@@ -95,7 +95,7 @@ test("public and desk chrome hide Upgrade / Subscribe unless flagged", () => {
 test("free landing page keeps claim free and never invents $10-a-day fees", () => {
   const listing = src("src/routes/daycare.$slug.tsx");
   assert.match(listing, /freeListingNotAd/);
-  assert.match(listing, /photoPending/);
+  assert.match(listing, /ListingPhotoFallback/);
   assert.match(listing, /claim=\{offerClaim\}/);
   assert.match(src("src/components/listing-hero-gallery.tsx"), /claimQuery/);
   assert.match(src("src/lib/copy.ts"), /claimListingFrame: "Claim Listing"/);

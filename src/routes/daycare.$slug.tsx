@@ -22,7 +22,6 @@ import {
 import { WaitlistOptIn } from "@/components/waitlist-opt-in";
 import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto, ListingPhotoFallback } from "@/components/building-photo";
-import { JsonLd } from "@/components/json-ld";
 import { LISTING_PLACEHOLDER, classifyListingPhotos, isOfficialBuildingPhoto, primaryListingPhoto } from "@/lib/listing-photo";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { DETAIL_SIZES, HERO_WIDTHS, photoSrcSet, photoUrl } from "@/lib/photo";
@@ -67,7 +66,6 @@ import { VacancyFreshness } from "@/components/vacancy-freshness";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { CompareBar } from "@/components/compare-bar";
 import { EmptyState } from "@/components/empty-state";
-import { PageSkeleton } from "@/components/page-skeleton";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useRoleChrome } from "@/components/role-chrome";
 import { listingActionMode, showsOwnListingEdit, showsParentListingActions } from "@/lib/role-access";
@@ -161,18 +159,6 @@ export const Route = createFileRoute("/daycare/$slug")({
   },
   component: Listing,
 });
-
-function ListingJsonLd({
-  src,
-  locale,
-}: {
-  src: Parameters<typeof listingJsonLdScript>[0] | null | undefined;
-  locale: "en" | "fr";
-}) {
-  const json = src ? listingJsonLdScript(src, locale) : "";
-  if (!json) return null;
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: json }} />;
-}
 
 function ClaimListingButton({ name, className = "" }: { name: string; className?: string }) {
   const { t } = useCopy();
@@ -309,13 +295,9 @@ export function Listing() {
     document.title = listingSeoPageTitle(d, locale === "fr" ? "fr" : "en") || listingPageTitle(d);
   }, [data, locale]);
 
-  const seoLocale = locale === "fr" ? "fr" : "en";
-  const jsonLdSrc = data?.daycare ?? seo;
-
   if (missing) {
     return (
       <Shell>
-        <ListingJsonLd src={seo} locale={seoLocale} />
         <main className="ke-gutter mx-auto max-w-lg py-16">
           <EmptyState
             title={t("listingMissing")}
@@ -338,9 +320,18 @@ export function Listing() {
     const earlyPhoto = primaryListingPhoto(seo?.photos);
     const earlyReal = earlyPhoto && isRealListingPhoto(earlyPhoto) ? earlyPhoto : "";
     const earlyName = seo ? displayCentreName(locale === "fr" ? seo.nameFr : seo.name) : "";
+    const earlyDesc = displayListingText(locale === "fr" ? seo?.descriptionFr : seo?.description);
+    const earlyHours = displayListingText(locale === "fr" ? seo?.hoursFr : seo?.hours);
+    const earlyAddress = [
+      displayListingText(seo?.address),
+      seo?.city,
+      [seo?.province, seo?.postalCode].filter(Boolean).join(" "),
+    ]
+      .map((part) => (part || "").trim())
+      .filter(Boolean)
+      .join(", ");
     return (
       <Shell>
-        <ListingJsonLd src={seo} locale={seoLocale} />
         <main className="mx-auto max-w-5xl overflow-x-hidden">
           <div className="lg:ke-gutter lg:pt-4">
             <div className="ke-listing-hero relative overflow-hidden lg:rounded-[14px]" data-empty={earlyReal ? undefined : "true"}>
@@ -355,18 +346,32 @@ export function Listing() {
                   className="size-full object-cover"
                 />
               ) : (
-                <>
-                  <ListingPhotoFallback className="size-full" />
-                  <span className="pointer-events-none absolute inset-x-0 bottom-3 text-center text-xs text-muted">
-                    {t("photoPending")}
-                  </span>
-                </>
+                <ListingPhotoFallback className="size-full" />
               )}
             </div>
           </div>
           <div className="ke-gutter">
             {earlyName ? <h1 className="mt-3 font-display text-[1.75rem] leading-tight md:text-[2rem]">{earlyName}</h1> : null}
-            <PageSkeleton hero={false} cards={2} />
+            <div id="listing-overview" className="mt-6 space-y-6">
+              {earlyDesc ? (
+                <section>
+                  <h2 className="font-display text-2xl">{t("about")}</h2>
+                  <p className="mt-2 max-w-prose text-muted">{earlyDesc}</p>
+                </section>
+              ) : null}
+              {earlyHours ? (
+                <section>
+                  <h2 className="font-display text-2xl">{t("hours")}</h2>
+                  <p className="mt-2 max-w-prose text-muted">{earlyHours}</p>
+                </section>
+              ) : null}
+              {earlyAddress ? (
+                <section>
+                  <h2 className="font-display text-2xl">{t("onMap")}</h2>
+                  <p className="mt-2 text-sm text-muted">{earlyAddress}</p>
+                </section>
+              ) : null}
+            </div>
           </div>
         </main>
       </Shell>
@@ -626,8 +631,6 @@ export function Listing() {
 
   return (
     <Shell>
-      <ListingJsonLd src={jsonLdSrc} locale={seoLocale} />
-      <JsonLd json={jsonLdSrc ? listingBreadcrumbJsonLdScript(jsonLdSrc, seoLocale) : ""} />
       <article className="ke-dense mx-auto max-w-5xl overflow-x-hidden pb-[calc(8.75rem+env(safe-area-inset-bottom))] lg:pb-10">
         <div className="lg:ke-gutter lg:pt-4">
           <ListingHeroGallery

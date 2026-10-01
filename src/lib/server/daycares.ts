@@ -746,6 +746,10 @@ export const getListingSeo = createServerFn({ method: "GET" })
       photos: found.photos,
       amenities: found.amenities,
       feeProgram: found.feeProgram || null,
+      description: found.description || "",
+      descriptionFr: found.descriptionFr || "",
+      hours: found.hours || "",
+      hoursFr: found.hoursFr || "",
     };
   });
 
