@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { compactExploreSearch, parseExploreSearchFields } from "@/lib/explore-search";
 import { productHomeOrigin } from "@/lib/default-origin";
 import { geocode } from "@/lib/geo";
+import { originFromSearchQuery, searchQueryFromUnknown } from "@/lib/search-query";
 import { MARKETING_PAGE_SEO_FR, pageSeoHead } from "@/lib/page-seo";
 import { featuredDaycares, searchDaycarePage } from "@/lib/server/daycares";
 import { resolveRequestSearchOrigin } from "@/lib/server/request-origin";
@@ -50,11 +51,11 @@ export const Route = createFileRoute("/fr/search")({
     return out;
   },
   loader: async ({ location }) => {
-    const origin = await withTimeoutFallback(
-      resolveRequestSearchOrigin(),
-      ORIGIN_BUDGET_MS,
-      productHomeOrigin(),
-    );
+    const q = searchQueryFromUnknown(location.search);
+    const fromQ = originFromSearchQuery(q);
+    const origin = fromQ
+      ? { lat: fromQ.lat, lng: fromQ.lng, label: fromQ.label, source: "manual" as const }
+      : await withTimeoutFallback(resolveRequestSearchOrigin(), ORIGIN_BUDGET_MS, productHomeOrigin());
     const rank = parseRankingOverride((location.search as { rank?: unknown } | undefined)?.rank);
     const sort = rank === "best" ? "best" : "distance";
     const [searched, featured] = await Promise.all([
@@ -67,7 +68,7 @@ export const Route = createFileRoute("/fr/search")({
             sort,
             ageGroup: "any",
             label: origin.label,
-            q: origin.label,
+            q: q || origin.label,
             page: 1,
           },
         }),
@@ -122,16 +123,19 @@ function FrExplore() {
   const [start, setStart] = useState<SearchStart | "">(incoming.start || "");
   useEffect(() => {
     if (boot.catalogueReady !== false && sort === boot.sort) return;
+    const q = (incoming.q || "").trim();
+    const named = originFromSearchQuery(q);
+    const origin = named ?? boot.origin;
     let live = true;
     void searchDaycarePage({
       data: {
-        lat: boot.origin.lat,
-        lng: boot.origin.lng,
+        lat: origin.lat,
+        lng: origin.lng,
         radiusKm: 25,
         sort,
         ageGroup: "any",
-        label: boot.origin.label,
-        q: boot.origin.label,
+        label: named?.label || origin.label,
+        q: q || origin.label,
         page: 1,
       },
     })
@@ -144,7 +148,7 @@ function FrExplore() {
     return () => {
       live = false;
     };
-  }, [boot.catalogueReady, boot.origin.lat, boot.origin.lng, boot.origin.label, boot.sort, sort]);
+  }, [boot.catalogueReady, boot.origin, boot.sort, incoming.q, sort]);
 
   const shown = useMemo(() => {
     const source = rows ?? (boot.items?.length ? boot.items : boot.featured) ?? [];

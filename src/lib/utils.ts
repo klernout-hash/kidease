@@ -44,9 +44,14 @@ export function displayCentreName(value: string | null | undefined) {
     .replace(/\b(\d+)(St|Nd|Rd|Th)\b/g, (_, n: string, suf: string) => `${n}${suf.toLowerCase()}`)
     .replace(/\s+-\s*/g, " – ")
     .replace(/([a-z])-([A-Z])/g, "$1 – $2")
+    .replace(/\\+/g, " ")
     .replace(/\s{2,}/g, " ")
-    .trim();
-  return titleCaseScrapedName(decoded);
+    .trim()
+    .replace(/[\s,;:–—-]+$/g, "");
+  const stripped = decoded.replace(/,\s+the$/i, "");
+  const named =
+    stripped === decoded ? decoded : /^the\b/i.test(stripped) ? stripped : `The ${stripped}`;
+  return titleCaseScrapedName(named);
 }
 
 const NAME_KEEP_UPPER = new Set(["ymca", "ywca", "abc", "ece", "cpr"]);

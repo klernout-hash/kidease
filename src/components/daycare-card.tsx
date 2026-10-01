@@ -12,6 +12,7 @@ import { distanceKm as kmBetween } from "@/lib/proximity";
 import { useAppStore } from "@/lib/store";
 import type { CopyKey } from "@/lib/copy";
 import { displayDistance } from "@/lib/units";
+import { plausibleListingKm } from "@/lib/plausible-distance";
 import { listingAgeRangeText } from "@/lib/listing-ages";
 import { classifyFacilityType, facilityTypeSeoKind } from "@/lib/facility-type";
 import { publicLicenseBadge } from "@/lib/license-verify";
@@ -233,9 +234,10 @@ export const DaycareCard = memo(function DaycareCard({
     fees: "cardGapFees",
     photo: "cardGapPhoto",
   } as const;
-  const away = originIsParentLocation(originSource)
-    ? `${displayDistance(distanceKm, "km")} ${t("kmAway")}`
-    : "";
+  const away =
+    originIsParentLocation(originSource) && plausibleListingKm(distanceKm, item.city, origin.label)
+      ? `${displayDistance(distanceKm, "km")} ${t("kmAway")}`
+      : "";
   const photos = (item.photos ?? []).filter((p) => p && !p.includes("-logo"));
   const hollowPhoto = !photos.some((p) => isRealListingPhoto(p));
   const offerClaim = showPublicClaimPrompt(item);

@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { geocode, isIqaluitQuery } from "../src/lib/geo.ts";
+import { explicitCityQuery } from "../src/lib/search-query.ts";
 import { renderSitemapXml } from "../src/lib/sitemap.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -26,6 +27,17 @@ test("Québec and Quebec mean Québec City, not Montréal", () => {
   const province = geocode("QC");
   assert.ok(province);
   assert.match(province.label, /Montréal/);
+});
+
+test("Winnipeg Beach is not Winnipeg", () => {
+  const beach = geocode("Winnipeg Beach");
+  assert.notEqual(beach?.label, "Winnipeg, MB");
+  assert.equal(geocode("Winnipeg")?.label, "Winnipeg, MB");
+  assert.equal(geocode("Winnipeg, MB")?.label, "Winnipeg, MB");
+  assert.equal(geocode("winnip")?.label, "Winnipeg, MB");
+  assert.equal(geocode("Winnipeg MB")?.label, "Winnipeg, MB");
+  assert.equal(explicitCityQuery("Winnipeg Beach"), null);
+  assert.equal(explicitCityQuery("Winnipeg, MB")?.label, "Winnipeg, MB");
 });
 
 test("Iqaluit stays Iqaluit and the empty state says so", () => {

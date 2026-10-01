@@ -78,6 +78,8 @@ test("search route honours city and refuses an unknown city fallback", () => {
   const search = readFileSync(join(root, "src/routes/search.tsx"), "utf8");
   const server = readFileSync(join(root, "src/lib/server/daycares.ts"), "utf8");
   assert.match(search, /cityParamFromUnknown\(location\.search\)/);
+  assert.match(readFileSync(join(root, "src/routes/fr.search.tsx"), "utf8"), /searchQueryFromUnknown/);
+  assert.match(server, /catalogNamedCityFromJson/);
   assert.match(search, /searchQueryFromUnknown\(location\.search\)/);
   assert.match(search, /unknownCity/);
   assert.match(search, /if \(city\) out\.city = city/);

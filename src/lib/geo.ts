@@ -177,13 +177,32 @@ function foldPlace(value: string) {
   return value.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
 }
 
+const PROVINCE_TAIL =
+  /^(?:ab|bc|mb|nb|nl|ns|nt|nu|on|pe|qc|sk|yt|alberta|british columbia|manitoba|new brunswick|newfoundland(?: and labrador)?|nova scotia|northwest territories|nunavut|ontario|prince edward island|quebec|québec|saskatchewan|yukon)\b/;
+
+/**
+ * "Winnipeg Beach" and "Winnipegosis" are not Winnipeg.
+ * "Winnipeg MB" still is.
+ */
+export function queryNamesLongerMunicipality(query: string, city: string) {
+  const q = foldPlace(query);
+  const name = foldPlace(city);
+  if (!name || !q.startsWith(name) || q.length <= name.length) return false;
+  const rest = q.slice(name.length).replace(/^[\s,]+/, "");
+  if (!rest || PROVINCE_TAIL.test(rest)) return false;
+  return true;
+}
+
 function aliasMatches(query: string, alias: string) {
   const a = foldPlace(alias);
   const q = foldPlace(query);
   if (!a) return false;
   if (q === a) return true;
   if (q.length < 3 || a.length < 3) return false;
-  return q.includes(a) || a.includes(q);
+  if (queryNamesLongerMunicipality(q, a)) return false;
+  if (a.startsWith(q) && q.length >= 4) return true;
+  if (q.startsWith(a)) return true;
+  return false;
 }
 
 /** City name or alias, before a province name. "Québec" is the city, not Montréal. */

@@ -86,6 +86,7 @@ import { BuildingPhoto } from "@/components/building-photo";
 import { mapPinThumb } from "@/lib/listing-photo";
 import { listingAgeRangeText } from "@/lib/listing-ages";
 import { displayDistance } from "@/lib/units";
+import { plausibleListingKm } from "@/lib/plausible-distance";
 import { honestVacancy } from "@/lib/now-loops";
 import { publicApprovalEligible } from "@/lib/approve-live";
 
@@ -1032,9 +1033,10 @@ function MapPinPopup({
   t: (key: CopyKey) => string;
 }) {
   const name = displayCentreName(locale === "fr" ? item.nameFr || item.name : item.name);
-  const away = Number.isFinite(item.distanceKm)
-    ? `${displayDistance(item.distanceKm, "km")} ${t("km")}`
-    : "";
+  const away =
+    plausibleListingKm(item.distanceKm, item.city, item.city) && Number.isFinite(item.distanceKm)
+      ? `${displayDistance(item.distanceKm, "km")} ${t("km")}`
+      : "";
   const place = mapPinPlaceLine({
     address: displayListingText(item.address),
     city: item.city,
