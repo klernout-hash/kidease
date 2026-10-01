@@ -5,7 +5,7 @@
     ],
     "target": {
       "namespace": "android_app",
-      "package_name": "ca.daycarenearme.app",
+      "package_name": "ca.kidease.app",
       "sha256_cert_fingerprints": []
     }
   }

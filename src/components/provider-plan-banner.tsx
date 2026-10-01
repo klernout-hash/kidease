@@ -34,7 +34,7 @@ export function ProviderPlanBanner({ subscription }: { subscription: ProviderDes
             .replace("{cap}", String(subscription.inquiryCap ?? ""))
         : null;
   return (
-    <section className="rounded-xl bg-surface px-5 py-4 ring-1 ring-border">
+    <section className="ke-digital-plan rounded-xl bg-surface px-5 py-4 ring-1 ring-border" data-ke="digital-plan">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.16em] text-subtle">{t("planCurrent")}</p>

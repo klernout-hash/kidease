@@ -179,7 +179,9 @@ describe("wiring keeps explicit search and documents the fallback", () => {
     const home = read("src/routes/index.tsx");
     const boot = read("src/lib/search-origin.ts");
     assert.match(search, /resolveRequestSearchOrigin/);
-    assert.match(search, /bootSearchOrigin\(incoming\.q, boot\.origin\)/);
+    assert.match(search, /bootSearchOrigin\(place, boot\.origin\)/);
+    assert.match(search, /incoming\.q \|\| ""/);
+    assert.match(search, /incoming\.city/);
     assert.match(home, /resolveRequestSearchOrigin/);
     assert.match(boot, /incomingQ/);
     assert.match(boot, /resolveLocationQuery/);

@@ -288,7 +288,7 @@ async function sendApns(
   nowSec: number,
 ): Promise<{ ok: boolean; invalid?: boolean; error?: string }> {
   const host = apnsHost(env);
-  const topic = envStr(env, "APNS_BUNDLE_ID") || "ca.daycarenearme.app";
+  const topic = envStr(env, "APNS_BUNDLE_ID") || "ca.kidease.app";
   const result = await apnsRequest({
     host,
     path: `/3/device/${target.token}`,

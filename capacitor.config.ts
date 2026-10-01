@@ -3,7 +3,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 /** Production WebView origin. Override with CAP_SERVER_URL for on-device live reload only. */
 export const CAP_PROD_SERVER_URL = "https://www.kidease.ca";
 export const CAP_PROD_HOSTNAME = "www.kidease.ca";
-export const CAP_APP_ID = "ca.daycarenearme.app";
+export const CAP_APP_ID = "ca.kidease.app";
 export const CAP_APP_NAME = "KidEase";
 
 /**

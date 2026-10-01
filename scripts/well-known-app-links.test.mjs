@@ -25,7 +25,7 @@ function read(rel) {
 }
 
 test("uses the Capacitor appId and a documented Team ID placeholder", () => {
-  assert.equal(CAP_APP_ID, "ca.daycarenearme.app");
+  assert.equal(CAP_APP_ID, "ca.kidease.app");
   assert.equal(PLACEHOLDER_APPLE_TEAM_ID, "XXXXXXXXXX");
   assert.equal(resolveAppleTeamId({}), PLACEHOLDER_APPLE_TEAM_ID);
   assert.equal(resolveAppleTeamId({ APPLE_TEAM_ID: "  AB12CD34EF  " }), "AB12CD34EF");

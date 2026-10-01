@@ -76,7 +76,7 @@ export function DaycareDeskHome({
         />
       ) : null}
       {capCopy ? (
-        <p className="rounded-xl bg-surface px-4 py-3 text-sm text-fg ring-1 ring-border" data-ke="daycare-cap-prompt">
+        <p className="ke-digital-plan rounded-xl bg-surface px-4 py-3 text-sm text-fg ring-1 ring-border" data-ke="daycare-cap-prompt">
           {capCopy}{" "}
           <Link to="/provider/subscription" className="font-semibold text-primary">
             {t("planViewPlans")}

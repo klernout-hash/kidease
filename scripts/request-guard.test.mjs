@@ -245,6 +245,8 @@ test("isHiddenListingPath matches daycare and book aliases, not claim or search"
   assert.equal(isHiddenListingPath("/daycare/test-test-nozo"), true);
   assert.equal(isHiddenListingPath("/daycare/not-a-real-centre"), false);
   assert.equal(isHiddenListingPath("/daycare/teston-child-care"), false);
+  assert.equal(isHiddenListingPath("/fr/daycare/test-ghost-claim-lab"), true);
+  assert.equal(isHiddenListingPath("/fr/daycare/bonnie-bairns-childcare-services-1"), false);
 });
 
 test("QA ghost listing document URLs 404 on every host", () => {
@@ -267,6 +269,8 @@ test("off-scope city hubs 404 instead of falling through to search", () => {
   assert.equal(isOffScopeCityHubPath("/daycare/city/brandon"), true);
   assert.equal(isOffScopeCityHubPath("/daycare/city/winnipeg"), false);
   assert.equal(isOffScopeCityHubPath("/daycare/city/quebec-city"), false);
+  assert.equal(isOffScopeCityHubPath("/fr/daycare/city/montreal"), false);
+  assert.equal(isOffScopeCityHubPath("/fr/daycare/city/new-york"), true);
   assert.equal(isOffScopeCityHubPath("/daycare/winnipeg"), false);
   assert.equal(isOffScopeCityHubPath("/search"), false);
   for (const host of ["www.kidease.ca", "kidease-git.vercel.app", "localhost:8080"]) {

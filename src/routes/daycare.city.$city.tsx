@@ -1,62 +1,37 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouterState } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
 import { JsonLd } from "@/components/json-ld";
 import { CityHubNotFoundPage } from "@/components/page-not-found";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
-import { cityHubBySlug, cityHubs } from "@/lib/city-hub-data";
+import { cityHubs } from "@/lib/city-hub-data";
 import {
   cityHubChipLabel,
   cityHubCityName,
   cityHubDefBySlug,
   cityHubMapSearchQuery,
-  cityHubPath,
   cityHubUrl,
   type CityHubListing,
-  type CityHubSnapshot,
 } from "@/lib/city-hubs";
-import {
-  breadcrumbJsonLdScript,
-  faqPageJsonLdScript,
-  pageSeoHead,
-} from "@/lib/page-seo";
-import { cityHubNotFoundHead } from "@/lib/city-hub-not-found";
-import { filterSuppressedBundleRows } from "@/lib/server/bundled-catalog";
-import { SITEMAP_ORIGIN } from "@/lib/sitemap";
+import { breadcrumbJsonLdScript, faqPageJsonLdScript } from "@/lib/page-seo";
+import { cityHubHead, loadCityHub } from "@/lib/city-hub-page";
+import { isFrPath } from "@/lib/locale-path";
+import { SITEMAP_ORIGIN, isSafeSitemapSlug } from "@/lib/sitemap";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/daycare/city/$city")({
-  loader: async ({ params }): Promise<CityHubSnapshot> => {
-    // Published Canadian hubs only. US and unknown slugs 404 — they must not
-    // fall through to the Winnipeg search page. The document edge does the
-    // same in scripts/request-guard.mjs so the SPA shell cannot return 200.
-    const hub = cityHubBySlug(params.city);
-    if (!hub) throw notFound();
-    try {
-      const listings = await filterSuppressedBundleRows({ data: hub.listings });
-      return { ...hub, listings };
-    } catch {
-      return hub;
-    }
-  },
+  loader: ({ params }) => loadCityHub(params.city),
   notFoundComponent: CityHubNotFoundPage,
-  head: ({ loaderData }) => {
-    if (!loaderData) return cityHubNotFoundHead();
-    const title = `Licensed daycare in ${loaderData.city}, ${loaderData.province} · KidEase`;
-    const description = `Browse ${loaderData.count} licensed centres, nurseries, and homes in ${loaderData.city}, ${loaderData.province}. Free to search on KidEase — no nannies or sitters.`;
-    return pageSeoHead({
-      title,
-      description,
-      path: cityHubPath(loaderData.slug),
-    });
-  },
+  head: ({ loaderData }) => cityHubHead(loaderData, "en"),
   component: CityHubPage,
 });
 
-function CityHubPage() {
+export function CityHubPage() {
   const hub = Route.useLoaderData();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const onFr = isFrPath(pathname);
   const { t, locale } = useCopy();
-  const fr = locale === "fr";
+  const fr = onFr || locale === "fr";
   const def = cityHubDefBySlug(hub.slug);
   const cityName = def ? cityHubCityName(def, locale) : hub.city;
   const mapSearch = def ? cityHubMapSearchQuery(def) : `${hub.city}, ${hub.province}`;
@@ -115,7 +90,7 @@ function CityHubPage() {
         </p>
         <p className="mt-4 text-sm text-muted">
           <Link
-            to="/search"
+            to={fr ? "/fr/search" : "/search"}
             search={{ q: mapSearch }}
             className="font-medium text-primary underline-offset-4 hover:underline"
           >
@@ -144,10 +119,10 @@ function CityHubPage() {
               : `${hub.count} licensed listings.`}
         </p>
         <ul className="mt-6 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
-          {hub.listings.map((listing: CityHubListing) => (
+          {hub.listings.filter((listing: CityHubListing) => isSafeSitemapSlug(listing.slug)).map((listing: CityHubListing) => (
             <li key={listing.slug}>
               <Link
-                to="/daycare/$slug"
+                to={fr ? "/fr/daycare/$slug" : "/daycare/$slug"}
                 params={{ slug: listing.slug }}
                 className="flex min-h-11 items-center px-4 py-3 text-sm font-medium hover:bg-bg"
               >
@@ -159,7 +134,7 @@ function CityHubPage() {
         {hub.listings.length < hub.count ? (
           <p className="mt-4 text-sm">
             <Link
-              to="/search"
+              to={fr ? "/fr/search" : "/search"}
               search={{ q: mapSearch }}
               className="font-medium text-primary underline-offset-4 hover:underline"
             >
@@ -198,7 +173,7 @@ function CityHubPage() {
                 return (
                   <li key={item.slug}>
                     <Link
-                      to="/daycare/city/$city"
+                      to={fr ? "/fr/daycare/city/$city" : "/daycare/city/$city"}
                       params={{ city: item.slug }}
                       className="inline-flex min-h-11 items-center whitespace-nowrap rounded-full bg-surface px-3 text-sm font-medium ring-1 ring-border hover:bg-bg"
                     >

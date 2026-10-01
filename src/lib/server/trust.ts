@@ -10,7 +10,7 @@ import { type LicenseStatus, type RegistryMatchState } from "@/lib/trust";
 import { LISTING_NOT_FOUND, assertCanMutateListing } from "@/lib/access-control";
 import { assertCentreCanMutateListing } from "@/lib/server/centre-access";
 
-const REPORT_REASONS = new Set(["license", "unlicensed", "ownership", "photo", "other"]);
+const REPORT_REASONS = new Set(["license", "unlicensed", "ownership", "photo", "complaint", "other"]);
 
 export type LicenseReviewAction = "matched" | "mismatch" | "expired" | "suspended" | "unverified";
 

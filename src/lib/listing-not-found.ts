@@ -3,6 +3,13 @@ export const LISTING_NOT_FOUND_TITLE = "Listing not found · KidEase";
 export const LISTING_NOT_FOUND_DESCRIPTION =
   "This centre is not on KidEase, or the link is out of date.";
 
+const RESERVED_LISTING_SLUG = /^(null|undefined)$/i;
+
+export function isReservedListingSlug(slug: string | null | undefined): boolean {
+  const value = String(slug ?? "").trim();
+  return !value || RESERVED_LISTING_SLUG.test(value);
+}
+
 export function listingNotFoundHead() {
   return {
     meta: [
@@ -38,6 +45,7 @@ export function decideListingLoader<T extends { slug?: string | null }>(
   | { type: "redirect-city"; city: string }
   | { type: "redirect-search"; q: string }
   | { type: "not-found" } {
+  if (isReservedListingSlug(requestedSlug)) return { type: "not-found" };
   if (seo?.slug && seo.slug !== requestedSlug) {
     return { type: "redirect-keeper", slug: seo.slug };
   }

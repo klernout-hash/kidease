@@ -373,14 +373,14 @@ export function ProviderSubscriptionPanel({
   if (!showCheckout) {
     if (!planOpen && !pinOpen) {
       return (
-        <section className="space-y-4 rounded-xl bg-surface p-5 ring-1 ring-border" data-ke="plans-not-offered">
+        <section className="ke-digital-plan space-y-4 rounded-xl bg-surface p-5 ring-1 ring-border" data-ke="plans-not-offered">
           <h2 className="font-display text-2xl">{t.title}</h2>
           <p className="text-sm text-muted">{tx("plansNotOffered")}</p>
         </section>
       );
     }
     return (
-      <section className="space-y-4" data-ke="plans-not-offered">
+      <section className="ke-digital-plan space-y-4" data-ke="plans-not-offered">
         <h2 className="font-display text-2xl">{t.title}</h2>
         <p className="text-sm text-muted">{tx("plansNotOffered")}</p>
         {billingCards}
@@ -389,7 +389,7 @@ export function ProviderSubscriptionPanel({
   }
 
   return (
-    <section className="space-y-8">
+    <section className="ke-digital-plan space-y-8" data-ke="digital-plan">
       <div>
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">{t.eyebrow}</p>
         <h2 className="mt-2 inline-flex items-center gap-2 font-display text-2xl">
