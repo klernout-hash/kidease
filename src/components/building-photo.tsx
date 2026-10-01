@@ -212,7 +212,8 @@ export function BuildingPhoto({
         sizes={sizes}
         width={width}
         height={height}
-        alt=""
+        alt={_alt}
+        aria-hidden={_alt ? undefined : true}
         data-ke-photo={loaded ? "ok" : "pending"}
         className={cn(
           "ke-photo size-full bg-surface-2 object-cover text-transparent",

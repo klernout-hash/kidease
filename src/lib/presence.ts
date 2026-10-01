@@ -2,6 +2,11 @@ import { haversineKm, type LatLng } from "@/lib/geo";
 import type { DaycareCard } from "@/lib/types";
 
 export type OriginSource = "gps" | "manual" | "saved" | "ip" | "default";
+
+/** GPS, a typed place, or a saved place. A default pin or IP guess is not a location. */
+export function originIsParentLocation(source: OriginSource | null | undefined): boolean {
+  return source === "gps" || source === "manual" || source === "saved";
+}
 export type PresenceFreshness = "live" | "fresh" | "stale" | "unknown";
 
 const LIVE_MS = 90_000;

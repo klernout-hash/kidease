@@ -16,6 +16,7 @@ import { listingAgeRangeText } from "@/lib/listing-ages";
 import { classifyFacilityType, facilityTypeSeoKind } from "@/lib/facility-type";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { licenseRecordUrl, officialLicenceNumber } from "@/lib/licensing";
+import { originIsParentLocation } from "@/lib/presence";
 import { isCatalogueMatchedBadge, trustBadgesFor, type TrustBadge as TrustBadgeModel } from "@/lib/trust";
 import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
 import {
@@ -148,6 +149,7 @@ function ListingAnchor({
   onClick,
   children,
   "data-ke": dataKe,
+  label,
 }: {
   slug: string;
   className?: string;
@@ -155,6 +157,7 @@ function ListingAnchor({
   onClick?: (event: MouseEvent) => void;
   children: ReactNode;
   "data-ke"?: string;
+  label?: string;
 }) {
   if (!isSafeSitemapSlug(slug)) {
     return (
@@ -170,6 +173,7 @@ function ListingAnchor({
       search={search}
       className={className}
       data-ke={dataKe}
+      aria-label={label}
       onClick={onClick}
     >
       {children}
@@ -214,7 +218,7 @@ export const DaycareCard = memo(function DaycareCard({
   const name = displayCentreName(locale === "fr" ? item.nameFr : item.name);
   const live = Boolean(item.live);
   const origin = useAppStore((s) => s.origin);
-  const located = useAppStore((s) => s.located);
+  const originSource = useAppStore((s) => s.originSource);
   const sort = useAppStore((s) => s.sort);
   const distanceKm = kmBetween(origin, { lat: item.lat, lng: item.lng });
   const subsidy = listingSubsidy(item);
@@ -229,7 +233,9 @@ export const DaycareCard = memo(function DaycareCard({
     fees: "cardGapFees",
     photo: "cardGapPhoto",
   } as const;
-  const away = located ? `${displayDistance(distanceKm, "km")} ${t("kmAway")}` : "";
+  const away = originIsParentLocation(originSource)
+    ? `${displayDistance(distanceKm, "km")} ${t("kmAway")}`
+    : "";
   const photos = (item.photos ?? []).filter((p) => p && !p.includes("-logo"));
   const hollowPhoto = !photos.some((p) => isRealListingPhoto(p));
   const offerClaim = showPublicClaimPrompt(item);
@@ -274,7 +280,7 @@ export const DaycareCard = memo(function DaycareCard({
     return (
       <article data-slug={item.slug} data-ke="visual-card" className="ke-visual-card group w-full">
         <div className="relative">
-          <ListingAnchor slug={item.slug} className="block text-inherit no-underline">
+          <ListingAnchor slug={item.slug} label={name} className="block text-inherit no-underline">
             <PhotoCarousel
               photos={photos}
               eager={eager}
@@ -364,7 +370,7 @@ export const DaycareCard = memo(function DaycareCard({
   return (
     <article data-slug={item.slug} className="ke-tile group w-full">
       <div className="relative">
-        <ListingAnchor slug={item.slug} className="block text-inherit no-underline">
+        <ListingAnchor slug={item.slug} label={name} className="block text-inherit no-underline">
           <PhotoCarousel
             photos={photos}
             eager={eager}
