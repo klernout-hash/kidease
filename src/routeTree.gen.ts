@@ -13,7 +13,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AdminRouteImport } from './routes/admin'
-import { Route as AdminFeaturesRouteImport } from './routes/admin.features'
 import { Route as AdminAiRouteImport } from './routes/admin-ai'
 import { Route as AdminChatRouteImport } from './routes/admin-chat'
 import { Route as AdminContractsRouteImport } from './routes/admin-contracts'
@@ -37,6 +36,7 @@ import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as DonateRouteImport } from './routes/donate'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as ForDaycaresRouteImport } from './routes/for-daycares'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FrRouteImport } from './routes/fr'
 import { Route as GetAppRouteImport } from './routes/get-app'
@@ -46,9 +46,7 @@ import { Route as ImgRouteImport } from './routes/img'
 import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as ForDaycaresRouteImport } from './routes/for-daycares'
 import { Route as MeetTheTeamRouteImport } from './routes/meet-the-team'
-import { Route as SignupRouteImport } from './routes/signup'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as ParentRouteImport } from './routes/parent'
@@ -58,6 +56,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProviderRouteImport } from './routes/provider'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as StartADaycareRouteImport } from './routes/start-a-daycare'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as TeamRouteImport } from './routes/team'
@@ -66,6 +65,7 @@ import { Route as TourChecklistRouteImport } from './routes/tour-checklist'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as Verify2faRouteImport } from './routes/verify-2fa'
+import { Route as AdminFeaturesRouteImport } from './routes/admin.features'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiE2eSeedRouteImport } from './routes/api/e2e-seed'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
@@ -150,11 +150,6 @@ const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AdminFeaturesRoute = AdminFeaturesRouteImport.update({
-  id: '/features',
-  path: '/features',
-  getParentRoute: () => AdminRoute,
 } as any)
 const AdminAiRoute = AdminAiRouteImport.update({
   id: '/admin-ai',
@@ -272,6 +267,11 @@ const FaqRoute = FaqRouteImport.update({
   path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForDaycaresRoute = ForDaycaresRouteImport.update({
+  id: '/for-daycares',
+  path: '/for-daycares',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
@@ -317,19 +317,9 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ForDaycaresRoute = ForDaycaresRouteImport.update({
-  id: '/for-daycares',
-  path: '/for-daycares',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const MeetTheTeamRoute = MeetTheTeamRouteImport.update({
   id: '/meet-the-team',
   path: '/meet-the-team',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MenuRoute = MenuRouteImport.update({
@@ -377,6 +367,11 @@ const SearchRoute = SearchRouteImport.update({
   path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StartADaycareRoute = StartADaycareRouteImport.update({
   id: '/start-a-daycare',
   path: '/start-a-daycare',
@@ -416,6 +411,11 @@ const Verify2faRoute = Verify2faRouteImport.update({
   id: '/verify-2fa',
   path: '/verify-2fa',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminFeaturesRoute = AdminFeaturesRouteImport.update({
+  id: '/features',
+  path: '/features',
+  getParentRoute: () => AdminRoute,
 } as any)
 const ApiDigestRoute = ApiDigestRouteImport.update({
   id: '/api/digest',
@@ -744,7 +744,6 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
-  '/admin/features': typeof AdminFeaturesRoute
   '/admin-ai': typeof AdminAiRoute
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
@@ -768,6 +767,7 @@ export interface FileRoutesByFullPath {
   '/donate': typeof DonateRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
+  '/for-daycares': typeof ForDaycaresRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/fr': typeof FrRouteWithChildren
   '/get-app': typeof GetAppRoute
@@ -777,9 +777,7 @@ export interface FileRoutesByFullPath {
   '/inbox': typeof InboxRouteWithChildren
   '/jobs': typeof JobsRoute
   '/login': typeof LoginRoute
-  '/for-daycares': typeof ForDaycaresRoute
   '/meet-the-team': typeof MeetTheTeamRoute
-  '/signup': typeof SignupRoute
   '/menu': typeof MenuRoute
   '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRoute
@@ -789,6 +787,7 @@ export interface FileRoutesByFullPath {
   '/provider': typeof ProviderRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
+  '/signup': typeof SignupRoute
   '/start-a-daycare': typeof StartADaycareRoute
   '/support': typeof SupportRouteWithChildren
   '/team': typeof TeamRoute
@@ -797,6 +796,7 @@ export interface FileRoutesByFullPath {
   '/unsubscribe': typeof UnsubscribeRoute
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
+  '/admin/features': typeof AdminFeaturesRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/health': typeof ApiHealthRoute
@@ -867,7 +867,6 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
-  '/admin/features': typeof AdminFeaturesRoute
   '/admin-ai': typeof AdminAiRoute
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
@@ -891,6 +890,7 @@ export interface FileRoutesByTo {
   '/donate': typeof DonateRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
+  '/for-daycares': typeof ForDaycaresRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/get-app': typeof GetAppRoute
   '/help': typeof HelpRoute
@@ -899,9 +899,7 @@ export interface FileRoutesByTo {
   '/inbox': typeof InboxRouteWithChildren
   '/jobs': typeof JobsRoute
   '/login': typeof LoginRoute
-  '/for-daycares': typeof ForDaycaresRoute
   '/meet-the-team': typeof MeetTheTeamRoute
-  '/signup': typeof SignupRoute
   '/menu': typeof MenuRoute
   '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRoute
@@ -910,6 +908,7 @@ export interface FileRoutesByTo {
   '/provider': typeof ProviderRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
+  '/signup': typeof SignupRoute
   '/start-a-daycare': typeof StartADaycareRoute
   '/support': typeof SupportRouteWithChildren
   '/team': typeof TeamRoute
@@ -918,6 +917,7 @@ export interface FileRoutesByTo {
   '/unsubscribe': typeof UnsubscribeRoute
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
+  '/admin/features': typeof AdminFeaturesRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/health': typeof ApiHealthRoute
@@ -989,7 +989,6 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
-  '/admin/features': typeof AdminFeaturesRoute
   '/admin-ai': typeof AdminAiRoute
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
@@ -1013,6 +1012,7 @@ export interface FileRoutesById {
   '/donate': typeof DonateRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
+  '/for-daycares': typeof ForDaycaresRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/fr': typeof FrRouteWithChildren
   '/get-app': typeof GetAppRoute
@@ -1022,9 +1022,7 @@ export interface FileRoutesById {
   '/inbox': typeof InboxRouteWithChildren
   '/jobs': typeof JobsRoute
   '/login': typeof LoginRoute
-  '/for-daycares': typeof ForDaycaresRoute
   '/meet-the-team': typeof MeetTheTeamRoute
-  '/signup': typeof SignupRoute
   '/menu': typeof MenuRoute
   '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRoute
@@ -1034,6 +1032,7 @@ export interface FileRoutesById {
   '/provider': typeof ProviderRouteWithChildren
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
+  '/signup': typeof SignupRoute
   '/start-a-daycare': typeof StartADaycareRoute
   '/support': typeof SupportRouteWithChildren
   '/team': typeof TeamRoute
@@ -1042,6 +1041,7 @@ export interface FileRoutesById {
   '/unsubscribe': typeof UnsubscribeRoute
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
+  '/admin/features': typeof AdminFeaturesRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/health': typeof ApiHealthRoute
@@ -1114,7 +1114,6 @@ export interface FileRouteTypes {
     | '/about'
     | '/account'
     | '/admin'
-    | '/admin/features'
     | '/admin-ai'
     | '/admin-chat'
     | '/admin-contracts'
@@ -1138,6 +1137,7 @@ export interface FileRouteTypes {
     | '/donate'
     | '/explore'
     | '/faq'
+    | '/for-daycares'
     | '/forgot-password'
     | '/fr'
     | '/get-app'
@@ -1147,9 +1147,7 @@ export interface FileRouteTypes {
     | '/inbox'
     | '/jobs'
     | '/login'
-    | '/for-daycares'
     | '/meet-the-team'
-    | '/signup'
     | '/menu'
     | '/notifications'
     | '/parent'
@@ -1159,6 +1157,7 @@ export interface FileRouteTypes {
     | '/provider'
     | '/reset-password'
     | '/search'
+    | '/signup'
     | '/start-a-daycare'
     | '/support'
     | '/team'
@@ -1167,6 +1166,7 @@ export interface FileRouteTypes {
     | '/unsubscribe'
     | '/verify'
     | '/verify-2fa'
+    | '/admin/features'
     | '/api/digest'
     | '/api/e2e-seed'
     | '/api/health'
@@ -1237,7 +1237,6 @@ export interface FileRouteTypes {
     | '/about'
     | '/account'
     | '/admin'
-    | '/admin/features'
     | '/admin-ai'
     | '/admin-chat'
     | '/admin-contracts'
@@ -1261,6 +1260,7 @@ export interface FileRouteTypes {
     | '/donate'
     | '/explore'
     | '/faq'
+    | '/for-daycares'
     | '/forgot-password'
     | '/get-app'
     | '/help'
@@ -1269,9 +1269,7 @@ export interface FileRouteTypes {
     | '/inbox'
     | '/jobs'
     | '/login'
-    | '/for-daycares'
     | '/meet-the-team'
-    | '/signup'
     | '/menu'
     | '/notifications'
     | '/parent'
@@ -1280,6 +1278,7 @@ export interface FileRouteTypes {
     | '/provider'
     | '/reset-password'
     | '/search'
+    | '/signup'
     | '/start-a-daycare'
     | '/support'
     | '/team'
@@ -1288,6 +1287,7 @@ export interface FileRouteTypes {
     | '/unsubscribe'
     | '/verify'
     | '/verify-2fa'
+    | '/admin/features'
     | '/api/digest'
     | '/api/e2e-seed'
     | '/api/health'
@@ -1358,7 +1358,6 @@ export interface FileRouteTypes {
     | '/about'
     | '/account'
     | '/admin'
-    | '/admin/features'
     | '/admin-ai'
     | '/admin-chat'
     | '/admin-contracts'
@@ -1382,6 +1381,7 @@ export interface FileRouteTypes {
     | '/donate'
     | '/explore'
     | '/faq'
+    | '/for-daycares'
     | '/forgot-password'
     | '/fr'
     | '/get-app'
@@ -1391,9 +1391,7 @@ export interface FileRouteTypes {
     | '/inbox'
     | '/jobs'
     | '/login'
-    | '/for-daycares'
     | '/meet-the-team'
-    | '/signup'
     | '/menu'
     | '/notifications'
     | '/parent'
@@ -1403,6 +1401,7 @@ export interface FileRouteTypes {
     | '/provider'
     | '/reset-password'
     | '/search'
+    | '/signup'
     | '/start-a-daycare'
     | '/support'
     | '/team'
@@ -1411,6 +1410,7 @@ export interface FileRouteTypes {
     | '/unsubscribe'
     | '/verify'
     | '/verify-2fa'
+    | '/admin/features'
     | '/api/digest'
     | '/api/e2e-seed'
     | '/api/health'
@@ -1505,6 +1505,7 @@ export interface RootRouteChildren {
   DonateRoute: typeof DonateRoute
   ExploreRoute: typeof ExploreRoute
   FaqRoute: typeof FaqRoute
+  ForDaycaresRoute: typeof ForDaycaresRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   FrRoute: typeof FrRouteWithChildren
   GetAppRoute: typeof GetAppRoute
@@ -1514,9 +1515,7 @@ export interface RootRouteChildren {
   InboxRoute: typeof InboxRouteWithChildren
   JobsRoute: typeof JobsRoute
   LoginRoute: typeof LoginRoute
-  ForDaycaresRoute: typeof ForDaycaresRoute
   MeetTheTeamRoute: typeof MeetTheTeamRoute
-  SignupRoute: typeof SignupRoute
   MenuRoute: typeof MenuRoute
   NotificationsRoute: typeof NotificationsRoute
   ParentRoute: typeof ParentRoute
@@ -1526,6 +1525,7 @@ export interface RootRouteChildren {
   ProviderRoute: typeof ProviderRouteWithChildren
   ResetPasswordRoute: typeof ResetPasswordRoute
   SearchRoute: typeof SearchRoute
+  SignupRoute: typeof SignupRoute
   StartADaycareRoute: typeof StartADaycareRoute
   SupportRoute: typeof SupportRouteWithChildren
   TeamRoute: typeof TeamRoute
@@ -1602,13 +1602,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/admin/features': {
-      id: '/admin/features'
-      path: '/features'
-      fullPath: '/admin/features'
-      preLoaderRoute: typeof AdminFeaturesRouteImport
-      parentRoute: typeof AdminRoute
     }
     '/admin-ai': {
       id: '/admin-ai'
@@ -1771,6 +1764,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/for-daycares': {
+      id: '/for-daycares'
+      path: '/for-daycares'
+      fullPath: '/for-daycares'
+      preLoaderRoute: typeof ForDaycaresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/forgot-password': {
       id: '/forgot-password'
       path: '/forgot-password'
@@ -1834,25 +1834,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/for-daycares': {
-      id: '/for-daycares'
-      path: '/for-daycares'
-      fullPath: '/for-daycares'
-      preLoaderRoute: typeof ForDaycaresRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/meet-the-team': {
       id: '/meet-the-team'
       path: '/meet-the-team'
       fullPath: '/meet-the-team'
       preLoaderRoute: typeof MeetTheTeamRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/menu': {
@@ -1918,6 +1904,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/start-a-daycare': {
       id: '/start-a-daycare'
       path: '/start-a-daycare'
@@ -1973,6 +1966,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/verify-2fa'
       preLoaderRoute: typeof Verify2faRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/admin/features': {
+      id: '/admin/features'
+      path: '/features'
+      fullPath: '/admin/features'
+      preLoaderRoute: typeof AdminFeaturesRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/api/digest': {
       id: '/api/digest'
@@ -2425,6 +2425,16 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminFeaturesRoute: typeof AdminFeaturesRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminFeaturesRoute: AdminFeaturesRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 interface FrRouteChildren {
   FrAboutRoute: typeof FrAboutRoute
   FrBenefitsRoute: typeof FrBenefitsRoute
@@ -2482,16 +2492,6 @@ const InboxRouteChildren: InboxRouteChildren = {
 }
 
 const InboxRouteWithChildren = InboxRoute._addFileChildren(InboxRouteChildren)
-
-interface AdminRouteChildren {
-  AdminFeaturesRoute: typeof AdminFeaturesRoute
-}
-
-const AdminRouteChildren: AdminRouteChildren = {
-  AdminFeaturesRoute: AdminFeaturesRoute,
-}
-
-const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface PayRouteChildren {
   PayBookingIdRoute: typeof PayBookingIdRoute
@@ -2571,6 +2571,7 @@ const rootRouteChildren: RootRouteChildren = {
   DonateRoute: DonateRoute,
   ExploreRoute: ExploreRoute,
   FaqRoute: FaqRoute,
+  ForDaycaresRoute: ForDaycaresRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   FrRoute: FrRouteWithChildren,
   GetAppRoute: GetAppRoute,
@@ -2580,9 +2581,7 @@ const rootRouteChildren: RootRouteChildren = {
   InboxRoute: InboxRouteWithChildren,
   JobsRoute: JobsRoute,
   LoginRoute: LoginRoute,
-  ForDaycaresRoute: ForDaycaresRoute,
   MeetTheTeamRoute: MeetTheTeamRoute,
-  SignupRoute: SignupRoute,
   MenuRoute: MenuRoute,
   NotificationsRoute: NotificationsRoute,
   ParentRoute: ParentRoute,
@@ -2592,6 +2591,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProviderRoute: ProviderRouteWithChildren,
   ResetPasswordRoute: ResetPasswordRoute,
   SearchRoute: SearchRoute,
+  SignupRoute: SignupRoute,
   StartADaycareRoute: StartADaycareRoute,
   SupportRoute: SupportRouteWithChildren,
   TeamRoute: TeamRoute,
