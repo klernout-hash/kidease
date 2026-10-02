@@ -1154,17 +1154,14 @@
   }
   .ke-listing-hero[data-empty="true"] {
     width: 100%;
-    aspect-ratio: 2 / 1;
-    max-height: none;
+    aspect-ratio: 16 / 9;
+    max-height: min(16rem, 38dvh);
   }
   @media (min-width: 1024px) {
-    .ke-listing-hero {
-      aspect-ratio: 5 / 2;
-      max-height: 20rem;
-    }
+    .ke-listing-hero,
     .ke-listing-hero[data-empty="true"] {
       aspect-ratio: 5 / 2;
-      max-height: 13rem;
+      max-height: 20rem;
     }
   }
   .ke-listing-jump {
