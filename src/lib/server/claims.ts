@@ -16,6 +16,8 @@ import { lookupUser, notifyPlatform, notifyProviderJoined } from "./notify";
 import { writeProfileRole } from "./roles";
 import { applyInteriorPhotos, applyManagedListingPhotos, applyStorefrontPhoto, listingPhotosChanged, MAX_LISTING_PHOTOS } from "@/lib/listing-photo";
 import { claimCityScore } from "@/lib/claim-search";
+import { officialLicenceNumber } from "@/lib/licensing";
+import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { cultureFieldsToSql } from "@/lib/listing-culture";
 import {
   mergeListingAmenities,
@@ -120,9 +122,9 @@ export const searchClaimable = createServerFn({ method: "POST" })
         province: d.province,
         postalCode: d.postalCode,
         phone: d.phone,
-        photo: d.photos[0] ?? "/photos/cottage.jpg",
+        photo: isRealListingPhoto(d.photos?.[0]) ? d.photos[0]! : "",
         claimed: taken.has(d.id),
-        licenseNumber: d.licenseNumber || "",
+        licenseNumber: officialLicenceNumber(d.licenseNumber, d.id) || "",
         score,
       });
     }

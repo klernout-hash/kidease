@@ -1932,7 +1932,7 @@ export const copy = {
     donateTitle: "Donate to Kids",
     donateLead:
       "Support children’s hospitals in Canada. KidEase links you to each foundation’s official donate page — we do not process gifts on this site.",
-    donateMatch: "Every dollar donated through KidEase, KidEase will match.",
+    donateMatch: "Gifts on this page go to the hospital foundation you choose. KidEase does not match donations.",
     donateOptional: "Giving is optional. You do not need to donate to search, save listings, or use KidEase.",
     donateSickKidsName: "SickKids Foundation",
     donateSickKidsWhy:
@@ -2694,7 +2694,7 @@ export const copy = {
     operatorOnly: "Operator sign-in is only for the KidEase owner account.",
     forgotPasswordTitle: "Forgot password",
     forgotPasswordPageLead:
-      "Enter the email on the account. If it is registered, we email a reset link that expires in about an hour. Use this if the password hash is stale or none of the passwords you remember work.",
+      "Enter the email on the account. If it is registered, we email a reset link that expires in about an hour. Use this if you do not remember the password.",
     forgotPasswordMailMissing:
       "This environment cannot send reset emails yet (missing RESEND_API_KEY or SENDGRID_API_KEY or TITAN_APP_PASSWORD). If the account was created with Apple or Google, use that button on the sign-in page.",
     forgotPasswordEmailInvalid: "Enter the email on the account first.",
@@ -4799,7 +4799,7 @@ export const copy = {
     donateTitle: "Faire un don aux enfants",
     donateLead:
       "Soutenez les hôpitaux pour enfants au Canada. KidEase vous dirige vers la page de don officielle de chaque fondation — nous ne traitons pas les dons sur ce site.",
-    donateMatch: "Chaque dollar donné par l’intermédiaire de KidEase, KidEase l’égalera.",
+    donateMatch: "Les dons sur cette page vont à la fondation que vous choisissez. KidEase n'égale pas les dons.",
     donateOptional:
       "Le don est facultatif. Vous n’avez pas besoin de donner pour chercher, enregistrer des fiches ou utiliser KidEase.",
     donateSickKidsName: "Fondation SickKids",

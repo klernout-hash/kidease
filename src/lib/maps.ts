@@ -225,6 +225,13 @@ export function placePinPopup(opts: {
   padLeft?: number;
   gap?: number;
 }): PinPopupBox {
+  if (
+    ![opts.pointX, opts.pointY, opts.width, opts.height, opts.mapWidth, opts.mapHeight].every((n) =>
+      Number.isFinite(n),
+    )
+  ) {
+    return { left: 8, top: 8, caretX: 16, placement: "above" };
+  }
   const pinHeight = opts.pinHeight ?? 44;
   const pad = opts.pad ?? 8;
   const padTop = opts.padTop ?? pad;
@@ -251,6 +258,7 @@ export function placePinPopup(opts: {
 }
 
 function clamp(value: number, min: number, max: number) {
+  if (!Number.isFinite(value)) return Number.isFinite(min) ? min : 0;
   return Math.min(Math.max(value, min), max);
 }
 
