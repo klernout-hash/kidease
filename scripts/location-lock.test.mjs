@@ -55,6 +55,9 @@ test("locked Winnipeg excludes Edmonton, Toronto, and Vancouver", () => {
   assert.equal(listingMatchesLocationLock({ city: "", province: "" }, WINNIPEG_LOCK), false);
   assert.equal(listingMatchesLocationLock({ city: "Mystery Suburb", province: "" }, WINNIPEG_LOCK), false);
   assert.equal(listingMatchesLocationLock({ city: "", province: "MB" }, WINNIPEG_LOCK), true);
+  assert.equal(listingMatchesLocationLock({ city: "East St. Paul", province: "MB" }, WINNIPEG_LOCK), true);
+  assert.equal(listingMatchesLocationLock({ city: "Winnipeg Beach", province: "MB" }, WINNIPEG_LOCK), false);
+  assert.equal(listingMatchesLocationLock({ city: "Winnipegosis", province: "MB" }, WINNIPEG_LOCK), false);
 });
 
 test("GPS or saved Winnipeg locks as tightly as an explicit city pick", () => {

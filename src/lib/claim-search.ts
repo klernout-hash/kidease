@@ -55,7 +55,13 @@ export function claimCityScore(query: string, city: string): number {
   const saved = normalizeCityKey(city);
   if (!q || !saved) return 0;
   if (saved === q) return 60;
-  if (saved.startsWith(q) || saved.includes(q)) return 58;
+  if (
+    saved.startsWith(`${q} `) ||
+    (saved.startsWith(q) && saved.length > q.length && saved[q.length] !== " ")
+  ) {
+    return 0;
+  }
+  if (saved.includes(q)) return 58;
   const keys = claimCityKeys(query);
   if (keys.includes(saved)) return 55;
   if (keys.some((key) => saved.includes(key) || (key.length > 3 && key.includes(saved)))) return 55;

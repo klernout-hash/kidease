@@ -264,7 +264,16 @@ export function listingMatchesLocationLock(
   if (!cityKey) return province === lock.province;
   if (lock.metroKeys.includes(cityKey)) return true;
   if (knownCityOutsideLock(cityKey, lock)) return false;
+  if (isSeparateMunicipality(cityKey, lock.city)) return false;
   return province === lock.province;
+}
+
+/** "Winnipeg Beach" and "Winnipegosis" are not the city of Winnipeg. */
+function isSeparateMunicipality(cityKey: string, lockCity: string | null): boolean {
+  const lockKey = normalizeCityKey(lockCity);
+  if (!cityKey || !lockKey || cityKey === lockKey) return false;
+  if (cityKey.startsWith(`${lockKey} `)) return true;
+  return cityKey.startsWith(lockKey) && cityKey.length > lockKey.length;
 }
 
 export function filterByLocationLock<T extends LocationLockListing>(
