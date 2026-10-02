@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Building2, ClipboardCheck, ClipboardList, Heart, Map, Menu, MessageCircle, Search, User } from "lucide-react";
+import { Building2, ClipboardCheck, ClipboardList, Heart, Home, LifeBuoy, MessageCircle, Search, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -52,7 +52,7 @@ export function AppTabBar() {
       <div
         className={cn(
           "mx-auto grid max-w-lg px-0.5 pb-[env(safe-area-inset-bottom)] pt-1",
-          storeTabs ? "grid-cols-4" : "grid-cols-5",
+          storeTabs || kind === "guest" ? "grid-cols-4" : "grid-cols-5",
         )}
       >
         {storeTabs
@@ -74,29 +74,34 @@ export function AppTabBar() {
           <>
             <Tab
               to="/provider"
-              label={t("navDesk")}
+              search={{ desk: "today" }}
+              label={t("todayHome")}
               icon={Building2}
-              active={(pathname === "/provider" || pathname === "/provider/") && !desk}
-            />
-            <Tab
-              to="/provider"
-              search={{ desk: "listings" }}
-              label={t("navListingShort")}
-              icon={ClipboardList}
-              active={pathname.startsWith("/provider") && desk === "listings"}
+              marker="today"
+              active={(pathname === "/provider" || pathname === "/provider/") && (!desk || desk === "today")}
             />
             <Tab
               to="/provider"
               search={{ desk: "requests" }}
-              label={t("navEnquiriesShort")}
+              label={t("navRequestsShort")}
               icon={ClipboardCheck}
+              marker="requests"
               active={pathname.startsWith("/provider") && desk === "requests"}
+            />
+            <Tab
+              to="/provider"
+              search={{ desk: "listings" }}
+              label={t("deskNavListings")}
+              icon={ClipboardList}
+              marker="listings"
+              active={pathname.startsWith("/provider") && desk === "listings"}
             />
             <Tab
               to="/inbox"
               search={{ view: "centre" }}
               label={t("messages")}
               icon={MessageCircle}
+              marker="messages"
               active={pathname.startsWith("/inbox") && view !== "family"}
             />
             <AvatarTab userId={user?.id} image={user?.profileImageUrl} name={user?.displayName} active={pathname.startsWith("/account")} />
@@ -105,16 +110,18 @@ export function AppTabBar() {
         {kind === "parent" && !storeTabs ? (
           <>
             <Tab
-              to="/parent"
-              label={t("navHome")}
-              icon={Building2}
-              active={pathname.startsWith("/parent") && (!tab || tab === "explore")}
+              to="/search"
+              label={t("search")}
+              icon={Search}
+              marker="search"
+              active={pathname.startsWith("/search")}
             />
             <Tab
               to="/parent"
               search={{ tab: "saved" }}
               label={t("saved")}
               icon={Heart}
+              marker="saved"
               active={pathname.startsWith("/parent") && tab === "saved"}
             />
             <Tab
@@ -122,6 +129,7 @@ export function AppTabBar() {
               search={{ tab: "requests" }}
               label={t("navRequestsShort")}
               icon={ClipboardCheck}
+              marker="bookings"
               active={pathname.startsWith("/parent") && (tab === "requests" || tab === "enrolled")}
             />
             <Tab
@@ -129,6 +137,7 @@ export function AppTabBar() {
               search={{ view: "family" }}
               label={t("messages")}
               icon={MessageCircle}
+              marker="messages"
               active={pathname.startsWith("/inbox")}
             />
             <AvatarTab userId={user?.id} image={user?.profileImageUrl} name={user?.displayName} active={pathname.startsWith("/account")} />
@@ -136,37 +145,26 @@ export function AppTabBar() {
         ) : null}
         {kind === "admin" && !storeTabs ? (
           <>
-            <Tab to="/parent" label={t("deskParent")} icon={Heart} active={pathname.startsWith("/parent")} />
-            <Tab to="/provider" label={t("deskDirector")} icon={Search} active={pathname.startsWith("/provider")} />
-            <Tab to="/" label={t("explore")} icon={ClipboardCheck} active={pathname === "/" || pathname.startsWith("/search") || pathname.startsWith("/daycare")} />
-            <Tab to="/inbox" label={t("messages")} icon={MessageCircle} active={pathname.startsWith("/inbox")} />
+            <Tab to="/admin" search={{ tab: "queue" }} label={t("navHome")} icon={Home} marker="queue" active={pathname.startsWith("/admin") && (!tab || tab === "queue")} />
+            <Tab to="/admin" search={{ tab: "verify" }} label={t("navReview")} icon={ClipboardCheck} marker="verify" active={pathname.startsWith("/admin") && tab === "verify"} />
+            <Tab to="/admin" search={{ tab: "mail" }} label={t("messages")} icon={MessageCircle} marker="mail" active={pathname.startsWith("/admin") && tab === "mail"} />
+            <Tab to="/support" label={t("support")} icon={LifeBuoy} marker="support" active={pathname.startsWith("/support")} />
             <AvatarTab userId={user?.id} image={user?.profileImageUrl} name={user?.displayName} active={pathname.startsWith("/account")} />
           </>
         ) : null}
         {kind === "guest" && !storeTabs ? (
           <>
-            <Tab
-              to="/"
-              label={t("explore")}
-              icon={Search}
-              active={pathname === "/" || pathname.startsWith("/search") || pathname.startsWith("/daycare")}
-            />
-            <Tab to="/search" search={{ view: "map" }} label={t("navMap")} icon={Map} active={false} />
+            <Tab to="/" label={t("navHome")} icon={Home} marker="home" active={pathname === "/"} />
+            <Tab to="/search" label={t("search")} icon={Search} marker="search" active={pathname.startsWith("/search")} />
             <Tab
               to="/login"
-              search={{ role: "parent", desk: "parent", intent: "up", next: "/parent" }}
-              label={t("navImParent")}
-              icon={ClipboardCheck}
+              search={{ next: "/parent?tab=saved" }}
+              label={t("saved")}
+              icon={Heart}
+              marker="saved"
               active={false}
             />
-            <Tab
-              to="/login"
-              search={{ role: "provider", desk: "director", intent: "up", next: "/provider" }}
-              label={t("navImDaycare")}
-              icon={MessageCircle}
-              active={false}
-            />
-            <Tab to="/menu" label="Menu" icon={Menu} active={pathname.startsWith("/menu")} />
+            <Tab to="/login" label={t("signIn")} icon={User} marker="signin" active={pathname.startsWith("/login")} />
           </>
         ) : null}
       </div>
@@ -222,7 +220,7 @@ function Tab({
 }: {
   to: string;
   label: string;
-  icon: typeof Search | typeof Map | typeof Building2 | typeof ClipboardList | typeof User;
+  icon: typeof Search | typeof Home | typeof Building2 | typeof ClipboardList | typeof User | typeof LifeBuoy;
   active: boolean;
   search?: Record<string, string>;
   marker?: string;

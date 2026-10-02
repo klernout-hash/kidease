@@ -53,7 +53,7 @@ test("desk pages name themselves and subscription is not the pay tab", () => {
   assert.match(src("src/lib/desk-nav.ts"), /search: \{ tab: "subscription" \}/);
   assert.doesNotMatch(src("src/routes/provider.tsx"), /city: "Winnipeg"/);
   assert.doesNotMatch(src("src/routes/provider.tsx"), /infantMonthly: 1200/);
-  assert.match(src("src/components/parent-shortlist.tsx"), /myShortlist/);
+  assert.match(src("src/components/parent-shortlist.tsx"), /t\("saved"\)/);
   assert.doesNotMatch(src("src/components/admin-mail.tsx"), /TITAN_APP_PASSWORD/);
   assert.match(src("src/routes/index.tsx"), /ke-home w-full/);
   assert.doesNotMatch(src("src/routes/index.tsx"), /ke-defer-paint/);

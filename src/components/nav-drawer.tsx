@@ -14,6 +14,7 @@ import { CountBadge } from "@/components/count-badge";
 import { useDeskMenu } from "@/components/desk-menu";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
 import { attentionForItem } from "@/lib/attention";
+import { visibleDeskGroups } from "@/lib/desk-nav";
 import { showDeskSwitcher } from "@/lib/desks";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
@@ -70,7 +71,8 @@ export function NavDrawer({
   const { session } = useSessionDesks();
   const deskMenu = useDeskMenu();
   void isAdmin;
-  const noteCount = session?.attention?.notifications ?? 0;
+  void parentLabel;
+  void providerLabel;
   const deskRole =
     deskMenu?.desk === "daycare" ? "provider" : deskMenu?.desk === "support" ? "support" : deskMenu?.desk ?? roleShown;
   const switcher = Boolean(session && showDeskSwitcher(session.desks, session.role, session.email));
@@ -143,21 +145,20 @@ export function NavDrawer({
           <div className="border-b border-border px-3 py-3">
             <Link
               to={loginTo}
-              search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }}
               onClick={onClose}
               className="flex min-h-12 items-center gap-3 rounded-full bg-primary px-3 text-base font-medium text-primary-fg"
             >
-              <MenuGlyph id="parent" className="text-primary-fg" />
-              {parentLabel}
+              <MenuGlyph id="login" className="text-primary-fg" />
+              {t("signIn")}
             </Link>
             <Link
               to={loginTo}
-              search={{ role: "provider", desk: "director", intent: "in", next: "/provider" }}
+              search={{ intent: "up" }}
               onClick={onClose}
               className="mt-2 flex min-h-12 items-center gap-3 rounded-full px-3 text-base font-medium text-fg ring-1 ring-border"
             >
-              <MenuGlyph id="daycare" />
-              {providerLabel}
+              <MenuGlyph id="parent" />
+              {t("createAccount")}
             </Link>
           </div>
         ) : null}
@@ -170,66 +171,116 @@ export function NavDrawer({
           ) : null}
           {deskMenu ? (
             <nav data-ke="role-nav" data-role={deskRole} aria-label={title}>
-              {deskMenu.items
-                .filter((item) => item.id !== "account")
-                .map((item) => {
-                  const plan = item.id === "upgrade" || item.id === "subscription";
-                  const label = item.labelKey ? t(item.labelKey) : item.label;
-                  const on = deskMenu.active === item.id;
-                  const rowClass = cn(
-                    "flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-base font-medium",
-                    plan && "max-md:hidden",
-                    on ? "bg-primary text-primary-fg" : "text-fg hover:bg-surface",
-                  );
-                  const body = (
-                    <>
-                      <span className="min-w-0 flex-1 truncate">{label}</span>
-                      <CountBadge count={attentionForItem(session?.attention, item.id)} />
-                    </>
-                  );
-                  if (item.href) {
-                    return (
-                      <Link
-                        key={item.id}
-                        to={item.href}
-                        {...(item.search ? { search: item.search } : {})}
-                        onClick={onClose}
-                        data-nav={plan ? "upgrade" : item.id}
-                        className={rowClass}
-                      >
-                        {body}
-                      </Link>
-                    );
+              {visibleDeskGroups(deskMenu.desk, deskMenu.items).map(({ group, items: rows }) => (
+                <details
+                  key={group.id}
+                  ref={(node) => {
+                    if (node && group.open && node.dataset.keGroup !== "1") {
+                      node.dataset.keGroup = "1";
+                      node.open = true;
+                    }
+                  }}
+                  className="py-0.5"
+                >
+                  <summary className="flex min-h-11 cursor-pointer list-none items-center rounded-xl px-3 text-xs font-semibold uppercase tracking-[0.12em] text-subtle [&::-webkit-details-marker]:hidden">
+                    {group.labelKey ? t(group.labelKey) : group.label}
+                  </summary>
+                  <div>
+                    {group.id === "settings" ? (
+                      <div className="flex min-h-12 items-center gap-3 px-3">
+                        <MenuGlyph id="language" />
+                        <LanguageSelect className="w-full justify-start" />
+                      </div>
+                    ) : null}
+                    {rows
+                      .filter((item) => item.id !== "account")
+                      .map((item) => {
+                        const plan = item.id === "upgrade" || item.id === "subscription";
+                        const label = item.labelKey ? t(item.labelKey) : item.label;
+                        const on = deskMenu.active === item.id;
+                        const rowClass = cn(
+                          "flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-base font-medium",
+                          plan && "max-md:hidden",
+                          on ? "bg-primary text-primary-fg" : "text-fg hover:bg-surface",
+                        );
+                        const body = (
+                          <>
+                            <span className="min-w-0 flex-1">{label}</span>
+                            <CountBadge count={attentionForItem(session?.attention, item.id)} />
+                          </>
+                        );
+                        if (item.href) {
+                          return (
+                            <Link
+                              key={item.id}
+                              to={item.href}
+                              {...(item.search ? { search: item.search } : {})}
+                              onClick={onClose}
+                              data-nav={plan ? "upgrade" : item.id}
+                              className={rowClass}
+                            >
+                              {body}
+                            </Link>
+                          );
+                        }
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            data-nav={plan ? "upgrade" : item.id}
+                            className={rowClass}
+                            onClick={() => {
+                              onClose();
+                              deskMenu.onSelect(item.id);
+                            }}
+                          >
+                            {body}
+                          </button>
+                        );
+                      })}
+                  </div>
+                </details>
+              ))}
+            </nav>
+          ) : !signedIn && showMenus ? (
+            <nav data-ke="role-nav" data-role="guest" aria-label={title}>
+              <details
+                className="py-0.5"
+                ref={(node) => {
+                  if (node && node.dataset.keGroup !== "1") {
+                    node.dataset.keGroup = "1";
+                    node.open = true;
                   }
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      data-nav={plan ? "upgrade" : item.id}
-                      className={rowClass}
-                      onClick={() => {
-                        onClose();
-                        deskMenu.onSelect(item.id);
-                      }}
-                    >
-                      {body}
-                    </button>
-                  );
-                })}
+                }}
+              >
+                <summary className="flex min-h-11 cursor-pointer list-none items-center px-3 text-xs font-semibold uppercase tracking-[0.12em] text-subtle [&::-webkit-details-marker]:hidden">
+                  {t("navFindCare")}
+                </summary>
+                <MenuRow to="/search" label={t("search")} icon="explore" appearance="drawer" marker="search" onClick={onClose} />
+                <MenuRow to="/search" search={{ view: "map" }} label={t("navMap")} icon="explore" appearance="drawer" marker="map" onClick={onClose} />
+                <MenuRow to="/cities" label={t("browseCities")} icon="explore" appearance="drawer" onClick={onClose} />
+                <MenuRow to="/compare" label={t("compare")} icon="compare" appearance="drawer" onClick={onClose} />
+                <MenuRow to="/tour-checklist" label={t("tourChecklist")} icon="tourChecklist" appearance="drawer" onClick={onClose} />
+              </details>
+              <details className="py-0.5">
+                <summary className="flex min-h-11 cursor-pointer list-none items-center px-3 text-xs font-semibold uppercase tracking-[0.12em] text-subtle [&::-webkit-details-marker]:hidden">
+                  {t("navForDaycares")}
+                </summary>
+                <MenuRow to="/claim" label={t("listYourDaycare")} icon="claim" appearance="drawer" onClick={onClose} />
+                <MenuRow to="/plans" label={t("navPlans")} icon="benefits" appearance="drawer" marker="plans" onClick={onClose} />
+                <MenuRow to="/jobs" label={t("findDaycareJobs")} icon="jobs" appearance="drawer" onClick={onClose} />
+              </details>
+              <details className="py-0.5">
+                <summary className="flex min-h-11 cursor-pointer list-none items-center px-3 text-xs font-semibold uppercase tracking-[0.12em] text-subtle [&::-webkit-details-marker]:hidden">
+                  {t("helpTitle")}
+                </summary>
+                <MenuRow to="/help" label={t("helpTitle")} icon="help" appearance="drawer" onClick={onClose} />
+                <MenuRow to="/faq" label={t("faqShort")} icon="faq" appearance="drawer" onClick={onClose} />
+                <MenuRow to="/contact" label={t("contactTitle")} icon="contact" appearance="drawer" onClick={onClose} />
+              </details>
             </nav>
           ) : showMenus ? (
             <RoleNavLinks role={roleShown} paid={paidShown} appearance="drawer" onNavigate={onClose} />
-          ) : null}
-          {signedIn ? (
-            <MenuRow
-              to="/notifications"
-              label={t("notifications")}
-              icon="notifications"
-              appearance="drawer"
-              marker="notifications"
-              onClick={onClose}
-              badge={<CountBadge count={noteCount} />}
-            />
           ) : null}
           {items.map((item) => (
             <span key={item.to + item.label}>
@@ -245,7 +296,7 @@ export function NavDrawer({
               />
             </span>
           ))}
-          <ShareKidEaseButton appearance="drawer" onDone={onClose} />
+          {signedIn ? <ShareKidEaseButton appearance="drawer" onDone={onClose} /> : null}
           {signedIn ? (
             <>
               <div className="my-3 h-px bg-border" />
@@ -272,7 +323,7 @@ export function NavDrawer({
             </>
           ) : null}
         </nav>
-        <div className="space-y-2 border-t border-border px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className={cn("space-y-2 border-t border-border px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]", deskMenu && "hidden")}>
           <div className="flex items-center gap-3 overflow-visible rounded-full bg-surface px-3 ring-1 ring-border">
             <MenuGlyph id="language" />
             <LanguageSelect className="w-full justify-start" />

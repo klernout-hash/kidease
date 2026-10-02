@@ -137,6 +137,11 @@
     display: none !important;
     pointer-events: none !important;
   }
+  /* Phone website still shows the footer. The native app keeps it hidden. */
+  html[data-runtime="web"][data-channel="app"] footer.ke-site-footer.ke-web-only {
+    display: block !important;
+    pointer-events: auto !important;
+  }
   /* A wide browser that was marked as the phone channel still gets the full home page. */
   @media (min-width: 1024px) {
     html[data-runtime="web"][data-channel="app"] .ke-home-web.ke-web-only {

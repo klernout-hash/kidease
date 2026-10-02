@@ -65,8 +65,10 @@ test("Daycare desk chrome is keyed for EN and FR", () => {
   const copy = src("src/lib/copy.ts");
   assert.match(copy, /todayHome: "Today"/);
   assert.match(copy, /todayHome: "Aujourd’hui"/);
-  assert.match(copy, /deskNavListings: "My listings"/);
-  assert.match(copy, /deskNavListings: "Mes fiches"/);
+  assert.match(copy, /deskNavListings: "Listings"/);
+  assert.match(copy, /deskNavListings: "Fiches"/);
+  assert.match(copy, /deskNavMoney: "Earnings"/);
+  assert.match(copy, /deskNavMoney: "Revenus"/);
   assert.match(copy, /daycareDeskTitle: "Daycare desk"/);
   assert.match(copy, /daycareDeskTitle: "Bureau garderie"/);
   assert.match(copy, /inboxEmptyNeedYouCta: "See incoming requests"/);

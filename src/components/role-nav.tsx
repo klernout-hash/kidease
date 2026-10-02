@@ -9,21 +9,23 @@ const NAV_KEY: Record<string, CopyKey> = {
   home: "navHome",
   search: "search",
   saved: "saved",
-  requests: "navRequests",
+  requests: "navRequestsShort",
   messages: "messages",
   upgrade: "navUpgrade",
   account: "account",
-  desk: "navDesk",
-  listing: "navListing",
-  enquiries: "navEnquiries",
-  jobs: "navJobs",
-  queue: "navApprovals",
+  desk: "todayHome",
+  listing: "deskNavListings",
+  enquiries: "navRequestsShort",
+  jobs: "postDaycareJob",
+  queue: "navHome",
+  review: "navReview",
   support: "navSupport",
   map: "navMap",
-  "parent-signup": "navImParent",
-  "daycare-signup": "navImDaycare",
   plans: "navPlans",
   signin: "signIn",
+  create: "createAccount",
+  list: "listYourDaycare",
+  help: "helpTitle",
 };
 
 export function RoleNavLinks({
@@ -39,7 +41,7 @@ export function RoleNavLinks({
 }) {
   const { t } = useCopy();
   const items = roleNavItems({ role, paid })
-    .filter((item) => !(appearance === "drawer" && item.id === "signin"))
+    .filter((item) => !(item.id === "signin" && appearance !== "header"))
     .map((item) => ({
     ...item,
     label: item.id === "upgrade" ? t(paid ? "navMyPlan" : "navUpgrade") : NAV_KEY[item.id] ? t(NAV_KEY[item.id]) : item.label,

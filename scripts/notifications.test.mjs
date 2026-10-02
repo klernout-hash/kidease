@@ -157,9 +157,8 @@ test("signed-in header and menus show a bell; guests do not get a badge", () => 
   assert.match(shell, /NotificationBell/);
   assert.match(shell, /user \? <NotificationBell/);
   assert.match(drawer, /signedIn \? \(/);
-  assert.match(drawer, /to="\/notifications"/);
-  assert.match(drawer, /icon="notifications"/);
-  assert.match(menu, /to="\/notifications"/);
+  assert.match(src("src/routes/account.tsx"), /NotificationBell/);
+  assert.match(src("src/components/notification-bell.tsx"), /to=\{NOTIFICATIONS_PATH\}/);
   assert.doesNotMatch(shell, /NotificationBell className="[^"]*guest/);
 });
 
@@ -195,7 +194,7 @@ test("hamburger and /menu rows keep an icon for every category", () => {
   for (const id of required) {
     assert.match(icons, new RegExp(`${id}:`), id);
   }
-  assert.match(src("src/components/shell.tsx"), /icon: "explore"/);
+  assert.match(src("src/components/nav-drawer.tsx"), /icon="explore"/);
   assert.match(drawer, /icon=\{item\.icon\}/);
   assert.match(drawer, /MenuGlyph id="language"/);
   assert.match(drawer, /MenuGlyph id="logout"/);

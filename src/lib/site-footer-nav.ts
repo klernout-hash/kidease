@@ -15,43 +15,42 @@ function copyLink(to: string, labelKey: CopyKey, extra: Partial<FooterLinkDef> =
   return { to, labelKey, ...extra };
 }
 
-/** Parents column — short set. The menu still has the longer list. */
+/** Parents column, highest use first. No sign-in link. */
 export const FOOTER_PARENTS: FooterLinkDef[] = [
   copyLink("/search", "search"),
   copyLink("/cities", "browseCities"),
-  copyLink("/login", "parentSignIn", {
-    search: { role: "parent", desk: "parent", intent: "in", next: "/parent" },
-  }),
-  copyLink("/benefits", "benefitsTab"),
   copyLink("/compare", "compare"),
-  copyLink("/get-app", "getApp"),
+  copyLink("/tour-checklist", "tourChecklist"),
+  copyLink("/benefits", "benefitsTab"),
 ];
 
-/** Daycares column — keep the live Daycares / Garderies label. */
+/** Daycares column. /jobs/post is centre hiring, not a KidEase careers page. */
 export const FOOTER_DAYCARES: FooterLinkDef[] = [
-  copyLink("/claim", "claimCta"),
-  copyLink("/login", "providerLogin", {
-    search: { role: "provider", desk: "director", intent: "in", next: "/provider" },
-  }),
+  copyLink("/claim", "listYourDaycare"),
+  copyLink("/plans", "navPlans"),
   copyLink("/verify", "verifyListings"),
   copyLink("/daycare-requirements", "daycareRequirements"),
+  copyLink("/start-a-daycare", "startADaycare", { localePaired: true }),
   copyLink("/jobs", "findDaycareJobs", { localePaired: true }),
 ];
 
-/** KidEase column — company / product. Careers stays /jobs/post (no careers route). */
+/** KidEase column. No careers link: there is no KidEase careers page. */
 export const FOOTER_KIDEASE: FooterLinkDef[] = [
-  copyLink("/plans", "navPlans"),
   copyLink("/about", "about", { localePaired: true }),
+  copyLink("/team", "team"),
   copyLink("/donate", "donateToKids", { localePaired: true }),
-  copyLink("/how-it-works", "howItWorksCta", { localePaired: true }),
-  copyLink("/jobs/post", "addJobsAtKidEase", { localePaired: true }),
-  copyLink("/start-a-daycare", "startADaycare", { localePaired: true }),
+  copyLink("/get-app", "getApp"),
 ];
 
-/** Support column — help and legal only. Unsubscribe lives on Privacy + email, not here. */
+/** Support column. Legal links sit on the bottom row. */
 export const FOOTER_SUPPORT: FooterLinkDef[] = [
   copyLink("/help", "helpTitle", { localePaired: true }),
+  copyLink("/faq", "faqShort"),
+  copyLink("/how-it-works", "howItWorksCta", { localePaired: true }),
   copyLink("/contact", "contactTitle", { localePaired: true }),
+];
+
+export const FOOTER_LEGAL: FooterLinkDef[] = [
   copyLink("/privacy", "privacy", { localePaired: true }),
   copyLink("/terms", "terms", { localePaired: true }),
   copyLink("/cookies", "cookies", { localePaired: true }),

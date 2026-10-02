@@ -186,8 +186,8 @@ test("parent My requests and daycare lead inbox are wired", () => {
   assert.match(inbox, /leadAnswered/);
   assert.match(inbox, /leadReplyNote/);
   assert.match(src("src/routes/provider.tsx"), /DaycareLeadInbox/);
-  assert.match(src("src/lib/desk-nav.ts"), /Lead inbox/);
-  assert.match(src("src/lib/desk-nav.ts"), /My requests/);
+  assert.match(src("src/lib/desk-nav.ts"), /id: "requests"/);
+  assert.match(src("src/lib/desk-nav.ts"), /labelKey: "navRequestsShort"/);
 });
 
 test("listing CTAs deep-link ask= tour|spot|waitlist and confirm in Messages", () => {

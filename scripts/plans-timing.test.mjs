@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { roleNavItems } from "../src/lib/role-access.ts";
-import { FOOTER_KIDEASE } from "../src/lib/site-footer-nav.ts";
+import { FOOTER_DAYCARES } from "../src/lib/site-footer-nav.ts";
 import {
   daycareCapPrompt,
   daycareHomeCardEligible,
@@ -34,7 +34,7 @@ test("guests reach plans from the main menu and the footer", () => {
   assert.equal(plans?.to, "/plans");
   assert.equal(roleNavItems({ role: "parent" }).some((item) => item.id === "plans"), false);
   assert.equal(roleNavItems({ role: "provider" }).some((item) => item.id === "upgrade"), true);
-  assert.ok(FOOTER_KIDEASE.some((link) => link.to === "/plans" && link.labelKey === "navPlans"));
+  assert.ok(FOOTER_DAYCARES.some((link) => link.to === "/plans" && link.labelKey === "navPlans"));
   assert.match(src("src/components/role-nav.tsx"), /plans: "navPlans"/);
   assert.match(src("src/lib/copy.ts"), /navPlans: "Subscription"/);
   assert.match(src("src/lib/copy.ts"), /navPlans: "Abonnement"/);

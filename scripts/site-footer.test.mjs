@@ -7,10 +7,10 @@ import {
   FOOTER_COLUMNS,
   FOOTER_DAYCARES,
   FOOTER_KIDEASE,
+  FOOTER_LEGAL,
   FOOTER_PARENTS,
   FOOTER_SUPPORT,
   footerLinkLabel,
-  sortFooterLinks,
 } from "../src/lib/site-footer-nav.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -36,18 +36,16 @@ function copyValue(key, locale) {
 
 function labels(links, locale) {
   const t = (key) => copyValue(key, locale);
-  return sortFooterLinks(
-    links.map((link) => ({ ...link, label: footerLinkLabel(link, t, locale) })),
-    locale,
-  ).map((link) => link.label);
+  return links.map((link) => footerLinkLabel(link, t, locale));
 }
 
 function destinations(links) {
   return links.map((link) => `${link.to}|${JSON.stringify(link.search ?? {})}|${link.localePaired ? "paired" : "bare"}`);
 }
 
-test("footer Get the app stays in Parents; Rate KidEase is not a footer label", () => {
-  assert.ok(FOOTER_PARENTS.some((link) => link.to === "/get-app" && link.labelKey === "getApp"));
+test("footer Get the app stays in KidEase; Rate KidEase is not a footer label", () => {
+  assert.ok(FOOTER_KIDEASE.some((link) => link.to === "/get-app" && link.labelKey === "getApp"));
+  assert.ok(!FOOTER_PARENTS.some((link) => link.to === "/get-app"));
   assert.ok(!FOOTER_KIDEASE.some((link) => link.labelKey === "rateKidEase"));
   assert.ok(!FOOTER_PARENTS.some((link) => link.labelKey === "rateKidEase"));
   assert.doesNotMatch(nav, /rateKidEase/);
@@ -81,8 +79,8 @@ test("hamburger is Parents, Daycares, Support; jobs are not a second Caregivers 
   assert.ok(
     footerParents > 0 &&
       footerDaycares > footerParents &&
-      footerKidEase > footerDaycares &&
-      footerSupport > footerKidEase,
+      footerSupport > footerDaycares &&
+      footerKidEase > footerSupport,
   );
 
   const menuParents = menu.indexOf('title="Parents"');
@@ -91,7 +89,8 @@ test("hamburger is Parents, Daycares, Support; jobs are not a second Caregivers 
   assert.ok(menuParents > 0 && menuDaycares > menuParents && menuSupport > menuDaycares);
   assert.equal(menu.indexOf('t("footerCaregivers")'), -1);
   assert.match(menu, /findDaycareJobs/);
-  assert.match(menu, /addJobsAtKidEase/);
+  assert.match(menu, /postDaycareJob/);
+  assert.doesNotMatch(menu, /addJobsAtKidEase/);
   assert.match(copySrc, /footerCaregivers: "Caregivers & jobs"/);
   assert.match(copySrc, /footerCaregivers: "Éducatrices et emplois"/);
 });
@@ -111,16 +110,18 @@ test("footer legal bar stays compact and uses FR-CA copy keys", () => {
   assert.doesNotMatch(copySrc, /operatorSignIn/);
 });
 
-test("Support column keeps help, contact, and legal links", () => {
+test("Support column keeps help and contact; legal links sit on the bottom row", () => {
   const supportTo = FOOTER_SUPPORT.map((link) => link.to);
+  const legalTo = FOOTER_LEGAL.map((link) => link.to);
   assert.ok(supportTo.includes("/help"));
   assert.ok(FOOTER_SUPPORT.some((link) => link.to === "/help" && link.localePaired));
   assert.ok(supportTo.includes("/contact"));
-  assert.ok(!supportTo.includes("/faq"));
-  assert.ok(supportTo.includes("/privacy"));
-  assert.ok(supportTo.includes("/terms"));
-  assert.ok(supportTo.includes("/cookies"));
-  assert.ok(!supportTo.includes("/how-it-works"));
+  assert.ok(supportTo.includes("/faq"));
+  assert.ok(supportTo.includes("/how-it-works"));
+  assert.ok(legalTo.includes("/privacy"));
+  assert.ok(legalTo.includes("/terms"));
+  assert.ok(legalTo.includes("/cookies"));
+  assert.ok(!supportTo.includes("/privacy"));
   assert.ok(!supportTo.includes("/delete-account"));
   assert.ok(!supportTo.includes("/unsubscribe"));
   assert.doesNotMatch(nav, /delete-account/);
@@ -137,9 +138,11 @@ test("KidEase column is company/product; Support does not repeat About, Team, or
   const supportTo = FOOTER_SUPPORT.map((link) => link.to);
   assert.ok(kideaseTo.includes("/about"));
   assert.ok(kideaseTo.includes("/donate"));
-  assert.ok(kideaseTo.includes("/how-it-works"));
-  assert.ok(kideaseTo.includes("/start-a-daycare"));
-  assert.ok(!kideaseTo.includes("/team"));
+  assert.ok(kideaseTo.includes("/team"));
+  assert.ok(kideaseTo.includes("/get-app"));
+  assert.ok(!kideaseTo.includes("/how-it-works"));
+  assert.ok(!kideaseTo.includes("/start-a-daycare"));
+  assert.ok(!kideaseTo.includes("/jobs/post"));
   assert.ok(!supportTo.includes("/about"));
   assert.ok(!supportTo.includes("/team"));
   assert.ok(!supportTo.includes("/verify"));
@@ -161,14 +164,14 @@ test("Parents column keeps product links and omits city hubs", () => {
   const parentTo = FOOTER_PARENTS.map((link) => link.to);
   assert.ok(parentTo.includes("/search"));
   assert.ok(parentTo.includes("/cities"));
-  assert.ok(parentTo.includes("/login"));
+  assert.ok(!parentTo.includes("/login"));
   assert.ok(parentTo.includes("/benefits"));
   assert.ok(parentTo.includes("/compare"));
-  assert.ok(parentTo.includes("/get-app"));
-  assert.ok(!parentTo.includes("/tour-checklist"));
-  assert.ok(FOOTER_PARENTS.some((link) => link.labelKey === "parentSignIn"));
+  assert.ok(parentTo.includes("/tour-checklist"));
+  assert.ok(!parentTo.includes("/get-app"));
+  assert.ok(!FOOTER_PARENTS.some((link) => link.labelKey === "parentSignIn"));
   assert.ok(!FOOTER_PARENTS.some((link) => link.labelKey === "saved"));
-  assert.ok(FOOTER_PARENTS.some((link) => link.to === "/get-app" && link.labelKey === "getApp"));
+  assert.ok(FOOTER_KIDEASE.some((link) => link.to === "/get-app" && link.labelKey === "getApp"));
   assert.doesNotMatch(nav, /cityHubs/);
   assert.doesNotMatch(nav, /cityHubPath/);
   assert.doesNotMatch(nav, /daycare\/city/);
@@ -178,11 +181,13 @@ test("Parents column keeps product links and omits city hubs", () => {
   assert.match(src("public/sitemap.xml"), /https:\/\/www\.kidease\.ca\/cities</);
 });
 
-test("Find daycare jobs lives on Daycares only; KidEase Careers stays on /jobs/post", () => {
+test("Find daycare jobs lives on Daycares only; there is no KidEase careers footer link", () => {
   assert.ok(FOOTER_DAYCARES.some((link) => link.to === "/jobs" && link.labelKey === "findDaycareJobs"));
   assert.ok(!FOOTER_KIDEASE.some((link) => link.to === "/jobs"));
-  assert.ok(FOOTER_KIDEASE.some((link) => link.to === "/jobs/post" && link.labelKey === "addJobsAtKidEase"));
+  assert.ok(!FOOTER_KIDEASE.some((link) => link.to === "/jobs/post"));
+  assert.ok(!FOOTER_DAYCARES.some((link) => link.to === "/jobs/post"));
   assert.ok(!FOOTER_SUPPORT.some((link) => link.to === "/jobs/post"));
+  assert.ok(!FOOTER_LEGAL.some((link) => link.to === "/jobs/post"));
   assert.match(copySrc, /addJobsAtKidEase: "Post a job"/);
   assert.match(copySrc, /addJobsAtKidEase: "Publier un emploi"/);
   assert.doesNotMatch(footer + nav, /Open Road/i);
@@ -196,101 +201,98 @@ test("footer CSS clusters columns instead of stretching full width", () => {
   assert.doesNotMatch(css, /gap: 3rem 4rem/);
 });
 
-test("EN footer labels sort alphabetically in every column", () => {
+test("EN footer labels stay in use order", () => {
   assert.deepEqual(labels(FOOTER_PARENTS, "en"), [
-    "Browse by city",
-    "Childcare Benefits Program",
-    "Compare",
-    "Get the app",
-    "Parent Sign In",
     "Search",
+    "Browse by city",
+    "Compare",
+    "Tour checklist",
+    "Childcare Benefits Program",
   ]);
   assert.deepEqual(labels(FOOTER_DAYCARES, "en"), [
-    "Claim your daycare",
-    "Daycare requirements",
-    "Daycare Sign In",
-    "Find daycare jobs",
+    "List your daycare",
+    "Subscription",
     "How we verify listings",
+    "Daycare requirements",
+    "Start a Daycare",
+    "Find daycare jobs",
+  ]);
+  assert.deepEqual(labels(FOOTER_SUPPORT, "en"), [
+    "Help Centre",
+    "FAQ",
+    "How It Works",
+    "Contact Us",
   ]);
   assert.deepEqual(labels(FOOTER_KIDEASE, "en"), [
     "About",
+    "Meet the Team",
     "Donate to Kids",
-    "How It Works",
-    "Post a job",
-    "Start a Daycare",
-    "Subscription",
-  ]);
-  assert.deepEqual(labels(FOOTER_SUPPORT, "en"), [
-    "Contact Us",
-    "Cookies",
-    "Help Centre",
-    "Privacy",
-    "Terms",
+    "Get the app",
   ]);
 });
 
-test("FR-CA footer labels sort by the French string in every column", () => {
+test("FR footer labels stay in the same use order", () => {
   assert.deepEqual(labels(FOOTER_PARENTS, "fr"), [
-    "Comparer",
-    "Connexion parent",
-    "Parcourir par ville",
-    "Programme d’aide à la garde d’enfants",
     "Rechercher",
-    "Télécharger l’appli",
+    "Parcourir par ville",
+    "Comparer",
+    "Liste pour la visite",
+    "Programme d’aide à la garde d’enfants",
   ]);
   assert.deepEqual(labels(FOOTER_DAYCARES, "fr"), [
-    "Comment nous vérifions les fiches",
-    "Connexion garderie",
-    "Exigences pour les garderies",
-    "Réclamez votre garderie",
-    "Trouver des emplois en garderie",
-  ]);
-  assert.deepEqual(labels(FOOTER_KIDEASE, "fr"), [
-    "À propos",
+    "Inscrire votre garderie",
     "Abonnement",
-    "Comment ça fonctionne",
-    "Faire un don aux enfants",
+    "Comment nous vérifions les fiches",
+    "Exigences pour les garderies",
     "Ouvrir une garderie",
-    "Publier un emploi",
+    "Trouver des emplois en garderie",
   ]);
   assert.deepEqual(labels(FOOTER_SUPPORT, "fr"), [
     "Centre d’aide",
-    "Conditions",
-    "Confidentialité",
+    "FAQ",
+    "Comment ça fonctionne",
     "Nous joindre",
-    "Témoins",
+  ]);
+  assert.deepEqual(labels(FOOTER_KIDEASE, "fr"), [
+    "À propos",
+    "L’équipe",
+    "Faire un don aux enfants",
+    "Télécharger l’appli",
   ]);
 });
 
 test("footer does not drop destinations when columns are renamed and reordered", () => {
   const all = Object.values(FOOTER_COLUMNS).flatMap(destinations);
+  const legal = destinations(FOOTER_LEGAL);
   for (const dest of [
     "/search|{}|bare",
-    '/login|{"role":"parent","desk":"parent","intent":"in","next":"/parent"}|bare',
     "/benefits|{}|bare",
     "/compare|{}|bare",
+    "/tour-checklist|{}|bare",
     "/get-app|{}|bare",
     "/claim|{}|bare",
-    '/login|{"role":"provider","desk":"director","intent":"in","next":"/provider"}|bare',
+    "/plans|{}|bare",
     "/verify|{}|bare",
     "/daycare-requirements|{}|bare",
     "/jobs|{}|paired",
-    "/jobs/post|{}|paired",
     "/help|{}|paired",
+    "/faq|{}|bare",
     "/contact|{}|paired",
     "/how-it-works|{}|paired",
     "/about|{}|paired",
+    "/team|{}|bare",
     "/start-a-daycare|{}|paired",
     "/donate|{}|paired",
-    "/privacy|{}|paired",
-    "/terms|{}|paired",
-    "/cookies|{}|paired",
   ]) {
     assert.ok(all.includes(dest), `missing ${dest}`);
   }
+  for (const dest of ["/privacy|{}|paired", "/terms|{}|paired", "/cookies|{}|paired"]) {
+    assert.ok(legal.includes(dest), `missing legal ${dest}`);
+  }
+  assert.ok(!all.includes("/jobs/post|{}|paired"));
   assert.ok(!all.includes("/unsubscribe|{}|bare"));
-  assert.equal(FOOTER_PARENTS.filter((link) => link.to === "/get-app").length, 1);
-  assert.equal(FOOTER_KIDEASE.filter((link) => link.to === "/get-app").length, 0);
+  assert.equal(FOOTER_PARENTS.filter((link) => link.to === "/get-app").length, 0);
+  assert.equal(FOOTER_KIDEASE.filter((link) => link.to === "/get-app").length, 1);
 });
 
 test("unsubscribe stays off the footer and remains on Privacy and account prefs", () => {

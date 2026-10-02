@@ -31,49 +31,62 @@ function src(rel) {
 
 const now = Date.parse("2026-09-13T15:00:00.000Z");
 
-test("daycare primary nav is Today, Messages, Listings, Money", () => {
-  assert.deepEqual([...DAYCARE_PRIMARY_NAV_IDS], ["today", "messages", "listings", "money"]);
+test("daycare phone tabs are Today, Requests, Listings, Messages, Account", () => {
+  assert.deepEqual([...DAYCARE_PRIMARY_NAV_IDS], ["today", "requests", "listings", "messages", "account"]);
   const primary = visiblePrimaryDeskNav("daycare", {
     providerSubscriptions: true,
     showPayCtas: true,
     centreOwner: true,
   }).map((i) => i.id);
-  assert.deepEqual(primary, ["today", "messages", "listings", "money"]);
-  assert.equal(primary.length <= 4, true);
+  assert.deepEqual(primary, ["today", "requests", "listings", "messages", "account"]);
+  assert.equal(primary.length <= 5, true);
   const secondary = visibleSecondaryDeskNav("daycare", {
     providerSubscriptions: true,
     showPayCtas: true,
     centreOwner: true,
   }).map((i) => i.id);
   assert.equal(secondary.includes("tours"), true);
-  assert.equal(secondary.includes("requests"), true);
+  assert.equal(secondary.includes("requests"), false);
   assert.equal(secondary.includes("employees"), true);
   assert.equal(secondary.includes("screening"), true);
-  assert.equal(secondary.includes("money"), false);
+  assert.equal(secondary.includes("money"), true);
   assert.equal(secondary.includes("licence"), true);
   assert.equal(secondary.includes("contract"), true);
   assert.equal(secondary.includes("promote"), true);
   assert.equal(secondary.includes("subscription"), true);
+  assert.equal(secondary.includes("post-job"), true);
   assert.equal(secondary.includes("claim"), true);
   assert.equal(secondary.includes("add"), true);
-  assert.equal(secondary.at(-1), "account");
+  assert.equal(secondary.includes("account"), false);
   assert.equal(secondary.includes("today"), false);
   assert.equal(secondary.includes("messages"), false);
-  assert.equal(visibleDeskNav("daycare").some((i) => i.label === "Lead inbox"), true);
+  const requests = visibleDeskNav("daycare").find((i) => i.id === "requests");
+  assert.equal(requests?.label, "Requests");
+  assert.equal(visibleDeskNav("daycare").find((i) => i.id === "money")?.label, "Earnings");
   assert.equal(providerNavSearch("today").desk, "today");
   assert.equal(providerNavSearch("requests").desk, "requests");
   assert.equal(PROVIDER_TAB_KEYS.includes("today"), true);
 });
 
-test("parent phone primaries are Home, Search, Shortlist, Messages, Account", () => {
-  assert.deepEqual([...PARENT_PRIMARY_NAV_IDS], ["explore", "search", "saved", "messages", "account"]);
+test("parent phone tabs are Search, Saved, Requests, Messages, Account", () => {
+  assert.deepEqual([...PARENT_PRIMARY_NAV_IDS], ["search", "saved", "bookings", "messages", "account"]);
   const parent = visiblePrimaryDeskNav("parent").map((i) => i.id);
-  assert.deepEqual(parent, ["explore", "search", "saved", "messages", "account"]);
+  assert.deepEqual(parent, ["search", "saved", "bookings", "messages", "account"]);
   const secondary = visibleSecondaryDeskNav("parent").map((i) => i.id);
-  assert.deepEqual(secondary, ["care", "children", "bookings", "waitlists", "alerts", "payments", "upgrade"]);
+  assert.equal(secondary.includes("explore"), true);
+  assert.equal(secondary.includes("care"), true);
+  assert.equal(secondary.includes("children"), true);
+  assert.equal(secondary.includes("waitlists"), true);
+  assert.equal(secondary.includes("payments"), true);
+  assert.equal(secondary.includes("upgrade"), true);
+  assert.equal(secondary.includes("delete"), true);
+  assert.equal(secondary.includes("search"), false);
+  assert.equal(secondary.includes("bookings"), false);
+  assert.equal(secondary.includes("account"), false);
   const admin = visiblePrimaryDeskNav("admin").map((i) => i.id);
   assert.equal(admin.includes("queue"), true);
   assert.equal(admin.includes("daycares"), true);
+  assert.equal(admin.includes("email-health"), true);
   assert.equal(visibleSecondaryDeskNav("admin").length, 0);
 });
 

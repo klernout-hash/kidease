@@ -19,7 +19,6 @@ test("THIS WEEK acceptance: age+start+place gate, hollow-free rails, Top7, vacan
   const listing = src("src/routes/daycare.$slug.tsx");
   const compare = src("src/routes/compare.tsx");
   const card = src("src/components/daycare-card.tsx");
-  const shell = src("src/components/shell.tsx");
   const copy = src("src/lib/copy.ts");
   const flags = src("src/lib/flags.ts");
   const stats = JSON.parse(src("src/lib/data/catalog-stats.json"));
@@ -67,7 +66,8 @@ test("THIS WEEK acceptance: age+start+place gate, hollow-free rails, Top7, vacan
   assert.match(card, /CompareChip/);
   assert.match(listing, /compareAdd/);
   assert.match(listing, /toggleCompareItem/);
-  assert.match(shell, /to: "\/compare"/);
+  assert.match(src("src/lib/site-footer-nav.ts"), /"\/compare"/);
+  assert.match(src("src/components/nav-drawer.tsx"), /to="\/compare"/);
   assert.match(compare, /compareFeesCwelcc/);
   assert.match(compare, /compareVacancy/);
   assert.match(compare, /comparePhoto/);

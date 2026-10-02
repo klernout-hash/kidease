@@ -53,7 +53,7 @@ export function ParentShortlist({
         : "Saved on this phone. Connect again to refresh.";
     return (
       <div className="mt-6 w-full">
-        <h2 className="font-display text-2xl">{t("myShortlist")}</h2>
+        <h2 className="font-display text-2xl">{t("saved")}</h2>
         <ul className="mt-4 w-full space-y-2">
           {offline.map((row) => (
             <li key={row.id}>
@@ -72,7 +72,7 @@ export function ParentShortlist({
   if (!items.length) {
     return (
       <div className="mt-6 w-full">
-        <h2 className="font-display text-2xl">{t("myShortlist")}</h2>
+        <h2 className="font-display text-2xl">{t("saved")}</h2>
         <div className="mt-4 w-full">
           <EmptyState title={t("noSaved")} body={t("shortlistLead")} action={t("emptyFindCare")} actionTo="/search" />
         </div>
@@ -83,7 +83,7 @@ export function ParentShortlist({
   return (
     <div className="mt-6 space-y-6">
       <div>
-        <h2 className="font-display text-2xl">{t("myShortlist")}</h2>
+        <h2 className="font-display text-2xl">{t("saved")}</h2>
         <p className="mt-1 text-sm text-muted">{t("shortlistLead")}</p>
         <p className="mt-2 text-sm text-muted">
           {t("shortlistCompareLead")}{" "}

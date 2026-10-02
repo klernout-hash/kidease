@@ -8,10 +8,12 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { HeaderSocial } from "@/components/header-social";
 import { useRoleChrome } from "@/components/role-chrome";
 import type { ChromeRole } from "@/lib/role-access";
+import { LanguageSelect } from "@/components/language-select";
+import { ShareKidEaseButton } from "@/components/share-button";
 import {
   FOOTER_COLUMNS,
+  FOOTER_LEGAL,
   footerLinkLabel,
-  sortFooterLinks,
   type FooterColumnId,
   type FooterLinkDef,
 } from "@/lib/site-footer-nav";
@@ -74,7 +76,7 @@ function Column({
     href: link.localePaired ? localePath(link.to, locale) : link.to,
     label: footerLinkLabel(link, t, locale),
   }));
-  const sorted = sortFooterLinks(labeled, locale);
+  const sorted = labeled;
 
   return (
     <section data-footer-col={id}>
@@ -89,6 +91,11 @@ function Column({
             {link.label}
           </Item>
         ))}
+        {id === "kidease" ? (
+          <li>
+            <ShareKidEaseButton appearance="row" />
+          </li>
+        ) : null}
       </ul>
     </section>
   );
@@ -131,9 +138,21 @@ export function SiteFooter() {
               locale={locale}
               t={t}
             />
-            <Column id="kidease" title={t("app")} links={linksForRole(FOOTER_COLUMNS.kidease, chrome.role, "kidease", chrome.pending || chrome.role !== "guest")} locale={locale} t={t} />
             <Column id="support" title={t("support")} links={linksForRole(FOOTER_COLUMNS.support, chrome.role, "support", chrome.pending || chrome.role !== "guest")} locale={locale} t={t} />
+            <Column id="kidease" title={t("app")} links={linksForRole(FOOTER_COLUMNS.kidease, chrome.role, "kidease", chrome.pending || chrome.role !== "guest")} locale={locale} t={t} />
           </nav>
+          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+            {FOOTER_LEGAL.map((link) => (
+              <Link
+                key={link.to}
+                to={link.localePaired ? localePath(link.to, locale) : link.to}
+                className="ke-footer-link inline-flex min-h-11 items-center"
+              >
+                {footerLinkLabel(link, t, locale)}
+              </Link>
+            ))}
+            <LanguageSelect />
+          </div>
 
           <div className="ke-footer-legal">
             <div className="ke-footer-legal-copy">

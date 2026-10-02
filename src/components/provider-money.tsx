@@ -65,7 +65,7 @@ export function ProviderMoneyPanel() {
   return (
     <section className="space-y-8">
       <div>
-        <h2 className="font-display text-2xl">Money</h2>
+        <h2 className="font-display text-2xl">{t("deskNavMoney")}</h2>
         <p className="mt-1 text-sm text-muted">{t("moneyDeskLead")}</p>
         <LedgerHonesty stripeLive={stripeLive} className="mt-2" ready={ready} />
         {ready && !stripeLive ? (
