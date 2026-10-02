@@ -1,10 +1,11 @@
 import { notFound } from "@tanstack/react-router";
 import { cityHubBySlug } from "@/lib/city-hub-data";
-import { cityHubCityName, cityHubDefBySlug, cityHubPath, type CityHubSnapshot } from "@/lib/city-hubs";
+import { CITY_HUB_LISTING_CAP, cityHubCityName, cityHubDefBySlug, cityHubPath, type CityHubSnapshot } from "@/lib/city-hubs";
 import { cityHubNotFoundHead } from "@/lib/city-hub-not-found";
+import { isPublicListing } from "@/lib/listing-visibility";
 import { pageSeoHead } from "@/lib/page-seo";
 import { filterSuppressedBundleRows } from "@/lib/server/bundled-catalog";
-import { liveHubCount } from "@/lib/server/city-directory";
+import { listingsForCityHub, liveHubCount } from "@/lib/server/city-directory";
 
 export async function loadCityHub(city: string): Promise<CityHubSnapshot> {
   // Published Canadian hubs only. US and unknown slugs 404: they must not
@@ -20,10 +21,27 @@ export async function loadCityHub(city: string): Promise<CityHubSnapshot> {
     /* Snapshot count stays if the live catalogue is unreachable. */
   }
   try {
-    const listings = await filterSuppressedBundleRows({ data: hub.listings });
+    const liveListings = await listingsForCityHub(hub.slug);
+    if (liveListings.length > 0) {
+      return {
+        ...hub,
+        count,
+        listings: liveListings.slice(0, CITY_HUB_LISTING_CAP).map((row) => ({
+          slug: row.slug,
+          name: row.name,
+        })),
+      };
+    }
+    const listings = (await filterSuppressedBundleRows({ data: hub.listings })).filter((row) =>
+      isPublicListing(row),
+    );
     return { ...hub, count, listings };
   } catch {
-    return { ...hub, count };
+    return {
+      ...hub,
+      count,
+      listings: hub.listings.filter((row) => isPublicListing(row)),
+    };
   }
 }
 

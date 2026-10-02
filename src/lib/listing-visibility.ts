@@ -1,4 +1,5 @@
 import { isKidEaseOperatorEmail } from "./admin-email.ts";
+import { hiddenDuplicateSlugSql, isHiddenDuplicateSlug } from "./hidden-duplicates.ts";
 
 export const LISTING_VISIBILITY = {
   public: "public",
@@ -40,6 +41,9 @@ export type ListingVisibilityInput = {
   importFault?: string | null;
   /** `false` / `0` means the operator or a merge took the row off the public site. */
   listingActive?: boolean | number | string | null;
+  claimStatus?: string | null;
+  province?: string | null;
+  factSource?: string | null;
 };
 
 /** Known QA fixture — keep in sync with GHOST_LISTING / centres-extra-1.json / request-guard HIDDEN_LISTING_SLUGS. */
@@ -129,6 +133,39 @@ export function isSupersededCatalogueRow(
   return Boolean((d.mergedInto || "").trim() || (d.importFault || "").trim());
 }
 
+/** Claim tokens that must not appear on the public catalogue. */
+export const NON_PUBLIC_CLAIM_STATUSES = ["declined", "rejected", "denied", "superseded"] as const;
+
+export function isNonPublicClaimStatus(status: string | null | undefined): boolean {
+  const raw = (status || "").trim().toLowerCase();
+  return (NON_PUBLIC_CLAIM_STATUSES as readonly string[]).includes(raw);
+}
+
+/**
+ * US state codes. Canadian province codes are not in this set.
+ * `CA` here is California, not Canada. Canada uses ON, BC, AB, and the rest.
+ */
+const US_STATE_CODES = new Set([
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS",
+  "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY",
+  "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV",
+  "WI", "WY", "DC",
+]);
+
+/** US catalogue rows (state code, us- id, or a kidease-us source). */
+export function isUsCatalogueRow(d: ListingVisibilityInput | null | undefined): boolean {
+  if (!d) return false;
+  const province = (d.province || "").trim().toUpperCase();
+  if (province && US_STATE_CODES.has(province)) return true;
+  const id = norm(d.id || d.daycareId);
+  const slug = norm(d.slug);
+  if (id.startsWith("us-") || slug.startsWith("us-")) return true;
+  if (id.includes("kidease-us") || slug.includes("kidease-us")) return true;
+  const fact = (d.factSource || "").trim().toLowerCase();
+  if (fact.includes("kidease-us")) return true;
+  return false;
+}
+
 /** Paused, merged-away, or explicitly deactivated. Missing means still active. */
 export function isInactiveListing(
   d: Pick<ListingVisibilityInput, "listingActive"> | null | undefined,
@@ -137,7 +174,15 @@ export function isInactiveListing(
   return d.listingActive === false || d.listingActive === 0 || d.listingActive === "0";
 }
 
+/**
+ * One public-catalogue rule for search, city hubs, the sitemap, and listing pages.
+ * Hidden duplicates, merged rows, declined claims, QA fixtures, and US rows are out.
+ */
 export function isPublicListing(d: ListingVisibilityInput | null | undefined): boolean {
+  if (!d) return false;
+  if (isHiddenDuplicateSlug(d.slug)) return false;
+  if (isUsCatalogueRow(d)) return false;
+  if (isNonPublicClaimStatus(d.claimStatus)) return false;
   if (isSupersededCatalogueRow(d)) return false;
   if (isInactiveListing(d)) return false;
   return !isAdminOnlyListing(d);
@@ -153,8 +198,11 @@ export function hideListingFromPublicPage(
   viewerIsAdmin = false,
 ): boolean {
   if (!d) return true;
+  if (isHiddenDuplicateSlug(d.slug)) return true;
+  if (isUsCatalogueRow(d)) return true;
   if (isSupersededCatalogueRow(d)) return true;
   if (viewerIsAdmin) return false;
+  if (isNonPublicClaimStatus(d.claimStatus)) return true;
   if (isInactiveListing(d)) return true;
   return isAdminOnlyListing(d);
 }
@@ -282,6 +330,12 @@ export function listingVisibilityInputFromDb(row: {
   address?: string | null;
   visibility?: string | null;
   is_test?: boolean | number | null;
+  claim_status?: string | null;
+  province?: string | null;
+  fact_source?: string | null;
+  merged_into?: string | null;
+  import_fault?: string | null;
+  listing_active?: boolean | number | string | null;
 }): ListingVisibilityInput {
   return {
     id: row.id,
@@ -291,6 +345,12 @@ export function listingVisibilityInputFromDb(row: {
     address: row.address,
     visibility: row.visibility === LISTING_VISIBILITY.adminOnly ? LISTING_VISIBILITY.adminOnly : row.visibility,
     isTest: row.is_test,
+    claimStatus: row.claim_status,
+    province: row.province,
+    factSource: row.fact_source,
+    mergedInto: row.merged_into,
+    importFault: row.import_fault,
+    listingActive: row.listing_active,
   };
 }
 
@@ -322,6 +382,18 @@ export const PUBLIC_LISTING_SQL = `(
   and slug <> 'peninsula-montessori-academy-oak-3572'
   and id <> 'bc-3572'
   and name !~* '^peninsula montessori academy oak'
+  and lower(btrim(coalesce(claim_status, ''))) not in ('declined', 'rejected', 'denied', 'superseded')
+  and upper(btrim(coalesce(province, ''))) not in (
+    'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD',
+    'MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC',
+    'SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC'
+  )
+  and id not ilike 'us-%'
+  and slug not ilike 'us-%'
+  and id not ilike '%kidease-us%'
+  and slug not ilike '%kidease-us%'
+  and coalesce(fact_source, '') not ilike '%kidease-us%'
+  and ${hiddenDuplicateSlugSql()}
 )`;
 
 /**
@@ -334,4 +406,16 @@ export const SUPPRESSED_CATALOG_SQL = `(
   or coalesce(listing_active, 1) = 0
   or coalesce(is_test, 0) <> 0
   or coalesce(visibility, 'public') <> 'public'
+  or lower(btrim(coalesce(claim_status, ''))) in ('declined', 'rejected', 'denied', 'superseded')
+  or upper(btrim(coalesce(province, ''))) in (
+    'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD',
+    'MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC',
+    'SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC'
+  )
+  or id ilike 'us-%'
+  or slug ilike 'us-%'
+  or id ilike '%kidease-us%'
+  or slug ilike '%kidease-us%'
+  or coalesce(fact_source, '') ilike '%kidease-us%'
+  or not (${hiddenDuplicateSlugSql()})
 )`;

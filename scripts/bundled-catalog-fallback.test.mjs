@@ -218,7 +218,9 @@ describe("listing and sitemap call sites use the fallback gate", () => {
     assert.match(src("src/lib/catalog.ts"), /omitSuppressedBundleCopies/);
     assert.match(src("src/routes/daycare.$slug.tsx"), /decideListingLoader/);
     assert.match(src("src/lib/server/daycares.ts"), /hideListingFromPublicPage/);
-    assert.match(src("server/middleware/sitemap.ts"), /SUPPRESSED_CATALOG_SQL/);
+    assert.match(src("server/middleware/sitemap.ts"), /PUBLIC_LISTING_SQL/);
+    assert.match(src("server/middleware/sitemap.ts"), /publicSitemapSlugs/);
+    assert.doesNotMatch(src("server/middleware/sitemap.ts"), /mergeListingSitemapSlugs/);
     assert.match(src("src/lib/city-hub-page.ts"), /filterSuppressedBundleRows/);
     assert.match(src("src/routes/daycare.city.$city.tsx"), /loadCityHub/);
     assert.match(src("src/lib/server/nearby.ts"), /catalogNearFromJson/);

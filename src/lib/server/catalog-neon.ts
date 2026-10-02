@@ -106,7 +106,7 @@ and length(btrim(coalesce(name, ''))) > 0
 `;
 
 export const DIRECTORY_GROUP_SQL = `
-select city, province, count(*)::int as n
+select city, province, count(distinct lower(btrim(slug)))::int as n
 from daycares
 where ${DIRECTORY_PUBLIC_SQL}
 group by city, province

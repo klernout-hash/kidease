@@ -6,7 +6,7 @@
  * QA ghost / admin-only slugs never appear.
  */
 
-import { isAdminOnlyListing, looksLikeTestFixture } from "./listing-visibility.ts";
+import { isPublicListing, looksLikeTestFixture, type ListingVisibilityInput } from "./listing-visibility.ts";
 import { normalizeListingSlug } from "./listing-slug.ts";
 import { SITEMAP_FR_PATHS } from "./locale-path.ts";
 
@@ -89,27 +89,17 @@ export function sitemapListingPath(slug: string): string {
   return `/daycare/${slug}`;
 }
 
+/** Same rows search keeps, as safe listing URLs. One slug per centre. */
 export function publicSitemapSlugs(
-  rows: Array<{
-    id?: string | null;
-    slug?: string | null;
-    name?: string | null;
-    licenseNumber?: string | null;
-    address?: string | null;
-    visibility?: string | null;
-    isTest?: boolean | number | null;
-    mergedInto?: string | null;
-    importFault?: string | null;
-  }>,
+  rows: readonly ListingVisibilityInput[],
   cap = SITEMAP_LISTING_CAP,
 ): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const row of rows) {
+    if (!isPublicListing(row)) continue;
     const slug = normalizeListingSlug((row.slug || "").trim());
     if (!isSafeSitemapSlug(slug)) continue;
-    if ((row.mergedInto || "").trim() || (row.importFault || "").trim()) continue;
-    if (isAdminOnlyListing(row)) continue;
     const key = slug.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);

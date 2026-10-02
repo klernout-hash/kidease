@@ -1,3 +1,5 @@
+import { hiddenDuplicateKeeper } from "./hidden-duplicates.ts";
+
 /** Public listing document is missing, hidden, or admin-only. */
 export const LISTING_NOT_FOUND_TITLE = "Listing not found · KidEase";
 export const LISTING_NOT_FOUND_DESCRIPTION =
@@ -46,6 +48,10 @@ export function decideListingLoader<T extends { slug?: string | null }>(
   | { type: "redirect-search"; q: string }
   | { type: "not-found" } {
   if (isReservedListingSlug(requestedSlug)) return { type: "not-found" };
+  const duplicateKeeper = hiddenDuplicateKeeper(requestedSlug);
+  if (duplicateKeeper && duplicateKeeper.toLowerCase() !== requestedSlug.trim().toLowerCase()) {
+    return { type: "redirect-keeper", slug: duplicateKeeper };
+  }
   if (seo?.slug && seo.slug !== requestedSlug) {
     return { type: "redirect-keeper", slug: seo.slug };
   }

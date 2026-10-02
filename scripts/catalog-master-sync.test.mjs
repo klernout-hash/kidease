@@ -222,7 +222,9 @@ describe("listing sitemap slug union", () => {
     assert.equal(isSafeSitemapSlug("test-ghost-claim-lab"), false);
     const centres = JSON.parse(readFileSync(join(root, "src/lib/data/centres.json"), "utf8"));
     const slugs = publicSitemapSlugs(centres, 100_000);
-    assert.equal(slugs.length, 20845);
+    assert.equal(slugs.length, 20636);
+    assert.equal(slugs.includes("abacus-montessori-learning-centre-9995"), false);
+    assert.equal(slugs.includes("abacus-montessori-learning-centre-58614"), true);
     assert.equal(slugs.includes("la-bulle-de-lait-"), true);
     assert.equal(slugs.includes("peninsula-montessori-academy-oak-3572"), false);
     assert.equal(slugs.includes("test-ghost-claim-lab"), false);
