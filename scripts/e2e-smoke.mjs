@@ -296,7 +296,9 @@ async function runRoleFixture(page, base) {
     });
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(new URL("/account?tab=profile&section=delete", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-    const deleteOnAccount = await page.locator('[data-ke="account-delete"] [data-ke="delete-confirm"]').count();
+    const deleteConfirm = page.locator('[data-ke="account-delete"] [data-ke="delete-confirm"]');
+    await deleteConfirm.waitFor({ timeout: timeoutMs }).catch(() => {});
+    const deleteOnAccount = await deleteConfirm.count();
     await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     const deleteOnDesk = await page.locator('[data-ke="parent-home"] a[href="/delete-account"], [data-ke="desk-desktop-nav"] [data-nav="delete"]').count();
     record("delete-account-on-account", deleteOnAccount > 0 && deleteOnDesk === 0, {
@@ -347,7 +349,7 @@ async function runRoleFixture(page, base) {
       "menu-daycare",
       daycareHome &&
         daycareCross.length === 0 &&
-        /desk/i.test(daycareNav) &&
+        /today/i.test(daycareNav) &&
         !daycareSignIn &&
         daycarePlaces.drawer === "Subscription",
       { note: daycareSignIn ? "sign-in leak" : daycareCross.join(",") || JSON.stringify(daycarePlaces) },
