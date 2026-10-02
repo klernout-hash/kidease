@@ -1,6 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Building2, ClipboardCheck, ClipboardList, CreditCard, Heart, Map, Menu, MessageCircle, Search, User } from "lucide-react";
+import { Building2, ClipboardCheck, ClipboardList, Heart, Map, Menu, MessageCircle, Search, User } from "lucide-react";
 import { useEffect, useState } from "react";
+import { ProfileAvatar } from "@/components/profile-avatar";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useRoleChrome } from "@/components/role-chrome";
 import { bottomBarKind } from "@/lib/role-access";
 import { hapticLight, isNative } from "@/lib/native";
@@ -21,8 +23,8 @@ export function AppTabBar() {
   const desk = useRouterState({ select: (s) => (s.location.search as { desk?: string }).desk });
   const view = useRouterState({ select: (s) => (s.location.search as { view?: string }).view });
   const chrome = useRoleChrome();
+  const { user } = useCurrentUserState();
   const kind = bottomBarKind({ role: chrome.role, pathname, pending: chrome.pending });
-  const plan = chrome.paid ? t("navMyPlan") : t("navUpgrade");
   const [native, setNative] = useState(false);
   useEffect(() => {
     setNative(isNative());
@@ -97,22 +99,16 @@ export function AppTabBar() {
               icon={MessageCircle}
               active={pathname.startsWith("/inbox") && view !== "family"}
             />
-            <Tab
-              to="/provider/subscription"
-              label={plan}
-              icon={CreditCard}
-              marker="upgrade"
-              active={pathname.startsWith("/provider/subscription")}
-            />
+            <AvatarTab userId={user?.id} image={user?.profileImageUrl} name={user?.displayName} active={pathname.startsWith("/account")} />
           </>
         ) : null}
         {kind === "parent" && !storeTabs ? (
           <>
             <Tab
-              to="/"
+              to="/parent"
               label={t("navHome")}
               icon={Building2}
-              active={pathname === "/" || pathname.startsWith("/search") || pathname.startsWith("/daycare")}
+              active={pathname.startsWith("/parent") && (!tab || tab === "explore")}
             />
             <Tab
               to="/parent"
@@ -135,14 +131,7 @@ export function AppTabBar() {
               icon={MessageCircle}
               active={pathname.startsWith("/inbox")}
             />
-            <Tab
-              to="/parent"
-              search={{ tab: "payments" }}
-              label={plan}
-              icon={CreditCard}
-              marker="upgrade"
-              active={pathname.startsWith("/parent") && tab === "payments"}
-            />
+            <AvatarTab userId={user?.id} image={user?.profileImageUrl} name={user?.displayName} active={pathname.startsWith("/account")} />
           </>
         ) : null}
         {kind === "admin" && !storeTabs ? (
@@ -151,7 +140,7 @@ export function AppTabBar() {
             <Tab to="/provider" label={t("deskDirector")} icon={Search} active={pathname.startsWith("/provider")} />
             <Tab to="/" label={t("explore")} icon={ClipboardCheck} active={pathname === "/" || pathname.startsWith("/search") || pathname.startsWith("/daycare")} />
             <Tab to="/inbox" label={t("messages")} icon={MessageCircle} active={pathname.startsWith("/inbox")} />
-            <Tab to="/menu" label="Menu" icon={Menu} active={pathname.startsWith("/menu")} />
+            <AvatarTab userId={user?.id} image={user?.profileImageUrl} name={user?.displayName} active={pathname.startsWith("/account")} />
           </>
         ) : null}
         {kind === "guest" && !storeTabs ? (
@@ -192,6 +181,34 @@ function storeTabActive(id: NativeStoreTabId, pathname: string, tab: string | un
   if (id === "saved") return pathname.startsWith("/parent") && tab === "saved";
   if (id === "messages") return pathname.startsWith("/inbox");
   return pathname.startsWith("/account");
+}
+
+function AvatarTab({
+  userId,
+  image,
+  name,
+  active,
+}: {
+  userId?: string | null;
+  image?: string | null;
+  name?: string | null;
+  active: boolean;
+}) {
+  return (
+    <Link
+      to="/account"
+      search={{ tab: "profile", section: "profile" }}
+      data-ke="tab-avatar"
+      aria-label="Account"
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "flex h-[3.35rem] min-w-11 flex-col items-center justify-center",
+        active ? "text-primary" : "text-muted",
+      )}
+    >
+      <ProfileAvatar userId={userId} fallback={image} name={name} size="sm" />
+    </Link>
+  );
 }
 
 function Tab({

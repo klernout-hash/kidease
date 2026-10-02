@@ -51,11 +51,11 @@ test("addon parse keeps only known ids and a stable order", () => {
 test("Upgrade stays on the parent and daycare desk panels", () => {
   const daycare = visibleDeskNav("daycare", { providerSubscriptions: false, centreOwner: true });
   const centre = daycare.find((i) => i.id === "subscription");
-  assert.equal(centre?.label, "Upgrade");
+  assert.equal(centre?.label, "Subscription");
   assert.equal(centre?.icon, "credit-card");
   assert.equal(centre?.href, "/provider/subscription");
   const parent = visibleDeskNav("parent", { providerSubscriptions: false }).find((i) => i.id === "upgrade");
-  assert.equal(parent?.label, "Upgrade");
+  assert.equal(parent?.label, "Subscription");
   assert.equal(parent?.href, "/parent");
   assert.equal(parent?.search?.tab, "payments");
   assert.equal(daycare.some((i) => i.id === "upgrade"), false);

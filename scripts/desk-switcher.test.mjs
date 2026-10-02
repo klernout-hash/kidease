@@ -64,7 +64,7 @@ test("admin desk stays gated by profiles.role + owner email", () => {
   assert.doesNotMatch(switcher, /if \(desk === "admin"\) return null/);
   assert.doesNotMatch(switcher, /AdminDeskLink/);
   assert.match(src("src/components/shell.tsx"), /canSeeAdminDesk\(session\?\.role, session\?\.email/);
-  assert.match(src("src/components/desk-shell.tsx"), /data-ke="desk-switcher-row"/);
+  assert.match(src("src/components/desk-shell.tsx"), /data-ke="desk-switcher-slot"/);
   assert.doesNotMatch(src("src/components/shell.tsx"), /desksSlot/);
   assert.doesNotMatch(src("src/components/nav-drawer.tsx"), /desksSlot/);
   assert.match(src("src/components/session-desks.tsx"), /sanitizeStickyDesk/);
@@ -79,11 +79,11 @@ test("admin sees Parent, Daycare, and Admin as the top desk tabs", () => {
   assert.equal(showDeskSwitcher(desksFor({ role: "admin" }), "admin", "parent@example.com"), false);
 
   const shell = src("src/components/desk-shell.tsx");
-  const rowAt = shell.indexOf('data-ke="desk-switcher-row"');
+  const rowAt = shell.indexOf('data-ke="desk-switcher-slot"');
   assert.ok(rowAt > 0);
-  const row = shell.slice(rowAt, shell.indexOf("<DeskSwitcher", rowAt));
-  assert.match(row, /sticky/);
-  assert.doesNotMatch(row, /\bhidden\b|md:hidden|max-md:hidden/);
+  const aside = shell.slice(shell.indexOf("<aside"), shell.indexOf("</aside>"));
+  assert.match(aside, /<DeskSwitcher/);
+  assert.doesNotMatch(shell, /data-ke="desk-switcher-row"/);
   assert.match(shell, /showDeskSwitcher\(session\.desks, session\.role, session\.email\)/);
 
   const switcher = src("src/components/desk-switcher.tsx");
@@ -95,7 +95,7 @@ test("admin sees Parent, Daycare, and Admin as the top desk tabs", () => {
   assert.match(switcher, /deskDirector/);
   assert.match(switcher, /deskAdmin/);
   assert.doesNotMatch(src("src/components/menu-desk-tools.tsx"), /<DeskSwitcher/);
-  assert.doesNotMatch(src("src/components/nav-drawer.tsx"), /<DeskSwitcher/);
+  assert.match(src("src/components/nav-drawer.tsx"), /<DeskSwitcher/);
   assert.doesNotMatch(src("src/components/shell.tsx"), /<DeskSwitcher/);
 });
 
@@ -114,7 +114,8 @@ test("daycare-only and parent-only users do not get the 3-desk switcher", () => 
   assert.equal(headerDesks(desksFor({ role: "parent" }), "parent").includes("provider"), false);
   assert.equal(headerDesks(desksFor({ role: "parent" }), "parent").includes("admin"), false);
 
-  assert.equal(showDeskSwitcher(desksFor({ role: "parent", ownsCentre: true }), "parent"), false);
-  assert.equal(showDeskSwitcher(["admin", "parent", "provider"], "parent", "parent@example.com"), false);
+  assert.equal(showDeskSwitcher(desksFor({ role: "parent", ownsCentre: true }), "parent"), true);
+  assert.equal(headerDesks(["admin", "parent", "provider"], "parent", "parent@example.com").includes("admin"), false);
+  assert.equal(showDeskSwitcher(["admin", "parent", "provider"], "parent", "parent@example.com"), true);
   assert.equal(showDeskSwitcher(["provider", "parent"], "provider", "kyle@kidease.ca"), false);
 });

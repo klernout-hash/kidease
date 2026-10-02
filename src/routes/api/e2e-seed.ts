@@ -16,7 +16,7 @@ function emailFor(role: "parent" | "provider", paid: boolean) {
 
 async function seed(request: Request) {
   if (!e2eLoopbackFixtureRequest(request)) return new Response("Not found", { status: 404 });
-  let body: { role?: string; paid?: boolean; ownSlug?: string; activity?: boolean } = {};
+  let body: { role?: string; paid?: boolean; ownSlug?: string; activity?: boolean; attention?: boolean } = {};
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -25,6 +25,7 @@ async function seed(request: Request) {
   const role = body.role === "provider" ? "provider" : "parent";
   const paid = Boolean(body.paid);
   const activity = Boolean(body.activity);
+  const attention = Boolean(body.attention);
   const ownSlug = String(body.ownSlug || "")
     .trim()
     .toLowerCase()
@@ -158,6 +159,35 @@ async function seed(request: Request) {
         )
         on conflict (id) do update set user_id = excluded.user_id, daycare_id = excluded.daycare_id
       `;
+    }
+  }
+  if (attention && role === "parent") {
+    const slug = "e2e-attn-centre";
+    const seededId = "e2e-attn-centre";
+    await sql`
+      insert into daycares (
+        id, slug, name, name_fr, tagline, tagline_fr, description, description_fr,
+        address, city, province, postal_code, lat, lng, hours, hours_fr,
+        age_min_months, age_max_months, photos
+      ) values (
+        ${seededId}, ${slug}, ${"E2E Attention Centre"}, ${"Centre attention E2E"},
+        ${"Licensed centre"}, ${"Centre permis"},
+        ${"Seeded so attention badges have a request."}, ${"Créé pour les pastilles."},
+        ${"1 Main St"}, ${"Winnipeg"}, ${"MB"}, ${"R3C 0A1"},
+        ${49.8951}, ${-97.1384},
+        ${"7:30 a.m. to 5:30 p.m."}, ${"7 h 30 a 17 h 30"},
+        ${6}, ${72}, ${""}
+      )
+      on conflict (slug) do nothing
+    `.catch(() => undefined);
+    const rows = await sql<{ id: string }>`select id from daycares where slug = ${slug} limit 1`.catch(() => []);
+    const daycareId = rows[0]?.id;
+    if (daycareId) {
+      await sql`
+        insert into lead_requests (id, kind, status, user_id, daycare_id, message)
+        values (${`e2e-attn-${userId}`.slice(0, 40)}, ${"tour"}, ${"requested"}, ${userId}, ${daycareId}, ${"E2E attention"})
+        on conflict (id) do update set status = 'requested', user_id = excluded.user_id
+      `.catch(() => undefined);
     }
   }
   await sql`

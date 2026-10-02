@@ -167,8 +167,8 @@ export function destinationAfterSignIn(input: {
   return home;
 }
 
-export function upgradeNavLabel(paid: boolean): "Upgrade" | "My plan" {
-  return paid ? "My plan" : "Upgrade";
+export function upgradeNavLabel(_paid: boolean): "Subscription" {
+  return "Subscription";
 }
 
 /** Phone bottom bar. Daycare desk paths stay daycare even for an admin tester. */
@@ -190,7 +190,7 @@ export function roleNavItems(input: { role: ChromeRole; paid?: boolean }): RoleN
   const planLabel = upgradeNavLabel(paid);
   if (input.role === "parent") {
     return [
-      { id: "home", label: "Home", to: "/", icon: "parent" },
+      { id: "home", label: "Home", to: "/parent", icon: "parent" },
       { id: "search", label: "Search", to: "/search", icon: "explore" },
       { id: "saved", label: "Saved", to: "/parent", search: { tab: "saved" }, icon: "saved" },
       { id: "requests", label: "Requests & tours", to: "/parent", search: { tab: "requests" }, icon: "tourChecklist" },
@@ -241,7 +241,7 @@ export function roleNavItems(input: { role: ChromeRole; paid?: boolean }): RoleN
       search: { role: "provider", desk: "director", intent: "up", next: "/provider" },
       icon: "daycare",
     },
-    { id: "plans", label: "Plans", to: "/plans", icon: "benefits" },
+    { id: "plans", label: "Subscription", to: "/plans", icon: "benefits" },
     { id: "signin", label: "Sign in", to: "/login", icon: "login" },
   ];
 }

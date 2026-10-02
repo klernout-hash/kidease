@@ -28,7 +28,8 @@ test("in-app Delete my account lives on Account only; public footer and desks do
   const parentDesk = src("src/components/parent-desk.tsx");
   const menu = src("src/routes/menu.tsx");
   assert.match(account, /data-ke="account-delete"/);
-  assert.match(account, /to="\/delete-account"/);
+  assert.match(account, /DeleteAccountPanel/);
+  assert.doesNotMatch(account, /to="\/delete-account"/);
   assert.doesNotMatch(account, /deleteAccount\(\)/);
   assert.doesNotMatch(parentDesk, /deleteAccount/);
   assert.doesNotMatch(parentDesk, /delete-account/);

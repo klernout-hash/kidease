@@ -216,9 +216,9 @@ test("EN footer labels sort alphabetically in every column", () => {
     "About",
     "Donate to Kids",
     "How It Works",
-    "Plans",
     "Post a job",
     "Start a Daycare",
+    "Subscription",
   ]);
   assert.deepEqual(labels(FOOTER_SUPPORT, "en"), [
     "Contact Us",
@@ -247,9 +247,9 @@ test("FR-CA footer labels sort by the French string in every column", () => {
   ]);
   assert.deepEqual(labels(FOOTER_KIDEASE, "fr"), [
     "À propos",
+    "Abonnement",
     "Comment ça fonctionne",
     "Faire un don aux enfants",
-    "Forfaits",
     "Ouvrir une garderie",
     "Publier un emploi",
   ]);

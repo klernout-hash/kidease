@@ -23,6 +23,8 @@ import {
   isKidEaseOperatorEmail,
 } from "@/lib/admin-email";
 import { isActiveCentreMember, listOwnedDaycareIds } from "@/lib/server/centre-access";
+import { EMPTY_ATTENTION, type AttentionCounts } from "@/lib/attention";
+import { restoreDeadline, withinRestoreWindow } from "@/lib/account-delete";
 
 export const ADMIN_PROMOTE_SQL =
   "update profiles set role = 'admin' where user_id = '…';";
@@ -101,6 +103,66 @@ async function unreadInboxCounts(sql: Awaited<ReturnType<typeof getSql>>, userId
     all: rows[0]?.n_all ?? 0,
     family: rows[0]?.n_family ?? 0,
     centre: rows[0]?.n_centre ?? 0,
+  };
+}
+
+async function countOrZero(run: () => Promise<Array<{ n: number }>>) {
+  const rows = await run().catch(() => [{ n: 0 }]);
+  const value = Number(rows[0]?.n ?? 0);
+  return Number.isFinite(value) && value > 0 ? value : 0;
+}
+
+/** One query batch. Callers must not fetch these numbers again for badges. */
+async function loadAttention(
+  sql: Awaited<ReturnType<typeof getSql>>,
+  userId: string,
+  stored: string,
+  unread: { all: number; family: number; centre: number },
+  notificationUnread: number,
+): Promise<AttentionCounts> {
+  const mine = await countOrZero(() => sql<{ n: number }>`
+    select count(*)::int as n from lead_requests
+    where user_id = ${userId} and status in ('requested', 'received')
+  `);
+  const centre = await countOrZero(() => sql<{ n: number }>`
+    select count(*)::int as n from lead_requests lr
+    where lr.status in ('requested', 'received')
+      and (
+        exists (
+          select 1 from provider_daycares p
+          where p.user_id = ${userId} and p.daycare_id = lr.daycare_id
+        )
+        or exists (
+          select 1 from centre_members m
+          where m.user_id = ${userId} and m.daycare_id = lr.daycare_id and m.status = 'active'
+        )
+      )
+  `);
+  const isAdmin = stored === "admin";
+  const signups = isAdmin
+    ? await countOrZero(() => sql<{ n: number }>`
+        select count(*)::int as n from listing_claims where status = 'pending'
+      `)
+    : 0;
+  const claims = isAdmin
+    ? await countOrZero(() => sql<{ n: number }>`
+        select count(*)::int as n from listing_claims where status = 'waiting'
+      `)
+    : 0;
+  const reviews = isAdmin
+    ? await countOrZero(() => sql<{ n: number }>`
+        select count(*)::int as n from reviews where status = 'pending'
+      `)
+    : 0;
+  const messages = stored === "provider" ? unread.centre : stored === "admin" ? unread.all : unread.family;
+  return {
+    ...EMPTY_ATTENTION,
+    messages,
+    notifications: notificationUnread,
+    requests: stored === "provider" || stored === "admin" ? centre : mine,
+    signups,
+    reviews,
+    claims,
   };
 }
 
@@ -195,9 +257,23 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
   if (stored === "provider" || owned) await claimProviderCrmIntake(userId);
   const member = owned ? false : await isActiveCentreMember(sql, userId);
   const desks = desksFor({ role: stored, ownsCentre: owned || member });
+  const { purgeAccountIfExpired, readDeletedAt } = await import("@/lib/server/family");
+  const deletedAt = await readDeletedAt(userId);
+  if (deletedAt && !withinRestoreWindow(deletedAt)) {
+    await purgeAccountIfExpired(userId);
+    throw new Error("Account closed");
+  }
+  const restoreUntil = deletedAt && withinRestoreWindow(deletedAt) ? restoreDeadline(deletedAt).toISOString() : null;
   const { all: unread, family: unreadFamily, centre: unreadCentre } = await unreadInboxCounts(sql, userId);
   const { countUnreadNotifications } = await import("@/lib/server/notifications");
   const notificationUnread = await countUnreadNotifications(userId).catch(() => 0);
+  const attention = await loadAttention(
+    sql,
+    userId,
+    stored,
+    { all: unread, family: unreadFamily, centre: unreadCentre },
+    notificationUnread,
+  ).catch(() => ({ ...EMPTY_ATTENTION, notifications: notificationUnread }));
   const stripeLive = stripeChargesLive();
   const actor = await lookupUser(userId);
   return {
@@ -216,6 +292,8 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
     centreOwner: owned || stored === "admin" || !member,
     ownsCentre: owned,
     centreLinked: owned || member,
+    attention,
+    restoreUntil,
   };
 }
 

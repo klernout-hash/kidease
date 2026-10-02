@@ -10,11 +10,14 @@ import { LanguageSelect } from "@/components/language-select";
 import { AppearanceControl } from "@/components/appearance-control";
 import { ShareKidEaseButton } from "@/components/share-button";
 import { MenuGlyph, MenuRow } from "@/components/menu-row";
-import { NotificationUnreadDot } from "@/components/notification-bell";
-import { useSessionDesks } from "@/components/session-desks";
+import { CountBadge } from "@/components/count-badge";
+import { useDeskMenu } from "@/components/desk-menu";
+import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
+import { attentionForItem } from "@/lib/attention";
+import { showDeskSwitcher } from "@/lib/desks";
 import { localePath } from "@/lib/locale-path";
-import { failClosedUnread } from "@/lib/notifications";
 import { useCopy } from "@/lib/use-copy";
+import { cn } from "@/lib/utils";
 import type { MenuIconId } from "@/lib/menu-icons";
 import { nextDrawerLatch, type DrawerLatch } from "@/lib/drawer-latch";
 
@@ -65,8 +68,12 @@ export function NavDrawer({
   const showMenus = latched != null;
   const { t, locale } = useCopy();
   const { session } = useSessionDesks();
+  const deskMenu = useDeskMenu();
   void isAdmin;
-  const unread = failClosedUnread(session?.notificationUnread);
+  const noteCount = session?.attention?.notifications ?? 0;
+  const deskRole =
+    deskMenu?.desk === "daycare" ? "provider" : deskMenu?.desk === "support" ? "support" : deskMenu?.desk ?? roleShown;
+  const switcher = Boolean(session && showDeskSwitcher(session.desks, session.role, session.email));
   const loginTo = (localePath("/login", locale) === "/fr/login" ? "/fr/login" : "/login") as "/login" | "/fr/login";
 
   useEffect(() => {
@@ -156,15 +163,72 @@ export function NavDrawer({
         ) : null}
         <nav className="flex-1 overflow-y-auto px-3 py-3">
           <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">KidEase</p>
-          {showMenus ? <RoleNavLinks role={roleShown} paid={paidShown} appearance="drawer" onNavigate={onClose} /> : null}
+          {switcher ? (
+            <div className="mb-3 md:hidden">
+              <DeskSwitcher />
+            </div>
+          ) : null}
+          {deskMenu ? (
+            <nav data-ke="role-nav" data-role={deskRole} aria-label={title}>
+              {deskMenu.items
+                .filter((item) => item.id !== "account")
+                .map((item) => {
+                  const plan = item.id === "upgrade" || item.id === "subscription";
+                  const label = item.labelKey ? t(item.labelKey) : item.label;
+                  const on = deskMenu.active === item.id;
+                  const rowClass = cn(
+                    "flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-base font-medium",
+                    plan && "max-md:hidden",
+                    on ? "bg-primary text-primary-fg" : "text-fg hover:bg-surface",
+                  );
+                  const body = (
+                    <>
+                      <span className="min-w-0 flex-1 truncate">{label}</span>
+                      <CountBadge count={attentionForItem(session?.attention, item.id)} />
+                    </>
+                  );
+                  if (item.href) {
+                    return (
+                      <Link
+                        key={item.id}
+                        to={item.href}
+                        {...(item.search ? { search: item.search } : {})}
+                        onClick={onClose}
+                        data-nav={plan ? "upgrade" : item.id}
+                        className={rowClass}
+                      >
+                        {body}
+                      </Link>
+                    );
+                  }
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      data-nav={plan ? "upgrade" : item.id}
+                      className={rowClass}
+                      onClick={() => {
+                        onClose();
+                        deskMenu.onSelect(item.id);
+                      }}
+                    >
+                      {body}
+                    </button>
+                  );
+                })}
+            </nav>
+          ) : showMenus ? (
+            <RoleNavLinks role={roleShown} paid={paidShown} appearance="drawer" onNavigate={onClose} />
+          ) : null}
           {signedIn ? (
             <MenuRow
               to="/notifications"
               label={t("notifications")}
               icon="notifications"
               appearance="drawer"
+              marker="notifications"
               onClick={onClose}
-              badge={<NotificationUnreadDot unread={unread} />}
+              badge={<CountBadge count={noteCount} />}
             />
           ) : null}
           {items.map((item) => (

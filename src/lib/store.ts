@@ -7,7 +7,7 @@ import { writeDistanceUnit, type DistanceUnit } from "./units";
 import { writeLocationConsent, type LocationConsent } from "./location-consent";
 import { clampRadiusKm } from "./proximity";
 import { parseAnchorMode, writeDualAnchorPrefs, type AnchorMode } from "./dual-anchor";
-import { applyTheme, writeThemePreference, type ResolvedTheme, type ThemePreference } from "./theme";
+import { applyTheme, persistThemePreference, writeThemePreference, type ResolvedTheme, type ThemePreference } from "./theme";
 
 export type SortKey = "distance" | "price" | "rating" | "availability" | "recommended" | "match" | "urgency" | "best";
 
@@ -136,5 +136,6 @@ export const useAppStore = create<SearchState>()((set) => ({
     writeThemePreference(theme);
     const resolvedTheme = applyTheme(theme);
     set({ theme, resolvedTheme });
+    persistThemePreference(theme);
   },
 }));

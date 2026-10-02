@@ -24,6 +24,7 @@ export function MenuRow({
   onClick,
   marker,
   emphasis = false,
+  className,
 }: {
   to?: string;
   search?: Record<string, string>;
@@ -35,8 +36,9 @@ export function MenuRow({
   onClick?: () => void;
   marker?: string;
   emphasis?: boolean;
+  className?: string;
 }) {
-  const className = cn(appearance === "drawer" ? drawerClass : rowClass, emphasis && "font-semibold text-primary");
+  const row = cn(appearance === "drawer" ? drawerClass : rowClass, emphasis && "font-semibold text-primary", className);
   const trailing =
     appearance === "page" ? (
       <span className="flex items-center gap-2">
@@ -57,13 +59,13 @@ export function MenuRow({
   );
   if (href) {
     return (
-      <a href={href} target="_blank" rel="noreferrer" onClick={onClick} className={className} data-nav={marker}>
+      <a href={href} target="_blank" rel="noreferrer" onClick={onClick} className={row} data-nav={marker}>
         {inner}
       </a>
     );
   }
   return (
-    <Link to={to ?? "/"} search={search} onClick={onClick} className={className} data-nav={marker}>
+    <Link to={to ?? "/"} search={search} onClick={onClick} className={row} data-nav={marker}>
       {inner}
     </Link>
   );

@@ -9,12 +9,15 @@ const family = readFileSync(join(root, "src/lib/server/family.ts"), "utf8");
 const copy = readFileSync(join(root, "src/lib/copy.ts"), "utf8");
 
 test("account deletion keeps billing rows and says so", () => {
-  const start = family.indexOf("export const deleteAccount");
+  const start = family.indexOf("export async function purgeAccountData");
   assert.ok(start > 0);
   const body = family.slice(start, start + 1800);
   assert.doesNotMatch(body, /delete from payments/);
   assert.doesNotMatch(body, /delete from invoices/);
   assert.match(body, /delete from "user"/);
+  const schedule = family.slice(family.indexOf("export const deleteAccount"), family.indexOf("export const restoreMyAccount"));
+  assert.match(schedule, /deleted_at/);
+  assert.doesNotMatch(schedule, /delete from "user"/);
   assert.match(copy, /keep billing records the law requires/i);
   assert.match(copy, /dossiers de facturation exigés par la loi/);
 });
