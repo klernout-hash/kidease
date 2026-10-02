@@ -355,7 +355,7 @@ export const PRIVACY_EN: LegalDoc = {
           type: "ul",
           items: [
             "We keep account, request, message, and payment records while the account is open.",
-            "Delete account at /delete-account (or in the app) removes your children, messages, bookings, saved centres, director links, profile, and sign-in rows on KidEase. We keep billing records because tax law requires them, and we keep fraud and security logs. This cannot be undone. Marketing email or SMS stops at /unsubscribe without deleting the account.",
+            "Delete account, under Account, schedules the close. You can restore the account for 30 days. After that KidEase removes your children, messages, bookings, saved centres, director links, profile, and sign-in rows. We keep billing records because tax law requires them, and we keep fraud and security logs. Marketing email or SMS stops at /unsubscribe without deleting the account.",
             "Deletion does not erase copies a centre already received, emails already sitting in kyle@kidease.ca or Titan, or records a law or chargeback requires us to keep for a time.",
             `You can also email ${SUPPORT_INBOX_EMAIL} to access, correct, or delete.`,
             "Security we actually use: HTTPS in transit; signed-in sessions in first-party cookies; OAuth tokens encrypted at rest; email sign-in codes; access checks on parent and director desks; payment card data stays with Stripe; audit events do not store card numbers or medical notes.",
@@ -710,7 +710,7 @@ export const PRIVACY_FR: LegalDoc = {
           type: "ul",
           items: [
             "Nous gardons le compte, les demandes, les messages et les paiements tant que le compte est ouvert.",
-            "Supprimer le compte à /delete-account (ou dans l’appli) efface enfants, messages, demandes, centres enregistrés, liens de direction, profil et sessions. Nous gardons les dossiers de facturation exigés par la loi fiscale, ainsi que les journaux de fraude et de sécurité. Irréversible. /unsubscribe arrête les messages marketing sans supprimer le compte.",
+            "Supprimer le compte, sous Compte, planifie la fermeture. Vous pouvez restaurer le compte pendant 30 jours. Ensuite KidEase efface enfants, messages, demandes, centres enregistrés, liens de direction, profil et sessions. Nous gardons les dossiers de facturation exigés par la loi fiscale, ainsi que les journaux de fraude et de sécurité. /unsubscribe arrête les messages marketing sans supprimer le compte.",
             "La suppression n’efface pas les copies déjà reçues par un centre, les courriels déjà reçus, ni les dossiers qu’une loi ou une rétrofacturation exige.",
             `Vous pouvez aussi écrire à ${SUPPORT_INBOX_EMAIL}.`,
             "Sécurité réelle : HTTPS; sessions en témoins internes; jetons OAuth chiffrés; codes par courriel; contrôles d’accès; les cartes restent chez Stripe; les journaux d’audit ne stockent pas les numéros de carte ni les notes médicales.",

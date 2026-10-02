@@ -57,21 +57,21 @@ test("sign-in lands on the stored role home unless the next path is allowed", ()
 });
 
 test("menus stay on one role and the plan label switches when paid", () => {
-  assert.equal(upgradeNavLabel(false), "Upgrade");
-  assert.equal(upgradeNavLabel(true), "My plan");
+  assert.equal(upgradeNavLabel(false), "Subscription");
+  assert.equal(upgradeNavLabel(true), "Subscription");
   const parent = roleNavItems({ role: "parent", paid: false }).map((item) => item.label);
   const daycare = roleNavItems({ role: "provider", paid: true }).map((item) => item.label);
   const guest = roleNavItems({ role: "guest" }).map((item) => item.label);
   assert.ok(parent.includes("Saved"));
-  assert.ok(parent.includes("Upgrade"));
+  assert.ok(parent.includes("Subscription"));
   assert.equal(parent.includes("My listing"), false);
   assert.ok(daycare.includes("Desk"));
-  assert.ok(daycare.includes("My plan"));
+  assert.ok(daycare.includes("Subscription"));
   assert.equal(daycare.includes("Saved"), false);
   assert.ok(guest.includes("I'm a parent"));
   assert.ok(guest.includes("I'm a daycare"));
-  assert.ok(guest.includes("Plans"));
-  assert.equal(roleNavItems({ role: "parent" }).find((item) => item.id === "home")?.to, "/");
+  assert.ok(guest.includes("Subscription"));
+  assert.equal(roleNavItems({ role: "parent" }).find((item) => item.id === "home")?.to, "/parent");
   assert.equal(roleNavItems({ role: "guest" }).find((item) => item.id === "plans")?.to, "/plans");
   assert.equal(guest.includes("Admin"), false);
   assert.equal(roleNavItems({ role: "admin" }).some((item) => item.label === "Admin"), false);

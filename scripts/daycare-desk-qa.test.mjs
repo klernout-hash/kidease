@@ -83,5 +83,5 @@ test("Daycare desk chrome is keyed for EN and FR", () => {
   const shell = src("src/components/desk-shell.tsx");
   assert.match(shell, /useCopy/);
   assert.match(shell, /item\.labelKey/);
-  assert.match(shell, /deskNavMore/);
+  assert.match(shell, /DeskMenuProvider/);
 });

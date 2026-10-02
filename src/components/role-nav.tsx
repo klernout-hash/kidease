@@ -84,6 +84,7 @@ export function RoleNavLinks({
           appearance={appearance === "drawer" ? "drawer" : "page"}
           marker={item.id}
           emphasis={item.id === "upgrade" && !paid}
+          className={item.id === "upgrade" && appearance === "drawer" ? "max-md:hidden" : undefined}
           onClick={onNavigate}
         />
       ))}

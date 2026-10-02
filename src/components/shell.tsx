@@ -8,6 +8,10 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
 import { useCopy } from "@/lib/use-copy";
 import { BrandMark } from "@/components/brand-mark";
+import { CountBadge } from "@/components/count-badge";
+import { ProfileAvatar } from "@/components/profile-avatar";
+import { attentionTotal } from "@/lib/attention";
+import { restoreMyAccount } from "@/lib/server/family";
 import { MenuLeafBack } from "@/components/menu-leaf-back";
 import { isMenuLeafPath } from "@/lib/menu-leaf";
 import { NavDrawer } from "@/components/nav-drawer";
@@ -115,20 +119,43 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
             <Link to={homeTo} className="relative z-20 shrink-0" aria-label="KidEase">
               <BrandMark size="sm" />
             </Link>
-            <button
-              type="button"
-              className="relative z-20 ml-auto grid size-12 shrink-0 place-items-center rounded-full text-fg transition-colors duration-150 ease-out hover:bg-surface [[data-channel=website]_&]:grid"
-              aria-label="Menu"
-              aria-expanded={open}
-              aria-controls="ke-nav-drawer"
-              onPointerDown={() => setOpen(true)}
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpen(true);
-              }}
-            >
-              <Menu className="size-6" strokeWidth={1.75} />
-            </button>
+            <div className="relative z-20 ml-auto flex items-center gap-1">
+              {user ? (
+                <Link
+                  to="/account"
+                  search={accountSearch(sticky)}
+                  data-ke="header-avatar"
+                  aria-label={t("account")}
+                  className="hidden size-11 place-items-center rounded-full md:grid"
+                >
+                  <ProfileAvatar
+                    userId={user.id}
+                    fallback={user.profileImageUrl}
+                    name={user.displayName}
+                    size="sm"
+                  />
+                </Link>
+              ) : null}
+              <button
+                type="button"
+                className="relative grid size-12 shrink-0 place-items-center rounded-full text-fg transition-colors duration-150 ease-out hover:bg-surface [[data-channel=website]_&]:grid"
+                aria-label="Menu"
+                aria-expanded={open}
+                aria-controls="ke-nav-drawer"
+                onPointerDown={() => setOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpen(true);
+                }}
+              >
+                <Menu className="size-6" strokeWidth={1.75} />
+                <CountBadge
+                  count={attentionTotal(session?.attention)}
+                  marker="menu-badge"
+                  className="absolute right-0.5 top-0.5"
+                />
+              </button>
+            </div>
           </div>
           {barePath === "/" || barePath === "/search" ? (
             <div className="w-full min-w-0 overflow-hidden pb-1.5 lg:absolute lg:inset-x-16 lg:top-0 lg:flex lg:h-16 lg:w-auto lg:items-center lg:overflow-visible lg:pb-0 [[data-channel=website]_&]:flex">
@@ -143,6 +170,25 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
           ) : null}
         </div>
       </header>
+      {session?.restoreUntil ? (
+        <div
+          data-ke="account-restore"
+          className="border-b border-border bg-surface px-4 py-3"
+        >
+          <p className="text-sm text-fg">{t("accountRestoreBody")}</p>
+          <button
+            type="button"
+            className="mt-2 inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-fg"
+            onClick={() => {
+              void restoreMyAccount()
+                .then(() => window.location.reload())
+                .catch(() => undefined);
+            }}
+          >
+            {t("accountRestoreAction")}
+          </button>
+        </div>
+      ) : null}
       <NavDrawer
         open={open}
         onClose={close}

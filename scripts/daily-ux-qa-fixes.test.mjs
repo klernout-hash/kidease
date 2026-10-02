@@ -225,22 +225,15 @@ test("parent unread badge follows the inbox view for the active desk", () => {
   assert.match(src("src/components/desk-switcher.tsx"), /inboxUnreadForDesk/);
 });
 
-test("shortlist chips wrap; Parent/Daycare phone desk nav scrolls instead of wrapping", () => {
+test("shortlist chips wrap; phone desk nav is the hamburger, not a wrapping pill row", () => {
   const shortlist = src("src/components/parent-shortlist.tsx");
   assert.match(shortlist, /ke-listings-narrow/);
   assert.match(shortlist, /min-w-0 max-w-full flex-wrap/);
   const shell = src("src/components/desk-shell.tsx");
-  assert.match(shell, /data-ke="desk-tab-nav"/);
-  assert.match(shell, /overflow-x-auto/);
-  assert.match(shell, /data-ke="desk-more-sheet"/);
-  assert.match(shell, /aria-modal="true"/);
-  const phone = shell.slice(shell.indexOf("function PhoneDeskNav"), shell.indexOf("export function DeskShell"));
-  assert.match(phone, /flex-nowrap/);
-  assert.doesNotMatch(phone, /flex-wrap/);
-  assert.match(phone, /data-ke="desk-more-open"/);
-  const moreIdx = phone.indexOf("data-ke=\"desk-more-open\"");
-  const navEnd = phone.indexOf("</nav>");
-  assert.equal(moreIdx > navEnd, true, "More stays pinned outside the scrolling primaries");
+  assert.doesNotMatch(shell, /data-ke="desk-tab-nav"/);
+  assert.doesNotMatch(shell, /data-ke="desk-more-sheet"/);
+  assert.match(shell, /DeskMenuProvider/);
+  assert.match(src("src/components/nav-drawer.tsx"), /useDeskMenu/);
   assert.match(src("src/styles.css"), /html\[data-channel="app"\] \.ke-listings-narrow/);
 });
 

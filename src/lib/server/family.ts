@@ -1741,30 +1741,80 @@ export const updateCapacity = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Final removal after the 30-day restore window. Keeps payment and invoice rows.
+ * Tax rules need the billing record after the account is gone.
+ */
+export async function purgeAccountData(uid: string) {
+  const sql = await getSql();
+  await sql`delete from messages where conversation_id in (select id from conversations where user_id = ${uid})`;
+  await sql`delete from conversations where user_id = ${uid}`;
+  await sql`delete from bookings where user_id = ${uid}`;
+  await sql`delete from children where user_id = ${uid}`;
+  await sql`delete from saved_daycares where user_id = ${uid}`;
+  await sql`delete from provider_daycares where user_id = ${uid}`;
+  await sql`delete from centre_members where user_id = ${uid}`.catch(() => undefined);
+  await sql`delete from centre_invites where invited_by = ${uid} or accepted_user_id = ${uid}`.catch(
+    () => undefined,
+  );
+  await sql`delete from lead_requests where user_id = ${uid}`.catch(() => undefined);
+  await sql`delete from waitlist_interests where user_id = ${uid}`.catch(() => undefined);
+  await sql`delete from waitlist_pulse_deliveries where user_id = ${uid}`.catch(() => undefined);
+  await sql`delete from casl_consent_events where user_id = ${uid}`.catch(() => undefined);
+  await sql`delete from casl_consents where user_id = ${uid}`.catch(() => undefined);
+  await sql`delete from user_notifications where user_id = ${uid}`.catch(() => undefined);
+  await sql`delete from profiles where user_id = ${uid}`;
+  await sql`delete from "session" where "userId" = ${uid}`;
+  await sql`delete from "account" where "userId" = ${uid}`;
+  await sql`delete from "user" where "id" = ${uid}`;
+}
+
+export async function readDeletedAt(userId: string): Promise<string | null> {
+  const sql = await getSql();
+  const rows = await sql<{ deleted_at: string | Date | null }>`
+    select deleted_at from profiles where user_id = ${userId} limit 1
+  `.catch(() => []);
+  const value = rows[0]?.deleted_at;
+  if (!value) return null;
+  return value instanceof Date ? value.toISOString() : String(value);
+}
+
+/** Purge only after the restore window. Returns pending while restore is still open. */
+export async function purgeAccountIfExpired(userId: string): Promise<"active" | "pending" | "purged"> {
+  const deletedAt = await readDeletedAt(userId);
+  if (!deletedAt) return "active";
+  const { withinRestoreWindow } = await import("@/lib/account-delete");
+  if (withinRestoreWindow(deletedAt)) return "pending";
+  await purgeAccountData(userId);
+  return "purged";
+}
+
 export const deleteAccount = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const sql = await getSql();
     const uid = context.userId;
-    await sql`delete from messages where conversation_id in (select id from conversations where user_id = ${uid})`;
-    await sql`delete from conversations where user_id = ${uid}`;
-    // Keep payment and invoice rows. Tax rules need the billing record after the account is gone.
-    await sql`delete from bookings where user_id = ${uid}`;
-    await sql`delete from children where user_id = ${uid}`;
-    await sql`delete from saved_daycares where user_id = ${uid}`;
-    await sql`delete from provider_daycares where user_id = ${uid}`;
-    await sql`delete from centre_members where user_id = ${uid}`.catch(() => undefined);
-    await sql`delete from centre_invites where invited_by = ${uid} or accepted_user_id = ${uid}`.catch(
-      () => undefined,
-    );
-    await sql`delete from lead_requests where user_id = ${uid}`.catch(() => undefined);
-    await sql`delete from waitlist_interests where user_id = ${uid}`.catch(() => undefined);
-    await sql`delete from waitlist_pulse_deliveries where user_id = ${uid}`.catch(() => undefined);
-    await sql`delete from casl_consent_events where user_id = ${uid}`.catch(() => undefined);
-    await sql`delete from casl_consents where user_id = ${uid}`.catch(() => undefined);
-    await sql`delete from profiles where user_id = ${uid}`;
+    await sql`
+      insert into profiles (user_id, role, deleted_at)
+      values (${uid}, 'parent', now())
+      on conflict (user_id) do update set deleted_at = now()
+    `;
     await sql`delete from "session" where "userId" = ${uid}`;
-    await sql`delete from "account" where "userId" = ${uid}`;
-    await sql`delete from "user" where "id" = ${uid}`;
-    return { ok: true as const };
+    const { ACCOUNT_RESTORE_DAYS } = await import("@/lib/account-delete");
+    return { ok: true as const, restoreDays: ACCOUNT_RESTORE_DAYS };
+  });
+
+export const restoreMyAccount = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const deletedAt = await readDeletedAt(context.userId);
+    if (!deletedAt) return { ok: true as const, restored: false as const };
+    const { withinRestoreWindow } = await import("@/lib/account-delete");
+    if (!withinRestoreWindow(deletedAt)) {
+      await purgeAccountData(context.userId);
+      throw new Error("This account can no longer be restored.");
+    }
+    const sql = await getSql();
+    await sql`update profiles set deleted_at = null where user_id = ${context.userId}`;
+    return { ok: true as const, restored: true as const };
   });

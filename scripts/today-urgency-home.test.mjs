@@ -168,8 +168,8 @@ test("provider default desk is Today and clutter stays off that path", () => {
   assert.match(home, /declineTour/);
   assert.match(home, /DailyCareDesk/);
   assert.doesNotMatch(home, /Promote|Subscription|Claim a centre|FreePageExplainer|DirectorNudge|VacancyConfirm|ProviderPlanBanner|first-run|modal|QualityIssuesPanel|Superhost/);
-  assert.match(shell, /visiblePrimaryDeskNav/);
-  assert.match(shell, /visibleSecondaryDeskNav/);
+  assert.match(shell, /DeskMenuProvider/);
+  assert.match(src("src/lib/desk-nav.ts"), /visiblePrimaryDeskNav/);
   assert.match(shell, /bg-primary text-primary-fg/);
   // Active desk nav is a filled pill, not an underline. `no-underline` is required
   // so Messages deep-links (`<a>`) do not render as text links.

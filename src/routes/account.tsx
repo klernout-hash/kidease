@@ -28,6 +28,7 @@ import { useAppStore } from "@/lib/store";
 import { AppearanceControl } from "@/components/appearance-control";
 import { SignedInDevices } from "@/components/signed-in-devices";
 import { AccountSecurity } from "@/components/account-security";
+import { DeleteAccountPanel } from "@/components/delete-account-panel";
 
 export const Route = createFileRoute("/account")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
@@ -35,9 +36,14 @@ export const Route = createFileRoute("/account")({
     const out: {
       tab?: "saved" | "enrolled" | "profile" | "payments";
       desk?: "parent" | "director" | "admin" | "support";
+      section?: "profile" | "appearance" | "subscription" | "delete";
     } = {};
     const tab = s.tab;
     if (tab === "saved" || tab === "enrolled" || tab === "profile" || tab === "payments") out.tab = tab;
+    const section = s.section;
+    if (section === "profile" || section === "appearance" || section === "subscription" || section === "delete") {
+      out.section = section;
+    }
     const desk = parseDeskQuery(typeof s.desk === "string" ? s.desk : "");
     if (desk) out.desk = deskQueryValue(desk);
     return out;
@@ -256,6 +262,19 @@ function ProfilePane() {
             ? t("accountBackParent")
             : null;
 
+  const section = search.section ?? "profile";
+  const sectionSearch = (next: "profile" | "appearance" | "subscription" | "delete") => ({
+    tab: "profile" as const,
+    ...(search.desk ? { desk: search.desk } : {}),
+    section: next,
+  });
+  const sections = [
+    { id: "profile" as const, label: t("profile") },
+    { id: "appearance" as const, label: t("appearance") },
+    { id: "subscription" as const, label: t("navUpgrade") },
+    { id: "delete" as const, label: t("deleteAccount") },
+  ];
+
   return (
     <AccountDeskFrame desk={desk}>
       <main className={desk ? "max-w-lg pb-6" : "ke-gutter mx-auto max-w-lg pb-10 pt-6"}>
@@ -280,20 +299,51 @@ function ProfilePane() {
             · {t("account")}
           </p>
         ) : null}
-        <h1 className="font-display text-[1.75rem] tracking-[-0.03em]">{t("profile")}</h1>
-        {user ? (
-          <Link
-            to="/delete-account"
-            data-ke="account-delete"
-            className="mt-4 flex min-h-14 items-center justify-between rounded-xl bg-surface px-4 text-[15px] font-medium text-danger ring-1 ring-border"
-          >
-            <span>{t("deleteAccount")}</span>
-            <span aria-hidden>›</span>
-          </Link>
+        <h1 className="font-display text-[1.75rem] tracking-[-0.03em]">{t("account")}</h1>
+        <nav data-ke="account-sections" aria-label={t("account")} className="mt-4 flex flex-col gap-1">
+          {sections.map((item) => (
+            <Link
+              key={item.id}
+              to="/account"
+              search={sectionSearch(item.id)}
+              data-ke={`account-section-${item.id}`}
+              aria-current={section === item.id ? "page" : undefined}
+              className={
+                section === item.id
+                  ? "flex min-h-11 items-center rounded-xl bg-primary px-3 text-sm font-medium text-primary-fg"
+                  : "flex min-h-11 items-center rounded-xl px-3 text-sm font-medium text-fg ring-1 ring-border"
+              }
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+        {section === "appearance" ? (
+          <section className="mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
+            <AppearanceControl />
+          </section>
         ) : null}
-        <section className="mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
-          <AppearanceControl />
-        </section>
+        {section === "subscription" ? (
+          <section className="mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
+            <h2 className="font-display text-xl">{t("navUpgrade")}</h2>
+            <p className="mt-2 text-sm text-muted">{t("accountSubscriptionLead")}</p>
+            <Button className="mt-4" asChild>
+              <Link
+                to={desk === "provider" ? "/provider/subscription" : "/parent"}
+                search={desk === "provider" ? undefined : { tab: "payments" }}
+              >
+                {t("navUpgrade")}
+              </Link>
+            </Button>
+          </section>
+        ) : null}
+        {section === "delete" && user ? (
+          <div data-ke="account-delete">
+            <DeleteAccountPanel signedIn />
+          </div>
+        ) : null}
+        {section !== "profile" ? null : (
+        <>
         <div className="mt-8 flex flex-col items-center text-center">
           <ProfileAvatar userId={user?.id} fallback={user?.profileImageUrl} name={name || user?.displayName} size="lg" />
           <p className="mt-4 text-lg font-semibold">{name || user?.displayName || t("profile")}</p>
@@ -404,22 +454,8 @@ function ProfilePane() {
             <SignedInDevices />
           </>
         ) : null}
-        {user ? (
-          <section
-            className="mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border"
-            data-ke="account-delete-detail"
-          >
-            <h2 className="font-display text-xl">{t("deleteAccount")}</h2>
-            <p className="mt-2 text-sm text-muted">{t("deleteAccountLead")}</p>
-            <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">
-              <li>{t("deleteAccountKeepBilling")}</li>
-              <li>{t("deleteAccountKeepLogs")}</li>
-            </ul>
-            <Button variant="ghost" className="mt-4 text-danger" asChild>
-              <Link to="/delete-account">{t("deleteAccount")}</Link>
-            </Button>
-          </section>
-        ) : null}
+        </>
+        )}
       </main>
     </AccountDeskFrame>
   );

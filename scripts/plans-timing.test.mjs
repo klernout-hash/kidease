@@ -30,14 +30,14 @@ test("guests do not see pricing on the public home", () => {
 
 test("guests reach plans from the main menu and the footer", () => {
   const plans = roleNavItems({ role: "guest" }).find((item) => item.id === "plans");
-  assert.equal(plans?.label, "Plans");
+  assert.equal(plans?.label, "Subscription");
   assert.equal(plans?.to, "/plans");
   assert.equal(roleNavItems({ role: "parent" }).some((item) => item.id === "plans"), false);
   assert.equal(roleNavItems({ role: "provider" }).some((item) => item.id === "upgrade"), true);
   assert.ok(FOOTER_KIDEASE.some((link) => link.to === "/plans" && link.labelKey === "navPlans"));
   assert.match(src("src/components/role-nav.tsx"), /plans: "navPlans"/);
-  assert.match(src("src/lib/copy.ts"), /navPlans: "Plans"/);
-  assert.match(src("src/lib/copy.ts"), /navPlans: "Forfaits"/);
+  assert.match(src("src/lib/copy.ts"), /navPlans: "Subscription"/);
+  assert.match(src("src/lib/copy.ts"), /navPlans: "Abonnement"/);
 });
 
 test("home upgrade card waits for a real action and stays hidden after dismissal", () => {

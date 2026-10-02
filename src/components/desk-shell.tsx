@@ -1,14 +1,15 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { CreditCard, Menu, X } from "lucide-react";
+import { CreditCard } from "lucide-react";
 import { Shell } from "@/components/shell";
+import { CountBadge } from "@/components/count-badge";
+import { DeskMenuProvider } from "@/components/desk-menu";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
+import { attentionForItem } from "@/lib/attention";
 import { showDeskSwitcher } from "@/lib/desks";
 import {
   DESK_META,
   visibleDeskNav,
-  visiblePrimaryDeskNav,
-  visibleSecondaryDeskNav,
   type DeskIcon,
   type DeskId,
   type DeskItem,
@@ -48,17 +49,20 @@ function DeskNavFace({
   item,
   on,
   t,
+  count = 0,
 }: {
   item: DeskItem;
   on: boolean;
   t: (key: CopyKey) => string;
+  count?: number;
 }) {
   const { label, hint } = deskItemText(item, t);
   return (
     <>
-      <span className="flex items-center gap-2 font-medium leading-none">
+      <span className="flex w-full items-center gap-2 font-medium leading-none">
         <DeskItemIcon name={item.icon} className="size-3.5 shrink-0" />
-        {label}
+        <span className="min-w-0 flex-1">{label}</span>
+        <CountBadge count={count} />
       </span>
       {hint ? (
         <span className={cn("mt-0.5 hidden text-xs md:block", on ? "text-primary-fg/70" : "text-subtle")}>
@@ -74,11 +78,13 @@ function DeskNavButton({
   on,
   onSelect,
   t,
+  count = 0,
 }: {
   item: DeskItem;
   on: boolean;
   onSelect: (id: string) => void;
   t: (key: CopyKey) => string;
+  count?: number;
 }) {
   return (
     <button
@@ -88,7 +94,7 @@ function DeskNavButton({
       onClick={() => onSelect(item.id)}
       className={cn(navClass(on), "text-left")}
     >
-      <DeskNavFace item={item} on={on} t={t} />
+      <DeskNavFace item={item} on={on} t={t} count={count} />
     </button>
   );
 }
@@ -108,10 +114,12 @@ function DeskNavLink({
   item,
   on,
   t,
+  count = 0,
 }: {
   item: DeskItem;
   on: boolean;
   t: (key: CopyKey) => string;
+  count?: number;
 }) {
   const plan = item.id === "subscription" || item.id === "upgrade";
   return (
@@ -120,9 +128,9 @@ function DeskNavLink({
       {...(item.search ? { search: item.search } : {})}
       data-ke="desk-primary-pill"
       data-nav={plan ? "upgrade" : item.id}
-      className={cn(navClass(on), "text-left")}
+      className={cn(navClass(on), "w-full text-left")}
     >
-      <DeskNavFace item={item} on={on} t={t} />
+      <DeskNavFace item={item} on={on} t={t} count={count} />
     </Link>
   );
 }
@@ -137,210 +145,6 @@ function itemIsOn(item: DeskItem, active: string, pathname: string): boolean {
   return active === item.id;
 }
 
-function DeskMoreSheet({
-  items,
-  active,
-  pathname,
-  onSelect,
-  t,
-  open,
-  onClose,
-}: {
-  items: DeskItem[];
-  active: string;
-  pathname: string;
-  onSelect: (id: string) => void;
-  t: (key: CopyKey) => string;
-  open: boolean;
-  onClose: () => void;
-}) {
-  const titleId = useId();
-  const closeRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-      if (e.key !== "Tab" || !panelRef.current) return;
-      const focusable = panelRef.current.querySelectorAll<HTMLElement>(
-        "a[href], button:not([disabled]), select, textarea, input",
-      );
-      if (!focusable.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last?.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first?.focus();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = prev;
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [open, onClose]);
-
-  if (!open || !items.length) return null;
-
-  return (
-    <div className="pointer-events-auto" data-ke="desk-more-sheet">
-      <button
-        type="button"
-        className="fixed inset-0 z-[70] bg-fg/40 backdrop-blur-[2px]"
-        aria-label={t("close")}
-        onClick={onClose}
-      />
-      <div
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        className="fixed inset-x-0 bottom-0 top-[calc(3.2rem+env(safe-area-inset-top))] z-[80] flex flex-col rounded-t-2xl bg-surface shadow-lift ring-1 ring-border"
-      >
-        <div className="flex shrink-0 flex-col items-center pt-2">
-          <span className="h-1 w-10 rounded-full bg-border" aria-hidden />
-        </div>
-        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-2">
-          <h2 id={titleId} className="font-display text-xl">
-            {t("deskNavMore")}
-          </h2>
-          <button
-            ref={closeRef}
-            type="button"
-            onClick={onClose}
-            className="grid size-11 place-items-center rounded-full text-fg hover:bg-bg"
-            aria-label={t("close")}
-          >
-            <X className="size-5" strokeWidth={1.75} />
-          </button>
-        </div>
-        <nav className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-2 pb-[max(1.25rem,calc(5.5rem+env(safe-area-inset-bottom)))]">
-          {items.map((item) => {
-            const on = itemIsOn(item, active, pathname);
-            const { label, hint } = deskItemText(item, t);
-            const rowClass = cn(
-              "flex w-full items-start justify-between gap-3 rounded-xl px-3 py-3 text-left no-underline hover:no-underline",
-              on ? "bg-primary text-primary-fg" : "text-fg hover:bg-bg",
-            );
-            const body = (
-              <>
-                <span className="min-w-0">
-                  <span className="flex items-center gap-2 font-medium">
-                    <DeskItemIcon name={item.icon} className="size-3.5 shrink-0" />
-                    {label}
-                  </span>
-                  {hint ? (
-                    <span className={cn("mt-0.5 block text-xs", on ? "text-primary-fg/70" : "text-subtle")}>
-                      {hint}
-                    </span>
-                  ) : null}
-                </span>
-              </>
-            );
-            if (item.href) {
-              const plan = item.id === "subscription" || item.id === "upgrade";
-              return (
-                <Link
-                  key={item.id}
-                  to={item.href}
-                  {...(item.search ? { search: item.search } : {})}
-                  onClick={onClose}
-                  data-nav={plan ? "upgrade" : item.id}
-                  className={rowClass}
-                >
-                  {body}
-                </Link>
-              );
-            }
-            return (
-              <button
-                key={item.id}
-                type="button"
-                data-nav={item.id === "subscription" || item.id === "upgrade" ? "upgrade" : item.id}
-                onClick={() => {
-                  onClose();
-                  onSelect(item.id);
-                }}
-                className={rowClass}
-              >
-                {body}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-    </div>
-  );
-}
-
-function PhoneDeskNav({
-  primary,
-  secondary,
-  active,
-  pathname,
-  onSelect,
-  t,
-  label,
-}: {
-  primary: DeskItem[];
-  secondary: DeskItem[];
-  active: string;
-  pathname: string;
-  onSelect: (id: string) => void;
-  t: (key: CopyKey) => string;
-  label: string;
-}) {
-  const [moreOpen, setMoreOpen] = useState(false);
-  const secondaryOn = secondary.some((item) => itemIsOn(item, active, pathname));
-
-  return (
-    <>
-      <div className="flex items-center gap-2">
-        <nav
-          data-ke="desk-tab-nav"
-          aria-label={label}
-          className="flex min-w-0 flex-1 flex-nowrap gap-2 overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {primary.map((item) => {
-            const on = itemIsOn(item, active, pathname);
-            if (item.href) return <DeskNavLink key={item.id} item={item} on={on} t={t} />;
-            return <DeskNavButton key={item.id} item={item} on={on} onSelect={onSelect} t={t} />;
-          })}
-        </nav>
-        {secondary.length ? (
-          <button
-            type="button"
-            data-ke="desk-more-open"
-            aria-expanded={moreOpen}
-            aria-haspopup="dialog"
-            aria-label={t("deskNavMore")}
-            onClick={() => setMoreOpen(true)}
-            className={cn(navClass(secondaryOn && !moreOpen), "gap-2")}
-          >
-            <Menu className="size-3.5 shrink-0" strokeWidth={1.8} />
-            <span className="font-medium">{t("deskNavMore")}</span>
-          </button>
-        ) : null}
-      </div>
-      <DeskMoreSheet
-        items={secondary}
-        active={active}
-        pathname={pathname}
-        onSelect={onSelect}
-        t={t}
-        open={moreOpen}
-        onClose={() => setMoreOpen(false)}
-      />
-    </>
-  );
-}
 
 export function DeskShell({
   desk,
@@ -366,74 +170,38 @@ export function DeskShell({
     centreOwner: session?.centreOwner,
     centreLinked: session?.centreLinked,
   };
-  const phoneMore = desk === "parent" || desk === "daycare";
   const labelPlan = (item: DeskItem) => planNavItem(item, chrome.paid);
   const allItems = visibleDeskNav(desk, opts).map(labelPlan);
-  const primary = (phoneMore ? visiblePrimaryDeskNav(desk, opts) : allItems).map(labelPlan);
-  const secondary = (phoneMore ? visibleSecondaryDeskNav(desk, opts) : []).map(labelPlan);
   const eyebrow = meta.eyebrowKey ? t(meta.eyebrowKey) : meta.eyebrow;
   const title = meta.titleKey ? t(meta.titleKey) : meta.title;
-  const adminSwitcher = Boolean(session && showDeskSwitcher(session.desks, session.role, session.email));
+  const showSwitcher = Boolean(session && showDeskSwitcher(session.desks, session.role, session.email));
 
   return (
-    <Shell>
-      <div className={cn("ke-dense mx-auto flex flex-col gap-3 px-3 py-2 md:py-3", wide ? "max-w-[90rem]" : "max-w-6xl")}>
-        {adminSwitcher ? (
-          <div
-            data-ke="desk-switcher-row"
-            className="sticky top-[calc(3.2rem+env(safe-area-inset-top))] z-40 -mx-3 border-b border-border bg-bg px-3 py-2 md:top-16 md:z-30 md:mx-0 md:px-0"
-          >
-            <DeskSwitcher />
-          </div>
-        ) : null}
-        <div className="flex flex-col gap-3 md:flex-row md:items-start md:gap-4">
-          <aside className={cn("md:sticky md:w-44 md:shrink-0", adminSwitcher ? "md:top-32" : "md:top-14")}>
-            <p className="hidden text-[11px] font-medium uppercase tracking-[0.14em] text-subtle md:block">{eyebrow}</p>
-            <h1 className="font-display text-[1.2rem] leading-tight md:mt-0.5">{title}</h1>
-            <nav
-              data-ke="desk-desktop-nav"
-              className="mt-2 hidden flex-col gap-0.5 md:flex"
-            >
-              {allItems.map((item) => {
-                const on = itemIsOn(item, active, pathname);
-                if (item.href) return <DeskNavLink key={item.id} item={item} on={on} t={t} />;
-                return <DeskNavButton key={item.id} item={item} on={on} onSelect={onSelect} t={t} />;
-              })}
-            </nav>
-          </aside>
-          <div className="min-w-0 flex-1">
-            <div
-              className={cn(
-                "sticky z-30 -mx-3 mb-2 border-b border-border bg-bg px-3 py-1 md:hidden",
-                adminSwitcher
-                  ? "top-[calc(6.6rem+env(safe-area-inset-top))]"
-                  : "top-[calc(3.2rem+env(safe-area-inset-top))]",
-              )}
-            >
-              {phoneMore ? (
-                <PhoneDeskNav
-                  primary={primary}
-                  secondary={secondary}
-                  active={active}
-                  pathname={pathname}
-                  onSelect={onSelect}
-                  t={t}
-                  label={title}
-                />
-              ) : (
-                <nav data-ke="desk-tab-nav" className="flex max-w-full flex-wrap gap-2 pb-1">
-                  {allItems.map((item) => {
-                    const on = itemIsOn(item, active, pathname);
-                    if (item.href) return <DeskNavLink key={item.id} item={item} on={on} t={t} />;
-                    return <DeskNavButton key={item.id} item={item} on={on} onSelect={onSelect} t={t} />;
-                  })}
-                </nav>
-              )}
-            </div>
-            {children}
+    <DeskMenuProvider value={{ desk, items: allItems, active, pathname, onSelect }}>
+      <Shell>
+        <div className={cn("ke-dense mx-auto flex flex-col gap-3 px-3 py-2 md:py-3", wide ? "max-w-[90rem]" : "max-w-6xl")}>
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:gap-4">
+            <aside className="md:sticky md:top-14 md:w-44 md:shrink-0">
+              <p className="hidden text-[11px] font-medium uppercase tracking-[0.14em] text-subtle md:block">{eyebrow}</p>
+              <h1 className="font-display text-[1.2rem] leading-tight md:mt-0.5">{title}</h1>
+              {showSwitcher ? (
+                <div className="mt-2 hidden md:block" data-ke="desk-switcher-slot">
+                  <DeskSwitcher />
+                </div>
+              ) : null}
+              <nav data-ke="desk-desktop-nav" className="mt-2 hidden flex-col gap-0.5 md:flex">
+                {allItems.map((item) => {
+                  const on = itemIsOn(item, active, pathname);
+                  const count = attentionForItem(session?.attention, item.id);
+                  if (item.href) return <DeskNavLink key={item.id} item={item} on={on} t={t} count={count} />;
+                  return <DeskNavButton key={item.id} item={item} on={on} onSelect={onSelect} t={t} count={count} />;
+                })}
+              </nav>
+            </aside>
+            <div className="min-w-0 flex-1">{children}</div>
           </div>
         </div>
-      </div>
-    </Shell>
+      </Shell>
+    </DeskMenuProvider>
   );
 }

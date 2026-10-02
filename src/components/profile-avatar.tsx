@@ -3,6 +3,16 @@ import { UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PROFILE_PHOTO_EVENT, readProfilePhoto } from "@/lib/profile-photo";
 
+export function initialsFromName(name?: string | null): string {
+  const parts = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!parts.length) return "";
+  if (parts.length === 1) return parts[0]!.slice(0, 1).toUpperCase();
+  return `${parts[0]!.slice(0, 1)}${parts[parts.length - 1]!.slice(0, 1)}`.toUpperCase();
+}
+
 export function useLiveProfilePhoto(userId: string | null | undefined, fallback?: string | null) {
   const [src, setSrc] = useState<string | null>(() => readProfilePhoto(userId, fallback));
 
@@ -36,7 +46,7 @@ export function ProfileAvatar({
   const src = useLiveProfilePhoto(userId, fallback);
   const dim = size === "lg" ? "size-28" : size === "sm" ? "size-9" : "size-11";
   const icon = size === "lg" ? "size-12" : size === "sm" ? "size-4" : "size-5";
-  const letter = name?.trim().slice(0, 1).toUpperCase();
+  const letter = initialsFromName(name);
 
   return (
     <span

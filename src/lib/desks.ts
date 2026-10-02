@@ -609,8 +609,9 @@ export function headerDesks(
 }
 
 /**
- * Parent | Daycare | Admin pills. Only the operator admin
- * (profiles.role = admin, and kyle@kidease.ca when the mailbox is known).
+ * Parent | Daycare | Admin switcher. Shown for the operator admin
+ * (profiles.role = admin, and kyle@kidease.ca when the mailbox is known)
+ * and for a multi-role account that can open both Parent and Daycare.
  * Parent-only and daycare-only stay on their own desk.
  */
 export function showDeskSwitcher(
@@ -618,9 +619,13 @@ export function showDeskSwitcher(
   role?: AppRole | null,
   email?: string | null,
 ) {
-  if (!canSeeAdminDesk(role, email)) return false;
+  if (!role) return false;
   const list = headerDesks(desks ?? [], role, email);
-  return list.includes("admin") && list.length > 1;
+  if (list.length < 2) return false;
+  if (parseAppRole(role) === "admin") {
+    return canSeeAdminDesk(role, email) && list.includes("admin");
+  }
+  return list.includes("parent") && list.includes("provider");
 }
 
 export type SessionDesks = {
@@ -648,6 +653,10 @@ export type SessionDesks = {
   ownsCentre?: boolean;
   /** Owns a centre or is an active centre member. */
   centreLinked?: boolean;
+  /** Shared menu badges. One payload so every desk shows the same numbers. */
+  attention?: import("@/lib/attention").AttentionCounts;
+  /** ISO time the 30-day restore window ends. Null when the account is active. */
+  restoreUntil?: string | null;
 };
 
 /**

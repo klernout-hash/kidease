@@ -45,6 +45,17 @@ export function writeThemePreference(preference: ThemePreference): void {
   }
 }
 
+let themePersister: ((theme: ThemePreference) => void) | null = null;
+
+/** Account save hook. Registered only while someone is signed in. */
+export function setThemePersister(next: ((theme: ThemePreference) => void) | null) {
+  themePersister = next;
+}
+
+export function persistThemePreference(theme: ThemePreference) {
+  themePersister?.(theme);
+}
+
 export function applyTheme(preference: ThemePreference, root = typeof document === "undefined" ? null : document.documentElement): ResolvedTheme {
   const resolved = resolveTheme(preference);
   if (!root) return resolved;
