@@ -188,7 +188,7 @@ test("listing health percent is separate from Listing Verified", () => {
 
 test("Stripe Checkout CTAs stay honest when there are no bills", () => {
   const parent = src("src/components/parent-desk.tsx");
-  assert.match(parent, /ParentPlusPanel offerCheckout/);
+  assert.match(parent, /ParentPlusPanel quiet offerCheckout/);
   assert.doesNotMatch(parent, /offerCheckout=\{bills\.filter/);
   assert.match(src("src/components/parent-plus.tsx"), /offerCheckout/);
   assert.match(src("src/components/parent-plus.tsx"), /KidEase is free|parentPlusLead/);

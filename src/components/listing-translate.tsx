@@ -47,7 +47,8 @@ export function ListingTranslate({
 
   return (
     <div className="rounded-lg bg-bg p-3 ring-1 ring-border" data-ke="listing-translate">
-      <p className="text-sm text-muted">{t("translateLead")}</p>
+      <h3 className="font-display text-xl">{t("translateFrench")}</h3>
+      <p className="mt-1 text-sm text-muted">{t("translateLead")}</p>
       <Button type="button" className="mt-2 min-h-11" disabled={busy} onClick={() => void draft()}>
         {busy ? t("translateWorking") : t("translateCta")}
       </Button>

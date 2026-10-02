@@ -167,9 +167,13 @@ export function AdminMailPanel() {
         </div>
       </div>
 
-      {inboxError ? (
+      {status && !status.titanLinked ? (
+        <p className="mb-6 rounded-2xl bg-surface px-5 py-4 text-sm text-muted ring-1 ring-border" data-ke="admin-mail-unconfigured">
+          Mail inside KidEase is not connected yet. Use Titan webmail for this mailbox. Nothing else on the admin desk changes.
+        </p>
+      ) : inboxError ? (
         <p className="mb-6 rounded-2xl bg-surface px-5 py-4 text-sm text-muted ring-1 ring-border">
-          {inboxError}
+          Messages could not be loaded. Use Titan webmail if you need them now.
         </p>
       ) : null}
 
@@ -184,7 +188,7 @@ export function AdminMailPanel() {
           <p className="border-t border-border px-5 py-8 text-sm text-muted">Loading Titan inbox…</p>
         ) : messages.length === 0 ? (
           <p className="border-t border-border px-5 py-8 text-sm text-muted">
-            {status?.titanLinked ? "This Titan inbox is empty." : "Inbox listing needs TITAN_APP_PASSWORD."}
+            {status?.titanLinked ? "This Titan inbox is empty." : "Open Titan webmail to read this mailbox."}
           </p>
         ) : (
           <ul className="divide-y divide-border border-t border-border">

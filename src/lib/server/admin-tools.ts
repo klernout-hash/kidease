@@ -4,6 +4,7 @@
  */
 
 import { createServerFn } from "@tanstack/react-start";
+import { centrePickerLabel } from "@/lib/centre-label";
 import { AI_FLAGS, type AiFlag } from "@/lib/ai/flags";
 import {
   PROTECTED_LISTING_ID,
@@ -102,7 +103,7 @@ export async function listTruthQueue(): Promise<{ on: boolean; rows: TruthQueueR
       rows: rows.map((row) => ({
         id: row.id,
         daycareId: row.daycare_id,
-        name: row.name || row.daycare_id,
+        name: centrePickerLabel(row.name, null, row.daycare_id),
         field: row.field,
         current: row.current_value,
         proposed: row.proposed_value,

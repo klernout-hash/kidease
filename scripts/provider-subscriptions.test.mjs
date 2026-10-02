@@ -57,7 +57,7 @@ test("Upgrade stays on the parent and daycare desk panels", () => {
   const parent = visibleDeskNav("parent", { providerSubscriptions: false }).find((i) => i.id === "upgrade");
   assert.equal(parent?.label, "Subscription");
   assert.equal(parent?.href, "/parent");
-  assert.equal(parent?.search?.tab, "payments");
+  assert.equal(parent?.search?.tab, "subscription");
   assert.equal(daycare.some((i) => i.id === "upgrade"), false);
 });
 

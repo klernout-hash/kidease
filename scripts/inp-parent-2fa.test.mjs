@@ -16,7 +16,7 @@ test("parent desk defers heavy tab content so nav highlight paints first", () =>
   const route = src("src/routes/parent.tsx");
   assert.match(desk, /startTransition/);
   assert.match(desk, /setContentTab/);
-  assert.match(desk, /active=\{tab\}/);
+  assert.match(desk, /active=\{tab === "subscription" \? "upgrade" : tab\}/);
   assert.match(desk, /contentTab === "explore"/);
   assert.match(desk, /contentTab === "saved"/);
   assert.match(desk, /scheduleIdle/);

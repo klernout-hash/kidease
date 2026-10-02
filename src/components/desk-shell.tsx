@@ -136,7 +136,7 @@ function DeskNavLink({
 }
 
 function itemIsOn(item: DeskItem, active: string, pathname: string): boolean {
-  if (item.id === "upgrade") return active === "upgrade" || active === "payments";
+  if (item.id === "upgrade") return active === "upgrade";
   if (item.href) {
     if (item.search?.tab || item.search?.desk) return active === item.id;
     const pathOnly = item.href.split("?")[0] || item.href;

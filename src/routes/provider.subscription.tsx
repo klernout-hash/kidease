@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { DeskShell } from "@/components/desk-shell";
 import { ProviderSubscriptionPanel } from "@/components/provider-subscription";
@@ -10,6 +10,7 @@ import { canBuyDaycareUpgrade } from "@/lib/upgrade-role";
 import { useRoleChrome } from "@/components/role-chrome";
 import { useCopy } from "@/lib/use-copy";
 import { parseAppRole } from "@/lib/desks";
+import { providerNavSearch } from "@/lib/desk-nav";
 
 export const Route = createFileRoute("/provider/subscription")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -42,6 +43,7 @@ export const Route = createFileRoute("/provider/subscription")({
 
 function ProviderSubscriptionPage() {
   const { t } = useCopy();
+  const navigate = useNavigate();
   const upgradeSearch = Route.useSearch();
   const { user, isPending } = useCurrentUserState();
   const chrome = useRoleChrome();
@@ -124,7 +126,8 @@ function ProviderSubscriptionPage() {
         desk="daycare"
         active="subscription"
         onSelect={(id) => {
-          if (id !== "subscription" && typeof window !== "undefined") window.location.assign("/provider");
+          if (id === "subscription") return;
+          void navigate({ to: "/provider", search: providerNavSearch(id) });
         }}
       >
         <p className="ke-native-plan-note mb-4 text-sm text-muted" data-ke="native-plan-note">

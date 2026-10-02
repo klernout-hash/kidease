@@ -413,7 +413,7 @@ async function runRoleFixture(page, base) {
     await page.locator('[data-ke="parent-home"]').waitFor({ timeout: timeoutMs });
     const parentHeaderUpgrade = ((await page.locator('[data-nav="upgrade"]:visible').first().innerText().catch(() => "")) || "").trim();
     await page.locator('[data-ke="desk-desktop-nav"] [data-nav="upgrade"]').click();
-    await page.waitForURL(/tab=payments/i, { timeout: timeoutMs }).catch(() => {});
+    await page.waitForURL(/tab=subscription/i, { timeout: timeoutMs }).catch(() => {});
     const deskPlus = page.locator('[data-ke="plan-checkout"]:visible').first();
     await deskPlus.waitFor({ timeout: timeoutMs }).catch(() => {});
     const parentDeskHit = page.waitForRequest((req) => req.url().includes("cs_test_e2e_mock"), { timeout: timeoutMs }).catch(() => null);
@@ -423,7 +423,7 @@ async function runRoleFixture(page, base) {
     await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await openHeaderMenu(page);
     await clickDrawerUpgrade(page);
-    await page.waitForURL(/tab=payments/i, { timeout: timeoutMs }).catch(() => {});
+    await page.waitForURL(/tab=subscription/i, { timeout: timeoutMs }).catch(() => {});
     const homePlus = page.locator('[data-ke="plan-checkout"]:visible').first();
     await homePlus.waitFor({ timeout: timeoutMs }).catch(() => {});
     const parentHomeHit = page.waitForRequest((req) => req.url().includes("cs_test_e2e_mock"), { timeout: timeoutMs }).catch(() => null);

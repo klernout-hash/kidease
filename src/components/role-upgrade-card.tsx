@@ -20,7 +20,7 @@ export function RoleUpgradeCard({
   if (role !== "parent" && role !== "provider") return null;
   const parent = role === "parent";
   const to = parent ? "/parent" : "/provider/subscription";
-  const search = parent ? ({ tab: "payments" } as const) : undefined;
+  const search = parent ? ({ tab: "subscription" } as const) : undefined;
   const renewal = renewsOn
     ? new Intl.DateTimeFormat(locale === "fr" ? "fr-CA" : "en-CA", {
         dateStyle: "long",

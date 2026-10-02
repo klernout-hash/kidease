@@ -394,24 +394,25 @@ function Home() {
   return (
     <Shell bare>
       <JsonLd json={organizationGraphJsonLdScript()} />
-      <h1 className="ke-gutter mx-auto max-w-6xl pt-4 text-[clamp(1.6rem,4.2vw,2.75rem)] leading-tight tracking-[-0.03em]">
+      <div className="ke-home w-full min-w-0">
+      <h1 className="ke-gutter mx-auto w-full pt-4 text-[clamp(1.6rem,4.2vw,2.75rem)] leading-tight tracking-[-0.03em]">
         {t("tagline")}
       </h1>
-      <div className="ke-web-only [[data-channel=app]_&]:hidden">
+      <div className="ke-home-web ke-web-only w-full [[data-channel=app]_&]:hidden">
         <section className="from-soft border-b border-border bg-bg">
-          <div className="ke-gutter mx-auto max-w-6xl pb-4 pt-1">
+          <div className="ke-gutter mx-auto w-full pb-4 pt-1">
             {featuredSearch}
           </div>
         </section>
 
         <section className="border-y border-border bg-surface">
-          <div className="ke-gutter mx-auto max-w-6xl py-6">
+          <div className="ke-gutter mx-auto w-full py-6">
             <TrustBar />
           </div>
         </section>
 
         {!featuredReady || featuredAgreement.showSection ? (
-        <section id="featured" className="ke-gutter mx-auto max-w-6xl py-8 md:py-12">
+        <section id="featured" className="ke-gutter mx-auto w-full py-8 md:py-12">
           <h2 className="text-xl tracking-[-0.03em] md:text-2xl">{t(strip.featuredTitleKey)}</h2>
           <p className="mt-2 max-w-2xl text-sm text-muted">{t("featuredBody")}</p>
           <ResumeVisitCard />
@@ -437,7 +438,7 @@ function Home() {
         </section>
         ) : null}
 
-        <section id="how" className="ke-defer-paint ke-gutter mx-auto max-w-6xl py-16">
+        <section id="how" className="ke-gutter mx-auto w-full py-16">
           <h2 className="max-w-2xl text-[clamp(1.75rem,4vw,2.25rem)]">{t("howStressFree")}</h2>
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <Step
@@ -464,8 +465,8 @@ function Home() {
           </div>
         </section>
 
-        <section className="ke-defer-paint bg-surface">
-          <div className="ke-gutter mx-auto max-w-6xl py-16">
+        <section className="bg-surface">
+          <div className="ke-gutter mx-auto w-full py-16">
             <div id="enroll">
               <Suspense fallback={<div className="min-h-64" aria-hidden="true" />}>
                 <RoleEnrollChooser
@@ -478,7 +479,7 @@ function Home() {
           </div>
         </section>
 
-        <section className="ke-defer-paint ke-gutter mx-auto max-w-6xl py-16">
+        <section className="ke-gutter mx-auto w-full py-16">
           <h2 className="text-3xl md:text-4xl">{t("trustWhyTitle")}</h2>
           <ul className="mt-8 grid gap-4 md:grid-cols-2">
             <Why icon={BadgeCheck} text={t("trustWhy1")} />
@@ -489,8 +490,8 @@ function Home() {
           <p className="mt-8 max-w-2xl text-muted">{t("trustWhyLocal")}</p>
         </section>
 
-        <section className="ke-defer-paint bg-surface">
-          <div className="ke-gutter mx-auto max-w-6xl py-16">
+        <section className="bg-surface">
+          <div className="ke-gutter mx-auto w-full py-16">
             <h2 className="text-3xl md:text-4xl">{t("quotesTitle")}</h2>
             <p className="mt-4 max-w-2xl text-muted">{t("quotesLead")}</p>
             <div className="mt-8 grid gap-5 md:grid-cols-3">
@@ -501,7 +502,7 @@ function Home() {
           </div>
         </section>
 
-        <section className="ke-defer-paint bg-primary text-primary-fg">
+        <section className="bg-primary text-primary-fg">
           <div className="ke-gutter mx-auto max-w-3xl py-16 text-center">
             <h2 className="text-3xl text-primary-fg md:text-4xl">{t("finalCtaTitle")}</h2>
             <p className="mx-auto mt-4 max-w-xl text-primary-fg/90">{t("finalCtaBody")}</p>
@@ -524,13 +525,13 @@ function Home() {
         <SiteFooter />
       </div>
 
-      <div className="ke-app-only hidden [[data-channel=app]_&]:block">
+      <div className="ke-home-app ke-app-only hidden w-full [[data-channel=app]_&]:block">
         <section className="border-b border-border bg-bg">
-          <div className="ke-gutter mx-auto max-w-6xl pb-4 pt-2">
+          <div className="ke-gutter mx-auto w-full pb-4 pt-2">
             {featuredSearch}
           </div>
         </section>
-        <section className="ke-gutter mx-auto max-w-6xl py-6">
+        <section className="ke-gutter mx-auto w-full py-6">
           <h2 className="text-xl tracking-[-0.03em]">{t(strip.featuredTitleKey)}</h2>
           <ResumeVisitCard />
           <HomeDiscovery
@@ -553,6 +554,7 @@ function Home() {
             </Button>
           </div>
         </section>
+      </div>
       </div>
 
       <Suspense fallback={null}>

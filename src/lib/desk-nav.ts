@@ -88,7 +88,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "payments", label: "Pay", hint: "Bills from your centre", labelKey: "payments", hintKey: "deskNavPaymentsHint" },
     { id: "messages", label: "Messages", hint: "Centre threads + tours", labelKey: "messages", hintKey: "deskNavParentMessagesHint", href: "/inbox", search: { view: "family" } },
     { id: "search", label: "Search", labelKey: "search", href: "/search" },
-    { id: "upgrade", label: "Subscription", hint: "Parent Plus", labelKey: "deskNavUpgrade", hintKey: "deskNavUpgradeHint", icon: "credit-card", href: "/parent", search: { tab: "payments" } },
+    { id: "upgrade", label: "Subscription", hint: "Parent Plus", labelKey: "deskNavUpgrade", hintKey: "deskNavUpgradeHint", icon: "credit-card", href: "/parent", search: { tab: "subscription" } },
     { id: "account", label: "Account", hint: "Family profile and alerts", labelKey: "account", hintKey: "deskNavParentAccountHint", href: "/account", search: { tab: "profile", desk: "parent" } },
   ],
 };

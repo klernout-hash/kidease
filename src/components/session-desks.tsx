@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { getMyDesks } from "@/lib/server/roles";
+import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import { SESSION_SETTLE_MS, withTimeout } from "@/lib/timeout";
 import {
   canVisitDesk,
@@ -71,6 +72,7 @@ export function SessionDesksProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState(false);
   const [sticky, setStickyState] = useState<DeskKey | null>(null);
+  const loadedFor = useRef<string | null>(null);
 
   function setSticky(desk: DeskKey) {
     writeStickyDesk(desk);
@@ -84,11 +86,17 @@ export function SessionDesksProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isPending) return;
     if (!user) {
+      loadedFor.current = null;
       setSession(null);
       setStickyState(null);
       setError(false);
       setReady(true);
       return;
+    }
+    if (loadedFor.current !== user.id) {
+      loadedFor.current = user.id;
+      setSession(null);
+      setReady(false);
     }
     if (!needsSessionDesks(pathname)) {
       setError(false);
@@ -96,10 +104,10 @@ export function SessionDesksProvider({ children }: { children: ReactNode }) {
       return;
     }
     let cancelled = false;
-    setSession(null);
-    setReady(false);
     setError(false);
-    void withTimeout(getMyDesks(), SESSION_SETTLE_MS, "get-desks-timeout")
+    void dedupedQuery(`get-my-desks:${user.id}`, QUERY_STALE_MS, () =>
+      withTimeout(getMyDesks(), SESSION_SETTLE_MS, "get-desks-timeout"),
+    )
       .then((s) => {
         if (cancelled) return;
         setSession(s);

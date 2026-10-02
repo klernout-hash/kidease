@@ -10,6 +10,12 @@ import { useRoleChrome } from "@/components/role-chrome";
 export const Route = createFileRoute("/inbox")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
   validateSearch: (s: Record<string, unknown>) => parseInboxSearch(s),
+  head: ({ match }) => ({
+    meta: [
+      { title: match.search.view === "family" ? "Family messages · KidEase" : "Messages · KidEase" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: InboxLayout,
 });
 

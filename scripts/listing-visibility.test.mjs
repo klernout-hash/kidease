@@ -4,6 +4,7 @@ import { test } from "node:test";
 import { GHOST_LISTING } from "../src/lib/ghost-listing.ts";
 import { centresInLiveSearch } from "../src/lib/approve-live.ts";
 import {
+  hideListingFromPublicPage,
   isAdminOnlyListing,
   isPublicListing,
   listingVisibilityForOwners,
@@ -72,6 +73,16 @@ test("an owned QA fixture stays on the director desk, including after approval",
   assert.equal(providerDeskListingVisible(qa), false);
   assert.equal(providerDeskListingVisible(qa, { ownedByViewer: false, viewerEmail: "other@centre.example" }), false);
   assert.equal(providerDeskListingVisible({ ...qa, claimStatus: "declined" }, owner), false);
+  const publicQaSlug = {
+    slug: "qa-test-daycare-listing-z5hz",
+    name: "QA TEST Daycare Listing",
+    visibility: "admin_only",
+    isTest: 1,
+  };
+  assert.equal(looksLikeTestFixture(publicQaSlug), false);
+  assert.equal(isAdminOnlyListing(publicQaSlug), false);
+  assert.equal(hideListingFromPublicPage(publicQaSlug, false), false);
+  assert.equal(isPublicListing(publicQaSlug), true);
   assert.equal(providerDeskListingVisible({ ...qa, claimStatus: "" }, owner), false);
 
   const testNamed = { name: "TEST Extra Claim Lab", claimStatus: "waiting", visibility: "admin_only", isTest: 1 };

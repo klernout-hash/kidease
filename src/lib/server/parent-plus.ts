@@ -156,8 +156,8 @@ export const startParentPlusCheckout = createServerFn({ method: "POST" })
         const session = await createCatalogCheckoutSession({
           mode: checked.mode,
           priceId: checked.priceId,
-          successUrl: `${origin}/parent?tab=payments&plus=success&plan=${plan}&interval=${data.interval}&session={CHECKOUT_SESSION_ID}`,
-          cancelUrl: `${origin}/parent?tab=payments&plus=cancel`,
+          successUrl: `${origin}/parent?tab=subscription&plus=success&plan=${plan}&interval=${data.interval}&session={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${origin}/parent?tab=subscription&plus=cancel`,
           customerId: state.customerId,
           customerEmail: state.customerId ? null : await userEmail(context.userId),
           userId: context.userId,
@@ -196,7 +196,7 @@ export const startParentPlusPortal = createServerFn({ method: "POST" })
           customerId: state.customerId!,
           subscriptionId: state.subscriptionId,
           configurationId: parentPortalConfiguration(),
-          returnUrl: `${appOrigin()}/parent?tab=payments&billing=return`,
+          returnUrl: `${appOrigin()}/parent?tab=subscription&billing=return`,
         }),
     });
   });

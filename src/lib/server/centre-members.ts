@@ -20,6 +20,8 @@ import { logSecurityEvent } from "@/lib/server/security-events";
 import { loadCentreRole } from "@/lib/server/centre-access";
 import { employeeInviteUrl, trySendEmployeeInviteEmail } from "@/lib/server/invite-mail";
 import { nid } from "@/lib/utils";
+import { dedupeCentreTeam } from "@/lib/centre-team";
+import { centrePickerLabel } from "@/lib/centre-label";
 
 export type CentreTeamRow = {
   id: string;
@@ -85,7 +87,7 @@ export const listCentreTeam = createServerFn({ method: "GET" })
       return {
         centres: staffCentres.map((c) => ({
           id: c.id,
-          name: c.name,
+          name: centrePickerLabel(c.name, null, c.id),
           role: (c.role as CentreMemberRole) || "staff",
         })),
         people: [],
@@ -162,8 +164,8 @@ export const listCentreTeam = createServerFn({ method: "GET" })
     ];
 
     return {
-      centres: centres.map((c) => ({ id: c.id, name: c.name, role: "owner" as const })),
-      people,
+      centres: centres.map((c) => ({ id: c.id, name: centrePickerLabel(c.name, null, c.id), role: "owner" as const })),
+      people: dedupeCentreTeam(people),
       canInvite,
     };
   });

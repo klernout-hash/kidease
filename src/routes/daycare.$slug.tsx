@@ -40,7 +40,7 @@ import { SaveListingButton } from "@/components/save-listing-button";
 import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
 import { amenityLabel } from "@/lib/amenities";
-import { licenseRecordUrl, subsidyEstimatorUrl, officialLicenceNumber } from "@/lib/licensing";
+import { licenseRecordUrl, subsidyEstimatorUrl } from "@/lib/licensing";
 import { listingSubsidy, subsidyNote, subsidyNoteKey } from "@/lib/fee-program";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { TrustBadge } from "@/components/trust-badge";
@@ -446,7 +446,6 @@ export function Listing() {
   const mapsQuery = encodeURIComponent(`${address}, ${d.city}, ${d.province} ${d.postalCode}`);
   const mapsPlace = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
   const googleReviewsHref = googleReviewsUrl(d);
-  const licenceNo = officialLicenceNumber(d.licenseNumber, d.id);
   const parentRated = (d.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (d.parentRatingX10 ?? 0) > 0;
   const googleRated = d.reviewCount > 0 && d.ratingX10 > 0;
 
@@ -693,18 +692,13 @@ export function Listing() {
             {d.city}, {d.province}
           </p>
           {tagline.trim() ? <p className="mt-0.5 text-sm text-muted">{tagline}</p> : null}
-          {approved || licensed || licenceNo ? (
+          {approved || licensed ? (
             <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm" data-ke="listing-trust-line">
               {approved ? (
                 <KidEaseApprovalStrip eligible={publicApprovalEligible(d)} variant="inline" />
-              ) : licensed ? (
-                <TrustBadge badge={licensed} compact />
-              ) : null}
-              {licenceNo ? (
-                <span className="text-muted">
-                  {t("license")} {licenceNo}
-                </span>
-              ) : null}
+              ) : (
+                <TrustBadge badge={licensed!} compact />
+              )}
             </p>
           ) : null}
           {parentRated ? (
@@ -951,7 +945,6 @@ export function Listing() {
               <h2 className="font-display text-2xl">{t("licenceAndInspections")}</h2>
               <p className="mt-2 max-w-prose text-sm text-muted">{t("licenceRecordLead")}</p>
               <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm">
-                <Meta label={t("license")} value={officialLicenceNumber(d.licenseNumber, d.id) ?? t("trustNotVerified")} />
                 {licensed && !approved ? (
                   <Meta label={t("licenseStatus")} value={t(licensed.labelKey as CopyKey)} />
                 ) : null}

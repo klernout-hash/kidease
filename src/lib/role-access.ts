@@ -195,7 +195,7 @@ export function roleNavItems(input: { role: ChromeRole; paid?: boolean }): RoleN
       { id: "saved", label: "Saved", to: "/parent", search: { tab: "saved" }, icon: "saved" },
       { id: "requests", label: "Requests & tours", to: "/parent", search: { tab: "requests" }, icon: "tourChecklist" },
       { id: "messages", label: "Messages", to: "/inbox", search: { view: "family" }, icon: "messages" },
-      { id: "upgrade", label: planLabel, to: "/parent", search: { tab: "payments" }, icon: "benefits" },
+      { id: "upgrade", label: planLabel, to: "/parent", search: { tab: "subscription" }, icon: "benefits" },
       { id: "account", label: "Account", to: "/account", search: { tab: "profile" }, icon: "account" },
     ];
   }

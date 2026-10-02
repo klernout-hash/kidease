@@ -10,6 +10,7 @@ import {
   type CentreTeamPayload,
 } from "@/lib/server/centre-members";
 import { useCopy } from "@/lib/use-copy";
+import { centrePickerLabel } from "@/lib/centre-label";
 import type { CopyKey } from "@/lib/copy";
 
 const ROLE_COPY: Record<string, CopyKey> = {
@@ -113,7 +114,7 @@ export function CentreEmployeesPanel({ canInvite }: { canInvite: boolean }) {
                 >
                   {team.centres.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.name}
+                      {centrePickerLabel(c.name, null, c.id)}
                     </option>
                   ))}
                 </select>
@@ -174,7 +175,7 @@ export function CentreEmployeesPanel({ canInvite }: { canInvite: boolean }) {
                 <p className="font-medium break-words">{row.name || row.email || t("employeeNoName")}</p>
                 <p className="text-sm text-muted break-all">{row.email}</p>
                 <p className="mt-1 text-xs text-subtle">
-                  {row.daycareName} · {t(ROLE_COPY[row.role] ?? "employeeRoleStaff")} ·{" "}
+                  {centrePickerLabel(row.daycareName, null, row.daycareId)} · {t(ROLE_COPY[row.role] ?? "employeeRoleStaff")} ·{" "}
                   {t(STATUS_COPY[row.status] ?? "employeeStatusPending")}
                 </p>
               </div>

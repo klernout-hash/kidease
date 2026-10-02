@@ -223,7 +223,6 @@ function ComparePage() {
                   values={items.map((d) => parentIncompleteLabel(d, t) ?? t("detailsReady"))}
                 />
                 <Row label={t("googleReviews")} values={items.map((d) => (d.reviewCount ? `${(d.ratingX10 / 10).toFixed(1)} (${d.reviewCount})` : "—"))} />
-                <Row label={t("license")} values={items.map((d) => d.licenseNumber ?? "—")} />
                 <tr>
                   <th className="p-2 text-fg">{t("license")}</th>
                   {items.map((d) => (

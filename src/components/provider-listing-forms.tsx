@@ -167,11 +167,11 @@ export function Field({
   name?: string;
 }) {
   return (
-    <label className="text-sm">
+    <label className="text-sm font-medium text-fg">
       {label}
       <input
         name={name}
-        className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
+        className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3 text-fg"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />

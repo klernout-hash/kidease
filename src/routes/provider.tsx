@@ -77,6 +77,7 @@ import { ProviderScreeningPanel } from "@/components/provider-screening";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { useRoleChrome } from "@/components/role-chrome";
 import { DaycareDeskHome } from "@/components/daycare-desk-home";
+import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 
 const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "tours", "licence", "contract", "promote", "employees", "screening"];
 const OWNER_DESKS = new Set<DaycareDesk>(["money", "licence", "contract", "promote"]);
@@ -97,6 +98,12 @@ const COACH_FOCUS = new Set<ListingCoachFocus>([
 
 export const Route = createFileRoute("/provider")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
+  head: () => ({
+    meta: [
+      { title: "Daycare desk · KidEase" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   pendingComponent: ProviderPending,
   validateSearch: (s: Record<string, unknown>) => {
     const out: { desk?: DaycareDesk; preview?: "support"; claimed?: boolean; focus?: ListingCoachFocus } = {};
@@ -168,12 +175,12 @@ function ProviderPage() {
   const [form, setForm] = useState({
     name: "",
     address: "",
-    city: "Winnipeg",
+    city: "",
     postalCode: "",
     licenseNumber: "",
-    infantMonthly: 1200,
-    toddlerMonthly: 1100,
-    preschoolMonthly: 1000,
+    infantMonthly: 0,
+    toddlerMonthly: 0,
+    preschoolMonthly: 0,
     storefront: "",
     staffLanguages: [] as string[],
     culturalPrograms: [] as string[],
@@ -193,6 +200,7 @@ function ProviderPage() {
       listLeadRequests({ data: { desk: "centre" } }).catch(() => [] as LeadRequest[]),
     ]);
     setListings(res.listings);
+    if (res.listings.length === 0) setShowNewForm(true);
     setStats(res.stats);
     setSubscription(res.subscription);
     setUpgradeDismissed(Boolean(res.upgradeCardDismissed));
@@ -204,11 +212,12 @@ function ProviderPage() {
   }
 
   useEffect(() => {
-    if (!user?.id) return;
-    void load().catch(() => undefined);
-  }, [user?.id]);
+    if (!user?.id || childRoute) return;
+    void dedupedQuery(`provider-desk:${user.id}`, QUERY_STALE_MS, () => load().then(() => true)).catch(() => undefined);
+  }, [user?.id, childRoute]);
 
   useEffect(() => {
+    if (childRoute) return;
     const next = search.desk ?? DEFAULT_DESK;
     if (OWNER_DESKS.has(next) && deskSettled && !centreOwner) {
       setDesk(DEFAULT_DESK);
@@ -216,7 +225,7 @@ function ProviderPage() {
       return;
     }
     setDesk(next);
-  }, [search.desk, centreOwner, deskSettled, navigate]);
+  }, [search.desk, centreOwner, deskSettled, navigate, childRoute]);
 
   useEffect(() => {
     const focus = search.focus;
@@ -553,6 +562,7 @@ function ProviderPage() {
             ) : (
             <h2 className="font-display text-2xl">{t("listCentre")}</h2>
             )}
+            <p className="mt-1 text-sm text-muted">{t("publishListingMissing")}</p>
             <form
               className="mt-4 grid gap-3 sm:grid-cols-2"
               data-ke="publish-listing-form"
@@ -605,9 +615,9 @@ function ProviderPage() {
               <Field name="address" label="Address" value={form.address} onChange={(v) => setForm({ ...form, address: v })} />
               <Field name="city" label="City" value={form.city} onChange={(v) => setForm({ ...form, city: v })} />
               <Field name="postalCode" label="Postal code" value={form.postalCode} onChange={(v) => setForm({ ...form, postalCode: v })} />
-              <Field name="infantMonthly" label={`${t("infantFee")} CAD`} value={String(form.infantMonthly)} onChange={(v) => setForm({ ...form, infantMonthly: Number(v) || 0 })} />
-              <Field name="toddlerMonthly" label={`${t("toddlerFee")} CAD`} value={String(form.toddlerMonthly)} onChange={(v) => setForm({ ...form, toddlerMonthly: Number(v) || 0 })} />
-              <Field name="preschoolMonthly" label={`${t("preschoolFee")} CAD`} value={String(form.preschoolMonthly)} onChange={(v) => setForm({ ...form, preschoolMonthly: Number(v) || 0 })} />
+              <Field name="infantMonthly" label={`${t("infantFee")} CAD`} value={form.infantMonthly ? String(form.infantMonthly) : ""} onChange={(v) => setForm({ ...form, infantMonthly: Number(v) || 0 })} />
+              <Field name="toddlerMonthly" label={`${t("toddlerFee")} CAD`} value={form.toddlerMonthly ? String(form.toddlerMonthly) : ""} onChange={(v) => setForm({ ...form, toddlerMonthly: Number(v) || 0 })} />
+              <Field name="preschoolMonthly" label={`${t("preschoolFee")} CAD`} value={form.preschoolMonthly ? String(form.preschoolMonthly) : ""} onChange={(v) => setForm({ ...form, preschoolMonthly: Number(v) || 0 })} />
               <div className="sm:col-span-2">
                 <p className="text-sm font-medium">{t("storefrontPhoto")}</p>
                 <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start">
