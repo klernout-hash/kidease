@@ -3,7 +3,14 @@ import { getSql } from "@/lib/db";
 import { filterByLocationLock, resolveLocationLock } from "@/lib/location-lock";
 import { catchmentMatch, clampRadiusKm, compareProximity, distanceKm, recommendedRank } from "@/lib/proximity";
 import { resolveListingTourTimezone } from "@/lib/tour-calendar";
-import { catalogByIdsGet, catalogBySlugGet, catalogMonths, catalogNear, type CatalogDaycare } from "@/lib/catalog";
+import {
+  catalogByIdsGet,
+  catalogBySlugGet,
+  catalogMonths,
+  catalogNamedCityFromJson,
+  catalogNear,
+  type CatalogDaycare,
+} from "@/lib/catalog";
 import { hideListingFromPublicPage, isAdminOnlyListing, isPublicListing, publicListings } from "@/lib/listing-visibility";
 import { parseAnchorMode, resolveSearchAnchors } from "@/lib/dual-anchor";
 import { nearbyListings, nearbyListingsDual, type NearbyListing } from "./nearby";
@@ -38,10 +45,10 @@ import { alignSearchOrigin } from "@/lib/search-query";
 import { transactionalMailConfigured } from "@/lib/transactional-mail";
 import { listingInfoSlaReady } from "@/lib/parent-listing";
 import { listedDaycareTypeFromSearch, matchesListedDaycareType } from "@/lib/care-type";
-import { CITY_TYPE_LIST_CAP } from "@/lib/server/catalog-neon";
+import { CITY_TYPE_LIST_CAP, queryNeonCityHubListings } from "@/lib/server/catalog-neon";
 import { applyMasterCareType } from "@/lib/server/master-care-type";
 import { resolveSearchDirectory, listingBelongsToHub } from "@/lib/city-directory";
-import { cityHubDefBySlug, cityHubMapSearchQuery } from "@/lib/city-hubs";
+import { cityHubDefBySlug, cityHubMapSearchQuery, normalizeCityKey } from "@/lib/city-hubs";
 import { listingsForCityHub } from "@/lib/server/city-directory";
 import { geocode } from "@/lib/geo";
 import type { AgeGroup, AvailabilityRow, Daycare, DaycareCard, Review } from "@/lib/types";
@@ -420,6 +427,22 @@ async function mergePinnedCentres(
   return extra.length ? [...cards, ...extra] : cards;
 }
 
+/** Exact city + province rows, even when the stored pin is outside the radius. */
+async function withNamedCityListings(
+  rows: NearbyListing[],
+  lock: ReturnType<typeof resolveLocationLock>,
+): Promise<NearbyListing[]> {
+  if (!lock?.city || !lock.province) return rows;
+  const key = normalizeCityKey(lock.city);
+  if (!key) return rows;
+  if (rows.some((row) => normalizeCityKey(row.city) === key)) return rows;
+  const neon = await queryNeonCityHubListings(lock.province, [key]);
+  const extra =
+    neon && neon.length > 0 ? neon : await catalogNamedCityFromJson(lock.city, lock.province);
+  if (!extra.length) return rows;
+  return uniqueById([...rows, ...extra]);
+}
+
 async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
   const work =
     typeof data.lat2 === "number" && typeof data.lng2 === "number"
@@ -438,7 +461,7 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
     q: data.q,
   });
   const directory = data.directorySlug ? cityHubDefBySlug(data.directorySlug) : null;
-  const listings = directory
+  const nearby = directory
     ? await listingsForCityHub(directory.slug)
     : await mergeApprovedCityListings(
         filterByLocationLock(
@@ -449,6 +472,7 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
         ),
         { origin, radiusKm: data.radiusKm, lock, label: data.label || data.q },
       );
+  const listings = directory ? nearby : await withNamedCityListings(nearby, lock);
   let cards: DaycareCard[] = [];
   for (const d of listings) {
     cards.push(toCard(d, origin, data.fsa));

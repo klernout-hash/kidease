@@ -1,5 +1,5 @@
 import { resolveSearchAnchors, type AnchorMode } from "./dual-anchor.ts";
-import { geocode, haversineKm } from "./geo.ts";
+import { geocode, haversineKm, queryNamesLongerMunicipality } from "./geo.ts";
 
 /** Parse `q` from TanStack `location.search` (object or query string). */
 export function searchQueryFromUnknown(search: unknown): string {
@@ -86,9 +86,8 @@ export function explicitCityQuery(q?: string | null) {
   const query = raw.toLowerCase();
   const label = hit.label.toLowerCase();
   const city = label.split(",")[0]?.trim() || "";
-  if (query === label || query === city || query.startsWith(`${city},`) || query.startsWith(`${city} `)) {
-    return hit;
-  }
+  if (query === label || query === city || query.startsWith(`${city},`)) return hit;
+  if (query.startsWith(`${city} `) && !queryNamesLongerMunicipality(query, city)) return hit;
   const compact = query.replace(/[^a-z0-9]/g, "");
   if (/^[a-z]\d[a-z](?:\d[a-z]\d)?$/.test(compact)) return hit;
   return null;

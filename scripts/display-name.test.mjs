@@ -8,4 +8,8 @@ test("display names clean scraped registry text without rewriting mixed-case nam
   assert.equal(displayCentreName("1St Ave Montessori"), "1st Ave Montessori");
   assert.equal(displayCentreName("ABC MONTESSORI"), "ABC Montessori");
   assert.equal(displayCentreName("YMCA Child Care"), "YMCA Child Care");
+  assert.equal(displayCentreName("Beanstalk Daycare, The"), "The Beanstalk Daycare");
+  assert.equal(displayCentreName("Play, Learn And Grow Childcare"), "Play, Learn And Grow Childcare");
+  assert.equal(displayCentreName("Neighbourhood Club -"), "Neighbourhood Club");
+  assert.equal(displayCentreName("Tiny Tots Inc."), "Tiny Tots Inc.");
 });

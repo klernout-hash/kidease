@@ -10,6 +10,7 @@ import { chooseCatalogListing, filterSuppressedCatalogRows } from "./catalog-fal
 import { isPublicListing } from "./listing-visibility";
 import { listingSlugLookupKeys, rememberSlugAliases } from "./listing-slug";
 import { collectPublicMapPins } from "./map-cluster";
+import { normalizeCityKey } from "./city-hubs.ts";
 import { bboxFromRadius, clampRadiusKm, distanceKm, inBbox } from "./proximity";
 
 export type { CatalogDaycare, RawCentre };
@@ -133,6 +134,27 @@ export async function catalogNearFromJson(origin: { lat: number; lng: number }, 
         out.push(listed);
       }
     }
+  }
+  return omitSuppressedBundleCopies(out);
+}
+
+/**
+ * Licensed rows whose city and province match exactly.
+ * Used when a centre is in that city but its pin sits outside the search radius.
+ */
+export async function catalogNamedCityFromJson(city: string, province: string): Promise<CatalogDaycare[]> {
+  await ensureRaw();
+  if (!rawCentres) return [];
+  const cityKey = normalizeCityKey(city);
+  const provinceKey = province.trim().toUpperCase();
+  if (!cityKey || provinceKey.length !== 2) return [];
+  const out: CatalogDaycare[] = [];
+  for (const row of rawCentres) {
+    if (normalizeCityKey(row.city) !== cityKey) continue;
+    if ((row.province || "").trim().toUpperCase() !== provinceKey) continue;
+    const listed = await hydrateRaw(row);
+    if (!isPublicListing(listed)) continue;
+    out.push(listed);
   }
   return omitSuppressedBundleCopies(out);
 }
