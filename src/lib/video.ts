@@ -1,12 +1,12 @@
 /**
  * Twilio Video env names, Parent Plus gate, and room-name helpers.
- * Real Account SID / API key come later — do not invent credentials.
+ * Real Account SID / API key come later: do not invent credentials.
  *
  * Video is a Parent Plus offer (CA$7.99/month or CA$59/year): parent ↔ centre tour.
  * Providers join without paying. Parents need active Plus (or admin testing).
  * No recording in v1. Monthly minute caps are scaffolded, not enforced.
  *
- * Flag helpers come from ./flags.ts (extension required — scripts/video.test.mjs
+ * Flag helpers come from ./flags.ts (extension required: scripts/video.test.mjs
  * loads this file in Node).
  */
 
@@ -29,7 +29,7 @@ export const VIDEO_CREDENTIALS_MESSAGE =
   "Twilio Video credentials are not configured. Set TWILIO_ACCOUNT_SID plus TWILIO_API_KEY_SID and TWILIO_API_KEY_SECRET (Access Tokens need an API key).";
 
 export const VIDEO_SDK_SCAFFOLD_MESSAGE =
-  "Scaffold — connect Twilio Video SDK next. Room and access token were created server-side. This page does not attach the camera yet.";
+  "Scaffold: connect Twilio Video SDK next. Room and access token were created server-side. This page does not attach the camera yet.";
 
 const PLUS_PRICE_EN = `${plusPriceHint("month", "en")} or ${plusPriceHint("year", "en")}`;
 
@@ -42,7 +42,7 @@ export const VIDEO_NO_RECORDING_MESSAGE = "This version does not record calls.";
 
 export const VIDEO_MINUTES_NOT_ENFORCED_MESSAGE = "Monthly minute limits are not enforced yet.";
 
-/** Planned monthly cap. Hook only — do not block joins on this number. */
+/** Planned monthly cap. Hook only: do not block joins on this number. */
 export const VIDEO_MONTHLY_MINUTE_CAP = 60;
 
 /** Access Token TTL in seconds. Short on purpose (Twilio max is 24h). */
@@ -51,7 +51,7 @@ export const VIDEO_TOKEN_TTL_SECONDS = 900;
 export const VIDEO_SDK_WIRED = false;
 
 export const VIDEO_FLAG_OFF_MESSAGE =
-  "Coming soon — FEATURE_VIDEO is off. This path does not start a live Twilio Video call or charge Plus.";
+  "Coming soon: FEATURE_VIDEO is off. This path does not start a live Twilio Video call or charge Plus.";
 
 export const VIDEO_SDK_NOT_WIRED_MESSAGE =
   "Video tours are not live yet. The Twilio Video camera SDK is not attached. This path does not start a call.";

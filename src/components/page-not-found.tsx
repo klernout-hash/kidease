@@ -39,13 +39,13 @@ export function ListingNotFoundPage() {
   return <PageNotFound title={t("listingNotFoundTitle")} body={t("listingNotFoundBody")} />;
 }
 
-/** Off-scope `/daycare/city/:slug` — not the Winnipeg search page. */
+/** Off-scope `/daycare/city/:slug`: not the Winnipeg search page. */
 export function CityHubNotFoundPage() {
   const { t } = useCopy();
   return <PageNotFound title={t("cityHubNotFoundTitle")} body={t("cityHubNotFoundBody")} />;
 }
 
-/** Router defaultNotFoundComponent — ignore TanStack's unused route props. */
+/** Router defaultNotFoundComponent: ignore TanStack's unused route props. */
 export function DefaultNotFound() {
   return <PageNotFound />;
 }

@@ -17,7 +17,7 @@
 export const CHAT_SCAFFOLD_READY = false;
 
 export const CHAT_SCAFFOLD_MESSAGE =
-  "This page is a flag checklist — not a chat product. Parents and centres already message on /inbox (text only, poll/reload). Do not buy Stream or Sendbird. Do not enable push, SMS, or video without a dry-run.";
+  "This page is a flag checklist: not a chat product. Parents and centres already message on /inbox (text only, poll/reload). Do not buy Stream or Sendbird. Do not enable push, SMS, or video without a dry-run.";
 
 export const CHAT_SCAFFOLD_EMPTY =
   "Could not load lab status. Confirm the admin session, then refresh. Live parent ↔ centre threads stay on /inbox regardless of these flags.";
@@ -25,15 +25,15 @@ export const CHAT_SCAFFOLD_EMPTY =
 export const CHAT_COMING_SOON_TITLE = "Coming soon";
 
 export const CHAT_FLAG_OFF_MESSAGE =
-  "Coming soon — FEATURE_INAPP_CHAT is off. Composer and delivery are not built. Live parent ↔ centre messages stay on /inbox.";
+  "Coming soon: FEATURE_INAPP_CHAT is off. Composer and delivery are not built. Live parent ↔ centre messages stay on /inbox.";
 
 export const CHAT_COMPOSER_DISABLED_MESSAGE =
   "Composer is disabled. This lab does not send, store, or deliver messages. FEATURE_INAPP_CHAT on still does not enable Stream, Sendbird, or a fake chat.";
 
-export const CHAT_COMPOSER_PLACEHOLDER = "Coming soon — in-app chat is not live";
+export const CHAT_COMPOSER_PLACEHOLDER = "Coming soon: in-app chat is not live";
 
 export const CHAT_FLAG_ON_NOT_LIVE_MESSAGE =
-  "FEATURE_INAPP_CHAT is on. Delivery is still not built — composer stays disabled. Do not treat this as working chat.";
+  "FEATURE_INAPP_CHAT is on. Delivery is still not built: composer stays disabled. Do not treat this as working chat.";
 
 export type ChatThreadKind = "parent_centre" | "parent_admin" | "centre_admin";
 

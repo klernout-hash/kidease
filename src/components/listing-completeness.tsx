@@ -20,7 +20,7 @@ const CARD_NEED_KEY: Record<CompletenessField, CopyKey> = {
   photo: "cardNeedPhoto",
 };
 
-/** Quiet parent-facing hint. Uses the first missing fact — never invents one. */
+/** Quiet parent-facing hint. Uses the first missing fact: never invents one. */
 export function parentIncompleteLabel(
   item: Pick<Daycare, "detailsReady" | "completenessMissing" | "lastPhotoUpdatedAt">,
   t: (key: CopyKey) => string,

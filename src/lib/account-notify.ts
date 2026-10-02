@@ -292,7 +292,7 @@ export function activityRoleBadge(kind?: string | null, detail?: string | null):
   return null;
 }
 
-/** name · email · role · city · time — never drop a row because email_status=failed. */
+/** name · email · role · city · time: never drop a row because email_status=failed. */
 export function activitySignupMeta(row: {
   kind: string;
   provider_name?: string | null;

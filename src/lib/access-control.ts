@@ -137,7 +137,7 @@ export function canCreateBillForCentre(ownedDaycareIds: readonly string[], dayca
   return ownsDaycare(ownedDaycareIds, daycareId);
 }
 
-/** Stripe Checkout for a bill — owning parent + sent only. No live charge here. */
+/** Stripe Checkout for a bill: owning parent + sent only. No live charge here. */
 export function canCheckoutBill(input: {
   actorUserId: string;
   parentUserId: string;
@@ -174,7 +174,7 @@ export const PROVIDER_PRICE_MISSING = "This plan’s Stripe price ID is not set.
 export const NETWORK_MIN_SITES = "Network is priced for 3 or more sites.";
 export const AUTH_UNAUTHORIZED = "Unauthorized";
 export const AUTH_FAIL_CLOSED =
-  "Auth is disabled (VITE_AUTH_ENABLED=false) but DATABASE_URL is set — refusing to fall back to the shared dev user against a real database.";
+  "Auth is disabled (VITE_AUTH_ENABLED=false) but DATABASE_URL is set: refusing to fall back to the shared dev user against a real database.";
 export const DEV_FALLBACK_USER_ID = "dev-user";
 
 /** Daycare A cannot mutate daycare B. Same predicate as updateListing / refreshVacancy. */
@@ -203,7 +203,7 @@ export type DeskWriteTarget =
 /**
  * Wrong-desk write APIs. Parent/daycare sessions never hit admin writes.
  * Listing writes need centre ownership (or admin). Child/profile/pay stay
- * same-user — a provider session cannot edit another family's rows.
+ * same-user: a provider session cannot edit another family's rows.
  */
 export function canCallDeskWriteApi(input: {
   actorRole?: AppRole | string | null;
@@ -262,7 +262,7 @@ export type ClaimDecision =
   | { ok: true; alreadyOwned: boolean }
   | { ok: false; error: string };
 
-/** startClaim — listing must exist and not belong to someone else. */
+/** startClaim: listing must exist and not belong to someone else. */
 export function decideStartClaim(input: {
   actorUserId: string;
   existingOwnerUserId?: string | null;

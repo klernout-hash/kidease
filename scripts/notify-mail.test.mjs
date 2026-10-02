@@ -103,7 +103,7 @@ test("contact submit throws when Resend fails", async () => {
 });
 
 test("auto-reply copy is the short thanks only", () => {
-  assert.equal(VISITOR_AUTO_REPLY_SUBJECT, "We got your message — KidEase");
+  assert.equal(VISITOR_AUTO_REPLY_SUBJECT, "We got your message: KidEase");
   assert.equal(
     VISITOR_AUTO_REPLY_TEXT,
     "Thanks for sending your request to KidEase. One of our KidEase representatives will get back to you within 24 hours.\n\nThank you",
@@ -210,7 +210,7 @@ test("actor confirmation is skipped when there is no actor email", () => {
 });
 
 test("confirmation copy keeps the 24-hour promise and Thank you, and does not invent spots or fees", () => {
-  assert.equal(ACTOR_CONFIRM_SUBJECT, "We got your request — KidEase");
+  assert.equal(ACTOR_CONFIRM_SUBJECT, "We got your request: KidEase");
   for (const kind of ACTOR_CONFIRM_KINDS) {
     const text = actorConfirmationText(kind);
     assert.match(text, /within 24 hours/);

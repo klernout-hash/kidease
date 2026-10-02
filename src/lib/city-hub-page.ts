@@ -7,7 +7,7 @@ import { filterSuppressedBundleRows } from "@/lib/server/bundled-catalog";
 import { liveHubCount } from "@/lib/server/city-directory";
 
 export async function loadCityHub(city: string): Promise<CityHubSnapshot> {
-  // Published Canadian hubs only. US and unknown slugs 404 — they must not
+  // Published Canadian hubs only. US and unknown slugs 404: they must not
   // fall through to the Winnipeg search page. The document edge does the
   // same in scripts/request-guard.mjs so the SPA shell cannot return 200.
   const hub = cityHubBySlug(city);
@@ -38,7 +38,7 @@ export function cityHubHead(loaderData: CityHubSnapshot | undefined, locale: "en
       : `Licensed daycare in ${cityName}, ${loaderData.province} · KidEase`;
   const description =
     locale === "fr"
-      ? `Parcourez ${loaderData.count} centres, nurseries et milieux familiaux permis à ${cityName}, ${loaderData.province}. Recherche gratuite sur KidEase — pas de nounous ni de gardiennes.`
-      : `Browse ${loaderData.count} licensed centres, nurseries, and homes in ${cityName}, ${loaderData.province}. Free to search on KidEase — no nannies or sitters.`;
+      ? `Parcourez ${loaderData.count} centres, nurseries et milieux familiaux permis à ${cityName}, ${loaderData.province}. Recherche gratuite sur KidEase: pas de nounous ni de gardiennes.`
+      : `Browse ${loaderData.count} licensed centres, nurseries, and homes in ${cityName}, ${loaderData.province}. Free to search on KidEase: no nannies or sitters.`;
   return pageSeoHead({ title, description, path });
 }

@@ -117,9 +117,9 @@ export function systemRequestMessage(p: RequestCopy, locale: Locale) {
 
 export function centreAckMessage(p: RequestCopy, locale: Locale) {
   if (locale === "fr") {
-    return `Bonjour ${p.parentName} — ici ${p.daycareName}. Nous avons bien reçu la demande pour ${p.childName} et la passerons en revue. Vous pouvez écrire, appeler ou lancer une visio ici.`;
+    return `Bonjour ${p.parentName}: ici ${p.daycareName}. Nous avons bien reçu la demande pour ${p.childName} et la passerons en revue. Vous pouvez écrire, appeler ou lancer une visio ici.`;
   }
-  return `Hi ${p.parentName} — this is ${p.daycareName}. We received your request for ${p.childName} and will review it shortly. You can message, call, or start a video visit right here.`;
+  return `Hi ${p.parentName}: this is ${p.daycareName}. We received your request for ${p.childName} and will review it shortly. You can message, call, or start a video visit right here.`;
 }
 
 export function statusUpdateMessage(

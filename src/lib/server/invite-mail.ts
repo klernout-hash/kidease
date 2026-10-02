@@ -33,7 +33,7 @@ ${input.url}
 
 This invite expires in 14 days. If you were not expecting this, you can ignore the email.
 
-— KidEase
+KidEase
 Vous avez été invité(e) à joindre ${input.centreName} sur KidEase. Ouvrez le lien pour créer votre propre connexion.`;
   const html = `<!doctype html>
 <html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
@@ -41,7 +41,7 @@ Vous avez été invité(e) à joindre ${input.centreName} sur KidEase. Ouvrez le
     <tr><td style="padding:28px;">
       <p style="margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#5c6578;">KidEase</p>
       <h1 style="margin:12px 0 0;font-size:24px;">Join ${escapeHtml(input.centreName)}</h1>
-      <p style="margin:16px 0 0;color:#5c6578;">${escapeHtml(hello)} You've been invited as ${escapeHtml(input.roleLabel)}. Use your own login — do not share the owner's password.</p>
+      <p style="margin:16px 0 0;color:#5c6578;">${escapeHtml(hello)} You've been invited as ${escapeHtml(input.roleLabel)}. Use your own login: do not share the owner's password.</p>
       <p style="margin:24px 0 0;">
         <a href="${escapeAttr(input.url)}" style="display:inline-block;background:#1a3790;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:600;">Accept invite</a>
       </p>

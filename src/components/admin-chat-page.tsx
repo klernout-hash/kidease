@@ -178,8 +178,8 @@ export function AdminChatPage() {
               {lab?.sms.sendEnabled
                 ? "FEATURE_SMS is armed and Twilio send credentials are present. User texts still need a stored CASL grant. This is Messages API, not Twilio Verify."
                 : lab?.sms.armed
-                  ? "Preview override — FEATURE_SMS is on, but send no-ops until Twilio credentials exist. Production would stay off without secrets."
-                  : "Coming soon — FEATURE_SMS is off in Production until Twilio + CASL are ready. Consent capture stays on so flipping later is safe."}
+                  ? "Preview override: FEATURE_SMS is on, but send no-ops until Twilio credentials exist. Production would stay off without secrets."
+                  : "Coming soon: FEATURE_SMS is off in Production until Twilio + CASL are ready. Consent capture stays on so flipping later is safe."}
             </p>
             <p className="mt-2 text-xs text-muted">
               Production stays off unless secrets exist. Preview/dev may set FEATURE_SMS=1 to test UI. See{" "}
@@ -192,7 +192,7 @@ export function AdminChatPage() {
             <p className="mt-2 text-muted">
               {lab?.push.enabled
                 ? "FEATURE_PUSH is on. Live send still needs credentials and a native binary. Dry-run does not send."
-                : "Coming soon — FEATURE_PUSH is off. Dry-run counts tokens only. www does not prompt."}
+                : "Coming soon: FEATURE_PUSH is off. Dry-run counts tokens only. www does not prompt."}
             </p>
             <ol className="mt-4 list-decimal space-y-2 pl-5 text-muted">
               {pushSteps.map((step) => (
@@ -222,8 +222,8 @@ export function AdminChatPage() {
             <h3 className="font-display text-xl">Video · Twilio Video</h3>
             <p className="mt-2 text-muted">
               {lab?.video.enabled
-                ? "FEATURE_VIDEO is on. The browser SDK is still not attached — /video/lab does not start a live call or charge."
-                : "Coming soon — FEATURE_VIDEO is off. Flag and env presence only. No secrets. No charge."}
+                ? "FEATURE_VIDEO is on. The browser SDK is still not attached: /video/lab does not start a live call or charge."
+                : "Coming soon: FEATURE_VIDEO is off. Flag and env presence only. No secrets. No charge."}
             </p>
             <ol className="mt-4 list-decimal space-y-2 pl-5 text-muted">
               {videoSteps.map((step) => (
@@ -291,8 +291,8 @@ function sourceHint(source: LabStatus["chat"]["source"] | undefined): string {
 
 function remoteHint(lab: LabStatus | null): string {
   if (!lab) return "remote status not loaded";
-  if (lab.remote.provider === "none") return "PostHog remote unset — env only";
-  if (!lab.remote.ok) return "PostHog remote configured, last fetch failed — using env fallback";
+  if (lab.remote.provider === "none") return "PostHog remote unset: env only";
+  if (!lab.remote.ok) return "PostHog remote configured, last fetch failed: using env fallback";
   return "PostHog remote configured";
 }
 

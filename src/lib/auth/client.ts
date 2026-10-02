@@ -80,7 +80,7 @@ function setBearerToken(token: string | null): void {
     if (token) window.sessionStorage.setItem(BEARER_KEY, token);
     else window.sessionStorage.removeItem(BEARER_KEY);
   } catch {
-    /* storage unavailable — ignore */
+    /* storage unavailable: ignore */
   }
 }
 
@@ -110,7 +110,7 @@ export async function signIn(
 
   if (isNativeSocialProvider(providerId)) {
     if (inLivePreview()) {
-      if (!popup) throw new Error("Pop-up blocked — allow pop-ups for sign-in");
+      if (!popup) throw new Error("Pop-up blocked: allow pop-ups for sign-in");
       const token = await waitForPopupToken(popup);
       if (!token) throw new Error("Sign-in was cancelled or failed");
       setBearerToken(token);
@@ -138,7 +138,7 @@ export async function signIn(
   }
 
   if (inLivePreview()) {
-    if (!popup) throw new Error("Pop-up blocked — allow pop-ups for sign-in");
+    if (!popup) throw new Error("Pop-up blocked: allow pop-ups for sign-in");
     const token = await waitForPopupToken(popup);
     if (!token) throw new Error("Sign-in was cancelled or failed");
     setBearerToken(token);
@@ -214,7 +214,7 @@ async function signOutBestEffort(): Promise<void> {
       rejectAfter(SIGN_OUT_WAIT_MS, "sign-out-timeout"),
     ]);
   } catch {
-    /* proceed — the next sign-in replaces the cookie */
+    /* proceed: the next sign-in replaces the cookie */
   }
 }
 

@@ -674,7 +674,7 @@ function Quote({ body, by }: { body: string; by: string }) {
   return (
     <blockquote className="rounded-xl bg-bg p-6 shadow-card ring-1 ring-border">
       <p className="text-sm leading-6 text-fg">“{body}”</p>
-      <footer className="mt-4 text-xs font-medium text-muted">— {by}</footer>
+      <footer className="mt-4 text-xs font-medium text-muted">{by}</footer>
     </blockquote>
   );
 }

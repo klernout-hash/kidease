@@ -204,8 +204,8 @@ export function BenefitsPage() {
             <h3 className="text-lg font-semibold">{fr ? "Prestation pour enfants handicapés" : "Child Disability Benefit"}</h3>
             <p className="mt-2 text-sm leading-6 text-muted">
               {fr
-                ? `Jusqu’à ${money(CDB.maxYear)}/an (${money(CDB.maxMonth)}/mois) par enfant admissible au crédit d’impôt pour personnes handicapées (CIPH). Versée avec l’ACE lorsque vous y avez droit — pas une demande KidEase.`
-                : `Up to about ${money(CDB.maxYear)}/year (${money(CDB.maxMonth)}/month) per child eligible for the Disability Tax Credit (DTC). Paid with CCB when you qualify — not a KidEase application.`}
+                ? `Jusqu’à ${money(CDB.maxYear)}/an (${money(CDB.maxMonth)}/mois) par enfant admissible au crédit d’impôt pour personnes handicapées (CIPH). Versée avec l’ACE lorsque vous y avez droit: pas une demande KidEase.`
+                : `Up to about ${money(CDB.maxYear)}/year (${money(CDB.maxMonth)}/month) per child eligible for the Disability Tax Credit (DTC). Paid with CCB when you qualify: not a KidEase application.`}
             </p>
             <div className="mt-3">
               <OfficialLink href={fr ? CDB.hrefFr : CDB.hrefEn}>
@@ -230,8 +230,8 @@ export function BenefitsPage() {
           <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-muted">
             <li>
               {fr
-                ? "Les tarifs réduits de type 10 $ par jour sont fixés par la province ou le territoire et appliqués au centre participant — pas par KidEase."
-                : "~$10-a-day style reduced fees are set by the province or territory and applied at the participating licensed centre — not by KidEase."}
+                ? "Les tarifs réduits de type 10 $ par jour sont fixés par la province ou le territoire et appliqués au centre participant: pas par KidEase."
+                : "~$10-a-day style reduced fees are set by the province or territory and applied at the participating licensed centre: not by KidEase."}
             </li>
             <li>
               {fr

@@ -1,6 +1,6 @@
 /**
  * CASL (Canada's Anti-Spam Legislation) helpers.
- * Pure — no DB, no secrets. scripts/casl-consent.test.mjs loads this in Node.
+ * Pure: no DB, no secrets. scripts/casl-consent.test.mjs loads this in Node.
  *
  * Express consent is required before commercial / service SMS to a parent or
  * provider. Transactional mail (sign-in codes, password reset) is not a CEM.
@@ -47,19 +47,19 @@ export type CaslMethod = (typeof CASL_METHODS)[number];
 export const CASL_STATEMENTS = {
   en: {
     smsService:
-      "I agree that KidEase (Winnipeg, Manitoba) may text me about my account, listing claims, bills, and spot alerts. Optional — not required to use or pay on KidEase. Message and data rates may apply. A few texts a month at most. Reply STOP or ARRÊT to opt out, HELP for help. Privacy: kidease.ca/privacy",
+      "I agree that KidEase (Winnipeg, Manitoba) may text me about my account, listing claims, bills, and spot alerts. Optional: not required to use or pay on KidEase. Message and data rates may apply. A few texts a month at most. Reply STOP or ARRÊT to opt out, HELP for help. Privacy: kidease.ca/privacy",
     emailService:
       "I agree that KidEase (Winnipeg, Manitoba) may email me saved-search and spot alerts I turn on. Optional. Unsubscribe any time at kidease.ca/unsubscribe or in alert settings. Privacy: kidease.ca/privacy",
     emailCommercial:
-      "I agree that KidEase (Winnipeg, Manitoba) may email me occasional news or offers. Optional — not required to pay or use KidEase. Unsubscribe any time at kidease.ca/unsubscribe. Privacy: kidease.ca/privacy",
+      "I agree that KidEase (Winnipeg, Manitoba) may email me occasional news or offers. Optional: not required to pay or use KidEase. Unsubscribe any time at kidease.ca/unsubscribe. Privacy: kidease.ca/privacy",
   },
   fr: {
     smsService:
-      "J’accepte que KidEase (Winnipeg, Manitoba) m’envoie des textos sur mon compte, les revendications, les factures et les places. Facultatif — pas exigé pour utiliser ou payer sur KidEase. Des frais de messagerie peuvent s’appliquer. Quelques textos par mois tout au plus. Répondez STOP ou ARRÊT pour vous désabonner, AIDE pour de l’aide. Confidentialité : kidease.ca/privacy",
+      "J’accepte que KidEase (Winnipeg, Manitoba) m’envoie des textos sur mon compte, les revendications, les factures et les places. Facultatif: pas exigé pour utiliser ou payer sur KidEase. Des frais de messagerie peuvent s’appliquer. Quelques textos par mois tout au plus. Répondez STOP ou ARRÊT pour vous désabonner, AIDE pour de l’aide. Confidentialité : kidease.ca/privacy",
     emailService:
       "J’accepte que KidEase (Winnipeg, Manitoba) m’écrive pour les alertes de recherche et de places que j’active. Facultatif. Désabonnement en tout temps à kidease.ca/unsubscribe ou dans les préférences d’alerte. Confidentialité : kidease.ca/privacy",
     emailCommercial:
-      "J’accepte que KidEase (Winnipeg, Manitoba) m’envoie à l’occasion des nouvelles ou offres. Facultatif — pas exigé pour payer ou utiliser KidEase. Désabonnement en tout temps à kidease.ca/unsubscribe. Confidentialité : kidease.ca/privacy",
+      "J’accepte que KidEase (Winnipeg, Manitoba) m’envoie à l’occasion des nouvelles ou offres. Facultatif: pas exigé pour payer ou utiliser KidEase. Désabonnement en tout temps à kidease.ca/unsubscribe. Confidentialité : kidease.ca/privacy",
   },
 } as const;
 

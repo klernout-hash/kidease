@@ -36,8 +36,8 @@ export type LegalDoc = {
   disclaimer: string;
 };
 
-const UPDATED_EN = "Effective 30 September 2026 · KidEase · Winnipeg, Manitoba";
-const UPDATED_FR = "En vigueur le 30 septembre 2026 · KidEase · Winnipeg (Manitoba)";
+const UPDATED_EN = "Effective 30 September 2026 · KidEase · Canada";
+const UPDATED_FR = "En vigueur le 30 septembre 2026 · KidEase · Canada";
 
 const DISCLAIMER_EN =
   "This page explains how KidEase handles personal information and how the service works. It is not legal advice. Official PIPEDA text lives on the Privacy Commissioner of Canada website.";
@@ -50,7 +50,7 @@ export const PRIVACY_EN: LegalDoc = {
   updated: UPDATED_EN,
   intro: [
     "KidEase is a Canadian directory and enrolment tool for provincially or territorially licensed childcare across Canada. Parents search nearby centres. Directors claim listings. We are not the care provider. Your care agreement is with the centre. We do not invent licences.",
-    "We follow PIPEDA’s consent, limiting-collection, and safeguarding principles. We do not sell or rent personal information. Children’s details are used only to help a parent and a centre they choose. KidEase is a parent-and-director tool — not a children’s app.",
+    "We follow PIPEDA’s consent, limiting-collection, and safeguarding principles. We do not sell or rent personal information. Children’s details are used only to help a parent and a centre they choose. KidEase is a parent-and-director tool: not a children’s app.",
   ],
   sections: [
     {
@@ -65,7 +65,7 @@ export const PRIVACY_EN: LegalDoc = {
             "Search location you choose: a GPS fix while you search, or a typed address, city, or postal code.",
             "Requests and messages: inquire, book-a-tour, and request-a-spot fields, plus in-app chat with that centre.",
             "Claim and enrol (directors): centre identity, licence photo, verification code, and the enrol form (name, email, centre, city, phone, message).",
-            "Payments: amount, method, status, and a KidEase reference — only if a deposit is recorded in-app. We do not store full card numbers.",
+            "Payments: amount, method, status, and a KidEase reference: only if a deposit is recorded in-app. We do not store full card numbers.",
             "Technical: session cookies, device/browser needed to run the site, and first-party search telemetry (a coarse geohash, not a street address).",
           ],
         },
@@ -117,7 +117,7 @@ export const PRIVACY_EN: LegalDoc = {
             {
               name: "Better Auth (software we host)",
               purpose:
-                "Session and password sign-in run on KidEase’s own servers (Vercel + Neon). Better Auth is the library we use — not a separate company that holds a copy of your account.",
+                "Session and password sign-in run on KidEase’s own servers (Vercel + Neon). Better Auth is the library we use: not a separate company that holds a copy of your account.",
             },
             {
               name: "Apple or Facebook sign-in, only when those buttons are on",
@@ -160,7 +160,7 @@ export const PRIVACY_EN: LegalDoc = {
             {
               name: "Stripe",
               purpose:
-                "Card, Apple Pay, and Google Pay for a first-month deposit after a centre offers a spot, and for KidEase plan charges. We send amount, currency (CAD), and a booking or plan reference — not full card numbers and not medical notes. Stripe processes the card. KidEase does not store the full card number.",
+                "Card, Apple Pay, and Google Pay for a first-month deposit after a centre offers a spot, and for KidEase plan charges. We send amount, currency (CAD), and a booking or plan reference: not full card numbers and not medical notes. Stripe processes the card. KidEase does not store the full card number.",
               href: "https://stripe.com/en-ca/privacy",
               hrefLabel: "Stripe Privacy Policy",
             },
@@ -174,14 +174,14 @@ export const PRIVACY_EN: LegalDoc = {
             {
               name: "PostHog, when product analytics is on",
               purpose:
-                "Page views, in-app clicks, feature flags, and privacy-masked session replay so we can improve KidEase. We send a random visitor id or your account id — not your password, email, or child-profile fields. Session replay masks form inputs and on-screen text. PostHog is not an advertising or remarketing pixel.",
+                "Page views, in-app clicks, feature flags, and privacy-masked session replay so we can improve KidEase. We send a random visitor id or your account id: not your password, email, or child-profile fields. Session replay masks form inputs and on-screen text. PostHog is not an advertising or remarketing pixel.",
               href: "https://posthog.com/privacy",
               hrefLabel: "PostHog Privacy Policy",
             },
             {
               name: "Sentry, when error monitoring is on",
               purpose:
-                "Crash and performance reports so we can fix production bugs. We send stack traces and a route tag — not cookies, Authorization headers, emails, tokens, or child names. Sentry is not an advertising pixel. In the iPhone and Android app it starts only after you tap Allow analytics.",
+                "Crash and performance reports so we can fix production bugs. We send stack traces and a route tag: not cookies, Authorization headers, emails, tokens, or child names. Sentry is not an advertising pixel. In the iPhone and Android app it starts only after you tap Allow analytics.",
               href: "https://sentry.io/privacy/",
               hrefLabel: "Sentry Privacy Policy",
             },
@@ -199,7 +199,7 @@ export const PRIVACY_EN: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "Location is for distance search only — licensed centres near the point you chose. We do not share your location with other parents.",
+          text: "Location is for distance search only: licensed centres near the point you chose. We do not share your location with other parents.",
         },
         {
           type: "ul",
@@ -208,7 +208,7 @@ export const PRIVACY_EN: LegalDoc = {
             "While Explore or Search is open and you have allowed when-in-use location, the map can update as you move. We do not request always-on or background location, and we do not track you after you leave the app.",
             "Typed address, city, or postal code: we send that text to Google Places / Geocoding to get a map point. If you also allowed GPS, we may send a nearby coordinate so suggestions are local.",
             "The map itself loads Google Maps in your browser (tiles and the map script).",
-            "What we keep: your last search point and a yes/no location choice in this browser (local storage). First-party telemetry may store a coarse geohash (about neighbourhood scale) to improve search — not a street address and not a continuous trail.",
+            "What we keep: your last search point and a yes/no location choice in this browser (local storage). First-party telemetry may store a coarse geohash (about neighbourhood scale) to improve search: not a street address and not a continuous trail.",
             "Raw GPS used to draw the map stays in that browsing session.",
             "Turn it off in your phone or browser location settings, tap “Not now” / change location in the app, or clear this site’s data. That stops new GPS use. It does not delete a request you already sent to a centre.",
           ],
@@ -240,9 +240,9 @@ export const PRIVACY_EN: LegalDoc = {
             `Inquire (💬 Contact): your name, email, and message, plus the listing name and link. That form goes to KidEase (${SUPPORT_INBOX_EMAIL}) so we can help; we may pass it to the centre.`,
             "Book a tour: parent name, child name, preferred date, optional note. This opens an in-app conversation with that centre. Birthdate is included if you enter it.",
             "Request a spot / enrol: parent name, child’s name, birthdate, start date, schedule, days, and optional message.",
-            "Saved child profile: if you attach a profile that already has care details, that centre can also see allergies, epi-pen, medical notes, medications, doctor, foods, routines, emergency contacts, pickup people, and notes — because those fields help them offer safe care.",
+            "Saved child profile: if you attach a profile that already has care details, that centre can also see allergies, epi-pen, medical notes, medications, doctor, foods, routines, emergency contacts, pickup people, and notes: because those fields help them offer safe care.",
             "Reuse: profiles stay on your account. We send them only to centres you contact. We do not reuse them for ads or for other families.",
-            "Once a centre has the details, its staff are responsible for how they store and use them (their own privacy duties). Use KidEase messages for placement and care — not for marketing lists.",
+            "Once a centre has the details, its staff are responsible for how they store and use them (their own privacy duties). Use KidEase messages for placement and care: not for marketing lists.",
           ],
         },
       ],
@@ -253,7 +253,7 @@ export const PRIVACY_EN: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "Directors and staff who claim a listing are running an organization, not a personal hobby page. When a parent sends you family or child details, treat them as that child’s information — not KidEase’s to resell, and not yours to use for ads.",
+          text: "Directors and staff who claim a listing are running an organization, not a personal hobby page. When a parent sends you family or child details, treat them as that child’s information: not KidEase’s to resell, and not yours to use for ads.",
         },
         {
           type: "ul",
@@ -277,7 +277,7 @@ export const PRIVACY_EN: LegalDoc = {
           type: "ul",
           items: [
             "Roles: a parent may pay a first-month deposit after the centre offers a spot. KidEase records the payment. The care contract stays between the parent and the centre. Childcare is a real-world service, not a digital in-app purchase.",
-            "Stripe processes the card, Apple Pay, or Google Pay. KidEase never stores the full card number. We may send Stripe the amount, CAD, payment method type, and identifiers for the booking, parent, and centre — not allergy or medical notes.",
+            "Stripe processes the card, Apple Pay, or Google Pay. KidEase never stores the full card number. We may send Stripe the amount, CAD, payment method type, and identifiers for the booking, parent, and centre: not allergy or medical notes.",
             "Interac e-Transfer and other bank methods may be added later. We will say so on the pay screen when they are on.",
             `Refunds follow the centre’s policy. Chargebacks go through Stripe. Email ${SUPPORT_INBOX_EMAIL} if a deposit looks wrong.`,
           ],
@@ -292,9 +292,9 @@ export const PRIVACY_EN: LegalDoc = {
           type: "ul",
           items: [
             "Allergies, epi-pen, medical notes, medications, doctor contacts, and emergency contacts are sensitive. We collect them only to help you and a centre you contact keep that child safe.",
-            "Purpose limit: placement and care — not advertising, not sale, not training public or advertising machine-learning models.",
+            "Purpose limit: placement and care: not advertising, not sale, not training public or advertising machine-learning models.",
             "Only add a child you have the legal right to enrol (parent or guardian).",
-            "Accounts are for adults 18 or older — parents, guardians, and centre directors. KidEase is not a children’s app and is not directed at children.",
+            "Accounts are for adults 18 or older: parents, guardians, and centre directors. KidEase is not a children’s app and is not directed at children.",
             "We do not livestream children. Video or voice check-in, if offered, is started by the parent.",
             "Providers must be provincially or territorially licensed before they can claim and edit a listing.",
           ],
@@ -327,7 +327,7 @@ export const PRIVACY_EN: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "KidEase is based in Winnipeg, Manitoba. Hosting and processors above may store or see data in the United States (Google, Vercel, Resend, Neon, Stripe, DocuSign when centre paperwork is sent, Cloudflare when proxied, PostHog when analytics is on, Sentry when error monitoring is on). We use them only to run this service and rely on their contracts and safeguards. We do not sell the data because it sits on a US server.",
+          text: "KidEase is a Canadian company. Hosting and processors above may store or see data in the United States (Google, Vercel, Resend, Neon, Stripe, DocuSign when centre paperwork is sent, Cloudflare when proxied, PostHog when analytics is on, Sentry when error monitoring is on). We use them only to run this service and rely on their contracts and safeguards. We do not sell the data because it sits on a US server.",
         },
       ],
     },
@@ -387,11 +387,11 @@ export const PRIVACY_EN: LegalDoc = {
   ],
   storeLabel: "What the stores ask us to disclose",
   storeItems: [
-    "Location — to search nearby centres. Not shared with other parents.",
-    "Contact info — email and name from sign-in.",
-    "User content — messages, enrolment notes, child name and birthdate, and care details you add (only you and the centre you contact).",
-    "Identifiers — account id for sign-in.",
-    "Payment records — deposit amount and method. Card numbers are never stored here.",
+    "Location: to search nearby centres. Not shared with other parents.",
+    "Contact info: email and name from sign-in.",
+    "User content: messages, enrolment notes, child name and birthdate, and care details you add (only you and the centre you contact).",
+    "Identifiers: account id for sign-in.",
+    "Payment records: deposit amount and method. Card numbers are never stored here.",
   ],
   officialHref:
     "https://www.priv.gc.ca/en/privacy-topics/privacy-laws-in-canada/the-personal-information-protection-and-electronic-documents-act-pipeda/",
@@ -406,7 +406,7 @@ export const PRIVACY_FR: LegalDoc = {
   updated: UPDATED_FR,
   intro: [
     "KidEase est un répertoire et un outil d’inscription pour des centres de garde permis au Canada (permis provincial ou territorial). Les parents cherchent près d’eux. Les directions réclament leur fiche. Nous ne sommes pas le fournisseur de garde. Le contrat de service est entre vous et le centre. Nous n’inventons pas de permis.",
-    "Nous suivons le consentement, la limitation de la collecte et les mesures de protection de la LPRPDE. Nous ne vendons ni ne louons les renseignements personnels. Les détails sur les enfants servent seulement au parent et au centre qu’il choisit. KidEase est un outil pour parents et directions — pas une appli pour enfants.",
+    "Nous suivons le consentement, la limitation de la collecte et les mesures de protection de la LPRPDE. Nous ne vendons ni ne louons les renseignements personnels. Les détails sur les enfants servent seulement au parent et au centre qu’il choisit. KidEase est un outil pour parents et directions: pas une appli pour enfants.",
   ],
   sections: [
     {
@@ -421,7 +421,7 @@ export const PRIVACY_FR: LegalDoc = {
             "Lieu de recherche : position GPS pendant la recherche, ou une adresse, une ville ou un code postal saisi.",
             "Demandes et messages : inquiry, visite et demande de place, plus le clavardage avec ce centre.",
             "Revendication et inscription (directions) : identité du centre, photo du permis, code de vérification, et le formulaire (nom, courriel, centre, ville, téléphone, message).",
-            "Paiements : montant, mode, statut et une référence KidEase — seulement si un dépôt est inscrit. Nous ne conservons pas les numéros de carte complets.",
+            "Paiements : montant, mode, statut et une référence KidEase: seulement si un dépôt est inscrit. Nous ne conservons pas les numéros de carte complets.",
             "Technique : témoins de session, données du navigateur nécessaires au site, et télémétrie de recherche (géohachage grossier, pas une adresse municipale).",
           ],
         },
@@ -473,7 +473,7 @@ export const PRIVACY_FR: LegalDoc = {
             {
               name: "Better Auth (logiciel que nous hébergeons)",
               purpose:
-                "La session et le mot de passe tournent sur nos serveurs (Vercel + Neon). Better Auth est la bibliothèque — pas une entreprise distincte qui garde une copie de votre compte.",
+                "La session et le mot de passe tournent sur nos serveurs (Vercel + Neon). Better Auth est la bibliothèque: pas une entreprise distincte qui garde une copie de votre compte.",
             },
             {
               name: "Apple ou Facebook, seulement si ces boutons sont actifs",
@@ -515,7 +515,7 @@ export const PRIVACY_FR: LegalDoc = {
             {
               name: "Stripe",
               purpose:
-                "Carte, Apple Pay et Google Pay pour un dépôt du premier mois et pour les forfaits KidEase. Nous envoyons le montant, le CAD et une référence — pas le numéro de carte complet ni les notes médicales. Stripe traite la carte. KidEase ne conserve pas le numéro complet.",
+                "Carte, Apple Pay et Google Pay pour un dépôt du premier mois et pour les forfaits KidEase. Nous envoyons le montant, le CAD et une référence: pas le numéro de carte complet ni les notes médicales. Stripe traite la carte. KidEase ne conserve pas le numéro complet.",
               href: "https://stripe.com/en-ca/privacy",
               hrefLabel: "Politique de confidentialité Stripe",
             },
@@ -529,14 +529,14 @@ export const PRIVACY_FR: LegalDoc = {
             {
               name: "PostHog, lorsque l’analytique produit est active",
               purpose:
-                "Pages vues, clics, drapeaux de fonctionnalité et replay de session masqué pour améliorer KidEase. Nous envoyons un identifiant anonyme ou l’identifiant de compte — pas le mot de passe, le courriel ni les profils d’enfants. Les champs de formulaire et le texte à l’écran sont masqués. Ce n’est pas un pixel publicitaire.",
+                "Pages vues, clics, drapeaux de fonctionnalité et replay de session masqué pour améliorer KidEase. Nous envoyons un identifiant anonyme ou l’identifiant de compte: pas le mot de passe, le courriel ni les profils d’enfants. Les champs de formulaire et le texte à l’écran sont masqués. Ce n’est pas un pixel publicitaire.",
               href: "https://posthog.com/privacy",
               hrefLabel: "Politique de confidentialité PostHog",
             },
             {
               name: "Sentry, lorsque le suivi des erreurs est actif",
               purpose:
-                "Rapports de plantage et de performance pour corriger la production. Nous envoyons des traces et une route — pas les témoins, les en-têtes Authorization, les courriels, les jetons ni les noms d’enfants. Sentry n’est pas un pixel publicitaire. Dans l’appli iPhone et Android, il démarre seulement après Autoriser l’analytique.",
+                "Rapports de plantage et de performance pour corriger la production. Nous envoyons des traces et une route: pas les témoins, les en-têtes Authorization, les courriels, les jetons ni les noms d’enfants. Sentry n’est pas un pixel publicitaire. Dans l’appli iPhone et Android, il démarre seulement après Autoriser l’analytique.",
               href: "https://sentry.io/privacy/",
               hrefLabel: "Politique de confidentialité Sentry",
             },
@@ -563,7 +563,7 @@ export const PRIVACY_FR: LegalDoc = {
             "Tant que Explorer ou Recherche est ouvert et que vous avez autorisé la position, la carte peut se mettre à jour. Nous ne demandons pas une position permanente en arrière-plan et nous ne vous suivons pas après la fermeture de l’appli.",
             "Adresse, ville ou code postal saisi : nous l’envoyons à Google Places / géocodage. Si le GPS est aussi autorisé, nous pouvons envoyer une coordonnée proche pour des suggestions locales.",
             "La carte charge Google Maps dans le navigateur.",
-            "Conservation : dernier point de recherche et choix oui/non dans ce navigateur. La télémétrie peut garder un géohachage grossier — pas une adresse municipale.",
+            "Conservation : dernier point de recherche et choix oui/non dans ce navigateur. La télémétrie peut garder un géohachage grossier: pas une adresse municipale.",
             "Le GPS brut servant à dessiner la carte reste dans la session.",
             "Désactivez la position dans le système ou le navigateur, choisissez « Pas maintenant », ou effacez les données du site.",
           ],
@@ -597,7 +597,7 @@ export const PRIVACY_FR: LegalDoc = {
             "Demande de place : nom du parent, nom de l’enfant, date de naissance, date de début, horaire, jours et message facultatif.",
             "Profil enregistré : si vous joignez un profil déjà rempli, le centre peut aussi voir allergies, notes médicales, médicaments, médecin, aliments, routines, contacts d’urgence et personnes au ramassage.",
             "Réutilisation : les profils restent sur votre compte. Nous les envoyons seulement aux centres que vous contactez. Pas pour la publicité.",
-            "Une fois les détails reçus, le personnel du centre en est responsable. Servez-vous des messages KidEase pour le placement et la garde — pas pour des listes marketing.",
+            "Une fois les détails reçus, le personnel du centre en est responsable. Servez-vous des messages KidEase pour le placement et la garde: pas pour des listes marketing.",
           ],
         },
       ],
@@ -632,7 +632,7 @@ export const PRIVACY_FR: LegalDoc = {
           type: "ul",
           items: [
             "Rôles : un parent peut verser un dépôt du premier mois après une offre de place. Le contrat de garde reste entre le parent et le centre. Ce n’est pas un achat numérique.",
-            "Stripe traite la carte, Apple Pay ou Google Pay. KidEase ne conserve pas le numéro complet. Nous pouvons envoyer le montant, le CAD et des identifiants de réservation — pas les notes médicales.",
+            "Stripe traite la carte, Apple Pay ou Google Pay. KidEase ne conserve pas le numéro complet. Nous pouvons envoyer le montant, le CAD et des identifiants de réservation: pas les notes médicales.",
             "Le virement Interac et d’autres modes bancaires pourront s’ajouter plus tard.",
             "Les remboursements suivent la politique du centre. Les rétrofacturations passent par Stripe.",
           ],
@@ -647,7 +647,7 @@ export const PRIVACY_FR: LegalDoc = {
           type: "ul",
           items: [
             "Allergies, épinéphrine, notes médicales, médicaments, médecin et contacts d’urgence sont sensibles. Ils servent à la sécurité de l’enfant auprès du centre contacté.",
-            "Limitation : placement et garde — pas de publicité, pas de vente, pas d’entraînement de modèles publicitaires ou publics.",
+            "Limitation : placement et garde: pas de publicité, pas de vente, pas d’entraînement de modèles publicitaires ou publics.",
             "N’ajoutez qu’un enfant dont vous avez la charge.",
             "Les comptes sont pour les personnes de 18 ans et plus. KidEase n’est pas une appli pour enfants.",
             "Pas de diffusion continue d’enfants. Une visio, le cas échéant, est lancée par le parent.",
@@ -682,7 +682,7 @@ export const PRIVACY_FR: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "KidEase est à Winnipeg (Manitoba). Les sous-traitants ci-dessus peuvent traiter des données aux États-Unis (Google, Vercel, Resend, Neon, Stripe, DocuSign si les documents du centre sont envoyés, Cloudflare si proxifié, PostHog si l’analytique est active, Sentry si le suivi des erreurs est actif). Nous les utilisons seulement pour le service. Nous ne vendons pas les données parce qu’elles passent par un serveur américain.",
+          text: "KidEase est une entreprise canadienne. Les sous-traitants ci-dessus peuvent traiter des données aux États-Unis (Google, Vercel, Resend, Neon, Stripe, DocuSign si les documents du centre sont envoyés, Cloudflare si proxifié, PostHog si l’analytique est active, Sentry si le suivi des erreurs est actif). Nous les utilisons seulement pour le service. Nous ne vendons pas les données parce qu’elles passent par un serveur américain.",
         },
       ],
     },
@@ -742,11 +742,11 @@ export const PRIVACY_FR: LegalDoc = {
   ],
   storeLabel: "Ce que les boutiques nous demandent de déclarer",
   storeItems: [
-    "Position — pour chercher des centres près de vous. Non partagée avec d’autres parents.",
-    "Coordonnées — courriel et nom à la connexion.",
-    "Contenu — messages, notes d’inscription, nom et date de naissance, et détails de garde (vous et le centre contacté).",
-    "Identifiants — identifiant de compte.",
-    "Paiements — montant et mode du dépôt. Aucun numéro de carte ici.",
+    "Position: pour chercher des centres près de vous. Non partagée avec d’autres parents.",
+    "Coordonnées: courriel et nom à la connexion.",
+    "Contenu: messages, notes d’inscription, nom et date de naissance, et détails de garde (vous et le centre contacté).",
+    "Identifiants: identifiant de compte.",
+    "Paiements: montant et mode du dépôt. Aucun numéro de carte ici.",
   ],
   officialHref:
     "https://www.priv.gc.ca/fr/sujets-lies-a-la-protection-de-la-vie-privee/lois-sur-la-protection-des-renseignements-personnels-au-canada/la-loi-sur-la-protection-des-renseignements-personnels-et-les-documents-electroniques-lprpde/",
@@ -794,7 +794,7 @@ export const COOKIES_EN: LegalDoc = {
             "Whether you last used KidEase as a parent or a director.",
             "Recent centres you opened, and a short-lived search cache.",
             "A random session id for first-party search telemetry (coarse geohash only).",
-            "A sign-in token in session storage on some preview hosts — not used for ads.",
+            "A sign-in token in session storage on some preview hosts: not used for ads.",
             "Your analytics choice (Essential or Allow) so we do not ask every visit.",
             "If you allowed analytics, PostHog may keep a first-party visitor id so page views and masked session replay stay on one browser.",
           ],
@@ -817,7 +817,7 @@ export const COOKIES_EN: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "On the website and in the iPhone and Android app, PostHog loads only after you tap Allow analytics. Until then — or if you choose Essential — we do not initialize PostHog or session replay. If you allow it, PostHog records page views, in-app clicks, and privacy-masked session replay on the website. Replay stays off in the app unless a separate switch is on. It may set a first-party cookie on this site and send events through this site’s /ingest path (proxied to PostHog in the US). Passwords and form fields are masked. This is not an advertising or remarketing cookie.",
+          text: "On the website and in the iPhone and Android app, PostHog loads only after you tap Allow analytics. Until then: or if you choose Essential: we do not initialize PostHog or session replay. If you allow it, PostHog records page views, in-app clicks, and privacy-masked session replay on the website. Replay stays off in the app unless a separate switch is on. It may set a first-party cookie on this site and send events through this site’s /ingest path (proxied to PostHog in the US). Passwords and form fields are masked. This is not an advertising or remarketing cookie.",
         },
       ],
     },
@@ -914,7 +914,7 @@ export const COOKIES_FR: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "Sur le site web et dans l’appli iPhone et Android, PostHog se charge seulement après Autoriser l’analytique. Avant cela — ou si vous choisissez Essentiel — nous n’initialisons ni PostHog ni le replay. Si vous l’autorisez, PostHog enregistre les pages vues, les clics et, sur le site web, un replay masqué. Le replay reste éteint dans l’appli sauf si un interrupteur séparé est ouvert. Il peut déposer un témoin de première partie et envoyer les événements par le chemin /ingest de ce site (relayé vers PostHog aux États-Unis). Les mots de passe et les champs de formulaire sont masqués. Ce n’est pas un témoin publicitaire.",
+          text: "Sur le site web et dans l’appli iPhone et Android, PostHog se charge seulement après Autoriser l’analytique. Avant cela: ou si vous choisissez Essentiel: nous n’initialisons ni PostHog ni le replay. Si vous l’autorisez, PostHog enregistre les pages vues, les clics et, sur le site web, un replay masqué. Le replay reste éteint dans l’appli sauf si un interrupteur séparé est ouvert. Il peut déposer un témoin de première partie et envoyer les événements par le chemin /ingest de ce site (relayé vers PostHog aux États-Unis). Les mots de passe et les champs de formulaire sont masqués. Ce n’est pas un témoin publicitaire.",
         },
       ],
     },
@@ -974,7 +974,7 @@ export const TERMS_EN: LegalDoc = {
     },
     {
       id: "accounts",
-      title: "Accounts — 18 and over",
+      title: "Accounts: 18 and over",
       blocks: [
         {
           type: "ul",
@@ -1050,7 +1050,7 @@ export const TERMS_EN: LegalDoc = {
           items: [
             "The platform is provided as a directory and messaging tool. We do not warrant that a listing is complete, that a spot is still open, or that a centre will accept your child.",
             "To the extent Canadian law allows, KidEase is not liable for care incidents, waitlists, fees charged by a centre, or decisions a centre or parent makes after they meet.",
-            "If we are liable for something we control (for example a confirmed billing error on our side), our aggregate responsibility is limited to the fees you actually paid to KidEase in the twelve months before the claim — or fifty Canadian dollars if you paid us nothing. This does not limit liability that Manitoba or Canada does not let us limit (including fraud or bodily injury we cause).",
+            "If we are liable for something we control (for example a confirmed billing error on our side), our aggregate responsibility is limited to the fees you actually paid to KidEase in the twelve months before the claim: or fifty Canadian dollars if you paid us nothing. This does not limit liability that Manitoba or Canada does not let us limit (including fraud or bodily injury we cause).",
             "You agree to indemnify KidEase against claims that arise from content you upload, a false licence claim, or misuse of family information you received on the platform.",
             "Parents and centres remain responsible for their own insurance, licensing, and duty of care.",
           ],
@@ -1117,7 +1117,7 @@ export const TERMS_FR: LegalDoc = {
     },
     {
       id: "accounts",
-      title: "Comptes — 18 ans et plus",
+      title: "Comptes: 18 ans et plus",
       blocks: [
         {
           type: "ul",
@@ -1193,7 +1193,7 @@ export const TERMS_FR: LegalDoc = {
           items: [
             "La plateforme est un répertoire et un outil de messages. Nous ne garantissons pas qu’une fiche est complète, qu’une place est encore ouverte ou qu’un centre acceptera votre enfant.",
             "Dans la mesure permise par le droit canadien, KidEase n’est pas responsable des incidents de garde, des listes d’attente, des tarifs du centre, ni des décisions prises après une rencontre.",
-            "Si nous sommes responsables de quelque chose que nous contrôlons (par exemple une erreur de facturation confirmée de notre côté), notre responsabilité globale est limitée aux frais que vous nous avez réellement versés au cours des douze mois précédents — ou cinquante dollars canadiens si vous ne nous avez rien versé. Cela ne limite pas la responsabilité que le Manitoba ou le Canada nous interdit de limiter.",
+            "Si nous sommes responsables de quelque chose que nous contrôlons (par exemple une erreur de facturation confirmée de notre côté), notre responsabilité globale est limitée aux frais que vous nous avez réellement versés au cours des douze mois précédents: ou cinquante dollars canadiens si vous ne nous avez rien versé. Cela ne limite pas la responsabilité que le Manitoba ou le Canada nous interdit de limiter.",
             "Vous indemnisez KidEase contre les réclamations liées au contenu que vous téléversez, à une fausse revendication de permis ou à l’usage abusif de renseignements familiaux reçus sur la plateforme.",
             "Parents et centres restent responsables de leurs assurances, permis et devoir de diligence.",
           ],

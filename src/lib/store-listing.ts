@@ -23,14 +23,14 @@ export const STORE = {
    */
   appleAppStoreId: "",
   /**
-   * Google Play application id. Same as the Capacitor `appId` — not a made-up
+   * Google Play application id. Same as the Capacitor `appId`: not a made-up
    * Play listing number. Override with `VITE_PLAY_PACKAGE_NAME` only if the
    * Play package ever differs from `ca.kidease.app`.
    */
   playPackageName: "ca.kidease.app",
   keywords:
     "daycare,childcare,Canada,licensed,preschool,infant,$10-a-day,garde,garderie,province",
-  /** Google Play short description — max 80 characters. */
+  /** Google Play short description: max 80 characters. */
   shortDescription: "Find licensed Canadian daycares by km radius. Fees, spots, enrolment.",
   shortDescriptionFr: "Trouvez des garderies permises au Canada. Frais, places, inscription.",
   description: `KidEase helps Canadian parents find licensed childcare within a kilometre radius they choose.
@@ -50,7 +50,7 @@ What you can do
 • Pay deposits by card, Apple Pay, Google Pay, PayPal, or Interac e-Transfer
 
 Child safety
-KidEase is a parent and provider app — not a children’s app. Child first names and birthdates are visible only to you and to a centre you contact. We do not sell personal information. Video check-in is started by the parent; we do not livestream children.
+KidEase is a parent and provider app: not a children’s app. Child first names and birthdates are visible only to you and to a centre you contact. We do not sell personal information. Video check-in is started by the parent; we do not livestream children.
 
 Payments for childcare deposits are real-world services (not digital in-app purchases).
 
@@ -64,7 +64,7 @@ Demandez une place, écrivez au centre et versez un dépôt du premier mois. Les
 Le répertoire couvre les centres permis de chaque province et territoire, d’après les registres provinciaux.
 
 Sécurité des enfants
-Application pour parents et fournisseurs — pas une appli pour enfants. Les prénoms et dates de naissance ne sont visibles que par vous et le centre contacté. Pas de vente de données. Pas de diffusion continue d’enfants.
+Application pour parents et fournisseurs: pas une appli pour enfants. Les prénoms et dates de naissance ne sont visibles que par vous et le centre contacté. Pas de vente de données. Pas de diffusion continue d’enfants.
 
 Les dépôts sont un service réel, pas un achat intégré numérique.`,
   ageRatingAnswers: {

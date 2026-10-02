@@ -34,7 +34,7 @@ export function SearchAgeGate({
   onAge: (age: SearchAge) => void;
   onStart: (start: SearchStart) => void;
   compact?: boolean;
-  /** Top 7 chips own the age row — keep start + place/when here. */
+  /** Top 7 chips own the age row: keep start + place/when here. */
   hideAge?: boolean;
 }) {
   const { t } = useCopy();

@@ -597,7 +597,7 @@ export const createBooking = createServerFn({ method: "POST" })
     const cid = convos[0]?.id ?? convoId;
     const body =
       status === "accepted"
-        ? `Enrolment request received for ${data.startMonth}. A spot is held — please pay the first-month deposit to confirm.`
+        ? `Enrolment request received for ${data.startMonth}. A spot is held: please pay the first-month deposit to confirm.`
         : `We've added you to the waitlist for ${data.startMonth}. We'll message you when a spot opens.`;
     await sql`
       insert into messages (id, conversation_id, sender, body)
@@ -1007,7 +1007,7 @@ export const openConversation = createServerFn({ method: "POST" })
     const d = await sql<{ name: string }>`select name from daycares where id = ${daycareId}`;
     await sql`
       insert into messages (id, conversation_id, sender, body)
-      values (${nid("msg")}, ${id}, 'provider', ${`Hi — this is ${d[0]?.name ?? "the centre"}. How can we help?`})
+      values (${nid("msg")}, ${id}, 'provider', ${`Hi: this is ${d[0]?.name ?? "the centre"}. How can we help?`})
     `;
     return { id };
   });
@@ -1050,7 +1050,7 @@ function autoReply(body: string, centre: string) {
   if (q.includes("subsidy") || q.includes("subvention")) {
     return `${centre}: We bill the parent fee after the provincial subsidy. Bring your subsidy letter to enrolment and we'll set the monthly amount.`;
   }
-  return `${centre}: Thanks — an educator will follow up during office hours. If this is about a held spot, you can pay the deposit from My requests.`;
+  return `${centre}: Thanks: an educator will follow up during office hours. If this is about a held spot, you can pay the deposit from My requests.`;
 }
 
 export const updateRequestStatus = createServerFn({ method: "POST" })

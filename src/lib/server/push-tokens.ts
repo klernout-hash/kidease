@@ -13,7 +13,7 @@ export const PUSH_SCAFFOLD_MESSAGE =
   "Push is scaffolded only. FEATURE_PUSH is off until Kyle adds Firebase and Apple credentials.";
 
 export const PUSH_DISABLED_MESSAGE =
-  "Push registration is off. FEATURE_PUSH is unset or 0 — www and production stay silent.";
+  "Push registration is off. FEATURE_PUSH is unset or 0: www and production stay silent.";
 
 export const PUSH_DRY_RUN_MESSAGE =
   "Dry-run only. No notification was sent. Live send is not wired.";

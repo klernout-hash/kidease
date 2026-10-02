@@ -67,7 +67,7 @@ const en: Record<DsKey, string> = {
     "DocuSign is not ready. Send is off so we do not pretend envelopes leave KidEase. Centres can still sign the in-app document from their desk.",
   envHint:
     "Set the DOCUSIGN_* names on Vercel (Production + Preview) when you want live envelopes. See docs/docusign.md. Until then this list is a status board only.",
-  consentBanner: "DocuSign not connected — finish JWT consent",
+  consentBanner: "DocuSign not connected: finish JWT consent",
   rateLimitBanner:
     "DocuSign hourly API limit reached. Wait about an hour, then try again. Refreshing now keeps using the same quota.",
   search: "Search centre, city, signer…",
@@ -124,7 +124,7 @@ const fr: Record<DsKey, string> = {
     "DocuSign n’est pas prêt. Envoi désactivé : nous ne prétendons pas que des enveloppes quittent KidEase. Les centres peuvent encore signer le document dans l’appli.",
   envHint:
     "Définissez les noms DOCUSIGN_* sur Vercel (Production + Preview) pour les enveloppes en direct. Voir docs/docusign.md. D’ici là, cette liste est un tableau de statut seulement.",
-  consentBanner: "DocuSign n’est pas connecté — terminez le consentement JWT",
+  consentBanner: "DocuSign n’est pas connecté: terminez le consentement JWT",
   rateLimitBanner:
     "Limite horaire de l’API DocuSign atteinte. Attendez environ une heure, puis réessayez. Actualiser maintenant consomme encore le quota.",
   search: "Rechercher un centre, une ville, un signataire…",
@@ -182,7 +182,7 @@ export function docusignLeadKey(input: {
   return "leadUnknown";
 }
 
-/** Operator-facing names only — never values. */
+/** Operator-facing names only: never values. */
 export function formatDocusignEnvIssues(locale: Locale, issues: DocusignEnvIssue[]): string {
   if (!issues.length) return "";
   const bits = issues.map((issue) => {

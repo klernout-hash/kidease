@@ -7,8 +7,8 @@
  * CRM nurture is later and out of scope. Kept free of DB / Start so tests can import it.
  */
 
-export const VERIFY_EMAIL_SUBJECT = "Verify your email — KidEase";
-export const VERIFY_EMAIL_SUBJECT_FR = "Confirmez votre courriel — KidEase";
+export const VERIFY_EMAIL_SUBJECT = "Verify your email: KidEase";
+export const VERIFY_EMAIL_SUBJECT_FR = "Confirmez votre courriel: KidEase";
 export const PROVIDER_ONBOARD_SUBJECT = "Next steps to get verified on KidEase";
 export const PROVIDER_ONBOARD_SUBJECT_FR = "Prochaines étapes pour être vérifié sur KidEase";
 export const PROVIDER_ONBOARD_PURPOSE = "provider_onboard";
@@ -56,7 +56,7 @@ export function signupSendsNextSteps(): false {
   return false;
 }
 
-/** Next-steps only after the mailbox is verified — never at unverified signup. */
+/** Next-steps only after the mailbox is verified: never at unverified signup. */
 export function shouldSendProviderNextSteps(input: {
   role?: string | null;
   email?: string | null;
@@ -129,10 +129,10 @@ export function verifyEmailText(url: string, name?: string | null, audience?: "p
     "",
     "This link expires in about 24 hours. If you did not create a KidEase account, you can ignore this email.",
     "",
-    "— KidEase",
+    "KidEase",
     "kyle@kidease.ca",
     "",
-    "—",
+    "---",
     "",
     hello(name, "fr"),
     "",
@@ -145,7 +145,7 @@ export function verifyEmailText(url: string, name?: string | null, audience?: "p
     "",
     "Ce lien expire dans environ 24 heures. Si vous n’avez pas créé de compte KidEase, ignorez ce message.",
     "",
-    "— KidEase",
+    "KidEase",
     "kyle@kidease.ca",
   ].join("\n");
 }
@@ -176,7 +176,7 @@ export function verifyEmailHtml(url: string, name?: string | null, audience?: "p
 
 /**
  * Honest provider onboarding (EN + FR-CA). KidEase reviews uploads.
- * It does not issue Vulnerable Sector Checks — only local police / RCMP (or BC CRRP) can.
+ * It does not issue Vulnerable Sector Checks: only local police / RCMP (or BC CRRP) can.
  */
 export function providerOnboardText(origin?: string | null, name?: string | null, listingName?: string | null): string {
   const listings = providerListingsHref(origin);
@@ -190,11 +190,11 @@ export function providerOnboardText(origin?: string | null, name?: string | null
     ? `Merci de joindre KidEase comme fournisseur de garde. Nous avons déjà « ${listing} » au dossier.`
     : "Merci de joindre KidEase comme fournisseur de garde.";
   const enStep1 = listing
-    ? `1. Complete your listing — ${listing} — address, hours, and open spots: ${listings}`
-    : `1. Complete your listing — name, address, hours, and open spots: ${listings}`;
+    ? `1. Complete your listing for ${listing}. Add the address, hours, and open spots. ${listings}`
+    : `1. Complete your listing: name, address, hours, and open spots. ${listings}`;
   const frStep1 = listing
-    ? `1. Complétez votre fiche — ${listing} — adresse, heures et places : ${listings}`
-    : `1. Complétez votre fiche — nom, adresse, heures et places : ${listings}`;
+    ? `1. Complétez la fiche de ${listing}. Ajoutez l’adresse, les heures et les places. ${listings}`
+    : `1. Complétez votre fiche: nom, adresse, heures et places. ${listings}`;
   return [
     hello(name, "en"),
     "",
@@ -212,7 +212,7 @@ export function providerOnboardText(origin?: string | null, name?: string | null
     "",
     "Questions: kyle@kidease.ca",
     "",
-    "—",
+    "---",
     "",
     hello(name, "fr"),
     "",
@@ -247,8 +247,8 @@ export function providerOnboardHtml(origin?: string | null, name?: string | null
     ? `${frHi} Merci de joindre KidEase comme fournisseur de garde. Nous avons déjà « ${listingHtml} » au dossier. KidEase examine vos téléversements et ne fait pas de contrôles policiers. Complétez la fiche, ajoutez le permis, réclamez au besoin, puis téléversez le VSC (et les vérifications de registre exigées par votre province) dans Filtrage.`
     : `${frHi} Merci de joindre KidEase comme fournisseur de garde. KidEase examine vos téléversements et ne fait pas de contrôles policiers. Complétez la fiche, ajoutez le permis, réclamez au besoin, puis téléversez le VSC (et les vérifications de registre exigées par votre province) dans Filtrage.`;
   const enStep1 = listingHtml
-    ? `Complete your listing — ${listingHtml} — address, hours, and open spots.`
-    : "Complete your listing — name, address, hours, and open spots.";
+    ? `Complete your listing for ${listingHtml}. Add the address, hours, and open spots.`
+    : "Complete your listing: name, address, hours, and open spots.";
   return `<!doctype html>
 <html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">
@@ -263,7 +263,7 @@ export function providerOnboardHtml(origin?: string | null, name?: string | null
         <li>Add your current licence number.</li>
         <li>Claim the listing if we already have it from the public registry.</li>
         <li>When ready, upload a current Vulnerable Sector Check on Screening. Your province may also require extra registry checks (for example a Child Abuse Registry check, and Prior Contact for home-based households).</li>
-        <li>The KidEase team reviews the files. Parents may see centre-level Screening on file — never individual PDFs or names.</li>
+        <li>The KidEase team reviews the files. Parents may see centre-level Screening on file: never individual PDFs or names.</li>
       </ol>
       <p style="margin:24px 0 0;">
         <a href="${listings}" style="display:inline-block;background:#1a3790;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:600;">Complete listing</a>

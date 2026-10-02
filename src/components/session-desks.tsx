@@ -60,7 +60,7 @@ export function needsSessionDesks(pathname: string): boolean {
 
 /**
  * One shared getMyDesks fetch per signed-in session.
- * Mount once under AuthProvider — do not call getMyDesks from every desk page.
+ * Mount once under AuthProvider: do not call getMyDesks from every desk page.
  */
 export function SessionDesksProvider({ children }: { children: ReactNode }) {
   const { user, isPending } = useCurrentUserState();

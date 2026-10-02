@@ -374,7 +374,7 @@ export const respondTourRequest = createServerFn({ method: "POST" })
       parentUserId: tour.user_id,
       parentEmail: tour.contact_email,
       parentName: guestName || null,
-      subject: next === "accepted" ? `Tour confirmed — ${tour.daycare_name}` : `Tour declined — ${tour.daycare_name}`,
+      subject: next === "accepted" ? `Tour confirmed: ${tour.daycare_name}` : `Tour declined: ${tour.daycare_name}`,
       preview: body,
     }).catch(() => undefined);
 
@@ -504,7 +504,7 @@ export const proposeTourTime = createServerFn({ method: "POST" })
       parentUserId: tour.user_id,
       parentEmail: tour.contact_email,
       parentName: guestName || null,
-      subject: `Tour time updated — ${tour.daycare_name}`,
+      subject: `Tour time updated: ${tour.daycare_name}`,
       preview: body,
     }).catch(() => undefined);
 
@@ -573,7 +573,7 @@ export const cancelTourRequest = createServerFn({ method: "POST" })
       parentUserId: tour.user_id,
       parentEmail: tour.contact_email,
       parentName: guestName || null,
-      subject: `Tour cancelled — ${tour.daycare_name}`,
+      subject: `Tour cancelled: ${tour.daycare_name}`,
       preview: body,
     }).catch(() => undefined);
 

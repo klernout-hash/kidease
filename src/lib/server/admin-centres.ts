@@ -143,7 +143,7 @@ function decisionCopy(decision: Decision, name: string) {
   }
   if (decision === "decline") {
     return {
-      subject: `Update on ${name} — KidEase listing`,
+      subject: `Update on ${name}: KidEase listing`,
       text: `Hi,\n\nWe reviewed the claim for ${name} and are not able to publish it on KidEase at this time.\nThe listing is not live for parent requests.\n\nIf you think this is a mistake, or you have a licence document to send, reply to this email and we will take another look.`,
     };
   }

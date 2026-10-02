@@ -221,7 +221,7 @@ export const listInbox = createServerFn({ method: "GET" })
         slaOverdue: remaining != null && remaining <= 0,
         confirmedDot: inboxConfirmedDot({ tourStatus, bookingStatus: r.status }),
         staffNote: (r.conversation_staff_note || r.tour_staff_note || "").trim() || null,
-        subsidyNote: financial.subsidy ? "Provincial subsidy / $10-a-day — ask on tour" : null,
+        subsidyNote: financial.subsidy ? "Provincial subsidy / $10-a-day: ask on tour" : null,
         scheduleNote: schedules.length ? schedules.join(" · ") : null,
         requestInfoCount: Number(r.info_count) || 0,
       };

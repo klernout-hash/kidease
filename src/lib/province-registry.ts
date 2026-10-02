@@ -72,7 +72,7 @@ export const JURISDICTIONS: Jurisdiction[] = [
     subsidyUrl: "https://direct3.gov.mb.ca/daycare/see/see.nsf/see?ReadForm#/en-ca",
     adapterStatus: "adapter_ready",
     adapterNotes:
-      "Local KidEase catalogue match for bundled Manitoba licence numbers. Not a live scrape of childcaresearch.gov.mb.ca — official search stays the source of truth for inspections.",
+      "Local KidEase catalogue match for bundled Manitoba licence numbers. Not a live scrape of childcaresearch.gov.mb.ca: official search stays the source of truth for inspections.",
   },
   {
     code: "ON",
@@ -178,9 +178,9 @@ export function canadaFallbackUrl() {
 }
 
 export function adapterStatusLabel(status: AdapterStatus) {
-  if (status === "adapter_ready") return "Catalogue match only — not a live scrape";
-  if (status === "manual") return "Manual review — no live adapter";
-  return "Adapter stub — manual review";
+  if (status === "adapter_ready") return "Catalogue match only: not a live scrape";
+  if (status === "manual") return "Manual review: no live adapter";
+  return "Adapter stub: manual review";
 }
 
 export function adapterStatusHint(status: AdapterStatus) {
@@ -188,7 +188,7 @@ export function adapterStatusHint(status: AdapterStatus) {
     return "Matches the bundled KidEase catalogue. Staff still verify the licence photo. No live government scrape.";
   }
   if (status === "manual") {
-    return "Documented adapter stub. Fail closed — no live match. Verify the licence against the official registry before approving a claim.";
+    return "Documented adapter stub. Fail closed: no live match. Verify the licence against the official registry before approving a claim.";
   }
   return "No live government scrape. Verify the licence manually before approving a claim.";
 }

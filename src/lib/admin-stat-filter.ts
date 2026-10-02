@@ -177,6 +177,6 @@ export function adminLeadStatHonesty(stat: AdminLeadStat, count: number): { titl
   }
   return {
     title,
-    body: `${count} lead request${count === 1 ? "" : "s"} recorded. This desk shows the count only — those rows are not listed here. Centres review tours, waitlist, and spot asks in their lead inbox.`,
+    body: `${count} lead request${count === 1 ? "" : "s"} recorded. This desk shows the count only: those rows are not listed here. Centres review tours, waitlist, and spot asks in their lead inbox.`,
   };
 }

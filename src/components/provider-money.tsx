@@ -70,7 +70,7 @@ export function ProviderMoneyPanel() {
         <LedgerHonesty stripeLive={stripeLive} className="mt-2" ready={ready} />
         {ready && !stripeLive ? (
           <p className="mt-2 text-sm text-muted">
-            You can draft and Send bills so both desks can rehearse. Pay stays off — internal ledger (not charged).
+            You can draft and Send bills so both desks can rehearse. Pay stays off: internal ledger (not charged).
           </p>
         ) : null}
         {ready && stripeLive ? <p className="mt-2 text-sm text-muted">{t("newBillLiveHint")}</p> : null}

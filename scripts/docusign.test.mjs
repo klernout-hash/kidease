@@ -379,7 +379,7 @@ test("DocuSign JWT auth failure returns an empty list and never throws", async (
   assert.match(contracts, /docusignEnvIssues/);
   assert.match(contracts, /emptyAdminContractsPayload/);
   assert.match(src("src/components/admin-contracts.tsx"), /docusign-consent-banner/);
-  assert.match(src("src/lib/docusign-copy.ts"), /DocuSign not connected — finish JWT consent/);
+  assert.match(src("src/lib/docusign-copy.ts"), /DocuSign not connected: finish JWT consent/);
   assert.match(src(".env.example"), /FEATURE_SMS=0/);
   assert.doesNotMatch(src(".env.example"), /^FEATURE_SMS=1$/m);
 });

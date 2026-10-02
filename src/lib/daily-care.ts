@@ -1,5 +1,5 @@
 /**
- * Daily-care (ops-lite) helpers. Pure — no DB, no Start.
+ * Daily-care (ops-lite) helpers. Pure: no DB, no Start.
  *
  * NOW: parent ↔ centre /inbox (already live), per-child check-in/out,
  * and daily journals (text + photos).
@@ -9,7 +9,7 @@
  * FEATURE_INAPP_CHAT stays off. It does not control the parent helper bubble.
  * Live messages stay on /inbox for claimed centres, enrolled or linked
  * children, and inquiry threads.
- * Care notices are transactional thread/email only — no commercial SMS.
+ * Care notices are transactional thread/email only: no commercial SMS.
  */
 
 import { LISTING_PHOTO_MAX_BYTES } from "./upload-limits.ts";
@@ -202,8 +202,8 @@ export function careStatusBody(input: {
   }
   if (input.kind === "vacation") {
     return fr
-      ? `${child} est en vacances aujourd’hui — pas à ${input.daycareName}.`
-      : `${child} is on vacation today — not at ${input.daycareName}.`;
+      ? `${child} est en vacances aujourd’hui: pas à ${input.daycareName}.`
+      : `${child} is on vacation today: not at ${input.daycareName}.`;
   }
   if (input.kind === "medication") {
     const med = (input.medicationName || "medication").trim() || "medication";

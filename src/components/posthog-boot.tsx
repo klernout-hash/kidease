@@ -8,7 +8,7 @@ import { captureRetentionTouch } from "@/lib/retention";
  * Allow, including inside Capacitor. Pageviews, autocapture, privacy-masked
  * web session replay, feature flags. Identifies the Better Auth user by
  * account id when a real session is present.
- * Missing VITE_PUBLIC_POSTHOG_KEY is a no-op — the app still boots.
+ * Missing VITE_PUBLIC_POSTHOG_KEY is a no-op: the app still boots.
  */
 export function PostHogBoot() {
   const { user, isPending } = useCurrentUserState();

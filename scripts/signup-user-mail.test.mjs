@@ -55,7 +55,7 @@ test("verify-your-email is independent of Admin notify success", () => {
 });
 
 test("verify email copy is a welcome/confirm with a real link, EN + FR-CA", () => {
-  assert.equal(VERIFY_EMAIL_SUBJECT, "Verify your email — KidEase");
+  assert.equal(VERIFY_EMAIL_SUBJECT, "Verify your email: KidEase");
   const text = verifyEmailText("https://www.kidease.ca/api/auth/verify-email?token=test", "Joan", "provider");
   assert.match(text, /Hi Joan,/);
   assert.match(text, /Thanks for signing up with KidEase/);
@@ -66,8 +66,8 @@ test("verify email copy is a welcome/confirm with a real link, EN + FR-CA", () =
   assert.doesNotMatch(text, /within 24 hours/);
   assert.doesNotMatch(text, /We got your request/);
   const copy = src("src/lib/copy.ts");
-  assert.match(copy, /verifyEmailSubject: "Verify your email — KidEase"/);
-  assert.match(copy, /verifyEmailSubject: "Confirmez votre courriel — KidEase"/);
+  assert.match(copy, /verifyEmailSubject: "Verify your email: KidEase"/);
+  assert.match(copy, /verifyEmailSubject: "Confirmez votre courriel: KidEase"/);
 });
 
 test("daycare verify and next-steps say the listing is not live until verified", () => {
@@ -179,7 +179,7 @@ test("provider next-steps copy is honest and bilingual, and can name an existing
   assert.match(text, /Hi Joan,/);
   assert.match(text, /Thanks for joining KidEase as a daycare provider/);
   assert.match(text, /We already have “Little Fox Child Care” on file/);
-  assert.match(text, /Complete your listing — Little Fox Child Care —/);
+  assert.match(text, /Complete your listing for Little Fox Child Care\./);
   assert.match(text, /does not run police checks/);
   assert.match(text, /does not issue Vulnerable Sector Checks/);
   assert.match(text, /Child Abuse Registry/);
@@ -200,7 +200,7 @@ test("provider next-steps copy is honest and bilingual, and can name an existing
   assert.doesNotMatch(text, /KidEase (ran|issued) a (police|Vulnerable)/i);
   const unnamed = providerOnboardText("https://www.kidease.ca", "Joan");
   assert.doesNotMatch(unnamed, /We already have/);
-  assert.match(unnamed, /Complete your listing — name, address, hours, and open spots/);
+  assert.match(unnamed, /Complete your listing: name, address, hours, and open spots/);
   const copy = src("src/lib/copy.ts");
   assert.match(copy, /providerOnboardSubject: "Next steps to get verified on KidEase"/);
   assert.match(copy, /providerOnboardSubject: "Prochaines étapes pour être vérifié sur KidEase"/);

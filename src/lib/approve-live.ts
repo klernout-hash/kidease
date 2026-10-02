@@ -4,7 +4,7 @@
  * One decision: licence number on file (not a private PDF), screening or a
  * valid attestation, a single canonical claim, Approved + Live, duplicate
  * claims suppressed, and a map point inside the centre's city so Live search
- * can see it. Admin health is this result — never a green check that skips
+ * can see it. Admin health is this result: never a green check that skips
  * a failed downstream step.
  */
 
@@ -240,7 +240,7 @@ export function liveSearchHit(input: {
   );
 }
 
-/** Strong public treatment. Statuses only — callers must not pass document refs. */
+/** Strong public treatment. Statuses only: callers must not pass document refs. */
 export function publicApprovalEligible(centre: ApprovalCentre): boolean {
   const status = (centre.claimStatus || "").trim().toLowerCase();
   if (!APPROVED_CLAIM.has(status)) return false;
@@ -475,7 +475,7 @@ export function planApproval(
     {
       id: "canonical_claim",
       ok: true,
-      detail: chosen.canonicalId ? "Canonical claim selected" : "No separate claim row — listing approval stands",
+      detail: chosen.canonicalId ? "Canonical claim selected" : "No separate claim row: listing approval stands",
     },
     {
       id: "search_location",

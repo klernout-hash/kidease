@@ -119,7 +119,7 @@ export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
     select: (s) => parseDeskQuery((s.location.search as { desk?: unknown }).desk as string | undefined),
   });
   const { session, sticky, setSticky } = useSessionDesks();
-  // Same Better Auth session. Pills only navigate — they do not call setRole
+  // Same Better Auth session. Pills only navigate: they do not call setRole
   // or rewrite the session cookie. /provider still promotes via its own mount.
   if (!session || !showDeskSwitcher(session.desks, session.role, session.email)) return null;
 

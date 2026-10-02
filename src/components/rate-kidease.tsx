@@ -6,7 +6,7 @@ import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
 /**
- * Rate KidEase is public — not Account-only.
+ * Rate KidEase is public: not Account-only.
  *
  * Surfaces: guest www homepage (`/`), Account, app Menu, website drawer, footer.
  * All of them call `rateKidEaseFromMenu()` (PR 98): native write-review / OS sheet,
@@ -83,7 +83,7 @@ export function RateKidEaseButton({ className }: { className?: string }) {
   return <RateKidEaseControl appearance="button" className={className} />;
 }
 
-/** Same prompt as authenticated Account — reused on guest www home. */
+/** Same prompt as authenticated Account: reused on guest www home. */
 export function RateKidEasePrompt({ className }: { className?: string }) {
   const { t } = useCopy();
   return (

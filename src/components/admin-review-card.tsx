@@ -523,7 +523,7 @@ export function AdminReviewCard({
             </Button>
           ) : (
             <p className="text-sm font-medium text-primary" data-ke="approve-closed">
-              Live — approval is closed
+              Live: approval is closed
             </p>
           )}
           <Button

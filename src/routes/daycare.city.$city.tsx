@@ -48,7 +48,7 @@ export function CityHubPage({ hub }: { hub: CityHubSnapshot }) {
         : `Does KidEase list nannies in ${cityName}?`,
       a: fr
         ? "Non. KidEase répertorie seulement les centres, nurseries et milieux familiaux permis par la province ou le territoire. Pas de nounous, de gardiennes non permises, ni de babysitting."
-        : "No. KidEase lists provincially or territorially licensed centres, nurseries, and homes only — not nannies, sitters, or unlicensed care.",
+        : "No. KidEase lists provincially or territorially licensed centres, nurseries, and homes only: not nannies, sitters, or unlicensed care.",
     },
     {
       q: fr ? "Comment obtenir une subvention?" : "How do childcare subsidies work?",
@@ -90,7 +90,7 @@ export function CityHubPage({ hub }: { hub: CityHubSnapshot }) {
         </h1>
         <p className="mt-6 text-lg text-muted">
           {fr
-            ? `KidEase répertorie ${hub.count} établissements permis à ${cityName} — centres, nurseries et milieux familiaux. La recherche est gratuite. Nous ne listons pas les nounous ni les gardiennes.`
+            ? `KidEase répertorie ${hub.count} établissements permis à ${cityName}: centres, nurseries et milieux familiaux. La recherche est gratuite. Nous ne listons pas les nounous ni les gardiennes.`
             : `KidEase lists ${hub.count} licensed centres, nurseries, and homes in ${cityName}. Search is free. We do not list nannies or sitters.`}
         </p>
         <p className="mt-4 text-sm text-muted">
