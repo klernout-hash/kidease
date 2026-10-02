@@ -365,7 +365,6 @@ export const DaycareCard = memo(function DaycareCard({
             className="relative z-10 mt-1 inline-flex min-h-11 items-center text-[13px] font-medium text-muted no-underline underline-offset-4 hover:text-fg hover:underline"
           >
             {t("viewLicenceRecord")}
-            {licenceNo ? ` · ${licenceNo}` : ""}
           </a>
         ) : null}
       </article>
@@ -504,7 +503,6 @@ export const DaycareCard = memo(function DaycareCard({
           className="relative z-10 mt-1 inline-flex min-h-11 items-center text-[12px] font-medium text-muted no-underline underline-offset-4 hover:text-fg hover:underline"
         >
           {t("viewLicenceRecord")}
-          {licenceNo ? ` · ${licenceNo}` : ""}
         </a>
       ) : null}
     </article>

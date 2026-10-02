@@ -22,11 +22,13 @@ export function ParentPlusPanel({
   plusReturn,
   upgradeSearch = null,
   billingReturn = false,
+  quiet = false,
 }: {
   offerCheckout?: boolean;
   plusReturn?: "success" | "cancel" | null;
   upgradeSearch?: UpgradeSearch | null;
   billingReturn?: boolean;
+  quiet?: boolean;
 }) {
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
@@ -150,8 +152,8 @@ export function ParentPlusPanel({
 
   return (
     <div className="ke-digital-plan rounded-xl bg-surface p-5 ring-1 ring-border" data-ke="digital-plan">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Upgrade</p>
-      <h2 className="mt-1 font-display text-3xl">{t("parentPlusTitle")}</h2>
+      {quiet ? null : <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Upgrade</p>}
+      <h2 className="mt-1 font-display text-3xl">{quiet ? t("navUpgrade") : t("parentPlusTitle")}</h2>
       <p className="mt-1 text-sm text-muted">{t("parentPlusLead")}</p>
       {returnPhase ? (
         <div className="mt-3">
@@ -181,10 +183,14 @@ export function ParentPlusPanel({
         <BillingIntervalToggle
           interval={interval}
           onChange={setInterval}
-          savePercents={visibleYearlySavings(
-            PARENT_UPGRADE_PLANS.map((plan) => plan.id),
-            state.prices,
-          )}
+          savePercents={
+            quiet
+              ? []
+              : visibleYearlySavings(
+                  PARENT_UPGRADE_PLANS.map((plan) => plan.id),
+                  state.prices,
+                )
+          }
           locale={loc}
         />
       </div>
@@ -203,13 +209,14 @@ export function ParentPlusPanel({
           const live = plan.id !== "free" && state.stripeLive && Boolean(state.prices[priceKey]);
           const current = state.plan === plan.id && state.interval === interval && (plusOn || !state.stripeLive);
           return (
-            <UpgradePlanCard
+              <UpgradePlanCard
               key={plan.id}
               plan={plan}
               locale={loc}
               interval={interval}
               monthly={amount.monthly}
               yearly={amount.yearly}
+              quiet={quiet}
               current={current || (plan.id === "free" && state.plan === "free")}
               cta={
                 plan.id === "free" ? (

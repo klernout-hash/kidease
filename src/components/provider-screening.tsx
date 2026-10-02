@@ -20,6 +20,7 @@ import {
   screeningDocHref,
 } from "@/lib/private-docs";
 import { useCopy } from "@/lib/use-copy";
+import { centrePickerLabel } from "@/lib/centre-label";
 import { isReauthRequiredMessage } from "@/lib/reauth";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { useReauthPrompt } from "@/components/reauth-dialog";
@@ -412,7 +413,7 @@ export function ProviderScreeningPanel() {
                 >
                   {centres.map((c) => (
                     <option key={c.daycareId} value={c.daycareId}>
-                      {c.daycareName}
+                      {centrePickerLabel(c.daycareName, null, c.daycareId)}
                     </option>
                   ))}
                 </select>

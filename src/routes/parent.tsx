@@ -18,9 +18,15 @@ const ParentDesk = lazy(() =>
 
 export const Route = createFileRoute("/parent")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
+  head: () => ({
+    meta: [
+      { title: "Parent home · KidEase" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   validateSearch: (s: Record<string, unknown>) => {
     const out: {
-      tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "alerts" | "children" | "care" | "waitlists";
+      tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "subscription" | "alerts" | "children" | "care" | "waitlists";
       preview?: "support";
       plus?: "success" | "cancel";
       plan?: "plus" | "alerts";
@@ -29,7 +35,7 @@ export const Route = createFileRoute("/parent")({
       billing?: "return";
     } = {};
     const tab = s.tab;
-    if (tab === "explore" || tab === "saved" || tab === "enrolled" || tab === "requests" || tab === "profile" || tab === "payments" || tab === "alerts" || tab === "children" || tab === "care" || tab === "waitlists") out.tab = tab;
+    if (tab === "explore" || tab === "saved" || tab === "enrolled" || tab === "requests" || tab === "profile" || tab === "payments" || tab === "subscription" || tab === "alerts" || tab === "children" || tab === "care" || tab === "waitlists") out.tab = tab;
     if (s.preview === "support") out.preview = "support";
     if (s.plus === "success" || s.plus === "cancel") out.plus = s.plus;
     if (s.plan === "plus" || s.plan === "alerts") out.plan = s.plan;
@@ -46,13 +52,15 @@ function ParentPage() {
   const chrome = useRoleChrome();
   const { session, ready } = useSessionDesks();
   const search = Route.useSearch();
-  const upgradeSurface = search.tab === "payments" || search.plus === "success" || search.plus === "cancel" || search.billing === "return";
+  const upgradeSurface = search.tab === "subscription" || search.plus === "success" || search.plus === "cancel" || search.billing === "return";
   const initialTab =
     search.tab === "saved"
       ? "saved"
       : search.tab === "enrolled" || search.tab === "requests"
         ? "bookings"
-          : search.tab === "payments" || search.plus === "success" || search.plus === "cancel" || search.billing === "return"
+          : search.tab === "subscription" || search.plus === "success" || search.plus === "cancel" || search.billing === "return"
+          ? "subscription"
+          : search.tab === "payments"
           ? "payments"
           : search.tab === "alerts"
             ? "alerts"
@@ -108,7 +116,6 @@ function ParentPage() {
     if (daycare) return <Navigate to="/provider/subscription" />;
     if (session.home === "/admin") return <Navigate to="/admin" />;
     if (session.home === "/support") return <Navigate to="/support" />;
-    return <Navigate to="/provider" />;
   }
 
   return (

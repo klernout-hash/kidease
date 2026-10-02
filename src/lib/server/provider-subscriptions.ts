@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
+import { centrePickerLabel } from "@/lib/centre-label";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { resolveSessionDesks } from "@/lib/server/roles";
 import { assertPayCheckoutAllowed, providerSubscriptionsEnabled } from "@/lib/features";
@@ -120,7 +121,11 @@ async function centresFor(userId: string): Promise<{ id: string; name: string; c
       [ids],
     )
     .catch(() => [] as { id: string; name: string; city: string | null }[]);
-  return rows.map((row) => ({ id: row.id, name: row.name || row.id, city: row.city || null }));
+  return rows.map((row) => ({
+    id: row.id,
+    name: centrePickerLabel(row.name, row.city, row.id),
+    city: row.city || null,
+  }));
 }
 
 async function daycareCheckoutMeta(userId: string, role: string, centreId?: string | null) {

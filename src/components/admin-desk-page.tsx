@@ -10,6 +10,7 @@ import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { canVisitDesk } from "@/lib/desks";
+import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import {
   ACTIVITY_KIND_CHIPS,
   ADMIN_PEOPLE_DAYS,
@@ -172,7 +173,7 @@ export function AdminPage() {
   }
 
   async function refresh() {
-    const [events, accounts, centresLoad, cash, envelopes, regs, flags, health, leads, screening] = await Promise.all([
+    const [events, accounts, centresLoad, cash, envelopes] = await Promise.all([
       listPlatformEvents().catch(() => []),
       listAdminPeople().catch(() => []),
       settleAdminCentresLoad(() => listAdminCentres()),
@@ -187,6 +188,8 @@ export function AdminPage() {
         docusignEnvIssues: [],
         docusignLoadFailed: true,
       })),
+    ]);
+    const [regs, flags, health, leads, screening] = await Promise.all([
       listJurisdictions().catch(() => []),
       listListingReports().catch(() => []),
       getCatalogHealth().catch(() => null),
@@ -221,7 +224,7 @@ export function AdminPage() {
 
   useEffect(() => {
     if (!user?.id || !admin) return;
-    void refresh();
+    void dedupedQuery(`admin-desk:${user.id}`, QUERY_STALE_MS, () => refresh());
   }, [user?.id, admin]);
 
   useEffect(() => {

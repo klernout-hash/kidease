@@ -32,6 +32,12 @@ import { DeleteAccountPanel } from "@/components/delete-account-panel";
 
 export const Route = createFileRoute("/account")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
+  head: ({ match }) => ({
+    meta: [
+      { title: match.search.desk === "admin" ? "Admin account · KidEase" : "Account · KidEase" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   validateSearch: (s: Record<string, unknown>) => {
     const out: {
       tab?: "saved" | "enrolled" | "profile" | "payments";
@@ -330,7 +336,7 @@ function ProfilePane() {
             <Button className="mt-4" asChild>
               <Link
                 to={desk === "provider" ? "/provider/subscription" : "/parent"}
-                search={desk === "provider" ? undefined : { tab: "payments" }}
+                search={desk === "provider" ? undefined : { tab: "subscription" }}
               >
                 {t("navUpgrade")}
               </Link>

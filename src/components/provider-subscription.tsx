@@ -7,6 +7,7 @@ import { CheckoutReturnNote, upgradeReturnFromSearch, useUpgradeCelebration, typ
 import { Button } from "@/components/ui/button";
 import { DaycareAddons } from "@/components/daycare-addons";
 import { useCopy } from "@/lib/use-copy";
+import { centrePickerLabel } from "@/lib/centre-label";
 import {
   PROVIDER_COMPARE,
   PROVIDER_PLANS,
@@ -531,7 +532,7 @@ export function ProviderSubscriptionPanel({
           >
             {state.centres.map((centre) => (
               <option key={centre.id} value={centre.id}>
-                {centre.name}
+                {centrePickerLabel(centre.name, centre.city, centre.id)}
               </option>
             ))}
           </select>

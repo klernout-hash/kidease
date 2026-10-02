@@ -124,7 +124,7 @@ function VideoRoomPage() {
             <div className="mt-4 flex flex-wrap gap-2">
               <PayCtas>
               <Button asChild>
-                <Link to="/parent" search={{ tab: "payments" }}>
+                <Link to="/parent" search={{ tab: "subscription" }}>
                   {t("parentPlusSubscribe")}
                 </Link>
               </Button>

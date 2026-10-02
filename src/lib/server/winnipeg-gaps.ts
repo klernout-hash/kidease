@@ -7,6 +7,7 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql, dbSource } from "@/lib/db";
 import { PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
 import { requireAdmin } from "@/lib/server/roles";
+import { decodeBasicEntities } from "@/lib/text-entities";
 import {
   hasRealPhoto,
   isPlatformLiveListing,
@@ -59,7 +60,7 @@ function fromDb(row: GapDbRow): CompletenessInput {
   return {
     id: row.id,
     slug: row.slug,
-    name: row.name,
+    name: decodeBasicEntities(row.name || ""),
     address: row.address,
     city: row.city,
     province: row.province,
@@ -134,7 +135,7 @@ function toClient(row: CompletenessInput): WinnipegGapClientRow {
   return {
     id: row.id || "",
     slug: row.slug || "",
-    name: row.name || "",
+    name: decodeBasicEntities(row.name || ""),
     city: row.city || "",
     phone: row.phone || null,
     website: row.website || null,

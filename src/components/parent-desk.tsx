@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { confirmSuccess } from "@/lib/success-confirm";
 import type { UpgradeSearch } from "@/components/checkout-return";
 import { DeskShell } from "@/components/desk-shell";
+import { DeskSkeleton } from "@/components/page-skeleton";
 import { ParentShortlist } from "@/components/parent-shortlist";
 import { StatusBadge } from "@/components/status-badge";
 import { LedgerHonesty } from "@/components/listing-status-badge";
@@ -77,7 +78,7 @@ function scheduleIdle(work: () => void): () => void {
   return () => window.clearTimeout(id);
 }
 
-type ParentTab = "explore" | "saved" | "bookings" | "payments" | "children" | "alerts" | "care" | "waitlists";
+type ParentTab = "explore" | "saved" | "bookings" | "payments" | "subscription" | "children" | "alerts" | "care" | "waitlists";
 
 export function ParentDesk({
   initialTab,
@@ -311,23 +312,22 @@ export function ParentDesk({
   void explore;
   void exploreReady;
   void ParentDeskRails;
-  if (!user) return null;
+  if (!user) return <DeskSkeleton />;
   const upgradeBuyer = {
     role: desks?.role,
     ownsCentre: desks?.ownsCentre,
     linkedToCentre: desks?.centreLinked,
   };
-  const onPlusSurface = contentTab === "payments" || plusReturn != null;
+  const onPlusSurface = contentTab === "subscription" || plusReturn != null;
   if (onPlusSurface && desksReady && desks && !canBuyParentUpgrade(upgradeBuyer)) {
     if (canBuyDaycareUpgrade(upgradeBuyer)) return <Navigate to="/provider/subscription" />;
     if (desks.home === "/admin") return <Navigate to="/admin" />;
     if (desks.home === "/support") return <Navigate to="/support" />;
-    return <Navigate to="/provider" />;
   }
   const showParentPlus = Boolean(desksReady && canBuyParentUpgrade(upgradeBuyer));
 
   return (
-    <DeskShell desk="parent" active={tab} onSelect={selectTab}>
+    <DeskShell desk="parent" active={tab === "subscription" ? "upgrade" : tab} onSelect={selectTab}>
       <p className="text-muted" data-ke="parent-identity" data-user-id={user.id}>
         {user.displayName ?? user.primaryEmail}
       </p>
@@ -474,6 +474,25 @@ export function ParentDesk({
         </div>
       ) : null}
 
+      {contentTab === "subscription" ? (
+        <div className="mt-6 w-full" data-ke="parent-subscription">
+          <h2 className="font-display text-2xl">{t("navUpgrade")}</h2>
+          <p className="mt-1 max-w-2xl text-sm text-muted">{t("accountSubscriptionLead")}</p>
+          {showParentPlus ? (
+            <div className="mt-4">
+              <p className="ke-native-plan-note mb-3 text-sm text-muted" data-ke="native-plan-note">
+                {t("nativePlansHidden")}
+              </p>
+              <Suspense fallback={<div className="ke-skel h-32 rounded-xl" aria-hidden="true" />}>
+                <ParentPlusPanel quiet offerCheckout plusReturn={plusReturn} upgradeSearch={upgradeSearch} billingReturn={billingReturn} />
+              </Suspense>
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-muted">{t("accountSubscriptionLead")}</p>
+          )}
+        </div>
+      ) : null}
+
       {contentTab === "payments" ? (
         <div className="mt-6 space-y-6">
           <div>
@@ -492,16 +511,6 @@ export function ParentDesk({
               ready={desksReady}
             />
             <p className="mt-2 text-sm text-muted">{t("connectFeeParentPay")}</p>
-            {showParentPlus ? (
-            <div className="mt-4">
-              <p className="ke-native-plan-note mb-3 text-sm text-muted" data-ke="native-plan-note">
-                {t("nativePlansHidden")}
-              </p>
-              <Suspense fallback={<div className="ke-skel h-32 rounded-xl" aria-hidden="true" />}>
-                <ParentPlusPanel offerCheckout plusReturn={plusReturn} upgradeSearch={upgradeSearch} billingReturn={billingReturn} />
-              </Suspense>
-            </div>
-            ) : null}
           </div>
           {bills.filter((b) => billIsOpen(b.status)).length ? (
             <div>

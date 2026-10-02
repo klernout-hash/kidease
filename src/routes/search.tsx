@@ -123,6 +123,7 @@ import { CityHubLinks } from "@/components/city-hub-links";
 import { EXPLORE_AGE_RAIL_COPY, preferCompleteCards } from "@/lib/explore-category-rails";
 import { dismissPopovers } from "@/lib/dismiss-popovers";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
+import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 
 const MapView = lazy(() => import("@/components/map-view").then((m) => ({ default: m.MapView })));
 const CompareBar = lazy(() =>
@@ -447,10 +448,12 @@ function SearchPage() {
 
   useEffect(() => {
     if (!user || !anchorsHydrated) return;
+    const payload = { home: origin, work: workOrigin, mode: anchorMode };
+    const key = JSON.stringify(payload);
     const tmr = window.setTimeout(() => {
-      void saveMySearchAnchors({
-        data: { home: origin, work: workOrigin, mode: anchorMode },
-      }).catch(() => undefined);
+      void dedupedQuery(`save-anchors:${user.id}:${key}`, QUERY_STALE_MS, () =>
+        saveMySearchAnchors({ data: payload }).then(() => true),
+      ).catch(() => undefined);
     }, 400);
     return () => window.clearTimeout(tmr);
   }, [
@@ -572,9 +575,7 @@ function SearchPage() {
       setSearchFailed(false);
     }
     const tmr = window.setTimeout(() => {
-      void searchDaycarePage({
-        data: searchData,
-      })
+      void dedupedQuery(`search-page:${key}`, QUERY_STALE_MS, () => searchDaycarePage({ data: searchData }))
         .then((result) => {
           if (!live) return;
           const locked = filterByLocationLock(result.items, locationLock);
@@ -943,9 +944,10 @@ function SearchPage() {
     setItems(null);
     setSearchFailed(false);
     setRefreshing(true);
-    void searchDaycarePage({
-      data: searchData,
-    })
+    void dedupedQuery(`search-page:${searchCacheKey(cacheInput)}`, QUERY_STALE_MS, () =>
+      searchDaycarePage({ data: searchData }),
+      { fresh: true },
+    )
       .then((result) => {
         const locked = filterByLocationLock(result.items, locationLock);
         setItems(locked);

@@ -117,13 +117,13 @@ export function OptionalUpgrades({
                     yearly={amount.yearly}
                     cta={
                       plan.id === "free" ? null : signedIn ? (
-                        <Link to="/parent" search={{ tab: "payments" }} className={planCtaClass(plan.recommended)}>
+                        <Link to="/parent" search={{ tab: "subscription" }} className={planCtaClass(plan.recommended)}>
                           {label}
                         </Link>
                       ) : (
                         <Link
                           to="/login"
-                          search={{ role: "parent", desk: "parent", intent: "in", next: "/parent?tab=payments" }}
+                          search={{ role: "parent", desk: "parent", intent: "in", next: "/parent?tab=subscription" }}
                           className={planCtaClass(plan.recommended)}
                         >
                           {label}

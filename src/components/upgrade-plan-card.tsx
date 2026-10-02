@@ -18,6 +18,7 @@ export function UpgradePlanCard({
   interval = "month",
   perSite = false,
   current = false,
+  quiet = false,
   cta,
 }: {
   plan: UpgradePlanCopy;
@@ -27,6 +28,8 @@ export function UpgradePlanCard({
   interval?: "month" | "year";
   perSite?: boolean;
   current?: boolean;
+  /** Subscription page: no Recommended badge and no yearly savings pressure copy. */
+  quiet?: boolean;
   cta?: ReactNode;
 }) {
   const yearlyMode = plan.id !== "free" && interval === "year" && yearly != null && yearly > 0;
@@ -50,13 +53,13 @@ export function UpgradePlanCard({
         : "/ month";
   return (
     <article
-      data-ke={plan.recommended ? "plan-recommended" : "plan-card"}
+      data-ke={!quiet && plan.recommended ? "plan-recommended" : "plan-card"}
       data-plan={plan.id}
       data-current={current ? "true" : "false"}
       data-interval={yearlyMode ? "year" : "month"}
       className={cn(
         "flex h-full flex-col rounded-2xl bg-surface p-4 ring-1",
-        current ? "ring-2 ring-primary" : plan.recommended ? "ring-primary/40" : "ring-border",
+        current ? "ring-2 ring-primary" : !quiet && plan.recommended ? "ring-primary/40" : "ring-border",
       )}
     >
       <div className="flex items-start justify-between gap-2">
@@ -65,7 +68,7 @@ export function UpgradePlanCard({
           <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-fg">
             {locale === "fr" ? "Forfait actuel" : "Current plan"}
           </span>
-        ) : plan.recommended ? (
+        ) : !quiet && plan.recommended ? (
           <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
             {RECOMMENDED_LABEL[locale]}
           </span>
@@ -75,7 +78,7 @@ export function UpgradePlanCard({
         {price}
         <span className="ml-1 text-sm font-normal text-muted">{unit}</span>
       </p>
-      {percent != null ? (
+      {!quiet && percent != null ? (
         <p className="mt-2 text-xs font-semibold text-primary" data-ke="plan-save">
           {saved == null
             ? locale === "fr"

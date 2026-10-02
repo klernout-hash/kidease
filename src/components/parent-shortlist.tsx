@@ -52,9 +52,9 @@ export function ParentShortlist({
         ? "Enregistré sur ce téléphone. Reconnectez-vous pour actualiser."
         : "Saved on this phone. Connect again to refresh.";
     return (
-      <div className="ke-listings mt-6">
+      <div className="mt-6 w-full">
         <h2 className="font-display text-2xl">{t("myShortlist")}</h2>
-        <ul className="mt-4 space-y-2">
+        <ul className="mt-4 w-full space-y-2">
           {offline.map((row) => (
             <li key={row.id}>
               <Link to="/daycare/$slug" params={{ slug: row.slug }} className="block min-h-11 rounded-xl bg-surface px-4 py-3 ring-1 ring-border">
@@ -71,8 +71,11 @@ export function ParentShortlist({
 
   if (!items.length) {
     return (
-      <div className="ke-listings mt-6">
-        <EmptyState title={t("noSaved")} body={t("shortlistLead")} action={t("emptyFindCare")} actionTo="/search" />
+      <div className="mt-6 w-full">
+        <h2 className="font-display text-2xl">{t("myShortlist")}</h2>
+        <div className="mt-4 w-full">
+          <EmptyState title={t("noSaved")} body={t("shortlistLead")} action={t("emptyFindCare")} actionTo="/search" />
+        </div>
       </div>
     );
   }

@@ -13,6 +13,7 @@ import { buildRoomCounts, canAssignRoster, canManageRooms, type CareDeskRole } f
 import { evaluateRoom, RATIO_AGE_GROUPS, type RatioAgeGroup } from "@/lib/licensed-day";
 import type { AttendanceRow } from "@/lib/server/ops";
 import { useCopy } from "@/lib/use-copy";
+import { centrePickerLabel } from "@/lib/centre-label";
 import type { CopyKey } from "@/lib/copy";
 
 const AGE_LABEL: Record<RatioAgeGroup, CopyKey> = {
@@ -227,7 +228,7 @@ export function CareOpsPanel({
                 >
                   {daycareOptions.map((centre) => (
                     <option key={centre.id} value={centre.id}>
-                      {centre.name}
+                      {centrePickerLabel(centre.name, null, centre.id)}
                     </option>
                   ))}
                 </select>

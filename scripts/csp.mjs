@@ -24,6 +24,14 @@
  * would break TanStack / Radix without a CSS-variable rewrite of popovers.
  */
 
+/** Maps and Google fonts inject stylesheets. style-src stays nonce-first, with these hosts only. */
+export const CSP_STYLE_HOSTS = [
+  "https://maps.googleapis.com",
+  "https://maps.gstatic.com",
+  "https://fonts.googleapis.com",
+  "https://fonts.gstatic.com",
+];
+
 export const CSP_SCRIPT_HOSTS = [
   "https://maps.googleapis.com",
   "https://js.stripe.com",
@@ -85,14 +93,14 @@ export function buildContentSecurityPolicy(nonce) {
   if (/['\s;]/.test(token)) throw new Error("CSP nonce contains unsafe characters");
 
   const scriptSrc = ["'self'", `'nonce-${token}'`, "'strict-dynamic'", "'wasm-unsafe-eval'", ...CSP_SCRIPT_HOSTS].join(" ");
-  const styleSrc = ["'self'", `'nonce-${token}'`].join(" ");
+  const styleSrc = ["'self'", `'nonce-${token}'`, ...CSP_STYLE_HOSTS].join(" ");
   return [
     "default-src 'self'",
     `script-src ${scriptSrc}`,
     `style-src ${styleSrc}`,
     "style-src-attr 'unsafe-inline'",
     `img-src 'self' data: blob: https: ${CSP_IMG_HOSTS.join(" ")}`,
-    "font-src 'self' data:",
+    "font-src 'self' data: https://fonts.gstatic.com",
     `connect-src 'self' ${CSP_CONNECT_HOSTS.join(" ")}`,
     "worker-src 'self' blob: data:",
     `frame-src ${CSP_FRAME_HOSTS.join(" ")}`,

@@ -60,6 +60,12 @@ const KNOWN_ADMIN_ONLY_LICENCES = new Set(["test-ghost-0001"]);
 export const PUBLIC_LIVE_KEEP_SLUGS = new Set(["kids-world-daycare-kh2t"]);
 
 /**
+ * This QA-looking slug is a real public page. Do not 404 it with the qa- fixture rule.
+ * Other qa- slugs, including qa-test-photo-upload, stay admin-only.
+ */
+export const PUBLIC_CATALOGUE_SLUGS = new Set(["qa-test-daycare-listing-z5hz"]);
+
+/**
  * Kyle's claimed catalogue fixture. Same admin-only signal as TEST/ghost rows
  * so Live search, the map, and "Show QA fixtures" share one check.
  */
@@ -89,6 +95,7 @@ export function looksLikeTestFixture(d: ListingVisibilityInput | null | undefine
   if (!d) return false;
   const id = norm(d.id || d.daycareId);
   const slug = norm(d.slug);
+  if (PUBLIC_CATALOGUE_SLUGS.has(slug)) return false;
   const license = norm(d.licenseNumber);
   const name = (d.name || "").trim();
   const nameLc = name.toLowerCase();
@@ -109,6 +116,7 @@ export function looksLikeTestFixture(d: ListingVisibilityInput | null | undefine
 /** Known QA fixture plus any row flagged admin_only / is_test. */
 export function isAdminOnlyListing(d: ListingVisibilityInput | null | undefined): boolean {
   if (!d) return false;
+  if (PUBLIC_CATALOGUE_SLUGS.has(norm(d.slug))) return false;
   if (d.visibility === LISTING_VISIBILITY.adminOnly) return true;
   if (d.isTest === true || d.isTest === 1) return true;
   return looksLikeTestFixture(d);
@@ -246,7 +254,8 @@ export function listingVisibilityWrite(d: ListingVisibilityInput): {
  * is_test / admin_only flag Admin uses for "Show QA fixtures". Kids World stays public.
  */
 export function isOperatorQaOwner(email: string | null | undefined, slug?: string | null): boolean {
-  if (PUBLIC_LIVE_KEEP_SLUGS.has(norm(slug))) return false;
+  const key = norm(slug);
+  if (PUBLIC_LIVE_KEEP_SLUGS.has(key) || PUBLIC_CATALOGUE_SLUGS.has(key)) return false;
   return isKidEaseOperatorEmail(email);
 }
 
@@ -254,7 +263,8 @@ export function listingVisibilityForOwners(
   listing: ListingVisibilityInput,
   ownerEmails: Array<string | null | undefined>,
 ): { visibility: ListingVisibility; isTest: 0 | 1 } {
-  if (PUBLIC_LIVE_KEEP_SLUGS.has(norm(listing.slug))) {
+  const slug = norm(listing.slug);
+  if (PUBLIC_LIVE_KEEP_SLUGS.has(slug) || PUBLIC_CATALOGUE_SLUGS.has(slug)) {
     return { visibility: LISTING_VISIBILITY.public, isTest: 0 };
   }
   if (ownerEmails.some((email) => isOperatorQaOwner(email, listing.slug))) {

@@ -378,11 +378,16 @@ function ThreadPage() {
         {canWrite ? (
           <form id="reply" onSubmit={onSend} className="sticky bottom-20 mt-4 flex flex-col gap-2 bg-bg py-2 md:bottom-0">
             {sendError ? <p className="text-sm text-danger">{sendError}</p> : null}
-            {fromDraft ? <p className="text-sm text-muted">{t("replyDraftLead")}</p> : null}
             {!isParent && replyDraftsOn ? (
-              <Button type="button" variant="secondary" className="min-h-11 self-start" disabled={drafting} onClick={draftReply}>
-                {drafting ? t("replyDraftWorking") : t("replyDraft")}
-              </Button>
+              <div data-ke="reply-draft" className="rounded-xl bg-surface p-3 ring-1 ring-border">
+                <h2 className="font-display text-lg">{t("replyDraft")}</h2>
+                <p className="mt-1 text-sm text-muted">{t("replyDraftLead")}</p>
+                <Button type="button" variant="secondary" className="mt-2 min-h-11 self-start" disabled={drafting} onClick={draftReply}>
+                  {drafting ? t("replyDraftWorking") : t("replyDraft")}
+                </Button>
+              </div>
+            ) : fromDraft ? (
+              <p className="text-sm text-muted">{t("replyDraftLead")}</p>
             ) : null}
             <div className="flex gap-2">
               <input value={body} onChange={(e) => setBody(e.target.value)} placeholder={t("writeMessage")} className="h-12 flex-1 rounded-md border border-border bg-surface px-3" />
