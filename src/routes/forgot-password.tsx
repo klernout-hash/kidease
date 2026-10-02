@@ -10,6 +10,7 @@ import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
 import { Shell } from "@/components/shell";
+import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 import { confirmAction } from "@/lib/success-confirm";
 
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/forgot-password")({
     const mailReady = await withTimeoutFallback(getResetMailReady(), LOADER_SETTLE_MS, true);
     return { mailReady };
   },
+  head: () => pageSeoHead(MARKETING_PAGE_SEO.forgotPassword),
   component: ForgotPassword,
 });
 

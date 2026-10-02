@@ -46,7 +46,9 @@ import { Route as ImgRouteImport } from './routes/img'
 import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ForDaycaresRouteImport } from './routes/for-daycares'
 import { Route as MeetTheTeamRouteImport } from './routes/meet-the-team'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as ParentRouteImport } from './routes/parent'
@@ -315,9 +317,19 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForDaycaresRoute = ForDaycaresRouteImport.update({
+  id: '/for-daycares',
+  path: '/for-daycares',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MeetTheTeamRoute = MeetTheTeamRouteImport.update({
   id: '/meet-the-team',
   path: '/meet-the-team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MenuRoute = MenuRouteImport.update({
@@ -765,7 +777,9 @@ export interface FileRoutesByFullPath {
   '/inbox': typeof InboxRouteWithChildren
   '/jobs': typeof JobsRoute
   '/login': typeof LoginRoute
+  '/for-daycares': typeof ForDaycaresRoute
   '/meet-the-team': typeof MeetTheTeamRoute
+  '/signup': typeof SignupRoute
   '/menu': typeof MenuRoute
   '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRoute
@@ -885,7 +899,9 @@ export interface FileRoutesByTo {
   '/inbox': typeof InboxRouteWithChildren
   '/jobs': typeof JobsRoute
   '/login': typeof LoginRoute
+  '/for-daycares': typeof ForDaycaresRoute
   '/meet-the-team': typeof MeetTheTeamRoute
+  '/signup': typeof SignupRoute
   '/menu': typeof MenuRoute
   '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRoute
@@ -1006,7 +1022,9 @@ export interface FileRoutesById {
   '/inbox': typeof InboxRouteWithChildren
   '/jobs': typeof JobsRoute
   '/login': typeof LoginRoute
+  '/for-daycares': typeof ForDaycaresRoute
   '/meet-the-team': typeof MeetTheTeamRoute
+  '/signup': typeof SignupRoute
   '/menu': typeof MenuRoute
   '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRoute
@@ -1129,7 +1147,9 @@ export interface FileRouteTypes {
     | '/inbox'
     | '/jobs'
     | '/login'
+    | '/for-daycares'
     | '/meet-the-team'
+    | '/signup'
     | '/menu'
     | '/notifications'
     | '/parent'
@@ -1249,7 +1269,9 @@ export interface FileRouteTypes {
     | '/inbox'
     | '/jobs'
     | '/login'
+    | '/for-daycares'
     | '/meet-the-team'
+    | '/signup'
     | '/menu'
     | '/notifications'
     | '/parent'
@@ -1369,7 +1391,9 @@ export interface FileRouteTypes {
     | '/inbox'
     | '/jobs'
     | '/login'
+    | '/for-daycares'
     | '/meet-the-team'
+    | '/signup'
     | '/menu'
     | '/notifications'
     | '/parent'
@@ -1490,7 +1514,9 @@ export interface RootRouteChildren {
   InboxRoute: typeof InboxRouteWithChildren
   JobsRoute: typeof JobsRoute
   LoginRoute: typeof LoginRoute
+  ForDaycaresRoute: typeof ForDaycaresRoute
   MeetTheTeamRoute: typeof MeetTheTeamRoute
+  SignupRoute: typeof SignupRoute
   MenuRoute: typeof MenuRoute
   NotificationsRoute: typeof NotificationsRoute
   ParentRoute: typeof ParentRoute
@@ -1808,11 +1834,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/for-daycares': {
+      id: '/for-daycares'
+      path: '/for-daycares'
+      fullPath: '/for-daycares'
+      preLoaderRoute: typeof ForDaycaresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/meet-the-team': {
       id: '/meet-the-team'
       path: '/meet-the-team'
       fullPath: '/meet-the-team'
       preLoaderRoute: typeof MeetTheTeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/menu': {
@@ -2540,7 +2580,9 @@ const rootRouteChildren: RootRouteChildren = {
   InboxRoute: InboxRouteWithChildren,
   JobsRoute: JobsRoute,
   LoginRoute: LoginRoute,
+  ForDaycaresRoute: ForDaycaresRoute,
   MeetTheTeamRoute: MeetTheTeamRoute,
+  SignupRoute: SignupRoute,
   MenuRoute: MenuRoute,
   NotificationsRoute: NotificationsRoute,
   ParentRoute: ParentRoute,
