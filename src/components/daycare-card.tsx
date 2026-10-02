@@ -13,6 +13,7 @@ import { useAppStore } from "@/lib/store";
 import type { CopyKey } from "@/lib/copy";
 import { parentDistanceLabel } from "@/lib/distance-label";
 import { originIsParentLocation } from "@/lib/presence";
+import { plausibleListingKm } from "@/lib/plausible-distance";
 import { listingAgeRangeText } from "@/lib/listing-ages";
 import { classifyFacilityType, facilityTypeSeoKind } from "@/lib/facility-type";
 import { publicLicenseBadge } from "@/lib/license-verify";
@@ -236,7 +237,9 @@ export const DaycareCard = memo(function DaycareCard({
   const away = parentDistanceLabel({
     km: distanceKm,
     away: t("kmAway"),
-    show: originIsParentLocation(originSource),
+    show:
+      originIsParentLocation(originSource) &&
+      plausibleListingKm(distanceKm, item.city, origin.label),
   });
   const photos = (item.photos ?? []).filter((p) => p && !p.includes("-logo"));
   const hollowPhoto = !photos.some((p) => isRealListingPhoto(p));
