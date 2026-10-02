@@ -29,6 +29,7 @@ import { AppearanceControl } from "@/components/appearance-control";
 import { SignedInDevices } from "@/components/signed-in-devices";
 import { AccountSecurity } from "@/components/account-security";
 import { DeleteAccountPanel } from "@/components/delete-account-panel";
+import { NotificationBell } from "@/components/notification-bell";
 
 export const Route = createFileRoute("/account")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
@@ -305,7 +306,10 @@ function ProfilePane() {
             · {t("account")}
           </p>
         ) : null}
-        <h1 className="font-display text-[1.75rem] tracking-[-0.03em]">{t("account")}</h1>
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="font-display text-[1.75rem] tracking-[-0.03em]">{t("account")}</h1>
+          <NotificationBell className="md:hidden" />
+        </div>
         <nav data-ke="account-sections" aria-label={t("account")} className="mt-4 flex flex-col gap-1">
           {sections.map((item) => (
             <Link

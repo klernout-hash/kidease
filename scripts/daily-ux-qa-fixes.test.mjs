@@ -222,7 +222,8 @@ test("parent unread badge follows the inbox view for the active desk", () => {
   const roles = src("src/lib/server/roles.ts");
   assert.match(roles, /unreadFamily/);
   assert.match(roles, /unreadCentre/);
-  assert.match(src("src/components/desk-switcher.tsx"), /inboxUnreadForDesk/);
+  assert.doesNotMatch(src("src/components/desk-switcher.tsx"), /inboxUnreadForDesk/);
+  assert.match(src("src/components/app-tab-bar.tsx"), /t\("messages"\)/);
 });
 
 test("shortlist chips wrap; phone desk nav is the hamburger, not a wrapping pill row", () => {

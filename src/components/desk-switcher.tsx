@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { MessageCircle } from "lucide-react";
 import {
+  canSeeAdminDesk,
   DESK_PATH,
   headerDesks,
   highlightDesk,
@@ -9,7 +9,6 @@ import {
   showDeskSwitcher,
   type DeskKey,
 } from "@/lib/desks";
-import { inboxSearch, inboxUnreadForDesk, inboxViewForDesk } from "@/lib/inbox-view";
 import { useSessionDesks } from "@/components/session-desks";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
@@ -24,28 +23,44 @@ const DESK_COPY: Record<DeskKey, CopyKey> = {
   support: "deskSupport",
 };
 
-function deskLabel(t: (key: CopyKey) => string, desk: DeskKey) {
-  return t(DESK_COPY[desk]);
+const SWITCH_COPY: Record<DeskKey, CopyKey> = {
+  parent: "switchToParent",
+  provider: "switchToDaycare",
+  admin: "switchToAdmin",
+  support: "deskSupport",
+};
+
+const SWITCH_VIEW: Partial<Record<DeskKey, CopyKey>> = {
+  parent: "switchToParentView",
+  provider: "switchToDaycareView",
+};
+
+function deskLabel(t: (key: CopyKey) => string, desk: DeskKey, adminViewer: boolean) {
+  void DESK_COPY[desk];
+  if (adminViewer && SWITCH_VIEW[desk]) return t(SWITCH_VIEW[desk]);
+  return t(SWITCH_COPY[desk]);
 }
 
-function DeskPills({
+function SwitchRows({
   desks,
   current,
   onPick,
   t,
+  adminViewer,
 }: {
   desks: DeskKey[];
   current: DeskKey | null;
   onPick: (desk: DeskKey) => void;
   t: (key: CopyKey) => string;
+  adminViewer: boolean;
 }) {
   return (
     <>
       {desks.map((desk) => {
         const on = current === desk;
+        if (on) return null;
         const className = cn(
-          "inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium leading-none min-w-0 flex-1 justify-center",
-          on ? "bg-primary text-primary-fg" : "text-muted hover:text-fg",
+          "flex min-h-11 w-full items-center rounded-lg px-2.5 text-left text-sm font-medium text-fg hover:bg-surface",
         );
         if (desk === "admin") {
           return (
@@ -61,7 +76,7 @@ function DeskPills({
                 openAdminDesk();
               }}
             >
-              {deskLabel(t, desk)}
+              {deskLabel(t, desk, adminViewer)}
             </button>
           );
         }
@@ -75,40 +90,11 @@ function DeskPills({
             aria-current={on ? "page" : undefined}
             className={className}
           >
-            {deskLabel(t, desk)}
+            {deskLabel(t, desk, adminViewer)}
           </Link>
         );
       })}
     </>
-  );
-}
-
-function InboxLink({
-  pathname,
-  current,
-  unread,
-}: {
-  pathname: string;
-  current: DeskKey | null;
-  unread: number;
-}) {
-  return (
-    <Link
-      to="/inbox"
-      search={inboxSearch(inboxViewForDesk(current))}
-      aria-label={unread ? `Inbox, ${unread} unread` : "Inbox"}
-      className={cn(
-        "relative inline-flex size-8 items-center justify-center rounded-full",
-        pathname.startsWith("/inbox") ? "text-primary" : "text-muted hover:text-fg",
-      )}
-    >
-      <MessageCircle className="size-3.5" strokeWidth={1.8} />
-      {unread > 0 ? (
-        <span className="absolute -right-0.5 -top-0.5 grid min-w-4 place-items-center rounded-full bg-danger px-1 text-[9px] font-semibold leading-4 text-white">
-          {unread > 9 ? "9+" : unread}
-        </span>
-      ) : null}
-    </Link>
   );
 }
 
@@ -127,19 +113,16 @@ export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
   const highlighted = highlightDesk(pathname, sticky, queryDesk);
   const current = highlighted && desks.includes(highlighted) ? highlighted : null;
 
-  const chrome = "flex w-full min-w-0 items-center gap-0.5 rounded-full bg-surface/90 p-0.5 ring-1 ring-border";
+  const adminViewer = canSeeAdminDesk(session.role, session.email);
 
   return (
     <div
       data-ke="desk-switcher"
       role="navigation"
       aria-label={t("deskSwitcherLabel")}
-      className={compact ? "flex w-full min-w-0 items-center gap-1" : "w-full min-w-0"}
+      className={compact ? "flex w-full min-w-0 flex-col gap-0.5" : "flex w-full min-w-0 flex-col gap-0.5"}
     >
-      <div className={chrome}>
-        <DeskPills desks={desks} current={current} onPick={setSticky} t={t} />
-        <InboxLink pathname={pathname} current={current} unread={inboxUnreadForDesk(session, current)} />
-      </div>
+      <SwitchRows desks={desks} current={current} onPick={setSticky} t={t} adminViewer={adminViewer} />
     </div>
   );
 }

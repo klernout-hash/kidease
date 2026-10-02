@@ -9,11 +9,13 @@ import { attentionForItem } from "@/lib/attention";
 import { showDeskSwitcher } from "@/lib/desks";
 import {
   DESK_META,
+  visibleDeskGroups,
   visibleDeskNav,
   type DeskIcon,
   type DeskId,
   type DeskItem,
 } from "@/lib/desk-nav";
+import { LanguageSelect } from "@/components/language-select";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import { cn } from "@/lib/utils";
@@ -190,12 +192,35 @@ export function DeskShell({
                 </div>
               ) : null}
               <nav data-ke="desk-desktop-nav" className="mt-2 hidden flex-col gap-0.5 md:flex">
-                {allItems.map((item) => {
-                  const on = itemIsOn(item, active, pathname);
-                  const count = attentionForItem(session?.attention, item.id);
-                  if (item.href) return <DeskNavLink key={item.id} item={item} on={on} t={t} count={count} />;
-                  return <DeskNavButton key={item.id} item={item} on={on} onSelect={onSelect} t={t} count={count} />;
-                })}
+                {visibleDeskGroups(desk, allItems).map(({ group, items }) => (
+                  <details
+                    key={group.id}
+                    ref={(node) => {
+                      if (node && group.open && node.dataset.keGroup !== "1") {
+                        node.dataset.keGroup = "1";
+                        node.open = true;
+                      }
+                    }}
+                    className="py-0.5"
+                  >
+                    <summary className="flex min-h-11 cursor-pointer list-none items-center rounded-lg px-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-subtle [&::-webkit-details-marker]:hidden">
+                      {group.labelKey ? t(group.labelKey) : group.label}
+                    </summary>
+                    <div className="flex flex-col gap-0.5">
+                      {group.id === "settings" ? (
+                        <div className="px-2.5 py-1">
+                          <LanguageSelect className="w-full justify-start" />
+                        </div>
+                      ) : null}
+                      {items.map((item) => {
+                        const on = itemIsOn(item, active, pathname);
+                        const count = attentionForItem(session?.attention, item.id);
+                        if (item.href) return <DeskNavLink key={item.id} item={item} on={on} t={t} count={count} />;
+                        return <DeskNavButton key={item.id} item={item} on={on} onSelect={onSelect} t={t} count={count} />;
+                      })}
+                    </div>
+                  </details>
+                ))}
               </nav>
             </aside>
             <div className="min-w-0 flex-1">{children}</div>

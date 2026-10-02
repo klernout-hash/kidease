@@ -104,7 +104,7 @@ test("Daycare P2: Account stays on Daycare pill; unclaimed desk is guided onboar
   assert.deepEqual(accountSearch("provider"), { tab: "profile", desk: "director" });
   const switcher = src("src/components/desk-switcher.tsx");
   assert.match(switcher, /highlightDesk/);
-  assert.match(switcher, /inboxSearch/);
+  assert.doesNotMatch(switcher, /inboxSearch/);
   const account = src("src/routes/account.tsx");
   assert.match(account, /accountBackDaycare/);
   assert.match(account, /accountBackAdmin/);

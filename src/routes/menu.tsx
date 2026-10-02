@@ -2,12 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 import { ShellLite } from "@/components/shell-lite";
 import { MenuGlyph, MenuRow } from "@/components/menu-row";
-import { NotificationUnreadDot } from "@/components/notification-bell";
 import { useCopy } from "@/lib/use-copy";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
-import { failClosedUnread } from "@/lib/notifications";
-import { useSessionDesks } from "@/components/session-desks";
 import { ShareKidEaseButton } from "@/components/share-button";
 import { RoleNavLinks } from "@/components/role-nav";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -50,10 +47,8 @@ function Group({
 function MenuPage() {
   const { t, locale } = useCopy();
   const { user } = useCurrentUserState();
-  const { session } = useSessionDesks();
   const chrome = useRoleChrome();
   const fr = locale === "fr";
-  const unread = failClosedUnread(session?.notificationUnread);
   const showParents = !chrome.pending && (chrome.role === "guest" || chrome.role === "parent" || chrome.role === "admin");
   const showDaycares = !chrome.pending && (chrome.role === "guest" || chrome.role === "provider" || chrome.role === "admin");
 
@@ -65,16 +60,8 @@ function MenuPage() {
         </h1>
 
         {chrome.pending ? null : <RoleNavLinks role={chrome.role} paid={chrome.paid} appearance="menu" />}
-
-        {user ? (
-          <Group title={t("notifications")}>
-            <MenuRow
-              to="/notifications"
-              label={t("notifications")}
-              icon="notifications"
-              badge={<NotificationUnreadDot unread={unread} />}
-            />
-          </Group>
+        {!chrome.pending && chrome.role === "guest" ? (
+          <MenuRow to="/login" label={t("signIn")} icon="login" />
         ) : null}
 
         {user ? (
@@ -83,7 +70,7 @@ function MenuPage() {
           </Suspense>
         ) : null}
 
-        <Group title={t("settings")}>
+        <Group title={t("account")}>
           <div className="flex items-center gap-3 px-1 py-2">
             <MenuGlyph id="appearance" />
             <div className="flex-1">
@@ -106,41 +93,31 @@ function MenuPage() {
         </Group>
 
         {showParents ? <Group title="Parents" defer>
-          {!chrome.pending && chrome.role === "guest" ? (
-            <MenuRow
-              to="/login"
-              search={{ role: "parent", desk: "parent", intent: "in", next: "/parent" }}
-              label={t("parentSignIn")}
-              icon="login"
-            />
+          {chrome.role !== "guest" ? (
+            <>
+              <MenuRow to="/parent" label={t("parentDesk")} icon="parent" />
+              <MenuRow to="/account" search={{ tab: "profile", desk: "parent" }} label={t("profile")} icon="profile" />
+              <MenuRow to="/parent" search={{ tab: "saved" }} label={t("saved")} icon="saved" />
+            </>
           ) : null}
-          <MenuRow to="/parent" label={t("parentDesk")} icon="parent" />
-          <MenuRow to="/account" search={{ tab: "profile", desk: "parent" }} label={t("profile")} icon="profile" />
           <MenuRow to="/tour-checklist" label={t("tourChecklist")} icon="tourChecklist" />
           <MenuRow to="/compare" label={t("compare")} icon="compare" />
-          <MenuRow to="/parent" search={{ tab: "saved" }} label={t("saved")} icon="saved" />
         </Group> : null}
 
         {showDaycares ? <Group title={fr ? "Garderies" : "Daycares"} defer>
-          <MenuRow to="/claim" label={t("claimCta")} icon="claim" />
-          {!chrome.pending && chrome.role === "guest" ? (
-            <MenuRow
-              to="/login"
-              search={{ role: "provider", desk: "director", intent: "in", next: "/provider" }}
-              label={t("providerLogin")}
-              icon="login"
-            />
-          ) : null}
-          <MenuRow to="/provider" label={t("daycareDesk")} icon="daycare" />
+          <MenuRow to="/claim" label={t("listYourDaycare")} icon="claim" />
+          {chrome.role !== "guest" ? <MenuRow to="/provider" label={t("daycareDesk")} icon="daycare" /> : null}
           <MenuRow to="/verify" label={t("mbChildcare")} icon="verify" />
           <MenuRow to="/jobs" label={t("findDaycareJobs")} icon="jobs" />
+          {chrome.role === "provider" || chrome.role === "admin" ? (
+            <MenuRow to="/jobs/post" label={t("postDaycareJob")} icon="jobs" />
+          ) : null}
         </Group> : null}
 
         <Group title={fr ? "Soutien" : "Support"} defer>
           <MenuRow to="/help" label={fr ? "Centre d’aide" : "Help Centre"} icon="help" />
           <MenuRow to="/faq" label="FAQ" icon="faq" />
           <MenuRow to="/how-it-works" label={t("howItWorksCta")} icon="howItWorks" />
-          <MenuRow to="/jobs/post" label={t("addJobsAtKidEase")} icon="jobs" />
           <MenuRow to="/verify" label={t("verifyListings")} icon="verify" />
           <MenuRow to="/daycare-requirements" label={t("daycareRequirements")} icon="verify" />
           <MenuRow to="/privacy" label={t("privacy")} icon="privacy" />

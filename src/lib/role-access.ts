@@ -193,7 +193,7 @@ export function roleNavItems(input: { role: ChromeRole; paid?: boolean }): RoleN
       { id: "home", label: "Home", to: "/parent", icon: "parent" },
       { id: "search", label: "Search", to: "/search", icon: "explore" },
       { id: "saved", label: "Saved", to: "/parent", search: { tab: "saved" }, icon: "saved" },
-      { id: "requests", label: "Requests & tours", to: "/parent", search: { tab: "requests" }, icon: "tourChecklist" },
+      { id: "requests", label: "Requests", to: "/parent", search: { tab: "requests" }, icon: "tourChecklist" },
       { id: "messages", label: "Messages", to: "/inbox", search: { view: "family" }, icon: "messages" },
       { id: "upgrade", label: planLabel, to: "/parent", search: { tab: "subscription" }, icon: "benefits" },
       { id: "account", label: "Account", to: "/account", search: { tab: "profile" }, icon: "account" },
@@ -201,19 +201,20 @@ export function roleNavItems(input: { role: ChromeRole; paid?: boolean }): RoleN
   }
   if (input.role === "provider") {
     return [
-      { id: "desk", label: "Desk", to: "/provider", icon: "daycare" },
-      { id: "listing", label: "My listing", to: "/provider", search: { desk: "listings" }, icon: "claim" },
-      { id: "enquiries", label: "Enquiries & tours", to: "/provider", search: { desk: "requests" }, icon: "tourChecklist" },
+      { id: "desk", label: "Today", to: "/provider", search: { desk: "today" }, icon: "daycare" },
+      { id: "requests", label: "Requests", to: "/provider", search: { desk: "requests" }, icon: "tourChecklist" },
+      { id: "listing", label: "Listings", to: "/provider", search: { desk: "listings" }, icon: "claim" },
       { id: "messages", label: "Messages", to: "/inbox", search: { view: "centre" }, icon: "messages" },
-      { id: "jobs", label: "Jobs", to: "/jobs/post", icon: "jobs" },
       { id: "upgrade", label: planLabel, to: "/provider/subscription", icon: "benefits" },
       { id: "account", label: "Account", to: "/account", search: { tab: "profile" }, icon: "account" },
     ];
   }
   if (input.role === "admin") {
     return [
-      { id: "queue", label: "Approvals", to: "/admin", icon: "verify" },
-      { id: "search", label: "Search", to: "/search", icon: "explore" },
+      { id: "queue", label: "Home", to: "/admin", search: { tab: "queue" }, icon: "verify" },
+      { id: "review", label: "Review", to: "/admin", search: { tab: "verify" }, icon: "verify" },
+      { id: "messages", label: "Messages", to: "/admin", search: { tab: "mail" }, icon: "messages" },
+      { id: "support", label: "Support", to: "/support", icon: "support" },
       { id: "account", label: "Account", to: "/account", search: { tab: "profile" }, icon: "account" },
     ];
   }
@@ -225,24 +226,12 @@ export function roleNavItems(input: { role: ChromeRole; paid?: boolean }): RoleN
     ];
   }
   return [
-    { id: "search", label: "Search", to: "/search", icon: "explore" },
-    { id: "map", label: "Map", to: "/search", search: { view: "map" }, icon: "explore" },
-    {
-      id: "parent-signup",
-      label: "I'm a parent",
-      to: "/login",
-      search: { role: "parent", desk: "parent", intent: "up", next: "/parent" },
-      icon: "parent",
-    },
-    {
-      id: "daycare-signup",
-      label: "I'm a daycare",
-      to: "/login",
-      search: { role: "provider", desk: "director", intent: "up", next: "/provider" },
-      icon: "daycare",
-    },
-    { id: "plans", label: "Subscription", to: "/plans", icon: "benefits" },
     { id: "signin", label: "Sign in", to: "/login", icon: "login" },
+    { id: "create", label: "Create an account", to: "/login", search: { intent: "up" }, icon: "parent" },
+    { id: "list", label: "List your daycare", to: "/claim", icon: "claim" },
+    { id: "plans", label: "Subscription", to: "/plans", icon: "benefits" },
+    { id: "search", label: "Search", to: "/search", icon: "explore" },
+    { id: "help", label: "Help Centre", to: "/help", icon: "help" },
   ];
 }
 

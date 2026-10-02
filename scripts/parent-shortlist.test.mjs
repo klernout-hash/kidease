@@ -104,7 +104,7 @@ test("parent desk shortlist compares up to five centres", () => {
   assert.match(desk, /ParentShortlist/);
   assert.match(shortlist, /MAX_SHORTLIST_COMPARE/);
   assert.match(shortlist, /addToCompare/);
-  assert.match(shortlist, /myShortlist/);
+  assert.match(shortlist, /t\("saved"\)/);
   assert.match(table, /compareVerified/);
   assert.match(table, /formatListingAges/);
   assert.match(table, /compareDistance/);
@@ -113,7 +113,7 @@ test("parent desk shortlist compares up to five centres", () => {
   assert.match(table, /compareSpots/);
   assert.match(compare, /formatListingAges/);
   assert.match(compare, /compareDistance/);
-  assert.match(nav, /My shortlist/);
+  assert.match(nav, /labelKey: "saved"/);
   assert.match(copy, /myShortlist: "My shortlist"/);
   assert.match(copy, /myShortlist: "Ma liste"/);
   assert.match(desk, /compareMax=\{chrome\.paid \? PLUS_COMPARE_MAX : FREE_COMPARE_MAX\}/);

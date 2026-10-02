@@ -68,15 +68,9 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
 
   const homeTo = localePath("/", locale);
   const drawerItems = [
-    { to: "/search", label: t("explore"), icon: "explore" as const },
-    { to: "/compare", label: t("compare"), icon: "compare" as const },
-    { to: "/benefits", label: t("benefitsTab"), icon: "benefits" as const },
-    { to: "/get-app", label: t("getApp"), icon: "getApp" as const, marker: "store-coming-soon" },
-    { to: localePath("/about", locale), label: t("about"), icon: "about" as const },
-    { to: localePath("/start-a-daycare", locale), label: t("startADaycare"), icon: "startDaycare" as const },
-    { to: localePath("/donate", locale), label: t("donateToKids"), icon: "donate" as const },
-    { to: "/team", label: t("team"), icon: "team" as const },
-    { to: localePath("/contact", locale), label: t("contact"), icon: "contact" as const },
+    { to: "/help", label: t("helpTitle"), icon: "help" as const },
+    { to: "/faq", label: t("faqShort"), icon: "faq" as const },
+    { to: localePath("/contact", locale), label: t("contactTitle"), icon: "contact" as const },
   ];
 
   if (verifyLite) {
@@ -120,6 +114,14 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
               <BrandMark size="sm" />
             </Link>
             <div className="relative z-20 ml-auto flex items-center gap-1">
+              {user ? <NotificationBell className="hidden md:grid" /> : (
+                <Link
+                  to="/claim"
+                  className="hidden min-h-11 items-center rounded-full px-3 text-sm font-medium text-fg hover:bg-surface md:inline-flex"
+                >
+                  {t("listYourDaycare")}
+                </Link>
+              )}
               {user ? (
                 <Link
                   to="/account"
@@ -205,7 +207,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
         paid={chrome.paid}
         isAdmin={canSeeAdminDesk(session?.role, session?.email ?? user?.primaryEmail)}
         onSignOut={() => void signOut("/")}
-        headerExtra={user ? <NotificationBell /> : null}
+        headerExtra={null}
       />
       <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(6rem+env(safe-area-inset-bottom))]"}>
         <ApplyPendingShortlist />
