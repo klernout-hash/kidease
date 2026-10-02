@@ -44,7 +44,7 @@ export async function expireDueTourHolds(input?: { dryRun?: boolean; notify?: bo
     await sql`
       update tour_requests
       set status = ${"expired"},
-          centre_note = coalesce(centre_note, ${"Hold expired — slot released"}),
+          centre_note = coalesce(centre_note, ${"Hold expired: slot released"}),
           responded_at = coalesce(responded_at, now())
       where id = ${tour.id} and status = ${"pending"}
     `.catch(() => undefined);
@@ -66,7 +66,7 @@ export async function expireDueTourHolds(input?: { dryRun?: boolean; notify?: bo
         parentUserId: tour.user_id,
         parentEmail: tour.contact_email,
         parentName: guestName || null,
-        subject: `Tour hold expired — ${tour.daycare_name}`,
+        subject: `Tour hold expired: ${tour.daycare_name}`,
         preview: body,
       }).catch(() => undefined);
     }

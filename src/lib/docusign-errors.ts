@@ -1,6 +1,6 @@
 /** Client-safe DocuSign failure shapes. No secrets, no Node fetch. */
 
-export const DOCUSIGN_CONSENT_MESSAGE = "DocuSign not connected — finish JWT consent";
+export const DOCUSIGN_CONSENT_MESSAGE = "DocuSign not connected: finish JWT consent";
 export const DOCUSIGN_UNAVAILABLE_MESSAGE = "DocuSign is unavailable right now.";
 export const DOCUSIGN_RATE_LIMIT_MESSAGE =
   "DocuSign hourly API limit reached. Wait about an hour, then try again.";
@@ -46,7 +46,7 @@ export function classifyDocusignFailure(err: unknown): DocusignConnectIssue {
   return { code: "unavailable", message: DOCUSIGN_UNAVAILABLE_MESSAGE };
 }
 
-/** Never throws — auth/consent failures become an error payload. */
+/** Never throws: auth/consent failures become an error payload. */
 export async function listDocusignTemplatesFromApi(
   load: () => Promise<Array<{ templateId: string; name: string }>>,
 ): Promise<DocusignTemplateList> {
@@ -57,7 +57,7 @@ export async function listDocusignTemplatesFromApi(
   }
 }
 
-/** Never throws — used for Admin status / PDF reads. */
+/** Never throws: used for Admin status / PDF reads. */
 export async function readDocusignOrNull<T>(load: () => Promise<T>): Promise<T | null> {
   try {
     return await load();

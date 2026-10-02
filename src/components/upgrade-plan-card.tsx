@@ -85,8 +85,8 @@ export function UpgradePlanCard({
               ? `Économisez ${percent} %`
               : `Save ${percent}%`
             : locale === "fr"
-              ? `Économisez ${percent} % — ${formatPlanCad(saved, locale)} de moins qu’en payant au mois`
-              : `Save ${percent}% — ${formatPlanCad(saved, locale)} less than paying monthly`}
+              ? `Économisez ${percent} %: ${formatPlanCad(saved, locale)} de moins qu’en payant au mois`
+              : `Save ${percent}%: ${formatPlanCad(saved, locale)} less than paying monthly`}
         </p>
       ) : null}
       <p className="mt-3 text-sm text-muted">{plan.pitch[locale]}</p>

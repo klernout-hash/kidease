@@ -93,7 +93,7 @@ export const STRIPE_CATALOG: StripeCatalogItem[] = [
     key: "network_monthly",
     lookupKey: "kidease_network_monthly",
     productName: "KidEase Network",
-    description: "Organization dashboard — $39 per licensed site / month.",
+    description: "Organization dashboard: $39 per licensed site / month.",
     amountCad: 39,
     kind: "recurring",
     interval: "month",

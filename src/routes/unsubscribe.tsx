@@ -15,7 +15,7 @@ export const Route = createFileRoute("/unsubscribe")({
   head: () => ({
     meta: [
       { title: "Unsubscribe · KidEase" },
-      { name: "description", content: "Stop KidEase email or SMS. CASL unsubscribe — no login required." },
+      { name: "description", content: "Stop KidEase email or SMS. CASL unsubscribe: no login required." },
     ],
   }),
   component: UnsubscribePage,

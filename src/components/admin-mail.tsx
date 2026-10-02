@@ -129,7 +129,7 @@ export function AdminMailPanel() {
         <div>
           <h2 className="font-display text-2xl">Mail</h2>
           <p className="mt-1 text-sm text-muted">
-            Inbox is Titan for <span className="text-fg">{mailbox}</span>. Open rows in KidEase. Titan’s website is a third-party tab — if that tab crashes, stay here.
+            Inbox is Titan for <span className="text-fg">{mailbox}</span>. Open rows in KidEase. Titan’s website is a third-party tab: if that tab crashes, stay here.
           </p>
           {status?.otpMail ? (
             <p className="mt-2 text-xs text-subtle" data-ke="otp-mail-health">

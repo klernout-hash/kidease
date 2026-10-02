@@ -1,6 +1,6 @@
 /**
  * Official-source education for starting licensed child care in Canada.
- * Amounts are illustrative ceilings from government pages — never a KidEase
+ * Amounts are illustrative ceilings from government pages: never a KidEase
  * promise. Programs change; confirm on the linked site. No per-province routes.
  */
 
@@ -53,9 +53,9 @@ export const START_DAYCARE_PTS: readonly StartDaycarePt[] = [
     licensingWhoEn: "Government of Alberta licences facility-based programs and family day home agencies.",
     licensingWhoFr: "Le gouvernement de l’Alberta délivre les permis des programmes en installation et des agences de garderies familiales.",
     licensingFirstEn:
-      "Start at Alberta’s “Start a childcare program” page. Confirm affordability-funding eligibility before you apply — new applicants are often not eligible. New family day home agency licences are not being accepted at this time (confirm on the official page).",
+      "Start at Alberta’s “Start a childcare program” page. Confirm affordability-funding eligibility before you apply: new applicants are often not eligible. New family day home agency licences are not being accepted at this time (confirm on the official page).",
     licensingFirstFr:
-      "Commencez par la page « Start a childcare program ». Confirmez l’admissibilité au financement d’abordabilité avant de demander — les nouveaux demandeurs sont souvent inadmissibles. Les nouvelles demandes d’agence de garderies familiales ne sont pas acceptées pour le moment (confirmez sur le site officiel).",
+      "Commencez par la page « Start a childcare program ». Confirmez l’admissibilité au financement d’abordabilité avant de demander: les nouveaux demandeurs sont souvent inadmissibles. Les nouvelles demandes d’agence de garderies familiales ne sont pas acceptées pour le moment (confirmez sur le site officiel).",
     licensingUrl: "https://www.alberta.ca/start-a-childcare-program",
     fundingEn:
       "Space Creation and Building Blocks capital intakes have been closed. Affordability Grant (operating) is capped and tied to federal-provincial space limits. New licence applicants are typically not eligible for affordability funding. KidEase does not award these grants.",
@@ -98,9 +98,9 @@ export const START_DAYCARE_PTS: readonly StartDaycarePt[] = [
       "Assistez à une séance d’information obligatoire, puis demandez un permis. Les centres suivent la Loi sur les normes des services de garde. Inscrivez-vous à une séance via cdcinfo@gov.mb.ca.",
     licensingUrl: "https://manitoba.ca/education/childcare/centres_homeproviders/centrebased_childcare.html",
     fundingEn:
-      "Eligible licensed non-profit centres and family/group homes may apply for a one-time start-up grant within one year of licensing new or expanded spaces — typically about $300/home space, $450/infant, preschool or school-age centre space, $245/nursery-school space — for licensing equipment, not wages or rent. Operating grants exist for eligible non-profits. Discretionary and budget-limited. Ask your Child Care Coordinator before purchasing.",
+      "Eligible licensed non-profit centres and family/group homes may apply for a one-time start-up grant within one year of licensing new or expanded spaces: typically about $300/home space, $450/infant, preschool or school-age centre space, $245/nursery-school space: for licensing equipment, not wages or rent. Operating grants exist for eligible non-profits. Discretionary and budget-limited. Ask your Child Care Coordinator before purchasing.",
     fundingFr:
-      "Les centres sans but lucratif et les milieux familiaux/de groupe permis peuvent demander une subvention de démarrage unique dans l’année suivant le permis de nouvelles places — généralement environ 300 $/place en milieu familial, 450 $/place en pouponnière, préscolaire ou parascolaire, 245 $/place en prématernelle — pour l’équipement lié au permis, pas les salaires ni le loyer. Des subventions de fonctionnement existent pour les OBNL admissibles. Discrétionnaire et limitée au budget. Parlez à votre coordonnateur avant d’acheter.",
+      "Les centres sans but lucratif et les milieux familiaux/de groupe permis peuvent demander une subvention de démarrage unique dans l’année suivant le permis de nouvelles places: généralement environ 300 $/place en milieu familial, 450 $/place en pouponnière, préscolaire ou parascolaire, 245 $/place en prématernelle: pour l’équipement lié au permis, pas les salaires ni le loyer. Des subventions de fonctionnement existent pour les OBNL admissibles. Discrétionnaire et limitée au budget. Parlez à votre coordonnateur avant d’acheter.",
     fundingUrl: "https://manitoba.ca/education/childcare/centres_homeproviders/providers_resources/grants.html",
     competitive: true,
   },
@@ -117,9 +117,9 @@ export const START_DAYCARE_PTS: readonly StartDaycarePt[] = [
       "Inscrivez-vous au système de délivrance des permis (CCLS), visionnez l’orientation et postulez en ligne. Vous n’avez pas besoin d’être propriétaire ou locataire avant de postuler, mais vous devez fournir une adresse proposée et une preuve de zonage. Un permis peut prendre plusieurs mois.",
     licensingUrl: "https://www.ontario.ca/page/apply-or-renew-child-care-licence",
     fundingEn:
-      "CWELCC Start-up Grants are administered by your local CMSM or DSSAB under Directed Growth — not by KidEase and not as a walk-in provincial form. Centre projects have been described as up to about $350,000 per 20 spaces; homes up to about $1,200/space (often capped around $7,200 per provider). Caps, spend deadlines, and who is invited change. Confirm with your service system manager.",
+      "CWELCC Start-up Grants are administered by your local CMSM or DSSAB under Directed Growth: not by KidEase and not as a walk-in provincial form. Centre projects have been described as up to about $350,000 per 20 spaces; homes up to about $1,200/space (often capped around $7,200 per provider). Caps, spend deadlines, and who is invited change. Confirm with your service system manager.",
     fundingFr:
-      "Les subventions de démarrage AGJE sont gérées par votre CMSM ou SSAB local selon la croissance dirigée — pas par KidEase et pas comme un formulaire provincial libre-service. Les projets en centre ont été décrits jusqu’à environ 350 000 $ par 20 places; les milieux familiaux jusqu’à environ 1 200 $/place (souvent plafonnés autour de 7 200 $ par responsable). Plafonds, délais et admissibilité changent. Confirmez auprès de votre gestionnaire de système de services.",
+      "Les subventions de démarrage AGJE sont gérées par votre CMSM ou SSAB local selon la croissance dirigée: pas par KidEase et pas comme un formulaire provincial libre-service. Les projets en centre ont été décrits jusqu’à environ 350 000 $ par 20 places; les milieux familiaux jusqu’à environ 1 200 $/place (souvent plafonnés autour de 7 200 $ par responsable). Plafonds, délais et admissibilité changent. Confirmez auprès de votre gestionnaire de système de services.",
     fundingUrl: "https://www.ontario.ca/page/child-care-and-early-years",
     competitive: true,
   },
@@ -129,9 +129,9 @@ export const START_DAYCARE_PTS: readonly StartDaycarePt[] = [
     nameFr: "Québec",
     aliases: ["qc", "quebec", "québec"],
     licensingWhoEn:
-      "Ministère de la Famille issues permits for CPEs and garderies. Home educational childcare (RSGE) is recognized by a bureau coordonnateur — a different path than a centre permit.",
+      "Ministère de la Famille issues permits for CPEs and garderies. Home educational childcare (RSGE) is recognized by a bureau coordonnateur: a different path than a centre permit.",
     licensingWhoFr:
-      "Le ministère de la Famille délivre les permis de CPE et de garderies. Les RSGE sont reconnues par un bureau coordonnateur — un chemin distinct du permis d’installation.",
+      "Le ministère de la Famille délivre les permis de CPE et de garderies. Les RSGE sont reconnues par un bureau coordonnateur: un chemin distinct du permis d’installation.",
     licensingFirstEn:
       "Québec is its own system (not CWELCC fee rules). To open a CPE or a subsidized garderie, apply through a project call for subsidized spaces. A non-subsidized garderie applies directly to the ministry for a permit (application fee applies). Do not start build-out before written ministry authorization.",
     licensingFirstFr:
@@ -139,9 +139,9 @@ export const START_DAYCARE_PTS: readonly StartDaycarePt[] = [
     licensingUrl:
       "https://www.quebec.ca/famille-et-soutien-aux-personnes/enfance/garderies-et-services-de-garde/reseau/developpement-reseau/ouverture-service-de-garde",
     fundingEn:
-      "Subsidized spaces (reduced-contribution) are awarded through competitive project calls — not a start-up cheque from KidEase. Non-subsidized garderies may still operate with a permit; parents may use the Revenu Québec childcare tax credit. Confirm the current call on Québec.ca.",
+      "Subsidized spaces (reduced-contribution) are awarded through competitive project calls: not a start-up cheque from KidEase. Non-subsidized garderies may still operate with a permit; parents may use the Revenu Québec childcare tax credit. Confirm the current call on Québec.ca.",
     fundingFr:
-      "Les places à contribution réduite sont attribuées par appels de projets concurrentiels — pas un chèque de démarrage de KidEase. Une garderie non subventionnée peut tout de même obtenir un permis; les parents peuvent utiliser le crédit d’impôt de Revenu Québec. Confirmez l’appel en cours sur Québec.ca.",
+      "Les places à contribution réduite sont attribuées par appels de projets concurrentiels: pas un chèque de démarrage de KidEase. Une garderie non subventionnée peut tout de même obtenir un permis; les parents peuvent utiliser le crédit d’impôt de Revenu Québec. Confirmez l’appel en cours sur Québec.ca.",
     fundingUrl:
       "https://www.quebec.ca/famille-et-soutien-aux-personnes/enfance/garderies-et-services-de-garde/reseau/developpement-reseau/appels-projets",
     competitive: true,
@@ -160,9 +160,9 @@ export const START_DAYCARE_PTS: readonly StartDaycarePt[] = [
     licensingUrl:
       "https://www2.gnb.ca/content/gnb/en/corporate/promo/investing-in-early-learning-and-child-care/operator.html",
     fundingEn:
-      "Operating grants and parent-fee supports go to designated facilities. Capital / designation start-up funding has been offered through calls for proposals and can close. Confirm current designation and capital intakes on the official operators page — do not assume a start-up grant is open.",
+      "Operating grants and parent-fee supports go to designated facilities. Capital / designation start-up funding has been offered through calls for proposals and can close. Confirm current designation and capital intakes on the official operators page: do not assume a start-up grant is open.",
     fundingFr:
-      "Les subventions de fonctionnement et le soutien tarifaire vont aux établissements désignés. Le financement d’immobilisations / de démarrage a été offert par appels de propositions et peut être fermé. Confirmez les appels en cours sur la page officielle — ne présumez pas qu’une subvention de démarrage est ouverte.",
+      "Les subventions de fonctionnement et le soutien tarifaire vont aux établissements désignés. Le financement d’immobilisations / de démarrage a été offert par appels de propositions et peut être fermé. Confirmez les appels en cours sur la page officielle: ne présumez pas qu’une subvention de démarrage est ouverte.",
     fundingUrl:
       "https://www2.gnb.ca/content/gnb/en/corporate/promo/investing-in-early-learning-and-child-care/creating-designated-child-care-spaces.html",
     competitive: true,
@@ -176,9 +176,9 @@ export const START_DAYCARE_PTS: readonly StartDaycarePt[] = [
     licensingWhoFr:
       "Le ministère de l’Éducation et du Développement de la petite enfance délivre les permis des centres; les milieux familiaux s’affilient à une agence de garde en milieu familial.",
     licensingFirstEn:
-      "For a centre, work with Licensing Services on a proposal before you build. For a home, contact the Family Home Child Care Agency in your area — they coach the licence path and administer home start-up grants.",
+      "For a centre, work with Licensing Services on a proposal before you build. For a home, contact the Family Home Child Care Agency in your area: they coach the licence path and administer home start-up grants.",
     licensingFirstFr:
-      "Pour un centre, travaillez avec les Services de permis sur une proposition avant de construire. Pour un milieu familial, communiquez avec l’agence de votre région — elle accompagne le permis et administre la subvention de démarrage à domicile.",
+      "Pour un centre, travaillez avec les Services de permis sur une proposition avant de construire. Pour un milieu familial, communiquez avec l’agence de votre région: elle accompagne le permis et administre la subvention de démarrage à domicile.",
     licensingUrl: "https://www.childcarenovascotia.ca/operators/future-operators/family-home",
     fundingEn:
       "Family Home Start Up has been described as a one-time grant of up to about $7,500 via the local agency. Minor/Major infrastructure programs for not-for-profit centre spaces have had intakes that close when funds are allocated (Minor was listed as closed). Confirm Creating Spaces on Child Care Nova Scotia.",
@@ -200,9 +200,9 @@ export const START_DAYCARE_PTS: readonly StartDaycarePt[] = [
       "Demandez en ligne un permis de centre de la petite enfance (ou de milieu familial) et téléversez le dossier (plans, vérifications, zonage, incendie et santé publique). La désignation de Centre de la petite enfance est une étape supplémentaire pour le modèle tarifaire public.",
     licensingUrl: "https://www.princeedwardisland.ca/en/service/early-learning-and-child-care-centre-licensing",
     fundingEn:
-      "A Non-Profit Organization Child Care Start-Up Grant (up to about $200,000 for eligible construction/renovation) had a public intake that closed 31 October 2025. Operating grants exist for designated Early Years and family home centres. Check the official licensing and Early Years pages for any open intake — do not treat a closed grant as current money.",
+      "A Non-Profit Organization Child Care Start-Up Grant (up to about $200,000 for eligible construction/renovation) had a public intake that closed 31 October 2025. Operating grants exist for designated Early Years and family home centres. Check the official licensing and Early Years pages for any open intake: do not treat a closed grant as current money.",
     fundingFr:
-      "Une subvention de démarrage pour OBNL (jusqu’à environ 200 000 $ pour construction/rénovation admissible) a eu un appel clos le 31 octobre 2025. Des subventions de fonctionnement existent pour les centres désignés. Vérifiez les pages officielles pour tout appel ouvert — ne traitez pas une subvention fermée comme de l’argent actuel.",
+      "Une subvention de démarrage pour OBNL (jusqu’à environ 200 000 $ pour construction/rénovation admissible) a eu un appel clos le 31 octobre 2025. Des subventions de fonctionnement existent pour les centres désignés. Vérifiez les pages officielles pour tout appel ouvert: ne traitez pas une subvention fermée comme de l’argent actuel.",
     fundingUrl: "https://www.princeedwardisland.ca/en/information/education-and-early-years/licensed-early-learning-and-child-care",
     competitive: true,
   },
@@ -219,9 +219,9 @@ export const START_DAYCARE_PTS: readonly StartDaycarePt[] = [
       "Commencez sur le site provincial de la garde, puis parlez au bureau régional des permis pour un centre ou un milieu familial. Les OBNL qui ajoutent des places commencent souvent par une évaluation des besoins.",
     licensingUrl: "https://www.gov.nl.ca/education/childcare/",
     fundingEn:
-      "The Child Care Capacity Initiative supports eligible not-for-profits and municipalities with start-up, renovation, and equipment to meet licensing — especially in underserved areas. An Operating Grant Program supports participating regulated services in the reduced-fee model. Confirm current eligibility on the official not-for-profit child care page.",
+      "The Child Care Capacity Initiative supports eligible not-for-profits and municipalities with start-up, renovation, and equipment to meet licensing: especially in underserved areas. An Operating Grant Program supports participating regulated services in the reduced-fee model. Confirm current eligibility on the official not-for-profit child care page.",
     fundingFr:
-      "L’initiative de capacité en garde aide les OBNL et municipalités admissibles pour le démarrage, les rénovations et l’équipement liés au permis — surtout dans les régions moins desservies. Un programme de subvention de fonctionnement appuie les services réglementés participants au modèle de frais réduits. Confirmez l’admissibilité sur la page officielle.",
+      "L’initiative de capacité en garde aide les OBNL et municipalités admissibles pour le démarrage, les rénovations et l’équipement liés au permis: surtout dans les régions moins desservies. Un programme de subvention de fonctionnement appuie les services réglementés participants au modèle de frais réduits. Confirmez l’admissibilité sur la page officielle.",
     fundingUrl: "https://www.childcare.gov.nl.ca/public/ccr/notforprofit",
     competitive: true,
   },
@@ -238,9 +238,9 @@ export const START_DAYCARE_PTS: readonly StartDaycarePt[] = [
       "Communiquez avec l’unité d’apprentissage et de garde avant de postuler. Les garderies familiales sont permises individuellement. Confirmez les exigences de l’inspecteur pour l’espace, la santé et la sécurité.",
     licensingUrl: "https://yukon.ca/en/find-child-care",
     fundingEn:
-      "Yukon’s Enhancement Fund has included start-up support for centres and family day homes that are licensing. Licensed programs also participate in universal fee-reduction funding. Amounts and who can apply change — confirm on Yukon.ca (Enhancement Fund / start-up funding).",
+      "Yukon’s Enhancement Fund has included start-up support for centres and family day homes that are licensing. Licensed programs also participate in universal fee-reduction funding. Amounts and who can apply change: confirm on Yukon.ca (Enhancement Fund / start-up funding).",
     fundingFr:
-      "Le Fonds d’amélioration du Yukon a inclus un soutien au démarrage pour les centres et garderies familiales en cours de permis. Les programmes permis participent aussi au financement de réduction des frais. Les montants et l’admissibilité changent — confirmez sur Yukon.ca.",
+      "Le Fonds d’amélioration du Yukon a inclus un soutien au démarrage pour les centres et garderies familiales en cours de permis. Les programmes permis participent aussi au financement de réduction des frais. Les montants et l’admissibilité changent: confirmez sur Yukon.ca.",
     fundingUrl: "https://yukon.ca/en/health-and-wellness/work/apply-enhancement-fund-your-child-care-program",
     competitive: true,
   },
@@ -276,9 +276,9 @@ export const START_DAYCARE_PTS: readonly StartDaycarePt[] = [
       "Lisez le guide des garderies permises, puis communiquez avec l’agente régionale de la petite enfance. Il faudra des plans, des rapports incendie et santé, le zonage, l’assurance et un plan d’urgence.",
     licensingUrl: "https://www.gov.nu.ca/en/education-and-schools/early-learning-and-child-care",
     fundingEn:
-      "Nunavut offers one-time start-up funding for opening, expanding, or relocating a licensed centre (and for individuals starting a licensed family home). The amount follows a departmental formula and available budget — not a published flat cheque. Separate infrastructure calls have funded new spaces first-come until funds run out. Email ELCCAdmin@gov.nu.ca or your Early Childhood Officer.",
+      "Nunavut offers one-time start-up funding for opening, expanding, or relocating a licensed centre (and for individuals starting a licensed family home). The amount follows a departmental formula and available budget: not a published flat cheque. Separate infrastructure calls have funded new spaces first-come until funds run out. Email ELCCAdmin@gov.nu.ca or your Early Childhood Officer.",
     fundingFr:
-      "Le Nunavut offre un financement de démarrage unique pour ouvrir, agrandir ou déménager un centre permis (et pour une garderie familiale permise). Le montant suit une formule ministérielle et le budget disponible — pas un chèque fixe publié. Des appels d’infrastructure ont financé de nouvelles places jusqu’à épuisement des fonds. Écrivez à ELCCAdmin@gov.nu.ca ou à votre agente.",
+      "Le Nunavut offre un financement de démarrage unique pour ouvrir, agrandir ou déménager un centre permis (et pour une garderie familiale permise). Le montant suit une formule ministérielle et le budget disponible: pas un chèque fixe publié. Des appels d’infrastructure ont financé de nouvelles places jusqu’à épuisement des fonds. Écrivez à ELCCAdmin@gov.nu.ca ou à votre agente.",
     fundingUrl: "https://www.gov.nu.ca/en/education-and-schools/early-learning-and-child-care",
     competitive: true,
   },
@@ -302,7 +302,7 @@ export function startDaycarePt(code: string | null | undefined): StartDaycarePt 
   return START_DAYCARE_PTS.find((pt) => pt.code === v);
 }
 
-/** Same-page query only — never `/start-a-daycare/:pt`. */
+/** Same-page query only: never `/start-a-daycare/:pt`. */
 export function parseStartDaycareSearch(s: Record<string, unknown>): { pt?: string; q?: string } {
   const raw = typeof s.pt === "string" ? s.pt.trim().toUpperCase() : "";
   const q = typeof s.q === "string" ? s.q.trim().slice(0, 80) : "";

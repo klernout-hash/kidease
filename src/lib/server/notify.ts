@@ -252,9 +252,9 @@ function digestCopy(
       hour: "numeric",
       minute: "2-digit",
     });
-    return `• ${KIND_LABEL[r.kind] || r.kind} — ${place} (${who}) at ${when}`;
+    return `• ${KIND_LABEL[r.kind] || r.kind}: ${place} (${who}) at ${when}`;
   });
-  const title = `KidEase daily digest — ${day}`;
+  const title = `KidEase daily digest: ${day}`;
   const admin = `${appOrigin()}/admin`;
   const text = [
     title,

@@ -18,12 +18,12 @@ export function publicSubmitResult(status: string, error?: string | null): { ok:
   return { ok: true };
 }
 
-export const VISITOR_AUTO_REPLY_SUBJECT = "We got your message — KidEase";
+export const VISITOR_AUTO_REPLY_SUBJECT = "We got your message: KidEase";
 
 export const VISITOR_AUTO_REPLY_TEXT =
   "Thanks for sending your request to KidEase. One of our KidEase representatives will get back to you within 24 hours.\n\nThank you";
 
-export const ACTOR_CONFIRM_SUBJECT = "We got your request — KidEase";
+export const ACTOR_CONFIRM_SUBJECT = "We got your request: KidEase";
 
 /** Enroll Now, new listing, claim, spot / tour / waitlist. Signup uses verify-email + next-steps instead. */
 export const ACTOR_CONFIRM_KINDS = [

@@ -289,7 +289,7 @@ export const submitListingReview = createServerFn({ method: "POST" })
       slug: centre[0].slug,
       actorName: author,
       actorEmail: actor.email,
-      detail: `${rating}/5 — pending moderation (${gateReason}). KidEase does not invent star ratings.`,
+      detail: `${rating}/5: pending moderation (${gateReason}). KidEase does not invent star ratings.`,
     }).catch(() => undefined);
 
     return { ok: true as const, status: "pending" as const, gateReason };

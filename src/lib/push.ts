@@ -3,7 +3,7 @@
  * FCM HTTP v1 / APNs send is wired behind FEATURE_PUSH + env credentials.
  * Capacitor PushNotifications is native-only. Do not invent keys.
  *
- * Flag helpers come from ./flags.ts (extension required — scripts/push.test.mjs
+ * Flag helpers come from ./flags.ts (extension required: scripts/push.test.mjs
  * loads this file in Node).
  */
 
@@ -26,7 +26,7 @@ export const PUSH_SCAFFOLD_MESSAGE =
   "Push is scaffolded only. FEATURE_PUSH is off until Kyle adds Firebase and Apple credentials.";
 
 export const PUSH_DISABLED_MESSAGE =
-  "Push registration is off. FEATURE_PUSH is unset or 0 — www and production stay silent.";
+  "Push registration is off. FEATURE_PUSH is unset or 0: www and production stay silent.";
 
 export const PUSH_CREDENTIALS_MESSAGE =
   "FCM / APNs credentials are not configured. Set the Firebase service account and/or the APNs .p8 env names. Do not invent keys.";
@@ -38,7 +38,7 @@ export const PUSH_WEB_BLOCKED_MESSAGE =
   "Push registration is native-only (iOS / Android). www does not collect tokens.";
 
 export const PUSH_FLAG_OFF_MESSAGE =
-  "Coming soon — FEATURE_PUSH is off. Dry-run can count stored tokens. Nothing is sent to FCM or APNs.";
+  "Coming soon: FEATURE_PUSH is off. Dry-run can count stored tokens. Nothing is sent to FCM or APNs.";
 
 export type PushLabNextStep = {
   id: "credentials" | "native" | "flag";

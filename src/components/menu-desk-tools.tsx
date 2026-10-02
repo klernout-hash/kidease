@@ -2,7 +2,7 @@ import { useSessionDesks } from "@/components/desk-switcher";
 import { canSeeAdminDesk, canVisitDesk, showDeskSwitcher } from "@/lib/desks";
 
 /**
- * Signed-in desk chrome for /menu — kept off the first menu JS chunk.
+ * Signed-in desk chrome for /menu: kept off the first menu JS chunk.
  * The operator admin switcher is the header pills, not a menu row.
  */
 export function MenuDeskTools() {

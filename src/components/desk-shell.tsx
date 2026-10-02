@@ -28,7 +28,7 @@ function DeskItemIcon({ name, className }: { name?: DeskIcon; className?: string
 function navClass(on: boolean) {
   return cn(
     // inline-flex so <a> deep-links (Messages, Find care) match <button> pills.
-    // Anchors are display:inline by default — min-height/ring then collapse into
+    // Anchors are display:inline by default: min-height/ring then collapse into
     // a vertical sliver beside the label.
     "inline-flex box-border h-11 min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-full px-3 text-sm leading-none no-underline hover:no-underline",
     "md:h-auto md:min-h-0 md:flex-col md:items-stretch md:justify-start md:whitespace-normal md:rounded-lg md:px-2.5 md:py-1.5 md:leading-snug",

@@ -305,7 +305,7 @@ function ActionsRail({
       <div className="border-t border-border pt-4">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subtle">View-as (banner only)</p>
         <p className="mt-2 text-xs text-muted">
-          Opens your own desk with a banner. No write impersonation — TODO if we ever add a
+          Opens your own desk with a banner. No write impersonation: TODO if we ever add a
           read-only session.
         </p>
         <div className="mt-2 flex flex-col gap-2">
@@ -356,7 +356,7 @@ function MoneyDrawer({
       <p className="mt-1 text-sm text-muted">
         {stripeLive
           ? "Stripe live. Refunds call the Stripe API; bill status waits for charge.refunded."
-          : "Internal ledger — refund rehearses a case event only. No fake Paid or Refunded state."}
+          : "Internal ledger: refund rehearses a case event only. No fake Paid or Refunded state."}
         {unlimited
           ? " Support lead / admin: no agent cap."
           : ` Agent cap: ${refundMaxCents} cents (SUPPORT_REFUND_MAX_CENTS).`}
@@ -517,7 +517,7 @@ function CentrePanel({ centre, centreLinked }: { centre: Centre360 | null; centr
             label="Vacancy"
             value={
               centre.listing.vacancy.kind === "unknown"
-                ? "Unknown — no last confirm"
+                ? "Unknown: no last confirm"
                 : `${centre.listing.vacancy.kind}${centre.listing.lastVacancyUpdatedAt ? ` · ${centre.listing.lastVacancyUpdatedAt}` : ""}`
             }
           />

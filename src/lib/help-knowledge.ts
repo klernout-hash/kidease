@@ -4,8 +4,8 @@ import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 const FACTS = `KidEase (kidease.ca) is a Canada-wide finder for provincially licensed daycares only. Founders Kyle Lernout and Kevin Lamont. Email ${SUPPORT_INBOX_EMAIL}.
 Parents: search by GPS or address/city/postal code, map + list, distance in km or miles, ages, $10-a-day / CWELCC badges, storefront photos, Request a spot, Book a tour, 💬 Contact, Save, Compare. Childcare Benefits Program at https://www.kidease.ca/benefits has every official provincial, territorial, and federal back-link. KidEase does not process subsidy, CWELCC, CCB, or tax-credit applications.
 Providers: Enroll Now / Claim listing, free, live spots and fees, storefront photo, priority listing (paid boost), in-app messages. Manual enroll form if not in the 20,000+ catalogue.
-Fees: unclaimed listings say fee not confirmed — never invent a price. Live listings (claimed centres) show provider-entered monthly fees. $10-a-day is a government program at participating centres, not a KidEase discount.
-Privacy: PIPEDA. We do not sell data. Children’s details only for the parent and a centre they contact. Processors include Google Maps/Places, Better Auth / Google sign-in, Resend, Titan (operator mail), Vercel, Neon, Cloudflare when proxied, Stripe when enabled, PostHog when product analytics is allowed (page views and masked session replay — not ads). Location is GPS or typed address for distance search only — not shared with other parents, no background tracking. Cookie policy at /cookies. Website and the iPhone and Android app ask Essential or Allow analytics before PostHog loads. In the app, crash reports wait for the same Allow tap. No advertising trackers.
+Fees: unclaimed listings say fee not confirmed: never invent a price. Live listings (claimed centres) show provider-entered monthly fees. $10-a-day is a government program at participating centres, not a KidEase discount.
+Privacy: PIPEDA. We do not sell data. Children’s details only for the parent and a centre they contact. Processors include Google Maps/Places, Better Auth / Google sign-in, Resend, Titan (operator mail), Vercel, Neon, Cloudflare when proxied, Stripe when enabled, PostHog when product analytics is allowed (page views and masked session replay: not ads). Location is GPS or typed address for distance search only: not shared with other parents, no background tracking. Cookie policy at /cookies. Website and the iPhone and Android app ask Essential or Allow analytics before PostHog loads. In the app, crash reports wait for the same Allow tap. No advertising trackers.
 App: website + iPhone + Android, same accounts.
 
 ${BENEFITS_BRIEF}`;
@@ -14,30 +14,30 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
   {
     keys: ["enroll", "provider", "claim", "listing", "centre owner", "daycare owner", "partner"],
     lines: [
-      `If you run a licensed centre, tap Enroll Now (or Claim). Search your name in our catalogue — over 20,000 licensed centres across Canada. Not listed? Choose Enter name manually and send the form. It goes to ${SUPPORT_INBOX_EMAIL}. Claiming is free.`,
+      `If you run a licensed centre, tap Enroll Now (or Claim). Search your name in our catalogue: over 20,000 licensed centres across Canada. Not listed? Choose Enter name manually and send the form. It goes to ${SUPPORT_INBOX_EMAIL}. Claiming is free.`,
       "Providers get a free landing page, proximity so nearby parents find you first, and in-app chat. Card payments are processed in the app through Stripe. Start at Enroll Now on the home page or kidease.ca/claim.",
-      "To show your centre to parents: claim your listing, add spots and monthly fees, and upload a storefront photo. Priority listing can pin you higher — that’s optional.",
+      "To show your centre to parents: claim your listing, add spots and monthly fees, and upload a storefront photo. Priority listing can pin you higher: that’s optional.",
     ],
   },
   {
     keys: ["start a daycare", "open a daycare", "ouvrir une garderie", "start daycare", "open daycare", "how to start"],
     lines: [
-      "KidEase does not issue licences. Open a licensed daycare through your province or territory first — rules differ across Canada. The Start a Daycare page at kidease.ca/start-a-daycare walks through the high-level steps.",
+      "KidEase does not issue licences. Open a licensed daycare through your province or territory first: rules differ across Canada. The Start a Daycare page at kidease.ca/start-a-daycare walks through the high-level steps.",
       "After you are licensed, claim or enroll at kidease.ca/claim so parents can find your fees and spots. Official registries are linked from How we verify listings and Daycare requirements.",
     ],
   },
   {
     keys: ["search", "near me", "location", "map", "km", "radius", "find"],
     lines: [
-      "Tap Search Daycares Near Me or Explore. We use your location (or an address / city / postal code) and list every licensed centre inside the radius you set in Filters (1–50 km, or miles). Add a work or school address and toggle Near you, Work, or Both — Both only shows centres inside both circles.",
+      "Tap Search Daycares Near Me or Explore. We use your location (or an address / city / postal code) and list every licensed centre inside the radius you set in Filters (1–50 km, or miles). Add a work or school address and toggle Near you, Work, or Both: Both only shows centres inside both circles.",
       "KidEase is proximity-first: listings show distance from you, not just a city name. Switch km or miles in Filters. On a phone the map is first; drag the sheet up for the list.",
-      "If location is blocked, type an address or postal code. Precise location is used only while you search — never in the background. Results are licensed centres only.",
+      "If location is blocked, type an address or postal code. Precise location is used only while you search: never in the background. Results are licensed centres only.",
     ],
   },
   {
     keys: ["spot", "opening", "waitlist", "available", "space", "vacanc"],
     lines: [
-      "Open spots are only confirmed on Live listings the centre updates. Unclaimed cards say availability unknown or Waitlist — use 💬 Contact on the card and we’ll help check.",
+      "Open spots are only confirmed on Live listings the centre updates. Unclaimed cards say availability unknown or Waitlist: use 💬 Contact on the card and we’ll help check.",
       "Request a spot on the centre’s page, or Book a tour. Don’t trust a default number if it isn’t a Live listing.",
       `Tap 💬 Contact on a listing and tell us the child’s age and start date. That message goes to our team at ${SUPPORT_INBOX_EMAIL}.`,
     ],
@@ -45,7 +45,7 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
   {
     keys: ["price", "fee", "cost", "tuition", "month"],
     lines: [
-      "We only show a monthly fee when the centre has claimed the listing and entered it. Otherwise you’ll see Fee not confirmed — please ask the centre or use Contact.",
+      "We only show a monthly fee when the centre has claimed the listing and entered it. Otherwise you’ll see Fee not confirmed: please ask the centre or use Contact.",
       "Fees vary by age (infant / toddler / preschool) and by province programs like $10-a-day. Check the listing, then confirm with the provider. For government help paying, ask me your province or open kidease.ca/benefits.",
     ],
   },
@@ -59,7 +59,7 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
   {
     keys: ["photo", "storefront", "picture", "building"],
     lines: [
-      "We use storefront or operator photos when we have them — not map satellite shots. Centres can upload a clearer entrance photo after they claim.",
+      "We use storefront or operator photos when we have them: not map satellite shots. Centres can upload a clearer entrance photo after they claim.",
     ],
   },
   {
@@ -77,7 +77,7 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
   {
     keys: ["hello", "hi ", "hey", "bonjour", "thanks", "thank"],
     lines: [
-      "Hi — I can help you find licensed care near you, explain $10-a-day and provincial benefits, or help a centre enroll. What do you need?",
+      "Hi: I can help you find licensed care near you, explain $10-a-day and provincial benefits, or help a centre enroll. What do you need?",
       "Welcome to KidEase. Search nearby licensed daycares, or ask me about benefits, claiming a listing, or how spots work.",
     ],
   },
@@ -106,7 +106,7 @@ KidEase does not process subsidy, CWELCC, CCB, or tax-credit applications.
 Keep everyday replies to 2–4 short sentences. For benefits / $10-a-day / subsidy questions, 4–8 short sentences is OK: name the program, say if the reduced fee is already on the centre invoice or needs a separate application, paste the official URL, and point to https://www.kidease.ca/benefits for every back-link.
 If the parent does not name a province or city, ask for it, then answer.
 Answer in the same language as the parent (English or French).
-Vary your wording — do not repeat the previous assistant message. After you answer, ask once whether they’d like a live agent? If you already asked about a live agent in this thread, don’t ask again unless they seem stuck. If they want a person, say you’ll connect them.`;
+Vary your wording: do not repeat the previous assistant message. After you answer, ask once whether they’d like a live agent? If you already asked about a live agent in this thread, don’t ask again unless they seem stuck. If they want a person, say you’ll connect them.`;
 
 export function wantsLiveAgent(text: string) {
   const q = text.toLowerCase();
@@ -131,4 +131,4 @@ export function localHelpReply(userText: string, priorAssistant: string[]) {
 }
 
 export const AGENT_CONFIRM =
-  `I’ve flagged a live agent. Our team gets a text and email at ${SUPPORT_INBOX_EMAIL} — usually the same day, often faster. You can also write us directly. Anything else I should pass along?`;
+  `I’ve flagged a live agent. Our team gets a text and email at ${SUPPORT_INBOX_EMAIL}: usually the same day, often faster. You can also write us directly. Anything else I should pass along?`;

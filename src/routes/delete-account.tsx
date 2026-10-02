@@ -11,7 +11,7 @@ export const Route = createFileRoute("/delete-account")({
       { title: "Delete account · KidEase" },
       {
         name: "description",
-        content: "PIPEDA account deletion for KidEase — sign in to remove your account and family data.",
+        content: "PIPEDA account deletion for KidEase: sign in to remove your account and family data.",
       },
     ],
   }),

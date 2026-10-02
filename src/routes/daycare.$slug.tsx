@@ -789,7 +789,7 @@ export function Listing() {
               {feeNotes.unconfirmed ? (
                 <p className="mt-2 max-w-prose text-sm text-muted">{t("feeUnknownLead")}</p>
               ) : null}
-              <p className="mt-3 text-sm text-muted">{t("feesAndSubsidies")} — {t("aidOnListing")}</p>
+              <p className="mt-3 text-sm text-muted">{t("feesAndSubsidies")}: {t("aidOnListing")}</p>
             </section>
 
             <section id="listing-location" className="scroll-mt-24">
@@ -805,7 +805,7 @@ export function Listing() {
                 </button>
               </div>
               <div className="mt-3 overflow-hidden rounded-lg ring-1 ring-border">
-                <ListingMap lat={d.lat} lng={d.lng} title={`${name} — Google Maps`} />
+                <ListingMap lat={d.lat} lng={d.lng} title={`${name}: Google Maps`} />
               </div>
               <p className="mt-3 text-sm text-muted">
                 {address}, {d.city}, {d.province} {d.postalCode}

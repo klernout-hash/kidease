@@ -163,7 +163,7 @@ export function ProviderTrustChecklist({ daycare, onSaved }: { daycare: Daycare;
             >
               {t("screeningDesk")}
             </Link>
-            {" — "}
+            {": "}
             {t("screeningDeskHint")}
           </p>
         </li>

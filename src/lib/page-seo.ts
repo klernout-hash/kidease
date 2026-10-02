@@ -147,9 +147,9 @@ export function faqPageJsonLdScript(items: FaqSeoItem[]) {
 }
 
 /**
- * Organization facts we can stand behind: Winnipeg-based, Canada-wide
- * licensed childcare discovery, free to search. No street address, ratings,
- * or review counts.
+ * Organization facts we can stand behind: a Canadian company,
+ * Canada-wide licensed childcare discovery, free to search. No street
+ * address, ratings, or review counts.
  */
 export function organizationJsonLd(locale: "en" | "fr" = "en") {
   return {
@@ -166,8 +166,6 @@ export function organizationJsonLd(locale: "en" | "fr" = "en") {
     },
     address: {
       "@type": "PostalAddress",
-      addressLocality: "Winnipeg",
-      addressRegion: "MB",
       addressCountry: "CA",
     },
     sameAs: [INSTAGRAM_PROFILE_URL, FACEBOOK_PROFILE_URL],
@@ -175,7 +173,7 @@ export function organizationJsonLd(locale: "en" | "fr" = "en") {
 }
 
 /**
- * SoftwareApplication for the web / PWA. App Store and Play are coming soon —
+ * SoftwareApplication for the web / PWA. App Store and Play are coming soon.
  * no download counts, ratings, or store IDs.
  */
 export function softwareApplicationJsonLd() {
@@ -192,7 +190,7 @@ export function softwareApplicationJsonLd() {
       priceCurrency: "CAD",
     },
     description:
-      "Free search for licensed Canadian childcare listings. Monthly fees, open spots, and enrolment — App Store and Google Play coming soon.",
+      "Free search for licensed Canadian childcare listings. Monthly fees, open spots, and enrolment: App Store and Google Play coming soon.",
     publisher: {
       "@type": "Organization",
       name: "KidEase",
@@ -226,19 +224,19 @@ export const MARKETING_PAGE_SEO = {
   about: {
     title: "About KidEase · Licensed daycare directory",
     description:
-      "KidEase is a Winnipeg-founded, Canada-wide directory of licensed daycares. Real storefront photos and kilometre search — no nannies or sitters.",
+      "KidEase is a Canadian company and a Canada-wide directory of licensed daycares. Real storefront photos and kilometre search: no nannies or sitters.",
     path: "/about",
   },
   benefits: {
     title: "Childcare benefits and subsidies · KidEase",
     description:
-      "Canada Child Benefit 2026–27 amounts, CWELCC $10-a-day fees, and provincial fee subsidies. Official government links only — KidEase does not process applications.",
+      "Canada Child Benefit 2026–27 amounts, CWELCC $10-a-day fees, and provincial fee subsidies. Official government links only: KidEase does not process applications.",
     path: "/benefits",
   },
   help: {
     title: "Help Centre · KidEase",
     description:
-      "Parents and licensed centres — email support or send a note. KidEase reads every message. App Store and Google Play also use this page.",
+      "Parents and licensed centres: email support or send a note. KidEase reads every message. App Store and Google Play also use this page.",
     path: "/help",
   },
   faq: {
@@ -262,7 +260,7 @@ export const MARKETING_PAGE_SEO = {
   compare: {
     title: "Compare licensed daycares · KidEase",
     description:
-      "Compare licensed centres side by side — hours, fees, and open spots. Save up to three listings, then tour with a checklist.",
+      "Compare licensed centres side by side: hours, fees, and open spots. Save up to three listings, then tour with a checklist.",
     path: "/compare",
   },
   login: {
@@ -291,7 +289,7 @@ export const MARKETING_PAGE_SEO = {
   team: {
     title: "Meet the Team · KidEase",
     description:
-      "KidEase was founded in Winnipeg by Kyle Lernout and Kevin Lamont to help Canadian families find licensed daycare.",
+      "Kyle Lernout and Kevin Lamont started KidEase, a Canadian company, to help families find licensed daycare.",
     path: "/team",
   },
   donate: {
@@ -343,7 +341,7 @@ export const MARKETING_PAGE_SEO_FR = {
   help: {
     title: "Centre d’aide · KidEase",
     description:
-      "Parents et centres permis — écrivez-nous ou envoyez une note. KidEase lit chaque message. L’App Store et Google Play utilisent aussi cette page.",
+      "Parents et centres permis: écrivez-nous ou envoyez une note. KidEase lit chaque message. L’App Store et Google Play utilisent aussi cette page.",
     path: "/fr/help",
   },
   faq: {
@@ -361,7 +359,7 @@ export const MARKETING_PAGE_SEO_FR = {
   about: {
     title: "À propos de KidEase · Répertoire de garderies permises",
     description:
-      "KidEase est un répertoire pancanadien de garderies permises, fondé à Winnipeg. De vraies photos de devanture et une recherche au kilomètre — pas de nounous ni de gardiens.",
+      "KidEase est une entreprise canadienne et un répertoire pancanadien de garderies permises. De vraies photos de devanture et une recherche au kilomètre: pas de nounous ni de gardiens.",
     path: "/fr/about",
   },
   donate: {
@@ -385,7 +383,7 @@ export const MARKETING_PAGE_SEO_FR = {
   benefits: {
     title: "Prestations et subventions pour la garde · KidEase",
     description:
-      "Montants de l’Allocation canadienne pour enfants 2026-2027, tarifs AGJE et subventions provinciales. Liens officiels seulement — KidEase ne traite pas les demandes.",
+      "Montants de l’Allocation canadienne pour enfants 2026-2027, tarifs AGJE et subventions provinciales. Liens officiels seulement: KidEase ne traite pas les demandes.",
     path: "/fr/benefits",
   },
   login: {
@@ -417,7 +415,7 @@ export const MARKETING_PAGE_SEO_FR = {
 export const LEGAL_PAGE_SEO = {
   privacy: {
     title: "Privacy · KidEase",
-    description: "KidEase privacy notice — PIPEDA, location, processors, and child safety.",
+    description: "KidEase privacy notice: PIPEDA, location, processors, and child safety.",
     path: "/privacy",
   },
   terms: {
@@ -427,7 +425,7 @@ export const LEGAL_PAGE_SEO = {
   },
   cookies: {
     title: "Cookies · KidEase",
-    description: "KidEase cookie policy — essential cookies, optional analytics only after you allow.",
+    description: "KidEase cookie policy: essential cookies, optional analytics only after you allow.",
     path: "/cookies",
   },
 } as const;
@@ -435,7 +433,7 @@ export const LEGAL_PAGE_SEO = {
 export const LEGAL_PAGE_SEO_FR = {
   privacy: {
     title: "Confidentialité · KidEase",
-    description: "Avis de confidentialité KidEase — LPRPDE, position, sous-traitants et sécurité des enfants.",
+    description: "Avis de confidentialité KidEase: LPRPDE, position, sous-traitants et sécurité des enfants.",
     path: "/fr/privacy",
   },
   terms: {
@@ -445,7 +443,7 @@ export const LEGAL_PAGE_SEO_FR = {
   },
   cookies: {
     title: "Témoins · KidEase",
-    description: "Politique sur les témoins KidEase — témoins essentiels, analytique facultative seulement après Autoriser.",
+    description: "Politique sur les témoins KidEase: témoins essentiels, analytique facultative seulement après Autoriser.",
     path: "/fr/cookies",
   },
 } as const;

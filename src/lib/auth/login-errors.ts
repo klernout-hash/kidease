@@ -2,9 +2,9 @@ import { LOGIN_TAKING_TOO_LONG_MESSAGE } from "./login-stall.ts";
 
 /** Map Better Auth / Turnstile / mail failures to copy we can show on login. */
 
-/** Cloudflare WAF/Bot Fight HTML 403 — not a Better Auth JSON error. */
+/** Cloudflare WAF/Bot Fight HTML 403: not a Better Auth JSON error. */
 export const CLOUDFLARE_AUTH_BLOCK_MESSAGE =
-  "Security filter blocked sign-in — try again or contact support";
+  "Security filter blocked sign-in: try again or contact support";
 
 export const WRONG_EMAIL_OR_PASSWORD_MESSAGE =
   "Wrong email or password. Try again, or reset it from Forgot password.";
@@ -84,7 +84,7 @@ export function socialProviderLabels(providers: string[]): string[] {
 export function oauthOnlyMessage(providers: string[] = []): string {
   const labels = socialProviderLabels(providers);
   const via = labels.length ? ` (${labels.join(", ")})` : "";
-  return `This email is registered with Apple, Google, or Facebook${via} — use that button, or set a password from Forgot password.`;
+  return `This email is registered with Apple, Google, or Facebook${via}: use that button, or set a password from Forgot password.`;
 }
 
 export function classifyEmailAccounts(
@@ -180,10 +180,10 @@ export function friendlyAuthError(
     return "Too many tries. Try again in 1 min.";
   }
   if (raw.includes("missing or null origin") || raw.includes("missing_or_null_origin")) {
-    return "This sign-in page needs a refresh — try again, or use email.";
+    return "This sign-in page needs a refresh: try again, or use email.";
   }
   if (raw.includes("invalid origin") || raw.includes("invalid_origin") || raw.includes("cross-site navigation")) {
-    return "This sign-in page needs a refresh — try again, or use email.";
+    return "This sign-in page needs a refresh: try again, or use email.";
   }
   if (raw.includes("failed to create session") || raw.includes("failed_to_create_session")) {
     return "Signed in, but the session could not be saved. Refresh and try again.";
@@ -210,7 +210,7 @@ export function friendlyAuthError(
     return "That sign-in method did not share an email. Try Google or email instead.";
   }
   if (raw.includes("popup")) {
-    return "Pop-up blocked — allow pop-ups for KidEase, then try again.";
+    return "Pop-up blocked: allow pop-ups for KidEase, then try again.";
   }
   if (raw.includes("could not start") && raw.includes("sign-in")) {
     return message?.trim() || socialSignInFailedMessage();

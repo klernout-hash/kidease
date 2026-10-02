@@ -835,7 +835,7 @@ function searchAlertCopy(
   const unsubLine = unsubUrl
     ? `\nUnsubscribe: ${unsubUrl}\nKidEase · Winnipeg, Manitoba · support@kidease.ca\n`
     : `\nUnsubscribe: ${origin}/unsubscribe\nKidEase · Winnipeg, Manitoba · support@kidease.ca\n`;
-  const text = `A saved search on KidEase has an update. Confirm details with the centre — KidEase does not guarantee an opening.\n\n${lines.join("\n")}\n\nOpen your family desk: ${deskUrl}\n${unsubLine}`;
+  const text = `A saved search on KidEase has an update. Confirm details with the centre: KidEase does not guarantee an opening.\n\n${lines.join("\n")}\n\nOpen your family desk: ${deskUrl}\n${unsubLine}`;
   const items = events
     .slice(0, 8)
     .map((ev) => {

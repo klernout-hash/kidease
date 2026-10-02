@@ -64,7 +64,7 @@ export function Contact() {
       kind: "contact" as const,
       name,
       email,
-      subject: isParent ? `${t("roleParentTitle")} — ${label}` : label,
+      subject: isParent ? `${t("roleParentTitle")}: ${label}` : label,
       body,
       turnstileToken: challenge,
     };

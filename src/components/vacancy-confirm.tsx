@@ -31,7 +31,7 @@ function lastConfirmedLabel(
 }
 
 /**
- * Centre-desk confirm loop. Stamps last_vacancy_updated_at only — never invents
+ * Centre-desk confirm loop. Stamps last_vacancy_updated_at only: never invents
  * open-spot counts. That timestamp is what parent “recently confirmed” filters use.
  */
 export function VacancyConfirmLoop({

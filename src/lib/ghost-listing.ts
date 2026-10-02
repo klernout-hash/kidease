@@ -21,7 +21,7 @@ export const GHOST_LISTING = {
   spotsInfant: 2,
   spotsToddler: 4,
   spotsPreschool: 6,
-  tagline: "QA ghost listing — not a real centre.",
+  tagline: "QA ghost listing: not a real centre.",
   description:
     "KidEase internal test listing so the owner can walk Claim → licence → waiting → admin approve. Not a licensed daycare.",
   visibility: "admin_only",

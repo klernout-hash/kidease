@@ -40,7 +40,7 @@ const COPY = {
   en: {
     eyebrow: "Optional plans",
     title: "Upgrade your centre",
-    lead: "Centre plans for listing, inquiries, and multi-site tools are optional. KidEase is free for every centre — vacancy, claim, and licence stay open. This is not parent Plus or a family bill.",
+    lead: "Centre plans for listing, inquiries, and multi-site tools are optional. KidEase is free for every centre: vacancy, claim, and licence stay open. This is not parent Plus or a family bill.",
     pendingPortal: "Manage billing",
     monthly: "Monthly",
     yearly: "Yearly",
@@ -56,7 +56,7 @@ const COPY = {
     sites: (n: number) => (n === 1 ? "1 listed site" : `${n} listed sites`),
     status: "Stripe status",
     entitled: "Active entitlements",
-    entitledFree: "Free basics — listing, vacancy, claim, licence.",
+    entitledFree: "Free basics: listing, vacancy, claim, licence.",
     blocked: "Checkout is blocked until this plan’s Stripe price ID is set on Vercel.",
     savedFree: "You are on Free. Listing tools stay on.",
     portalCard: "Open the Stripe customer portal to update the card or cancel.",
@@ -66,7 +66,7 @@ const COPY = {
   fr: {
     eyebrow: "Forfaits facultatifs",
     title: "Améliorer votre centre",
-    lead: "Les forfaits centre pour la fiche, les demandes et plusieurs sites sont facultatifs. KidEase est gratuit pour chaque centre — places, réclamation et permis restent ouverts. Ce n’est pas Plus parents ni une facture famille.",
+    lead: "Les forfaits centre pour la fiche, les demandes et plusieurs sites sont facultatifs. KidEase est gratuit pour chaque centre: places, réclamation et permis restent ouverts. Ce n’est pas Plus parents ni une facture famille.",
     pendingPortal: "Gérer la facturation",
     monthly: "Mensuel",
     yearly: "Annuel",
@@ -82,7 +82,7 @@ const COPY = {
     sites: (n: number) => (n === 1 ? "1 site listé" : `${n} sites listés`),
     status: "Statut Stripe",
     entitled: "Droits actifs",
-    entitledFree: "Base gratuite — fiche, places, réclamation, permis.",
+    entitledFree: "Base gratuite: fiche, places, réclamation, permis.",
     blocked: "Le checkout reste fermé tant que l’identifiant de prix Stripe n’est pas sur Vercel.",
     savedFree: "Vous êtes sur Gratuit. Les outils de fiche restent ouverts.",
     portalCard: "Ouvrez le portail Stripe pour changer la carte ou annuler.",
@@ -417,7 +417,7 @@ export function ProviderSubscriptionPanel({
         <p className="mt-2 text-sm">
           <span className="font-medium">{t.entitled}: </span>
           <span className="capitalize">{state.entitlements.entitledPlan}</span>
-          {!state.entitlements.paid ? ` — ${t.entitledFree}` : null}
+          {!state.entitlements.paid ? `: ${t.entitledFree}` : null}
         </p>
         {!state.entitlements.paid ? (
           <p className="mt-3 rounded-xl bg-bg p-4 text-sm text-muted ring-1 ring-border">{t.savedFree}</p>

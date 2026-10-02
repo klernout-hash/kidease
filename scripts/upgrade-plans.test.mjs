@@ -31,7 +31,7 @@ test("each role has one recommended plan and only real benefits", () => {
 
   assert.equal(
     parentUpgradePlan("free").pitch.en,
-    "Free forever. Everything you need to find and connect",
+    "Search, save centres, and message daycares. These stay on the free plan.",
   );
   const plus = parentUpgradePlan("plus").benefits.map((line) => line.en).join(" | ");
   assert.match(plus, /video tour, when video is on/);

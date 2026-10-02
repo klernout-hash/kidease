@@ -114,8 +114,8 @@ export function daycareAddonVisible(id: string, flags: Partial<Record<string, bo
 export const RECOMMENDED_LABEL: PlanLine = { en: "Recommended", fr: "Recommandé" };
 
 const PARENT_FREE_PITCH: PlanLine = {
-  en: "Free forever. Everything you need to find and connect",
-  fr: "Gratuit pour toujours. Tout ce qu’il faut pour chercher et écrire",
+  en: "Search, save centres, and message daycares. These stay on the free plan.",
+  fr: "Cherchez, enregistrez des centres et écrivez aux garderies. Cela reste sur le forfait gratuit.",
 };
 
 const PARENT_PLUS_PITCH: PlanLine = {
@@ -124,8 +124,8 @@ const PARENT_PLUS_PITCH: PlanLine = {
 };
 
 const DAYCARE_FREE_PITCH: PlanLine = {
-  en: "Free forever. Listing, vacancy, claim, and messages stay open.",
-  fr: "Gratuit pour toujours. La fiche, les places, la réclamation et les messages restent ouverts.",
+  en: "Listing, vacancy, claim, and messages stay open.",
+  fr: "La fiche, les places, la réclamation et les messages restent ouverts.",
 };
 
 const PRO_PITCH: PlanLine = {

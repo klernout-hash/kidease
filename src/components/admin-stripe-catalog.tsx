@@ -63,8 +63,8 @@ export function AdminStripeCatalog() {
       setData(json);
       setNote(
         method === "POST"
-          ? "Created any missing LIVE prices. Copy the price IDs into Vercel — the secret is never shown."
-          : "Catalog status loaded. Price IDs only — no secret keys.",
+          ? "Created any missing LIVE prices. Copy the price IDs into Vercel: the secret is never shown."
+          : "Catalog status loaded. Price IDs only: no secret keys.",
       );
     } catch (err) {
       setNote(err instanceof Error ? err.message : "Request failed");
@@ -101,7 +101,7 @@ export function AdminStripeCatalog() {
                   if (!price || percent == null) return "Yearly saving cannot be computed.";
                   const proposal =
                     price.hideUntilBothPrices || price.yearlyProposal
-                      ? " Proposal — hidden until the Stripe price env is set. Needs Kyle’s OK."
+                      ? " Proposal: hidden until the Stripe price env is set. Needs Kyle’s OK."
                       : "";
                   return `Yearly saves ${percent}% (rounded down from ${formatPlanCad(price.monthlyCad, "en")} × 12 vs ${formatPlanCad(price.yearlyCad, "en")}).${proposal}`;
                 })()}

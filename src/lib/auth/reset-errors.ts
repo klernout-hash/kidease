@@ -7,7 +7,7 @@ export function friendlyResetMailError(message?: string | null) {
     raw.includes("you have been blocked") ||
     (raw.includes("cloudflare") && raw.includes("blocked"))
   ) {
-    return "Security filter blocked sign-in — try again or contact support";
+    return "Security filter blocked sign-in: try again or contact support";
   }
   if (
     raw.includes("not configured") ||
@@ -42,7 +42,7 @@ export function friendlyResetMailError(message?: string | null) {
     return message || "Please complete the security check.";
   }
   if (raw.includes("invalid origin") || raw.includes("invalid_origin")) {
-    return "This page needs a refresh — try again.";
+    return "This page needs a refresh: try again.";
   }
   return message || "Could not send a reset email.";
 }

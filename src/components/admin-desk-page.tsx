@@ -682,7 +682,7 @@ export function AdminPage() {
                   </span>
                   <span className="mt-1 block">{catalogHealth.reason}</span>
                   <span className="mt-2 block" data-facility-type-taxonomy>
-                    Facility types: child care centre (fallback), family child care (`home`), group child care home (`group-home`), nursery school (`nursery`), school-age (`in-school`). Name tokens are an admin gap only — never assigned at random. US-style aliases map and stay off empty filters.
+                    Facility types: child care centre (fallback), family child care (`home`), group child care home (`group-home`), nursery school (`nursery`), school-age (`in-school`). Name tokens are an admin gap only: never assigned at random. US-style aliases map and stay off empty filters.
                   </span>
                 </p>
               ) : null}
@@ -1067,7 +1067,7 @@ function MoneyPanel({
         {ready && stripeLive ? (
           <p className="mt-2 text-sm text-muted">
             {t("connectFeeAdminLive")} {paymentSourceLabel(true)} for paid / refunded / disputed bills.
-            The internal row is a projection of signed webhooks — do not mark paid by hand.
+            The internal row is a projection of signed webhooks: do not mark paid by hand.
           </p>
         ) : null}
         <AdminStripeCatalog />

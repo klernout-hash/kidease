@@ -309,7 +309,7 @@ export function DaycareTypeRails({
   );
 }
 
-/** @deprecated alias — Explore home still mounts this name. */
+/** @deprecated alias: Explore home still mounts this name. */
 export function FacilityTypeRails(props: {
   items?: Card[];
   rows?: Partial<Record<BrowseDaycareType, Card[]>>;

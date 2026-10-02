@@ -5,7 +5,7 @@ import { PageSkeleton } from "@/components/page-skeleton";
 
 /**
  * Index-route pending UI only (never on the root document). Must never be a
- * BrandMark — a hung loader plus a logo is the production “logo loop”, and
+ * BrandMark: a hung loader plus a logo is the production “logo loop”, and
  * replacing `<html>` with pending UI drops the stylesheet.
  */
 export function BootPending() {
@@ -31,7 +31,7 @@ export function BootPending() {
         <h1 className="mt-3 font-display text-2xl text-fg">KidEase could not finish loading</h1>
         <p className="mt-3 text-sm text-muted">
           The home page waited too long for search or your sign-in session. This is not an infinite
-          spinner — refresh, or try again on https://www.kidease.ca. If it keeps happening, email{" "}
+          spinner: refresh, or try again on https://www.kidease.ca. If it keeps happening, email{" "}
           {SUPPORT_INBOX_EMAIL}.
         </p>
         <button

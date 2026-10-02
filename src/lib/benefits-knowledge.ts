@@ -1,5 +1,5 @@
 /** Official childcare-benefit links and parent facts for KidEase Live Chat.
- *  KidEase never processes these applications — we send families to government sites.
+ *  KidEase never processes these applications: we send families to government sites.
  */
 
 import {
@@ -53,7 +53,7 @@ export const BENEFIT_PROGRAMS: BenefitProgram[] = [
       KE,
     ],
     reply:
-      `Two different federal programs: (1) Canada Child Benefit is a monthly tax-free CRA payment — not a daycare invoice discount. For ${CCB.periodEn} (based on ${CCB.afniYear} AFNI): max about ${moneyEn(CCB.maxUnder6Year)}/year (${moneyEn(CCB.maxUnder6Month, 2)}/mo) per child under 6, and ${moneyEn(CCB.max6to17Year)}/year (${moneyEn(CCB.max6to17Month, 2)}/mo) ages 6–17. Full amount if AFNI is under about ${moneyEn(CCB.fullAfni)}; phases down above that. How much: ${CCB.howMuchEn} — apply or check in CRA My Account: ${CCB.overviewEn}. Child Disability Benefit (DTC-eligible child) up to about ${moneyEn(CDB.maxYear)}/year (${moneyEn(CDB.maxMonth)}/mo), paid with CCB: ${CDB.hrefEn}. (2) CWELCC / $10-a-day is delivered by your province at participating licensed centres; you usually do not file a separate federal daycare form. Overview: https://www.canada.ca/en/employment-social-development/campaigns/child-care.html . KidEase does not process either. Open every official link on kidease.ca/benefits.`,
+      `Two different federal programs: (1) Canada Child Benefit is a monthly tax-free CRA payment: not a daycare invoice discount. For ${CCB.periodEn} (based on ${CCB.afniYear} AFNI): max about ${moneyEn(CCB.maxUnder6Year)}/year (${moneyEn(CCB.maxUnder6Month, 2)}/mo) per child under 6, and ${moneyEn(CCB.max6to17Year)}/year (${moneyEn(CCB.max6to17Month, 2)}/mo) ages 6–17. Full amount if AFNI is under about ${moneyEn(CCB.fullAfni)}; phases down above that. How much: ${CCB.howMuchEn}: apply or check in CRA My Account: ${CCB.overviewEn}. Child Disability Benefit (DTC-eligible child) up to about ${moneyEn(CDB.maxYear)}/year (${moneyEn(CDB.maxMonth)}/mo), paid with CCB: ${CDB.hrefEn}. (2) CWELCC / $10-a-day is delivered by your province at participating licensed centres; you usually do not file a separate federal daycare form. Overview: https://www.canada.ca/en/employment-social-development/campaigns/child-care.html . KidEase does not process either. Open every official link on kidease.ca/benefits.`,
   },
   {
     key: "mb",
@@ -66,7 +66,7 @@ export const BENEFIT_PROGRAMS: BenefitProgram[] = [
       "https://childcaresearch.gov.mb.ca/en",
     ],
     reply:
-      `In Manitoba there are two layers. $10-a-day at licensed funded centres is usually already on the invoice for regular hours — no extra form: https://www.gov.mb.ca/education/childcare/families/10_dollar_a_day.html . The Child Care Subsidy is a separate income-tested application for eligible families using licensed care (about 12 weeks to 12 years). Effective ${MB_ZERO_FEE_EFFECTIVE_EN}, subsidy-eligible families no longer pay a family contribution or non-subsidized daily fee (effectively $0 parent fees while eligible, within absence rules): https://www.gov.mb.ca/education/childcare/families/childcare_subsidies.html . Estimate first (SEE): https://direct3.gov.mb.ca/daycare/see/see.nsf/see?ReadForm#/en-ca then apply on that province page. KidEase does not process subsidy. Search licensed centres: https://childcaresearch.gov.mb.ca/en`,
+      `In Manitoba there are two layers. $10-a-day at licensed funded centres is usually already on the invoice for regular hours: no extra form: https://www.gov.mb.ca/education/childcare/families/10_dollar_a_day.html . The Child Care Subsidy is a separate income-tested application for eligible families using licensed care (about 12 weeks to 12 years). Effective ${MB_ZERO_FEE_EFFECTIVE_EN}, subsidy-eligible families no longer pay a family contribution or non-subsidized daily fee (effectively $0 parent fees while eligible, within absence rules): https://www.gov.mb.ca/education/childcare/families/childcare_subsidies.html . Estimate first (SEE): https://direct3.gov.mb.ca/daycare/see/see.nsf/see?ReadForm#/en-ca then apply on that province page. KidEase does not process subsidy. Search licensed centres: https://childcaresearch.gov.mb.ca/en`,
   },
   {
     key: "on",
@@ -78,7 +78,7 @@ export const BENEFIT_PROGRAMS: BenefitProgram[] = [
       "https://www.ontario.ca/page/canada-ontario-early-years-and-child-care-agreement",
     ],
     reply:
-      "Ontario has two different helps. CWELCC reduced fees are billed by participating licensed centres for children under 6 — as of 2025 many centres cap around $22/day and are still working toward a $10 average; confirm with the centre. Income-tested fee subsidy is separate and run by your city/region (CMSM or DSSAB), often with a waitlist. For eligible children in CWELCC-enrolled programs, the province notes the income-tested parent portion can be reduced by about 50%. Find your manager: https://www.ontario.ca/page/service-system-managers-child-care-and-early-years-programs then apply via https://www.ontario.ca/page/child-care-subsidies . KidEase does not process Ontario subsidy. In Toronto, fee subsidy is 416-338-8888 / toronto.ca child care fee subsidy.",
+      "Ontario has two different helps. CWELCC reduced fees are billed by participating licensed centres for children under 6: as of 2025 many centres cap around $22/day and are still working toward a $10 average; confirm with the centre. Income-tested fee subsidy is separate and run by your city/region (CMSM or DSSAB), often with a waitlist. For eligible children in CWELCC-enrolled programs, the province notes the income-tested parent portion can be reduced by about 50%. Find your manager: https://www.ontario.ca/page/service-system-managers-child-care-and-early-years-programs then apply via https://www.ontario.ca/page/child-care-subsidies . KidEase does not process Ontario subsidy. In Toronto, fee subsidy is 416-338-8888 / toronto.ca child care fee subsidy.",
   },
   {
     key: "bc",
@@ -91,7 +91,7 @@ export const BENEFIT_PROGRAMS: BenefitProgram[] = [
       "https://www2.gov.bc.ca/gov/content/family-social-supports/caring-for-young-children/childcarebc-programs/10-a-day-childcarebc-centres",
     ],
     reply:
-      "BC’s Affordable Child Care Benefit is a monthly payment based on income, family size, and type of care. Renew each year. Apply or check status in My Family Services: https://myfamilyservices.gov.bc.ca/ — estimator: https://myfamilyservices.gov.bc.ca/s/estimator — program: https://www.gov.bc.ca/affordablechildcarebenefit . KidEase does not publish a dollar table. Some centres are also $10-a-Day ChildCareBC sites (different list): https://www2.gov.bc.ca/gov/content/family-social-supports/caring-for-young-children/childcarebc-programs/10-a-day-childcarebc-centres . KidEase does not process ACCB. Phone Child Care Service Centre 1-888-338-6622.",
+      "BC’s Affordable Child Care Benefit is a monthly payment based on income, family size, and type of care. Renew each year. Apply or check status in My Family Services: https://myfamilyservices.gov.bc.ca/: estimator: https://myfamilyservices.gov.bc.ca/s/estimator: program: https://www.gov.bc.ca/affordablechildcarebenefit . KidEase does not publish a dollar table. Some centres are also $10-a-Day ChildCareBC sites (different list): https://www2.gov.bc.ca/gov/content/family-social-supports/caring-for-young-children/childcarebc-programs/10-a-day-childcarebc-centres . KidEase does not process ACCB. Phone Child Care Service Centre 1-888-338-6622.",
   },
   {
     key: "ab",
@@ -105,7 +105,7 @@ export const BENEFIT_PROGRAMS: BenefitProgram[] = [
       "https://www.childcaresubsidy.gov.ab.ca/ccs/ccs_public.nsf/Estimator?OpenForm",
     ],
     reply:
-      `Alberta: licensed daycare/family day homes in the Affordability Grant charge a set parent fee of about $15/day (about ${moneyEn(AB_AFFORDABILITY_FT_MONTH, 2)}/month full-time, $230 part-time) for children up to kindergarten — that is billed by the centre, not a KidEase discount. Details: https://www.alberta.ca/childcare-fees . The Child Care Subsidy is a separate income-tested program, mainly for full-time kindergarten to grade 6 licensed care: facility kindergarten from about ${moneyEn(AB_K_FACILITY_MAX_UNDER_50K)}/month under $50,000 down toward about ${moneyEn(AB_K_FACILITY_NEAR_90K)} near $85,000–$90,000; school-age amounts are lower. Optional extended-hours subsidy about ${moneyEn(AB_EXTENDED_HOURS)}/month when eligible. Estimator: https://www.childcaresubsidy.gov.ab.ca/ccs/ccs_public.nsf/Estimator?OpenForm apply: https://applychildcaresubsidy.alberta.ca/ info: https://www.alberta.ca/child-care-subsidy . KidEase does not process Alberta applications.`,
+      `Alberta: licensed daycare/family day homes in the Affordability Grant charge a set parent fee of about $15/day (about ${moneyEn(AB_AFFORDABILITY_FT_MONTH, 2)}/month full-time, $230 part-time) for children up to kindergarten: that is billed by the centre, not a KidEase discount. Details: https://www.alberta.ca/childcare-fees . The Child Care Subsidy is a separate income-tested program, mainly for full-time kindergarten to grade 6 licensed care: facility kindergarten from about ${moneyEn(AB_K_FACILITY_MAX_UNDER_50K)}/month under $50,000 down toward about ${moneyEn(AB_K_FACILITY_NEAR_90K)} near $85,000–$90,000; school-age amounts are lower. Optional extended-hours subsidy about ${moneyEn(AB_EXTENDED_HOURS)}/month when eligible. Estimator: https://www.childcaresubsidy.gov.ab.ca/ccs/ccs_public.nsf/Estimator?OpenForm apply: https://applychildcaresubsidy.alberta.ca/ info: https://www.alberta.ca/child-care-subsidy . KidEase does not process Alberta applications.`,
   },
   {
     key: "qc",
@@ -114,7 +114,7 @@ export const BENEFIT_PROGRAMS: BenefitProgram[] = [
     href: "https://www.revenuquebec.ca/en/citizens/tax-credits/tax-credit-for-childcare-expenses/",
     extra: ["https://www.mfa.gouv.qc.ca/en/services-de-garde/Parents/Pages/default.aspx"],
     reply:
-      "Québec is not the same $10-a-day CWELCC schedule. Reduced-contribution spaces (CPE / subsidized garderie) bill a set daily parent contribution — ask the centre if the space is reduced-contribution. Unsubsidized spaces use the refundable tax credit for childcare expenses through Revenu Québec: https://www.revenuquebec.ca/en/citizens/tax-credits/tax-credit-for-childcare-expenses/ . Parent info: https://www.mfa.gouv.qc.ca/en/services-de-garde/Parents/Pages/default.aspx . KidEase does not assign CPE spaces or file the tax credit.",
+      "Québec is not the same $10-a-day CWELCC schedule. Reduced-contribution spaces (CPE / subsidized garderie) bill a set daily parent contribution: ask the centre if the space is reduced-contribution. Unsubsidized spaces use the refundable tax credit for childcare expenses through Revenu Québec: https://www.revenuquebec.ca/en/citizens/tax-credits/tax-credit-for-childcare-expenses/ . Parent info: https://www.mfa.gouv.qc.ca/en/services-de-garde/Parents/Pages/default.aspx . KidEase does not assign CPE spaces or file the tax credit.",
   },
   {
     key: "sk",
@@ -123,7 +123,7 @@ export const BENEFIT_PROGRAMS: BenefitProgram[] = [
     href: "https://www.saskatchewan.ca/residents/family-and-social-support/child-care",
     extra: [],
     reply:
-      "Saskatchewan regulated child care for children under 6 is in the $10-a-day system at participating licensed centres — the reduced fee is typically on the centre’s invoice. Extra help for lower-income families may be available through provincial income supports such as the Saskatchewan Employment Incentive. Start here: https://www.saskatchewan.ca/residents/family-and-social-support/child-care . KidEase does not process those applications.",
+      "Saskatchewan regulated child care for children under 6 is in the $10-a-day system at participating licensed centres: the reduced fee is typically on the centre’s invoice. Extra help for lower-income families may be available through provincial income supports such as the Saskatchewan Employment Incentive. Start here: https://www.saskatchewan.ca/residents/family-and-social-support/child-care . KidEase does not process those applications.",
   },
   {
     key: "ns",
@@ -132,7 +132,7 @@ export const BENEFIT_PROGRAMS: BenefitProgram[] = [
     href: "https://childcarenovascotia.ca/families/child-care-subsidy",
     extra: ["https://childcare-subsidy.novascotia.ca"],
     reply:
-      "Nova Scotia has reduced parent fees at participating licensed centres plus a separate Child Care Subsidy for eligible families (children 12 and under in licensed / approved care; income is assessed, currently described as under $70,000 on the province site). Apply online: https://childcare-subsidy.novascotia.ca — program: https://childcarenovascotia.ca/families/child-care-subsidy — intake 1-844-804-2084. Subsidy is paid to the provider. KidEase does not process NS subsidy.",
+      "Nova Scotia has reduced parent fees at participating licensed centres plus a separate Child Care Subsidy for eligible families (children 12 and under in licensed / approved care; income is assessed, currently described as under $70,000 on the province site). Apply online: https://childcare-subsidy.novascotia.ca: program: https://childcarenovascotia.ca/families/child-care-subsidy: intake 1-844-804-2084. Subsidy is paid to the provider. KidEase does not process NS subsidy.",
   },
   {
     key: "nb",
@@ -141,7 +141,7 @@ export const BENEFIT_PROGRAMS: BenefitProgram[] = [
     href: "https://www2.gnb.ca/content/gnb/en/corporate/promo/investing-in-early-learning-and-child-care/information-for-families/guide.html",
     extra: ["https://www.nbed.nb.ca/parentportal/en/", "https://www.nbed.nb.ca/parentportal/en/FinancialAssistance/"],
     reply:
-      "New Brunswick Parent Subsidy is for preschool children (0–5, not yet in school) in a designated early learning and childcare facility. It is income-tested (province describes help up to about $80,000 household income, and free care at or under $37,500 at a designated facility). Apply in the Parent Portal: https://www.nbed.nb.ca/parentportal/en/FinancialAssistance/ — guide: https://www2.gnb.ca/content/gnb/en/corporate/promo/investing-in-early-learning-and-child-care/information-for-families/guide.html — phone 1-833-221-9339. KidEase does not process NB subsidy.",
+      "New Brunswick Parent Subsidy is for preschool children (0–5, not yet in school) in a designated early learning and childcare facility. It is income-tested (province describes help up to about $80,000 household income, and free care at or under $37,500 at a designated facility). Apply in the Parent Portal: https://www.nbed.nb.ca/parentportal/en/FinancialAssistance/: guide: https://www2.gnb.ca/content/gnb/en/corporate/promo/investing-in-early-learning-and-child-care/information-for-families/guide.html: phone 1-833-221-9339. KidEase does not process NB subsidy.",
   },
   {
     key: "pe",
@@ -150,7 +150,7 @@ export const BENEFIT_PROGRAMS: BenefitProgram[] = [
     href: "https://www.princeedwardisland.ca/en/information/social-development-and-seniors/help-for-child-care-expenses",
     extra: ["https://peichildcareregistry.com/calculator.php"],
     reply:
-      "PEI has $10-a-day regulated child care at participating licensed centres, plus a Child Care Subsidy for eligible families. Estimate with the registry calculator: https://peichildcareregistry.com/calculator.php — province page: https://www.princeedwardisland.ca/en/information/social-development-and-seniors/help-for-child-care-expenses . KidEase does not process PEI subsidy.",
+      "PEI has $10-a-day regulated child care at participating licensed centres, plus a Child Care Subsidy for eligible families. Estimate with the registry calculator: https://peichildcareregistry.com/calculator.php: province page: https://www.princeedwardisland.ca/en/information/social-development-and-seniors/help-for-child-care-expenses . KidEase does not process PEI subsidy.",
   },
   {
     key: "nl",
@@ -159,7 +159,7 @@ export const BENEFIT_PROGRAMS: BenefitProgram[] = [
     href: "https://www.gov.nl.ca/education/childcare/childcaresubsidy/",
     extra: ["https://www.gov.nl.ca/education/childcare/"],
     reply:
-      "Newfoundland and Labrador has $10-a-day regulated child care at participating licensed centres and a separate Child Care Subsidy for eligible families. Apply / read the subsidy program: https://www.gov.nl.ca/education/childcare/childcaresubsidy/ — childcare home: https://www.gov.nl.ca/education/childcare/ . KidEase does not process NL applications.",
+      "Newfoundland and Labrador has $10-a-day regulated child care at participating licensed centres and a separate Child Care Subsidy for eligible families. Apply / read the subsidy program: https://www.gov.nl.ca/education/childcare/childcaresubsidy/: childcare home: https://www.gov.nl.ca/education/childcare/ . KidEase does not process NL applications.",
   },
   {
     key: "yt",
@@ -168,7 +168,7 @@ export const BENEFIT_PROGRAMS: BenefitProgram[] = [
     href: "https://yukon.ca/en/universal-child-care",
     extra: ["https://yukon.ca/en/education-and-schools/early-childhood-learning-and-programs/apply-child-care-subsidy"],
     reply:
-      "Yukon universal child care lowers licensed-space fees automatically (no form for the universal reduction). Lower-income families can also apply for the Yukon child care subsidy on top: https://yukon.ca/en/education-and-schools/early-childhood-learning-and-programs/apply-child-care-subsidy — universal program: https://yukon.ca/en/universal-child-care . KidEase does not process Yukon subsidy.",
+      "Yukon universal child care lowers licensed-space fees automatically (no form for the universal reduction). Lower-income families can also apply for the Yukon child care subsidy on top: https://yukon.ca/en/education-and-schools/early-childhood-learning-and-programs/apply-child-care-subsidy: universal program: https://yukon.ca/en/universal-child-care . KidEase does not process Yukon subsidy.",
   },
   {
     key: "nt",
@@ -177,7 +177,7 @@ export const BENEFIT_PROGRAMS: BenefitProgram[] = [
     href: "https://www.ece.gov.nt.ca/en/average-10-day-child-care",
     extra: ["https://www.ece.gov.nt.ca/en/services/early-learning-and-child-care"],
     reply:
-      "Northwest Territories has a Child Care Fee Reduction (average about $10 a day) at participating licensed programs. Extra help may be available through Income Assistance. Start: https://www.ece.gov.nt.ca/en/average-10-day-child-care — ELCC: https://www.ece.gov.nt.ca/en/services/early-learning-and-child-care . KidEase does not process NWT applications.",
+      "Northwest Territories has a Child Care Fee Reduction (average about $10 a day) at participating licensed programs. Extra help may be available through Income Assistance. Start: https://www.ece.gov.nt.ca/en/average-10-day-child-care: ELCC: https://www.ece.gov.nt.ca/en/services/early-learning-and-child-care . KidEase does not process NWT applications.",
   },
   {
     key: "nu",
@@ -186,7 +186,7 @@ export const BENEFIT_PROGRAMS: BenefitProgram[] = [
     href: "https://www.gov.nu.ca/en/education-and-schools/10_day-child-care",
     extra: ["https://www.gov.nu.ca/en/education-and-schools/early-learning-and-child-care"],
     reply:
-      "Nunavut has $10-a-day regulated child care at participating licensed programs, plus a Daycare Subsidy for eligible families. Official: https://www.gov.nu.ca/en/education-and-schools/10_day-child-care — ELCC: https://www.gov.nu.ca/en/education-and-schools/early-learning-and-child-care . KidEase does not process Nunavut subsidy.",
+      "Nunavut has $10-a-day regulated child care at participating licensed programs, plus a Daycare Subsidy for eligible families. Official: https://www.gov.nu.ca/en/education-and-schools/10_day-child-care: ELCC: https://www.gov.nu.ca/en/education-and-schools/early-learning-and-child-care . KidEase does not process Nunavut subsidy.",
   },
 ];
 
@@ -196,8 +196,8 @@ KidEase page that lists every back-link: https://www.kidease.ca/benefits
 KidEase NEVER processes subsidy, CWELCC, CCB, tax credits, or $10-a-day enrolment. We only list licensed centres and point parents to government sites.
 
 Two layers parents mix up:
-1) Reduced parent fee / $10-a-day / CWELCC / affordability grant — usually applied automatically at a PARTICIPATING licensed centre. No KidEase form. Not every licensed centre is in. Confirm with the centre.
-2) Income-tested fee subsidy — a separate provincial/territorial application. Can often stack on top of the reduced fee. Apply on the government site.
+1) Reduced parent fee / $10-a-day / CWELCC / affordability grant: usually applied automatically at a PARTICIPATING licensed centre. No KidEase form. Not every licensed centre is in. Confirm with the centre.
+2) Income-tested fee subsidy: a separate provincial/territorial application. Can often stack on top of the reduced fee. Apply on the government site.
 
 Federal
 - Canada Child Benefit (CCB): monthly tax-free CRA payment based on income and children. Not a daycare discount. ${CCB.periodEn} (2025 AFNI): max ~${moneyEn(CCB.maxUnder6Year)}/year (${moneyEn(CCB.maxUnder6Month, 2)}/mo) under 6; ~${moneyEn(CCB.max6to17Year)}/year (${moneyEn(CCB.max6to17Month, 2)}/mo) ages 6–17. Full amount if AFNI under ~${moneyEn(CCB.fullAfni)}. How much: ${CCB.howMuchEn} Overview: ${CCB.overviewEn}

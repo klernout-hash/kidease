@@ -1,5 +1,5 @@
 /**
- * Daycare-provider screening — first slice (MB-first, Canada stubs).
+ * Daycare-provider screening: first slice (MB-first, Canada stubs).
  *
  * Honesty rules (same as src/lib/trust.ts):
  * - KidEase stores and reviews documents. It does not issue Vulnerable Sector
@@ -88,7 +88,7 @@ export type ScreeningRequirement = {
 };
 
 const MB_VSC_NOTE =
-  "Criminal Record Check with Vulnerable Sector Search. Issued only by local police or RCMP — KidEase cannot run or stamp this check. Required at 18+.";
+  "Criminal Record Check with Vulnerable Sector Search. Issued only by local police or RCMP: KidEase cannot run or stamp this check. Required at 18+.";
 const MB_CAR_NOTE =
   "Manitoba Child Abuse Registry Check. KidEase records the certificate; it does not search the registry itself.";
 const MB_PRIOR_NOTE =

@@ -18,7 +18,7 @@ export async function sendClaimCodeEmail(input: { to: string; code: string; cent
     <tr><td style="padding:28px;">
       <p style="margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#5c6578;">KidEase</p>
       <h1 style="margin:12px 0 0;font-size:28px;letter-spacing:.12em;">${input.code}</h1>
-      <p style="margin:16px 0 0;color:#5c6578;">Enter this code to confirm you manage ${centre}. Email only — we do not text claim codes.</p>
+      <p style="margin:16px 0 0;color:#5c6578;">Enter this code to confirm you manage ${centre}. Email only: we do not text claim codes.</p>
     </td></tr>
   </table>
 </body></html>`;

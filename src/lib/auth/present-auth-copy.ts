@@ -36,11 +36,11 @@ const EXACT: Array<[string, CopyKey]> = [
   ["No KidEase account uses that email. Create one, or try Apple / Google / Facebook.", "authMissingAccount"],
   ["Could not start social sign-in. Use email, or try again.", "authSocialFailedGeneric"],
   ["Too many tries. Try again in 1 min.", "authTooManyMinOne"],
-  ["This sign-in page needs a refresh — try again, or use email.", "authRefresh"],
+  ["This sign-in page needs a refresh: try again, or use email.", "authRefresh"],
   ["Signed in, but the session could not be saved. Refresh and try again.", "authSessionSave"],
   ["An account with that email already exists. Sign in instead.", "authExists"],
   ["That sign-in method did not share an email. Try Google or email instead.", "authEmailMissing"],
-  ["Pop-up blocked — allow pop-ups for KidEase, then try again.", "authPopup"],
+  ["Pop-up blocked: allow pop-ups for KidEase, then try again.", "authPopup"],
   ["That sign-in method is not configured on this host. Use email or Google.", "authProviderMissing"],
   ["Email is not configured (missing RESEND_API_KEY or SENDGRID_API_KEY).", "authMailMissing"],
   ["Sign-in failed", "signInFailed"],
@@ -79,7 +79,7 @@ export function presentAuthCopy(locale: string, message: string | null | undefin
   const sec = text.match(/^Too many tries\. Try again in (\d+)s\.$/);
   if (sec) return tx("fr", "authTooManySec").replace("{n}", sec[1]);
   const oauth = text.match(
-    /^This email is registered with Apple, Google, or Facebook( \([^)]+\))? — use that button, or set a password from Forgot password\.$/,
+    /^This email is registered with Apple, Google, or Facebook( \([^)]+\))?: use that button, or set a password from Forgot password\.$/,
   );
   if (oauth) return tx("fr", "authOauthOnly").replace("{via}", oauth[1] || "");
   const social = text.match(/^Could not start (.+) sign-in\. Use email, or try again\.$/);

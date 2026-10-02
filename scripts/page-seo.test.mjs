@@ -86,7 +86,8 @@ test("Organization and SoftwareApplication stay honest", () => {
   assert.equal(org.name, "KidEase");
   assert.equal(org.url, "https://www.kidease.ca/");
   assert.equal(org.email, "support@kidease.ca");
-  assert.equal(org.address.addressLocality, "Winnipeg");
+  assert.equal(org.address.addressCountry, "CA");
+  assert.equal("addressLocality" in org.address, false);
   assert.equal("aggregateRating" in org, false);
   const app = softwareApplicationJsonLd();
   assert.equal(app.offers.price, "0");

@@ -1,5 +1,5 @@
 /**
- * Support desk — client-safe types, gates, macros, refund policy.
+ * Support desk: client-safe types, gates, macros, refund policy.
  * Server functions live in src/lib/server/support.ts (createServerFn).
  * Do not import *.server.* from here.
  */
@@ -42,7 +42,7 @@ export const SUPPORT_INBOX_EMAIL = "support@kidease.ca";
 /** Default agent live-refund cap when SUPPORT_REFUND_MAX_CENTS is unset ($100 CAD). */
 export const DEFAULT_SUPPORT_REFUND_MAX_CENTS = 10_000;
 
-export const REFUND_REHEARSED_COPY = "Refund rehearsed — Stripe not live";
+export const REFUND_REHEARSED_COPY = "Refund rehearsed: Stripe not live";
 
 export type SupportCase = {
   id: string;
@@ -187,7 +187,7 @@ export type RefundPath = "live" | "rehearse" | "blocked";
 
 /**
  * Pure refund decision. Live Stripe calls happen only after this returns "live".
- * Rehearse never writes invoice/payment paid or refunded — case event only.
+ * Rehearse never writes invoice/payment paid or refunded: case event only.
  */
 export function decideSupportRefund(input: {
   stripeLive: boolean;
@@ -208,7 +208,7 @@ export function decideSupportRefund(input: {
     return { path: "rehearse", reason: REFUND_REHEARSED_COPY };
   }
   if (!String(input.paymentId || "").trim()) {
-    return { path: "blocked", reason: "No Stripe payment id on this bill — cannot refund live." };
+    return { path: "blocked", reason: "No Stripe payment id on this bill: cannot refund live." };
   }
   return { path: "live", reason: "Stripe refunds API" };
 }
@@ -234,12 +234,12 @@ export type SupportMacro = {
   body: string;
 };
 
-/** Canned notes — not a Zendesk clone. */
+/** Canned notes: not a Zendesk clone. */
 export const SUPPORT_MACROS: SupportMacro[] = [
   {
     id: "refund_policy",
     label: "Refund policy",
-    body: "KidEase refunds parent bills only after the centre and our money ledger agree. Live Stripe refunds go through the case money drawer (support lead / admin above the agent cap). The bill status updates when Stripe sends charge.refunded — we do not mark Paid or Refunded by hand.",
+    body: "KidEase refunds parent bills only after the centre and our money ledger agree. Live Stripe refunds go through the case money drawer (support lead / admin above the agent cap). The bill status updates when Stripe sends charge.refunded: we do not mark Paid or Refunded by hand.",
   },
   {
     id: "claim_help",
@@ -249,7 +249,7 @@ export const SUPPORT_MACROS: SupportMacro[] = [
   {
     id: "vacancy_update",
     label: "How to update vacancy",
-    body: "On the centre desk, open My listings and confirm today’s open spots. After two weeks without a confirm, parents see “Ask about current spots” — not a made-up vacancy. KidEase does not invent open spots.",
+    body: "On the centre desk, open My listings and confirm today’s open spots. After two weeks without a confirm, parents see “Ask about current spots”: not a made-up vacancy. KidEase does not invent open spots.",
   },
   {
     id: "parent_plus",

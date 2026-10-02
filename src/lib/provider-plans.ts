@@ -18,10 +18,10 @@ export type ProviderAddonId = (typeof PROVIDER_ADDON_IDS)[number];
 export const PROVIDER_CHECKOUT_LIVE = true;
 
 export const PROVIDER_SUBSCRIPTION_GHOST_MESSAGE =
-  "Admin preview — this is what centre directors will see. Providers without admin cannot open this tab.";
+  "Admin preview: this is what centre directors will see. Providers without admin cannot open this tab.";
 
 export const PROVIDER_CHECKOUT_STUB_MESSAGE =
-  "Coming soon — checkout next. Subscribe saves the pick on this profile. No card is charged.";
+  "Coming soon: checkout next. Subscribe saves the pick on this profile. No card is charged.";
 
 export const PROVIDER_CHECKOUT_REHEARSAL_MESSAGE =
   "Card payments are not live yet. Subscribe saves the pick on this profile. No card is charged until Stripe live keys and price IDs are set.";

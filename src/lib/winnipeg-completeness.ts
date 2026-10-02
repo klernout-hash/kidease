@@ -202,7 +202,7 @@ function csvCell(value: string | number | null | undefined): string {
   return text;
 }
 
-/** Outreach CSV. Fill columns stay blank — the catalogue fee guess is not copied. */
+/** Outreach CSV. Fill columns stay blank: the catalogue fee guess is not copied. */
 export function winnipegGapsCsv(rows: readonly CompletenessInput[]): string {
   const visible = rows.filter((row) => isSearchVisibleListing(row) && isWinnipegOutreachCity(row.city));
   const ranked = [...visible].sort((a, b) => {
@@ -449,7 +449,7 @@ export function planCompletenessFill(current: CompletenessInput, patch: FillPatc
       return { id, action: "reject", reason: "Age range must be 0–216 months with max greater than min" };
     }
     if (hasConfirmedAges(current)) {
-      plan.reason = "Ages already confirmed — left unchanged";
+      plan.reason = "Ages already confirmed: left unchanged";
     } else {
       plan.setAges = { min, max };
     }

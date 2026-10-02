@@ -162,7 +162,7 @@ export function packDocumentBody(kind: PackKind, input: CentreFields) {
 
 export function packEmailSubject(kind: PackKind, centreName: string) {
   const title = packTitle(kind, "en");
-  return `Please sign: ${title} — ${centreName}`;
+  return `Please sign: ${title}: ${centreName}`;
 }
 
 export function packEmailBlurb(kind: PackKind) {

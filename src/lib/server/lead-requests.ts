@@ -427,10 +427,10 @@ export const updateLeadRequest = createServerFn({ method: "POST" })
       name: parent.name,
       subject:
         next === "confirmed"
-          ? `Request confirmed — ${lead.daycare_name}`
+          ? `Request confirmed: ${lead.daycare_name}`
           : next === "declined"
-            ? `Request update — ${lead.daycare_name}`
-            : `Request answered — ${lead.daycare_name}`,
+            ? `Request update: ${lead.daycare_name}`
+            : `Request answered: ${lead.daycare_name}`,
       preview,
       threadUrl: `${origin}${PARENT_REQUESTS_HREF}`,
       daycareName: lead.daycare_name,

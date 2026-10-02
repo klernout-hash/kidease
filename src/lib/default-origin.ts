@@ -4,7 +4,7 @@ import { CITIES, PROVINCES, WINNIPEG, haversineKm, type LatLng } from "./geo.ts"
 /**
  * Default Explore / search center.
  *
- * KidEase is a Canada-wide proximity product founded in Winnipeg. Anonymous
+ * KidEase is a Canadian company and a Canada-wide proximity product. Anonymous
  * first paint must not silently become Toronto because a CDN, Vercel/CF IP
  * header, CF colo (YYZ), Vercel iad mis-map, IP-based “GPS”, or an old
  * default that was persisted to localStorage.

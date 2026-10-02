@@ -101,7 +101,7 @@ export type SaveSearchInput = {
 
 function validateSaveInput(input: SaveSearchInput) {
   if (!isValidSearchOrigin(input.centerLat, input.centerLng)) {
-    throw new Error("Save a real search origin — KidEase does not invent a location.");
+    throw new Error("Save a real search origin: KidEase does not invent a location.");
   }
   const ageBand: AgeBand = isAgeBand(input.ageBand) ? input.ageBand : "any";
   const radiusKm = clampRadiusKm(input.radiusKm);
