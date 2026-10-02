@@ -17,6 +17,8 @@ test("Winnipeg matches neighbourhood cities saved on a listing", () => {
   assert.equal(claimCityScore("Winnipeg", "St. Vital"), 55);
   assert.equal(claimCityScore("Winnipeg", "Winnipeg"), 60);
   assert.equal(claimCityScore("Winnipeg", "Brandon"), 0);
+  assert.equal(claimCityScore("Winnipeg", "Winnipeg Beach"), 0);
+  assert.equal(claimCityScore("Winnipeg", "Winnipegosis"), 0);
 });
 
 test("claim page leads with Find your centre", () => {
