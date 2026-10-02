@@ -113,10 +113,11 @@ What the merge does:
   street folds into that street row. Two real streets that share a licence stay
   separate. A shared name is not enough.
 
-Deploy this change before the Production seed. The listing sitemap keeps the
-bundled slug file and unions public Neon slugs, so the new rows show up on
-www after the seed without committing the CSV. Ghost / TEST fixtures stay off
-the public sitemap.
+Deploy this change before the Production seed. When Neon answers with public
+rows, the listing sitemap is that set only (the same visibility rule as search).
+The bundled slug file is the fallback when Neon is empty or unreachable.
+Ghost / TEST fixtures, hidden duplicates, declined rows, and US catalogue rows
+stay off the public sitemap.
 
 ## QA / ghost fixtures
 

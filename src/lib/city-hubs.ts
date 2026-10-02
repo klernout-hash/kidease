@@ -4,7 +4,7 @@
  * Relative .ts imports so Node tests can load this file.
  */
 
-import { isAdminOnlyListing } from "./listing-visibility.ts";
+import { isPublicListing } from "./listing-visibility.ts";
 import { normalizeListingSlug } from "./listing-slug.ts";
 import { isSafeSitemapSlug, SITEMAP_ORIGIN } from "./sitemap.ts";
 
@@ -170,6 +170,11 @@ type HubSourceRow = {
   id?: string | null;
   licenseNumber?: string | null;
   address?: string | null;
+  mergedInto?: string | null;
+  importFault?: string | null;
+  listingActive?: boolean | number | string | null;
+  claimStatus?: string | null;
+  factSource?: string | null;
 };
 
 function stripAccents(value: string) {
@@ -257,7 +262,7 @@ export function buildCityHubSnapshots(
 
   const seen = new Set<string>();
   for (const row of rows) {
-    if (isAdminOnlyListing(row)) continue;
+    if (!isPublicListing(row)) continue;
     const slug = normalizeListingSlug((row.slug || "").trim());
     if (!isSafeSitemapSlug(slug)) continue;
     const def = cityHubDefForPlace(row.city, row.province);

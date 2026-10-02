@@ -32,6 +32,8 @@ export type DirectoryRow = {
   mergedInto?: string | null;
   importFault?: string | null;
   listingActive?: boolean | number | string | null;
+  claimStatus?: string | null;
+  factSource?: string | null;
 };
 
 export type DirectoryCounts = {
