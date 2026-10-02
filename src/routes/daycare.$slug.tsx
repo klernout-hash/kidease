@@ -371,6 +371,15 @@ export function Listing() {
                   <p className="mt-2 text-sm text-muted">{earlyAddress}</p>
                 </section>
               ) : null}
+              <div className="space-y-3" aria-hidden="true">
+                <div className="flex flex-wrap gap-2">
+                  <div className="ke-skel h-8 w-28 rounded-full" />
+                  <div className="ke-skel h-8 w-24 rounded-full" />
+                  <div className="ke-skel h-8 w-32 rounded-full" />
+                </div>
+                <div className="ke-skel h-28 w-full rounded-xl" />
+                <div className="ke-skel aspect-[16/9] w-full max-h-64 rounded-xl" />
+              </div>
             </div>
           </div>
         </main>
