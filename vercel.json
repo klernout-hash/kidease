@@ -40,6 +40,8 @@
     }
   ],
   "redirects": [
+    { "source": "/signup", "destination": "/login?intent=up", "statusCode": 301 },
+    { "source": "/for-daycares", "destination": "/claim", "statusCode": 301 },
     { "source": "/.well-known/change-password", "destination": "/forgot-password", "permanent": false },
     {
       "source": "/admin",
