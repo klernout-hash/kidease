@@ -339,8 +339,11 @@ async function runRoleFixture(page, base) {
     await deleteConfirm.waitFor({ timeout: timeoutMs }).catch(() => {});
     const deleteOnAccount = await deleteConfirm.count();
     await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await page.locator('[data-ke="parent-home"]').waitFor({ timeout: timeoutMs });
+    const deleteLinkLoc = page.locator('[data-ke="desk-desktop-nav"] [data-nav="delete"]');
+    await deleteLinkLoc.waitFor({ state: "attached", timeout: timeoutMs }).catch(() => {});
     const deleteConfirmOnHome = await page.locator('[data-ke="parent-home"] [data-ke="delete-confirm"]').count();
-    const deleteLink = await page.locator('[data-ke="desk-desktop-nav"] [data-nav="delete"]').count();
+    const deleteLink = await deleteLinkLoc.count();
     record("delete-account-on-account", deleteOnAccount > 0 && deleteConfirmOnHome === 0 && deleteLink > 0, {
       note: `account=${deleteOnAccount} confirmOnHome=${deleteConfirmOnHome} link=${deleteLink}`,
     });

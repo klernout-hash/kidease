@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import {
   DAYCARE_PRIMARY_NAV_IDS,
   PARENT_PRIMARY_NAV_IDS,
+  visibleDeskGroups,
   visibleDeskNav,
   visiblePrimaryDeskNav,
   visibleSecondaryDeskNav,
@@ -80,6 +81,8 @@ test("parent phone tabs are Search, Saved, Requests, Messages, Account", () => {
   assert.equal(secondary.includes("payments"), true);
   assert.equal(secondary.includes("upgrade"), true);
   assert.equal(secondary.includes("delete"), true);
+  const accountGroup = visibleDeskGroups("parent", visibleDeskNav("parent")).find((row) => row.group.id === "account");
+  assert.deepEqual(accountGroup?.items.map((item) => item.id), ["profile", "appearance", "upgrade", "delete"]);
   assert.equal(secondary.includes("search"), false);
   assert.equal(secondary.includes("bookings"), false);
   assert.equal(secondary.includes("account"), false);
