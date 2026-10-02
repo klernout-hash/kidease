@@ -265,6 +265,23 @@ export const MARKETING_PAGE_SEO = {
       "Compare licensed centres side by side — hours, fees, and open spots. Save up to three listings, then tour with a checklist.",
     path: "/compare",
   },
+  login: {
+    title: "Sign in or create an account · KidEase",
+    description:
+      "Create a KidEase account or sign in to save licensed centres, request a tour, and message a daycare. KidEase is a Canadian company.",
+    path: "/login",
+  },
+  forgotPassword: {
+    title: "Reset your password · KidEase",
+    description:
+      "Ask for a reset link if you do not remember your KidEase password. We email the link to the address on your account.",
+    path: "/forgot-password",
+  },
+  resetPassword: {
+    title: "Choose a new password · KidEase",
+    description: "Set a new password for your KidEase account after you open the reset link from your email.",
+    path: "/reset-password",
+  },
   claim: {
     title: "Claim your daycare listing · KidEase",
     description:
