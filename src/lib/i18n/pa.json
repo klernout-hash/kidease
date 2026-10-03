@@ -2703,5 +2703,19 @@
   "claimProgressFees": "ਫੀਸ",
   "claimProgressAges": "ਉਮਰਾਂ",
   "claimProgressSpots": "ਖਾਲੀ ਥਾਵਾਂ",
-  "guestShortlistCarried": "ਸੰਭਾਲੇ ਕੇਂਦਰ ਤੁਹਾਡੇ ਖਾਤੇ ਵਿੱਚ ਹਨ।"
+  "guestShortlistCarried": "ਸੰਭਾਲੇ ਕੇਂਦਰ ਤੁਹਾਡੇ ਖਾਤੇ ਵਿੱਚ ਹਨ।",
+  "vacancyCheckinTitle": "ਇਸ ਹਫ਼ਤੇ ਖੁੱਲ੍ਹੀਆਂ ਥਾਵਾਂ",
+  "vacancyCheckinLead": "ਇੱਕ ਨੰਬਰ ਛੋਹਵੋ। KidEase ਇਸਨੂੰ ਸੰਭਾਲਦਾ ਹੈ ਅਤੇ ਸਮਾਂ ਨੋਟ ਕਰਦਾ ਹੈ। ਤੁਹਾਨੂੰ ਸਾਈਨ ਇਨ ਕਰਨ ਦੀ ਲੋੜ ਨਹੀਂ।",
+  "vacancyCheckinViews": "ਪਿਛਲੇ 7 ਦਿਨਾਂ ਵਿੱਚ ਮਾਪਿਆਂ ਨੇ ਇਹ ਸੂਚੀ {n} ਵਾਰ ਵੇਖੀ।",
+  "vacancyCheckinChoose": "ਤੁਹਾਡੇ ਕੋਲ ਕਿੰਨੀਆਂ ਖੁੱਲ੍ਹੀਆਂ ਥਾਵਾਂ ਹਨ?",
+  "vacancyCheckinZero": "0",
+  "vacancyCheckinOne": "1",
+  "vacancyCheckinTwo": "2",
+  "vacancyCheckinThree": "3+",
+  "vacancyCheckinSaved": "ਸੰਭਾਲਿਆ ਗਿਆ। ਮਾਪੇ ਵੇਖ ਸਕਦੇ ਹਨ ਕਿ ਤੁਸੀਂ ਅੱਜ ਪੁਸ਼ਟੀ ਕੀਤੀ।",
+  "vacancyCheckinZeroNote": "ਉਮਰ ਸਮੂਹਾਂ ਦੀ ਗਿਣਤੀ ਹੁਣ 0 ਹੈ।",
+  "vacancyCheckinKeepNote": "ਉਮਰ ਸਮੂਹਾਂ ਦੀ ਗਿਣਤੀ ਉਹੀ ਰਹਿੰਦੀ ਹੈ ਜੋ ਤੁਸੀਂ ਆਖਰੀ ਵਾਰ ਸੰਭਾਲੀ। ਇਹ ਟੈਪ ਕੁੱਲ ਗਿਣਤੀ ਰੱਖਦਾ ਹੈ।",
+  "vacancyCheckinInvalid": "ਇਹ ਲਿੰਕ ਹੁਣ ਠੀਕ ਨਹੀਂ।",
+  "vacancyCheckinHome": "KidEase ਤੇ ਜਾਓ",
+  "vacancyCheckinContact": "ਸਾਡੇ ਨਾਲ ਸੰਪਰਕ ਕਰੋ"
 }

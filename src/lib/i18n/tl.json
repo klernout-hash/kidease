@@ -2703,5 +2703,19 @@
   "claimProgressFees": "Bayad",
   "claimProgressAges": "Edad",
   "claimProgressSpots": "Bakanteng puwesto",
-  "guestShortlistCarried": "Ang mga na-save na sentro ay nasa iyong account."
+  "guestShortlistCarried": "Ang mga na-save na sentro ay nasa iyong account.",
+  "vacancyCheckinTitle": "Mga bukas na puwesto ngayong linggo",
+  "vacancyCheckinLead": "Pindutin ang isang numero. Sine-save ito ng KidEase at minamarkahan ang oras. Hindi mo kailangang mag-sign in.",
+  "vacancyCheckinViews": "Tiningnan ng mga magulang ang listahang ito nang {n} beses sa nakaraang 7 araw.",
+  "vacancyCheckinChoose": "Ilang bukas na puwesto ang mayroon ka?",
+  "vacancyCheckinZero": "0",
+  "vacancyCheckinOne": "1",
+  "vacancyCheckinTwo": "2",
+  "vacancyCheckinThree": "3+",
+  "vacancyCheckinSaved": "Na-save. Makikita ng mga magulang na kinumpirma mo ngayon.",
+  "vacancyCheckinZeroNote": "Ang bilang ayon sa edad ay 0 na.",
+  "vacancyCheckinKeepNote": "Nananatili ang bilang ayon sa edad sa huli mong sine-save. Itinatala ng tap na ito ang kabuuan.",
+  "vacancyCheckinInvalid": "Hindi na gumagana ang link na ito.",
+  "vacancyCheckinHome": "Pumunta sa KidEase",
+  "vacancyCheckinContact": "Makipag-ugnayan"
 }

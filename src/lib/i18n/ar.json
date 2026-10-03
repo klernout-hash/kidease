@@ -2703,5 +2703,19 @@
   "claimProgressFees": "الرسوم",
   "claimProgressAges": "الأعمار",
   "claimProgressSpots": "الأماكن الشاغرة",
-  "guestShortlistCarried": "الحضانات المحفوظة موجودة في حسابك."
+  "guestShortlistCarried": "الحضانات المحفوظة موجودة في حسابك.",
+  "vacancyCheckinTitle": "الأماكن الشاغرة هذا الأسبوع",
+  "vacancyCheckinLead": "اضغط رقما واحدا. يحفظ KidEase الرقم ويسجل الوقت. لا تحتاج إلى تسجيل الدخول.",
+  "vacancyCheckinViews": "شاهد الأهل هذه الصفحة {n} مرات خلال آخر 7 أيام.",
+  "vacancyCheckinChoose": "كم مكانا شاغرا لديك؟",
+  "vacancyCheckinZero": "0",
+  "vacancyCheckinOne": "1",
+  "vacancyCheckinTwo": "2",
+  "vacancyCheckinThree": "3+",
+  "vacancyCheckinSaved": "تم الحفظ. يمكن للأهل أن يروا أنك أكدت اليوم.",
+  "vacancyCheckinZeroNote": "أعداد الفئات العمرية الآن 0.",
+  "vacancyCheckinKeepNote": "تبقى أعداد الفئات العمرية كما حفظتها. هذا الاختيار يخزن المجموع.",
+  "vacancyCheckinInvalid": "هذا الرابط لم يعد صالحا.",
+  "vacancyCheckinHome": "الذهاب إلى KidEase",
+  "vacancyCheckinContact": "اتصل بنا"
 }

@@ -22,6 +22,8 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_PROVIDER_SUBSCRIPTIONS",
   "SHOW_PAY_CTAS",
   "FEATURE_OPEN_SPOT_ALERTS",
+  "FEATURE_VACANCY_CHECKIN",
+  "FEATURE_VACANCY_CHECKIN_SMS",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -62,6 +64,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_PROVIDER_SUBSCRIPTIONS: true,
   SHOW_PAY_CTAS: false,
   FEATURE_OPEN_SPOT_ALERTS: false,
+  FEATURE_VACANCY_CHECKIN: false,
+  FEATURE_VACANCY_CHECKIN_SMS: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -116,6 +120,18 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Email when a saved search matches a newly posted open spot. Default off. Saving a search still works. Needs CASL.",
+  },
+  {
+    key: "FEATURE_VACANCY_CHECKIN",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Weekly email asking claimed daycares to tap open spots. Default off. Needs CASL.",
+  },
+  {
+    key: "FEATURE_VACANCY_CHECKIN_SMS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "SMS variant of the weekly open-spot check-in. Default off. Toll-free SMS is not approved, so this never sends.",
   },
 ];
 

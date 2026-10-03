@@ -66,6 +66,16 @@ export function openSpotAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_OPEN_SPOT_ALERTS", env);
 }
 
+/** Weekly email asking a claimed daycare to tap open spots. Default off. */
+export function vacancyCheckinEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_VACANCY_CHECKIN", env);
+}
+
+/** SMS variant. Default off. Toll-free SMS is not approved, so send stays a no-op. */
+export function vacancyCheckinSmsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_VACANCY_CHECKIN_SMS", env);
+}
+
 /** Live checkout for KidEase plans. Admin may still open Stripe when chrome is hidden. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (showPayCtas(env)) return true;

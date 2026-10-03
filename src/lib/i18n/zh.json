@@ -2703,5 +2703,19 @@
   "claimProgressFees": "费用",
   "claimProgressAges": "年龄",
   "claimProgressSpots": "空位",
-  "guestShortlistCarried": "已保存的托儿所已在您的账户里。"
+  "guestShortlistCarried": "已保存的托儿所已在您的账户里。",
+  "vacancyCheckinTitle": "本周空位",
+  "vacancyCheckinLead": "点一个数字。KidEase 会保存并记下时间。您不需要登录。",
+  "vacancyCheckinViews": "过去 7 天，家长查看了此名录 {n} 次。",
+  "vacancyCheckinChoose": "您有多少个空位？",
+  "vacancyCheckinZero": "0",
+  "vacancyCheckinOne": "1",
+  "vacancyCheckinTwo": "2",
+  "vacancyCheckinThree": "3+",
+  "vacancyCheckinSaved": "已保存。家长可以看到您今天确认过。",
+  "vacancyCheckinZeroNote": "各年龄组的数量现在是 0。",
+  "vacancyCheckinKeepNote": "各年龄组的数量保持您上次保存的数字。这次只记录总数。",
+  "vacancyCheckinInvalid": "这个链接已失效。",
+  "vacancyCheckinHome": "前往 KidEase",
+  "vacancyCheckinContact": "联系我们"
 }

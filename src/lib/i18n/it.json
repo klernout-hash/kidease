@@ -2703,5 +2703,19 @@
   "claimProgressFees": "Tariffe",
   "claimProgressAges": "Età",
   "claimProgressSpots": "Posti liberi",
-  "guestShortlistCarried": "Gli asili salvati sono sul tuo account."
+  "guestShortlistCarried": "Gli asili salvati sono sul tuo account.",
+  "vacancyCheckinTitle": "Posti liberi questa settimana",
+  "vacancyCheckinLead": "Tocca un numero. KidEase lo salva e segna l'ora. Non devi accedere.",
+  "vacancyCheckinViews": "I genitori hanno visto questa scheda {n} volte negli ultimi 7 giorni.",
+  "vacancyCheckinChoose": "Quanti posti liberi hai?",
+  "vacancyCheckinZero": "0",
+  "vacancyCheckinOne": "1",
+  "vacancyCheckinTwo": "2",
+  "vacancyCheckinThree": "3+",
+  "vacancyCheckinSaved": "Salvato. I genitori possono vedere che hai confermato oggi.",
+  "vacancyCheckinZeroNote": "I conteggi per età ora sono 0.",
+  "vacancyCheckinKeepNote": "I conteggi per età restano come li hai salvati. Questo tocco memorizza il totale.",
+  "vacancyCheckinInvalid": "Questo link non è più valido.",
+  "vacancyCheckinHome": "Vai a KidEase",
+  "vacancyCheckinContact": "Contattaci"
 }

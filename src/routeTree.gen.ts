@@ -77,6 +77,7 @@ import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
 import { Route as ApiSeedCatalogRouteImport } from './routes/api/seed-catalog'
 import { Route as ApiTourHoldsRouteImport } from './routes/api/tour-holds'
 import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
+import { Route as ApiVacancyCheckinRouteImport } from './routes/api/vacancy-checkin'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as CheckinIdRouteImport } from './routes/checkin.$id'
 import { Route as DaycareSlugRouteImport } from './routes/daycare.$slug'
@@ -107,6 +108,7 @@ import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
 import { Route as ProviderSubscriptionRouteImport } from './routes/provider.subscription'
 import { Route as SignIdRouteImport } from './routes/sign.$id'
 import { Route as SupportCaseIdRouteImport } from './routes/support.$caseId'
+import { Route as VacancyCheckinTokenRouteImport } from './routes/vacancy-checkin.$token'
 import { Route as VideoRoomIdRouteImport } from './routes/video.$roomId'
 import { Route as ApiAdminContractsRouteImport } from './routes/api/admin.contracts'
 import { Route as ApiAdminEmailSuppressionsRouteImport } from './routes/api/admin.email-suppressions'
@@ -472,6 +474,11 @@ const ApiUnsubscribeRoute = ApiUnsubscribeRouteImport.update({
   path: '/api/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiVacancyCheckinRoute = ApiVacancyCheckinRouteImport.update({
+  id: '/api/vacancy-checkin',
+  path: '/api/vacancy-checkin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BookSlugRoute = BookSlugRouteImport.update({
   id: '/book/$slug',
   path: '/book/$slug',
@@ -621,6 +628,11 @@ const SupportCaseIdRoute = SupportCaseIdRouteImport.update({
   id: '/$caseId',
   path: '/$caseId',
   getParentRoute: () => SupportRoute,
+} as any)
+const VacancyCheckinTokenRoute = VacancyCheckinTokenRouteImport.update({
+  id: '/vacancy-checkin/$token',
+  path: '/vacancy-checkin/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const VideoRoomIdRoute = VideoRoomIdRouteImport.update({
   id: '/video/$roomId',
@@ -808,6 +820,7 @@ export interface FileRoutesByFullPath {
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
+  '/api/vacancy-checkin': typeof ApiVacancyCheckinRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
@@ -836,6 +849,7 @@ export interface FileRoutesByFullPath {
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/sign/$id': typeof SignIdRoute
   '/support/$caseId': typeof SupportCaseIdRoute
+  '/vacancy-checkin/$token': typeof VacancyCheckinTokenRoute
   '/video/$roomId': typeof VideoRoomIdRoute
   '/fr/': typeof FrIndexRoute
   '/pay/': typeof PayIndexRoute
@@ -929,6 +943,7 @@ export interface FileRoutesByTo {
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
+  '/api/vacancy-checkin': typeof ApiVacancyCheckinRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
@@ -957,6 +972,7 @@ export interface FileRoutesByTo {
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/sign/$id': typeof SignIdRoute
   '/support/$caseId': typeof SupportCaseIdRoute
+  '/vacancy-checkin/$token': typeof VacancyCheckinTokenRoute
   '/video/$roomId': typeof VideoRoomIdRoute
   '/fr': typeof FrIndexRoute
   '/pay': typeof PayIndexRoute
@@ -1053,6 +1069,7 @@ export interface FileRoutesById {
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
+  '/api/vacancy-checkin': typeof ApiVacancyCheckinRoute
   '/book/$slug': typeof BookSlugRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
@@ -1081,6 +1098,7 @@ export interface FileRoutesById {
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/sign/$id': typeof SignIdRoute
   '/support/$caseId': typeof SupportCaseIdRoute
+  '/vacancy-checkin/$token': typeof VacancyCheckinTokenRoute
   '/video/$roomId': typeof VideoRoomIdRoute
   '/fr/': typeof FrIndexRoute
   '/pay/': typeof PayIndexRoute
@@ -1178,6 +1196,7 @@ export interface FileRouteTypes {
     | '/api/seed-catalog'
     | '/api/tour-holds'
     | '/api/unsubscribe'
+    | '/api/vacancy-checkin'
     | '/book/$slug'
     | '/checkin/$id'
     | '/daycare/$slug'
@@ -1206,6 +1225,7 @@ export interface FileRouteTypes {
     | '/provider/subscription'
     | '/sign/$id'
     | '/support/$caseId'
+    | '/vacancy-checkin/$token'
     | '/video/$roomId'
     | '/fr/'
     | '/pay/'
@@ -1299,6 +1319,7 @@ export interface FileRouteTypes {
     | '/api/seed-catalog'
     | '/api/tour-holds'
     | '/api/unsubscribe'
+    | '/api/vacancy-checkin'
     | '/book/$slug'
     | '/checkin/$id'
     | '/daycare/$slug'
@@ -1327,6 +1348,7 @@ export interface FileRouteTypes {
     | '/provider/subscription'
     | '/sign/$id'
     | '/support/$caseId'
+    | '/vacancy-checkin/$token'
     | '/video/$roomId'
     | '/fr'
     | '/pay'
@@ -1422,6 +1444,7 @@ export interface FileRouteTypes {
     | '/api/seed-catalog'
     | '/api/tour-holds'
     | '/api/unsubscribe'
+    | '/api/vacancy-checkin'
     | '/book/$slug'
     | '/checkin/$id'
     | '/daycare/$slug'
@@ -1450,6 +1473,7 @@ export interface FileRouteTypes {
     | '/provider/subscription'
     | '/sign/$id'
     | '/support/$caseId'
+    | '/vacancy-checkin/$token'
     | '/video/$roomId'
     | '/fr/'
     | '/pay/'
@@ -1545,6 +1569,7 @@ export interface RootRouteChildren {
   ApiSeedCatalogRoute: typeof ApiSeedCatalogRoute
   ApiTourHoldsRoute: typeof ApiTourHoldsRoute
   ApiUnsubscribeRoute: typeof ApiUnsubscribeRoute
+  ApiVacancyCheckinRoute: typeof ApiVacancyCheckinRoute
   BookSlugRoute: typeof BookSlugRoute
   CheckinIdRoute: typeof CheckinIdRoute
   DaycareSlugRoute: typeof DaycareSlugRoute
@@ -1553,6 +1578,7 @@ export interface RootRouteChildren {
   JobsPostRoute: typeof JobsPostRoute
   ListingSlugRoute: typeof ListingSlugRoute
   SignIdRoute: typeof SignIdRoute
+  VacancyCheckinTokenRoute: typeof VacancyCheckinTokenRoute
   VideoRoomIdRoute: typeof VideoRoomIdRoute
   ApiAdminContractsRoute: typeof ApiAdminContractsRoute
   ApiAdminEmailSuppressionsRoute: typeof ApiAdminEmailSuppressionsRoute
@@ -2051,6 +2077,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/vacancy-checkin': {
+      id: '/api/vacancy-checkin'
+      path: '/api/vacancy-checkin'
+      fullPath: '/api/vacancy-checkin'
+      preLoaderRoute: typeof ApiVacancyCheckinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/book/$slug': {
       id: '/book/$slug'
       path: '/book/$slug'
@@ -2260,6 +2293,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/support/$caseId'
       preLoaderRoute: typeof SupportCaseIdRouteImport
       parentRoute: typeof SupportRoute
+    }
+    '/vacancy-checkin/$token': {
+      id: '/vacancy-checkin/$token'
+      path: '/vacancy-checkin/$token'
+      fullPath: '/vacancy-checkin/$token'
+      preLoaderRoute: typeof VacancyCheckinTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/video/$roomId': {
       id: '/video/$roomId'
@@ -2611,6 +2651,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSeedCatalogRoute: ApiSeedCatalogRoute,
   ApiTourHoldsRoute: ApiTourHoldsRoute,
   ApiUnsubscribeRoute: ApiUnsubscribeRoute,
+  ApiVacancyCheckinRoute: ApiVacancyCheckinRoute,
   BookSlugRoute: BookSlugRoute,
   CheckinIdRoute: CheckinIdRoute,
   DaycareSlugRoute: DaycareSlugRoute,
@@ -2619,6 +2660,7 @@ const rootRouteChildren: RootRouteChildren = {
   JobsPostRoute: JobsPostRoute,
   ListingSlugRoute: ListingSlugRoute,
   SignIdRoute: SignIdRoute,
+  VacancyCheckinTokenRoute: VacancyCheckinTokenRoute,
   VideoRoomIdRoute: VideoRoomIdRoute,
   ApiAdminContractsRoute: ApiAdminContractsRoute,
   ApiAdminEmailSuppressionsRoute: ApiAdminEmailSuppressionsRoute,

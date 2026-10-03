@@ -2703,5 +2703,19 @@
   "claimProgressFees": "Tarifas",
   "claimProgressAges": "Edades",
   "claimProgressSpots": "Lugares libres",
-  "guestShortlistCarried": "Las guarderías guardadas están en tu cuenta."
+  "guestShortlistCarried": "Las guarderías guardadas están en tu cuenta.",
+  "vacancyCheckinTitle": "Lugares libres esta semana",
+  "vacancyCheckinLead": "Toca un número. KidEase lo guarda y anota la hora. No necesitas iniciar sesión.",
+  "vacancyCheckinViews": "Los padres vieron esta ficha {n} veces en los últimos 7 días.",
+  "vacancyCheckinChoose": "¿Cuántos lugares libres tienes?",
+  "vacancyCheckinZero": "0",
+  "vacancyCheckinOne": "1",
+  "vacancyCheckinTwo": "2",
+  "vacancyCheckinThree": "3+",
+  "vacancyCheckinSaved": "Guardado. Los padres pueden ver que confirmaste hoy.",
+  "vacancyCheckinZeroNote": "Los conteos por edad ahora son 0.",
+  "vacancyCheckinKeepNote": "Los conteos por edad quedan como los guardaste. Este toque guarda el total.",
+  "vacancyCheckinInvalid": "Este enlace ya no sirve.",
+  "vacancyCheckinHome": "Ir a KidEase",
+  "vacancyCheckinContact": "Contáctanos"
 }

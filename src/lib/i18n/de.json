@@ -2703,5 +2703,19 @@
   "claimProgressFees": "Gebühren",
   "claimProgressAges": "Alter",
   "claimProgressSpots": "Freie Plätze",
-  "guestShortlistCarried": "Gespeicherte Kitas sind auf Ihrem Konto."
+  "guestShortlistCarried": "Gespeicherte Kitas sind auf Ihrem Konto.",
+  "vacancyCheckinTitle": "Freie Plätze diese Woche",
+  "vacancyCheckinLead": "Tippen Sie eine Zahl. KidEase speichert sie und notiert die Zeit. Sie müssen sich nicht anmelden.",
+  "vacancyCheckinViews": "Eltern haben diesen Eintrag in den letzten 7 Tagen {n} Mal angesehen.",
+  "vacancyCheckinChoose": "Wie viele freie Plätze haben Sie?",
+  "vacancyCheckinZero": "0",
+  "vacancyCheckinOne": "1",
+  "vacancyCheckinTwo": "2",
+  "vacancyCheckinThree": "3+",
+  "vacancyCheckinSaved": "Gespeichert. Eltern können sehen, dass Sie heute bestätigt haben.",
+  "vacancyCheckinZeroNote": "Die Zahlen nach Altersgruppe sind jetzt 0.",
+  "vacancyCheckinKeepNote": "Die Zahlen nach Altersgruppe bleiben wie zuletzt gespeichert. Dieser Tipp speichert die Summe.",
+  "vacancyCheckinInvalid": "Dieser Link ist nicht mehr gültig.",
+  "vacancyCheckinHome": "Zu KidEase",
+  "vacancyCheckinContact": "Kontakt"
 }

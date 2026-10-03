@@ -295,6 +295,20 @@ export const GROUPS = [
         required: false,
         notes: "Default 0. Email when a saved search matches a newly posted open spot. Needs CASL.",
       },
+      {
+        name: "FEATURE_VACANCY_CHECKIN",
+        concealed: false,
+        vercel: "both",
+        required: false,
+        notes: "Default 0. Weekly email for claimed daycares to tap open spots. Needs CASL.",
+      },
+      {
+        name: "FEATURE_VACANCY_CHECKIN_SMS",
+        concealed: false,
+        vercel: "both",
+        required: false,
+        notes: "Default 0. SMS variant. Toll-free SMS is not approved, so this never sends.",
+      },
     ],
   },
   {

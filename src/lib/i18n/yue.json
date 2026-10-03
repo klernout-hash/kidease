@@ -2703,5 +2703,19 @@
   "claimProgressFees": "收費",
   "claimProgressAges": "年齡",
   "claimProgressSpots": "空位",
-  "guestShortlistCarried": "已儲存嘅托兒所已喺你嘅帳戶。"
+  "guestShortlistCarried": "已儲存嘅托兒所已喺你嘅帳戶。",
+  "vacancyCheckinTitle": "今個星期嘅空位",
+  "vacancyCheckinLead": "撳一個數字。KidEase 會儲存並記下時間。你唔使登入。",
+  "vacancyCheckinViews": "過去 7 日，家長睇過呢個名單 {n} 次。",
+  "vacancyCheckinChoose": "你有幾多個空位？",
+  "vacancyCheckinZero": "0",
+  "vacancyCheckinOne": "1",
+  "vacancyCheckinTwo": "2",
+  "vacancyCheckinThree": "3+",
+  "vacancyCheckinSaved": "已儲存。家長可以見到你今日確認過。",
+  "vacancyCheckinZeroNote": "各年齡組嘅數量而家係 0。",
+  "vacancyCheckinKeepNote": "各年齡組嘅數量保持你上次儲存嘅數字。今次只記錄總數。",
+  "vacancyCheckinInvalid": "呢條連結已經失效。",
+  "vacancyCheckinHome": "前往 KidEase",
+  "vacancyCheckinContact": "聯絡我哋"
 }
