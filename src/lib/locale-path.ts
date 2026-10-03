@@ -37,6 +37,20 @@ export const LOCALE_PAIRED_PATHS = [
   "/jobs/post",
   "/start-a-daycare",
   "/need-care-fast",
+  "/guides",
+  "/guides/bc",
+  "/guides/ab",
+  "/guides/sk",
+  "/guides/mb",
+  "/guides/on",
+  "/guides/qc",
+  "/guides/nb",
+  "/guides/ns",
+  "/guides/pe",
+  "/guides/nl",
+  "/guides/yt",
+  "/guides/nt",
+  "/guides/nu",
 ] as const;
 
 export type LocalePairedPath = (typeof LOCALE_PAIRED_PATHS)[number];
