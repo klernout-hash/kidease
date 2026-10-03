@@ -70,6 +70,7 @@ export type CatalogDaycare = {
   /** From Neon claimed_at. JSON catalogue rows stay unclaimed — never invented. */
   claimed?: boolean;
   claimedAt?: string | null;
+  foundingMember?: boolean;
   claimStatus?: string | null;
   staffScreeningAttested?: boolean;
   screeningOnFile?: boolean;

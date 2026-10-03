@@ -15,7 +15,7 @@ import { canAccessSupport } from "@/lib/support";
 import { stripeChargesLive } from "@/lib/stripe-live";
 import { paymentSourceLabel } from "@/lib/payment-source";
 import { reportError } from "@/lib/observe";
-import { canSeeProviderSubscriptions, showPayCtas } from "@/lib/features";
+import { canSeeProviderSubscriptions, showPayCtas, subscriptionsEnabled } from "@/lib/features";
 import {
   bootstrapAdminEmail,
   canBootstrapAdmin,
@@ -289,6 +289,7 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
     ledgerLabel: paymentSourceLabel(stripeLive),
     providerSubscriptions: canSeeProviderSubscriptions(stored, process.env, owned || member),
     showPayCtas: showPayCtas(),
+    subscriptionsEnabled: subscriptionsEnabled(),
     centreOwner: owned || stored === "admin" || !member,
     ownsCentre: owned,
     centreLinked: owned || member,

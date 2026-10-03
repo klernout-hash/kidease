@@ -1,44 +1,50 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { FoundingPlans } from "@/components/founding-plans";
 import { OptionalUpgrades } from "@/components/optional-upgrades";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
-import { useCopy } from "@/lib/use-copy";
 import { useRoleChrome } from "@/components/role-chrome";
+import { getPlansGate } from "@/lib/server/ui-chrome";
 import { plansAudience } from "@/lib/upgrade-prompt";
 
+const FOUNDING_DESCRIPTION =
+  "Parents use KidEase for free. Daycares get every tool free during launch. Founding members keep a locked-in discount when paid extras arrive.";
+
 export const Route = createFileRoute("/plans")({
-  head: () => ({
+  loader: () => getPlansGate(),
+  head: ({ loaderData }) => ({
     meta: [
       { title: "Plans · KidEase" },
       {
         name: "description",
-        content:
-          "KidEase is free for parents and daycares across Canada. Optional Parent Plus and centre plans are billed in Canadian dollars.",
+        content: loaderData?.subscriptionsOn
+          ? "KidEase is free for parents and daycares across Canada. Optional Parent Plus and centre plans are billed in Canadian dollars."
+          : FOUNDING_DESCRIPTION,
       },
     ],
   }),
   component: PlansPage,
 });
 
-/** Public catalogue. Guests see both sides. A signed-in role sees only its own plans. */
+/**
+ * Public plans. While subscriptions are off this is the free founding period,
+ * rendered on the server so the page is not an empty nav shell.
+ * While subscriptions are on, the existing catalogue stays.
+ */
 export function PlansPage() {
+  const { subscriptionsOn } = Route.useLoaderData();
   const chrome = useRoleChrome();
-  const { t } = useCopy();
-  if (chrome.pending) {
-    return (
-      <Shell bare>
-        <main className="ke-gutter mx-auto min-h-64 max-w-6xl py-12" data-ke="plans-page" />
-        <SiteFooter />
-      </Shell>
-    );
-  }
   return (
     <Shell bare>
       <main data-ke="plans-page">
-        <p className="ke-native-plan-note ke-gutter mx-auto max-w-6xl pt-12 text-sm text-muted" data-ke="native-plan-note">
-          {t("nativePlansHidden")}
-        </p>
-        <OptionalUpgrades side={plansAudience(chrome.role)} signedIn={chrome.signedIn} />
+        {subscriptionsOn ? (
+          <OptionalUpgrades
+            side={chrome.pending ? "both" : plansAudience(chrome.role)}
+            signedIn={chrome.signedIn && !chrome.pending}
+          />
+        ) : (
+          <FoundingPlans />
+        )}
       </main>
       <SiteFooter />
     </Shell>

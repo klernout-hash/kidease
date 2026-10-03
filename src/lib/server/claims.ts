@@ -226,8 +226,11 @@ export const verifyClaim = createServerFn({ method: "POST" })
       on conflict (user_id, daycare_id) do nothing
     `;
     try {
-      const { applyPendingClaimBoost } = await import("@/lib/server/stripe-lifecycle");
-      await applyPendingClaimBoost(sql, context.userId);
+      const { subscriptionsEnabled } = await import("@/lib/features");
+      if (subscriptionsEnabled()) {
+        const { applyPendingClaimBoost } = await import("@/lib/server/stripe-lifecycle");
+        await applyPendingClaimBoost(sql, context.userId);
+      }
     } catch (err) {
       console.error("[kidease-stripe] claim boost apply failed", err);
     }

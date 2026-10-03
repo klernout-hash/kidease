@@ -185,6 +185,19 @@ async function runRoleFixture(page, base) {
     record("guest-plans-links", guestPlans > 0 && guestFooterPlans > 0, {
       note: `nav=${guestPlans} footer=${guestFooterPlans}`,
     });
+    const plansResp = await page.goto(new URL("/plans", base).href, {
+      waitUntil: "domcontentloaded",
+      timeout: timeoutMs,
+    });
+    await page.locator("[data-ke='plans-page']").waitFor({ timeout: timeoutMs }).catch(() => {});
+    const freeTier = page.locator("[data-ke='plans-page'] [data-plan='free']");
+    await freeTier.first().waitFor({ timeout: timeoutMs }).catch(() => {});
+    const plansText = ((await page.locator("[data-ke='plans-page']").innerText().catch(() => "")) || "").replace(/\s+/g, " ");
+    record("plans-free-tier", (plansResp?.status() ?? 0) < 500 && (await freeTier.count()) > 0 && /free|gratuit/i.test(plansText), {
+      note: plansText.slice(0, 180),
+      status: plansResp?.status() ?? 0,
+    });
+    await page.goto(new URL("/", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await shot(page, "guest-desktop", 1280, "h1");
     await page.keyboard.press("Escape");
     const menu = page.locator('header button[aria-label="Menu"]');
@@ -696,6 +709,7 @@ function startPreview() {
   // Loopback seed + mocked checkout only. Production builds ignore the role cookie.
   env.E2E_ROLE_FIXTURE = "1";
   env.SHOW_PAY_CTAS = "1";
+  env.SUBSCRIPTIONS_ENABLED = "1";
   previewChild = spawn("npm", ["run", "preview"], {
     cwd: root,
     stdio: ["ignore", "pipe", "pipe"],

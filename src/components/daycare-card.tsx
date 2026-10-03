@@ -4,6 +4,7 @@ import { memo, type MouseEvent, type ReactNode } from "react";
 import type { DaycareCard as Card } from "@/lib/types";
 import { isSafeSitemapSlug } from "@/lib/sitemap";
 import { PhotoCarousel } from "@/components/photo-carousel";
+import { FoundingMemberBadge } from "@/components/founding-member-badge";
 import { SaveListingButton } from "@/components/save-listing-button";
 import { ShareListingButton } from "@/components/share-button";
 import { useCopy } from "@/lib/use-copy";
@@ -24,8 +25,8 @@ import {
   cardPhotoLicenseWarning,
   showCardLivePill,
 } from "@/lib/card-photo-pills";
-import { photoLine, vacancyLine } from "@/components/vacancy-freshness";
 import { parentIncompleteLabel } from "@/components/listing-completeness";
+import { photoLine, vacancyLine } from "@/components/vacancy-freshness";
 import { TrustBadge, TrustSignals } from "@/components/trust-badge";
 import { GuestFavoriteBadge } from "@/components/guest-favorite";
 import { MatchCue, UrgencyCue } from "@/components/rank-cues";
@@ -317,6 +318,7 @@ export const DaycareCard = memo(function DaycareCard({
               </span>
             ) : null}
           </div>
+          <FoundingMemberBadge show={item.foundingMember} className="mt-1" />
           {placeLine ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{placeLine}</p> : null}
           {sort === "best" && whyMatchLine(item, t) ? (
             <p className="mt-0.5 line-clamp-2 text-[13px] leading-5 text-muted" data-ke="why-match">
@@ -424,6 +426,7 @@ export const DaycareCard = memo(function DaycareCard({
               </span>
             ) : null}
           </div>
+          {!compact ? <FoundingMemberBadge show={item.foundingMember} className="mt-1" /> : null}
           {!compact && publicApprovalEligible(item) ? (
             <p className="text-[11px] font-medium leading-4 text-primary" data-ke="kidease-approved-marker">
               {t("kideaseApprovedMarker")}

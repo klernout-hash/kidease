@@ -55,14 +55,30 @@ export const PLANS_NOT_OFFERED_YET =
 /**
  * Parent- and director-facing Upgrade / Subscribe / plan-price chrome.
  * Default OFF. Does not delete Stripe, webhooks, or plan tables.
- * Set SHOW_PAY_CTAS=1 to restore CTAs. Admin Stripe screens stay available.
+ * Set SHOW_PAY_CTAS=1 to restore CTAs once SUBSCRIPTIONS_ENABLED is on.
+ * Admin Stripe screens stay available.
+ *
+ * Master switch for paid plans. Default off (free founding period).
+ * Env `SUBSCRIPTIONS_ENABLED=1` or the same PostHog flag turns checkout back on.
+ * While off, showPayCtas and canUsePayCheckout stay false for every role.
  */
+export function subscriptionsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("SUBSCRIPTIONS_ENABLED", env);
+}
+
+/** Public Founding member badge. Default on. Does not clear the database marker. */
+export function foundingBadgeEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FOUNDING_BADGE_ENABLED", env);
+}
+
 export function showPayCtas(env?: EnvMap): boolean {
+  if (!subscriptionsEnabled(env)) return false;
   return evaluateFeatureFlag("SHOW_PAY_CTAS", env);
 }
 
-/** Live checkout for KidEase plans. Admin may still open Stripe when chrome is hidden. */
+/** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
+  if (!subscriptionsEnabled(env)) return false;
   if (showPayCtas(env)) return true;
   const r = String(role || "")
     .trim()

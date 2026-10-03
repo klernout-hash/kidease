@@ -98,6 +98,8 @@ export type Daycare = {
   contactEmail?: string | null;
   claimed?: boolean;
   claimedAt?: string | null;
+  /** Claimed during the free founding period. Hidden when the badge flag is off. */
+  foundingMember?: boolean;
   claimStatus?: string | null;
   listingActive?: boolean;
   pauseCode?: string | null;

@@ -92,6 +92,24 @@ export function entitledProviderPlan(input: ProviderEntitlementInput): ProviderP
   return selected;
 }
 
+/**
+ * Free founding period: every daycare desk tool is open.
+ * Search pins (featured city, claim boost) stay off. Those are placement, not tools.
+ */
+export function applyFoundingPeriodEntitlements(
+  entitlements: ProviderEntitlements,
+  subscriptionsOn: boolean,
+): ProviderEntitlements {
+  if (subscriptionsOn) return entitlements;
+  return {
+    ...entitlements,
+    unlimitedInquiries: true,
+    inquiryCap: null,
+    analyticsDays: Math.max(entitlements.analyticsDays, PRO_ANALYTICS_DAYS),
+    orgDashboard: true,
+  };
+}
+
 export function resolveProviderEntitlements(input: ProviderEntitlementInput): ProviderEntitlements {
   const selectedPlan = isProviderPlanId(input.plan) ? input.plan : "free";
   const entitledPlan = entitledProviderPlan(input);

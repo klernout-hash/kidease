@@ -647,6 +647,8 @@ export type SessionDesks = {
   providerSubscriptions: boolean;
   /** Parent/director Upgrade · Subscribe chrome. Default off. */
   showPayCtas: boolean;
+  /** Paid plans. Default off during the free founding period. */
+  subscriptionsEnabled?: boolean;
   /** Owner chrome (Money / claim / invite). False only for staff-only employees. */
   centreOwner?: boolean;
   /** This user owns a centre (provider_daycares). Not the same as centreOwner. */

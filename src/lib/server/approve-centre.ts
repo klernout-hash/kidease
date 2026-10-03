@@ -7,6 +7,8 @@
  */
 
 import { planApproval, type ApprovalCentre, type ApprovalClaim, type ApprovalHealth } from "@/lib/approve-live";
+import { subscriptionsEnabled } from "@/lib/features";
+import { PROTECTED_LISTING_ID } from "@/lib/founding-period";
 import { normalizeCentreName } from "@/lib/listing-identity";
 import { listingVisibilityForOwners } from "@/lib/listing-visibility";
 import type { Sql } from "@/lib/db";
@@ -207,10 +209,12 @@ export async function runApproval(
   }
 
   const next = plan.next;
+  const markFounding = !subscriptionsEnabled() && row.id !== PROTECTED_LISTING_ID;
   try {
     await sql`
       update daycares
       set claimed_at = coalesce(claimed_at, now()),
+          founding_member = founding_member or (claimed_at is null and ${markFounding}),
           claim_status = 'approved',
           listing_active = 1,
           verified = 1,

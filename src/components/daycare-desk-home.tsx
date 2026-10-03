@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
+import { FoundingMemberBadge } from "@/components/founding-member-badge";
 import { RoleUpgradeCard } from "@/components/role-upgrade-card";
+import { useSessionDesks } from "@/components/session-desks";
 import { listingCompleteness, type CompletenessField } from "@/lib/listing-readiness";
 import { isOpenLeadStatus, type LeadRequest } from "@/lib/lead-requests";
 import { daycareCapPrompt, daycareHomeCardEligible, showHomeUpgradeCard } from "@/lib/upgrade-prompt";
@@ -42,6 +44,8 @@ export function DaycareDeskHome({
   onDismiss?: () => void;
 }) {
   const { t } = useCopy();
+  const { session } = useSessionDesks();
+  const subscriptionsOn = session?.subscriptionsEnabled === true;
   const waitingLeads = leads.filter((lead) => isOpenLeadStatus(lead.status));
   const waitingTours = tours.filter((tour) => tour.status === "pending");
   const waiting = waitingLeads.length + waitingTours.length;
@@ -66,7 +70,7 @@ export function DaycareDeskHome({
 
   return (
     <div className="mb-6 space-y-3" data-ke="daycare-desk" data-settled={settled ? "1" : "0"}>
-      {card ? (
+      {card && subscriptionsOn ? (
         <RoleUpgradeCard
           role="provider"
           paid={card === "plan"}
@@ -98,6 +102,7 @@ export function DaycareDeskHome({
 
       <section className="rounded-xl bg-surface px-4 py-3 ring-1 ring-border">
         <h2 className="font-display text-xl">{t("deskHomeListing")}</h2>
+        <FoundingMemberBadge show={primary?.foundingMember} className="mt-2" />
         {!primary ? (
           <p className="mt-1 text-sm text-muted">{t("deskHomeAddCentre")}</p>
         ) : missing.length === 0 ? (
@@ -121,6 +126,9 @@ export function DaycareDeskHome({
         <h2 className="font-display text-xl">{t("deskHomeCurrentPlan")}</h2>
         <p className="mt-1 text-sm text-fg">{paid ? planName : t("deskHomeFree")}</p>
         <p className="text-sm text-muted">{t("deskHomeFreeNote")}</p>
+        <Link to="/plans" className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-primary">
+          {t("navPlans")}
+        </Link>
       </section>
 
     </div>
