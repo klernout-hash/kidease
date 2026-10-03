@@ -26,6 +26,7 @@ export const FEATURE_FLAG_KEYS = [
   "SUBSCRIPTIONS_ENABLED",
   "FOUNDING_BADGE_ENABLED",
   "FEATURE_OPEN_SPOT_ALERTS",
+  "FEATURE_SPOT_OFFER_MAIL",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -70,6 +71,7 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   /** Founding member badge on claimed listings. The marker stays either way. */
   FOUNDING_BADGE_ENABLED: true,
   FEATURE_OPEN_SPOT_ALERTS: false,
+  FEATURE_SPOT_OFFER_MAIL: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -138,6 +140,12 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Email when a saved search matches a newly posted open spot. Default off. Saving a search still works. Needs CASL.",
+  },
+  {
+    key: "FEATURE_SPOT_OFFER_MAIL",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Email when a daycare sends a 48-hour spot offer. Default off. The offer still shows in the parent account.",
   },
 ];
 

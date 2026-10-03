@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Navigate, Outlet, useRouterState } from "@tanstack/react-router";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { privateReturnPath } from "@/lib/role-access";
 import { lazy, Suspense } from "react";
@@ -48,10 +48,12 @@ export const Route = createFileRoute("/parent")({
 });
 
 function ParentPage() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, isPending } = useCurrentUserState();
   const chrome = useRoleChrome();
   const { session, ready } = useSessionDesks();
   const search = Route.useSearch();
+  if (pathname === "/parent/spot-offers" || pathname.startsWith("/parent/spot-offers/")) return <Outlet />;
   const upgradeSurface = search.tab === "subscription" || search.plus === "success" || search.plus === "cancel" || search.billing === "return";
   const initialTab =
     search.tab === "saved"

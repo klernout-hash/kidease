@@ -81,6 +81,11 @@ export function openSpotAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_OPEN_SPOT_ALERTS", env);
 }
 
+/** Email a parent when a daycare offers a spot. Default OFF. The offer still shows in the account. */
+export function spotOfferMailEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_SPOT_OFFER_MAIL", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;

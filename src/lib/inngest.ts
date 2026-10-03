@@ -40,6 +40,11 @@ export const TRUTH_CHECK_CRON = "TZ=America/Winnipeg 15 4 * * *";
 
 export const TRUTH_CHECK_EVENT = "kidease/truth-check.run";
 
+/** Hourly :40 America/Winnipeg. Expire 48-hour spot offers and offer the next family. */
+export const SPOT_OFFERS_CRON = "TZ=America/Winnipeg 40 * * * *";
+
+export const SPOT_OFFERS_EVENT = "kidease/spot-offers.expire";
+
 export function inngestEventKey(env: EnvMap = process.env): string {
   return String(env.INNGEST_EVENT_KEY || "").trim();
 }
@@ -80,6 +85,13 @@ export function shouldDeferRankingMarketToInngest(
 }
 
 export function shouldDeferProvincialVacancyToInngest(
+  request: Request,
+  env: EnvMap = process.env,
+): boolean {
+  return shouldDeferCronToInngest(request, env);
+}
+
+export function shouldDeferSpotOffersToInngest(
   request: Request,
   env: EnvMap = process.env,
 ): boolean {

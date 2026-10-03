@@ -75,6 +75,7 @@ import { Route as ApiRankingMarketRouteImport } from './routes/api/ranking-marke
 import { Route as ApiScreeningDocumentsRouteImport } from './routes/api/screening-documents'
 import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
 import { Route as ApiSeedCatalogRouteImport } from './routes/api/seed-catalog'
+import { Route as ApiSpotOffersRouteImport } from './routes/api/spot-offers'
 import { Route as ApiTourHoldsRouteImport } from './routes/api/tour-holds'
 import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
@@ -102,6 +103,8 @@ import { Route as InboxIdRouteImport } from './routes/inbox.$id'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as JobsPostRouteImport } from './routes/jobs_.post'
 import { Route as ListingSlugRouteImport } from './routes/listing.$slug'
+import { Route as OfferTokenRouteImport } from './routes/offer.$token'
+import { Route as ParentSpotOffersRouteImport } from './routes/parent.spot-offers'
 import { Route as PayIndexRouteImport } from './routes/pay.index'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
 import { Route as ProviderSubscriptionRouteImport } from './routes/provider.subscription'
@@ -462,6 +465,11 @@ const ApiSeedCatalogRoute = ApiSeedCatalogRouteImport.update({
   path: '/api/seed-catalog',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSpotOffersRoute = ApiSpotOffersRouteImport.update({
+  id: '/api/spot-offers',
+  path: '/api/spot-offers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiTourHoldsRoute = ApiTourHoldsRouteImport.update({
   id: '/api/tour-holds',
   path: '/api/tour-holds',
@@ -596,6 +604,16 @@ const ListingSlugRoute = ListingSlugRouteImport.update({
   id: '/listing/$slug',
   path: '/listing/$slug',
   getParentRoute: () => rootRouteImport,
+} as any)
+const OfferTokenRoute = OfferTokenRouteImport.update({
+  id: '/offer/$token',
+  path: '/offer/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParentSpotOffersRoute = ParentSpotOffersRouteImport.update({
+  id: '/spot-offers',
+  path: '/spot-offers',
+  getParentRoute: () => ParentRoute,
 } as any)
 const PayIndexRoute = PayIndexRouteImport.update({
   id: '/',
@@ -780,7 +798,7 @@ export interface FileRoutesByFullPath {
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
   '/notifications': typeof NotificationsRoute
-  '/parent': typeof ParentRoute
+  '/parent': typeof ParentRouteWithChildren
   '/pay': typeof PayRouteWithChildren
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
@@ -806,6 +824,7 @@ export interface FileRoutesByFullPath {
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
+  '/api/spot-offers': typeof ApiSpotOffersRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
@@ -832,6 +851,8 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/jobs/post': typeof JobsPostRoute
   '/listing/$slug': typeof ListingSlugRoute
+  '/offer/$token': typeof OfferTokenRoute
+  '/parent/spot-offers': typeof ParentSpotOffersRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/sign/$id': typeof SignIdRoute
@@ -902,7 +923,7 @@ export interface FileRoutesByTo {
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
   '/notifications': typeof NotificationsRoute
-  '/parent': typeof ParentRoute
+  '/parent': typeof ParentRouteWithChildren
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRouteWithChildren
@@ -927,6 +948,7 @@ export interface FileRoutesByTo {
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
+  '/api/spot-offers': typeof ApiSpotOffersRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
@@ -953,6 +975,8 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/jobs/post': typeof JobsPostRoute
   '/listing/$slug': typeof ListingSlugRoute
+  '/offer/$token': typeof OfferTokenRoute
+  '/parent/spot-offers': typeof ParentSpotOffersRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/sign/$id': typeof SignIdRoute
@@ -1025,7 +1049,7 @@ export interface FileRoutesById {
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
   '/notifications': typeof NotificationsRoute
-  '/parent': typeof ParentRoute
+  '/parent': typeof ParentRouteWithChildren
   '/pay': typeof PayRouteWithChildren
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
@@ -1051,6 +1075,7 @@ export interface FileRoutesById {
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
+  '/api/spot-offers': typeof ApiSpotOffersRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
@@ -1077,6 +1102,8 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/jobs_/post': typeof JobsPostRoute
   '/listing/$slug': typeof ListingSlugRoute
+  '/offer/$token': typeof OfferTokenRoute
+  '/parent/spot-offers': typeof ParentSpotOffersRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/sign/$id': typeof SignIdRoute
@@ -1176,6 +1203,7 @@ export interface FileRouteTypes {
     | '/api/screening-documents'
     | '/api/search-alerts'
     | '/api/seed-catalog'
+    | '/api/spot-offers'
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/book/$slug'
@@ -1202,6 +1230,8 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/jobs/post'
     | '/listing/$slug'
+    | '/offer/$token'
+    | '/parent/spot-offers'
     | '/pay/$bookingId'
     | '/provider/subscription'
     | '/sign/$id'
@@ -1297,6 +1327,7 @@ export interface FileRouteTypes {
     | '/api/screening-documents'
     | '/api/search-alerts'
     | '/api/seed-catalog'
+    | '/api/spot-offers'
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/book/$slug'
@@ -1323,6 +1354,8 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/jobs/post'
     | '/listing/$slug'
+    | '/offer/$token'
+    | '/parent/spot-offers'
     | '/pay/$bookingId'
     | '/provider/subscription'
     | '/sign/$id'
@@ -1420,6 +1453,7 @@ export interface FileRouteTypes {
     | '/api/screening-documents'
     | '/api/search-alerts'
     | '/api/seed-catalog'
+    | '/api/spot-offers'
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/book/$slug'
@@ -1446,6 +1480,8 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/jobs_/post'
     | '/listing/$slug'
+    | '/offer/$token'
+    | '/parent/spot-offers'
     | '/pay/$bookingId'
     | '/provider/subscription'
     | '/sign/$id'
@@ -1518,7 +1554,7 @@ export interface RootRouteChildren {
   MeetTheTeamRoute: typeof MeetTheTeamRoute
   MenuRoute: typeof MenuRoute
   NotificationsRoute: typeof NotificationsRoute
-  ParentRoute: typeof ParentRoute
+  ParentRoute: typeof ParentRouteWithChildren
   PayRoute: typeof PayRouteWithChildren
   PlansRoute: typeof PlansRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -1543,6 +1579,7 @@ export interface RootRouteChildren {
   ApiScreeningDocumentsRoute: typeof ApiScreeningDocumentsRouteWithChildren
   ApiSearchAlertsRoute: typeof ApiSearchAlertsRoute
   ApiSeedCatalogRoute: typeof ApiSeedCatalogRoute
+  ApiSpotOffersRoute: typeof ApiSpotOffersRoute
   ApiTourHoldsRoute: typeof ApiTourHoldsRoute
   ApiUnsubscribeRoute: typeof ApiUnsubscribeRoute
   BookSlugRoute: typeof BookSlugRoute
@@ -1552,6 +1589,7 @@ export interface RootRouteChildren {
   InviteTokenRoute: typeof InviteTokenRoute
   JobsPostRoute: typeof JobsPostRoute
   ListingSlugRoute: typeof ListingSlugRoute
+  OfferTokenRoute: typeof OfferTokenRoute
   SignIdRoute: typeof SignIdRoute
   VideoRoomIdRoute: typeof VideoRoomIdRoute
   ApiAdminContractsRoute: typeof ApiAdminContractsRoute
@@ -2037,6 +2075,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSeedCatalogRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/spot-offers': {
+      id: '/api/spot-offers'
+      path: '/api/spot-offers'
+      fullPath: '/api/spot-offers'
+      preLoaderRoute: typeof ApiSpotOffersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/tour-holds': {
       id: '/api/tour-holds'
       path: '/api/tour-holds'
@@ -2225,6 +2270,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/listing/$slug'
       preLoaderRoute: typeof ListingSlugRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/offer/$token': {
+      id: '/offer/$token'
+      path: '/offer/$token'
+      fullPath: '/offer/$token'
+      preLoaderRoute: typeof OfferTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parent/spot-offers': {
+      id: '/parent/spot-offers'
+      path: '/spot-offers'
+      fullPath: '/parent/spot-offers'
+      preLoaderRoute: typeof ParentSpotOffersRouteImport
+      parentRoute: typeof ParentRoute
     }
     '/pay/': {
       id: '/pay/'
@@ -2493,6 +2552,17 @@ const InboxRouteChildren: InboxRouteChildren = {
 
 const InboxRouteWithChildren = InboxRoute._addFileChildren(InboxRouteChildren)
 
+interface ParentRouteChildren {
+  ParentSpotOffersRoute: typeof ParentSpotOffersRoute
+}
+
+const ParentRouteChildren: ParentRouteChildren = {
+  ParentSpotOffersRoute: ParentSpotOffersRoute,
+}
+
+const ParentRouteWithChildren =
+  ParentRoute._addFileChildren(ParentRouteChildren)
+
 interface PayRouteChildren {
   PayBookingIdRoute: typeof PayBookingIdRoute
   PayIndexRoute: typeof PayIndexRoute
@@ -2584,7 +2654,7 @@ const rootRouteChildren: RootRouteChildren = {
   MeetTheTeamRoute: MeetTheTeamRoute,
   MenuRoute: MenuRoute,
   NotificationsRoute: NotificationsRoute,
-  ParentRoute: ParentRoute,
+  ParentRoute: ParentRouteWithChildren,
   PayRoute: PayRouteWithChildren,
   PlansRoute: PlansRoute,
   PrivacyRoute: PrivacyRoute,
@@ -2609,6 +2679,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiScreeningDocumentsRoute: ApiScreeningDocumentsRouteWithChildren,
   ApiSearchAlertsRoute: ApiSearchAlertsRoute,
   ApiSeedCatalogRoute: ApiSeedCatalogRoute,
+  ApiSpotOffersRoute: ApiSpotOffersRoute,
   ApiTourHoldsRoute: ApiTourHoldsRoute,
   ApiUnsubscribeRoute: ApiUnsubscribeRoute,
   BookSlugRoute: BookSlugRoute,
@@ -2618,6 +2689,7 @@ const rootRouteChildren: RootRouteChildren = {
   InviteTokenRoute: InviteTokenRoute,
   JobsPostRoute: JobsPostRoute,
   ListingSlugRoute: ListingSlugRoute,
+  OfferTokenRoute: OfferTokenRoute,
   SignIdRoute: SignIdRoute,
   VideoRoomIdRoute: VideoRoomIdRoute,
   ApiAdminContractsRoute: ApiAdminContractsRoute,
@@ -2643,11 +2715,15 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
+
 import type { startInstance } from './start.ts'
+
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
+
     router: Awaited<ReturnType<typeof getRouter>>
+
     config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }
