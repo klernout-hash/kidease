@@ -56,6 +56,8 @@ export type HealthPayload = {
   runtime?: HealthRuntime;
   /** Production change-failure / crash signal for Better Stack + Sentry. */
   cfr: HealthCfr;
+  /** Listings whose ages were confirmed. Omitted when the count was not read. */
+  agesConfirmed?: number;
 };
 
 export function healthHeaders(): Headers {
