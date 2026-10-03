@@ -10,6 +10,7 @@ import { formatPublicAgeRange, listingAgeRangeText } from "../src/lib/listing-ag
 import {
   AGES_PROTECTED_LISTING_ID,
   SOURCED_AGES_MIGRATION,
+  SOURCED_AGES_UNCLAIMED_RETRY,
   applyRecordedSourcedAges,
   applySourcedAgeUpdates,
   parseSourcedAges,
@@ -280,7 +281,8 @@ test("sourced age migration updates eligible rows once and leaves the rest", asy
       age_max_months int,
       ages_confirmed int not null default 0,
       ages_source text,
-      ages_source_url text
+      ages_source_url text,
+      claim_status text not null default 'unclaimed'
     );
     create table provider_daycares (daycare_id text);
     create table listing_claims (daycare_id text);
@@ -288,19 +290,23 @@ test("sourced age migration updates eligible rows once and leaves the rest", asy
     insert into daycares (id, age_min_months, age_max_months, ages_confirmed) values
       ('mb-1172', 0, 0, 0),
       ('mb-9654', 1, 2, 1),
+      ('mb-102660', 0, 0, 0),
       ('bc-2', 9, 10, 0),
       ('ns-5515087', 4, 5, 0),
       ('${AGES_PROTECTED_LISTING_ID}', 7, 8, 0);
     update daycares set claimed_at = now() where id = 'bc-2';
     update daycares set ages_source = 'keep' where id = 'mb-9654';
+    update daycares set claim_status = 'pending' where id = 'mb-102660';
     insert into provider_daycares (daycare_id) values ('ns-5515087');
-    insert into listing_claims (daycare_id) values ('bc-2');
+    insert into listing_claims (daycare_id) values ('ns-5515087');
+    insert into centre_members (daycare_id) values ('mb-1172');
   `);
   const query = (text, params) => pg.query(text, params);
   const file = parseSourcedAges(csv);
   const batch = [
     file.get("mb-1172"),
     file.get("mb-9654"),
+    file.get("mb-102660"),
     file.get("bc-2"),
     file.get("ns-5515087"),
     age("missing-id", 1, 2),
@@ -308,7 +314,7 @@ test("sourced age migration updates eligible rows once and leaves the rest", asy
   ];
   const first = await applySourcedAgeUpdates(query, batch);
   const second = await applySourcedAgeUpdates(query, batch);
-  assert.equal(first, 1);
+  assert.equal(first, 2);
   assert.equal(second, 0);
 
   const rows = await pg.query(
@@ -322,8 +328,12 @@ test("sourced age migration updates eligible rows once and leaves the rest", asy
   assert.equal(byId["mb-9654"].age_min_months, 1);
   assert.equal(byId["mb-9654"].age_max_months, 2);
   assert.equal(byId["mb-9654"].ages_source, "keep");
+  assert.equal(byId["mb-102660"].age_min_months, 0);
+  assert.equal(byId["mb-102660"].ages_confirmed, 0);
   assert.equal(byId["bc-2"].age_min_months, 9);
-  assert.equal(byId["ns-5515087"].age_min_months, 4);
+  assert.equal(byId["ns-5515087"].age_min_months, 18);
+  assert.equal(byId["ns-5515087"].age_max_months, 144);
+  assert.equal(byId["ns-5515087"].ages_confirmed, 1);
   assert.equal(byId[AGES_PROTECTED_LISTING_ID].age_min_months, 7);
   assert.equal(byId[AGES_PROTECTED_LISTING_ID].age_max_months, 8);
   const invented = await pg.query(`select id from daycares where id = 'missing-id'`);
@@ -343,12 +353,19 @@ test("sourced age migration updates eligible rows once and leaves the rest", asy
   assert.equal(still.rows[0].ages_confirmed, 1);
   const marked = await pg.query(`select name from _migrations where name = $1`, [SOURCED_AGES_MIGRATION]);
   assert.equal(marked.rows.length, 1);
+  const retry = await applyRecordedSourcedAges(query, root, SOURCED_AGES_UNCLAIMED_RETRY);
+  assert.equal(retry.applied, true);
+  assert.equal(retry.updated, 0);
+  const retryAgain = await applyRecordedSourcedAges(query, root, SOURCED_AGES_UNCLAIMED_RETRY);
+  assert.equal(retryAgain.applied, false);
+  assert.equal(retryAgain.updated, 0);
 });
 
 test("deploy migrate logs the confirmed age count and does not print a database url", () => {
   const migrate = readFileSync(join(root, "scripts/migrate.mjs"), "utf8");
   assert.match(migrate, /ages_confirmed=1 count/);
   assert.match(migrate, /applyRecordedSourcedAges/);
+  assert.match(migrate, /SOURCED_AGES_UNCLAIMED_RETRY/);
   assert.doesNotMatch(migrate, /console\.log\(databaseUrl\)/);
   assert.doesNotMatch(migrate, /console\.log\(process\.env\.DATABASE_URL\)/);
 });

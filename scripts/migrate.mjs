@@ -67,10 +67,15 @@ async function main() {
       count += 1;
     }
     console.log(count ? `[migrate] done — ${count} migration(s) applied.` : "[migrate] up to date.");
-    const { applyRecordedSourcedAges } = await import("../src/lib/sourced-ages.ts");
-    const sourced = await applyRecordedSourcedAges((text, params) => client.query(text, params));
+    const { applyRecordedSourcedAges, SOURCED_AGES_UNCLAIMED_RETRY } = await import("../src/lib/sourced-ages.ts");
+    const runAges = (text, params) => client.query(text, params);
+    const sourced = await applyRecordedSourcedAges(runAges);
     if (sourced.applied) {
       console.log(`[migrate] sourced ages updated ${sourced.updated} unclaimed unconfirmed rows`);
+    }
+    const retry = await applyRecordedSourcedAges(runAges, undefined, SOURCED_AGES_UNCLAIMED_RETRY);
+    if (retry.applied) {
+      console.log(`[migrate] sourced ages retry updated ${retry.updated} unclaimed unconfirmed rows`);
     }
     const counted = await client.query(
       "select count(*)::int as n from daycares where coalesce(ages_confirmed, 0) = 1",
