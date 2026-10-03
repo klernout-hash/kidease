@@ -58,6 +58,21 @@ export type HealthPayload = {
   cfr: HealthCfr;
   /** Listings whose ages were confirmed. Omitted when the count was not read. */
   agesConfirmed?: number;
+  /** One slice of the approved age fill. Omitted once that fill is recorded. */
+  ageFill?: { done: boolean; updated: number; cursor: number; total: number };
+  /** The five live checks, until the runtime fill is recorded. */
+  ageProbe?: Array<{
+    id: string;
+    chars: number;
+    claim: string;
+    unclaimed: boolean;
+    confirmed: number;
+    min: number;
+    max: number;
+    slug: string;
+  }>;
+  /** Short reason the fill did not run. Never a database URL. */
+  ageFillError?: string;
 };
 
 export function healthHeaders(): Headers {

@@ -42,8 +42,21 @@ export async function collectHealth(): Promise<HealthPayload> {
       `;
       const count = Number(rows[0]?.n);
       if (Number.isFinite(count)) payload.agesConfirmed = count;
-    } catch {
+      const { advanceRuntimeSourcedAges, probeRuntimeAgeListings } = await import(
+        "@/lib/server/sourced-ages-runtime"
+      );
+      const query = (text: string, params?: unknown[]) =>
+        sql.query(text, params).then((queried) => ({ rows: queried }));
+      const fill = await advanceRuntimeSourcedAges(query);
+      if (!fill.done || fill.cursor > 0) {
+        payload.ageFill = fill;
+        payload.ageProbe = await probeRuntimeAgeListings(query);
+      }
+    } catch (err) {
       // The count is optional. A missing column must not fail the liveness probe.
+      const message = err instanceof Error ? err.message : "";
+      if (message.startsWith("sourced ages file")) payload.ageFillError = "short-file";
+      else if (!payload.ageFill) payload.ageFillError = "unavailable";
     }
   }
   if (payload.cfr.candidate) {
