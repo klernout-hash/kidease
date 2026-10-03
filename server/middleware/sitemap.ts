@@ -124,6 +124,15 @@ export default async function sitemapListingsMiddleware(
 ): Promise<unknown> {
   const method = (event.req.method ?? "GET").toUpperCase();
   if (method !== "GET" && method !== "HEAD") return next();
+  if (event.url.pathname === "/sitemap-age-vacancy.xml" || event.url.pathname === "/sitemap-age-vacancy.xml/") {
+    try {
+      const { ageVacancySitemapXml } = await import("../../src/lib/server/age-vacancy.ts");
+      return xmlResponse(method, await ageVacancySitemapXml());
+    } catch {
+      const { renderAgeVacancySitemapXml } = await import("../../src/lib/age-vacancy.ts");
+      return xmlResponse(method, renderAgeVacancySitemapXml([]));
+    }
+  }
   if (!isListingSitemapPath(event.url.pathname)) return next();
   try {
     return xmlResponse(method, await listingSitemapXml(event.url.pathname));

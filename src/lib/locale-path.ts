@@ -80,12 +80,13 @@ export function isPairedPath(pathname: string | null | undefined): boolean {
   return PAIRED.has(stripLocalePrefix(pathname)) || isCatalogueDocumentPath(pathname);
 }
 
-/** `/daycare/:slug` and `/daycare/city/:slug` — one segment after the prefix. */
+/** `/daycare/:slug`, `/daycare/city/:slug`, and `/daycare/:city/:age`. */
 export function isCatalogueDocumentPath(pathname: string | null | undefined): boolean {
   const bare = stripLocalePrefix(pathname);
   const listing = bare.match(/^\/daycare\/([^/]+)$/);
   if (listing && listing[1] !== "city") return true;
-  return /^\/daycare\/city\/[^/]+$/.test(bare);
+  if (/^\/daycare\/city\/[^/]+$/.test(bare)) return true;
+  return /^\/daycare\/[^/]+\/(infant|toddler|preschool)$/.test(bare);
 }
 
 export function frenchPath(enPath: string): string {
@@ -175,7 +176,8 @@ export function hreflangLinks(
   origin = "https://www.kidease.ca",
 ): Array<{ rel: "alternate"; hrefLang: string; href: string }> {
   const bare = stripLocalePrefix(pathname);
-  if (!isPairedPath(bare) || REDIRECT.has(bare)) return [];
+  const agePage = /^\/daycare\/[^/]+\/(infant|toddler|preschool)$/.test(bare);
+  if (!agePage && (!isPairedPath(bare) || REDIRECT.has(bare))) return [];
   const en = absoluteUrl(bare, origin);
   const fr = absoluteUrl(frenchPath(bare), origin);
   return [
