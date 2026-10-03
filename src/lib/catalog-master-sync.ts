@@ -5,6 +5,8 @@
  * only. Unmatched Canada rows are appended when a real coordinate can be taken
  * from the catalogue (same postal, FSA, or city) or the built-in city list.
  * Ages, fees, photos, open spots, and Live/claim fields are not invented.
+ * Approved sourced ages (data/ops/ages-sourced-20261002.csv) may be passed in
+ * and are matched by listing id. They never invent a range that is not in that file.
  * Nothing is deleted. Contact values are never logged.
  */
 
@@ -20,6 +22,7 @@ import {
   splitCityPostalLabel,
 } from "./catalog-match.ts";
 import { preserveFilledContact, type CatalogUpsertInput } from "./catalog-upsert.ts";
+import { parseSourcedAges, stampSourcedAge, type SourcedAge } from "./sourced-ages.ts";
 import { isInCanada } from "./canada-origin.ts";
 import { facilityTypeTagline, listingFacilityType } from "./facility-type.ts";
 import { CITIES, PROVINCES } from "./geo.ts";
@@ -350,10 +353,18 @@ function buildNewRow(master: MasterFacility, point: { lat: number; lng: number }
  * Upsert plan: catalogue rows in, catalogue rows out, never fewer.
  * `rows` keeps the input order, then appends new master facilities.
  */
+function sourcedAgeMap(sourcedAges: string | ReadonlyMap<string, SourcedAge> | undefined) {
+  if (!sourcedAges) return new Map<string, SourcedAge>();
+  if (typeof sourcedAges === "string") return parseSourcedAges(sourcedAges);
+  return sourcedAges;
+}
+
 export function syncMasterCatalogue<T extends CatalogueMatchRow>(
   catalog: readonly T[],
   csvText: string,
+  sourcedAges: string | ReadonlyMap<string, SourcedAge> = "",
 ): MasterSyncResult<T | CatalogUpsertInput> {
+  const ages = sourcedAgeMap(sourcedAges);
   const parsed = parseMasterFacilities(csvText);
   const byMatch = new Map<string, T[]>();
   const geo: GeoIndex = { postal: new Map(), fsa: new Map(), city: new Map() };
@@ -447,6 +458,9 @@ export function syncMasterCatalogue<T extends CatalogueMatchRow>(
   if (rows.length < catalog.length) {
     throw new Error("master sync shrank the catalogue");
   }
+  const stamped = rows.map((row) => stampSourcedAge(row, ages));
+  rows.length = 0;
+  rows.push(...stamped);
 
   const publicSlugs = publicSitemapSlugs(rows, 100_000).length;
   return {

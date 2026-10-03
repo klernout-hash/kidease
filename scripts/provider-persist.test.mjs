@@ -113,6 +113,7 @@ test("catalogue upsert keeps provider open spots and screening metadata sticks",
       rating_x10 int, review_count int, license_number text, languages text,
       amenities text, photos text, verified int, google_place_id text,
       contact_email text, website text, visibility text, is_test boolean,
+      ages_confirmed int not null default 0, ages_source text, ages_source_url text,
       claimed_at timestamptz
     );
     create table provider_daycares (

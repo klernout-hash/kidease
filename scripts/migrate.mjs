@@ -67,6 +67,17 @@ async function main() {
       count += 1;
     }
     console.log(count ? `[migrate] done — ${count} migration(s) applied.` : "[migrate] up to date.");
+    const { applyRecordedSourcedAges } = await import("../src/lib/sourced-ages.ts");
+    const sourced = await applyRecordedSourcedAges((text, params) => client.query(text, params));
+    if (sourced.applied) {
+      console.log(`[migrate] sourced ages updated ${sourced.updated} unclaimed unconfirmed rows`);
+    }
+    const counted = await client.query(
+      "select count(*)::int as n from daycares where coalesce(ages_confirmed, 0) = 1",
+    );
+    const confirmedAges = Number(counted.rows[0]?.n ?? 0);
+    const migrateEnv = process.env.VERCEL_ENV || "database";
+    console.log(`[migrate] ${migrateEnv} ages_confirmed=1 count ${confirmedAges}`);
     const credential = await applyOperatorCredentialFromEnv(databaseUrl);
     if (credential !== "skipped") {
       console.log(`[migrate] ${credential} — unset OPERATOR_RESET_PASSWORD after sign-in works`);

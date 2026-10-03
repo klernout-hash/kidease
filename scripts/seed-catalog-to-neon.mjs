@@ -22,6 +22,7 @@ import {
 } from "../src/lib/catalog-master-sync.ts";
 import { REMOVED_FROM_MASTER_FAULT } from "../src/lib/listing-visibility.ts";
 import { catalogRowsForSeed, clampSeedLimit, clampSeedOffset, seedCatalogChunk } from "../src/lib/catalog-seed.ts";
+import { loadSourcedAges, stampSourcedAge } from "../src/lib/sourced-ages.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const DEFAULT_CHECKPOINT = join(root, "tmp", "seed-catalog-offset.txt");
@@ -98,8 +99,13 @@ Flags:
 
 The master CSV is not in this repo. Pass MASTER_CSV_PATH or --master-csv.
 New rows are appended. Existing rows are never deleted. Filled phone, email,
-and website are never replaced with blank. Ages, fees, photos, open spots,
-and Live/claim fields are not taken from the CSV.
+and website are never replaced with blank. Fees, photos, open spots,
+and Live/claim fields are not taken from the master CSV.
+
+Approved ages come from data/ops/ages-sourced-20261002.csv, matched by listing id.
+That file sets age_min_months, age_max_months, ages_confirmed = 1, ages_source,
+and ages_source_url. It never overwrites ages_confirmed = 1, a claimed listing,
+or an owner-linked listing, and it never blanks an age range that is already filled.
 
 With a master CSV, mx- rows whose facility_id is gone are hidden
 (listing_active = 0, import_fault = removed_from_master). That is the default.
@@ -108,8 +114,9 @@ above the safety cap, the seed stops and writes nothing. --no-hide-stale skips
 that step. A dry-run with DATABASE_URL prints the count and does not write.
 
 Claimed, provider-owned, and staffed listings are left unchanged by the upsert.
-/api/seed-catalog does not read the private CSV — use this script for the
-master close. Never pass secrets on the query string; Authorization: Bearer
+/api/seed-catalog does not read the private master CSV. Use this script for the
+master close. Both paths apply the approved ages file when it is on disk.
+Never pass secrets on the query string; Authorization: Bearer
 $CRON_SECRET is the HTTP seed.
 `;
 }
@@ -164,11 +171,18 @@ async function defaultLoadCatalog() {
 
 export async function prepareCatalogRows(opts, loadCatalog = defaultLoadCatalog, loadMaster = loadMasterText) {
   const catalog = catalogRowsForSeed(await loadCatalog());
+  const ages = await loadSourcedAges({ required: true, rootDir: root });
   const masterText = await loadMaster(opts.masterCsvPath);
   if (!masterText) {
-    return { rows: catalog, masterKeys: 0, enriched: 0, summary: null };
+    return {
+      rows: catalog.map((row) => stampSourcedAge(row, ages)),
+      masterKeys: 0,
+      enriched: 0,
+      summary: null,
+      sourcedAges: ages.size,
+    };
   }
-  const plan = syncMasterCatalogue(catalog, masterText);
+  const plan = syncMasterCatalogue(catalog, masterText, ages);
   const rows = catalogRowsForSeed(plan.rows);
   if (rows.length < catalog.length) {
     throw new Error("seed catalogue shrank while applying the master");
@@ -178,6 +192,7 @@ export async function prepareCatalogRows(opts, loadCatalog = defaultLoadCatalog,
     masterKeys: plan.summary.masterRows,
     enriched: plan.summary.contactsFilled,
     summary: plan.summary,
+    sourcedAges: ages.size,
   };
 }
 
@@ -263,7 +278,7 @@ async function main() {
 
     const summary = prepared.summary;
     console.log(
-      `[seed-catalog] rows=${total} offset=${offset} stop=${stopAt} chunk=${chunk} dryRun=${opts.dryRun} masterKeys=${prepared.masterKeys} enriched=${prepared.enriched}`,
+      `[seed-catalog] rows=${total} offset=${offset} stop=${stopAt} chunk=${chunk} dryRun=${opts.dryRun} masterKeys=${prepared.masterKeys} enriched=${prepared.enriched} sourcedAges=${prepared.sourcedAges ?? 0}`,
     );
     if (summary) {
       console.log(
