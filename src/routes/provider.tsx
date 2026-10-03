@@ -67,6 +67,7 @@ import { ProviderPlanBanner } from "@/components/provider-plan-banner";
 import { PayCtas, useShowPayCtas } from "@/components/pay-chrome";
 import { FreePageExplainer } from "@/components/free-listing-share";
 import { CompletenessChecklist } from "@/components/listing-completeness";
+import { ClaimProgressMeter } from "@/components/claim-progress-meter";
 import { ActionRequiredBanner, ListingReadinessCoach } from "@/components/listing-readiness-coach";
 import { COACH_FOCUS_ANCHOR, type ListingCoachFocus } from "@/lib/listing-verified";
 import { DemandCues } from "@/components/rank-cues";
@@ -505,6 +506,7 @@ function ProviderPage() {
                   </div>
                 </dl>
                 <DemandCues snapshot={st?.demand} />
+                <ClaimProgressMeter item={d} />
                 <CompletenessChecklist item={d} />
                 {declined ? (
                   <p className="mt-4 rounded-lg bg-danger/10 p-3 text-sm text-danger">

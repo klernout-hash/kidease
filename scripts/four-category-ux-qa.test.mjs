@@ -33,7 +33,7 @@ test("Guest: live vs all counts, empty-search lead, and listing login handoff", 
   assert.match(src("src/lib/copy.ts"), /proWhyTitle: "Get more families with Pro"/);
   assert.match(search, /data-ke="search-result-list"/);
   assert.match(search, /areaPresence\(catalog\)/);
-  assert.match(search, /parentLoginSearch\("\/search"\)/);
+  assert.match(search, /parentSignupSearch\("\/search", "alerts"\)/);
   const listing = src("src/routes/daycare.$slug.tsx");
   assert.match(listing, /ownEdit \? <CompletenessBanner/);
   assert.match(listing, /ask === "tour"/);
@@ -59,7 +59,7 @@ test("Parent: request empty copy, inbox subtitle, and search ↔ child wayfindin
   assert.doesNotMatch(inbox, /items && items.length \? <p className="mt-2 text-sm text-muted">\{t\("noInboxLead"\)\}/);
   const search = src("src/routes/search.tsx");
   assert.match(search, /changeLocation/);
-  assert.match(search, /parentLoginSearch\("\/search"\)/);
+  assert.match(search, /parentSignupSearch\("\/search", "alerts"\)/);
   assert.match(src("src/lib/copy.ts"), /wayfindChildProfile/);
   const card = src("src/components/child-care-card.tsx");
   assert.match(card, /tab: "children"/);

@@ -2691,5 +2691,17 @@
   "navSystem": "系统",
   "faqShort": "常见问题",
   "navFindCare": "找托儿",
-  "navForDaycares": "托儿所"
+  "navForDaycares": "托儿所",
+  "claimFreeListing": "认领您的免费名录",
+  "signupWhySave": "把这家托儿所存到家长账户。邮箱或 Google，一步完成。您的清单会跟着您。",
+  "signupWhyWaitlist": "加入候补名单，托儿所才能给您留位置。邮箱或 Google，一步完成。候补不收费。",
+  "signupWhyAlerts": "保存这次搜索，有匹配的空位时通知您。邮箱或 Google，一步完成。",
+  "signupWhyMessage": "用您的账户给这家托儿所发消息。邮箱或 Google，一步完成。之后您会回到这里。",
+  "claimProgressTitle": "完善您的名录",
+  "claimProgressLead": "家长会看这四项。只填写真实信息。",
+  "claimProgressPhotos": "照片",
+  "claimProgressFees": "费用",
+  "claimProgressAges": "年龄",
+  "claimProgressSpots": "空位",
+  "guestShortlistCarried": "已保存的托儿所已在您的账户里。"
 }

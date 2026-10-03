@@ -4,7 +4,9 @@ import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { getWaitlistInterest, setWaitlistInterest } from "@/lib/server/waitlist-api";
-import { parentLoginSearch } from "@/lib/auth/parent-login";
+import { parentSignupSearch } from "@/lib/auth/parent-login";
+import { capturePostHogEvent } from "@/lib/posthog";
+import { SIGNUP_FUNNEL_EVENT, signupFunnelPayload, signupPromptStep } from "@/lib/signup-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import { subsidyEstimatorUrl } from "@/lib/licensing";
@@ -45,7 +47,9 @@ export function WaitlistOptIn({
 
   function onToggle() {
     if (!user) {
-      void navigate({ to: "/login", search: parentLoginSearch(next ?? "/search") });
+      capturePostHogEvent(SIGNUP_FUNNEL_EVENT, signupFunnelPayload(signupPromptStep("waitlist"), { source: "listing" }));
+      toast.message(t("signupWhyWaitlist"));
+      void navigate({ to: "/login", search: parentSignupSearch(next ?? "/search", "waitlist") });
       return;
     }
     setBusy(true);
@@ -56,7 +60,7 @@ export function WaitlistOptIn({
       })
       .catch((err) => {
         toast.error(err instanceof Error ? err.message : t("needSignIn"));
-        void navigate({ to: "/login", search: parentLoginSearch(next ?? "/search") });
+        void navigate({ to: "/login", search: parentSignupSearch(next ?? "/search", "waitlist") });
       })
       .finally(() => setBusy(false));
   }

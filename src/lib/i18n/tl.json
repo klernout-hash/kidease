@@ -2691,5 +2691,17 @@
   "navSystem": "Sistema",
   "faqShort": "FAQ",
   "navFindCare": "Humanap ng alaga",
-  "navForDaycares": "Para sa daycare"
+  "navForDaycares": "Para sa daycare",
+  "claimFreeListing": "Kunin ang iyong libreng listahan",
+  "signupWhySave": "I-save ang daycare na ito sa account ng magulang. Email o Google, isang hakbang. Kasama mo ang iyong listahan.",
+  "signupWhyWaitlist": "Sumali sa waitlist para makapag-alok ng puwesto ang daycare. Email o Google, isang hakbang. Walang bayad sa waitlist.",
+  "signupWhyAlerts": "I-save ang paghahanap na ito at malaman kapag may tumugmang puwesto. Email o Google, isang hakbang.",
+  "signupWhyMessage": "Magmensahe sa daycare na ito mula sa iyong account. Email o Google, isang hakbang. Babalik ka rito pagkatapos.",
+  "claimProgressTitle": "Tapusin ang iyong listahan",
+  "claimProgressLead": "Hinahanap ng mga magulang ang apat na ito. Ilagay lang ang totoo.",
+  "claimProgressPhotos": "Mga larawan",
+  "claimProgressFees": "Bayad",
+  "claimProgressAges": "Edad",
+  "claimProgressSpots": "Bakanteng puwesto",
+  "guestShortlistCarried": "Ang mga na-save na sentro ay nasa iyong account."
 }

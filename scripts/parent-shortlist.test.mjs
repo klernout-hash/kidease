@@ -84,7 +84,8 @@ test("listing detail and cards save or remove, guests keep intent", () => {
   assert.match(listing, /appearance="ghost"/);
   assert.match(listing, /appearance="bar"/);
   assert.match(button, /stashPendingSave/);
-  assert.match(button, /parentLoginSearch/);
+  assert.match(button, /parentSignupSearch/);
+  assert.match(button, /addGuestShortlist/);
   assert.match(button, /saveDaycare/);
   assert.match(button, /unsaveDaycare/);
   assert.match(apply, /takePendingSave/);
