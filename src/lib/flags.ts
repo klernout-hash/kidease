@@ -27,6 +27,8 @@ export const FEATURE_FLAG_KEYS = [
   "FOUNDING_BADGE_ENABLED",
   "FEATURE_OPEN_SPOT_ALERTS",
   "FEATURE_SPOT_OFFER_MAIL",
+  "FEATURE_OPEN_SPOTS_CHECKIN_MAIL",
+  "FEATURE_OPEN_SPOTS_CHECKIN_SMS",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -72,6 +74,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FOUNDING_BADGE_ENABLED: true,
   FEATURE_OPEN_SPOT_ALERTS: false,
   FEATURE_SPOT_OFFER_MAIL: false,
+  FEATURE_OPEN_SPOTS_CHECKIN_MAIL: false,
+  FEATURE_OPEN_SPOTS_CHECKIN_SMS: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -146,6 +150,18 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary: "Email when a daycare sends a 48-hour spot offer. Default off. The offer still shows in the parent account.",
+  },
+  {
+    key: "FEATURE_OPEN_SPOTS_CHECKIN_MAIL",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Weekly open-spots email to claimed daycares. Default off. No send until this is on.",
+  },
+  {
+    key: "FEATURE_OPEN_SPOTS_CHECKIN_SMS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Weekly open-spots SMS. Default off. Also needs FEATURE_SMS. Toll-free is not approved.",
   },
 ];
 

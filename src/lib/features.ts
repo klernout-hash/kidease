@@ -86,6 +86,19 @@ export function spotOfferMailEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_SPOT_OFFER_MAIL", env);
 }
 
+/** Weekly "any open spots?" email. Default OFF. No send while this is off. */
+export function openSpotsCheckinMailEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_OPEN_SPOTS_CHECKIN_MAIL", env);
+}
+
+/**
+ * Weekly open-spots SMS. Default OFF. sendSms still requires FEATURE_SMS,
+ * CASL consent, and Twilio. Toll-free is not approved yet.
+ */
+export function openSpotsCheckinSmsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_OPEN_SPOTS_CHECKIN_SMS", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;

@@ -72,6 +72,7 @@ import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiE2eSeedRouteImport } from './routes/api/e2e-seed'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiInngestRouteImport } from './routes/api/inngest'
+import { Route as ApiOpenSpotsCheckinRouteImport } from './routes/api/open-spots-checkin'
 import { Route as ApiProvincialVacancyRouteImport } from './routes/api/provincial-vacancy'
 import { Route as ApiRankingMarketRouteImport } from './routes/api/ranking-market'
 import { Route as ApiScreeningDocumentsRouteImport } from './routes/api/screening-documents'
@@ -112,6 +113,7 @@ import { Route as PayIndexRouteImport } from './routes/pay.index'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
 import { Route as ProviderSubscriptionRouteImport } from './routes/provider.subscription'
 import { Route as SignIdRouteImport } from './routes/sign.$id'
+import { Route as SpotsTokenRouteImport } from './routes/spots.$token'
 import { Route as SupportCaseIdRouteImport } from './routes/support.$caseId'
 import { Route as VideoRoomIdRouteImport } from './routes/video.$roomId'
 import { Route as ApiAdminContractsRouteImport } from './routes/api/admin.contracts'
@@ -453,6 +455,11 @@ const ApiInngestRoute = ApiInngestRouteImport.update({
   path: '/api/inngest',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiOpenSpotsCheckinRoute = ApiOpenSpotsCheckinRouteImport.update({
+  id: '/api/open-spots-checkin',
+  path: '/api/open-spots-checkin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiProvincialVacancyRoute = ApiProvincialVacancyRouteImport.update({
   id: '/api/provincial-vacancy',
   path: '/api/provincial-vacancy',
@@ -653,6 +660,11 @@ const SignIdRoute = SignIdRouteImport.update({
   path: '/sign/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SpotsTokenRoute = SpotsTokenRouteImport.update({
+  id: '/spots/$token',
+  path: '/spots/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SupportCaseIdRoute = SupportCaseIdRouteImport.update({
   id: '/$caseId',
   path: '/$caseId',
@@ -839,6 +851,7 @@ export interface FileRoutesByFullPath {
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
+  '/api/open-spots-checkin': typeof ApiOpenSpotsCheckinRoute
   '/api/provincial-vacancy': typeof ApiProvincialVacancyRoute
   '/api/ranking-market': typeof ApiRankingMarketRoute
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
@@ -877,6 +890,7 @@ export interface FileRoutesByFullPath {
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/sign/$id': typeof SignIdRoute
+  '/spots/$token': typeof SpotsTokenRoute
   '/support/$caseId': typeof SupportCaseIdRoute
   '/video/$roomId': typeof VideoRoomIdRoute
   '/fr/': typeof FrIndexRoute
@@ -966,6 +980,7 @@ export interface FileRoutesByTo {
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
+  '/api/open-spots-checkin': typeof ApiOpenSpotsCheckinRoute
   '/api/provincial-vacancy': typeof ApiProvincialVacancyRoute
   '/api/ranking-market': typeof ApiRankingMarketRoute
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
@@ -1004,6 +1019,7 @@ export interface FileRoutesByTo {
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/sign/$id': typeof SignIdRoute
+  '/spots/$token': typeof SpotsTokenRoute
   '/support/$caseId': typeof SupportCaseIdRoute
   '/video/$roomId': typeof VideoRoomIdRoute
   '/fr': typeof FrIndexRoute
@@ -1096,6 +1112,7 @@ export interface FileRoutesById {
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
+  '/api/open-spots-checkin': typeof ApiOpenSpotsCheckinRoute
   '/api/provincial-vacancy': typeof ApiProvincialVacancyRoute
   '/api/ranking-market': typeof ApiRankingMarketRoute
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
@@ -1134,6 +1151,7 @@ export interface FileRoutesById {
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/sign/$id': typeof SignIdRoute
+  '/spots/$token': typeof SpotsTokenRoute
   '/support/$caseId': typeof SupportCaseIdRoute
   '/video/$roomId': typeof VideoRoomIdRoute
   '/fr/': typeof FrIndexRoute
@@ -1227,6 +1245,7 @@ export interface FileRouteTypes {
     | '/api/e2e-seed'
     | '/api/health'
     | '/api/inngest'
+    | '/api/open-spots-checkin'
     | '/api/provincial-vacancy'
     | '/api/ranking-market'
     | '/api/screening-documents'
@@ -1265,6 +1284,7 @@ export interface FileRouteTypes {
     | '/pay/$bookingId'
     | '/provider/subscription'
     | '/sign/$id'
+    | '/spots/$token'
     | '/support/$caseId'
     | '/video/$roomId'
     | '/fr/'
@@ -1354,6 +1374,7 @@ export interface FileRouteTypes {
     | '/api/e2e-seed'
     | '/api/health'
     | '/api/inngest'
+    | '/api/open-spots-checkin'
     | '/api/provincial-vacancy'
     | '/api/ranking-market'
     | '/api/screening-documents'
@@ -1392,6 +1413,7 @@ export interface FileRouteTypes {
     | '/pay/$bookingId'
     | '/provider/subscription'
     | '/sign/$id'
+    | '/spots/$token'
     | '/support/$caseId'
     | '/video/$roomId'
     | '/fr'
@@ -1483,6 +1505,7 @@ export interface FileRouteTypes {
     | '/api/e2e-seed'
     | '/api/health'
     | '/api/inngest'
+    | '/api/open-spots-checkin'
     | '/api/provincial-vacancy'
     | '/api/ranking-market'
     | '/api/screening-documents'
@@ -1521,6 +1544,7 @@ export interface FileRouteTypes {
     | '/pay/$bookingId'
     | '/provider/subscription'
     | '/sign/$id'
+    | '/spots/$token'
     | '/support/$caseId'
     | '/video/$roomId'
     | '/fr/'
@@ -1612,6 +1636,7 @@ export interface RootRouteChildren {
   ApiE2eSeedRoute: typeof ApiE2eSeedRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiInngestRoute: typeof ApiInngestRoute
+  ApiOpenSpotsCheckinRoute: typeof ApiOpenSpotsCheckinRoute
   ApiProvincialVacancyRoute: typeof ApiProvincialVacancyRoute
   ApiRankingMarketRoute: typeof ApiRankingMarketRoute
   ApiScreeningDocumentsRoute: typeof ApiScreeningDocumentsRouteWithChildren
@@ -1629,6 +1654,7 @@ export interface RootRouteChildren {
   ListingSlugRoute: typeof ListingSlugRoute
   OfferTokenRoute: typeof OfferTokenRoute
   SignIdRoute: typeof SignIdRoute
+  SpotsTokenRoute: typeof SpotsTokenRoute
   VideoRoomIdRoute: typeof VideoRoomIdRoute
   ApiAdminContractsRoute: typeof ApiAdminContractsRoute
   ApiAdminEmailSuppressionsRoute: typeof ApiAdminEmailSuppressionsRoute
@@ -2092,6 +2118,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiInngestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/open-spots-checkin': {
+      id: '/api/open-spots-checkin'
+      path: '/api/open-spots-checkin'
+      fullPath: '/api/open-spots-checkin'
+      preLoaderRoute: typeof ApiOpenSpotsCheckinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/provincial-vacancy': {
       id: '/api/provincial-vacancy'
       path: '/api/provincial-vacancy'
@@ -2370,6 +2403,13 @@ declare module '@tanstack/react-router' {
       path: '/sign/$id'
       fullPath: '/sign/$id'
       preLoaderRoute: typeof SignIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/spots/$token': {
+      id: '/spots/$token'
+      path: '/spots/$token'
+      fullPath: '/spots/$token'
+      preLoaderRoute: typeof SpotsTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/support/$caseId': {
@@ -2737,6 +2777,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiE2eSeedRoute: ApiE2eSeedRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiInngestRoute: ApiInngestRoute,
+  ApiOpenSpotsCheckinRoute: ApiOpenSpotsCheckinRoute,
   ApiProvincialVacancyRoute: ApiProvincialVacancyRoute,
   ApiRankingMarketRoute: ApiRankingMarketRoute,
   ApiScreeningDocumentsRoute: ApiScreeningDocumentsRouteWithChildren,
@@ -2754,6 +2795,7 @@ const rootRouteChildren: RootRouteChildren = {
   ListingSlugRoute: ListingSlugRoute,
   OfferTokenRoute: OfferTokenRoute,
   SignIdRoute: SignIdRoute,
+  SpotsTokenRoute: SpotsTokenRoute,
   VideoRoomIdRoute: VideoRoomIdRoute,
   ApiAdminContractsRoute: ApiAdminContractsRoute,
   ApiAdminEmailSuppressionsRoute: ApiAdminEmailSuppressionsRoute,
