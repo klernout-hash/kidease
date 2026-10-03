@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound, redirect, useNavigate, useParams, useSearch, useLoaderData } from "@tanstack/react-router";
 import { MapPinned, MessageCircle, Star } from "lucide-react";
-import { parentLoginSearch } from "@/lib/auth/parent-login";
+import { parentLoginSearch, parentSignupSearch } from "@/lib/auth/parent-login";
 import { ShareListingButton } from "@/components/share-button";
 import { FreeListingShareActions } from "@/components/free-listing-share";
 import { useEffect, useState } from "react";
@@ -37,6 +37,7 @@ import {
 } from "@/lib/listing-seo";
 import { ListingCultureCard } from "@/components/listing-culture-card";
 import { SaveListingButton } from "@/components/save-listing-button";
+import { ClaimListingCta } from "@/components/claim-listing-cta";
 import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
 import { amenityLabel } from "@/lib/amenities";
@@ -49,6 +50,7 @@ import type { CopyKey } from "@/lib/copy";
 import { hasCompare, toggleCompareItem } from "@/lib/compare";
 import { ListingMoreActions, ListingMoreItem } from "@/components/listing-more-actions";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { SIGNUP_FUNNEL_EVENT, signupFunnelPayload, signupPromptStep } from "@/lib/signup-funnel";
 import { formatMonthlyFee, listingFeeNotes } from "@/lib/public-programs";
 import { liveLookingOnly } from "@/lib/now-loops";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
@@ -160,18 +162,8 @@ export const Route = createFileRoute("/daycare/$slug")({
   component: Listing,
 });
 
-function ClaimListingButton({ name, className = "" }: { name: string; className?: string }) {
-  const { t } = useCopy();
-  return (
-    <Link
-      to="/claim"
-      search={{ q: name }}
-      data-ke="listing-claim-button"
-      className={`inline-flex min-h-11 items-center justify-center rounded-[14px] bg-[#1f9d55] px-4 text-sm font-semibold text-white shadow-card hover:bg-[#187a43] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f9d55]/50 ${className}`}
-    >
-      {t("claimListingFrame")}
-    </Link>
-  );
+function ClaimListingButton({ id, name, className = "" }: { id: string; name: string; className?: string }) {
+  return <ClaimListingCta daycareId={id} name={name} source="listing" className={className} />;
 }
 
 export function Listing() {
@@ -502,7 +494,12 @@ export function Listing() {
 
   function onMessage() {
     if (!user) {
-      goLogin("needSignInMessage");
+      capturePostHogEvent(SIGNUP_FUNNEL_EVENT, signupFunnelPayload(signupPromptStep("message"), { source: "listing" }));
+      toast.message(t("signupWhyMessage"));
+      void navigate({
+        to: "/login",
+        search: parentSignupSearch(`/daycare/${slug}`, "message"),
+      });
       return;
     }
     captureMarketplaceFunnel({ step: "contact", source: "listing", dest_path: "/daycare", contact: "message" });
@@ -545,7 +542,7 @@ export function Listing() {
         {offerClaim ? (
           <Link
             to="/claim"
-            search={{ q: name }}
+            search={{ id: d.id, q: name }}
             role="menuitem"
             className="flex min-h-11 items-center px-3 text-sm font-medium text-primary hover:bg-surface-2"
           >
@@ -716,8 +713,8 @@ export function Listing() {
           ) : null}
           <ListingHeaderPills item={d} agesLabel={agesLabel} hours={hours} feeFrom={from} />
           {offerClaim ? (
-            <div className="mt-3">
-              <ClaimListingButton name={name} />
+            <div className="mt-3" data-ke="listing-claim-button">
+              <ClaimListingButton id={d.id} name={name} />
             </div>
           ) : null}
           <ListingBadges item={ranked} compact feeOnly />
@@ -744,8 +741,8 @@ export function Listing() {
             {offerClaim ? (
               <p className="text-sm" data-ke="listing-claim-prompt">
                 {t("isThisYours")}{" "}
-                <Link to="/claim" search={{ q: name }} className="text-primary underline-offset-4 hover:underline">
-                  {t("claimThisFreePage")}
+                <Link to="/claim" search={{ id: d.id, q: name }} className="text-primary underline-offset-4 hover:underline">
+                  {t("claimFreeListing")}
                 </Link>
               </p>
             ) : null}
@@ -1015,7 +1012,7 @@ export function Listing() {
             </p>
         </div>
         <aside className="ke-panel hidden h-fit px-4 py-4 shadow-card lg:sticky lg:top-20 lg:block">
-          {offerClaim ? <ClaimListingButton name={name} className="mb-3 w-full" /> : null}
+          {offerClaim ? <ClaimListingButton id={d.id} name={name} className="mb-3 w-full" /> : null}
           <ListingCtaSnippet live={live} from={from} hours={hours} prominent />
           <p className="mt-1 text-sm text-muted">{live ? t("listingCtaLead") : t("guestListingTrust")}</p>
           {!user && live ? <p className="mt-1 text-xs text-subtle">{t("guestBrowse")}</p> : null}
@@ -1060,7 +1057,7 @@ export function Listing() {
             </div>
           ) : null}
           {parentActions && !live && offerClaim ? (
-            <ClaimListingButton name={name} className="h-12 min-h-12 flex-1" />
+            <ClaimListingButton id={d.id} name={name} className="h-12 min-h-12 flex-1" />
           ) : null}
           {parentActions && !live ? (
             <Button className="h-12 min-h-12 flex-1 rounded-[14px]" data-ke="listing-sticky-cta" asChild>

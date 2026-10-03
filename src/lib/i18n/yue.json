@@ -2691,5 +2691,17 @@
   "navSystem": "系統",
   "faqShort": "常見問題",
   "navFindCare": "搵托兒",
-  "navForDaycares": "托兒所"
+  "navForDaycares": "托兒所",
+  "claimFreeListing": "認領你嘅免費名單",
+  "signupWhySave": "將呢間托兒所存入家長帳戶。電郵或者 Google，一步搞掂。你嘅清單會跟住你。",
+  "signupWhyWaitlist": "加入輪候名單，托兒所先可以留位畀你。電郵或者 Google，一步搞掂。輪候唔收費。",
+  "signupWhyAlerts": "儲存呢次搜尋，有相符空位時通知你。電郵或者 Google，一步搞掂。",
+  "signupWhyMessage": "用你嘅帳戶聯絡呢間托兒所。電郵或者 Google，一步搞掂。之後你會返到呢度。",
+  "claimProgressTitle": "完善你嘅名單",
+  "claimProgressLead": "家長會睇呢四樣。只填真實資料。",
+  "claimProgressPhotos": "相片",
+  "claimProgressFees": "收費",
+  "claimProgressAges": "年齡",
+  "claimProgressSpots": "空位",
+  "guestShortlistCarried": "已儲存嘅托兒所已喺你嘅帳戶。"
 }

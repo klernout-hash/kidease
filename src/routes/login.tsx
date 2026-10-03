@@ -55,11 +55,27 @@ import {
   releaseStuckLogin,
 } from "@/lib/auth/login-stall";
 import { socialSignupCallbackPath } from "@/lib/auth/social-callback";
+import { capturePostHogEvent } from "@/lib/posthog";
+import { isSignupWhy, SIGNUP_FUNNEL_EVENT, signupFunnelPayload, type SignupWhy } from "@/lib/signup-funnel";
+import type { CopyKey } from "@/lib/copy";
 
 type Role = "parent" | "provider" | "admin";
 type DeskAlias = "parent" | "director" | "centre" | "admin" | "support" | "provider";
 
-export type LoginSearch = { next?: string; role?: Role; intent?: "in" | "up" | "admin"; desk?: DeskAlias };
+export type LoginSearch = {
+  next?: string;
+  role?: Role;
+  intent?: "in" | "up" | "admin";
+  desk?: DeskAlias;
+  why?: SignupWhy;
+};
+
+const WHY_LEAD: Record<SignupWhy, CopyKey> = {
+  save: "signupWhySave",
+  waitlist: "signupWhyWaitlist",
+  alerts: "signupWhyAlerts",
+  message: "signupWhyMessage",
+};
 
 const OPERATOR_EMAIL = KIDEASE_OPERATOR_EMAIL;
 
@@ -69,6 +85,7 @@ export function loginValidateSearch(s: Record<string, unknown>): LoginSearch {
   if (next) out.next = next;
   if (s.role === "parent" || s.role === "provider" || s.role === "admin") out.role = s.role;
   if (s.intent === "in" || s.intent === "up" || s.intent === "admin") out.intent = s.intent;
+  if (isSignupWhy(s.why)) out.why = s.why;
   const desk = parseDeskQuery(typeof s.desk === "string" ? s.desk : "");
   if (desk) out.desk = deskQueryValue(desk);
   return out;
@@ -280,6 +297,9 @@ export function LoginScreen({
         throw new Error("Please complete the security check, then try again.");
       }
       captureLoginFunnel({ step: "submitted", method: "email", native: isNative() });
+      if (search.why && mode === "up") {
+        capturePostHogEvent(SIGNUP_FUNNEL_EVENT, signupFunnelPayload("email_continue", { source: "login" }));
+      }
       // Operator / Admin idle recovery must mint a new session.createdAt so
       // assertAdminIdleFresh can bootstrap the idle cookie after password entry.
       if (user || operator || urlOperator) {
@@ -334,6 +354,9 @@ export function LoginScreen({
     if (role === "parent" || role === "provider") rememberRole(role);
     try {
       captureLoginFunnel({ step: "submitted", method: "social", native: isNative() });
+      if (search.why && providerId.includes("google")) {
+        capturePostHogEvent(SIGNUP_FUNNEL_EVENT, signupFunnelPayload("google_continue", { source: "login" }));
+      }
       captureLoginFunnel({
         step: "dest_resolved",
         dest_kind: postLoginDestKind(dest),
@@ -368,7 +391,10 @@ export function LoginScreen({
   const title =
     role === "provider" ? t("providerSignIn") : role === "parent" ? t("parentSignIn") : t("signIn");
   const nextPath = (search.next || "").split("?")[0] || "";
-  const lead = nextPath.startsWith("/daycare/")
+  const whyLead = search.why ? t(WHY_LEAD[search.why]) : "";
+  const lead = whyLead
+      ? whyLead
+      : nextPath.startsWith("/daycare/")
       ? t("loginLeadListing")
       : nextPath === "/search"
         ? t("loginLeadSearchSave")

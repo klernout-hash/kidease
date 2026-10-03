@@ -2691,5 +2691,17 @@
   "navSystem": "System",
   "faqShort": "FAQ",
   "navFindCare": "Betreuung finden",
-  "navForDaycares": "Für Kitas"
+  "navForDaycares": "Für Kitas",
+  "claimFreeListing": "Fordern Sie Ihren kostenlosen Eintrag an",
+  "signupWhySave": "Speichern Sie diese Kita in einem Elternkonto. E-Mail oder Google, ein Schritt. Ihre Liste kommt mit.",
+  "signupWhyWaitlist": "Treten Sie dieser Warteliste bei, damit die Kita einen Platz anbieten kann. E-Mail oder Google, ein Schritt. Keine Wartelistengebühr.",
+  "signupWhyAlerts": "Speichern Sie diese Suche und erfahren Sie, wenn ein passender Platz erscheint. E-Mail oder Google, ein Schritt.",
+  "signupWhyMessage": "Schreiben Sie dieser Kita aus Ihrem Konto. E-Mail oder Google, ein Schritt. Danach kommen Sie hierher zurück.",
+  "claimProgressTitle": "Eintrag fertigstellen",
+  "claimProgressLead": "Eltern suchen diese vier Angaben. Tragen Sie nur ein, was stimmt.",
+  "claimProgressPhotos": "Fotos",
+  "claimProgressFees": "Gebühren",
+  "claimProgressAges": "Alter",
+  "claimProgressSpots": "Freie Plätze",
+  "guestShortlistCarried": "Gespeicherte Kitas sind auf Ihrem Konto."
 }

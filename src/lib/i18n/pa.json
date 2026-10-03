@@ -2691,5 +2691,17 @@
   "navSystem": "ਸਿਸਟਮ",
   "faqShort": "ਸਵਾਲ",
   "navFindCare": "ਦੇਖਭਾਲ ਲੱਭੋ",
-  "navForDaycares": "ਡੇਅਕੇਅਰਾਂ ਲਈ"
+  "navForDaycares": "ਡੇਅਕੇਅਰਾਂ ਲਈ",
+  "claimFreeListing": "ਆਪਣੀ ਮੁਫ਼ਤ ਸੂਚੀ ਦਾ ਦਾਅਵਾ ਕਰੋ",
+  "signupWhySave": "ਇਸ ਡੇਅਕੇਅਰ ਨੂੰ ਮਾਪੇ ਖਾਤੇ ਵਿੱਚ ਸੰਭਾਲੋ। ਈਮੇਲ ਜਾਂ Google, ਇੱਕ ਕਦਮ। ਤੁਹਾਡੀ ਸੂਚੀ ਤੁਹਾਡੇ ਨਾਲ ਆਉਂਦੀ ਹੈ।",
+  "signupWhyWaitlist": "ਇਸ ਉਡੀਕ ਸੂਚੀ ਵਿੱਚ ਸ਼ਾਮਲ ਹੋਵੋ ਤਾਂ ਡੇਅਕੇਅਰ ਥਾਂ ਦੇ ਸਕੇ। ਈਮੇਲ ਜਾਂ Google, ਇੱਕ ਕਦਮ। ਉਡੀਕ ਸੂਚੀ ਦੀ ਫੀਸ ਨਹੀਂ।",
+  "signupWhyAlerts": "ਇਹ ਖੋਜ ਸੰਭਾਲੋ ਅਤੇ ਮਿਲਦੀ ਥਾਂ ਆਉਣ ਤੇ ਸੁਣੋ। ਈਮੇਲ ਜਾਂ Google, ਇੱਕ ਕਦਮ।",
+  "signupWhyMessage": "ਆਪਣੇ ਖਾਤੇ ਤੋਂ ਇਸ ਡੇਅਕੇਅਰ ਨੂੰ ਸੁਨੇਹਾ ਭੇਜੋ। ਈਮੇਲ ਜਾਂ Google, ਇੱਕ ਕਦਮ। ਬਾਅਦ ਵਿੱਚ ਤੁਸੀਂ ਇੱਥੇ ਵਾਪਸ ਆਓਗੇ।",
+  "claimProgressTitle": "ਆਪਣੀ ਸੂਚੀ ਪੂਰੀ ਕਰੋ",
+  "claimProgressLead": "ਮਾਪੇ ਇਹ ਚਾਰ ਗੱਲਾਂ ਦੇਖਦੇ ਹਨ। ਸਿਰਫ਼ ਸੱਚ ਲਿਖੋ।",
+  "claimProgressPhotos": "ਫੋਟੋਆਂ",
+  "claimProgressFees": "ਫੀਸ",
+  "claimProgressAges": "ਉਮਰਾਂ",
+  "claimProgressSpots": "ਖਾਲੀ ਥਾਵਾਂ",
+  "guestShortlistCarried": "ਸੰਭਾਲੇ ਕੇਂਦਰ ਤੁਹਾਡੇ ਖਾਤੇ ਵਿੱਚ ਹਨ।"
 }

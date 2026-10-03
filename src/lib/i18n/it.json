@@ -2691,5 +2691,17 @@
   "navSystem": "Sistema",
   "faqShort": "FAQ",
   "navFindCare": "Trova un posto",
-  "navForDaycares": "Per gli asili"
+  "navForDaycares": "Per gli asili",
+  "claimFreeListing": "Richiedi la tua scheda gratuita",
+  "signupWhySave": "Salva questo asilo su un account genitore. Email o Google, un passo. La lista ti segue.",
+  "signupWhyWaitlist": "Entra in questa lista d'attesa così l'asilo può offrirti un posto. Email o Google, un passo. Nessun costo di lista.",
+  "signupWhyAlerts": "Salva questa ricerca e sappi quando viene pubblicato un posto adatto. Email o Google, un passo.",
+  "signupWhyMessage": "Scrivi a questo asilo dal tuo account. Email o Google, un passo. Tornerai qui dopo.",
+  "claimProgressTitle": "Completa la scheda",
+  "claimProgressLead": "I genitori cercano questi quattro fatti. Aggiungi solo ciò che è vero.",
+  "claimProgressPhotos": "Foto",
+  "claimProgressFees": "Tariffe",
+  "claimProgressAges": "Età",
+  "claimProgressSpots": "Posti liberi",
+  "guestShortlistCarried": "Gli asili salvati sono sul tuo account."
 }
