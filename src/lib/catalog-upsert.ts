@@ -4,6 +4,10 @@
  * Claimed rows, and any row a provider owns, has a claim on, or staffs,
  * are left alone so open spots and profile edits survive later imports.
  * Filled phone / email / website are never replaced with blank.
+ * Sourced ages (data/ops/ages-sourced-20261002.csv) are matched by listing id
+ * before this upsert. ages_confirmed = 1, claimed rows, and owner-edited ages
+ * are never replaced with 0 or catalogue defaults. A filled age range, source,
+ * or source URL is never blanked. Listing d_d85jtifbkh2t is never age-written.
  */
 
 import { correctCentreNameTypos, normalizeListingSlug } from "./listing-slug.ts";
@@ -49,6 +53,10 @@ export type CatalogUpsertInput = {
   website?: string | null;
   visibility?: string | null;
   isTest?: boolean;
+  /** 1 when the approved sourced-ages file matched this listing id. */
+  agesConfirmed?: number | null;
+  agesSource?: string | null;
+  agesSourceUrl?: string | null;
 };
 
 export const CONTACT_BLANK_SAFE_SQL = `case
@@ -64,6 +72,55 @@ export const EMAIL_BLANK_SAFE_SQL = `case
 export const WEBSITE_BLANK_SAFE_SQL = `case
         when excluded.website is null or btrim(excluded.website) = '' then daycares.website
         else excluded.website
+      end`;
+
+/**
+ * Keep confirmed and protected ages. Apply a sourced range when the row is
+ * still unconfirmed. Never replace a real range with 0.
+ */
+export const AGE_MIN_PRESERVE_SQL = `case
+        when daycares.id = 'd_d85jtifbkh2t' then daycares.age_min_months
+        when coalesce(daycares.ages_confirmed, 0) = 1 then daycares.age_min_months
+        when excluded.ages_confirmed = 1 then excluded.age_min_months
+        when excluded.age_max_months > excluded.age_min_months and excluded.age_max_months > 0
+          then excluded.age_min_months
+        when daycares.age_max_months > daycares.age_min_months and daycares.age_max_months > 0
+          then daycares.age_min_months
+        else excluded.age_min_months
+      end`;
+
+export const AGE_MAX_PRESERVE_SQL = `case
+        when daycares.id = 'd_d85jtifbkh2t' then daycares.age_max_months
+        when coalesce(daycares.ages_confirmed, 0) = 1 then daycares.age_max_months
+        when excluded.ages_confirmed = 1 then excluded.age_max_months
+        when excluded.age_max_months > excluded.age_min_months and excluded.age_max_months > 0
+          then excluded.age_max_months
+        when daycares.age_max_months > daycares.age_min_months and daycares.age_max_months > 0
+          then daycares.age_max_months
+        else excluded.age_max_months
+      end`;
+
+export const AGES_CONFIRMED_PRESERVE_SQL = `case
+        when daycares.id = 'd_d85jtifbkh2t' then daycares.ages_confirmed
+        when coalesce(daycares.ages_confirmed, 0) = 1 then daycares.ages_confirmed
+        when excluded.ages_confirmed = 1 then 1
+        else coalesce(daycares.ages_confirmed, 0)
+      end`;
+
+export const AGES_SOURCE_PRESERVE_SQL = `case
+        when daycares.id = 'd_d85jtifbkh2t' then daycares.ages_source
+        when coalesce(daycares.ages_confirmed, 0) = 1 then daycares.ages_source
+        when excluded.ages_confirmed = 1 and nullif(btrim(coalesce(excluded.ages_source, '')), '') is not null
+          then excluded.ages_source
+        else daycares.ages_source
+      end`;
+
+export const AGES_SOURCE_URL_PRESERVE_SQL = `case
+        when daycares.id = 'd_d85jtifbkh2t' then daycares.ages_source_url
+        when coalesce(daycares.ages_confirmed, 0) = 1 then daycares.ages_source_url
+        when excluded.ages_confirmed = 1 and nullif(btrim(coalesce(excluded.ages_source_url, '')), '') is not null
+          then excluded.ages_source_url
+        else daycares.ages_source_url
       end`;
 
 /** Keep a filled contact when the incoming catalogue/master value is blank. */
@@ -84,10 +141,11 @@ insert into daycares (
   preschool_monthly, part_time_monthly, spots_infant, spots_toddler,
   spots_preschool, waitlist, rating_x10, review_count, license_number,
   languages, amenities, photos, verified, google_place_id, contact_email,
-  website, visibility, is_test
+  website, visibility, is_test, ages_confirmed, ages_source, ages_source_url
 ) values (
   $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,
-  $21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39
+  $21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,
+  $40,$41,$42
 )
 on conflict (id) do update set
   slug = excluded.slug,
@@ -106,8 +164,11 @@ on conflict (id) do update set
   phone = ${CONTACT_BLANK_SAFE_SQL},
   hours = excluded.hours,
   hours_fr = excluded.hours_fr,
-  age_min_months = excluded.age_min_months,
-  age_max_months = excluded.age_max_months,
+  age_min_months = ${AGE_MIN_PRESERVE_SQL},
+  age_max_months = ${AGE_MAX_PRESERVE_SQL},
+  ages_confirmed = ${AGES_CONFIRMED_PRESERVE_SQL},
+  ages_source = ${AGES_SOURCE_PRESERVE_SQL},
+  ages_source_url = ${AGES_SOURCE_URL_PRESERVE_SQL},
   infant_monthly = excluded.infant_monthly,
   toddler_monthly = excluded.toddler_monthly,
   preschool_monthly = excluded.preschool_monthly,
@@ -191,5 +252,8 @@ export function daycareUpsertParams(d: CatalogUpsertInput): unknown[] {
     d.website?.trim() || null,
     flags.visibility,
     flags.isTest,
+    d.agesConfirmed === 1 ? 1 : 0,
+    d.agesConfirmed === 1 ? d.agesSource?.trim() || null : null,
+    d.agesConfirmed === 1 ? d.agesSourceUrl?.trim() || null : null,
   ];
 }

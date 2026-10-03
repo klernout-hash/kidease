@@ -56,7 +56,7 @@ export function ListingHeaderPills({
         .join(" · "),
     );
   }
-  if (agesLabel) parts.push(`${t("ages")} ${agesLabel}`);
+  if (agesLabel) parts.push(agesLabel);
   const hoursText = hours.trim();
   if (hoursText && hoursText !== "—" && hoursText !== "-") parts.push(hoursText);
   const subsidy = listingSubsidy(item);

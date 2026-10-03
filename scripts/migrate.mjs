@@ -67,6 +67,11 @@ async function main() {
       count += 1;
     }
     console.log(count ? `[migrate] done — ${count} migration(s) applied.` : "[migrate] up to date.");
+    const { applyRecordedSourcedAges } = await import("../src/lib/sourced-ages.ts");
+    const sourced = await applyRecordedSourcedAges((text, params) => client.query(text, params));
+    if (sourced.applied) {
+      console.log(`[migrate] sourced ages updated ${sourced.updated} unclaimed unconfirmed rows`);
+    }
     const credential = await applyOperatorCredentialFromEnv(databaseUrl);
     if (credential !== "skipped") {
       console.log(`[migrate] ${credential} — unset OPERATOR_RESET_PASSWORD after sign-in works`);

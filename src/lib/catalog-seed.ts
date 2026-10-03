@@ -4,6 +4,7 @@
  */
 
 import { DAYCARE_UPSERT_SQL, daycareUpsertParams, type CatalogUpsertInput } from "./catalog-upsert.ts";
+import { loadSourcedAges, stampSourcedAge } from "./sourced-ages.ts";
 import { isAdminOnlyListing, type ListingVisibilityInput } from "./listing-visibility.ts";
 import { localCatalogMatchIds, persistLocalLicenseMatches } from "./server/license-match.ts";
 
@@ -67,7 +68,8 @@ export async function seedCatalogChunk(
   const offset = clampSeedOffset(opts.offset ?? 0, total);
   const limit = clampSeedLimit(opts.limit ?? 200);
   const concurrency = Math.max(1, Math.min(opts.concurrency ?? 24, 40));
-  const slice = rows.slice(offset, offset + limit);
+  const ages = await loadSourcedAges();
+  const slice = rows.slice(offset, offset + limit).map((row) => stampSourcedAge(row, ages));
   let upserted = 0;
   let failed = 0;
   for (let i = 0; i < slice.length; i += concurrency) {

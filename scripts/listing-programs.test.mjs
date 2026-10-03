@@ -122,13 +122,16 @@ test("known fees do not also say they are confirmed after claim", () => {
 });
 
 test("public ages use months under 2 years and years from 2 up", () => {
-  assert.equal(formatPublicAgeRange(3, 18, "en"), "3\u201318 months");
-  assert.equal(formatPublicAgeRange(30, 72, "en"), "2\u00bd\u20136 years");
-  assert.equal(formatPublicAgeRange(72, 144, "en"), "6\u201312 years");
-  assert.equal(formatPublicAgeRange(6, 72, "en"), "6 months \u2013 6 years");
-  assert.equal(formatPublicAgeRange(3, 18, "fr"), "3\u201318 mois");
-  assert.equal(formatPublicAgeRange(30, 72, "fr"), "2,5\u20136 ans");
-  assert.equal(formatPublicAgeRange(72, 144, "fr"), "6\u201312 ans");
+  assert.equal(formatPublicAgeRange(3, 18, "en"), "3 to 18 months");
+  assert.equal(formatPublicAgeRange(3, 24, "en"), "3 to 24 months");
+  assert.equal(formatPublicAgeRange(6, 36, "en"), "6 to 36 months");
+  assert.equal(formatPublicAgeRange(30, 72, "en"), "2\u00bd to 6 years");
+  assert.equal(formatPublicAgeRange(72, 144, "en"), "6 to 12 years");
+  assert.equal(formatPublicAgeRange(6, 72, "en"), "6 months to 6 years");
+  assert.equal(formatPublicAgeRange(3, 18, "fr"), "3 à 18 mois");
+  assert.equal(formatPublicAgeRange(30, 72, "fr"), "2,5 à 6 ans");
+  assert.equal(formatPublicAgeRange(72, 144, "fr"), "6 à 12 ans");
+  assert.doesNotMatch(formatPublicAgeRange(18, 144, "en"), /\u2013|\u2014/);
 });
 
 test("listing text decodes HTML entities, including a second pass", () => {

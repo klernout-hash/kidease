@@ -63,16 +63,23 @@ function rangeUnit(unit: "month" | "year", maxMonths: number, locale: "en" | "fr
 }
 
 /**
- * Months under 2 years, years from 2 up. Same unit collapses to one word:
- * "3–18 months", "2½–6 years". Mixed units keep both: "6 months – 6 years".
+ * Months while the whole range is 36 months or under ("3 to 24 months").
+ * From 2 years up, whole years share one word ("2 to 6 years").
+ * Mixed units keep both ("3 months to 12 years"). The word is "to", never a dash.
  */
 export function formatPublicAgeRange(min: number, max: number, locale: "en" | "fr" = "en"): string {
-  const a = formatAgePoint(min, locale);
-  const b = formatAgePoint(max, locale);
-  if (a.unit === b.unit && !a.mixed && !b.mixed) {
-    return `${a.label}\u2013${b.label} ${rangeUnit(b.unit, max, locale)}`;
+  const lo = Math.max(0, Math.round(min));
+  const hi = Math.max(0, Math.round(max));
+  const joiner = locale === "fr" ? "à" : "to";
+  if (hi <= 36) {
+    return `${lo} ${joiner} ${hi} ${monthWord(hi, locale)}`;
   }
-  return `${a.full} \u2013 ${b.full}`;
+  const a = formatAgePoint(lo, locale);
+  const b = formatAgePoint(hi, locale);
+  if (a.unit === b.unit && !a.mixed && !b.mixed) {
+    return `${a.label} ${joiner} ${b.label} ${rangeUnit(b.unit, hi, locale)}`;
+  }
+  return `${a.full} ${joiner} ${b.full}`;
 }
 
 export function listingAgeRangeText(
@@ -81,5 +88,7 @@ export function listingAgeRangeText(
   locale: "en" | "fr" = "en",
 ): string {
   if (!listingAgesConfirmed(item)) return "";
-  return formatPublicAgeRange(Number(item.ageMinMonths), Number(item.ageMaxMonths), locale);
+  const range = formatPublicAgeRange(Number(item.ageMinMonths), Number(item.ageMaxMonths), locale);
+  if (!range) return "";
+  return locale === "fr" ? `Âges ${range}` : `Ages ${range}`;
 }

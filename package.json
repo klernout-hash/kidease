@@ -16,7 +16,7 @@
   "scripts": {
     "dev": "vite dev --host 0.0.0.0 --port 8080",
     "build": "vite build && node scripts/check-ssr-bundle.mjs && node scripts/check-locale-chunks.mjs && node scripts/check-client-db.mjs && npm run db:migrate",
-    "db:migrate": "node scripts/migrate.mjs",
+    "db:migrate": "node --experimental-strip-types scripts/migrate.mjs",
     "ops:1password-checklist": "node scripts/1password-env-checklist.mjs",
     "ops:export-suppressions": "node --experimental-strip-types scripts/export-suppressions.mjs",
     "ops:operator-password": "node --experimental-strip-types scripts/set-operator-password.mjs",

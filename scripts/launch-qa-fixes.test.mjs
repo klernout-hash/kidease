@@ -66,9 +66,11 @@ test("M-01 public ages require confirmed min/max and never invent 12–60", () =
   assert.equal(listingAgesConfirmed({ agesKnown: false, ageMinMonths: 12, ageMaxMonths: 60 }), false);
   assert.equal(listingAgeRangeText({ agesKnown: false, ageMinMonths: 12, ageMaxMonths: 60 }), "");
   assert.equal(listingAgeRangeText({ agesKnown: true, ageMinMonths: 12, ageMaxMonths: 12 }), "");
-  assert.equal(listingAgeRangeText({ agesKnown: true, ageMinMonths: 6, ageMaxMonths: 72 }), "6 months \u2013 6 years");
-  assert.equal(listingAgeRangeText({ agesKnown: true, ageMinMonths: 6, ageMaxMonths: 72 }, "months"), "6 months \u2013 6 years");
-  assert.equal(listingAgeRangeText({ agesKnown: true, ageMinMonths: 24, ageMaxMonths: 72 }, "months", "en"), "2\u20136 years");
+  assert.equal(listingAgeRangeText({ agesKnown: true, ageMinMonths: 6, ageMaxMonths: 72 }), "Ages 6 months to 6 years");
+  assert.equal(listingAgeRangeText({ agesKnown: true, ageMinMonths: 6, ageMaxMonths: 72 }, "months"), "Ages 6 months to 6 years");
+  assert.equal(listingAgeRangeText({ agesKnown: true, ageMinMonths: 24, ageMaxMonths: 72 }, "months", "en"), "Ages 2 to 6 years");
+  assert.equal(listingAgeRangeText({ agesKnown: true, ageMinMonths: 3, ageMaxMonths: 144 }), "Ages 3 months to 12 years");
+  assert.doesNotMatch(listingAgeRangeText({ agesKnown: true, ageMinMonths: 24, ageMaxMonths: 72 }), /\u2013|\u2014/);
   assert.match(src("src/components/daycare-card.tsx"), /listingAgeRangeText\(item, "months"/);
   assert.match(src("src/components/daycare-card.tsx"), /const placeLine = \[item\.city, away\]/);
   assert.match(src("src/components/daycare-card.tsx"), /data-ke="card-age-range"/);
