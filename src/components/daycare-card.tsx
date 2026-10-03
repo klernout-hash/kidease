@@ -5,6 +5,7 @@ import type { DaycareCard as Card } from "@/lib/types";
 import { isSafeSitemapSlug } from "@/lib/sitemap";
 import { PhotoCarousel } from "@/components/photo-carousel";
 import { SaveListingButton } from "@/components/save-listing-button";
+import { ClaimListingCta } from "@/components/claim-listing-cta";
 import { ShareListingButton } from "@/components/share-button";
 import { useCopy } from "@/lib/use-copy";
 import { cn, displayCentreName, displayListingText, money } from "@/lib/utils";
@@ -356,6 +357,9 @@ export const DaycareCard = memo(function DaycareCard({
         >
           {t("cardRequestInfo")}
         </ListingAnchor>
+        {offerClaim ? (
+          <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10 mt-1" />
+        ) : null}
         {licenceHref ? (
           <a
             href={licenceHref}
@@ -494,6 +498,9 @@ export const DaycareCard = memo(function DaycareCard({
       >
         {t("cardRequestInfo")}
       </ListingAnchor>
+      {offerClaim ? (
+        <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10 mt-1 px-2.5 text-[12px]" />
+      ) : null}
       {licenceHref && !compact ? (
         <a
           href={licenceHref}

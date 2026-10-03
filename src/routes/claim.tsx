@@ -17,6 +17,8 @@ import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field"
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
+import { capturePostHogEvent } from "@/lib/posthog";
+import { SIGNUP_FUNNEL_EVENT, signupFunnelPayload } from "@/lib/signup-funnel";
 import { UploadLimitHint } from "@/components/upload-limit-hint";
 import { isListingPhotoTooBig } from "@/lib/upload-limits";
 
@@ -159,13 +161,15 @@ function ClaimPage() {
     if (name) setQ(name);
     setOpen(false);
     if (!user) {
-      void navigate({ to: "/login", search: { next: `/claim?id=${daycareId}`, role: "provider", desk: "director", intent: "in" } });
+      capturePostHogEvent(SIGNUP_FUNNEL_EVENT, signupFunnelPayload("claim_started", { source: "claim" }));
+      void navigate({ to: "/login", search: { next: `/claim?id=${daycareId}`, role: "provider", desk: "director", intent: "up" } });
       return;
     }
     setBusy(true);
     try {
       const res = await startClaim({ data: daycareId });
       captureMarketplaceFunnel({ step: "claim", source: "claim", dest_path: "/claim" });
+      capturePostHogEvent(SIGNUP_FUNNEL_EVENT, signupFunnelPayload("claim_started", { source: "claim" }));
       if (res.alreadyOwned) {
         confirmSuccess({ variant: "toast", title: t("claimOwned") });
         void navigate({ to: "/provider" });

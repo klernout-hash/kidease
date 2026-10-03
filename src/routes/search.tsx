@@ -109,7 +109,8 @@ import {
   toggleExploreRailAge,
   type ExploreCategory,
 } from "@/lib/explore-categories";
-import { parentLoginSearch } from "@/lib/auth/parent-login";
+import { parentSignupSearch } from "@/lib/auth/parent-login";
+import { SIGNUP_FUNNEL_EVENT, signupFunnelPayload, signupPromptStep } from "@/lib/signup-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { noteHappyMoment } from "@/lib/store-review";
 import { saveSearch } from "@/lib/server/saved-searches";
@@ -1564,8 +1565,18 @@ function SearchPage() {
                 {user ? (
                   <ChipButton onClick={openSaveSearch}>{t("saveSearch")}</ChipButton>
                 ) : (
-                  <Link to="/login" search={parentLoginSearch("/search")} className="text-sm font-medium text-primary">
-                    {t("saveSearchNeedSignIn")}
+                  <Link
+                    to="/login"
+                    search={parentSignupSearch("/search", "alerts")}
+                    className="inline-flex min-h-11 items-center text-sm font-medium text-primary"
+                    onClick={() => {
+                      capturePostHogEvent(
+                        SIGNUP_FUNNEL_EVENT,
+                        signupFunnelPayload(signupPromptStep("alerts"), { source: "listing" }),
+                      );
+                    }}
+                  >
+                    {t("signupWhyAlerts")}
                   </Link>
                 )}
                 <ChipButton onClick={() => setFilters(false)}>{t("close")}</ChipButton>

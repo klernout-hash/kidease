@@ -3,7 +3,10 @@ import { useEffect, useState, type MouseEvent } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
-import { parentLoginSearch } from "@/lib/auth/parent-login";
+import { parentSignupSearch } from "@/lib/auth/parent-login";
+import { addGuestShortlist } from "@/lib/guest-shortlist";
+import { capturePostHogEvent } from "@/lib/posthog";
+import { SIGNUP_FUNNEL_EVENT, signupFunnelPayload, signupPromptStep } from "@/lib/signup-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { listSavedIds, saveDaycare, unsaveDaycare } from "@/lib/server/family";
 import {
@@ -83,8 +86,13 @@ export function SaveListingButton({
 
   function goLogin() {
     stashPendingSave(daycareId);
-    toast.message(t("needSignInSave"));
-    void navigate({ to: "/login", search: parentLoginSearch(nextPath || fallbackPath) });
+    addGuestShortlist({ id: daycareId });
+    capturePostHogEvent(SIGNUP_FUNNEL_EVENT, signupFunnelPayload(signupPromptStep("save"), { source: "listing" }));
+    toast.message(t("signupWhySave"));
+    void navigate({
+      to: "/login",
+      search: parentSignupSearch(nextPath || fallbackPath, "save"),
+    });
   }
 
   async function onSave(e: MouseEvent<HTMLButtonElement>) {

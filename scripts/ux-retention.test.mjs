@@ -38,7 +38,7 @@ test("listing detail keeps website CTAs, login next, and a back link", () => {
 
 test("waitlist and account guest sign-in keep a next path", () => {
   const waitlist = src("src/components/waitlist-opt-in.tsx");
-  assert.match(waitlist, /parentLoginSearch\(next \?\? "\/search"\)/);
+  assert.match(waitlist, /parentSignupSearch\(next \?\? "\/search", "waitlist"\)/);
   const account = src("src/routes/account.tsx");
   assert.match(account, /parentLoginSearch\(/);
   assert.match(account, /\/parent\?tab=saved/);
