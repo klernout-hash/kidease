@@ -345,6 +345,14 @@ test("sourced age migration updates eligible rows once and leaves the rest", asy
   assert.equal(marked.rows.length, 1);
 });
 
+test("deploy migrate logs the confirmed age count and does not print a database url", () => {
+  const migrate = readFileSync(join(root, "scripts/migrate.mjs"), "utf8");
+  assert.match(migrate, /ages_confirmed=1 count/);
+  assert.match(migrate, /applyRecordedSourcedAges/);
+  assert.doesNotMatch(migrate, /console\.log\(databaseUrl\)/);
+  assert.doesNotMatch(migrate, /console\.log\(process\.env\.DATABASE_URL\)/);
+});
+
 test("master sync stamps sourced ages by listing id and skips the protected id", () => {
   const ages = `listing_id,facility_id,age_min_months,age_max_months,age_groups,ages_source,ages_source_url
 bc-1,BC|1,6,36,infant,website_stated,https://example.com/willow
