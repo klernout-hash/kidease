@@ -29,10 +29,23 @@ export async function probeDatabase(): Promise<HealthCheckState> {
 }
 
 export async function collectHealth(): Promise<HealthPayload> {
+  const database = await probeDatabase();
   const payload = buildHealthPayload({
     app: "ok",
-    database: await probeDatabase(),
+    database,
   });
+  if (database === "ok") {
+    try {
+      const sql = await getSqlWithin(DATABASE_PROBE_MS);
+      const rows = await sql<{ n: number | string }>`
+        select count(*)::int as n from daycares where coalesce(ages_confirmed, 0) = 1
+      `;
+      const count = Number(rows[0]?.n);
+      if (Number.isFinite(count)) payload.agesConfirmed = count;
+    } catch {
+      // The count is optional. A missing column must not fail the liveness probe.
+    }
+  }
   if (payload.cfr.candidate) {
     const finger = `${payload.revision ?? ""}:${payload.checks.app}:${payload.checks.database}`;
     if (lastCfrFinger !== finger) {

@@ -19,6 +19,13 @@ export const SOURCED_AGES_MIGRATION = "0077_sourced_ages_20261002";
  * still have no ages. This pass fills them. It still skips a real claim.
  */
 export const SOURCED_AGES_UNCLAIMED_RETRY = "0078_sourced_ages_unclaimed_retry";
+/** Third pass. Match ids the site trims, and only skip a real claim. */
+export const SOURCED_AGES_ID_TRIM = "0079_sourced_ages_id_trim";
+/**
+ * Edges JavaScript trim() removes. The public id is trimmed, so a stored id
+ * with the same edges must still match the approved file.
+ */
+const ID_TRIM_CLASS = "\\s\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff";
 /** Left out of the approved file. Never write ages for this id. */
 export const AGES_PROTECTED_LISTING_ID = "d_d85jtifbkh2t";
 export const SOURCED_AGES_CHUNK = 400;
@@ -128,6 +135,8 @@ export function sourcedAgeUpdateStatement(rows: readonly SourcedAge[]) {
   if (!values.length) return { text: "select id from daycares where false", params: [] };
   params.push(AGES_PROTECTED_LISTING_ID);
   const protectedParam = `$${n}`;
+  const trimmed = (column: string) =>
+    `regexp_replace(${column}, '^[${ID_TRIM_CLASS}]+|[${ID_TRIM_CLASS}]+$', '', 'g')`;
   const text = `
 update daycares as d
 set age_min_months = v.age_min_months,
@@ -136,11 +145,12 @@ set age_min_months = v.age_min_months,
     ages_source = v.ages_source,
     ages_source_url = v.ages_source_url
 from (values ${values.join(", ")}) as v(id, age_min_months, age_max_months, ages_source, ages_source_url)
-where d.id = v.id
-  and d.id <> ${protectedParam}
+where ${trimmed("d.id")} = ${trimmed("v.id")}
+  and ${trimmed("d.id")} <> ${protectedParam}
   and d.claimed_at is null
   and coalesce(d.ages_confirmed, 0) = 0
-  and coalesce(d.claim_status, 'unclaimed') in ('unclaimed', 'declined', '')
+  and lower(btrim(coalesce(d.claim_status, 'unclaimed'))) not in
+    ('pending', 'waiting', 'approved', 'verified', 'live', 'active')
 returning d.id
 `;
   return { text, params };
@@ -168,7 +178,8 @@ export async function applyRecordedSourcedAges(
 ) {
   const found = await query("select name from _migrations where name = $1", [migrationName]);
   if ((found.rows?.length ?? 0) > 0) return { updated: 0, applied: false };
-  const ages = parseSourcedAges(await readSourcedAgesCsv(rootDir));
+  const root = typeof rootDir === "string" && rootDir.length > 0 ? rootDir : repoRoot();
+  const ages = parseSourcedAges(await readSourcedAgesCsv(root));
   if (ages.size < 1000) {
     throw new Error(`sourced ages file has ${ages.size} rows; expected the approved 2026-10-02 file`);
   }

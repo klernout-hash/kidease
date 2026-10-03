@@ -9,6 +9,7 @@ import { DAYCARE_UPSERT_SQL, daycareUpsertParams } from "../src/lib/catalog-upse
 import { formatPublicAgeRange, listingAgeRangeText } from "../src/lib/listing-ages.ts";
 import {
   AGES_PROTECTED_LISTING_ID,
+  SOURCED_AGES_ID_TRIM,
   SOURCED_AGES_MIGRATION,
   SOURCED_AGES_UNCLAIMED_RETRY,
   applyRecordedSourcedAges,
@@ -359,6 +360,37 @@ test("sourced age migration updates eligible rows once and leaves the rest", asy
   const retryAgain = await applyRecordedSourcedAges(query, root, SOURCED_AGES_UNCLAIMED_RETRY);
   assert.equal(retryAgain.applied, false);
   assert.equal(retryAgain.updated, 0);
+
+  await pg.exec(`
+    insert into daycares (id, age_min_months, age_max_months, ages_confirmed, claim_status) values
+      ('mb-100034 ', 0, 0, 0, 'unclaimed'),
+      ('mb-100926${"\u00a0"}', 0, 0, 0, 'declined'),
+      ('mb-101669', 0, 0, 0, 'approved'),
+      ('mb-102052', 0, 0, 0, ' Live ');
+  `);
+  const trimmed = await applyRecordedSourcedAges(query, root, SOURCED_AGES_ID_TRIM);
+  assert.equal(trimmed.applied, true);
+  assert.equal(trimmed.updated, 2);
+  const spaced = await pg.query(`select age_min_months, age_max_months, ages_confirmed from daycares where id = 'mb-100034 '`);
+  assert.equal(spaced.rows[0].age_min_months, 3);
+  assert.equal(spaced.rows[0].age_max_months, 144);
+  assert.equal(spaced.rows[0].ages_confirmed, 1);
+  const nbsp = await pg.query(
+    `select age_min_months, ages_confirmed from daycares where id = 'mb-100926${"\u00a0"}'`,
+  );
+  assert.equal(nbsp.rows[0].age_min_months, 60);
+  assert.equal(nbsp.rows[0].ages_confirmed, 1);
+  const approved = await pg.query(`select age_min_months, ages_confirmed from daycares where id = 'mb-101669'`);
+  assert.equal(approved.rows[0].age_min_months, 0);
+  assert.equal(approved.rows[0].ages_confirmed, 0);
+  const liveStatus = await pg.query(`select age_min_months, ages_confirmed from daycares where id = 'mb-102052'`);
+  assert.equal(liveStatus.rows[0].age_min_months, 0);
+  assert.equal(liveStatus.rows[0].ages_confirmed, 0);
+  const trimmedAgain = await applyRecordedSourcedAges(query, root, SOURCED_AGES_ID_TRIM);
+  assert.equal(trimmedAgain.applied, false);
+  assert.equal(trimmedAgain.updated, 0);
+  const markedTrim = await pg.query(`select name from _migrations where name = $1`, [SOURCED_AGES_ID_TRIM]);
+  assert.equal(markedTrim.rows.length, 1);
 });
 
 test("deploy migrate logs the confirmed age count and does not print a database url", () => {
@@ -366,6 +398,7 @@ test("deploy migrate logs the confirmed age count and does not print a database 
   assert.match(migrate, /ages_confirmed=1 count/);
   assert.match(migrate, /applyRecordedSourcedAges/);
   assert.match(migrate, /SOURCED_AGES_UNCLAIMED_RETRY/);
+  assert.match(migrate, /SOURCED_AGES_ID_TRIM/);
   assert.doesNotMatch(migrate, /console\.log\(databaseUrl\)/);
   assert.doesNotMatch(migrate, /console\.log\(process\.env\.DATABASE_URL\)/);
 });
