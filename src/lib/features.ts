@@ -61,6 +61,11 @@ export function showPayCtas(env?: EnvMap): boolean {
   return evaluateFeatureFlag("SHOW_PAY_CTAS", env);
 }
 
+/** Email when a saved search matches a newly posted open spot. Default off. */
+export function openSpotAlertsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_OPEN_SPOT_ALERTS", env);
+}
+
 /** Live checkout for KidEase plans. Admin may still open Stripe when chrome is hidden. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (showPayCtas(env)) return true;

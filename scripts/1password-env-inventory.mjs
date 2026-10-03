@@ -288,6 +288,13 @@ export const GROUPS = [
         required: false,
         notes: "Default 0. Parent/director Upgrade · Subscribe chrome. Set 1 to restore. Stripe code stays.",
       },
+      {
+        name: "FEATURE_OPEN_SPOT_ALERTS",
+        concealed: false,
+        vercel: "both",
+        required: false,
+        notes: "Default 0. Email when a saved search matches a newly posted open spot. Needs CASL.",
+      },
     ],
   },
   {

@@ -43,7 +43,7 @@ No new geography column. Matching reads `daycares.location` from `0011_listing_g
 6. Later runs: `new_centre` (not seen before) and `vacancy_reconfirmed` only when the centre is **Live + claimed + confirm < 14 days**. Unclaimed or stale vacancy never pings.
 7. Age band must overlap **and** `agesKnown`. Unknown ages never match infant / toddler / preschool / school-age.
 8. Same centre + type is silent for 72 hours. Digest email is max 1/day; quiet hours 21:00–08:00 America/Winnipeg hold email (in-app still lands).
-9. In-app insert when prefs allow. Email via Resend/SendGrid when those keys exist (List-Unsubscribe). Free — no Plus.
+9. In-app insert when prefs allow. Email for a new centre uses Resend/SendGrid when those keys exist (List-Unsubscribe). Email for a newly posted open spot (`vacancy_reconfirmed`) sends only when `FEATURE_OPEN_SPOT_ALERTS` is on and CASL allows it. That flag defaults off.
 10. `sendPushNotification` / `sendSms` run and no-op while flags are off (3/search/day cap when those channels exist).
 11. `request_reply` is an in-app notice when a centre replies (`{centre} replied.` → `/inbox/{id}`).
 
