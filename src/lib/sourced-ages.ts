@@ -1,7 +1,8 @@
 /**
  * Owner-approved age bounds, 2026-10-02.
  * data/ops/ages-sourced-20261002.csv is matched by listing id.
- * Confirmed, claimed, and owner-linked ages are never replaced.
+ * Confirmed ages and claimed listings are never replaced.
+ * A claim, provider, or staff link without a claim does not block this fill.
  * Existing ages, sources, and source URLs are never blanked.
  */
 
@@ -12,6 +13,12 @@ import { parseCsvRecords } from "./catalog-master.ts";
 
 export const SOURCED_AGES_FILE = "data/ops/ages-sourced-20261002.csv";
 export const SOURCED_AGES_MIGRATION = "0077_sourced_ages_20261002";
+/**
+ * Second pass. The first pass also skipped rows that merely had a claim,
+ * provider, or staff link. Those Manitoba listings are still unclaimed and
+ * still have no ages. This pass fills them. It still skips a real claim.
+ */
+export const SOURCED_AGES_UNCLAIMED_RETRY = "0078_sourced_ages_unclaimed_retry";
 /** Left out of the approved file. Never write ages for this id. */
 export const AGES_PROTECTED_LISTING_ID = "d_d85jtifbkh2t";
 export const SOURCED_AGES_CHUNK = 400;
@@ -106,7 +113,7 @@ export function stampSourcedAge<T extends { id: string }>(
 
 /**
  * One UPDATE for a chunk. Only rows that already exist, are unclaimed,
- * are not provider-linked, and are not already confirmed.
+ * and are not already confirmed. A pending or approved claim is left alone.
  */
 export function sourcedAgeUpdateStatement(rows: readonly SourcedAge[]) {
   const values: string[] = [];
@@ -133,9 +140,7 @@ where d.id = v.id
   and d.id <> ${protectedParam}
   and d.claimed_at is null
   and coalesce(d.ages_confirmed, 0) = 0
-  and not exists (select 1 from provider_daycares pd where pd.daycare_id = d.id)
-  and not exists (select 1 from listing_claims lc where lc.daycare_id = d.id)
-  and not exists (select 1 from centre_members cm where cm.daycare_id = d.id)
+  and coalesce(d.claim_status, 'unclaimed') in ('unclaimed', 'declined', '')
 returning d.id
 `;
   return { text, params };
@@ -156,16 +161,18 @@ export async function applySourcedAgeUpdates(query: AgeQuery, ages: Iterable<Sou
 }
 
 /** Runs once per database, recorded in _migrations. Safe to run again. */
-export async function applyRecordedSourcedAges(query: AgeQuery, rootDir = repoRoot()) {
-  const found = await query("select name from _migrations where name = $1", [SOURCED_AGES_MIGRATION]);
+export async function applyRecordedSourcedAges(
+  query: AgeQuery,
+  rootDir = repoRoot(),
+  migrationName = SOURCED_AGES_MIGRATION,
+) {
+  const found = await query("select name from _migrations where name = $1", [migrationName]);
   if ((found.rows?.length ?? 0) > 0) return { updated: 0, applied: false };
   const ages = parseSourcedAges(await readSourcedAgesCsv(rootDir));
   if (ages.size < 1000) {
     throw new Error(`sourced ages file has ${ages.size} rows; expected the approved 2026-10-02 file`);
   }
   const updated = await applySourcedAgeUpdates(query, ages.values());
-  await query("insert into _migrations (name) values ($1) on conflict (name) do nothing", [
-    SOURCED_AGES_MIGRATION,
-  ]);
+  await query("insert into _migrations (name) values ($1) on conflict (name) do nothing", [migrationName]);
   return { updated, applied: true };
 }

@@ -147,7 +147,7 @@ async function upgradePlaces(page) {
   let drawer = "";
   const menu = page.locator('header button[aria-label="Menu"]');
   if (await menu.isVisible().catch(() => false)) {
-    await menu.click();
+    await menu.click({ force: true });
     await openAccountGroup(page, "#ke-nav-drawer");
     const row = page.locator('#ke-nav-drawer [data-nav="upgrade"]');
     await row.waitFor({ timeout: 8000 }).catch(() => {});
@@ -189,7 +189,7 @@ async function runRoleFixture(page, base) {
     await page.keyboard.press("Escape");
     const menu = page.locator('header button[aria-label="Menu"]');
     if (await menu.isVisible().catch(() => false)) {
-      await menu.click({ timeout: 8000 });
+      await menu.click({ timeout: 8000, force: true });
       const drawerNav = page.locator("#ke-nav-drawer [data-ke='role-nav']");
       await drawerNav.waitFor({ timeout: 8000 }).catch(() => {});
       await page.locator('#ke-nav-drawer [data-nav="plans"]').waitFor({ timeout: 8000 }).catch(() => {});
