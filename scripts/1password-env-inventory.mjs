@@ -302,6 +302,13 @@ export const GROUPS = [
         required: false,
         notes: "Default 1. Hides the Founding member badge when 0. Database marker stays.",
       },
+      {
+        name: "FEATURE_OPEN_SPOT_ALERTS",
+        concealed: false,
+        vercel: "both",
+        required: false,
+        notes: "Default 0. Email when a saved search matches a newly posted open spot. Needs CASL.",
+      },
     ],
   },
   {

@@ -25,6 +25,7 @@ export const FEATURE_FLAG_KEYS = [
   "SHOW_PAY_CTAS",
   "SUBSCRIPTIONS_ENABLED",
   "FOUNDING_BADGE_ENABLED",
+  "FEATURE_OPEN_SPOT_ALERTS",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -68,6 +69,7 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   SUBSCRIPTIONS_ENABLED: false,
   /** Founding member badge on claimed listings. The marker stays either way. */
   FOUNDING_BADGE_ENABLED: true,
+  FEATURE_OPEN_SPOT_ALERTS: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -129,6 +131,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Founding member badge. Default on. Turning it off hides the badge. The founding_member marker on the listing stays.",
+  },
+  {
+    key: "FEATURE_OPEN_SPOT_ALERTS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Email when a saved search matches a newly posted open spot. Default off. Saving a search still works. Needs CASL.",
   },
 ];
 

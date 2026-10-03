@@ -76,6 +76,11 @@ export function showPayCtas(env?: EnvMap): boolean {
   return evaluateFeatureFlag("SHOW_PAY_CTAS", env);
 }
 
+/** Email when a saved search matches a newly posted open spot. Default off. */
+export function openSpotAlertsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_OPEN_SPOT_ALERTS", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;
