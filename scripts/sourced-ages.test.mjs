@@ -9,9 +9,9 @@ import { DAYCARE_UPSERT_SQL, daycareUpsertParams } from "../src/lib/catalog-upse
 import { formatPublicAgeRange, listingAgeRangeText } from "../src/lib/listing-ages.ts";
 import {
   AGES_PROTECTED_LISTING_ID,
+  SOURCED_AGES_EMPTY_CONFIRMED,
   SOURCED_AGES_ID_TRIM,
   SOURCED_AGES_MIGRATION,
-  SOURCED_AGES_RUNTIME,
   SOURCED_AGES_UNCLAIMED_RETRY,
   advanceSourcedAgeFill,
   applyRecordedSourcedAges,
@@ -197,6 +197,32 @@ test("upsert never overwrites confirmed, claimed, owner-linked, or filled ages",
   assert.equal(confirmed.ages_confirmed, 1);
   assert.equal(confirmed.ages_source, "owner-edit");
   assert.equal(confirmed.ages_source_url, "https://owner.example/ages");
+
+  await query(
+    DAYCARE_UPSERT_SQL,
+    daycareUpsertParams({
+      ...listing("empty-flag", 1),
+      ageMinMonths: 0,
+      ageMaxMonths: 0,
+      agesSource: "",
+      agesSourceUrl: "",
+    }),
+  );
+  await query(
+    DAYCARE_UPSERT_SQL,
+    daycareUpsertParams({
+      ...listing("empty-flag", 1),
+      ageMinMonths: 3,
+      ageMaxMonths: 144,
+      agesSource: "website_stated",
+      agesSourceUrl: "https://www.stmauricedaycare.ca",
+    }),
+  );
+  const emptyFlag = await readAges(pg, "empty-flag");
+  assert.equal(emptyFlag.age_min_months, 3);
+  assert.equal(emptyFlag.age_max_months, 144);
+  assert.equal(emptyFlag.ages_confirmed, 1);
+  assert.equal(emptyFlag.ages_source, "website_stated");
 
   await query(DAYCARE_UPSERT_SQL, daycareUpsertParams(listing("claimed", 0)));
   await query(`update daycares set claimed_at = now(), age_min_months = 4, age_max_months = 40 where id = 'claimed'`);
@@ -412,19 +438,21 @@ test("runtime age fill is idempotent and does not overwrite confirmed ages", asy
     );
     insert into daycares (id, slug, age_min_months, age_max_months, ages_confirmed, claim_status) values
       ('mb-9654 ', 'st-maurice', 0, 0, 0, 'unclaimed'),
+      ('mb-102660', 'river-east', 0, 0, 1, 'unclaimed'),
       ('mb-1172', 'cuddles', 1, 2, 1, 'unclaimed'),
       ('bc-2', 'willow', 9, 10, 0, 'approved');
   `);
   const tiny = `listing_id,facility_id,age_min_months,age_max_months,age_groups,ages_source,ages_source_url
 mb-9654,MB|9654,3,144,infant,website_stated,https://www.stmauricedaycare.ca
+mb-102660,MB|102660,24,72,preschool,website_stated,https://example.com/river
 mb-1172,MB|1172,3,24,infant,licensing_groups+regulation,https://example.com/cuddles
 bc-2,BC|2,6,36,infant,website_stated,https://example.com/willow
 `;
   const query = (text, params) => pg.query(text, params);
-  const opts = { chunk: 2, minRows: 1, migrationName: SOURCED_AGES_RUNTIME };
+  const opts = { chunk: 2, minRows: 1, migrationName: SOURCED_AGES_EMPTY_CONFIRMED };
   const first = await advanceSourcedAgeFill(query, tiny, opts);
   assert.equal(first.done, false);
-  assert.equal(first.updated, 1);
+  assert.equal(first.updated, 2);
   assert.equal(first.cursor, 2);
   const second = await advanceSourcedAgeFill(query, tiny, opts);
   assert.equal(second.done, true);
@@ -440,11 +468,14 @@ bc-2,BC|2,6,36,infant,website_stated,https://example.com/willow
   assert.equal(byId["mb-9654 "].age_min_months, 3);
   assert.equal(byId["mb-9654 "].age_max_months, 144);
   assert.equal(byId["mb-9654 "].ages_confirmed, 1);
+  assert.equal(byId["mb-102660"].age_min_months, 24);
+  assert.equal(byId["mb-102660"].age_max_months, 72);
+  assert.equal(byId["mb-102660"].ages_confirmed, 1);
   assert.equal(byId["mb-1172"].age_min_months, 1);
   assert.equal(byId["mb-1172"].ages_confirmed, 1);
   assert.equal(byId["bc-2"].age_min_months, 9);
   assert.equal(byId["bc-2"].ages_confirmed, 0);
-  const marked = await pg.query(`select name from _migrations where name = $1`, [SOURCED_AGES_RUNTIME]);
+  const marked = await pg.query(`select name from _migrations where name = $1`, [SOURCED_AGES_EMPTY_CONFIRMED]);
   assert.equal(marked.rows.length, 1);
 });
 

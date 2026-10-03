@@ -26,7 +26,12 @@ export const SOURCED_AGES_ID_TRIM = "0079_sourced_ages_id_trim";
  * This finishes the fill there when the build migrator did not.
  */
 export const SOURCED_AGES_RUNTIME = "0080_sourced_ages_runtime";
-const RUNTIME_CURSOR_KEY = "sourced_ages_20261002";
+/**
+ * Some unclaimed rows were flagged confirmed while both months were still 0.
+ * The public page reads the months, so those listings showed no ages.
+ * A real confirmed range stays as it is.
+ */
+export const SOURCED_AGES_EMPTY_CONFIRMED = "0081_sourced_ages_empty_confirmed";
 /**
  * Edges JavaScript trim() removes. The public id is trimmed, so a stored id
  * with the same edges must still match the approved file.
@@ -152,7 +157,11 @@ from (values ${values.join(", ")}) as v(id, age_min_months, age_max_months, ages
 where ${trimmedIdSql("d.id")} = ${trimmedIdSql("v.id")}
   and ${trimmedIdSql("d.id")} <> ${protectedParam}
   and d.claimed_at is null
-  and coalesce(d.ages_confirmed, 0) = 0
+  and not (
+    coalesce(d.ages_confirmed, 0) = 1
+    and coalesce(d.age_max_months, 0) > coalesce(d.age_min_months, 0)
+    and coalesce(d.age_max_months, 0) > 0
+  )
   and lower(btrim(coalesce(d.claim_status, 'unclaimed'))) not in
     ('pending', 'waiting', 'approved', 'verified', 'live', 'active')
 returning d.id
@@ -205,7 +214,7 @@ export async function advanceSourcedAgeFill(
   csvText: string,
   opts: { migrationName?: string; chunk?: number; minRows?: number } = {},
 ) {
-  const migrationName = opts.migrationName ?? SOURCED_AGES_RUNTIME;
+  const migrationName = opts.migrationName ?? SOURCED_AGES_EMPTY_CONFIRMED;
   const chunk = opts.chunk ?? SOURCED_AGES_CHUNK;
   const minRows = opts.minRows ?? 1000;
   const found = await query("select name from _migrations where name = $1", [migrationName]);
@@ -217,13 +226,14 @@ export async function advanceSourcedAgeFill(
   }
 
   await query("create table if not exists _ops_state (key text primary key, value text not null)");
+  const cursorKey = `sourced_ages_${migrationName}`;
   await query(
     "insert into _ops_state (key, value) values ($1, '0') on conflict (key) do nothing",
-    [RUNTIME_CURSOR_KEY],
+    [cursorKey],
   );
   const stepped = await query(
     "update _ops_state set value = (value::int + $2)::text where key = $1 returning value::int as cursor",
-    [RUNTIME_CURSOR_KEY, chunk],
+    [cursorKey, chunk],
   );
   const end = Number((stepped.rows?.[0] as { cursor?: number | string } | undefined)?.cursor ?? 0);
   const start = end - chunk;

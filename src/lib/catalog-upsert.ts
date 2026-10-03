@@ -75,12 +75,16 @@ export const WEBSITE_BLANK_SAFE_SQL = `case
       end`;
 
 /**
- * Keep confirmed and protected ages. Apply a sourced range when the row is
- * still unconfirmed. Never replace a real range with 0.
+ * Keep a real confirmed range and the protected listing. A confirmed flag
+ * with no months is not an age yet, so a sourced range can fill it.
+ * Never replace a real range with 0.
  */
 export const AGE_MIN_PRESERVE_SQL = `case
         when daycares.id = 'd_d85jtifbkh2t' then daycares.age_min_months
-        when coalesce(daycares.ages_confirmed, 0) = 1 then daycares.age_min_months
+        when coalesce(daycares.ages_confirmed, 0) = 1
+          and daycares.age_max_months > daycares.age_min_months
+          and daycares.age_max_months > 0
+          then daycares.age_min_months
         when excluded.ages_confirmed = 1 then excluded.age_min_months
         when excluded.age_max_months > excluded.age_min_months and excluded.age_max_months > 0
           then excluded.age_min_months
@@ -91,7 +95,10 @@ export const AGE_MIN_PRESERVE_SQL = `case
 
 export const AGE_MAX_PRESERVE_SQL = `case
         when daycares.id = 'd_d85jtifbkh2t' then daycares.age_max_months
-        when coalesce(daycares.ages_confirmed, 0) = 1 then daycares.age_max_months
+        when coalesce(daycares.ages_confirmed, 0) = 1
+          and daycares.age_max_months > daycares.age_min_months
+          and daycares.age_max_months > 0
+          then daycares.age_max_months
         when excluded.ages_confirmed = 1 then excluded.age_max_months
         when excluded.age_max_months > excluded.age_min_months and excluded.age_max_months > 0
           then excluded.age_max_months
@@ -109,7 +116,10 @@ export const AGES_CONFIRMED_PRESERVE_SQL = `case
 
 export const AGES_SOURCE_PRESERVE_SQL = `case
         when daycares.id = 'd_d85jtifbkh2t' then daycares.ages_source
-        when coalesce(daycares.ages_confirmed, 0) = 1 then daycares.ages_source
+        when coalesce(daycares.ages_confirmed, 0) = 1
+          and daycares.age_max_months > daycares.age_min_months
+          and daycares.age_max_months > 0
+          then daycares.ages_source
         when excluded.ages_confirmed = 1 and nullif(btrim(coalesce(excluded.ages_source, '')), '') is not null
           then excluded.ages_source
         else daycares.ages_source
@@ -117,7 +127,10 @@ export const AGES_SOURCE_PRESERVE_SQL = `case
 
 export const AGES_SOURCE_URL_PRESERVE_SQL = `case
         when daycares.id = 'd_d85jtifbkh2t' then daycares.ages_source_url
-        when coalesce(daycares.ages_confirmed, 0) = 1 then daycares.ages_source_url
+        when coalesce(daycares.ages_confirmed, 0) = 1
+          and daycares.age_max_months > daycares.age_min_months
+          and daycares.age_max_months > 0
+          then daycares.ages_source_url
         when excluded.ages_confirmed = 1 and nullif(btrim(coalesce(excluded.ages_source_url, '')), '') is not null
           then excluded.ages_source_url
         else daycares.ages_source_url
