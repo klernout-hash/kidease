@@ -11,7 +11,9 @@ import {
   AGES_PROTECTED_LISTING_ID,
   SOURCED_AGES_ID_TRIM,
   SOURCED_AGES_MIGRATION,
+  SOURCED_AGES_RUNTIME,
   SOURCED_AGES_UNCLAIMED_RETRY,
+  advanceSourcedAgeFill,
   applyRecordedSourcedAges,
   applySourcedAgeUpdates,
   parseSourcedAges,
@@ -391,6 +393,59 @@ test("sourced age migration updates eligible rows once and leaves the rest", asy
   assert.equal(trimmedAgain.updated, 0);
   const markedTrim = await pg.query(`select name from _migrations where name = $1`, [SOURCED_AGES_ID_TRIM]);
   assert.equal(markedTrim.rows.length, 1);
+});
+
+test("runtime age fill is idempotent and does not overwrite confirmed ages", async () => {
+  const pg = new PGlite();
+  await pg.exec(`
+    create table _migrations (name text primary key, applied_at timestamptz not null default now());
+    create table daycares (
+      id text primary key,
+      slug text,
+      claimed_at timestamptz,
+      age_min_months int,
+      age_max_months int,
+      ages_confirmed int not null default 0,
+      ages_source text,
+      ages_source_url text,
+      claim_status text not null default 'unclaimed'
+    );
+    insert into daycares (id, slug, age_min_months, age_max_months, ages_confirmed, claim_status) values
+      ('mb-9654 ', 'st-maurice', 0, 0, 0, 'unclaimed'),
+      ('mb-1172', 'cuddles', 1, 2, 1, 'unclaimed'),
+      ('bc-2', 'willow', 9, 10, 0, 'approved');
+  `);
+  const tiny = `listing_id,facility_id,age_min_months,age_max_months,age_groups,ages_source,ages_source_url
+mb-9654,MB|9654,3,144,infant,website_stated,https://www.stmauricedaycare.ca
+mb-1172,MB|1172,3,24,infant,licensing_groups+regulation,https://example.com/cuddles
+bc-2,BC|2,6,36,infant,website_stated,https://example.com/willow
+`;
+  const query = (text, params) => pg.query(text, params);
+  const opts = { chunk: 2, minRows: 1, migrationName: SOURCED_AGES_RUNTIME };
+  const first = await advanceSourcedAgeFill(query, tiny, opts);
+  assert.equal(first.done, false);
+  assert.equal(first.updated, 1);
+  assert.equal(first.cursor, 2);
+  const second = await advanceSourcedAgeFill(query, tiny, opts);
+  assert.equal(second.done, true);
+  assert.equal(second.updated, 0);
+  const third = await advanceSourcedAgeFill(query, tiny, opts);
+  assert.equal(third.done, true);
+  assert.equal(third.updated, 0);
+  assert.equal(third.cursor, 0);
+  const rows = await pg.query(
+    `select id, age_min_months, age_max_months, ages_confirmed from daycares order by id`,
+  );
+  const byId = Object.fromEntries(rows.rows.map((row) => [row.id, row]));
+  assert.equal(byId["mb-9654 "].age_min_months, 3);
+  assert.equal(byId["mb-9654 "].age_max_months, 144);
+  assert.equal(byId["mb-9654 "].ages_confirmed, 1);
+  assert.equal(byId["mb-1172"].age_min_months, 1);
+  assert.equal(byId["mb-1172"].ages_confirmed, 1);
+  assert.equal(byId["bc-2"].age_min_months, 9);
+  assert.equal(byId["bc-2"].ages_confirmed, 0);
+  const marked = await pg.query(`select name from _migrations where name = $1`, [SOURCED_AGES_RUNTIME]);
+  assert.equal(marked.rows.length, 1);
 });
 
 test("deploy migrate logs the confirmed age count and does not print a database url", () => {

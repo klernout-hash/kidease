@@ -22,6 +22,12 @@ export const SOURCED_AGES_UNCLAIMED_RETRY = "0078_sourced_ages_unclaimed_retry";
 /** Third pass. Match ids the site trims, and only skip a real claim. */
 export const SOURCED_AGES_ID_TRIM = "0079_sourced_ages_id_trim";
 /**
+ * Runtime pass. The production site reads the same database it serves.
+ * This finishes the fill there when the build migrator did not.
+ */
+export const SOURCED_AGES_RUNTIME = "0080_sourced_ages_runtime";
+const RUNTIME_CURSOR_KEY = "sourced_ages_20261002";
+/**
  * Edges JavaScript trim() removes. The public id is trimmed, so a stored id
  * with the same edges must still match the approved file.
  */
@@ -135,8 +141,6 @@ export function sourcedAgeUpdateStatement(rows: readonly SourcedAge[]) {
   if (!values.length) return { text: "select id from daycares where false", params: [] };
   params.push(AGES_PROTECTED_LISTING_ID);
   const protectedParam = `$${n}`;
-  const trimmed = (column: string) =>
-    `regexp_replace(${column}, '^[${ID_TRIM_CLASS}]+|[${ID_TRIM_CLASS}]+$', '', 'g')`;
   const text = `
 update daycares as d
 set age_min_months = v.age_min_months,
@@ -145,8 +149,8 @@ set age_min_months = v.age_min_months,
     ages_source = v.ages_source,
     ages_source_url = v.ages_source_url
 from (values ${values.join(", ")}) as v(id, age_min_months, age_max_months, ages_source, ages_source_url)
-where ${trimmed("d.id")} = ${trimmed("v.id")}
-  and ${trimmed("d.id")} <> ${protectedParam}
+where ${trimmedIdSql("d.id")} = ${trimmedIdSql("v.id")}
+  and ${trimmedIdSql("d.id")} <> ${protectedParam}
   and d.claimed_at is null
   and coalesce(d.ages_confirmed, 0) = 0
   and lower(btrim(coalesce(d.claim_status, 'unclaimed'))) not in
@@ -186,4 +190,103 @@ export async function applyRecordedSourcedAges(
   const updated = await applySourcedAgeUpdates(query, ages.values());
   await query("insert into _migrations (name) values ($1) on conflict (name) do nothing", [migrationName]);
   return { updated, applied: true };
+}
+
+function trimmedIdSql(column: string) {
+  return `regexp_replace(${column}, '^[${ID_TRIM_CLASS}]+|[${ID_TRIM_CLASS}]+$', '', 'g')`;
+}
+
+/**
+ * One slice of the approved file. Safe to call on every health check.
+ * Stops after the slice is recorded. Never blanks a confirmed or claimed row.
+ */
+export async function advanceSourcedAgeFill(
+  query: AgeQuery,
+  csvText: string,
+  opts: { migrationName?: string; chunk?: number; minRows?: number } = {},
+) {
+  const migrationName = opts.migrationName ?? SOURCED_AGES_RUNTIME;
+  const chunk = opts.chunk ?? SOURCED_AGES_CHUNK;
+  const minRows = opts.minRows ?? 1000;
+  const found = await query("select name from _migrations where name = $1", [migrationName]);
+  if ((found.rows?.length ?? 0) > 0) return { done: true, updated: 0, cursor: 0, total: 0 };
+
+  const ages = [...parseSourcedAges(csvText).values()];
+  if (ages.length < minRows) {
+    throw new Error(`sourced ages file has ${ages.length} rows; expected the approved 2026-10-02 file`);
+  }
+
+  await query("create table if not exists _ops_state (key text primary key, value text not null)");
+  await query(
+    "insert into _ops_state (key, value) values ($1, '0') on conflict (key) do nothing",
+    [RUNTIME_CURSOR_KEY],
+  );
+  const stepped = await query(
+    "update _ops_state set value = (value::int + $2)::text where key = $1 returning value::int as cursor",
+    [RUNTIME_CURSOR_KEY, chunk],
+  );
+  const end = Number((stepped.rows?.[0] as { cursor?: number | string } | undefined)?.cursor ?? 0);
+  const start = end - chunk;
+  if (start >= ages.length) {
+    await query("insert into _migrations (name) values ($1) on conflict (name) do nothing", [migrationName]);
+    return { done: true, updated: 0, cursor: start, total: ages.length };
+  }
+  const updated = await applySourcedAgeUpdates(query, ages.slice(start, end));
+  const done = end >= ages.length;
+  if (done) {
+    await query("insert into _migrations (name) values ($1) on conflict (name) do nothing", [migrationName]);
+  }
+  return { done, updated, cursor: end, total: ages.length };
+}
+
+export type AgeProbeRow = {
+  id: string;
+  chars: number;
+  claim: string;
+  unclaimed: boolean;
+  confirmed: number;
+  min: number;
+  max: number;
+  slug: string;
+};
+
+/** Rows the public pages read, matched by trimmed id or slug. */
+export async function probeAgeListings(
+  query: AgeQuery,
+  ids: readonly string[],
+  slugs: readonly string[],
+): Promise<AgeProbeRow[]> {
+  const result = await query(
+    `select id, char_length(id)::int as chars, claim_status, claimed_at is null as unclaimed,
+            coalesce(ages_confirmed, 0)::int as confirmed,
+            coalesce(age_min_months, 0)::int as min_months,
+            coalesce(age_max_months, 0)::int as max_months,
+            slug
+       from daycares
+      where ${trimmedIdSql("id")} = any($1::text[])
+         or slug = any($2::text[])`,
+    [ids, slugs],
+  );
+  return (result.rows ?? []).map((row) => {
+    const record = row as {
+      id?: string;
+      chars?: number | string;
+      claim_status?: string | null;
+      unclaimed?: boolean | null;
+      confirmed?: number | string;
+      min_months?: number | string;
+      max_months?: number | string;
+      slug?: string | null;
+    };
+    return {
+      id: String(record.id ?? ""),
+      chars: Number(record.chars ?? 0),
+      claim: String(record.claim_status ?? ""),
+      unclaimed: record.unclaimed !== false,
+      confirmed: Number(record.confirmed ?? 0),
+      min: Number(record.min_months ?? 0),
+      max: Number(record.max_months ?? 0),
+      slug: String(record.slug ?? ""),
+    };
+  });
 }
