@@ -2691,5 +2691,17 @@
   "navSystem": "النظام",
   "faqShort": "الأسئلة",
   "navFindCare": "ابحث عن رعاية",
-  "navForDaycares": "للحضانات"
+  "navForDaycares": "للحضانات",
+  "claimFreeListing": "اطلب قائمتك المجانية",
+  "signupWhySave": "احفظ هذه الحضانة في حساب ولي الأمر. بريد أو Google، خطوة واحدة. قائمتك تأتي معك.",
+  "signupWhyWaitlist": "انضم إلى قائمة الانتظار ليتمكن المركز من عرض مكان. بريد أو Google، خطوة واحدة. لا رسوم للقائمة.",
+  "signupWhyAlerts": "احفظ هذا البحث لتعرف عند نشر مكان مناسب. بريد أو Google، خطوة واحدة.",
+  "signupWhyMessage": "راسل هذه الحضانة من حسابك. بريد أو Google، خطوة واحدة. ستعود إلى هنا بعد ذلك.",
+  "claimProgressTitle": "أكمل قائمتك",
+  "claimProgressLead": "يبحث الأهل عن هذه الحقائق الأربع. أضف فقط ما هو صحيح.",
+  "claimProgressPhotos": "صور",
+  "claimProgressFees": "الرسوم",
+  "claimProgressAges": "الأعمار",
+  "claimProgressSpots": "الأماكن الشاغرة",
+  "guestShortlistCarried": "الحضانات المحفوظة موجودة في حسابك."
 }

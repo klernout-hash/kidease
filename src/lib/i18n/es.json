@@ -2691,5 +2691,17 @@
   "navSystem": "Sistema",
   "faqShort": "Preguntas",
   "navFindCare": "Buscar cuidado",
-  "navForDaycares": "Para guarderías"
+  "navForDaycares": "Para guarderías",
+  "claimFreeListing": "Reclama tu ficha gratis",
+  "signupWhySave": "Guarda esta guardería en una cuenta de padre. Correo o Google, un paso. Tu lista te acompaña.",
+  "signupWhyWaitlist": "Únete a esta lista de espera para que la guardería pueda ofrecerte un lugar. Correo o Google, un paso. La lista no tiene tarifa.",
+  "signupWhyAlerts": "Guarda esta búsqueda y entérate cuando publiquen un lugar que coincida. Correo o Google, un paso.",
+  "signupWhyMessage": "Escribe a esta guardería desde tu cuenta. Correo o Google, un paso. Volverás aquí después.",
+  "claimProgressTitle": "Completa tu ficha",
+  "claimProgressLead": "Las familias buscan estos cuatro datos. Añade solo lo que es cierto.",
+  "claimProgressPhotos": "Fotos",
+  "claimProgressFees": "Tarifas",
+  "claimProgressAges": "Edades",
+  "claimProgressSpots": "Lugares libres",
+  "guestShortlistCarried": "Las guarderías guardadas están en tu cuenta."
 }
