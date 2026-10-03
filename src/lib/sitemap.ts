@@ -47,6 +47,7 @@ export const SITEMAP_STATIC_PATHS = [
   "/jobs",
   "/jobs/post",
   "/start-a-daycare",
+  "/need-care-fast",
 ] as const;
 
 function sitemapBasePaths() {

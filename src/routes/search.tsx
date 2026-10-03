@@ -255,7 +255,7 @@ export const Route = createFileRoute("/search")({
 const PRESETS_KM = [1, 5, 10, 15, 25, 40, 50];
 
 function SearchPage() {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const { user } = useCurrentUserState();
   const navigate = useNavigate({ from: "/search" });
   const incoming = Route.useSearch();
@@ -1396,6 +1396,13 @@ function SearchPage() {
                   ? t(BROWSE_RAIL_COPY.before_after)
                   : headingCity}
             </h1>
+            <Link
+              to="/need-care-fast"
+              search={{ q: locationKnown ? city : "" }}
+              className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline"
+            >
+              {locale === "fr" ? "Besoin de garde vite" : "Need care fast"}
+            </Link>
             <p className="mt-0.5 min-h-5 text-sm text-muted text-balance" aria-live="polite">
               {items === null ? (
                 <span className="inline-flex items-center gap-2">

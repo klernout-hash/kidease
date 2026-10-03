@@ -95,7 +95,7 @@ export const Route = createFileRoute("/fr/search")({
 });
 
 function FrExplore() {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const navigate = useNavigate();
   const incoming = Route.useSearch();
   const boot = Route.useLoaderData();
@@ -199,6 +199,13 @@ function FrExplore() {
         <p className="text-sm font-semibold tracking-wide text-primary">{t("explore")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("tagline")}</h1>
         <p className="mt-4 max-w-2xl text-muted">{t("heroSub")}</p>
+        <Link
+          to="/fr/need-care-fast"
+          search={{ q: place || "" }}
+          className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline"
+        >
+          {locale === "fr" ? "Besoin de garde vite" : "Need care fast"}
+        </Link>
         <p className="mt-3 max-w-2xl text-sm text-muted">{t("listingCopyEnNote")}</p>
 
         <ExploreSearchBar
