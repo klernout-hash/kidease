@@ -3,7 +3,9 @@ import { stripeChargesLive } from "@/lib/stripe-live";
 import { featuredPinForCentre } from "@/lib/centre-addons";
 import { listingMatchesLocationLock, type LocationLock } from "@/lib/location-lock";
 import { isProviderPlanId, parseProviderAddons, type ProviderPlanId } from "@/lib/provider-plans";
+import { subscriptionsEnabled } from "@/lib/features";
 import {
+  applyFoundingPeriodEntitlements,
   inquiryAtCap,
   inquiryCapCopy,
   resolveProviderEntitlements,
@@ -35,13 +37,16 @@ export async function loadProfileEntitlements(
     limit 1
   `.catch(() => []);
   const row = rows[0];
-  return resolveProviderEntitlements({
-    plan: row?.selected_plan,
-    status: row?.stripe_subscription_status,
-    addons: row?.selected_addons,
-    stripeLive: stripeChargesLive(),
-    featuredCityStatus: row?.featured_city_status,
-  });
+  return applyFoundingPeriodEntitlements(
+    resolveProviderEntitlements({
+      plan: row?.selected_plan,
+      status: row?.stripe_subscription_status,
+      addons: row?.selected_addons,
+      stripeLive: stripeChargesLive(),
+      featuredCityStatus: row?.featured_city_status,
+    }),
+    subscriptionsEnabled(),
+  );
 }
 
 export async function loadCentreOwnerRows(sql: Sql, daycareId: string): Promise<CentreOwnerPlanRow[]> {
@@ -57,17 +62,24 @@ export async function loadCentreOwnerRows(sql: Sql, daycareId: string): Promise<
 /** Best entitlement among owners. Any paid owner unlocks Pro/Network extras for that listing. */
 export function entitlementsFromOwners(rows: CentreOwnerPlanRow[]): ProviderEntitlements {
   const stripeLive = stripeChargesLive();
+  const open = subscriptionsEnabled();
   if (!rows.length) {
-    return resolveProviderEntitlements({ plan: "free", status: null, addons: "", stripeLive });
+    return applyFoundingPeriodEntitlements(
+      resolveProviderEntitlements({ plan: "free", status: null, addons: "", stripeLive }),
+      open,
+    );
   }
   const resolved = rows.map((row) =>
-    resolveProviderEntitlements({
-      plan: row.selected_plan,
-      status: row.stripe_subscription_status,
-      addons: row.selected_addons,
-      stripeLive,
-      featuredCityStatus: row.featured_city_status,
-    }),
+    applyFoundingPeriodEntitlements(
+      resolveProviderEntitlements({
+        plan: row.selected_plan,
+        status: row.stripe_subscription_status,
+        addons: row.selected_addons,
+        stripeLive,
+        featuredCityStatus: row.featured_city_status,
+      }),
+      open,
+    ),
   );
   const rank = (plan: ProviderPlanId) => (plan === "network" ? 2 : plan === "pro" ? 1 : 0);
   return resolved.reduce((best, next) => {

@@ -7,6 +7,8 @@ import {
   preferNeonCatalog,
   type CatalogRuntime,
 } from "@/lib/catalog-source";
+import { foundingBadgeEnabled } from "@/lib/features";
+import { foundingMemberVisible } from "@/lib/founding-period";
 import { splitPhotoList } from "@/lib/listing-photo";
 import { clampRadiusKm } from "@/lib/proximity";
 import { resolveFoundCatalogRow, suppressedCatalogKey, type SuppressedCatalogKeys } from "@/lib/catalog-fallback";
@@ -64,6 +66,7 @@ export type CatalogDbRow = {
   amenities: string | null;
   photos: string | null;
   claimed_at: string | null;
+  founding_member?: boolean | number | null;
   claim_status?: string | null;
   staff_screening_attested?: number | boolean | null;
   screening_on_file?: number | boolean | null;
@@ -86,7 +89,7 @@ preschool_monthly, part_time_monthly, fee_program, fact_source, spots_infant, sp
 spots_preschool, waitlist, rating_x10, review_count, license_number,
 license_status, registry_match_state, license_verification_source,
 languages, staff_languages, cultural_programs, cultural_team_note,
-amenities, photos, claimed_at, claim_status, listing_active, staff_screening_attested, screening_on_file, visibility, is_test,
+amenities, photos, claimed_at, founding_member, claim_status, listing_active, staff_screening_attested, screening_on_file, visibility, is_test,
 google_place_id, contact_email, website, merged_into, import_fault
 `;
 
@@ -301,6 +304,11 @@ export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
     feeConfirmed: Boolean(row.claimed_at),
     claimed: Boolean(row.claimed_at),
     claimedAt: row.claimed_at ? String(row.claimed_at) : null,
+    foundingMember: foundingMemberVisible({
+      id,
+      foundingMember: row.founding_member,
+      badgeEnabled: foundingBadgeEnabled(),
+    }),
     claimStatus: row.claim_status ?? null,
     staffScreeningAttested: row.staff_screening_attested === 1 || row.staff_screening_attested === true,
     screeningOnFile: row.screening_on_file === 1 || row.screening_on_file === true,

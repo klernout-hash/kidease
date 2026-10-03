@@ -34,6 +34,7 @@ import { PayCtas, useShowPayCtas } from "@/components/pay-chrome";
 import { useSessionDesks } from "@/components/session-desks";
 import { checkoutCtaLabel, daycareUpgradePlan, paidPlanVisible, visibleYearlySavings } from "@/lib/upgrade-plans";
 import { BillingIntervalToggle } from "@/components/billing-interval-toggle";
+import { FoundingPlans } from "@/components/founding-plans";
 import { UpgradePlanCard } from "@/components/upgrade-plan-card";
 
 const COPY = {
@@ -115,7 +116,6 @@ export function ProviderSubscriptionPanel({
   const showPay = useShowPayCtas();
   const { session } = useSessionDesks();
   const adminPreview = session?.role === "admin";
-  const showCheckout = showPay || adminPreview;
   const [state, setState] = useState<ProviderSubscriptionState | null>(null);
   const [interval, setInterval] = useState<ProviderInterval>("year");
   const [addons, setAddons] = useState<ProviderAddonId[]>([]);
@@ -371,7 +371,13 @@ export function ProviderSubscriptionPanel({
       </>
   );
 
+  const subscriptionsOn = current.subscriptionsEnabled;
+  const showCheckout = subscriptionsOn && (showPay || adminPreview);
+
   if (!showCheckout) {
+    if (!subscriptionsOn) {
+      return <FoundingPlans embedded />;
+    }
     if (!planOpen && !pinOpen) {
       return (
         <section className="ke-digital-plan space-y-4 rounded-xl bg-surface p-5 ring-1 ring-border" data-ke="plans-not-offered">

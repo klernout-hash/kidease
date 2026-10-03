@@ -24,13 +24,17 @@ test("SHOW_PAY_CTAS defaults off and SHOW_PAY_CTAS=1 restores", () => {
   assert.equal(FLAG_DEFAULTS.SHOW_PAY_CTAS, false);
   assert.equal(showPayCtas({}), false);
   assert.equal(showPayCtas({ SHOW_PAY_CTAS: "0" }), false);
-  assert.equal(showPayCtas({ SHOW_PAY_CTAS: "1" }), true);
+  assert.equal(showPayCtas({ SHOW_PAY_CTAS: "1" }), false);
+  assert.equal(showPayCtas({ SHOW_PAY_CTAS: "1", SUBSCRIPTIONS_ENABLED: "1" }), true);
   assert.equal(canUsePayCheckout("parent"), false);
   assert.equal(canUsePayCheckout("provider"), false);
-  assert.equal(canUsePayCheckout("admin"), true);
-  assert.equal(canUsePayCheckout("parent", { SHOW_PAY_CTAS: "1" }), true);
+  assert.equal(canUsePayCheckout("admin"), false);
+  assert.equal(canUsePayCheckout("parent", { SHOW_PAY_CTAS: "1" }), false);
+  assert.equal(canUsePayCheckout("admin", { SUBSCRIPTIONS_ENABLED: "1" }), true);
+  assert.equal(canUsePayCheckout("parent", { SHOW_PAY_CTAS: "1", SUBSCRIPTIONS_ENABLED: "1" }), true);
   assert.throws(() => assertPayCheckoutAllowed("provider"), /Plans are not offered/);
-  assert.doesNotThrow(() => assertPayCheckoutAllowed("admin"));
+  assert.throws(() => assertPayCheckoutAllowed("admin"), /Plans are not offered/);
+  assert.doesNotThrow(() => assertPayCheckoutAllowed("admin", { SUBSCRIPTIONS_ENABLED: "1" }));
   assert.equal(
     PLANS_NOT_OFFERED_YET,
     "Plans are not offered on this site yet. Listing and claim stay free.",

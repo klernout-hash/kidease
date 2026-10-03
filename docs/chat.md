@@ -8,7 +8,7 @@ Parent ↔ centre messages stay on `/inbox` (text; poll/reload) for claimed cent
 
 - **Coming soon / feature flag off** on Chat, Push, and Video when those flags are off (the default).
 - A **disabled composer**. Send is off. The form does not store, deliver, or fake a thread — even if `FEATURE_INAPP_CHAT` is on.
-- Exact **flag names** (`FEATURE_INAPP_CHAT`, `FEATURE_PUSH`, `FEATURE_SMS`, `FEATURE_VIDEO`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`) plus docs paths. Secret values are never shown.
+- Exact **flag names** (`FEATURE_INAPP_CHAT`, `FEATURE_PUSH`, `FEATURE_SMS`, `FEATURE_VIDEO`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`) plus docs paths. Secret values are never shown.
 - Next-build checklists for **FCM / APNs** and **Twilio Video**, plus an SMS (Programmable SMS, not Verify) status. These do not enable live send, mint a charged call, or invent credentials.
 - Production vs Preview: flags stay off on Production unless vendor secrets exist. Preview may override. See `docs/flags.md`.
 
@@ -22,6 +22,9 @@ Parent ↔ centre messages stay on `/inbox` (text; poll/reload) for claimed cent
 | `FEATURE_VIDEO` | **off** | `docs/video.md` |
 | `FEATURE_PROVIDER_SUBSCRIPTIONS` | **on** | `docs/flags.md` |
 | `SHOW_PAY_CTAS` | **off** | `docs/flags.md` |
+| `SUBSCRIPTIONS_ENABLED` | **off** | `docs/flags.md` |
+| `FOUNDING_BADGE_ENABLED` | **on** | `docs/flags.md` |
+| `FEATURE_OPEN_SPOT_ALERTS` | **off** | `docs/flags.md` |
 
 Flip remote overlays in PostHog with the **same key** — see `docs/flags.md`. Env is the fallback.
 

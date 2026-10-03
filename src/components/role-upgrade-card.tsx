@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { useSessionDesks } from "@/components/session-desks";
 import type { ChromeRole } from "@/lib/role-access";
 import { useCopy } from "@/lib/use-copy";
 
@@ -17,6 +18,8 @@ export function RoleUpgradeCard({
   onDismiss?: () => void;
 }) {
   const { locale, t } = useCopy();
+  const { session } = useSessionDesks();
+  if (session?.subscriptionsEnabled !== true) return null;
   if (role !== "parent" && role !== "provider") return null;
   const parent = role === "parent";
   const to = parent ? "/parent" : "/provider/subscription";

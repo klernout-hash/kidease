@@ -1,3 +1,5 @@
+import { foundingBadgeEnabled } from "@/lib/features";
+import { foundingMemberVisible } from "@/lib/founding-period";
 import { splitPhotoList } from "@/lib/listing-photo";
 import { listingCultureFrom } from "@/lib/listing-culture";
 import { parentListingFrom } from "@/lib/parent-listing";
@@ -61,6 +63,7 @@ export type DaycareRow = {
   verified: number;
   contact_email?: string | null;
   claimed_at?: string | null;
+  founding_member?: boolean | number | null;
   claim_status?: string | null;
   priority_until?: string | null;
   ages_confirmed?: number | boolean | null;
@@ -148,6 +151,11 @@ export function mapDaycare(r: DaycareRow): Daycare {
     contactEmail: r.contact_email ?? null,
     claimed,
     claimedAt: r.claimed_at ?? null,
+    foundingMember: foundingMemberVisible({
+      id: r.id,
+      foundingMember: r.founding_member,
+      badgeEnabled: foundingBadgeEnabled(),
+    }),
     claimStatus: r.claim_status ?? null,
     listingActive,
     pauseCode: r.pause_code ?? null,

@@ -51,7 +51,10 @@ test("FEATURE_PUSH and FEATURE_SMS default off; subscriptions default on", () =>
   assert.equal(providerSubscriptionsEnabled({}), true);
   assert.equal(showPayCtas({}), false);
   assert.equal(showPayCtas({ SHOW_PAY_CTAS: "0" }), false);
-  assert.equal(showPayCtas({ SHOW_PAY_CTAS: "1" }), true);
+  assert.equal(showPayCtas({ SHOW_PAY_CTAS: "1" }), false);
+  assert.equal(showPayCtas({ SHOW_PAY_CTAS: "1", SUBSCRIPTIONS_ENABLED: "1" }), true);
+  assert.equal(FLAG_DEFAULTS.SUBSCRIPTIONS_ENABLED, false);
+  assert.equal(FLAG_DEFAULTS.FOUNDING_BADGE_ENABLED, true);
 });
 
 test("custom env objects stay env-only and ignore the process overlay", () => {

@@ -6,7 +6,9 @@
  * `isPostHogFlagEnabled` exists. A thin POST /flags HTTP call needs no extra
  * SDK and no personal API key. Unset POSTHOG_FLAGS_KEY → env-only, same as today.
  *
- * Do not use these for auth, payments, or Turnstile.
+ * Do not use these for auth or Turnstile.
+ * SUBSCRIPTIONS_ENABLED is the one payments gate: it only decides whether
+ * checkout is offered. Stripe secrets stay in their own env helpers.
  * FEATURE_PUSH and FEATURE_SMS default off. Do not flip them here.
  *
  * No @/ imports — scripts/flags.test.mjs loads this file in Node.
@@ -21,6 +23,8 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_VIDEO",
   "FEATURE_PROVIDER_SUBSCRIPTIONS",
   "SHOW_PAY_CTAS",
+  "SUBSCRIPTIONS_ENABLED",
+  "FOUNDING_BADGE_ENABLED",
   "FEATURE_OPEN_SPOT_ALERTS",
 ] as const;
 
@@ -61,6 +65,10 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_VIDEO: false,
   FEATURE_PROVIDER_SUBSCRIPTIONS: true,
   SHOW_PAY_CTAS: false,
+  /** Paid daycare and parent plans. Off during the free founding period. */
+  SUBSCRIPTIONS_ENABLED: false,
+  /** Founding member badge on claimed listings. The marker stays either way. */
+  FOUNDING_BADGE_ENABLED: true,
   FEATURE_OPEN_SPOT_ALERTS: false,
 };
 
@@ -108,7 +116,21 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary:
-      "Parent and director Upgrade / Subscribe / plan-price chrome. Default off. Stripe code stays. Admin catalog stays.",
+      "Parent and director Upgrade / Subscribe / plan-price chrome. Default off. Stripe code stays. Admin catalog stays. Ignored while SUBSCRIPTIONS_ENABLED is off.",
+  },
+  {
+    key: "SUBSCRIPTIONS_ENABLED",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Paid plans and checkout. Default off: free founding period, no charges, daycare tools unlocked. Set 1 to restore the current subscription flow. Env or PostHog. No redeploy when PostHog is already connected.",
+  },
+  {
+    key: "FOUNDING_BADGE_ENABLED",
+    defaultOn: true,
+    docs: "docs/flags.md",
+    summary:
+      "Founding member badge. Default on. Turning it off hides the badge. The founding_member marker on the listing stays.",
   },
   {
     key: "FEATURE_OPEN_SPOT_ALERTS",

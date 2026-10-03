@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound, redirect, useNavigate, useParams, useSearch, useLoaderData } from "@tanstack/react-router";
 import { MapPinned, MessageCircle, Star } from "lucide-react";
 import { parentLoginSearch, parentSignupSearch } from "@/lib/auth/parent-login";
+import { FoundingMemberBadge } from "@/components/founding-member-badge";
 import { ShareListingButton } from "@/components/share-button";
 import { FreeListingShareActions } from "@/components/free-listing-share";
 import { useEffect, useState } from "react";
@@ -688,6 +689,7 @@ export function Listing() {
           <p className="mt-1 text-sm text-muted">
             {d.city}, {d.province}
           </p>
+          <FoundingMemberBadge show={d.foundingMember} className="mt-2" />
           {tagline.trim() ? <p className="mt-0.5 text-sm text-muted">{tagline}</p> : null}
           {approved || licensed ? (
             <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm" data-ke="listing-trust-line">

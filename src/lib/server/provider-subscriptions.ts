@@ -3,7 +3,8 @@ import { getSql } from "@/lib/db";
 import { centrePickerLabel } from "@/lib/centre-label";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { resolveSessionDesks } from "@/lib/server/roles";
-import { assertPayCheckoutAllowed, providerSubscriptionsEnabled } from "@/lib/features";
+import { assertPayCheckoutAllowed, providerSubscriptionsEnabled, subscriptionsEnabled } from "@/lib/features";
+import { applyFoundingPeriodEntitlements } from "@/lib/provider-entitlements";
 import { resolveProviderEntitlements, type ProviderEntitlements } from "@/lib/provider-entitlements";
 import { stripeChargesLive } from "@/lib/stripe-live";
 import { e2eCheckoutMock, E2E_CHECKOUT_URL } from "@/lib/server/e2e-fixture.server";
@@ -76,6 +77,8 @@ export type ProviderSubscriptionState = {
   featuredCityPeriodEnd: string | null;
   prices: Record<string, boolean>;
   paymentLinks: Partial<Record<ProviderAddonId, string>>;
+  /** False during the free founding period. Checkout stays in this file either way. */
+  subscriptionsEnabled: boolean;
 };
 
 function periodIso(value: string | Date | null | undefined): string | null {
@@ -203,6 +206,7 @@ async function readSelection(userId: string): Promise<ProviderSubscriptionState>
     : listed;
   const addons = parseProviderAddons(row?.selected_addons);
   const plan = isProviderPlanId(row?.selected_plan) ? row.selected_plan : "free";
+  const subscriptionsOn = subscriptionsEnabled();
   const paymentLinks: Partial<Record<ProviderAddonId, string>> = {};
   for (const addon of ["featured_city", "claim_boost", "job_post"] as const) {
     const link = envPaymentLink(addon);
@@ -214,13 +218,16 @@ async function readSelection(userId: string): Promise<ProviderSubscriptionState>
     addons,
     siteCount: await siteCountFor(userId),
     ghost: !providerSubscriptionsEnabled(),
-    entitlements: resolveProviderEntitlements({
-      plan,
-      status: row?.stripe_subscription_status,
-      addons,
-      stripeLive,
-      featuredCityStatus: row?.featured_city_status,
-    }),
+    entitlements: applyFoundingPeriodEntitlements(
+      resolveProviderEntitlements({
+        plan,
+        status: row?.stripe_subscription_status,
+        addons,
+        stripeLive,
+        featuredCityStatus: row?.featured_city_status,
+      }),
+      subscriptionsOn,
+    ),
     checkoutLive:
       stripeLive && PROVIDER_CHECKOUT_LIVE && (prices.pro_monthly || prices.pro_yearly || prices.network_monthly),
     stripeLive,
@@ -245,6 +252,7 @@ async function readSelection(userId: string): Promise<ProviderSubscriptionState>
     featuredCityPeriodEnd: periodIso(row?.featured_city_current_period_end),
     prices,
     paymentLinks,
+    subscriptionsEnabled: subscriptionsOn,
   };
 }
 
