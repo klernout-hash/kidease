@@ -21,6 +21,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_VIDEO",
   "FEATURE_PROVIDER_SUBSCRIPTIONS",
   "SHOW_PAY_CTAS",
+  "FEATURE_OPEN_SPOT_ALERTS",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -60,6 +61,7 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_VIDEO: false,
   FEATURE_PROVIDER_SUBSCRIPTIONS: true,
   SHOW_PAY_CTAS: false,
+  FEATURE_OPEN_SPOT_ALERTS: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -107,6 +109,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Parent and director Upgrade / Subscribe / plan-price chrome. Default off. Stripe code stays. Admin catalog stays.",
+  },
+  {
+    key: "FEATURE_OPEN_SPOT_ALERTS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Email when a saved search matches a newly posted open spot. Default off. Saving a search still works. Needs CASL.",
   },
 ];
 

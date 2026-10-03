@@ -33,6 +33,8 @@ import {
   type SearchAlertCandidate,
   type SearchAlertKind,
 } from "@/lib/saved-search";
+import { openSpotAlertsEnabled } from "@/lib/features";
+import { eventsForOpenSpotMail } from "@/lib/open-spot-alerts";
 import { parentAlertsEntitled } from "@/lib/parent-plus";
 import { nid } from "@/lib/utils";
 import { transactionalMailFrom } from "@/lib/mail-from";
@@ -392,6 +394,7 @@ async function recordChannelSend(
  */
 export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date }) {
   const dryRun = Boolean(opts?.dryRun);
+  const spotMail = openSpotAlertsEnabled();
   const now = opts?.now ?? new Date();
   const nowMs = now.getTime();
   const sql = await getSql();
@@ -556,14 +559,15 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
         }
       }
 
-      if (emailOn) {
+      const outbound = eventsForOpenSpotMail(events, spotMail);
+      if (emailOn && outbound.length) {
         const pending = digestByUser.get(search.user_id) ?? [];
         pending.push({
           userId: search.user_id,
           savedSearchId: search.id,
           searchName: search.name,
           originLabel: search.center_label,
-          events: events.map((ev) => ({ ...ev, ageBand })),
+          events: outbound.map((ev) => ({ ...ev, ageBand })),
         });
         digestByUser.set(search.user_id, pending);
       }
@@ -583,7 +587,7 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
       });
       let pushToday = await countChannelSendsToday(sql, search.user_id, search.id, "push", now);
       let smsToday = await countChannelSendsToday(sql, search.user_id, search.id, "sms", now);
-      for (const ev of events) {
+      for (const ev of eventsForOpenSpotMail(events, spotMail)) {
         const copy = honestAlertCopy({
           kind: ev.kind,
           name: ev.name,
@@ -673,6 +677,7 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
   `.catch(() => []);
   for (const row of pendingMail) {
     if (row.kind !== "new_centre" && row.kind !== "vacancy_reconfirmed") continue;
+    if (!spotMail && row.kind === "vacancy_reconfirmed") continue;
     const buckets = digestByUser.get(row.user_id) ?? [];
     const already = buckets.some((b) =>
       b.events.some((ev) => ev.daycareId === row.daycare_id && ev.kind === row.kind),
