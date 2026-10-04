@@ -50,6 +50,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "spam", label: "Spam and fraud", hint: "High scores only", labelKey: "adminSpamTitle", hintKey: "adminNavSpamHint", href: "/admin-spam" },
     { id: "triage", label: "Support drafts", hint: "Drafts are not sent", labelKey: "adminTriageTitle", hintKey: "adminNavTriageHint", href: "/admin-triage" },
     { id: "vacancies", label: "Provincial openings", hint: "Manitoba and New Brunswick", href: "/admin-vacancies" },
+    { id: "qc-home", label: "Quebec home daycares", hint: "Correction and removal requests", href: "/admin-qc-home" },
     { id: "ai", label: "AI usage", hint: "Calls, cost, failures", href: "/admin-ai" },
     { id: "features", label: "Features", hint: "On, off, or a split", labelKey: "adminNavFeatures", hintKey: "adminNavFeaturesHint", href: "/admin/features" },
     { id: "email-health", label: "Email health", hint: "Bounces and suppressed addresses", href: "/admin-email-health" },

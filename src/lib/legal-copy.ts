@@ -36,8 +36,8 @@ export type LegalDoc = {
   disclaimer: string;
 };
 
-const UPDATED_EN = "Effective 30 September 2026 · KidEase · Canada";
-const UPDATED_FR = "En vigueur le 30 septembre 2026 · KidEase · Canada";
+const UPDATED_EN = "Effective 4 October 2026 · KidEase · Canada";
+const UPDATED_FR = "En vigueur le 4 octobre 2026 · KidEase · Canada";
 
 const DISCLAIMER_EN =
   "This page explains how KidEase handles personal information and how the service works. It is not legal advice. Official PIPEDA text lives on the Privacy Commissioner of Canada website.";
@@ -360,6 +360,30 @@ export const PRIVACY_EN: LegalDoc = {
             `You can also email ${SUPPORT_INBOX_EMAIL} to access, correct, or delete.`,
             "Security we actually use: HTTPS in transit; signed-in sessions in first-party cookies; OAuth tokens encrypted at rest; email sign-in codes; access checks on parent and director desks; payment card data stays with Stripe; audit events do not store card numbers or medical notes.",
             "We do not claim the internet is risk-free. If a breach creates a real risk of significant harm, we will notify affected people and the Office of the Privacy Commissioner of Canada as PIPEDA requires.",
+          ],
+        },
+      ],
+    },
+    {
+      id: "qc-home",
+      title: "Quebec recognized home daycares",
+      blocks: [
+        {
+          type: "p",
+          text: "KidEase is a Canadian company. When we publish a Quebec recognized home daycare (milieu familial reconnu), we follow Quebec's Law 25 and PIPEDA.",
+        },
+        {
+          type: "ul",
+          items: [
+            "These listings are stored apart from licensed centre listings.",
+            "If the name on the source page is a person's name, the public page says Recognized home daycare and the municipality instead.",
+            "We show the municipality, the neighbourhood, or the first three characters of the postal code. We do not show a street address or an exact map pin. The map, when we have a town point, is an area circle.",
+            "A badge names the bureau coordonnateur and the date we checked their public page, and links to that page.",
+            "Phone and email stay hidden until a visitor chooses to show them.",
+            "Open spots, when the source lists a number, are shown with that date. The number may be out of date. We do not invent a number.",
+            "We do not email or text these providers. Canada's anti-spam law (CASL) applies. The provider can ask us to correct or remove the listing from the page. We store that request for an admin to review. We do not send a message back.",
+            "The public directory is at /milieux-familiaux when this list is turned on.",
+            `Privacy officer: [name to be supplied by Kyle]. Until that name is published, write to ${SUPPORT_INBOX_EMAIL}. You can also contact the Commission d'accès à l'information du Québec, or the Office of the Privacy Commissioner of Canada.`,
           ],
         },
       ],
@@ -715,6 +739,30 @@ export const PRIVACY_FR: LegalDoc = {
             `Vous pouvez aussi écrire à ${SUPPORT_INBOX_EMAIL}.`,
             "Sécurité réelle : HTTPS; sessions en témoins internes; jetons OAuth chiffrés; codes par courriel; contrôles d’accès; les cartes restent chez Stripe; les journaux d’audit ne stockent pas les numéros de carte ni les notes médicales.",
             "Si une atteinte crée un risque réel de préjudice important, nous aviserons les personnes concernées et le Commissariat, comme l’exige la LPRPDE.",
+          ],
+        },
+      ],
+    },
+    {
+      id: "qc-home",
+      title: "Milieux familiaux reconnus au Québec",
+      blocks: [
+        {
+          type: "p",
+          text: "KidEase est une entreprise canadienne. Quand nous publions un milieu familial reconnu au Québec, nous suivons la Loi 25 et la LPRPDE.",
+        },
+        {
+          type: "ul",
+          items: [
+            "Ces fiches sont stockées à part des centres permis.",
+            "Si le nom sur la page source est le nom d'une personne, la fiche publique dit Milieu familial reconnu et la municipalité.",
+            "Nous montrons la municipalité, le quartier, ou les trois premiers caractères du code postal. Nous ne montrons pas d'adresse de rue ni d'épingle exacte. La carte, quand nous avons un point de ville, est un cercle de secteur.",
+            "Un badge nomme le bureau coordonnateur et la date de vérification, et mène à la page du bureau.",
+            "Le téléphone et le courriel restent cachés tant que le visiteur ne choisit pas de les afficher.",
+            "Les places libres, quand la source donne un nombre, sont montrées avec la date. Le nombre peut ne plus être à jour. Nous n'inventons pas de nombre.",
+            "Nous n'envoyons pas de courriel ni de texto à ces services. La LCAP s'applique. Le service peut demander une correction ou un retrait sur la fiche. Nous gardons la demande pour qu'un admin la révise. Nous n'envoyons pas de message en retour.",
+            "Le répertoire public est à /milieux-familiaux quand cette liste est activée.",
+            `Responsable de la protection des renseignements personnels : [nom à fournir par Kyle]. En attendant ce nom, écrivez à ${SUPPORT_INBOX_EMAIL}. Vous pouvez aussi joindre la Commission d'accès à l'information du Québec, ou le Commissariat à la protection de la vie privée du Canada.`,
           ],
         },
       ],

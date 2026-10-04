@@ -99,6 +99,11 @@ export function openSpotsCheckinSmsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_OPEN_SPOTS_CHECKIN_SMS", env);
 }
 
+/** Public Quebec recognized home daycares. Default OFF. No provider email or SMS. */
+export function qcHomeDaycaresEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_QC_HOME_DAYCARES", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;

@@ -1,6 +1,6 @@
 # Feature flags (env + optional PostHog)
 
-KidEase product gates (`FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`) go through `src/lib/flags.ts`.
+KidEase product gates (`FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`) go through `src/lib/flags.ts`.
 
 **Env is the safe fallback.** If remote is unset, down, or the flag does not exist in PostHog, behavior is exactly today’s `FEATURE_*=` env read.
 
@@ -35,6 +35,7 @@ Parent inbox **Video** stays hidden until `VIDEO_SDK_WIRED` is true (Twilio Vide
 | `FEATURE_SPOT_OFFER_MAIL` | **off** | `sendTransactionalMail` for a 48-hour spot offer. No send when off. | Offer still appears on `/parent/spot-offers`. Desk says email is off. | Families answer in the account or by signed link. |
 | `FEATURE_OPEN_SPOTS_CHECKIN_MAIL` | off | Weekly email to claimed daycares. No-ops while off. | Signed link page `/spots/$token`. | No email goes out. |
 | `FEATURE_OPEN_SPOTS_CHECKIN_SMS` | off | Weekly SMS. Also needs `FEATURE_SMS`, CASL consent, and Twilio. Toll-free is not approved. | Same signed link. Label the text path coming soon. | No SMS goes out. |
+| `FEATURE_QC_HOME_DAYCARES` | off | None. No email or SMS to these providers. | `/milieux-familiaux` when on. Area circle, not a street pin. | Page says the list is not published yet. |
 
 ## Why PostHog
 
@@ -51,7 +52,7 @@ Do **not** use these flags for auth or Turnstile. Those stay their own env-gated
 1. Confirm credentials for that channel exist (Twilio / FCM / APNs). Flags do not invent keys. SMS also needs CASL consent + STOP — see `docs/sms.md`.
 2. On Vercel **kidease-git** (Production + Preview), set `POSTHOG_FLAGS_KEY` to the **same public project key** already used as `VITE_PUBLIC_POSTHOG_KEY` (`phc_…`). Optional: `POSTHOG_FLAGS_HOST` if ingest is not `https://us.i.posthog.com`. Redeploy **once** so the server can call PostHog. Leave the key unset to stay env-only.
 3. In [PostHog](https://us.posthog.com) → KidEase → **Feature flags** → **New feature flag**.
-   - Key must match the env name exactly: `FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, or `FEATURE_OPEN_SPOTS_CHECKIN_SMS`.
+   - Key must match the env name exactly: `FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, or `FEATURE_QC_HOME_DAYCARES`.
    - Create the flag **disabled**. Boolean release toggle (not a % experiment). The server evaluates as distinct id `kidease-server`.
 4. Enable or disable the flag in PostHog. Within ~30s the app picks it up (in-memory TTL). No Vercel redeploy.
 5. Confirm Admin → Chat lab (`/admin-chat`): source reads **PostHog**, value on/off. Secret values are never shown.
@@ -76,6 +77,7 @@ Env still works as a fallback when PostHog is down (last successful overlay is k
 | `FEATURE_SPOT_OFFER_MAIL` | no | Default **off**. Leave `0` until you want offer emails. The waitlist still works. |
 | `FEATURE_OPEN_SPOTS_CHECKIN_MAIL` | no | Default **off**. Leave `0` until you want the weekly open-spots email. |
 | `FEATURE_OPEN_SPOTS_CHECKIN_SMS` | no | Default **off**. Leave `0`. Toll-free is not approved. Also needs `FEATURE_SMS`. |
+| `FEATURE_QC_HOME_DAYCARES` | no | Default **off**. Leave `0` until Kyle publishes Quebec recognized home daycares. No email or SMS to those providers. |
 | `POSTHOG_FLAGS_KEY` | no | Server-only. Same `phc_…` project key as analytics. Leave blank to disable remote. Never commit a real value. |
 | `POSTHOG_FLAGS_HOST` | no | Defaults to `POSTHOG_HOST` or `https://us.i.posthog.com`. |
 
