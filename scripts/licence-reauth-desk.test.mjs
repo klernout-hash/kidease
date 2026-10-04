@@ -64,7 +64,8 @@ test("daycare licence desk keeps the file and opens the existing confirm dialog"
   assert.doesNotMatch(tx("fr", "reauthRequired"), /Confirm it's you/);
   assert.doesNotMatch(tx("fr", "reauthKeptFile"), /Your file|Confirm, then/);
   assert.doesNotMatch(tx("fr", "licenceUploadLead"), /Upload a clear photo/);
-  assert.match(tx("fr", "licenceUploadLead"), /permis provincial/);
+  assert.match(tx("fr", "licensePhoto"), /permis provincial/);
+  assert.match(tx("fr", "licenceUploadLead"), /vérification de conformité/);
 });
 
 test("owner screening upload is not step-up gated, and a confirm error still has a way through", () => {

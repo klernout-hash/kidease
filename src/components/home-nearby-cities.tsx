@@ -1,10 +1,11 @@
 import { Link } from "@tanstack/react-router";
 import type { PopularHomeCity } from "@/lib/home-popular-cities";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 
 /** Quiet text links. Render nothing when location is unknown. */
 export function HomeNearbyCities({ cities }: { cities: PopularHomeCity[] }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   if (!cities.length) return null;
   return (
     <nav aria-label={t("nearbyCities")} data-ke="hero-nearby-cities" className="text-sm text-muted">
@@ -12,8 +13,7 @@ export function HomeNearbyCities({ cities }: { cities: PopularHomeCity[] }) {
         {cities.map((city) => (
           <li key={city.slug}>
             <Link
-              to="/daycare/city/$city"
-              params={{ city: city.slug }}
+              to={localePath(`/daycare/city/${city.slug}`, locale)}
               className="inline-flex min-h-11 items-center underline-offset-4 hover:text-fg hover:underline"
             >
               {city.label}

@@ -114,7 +114,7 @@ function FrHome() {
           <h2 className="text-3xl text-primary-fg md:text-4xl">{t("finalCtaTitle")}</h2>
           <p className="mx-auto mt-4 max-w-xl text-primary-fg/90">{t("finalCtaBody")}</p>
           <Button asChild size="lg" variant="secondary" className="mt-8 h-14 min-h-14 px-7 text-base">
-            <Link to="/search">{t("fullMapExplore")}</Link>
+            <Link to="/fr/search">{t("fullMapExplore")}</Link>
           </Button>
         </div>
       </section>

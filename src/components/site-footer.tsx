@@ -73,7 +73,7 @@ function Column({
   if (links.length === 0) return null;
   const labeled = links.map((link) => ({
     ...link,
-    href: link.localePaired ? localePath(link.to, locale) : link.to,
+    href: localePath(link.to, locale),
     label: footerLinkLabel(link, t, locale),
   }));
   const sorted = labeled;
@@ -145,7 +145,7 @@ export function SiteFooter() {
             {FOOTER_LEGAL.map((link) => (
               <Link
                 key={link.to}
-                to={link.localePaired ? localePath(link.to, locale) : link.to}
+                to={localePath(link.to, locale)}
                 className="ke-footer-link inline-flex min-h-11 items-center"
               >
                 {footerLinkLabel(link, t, locale)}

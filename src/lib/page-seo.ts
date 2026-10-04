@@ -21,6 +21,8 @@ export type PageSeoInput = {
   description: string;
   path: string;
   ogType?: "website" | "article";
+  /** Overrides the locale taken from the path. Unpaired pages stay on the English URL. */
+  locale?: "en" | "fr";
 };
 
 export type PageSeoMeta = {
@@ -54,7 +56,7 @@ export function pageSeoMeta(input: PageSeoInput): PageSeoMeta {
 
 export function pageSeoHeadTags(input: PageSeoInput) {
   const meta = pageSeoMeta(input);
-  const locale = pathLocale(input.path);
+  const locale = input.locale ?? pathLocale(input.path);
   const tags: Array<Record<string, string>> = [
     { title: meta.title },
     { name: "description", content: meta.description },
@@ -371,7 +373,7 @@ export const MARKETING_PAGE_SEO_FR = {
   search: {
     title: "Chercher une garderie permise près de vous · KidEase",
     description:
-      "Cherchez des centres, nurseries et milieux familiaux permis par rayon en kilomètres. Filtrez par type, âge et places ouvertes, ou ouvrez un répertoire de ville.",
+      "Cherchez des centres, prématernelles et milieux familiaux permis par rayon en kilomètres. Filtrez par type, âge et places ouvertes, ou ouvrez un répertoire de ville.",
     path: "/fr/search",
   },
   getApp: {
@@ -387,9 +389,9 @@ export const MARKETING_PAGE_SEO_FR = {
     path: "/fr/benefits",
   },
   login: {
-    title: "Connexion · KidEase",
+    title: "Connexion ou création de compte · KidEase",
     description:
-      "Connectez-vous pour enregistrer des centres, demander une place et écrire aux éducatrices. Parents et centres permis.",
+      "Créez un compte KidEase ou connectez-vous pour enregistrer des centres permis, demander une visite et écrire à une garderie.",
     path: "/fr/login",
   },
   jobs: {
@@ -409,6 +411,47 @@ export const MARKETING_PAGE_SEO_FR = {
     description:
       "Comment ouvrir un service de garde permis au Canada, avec un filtre par province pour les pages officielles de permis et de subventions. KidEase ne délivre pas de permis et n’accorde pas de subventions.",
     path: "/fr/start-a-daycare",
+  },
+} as const;
+
+/**
+ * French titles for pages that do not have a /fr URL yet.
+ * Canonical path stays the English URL. Full /fr routes are a later change.
+ */
+export const UNPAIRED_FR_SEO = {
+  plans: {
+    title: "Forfaits · KidEase",
+    description:
+      "Recherche, favoris (jusqu’à cinq centres) et messages aux garderies, sans frais. Les garderies utilisent tous les outils pendant la période fondatrice gratuite.",
+  },
+  plansPaid: {
+    title: "Forfaits · KidEase",
+    description:
+      "Recherche, favoris (jusqu’à cinq centres) et messages, sans frais. Parent Plus et les forfaits de centre sont facultatifs et facturés en dollars canadiens.",
+  },
+  claim: {
+    title: "Réclamez la fiche de votre garderie · KidEase",
+    description:
+      "Directeurs : réclamez la fiche de votre garderie permise sur KidEase. Indiquez les places et les frais mensuels. Réclamer la fiche est gratuit.",
+  },
+  cities: {
+    title: "Villes au Canada · KidEase",
+    description: "Répertoires de garderies permises, regroupés par province, partout au Canada.",
+  },
+  compare: {
+    title: "Comparer des garderies permises · KidEase",
+    description:
+      "Comparez des centres permis côte à côte : heures, frais et places ouvertes. Enregistrez jusqu’à trois fiches, puis visitez avec une liste.",
+  },
+  login: {
+    title: "Connexion ou création de compte · KidEase",
+    description:
+      "Créez un compte KidEase ou connectez-vous pour enregistrer des centres permis, demander une visite et écrire à une garderie.",
+  },
+  vacancy: {
+    title: "Places ouvertes par province · KidEase",
+    description:
+      "Fiches publiques KidEase par province et par âge. Places ouvertes confirmées seulement. Les frais ne sont pas sur cette page.",
   },
 } as const;
 

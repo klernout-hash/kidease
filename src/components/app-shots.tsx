@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useCopy } from "@/lib/use-copy";
 
 const NAVY = "#1a3790";
 const CREAM = "#f6f3ee";
@@ -43,6 +44,7 @@ function StatusBar() {
 }
 
 function AppChrome({ children }: { children: ReactNode }) {
+  const { t } = useCopy();
   return (
     <div className="flex h-full flex-col" style={{ background: CREAM, color: INK }}>
       <StatusBar />
@@ -57,10 +59,10 @@ function AppChrome({ children }: { children: ReactNode }) {
           className="ml-auto rounded-full px-2 py-0.5 text-[8px]"
           style={{ background: PAPER, color: MUTED, boxShadow: `inset 0 0 0 1px ${LINE}` }}
         >
-          EN
+          {t("shotLang")}
         </span>
         <span className="rounded-full px-2.5 py-0.5 text-[8px] font-medium text-white" style={{ background: NAVY }}>
-          Sign in
+          {t("signIn")}
         </span>
       </header>
       <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
@@ -69,6 +71,7 @@ function AppChrome({ children }: { children: ReactNode }) {
 }
 
 function TabBar({ active }: { active: "search" | "profile" }) {
+  const { t } = useCopy();
   const item = (label: string, on: boolean, icon: ReactNode) => (
     <span className="flex flex-col items-center gap-0.5 text-[7.5px]" style={{ color: on ? NAVY : MUTED }}>
       {icon}
@@ -78,7 +81,7 @@ function TabBar({ active }: { active: "search" | "profile" }) {
   return (
     <nav className="grid grid-cols-5 px-1.5 pb-3 pt-1.5" style={{ background: CREAM, borderTop: `1px solid ${LINE}` }}>
       {item(
-        "Search",
+        t("search"),
         active === "search",
         <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
           <circle cx="11" cy="11" r="6.5" />
@@ -86,14 +89,14 @@ function TabBar({ active }: { active: "search" | "profile" }) {
         </svg>,
       )}
       {item(
-        "Saved",
+        t("saved"),
         false,
         <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 5.6-7 10-7 10Z" />
         </svg>,
       )}
       {item(
-        "Enrolled",
+        t("enrolled"),
         false,
         <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
           <rect x="6" y="3" width="12" height="18" rx="2" />
@@ -101,14 +104,14 @@ function TabBar({ active }: { active: "search" | "profile" }) {
         </svg>,
       )}
       {item(
-        "Messages",
+        t("messages"),
         false,
         <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path d="M5 6h14v10H8l-3 3V6Z" />
         </svg>,
       )}
       {item(
-        "Profile",
+        t("profile"),
         active === "profile",
         <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
           <circle cx="12" cy="8" r="3" />
@@ -121,18 +124,20 @@ function TabBar({ active }: { active: "search" | "profile" }) {
 
 function Storefront({
   tall = false,
-  badge = "$10-a-day",
+  badge,
   photo = "/photos/cottage-768.webp",
 }: {
   tall?: boolean;
   badge?: string;
   photo?: string;
 }) {
+  const { t } = useCopy();
+  const label = badge ?? t("shotTenADay");
   return (
     <div className={`relative overflow-hidden rounded-lg ${tall ? "h-full" : "aspect-[4/3]"}`} style={{ background: "#d4e0f6" }}>
       <img src={photo} alt="" className="absolute inset-0 size-full object-cover" width={768} height={576} />
       <span className="absolute left-1.5 top-1.5 rounded-full px-1.5 py-0.5 text-[7px] font-semibold text-white" style={{ background: NAVY }}>
-        {badge}
+        {label}
       </span>
     </div>
   );
@@ -150,6 +155,7 @@ function Pill({ children, solid = false }: { children: ReactNode; solid?: boolea
 }
 
 export function ShotHome() {
+  const { t, locale } = useCopy();
   return (
     <AppChrome>
       <div className="flex h-full flex-col">
@@ -158,30 +164,28 @@ export function ShotHome() {
             <img src="/photos/hero-1200.jpg" alt="" className="aspect-[16/9] w-full object-cover" />
           </div>
           <h1 className="mt-2 font-display text-[17px] leading-[1.15] tracking-tight">
-            Find licensed
-            <br />
-            daycare near you
+            {t("shotFindTitle")}
           </h1>
           <div className="mt-3 flex h-8 items-center justify-center rounded-full text-[10px] font-medium text-white" style={{ background: NAVY }}>
-            Use my location
+            {t("useLocation")}
           </div>
           <p className="mt-2 text-center text-[8px]" style={{ color: SUBTLE }}>
-            Or enter city or postal code
+            {t("orEnterCity")}
           </p>
           <div className="mt-1.5 flex h-7 items-center rounded-full px-2.5 text-[9px]" style={{ background: PAPER, color: MUTED, boxShadow: `inset 0 0 0 1px ${LINE}` }}>
-            Winnipeg, MB
+            {locale === "fr" ? "Winnipeg, Man." : "Winnipeg, MB"}
           </div>
           <div className="mt-1.5 flex h-7 items-center justify-center rounded-full text-[10px] font-medium text-white" style={{ background: NAVY }}>
-            Search nearby care
+            {t("shotNearby")}
           </div>
           <div className="mt-2.5 flex gap-1.5">
-            <Pill>Live listings</Pill>
-            <Pill solid>All \u00b7 12</Pill>
+            <Pill>{t("shotLive")}</Pill>
+            <Pill solid>{t("shotAll")} · 12</Pill>
           </div>
           <p className="mt-2 text-[8px]" style={{ color: SUBTLE }}>
             Winnipeg \u00b7 15 km
           </p>
-          <h2 className="mt-1 font-display text-[13px]">Daycares available</h2>
+          <h2 className="mt-1 font-display text-[13px]">{t("shotAvailable")}</h2>
           <div className="mt-1.5 grid grid-cols-2 gap-1.5">
             <Storefront photo="/photos/cottage-768.webp" />
             <Storefront photo="/photos/brick.jpg" />
@@ -194,16 +198,17 @@ export function ShotHome() {
 }
 
 export function ShotSearch() {
+  const { t } = useCopy();
   return (
     <AppChrome>
       <div className="flex h-full flex-col">
         <div className="px-2.5 pb-1.5">
           <div className="flex h-7 items-center rounded-full px-2.5 text-[9px]" style={{ background: PAPER, color: SUBTLE, boxShadow: `inset 0 0 0 1px ${LINE}` }}>
-            Address, city, postal code, or daycare
+            {t("shotSearchPh")}
           </div>
           <div className="mt-1.5 flex items-center gap-1">
             <span className="flex h-6 flex-1 items-center justify-center rounded-full text-[8px] font-medium text-white" style={{ background: NAVY }}>
-              Search
+              {t("search")}
             </span>
             <span
               className="flex h-6 items-center rounded-full px-2 text-[8px] font-medium"
@@ -213,10 +218,10 @@ export function ShotSearch() {
             </span>
             <span className="flex overflow-hidden rounded-full text-[8px] font-medium" style={{ boxShadow: `inset 0 0 0 1px ${LINE}` }}>
               <span className="px-2 py-1 text-white" style={{ background: NAVY }}>
-                List
+                {t("shotList")}
               </span>
               <span className="px-2 py-1" style={{ background: PAPER, color: MUTED }}>
-                Map
+                {t("shotMap")}
               </span>
             </span>
           </div>
@@ -237,7 +242,7 @@ export function ShotSearch() {
             <div className="mx-auto mb-1.5 h-1 w-8 rounded-full" style={{ background: LINE }} />
             <p className="text-center text-[11px] font-semibold">462 centres · 16 km</p>
             <div className="mt-1.5 h-24 overflow-hidden rounded-xl">
-              <Storefront tall badge="Licensed" photo="/photos/community.jpg" />
+              <Storefront tall badge={t("licensed")} photo="/photos/community.jpg" />
             </div>
           </div>
         </div>
@@ -248,6 +253,7 @@ export function ShotSearch() {
 }
 
 export function ShotListing() {
+  const { t, locale } = useCopy();
   return (
     <AppChrome>
       <div className="flex h-full flex-col">
@@ -256,20 +262,20 @@ export function ShotListing() {
             <Storefront tall photo="/photos/playroom-1200.jpg" />
           </div>
           <p className="mt-1.5 text-[8px]" style={{ color: MUTED }}>
-            123 Osborne St, Winnipeg, MB
+            {locale === "fr" ? "123, rue Osborne, Winnipeg, Man." : "123 Osborne St, Winnipeg, MB"}
           </p>
           <h1 className="mt-0.5 font-display text-[14px] leading-tight tracking-tight">River Heights Child Care</h1>
           <div className="mt-1.5 flex flex-wrap gap-1">
-            <Pill solid>Licensed</Pill>
-            <Pill solid>$10-a-day</Pill>
-            <Pill>Live</Pill>
+            <Pill solid>{t("licensed")}</Pill>
+            <Pill solid>{t("shotTenADay")}</Pill>
+            <Pill>{t("live")}</Pill>
           </div>
           <div className="mt-2 grid grid-cols-2 gap-1.5 text-[8px]">
             {[
-              ["Hours", "7:30 \u2013 5:30"],
-              ["Ages", "12\u201360 months"],
-              ["Licence", "MB-1184"],
-              ["Open spots", "3"],
+              [t("shotHours"), t("shotHoursValue")],
+              [t("shotAges"), t("shotAgesValue")],
+              [t("shotLicence"), "MB-1184"],
+              [t("shotOpenSpots"), "3"],
             ].map(([k, v]) => (
               <div key={k} className="rounded-lg px-2 py-1.5" style={{ background: PAPER, boxShadow: `inset 0 0 0 1px ${LINE}` }}>
                 <p className="text-[7px]" style={{ color: SUBTLE }}>
@@ -281,20 +287,20 @@ export function ShotListing() {
           </div>
           <div className="mt-1.5 rounded-lg px-2 py-1.5" style={{ background: PAPER, boxShadow: `inset 0 0 0 1px ${LINE}` }}>
             <p className="text-[8px]" style={{ color: SUBTLE }}>
-              Monthly parent fees from
+              {t("shotFeesFrom")}
             </p>
             <p className="font-display text-[16px] tabular-nums">
-              $10<span className="text-[10px]" style={{ color: MUTED }}>
-                /day
+              {locale === "fr" ? "10\u00a0$" : "$10"}<span className="text-[10px]" style={{ color: MUTED }}>
+                {t("shotPerDay")}
               </span>
             </p>
           </div>
           <div className="mt-1.5 grid grid-cols-2 gap-1.5">
             <div className="flex h-7 items-center justify-center rounded-full text-[9px] font-medium" style={{ background: "#eee8df" }}>
-              Book a tour
+              {t("bookTour")}
             </div>
             <div className="flex h-7 items-center justify-center rounded-full text-[9px] font-medium text-white" style={{ background: NAVY }}>
-              Request a spot
+              {t("requestSpotCta")}
             </div>
           </div>
         </div>
@@ -305,28 +311,29 @@ export function ShotListing() {
 }
 
 export function ShotLogin() {
+  const { t } = useCopy();
   return (
     <AppChrome>
       <div className="flex h-full flex-col px-3 pb-3 pt-1">
         <div className="flex flex-1 flex-col rounded-2xl px-3.5 py-3.5" style={{ background: PAPER, boxShadow: `inset 0 0 0 1px ${LINE}` }}>
           <div className="mx-auto">{PIN}</div>
           <p className="mt-1 text-center font-display text-[12px]">KidEase</p>
-          <h1 className="mt-2.5 font-display text-[18px] tracking-tight">Sign in</h1>
+          <h1 className="mt-2.5 font-display text-[18px] tracking-tight">{t("signIn")}</h1>
           <p className="mt-1 text-[8px] leading-snug" style={{ color: MUTED }}>
-            Save centres, request a spot, and message educators.
+            {t("shotLoginLead")}
           </p>
-          <p className="mt-2 text-[8px] font-medium">Email</p>
+          <p className="mt-2 text-[8px] font-medium">{t("email")}</p>
           <div className="mt-1 h-6 rounded-xl" style={{ boxShadow: `inset 0 0 0 1px ${LINE}` }} />
-          <p className="mt-1.5 text-[8px] font-medium">Password</p>
+          <p className="mt-1.5 text-[8px] font-medium">{t("password")}</p>
           <div className="mt-1 h-6 rounded-xl" style={{ boxShadow: `inset 0 0 0 1px ${LINE}` }} />
           <div className="mt-2.5 flex h-7 items-center justify-center rounded-full text-[9px] font-medium text-white" style={{ background: NAVY }}>
-            Sign in
+            {t("signIn")}
           </div>
           <p className="mt-2.5 text-center text-[7px] uppercase tracking-[0.14em]" style={{ color: SUBTLE }}>
-            or continue with Google
+            {t("shotOrGoogle")}
           </p>
           <div className="mt-1.5 flex h-6 items-center justify-center rounded-full text-[8px]" style={{ background: PAPER, boxShadow: `inset 0 0 0 1px ${LINE}` }}>
-            Continue with Google
+            {t("shotContinueGoogle")}
           </div>
         </div>
       </div>

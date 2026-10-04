@@ -7,6 +7,7 @@ import { useRoleChrome } from "@/components/role-chrome";
 import { bottomBarKind } from "@/lib/role-access";
 import { hapticLight, isNative } from "@/lib/native";
 import { nativeStoreTabs, type NativeStoreTabId } from "@/lib/native-store-tabs";
+import { localePath, stripLocalePrefix } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -17,8 +18,9 @@ import { cn } from "@/lib/utils";
  */
 
 export function AppTabBar() {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const bare = stripLocalePrefix(pathname);
   const tab = useRouterState({ select: (s) => (s.location.search as { tab?: string }).tab });
   const desk = useRouterState({ select: (s) => (s.location.search as { desk?: string }).desk });
   const view = useRouterState({ select: (s) => (s.location.search as { view?: string }).view });
@@ -110,11 +112,11 @@ export function AppTabBar() {
         {kind === "parent" && !storeTabs ? (
           <>
             <Tab
-              to="/search"
+              to={localePath("/search", locale)}
               label={t("search")}
               icon={Search}
               marker="search"
-              active={pathname.startsWith("/search")}
+              active={bare === "/search" || bare.startsWith("/search/")}
             />
             <Tab
               to="/parent"
@@ -154,17 +156,17 @@ export function AppTabBar() {
         ) : null}
         {kind === "guest" && !storeTabs ? (
           <>
-            <Tab to="/" label={t("navHome")} icon={Home} marker="home" active={pathname === "/"} />
-            <Tab to="/search" label={t("search")} icon={Search} marker="search" active={pathname.startsWith("/search")} />
+            <Tab to={localePath("/", locale)} label={t("navHome")} icon={Home} marker="home" active={bare === "/"} />
+            <Tab to={localePath("/search", locale)} label={t("search")} icon={Search} marker="search" active={bare === "/search" || bare.startsWith("/search/")} />
             <Tab
-              to="/login"
+              to={localePath("/login", locale)}
               search={{ next: "/parent?tab=saved" }}
               label={t("saved")}
               icon={Heart}
               marker="saved"
               active={false}
             />
-            <Tab to="/login" label={t("signIn")} icon={User} marker="signin" active={pathname.startsWith("/login")} />
+            <Tab to={localePath("/login", locale)} label={t("signIn")} icon={User} marker="signin" active={bare === "/login" || bare.startsWith("/login/")} />
           </>
         ) : null}
       </div>
@@ -173,8 +175,9 @@ export function AppTabBar() {
 }
 
 function storeTabActive(id: NativeStoreTabId, pathname: string, tab: string | undefined): boolean {
+  const bare = stripLocalePrefix(pathname);
   if (id === "search") {
-    return pathname === "/" || pathname.startsWith("/search") || pathname.startsWith("/daycare");
+    return bare === "/" || bare.startsWith("/search") || bare.startsWith("/daycare");
   }
   if (id === "saved") return pathname.startsWith("/parent") && tab === "saved";
   if (id === "messages") return pathname.startsWith("/inbox");

@@ -67,7 +67,7 @@ test("verify email copy is a welcome/confirm with a real link, EN + FR-CA", () =
   assert.doesNotMatch(text, /We got your request/);
   const copy = src("src/lib/copy.ts");
   assert.match(copy, /verifyEmailSubject: "Verify your email: KidEase"/);
-  assert.match(copy, /verifyEmailSubject: "Confirmez votre courriel: KidEase"/);
+  assert.match(copy, /verifyEmailSubject: "Confirmez votre courriel\u00a0: KidEase"/);
 });
 
 test("daycare verify and next-steps say the listing is not live until verified", () => {

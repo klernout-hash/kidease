@@ -5,6 +5,7 @@ import { BuildingPhoto, ListingPhotoFallback } from "@/components/building-photo
 import { SaveListingButton } from "@/components/save-listing-button";
 import { ShareListingButton } from "@/components/share-button";
 import { DETAIL_SIZES } from "@/lib/photo";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 
 type ListingHeroBack =
@@ -39,7 +40,7 @@ export function ListingHeroGallery({
   /** False for a centre already live. Do not ask them to claim. */
   claim?: boolean;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const start = useRef<{ x: number; y: number } | null>(null);
   const count = photos.length;
   const current = count ? Math.min(Math.max(index, 0), count - 1) : 0;
@@ -77,13 +78,12 @@ export function ListingHeroGallery({
 
   const backLink =
     back.to === "/search" ? (
-      <Link to="/search" className={count ? overlayControl : emptyControl} aria-label={t("backToExplore")} onClick={backIfInApp}>
+      <Link to={localePath("/search", locale)} className={count ? overlayControl : emptyControl} aria-label={t("backToExplore")} onClick={backIfInApp}>
         <ChevronLeft className="size-6" strokeWidth={1.75} aria-hidden />
       </Link>
     ) : (
       <Link
-        to="/daycare/city/$city"
-        params={{ city: back.city }}
+        to={localePath(`/daycare/city/${back.city}`, locale)}
         className={count ? overlayControl : emptyControl}
         aria-label={t("backToExplore")}
         onClick={backIfInApp}

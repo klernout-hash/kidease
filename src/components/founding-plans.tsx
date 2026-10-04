@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FOUNDING_FREE_FEATURES, FOUNDING_PAGE, foundingLocale } from "@/lib/founding-period";
+import { localePath } from "@/lib/locale-path";
 import { formatPlanCad } from "@/lib/upgrade-plans";
 import { useCopy } from "@/lib/use-copy";
 
@@ -24,7 +25,7 @@ export function FoundingPlans({ embedded = false }: { embedded?: boolean }) {
       <div className="mt-8 rounded-2xl bg-surface p-4 ring-1 ring-border sm:p-5">
         <h2 className="font-display text-xl">{copy.parentsTitle}</h2>
         <p className="mt-2 text-sm text-muted">{copy.parentsBody}</p>
-        <Link to="/search" className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-primary">
+        <Link to={localePath("/search", locale)} className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-primary">
           {copy.parentsCta}
         </Link>
       </div>
@@ -40,7 +41,7 @@ export function FoundingPlans({ embedded = false }: { embedded?: boolean }) {
         </div>
         <p className="mt-3 font-display text-3xl tabular-nums leading-none">
           {price}
-          <span className="ml-1 text-sm font-normal text-muted">{copy.priceUnit}</span>
+          <span className={`${copy.priceUnit.startsWith("/") ? "" : "ml-1 "}text-sm font-normal text-muted`}>{copy.priceUnit}</span>
         </p>
         <p className="mt-1 text-sm font-medium">{copy.daycareName}</p>
         <p className="mt-3 text-sm text-muted">{copy.daycareBody}</p>

@@ -259,8 +259,8 @@ export function NavDrawer({
                 <summary className="flex min-h-11 cursor-pointer list-none items-center px-3 text-xs font-semibold uppercase tracking-[0.12em] text-subtle [&::-webkit-details-marker]:hidden">
                   {t("navFindCare")}
                 </summary>
-                <MenuRow to="/search" label={t("search")} icon="explore" appearance="drawer" marker="search" onClick={onClose} />
-                <MenuRow to="/search" search={{ view: "map" }} label={t("navMap")} icon="explore" appearance="drawer" marker="map" onClick={onClose} />
+                <MenuRow to={localePath("/search", locale)} label={t("search")} icon="explore" appearance="drawer" marker="search" onClick={onClose} />
+                <MenuRow to={localePath("/search", locale)} search={{ view: "map" }} label={t("navMap")} icon="explore" appearance="drawer" marker="map" onClick={onClose} />
                 <MenuRow to="/cities" label={t("browseCities")} icon="explore" appearance="drawer" onClick={onClose} />
                 <MenuRow to="/compare" label={t("compare")} icon="compare" appearance="drawer" onClick={onClose} />
                 <MenuRow to="/tour-checklist" label={t("tourChecklist")} icon="tourChecklist" appearance="drawer" onClick={onClose} />
@@ -271,15 +271,15 @@ export function NavDrawer({
                 </summary>
                 <MenuRow to="/claim" label={t("listYourDaycare")} icon="claim" appearance="drawer" onClick={onClose} />
                 <MenuRow to="/plans" label={t("navPlans")} icon="benefits" appearance="drawer" marker="plans" onClick={onClose} />
-                <MenuRow to="/jobs" label={t("findDaycareJobs")} icon="jobs" appearance="drawer" onClick={onClose} />
+                <MenuRow to={localePath("/jobs", locale)} label={t("findDaycareJobs")} icon="jobs" appearance="drawer" onClick={onClose} />
               </details>
               <details className="py-0.5">
                 <summary className="flex min-h-11 cursor-pointer list-none items-center px-3 text-xs font-semibold uppercase tracking-[0.12em] text-subtle [&::-webkit-details-marker]:hidden">
                   {t("helpTitle")}
                 </summary>
-                <MenuRow to="/help" label={t("helpTitle")} icon="help" appearance="drawer" onClick={onClose} />
-                <MenuRow to="/faq" label={t("faqShort")} icon="faq" appearance="drawer" onClick={onClose} />
-                <MenuRow to="/contact" label={t("contactTitle")} icon="contact" appearance="drawer" onClick={onClose} />
+                <MenuRow to={localePath("/help", locale)} label={t("helpTitle")} icon="help" appearance="drawer" onClick={onClose} />
+                <MenuRow to={localePath("/faq", locale)} label={t("faqShort")} icon="faq" appearance="drawer" onClick={onClose} />
+                <MenuRow to={localePath("/contact", locale)} label={t("contactTitle")} icon="contact" appearance="drawer" onClick={onClose} />
               </details>
             </nav>
           ) : showMenus ? (

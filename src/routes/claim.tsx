@@ -15,7 +15,8 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
-import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
+import { headChromeLocale } from "@/lib/head-locale";
+import { MARKETING_PAGE_SEO, pageSeoHead, UNPAIRED_FR_SEO } from "@/lib/page-seo";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { SIGNUP_FUNNEL_EVENT, signupFunnelPayload } from "@/lib/signup-funnel";
@@ -37,7 +38,10 @@ function ClaimHitPhoto({ photo, name, compact = false }: { photo: string; name: 
 }
 
 export const Route = createFileRoute("/claim")({
-  head: () => pageSeoHead(MARKETING_PAGE_SEO.claim),
+  head: ({ matches }) =>
+    headChromeLocale(matches) === "fr"
+      ? pageSeoHead({ ...UNPAIRED_FR_SEO.claim, path: "/claim", locale: "fr" })
+      : pageSeoHead(MARKETING_PAGE_SEO.claim),
   validateSearch: (s: Record<string, unknown>) => {
     const q = typeof s.q === "string" ? s.q : "";
     const id = typeof s.id === "string" ? s.id : "";
@@ -305,8 +309,8 @@ function ClaimPage() {
               />
             </label>
             <label className="block text-sm font-medium">
-              Provincial licence photo
-              <span className="mt-1 block text-xs font-normal text-muted">Required. Photo or scan of the current licence.</span>
+              {t("licensePhoto")}
+              <span className="mt-1 block text-xs font-normal text-muted">{t("licenceUploadLead")}</span>
               <input
                 ref={claimFileRef}
                 required
@@ -319,9 +323,9 @@ function ClaimPage() {
               <UploadLimitHint hint={t("uploadClaimDocHint")} error={licenseError} />
             </label>
             {license.startsWith("data:image") ? (
-              <img src={license} alt="Licence preview" className="max-h-40 rounded-md object-contain ring-1 ring-border" />
+              <img src={license} alt={t("claimLicenseAlt")} className="max-h-40 rounded-md object-contain ring-1 ring-border" />
             ) : license ? (
-              <p className="text-sm text-muted">PDF selected</p>
+              <p className="text-sm text-muted">{t("claimPdfSelected")}</p>
             ) : null}
             <TurnstileField onToken={claimChallenge.onToken} />
             <div className="flex flex-wrap gap-2">
@@ -506,8 +510,8 @@ function ClaimPage() {
             <input className="ke-input mt-1" value={enroll.phone} onChange={(e) => setEnroll((s) => ({ ...s, phone: e.target.value }))} autoComplete="tel" />
           </label>
           <label className="block text-sm font-medium">
-            Provincial licence photo
-            <span className="mt-1 block text-xs font-normal text-muted">Required for compliance review. Clear photo or scan of the current licence.</span>
+            {t("licensePhoto")}
+            <span className="mt-1 block text-xs font-normal text-muted">{t("licenceUploadLead")}</span>
             <input
               ref={enrollFileRef}
               required
@@ -520,9 +524,9 @@ function ClaimPage() {
             <UploadLimitHint hint={t("uploadClaimDocHint")} error={enrollLicenseError} />
           </label>
           {enrollLicense.startsWith("data:image") ? (
-            <img src={enrollLicense} alt="Licence preview" className="max-h-40 rounded-md object-contain ring-1 ring-border" />
+            <img src={enrollLicense} alt={t("claimLicenseAlt")} className="max-h-40 rounded-md object-contain ring-1 ring-border" />
           ) : enrollLicense ? (
-            <p className="text-sm text-muted">PDF selected</p>
+            <p className="text-sm text-muted">{t("claimPdfSelected")}</p>
           ) : null}
           <label className="block text-sm font-medium">
             {t("enrollMessage")}

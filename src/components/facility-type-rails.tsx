@@ -8,6 +8,7 @@ import { matchesListedDaycareType } from "@/lib/care-type";
 import { classifyFacilityType, FACILITY_TYPES, matchesFacilityType, type FacilityType } from "@/lib/facility-type";
 import { homeRailItems } from "@/lib/now-loops";
 import type { DaycareCard as Card } from "@/lib/types";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { uniqueById } from "@/lib/utils";
 
@@ -122,7 +123,7 @@ export function HomeCareTypeRow({
   fit?: boolean;
   onOverflow?: (hidden: BrowseDaycareType[]) => void;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState<number>(BROWSE_DAYCARE_TYPES.length);
 
@@ -212,7 +213,7 @@ export function HomeCareTypeRow({
           return (
             <Link
               key={type}
-              to="/search"
+              to={localePath("/search", locale)}
               search={browseTypeSearch(type, city)}
               data-browse-type={type}
               aria-current={on ? "page" : undefined}

@@ -81,8 +81,8 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
 
   const homeTo = localePath("/", locale);
   const drawerItems = [
-    { to: "/help", label: t("helpTitle"), icon: "help" as const },
-    { to: "/faq", label: t("faqShort"), icon: "faq" as const },
+    { to: localePath("/help", locale), label: t("helpTitle"), icon: "help" as const },
+    { to: localePath("/faq", locale), label: t("faqShort"), icon: "faq" as const },
     { to: localePath("/contact", locale), label: t("contactTitle"), icon: "contact" as const },
   ];
 

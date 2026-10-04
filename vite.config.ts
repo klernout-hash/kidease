@@ -224,18 +224,34 @@ export default defineConfig(({ command, isPreview }) => ({
     rolldownOptions: {
       output: {
         codeSplitting: {
-          groups: (["zh", "yue", "pa", "es", "ar", "tl", "it", "de"] as const).map((code) => ({
+          groups: [
+            {
+              // Keep "posthog" out of the public chunk URL. Blockers that match
+              // that name fail the shell import and asset-recover reloads forever.
+              name: "product-events",
+              test: /src\/lib\/posthog\.ts$/,
+              minSize: 0,
+              minShareCount: 1,
+            },
+            {
+              name: "product-events-lib",
+              test: /node_modules\/posthog-js/,
+              minSize: 0,
+              minShareCount: 1,
+            },
+            ...(["zh", "yue", "pa", "es", "ar", "tl", "it", "de"] as const).map((code) => ({
             name: `locale-${code}`,
             test: new RegExp(`/src/lib/i18n/${code}\\.json$`),
             minSize: 0,
             minShareCount: 1,
           })),
+          ],
         },
       },
     },
     modulePreload: {
       resolveDependencies(_filename, deps) {
-        return deps.filter((dep) => !/locale-(?:zh|yue|pa|es|ar|tl|it|de)/.test(dep));
+        return deps.filter((dep) => !/locale-(?:zh|yue|pa|es|ar|tl|it|de)/.test(dep) && !/posthog/i.test(dep));
       },
     },
   },

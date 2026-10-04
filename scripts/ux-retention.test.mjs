@@ -26,7 +26,8 @@ test("parent login search returns visitors to the page they left", () => {
 test("listing detail keeps website CTAs, login next, and a back link", () => {
   const listing = src("src/routes/daycare.$slug.tsx");
   assert.match(listing, /parentLoginSearch\(next\)/);
-  assert.match(listing, /`\/daycare\/\$\{slug\}\?ask=/);
+  assert.match(listing, /listingPath = localePath\(`\/daycare\/\$\{slug\}`, locale\)/);
+  assert.match(listing, /\$\{listingPath\}\?ask=/);
   assert.match(listing, /backToExplore/);
   assert.match(listing, /listingCtaLead/);
   assert.match(listing, /searchNearby/);
@@ -70,7 +71,7 @@ test("error surfaces and get-app offer a next step instead of a dead end", () =>
   assert.match(rootCrash, /href="\/"/);
   const getApp = src("src/routes/get-app.tsx");
   assert.match(getApp, /getAppBrowse/);
-  assert.match(getApp, /to="\/search"/);
+  assert.match(getApp, /localePath\("\/search", locale\)/);
 });
 
 test("listing cards use the heart to save to the parent shortlist", () => {

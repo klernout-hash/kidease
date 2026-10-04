@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Baby, Backpack, Shapes, Smile, type LucideIcon } from "lucide-react";
 import { isRailAge, RAIL_AGES, type RailAge } from "@/lib/care-type";
 import { EXPLORE_CATEGORY_COPY, type ExploreCategory } from "@/lib/explore-categories";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -23,7 +24,7 @@ export function ExploreCategoryChips({
   searchFor: (cat?: RailAge) => Record<string, unknown>;
   onSelect?: (cat?: RailAge) => void;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const picked = (selected ?? []).filter(isRailAge);
   const allOn = picked.length === 0;
 
@@ -36,6 +37,7 @@ export function ExploreCategoryChips({
           aria-pressed={allOn}
           data-explore-cat="all"
           search={searchFor(undefined)}
+          to={localePath("/search", locale)}
           onClick={() => onSelect?.(undefined)}
         />
       ) : null}
@@ -51,6 +53,7 @@ export function ExploreCategoryChips({
             aria-pressed={on}
             data-explore-cat={cat}
             search={searchFor(cat)}
+            to={localePath("/search", locale)}
             onClick={() => onSelect?.(cat)}
           />
         );
@@ -65,17 +68,19 @@ function ExploreCatChip({
   on,
   className,
   search,
+  to = "/search",
   ...props
 }: {
   icon?: LucideIcon;
   label: string;
   on: boolean;
   search: Record<string, unknown>;
+  to?: string;
   className?: string;
 } & Omit<ComponentProps<typeof Link>, "to" | "search" | "className">) {
   return (
     <Link
-      to="/search"
+      to={to}
       search={search as never}
       className={cn("ke-chip ke-explore-cat", on && "ke-chip-on", className)}
       {...props}

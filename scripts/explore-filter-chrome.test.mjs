@@ -63,7 +63,7 @@ test("Explore filter chrome is one Airbnb/Maps bar, not three pill rows", () => 
   assert.doesNotMatch(chips, /catAllAges/);
   assert.match(chips, /t\("catAll"\)/);
   assert.match(chips, /data-explore-cat="all"/);
-  assert.match(chips, /to="\/search"/);
+  assert.match(chips, /localePath\("\/search", locale\)/);
   assert.doesNotMatch(chips, /ChipCarousel/);
 
   const chrome = search.slice(search.indexOf("<ExploreSearchBar"), search.indexOf("{askLocation"));

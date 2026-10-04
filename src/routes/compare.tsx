@@ -39,13 +39,17 @@ import { money } from "@/lib/utils";
 import { licenseRegistryUrl } from "@/lib/licensing";
 import type { DaycareCard } from "@/lib/types";
 import { MultiApplyPanel } from "@/components/multi-apply-sheet";
-import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
+import { headChromeLocale } from "@/lib/head-locale";
+import { MARKETING_PAGE_SEO, pageSeoHead, UNPAIRED_FR_SEO } from "@/lib/page-seo";
 
 export const Route = createFileRoute("/compare")({
   validateSearch: (s: Record<string, unknown>) => ({
     slugs: parseCompareSlugs(s.slugs),
   }),
-  head: () => pageSeoHead(MARKETING_PAGE_SEO.compare),
+  head: ({ matches }) =>
+    headChromeLocale(matches) === "fr"
+      ? pageSeoHead({ ...UNPAIRED_FR_SEO.compare, path: "/compare", locale: "fr" })
+      : pageSeoHead(MARKETING_PAGE_SEO.compare),
   component: ComparePage,
 });
 

@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { cityHubs } from "@/lib/city-hub-data";
 import { cityHubChipLabel, cityHubDefBySlug } from "@/lib/city-hubs";
 import type { CopyKey } from "@/lib/copy";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 
 export function CityHubLinks({
@@ -23,8 +24,7 @@ export function CityHubLinks({
           return (
             <li key={hub.slug} className="shrink-0">
               <Link
-                to="/daycare/city/$city"
-                params={{ city: hub.slug }}
+                to={localePath(`/daycare/city/${hub.slug}`, locale)}
                 className="inline-flex min-h-11 items-center whitespace-nowrap rounded-full bg-surface px-3 text-sm font-medium ring-1 ring-border hover:bg-bg"
               >
                 {def ? cityHubChipLabel(def, locale) : hub.city}

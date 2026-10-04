@@ -8,6 +8,7 @@ import { FoundingMemberBadge } from "@/components/founding-member-badge";
 import { SaveListingButton } from "@/components/save-listing-button";
 import { ClaimListingCta } from "@/components/claim-listing-cta";
 import { ShareListingButton } from "@/components/share-button";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { cn, displayCentreName, displayListingText, money } from "@/lib/utils";
 import { distanceKm as kmBetween } from "@/lib/proximity";
@@ -162,6 +163,7 @@ function ListingAnchor({
   "data-ke"?: string;
   label?: string;
 }) {
+  const { locale } = useCopy();
   if (!isSafeSitemapSlug(slug)) {
     return (
       <div className={className} data-ke={dataKe}>
@@ -171,8 +173,7 @@ function ListingAnchor({
   }
   return (
     <Link
-      to="/daycare/$slug"
-      params={{ slug }}
+      to={localePath(`/daycare/${slug}`, locale)}
       search={search}
       className={className}
       data-ke={dataKe}

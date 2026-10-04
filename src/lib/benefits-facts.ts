@@ -44,7 +44,10 @@ export const CWELCC_HREF = {
 
 export const MB_SUBSIDY_HREF =
   "https://www.gov.mb.ca/education/childcare/families/childcare_subsidies.html";
+export const MB_SUBSIDY_HREF_FR =
+  "https://www.gov.mb.ca/education/childcare/families/childcare_subsidies.fr.html";
 export const MB_SEE_HREF = "https://direct3.gov.mb.ca/daycare/see/see.nsf/see?ReadForm#/en-ca";
+export const MB_SEE_HREF_FR = "https://direct3.gov.mb.ca/daycare/see/see.nsf/see?ReadForm#/fr-ca";
 export const MB_ZERO_FEE_EFFECTIVE_EN = "September 13, 2026";
 export const MB_ZERO_FEE_EFFECTIVE_FR = "13 septembre 2026";
 
@@ -58,8 +61,11 @@ export const AB_EXTENDED_HOURS = 100;
 export const AB_AFFORDABILITY_FT_MONTH = 326.25;
 
 export const ON_SUBSIDY_HREF = "https://www.ontario.ca/page/child-care-subsidies";
+export const ON_SUBSIDY_HREF_FR = "https://www.ontario.ca/fr/page/subventions-pour-la-garde-denfants";
 export const ON_CMSM_HREF =
   "https://www.ontario.ca/page/service-system-managers-child-care-and-early-years-programs";
+export const ON_CMSM_HREF_FR =
+  "https://www.ontario.ca/fr/page/gestionnaires-de-systeme-de-services-pour-les-programmes-de-garde-denfants-et-de-la";
 
 export const BC_ACCB_HREF = "https://www.gov.bc.ca/affordablechildcarebenefit";
 export const BC_ESTIMATOR_HREF = "https://myfamilyservices.gov.bc.ca/s/estimator";
