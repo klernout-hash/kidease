@@ -40,8 +40,9 @@ test("Start a Daycare is one page with honesty first and live claim CTAs", () =>
   const finder = page.indexOf("startDaycareFinderT");
   assert.ok(honesty > 0 && steps > honesty && finder > steps, "honesty, then steps, then province finder");
   assert.match(page, /hash="enroll"/);
-  assert.match(page, /enrollToday/);
+  assert.match(page, /createKideaseListing/);
   assert.match(page, /startDaycareClaimExisting/);
+  assert.doesNotMatch(page, /\/plans/);
   assert.match(page, /to="\/claim"/);
   assert.match(page, /to="\/verify"/);
   assert.match(page, /to="\/daycare-requirements"/);
@@ -51,6 +52,8 @@ test("Start a Daycare is one page with honesty first and live claim CTAs", () =>
   assert.match(copy, /startADaycare: "Start a Daycare"/);
   assert.match(copy, /startADaycare: "Ouvrir une garderie"/);
   assert.match(copy, /enrollToday: "Enroll today!"/);
+  assert.match(copy, /createKideaseListing: "Create your KidEase listing"/);
+  assert.match(copy, /Create your KidEase listing means claim or create/);
   assert.match(copy, /does not issue licences/);
   assert.match(copy, /does not award government grants|does not award grants/);
   assert.match(copy, /not a payment to become licensed/);
