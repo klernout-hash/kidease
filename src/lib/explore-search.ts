@@ -33,13 +33,64 @@ export function parseExploreSearchFields(s: Record<string, unknown>): ExploreSea
   return out;
 }
 
+/** Accent-folded, with saint / st / ste written out. Safe for French and English names. */
+export function foldDaycareName(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\b(ste|sainte)\.?\b/g, "sainte")
+    .replace(/\b(st|saint)\.?\b/g, "saint")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function trigrams(value: string) {
+  const padded = `  ${value} `;
+  const out = new Set<string>();
+  for (let i = 0; i < padded.length - 2; i += 1) out.add(padded.slice(i, i + 3));
+  return out;
+}
+
+/** Dice score, close to pg_trgm similarity. 1 is the same string. */
+export function daycareNameSimilarity(left: string, right: string) {
+  const a = foldDaycareName(left);
+  const b = foldDaycareName(right);
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  const leftGrams = trigrams(a);
+  const rightGrams = trigrams(b);
+  let shared = 0;
+  for (const gram of leftGrams) if (rightGrams.has(gram)) shared += 1;
+  return (2 * shared) / (leftGrams.size + rightGrams.size);
+}
+
+const FUZZY_NAME_MIN = 5;
+const FUZZY_NAME_SCORE = 0.45;
+
 export function matchesDaycareName(
   item: { name: string; nameFr?: string | null },
   query: string,
 ): boolean {
-  const q = query.trim().toLowerCase();
+  const q = foldDaycareName(query);
   if (!q) return true;
-  return item.name.toLowerCase().includes(q) || (item.nameFr ?? "").toLowerCase().includes(q);
+  const names = [item.name, item.nameFr ?? ""].map(foldDaycareName).filter(Boolean);
+  if (names.some((name) => name.includes(q))) return true;
+  if (q.length < FUZZY_NAME_MIN) return false;
+  return names.some((name) => fuzzyNameTokens(q, name));
+}
+
+function fuzzyNameTokens(query: string, name: string) {
+  const wanted = query.split(" ").filter((part) => part.length >= 2);
+  const words = name.split(" ").filter((part) => part.length >= 2);
+  if (!wanted.length || !words.length) return false;
+  return wanted.every(
+    (part) =>
+      words.some(
+        (word) => word.includes(part) || (part.length >= 4 && daycareNameSimilarity(part, word) >= FUZZY_NAME_SCORE),
+      ),
+  );
 }
 
 export const OPENING_HORIZON_DAYS = 14;
