@@ -1,4 +1,10 @@
-import { photoFreshness, photoTimestamp, vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
+import {
+  photoFreshness,
+  photoTimestamp,
+  vacancyFreshness,
+  vacancyPublicWindow,
+  vacancyTimestamp,
+} from "@/lib/listing-readiness";
 import { useCopy } from "@/lib/use-copy";
 import type { Daycare } from "@/lib/types";
 
@@ -8,28 +14,38 @@ function formatAgo(locale: string, age: { unit: "now" | "minute" | "hour" | "day
   return new Intl.RelativeTimeFormat(tag, { numeric: "auto" }).format(-age.count, age.unit);
 }
 
-type VacancyCopyKey = "vacancyUpdated" | "vacancyStale" | "vacancyUpdatedNow" | "vacancyLastConfirmed" | "availUnknown";
+type VacancyCopyKey =
+  | "vacancyUpdated"
+  | "vacancyStale"
+  | "vacancyUpdatedNow"
+  | "vacancyLastConfirmed"
+  | "vacancyNotConfirmed"
+  | "vacancyMayBeOutOfDate"
+  | "availUnknown";
 
 export function vacancyLine(
   item: Pick<Daycare, "lastVacancyUpdatedAt" | "spotsUpdatedAt">,
   t: (key: VacancyCopyKey) => string,
   locale: string,
 ) {
-  const state = vacancyFreshness(vacancyTimestamp(item));
-  if (state.kind === "unknown") return { kind: "unknown" as const, text: "", detail: "" };
-  if (state.kind === "stale") {
-    const ago = formatAgo(locale, state.age);
+  const at = vacancyTimestamp(item);
+  const window = vacancyPublicWindow(at);
+  if (window === "unknown") {
+    return { kind: "unknown" as const, text: t("vacancyNotConfirmed"), detail: t("vacancyNotConfirmed") };
+  }
+  const state = vacancyFreshness(at);
+  const confirmed =
+    state.kind === "unknown" || state.age.unit === "now"
+      ? t("vacancyUpdatedNow")
+      : `${t("vacancyUpdated")} ${formatAgo(locale, state.age)}`;
+  if (window === "out_of_date") {
     return {
       kind: "stale" as const,
-      text: t("vacancyStale"),
-      detail: ago ? `${t("vacancyLastConfirmed")} ${ago}` : t("vacancyStale"),
+      text: `${confirmed}. ${t("vacancyMayBeOutOfDate")}`,
+      detail: t("vacancyMayBeOutOfDate"),
     };
   }
-  if (state.age.unit === "now") {
-    return { kind: "fresh" as const, text: t("vacancyUpdatedNow"), detail: t("vacancyUpdatedNow") };
-  }
-  const text = `${t("vacancyUpdated")} ${formatAgo(locale, state.age)}`;
-  return { kind: "fresh" as const, text, detail: text };
+  return { kind: "fresh" as const, text: confirmed, detail: confirmed };
 }
 
 export function photoLine(
@@ -57,11 +73,11 @@ export function VacancyFreshness({
 }) {
   const { t, locale } = useCopy();
   const line = vacancyLine(item, t, locale);
-  if (line.kind === "unknown" || !line.text) return null;
+  if (!line.text) return null;
   return (
-    <div className={className}>
-      <p>{line.kind === "stale" ? line.detail : line.text}</p>
-      {lead && line.kind === "stale" ? <p className="mt-1 text-muted">{t("vacancyStaleLead")}</p> : null}
+    <div className={className} data-ke="vacancy-confirmed">
+      <p>{line.text}</p>
+      {lead && line.kind === "stale" ? <p className="mt-1 text-muted">{t("vacancyOutOfDateLead")}</p> : null}
     </div>
   );
 }

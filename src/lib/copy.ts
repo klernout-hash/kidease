@@ -2207,6 +2207,11 @@ export const copy = {
     vacancyStaleLead:
       "This centre last confirmed open spots more than two weeks ago. KidEase does not invent availability: ask before you plan around a spot.",
     vacancyUpdatedNow: "Spots confirmed just now",
+    vacancyNotConfirmed: "Spots not confirmed yet",
+    vacancyMayBeOutOfDate: "May be out of date",
+    vacancyOutOfDateLead:
+      "Open spots were last confirmed more than 30 days ago. The count may be out of date. KidEase does not invent availability.",
+    deskUpdatedThisWeek: "Updated this week",
     vacancyRefresh: "Confirm today’s open spots",
     vacancyRefreshLead: "Parents see when you last confirmed open spots. KidEase does not invent availability.",
     vacancyRefreshed: "Vacancy timestamp updated.",
@@ -5121,6 +5126,11 @@ export const copy = {
     vacancyStaleLead:
       "Ce centre a confirmé ses places il y a plus de deux semaines. KidEase n’invente pas la disponibilité: confirmez avant de compter sur une place.",
     vacancyUpdatedNow: "Places confirmées à l’instant",
+    vacancyNotConfirmed: "Places pas encore confirmées",
+    vacancyMayBeOutOfDate: "Peut ne plus être à jour",
+    vacancyOutOfDateLead:
+      "Les places ont été confirmées il y a plus de 30 jours. Le nombre peut ne plus être à jour. KidEase n’invente pas la disponibilité.",
+    deskUpdatedThisWeek: "Mis à jour cette semaine",
     vacancyRefresh: "Confirmer les places d’aujourd’hui",
     vacancyRefreshLead: "Les parents voient la dernière confirmation des places. KidEase n’invente pas la disponibilité.",
     vacancyRefreshed: "Horodatage des places mis à jour.",
