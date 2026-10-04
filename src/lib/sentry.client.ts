@@ -7,6 +7,7 @@ import {
   SENTRY_IGNORE_ERRORS,
   SENTRY_PUBLIC_DSN_ENV,
   scrubSentryEvent,
+  scrubSentrySpan,
   sentryDataCollection,
   sentryTracesSampleRate,
 } from "@/lib/sentry-shared";
@@ -45,7 +46,6 @@ export function initSentryBrowser() {
   Sentry.init({
     dsn,
     environment,
-    sendDefaultPii: false,
     dataCollection: sentryDataCollection(),
     tracesSampleRate: sentryTracesSampleRate(environment),
     ignoreErrors: [...SENTRY_IGNORE_ERRORS],
@@ -53,8 +53,8 @@ export function initSentryBrowser() {
     beforeSend(event) {
       return scrubSentryEvent(event);
     },
-    beforeSendTransaction(event) {
-      return scrubSentryEvent(event);
+    beforeSendSpan(span) {
+      return scrubSentrySpan(span);
     },
     integrations: [Sentry.browserTracingIntegration()],
   });

@@ -14,6 +14,7 @@ import {
   scrubPiiString,
   scrubPiiValue,
   scrubSentryEvent,
+  scrubSentrySpan,
   sentryDataCollection,
   sentryTracesSampleRate,
 } from "../src/lib/sentry-shared.ts";
@@ -70,6 +71,24 @@ describe("Sentry wiring", () => {
     assert.equal(collection.httpHeaders.request, false);
     assert.equal(collection.httpHeaders.response, false);
     assert.deepEqual(collection.httpBodies, []);
+    assert.equal(collection.urlQueryParams, false);
+    assert.deepEqual(collection.genAI, { inputs: false, outputs: false });
+    assert.equal(collection.databaseQueryData, false);
+    assert.equal(collection.queues, false);
+    assert.equal(collection.stackFrameVariables, false);
+
+    const span = scrubSentrySpan({
+      name: "GET /daycare?email=ada@kidease.ca",
+      attributes: {
+        "url.full": "https://kidease.ca/x?q=ada@kidease.ca",
+        email: "a@b.c",
+        "sentry.op": "http.server",
+      },
+    });
+    assert.equal(span.name, "GET /daycare?email=[email]");
+    assert.equal(span.attributes["url.full"], "https://kidease.ca/x?q=[email]");
+    assert.equal(span.attributes.email, "[Filtered]");
+    assert.equal(span.attributes["sentry.op"], "http.server");
     assert.equal(scrubPiiString("Bearer secret-token"), "Bearer [Filtered]");
     assert.equal(scrubPiiString("parent@example.com called"), "[email] called");
     assert.equal(scrubPiiValue({ email: "a@b.c", child_name: "Ada", route: "/admin" }).email, "[Filtered]");
@@ -137,8 +156,14 @@ describe("Sentry wiring", () => {
     assert.match(read("src/client.tsx"), /import "\.\/instrument\.client"/);
     assert.match(read("src/server.ts"), /import "\.\/instrument\.server"/);
     assert.match(read("src/server.ts"), /flushSentry/);
-    assert.match(read("package.json"), /"@sentry\/react"/);
-    assert.match(read("package.json"), /"@sentry\/node"/);
+    assert.match(read("package.json"), /"@sentry\/react": "\^11\./);
+    assert.match(read("package.json"), /"@sentry\/node": "\^11\./);
+    assert.match(read("src/lib/sentry.client.ts"), /beforeSendSpan/);
+    assert.match(read("src/lib/sentry.server.ts"), /beforeSendSpan/);
+    assert.doesNotMatch(read("src/lib/sentry.client.ts"), /sendDefaultPii/);
+    assert.doesNotMatch(read("src/lib/sentry.server.ts"), /sendDefaultPii/);
+    assert.doesNotMatch(read("src/lib/sentry.client.ts"), /beforeSendTransaction/);
+    assert.doesNotMatch(read("src/lib/sentry.server.ts"), /beforeSendTransaction/);
     assert.doesNotMatch(read("package.json"), /@sentry\/nextjs/);
   });
 });
