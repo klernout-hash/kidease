@@ -31,6 +31,8 @@ export type WaitlistEntry = {
   ageGroup: SpotAge;
   status: WaitlistStatus;
   joinedAt: string;
+  sibling?: boolean;
+  startDate?: string | null;
 };
 
 export type SpotOffer = {
@@ -47,6 +49,8 @@ export type SpotOffer = {
 export type QueueSnapshot = {
   entries: WaitlistEntry[];
   offers: SpotOffer[];
+  /** Daycare toggle. Off leaves sibling out of the offer order. */
+  siblingPriority?: boolean;
 };
 
 export type QueueStep = {
@@ -98,6 +102,7 @@ function cloneState(state: QueueSnapshot): QueueSnapshot {
   return {
     entries: state.entries.map((row) => ({ ...row })),
     offers: state.offers.map((row) => ({ ...row })),
+    siblingPriority: state.siblingPriority === true,
   };
 }
 
@@ -123,15 +128,85 @@ export function placeInLine(entries: readonly WaitlistEntry[], entryId: string):
   return index < 0 ? null : index + 1;
 }
 
-function pickNext(entries: readonly WaitlistEntry[], daycareId: string, age: SpotAge): WaitlistEntry | null {
-  const waiting = entries
-    .filter((row) => row.daycareId === daycareId && row.status === "waiting")
-    .slice()
-    .sort(byJoined);
-  if (age !== "any") {
-    return waiting.find((row) => row.ageGroup === age) ?? waiting.find((row) => row.ageGroup === "any") ?? null;
+function startSortKey(value: string | null | undefined) {
+  const raw = String(value || "").trim().slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return "9999-99-99";
+  return raw;
+}
+
+/**
+ * Offer order: sibling first only when the daycare turned that on,
+ * then an age match, then an earlier start date, then sign-up date.
+ * A missing start date stays last. It is not invented.
+ */
+export function fairOfferOrder(
+  entries: readonly WaitlistEntry[],
+  options: { siblingPriority: boolean; spotAge: SpotAge },
+): WaitlistEntry[] {
+  const ageRank = (row: WaitlistEntry) => {
+    if (options.spotAge === "any") return 0;
+    if (row.ageGroup === options.spotAge) return 0;
+    if (row.ageGroup === "any") return 1;
+    return 2;
+  };
+  return entries.slice().sort((a, b) => {
+    if (options.siblingPriority) {
+      const sibling = Number(b.sibling === true) - Number(a.sibling === true);
+      if (sibling !== 0) return sibling;
+    }
+    const age = ageRank(a) - ageRank(b);
+    if (age !== 0) return age;
+    const start = startSortKey(a.startDate).localeCompare(startSortKey(b.startDate));
+    if (start !== 0) return start;
+    return byJoined(a, b);
+  });
+}
+
+export type WaitlistAuditRow = {
+  place: number;
+  entryId: string;
+  sibling: boolean;
+  ageGroup: SpotAge;
+  startDate: string;
+  joinedAt: string;
+};
+
+/** Daycare export. No parent email, phone, or child name. */
+export function waitlistAuditCsv(rows: readonly WaitlistAuditRow[]): string {
+  const lines = ["place,entry_id,sibling,age,start_date,joined_at"];
+  for (const row of rows) {
+    lines.push(
+      [row.place, row.entryId, row.sibling ? "yes" : "no", row.ageGroup, row.startDate, row.joinedAt].join(","),
+    );
   }
-  return waiting[0] ?? null;
+  return lines.join("\n");
+}
+
+export function auditRowsForOffer(
+  entries: readonly WaitlistEntry[],
+  options: { siblingPriority: boolean; spotAge: SpotAge },
+): WaitlistAuditRow[] {
+  return fairOfferOrder(entries, options)
+    .filter((row) => row.status === "waiting" || row.status === "offered")
+    .map((row, index) => ({
+      place: index + 1,
+      entryId: row.id,
+      sibling: row.sibling === true,
+      ageGroup: row.ageGroup,
+      startDate: startSortKey(row.startDate) === "9999-99-99" ? "" : startSortKey(row.startDate),
+      joinedAt: row.joinedAt,
+    }));
+}
+
+function pickNext(
+  entries: readonly WaitlistEntry[],
+  daycareId: string,
+  age: SpotAge,
+  siblingPriority = false,
+): WaitlistEntry | null {
+  const waiting = entries.filter((row) => row.daycareId === daycareId && row.status === "waiting");
+  const ordered = fairOfferOrder(waiting, { siblingPriority, spotAge: age });
+  return ordered.find((row) => age === "any" || row.ageGroup === age || row.ageGroup === "any") ?? null;
 }
 
 function openOfferFor(offers: readonly SpotOffer[], daycareId: string, now: number): SpotOffer | undefined {
@@ -183,7 +258,7 @@ function advanceAfterClose(
 ): SpotOffer[] {
   if (!closed) return [];
   if (openOfferFor(state.offers, closed.daycareId, now)) return [];
-  const next = pickNext(state.entries, closed.daycareId, closed.ageGroup);
+  const next = pickNext(state.entries, closed.daycareId, closed.ageGroup, state.siblingPriority === true);
   if (!next) return [];
   return [mintOffer(state, next, now, nextId)];
 }
