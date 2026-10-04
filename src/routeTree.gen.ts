@@ -132,11 +132,13 @@ import { Route as ApiSmsInboundRouteImport } from './routes/api/sms.inbound'
 import { Route as ApiSmsStatusRouteImport } from './routes/api/sms.status'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
 import { Route as ApiWebhooksResendRouteImport } from './routes/api/webhooks.resend'
+import { Route as DaycareCityAgeRouteImport } from './routes/daycare.$city.$age'
 import { Route as DaycareCityCityRouteImport } from './routes/daycare.city.$city'
 import { Route as FrDaycareSlugRouteImport } from './routes/fr.daycare.$slug'
 import { Route as FrJobsPostRouteImport } from './routes/fr.jobs_.post'
 import { Route as PayBillBillIdRouteImport } from './routes/pay.bill.$billId'
 import { Route as ApiContractsIdPdfRouteImport } from './routes/api/contracts.$id.pdf'
+import { Route as FrDaycareCityAgeRouteImport } from './routes/fr.daycare.$city.$age'
 import { Route as FrDaycareCityCityRouteImport } from './routes/fr.daycare.city.$city'
 
 const IndexRoute = IndexRouteImport.update({
@@ -756,6 +758,11 @@ const ApiWebhooksResendRoute = ApiWebhooksResendRouteImport.update({
   path: '/api/webhooks/resend',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DaycareCityAgeRoute = DaycareCityAgeRouteImport.update({
+  id: '/daycare/$city/$age',
+  path: '/daycare/$city/$age',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DaycareCityCityRoute = DaycareCityCityRouteImport.update({
   id: '/daycare/city/$city',
   path: '/daycare/city/$city',
@@ -780,6 +787,11 @@ const ApiContractsIdPdfRoute = ApiContractsIdPdfRouteImport.update({
   id: '/api/contracts/$id/pdf',
   path: '/api/contracts/$id/pdf',
   getParentRoute: () => rootRouteImport,
+} as any)
+const FrDaycareCityAgeRoute = FrDaycareCityAgeRouteImport.update({
+  id: '/daycare/$city/$age',
+  path: '/daycare/$city/$age',
+  getParentRoute: () => FrRoute,
 } as any)
 const FrDaycareCityCityRoute = FrDaycareCityCityRouteImport.update({
   id: '/daycare/city/$city',
@@ -911,11 +923,13 @@ export interface FileRoutesByFullPath {
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
+  '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
+  '/fr/daycare/$city/$age': typeof FrDaycareCityAgeRoute
   '/fr/daycare/city/$city': typeof FrDaycareCityCityRoute
 }
 export interface FileRoutesByTo {
@@ -1040,11 +1054,13 @@ export interface FileRoutesByTo {
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
+  '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
+  '/fr/daycare/$city/$age': typeof FrDaycareCityAgeRoute
   '/fr/daycare/city/$city': typeof FrDaycareCityCityRoute
 }
 export interface FileRoutesById {
@@ -1172,11 +1188,13 @@ export interface FileRoutesById {
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
+  '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/jobs_/post': typeof FrJobsPostRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
+  '/fr/daycare/$city/$age': typeof FrDaycareCityAgeRoute
   '/fr/daycare/city/$city': typeof FrDaycareCityCityRoute
 }
 export interface FileRouteTypes {
@@ -1305,11 +1323,13 @@ export interface FileRouteTypes {
     | '/api/sms/status'
     | '/api/stripe/webhook'
     | '/api/webhooks/resend'
+    | '/daycare/$city/$age'
     | '/daycare/city/$city'
     | '/fr/daycare/$slug'
     | '/fr/jobs/post'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
+    | '/fr/daycare/$city/$age'
     | '/fr/daycare/city/$city'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -1434,11 +1454,13 @@ export interface FileRouteTypes {
     | '/api/sms/status'
     | '/api/stripe/webhook'
     | '/api/webhooks/resend'
+    | '/daycare/$city/$age'
     | '/daycare/city/$city'
     | '/fr/daycare/$slug'
     | '/fr/jobs/post'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
+    | '/fr/daycare/$city/$age'
     | '/fr/daycare/city/$city'
   id:
     | '__root__'
@@ -1565,11 +1587,13 @@ export interface FileRouteTypes {
     | '/api/sms/status'
     | '/api/stripe/webhook'
     | '/api/webhooks/resend'
+    | '/daycare/$city/$age'
     | '/daycare/city/$city'
     | '/fr/daycare/$slug'
     | '/fr/jobs_/post'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
+    | '/fr/daycare/$city/$age'
     | '/fr/daycare/city/$city'
   fileRoutesById: FileRoutesById
 }
@@ -1671,6 +1695,7 @@ export interface RootRouteChildren {
   ApiSmsStatusRoute: typeof ApiSmsStatusRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   ApiWebhooksResendRoute: typeof ApiWebhooksResendRoute
+  DaycareCityAgeRoute: typeof DaycareCityAgeRoute
   DaycareCityCityRoute: typeof DaycareCityCityRoute
   ApiContractsIdPdfRoute: typeof ApiContractsIdPdfRoute
 }
@@ -2538,6 +2563,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiWebhooksResendRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/daycare/$city/$age': {
+      id: '/daycare/$city/$age'
+      path: '/daycare/$city/$age'
+      fullPath: '/daycare/$city/$age'
+      preLoaderRoute: typeof DaycareCityAgeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/daycare/city/$city': {
       id: '/daycare/city/$city'
       path: '/daycare/city/$city'
@@ -2572,6 +2604,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/contracts/$id/pdf'
       preLoaderRoute: typeof ApiContractsIdPdfRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/fr/daycare/$city/$age': {
+      id: '/fr/daycare/$city/$age'
+      path: '/daycare/$city/$age'
+      fullPath: '/fr/daycare/$city/$age'
+      preLoaderRoute: typeof FrDaycareCityAgeRouteImport
+      parentRoute: typeof FrRoute
     }
     '/fr/daycare/city/$city': {
       id: '/fr/daycare/city/$city'
@@ -2614,6 +2653,7 @@ interface FrRouteChildren {
   FrIndexRoute: typeof FrIndexRoute
   FrDaycareSlugRoute: typeof FrDaycareSlugRoute
   FrJobsPostRoute: typeof FrJobsPostRoute
+  FrDaycareCityAgeRoute: typeof FrDaycareCityAgeRoute
   FrDaycareCityCityRoute: typeof FrDaycareCityCityRoute
 }
 
@@ -2638,6 +2678,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrIndexRoute: FrIndexRoute,
   FrDaycareSlugRoute: FrDaycareSlugRoute,
   FrJobsPostRoute: FrJobsPostRoute,
+  FrDaycareCityAgeRoute: FrDaycareCityAgeRoute,
   FrDaycareCityCityRoute: FrDaycareCityCityRoute,
 }
 
@@ -2812,6 +2853,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSmsStatusRoute: ApiSmsStatusRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   ApiWebhooksResendRoute: ApiWebhooksResendRoute,
+  DaycareCityAgeRoute: DaycareCityAgeRoute,
   DaycareCityCityRoute: DaycareCityCityRoute,
   ApiContractsIdPdfRoute: ApiContractsIdPdfRoute,
 }
