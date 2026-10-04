@@ -1,8 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { START_DAYCARE_PTS } from "@/lib/start-daycare-hub";
 import { provincialGuideCopy } from "@/lib/provincial-guide-copy";
-import { provincialGuidePath } from "@/lib/provincial-guides";
 import { pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 
@@ -18,7 +17,9 @@ export const Route = createFileRoute("/guides")({
 
 function GuidesIndex() {
   const { locale } = useCopy();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const copy = provincialGuideCopy(locale);
+  if (pathname.startsWith("/guides/") && pathname !== "/guides") return <Outlet />;
   return (
     <Shell bare>
       <main className="ke-gutter mx-auto w-full max-w-3xl py-8">
