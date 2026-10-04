@@ -27,6 +27,16 @@ import { overlayPriority } from "./promos";
 import { featuredCentreIdsInLock, overlayFeaturedCity } from "@/lib/server/provider-entitlements";
 import { compareWithPaidPins, sortFeaturedCityAfterPriority } from "@/lib/provider-entitlements";
 import { compareSmartMatchOrNearest, whyForListing, type RankAge, type SmartMatchQuery } from "@/lib/ranking/score";
+import { listingSubsidy } from "@/lib/fee-program";
+import {
+  compareParentFit,
+  parentFitApplies,
+  parentFitCacheKey,
+  parentFitScore,
+  parseParentFit,
+  type ParentFitListing,
+  type ParentFitProfile,
+} from "@/lib/parent-fit";
 import { recordRankingSearch } from "@/lib/server/ranking-market";
 import { compareParentMatch } from "@/lib/parent-match";
 import { compareParentUrgency } from "@/lib/parent-urgency";
@@ -84,6 +94,8 @@ type SearchInput = {
   schedules?: SearchSchedule[];
   /** Interactive searches only. The first paint does not count demand. */
   countDemand?: boolean;
+  /** Signed-in parent only. Guests omit this and keep fresh-first order. */
+  parentFit?: ParentFitProfile | null;
 };
 
 function parseSort(raw: unknown): SearchSort {
@@ -128,6 +140,31 @@ function smartQuery(data: SearchInput): SmartMatchQuery {
 function optionalCoord(value: unknown) {
   const n = Number(value);
   return Number.isFinite(n) ? n : undefined;
+}
+
+function fitListing(card: DaycareCard): ParentFitListing {
+  return {
+    lat: card.lat,
+    lng: card.lng,
+    agesKnown: card.agesKnown,
+    ageMinMonths: card.ageMinMonths,
+    ageMaxMonths: card.ageMaxMonths,
+    spotsInfant: card.spotsInfant,
+    spotsToddler: card.spotsToddler,
+    spotsPreschool: card.spotsPreschool,
+    lastVacancyUpdatedAt: card.lastVacancyUpdatedAt,
+    spotsUpdatedAt: card.spotsUpdatedAt,
+    infantMonthly: card.infantMonthly,
+    toddlerMonthly: card.toddlerMonthly,
+    preschoolMonthly: card.preschoolMonthly,
+    languages: card.languages,
+    amenities: card.amenities,
+    subsidy: listingSubsidy(card)?.subsidy_type ?? null,
+  };
+}
+
+function usesParentFitSort(sort: SearchSort) {
+  return sort === "distance" || sort === "recommended" || sort === "match";
 }
 
 function toDaycare(d: CatalogDaycare): Daycare {
@@ -509,9 +546,21 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
       return c.ageMaxMonths >= 30 && c.ageMinMonths < 72;
     });
   }
+  const fit = parentFitApplies(data.parentFit) ? data.parentFit : null;
+  if (fit) {
+    cards = cards.map((card) => ({ ...card, parentFitChips: parentFitScore(fitListing(card), fit).chips }));
+  }
   const useBest = data.sort === "best";
   const matchQuery = smartQuery(data);
-  if (useBest) {
+  if (fit && usesParentFitSort(data.sort)) {
+    cards.sort((a, b) => {
+      const delta = compareParentFit(fitListing(a), fitListing(b), fit);
+      if (delta !== 0) return delta;
+      const fresh = compareFreshOpenSpots(a, b);
+      if (fresh !== 0) return fresh;
+      return a.distanceKm - b.distanceKm;
+    });
+  } else if (useBest) {
     cards.sort((a, b) => compareSmartMatchOrNearest(a, b, matchQuery));
   } else {
     cards.sort((a, b) =>
@@ -586,6 +635,7 @@ function normalizeSearchInput(input: SearchInput): SearchInput {
     wantExtendedHours: input.wantExtendedHours === true,
     schedules: parseSchedules(input.schedules),
     countDemand: input.countDemand === true,
+    parentFit: parseParentFit(input.parentFit),
     facility: listedDaycareTypeFromSearch(
       input.facility === "before_after" ? { cat: "before-after" } : { fac: input.facility },
     ),
@@ -594,7 +644,9 @@ function normalizeSearchInput(input: SearchInput): SearchInput {
 
 export const searchDaycares = createServerFn({ method: "GET" })
   .validator((input: SearchInput) => normalizeSearchInput(input))
-  .handler(async ({ data }) => rememberSearch(searchMemoKey(data), () => searchIncludingLive(data)));
+  .handler(async ({ data }) =>
+    rememberSearch(`${searchMemoKey(data)}:${parentFitCacheKey(data.parentFit ?? null)}`, () => searchIncludingLive(data)),
+  );
 
 /** Same ranking as searchDaycares, then one page of 96 cards. */
 export const searchDaycarePage = createServerFn({ method: "GET" })
@@ -604,7 +656,10 @@ export const searchDaycarePage = createServerFn({ method: "GET" })
   })
   .handler(async ({ data }) => {
     const { page, ...query } = data;
-    const all = await rememberSearch(searchMemoKey(query), () => searchIncludingLive(query));
+    const all = await rememberSearch(
+      `${searchMemoKey(query)}:${parentFitCacheKey(query.parentFit ?? null)}`,
+      () => searchIncludingLive(query),
+    );
     return sliceSearchPage(all, page);
   });
 
