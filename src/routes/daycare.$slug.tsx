@@ -87,7 +87,6 @@ import { listingAgeRangeText } from "@/lib/listing-ages";
 import type { ListingSeoSource } from "@/lib/listing-seo";
 import { formatMonth, money, displayCentreName, displayListingText } from "@/lib/utils";
 import { openDirections } from "@/lib/maps";
-import { googleReviewsUrl } from "@/lib/google-reviews";
 import { ListingMap } from "@/components/listing-map";
 import type { AvailabilityRow, Daycare, DaycareCard as Card, Review } from "@/lib/types";
 import { parseListingAsk, type ListingAsk } from "@/lib/lead-requests";
@@ -365,6 +364,12 @@ export function Listing() {
                   <p className="mt-2 text-sm text-muted">{earlyAddress}</p>
                 </section>
               ) : null}
+              <section id="listing-reviews">
+                <h2 className="font-display text-2xl">{t("parentReviews")}</h2>
+                <p className="mt-2 max-w-prose text-sm text-muted" data-ke="verified-review-note">
+                  {t("verifiedReviewNote")}
+                </p>
+              </section>
               <div className="space-y-3" aria-hidden="true">
                 <div className="flex flex-wrap gap-2">
                   <div className="ke-skel h-8 w-28 rounded-full" />
@@ -439,7 +444,6 @@ export function Listing() {
   };
   const mapsQuery = encodeURIComponent(`${address}, ${d.city}, ${d.province} ${d.postalCode}`);
   const mapsPlace = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
-  const googleReviewsHref = googleReviewsUrl(d);
   const parentRated = (d.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (d.parentRatingX10 ?? 0) > 0;
   const googleRated = d.reviewCount > 0 && d.ratingX10 > 0;
 
@@ -822,6 +826,9 @@ export function Listing() {
 
             <section id="listing-reviews" className="scroll-mt-24">
               <h2 className="font-display text-2xl">{t("parentReviews")}</h2>
+              <p className="mt-2 max-w-prose text-sm text-muted" data-ke="verified-review-note">
+                {t("verifiedReviewNote")}
+              </p>
               {(d.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (d.parentRatingX10 ?? 0) > 0 ? (
                 <p className="mt-2 inline-flex items-center gap-2 text-sm">
                   <Star className="size-3.5 fill-fg" />
@@ -851,14 +858,9 @@ export function Listing() {
                 <p className="mt-2 text-sm text-muted">{t("reviewsEnrolledEmpty")}</p>
               )}
               {googleRated ? (
-                <a
-                  href={googleReviewsHref}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
-                >
-                  {t("viewOnGoogle")}
-                </a>
+                <div className="mt-3" data-ke="listing-google-rating">
+                  <GoogleRating item={d} ratingX10={d.ratingX10} reviewCount={d.reviewCount} />
+                </div>
               ) : null}
               <ListingReviewForm daycareId={d.id} slug={d.slug} />
             </section>

@@ -618,7 +618,7 @@ export const copy = {
       "Live listings can take a tour or spot request now. Licensed centres in the directory stay searchable under All listings: they are not yet on KidEase.",
     noFilterResultsLead: "Clear a filter, or switch to All listings to include centres that are licensed but not yet live.",
     reviews: "reviews",
-    googleReviews: "Google",
+    googleReviews: "Google rating",
     readGoogleReviews: "Read Google reviews",
     noResults: "No licensed centres in this radius. Widen the circle or try another city.",
     noResultsLead: "Widen the radius, clear extra filters, or try a nearby city. Licensed centres stay listed even when spots are unconfirmed.",
@@ -1941,7 +1941,7 @@ export const copy = {
     startDaycareHero:
       "Want to open a licensed daycare? This is a Canada-wide overview of the process: then a path to join KidEase as a provider after, or while, you pursue a provincial or territorial licence.",
     startDaycareIntro:
-      "Enroll today! means claim or create your KidEase listing so parents can find you. It is not a payment to become licensed, and it is not a government application.",
+      "Create your KidEase listing means claim or create your listing so parents can find you. It is not a payment to become licensed, and it is not a government application.",
     startDaycareEnrollLead: "Join KidEase as a provider. Claiming a listing is free.",
     startDaycareClaimExisting: "Claim an existing licensed centre",
     startDaycareStepsT: "The process, honestly",
@@ -1986,6 +1986,7 @@ export const copy = {
     startDaycareCompetitive: "Eligibility is competitive or limited by budget where the government says so.",
     startDaycareReviewed: "Reviewed September 2026",
     enrollToday: "Enroll today!",
+    createKideaseListing: "Create your KidEase listing",
     donateToKids: "Donate to Kids",
     donateTitle: "Donate to Kids",
     donateLead:
@@ -2358,6 +2359,10 @@ export const copy = {
     writeReview: "Write a parent review",
     writeReviewLead:
       "Only parents with a confirmed enrolment or in-care relationship can review. Reviews appear after KidEase publishes them. We do not invent star ratings.",
+    verifiedReviewNote:
+      "Verified reviews are from parents enrolled at this centre. KidEase does not invent stars. A Google rating is labeled Google rating.",
+    verifiedReviewPrompt: "You are enrolled here. Write a verified review.",
+    verifiedReviewLead: "Only enrolled parents can post this. KidEase reads it before it appears.",
     reviewPending: "Your review is waiting on KidEase.",
     reviewApproved: "Your review is published.",
     reviewRejected: "KidEase did not publish this review.",
@@ -3556,7 +3561,7 @@ export const copy = {
       "Les fiches actives peuvent recevoir une visite ou une demande de place. Les centres permis restent trouvables sous Toutes les fiches: ils ne sont pas encore sur KidEase.",
     noFilterResultsLead: "Retirez un filtre, ou affichez toutes les fiches pour inclure les centres permis qui ne sont pas encore actifs.",
     reviews: "avis",
-    googleReviews: "Google",
+    googleReviews: "Note Google",
     readGoogleReviews: "Lire les avis Google",
     noResults: "Aucun centre dans ce rayon. Élargissez le cercle ou changez de ville.",
     noResultsLead:
@@ -4883,7 +4888,7 @@ export const copy = {
     startDaycareHero:
       "Vous voulez ouvrir une garderie permise ? Voici un aperçu pancanadien du processus: puis un chemin pour joindre KidEase comme fournisseur, après ou pendant votre demande de permis provincial ou territorial.",
     startDaycareIntro:
-      "Inscrivez-vous aujourd’hui ! signifie réclamer ou créer votre fiche KidEase pour que les parents vous trouvent. Ce n’est pas un paiement pour devenir permis, ni une demande gouvernementale.",
+      "Créez votre fiche KidEase signifie réclamer ou créer votre fiche pour que les parents vous trouvent. Ce n’est pas un paiement pour devenir permis, ni une demande gouvernementale.",
     startDaycareEnrollLead: "Joignez KidEase comme fournisseur. Réclamer une fiche est gratuit.",
     startDaycareClaimExisting: "Réclamez un centre déjà permis",
     startDaycareStepsT: "Le processus, honnêtement",
@@ -4928,6 +4933,7 @@ export const copy = {
     startDaycareCompetitive: "L’admissibilité est concurrentielle ou limitée au budget lorsque le gouvernement le dit.",
     startDaycareReviewed: "Révisé en septembre 2026",
     enrollToday: "Inscrivez-vous aujourd’hui !",
+    createKideaseListing: "Créez votre fiche KidEase",
     donateToKids: "Faire un don aux enfants",
     donateTitle: "Faire un don aux enfants",
     donateLead:
@@ -5304,6 +5310,10 @@ export const copy = {
     writeReview: "Écrire un avis de parent",
     writeReviewLead:
       "Seuls les parents avec une inscription confirmée ou une relation de garde peuvent écrire. Les avis apparaissent après publication par KidEase. Nous n’inventons pas de notes.",
+    verifiedReviewNote:
+      "Les avis vérifiés viennent de parents inscrits à ce centre. KidEase n’invente pas d’étoiles. Une note Google est indiquée comme note Google.",
+    verifiedReviewPrompt: "Vous êtes inscrit ici. Écrivez un avis vérifié.",
+    verifiedReviewLead: "Seuls les parents inscrits peuvent publier ceci. KidEase le lit avant qu’il paraisse.",
     reviewPending: "Votre avis attend KidEase.",
     reviewApproved: "Votre avis est publié.",
     reviewRejected: "KidEase n’a pas publié cet avis.",
