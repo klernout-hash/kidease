@@ -139,7 +139,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
                 />
               </div>
             ) : null}
-            <div className="relative z-20 ml-auto flex shrink-0 items-center gap-2 bg-bg pl-1">
+            <div className="relative z-20 ml-auto flex shrink-0 items-center gap-2 bg-bg pl-1 [[data-channel=website]_&]:flex">
               {user ? <NotificationBell className="hidden md:grid" /> : (
                 <Link
                   to="/claim"
