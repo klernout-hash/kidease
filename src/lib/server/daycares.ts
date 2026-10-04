@@ -13,7 +13,7 @@ import {
 } from "@/lib/catalog";
 import { hideListingFromPublicPage, isAdminOnlyListing, isPublicListing, publicListings } from "@/lib/listing-visibility";
 import { parseAnchorMode, resolveSearchAnchors } from "@/lib/dual-anchor";
-import { nearbyListings, nearbyListingsDual, type NearbyListing } from "./nearby";
+import { nearbyListings, nearbyListingsAlong, nearbyListingsDual, type NearbyListing } from "./nearby";
 import { callerIsAdmin } from "./public-listing";
 import { upsertDaycare } from "./seed";
 import { applyListingReadiness, compareFreshOpenSpots } from "@/lib/listing-readiness";
@@ -461,6 +461,10 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
     q: data.q,
   });
   const directory = data.directorySlug ? cityHubDefBySlug(data.directorySlug) : null;
+  const corridor =
+    !directory && anchors.intersect && anchors.secondary
+      ? await nearbyListingsAlong(anchors.primary, anchors.secondary, data.radiusKm)
+      : [];
   const nearby = directory
     ? await listingsForCityHub(directory.slug)
     : await mergeApprovedCityListings(
@@ -478,6 +482,12 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
     cards.push(toCard(d, origin, data.fsa));
   }
   cards = filterByLocationLock(cards, lock);
+  if (corridor.length) {
+    const kept = new Set(cards.map((card) => card.id));
+    for (const row of corridor) {
+      if (!kept.has(row.id)) cards.push(toCard(row, origin, data.fsa));
+    }
+  }
   cards = await mergePinnedCentres(cards, lock, origin, data.fsa);
   cards = await overlayClaimed(cards, mergeClaimedCard);
   cards = await overlayParentReviews(cards);

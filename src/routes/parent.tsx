@@ -11,6 +11,8 @@ import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
+import { parseShareToken } from "@/lib/parent-tracker";
+import { getFamily } from "@/lib/server/family";
 
 const ParentDesk = lazy(() =>
   import("@/components/parent-desk").then((m) => ({ default: m.ParentDesk })),
@@ -24,6 +26,14 @@ export const Route = createFileRoute("/parent")({
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
+  loader: async () => {
+    try {
+      const family = await getFamily();
+      return { saved: family.saved, shortlistShared: Boolean(family.shortlistShared) };
+    } catch {
+      return { saved: [], shortlistShared: false };
+    }
+  },
   validateSearch: (s: Record<string, unknown>) => {
     const out: {
       tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "subscription" | "alerts" | "children" | "care" | "waitlists";
@@ -33,6 +43,7 @@ export const Route = createFileRoute("/parent")({
       interval?: "month" | "year";
       session?: string;
       billing?: "return";
+      share?: string;
     } = {};
     const tab = s.tab;
     if (tab === "explore" || tab === "saved" || tab === "enrolled" || tab === "requests" || tab === "profile" || tab === "payments" || tab === "subscription" || tab === "alerts" || tab === "children" || tab === "care" || tab === "waitlists") out.tab = tab;
@@ -42,6 +53,8 @@ export const Route = createFileRoute("/parent")({
     if (s.interval === "month" || s.interval === "year") out.interval = s.interval;
     if (typeof s.session === "string" && /^cs_[A-Za-z0-9_]+$/.test(s.session)) out.session = s.session;
     if (s.billing === "return") out.billing = "return";
+    const share = parseShareToken(s.share);
+    if (share) out.share = share;
     return out;
   },
   component: ParentPage,
@@ -53,6 +66,7 @@ function ParentPage() {
   const chrome = useRoleChrome();
   const { session, ready } = useSessionDesks();
   const search = Route.useSearch();
+  const loaded = Route.useLoaderData();
   if (pathname === "/parent/spot-offers" || pathname.startsWith("/parent/spot-offers/")) return <Outlet />;
   const upgradeSurface = search.tab === "subscription" || search.plus === "success" || search.plus === "cancel" || search.billing === "return";
   const initialTab =
@@ -142,6 +156,9 @@ function ParentPage() {
             session: search.session,
           }}
           billingReturn={search.billing === "return"}
+          shareToken={search.share ?? null}
+          initialSaved={loaded.saved}
+          initialShared={loaded.shortlistShared}
         />
       </Suspense>
     </TwoFactorGate>

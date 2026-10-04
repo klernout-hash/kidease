@@ -174,6 +174,10 @@ export type Daycare = {
   inboxMailReady?: boolean;
   /** Official provincial opening. Omitted when stale, missing, or the centre set its own. */
   provincialOpening?: { total: number; asOf: string; sourceUrl: string; ageLabel: string } | null;
+  /** Private shortlist tracker. Only set on a parent's saved rows. */
+  trackStatus?: "interested" | "called" | "toured" | "waitlisted" | "enrolled";
+  callNote?: string;
+  tourNote?: string;
 };
 
 export type DaycareCard = Daycare & {
