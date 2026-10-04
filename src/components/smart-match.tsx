@@ -47,7 +47,7 @@ export function SmartMatchEntry() {
 
   return (
     <>
-      <div className="mt-3">
+      <div className="mt-3 flex justify-center">
         <Button type="button" variant="secondary" data-ke="smart-match-open" onClick={() => setOpen(true)}>
           {t("smartMatchCta")}
         </Button>

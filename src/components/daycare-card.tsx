@@ -285,7 +285,7 @@ export const DaycareCard = memo(function DaycareCard({
   if (presentation === "visual") {
     const placeLine = [item.city, away].filter(Boolean).join(" · ");
     return (
-      <article data-slug={item.slug} data-ke="visual-card" className="ke-visual-card group w-full">
+      <article data-slug={item.slug} data-ke="visual-card" className="ke-visual-card group w-full min-w-0">
         <div className="relative">
           <ListingAnchor slug={item.slug} label={name} className="block text-inherit no-underline">
             <PhotoCarousel
@@ -370,7 +370,7 @@ export const DaycareCard = memo(function DaycareCard({
           {t("cardRequestInfo")}
         </ListingAnchor>
         {offerClaim ? (
-          <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10 mt-1" />
+          <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10 mt-1.5" />
         ) : null}
         {licenceHref ? (
           <a
@@ -388,7 +388,7 @@ export const DaycareCard = memo(function DaycareCard({
   }
 
   return (
-    <article data-slug={item.slug} className="ke-tile group w-full">
+    <article data-slug={item.slug} className="ke-tile group min-w-0 w-full">
       <div className="relative">
         <ListingAnchor slug={item.slug} label={name} className="block text-inherit no-underline">
           <PhotoCarousel
@@ -516,7 +516,7 @@ export const DaycareCard = memo(function DaycareCard({
         {t("cardRequestInfo")}
       </ListingAnchor>
       {offerClaim ? (
-        <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10 mt-1 px-2.5 text-[12px]" />
+        <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10 mt-1.5" />
       ) : null}
       {licenceHref && !compact ? (
         <a

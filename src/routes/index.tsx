@@ -395,7 +395,7 @@ function Home() {
     <Shell bare>
       <JsonLd json={organizationGraphJsonLdScript()} />
       <div className="ke-home w-full min-w-0">
-      <h1 className="ke-gutter mx-auto w-full pt-4 text-[clamp(1.6rem,4.2vw,2.75rem)] leading-tight tracking-[-0.03em]">
+      <h1 className="ke-gutter mx-auto w-full pt-4 text-center text-[clamp(1.6rem,4.2vw,2.75rem)] leading-tight tracking-[-0.03em]">
         {t("tagline")}
       </h1>
       <div className="ke-home-web ke-web-only w-full [[data-channel=app]_&]:hidden">
