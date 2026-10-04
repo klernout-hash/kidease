@@ -15,7 +15,9 @@ type Origin = { lat: number; lng: number; label: string; explicit?: boolean };
 
 type SearchState = {
   locale: Locale;
-  setLocale: (locale: Locale) => void;
+  /** True after this browser picked a language. Location must not replace it. */
+  localeLocked: boolean;
+  setLocale: (locale: Locale, opts?: { lock?: boolean }) => void;
   origin: Origin;
   setOrigin: (origin: Origin, source?: OriginSource) => void;
   workOrigin: Origin | null;
@@ -51,14 +53,20 @@ type SearchState = {
 
 export const useAppStore = create<SearchState>()((set) => ({
   locale: "en",
-  setLocale: (locale) => {
-    try {
-      window.localStorage.setItem("kidease-locale", locale);
-    } catch {
-      /* ignore */
+  localeLocked: false,
+  setLocale: (locale, opts) => {
+    if (opts?.lock) {
+      try {
+        window.localStorage.setItem("kidease-locale", locale);
+      } catch {
+        /* ignore */
+      }
     }
     applyDocumentLocale(locale);
-    set({ locale });
+    set((state) => ({
+      locale,
+      localeLocked: opts?.lock ? true : state.localeLocked,
+    }));
   },
   origin: { lat: WINNIPEG.lat, lng: WINNIPEG.lng, label: WINNIPEG.label },
   setOrigin: (origin, source = "manual") => {

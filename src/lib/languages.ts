@@ -29,8 +29,8 @@ export function isShippedLocale(code: string | null | undefined): code is Shippe
 }
 
 /**
- * English unless the user picked one of the ten languages.
- * Geo, IP, and the browser language do not choose for them.
+ * Parse a saved language code. Unknown values stay English.
+ * Location and the browser Accept-Language header are not read here.
  */
 export function localeFromPreference(saved: string | null | undefined): ShippedLocale {
   return isShippedLocale(saved) ? saved : "en";
