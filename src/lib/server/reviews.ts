@@ -207,6 +207,14 @@ export const submitListingReview = createServerFn({ method: "POST" })
       if (access.reason === "centre_owner") {
         throw new Error("Centres cannot write reviews on their own listing.");
       }
+      const { flagReviewAttempt } = await import("@/lib/server/fraud-queue");
+      await flagReviewAttempt({
+        reviewId: null,
+        daycareId,
+        userId: context.userId,
+        body,
+        enrolled: false,
+      });
       throw new Error(
         "Reviews are only from parents with a confirmed enrolment or in-care relationship.",
       );
@@ -281,6 +289,14 @@ export const submitListingReview = createServerFn({ method: "POST" })
     void import("@/lib/server/admin-tools")
       .then((mod) => mod.maybeQueueSpam({ kind: "review", text: body, email: actor.email, sourceId: id }))
       .catch(() => undefined);
+    const { flagReviewAttempt } = await import("@/lib/server/fraud-queue");
+    await flagReviewAttempt({
+      reviewId: id,
+      daycareId,
+      userId: context.userId,
+      body,
+      enrolled: true,
+    });
 
     await notifyPlatform({
       kind: "review",
