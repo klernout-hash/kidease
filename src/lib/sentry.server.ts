@@ -6,6 +6,7 @@ import {
   SENTRY_IGNORE_ERRORS,
   SENTRY_PUBLIC_DSN_ENV,
   scrubSentryEvent,
+  scrubSentrySpan,
   sentryDataCollection,
   sentryTracesSampleRate,
 } from "@/lib/sentry-shared";
@@ -38,7 +39,6 @@ export function initSentryServer() {
     dsn,
     environment,
     release: readEnv("VERCEL_GIT_COMMIT_SHA") || undefined,
-    sendDefaultPii: false,
     dataCollection: sentryDataCollection(),
     tracesSampleRate: sentryTracesSampleRate(environment),
     ignoreErrors: [...SENTRY_IGNORE_ERRORS],
@@ -46,8 +46,8 @@ export function initSentryServer() {
     beforeSend(event) {
       return scrubSentryEvent(event);
     },
-    beforeSendTransaction(event) {
-      return scrubSentryEvent(event);
+    beforeSendSpan(span) {
+      return scrubSentrySpan(span);
     },
   });
 

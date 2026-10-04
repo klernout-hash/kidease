@@ -28,7 +28,7 @@ The WebView loads `https://www.kidease.ca`. JavaScript SDKs are not Android libr
 | SDK | Data it collects | When |
 | --- | --- | --- |
 | posthog-js | Page views, product events, account id if signed in. The property scrubber drops password, email, phone, child name, allergy, and birth date. Session replay stays off unless `VITE_PUBLIC_POSTHOG_REPLAY_NATIVE` is on (default off). | Only after the person taps Allow analytics. Essential or no choice means PostHog does not start and the app does not queue events. First-party `/ingest` proxy. |
-| @sentry/react | Crash and performance traces if `VITE_PUBLIC_SENTRY_DSN` is set. `sendDefaultPii` is false. Stack trace and route tag. No email, cookies, or child name. | In the app, only after the same Allow tap. The website still starts Sentry without that banner. Leave it off the form when the DSN is unset. |
+| @sentry/react | Crash and performance traces if `VITE_PUBLIC_SENTRY_DSN` is set. Data collection is limited: no user info, cookies, headers, query params, or request bodies. Stack trace and route tag. No email or child name. | In the app, only after the same Allow tap. The website still starts Sentry without that banner. Leave it off the form when the DSN is unset. |
 | Stripe Checkout (hosted page, not an Android library) | Childcare payments (spots, tours, fees). | Card data stays on Stripe. Not used for Parent Plus or centre plans inside the app — those screens are hidden. |
 
 ## Not in this build

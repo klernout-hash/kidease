@@ -158,6 +158,10 @@ export function scrubSentryEvent<T>(event: T): T {
   return event;
 }
 
+/**
+ * Keep the v10 "don't send personal data" baseline on Sentry 11.
+ * Omitted categories now default to on, so each one is set here.
+ */
 export function sentryDataCollection() {
   return {
     userInfo: false,
@@ -165,7 +169,19 @@ export function sentryDataCollection() {
     httpHeaders: { request: false, response: false },
     httpBodies: [] as [],
     urlQueryParams: false,
+    genAI: { inputs: false, outputs: false },
+    graphQL: { document: false, variables: false },
     databaseQueryData: false,
+    queues: false,
     stackFrameVariables: false,
   };
+}
+
+/** Scrub a streamed span. v11 ignores beforeSendTransaction. */
+export function scrubSentrySpan<T extends { name: string; attributes?: object }>(span: T): T {
+  span.name = scrubPiiString(span.name);
+  if (span.attributes) {
+    span.attributes = scrubPiiValue(span.attributes) as T["attributes"];
+  }
+  return span;
 }
