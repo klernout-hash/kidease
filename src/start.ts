@@ -62,7 +62,25 @@ const serverFnThrottleMiddleware = createMiddleware({ type: "request" }).server(
   return next();
 });
 
+/**
+ * First-visit language from Vercel location headers. Runs before the page
+ * renders so a Quebec visitor gets the French URL in one temporary hop.
+ * A failure serves the URL they asked for.
+ */
+const localeRequestMiddleware = createMiddleware({ type: "request" }).server(async ({ next, request }) => {
+  const { localeDocumentDecision, stampProfileLocaleCookie } = await import("@/lib/locale-choice.server");
+  const decision = await localeDocumentDecision(request);
+  if (decision.redirect) return decision.redirect;
+  const result = await next();
+  try {
+    stampProfileLocaleCookie(request, result.response.headers, decision.hint);
+  } catch {
+    /* a locked response still renders */
+  }
+  return result;
+});
+
 export const startInstance = createStart(() => ({
-  requestMiddleware: [sentryRequestMiddleware, serverFnThrottleMiddleware],
+  requestMiddleware: [sentryRequestMiddleware, localeRequestMiddleware, serverFnThrottleMiddleware],
   functionMiddleware: [sentryFunctionMiddleware],
 }));
