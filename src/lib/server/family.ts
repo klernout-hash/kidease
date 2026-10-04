@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { parseTrackStatus } from "@/lib/parent-tracker";
+import { shortlistUserId } from "@/lib/server/parent-tracker";
 import { nid } from "@/lib/utils";
 import { ensureSeed, upsertDaycare } from "./seed";
 import { lookupUser, notifyNewAccountFromUser, notifyPlatform, notifyProviderJoined } from "./notify";
@@ -197,10 +199,12 @@ export const getFamily = createServerFn({ method: "GET" })
              photo_ok, sunscreen_ok, notes
       from children where user_id = ${context.userId} order by created_at
     `;
-    const saved = await sql<DaycareRow>`
-      select d.* from daycares d
+    const shortlistOwner = await shortlistUserId(context.userId);
+    const saved = await sql<DaycareRow & { track_status: string | null; call_note: string | null; tour_note: string | null }>`
+      select d.*, s.track_status, s.call_note, s.tour_note
+      from daycares d
       join saved_daycares s on s.daycare_id = d.id
-      where s.user_id = ${context.userId}
+      where s.user_id = ${shortlistOwner}
       order by s.created_at desc
     `;
     const bookings = await sql<{
@@ -290,7 +294,15 @@ export const getFamily = createServerFn({ method: "GET" })
             saved
               .map((r) => {
                 const d = mapDaycare(r);
-                return { ...d, spotsTotal: spotsTotal(d), fromPrice: fromPrice(d), distanceKm: 0 };
+                return {
+                  ...d,
+                  spotsTotal: spotsTotal(d),
+                  fromPrice: fromPrice(d),
+                  distanceKm: 0,
+                  trackStatus: parseTrackStatus(r.track_status),
+                  callNote: String(r.call_note ?? ""),
+                  tourNote: String(r.tour_note ?? ""),
+                };
               })
               .filter((d) => admin || !isAdminOnlyListing(d)),
           ),
@@ -330,6 +342,7 @@ export const getFamily = createServerFn({ method: "GET" })
       })),
       centreMessages: sent[0]?.n ?? 0,
       upgradeCardDismissed: Boolean(profile[0]?.dismissed),
+      shortlistShared: shortlistOwner !== context.userId,
     };
   });
 
@@ -461,14 +474,15 @@ export const toggleSave = createServerFn({ method: "POST" })
       throw new Error("Listing not found");
     }
     if (listed) await upsertDaycare(sql, listed);
+    const owner = await shortlistUserId(context.userId);
     const existing = await sql<{ user_id: string }>`
-      select user_id from saved_daycares where user_id = ${context.userId} and daycare_id = ${daycareId}
+      select user_id from saved_daycares where user_id = ${owner} and daycare_id = ${daycareId}
     `;
     if (existing.length) {
-      await sql`delete from saved_daycares where user_id = ${context.userId} and daycare_id = ${daycareId}`;
+      await sql`delete from saved_daycares where user_id = ${owner} and daycare_id = ${daycareId}`;
       return { saved: false };
     }
-    await sql`insert into saved_daycares (user_id, daycare_id) values (${context.userId}, ${daycareId})`;
+    await sql`insert into saved_daycares (user_id, daycare_id) values (${owner}, ${daycareId})`;
     return { saved: true };
   });
 
@@ -477,9 +491,10 @@ export const isSaved = createServerFn({ method: "GET" })
   .validator((daycareId: string) => daycareId)
   .handler(async ({ context, data: daycareId }) => {
     const sql = await getSql();
+    const owner = await shortlistUserId(context.userId);
     const rows = await sql<{ n: number }>`
       select count(*)::int as n from saved_daycares
-      where user_id = ${context.userId} and daycare_id = ${daycareId}
+      where user_id = ${owner} and daycare_id = ${daycareId}
     `;
     return { saved: (rows[0]?.n ?? 0) > 0 };
   });
@@ -488,8 +503,9 @@ export const listSavedIds = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const sql = await getSql();
+    const owner = await shortlistUserId(context.userId);
     const rows = await sql<{ daycare_id: string }>`
-      select daycare_id from saved_daycares where user_id = ${context.userId}
+      select daycare_id from saved_daycares where user_id = ${owner}
     `;
     return rows.map((r) => r.daycare_id);
   });
@@ -505,9 +521,10 @@ export const saveDaycare = createServerFn({ method: "POST" })
       throw new Error("Listing not found");
     }
     if (listed) await upsertDaycare(sql, listed);
+    const owner = await shortlistUserId(context.userId);
     await sql`
       insert into saved_daycares (user_id, daycare_id)
-      values (${context.userId}, ${daycareId})
+      values (${owner}, ${daycareId})
       on conflict (user_id, daycare_id) do nothing
     `;
     return { saved: true as const };
@@ -518,7 +535,8 @@ export const unsaveDaycare = createServerFn({ method: "POST" })
   .validator((daycareId: string) => daycareId)
   .handler(async ({ context, data: daycareId }) => {
     const sql = await getSql();
-    await sql`delete from saved_daycares where user_id = ${context.userId} and daycare_id = ${daycareId}`;
+    const owner = await shortlistUserId(context.userId);
+    await sql`delete from saved_daycares where user_id = ${owner} and daycare_id = ${daycareId}`;
     return { saved: false as const };
   });
 
@@ -1752,6 +1770,7 @@ export async function purgeAccountData(uid: string) {
   await sql`delete from bookings where user_id = ${uid}`;
   await sql`delete from children where user_id = ${uid}`;
   await sql`delete from saved_daycares where user_id = ${uid}`;
+  await sql`delete from shortlist_shares where owner_user_id = ${uid} or accepted_user_id = ${uid}`.catch(() => undefined);
   await sql`delete from provider_daycares where user_id = ${uid}`;
   await sql`delete from centre_members where user_id = ${uid}`.catch(() => undefined);
   await sql`delete from centre_invites where invited_by = ${uid} or accepted_user_id = ${uid}`.catch(

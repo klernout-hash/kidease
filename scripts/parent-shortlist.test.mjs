@@ -69,7 +69,9 @@ test("Neon persists shortlist per parent user", () => {
   assert.match(family, /export const listSavedIds/);
   assert.match(family, /insert into saved_daycares/);
   assert.match(family, /on conflict \(user_id, daycare_id\) do nothing/);
-  assert.match(family, /delete from saved_daycares where user_id = \$\{context\.userId\} and daycare_id/);
+  assert.match(family, /shortlistUserId\(context\.userId\)/);
+  assert.match(family, /delete from saved_daycares where user_id = \$\{owner\} and daycare_id/);
+  assert.doesNotMatch(family, /delete from saved_daycares where user_id = \$\{data/);
 });
 
 test("listing detail and cards save or remove, guests keep intent", () => {

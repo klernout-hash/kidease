@@ -1,6 +1,7 @@
 import { dbSource, getSql, type Sql } from "@/lib/db";
 import { catalogNearFromJson, type CatalogDaycare } from "@/lib/catalog";
 import { catalogSourceFromEnv } from "@/lib/catalog-source";
+import { commuteMidpoint, commuteQueryRadiusKm, isAlongCommute } from "@/lib/commute-route";
 import { isPublicListing } from "@/lib/listing-visibility";
 import { clampRadiusKm, distanceKm } from "@/lib/proximity";
 import { isNeonCatalogPreferred, queryNeonNearby, queryNeonNearbyDual } from "./catalog-neon";
@@ -97,4 +98,19 @@ export async function nearbyListingsDual(
     }
   }
   return catalogIntersectFromJson(originA, originB, radiusKm);
+}
+
+/**
+ * Public listings within 8 km of the straight line between home and work.
+ * Union these with nearbyListingsDual. Do not replace the two-circle search.
+ */
+export async function nearbyListingsAlong(
+  originA: { lat: number; lng: number },
+  originB: { lat: number; lng: number },
+  radiusKm: number,
+): Promise<NearbyListing[]> {
+  const mid = commuteMidpoint(originA, originB);
+  const reach = commuteQueryRadiusKm(originA, originB, radiusKm);
+  const rows = await nearbyListings(mid, reach, 800);
+  return rows.filter((row) => isAlongCommute(originA, originB, { lat: row.lat, lng: row.lng }));
 }

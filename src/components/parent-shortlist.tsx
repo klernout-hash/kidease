@@ -1,17 +1,24 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { DaycareCard } from "@/components/daycare-card";
 import { EmptyState } from "@/components/empty-state";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { PipelineBadge } from "@/components/pipeline-badge";
+import { SavedTrack } from "@/components/saved-track";
 import { ShortlistCompareTable } from "@/components/shortlist-compare";
 import { TrustSignals } from "@/components/trust-badge";
 import { Button } from "@/components/ui/button";
 import { MultiApplyPanel } from "@/components/multi-apply-sheet";
 import { mirrorOfflineSaved, readOfflineSaved, type OfflineSaved } from "@/lib/offline-shortlist";
+import { parseTrackStatus, type TrackStatus } from "@/lib/parent-tracker";
+import { inviteShortlistShare, leaveShortlistShare } from "@/lib/server/parent-tracker";
 import { MAX_SHORTLIST_COMPARE, toggleCompareSelection } from "@/lib/shortlist";
+import { useAppStore } from "@/lib/store";
 import type { Booking, DaycareCard as Card, TourRequest } from "@/lib/types";
 import { useCopy } from "@/lib/use-copy";
+
+const MapView = lazy(() => import("@/components/map-view").then((m) => ({ default: m.MapView })));
 
 const SAVED_EAGER_CARDS = 4;
 
@@ -22,6 +29,9 @@ export function ParentShortlist({
   tours,
   bookings,
   compareMax = MAX_SHORTLIST_COMPARE,
+  shared = false,
+  onTrack,
+  onLeave,
 }: {
   items: Array<Card & { distanceKm: number }>;
   ready: boolean;
@@ -30,10 +40,20 @@ export function ParentShortlist({
   bookings: Booking[];
   /** Free is 5. Parent Plus is 10. */
   compareMax?: number;
+  shared?: boolean;
+  onTrack?: (id: string, next: { trackStatus: TrackStatus; callNote: string; tourNote: string }) => void;
+  onLeave?: () => void;
 }) {
   const { t, locale } = useCopy();
+  const origin = useAppStore((s) => s.origin);
+  const radiusKm = useAppStore((s) => s.radiusKm);
   const [picked, setPicked] = useState<string[]>([]);
   const [offline, setOffline] = useState<OfflineSaved[]>([]);
+  const [mapOn, setMapOn] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteBusy, setInviteBusy] = useState(false);
+  const [inviteError, setInviteError] = useState("");
+  const [heldPath, setHeldPath] = useState("");
   const visible = ready ? items : items.slice(0, SAVED_EAGER_CARDS);
   const compared = useMemo(() => items.filter((item) => picked.includes(item.id)).slice(0, compareMax), [compareMax, items, picked]);
   const distances = useMemo(() => Object.fromEntries(items.map((item) => [item.id, item.distanceKm])), [items]);
@@ -83,8 +103,102 @@ export function ParentShortlist({
   return (
     <div className="mt-6 space-y-6">
       <div>
-        <h2 className="font-display text-2xl">{t("saved")}</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="font-display text-2xl">{t("saved")}</h2>
+          <Button
+            type="button"
+            variant="secondary"
+            aria-pressed={mapOn}
+            data-ke="saved-map-toggle"
+            onClick={() => setMapOn((on) => !on)}
+          >
+            {mapOn ? t("savedList") : t("savedMap")}
+          </Button>
+        </div>
         <p className="mt-1 text-sm text-muted">{t("shortlistLead")}</p>
+        {shared ? (
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <p className="text-sm text-fg" data-ke="shortlist-shared">
+              {t("shareShortlistShared")}
+            </p>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                void leaveShortlistShare()
+                  .then(() => onLeave?.())
+                  .catch(() => toast.error(t("trackSaveFailed")));
+              }}
+            >
+              {t("shareShortlistLeave")}
+            </Button>
+          </div>
+        ) : (
+          <form
+            className="mt-3 w-full space-y-2"
+            data-ke="shortlist-share"
+            onSubmit={(event) => {
+              event.preventDefault();
+              setInviteError("");
+              setHeldPath("");
+              setInviteBusy(true);
+              void inviteShortlistShare({ data: { email: inviteEmail } })
+                .then((result) => {
+                  if (!result.ok) {
+                    const key =
+                      result.reason === "self"
+                        ? "shareShortlistSelf"
+                        : result.reason === "limit"
+                          ? "shareShortlistLimit"
+                          : "shareShortlistEmailBad";
+                    setInviteError(t(key));
+                    return;
+                  }
+                  setInviteEmail("");
+                  if (result.emailed) {
+                    toast.success(t("shareShortlistSent"));
+                    return;
+                  }
+                  setHeldPath(result.path);
+                  toast.message(t("shareShortlistHeld"));
+                })
+                .catch(() => setInviteError(t("shareShortlistBad")))
+                .finally(() => setInviteBusy(false));
+            }}
+          >
+            <p className="text-sm font-medium text-fg">{t("shareShortlist")}</p>
+            <label className="block text-sm" htmlFor="shortlist-partner-email">
+              {t("shareShortlistEmail")}
+            </label>
+            <p className="text-sm text-muted">{t("shareShortlistLead")}</p>
+            <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
+              <input
+                id="shortlist-partner-email"
+                type="email"
+                autoComplete="email"
+                inputMode="email"
+                required
+                value={inviteEmail}
+                onChange={(event) => setInviteEmail(event.target.value)}
+                onFocus={(event) => event.currentTarget.scrollIntoView({ block: "nearest" })}
+                className="h-11 w-full min-w-0 rounded-md border border-border bg-bg px-3 text-base"
+              />
+              <Button type="submit" variant="secondary" disabled={inviteBusy}>
+                {t("shareShortlistSend")}
+              </Button>
+            </div>
+            {inviteError ? (
+              <p role="alert" className="text-sm text-danger">
+                {inviteError}
+              </p>
+            ) : null}
+            {heldPath ? (
+              <p className="break-all text-sm text-fg" data-ke="share-link">
+                {heldPath}
+              </p>
+            ) : null}
+          </form>
+        )}
         <p className="mt-2 text-sm text-muted">
           {t("shortlistCompareLead")}{" "}
           {picked.length ? (
@@ -111,6 +225,23 @@ export function ParentShortlist({
 
       <MultiApplyPanel centres={visible} returnTo="/parent?tab=saved" />
 
+      {mapOn ? (
+        <div className="h-[min(72dvh,36rem)] min-h-[18rem] overflow-hidden rounded-[14px] shadow-card ring-1 ring-border">
+          <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
+            <MapView
+              items={visible}
+              origin={
+                located && Number.isFinite(origin.lat)
+                  ? { lat: origin.lat, lng: origin.lng }
+                  : { lat: visible[0]?.lat ?? origin.lat, lng: visible[0]?.lng ?? origin.lng }
+              }
+              radiusKm={radiusKm}
+              onSelect={() => undefined}
+              onFallback={() => setMapOn(false)}
+            />
+          </Suspense>
+        </div>
+      ) : (
       <div className="ke-listings ke-listings-narrow">
         {visible.map((item) => {
           const on = picked.includes(item.id);
@@ -138,10 +269,18 @@ export function ParentShortlist({
                 <TrustSignals item={item} surface="parent" compact />
               </div>
               <DaycareCard item={item} showDistance={located} presentation="visual" />
+              <SavedTrack
+                daycareId={item.id}
+                status={parseTrackStatus(item.trackStatus)}
+                callNote={item.callNote ?? ""}
+                tourNote={item.tourNote ?? ""}
+                onChange={(next) => onTrack?.(item.id, next)}
+              />
             </div>
           );
         })}
       </div>
+      )}
     </div>
   );
 }

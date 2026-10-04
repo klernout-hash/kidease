@@ -1,4 +1,4 @@
-import { lazy, startTransition, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { lazy, startTransition, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { confirmSuccess } from "@/lib/success-confirm";
@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getFamily } from "@/lib/server/family";
+import { acceptShortlistShare } from "@/lib/server/parent-tracker";
 import { dismissUpgradeCard } from "@/lib/server/upgrade-card";
 import { listTourRequests } from "@/lib/server/tours";
 import { listLeadRequests } from "@/lib/server/lead-requests";
@@ -85,11 +86,17 @@ export function ParentDesk({
   plusReturn = null,
   upgradeSearch = null,
   billingReturn = false,
+  shareToken = null,
+  initialSaved = [],
+  initialShared = false,
 }: {
   initialTab?: ParentTab;
   plusReturn?: "success" | "cancel" | null;
   upgradeSearch?: UpgradeSearch | null;
   billingReturn?: boolean;
+  shareToken?: string | null;
+  initialSaved?: Card[];
+  initialShared?: boolean;
 }) {
   const { user } = useCurrentUserState();
   const chrome = useRoleChrome();
@@ -102,7 +109,7 @@ export function ParentDesk({
   const [contentTab, setContentTab] = useState<ParentTab>(initialTab ?? "explore");
   const [explore, setExplore] = useState<Card[]>([]);
   const [exploreReady, setExploreReady] = useState(false);
-  const [saved, setSaved] = useState<Card[]>([]);
+  const [saved, setSaved] = useState<Card[]>(initialSaved);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [bills, setBills] = useState<Bill[]>([]);
@@ -116,6 +123,8 @@ export function ParentDesk({
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [picked, setPicked] = useState<Record<string, string[]>>({});
   const [savedReady, setSavedReady] = useState(false);
+  const [shortlistShared, setShortlistShared] = useState(initialShared);
+  const acceptedShare = useRef<string | null>(null);
 
   const selectTab = useCallback((id: string) => {
     const next = id as ParentTab;
@@ -168,7 +177,25 @@ export function ParentDesk({
   );
 
   const loadFamily = useCallback(async (fresh = false) => {
-    const f = await dedupedQuery(`parent-family:${user?.id ?? ""}`, QUERY_STALE_MS, () => getFamily(), { fresh });
+    if (shareToken && acceptedShare.current !== shareToken) {
+      const result = await acceptShortlistShare({ data: { token: shareToken } }).catch(() => null);
+      acceptedShare.current = shareToken;
+      if (result?.ok) toast.success(t("shareShortlistAccepted"));
+      else if (result && !result.ok) {
+        const key =
+          result.reason === "email"
+            ? "shareShortlistMismatch"
+            : result.reason === "used"
+              ? "shareShortlistUsed"
+              : result.reason === "self"
+                ? "shareShortlistSelf"
+                : "shareShortlistBad";
+        toast.error(t(key));
+      }
+    }
+    const f = await dedupedQuery(`parent-family:${user?.id ?? ""}`, QUERY_STALE_MS, () => getFamily(), {
+      fresh: fresh || Boolean(shareToken),
+    });
     await yieldToMain();
     startTransition(() => {
       setSaved(f.saved);
@@ -177,9 +204,10 @@ export function ParentDesk({
       setChildren(f.children);
       setCentreMessages(f.centreMessages ?? 0);
       setUpgradeDismissed(Boolean(f.upgradeCardDismissed));
+      setShortlistShared(Boolean(f.shortlistShared));
     });
     return f;
-  }, [user?.id]);
+  }, [shareToken, t, user?.id]);
 
   const loadDeskExtras = useCallback(async (fresh = false) => {
     const uid = user?.id ?? "";
@@ -216,7 +244,6 @@ export function ParentDesk({
   }
 
   useEffect(() => {
-    setSaved([]);
     setBookings([]);
     setPayments([]);
     setBills([]);
@@ -360,6 +387,20 @@ export function ParentDesk({
           tours={tours}
           bookings={bookings}
           compareMax={chrome.paid ? PLUS_COMPARE_MAX : FREE_COMPARE_MAX}
+          shared={shortlistShared}
+          onTrack={(id, next) => {
+            setSaved((cur) =>
+              cur.map((item) =>
+                item.id === id
+                  ? { ...item, trackStatus: next.trackStatus, callNote: next.callNote, tourNote: next.tourNote }
+                  : item,
+              ),
+            );
+          }}
+          onLeave={() => {
+            setShortlistShared(false);
+            void loadFamily(true);
+          }}
         />
       ) : null}
 

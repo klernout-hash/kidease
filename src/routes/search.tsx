@@ -1605,7 +1605,7 @@ function SearchPage() {
               />
             </div>
             {anchors.mode === "both" && workOrigin ? (
-              <p className="text-xs text-muted">
+              <p className="text-xs text-muted" data-ke="anchor-both-hint">
                 {t("anchorBothHint").replace("{n}", String(shownRadius)).replace("{u}", u)}
               </p>
             ) : anchors.mode === "work" && workOrigin ? (
