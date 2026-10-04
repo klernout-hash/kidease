@@ -35,6 +35,15 @@ import {
 } from "@/lib/saved-search";
 import { openSpotAlertsEnabled } from "@/lib/features";
 import { eventsForOpenSpotMail } from "@/lib/open-spot-alerts";
+import {
+  immediateSpotListingIds,
+  openSpotCapAllows,
+  openSpotMailListingIds,
+  planOpenSpotAlerts,
+  type PostedSpot,
+  type PriorSpotAlert,
+  type SpotSearchWatch,
+} from "@/lib/spot-alert-match";
 import { parentAlertsEntitled } from "@/lib/parent-plus";
 import { nid } from "@/lib/utils";
 import { transactionalMailFrom } from "@/lib/mail-from";
@@ -387,6 +396,96 @@ async function recordChannelSend(
   `.catch(() => undefined);
 }
 
+function spotWatchFromSearch(search: SavedSearchJobRow): SpotSearchWatch {
+  const raw = search.filters && typeof search.filters === "object" ? (search.filters as Record<string, unknown>) : {};
+  const child = raw.childAgeMonths;
+  const start = typeof raw.startDate === "string" ? raw.startDate : null;
+  const label = String(search.center_label || "");
+  return {
+    id: search.id,
+    parentId: search.user_id,
+    ageBand: isAgeBand(search.age_band) ? search.age_band : "any",
+    childAgeMonths: typeof child === "number" && Number.isFinite(child) ? child : null,
+    city: label.split(",")[0]?.trim() || null,
+    lat: Number(search.center_lat),
+    lng: Number(search.center_lng),
+    radiusKm: Number(search.radius_km),
+    startDate: start,
+    digest: raw.digest === true,
+  };
+}
+
+function postedSpotsForAlerts(
+  matches: Array<{
+    id: string;
+    city?: string;
+    lat?: number;
+    lng?: number;
+    distanceKm?: number;
+    agesKnown?: boolean;
+    ageMinMonths?: number;
+    ageMaxMonths?: number;
+    spotsInfant?: number;
+    spotsToddler?: number;
+    spotsPreschool?: number;
+  }>,
+  events: PlannedAlertEvent[],
+): PostedSpot[] {
+  const wanted = new Set(events.filter((event) => event.kind === "vacancy_reconfirmed").map((event) => event.daycareId));
+  return matches
+    .filter((hit) => wanted.has(hit.id))
+    .map((hit) => ({
+      listingId: hit.id,
+      city: hit.city || "",
+      lat: typeof hit.lat === "number" ? hit.lat : null,
+      lng: typeof hit.lng === "number" ? hit.lng : null,
+      distanceKm: hit.distanceKm,
+      agesKnown: hit.agesKnown === true,
+      ageMinMonths: hit.ageMinMonths ?? 0,
+      ageMaxMonths: hit.ageMaxMonths ?? 0,
+      spotsInfant: hit.spotsInfant ?? 0,
+      spotsToddler: hit.spotsToddler ?? 0,
+      spotsPreschool: hit.spotsPreschool ?? 0,
+    }));
+}
+
+async function priorSpotAlerts(
+  sql: Sql,
+  parentId: string,
+  cache: Map<string, PriorSpotAlert[]>,
+): Promise<PriorSpotAlert[]> {
+  const cached = cache.get(parentId);
+  if (cached) return cached;
+  const rows = await sql<{ daycare_id: string | null; created_at: string | Date | null }>`
+    select daycare_id, created_at
+    from search_alert_channel_sends
+    where user_id = ${parentId}
+      and kind = 'vacancy_reconfirmed'
+      and daycare_id is not null
+    order by created_at desc
+    limit 300
+  `.catch(() => [] as Array<{ daycare_id: string | null; created_at: string | Date | null }>);
+  const prior = rows.flatMap((row) => {
+    if (!row.daycare_id) return [];
+    const ts = row.created_at instanceof Date ? row.created_at : new Date(String(row.created_at || ""));
+    return [{ parentId, listingId: row.daycare_id, day: winnipegDayKey(ts) }];
+  });
+  cache.set(parentId, prior);
+  return prior;
+}
+
+function rememberSpotPlans(
+  cache: Map<string, PriorSpotAlert[]>,
+  matches: Array<{ parentId: string; listingId: string }>,
+  day: string,
+) {
+  for (const row of matches) {
+    const list = cache.get(row.parentId) ?? [];
+    list.push({ parentId: row.parentId, listingId: row.listingId, day });
+    cache.set(row.parentId, list);
+  }
+}
+
 /**
  * Hourly job (also the Inngest `search-alerts-hourly` step).
  * First pass baselines (notified=0). Later passes emit in-app + digest email.
@@ -425,6 +524,7 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
   };
   const digestByUser = new Map<string, DigestBucket[]>();
   const lastEmailByUser = new Map<string, string | Date | null>();
+  const spotPriorByParent = new Map<string, PriorSpotAlert[]>();
 
   for (const search of searches) {
     const lat = Number(search.center_lat);
@@ -559,7 +659,19 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
         }
       }
 
-      const outbound = eventsForOpenSpotMail(events, spotMail);
+      const spotPlan = planOpenSpotAlerts({
+        spots: postedSpotsForAlerts(matches, events),
+        watches: [spotWatchFromSearch(search)],
+        prior: await priorSpotAlerts(sql, search.user_id, spotPriorByParent),
+        now,
+        sendEnabled: spotMail,
+      });
+      const spotIds = openSpotMailListingIds(spotPlan, search.user_id);
+      const immediateIds = immediateSpotListingIds(spotPlan, search.user_id);
+      rememberSpotPlans(spotPriorByParent, spotPlan.matches, winnipegDayKey(now));
+      const outbound = eventsForOpenSpotMail(events, spotMail).filter(
+        (ev) => ev.kind !== "vacancy_reconfirmed" || spotIds.has(ev.daycareId),
+      );
       if (emailOn && outbound.length) {
         const pending = digestByUser.get(search.user_id) ?? [];
         pending.push({
@@ -587,7 +699,9 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
       });
       let pushToday = await countChannelSendsToday(sql, search.user_id, search.id, "push", now);
       let smsToday = await countChannelSendsToday(sql, search.user_id, search.id, "sms", now);
-      for (const ev of eventsForOpenSpotMail(events, spotMail)) {
+      for (const ev of eventsForOpenSpotMail(events, spotMail).filter(
+        (row) => row.kind !== "vacancy_reconfirmed" || immediateIds.has(row.daycareId),
+      )) {
         const copy = honestAlertCopy({
           kind: ev.kind,
           name: ev.name,
@@ -678,6 +792,12 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
   for (const row of pendingMail) {
     if (row.kind !== "new_centre" && row.kind !== "vacancy_reconfirmed") continue;
     if (!spotMail && row.kind === "vacancy_reconfirmed") continue;
+    if (row.kind === "vacancy_reconfirmed") {
+      const prior = await priorSpotAlerts(sql, row.user_id, spotPriorByParent);
+      const today = winnipegDayKey(now);
+      if (!openSpotCapAllows(prior, row.user_id, row.daycare_id, today)) continue;
+      rememberSpotPlans(spotPriorByParent, [{ parentId: row.user_id, listingId: row.daycare_id }], today);
+    }
     const buckets = digestByUser.get(row.user_id) ?? [];
     const already = buckets.some((b) =>
       b.events.some((ev) => ev.daycareId === row.daycare_id && ev.kind === row.kind),
