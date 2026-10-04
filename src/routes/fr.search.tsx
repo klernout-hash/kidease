@@ -20,6 +20,7 @@ import { geocode } from "@/lib/geo";
 import { originFromSearchQuery, searchQueryFromUnknown } from "@/lib/search-query";
 import { MARKETING_PAGE_SEO_FR, pageSeoHead } from "@/lib/page-seo";
 import { featuredDaycares, searchDaycarePage } from "@/lib/server/daycares";
+import { parentFitFromSearch, useParentFitFacts } from "@/lib/use-parent-fit";
 import { resolveRequestSearchOrigin } from "@/lib/server/request-origin";
 import { useAppStore } from "@/lib/store";
 import {
@@ -96,6 +97,7 @@ export const Route = createFileRoute("/fr/search")({
 
 function FrExplore() {
   const { t, locale } = useCopy();
+  const fitFacts = useParentFitFacts();
   const navigate = useNavigate();
   const incoming = Route.useSearch();
   const boot = Route.useLoaderData();
@@ -137,6 +139,11 @@ function FrExplore() {
         label: named?.label || origin.label,
         q: q || origin.label,
         page: 1,
+        parentFit: parentFitFromSearch({
+          facts: fitFacts,
+          home: { lat: origin.lat, lng: origin.lng },
+          radiusKm: 25,
+        }),
       },
     })
       .then((result) => {
@@ -148,7 +155,7 @@ function FrExplore() {
     return () => {
       live = false;
     };
-  }, [boot.catalogueReady, boot.origin, boot.sort, incoming.q, sort]);
+  }, [boot.catalogueReady, boot.origin, boot.sort, incoming.q, sort, fitFacts]);
 
   const shown = useMemo(() => {
     const source = rows ?? (boot.items?.length ? boot.items : boot.featured) ?? [];
