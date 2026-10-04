@@ -31,7 +31,7 @@ test("signed link verifies and an expired link does not", () => {
   assert.equal(signVacancyCheckinToken("d_123", ""), null);
 });
 
-test("weekly check-in mail and SMS stay off", () => {
+test("weekly check-in mail and SMS stay off by default", () => {
   const flags = readFileSync(join(root, "src/lib/flags.ts"), "utf8");
   assert.match(flags, /FEATURE_VACANCY_CHECKIN: false/);
   assert.match(flags, /FEATURE_VACANCY_CHECKIN_SMS: false/);
