@@ -19,7 +19,13 @@ import { LiveChatSlot } from "@/components/help-bot";
 import { applyDocumentLocale } from "@/lib/languages";
 import { localePath, stripLocalePrefix } from "@/lib/locale-path";
 import { useSessionDesks } from "@/components/desk-switcher";
-import { HomeCareTypeRow, selectedBrowseType } from "@/components/facility-type-rails";
+import {
+  BROWSE_RAIL_COPY,
+  HomeCareTypeRow,
+  browseTypeSearch,
+  selectedBrowseType,
+  type BrowseDaycareType,
+} from "@/components/facility-type-rails";
 import { useRoleChrome } from "@/components/role-chrome";
 import { accountSearch, canSeeAdminDesk } from "@/lib/desks";
 import { SiteFooter } from "@/components/site-footer";
@@ -40,6 +46,13 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
   const { session, sticky } = useSessionDesks();
   const chrome = useRoleChrome();
   const [open, setOpen] = useState(false);
+  const [hiddenCare, setHiddenCare] = useState<BrowseDaycareType[]>([]);
+  const onCareOverflow = useCallback((hidden: BrowseDaycareType[]) => {
+    setHiddenCare((prev) => {
+      if (prev.length === hidden.length && prev.every((type, index) => type === hidden[index])) return prev;
+      return hidden;
+    });
+  }, []);
 
   useEffect(() => {
     applyDocumentLocale(locale);
@@ -108,16 +121,30 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
     <div className="min-h-dvh bg-bg text-fg">
       <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
         <div className="ke-gutter relative mx-auto max-w-6xl">
-          <div className="flex h-14 items-center lg:h-16">
+          <div className="flex h-14 items-center gap-3 md:h-16">
             {menuLeaf ? <MenuLeafBack /> : null}
             <Link to={homeTo} className="relative z-20 shrink-0" aria-label="KidEase">
               <BrandMark size="sm" />
             </Link>
-            <div className="relative z-20 ml-auto flex items-center gap-1">
+            {barePath === "/" || barePath === "/search" ? (
+              <div className="hidden min-w-0 flex-1 md:block" data-ke="header-care-slot">
+                <HomeCareTypeRow
+                  compact
+                  toSearch
+                  fit
+                  selected={headerType}
+                  city={headerCity}
+                  onSelect={() => {}}
+                  onOverflow={onCareOverflow}
+                />
+              </div>
+            ) : null}
+            <div className="relative z-20 ml-auto flex shrink-0 items-center gap-2 bg-bg pl-1">
               {user ? <NotificationBell className="hidden md:grid" /> : (
                 <Link
                   to="/claim"
-                  className="hidden min-h-11 items-center rounded-full px-3 text-sm font-medium text-fg hover:bg-surface md:inline-flex"
+                  data-ke="list-your-daycare"
+                  className="hidden min-h-11 shrink-0 items-center whitespace-nowrap rounded-full px-3 text-sm font-medium text-fg hover:bg-surface md:inline-flex"
                 >
                   {t("listYourDaycare")}
                 </Link>
@@ -160,7 +187,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
             </div>
           </div>
           {barePath === "/" || barePath === "/search" ? (
-            <div className="w-full min-w-0 overflow-hidden pb-1.5 lg:absolute lg:inset-x-16 lg:top-0 lg:flex lg:h-16 lg:w-auto lg:items-center lg:overflow-visible lg:pb-0 [[data-channel=website]_&]:flex">
+            <div className="w-full min-w-0 overflow-hidden pb-1.5 md:hidden">
               <HomeCareTypeRow
                 compact
                 toSearch
@@ -208,6 +235,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
         isAdmin={canSeeAdminDesk(session?.role, session?.email ?? user?.primaryEmail)}
         onSignOut={() => void signOut("/")}
         headerExtra={null}
+        navExtra={hiddenCare.length ? <HeaderCareOverflow types={hiddenCare} city={headerCity} onNavigate={close} /> : null}
       />
       <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(6rem+env(safe-area-inset-bottom))]"}>
         <ApplyPendingShortlist />
@@ -216,6 +244,33 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
       {hideFooter || bare ? null : <SiteFooter />}
       {hideTabs ? null : <AppTabBar />}
       {hideTabs || pathname.startsWith("/search") || pathname.startsWith("/parent") || pathname.startsWith("/menu") ? null : <LiveChatSlot />}
+    </div>
+  );
+}
+
+function HeaderCareOverflow({
+  types,
+  city,
+  onNavigate,
+}: {
+  types: BrowseDaycareType[];
+  city: string;
+  onNavigate: () => void;
+}) {
+  const { t } = useCopy();
+  return (
+    <div className="mb-3" data-ke="header-overflow-types">
+      {types.map((type) => (
+        <Link
+          key={type}
+          to="/search"
+          search={browseTypeSearch(type, city)}
+          onClick={onNavigate}
+          className="flex min-h-11 items-center rounded-xl px-3 text-sm font-medium text-fg hover:bg-surface"
+        >
+          {t(BROWSE_RAIL_COPY[type])}
+        </Link>
+      ))}
     </div>
   );
 }

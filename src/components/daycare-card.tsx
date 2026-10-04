@@ -360,18 +360,20 @@ export const DaycareCard = memo(function DaycareCard({
             </p>
           ) : null}
         </ListingAnchor>
-        <ListingAnchor
-          slug={item.slug}
-          search={{ ask: "info" }}
-          data-ke="card-request-info"
-          className="relative z-10 mt-1 inline-flex min-h-11 items-center text-[13px] font-semibold text-primary no-underline"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {t("cardRequestInfo")}
-        </ListingAnchor>
-        {offerClaim ? (
-          <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10 mt-1.5" />
-        ) : null}
+        <div className="mt-1 flex w-full min-w-0 flex-col items-start gap-1.5">
+          <ListingAnchor
+            slug={item.slug}
+            search={{ ask: "info" }}
+            data-ke="card-request-info"
+            className="relative z-10 inline-flex min-h-11 items-center text-[13px] font-semibold text-primary no-underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {t("cardRequestInfo")}
+          </ListingAnchor>
+          {offerClaim ? (
+            <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10" />
+          ) : null}
+        </div>
         {licenceHref ? (
           <a
             href={licenceHref}
@@ -506,18 +508,20 @@ export const DaycareCard = memo(function DaycareCard({
           ) : null}
         </div>
       </ListingAnchor>
-      <ListingAnchor
-        slug={item.slug}
-        search={{ ask: "info" }}
-        data-ke="card-request-info"
-        className="relative z-10 mt-1.5 inline-flex h-9 min-h-9 appearance-none items-center rounded-[14px] border-0 bg-primary px-2.5 text-[11px] font-semibold text-primary-fg no-underline shadow-none [-moz-appearance:none]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {t("cardRequestInfo")}
-      </ListingAnchor>
-      {offerClaim ? (
-        <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10 mt-1.5" />
-      ) : null}
+      <div className="mt-1.5 flex w-full min-w-0 flex-col items-start gap-1.5">
+        <ListingAnchor
+          slug={item.slug}
+          search={{ ask: "info" }}
+          data-ke="card-request-info"
+          className="relative z-10 inline-flex h-9 min-h-9 appearance-none items-center rounded-[14px] border-0 bg-primary px-2.5 text-[11px] font-semibold text-primary-fg no-underline shadow-none [-moz-appearance:none]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {t("cardRequestInfo")}
+        </ListingAnchor>
+        {offerClaim ? (
+          <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10" />
+        ) : null}
+      </div>
       {licenceHref && !compact ? (
         <a
           href={licenceHref}

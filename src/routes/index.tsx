@@ -360,7 +360,10 @@ function Home() {
           });
         }}
       />
-      <SmartMatchEntry />
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-2 empty:hidden" data-ke="home-hero-pills">
+        <SmartMatchEntry inline />
+        <ResumeVisitCard />
+      </div>
 
       {featuredReady && strip.liveCount > 0 ? (
         <div className="mt-4 flex min-h-11 flex-wrap gap-2" data-ke="home-live-strip">
@@ -415,7 +418,6 @@ function Home() {
         <section id="featured" className="ke-gutter mx-auto w-full py-8 md:py-12">
           <h2 className="text-xl tracking-[-0.03em] md:text-2xl">{t(strip.featuredTitleKey)}</h2>
           <p className="mt-2 max-w-2xl text-sm text-muted">{t("featuredBody")}</p>
-          <ResumeVisitCard />
           <HomeDiscovery
             ready={featuredReady}
             shown={shown}
@@ -533,7 +535,6 @@ function Home() {
         </section>
         <section className="ke-gutter mx-auto w-full py-6">
           <h2 className="text-xl tracking-[-0.03em]">{t(strip.featuredTitleKey)}</h2>
-          <ResumeVisitCard />
           <HomeDiscovery
             ready={featuredReady}
             shown={shown}

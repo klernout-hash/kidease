@@ -55,6 +55,17 @@ describe("listing photos prefer official buildings over /photos/wpg/", () => {
     assert.equal(resolveListingStorefront("mb-unknown", official, {}), LISTING_PLACEHOLDER);
   });
 
+  it("shows the standard placeholder for Knox Day Nursery instead of the missing-font still", () => {
+    assert.equal(resolveListingStorefront("mb-1028", official, wpg), LISTING_PLACEHOLDER);
+    assert.equal(isStockListingPhoto("/photos/buildings/mb-1028.jpg"), true);
+    assert.equal(isStockListingPhoto("/photos/wpg/1028.jpg"), true);
+    assert.equal(listingThumb(["/photos/buildings/mb-1028.jpg", "/photos/wpg/1028.jpg"]), LISTING_PLACEHOLDER);
+    const photos = listingPhotosFor("mb-1028", ["/photos/wpg/1028.jpg"], official, wpg);
+    assert.equal(photos[0], LISTING_PLACEHOLDER);
+    assert.equal(photos.includes("/photos/wpg/1028.jpg"), false);
+    assert.equal(photos.includes("/photos/buildings/mb-1028.jpg"), false);
+  });
+
   it("does not treat unflagged shared street-view copies as unique storefronts", () => {
     assert.equal(resolveListingStorefront("mb-2121", official, wpg), LISTING_PLACEHOLDER);
     assert.equal(resolveListingStorefront("mb-2029", official, wpg), LISTING_PLACEHOLDER);
