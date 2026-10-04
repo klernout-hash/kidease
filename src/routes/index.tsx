@@ -3,6 +3,7 @@ import { JsonLd } from "@/components/json-ld";
 import { MARKETING_PAGE_SEO, organizationGraphJsonLdScript, pageSeoHead } from "@/lib/page-seo";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { BadgeCheck, Camera, Lock, MapPin, MessageCircle, Search, ListChecks } from "lucide-react";
+import { HeroClaimStrip } from "@/components/hero-claim-strip";
 import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
 import { FacilityTypeRails, type BrowseDaycareType } from "@/components/facility-type-rails";
@@ -310,7 +311,7 @@ function Home() {
   const featuredSearch = (
     <>
       <ExploreSearchBar
-        className="mx-auto mt-1 max-w-[60rem]"
+        className="mx-auto mt-1 w-full max-w-[960px]"
         prominent
         compactSubmit
         values={{ where: place, name: homeName, from: homeFrom, to: homeTo }}
@@ -364,6 +365,7 @@ function Home() {
         <SmartMatchEntry inline />
         <ResumeVisitCard />
       </div>
+      <HeroClaimStrip />
 
       {featuredReady && strip.liveCount > 0 ? (
         <div className="mt-4 flex min-h-11 flex-wrap gap-2" data-ke="home-live-strip">

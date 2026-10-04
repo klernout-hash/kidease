@@ -106,9 +106,11 @@ function WhenCalendar({
 function SearchRadiusSelect({
   value,
   onChange,
+  quiet = false,
 }: {
   value: number;
   onChange: (km: number) => void;
+  quiet?: boolean;
 }) {
   const { t } = useCopy();
   return (
@@ -118,7 +120,11 @@ function SearchRadiusSelect({
       value={value}
       onChange={(e) => onChange(Number(e.target.value))}
       onClick={(e) => e.stopPropagation()}
-      className="h-11 max-w-[5.75rem] shrink-0 rounded-full bg-bg px-2 text-sm font-medium text-fg ring-1 ring-border"
+      className={
+        quiet
+          ? "h-[44px] max-w-[4.75rem] shrink-0 cursor-pointer rounded-full border border-border bg-transparent px-2 font-normal text-muted"
+          : "h-11 max-w-[5.75rem] shrink-0 rounded-full bg-bg px-2 text-sm font-medium text-fg ring-1 ring-border"
+      }
     >
       {(RADIUS_KM_OPTIONS.includes(value as (typeof RADIUS_KM_OPTIONS)[number])
         ? RADIUS_KM_OPTIONS
@@ -177,7 +183,7 @@ export function ExploreSearchBar({
   startCollapsed?: boolean;
   /** Round icon button, for the home browse bar. */
   compactSubmit?: boolean;
-  /** Home bar: 25% taller and wider than the results bar. */
+  /** Home bar: one slim 56px pill, wider than the results bar. */
   prominent?: boolean;
   childSummary?: string;
   childAges?: { id: string; label: string; on: boolean }[];
@@ -201,10 +207,10 @@ export function ExploreSearchBar({
   const whenLabel = dateLabel || (onStartChange ? startLabel : "") || t("searchWhenHint");
   const whenFilled = Boolean(dateLabel || start);
   const fieldLabel = prominent
-    ? "block text-[13px] font-semibold leading-4 text-fg lg:text-[19px] lg:leading-6"
+    ? "block text-[12px] font-normal leading-4 text-muted"
     : "block text-[12px] font-semibold leading-4 text-fg";
   const fieldValue = prominent
-    ? "mt-0.5 h-7 w-full min-w-0 bg-transparent text-base leading-6 text-fg outline-none placeholder:text-muted lg:h-8 lg:text-[1.55rem] lg:leading-7"
+    ? "mt-0 h-5 w-full min-w-0 bg-transparent text-[16px] font-normal leading-5 text-fg outline-none placeholder:font-normal placeholder:text-muted"
     : "mt-0.5 h-6 w-full min-w-0 bg-transparent text-base leading-5 text-fg outline-none placeholder:text-muted";
   const destinationCities = origin ? nearestCities(origin, 6) : [];
 
@@ -231,11 +237,13 @@ export function ExploreSearchBar({
   function segmentClass(field: Field, index: number) {
     return cn(
       "relative flex min-w-0 flex-1 flex-col justify-center overflow-visible px-3 text-left transition-colors duration-150 ease-out",
-      prominent ? "min-h-12 py-1.5 lg:min-h-[4.3rem] lg:py-2 lg:px-6" : "min-h-[2.75rem] py-1 lg:px-4",
+      prominent ? "h-[56px] min-h-[56px] px-3 py-1 lg:h-[56px] lg:px-4 lg:py-1" : "min-h-[2.75rem] py-1 lg:px-4",
       index === 0 && "rounded-t-[2rem] lg:rounded-none lg:rounded-l-full",
       index === 2 && "rounded-b-[2rem] lg:rounded-none lg:rounded-r-full",
       index > 0 &&
-        "lg:before:absolute lg:before:left-0 lg:before:top-1/2 lg:before:h-6 lg:before:w-px lg:before:-translate-y-1/2 lg:before:bg-border",
+        (prominent
+          ? "lg:before:absolute lg:before:left-0 lg:before:top-1/2 lg:before:h-7 lg:before:w-px lg:before:-translate-y-1/2 lg:before:bg-border"
+          : "lg:before:absolute lg:before:left-0 lg:before:top-1/2 lg:before:h-6 lg:before:w-px lg:before:-translate-y-1/2 lg:before:bg-border"),
       active === field ? "z-30 bg-surface-2" : "hover:bg-surface-2/90",
     );
   }
@@ -268,7 +276,7 @@ export function ExploreSearchBar({
             </span>
           </button>
           {onRadiusChange && radiusKm != null ? (
-            <SearchRadiusSelect value={radiusKm} onChange={onRadiusChange} />
+            <SearchRadiusSelect value={radiusKm} onChange={onRadiusChange} quiet={prominent} />
           ) : null}
           <button
             type="submit"
@@ -312,11 +320,14 @@ export function ExploreSearchBar({
       <div
         className={cn(
           "relative z-20 flex flex-col divide-y divide-border overflow-visible rounded-[1.5rem] bg-surface shadow-card ring-1 ring-border/80 lg:flex-row lg:flex-wrap lg:items-stretch lg:divide-y-0 lg:rounded-full",
-          prominent ? "min-h-0 lg:min-h-[4.3rem]" : "min-h-[8.4rem] lg:min-h-[2.75rem]",
+          prominent ? "lg:h-[56px] lg:min-h-[56px]" : "min-h-[8.4rem] lg:min-h-[2.75rem]",
         )}
       >
         <div
-          className={cn(segmentClass("where", 0), "lg:min-w-[12rem] lg:flex-[1.2]")}
+          className={cn(
+            segmentClass("where", 0),
+            prominent ? "lg:min-w-[16rem] lg:flex-[2.4]" : "lg:min-w-[12rem] lg:flex-[1.2]",
+          )}
           onClick={() => {
             setActive("where");
             document.getElementById(whereId)?.focus();
@@ -367,21 +378,25 @@ export function ExploreSearchBar({
                       e.stopPropagation();
                       onLocate();
                     }}
-                    className="grid size-11 shrink-0 place-items-center rounded-full text-muted hover:bg-bg hover:text-fg"
+                    className={
+                      prominent
+                        ? "grid size-[44px] shrink-0 place-items-center rounded-full text-muted hover:bg-bg hover:text-fg"
+                        : "grid size-11 shrink-0 place-items-center rounded-full text-muted hover:bg-bg hover:text-fg"
+                    }
                     aria-label={t("useLocation")}
                   >
                     <LocateFixed className="size-5" />
                   </button>
                 ) : null}
                 {onRadiusChange && radiusKm != null ? (
-                  <SearchRadiusSelect value={radiusKm} onChange={onRadiusChange} />
+                  <SearchRadiusSelect value={radiusKm} onChange={onRadiusChange} quiet={prominent} />
                 ) : null}
               </div>
             ) : null}
           </div>
         </div>
 
-        <div className={segmentClass("when", 1)}>
+        <div className={cn(segmentClass("when", 1), prominent && "lg:max-w-[14rem] lg:flex-[0.85]")}>
           <button
             type="button"
             className="w-full min-w-0 text-left"
@@ -394,7 +409,7 @@ export function ExploreSearchBar({
             </span>
             <span
               className={cn(
-                prominent ? "mt-0.5 block h-7 truncate text-base leading-6 lg:h-8 lg:text-[1.55rem] lg:leading-7" : "mt-0.5 block h-5 truncate text-base leading-5",
+                prominent ? "mt-0 block h-5 truncate text-[16px] font-normal leading-5" : "mt-0.5 block h-5 truncate text-base leading-5",
                 whenFilled ? "text-fg" : "text-muted",
               )}
             >
@@ -458,7 +473,12 @@ export function ExploreSearchBar({
           ) : null}
         </div>
 
-        <div className={cn(segmentClass("name", 2), "lg:min-w-[14rem] lg:pr-1.5")}>
+        <div
+          className={cn(
+            segmentClass("name", 2),
+            prominent ? "lg:min-w-[11rem] lg:flex-[1.05] lg:pr-1.5" : "lg:min-w-[14rem] lg:pr-1.5",
+          )}
+        >
           <div className="flex items-center gap-2">
             <div className="min-w-0 flex-1">
               <label
@@ -484,13 +504,13 @@ export function ExploreSearchBar({
               className={
                 compactSubmit
                   ? `grid shrink-0 place-items-center rounded-full bg-primary text-primary-fg shadow-card transition-colors duration-150 ease-out hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 ${
-                      prominent ? "size-12 lg:size-[4.7rem]" : "size-12"
+                      prominent ? "size-[44px]" : "size-12"
                     }`
                   : "inline-flex h-11 shrink-0 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-fg shadow-card hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
               }
               aria-label={t("findChildcare")}
             >
-              {compactSubmit ? <Search className="size-5" strokeWidth={2.25} /> : null}
+              {compactSubmit ? <Search className={prominent ? "size-4" : "size-5"} strokeWidth={2.25} /> : null}
               <span className={compactSubmit ? "sr-only" : undefined}>{t("searchSubmit")}</span>
             </button>
           </div>

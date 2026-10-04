@@ -53,6 +53,46 @@ test("home keeps a single trust disclaimer and the police-check wording", () => 
   assert.doesNotMatch(home, /showPayCtas/);
 });
 
+test("home search bar is a slim pill with a claim strip and a daycare header pill", () => {
+  const bar = src("src/components/explore-search-bar.tsx");
+  const home = src("src/routes/index.tsx");
+  const fr = src("src/routes/fr.index.tsx");
+  const shell = src("src/components/shell.tsx");
+  const copy = src("src/lib/copy.ts");
+  const strip = src("src/components/hero-claim-strip.tsx");
+  assert.match(bar, /lg:h-\[56px\]/);
+  assert.match(bar, /text-\[12px\] font-normal/);
+  assert.match(bar, /text-\[16px\] font-normal/);
+  assert.match(bar, /lg:flex-\[2\.4\]/);
+  assert.match(bar, /lg:before:w-px/);
+  assert.match(bar, /quiet=\{prominent\}/);
+  assert.match(bar, /prominent \? "size-\[44px\]"/);
+  assert.match(home, /max-w-\[960px\]/);
+  assert.match(home, /data-ke="home-hero-pills"[\s\S]*?<HeroClaimStrip/);
+  assert.match(fr, /<HeroClaimStrip/);
+  assert.match(strip, /data-ke="home-claim-strip"/);
+  assert.match(strip, /to="\/claim"/);
+  assert.match(copy, /heroDaycareLead: "Run a daycare\? Claim your free listing in 2 minutes"/);
+  assert.match(copy, /heroDaycareLead: "Vous gérez une garderie\? Réclamez votre fiche gratuite en 2 minutes"/);
+  assert.match(copy, /heroClaimListing: "Claim listing"/);
+  assert.match(copy, /heroClaimListing: "Réclamer la fiche"/);
+  assert.match(copy, /heroTrustLicensed: "Licensed centres only"/);
+  assert.match(copy, /heroTrustLicensed: "Centres permis seulement"/);
+  assert.match(copy, /heroTrustCount: "20,000\+ centres listed"/);
+  assert.match(copy, /heroTrustCount: "Plus de 20 000 centres inscrits"/);
+  assert.match(copy, /heroTrustFounding: "Free founding period"/);
+  assert.match(copy, /heroTrustFounding: "Période fondatrice gratuite"/);
+  assert.doesNotMatch(strip, /free forever/i);
+  assert.doesNotMatch(strip, /—/);
+  const link = shell.slice(shell.indexOf('data-ke="list-your-daycare"') - 80, shell.indexOf('data-ke="list-your-daycare"') + 500);
+  assert.match(link, /border-primary/);
+  assert.match(link, /Building2/);
+  assert.match(link, /navForDaycares/);
+  assert.match(link, /whitespace-nowrap/);
+  assert.doesNotMatch(link, /hidden md:inline-flex/);
+  assert.doesNotMatch(link, /listYourDaycare/);
+});
+
 test("search control has a Search button, radius, and no Care schedule subtitle", () => {
   const bar = src("src/components/explore-search-bar.tsx");
   const home = src("src/routes/index.tsx");

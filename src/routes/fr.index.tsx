@@ -6,6 +6,7 @@ import { FeelPhoto } from "@/components/building-photo";
 import { JsonLd } from "@/components/json-ld";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
+import { HeroClaimStrip } from "@/components/hero-claim-strip";
 import { TrustBar } from "@/components/trust-bar";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -83,6 +84,7 @@ function FrHome() {
                 <Link to="/fr" hash="comment">{t("howItWorksCta")}</Link>
               </Button>
             </div>
+            <HeroClaimStrip />
             <Link
               to="/cities"
               data-ke="browse-cities"
