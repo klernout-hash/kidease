@@ -35,6 +35,8 @@ import { publicListings } from "@/lib/listing-visibility";
 import { fsaOf, MAX_SEARCH_RADIUS_KM } from "@/lib/proximity";
 import { areaPresence } from "@/lib/presence";
 import { readSearchCache, searchCacheKey, writeSearchCache } from "@/lib/search-cache";
+import { parentFitCacheKey } from "@/lib/parent-fit";
+import { parentFitFromSearch, useParentFitFacts } from "@/lib/use-parent-fit";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
 import { useLivePresence } from "@/lib/use-presence";
 import { trackLocation } from "@/lib/telemetry";
@@ -257,6 +259,8 @@ const PRESETS_KM = [1, 5, 10, 15, 25, 40, 50];
 function SearchPage() {
   const { t, locale } = useCopy();
   const { user } = useCurrentUserState();
+  const fitFacts = useParentFitFacts();
+  const [budgetMonthly, setBudgetMonthly] = useState("");
   const navigate = useNavigate({ from: "/search" });
   const incoming = Route.useSearch();
   const boot = Route.useLoaderData();
@@ -529,7 +533,17 @@ function SearchPage() {
     lat2: viewAnchors.cityOwned ? undefined : workOrigin?.lat,
     lng2: viewAnchors.cityOwned ? undefined : workOrigin?.lng,
     mode: viewAnchors.mode,
+    parentFit: parentFitFromSearch({
+      facts: fitFacts,
+      home: { lat: cameraHome.lat, lng: cameraHome.lng },
+      work: viewAnchors.cityOwned || !workOrigin ? null : { lat: workOrigin.lat, lng: workOrigin.lng },
+      radiusKm,
+      budgetMonthly: Number(budgetMonthly) > 0 ? Math.round(Number(budgetMonthly)) : null,
+      wantSubsidy: ten,
+    }),
   };
+  const fitKey = parentFitCacheKey(searchData.parentFit);
+  const fitLanguageKey = fitFacts.languages.join(",");
   const cacheInput = {
     lat: cameraHome.lat,
     lng: cameraHome.lng,
@@ -545,6 +559,7 @@ function SearchPage() {
     lng2: viewAnchors.cityOwned ? undefined : workOrigin?.lng,
     mode: viewAnchors.mode,
     page: resultPage,
+    parentFit: fitKey,
   };
   const locationLock = useMemo(
     () =>
@@ -632,6 +647,11 @@ function SearchPage() {
     extended,
     rankSchedules.join(","),
     resultPage,
+    fitKey,
+    budgetMonthly,
+    fitFacts.signedIn,
+    fitFacts.childAgeMonths,
+    fitLanguageKey,
   ]);
 
   const parentFilters = useMemo(() => parseParentListingSearch(incoming), [incoming]);
@@ -1368,6 +1388,18 @@ function SearchPage() {
       {chip(readyOnly, t("filterDetailsReady"), () => setReadyOnly((v) => !v))}
       {chip(claimVerifiedOnly, t("filterClaimVerified"), () => setClaimVerifiedOnly((v) => !v))}
       {chip(ten, t("filterTen"), () => setTen((v) => !v))}
+      {fitFacts.signedIn ? (
+        <label className="inline-flex min-h-11 items-center gap-2 text-sm">
+          <span>{locale === "fr" ? "Budget mensuel" : "Monthly budget"}</span>
+          <input
+            inputMode="numeric"
+            className="ke-input w-[7rem]"
+            value={budgetMonthly}
+            aria-label={locale === "fr" ? "Budget mensuel" : "Monthly budget"}
+            onChange={(event) => setBudgetMonthly(event.target.value.replace(/[^\d]/g, "").slice(0, 5))}
+          />
+        </label>
+      ) : null}
       {chip(meals, t("filterMeals"), () => setMeals((v) => !v))}
       {chip(outdoor, t("filterOutdoor"), () => setOutdoor((v) => !v))}
       {chip(inclusive, t("filterInclusive"), () => setInclusive((v) => !v))}
