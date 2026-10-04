@@ -126,6 +126,10 @@ export function StartADaycarePage() {
       <main className="ke-gutter mx-auto max-w-3xl py-12 md:py-16">
         <p className="text-sm font-semibold tracking-wide text-primary">{t("startADaycare")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("startDaycareTitle")}</h1>
+        <p className="mt-3 text-lg text-muted">{t("startDaycareHero")}</p>
+        <div className="mt-6">
+          <Ctas />
+        </div>
 
         <aside
           className="mt-6 rounded-2xl bg-primary p-5 text-primary-fg shadow-card ring-1 ring-primary md:p-6"
@@ -142,12 +146,7 @@ export function StartADaycarePage() {
           </ul>
           <p className="mt-4 text-sm leading-6 md:text-base">{t("startDaycareIntro")}</p>
         </aside>
-
-        <p className="mt-6 text-lg text-muted">{t("startDaycareHero")}</p>
         <p className="mt-3 text-sm text-muted">{t("startDaycareEnrollLead")}</p>
-        <div className="mt-6">
-          <Ctas />
-        </div>
 
         <section className="mt-10 rounded-xl bg-surface p-5 ring-1 ring-border">
           <h2 className="text-lg font-semibold">{t("startDaycareOfficialT")}</h2>

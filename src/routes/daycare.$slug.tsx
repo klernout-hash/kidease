@@ -364,6 +364,12 @@ export function Listing() {
                   <p className="mt-2 text-sm text-muted">{earlyAddress}</p>
                 </section>
               ) : null}
+              <section id="listing-reviews">
+                <h2 className="font-display text-2xl">{t("parentReviews")}</h2>
+                <p className="mt-2 max-w-prose text-sm text-muted" data-ke="verified-review-note">
+                  {t("verifiedReviewNote")}
+                </p>
+              </section>
               <div className="space-y-3" aria-hidden="true">
                 <div className="flex flex-wrap gap-2">
                   <div className="ke-skel h-8 w-28 rounded-full" />
