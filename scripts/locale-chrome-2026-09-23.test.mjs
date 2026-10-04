@@ -41,7 +41,7 @@ test("English is the default and an explicit language choice sticks", () => {
   const useCopy = src("src/lib/use-copy.ts");
   assert.match(boot, /localeFromPreference/);
   assert.match(boot, /readLocaleCookie/);
-  assert.match(boot, /setLocale\(code, \{ lock: true \}\)/);
+  assert.match(boot, /setLocale\(saved, \{ lock: true \}\)/);
   assert.doesNotMatch(boot, /saved === "fr"/);
   assert.doesNotMatch(boot, /LANGUAGES\.some/);
   assert.match(select, /shippedLanguages\(\)/);

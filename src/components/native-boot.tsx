@@ -49,26 +49,19 @@ export function NativeBoot() {
   useLayoutEffect(() => {
     try {
       const cookie = readLocaleCookie(document.cookie);
-      const lock = (code: typeof cookie) => {
-        if (!code) return;
-        if (!isExtraLocale(code)) {
-          setLocale(code, { lock: true });
-          return;
-        }
-        void activateLocale(code).then((ok) => {
-          if (ok) setLocale(code, { lock: true });
-        });
-      };
-      if (cookie) {
-        lock(cookie);
-        return;
-      }
       const raw = window.localStorage.getItem("kidease-locale");
-      const saved = localeFromPreference(raw);
-      // The old boot wrote "en" for everyone. Only a non-English value is a real choice.
-      if (raw && saved !== "en") {
-        writeLocaleChoiceCookie(saved);
-        lock(saved);
+      // The old boot wrote "en" for everyone. Only a non-English stored value is a real choice.
+      const legacy = raw && raw !== "en" ? raw : null;
+      const saved = localeFromPreference(cookie || legacy);
+      if (cookie || legacy) {
+        if (!cookie && legacy) writeLocaleChoiceCookie(saved);
+        if (!isExtraLocale(saved)) {
+          setLocale(saved, { lock: true });
+        } else {
+          void activateLocale(saved).then((ok) => {
+            if (ok) setLocale(saved, { lock: true });
+          });
+        }
         return;
       }
       if (isFrPath(window.location.pathname)) setLocale("fr");
