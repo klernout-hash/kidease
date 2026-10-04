@@ -163,6 +163,8 @@ function toDaycare(d: CatalogDaycare): Daycare {
     waitlist: d.waitlist,
     ratingX10: d.ratingX10,
     reviewCount: d.reviewCount || d.reviews.length,
+    googleRatingX10: d.googleRatingX10 ?? null,
+    googleReviewCount: d.googleReviewCount ?? null,
     parentRatingX10: 0,
     parentReviewCount: 0,
     googlePlaceId: d.googlePlaceId,

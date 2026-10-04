@@ -25,6 +25,7 @@ import {
   type StartDaycarePt,
 } from "@/lib/start-daycare-hub";
 import { cn } from "@/lib/utils";
+import { trustSurfaceCopy } from "@/lib/trust-surface";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 
@@ -50,11 +51,11 @@ const KIDEASE_HELPS: Array<{ icon: typeof BadgeCheck; key: CopyKey }> = [
   { icon: Wallet, key: "startDaycareKidEase3" },
 ];
 
-function Ctas() {
+function Ctas({ primary = true }: { primary?: boolean }) {
   const { t } = useCopy();
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-      <Button asChild size="lg">
+      <Button asChild size="lg" variant={primary ? "primary" : "secondary"}>
         <Link to="/claim" hash="enroll">
           {t("enrollToday")}
         </Link>
@@ -82,6 +83,7 @@ function OfficialLink({ href, children }: { href: string; children: string }) {
 
 function ProvincePanel({ pt, locale }: { pt: StartDaycarePt; locale: string }) {
   const { t } = useCopy();
+  const path = trustSurfaceCopy(locale);
   const fr = locale === "fr";
   return (
     <article className="mt-5 rounded-2xl bg-surface p-5 ring-1 ring-border md:p-6">
@@ -108,6 +110,35 @@ function ProvincePanel({ pt, locale }: { pt: StartDaycarePt; locale: string }) {
           </p>
         </section>
       </div>
+
+      <h4 className="mt-6 text-lg font-semibold">{path.pathTitle}</h4>
+      <ol className="mt-3 list-decimal space-y-3 pl-5 text-sm leading-6 text-fg" data-ke="start-daycare-path">
+        <li>
+          <p className="font-medium">{path.stepLicence}</p>
+          <p className="mt-1 text-muted">{fr ? pt.licensingWhoFr : pt.licensingWhoEn}</p>
+        </li>
+        <li>
+          <p className="font-medium">{path.stepFirst}</p>
+          <p className="mt-1 text-muted">{fr ? pt.licensingFirstFr : pt.licensingFirstEn}</p>
+          <p className="mt-2">
+            <OfficialLink href={pt.licensingUrl}>{t("startDaycareOfficialLink")}</OfficialLink>
+          </p>
+        </li>
+        <li>
+          <p className="font-medium">{path.stepFunding}</p>
+          <p className="mt-2">
+            <OfficialLink href={pt.fundingUrl}>{t("startDaycareOfficialLink")}</OfficialLink>
+          </p>
+        </li>
+        <li>
+          <p className="font-medium">{path.stepList}</p>
+          <div className="mt-3">
+            <Button asChild>
+              <Link to="/claim">{path.createListing}</Link>
+            </Button>
+          </div>
+        </li>
+      </ol>
     </article>
   );
 }
@@ -146,7 +177,7 @@ export function StartADaycarePage() {
         <p className="mt-6 text-lg text-muted">{t("startDaycareHero")}</p>
         <p className="mt-3 text-sm text-muted">{t("startDaycareEnrollLead")}</p>
         <div className="mt-6">
-          <Ctas />
+          <Ctas primary={!pt} />
         </div>
 
         <section className="mt-10 rounded-xl bg-surface p-5 ring-1 ring-border">
@@ -246,7 +277,7 @@ export function StartADaycarePage() {
         </ul>
 
         <div className="mt-10">
-          <Ctas />
+          <Ctas primary={false} />
         </div>
         <p className="mt-3 text-sm text-muted">{t("startDaycareEnrollLead")}</p>
       </main>

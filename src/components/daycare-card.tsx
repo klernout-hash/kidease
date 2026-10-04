@@ -40,8 +40,27 @@ import {
 import { listingAgeChips, parentAgeLabel } from "@/lib/parent-listing";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
+import { publicGoogleRating } from "@/lib/google-reviews";
+import { trustSurfaceCopy } from "@/lib/trust-surface";
 import { listingSubsidy } from "@/lib/fee-program";
 import { SubsidyPill } from "@/components/subsidy-pill";
+
+function CardGoogleLine({ item, locale }: { item: Card; locale: string }) {
+  const google = publicGoogleRating({
+    googleRatingX10: item.googleRatingX10,
+    googleReviewCount: item.googleReviewCount,
+    parentReviewCount: item.parentReviewCount,
+    parentRatingX10: item.parentRatingX10,
+    minParentReviews: MIN_REVIEW_COUNT,
+  });
+  if (!google) return null;
+  const words = trustSurfaceCopy(locale);
+  return (
+    <p className="mt-0.5 text-[12px] leading-4 text-muted" data-ke="google-rating">
+      {words.googleRating} {(google.ratingX10 / 10).toFixed(1)} ({google.reviewCount})
+    </p>
+  );
+}
 
 function whyMatchLine(
   item: Card,
@@ -320,6 +339,7 @@ export const DaycareCard = memo(function DaycareCard({
             ) : null}
           </div>
           <FoundingMemberBadge show={item.foundingMember} className="mt-1" />
+          {showParentAverage ? null : <CardGoogleLine item={item} locale={locale} />}
           {placeLine ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{placeLine}</p> : null}
           {sort === "best" && whyMatchLine(item, t) ? (
             <p className="mt-0.5 line-clamp-2 text-[13px] leading-5 text-muted" data-ke="why-match">
@@ -436,6 +456,7 @@ export const DaycareCard = memo(function DaycareCard({
             ) : null}
           </div>
           {!compact ? <FoundingMemberBadge show={item.foundingMember} className="mt-1" /> : null}
+          {showParentAverage ? null : <CardGoogleLine item={item} locale={locale} />}
           {!compact && publicApprovalEligible(item) ? (
             <p className="text-[11px] font-medium leading-4 text-primary" data-ke="kidease-approved-marker">
               {t("kideaseApprovedMarker")}

@@ -1,5 +1,6 @@
 import { Star } from "lucide-react";
 import { googleReviewsUrl, type GoogleBits } from "@/lib/google-reviews";
+import { trustSurfaceCopy } from "@/lib/trust-surface";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -35,25 +36,21 @@ export function GoogleRating({
   compact?: boolean;
   asButton?: boolean;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
+  const words = trustSurfaceCopy(locale);
   if (ratingX10 <= 0 || reviewCount <= 0) return null;
   const rating = ratingX10 / 10;
   const href = googleReviewsUrl(item);
-  const label = `${rating.toFixed(1)} · ${reviewCount} ${t("reviews")} · ${t("googleReviews")}`;
+  const label = `${words.googleRating} ${rating.toFixed(1)} · ${reviewCount} ${t("reviews")}`;
   const inner = (
     <>
       <GoogleStars rating={rating} />
+      <span className="font-medium text-muted">{words.googleRating}</span>
       <span className="tabular-nums font-medium">{rating.toFixed(1)}</span>
-      {compact ? (
-        <span className="text-muted">({reviewCount})</span>
-      ) : (
-        <span className="text-muted">
-          · {reviewCount} {t("reviews")}
-        </span>
-      )}
+      <span className="text-muted">({reviewCount})</span>
     </>
   );
-  const cls = "inline-flex items-center gap-1 text-sm hover:underline";
+  const cls = cn("inline-flex flex-wrap items-center gap-1 text-sm hover:underline", compact && "text-[13px]");
   if (asButton) {
     return (
       <button

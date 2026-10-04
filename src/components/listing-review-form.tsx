@@ -7,6 +7,7 @@ import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field"
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getListingReviewAccess, submitListingReview } from "@/lib/server/reviews";
 import { isPublicReviewStatus, normalizeReviewStatus } from "@/lib/review-gate";
+import { trustSurfaceCopy } from "@/lib/trust-surface";
 import { useCopy } from "@/lib/use-copy";
 import type { Review } from "@/lib/types";
 
@@ -24,6 +25,8 @@ export function ListingReviewForm({ daycareId, slug }: { daycareId: string; slug
   const [rating, setRating] = useState(0);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
+  const words = trustSurfaceCopy(locale);
+  const enrolledPrompt = access?.canWrite && access.reason === "enrolment";
 
   useEffect(() => {
     if (isPending || !user) {
@@ -72,6 +75,7 @@ export function ListingReviewForm({ daycareId, slug }: { daycareId: string; slug
   return (
     <form
       className="mt-4 space-y-3 rounded-lg bg-surface p-4 ring-1 ring-border"
+      data-ke={enrolledPrompt ? "enrolment-review-prompt" : "listing-review-form"}
       onSubmit={(e) => {
         e.preventDefault();
         if (rating < 1) {
@@ -104,8 +108,8 @@ export function ListingReviewForm({ daycareId, slug }: { daycareId: string; slug
           .finally(() => setBusy(false));
       }}
     >
-      <p className="font-medium">{t("writeReview")}</p>
-      <p className="text-sm text-muted">{t("writeReviewLead")}</p>
+      <h3 className="text-lg font-semibold">{enrolledPrompt ? words.verifiedReviewTitle : t("writeReview")}</h3>
+      <p className="text-sm text-muted">{enrolledPrompt ? words.verifiedReviewLead : t("writeReviewLead")}</p>
       <fieldset>
         <legend className="text-sm">{t("reviewRating")}</legend>
         <div className="mt-2 flex gap-2">

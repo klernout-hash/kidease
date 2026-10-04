@@ -19,6 +19,7 @@ import type { LeadRequest } from "@/lib/lead-requests";
 import { listParentBills } from "@/lib/server/billing";
 import { shareChildWithCentres } from "@/lib/server/enrol-queue";
 import { hasCareDetails } from "@/lib/child-profile";
+import { trustSurfaceCopy } from "@/lib/trust-surface";
 import { useCopy } from "@/lib/use-copy";
 import { formatAgeLabel } from "@/lib/templates";
 import { ageGroupFromMonths, formatMonth, money, monthsBetween } from "@/lib/utils";
@@ -438,6 +439,18 @@ export function ParentDesk({
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
+                  {b.status === "accepted" || b.status === "active" ? (
+                    <Button size="sm" variant="secondary" asChild>
+                      <Link
+                        to="/daycare/$slug"
+                        params={{ slug: b.daycareSlug }}
+                        hash="listing-reviews"
+                        data-ke="enrolment-review-link"
+                      >
+                        {trustSurfaceCopy(locale).writeVerifiedReview}
+                      </Link>
+                    </Button>
+                  ) : null}
                   {b.conversationId ? (
                     <Button size="sm" variant="secondary" asChild>
                       <Link to="/inbox/$id" params={{ id: b.conversationId }}>

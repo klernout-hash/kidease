@@ -55,6 +55,8 @@ export type CatalogDbRow = {
   waitlist: number | null;
   rating_x10: number | null;
   review_count: number | null;
+  google_rating_x10?: number | null;
+  google_review_count?: number | null;
   license_number: string | null;
   license_status?: string | null;
   registry_match_state?: string | null;
@@ -86,7 +88,7 @@ id, slug, name, name_fr, tagline, tagline_fr, description, description_fr,
 address, city, province, postal_code, lat, lng, phone, hours, hours_fr,
 age_min_months, age_max_months, infant_monthly, toddler_monthly,
 preschool_monthly, part_time_monthly, fee_program, fact_source, spots_infant, spots_toddler,
-spots_preschool, waitlist, rating_x10, review_count, license_number,
+spots_preschool, waitlist, rating_x10, review_count, google_rating_x10, google_review_count, license_number,
 license_status, registry_match_state, license_verification_source,
 languages, staff_languages, cultural_programs, cultural_team_note,
 amenities, photos, claimed_at, founding_member, claim_status, listing_active, staff_screening_attested, screening_on_file, visibility, is_test,
@@ -291,6 +293,8 @@ export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
     waitlist: Number(row.waitlist) || 0,
     ratingX10: Number(row.rating_x10) || 0,
     reviewCount: Number(row.review_count) || 0,
+    googleRatingX10: row.google_rating_x10 == null ? null : Number(row.google_rating_x10) || 0,
+    googleReviewCount: row.google_review_count == null ? null : Number(row.google_review_count) || 0,
     licenseNumber: row.license_number || row.id,
     licenseStatus: normalizeLicenseStatus(row.license_status),
     registryMatchState: normalizeMatchState(row.registry_match_state),

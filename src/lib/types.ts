@@ -73,6 +73,9 @@ export type Daycare = {
   waitlist: number;
   ratingX10: number;
   reviewCount: number;
+  /** Google Places rating times 10. Absent or 0 means no Google rating. */
+  googleRatingX10?: number | null;
+  googleReviewCount?: number | null;
   parentRatingX10?: number;
   parentReviewCount?: number;
   qualityScore?: number;

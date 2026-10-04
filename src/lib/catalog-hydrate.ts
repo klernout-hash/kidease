@@ -54,6 +54,8 @@ export type CatalogDaycare = {
   waitlist: number;
   ratingX10: number;
   reviewCount: number;
+  googleRatingX10?: number | null;
+  googleReviewCount?: number | null;
   licenseNumber: string;
   licenseStatus?: "unverified" | "matched" | "expired" | "suspended";
   registryMatchState?: "unmatched" | "pending" | "matched" | "mismatch";

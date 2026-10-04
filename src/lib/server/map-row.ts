@@ -52,6 +52,9 @@ export type DaycareRow = {
   waitlist: number;
   rating_x10: number;
   review_count: number;
+  google_rating_x10?: number | null;
+  google_review_count?: number | null;
+  google_place_id?: string | null;
   license_number: string | null;
   languages: string;
   staff_languages?: unknown;
@@ -140,7 +143,9 @@ export function mapDaycare(r: DaycareRow): Daycare {
     waitlist: r.waitlist,
     ratingX10: r.rating_x10,
     reviewCount: r.review_count,
-    googlePlaceId: null,
+    googleRatingX10: r.google_rating_x10 ?? null,
+    googleReviewCount: r.google_review_count ?? null,
+    googlePlaceId: r.google_place_id ?? null,
     licenseNumber: r.license_number,
     licensePhotoOnFile: Boolean((r.license_photo || "").trim()),
     languages: r.languages,

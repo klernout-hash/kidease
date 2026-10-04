@@ -87,7 +87,7 @@ import { listingAgeRangeText } from "@/lib/listing-ages";
 import type { ListingSeoSource } from "@/lib/listing-seo";
 import { formatMonth, money, displayCentreName, displayListingText } from "@/lib/utils";
 import { openDirections } from "@/lib/maps";
-import { googleReviewsUrl } from "@/lib/google-reviews";
+import { googleReviewsUrl, publicGoogleRating } from "@/lib/google-reviews";
 import { ListingMap } from "@/components/listing-map";
 import type { AvailabilityRow, Daycare, DaycareCard as Card, Review } from "@/lib/types";
 import { parseListingAsk, type ListingAsk } from "@/lib/lead-requests";
@@ -441,7 +441,13 @@ export function Listing() {
   const mapsPlace = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
   const googleReviewsHref = googleReviewsUrl(d);
   const parentRated = (d.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (d.parentRatingX10 ?? 0) > 0;
-  const googleRated = d.reviewCount > 0 && d.ratingX10 > 0;
+  const googleShown = publicGoogleRating({
+    googleRatingX10: d.googleRatingX10,
+    googleReviewCount: d.googleReviewCount,
+    parentReviewCount: d.parentReviewCount,
+    parentRatingX10: d.parentRatingX10,
+    minParentReviews: MIN_REVIEW_COUNT,
+  });
 
   function goLogin(
     reason?: "needSignInTour" | "needSignInSave" | "needSignInMessage" | "guestSignInReturn",
@@ -709,9 +715,9 @@ export function Listing() {
                 · {d.parentReviewCount} {t("reviews")}
               </span>
             </a>
-          ) : googleRated ? (
-            <div className="mt-1">
-              <GoogleRating item={d} ratingX10={d.ratingX10} reviewCount={d.reviewCount} compact />
+          ) : googleShown ? (
+            <div className="mt-1" data-ke="google-rating">
+              <GoogleRating item={d} ratingX10={googleShown.ratingX10} reviewCount={googleShown.reviewCount} compact />
             </div>
           ) : null}
           <ListingHeaderPills item={d} agesLabel={agesLabel} hours={hours} feeFrom={from} />
@@ -850,7 +856,7 @@ export function Listing() {
               ) : (
                 <p className="mt-2 text-sm text-muted">{t("reviewsEnrolledEmpty")}</p>
               )}
-              {googleRated ? (
+              {googleShown ? (
                 <a
                   href={googleReviewsHref}
                   target="_blank"
