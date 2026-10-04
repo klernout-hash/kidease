@@ -248,6 +248,21 @@ export const verifyClaim = createServerFn({ method: "POST" })
     });
     await writeProfileRole(context.userId, "provider");
     const actor = await lookupUser(context.userId);
+    const licenceContact = await sql<{ contact_email: string | null; phone: string | null }>`
+      select contact_email, phone from daycares where id = ${data.daycareId} limit 1
+    `.catch(() => [] as Array<{ contact_email: string | null; phone: string | null }>);
+    const profilePhone = await sql<{ phone: string | null }>`
+      select phone from profiles where user_id = ${context.userId} limit 1
+    `.catch(() => [] as Array<{ phone: string | null }>);
+    const { queueClaimReview } = await import("@/lib/server/fraud-queue");
+    await queueClaimReview({
+      claimId: claim.id,
+      daycareId: data.daycareId,
+      claimantEmail: actor.email,
+      claimantPhone: profilePhone[0]?.phone,
+      licenceEmail: licenceContact[0]?.contact_email,
+      licencePhone: licenceContact[0]?.phone,
+    });
     const listedAfter = await catalogByIdGet(data.daycareId);
     const flags = listingVisibilityForOwners(
       {
