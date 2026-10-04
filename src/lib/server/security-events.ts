@@ -29,7 +29,9 @@ export type SecurityKind =
   | "seed_catalog_run"
   | "employee_invite"
   | "employee_accept"
-  | "employee_revoke";
+  | "employee_revoke"
+  | "open_spots_checkin_denied"
+  | "open_spots_checkin_run";
 
 /** Insert-only audit row. Never pass secrets, card data, or medical notes. */
 export async function logSecurityEvent(input: {
