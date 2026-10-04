@@ -1,12 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { beforeLoadAdminDesk } from "@/lib/server/admin-route";
 import { listProvincialVacancyReport } from "@/lib/server/provincial-vacancy";
+import { listUnconfirmedVacancies } from "@/lib/server/vacancy-stale";
 import { useCopy } from "@/lib/use-copy";
 import { Shell } from "@/components/shell";
 
 export const Route = createFileRoute("/admin-vacancies")({
   beforeLoad: beforeLoadAdminDesk,
-  loader: () => listProvincialVacancyReport(),
+  loader: async () => {
+    const report = await listProvincialVacancyReport();
+    const unconfirmed = await listUnconfirmedVacancies();
+    return { report, unconfirmed };
+  },
   head: () => ({
     meta: [
       { title: "Provincial openings · KidEase" },
@@ -24,8 +29,9 @@ function when(value: string | null | undefined) {
 }
 
 function ProvincialVacancyPage() {
-  const report = Route.useLoaderData();
-  const { t } = useCopy();
+  const { report, unconfirmed } = Route.useLoaderData();
+  const { t, locale } = useCopy();
+  const fr = locale === "fr";
   const sections = [
     ["Matched", report.matched],
     ["Unmatched", report.unmatched],
@@ -39,6 +45,48 @@ function ProvincialVacancyPage() {
         <p className="mt-2 text-sm text-muted">
           New Brunswick's published file lists licensed capacity, not current openings. When that file has no opening column, the import is marked failed and no number is written.
         </p>
+        <section className="mt-8" data-ke="vacancy-unconfirmed">
+          <h2 className="font-display text-xl">
+            {fr ? "Non confirmées depuis 30 jours" : "Unconfirmed for 30 days or more"}
+          </h2>
+          <p className="mt-2 max-w-prose text-sm text-muted">
+            {fr
+              ? `${unconfirmed.total} fiches restent dans la recherche. Leur place baisse lentement jusqu’à une confirmation.`
+              : `${unconfirmed.total} listings stay in search. Their rank drops slowly until a centre confirms openings.`}
+          </p>
+          {unconfirmed.rows.length ? (
+            <ul className="mt-3 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
+              {unconfirmed.rows.map((row) => (
+                <li key={row.id} className="p-4 text-sm">
+                  {row.slug ? (
+                    <a
+                      href={`/daycare/${row.slug}`}
+                      className="inline-flex min-h-11 items-center font-medium underline-offset-2 hover:underline"
+                    >
+                      {row.name}
+                    </a>
+                  ) : (
+                    <p className="font-medium">{row.name}</p>
+                  )}
+                  <p className="mt-1 text-muted">
+                    {[row.city, row.province].filter(Boolean).join(" · ") || (fr ? "Lieu non indiqué" : "Place not listed")}
+                    {row.ageDays == null
+                      ? fr
+                        ? " · jamais confirmé"
+                        : " · never confirmed"
+                      : fr
+                        ? ` · confirmé il y a ${Math.floor(row.ageDays)} jours`
+                        : ` · confirmed ${Math.floor(row.ageDays)} days ago`}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-2 text-sm text-muted">
+              {fr ? "Aucune fiche dans cet échantillon." : "None in this sample."}
+            </p>
+          )}
+        </section>
         {report.runs.length ? (
           <ul className="mt-4 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
             {report.runs.map((run, i) => (

@@ -90,8 +90,14 @@ export function documentLangFromPath(pathname: string | null | undefined): strin
   return isFrPath(pathname) ? "fr-CA" : "en";
 }
 
+/** `/milieux-familiaux` and `/milieux-familiaux/:id` have French URLs. Not in the sitemap while unpublished. */
+export function isQcHomePath(pathname: string | null | undefined): boolean {
+  const bare = stripLocalePrefix(pathname);
+  return bare === "/milieux-familiaux" || /^\/milieux-familiaux\/[^/]+$/.test(bare);
+}
+
 export function isPairedPath(pathname: string | null | undefined): boolean {
-  return PAIRED.has(stripLocalePrefix(pathname)) || isCatalogueDocumentPath(pathname);
+  return PAIRED.has(stripLocalePrefix(pathname)) || isCatalogueDocumentPath(pathname) || isQcHomePath(pathname);
 }
 
 /** `/daycare/:slug`, `/daycare/city/:slug`, and `/daycare/:city/:age`. */
@@ -116,7 +122,7 @@ export function englishPath(pathname: string): string {
 export function localePath(enPath: string, locale: string): string {
   const bare = enPath.startsWith("/") ? enPath : `/${enPath}`;
   if (bare === "/explore") return locale === "fr" ? frenchPath("/search") : "/search";
-  if (locale === "fr" && (PAIRED.has(bare) || isCatalogueDocumentPath(bare))) return frenchPath(bare);
+  if (locale === "fr" && (PAIRED.has(bare) || isCatalogueDocumentPath(bare) || isQcHomePath(bare))) return frenchPath(bare);
   return bare;
 }
 

@@ -29,6 +29,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_SPOT_OFFER_MAIL",
   "FEATURE_OPEN_SPOTS_CHECKIN_MAIL",
   "FEATURE_OPEN_SPOTS_CHECKIN_SMS",
+  "FEATURE_QC_HOME_DAYCARES",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -76,6 +77,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_SPOT_OFFER_MAIL: false,
   FEATURE_OPEN_SPOTS_CHECKIN_MAIL: false,
   FEATURE_OPEN_SPOTS_CHECKIN_SMS: false,
+  /** Quebec recognized home daycares. Off until Kyle publishes them. */
+  FEATURE_QC_HOME_DAYCARES: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -162,6 +165,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary: "Weekly open-spots SMS. Default off. Also needs FEATURE_SMS. Toll-free is not approved.",
+  },
+  {
+    key: "FEATURE_QC_HOME_DAYCARES",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Quebec recognized home daycares. Default off. Area only, no street pin, no email or text to those providers.",
   },
 ];
 
