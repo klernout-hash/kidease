@@ -6,7 +6,7 @@
  * Paid Pro / Network, featured-city, and promote pins never enter this score.
  */
 
-import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
+import { compareFreshOpenSpots, vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { qualityBreakdown, QUALITY_WEIGHTS } from "@/lib/quality";
 import { distanceDecay } from "@/lib/proximity";
 import { matchesAgeBand, type AgeBand } from "@/lib/saved-search";
@@ -168,6 +168,8 @@ export function compareParentMatch(
 ) {
   const delta = parentMatchScore(b, prefs) - parentMatchScore(a, prefs);
   if (delta !== 0) return delta;
+  const fresh = compareFreshOpenSpots(a, b);
+  if (fresh !== 0) return fresh;
   const kmA = typeof a.distanceKm === "number" ? a.distanceKm : 9e6;
   const kmB = typeof b.distanceKm === "number" ? b.distanceKm : 9e6;
   return kmA - kmB;

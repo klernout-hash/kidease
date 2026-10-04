@@ -7,7 +7,7 @@
  */
 
 import { MIN_THREAD_SAMPLE } from "@/lib/quality";
-import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
+import { compareFreshOpenSpots, vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { spotsForAgeGroup, type ParentMatchInput } from "@/lib/parent-match";
 import { parseAgeGroup } from "@/lib/care-type";
 
@@ -122,6 +122,8 @@ export function compareParentUrgency(
 ) {
   const delta = parentUrgencyScore(b, prefs) - parentUrgencyScore(a, prefs);
   if (delta !== 0) return delta;
+  const fresh = compareFreshOpenSpots(a, b, prefs.now);
+  if (fresh !== 0) return fresh;
   const kmA = typeof a.distanceKm === "number" ? a.distanceKm : 9e6;
   const kmB = typeof b.distanceKm === "number" ? b.distanceKm : 9e6;
   return kmA - kmB;

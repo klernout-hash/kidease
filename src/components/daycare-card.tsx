@@ -230,7 +230,7 @@ export const DaycareCard = memo(function DaycareCard({
   const vacancy = honestVacancy(item);
   const freshness = vacancyLine(item, t, locale);
   const incompleteLabel = parentIncompleteLabel(item, t);
-  const freshnessText = freshness.kind === "unknown" ? "" : vacancy.kind === "open" || vacancy.kind === "waitlist" ? freshness.text : "";
+  const freshnessText = freshness.kind === "unknown" ? t("vacancyNotConfirmed") : freshness.text;
   const GAP_COPY = {
     ages: "cardGapAges",
     fees: "cardGapFees",
@@ -335,6 +335,11 @@ export const DaycareCard = memo(function DaycareCard({
           {openSpotsLine ? (
             <p className="mt-0.5 text-[13px] font-medium leading-5 text-fg" data-ke="card-open-spots">
               {openSpotsLine}
+            </p>
+          ) : null}
+          {freshnessText ? (
+            <p className="mt-0.5 text-[13px] leading-5 text-muted" data-ke="vacancy-confirmed">
+              {freshnessText}
             </p>
           ) : null}
           <ProvincialOpeningLine item={item} />
@@ -466,11 +471,15 @@ export const DaycareCard = memo(function DaycareCard({
           {spotsKnown ? (
             <div className="flex flex-wrap gap-1.5 pt-0.5">
               <span className="ke-honesty">{spotsKnown}</span>
-              {!compact && freshnessText ? <span className="ke-honesty">{freshnessText}</span> : null}
               {!compact && !hollowPhoto && photoText ? <span className="ke-honesty">{photoText}</span> : null}
               {!compact ? <MatchCue score={canShowMatchScore(item) ? item.matchScore : undefined} compact /> : null}
               {!compact ? <UrgencyCue score={item.urgencyScore} compact /> : null}
             </div>
+          ) : null}
+          {freshnessText ? (
+            <p className="text-[12px] leading-4 text-muted" data-ke="vacancy-confirmed">
+              {freshnessText}
+            </p>
           ) : null}
           <ProvincialOpeningLine item={item} />
           {!compact && ageChips.length ? (

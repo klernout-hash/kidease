@@ -11,6 +11,25 @@ import { feeProgramBadgeKey, officialLicenceNumber } from "@/lib/licensing";
 import { isUnflaggedSharedFallbackSrc } from "@/lib/photo-honesty";
 import { isClaimVerified, type TrustListing } from "@/lib/trust";
 import type { Daycare } from "@/lib/types";
+import {
+  compareFreshOpenSpots,
+  openSpotCount,
+  openSpotsConfirmedRecently,
+  vacancyPublicWindow,
+  vacancyUpdatedThisWeek,
+  VACANCY_OUT_OF_DATE_MS,
+  VACANCY_UPDATED_THIS_WEEK_MS,
+} from "./vacancy-rank.ts";
+
+export {
+  compareFreshOpenSpots,
+  openSpotCount,
+  openSpotsConfirmedRecently,
+  vacancyPublicWindow,
+  vacancyUpdatedThisWeek,
+  VACANCY_OUT_OF_DATE_MS,
+  VACANCY_UPDATED_THIS_WEEK_MS,
+};
 
 export const COMPLETENESS_FIELDS = ["fees", "ages", "hours", "license", "photo"] as const;
 export type CompletenessField = (typeof COMPLETENESS_FIELDS)[number];

@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { FoundingMemberBadge } from "@/components/founding-member-badge";
 import { RoleUpgradeCard } from "@/components/role-upgrade-card";
 import { useSessionDesks } from "@/components/session-desks";
-import { listingCompleteness, type CompletenessField } from "@/lib/listing-readiness";
+import { listingCompleteness, vacancyUpdatedThisWeek, type CompletenessField } from "@/lib/listing-readiness";
 import { isOpenLeadStatus, type LeadRequest } from "@/lib/lead-requests";
 import { daycareCapPrompt, daycareHomeCardEligible, showHomeUpgradeCard } from "@/lib/upgrade-prompt";
 import { useCopy } from "@/lib/use-copy";
@@ -103,6 +103,11 @@ export function DaycareDeskHome({
       <section className="rounded-xl bg-surface px-4 py-3 ring-1 ring-border">
         <h2 className="font-display text-xl">{t("deskHomeListing")}</h2>
         <FoundingMemberBadge show={primary?.foundingMember} className="mt-2" />
+        {primary && vacancyUpdatedThisWeek(primary) ? (
+          <p className="mt-2 inline-flex min-h-11 items-center rounded-full bg-primary/10 px-3 text-sm font-semibold text-primary" data-ke="updated-this-week">
+            {t("deskUpdatedThisWeek")}
+          </p>
+        ) : null}
         {!primary ? (
           <p className="mt-1 text-sm text-muted">{t("deskHomeAddCentre")}</p>
         ) : missing.length === 0 ? (

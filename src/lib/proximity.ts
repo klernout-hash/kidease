@@ -1,4 +1,5 @@
 import { CITIES, PROVINCES, geocode, haversineKm, reverseGeocode, type LatLng } from "@/lib/geo";
+import { compareFreshOpenSpots } from "@/lib/listing-readiness";
 import { qualityScore100 } from "@/lib/quality";
 import type { DaycareCard } from "@/lib/types";
 
@@ -116,6 +117,8 @@ export function proximityScore(card: DaycareCard) {
 export function compareProximity(a: DaycareCard, b: DaycareCard) {
   const delta = proximityScore(b) - proximityScore(a);
   if (Math.abs(delta) > 0.008) return delta;
+  const fresh = compareFreshOpenSpots(a, b);
+  if (fresh !== 0) return fresh;
   return a.distanceKm - b.distanceKm;
 }
 

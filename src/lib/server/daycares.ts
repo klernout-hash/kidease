@@ -16,7 +16,7 @@ import { parseAnchorMode, resolveSearchAnchors } from "@/lib/dual-anchor";
 import { nearbyListings, nearbyListingsDual, type NearbyListing } from "./nearby";
 import { callerIsAdmin } from "./public-listing";
 import { upsertDaycare } from "./seed";
-import { applyListingReadiness } from "@/lib/listing-readiness";
+import { applyListingReadiness, compareFreshOpenSpots } from "@/lib/listing-readiness";
 import { listingAgeUnknown } from "@/lib/now-loops";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { overlayClaimed } from "./claims";
@@ -511,11 +511,31 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
         if (data.sort === "recommended") {
           const delta = recommendedRank(right) - recommendedRank(left);
           if (Math.abs(delta) > 1e-6) return delta;
+          const fresh = compareFreshOpenSpots(left, right);
+          if (fresh !== 0) return fresh;
           return left.distanceKm - right.distanceKm;
         }
-        if (data.sort === "price") return (left.fromPrice || 9e6) - (right.fromPrice || 9e6);
-        if (data.sort === "rating") return right.ratingX10 - left.ratingX10;
-        if (data.sort === "availability") return right.spotsTotal - left.spotsTotal || left.distanceKm - right.distanceKm;
+        if (data.sort === "price") {
+          const price = (left.fromPrice || 9e6) - (right.fromPrice || 9e6);
+          if (price !== 0) return price;
+          const fresh = compareFreshOpenSpots(left, right);
+          if (fresh !== 0) return fresh;
+          return left.distanceKm - right.distanceKm;
+        }
+        if (data.sort === "rating") {
+          const rating = right.ratingX10 - left.ratingX10;
+          if (rating !== 0) return rating;
+          const fresh = compareFreshOpenSpots(left, right);
+          if (fresh !== 0) return fresh;
+          return left.distanceKm - right.distanceKm;
+        }
+        if (data.sort === "availability") {
+          const spots = right.spotsTotal - left.spotsTotal;
+          if (spots !== 0) return spots;
+          const fresh = compareFreshOpenSpots(left, right);
+          if (fresh !== 0) return fresh;
+          return left.distanceKm - right.distanceKm;
+        }
         return compareProximity(left, right);
       }),
     );

@@ -5,7 +5,13 @@
 
 import { haversineKm, type LatLng } from "@/lib/geo";
 import { confirmedFeeProgramBadge } from "@/lib/fee-program";
-import { listingCompleteness, hasListedHours, vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
+import {
+  compareFreshOpenSpots,
+  hasListedHours,
+  listingCompleteness,
+  vacancyFreshness,
+  vacancyTimestamp,
+} from "@/lib/listing-readiness";
 import { opensEarly, staysLate } from "@/lib/licensing";
 import { matchesAgeBand, type AgeBand } from "@/lib/saved-search";
 import { isClaimVerified } from "@/lib/trust";
@@ -278,6 +284,8 @@ export function compareSmartMatch(
 ) {
   const delta = smartMatchScore(b, query, now).total - smartMatchScore(a, query, now).total;
   if (delta !== 0) return delta;
+  const fresh = compareFreshOpenSpots(a, b, now);
+  if (fresh !== 0) return fresh;
   const aKm = kmBetween(query.home, a);
   const bKm = kmBetween(query.home, b);
   return (aKm ?? 9e6) - (bKm ?? 9e6);
