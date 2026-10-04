@@ -5,10 +5,12 @@ import { isPublicListing, listingVisibilityInputFromDb } from "@/lib/listing-vis
 import { spotOfferMailEnabled } from "@/lib/features";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
 import {
+  auditRowsForOffer,
   expireDue,
   parseSpotAge,
   placeInLine,
   rejectWaitlistFee,
+  waitlistAuditCsv,
   respondToOffer,
   sendSpotToFamily,
   spotOfferMailPlan,
@@ -34,6 +36,8 @@ type EntryRow = {
   note: string | null;
   status: string;
   joined_at: string | Date;
+  sibling?: number | boolean | null;
+  start_date?: string | Date | null;
 };
 
 type OfferRow = {
@@ -65,6 +69,7 @@ export type CentreWaitlistCard = {
   slug: string;
   families: CentreWaitlistFamily[];
   openOfferId: string | null;
+  siblingPriority: boolean;
 };
 
 export type MySpotOfferRow = {
@@ -122,6 +127,8 @@ function toEntry(row: EntryRow): WaitlistEntry {
     ageGroup: parseSpotAge(row.age_group) ?? "any",
     status: asStatus(row.status),
     joinedAt: iso(row.joined_at),
+    sibling: row.sibling === 1 || row.sibling === true,
+    startDate: row.start_date ? iso(row.start_date).slice(0, 10) : null,
   };
 }
 
@@ -138,18 +145,43 @@ function toOffer(row: OfferRow): SpotOffer {
   };
 }
 
+async function siblingPriorityOn(sql: Sql, daycareId: string): Promise<boolean> {
+  try {
+    await sql`
+      create table if not exists daycare_waitlist_rules (
+        daycare_id text primary key,
+        sibling_priority int not null default 0
+      )
+    `;
+    const rows = await sql<{ sibling_priority: number }>`
+      select sibling_priority from daycare_waitlist_rules where daycare_id = ${daycareId} limit 1
+    `;
+    return rows[0]?.sibling_priority === 1;
+  } catch {
+    return false;
+  }
+}
+
 async function loadState(sql: Sql, daycareId: string): Promise<QueueSnapshot> {
+  const siblingPriority = await siblingPriorityOn(sql, daycareId);
   const entries = await sql<EntryRow>`
-    select id, daycare_id, user_id, age_group, child_label, note, status, joined_at
+    select id, daycare_id, user_id, age_group, child_label, note, status, joined_at,
+           sibling, start_date
     from daycare_waitlist
     where daycare_id = ${daycareId}
-  `;
+  `.catch(() =>
+    sql<EntryRow>`
+      select id, daycare_id, user_id, age_group, child_label, note, status, joined_at
+      from daycare_waitlist
+      where daycare_id = ${daycareId}
+    `,
+  );
   const offers = await sql<OfferRow>`
     select id, waitlist_id, daycare_id, user_id, age_group, status, offered_at, expires_at
     from spot_offers
     where daycare_id = ${daycareId}
   `;
-  return { entries: entries.map(toEntry), offers: offers.map(toOffer) };
+  return { entries: entries.map(toEntry), offers: offers.map(toOffer), siblingPriority };
 }
 
 async function persistStep(sql: Sql, before: QueueSnapshot, after: QueueSnapshot, created: SpotOffer[]) {
@@ -380,6 +412,7 @@ export const listCentreWaitlist = createServerFn({ method: "GET" })
         daycareName: centre.name,
         slug: centre.slug,
         openOfferId: open?.id ?? null,
+        siblingPriority: state.siblingPriority === true,
         families: people.map((row) => ({
           id: row.id,
           userId: row.user_id,
@@ -516,3 +549,79 @@ export async function runSpotOfferExpiryJob(now = Date.now()) {
     emailEnabled: spotOfferMailEnabled(),
   };
 }
+
+async function ensureAuditTable(sql: Sql) {
+  await sql`
+    create table if not exists waitlist_audit (
+      id text primary key,
+      daycare_id text not null,
+      entry_id text,
+      place int,
+      action text not null,
+      detail text not null default '',
+      created_at timestamptz not null default now()
+    )
+  `;
+}
+
+export const setWaitlistSiblingPriority = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId?: string; on?: boolean }) => input)
+  .handler(async ({ context, data }) => {
+    const daycareId = String(data.daycareId || "").trim();
+    const sql = await getSql();
+    if (!daycareId || !(await canCentreWriteLeadsFor(sql, context.userId, daycareId))) {
+      throw new Error("This listing is not on your desk.");
+    }
+    await sql`
+      create table if not exists daycare_waitlist_rules (
+        daycare_id text primary key,
+        sibling_priority int not null default 0
+      )
+    `;
+    const on = data.on === true ? 1 : 0;
+    await sql`
+      insert into daycare_waitlist_rules (daycare_id, sibling_priority)
+      values (${daycareId}, ${on})
+      on conflict (daycare_id) do update set sibling_priority = ${on}
+    `;
+    return { ok: true as const, siblingPriority: on === 1 };
+  });
+
+export const exportCentreWaitlistAudit = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId?: string }) => input)
+  .handler(async ({ context, data }) => {
+    const daycareId = String(data.daycareId || "").trim();
+    const sql = await getSql();
+    if (!daycareId || !(await canCentreWriteLeadsFor(sql, context.userId, daycareId))) {
+      throw new Error("This listing is not on your desk.");
+    }
+    const state = await loadState(sql, daycareId);
+    const waiting = state.entries.filter((row) => row.status === "waiting" || row.status === "offered");
+    const spotAge = waiting[0]?.ageGroup ?? "any";
+    const rows = auditRowsForOffer(waiting, {
+      siblingPriority: state.siblingPriority === true,
+      spotAge,
+    });
+    const csv = waitlistAuditCsv(rows);
+    try {
+      await ensureAuditTable(sql);
+      for (const row of rows) {
+        await sql`
+          insert into waitlist_audit (id, daycare_id, entry_id, place, action, detail)
+          values (
+            ${nid("wla")},
+            ${daycareId},
+            ${row.entryId},
+            ${row.place},
+            ${"export"},
+            ${`${row.ageGroup}|${row.startDate}|${row.sibling ? "sibling" : "no-sibling"}`}
+          )
+        `;
+      }
+    } catch (err) {
+      console.error("[kidease-waitlist] audit skipped", err instanceof Error ? err.message : "failed");
+    }
+    return { ok: true as const, csv };
+  });

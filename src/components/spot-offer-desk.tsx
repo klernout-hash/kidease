@@ -3,7 +3,13 @@ import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { spotOfferCopy } from "@/lib/spot-offer-copy";
-import { listCentreWaitlist, sendCentreSpotOffer, type CentreWaitlistCard } from "@/lib/server/spot-offers";
+import {
+  exportCentreWaitlistAudit,
+  listCentreWaitlist,
+  sendCentreSpotOffer,
+  setWaitlistSiblingPriority,
+  type CentreWaitlistCard,
+} from "@/lib/server/spot-offers";
 import { useCopy } from "@/lib/use-copy";
 
 function when(iso: string, locale: string) {
@@ -61,7 +67,51 @@ export function SpotOfferDesk() {
       <div className="mt-4 space-y-6">
         {centres.map((centre) => (
           <div key={centre.daycareId}>
-            <p className="font-medium">{centre.daycareName}</p>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="font-medium">{centre.daycareName}</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <label className="inline-flex min-h-11 items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="size-4"
+                    checked={centre.siblingPriority}
+                    onChange={(event) => {
+                      const on = event.target.checked;
+                      void setWaitlistSiblingPriority({ data: { daycareId: centre.daycareId, on } })
+                        .then(() => load())
+                        .catch((err: unknown) => {
+                          const message = err instanceof Error ? err.message : copy.feeBlocked;
+                          setError(message);
+                        });
+                    }}
+                  />
+                  {locale === "fr" ? "Frères et sœurs d’abord" : "Siblings first"}
+                </label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  onClick={() => {
+                    void exportCentreWaitlistAudit({ data: { daycareId: centre.daycareId } })
+                      .then((result) => {
+                        const blob = new Blob([result.csv], { type: "text/csv" });
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement("a");
+                        link.href = url;
+                        link.download = "waitlist-order.csv";
+                        link.click();
+                        URL.revokeObjectURL(url);
+                      })
+                      .catch((err: unknown) => {
+                        const message = err instanceof Error ? err.message : copy.feeBlocked;
+                        setError(message);
+                      });
+                  }}
+                >
+                  {locale === "fr" ? "Télécharger l’ordre" : "Download the order"}
+                </Button>
+              </div>
+            </div>
             {centre.families.length ? (
               <ul className="mt-2 divide-y divide-border">
                 {centre.families.map((family) => {
