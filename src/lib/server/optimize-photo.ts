@@ -25,8 +25,14 @@ function photoHeaders(type: string, placeholder: boolean): HeadersInit {
   };
 }
 
-function escapeXml(value: string) {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+/** Distinct pixels per listing without drawing text. librsvg has no UI font, so <text> becomes tofu. */
+function placeholderShift(stem: string): number {
+  let n = 2166136261;
+  for (let i = 0; i < stem.length; i++) {
+    n ^= stem.charCodeAt(i);
+    n = Math.imul(n, 16777619);
+  }
+  return (n >>> 0) % 28;
 }
 
 export async function encodePerListingPlaceholder(
@@ -34,13 +40,25 @@ export async function encodePerListingPlaceholder(
   width: number,
   format: "avif" | "webp",
 ): Promise<Buffer> {
-  const stem = escapeXml(listingStemFromSrc(src));
+  const shift = placeholderShift(listingStemFromSrc(src));
   const height = Math.max(1, Math.round((width * 3) / 4));
-  const font = Math.max(12, Math.round(width / 18));
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
-    <rect width="100%" height="100%" fill="#E8E4DC"/>
-    <text x="50%" y="46%" text-anchor="middle" font-family="ui-sans-serif,system-ui,sans-serif" font-size="${font}" fill="#6B6560">Photo coming soon</text>
-    <text x="50%" y="62%" text-anchor="middle" font-family="ui-sans-serif,system-ui,sans-serif" font-size="${Math.max(10, Math.round(font * 0.7))}" fill="#8A847C">${stem}</text>
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 640 480">
+    <rect width="640" height="480" fill="#E8E4DC"/>
+    <circle cx="${500 + shift}" cy="64" r="22" fill="#1a3790" opacity="0.18"/>
+    <g fill="none" stroke="#1a3790" stroke-width="3" opacity="0.28">
+      <path d="M48 150V96h70v54"/>
+      <path d="M83 96v54M48 123h70"/>
+      <path d="M470 360v-72h92v72"/>
+      <path d="M458 288h116L516 246z"/>
+    </g>
+    <g fill="#1a3790" opacity="0.22">
+      <rect x="508" y="312" width="18" height="48" rx="1"/>
+      <rect x="40" y="338" width="36" height="36" rx="4"/>
+      <rect x="66" y="316" width="30" height="30" rx="4"/>
+      <rect x="88" y="350" width="24" height="24" rx="3"/>
+      <circle cx="${598 - (shift % 8)}" cy="330" r="18"/>
+      <rect x="592" y="330" width="10" height="32"/>
+    </g>
   </svg>`;
   let pipeline = sharp(Buffer.from(svg)).resize({ width, withoutEnlargement: true });
   if (format === "avif") pipeline = pipeline.avif({ quality: 42 });

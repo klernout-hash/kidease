@@ -16,6 +16,7 @@ import {
   smartMatchModelUser,
   whyParts,
 } from "../src/lib/ai/smart-match.ts";
+import { tx } from "../src/lib/copy.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (path) => readFileSync(join(root, path), "utf8");
@@ -162,4 +163,17 @@ test("smart match stays behind its flag and does not send places to the model", 
   assert.doesNotMatch(ui, /callAi|XAI_API_KEY/);
   assert.match(home, /<SmartMatchEntry/);
   assert.match(search, /<SmartMatchEntry/);
+  assert.match(ui, /if \(!on\) return null/);
+  assert.match(ui, /mt-3 flex justify-center/);
+  assert.equal(tx("en", "smartMatchCta"), "Find my match with AI");
+  assert.equal(tx("fr", "smartMatchCta"), "Trouver mon match avec l'IA");
+  assert.match(home, /text-center text-\[clamp\(1\.6rem,4\.2vw,2\.75rem\)\]/);
+  assert.match(read("src/routes/fr.index.tsx"), /text-center text-\[clamp\(2rem,6vw,3\.25rem\)\]/);
+  const claim = read("src/components/claim-listing-cta.tsx");
+  assert.match(claim, /source === "card"/);
+  assert.match(claim, /rounded-full/);
+  assert.match(claim, /min-h-8/);
+  assert.match(claim, /max-w-full/);
+  assert.doesNotMatch(tx("en", "smartMatchCta"), /—/);
+  assert.doesNotMatch(tx("fr", "smartMatchCta"), /—/);
 });

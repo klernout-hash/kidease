@@ -41,6 +41,7 @@ export function NavDrawer({
   isAdmin = false,
   onSignOut,
   headerExtra,
+  navExtra,
 }: {
   open: boolean;
   onClose: () => void;
@@ -58,6 +59,7 @@ export function NavDrawer({
   isAdmin?: boolean;
   onSignOut: () => void;
   headerExtra?: ReactNode;
+  navExtra?: ReactNode;
 }) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
@@ -163,6 +165,7 @@ export function NavDrawer({
           </div>
         ) : null}
         <nav className="flex-1 overflow-y-auto px-3 py-3">
+          {navExtra}
           <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">KidEase</p>
           {switcher ? (
             <div className="mb-3 md:hidden">

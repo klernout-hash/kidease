@@ -25,8 +25,29 @@ export const MAX_INTERIOR_PHOTOS = MAX_LISTING_PHOTOS - 1;
 
 const STOCK_CREATE_SET = new Set(STOCK_CREATE_PHOTOS.split(","));
 
+/**
+ * Not a photo of the centre.
+ * Knox Day Nursery (`mb-1028`): `/photos/buildings/mb-1028.jpg` is not on the
+ * media host, so `/img` drew "Photo coming soon" with a font librsvg does not
+ * have (tofu boxes on a beige card). `/photos/wpg/1028.jpg` is a screenshot of
+ * knoxdaynursery.com captured while that site's webfont was missing.
+ */
+const REJECTED_STOREFRONT_SRCS = new Set([
+  "/photos/buildings/mb-1028.jpg",
+  "/photos/wpg/1028.jpg",
+]);
+
+export function isRejectedStorefrontSrc(src: string) {
+  return REJECTED_STOREFRONT_SRCS.has(src.split("?")[0] ?? "");
+}
+
 export function isStockListingPhoto(src: string) {
-  return STOCK_CREATE_SET.has(src) || src.includes("storefront-placeholder") || isUnflaggedSharedFallbackSrc(src);
+  return (
+    STOCK_CREATE_SET.has(src) ||
+    src.includes("storefront-placeholder") ||
+    isUnflaggedSharedFallbackSrc(src) ||
+    isRejectedStorefrontSrc(src)
+  );
 }
 
 const failedPhotoUrls = new Set<string>();
@@ -275,7 +296,7 @@ export function isOfficialBuildingPhoto(src: string | undefined): boolean {
 export function listingThumb(photos: string[] | undefined) {
   const list = (photos ?? [])
     .map((p) => healMediaUrl(p))
-    .filter((p) => p && !p.includes("-logo") && !isUnflaggedSharedFallbackSrc(p));
+    .filter((p) => p && !p.includes("-logo") && !isUnflaggedSharedFallbackSrc(p) && !isRejectedStorefrontSrc(p));
   const official = list.find((p) => isOfficialBuildingPhoto(p));
   return official || list[0] || LISTING_PLACEHOLDER;
 }
@@ -305,9 +326,9 @@ export function resolveListingStorefront(
   wpgById: Record<string, string>,
 ): string {
   const official = officialById[id];
-  if (official && !isUnflaggedSharedFallbackSrc(official)) return official;
+  if (official && !isUnflaggedSharedFallbackSrc(official) && !isRejectedStorefrontSrc(official)) return official;
   const wpg = wpgById[id];
-  if (wpg && !isUnflaggedSharedFallbackSrc(wpg)) return wpg;
+  if (wpg && !isUnflaggedSharedFallbackSrc(wpg) && !isRejectedStorefrontSrc(wpg)) return wpg;
   return LISTING_PLACEHOLDER;
 }
 
@@ -323,6 +344,6 @@ export function listingPhotosFor(
 ): string[] {
   const storefront = resolveListingStorefront(id, officialById, wpgById);
   const { interiors, logos } = classifyListingPhotos(rawPhotos);
-  const extras = interiors.filter((p) => p !== storefront);
+  const extras = interiors.filter((p) => p !== storefront && !isRejectedStorefrontSrc(p));
   return [storefront, ...extras, ...logos];
 }

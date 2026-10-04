@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, House, School, ToyBrick } from "lucide-react";
 import type { DaycareCard as Card } from "@/lib/types";
+import { ListingShadowArt } from "@/components/building-photo";
 import { DaycareCard } from "@/components/daycare-card";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -157,18 +158,21 @@ export function ListingRail({
           {more ? (
             <div className="ke-rail-card">
               <button type="button" className="ke-rail-more" onClick={revealMore}>
-                <span className="ke-rail-more-stage" aria-hidden="true">
-                  <span className="ke-rail-more-ghost ke-rail-more-ghost-a" />
-                  <span className="ke-rail-more-ghost ke-rail-more-ghost-b" />
-                  <span className="ke-rail-more-face">
-                    <span className="ke-rail-more-emojis" aria-hidden="true">
-                      <span>🏫</span>
-                      <span>🏡</span>
-                      <span>🧸</span>
-                    </span>
+                <span
+                  className={cn(
+                    "relative block w-full overflow-hidden rounded-[14px]",
+                    visual ? "aspect-[4/3]" : "aspect-[3/2]",
+                  )}
+                  aria-hidden="true"
+                >
+                  <ListingShadowArt />
+                  <span className="absolute inset-0 z-[1] flex items-center justify-center gap-3 text-primary">
+                    <School className="size-7 shrink-0" strokeWidth={1.75} />
+                    <House className="size-7 shrink-0" strokeWidth={1.75} />
+                    <ToyBrick className="size-7 shrink-0" strokeWidth={1.75} />
                   </span>
                 </span>
-                <span className="ke-rail-more-label">{t("showMoreListings")}</span>
+                <span className="ke-rail-more-label">{t("seeMoreListings")}</span>
               </button>
             </div>
           ) : null}

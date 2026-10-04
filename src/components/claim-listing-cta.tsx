@@ -19,6 +19,7 @@ export function ClaimListingCta({
   const { t } = useCopy();
   const id = daycareId.trim();
   const q = name.trim();
+  const onCard = source === "card";
   return (
     <Link
       to="/claim"
@@ -29,7 +30,10 @@ export function ClaimListingCta({
         capturePostHogEvent(SIGNUP_FUNNEL_EVENT, signupFunnelPayload("claim_cta", { source }));
       }}
       className={cn(
-        "inline-flex min-h-11 items-center justify-center rounded-[14px] bg-[#1f9d55] px-4 text-sm font-semibold text-white shadow-card hover:bg-[#187a43] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f9d55]/50",
+        "box-border max-w-full bg-[#1f9d55] text-center font-semibold text-white touch-manipulation hover:bg-[#187a43] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f9d55]/50",
+        onCard
+          ? "block w-fit max-w-full break-words min-h-8 self-start rounded-full px-2.5 py-1 text-left text-[11px] leading-4"
+          : "inline-flex min-h-11 items-center justify-center rounded-[14px] px-4 text-sm shadow-card",
         className,
       )}
     >

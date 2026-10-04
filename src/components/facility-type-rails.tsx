@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ListingRail } from "@/components/listing-rail";
 import { ChipButton } from "@/components/chip";
@@ -108,6 +108,8 @@ export function HomeCareTypeRow({
   compact = false,
   toSearch = false,
   city,
+  fit = false,
+  onOverflow,
 }: {
   selected?: BrowseDaycareType;
   onSelect: (type?: BrowseDaycareType) => void;
@@ -117,27 +119,77 @@ export function HomeCareTypeRow({
   toSearch?: boolean;
   /** Current city, kept on the category URL. */
   city?: string;
+  /** Hide trailing types that do not fit. The parent can move them into the menu. */
+  fit?: boolean;
+  onOverflow?: (hidden: BrowseDaycareType[]) => void;
 }) {
   const { t, locale } = useCopy();
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState<number>(BROWSE_DAYCARE_TYPES.length);
+
+  useEffect(() => {
+    if (!fit) {
+      onOverflow?.([]);
+      return;
+    }
+    const node = scrollerRef.current;
+    if (!node) return;
+
+    const measure = () => {
+      const items = [...node.querySelectorAll<HTMLElement>("[data-browse-type]")];
+      if (node.clientWidth < 8) {
+        setVisible(BROWSE_DAYCARE_TYPES.length);
+        onOverflow?.([]);
+        return;
+      }
+      const wasHidden = items.map((el) => el.classList.contains("hidden"));
+      items.forEach((el) => el.classList.remove("hidden"));
+      const gap = Number.parseFloat(getComputedStyle(node).columnGap || "0") || 0;
+      const available = node.clientWidth;
+      let used = 0;
+      let count = 0;
+      for (const item of items) {
+        const next = used + (count > 0 ? gap : 0) + item.getBoundingClientRect().width;
+        if (next > available + 0.5) break;
+        used = next;
+        count += 1;
+      }
+      wasHidden.forEach((hidden, index) => {
+        if (hidden) items[index]?.classList.add("hidden");
+      });
+      setVisible(count);
+      onOverflow?.(BROWSE_DAYCARE_TYPES.slice(count));
+    };
+
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [fit, onOverflow]);
+
   return (
     <div
-      className={`flex w-full min-w-0 justify-start overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] lg:[justify-content:safe_center] [&::-webkit-scrollbar]:hidden ${
-        compact ? "gap-1 px-0.5" : "gap-1 pb-1"
-      }`}
+      ref={scrollerRef}
+      className={`flex w-full min-w-0 flex-nowrap ${
+        fit
+          ? "justify-center overflow-hidden"
+          : "justify-start overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      } ${compact ? "gap-1 px-0.5" : "gap-1 pb-1"}`}
       data-ke="home-care-types"
+      data-fit={fit ? "1" : undefined}
       role="tablist"
       aria-label={t("railByCare")}
     >
-      {BROWSE_DAYCARE_TYPES.map((type) => {
+      {BROWSE_DAYCARE_TYPES.map((type, index) => {
         const on = selected === type;
         const className =
           compact
             ? `flex min-h-11 w-max max-w-none shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl px-2.5 py-1 text-center transition-colors duration-150 ease-out ${
-                on ? "text-fg" : "text-muted hover:bg-surface hover:text-fg"
-              }`
+                fit && index >= visible ? "hidden " : ""
+              }${on ? "text-fg" : "text-muted hover:bg-surface hover:text-fg"}`
             : `flex w-max max-w-none shrink-0 flex-col items-center gap-1.5 rounded-xl px-2.5 pb-2 pt-1.5 text-center transition-colors duration-150 ease-out ${
-                on ? "text-fg" : "text-muted hover:text-fg"
-              }`;
+                fit && index >= visible ? "hidden " : ""
+              }${on ? "text-fg" : "text-muted hover:text-fg"}`;
         const body = (
           <>
             <span

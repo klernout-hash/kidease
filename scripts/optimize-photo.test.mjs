@@ -23,6 +23,8 @@ test("/img dual-reads R2 then Git and still allow-lists /photos paths", () => {
   assert.match(source, /shouldReplaceWithPerListingPlaceholder/);
   assert.match(source, /encodePerListingPlaceholder/);
   assert.match(source, /x-kidease-photo/);
+  assert.doesNotMatch(source, /Photo coming soon/);
+  assert.doesNotMatch(source, /font-family/);
 
   const src = "/photos/storefront-placeholder-480.webp";
   assert.equal(listingSrcToR2Key(src), "originals/storefront-placeholder-480.webp");

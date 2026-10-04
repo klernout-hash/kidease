@@ -37,7 +37,7 @@ function track(event: "smart_match_started" | "smart_match_completed" | "smart_m
   capturePostHogEvent(event, smartMatchEventProps(props));
 }
 
-export function SmartMatchEntry() {
+export function SmartMatchEntry({ inline = false }: { inline?: boolean }) {
   const { user } = useCurrentUserState();
   const { t } = useCopy();
   const on = useAiFeatureFlag(AI_FLAGS.smartMatch);
@@ -45,13 +45,21 @@ export function SmartMatchEntry() {
 
   if (!on) return null;
 
+  const button = (
+    <Button
+      type="button"
+      variant="secondary"
+      className="whitespace-nowrap"
+      data-ke="smart-match-open"
+      onClick={() => setOpen(true)}
+    >
+      {t("smartMatchCta")}
+    </Button>
+  );
+
   return (
     <>
-      <div className="mt-3">
-        <Button type="button" variant="secondary" data-ke="smart-match-open" onClick={() => setOpen(true)}>
-          {t("smartMatchCta")}
-        </Button>
-      </div>
+      {inline ? button : <div className="mt-3 flex justify-center">{button}</div>}
       {open ? <SmartMatchSheet onClose={() => setOpen(false)} signedIn={Boolean(user)} visitorId={user?.id} /> : null}
     </>
   );

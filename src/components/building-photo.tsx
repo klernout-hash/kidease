@@ -58,6 +58,15 @@ function UnclaimedWash() {
   );
 }
 
+/** Same building-outline wash as an unclaimed card photo. No text, so it stays sharp in light and dark. */
+export function ListingShadowArt({ className }: { className?: string }) {
+  return (
+    <div className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)} aria-hidden>
+      <UnclaimedWash />
+    </div>
+  );
+}
+
 export function ListingPhotoFallback({
   className,
   style,
