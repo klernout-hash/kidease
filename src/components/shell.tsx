@@ -257,13 +257,13 @@ function HeaderCareOverflow({
   city: string;
   onNavigate: () => void;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   return (
-    <div className="mb-3" data-ke="header-overflow-types">
+    <div data-ke="header-overflow-types">
       {types.map((type) => (
         <Link
           key={type}
-          to="/search"
+          to={localePath("/search", locale)}
           search={browseTypeSearch(type, city)}
           onClick={onNavigate}
           className="flex min-h-11 items-center rounded-xl px-3 text-sm font-medium text-fg hover:bg-surface"

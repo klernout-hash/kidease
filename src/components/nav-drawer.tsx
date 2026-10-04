@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { Children, useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
@@ -23,6 +23,58 @@ import type { MenuIconId } from "@/lib/menu-icons";
 import { nextDrawerLatch, type DrawerLatch } from "@/lib/drawer-latch";
 
 type Item = { to: string; label: string; search?: Record<string, string>; icon: MenuIconId; marker?: string };
+
+const drawerSummaryClass =
+  "flex min-h-11 cursor-pointer list-none items-center rounded-xl px-3 text-xs font-semibold uppercase tracking-[0.12em] text-subtle [&::-webkit-details-marker]:hidden";
+
+const drawerHeadingClass =
+  "flex min-h-11 items-center rounded-xl px-3 text-xs font-semibold uppercase tracking-[0.12em] text-subtle";
+
+/** A heading with no links is not a section. Guest groups stay open so the links are on screen. */
+function DrawerSection({ title, marker, children }: { title: string; marker?: string; children: ReactNode }) {
+  const rows = Children.toArray(children);
+  if (rows.length === 0) return null;
+  return (
+    <div className="py-0.5" data-ke={marker}>
+      <p className={drawerHeadingClass}>{title}</p>
+      <div>{rows}</div>
+    </div>
+  );
+}
+
+function GuestDrawerLinks({
+  navExtra,
+  onClose,
+  title,
+}: {
+  navExtra?: ReactNode;
+  onClose: () => void;
+  title: string;
+}) {
+  const { t, locale } = useCopy();
+  return (
+    <nav data-ke="role-nav" data-role="guest" aria-label={title}>
+      <DrawerSection title={t("navFindCare")} marker="drawer-find-care">
+        {navExtra}
+        <MenuRow to={localePath("/search", locale)} label={t("search")} icon="explore" appearance="drawer" marker="search" onClick={onClose} />
+        <MenuRow to={localePath("/search", locale)} search={{ view: "map" }} label={t("navMap")} icon="explore" appearance="drawer" marker="map" onClick={onClose} />
+        <MenuRow to="/cities" label={t("browseCities")} icon="explore" appearance="drawer" onClick={onClose} />
+        <MenuRow to="/compare" label={t("compare")} icon="compare" appearance="drawer" onClick={onClose} />
+        <MenuRow to="/tour-checklist" label={t("tourChecklist")} icon="tourChecklist" appearance="drawer" onClick={onClose} />
+      </DrawerSection>
+      <DrawerSection title={t("navForDaycares")} marker="drawer-for-daycares">
+        <MenuRow to="/claim" label={t("listYourDaycare")} icon="claim" appearance="drawer" onClick={onClose} />
+        <MenuRow to="/plans" label={t("navPlans")} icon="benefits" appearance="drawer" marker="plans" onClick={onClose} />
+        <MenuRow to={localePath("/jobs", locale)} label={t("findDaycareJobs")} icon="jobs" appearance="drawer" onClick={onClose} />
+      </DrawerSection>
+      <DrawerSection title={t("helpTitle")} marker="drawer-help">
+        <MenuRow to={localePath("/help", locale)} label={t("helpTitle")} icon="help" appearance="drawer" onClick={onClose} />
+        <MenuRow to={localePath("/faq", locale)} label={t("faqShort")} icon="faq" appearance="drawer" onClick={onClose} />
+        <MenuRow to={localePath("/contact", locale)} label={t("contactTitle")} icon="contact" appearance="drawer" onClick={onClose} />
+      </DrawerSection>
+    </nav>
+  );
+}
 
 export function NavDrawer({
   open,
@@ -77,6 +129,8 @@ export function NavDrawer({
   void providerLabel;
   const deskRole =
     deskMenu?.desk === "daycare" ? "provider" : deskMenu?.desk === "support" ? "support" : deskMenu?.desk ?? roleShown;
+  const guestMenu = !deskMenu && !signedIn && showMenus;
+  const roleList = !deskMenu && signedIn && showMenus;
   const switcher = Boolean(session && showDeskSwitcher(session.desks, session.role, session.email));
   const loginTo = (localePath("/login", locale) === "/fr/login" ? "/fr/login" : "/login") as "/login" | "/fr/login";
 
@@ -165,8 +219,14 @@ export function NavDrawer({
           </div>
         ) : null}
         <nav className="flex-1 overflow-y-auto px-3 py-3">
-          {navExtra}
-          <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">KidEase</p>
+          {guestMenu ? (
+            <GuestDrawerLinks navExtra={navExtra} onClose={onClose} title={title} />
+          ) : (
+            <>
+          {navExtra ? <DrawerSection title={t("navFindCare")} marker="drawer-find-care">{navExtra}</DrawerSection> : null}
+          {roleList ? (
+            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">KidEase</p>
+          ) : null}
           {switcher ? (
             <div className="mb-3 md:hidden">
               <DeskSwitcher />
@@ -174,7 +234,10 @@ export function NavDrawer({
           ) : null}
           {deskMenu ? (
             <nav data-ke="role-nav" data-role={deskRole} aria-label={title}>
-              {visibleDeskGroups(deskMenu.desk, deskMenu.items).map(({ group, items: rows }) => (
+              {visibleDeskGroups(deskMenu.desk, deskMenu.items).map(({ group, items: rows }) => {
+                const visibleRows = rows.filter((item) => item.id !== "account");
+                if (visibleRows.length === 0 && group.id !== "settings") return null;
+                return (
                 <details
                   key={group.id}
                   ref={(node) => {
@@ -185,7 +248,7 @@ export function NavDrawer({
                   }}
                   className="py-0.5"
                 >
-                  <summary className="flex min-h-11 cursor-pointer list-none items-center rounded-xl px-3 text-xs font-semibold uppercase tracking-[0.12em] text-subtle [&::-webkit-details-marker]:hidden">
+                  <summary className={drawerSummaryClass}>
                     {group.labelKey ? t(group.labelKey) : group.label}
                   </summary>
                   <div>
@@ -195,9 +258,7 @@ export function NavDrawer({
                         <LanguageSelect className="w-full justify-start" />
                       </div>
                     ) : null}
-                    {rows
-                      .filter((item) => item.id !== "account")
-                      .map((item) => {
+                    {visibleRows.map((item) => {
                         const plan = item.id === "upgrade" || item.id === "subscription";
                         const label = item.labelKey ? t(item.labelKey) : item.label;
                         const on = deskMenu.active === item.id;
@@ -243,49 +304,15 @@ export function NavDrawer({
                       })}
                   </div>
                 </details>
-              ))}
-            </nav>
-          ) : !signedIn && showMenus ? (
-            <nav data-ke="role-nav" data-role="guest" aria-label={title}>
-              <details
-                className="py-0.5"
-                ref={(node) => {
-                  if (node && node.dataset.keGroup !== "1") {
-                    node.dataset.keGroup = "1";
-                    node.open = true;
-                  }
-                }}
-              >
-                <summary className="flex min-h-11 cursor-pointer list-none items-center px-3 text-xs font-semibold uppercase tracking-[0.12em] text-subtle [&::-webkit-details-marker]:hidden">
-                  {t("navFindCare")}
-                </summary>
-                <MenuRow to={localePath("/search", locale)} label={t("search")} icon="explore" appearance="drawer" marker="search" onClick={onClose} />
-                <MenuRow to={localePath("/search", locale)} search={{ view: "map" }} label={t("navMap")} icon="explore" appearance="drawer" marker="map" onClick={onClose} />
-                <MenuRow to="/cities" label={t("browseCities")} icon="explore" appearance="drawer" onClick={onClose} />
-                <MenuRow to="/compare" label={t("compare")} icon="compare" appearance="drawer" onClick={onClose} />
-                <MenuRow to="/tour-checklist" label={t("tourChecklist")} icon="tourChecklist" appearance="drawer" onClick={onClose} />
-              </details>
-              <details className="py-0.5">
-                <summary className="flex min-h-11 cursor-pointer list-none items-center px-3 text-xs font-semibold uppercase tracking-[0.12em] text-subtle [&::-webkit-details-marker]:hidden">
-                  {t("navForDaycares")}
-                </summary>
-                <MenuRow to="/claim" label={t("listYourDaycare")} icon="claim" appearance="drawer" onClick={onClose} />
-                <MenuRow to="/plans" label={t("navPlans")} icon="benefits" appearance="drawer" marker="plans" onClick={onClose} />
-                <MenuRow to={localePath("/jobs", locale)} label={t("findDaycareJobs")} icon="jobs" appearance="drawer" onClick={onClose} />
-              </details>
-              <details className="py-0.5">
-                <summary className="flex min-h-11 cursor-pointer list-none items-center px-3 text-xs font-semibold uppercase tracking-[0.12em] text-subtle [&::-webkit-details-marker]:hidden">
-                  {t("helpTitle")}
-                </summary>
-                <MenuRow to={localePath("/help", locale)} label={t("helpTitle")} icon="help" appearance="drawer" onClick={onClose} />
-                <MenuRow to={localePath("/faq", locale)} label={t("faqShort")} icon="faq" appearance="drawer" onClick={onClose} />
-                <MenuRow to={localePath("/contact", locale)} label={t("contactTitle")} icon="contact" appearance="drawer" onClick={onClose} />
-              </details>
+                );
+              })}
             </nav>
           ) : showMenus ? (
             <RoleNavLinks role={roleShown} paid={paidShown} appearance="drawer" onNavigate={onClose} />
           ) : null}
-          {items.map((item) => (
+            </>
+          )}
+          {guestMenu ? null : items.map((item) => (
             <span key={item.to + item.label}>
               {item.to === "/about" ? <div className="my-3 h-px bg-border" /> : null}
               <MenuRow

@@ -144,3 +144,25 @@ test("guest home hero keeps the search bar and drops the city grid and trust dup
   assert.doesNotMatch(src("src/components/shell.tsx"), /<RoleNavLinks role=\{chrome\.role\}/);
   assert.doesNotMatch(hero, /HeroYard/);
 });
+
+test("guest menu shows each help link once and hides empty headings", () => {
+  const drawer = src("src/components/nav-drawer.tsx");
+  const guestStart = drawer.indexOf("function GuestDrawerLinks");
+  const guestEnd = drawer.indexOf("export function NavDrawer");
+  assert.ok(guestStart >= 0 && guestEnd > guestStart);
+  const guest = drawer.slice(guestStart, guestEnd);
+  assert.equal((guest.match(/label=\{t\("helpTitle"\)\}/g) || []).length, 1);
+  assert.equal((guest.match(/label=\{t\("faqShort"\)\}/g) || []).length, 1);
+  assert.equal((guest.match(/label=\{t\("contactTitle"\)\}/g) || []).length, 1);
+  assert.equal((guest.match(/<DrawerSection/g) || []).length, 3);
+  assert.match(drawer.slice(0, guestStart), /if \(rows\.length === 0\) return null/);
+  assert.doesNotMatch(guest, /<details/);
+  assert.match(guest, /marker="drawer-find-care"[\s\S]*\{navExtra\}/);
+  assert.doesNotMatch(guest, />KidEase</);
+  assert.match(drawer, /guestMenu \? null : items\.map/);
+  assert.match(drawer, /visibleRows\.length === 0 && group\.id !== "settings"/);
+  const overflow = src("src/components/shell.tsx");
+  const fn = overflow.slice(overflow.indexOf("function HeaderCareOverflow"));
+  assert.match(fn, /header-overflow-types/);
+  assert.match(fn, /localePath\("\/search", locale\)/);
+});
