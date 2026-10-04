@@ -24,6 +24,7 @@ import {
   type VideoSourceKind,
 } from "@/lib/video";
 import { videoArmed } from "@/lib/channel-readiness";
+import { subscriptionsEnabled } from "@/lib/features";
 
 export type VideoJoinStatus = {
   roomId: string;
@@ -156,6 +157,7 @@ async function buildStatus(userId: string, roomId: string): Promise<VideoJoinSta
     featureOn,
     credentialsPresent,
     stripeLive,
+    subscriptionsOn: subscriptionsEnabled(),
     actor: {
       role: desk || profile.role,
       plusPlan: profile.plus_plan,

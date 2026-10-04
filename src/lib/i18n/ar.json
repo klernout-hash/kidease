@@ -2761,5 +2761,7 @@
   "claimProgressFees": "الرسوم",
   "claimProgressAges": "الأعمار",
   "claimProgressSpots": "الأماكن الشاغرة",
-  "guestShortlistCarried": "الحضانات المحفوظة موجودة في حسابك."
+  "guestShortlistCarried": "الحضانات المحفوظة موجودة في حسابك.",
+  "shortlistLeadOpen": "احفظ المراكز من البحث أو من الصفحة. دوّن المكالمات والزيارات هنا. قارن حتى 10 مراكز.",
+  "deskNavShortlistOpenHint": "مكالمات وزيارات ومقارنة"
 }

@@ -50,6 +50,7 @@ import { TrustBadge } from "@/components/trust-badge";
 import { ListingReport } from "@/components/listing-report";
 import type { CopyKey } from "@/lib/copy";
 import { hasCompare, toggleCompareItem } from "@/lib/compare";
+import { useParentPlusAccess } from "@/lib/use-parent-plus";
 import { ListingMoreActions, ListingMoreItem } from "@/components/listing-more-actions";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { SIGNUP_FUNNEL_EVENT, signupFunnelPayload, signupPromptStep } from "@/lib/signup-funnel";
@@ -175,6 +176,7 @@ export function Listing() {
   const navigate = useNavigate();
   const { user, isPending } = useCurrentUserState();
   const chrome = useRoleChrome();
+  const { compareMax } = useParentPlusAccess();
   const [data, setData] = useState<{
     daycare: Daycare;
     reviews: Review[];
@@ -539,7 +541,7 @@ export function Listing() {
             <MessageCircle className="size-4" /> {t("message")}
           </ListingMoreItem>
         ) : null}
-        <ListingMoreItem onClick={() => toggleCompareItem({ id: d.id, slug: d.slug })}>
+        <ListingMoreItem onClick={() => toggleCompareItem({ id: d.id, slug: d.slug }, compareMax)}>
           {comparing ? t("comparing") : t("compareAdd")}
         </ListingMoreItem>
         <ListingMoreItem onClick={() => void openDirections(d.lat, d.lng, name, directionsPlace)}>

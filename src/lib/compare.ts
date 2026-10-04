@@ -48,8 +48,8 @@ export function readCompareEntries(max = cap()): CompareEntry[] {
 }
 
 /** Legacy id list for existing callers. */
-export function readCompare(): string[] {
-  return readCompareEntries().map((item) => item.id);
+export function readCompare(max = cap()): string[] {
+  return readCompareEntries(max).map((item) => item.id);
 }
 
 export function readCompareSlugs(): string[] {
@@ -69,8 +69,8 @@ export function hasCompare(id: string, slug?: string) {
   return readCompareEntries(PLUS_COMPARE_MAX).some((item) => item.id === id || (slug && item.slug === slug));
 }
 
-export function toggleCompareItem(item: CompareEntry, paid = false): CompareEntry[] {
-  const max = compareLimit(paid);
+export function toggleCompareItem(item: CompareEntry, paidOrMax: boolean | number = false): CompareEntry[] {
+  const max = typeof paidOrMax === "number" ? paidOrMax : compareLimit(paidOrMax);
   const cur = readCompareEntries(max);
   const next = cur.some((row) => row.id === item.id || row.slug === item.slug)
     ? cur.filter((row) => row.id !== item.id && row.slug !== item.slug)

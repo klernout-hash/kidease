@@ -17,6 +17,7 @@ import { MAX_SHORTLIST_COMPARE, toggleCompareSelection } from "@/lib/shortlist";
 import { useAppStore } from "@/lib/store";
 import type { Booking, DaycareCard as Card, TourRequest } from "@/lib/types";
 import { useCopy } from "@/lib/use-copy";
+import { useParentPlusAccess } from "@/lib/use-parent-plus";
 
 const MapView = lazy(() => import("@/components/map-view").then((m) => ({ default: m.MapView })));
 
@@ -45,6 +46,8 @@ export function ParentShortlist({
   onLeave?: () => void;
 }) {
   const { t, locale } = useCopy();
+  const { plusOpen } = useParentPlusAccess();
+  const leadKey = plusOpen ? "shortlistLeadOpen" : "shortlistLead";
   const origin = useAppStore((s) => s.origin);
   const radiusKm = useAppStore((s) => s.radiusKm);
   const [picked, setPicked] = useState<string[]>([]);
@@ -94,7 +97,7 @@ export function ParentShortlist({
       <div className="mt-6 w-full">
         <h2 className="font-display text-2xl">{t("saved")}</h2>
         <div className="mt-4 w-full">
-          <EmptyState title={t("noSaved")} body={t("shortlistLead")} action={t("emptyFindCare")} actionTo="/search" />
+          <EmptyState title={t("noSaved")} body={t(leadKey)} action={t("emptyFindCare")} actionTo="/search" />
         </div>
       </div>
     );
@@ -115,7 +118,7 @@ export function ParentShortlist({
             {mapOn ? t("savedList") : t("savedMap")}
           </Button>
         </div>
-        <p className="mt-1 text-sm text-muted">{t("shortlistLead")}</p>
+        <p className="mt-1 text-sm text-muted">{t(leadKey)}</p>
         {shared ? (
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <p className="text-sm text-fg" data-ke="shortlist-shared">

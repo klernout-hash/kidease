@@ -38,6 +38,7 @@ export const Route = createRootRoute({
       ownedSlugs: [] as string[],
       e2e: false,
       degraded: true,
+      subscriptionsEnabled: false,
     }));
     return { roleChrome };
   },

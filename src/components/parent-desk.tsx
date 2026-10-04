@@ -41,7 +41,7 @@ import { yieldToMain } from "@/lib/yield-main";
 import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
 import { ParentHome } from "@/components/parent-home";
 import { useRoleChrome } from "@/components/role-chrome";
-import { FREE_COMPARE_MAX, PLUS_COMPARE_MAX } from "@/lib/compare";
+import { useParentPlusAccess } from "@/lib/use-parent-plus";
 import { DeleteChildControl } from "@/components/delete-child-control";
 
 const ParentPlusPanel = lazy(() =>
@@ -100,6 +100,7 @@ export function ParentDesk({
 }) {
   const { user } = useCurrentUserState();
   const chrome = useRoleChrome();
+  const plus = useParentPlusAccess();
   const { t, locale } = useCopy();
   const { session: desks, ready: desksReady } = useSessionDesks();
   const origin = useAppStore((s) => s.origin);
@@ -351,7 +352,7 @@ export function ParentDesk({
     if (desks.home === "/admin") return <Navigate to="/admin" />;
     if (desks.home === "/support") return <Navigate to="/support" />;
   }
-  const showParentPlus = Boolean(desksReady && canBuyParentUpgrade(upgradeBuyer));
+  const showParentPlus = Boolean(desksReady && canBuyParentUpgrade(upgradeBuyer) && plus.showParentUpgrade);
 
   return (
     <DeskShell desk="parent" active={tab === "subscription" ? "upgrade" : tab} onSelect={selectTab}>
@@ -386,7 +387,7 @@ export function ParentDesk({
           located={located}
           tours={tours}
           bookings={bookings}
-          compareMax={chrome.paid ? PLUS_COMPARE_MAX : FREE_COMPARE_MAX}
+          compareMax={plus.compareMax}
           shared={shortlistShared}
           onTrack={(id, next) => {
             setSaved((cur) =>

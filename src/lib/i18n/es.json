@@ -2761,5 +2761,7 @@
   "claimProgressFees": "Tarifas",
   "claimProgressAges": "Edades",
   "claimProgressSpots": "Lugares libres",
-  "guestShortlistCarried": "Las guarderías guardadas están en tu cuenta."
+  "guestShortlistCarried": "Las guarderías guardadas están en tu cuenta.",
+  "shortlistLeadOpen": "Guarda centros desde la búsqueda o una ficha. Anota llamadas y visitas aquí. Compara hasta 10 centros.",
+  "deskNavShortlistOpenHint": "Llamadas, visitas y comparar"
 }

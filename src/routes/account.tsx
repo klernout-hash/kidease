@@ -12,6 +12,7 @@ import { AdminDeskLink } from "@/components/admin-desk-link";
 import { DESK_PATH, deskQueryValue, openAdminDesk, parseDeskQuery, type DeskKey } from "@/lib/desks";
 import { parentNavSearch, providerNavSearch } from "@/lib/desk-nav";
 import { useSessionDesks } from "@/components/session-desks";
+import { useRoleChrome } from "@/components/role-chrome";
 import { Button } from "@/components/ui/button";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -168,6 +169,7 @@ function ProfilePane() {
   const { user } = useCurrentUserState();
   const { t, locale } = useCopy();
   const search = Route.useSearch();
+  const chrome = useRoleChrome();
   const { sticky } = useSessionDesks();
   const desk = parseDeskQuery(search.desk) ?? sticky;
   const inputRef = useRef<HTMLInputElement>(null);
@@ -269,7 +271,8 @@ function ProfilePane() {
             ? t("accountBackParent")
             : null;
 
-  const section = search.section ?? "profile";
+  const hideParentPlan = !chrome.pending && chrome.role === "parent" && !chrome.subscriptionsEnabled;
+  const section = hideParentPlan && search.section === "subscription" ? "profile" : (search.section ?? "profile");
   const sectionSearch = (next: "profile" | "appearance" | "subscription" | "delete") => ({
     tab: "profile" as const,
     ...(search.desk ? { desk: search.desk } : {}),
@@ -280,7 +283,7 @@ function ProfilePane() {
     { id: "appearance" as const, label: t("appearance") },
     { id: "subscription" as const, label: t("navUpgrade") },
     { id: "delete" as const, label: t("deleteAccount") },
-  ];
+  ].filter((item) => item.id !== "subscription" || !hideParentPlan);
 
   return (
     <AccountDeskFrame desk={desk}>

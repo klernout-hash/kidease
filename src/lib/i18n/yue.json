@@ -2761,5 +2761,7 @@
   "claimProgressFees": "收費",
   "claimProgressAges": "年齡",
   "claimProgressSpots": "空位",
-  "guestShortlistCarried": "已儲存嘅托兒所已喺你嘅帳戶。"
+  "guestShortlistCarried": "已儲存嘅托兒所已喺你嘅帳戶。",
+  "shortlistLeadOpen": "由搜尋或名單儲存中心。喺度記錄電話同參觀。最多比較 10 個中心。",
+  "deskNavShortlistOpenHint": "電話、參觀同比較"
 }

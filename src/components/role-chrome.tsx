@@ -12,6 +12,7 @@ export type RoleChromeState = {
   renewsOn: string | null;
   ownedSlugs: string[];
   e2e: boolean;
+  subscriptionsEnabled: boolean;
 };
 
 const GUEST: RoleChromeState = {
@@ -23,6 +24,7 @@ const GUEST: RoleChromeState = {
   renewsOn: null,
   ownedSlugs: [],
   e2e: false,
+  subscriptionsEnabled: false,
 };
 
 /**
@@ -46,6 +48,7 @@ export function useRoleChrome(): RoleChromeState {
       renewsOn: remote.renewsOn,
       ownedSlugs: remote.ownedSlugs,
       e2e: remote.e2e,
+      subscriptionsEnabled: remote.subscriptionsEnabled === true,
     };
   }
 

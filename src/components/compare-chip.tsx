@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { hasCompare, toggleCompareItem } from "@/lib/compare";
+import { useParentPlusAccess } from "@/lib/use-parent-plus";
 import { compareSlugsHref } from "@/lib/now-loops";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,7 @@ export function CompareChip({
   className?: string;
 }) {
   const { t } = useCopy();
+  const { compareMax } = useParentPlusAccess();
   const [on, setOn] = useState(false);
 
   useEffect(() => {
@@ -42,7 +44,7 @@ export function CompareChip({
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        toggleCompareItem({ id, slug });
+        toggleCompareItem({ id, slug }, compareMax);
       }}
     >
       {on ? t("compareAdded") : t("compareAdd")}
