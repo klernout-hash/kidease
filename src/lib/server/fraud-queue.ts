@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { getSql, type Sql } from "@/lib/db";
+import { getSql } from "@/lib/db";
 import {
   reviewFraudReasons,
   scoreClaimMatch,
@@ -19,35 +19,9 @@ export type FraudFlagRow = {
   createdAt: string;
 };
 
-async function ensureFraudTables(sql: Sql) {
-  await sql`
-    create table if not exists fraud_flags (
-      id text primary key,
-      kind text not null,
-      source_id text,
-      daycare_id text,
-      score int,
-      reasons text not null default '',
-      created_at timestamptz not null default now()
-    )
-  `;
-  await sql`
-    create table if not exists review_signals (
-      id text primary key,
-      daycare_id text,
-      user_id text,
-      ip_hash text,
-      device_id text,
-      body_norm text not null default '',
-      created_at timestamptz not null default now()
-    )
-  `;
-}
-
 export async function listFraudFlags(): Promise<FraudFlagRow[]> {
   try {
     const sql = await getSql();
-    await ensureFraudTables(sql);
     const rows = await sql<{
       id: string;
       kind: string;
@@ -88,7 +62,6 @@ export async function queueClaimReview(input: {
   if (!scored.needsReview || scored.autoApprove !== false) return scored;
   try {
     const sql = await getSql();
-    await ensureFraudTables(sql);
     await sql`
       insert into fraud_flags (id, kind, source_id, daycare_id, score, reasons)
       values (
@@ -131,7 +104,6 @@ export async function flagReviewAttempt(input: {
   let recent: ReviewSignal[] = [];
   try {
     const sql = await getSql();
-    await ensureFraudTables(sql);
     const rows = await sql<{ ip_hash: string | null; device_id: string | null; body_norm: string; created_at: string | Date }>`
       select ip_hash, device_id, body_norm, created_at
       from review_signals
@@ -171,7 +143,6 @@ export async function flagReviewAttempt(input: {
   if (!reasons.length) return reasons;
   try {
     const sql = await getSql();
-    await ensureFraudTables(sql);
     await sql`
       insert into fraud_flags (id, kind, source_id, daycare_id, score, reasons)
       values (

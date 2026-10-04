@@ -105,4 +105,9 @@ test("low claim scores are queued and claims stay unapproved", () => {
   assert.match(page, /notice=/);
   const frame = readFileSync(join(root, "src/components/admin-tool-frame.tsx"), "utf8");
   assert.match(frame, /notice/);
+  const queue = readFileSync(join(root, "src/lib/server/fraud-queue.ts"), "utf8");
+  assert.doesNotMatch(queue, /create table/i);
+  const migration = readFileSync(join(root, "migrations/0080_fraud_flags.sql"), "utf8");
+  assert.match(migration, /create table if not exists fraud_flags/);
+  assert.match(migration, /create table if not exists review_signals/);
 });
