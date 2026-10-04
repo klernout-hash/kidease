@@ -45,6 +45,11 @@ export const SPOT_OFFERS_CRON = "TZ=America/Winnipeg 40 * * * *";
 
 export const SPOT_OFFERS_EVENT = "kidease/spot-offers.expire";
 
+/** Monday 09:15 America/Winnipeg. No-ops while check-in flags stay off. */
+export const OPEN_SPOTS_CHECKIN_CRON = "TZ=America/Winnipeg 15 9 * * 1";
+
+export const OPEN_SPOTS_CHECKIN_EVENT = "kidease/open-spots-checkin.run";
+
 export function inngestEventKey(env: EnvMap = process.env): string {
   return String(env.INNGEST_EVENT_KEY || "").trim();
 }
@@ -71,6 +76,13 @@ export function shouldDeferSearchAlertsToInngest(
 }
 
 export function shouldDeferTourHoldsToInngest(
+  request: Request,
+  env: EnvMap = process.env,
+): boolean {
+  return shouldDeferCronToInngest(request, env);
+}
+
+export function shouldDeferOpenSpotsCheckinToInngest(
   request: Request,
   env: EnvMap = process.env,
 ): boolean {
