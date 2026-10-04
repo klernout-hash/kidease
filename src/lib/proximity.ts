@@ -2,17 +2,18 @@ import { CITIES, PROVINCES, geocode, haversineKm, reverseGeocode, type LatLng } 
 import { compareFreshOpenSpots } from "@/lib/listing-readiness";
 import { qualityScore100 } from "@/lib/quality";
 import type { DaycareCard } from "@/lib/types";
+import { compareVacancyDecay, vacancyRankWeight } from "@/lib/vacancy-decay";
 
 /** Modest, transparent preference. Distance still dominates; incomplete listings stay in the set. */
 export function listingQualityBoost(card: DaycareCard) {
   return (qualityScore100(card) / 100) * 0.12;
 }
 
-/** Recommended sort: quality × proximity. Incomplete listings stay in the set. */
-export function recommendedRank(card: DaycareCard) {
+/** Recommended sort: quality × proximity, times a slow vacancy-age weight. Incomplete listings stay in the set. */
+export function recommendedRank(card: DaycareCard, now = Date.now()) {
   const quality = qualityScore100(card) / 100;
   const near = distanceDecay(card.distanceKm, card.catchmentKm ?? 8);
-  return quality * near;
+  return quality * near * vacancyRankWeight(card, now);
 }
 
 export const MAX_SEARCH_RADIUS_KM = 50;
@@ -114,10 +115,12 @@ export function proximityScore(card: DaycareCard) {
   return score;
 }
 
-export function compareProximity(a: DaycareCard, b: DaycareCard) {
+export function compareProximity(a: DaycareCard, b: DaycareCard, now = Date.now()) {
   const delta = proximityScore(b) - proximityScore(a);
   if (Math.abs(delta) > 0.008) return delta;
-  const fresh = compareFreshOpenSpots(a, b);
+  const decay = compareVacancyDecay(a, b, now);
+  if (decay !== 0) return decay;
+  const fresh = compareFreshOpenSpots(a, b, now);
   if (fresh !== 0) return fresh;
   return a.distanceKm - b.distanceKm;
 }
