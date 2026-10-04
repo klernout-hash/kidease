@@ -37,6 +37,7 @@ export const LOCALE_PAIRED_PATHS = [
   "/jobs/post",
   "/start-a-daycare",
   "/need-care-fast",
+  "/vacancy-index",
   "/guides",
   "/guides/bc",
   "/guides/ab",

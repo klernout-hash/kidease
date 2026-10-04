@@ -100,9 +100,9 @@ test("the vacancy page is public, sourced, and has no upgrade path", () => {
   assert.match(page, /createFileRoute\("\/vacancy-index"\)/);
   assert.match(page, /loadVacancyIndex/);
   assert.match(page, /vacancyIndexMethodT/);
-  assert.match(page, /to="\/search"/);
+  assert.match(page, /localePath\("\/search", locale\)/);
   assert.match(page, /to="\/cities"/);
-  assert.match(page, /to="\/contact"/);
+  assert.match(page, /localePath\("\/contact", locale\)/);
   assert.doesNotMatch(page, /\/plans/);
   assert.doesNotMatch(page, /upgrade/i);
   assert.doesNotMatch(page, /free forever/i);
@@ -113,7 +113,9 @@ test("the vacancy page is public, sourced, and has no upgrade path", () => {
   assert.doesNotMatch(server, /infant_monthly|toddler_monthly|preschool_monthly/);
   assert.ok(SITEMAP_STATIC_PATHS.includes("/vacancy-index"));
   assert.match(src("public/sitemap.xml"), /https:\/\/www\.kidease\.ca\/vacancy-index/);
-  assert.match(src("src/routes/cities.tsx"), /to="\/vacancy-index"/);
+  assert.match(src("src/routes/cities.tsx"), /localePath\("\/vacancy-index", locale\)/);
+  assert.match(src("src/routes/fr.vacancy-index.tsx"), /\/fr\/vacancy-index/);
+  assert.match(src("public/sitemap.xml"), /https:\/\/www\.kidease\.ca\/fr\/vacancy-index/);
   const copy = src("src/lib/copy.ts");
   assert.match(copy, /vacancyIndexTitle: "Open spots by province"/);
   assert.match(copy, /Fees are not on this page/);

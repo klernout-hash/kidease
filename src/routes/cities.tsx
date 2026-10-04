@@ -2,7 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { citiesIndexGroups } from "@/lib/cities-index";
-import { pageSeoHead } from "@/lib/page-seo";
+import { headChromeLocale } from "@/lib/head-locale";
+import { localePath } from "@/lib/locale-path";
+import { pageSeoHead, UNPAIRED_FR_SEO } from "@/lib/page-seo";
 import { loadDirectoryCounts } from "@/lib/server/city-directory";
 import { useCopy } from "@/lib/use-copy";
 
@@ -19,12 +21,14 @@ export const Route = createFileRoute("/cities")({
       };
     }
   },
-  head: () =>
-    pageSeoHead({
-      title: "Cities in Canada · KidEase",
-      description: "Licensed daycare directories grouped by province across Canada.",
-      path: "/cities",
-    }),
+  head: ({ matches }) =>
+    headChromeLocale(matches) === "fr"
+      ? pageSeoHead({ ...UNPAIRED_FR_SEO.cities, path: "/cities", locale: "fr" })
+      : pageSeoHead({
+          title: "Cities in Canada · KidEase",
+          description: "Licensed daycare directories grouped by province across Canada.",
+          path: "/cities",
+        }),
   component: CitiesPage,
 });
 
@@ -39,7 +43,7 @@ export function CitiesPage() {
         <p className="mt-3 max-w-xl text-base text-muted">{t("citiesLead")}</p>
         <p className="mt-2">
           <Link
-            to="/vacancy-index"
+            to={localePath("/vacancy-index", locale)}
             className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline"
           >
             {t("vacancyIndexLink")}

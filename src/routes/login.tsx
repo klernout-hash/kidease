@@ -13,7 +13,8 @@ import { PasswordField } from "@/components/password-field";
 import { PasswordRules } from "@/components/password-rules";
 import { localPasswordIssue } from "@/lib/password-hygiene";
 import { Shell } from "@/components/shell";
-import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
+import { headChromeLocale } from "@/lib/head-locale";
+import { MARKETING_PAGE_SEO, MARKETING_PAGE_SEO_FR, pageSeoHead } from "@/lib/page-seo";
 import { rememberRole } from "@/components/role-boot";
 import { setRole } from "@/lib/server/family";
 import { KIDEASE_OPERATOR_EMAIL } from "@/lib/admin-email";
@@ -99,7 +100,10 @@ export async function loginLoader() {
 export const Route = createFileRoute("/login")({
   validateSearch: loginValidateSearch,
   loader: loginLoader,
-  head: () => pageSeoHead(MARKETING_PAGE_SEO.login),
+  head: ({ matches }) =>
+    headChromeLocale(matches) === "fr"
+      ? pageSeoHead({ ...MARKETING_PAGE_SEO_FR.login, path: "/login", locale: "fr" })
+      : pageSeoHead(MARKETING_PAGE_SEO.login),
   component: Login,
 });
 

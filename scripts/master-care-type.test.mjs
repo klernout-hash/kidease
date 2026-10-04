@@ -64,7 +64,7 @@ test("header care types open a search URL", () => {
   const shell = readFileSync(join(root, "src/components/shell.tsx"), "utf8");
   assert.match(rails, /export function browseTypeSearch/);
   assert.match(rails, /cat: "before-after"/);
-  assert.match(rails, /to="\/search"/);
+  assert.match(rails, /localePath\("\/search", locale\)/);
   assert.match(shell, /toSearch/);
   assert.match(shell, /selectedBrowseType/);
 });

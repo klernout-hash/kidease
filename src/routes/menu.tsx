@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 import { ShellLite } from "@/components/shell-lite";
 import { MenuGlyph, MenuRow } from "@/components/menu-row";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
@@ -49,6 +50,7 @@ function MenuPage() {
   const { user } = useCurrentUserState();
   const chrome = useRoleChrome();
   const fr = locale === "fr";
+  const to = (path: string) => localePath(path, locale);
   const showParents = !chrome.pending && (chrome.role === "guest" || chrome.role === "parent" || chrome.role === "admin");
   const showDaycares = !chrome.pending && (chrome.role === "guest" || chrome.role === "provider" || chrome.role === "admin");
 
@@ -61,7 +63,7 @@ function MenuPage() {
 
         {chrome.pending ? null : <RoleNavLinks role={chrome.role} paid={chrome.paid} appearance="menu" />}
         {!chrome.pending && chrome.role === "guest" ? (
-          <MenuRow to="/login" label={t("signIn")} icon="login" />
+          <MenuRow to={to("/login")} label={t("signIn")} icon="login" />
         ) : null}
 
         {user ? (
@@ -82,14 +84,14 @@ function MenuPage() {
         </Group>
 
         <Group title="KidEase" defer>
-          <MenuRow to="/benefits" label={t("benefitsTab")} icon="benefits" />
-          <MenuRow to="/get-app" label={t("getApp")} icon="getApp" marker="store-coming-soon" />
+          <MenuRow to={to("/benefits")} label={t("benefitsTab")} icon="benefits" />
+          <MenuRow to={to("/get-app")} label={t("getApp")} icon="getApp" marker="store-coming-soon" />
           <ShareKidEaseButton appearance="row" />
-          <MenuRow to="/about" label={t("about")} icon="about" />
-          <MenuRow to="/start-a-daycare" label={t("startADaycare")} icon="startDaycare" />
-          <MenuRow to="/donate" label={t("donateToKids")} icon="donate" />
+          <MenuRow to={to("/about")} label={t("about")} icon="about" />
+          <MenuRow to={to("/start-a-daycare")} label={t("startADaycare")} icon="startDaycare" />
+          <MenuRow to={to("/donate")} label={t("donateToKids")} icon="donate" />
           <MenuRow to="/team" label={t("team")} icon="team" />
-          <MenuRow to="/contact" label={t("contact")} icon="contact" />
+          <MenuRow to={to("/contact")} label={t("contact")} icon="contact" />
         </Group>
 
         {showParents ? <Group title="Parents" defer>
@@ -108,21 +110,21 @@ function MenuPage() {
           <MenuRow to="/claim" label={t("listYourDaycare")} icon="claim" />
           {chrome.role !== "guest" ? <MenuRow to="/provider" label={t("daycareDesk")} icon="daycare" /> : null}
           <MenuRow to="/verify" label={t("mbChildcare")} icon="verify" />
-          <MenuRow to="/jobs" label={t("findDaycareJobs")} icon="jobs" />
+          <MenuRow to={to("/jobs")} label={t("findDaycareJobs")} icon="jobs" />
           {chrome.role === "provider" || chrome.role === "admin" ? (
-            <MenuRow to="/jobs/post" label={t("postDaycareJob")} icon="jobs" />
+            <MenuRow to={to("/jobs/post")} label={t("postDaycareJob")} icon="jobs" />
           ) : null}
         </Group> : null}
 
         <Group title={fr ? "Soutien" : "Support"} defer>
-          <MenuRow to="/help" label={fr ? "Centre d’aide" : "Help Centre"} icon="help" />
-          <MenuRow to="/faq" label="FAQ" icon="faq" />
-          <MenuRow to="/how-it-works" label={t("howItWorksCta")} icon="howItWorks" />
+          <MenuRow to={to("/help")} label={fr ? "Centre d’aide" : "Help Centre"} icon="help" />
+          <MenuRow to={to("/faq")} label="FAQ" icon="faq" />
+          <MenuRow to={to("/how-it-works")} label={t("howItWorksCta")} icon="howItWorks" />
           <MenuRow to="/verify" label={t("verifyListings")} icon="verify" />
           <MenuRow to="/daycare-requirements" label={t("daycareRequirements")} icon="verify" />
-          <MenuRow to="/privacy" label={t("privacy")} icon="privacy" />
-          <MenuRow to="/terms" label={t("terms")} icon="terms" />
-          <MenuRow to="/cookies" label={t("cookies")} icon="cookies" />
+          <MenuRow to={to("/privacy")} label={t("privacy")} icon="privacy" />
+          <MenuRow to={to("/terms")} label={t("terms")} icon="terms" />
+          <MenuRow to={to("/cookies")} label={t("cookies")} icon="cookies" />
         </Group>
 
         {user ? (

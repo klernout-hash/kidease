@@ -6,7 +6,7 @@ import { provincialGuideCopy } from "@/lib/provincial-guide-copy";
 import { CANADA_WIDE_CHILD_CARE_URL, provincialGuideByCode, provincialGuidePath } from "@/lib/provincial-guides";
 import { pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
-import { isFrPath } from "@/lib/locale-path";
+import { isFrPath, localePath } from "@/lib/locale-path";
 import { useRouterState } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/guides/$code")({
@@ -105,7 +105,7 @@ export function GuideView({
           </p>
         </section>
         <p className="mt-8">
-          <Link to="/guides" className="inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline">
+          <Link to={localePath("/guides", fr ? "fr" : "en")} className="inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline">
             {copy.back}
           </Link>
         </p>
@@ -125,7 +125,7 @@ function MissingGuide() {
   return (
     <Shell bare>
       <main className="ke-gutter mx-auto w-full max-w-lg py-10">
-        <EmptyState title={copy.missing} action={copy.home} actionTo="/search" />
+        <EmptyState title={copy.missing} action={copy.home} actionTo={localePath("/search", locale)} />
       </main>
     </Shell>
   );

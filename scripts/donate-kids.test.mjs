@@ -60,7 +60,7 @@ test("donate page opens official foundation forms, not a KidEase processor", () 
 test("hamburger, app menu, and footer all point at /donate", () => {
   assert.match(src("src/lib/site-footer-nav.ts"), /donateToKids/);
   assert.match(src("src/lib/site-footer-nav.ts"), /"\/donate"/);
-  assert.match(src("src/routes/menu.tsx"), /to="\/donate"/);
+  assert.match(src("src/routes/menu.tsx"), /to\("\/donate"\)/);
   assert.match(src("src/routes/menu.tsx"), /donateToKids/);
   assert.equal(localePath("/donate", "fr"), "/fr/donate");
   assert.equal(MARKETING_PAGE_SEO.donate.path, "/donate");

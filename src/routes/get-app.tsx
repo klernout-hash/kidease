@@ -16,6 +16,7 @@ import {
 } from "@/lib/native";
 import { STORE } from "@/lib/store-listing";
 import { appleStoreListingUrl, playStoreListingUrl } from "@/lib/store-review";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { HomeScreenGuide } from "@/components/home-screen-guide";
 import { JsonLd } from "@/components/json-ld";
@@ -33,11 +34,11 @@ export const Route = createFileRoute("/get-app")({
   component: GetApp,
 });
 
-const SHOTS: { key: string; device: "iphone" | "android"; caption: string; screen: ReactNode }[] = [
-  { key: "home", device: "iphone", caption: "Home \u00b7 iPhone", screen: <ShotHome /> },
-  { key: "search", device: "iphone", caption: "Search \u00b7 iPhone", screen: <ShotSearch /> },
-  { key: "listing", device: "android", caption: "Listing \u00b7 Android", screen: <ShotListing /> },
-  { key: "login", device: "android", caption: "Sign in \u00b7 Android", screen: <ShotLogin /> },
+const SHOTS: { key: string; device: "iphone" | "android"; captionEn: string; captionFr: string; screen: ReactNode }[] = [
+  { key: "home", device: "iphone", captionEn: "Home · iPhone", captionFr: "Accueil · iPhone", screen: <ShotHome /> },
+  { key: "search", device: "iphone", captionEn: "Search · iPhone", captionFr: "Recherche · iPhone", screen: <ShotSearch /> },
+  { key: "listing", device: "android", captionEn: "Listing · Android", captionFr: "Fiche · Android", screen: <ShotListing /> },
+  { key: "login", device: "android", captionEn: "Sign in · Android", captionFr: "Connexion · Android", screen: <ShotLogin /> },
 ];
 
 export function GetApp() {
@@ -67,10 +68,7 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
   }
 
   const desc = locale === "fr" ? STORE.descriptionFr : STORE.description;
-  const phoneLead =
-    locale === "fr"
-      ? "KidEase sur iPhone et Android \u2014 accueil, recherche, une fiche, et connexion."
-      : "KidEase on iPhone and Android \u2014 home, search, a listing, and sign in.";
+  const phoneLead = t("getAppPhoneLead");
   const coming =
     locale === "fr" ? "Bient\u00f4t dans l\u2019App Store et sur Google Play." : "Coming soon on the App Store and Google Play.";
 
@@ -105,7 +103,7 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
                 </Button>
               )}
               <Button size="lg" variant="secondary" asChild>
-                <Link to="/search">
+                <Link to={localePath("/search", locale)}>
                   <MapPinned className="size-4" />
                   {t("getAppBrowse")}
                 </Link>
@@ -172,7 +170,9 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
             {SHOTS.map((s) => (
               <li key={s.key} className="min-w-0">
                 <DeviceFrame device={s.device}>{s.screen}</DeviceFrame>
-                <p className="mt-4 text-center text-xs font-medium tracking-wide text-primary-fg/75">{s.caption}</p>
+                <p className="mt-4 text-center text-xs font-medium tracking-wide text-primary-fg/75">
+                  {locale === "fr" ? s.captionFr : s.captionEn}
+                </p>
               </li>
             ))}
           </ul>
@@ -196,16 +196,16 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
             </>
           ) : null}
           <div className="mt-6 flex flex-wrap gap-4 text-sm">
-            <Link to="/privacy" className="underline-offset-4 hover:underline">
+            <Link to={localePath("/privacy", locale)} className="underline-offset-4 hover:underline">
               {t("privacy")}
             </Link>
-            <Link to="/terms" className="underline-offset-4 hover:underline">
+            <Link to={localePath("/terms", locale)} className="underline-offset-4 hover:underline">
               {t("terms")}
             </Link>
-            <Link to="/cookies" className="underline-offset-4 hover:underline">
+            <Link to={localePath("/cookies", locale)} className="underline-offset-4 hover:underline">
               {t("cookies")}
             </Link>
-            <Link to="/help" className="underline-offset-4 hover:underline">
+            <Link to={localePath("/help", locale)} className="underline-offset-4 hover:underline">
               {t("helpTitle")}
             </Link>
           </div>

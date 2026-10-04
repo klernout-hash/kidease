@@ -26,22 +26,25 @@ function json(body) {
   });
 }
 
-test("plan prices use a CA$ prefix in English and French", () => {
+test("plan prices use a CA$ prefix in English and fr-CA dollars in French", () => {
   assert.equal(formatPlanCad(49, "en"), "CA$49");
   assert.equal(formatPlanCad(7.99, "en"), "CA$7.99");
-  assert.equal(formatPlanCad(7.99, "fr"), "CA$7,99");
+  assert.equal(formatPlanCad(7.99, "fr"), "7,99\u00a0$");
   assert.equal(formatPlanCad(0, "en"), "CA$0");
+  assert.equal(formatPlanCad(0, "fr"), "0\u00a0$");
   assert.equal(formatPlanCad(36.88, "en"), "CA$36.88");
   assert.equal(plusPriceHint("month", "en"), "CA$7.99/month");
-  assert.equal(plusPriceHint("year", "fr"), "CA$59/an");
+  assert.equal(plusPriceHint("month", "fr"), "7,99\u00a0$/mois");
+  assert.equal(plusPriceHint("year", "fr"), "59\u00a0$/an");
   assert.equal(planPriceHint(providerPlan("pro"), "month", "en"), "CA$49/month");
   assert.equal(planPriceHint(providerPlan("pro"), "year", "en"), "CA$490/year");
-  assert.equal(planPriceHint(providerPlan("network"), "month", "fr"), "CA$39/site/mois");
+  assert.equal(planPriceHint(providerPlan("network"), "month", "fr"), "39\u00a0$/site/mois");
   assert.equal(planPriceHint(providerPlan("network"), "year", "en"), "CA$390/site/year");
   assert.equal(planPriceHint(providerPlan("free"), "month", "en"), "CA$0/month");
+  assert.equal(planPriceHint(providerPlan("free"), "month", "fr"), "0\u00a0$/mois");
   assert.equal(billingPriceLabel({ product: "pro", interval: "year", locale: "en" }), "CA$490/year");
   assert.equal(billingPriceLabel({ product: "network", interval: "month", locale: "en" }), "CA$39/site/month");
-  assert.equal(billingPriceLabel({ product: "plus", interval: "month", locale: "fr" }), "CA$7,99/mois");
+  assert.equal(billingPriceLabel({ product: "plus", interval: "month", locale: "fr" }), "7,99\u00a0$/mois");
   assert.equal(billingPriceLabel({ product: "featured_city", interval: "month", locale: "en" }), "CA$29/month");
   assert.equal(yearlySavingsLine(49, 490, "en"), "or CA$490/year · save CA$98");
   assert.doesNotMatch(formatPlanCad(49, "en"), /^\$/);

@@ -42,6 +42,7 @@ import { useLivePresence } from "@/lib/use-presence";
 import { trackLocation } from "@/lib/telemetry";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { useAppStore, type SortKey } from "@/lib/store";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import { confirmedFeeProgramBadge } from "@/lib/fee-program";
@@ -1605,8 +1606,8 @@ function SearchPage() {
                   <ChipButton onClick={openSaveSearch}>{t("saveSearch")}</ChipButton>
                 ) : (
                   <Link
-                    to="/login"
-                    search={parentSignupSearch("/search", "alerts")}
+                    to={locale === "fr" ? "/fr/login" : "/login"}
+                    search={parentSignupSearch(localePath("/search", locale), "alerts")}
                     className="inline-flex min-h-11 items-center text-sm font-medium text-primary"
                     onClick={() => {
                       capturePostHogEvent(
@@ -1844,14 +1845,14 @@ function SearchPage() {
             <nav className="mt-6 flex flex-wrap gap-3" aria-label={t("search")}>
               {resultPage > 1 ? (
                 <Button asChild variant="secondary">
-                  <Link to="/search" search={listingPageSearch(resultPage - 1)}>
+                  <Link to={localePath("/search", locale)} search={listingPageSearch(resultPage - 1)}>
                     {t("showPreviousListings")}
                   </Link>
                 </Button>
               ) : null}
               {hasMore ? (
                 <Button asChild variant="secondary">
-                  <Link to="/search" search={listingPageSearch(resultPage + 1)}>
+                  <Link to={localePath("/search", locale)} search={listingPageSearch(resultPage + 1)}>
                     {t("showMoreListings")}
                   </Link>
                 </Button>

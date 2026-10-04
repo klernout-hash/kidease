@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { List, Map, SlidersHorizontal } from "lucide-react";
 import { ChipButton } from "@/components/chip";
 import { ChipCarousel } from "@/components/chip-carousel";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -75,7 +76,7 @@ export function ExploreFilterBar({
   onMap: () => void;
   className?: string;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
 
   return (
     <div
@@ -96,7 +97,7 @@ export function ExploreFilterBar({
         </ChipButton>
         {openSpotsSearch ? (
           <Link
-            to="/search"
+            to={localePath("/search", locale)}
             search={openSpotsSearch as never}
             className={cn("ke-chip", openSpotsOn && "ke-chip-on")}
             aria-pressed={openSpotsOn}

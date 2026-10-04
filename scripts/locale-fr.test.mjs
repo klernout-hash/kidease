@@ -107,6 +107,7 @@ test("sitemap lists shipped FR URLs and omits redirect-only pairs", () => {
     "/fr/jobs",
     "/fr/jobs/post",
     "/fr/start-a-daycare",
+    "/fr/vacancy-index",
   ]) {
     assert.match(sitemap, new RegExp(`<loc>https://www.kidease.ca${path}</loc>`));
   }

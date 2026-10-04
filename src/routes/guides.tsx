@@ -6,12 +6,15 @@ import { pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/guides")({
-  head: () =>
-    pageSeoHead({
+  head: ({ matches }) => {
+    const leaf = matches[matches.length - 1]?.routeId;
+    if (leaf && leaf !== "/guides") return { meta: [] };
+    return pageSeoHead({
       title: "Provincial child care guides · KidEase",
       description: "Official links for fees, subsidy, waitlists, and licensing in every province and territory.",
       path: "/guides",
-    }),
+    });
+  },
   component: GuidesIndex,
 });
 

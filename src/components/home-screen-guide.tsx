@@ -17,7 +17,7 @@ export function HomeScreenGuide() {
         <div>
           <h3 className="font-display text-lg">{fr ? "iPhone et iPad (Safari)" : "iPhone and iPad (Safari)"}</h3>
           <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-muted">
-            <li>{fr ? "Ouvrez kidease.ca dans Safari \u2014 pas Chrome." : "Open kidease.ca in Safari \u2014 not Chrome."}</li>
+            <li>{fr ? "Ouvrez kidease.ca dans Safari, pas dans Chrome." : "Open kidease.ca in Safari, not Chrome."}</li>
             <li>
               {fr
                 ? "Touchez Partager (carr\u00e9 avec la fl\u00e8che vers le haut), en bas de l\u2019\u00e9cran."

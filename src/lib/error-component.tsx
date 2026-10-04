@@ -6,6 +6,8 @@ import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
 function isStaleChunk(error: unknown) {
   const msg = error instanceof Error ? error.message : String(error ?? "");
+  // A blocked analytics file is not a stale app chunk. Reloading does not help.
+  if (/posthog/i.test(msg)) return false;
   return /importing a module script failed|failed to fetch dynamically imported module|loading chunk|error loading dynamically imported module/i.test(
     msg,
   );

@@ -7,6 +7,7 @@ import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field"
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getListingReviewAccess, submitListingReview } from "@/lib/server/reviews";
 import { isPublicReviewStatus, normalizeReviewStatus } from "@/lib/review-gate";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import type { Review } from "@/lib/types";
 
@@ -43,7 +44,7 @@ export function ListingReviewForm({ daycareId, slug }: { daycareId: string; slug
     return (
       <p className="mt-4 text-sm text-muted">
         {t("reviewNeedSignIn")}{" "}
-        <Link to="/login" search={{ next: `/daycare/${slug}`, role: "parent", desk: "parent", intent: "in" }} className="text-primary underline-offset-4 hover:underline">
+        <Link to={localePath("/login", locale)} search={{ next: localePath(`/daycare/${slug}`, locale), role: "parent", desk: "parent", intent: "in" }} className="text-primary underline-offset-4 hover:underline">
           {t("signIn")}
         </Link>
       </p>

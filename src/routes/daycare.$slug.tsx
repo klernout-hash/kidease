@@ -76,7 +76,7 @@ import { useRoleChrome } from "@/components/role-chrome";
 import { listingActionMode, showsOwnListingEdit, showsParentListingActions } from "@/lib/role-access";
 import { useCopy } from "@/lib/use-copy";
 import { listingPageTitle } from "@/lib/listing-meta";
-import { hreflangLinks } from "@/lib/locale-path";
+import { hreflangLinks, localePath } from "@/lib/locale-path";
 import { captureRankingEvent, publicTelHref, publicWebsiteHref } from "@/lib/ranking/events";
 import { rankingContextFor } from "@/lib/ranking/context";
 import { rethrowRouterControl } from "@/lib/listing-loader-errors";
@@ -454,17 +454,18 @@ export function Listing() {
     ask?: ListingAsk,
   ) {
     if (reason) toast.message(t(reason));
+    const listingPath = localePath(`/daycare/${slug}`, locale);
     const next =
       ask === "tour"
-        ? `/daycare/${slug}?ask=tour`
+        ? `${listingPath}?ask=tour`
         : ask === "spot"
-          ? `/daycare/${slug}?ask=spot`
+          ? `${listingPath}?ask=spot`
           : ask === "waitlist"
-            ? `/daycare/${slug}?ask=waitlist`
+            ? `${listingPath}?ask=waitlist`
             : ask === "info"
-              ? `/daycare/${slug}?ask=info`
-              : `/daycare/${slug}`;
-    void navigate({ to: "/login", search: parentLoginSearch(next) });
+              ? `${listingPath}?ask=info`
+              : listingPath;
+    void navigate({ to: locale === "fr" ? "/fr/login" : "/login", search: parentLoginSearch(next) });
   }
 
   function onInfo() {
@@ -505,8 +506,8 @@ export function Listing() {
       capturePostHogEvent(SIGNUP_FUNNEL_EVENT, signupFunnelPayload(signupPromptStep("message"), { source: "listing" }));
       toast.message(t("signupWhyMessage"));
       void navigate({
-        to: "/login",
-        search: parentSignupSearch(`/daycare/${slug}`, "message"),
+        to: locale === "fr" ? "/fr/login" : "/login",
+        search: parentSignupSearch(localePath(`/daycare/${slug}`, locale), "message"),
       });
       return;
     }
@@ -629,7 +630,7 @@ export function Listing() {
         ) : null}
         {parentActions && !live ? (
           <Button className="rounded-[14px]" data-ke="listing-primary-cta" asChild>
-            <Link to="/search">{t("searchNearby")}</Link>
+            <Link to={localePath("/search", locale)}>{t("searchNearby")}</Link>
           </Button>
         ) : null}
         {parentActions && live ? (
@@ -654,22 +655,21 @@ export function Listing() {
             slug={d.slug}
             name={name}
             daycareId={d.id}
-            nextPath={`/daycare/${slug}`}
+            nextPath={localePath(`/daycare/${slug}`, locale)}
             photoId={roomPhotos.length ? undefined : "listing-photos"}
             claim={offerClaim}
           />
         </div>
         <div className="ke-gutter">
         <nav className="relative z-10 mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-0 bg-bg text-muted">
-          <Link to="/" className="ke-crumb hover:text-fg hover:underline">
+          <Link to={localePath("/", locale)} className="ke-crumb hover:text-fg hover:underline">
             KidEase
           </Link>
           {cityHub ? (
             <>
               <span aria-hidden>/</span>
               <Link
-                to="/daycare/city/$city"
-                params={{ city: cityHub.slug }}
+                to={localePath(`/daycare/city/${cityHub.slug}`, locale)}
                 className="ke-crumb hover:text-fg hover:underline"
               >
                 {locale === "fr" ? `Garderies à ${cityHubCityName(cityHub, "fr")}` : `Daycare in ${cityHubCityName(cityHub, "en")}`}
@@ -678,7 +678,7 @@ export function Listing() {
           ) : (
             <>
               <span aria-hidden>/</span>
-              <Link to="/search" className="ke-crumb hover:text-fg hover:underline">
+              <Link to={localePath("/search", locale)} className="ke-crumb hover:text-fg hover:underline">
                 {t("backToExplore")}
               </Link>
             </>
@@ -998,7 +998,7 @@ export function Listing() {
                 >
                   {t("checkSubsidy")}
                 </a>
-                <Link to="/benefits" className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline">
+                <Link to={localePath("/benefits", locale)} className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline">
                   {t("benefitsTab")}
                 </Link>
                 <Link to="/tour-checklist" className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline underline-offset-4">
@@ -1036,7 +1036,7 @@ export function Listing() {
                 <FreeListingShareActions slug={d.slug} name={name} lat={d.lat} lng={d.lng} {...directionsPlace} />
               </div>
             </ListingMoreActions>
-            {parentActions ? <SaveListingButton daycareId={d.id} nextPath={`/daycare/${slug}`} appearance="ghost" /> : null}
+            {parentActions ? <SaveListingButton daycareId={d.id} nextPath={localePath(`/daycare/${slug}`, locale)} appearance="ghost" /> : null}
           </div>
           <p className="mt-3 text-xs text-subtle">{t("privacyNote")}</p>
         </aside>
@@ -1069,10 +1069,10 @@ export function Listing() {
           ) : null}
           {parentActions && !live ? (
             <Button className="h-12 min-h-12 flex-1 rounded-[14px]" data-ke="listing-sticky-cta" asChild>
-              <Link to="/search">{t("searchNearbyShort")}</Link>
+              <Link to={localePath("/search", locale)}>{t("searchNearbyShort")}</Link>
             </Button>
           ) : null}
-          {parentActions ? <SaveListingButton daycareId={d.id} nextPath={`/daycare/${slug}`} appearance="bar" className="shrink-0" /> : null}
+          {parentActions ? <SaveListingButton daycareId={d.id} nextPath={localePath(`/daycare/${slug}`, locale)} appearance="bar" className="shrink-0" /> : null}
           <ListingMoreActions compact>
             <ListingOverflowItems />
             <div className="px-1 py-1">

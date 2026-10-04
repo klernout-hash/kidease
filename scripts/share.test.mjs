@@ -211,7 +211,7 @@ test("share copy is present in English and French", () => {
   assert.match(copy, /shareStarted: "Share started"/);
   assert.match(copy, /shareStarted: "Partage lancé"/);
   assert.match(copy, /shareCopiedFallback: "Link copied: share isn’t available on this browser"/);
-  assert.match(copy, /shareCopiedFallback: "Lien copié: le partage n’est pas disponible dans ce navigateur"/);
+  assert.match(copy, /shareCopiedFallback: "Lien copié\u00a0: le partage n’est pas disponible dans ce navigateur"/);
 });
 
 test("share v1 does not touch OAuth buttons or invent store IDs", () => {
