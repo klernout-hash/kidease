@@ -28,13 +28,22 @@ export const matchDaycareNames = createServerFn({ method: "GET" })
     const sql = await getSql();
     const contains = `%${likePiece(q)}%`;
     const prefix = `${likePiece(q)}%`;
-    const rows = await sql.query<{
-      slug: string;
-      name: string;
-      city: string | null;
-      province: string | null;
-    }>(
-      `select slug, name, city, province
+    const fuzzySql = `select slug, name, city, province,
+         greatest(
+           similarity(lower(name), lower($2)),
+           similarity(lower(coalesce(name_fr, '')), lower($2))
+         ) as sim
+       from daycares
+       where ${PUBLIC_LISTING_SQL}
+         and (
+           name ilike $1 escape '\\'
+           or coalesce(name_fr, '') ilike $1 escape '\\'
+           or similarity(lower(name), lower($2)) > 0.35
+           or similarity(lower(coalesce(name_fr, '')), lower($2)) > 0.35
+         )
+       order by sim desc, name
+       limit ${DAYCARE_NAME_MATCH_LIMIT}`;
+    const plainSql = `select slug, name, city, province
        from daycares
        where ${PUBLIC_LISTING_SQL}
          and (
@@ -48,9 +57,22 @@ export const matchDaycareNames = createServerFn({ method: "GET" })
            else 2
          end,
          name
-       limit ${DAYCARE_NAME_MATCH_LIMIT}`,
-      [contains, q, prefix],
-    );
+       limit ${DAYCARE_NAME_MATCH_LIMIT}`;
+    const rows = await sql
+      .query<{
+        slug: string;
+        name: string;
+        city: string | null;
+        province: string | null;
+      }>(fuzzySql, [contains, q, prefix])
+      .catch(() =>
+        sql.query<{
+          slug: string;
+          name: string;
+          city: string | null;
+          province: string | null;
+        }>(plainSql, [contains, q, prefix]),
+      );
     return rows
       .filter((row) => row.slug && row.name)
       .map((row) => ({
