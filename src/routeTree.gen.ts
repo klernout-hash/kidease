@@ -17,6 +17,7 @@ import { Route as AdminAiRouteImport } from './routes/admin-ai'
 import { Route as AdminChatRouteImport } from './routes/admin-chat'
 import { Route as AdminContractsRouteImport } from './routes/admin-contracts'
 import { Route as AdminEmailHealthRouteImport } from './routes/admin-email-health'
+import { Route as AdminQcHomeRouteImport } from './routes/admin-qc-home'
 import { Route as AdminRankingRouteImport } from './routes/admin-ranking'
 import { Route as AdminSpamRouteImport } from './routes/admin-spam'
 import { Route as AdminTriageRouteImport } from './routes/admin-triage'
@@ -49,6 +50,7 @@ import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MeetTheTeamRouteImport } from './routes/meet-the-team'
 import { Route as MenuRouteImport } from './routes/menu'
+import { Route as MilieuxFamiliauxRouteImport } from './routes/milieux-familiaux'
 import { Route as NeedCareFastRouteImport } from './routes/need-care-fast'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as ParentRouteImport } from './routes/parent'
@@ -100,6 +102,7 @@ import { Route as FrHelpRouteImport } from './routes/fr.help'
 import { Route as FrHowItWorksRouteImport } from './routes/fr.how-it-works'
 import { Route as FrJobsRouteImport } from './routes/fr.jobs'
 import { Route as FrLoginRouteImport } from './routes/fr.login'
+import { Route as FrMilieuxFamiliauxRouteImport } from './routes/fr.milieux-familiaux'
 import { Route as FrNeedCareFastRouteImport } from './routes/fr.need-care-fast'
 import { Route as FrPrivacyRouteImport } from './routes/fr.privacy'
 import { Route as FrSearchRouteImport } from './routes/fr.search'
@@ -110,6 +113,7 @@ import { Route as InboxIdRouteImport } from './routes/inbox.$id'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as JobsPostRouteImport } from './routes/jobs_.post'
 import { Route as ListingSlugRouteImport } from './routes/listing.$slug'
+import { Route as MilieuxFamiliauxIdRouteImport } from './routes/milieux-familiaux_.$id'
 import { Route as OfferTokenRouteImport } from './routes/offer.$token'
 import { Route as ParentSpotOffersRouteImport } from './routes/parent.spot-offers'
 import { Route as PayIndexRouteImport } from './routes/pay.index'
@@ -140,6 +144,7 @@ import { Route as DaycareCityCityRouteImport } from './routes/daycare.city.$city
 import { Route as FrDaycareSlugRouteImport } from './routes/fr.daycare.$slug'
 import { Route as FrGuidesCodeRouteImport } from './routes/fr.guides.$code'
 import { Route as FrJobsPostRouteImport } from './routes/fr.jobs_.post'
+import { Route as FrMilieuxFamiliauxIdRouteImport } from './routes/fr.milieux-familiaux_.$id'
 import { Route as PayBillBillIdRouteImport } from './routes/pay.bill.$billId'
 import { Route as ApiContractsIdPdfRouteImport } from './routes/api/contracts.$id.pdf'
 import { Route as FrDaycareCityAgeRouteImport } from './routes/fr.daycare.$city.$age'
@@ -183,6 +188,11 @@ const AdminContractsRoute = AdminContractsRouteImport.update({
 const AdminEmailHealthRoute = AdminEmailHealthRouteImport.update({
   id: '/admin-email-health',
   path: '/admin-email-health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminQcHomeRoute = AdminQcHomeRouteImport.update({
+  id: '/admin-qc-home',
+  path: '/admin-qc-home',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRankingRoute = AdminRankingRouteImport.update({
@@ -344,6 +354,11 @@ const MeetTheTeamRoute = MeetTheTeamRouteImport.update({
 const MenuRoute = MenuRouteImport.update({
   id: '/menu',
   path: '/menu',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MilieuxFamiliauxRoute = MilieuxFamiliauxRouteImport.update({
+  id: '/milieux-familiaux',
+  path: '/milieux-familiaux',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NeedCareFastRoute = NeedCareFastRouteImport.update({
@@ -601,6 +616,11 @@ const FrLoginRoute = FrLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => FrRoute,
 } as any)
+const FrMilieuxFamiliauxRoute = FrMilieuxFamiliauxRouteImport.update({
+  id: '/milieux-familiaux',
+  path: '/milieux-familiaux',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrNeedCareFastRoute = FrNeedCareFastRouteImport.update({
   id: '/need-care-fast',
   path: '/need-care-fast',
@@ -649,6 +669,11 @@ const JobsPostRoute = JobsPostRouteImport.update({
 const ListingSlugRoute = ListingSlugRouteImport.update({
   id: '/listing/$slug',
   path: '/listing/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MilieuxFamiliauxIdRoute = MilieuxFamiliauxIdRouteImport.update({
+  id: '/milieux-familiaux_/$id',
+  path: '/milieux-familiaux/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OfferTokenRoute = OfferTokenRouteImport.update({
@@ -802,6 +827,11 @@ const FrJobsPostRoute = FrJobsPostRouteImport.update({
   path: '/jobs/post',
   getParentRoute: () => FrRoute,
 } as any)
+const FrMilieuxFamiliauxIdRoute = FrMilieuxFamiliauxIdRouteImport.update({
+  id: '/milieux-familiaux_/$id',
+  path: '/milieux-familiaux/$id',
+  getParentRoute: () => FrRoute,
+} as any)
 const PayBillBillIdRoute = PayBillBillIdRouteImport.update({
   id: '/bill/$billId',
   path: '/bill/$billId',
@@ -832,6 +862,7 @@ export interface FileRoutesByFullPath {
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
+  '/admin-qc-home': typeof AdminQcHomeRoute
   '/admin-ranking': typeof AdminRankingRoute
   '/admin-spam': typeof AdminSpamRoute
   '/admin-triage': typeof AdminTriageRoute
@@ -864,6 +895,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
+  '/milieux-familiaux': typeof MilieuxFamiliauxRoute
   '/need-care-fast': typeof NeedCareFastRoute
   '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRouteWithChildren
@@ -914,6 +946,7 @@ export interface FileRoutesByFullPath {
   '/fr/how-it-works': typeof FrHowItWorksRoute
   '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
+  '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/search': typeof FrSearchRoute
@@ -924,6 +957,7 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/jobs/post': typeof JobsPostRoute
   '/listing/$slug': typeof ListingSlugRoute
+  '/milieux-familiaux/$id': typeof MilieuxFamiliauxIdRoute
   '/offer/$token': typeof OfferTokenRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
@@ -955,6 +989,7 @@ export interface FileRoutesByFullPath {
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/jobs/post': typeof FrJobsPostRoute
+  '/fr/milieux-familiaux/$id': typeof FrMilieuxFamiliauxIdRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
   '/fr/daycare/$city/$age': typeof FrDaycareCityAgeRoute
@@ -969,6 +1004,7 @@ export interface FileRoutesByTo {
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
+  '/admin-qc-home': typeof AdminQcHomeRoute
   '/admin-ranking': typeof AdminRankingRoute
   '/admin-spam': typeof AdminSpamRoute
   '/admin-triage': typeof AdminTriageRoute
@@ -1000,6 +1036,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
+  '/milieux-familiaux': typeof MilieuxFamiliauxRoute
   '/need-care-fast': typeof NeedCareFastRoute
   '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRouteWithChildren
@@ -1049,6 +1086,7 @@ export interface FileRoutesByTo {
   '/fr/how-it-works': typeof FrHowItWorksRoute
   '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
+  '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/search': typeof FrSearchRoute
@@ -1059,6 +1097,7 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/jobs/post': typeof JobsPostRoute
   '/listing/$slug': typeof ListingSlugRoute
+  '/milieux-familiaux/$id': typeof MilieuxFamiliauxIdRoute
   '/offer/$token': typeof OfferTokenRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
@@ -1090,6 +1129,7 @@ export interface FileRoutesByTo {
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/jobs/post': typeof FrJobsPostRoute
+  '/fr/milieux-familiaux/$id': typeof FrMilieuxFamiliauxIdRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
   '/fr/daycare/$city/$age': typeof FrDaycareCityAgeRoute
@@ -1105,6 +1145,7 @@ export interface FileRoutesById {
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
+  '/admin-qc-home': typeof AdminQcHomeRoute
   '/admin-ranking': typeof AdminRankingRoute
   '/admin-spam': typeof AdminSpamRoute
   '/admin-triage': typeof AdminTriageRoute
@@ -1137,6 +1178,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
+  '/milieux-familiaux': typeof MilieuxFamiliauxRoute
   '/need-care-fast': typeof NeedCareFastRoute
   '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRouteWithChildren
@@ -1187,6 +1229,7 @@ export interface FileRoutesById {
   '/fr/how-it-works': typeof FrHowItWorksRoute
   '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
+  '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/search': typeof FrSearchRoute
@@ -1197,6 +1240,7 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/jobs_/post': typeof JobsPostRoute
   '/listing/$slug': typeof ListingSlugRoute
+  '/milieux-familiaux_/$id': typeof MilieuxFamiliauxIdRoute
   '/offer/$token': typeof OfferTokenRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
@@ -1228,6 +1272,7 @@ export interface FileRoutesById {
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/jobs_/post': typeof FrJobsPostRoute
+  '/fr/milieux-familiaux_/$id': typeof FrMilieuxFamiliauxIdRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
   '/fr/daycare/$city/$age': typeof FrDaycareCityAgeRoute
@@ -1244,6 +1289,7 @@ export interface FileRouteTypes {
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
+    | '/admin-qc-home'
     | '/admin-ranking'
     | '/admin-spam'
     | '/admin-triage'
@@ -1276,6 +1322,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/meet-the-team'
     | '/menu'
+    | '/milieux-familiaux'
     | '/need-care-fast'
     | '/notifications'
     | '/parent'
@@ -1326,6 +1373,7 @@ export interface FileRouteTypes {
     | '/fr/how-it-works'
     | '/fr/jobs'
     | '/fr/login'
+    | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
     | '/fr/privacy'
     | '/fr/search'
@@ -1336,6 +1384,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/jobs/post'
     | '/listing/$slug'
+    | '/milieux-familiaux/$id'
     | '/offer/$token'
     | '/parent/spot-offers'
     | '/pay/$bookingId'
@@ -1367,6 +1416,7 @@ export interface FileRouteTypes {
     | '/fr/daycare/$slug'
     | '/fr/guides/$code'
     | '/fr/jobs/post'
+    | '/fr/milieux-familiaux/$id'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
     | '/fr/daycare/$city/$age'
@@ -1381,6 +1431,7 @@ export interface FileRouteTypes {
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
+    | '/admin-qc-home'
     | '/admin-ranking'
     | '/admin-spam'
     | '/admin-triage'
@@ -1412,6 +1463,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/meet-the-team'
     | '/menu'
+    | '/milieux-familiaux'
     | '/need-care-fast'
     | '/notifications'
     | '/parent'
@@ -1461,6 +1513,7 @@ export interface FileRouteTypes {
     | '/fr/how-it-works'
     | '/fr/jobs'
     | '/fr/login'
+    | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
     | '/fr/privacy'
     | '/fr/search'
@@ -1471,6 +1524,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/jobs/post'
     | '/listing/$slug'
+    | '/milieux-familiaux/$id'
     | '/offer/$token'
     | '/parent/spot-offers'
     | '/pay/$bookingId'
@@ -1502,6 +1556,7 @@ export interface FileRouteTypes {
     | '/fr/daycare/$slug'
     | '/fr/guides/$code'
     | '/fr/jobs/post'
+    | '/fr/milieux-familiaux/$id'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
     | '/fr/daycare/$city/$age'
@@ -1516,6 +1571,7 @@ export interface FileRouteTypes {
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
+    | '/admin-qc-home'
     | '/admin-ranking'
     | '/admin-spam'
     | '/admin-triage'
@@ -1548,6 +1604,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/meet-the-team'
     | '/menu'
+    | '/milieux-familiaux'
     | '/need-care-fast'
     | '/notifications'
     | '/parent'
@@ -1598,6 +1655,7 @@ export interface FileRouteTypes {
     | '/fr/how-it-works'
     | '/fr/jobs'
     | '/fr/login'
+    | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
     | '/fr/privacy'
     | '/fr/search'
@@ -1608,6 +1666,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/jobs_/post'
     | '/listing/$slug'
+    | '/milieux-familiaux_/$id'
     | '/offer/$token'
     | '/parent/spot-offers'
     | '/pay/$bookingId'
@@ -1639,6 +1698,7 @@ export interface FileRouteTypes {
     | '/fr/daycare/$slug'
     | '/fr/guides/$code'
     | '/fr/jobs_/post'
+    | '/fr/milieux-familiaux_/$id'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
     | '/fr/daycare/$city/$age'
@@ -1654,6 +1714,7 @@ export interface RootRouteChildren {
   AdminChatRoute: typeof AdminChatRoute
   AdminContractsRoute: typeof AdminContractsRoute
   AdminEmailHealthRoute: typeof AdminEmailHealthRoute
+  AdminQcHomeRoute: typeof AdminQcHomeRoute
   AdminRankingRoute: typeof AdminRankingRoute
   AdminSpamRoute: typeof AdminSpamRoute
   AdminTriageRoute: typeof AdminTriageRoute
@@ -1686,6 +1747,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MeetTheTeamRoute: typeof MeetTheTeamRoute
   MenuRoute: typeof MenuRoute
+  MilieuxFamiliauxRoute: typeof MilieuxFamiliauxRoute
   NeedCareFastRoute: typeof NeedCareFastRoute
   NotificationsRoute: typeof NotificationsRoute
   ParentRoute: typeof ParentRouteWithChildren
@@ -1725,6 +1787,7 @@ export interface RootRouteChildren {
   InviteTokenRoute: typeof InviteTokenRoute
   JobsPostRoute: typeof JobsPostRoute
   ListingSlugRoute: typeof ListingSlugRoute
+  MilieuxFamiliauxIdRoute: typeof MilieuxFamiliauxIdRoute
   OfferTokenRoute: typeof OfferTokenRoute
   SignIdRoute: typeof SignIdRoute
   SpotsTokenRoute: typeof SpotsTokenRoute
@@ -1805,6 +1868,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-email-health'
       fullPath: '/admin-email-health'
       preLoaderRoute: typeof AdminEmailHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-qc-home': {
+      id: '/admin-qc-home'
+      path: '/admin-qc-home'
+      fullPath: '/admin-qc-home'
+      preLoaderRoute: typeof AdminQcHomeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin-ranking': {
@@ -2029,6 +2099,13 @@ declare module '@tanstack/react-router' {
       path: '/menu'
       fullPath: '/menu'
       preLoaderRoute: typeof MenuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/milieux-familiaux': {
+      id: '/milieux-familiaux'
+      path: '/milieux-familiaux'
+      fullPath: '/milieux-familiaux'
+      preLoaderRoute: typeof MilieuxFamiliauxRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/need-care-fast': {
@@ -2388,6 +2465,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrLoginRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/milieux-familiaux': {
+      id: '/fr/milieux-familiaux'
+      path: '/milieux-familiaux'
+      fullPath: '/fr/milieux-familiaux'
+      preLoaderRoute: typeof FrMilieuxFamiliauxRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/need-care-fast': {
       id: '/fr/need-care-fast'
       path: '/need-care-fast'
@@ -2456,6 +2540,13 @@ declare module '@tanstack/react-router' {
       path: '/listing/$slug'
       fullPath: '/listing/$slug'
       preLoaderRoute: typeof ListingSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/milieux-familiaux_/$id': {
+      id: '/milieux-familiaux_/$id'
+      path: '/milieux-familiaux/$id'
+      fullPath: '/milieux-familiaux/$id'
+      preLoaderRoute: typeof MilieuxFamiliauxIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/offer/$token': {
@@ -2668,6 +2759,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrJobsPostRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/milieux-familiaux_/$id': {
+      id: '/fr/milieux-familiaux_/$id'
+      path: '/milieux-familiaux/$id'
+      fullPath: '/fr/milieux-familiaux/$id'
+      preLoaderRoute: typeof FrMilieuxFamiliauxIdRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/pay/bill/$billId': {
       id: '/pay/bill/$billId'
       path: '/bill/$billId'
@@ -2735,6 +2833,7 @@ interface FrRouteChildren {
   FrHowItWorksRoute: typeof FrHowItWorksRoute
   FrJobsRoute: typeof FrJobsRoute
   FrLoginRoute: typeof FrLoginRoute
+  FrMilieuxFamiliauxRoute: typeof FrMilieuxFamiliauxRoute
   FrNeedCareFastRoute: typeof FrNeedCareFastRoute
   FrPrivacyRoute: typeof FrPrivacyRoute
   FrSearchRoute: typeof FrSearchRoute
@@ -2743,6 +2842,7 @@ interface FrRouteChildren {
   FrIndexRoute: typeof FrIndexRoute
   FrDaycareSlugRoute: typeof FrDaycareSlugRoute
   FrJobsPostRoute: typeof FrJobsPostRoute
+  FrMilieuxFamiliauxIdRoute: typeof FrMilieuxFamiliauxIdRoute
   FrDaycareCityAgeRoute: typeof FrDaycareCityAgeRoute
   FrDaycareCityCityRoute: typeof FrDaycareCityCityRoute
 }
@@ -2761,6 +2861,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrHowItWorksRoute: FrHowItWorksRoute,
   FrJobsRoute: FrJobsRoute,
   FrLoginRoute: FrLoginRoute,
+  FrMilieuxFamiliauxRoute: FrMilieuxFamiliauxRoute,
   FrNeedCareFastRoute: FrNeedCareFastRoute,
   FrPrivacyRoute: FrPrivacyRoute,
   FrSearchRoute: FrSearchRoute,
@@ -2769,6 +2870,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrIndexRoute: FrIndexRoute,
   FrDaycareSlugRoute: FrDaycareSlugRoute,
   FrJobsPostRoute: FrJobsPostRoute,
+  FrMilieuxFamiliauxIdRoute: FrMilieuxFamiliauxIdRoute,
   FrDaycareCityAgeRoute: FrDaycareCityAgeRoute,
   FrDaycareCityCityRoute: FrDaycareCityCityRoute,
 }
@@ -2866,6 +2968,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminChatRoute: AdminChatRoute,
   AdminContractsRoute: AdminContractsRoute,
   AdminEmailHealthRoute: AdminEmailHealthRoute,
+  AdminQcHomeRoute: AdminQcHomeRoute,
   AdminRankingRoute: AdminRankingRoute,
   AdminSpamRoute: AdminSpamRoute,
   AdminTriageRoute: AdminTriageRoute,
@@ -2898,6 +3001,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MeetTheTeamRoute: MeetTheTeamRoute,
   MenuRoute: MenuRoute,
+  MilieuxFamiliauxRoute: MilieuxFamiliauxRoute,
   NeedCareFastRoute: NeedCareFastRoute,
   NotificationsRoute: NotificationsRoute,
   ParentRoute: ParentRouteWithChildren,
@@ -2937,6 +3041,7 @@ const rootRouteChildren: RootRouteChildren = {
   InviteTokenRoute: InviteTokenRoute,
   JobsPostRoute: JobsPostRoute,
   ListingSlugRoute: ListingSlugRoute,
+  MilieuxFamiliauxIdRoute: MilieuxFamiliauxIdRoute,
   OfferTokenRoute: OfferTokenRoute,
   SignIdRoute: SignIdRoute,
   SpotsTokenRoute: SpotsTokenRoute,

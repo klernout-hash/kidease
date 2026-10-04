@@ -22,6 +22,7 @@
     "ops:operator-password": "node --experimental-strip-types scripts/set-operator-password.mjs",
     "ops:reviewer-demo": "node scripts/seed-reviewer-demo.mjs",
     "ops:seed-catalog": "node --experimental-strip-types scripts/seed-catalog-to-neon.mjs",
+    "ops:import-qc-home-daycares": "node --experimental-strip-types scripts/import-qc-home-daycares.mjs",
     "ops:merge-duplicates": "node --experimental-strip-types scripts/merge-duplicate-listings.mjs",
     "ops:repair-pei-names": "node --experimental-strip-types scripts/repair-pei-names.mjs",
     "ops:winnipeg-gaps": "node --experimental-strip-types scripts/winnipeg-live-looking.mjs",

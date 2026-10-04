@@ -309,6 +309,13 @@ export const GROUPS = [
         required: false,
         notes: "Default 0. Email when a saved search matches a newly posted open spot. Needs CASL.",
       },
+      {
+        name: "FEATURE_QC_HOME_DAYCARES",
+        concealed: false,
+        vercel: "both",
+        required: false,
+        notes: "Default 0. Quebec recognized home daycares. No email or SMS to those providers.",
+      },
     ],
   },
   {
