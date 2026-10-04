@@ -2761,5 +2761,7 @@
   "claimProgressFees": "Gebühren",
   "claimProgressAges": "Alter",
   "claimProgressSpots": "Freie Plätze",
-  "guestShortlistCarried": "Gespeicherte Kitas sind auf Ihrem Konto."
+  "guestShortlistCarried": "Gespeicherte Kitas sind auf Ihrem Konto.",
+  "shortlistLeadOpen": "Speichere Zentren aus der Suche oder einer Seite. Notiere Anrufe und Besuche hier. Vergleiche bis zu 10 Zentren.",
+  "deskNavShortlistOpenHint": "Anrufe, Besuche und Vergleich"
 }

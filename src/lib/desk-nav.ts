@@ -168,6 +168,8 @@ export const DESK_META: Record<DeskId, { eyebrow: string; title: string; eyebrow
 type DeskNavOpts = {
   providerSubscriptions?: boolean;
   showPayCtas?: boolean;
+  /** When false, hide the parent Subscription item. Daycare subscription stays. */
+  subscriptionsEnabled?: boolean;
   centreOwner?: boolean;
   /** Active centre member. Subscription stays hidden for staff unless this is true. */
   centreLinked?: boolean;
@@ -188,7 +190,10 @@ const OWNER_ONLY_NAV = new Set([
 
 export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
   return DESK_NAV[desk].filter((item) => {
-    if (item.id === "upgrade") return true;
+    if (item.id === "upgrade") {
+      if (desk === "parent" && opts?.subscriptionsEnabled === false) return false;
+      return true;
+    }
     if (item.id === "subscription") {
       if (opts?.centreOwner === false && opts?.centreLinked !== true) return false;
       return true;

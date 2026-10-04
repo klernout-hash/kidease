@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { getDaycaresByIds } from "@/lib/server/daycares";
 import { clearCompare, compareKeysFromSearch, readCompare, toggleCompareItem } from "@/lib/compare";
+import { useParentPlusAccess } from "@/lib/use-parent-plus";
 import { listingSubsidy, subsidyLabel } from "@/lib/fee-program";
 import {
   canShowMatchScore,
@@ -50,6 +51,7 @@ export const Route = createFileRoute("/compare")({
 
 function ComparePage() {
   const { t, locale } = useCopy();
+  const { compareMax } = useParentPlusAccess();
   const origin = useAppStore((s) => s.origin);
   const located = useAppStore((s) => s.located);
   const radiusKm = useAppStore((s) => s.radiusKm);
@@ -58,7 +60,7 @@ function ComparePage() {
   const [items, setItems] = useState<DaycareCard[]>([]);
 
   useEffect(() => {
-    const keys = compareKeysFromSearch(incoming.slugs, readCompare());
+    const keys = compareKeysFromSearch(incoming.slugs, readCompare(compareMax));
     if (!keys.length) {
       setItems([]);
       return;
@@ -76,7 +78,7 @@ function ComparePage() {
         });
       }
     }).catch(() => setItems([]));
-  }, [incoming.slugs]);
+  }, [compareMax, incoming.slugs]);
 
   return (
     <Shell>

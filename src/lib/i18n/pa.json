@@ -2761,5 +2761,7 @@
   "claimProgressFees": "ਫੀਸ",
   "claimProgressAges": "ਉਮਰਾਂ",
   "claimProgressSpots": "ਖਾਲੀ ਥਾਵਾਂ",
-  "guestShortlistCarried": "ਸੰਭਾਲੇ ਕੇਂਦਰ ਤੁਹਾਡੇ ਖਾਤੇ ਵਿੱਚ ਹਨ।"
+  "guestShortlistCarried": "ਸੰਭਾਲੇ ਕੇਂਦਰ ਤੁਹਾਡੇ ਖਾਤੇ ਵਿੱਚ ਹਨ।",
+  "shortlistLeadOpen": "ਖੋਜ ਜਾਂ ਸੂਚੀ ਤੋਂ ਸੈਂਟਰ ਸੰਭਾਲੋ। ਇੱਥੇ ਕਾਲਾਂ ਅਤੇ ਟੂਰ ਲਿਖੋ। 10 ਸੈਂਟਰਾਂ ਤੱਕ ਤੁਲਨਾ ਕਰੋ।",
+  "deskNavShortlistOpenHint": "ਕਾਲਾਂ, ਟੂਰ ਅਤੇ ਤੁਲਨਾ"
 }

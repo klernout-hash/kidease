@@ -169,10 +169,17 @@ export function DeskShell({
   const opts = {
     providerSubscriptions: session?.providerSubscriptions,
     showPayCtas: session?.showPayCtas,
+    subscriptionsEnabled: chrome.subscriptionsEnabled,
     centreOwner: session?.centreOwner,
     centreLinked: session?.centreLinked,
   };
-  const labelPlan = (item: DeskItem) => planNavItem(item, chrome.paid);
+  const labelPlan = (item: DeskItem) => {
+    const planned = planNavItem(item, chrome.paid);
+    if (planned.id === "saved" && !chrome.subscriptionsEnabled) {
+      return { ...planned, hint: undefined, hintKey: "deskNavShortlistOpenHint" as const };
+    }
+    return planned;
+  };
   const allItems = visibleDeskNav(desk, opts).map(labelPlan);
   const eyebrow = meta.eyebrowKey ? t(meta.eyebrowKey) : meta.eyebrow;
   const title = meta.titleKey ? t(meta.titleKey) : meta.title;

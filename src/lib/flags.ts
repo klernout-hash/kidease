@@ -125,7 +125,7 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary:
-      "Paid plans and checkout. Default off: free founding period, no charges, daycare tools unlocked. Set 1 to restore the current subscription flow. Env or PostHog. No redeploy when PostHog is already connected.",
+      "Paid plans and checkout. Default off: free founding period, no charges, daycare tools unlocked, signed-in parents get Parent Plus tools with no upgrade button. Set 1 to restore the current subscription flow. Env or PostHog. No redeploy when PostHog is already connected.",
   },
   {
     key: "FOUNDING_BADGE_ENABLED",

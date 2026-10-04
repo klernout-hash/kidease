@@ -2761,5 +2761,7 @@
   "claimProgressFees": "Tariffe",
   "claimProgressAges": "Età",
   "claimProgressSpots": "Posti liberi",
-  "guestShortlistCarried": "Gli asili salvati sono sul tuo account."
+  "guestShortlistCarried": "Gli asili salvati sono sul tuo account.",
+  "shortlistLeadOpen": "Salva i centri dalla ricerca o da una scheda. Segna chiamate e visite qui. Confronta fino a 10 centri.",
+  "deskNavShortlistOpenHint": "Chiamate, visite e confronto"
 }

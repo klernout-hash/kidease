@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { useRoleChrome } from "@/components/role-chrome";
 import { MenuRow } from "@/components/menu-row";
 import { roleNavItems, type ChromeRole } from "@/lib/role-access";
 import type { CopyKey } from "@/lib/copy";
@@ -40,7 +41,8 @@ export function RoleNavLinks({
   onNavigate?: () => void;
 }) {
   const { t } = useCopy();
-  const items = roleNavItems({ role, paid })
+  const chrome = useRoleChrome();
+  const items = roleNavItems({ role, paid, subscriptionsOn: chrome.subscriptionsEnabled })
     .filter((item) => !(item.id === "signin" && appearance !== "header"))
     .map((item) => ({
     ...item,

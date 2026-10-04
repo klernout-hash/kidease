@@ -2761,5 +2761,7 @@
   "claimProgressFees": "Bayad",
   "claimProgressAges": "Edad",
   "claimProgressSpots": "Bakanteng puwesto",
-  "guestShortlistCarried": "Ang mga na-save na sentro ay nasa iyong account."
+  "guestShortlistCarried": "Ang mga na-save na sentro ay nasa iyong account.",
+  "shortlistLeadOpen": "I-save ang mga centre mula sa search o sa isang listing. Itala ang mga tawag at tour dito. Ikumpara ang hanggang 10 centre.",
+  "deskNavShortlistOpenHint": "Mga tawag, tour, at paghahambing"
 }

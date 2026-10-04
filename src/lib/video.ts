@@ -179,15 +179,21 @@ export function parseVideoRoomParam(raw: string | null | undefined): { kind: Vid
 /**
  * Parent Plus entitlement for video.
  * Providers join without paying. Admins may test.
- * When Stripe is live: parent needs plus_plan plus or alerts, and plus_status active/trialing.
- * When Stripe is not live: fail closed for parents (honest billing-not-live).
+ * When subscriptions are off: a signed-in parent is entitled. FEATURE_VIDEO still gates the join.
+ * When Stripe is live and subscriptions are on: parent needs plus_plan plus or alerts, and plus_status active/trialing.
+ * When Stripe is not live and subscriptions are on: fail closed for parents (honest billing-not-live).
  */
-export function parentPlusEntitlesVideo(actor: VideoActor, stripeLive: boolean): VideoPlusGate {
+export function parentPlusEntitlesVideo(
+  actor: VideoActor,
+  stripeLive: boolean,
+  subscriptionsOn = true,
+): VideoPlusGate {
   const role = String(actor.role || "")
     .trim()
     .toLowerCase();
   if (role === "admin") return { ok: true };
   if (role === "provider") return { ok: true };
+  if (!subscriptionsOn && role === "parent") return { ok: true };
   if (stripeLive) {
     if (parentVideoEntitled(actor.plusPlan, actor.plusStatus)) return { ok: true };
     return { ok: false, reason: "plus_required" };
@@ -200,6 +206,8 @@ export function videoJoinGate(input: {
   credentialsPresent: boolean;
   actor: VideoActor;
   stripeLive: boolean;
+  /** Defaults true so existing Plus tests keep the paid gate. */
+  subscriptionsOn?: boolean;
   /** Defaults true so unit tests of Plus / credentials stay focused. */
   sdkWired?: boolean;
   /** Admin lab may mint a token to verify credentials before the SDK ships. */
@@ -207,7 +215,7 @@ export function videoJoinGate(input: {
 }): VideoJoinGate {
   if (!input.featureOn) return { ok: false, reason: "feature_off", error: VIDEO_SCAFFOLD_MESSAGE };
   if (!input.credentialsPresent) return { ok: false, reason: "no_credentials", error: VIDEO_CREDENTIALS_MESSAGE };
-  const plus = parentPlusEntitlesVideo(input.actor, input.stripeLive);
+  const plus = parentPlusEntitlesVideo(input.actor, input.stripeLive, input.subscriptionsOn !== false);
   if (!plus.ok) {
     return {
       ok: false,

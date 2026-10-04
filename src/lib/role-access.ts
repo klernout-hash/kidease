@@ -185,19 +185,23 @@ export function bottomBarKind(input: {
   return "parent";
 }
 
-export function roleNavItems(input: { role: ChromeRole; paid?: boolean }): RoleNavItem[] {
+export function roleNavItems(input: { role: ChromeRole; paid?: boolean; subscriptionsOn?: boolean }): RoleNavItem[] {
   const paid = Boolean(input.paid);
   const planLabel = upgradeNavLabel(paid);
+  const parentUpgrade = input.subscriptionsOn !== false;
   if (input.role === "parent") {
-    return [
+    const items: RoleNavItem[] = [
       { id: "home", label: "Home", to: "/parent", icon: "parent" },
       { id: "search", label: "Search", to: "/search", icon: "explore" },
       { id: "saved", label: "Saved", to: "/parent", search: { tab: "saved" }, icon: "saved" },
       { id: "requests", label: "Requests", to: "/parent", search: { tab: "requests" }, icon: "tourChecklist" },
       { id: "messages", label: "Messages", to: "/inbox", search: { view: "family" }, icon: "messages" },
-      { id: "upgrade", label: planLabel, to: "/parent", search: { tab: "subscription" }, icon: "benefits" },
-      { id: "account", label: "Account", to: "/account", search: { tab: "profile" }, icon: "account" },
     ];
+    if (parentUpgrade) {
+      items.push({ id: "upgrade", label: planLabel, to: "/parent", search: { tab: "subscription" }, icon: "benefits" });
+    }
+    items.push({ id: "account", label: "Account", to: "/account", search: { tab: "profile" }, icon: "account" });
+    return items;
   }
   if (input.role === "provider") {
     return [

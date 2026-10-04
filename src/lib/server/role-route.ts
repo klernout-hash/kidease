@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { notFound, redirect } from "@tanstack/react-router";
 import { sessionBearerMiddleware } from "@/lib/auth/middleware";
+import { subscriptionsEnabled } from "@/lib/features";
 import { e2eChromeFromRequest } from "@/lib/e2e-role-cookie";
 import { guardPrivatePath, navRoleForSession, type ChromeRole } from "@/lib/role-access";
 import { SQL_SETTLE_MS, withTimeout } from "@/lib/timeout";
@@ -32,6 +33,8 @@ export type RoleChromePayload = {
   e2e: boolean;
   /** Auth or the role query failed. Do not redirect this visitor to /login. */
   degraded: boolean;
+  /** SUBSCRIPTIONS_ENABLED. Server-evaluated. Default false. */
+  subscriptionsEnabled: boolean;
 };
 
 const EMPTY: RoleChromePayload = {
@@ -43,6 +46,7 @@ const EMPTY: RoleChromePayload = {
   ownedSlugs: [],
   e2e: false,
   degraded: false,
+  subscriptionsEnabled: false,
 };
 
 const DEGRADED: RoleChromePayload = {
@@ -54,6 +58,7 @@ const DEGRADED: RoleChromePayload = {
   ownedSlugs: [],
   e2e: false,
   degraded: true,
+  subscriptionsEnabled: false,
 };
 
 const chromeByRequest = new WeakMap<Request, Promise<RoleChromePayload>>();
@@ -145,16 +150,17 @@ async function computeRoleChrome(bearer: string | undefined, req: Request | null
     cookie,
     productionBuild: import.meta.env.PROD,
   });
-  if (fixture) return fixture;
+  const plansOn = subscriptionsEnabled();
+  if (fixture) return { ...fixture, subscriptionsEnabled: plansOn };
 
   const { getSessionUser } = await import("@/lib/auth/verify.server");
   let user: { id: string } | null = null;
   try {
     user = await withTimeout(getSessionUser(bearerFrom(req, bearer)), SQL_SETTLE_MS, "role-chrome-auth");
   } catch {
-    return DEGRADED;
+    return { ...DEGRADED, subscriptionsEnabled: plansOn };
   }
-  if (!user) return EMPTY;
+  if (!user) return { ...EMPTY, subscriptionsEnabled: plansOn };
 
   try {
     const row = await withTimeout(queryRoleRow(user.id), SQL_SETTLE_MS, "role-chrome-sql");
@@ -195,9 +201,10 @@ async function computeRoleChrome(bearer: string | undefined, req: Request | null
       ownedSlugs,
       e2e: false,
       degraded: false,
+      subscriptionsEnabled: plansOn,
     };
   } catch {
-    return DEGRADED;
+    return { ...DEGRADED, subscriptionsEnabled: plansOn };
   }
 }
 
