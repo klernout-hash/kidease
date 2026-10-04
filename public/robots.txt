@@ -4,6 +4,7 @@
 # sitemap.xml = marketing pages + city hubs + a capped listing set.
 # sitemap-listings.xml = sitemap index of /sitemap-listings-N.xml urlsets
 # (full public listing catalogue; do not treat the 5 index <loc>s as the URL set).
+# sitemap-age-vacancy.xml = city x age pages with at least 5 public listings.
 
 User-agent: *
 Allow: /
@@ -16,3 +17,4 @@ Disallow: /book/test-ghost-claim-lab
 
 Sitemap: https://www.kidease.ca/sitemap.xml
 Sitemap: https://www.kidease.ca/sitemap-listings.xml
+Sitemap: https://www.kidease.ca/sitemap-age-vacancy.xml
