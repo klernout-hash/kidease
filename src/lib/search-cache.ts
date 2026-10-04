@@ -16,6 +16,7 @@ export function searchCacheKey(input: {
   mode?: string;
   facility?: string;
   page?: number;
+  parentFit?: string;
 }) {
   return [
     "live4",
@@ -32,6 +33,7 @@ export function searchCacheKey(input: {
     typeof input.lat2 === "number" ? input.lat2.toFixed(3) : "",
     typeof input.lng2 === "number" ? input.lng2.toFixed(3) : "",
     input.page && input.page > 1 ? String(input.page) : "",
+    input.parentFit || "",
   ].join(":");
 }
 
