@@ -102,7 +102,7 @@
     "heic-decode": "^2.1.0",
     "inngest": "^4.21.0",
     "kysely": "^0.29.6",
-    "lucide-react": "^0.510.0",
+    "lucide-react": "^1.49.0",
     "pg": "^8.23.1",
     "posthog-js": "^1.435.5",
     "react": "^19.3.0",
