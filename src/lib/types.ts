@@ -188,6 +188,8 @@ export type DaycareCard = Daycare & {
   inCatchment?: boolean;
   /** Set only for Best match. Reason codes, not a sentence, so French can fit. */
   smartMatchWhy?: Array<{ code: string; days?: number; age?: string }>;
+  /** Signed-in parent fit. Plain reasons such as "Takes 18 months". */
+  parentFitChips?: Array<{ en: string; fr: string }>;
 };
 
 export type ReviewStatus = "pending" | "published" | "hidden" | "approved" | "rejected";
