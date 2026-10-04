@@ -5,8 +5,6 @@
  * This file does not send email or SMS.
  */
 
-import { parseCsvRecords } from "./catalog-master.ts";
-
 export const QC_HOME_PROVIDER_TYPE = "milieu_familial_reconnu" as const;
 
 export type QcHomeProviderType = typeof QC_HOME_PROVIDER_TYPE;
@@ -451,6 +449,41 @@ function placeFromCommaName(name: string): string | null {
 
 function bump(reasons: Record<string, number>, key: string) {
   reasons[key] = (reasons[key] || 0) + 1;
+}
+
+/** Same CSV rules as the catalogue importer. Local so public pages do not import Node file code. */
+function parseCsvRecords(csvText: string): string[][] {
+  const text = csvText.replace(/^\uFEFF/, "");
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cur = "";
+  let quoted = false;
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i];
+    if (quoted) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') {
+          cur += '"';
+          i += 1;
+        } else quoted = false;
+      } else cur += ch;
+    } else if (ch === '"') quoted = true;
+    else if (ch === ",") {
+      row.push(cur);
+      cur = "";
+    } else if (ch === "\n" || ch === "\r") {
+      if (ch === "\r" && text[i + 1] === "\n") i += 1;
+      row.push(cur);
+      cur = "";
+      if (row.some((cell) => cell.trim())) rows.push(row);
+      row = [];
+    } else cur += ch;
+  }
+  if (cur.length > 0 || row.length > 0) {
+    row.push(cur);
+    if (row.some((cell) => cell.trim())) rows.push(row);
+  }
+  return rows;
 }
 
 export function parseQcHomeCsv(csvText: string): QcHomeParseResult {
