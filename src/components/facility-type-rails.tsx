@@ -8,6 +8,7 @@ import { matchesListedDaycareType } from "@/lib/care-type";
 import { classifyFacilityType, FACILITY_TYPES, matchesFacilityType, type FacilityType } from "@/lib/facility-type";
 import { homeRailItems } from "@/lib/now-loops";
 import type { DaycareCard as Card } from "@/lib/types";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { uniqueById } from "@/lib/utils";
 
@@ -117,7 +118,7 @@ export function HomeCareTypeRow({
   /** Current city, kept on the category URL. */
   city?: string;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   return (
     <div
       className={`flex w-full min-w-0 justify-start overflow-x-auto overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] lg:[justify-content:safe_center] [&::-webkit-scrollbar]:hidden ${
@@ -160,7 +161,7 @@ export function HomeCareTypeRow({
           return (
             <Link
               key={type}
-              to="/search"
+              to={localePath("/search", locale)}
               search={browseTypeSearch(type, city)}
               data-browse-type={type}
               aria-current={on ? "page" : undefined}

@@ -2,12 +2,16 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
-import { pageSeoHead } from "@/lib/page-seo";
+import { headChromeLocale } from "@/lib/head-locale";
+import { localePath } from "@/lib/locale-path";
+import { pageSeoHead, UNPAIRED_FR_SEO } from "@/lib/page-seo";
+import { provinceLocativeFr } from "@/lib/province-phrase";
 import { jurisdiction } from "@/lib/province-registry";
-import { loadVacancyIndex } from "@/lib/server/vacancy-index";
+import { loadVacancyIndex, type VacancyIndexPage as VacancyIndexData } from "@/lib/server/vacancy-index";
 import type { PublicAgeBand } from "@/lib/public-programs";
 import type { CopyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
+import { formatCount } from "@/lib/utils";
 
 const BAND_LABEL: Record<PublicAgeBand, CopyKey> = {
   infant: "infant",
@@ -18,14 +22,18 @@ const BAND_LABEL: Record<PublicAgeBand, CopyKey> = {
 
 export const Route = createFileRoute("/vacancy-index")({
   loader: () => loadVacancyIndex(),
-  head: () =>
-    pageSeoHead({
+  head: ({ matches }) => {
+    if (headChromeLocale(matches) === "fr") {
+      return pageSeoHead({ ...UNPAIRED_FR_SEO.vacancy, path: "/vacancy-index" });
+    }
+    return pageSeoHead({
       title: "Open spots by province · KidEase",
       description:
         "Public KidEase listings by province and age. Confirmed open spots only. Fees are not on this page.",
       path: "/vacancy-index",
-    }),
-  component: VacancyIndexPage,
+    });
+  },
+  component: VacancyIndexRoute,
 });
 
 function formatCounted(iso: string, locale: string): string {
@@ -39,9 +47,19 @@ function formatCounted(iso: string, locale: string): string {
   }).format(new Date(Date.UTC(year, month - 1, day)));
 }
 
-export function VacancyIndexPage() {
-  const { t, locale } = useCopy();
+function VacancyIndexRoute() {
   const data = Route.useLoaderData();
+  return <VacancyIndexView data={data} />;
+}
+
+function centreLine(n: number, locale: string, template: string): string {
+  const formatted = formatCount(n, locale);
+  if (locale === "fr" && Math.abs(n) < 2) return `${formatted} centre`;
+  return template.replace("{n}", formatted);
+}
+
+export function VacancyIndexView({ data }: { data: VacancyIndexData }) {
+  const { t, locale } = useCopy();
   const counted = t("vacancyIndexCounted").replace("{date}", formatCounted(data.countedOn, locale));
 
   return (
@@ -53,7 +71,7 @@ export function VacancyIndexPage() {
         <p className="mt-2 text-sm text-muted">{counted}</p>
         <div className="mt-6">
           <Button asChild size="lg">
-            <Link to="/search">{t("vacancyIndexCta")}</Link>
+            <Link to={localePath("/search", locale)}>{t("vacancyIndexCta")}</Link>
           </Button>
         </div>
 
@@ -61,10 +79,10 @@ export function VacancyIndexPage() {
           <div className="mt-10 rounded-xl bg-surface p-5 ring-1 ring-border">
             <p className="text-base">{t("vacancyIndexEmpty")}</p>
             <p className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm">
-              <Link to="/" className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline">
+              <Link to={localePath("/", locale)} className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline">
                 {t("vacancyIndexHome")}
               </Link>
-              <Link to="/contact" className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline">
+              <Link to={localePath("/contact", locale)} className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline">
                 {t("vacancyIndexContact")}
               </Link>
             </p>
@@ -80,11 +98,11 @@ export function VacancyIndexPage() {
                     {name}
                   </h2>
                   <p className="mt-1 text-sm tabular-nums text-muted">
-                    {t("vacancyIndexCentres").replace("{n}", String(province.centres))}
+                    {centreLine(province.centres, locale, t("vacancyIndexCentres"))}
                   </p>
                   {province.agesUnknown > 0 ? (
                     <p className="mt-1 text-sm text-muted">
-                      {t("vacancyIndexAgesUnknown").replace("{n}", String(province.agesUnknown))}
+                      {t("vacancyIndexAgesUnknown").replace("{n}", formatCount(province.agesUnknown, locale))}
                     </p>
                   ) : null}
                   <ul className="mt-3 divide-y divide-border">
@@ -93,12 +111,12 @@ export function VacancyIndexPage() {
                         ? t("vacancyIndexSpotsUnstored")
                         : band.openSpots == null
                           ? t("vacancyIndexSpotsUnknown")
-                          : t("vacancyIndexSpots").replace("{n}", String(band.openSpots));
+                          : t("vacancyIndexSpots").replace("{n}", formatCount(band.openSpots, locale));
                       return (
                         <li key={band.band} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3">
                           <span className="font-medium">{t(BAND_LABEL[band.band])}</span>
                           <span className="text-sm text-muted tabular-nums">
-                            {t("vacancyIndexCentres").replace("{n}", String(band.centres))}
+                            {centreLine(band.centres, locale, t("vacancyIndexCentres"))}
                             {" · "}
                             {spots}
                           </span>
@@ -107,17 +125,17 @@ export function VacancyIndexPage() {
                     })}
                   </ul>
                   <Link
-                    to="/search"
+                    to={localePath("/search", locale)}
                     search={{ q: name }}
                     className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
                   >
-                    {t("vacancyIndexSearchProvince").replace("{name}", name)}
+                    {t("vacancyIndexSearchProvince").replace("{name}", locale === "fr" ? provinceLocativeFr(province.code) : name)}
                   </Link>
                 </section>
               );
             })}
             {data.unplaced > 0 ? (
-              <p className="text-sm text-muted">{t("vacancyIndexUnplaced").replace("{n}", String(data.unplaced))}</p>
+              <p className="text-sm text-muted">{t("vacancyIndexUnplaced").replace("{n}", formatCount(data.unplaced, locale))}</p>
             ) : null}
           </div>
         )}

@@ -4,6 +4,8 @@ import { CITY_HUB_LISTING_CAP, cityHubCityName, cityHubDefBySlug, cityHubPath, t
 import { cityHubNotFoundHead } from "@/lib/city-hub-not-found";
 import { isPublicListing } from "@/lib/listing-visibility";
 import { pageSeoHead } from "@/lib/page-seo";
+import { provinceAbbrev } from "@/lib/province-phrase";
+import { formatCount } from "@/lib/utils";
 import { filterSuppressedBundleRows } from "@/lib/server/bundled-catalog";
 import { listingsForCityHub, liveHubCount } from "@/lib/server/city-directory";
 
@@ -49,14 +51,16 @@ export function cityHubHead(loaderData: CityHubSnapshot | undefined, locale: "en
   if (!loaderData) return cityHubNotFoundHead();
   const def = cityHubDefBySlug(loaderData.slug);
   const cityName = def ? cityHubCityName(def, locale) : loaderData.city;
+  const province = provinceAbbrev(loaderData.province, locale);
+  const count = formatCount(loaderData.count, locale);
   const path = locale === "fr" ? `/fr${cityHubPath(loaderData.slug)}` : cityHubPath(loaderData.slug);
   const title =
     locale === "fr"
-      ? `Garderies permises à ${cityName}, ${loaderData.province} · KidEase`
-      : `Licensed daycare in ${cityName}, ${loaderData.province} · KidEase`;
+      ? `Garderies permises à ${cityName}, ${province} · KidEase`
+      : `Licensed daycare in ${cityName}, ${province} · KidEase`;
   const description =
     locale === "fr"
-      ? `Parcourez ${loaderData.count} centres, nurseries et milieux familiaux permis à ${cityName}, ${loaderData.province}. Recherche gratuite sur KidEase: pas de nounous ni de gardiennes.`
-      : `Browse ${loaderData.count} licensed centres, nurseries, and homes in ${cityName}, ${loaderData.province}. Free to search on KidEase: no nannies or sitters.`;
+      ? `Parcourez ${count} centres, prématernelles et milieux familiaux permis à ${cityName}, ${province}. Recherche gratuite sur KidEase: pas de nounous ni de gardiennes.`
+      : `Browse ${count} licensed centres, nurseries, and homes in ${cityName}, ${province}. Free to search on KidEase: no nannies or sitters.`;
   return pageSeoHead({ title, description, path });
 }

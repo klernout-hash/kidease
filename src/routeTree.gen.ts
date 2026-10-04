@@ -108,6 +108,7 @@ import { Route as FrPrivacyRouteImport } from './routes/fr.privacy'
 import { Route as FrSearchRouteImport } from './routes/fr.search'
 import { Route as FrStartADaycareRouteImport } from './routes/fr.start-a-daycare'
 import { Route as FrTermsRouteImport } from './routes/fr.terms'
+import { Route as FrVacancyIndexRouteImport } from './routes/fr.vacancy-index'
 import { Route as GuidesCodeRouteImport } from './routes/guides.$code'
 import { Route as InboxIdRouteImport } from './routes/inbox.$id'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
@@ -646,6 +647,11 @@ const FrTermsRoute = FrTermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => FrRoute,
 } as any)
+const FrVacancyIndexRoute = FrVacancyIndexRouteImport.update({
+  id: '/vacancy-index',
+  path: '/vacancy-index',
+  getParentRoute: () => FrRoute,
+} as any)
 const GuidesCodeRoute = GuidesCodeRouteImport.update({
   id: '/$code',
   path: '/$code',
@@ -952,6 +958,7 @@ export interface FileRoutesByFullPath {
   '/fr/search': typeof FrSearchRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
   '/fr/terms': typeof FrTermsRoute
+  '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/inbox/$id': typeof InboxIdRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -1092,6 +1099,7 @@ export interface FileRoutesByTo {
   '/fr/search': typeof FrSearchRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
   '/fr/terms': typeof FrTermsRoute
+  '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/inbox/$id': typeof InboxIdRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -1235,6 +1243,7 @@ export interface FileRoutesById {
   '/fr/search': typeof FrSearchRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
   '/fr/terms': typeof FrTermsRoute
+  '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/inbox/$id': typeof InboxIdRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -1379,6 +1388,7 @@ export interface FileRouteTypes {
     | '/fr/search'
     | '/fr/start-a-daycare'
     | '/fr/terms'
+    | '/fr/vacancy-index'
     | '/guides/$code'
     | '/inbox/$id'
     | '/invite/$token'
@@ -1519,6 +1529,7 @@ export interface FileRouteTypes {
     | '/fr/search'
     | '/fr/start-a-daycare'
     | '/fr/terms'
+    | '/fr/vacancy-index'
     | '/guides/$code'
     | '/inbox/$id'
     | '/invite/$token'
@@ -1661,6 +1672,7 @@ export interface FileRouteTypes {
     | '/fr/search'
     | '/fr/start-a-daycare'
     | '/fr/terms'
+    | '/fr/vacancy-index'
     | '/guides/$code'
     | '/inbox/$id'
     | '/invite/$token'
@@ -2507,6 +2519,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrTermsRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/vacancy-index': {
+      id: '/fr/vacancy-index'
+      path: '/vacancy-index'
+      fullPath: '/fr/vacancy-index'
+      preLoaderRoute: typeof FrVacancyIndexRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/guides/$code': {
       id: '/guides/$code'
       path: '/$code'
@@ -2839,6 +2858,7 @@ interface FrRouteChildren {
   FrSearchRoute: typeof FrSearchRoute
   FrStartADaycareRoute: typeof FrStartADaycareRoute
   FrTermsRoute: typeof FrTermsRoute
+  FrVacancyIndexRoute: typeof FrVacancyIndexRoute
   FrIndexRoute: typeof FrIndexRoute
   FrDaycareSlugRoute: typeof FrDaycareSlugRoute
   FrJobsPostRoute: typeof FrJobsPostRoute
@@ -2867,6 +2887,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrSearchRoute: FrSearchRoute,
   FrStartADaycareRoute: FrStartADaycareRoute,
   FrTermsRoute: FrTermsRoute,
+  FrVacancyIndexRoute: FrVacancyIndexRoute,
   FrIndexRoute: FrIndexRoute,
   FrDaycareSlugRoute: FrDaycareSlugRoute,
   FrJobsPostRoute: FrJobsPostRoute,
@@ -3070,15 +3091,11 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-
 import type { startInstance } from './start.ts'
-
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
-
     router: Awaited<ReturnType<typeof getRouter>>
-
     config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }

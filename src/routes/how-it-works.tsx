@@ -3,6 +3,7 @@ import { ListChecks, MapPin, MessageCircle } from "lucide-react";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
+import { localePath } from "@/lib/locale-path";
 import { pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/how-it-works")({
 });
 
 export function HowItWorksPage() {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const steps = [
     { n: "1", icon: MapPin, title: t("how1t"), body: t("how1") },
     { n: "2", icon: ListChecks, title: t("how2t"), body: t("how2") },
@@ -42,7 +43,7 @@ export function HowItWorksPage() {
         </ol>
         <div className="mt-8 flex flex-wrap gap-3">
           <Button asChild>
-            <Link to="/search">{t("search")}</Link>
+            <Link to={localePath("/search", locale)}>{t("search")}</Link>
           </Button>
           <Button variant="secondary" asChild>
             <Link to="/claim">{t("claimFindTitle")}</Link>

@@ -44,7 +44,7 @@ export function FaqPage() {
             {t("tourChecklist")}
           </Link>
           {" · "}
-          <Link to="/benefits" className="font-medium text-primary underline-offset-4 hover:underline">
+          <Link to={localePath("/benefits", locale)} className="font-medium text-primary underline-offset-4 hover:underline">
             {t("benefitsShort")}
           </Link>
         </p>

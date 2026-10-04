@@ -51,7 +51,7 @@ test("menu-leaf paths cover hamburger marketing/info links and skip tab stacks",
 
 test("menu page destinations are classified as leaf, excluded, or redirect", () => {
   const menu = src("src/routes/menu.tsx");
-  const tos = [...menu.matchAll(/\bto="(\/[^"]+)"/g)].map((m) => m[1]);
+  const tos = [...menu.matchAll(/\bto(?:="(\/[^"]+)"|\("(\/[^"]+)"\))/g)].map((m) => m[1] || m[2]);
   assert.ok(tos.includes("/get-app"));
   const excluded = new Set([
     "/search",

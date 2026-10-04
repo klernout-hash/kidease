@@ -107,6 +107,11 @@ export function formatMonth(ym: string, locale: Locale = "en") {
   return new Intl.DateTimeFormat(localeTag(locale), { month: "long", year: "numeric" }).format(d);
 }
 
+export function formatCount(n: number, locale: string): string {
+  const safe = Number.isFinite(n) ? n : 0;
+  return new Intl.NumberFormat(locale === "fr" ? "fr-CA" : "en-CA").format(safe);
+}
+
 export function formatAgeRange(min: number, max: number) {
   return `${min} m – ${max} m`;
 }

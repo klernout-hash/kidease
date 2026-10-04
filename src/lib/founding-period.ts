@@ -22,13 +22,13 @@ export const FOUNDING_PAGE = {
   en: {
     kicker: "KidEase",
     title: "Plans for daycares",
-    lead: "KidEase is a Canadian company that helps parents find licensed daycare. Parents always use KidEase for free. Daycares get every tool free during launch.",
+    lead: "KidEase is a Canadian company that helps parents find licensed daycare. Parents can search, save up to five centres, and message daycares at no charge. Daycares get every tool during the free founding period.",
     parentsTitle: "For parents",
-    parentsBody: "Search, save centres, and message daycares. This stays free.",
+    parentsBody: "Search licensed centres, save up to five favourites, and message daycares. No charge.",
     parentsCta: "Search daycares",
     daycareTitle: "For daycares",
     daycareName: "Free",
-    daycarePill: "Free during launch",
+    daycarePill: "Free founding period",
     daycareBody: "Claim your listing and use every daycare tool during the free founding period. No card is charged.",
     foundingTitle: "Founding member",
     foundingBody:
@@ -39,19 +39,19 @@ export const FOUNDING_PAGE = {
   fr: {
     kicker: "KidEase",
     title: "Forfaits pour les garderies",
-    lead: "KidEase est une entreprise canadienne qui aide les parents à trouver une garderie permise. Les parents utilisent toujours KidEase gratuitement. Les garderies ont tous les outils gratuits pendant le lancement.",
+    lead: "KidEase est une entreprise canadienne qui aide les parents à trouver une garderie permise. Les parents cherchent, enregistrent jusqu’à cinq centres et écrivent aux garderies, sans frais. Les garderies ont tous les outils pendant la période fondatrice gratuite.",
     parentsTitle: "Pour les parents",
-    parentsBody: "Cherchez, enregistrez des centres et écrivez aux garderies. Cela reste gratuit.",
+    parentsBody: "Recherche, favoris (5 centres) et messages aux garderies, sans frais.",
     parentsCta: "Chercher une garderie",
     daycareTitle: "Pour les garderies",
     daycareName: "Gratuit",
-    daycarePill: "Gratuit pendant le lancement",
+    daycarePill: "Période fondatrice gratuite",
     daycareBody: "Réclamez votre fiche et utilisez tous les outils de garderie pendant la période fondatrice gratuite. Aucune carte n’est débitée.",
     foundingTitle: "Membre fondateur",
     foundingBody:
       "Les garderies qui réclament leur fiche pendant le lancement reçoivent un badge Membre fondateur. Les membres fondateurs gardent un rabais bloqué quand les extras payants arrivent.",
     claim: "Réclamer votre fiche",
-    priceUnit: "/ mois",
+    priceUnit: "/mois",
   },
 } as const;
 

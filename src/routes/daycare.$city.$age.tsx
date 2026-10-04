@@ -7,7 +7,7 @@ import { ageVacancyCopy, ageVacancyMeta } from "@/lib/age-vacancy-copy";
 import { ageVacancyPath, type AgeVacancyPage } from "@/lib/age-vacancy";
 import { loadAgeVacancyPage } from "@/lib/server/age-vacancy";
 import { pageSeoHead } from "@/lib/page-seo";
-import { isFrPath } from "@/lib/locale-path";
+import { isFrPath, localePath } from "@/lib/locale-path";
 import { SITEMAP_ORIGIN } from "@/lib/sitemap";
 import { useCopy } from "@/lib/use-copy";
 import { useRouterState } from "@tanstack/react-router";
@@ -47,7 +47,7 @@ export function AgeVacancyView({ page }: { page: AgeVacancyPage }) {
       "@type": "ListItem",
       position: index + 1,
       name: hit.name,
-      url: `${SITEMAP_ORIGIN}/daycare/${hit.slug}`,
+      url: `${SITEMAP_ORIGIN}${localePath(`/daycare/${hit.slug}`, fr ? "fr" : "en")}`,
     })),
   };
 
@@ -73,7 +73,7 @@ export function AgeVacancyView({ page }: { page: AgeVacancyPage }) {
         <ul className="mt-6 divide-y divide-border">
           {page.listings.map((hit) => (
             <li key={hit.id} className="py-4">
-              <a className="font-medium text-fg underline-offset-4 hover:underline" href={`/daycare/${hit.slug}`}>
+              <a className="font-medium text-fg underline-offset-4 hover:underline" href={localePath(`/daycare/${hit.slug}`, fr ? "fr" : "en")}>
                 {hit.name}
               </a>
               <p className="mt-1 text-sm text-muted">

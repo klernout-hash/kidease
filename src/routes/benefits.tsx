@@ -21,11 +21,15 @@ import {
   CDB,
   CWELCC_HREF,
   MB_SEE_HREF,
+  MB_SEE_HREF_FR,
   MB_SUBSIDY_HREF,
+  MB_SUBSIDY_HREF_FR,
   MB_ZERO_FEE_EFFECTIVE_EN,
   MB_ZERO_FEE_EFFECTIVE_FR,
   ON_CMSM_HREF,
+  ON_CMSM_HREF_FR,
   ON_SUBSIDY_HREF,
+  ON_SUBSIDY_HREF_FR,
   moneyEn,
   moneyFr,
 } from "@/lib/benefits-facts";
@@ -35,13 +39,14 @@ export const Route = createFileRoute("/benefits")({
   component: BenefitsPage,
 });
 
-type ExtraLink = { href: string; labelEn: string; labelFr: string };
+type ExtraLink = { href: string; hrefFr?: string; labelEn: string; labelFr: string };
 
 const PROGRAMS: {
   key: string;
   title: CopyKey;
   body: CopyKey;
   href: string;
+  hrefFr?: string;
   extras?: ExtraLink[];
   highlight?: boolean;
 }[] = [
@@ -50,8 +55,9 @@ const PROGRAMS: {
     title: "benefitsMbT",
     body: "benefitsMb",
     href: MB_SUBSIDY_HREF,
+    hrefFr: MB_SUBSIDY_HREF_FR,
     highlight: true,
-    extras: [{ href: MB_SEE_HREF, labelEn: "Manitoba fee estimator (SEE)", labelFr: "Estimateur de frais du Manitoba (SEE)" }],
+    extras: [{ href: MB_SEE_HREF, hrefFr: MB_SEE_HREF_FR, labelEn: "Manitoba fee estimator (SEE)", labelFr: "Estimateur de frais du Manitoba (SEE)" }],
   },
   {
     key: "ab",
@@ -68,7 +74,8 @@ const PROGRAMS: {
     title: "benefitsOnT",
     body: "benefitsOn",
     href: ON_SUBSIDY_HREF,
-    extras: [{ href: ON_CMSM_HREF, labelEn: "Find your CMSM or DSSAB", labelFr: "Trouver votre CMSM ou DSSAB" }],
+    hrefFr: ON_SUBSIDY_HREF_FR,
+    extras: [{ href: ON_CMSM_HREF, hrefFr: ON_CMSM_HREF_FR, labelEn: "Find your CMSM or DSSAB", labelFr: "Trouver votre CMSM ou DSSAB" }],
   },
   {
     key: "bc",
@@ -80,24 +87,45 @@ const PROGRAMS: {
       { href: BC_ESTIMATOR_HREF, labelEn: "Official ACCB estimator", labelFr: "Estimateur officiel de la PGEA" },
     ],
   },
-  { key: "qc", title: "benefitsQcT", body: "benefitsQc", href: "https://www.revenuquebec.ca/en/citizens/tax-credits/tax-credit-for-childcare-expenses/" },
+  {
+    key: "qc",
+    title: "benefitsQcT",
+    body: "benefitsQc",
+    href: "https://www.revenuquebec.ca/en/citizens/tax-credits/tax-credit-for-childcare-expenses/",
+    hrefFr: "https://www.revenuquebec.ca/fr/citoyens/credits-dimpot/credit-dimpot-pour-frais-de-garde-denfants/",
+  },
   { key: "sk", title: "benefitsSkT", body: "benefitsSk", href: "https://www.saskatchewan.ca/residents/family-and-social-support/child-care" },
-  { key: "ns", title: "benefitsNsT", body: "benefitsNs", href: "https://childcarenovascotia.ca/families/child-care-subsidy" },
+  {
+    key: "ns",
+    title: "benefitsNsT",
+    body: "benefitsNs",
+    href: "https://childcarenovascotia.ca/families/child-care-subsidy",
+    hrefFr: "https://childcarenovascotia.ca/fr/families/child-care-subsidy",
+  },
   {
     key: "nb",
     title: "benefitsNbT",
     body: "benefitsNb",
     href: "https://www2.gnb.ca/content/gnb/en/corporate/promo/investing-in-early-learning-and-child-care/information-for-families/guide.html",
+    hrefFr:
+      "https://www2.gnb.ca/content/gnb/fr/corporate/promo/investir-services-apprentissage-garde-jeunes-enfants/information-pour-les-familles/guide.html",
   },
   {
     key: "pe",
     title: "benefitsPeT",
     body: "benefitsPe",
     href: "https://www.princeedwardisland.ca/en/information/social-development-and-seniors/help-for-child-care-expenses",
+    hrefFr: "https://www.princeedwardisland.ca/fr/information/developpement-social-et-aines/aide-pour-les-frais-de-garde-denfants",
   },
   { key: "nl", title: "benefitsNlT", body: "benefitsNl", href: "https://www.gov.nl.ca/education/childcare/childcaresubsidy/" },
   { key: "yt", title: "benefitsYtT", body: "benefitsYt", href: "https://yukon.ca/en/universal-child-care" },
-  { key: "nt", title: "benefitsNtT", body: "benefitsNt", href: "https://www.ece.gov.nt.ca/en/average-10-day-child-care" },
+  {
+    key: "nt",
+    title: "benefitsNtT",
+    body: "benefitsNt",
+    href: "https://www.ece.gov.nt.ca/en/average-10-day-child-care",
+    hrefFr: "https://www.ece.gov.nt.ca/fr/services/garde-10-dollars-par-jour",
+  },
   { key: "nu", title: "benefitsNuT", body: "benefitsNu", href: "https://www.gov.nu.ca/en/education-and-schools/10_day-child-care" },
 ];
 
@@ -278,9 +306,9 @@ export function BenefitsPage() {
                   </div>
                   <p className="mt-2 flex-1 text-sm leading-6 text-muted">{t(p.body)}</p>
                   <div className="mt-4 flex flex-col gap-2">
-                    <OfficialLink href={p.href}>{t("benefitsApply")}</OfficialLink>
+                    <OfficialLink href={fr && p.hrefFr ? p.hrefFr : p.href}>{t("benefitsApply")}</OfficialLink>
                     {p.extras?.map((extra) => (
-                      <OfficialLink key={extra.href} href={extra.href}>
+                      <OfficialLink key={extra.href} href={fr && extra.hrefFr ? extra.hrefFr : extra.href}>
                         {fr ? extra.labelFr : extra.labelEn}
                       </OfficialLink>
                     ))}

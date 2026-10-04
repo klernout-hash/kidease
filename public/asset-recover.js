@@ -33,6 +33,12 @@
     return typeof url === "string" && url.indexOf("/assets/") !== -1;
   }
 
+  // Ad blockers that match "posthog" in the URL fail this file on every page.
+  // That is not a stale document. Reloading it loops (the flag clears on load).
+  function isBlockedAnalytics(url) {
+    return typeof url === "string" && /posthog/i.test(url);
+  }
+
   function recover() {
     if (flagged()) return;
     flag();
@@ -71,11 +77,19 @@
       var el = event.target;
       if (!el || el === window) return;
       var url = el.href || el.src || "";
-      if (!isHashedAsset(url)) return;
+      if (!isHashedAsset(url) || isBlockedAnalytics(url)) return;
       if (el.tagName === "LINK" || el.tagName === "SCRIPT") recover();
     },
     true,
   );
+
+  window.addEventListener("vite:preloadError", function (event) {
+    var payload = event && event.payload;
+    var message = payload && payload.message ? String(payload.message) : "";
+    var url = payload && payload.url ? String(payload.url) : message;
+    if (!isBlockedAnalytics(url) && !isBlockedAnalytics(message)) return;
+    if (event.preventDefault) event.preventDefault();
+  });
 
   window.addEventListener("load", function () {
     var sheets = document.querySelectorAll('link[rel="stylesheet"][href*="/assets/"]');

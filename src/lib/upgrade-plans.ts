@@ -373,8 +373,8 @@ export function upgradeUnlockedBenefits(input: {
 }
 
 /**
- * Plan prices. `en-CA` currency symbol is `$`, which reads as US dollars.
- * Format with that symbol, then force a `CA$` prefix (`CA$49`, `CA$7.99`).
+ * Plan prices. English keeps a `CA$` prefix so `$` is not read as US dollars.
+ * French uses fr-CA: the amount, a non-breaking space, then `$` (`0 $`, `7,99 $`).
  */
 export function formatPlanCad(amount: number, locale: PlanLocale): string {
   const fr = locale === "fr";
@@ -389,6 +389,7 @@ export function formatPlanCad(amount: number, locale: PlanLocale): string {
   }).format(safe);
   const negative = formatted.includes("-");
   const numeric = formatted.replace(/[^\d,.]/g, "");
+  if (fr) return `${negative ? "-" : ""}${numeric}\u00a0$`;
   return `${negative ? "-" : ""}CA$${numeric}`;
 }
 

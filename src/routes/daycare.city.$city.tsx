@@ -16,7 +16,9 @@ import {
 } from "@/lib/city-hubs";
 import { breadcrumbJsonLdScript, faqPageJsonLdScript } from "@/lib/page-seo";
 import { cityHubHead, loadCityHub } from "@/lib/city-hub-page";
-import { isFrPath } from "@/lib/locale-path";
+import { isFrPath, localePath } from "@/lib/locale-path";
+import { provinceAbbrev } from "@/lib/province-phrase";
+import { formatCount } from "@/lib/utils";
 import { SITEMAP_ORIGIN, isSafeSitemapSlug } from "@/lib/sitemap";
 import { useCopy } from "@/lib/use-copy";
 
@@ -74,7 +76,7 @@ export function CityHubPage({ hub }: { hub: CityHubSnapshot }) {
       <JsonLd json={faqPageJsonLdScript(faqItems)} />
       <main className="ke-gutter mx-auto max-w-3xl py-12 md:py-16">
         <nav className="text-sm text-muted">
-          <Link to="/" className="hover:text-fg hover:underline">
+          <Link to={localePath("/", fr ? "fr" : "en")} className="hover:text-fg hover:underline">
             KidEase
           </Link>
           <span className="mx-1.5" aria-hidden>
@@ -85,13 +87,13 @@ export function CityHubPage({ hub }: { hub: CityHubSnapshot }) {
         <p className="mt-6 text-sm font-semibold tracking-wide text-primary">{t("cityHubKicker")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">
           {fr
-            ? `Garderies permises à ${cityName}, ${hub.province}`
+            ? `Garderies permises à ${cityName}, ${provinceAbbrev(hub.province, "fr")}`
             : `Licensed daycare in ${cityName}, ${hub.province}`}
         </h1>
         <p className="mt-6 text-lg text-muted">
           {fr
-            ? `KidEase répertorie ${hub.count} établissements permis à ${cityName}: centres, nurseries et milieux familiaux. La recherche est gratuite. Nous ne listons pas les nounous ni les gardiennes.`
-            : `KidEase lists ${hub.count} licensed centres, nurseries, and homes in ${cityName}. Search is free. We do not list nannies or sitters.`}
+            ? `KidEase répertorie ${formatCount(hub.count, "fr")} établissements permis à ${cityName}: centres, prématernelles et milieux familiaux. La recherche est gratuite. Nous ne listons pas les nounous ni les gardiennes.`
+            : `KidEase lists ${formatCount(hub.count, "en")} licensed centres, nurseries, and homes in ${cityName}. Search is free. We do not list nannies or sitters.`}
         </p>
         <p className="mt-4 text-sm text-muted">
           <Link
@@ -102,11 +104,11 @@ export function CityHubPage({ hub }: { hub: CityHubSnapshot }) {
             {t("cityHubSearch")}
           </Link>
           {" · "}
-          <Link to="/benefits" className="font-medium text-primary underline-offset-4 hover:underline">
+          <Link to={localePath("/benefits", fr ? "fr" : "en")} className="font-medium text-primary underline-offset-4 hover:underline">
             {t("benefitsShort")}
           </Link>
           {" · "}
-          <Link to="/faq" className="font-medium text-primary underline-offset-4 hover:underline">
+          <Link to={localePath("/faq", fr ? "fr" : "en")} className="font-medium text-primary underline-offset-4 hover:underline">
             FAQ
           </Link>
         </p>
@@ -117,11 +119,11 @@ export function CityHubPage({ hub }: { hub: CityHubSnapshot }) {
         <p className="mt-2 text-sm text-muted">
           {hub.listings.length < hub.count
             ? fr
-              ? `${hub.listings.length} fiches ci-dessous · ${hub.count} au total dans le répertoire.`
-              : `${hub.listings.length} listings below · ${hub.count} in the full directory.`
+              ? `${formatCount(hub.listings.length, "fr")} fiches ci-dessous · ${formatCount(hub.count, "fr")} au total dans le répertoire.`
+              : `${formatCount(hub.listings.length, "en")} listings below · ${formatCount(hub.count, "en")} in the full directory.`
             : fr
-              ? `${hub.count} fiches permises.`
-              : `${hub.count} licensed listings.`}
+              ? `${formatCount(hub.count, "fr")} fiches permises.`
+              : `${formatCount(hub.count, "en")} licensed listings.`}
         </p>
         <ul className="mt-6 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
           {hub.listings.filter((listing: CityHubListing) => isSafeSitemapSlug(listing.slug)).map((listing: CityHubListing) => (

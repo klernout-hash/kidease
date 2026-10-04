@@ -34,7 +34,10 @@ test("subscriptions stay off and the founding badge stays on by default", () => 
 
 test("founding copy names the free tier and does not invent a paid price", () => {
   const blob = JSON.stringify(FOUNDING_PAGE) + JSON.stringify(FOUNDING_FREE_FEATURES);
-  assert.match(FOUNDING_PAGE.en.daycarePill, /Free during launch/);
+  assert.match(FOUNDING_PAGE.en.daycarePill, /Free founding period/);
+  assert.match(FOUNDING_PAGE.fr.daycarePill, /Période fondatrice gratuite/);
+  assert.match(FOUNDING_PAGE.fr.parentsBody, /5 centres/);
+  assert.doesNotMatch(blob, /toujours|gratuit pour toujours/i);
   assert.match(FOUNDING_PAGE.en.foundingBody, /locked-in discount when paid extras arrive/);
   assert.match(FOUNDING_PAGE.en.lead, /Canadian company/);
   assert.match(blob, /Claimed listing/);

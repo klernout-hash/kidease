@@ -23,7 +23,7 @@ test("Start a Daycare lives on the Daycares footer and the app menu", () => {
   assert.ok(FOOTER_DAYCARES.some((link) => link.to === "/start-a-daycare" && link.labelKey === "startADaycare"));
   assert.ok(FOOTER_DAYCARES.some((link) => link.to === "/start-a-daycare" && link.localePaired));
   assert.ok(!FOOTER_KIDEASE.some((link) => link.to === "/start-a-daycare"));
-  assert.match(src("src/routes/menu.tsx"), /to="\/start-a-daycare"/);
+  assert.match(src("src/routes/menu.tsx"), /to\("\/start-a-daycare"\)/);
 });
 
 test("Start a Daycare is one page with honesty first and live claim CTAs", () => {
