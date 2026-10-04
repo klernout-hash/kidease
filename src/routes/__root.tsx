@@ -2,10 +2,15 @@ import {
   createRootRoute,
   HeadContent,
   Outlet,
+  redirect,
   Scripts,
   useRouterState,
 } from "@tanstack/react-router";
-import { documentLangFromPath } from "@/lib/locale-path";
+import { localeTag } from "@/lib/languages";
+import { pathLocale } from "@/lib/locale-path";
+import { getVisitorLocale } from "@/lib/locale-choice";
+import { LocaleChoiceSync } from "@/components/language-select";
+import { useCopy } from "@/lib/use-copy";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { NativeBoot } from "@/components/native-boot";
@@ -27,20 +32,35 @@ const APP_NAME = "KidEase";
 const ICON_VER = "20";
 const APP_ICON = `/icon-512.png?v=${ICON_VER}`;
 
+const GUEST_LOCALE = {
+  locale: "en" as const,
+  explicit: false,
+  source: "default" as const,
+  suppressGeo: false,
+  redirectTo: null as string | null,
+};
+
 export const Route = createRootRoute({
-  beforeLoad: async () => {
-    const roleChrome = await getRoleChrome().catch(() => ({
-      signedIn: true,
-      role: null as null,
-      paid: false,
-      planLabel: null,
-      renewsOn: null,
-      ownedSlugs: [] as string[],
-      e2e: false,
-      degraded: true,
-      subscriptionsEnabled: false,
-    }));
-    return { roleChrome };
+  beforeLoad: async ({ location }) => {
+    const search = `${location.searchStr || ""}${location.hash || ""}`;
+    const [roleChrome, visitorLocale] = await Promise.all([
+      getRoleChrome().catch(() => ({
+        signedIn: true,
+        role: null as null,
+        paid: false,
+        planLabel: null,
+        renewsOn: null,
+        ownedSlugs: [] as string[],
+        e2e: false,
+        degraded: true,
+        subscriptionsEnabled: false,
+      })),
+      getVisitorLocale({ data: { pathname: location.pathname, search } }).catch(() => GUEST_LOCALE),
+    ]);
+    if (visitorLocale.redirectTo) {
+      throw redirect({ href: visitorLocale.redirectTo, statusCode: 302 });
+    }
+    return { roleChrome, visitorLocale };
   },
   errorComponent: ({ error }) => {
     reportError(error, {
@@ -129,9 +149,12 @@ export const Route = createRootRoute({
 
 function RootDocument() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { locale } = useCopy();
+  const lang =
+    pathLocale(pathname) === "fr" || locale === "fr" ? "fr-CA" : locale === "en" ? "en" : localeTag(locale);
   return (
     <html
-      lang={documentLangFromPath(pathname)}
+      lang={lang}
       className="antialiased"
       data-channel="website"
       data-runtime="web"
@@ -170,6 +193,7 @@ function RootDocument() {
         <PreviewHostBridge />
         <AuthProvider>
           <ThemeBoot />
+          <LocaleChoiceSync />
           <NativeBoot />
           <PushExplain />
           <PostHogBoot />
