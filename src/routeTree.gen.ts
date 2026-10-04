@@ -64,6 +64,7 @@ import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TourChecklistRouteImport } from './routes/tour-checklist'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
+import { Route as VacancyIndexRouteImport } from './routes/vacancy-index'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as Verify2faRouteImport } from './routes/verify-2fa'
 import { Route as AdminFeaturesRouteImport } from './routes/admin.features'
@@ -101,6 +102,7 @@ import { Route as FrPrivacyRouteImport } from './routes/fr.privacy'
 import { Route as FrSearchRouteImport } from './routes/fr.search'
 import { Route as FrStartADaycareRouteImport } from './routes/fr.start-a-daycare'
 import { Route as FrTermsRouteImport } from './routes/fr.terms'
+import { Route as FrVacancyIndexRouteImport } from './routes/fr.vacancy-index'
 import { Route as InboxIdRouteImport } from './routes/inbox.$id'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as JobsPostRouteImport } from './routes/jobs_.post'
@@ -412,6 +414,11 @@ const UnsubscribeRoute = UnsubscribeRouteImport.update({
   path: '/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VacancyIndexRoute = VacancyIndexRouteImport.update({
+  id: '/vacancy-index',
+  path: '/vacancy-index',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VerifyRoute = VerifyRouteImport.update({
   id: '/verify',
   path: '/verify',
@@ -595,6 +602,11 @@ const FrStartADaycareRoute = FrStartADaycareRouteImport.update({
 const FrTermsRoute = FrTermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrVacancyIndexRoute = FrVacancyIndexRouteImport.update({
+  id: '/vacancy-index',
+  path: '/vacancy-index',
   getParentRoute: () => FrRoute,
 } as any)
 const InboxIdRoute = InboxIdRouteImport.update({
@@ -825,6 +837,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/vacancy-index': typeof VacancyIndexRoute
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
   '/admin/features': typeof AdminFeaturesRoute
@@ -861,6 +874,7 @@ export interface FileRoutesByFullPath {
   '/fr/search': typeof FrSearchRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
   '/fr/terms': typeof FrTermsRoute
+  '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/inbox/$id': typeof InboxIdRoute
   '/invite/$token': typeof InviteTokenRoute
   '/jobs/post': typeof JobsPostRoute
@@ -951,6 +965,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/vacancy-index': typeof VacancyIndexRoute
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
   '/admin/features': typeof AdminFeaturesRoute
@@ -987,6 +1002,7 @@ export interface FileRoutesByTo {
   '/fr/search': typeof FrSearchRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
   '/fr/terms': typeof FrTermsRoute
+  '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/inbox/$id': typeof InboxIdRoute
   '/invite/$token': typeof InviteTokenRoute
   '/jobs/post': typeof JobsPostRoute
@@ -1080,6 +1096,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/vacancy-index': typeof VacancyIndexRoute
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
   '/admin/features': typeof AdminFeaturesRoute
@@ -1116,6 +1133,7 @@ export interface FileRoutesById {
   '/fr/search': typeof FrSearchRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
   '/fr/terms': typeof FrTermsRoute
+  '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/inbox/$id': typeof InboxIdRoute
   '/invite/$token': typeof InviteTokenRoute
   '/jobs_/post': typeof JobsPostRoute
@@ -1210,6 +1228,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/tour-checklist'
     | '/unsubscribe'
+    | '/vacancy-index'
     | '/verify'
     | '/verify-2fa'
     | '/admin/features'
@@ -1246,6 +1265,7 @@ export interface FileRouteTypes {
     | '/fr/search'
     | '/fr/start-a-daycare'
     | '/fr/terms'
+    | '/fr/vacancy-index'
     | '/inbox/$id'
     | '/invite/$token'
     | '/jobs/post'
@@ -1336,6 +1356,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/tour-checklist'
     | '/unsubscribe'
+    | '/vacancy-index'
     | '/verify'
     | '/verify-2fa'
     | '/admin/features'
@@ -1372,6 +1393,7 @@ export interface FileRouteTypes {
     | '/fr/search'
     | '/fr/start-a-daycare'
     | '/fr/terms'
+    | '/fr/vacancy-index'
     | '/inbox/$id'
     | '/invite/$token'
     | '/jobs/post'
@@ -1464,6 +1486,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/tour-checklist'
     | '/unsubscribe'
+    | '/vacancy-index'
     | '/verify'
     | '/verify-2fa'
     | '/admin/features'
@@ -1500,6 +1523,7 @@ export interface FileRouteTypes {
     | '/fr/search'
     | '/fr/start-a-daycare'
     | '/fr/terms'
+    | '/fr/vacancy-index'
     | '/inbox/$id'
     | '/invite/$token'
     | '/jobs_/post'
@@ -1593,6 +1617,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   TourChecklistRoute: typeof TourChecklistRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
+  VacancyIndexRoute: typeof VacancyIndexRoute
   VerifyRoute: typeof VerifyRoute
   Verify2faRoute: typeof Verify2faRoute
   ApiDigestRoute: typeof ApiDigestRoute
@@ -2023,6 +2048,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/vacancy-index': {
+      id: '/vacancy-index'
+      path: '/vacancy-index'
+      fullPath: '/vacancy-index'
+      preLoaderRoute: typeof VacancyIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/verify': {
       id: '/verify'
       path: '/verify'
@@ -2280,6 +2312,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/fr/terms'
       preLoaderRoute: typeof FrTermsRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/vacancy-index': {
+      id: '/fr/vacancy-index'
+      path: '/vacancy-index'
+      fullPath: '/fr/vacancy-index'
+      preLoaderRoute: typeof FrVacancyIndexRouteImport
       parentRoute: typeof FrRoute
     }
     '/inbox/$id': {
@@ -2551,6 +2590,7 @@ interface FrRouteChildren {
   FrSearchRoute: typeof FrSearchRoute
   FrStartADaycareRoute: typeof FrStartADaycareRoute
   FrTermsRoute: typeof FrTermsRoute
+  FrVacancyIndexRoute: typeof FrVacancyIndexRoute
   FrIndexRoute: typeof FrIndexRoute
   FrDaycareSlugRoute: typeof FrDaycareSlugRoute
   FrJobsPostRoute: typeof FrJobsPostRoute
@@ -2575,6 +2615,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrSearchRoute: FrSearchRoute,
   FrStartADaycareRoute: FrStartADaycareRoute,
   FrTermsRoute: FrTermsRoute,
+  FrVacancyIndexRoute: FrVacancyIndexRoute,
   FrIndexRoute: FrIndexRoute,
   FrDaycareSlugRoute: FrDaycareSlugRoute,
   FrJobsPostRoute: FrJobsPostRoute,
@@ -2710,6 +2751,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   TourChecklistRoute: TourChecklistRoute,
   UnsubscribeRoute: UnsubscribeRoute,
+  VacancyIndexRoute: VacancyIndexRoute,
   VerifyRoute: VerifyRoute,
   Verify2faRoute: Verify2faRoute,
   ApiDigestRoute: ApiDigestRoute,
