@@ -40,7 +40,8 @@ test("English is the default and an explicit language choice sticks", () => {
   const select = src("src/components/language-select.tsx");
   const useCopy = src("src/lib/use-copy.ts");
   assert.match(boot, /localeFromPreference/);
-  assert.match(boot, /setLocale\(saved\)/);
+  assert.match(boot, /readLocaleCookie/);
+  assert.match(boot, /setLocale\(code, \{ lock: true \}\)/);
   assert.doesNotMatch(boot, /saved === "fr"/);
   assert.doesNotMatch(boot, /LANGUAGES\.some/);
   assert.match(select, /shippedLanguages\(\)/);
@@ -48,6 +49,7 @@ test("English is the default and an explicit language choice sticks", () => {
   assert.match(useCopy, /isShippedLocale/);
   assert.doesNotMatch(boot, /navigator\.language|geoip|province\s*===\s*["']QC/i);
   assert.doesNotMatch(src("src/lib/languages.ts"), /navigator\.language/);
+  assert.doesNotMatch(src("src/lib/locale-geo.ts"), /accept-language/i);
 });
 
 test("French and English copy keys match", async () => {

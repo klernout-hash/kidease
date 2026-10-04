@@ -21,6 +21,7 @@ import { gpsMayMoveSearchOrigin, searchQueryFromUnknown, urlHasGeocodableSearchQ
 import { readDualAnchorPrefs } from "@/lib/dual-anchor";
 import { activateLocale, isExtraLocale } from "@/lib/extra-copy";
 import { localeFromPreference } from "@/lib/languages";
+import { readLocaleCookie, writeLocaleChoiceCookie } from "@/lib/locale-geo";
 import { isFrPath } from "@/lib/locale-path";
 import { useAppStore } from "@/lib/store";
 import { readDistanceUnit } from "@/lib/units";
@@ -45,20 +46,39 @@ export function NativeBoot() {
   const setDistanceUnit = useAppStore((s) => s.setDistanceUnit);
   const setLocationConsent = useAppStore((s) => s.setLocationConsent);
 
+  useLayoutEffect(() => {
+    try {
+      const cookie = readLocaleCookie(document.cookie);
+      const lock = (code: typeof cookie) => {
+        if (!code) return;
+        if (!isExtraLocale(code)) {
+          setLocale(code, { lock: true });
+          return;
+        }
+        void activateLocale(code).then((ok) => {
+          if (ok) setLocale(code, { lock: true });
+        });
+      };
+      if (cookie) {
+        lock(cookie);
+        return;
+      }
+      const raw = window.localStorage.getItem("kidease-locale");
+      const saved = localeFromPreference(raw);
+      // The old boot wrote "en" for everyone. Only a non-English value is a real choice.
+      if (raw && saved !== "en") {
+        writeLocaleChoiceCookie(saved);
+        lock(saved);
+        return;
+      }
+      if (isFrPath(window.location.pathname)) setLocale("fr");
+    } catch {
+      /* ignore */
+    }
+  }, [setLocale]);
+
   useEffect(() => {
     try {
-      if (isFrPath(window.location.pathname)) {
-        setLocale("fr");
-      } else {
-        const saved = localeFromPreference(window.localStorage.getItem("kidease-locale"));
-        if (!isExtraLocale(saved)) {
-          setLocale(saved);
-        } else {
-          void activateLocale(saved).then((ok) => {
-            if (ok) setLocale(saved);
-          });
-        }
-      }
       window.localStorage.removeItem("kidease-live-only");
       setLiveOnly(false);
       setDistanceUnit(readDistanceUnit());
@@ -71,7 +91,7 @@ export function NativeBoot() {
     } catch {
       /* ignore */
     }
-  }, [setLocale, setLiveOnly, setDistanceUnit, setLocationConsent, setWorkOrigin, setAnchorMode]);
+  }, [setLiveOnly, setDistanceUnit, setLocationConsent, setWorkOrigin, setAnchorMode]);
 
   useLayoutEffect(() => {
     // Hide after the shell has painted so the splash does not drop onto a blank WebView.
