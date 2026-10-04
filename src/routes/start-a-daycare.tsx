@@ -56,7 +56,7 @@ function Ctas() {
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
       <Button asChild size="lg">
         <Link to="/claim" hash="enroll">
-          {t("enrollToday")}
+          {t("createKideaseListing")}
         </Link>
       </Button>
       <Button asChild size="lg" variant="secondary">

@@ -104,8 +104,8 @@ export function ListingReviewForm({ daycareId, slug }: { daycareId: string; slug
           .finally(() => setBusy(false));
       }}
     >
-      <p className="font-medium">{t("writeReview")}</p>
-      <p className="text-sm text-muted">{t("writeReviewLead")}</p>
+      <p className="font-medium">{access?.reason === "enrolment" ? t("verifiedReviewPrompt") : t("writeReview")}</p>
+      <p className="text-sm text-muted">{access?.reason === "enrolment" ? t("verifiedReviewLead") : t("writeReviewLead")}</p>
       <fieldset>
         <legend className="text-sm">{t("reviewRating")}</legend>
         <div className="mt-2 flex gap-2">

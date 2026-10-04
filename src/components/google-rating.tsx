@@ -26,12 +26,13 @@ export function GoogleRating({
   item,
   ratingX10,
   reviewCount,
-  compact = false,
+  compact: _compact = false,
   asButton = false,
 }: {
   item: GoogleBits;
   ratingX10: number;
   reviewCount: number;
+  /** Kept so existing cards can pass it. The words Google rating always show. */
   compact?: boolean;
   asButton?: boolean;
 }) {
@@ -39,26 +40,24 @@ export function GoogleRating({
   if (ratingX10 <= 0 || reviewCount <= 0) return null;
   const rating = ratingX10 / 10;
   const href = googleReviewsUrl(item);
-  const label = `${rating.toFixed(1)} · ${reviewCount} ${t("reviews")} · ${t("googleReviews")}`;
+  const label = `${t("googleReviews")} ${rating.toFixed(1)}, ${reviewCount} ${t("reviews")}`;
   const inner = (
     <>
       <GoogleStars rating={rating} />
+      <span className="font-medium">{t("googleReviews")}</span>
       <span className="tabular-nums font-medium">{rating.toFixed(1)}</span>
-      {compact ? (
-        <span className="text-muted">({reviewCount})</span>
-      ) : (
-        <span className="text-muted">
-          · {reviewCount} {t("reviews")}
-        </span>
-      )}
+      <span className="text-muted">({reviewCount})</span>
     </>
   );
-  const cls = "inline-flex items-center gap-1 text-sm hover:underline";
+  const cls = "inline-flex min-h-11 flex-wrap items-center gap-x-1 gap-y-0.5 text-sm hover:underline";
+  const compactMark = _compact ? "true" : undefined;
   if (asButton) {
     return (
       <button
         type="button"
         className={cls}
+        data-ke="google-rating"
+        data-compact={compactMark}
         aria-label={label}
         onClick={(e) => {
           e.preventDefault();
@@ -71,7 +70,16 @@ export function GoogleRating({
     );
   }
   return (
-    <a href={href} target="_blank" rel="noreferrer" className={cls} aria-label={label} onClick={(e) => e.stopPropagation()}>
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className={cls}
+      data-ke="google-rating"
+      data-compact={compactMark}
+      aria-label={label}
+      onClick={(e) => e.stopPropagation()}
+    >
       {inner}
     </a>
   );
