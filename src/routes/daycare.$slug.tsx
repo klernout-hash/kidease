@@ -21,6 +21,7 @@ import {
   ListingSnapshotGrid,
 } from "@/components/listing-parent-pack";
 import { WaitlistOptIn } from "@/components/waitlist-opt-in";
+import { JoinWaitlist } from "@/components/join-waitlist";
 import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto, ListingPhotoFallback } from "@/components/building-photo";
 import { LISTING_PLACEHOLDER, classifyListingPhotos, isOfficialBuildingPhoto, primaryListingPhoto } from "@/lib/listing-photo";
@@ -919,6 +920,7 @@ export function Listing() {
                   <WaitlistOptIn daycareId={d.id} province={d.province} next={`/daycare/${d.slug}`} />
                 </div>
               ) : null}
+              <JoinWaitlist daycareId={d.id} next={`/daycare/${d.slug}`} />
             </section>
 
             {d.amenities.split(",").filter(Boolean).length ? (

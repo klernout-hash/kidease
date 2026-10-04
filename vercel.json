@@ -23,6 +23,10 @@
     {
       "path": "/api/provincial-vacancy",
       "schedule": "15 8 * * *"
+    },
+    {
+      "path": "/api/spot-offers",
+      "schedule": "40 * * * *"
     }
   ],
   "rewrites": [

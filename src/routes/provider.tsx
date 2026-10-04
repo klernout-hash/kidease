@@ -62,6 +62,7 @@ import { officialLicenceNumber } from "@/lib/licensing";
 import { ProviderMoneyPanel } from "@/components/provider-money";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
 import { VacancyConfirmLoop } from "@/components/vacancy-confirm";
+import { SpotOfferDesk } from "@/components/spot-offer-desk";
 import { DirectorNudgeQueue } from "@/components/director-nudges";
 import { ProviderPlanBanner } from "@/components/provider-plan-banner";
 import { PayCtas, useShowPayCtas } from "@/components/pay-chrome";
@@ -444,6 +445,7 @@ function ProviderPage() {
           <ActionRequiredBanner listings={listings} />
           <DirectorNudgeQueue listings={listings} stats={stats} onConfirmed={() => void load()} />
           <VacancyConfirmLoop listings={listings} onConfirmed={() => void load()} />
+          <SpotOfferDesk />
           {listings.length ? (
             <FreePageExplainer
               listings={listings.map((d) => ({
