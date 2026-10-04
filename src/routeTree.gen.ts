@@ -48,6 +48,7 @@ import { Route as JobsRouteImport } from './routes/jobs'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MeetTheTeamRouteImport } from './routes/meet-the-team'
 import { Route as MenuRouteImport } from './routes/menu'
+import { Route as NeedCareFastRouteImport } from './routes/need-care-fast'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as ParentRouteImport } from './routes/parent'
 import { Route as PayRouteImport } from './routes/pay'
@@ -63,6 +64,7 @@ import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TourChecklistRouteImport } from './routes/tour-checklist'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
+import { Route as VacancyIndexRouteImport } from './routes/vacancy-index'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as Verify2faRouteImport } from './routes/verify-2fa'
 import { Route as AdminFeaturesRouteImport } from './routes/admin.features'
@@ -95,6 +97,7 @@ import { Route as FrHelpRouteImport } from './routes/fr.help'
 import { Route as FrHowItWorksRouteImport } from './routes/fr.how-it-works'
 import { Route as FrJobsRouteImport } from './routes/fr.jobs'
 import { Route as FrLoginRouteImport } from './routes/fr.login'
+import { Route as FrNeedCareFastRouteImport } from './routes/fr.need-care-fast'
 import { Route as FrPrivacyRouteImport } from './routes/fr.privacy'
 import { Route as FrSearchRouteImport } from './routes/fr.search'
 import { Route as FrStartADaycareRouteImport } from './routes/fr.start-a-daycare'
@@ -330,6 +333,11 @@ const MenuRoute = MenuRouteImport.update({
   path: '/menu',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NeedCareFastRoute = NeedCareFastRouteImport.update({
+  id: '/need-care-fast',
+  path: '/need-care-fast',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NotificationsRoute = NotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
@@ -403,6 +411,11 @@ const TourChecklistRoute = TourChecklistRouteImport.update({
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
   path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VacancyIndexRoute = VacancyIndexRouteImport.update({
+  id: '/vacancy-index',
+  path: '/vacancy-index',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VerifyRoute = VerifyRouteImport.update({
@@ -563,6 +576,11 @@ const FrJobsRoute = FrJobsRouteImport.update({
 const FrLoginRoute = FrLoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrNeedCareFastRoute = FrNeedCareFastRouteImport.update({
+  id: '/need-care-fast',
+  path: '/need-care-fast',
   getParentRoute: () => FrRoute,
 } as any)
 const FrPrivacyRoute = FrPrivacyRouteImport.update({
@@ -797,6 +815,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
+  '/need-care-fast': typeof NeedCareFastRoute
   '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRouteWithChildren
   '/pay': typeof PayRouteWithChildren
@@ -812,6 +831,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/vacancy-index': typeof VacancyIndexRoute
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
   '/admin/features': typeof AdminFeaturesRoute
@@ -843,6 +863,7 @@ export interface FileRoutesByFullPath {
   '/fr/how-it-works': typeof FrHowItWorksRoute
   '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
+  '/fr/need-care-fast': typeof FrNeedCareFastRoute
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/search': typeof FrSearchRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
@@ -922,6 +943,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
+  '/need-care-fast': typeof NeedCareFastRoute
   '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRouteWithChildren
   '/plans': typeof PlansRoute
@@ -936,6 +958,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/vacancy-index': typeof VacancyIndexRoute
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
   '/admin/features': typeof AdminFeaturesRoute
@@ -967,6 +990,7 @@ export interface FileRoutesByTo {
   '/fr/how-it-works': typeof FrHowItWorksRoute
   '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
+  '/fr/need-care-fast': typeof FrNeedCareFastRoute
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/search': typeof FrSearchRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
@@ -1048,6 +1072,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
+  '/need-care-fast': typeof NeedCareFastRoute
   '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRouteWithChildren
   '/pay': typeof PayRouteWithChildren
@@ -1063,6 +1088,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/vacancy-index': typeof VacancyIndexRoute
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
   '/admin/features': typeof AdminFeaturesRoute
@@ -1094,6 +1120,7 @@ export interface FileRoutesById {
   '/fr/how-it-works': typeof FrHowItWorksRoute
   '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
+  '/fr/need-care-fast': typeof FrNeedCareFastRoute
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/search': typeof FrSearchRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
@@ -1176,6 +1203,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/meet-the-team'
     | '/menu'
+    | '/need-care-fast'
     | '/notifications'
     | '/parent'
     | '/pay'
@@ -1191,6 +1219,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/tour-checklist'
     | '/unsubscribe'
+    | '/vacancy-index'
     | '/verify'
     | '/verify-2fa'
     | '/admin/features'
@@ -1222,6 +1251,7 @@ export interface FileRouteTypes {
     | '/fr/how-it-works'
     | '/fr/jobs'
     | '/fr/login'
+    | '/fr/need-care-fast'
     | '/fr/privacy'
     | '/fr/search'
     | '/fr/start-a-daycare'
@@ -1301,6 +1331,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/meet-the-team'
     | '/menu'
+    | '/need-care-fast'
     | '/notifications'
     | '/parent'
     | '/plans'
@@ -1315,6 +1346,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/tour-checklist'
     | '/unsubscribe'
+    | '/vacancy-index'
     | '/verify'
     | '/verify-2fa'
     | '/admin/features'
@@ -1346,6 +1378,7 @@ export interface FileRouteTypes {
     | '/fr/how-it-works'
     | '/fr/jobs'
     | '/fr/login'
+    | '/fr/need-care-fast'
     | '/fr/privacy'
     | '/fr/search'
     | '/fr/start-a-daycare'
@@ -1426,6 +1459,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/meet-the-team'
     | '/menu'
+    | '/need-care-fast'
     | '/notifications'
     | '/parent'
     | '/pay'
@@ -1441,6 +1475,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/tour-checklist'
     | '/unsubscribe'
+    | '/vacancy-index'
     | '/verify'
     | '/verify-2fa'
     | '/admin/features'
@@ -1472,6 +1507,7 @@ export interface FileRouteTypes {
     | '/fr/how-it-works'
     | '/fr/jobs'
     | '/fr/login'
+    | '/fr/need-care-fast'
     | '/fr/privacy'
     | '/fr/search'
     | '/fr/start-a-daycare'
@@ -1553,6 +1589,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MeetTheTeamRoute: typeof MeetTheTeamRoute
   MenuRoute: typeof MenuRoute
+  NeedCareFastRoute: typeof NeedCareFastRoute
   NotificationsRoute: typeof NotificationsRoute
   ParentRoute: typeof ParentRouteWithChildren
   PayRoute: typeof PayRouteWithChildren
@@ -1568,6 +1605,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   TourChecklistRoute: typeof TourChecklistRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
+  VacancyIndexRoute: typeof VacancyIndexRoute
   VerifyRoute: typeof VerifyRoute
   Verify2faRoute: typeof Verify2faRoute
   ApiDigestRoute: typeof ApiDigestRoute
@@ -1886,6 +1924,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MenuRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/need-care-fast': {
+      id: '/need-care-fast'
+      path: '/need-care-fast'
+      fullPath: '/need-care-fast'
+      preLoaderRoute: typeof NeedCareFastRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/notifications': {
       id: '/notifications'
       path: '/notifications'
@@ -1989,6 +2034,13 @@ declare module '@tanstack/react-router' {
       path: '/unsubscribe'
       fullPath: '/unsubscribe'
       preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vacancy-index': {
+      id: '/vacancy-index'
+      path: '/vacancy-index'
+      fullPath: '/vacancy-index'
+      preLoaderRoute: typeof VacancyIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/verify': {
@@ -2213,6 +2265,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/fr/login'
       preLoaderRoute: typeof FrLoginRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/need-care-fast': {
+      id: '/fr/need-care-fast'
+      path: '/need-care-fast'
+      fullPath: '/fr/need-care-fast'
+      preLoaderRoute: typeof FrNeedCareFastRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/privacy': {
@@ -2507,6 +2566,7 @@ interface FrRouteChildren {
   FrHowItWorksRoute: typeof FrHowItWorksRoute
   FrJobsRoute: typeof FrJobsRoute
   FrLoginRoute: typeof FrLoginRoute
+  FrNeedCareFastRoute: typeof FrNeedCareFastRoute
   FrPrivacyRoute: typeof FrPrivacyRoute
   FrSearchRoute: typeof FrSearchRoute
   FrStartADaycareRoute: typeof FrStartADaycareRoute
@@ -2530,6 +2590,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrHowItWorksRoute: FrHowItWorksRoute,
   FrJobsRoute: FrJobsRoute,
   FrLoginRoute: FrLoginRoute,
+  FrNeedCareFastRoute: FrNeedCareFastRoute,
   FrPrivacyRoute: FrPrivacyRoute,
   FrSearchRoute: FrSearchRoute,
   FrStartADaycareRoute: FrStartADaycareRoute,
@@ -2653,6 +2714,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MeetTheTeamRoute: MeetTheTeamRoute,
   MenuRoute: MenuRoute,
+  NeedCareFastRoute: NeedCareFastRoute,
   NotificationsRoute: NotificationsRoute,
   ParentRoute: ParentRouteWithChildren,
   PayRoute: PayRouteWithChildren,
@@ -2668,6 +2730,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   TourChecklistRoute: TourChecklistRoute,
   UnsubscribeRoute: UnsubscribeRoute,
+  VacancyIndexRoute: VacancyIndexRoute,
   VerifyRoute: VerifyRoute,
   Verify2faRoute: Verify2faRoute,
   ApiDigestRoute: ApiDigestRoute,

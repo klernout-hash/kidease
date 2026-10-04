@@ -37,6 +37,14 @@ export function CitiesPage() {
       <main className="ke-gutter mx-auto max-w-3xl py-10 md:py-14" data-ke="cities-index">
         <h1 className="text-[clamp(1.75rem,4vw,2.5rem)]">{t("browseCities")}</h1>
         <p className="mt-3 max-w-xl text-base text-muted">{t("citiesLead")}</p>
+        <p className="mt-2">
+          <Link
+            to="/vacancy-index"
+            className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline"
+          >
+            {t("vacancyIndexLink")}
+          </Link>
+        </p>
         <div className="mt-10 space-y-8">
           {groups.map((group) => {
             const provinceCount = counts.provinces[group.code] || 0;
