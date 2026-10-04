@@ -2,7 +2,6 @@ import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-r
 import { Shell } from "@/components/shell";
 import { START_DAYCARE_PTS } from "@/lib/start-daycare-hub";
 import { provincialGuideCopy } from "@/lib/provincial-guide-copy";
-import { provincialGuidePath } from "@/lib/provincial-guides";
 import { pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 
