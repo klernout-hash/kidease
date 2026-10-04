@@ -327,6 +327,11 @@ export const DaycareCard = memo(function DaycareCard({
               {whyMatchLine(item, t)}
             </p>
           ) : null}
+          {item.parentFitChips?.length ? (
+            <p className="mt-0.5 line-clamp-2 text-[13px] leading-5 text-fg" data-ke="parent-fit">
+              {item.parentFitChips.map((chip) => (locale === "fr" ? chip.fr : chip.en)).join(" · ")}
+            </p>
+          ) : null}
           {ages ? (
             <p className="mt-0.5 text-[13px] font-medium leading-5 text-fg" data-ke="card-age-range">
               {ages}
