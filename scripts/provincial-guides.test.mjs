@@ -39,4 +39,10 @@ test("provincial guides cite official pages and add no new fee figures", () => {
   assert.match(copy.waitlistBody, /does not charge a waitlist fee/);
   assert.match(readFileSync(join(root, "src/routes/guides.$code.tsx"), "utf8"), /CANADA_WIDE_CHILD_CARE_URL/);
   assert.match(readFileSync(join(root, "src/routes/guides.$code.tsx"), "utf8"), /href="\/claim"/);
+  const index = readFileSync(join(root, "src/routes/guides.tsx"), "utf8");
+  const frIndex = readFileSync(join(root, "src/routes/fr.guides.tsx"), "utf8");
+  assert.match(index, /pathname\.startsWith\("\/guides\/"\)/);
+  assert.match(index, /return <Outlet \/>/);
+  assert.match(frIndex, /pathname\.startsWith\("\/fr\/guides\/"\)/);
+  assert.match(frIndex, /return <Outlet \/>/);
 });
