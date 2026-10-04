@@ -384,6 +384,11 @@ export function ParentDesk({
           <Suspense fallback={<div className="ke-skel mt-6 h-40 rounded-xl" aria-hidden="true" />}>
             <MyWaitlists />
           </Suspense>
+          <p className="mt-4 text-sm">
+            <Link to="/parent/spot-offers" className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline">
+              {locale === "fr" ? "Voir les offres de place" : "See spot offers"}
+            </Link>
+          </p>
         </div>
       ) : null}
 

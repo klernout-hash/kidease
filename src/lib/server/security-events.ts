@@ -23,6 +23,8 @@ export type SecurityKind =
   | "ranking_market_run"
   | "provincial_vacancy_denied"
   | "provincial_vacancy_run"
+  | "spot_offer_expiry_denied"
+  | "spot_offer_expiry_run"
   | "seed_catalog_denied"
   | "seed_catalog_run"
   | "employee_invite"
