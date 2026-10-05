@@ -2,7 +2,7 @@
 
 KidEase push is for **transactional** vacancy and alert notifications later (spot opened, claim status, bill reminder). Not marketing blasts. Not OneSignal. Not Meta.
 
-`FEATURE_PUSH` defaults **off**. Absent Vercel env = off. **www.kidease.ca does not register tokens and does not prompt** even after you flip the flag — only the Capacitor iOS / Android app does.
+`FEATURE_PUSH` defaults **off**. Absent Vercel env = off. Native iOS and Android register with Capacitor when the flag is on. www.kidease.ca does not register native device tokens. **Get alerts** on the website asks only when the browser supports Web Push, `VITE_FCM_VAPID_PUBLIC_KEY` is set, and `FEATURE_PUSH` is armed. Otherwise it opens account alert settings. Nothing is sent after 9 p.m. Winnipeg time.
 
 **Production vs Preview:** on Vercel Production the flag is ignored unless FCM and/or APNs secrets exist (`src/lib/channel-readiness.ts`). Preview/dev may set `FEATURE_PUSH=1` to exercise Chat lab + native register; send still no-ops without credentials.
 
@@ -37,7 +37,7 @@ Set the same keys on **Production and Preview** (encrypted). Never commit values
 | `APNS_BUNDLE_ID` | iOS | `ca.kidease.app` (Capacitor `appId`). |
 | `APNS_KEY` | iOS | Contents of the Auth Key `.p8` (-----BEGIN PRIVATE KEY----- …). |
 | `APNS_PRODUCTION` | iOS TestFlight / App Store | `1` for production APNs (`api.push.apple.com`). Default / `0` is sandbox. TestFlight uses production. |
-| `VITE_FCM_VAPID_PUBLIC_KEY` | web push only | **Not used.** www stays off. Leave blank. |
+| `VITE_FCM_VAPID_PUBLIC_KEY` | web push subscribe | Public key only. Get alerts registers a subscription when this is set and `FEATURE_PUSH` is armed. Delivery of web pushes still needs a VAPID private key sender. Leave blank to skip the permission sheet. |
 
 There is no legacy “FCM server key” in this scaffold. Firebase Cloud Messaging HTTP v1 uses the service account trio above. If a Console still shows a server key, do not put it in git and do not add a new env name.
 
@@ -71,7 +71,7 @@ The web client dynamically imports the plugin only when:
 - `Capacitor.isNativePlatform()` is true,
 - `getPushClientStatus()` says `FEATURE_PUSH` is on.
 
-www never calls `Notification.requestPermission()`. `Permissions-Policy: notifications=()` stays on the web origin.
+www calls `Notification.requestPermission()` only from the Get alerts button, and only when Web Push is supported and `FEATURE_PUSH` is armed. The first view in a browser tab does not ask.
 
 ## What is wired
 
@@ -82,6 +82,8 @@ www never calls `Notification.requestPermission()`. `Permissions-Policy: notific
 - `POST /api/admin/push-dry-run` and `dryRunPush` — admin only. Counts tokens. **Does not send.**
 - `sendPushNotification` / `sendPushToDevices` — FCM HTTP v1 and APNs HTTP/2 when the flag **and** credentials are present. Otherwise skip / dry-run. Invalid tokens (UNREGISTERED / 410) are deleted.
 - Admin → Chat lab shows FEATURE_PUSH on/off, source (env / PostHog), env-name presence (no secret values), a coming-soon / flag-off state, and the FCM next-build checklist. Staff can run a dry-run. See `docs/chat.md`.
+- Migration `0084_alert_push_prefs.sql`: category opt-out (`notification_prefs`), quiet-hours queue (`notification_outbox`), and stored web subscriptions. Billing alerts are skipped while `SUBSCRIPTIONS_ENABLED` is off. Quiet hours are 9 p.m. to 8 a.m. America/Winnipeg.
+- Account → Alerts (parent and daycare) saves those toggles in English and French. Unsubscribe links use `/unsubscribe?token=ka.…`.
 
 ## How to turn it on later
 
@@ -91,9 +93,8 @@ www never calls `Notification.requestPermission()`. `Permissions-Policy: notific
 4. `POST /api/admin/push-dry-run` — expect `dryRun: true` and a token count. Still no send.
 5. Call `sendPushNotification({ userId, title, body })` from a server path (vacancy / claim) only after a dry-run looks right. Keep copy transactional.
 
-## Later (not this PR)
+## Later
 
-- Vacancy alert fan-out to waitlisted parents (need consent + stored tokens). Search alerts stay email-only.
-- Deep links into `/inbox` or a listing.
-- Web push / VAPID. Do not enable on www without a separate product decision.
+- Web push delivery (VAPID private key and encryption). Subscriptions can be stored. They are not sent yet.
+- Saved-listing edits, weekly "still looking", review replies, document expiry, and photo or review attention. The toggles exist. The events are not wired yet.
 - OneSignal or another vendor. Not planned.

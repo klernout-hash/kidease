@@ -8,10 +8,11 @@
  *   - in-app family-desk notices
  *   - email via Resend/SendGrid when keyed (else honest stub). List-Unsubscribe. Free.
  * Delivery later (wired no-op until flags + keys):
- *   - sendPushNotification when FEATURE_PUSH is armed + a native token exists
+ *   - category push (spot or match) when FEATURE_PUSH is armed and the parent left it on
  *   - sendSms when FEATURE_SMS + CASL. www never prompts for push.
- * SMS and push require Parent Alerts (plus_plan=alerts, active or trialing).
- * Email and in-app alerts stay on Free. Both channels still no-op while their flags are off.
+ * SMS still requires Parent Alerts (plus_plan=alerts, active or trialing).
+ * Spot and match push follow the account alert toggles and quiet hours.
+ * Email and in-app alerts stay on Free. Push and SMS still no-op while their flags are off.
  */
 import { getSql, dbSource, type Sql } from "@/lib/db";
 import { SEARCH_ALERTS_CAMPAIGN_TAG } from "@/lib/email-suppressions";
@@ -58,7 +59,6 @@ import {
   winnipegDayKey,
   type PlannedAlertEvent,
 } from "@/lib/search-alert-policy";
-import { sendPushNotification } from "@/lib/server/push.server";
 import { sendSms } from "@/lib/server/sms";
 
 type SavedSearchJobRow = {
@@ -495,6 +495,10 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
   const dryRun = Boolean(opts?.dryRun);
   const spotMail = openSpotAlertsEnabled();
   const now = opts?.now ?? new Date();
+  if (!dryRun) {
+    const { drainAlertOutbox } = await import("@/lib/server/alert-dispatch");
+    await drainAlertOutbox({ now }).catch(() => undefined);
+  }
   const nowMs = now.getTime();
   const sql = await getSql();
   const searches = await sql<SavedSearchJobRow>`
@@ -659,6 +663,37 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
         }
       }
 
+      const { dispatchCustomerAlert } = await import("@/lib/server/alert-dispatch");
+      let pushToday = await countChannelSendsToday(sql, search.user_id, search.id, "push", now);
+      for (const ev of events) {
+        if (!underPushSmsDailyCap(pushToday)) {
+          pushSkipped += 1;
+          break;
+        }
+        const category = ev.kind === "new_centre" ? "match" : ev.kind === "request_reply" ? "message" : "spot_opened";
+        const pushed = await dispatchCustomerAlert({
+          userId: search.user_id,
+          category,
+          vars: { name: ev.name },
+          href: `/daycare/${ev.slug}`,
+          dedupeKey: `search:${search.id}:${ev.daycareId}:${ev.kind}`,
+          emailFallback: false,
+          now,
+        });
+        if (pushed.pushed) {
+          pushToday += 1;
+          await recordChannelSend(sql, {
+            userId: search.user_id,
+            savedSearchId: search.id,
+            daycareId: ev.daycareId,
+            kind: ev.kind,
+            channel: "push",
+          });
+        } else if (pushed.status !== "held" && pushed.reason !== "opt_out") {
+          pushSkipped += 1;
+        }
+      }
+
       const spotPlan = planOpenSpotAlerts({
         spots: postedSpotsForAlerts(matches, events),
         watches: [spotWatchFromSearch(search)],
@@ -685,7 +720,6 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
       }
 
       const { evaluateCaslSend } = await import("@/lib/server/casl-consent");
-      const actor = await lookupUser(search.user_id);
       const phoneRows = await sql<{ phone: string | null; plus_plan: string | null; plus_status: string | null }>`
         select phone, plus_plan, plus_status from profiles where user_id = ${search.user_id} limit 1
       `.catch(() => [] as { phone: string | null; plus_plan: string | null; plus_status: string | null }[]);
@@ -697,7 +731,6 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
         purpose: "service",
         address: phoneRows[0]?.phone,
       });
-      let pushToday = await countChannelSendsToday(sql, search.user_id, search.id, "push", now);
       let smsToday = await countChannelSendsToday(sql, search.user_id, search.id, "sms", now);
       for (const ev of eventsForOpenSpotMail(events, spotMail).filter(
         (row) => row.kind !== "vacancy_reconfirmed" || immediateIds.has(row.daycareId),
@@ -710,27 +743,6 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
           originLabel: search.center_label,
           facilityType: ev.facilityType,
         });
-        if (underPushSmsDailyCap(pushToday)) {
-          const push = await sendPushNotification({
-            userId: search.user_id,
-            title: copy.title,
-            body: copy.body,
-          });
-          if (push.ok) {
-            pushToday += 1;
-            await recordChannelSend(sql, {
-              userId: search.user_id,
-              savedSearchId: search.id,
-              daycareId: ev.daycareId,
-              kind: ev.kind,
-              channel: "push",
-            });
-          } else {
-            pushSkipped += 1;
-          }
-        } else {
-          pushSkipped += 1;
-        }
         if (underPushSmsDailyCap(smsToday)) {
           const sms = await sendSms({
             to: phoneRows[0]?.phone || "",

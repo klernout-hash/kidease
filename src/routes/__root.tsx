@@ -15,6 +15,7 @@ import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { NativeBoot } from "@/components/native-boot";
 import { PushExplain } from "@/components/push-explain";
+import { GetAlertsPrompt } from "@/components/get-alerts-prompt";
 import { ThemeBoot } from "@/components/theme-boot";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { RouteProgress } from "@/components/route-progress";
@@ -196,6 +197,7 @@ function RootDocument() {
           <LocaleChoiceSync />
           <NativeBoot />
           <PushExplain />
+          <GetAlertsPrompt />
           <PostHogBoot />
           <RoleBoot />
           <RouteProgress />

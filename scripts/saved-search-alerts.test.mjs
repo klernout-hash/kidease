@@ -118,7 +118,8 @@ test("matcher uses ST_DWithin like nearby.ts (lng, lat)", () => {
   assert.match(geo, /st_makepoint\(\$1, \$2\)/);
   assert.match(`${nearby}\n${neon}\n${geo}`, /st_makepoint\(\$1, \$2\)/);
   assert.match(alerts, /last_vacancy_updated_at/);
-  assert.match(alerts, /sendPushNotification/);
+  assert.match(alerts, /dispatchCustomerAlert/);
+  assert.match(src("src/lib/server/alert-dispatch.ts"), /sendPushNotification/);
   assert.match(alerts, /sendSms/);
   assert.match(alerts, /FEATURE_PUSH/);
   assert.doesNotMatch(alerts, /sendPushToDevices\(/);

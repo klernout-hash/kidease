@@ -260,9 +260,10 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
     const row = access.conversation;
 
     const sender = access.role === "parent" ? "parent" : "provider";
+    const messageId = nid("msg");
     await sql`
       insert into messages (id, conversation_id, sender, body, kind)
-      values (${nid("msg")}, ${row.id}, ${sender}, ${body}, ${"chat"})
+      values (${messageId}, ${row.id}, ${sender}, ${body}, ${"chat"})
     `;
     await sql`update conversations set last_at = now() where id = ${row.id}`;
     await markConversationRead(sql, row.id, context.userId);
@@ -283,6 +284,7 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
 
     const origin = process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://kidease.ca";
     const threadUrl = `${origin}/inbox/${row.id}`;
+    const { dispatchCustomerAlert } = await import("@/lib/server/alert-dispatch");
     if (sender === "parent") {
       const owners = await listCentreOwnerEmails(sql, row.daycare_id);
       const extras = (row.contact_email || "").trim();
@@ -299,6 +301,16 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
           threadUrl,
           daycareName: row.name,
         }).catch(() => undefined);
+        if (r.userId) {
+          void dispatchCustomerAlert({
+            userId: r.userId,
+            category: "message",
+            vars: { name: row.name },
+            href: `/inbox/${row.id}?view=centre&detail=1`,
+            dedupeKey: `message:${messageId}:${r.userId}`,
+            emailFallback: false,
+          });
+        }
       }
     } else {
       const parent = await lookupUser(row.user_id);
@@ -310,6 +322,14 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
         threadUrl,
         daycareName: row.name,
       }).catch(() => undefined);
+      void dispatchCustomerAlert({
+        userId: row.user_id,
+        category: "message",
+        vars: { name: row.name },
+        href: `/inbox/${row.id}`,
+        dedupeKey: `message:${messageId}:${row.user_id}`,
+        emailFallback: false,
+      });
       const { requestReplyCopy, requestReplyPath } = await import("@/lib/search-alert-policy");
       const reply = requestReplyCopy(row.name);
       const linkPath = requestReplyPath(row.id);

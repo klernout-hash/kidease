@@ -31,6 +31,7 @@ import { SignedInDevices } from "@/components/signed-in-devices";
 import { AccountSecurity } from "@/components/account-security";
 import { DeleteAccountPanel } from "@/components/delete-account-panel";
 import { NotificationBell } from "@/components/notification-bell";
+import { AlertPushSettings } from "@/components/alert-push-settings";
 
 export const Route = createFileRoute("/account")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
@@ -44,12 +45,18 @@ export const Route = createFileRoute("/account")({
     const out: {
       tab?: "saved" | "enrolled" | "profile" | "payments";
       desk?: "parent" | "director" | "admin" | "support";
-      section?: "profile" | "appearance" | "subscription" | "delete";
+      section?: "profile" | "alerts" | "appearance" | "subscription" | "delete";
     } = {};
     const tab = s.tab;
     if (tab === "saved" || tab === "enrolled" || tab === "profile" || tab === "payments") out.tab = tab;
     const section = s.section;
-    if (section === "profile" || section === "appearance" || section === "subscription" || section === "delete") {
+    if (
+      section === "profile" ||
+      section === "alerts" ||
+      section === "appearance" ||
+      section === "subscription" ||
+      section === "delete"
+    ) {
       out.section = section;
     }
     const desk = parseDeskQuery(typeof s.desk === "string" ? s.desk : "");
@@ -273,13 +280,14 @@ function ProfilePane() {
 
   const hideParentPlan = !chrome.pending && chrome.role === "parent" && !chrome.subscriptionsEnabled;
   const section = hideParentPlan && search.section === "subscription" ? "profile" : (search.section ?? "profile");
-  const sectionSearch = (next: "profile" | "appearance" | "subscription" | "delete") => ({
+  const sectionSearch = (next: "profile" | "alerts" | "appearance" | "subscription" | "delete") => ({
     tab: "profile" as const,
     ...(search.desk ? { desk: search.desk } : {}),
     section: next,
   });
   const sections = [
     { id: "profile" as const, label: t("profile") },
+    { id: "alerts" as const, label: t("accountAlerts") },
     { id: "appearance" as const, label: t("appearance") },
     { id: "subscription" as const, label: t("navUpgrade") },
     { id: "delete" as const, label: t("deleteAccount") },
@@ -331,6 +339,12 @@ function ProfilePane() {
             </Link>
           ))}
         </nav>
+        {section === "alerts" && user ? (
+          <AlertPushSettings
+            audience={desk === "provider" ? "daycare" : "parent"}
+            subscriptionsOn={chrome.subscriptionsEnabled === true}
+          />
+        ) : null}
         {section === "appearance" ? (
           <section className="mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
             <AppearanceControl />

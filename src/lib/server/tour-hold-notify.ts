@@ -1,5 +1,4 @@
 import { tourStatusToLead } from "@/lib/lead-requests";
-import { sendPushNotification } from "@/lib/server/push.server";
 import { lookupUser, notifyThreadParty } from "@/lib/server/notify";
 import { listCentreOwnerEmails } from "@/lib/server/thread-access";
 import type { getSql } from "@/lib/db";
@@ -52,11 +51,15 @@ export async function notifyTourParties(
     daycareName: input.daycareName,
   }).catch(() => undefined);
 
+  const { dispatchCustomerAlert } = await import("@/lib/server/alert-dispatch");
   if (input.parentUserId && !input.parentUserId.startsWith("guest:")) {
-    await sendPushNotification({
+    await dispatchCustomerAlert({
       userId: input.parentUserId,
-      title: input.subject,
-      body: input.preview,
+      category: "tour",
+      vars: { name: input.daycareName },
+      href: `/inbox/${input.conversationId}`,
+      dedupeKey: `tour:${input.conversationId}:${input.parentUserId}:${input.subject}`.slice(0, 180),
+      emailFallback: false,
     }).catch(() => undefined);
   }
 
@@ -70,10 +73,13 @@ export async function notifyTourParties(
       daycareName: input.daycareName,
     }).catch(() => undefined);
     if (owner.userId) {
-      await sendPushNotification({
+      await dispatchCustomerAlert({
         userId: owner.userId,
-        title: input.subject,
-        body: input.preview,
+        category: "enquiry",
+        vars: { name: input.daycareName },
+        href: `/inbox/${input.conversationId}?view=centre&detail=1`,
+        dedupeKey: `tour:${input.conversationId}:${owner.userId}:${input.subject}`.slice(0, 180),
+        emailFallback: false,
       }).catch(() => undefined);
     }
   }
