@@ -3,6 +3,7 @@ import { BadgeCheck, Camera, MapPin, ListChecks } from "lucide-react";
 import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
+import { companyAddress, companyOperatorLine } from "@/lib/company";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 
@@ -12,7 +13,9 @@ export const Route = createFileRoute("/about")({
 });
 
 export function About() {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
+  const lang = locale === "fr" ? "fr" : "en";
+  const address = companyAddress(lang);
   return (
     <Shell bare>
       <main className="ke-gutter mx-auto max-w-3xl py-12 md:py-16">
@@ -36,6 +39,12 @@ export function About() {
         <h2 className="mt-12 text-2xl">{t("aboutLocalT")}</h2>
         <p className="mt-3 text-muted">{t("aboutLocal1")}</p>
         <p className="mt-3 text-muted">{t("aboutLocal2")}</p>
+
+        <h2 className="mt-12 text-2xl">{t("aboutCompanyT")}</h2>
+        <p className="mt-3 text-muted" data-ke="about-operator">
+          {companyOperatorLine(lang)}
+        </p>
+        {address ? <p className="mt-3 text-muted">{address}</p> : null}
 
         <h2 className="mt-12 text-2xl">{t("aboutCommitT")}</h2>
         <ul className="mt-4 list-disc space-y-2 pl-5 text-muted">

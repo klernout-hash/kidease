@@ -44,6 +44,7 @@ import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
 import { amenityLabel } from "@/lib/amenities";
 import { licenseRecordUrl, subsidyEstimatorUrl } from "@/lib/licensing";
+import { reportSearchProvince } from "@/lib/licensing-offices";
 import { listingSubsidy, subsidyNote, subsidyNoteKey } from "@/lib/fee-program";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { TrustBadge } from "@/components/trust-badge";
@@ -173,6 +174,10 @@ export function Listing() {
   const search = useSearch({ strict: false }) as { ask?: ListingAsk };
   const seo = useLoaderData({ strict: false }) as ListingSeoSource | undefined;
   const { t, locale } = useCopy();
+  function reportSafetyHref(province: string | null | undefined) {
+    const code = reportSearchProvince(province) || (province || "").trim().toUpperCase();
+    return `${localePath("/report", locale)}?province=${encodeURIComponent(code)}#${encodeURIComponent(code)}`;
+  }
   const navigate = useNavigate();
   const { user, isPending } = useCurrentUserState();
   const chrome = useRoleChrome();
@@ -372,6 +377,15 @@ export function Listing() {
                   {t("verifiedReviewNote")}
                 </p>
               </section>
+              <p className="max-w-prose text-sm">
+                <a
+                  href={reportSafetyHref(seo?.province)}
+                  className="inline-flex min-h-11 items-center text-muted underline-offset-4 hover:underline"
+                  data-ke="report-safety-link"
+                >
+                  {t("reportSafetyConcern")}
+                </a>
+              </p>
               <div className="space-y-3" aria-hidden="true">
                 <div className="flex flex-wrap gap-2">
                   <div className="ke-skel h-8 w-28 rounded-full" />
@@ -1014,6 +1028,15 @@ export function Listing() {
             </section>
             </div>
 
+            <p className="max-w-prose text-sm">
+              <a
+                href={reportSafetyHref(d.province)}
+                className="inline-flex min-h-11 items-center text-muted underline-offset-4 hover:underline"
+                data-ke="report-safety-link"
+              >
+                {t("reportSafetyConcern")}
+              </a>
+            </p>
             <p className="max-w-prose text-xs leading-5 text-subtle">
               {[
                 facilityLabel,

@@ -105,6 +105,7 @@ test("sitemap lists shipped FR URLs and omits redirect-only pairs", () => {
     "/fr/terms",
     "/fr/cookies",
     "/fr/help",
+    "/fr/report",
     "/fr/search",
     "/fr/contact",
     "/fr/get-app",

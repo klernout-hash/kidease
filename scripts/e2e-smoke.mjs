@@ -880,6 +880,7 @@ async function frenchChromeSmoke(page, base) {
     ["/fr/cities", "/fr/cities"],
     ["/fr/signup", "/fr/login"],
     ["/fr/verify", "/fr/verify"],
+    ["/fr/report", "/fr/report"],
     ["/fr/daycare-requirements", "/fr/daycare-requirements"],
     ["/fr/search", "/fr/search"],
     ["/fr/daycare/city/winnipeg", "/fr/daycare/city/winnipeg"],

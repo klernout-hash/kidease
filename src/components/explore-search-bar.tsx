@@ -207,12 +207,29 @@ export function ExploreSearchBar({
   const whenLabel = dateLabel || (onStartChange ? startLabel : "") || t("searchWhenHint");
   const whenFilled = Boolean(dateLabel || start);
   const fieldLabel = prominent
-    ? "block text-[12px] font-normal leading-4 text-muted"
+    ? "block h-5 whitespace-nowrap text-[16px] font-semibold leading-5 text-fg"
     : "block text-[12px] font-semibold leading-4 text-fg";
   const fieldValue = prominent
-    ? "mt-0 h-5 w-full min-w-0 bg-transparent text-[16px] font-normal leading-5 text-fg outline-none placeholder:font-normal placeholder:text-muted"
+    ? "mt-0 h-4 w-full min-w-0 truncate bg-transparent !text-[12px] font-normal leading-4 text-muted outline-none placeholder:font-normal placeholder:!text-[12px] placeholder:text-muted"
     : "mt-0.5 h-6 w-full min-w-0 bg-transparent text-base leading-5 text-fg outline-none placeholder:text-muted";
   const destinationCities = origin ? nearestCities(origin, 6) : [];
+  const submitControl = (
+    <button
+      type="submit"
+      data-ke="search-submit"
+      className={
+        compactSubmit
+          ? `grid shrink-0 place-items-center rounded-full bg-primary text-primary-fg shadow-card transition-colors duration-150 ease-out hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation ${
+              prominent ? "size-[44px]" : "size-12"
+            }`
+          : "inline-flex h-11 shrink-0 touch-manipulation items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-fg shadow-card hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+      }
+      aria-label={t("findChildcare")}
+    >
+      {compactSubmit ? <Search className={prominent ? "size-4" : "size-5"} strokeWidth={2.25} /> : null}
+      <span className={compactSubmit ? "sr-only" : undefined}>{t("searchSubmit")}</span>
+    </button>
+  );
 
   useEffect(() => {
     function onDoc(event: MouseEvent) {
@@ -319,14 +336,16 @@ export function ExploreSearchBar({
       ) : null}
       <div
         className={cn(
-          "relative z-20 flex flex-col divide-y divide-border overflow-visible rounded-[1.5rem] bg-surface shadow-card ring-1 ring-border/80 lg:flex-row lg:flex-wrap lg:items-stretch lg:divide-y-0 lg:rounded-full",
-          prominent ? "lg:h-[56px] lg:min-h-[56px]" : "min-h-[8.4rem] lg:min-h-[2.75rem]",
+          "relative z-20 flex flex-col divide-y divide-border overflow-visible rounded-[1.5rem] bg-surface shadow-card ring-1 ring-border/80 lg:items-stretch lg:divide-y-0 lg:rounded-full",
+          prominent
+            ? "lg:grid lg:h-[56px] lg:min-h-[56px] lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
+            : "min-h-[8.4rem] lg:min-h-[2.75rem] lg:flex-row lg:flex-wrap",
         )}
       >
         <div
           className={cn(
             segmentClass("where", 0),
-            prominent ? "lg:min-w-[16rem] lg:flex-[2.4]" : "lg:min-w-[12rem] lg:flex-[1.2]",
+            prominent ? "lg:min-w-0" : "lg:min-w-[12rem] lg:flex-[1.2]",
           )}
           onClick={() => {
             setActive("where");
@@ -353,7 +372,7 @@ export function ExploreSearchBar({
                 placeholder={t("searchWhereHint")}
                 origin={origin}
                 ariaLabelledBy={whereLabelId}
-                className="min-h-6"
+                className={prominent ? "h-4 min-h-0" : "min-h-6"}
                 emptyMenu={{
                   title: t("whereSuggested"),
                   nearby: t("whereNearby"),
@@ -396,7 +415,7 @@ export function ExploreSearchBar({
           </div>
         </div>
 
-        <div className={cn(segmentClass("when", 1), prominent && "lg:max-w-[14rem] lg:flex-[0.85]")}>
+        <div className={cn(segmentClass("when", 1), prominent && "lg:min-w-0")}>
           <button
             type="button"
             className="w-full min-w-0 text-left"
@@ -409,8 +428,10 @@ export function ExploreSearchBar({
             </span>
             <span
               className={cn(
-                prominent ? "mt-0 block h-5 truncate text-[16px] font-normal leading-5" : "mt-0.5 block h-5 truncate text-base leading-5",
-                whenFilled ? "text-fg" : "text-muted",
+                prominent
+                  ? "mt-0 block h-4 truncate text-[12px] font-normal leading-4 text-muted"
+                  : "mt-0.5 block h-5 truncate text-base leading-5",
+                !prominent && (whenFilled ? "text-fg" : "text-muted"),
               )}
             >
               {whenLabel}
@@ -476,10 +497,10 @@ export function ExploreSearchBar({
         <div
           className={cn(
             segmentClass("name", 2),
-            prominent ? "lg:min-w-[11rem] lg:flex-[1.05] lg:pr-1.5" : "lg:min-w-[14rem] lg:pr-1.5",
+            prominent ? "max-lg:pr-16 lg:min-w-0" : "lg:min-w-[14rem] lg:pr-1.5",
           )}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <div className="min-w-0 flex-1">
               <label
                 id={nameLabelId}
@@ -498,21 +519,7 @@ export function ExploreSearchBar({
                 onFocus={() => setActive("name")}
               />
             </div>
-            <button
-              type="submit"
-              data-ke="search-submit"
-              className={
-                compactSubmit
-                  ? `grid shrink-0 place-items-center rounded-full bg-primary text-primary-fg shadow-card transition-colors duration-150 ease-out hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 ${
-                      prominent ? "size-[44px]" : "size-12"
-                    }`
-                  : "inline-flex h-11 shrink-0 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-fg shadow-card hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-              }
-              aria-label={t("findChildcare")}
-            >
-              {compactSubmit ? <Search className={prominent ? "size-4" : "size-5"} strokeWidth={2.25} /> : null}
-              <span className={compactSubmit ? "sr-only" : undefined}>{t("searchSubmit")}</span>
-            </button>
+            {prominent ? null : submitControl}
           </div>
           {childAges?.length && active === "name" && onChildAge && values.name.trim().length < 2 ? (
             <div className="absolute left-2 right-2 top-full z-[60] mt-1.5 rounded-xl bg-surface p-3 shadow-card ring-1 ring-border lg:left-auto lg:right-0 lg:w-[22rem]">
@@ -532,6 +539,11 @@ export function ExploreSearchBar({
             </div>
           ) : null}
         </div>
+        {prominent ? (
+          <div className="absolute right-2 bottom-1.5 z-10 lg:static lg:right-auto lg:bottom-auto lg:z-auto lg:flex lg:items-center lg:self-center lg:pr-1.5">
+            {submitControl}
+          </div>
+        ) : null}
       </div>
     </form>
   );

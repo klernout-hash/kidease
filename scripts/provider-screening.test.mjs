@@ -294,7 +294,10 @@ test("public copy and desks stay honest and PIPEDA-tight", () => {
   assert.doesNotMatch(src("src/lib/desk-nav.ts"), /OWNER_ONLY_NAV = new Set\(\[[^\]]*screening/);
   assert.match(src("src/routes/verify.tsx"), /verifyScreeningTitle/);
   assert.match(src("src/routes/daycare-requirements.tsx"), /reqPoliceBody/);
-  assert.match(src("src/components/trust-bar.tsx"), /daycare-requirements/);
+  assert.match(src("src/components/trust-bar.tsx"), /localePath\("\/verify"/);
+  assert.match(src("src/lib/site-footer-nav.ts"), /\/daycare-requirements/);
+  assert.match(src("src/lib/copy.ts"), /does not run police checks/);
+  assert.match(src("src/lib/copy.ts"), /ne fait pas de contrôle policier/);
   assert.doesNotMatch(src("src/lib/site-footer-nav.ts"), /delete-account/);
   assert.match(src("src/lib/server/provider-screening.ts"), /kind: "screening_upload"/);
   assert.match(src("src/lib/server/provider-screening.ts"), /screening_approve/);

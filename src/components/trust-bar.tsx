@@ -1,55 +1,19 @@
 import { Link } from "@tanstack/react-router";
-import { BadgeCheck, Camera, MapPin, ListChecks } from "lucide-react";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 
-const ITEMS = [
-  { icon: BadgeCheck, key: "trustLicensedOnly" as const },
-  { icon: Camera, key: "trustLiveAvail" as const },
-  { icon: MapPin, key: "trustGoogle" as const },
-  { icon: ListChecks, key: "trustSecure" as const },
-];
-
-export function TrustBar({ compact = false }: { compact?: boolean }) {
+/** One quiet line above featured listings. Server-rendered. No police-check claim. */
+export function TrustBar() {
   const { t, locale } = useCopy();
-  if (compact) {
-    return (
-      <ul className="flex flex-wrap justify-center gap-2">
-        {ITEMS.map((item) => (
-          <li
-            key={item.key}
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-bg px-3 py-1.5 text-xs font-medium text-fg ring-1 ring-border"
-          >
-            <item.icon className="size-4 text-primary" />
-            {t(item.key)}
-          </li>
-        ))}
-      </ul>
-    );
-  }
   return (
-    <div>
-      <ul className="grid grid-cols-2 gap-2 lg:grid-cols-4 lg:gap-3">
-        {ITEMS.map((item) => (
-          <li
-            key={item.key}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-bg px-3 py-3 text-center text-sm font-semibold tracking-[-0.015em] text-fg ring-1 ring-border"
-          >
-            <item.icon className="size-4 shrink-0 text-primary" />
-            {t(item.key)}
-          </li>
-        ))}
-      </ul>
-      <p className="mt-3 text-center text-sm leading-6 text-muted">
-        {t("trustBarLead")}{" "}
-        <Link to={localePath("/verify", locale)} className="font-medium text-primary underline-offset-4 hover:underline">
-          {t("verifyListings")}
-        </Link>
-        {" · "}
-        <Link to={localePath("/daycare-requirements", locale)} className="font-medium text-primary underline-offset-4 hover:underline">
-          {t("daycareRequirements")}
-        </Link>
-      </p>
-    </div>
+    <p data-ke="home-trust-line" className="mx-auto max-w-3xl text-balance text-center text-sm leading-6 text-muted">
+      {t("trustBarLead")}{" "}
+      <Link
+        to={localePath("/verify", locale)}
+        className="relative font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation after:absolute after:-inset-x-2 after:-inset-y-3"
+      >
+        {t("homeTrustVerify")}
+      </Link>
+    </p>
   );
 }

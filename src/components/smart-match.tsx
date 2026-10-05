@@ -37,7 +37,7 @@ function track(event: "smart_match_started" | "smart_match_completed" | "smart_m
   capturePostHogEvent(event, smartMatchEventProps(props));
 }
 
-export function SmartMatchEntry({ inline = false }: { inline?: boolean }) {
+export function SmartMatchEntry({ inline = false, quiet = false }: { inline?: boolean; quiet?: boolean }) {
   const { user } = useCurrentUserState();
   const { t } = useCopy();
   const on = useAiFeatureFlag(AI_FLAGS.smartMatch);
@@ -45,7 +45,16 @@ export function SmartMatchEntry({ inline = false }: { inline?: boolean }) {
 
   if (!on) return null;
 
-  const button = (
+  const button = quiet ? (
+    <button
+      type="button"
+      className="inline-flex min-h-11 items-center px-1 text-sm font-medium text-muted underline-offset-4 hover:text-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation"
+      data-ke="smart-match-open"
+      onClick={() => setOpen(true)}
+    >
+      {t("smartMatchCta")}
+    </button>
+  ) : (
     <Button
       type="button"
       variant="secondary"

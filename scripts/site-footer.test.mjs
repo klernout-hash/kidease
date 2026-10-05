@@ -222,6 +222,7 @@ test("EN footer labels stay in use order", () => {
     "FAQ",
     "How It Works",
     "Contact Us",
+    "Report a safety concern",
   ]);
   assert.deepEqual(labels(FOOTER_KIDEASE, "en"), [
     "About",
@@ -252,6 +253,7 @@ test("FR footer labels stay in the same use order", () => {
     "FAQ",
     "Comment ça fonctionne",
     "Nous joindre",
+    "Signaler une préoccupation de sécurité",
   ]);
   assert.deepEqual(labels(FOOTER_KIDEASE, "fr"), [
     "À propos",
