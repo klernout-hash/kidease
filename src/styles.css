@@ -153,6 +153,12 @@
       pointer-events: none !important;
     }
   }
+  /* Explainer stays on the website, including a phone browser. Native shells hide it. */
+  html[data-runtime="ios"] .ke-how-video,
+  html[data-runtime="android"] .ke-how-video {
+    display: none !important;
+    pointer-events: none !important;
+  }
   /* Capacitor only. Phone website is data-channel=app with data-runtime=web.
      The slot is display:contents on the website so PayCtas does not change layout. */
   .ke-digital-plan-slot {
