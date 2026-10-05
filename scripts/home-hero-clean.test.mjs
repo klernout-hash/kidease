@@ -75,7 +75,7 @@ test("home search bar is a slim pill with a claim strip and a daycare header pil
   assert.match(fr, /loadProductHome/);
   assert.doesNotMatch(fr, /clamp\(2rem,6vw,3\.25rem\)/);
   assert.match(strip, /data-ke="home-claim-strip"/);
-  assert.match(strip, /to="\/claim"/);
+  assert.match(strip, /localePath\("\/claim"/);
   assert.match(copy, /heroDaycareLead: "Run a daycare\? Claim your free listing in 2 minutes"/);
   assert.match(copy, /heroDaycareLead: "Vous gérez une garderie\? Réclamez votre fiche gratuite en 2 minutes"/);
   assert.match(copy, /heroClaimListing: "Claim listing"/);
@@ -130,7 +130,7 @@ test("cities index lists every province and only real city hubs", () => {
   assert.equal(citiesIndexGroups("fr").find((group) => group.code === "QC")?.name, "Québec");
   const page = src("src/routes/cities.tsx");
   assert.match(page, /createFileRoute\("\/cities"\)/);
-  assert.match(page, /\/daycare\/city\/\$city/);
+  assert.match(page, /localePath\(`\/daycare\/city\/\$\{city\.slug\}`, locale\)/);
   assert.doesNotMatch(page, /\bstate\b/i);
   assert.doesNotMatch(page, /United States/);
   assert.ok(SITEMAP_STATIC_PATHS.includes("/cities"));

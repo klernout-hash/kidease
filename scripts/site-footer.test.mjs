@@ -176,7 +176,7 @@ test("Parents column keeps product links and omits city hubs", () => {
   assert.doesNotMatch(nav, /cityHubPath/);
   assert.doesNotMatch(nav, /daycare\/city/);
   assert.match(nav, /"\/cities"/);
-  assert.match(src("src/routes/cities.tsx"), /\/daycare\/city\/\$city/);
+  assert.match(src("src/routes/cities.tsx"), /localePath\(`\/daycare\/city\/\$\{city\.slug\}`, locale\)/);
   assert.match(src("public/sitemap.xml"), /\/daycare\/city\/winnipeg/);
   assert.match(src("public/sitemap.xml"), /https:\/\/www\.kidease\.ca\/cities</);
 });

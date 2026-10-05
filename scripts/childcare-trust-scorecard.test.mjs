@@ -95,7 +95,7 @@ test("support desks settle instead of hanging on Loading", () => {
 
 test("search SSR loader seeds first paint instead of an empty null list", () => {
   const search = src("src/routes/search.tsx");
-  assert.match(search, /loader: async/);
+  assert.match(search, /export async function searchLoader/);
   assert.match(search, /searchDaycarePage/);
   assert.match(search, /resolveRequestSearchOrigin/);
   assert.match(search, /pendingComponent: BootPending/);

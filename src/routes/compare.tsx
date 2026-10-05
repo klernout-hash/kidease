@@ -39,28 +39,31 @@ import { money } from "@/lib/utils";
 import { licenseRegistryUrl } from "@/lib/licensing";
 import type { DaycareCard } from "@/lib/types";
 import { MultiApplyPanel } from "@/components/multi-apply-sheet";
-import { headChromeLocale } from "@/lib/head-locale";
-import { MARKETING_PAGE_SEO, pageSeoHead, UNPAIRED_FR_SEO } from "@/lib/page-seo";
+import { localePath } from "@/lib/locale-path";
+import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
+
+export function compareValidateSearch(s: Record<string, unknown>) {
+  return { slugs: parseCompareSlugs(s.slugs) };
+}
 
 export const Route = createFileRoute("/compare")({
-  validateSearch: (s: Record<string, unknown>) => ({
-    slugs: parseCompareSlugs(s.slugs),
-  }),
-  head: ({ matches }) =>
-    headChromeLocale(matches) === "fr"
-      ? pageSeoHead({ ...UNPAIRED_FR_SEO.compare, path: "/compare", locale: "fr" })
-      : pageSeoHead(MARKETING_PAGE_SEO.compare),
-  component: ComparePage,
+  validateSearch: compareValidateSearch,
+  head: () => pageSeoHead(MARKETING_PAGE_SEO.compare),
+  component: CompareRoute,
 });
 
-function ComparePage() {
+function CompareRoute() {
+  return <ComparePage slugs={Route.useSearch().slugs} />;
+}
+
+export function ComparePage({ slugs }: { slugs: string[] }) {
   const { t, locale } = useCopy();
   const { compareMax } = useParentPlusAccess();
   const origin = useAppStore((s) => s.origin);
   const located = useAppStore((s) => s.located);
   const radiusKm = useAppStore((s) => s.radiusKm);
   const ageGroup = useAppStore((s) => s.ageGroup);
-  const incoming = Route.useSearch();
+  const incoming = { slugs };
   const [items, setItems] = useState<DaycareCard[]>([]);
 
   useEffect(() => {
@@ -108,7 +111,7 @@ function ComparePage() {
                   {items.map((d) => (
                     <th key={d.id} className="p-2 align-bottom">
                       <BuildingPhoto src={listingThumb(d.photos)} className="mb-2 aspect-[4/3] w-full rounded-lg object-cover" />
-                      <Link to="/daycare/$slug" params={{ slug: d.slug }} className="font-semibold hover:underline">
+                      <Link to={localePath(`/daycare/${d.slug}`, locale)} className="font-semibold hover:underline">
                         {locale === "fr" ? d.nameFr : d.name}
                       </Link>
                     </th>
@@ -228,7 +231,7 @@ function ComparePage() {
                   label={t("detailsIncomplete")}
                   values={items.map((d) => parentIncompleteLabel(d, t) ?? t("detailsReady"))}
                 />
-                <Row label={t("googleReviews")} values={items.map((d) => (d.reviewCount ? `${(d.ratingX10 / 10).toFixed(1)} (${d.reviewCount})` : "—"))} />
+                <Row label={t("googleReviews")} values={items.map((d) => (d.reviewCount ? `${(d.ratingX10 / 10).toFixed(1)} (${d.reviewCount})` : t("noneListed")))} />
                 <tr>
                   <th className="p-2 text-fg">{t("license")}</th>
                   {items.map((d) => (
@@ -254,7 +257,7 @@ function ComparePage() {
           </div>
         ) : (
           <div className="mt-10 rounded-xl bg-surface ring-1 ring-border">
-            <EmptyState title={t("noCompare")} body={t("compareEmpty")} action={t("emptyFindCare")} actionTo="/search" />
+            <EmptyState title={t("noCompare")} body={t("compareEmpty")} action={t("emptyFindCare")} actionTo={localePath("/search", locale)} />
           </div>
         )}
       </main>

@@ -2,9 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
-import { headChromeLocale } from "@/lib/head-locale";
 import { localePath } from "@/lib/locale-path";
-import { pageSeoHead, UNPAIRED_FR_SEO } from "@/lib/page-seo";
+import { pageSeoHead } from "@/lib/page-seo";
 import { provinceLocativeFr } from "@/lib/province-phrase";
 import { jurisdiction } from "@/lib/province-registry";
 import { loadVacancyIndex, type VacancyIndexPage as VacancyIndexData } from "@/lib/server/vacancy-index";
@@ -22,17 +21,13 @@ const BAND_LABEL: Record<PublicAgeBand, CopyKey> = {
 
 export const Route = createFileRoute("/vacancy-index")({
   loader: () => loadVacancyIndex(),
-  head: ({ matches }) => {
-    if (headChromeLocale(matches) === "fr") {
-      return pageSeoHead({ ...UNPAIRED_FR_SEO.vacancy, path: "/vacancy-index" });
-    }
-    return pageSeoHead({
+  head: () =>
+    pageSeoHead({
       title: "Open spots by province · KidEase",
       description:
         "Public KidEase listings by province and age. Confirmed open spots only. Fees are not on this page.",
       path: "/vacancy-index",
-    });
-  },
+    }),
   component: VacancyIndexRoute,
 });
 

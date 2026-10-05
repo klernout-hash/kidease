@@ -59,7 +59,7 @@ export function GuideView({
         <p className="mt-2 text-muted">{copy.lead}</p>
         <p className="mt-4">
           <Button asChild>
-            <a href="/claim">{copy.create}</a>
+            <a href={localePath("/claim", fr ? "fr" : "en")}>{copy.create}</a>
           </Button>
         </p>
         <section className="mt-8">

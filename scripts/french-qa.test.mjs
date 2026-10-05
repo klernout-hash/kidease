@@ -34,7 +34,7 @@ test("French money, counts, and vacancy path", () => {
   assert.equal(formatPlanCad(7.99, "fr"), "7,99\u00a0$");
   assert.match(formatCount(5805, "fr"), /5\s805/);
   assert.equal(localePath("/vacancy-index", "fr"), "/fr/vacancy-index");
-  assert.equal(localePath("/claim", "fr"), "/claim");
+  assert.equal(localePath("/claim", "fr"), "/fr/claim");
 });
 
 test("French plans copy lists perks and avoids free-forever wording", () => {

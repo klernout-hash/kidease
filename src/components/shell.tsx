@@ -142,7 +142,7 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
             <div className="relative z-20 ml-auto flex shrink-0 items-center gap-2 bg-bg pl-1 [[data-channel=website]_&]:flex">
               {user ? <NotificationBell className="hidden md:grid" /> : (
                 <Link
-                  to="/claim"
+                  to={localePath("/claim", locale)}
                   data-ke="list-your-daycare"
                   className="inline-flex min-h-11 shrink-0 touch-manipulation items-center gap-1.5 whitespace-nowrap rounded-full border border-primary px-2.5 text-[13px] font-medium text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 sm:px-3 sm:text-sm"
                 >

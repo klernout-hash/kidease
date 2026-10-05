@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-r
 import { Shell } from "@/components/shell";
 import { START_DAYCARE_PTS } from "@/lib/start-daycare-hub";
 import { provincialGuideCopy } from "@/lib/provincial-guide-copy";
+import { localePath, stripLocalePrefix } from "@/lib/locale-path";
 import { pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 
@@ -18,11 +19,12 @@ export const Route = createFileRoute("/guides")({
   component: GuidesIndex,
 });
 
-function GuidesIndex() {
+export function GuidesIndex() {
   const { locale } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const copy = provincialGuideCopy(locale);
-  if (pathname.startsWith("/guides/") && pathname !== "/guides") return <Outlet />;
+  const bare = stripLocalePrefix(pathname);
+  if (bare.startsWith("/guides/") && bare !== "/guides") return <Outlet />;
   return (
     <Shell bare>
       <main className="ke-gutter mx-auto w-full max-w-3xl py-8">
@@ -35,8 +37,7 @@ function GuidesIndex() {
           {START_DAYCARE_PTS.map((pt) => (
             <li key={pt.code}>
               <Link
-                to="/guides/$code"
-                params={{ code: pt.code.toLowerCase() }}
+                to={localePath(`/guides/${pt.code.toLowerCase()}`, locale)}
                 className="inline-flex min-h-11 items-center font-medium underline-offset-4 hover:underline"
               >
                 {locale === "fr" ? pt.nameFr : pt.nameEn}

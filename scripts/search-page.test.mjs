@@ -58,12 +58,12 @@ test("public search routes page the payload and keep a crawlable next link", () 
   assert.match(search, /searchDaycarePage/);
   assert.match(search, /resultTotal/);
   assert.match(search, /ParentHelperPanel collapsed/);
-  assert.match(french, /ParentHelperPanel collapsed/);
+  assert.match(french, /SearchScreen/);
   assert.doesNotMatch(search, /searchDaycares\(/);
   assert.match(search, /showMoreListings/);
   assert.match(search, /showPreviousListings/);
   assert.match(search, /listingPageSearch/);
-  assert.match(french, /searchDaycarePage/);
+  assert.match(french, /searchLoader/);
   assert.doesNotMatch(french, /searchDaycares\(/);
   assert.match(daycares, /export const searchDaycares = createServerFn\(\{ method: "GET" \}\)/);
   assert.match(daycares, /sliceSearchPage\(all, page\)/);

@@ -67,7 +67,7 @@ test("THIS WEEK acceptance: age+start+place gate, hollow-free rails, Top7, vacan
   assert.match(listing, /compareAdd/);
   assert.match(listing, /toggleCompareItem/);
   assert.match(src("src/lib/site-footer-nav.ts"), /"\/compare"/);
-  assert.match(src("src/components/nav-drawer.tsx"), /to="\/compare"/);
+  assert.match(src("src/components/nav-drawer.tsx"), /localePath\("\/compare"/);
   assert.match(compare, /compareFeesCwelcc/);
   assert.match(compare, /compareVacancy/);
   assert.match(compare, /comparePhoto/);

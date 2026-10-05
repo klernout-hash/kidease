@@ -94,6 +94,6 @@ test("plans page renders the founding period on the server and keeps checkout co
   assert.match(migration, /founding_member/);
   assert.match(migration, /d_d85jtifbkh2t/);
   assert.match(src("src/lib/server/approve-centre.ts"), /founding_member/);
-  assert.match(src("src/components/nav-drawer.tsx"), /to="\/plans"/);
+  assert.match(src("src/components/nav-drawer.tsx"), /localePath\("\/plans"/);
   assert.match(src("src/lib/site-footer-nav.ts"), /"\/plans"/);
 });

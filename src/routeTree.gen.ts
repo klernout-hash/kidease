@@ -91,24 +91,39 @@ import { Route as DaycaresCityRouteImport } from './routes/daycares_.$city'
 import { Route as FrIndexRouteImport } from './routes/fr.index'
 import { Route as FrAboutRouteImport } from './routes/fr.about'
 import { Route as FrBenefitsRouteImport } from './routes/fr.benefits'
+import { Route as FrChildcareBenefitsProgramRouteImport } from './routes/fr.childcare-benefits-program'
+import { Route as FrCitiesRouteImport } from './routes/fr.cities'
+import { Route as FrClaimRouteImport } from './routes/fr.claim'
+import { Route as FrCompareRouteImport } from './routes/fr.compare'
 import { Route as FrContactRouteImport } from './routes/fr.contact'
 import { Route as FrCookiesRouteImport } from './routes/fr.cookies'
+import { Route as FrDaycareRequirementsRouteImport } from './routes/fr.daycare-requirements'
+import { Route as FrDaycaresRouteImport } from './routes/fr.daycares'
+import { Route as FrDeleteAccountRouteImport } from './routes/fr.delete-account'
 import { Route as FrDonateRouteImport } from './routes/fr.donate'
 import { Route as FrExploreRouteImport } from './routes/fr.explore'
 import { Route as FrFaqRouteImport } from './routes/fr.faq'
+import { Route as FrForDaycaresRouteImport } from './routes/fr.for-daycares'
 import { Route as FrGetAppRouteImport } from './routes/fr.get-app'
 import { Route as FrGuidesRouteImport } from './routes/fr.guides'
 import { Route as FrHelpRouteImport } from './routes/fr.help'
 import { Route as FrHowItWorksRouteImport } from './routes/fr.how-it-works'
 import { Route as FrJobsRouteImport } from './routes/fr.jobs'
 import { Route as FrLoginRouteImport } from './routes/fr.login'
+import { Route as FrMeetTheTeamRouteImport } from './routes/fr.meet-the-team'
 import { Route as FrMilieuxFamiliauxRouteImport } from './routes/fr.milieux-familiaux'
 import { Route as FrNeedCareFastRouteImport } from './routes/fr.need-care-fast'
+import { Route as FrPlansRouteImport } from './routes/fr.plans'
 import { Route as FrPrivacyRouteImport } from './routes/fr.privacy'
 import { Route as FrSearchRouteImport } from './routes/fr.search'
+import { Route as FrSignupRouteImport } from './routes/fr.signup'
 import { Route as FrStartADaycareRouteImport } from './routes/fr.start-a-daycare'
+import { Route as FrTeamRouteImport } from './routes/fr.team'
 import { Route as FrTermsRouteImport } from './routes/fr.terms'
+import { Route as FrTourChecklistRouteImport } from './routes/fr.tour-checklist'
+import { Route as FrUnsubscribeRouteImport } from './routes/fr.unsubscribe'
 import { Route as FrVacancyIndexRouteImport } from './routes/fr.vacancy-index'
+import { Route as FrVerifyRouteImport } from './routes/fr.verify'
 import { Route as GuidesCodeRouteImport } from './routes/guides.$code'
 import { Route as InboxIdRouteImport } from './routes/inbox.$id'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
@@ -562,6 +577,27 @@ const FrBenefitsRoute = FrBenefitsRouteImport.update({
   path: '/benefits',
   getParentRoute: () => FrRoute,
 } as any)
+const FrChildcareBenefitsProgramRoute =
+  FrChildcareBenefitsProgramRouteImport.update({
+    id: '/childcare-benefits-program',
+    path: '/childcare-benefits-program',
+    getParentRoute: () => FrRoute,
+  } as any)
+const FrCitiesRoute = FrCitiesRouteImport.update({
+  id: '/cities',
+  path: '/cities',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrClaimRoute = FrClaimRouteImport.update({
+  id: '/claim',
+  path: '/claim',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrCompareRoute = FrCompareRouteImport.update({
+  id: '/compare',
+  path: '/compare',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrContactRoute = FrContactRouteImport.update({
   id: '/contact',
   path: '/contact',
@@ -570,6 +606,21 @@ const FrContactRoute = FrContactRouteImport.update({
 const FrCookiesRoute = FrCookiesRouteImport.update({
   id: '/cookies',
   path: '/cookies',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrDaycareRequirementsRoute = FrDaycareRequirementsRouteImport.update({
+  id: '/daycare-requirements',
+  path: '/daycare-requirements',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrDaycaresRoute = FrDaycaresRouteImport.update({
+  id: '/daycares',
+  path: '/daycares',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrDeleteAccountRoute = FrDeleteAccountRouteImport.update({
+  id: '/delete-account',
+  path: '/delete-account',
   getParentRoute: () => FrRoute,
 } as any)
 const FrDonateRoute = FrDonateRouteImport.update({
@@ -585,6 +636,11 @@ const FrExploreRoute = FrExploreRouteImport.update({
 const FrFaqRoute = FrFaqRouteImport.update({
   id: '/faq',
   path: '/faq',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrForDaycaresRoute = FrForDaycaresRouteImport.update({
+  id: '/for-daycares',
+  path: '/for-daycares',
   getParentRoute: () => FrRoute,
 } as any)
 const FrGetAppRoute = FrGetAppRouteImport.update({
@@ -617,6 +673,11 @@ const FrLoginRoute = FrLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => FrRoute,
 } as any)
+const FrMeetTheTeamRoute = FrMeetTheTeamRouteImport.update({
+  id: '/meet-the-team',
+  path: '/meet-the-team',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrMilieuxFamiliauxRoute = FrMilieuxFamiliauxRouteImport.update({
   id: '/milieux-familiaux',
   path: '/milieux-familiaux',
@@ -625,6 +686,11 @@ const FrMilieuxFamiliauxRoute = FrMilieuxFamiliauxRouteImport.update({
 const FrNeedCareFastRoute = FrNeedCareFastRouteImport.update({
   id: '/need-care-fast',
   path: '/need-care-fast',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrPlansRoute = FrPlansRouteImport.update({
+  id: '/plans',
+  path: '/plans',
   getParentRoute: () => FrRoute,
 } as any)
 const FrPrivacyRoute = FrPrivacyRouteImport.update({
@@ -637,9 +703,19 @@ const FrSearchRoute = FrSearchRouteImport.update({
   path: '/search',
   getParentRoute: () => FrRoute,
 } as any)
+const FrSignupRoute = FrSignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrStartADaycareRoute = FrStartADaycareRouteImport.update({
   id: '/start-a-daycare',
   path: '/start-a-daycare',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrTeamRoute = FrTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
   getParentRoute: () => FrRoute,
 } as any)
 const FrTermsRoute = FrTermsRouteImport.update({
@@ -647,9 +723,24 @@ const FrTermsRoute = FrTermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => FrRoute,
 } as any)
+const FrTourChecklistRoute = FrTourChecklistRouteImport.update({
+  id: '/tour-checklist',
+  path: '/tour-checklist',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrUnsubscribeRoute = FrUnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrVacancyIndexRoute = FrVacancyIndexRouteImport.update({
   id: '/vacancy-index',
   path: '/vacancy-index',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrVerifyRoute = FrVerifyRouteImport.update({
+  id: '/verify',
+  path: '/verify',
   getParentRoute: () => FrRoute,
 } as any)
 const GuidesCodeRoute = GuidesCodeRouteImport.update({
@@ -941,24 +1032,39 @@ export interface FileRoutesByFullPath {
   '/daycares/$city': typeof DaycaresCityRoute
   '/fr/about': typeof FrAboutRoute
   '/fr/benefits': typeof FrBenefitsRoute
+  '/fr/childcare-benefits-program': typeof FrChildcareBenefitsProgramRoute
+  '/fr/cities': typeof FrCitiesRoute
+  '/fr/claim': typeof FrClaimRoute
+  '/fr/compare': typeof FrCompareRoute
   '/fr/contact': typeof FrContactRoute
   '/fr/cookies': typeof FrCookiesRoute
+  '/fr/daycare-requirements': typeof FrDaycareRequirementsRoute
+  '/fr/daycares': typeof FrDaycaresRoute
+  '/fr/delete-account': typeof FrDeleteAccountRoute
   '/fr/donate': typeof FrDonateRoute
   '/fr/explore': typeof FrExploreRoute
   '/fr/faq': typeof FrFaqRoute
+  '/fr/for-daycares': typeof FrForDaycaresRoute
   '/fr/get-app': typeof FrGetAppRoute
   '/fr/guides': typeof FrGuidesRouteWithChildren
   '/fr/help': typeof FrHelpRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
   '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
+  '/fr/meet-the-team': typeof FrMeetTheTeamRoute
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
+  '/fr/plans': typeof FrPlansRoute
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/search': typeof FrSearchRoute
+  '/fr/signup': typeof FrSignupRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
+  '/fr/team': typeof FrTeamRoute
   '/fr/terms': typeof FrTermsRoute
+  '/fr/tour-checklist': typeof FrTourChecklistRoute
+  '/fr/unsubscribe': typeof FrUnsubscribeRoute
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
+  '/fr/verify': typeof FrVerifyRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/inbox/$id': typeof InboxIdRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -1082,24 +1188,39 @@ export interface FileRoutesByTo {
   '/daycares/$city': typeof DaycaresCityRoute
   '/fr/about': typeof FrAboutRoute
   '/fr/benefits': typeof FrBenefitsRoute
+  '/fr/childcare-benefits-program': typeof FrChildcareBenefitsProgramRoute
+  '/fr/cities': typeof FrCitiesRoute
+  '/fr/claim': typeof FrClaimRoute
+  '/fr/compare': typeof FrCompareRoute
   '/fr/contact': typeof FrContactRoute
   '/fr/cookies': typeof FrCookiesRoute
+  '/fr/daycare-requirements': typeof FrDaycareRequirementsRoute
+  '/fr/daycares': typeof FrDaycaresRoute
+  '/fr/delete-account': typeof FrDeleteAccountRoute
   '/fr/donate': typeof FrDonateRoute
   '/fr/explore': typeof FrExploreRoute
   '/fr/faq': typeof FrFaqRoute
+  '/fr/for-daycares': typeof FrForDaycaresRoute
   '/fr/get-app': typeof FrGetAppRoute
   '/fr/guides': typeof FrGuidesRouteWithChildren
   '/fr/help': typeof FrHelpRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
   '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
+  '/fr/meet-the-team': typeof FrMeetTheTeamRoute
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
+  '/fr/plans': typeof FrPlansRoute
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/search': typeof FrSearchRoute
+  '/fr/signup': typeof FrSignupRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
+  '/fr/team': typeof FrTeamRoute
   '/fr/terms': typeof FrTermsRoute
+  '/fr/tour-checklist': typeof FrTourChecklistRoute
+  '/fr/unsubscribe': typeof FrUnsubscribeRoute
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
+  '/fr/verify': typeof FrVerifyRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/inbox/$id': typeof InboxIdRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -1226,24 +1347,39 @@ export interface FileRoutesById {
   '/daycares_/$city': typeof DaycaresCityRoute
   '/fr/about': typeof FrAboutRoute
   '/fr/benefits': typeof FrBenefitsRoute
+  '/fr/childcare-benefits-program': typeof FrChildcareBenefitsProgramRoute
+  '/fr/cities': typeof FrCitiesRoute
+  '/fr/claim': typeof FrClaimRoute
+  '/fr/compare': typeof FrCompareRoute
   '/fr/contact': typeof FrContactRoute
   '/fr/cookies': typeof FrCookiesRoute
+  '/fr/daycare-requirements': typeof FrDaycareRequirementsRoute
+  '/fr/daycares': typeof FrDaycaresRoute
+  '/fr/delete-account': typeof FrDeleteAccountRoute
   '/fr/donate': typeof FrDonateRoute
   '/fr/explore': typeof FrExploreRoute
   '/fr/faq': typeof FrFaqRoute
+  '/fr/for-daycares': typeof FrForDaycaresRoute
   '/fr/get-app': typeof FrGetAppRoute
   '/fr/guides': typeof FrGuidesRouteWithChildren
   '/fr/help': typeof FrHelpRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
   '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
+  '/fr/meet-the-team': typeof FrMeetTheTeamRoute
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
+  '/fr/plans': typeof FrPlansRoute
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/search': typeof FrSearchRoute
+  '/fr/signup': typeof FrSignupRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
+  '/fr/team': typeof FrTeamRoute
   '/fr/terms': typeof FrTermsRoute
+  '/fr/tour-checklist': typeof FrTourChecklistRoute
+  '/fr/unsubscribe': typeof FrUnsubscribeRoute
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
+  '/fr/verify': typeof FrVerifyRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/inbox/$id': typeof InboxIdRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -1371,24 +1507,39 @@ export interface FileRouteTypes {
     | '/daycares/$city'
     | '/fr/about'
     | '/fr/benefits'
+    | '/fr/childcare-benefits-program'
+    | '/fr/cities'
+    | '/fr/claim'
+    | '/fr/compare'
     | '/fr/contact'
     | '/fr/cookies'
+    | '/fr/daycare-requirements'
+    | '/fr/daycares'
+    | '/fr/delete-account'
     | '/fr/donate'
     | '/fr/explore'
     | '/fr/faq'
+    | '/fr/for-daycares'
     | '/fr/get-app'
     | '/fr/guides'
     | '/fr/help'
     | '/fr/how-it-works'
     | '/fr/jobs'
     | '/fr/login'
+    | '/fr/meet-the-team'
     | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
+    | '/fr/plans'
     | '/fr/privacy'
     | '/fr/search'
+    | '/fr/signup'
     | '/fr/start-a-daycare'
+    | '/fr/team'
     | '/fr/terms'
+    | '/fr/tour-checklist'
+    | '/fr/unsubscribe'
     | '/fr/vacancy-index'
+    | '/fr/verify'
     | '/guides/$code'
     | '/inbox/$id'
     | '/invite/$token'
@@ -1512,24 +1663,39 @@ export interface FileRouteTypes {
     | '/daycares/$city'
     | '/fr/about'
     | '/fr/benefits'
+    | '/fr/childcare-benefits-program'
+    | '/fr/cities'
+    | '/fr/claim'
+    | '/fr/compare'
     | '/fr/contact'
     | '/fr/cookies'
+    | '/fr/daycare-requirements'
+    | '/fr/daycares'
+    | '/fr/delete-account'
     | '/fr/donate'
     | '/fr/explore'
     | '/fr/faq'
+    | '/fr/for-daycares'
     | '/fr/get-app'
     | '/fr/guides'
     | '/fr/help'
     | '/fr/how-it-works'
     | '/fr/jobs'
     | '/fr/login'
+    | '/fr/meet-the-team'
     | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
+    | '/fr/plans'
     | '/fr/privacy'
     | '/fr/search'
+    | '/fr/signup'
     | '/fr/start-a-daycare'
+    | '/fr/team'
     | '/fr/terms'
+    | '/fr/tour-checklist'
+    | '/fr/unsubscribe'
     | '/fr/vacancy-index'
+    | '/fr/verify'
     | '/guides/$code'
     | '/inbox/$id'
     | '/invite/$token'
@@ -1655,24 +1821,39 @@ export interface FileRouteTypes {
     | '/daycares_/$city'
     | '/fr/about'
     | '/fr/benefits'
+    | '/fr/childcare-benefits-program'
+    | '/fr/cities'
+    | '/fr/claim'
+    | '/fr/compare'
     | '/fr/contact'
     | '/fr/cookies'
+    | '/fr/daycare-requirements'
+    | '/fr/daycares'
+    | '/fr/delete-account'
     | '/fr/donate'
     | '/fr/explore'
     | '/fr/faq'
+    | '/fr/for-daycares'
     | '/fr/get-app'
     | '/fr/guides'
     | '/fr/help'
     | '/fr/how-it-works'
     | '/fr/jobs'
     | '/fr/login'
+    | '/fr/meet-the-team'
     | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
+    | '/fr/plans'
     | '/fr/privacy'
     | '/fr/search'
+    | '/fr/signup'
     | '/fr/start-a-daycare'
+    | '/fr/team'
     | '/fr/terms'
+    | '/fr/tour-checklist'
+    | '/fr/unsubscribe'
     | '/fr/vacancy-index'
+    | '/fr/verify'
     | '/guides/$code'
     | '/inbox/$id'
     | '/invite/$token'
@@ -2400,6 +2581,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrBenefitsRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/childcare-benefits-program': {
+      id: '/fr/childcare-benefits-program'
+      path: '/childcare-benefits-program'
+      fullPath: '/fr/childcare-benefits-program'
+      preLoaderRoute: typeof FrChildcareBenefitsProgramRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/cities': {
+      id: '/fr/cities'
+      path: '/cities'
+      fullPath: '/fr/cities'
+      preLoaderRoute: typeof FrCitiesRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/claim': {
+      id: '/fr/claim'
+      path: '/claim'
+      fullPath: '/fr/claim'
+      preLoaderRoute: typeof FrClaimRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/compare': {
+      id: '/fr/compare'
+      path: '/compare'
+      fullPath: '/fr/compare'
+      preLoaderRoute: typeof FrCompareRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/contact': {
       id: '/fr/contact'
       path: '/contact'
@@ -2412,6 +2621,27 @@ declare module '@tanstack/react-router' {
       path: '/cookies'
       fullPath: '/fr/cookies'
       preLoaderRoute: typeof FrCookiesRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/daycare-requirements': {
+      id: '/fr/daycare-requirements'
+      path: '/daycare-requirements'
+      fullPath: '/fr/daycare-requirements'
+      preLoaderRoute: typeof FrDaycareRequirementsRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/daycares': {
+      id: '/fr/daycares'
+      path: '/daycares'
+      fullPath: '/fr/daycares'
+      preLoaderRoute: typeof FrDaycaresRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/delete-account': {
+      id: '/fr/delete-account'
+      path: '/delete-account'
+      fullPath: '/fr/delete-account'
+      preLoaderRoute: typeof FrDeleteAccountRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/donate': {
@@ -2433,6 +2663,13 @@ declare module '@tanstack/react-router' {
       path: '/faq'
       fullPath: '/fr/faq'
       preLoaderRoute: typeof FrFaqRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/for-daycares': {
+      id: '/fr/for-daycares'
+      path: '/for-daycares'
+      fullPath: '/fr/for-daycares'
+      preLoaderRoute: typeof FrForDaycaresRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/get-app': {
@@ -2477,6 +2714,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrLoginRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/meet-the-team': {
+      id: '/fr/meet-the-team'
+      path: '/meet-the-team'
+      fullPath: '/fr/meet-the-team'
+      preLoaderRoute: typeof FrMeetTheTeamRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/milieux-familiaux': {
       id: '/fr/milieux-familiaux'
       path: '/milieux-familiaux'
@@ -2489,6 +2733,13 @@ declare module '@tanstack/react-router' {
       path: '/need-care-fast'
       fullPath: '/fr/need-care-fast'
       preLoaderRoute: typeof FrNeedCareFastRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/plans': {
+      id: '/fr/plans'
+      path: '/plans'
+      fullPath: '/fr/plans'
+      preLoaderRoute: typeof FrPlansRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/privacy': {
@@ -2505,11 +2756,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrSearchRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/signup': {
+      id: '/fr/signup'
+      path: '/signup'
+      fullPath: '/fr/signup'
+      preLoaderRoute: typeof FrSignupRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/start-a-daycare': {
       id: '/fr/start-a-daycare'
       path: '/start-a-daycare'
       fullPath: '/fr/start-a-daycare'
       preLoaderRoute: typeof FrStartADaycareRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/team': {
+      id: '/fr/team'
+      path: '/team'
+      fullPath: '/fr/team'
+      preLoaderRoute: typeof FrTeamRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/terms': {
@@ -2519,11 +2784,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrTermsRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/tour-checklist': {
+      id: '/fr/tour-checklist'
+      path: '/tour-checklist'
+      fullPath: '/fr/tour-checklist'
+      preLoaderRoute: typeof FrTourChecklistRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/unsubscribe': {
+      id: '/fr/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/fr/unsubscribe'
+      preLoaderRoute: typeof FrUnsubscribeRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/vacancy-index': {
       id: '/fr/vacancy-index'
       path: '/vacancy-index'
       fullPath: '/fr/vacancy-index'
       preLoaderRoute: typeof FrVacancyIndexRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/verify': {
+      id: '/fr/verify'
+      path: '/verify'
+      fullPath: '/fr/verify'
+      preLoaderRoute: typeof FrVerifyRouteImport
       parentRoute: typeof FrRoute
     }
     '/guides/$code': {
@@ -2841,24 +3127,39 @@ const FrGuidesRouteWithChildren = FrGuidesRoute._addFileChildren(
 interface FrRouteChildren {
   FrAboutRoute: typeof FrAboutRoute
   FrBenefitsRoute: typeof FrBenefitsRoute
+  FrChildcareBenefitsProgramRoute: typeof FrChildcareBenefitsProgramRoute
+  FrCitiesRoute: typeof FrCitiesRoute
+  FrClaimRoute: typeof FrClaimRoute
+  FrCompareRoute: typeof FrCompareRoute
   FrContactRoute: typeof FrContactRoute
   FrCookiesRoute: typeof FrCookiesRoute
+  FrDaycareRequirementsRoute: typeof FrDaycareRequirementsRoute
+  FrDaycaresRoute: typeof FrDaycaresRoute
+  FrDeleteAccountRoute: typeof FrDeleteAccountRoute
   FrDonateRoute: typeof FrDonateRoute
   FrExploreRoute: typeof FrExploreRoute
   FrFaqRoute: typeof FrFaqRoute
+  FrForDaycaresRoute: typeof FrForDaycaresRoute
   FrGetAppRoute: typeof FrGetAppRoute
   FrGuidesRoute: typeof FrGuidesRouteWithChildren
   FrHelpRoute: typeof FrHelpRoute
   FrHowItWorksRoute: typeof FrHowItWorksRoute
   FrJobsRoute: typeof FrJobsRoute
   FrLoginRoute: typeof FrLoginRoute
+  FrMeetTheTeamRoute: typeof FrMeetTheTeamRoute
   FrMilieuxFamiliauxRoute: typeof FrMilieuxFamiliauxRoute
   FrNeedCareFastRoute: typeof FrNeedCareFastRoute
+  FrPlansRoute: typeof FrPlansRoute
   FrPrivacyRoute: typeof FrPrivacyRoute
   FrSearchRoute: typeof FrSearchRoute
+  FrSignupRoute: typeof FrSignupRoute
   FrStartADaycareRoute: typeof FrStartADaycareRoute
+  FrTeamRoute: typeof FrTeamRoute
   FrTermsRoute: typeof FrTermsRoute
+  FrTourChecklistRoute: typeof FrTourChecklistRoute
+  FrUnsubscribeRoute: typeof FrUnsubscribeRoute
   FrVacancyIndexRoute: typeof FrVacancyIndexRoute
+  FrVerifyRoute: typeof FrVerifyRoute
   FrIndexRoute: typeof FrIndexRoute
   FrDaycareSlugRoute: typeof FrDaycareSlugRoute
   FrJobsPostRoute: typeof FrJobsPostRoute
@@ -2870,24 +3171,39 @@ interface FrRouteChildren {
 const FrRouteChildren: FrRouteChildren = {
   FrAboutRoute: FrAboutRoute,
   FrBenefitsRoute: FrBenefitsRoute,
+  FrChildcareBenefitsProgramRoute: FrChildcareBenefitsProgramRoute,
+  FrCitiesRoute: FrCitiesRoute,
+  FrClaimRoute: FrClaimRoute,
+  FrCompareRoute: FrCompareRoute,
   FrContactRoute: FrContactRoute,
   FrCookiesRoute: FrCookiesRoute,
+  FrDaycareRequirementsRoute: FrDaycareRequirementsRoute,
+  FrDaycaresRoute: FrDaycaresRoute,
+  FrDeleteAccountRoute: FrDeleteAccountRoute,
   FrDonateRoute: FrDonateRoute,
   FrExploreRoute: FrExploreRoute,
   FrFaqRoute: FrFaqRoute,
+  FrForDaycaresRoute: FrForDaycaresRoute,
   FrGetAppRoute: FrGetAppRoute,
   FrGuidesRoute: FrGuidesRouteWithChildren,
   FrHelpRoute: FrHelpRoute,
   FrHowItWorksRoute: FrHowItWorksRoute,
   FrJobsRoute: FrJobsRoute,
   FrLoginRoute: FrLoginRoute,
+  FrMeetTheTeamRoute: FrMeetTheTeamRoute,
   FrMilieuxFamiliauxRoute: FrMilieuxFamiliauxRoute,
   FrNeedCareFastRoute: FrNeedCareFastRoute,
+  FrPlansRoute: FrPlansRoute,
   FrPrivacyRoute: FrPrivacyRoute,
   FrSearchRoute: FrSearchRoute,
+  FrSignupRoute: FrSignupRoute,
   FrStartADaycareRoute: FrStartADaycareRoute,
+  FrTeamRoute: FrTeamRoute,
   FrTermsRoute: FrTermsRoute,
+  FrTourChecklistRoute: FrTourChecklistRoute,
+  FrUnsubscribeRoute: FrUnsubscribeRoute,
   FrVacancyIndexRoute: FrVacancyIndexRoute,
+  FrVerifyRoute: FrVerifyRoute,
   FrIndexRoute: FrIndexRoute,
   FrDaycareSlugRoute: FrDaycareSlugRoute,
   FrJobsPostRoute: FrJobsPostRoute,

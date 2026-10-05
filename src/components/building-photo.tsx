@@ -11,6 +11,7 @@ import {
   srcsetWidthsFor,
 } from "@/lib/photo";
 import { healMediaUrl, isFailedPhotoUrl, isStockListingPhoto, rememberFailedPhoto } from "@/lib/listing-photo";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -79,7 +80,7 @@ export function ListingPhotoFallback({
   /** When set, the frame links to claim search for this centre. */
   claimQuery?: string;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const mark = (
     <span className="flex max-w-full flex-col items-center gap-1.5 px-3 text-center">
       <img
@@ -109,7 +110,7 @@ export function ListingPhotoFallback({
       {claim ? (
         claimQuery !== undefined ? (
           <Link
-            to="/claim"
+            to={localePath("/claim", locale)}
             search={claimQuery ? { q: claimQuery } : {}}
             className="text-inherit no-underline"
           >

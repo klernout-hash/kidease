@@ -25,12 +25,12 @@ test("French search follows ranking-best-match the same way as English", () => {
 
   const fr = read("src/routes/fr.search.tsx");
   const en = read("src/routes/search.tsx");
-  assert.match(fr, /useRankingBestMatchFlag/);
+  assert.match(fr, /SearchScreen/);
   assert.match(en, /useRankingBestMatchFlag/);
-  assert.match(fr, /assignRankingVariant/);
-  assert.match(fr, /parseRankingOverride/);
-  assert.match(fr, /t\("sortBest"\)/);
-  assert.doesNotMatch(fr, /isPostHogFlagEnabled|getPostHog/);
+  assert.match(en, /assignRankingVariant/);
+  assert.match(en, /parseRankingOverride/);
+  assert.match(en, /t\("sortBest"\)/);
+  assert.doesNotMatch(en, /isPostHogFlagEnabled|getPostHog/);
   assert.equal(tx("fr", "sortBest"), "Meilleure correspondance");
   assert.match(read("src/lib/ranking/use-ranking-flag.ts"), /readAiFeatureFlags/);
   assert.match(read("src/lib/ranking/use-ranking-flag.ts"), /kidease-ai-id/);
@@ -73,7 +73,7 @@ test("Find my match and Write it for me use one flag read and the same visitor i
     false,
   );
 
-  const fr = read("src/routes/fr.search.tsx");
+  const fr = read("src/routes/search.tsx");
   const smartUi = read("src/components/smart-match.tsx");
   const writerUi = read("src/components/listing-writer.tsx");
   const smartServer = read("src/lib/server/smart-match.ts");

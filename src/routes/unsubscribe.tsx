@@ -4,26 +4,32 @@ import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { applyPublicUnsubscribe } from "@/lib/server/casl-consent-api";
+import { pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 
+export function unsubscribeValidateSearch(s: Record<string, unknown>) {
+  const token = typeof s.token === "string" ? s.token : "";
+  const channel = s.channel === "sms" || s.channel === "email" ? s.channel : undefined;
+  return { token: token || undefined, channel };
+}
+
 export const Route = createFileRoute("/unsubscribe")({
-  validateSearch: (s: Record<string, unknown>) => {
-    const token = typeof s.token === "string" ? s.token : "";
-    const channel = s.channel === "sms" || s.channel === "email" ? s.channel : undefined;
-    return { token: token || undefined, channel };
-  },
-  head: () => ({
-    meta: [
-      { title: "Unsubscribe · KidEase" },
-      { name: "description", content: "Stop KidEase email or SMS. CASL unsubscribe: no login required." },
-    ],
-  }),
-  component: UnsubscribePage,
+  validateSearch: unsubscribeValidateSearch,
+  head: () =>
+    pageSeoHead({
+      title: "Unsubscribe · KidEase",
+      description: "Stop KidEase email or SMS. CASL unsubscribe: no login required.",
+      path: "/unsubscribe",
+    }),
+  component: UnsubscribeRoute,
 });
 
-function UnsubscribePage() {
+function UnsubscribeRoute() {
+  return <UnsubscribePage search={Route.useSearch()} />;
+}
+
+export function UnsubscribePage({ search }: { search: ReturnType<typeof unsubscribeValidateSearch> }) {
   const { t } = useCopy();
-  const search = Route.useSearch();
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [channel, setChannel] = useState<"email" | "sms">(search.channel === "sms" ? "sms" : "email");

@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { BadgeCheck, Camera, MapPin, ListChecks } from "lucide-react";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 
 const ITEMS = [
@@ -10,7 +11,7 @@ const ITEMS = [
 ];
 
 export function TrustBar({ compact = false }: { compact?: boolean }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   if (compact) {
     return (
       <ul className="flex flex-wrap justify-center gap-2">
@@ -41,11 +42,11 @@ export function TrustBar({ compact = false }: { compact?: boolean }) {
       </ul>
       <p className="mt-3 text-center text-sm leading-6 text-muted">
         {t("trustBarLead")}{" "}
-        <Link to="/verify" className="font-medium text-primary underline-offset-4 hover:underline">
+        <Link to={localePath("/verify", locale)} className="font-medium text-primary underline-offset-4 hover:underline">
           {t("verifyListings")}
         </Link>
         {" · "}
-        <Link to="/daycare-requirements" className="font-medium text-primary underline-offset-4 hover:underline">
+        <Link to={localePath("/daycare-requirements", locale)} className="font-medium text-primary underline-offset-4 hover:underline">
           {t("daycareRequirements")}
         </Link>
       </p>

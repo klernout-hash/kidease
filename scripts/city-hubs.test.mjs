@@ -200,7 +200,7 @@ test("hub route, listing breadcrumbs, and internal links are wired", () => {
   const cities = src("src/routes/cities.tsx");
   assert.doesNotMatch(home, /CityHubLinks/);
   assert.match(search, /CityHubLinks/);
-  assert.match(cities, /\/daycare\/city\/\$city/);
+  assert.match(cities, /localePath\(`\/daycare\/city\/\$\{city\.slug\}`, locale\)/);
   assert.doesNotMatch(footer, /cityHubPath/);
   assert.doesNotMatch(footer, /cityHubs\(\)/);
 });

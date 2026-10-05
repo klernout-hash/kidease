@@ -15,8 +15,8 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
-import { headChromeLocale } from "@/lib/head-locale";
-import { MARKETING_PAGE_SEO, pageSeoHead, UNPAIRED_FR_SEO } from "@/lib/page-seo";
+import { localePath } from "@/lib/locale-path";
+import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { SIGNUP_FUNNEL_EVENT, signupFunnelPayload } from "@/lib/signup-funnel";
@@ -37,27 +37,29 @@ function ClaimHitPhoto({ photo, name, compact = false }: { photo: string; name: 
   );
 }
 
+export function claimValidateSearch(s: Record<string, unknown>) {
+  const q = typeof s.q === "string" ? s.q : "";
+  const id = typeof s.id === "string" ? s.id : "";
+  return {
+    ...(q ? { q } : {}),
+    ...(id ? { id } : {}),
+  };
+}
+
 export const Route = createFileRoute("/claim")({
-  head: ({ matches }) =>
-    headChromeLocale(matches) === "fr"
-      ? pageSeoHead({ ...UNPAIRED_FR_SEO.claim, path: "/claim", locale: "fr" })
-      : pageSeoHead(MARKETING_PAGE_SEO.claim),
-  validateSearch: (s: Record<string, unknown>) => {
-    const q = typeof s.q === "string" ? s.q : "";
-    const id = typeof s.id === "string" ? s.id : "";
-    return {
-      ...(q ? { q } : {}),
-      ...(id ? { id } : {}),
-    };
-  },
-  component: ClaimPage,
+  head: () => pageSeoHead(MARKETING_PAGE_SEO.claim),
+  validateSearch: claimValidateSearch,
+  component: ClaimRoute,
 });
 
-function ClaimPage() {
-  const search = Route.useSearch();
+function ClaimRoute() {
+  return <ClaimPage search={Route.useSearch()} />;
+}
+
+export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateSearch> }) {
   const q0 = search.q ?? "";
   const id0 = search.id ?? "";
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const { user, isPending } = useCurrentUserState();
   const navigate = useNavigate();
   const [q, setQ] = useState(q0);
@@ -166,7 +168,10 @@ function ClaimPage() {
     setOpen(false);
     if (!user) {
       capturePostHogEvent(SIGNUP_FUNNEL_EVENT, signupFunnelPayload("claim_started", { source: "claim" }));
-      void navigate({ to: "/login", search: { next: `/claim?id=${daycareId}`, role: "provider", desk: "director", intent: "up" } });
+      void navigate({
+        to: locale === "fr" ? "/fr/login" : "/login",
+        search: { next: `${localePath("/claim", locale)}?id=${daycareId}`, role: "provider", desk: "director", intent: "up" },
+      });
       return;
     }
     setBusy(true);
@@ -197,7 +202,7 @@ function ClaimPage() {
       return;
     }
     if (!license.startsWith("data:image") && !license.startsWith("data:application/pdf")) {
-      toast.error("Upload a photo or PDF of your provincial licence");
+      toast.error(t("licensePhoto"));
       return;
     }
     setBusy(true);
@@ -254,7 +259,7 @@ function ClaimPage() {
       return;
     }
     if (!enrollLicense.startsWith("data:image") && !enrollLicense.startsWith("data:application/pdf")) {
-      toast.error("Upload a photo or PDF of your provincial licence");
+      toast.error(t("licensePhoto"));
       return;
     }
     setEnrollBusy(true);
@@ -276,7 +281,7 @@ function ClaimPage() {
       setEnroll({ name: "", email: "", centre: "", city: "", phone: "", body: "", daycareId: "" });
       setEnrollLicense("");
     } catch {
-      toast.error(`Could not send. Email ${SUPPORT_INBOX_EMAIL} directly.`);
+      toast.error(t("contactSendFailed").replace("{email}", SUPPORT_INBOX_EMAIL));
     } finally {
       setEnrollBusy(false);
     }

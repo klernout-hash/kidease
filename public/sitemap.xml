@@ -77,6 +77,10 @@
     <lastmod>2026-09-08</lastmod>
   </url>
   <url>
+    <loc>https://www.kidease.ca/plans</loc>
+    <lastmod>2026-09-08</lastmod>
+  </url>
+  <url>
     <loc>https://www.kidease.ca/claim</loc>
     <lastmod>2026-09-08</lastmod>
   </url>
@@ -215,6 +219,16 @@
   <url><loc>https://www.kidease.ca/fr/guides/nt</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://www.kidease.ca/fr/guides/nu</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://www.kidease.ca/fr/vacancy-index</loc><lastmod>2026-09-08</lastmod></url>
+  <url><loc>https://www.kidease.ca/fr/claim</loc><lastmod>2026-09-08</lastmod></url>
+  <url><loc>https://www.kidease.ca/fr/plans</loc><lastmod>2026-09-08</lastmod></url>
+  <url><loc>https://www.kidease.ca/fr/compare</loc><lastmod>2026-09-08</lastmod></url>
+  <url><loc>https://www.kidease.ca/fr/cities</loc><lastmod>2026-09-08</lastmod></url>
+  <url><loc>https://www.kidease.ca/fr/verify</loc><lastmod>2026-09-08</lastmod></url>
+  <url><loc>https://www.kidease.ca/fr/daycare-requirements</loc><lastmod>2026-09-08</lastmod></url>
+  <url><loc>https://www.kidease.ca/fr/tour-checklist</loc><lastmod>2026-09-08</lastmod></url>
+  <url><loc>https://www.kidease.ca/fr/team</loc><lastmod>2026-09-08</lastmod></url>
+  <url><loc>https://www.kidease.ca/fr/unsubscribe</loc><lastmod>2026-09-08</lastmod></url>
+  <url><loc>https://www.kidease.ca/fr/delete-account</loc><lastmod>2026-09-08</lastmod></url>
   <url>
     <loc>https://www.kidease.ca/daycare/city/toronto</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://www.kidease.ca/daycare/city/toronto"/>
