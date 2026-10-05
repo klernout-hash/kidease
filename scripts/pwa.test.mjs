@@ -15,8 +15,10 @@ test("390px guest chrome wraps instead of forcing a horizontal page scroll", () 
   assert.match(css, /html\[data-channel="website"\] \.ke-listings \{[\s\S]*grid-template-columns: 1fr;/);
   assert.match(css, /overflow-x:\s*hidden/);
   const trust = src("src/components/trust-bar.tsx");
-  assert.match(trust, /grid-cols-2/);
+  assert.match(trust, /text-balance/);
+  assert.doesNotMatch(trust, /whitespace-nowrap/);
   assert.doesNotMatch(trust, /min-w-\[78%\]/);
+  assert.doesNotMatch(trust, /grid-cols-2/);
   const map = src("src/components/map-view.tsx");
   assert.match(map, /size-11 place-items-center rounded-full bg-surface/);
   assert.match(map, /size-11 place-items-center text-fg/);
