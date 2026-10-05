@@ -76,6 +76,13 @@ test("hreflang includes en, fr, and x-default on paired pages", () => {
   });
   assert.ok(privacy.links.some((l) => l.rel === "alternate" && l.hrefLang === "fr" && l.href.endsWith("/fr/privacy")));
   assert.ok(privacy.links.some((l) => l.rel === "canonical" && l.href.endsWith("/privacy")));
+  const frHome = pageSeoHead(MARKETING_PAGE_SEO_FR.home);
+  assert.ok(frHome.links.some((l) => l.rel === "canonical" && l.href === "https://www.kidease.ca/fr"));
+  assert.deepEqual(
+    frHome.links.filter((l) => l.rel === "alternate").map((l) => l.hrefLang),
+    ["en", "fr", "x-default"],
+  );
+  assert.equal(hreflangLinks("/fr").find((l) => l.hrefLang === "x-default")?.href, "https://www.kidease.ca/");
   assert.equal(hreflangLinks("/parent").length, 0);
 });
 

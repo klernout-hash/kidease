@@ -35,6 +35,7 @@ import { originFromDeviceFix, productHomeOrigin, readClientTimeZone, trustedSave
 import { getDeviceLocation, hapticLight } from "@/lib/native";
 import { resolveRequestSearchOrigin } from "@/lib/server/request-origin";
 import { useAppStore } from "@/lib/store";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { uniqueById } from "@/lib/utils";
 import { publicListings } from "@/lib/listing-visibility";
@@ -65,23 +66,29 @@ const RoleEnrollDialog = lazy(() =>
   import("@/components/role-enroll").then((m) => ({ default: m.RoleEnrollDialog })),
 );
 
+export function homeValidateSearch(s: Record<string, unknown>) {
+  const change = s.change === "1" || s.change === true;
+  return change ? { change: "1" as const } : {};
+}
+
+export async function loadProductHome() {
+  const origin = await withTimeoutFallback(resolveRequestSearchOrigin(), ORIGIN_BUDGET_MS, productHomeOrigin());
+  const painted = await withPaintBudget(
+    featuredDaycares({ data: { lat: origin.lat, lng: origin.lng, label: origin.label, radiusKm: 25 } }),
+    HOME_PAINT_BUDGET_MS,
+  );
+  return {
+    featured: painted.value ?? [],
+    featuredReady: painted.ready,
+    origin,
+  };
+}
+
+export type ProductHomeBoot = Awaited<ReturnType<typeof loadProductHome>>;
+
 export const Route = createFileRoute("/")({
-  validateSearch: (s: Record<string, unknown>) => {
-    const change = s.change === "1" || s.change === true;
-    return change ? { change: "1" as const } : {};
-  },
-  loader: async () => {
-    const origin = await withTimeoutFallback(resolveRequestSearchOrigin(), ORIGIN_BUDGET_MS, productHomeOrigin());
-    const painted = await withPaintBudget(
-      featuredDaycares({ data: { lat: origin.lat, lng: origin.lng, label: origin.label, radiusKm: 25 } }),
-      HOME_PAINT_BUDGET_MS,
-    );
-    return {
-      featured: painted.value ?? [],
-      featuredReady: painted.ready,
-      origin,
-    };
-  },
+  validateSearch: homeValidateSearch,
+  loader: () => loadProductHome(),
   staleTime: 60_000,
   pendingMs: 0,
   pendingMinMs: 0,
@@ -91,9 +98,12 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
+  return <HomePage boot={Route.useLoaderData()} />;
+}
+
+export function HomePage({ boot }: { boot: ProductHomeBoot }) {
   const { t, locale } = useCopy();
   const navigate = useNavigate();
-  const boot = Route.useLoaderData();
   const { user, isPending } = useCurrentUserState();
   const origin = useAppStore((s) => s.origin);
   const originSource = useAppStore((s) => s.originSource);
@@ -210,17 +220,16 @@ function Home() {
     });
     const age = extra?.age || undefined;
     const start = extra?.start || homeStart || undefined;
-    void navigate({
-      to: "/search",
-      search: {
-        q: fields.q,
-        name: fields.name,
-        from: fields.from,
-        to: fields.to,
-        age: age || undefined,
-        start: start || undefined,
-      },
-    });
+    const search = {
+      q: fields.q,
+      name: fields.name,
+      from: fields.from,
+      to: fields.to,
+      age: age || undefined,
+      start: start || undefined,
+    };
+    if (locale === "fr") void navigate({ to: "/fr/search", search });
+    else void navigate({ to: "/search", search });
   }
 
   async function applyPlace(raw: string) {
@@ -398,7 +407,7 @@ function Home() {
 
   return (
     <Shell bare>
-      <JsonLd json={organizationGraphJsonLdScript()} />
+      <JsonLd json={organizationGraphJsonLdScript(locale === "fr" ? "fr" : "en")} />
       <div className="ke-home w-full min-w-0">
       <h1 className="ke-gutter mx-auto w-full pt-4 text-center text-[clamp(1.6rem,4.2vw,2.75rem)] leading-tight tracking-[-0.03em]">
         {t("tagline")}
@@ -592,7 +601,7 @@ function HomeDiscovery({
   onCareType?: (type?: BrowseDaycareType) => void;
   city?: string;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   if (!ready && shown.length === 0) return <HomeCardSkeleton />;
   if (shown.length === 0) {
     return (
@@ -602,7 +611,7 @@ function HomeDiscovery({
           body={liveOnly && hasPublic ? t("noLiveResultsLead") : t("noResultsLead")}
           action={liveOnly && hasPublic ? t("showAll") : t("changeLocation")}
           onAction={liveOnly && hasPublic ? onShowAll : undefined}
-          actionTo={liveOnly && hasPublic ? undefined : "/?change=1"}
+          actionTo={liveOnly && hasPublic ? undefined : `${localePath("/", locale)}?change=1`}
           secondary={liveOnly && hasPublic ? t("noLiveResultsClaim") : undefined}
           secondaryTo={liveOnly && hasPublic ? "/claim" : undefined}
         />

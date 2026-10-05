@@ -168,7 +168,7 @@ test("smart match stays behind its flag and does not send places to the model", 
   assert.equal(tx("en", "smartMatchCta"), "Find my match with AI");
   assert.equal(tx("fr", "smartMatchCta"), "Trouver mon match avec l'IA");
   assert.match(home, /text-center text-\[clamp\(1\.6rem,4\.2vw,2\.75rem\)\]/);
-  assert.match(read("src/routes/fr.index.tsx"), /text-center text-\[clamp\(2rem,6vw,3\.25rem\)\]/);
+  assert.match(read("src/routes/fr.index.tsx"), /<HomePage/);
   const claim = read("src/components/claim-listing-cta.tsx");
   assert.match(claim, /source === "card"/);
   assert.match(claim, /rounded-full/);

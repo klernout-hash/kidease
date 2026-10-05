@@ -27,7 +27,8 @@ test("home hero has no city pills and no Browse by city link", () => {
   assert.equal((home.match(/data-ke="browse-cities"/g) ?? []).length, 0);
   assert.doesNotMatch(home, /<CityHubLinks/);
   assert.doesNotMatch(src("src/routes/fr.index.tsx"), /<CityHubLinks/);
-  assert.match(src("src/routes/fr.index.tsx"), /to="\/cities"/);
+  assert.match(src("src/routes/fr.index.tsx"), /<HomePage/);
+  assert.doesNotMatch(src("src/routes/fr.index.tsx"), /to="\/cities"/);
   assert.match(src("src/components/place-search.tsx"), /data-ke="where-nearby"/);
 });
 
@@ -69,7 +70,10 @@ test("home search bar is a slim pill with a claim strip and a daycare header pil
   assert.match(bar, /prominent \? "size-\[44px\]"/);
   assert.match(home, /max-w-\[960px\]/);
   assert.match(home, /data-ke="home-hero-pills"[\s\S]*?<HeroClaimStrip/);
-  assert.match(fr, /<HeroClaimStrip/);
+  assert.match(fr, /<HomePage/);
+  assert.match(fr, /pageSeoHead\(MARKETING_PAGE_SEO_FR\.home\)/);
+  assert.match(fr, /loadProductHome/);
+  assert.doesNotMatch(fr, /clamp\(2rem,6vw,3\.25rem\)/);
   assert.match(strip, /data-ke="home-claim-strip"/);
   assert.match(strip, /to="\/claim"/);
   assert.match(copy, /heroDaycareLead: "Run a daycare\? Claim your free listing in 2 minutes"/);
