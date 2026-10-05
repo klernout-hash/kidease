@@ -29,7 +29,7 @@ export function RecentlyViewedRow({ items }: { items: Card[] }) {
               <Link
                 to={localePath(`/daycare/${item.slug}`, locale)}
                 data-ke="recent-chip"
-                className="ke-chip h-auto min-h-11 w-[min(16rem,72vw)] max-w-[min(16rem,72vw)] justify-start gap-2 overflow-hidden whitespace-normal px-1.5 py-1 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                className="ke-chip h-auto min-h-[44px] w-[min(16rem,72vw)] max-w-[min(16rem,72vw)] justify-start gap-2 overflow-hidden whitespace-normal px-1.5 py-1 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               >
                 <BuildingPhoto
                   src={photo}
