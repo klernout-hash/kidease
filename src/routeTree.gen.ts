@@ -43,7 +43,6 @@ import { Route as FrRouteImport } from './routes/fr'
 import { Route as GetAppRouteImport } from './routes/get-app'
 import { Route as GuidesRouteImport } from './routes/guides'
 import { Route as HelpRouteImport } from './routes/help'
-import { Route as ReportRouteImport } from './routes/report'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as ImgRouteImport } from './routes/img'
 import { Route as InboxRouteImport } from './routes/inbox'
@@ -59,6 +58,7 @@ import { Route as PayRouteImport } from './routes/pay'
 import { Route as PlansRouteImport } from './routes/plans'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProviderRouteImport } from './routes/provider'
+import { Route as ReportRouteImport } from './routes/report'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SignupRouteImport } from './routes/signup'
@@ -108,7 +108,6 @@ import { Route as FrForDaycaresRouteImport } from './routes/fr.for-daycares'
 import { Route as FrGetAppRouteImport } from './routes/fr.get-app'
 import { Route as FrGuidesRouteImport } from './routes/fr.guides'
 import { Route as FrHelpRouteImport } from './routes/fr.help'
-import { Route as FrReportRouteImport } from './routes/fr.report'
 import { Route as FrHowItWorksRouteImport } from './routes/fr.how-it-works'
 import { Route as FrJobsRouteImport } from './routes/fr.jobs'
 import { Route as FrLoginRouteImport } from './routes/fr.login'
@@ -117,6 +116,7 @@ import { Route as FrMilieuxFamiliauxRouteImport } from './routes/fr.milieux-fami
 import { Route as FrNeedCareFastRouteImport } from './routes/fr.need-care-fast'
 import { Route as FrPlansRouteImport } from './routes/fr.plans'
 import { Route as FrPrivacyRouteImport } from './routes/fr.privacy'
+import { Route as FrReportRouteImport } from './routes/fr.report'
 import { Route as FrSearchRouteImport } from './routes/fr.search'
 import { Route as FrSignupRouteImport } from './routes/fr.signup'
 import { Route as FrStartADaycareRouteImport } from './routes/fr.start-a-daycare'
@@ -339,11 +339,6 @@ const HelpRoute = HelpRouteImport.update({
   path: '/help',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ReportRoute = ReportRouteImport.update({
-  id: '/report',
-  path: '/report',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const HowItWorksRoute = HowItWorksRouteImport.update({
   id: '/how-it-works',
   path: '/how-it-works',
@@ -417,6 +412,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const ProviderRoute = ProviderRouteImport.update({
   id: '/provider',
   path: '/provider',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportRoute = ReportRouteImport.update({
+  id: '/report',
+  path: '/report',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -665,11 +665,6 @@ const FrHelpRoute = FrHelpRouteImport.update({
   path: '/help',
   getParentRoute: () => FrRoute,
 } as any)
-const FrReportRoute = FrReportRouteImport.update({
-  id: '/report',
-  path: '/report',
-  getParentRoute: () => FrRoute,
-} as any)
 const FrHowItWorksRoute = FrHowItWorksRouteImport.update({
   id: '/how-it-works',
   path: '/how-it-works',
@@ -708,6 +703,11 @@ const FrPlansRoute = FrPlansRouteImport.update({
 const FrPrivacyRoute = FrPrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrReportRoute = FrReportRouteImport.update({
+  id: '/report',
+  path: '/report',
   getParentRoute: () => FrRoute,
 } as any)
 const FrSearchRoute = FrSearchRouteImport.update({
@@ -997,7 +997,6 @@ export interface FileRoutesByFullPath {
   '/get-app': typeof GetAppRoute
   '/guides': typeof GuidesRouteWithChildren
   '/help': typeof HelpRoute
-  '/report': typeof ReportRoute
   '/how-it-works': typeof HowItWorksRoute
   '/img': typeof ImgRoute
   '/inbox': typeof InboxRouteWithChildren
@@ -1013,6 +1012,7 @@ export interface FileRoutesByFullPath {
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRouteWithChildren
+  '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
@@ -1061,7 +1061,6 @@ export interface FileRoutesByFullPath {
   '/fr/get-app': typeof FrGetAppRoute
   '/fr/guides': typeof FrGuidesRouteWithChildren
   '/fr/help': typeof FrHelpRoute
-  '/fr/report': typeof FrReportRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
   '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
@@ -1070,6 +1069,7 @@ export interface FileRoutesByFullPath {
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
   '/fr/plans': typeof FrPlansRoute
   '/fr/privacy': typeof FrPrivacyRoute
+  '/fr/report': typeof FrReportRoute
   '/fr/search': typeof FrSearchRoute
   '/fr/signup': typeof FrSignupRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
@@ -1156,7 +1156,6 @@ export interface FileRoutesByTo {
   '/get-app': typeof GetAppRoute
   '/guides': typeof GuidesRouteWithChildren
   '/help': typeof HelpRoute
-  '/report': typeof ReportRoute
   '/how-it-works': typeof HowItWorksRoute
   '/img': typeof ImgRoute
   '/inbox': typeof InboxRouteWithChildren
@@ -1171,6 +1170,7 @@ export interface FileRoutesByTo {
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRouteWithChildren
+  '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
@@ -1219,7 +1219,6 @@ export interface FileRoutesByTo {
   '/fr/get-app': typeof FrGetAppRoute
   '/fr/guides': typeof FrGuidesRouteWithChildren
   '/fr/help': typeof FrHelpRoute
-  '/fr/report': typeof FrReportRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
   '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
@@ -1228,6 +1227,7 @@ export interface FileRoutesByTo {
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
   '/fr/plans': typeof FrPlansRoute
   '/fr/privacy': typeof FrPrivacyRoute
+  '/fr/report': typeof FrReportRoute
   '/fr/search': typeof FrSearchRoute
   '/fr/signup': typeof FrSignupRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
@@ -1316,7 +1316,6 @@ export interface FileRoutesById {
   '/get-app': typeof GetAppRoute
   '/guides': typeof GuidesRouteWithChildren
   '/help': typeof HelpRoute
-  '/report': typeof ReportRoute
   '/how-it-works': typeof HowItWorksRoute
   '/img': typeof ImgRoute
   '/inbox': typeof InboxRouteWithChildren
@@ -1332,6 +1331,7 @@ export interface FileRoutesById {
   '/plans': typeof PlansRoute
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRouteWithChildren
+  '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
   '/signup': typeof SignupRoute
@@ -1380,7 +1380,6 @@ export interface FileRoutesById {
   '/fr/get-app': typeof FrGetAppRoute
   '/fr/guides': typeof FrGuidesRouteWithChildren
   '/fr/help': typeof FrHelpRoute
-  '/fr/report': typeof FrReportRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
   '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
@@ -1389,6 +1388,7 @@ export interface FileRoutesById {
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
   '/fr/plans': typeof FrPlansRoute
   '/fr/privacy': typeof FrPrivacyRoute
+  '/fr/report': typeof FrReportRoute
   '/fr/search': typeof FrSearchRoute
   '/fr/signup': typeof FrSignupRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
@@ -1478,7 +1478,6 @@ export interface FileRouteTypes {
     | '/get-app'
     | '/guides'
     | '/help'
-    | '/report'
     | '/how-it-works'
     | '/img'
     | '/inbox'
@@ -1494,6 +1493,7 @@ export interface FileRouteTypes {
     | '/plans'
     | '/privacy'
     | '/provider'
+    | '/report'
     | '/reset-password'
     | '/search'
     | '/signup'
@@ -1542,7 +1542,6 @@ export interface FileRouteTypes {
     | '/fr/get-app'
     | '/fr/guides'
     | '/fr/help'
-    | '/fr/report'
     | '/fr/how-it-works'
     | '/fr/jobs'
     | '/fr/login'
@@ -1551,6 +1550,7 @@ export interface FileRouteTypes {
     | '/fr/need-care-fast'
     | '/fr/plans'
     | '/fr/privacy'
+    | '/fr/report'
     | '/fr/search'
     | '/fr/signup'
     | '/fr/start-a-daycare'
@@ -1637,7 +1637,6 @@ export interface FileRouteTypes {
     | '/get-app'
     | '/guides'
     | '/help'
-    | '/report'
     | '/how-it-works'
     | '/img'
     | '/inbox'
@@ -1652,6 +1651,7 @@ export interface FileRouteTypes {
     | '/plans'
     | '/privacy'
     | '/provider'
+    | '/report'
     | '/reset-password'
     | '/search'
     | '/signup'
@@ -1700,7 +1700,6 @@ export interface FileRouteTypes {
     | '/fr/get-app'
     | '/fr/guides'
     | '/fr/help'
-    | '/fr/report'
     | '/fr/how-it-works'
     | '/fr/jobs'
     | '/fr/login'
@@ -1709,6 +1708,7 @@ export interface FileRouteTypes {
     | '/fr/need-care-fast'
     | '/fr/plans'
     | '/fr/privacy'
+    | '/fr/report'
     | '/fr/search'
     | '/fr/signup'
     | '/fr/start-a-daycare'
@@ -1796,7 +1796,6 @@ export interface FileRouteTypes {
     | '/get-app'
     | '/guides'
     | '/help'
-    | '/report'
     | '/how-it-works'
     | '/img'
     | '/inbox'
@@ -1812,6 +1811,7 @@ export interface FileRouteTypes {
     | '/plans'
     | '/privacy'
     | '/provider'
+    | '/report'
     | '/reset-password'
     | '/search'
     | '/signup'
@@ -1860,7 +1860,6 @@ export interface FileRouteTypes {
     | '/fr/get-app'
     | '/fr/guides'
     | '/fr/help'
-    | '/fr/report'
     | '/fr/how-it-works'
     | '/fr/jobs'
     | '/fr/login'
@@ -1869,6 +1868,7 @@ export interface FileRouteTypes {
     | '/fr/need-care-fast'
     | '/fr/plans'
     | '/fr/privacy'
+    | '/fr/report'
     | '/fr/search'
     | '/fr/signup'
     | '/fr/start-a-daycare'
@@ -1957,7 +1957,6 @@ export interface RootRouteChildren {
   GetAppRoute: typeof GetAppRoute
   GuidesRoute: typeof GuidesRouteWithChildren
   HelpRoute: typeof HelpRoute
-  ReportRoute: typeof ReportRoute
   HowItWorksRoute: typeof HowItWorksRoute
   ImgRoute: typeof ImgRoute
   InboxRoute: typeof InboxRouteWithChildren
@@ -1973,6 +1972,7 @@ export interface RootRouteChildren {
   PlansRoute: typeof PlansRoute
   PrivacyRoute: typeof PrivacyRoute
   ProviderRoute: typeof ProviderRouteWithChildren
+  ReportRoute: typeof ReportRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SearchRoute: typeof SearchRoute
   SignupRoute: typeof SignupRoute
@@ -2270,13 +2270,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HelpRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/report': {
-      id: '/report'
-      path: '/report'
-      fullPath: '/report'
-      preLoaderRoute: typeof ReportRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/how-it-works': {
       id: '/how-it-works'
       path: '/how-it-works'
@@ -2380,6 +2373,13 @@ declare module '@tanstack/react-router' {
       path: '/provider'
       fullPath: '/provider'
       preLoaderRoute: typeof ProviderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/report': {
+      id: '/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof ReportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -2725,13 +2725,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrHelpRouteImport
       parentRoute: typeof FrRoute
     }
-    '/fr/report': {
-      id: '/fr/report'
-      path: '/report'
-      fullPath: '/fr/report'
-      preLoaderRoute: typeof FrReportRouteImport
-      parentRoute: typeof FrRoute
-    }
     '/fr/how-it-works': {
       id: '/fr/how-it-works'
       path: '/how-it-works'
@@ -2786,6 +2779,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/fr/privacy'
       preLoaderRoute: typeof FrPrivacyRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/report': {
+      id: '/fr/report'
+      path: '/report'
+      fullPath: '/fr/report'
+      preLoaderRoute: typeof FrReportRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/search': {
@@ -3182,7 +3182,6 @@ interface FrRouteChildren {
   FrGetAppRoute: typeof FrGetAppRoute
   FrGuidesRoute: typeof FrGuidesRouteWithChildren
   FrHelpRoute: typeof FrHelpRoute
-  FrReportRoute: typeof FrReportRoute
   FrHowItWorksRoute: typeof FrHowItWorksRoute
   FrJobsRoute: typeof FrJobsRoute
   FrLoginRoute: typeof FrLoginRoute
@@ -3191,6 +3190,7 @@ interface FrRouteChildren {
   FrNeedCareFastRoute: typeof FrNeedCareFastRoute
   FrPlansRoute: typeof FrPlansRoute
   FrPrivacyRoute: typeof FrPrivacyRoute
+  FrReportRoute: typeof FrReportRoute
   FrSearchRoute: typeof FrSearchRoute
   FrSignupRoute: typeof FrSignupRoute
   FrStartADaycareRoute: typeof FrStartADaycareRoute
@@ -3227,7 +3227,6 @@ const FrRouteChildren: FrRouteChildren = {
   FrGetAppRoute: FrGetAppRoute,
   FrGuidesRoute: FrGuidesRouteWithChildren,
   FrHelpRoute: FrHelpRoute,
-  FrReportRoute: FrReportRoute,
   FrHowItWorksRoute: FrHowItWorksRoute,
   FrJobsRoute: FrJobsRoute,
   FrLoginRoute: FrLoginRoute,
@@ -3236,6 +3235,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrNeedCareFastRoute: FrNeedCareFastRoute,
   FrPlansRoute: FrPlansRoute,
   FrPrivacyRoute: FrPrivacyRoute,
+  FrReportRoute: FrReportRoute,
   FrSearchRoute: FrSearchRoute,
   FrSignupRoute: FrSignupRoute,
   FrStartADaycareRoute: FrStartADaycareRoute,
@@ -3372,7 +3372,6 @@ const rootRouteChildren: RootRouteChildren = {
   GetAppRoute: GetAppRoute,
   GuidesRoute: GuidesRouteWithChildren,
   HelpRoute: HelpRoute,
-  ReportRoute: ReportRoute,
   HowItWorksRoute: HowItWorksRoute,
   ImgRoute: ImgRoute,
   InboxRoute: InboxRouteWithChildren,
@@ -3388,6 +3387,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlansRoute: PlansRoute,
   PrivacyRoute: PrivacyRoute,
   ProviderRoute: ProviderRouteWithChildren,
+  ReportRoute: ReportRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SearchRoute: SearchRoute,
   SignupRoute: SignupRoute,
