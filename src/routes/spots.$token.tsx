@@ -41,7 +41,7 @@ function OpenSpotsPage() {
 
   if (!preview.ok) {
     return (
-      <Shell bare>
+      <Shell>
         <main className="ke-gutter mx-auto w-full max-w-lg py-10">
           <EmptyState title={copy.invalid} action={copy.searchAgain} actionTo="/" />
         </main>
@@ -66,7 +66,7 @@ function OpenSpotsPage() {
   const primary = band ?? null;
 
   return (
-    <Shell bare>
+    <Shell>
       <main className="ke-gutter mx-auto w-full max-w-lg py-8">
         <p className="text-sm font-semibold text-primary">{copy.kicker}</p>
         <h1 className="mt-2 font-display text-3xl md:text-5xl">{copy.title}</h1>

@@ -8,7 +8,6 @@ import { officialLicenceNumber } from "@/lib/licensing";
 import { LISTING_PLACEHOLDER } from "@/lib/listing-photo";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { Shell } from "@/components/shell";
-import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { searchClaimable, startClaim, submitEnrollLicense, verifyClaim, type ClaimHit } from "@/lib/server/claims";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -550,7 +549,6 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
           </Button>
         </form>
       </main>
-      <SiteFooter />
     </Shell>
   );
 }

@@ -3,7 +3,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { Shell } from "@/components/shell";
-import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { confirmAction } from "@/lib/success-confirm";
 import { LICENSING_OFFICES, reportSearchProvince } from "@/lib/licensing-offices";
@@ -85,7 +84,7 @@ export function ReportPage() {
   const mailto = `mailto:${SUPPORT_INBOX_EMAIL}?subject=${encodeURIComponent("Listing concern")}`;
 
   return (
-    <Shell bare>
+    <Shell>
       <main className="ke-gutter mx-auto max-w-3xl py-12 md:py-16" data-ke="report-page">
         <p className="text-sm font-semibold tracking-wide text-primary">{t("reportKicker")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("reportTitle")}</h1>
@@ -229,7 +228,6 @@ export function ReportPage() {
           </p>
         </section>
       </main>
-      <SiteFooter />
     </Shell>
   );
 }

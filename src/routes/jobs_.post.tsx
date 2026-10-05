@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
-import { SiteFooter } from "@/components/site-footer";
 import { JobsInterestForm } from "@/components/jobs-interest-form";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { localePath } from "@/lib/locale-path";
@@ -14,7 +13,7 @@ export const Route = createFileRoute("/jobs_/post")({
 export function JobsPost() {
   const { t, locale } = useCopy();
   return (
-    <Shell bare>
+    <Shell>
       <main className="ke-gutter mx-auto max-w-lg py-12 md:py-16">
         <p className="text-sm font-semibold tracking-wide text-primary">{t("jobsPostKicker")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("jobsPostTitle")}</h1>
@@ -27,7 +26,6 @@ export function JobsPost() {
           </Link>
         </p>
       </main>
-      <SiteFooter />
     </Shell>
   );
 }

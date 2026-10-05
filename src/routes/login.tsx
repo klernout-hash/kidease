@@ -409,7 +409,7 @@ export function LoginScreen({
             : t("loginLead");
 
   return (
-    <Shell bare>
+    <Shell>
       <main
         className="ke-auth-viewport mx-auto grid w-full min-w-0 max-w-5xl overflow-x-hidden lg:grid-cols-2"
         data-ke="login-split"

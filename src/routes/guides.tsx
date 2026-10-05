@@ -26,7 +26,7 @@ export function GuidesIndex() {
   const bare = stripLocalePrefix(pathname);
   if (bare.startsWith("/guides/") && bare !== "/guides") return <Outlet />;
   return (
-    <Shell bare>
+    <Shell>
       <main className="ke-gutter mx-auto w-full max-w-3xl py-8">
         <p className="text-sm font-semibold text-primary">{copy.kicker}</p>
         <h1 className="mt-2 font-display text-3xl md:text-5xl">{copy.indexTitle}</h1>

@@ -3,7 +3,6 @@ import { ArrowUpRight } from "lucide-react";
 import { JsonLd } from "@/components/json-ld";
 import { CityHubNotFoundPage } from "@/components/page-not-found";
 import { Shell } from "@/components/shell";
-import { SiteFooter } from "@/components/site-footer";
 import { cityHubs } from "@/lib/city-hub-data";
 import {
   cityHubChipLabel,
@@ -71,7 +70,7 @@ export function CityHubPage({ hub }: { hub: CityHubSnapshot }) {
   ];
 
   return (
-    <Shell bare>
+    <Shell>
       <JsonLd json={breadcrumbJsonLdScript(crumbs)} />
       <JsonLd json={faqPageJsonLdScript(faqItems)} />
       <main className="ke-gutter mx-auto max-w-3xl py-12 md:py-16">
@@ -193,7 +192,6 @@ export function CityHubPage({ hub }: { hub: CityHubSnapshot }) {
           </section>
         ) : null}
       </main>
-      <SiteFooter />
     </Shell>
   );
 }

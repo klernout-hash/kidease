@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
@@ -295,6 +295,47 @@ test("footer does not drop destinations when columns are renamed and reordered",
   assert.ok(!all.includes("/unsubscribe|{}|bare"));
   assert.equal(FOOTER_PARENTS.filter((link) => link.to === "/get-app").length, 0);
   assert.equal(FOOTER_KIDEASE.filter((link) => link.to === "/get-app").length, 1);
+});
+
+test("the public shell mounts the site footer once", () => {
+  const shell = src("src/components/shell.tsx");
+  const css = src("src/styles.css");
+  assert.equal((shell.match(/<SiteFooter/g) ?? []).length, 1);
+  assert.match(shell, /hideFooter \? null : <SiteFooter \/>/);
+  assert.doesNotMatch(shell, /bare \? null/);
+  assert.doesNotMatch(src("src/components/site-footer.tsx"), /ke-web-only/);
+  assert.doesNotMatch(src("src/components/site-footer.tsx"), /querySelectorAll\("footer\.ke-site-footer"\)/);
+  assert.doesNotMatch(css, /footer\.ke-site-footer\.ke-web-only/);
+  assert.doesNotMatch(src("src/routes/index.tsx"), /<SiteFooter/);
+  assert.doesNotMatch(src("src/components/legal-doc.tsx"), /<SiteFooter/);
+
+  function walk(dir) {
+    const out = [];
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) out.push(...walk(full));
+      else if (entry.name.endsWith(".tsx")) out.push(full);
+    }
+    return out;
+  }
+  const routes = walk(join(root, "src/routes"));
+  for (const file of routes) {
+    assert.doesNotMatch(readFileSync(file, "utf8"), /<SiteFooter/, `${file} must not mount a second footer`);
+  }
+  for (const rel of [
+    "src/routes/guides.tsx",
+    "src/routes/guides.$code.tsx",
+    "src/routes/need-care-fast.tsx",
+    "src/routes/daycare.$city.$age.tsx",
+    "src/routes/claim.tsx",
+    "src/routes/compare.tsx",
+    "src/routes/search.tsx",
+    "src/routes/about.tsx",
+    "src/routes/plans.tsx",
+  ]) {
+    assert.match(src(rel), /<Shell>/);
+    assert.doesNotMatch(src(rel), /<Shell bare>/);
+  }
 });
 
 test("unsubscribe stays off the footer and remains on Privacy and account prefs", () => {

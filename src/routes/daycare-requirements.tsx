@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { BadgeCheck, FileCheck, Home, Shield, Users } from "lucide-react";
 import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
-import { SiteFooter } from "@/components/site-footer";
 import { localePath } from "@/lib/locale-path";
 import { pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
@@ -28,7 +27,7 @@ export function DaycareRequirementsPage() {
     { icon: FileCheck, title: t("reqMbTitle"), body: t("reqMbBody") },
   ];
   return (
-    <Shell bare>
+    <Shell>
       <main className="ke-gutter mx-auto max-w-3xl py-12 md:py-16">
         <p className="text-sm font-semibold tracking-wide text-primary">{t("daycareRequirements")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("reqTitle")}</h1>
@@ -58,7 +57,6 @@ export function DaycareRequirementsPage() {
           </Link>
         </p>
       </main>
-      <SiteFooter />
     </Shell>
   );
 }

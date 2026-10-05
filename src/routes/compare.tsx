@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Shell } from "@/components/shell";
-import { SiteFooter } from "@/components/site-footer";
 import { BuildingPhoto } from "@/components/building-photo";
 import { listingThumb } from "@/lib/listing-photo";
 import { Button } from "@/components/ui/button";
@@ -273,7 +272,6 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
           </div>
         )}
       </main>
-      <SiteFooter />
     </Shell>
   );
 }

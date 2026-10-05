@@ -5,7 +5,6 @@ import { confirmAction } from "@/lib/success-confirm";
 import { Mail } from "lucide-react";
 import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
-import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
 import { submitPublicMessage } from "@/lib/server/notify";
@@ -93,7 +92,7 @@ export function Contact() {
   }
 
   return (
-    <Shell bare>
+    <Shell>
       <main className="ke-gutter mx-auto max-w-lg py-12 md:py-16">
         <p className="text-sm font-semibold tracking-wide text-primary">{t("contact")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{isParent ? t("parentContactTitle") : t("contactTitle")}</h1>
@@ -193,7 +192,6 @@ export function Contact() {
           <p className="mt-3 text-xs text-subtle">{t("contactPrivacy")}</p>
         </div>
       </main>
-      <SiteFooter />
     </Shell>
   );
 }

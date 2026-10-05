@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import { SiteFooter } from "@/components/site-footer";
 import { Shell } from "@/components/shell";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
@@ -80,7 +79,7 @@ function Block({ block }: { block: LegalBlock }) {
 export function LegalPage({ doc }: { doc: LegalDoc }) {
   const { t, locale } = useCopy();
   return (
-    <Shell bare>
+    <Shell>
       <main className="ke-gutter mx-auto max-w-2xl py-10 md:py-14">
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">{doc.kicker}</p>
         <h1 className="mt-2 font-display text-3xl md:text-4xl">{doc.title}</h1>
@@ -166,7 +165,6 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
         </p>
         <p className="mt-6 text-xs text-subtle">{doc.disclaimer}</p>
       </main>
-      <SiteFooter />
     </Shell>
   );
 }
