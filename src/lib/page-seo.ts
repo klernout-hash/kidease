@@ -412,46 +412,69 @@ export const MARKETING_PAGE_SEO_FR = {
       "Comment ouvrir un service de garde permis au Canada, avec un filtre par province pour les pages officielles de permis et de subventions. KidEase ne délivre pas de permis et n’accorde pas de subventions.",
     path: "/fr/start-a-daycare",
   },
-} as const;
-
-/**
- * French titles for pages that do not have a /fr URL yet.
- * Canonical path stays the English URL. Full /fr routes are a later change.
- */
-export const UNPAIRED_FR_SEO = {
   plans: {
     title: "Forfaits · KidEase",
     description:
-      "Recherche, favoris (jusqu’à cinq centres) et messages aux garderies, sans frais. Les garderies utilisent tous les outils pendant la période fondatrice gratuite.",
+      "Recherche, favoris (jusqu’à cinq centres) et messages aux garderies, sans frais. Les garderies utilisent tous les outils pendant la période fondatrice gratuite. KidEase est une entreprise canadienne.",
+    path: "/fr/plans",
   },
   plansPaid: {
     title: "Forfaits · KidEase",
     description:
-      "Recherche, favoris (jusqu’à cinq centres) et messages, sans frais. Parent Plus et les forfaits de centre sont facultatifs et facturés en dollars canadiens.",
+      "Recherche, favoris (jusqu’à cinq centres) et messages, sans frais. Parent Plus et les forfaits de centre sont facultatifs et facturés en dollars canadiens. KidEase est une entreprise canadienne.",
+    path: "/fr/plans",
   },
   claim: {
     title: "Réclamez la fiche de votre garderie · KidEase",
     description:
-      "Directeurs : réclamez la fiche de votre garderie permise sur KidEase. Indiquez les places et les frais mensuels. Réclamer la fiche est gratuit.",
+      "Directeurs : réclamez la fiche de votre garderie permise sur KidEase, une entreprise canadienne. Indiquez les places et les frais mensuels. Réclamer la fiche est gratuit.",
+    path: "/fr/claim",
   },
   cities: {
     title: "Villes au Canada · KidEase",
     description: "Répertoires de garderies permises, regroupés par province, partout au Canada.",
+    path: "/fr/cities",
   },
   compare: {
     title: "Comparer des garderies permises · KidEase",
     description:
       "Comparez des centres permis côte à côte : heures, frais et places ouvertes. Enregistrez jusqu’à trois fiches, puis visitez avec une liste.",
+    path: "/fr/compare",
   },
-  login: {
-    title: "Connexion ou création de compte · KidEase",
+  verify: {
+    title: "Comment nous vérifions les fiches · KidEase",
     description:
-      "Créez un compte KidEase ou connectez-vous pour enregistrer des centres permis, demander une visite et écrire à une garderie.",
+      "Badges KidEase : correspondance au catalogue, revue avec le registre officiel, vérifications de réclamation et liens vers les dossiers du gouvernement. KidEase est une entreprise canadienne.",
+    path: "/fr/verify",
   },
-  vacancy: {
-    title: "Places ouvertes par province · KidEase",
+  daycareRequirements: {
+    title: "Exigences pour les garderies · KidEase",
     description:
-      "Fiches publiques KidEase par province et par âge. Places ouvertes confirmées seulement. Les frais ne sont pas sur cette page.",
+      "Ce que les parents peuvent attendre et ce que les garderies permises doivent fournir : un permis, une vérification du secteur vulnérable et les documents de registre exigés. KidEase ne délivre pas les vérifications policières.",
+    path: "/fr/daycare-requirements",
+  },
+  tourChecklist: {
+    title: "Liste pour visiter une garderie · KidEase",
+    description:
+      "Questions à poser lors d’une visite : permis, ratios, allergies, temps dehors et subvention. À imprimer ou à ouvrir sur le téléphone.",
+    path: "/fr/tour-checklist",
+  },
+  team: {
+    title: "L’équipe · KidEase",
+    description:
+      "Kyle Lernout et Kevin Lamont ont fondé KidEase, une entreprise canadienne, pour aider les familles à trouver une garderie permise.",
+    path: "/fr/team",
+  },
+  unsubscribe: {
+    title: "Se désabonner · KidEase",
+    description: "Arrêtez les courriels ou les SMS de KidEase. Désabonnement selon la LCAP : aucun compte requis.",
+    path: "/fr/unsubscribe",
+  },
+  deleteAccount: {
+    title: "Supprimer le compte · KidEase",
+    description:
+      "Suppression de compte KidEase selon la LPRPDE. Connectez-vous pour retirer votre compte et les données de la famille.",
+    path: "/fr/delete-account",
   },
 } as const;
 

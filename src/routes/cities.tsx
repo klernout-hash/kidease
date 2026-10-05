@@ -2,39 +2,41 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { citiesIndexGroups } from "@/lib/cities-index";
-import { headChromeLocale } from "@/lib/head-locale";
 import { localePath } from "@/lib/locale-path";
-import { pageSeoHead, UNPAIRED_FR_SEO } from "@/lib/page-seo";
+import { pageSeoHead } from "@/lib/page-seo";
 import { loadDirectoryCounts } from "@/lib/server/city-directory";
 import { useCopy } from "@/lib/use-copy";
 
+export async function citiesLoader() {
+  try {
+    const counts = await loadDirectoryCounts();
+    return { provinces: counts.provinces, hubs: counts.hubs, source: counts.source };
+  } catch {
+    return {
+      provinces: {} as Record<string, number>,
+      hubs: {} as Record<string, number>,
+      source: "json" as const,
+    };
+  }
+}
+
 export const Route = createFileRoute("/cities")({
-  loader: async () => {
-    try {
-      const counts = await loadDirectoryCounts();
-      return { provinces: counts.provinces, hubs: counts.hubs, source: counts.source };
-    } catch {
-      return {
-        provinces: {} as Record<string, number>,
-        hubs: {} as Record<string, number>,
-        source: "json" as const,
-      };
-    }
-  },
-  head: ({ matches }) =>
-    headChromeLocale(matches) === "fr"
-      ? pageSeoHead({ ...UNPAIRED_FR_SEO.cities, path: "/cities", locale: "fr" })
-      : pageSeoHead({
-          title: "Cities in Canada · KidEase",
-          description: "Licensed daycare directories grouped by province across Canada.",
-          path: "/cities",
-        }),
-  component: CitiesPage,
+  loader: citiesLoader,
+  head: () =>
+    pageSeoHead({
+      title: "Cities in Canada · KidEase",
+      description: "Licensed daycare directories grouped by province across Canada.",
+      path: "/cities",
+    }),
+  component: CitiesRoute,
 });
 
-export function CitiesPage() {
+function CitiesRoute() {
+  return <CitiesPage counts={Route.useLoaderData()} />;
+}
+
+export function CitiesPage({ counts }: { counts: Awaited<ReturnType<typeof citiesLoader>> }) {
   const { t, locale } = useCopy();
-  const counts = Route.useLoaderData();
   const groups = citiesIndexGroups(locale);
   return (
     <Shell bare>
@@ -65,8 +67,7 @@ export function CitiesPage() {
                   {group.cities.map((city) => (
                     <li key={city.slug}>
                       <Link
-                        to="/daycare/city/$city"
-                        params={{ city: city.slug }}
+                        to={localePath(`/daycare/city/${city.slug}`, locale)}
                         className="inline-flex min-h-11 items-center text-base font-medium text-primary underline-offset-4 hover:underline"
                       >
                         {city.label}

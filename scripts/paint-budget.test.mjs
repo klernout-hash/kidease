@@ -41,8 +41,8 @@ describe("shell does not wait on catalogue", () => {
     assert.match(search, /withPaintBudget\(/);
     assert.match(search, /productHomeOrigin\(\)/);
     assert.match(search, /staleTime: 60_000/);
-    assert.match(fr, /Promise\.all\(\[/);
-    assert.match(fr, /catalogueReady/);
+    assert.match(fr, /searchLoader/);
+    assert.match(fr, /searchPageHead\("fr"/);
     assert.doesNotMatch(home, /const featured = await withTimeoutFallback\(\s*featuredDaycares/);
   });
 

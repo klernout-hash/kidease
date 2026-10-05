@@ -58,7 +58,7 @@ export function FoundingPlans({ embedded = false }: { embedded?: boolean }) {
           <p className="mt-1 text-sm text-muted">{copy.foundingBody}</p>
         </div>
         <Button asChild className="mt-5 min-h-11 w-full touch-manipulation sm:w-auto">
-          <Link to="/claim">{copy.claim}</Link>
+          <Link to={localePath("/claim", locale)}>{copy.claim}</Link>
         </Button>
       </article>
     </section>

@@ -2,24 +2,23 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { DeleteAccountPanel } from "@/components/delete-account-panel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { localePath } from "@/lib/locale-path";
+import { pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 import { DeskSkeleton } from "@/components/page-skeleton";
 
 export const Route = createFileRoute("/delete-account")({
-  head: () => ({
-    meta: [
-      { title: "Delete account · KidEase" },
-      {
-        name: "description",
-        content: "PIPEDA account deletion for KidEase: sign in to remove your account and family data.",
-      },
-    ],
-  }),
+  head: () =>
+    pageSeoHead({
+      title: "Delete account · KidEase",
+      description: "PIPEDA account deletion for KidEase: sign in to remove your account and family data.",
+      path: "/delete-account",
+    }),
   component: DeleteAccountPage,
 });
 
-function DeleteAccountPage() {
-  const { t } = useCopy();
+export function DeleteAccountPage() {
+  const { t, locale } = useCopy();
   const { user, isPending } = useCurrentUserState();
 
   if (!isPending && user) {
@@ -42,15 +41,15 @@ function DeleteAccountPage() {
           <DeleteAccountPanel signedIn={Boolean(user)} />
         )}
         <p className="mt-8 text-sm text-muted">
-          <Link to="/unsubscribe" search={{ token: undefined, channel: undefined }} className="underline-offset-4 hover:underline">
+          <Link to={localePath("/unsubscribe", locale)} className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
             {t("unsubscribe")}
           </Link>
           {" · "}
-          <Link to="/privacy" className="underline-offset-4 hover:underline">
+          <Link to={localePath("/privacy", locale)} className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
             {t("privacy")}
           </Link>
           {" · "}
-          <Link to="/help" className="underline-offset-4 hover:underline">
+          <Link to={localePath("/help", locale)} className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
             {t("helpTitle")}
           </Link>
         </p>

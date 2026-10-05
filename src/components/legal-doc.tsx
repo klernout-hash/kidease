@@ -143,7 +143,7 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
             {SUPPORT_INBOX_EMAIL}
           </a>
           {" · "}
-          <Link to="/delete-account" className="underline-offset-4 hover:underline">
+          <Link to={localePath("/delete-account", locale)} className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
             {t("deleteAccount")}
           </Link>
           {" · "}

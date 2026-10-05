@@ -856,6 +856,66 @@ async function rankingSortSmoke(page, base) {
   await page.setViewportSize({ width: 1280, height: 800 });
 }
 
+const FR_CHROME_BANNED = [
+  /\bSign in\b/,
+  /\bSign up\b/,
+  /\bFree forever\b/i,
+  /gratuit pour toujours/i,
+  /\bFor daycares\b/,
+  /\bClaim listing\b/,
+  /\bList your daycare\b/,
+  /\bContact Us\b/,
+  /\bBrowse by city\b/,
+  /\bHow we verify listings\b/,
+  /\bDaycare requirements\b/,
+  /\bFree founding period\b/,
+  /\bPhoto pending\b/i,
+];
+
+async function frenchChromeSmoke(page, base) {
+  const pages = [
+    ["/fr/claim", "/fr/claim"],
+    ["/fr/plans", "/fr/plans"],
+    ["/fr/compare", "/fr/compare"],
+    ["/fr/cities", "/fr/cities"],
+    ["/fr/signup", "/fr/login"],
+    ["/fr/verify", "/fr/verify"],
+    ["/fr/daycare-requirements", "/fr/daycare-requirements"],
+    ["/fr/search", "/fr/search"],
+    ["/fr/daycare/city/winnipeg", "/fr/daycare/city/winnipeg"],
+  ];
+  const misses = [];
+  for (const [path, canonicalIncludes] of pages) {
+    const res = await page.goto(new URL(path, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    const status = res?.status() ?? 0;
+    const landed = new URL(page.url()).pathname;
+    const canonical = await page.locator('link[rel="canonical"]').first().getAttribute("href").catch(() => "");
+    const langs = await page.locator('link[rel="alternate"]').evaluateAll((nodes) =>
+      nodes.map((node) => node.getAttribute("hreflang")).filter(Boolean),
+    );
+    const text = await page.evaluate(() => {
+      const bits = [];
+      for (const sel of ["header", "main h1", "footer"]) {
+        const el = document.querySelector(sel);
+        if (el) bits.push(el.textContent || "");
+      }
+      if (!location.pathname.includes("/daycare/city/")) {
+        const main = document.querySelector("main");
+        if (main) bits.push(main.textContent || "");
+      }
+      return bits.join("\n").replace(/\s+/g, " ");
+    });
+    const hit = FR_CHROME_BANNED.find((re) => re.test(text));
+    const hreflangOk = ["en", "fr", "x-default"].every((lang) => langs.includes(lang));
+    if (status >= 400 || !landed.startsWith(canonicalIncludes) || !String(canonical).includes(canonicalIncludes) || !hreflangOk || hit) {
+      misses.push(`${path}:${status}:${landed}:${hit ? hit.source : canonicalIncludes}`);
+    }
+  }
+  record("fr-public-chrome", misses.length === 0, {
+    note: misses.length ? misses.join(" ") : `${pages.length} French pages`,
+  });
+}
+
 async function frenchCityHubSmoke(page, base) {
   const misses = [];
   for (const slug of FR_CITY_HUB_SLUGS) {
@@ -910,6 +970,7 @@ try {
 
   await rankingSortSmoke(page, base);
   await frenchCityHubSmoke(page, base);
+  await frenchChromeSmoke(page, base);
 
   const healthResp = await page.request.get(new URL(HEALTH_SMOKE_PATH, base).href).catch(() => null);
   const healthBody = (await healthResp?.text().catch(() => "")) || "";

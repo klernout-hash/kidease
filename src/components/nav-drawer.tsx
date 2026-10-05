@@ -58,13 +58,13 @@ function GuestDrawerLinks({
         {navExtra}
         <MenuRow to={localePath("/search", locale)} label={t("search")} icon="explore" appearance="drawer" marker="search" onClick={onClose} />
         <MenuRow to={localePath("/search", locale)} search={{ view: "map" }} label={t("navMap")} icon="explore" appearance="drawer" marker="map" onClick={onClose} />
-        <MenuRow to="/cities" label={t("browseCities")} icon="explore" appearance="drawer" onClick={onClose} />
-        <MenuRow to="/compare" label={t("compare")} icon="compare" appearance="drawer" onClick={onClose} />
-        <MenuRow to="/tour-checklist" label={t("tourChecklist")} icon="tourChecklist" appearance="drawer" onClick={onClose} />
+        <MenuRow to={localePath("/cities", locale)} label={t("browseCities")} icon="explore" appearance="drawer" onClick={onClose} />
+        <MenuRow to={localePath("/compare", locale)} label={t("compare")} icon="compare" appearance="drawer" onClick={onClose} />
+        <MenuRow to={localePath("/tour-checklist", locale)} label={t("tourChecklist")} icon="tourChecklist" appearance="drawer" onClick={onClose} />
       </DrawerSection>
       <DrawerSection title={t("navForDaycares")} marker="drawer-for-daycares">
-        <MenuRow to="/claim" label={t("listYourDaycare")} icon="claim" appearance="drawer" onClick={onClose} />
-        <MenuRow to="/plans" label={t("navPlans")} icon="benefits" appearance="drawer" marker="plans" onClick={onClose} />
+        <MenuRow to={localePath("/claim", locale)} label={t("listYourDaycare")} icon="claim" appearance="drawer" onClick={onClose} />
+        <MenuRow to={localePath("/plans", locale)} label={t("navPlans")} icon="benefits" appearance="drawer" marker="plans" onClick={onClose} />
         <MenuRow to={localePath("/jobs", locale)} label={t("findDaycareJobs")} icon="jobs" appearance="drawer" onClick={onClose} />
       </DrawerSection>
       <DrawerSection title={t("helpTitle")} marker="drawer-help">

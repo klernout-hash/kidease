@@ -383,7 +383,7 @@ test("director quality todos put ages, fees, and photo first", () => {
 test("search, cards, rails, and vacancy wire the shared helper", () => {
   const search = src("src/routes/search.tsx");
   const home = src("src/routes/index.tsx");
-  const fr = src("src/routes/fr.search.tsx");
+  const fr = src("src/routes/search.tsx");
   const card = src("src/components/daycare-card.tsx");
   const rails = src("src/components/explore-rails.tsx");
   const parentRails = src("src/lib/parent-rails.ts");
@@ -414,7 +414,7 @@ test("search, cards, rails, and vacancy wire the shared helper", () => {
   assert.match(listing, /unclaimedRequestNote|listing_request_started/);
   assert.match(src("src/components/request-tour.tsx"), /listing_request_submitted/);
   assert.match(src("src/lib/site-footer-nav.ts"), /"\/compare"/);
-  assert.match(src("src/components/nav-drawer.tsx"), /to="\/compare"/);
+  assert.match(src("src/components/nav-drawer.tsx"), /localePath\("\/compare"/);
   assert.match(inbox, /providerRequestsEmpty/);
   assert.match(quality, /qualityTodoFirst/);
   assert.doesNotMatch(helpers, /FEATURE_INAPP_CHAT|FEATURE_SMS|FEATURE_PUSH/);

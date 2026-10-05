@@ -4,24 +4,23 @@ import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
 import { TrustExplainer } from "@/components/trust-badge";
+import { localePath } from "@/lib/locale-path";
+import { pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/verify")({
-  head: () => ({
-    meta: [
-      { title: "How we verify listings · KidEase" },
-      {
-        name: "description",
-        content:
-          "How KidEase badges work: catalogue matches, staff review against the official registry, claim checks, and links to government records.",
-      },
-    ],
-  }),
+  head: () =>
+    pageSeoHead({
+      title: "How we verify listings · KidEase",
+      description:
+        "How KidEase badges work: catalogue matches, staff review against the official registry, claim checks, and links to government records. KidEase is a Canadian company.",
+      path: "/verify",
+    }),
   component: VerifyPage,
 });
 
 export function VerifyPage() {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const items = [
     { icon: BadgeCheck, title: t("verifyMbTitle"), body: t("verifyMbBody") },
     { icon: Shield, title: t("verifyStubTitle"), body: t("verifyStubBody") },
@@ -88,7 +87,7 @@ export function VerifyPage() {
           <h2 className="text-2xl font-semibold">{t("verifyScreeningTitle")}</h2>
           <p className="mt-3 text-sm leading-6 text-muted">{t("verifyScreeningBody")}</p>
           <p className="mt-3 text-sm">
-            <Link to="/daycare-requirements" className="font-medium text-primary underline-offset-4 hover:underline">
+            <Link to={localePath("/daycare-requirements", locale)} className="font-medium text-primary underline-offset-4 hover:underline">
               {t("daycareRequirements")}
             </Link>
           </p>
@@ -96,15 +95,15 @@ export function VerifyPage() {
 
         <p className="mt-8 text-sm text-muted">{t("verifyOfficial")}</p>
         <p className="mt-6 text-sm">
-          <Link to="/about" className="font-medium text-primary underline-offset-4 hover:underline">
+          <Link to={localePath("/about", locale)} className="font-medium text-primary underline-offset-4 hover:underline">
             {t("about")}
           </Link>
           {" · "}
-          <Link to="/faq" className="font-medium text-primary underline-offset-4 hover:underline">
-            FAQ
+          <Link to={localePath("/faq", locale)} className="font-medium text-primary underline-offset-4 hover:underline">
+            {t("faqShort")}
           </Link>
           {" · "}
-          <Link to="/claim" className="font-medium text-primary underline-offset-4 hover:underline">
+          <Link to={localePath("/claim", locale)} className="font-medium text-primary underline-offset-4 hover:underline">
             {t("claimCta")}
           </Link>
         </p>

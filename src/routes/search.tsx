@@ -126,7 +126,7 @@ import {
 import { CityHubLinks } from "@/components/city-hub-links";
 import { EXPLORE_AGE_RAIL_COPY, preferCompleteCards } from "@/lib/explore-category-rails";
 import { dismissPopovers } from "@/lib/dismiss-popovers";
-import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
+import { MARKETING_PAGE_SEO, MARKETING_PAGE_SEO_FR, pageSeoHead } from "@/lib/page-seo";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 
 const MapView = lazy(() => import("@/components/map-view").then((m) => ({ default: m.MapView })));
@@ -134,8 +134,7 @@ const CompareBar = lazy(() =>
   import("@/components/compare-bar").then((m) => ({ default: m.CompareBar })),
 );
 
-export const Route = createFileRoute("/search")({
-  loader: async ({ location }) => {
+export async function searchLoader({ location }: { location: { search: unknown } }) {
     const q = searchQueryFromUnknown(location.search);
     const city = cityParamFromUnknown(location.search);
     const decision = resolveSearchDirectory({ q, city });
@@ -182,12 +181,9 @@ export const Route = createFileRoute("/search")({
       hasMore: painted.value?.hasMore === true,
       total: painted.value?.total ?? 0,
     };
-  },
-  staleTime: 60_000,
-  pendingMs: 0,
-  pendingMinMs: 0,
-  pendingComponent: BootPending,
-  validateSearch: (s: Record<string, unknown>) => {
+}
+
+export function searchValidateSearch(s: Record<string, unknown>) {
     const fields = parseExploreSearchFields(s);
     const out: {
       q?: string;
@@ -233,38 +229,59 @@ export const Route = createFileRoute("/search")({
     if (s.favorites === "1" || s.favorites === true) out.favorites = "1";
     const parent = compactParentListingSearch(parseParentListingSearch(s));
     return { ...out, ...parent };
-  },
-  head: ({ loaderData }) => {
-    const seo = pageSeoHead(MARKETING_PAGE_SEO.search);
-    const src = loaderData?.items?.[0]?.photos?.[0];
-    const image =
-      src && !src.startsWith("data:")
-        ? [
-            {
-              rel: "preload" as const,
-              as: "image" as const,
-              href: photoUrl(src, 480),
-              imageSrcSet: photoSrcSet(src, CARD_WIDTHS),
-              imageSizes: CARD_SIZES,
-              fetchPriority: "high" as const,
-            },
-          ]
-        : [];
-    return { ...seo, links: [...seo.links, ...image] };
-  },
-  component: SearchPage,
+}
+
+export function searchPageHead(
+  kind: "en" | "fr",
+  loaderData: { items?: Array<{ photos?: string[] | null }> } | undefined,
+) {
+  const seo = pageSeoHead(kind === "fr" ? MARKETING_PAGE_SEO_FR.search : MARKETING_PAGE_SEO.search);
+  const src = loaderData?.items?.[0]?.photos?.[0];
+  const image =
+    src && !src.startsWith("data:")
+      ? [
+          {
+            rel: "preload" as const,
+            as: "image" as const,
+            href: photoUrl(src, 480),
+            imageSrcSet: photoSrcSet(src, CARD_WIDTHS),
+            imageSizes: CARD_SIZES,
+            fetchPriority: "high" as const,
+          },
+        ]
+      : [];
+  return { ...seo, links: [...seo.links, ...image] };
+}
+
+export const Route = createFileRoute("/search")({
+  loader: searchLoader,
+  staleTime: 60_000,
+  pendingMs: 0,
+  pendingMinMs: 0,
+  pendingComponent: BootPending,
+  validateSearch: searchValidateSearch,
+  head: ({ loaderData }) => searchPageHead("en", loaderData),
+  component: SearchRoute,
 });
+
+function SearchRoute() {
+  return <SearchScreen boot={Route.useLoaderData()} incoming={Route.useSearch()} />;
+}
 
 const PRESETS_KM = [1, 5, 10, 15, 25, 40, 50];
 
-function SearchPage() {
+export function SearchScreen({
+  boot,
+  incoming,
+}: {
+  boot: Awaited<ReturnType<typeof searchLoader>>;
+  incoming: ReturnType<typeof searchValidateSearch>;
+}) {
   const { t, locale } = useCopy();
   const { user } = useCurrentUserState();
   const fitFacts = useParentFitFacts();
   const [budgetMonthly, setBudgetMonthly] = useState("");
-  const navigate = useNavigate({ from: "/search" });
-  const incoming = Route.useSearch();
-  const boot = Route.useLoaderData();
+  const navigate = useNavigate({ from: locale === "fr" ? "/fr/search" : "/search" });
   const origin = useAppStore((s) => s.origin);
   const located = useAppStore((s) => s.located);
   const setOrigin = useAppStore((s) => s.setOrigin);

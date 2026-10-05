@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 
@@ -11,7 +12,7 @@ export const Route = createFileRoute("/tour-checklist")({
 });
 
 export function TourChecklist() {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const items = ["tourQ1", "tourQ2", "tourQ3", "tourQ4", "tourQ5", "tourQ6"] as const;
   return (
     <Shell>
@@ -31,7 +32,7 @@ export function TourChecklist() {
           ))}
         </ol>
         <p className="mt-8 text-sm">
-          <Link to="/benefits" className="font-medium text-primary hover:underline">
+          <Link to={localePath("/benefits", locale)} className="inline-flex min-h-11 items-center font-medium text-primary hover:underline">
             {t("benefitsTab")}
           </Link>
         </p>

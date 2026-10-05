@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { SIGNUP_FUNNEL_EVENT, signupFunnelPayload } from "@/lib/signup-funnel";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -16,13 +17,13 @@ export function ClaimListingCta({
   source: "card" | "listing";
   className?: string;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const id = daycareId.trim();
   const q = name.trim();
   const onCard = source === "card";
   return (
     <Link
-      to="/claim"
+      to={localePath("/claim", locale)}
       search={{ ...(id ? { id } : {}), ...(q ? { q } : {}) }}
       data-ke="claim-free-listing"
       data-source={source}

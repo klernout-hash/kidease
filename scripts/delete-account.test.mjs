@@ -35,7 +35,7 @@ test("in-app Delete my account lives on Account only; public footer and desks do
   assert.doesNotMatch(parentDesk, /delete-account/);
   assert.doesNotMatch(menu, /to="\/delete-account"/);
   assert.doesNotMatch(menu, /deleteAccount/);
-  assert.match(src("src/components/legal-doc.tsx"), /to="\/delete-account"/);
+  assert.match(src("src/components/legal-doc.tsx"), /localePath\("\/delete-account"/);
   assert.doesNotMatch(src("src/lib/site-footer-nav.ts"), /delete-account/);
   assert.doesNotMatch(src("src/components/site-footer.tsx"), /delete-account/);
 });

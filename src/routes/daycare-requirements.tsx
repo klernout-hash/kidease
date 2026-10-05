@@ -3,24 +3,23 @@ import { BadgeCheck, FileCheck, Home, Shield, Users } from "lucide-react";
 import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
 import { SiteFooter } from "@/components/site-footer";
+import { localePath } from "@/lib/locale-path";
+import { pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/daycare-requirements")({
-  head: () => ({
-    meta: [
-      { title: "Daycare requirements · KidEase" },
-      {
-        name: "description",
-        content:
-          "What parents should expect and what licensed daycares must provide: a provincial or territorial licence, Vulnerable Sector Checks from police, and any extra provincial registry documents. KidEase reviews files: it does not issue police checks.",
-      },
-    ],
-  }),
+  head: () =>
+    pageSeoHead({
+      title: "Daycare requirements · KidEase",
+      description:
+        "What parents should expect and what licensed daycares must provide: a provincial or territorial licence, Vulnerable Sector Checks from police, and any extra provincial registry documents. KidEase reviews files. It does not issue police checks.",
+      path: "/daycare-requirements",
+    }),
   component: DaycareRequirementsPage,
 });
 
 export function DaycareRequirementsPage() {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const items = [
     { icon: Home, title: t("reqParentsTitle"), body: t("reqParentsBody") },
     { icon: Users, title: t("reqDaycaresTitle"), body: t("reqDaycaresBody") },
@@ -50,11 +49,11 @@ export function DaycareRequirementsPage() {
         </ul>
         <p className="mt-8 text-sm leading-6 text-muted">{t("reqPrivacyBody")}</p>
         <p className="mt-6 text-sm">
-          <Link to="/verify" className="font-medium text-primary underline-offset-4 hover:underline">
+          <Link to={localePath("/verify", locale)} className="font-medium text-primary underline-offset-4 hover:underline">
             {t("verifyListings")}
           </Link>
           {" · "}
-          <Link to="/about" className="font-medium text-primary underline-offset-4 hover:underline">
+          <Link to={localePath("/about", locale)} className="font-medium text-primary underline-offset-4 hover:underline">
             {t("about")}
           </Link>
         </p>

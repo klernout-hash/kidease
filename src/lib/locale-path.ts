@@ -38,6 +38,21 @@ export const LOCALE_PAIRED_PATHS = [
   "/start-a-daycare",
   "/need-care-fast",
   "/vacancy-index",
+  "/claim",
+  "/plans",
+  "/compare",
+  "/cities",
+  "/verify",
+  "/daycare-requirements",
+  "/tour-checklist",
+  "/team",
+  "/unsubscribe",
+  "/delete-account",
+  "/signup",
+  "/for-daycares",
+  "/daycares",
+  "/meet-the-team",
+  "/childcare-benefits-program",
   "/guides",
   "/guides/bc",
   "/guides/ab",
@@ -57,7 +72,14 @@ export const LOCALE_PAIRED_PATHS = [
 export type LocalePairedPath = (typeof LOCALE_PAIRED_PATHS)[number];
 
 /** Redirect-only pairs — exist so `/fr/explore` is not a 404, omitted from sitemap. */
-export const LOCALE_REDIRECT_PATHS = ["/explore"] as const;
+export const LOCALE_REDIRECT_PATHS = [
+  "/explore",
+  "/signup",
+  "/for-daycares",
+  "/daycares",
+  "/meet-the-team",
+  "/childcare-benefits-program",
+] as const;
 
 const PAIRED = new Set<string>(LOCALE_PAIRED_PATHS);
 const REDIRECT = new Set<string>(LOCALE_REDIRECT_PATHS);
