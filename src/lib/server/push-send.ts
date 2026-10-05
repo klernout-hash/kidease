@@ -244,6 +244,7 @@ async function sendFcm(
   env: EnvMap,
   fetchImpl: typeof fetch,
   nowSec: number,
+  url = "",
 ): Promise<{ ok: boolean; invalid?: boolean; error?: string }> {
   const projectId = envStr(env, "FCM_PROJECT_ID");
   const access = await fcmAccessToken(env, fetchImpl, nowSec);
@@ -258,6 +259,7 @@ async function sendFcm(
         token: target.token,
         notification: { title, body },
         android: { priority: "HIGH" },
+        ...(url ? { data: { url } } : {}),
       },
     }),
   });
@@ -286,6 +288,7 @@ async function sendApns(
   env: EnvMap,
   apnsRequest: ApnsRequestImpl,
   nowSec: number,
+  url = "",
 ): Promise<{ ok: boolean; invalid?: boolean; error?: string }> {
   const host = apnsHost(env);
   const topic = envStr(env, "APNS_BUNDLE_ID") || "ca.kidease.app";
@@ -304,6 +307,7 @@ async function sendApns(
         alert: { title, body },
         sound: "default",
       },
+      ...(url ? { url } : {}),
     }),
   });
   if (result.status >= 200 && result.status < 300) return { ok: true };
@@ -325,8 +329,27 @@ async function deleteInvalidTokens(sql: Sql | undefined, tokens: string[]): Prom
  * Fan-out one transactional notification to stored device tokens.
  * No-ops when FEATURE_PUSH is off or neither vendor is configured.
  */
+function pushLink(raw: unknown): string {
+  const value = sanitizePushText(raw, 300);
+  if (!value.startsWith("https://")) return "";
+  try {
+    const url = new URL(value);
+    const host = url.hostname.toLowerCase();
+    const allowed =
+      host === "kidease.ca" ||
+      host === "www.kidease.ca" ||
+      host.endsWith(".kidease.ca") ||
+      host === "localhost" ||
+      host === "127.0.0.1";
+    if (!allowed || url.username || url.password) return "";
+    return url.toString();
+  } catch {
+    return "";
+  }
+}
+
 export async function sendPushToDevices(
-  input: { title: string; body: string; tokens: PushTokenTarget[] },
+  input: { title: string; body: string; url?: string; tokens: PushTokenTarget[] },
   options: PushSendOptions = {},
 ): Promise<PushFanoutResult> {
   const env = options.env ?? process.env;
@@ -341,6 +364,7 @@ export async function sendPushToDevices(
 
   const title = sanitizePushText(input.title, 80);
   const body = sanitizePushText(input.body, 160);
+  const url = pushLink(input.url);
   if (!title || !body) {
     return { ok: false, skipped: true, error: "Push title and body are required." };
   }
@@ -361,7 +385,7 @@ export async function sendPushToDevices(
           skipped += 1;
           continue;
         }
-        const result = await sendFcm(target, title, body, env, fetchImpl, nowSec);
+        const result = await sendFcm(target, title, body, env, fetchImpl, nowSec, url);
         if (result.ok) sent += 1;
         else {
           failed += 1;
@@ -373,7 +397,7 @@ export async function sendPushToDevices(
         skipped += 1;
         continue;
       }
-      const result = await sendApns(target, title, body, env, apnsRequest, nowSec);
+      const result = await sendApns(target, title, body, env, apnsRequest, nowSec, url);
       if (result.ok) sent += 1;
       else {
         failed += 1;

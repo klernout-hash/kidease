@@ -1005,6 +1005,7 @@ export const copy = {
     accountBackAdmin: "Back to Admin desk",
     accountBackParent: "Back to Parent desk",
     accountBackSupport: "Back to Support desk",
+    accountAlerts: "Alerts",
     sendChildProfile: "Send this profile to a centre",
     sendChildNeedSaved: "Save centres from Find care first, or open a listing and request a spot.",
     sendChildCta: "Send to selected centres",
@@ -1029,10 +1030,10 @@ export const copy = {
     runSavedSearch: "Open in search",
     alertPrefs: "Alert preferences",
     alertPrefsLead:
-      "Email and in-app notices are free. SMS is optional and off until you tick CASL. Push comes in the iPhone/Android app later: www never asks for notification permission.",
+      "Email and in-app notices are free. SMS is optional and off until you tick CASL. Phone alerts use the KidEase app, which is coming soon. This website asks only if your browser can receive them.",
     alertEmail: "Email me when something matches",
     alertInApp: "Show notices on the family desk",
-    alertPushOff: "Push alerts come in the iPhone/Android app later. This website never asks for notification permission.",
+    alertPushOff: "Phone alerts come in the iPhone and Android apps, which are coming soon. This website asks only if your browser can receive them.",
     alertEmailStub:
       "Email alerts are saved, but this environment has no RESEND_API_KEY or SENDGRID_API_KEY. Matches stay on the family desk until mail is connected.",
     alertSmsStub:
@@ -4053,6 +4054,7 @@ export const copy = {
     accountBackAdmin: "Retour au bureau Admin",
     accountBackParent: "Retour au bureau Parent",
     accountBackSupport: "Retour au bureau Soutien",
+    accountAlerts: "Alertes",
     sendChildProfile: "Envoyer ce profil à un centre",
     sendChildNeedSaved: "Enregistrez d’abord des centres depuis Trouver une place, ou ouvrez une fiche et demandez une place.",
     sendChildCta: "Envoyer aux centres choisis",
@@ -4077,11 +4079,11 @@ export const copy = {
     runSavedSearch: "Ouvrir dans la recherche",
     alertPrefs: "Préférences d’alerte",
     alertPrefsLead:
-      "Le courriel et les avis dans l’appli sont gratuits. Le texto est facultatif et fermé tant que vous n’avez pas coché LCAP. Le push arrivera dans l’appli iPhone/Android plus tard : le site www ne demande jamais la permission de notification.",
+      "Le courriel et les avis dans l’appli sont gratuits. Le texto est facultatif et fermé tant que vous n’avez pas coché LCAP. Les alertes téléphone utilisent l’appli KidEase, qui arrive bientôt. Ce site demande seulement si votre navigateur peut les recevoir.",
     alertEmail: "M’écrire quand quelque chose correspond",
     alertInApp: "Afficher les avis au bureau famille",
     alertPushOff:
-      "Les alertes push arriveront dans l’appli iPhone/Android plus tard. Ce site ne demande jamais la permission de notification.",
+      "Les alertes téléphone arrivent dans les applis iPhone et Android, bientôt. Ce site demande seulement si votre navigateur peut les recevoir.",
     alertEmailStub:
       "Les alertes courriel sont enregistrées, mais cet environnement n’a pas de RESEND_API_KEY ni de SENDGRID_API_KEY. Les correspondances restent au bureau famille jusqu’à ce que le courriel soit branché.",
     alertSmsStub:

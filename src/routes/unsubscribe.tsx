@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
@@ -62,7 +62,23 @@ export function UnsubscribePage({ search }: { search: ReturnType<typeof unsubscr
         <h1 className="mt-2 font-display text-3xl tracking-[-0.03em]">{t("unsubscribe")}</h1>
         <p className="mt-3 text-muted">{t("unsubscribeLead")}</p>
         {done ? (
-          <p className="mt-8 rounded-xl bg-surface p-5 text-sm ring-1 ring-border">{t("unsubscribeDone")}</p>
+          <div className="mt-8 space-y-4 rounded-xl bg-surface p-5 text-sm ring-1 ring-border">
+            <p>{t("unsubscribeDone")}</p>
+            <p>
+              <Link
+                to="/account"
+                search={{ tab: "profile", section: "alerts", desk: "parent" }}
+                className="font-medium text-primary underline-offset-4 hover:underline"
+              >
+                {t("accountAlerts")}
+              </Link>
+            </p>
+            <p>
+              <Link to="/" className="font-medium text-primary underline-offset-4 hover:underline">
+                {t("navHome")}
+              </Link>
+            </p>
+          </div>
         ) : (
           <form onSubmit={(e) => void submit(e)} className="mt-8 space-y-4 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
             {search.token ? (

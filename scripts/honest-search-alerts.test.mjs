@@ -179,7 +179,8 @@ test("sendPush / sendSms no-op when flags are off", async () => {
   );
   assert.equal(push.ok, false);
   const job = src("src/lib/server/search-alerts.ts");
-  assert.match(job, /sendPushNotification/);
+  assert.match(job, /dispatchCustomerAlert/);
+  assert.match(src("src/lib/server/alert-dispatch.ts"), /sendPushNotification/);
   assert.match(job, /sendSms/);
   assert.match(src("src/lib/use-push.ts"), /www never prompts/);
   assert.match(src("src/lib/push-client.ts"), /No-ops on www/);

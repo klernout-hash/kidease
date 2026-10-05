@@ -14,7 +14,7 @@ import {
   type OpenSpotsBand,
   type SpotCounts,
 } from "@/lib/open-spots-checkin";
-import { openSpotsCheckinMailEnabled, openSpotsCheckinSmsEnabled } from "@/lib/features";
+import { openSpotsCheckinMailEnabled, openSpotsCheckinSmsEnabled, pushEnabled } from "@/lib/features";
 import {
   openSpotsTokenSecret,
   signOpenSpotsToken,
@@ -212,26 +212,44 @@ function pageLinks(token: string) {
 export async function runOpenSpotsCheckinJob(options: { dryRun?: boolean; now?: number } = {}) {
   const now = options.now ?? Date.now();
   const plan = checkinDispatchPlan(openSpotsCheckinMailEnabled(), openSpotsCheckinSmsEnabled());
-  if (plan.skipped) {
-    return { ok: true, skipped: true, reason: "flags-off", emailed: 0, sms: 0 };
+  const pushOn = pushEnabled();
+  if (plan.skipped && !pushOn) {
+    return { ok: true, skipped: true, reason: "flags-off", emailed: 0, sms: 0, pushed: 0 };
   }
   const secret = openSpotsTokenSecret();
-  if (!secret) {
-    return { ok: true, skipped: true, reason: "no-secret", emailed: 0, sms: 0 };
+  if (!secret && !pushOn) {
+    return { ok: true, skipped: true, reason: "no-secret", emailed: 0, sms: 0, pushed: 0 };
   }
   const week = checkinWeekKey(now);
   const rows = await listRecipients();
   let emailed = 0;
   let sms = 0;
+  let pushed = 0;
   const { sendTransactionalMail } = await import("@/lib/transactional-mail");
   const { sendSms } = await import("@/lib/server/sms");
   const { readConsent } = await import("@/lib/server/casl-consent");
   for (const row of rows) {
-    const token = signOpenSpotsToken({ daycareId: row.id, exp: now + OPEN_SPOTS_TOKEN_TTL_MS }, secret);
-    if (!token) continue;
+    const token = secret
+      ? signOpenSpotsToken({ daycareId: row.id, exp: now + OPEN_SPOTS_TOKEN_TTL_MS }, secret)
+      : null;
+    if (!token && !pushOn) continue;
     const views = await viewsThisWeek(row.id, now);
-    const links = pageLinks(token);
-    if (plan.email && row.email) {
+    const links = token ? pageLinks(token) : null;
+    if (pushOn && row.owner_id && !options.dryRun) {
+      const { dispatchCustomerAlert } = await import("@/lib/server/alert-dispatch");
+      const href = token ? `${ORIGIN}/spots/${token}` : "/provider";
+      const result = await dispatchCustomerAlert({
+        userId: row.owner_id,
+        category: "open_spots",
+        vars: { name: row.name },
+        href,
+        dedupeKey: `open-spots:${row.id}:${week}`,
+        emailFallback: false,
+        now: new Date(now),
+      });
+      if (result.pushed) pushed += 1;
+    }
+    if (plan.email && row.email && links) {
       const claimed = options.dryRun ? true : await claimSend(row.id, week, "email");
       if (claimed && !options.dryRun) {
         const mail = checkinEmailText({ name: row.name, views, links });
@@ -251,7 +269,7 @@ export async function runOpenSpotsCheckinJob(options: { dryRun?: boolean; now?: 
         emailed += 1;
       }
     }
-    if (plan.sms && row.phone && row.owner_id) {
+    if (plan.sms && row.phone && row.owner_id && token) {
       const consent = await readConsent(row.owner_id, "sms", "service").catch(() => null);
       if (!consent?.granted) continue;
       const claimed = options.dryRun ? true : await claimSend(row.id, week, "sms");
@@ -269,7 +287,7 @@ export async function runOpenSpotsCheckinJob(options: { dryRun?: boolean; now?: 
       else await releaseSend(row.id, week, "sms");
     }
   }
-  return { ok: true, skipped: false, reason: null, emailed, sms, dryRun: Boolean(options.dryRun) };
+  return { ok: true, skipped: false, reason: null, emailed, sms, pushed, dryRun: Boolean(options.dryRun) };
 }
 
 export const previewOpenSpotsCheckin = createServerFn({ method: "GET" })

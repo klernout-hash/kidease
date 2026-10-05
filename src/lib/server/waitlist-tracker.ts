@@ -146,6 +146,16 @@ export async function notifyWaitlistStatusChange(input: {
     on conflict (user_id, source_key) do nothing
   `.catch(() => undefined);
   const now = input.now ?? new Date();
+  const { dispatchCustomerAlert } = await import("@/lib/server/alert-dispatch");
+  await dispatchCustomerAlert({
+    userId: input.userId,
+    category: "waitlist",
+    vars: { name: input.daycareName, status },
+    href: "/parent?tab=waitlists",
+    dedupeKey: `waitlist:${input.bookingId}:${status}`,
+    emailFallback: false,
+    now,
+  }).catch(() => undefined);
   if (waitlistQuietNow(now)) {
     await sql`
       insert into waitlist_status_mail (id, user_id, booking_id, status, daycare_name)

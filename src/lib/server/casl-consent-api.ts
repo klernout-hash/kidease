@@ -82,6 +82,10 @@ export const applyPublicUnsubscribe = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { applyUnsubscribeToken, withdrawByAddress } = await import("./casl-consent");
     if (data.token) {
+      if (data.token.startsWith("ka.")) {
+        const { applyAlertUnsubscribeToken } = await import("./alert-dispatch");
+        return applyAlertUnsubscribeToken(data.token);
+      }
       return applyUnsubscribeToken(data.token);
     }
     if (!isCaslChannel(data.channel)) {

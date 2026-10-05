@@ -31,6 +31,7 @@ export async function sendPushNotification(input: {
   userId: string;
   title: string;
   body: string;
+  url?: string;
 }): Promise<PushSendResult> {
   if (!pushEnabled()) {
     return { ok: false, skipped: true, error: PUSH_SCAFFOLD_MESSAGE };
@@ -52,7 +53,7 @@ export async function sendPushNotification(input: {
     const { sendPushToDevices } = await import("./push-send");
     const tokens = await listPushDeviceTokens(sql, input.userId);
     const result = await sendPushToDevices(
-      { title: input.title, body: input.body, tokens },
+      { title: input.title, body: input.body, url: input.url, tokens },
       { sql },
     );
     if (!result.ok) {

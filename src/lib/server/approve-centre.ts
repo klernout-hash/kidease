@@ -291,5 +291,26 @@ export async function runApproval(
     return { ok: false, status: "approved", health };
   }
 
+  try {
+    const { listCentreOwnerEmails } = await import("@/lib/server/thread-access");
+    const { dispatchCustomerAlert } = await import("@/lib/server/alert-dispatch");
+    const owners = await listCentreOwnerEmails(sql, row.id);
+    await Promise.all(
+      owners.map((owner) => {
+        if (!owner.userId) return Promise.resolve();
+        return dispatchCustomerAlert({
+          userId: owner.userId,
+          category: "claim",
+          vars: { name: row.name, status: "approved" },
+          href: "/provider",
+          dedupeKey: `claim-approved:${row.id}:${owner.userId}`,
+          emailFallback: true,
+        });
+      }),
+    );
+  } catch (err) {
+    console.error("[kidease-alert] claim push failed", err instanceof Error ? err.name : "error");
+  }
+
   return { ok: true, status: "approved", health: plan.health };
 }

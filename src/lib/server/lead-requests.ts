@@ -260,6 +260,20 @@ async function notifyNewLead(
       }).catch(() => undefined),
     ),
   );
+  const { dispatchCustomerAlert } = await import("@/lib/server/alert-dispatch");
+  await Promise.all(
+    recipients.map((r) => {
+      if (!r.userId) return Promise.resolve();
+      return dispatchCustomerAlert({
+        userId: r.userId,
+        category: "enquiry",
+        vars: { name: d.name },
+        href: DAYCARE_INBOX_HREF,
+        dedupeKey: `enquiry:${input.leadId}:${r.userId}`,
+        emailFallback: false,
+      });
+    }),
+  );
 }
 
 export const listLeadRequests = createServerFn({ method: "GET" })

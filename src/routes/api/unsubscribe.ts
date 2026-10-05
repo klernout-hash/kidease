@@ -18,6 +18,12 @@ async function run(request: Request) {
   if (!token.trim()) {
     return new Response("Missing token", { status: 400 });
   }
+  if (token.startsWith("ka.")) {
+    const { applyAlertUnsubscribeToken } = await import("@/lib/server/alert-dispatch");
+    const alert = await applyAlertUnsubscribeToken(token);
+    if (!alert.ok) return new Response("Invalid token", { status: 400 });
+    return new Response(null, { status: 204 });
+  }
   const result = await applyUnsubscribeToken(token, {
     ip,
     userAgent: request.headers.get("user-agent"),
