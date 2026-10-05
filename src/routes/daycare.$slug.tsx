@@ -420,6 +420,7 @@ export function Listing() {
     urgencyScore: parentUrgencyScore(d, { ageGroup }),
   };
   const name = displayCentreName(locale === "fr" ? d.nameFr : d.name);
+  const licenceHref = licenseRecordUrl(d.province, name, d.licenseNumber, locale === "fr" ? "fr" : "en");
   const loc = locale === "fr" ? "fr" : "en";
   const desc = displayListingText(locale === "fr" ? d.descriptionFr : d.description);
   const hours = displayListingText(locale === "fr" ? d.hoursFr : d.hours);
@@ -572,15 +573,17 @@ export function Listing() {
             {t("claimCtaShort")}
           </Link>
         ) : null}
-        <a
-          href={licenseRecordUrl(d.province, name, d.licenseNumber)}
-          target="_blank"
-          rel="noreferrer"
-          role="menuitem"
-          className="flex min-h-11 items-center px-3 text-sm font-medium text-primary hover:bg-surface-2"
-        >
-          {t("viewLicenceRecord")}
-        </a>
+        {licenceHref ? (
+          <a
+            href={licenceHref}
+            target="_blank"
+            rel="noreferrer"
+            role="menuitem"
+            className="flex min-h-11 items-center px-3 text-sm font-medium text-primary hover:bg-surface-2"
+          >
+            {t("viewLicenceRecord")}
+          </a>
+        ) : null}
         {publicTelHref(d.phone) ? (
           <a
             href={publicTelHref(d.phone) || undefined}
@@ -971,14 +974,17 @@ export function Listing() {
                 <Meta label={t("lastInspection")} value={t("seeOfficialRecord")} />
               </dl>
               <div className="mt-3 flex flex-col items-start gap-1">
-                <a
-                  href={licenseRecordUrl(d.province, name, d.licenseNumber)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
-                >
-                  {t("viewLicenceRecord")}
-                </a>
+                {licenceHref ? (
+                  <a
+                    href={licenceHref}
+                    target="_blank"
+                    rel="noreferrer"
+                    data-ke="listing-licence"
+                    className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+                  >
+                    {t("viewLicenceRecord")}
+                  </a>
+                ) : null}
                 <Link to="/verify" className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline">
                   {t("learnMore")}
                 </Link>

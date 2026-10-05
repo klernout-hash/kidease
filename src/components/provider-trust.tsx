@@ -40,6 +40,7 @@ export function ProviderTrustChecklist({ daycare, onSaved }: { daycare: Daycare;
   const claim = claimCopy(daycare);
   const licence = adminLicenceFact(daycare);
   const licenceNumber = officialLicenceNumber(daycare.licenseNumber, daycare.id);
+  const licenceHref = licenseRecordUrl(daycare.province, daycare.name, licenceNumber, locale === "fr" ? "fr" : "en");
   const screening = approvalScreeningFact(daycare);
   const screeningLabel =
     screening.id === "on_file" ? t("trustScreeningOnFile") : screening.id === "attested" ? t("trustStaffAttested") : t("trustStaffNone");
@@ -113,14 +114,16 @@ export function ProviderTrustChecklist({ daycare, onSaved }: { daycare: Daycare;
               <Button type="submit" size="sm" disabled={busy !== null}>
                 {t("saveChanges")}
               </Button>
-              <a
-                href={licenseRecordUrl(daycare.province, daycare.name, licenseNumber)}
-                target="_blank"
-                rel="noreferrer"
-                className="text-sm text-primary underline-offset-4 hover:underline"
-              >
-                {t("viewLicenceRecord")}
-              </a>
+              {licenceHref ? (
+                <a
+                  href={licenceHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-h-11 items-center text-sm text-primary underline-offset-4 hover:underline"
+                >
+                  {t("viewLicenceRecord")}
+                </a>
+              ) : null}
             </div>
           </form>
         </li>

@@ -20,7 +20,6 @@ import { plausibleListingKm } from "@/lib/plausible-distance";
 import { listingAgeRangeText } from "@/lib/listing-ages";
 import { classifyFacilityType, facilityTypeSeoKind } from "@/lib/facility-type";
 import { publicLicenseBadge } from "@/lib/license-verify";
-import { licenseRecordUrl, officialLicenceNumber } from "@/lib/licensing";
 import { isCatalogueMatchedBadge, trustBadgesFor, type TrustBadge as TrustBadgeModel } from "@/lib/trust";
 import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
 import {
@@ -249,8 +248,6 @@ export const DaycareCard = memo(function DaycareCard({
   const offerClaim = showPublicClaimPrompt(item);
 
   const license = publicLicenseBadge(item);
-  const licenceNo = officialLicenceNumber(item.licenseNumber, item.id);
-  const licenceHref = licenceNo ? licenseRecordUrl(item.province, name, item.licenseNumber) : "";
   const cardTrust = trustBadgesFor(item, "card");
   const showLivePill = showCardLivePill(live, publicApprovalEligible(item));
   const licenseWarning =
@@ -375,17 +372,6 @@ export const DaycareCard = memo(function DaycareCard({
             <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10" />
           ) : null}
         </div>
-        {licenceHref ? (
-          <a
-            href={licenceHref}
-            target="_blank"
-            rel="noreferrer"
-            data-ke="card-licence"
-            className="relative z-10 mt-1 inline-flex min-h-11 items-center text-[13px] font-medium text-muted no-underline underline-offset-4 hover:text-fg hover:underline"
-          >
-            {t("viewLicenceRecord")}
-          </a>
-        ) : null}
       </article>
     );
   }
@@ -523,17 +509,6 @@ export const DaycareCard = memo(function DaycareCard({
           <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10" />
         ) : null}
       </div>
-      {licenceHref && !compact ? (
-        <a
-          href={licenceHref}
-          target="_blank"
-          rel="noreferrer"
-          data-ke="card-licence"
-          className="relative z-10 mt-1 inline-flex min-h-11 items-center text-[12px] font-medium text-muted no-underline underline-offset-4 hover:text-fg hover:underline"
-        >
-          {t("viewLicenceRecord")}
-        </a>
-      ) : null}
     </article>
   );
 });
