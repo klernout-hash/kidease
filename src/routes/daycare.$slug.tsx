@@ -44,6 +44,7 @@ import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
 import { amenityLabel } from "@/lib/amenities";
 import { licenseRecordUrl, subsidyEstimatorUrl } from "@/lib/licensing";
+import { reportSearchProvince } from "@/lib/licensing-offices";
 import { listingSubsidy, subsidyNote, subsidyNoteKey } from "@/lib/fee-program";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { TrustBadge } from "@/components/trust-badge";
@@ -1008,6 +1009,15 @@ export function Listing() {
             </section>
             </div>
 
+            <p className="max-w-prose text-sm">
+              <a
+                href={`${localePath("/report", locale)}?province=${encodeURIComponent(reportSearchProvince(d.province) || (d.province || "").trim().toUpperCase())}#${encodeURIComponent(reportSearchProvince(d.province) || (d.province || "").trim().toUpperCase())}`}
+                className="inline-flex min-h-11 items-center text-muted underline-offset-4 hover:underline"
+                data-ke="report-safety-link"
+              >
+                {t("reportSafetyConcern")}
+              </a>
+            </p>
             <p className="max-w-prose text-xs leading-5 text-subtle">
               {[
                 facilityLabel,

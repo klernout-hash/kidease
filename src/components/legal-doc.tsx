@@ -4,6 +4,7 @@ import { Shell } from "@/components/shell";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import type { LegalDoc, LegalBlock } from "@/lib/legal-copy";
+import { companyAddress, companyOperatorLine, privacyOfficerLine } from "@/lib/company";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
 function Block({ block }: { block: LegalBlock }) {
@@ -137,10 +138,22 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
           </a>
         ) : null}
 
+        {doc.showOperator ? (
+          <div className="mt-8 space-y-2 text-sm text-muted" data-ke="privacy-operator">
+            <p>{companyOperatorLine(locale === "fr" ? "fr" : "en")}</p>
+            {companyAddress(locale === "fr" ? "fr" : "en") ? (
+              <p>{companyAddress(locale === "fr" ? "fr" : "en")}</p>
+            ) : null}
+            <p>
+              {privacyOfficerLine(locale === "fr" ? "fr" : "en")}
+            </p>
+          </div>
+        ) : null}
+
         <p className="mt-8 text-sm text-muted">
           {doc.contactLead}{" "}
-          <a href={`mailto:${SUPPORT_INBOX_EMAIL}`} className="text-primary underline-offset-4 hover:underline">
-            {SUPPORT_INBOX_EMAIL}
+          <a href={`mailto:${doc.contactEmail || SUPPORT_INBOX_EMAIL}`} className="text-primary underline-offset-4 hover:underline">
+            {doc.contactEmail || SUPPORT_INBOX_EMAIL}
           </a>
           {" · "}
           <Link to={localePath("/delete-account", locale)} className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">

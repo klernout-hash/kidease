@@ -43,6 +43,7 @@ import { Route as FrRouteImport } from './routes/fr'
 import { Route as GetAppRouteImport } from './routes/get-app'
 import { Route as GuidesRouteImport } from './routes/guides'
 import { Route as HelpRouteImport } from './routes/help'
+import { Route as ReportRouteImport } from './routes/report'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as ImgRouteImport } from './routes/img'
 import { Route as InboxRouteImport } from './routes/inbox'
@@ -107,6 +108,7 @@ import { Route as FrForDaycaresRouteImport } from './routes/fr.for-daycares'
 import { Route as FrGetAppRouteImport } from './routes/fr.get-app'
 import { Route as FrGuidesRouteImport } from './routes/fr.guides'
 import { Route as FrHelpRouteImport } from './routes/fr.help'
+import { Route as FrReportRouteImport } from './routes/fr.report'
 import { Route as FrHowItWorksRouteImport } from './routes/fr.how-it-works'
 import { Route as FrJobsRouteImport } from './routes/fr.jobs'
 import { Route as FrLoginRouteImport } from './routes/fr.login'
@@ -335,6 +337,11 @@ const GuidesRoute = GuidesRouteImport.update({
 const HelpRoute = HelpRouteImport.update({
   id: '/help',
   path: '/help',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportRoute = ReportRouteImport.update({
+  id: '/report',
+  path: '/report',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HowItWorksRoute = HowItWorksRouteImport.update({
@@ -656,6 +663,11 @@ const FrGuidesRoute = FrGuidesRouteImport.update({
 const FrHelpRoute = FrHelpRouteImport.update({
   id: '/help',
   path: '/help',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrReportRoute = FrReportRouteImport.update({
+  id: '/report',
+  path: '/report',
   getParentRoute: () => FrRoute,
 } as any)
 const FrHowItWorksRoute = FrHowItWorksRouteImport.update({
@@ -985,6 +997,7 @@ export interface FileRoutesByFullPath {
   '/get-app': typeof GetAppRoute
   '/guides': typeof GuidesRouteWithChildren
   '/help': typeof HelpRoute
+  '/report': typeof ReportRoute
   '/how-it-works': typeof HowItWorksRoute
   '/img': typeof ImgRoute
   '/inbox': typeof InboxRouteWithChildren
@@ -1048,6 +1061,7 @@ export interface FileRoutesByFullPath {
   '/fr/get-app': typeof FrGetAppRoute
   '/fr/guides': typeof FrGuidesRouteWithChildren
   '/fr/help': typeof FrHelpRoute
+  '/fr/report': typeof FrReportRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
   '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
@@ -1142,6 +1156,7 @@ export interface FileRoutesByTo {
   '/get-app': typeof GetAppRoute
   '/guides': typeof GuidesRouteWithChildren
   '/help': typeof HelpRoute
+  '/report': typeof ReportRoute
   '/how-it-works': typeof HowItWorksRoute
   '/img': typeof ImgRoute
   '/inbox': typeof InboxRouteWithChildren
@@ -1204,6 +1219,7 @@ export interface FileRoutesByTo {
   '/fr/get-app': typeof FrGetAppRoute
   '/fr/guides': typeof FrGuidesRouteWithChildren
   '/fr/help': typeof FrHelpRoute
+  '/fr/report': typeof FrReportRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
   '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
@@ -1300,6 +1316,7 @@ export interface FileRoutesById {
   '/get-app': typeof GetAppRoute
   '/guides': typeof GuidesRouteWithChildren
   '/help': typeof HelpRoute
+  '/report': typeof ReportRoute
   '/how-it-works': typeof HowItWorksRoute
   '/img': typeof ImgRoute
   '/inbox': typeof InboxRouteWithChildren
@@ -1363,6 +1380,7 @@ export interface FileRoutesById {
   '/fr/get-app': typeof FrGetAppRoute
   '/fr/guides': typeof FrGuidesRouteWithChildren
   '/fr/help': typeof FrHelpRoute
+  '/fr/report': typeof FrReportRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
   '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
@@ -1460,6 +1478,7 @@ export interface FileRouteTypes {
     | '/get-app'
     | '/guides'
     | '/help'
+    | '/report'
     | '/how-it-works'
     | '/img'
     | '/inbox'
@@ -1523,6 +1542,7 @@ export interface FileRouteTypes {
     | '/fr/get-app'
     | '/fr/guides'
     | '/fr/help'
+    | '/fr/report'
     | '/fr/how-it-works'
     | '/fr/jobs'
     | '/fr/login'
@@ -1617,6 +1637,7 @@ export interface FileRouteTypes {
     | '/get-app'
     | '/guides'
     | '/help'
+    | '/report'
     | '/how-it-works'
     | '/img'
     | '/inbox'
@@ -1679,6 +1700,7 @@ export interface FileRouteTypes {
     | '/fr/get-app'
     | '/fr/guides'
     | '/fr/help'
+    | '/fr/report'
     | '/fr/how-it-works'
     | '/fr/jobs'
     | '/fr/login'
@@ -1774,6 +1796,7 @@ export interface FileRouteTypes {
     | '/get-app'
     | '/guides'
     | '/help'
+    | '/report'
     | '/how-it-works'
     | '/img'
     | '/inbox'
@@ -1837,6 +1860,7 @@ export interface FileRouteTypes {
     | '/fr/get-app'
     | '/fr/guides'
     | '/fr/help'
+    | '/fr/report'
     | '/fr/how-it-works'
     | '/fr/jobs'
     | '/fr/login'
@@ -1933,6 +1957,7 @@ export interface RootRouteChildren {
   GetAppRoute: typeof GetAppRoute
   GuidesRoute: typeof GuidesRouteWithChildren
   HelpRoute: typeof HelpRoute
+  ReportRoute: typeof ReportRoute
   HowItWorksRoute: typeof HowItWorksRoute
   ImgRoute: typeof ImgRoute
   InboxRoute: typeof InboxRouteWithChildren
@@ -2243,6 +2268,13 @@ declare module '@tanstack/react-router' {
       path: '/help'
       fullPath: '/help'
       preLoaderRoute: typeof HelpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/report': {
+      id: '/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof ReportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/how-it-works': {
@@ -2691,6 +2723,13 @@ declare module '@tanstack/react-router' {
       path: '/help'
       fullPath: '/fr/help'
       preLoaderRoute: typeof FrHelpRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/report': {
+      id: '/fr/report'
+      path: '/report'
+      fullPath: '/fr/report'
+      preLoaderRoute: typeof FrReportRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/how-it-works': {
@@ -3143,6 +3182,7 @@ interface FrRouteChildren {
   FrGetAppRoute: typeof FrGetAppRoute
   FrGuidesRoute: typeof FrGuidesRouteWithChildren
   FrHelpRoute: typeof FrHelpRoute
+  FrReportRoute: typeof FrReportRoute
   FrHowItWorksRoute: typeof FrHowItWorksRoute
   FrJobsRoute: typeof FrJobsRoute
   FrLoginRoute: typeof FrLoginRoute
@@ -3187,6 +3227,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrGetAppRoute: FrGetAppRoute,
   FrGuidesRoute: FrGuidesRouteWithChildren,
   FrHelpRoute: FrHelpRoute,
+  FrReportRoute: FrReportRoute,
   FrHowItWorksRoute: FrHowItWorksRoute,
   FrJobsRoute: FrJobsRoute,
   FrLoginRoute: FrLoginRoute,
@@ -3331,6 +3372,7 @@ const rootRouteChildren: RootRouteChildren = {
   GetAppRoute: GetAppRoute,
   GuidesRoute: GuidesRouteWithChildren,
   HelpRoute: HelpRoute,
+  ReportRoute: ReportRoute,
   HowItWorksRoute: HowItWorksRoute,
   ImgRoute: ImgRoute,
   InboxRoute: InboxRouteWithChildren,

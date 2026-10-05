@@ -1,5 +1,6 @@
 import { useLayoutEffect } from "react";
 import { Link } from "@tanstack/react-router";
+import { companyOperatorLine } from "@/lib/company";
 import { localePath } from "@/lib/locale-path";
 import { isKidEaseOperatorEmail } from "@/lib/admin-email";
 import type { CopyKey } from "@/lib/copy";
@@ -164,6 +165,9 @@ export function SiteFooter() {
                 {t("footerCopy")}
               </p>
               <p className="ke-footer-legal-note">{t("neverSell")}</p>
+              <p className="ke-footer-legal-note" data-ke="company-operator">
+                {companyOperatorLine(fr ? "fr" : "en")}
+              </p>
             </div>
             <div className="ke-footer-legal-meta">
               <HeaderSocial />
