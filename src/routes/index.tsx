@@ -371,9 +371,15 @@ export function HomePage({ boot }: { boot: ProductHomeBoot }) {
           });
         }}
       />
-      <div className="mt-3 flex flex-wrap items-center justify-center gap-2 empty:hidden" data-ke="home-hero-pills">
-        <SmartMatchEntry inline />
-        <ResumeVisitCard />
+      <div
+        data-ke="home-hero-pills"
+        className="mx-auto mt-2 flex min-h-11 w-full max-w-[960px] flex-wrap items-center justify-center gap-x-2.5 [&:has([data-ke=smart-match-open]):has([data-ke=resume-visit])_[data-ke=home-hero-dot]]:inline"
+      >
+        <SmartMatchEntry inline quiet />
+        <span aria-hidden="true" data-ke="home-hero-dot" className="hidden text-muted">
+          ·
+        </span>
+        <ResumeVisitCard quiet />
       </div>
       <HeroClaimStrip />
 
@@ -415,19 +421,17 @@ export function HomePage({ boot }: { boot: ProductHomeBoot }) {
       </h1>
       <div className="ke-home-web ke-web-only w-full [[data-channel=app]_&]:hidden">
         <section className="from-soft border-b border-border bg-bg">
-          <div className="ke-gutter mx-auto w-full pb-4 pt-1">
+          <div className="ke-gutter mx-auto w-full pb-10 pt-1 md:pb-14">
             {featuredSearch}
           </div>
         </section>
 
-        <section className="border-y border-border bg-surface">
-          <div className="ke-gutter mx-auto w-full py-6">
-            <TrustBar />
-          </div>
-        </section>
+        <div className="ke-gutter mx-auto w-full pt-6 md:pt-8">
+          <TrustBar />
+        </div>
 
         {!featuredReady || featuredAgreement.showSection ? (
-        <section id="featured" className="ke-gutter mx-auto w-full py-8 md:py-12">
+        <section id="featured" className="ke-gutter mx-auto w-full pb-8 pt-4 md:pb-12 md:pt-5">
           <h2 className="text-xl tracking-[-0.03em] md:text-2xl">{t(strip.featuredTitleKey)}</h2>
           <p className="mt-2 max-w-2xl text-sm text-muted">{t("featuredBody")}</p>
           <HomeDiscovery
@@ -543,12 +547,13 @@ export function HomePage({ boot }: { boot: ProductHomeBoot }) {
 
       <div className="ke-home-app ke-app-only hidden w-full [[data-channel=app]_&]:block">
         <section className="border-b border-border bg-bg">
-          <div className="ke-gutter mx-auto w-full pb-4 pt-2">
+          <div className="ke-gutter mx-auto w-full pb-10 pt-2">
             {featuredSearch}
           </div>
         </section>
-        <section className="ke-gutter mx-auto w-full py-6">
-          <h2 className="text-xl tracking-[-0.03em]">{t(strip.featuredTitleKey)}</h2>
+        <section className="ke-gutter mx-auto w-full pb-6 pt-6">
+          <TrustBar />
+          <h2 className="mt-4 text-xl tracking-[-0.03em]">{t(strip.featuredTitleKey)}</h2>
           <HomeDiscovery
             ready={featuredReady}
             shown={shown}

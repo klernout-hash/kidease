@@ -1326,7 +1326,8 @@ export const copy = {
     trustLiveAvail: "Storefront photos",
     trustGoogle: "Search by km",
     trustSecure: "Private",
-    trustBarLead: "KidEase verifies licences and listing ownership. Screening on file means required documents were reviewed. KidEase does not run police checks.",
+    trustBarLead: "Licensed centres only. Screening on file means required documents were reviewed; KidEase does not run police checks.",
+    homeTrustVerify: "How we verify",
     bookConfidenceTitle: "Book with confidence",
     bookConfidenceBody:
       "KidEase lists centres from provincial and territorial registries. Live listings show availability and pricing from the centre. Parent reviews on KidEase are gated to confirmed enrolment: we do not invent testimonials.",
@@ -4374,7 +4375,8 @@ export const copy = {
     trustLiveAvail: "Vraies photos de devanture",
     trustGoogle: "Recherche de proximité",
     trustSecure: "Infos claires et transparentes",
-    trustBarLead: "KidEase vérifie les permis et qui possède une fiche. Dossier de filtrage signifie que les documents requis ont été examinés. KidEase ne fait pas de contrôle policier.",
+    trustBarLead: "Centres permis seulement. Dossier de filtrage signifie que les documents requis ont été examinés ; KidEase ne fait pas de contrôle policier.",
+    homeTrustVerify: "Comment nous vérifions",
     bookConfidenceTitle: "Réservez en toute confiance",
     bookConfidenceBody:
       "KidEase inscrit des centres provenant des registres provinciaux et territoriaux. Les fiches actives affichent les places et les tarifs du centre. Les avis parents sur KidEase sont réservés aux inscriptions confirmées : nous n’inventons pas de témoignages.",
