@@ -22,6 +22,7 @@ export const LOCALE_PAIRED_PATHS = [
   "/search",
   "/explore",
   "/help",
+  "/report",
   "/contact",
   "/privacy",
   "/terms",

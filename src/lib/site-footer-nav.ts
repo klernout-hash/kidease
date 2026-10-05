@@ -48,6 +48,7 @@ export const FOOTER_SUPPORT: FooterLinkDef[] = [
   copyLink("/faq", "faqShort"),
   copyLink("/how-it-works", "howItWorksCta", { localePaired: true }),
   copyLink("/contact", "contactTitle", { localePaired: true }),
+  copyLink("/report", "reportSafetyConcern", { localePaired: true }),
 ];
 
 export const FOOTER_LEGAL: FooterLinkDef[] = [

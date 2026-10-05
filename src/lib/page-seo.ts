@@ -241,6 +241,12 @@ export const MARKETING_PAGE_SEO = {
       "Parents and licensed centres: email support or send a note. KidEase reads every message. App Store and Google Play also use this page.",
     path: "/help",
   },
+  report: {
+    title: "Report a safety concern · KidEase",
+    description:
+      "KidEase is a licensed child care directory. For a safety concern, contact the provincial licensing office. Call 911 in an emergency. Tell KidEase about a listing error.",
+    path: "/report",
+  },
   faq: {
     title: "Frequently asked questions · KidEase",
     description:
@@ -345,6 +351,12 @@ export const MARKETING_PAGE_SEO_FR = {
     description:
       "Parents et centres permis: écrivez-nous ou envoyez une note. KidEase lit chaque message. L’App Store et Google Play utilisent aussi cette page.",
     path: "/fr/help",
+  },
+  report: {
+    title: "Signaler une préoccupation de sécurité · KidEase",
+    description:
+      "KidEase est un répertoire de garde permise. Pour une préoccupation de sécurité, contactez le bureau de permis. Appelez le 911 en urgence. Signalez une erreur de fiche à KidEase.",
+    path: "/fr/report",
   },
   faq: {
     title: "Foire aux questions · KidEase",

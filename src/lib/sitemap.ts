@@ -36,6 +36,7 @@ export const SITEMAP_STATIC_PATHS = [
   "/vacancy-index",
   "/contact",
   "/help",
+  "/report",
   "/team",
   "/benefits",
   "/faq",

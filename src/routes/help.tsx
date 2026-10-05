@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Mail } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field"
 import { publicFormErrorMessage } from "@/lib/public-form-error";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { ParentHelperPanel } from "@/components/parent-helper";
+import { localePath } from "@/lib/locale-path";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 
 export const Route = createFileRoute("/help")({
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/help")({
 });
 
 export function Help() {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [body, setBody] = useState("");
@@ -70,6 +71,14 @@ export function Help() {
         <p className="ke-kicker">{t("helpKicker")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("helpTitle")}</h1>
         <p className="mt-6 text-muted">{t("supportLead")}</p>
+        <p className="mt-4">
+          <Link
+            to={localePath("/report", locale)}
+            className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            {t("reportSafetyConcern")}
+          </Link>
+        </p>
         <ParentHelperPanel />
         <FeelBanner src="/photos/cottage.jpg" className="mt-8" />
 

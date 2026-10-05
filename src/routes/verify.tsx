@@ -70,6 +70,23 @@ export function VerifyPage() {
           <p className="mt-3 text-sm leading-6 text-muted">{t("verifyUnclaimedBody")}</p>
         </section>
 
+        <section id="parent-safety" className="mt-8 scroll-mt-24" data-ke="parent-safety">
+          <h2 className="text-2xl font-semibold">{t("verifyParentSafetyTitle")}</h2>
+          <p className="mt-3 text-sm leading-6 text-muted">{t("verifyParentSafetyLead")}</p>
+          <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-6 text-muted">
+            <li>{t("verifyParentSafetyEmail")}</li>
+            <li>{t("verifyParentSafetyRate")}</li>
+            <li>{t("verifyParentSafetyBot")}</li>
+            <li>{t("verifyParentSafetySpam")}</li>
+            <li>{t("verifyParentSafetyReviews")}</li>
+          </ul>
+        </section>
+
+        <section id="licence-checks" className="mt-8 scroll-mt-24">
+          <p className="text-sm leading-6 text-muted">{t("verifyLicenceChecked")}</p>
+          <p className="mt-3 text-sm leading-6 text-muted">{t("verifyLicenceNoRecheck")}</p>
+        </section>
+
         <ul className="mt-10 space-y-4">
           {items.map((item) => (
             <li key={item.title} className="flex gap-3 rounded-xl bg-surface p-5 ring-1 ring-border">

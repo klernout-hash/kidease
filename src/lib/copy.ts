@@ -1959,6 +1959,43 @@ export const copy = {
     verifyUnclaimedTitle: "Unclaimed listings",
     verifyUnclaimedBody:
       "Unclaimed means no operator has proven they run this centre on KidEase yet. Facts may come from the public registry. The listing stays searchable. Claimed or Claim verified means the operator, not that KidEase police-checked staff.",
+    verifyParentSafetyTitle: "Parent account safety",
+    verifyParentSafetyLead:
+      "These are the checks KidEase runs for parent accounts. We do not ask a parent for government ID or a police check.",
+    verifyParentSafetyEmail:
+      "When you create an account with email and a password, KidEase emails a link to confirm that mailbox. You can still sign in if the email is slow. We do not lock the account until the link is opened.",
+    verifyParentSafetyRate:
+      "Email sign-in is limited to 30 tries a minute. Email sign-up is limited to 15 tries a minute. Password reset is limited to 8 tries a minute. Extra tries are paused.",
+    verifyParentSafetyBot:
+      "When Cloudflare Turnstile keys are set in production, sign-in, sign-up, and a parent review ask for a security check before the form is sent. If those keys are missing, that check is off.",
+    verifyParentSafetySpam:
+      "When the spam filter is turned on, a new account and a waiting review can be scored and queued for staff. The filter does not block the account by itself. It does nothing when that switch is off.",
+    verifyParentSafetyReviews:
+      "A parent can write a review only with a confirmed enrolment at that centre. The review is saved as waiting for staff. It is not published by itself. KidEase flags a review when the writer is not enrolled, when the same network or device sends several reviews within ten minutes, or when the same text is sent again.",
+    verifyLicenceChecked:
+      "When a centre claims a listing, staff check the licence against the provincial or territorial registry. A claim that does not match the licence email or phone is flagged for staff. KidEase does not auto-approve a claim. A Manitoba licence number can also match a bundled KidEase snapshot. That snapshot is not a live copy of the government site.",
+    verifyLicenceNoRecheck:
+      "KidEase does not automatically recheck licences on a schedule. The date of the last staff check is stored when a claim is approved. The official registry stays the source of truth for inspections and licence status.",
+    reportSafetyConcern: "Report a safety concern",
+    reportKicker: "Safety",
+    reportTitle: "Report a safety concern",
+    reportLead:
+      "KidEase is a directory of licensed child care in Canada. We help you find a listing. We do not provide the care, and we do not investigate a safety complaint.",
+    reportEmergency: "If a child is in danger now, call 911.",
+    reportAbuse:
+      "To report abuse or neglect, contact child protection services in your province or territory. KidEase cannot take that report for the government.",
+    reportOfficesTitle: "Child care licensing offices",
+    reportOfficesLead:
+      "For a concern about a licensed program, contact the licensing office for that province or territory. Use the official page. Phone numbers below are copied from those government sites.",
+    reportFormTitle: "Tell KidEase about a listing",
+    reportFormLead:
+      "Use this form for a wrong address, a closed centre, or another listing error. For a child’s safety, contact the licensing office above first.",
+    reportProvince: "Province or territory",
+    reportListing: "Listing name (optional)",
+    reportChooseProvince: "Choose a province or territory",
+    reportOrEmail: "Or email",
+    reportOfficialPage: "Official page",
+    aboutCompanyT: "Company details",
     learnMore: "Learn more",
     unclaimedWhatMeans: "What does unclaimed mean?",
     mbChildcare: "Official provincial registries",
@@ -4970,6 +5007,43 @@ export const copy = {
     verifyUnclaimedTitle: "Fiches non réclamées",
     verifyUnclaimedBody:
       "Non réclamée signifie qu’aucun exploitant n’a encore prouvé qu’il dirige ce centre sur KidEase. Les faits peuvent venir du registre public. La fiche reste trouvable. Réclamée ou Réclamation vérifiée désigne l’exploitant, pas une vérification policière du personnel.",
+    verifyParentSafetyTitle: "Sécurité du compte parent",
+    verifyParentSafetyLead:
+      "Voici les vérifications que KidEase fait vraiment pour un compte parent. Nous ne demandons pas une pièce d’identité ni un contrôle policier.",
+    verifyParentSafetyEmail:
+      "Quand vous créez un compte avec un courriel et un mot de passe, KidEase envoie un lien pour confirmer cette boîte. Vous pouvez quand même vous connecter si le courriel tarde. Nous ne bloquons pas le compte tant que le lien n’est pas ouvert.",
+    verifyParentSafetyRate:
+      "La connexion par courriel est limitée à 30 essais par minute. La création de compte par courriel est limitée à 15 essais par minute. La réinitialisation du mot de passe est limitée à 8 essais par minute. Les essais en trop sont mis en pause.",
+    verifyParentSafetyBot:
+      "Quand les clés Cloudflare Turnstile sont réglées en production, la connexion, la création de compte et un avis parent demandent une vérification de sécurité avant l’envoi. Si ces clés manquent, cette vérification est désactivée.",
+    verifyParentSafetySpam:
+      "Quand le filtre de pourriel est activé, un nouveau compte et un avis en attente peuvent être notés et mis en file pour le personnel. Le filtre ne bloque pas le compte à lui seul. Il ne fait rien quand cet interrupteur est éteint.",
+    verifyParentSafetyReviews:
+      "Un parent peut écrire un avis seulement avec une inscription confirmée à ce centre. L’avis est enregistré en attente du personnel. Il n’est pas publié tout seul. KidEase signale un avis si l’auteur n’est pas inscrit, si le même réseau ou le même appareil envoie plusieurs avis en dix minutes, ou si le même texte est envoyé de nouveau.",
+    verifyLicenceChecked:
+      "Quand un centre réclame une fiche, le personnel vérifie le permis auprès du registre provincial ou territorial. Une réclamation qui ne correspond pas au courriel ou au téléphone du permis est signalée au personnel. KidEase n’approuve pas une réclamation automatiquement. Un numéro de permis du Manitoba peut aussi correspondre à un instantané KidEase. Cet instantané n’est pas une copie en direct du site du gouvernement.",
+    verifyLicenceNoRecheck:
+      "KidEase ne revérifie pas les permis automatiquement selon un calendrier. La date de la dernière vérification du personnel est enregistrée quand une réclamation est approuvée. Le registre officiel reste la source de vérité pour les inspections et le statut du permis.",
+    reportSafetyConcern: "Signaler une préoccupation de sécurité",
+    reportKicker: "Sécurité",
+    reportTitle: "Signaler une préoccupation de sécurité",
+    reportLead:
+      "KidEase est un répertoire de services de garde permis au Canada. Nous vous aidons à trouver une fiche. Nous ne donnons pas la garde, et nous n’enquêtons pas sur une plainte de sécurité.",
+    reportEmergency: "Si un enfant est en danger maintenant, appelez le 911.",
+    reportAbuse:
+      "Pour signaler de la maltraitance ou de la négligence, contactez les services de protection de l’enfance de votre province ou territoire. KidEase ne peut pas prendre ce signalement à la place du gouvernement.",
+    reportOfficesTitle: "Bureaux de permis de garde",
+    reportOfficesLead:
+      "Pour une préoccupation sur un service permis, contactez le bureau de permis de cette province ou de ce territoire. Utilisez la page officielle. Les numéros ci-dessous sont copiés de ces sites gouvernementaux.",
+    reportFormTitle: "Dire à KidEase qu’une fiche est erronée",
+    reportFormLead:
+      "Utilisez ce formulaire pour une mauvaise adresse, un centre fermé ou une autre erreur de fiche. Pour la sécurité d’un enfant, contactez d’abord le bureau de permis ci-dessus.",
+    reportProvince: "Province ou territoire",
+    reportListing: "Nom de la fiche (facultatif)",
+    reportChooseProvince: "Choisir une province ou un territoire",
+    reportOrEmail: "Ou écrire à",
+    reportOfficialPage: "Page officielle",
+    aboutCompanyT: "Renseignements sur l’entreprise",
     learnMore: "En savoir plus",
     unclaimedWhatMeans: "Que signifie non réclamée ?",
     mbChildcare: "Registres provinciaux officiels",

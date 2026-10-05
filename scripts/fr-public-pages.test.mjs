@@ -19,6 +19,7 @@ const SHARED = [
   ["/compare", "src/routes/fr.compare.tsx", "ComparePage", "compare"],
   ["/cities", "src/routes/fr.cities.tsx", "CitiesPage", "cities"],
   ["/verify", "src/routes/fr.verify.tsx", "VerifyPage", "verify"],
+  ["/report", "src/routes/fr.report.tsx", "ReportPage", "report"],
   ["/daycare-requirements", "src/routes/fr.daycare-requirements.tsx", "DaycareRequirementsPage", "daycareRequirements"],
   ["/tour-checklist", "src/routes/fr.tour-checklist.tsx", "TourChecklist", "tourChecklist"],
   ["/team", "src/routes/fr.team.tsx", "Team", "team"],
