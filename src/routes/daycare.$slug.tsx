@@ -25,6 +25,7 @@ import { JoinWaitlist } from "@/components/join-waitlist";
 import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto, ListingPhotoFallback } from "@/components/building-photo";
 import { LISTING_PLACEHOLDER, classifyListingPhotos, isOfficialBuildingPhoto, primaryListingPhoto } from "@/lib/listing-photo";
+import { isMissingCatalogueBuilding } from "@/lib/catalogue-buildings";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { DETAIL_SIZES, HERO_WIDTHS, photoSrcSet, photoUrl } from "@/lib/photo";
 import { Button } from "@/components/ui/button";
@@ -318,7 +319,8 @@ export function Listing() {
 
   if (!data) {
     const earlyPhoto = primaryListingPhoto(seo?.photos);
-    const earlyReal = earlyPhoto && isRealListingPhoto(earlyPhoto) ? earlyPhoto : "";
+    const earlyReal =
+      earlyPhoto && isRealListingPhoto(earlyPhoto) && !isMissingCatalogueBuilding(earlyPhoto) ? earlyPhoto : "";
     const earlyName = seo ? displayCentreName(locale === "fr" ? seo.nameFr : seo.name) : "";
     const earlyDesc = displayListingText(locale === "fr" ? seo?.descriptionFr : seo?.description);
     const earlyHours = displayListingText(locale === "fr" ? seo?.hoursFr : seo?.hours);
@@ -434,8 +436,8 @@ export function Listing() {
     list.sort((a, b) => Number(isOfficialBuildingPhoto(b)) - Number(isOfficialBuildingPhoto(a)));
     return list.length ? list : [LISTING_PLACEHOLDER];
   })();
-  const gallery = photos.filter((src) => isRealListingPhoto(src));
-  const roomPhotos = interiors.filter((src) => isRealListingPhoto(src));
+  const gallery = photos.filter((src) => isRealListingPhoto(src) && !isMissingCatalogueBuilding(src));
+  const roomPhotos = interiors.filter((src) => isRealListingPhoto(src) && !isMissingCatalogueBuilding(src));
   const prices = [d.infantMonthly, d.toddlerMonthly, d.preschoolMonthly].filter((n): n is number => n != null && n > 0);
   const from = prices.length ? Math.min(...prices) : 0;
   const live = Boolean(d.live);

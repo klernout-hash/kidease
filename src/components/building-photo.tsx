@@ -10,6 +10,7 @@ import {
   publicPhotoUrl,
   srcsetWidthsFor,
 } from "@/lib/photo";
+import { isMissingCatalogueBuilding } from "@/lib/catalogue-buildings";
 import { healMediaUrl, isFailedPhotoUrl, isStockListingPhoto, rememberFailedPhoto } from "@/lib/listing-photo";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
@@ -29,7 +30,7 @@ export const HERO_LCP_SIZES = HERO_SIZES;
 export const HERO_LCP_MOBILE_SIZES = "100vw";
 
 function photoNeedsFallback(src: string): boolean {
-  return !src || isStockListingPhoto(src) || isFailedPhotoUrl(src);
+  return !src || isStockListingPhoto(src) || isFailedPhotoUrl(src) || isMissingCatalogueBuilding(src);
 }
 
 /** Quiet while a real photo loads. Logo and Claim Listing only when there is no picture. */
@@ -73,14 +74,18 @@ export function ListingPhotoFallback({
   style,
   claim = false,
   claimQuery,
+  quiet = false,
 }: {
   className?: string;
   style?: CSSProperties;
   claim?: boolean;
   /** When set, the frame links to claim search for this centre. */
   claimQuery?: string;
+  /** Flat theme fill while a real photo is still loading. Empty photos use the wash. */
+  quiet?: boolean;
 }) {
   const { t, locale } = useCopy();
+  const showClaim = claim && !quiet;
   const mark = (
     <span className="flex max-w-full flex-col items-center gap-1.5 px-3 text-center">
       <img
@@ -98,16 +103,17 @@ export function ListingPhotoFallback({
     <div
       className={cn(
         "relative grid place-items-center overflow-hidden text-primary",
-        claim ? "" : "bg-[#F7F4EF]",
+        quiet && "bg-surface-2",
         className,
       )}
       style={style}
       data-ke="photo-fallback"
-      data-claim={claim ? "listing" : undefined}
-      aria-hidden={claim ? undefined : true}
+      data-claim={showClaim ? "listing" : undefined}
+      data-placeholder={quiet ? "loading" : "theme"}
+      aria-hidden={showClaim ? undefined : true}
     >
-      {claim ? <UnclaimedWash /> : null}
-      {claim ? (
+      {quiet ? null : <UnclaimedWash />}
+      {showClaim ? (
         claimQuery !== undefined ? (
           <Link
             to={localePath("/claim", locale)}
@@ -119,12 +125,7 @@ export function ListingPhotoFallback({
         ) : (
           <span className="relative z-[1]">{mark}</span>
         )
-      ) : (
-        <svg viewBox="0 0 48 48" className="size-12 text-muted" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-          <path d="M8 22 24 10l16 12v18H8Z" />
-          <path d="M20 40V28h8v12" />
-        </svg>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -214,7 +215,7 @@ export function BuildingPhoto({
 
   return (
     <span className={cn("relative block overflow-hidden", className)}>
-      {loaded ? null : <ListingPhotoFallback className="absolute inset-0 size-full" />}
+      {loaded ? null : <ListingPhotoFallback quiet className="absolute inset-0 size-full" />}
       <img
         ref={ref}
         src={delivered}
