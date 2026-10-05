@@ -50,7 +50,7 @@ export function GuideView({
   const first = fr ? pt.licensingFirstFr : pt.licensingFirstEn;
   const funding = fr ? pt.fundingFr : pt.fundingEn;
   return (
-    <Shell bare>
+    <Shell>
       <main className="ke-gutter mx-auto w-full max-w-3xl py-8">
         <p className="text-sm font-semibold text-primary">{copy.kicker}</p>
         <h1 className="mt-2 font-display text-3xl md:text-5xl">{copy.title(name)}</h1>
@@ -123,7 +123,7 @@ function MissingGuide() {
   const { locale } = useCopy();
   const copy = provincialGuideCopy(locale);
   return (
-    <Shell bare>
+    <Shell>
       <main className="ke-gutter mx-auto w-full max-w-lg py-10">
         <EmptyState title={copy.missing} action={copy.home} actionTo={localePath("/search", locale)} />
       </main>

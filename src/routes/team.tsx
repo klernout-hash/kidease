@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
-import { SiteFooter } from "@/components/site-footer";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 
@@ -12,7 +11,7 @@ export const Route = createFileRoute("/team")({
 export function Team() {
   const { t } = useCopy();
   return (
-    <Shell bare>
+    <Shell>
       <main className="ke-gutter mx-auto max-w-3xl py-12 md:py-16">
         <p className="text-sm font-semibold tracking-wide text-primary">{t("team")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("team")}</h1>
@@ -55,7 +54,6 @@ export function Team() {
         <h2 className="mt-12 text-2xl">{t("teamGoalT")}</h2>
         <p className="mt-3 text-muted">{t("teamGoal")}</p>
       </main>
-      <SiteFooter />
     </Shell>
   );
 }

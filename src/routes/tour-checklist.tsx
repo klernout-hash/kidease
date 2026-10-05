@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
-import { SiteFooter } from "@/components/site-footer";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
@@ -37,7 +36,6 @@ export function TourChecklist() {
           </Link>
         </p>
       </main>
-      <SiteFooter />
     </Shell>
   );
 }

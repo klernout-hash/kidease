@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
 import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
-import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
 import { submitPublicMessage } from "@/lib/server/notify";
@@ -66,7 +65,7 @@ export function Help() {
   }
 
   return (
-    <Shell bare>
+    <Shell>
       <main className="ke-gutter mx-auto max-w-lg py-12 md:py-16">
         <p className="ke-kicker">{t("helpKicker")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("helpTitle")}</h1>
@@ -146,7 +145,6 @@ export function Help() {
         </form>
         )}
       </main>
-      <SiteFooter />
     </Shell>
   );
 }

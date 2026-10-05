@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
 import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
-import { SiteFooter } from "@/components/site-footer";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
@@ -323,7 +322,6 @@ export function BenefitsPage() {
           {t("benefitsNote")} {fr ? `Dernière revue : ${reviewed}.` : `Last reviewed: ${reviewed}.`}
         </p>
       </main>
-      <SiteFooter />
     </Shell>
   );
 }

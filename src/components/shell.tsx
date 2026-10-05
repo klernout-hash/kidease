@@ -32,7 +32,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { rememberResumePath } from "@/lib/retention";
 import { ApplyPendingShortlist } from "@/components/apply-pending-shortlist";
 
-export function Shell({ children, bare = false }: { children: ReactNode; bare?: boolean }) {
+export function Shell({ children }: { children: ReactNode }) {
   const { t, locale } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const headerType = useRouterState({ select: (s) => selectedBrowseType(s.location.search) });
@@ -241,8 +241,8 @@ export function Shell({ children, bare = false }: { children: ReactNode; bare?: 
       <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(6rem+env(safe-area-inset-bottom))]"}>
         <ApplyPendingShortlist />
         {children}
+        {hideFooter ? null : <SiteFooter />}
       </div>
-      {hideFooter || bare ? null : <SiteFooter />}
       {hideTabs ? null : <AppTabBar />}
       {hideTabs || pathname.startsWith("/search") || pathname.startsWith("/parent") || pathname.startsWith("/menu") ? null : <LiveChatSlot />}
     </div>

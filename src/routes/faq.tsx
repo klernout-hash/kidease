@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { FeelBanner } from "@/components/building-photo";
 import { JsonLd } from "@/components/json-ld";
 import { Shell } from "@/components/shell";
-import { SiteFooter } from "@/components/site-footer";
 import { ParentHelperPanel } from "@/components/parent-helper";
 import { FAQ_ITEM_KEYS } from "@/lib/faq-items";
 import { localePath } from "@/lib/locale-path";
@@ -19,7 +18,7 @@ export function FaqPage() {
   const items = FAQ_ITEM_KEYS.map(([q, a]) => ({ q: t(q), a: t(a) }));
   const jsonLd = faqPageJsonLdScript(items);
   return (
-    <Shell bare>
+    <Shell>
       <JsonLd json={jsonLd} />
       <main className="ke-gutter mx-auto max-w-3xl py-12 md:py-16">
         <p className="text-sm font-semibold tracking-wide text-primary">FAQ</p>
@@ -49,7 +48,6 @@ export function FaqPage() {
           </Link>
         </p>
       </main>
-      <SiteFooter />
     </Shell>
   );
 }

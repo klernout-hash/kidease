@@ -72,7 +72,7 @@ function ForgotPassword() {
   }
 
   return (
-    <Shell bare>
+    <Shell>
       <main className="ke-auth-viewport mx-auto grid place-items-center px-4 py-10">
         <div className="w-full max-w-md rounded-xl bg-surface p-8 shadow-card ring-1 ring-border">
           <div className="flex justify-center">

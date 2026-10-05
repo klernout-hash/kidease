@@ -52,7 +52,7 @@ export function AgeVacancyView({ page }: { page: AgeVacancyPage }) {
   };
 
   return (
-    <Shell bare>
+    <Shell>
       <JsonLd json={JSON.stringify(list)} />
       <main className="ke-gutter mx-auto w-full max-w-3xl py-8">
         <p className="text-sm font-semibold text-primary">{copy.kicker}</p>

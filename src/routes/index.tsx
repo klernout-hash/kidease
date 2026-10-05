@@ -12,7 +12,6 @@ import { getHomeCareType, setHomeCareType, subscribeHomeCareType } from "@/lib/h
 import { ListingRail } from "@/components/listing-rail";
 import { RecentlyViewedRow } from "@/components/recently-viewed-row";
 import { Button } from "@/components/ui/button";
-import { SiteFooter } from "@/components/site-footer";
 import {
   FeelPhoto,
 } from "@/components/building-photo";
@@ -417,7 +416,7 @@ export function HomePage({ boot }: { boot: ProductHomeBoot }) {
   );
 
   return (
-    <Shell bare>
+    <Shell>
       <JsonLd json={organizationGraphJsonLdScript(locale === "fr" ? "fr" : "en")} />
       <div className="ke-home w-full min-w-0">
       <h1 className="ke-gutter mx-auto w-full pt-4 text-center text-[clamp(1.6rem,4.2vw,2.75rem)] leading-tight tracking-[-0.03em]">
@@ -549,7 +548,6 @@ export function HomePage({ boot }: { boot: ProductHomeBoot }) {
           </div>
         </section>
 
-        <SiteFooter />
       </div>
 
       <div className="ke-home-app ke-app-only hidden w-full [[data-channel=app]_&]:block">

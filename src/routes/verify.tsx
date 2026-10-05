@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { BadgeCheck, BookOpen, Home, School, Shield, Users, Wallet, Backpack } from "lucide-react";
 import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
-import { SiteFooter } from "@/components/site-footer";
 import { TrustExplainer } from "@/components/trust-badge";
 import { localePath } from "@/lib/locale-path";
 import { pageSeoHead } from "@/lib/page-seo";
@@ -28,7 +27,7 @@ export function VerifyPage() {
     { icon: Wallet, title: t("verifyPayTitle"), body: t("verifyPayBody") },
   ];
   return (
-    <Shell bare>
+    <Shell>
       <main className="ke-gutter mx-auto max-w-3xl py-12 md:py-16">
         <p className="text-sm font-semibold tracking-wide text-primary">{t("verifyListings")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("verifyTitle")}</h1>
@@ -125,7 +124,6 @@ export function VerifyPage() {
           </Link>
         </p>
       </main>
-      <SiteFooter />
     </Shell>
   );
 }

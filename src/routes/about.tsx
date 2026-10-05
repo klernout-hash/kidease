@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { BadgeCheck, Camera, MapPin, ListChecks } from "lucide-react";
 import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
-import { SiteFooter } from "@/components/site-footer";
 import { companyAddress, companyOperatorLine } from "@/lib/company";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
@@ -17,7 +16,7 @@ export function About() {
   const lang = locale === "fr" ? "fr" : "en";
   const address = companyAddress(lang);
   return (
-    <Shell bare>
+    <Shell>
       <main className="ke-gutter mx-auto max-w-3xl py-12 md:py-16">
         <p className="text-sm font-semibold tracking-wide text-primary">{t("about")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("aboutTitle")}</h1>
@@ -56,7 +55,6 @@ export function About() {
         </ul>
         <p className="mt-8 font-medium">{t("aboutClose")}</p>
       </main>
-      <SiteFooter />
     </Shell>
   );
 }

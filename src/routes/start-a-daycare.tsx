@@ -13,7 +13,6 @@ import {
   Wallet,
 } from "lucide-react";
 import { Shell } from "@/components/shell";
-import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { canadaFallbackUrl } from "@/lib/province-registry";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
@@ -122,7 +121,7 @@ export function StartADaycarePage() {
   const finderPath = startDaycarePath(locale);
 
   return (
-    <Shell bare>
+    <Shell>
       <main className="ke-gutter mx-auto max-w-3xl py-12 md:py-16">
         <p className="text-sm font-semibold tracking-wide text-primary">{t("startADaycare")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("startDaycareTitle")}</h1>
@@ -249,7 +248,6 @@ export function StartADaycarePage() {
         </div>
         <p className="mt-3 text-sm text-muted">{t("startDaycareEnrollLead")}</p>
       </main>
-      <SiteFooter />
     </Shell>
   );
 }

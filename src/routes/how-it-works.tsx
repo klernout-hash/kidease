@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ListChecks, MapPin, MessageCircle } from "lucide-react";
 import { Shell } from "@/components/shell";
-import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { localePath } from "@/lib/locale-path";
 import { pageSeoHead } from "@/lib/page-seo";
@@ -25,7 +24,7 @@ export function HowItWorksPage() {
     { n: "3", icon: MessageCircle, title: t("how3t"), body: t("how3") },
   ] as const;
   return (
-    <Shell bare>
+    <Shell>
       <main className="ke-gutter mx-auto max-w-3xl py-12 md:py-16">
         <p className="text-sm font-semibold tracking-wide text-primary">{t("howItWorksCta")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("howStressFree")}</h1>
@@ -50,7 +49,6 @@ export function HowItWorksPage() {
           </Button>
         </div>
       </main>
-      <SiteFooter />
     </Shell>
   );
 }

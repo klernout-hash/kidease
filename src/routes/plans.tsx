@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { FoundingPlans } from "@/components/founding-plans";
 import { OptionalUpgrades } from "@/components/optional-upgrades";
 import { Shell } from "@/components/shell";
-import { SiteFooter } from "@/components/site-footer";
 import { useRoleChrome } from "@/components/role-chrome";
 import { MARKETING_PAGE_SEO_FR, pageSeoHead } from "@/lib/page-seo";
 import { getPlansGate } from "@/lib/server/ui-chrome";
@@ -39,7 +38,7 @@ function PlansRoute() {
 export function PlansPage({ subscriptionsOn }: { subscriptionsOn: boolean }) {
   const chrome = useRoleChrome();
   return (
-    <Shell bare>
+    <Shell>
       <main data-ke="plans-page">
         {subscriptionsOn ? (
           <OptionalUpgrades
@@ -50,7 +49,6 @@ export function PlansPage({ subscriptionsOn }: { subscriptionsOn: boolean }) {
           <FoundingPlans />
         )}
       </main>
-      <SiteFooter />
     </Shell>
   );
 }

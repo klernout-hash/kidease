@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
-import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { localePath } from "@/lib/locale-path";
 import { pageSeoHead } from "@/lib/page-seo";
@@ -58,7 +57,7 @@ export function VacancyIndexView({ data }: { data: VacancyIndexData }) {
   const counted = t("vacancyIndexCounted").replace("{date}", formatCounted(data.countedOn, locale));
 
   return (
-    <Shell bare>
+    <Shell>
       <main className="ke-gutter mx-auto w-full max-w-3xl py-10 md:py-14" data-ke="vacancy-index">
         <p className="text-sm font-semibold tracking-wide text-primary">KidEase</p>
         <h1 className="mt-2 text-[clamp(1.75rem,4vw,2.5rem)]">{t("vacancyIndexTitle")}</h1>
@@ -155,7 +154,6 @@ export function VacancyIndexView({ data }: { data: VacancyIndexData }) {
           </p>
         </section>
       </main>
-      <SiteFooter />
     </Shell>
   );
 }

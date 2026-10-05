@@ -1,4 +1,3 @@
-import { useLayoutEffect } from "react";
 import { Link } from "@tanstack/react-router";
 import { companyOperatorLine } from "@/lib/company";
 import { localePath } from "@/lib/locale-path";
@@ -111,17 +110,8 @@ export function SiteFooter() {
   void isPending;
   void isKidEaseOperatorEmail(user?.primaryEmail);
 
-  useLayoutEffect(() => {
-    const all = document.querySelectorAll("footer.ke-site-footer");
-    if (all.length < 2) return;
-    all.forEach((node, index) => {
-      if (index === all.length - 1) node.removeAttribute("hidden");
-      else node.setAttribute("hidden", "");
-    });
-  }, []);
-
   return (
-    <footer className="ke-site-footer ke-web-only [[data-channel=app]_&]:hidden">
+    <footer className="ke-site-footer">
       <div className="ke-gutter">
         <div className="ke-footer-inner">
           <nav className="ke-footer-cols" aria-label="KidEase">

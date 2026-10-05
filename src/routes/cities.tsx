@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
-import { SiteFooter } from "@/components/site-footer";
 import { citiesIndexGroups } from "@/lib/cities-index";
 import { localePath } from "@/lib/locale-path";
 import { pageSeoHead } from "@/lib/page-seo";
@@ -39,7 +38,7 @@ export function CitiesPage({ counts }: { counts: Awaited<ReturnType<typeof citie
   const { t, locale } = useCopy();
   const groups = citiesIndexGroups(locale);
   return (
-    <Shell bare>
+    <Shell>
       <main className="ke-gutter mx-auto max-w-3xl py-10 md:py-14" data-ke="cities-index">
         <h1 className="text-[clamp(1.75rem,4vw,2.5rem)]">{t("browseCities")}</h1>
         <p className="mt-3 max-w-xl text-base text-muted">{t("citiesLead")}</p>
@@ -86,7 +85,6 @@ export function CitiesPage({ counts }: { counts: Awaited<ReturnType<typeof citie
           })}
         </div>
       </main>
-      <SiteFooter />
     </Shell>
   );
 }
