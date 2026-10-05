@@ -36,7 +36,7 @@ import {
 import { parentDistanceLabel } from "@/lib/distance-label";
 import { TrustSignals } from "@/components/trust-badge";
 import { money } from "@/lib/utils";
-import { licenseRegistryUrl } from "@/lib/licensing";
+import { licenseRecordUrl } from "@/lib/licensing";
 import type { DaycareCard } from "@/lib/types";
 import { MultiApplyPanel } from "@/components/multi-apply-sheet";
 import { localePath } from "@/lib/locale-path";
@@ -234,13 +234,25 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
                 <Row label={t("googleReviews")} values={items.map((d) => (d.reviewCount ? `${(d.ratingX10 / 10).toFixed(1)} (${d.reviewCount})` : t("noneListed")))} />
                 <tr>
                   <th className="p-2 text-fg">{t("license")}</th>
-                  {items.map((d) => (
-                    <td key={d.id} className="p-2">
-                      <a href={licenseRegistryUrl(d.province)} target="_blank" rel="noreferrer" className="text-primary hover:underline">
-                        {t("viewLicenceRecord")}
-                      </a>
-                    </td>
-                  ))}
+                  {items.map((d) => {
+                    const href = licenseRecordUrl(d.province, d.name, d.licenseNumber, locale === "fr" ? "fr" : "en");
+                    return (
+                      <td key={d.id} className="p-2">
+                        {href ? (
+                          <a
+                            href={href}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex min-h-11 items-center text-primary hover:underline"
+                          >
+                            {t("viewLicenceRecord")}
+                          </a>
+                        ) : (
+                          t("noneListed")
+                        )}
+                      </td>
+                    );
+                  })}
                 </tr>
                 <tr>
                   <th className="p-2" />

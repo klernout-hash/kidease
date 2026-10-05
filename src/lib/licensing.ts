@@ -1,24 +1,59 @@
 /** Official provincial / territorial licence lookup and subsidy pages. */
 
-import type { Locale } from "@/lib/types";
-import { canadaFallbackUrl, jurisdiction } from "@/lib/province-registry";
+import type { Locale } from "./types.ts";
+import { canadaFallbackUrl, jurisdiction } from "./province-registry.ts";
 
 /** Jurisdictions where $10-a-day / reduced parent fees are typical at licensed 0–5 centres. Confirm with the centre. */
 const TYPICAL_TEN = new Set(["MB", "SK", "PE", "NL", "YT", "NT", "NU"]);
 
-export function licenseRegistryUrl(province: string) {
-  return jurisdiction(province)?.registryUrl ?? canadaFallbackUrl();
+/** Official registry search page. Null when this province has no page we can stand behind. */
+export function licenseRegistryUrl(province: string): string | null {
+  return jurisdiction(province)?.registryUrl ?? null;
 }
 
-/** Official registry, with a search query so parents land closer to this centre. */
-export function licenseRecordUrl(province: string, name?: string, licenseNumber?: string | null) {
-  const base = licenseRegistryUrl(province);
-  const q = [name, licenseNumber].filter(Boolean).join(" ").trim();
-  if (!q) return base;
-  if (province === "MB") {
-    return `https://childcaresearch.gov.mb.ca/en#q=${encodeURIComponent(q)}`;
-  }
-  return `${base}${base.includes("?") ? "&" : "?"}q=${encodeURIComponent(q)}`;
+/**
+ * French pages checked against the live site. Other provinces stay on the English search page.
+ */
+const FR_REGISTRY: Partial<Record<string, string>> = {
+  MB: "https://childcaresearch.gov.mb.ca/fr",
+  ON: "https://www.earlyyears.edu.gov.on.ca/LCCWWeb/childcare/search.xhtml?lang=fr",
+  QC: "https://www.quebec.ca/famille-et-soutien-aux-personnes/enfance/garderies-et-services-de-garde",
+  NB: "https://www.nbed.nb.ca/parentportal/fr/Search/Info/",
+  NU: "https://www.gov.nu.ca/fr/education-et-ecoles/centres-de-la-petite-enfance-titulaires-dun-permis",
+};
+
+/**
+ * Hosts that actually search on this query key.
+ * A generic `q` is not used: alberta.ca, gov.bc.ca, ontario.ca, and ece.gov.nt.ca
+ * answer it with a 404 or a junk path such as /en/test.
+ */
+const NAME_QUERY: Partial<Record<string, string>> = {
+  AB: "name",
+  NL: "keyword",
+};
+
+/**
+ * Official provincial or territorial registry record or search page.
+ * Null when there is no working page, so the link can be hidden.
+ * The centre name is added only where that host searches on it.
+ * The stored licence number is not appended: it is not a search key on these sites,
+ * and the old `?q=name licence` URLs were the error pages.
+ */
+export function licenseRecordUrl(
+  province: string,
+  name?: string,
+  _licenseNumber?: string | null,
+  locale?: Locale,
+): string | null {
+  const row = jurisdiction(province);
+  if (!row?.registryUrl) return null;
+  const base = (locale === "fr" && FR_REGISTRY[row.code]) || row.registryUrl;
+  const param = NAME_QUERY[row.code];
+  const q = (name || "").replace(/\s+/g, " ").trim();
+  if (!param || !q) return base;
+  const url = new URL(base);
+  url.searchParams.set(param, q);
+  return url.toString();
 }
 
 export function subsidyEstimatorUrl(province: string) {

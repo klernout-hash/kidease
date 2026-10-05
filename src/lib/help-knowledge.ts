@@ -52,7 +52,7 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
   {
     keys: ["licen", "inspect", "safe", "legal"],
     lines: [
-      "Every centre on KidEase is from a provincial licensed-care register. Each card has a licence record link. We don’t list unlicensed care.",
+      "Every centre on KidEase is from a provincial licensed-care register. Open the listing to see the official licence record when that province publishes one. We don’t list unlicensed care.",
       "Look for Registry-checked when an operator confirmed the licence. Never treat a stub province as a live government match. Open the official licence record from the listing. That record is the government source of truth.",
     ],
   },

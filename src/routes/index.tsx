@@ -9,6 +9,7 @@ import { Shell } from "@/components/shell";
 import { FacilityTypeRails, type BrowseDaycareType } from "@/components/facility-type-rails";
 import { getHomeCareType, setHomeCareType, subscribeHomeCareType } from "@/lib/home-care-selection";
 import { ListingRail } from "@/components/listing-rail";
+import { RecentlyViewedRow } from "@/components/recently-viewed-row";
 import { Button } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site-footer";
 import {
@@ -40,6 +41,7 @@ import { useCopy } from "@/lib/use-copy";
 import { uniqueById } from "@/lib/utils";
 import { publicListings } from "@/lib/listing-visibility";
 import { readRecent } from "@/lib/recent";
+import { isSafeSitemapSlug } from "@/lib/sitemap";
 import { ExploreSearchBar } from "@/components/explore-search-bar";
 import { SmartMatchEntry } from "@/components/smart-match";
 import { resolveLocationQuery } from "@/components/place-search";
@@ -53,7 +55,6 @@ import type { DaycareCard as Card } from "@/lib/types";
 import {
   honestVacancy,
   homeRailItems,
-  isLiveLookingCard,
   liveLookingOnly,
   type SearchAge,
   type SearchStart,
@@ -296,7 +297,10 @@ export function HomePage({ boot }: { boot: ProductHomeBoot }) {
     const top = new Set(availableNow.slice(0, 6).map((r) => r.id));
     return shown.filter((r) => honestVacancy(r).kind === "open" && !top.has(r.id)).slice(0, 18);
   }, [shown, availableNow]);
-  const recentLooking = useMemo(() => recent.filter((r) => isLiveLookingCard(r)), [recent]);
+  const recentPublic = useMemo(
+    () => publicListings(recent).filter((row) => isSafeSitemapSlug(row.slug)),
+    [recent],
+  );
 
   useEffect(() => {
     if (isPending) return;
@@ -434,7 +438,6 @@ export function HomePage({ boot }: { boot: ProductHomeBoot }) {
             shown={shown}
             availableNow={availableNow}
             availableNextMonth={availableNextMonth}
-            recent={recentLooking}
             liveOnly={liveOnly}
             hasPublic={publicFeatured.length > 0}
             onShowAll={() => setLiveOnly(false)}
@@ -477,6 +480,10 @@ export function HomePage({ boot }: { boot: ProductHomeBoot }) {
             />
           </div>
         </section>
+
+        <div className="ke-gutter mx-auto w-full">
+          <RecentlyViewedRow items={recentPublic} />
+        </div>
 
         <section className="bg-surface">
           <div className="ke-gutter mx-auto w-full py-16">
@@ -551,7 +558,6 @@ export function HomePage({ boot }: { boot: ProductHomeBoot }) {
             shown={shown}
             availableNow={availableNow}
             availableNextMonth={availableNextMonth}
-            recent={recentLooking}
             liveOnly={liveOnly}
             hasPublic={publicFeatured.length > 0}
             onShowAll={() => setLiveOnly(false)}
@@ -565,6 +571,7 @@ export function HomePage({ boot }: { boot: ProductHomeBoot }) {
               {t("heroCta")}
             </Button>
           </div>
+          <RecentlyViewedRow items={recentPublic} />
         </section>
       </div>
       </div>
@@ -581,7 +588,6 @@ function HomeDiscovery({
   shown,
   availableNow,
   availableNextMonth,
-  recent,
   liveOnly,
   hasPublic,
   onShowAll,
@@ -593,7 +599,6 @@ function HomeDiscovery({
   shown: Card[];
   availableNow: Card[];
   availableNextMonth: Card[];
-  recent: Card[];
   liveOnly: boolean;
   hasPublic: boolean;
   onShowAll: () => void;
@@ -620,7 +625,6 @@ function HomeDiscovery({
   }
   return (
     <>
-      <ListingRail title={t("recentlyViewed")} items={recent} eagerThumbs={false} visual />
       <ListingRail title={t("availableNow")} items={availableNow} eagerThumbs={false} visual />
       <ListingRail title={t("availableNextMonth")} items={availableNextMonth} eagerThumbs={false} visual />
       <FacilityTypeRails items={shown} visual skipLiveLooking menu={!onCareType} selected={careType} onSelect={onCareType} city={city} />
