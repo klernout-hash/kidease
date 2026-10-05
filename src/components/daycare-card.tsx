@@ -291,7 +291,7 @@ export const DaycareCard = memo(function DaycareCard({
               eager={eager}
               claim={offerClaim}
               rounded="rounded-[14px]"
-              className="aspect-[4/3] bg-[#EBEBEB]"
+              className="aspect-[4/3]"
             />
             <CardPhotoBadges
               item={item}
@@ -385,7 +385,7 @@ export const DaycareCard = memo(function DaycareCard({
             eager={eager}
             claim={offerClaim}
             rounded="rounded-[14px]"
-            className="aspect-[3/2] bg-[#EBEBEB]"
+            className="aspect-[3/2]"
           />
           <CardPhotoBadges
             item={item}

@@ -1,5 +1,6 @@
 /** Listing-honesty photo pick. Official operator JPEGs beat /photos/wpg/; never Street View. */
 
+import { isMissingCatalogueBuilding } from "./catalogue-buildings.ts";
 import { isUnflaggedSharedFallbackSrc } from "./photo-honesty.ts";
 
 export const LISTING_PLACEHOLDER = "/photos/storefront-placeholder-480.webp";
@@ -296,7 +297,14 @@ export function isOfficialBuildingPhoto(src: string | undefined): boolean {
 export function listingThumb(photos: string[] | undefined) {
   const list = (photos ?? [])
     .map((p) => healMediaUrl(p))
-    .filter((p) => p && !p.includes("-logo") && !isUnflaggedSharedFallbackSrc(p) && !isRejectedStorefrontSrc(p));
+    .filter(
+      (p) =>
+        p &&
+        !p.includes("-logo") &&
+        !isUnflaggedSharedFallbackSrc(p) &&
+        !isRejectedStorefrontSrc(p) &&
+        !isMissingCatalogueBuilding(p),
+    );
   const official = list.find((p) => isOfficialBuildingPhoto(p));
   return official || list[0] || LISTING_PLACEHOLDER;
 }
