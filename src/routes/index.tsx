@@ -4,6 +4,7 @@ import { MARKETING_PAGE_SEO, organizationGraphJsonLdScript, pageSeoHead } from "
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { BadgeCheck, Camera, Lock, MapPin, MessageCircle, Search, ListChecks } from "lucide-react";
 import { HeroClaimStrip } from "@/components/hero-claim-strip";
+import { HomeHowVideo } from "@/components/home-how-video";
 import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
 import { FacilityTypeRails, type BrowseDaycareType } from "@/components/facility-type-rails";
@@ -450,6 +451,8 @@ export function HomePage({ boot }: { boot: ProductHomeBoot }) {
           </div>
         </section>
         ) : null}
+
+        <HomeHowVideo />
 
         <section id="how" className="ke-gutter mx-auto w-full py-16">
           <h2 className="max-w-2xl text-[clamp(1.75rem,4vw,2.25rem)]">{t("howStressFree")}</h2>
