@@ -5,10 +5,18 @@ import { useCopy } from "@/lib/use-copy";
 
 const POSTER = "/video/how-kidease.webp";
 const MP4 = "/video/how-kidease.mp4";
+const DESKTOP_QUERY = "(min-width: 1024px)";
+
+function desktopWebsite() {
+  if (typeof window === "undefined") return false;
+  const runtime = document.documentElement.dataset.runtime;
+  if (runtime === "ios" || runtime === "android") return false;
+  return window.matchMedia(DESKTOP_QUERY).matches;
+}
 
 /**
- * Website explainer. The file is not requested until this block is near the
- * viewport. Native iOS and Android shells hide `.ke-how-video` in CSS.
+ * Desktop website explainer. Phones and the native shells never request the
+ * file. On a wide website, the file waits until this block is near the viewport.
  */
 export function HomeHowVideo() {
   const { t } = useCopy();
@@ -24,6 +32,24 @@ export function HomeHowVideo() {
   const [muted, setMuted] = useState(true);
   const [blocked, setBlocked] = useState(false);
   const [srcOn, setSrcOn] = useState(false);
+  const [desktop, setDesktop] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia(DESKTOP_QUERY);
+    const apply = () => {
+      const on = desktopWebsite();
+      setDesktop(on);
+      if (!on) {
+        setNear(false);
+        setOnScreen(false);
+        setSrcOn(false);
+        setStarted(false);
+      }
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -34,8 +60,10 @@ export function HomeHowVideo() {
   }, []);
 
   useEffect(() => {
+    if (!desktop) return;
+    if (!window.matchMedia(DESKTOP_QUERY).matches) return;
     const el = rootRef.current;
-    if (!el) return;
+    if (!el || el.getClientRects().length === 0) return;
     const nearIo = new IntersectionObserver(
       ([entry]) => setNear(Boolean(entry?.isIntersecting)),
       { root: null, rootMargin: "240px 0px", threshold: 0 },
@@ -53,7 +81,7 @@ export function HomeHowVideo() {
       nearIo.disconnect();
       playIo.disconnect();
     };
-  }, []);
+  }, [desktop]);
 
   useEffect(() => {
     const onVis = () => setTabVisible(document.visibilityState === "visible");
@@ -62,13 +90,15 @@ export function HomeHowVideo() {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
 
-  const showPoster = (near || started) && reduced !== null;
-  const showVideo = started || (near && reduced === false);
+  const showPoster = desktop && (near || started) && reduced !== null;
+  const showVideo = desktop && (started || (near && reduced === false));
   const shouldPlay = showVideo && tabVisible && onScreen && !userPaused && !blocked;
 
   useEffect(() => {
+    if (!desktop) return;
+    if (!window.matchMedia(DESKTOP_QUERY).matches) return;
     if ((shouldPlay || started) && reduced !== null) setSrcOn(true);
-  }, [shouldPlay, started, reduced]);
+  }, [desktop, shouldPlay, started, reduced]);
 
   useEffect(() => {
     const video = videoRef.current;

@@ -11,11 +11,11 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("home explainer is website-only, lazy, and below featured centres", () => {
+test("home explainer is desktop website only, lazy, and below featured centres", () => {
   const home = src("src/routes/index.tsx");
   const video = src("src/components/home-how-video.tsx");
   const css = src("src/styles.css");
-  assert.equal((home.match(/<HomeHowVideo \/>/g) ?? []).length, 2);
+  assert.equal((home.match(/<HomeHowVideo \/>/g) ?? []).length, 1);
 
   const web = home.slice(home.indexOf("ke-web-only"), home.indexOf("ke-app-only"));
   const featuredAt = web.indexOf('id="featured"');
@@ -24,14 +24,16 @@ test("home explainer is website-only, lazy, and below featured centres", () => {
   assert.ok(featuredAt >= 0 && videoAt > featuredAt && howAt > videoAt);
 
   const app = home.slice(home.indexOf("ke-home-app"));
-  const appVideo = app.indexOf("<HomeHowVideo />");
-  const appFeatured = app.indexOf("HomeDiscovery");
-  assert.ok(appFeatured >= 0 && appVideo > appFeatured);
-  assert.match(app, /ke-how-video|HomeHowVideo/);
+  assert.doesNotMatch(app, /HomeHowVideo/);
 
+  assert.match(css, /\.ke-how-video \{\n\s*display: none !important;/);
+  assert.match(css, /@media \(min-width: 1024px\) \{\n\s*html\[data-runtime="web"\] \.ke-how-video/);
   assert.match(css, /html\[data-runtime="ios"\] \.ke-how-video/);
   assert.match(css, /html\[data-runtime="android"\] \.ke-how-video/);
-  assert.match(css, /display: none !important/);
+  assert.match(video, /matchMedia\(DESKTOP_QUERY\)/);
+  assert.match(video, /DESKTOP_QUERY = "\(min-width: 1024px\)"/);
+  assert.match(video, /if \(!desktop\) return/);
+  assert.match(video, /if \(!window\.matchMedia\(DESKTOP_QUERY\)\.matches\) return/);
 
   assert.match(video, /IntersectionObserver/);
   assert.match(video, /rootMargin: "240px 0px"/);

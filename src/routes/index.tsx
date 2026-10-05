@@ -569,7 +569,6 @@ export function HomePage({ boot }: { boot: ProductHomeBoot }) {
             </Button>
           </div>
         </section>
-        <HomeHowVideo />
       </div>
       </div>
 

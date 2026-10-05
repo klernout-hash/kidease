@@ -153,7 +153,18 @@
       pointer-events: none !important;
     }
   }
-  /* Explainer stays on the website, including a phone browser. Native shells hide it. */
+  /* Explainer is the desktop website only. 1024px is the same cutoff as the full home.
+     Hidden below that so the section takes no space. Native shells stay hidden at any width. */
+  .ke-how-video {
+    display: none !important;
+    pointer-events: none !important;
+  }
+  @media (min-width: 1024px) {
+    html[data-runtime="web"] .ke-how-video {
+      display: block !important;
+      pointer-events: auto !important;
+    }
+  }
   html[data-runtime="ios"] .ke-how-video,
   html[data-runtime="android"] .ke-how-video {
     display: none !important;
