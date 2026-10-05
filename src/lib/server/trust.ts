@@ -74,12 +74,21 @@ export const attestStaffScreening = createServerFn({ method: "POST" })
 
 export const saveLicenseFields = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { daycareId: string; licenseNumber: string; licenseExpiry?: string; licensedCapacity?: number }) => input)
+  .validator(
+    (input: {
+      daycareId: string;
+      licenseNumber: string;
+      licenseExpiry?: string;
+      licensedCapacity?: number;
+      firstAidExpiry?: string;
+    }) => input,
+  )
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     await assertCentreCanMutateListing(sql, context.userId, data.daycareId);
     const number = data.licenseNumber.trim().slice(0, 80);
     const expiry = (data.licenseExpiry || "").trim().slice(0, 10) || null;
+    const firstAid = (data.firstAidExpiry || "").trim().slice(0, 10) || null;
     const capacity =
       typeof data.licensedCapacity === "number" && Number.isFinite(data.licensedCapacity) && data.licensedCapacity > 0
         ? Math.min(400, Math.round(data.licensedCapacity))
@@ -88,11 +97,34 @@ export const saveLicenseFields = createServerFn({ method: "POST" })
       update daycares
       set license_number = ${number || null},
           license_expiry = ${expiry},
+          first_aid_expiry = ${firstAid},
           licensed_capacity = coalesce(${capacity}, licensed_capacity),
           license_verification_source = coalesce(license_verification_source, ${"provider"})
       where id = ${data.daycareId}
       returning id
-    `;
+    `.catch(async () => {
+      await sql`alter table daycares add column if not exists first_aid_expiry date`.catch(() => undefined);
+      const withAid = await sql<{ id: string }>`
+        update daycares
+        set license_number = ${number || null},
+            license_expiry = ${expiry},
+            first_aid_expiry = ${firstAid},
+            licensed_capacity = coalesce(${capacity}, licensed_capacity),
+            license_verification_source = coalesce(license_verification_source, ${"provider"})
+        where id = ${data.daycareId}
+        returning id
+      `.catch(() => [] as { id: string }[]);
+      if (withAid[0]) return withAid;
+      return sql<{ id: string }>`
+        update daycares
+        set license_number = ${number || null},
+            license_expiry = ${expiry},
+            licensed_capacity = coalesce(${capacity}, licensed_capacity),
+            license_verification_source = coalesce(license_verification_source, ${"provider"})
+        where id = ${data.daycareId}
+        returning id
+      `;
+    });
     if (!wrote[0]) throw new Error(LISTING_NOT_FOUND);
     await writeTrustEvent(sql, {
       daycareId: data.daycareId,
@@ -278,8 +310,10 @@ export const reviewLicense = createServerFn({ method: "POST" })
       city: string;
       province: string;
       license_number: string | null;
+      license_status: string | null;
     }>`
-      select id, name, slug, city, province, license_number from daycares where id = ${data.daycareId} limit 1
+      select id, name, slug, city, province, license_number, license_status
+      from daycares where id = ${data.daycareId} limit 1
     `;
     const centre = listed[0];
     if (!centre) throw new Error("Centre not found");
@@ -328,6 +362,16 @@ export const reviewLicense = createServerFn({ method: "POST" })
         adapter: lookupRegistry(centre.province, centre.license_number),
       }),
     });
+
+    void import("@/lib/server/alert-fanout")
+      .then((mod) =>
+        mod.notifyLicenceWatchers({
+          daycareId: centre.id,
+          before: centre.license_status,
+          after: status,
+        }),
+      )
+      .catch(() => undefined);
 
     try {
       await notifyPlatform({

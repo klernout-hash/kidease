@@ -5,6 +5,7 @@ import { nid } from "@/lib/utils";
 import { isKidEaseOperatorEmail } from "@/lib/admin-email";
 import { lookupUser } from "@/lib/server/notify";
 import { isLeadKind } from "@/lib/lead-requests";
+import { OUTBOX_BELL_CATEGORIES, isAlertCategory, safeAlertHref } from "@/lib/alert-push";
 import {
   claimNotificationHref,
   claimTitleKey,
@@ -24,6 +25,8 @@ import {
 } from "@/lib/notifications";
 
 type Sql = Awaited<ReturnType<typeof getSql>>;
+
+const bellCategories = new Set<string>(OUTBOX_BELL_CATEGORIES);
 
 async function ensureNotificationsTable(sql: Sql) {
   if (!import.meta.env.SSR) return;
@@ -241,6 +244,49 @@ async function projectFromPlatformSignups(sql: Sql, isAdmin: boolean): Promise<P
     .filter((row): row is ProjectedNotification => Boolean(row));
 }
 
+function bellHref(raw: string): string {
+  const safe = safeAlertHref(raw);
+  if (safe.startsWith("/")) return safe.split("#")[0] || "/notifications";
+  try {
+    const url = new URL(safe);
+    return `${url.pathname}${url.search}` || "/notifications";
+  } catch {
+    return "/notifications";
+  }
+}
+
+async function projectFromAlertOutbox(sql: Sql, userId: string): Promise<ProjectedNotification[]> {
+  const rows = await sql<{
+    id: string;
+    category: string;
+    title: string;
+    href: string;
+    sent_at: string;
+  }>`
+    select id, category, title, href, sent_at
+    from notification_outbox
+    where user_id = ${userId} and sent_at is not null
+    order by sent_at desc
+    limit 20
+  `.catch(() => []);
+  return rows.flatMap((row) => {
+    if (!isAlertCategory(row.category) || !bellCategories.has(row.category)) return [];
+    const href = bellHref(row.href);
+    if (!isAllowedNotificationHref(href)) return [];
+    return [
+      {
+        kind: "customer_alert" as const,
+        titleKey: "notifCustomerAlert" as const,
+        href,
+        sourceKey: notificationSourceKey("customer_alert", row.id, row.category),
+        createdAt: String(row.sent_at),
+        daycareName: row.title,
+        status: row.category,
+      },
+    ];
+  });
+}
+
 export async function projectUserNotifications(sql: Sql, userId: string): Promise<ProjectedNotification[]> {
   const actor = await lookupUser(userId).catch(() => ({ email: null }));
   const isAdmin = isKidEaseOperatorEmail(actor.email);
@@ -251,6 +297,7 @@ export async function projectUserNotifications(sql: Sql, userId: string): Promis
     projectFromInbox(sql, userId),
     projectFromSearchAlerts(sql, userId),
     projectFromPlatformSignups(sql, isAdmin),
+    projectFromAlertOutbox(sql, userId),
   ]);
   return batches.flat().filter((row) => isAllowedNotificationHref(row.href));
 }

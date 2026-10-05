@@ -100,6 +100,9 @@ export const checkListingPhoto = createServerFn({ method: "POST" })
       insert into photo_checks (id, daycare_id, sha256, status, preview)
       values (${id}, ${data.daycareId}, ${sha}, 'held', ${data.dataUrl})
     `.catch(() => undefined);
+    void import("@/lib/server/alert-fanout")
+      .then((mod) => mod.notifyListingAttention({ daycareId: data.daycareId, sourceId: id, kind: "photo" }))
+      .catch(() => undefined);
     return outcome;
   });
 

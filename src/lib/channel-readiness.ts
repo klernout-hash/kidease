@@ -2,9 +2,11 @@
  * Safe enablement for FEATURE_SMS / FEATURE_PUSH / FEATURE_VIDEO.
  *
  * Production (VERCEL_ENV=production): a flag is ignored unless the required
- * vendor secrets are present. Preview and local may set FEATURE_*=1 to
- * exercise UI without live vendors — send / mint / native prompt still
- * no-op without credentials.
+ * vendor secrets are present. For push, a secret is the FCM trio, the APNs
+ * set, or a VAPID public+private pair. Native send still needs FCM or APNs.
+ * Website send still needs the VAPID pair. Preview and local may set
+ * FEATURE_*=1 to exercise UI without live vendors — send / mint / native
+ * prompt still no-op without credentials. The code default stays off.
  *
  * Parent-facing chrome only appears when that channel has a real backend.
  * Video token mint exists, but VIDEO_SDK_WIRED is false, so inbox Video
@@ -14,7 +16,7 @@
  */
 
 import { evaluateFeatureFlag, envMap, type EnvMap } from "./flags.ts";
-import { pushCredentialsPresent } from "./push.ts";
+import { pushChannelSecretsPresent } from "./push.ts";
 import { smsCredentialsPresent } from "./sms.ts";
 import { VIDEO_SDK_WIRED, videoCredentialsPresent } from "./video.ts";
 
@@ -63,7 +65,7 @@ export function isVercelProduction(env?: EnvMap): boolean {
 
 function credentialsFor(id: ChannelId, env: EnvMap): boolean {
   if (id === "sms") return smsCredentialsPresent(env);
-  if (id === "push") return pushCredentialsPresent(env);
+  if (id === "push") return pushChannelSecretsPresent(env);
   return videoCredentialsPresent(env);
 }
 

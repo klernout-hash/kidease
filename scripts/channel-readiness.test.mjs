@@ -14,6 +14,7 @@ import {
   videoSurfaceEnabled,
 } from "../src/lib/channel-readiness.ts";
 import { VIDEO_SDK_WIRED } from "../src/lib/video.ts";
+import { pushCredentialsPresent } from "../src/lib/push.ts";
 import { resetRemoteFlagsForTests } from "../src/lib/flags.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -59,6 +60,14 @@ test("Production ignores FEATURE_* without secrets; Preview may override", () =>
   assert.equal(pushArmed({ FEATURE_PUSH: "1" }), true);
   assert.equal(pushArmed({ FEATURE_PUSH: "1", VERCEL_ENV: "production" }), false);
   assert.equal(pushArmed({ ...PUSH_LIVE, VERCEL_ENV: "production" }), true);
+  const vapidOnly = {
+    FEATURE_PUSH: "1",
+    VERCEL_ENV: "production",
+    VAPID_PUBLIC_KEY: "public-not-real",
+    VAPID_PRIVATE_KEY: "private-not-real",
+  };
+  assert.equal(pushArmed(vapidOnly), true);
+  assert.equal(pushCredentialsPresent(vapidOnly), false);
 
   assert.equal(videoArmed({ FEATURE_VIDEO: "1" }), true);
   assert.equal(videoArmed({ FEATURE_VIDEO: "1", VERCEL_ENV: "production" }), false);

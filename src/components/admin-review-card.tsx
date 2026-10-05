@@ -535,6 +535,14 @@ export function AdminReviewCard({
             {status === "waiting" ? "Keep waiting" : "Waiting"}
           </Button>
           <Button
+            variant="secondary"
+            className="w-full sm:w-auto sm:min-w-36"
+            disabled={locked || status === "declined"}
+            onClick={() => onDecide(centre.daycareId, "needs_docs")}
+          >
+            Needs a document
+          </Button>
+          <Button
             variant={status === "declined" ? "danger" : "secondary"}
             className={cn("w-full sm:ml-auto sm:w-auto sm:min-w-28", status === "declined" ? "" : "text-danger")}
             disabled={locked || status === "declined"}

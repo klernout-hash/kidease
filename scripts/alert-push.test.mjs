@@ -12,6 +12,7 @@ import {
   nextAlertSendAt,
   safeAlertHref,
   webAlertPromptStep,
+  webPushPermissionAllowed,
 } from "../src/lib/alert-push.ts";
 import { signAlertUnsubToken, verifyAlertUnsubToken } from "../src/lib/alert-push-token.ts";
 import { isAlertQuietHours, winnipegHour } from "../src/lib/search-alert-policy.ts";
@@ -95,6 +96,9 @@ test("unsubscribe token and web prompt rules", () => {
   assert.equal(webAlertPromptStep({ native: false, choice: null, seenThisVisit: false }), "hide");
   assert.equal(webAlertPromptStep({ native: false, choice: null, seenThisVisit: true }), "show");
   assert.equal(webAlertPromptStep({ native: false, choice: "no", seenThisVisit: true }), "hide");
+  assert.equal(webAlertPromptStep({ native: false, signedIn: false, choice: null, seenThisVisit: true }), "hide");
+  assert.equal(webPushPermissionAllowed({ pushArmed: true, vapidPublic: true, vapidPrivate: false }), false);
+  assert.equal(webPushPermissionAllowed({ pushArmed: true, vapidPublic: true, vapidPrivate: true }), true);
   assert.equal(
     canRegisterWebPush({ notification: true, pushManager: true, serviceWorker: true, vapidPublic: true, pushArmed: false }),
     false,

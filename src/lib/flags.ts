@@ -100,7 +100,7 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     key: "FEATURE_PUSH",
     defaultOn: false,
     docs: "docs/push.md",
-    summary: "FCM HTTP v1 / APNs. Native-only. Production stays off without secrets. Preview may override.",
+    summary: "One push path for website (VAPID) and phones (FCM / APNs). Default off. Production stays disarmed without secrets.",
   },
   {
     key: "FEATURE_SMS",
