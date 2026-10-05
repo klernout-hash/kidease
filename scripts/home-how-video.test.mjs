@@ -19,9 +19,16 @@ test("home explainer is desktop website only, lazy, and below featured centres",
 
   const web = home.slice(home.indexOf("ke-web-only"), home.indexOf("ke-app-only"));
   const featuredAt = web.indexOf('id="featured"');
-  const videoAt = web.indexOf("<HomeHowVideo />");
   const howAt = web.indexOf('id="how"');
-  assert.ok(featuredAt >= 0 && videoAt > featuredAt && howAt > videoAt);
+  const videoAt = web.indexOf("<HomeHowVideo />");
+  const stepsAt = web.indexOf('photo="/photos/cottage.jpg"');
+  assert.ok(featuredAt >= 0 && howAt > featuredAt && videoAt > howAt && stepsAt > videoAt);
+  assert.equal((web.match(/howVideoTitle/g) ?? []).length, 1);
+  const howBlock = web.slice(howAt, web.indexOf('id="enroll"'));
+  assert.equal((howBlock.match(/<h2/g) ?? []).length, 1);
+  assert.match(howBlock, /howVideoTitle/);
+  assert.doesNotMatch(howBlock, /howStressFree/);
+  assert.doesNotMatch(video, /<h2/);
 
   const app = home.slice(home.indexOf("ke-home-app"));
   assert.doesNotMatch(app, /HomeHowVideo/);
@@ -51,6 +58,12 @@ test("home explainer is desktop website only, lazy, and below featured centres",
   assert.doesNotMatch(video, /controls=\{true\}/);
   assert.match(video, /srcOn \? \(/);
   assert.match(video, /video\.pause\(\)/);
+  assert.match(video, /video\.muted = !wantSound/);
+  assert.match(video, /setSoundBlocked\(true\)/);
+  assert.match(video, /howVideoPlayWithSound/);
+  assert.match(video, /useState\(false\)/);
+  assert.doesNotMatch(video, /muted\n/);
+  assert.doesNotMatch(video, /autoPlay=/);
   assert.doesNotMatch(video, /how-kidease\.webm/);
   assert.doesNotMatch(video, /—/);
 });
@@ -59,8 +72,10 @@ test("explainer copy, poster, and mp4 stay small", () => {
   assert.equal(tx("en", "howVideoTitle"), "Here's how KidEase works");
   assert.equal(tx("fr", "howVideoTitle"), "Voici comment fonctionne KidEase");
   assert.equal(tx("en", "howVideoPlay"), "Play video");
+  assert.equal(tx("en", "howVideoPlayWithSound"), "Play with sound");
+  assert.equal(tx("fr", "howVideoPlayWithSound"), "Lire avec le son");
   assert.equal(tx("fr", "howVideoPause"), "Mettre la vidéo en pause");
-  for (const key of ["howVideoTitle", "howVideoPlay", "howVideoPause", "howVideoSoundOn", "howVideoSoundOff"]) {
+  for (const key of ["howVideoTitle", "howVideoPlay", "howVideoPause", "howVideoSoundOn", "howVideoSoundOff", "howVideoPlayWithSound"]) {
     assert.doesNotMatch(tx("en", key), /—|free forever/i);
     assert.doesNotMatch(tx("fr", key), /—|gratuit pour toujours/i);
   }
