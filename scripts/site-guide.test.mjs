@@ -122,6 +122,34 @@ test("search and claim stay on the real pages, in French too", () => {
   assert.match(map.direct?.answer || "", /parent desk/);
 });
 
+test("the four starter questions each land on a real page", () => {
+  const starters = [
+    ["How do I find a daycare?", "en", "/search"],
+    ["How do I request a tour?", "en", "/help"],
+    ["Where are my waitlists?", "en", "/parent"],
+    ["What can I use?", "en", "/search"],
+    ["Comment trouver une garderie ?", "fr", "/fr/search"],
+    ["Comment demander une visite ?", "fr", "/fr/help"],
+    ["Où est ma liste d'attente ?", "fr", "/parent"],
+    ["Quels outils puis-je utiliser ?", "fr", "/fr/search"],
+  ];
+  for (const [question, locale, path] of starters) {
+    const turn = prepareGuideTurn({
+      question,
+      audience: "parent",
+      locale,
+      flags: locale === "fr" ? {} : { "parent-helper": false },
+    });
+    assert.equal(turn.direct?.known, true, question);
+    assert.equal(turn.direct?.path, path, question);
+  }
+  const bot = read("src/components/help-bot.tsx");
+  assert.match(bot, /helpBotQ1/);
+  assert.match(bot, /sendText\(t\(key\)\)/);
+  assert.match(read("src/lib/copy.ts"), /Tap a question/);
+  assert.match(read("src/lib/copy.ts"), /Touchez une question/);
+});
+
 test("the chat reads the guide and does not write a profile", () => {
   const server = read("src/lib/server/parent-helper.ts");
   const bot = read("src/components/help-bot.tsx");

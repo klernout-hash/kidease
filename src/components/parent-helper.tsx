@@ -23,8 +23,8 @@ export function ParentHelperPanel({ collapsed = false }: { collapsed?: boolean }
   const { onToken, takeChallenge, resetSignal, reset } = useTurnstileToken();
   if (!on) return null;
 
-  function ask() {
-    const text = question.trim();
+  function ask(next?: string) {
+    const text = (typeof next === "string" ? next : question).trim();
     if (!text || busy) return;
     const token = takeChallenge();
     if (needChallenge && !token) {
@@ -77,6 +77,21 @@ export function ParentHelperPanel({ collapsed = false }: { collapsed?: boolean }
   const body = (
     <>
       <p className="mt-1 text-sm text-muted">{t("parentHelperLead")}</p>
+      {!answer ? (
+        <div className="mt-3 flex flex-col gap-2">
+          {(["helpBotQ1", "helpBotQ2", "helpBotQ3", "helpBotQ4"] as const).map((key) => (
+            <button
+              key={key}
+              type="button"
+              disabled={busy}
+              onClick={() => ask(t(key))}
+              className="min-h-11 w-full rounded-2xl bg-bg px-3 py-2 text-left text-sm font-medium leading-5 text-primary ring-1 ring-border"
+            >
+              {t(key)}
+            </button>
+          ))}
+        </div>
+      ) : null}
       <label className="mt-3 block text-sm font-medium">
         {t("parentHelperAsk")}
         <textarea
@@ -90,7 +105,7 @@ export function ParentHelperPanel({ collapsed = false }: { collapsed?: boolean }
           <TurnstileField onToken={onToken} resetSignal={resetSignal} />
         </div>
       ) : null}
-      <Button type="button" className="mt-2 min-h-11" disabled={busy} onClick={ask}>
+      <Button type="button" className="mt-2 min-h-11" disabled={busy} onClick={() => ask()}>
         {busy ? t("parentHelperWorking") : t("parentHelperAsk")}
       </Button>
       {answer ? (

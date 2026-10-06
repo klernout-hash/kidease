@@ -25,6 +25,8 @@ export function HelpBot() {
   const [needChallenge, setNeedChallenge] = useState(false);
   const { onToken, takeChallenge, resetSignal, reset } = useTurnstileToken();
   const end = useRef<HTMLDivElement>(null);
+  const starters = ["helpBotQ1", "helpBotQ2", "helpBotQ3", "helpBotQ4"] as const;
+  const showStarters = msgs.every((m) => m.role !== "user");
 
   useEffect(() => {
     end.current?.scrollIntoView({ behavior: "smooth" });
@@ -134,6 +136,21 @@ export function HelpBot() {
                 ) : null}
               </p>
             ))}
+            {showStarters ? (
+              <div className="flex flex-col gap-2 pt-1">
+                {starters.map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void sendText(t(key))}
+                    className="min-h-11 w-full rounded-2xl bg-surface px-3 py-2 text-left text-sm font-medium leading-5 text-primary ring-1 ring-border"
+                  >
+                    {t(key)}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             {busy ? <p className="text-xs text-muted">{t("helpBotTyping")}</p> : null}
             <div ref={end} />
           </div>

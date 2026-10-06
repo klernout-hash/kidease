@@ -47,7 +47,7 @@ const NAV: readonly NavPage[] = [
   },
   {
     path: "/parent",
-    phrases: ["waitlist", "waitlists", "liste d attente", "parent desk", "bureau parent", "my requests", "mes demandes", "saved centres"],
+    phrases: ["waitlist", "waitlists", "liste d attente", "listes d attente", "parent desk", "bureau parent", "my requests", "mes demandes", "saved centres"],
     en: "The parent desk holds your requests, waitlists, and saved centres. Open Parent, then Waitlists, to see a request or withdraw it. Other families are not shown.",
     fr: "Le bureau parent garde vos demandes, vos listes d'attente et vos centres enregistrés. Ouvrez Parent, puis Listes d'attente, pour voir une demande ou la retirer. Les autres familles ne s'affichent pas.",
   },
