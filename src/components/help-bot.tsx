@@ -11,11 +11,11 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
-type ChatMsg = { role: "user" | "assistant"; text: string };
+type ChatMsg = { role: "user" | "assistant"; text: string; path?: string | null };
 type AskError = "off" | "turnstile" | "rate_limited" | "ticket";
 
 export function HelpBot() {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const { user } = useCurrentUserState();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -56,7 +56,7 @@ export function HelpBot() {
         const { requestParentHelperAgent } = await import("@/lib/server/parent-helper");
         const last = [...msgs].reverse().find((m) => m.role === "user")?.text || trimmed;
         const res = await requestParentHelperAgent({
-          data: { question: last, distinctId, turnstileToken: token },
+          data: { question: last, distinctId, turnstileToken: token, locale },
         });
         if ("error" in res) {
           if (res.error === "turnstile") setNeedChallenge(true);
@@ -70,7 +70,7 @@ export function HelpBot() {
         return;
       }
       const { askParentHelper } = await import("@/lib/server/parent-helper");
-      const res = await askParentHelper({ data: { question: trimmed, distinctId, turnstileToken: token } });
+      const res = await askParentHelper({ data: { question: trimmed, distinctId, turnstileToken: token, locale } });
       if ("error" in res) {
         if (res.error === "turnstile") setNeedChallenge(true);
         setMsgs((m) => [...m, { role: "assistant", text: replyFor(res.error) }]);
@@ -78,9 +78,8 @@ export function HelpBot() {
       }
       setNeedChallenge(false);
       reset();
-      const reply = res.path ? `${res.answer} (${res.path})` : res.answer;
       capturePostHogEvent(res.known ? "parent_helper_asked" : "parent_helper_unknown", parentHelperEventProps({ path: res.path || "" }));
-      setMsgs((m) => [...m, { role: "assistant", text: reply }]);
+      setMsgs((m) => [...m, { role: "assistant", text: res.answer, path: res.path }]);
     } catch {
       setMsgs((m) => [...m, { role: "assistant", text: t("helpBotFail") }]);
     } finally {
@@ -125,6 +124,14 @@ export function HelpBot() {
                 )}
               >
                 {m.text}
+                {m.path ? (
+                  <>
+                    {" "}
+                    <a href={m.path} className="font-medium text-primary underline">
+                      {t("parentHelperCite").replace("{path}", m.path)}
+                    </a>
+                  </>
+                ) : null}
               </p>
             ))}
             {busy ? <p className="text-xs text-muted">{t("helpBotTyping")}</p> : null}

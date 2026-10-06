@@ -13,7 +13,7 @@ import { useCopy } from "@/lib/use-copy";
 export function ParentHelperPanel({ collapsed = false }: { collapsed?: boolean } = {}) {
   const on = useAiFeatureFlag(AI_FLAGS.parentHelper);
   const { user } = useCurrentUserState();
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [path, setPath] = useState<string | null>(null);
@@ -33,7 +33,7 @@ export function ParentHelperPanel({ collapsed = false }: { collapsed?: boolean }
     }
     setBusy(true);
     void askParentHelper({
-      data: { question: text, distinctId: helpBubbleDistinctId(user?.id), turnstileToken: token },
+      data: { question: text, distinctId: helpBubbleDistinctId(user?.id), turnstileToken: token, locale },
     })
       .then((res) => {
         if ("error" in res) {
