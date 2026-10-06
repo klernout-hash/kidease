@@ -40,9 +40,10 @@ export type ParentHelperModel = z.infer<typeof parentHelperSchema>;
 export const PARENT_HELPER_UNKNOWN = "I don't know that from KidEase guides.";
 
 export const PARENT_HELPER_SYSTEM = [
-  "Answer in one or two sentences using only the guide pages.",
-  "Cite one path from the pages.",
+  "Answer in one or two sentences using only the pages in the question.",
+  "Cite one path from those pages.",
   "Do not invent a daycare, a fee, a licence, a spot, or a review.",
+  "Do not say you changed a profile, sent a message, or turned a tool on.",
   "If the pages do not answer, say you do not know.",
   "Reply with JSON only: {\"answer\":\"...\",\"path\":\"/faq\"}.",
 ].join(" ");
@@ -55,10 +56,12 @@ export function parentHelperEventProps(input: { path?: string } = {}) {
   return { path };
 }
 
-export function parentHelperModelUser(question: string): string {
+export type GuideSourcePage = { path: string; text: string };
+
+export function parentHelperModelUser(question: string, pages: readonly GuideSourcePage[] = PARENT_PAGES): string {
   return JSON.stringify({
     question: question.replace(/\s+/g, " ").trim().slice(0, 400),
-    pages: PARENT_PAGES.map((page) => ({ path: page.path, text: page.text })),
+    pages: pages.map((page) => ({ path: page.path, text: page.text })),
   });
 }
 
@@ -68,18 +71,21 @@ export type ParentAnswer = {
   path: string | null;
 };
 
-function pageByPath(path: string) {
-  return PARENT_PAGES.find((page) => page.path === path);
+function pageByPath(path: string, pages: readonly GuideSourcePage[]) {
+  return pages.find((page) => page.path === path);
 }
 
 function allowedNumbers(text: string): Set<string> {
   return new Set(text.match(/\d+/g) || []);
 }
 
-export function groundParentAnswer(model: ParentHelperModel | null): ParentAnswer {
+export function groundParentAnswer(
+  model: ParentHelperModel | null,
+  pages: readonly GuideSourcePage[] = PARENT_PAGES,
+): ParentAnswer {
   const unknown: ParentAnswer = { known: false, answer: PARENT_HELPER_UNKNOWN, path: null };
   if (!model) return unknown;
-  const page = pageByPath(model.path.trim());
+  const page = pageByPath(model.path.trim(), pages);
   if (!page) return unknown;
   const answer = model.answer.replace(/\s+/g, " ").trim();
   if (!answer || answer.length > 400 || /@/.test(answer)) return unknown;
