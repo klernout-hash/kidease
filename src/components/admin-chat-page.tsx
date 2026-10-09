@@ -188,12 +188,13 @@ export function AdminChatPage() {
           </div>
 
           <div className="rounded-2xl bg-surface px-5 py-6 text-sm ring-1 ring-border">
-            <h3 className="font-display text-xl">Push · FCM / APNs</h3>
+            <h3 className="font-display text-xl">Push · website, FCM, and APNs</h3>
             <p className="mt-2 text-muted">
               {lab?.push.enabled
-                ? "FEATURE_PUSH is on. Live send still needs credentials and a native binary. Dry-run does not send."
-                : "Coming soon: FEATURE_PUSH is off. Dry-run counts tokens only. www does not prompt."}
+                ? "FEATURE_PUSH is on. Website send needs the VAPID pair. Phone send needs FCM or APNs. Dry-run does not send."
+                : "FEATURE_PUSH is off. Production stays disarmed without secrets. Dry-run counts tokens only. Unsigned visitors are never prompted."}
             </p>
+            <p className="mt-2 text-xs text-muted">{pushPresenceLine(lab)}</p>
             <ol className="mt-4 list-decimal space-y-2 pl-5 text-muted">
               {pushSteps.map((step) => (
                 <li key={step.id}>
@@ -248,7 +249,7 @@ export function AdminChatPage() {
           <div className="rounded-2xl bg-surface px-5 py-6 text-sm text-muted ring-1 ring-border">
             <p>No Stream or Sendbird. Types live in <code>src/lib/chat-scaffold.ts</code>.</p>
             <p className="mt-2">
-              Push is native-only (<code>docs/push.md</code>). Video SDK attach is later (
+              Website push uses VAPID when armed (<code>docs/push.md</code>). Phone push uses FCM and APNs. Video SDK attach is later (
               <code>docs/video.md</code>). <code>FEATURE_PUSH</code> and <code>FEATURE_VIDEO</code> stay off
               until you enable them.
             </p>
@@ -296,15 +297,22 @@ function remoteHint(lab: LabStatus | null): string {
   return "PostHog remote configured";
 }
 
+function presenceWord(on: boolean): string {
+  return on ? "present" : "missing";
+}
+
+function pushPresenceLine(lab: LabStatus | null): string {
+  if (!lab) return "Credential presence is not loaded. Values are never shown.";
+  const p = lab.push.presence;
+  return `FCM ${presenceWord(p.fcm)}. APNs ${presenceWord(p.apns)}. VAPID public ${presenceWord(p.vapid)}. VAPID private ${presenceWord(p.vapidPrivate)}. Production stays disarmed without secrets.`;
+}
+
 function pushHint(lab: LabStatus | null, dryRunHint: string): string {
   if (dryRunHint) return dryRunHint;
-  if (!lab) return "FCM / APNs env not loaded. Do not invent keys.";
+  if (!lab) return "FCM / APNs / VAPID env not loaded. Do not invent keys.";
   const tokens = `${lab.push.tokenCount} stored token(s)`;
   const source = sourceHint(lab.push.source);
-  if (lab.push.credentialsPresent) {
-    return `${source}${tokens}. Env names are present. Send stays off until the flag is on.`;
-  }
-  return `${source}${tokens}. No FCM / APNs credentials. Do not invent keys.`;
+  return `${source}${tokens}. ${pushPresenceLine(lab)}`;
 }
 
 function smsHint(lab: LabStatus | null): string {

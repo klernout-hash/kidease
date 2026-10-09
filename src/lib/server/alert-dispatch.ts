@@ -9,6 +9,7 @@ import { getSql } from "@/lib/db";
 import { nid } from "@/lib/utils";
 import { subscriptionsEnabled } from "@/lib/features";
 import { pushArmed } from "@/lib/channel-readiness";
+import { isAllowedWebPushEndpoint } from "@/lib/web-push";
 import {
   ALERT_CATEGORIES,
   alertEmailLetter,
@@ -167,6 +168,17 @@ async function localeFor(sql: Sql, userId: string, explicit?: AlertLocale): Prom
   return normalizeAlertLocale(rows[0]?.locale);
 }
 
+function webPushPath(href: string): string {
+  const safe = safeAlertHref(href);
+  if (safe.startsWith("/")) return safe;
+  try {
+    const url = new URL(safe);
+    return `${url.pathname}${url.search}`.slice(0, 300) || "/notifications";
+  } catch {
+    return "/notifications";
+  }
+}
+
 async function deliverChannels(row: OutboxRow): Promise<{ pushed: boolean; emailed: boolean }> {
   const category = isAlertCategory(row.category) ? row.category : null;
   const href = absoluteHref(safeAlertHref(row.href));
@@ -176,9 +188,16 @@ async function deliverChannels(row: OutboxRow): Promise<{ pushed: boolean; email
     body: row.body,
     url: href,
   }).catch(() => null);
-  const pushed = Boolean(push && push.ok && push.sent > 0);
+  const { sendWebPushToUser } = await import("@/lib/server/web-push-send");
+  const web = await sendWebPushToUser({
+    userId: row.user_id,
+    title: row.title,
+    body: row.body,
+    url: webPushPath(row.href),
+  }).catch(() => ({ sent: 0 }));
+  const pushed = Boolean(push && push.ok && push.sent > 0) || web.sent > 0;
   let emailed = false;
-  if (!pushed && category && flagOn(row.email_fallback) && isCriticalAlert(category)) {
+  if (!pushed && category && flagOn(row.email_fallback)) {
     emailed = await sendFallbackEmail(row, href);
   }
   return { pushed, emailed };
@@ -341,15 +360,9 @@ export async function applyAlertUnsubscribeToken(token: string): Promise<{ ok: t
 }
 
 function validEndpoint(raw: string): string | null {
-  try {
-    const url = new URL(raw.trim());
-    if (url.protocol !== "https:") return null;
-    const value = url.toString();
-    if (value.length > 2000) return null;
-    return value;
-  } catch {
-    return null;
-  }
+  const value = raw.trim();
+  if (!isAllowedWebPushEndpoint(value)) return null;
+  return value;
 }
 
 function validKey(raw: string, min: number, max: number): string | null {

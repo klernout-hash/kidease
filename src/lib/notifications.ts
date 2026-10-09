@@ -1,7 +1,16 @@
 import { DAYCARE_INBOX_HREF, PARENT_REQUESTS_HREF, type LeadKind } from "./lead-requests.ts";
 import type { CopyKey } from "./copy.ts";
 
-export const NOTIFICATION_KINDS = ["lead", "tour", "claim", "inbox", "search_alert", "admin_queue", "admin_signup"] as const;
+export const NOTIFICATION_KINDS = [
+  "lead",
+  "tour",
+  "claim",
+  "inbox",
+  "search_alert",
+  "admin_queue",
+  "admin_signup",
+  "customer_alert",
+] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
 export const NOTIFICATION_TITLE_KEYS = [
@@ -15,6 +24,7 @@ export const NOTIFICATION_TITLE_KEYS = [
   "notifClaimWaiting",
   "notifInbox",
   "notifSearchAlert",
+  "notifCustomerAlert",
   "notifAdminClaim",
   "notifAdminQueue",
   "notifAdminParentSignup",
@@ -58,6 +68,8 @@ const ALLOWED_PREFIXES = [
   "/support",
   "/account",
   "/notifications",
+  "/daycare",
+  "/spots",
 ] as const;
 
 export function isNotificationKind(value: string | null | undefined): value is NotificationKind {

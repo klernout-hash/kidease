@@ -77,7 +77,7 @@ function firstReviewPhoto(photos?: string | null, licensePhoto?: string | null) 
   };
 }
 
-export type Decision = "approve" | "decline" | "waiting";
+export type Decision = "approve" | "decline" | "waiting" | "needs_docs";
 
 async function requireOperator(userId: string) {
   return requireAdmin(userId);
@@ -135,6 +135,12 @@ async function deliverToProvider(to: string, subject: string, text: string) {
 }
 
 function decisionCopy(decision: Decision, name: string) {
+  if (decision === "needs_docs") {
+    return {
+      subject: `${name} needs a document before KidEase can approve it`,
+      text: `Hi,\n\nWe reviewed the claim for ${name}. It is not live yet.\nPlease reply with the missing document (licence, screening, or first aid) and we will take another look.\n\nYou can still open the provider dashboard: https://kidease.ca/provider`,
+    };
+  }
   if (decision === "approve") {
     return {
       subject: `${name} is live on KidEase`,
@@ -380,7 +386,7 @@ export const decideCentre = createServerFn({ method: "POST" })
     const { assertRecentReauth } = await import("@/lib/server/reauth.server");
     assertRecentReauth(context.userId);
     const decision = data.decision;
-    if (!["approve", "decline", "waiting"].includes(decision)) throw new Error("Invalid decision");
+    if (!["approve", "decline", "waiting", "needs_docs"].includes(decision)) throw new Error("Invalid decision");
 
     const sql = await getSql();
     const listed = await sql<{
@@ -492,7 +498,9 @@ export const decideCentre = createServerFn({ method: "POST" })
             ? `Approved: ${centre.name}`
             : decision === "decline"
               ? `Declined: ${centre.name}`
-              : `Waiting: ${centre.name}`,
+              : decision === "needs_docs"
+                ? `Needs a document: ${centre.name}`
+                : `Waiting: ${centre.name}`,
         daycareName: centre.name,
         address: centre.address,
         city: centre.city,
@@ -504,6 +512,20 @@ export const decideCentre = createServerFn({ method: "POST" })
       });
     } catch (err) {
       console.error("[kidease-mail] decision admin event failed", err);
+    }
+
+    if (decision === "needs_docs" && latest[0]?.user_id) {
+      const claimantId = latest[0].user_id;
+      void import("@/lib/server/alert-fanout")
+        .then((mod) =>
+          mod.notifyClaimNeedsDocument({
+            userId: claimantId,
+            daycareId: data.daycareId,
+            daycareName: centre.name,
+            emailFallback: mail !== "sent",
+          }),
+        )
+        .catch(() => undefined);
     }
 
     await writeTrustEvent(sql, {

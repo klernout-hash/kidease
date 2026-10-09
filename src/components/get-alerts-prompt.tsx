@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { canRegisterWebPush, getAlertsPromptCopy, webAlertPromptStep } from "@/lib/alert-push";
+import { canRegisterWebPush, getAlertsPromptCopy, webAlertPromptStep, webPushPermissionAllowed } from "@/lib/alert-push";
 import { isNative } from "@/lib/native";
 import { getWebAlertStatus, registerWebPush } from "@/lib/server/alert-push-api";
 import { useCopy } from "@/lib/use-copy";
@@ -33,26 +33,35 @@ function urlBase64ToUint8Array(value: string): Uint8Array {
  */
 export function GetAlertsPrompt() {
   const { locale } = useCopy();
-  const { user } = useCurrentUserState();
+  const { user, isPending } = useCurrentUserState();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [armed, setArmed] = useState(false);
+  const [serverReady, setServerReady] = useState(false);
   const copy = getAlertsPromptCopy(locale === "fr" ? "fr" : "en");
 
   useEffect(() => {
-    if (typeof window === "undefined" || isNative()) return;
+    if (typeof window === "undefined" || isNative() || isPending) return;
+    if (!user?.id) return;
     const choice = window.localStorage.getItem(CHOICE_KEY);
     const seen = window.sessionStorage.getItem(SEEN_KEY);
     if (!seen) {
       window.sessionStorage.setItem(SEEN_KEY, "1");
       return;
     }
-    if (webAlertPromptStep({ native: false, choice, seenThisVisit: true }) !== "show") return;
+    if (webAlertPromptStep({ native: false, signedIn: true, choice, seenThisVisit: true }) !== "show") return;
     setOpen(true);
     void getWebAlertStatus()
-      .then((status) => setArmed(status.pushArmed && status.vapid))
+      .then((status) =>
+        setServerReady(
+          webPushPermissionAllowed({
+            pushArmed: status.pushArmed,
+            vapidPublic: status.vapid,
+            vapidPrivate: status.vapidPrivate,
+          }),
+        ),
+      )
       .catch(() => undefined);
-  }, [user?.id]);
+  }, [user?.id, isPending]);
 
   async function turnOn() {
     if (!user?.id) {
@@ -67,7 +76,7 @@ export function GetAlertsPrompt() {
       pushManager: "PushManager" in window,
       serviceWorker: "serviceWorker" in navigator,
       vapidPublic: Boolean(key),
-      pushArmed: armed,
+      pushArmed: serverReady,
     });
     if (!supported) {
       window.localStorage.setItem(CHOICE_KEY, "email");

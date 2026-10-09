@@ -42,6 +42,7 @@ const COPY_KEYS = [
   "notifClaimWaiting",
   "notifInbox",
   "notifSearchAlert",
+  "notifCustomerAlert",
   "notifAdminClaim",
   "notifAdminQueue",
   "notifAdminParentSignup",

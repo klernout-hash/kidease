@@ -323,7 +323,15 @@ function mergeClaimedCard<T extends DaycareCard>(card: T, claimed: Daycare): T {
 }
 
 function mapReviews(
-  reviews: Array<Review & { daycare_id: string; body_fr: string; created_at: string }>,
+  reviews: Array<
+    Review & {
+      daycare_id: string;
+      body_fr: string;
+      created_at: string;
+      owner_reply?: string | null;
+      owner_reply_at?: string | null;
+    }
+  >,
 ): Review[] {
   return reviews.map((r) => ({
     id: r.id,
@@ -334,6 +342,8 @@ function mapReviews(
     bodyFr: r.body_fr,
     createdAt: String(r.created_at),
     status: r.status && r.status !== "approved" ? r.status : "published",
+    ownerReply: r.owner_reply ? String(r.owner_reply).trim() : null,
+    ownerReplyAt: r.owner_reply_at ? String(r.owner_reply_at) : null,
   }));
 }
 
@@ -764,15 +774,33 @@ export const getDaycare = createServerFn({ method: "GET" })
         daycare.reviewCount = found.reviewCount;
       }
       daycare.googlePlaceId = found.googlePlaceId ?? daycare.googlePlaceId;
-      const reviews = await sql<Review & { daycare_id: string; body_fr: string; created_at: string; status?: string }>`
-        select id, daycare_id, author, rating, body, body_fr, created_at, status
+      type PublicReviewRow = Review & {
+        daycare_id: string;
+        body_fr: string;
+        created_at: string;
+        status?: string;
+        owner_reply?: string | null;
+        owner_reply_at?: string | null;
+      };
+      const reviews = await sql<PublicReviewRow>`
+        select id, daycare_id, author, rating, body, body_fr, created_at, status, owner_reply, owner_reply_at
         from reviews
         where daycare_id = ${daycare.id}
           and status in ('published', 'approved')
           and coalesce(user_id, '') <> ''
         order by created_at desc
         limit 20
-      `.catch(() => [] as Array<Review & { daycare_id: string; body_fr: string; created_at: string; status?: string }>);
+      `.catch(() =>
+        sql<PublicReviewRow>`
+          select id, daycare_id, author, rating, body, body_fr, created_at, status
+          from reviews
+          where daycare_id = ${daycare.id}
+            and status in ('published', 'approved')
+            and coalesce(user_id, '') <> ''
+          order by created_at desc
+          limit 20
+        `.catch(() => [] as PublicReviewRow[]),
+      );
       const parent = parentReviewSummary(reviews);
       daycare.parentRatingX10 = parent.ratingX10;
       daycare.parentReviewCount = parent.count;

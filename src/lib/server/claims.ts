@@ -515,6 +515,9 @@ export const updateListing = createServerFn({ method: "POST" })
     );
     const row = current[0];
     if (!row) throw new Error(LISTING_NOT_FOUND);
+    const beforeWatch = await import("@/lib/server/alert-fanout")
+      .then((mod) => mod.readListingWatch(sql, data.daycareId))
+      .catch(() => null);
     if (row.name !== undefined || row.visibility !== undefined || row.is_test !== undefined || row.claim_status !== undefined) {
       const actor = await lookupUser(context.userId);
       const onDesk = providerDeskListingVisible(
@@ -701,6 +704,23 @@ export const updateListing = createServerFn({ method: "POST" })
         where daycare_id = ${data.daycareId} and user_id = ${context.userId}
       `.catch(() => undefined);
     }
+    const { notifySavedListingChange, readListingWatch } = await import("@/lib/server/alert-fanout");
+    const { scheduleWatchKey } = await import("@/lib/alert-rules");
+    const written = (await readListingWatch(sql, data.daycareId).catch(() => null)) ?? {
+      infantMonthly,
+      toddlerMonthly,
+      preschoolMonthly,
+      partTimeMonthly: partTime ?? beforeWatch?.partTimeMonthly ?? 0,
+      ageMinMonths: minAge,
+      ageMaxMonths: maxAge,
+      hours: hours || beforeWatch?.hours || "",
+      scheduleKey: data.scheduleOptions ? scheduleWatchKey(data.scheduleOptions) : beforeWatch?.scheduleKey || "",
+    };
+    void notifySavedListingChange({
+      daycareId: data.daycareId,
+      before: beforeWatch,
+      after: written,
+    }).catch(() => undefined);
     return { ok: true as const };
   });
 

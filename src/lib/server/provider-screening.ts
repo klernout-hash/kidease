@@ -760,6 +760,10 @@ export const reviewScreeningDocument = createServerFn({ method: "POST" })
     `.catch(() => []);
     const row = rows[0];
     if (!row) throw new Error("Document not found");
+    const beforeFile = await sql<{ screening_on_file: number | boolean | null }>`
+      select screening_on_file from daycares where id = ${row.daycare_id} limit 1
+    `.catch(() => [] as { screening_on_file: number | boolean | null }[]);
+    const beforeOnFile = beforeFile[0]?.screening_on_file === 1 || beforeFile[0]?.screening_on_file === true;
     if (data.action === "approve" && !hasStoredPrivateDoc(row.storage_ref)) {
       throw new Error("This document has no file on record.");
     }
@@ -789,5 +793,18 @@ export const reviewScreeningDocument = createServerFn({ method: "POST" })
           : `${row.doc_kind} rejected.${reason ? ` ${reason}` : ""}`,
     });
     const screeningOnFile = await refreshScreeningOnFile(sql, row.daycare_id, context.userId);
+    const statusChanged = row.status !== decision.next;
+    const onFileChanged = beforeOnFile !== screeningOnFile;
+    if (statusChanged || onFileChanged) {
+      void import("@/lib/server/alert-fanout")
+        .then((mod) =>
+          mod.notifyLicenceWatchers({
+            daycareId: row.daycare_id,
+            before: beforeOnFile ? "on_file" : row.status,
+            after: screeningOnFile ? "on_file" : decision.next,
+          }),
+        )
+        .catch(() => undefined);
+    }
     return { ok: true as const, status: decision.next, screeningOnFile };
   });

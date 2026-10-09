@@ -6,10 +6,11 @@ import { confirmAction } from "@/lib/success-confirm";
 import {
   alertSettingRows,
   alertSettingsIntro,
+  stillLookingCopy,
   type AlertAudience,
   type AlertLocale,
 } from "@/lib/alert-push";
-import { getMyAlertPrefs, saveMyAlertPrefs } from "@/lib/server/alert-push-api";
+import { confirmStillLooking, getMyAlertPrefs, saveMyAlertPrefs } from "@/lib/server/alert-push-api";
 import { useCopy } from "@/lib/use-copy";
 
 export function AlertPushSettings({
@@ -99,6 +100,7 @@ export function AlertPushSettings({
           {saving ? t("loading") : intro.save}
         </Button>
       </form>
+      {audience === "parent" ? <StillLookingConfirm locale={loc} /> : null}
       <p className="mt-4 text-sm">
         <Link to="/unsubscribe" search={{ token: undefined, channel: undefined }} className="underline-offset-4 hover:underline">
           {intro.unsub}
@@ -106,5 +108,38 @@ export function AlertPushSettings({
       </p>
       <p className="mt-2 text-sm text-muted">{intro.apps}</p>
     </section>
+  );
+}
+
+function StillLookingConfirm({ locale }: { locale: AlertLocale }) {
+  const copy = stillLookingCopy(locale);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  function send(looking: boolean) {
+    setBusy(true);
+    void confirmStillLooking({ data: { looking } })
+      .then(() => setNote(copy.saved))
+      .catch(() => setNote(""))
+      .finally(() => setBusy(false));
+  }
+
+  return (
+    <div className="mt-4 rounded-lg bg-bg p-3 ring-1 ring-border">
+      <p className="text-sm text-fg">{copy.ask}</p>
+      <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+        <Button type="button" variant="secondary" className="min-h-11 w-full sm:w-auto" disabled={busy} onClick={() => send(true)}>
+          {copy.yes}
+        </Button>
+        <Button type="button" variant="secondary" className="min-h-11 w-full sm:w-auto" disabled={busy} onClick={() => send(false)}>
+          {copy.no}
+        </Button>
+      </div>
+      {note ? (
+        <p className="mt-2 text-sm text-muted" role="status">
+          {note}
+        </p>
+      ) : null}
+    </div>
   );
 }

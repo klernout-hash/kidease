@@ -24,15 +24,17 @@ function claimCopy(d: Daycare): { label: CopyKey; tip: CopyKey } {
 
 export function ProviderTrustChecklist({ daycare, onSaved }: { daycare: Daycare; onSaved: () => void }) {
   const { t, locale } = useCopy();
-  const serverRev = `${daycare.id}|${daycare.licenseNumber ?? ""}|${daycare.licenseExpiry ?? ""}|${daycare.licensedCapacity ?? ""}`;
+  const serverRev = `${daycare.id}|${daycare.licenseNumber ?? ""}|${daycare.licenseExpiry ?? ""}|${daycare.firstAidExpiry ?? ""}|${daycare.licensedCapacity ?? ""}`;
   const [appliedRev, setAppliedRev] = useState(serverRev);
   const [licenseNumber, setLicenseNumber] = useState(daycare.licenseNumber ?? "");
   const [licenseExpiry, setLicenseExpiry] = useState(daycare.licenseExpiry ?? "");
+  const [firstAidExpiry, setFirstAidExpiry] = useState(daycare.firstAidExpiry ?? "");
   const [capacity, setCapacity] = useState(daycare.licensedCapacity ? String(daycare.licensedCapacity) : "");
   if (appliedRev !== serverRev) {
     setAppliedRev(serverRev);
     setLicenseNumber(daycare.licenseNumber ?? "");
     setLicenseExpiry(daycare.licenseExpiry ?? "");
+    setFirstAidExpiry(daycare.firstAidExpiry ?? "");
     setCapacity(daycare.licensedCapacity ? String(daycare.licensedCapacity) : "");
   }
   const [busy, setBusy] = useState<string | null>(null);
@@ -70,7 +72,7 @@ export function ProviderTrustChecklist({ daycare, onSaved }: { daycare: Daycare;
           </p>
           <p className="mt-1 text-sm text-muted">{licenceTip}</p>
           <form
-            className="mt-3 grid gap-3 sm:grid-cols-3"
+            className="mt-3 grid gap-3 sm:grid-cols-2"
             onSubmit={(e) => {
               e.preventDefault();
               setBusy("license");
@@ -79,6 +81,7 @@ export function ProviderTrustChecklist({ daycare, onSaved }: { daycare: Daycare;
                   daycareId: daycare.id,
                   licenseNumber,
                   licenseExpiry,
+                  firstAidExpiry,
                   licensedCapacity: Number(capacity) || 0,
                 },
               })
@@ -98,6 +101,15 @@ export function ProviderTrustChecklist({ daycare, onSaved }: { daycare: Daycare;
                 className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
                 value={licenseExpiry}
                 onChange={(e) => setLicenseExpiry(e.target.value)}
+              />
+            </label>
+            <label className="text-sm">
+              {t("trustFirstAidExpiry")}
+              <input
+                type="date"
+                className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
+                value={firstAidExpiry}
+                onChange={(e) => setFirstAidExpiry(e.target.value)}
               />
             </label>
             <label id="listing-health-capacity" className="text-sm">

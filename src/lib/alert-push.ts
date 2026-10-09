@@ -31,6 +31,18 @@ export const DAYCARE_ALERT_CATEGORIES = [
   "billing",
 ] as const;
 
+/** Categories that do not already land in the bell from leads, inbox, claims, or search notices. */
+export const OUTBOX_BELL_CATEGORIES = [
+  "saved_listing",
+  "licence_status",
+  "still_looking",
+  "review_reply",
+  "document_expiry",
+  "open_spots",
+  "listing_attention",
+  "billing",
+] as const;
+
 export const ALERT_CATEGORIES = [
   ...PARENT_ALERT_CATEGORIES,
   ...DAYCARE_ALERT_CATEGORIES.filter((id) => id !== "message"),
@@ -389,6 +401,23 @@ export function alertSettingsIntro(locale: AlertLocale, audience: AlertAudience)
   };
 }
 
+export function stillLookingCopy(locale: AlertLocale) {
+  if (locale === "fr") {
+    return {
+      ask: "Vous cherchez encore une place cette semaine?",
+      yes: "Oui, je cherche encore",
+      no: "Pas pour l'instant",
+      saved: "Merci. Nous revérifierons la semaine prochaine.",
+    };
+  }
+  return {
+    ask: "Are you still looking for a spot this week?",
+    yes: "Yes, still looking",
+    no: "Not right now",
+    saved: "Thanks. We will check again next week.",
+  };
+}
+
 export function getAlertsPromptCopy(locale: AlertLocale) {
   if (locale === "fr") {
     return {
@@ -410,8 +439,14 @@ export function getAlertsPromptCopy(locale: AlertLocale) {
   };
 }
 
-export function webAlertPromptStep(input: { native: boolean; choice: string | null; seenThisVisit: boolean }): "hide" | "show" {
+export function webAlertPromptStep(input: {
+  native: boolean;
+  signedIn?: boolean;
+  choice: string | null;
+  seenThisVisit: boolean;
+}): "hide" | "show" {
   if (input.native) return "hide";
+  if (input.signedIn === false) return "hide";
   if (input.choice === "yes" || input.choice === "no" || input.choice === "email") return "hide";
   if (!input.seenThisVisit) return "hide";
   return "show";
@@ -426,6 +461,15 @@ export function canRegisterWebPush(input: {
   pushArmed: boolean;
 }): boolean {
   return input.notification && input.pushManager && input.serviceWorker && input.vapidPublic && input.pushArmed;
+}
+
+/** Permission sheet only when a real send can follow: armed flag plus both VAPID keys. */
+export function webPushPermissionAllowed(input: {
+  pushArmed: boolean;
+  vapidPublic: boolean;
+  vapidPrivate: boolean;
+}): boolean {
+  return input.pushArmed && input.vapidPublic && input.vapidPrivate;
 }
 
 export function safeAlertHref(href: string | null | undefined): string {

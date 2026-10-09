@@ -108,7 +108,14 @@ test("FEATURE_PUSH defaults off and absent env is off", () => {
   assert.equal(fcmConfigured({}), false);
   assert.equal(apnsConfigured({}), false);
   assert.equal(pushCredentialsPresent({}), false);
-  assert.deepEqual(pushEnvPresence({}), { fcm: false, apns: false, vapid: false, credentialsPresent: false });
+  assert.deepEqual(pushEnvPresence({}), {
+    fcm: false,
+    apns: false,
+    vapid: false,
+    vapidPrivate: false,
+    webPush: false,
+    credentialsPresent: false,
+  });
 });
 
 test("token and platform validation rejects web and junk", () => {
@@ -265,7 +272,7 @@ test("docs, migration, API, hook, and plugin are wired but off by default", () =
   assert.match(src("src/lib/server/push-send.ts"), /fcm\.googleapis\.com\/v1\/projects/);
   assert.match(src("src/lib/server/push-send.ts"), /api\.push\.apple\.com/);
   assert.match(src("src/lib/server/push-send.ts"), /FEATURE_PUSH/);
-  assert.match(vercel, /notifications=\(\)/);
+  assert.match(vercel, /notifications=\(self\)/);
   assert.match(docs, /Leave `FEATURE_PUSH` unset/);
   assert.match(envExample, /FEATURE_SMS=0/);
   assert.doesNotMatch(envExample, /FEATURE_PUSH=1/);

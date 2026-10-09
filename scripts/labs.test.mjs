@@ -82,11 +82,15 @@ test("push stubs do not invent credentials and env example has names only", () =
     "APNS_KEY",
     "APNS_PRODUCTION",
     "VITE_FCM_VAPID_PUBLIC_KEY",
+    "VAPID_PUBLIC_KEY",
+    "VAPID_PRIVATE_KEY",
+    "VAPID_SUBJECT",
   ]) {
     assert.match(envExample, new RegExp(`${name}=`));
   }
   assert.doesNotMatch(envExample, /FCM_PRIVATE_KEY=\S+/);
   assert.doesNotMatch(envExample, /APNS_KEY=\S+/);
+  assert.doesNotMatch(envExample, /VAPID_PRIVATE_KEY=\S+/);
   assert.match(envExample, /^FEATURE_INAPP_CHAT=0$/m);
   assert.match(envExample, /^FEATURE_PUSH=0$/m);
   assert.match(envExample, /FEATURE_PROVIDER_SUBSCRIPTIONS=1/);
