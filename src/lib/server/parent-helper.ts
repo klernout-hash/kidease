@@ -7,7 +7,6 @@ import { sanitizeAiDistinctId } from "@/lib/ai/flag-gate";
 import { bubbleQuestionForModel, consumeBubbleAsk } from "@/lib/ai/help-bubble";
 import { sessionBearerMiddleware } from "@/lib/auth/middleware";
 import {
-  groundParentAnswer,
   parentHelperModelUser,
   parentHelperSchema,
   PARENT_HELPER_SYSTEM,
@@ -15,6 +14,13 @@ import {
   type ParentAnswer,
   type SubsidyEstimate,
 } from "@/lib/ai/parent-helper";
+import {
+  finishGuideAnswer,
+  guideAudienceFromRole,
+  prepareGuideTurn,
+  type GuideAudience,
+  type GuideLocale,
+} from "@/lib/ai/site-guide";
 
 export type ParentHelperBlock = { ok: false; error: "off" | "turnstile" | "rate_limited" | "ticket" };
 
@@ -29,9 +35,44 @@ async function ipHashFor(): Promise<string> {
   }
 }
 
-async function flagOn(distinctId: string): Promise<boolean> {
+async function parentHelperOn(distinctId: string): Promise<boolean> {
   const snapshot = await fetchAiFeatureFlags({ distinctId });
   return snapshot.reached === true && snapshot.flags[AI_FLAGS.parentHelper] === true;
+}
+
+async function audienceFor(userId: string | null): Promise<GuideAudience> {
+  if (!userId) return "guest";
+  try {
+    const { getSql } = await import("@/lib/db");
+    const sql = await getSql();
+    const rows = await sql<{ role: string }>`
+      select role from profiles where user_id = ${userId} limit 1
+    `;
+    return guideAudienceFromRole(rows[0]?.role);
+  } catch {
+    return "parent";
+  }
+}
+
+async function cityListingCount(slug: string): Promise<number | null> {
+  try {
+    const { liveHubCount } = await import("@/lib/server/city-directory");
+    return await liveHubCount(slug);
+  } catch {
+    return null;
+  }
+}
+
+async function canadaListingTotal(): Promise<number | null> {
+  try {
+    const { loadDirectoryCounts } = await import("@/lib/server/city-directory");
+    const counts = await loadDirectoryCounts();
+    let total = 0;
+    for (const value of Object.values(counts.provinces)) total += Math.max(0, Math.floor(Number(value) || 0));
+    return total > 0 ? total : null;
+  } catch {
+    return null;
+  }
 }
 
 async function sessionUserId(bearer?: string): Promise<string | null> {
@@ -76,11 +117,13 @@ async function guardGuest(input: {
   return { ok: true, userId: null, ipHash };
 }
 
-function askInput(input: { question?: string; distinctId?: string; turnstileToken?: string } | undefined) {
+function askInput(input: { question?: string; distinctId?: string; turnstileToken?: string; locale?: string } | undefined) {
+  const locale: GuideLocale = input?.locale === "fr" ? "fr" : "en";
   return {
     question: bubbleQuestionForModel(String(input?.question || "")),
     distinctId: sanitizeAiDistinctId(input?.distinctId),
     turnstileToken: String(input?.turnstileToken || "").trim().slice(0, 2048),
+    locale,
   };
 }
 
@@ -88,20 +131,35 @@ export const askParentHelper = createServerFn({ method: "POST" })
   .middleware([sessionBearerMiddleware])
   .validator(askInput)
   .handler(async ({ data, context }): Promise<ParentAnswer | ParentHelperBlock> => {
-    if (!(await flagOn(data.distinctId))) return { ok: false, error: "off" };
+    const snapshot = await fetchAiFeatureFlags({ distinctId: data.distinctId });
+    if (!(snapshot.reached === true && snapshot.flags[AI_FLAGS.parentHelper] === true)) return { ok: false, error: "off" };
     const bearer = (context as { bearerToken?: string }).bearerToken;
     const guard = await guardGuest({ bearer, turnstileToken: data.turnstileToken });
     if (!guard.ok) return guard;
-    if (!data.question) return groundParentAnswer(null);
+    if (!data.question) return finishGuideAnswer(null, prepareGuideTurn({ question: "", audience: "guest", locale: data.locale }), data.locale);
+    const audience = await audienceFor(guard.userId);
+    const flags = snapshot.flags;
+    const preview = prepareGuideTurn({ question: data.question, audience, locale: data.locale, flags });
+    const cityCount = preview.needsCityCount && preview.citySlug ? await cityListingCount(preview.citySlug) : null;
+    const canadaTotal = preview.needsCanadaTotal ? await canadaListingTotal() : null;
+    const turn = prepareGuideTurn({
+      question: data.question,
+      audience,
+      locale: data.locale,
+      flags,
+      cityCount,
+      canadaTotal,
+    });
+    if (turn.direct) return turn.direct;
     const { logAiCall, readAiCache, writeAiCache } = await import("@/lib/server/ai-usage");
     const result = await callAi({
       feature: "parent-helper",
       system: PARENT_HELPER_SYSTEM,
-      user: parentHelperModelUser(data.question),
+      user: parentHelperModelUser(data.question, turn.pages),
       schema: parentHelperSchema,
       userId: guard.userId,
       ipHash: guard.ipHash,
-      maxTokens: 180,
+      maxTokens: 220,
       deps: {
         log: logAiCall,
         readCache: readAiCache,
@@ -109,14 +167,14 @@ export const askParentHelper = createServerFn({ method: "POST" })
       },
     });
     if (!result.ok && result.error === "rate_limited") return { ok: false, error: "rate_limited" };
-    return groundParentAnswer(result.ok ? result.data : null);
+    return finishGuideAnswer(result.ok ? result.data : null, turn, data.locale);
   });
 
 export const requestParentHelperAgent = createServerFn({ method: "POST" })
   .middleware([sessionBearerMiddleware])
   .validator(askInput)
   .handler(async ({ data, context }): Promise<{ ok: true } | ParentHelperBlock> => {
-    if (!(await flagOn(data.distinctId))) return { ok: false, error: "off" };
+    if (!(await parentHelperOn(data.distinctId))) return { ok: false, error: "off" };
     const bearer = (context as { bearerToken?: string }).bearerToken;
     const guard = await guardGuest({ bearer, turnstileToken: data.turnstileToken });
     if (!guard.ok) return guard;
@@ -151,6 +209,6 @@ export const estimateSubsidy = createServerFn({ method: "POST" })
     distinctId: sanitizeAiDistinctId(input?.distinctId),
   }))
   .handler(async ({ data }): Promise<SubsidyEstimate | { ok: false; error: "off" }> => {
-    if (!(await flagOn(data.distinctId))) return { ok: false, error: "off" };
+    if (!(await parentHelperOn(data.distinctId))) return { ok: false, error: "off" };
     return subsidyEstimate(data.province);
   });
