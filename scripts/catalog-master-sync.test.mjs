@@ -7,10 +7,13 @@ import { parseCsvRecords, parseMasterContacts } from "../src/lib/catalog-master.
 import {
   dropStoredDuplicateAdditions,
   masterListingId,
+  planRemovedFromMasterRepublish,
   planStaleMasterHides,
+  REMOVED_FROM_MASTER_REPUBLISH_CAP,
   STALE_MASTER_HIDE_CAP,
   syncMasterCatalogue,
 } from "../src/lib/catalog-master-sync.ts";
+import { fsaCentroid } from "../src/lib/fsa-centroids.ts";
 import { DAYCARE_UPSERT_SQL } from "../src/lib/catalog-upsert.ts";
 import { assertMasterLock, parseSeedArgs } from "./seed-catalog-to-neon.mjs";
 import { isSafeSitemapSlug, mergeListingSitemapSlugs, publicSitemapSlugs } from "../src/lib/sitemap.ts";
@@ -25,6 +28,7 @@ NB|NoGeo|2,No Geo Home,2,Family Home,1 Lane,Scoudouc,NB,,,,,
 "QC|Quoted|G5J3H7","Centre ""Les P'Tits""",3,CPE,"7, rue Saint-Augustin",Amqui,QC,G5J 3H7,"418-629-5363
 (cell)",qc@example.com,,,
 ON|Ghost|8,TEST Ghost Claim Lab,8,Centre,100 KidEase Test Lane,Toronto,ON,M5V 2T6,416-555-0101,ghost@example.com,,
+QC|Home|H2X1A1,Chez Marie,4,Milieu familial,9 Rue Secret,Montréal,QC,H2X 1A1,,,,
 `;
 
 function catalogue() {
@@ -63,7 +67,7 @@ function catalogue() {
 describe("master catalogue sync", () => {
   it("parses quoted newlines without dropping the Canada lock", () => {
     const records = parseCsvRecords(CSV);
-    assert.equal(records.length, 7);
+    assert.equal(records.length, 8);
     assert.equal(records[5][0], "QC|Quoted|G5J3H7");
     assert.match(records[5][8], /418-629-5363/);
     const contacts = parseMasterContacts(CSV);
@@ -73,22 +77,31 @@ describe("master catalogue sync", () => {
   it("appends Canada rows, keeps filled contacts, and does not invent Live data", () => {
     const before = catalogue();
     const plan = syncMasterCatalogue(before, CSV);
-    assert.equal(plan.summary.masterRows, 6);
+    assert.equal(plan.summary.masterRows, 7);
     assert.equal(plan.summary.matched, 1);
-    assert.equal(plan.summary.added, 1);
+    assert.equal(plan.summary.added, 2);
     assert.equal(plan.summary.skippedNonCanada, 1);
-    assert.equal(plan.summary.skippedNoGeo, 2);
+    assert.equal(plan.summary.skippedNoGeo, 1);
+    assert.equal(plan.summary.skippedQcHome, 1);
     assert.equal(plan.summary.skippedInvalid, 1);
     assert.equal(
       plan.summary.matched +
         plan.summary.added +
         plan.summary.skippedNoGeo +
         plan.summary.skippedNonCanada +
+        plan.summary.skippedQcHome +
         plan.summary.skippedInvalid,
       plan.summary.masterRows,
     );
-    assert.ok(plan.summary.catalogueRows >= plan.summary.masterRows - plan.summary.skippedNoGeo - plan.summary.skippedNonCanada);
-    assert.equal(plan.rows.length, before.length + 1);
+    assert.ok(
+      plan.summary.catalogueRows >=
+        plan.summary.masterRows -
+          plan.summary.skippedNoGeo -
+          plan.summary.skippedNonCanada -
+          plan.summary.skippedQcHome -
+          plan.summary.skippedInvalid,
+    );
+    assert.equal(plan.rows.length, before.length + 2);
     assert.equal(plan.rows[0].id, "bc-1");
     assert.equal(plan.rows[0].phone, "604-983-2600");
     assert.equal(plan.rows[0].contactEmail, "keep@example.com");
@@ -110,7 +123,18 @@ describe("master catalogue sync", () => {
     assert.equal(added.visibility, "public");
     assert.equal(added.isTest, false);
     assert.ok(added.lat > 41 && added.lng < -52);
+    const amqui = plan.rows.find((row) => row.name.includes("P'Tits"));
+    assert.ok(amqui);
+    assert.equal(amqui.province, "QC");
+    assert.equal(amqui.city, "Amqui");
+    assert.ok(Math.abs(amqui.lat - 48.4638) < 0.001);
+    assert.ok(Math.abs(amqui.lng - -67.4313) < 0.001);
+    assert.equal(amqui.infantMonthly, null);
+    assert.equal(amqui.preschoolMonthly, null);
+    assert.deepEqual(amqui.photos, []);
     assert.equal(plan.rows.some((row) => row.province === "NY"), false);
+    assert.equal(plan.rows.some((row) => row.name === "Chez Marie"), false);
+    assert.equal(plan.rows.some((row) => row.name === "No Geo Home"), false);
     assert.equal(plan.rows.some((row) => /test/i.test(row.name) && row.id !== "on-9"), false);
     assert.doesNotMatch(DAYCARE_UPSERT_SQL, /claim_status/);
     assert.match(DAYCARE_UPSERT_SQL, /claimed_at is null/);
@@ -211,6 +235,62 @@ describe("master catalogue sync", () => {
     assert.equal(capped.overCap, true);
     const off = parseSeedArgs(["--dry-run", "--no-hide-stale"]);
     assert.equal(off.hideStale, false);
+  });
+
+  it("places a Quebec centre from the postal area and leaves recognized homes out", () => {
+    assert.deepEqual(fsaCentroid("G5J 3H7"), { lat: 48.4638, lng: -67.4313 });
+    assert.equal(fsaCentroid(""), null);
+    assert.equal(fsaCentroid("no-postal"), null);
+    const csv = `facility_id,name,facility_type,care_type,licence_category,program_model,provider_type,city,province,postal_code
+QC|CPE|G5J1A1,Garderie du Coin,garderie,centre,CPE,centre,,Amqui,Québec,G5J 1A1
+QC|Name|H2X2B2,Milieu familial du Parc,CPE,centre,CPE,centre,,Montréal,QC,H2X 2B2
+QC|RSG|H2X1A1,Recognized Home Test,centre,RSGE,RSGE,family home,milieu_familial_reconnu,Montréal,QC,H2X 1A1
+BC|Fam|V6B1A1,BC Family Home,Family Home,family,licensed,home,,Vancouver,BC,V6B 1A1
+NB|None|1,No Postal Home,Centre,,,,,Scoudouc,NB,
+`;
+    const plan = syncMasterCatalogue([], csv);
+    assert.equal(plan.summary.masterRows, 5);
+    assert.equal(plan.summary.added, 3);
+    assert.equal(plan.summary.skippedQcHome, 1);
+    assert.equal(plan.summary.skippedNoGeo, 1);
+    assert.equal(plan.summary.skippedNonCanada, 0);
+    assert.equal(
+      plan.summary.matched +
+        plan.summary.added +
+        plan.summary.skippedNoGeo +
+        plan.summary.skippedNonCanada +
+        plan.summary.skippedQcHome +
+        plan.summary.skippedInvalid,
+      plan.summary.masterRows,
+    );
+    const garderie = plan.rows.find((row) => row.name === "Garderie du Coin");
+    const family = plan.rows.find((row) => row.name === "BC Family Home");
+    assert.ok(garderie);
+    assert.equal(garderie.province, "QC");
+    assert.ok(Math.abs(garderie.lat - 48.4638) < 0.001);
+    assert.equal(garderie.infantMonthly, null);
+    assert.ok(family);
+    assert.equal(family.province, "BC");
+    assert.ok(plan.rows.some((row) => row.name === "Milieu familial du Parc"));
+    assert.equal(plan.rows.some((row) => row.name === "Recognized Home Test"), false);
+    assert.equal(plan.rows.some((row) => row.name === "No Postal Home"), false);
+  });
+
+  it("republishes a hidden master row and leaves claimed rows hidden", () => {
+    const back = masterListingId("QC|back");
+    const claimed = masterListingId("QC|claimed");
+    const plan = planRemovedFromMasterRepublish(
+      [
+        { id: back, importFault: "removed_from_master" },
+        { id: claimed, importFault: "removed_from_master", claimStatus: "approved" },
+        { id: masterListingId("QC|other"), importFault: "duplicate" },
+        { id: "bc-1", importFault: "removed_from_master" },
+      ],
+      ["QC|back", "QC|claimed"],
+    );
+    assert.deepEqual(plan.ids, [back]);
+    assert.equal(plan.overCap, false);
+    assert.equal(plan.cap, REMOVED_FROM_MASTER_REPUBLISH_CAP);
   });
 });
 

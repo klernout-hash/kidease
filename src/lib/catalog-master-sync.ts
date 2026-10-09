@@ -3,7 +3,9 @@
  *
  * Existing rows stay. Matched master rows fill blank phone / email / website
  * only. Unmatched Canada rows are appended when a real coordinate can be taken
- * from the catalogue (same postal, FSA, or city) or the built-in city list.
+ * from the catalogue (same postal, FSA, or city), the built-in city list, or
+ * the official postal-area centre for that postal code. Rows with no postal
+ * code are not given a pin. Quebec recognized home daycares are not inserted.
  * Ages, fees, photos, open spots, and Live/claim fields are not invented.
  * Approved sourced ages (data/ops/ages-sourced-20261002.csv) may be passed in
  * and are matched by listing id. They never invent a range that is not in that file.
@@ -25,9 +27,10 @@ import { preserveFilledContact, type CatalogUpsertInput } from "./catalog-upsert
 import { parseSourcedAges, stampSourcedAge, type SourcedAge } from "./sourced-ages.ts";
 import { isInCanada } from "./canada-origin.ts";
 import { facilityTypeTagline, listingFacilityType } from "./facility-type.ts";
+import { fsaCentroid } from "./fsa-centroids.ts";
 import { CITIES, PROVINCES } from "./geo.ts";
 import { listingSlugFromName } from "./listing-slug.ts";
-import { isAdminOnlyListing } from "./listing-visibility.ts";
+import { REMOVED_FROM_MASTER_FAULT, isAdminOnlyListing } from "./listing-visibility.ts";
 import { isSafeSitemapSlug, publicSitemapSlugs } from "./sitemap.ts";
 
 const CANADA = new Set(PROVINCES.map((p) => p.code));
@@ -55,6 +58,8 @@ export type MasterSyncSummary = {
   skippedNoGeo: number;
   skippedNonCanada: number;
   skippedInvalid: number;
+  /** Quebec recognized homes. Counted, not inserted into the licensed catalogue. */
+  skippedQcHome: number;
   contactsFilled: number;
   catalogueRows: number;
   publicSlugs: number;
@@ -79,6 +84,10 @@ export type MasterFacility = {
   website: string;
   /** Real centre name when `name` is only a city and postal code. */
   facilityName: string;
+  careType: string;
+  licenceCategory: string;
+  programModel: string;
+  providerType: string;
 };
 
 const NAME_ALIASES = new Set([
@@ -108,7 +117,54 @@ const MASTER_FIELDS: Record<string, keyof MasterFacility> = {
   email: "email",
   contact_email: "email",
   website: "website",
+  care_type: "careType",
+  licence_category: "licenceCategory",
+  license_category: "licenceCategory",
+  program_model: "programModel",
+  provider_type: "providerType",
 };
+
+const PROVINCE_ALIASES = new Map<string, string>();
+for (const province of PROVINCES) {
+  PROVINCE_ALIASES.set(province.code, province.code);
+  PROVINCE_ALIASES.set(foldProvince(province.name), province.code);
+  PROVINCE_ALIASES.set(foldProvince(province.nameFr), province.code);
+}
+for (const [alias, code] of [
+  ["PQ", "QC"],
+  ["PEI", "PE"],
+  ["NWT", "NT"],
+  ["NF", "NL"],
+  ["YK", "YT"],
+  ["NEWFOUNDLAND", "NL"],
+  ["YUKON TERRITORY", "YT"],
+] as const) {
+  PROVINCE_ALIASES.set(alias, code);
+}
+
+function foldProvince(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, " ")
+    .trim();
+}
+
+export function canonProvince(value: string | null | undefined) {
+  const folded = foldProvince(value || "");
+  return PROVINCE_ALIASES.get(folded) || folded;
+}
+
+/** Quebec recognized home daycares stay in their own file. Centres and other provinces stay. */
+const QC_HOME_TEXT =
+  /\bmilieu familial\b|\bgarderie familiale\b|\bresponsable\b(?:\s+\S+){0,3}\s+service\b|\brsge?\b|\brecognized home\b|\bfamily home\b|\bhome daycare\b|\bin[-\s]?home\b|\bmilieu_familial_reconnu\b/i;
+
+export function isQcRecognizedHome(row: Pick<MasterFacility, "province" | "facilityType" | "careType" | "licenceCategory" | "programModel" | "providerType">) {
+  if (row.province !== "QC") return false;
+  const text = [row.facilityType, row.careType, row.licenceCategory, row.programModel, row.providerType].join(" ");
+  return QC_HOME_TEXT.test(text);
+}
 
 function normHeader(h: string) {
   return h.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
@@ -188,14 +244,19 @@ function locate(row: MasterFacility, geo: GeoIndex) {
   const city = pointFrom(geo.city, `${row.province}|${fold(row.city)}`);
   if (city) return city;
   const wanted = fold(row.city);
-  if (!wanted) return null;
-  const named = CITIES.find((candidate) => {
-    if (candidate.province !== row.province) return false;
-    const label = fold(candidate.label.split(",")[0] || "");
-    if (label === wanted) return true;
-    return candidate.aliases.some((alias) => /^[a-z]{3,}$/i.test(alias) && fold(alias) === wanted);
-  });
-  if (named && isInCanada(named.lat, named.lng)) return { lat: named.lat, lng: named.lng };
+  if (wanted) {
+    const named = CITIES.find((candidate) => {
+      if (candidate.province !== row.province) return false;
+      const label = fold(candidate.label.split(",")[0] || "");
+      if (label === wanted) return true;
+      return candidate.aliases.some((alias) => /^[a-z]{3,}$/i.test(alias) && fold(alias) === wanted);
+    });
+    if (named && isInCanada(named.lat, named.lng)) return { lat: named.lat, lng: named.lng };
+  }
+  if (postal.length >= 3) {
+    const official = fsaCentroid(postal);
+    if (official) return official;
+  }
   return null;
 }
 
@@ -224,6 +285,10 @@ export function parseMasterFacilities(csvText: string): { rows: MasterFacility[]
       email: "",
       website: "",
       facilityName: "",
+      careType: "",
+      licenceCategory: "",
+      programModel: "",
+      providerType: "",
     };
     headers.forEach((field, i) => {
       const value = decodeImportText((cells[i] || "").replace(/\s+/g, " ").trim());
@@ -232,14 +297,14 @@ export function parseMasterFacilities(csvText: string): { rows: MasterFacility[]
       row[field] = value;
     });
     row.address = row.address.replace(/^mailing address:\s*/i, "").trim();
-    row.province = row.province.toUpperCase();
+    row.province = canonProvince(row.province);
     const location = splitCityPostalLabel(row.name);
     const alternate = row.facilityName && !splitCityPostalLabel(row.facilityName) ? row.facilityName : "";
     if (location && alternate) {
       row.name = alternate;
       if (!row.city) row.city = location.city;
       if (!row.postal) row.postal = formatPostal(postalKey(location.postal));
-      if (!row.province) row.province = location.province;
+      if (!row.province) row.province = canonProvince(location.province);
     } else if (location) {
       invalid += 1;
       continue;
@@ -390,11 +455,16 @@ export function syncMasterCatalogue<T extends CatalogueMatchRow>(
   let matched = 0;
   let skippedNoGeo = 0;
   let skippedNonCanada = 0;
+  let skippedQcHome = 0;
   let skippedInvalid = parsed.invalid;
 
   for (const master of parsed.rows) {
     if (!CANADA.has(master.province)) {
       skippedNonCanada += 1;
+      continue;
+    }
+    if (isQcRecognizedHome(master)) {
+      skippedQcHome += 1;
       continue;
     }
     const province = master.province;
@@ -472,6 +542,7 @@ export function syncMasterCatalogue<T extends CatalogueMatchRow>(
       skippedNoGeo,
       skippedNonCanada,
       skippedInvalid,
+      skippedQcHome,
       contactsFilled,
       catalogueRows: rows.length,
       publicSlugs,
@@ -546,6 +617,37 @@ export function planStaleMasterHides(
     if ((row.slug || "").trim().toLowerCase() === "kids-world-daycare-kh2t") continue;
     if ((row.mergedInto || "").trim()) continue;
     if ((row.importFault || "").trim()) continue;
+    if (row.claimedAt) continue;
+    if ((row.ownerCount || 0) > 0) continue;
+    if (CLAIMED_STATUS.has((row.claimStatus || "").trim().toLowerCase())) continue;
+    ids.push(row.id);
+  }
+  ids.sort((a, b) => a.localeCompare(b));
+  return { ids, count: ids.length, cap, overCap: ids.length > cap };
+}
+
+/** Licensed master ids only. Quebec recognized homes are not republished onto the public catalogue. */
+export function licensedMasterFacilityIds(rows: readonly MasterFacility[]) {
+  return rows.filter((row) => CANADA.has(row.province) && !isQcRecognizedHome(row)).map((row) => row.facilityId);
+}
+
+/**
+ * mx- rows hidden as removed_from_master whose facility is in this licensed master.
+ * Above the cap the caller must not write.
+ */
+export const REMOVED_FROM_MASTER_REPUBLISH_CAP = 500;
+
+export function planRemovedFromMasterRepublish(
+  stored: readonly StaleMasterRow[],
+  facilityIds: readonly string[],
+  cap = REMOVED_FROM_MASTER_REPUBLISH_CAP,
+): { ids: string[]; count: number; cap: number; overCap: boolean } {
+  const live = new Set(facilityIds.filter(Boolean).map((id) => masterListingId(id)));
+  const ids: string[] = [];
+  for (const row of stored) {
+    if (!row.id || !live.has(row.id)) continue;
+    if ((row.importFault || "").trim() !== REMOVED_FROM_MASTER_FAULT) continue;
+    if ((row.mergedInto || "").trim()) continue;
     if (row.claimedAt) continue;
     if ((row.ownerCount || 0) > 0) continue;
     if (CLAIMED_STATUS.has((row.claimStatus || "").trim().toLowerCase())) continue;
