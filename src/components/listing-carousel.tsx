@@ -1,6 +1,7 @@
 import { useRef, useState, type PointerEvent } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { BuildingPhoto, ListingPhotoFallback } from "@/components/building-photo";
+import { isMissingCatalogueBuilding } from "@/lib/catalogue-buildings";
 import { healMediaUrl, isFailedPhotoUrl, isStockListingPhoto } from "@/lib/listing-photo";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +18,7 @@ export function ListingCarousel({
 }) {
   const shots = photos
     .map((p) => healMediaUrl(p))
-    .filter((p) => p && !isStockListingPhoto(p) && !isFailedPhotoUrl(p))
+    .filter((p) => p && !isStockListingPhoto(p) && !isMissingCatalogueBuilding(p) && !isFailedPhotoUrl(p))
     .slice(0, 12);
   const [index, setIndex] = useState(0);
   const startX = useRef<number | null>(null);
@@ -45,7 +46,7 @@ export function ListingCarousel({
 
   return (
     <div
-      className={cn("group/photo relative overflow-hidden rounded-[14px] bg-[#F0EDE8]", ratio, className)}
+      className={cn("group/photo relative overflow-hidden rounded-[14px] bg-surface-2", ratio, className)}
       onPointerDown={onPointerDown}
       onPointerUp={onPointerUp}
     >
