@@ -1702,8 +1702,11 @@ export const updateCapacity = createServerFn({ method: "POST" })
       spots_infant: number;
       spots_toddler: number;
       spots_preschool: number;
+      infant_monthly: number | null;
+      toddler_monthly: number | null;
+      preschool_monthly: number | null;
     }>`
-      select spots_infant, spots_toddler, spots_preschool
+      select spots_infant, spots_toddler, spots_preschool, infant_monthly, toddler_monthly, preschool_monthly
       from daycares
       where id = ${data.daycareId}
       limit 1
@@ -1723,6 +1726,33 @@ export const updateCapacity = createServerFn({ method: "POST" })
       (Number(before[0]?.spots_toddler) || 0) +
       (Number(before[0]?.spots_preschool) || 0);
     const nextTotal = data.spotsInfant + data.spotsToddler + data.spotsPreschool;
+    void import("@/lib/server/alert-fanout")
+      .then((mod) =>
+        mod.notifySavedListingChange({
+          daycareId: data.daycareId,
+          before: {
+            infantMonthly: Number(before[0]?.infant_monthly) || 0,
+            toddlerMonthly: Number(before[0]?.toddler_monthly) || 0,
+            preschoolMonthly: Number(before[0]?.preschool_monthly) || 0,
+            partTimeMonthly: 0,
+            ageMinMonths: 0,
+            ageMaxMonths: 0,
+            hours: "",
+            scheduleKey: "",
+          },
+          after: {
+            infantMonthly: data.infantMonthly,
+            toddlerMonthly: data.toddlerMonthly,
+            preschoolMonthly: data.preschoolMonthly,
+            partTimeMonthly: 0,
+            ageMinMonths: 0,
+            ageMaxMonths: 0,
+            hours: "",
+            scheduleKey: "",
+          },
+        }),
+      )
+      .catch(() => undefined);
     if (nextTotal > prevTotal) {
       try {
         const { pulseRateLimited } = await import("@/lib/waitlist-pulse");

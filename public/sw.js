@@ -74,6 +74,20 @@ function shouldBypass(url, request) {
   );
 }
 
+function notificationPath(raw) {
+  if (typeof raw !== "string" || !raw) return "/notifications";
+  if (raw.startsWith("/") && !raw.startsWith("//")) return raw;
+  try {
+    const url = new URL(raw);
+    const host = url.hostname.toLowerCase();
+    const ours = host === "kidease.ca" || host === "www.kidease.ca" || host.endsWith(".kidease.ca");
+    if (url.protocol === "https:" && ours) return `${url.pathname}${url.search}` || "/notifications";
+  } catch {
+    /* ignore */
+  }
+  return "/notifications";
+}
+
 self.addEventListener("push", (event) => {
   let payload = {};
   try {
@@ -83,7 +97,7 @@ self.addEventListener("push", (event) => {
   }
   const title = typeof payload.title === "string" && payload.title.trim() ? payload.title.trim() : "KidEase";
   const body = typeof payload.body === "string" ? payload.body : "";
-  const url = typeof payload.url === "string" && payload.url.startsWith("/") ? payload.url : "/notifications";
+  const url = notificationPath(payload.url);
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
@@ -96,7 +110,7 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const raw = event.notification.data && event.notification.data.url;
-  const url = typeof raw === "string" && raw.startsWith("/") ? raw : "/notifications";
+  const url = notificationPath(raw);
   event.waitUntil(self.clients.openWindow(url));
 });
 

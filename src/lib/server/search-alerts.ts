@@ -498,6 +498,8 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
   if (!dryRun) {
     const { drainAlertOutbox } = await import("@/lib/server/alert-dispatch");
     await drainAlertOutbox({ now }).catch(() => undefined);
+    const { runCustomerAlertMaintenance } = await import("@/lib/server/alert-fanout");
+    await runCustomerAlertMaintenance(now).catch(() => undefined);
   }
   const nowMs = now.getTime();
   const sql = await getSql();

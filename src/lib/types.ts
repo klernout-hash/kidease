@@ -118,6 +118,7 @@ export type Daycare = {
   completenessMissing?: Array<"fees" | "ages" | "hours" | "license" | "photo">;
   licenseStatus?: "unverified" | "matched" | "expired" | "suspended" | "active" | "unknown";
   licenseExpiry?: string | null;
+  firstAidExpiry?: string | null;
   licensedCapacity?: number | null;
   registryMatchState?: "unmatched" | "pending" | "matched" | "mismatch";
   licenseVerifiedAt?: string | null;
@@ -203,6 +204,8 @@ export type Review = {
   body: string;
   bodyFr: string;
   createdAt: string;
+  ownerReply?: string | null;
+  ownerReplyAt?: string | null;
   status?: ReviewStatus;
   userId?: string | null;
   gateReason?: ReviewGateReason | null;

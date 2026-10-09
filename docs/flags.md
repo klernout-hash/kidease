@@ -24,7 +24,7 @@ Parent inbox **Video** stays hidden until `VIDEO_SDK_WIRED` is true (Twilio Vide
 | Flag | Default | Server send / mint | Client / UI | Honest off-state |
 | --- | --- | --- | --- | --- |
 | `FEATURE_SMS` | off | `sendSms` in `src/lib/server/sms.ts`. No-ops if flag off, secrets missing, or no CASL grant. Waitlist pulse + claim-status SMS. **Programmable SMS (Messages API), not Twilio Verify.** | Consent on profile / search alerts / Plus checkout always (capture before flip). Alerts show a stub until send is armed. | Chat lab + `alertSmsStub`. |
-| `FEATURE_PUSH` | off | `sendPushToDevices` (FCM HTTP v1 / APNs). Register `POST /api/push/register` uses **armed** (Production requires secrets). | Native Capacitor only after `getPushClientStatus().enabled`. www never prompts. | Chat lab dry-run. Inbox / www stay silent. |
+| `FEATURE_PUSH` | off | `dispatchCustomerAlert` sends FCM / APNs and, when the VAPID pair exists, website Web Push. Register `POST /api/push/register` uses **armed** (Production requires a secret). | Signed-in www may prompt only when armed and both VAPID keys exist. Unsigned visitors never prompt. Native Capacitor after `getPushClientStatus().enabled`. | Chat lab dry-run. If push cannot send, email and the in-app bell still run. |
 | `FEATURE_VIDEO` | off | `createVideoRoom` / `createVideoAccessToken`. Admin `/video/lab` may mint to verify credentials. | Inbox Video icon only when `videoSurfaceEnabled` (flag armed **and** `VIDEO_SDK_WIRED`). `/video/$roomId` is honest when off / no secrets / SDK missing. | Coming-soon copy on `/video/$roomId`. |
 | `FEATURE_INAPP_CHAT` | off | None. Composer refuses send. `askKidEase` stays gated on this flag. | Chat lab only. The parent helper bubble uses the `parent-helper` flag. Live parent ↔ centre threads stay on `/inbox`. | `docs/chat.md`. |
 | `FEATURE_PROVIDER_SUBSCRIPTIONS` | **on** | Stripe checkout still needs live keys. | Director Subscription tab. | Admin can preview when killed. |
@@ -66,7 +66,7 @@ Env still works as a fallback when PostHog is down (last successful overlay is k
 | Name | Required | Notes |
 | --- | --- | --- |
 | `FEATURE_SMS` | no | Default **off**. Leave `0` until Twilio + CASL are ready. |
-| `FEATURE_PUSH` | no | Default **off**. Leave `0` until FCM / APNs + a native binary exist. |
+| `FEATURE_PUSH` | no | Default **off**. Production stays disarmed until FCM, APNs, or the VAPID pair exists, and you set the flag. |
 | `FEATURE_VIDEO` | no | Default **off**. Leave `0` until Twilio Video credentials exist. |
 | `FEATURE_INAPP_CHAT` | no | Default **off**. Chat lab only. The parent helper bubble is a separate PostHog flag. Do not flip this to enable parent ↔ centre `/inbox` — that path is already live. |
 | `FEATURE_PROVIDER_SUBSCRIPTIONS` | no | Default **on** when unset. |

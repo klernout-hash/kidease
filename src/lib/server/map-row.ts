@@ -76,6 +76,7 @@ export type DaycareRow = {
   last_photo_updated_at?: string | null;
   license_status?: string | null;
   license_expiry?: string | Date | null;
+  first_aid_expiry?: string | Date | null;
   licensed_capacity?: number | null;
   registry_match_state?: string | null;
   license_verified_at?: string | null;
@@ -175,6 +176,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
     ...defaultTrustFields(),
     licenseStatus: normalizeLicenseStatus(r.license_status),
     licenseExpiry: r.license_expiry ? String(r.license_expiry).slice(0, 10) : null,
+    firstAidExpiry: r.first_aid_expiry ? String(r.first_aid_expiry).slice(0, 10) : null,
     licensedCapacity: r.licensed_capacity ?? null,
     registryMatchState: normalizeMatchState(r.registry_match_state),
     licenseVerifiedAt: r.license_verified_at ?? null,

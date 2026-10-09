@@ -68,6 +68,7 @@ import { distanceKm } from "@/lib/proximity";
 import { ListingBadges } from "@/components/listing-badges";
 import { CompletenessBanner } from "@/components/listing-completeness";
 import { ListingReviewForm } from "@/components/listing-review-form";
+import { ListingOwnerReply } from "@/components/listing-owner-reply";
 import { ReviewSummary } from "@/components/review-summary";
 import { VacancyFreshness } from "@/components/vacancy-freshness";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
@@ -872,6 +873,7 @@ export function Listing() {
                         </span>
                       </div>
                       <p className="mt-1 text-sm text-muted">{locale === "fr" ? r.bodyFr : r.body}</p>
+                      <ListingOwnerReply reviewId={r.id} ownsListing={ownsListing} reply={r.ownerReply || null} />
                     </li>
                   ))}
                 </ul>

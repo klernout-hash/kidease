@@ -5,6 +5,7 @@ import { nid } from "@/lib/utils";
 import { assertTurnstileToken } from "@/lib/server/turnstile";
 import { lookupUser, notifyPlatform } from "@/lib/server/notify";
 import { requireAdmin } from "@/lib/server/roles";
+import { assertCentreCanMutateListing } from "@/lib/server/centre-access";
 import {
   ENROLLED_BOOKING_STATUSES,
   isPendingReviewStatus,
@@ -298,6 +299,10 @@ export const submitListingReview = createServerFn({ method: "POST" })
       enrolled: true,
     });
 
+    void import("@/lib/server/alert-fanout")
+      .then((mod) => mod.notifyListingAttention({ daycareId, sourceId: id, kind: "review" }))
+      .catch(() => undefined);
+
     await notifyPlatform({
       kind: "review",
       title: `Parent review waiting: ${centre[0].name}`,
@@ -309,6 +314,67 @@ export const submitListingReview = createServerFn({ method: "POST" })
     }).catch(() => undefined);
 
     return { ok: true as const, status: "pending" as const, gateReason };
+  });
+
+export const replyToListingReview = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { reviewId?: string; body?: string }) => ({
+    reviewId: String(input?.reviewId || "").trim(),
+    body: String(input?.body || "").trim(),
+  }))
+  .handler(async ({ context, data }) => {
+    if (!data.reviewId) throw new Error("Missing review.");
+    if (data.body.length < 2) throw new Error("Write a short reply.");
+    if (data.body.length > 800) throw new Error("Reply is too long.");
+    const sql = await getSql();
+    const rows = await sql<{
+      id: string;
+      daycare_id: string;
+      user_id: string | null;
+      status: string;
+    }>`
+      select id, daycare_id, user_id, status from reviews where id = ${data.reviewId} limit 1
+    `;
+    const review = rows[0];
+    if (!review) throw new Error("Review not found.");
+    if (!isPublicReviewStatus(review.status)) throw new Error("This review is not public yet.");
+    await assertCentreCanMutateListing(sql, context.userId, review.daycare_id);
+    const reply = data.body.slice(0, 800);
+    const wrote = await sql<{ id: string }>`
+      update reviews
+      set owner_reply = ${reply}, owner_reply_at = now()
+      where id = ${review.id}
+      returning id
+    `.catch(async () => {
+      await sql`alter table reviews add column if not exists owner_reply text`.catch(() => undefined);
+      await sql`alter table reviews add column if not exists owner_reply_at timestamptz`.catch(() => undefined);
+      return sql<{ id: string }>`
+        update reviews
+        set owner_reply = ${reply}, owner_reply_at = now()
+        where id = ${review.id}
+        returning id
+      `;
+    });
+    if (!wrote[0]) throw new Error("Could not save the reply.");
+    const centre = await sql<{ name: string; slug: string }>`
+      select name, slug from daycares where id = ${review.daycare_id} limit 1
+    `;
+    if (review.user_id && centre[0]) {
+      const authorId = review.user_id;
+      const name = centre[0].name;
+      const slug = centre[0].slug;
+      void import("@/lib/server/alert-fanout")
+        .then((mod) =>
+          mod.notifyReviewReply({
+            userId: authorId,
+            daycareName: name,
+            slug,
+            reviewId: review.id,
+          }),
+        )
+        .catch(() => undefined);
+    }
+    return { ok: true as const };
   });
 
 export const getListingReviewAccess = createServerFn({ method: "GET" })

@@ -2,19 +2,23 @@ import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { ALERT_CATEGORIES, isAlertCategory, type AlertPrefMap } from "@/lib/alert-push";
 import { pushArmed } from "@/lib/channel-readiness";
-import { pushEnvPresence } from "@/lib/push";
+import { vapidPrivateKey, vapidPublicKey } from "@/lib/push";
 import { subscriptionsEnabled } from "@/lib/features";
 
 export type WebAlertStatus = {
   pushArmed: boolean;
+  /** Public VAPID key is set. The value is never returned. */
   vapid: boolean;
+  /** Server-only private key is set. The value is never returned. */
+  vapidPrivate: boolean;
   subscriptionsOn: boolean;
 };
 
 export const getWebAlertStatus = createServerFn({ method: "GET" }).handler(async (): Promise<WebAlertStatus> => {
   return {
     pushArmed: pushArmed(),
-    vapid: pushEnvPresence().vapid,
+    vapid: Boolean(vapidPublicKey()),
+    vapidPrivate: Boolean(vapidPrivateKey()),
     subscriptionsOn: subscriptionsEnabled(),
   };
 });
@@ -43,6 +47,15 @@ export const saveMyAlertPrefs = createServerFn({ method: "POST" })
   .handler(async ({ context, data }): Promise<AlertPrefMap> => {
     const { writeAlertPrefs } = await import("./alert-dispatch");
     return writeAlertPrefs(context.userId, data.items);
+  });
+
+export const confirmStillLooking = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { looking?: boolean }) => ({ looking: input?.looking !== false }))
+  .handler(async ({ context, data }) => {
+    const { confirmStillLooking: save } = await import("./alert-fanout");
+    await save(context.userId, data.looking);
+    return { ok: true as const, looking: data.looking };
   });
 
 export const registerWebPush = createServerFn({ method: "POST" })
