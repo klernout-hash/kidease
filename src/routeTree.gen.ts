@@ -133,6 +133,7 @@ import { Route as JobsPostRouteImport } from './routes/jobs_.post'
 import { Route as ListingSlugRouteImport } from './routes/listing.$slug'
 import { Route as MilieuxFamiliauxIdRouteImport } from './routes/milieux-familiaux_.$id'
 import { Route as OfferTokenRouteImport } from './routes/offer.$token'
+import { Route as ParentSignupRouteImport } from './routes/parent.signup'
 import { Route as ParentSpotOffersRouteImport } from './routes/parent.spot-offers'
 import { Route as PayIndexRouteImport } from './routes/pay.index'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
@@ -790,6 +791,11 @@ const OfferTokenRoute = OfferTokenRouteImport.update({
   path: '/offer/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ParentSignupRoute = ParentSignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => ParentRoute,
+} as any)
 const ParentSpotOffersRoute = ParentSpotOffersRouteImport.update({
   id: '/spot-offers',
   path: '/spot-offers',
@@ -1086,6 +1092,7 @@ export interface FileRoutesByFullPath {
   '/listing/$slug': typeof ListingSlugRoute
   '/milieux-familiaux/$id': typeof MilieuxFamiliauxIdRoute
   '/offer/$token': typeof OfferTokenRoute
+  '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
@@ -1244,6 +1251,7 @@ export interface FileRoutesByTo {
   '/listing/$slug': typeof ListingSlugRoute
   '/milieux-familiaux/$id': typeof MilieuxFamiliauxIdRoute
   '/offer/$token': typeof OfferTokenRoute
+  '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
@@ -1405,6 +1413,7 @@ export interface FileRoutesById {
   '/listing/$slug': typeof ListingSlugRoute
   '/milieux-familiaux_/$id': typeof MilieuxFamiliauxIdRoute
   '/offer/$token': typeof OfferTokenRoute
+  '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
@@ -1567,6 +1576,7 @@ export interface FileRouteTypes {
     | '/listing/$slug'
     | '/milieux-familiaux/$id'
     | '/offer/$token'
+    | '/parent/signup'
     | '/parent/spot-offers'
     | '/pay/$bookingId'
     | '/provider/subscription'
@@ -1725,6 +1735,7 @@ export interface FileRouteTypes {
     | '/listing/$slug'
     | '/milieux-familiaux/$id'
     | '/offer/$token'
+    | '/parent/signup'
     | '/parent/spot-offers'
     | '/pay/$bookingId'
     | '/provider/subscription'
@@ -1885,6 +1896,7 @@ export interface FileRouteTypes {
     | '/listing/$slug'
     | '/milieux-familiaux_/$id'
     | '/offer/$token'
+    | '/parent/signup'
     | '/parent/spot-offers'
     | '/pay/$bookingId'
     | '/provider/subscription'
@@ -2900,6 +2912,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OfferTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/parent/signup': {
+      id: '/parent/signup'
+      path: '/signup'
+      fullPath: '/parent/signup'
+      preLoaderRoute: typeof ParentSignupRouteImport
+      parentRoute: typeof ParentRoute
+    }
     '/parent/spot-offers': {
       id: '/parent/spot-offers'
       path: '/spot-offers'
@@ -3277,10 +3296,12 @@ const InboxRouteChildren: InboxRouteChildren = {
 const InboxRouteWithChildren = InboxRoute._addFileChildren(InboxRouteChildren)
 
 interface ParentRouteChildren {
+  ParentSignupRoute: typeof ParentSignupRoute
   ParentSpotOffersRoute: typeof ParentSpotOffersRoute
 }
 
 const ParentRouteChildren: ParentRouteChildren = {
+  ParentSignupRoute: ParentSignupRoute,
   ParentSpotOffersRoute: ParentSpotOffersRoute,
 }
 

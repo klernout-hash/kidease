@@ -114,8 +114,8 @@ const NAV: readonly NavPage[] = [
   {
     path: "/signup",
     phrases: ["sign up", "create an account", "creer un compte"],
-    en: "Create an account on Sign up. Pick parent or daycare. This chat cannot create the account for you.",
-    fr: "Créez un compte sur Inscription. Choisissez parent ou garderie. Ce clavardage ne peut pas créer le compte.",
+    en: "Parents create an account on Sign up. A mobile number is optional. Daycare owners claim a listing. This chat cannot create the account for you.",
+    fr: "Les parents créent un compte sur Inscription. Le numéro mobile est facultatif. Les garderies réclament une fiche. Ce clavardage ne peut pas créer le compte.",
   },
   {
     path: "/guides",

@@ -182,10 +182,6 @@ export function shouldCanonicalizeApexPath(pathname) {
 export function decideRequest(input = {}) {
   const path = normalizePath(input.pathname);
 
-  if (path === "/signup") {
-    return { action: "redirect", status: 301, location: "/login?intent=up" };
-  }
-
   if (path === "/for-daycares") {
     return { action: "redirect", status: 301, location: "/claim" };
   }

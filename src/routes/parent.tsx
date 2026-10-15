@@ -18,14 +18,25 @@ const ParentDesk = lazy(() =>
   import("@/components/parent-desk").then((m) => ({ default: m.ParentDesk })),
 );
 
+function isParentSignupPath(pathname: string) {
+  const path = pathname.replace(/\/$/, "") || "/";
+  return path === "/parent/signup";
+}
+
 export const Route = createFileRoute("/parent")({
-  beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
-  head: () => ({
-    meta: [
-      { title: "Parent home · KidEase" },
-      { name: "robots", content: "noindex, nofollow" },
-    ],
-  }),
+  beforeLoad: ({ context, location }) => {
+    if (isParentSignupPath(location.pathname)) return;
+    return beforeLoadPrivate(privateReturnPath(location), context.roleChrome);
+  },
+  head: ({ matches }) => {
+    if (matches.some((item) => isParentSignupPath(item.pathname))) return { meta: [] };
+    return {
+      meta: [
+        { title: "Parent home · KidEase" },
+        { name: "robots", content: "noindex, nofollow" },
+      ],
+    };
+  },
   loader: async () => {
     try {
       const family = await getFamily();
@@ -67,7 +78,13 @@ function ParentPage() {
   const { session, ready } = useSessionDesks();
   const search = Route.useSearch();
   const loaded = Route.useLoaderData();
-  if (pathname === "/parent/spot-offers" || pathname.startsWith("/parent/spot-offers/")) return <Outlet />;
+  if (
+    pathname === "/parent/spot-offers" ||
+    pathname.startsWith("/parent/spot-offers/") ||
+    isParentSignupPath(pathname)
+  ) {
+    return <Outlet />;
+  }
   const upgradeSurface = search.tab === "subscription" || search.plus === "success" || search.plus === "cancel" || search.billing === "return";
   const initialTab =
     search.tab === "saved"
