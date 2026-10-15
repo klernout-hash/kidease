@@ -299,9 +299,7 @@ test("real listing document URLs are not 404'd by the guard", () => {
   );
   assert.deepEqual(decideRequest({ host: "www.kidease.ca", pathname: "/claim" }), { action: "next" });
   assert.deepEqual(decideRequest({ host: "www.kidease.ca", pathname: "/signup" }), {
-    action: "redirect",
-    status: 301,
-    location: "/login?intent=up",
+    action: "next",
   });
   assert.deepEqual(decideRequest({ host: "www.kidease.ca", pathname: "/for-daycares" }), {
     action: "redirect",
