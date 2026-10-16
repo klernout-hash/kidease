@@ -3,6 +3,7 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { parseTrackStatus } from "@/lib/parent-tracker";
 import { shortlistUserId } from "@/lib/server/parent-tracker";
+import { parentRequestSms } from "@/lib/sms-copy";
 import { nid } from "@/lib/utils";
 import { ensureSeed, upsertDaycare } from "./seed";
 import { lookupUser, notifyNewAccountFromUser, notifyPlatform, notifyProviderJoined } from "./notify";
@@ -805,6 +806,10 @@ export const createSpotRequest = createServerFn({ method: "POST" })
       console.error("[kidease-mail] spot request notify failed", err);
     }
 
+    void import("@/lib/server/sms-notify")
+      .then((mod) => mod.notifyCentreSms({ daycareId: data.daycareId, body: parentRequestSms(d.name) }))
+      .catch(() => undefined);
+
     return {
       id: bookingId,
       status: "requested" as const,
@@ -971,9 +976,11 @@ export const getThread = createServerFn({ method: "GET" })
       );
     }
     const { videoSurfaceEnabled } = await import("@/lib/channel-readiness");
+    const { voiceCredentialsPresent } = await import("@/lib/voice");
     return {
       id: conv[0].id,
       videoSurfaceEnabled: videoSurfaceEnabled(),
+      voiceReady: voiceCredentialsPresent(),
       daycareId: conv[0].daycare_id,
       daycareName: conv[0].name,
       daycareSlug: conv[0].slug,

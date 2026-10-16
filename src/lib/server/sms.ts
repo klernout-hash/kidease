@@ -14,6 +14,7 @@
  */
 
 import { evaluateFeatureFlag } from "../flags.ts";
+import { brandKidEaseSms } from "../sms-copy.ts";
 
 const SMS_SCAFFOLD_MESSAGE =
   "SMS is scaffolded only. FEATURE_SMS is off until Kyle adds Twilio credentials and a Canadian sender.";
@@ -36,7 +37,10 @@ function envHas(env: EnvMap, key: string) {
 function smsCredentialsPresent(env: EnvMap): boolean {
   const account = envHas(env, "TWILIO_ACCOUNT_SID");
   const auth = envHas(env, "TWILIO_AUTH_TOKEN") || (envHas(env, "TWILIO_API_KEY_SID") && envHas(env, "TWILIO_API_KEY_SECRET"));
-  const sender = envHas(env, "TWILIO_FROM_NUMBER") || envHas(env, "TWILIO_MESSAGING_SERVICE_SID");
+  const sender =
+    envHas(env, "TWILIO_FROM_NUMBER") ||
+    envHas(env, "TWILIO_PHONE_NUMBER") ||
+    envHas(env, "TWILIO_MESSAGING_SERVICE_SID");
   return account && auth && sender;
 }
 
@@ -126,7 +130,7 @@ function resolveAuth(env: EnvMap): { username: string; password: string } | { er
 function resolveSender(env: EnvMap): { messagingServiceSid?: string; from?: string } | { error: string } {
   const messagingServiceSid = envStr(env, "TWILIO_MESSAGING_SERVICE_SID");
   if (messagingServiceSid) return { messagingServiceSid };
-  const from = envStr(env, "TWILIO_FROM_NUMBER");
+  const from = envStr(env, "TWILIO_FROM_NUMBER") || envStr(env, "TWILIO_PHONE_NUMBER");
   if (from && isE164(normalizeE164(from) || from)) return { from: normalizeE164(from) || from };
   if (from) return { error: "TWILIO_FROM_NUMBER must be E.164 (e.g. +1…). Prefer a Canadian sender." };
   return { error: SMS_CREDENTIALS_MESSAGE };
@@ -159,10 +163,7 @@ export async function sendSms(input: SendSmsInput, options: SendSmsOptions = {})
   const sender = resolveSender(env);
   if ("error" in sender) return { ok: false, skipped: true, error: sender.error };
 
-  const body = String(input.body || "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 1600);
+  const body = brandKidEaseSms(input.body);
   if (!body) return { ok: false, skipped: false, error: "SMS body is empty." };
 
   const params = new URLSearchParams({ To: to, Body: body });

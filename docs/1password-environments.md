@@ -75,11 +75,16 @@ See `docs/store-readiness.md`. Do not put `sk_live_` in Preview.
 | `TWILIO_ACCOUNT_SID` | yes | both | `AC…` — SMS + Video. |
 | `TWILIO_AUTH_TOKEN` | yes | both | Signature validation even if you send with an API key. |
 | `TWILIO_API_KEY_SID` / `TWILIO_API_KEY_SECRET` | yes | both | Preferred send; required for Video tokens. |
-| `TWILIO_MESSAGING_SERVICE_SID` | yes | both | `MG…` for Canada. |
+| `TWILIO_MESSAGING_SERVICE_SID` | yes | both | `MG…` for Canada. SMS sender. |
+| `TWILIO_PHONE_NUMBER` | yes | both | Approved toll-free, E.164. Voice caller id and SMS fallback. |
+| `TWILIO_TWIML_APP_SID` | yes | both | `AP…` for in-app calls. Voice URL `/api/voice/connect`. |
+| `TWILIO_VOICE_INCOMING_URL` | no | both | Exact `https://www.kidease.ca/api/voice/incoming` so the signature matches. |
+| `TWILIO_VOICE_CONNECT_URL` | no | both | Exact `https://www.kidease.ca/api/voice/connect`. |
+| `TWILIO_VOICE_RECORDING_URL` | no | both | Exact `https://www.kidease.ca/api/voice/recording`. |
 | `FEATURE_SMS` / `FEATURE_VIDEO` / `FEATURE_PUSH` | no | both | Stay `0` on Production until secrets exist. Preview may override. |
 | `SHOW_PAY_CTAS` | no | both | Stay `0` on Production. Set `1` to restore Upgrade / Subscribe chrome. Stripe code stays. |
 
-See `docs/sms.md` and `docs/video.md`.
+See `docs/sms.md`, `docs/voice.md`, and `docs/video.md`.
 
 ### Inngest
 

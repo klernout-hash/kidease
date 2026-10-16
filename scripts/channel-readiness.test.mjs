@@ -74,15 +74,18 @@ test("Production ignores FEATURE_* without secrets; Preview may override", () =>
   assert.equal(videoArmed({ ...VIDEO_LIVE, VERCEL_ENV: "production" }), true);
 });
 
-test("Video inbox surface stays off until the Twilio Video SDK is wired", () => {
-  assert.equal(VIDEO_SDK_WIRED, false);
-  assert.equal(videoSurfaceEnabled({ ...VIDEO_LIVE }), false);
-  assert.equal(videoSurfaceEnabled({ ...VIDEO_LIVE, VERCEL_ENV: "production" }), false);
+test("Video inbox surface turns on when the SDK is wired and the flag is armed", () => {
+  assert.equal(VIDEO_SDK_WIRED, true);
+  assert.equal(videoSurfaceEnabled({ FEATURE_VIDEO: "1" }), true);
+  assert.equal(videoSurfaceEnabled({ FEATURE_VIDEO: "1", VERCEL_ENV: "production" }), false);
+  assert.equal(videoSurfaceEnabled({ ...VIDEO_LIVE }), true);
+  assert.equal(videoSurfaceEnabled({ ...VIDEO_LIVE, VERCEL_ENV: "production" }), true);
   const ready = describeChannelReadiness("video", VIDEO_LIVE);
   assert.equal(ready.flagOn, true);
   assert.equal(ready.sendEnabled, true);
-  assert.equal(ready.surfaceEnabled, false);
-  assert.equal(ready.reason, "sdk_not_wired");
+  assert.equal(ready.surfaceEnabled, true);
+  assert.equal(ready.sdkWired, true);
+  assert.equal(ready.reason, null);
 });
 
 test("defaults stay off and inventory lists all three channels", () => {

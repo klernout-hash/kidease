@@ -223,7 +223,7 @@ export function AdminChatPage() {
             <h3 className="font-display text-xl">Video · Twilio Video</h3>
             <p className="mt-2 text-muted">
               {lab?.video.enabled
-                ? "FEATURE_VIDEO is on. The browser SDK is still not attached: /video/lab does not start a live call or charge."
+                ? "FEATURE_VIDEO is on. The video page can join a Twilio room when the API key is set. No recording. Parents still need Plus when plans are on."
                 : "Coming soon: FEATURE_VIDEO is off. Flag and env presence only. No secrets. No charge."}
             </p>
             <ol className="mt-4 list-decimal space-y-2 pl-5 text-muted">

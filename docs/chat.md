@@ -47,7 +47,7 @@ The floating helper (`HelpBot`) follows the PostHog flag `parent-helper`. It sta
 ## Push + video (next build only)
 
 - Push dry-run on this page **counts tokens**. It does not call FCM or APNs.
-- `/video/lab` shows coming soon when `FEATURE_VIDEO` is off, or an honest credentials-missing state. The Twilio Video JS SDK is not attached. Plus is not charged from this lab.
+- `/video/lab` shows coming soon when `FEATURE_VIDEO` is off, or an honest credentials-missing state. The Twilio Video JS SDK joins the room when the flag and API key are on. Plus is not charged from this lab. No recording.
 
 ## Later (not this PR)
 

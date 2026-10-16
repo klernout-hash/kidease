@@ -2,9 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { applyInboundSms } from "@/lib/server/casl-consent";
 import { logSecurityEvent, requestIp } from "@/lib/server/security-events";
 import { normalizeCaslPhone, parseInboundOptOut } from "@/lib/casl";
+import { inboundKeywordTwiml } from "@/lib/sms-copy";
+import { upsertSmsDelivery } from "@/lib/server/sms-log";
 import {
   parseTwilioForm,
   publicRequestUrl,
+  smsDeliveryRecord,
   TwilioSignatureError,
   validateTwilioSignature,
 } from "@/lib/server/sms-status";
@@ -40,7 +43,7 @@ async function run(request: Request) {
 
   const from = normalizeCaslPhone(params.From || params.from);
   const opt = parseInboundOptOut(params);
-  if (from && opt) {
+  if (from && (opt === "stop" || opt === "start")) {
     await applyInboundSms({
       from,
       opt,
@@ -48,16 +51,17 @@ async function run(request: Request) {
       userAgent: request.headers.get("user-agent"),
     });
   }
+  await upsertSmsDelivery(smsDeliveryRecord(params, opt)).catch(() => undefined);
   console.info("[kidease-sms]", { event: "inbound", opt, hasFrom: Boolean(from) });
   await logSecurityEvent({
     kind: "webhook_accept",
     detail: `twilio inbound ${opt || "other"}`,
     ip,
   });
-  return new Response(
-    `<?xml version="1.0" encoding="UTF-8"?><Response></Response>`,
-    { status: 200, headers: { "Content-Type": "text/xml" } },
-  );
+  return new Response(inboundKeywordTwiml(params, opt), {
+    status: 200,
+    headers: { "Content-Type": "text/xml" },
+  });
 }
 
 export const Route = createFileRoute("/api/sms/inbound")({

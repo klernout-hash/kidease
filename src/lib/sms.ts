@@ -20,6 +20,7 @@ export const SMS_ENV_NAMES = [
   "TWILIO_API_KEY_SID",
   "TWILIO_API_KEY_SECRET",
   "TWILIO_FROM_NUMBER",
+  "TWILIO_PHONE_NUMBER",
   "TWILIO_MESSAGING_SERVICE_SID",
   "TWILIO_STATUS_CALLBACK_URL",
 ] as const;
@@ -79,7 +80,7 @@ export function smsEnvPresence(env: EnvMap = process.env): SmsEnvPresence {
   const accountSid = Boolean(envStr(env, "TWILIO_ACCOUNT_SID"));
   const authToken = Boolean(envStr(env, "TWILIO_AUTH_TOKEN"));
   const apiKey = Boolean(envStr(env, "TWILIO_API_KEY_SID") && envStr(env, "TWILIO_API_KEY_SECRET"));
-  const fromNumber = Boolean(envStr(env, "TWILIO_FROM_NUMBER"));
+  const fromNumber = Boolean(envStr(env, "TWILIO_FROM_NUMBER") || envStr(env, "TWILIO_PHONE_NUMBER"));
   const messagingService = Boolean(envStr(env, "TWILIO_MESSAGING_SERVICE_SID"));
   const statusCallback = Boolean(envStr(env, "TWILIO_STATUS_CALLBACK_URL"));
   const authMode: SmsAuthMode = apiKey ? "api_key" : authToken ? "auth_token" : "none";

@@ -56,6 +56,8 @@ export const CSP_CONNECT_HOSTS = [
   "https://*.ingest.sentry.io",
   "https://*.ingest.us.sentry.io",
   "https://*.ingest.de.sentry.io",
+  "https://*.twilio.com",
+  "wss://*.twilio.com",
 ];
 
 export const CSP_FRAME_HOSTS = [
@@ -102,6 +104,7 @@ export function buildContentSecurityPolicy(nonce) {
     `img-src 'self' data: blob: https: ${CSP_IMG_HOSTS.join(" ")}`,
     "font-src 'self' data: https://fonts.gstatic.com",
     `connect-src 'self' ${CSP_CONNECT_HOSTS.join(" ")}`,
+    "media-src 'self' blob: mediastream:",
     "worker-src 'self' blob: data:",
     `frame-src ${CSP_FRAME_HOSTS.join(" ")}`,
     "object-src 'none'",

@@ -58,7 +58,6 @@ function ThreadPage() {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [photo, setPhoto] = useState("");
-  const [phone, setPhone] = useState<string | null>(null);
   const [isParent, setIsParent] = useState(true);
   const [booking, setBooking] = useState<BookingInfo | null>(null);
   const [child, setChild] = useState<Child | null>(null);
@@ -73,6 +72,7 @@ function ThreadPage() {
   const aiDrafted = useRef(false);
   const replyDraftsOn = useAiFeatureFlag(AI_FLAGS.replyDrafts);
   const [videoSurface, setVideoSurface] = useState(false);
+  const [voiceReady, setVoiceReady] = useState(false);
 
   async function load() {
     const res = await getThread({ data: id });
@@ -80,7 +80,6 @@ function ThreadPage() {
     setName(res.daycareName);
     setSlug(res.daycareSlug);
     setPhoto(res.photo);
-    setPhone(res.phone);
     setIsParent(res.isParent);
     let next = res.booking ? { ...res.booking, birthdate: res.booking.birthdate ?? null } : null;
     let kid = res.child ?? null;
@@ -117,6 +116,7 @@ function ThreadPage() {
     setTours(res.tours ?? []);
     setCanWrite(res.canWrite !== false);
     setVideoSurface(Boolean(res.videoSurfaceEnabled));
+    setVoiceReady(Boolean(res.voiceReady));
     if (res.isParent && next) {
       const billed = await listParentBills().catch(() => ({ bills: [] as Bill[] }));
       const match = billed.bills.find((bill) => bill.bookingId === next.id && billIsOpen(bill.status)) ?? null;
@@ -236,7 +236,6 @@ function ThreadPage() {
       .finally(() => setDrafting(false));
   }
 
-  const telHref = phone ? `tel:${phone.replace(/[^\d+]/g, "")}` : undefined;
   const notice = booking
     ? pushNewRequest(
         {
@@ -272,11 +271,11 @@ function ThreadPage() {
             </div>
           </div>
           <div className="flex shrink-0 gap-1">
-            {telHref ? (
+            {id && voiceReady ? (
               <Button variant="ghost" size="icon" asChild>
-                <a href={telHref} aria-label={t("call")}>
+                <Link to="/call/$conversationId" params={{ conversationId: id }} aria-label={t("voiceStart")}>
                   <Phone className="size-5" />
-                </a>
+                </Link>
               </Button>
             ) : null}
             {id && videoSurface ? (

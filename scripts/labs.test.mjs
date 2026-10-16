@@ -48,7 +48,7 @@ test("feature flags default off and only accept explicit on values", () => {
   assert.equal(CHAT_SCAFFOLD_READY, false);
   assert.equal(FLAG_DEFAULTS.FEATURE_PUSH, false);
   assert.equal(FLAG_DEFAULTS.FEATURE_VIDEO, false);
-  assert.equal(VIDEO_SDK_WIRED, false);
+  assert.equal(VIDEO_SDK_WIRED, true);
   const off = chatComposerState(false);
   const on = chatComposerState(true);
   assert.equal(off.disabled, true);

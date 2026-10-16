@@ -371,6 +371,45 @@ export async function withdrawByAddress(input: {
   return { ok: true as const };
 }
 
+async function userIdsForSmsAddress(dest: string): Promise<string[]> {
+  const sql = await getSql();
+  const byConsent = await sql<{ user_id: string }>`
+    select user_id from casl_consents
+    where channel = ${"sms"} and address = ${dest}
+  `.catch(() => [] as { user_id: string }[]);
+  const byProfile = await sql<{ user_id: string; phone: string | null }>`
+    select user_id, phone from profiles where phone is not null
+  `.catch(() => [] as { user_id: string; phone: string | null }[]);
+  const seen = new Set<string>();
+  for (const row of byConsent) {
+    if (row.user_id) seen.add(row.user_id);
+  }
+  for (const row of byProfile) {
+    if (row.user_id && normalizeCaslAddress("sms", row.phone) === dest) seen.add(row.user_id);
+  }
+  return [...seen];
+}
+
+async function setProfileSmsFlag(userIds: string[], granted: boolean) {
+  if (!userIds.length) return;
+  const sql = await getSql();
+  for (const userId of userIds) {
+    if (granted) {
+      await sql`
+        update profiles
+        set sms_consent = 1, sms_consent_at = coalesce(sms_consent_at, now())
+        where user_id = ${userId}
+      `.catch(() => undefined);
+    } else {
+      await sql`
+        update profiles
+        set sms_consent = 0, sms_consent_at = null
+        where user_id = ${userId}
+      `.catch(() => undefined);
+    }
+  }
+}
+
 export async function applyInboundSms(input: {
   from: string;
   opt: "stop" | "start";
@@ -379,6 +418,7 @@ export async function applyInboundSms(input: {
 }) {
   const dest = normalizeCaslAddress("sms", input.from);
   if (!dest) return { ok: false as const };
+  const userIds = await userIdsForSmsAddress(dest);
   if (input.opt === "stop") {
     await withdrawByAddress({
       channel: "sms",
@@ -388,6 +428,7 @@ export async function applyInboundSms(input: {
       ip: input.ip,
       userAgent: input.userAgent,
     });
+    await setProfileSmsFlag(userIds, false);
     return { ok: true as const, action: "stop" as const };
   }
   await setAddressBlock({
@@ -397,6 +438,19 @@ export async function applyInboundSms(input: {
     method: "sms_start",
     blocked: false,
   });
+  await setProfileSmsFlag(userIds, true);
+  for (const userId of userIds) {
+    await setConsent({
+      userId,
+      channel: "sms",
+      purpose: "service",
+      granted: true,
+      method: "sms_start",
+      address: dest,
+      ip: input.ip,
+      userAgent: input.userAgent,
+    });
+  }
   return { ok: true as const, action: "start" as const };
 }
 
