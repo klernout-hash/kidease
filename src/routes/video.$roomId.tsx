@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
-import { VIDEO_SDK_SCAFFOLD_MESSAGE } from "@/lib/video";
+import { VideoRoomPanel } from "@/components/video-room-panel";
 import { PayCtas } from "@/components/pay-chrome";
 import {
   getVideoJoinStatus,
@@ -29,6 +29,7 @@ function VideoRoomPage() {
   const { user, isPending } = useCurrentUserState();
   const { t } = useCopy();
   const [status, setStatus] = useState<VideoJoinStatus | null>(null);
+  const [statusFailed, setStatusFailed] = useState(false);
   const [joined, setJoined] = useState<Extract<VideoJoinResult, { ok: true }> | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -37,9 +38,16 @@ function VideoRoomPage() {
     if (!user) return;
     setJoined(null);
     setError("");
+    setStatusFailed(false);
     void getVideoJoinStatus({ data: roomId })
-      .then(setStatus)
-      .catch(() => setStatus(null));
+      .then((next) => {
+        setStatus(next);
+        setStatusFailed(false);
+      })
+      .catch(() => {
+        setStatus(null);
+        setStatusFailed(true);
+      });
   }, [user, roomId]);
 
   if (isPending) {
@@ -146,24 +154,18 @@ function VideoRoomPage() {
         ) : null}
 
         {joined ? (
-          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border">
-            <p className="font-medium">{t("videoRoomReady")}</p>
-            <p className="mt-2 text-sm text-muted">{VIDEO_SDK_SCAFFOLD_MESSAGE}</p>
-            <dl className="mt-4 space-y-2 text-sm">
-              <div className="flex justify-between gap-3">
-                <dt className="text-subtle">{t("videoRoom")}</dt>
-                <dd className="font-mono text-xs">{joined.roomName}</dd>
-              </div>
-              <div className="flex justify-between gap-3">
-                <dt className="text-subtle">{t("videoTokenTtl")}</dt>
-                <dd>{joined.ttlSeconds}s</dd>
-              </div>
-            </dl>
-            <p className="mt-4 text-xs text-subtle">{joined.minutesMessage}</p>
-          </div>
+          <VideoRoomPanel token={joined.token} roomName={joined.roomName} onLeft={() => setJoined(null)} />
         ) : null}
 
-        {!status && user ? <p className="mt-6 text-sm text-muted">{t("loading")}</p> : null}
+        {!status && !statusFailed && user ? <p className="mt-6 text-sm text-muted">{t("loading")}</p> : null}
+        {statusFailed && !joined ? (
+          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border">
+            <p className="text-sm text-muted">{t("videoTourFailed")}</p>
+            <Button variant="secondary" asChild className="mt-4">
+              <Link to="/inbox">{t("inbox")}</Link>
+            </Button>
+          </div>
+        ) : null}
       </main>
     </Shell>
   );

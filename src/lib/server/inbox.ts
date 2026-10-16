@@ -13,6 +13,7 @@ import { formatAgeLabel } from "@/lib/templates";
 import { isClaimVerified } from "@/lib/trust";
 import { tourSlaRemainingMs } from "@/lib/today-sla";
 import { formatPreferredTimes, parsePreferredTimes } from "@/lib/threads";
+import { daycareReplySms, parentMessageSms } from "@/lib/sms-copy";
 import { nid } from "@/lib/utils";
 import { lookupUser, notifyPlatform, notifyThreadParty } from "./notify";
 import {
@@ -272,6 +273,16 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
     void import("@/lib/server/admin-tools")
       .then((mod) => mod.maybeQueueSpam({ kind: "message", text: body, email: actor.email, sourceId: row.id }))
       .catch(() => undefined);
+    if (sender === "parent") {
+      void import("@/lib/server/sms-notify")
+        .then((mod) => mod.notifyCentreSms({ daycareId: row.daycare_id, body: parentMessageSms(row.name) }))
+        .catch(() => undefined);
+    } else {
+      void import("@/lib/server/sms-notify")
+        .then((mod) => mod.notifyConsentedUserSms({ userId: row.user_id, body: daycareReplySms(row.name) }))
+        .catch(() => undefined);
+    }
+
     void notifyPlatform({
       kind: "chat",
       title: sender === "parent" ? `Parent message: ${row.name}` : `Daycare message: ${row.name}`,

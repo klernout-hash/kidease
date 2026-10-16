@@ -34,7 +34,7 @@ Parent inbox **Video** stays hidden until `VIDEO_SDK_WIRED` is true (Twilio Vide
 | `FEATURE_OPEN_SPOT_ALERTS` | off | Vacancy emails in `runSearchAlertJob`. Sends only when the flag is on and CASL allows the email. | Parents can still save a search (city and child age). In-app notices for a new centre stay. | Email about a newly posted open spot stays off. |
 | `FEATURE_SPOT_OFFER_MAIL` | **off** | `sendTransactionalMail` for a 48-hour spot offer. No send when off. | Offer still appears on `/parent/spot-offers`. Desk says email is off. | Families answer in the account or by signed link. |
 | `FEATURE_OPEN_SPOTS_CHECKIN_MAIL` | off | Weekly email to claimed daycares. No-ops while off. | Signed link page `/spots/$token`. | No email goes out. |
-| `FEATURE_OPEN_SPOTS_CHECKIN_SMS` | off | Weekly SMS. Also needs `FEATURE_SMS`, CASL consent, and Twilio. Toll-free is not approved. | Same signed link. Label the text path coming soon. | No SMS goes out. |
+| `FEATURE_OPEN_SPOTS_CHECKIN_SMS` | off | Weekly SMS. Also needs `FEATURE_SMS`, consent, and Twilio. The toll-free sender is approved. | Same signed link. | No SMS goes out while this flag is off. |
 | `FEATURE_QC_HOME_DAYCARES` | off | None. No email or SMS to these providers. | `/milieux-familiaux` when on. Area circle, not a street pin. | Page says the list is not published yet. |
 
 ## Why PostHog
@@ -76,7 +76,7 @@ Env still works as a fallback when PostHog is down (last successful overlay is k
 | `FEATURE_OPEN_SPOT_ALERTS` | no | Default **off**. Leave `0` until Kyle wants email when a saved search matches a newly posted open spot. |
 | `FEATURE_SPOT_OFFER_MAIL` | no | Default **off**. Leave `0` until you want offer emails. The waitlist still works. |
 | `FEATURE_OPEN_SPOTS_CHECKIN_MAIL` | no | Default **off**. Leave `0` until you want the weekly open-spots email. |
-| `FEATURE_OPEN_SPOTS_CHECKIN_SMS` | no | Default **off**. Leave `0`. Toll-free is not approved. Also needs `FEATURE_SMS`. |
+| `FEATURE_OPEN_SPOTS_CHECKIN_SMS` | no | Default **off**. Leave `0` until you want the weekly text. The toll-free sender is approved. Also needs `FEATURE_SMS` and consent. |
 | `FEATURE_QC_HOME_DAYCARES` | no | Default **off**. Leave `0` until Kyle publishes Quebec recognized home daycares. No email or SMS to those providers. |
 | `POSTHOG_FLAGS_KEY` | no | Server-only. Same `phc_…` project key as analytics. Leave blank to disable remote. Never commit a real value. |
 | `POSTHOG_FLAGS_HOST` | no | Defaults to `POSTHOG_HOST` or `https://us.i.posthog.com`. |

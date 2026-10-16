@@ -49,7 +49,7 @@ test("FEATURE_VIDEO defaults off", () => {
   assert.equal(videoEnabled({ FEATURE_VIDEO: "1" }), true);
   assert.equal(videoLive({}), false);
   assert.equal(videoLive(LIVE_ENV), true);
-  assert.equal(VIDEO_SDK_WIRED, false);
+  assert.equal(VIDEO_SDK_WIRED, true);
 });
 
 test("createVideoAccessToken does not mint when FEATURE_VIDEO is off", () => {
@@ -295,7 +295,8 @@ test("video route is registered, Plus-gated, and not a *.server.* client import"
   const join = src("src/lib/server/video-join.ts");
   assert.match(route, /createFileRoute\("\/video\/\$roomId"\)/);
   assert.match(route, /parentPlusSubscribe/);
-  assert.match(route, /VIDEO_SDK_SCAFFOLD_MESSAGE/);
+  assert.match(route, /VideoRoomPanel/);
+  assert.doesNotMatch(route, /VIDEO_SDK_SCAFFOLD_MESSAGE/);
   assert.match(route, /from "@\/lib\/server\/video-join"/);
   assert.doesNotMatch(route, /\.server['"]/);
   assert.match(inbox, /to="\/video\/\$roomId"/);

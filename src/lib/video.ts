@@ -48,7 +48,7 @@ export const VIDEO_MONTHLY_MINUTE_CAP = 60;
 /** Access Token TTL in seconds. Short on purpose (Twilio max is 24h). */
 export const VIDEO_TOKEN_TTL_SECONDS = 900;
 
-export const VIDEO_SDK_WIRED = false;
+export const VIDEO_SDK_WIRED = true;
 
 export const VIDEO_FLAG_OFF_MESSAGE =
   "Coming soon: FEATURE_VIDEO is off. This path does not start a live Twilio Video call or charge Plus.";
@@ -78,9 +78,9 @@ export const TWILIO_VIDEO_LAB_NEXT_STEPS: readonly VideoLabNextStep[] = [
   },
   {
     id: "sdk",
-    title: "Attach Twilio Video SDK later",
+    title: "Twilio Video SDK",
     detail:
-      "Join mints a room + token when the flag and credentials are on. /video/$roomId does not attach @twilio/video or the camera. Add Twilio hosts to CSP then.",
+      "Join on /video/$roomId attaches twilio-video when FEATURE_VIDEO and the API key are on. Camera and microphone stay on that page. CSP allows Twilio. No recording.",
   },
 ];
 

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { parentRequestSms } from "@/lib/sms-copy";
 import { nid } from "@/lib/utils";
 import { catalogByIdGet } from "@/lib/catalog";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
@@ -261,6 +262,9 @@ export const createTourRequest = createServerFn({ method: "POST" })
         }).catch(() => undefined),
       ),
     );
+    void import("@/lib/server/sms-notify")
+      .then((mod) => mod.notifyCentreSms({ daycareId: data.daycareId, body: parentRequestSms(d.name) }))
+      .catch(() => undefined);
 
     return { id: tourId, conversationId: cid, status: "pending" as const };
   });

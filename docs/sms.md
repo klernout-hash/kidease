@@ -36,6 +36,7 @@ Set the same keys on **Production and Preview** (encrypted). Never prefix `VITE_
 | `TWILIO_API_KEY_SID` + `TWILIO_API_KEY_SECRET` | API-key mode | Preferred for production send. `SK…` + secret. |
 | `TWILIO_MESSAGING_SERVICE_SID` | recommended | `MG…`. Prefer this over a raw From for Canada. |
 | `TWILIO_FROM_NUMBER` | if no Messaging Service | E.164 Canadian number you own in Twilio. |
+| `TWILIO_PHONE_NUMBER` | if no Messaging Service and no From | Approved toll-free, E.164. Same value used for voice. |
 | `TWILIO_STATUS_CALLBACK_URL` | optional | Exact HTTPS URL, e.g. `https://www.kidease.ca/api/sms/status`. |
 | `TWILIO_INBOUND_CALLBACK_URL` | optional | Exact HTTPS URL Twilio signs for STOP, e.g. `https://www.kidease.ca/api/sms/inbound`. |
 
@@ -71,13 +72,13 @@ The send path is fully wired. Flip **only** after all of these are true:
 - `sendSms({ to, body })` in `src/lib/server/sms.ts` — no-ops when the flag is off, env is incomplete, or a user SMS lacks stored consent; validates E.164; never logs the auth token.
 - Admin claim decision (`decideCentre`) may SMS the provider profile mobile **only after** a CASL grant. Email still sends if SMS skips.
 - Platform admin SMS (Kyle) uses `audience: "internal"` and is still gated by the feature flag.
-- `POST /api/sms/status` validates Twilio signatures (needs `TWILIO_AUTH_TOKEN`) and returns `204`. No delivery table yet.
-- `POST /api/sms/inbound` persists STOP / START. `/unsubscribe` and `GET|POST /api/unsubscribe` honour email one-click.
+- `POST /api/sms/status` validates Twilio signatures (needs `TWILIO_AUTH_TOKEN`), stores `MessageSid` and status in `sms_delivery_status`, and returns `204`.
+- `POST /api/sms/inbound` persists STOP / START (including `profiles.sms_consent`) and answers HELP when Advanced Opt-Out did not already reply. `/unsubscribe` and `GET|POST /api/unsubscribe` honour email one-click.
+- A new parent request or message texts the daycare, and a daycare reply texts the parent, only when that person has SMS consent and is not opted out. The send uses `TWILIO_MESSAGING_SERVICE_SID`. Every text starts with KidEase.
 - Admin → Chat lab shows FEATURE_SMS on/off, source (env / PostHog), and whether env names are present (no secret values).
 - Waitlist pulse (`docs/waitlist-pulse.md`) texts matched parents only after a stored CASL grant. The job still no-ops while `FEATURE_SMS` is off.
 
 ## Later (not this PR)
 
 - Bill / pay reminder SMS (do not mix into Stripe webhook apply).
-- Persist status-callback rows.
 - Street mailing address on CASL copy if Kyle adds one (today: KidEase, Winnipeg, Manitoba + support@kidease.ca).
