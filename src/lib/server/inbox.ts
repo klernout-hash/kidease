@@ -13,7 +13,7 @@ import { formatAgeLabel } from "@/lib/templates";
 import { isClaimVerified } from "@/lib/trust";
 import { tourSlaRemainingMs } from "@/lib/today-sla";
 import { formatPreferredTimes, parsePreferredTimes } from "@/lib/threads";
-import { daycareReplySms, parentMessageSms } from "@/lib/sms-copy";
+import { chatBodyWithoutSmsFooter, daycareReplySms, parentMessageSms } from "@/lib/sms-copy";
 import { nid } from "@/lib/utils";
 import { lookupUser, notifyPlatform, notifyThreadParty } from "./notify";
 import {
@@ -255,7 +255,7 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
   .validator((input: { conversationId: string; body: string }) => input)
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    const body = data.body.trim();
+    const body = chatBodyWithoutSmsFooter(data.body);
     if (!body) return { ok: false as const };
     const access = await requireConversationWrite(sql, data.conversationId, context.userId);
     const row = access.conversation;

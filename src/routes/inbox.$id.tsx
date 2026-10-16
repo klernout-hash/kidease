@@ -12,6 +12,7 @@ import { getFamily, getThread, updateRequestStatus } from "@/lib/server/family";
 import { listParentBills } from "@/lib/server/billing";
 import { billDollars, billIsOpen, type Bill } from "@/lib/bill";
 import { sendConnectedMessage } from "@/lib/server/inbox";
+import { chatBodyWithoutSmsFooter } from "@/lib/sms-copy";
 import { draftInboxReply } from "@/lib/server/reply-drafts";
 import { AI_FLAGS } from "@/lib/ai/flags";
 import { replyDraftEventProps, replyDraftQuiet } from "@/lib/ai/reply-drafts";
@@ -31,6 +32,10 @@ export const Route = createFileRoute("/inbox/$id")({
   validateSearch: (s: Record<string, unknown>) => parseInboxSearch(s),
   component: ThreadPage,
 });
+
+function showChatBubble(m: Message) {
+  return m.kind === "status" || (m.kind !== "system" && m.kind !== "notify" && m.sender !== "system");
+}
 
 type BookingInfo = {
   id: string;
@@ -59,6 +64,8 @@ function ThreadPage() {
   const [slug, setSlug] = useState("");
   const [photo, setPhoto] = useState("");
   const [isParent, setIsParent] = useState(true);
+  const [viewerRole, setViewerRole] = useState<"parent" | "centre" | "admin" | "none">("none");
+  const [loadState, setLoadState] = useState<"loading" | "ready" | "missing" | "error">("loading");
   const [booking, setBooking] = useState<BookingInfo | null>(null);
   const [child, setChild] = useState<Child | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -76,11 +83,16 @@ function ThreadPage() {
 
   async function load() {
     const res = await getThread({ data: id });
-    if (!res) return;
+    if (!res) {
+      setLoadState("missing");
+      return;
+    }
+    setLoadState("ready");
     setName(res.daycareName);
     setSlug(res.daycareSlug);
     setPhoto(res.photo);
     setIsParent(res.isParent);
+    setViewerRole(res.viewerRole === "centre" || res.viewerRole === "admin" || res.viewerRole === "parent" ? res.viewerRole : "none");
     let next = res.booking ? { ...res.booking, birthdate: res.booking.birthdate ?? null } : null;
     let kid = res.child ?? null;
     if (!next) {
@@ -149,6 +161,7 @@ function ThreadPage() {
         failures = 0;
       } catch {
         failures += 1;
+        setLoadState((current) => (current === "ready" ? current : "error"));
       }
       if (cancelled) return;
       arm(failures > 0 ? pollBackoffMs(failures) : MIN_POLL_MS);
@@ -198,7 +211,11 @@ function ThreadPage() {
     setSendError("");
     const drafted = aiDrafted.current;
     try {
-      await sendConnectedMessage({ data: { conversationId: id, body } });
+      const sent = await sendConnectedMessage({ data: { conversationId: id, body } });
+      if (!sent.ok) {
+        setSendError(t("threadSendEmpty"));
+        return;
+      }
       setBody("");
       aiDrafted.current = false;
       setFromDraft(false);
@@ -324,7 +341,7 @@ function ThreadPage() {
             </Button>
           </div>
         ) : null}
-        {!isParent && booking ? (
+        {viewerRole === "centre" && canWrite && booking ? (
           <div className="mt-3 flex flex-wrap gap-2">
             {(["under_review", "accepted", "waitlist", "declined"] as const).map((st) => (
               <Button
@@ -355,28 +372,73 @@ function ThreadPage() {
             {t("directions")}
           </Link>
         ) : null}
+        {loadState === "loading" ? <p className="mt-6 text-sm text-muted">{t("loading")}</p> : null}
+        {loadState === "missing" ? (
+          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border">
+            <p className="font-medium">{t("threadMissingTitle")}</p>
+            <p className="mt-2 text-sm text-muted">{t("threadMissingLead")}</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button asChild>
+                <Link to="/inbox" search={inboxSearch(inboxView)}>
+                  {t("inbox")}
+                </Link>
+              </Button>
+              <Button variant="secondary" asChild>
+                <Link to="/search">{t("search")}</Link>
+              </Button>
+            </div>
+          </div>
+        ) : null}
+        {loadState === "error" ? (
+          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border">
+            <p className="text-sm text-muted">{t("threadLoadFailed")}</p>
+            <Button className="mt-4" type="button" onClick={() => void load().catch(() => setLoadState("error"))}>
+              {t("threadTryAgain")}
+            </Button>
+          </div>
+        ) : null}
         <ul className="ph-no-capture mt-4 flex-1 space-y-3">
-          {messages
-            .filter((m) => m.kind === "status" || (m.kind !== "system" && m.kind !== "notify" && m.sender !== "system"))
-            .map((m) => (
+          {loadState === "ready" && messages.filter(showChatBubble).length === 0 ? (
+            <li className="text-sm text-muted">{canWrite ? t("threadEmpty") : t("threadEmptyRead")}</li>
+          ) : null}
+          {messages.filter(showChatBubble).map((m) => {
+            const text = chatBodyWithoutSmsFooter(m.body);
+            if (!text) return null;
+            const mine =
+              viewerRole === "parent"
+                ? m.sender === "parent"
+                : viewerRole === "centre"
+                  ? m.sender === "provider"
+                  : false;
+            return (
               <li
                 key={m.id}
                 className={cn(
                   "max-w-[85%] whitespace-pre-line rounded-lg px-3 py-2 text-sm",
                   m.kind === "status"
                     ? "w-full max-w-none bg-surface-2 text-fg"
-                    : (isParent && m.sender === "parent") || (!isParent && m.sender === "provider")
+                    : mine
                       ? "ml-auto bg-primary text-primary-fg"
                       : "bg-surface ring-1 ring-border",
                 )}
               >
-                {m.body}
+                {viewerRole === "admin" && m.kind !== "status" ? (
+                  <span className="mb-1 block text-xs text-muted">
+                    {m.sender === "parent" ? t("parentLabel") : t("threadSenderCentre")}
+                  </span>
+                ) : null}
+                {text}
               </li>
-            ))}
+            );
+          })}
         </ul>
-        {canWrite ? (
+        {loadState === "ready" && canWrite ? (
           <form id="reply" onSubmit={onSend} className="sticky bottom-20 mt-4 flex flex-col gap-2 bg-bg py-2 md:bottom-0">
-            {sendError ? <p className="text-sm text-danger">{sendError}</p> : null}
+            {sendError ? (
+              <p className="text-sm text-danger" role="alert">
+                {sendError}
+              </p>
+            ) : null}
             {!isParent && replyDraftsOn ? (
               <div data-ke="reply-draft" className="rounded-xl bg-surface p-3 ring-1 ring-border">
                 <h2 className="font-display text-lg">{t("replyDraft")}</h2>
@@ -388,14 +450,27 @@ function ThreadPage() {
             ) : fromDraft ? (
               <p className="text-sm text-muted">{t("replyDraftLead")}</p>
             ) : null}
+            <label htmlFor="thread-reply" className="sr-only">
+              {t("writeMessage")}
+            </label>
             <div className="flex gap-2">
-              <input value={body} onChange={(e) => setBody(e.target.value)} placeholder={t("writeMessage")} className="h-12 flex-1 rounded-md border border-border bg-surface px-3" />
+              <input
+                id="thread-reply"
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                onFocus={(e) => e.currentTarget.scrollIntoView({ block: "center" })}
+                placeholder={t("writeMessage")}
+                autoComplete="off"
+                className="h-12 min-h-11 flex-1 rounded-md border border-border bg-surface px-3"
+              />
               <Button type="submit">{t("send")}</Button>
             </div>
           </form>
-        ) : (
-          <p className="mt-4 rounded-lg bg-surface-2 px-3 py-2 text-sm text-muted">{t("threadLead")}</p>
-        )}
+        ) : loadState === "ready" ? (
+          <p className="mt-4 rounded-lg bg-surface-2 px-3 py-2 text-sm text-muted">
+            {viewerRole === "admin" ? t("threadAdminRead") : t("threadReadOnly")}
+          </p>
+        ) : null}
       </main>
     </Shell>
   );

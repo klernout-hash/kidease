@@ -59,6 +59,9 @@ describe("reviewer demo seed", () => {
       assert.doesNotMatch(body, /parentPassword|daycarePassword/);
     }
     assert.doesNotMatch(read("scripts/migrate.mjs"), /applyReviewerDemoFromEnv/);
+    assert.match(script, /qa-reviewer-reply/);
+    assert.match(script, /daycare demo reply/);
+    assert.doesNotMatch(script, /Reply STOP/);
     assert.match(read("package.json"), /ops:reviewer-demo/);
     assert.match(read(".env.example"), /# REVIEWER_PARENT_PASSWORD=/);
     assert.match(read(".env.example"), /# REVIEWER_DAYCARE_PASSWORD=/);

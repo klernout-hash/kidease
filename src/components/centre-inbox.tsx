@@ -19,6 +19,7 @@ import {
 } from "@/lib/inbox-stages";
 import { fillQuickReply, opsQuickReplies } from "@/lib/inbox-quick-replies";
 import { listInbox, markInboxThreadRead, sendConnectedMessage } from "@/lib/server/inbox";
+import { chatBodyWithoutSmsFooter } from "@/lib/sms-copy";
 import { getThread } from "@/lib/server/family";
 import { listLeadRequests } from "@/lib/server/lead-requests";
 import type { CopyKey } from "@/lib/copy";
@@ -119,7 +120,11 @@ export function CentreInboxDesk({
     if (!selectedId || !body.trim()) return;
     setSendError("");
     try {
-      await sendConnectedMessage({ data: { conversationId: selectedId, body } });
+      const sent = await sendConnectedMessage({ data: { conversationId: selectedId, body } });
+      if (!sent.ok) {
+        setSendError(t("threadSendEmpty"));
+        return;
+      }
       setBody("");
       confirmAction(t, "replySent");
       refresh();
@@ -308,7 +313,10 @@ export function CentreInboxDesk({
             ) : (
               messages
                 .filter((m) => m.kind === "status" || (m.kind !== "system" && m.kind !== "notify" && m.sender !== "system"))
-                .map((m) => (
+                .map((m) => {
+                  const text = chatBodyWithoutSmsFooter(m.body);
+                  if (!text) return null;
+                  return (
                   <li
                     key={m.id}
                     className={cn(
@@ -320,14 +328,19 @@ export function CentreInboxDesk({
                           : "bg-surface ring-1 ring-border",
                     )}
                   >
-                    {m.body}
+                    {text}
                   </li>
-                ))
+                  );
+                })
             )}
           </ul>
           {canWrite ? (
             <form onSubmit={onSend} className="sticky bottom-0 space-y-2 border-t border-border bg-bg px-4 py-3">
-              {sendError ? <p className="text-sm text-danger">{sendError}</p> : null}
+              {sendError ? (
+                <p className="text-sm text-danger" role="alert">
+                  {sendError}
+                </p>
+              ) : null}
               {quickOpen ? (
                 <ul className="max-h-56 space-y-2 overflow-y-auto rounded-xl bg-surface p-2 ring-1 ring-border">
                   {templates.map((row) => (
@@ -344,6 +357,9 @@ export function CentreInboxDesk({
                   ))}
                 </ul>
               ) : null}
+              <label htmlFor="centre-thread-reply" className="sr-only">
+                {t("writeMessage")}
+              </label>
               <div className="flex items-center gap-2">
                 <Button
                   type="button"
@@ -359,10 +375,13 @@ export function CentreInboxDesk({
                   {t("inboxQuickReplies")}
                 </Button>
                 <input
+                  id="centre-thread-reply"
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
+                  onFocus={(e) => e.currentTarget.scrollIntoView({ block: "center" })}
                   placeholder={t("writeMessage")}
-                  className="h-12 flex-1 rounded-md border border-border bg-surface px-3"
+                  autoComplete="off"
+                  className="h-12 min-h-11 flex-1 rounded-md border border-border bg-surface px-3"
                 />
                 <Button type="submit">{t("send")}</Button>
               </div>

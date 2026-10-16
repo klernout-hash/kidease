@@ -28,6 +28,7 @@ import {
   publicRequestUrl,
   summarizeSmsStatus,
   TwilioSignatureError,
+  twilioSignatureMatches,
   validateTwilioSignature,
 } from "../src/lib/server/sms-status.ts";
 
@@ -206,6 +207,32 @@ test("Twilio signature validation matches the documented HMAC-SHA1 scheme", () =
     MessageSid: "SM1",
   });
 });
+
+test("a second auth token can match during rotation and a wrong pair cannot", () => {
+  const url = "https://www.kidease.ca/api/sms/inbound";
+  const params = { Body: "tour Thursday", From: "+12045550199" };
+  const next = "next_auth_token_not_real";
+  const sig = signed(url, params, next);
+  assert.equal(
+    twilioSignatureMatches(sig, url, params, {
+      TWILIO_AUTH_TOKEN: "old_auth_token_not_real",
+      TWILIO_AUTH_TOKEN_NEXT: next,
+    }),
+    true,
+  );
+  assert.equal(
+    twilioSignatureMatches(sig, url, params, {
+      TWILIO_AUTH_TOKEN: "old_auth_token_not_real",
+      TWILIO_AUTH_TOKEN_NEXT: "other_auth_token_not_real",
+    }),
+    false,
+  );
+  assert.doesNotMatch(srcSafe("src/lib/server/sms-status.ts"), /console\.\w+\([^)]*token/i);
+});
+
+function srcSafe(rel) {
+  return readFileSync(join(root, rel), "utf8");
+}
 
 test("publicRequestUrl prefers the configured callback URL", () => {
   const request = new Request("http://127.0.0.1/api/sms/status", {
