@@ -1,39 +1,39 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Inbox, Paperclip, Search, X } from "lucide-react";
+import { Inbox, Search, X } from "lucide-react";
+import { toast } from "sonner";
 import { DeskShell } from "@/components/desk-shell";
 import { InboxDetailRail } from "@/components/inbox-detail-rail";
+import { InboxMessageRow } from "@/components/inbox-row";
+import { PipelineBadge } from "@/components/pipeline-badge";
+import { ThreadComposer, ThreadHeader, ThreadTranscript } from "@/components/thread-chrome";
 import { Button } from "@/components/ui/button";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { providerNavSearch } from "@/lib/desk-nav";
 import { inboxSearch } from "@/lib/inbox-view";
-import {
-  filterCentreThreads,
-  INBOX_FILTERS,
-  INBOX_FILTER_COPY,
-  inboxInitials,
-  parseInboxFilter,
-  type CentreInboxThread,
-  type InboxFilter,
-} from "@/lib/inbox-stages";
+import type { CentreInboxThread } from "@/lib/inbox-stages";
 import { fillQuickReply, opsQuickReplies } from "@/lib/inbox-quick-replies";
-import { listInbox, markInboxThreadRead, sendConnectedMessage } from "@/lib/server/inbox";
+import {
+  MESSAGE_FILTERS,
+  filterInboxList,
+  formatStayDate,
+  messageFilterCopyKey,
+  parseMessageFilter,
+  rowTitle,
+  type ConversationDetails,
+  type MessageFilter,
+} from "@/lib/inbox-thread-ui";
+import { listInbox, sendConnectedMessage } from "@/lib/server/inbox";
 import { chatBodyWithoutSmsFooter } from "@/lib/sms-copy";
+import { getConversationDetails, setConversationUserState } from "@/lib/server/conversation-state";
 import { getThread } from "@/lib/server/family";
 import { listLeadRequests } from "@/lib/server/lead-requests";
-import type { CopyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
 import { confirmAction } from "@/lib/success-confirm";
 import { cn } from "@/lib/utils";
 import type { LeadRequest } from "@/lib/lead-requests";
 import type { Message, TourRequest } from "@/lib/types";
-
-function rowDate(iso: string, locale: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", { month: "short", day: "numeric" });
-}
 
 export function CentreInboxDesk({
   selectedId,
@@ -46,7 +46,7 @@ export function CentreInboxDesk({
   const { t, locale } = useCopy();
   const navigate = useNavigate();
   const [items, setItems] = useState<CentreInboxThread[] | null>(null);
-  const [filter, setFilter] = useState<InboxFilter>("all");
+  const [filter, setFilter] = useState<MessageFilter>("all");
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [tours, setTours] = useState<TourRequest[]>([]);
@@ -58,9 +58,11 @@ export function CentreInboxDesk({
   const [quickOpen, setQuickOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(openDetail);
   const [threadReady, setThreadReady] = useState(false);
+  const [details, setDetails] = useState<ConversationDetails | null>(null);
+  const [stateBusy, setStateBusy] = useState(false);
 
   const visible = useMemo(
-    () => (items ? filterCentreThreads(items, { filter, query }) : []),
+    () => (items ? filterInboxList(items, { filter, query }) : []),
     [items, filter, query],
   );
   const selected = visible.find((row) => row.id === selectedId) ?? items?.find((row) => row.id === selectedId) ?? null;
@@ -86,6 +88,8 @@ export function CentreInboxDesk({
     setTours(res.tours ?? []);
     setCanWrite(res.canWrite !== false);
     setThreadReady(true);
+    const meta = await getConversationDetails({ data: { conversationId: id } }).catch(() => null);
+    setDetails(meta);
   }
 
   useEffect(() => {
@@ -100,6 +104,7 @@ export function CentreInboxDesk({
     if (!user?.id || !selectedId) {
       setMessages([]);
       setTours([]);
+      setDetails(null);
       setThreadReady(false);
       return;
     }
@@ -133,6 +138,27 @@ export function CentreInboxDesk({
     }
   }
 
+  async function onState(action: "unread" | "star" | "archive") {
+    if (!selectedId) return;
+    setStateBusy(true);
+    try {
+      const res = await setConversationUserState({ data: { conversationId: selectedId, action } });
+      if (!res.ok) {
+        toast.error(t("threadLoadFailed"));
+        return;
+      }
+      setDetails((current) => (current ? { ...current, starred: res.starred, archived: res.archived, markedUnread: res.markedUnread } : current));
+      if (action === "unread") toast.success(t("inboxMarkedUnread"));
+      if (action === "star") toast.success(res.starred ? t("inboxStarred") : t("inboxUnstarred"));
+      if (action === "archive") toast.success(res.archived ? t("inboxArchived") : t("inboxUnarchived"));
+      void loadList().catch(() => undefined);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("threadLoadFailed"));
+    } finally {
+      setStateBusy(false);
+    }
+  }
+
   function insertQuick(id: string) {
     const template = templates.find((row) => row.id === id);
     if (!template || !selected) return;
@@ -158,6 +184,7 @@ export function CentreInboxDesk({
     );
   }
   if (!user) return <RedirectToSignIn />;
+  const viewer = user;
 
   const emptyAll = items !== null && items.length === 0;
   const emptyFilter = items !== null && items.length > 0 && visible.length === 0;
@@ -166,7 +193,8 @@ export function CentreInboxDesk({
   const listPane = (
     <div className="flex min-h-0 flex-col border-border lg:border-r">
       <div className="shrink-0 space-y-3 p-3">
-        <h2 className="font-display text-2xl">{t("inboxCentreTitle")}</h2>
+        <h2 className="font-display text-[clamp(1.6rem,4vw,2rem)]">{t("messages")}</h2>
+        <p className="text-sm text-muted">{t("inboxCentreTitle")}</p>
         <label className="relative block">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-subtle" />
           <input
@@ -176,18 +204,19 @@ export function CentreInboxDesk({
             className="h-11 w-full rounded-md border border-border bg-surface pl-9 pr-3 text-sm"
           />
         </label>
-        <div className="flex flex-wrap gap-1.5" data-ke="inbox-stage-filters">
-          {INBOX_FILTERS.map((id) => (
+        <div className="flex flex-wrap gap-1.5" data-ke="inbox-stage-filters" role="group" aria-label={t("messages")}>
+          {MESSAGE_FILTERS.map((id) => (
             <button
               key={id}
               type="button"
-              onClick={() => setFilter(parseInboxFilter(id))}
+              aria-pressed={filter === id}
+              onClick={() => setFilter(parseMessageFilter(id))}
               className={cn(
-                "whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium ring-1",
-                filter === id ? "bg-primary text-primary-fg ring-primary" : "bg-surface text-muted ring-border",
+                "min-h-11 whitespace-nowrap rounded-full px-4 text-sm font-medium touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+                filter === id ? "bg-fg text-bg" : "bg-surface text-fg ring-1 ring-border",
               )}
             >
-              {t(INBOX_FILTER_COPY[id] as CopyKey)}
+              {t(messageFilterCopyKey(id, "centre"))}
             </button>
           ))}
         </div>
@@ -218,7 +247,7 @@ export function CentreInboxDesk({
         ) : emptyFilter ? (
           <li className="p-4">
             <p className="font-medium">
-              {t("inboxNothingInFilter").replace("{filter}", t(INBOX_FILTER_COPY[filter] as CopyKey))}
+              {t("inboxNothingInFilter").replace("{filter}", t(messageFilterCopyKey(filter, "centre")))}
             </p>
             <Button size="sm" variant="secondary" className="mt-3" onClick={() => { setFilter("all"); setQuery(""); }}>
               {t("inboxClearFilters")}
@@ -227,37 +256,8 @@ export function CentreInboxDesk({
         ) : (
           visible.map((row) => (
             <li key={row.id}>
-              <Link
-                to="/inbox/$id"
-                params={{ id: row.id }}
-                search={inboxSearch("centre")}
-                className={cn(
-                  "flex items-start gap-3 px-3 py-3 hover:bg-bg",
-                  selectedId === row.id && "bg-bg",
-                )}
-              >
-                {row.photo ? (
-                  <img src={row.photo} alt="" className="size-10 rounded-md object-cover" />
-                ) : (
-                  <span className="grid size-10 place-items-center rounded-md bg-primary/10 text-xs font-semibold text-primary">
-                    {inboxInitials(row.parentName)}
-                  </span>
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate font-medium">{row.parentName}</p>
-                    {row.unread ? <span className="size-2 shrink-0 rounded-full bg-danger" aria-label={t("inboxFilterUnread")} /> : null}
-                    {row.confirmedDot ? (
-                      <span className="size-2 shrink-0 rounded-full bg-ok" aria-label={t("inboxConfirmedDot")} />
-                    ) : null}
-                    <span className="ml-auto shrink-0 text-[11px] text-subtle">{rowDate(row.lastAt, locale)}</span>
-                  </div>
-                  <p className="truncate text-sm text-muted">{row.preview}</p>
-                  <span className="mt-1 inline-flex rounded-full bg-surface px-2 py-0.5 text-[11px] font-medium ring-1 ring-border">
-                    {t(INBOX_FILTER_COPY[row.stage] as CopyKey)}
-                  </span>
-                </div>
-              </Link>
+              <InboxMessageRow row={row} view="centre" selected={selectedId === row.id} />
+              <PipelineBadge className="sr-only" tourStatus={row.tourStatus} bookingStatus={row.status} />
             </li>
           ))
         )}
@@ -265,128 +265,102 @@ export function CentreInboxDesk({
     </div>
   );
 
+  const threadTitle = rowTitle({
+    viewerIsParent: false,
+    parentName: selected?.parentName,
+    centreName: centreName || selected?.centreName,
+  });
+  const threadDates = formatStayDate(selected?.startDate, locale) || selected?.tourDatetime || "";
+  const threadSub = [centreName || selected?.centreName, threadDates].filter(Boolean).join(" · ");
+  const cleaned = messages.map((m) => ({ ...m, body: chatBodyWithoutSmsFooter(m.body) }));
+
   const threadPane = (
     <div className="flex min-h-0 flex-col">
       {selected ? (
         <>
-          <div className="flex items-start justify-between gap-2 border-b border-border px-4 py-3">
-            <div className="min-w-0">
-              <Link to="/inbox" search={inboxSearch("centre")} className="text-sm text-muted lg:hidden">
-                {t("inboxBackCentre")}
-              </Link>
-              <h3 className="truncate font-display text-xl">{selected.parentName}</h3>
-              {confirmedTour ? (
-                <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-ok/10 px-3 py-2 text-sm text-ok">
-                  <span className="font-medium">{t("inboxTourConfirmedBanner")}</span>
-                  <Link to="/provider" search={{ desk: "tours" }} className="underline">
-                    {t("inboxShowTour")}
-                  </Link>
-                </div>
-              ) : null}
-            </div>
-            <div className="flex shrink-0 gap-1">
-              {selected.unread ? (
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => {
-                    void markInboxThreadRead({ data: { conversationId: selected.id } }).then(refresh);
-                  }}
-                >
-                  {t("inboxMarkRead")}
-                </Button>
-              ) : null}
-              <Button
-                size="sm"
-                variant="secondary"
-                className="lg:hidden"
-                data-ke="inbox-detail-open"
-                onClick={() => setDetailOpen(true)}
-              >
-                {t("inboxDetail")}
-              </Button>
-            </div>
-          </div>
-          <ul className="ph-no-capture min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">
-            {!threadReady ? (
-              <li className="ke-skel h-20 rounded-xl" aria-hidden />
-            ) : (
-              messages
-                .filter((m) => m.kind === "status" || (m.kind !== "system" && m.kind !== "notify" && m.sender !== "system"))
-                .map((m) => {
-                  const text = chatBodyWithoutSmsFooter(m.body);
-                  if (!text) return null;
-                  return (
-                  <li
-                    key={m.id}
-                    className={cn(
-                      "max-w-[85%] whitespace-pre-line rounded-lg px-3 py-2 text-sm",
-                      m.kind === "status"
-                        ? "w-full max-w-none bg-surface-2"
-                        : m.sender === "provider"
-                          ? "ml-auto bg-primary text-primary-fg"
-                          : "bg-surface ring-1 ring-border",
-                    )}
-                  >
-                    {text}
-                  </li>
-                  );
-                })
-            )}
-          </ul>
-          {canWrite ? (
-            <form onSubmit={onSend} className="sticky bottom-0 space-y-2 border-t border-border bg-bg px-4 py-3">
-              {sendError ? (
-                <p className="text-sm text-danger" role="alert">
-                  {sendError}
-                </p>
-              ) : null}
-              {quickOpen ? (
-                <ul className="max-h-56 space-y-2 overflow-y-auto rounded-xl bg-surface p-2 ring-1 ring-border">
-                  {templates.map((row) => (
-                    <li key={row.id}>
-                      <button
-                        type="button"
-                        onClick={() => insertQuick(row.id)}
-                        className="w-full rounded-lg px-3 py-2 text-left hover:bg-bg"
-                      >
-                        <p className="text-sm font-medium">{row.title}</p>
-                        <p className="text-[11px] text-subtle">{row.meta}</p>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-              <label htmlFor="centre-thread-reply" className="sr-only">
-                {t("writeMessage")}
-              </label>
-              <div className="flex items-center gap-2">
-                <Button
+          <ThreadHeader
+            backTo="/inbox"
+            backSearch={inboxSearch("centre")}
+            backLabel={t("inboxBackCentre")}
+            title={threadTitle || selected.parentName}
+            subtitle={threadSub}
+            avatars={(details?.participants || [{ id: "parent", name: selected.parentName, image: null, role: "parent" as const }]).map((person) => ({
+              name: person.name,
+              image: person.image,
+            }))}
+            showDetails={false}
+            actions={
+              <div className="flex shrink-0 items-center">
+                <button
                   type="button"
-                  size="icon"
-                  variant="ghost"
-                  disabled
-                  title={t("inboxAttachSoon")}
-                  aria-label={t("inboxAttachSoon")}
+                  className="min-h-11 rounded-full px-3 text-sm font-medium ring-1 ring-border lg:hidden"
+                  data-ke="inbox-detail-open"
+                  onClick={() => setDetailOpen(true)}
                 >
-                  <Paperclip className="size-5" />
-                </Button>
-                <Button type="button" size="sm" variant="secondary" onClick={() => setQuickOpen((v) => !v)}>
-                  {t("inboxQuickReplies")}
-                </Button>
-                <input
-                  id="centre-thread-reply"
-                  value={body}
-                  onChange={(e) => setBody(e.target.value)}
-                  onFocus={(e) => e.currentTarget.scrollIntoView({ block: "center" })}
-                  placeholder={t("writeMessage")}
-                  autoComplete="off"
-                  className="h-12 min-h-11 flex-1 rounded-md border border-border bg-surface px-3"
-                />
-                <Button type="submit">{t("send")}</Button>
+                  {t("inboxDetail")}
+                </button>
               </div>
-            </form>
+            }
+          />
+          {confirmedTour ? (
+            <div className="mx-3 mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-ok/10 px-3 py-2 text-sm text-ok">
+              <span className="font-medium">{t("inboxTourConfirmedBanner")}</span>
+              <Link to="/provider" search={{ desk: "tours" }} className="underline">
+                {t("inboxShowTour")}
+              </Link>
+            </div>
           ) : null}
+          <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
+            {!threadReady ? (
+              <div className="ke-skel h-20 rounded-xl" aria-hidden />
+            ) : cleaned.filter((m) => m.body).length === 0 ? (
+              <p className="text-sm text-muted">{t("inboxNoMessagesYet")}</p>
+            ) : (
+              <ThreadTranscript
+                messages={cleaned}
+                viewerRole="centre"
+                viewerId={viewer.id}
+                parentName={selected.parentName}
+                centreName={centreName || selected.centreName || selected.daycareName}
+                reads={details?.reads || []}
+              />
+            )}
+          </div>
+          {canWrite ? (
+            <ThreadComposer
+              inputId="centre-thread-reply"
+              value={body}
+              onChange={setBody}
+              onSubmit={onSend}
+              error={sendError}
+              placeholder={t("writeMessage")}
+              plusLabel={t("inboxQuickReplies")}
+              sendLabel={t("send")}
+              plusOpen={quickOpen}
+              onPlus={() => setQuickOpen((v) => !v)}
+              menu={
+                <div className="mb-2 rounded-xl bg-surface p-2 ring-1 ring-border">
+                  <p className="px-3 py-2 text-sm text-muted">{t("inboxAttachSoon")}</p>
+                  <ul className="max-h-56 space-y-1 overflow-y-auto">
+                    {templates.map((row) => (
+                      <li key={row.id}>
+                        <button
+                          type="button"
+                          onClick={() => insertQuick(row.id)}
+                          className="min-h-11 w-full rounded-lg px-3 py-2 text-left hover:bg-bg"
+                        >
+                          <p className="text-sm font-medium">{row.title}</p>
+                          <p className="text-[11px] text-subtle">{row.meta}</p>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              }
+            />
+          ) : (
+            <p className="px-4 py-3 text-sm text-muted">{t("threadReadOnly")}</p>
+          )}
         </>
       ) : (
         <div className="flex flex-1 items-start p-6">
@@ -399,18 +373,27 @@ export function CentreInboxDesk({
     </div>
   );
 
-  const detail = selected ? (
-    <InboxDetailRail
-      thread={selected}
-      tour={tour}
-      leads={leads}
-      centreName={centreName || selected.daycareName}
-      canWrite={canWrite}
-      onChanged={refresh}
-    />
-  ) : (
-    <div className="hidden p-4 text-sm text-muted lg:block">{t("inboxSelectThreadLead")}</div>
-  );
+  function detailPane() {
+    if (!selected) {
+      return <div className="hidden p-4 text-sm text-muted lg:block">{t("inboxSelectThreadLead")}</div>;
+    }
+    return (
+      <InboxDetailRail
+        thread={selected}
+        tour={tour}
+        leads={leads}
+        centreName={centreName || selected.centreName || selected.daycareName}
+        canWrite={canWrite}
+        onChanged={refresh}
+        details={details}
+                viewerId={viewer.id}
+        stateBusy={stateBusy}
+        onMarkUnread={() => void onState("unread")}
+        onToggleStar={() => void onState("star")}
+        onToggleArchive={() => void onState("archive")}
+      />
+    );
+  }
 
   return (
     <DeskShell
@@ -428,7 +411,7 @@ export function CentreInboxDesk({
       >
         <div className={cn(selectedId ? "hidden lg:flex lg:flex-col" : "flex flex-col")}>{listPane}</div>
         <div className={cn(!selectedId ? "hidden lg:flex lg:flex-col" : "flex flex-col")}>{threadPane}</div>
-        <div className="hidden border-l border-border lg:block">{detail}</div>
+        <div className="hidden border-l border-border lg:block">{detailPane()}</div>
       </div>
       {detailOpen && selected ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center lg:hidden" role="presentation">
@@ -446,7 +429,7 @@ export function CentreInboxDesk({
               </Button>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto">
-              {detail}
+              {detailPane()}
             </div>
           </div>
         </div>
