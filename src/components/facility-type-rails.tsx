@@ -282,6 +282,7 @@ export function DaycareTypeRails({
   rows,
   eagerThumbs = false,
   visual = false,
+  labelFar = false,
   skipLiveLooking = false,
   menu = true,
   seeAll = true,
@@ -293,6 +294,8 @@ export function DaycareTypeRails({
   rows?: Partial<Record<BrowseDaycareType, Card[]>>;
   eagerThumbs?: boolean;
   visual?: boolean;
+  /** Name search labels far centres with province and kilometres. */
+  labelFar?: boolean;
   /** Home featured rail: show the same centres the chip counted, including incomplete cards. */
   skipLiveLooking?: boolean;
   menu?: boolean;
@@ -345,6 +348,7 @@ export function DaycareTypeRails({
               }
               eagerThumbs={eagerThumbs}
               visual={visual}
+              labelFar={labelFar}
               persist={forced}
               empty={
                 forced && !row.length

@@ -9,8 +9,13 @@ import {
   type PlaceSuggestion,
 } from "@/lib/server/google-places";
 import { DISMISS_POPOVERS, placeHostVisible } from "@/lib/dismiss-popovers";
+import { matchDaycareNames } from "@/lib/server/daycare-name-search";
 import {
+  centreSlugFromPlaceId,
   geocodeWithBrowser,
+  isCentrePlaceId,
+  placeMatchRank,
+  rankPlaceSuggestions,
   resolveLocalPlace,
   resolvePlaceIdBrowser,
   suggestLocalPlaces,
@@ -48,18 +53,34 @@ async function loadSuggestions(
   q: string,
   origin?: { lat: number; lng: number },
   session?: string,
+  includeCentres = false,
 ): Promise<PlaceSuggestion[]> {
+  let remote: PlaceSuggestion[] = [];
   try {
-    const rows = await suggestPlaces({
+    remote = await suggestPlaces({
       data: { q, session, lat: origin?.lat, lng: origin?.lng },
     });
-    if (rows.length) return rows;
   } catch {
-    /* fall through to browser / local */
+    remote = [];
   }
-  const browser = await suggestPlacesBrowser(q, origin);
-  if (browser.length) return browser;
-  return suggestLocalPlaces(q);
+  if (!remote.length) remote = await suggestPlacesBrowser(q, origin);
+  const local = suggestLocalPlaces(q, 12);
+  let merged = rankPlaceSuggestions(q, [...local, ...remote], 6);
+  const cityHit = merged.some((row) => placeMatchRank(q, row.label, row.secondary) <= 1);
+  if (includeCentres && !cityHit) {
+    try {
+      const names = await matchDaycareNames({ data: q });
+      const centres = names.slice(0, 4).map((hit) => ({
+        placeId: `centre:${hit.slug}`,
+        label: hit.name,
+        secondary: [hit.city, hit.province].filter(Boolean).join(", "),
+      }));
+      merged = rankPlaceSuggestions(q, [...merged, ...centres], 6);
+    } catch {
+      /* name lookup can be empty without a database */
+    }
+  }
+  return merged;
 }
 
 function newSession() {
@@ -85,6 +106,7 @@ export function PlaceSearch({
   ariaLabel,
   ariaLabelledBy,
   emptyMenu,
+  onCentre,
 }: {
   value: string;
   onChange: (q: string) => void;
@@ -98,6 +120,8 @@ export function PlaceSearch({
   ariaLabelledBy?: string;
   /** Shown on focus before a city is typed. Nearby stays first. */
   emptyMenu?: WhereEmptyMenu;
+  /** A daycare name in the Where box opens that listing. */
+  onCentre?: (hit: { slug: string; label: string }) => void;
 }) {
   const listId = useId();
   const wrap = useRef<HTMLDivElement>(null);
@@ -110,6 +134,8 @@ export function PlaceSearch({
   const [destOpen, setDestOpen] = useState(false);
   const focusedValue = useRef(value);
   const holdDest = useRef(false);
+  const onCentreRef = useRef(onCentre);
+  onCentreRef.current = onCentre;
   const showDestinations = Boolean(emptyMenu) && destOpen && !open && (value.trim().length < 2 || value === focusedValue.current);
 
   function close() {
@@ -130,7 +156,7 @@ export function PlaceSearch({
     }
     let live = true;
     const tmr = window.setTimeout(() => {
-      void loadSuggestions(q, origin, session.current).then((rows) => {
+      void loadSuggestions(q, origin, session.current, Boolean(onCentreRef.current)).then((rows) => {
         if (!live || holdDest.current) return;
         if (!placeHostVisible(wrap.current)) return;
         if (document.activeElement !== input.current) return;
@@ -192,6 +218,15 @@ export function PlaceSearch({
   }, []);
 
   async function pick(hit: PlaceSuggestion) {
+    if (isCentrePlaceId(hit.placeId)) {
+      const slug = centreSlugFromPlaceId(hit.placeId);
+      setOpen(false);
+      setHits([]);
+      if (slug && onCentreRef.current) {
+        onCentreRef.current({ slug, label: hit.label });
+        return;
+      }
+    }
     const local = resolveLocalPlace(hit.placeId);
     const resolved =
       local ??
