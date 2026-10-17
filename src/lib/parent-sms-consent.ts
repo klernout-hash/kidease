@@ -55,6 +55,15 @@ export function parentSmsOptInInput(input: { phone?: unknown; smsConsent?: unkno
   };
 }
 
+/** True when Lookup said texts cannot reach the number, so SMS stayed off. */
+export function smsOptInWasBlocked(result: unknown): boolean {
+  return Boolean(
+    result &&
+      typeof result === "object" &&
+      (result as { smsUnreachable?: unknown }).smsUnreachable === true,
+  );
+}
+
 export function stashParentSmsOptIn(phone: string, smsConsent: boolean) {
   if (typeof window === "undefined") return;
   try {

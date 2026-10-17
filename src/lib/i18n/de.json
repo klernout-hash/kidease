@@ -2610,6 +2610,7 @@
   "accountContactTitle": "Kontaktdaten",
   "accountContactLead": "Wird auf Ihren Seiten „Eltern“ und „Kita“ angezeigt: das ist Ihr KidEase-Konto.",
   "accountPhone": "Telefonnummer",
+  "smsUnreachable": "SMS erreichen diese Nummer nicht. Nutze ein Handy, das Nachrichten empfangen kann.",
   "accountEmailNote": "Die E-Mail ist die Adresse, mit der Sie sich anmelden. Verwenden Sie „Passwort vergessen“ auf der Anmeldeseite, um sie wiederherzustellen.",
   "accountBio": "Kurzbeschreibung",
   "accountBioPh": "Eine kurze Notiz über Sie oder Ihre Familie.",

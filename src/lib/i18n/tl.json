@@ -2610,6 +2610,7 @@
   "accountContactTitle": "Mga detalye ng contact",
   "accountContactLead": "Ipinapakita sa iyong Parent at Daycare pages: ito ang iyong KidEase account.",
   "accountPhone": "Numero ng telepono",
+  "smsUnreachable": "Hindi umabot ang text sa numerong iyan. Gumamit ng mobile na tumatanggap ng text.",
   "accountEmailNote": "Ang email ang address na ginagamit mo sa pag-sign in. Gamitin ang Forgot password sa sign-in page para mabawi ito.",
   "accountBio": "Bio",
   "accountBioPh": "Maikling tala tungkol sa iyo o sa pamilya mo.",

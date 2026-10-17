@@ -2610,6 +2610,7 @@
   "accountContactTitle": "联系信息",
   "accountContactLead": "显示在你的家长和托儿所页面: 这是你的 KidEase 账户。",
   "accountPhone": "电话号码",
+  "smsUnreachable": "短信无法发到这个号码。请改用可以接收短信的手机号。",
   "accountEmailNote": "电子邮件是你的登录地址。请在登录页使用“忘记密码”来找回。",
   "accountBio": "简介",
   "accountBioPh": "关于你或你家庭的简短说明。",

@@ -2610,6 +2610,7 @@
   "accountContactTitle": "Datos de contacto",
   "accountContactLead": "Se muestran en tus páginas de Padre y Guardería: esta es tu cuenta de KidEase.",
   "accountPhone": "Número de teléfono",
+  "smsUnreachable": "Los textos no llegan a ese número. Usa un celular que pueda recibir mensajes.",
   "accountEmailNote": "El correo electrónico es la dirección con la que inicias sesión. Usa Olvidé mi contraseña en la página de inicio de sesión para recuperarlo.",
   "accountBio": "Biografía",
   "accountBioPh": "Una nota breve sobre ti o tu familia.",

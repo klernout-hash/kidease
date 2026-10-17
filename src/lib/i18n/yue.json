@@ -2610,6 +2610,7 @@
   "accountContactTitle": "聯絡資料",
   "accountContactLead": "會顯示喺你嘅家長頁同托兒頁: 呢個係你嘅 KidEase 帳戶。",
   "accountPhone": "電話號碼",
+  "smsUnreachable": "短訊去唔到呢個號碼。請用一部收得到短訊嘅手機。",
   "accountEmailNote": "電郵就係你登入用嘅地址。要找回，請喺登入頁用「忘記密碼」。",
   "accountBio": "簡介",
   "accountBioPh": "寫少少關於你或者你屋企嘅介紹。",

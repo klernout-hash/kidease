@@ -2610,6 +2610,7 @@
   "accountContactTitle": "Dati di contatto",
   "accountContactLead": "Visibili nelle Sue pagine Genitore e Asilo nido: questo è il Suo account KidEase.",
   "accountPhone": "Numero di telefono",
+  "smsUnreachable": "Gli SMS non arrivano a quel numero. Usa un cellulare che può ricevere messaggi.",
   "accountEmailNote": "L'email è l'indirizzo con cui accede. Usi Password dimenticata nella pagina di accesso per recuperarla.",
   "accountBio": "Bio",
   "accountBioPh": "Una breve nota su di Lei o sulla Sua famiglia.",
