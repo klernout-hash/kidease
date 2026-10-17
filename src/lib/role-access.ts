@@ -167,8 +167,8 @@ export function destinationAfterSignIn(input: {
   return home;
 }
 
-export function upgradeNavLabel(_paid: boolean): "Subscription" {
-  return "Subscription";
+export function upgradeNavLabel(paid: boolean): "Upgrade" | "My plan" {
+  return paid ? "My plan" : "Upgrade";
 }
 
 /** Phone bottom bar. Daycare desk paths stay daycare even for an admin tester. */

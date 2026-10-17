@@ -286,7 +286,7 @@ async function runRoleFixture(page, base) {
         parentCross.length === 0 &&
         /home/i.test(parentNav) &&
         !parentSignIn &&
-        parentPlaces.drawer === "Subscription",
+        parentPlaces.drawer === "Upgrade",
       { note: parentSignIn ? "sign-in leak" : parentCross.join(",") || JSON.stringify(parentPlaces) },
     );
     const parentBar = await appBarText(page, new URL("/parent", base).href);
@@ -300,6 +300,7 @@ async function runRoleFixture(page, base) {
         /\bRequests\b/.test(parentBar) &&
         /\bMessages\b/.test(parentBar) &&
         !/\bUpgrade\b/.test(parentBar) &&
+        !/\bMy plan\b/.test(parentBar) &&
         !/\bSubscription\b/.test(parentBar) &&
         !/\bDesk\b/.test(parentBar) &&
         !/\bEnquiries\b/.test(parentBar) &&
@@ -372,7 +373,7 @@ async function runRoleFixture(page, base) {
     const managed = (await page.locator('[data-ke="manage-or-cancel"]').count()) > 0;
     record(
       "upgrade-my-plan-parent",
-      paidPlaces.drawer === "Subscription" && managed,
+      paidPlaces.drawer === "My plan" && managed,
       { note: JSON.stringify(paidPlaces) },
     );
 
@@ -407,7 +408,7 @@ async function runRoleFixture(page, base) {
         daycareCross.length === 0 &&
         /today/i.test(daycareNav) &&
         !daycareSignIn &&
-        daycarePlaces.drawer === "Subscription",
+        daycarePlaces.drawer === "Upgrade",
       { note: daycareSignIn ? "sign-in leak" : daycareCross.join(",") || JSON.stringify(daycarePlaces) },
     );
     // Pure daycare fixture (role=provider), not an admin who also owns centres.
@@ -421,6 +422,7 @@ async function runRoleFixture(page, base) {
         !daycareBar.includes("Desk") &&
         !daycareBar.includes("Enquiries") &&
         !daycareBar.includes("Upgrade") &&
+        !daycareBar.includes("My plan") &&
         !daycareBar.includes("Subscription") &&
         !daycareBar.includes("Earnings") &&
         !/\bSaved\b/.test(daycareBar) &&
@@ -446,7 +448,7 @@ async function runRoleFixture(page, base) {
     const daycarePaidPlaces = await upgradePlaces(page);
     record(
       "upgrade-my-plan-daycare",
-      daycarePaidPlaces.panel === "Subscription" && daycarePaidPlaces.drawer === "Subscription",
+      daycarePaidPlaces.panel === "My plan" && daycarePaidPlaces.drawer === "My plan",
       { note: JSON.stringify(daycarePaidPlaces) },
     );
 
@@ -474,7 +476,7 @@ async function runRoleFixture(page, base) {
     if ((await homeCheckout.count()) > 0) await homeCheckout.click();
     const homeReached = Boolean(await homeHit);
     await settleMockCheckout(page);
-    record("daycare-checkout-two-clicks", headerUpgrade === "Subscription" && deskReached && homeReached, {
+    record("daycare-checkout-two-clicks", headerUpgrade === "Upgrade" && deskReached && homeReached, {
       note: `${headerUpgrade} desk=${deskReached} home=${homeReached}`,
     });
 
@@ -502,7 +504,7 @@ async function runRoleFixture(page, base) {
     if ((await homePlus.count()) > 0) await homePlus.click();
     const parentHomeReached = Boolean(await parentHomeHit);
     await settleMockCheckout(page);
-    record("parent-plus-two-clicks", parentHeaderUpgrade === "Subscription" && parentDeskReached && parentHomeReached, {
+    record("parent-plus-two-clicks", parentHeaderUpgrade === "Upgrade" && parentDeskReached && parentHomeReached, {
       note: `${parentHeaderUpgrade} desk=${parentDeskReached} home=${parentHomeReached}`,
     });
 
