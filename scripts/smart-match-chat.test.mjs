@@ -58,7 +58,7 @@ test("the match chat asks in bubbles and does not use the old step sheet", () =>
   assert.match(ui, /radiusKm: snapshot\.radiusKm/);
   assert.match(ui, /wantsSubsidy\(snapshot\)/);
   assert.match(ui, /answersToQuiz\(snapshot\)/);
-  assert.match(ui, /if \(!on\) return null/);
+  assert.doesNotMatch(ui, /if \(!on\) return null/);
   assert.match(ui, /mt-3 flex justify-center/);
   assert.match(ui, /useAiFeatureFlag\(AI_FLAGS\.smartMatch\)/);
   assert.match(ui, /helpBubbleDistinctId/);

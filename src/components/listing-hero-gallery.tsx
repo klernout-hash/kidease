@@ -27,6 +27,7 @@ export function ListingHeroGallery({
   nextPath,
   photoId,
   claim = false,
+  showSave = true,
 }: {
   photos: string[];
   index: number;
@@ -39,6 +40,8 @@ export function ListingHeroGallery({
   photoId?: string;
   /** False for a centre already live. Do not ask them to claim. */
   claim?: boolean;
+  /** Parents and guests can save. Daycare accounts do not see the heart. */
+  showSave?: boolean;
 }) {
   const { t, locale } = useCopy();
   const start = useRef<{ x: number; y: number } | null>(null);
@@ -126,13 +129,15 @@ export function ListingHeroGallery({
             {backLink}
             <div className="flex items-center">
               <ShareListingButton appearance="photo" slug={slug} name={name} className="bg-black/40" />
-              <SaveListingButton
-                daycareId={daycareId}
-                nextPath={nextPath}
-                appearance="photo"
-                framed={false}
-                className="static right-auto top-auto bg-black/40"
-              />
+              {showSave ? (
+                <SaveListingButton
+                  daycareId={daycareId}
+                  nextPath={nextPath}
+                  appearance="photo"
+                  framed={false}
+                  className="static right-auto top-auto bg-black/40"
+                />
+              ) : null}
             </div>
           </div>
           <div className="absolute inset-x-0 bottom-3 flex justify-center">

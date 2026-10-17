@@ -133,13 +133,12 @@ export function SmartMatchEntry({ inline = false, quiet = false }: { inline?: bo
   const on = useAiFeatureFlag(AI_FLAGS.smartMatch);
   const [open, setOpen] = useState(false);
 
-  if (!on) return null;
-
   const button = quiet ? (
     <button
       type="button"
       className="inline-flex min-h-11 items-center px-1 text-sm font-medium text-muted underline-offset-4 hover:text-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation"
       data-ke="smart-match-open"
+      data-flag={on ? "on" : "off"}
       onClick={() => setOpen(true)}
     >
       {t("smartMatchCta")}
@@ -150,6 +149,7 @@ export function SmartMatchEntry({ inline = false, quiet = false }: { inline?: bo
       variant="secondary"
       className="whitespace-nowrap"
       data-ke="smart-match-open"
+      data-flag={on ? "on" : "off"}
       onClick={() => setOpen(true)}
     >
       {t("smartMatchCta")}
