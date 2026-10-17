@@ -179,11 +179,15 @@ async function runRoleFixture(page, base) {
     await page.locator('#ke-nav-drawer [data-ke="role-nav"][data-role="guest"]').waitFor({ timeout: timeoutMs });
     let guestNav = await page.locator("#ke-nav-drawer").innerText();
     const guestPricing = await page.locator('[data-ke="optional-upgrades"]').count();
-    const guestPlans = await page.locator('#ke-nav-drawer [data-nav="plans"]').count();
-    const guestFooterPlans = await page.locator('footer a[href="/plans"]').count();
+    const guestPlanLink = page.locator('#ke-nav-drawer [data-nav="plans"]');
+    const guestPlans = await guestPlanLink.count();
+    const guestPlanLabel = ((await guestPlanLink.first().innerText().catch(() => "")) || "").replace(/\s+/g, " ").trim();
+    const guestFooterLink = page.locator('footer a[href="/plans"]');
+    const guestFooterPlans = await guestFooterLink.count();
+    const guestFooterLabel = ((await guestFooterLink.first().innerText().catch(() => "")) || "").replace(/\s+/g, " ").trim();
     record("guest-no-pricing", guestPricing === 0, { note: `pricing blocks ${guestPricing}` });
-    record("guest-plans-links", guestPlans > 0 && guestFooterPlans > 0, {
-      note: `nav=${guestPlans} footer=${guestFooterPlans}`,
+    record("guest-plans-links", guestPlans > 0 && guestFooterPlans > 0 && guestPlanLabel === "Plans" && guestFooterLabel === "Plans", {
+      note: `nav=${guestPlans}:${guestPlanLabel} footer=${guestFooterPlans}:${guestFooterLabel}`,
     });
     const plansResp = await page.goto(new URL("/plans", base).href, {
       waitUntil: "domcontentloaded",

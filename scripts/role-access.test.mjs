@@ -77,7 +77,8 @@ test("menus stay on one role and the plan label switches when paid", () => {
   assert.ok(guest.includes("Sign in"));
   assert.ok(guest.includes("List your daycare"));
   assert.equal(guest.includes("I'm a parent"), false);
-  assert.ok(guest.includes("Subscription"));
+  assert.ok(guest.includes("Plans"));
+  assert.equal(guest.includes("Subscription"), false);
   assert.equal(guest.includes("Upgrade"), false);
   assert.equal(guest.includes("My plan"), false);
   assert.equal(roleNavItems({ role: "parent" }).find((item) => item.id === "home")?.to, "/parent");

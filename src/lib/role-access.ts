@@ -229,7 +229,7 @@ export function roleNavItems(input: { role: ChromeRole; paid?: boolean; subscrip
     { id: "signin", label: "Sign in", to: "/login", icon: "login" },
     { id: "create", label: "Create an account", to: "/login", search: { intent: "up" }, icon: "parent" },
     { id: "list", label: "List your daycare", to: "/claim", icon: "claim" },
-    { id: "plans", label: "Subscription", to: "/plans", icon: "benefits" },
+    { id: "plans", label: "Plans", to: "/plans", icon: "benefits" },
     { id: "search", label: "Search", to: "/search", icon: "explore" },
     { id: "help", label: "Help Centre", to: "/help", icon: "help" },
   ];
