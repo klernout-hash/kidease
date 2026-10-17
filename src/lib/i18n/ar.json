@@ -1535,6 +1535,7 @@
   "waitlistRequestSaved": "أنت على قائمة الانتظار هذه. تتبّعها في طلباتي.",
   "directions": "الاتجاهات",
   "getDirections": "احصل على الاتجاهات",
+  "hiddenFromPublic": "مخفي عن الجمهور",
   "dayMon": "الإثنين",
   "dayTue": "الثلاثاء",
   "dayWed": "الأربعاء",

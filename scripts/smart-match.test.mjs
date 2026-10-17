@@ -145,7 +145,7 @@ test("events drop notes, addresses, and contact", () => {
   });
 });
 
-test("smart match stays behind its flag and does not send places to the model", () => {
+test("smart match stays on the page and does not send places to the model", () => {
   const server = read("src/lib/server/smart-match.ts");
   const ui = read("src/components/smart-match.tsx");
   const home = read("src/routes/index.tsx");
@@ -163,7 +163,8 @@ test("smart match stays behind its flag and does not send places to the model", 
   assert.doesNotMatch(ui, /callAi|XAI_API_KEY/);
   assert.match(home, /<SmartMatchEntry/);
   assert.match(search, /<SmartMatchEntry/);
-  assert.match(ui, /if \(!on\) return null/);
+  assert.doesNotMatch(ui, /if \(!on\) return null/);
+  assert.match(ui, /data-flag=\{on \? "on" : "off"\}/);
   assert.match(ui, /mt-3 flex justify-center/);
   assert.equal(tx("en", "smartMatchCta"), "Find my match with AI");
   assert.equal(tx("fr", "smartMatchCta"), "Trouver mon match avec l'IA");

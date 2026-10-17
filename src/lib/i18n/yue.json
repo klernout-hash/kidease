@@ -1535,6 +1535,7 @@
   "waitlistRequestSaved": "你已經喺呢個輪候名單上面。喺「我嘅請求」追蹤。",
   "directions": "路線",
   "getDirections": "睇路線",
+  "hiddenFromPublic": "公眾睇唔到",
   "dayMon": "一",
   "dayTue": "二",
   "dayWed": "三",

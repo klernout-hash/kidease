@@ -1535,6 +1535,7 @@
   "waitlistRequestSaved": "ਤੁਸੀਂ ਇਸ ਉਡੀਕ ਸੂਚੀ ਉੱਤੇ ਹੋ। ਇਸਨੂੰ ਮੇਰੀਆਂ ਬੇਨਤੀਆਂ ਉੱਤੇ ਟਰੈਕ ਕਰੋ।",
   "directions": "ਰਾਹ",
   "getDirections": "ਦਿਸ਼ਾਵਾਂ ਲਵੋ",
+  "hiddenFromPublic": "ਲੋਕਾਂ ਤੋਂ ਲੁਕਿਆ",
   "dayMon": "ਸੋਮ",
   "dayTue": "ਮੰਗਲ",
   "dayWed": "ਬੁੱਧ",

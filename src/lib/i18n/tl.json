@@ -1535,6 +1535,7 @@
   "waitlistRequestSaved": "Nasa waitlist ka na nito. Subaybayan ito sa Mga request ko.",
   "directions": "Direksyon",
   "getDirections": "Kumuha ng direksyon",
+  "hiddenFromPublic": "Nakatago sa publiko",
   "dayMon": "Lun",
   "dayTue": "Mar",
   "dayWed": "Miy",

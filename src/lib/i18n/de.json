@@ -1535,6 +1535,7 @@
   "waitlistRequestSaved": "Sie stehen auf dieser Warteliste. Verfolgen Sie sie unter Meine Anfragen.",
   "directions": "Route",
   "getDirections": "Route anzeigen",
+  "hiddenFromPublic": "Für die Öffentlichkeit verborgen",
   "dayMon": "Mo",
   "dayTue": "Di",
   "dayWed": "Mi",

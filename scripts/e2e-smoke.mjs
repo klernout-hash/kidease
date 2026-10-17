@@ -343,7 +343,7 @@ async function runRoleFixture(page, base) {
     const drawerBadge = ((await page.locator('#ke-nav-drawer [data-nav="bookings"] [data-ke="count-badge"]').innerText().catch(() => "")) || "").trim();
     const phoneSwitcher = await page.locator('#ke-nav-drawer [data-ke="desk-switcher"]').count();
     await page.keyboard.press("Escape");
-    record("nav-phone-shell", menuBadge > 0 && drawerUpgrade === 0 && phoneSwitcher === 0 && /^(\d+|99\+)$/.test(drawerBadge), {
+    record("nav-phone-shell", menuBadge > 0 && drawerUpgrade > 0 && phoneSwitcher === 0 && /^(\d+|99\+)$/.test(drawerBadge), {
       note: `menu=${menuBadge} upgrade=${drawerUpgrade} switcher=${phoneSwitcher} badge=${drawerBadge}`,
     });
     await page.setViewportSize({ width: 1280, height: 900 });

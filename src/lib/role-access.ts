@@ -188,20 +188,16 @@ export function bottomBarKind(input: {
 export function roleNavItems(input: { role: ChromeRole; paid?: boolean; subscriptionsOn?: boolean }): RoleNavItem[] {
   const paid = Boolean(input.paid);
   const planLabel = upgradeNavLabel(paid);
-  const parentUpgrade = input.subscriptionsOn !== false;
   if (input.role === "parent") {
-    const items: RoleNavItem[] = [
+    return [
       { id: "home", label: "Home", to: "/parent", icon: "parent" },
       { id: "search", label: "Search", to: "/search", icon: "explore" },
       { id: "saved", label: "Saved", to: "/parent", search: { tab: "saved" }, icon: "saved" },
       { id: "requests", label: "Requests", to: "/parent", search: { tab: "requests" }, icon: "tourChecklist" },
       { id: "messages", label: "Messages", to: "/inbox", search: { view: "family" }, icon: "messages" },
+      { id: "upgrade", label: planLabel, to: "/parent", search: { tab: "subscription" }, icon: "benefits" },
+      { id: "account", label: "Account", to: "/account", search: { tab: "profile" }, icon: "account" },
     ];
-    if (parentUpgrade) {
-      items.push({ id: "upgrade", label: planLabel, to: "/parent", search: { tab: "subscription" }, icon: "benefits" });
-    }
-    items.push({ id: "account", label: "Account", to: "/account", search: { tab: "profile" }, icon: "account" });
-    return items;
   }
   if (input.role === "provider") {
     return [
@@ -241,12 +237,19 @@ export function roleNavItems(input: { role: ChromeRole; paid?: boolean; subscrip
 
 export type ListingActionMode = "parent" | "edit" | "none" | "all";
 
-/** Guest, parent, and a daycare browsing someone else's listing get parent actions. Edit stays on the owner's own listing. */
+/** Parents and guests get parent actions. A daycare account never does. Edit stays on the owner's own listing. */
 export function listingActionMode(input: { role: ChromeRole; ownsListing: boolean }): ListingActionMode {
   if (input.role === "admin") return "all";
   if (input.role === "provider" && input.ownsListing) return "edit";
-  if (input.role === "provider" || input.role === "parent" || input.role === "guest") return "parent";
+  if (input.role === "provider") return "none";
+  if (input.role === "parent" || input.role === "guest") return "parent";
   return "none";
+}
+
+/** Search cards and other centres. A daycare account does not get waitlist, info, or save. */
+export function showsParentBrowseActions(role: ChromeRole | null | undefined): boolean {
+  const chrome = role === "admin" || role === "provider" || role === "parent" || role === "support" || role === "guest" ? role : "guest";
+  return showsParentListingActions(listingActionMode({ role: chrome, ownsListing: false }));
 }
 
 export function showsParentListingActions(mode: ListingActionMode): boolean {

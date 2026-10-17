@@ -78,7 +78,7 @@ test("phone desk destinations live in one hamburger, and the desktop sidebar sta
   assert.doesNotMatch(shell, /data-ke="desk-tab-nav"/);
   assert.match(shell, /DeskMenuProvider/);
   assert.match(drawer, /useDeskMenu/);
-  assert.match(drawer, /max-md:hidden/);
+  assert.doesNotMatch(drawer, /plan && "max-md:hidden"/);
   assert.match(shell, /hidden text-\[11px\] font-medium uppercase[\s\S]*md:block/);
   assert.match(shell, /data-ke="desk-desktop-nav"/);
   assert.match(shell, /hidden flex-col gap-0\.5 md:flex/);

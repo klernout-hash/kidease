@@ -77,6 +77,7 @@ import { EmptyState } from "@/components/empty-state";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useRoleChrome } from "@/components/role-chrome";
 import { listingActionMode, showsOwnListingEdit, showsParentListingActions } from "@/lib/role-access";
+import { isPublicListing } from "@/lib/listing-visibility";
 import { useCopy } from "@/lib/use-copy";
 import { listingPageTitle } from "@/lib/listing-meta";
 import { hreflangLinks, localePath } from "@/lib/locale-path";
@@ -544,7 +545,7 @@ export function Listing() {
     return (
       <Button className="rounded-[14px]" data-ke="listing-edit" asChild>
         <Link to="/provider" search={{ desk: "listings" }}>
-          Edit your listing
+          {t("deskHomeEdit")}
         </Link>
       </Button>
     );
@@ -638,10 +639,24 @@ export function Listing() {
     );
   }
 
-  function ListingActions() {
-    if (!parentActions && !ownEdit) return <div data-ke="listing-actions-none" />;
+  function DirectionsButton({ className = "" }: { className?: string }) {
     return (
-      <div data-ke={parentActions ? "listing-parent-actions" : "listing-own-edit"}>
+      <Button
+        type="button"
+        variant="secondary"
+        className={`rounded-[14px] ${className}`}
+        data-ke="get-directions"
+        onClick={() => void openDirections(d.lat, d.lng, name, directionsPlace)}
+      >
+        <MapPinned className="size-4" />
+        {t("getDirections")}
+      </Button>
+    );
+  }
+
+  function ListingActions() {
+    return (
+      <div data-ke={parentActions ? "listing-parent-actions" : ownEdit ? "listing-own-edit" : "listing-actions-none"}>
         <ListingEditLink />
         {parentActions && live ? (
           <Button className="rounded-[14px]" data-ke="listing-primary-cta" onClick={onInfo}>
@@ -659,6 +674,7 @@ export function Listing() {
           </Button>
         ) : null}
         {parentActions && !live ? <p className="text-xs text-muted">{t("parentRequestNotLive")}</p> : null}
+        <DirectionsButton />
       </div>
     );
   }
@@ -678,6 +694,7 @@ export function Listing() {
             nextPath={localePath(`/daycare/${slug}`, locale)}
             photoId={roomPhotos.length ? undefined : "listing-photos"}
             claim={offerClaim}
+            showSave={parentActions}
           />
         </div>
         <div className="ke-gutter">
@@ -709,6 +726,14 @@ export function Listing() {
         <header className="mt-1">
           <div className="flex items-start justify-between gap-3">
             <h1 className="font-display text-[1.75rem] leading-tight md:text-[2rem]">{name}</h1>
+          {!isPublicListing(d) ? (
+            <p
+              className="mt-2 rounded-xl bg-surface px-3 py-2 text-sm font-medium ring-1 ring-border"
+              data-ke="hidden-from-public"
+            >
+              {t("hiddenFromPublic")}
+            </p>
+          ) : null}
             {gallery.length ? null : (
               <ShareListingButton slug={d.slug} name={name} appearance="icon" className="shrink-0" />
             )}
@@ -821,14 +846,7 @@ export function Listing() {
             <section id="listing-location" className="scroll-mt-24">
               <div className="flex items-end justify-between gap-3">
                 <h2 className="font-display text-2xl">{t("onMap")}</h2>
-                <button
-                  type="button"
-                  onClick={() => void openDirections(d.lat, d.lng, name, directionsPlace)}
-                  className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-primary hover:underline"
-                >
-                  <MapPinned className="size-4" />
-                  {t("directions")}
-                </button>
+                <DirectionsButton className="shrink-0" />
               </div>
               <div className="mt-3 overflow-hidden rounded-lg ring-1 ring-border">
                 <ListingMap lat={d.lat} lng={d.lng} title={`${name}: Google Maps`} />
@@ -940,12 +958,12 @@ export function Listing() {
                 <p className="mt-2 max-w-prose text-sm text-muted">{t("availUnknownLead")}</p>
               )}
               <VacancyFreshness item={d} className="mt-2 text-xs text-subtle" lead />
-              {live ? (
+              {parentActions && live ? (
                 <div className="mt-4">
                   <WaitlistOptIn daycareId={d.id} province={d.province} next={`/daycare/${d.slug}`} />
                 </div>
               ) : null}
-              <JoinWaitlist daycareId={d.id} next={`/daycare/${d.slug}`} />
+              {parentActions ? <JoinWaitlist daycareId={d.id} next={`/daycare/${d.slug}`} /> : null}
             </section>
 
             {d.amenities.split(",").filter(Boolean).length ? (
@@ -1087,6 +1105,7 @@ export function Listing() {
           <ListingCtaSnippet live={live} from={from} hours={hours} />
           <div className="flex items-center gap-2">
           {ownEdit ? <ListingEditLink /> : null}
+          <DirectionsButton className="shrink-0" />
           {parentActions && live ? (
             <div className="flex min-w-0 flex-1 gap-2" data-ke="listing-parent-actions">
               <Button className="h-auto min-h-11 flex-1 rounded-[14px] px-2.5 py-2 text-center text-[13px] leading-tight" data-ke="listing-sticky-cta" onClick={onInfo}>

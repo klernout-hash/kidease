@@ -1535,6 +1535,7 @@
   "waitlistRequestSaved": "您已在此等候名单上。请在「我的申请」中跟踪。",
   "directions": "路线",
   "getDirections": "获取路线",
+  "hiddenFromPublic": "不对公众显示",
   "dayMon": "周一",
   "dayTue": "周二",
   "dayWed": "周三",

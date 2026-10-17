@@ -203,7 +203,8 @@ test("the quiz and the writer stay hidden until the real flag is read", () => {
   assert.match(hook, /readAiFeatureFlags/);
   assert.match(smart, /useAiFeatureFlag\(AI_FLAGS\.smartMatch\)/);
   assert.match(writer, /useAiFeatureFlag\(AI_FLAGS\.listingWriter\)/);
-  assert.match(smart, /if \(!on\) return null/);
+  // Find my match stays on the page even when the flag is off. The listing writer stays gated.
+  assert.doesNotMatch(smart, /if \(!on\) return null/);
   assert.match(writer, /if \(!on\) return null/);
   assert.doesNotMatch(smart, /aiFlagDefaultOn/);
   assert.doesNotMatch(writer, /aiFlagDefaultOn/);
