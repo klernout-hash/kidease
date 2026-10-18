@@ -20,6 +20,7 @@ export function ListingRail({
   empty,
   persist = false,
   visual = false,
+  labelFar = false,
 }: {
   title: string;
   items: Card[];
@@ -39,6 +40,8 @@ export function ListingRail({
   persist?: boolean;
   /** Large photo cards for home and parent discovery sections. */
   visual?: boolean;
+  /** Name search labels far centres with province and kilometres. */
+  labelFar?: boolean;
 }) {
   const { t } = useCopy();
   const scroller = useRef<HTMLDivElement>(null);
@@ -152,6 +155,7 @@ export function ListingRail({
                 presentation={visual ? "visual" : "rail"}
                 compact={!visual}
                 eager={eagerThumbs && i < 2}
+                labelFar={labelFar}
               />
             </div>
           ))}
