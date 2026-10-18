@@ -128,6 +128,13 @@ export type CentreInboxThread = {
   subsidyNote: string | null;
   scheduleNote: string | null;
   requestInfoCount: number;
+  centreName?: string;
+  memberNames?: string | null;
+  lastSender?: string | null;
+  archived?: boolean;
+  starred?: boolean;
+  startDate?: string | null;
+  childName?: string | null;
 };
 
 export function threadMatchesQuery(thread: Pick<CentreInboxThread, "parentName" | "preview" | "daycareName">, query: string) {

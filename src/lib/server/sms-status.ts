@@ -36,19 +36,44 @@ export function publicRequestUrl(request: Request, configured?: string): string 
   return `${proto}://${host}${url.pathname}${url.search}`;
 }
 
+/**
+ * Primary auth token, then an optional TWILIO_AUTH_TOKEN_NEXT during a
+ * rotation. Production inbound already validates with TWILIO_AUTH_TOKEN.
+ * Neither value is logged.
+ */
+export function twilioAuthTokenCandidates(env: Record<string, string | undefined> = process.env): string[] {
+  const primary = (env.TWILIO_AUTH_TOKEN || "").trim();
+  const next = (env.TWILIO_AUTH_TOKEN_NEXT || "").trim();
+  const tokens: string[] = [];
+  if (primary) tokens.push(primary);
+  if (next && next !== primary) tokens.push(next);
+  return tokens;
+}
+
+/** True when any configured auth token matches. Missing token or header throws. */
+export function twilioSignatureMatches(
+  signatureHeader: string,
+  url: string,
+  params: Record<string, string>,
+  env: Record<string, string | undefined> = process.env,
+): boolean {
+  const tokens = twilioAuthTokenCandidates(env);
+  if (!tokens.length) throw new TwilioSignatureError("TWILIO_AUTH_TOKEN missing");
+  if (!signatureHeader.trim()) throw new TwilioSignatureError("X-Twilio-Signature missing");
+  return tokens.some((token) => validateTwilioSignature(token, signatureHeader, url, params));
+}
+
 /** Fail closed. Missing token or a bad X-Twilio-Signature is 401. */
 export async function authorizeTwilioPost(
   request: Request,
   configuredUrl?: string,
 ): Promise<{ ok: true; params: Record<string, string> } | { ok: false; response: Response }> {
   const raw = await request.text();
-  const token = (process.env.TWILIO_AUTH_TOKEN || "").trim();
   const params = parseTwilioForm(raw);
   const url = publicRequestUrl(request, configuredUrl);
   const sig = request.headers.get("x-twilio-signature") || "";
-  if (!token) return { ok: false, response: new Response("Unauthorized", { status: 401 }) };
   try {
-    if (!validateTwilioSignature(token, sig, url, params)) {
+    if (!twilioSignatureMatches(sig, url, params)) {
       return { ok: false, response: new Response("Unauthorized", { status: 401 }) };
     }
   } catch {

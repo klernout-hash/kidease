@@ -202,6 +202,7 @@ export function DeskShell({
                 {visibleDeskGroups(desk, allItems).map(({ group, items }) => (
                   <details
                     key={group.id}
+                    open={group.open || undefined}
                     ref={(node) => {
                       if (node && group.open && node.dataset.keGroup !== "1") {
                         node.dataset.keGroup = "1";
@@ -211,7 +212,7 @@ export function DeskShell({
                     className="py-0.5"
                   >
                     <summary className="flex min-h-11 cursor-pointer list-none items-center rounded-lg px-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-subtle [&::-webkit-details-marker]:hidden">
-                      {group.labelKey ? t(group.labelKey) : group.label}
+                      <span>{group.labelKey ? t(group.labelKey) : group.label}</span>
                     </summary>
                     <div className="flex flex-col gap-0.5">
                       {group.id === "settings" ? (
