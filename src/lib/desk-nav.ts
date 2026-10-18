@@ -81,7 +81,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "contract", label: "Contract", hint: "Agreement + enrolment packs", labelKey: "deskNavContract", hintKey: "deskNavContractHint", href: "/provider", search: { desk: "contract" } },
     { id: "promote", label: "Promote", hint: "Promote and add-ons", labelKey: "deskNavPromote", hintKey: "deskNavPromoteHint", href: "/provider", search: { desk: "promote" } },
     { id: "post-job", label: "Post a daycare job", labelKey: "postDaycareJob", href: "/jobs/post" },
-    { id: "subscription", label: "Subscription", hint: "Pro, Network, and add-ons", labelKey: "deskNavSubscription", hintKey: "deskNavSubscriptionHint", icon: "credit-card", href: "/provider/subscription" },
+    { id: "subscription", label: "Upgrade", hint: "Pro, Network, and add-ons", labelKey: "deskNavSubscription", hintKey: "deskNavSubscriptionHint", icon: "credit-card", href: "/provider/subscription" },
     { id: "profile", label: "Profile", labelKey: "profile", href: "/account", search: { tab: "profile", section: "profile", desk: "director" } },
     { id: "appearance", label: "Appearance", labelKey: "appearance", href: "/account", search: { tab: "profile", section: "appearance", desk: "director" } },
     { id: "delete", label: "Delete account", labelKey: "deleteAccount", href: "/account", search: { tab: "profile", section: "delete", desk: "director" } },
@@ -103,7 +103,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "payments", label: "Pay", hint: "Bills from your centre", labelKey: "payments", hintKey: "deskNavPaymentsHint" },
     { id: "messages", label: "Messages", hint: "Centre threads + tours", labelKey: "messages", hintKey: "deskNavParentMessagesHint", href: "/inbox", search: { view: "family" } },
     { id: "search", label: "Search", labelKey: "search", href: "/search" },
-    { id: "upgrade", label: "Subscription", hint: "Parent Plus", labelKey: "deskNavUpgrade", hintKey: "deskNavUpgradeHint", icon: "credit-card", href: "/parent", search: { tab: "subscription" } },
+    { id: "upgrade", label: "Upgrade", hint: "Parent Plus", labelKey: "deskNavUpgrade", hintKey: "deskNavUpgradeHint", icon: "credit-card", href: "/parent", search: { tab: "subscription" } },
     { id: "profile", label: "Profile", labelKey: "profile", href: "/account", search: { tab: "profile", section: "profile", desk: "parent" } },
     { id: "appearance", label: "Appearance", labelKey: "appearance", href: "/account", search: { tab: "profile", section: "appearance", desk: "parent" } },
     { id: "delete", label: "Delete account", labelKey: "deleteAccount", href: "/account", search: { tab: "profile", section: "delete", desk: "parent" } },
@@ -191,14 +191,7 @@ const OWNER_ONLY_NAV = new Set([
 
 export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
   return DESK_NAV[desk].filter((item) => {
-    if (item.id === "upgrade") {
-      if (desk === "parent" && opts?.subscriptionsEnabled === false) return false;
-      return true;
-    }
-    if (item.id === "subscription") {
-      if (opts?.centreOwner === false && opts?.centreLinked !== true) return false;
-      return true;
-    }
+    if (item.id === "upgrade" || item.id === "subscription") return true;
     if (item.id === "promote") {
       if (opts?.showPayCtas === false) return false;
       if (opts?.centreOwner === false) return false;
@@ -245,9 +238,9 @@ export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
   parent: [
     { id: "family", label: "Family desk", labelKey: "familyDeskTitle", open: true, itemIds: ["explore", "saved", "bookings", "waitlists", "messages"] },
     { id: "my-family", label: "My family", labelKey: "navMyFamily", open: true, itemIds: ["children", "care", "payments"] },
-    { id: "search-tools", label: "Search tools", labelKey: "navSearchTools", itemIds: ["search", "alerts"] },
-    { id: "account", label: "Account", labelKey: "account", itemIds: ["profile", "appearance", "upgrade", "delete"] },
-    { id: "settings", label: "Settings", labelKey: "settings", itemIds: ["notify-prefs", "security", "email-sms"] },
+    { id: "search-tools", label: "Search tools", labelKey: "navSearchTools", open: true, itemIds: ["search", "alerts"] },
+    { id: "account", label: "Account", labelKey: "account", open: true, itemIds: ["profile", "appearance", "upgrade", "delete"] },
+    { id: "settings", label: "Settings", labelKey: "settings", open: true, itemIds: ["notify-prefs", "security", "email-sms"] },
   ],
   daycare: [
     { id: "desk", label: "Daycare desk", labelKey: "daycareDeskTitle", open: true, itemIds: ["today", "requests", "tours", "listings", "messages"] },
@@ -255,8 +248,8 @@ export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
     { id: "team", label: "Team", labelKey: "navTeam", itemIds: ["employees", "screening"] },
     { id: "compliance", label: "Compliance", labelKey: "navCompliance", itemIds: ["licence", "contract"] },
     { id: "grow", label: "Grow", labelKey: "navGrow", itemIds: ["post-job", "add", "claim"] },
-    { id: "account", label: "Account", labelKey: "account", itemIds: ["profile", "appearance", "subscription", "delete"] },
-    { id: "settings", label: "Settings", labelKey: "settings", itemIds: ["notify-prefs", "security", "email-sms"] },
+    { id: "account", label: "Account", labelKey: "account", open: true, itemIds: ["profile", "appearance", "subscription", "delete"] },
+    { id: "settings", label: "Settings", labelKey: "settings", open: true, itemIds: ["notify-prefs", "security", "email-sms"] },
   ],
   admin: [
     { id: "ops", label: "Operations", labelKey: "navOperations", open: true, itemIds: ["queue", "mail"] },

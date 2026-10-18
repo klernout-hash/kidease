@@ -58,7 +58,8 @@ import {
 import { socialSignupCallbackPath } from "@/lib/auth/social-callback";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { isSignupWhy, SIGNUP_FUNNEL_EVENT, signupFunnelPayload, type SignupWhy } from "@/lib/signup-funnel";
-import { parentMobileIssue, stashParentSmsOptIn, takeParentSmsOptIn } from "@/lib/parent-sms-consent";
+import { parentMobileIssue, smsOptInWasBlocked, stashParentSmsOptIn, takeParentSmsOptIn } from "@/lib/parent-sms-consent";
+import { toast } from "sonner";
 import { saveParentSmsOptIn } from "@/lib/server/parent-sms-consent";
 import { ParentSmsFields } from "@/components/parent-sms-fields";
 import type { CopyKey } from "@/lib/copy";
@@ -219,7 +220,8 @@ export function LoginScreen({
       if ((search.intent === "up" || mode === "up") && role !== "provider") {
         const stashed = takeParentSmsOptIn();
         if (stashed) {
-          await withTimeoutFallback(saveParentSmsOptIn({ data: stashed }), LOGIN_CONTINUE_MS, undefined);
+          const savedSms = await withTimeoutFallback(saveParentSmsOptIn({ data: stashed }), LOGIN_CONTINUE_MS, undefined);
+          if (smsOptInWasBlocked(savedSms)) toast.message(t("smsUnreachable"));
         }
       }
       if (search.intent === "up" && (role === "parent" || role === "provider")) {
@@ -341,11 +343,12 @@ export function LoginScreen({
         if (res.error) throw new Error(friendlyAuthError(authClientErrorMessage(res.error)));
         rememberToken(res.data);
         if (parentSignup) {
-          await withTimeoutFallback(
+          const savedSms = await withTimeoutFallback(
             saveParentSmsOptIn({ data: { phone, smsConsent } }),
             LOGIN_CONTINUE_MS,
             undefined,
           );
+          if (smsOptInWasBlocked(savedSms)) toast.message(t("smsUnreachable"));
         }
         confirmAction(t, "accountCreated");
       } else {

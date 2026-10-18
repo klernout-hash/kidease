@@ -4,7 +4,8 @@ import { authClient, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { continueAfterSignIn } from "@/lib/auth/login-funnel";
-import { parentMobileIssue } from "@/lib/parent-sms-consent";
+import { parentMobileIssue, smsOptInWasBlocked } from "@/lib/parent-sms-consent";
+import { toast } from "sonner";
 import { saveParentSmsOptIn } from "@/lib/server/parent-sms-consent";
 import { setRole } from "@/lib/server/family";
 import { localPasswordIssue } from "@/lib/password-hygiene";
@@ -76,11 +77,12 @@ export function ParentSignupForm() {
       rememberToken(res.data);
       rememberRole("parent");
       await withTimeoutFallback(setRole({ data: "parent" }), LOGIN_CONTINUE_MS, undefined);
-      await withTimeoutFallback(
+      const savedSms = await withTimeoutFallback(
         saveParentSmsOptIn({ data: { phone, smsConsent } }),
         LOGIN_CONTINUE_MS,
         undefined,
       );
+      if (smsOptInWasBlocked(savedSms)) toast.message(t("smsUnreachable"));
       confirmAction(t, "accountCreated");
       await continueAfterSignIn({
         next: "/parent",

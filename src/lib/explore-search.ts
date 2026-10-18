@@ -69,6 +69,16 @@ export function daycareNameSimilarity(left: string, right: string) {
 const FUZZY_NAME_MIN = 5;
 const FUZZY_NAME_SCORE = 0.45;
 
+/** Every public name match. A name search does not drop centres outside the radius. */
+export function filterByDaycareName<T extends { name: string; nameFr?: string | null }>(
+  rows: readonly T[],
+  name: string,
+): T[] {
+  const q = name.trim();
+  if (!q) return [...rows];
+  return rows.filter((row) => matchesDaycareName(row, q));
+}
+
 export function matchesDaycareName(
   item: { name: string; nameFr?: string | null },
   query: string,

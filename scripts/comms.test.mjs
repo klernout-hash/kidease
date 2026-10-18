@@ -5,12 +5,19 @@ import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import {
   brandKidEaseSms,
+  chatBodyWithoutSmsFooter,
   daycareReplySms,
   inboundKeywordTwiml,
+  inboundSmsChatDecision,
   parentMessageSms,
   parentRequestSms,
   smsConsentAllows,
   SMS_HELP_REPLY,
+  SMS_HELP_REPLY_FR,
+  SMS_START_REPLY,
+  SMS_START_REPLY_FR,
+  SMS_STOP_REPLY,
+  SMS_STOP_REPLY_FR,
 } from "../src/lib/sms-copy.ts";
 import { CASL_ADDRESS_BLOCKED_MESSAGE, CASL_NO_CONSENT_MESSAGE } from "../src/lib/casl.ts";
 import { smsDeliveryRecord } from "../src/lib/server/sms-status.ts";
@@ -64,8 +71,42 @@ test("HELP replies only when Advanced Opt-Out did not", () => {
   assert.match(help, /<Message>/);
   assert.match(help, /KidEase/);
   assert.match(help, /STOP/);
-  assert.equal(inboundKeywordTwiml({ OptOutType: "HELP", Body: "HELP" }, "help").includes("<Message>"), false);
+  assert.match(help, /1-877-502-7728/);
   assert.match(SMS_HELP_REPLY, /support@kidease\.ca/);
+  for (const typed of ["HELP", "STOP", "START"]) {
+    assert.equal(inboundKeywordTwiml({ OptOutType: typed, Body: typed }, typed.toLowerCase()).includes("<Message>"), false);
+  }
+  for (const line of [SMS_HELP_REPLY, SMS_STOP_REPLY, SMS_START_REPLY, SMS_HELP_REPLY_FR, SMS_STOP_REPLY_FR, SMS_START_REPLY_FR]) {
+    assert.ok(line.length <= 160, line);
+    assert.match(line, /KidEase/);
+  }
+});
+
+test("inbound SMS never becomes a chat message", () => {
+  const decision = inboundSmsChatDecision("tour Thursday");
+  assert.equal(decision.insertIntoThread, false);
+  assert.equal(decision.persistBody, false);
+  assert.equal(inboundSmsChatDecision("HELP").insertIntoThread, false);
+  const inbound = src("src/routes/api/sms.inbound.ts");
+  assert.doesNotMatch(inbound, /insert into messages/);
+  assert.doesNotMatch(inbound, /sendConnectedMessage/);
+  assert.match(inbound, /inboundSmsChatDecision/);
+  assert.equal(
+    chatBodyWithoutSmsFooter("See you Thursday. Reply STOP to opt out."),
+    "See you Thursday.",
+  );
+  assert.match(parentMessageSms("Little Fox"), /Reply STOP to opt out/);
+  assert.match(daycareReplySms("Little Fox"), /Reply STOP to opt out/);
+  assert.doesNotMatch(src("src/lib/server/family.ts"), /We tour Thursday/);
+  assert.doesNotMatch(src("src/lib/server/family.ts"), /How can we help/);
+  const thread = src("src/routes/inbox.$id.tsx");
+  assert.match(thread, /viewerRole === "centre"/);
+  assert.match(thread, /threadAdminRead/);
+  assert.match(thread, /chatBodyWithoutSmsFooter/);
+  assert.match(src("src/components/centre-inbox.tsx"), /chatBodyWithoutSmsFooter/);
+  assert.match(src("src/components/centre-inbox.tsx"), /centre-thread-reply/);
+  assert.match(src("docs/sms.md"), /1-877-502-7728/);
+  assert.match(src("docs/sms.md"), /Opt-out management/);
 });
 
 test("status rows keep sid and status and drop the body", () => {

@@ -13,8 +13,9 @@ import { formatAgeLabel } from "@/lib/templates";
 import { isClaimVerified } from "@/lib/trust";
 import { tourSlaRemainingMs } from "@/lib/today-sla";
 import { formatPreferredTimes, parsePreferredTimes } from "@/lib/threads";
-import { daycareReplySms, parentMessageSms } from "@/lib/sms-copy";
+import { chatBodyWithoutSmsFooter, daycareReplySms, parentMessageSms } from "@/lib/sms-copy";
 import { nid } from "@/lib/utils";
+import { ensureConversationUserState } from "./conversation-state";
 import { lookupUser, notifyPlatform, notifyThreadParty } from "./notify";
 import {
   listCentreOwnerEmails,
@@ -31,6 +32,7 @@ export const listInbox = createServerFn({ method: "GET" })
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     await sql.query(`alter table conversations add column if not exists staff_note text`).catch(() => undefined);
+    await ensureConversationUserState(sql);
     const rows = await sql<{
       id: string;
       daycare_id: string;
@@ -61,6 +63,11 @@ export const listInbox = createServerFn({ method: "GET" })
       provider_replied: number | null;
       has_parent_message: number | null;
       info_count: number | null;
+      starred: boolean | null;
+      archived_at: string | null;
+      marked_unread: boolean | null;
+      member_names: string | null;
+      start_date: string | null;
     }>`
       select c.id, c.daycare_id, c.user_id as parent_user_id,
              d.name, d.slug, d.photos, c.last_at, d.phone,
@@ -68,6 +75,9 @@ export const listInbox = createServerFn({ method: "GET" })
              d.claim_status, d.claimed_at, d.screening_on_file,
              d.financial_flags, d.schedule_options,
              c.staff_note as conversation_staff_note,
+             s.starred as starred,
+             s.archived_at as archived_at,
+             s.marked_unread as marked_unread,
              (
                select b.status from bookings b
                where b.conversation_id = c.id
@@ -128,7 +138,9 @@ export const listInbox = createServerFn({ method: "GET" })
                order by t.created_at desc limit 1
              ) as tour_hold_expires_at,
              (
-               select case when exists (
+               select case
+                 when coalesce(s.marked_unread, false) then 1
+                 when exists (
                  select 1 from messages m
                  where m.conversation_id = c.id
                    and m.sender not in ('system')
@@ -155,10 +167,29 @@ export const listInbox = createServerFn({ method: "GET" })
              (
                select count(*)::int from lead_requests l
                where l.conversation_id = c.id and l.kind = 'info'
-             ) as info_count
+             ) as info_count,
+             (
+               select b.start_date from bookings b
+               where b.conversation_id = c.id
+                  or (b.user_id = c.user_id and b.daycare_id = c.daycare_id)
+               order by b.created_at desc limit 1
+             ) as start_date,
+             (
+               select string_agg(name, ', ')
+               from (
+                 select u2.name as name
+                 from centre_members m
+                 join "user" u2 on u2.id = m.user_id
+                 where m.daycare_id = c.daycare_id and m.status = 'active' and m.user_id <> c.user_id
+                 order by case m.role when 'owner' then 0 when 'manager' then 1 else 2 end, u2.name
+                 limit 3
+               ) members
+             ) as member_names
       from conversations c
       join daycares d on d.id = c.daycare_id
       left join "user" u on u.id = c.user_id
+      left join conversation_user_state s
+        on s.conversation_id = c.id and s.user_id = ${context.userId}
       where c.user_id = ${context.userId}
          or exists (
            select 1 from provider_daycares p
@@ -173,8 +204,13 @@ export const listInbox = createServerFn({ method: "GET" })
 
     const out: Conversation[] = [];
     for (const r of rows) {
-      const last = await sql<{ body: string }>`
-        select body from messages where conversation_id = ${r.id} order by created_at desc limit 1
+      const last = await sql<{ body: string; sender: string }>`
+        select body, sender from messages
+        where conversation_id = ${r.id}
+          and sender <> 'system'
+          and coalesce(kind, 'chat') = 'chat'
+        order by created_at desc
+        limit 1
       `;
       const isParent = r.parent_user_id === context.userId;
       if (data.view === "centre" && isParent) continue;
@@ -225,6 +261,13 @@ export const listInbox = createServerFn({ method: "GET" })
         subsidyNote: financial.subsidy ? "Provincial subsidy / $10-a-day: ask on tour" : null,
         scheduleNote: schedules.length ? schedules.join(" · ") : null,
         requestInfoCount: Number(r.info_count) || 0,
+        centreName: r.name,
+        memberNames: r.member_names,
+        lastSender: last[0]?.sender ?? null,
+        archived: Boolean(r.archived_at),
+        starred: r.starred === true || Number(r.starred) === 1,
+        startDate: r.start_date ? String(r.start_date).slice(0, 10) : null,
+        childName: r.child_name,
       };
       out.push(row);
     }
@@ -255,7 +298,7 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
   .validator((input: { conversationId: string; body: string }) => input)
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    const body = data.body.trim();
+    const body = chatBodyWithoutSmsFooter(data.body);
     if (!body) return { ok: false as const };
     const access = await requireConversationWrite(sql, data.conversationId, context.userId);
     const row = access.conversation;
