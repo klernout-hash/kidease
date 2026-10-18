@@ -57,22 +57,32 @@ Admin → Daycares shows the live SoT (Neon vs JSON fallback) and the public row
 
 ## Optional master CSV (offline only)
 
-The private 23 927-row master lives in
+The private licensed master lives in
 [kidease-master-data](https://github.com/klernout-hash/kidease-master-data).
 Do not commit it here. `POST /api/seed-catalog` only upserts `centres.json`
 (+ extras). It cannot see the private file. Close the master gap with the
 ops script.
 
+The verified master is **25,872** rows (`KidEase_Canada_Master_25872_20261006_1314.csv`,
+2026-10-06). On 2026-10-09 the public sitemap and the city directory both
+listed **25,617** centres (255 short). That gap is rows from this master that
+are not public yet. It is not a sitemap-only filter. Quebec recognized home
+daycares are a separate file and are not part of the 25,872.
+
 ```bash
 # Prove the lock before writing. No DATABASE_URL. Prints counts only.
-MASTER_CSV_PATH=/secure/KidEase_Canada_Master_23927_20260923_1004.csv \
-npm run ops:seed-catalog -- --dry-run --expect-master=23927
+MASTER_CSV_PATH=/secure/KidEase_Canada_Master_25872_20261006_1314.csv \
+npm run ops:seed-catalog -- --dry-run --expect-master=25872
 
-# One Production write after migrations. Idempotent.
-MASTER_CSV_PATH=/secure/KidEase_Canada_Master_23927_20260923_1004.csv \
+# One Production write after the dry-run matches. Idempotent.
+MASTER_CSV_PATH=/secure/KidEase_Canada_Master_25872_20261006_1314.csv \
 DATABASE_URL='postgresql://…' \
-npm run ops:seed-catalog
+npm run ops:seed-catalog -- --expect-master=25872
 ```
+
+The September 23,927-row file is the previous snapshot. Do not seed that file
+over the 25,872 master. If the dry-run says the catalogue is below the lock,
+paste the printed summary and stop. Do not hide rows to force the number.
 
 What the merge does:
 
@@ -93,8 +103,15 @@ What the merge does:
   never replaced with blank.
 - Unmatched Canada rows are appended only when a coordinate already exists for
   that postal code, FSA, or city (catalogue median, or the built-in city list).
-  Rows with no coordinate are counted as `skippedNoGeo` and are not given an
-  invented pin.
+  If those miss and the postal code has a forward sortation area, the seed
+  uses the official area centre from GeoNames (CC BY 4.0). That is the postal
+  area, not a street pin. Rows with no postal code are counted as
+  `skippedNoGeo` and are not given a pin.
+- A Quebec row whose type, care, licence category, or program says milieu
+  familial, RSG, or RSGE is counted as `skippedQcHome` and is not inserted.
+  CPE and garderie rows stay. British Columbia and Alberta family homes stay.
+  Recognized homes stay in the separate Quebec home import. Do not turn that
+  feature on from this seed.
 - Ages, fees, photos, open spots, and Live/claim fields are not copied from
   the CSV. New rows stay unclaimed (`claim_status` default `unclaimed`), so
   they are catalogue listings, not Live centres.
@@ -104,6 +121,10 @@ What the merge does:
   hidden. Nothing is deleted. If the hide count is above 40, the seed stops
   and writes nothing. `--no-hide-stale` skips the hide. A dry-run with
   `DATABASE_URL` prints `staleMaster=` and does not write.
+- An `mx-` row already hidden as `removed_from_master` is made public again
+  when its facility is in this licensed master. Quebec recognized homes are
+  not restored. Claimed rows stay hidden. If that restore count is above 500,
+  the seed stops and writes nothing.
 - The upsert still skips any row with `claimed_at`, a provider link, a claim,
   or a staff membership. Kids World and other approved centres are left as
   they are.
