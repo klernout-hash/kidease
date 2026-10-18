@@ -14,16 +14,11 @@ export function PostHogBoot() {
   const { user, isPending } = useCurrentUserState();
 
   useEffect(() => {
-    const start = () => {
-      startPostHog();
-      captureRetentionTouch();
-    };
-    if (typeof requestIdleCallback === "function") {
-      const id = requestIdleCallback(start, { timeout: 2500 });
-      return () => cancelIdleCallback(id);
-    }
-    const timer = window.setTimeout(start, 1);
-    return () => window.clearTimeout(timer);
+    // Granted visitors must init on mount. Deferring until the browser is
+    // idle dropped the landing pageview when they left first.
+    // startPostHog still no-ops until Allow.
+    startPostHog();
+    captureRetentionTouch();
   }, []);
 
   useEffect(() => {

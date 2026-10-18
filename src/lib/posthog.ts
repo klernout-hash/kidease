@@ -349,6 +349,9 @@ export function startPostHog(): void {
     })
     .catch(() => {
       client = null;
+      // The Oct 4 split loads this from product-events-lib. A blocked or
+      // missing chunk must not stick, or Allow can never retry on this page.
+      started = false;
     });
 }
 
