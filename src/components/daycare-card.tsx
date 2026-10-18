@@ -210,6 +210,7 @@ export const DaycareCard = memo(function DaycareCard({
   compact = false,
   eager = false,
   presentation = "rail",
+  labelFar = false,
 }: {
   item: Card;
   showDistance?: boolean;
@@ -218,6 +219,8 @@ export const DaycareCard = memo(function DaycareCard({
   eager?: boolean;
   /** Rail keeps the dense tile. Visual is the photo-led search and home card. */
   presentation?: "rail" | "visual";
+  /** Name search: show kilometres, and the province once a centre is far away. */
+  labelFar?: boolean;
 }) {
   const { t, locale } = useCopy();
   const parentActions = showsParentBrowseActions(useRoleChrome().role);
@@ -239,12 +242,15 @@ export const DaycareCard = memo(function DaycareCard({
     fees: "cardGapFees",
     photo: "cardGapPhoto",
   } as const;
+  const farAway = labelFar && typeof distanceKm === "number" && distanceKm >= 80;
   const away = parentDistanceLabel({
     km: distanceKm,
     away: t("kmAway"),
     show:
-      originIsParentLocation(originSource) &&
-      plausibleListingKm(distanceKm, item.city, origin.label),
+      farAway ||
+      (labelFar && typeof distanceKm === "number" && distanceKm > 0) ||
+      (originIsParentLocation(originSource) &&
+        plausibleListingKm(distanceKm, item.city, origin.label)),
   });
   const photos = (item.photos ?? []).filter((p) => p && !p.includes("-logo"));
   const hollowPhoto = !photos.some((p) => isRealListingPhoto(p));
@@ -284,7 +290,7 @@ export const DaycareCard = memo(function DaycareCard({
   const showParentAverage = (item.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (item.parentRatingX10 ?? 0) > 0;
 
   if (presentation === "visual") {
-    const placeLine = [item.city, away].filter(Boolean).join(" · ");
+    const placeLine = [item.city, farAway ? item.province : "", away].filter(Boolean).join(" · ");
     return (
       <article data-slug={item.slug} data-ke="visual-card" className="ke-visual-card group w-full min-w-0">
         <div className="relative">
@@ -321,7 +327,11 @@ export const DaycareCard = memo(function DaycareCard({
             ) : null}
           </div>
           <FoundingMemberBadge show={item.foundingMember} className="mt-1" />
-          {placeLine ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{placeLine}</p> : null}
+          {placeLine ? (
+            <p className="mt-0.5 truncate text-[13px] leading-5 text-muted" data-far={farAway ? "1" : undefined}>
+              {placeLine}
+            </p>
+          ) : null}
           {sort === "best" && whyMatchLine(item, t) ? (
             <p className="mt-0.5 line-clamp-2 text-[13px] leading-5 text-muted" data-ke="why-match">
               <span className="font-medium text-fg">{t("whyMatch")}. </span>

@@ -71,11 +71,13 @@ test("video Plus opens for parents while subscriptions are off, and the video fl
   assert.equal(on.ok, true);
 });
 
-test("parent desk uses the flag for compare and hides the parent upgrade surface", () => {
+test("parent desk compare stays flagged and Upgrade opens the plan view", () => {
   const desk = readFileSync(join(root, "src/components/parent-desk.tsx"), "utf8");
   const route = readFileSync(join(root, "src/routes/parent.tsx"), "utf8");
   assert.match(desk, /compareMax=\{plus\.compareMax\}/);
-  assert.match(desk, /plus\.showParentUpgrade/);
-  assert.match(route, /!chrome\.subscriptionsEnabled/);
+  assert.match(desk, /alwaysOffer/);
+  assert.match(desk, /chrome\.paid \? "navMyPlan" : "navUpgrade"/);
+  assert.match(desk, /data-ke="parent-plan-view"/);
+  assert.doesNotMatch(route, /tab: "explore"/);
   assert.doesNotMatch(desk, /free forever/i);
 });

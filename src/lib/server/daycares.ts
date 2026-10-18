@@ -463,7 +463,7 @@ async function searchIncludingLive(data: SearchInput): Promise<DaycareCard[]> {
   if (hub) return runSearch({ ...searched, directorySlug: hub.slug });
   const livePromise = liveCardsForSearch(searched);
   const full = await withTimeoutFallback(runSearch(searched), LOADER_SETTLE_MS, null);
-  const live = await withTimeoutFallback(livePromise, full && full.length > 0 ? 800 : 2500, []);
+  const live = await withTimeoutFallback(livePromise, full && full.length > 0 ? 80 : 400, []);
   const facility = data.facility;
   if (!full || full.length === 0) {
     const liveOnly = uniqueById(live);
@@ -552,6 +552,15 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
     }
   }
   cards = await mergePinnedCentres(cards, lock, origin, data.fsa);
+  const overlayCap = 192;
+  const rankSort =
+    data.sort === "best" || data.sort === "match" || data.sort === "recommended" || data.sort === "urgency";
+  let distanceTail: DaycareCard[] = [];
+  if (!rankSort && cards.length > overlayCap) {
+    cards.sort((a, b) => a.distanceKm - b.distanceKm || a.name.localeCompare(b.name));
+    distanceTail = cards.slice(overlayCap);
+    cards = cards.slice(0, overlayCap);
+  }
   cards = await overlayClaimed(cards, mergeClaimedCard);
   cards = await overlayParentReviews(cards);
   cards = await overlayQuality(cards);
@@ -564,6 +573,7 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
   cards = await overlayParentRank(cards, rankPrefs);
   cards = await overlayPriority(cards);
   cards = await overlayFeaturedCity(cards);
+  if (distanceTail.length) cards = cards.concat(distanceTail);
   if (data.ageGroup !== "any") {
     cards = cards.filter((c) => {
       if (listingAgeUnknown(c)) return true;

@@ -12,6 +12,62 @@ export function isLocalPlaceId(placeId: string) {
   return placeId.startsWith("local:");
 }
 
+export function isCentrePlaceId(placeId: string) {
+  return placeId.startsWith("centre:");
+}
+
+export function centreSlugFromPlaceId(placeId: string) {
+  return isCentrePlaceId(placeId) ? placeId.slice("centre:".length) : "";
+}
+
+/** Accent-folded text so "Edmonton" and "edmonton" rank the same. */
+export function foldPlaceQuery(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+/**
+ * 0 exact city, 1 prefix, 2 contains.
+ * Exact and prefix beat a nearer city that only contains the letters.
+ */
+export function placeMatchRank(query: string, label: string, secondary = ""): number {
+  const q = foldPlaceQuery(query);
+  const main = foldPlaceQuery(label);
+  const city = main.split(",")[0]?.trim() || main;
+  if (!q) return 3;
+  if (city === q || main === q) return 0;
+  if (city.startsWith(q) || main.startsWith(q) || foldPlaceQuery(secondary).startsWith(q)) return 1;
+  return 2;
+}
+
+/** Exact, then prefix, then the original order. Duplicate labels keep the first. */
+export function rankPlaceSuggestions<T extends { label: string; secondary?: string }>(
+  query: string,
+  rows: readonly T[],
+  limit = 6,
+): T[] {
+  const seen = new Set<string>();
+  const ranked = rows
+    .map((row, index) => ({
+      row,
+      index,
+      rank: placeMatchRank(query, row.label, row.secondary || ""),
+    }))
+    .sort((a, b) => a.rank - b.rank || a.index - b.index);
+  const out: T[] = [];
+  for (const item of ranked) {
+    const key = foldPlaceQuery(item.row.label);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(item.row);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
 /** City / neighbourhood matches when Places autocomplete is empty or denied. */
 export function suggestLocalPlaces(query: string, limit = 6): PlaceSuggestion[] {
   const q = query.trim().toLowerCase();
@@ -30,9 +86,8 @@ export function suggestLocalPlaces(query: string, limit = 6): PlaceSuggestion[] 
       label,
       secondary: city.province,
     });
-    if (out.length >= limit) break;
   }
-  return out;
+  return rankPlaceSuggestions(query, out, limit);
 }
 
 export function resolveLocalPlace(placeId: string): ResolvedPlace | null {

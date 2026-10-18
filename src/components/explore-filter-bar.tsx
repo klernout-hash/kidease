@@ -46,6 +46,9 @@ function IconToggle({
 export function ExploreFilterBar({
   listingCount,
   ageChips,
+  liveOn = false,
+  liveSearch,
+  onLive,
   nearMeOn,
   onNearMe,
   openSpotsOn,
@@ -62,6 +65,10 @@ export function ExploreFilterBar({
 }: {
   listingCount?: number;
   ageChips: ReactNode;
+  /** Claim-verified listings. Same set as Filters → Claim verified. */
+  liveOn?: boolean;
+  liveSearch?: Record<string, unknown>;
+  onLive?: () => void;
   nearMeOn: boolean;
   onNearMe: () => void;
   openSpotsOn: boolean;
@@ -91,6 +98,18 @@ export function ExploreFilterBar({
         className="ke-explore-filter-scroll"
         label={t("searchRowFilters")}
       >
+        {liveSearch ? (
+          <Link
+            to={localePath("/search", locale)}
+            search={liveSearch as never}
+            data-ke="live-on-kidease"
+            className={cn("ke-chip shrink-0", liveOn && "ke-chip-on")}
+            aria-pressed={liveOn}
+            onClick={onLive}
+          >
+            {t("liveOnKidEase")}
+          </Link>
+        ) : null}
         {ageChips}
         <ChipButton on={nearMeOn} aria-pressed={nearMeOn} onClick={onNearMe}>
           {t("nearMe")}
