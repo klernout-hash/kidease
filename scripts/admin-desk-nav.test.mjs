@@ -82,18 +82,27 @@ test("header, hamburger, and menu Admin entries document-navigate to /admin", ()
   assert.doesNotMatch(drawer, />\s*Admin\s*</);
 });
 
-test("document /admin gate is role-only; APIs still require 2FA", () => {
+test("document /admin gate requires the 2FA cookie and still reaches enrolment", () => {
   const roles = src("src/lib/server/roles.ts");
   const gate = src("src/lib/server/admin-route.ts");
-  const assertBlock = roles.slice(roles.indexOf("export const assertAdminDesk"));
+  const redirect = src("src/lib/admin-desk-gate.ts");
+  const assertBlock = roles.slice(roles.indexOf("export const assertAdminDesk"), roles.indexOf("export const assertSupportDesk"));
   assert.match(assertBlock, /resolveAdminAccess/);
   assert.match(assertBlock, /Not authorized/);
-  assert.doesNotMatch(assertBlock, /requireAdmin/);
-  assert.doesNotMatch(assertBlock, /assertTwoFactorVerified/);
+  assert.match(assertBlock, /assertTwoFactorVerified/);
+  assert.doesNotMatch(assertBlock, /requireAdmin\(/);
   assert.match(roles, /export async function requireAdmin/);
   assert.match(roles, /assertTwoFactorVerified/);
   assert.match(gate, /adminDeskGateRedirect/);
   assert.match(gate, /beforeLoadAdminDesk/);
+  assert.match(redirect, /to: "\/verify-2fa"/);
+  const support = src("src/lib/server/support-route.ts");
+  assert.match(support, /assertSupportDesk/);
+  assert.match(support, /two_factor/);
+  assert.match(support, /\/verify-2fa/);
+  assert.match(src("src/routes/support.tsx"), /beforeLoadSupportDesk\("\/support"\)/);
+  assert.match(src("src/routes/support.$caseId.tsx"), /beforeLoadSupportDesk/);
+  assert.doesNotMatch(src("src/routes/verify-2fa.tsx"), /beforeLoadAdminDesk|beforeLoadSupportDesk/);
 });
 
 test("openAdminDesk is a document assign and writes the sticky desk", () => {

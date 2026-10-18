@@ -5,9 +5,11 @@ import { SupportCaseView } from "@/components/support-case";
 import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
+import { beforeLoadSupportDesk } from "@/lib/server/support-route";
 import { SESSION_SETTLE_MS } from "@/lib/timeout";
 
 export const Route = createFileRoute("/support/$caseId")({
+  beforeLoad: ({ params }) => beforeLoadSupportDesk(`/support/${params.caseId}`),
   head: () => ({
     meta: [
       { title: "Case · Support · KidEase" },
