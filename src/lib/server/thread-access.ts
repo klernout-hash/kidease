@@ -88,6 +88,11 @@ export async function markConversationRead(sql: Sql, conversationId: string, use
     values (${conversationId}, ${userId}, now())
     on conflict (conversation_id, user_id) do update set last_read_at = now()
   `.catch(() => undefined);
+  await sql`
+    update conversation_user_state
+    set marked_unread = false, updated_at = now()
+    where conversation_id = ${conversationId} and user_id = ${userId}
+  `.catch(() => undefined);
 }
 
 export async function listCentreOwnerEmails(

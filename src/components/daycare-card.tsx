@@ -10,6 +10,8 @@ import { ClaimListingCta } from "@/components/claim-listing-cta";
 import { ShareListingButton } from "@/components/share-button";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
+import { useRoleChrome } from "@/components/role-chrome";
+import { showsParentBrowseActions } from "@/lib/role-access";
 import { cn, displayCentreName, displayListingText, money } from "@/lib/utils";
 import { distanceKm as kmBetween } from "@/lib/proximity";
 import { useAppStore } from "@/lib/store";
@@ -218,6 +220,7 @@ export const DaycareCard = memo(function DaycareCard({
   presentation?: "rail" | "visual";
 }) {
   const { t, locale } = useCopy();
+  const parentActions = showsParentBrowseActions(useRoleChrome().role);
   const name = displayCentreName(locale === "fr" ? item.nameFr : item.name);
   const live = Boolean(item.live);
   const origin = useAppStore((s) => s.origin);
@@ -302,7 +305,7 @@ export const DaycareCard = memo(function DaycareCard({
               licenseWarning={licenseWarning}
             />
           </ListingAnchor>
-          <SaveListingButton daycareId={item.id} />
+          {parentActions ? <SaveListingButton daycareId={item.id} /> : null}
         </div>
         <ListingAnchor slug={item.slug} className="mt-2 block text-inherit no-underline">
           <div className="flex items-start justify-between gap-2">
@@ -359,15 +362,17 @@ export const DaycareCard = memo(function DaycareCard({
           ) : null}
         </ListingAnchor>
         <div className="mt-1 flex w-full min-w-0 flex-col items-start gap-1.5">
-          <ListingAnchor
-            slug={item.slug}
-            search={{ ask: "info" }}
-            data-ke="card-request-info"
-            className="relative z-10 inline-flex min-h-11 items-center text-[13px] font-semibold text-primary no-underline"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {t("cardRequestInfo")}
-          </ListingAnchor>
+          {parentActions ? (
+            <ListingAnchor
+              slug={item.slug}
+              search={{ ask: "info" }}
+              data-ke="card-request-info"
+              className="relative z-10 inline-flex min-h-11 items-center text-[13px] font-semibold text-primary no-underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {t("cardRequestInfo")}
+            </ListingAnchor>
+          ) : null}
           {offerClaim ? (
             <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10" />
           ) : null}
@@ -412,7 +417,7 @@ export const DaycareCard = memo(function DaycareCard({
             className="pointer-events-auto absolute right-16 top-2 z-20"
           />
         ) : null}
-        <SaveListingButton daycareId={item.id} />
+        {parentActions ? <SaveListingButton daycareId={item.id} /> : null}
       </div>
 
       <ListingAnchor slug={item.slug} className="block text-inherit no-underline">
@@ -496,15 +501,17 @@ export const DaycareCard = memo(function DaycareCard({
         </div>
       </ListingAnchor>
       <div className="mt-1.5 flex w-full min-w-0 flex-col items-start gap-1.5">
-        <ListingAnchor
-          slug={item.slug}
-          search={{ ask: "info" }}
-          data-ke="card-request-info"
-          className="relative z-10 inline-flex h-9 min-h-9 appearance-none items-center rounded-[14px] border-0 bg-primary px-2.5 text-[11px] font-semibold text-primary-fg no-underline shadow-none [-moz-appearance:none]"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {t("cardRequestInfo")}
-        </ListingAnchor>
+        {parentActions ? (
+          <ListingAnchor
+            slug={item.slug}
+            search={{ ask: "info" }}
+            data-ke="card-request-info"
+            className="relative z-10 inline-flex h-9 min-h-9 appearance-none items-center rounded-[14px] border-0 bg-primary px-2.5 text-[11px] font-semibold text-primary-fg no-underline shadow-none [-moz-appearance:none]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {t("cardRequestInfo")}
+          </ListingAnchor>
+        ) : null}
         {offerClaim ? (
           <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10" />
         ) : null}

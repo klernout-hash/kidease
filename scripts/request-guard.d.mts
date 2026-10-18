@@ -9,11 +9,14 @@ export function isSensitiveDeskPath(pathname: string | null | undefined): boolea
 export function isHiddenListingPath(pathname: string | null | undefined): boolean;
 export function isApexKideaseHost(hostHeader: string | null | undefined): boolean;
 export function shouldCanonicalizeApexPath(pathname: string | null | undefined): boolean;
+export function hasAuthSessionCookie(cookieHeader: string | null | undefined): boolean;
+export function notFoundDocument(kind?: "listing" | "page"): string;
 export function decideRequest(input?: {
   host?: string | null;
   pathname?: string | null;
   search?: string | null;
   method?: string | null;
+  cookie?: string | null;
 }):
   | { action: "next" }
   | { action: "redirect"; status: 301 | 302 | 308; location: string }

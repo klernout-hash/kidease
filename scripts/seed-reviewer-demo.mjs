@@ -41,6 +41,7 @@ const CHILD_ID = "qa-reviewer-child";
 const BOOKING_ID = "qa-reviewer-request";
 const CONVERSATION_ID = "qa-reviewer-thread";
 const MESSAGE_ID = "qa-reviewer-msg";
+const REPLY_ID = "qa-reviewer-reply";
 
 function newId() {
   return randomBytes(16).toString("hex");
@@ -267,6 +268,17 @@ async function upsertParentSamples(client, parentUserId) {
       "Hello — this is the App Review demo thread. Not a real parent.",
     ],
   );
+  await client.query(
+    `insert into messages (id, conversation_id, sender, body, kind)
+     values ($1, $2, 'provider', $3, 'chat')
+     on conflict (id) do nothing`,
+    [
+      REPLY_ID,
+      conversationId,
+      "Hello — this is the daycare demo reply. It stays in KidEase messages, not in a text.",
+    ],
+  );
+  await client.query(`update conversations set last_at = now() where id = $1`, [conversationId]);
 }
 
 /**

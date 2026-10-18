@@ -33,15 +33,30 @@ export const saveMyCaslConsents = createServerFn({ method: "POST" })
     locale: input?.locale === "fr" ? ("fr" as const) : ("en" as const),
     method: isCaslMethod(String(input?.method || "")) ? (input!.method as CaslMethod) : ("profile_checkbox" as const),
   }))
-  .handler(async ({ context, data }): Promise<CaslPrefs> => {
+  .handler(async ({ context, data }): Promise<CaslPrefs & { smsUnreachable: boolean }> => {
     const { setConsent, listConsents } = await import("./casl-consent");
-    const phone = normalizeCaslAddress("sms", data.phone);
+    let phone = normalizeCaslAddress("sms", data.phone);
     const email = normalizeCaslAddress("email", data.email);
+    let grantSms = data.smsService;
+    let smsUnreachable = false;
+    if (grantSms && phone) {
+      try {
+        const { decideSmsLookup } = await import("@/lib/sms-lookup");
+        const decision = await decideSmsLookup(phone);
+        if (decision.phone) phone = decision.phone;
+        if (decision.block) {
+          grantSms = false;
+          smsUnreachable = true;
+        }
+      } catch {
+        /* Lookup failed. Keep the opt-in. */
+      }
+    }
     await setConsent({
       userId: context.userId,
       channel: "sms",
       purpose: "service",
-      granted: data.smsService,
+      granted: grantSms,
       method: data.method,
       address: phone,
       locale: data.locale,
@@ -69,6 +84,7 @@ export const saveMyCaslConsents = createServerFn({ method: "POST" })
       smsService: next.smsService,
       emailService: next.emailService,
       emailCommercial: next.emailCommercial,
+      smsUnreachable,
     };
   });
 

@@ -57,21 +57,30 @@ test("sign-in lands on the stored role home unless the next path is allowed", ()
 });
 
 test("menus stay on one role and the plan label switches when paid", () => {
-  assert.equal(upgradeNavLabel(false), "Subscription");
-  assert.equal(upgradeNavLabel(true), "Subscription");
+  assert.equal(upgradeNavLabel(false), "Upgrade");
+  assert.equal(upgradeNavLabel(true), "My plan");
   const parent = roleNavItems({ role: "parent", paid: false }).map((item) => item.label);
+  const parentPaid = roleNavItems({ role: "parent", paid: true }).map((item) => item.label);
   const daycare = roleNavItems({ role: "provider", paid: true }).map((item) => item.label);
+  const daycareFree = roleNavItems({ role: "provider", paid: false }).map((item) => item.label);
   const guest = roleNavItems({ role: "guest" }).map((item) => item.label);
   assert.ok(parent.includes("Saved"));
-  assert.ok(parent.includes("Subscription"));
+  assert.ok(parent.includes("Upgrade"));
+  assert.equal(parent.includes("My plan"), false);
+  assert.ok(parentPaid.includes("My plan"));
+  assert.equal(parentPaid.includes("Upgrade"), false);
   assert.equal(parent.includes("My listing"), false);
   assert.ok(daycare.includes("Today"));
-  assert.ok(daycare.includes("Subscription"));
+  assert.ok(daycare.includes("My plan"));
+  assert.ok(daycareFree.includes("Upgrade"));
   assert.equal(daycare.includes("Saved"), false);
   assert.ok(guest.includes("Sign in"));
   assert.ok(guest.includes("List your daycare"));
   assert.equal(guest.includes("I'm a parent"), false);
-  assert.ok(guest.includes("Subscription"));
+  assert.ok(guest.includes("Plans"));
+  assert.equal(guest.includes("Subscription"), false);
+  assert.equal(guest.includes("Upgrade"), false);
+  assert.equal(guest.includes("My plan"), false);
   assert.equal(roleNavItems({ role: "parent" }).find((item) => item.id === "home")?.to, "/parent");
   assert.equal(roleNavItems({ role: "guest" }).find((item) => item.id === "plans")?.to, "/plans");
   assert.equal(guest.includes("Admin"), false);
@@ -81,7 +90,7 @@ test("menus stay on one role and the plan label switches when paid", () => {
 test("listing actions follow the viewer, and a role sticks after sign-up", () => {
   assert.equal(listingActionMode({ role: "guest", ownsListing: false }), "parent");
   assert.equal(listingActionMode({ role: "parent", ownsListing: false }), "parent");
-  assert.equal(listingActionMode({ role: "provider", ownsListing: false }), "parent");
+  assert.equal(listingActionMode({ role: "provider", ownsListing: false }), "none");
   assert.equal(listingActionMode({ role: "provider", ownsListing: true }), "edit");
   assert.equal(listingActionMode({ role: "admin", ownsListing: false }), "all");
   assert.equal(roleFlipAllowed("parent", "provider", 60_000), true);

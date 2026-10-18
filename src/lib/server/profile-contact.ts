@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { isE164, normalizeE164 } from "@/lib/sms";
 
 export type ContactProfile = {
   name: string;
@@ -14,7 +15,9 @@ function cleanName(value: unknown) {
 }
 
 function cleanPhone(value: unknown) {
-  return String(value ?? "").replace(/[^0-9+()\-.\s]/g, "").trim().slice(0, 32);
+  const cleaned = String(value ?? "").replace(/[^0-9+()\-.\s]/g, "").trim().slice(0, 32);
+  const e164 = normalizeE164(cleaned);
+  return isE164(e164) ? e164 : cleaned;
 }
 
 function cleanBio(value: unknown) {
