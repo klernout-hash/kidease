@@ -58,7 +58,9 @@ import {
   compactExploreSearch,
   dateAsksForOpenSpot,
   matchesDaycareName,
+  orderNameMatches,
   parseExploreSearchFields,
+  licensedSearchCountLine,
 } from "@/lib/explore-search";
 import {
   compactParentListingSearch,
@@ -208,6 +210,7 @@ export function searchValidateSearch(s: Record<string, unknown>) {
       city?: string;
       rank?: "best" | "nearest";
       page?: number;
+      live?: "1";
     } = { ...fields };
     const city = typeof s.city === "string" ? s.city.trim().slice(0, 80) : "";
     if (city) out.city = city;
@@ -226,6 +229,7 @@ export function searchValidateSearch(s: Record<string, unknown>) {
     const ageCsv = formatExploreRailAges(parseExploreRailAges({ age: s.age, cat: s.cat }));
     if (ageCsv) out.age = ageCsv;
     if (s.openings === "1" || s.openings === true || s.openings === 1) out.openings = "1";
+    if (s.live === "1" || s.live === true || s.live === 1) out.live = "1";
     if (typeof s.start === "string" && isSearchStart(s.start)) out.start = s.start;
     if (typeof s.cat === "string" && isExploreCategory(s.cat)) out.cat = s.cat;
     if (typeof s.care === "string" && isCareType(s.care)) out.care = s.care;
@@ -350,7 +354,7 @@ export function SearchScreen({
   const [catchmentOnly, setCatchmentOnly] = useState(false);
   const [confirmedOnly, setConfirmedOnly] = useState(false);
   const [readyOnly, setReadyOnly] = useState(false);
-  const [claimVerifiedOnly, setClaimVerifiedOnly] = useState(false);
+  const [claimVerifiedOnly, setClaimVerifiedOnly] = useState(incoming.live === "1");
   const [needBy, setNeedBy] = useState(incoming.from ?? "");
   const [needUntil, setNeedUntil] = useState(incoming.to ?? "");
   const [nameQuery, setNameQuery] = useState(incoming.name ?? "");
@@ -402,6 +406,10 @@ export function SearchScreen({
       setNeedBy(startWindowToDate(incoming.start));
     }
   }, [incoming.sort, incoming.age, incoming.cat, incoming.care, incoming.favorites, incoming.start, incoming.openings, setSort, setAgeGroup]);
+
+  useEffect(() => {
+    if (incoming.live === "1") setClaimVerifiedOnly(true);
+  }, [incoming.live]);
 
   useEffect(() => {
     setNameQuery(incoming.name ?? "");
@@ -635,7 +643,7 @@ export function SearchScreen({
         .finally(() => {
           if (live) setRefreshing(false);
         });
-    }, 160);
+    }, cached ? 160 : 0);
     const watchdog = window.setTimeout(() => {
       if (!live) return;
       setItems((cur) => {
@@ -686,6 +694,8 @@ export function SearchScreen({
     return { ...search, ...compactParentListingSearch(parentFilters) };
   }
 
+  const liveOn = claimVerifiedOnly || incoming.live === "1";
+
   function listingPageSearch(page: number) {
     return withParentSearch({
       q: incoming.q,
@@ -701,6 +711,7 @@ export function SearchScreen({
       openings: incoming.openings,
       city: incoming.city,
       rank: incoming.rank,
+      live: liveOn ? "1" : undefined,
       page: page > 1 ? page : undefined,
     });
   }
@@ -719,12 +730,35 @@ export function SearchScreen({
         care: incoming.care,
         favorites: incoming.favorites,
         openings: incoming.openings,
+        live: liveOn ? "1" : undefined,
         ages: undefined,
         open: undefined,
         sched: undefined,
         fac: undefined,
         ...compactParentListingSearch(next),
       },
+    });
+  }
+
+  function writeLiveClaimed(on: boolean) {
+    setClaimVerifiedOnly(on);
+    void navigate({
+      search: withParentSearch({
+        q: incoming.q ?? query,
+        name: incoming.name,
+        from: incoming.from,
+        to: incoming.to,
+        sort: incoming.sort,
+        age: incoming.age,
+        start: incoming.start,
+        cat: incoming.cat,
+        care: incoming.care,
+        favorites: incoming.favorites,
+        openings: incoming.openings,
+        city: incoming.city,
+        rank: incoming.rank,
+        live: on ? "1" : undefined,
+      }),
     });
   }
 
@@ -758,6 +792,7 @@ export function SearchScreen({
         care: incoming.care,
         favorites: incoming.favorites,
         openings: incoming.openings,
+        live: liveOn ? "1" : undefined,
       }),
     });
   }
@@ -785,6 +820,7 @@ export function SearchScreen({
         care: incoming.care,
         favorites: incoming.favorites,
         openings: incoming.openings,
+        live: liveOn ? "1" : undefined,
       }),
     });
   }
@@ -813,6 +849,7 @@ export function SearchScreen({
       start: incoming.start,
       favorites: incoming.favorites,
       openings,
+      live: liveOn ? "1" : undefined,
     });
   }
 
@@ -838,6 +875,7 @@ export function SearchScreen({
           care: incoming.care,
           favorites: incoming.favorites,
           openings: incoming.openings,
+          live: liveOn ? "1" : undefined,
         }),
         fac,
       },
@@ -863,16 +901,24 @@ export function SearchScreen({
     writeRailSelection({ ages: toggleExploreRailAge(parseExploreRailAges(incoming), age) });
   }
 
-  async function applyQuery() {
-    const label = query.trim();
+  async function applyQuery(typed?: string) {
+    const label = (typed ?? query).trim();
     if (label) {
       const hit = await resolveLocationQuery(label);
       if (hit) {
         applyPlace(hit);
         return;
       }
+      const kept = (incoming.q || origin.label || "").trim();
+      writeExploreSearch({
+        q: kept || undefined,
+        name: label,
+        from: needBy,
+        to: needUntil,
+      });
+      return;
     }
-    writeExploreSearch({ q: label, name: nameQuery, from: needBy, to: needUntil });
+    writeExploreSearch({ q: origin.label, name: nameQuery, from: needBy, to: needUntil });
   }
 
   function followDevice(pos: { lat: number; lng: number; accuracyM?: number }) {
@@ -1124,9 +1170,8 @@ export function SearchScreen({
     careType !== "any" ||
     Boolean(nameQuery.trim()) ||
     parentSearchActive(parentFilters);
-  const railItems = preferCompleteCards(
-    publicListings(extraListingFilters || (liveOnly && shownList.length > 0) ? shownList : (items ?? [])),
-  );
+  const pooled = publicListings(extraListingFilters || (liveOnly && shownList.length > 0) ? shownList : (items ?? []));
+  const railItems = nameQuery.trim() ? orderNameMatches(pooled) : preferCompleteCards(pooled);
   const visualItems = railItems.filter((row) => {
     if (
       selectedAges.length &&
@@ -1337,12 +1382,16 @@ export function SearchScreen({
   const mapOrigin = anchors.primary;
   const nameSearch = Boolean(nameQuery.trim());
   const centreCount = nameSearch || extraFilters ? visualItems.length : resultTotal;
-  const searchCountLine =
-    !nameSearch && fabric.live > 0
-      ? t("exploreBrowseHint").replace("{n}", String(fabric.live))
-      : centreCount === 1
-        ? t("searchLicensedCountOne")
-        : t("searchLicensedCount").replace("{n}", String(centreCount));
+  const licensedCount =
+    centreCount === 1
+      ? t("searchLicensedCountOne")
+      : t("searchLicensedCount").replace("{n}", String(centreCount));
+  const searchCountLine = licensedSearchCountLine({
+    nameSearch,
+    liveCount: fabric.live,
+    licensed: licensedCount,
+    liveHint: t("exploreBrowseHint").replace("{n}", String(fabric.live)),
+  });
 
   function chip(on: boolean, label: string, action: () => void) {
     return (
@@ -1413,7 +1462,7 @@ export function SearchScreen({
       )}
       {chip(confirmedOnly, t("filterConfirmedSpots"), () => setConfirmedOnly((v) => !v))}
       {chip(readyOnly, t("filterDetailsReady"), () => setReadyOnly((v) => !v))}
-      {chip(claimVerifiedOnly, t("filterClaimVerified"), () => setClaimVerifiedOnly((v) => !v))}
+      {chip(liveOn, t("filterClaimVerified"), () => writeLiveClaimed(!liveOn))}
       {chip(ten, t("filterTen"), () => setTen((v) => !v))}
       {fitFacts.signedIn ? (
         <label className="inline-flex min-h-11 items-center gap-2 text-sm">
@@ -1544,12 +1593,15 @@ export function SearchScreen({
           }}
           onStartChange={(start) => writeNowLoopSearch({ start })}
           onLocate={() => void geo()}
-          onSubmit={() => void applyQuery()}
+          onSubmit={(typed) => void applyQuery(typed)}
         />
         <SmartMatchEntry />
         <div className="ke-explore-filter-sticky mt-3">
         <ExploreFilterBar
           listingCount={items !== null ? resultCount : undefined}
+          liveOn={liveOn}
+          onLive={() => writeLiveClaimed(!liveOn)}
+          liveSearch={{ ...exploreSearchPatch({}), live: liveOn ? undefined : "1" }}
           ageChips={
             <ExploreCategoryChips
               selected={selectedAges}
@@ -1853,6 +1905,7 @@ export function SearchScreen({
               <DaycareTypeRails
                 items={visualItems}
                 visual
+                labelFar={nameSearch}
                 skipLiveLooking
                 seeAll={false}
                 selected={

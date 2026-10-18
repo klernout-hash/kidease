@@ -352,7 +352,7 @@ export function ParentDesk({
     if (desks.home === "/admin") return <Navigate to="/admin" />;
     if (desks.home === "/support") return <Navigate to="/support" />;
   }
-  const showParentPlus = Boolean(desksReady && canBuyParentUpgrade(upgradeBuyer) && plus.showParentUpgrade);
+  const showParentPlus = Boolean(desksReady && canBuyParentUpgrade(upgradeBuyer));
 
   return (
     <DeskShell desk="parent" active={tab === "subscription" ? "upgrade" : tab} onSelect={selectTab}>
@@ -523,15 +523,17 @@ export function ParentDesk({
 
       {contentTab === "subscription" ? (
         <div className="mt-6 w-full" data-ke="parent-subscription">
-          <h2 className="font-display text-2xl">{t("navUpgrade")}</h2>
-          <p className="mt-1 max-w-2xl text-sm text-muted">{t("accountSubscriptionLead")}</p>
-          {showParentPlus ? (
-            <div className="mt-4">
+          <h2 className="font-display text-2xl">{t(chrome.paid ? "navMyPlan" : "navUpgrade")}</h2>
+          <p className="mt-1 max-w-2xl text-sm text-muted">{t("parentPlusLead")}</p>
+          {!desksReady ? (
+            <div className="ke-skel mt-4 h-32 rounded-xl" aria-hidden="true" />
+          ) : showParentPlus ? (
+            <div className="mt-4" data-ke="parent-plan-view">
               <p className="ke-native-plan-note mb-3 text-sm text-muted" data-ke="native-plan-note">
                 {t("nativePlansHidden")}
               </p>
               <Suspense fallback={<div className="ke-skel h-32 rounded-xl" aria-hidden="true" />}>
-                <ParentPlusPanel quiet offerCheckout plusReturn={plusReturn} upgradeSearch={upgradeSearch} billingReturn={billingReturn} />
+                <ParentPlusPanel quiet offerCheckout alwaysOffer plusReturn={plusReturn} upgradeSearch={upgradeSearch} billingReturn={billingReturn} />
               </Suspense>
             </div>
           ) : (
