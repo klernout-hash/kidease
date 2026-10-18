@@ -75,9 +75,10 @@ describe("images are in the first HTML", () => {
     const listing = src("src/routes/daycare.$slug.tsx");
     assert.match(listing, /primaryListingPhoto/);
     assert.match(listing, /imageSrcSet: photoSrcSet\(hero, HERO_WIDTHS\)/);
+    assert.equal(primaryListingPhoto(["/photos/buildings/mb-1001.jpg"]), "");
     assert.equal(
-      primaryListingPhoto(["/photos/buildings/mb-1001.jpg"]),
-      "/photos/buildings/mb-1001.jpg",
+      primaryListingPhoto(["/photos/buildings/mb-1052.jpg"]),
+      "/photos/buildings/mb-1052.jpg",
     );
     assert.equal(primaryListingPhoto([]), "");
   });
