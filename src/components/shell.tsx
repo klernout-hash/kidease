@@ -42,6 +42,12 @@ export function Shell({ children }: { children: ReactNode }) {
       return typeof search?.q === "string" ? search.q : "";
     },
   });
+  const headerLive = useRouterState({
+    select: (s) => {
+      const search = s.location.search as { live?: unknown } | undefined;
+      return search?.live === "1";
+    },
+  });
   const { user } = useCurrentUserState();
   const { session, sticky } = useSessionDesks();
   const chrome = useRoleChrome();
@@ -127,7 +133,22 @@ export function Shell({ children }: { children: ReactNode }) {
               <BrandMark size="sm" />
             </Link>
             {barePath === "/" || barePath === "/search" ? (
-              <div className="hidden min-w-0 flex-1 md:block" data-ke="header-care-slot">
+              <div className="hidden min-w-0 flex-1 items-center gap-2 md:flex" data-ke="header-care-slot">
+                <Link
+                  to={localePath("/search", locale)}
+                  search={
+                    headerLive
+                      ? headerCity
+                        ? { q: headerCity }
+                        : {}
+                      : { ...(headerCity ? { q: headerCity } : {}), live: "1" as const }
+                  }
+                  data-ke="live-on-kidease-tab"
+                  aria-pressed={headerLive}
+                  className={`ke-chip shrink-0 ${headerLive ? "ke-chip-on" : ""}`}
+                >
+                  {t("liveOnKidEase")}
+                </Link>
                 <HomeCareTypeRow
                   compact
                   toSearch
@@ -188,7 +209,22 @@ export function Shell({ children }: { children: ReactNode }) {
             </div>
           </div>
           {barePath === "/" || barePath === "/search" ? (
-            <div className="w-full min-w-0 overflow-hidden pb-1.5 md:hidden">
+            <div className="flex w-full min-w-0 items-center gap-2 overflow-x-auto pb-1.5 md:hidden">
+              <Link
+                to={localePath("/search", locale)}
+                search={
+                  headerLive
+                    ? headerCity
+                      ? { q: headerCity }
+                      : {}
+                    : { ...(headerCity ? { q: headerCity } : {}), live: "1" as const }
+                }
+                data-ke="live-on-kidease-tab"
+                aria-pressed={headerLive}
+                className={`ke-chip shrink-0 ${headerLive ? "ke-chip-on" : ""}`}
+              >
+                {t("liveOnKidEase")}
+              </Link>
               <HomeCareTypeRow
                 compact
                 toSearch

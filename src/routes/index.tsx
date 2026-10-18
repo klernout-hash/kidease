@@ -40,6 +40,7 @@ import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { uniqueById } from "@/lib/utils";
 import { publicListings } from "@/lib/listing-visibility";
+import { isClaimVerified } from "@/lib/trust";
 import { readRecent } from "@/lib/recent";
 import { isSafeSitemapSlug } from "@/lib/sitemap";
 import { ExploreSearchBar } from "@/components/explore-search-bar";
@@ -69,7 +70,11 @@ const RoleEnrollDialog = lazy(() =>
 
 export function homeValidateSearch(s: Record<string, unknown>) {
   const change = s.change === "1" || s.change === true;
-  return change ? { change: "1" as const } : {};
+  const live = s.live === "1" || s.live === true || s.live === 1;
+  return {
+    ...(change ? { change: "1" as const } : {}),
+    ...(live ? { live: "1" as const } : {}),
+  };
 }
 
 export async function loadProductHome() {
@@ -99,10 +104,11 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
-  return <HomePage boot={Route.useLoaderData()} />;
+  const search = Route.useSearch();
+  return <HomePage boot={Route.useLoaderData()} liveClaimed={search.live === "1"} />;
 }
 
-export function HomePage({ boot }: { boot: ProductHomeBoot }) {
+export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot; liveClaimed?: boolean }) {
   const { t, locale } = useCopy();
   const navigate = useNavigate();
   const { user, isPending } = useCurrentUserState();
@@ -279,6 +285,10 @@ export function HomePage({ boot }: { boot: ProductHomeBoot }) {
     return () => window.removeEventListener("kidease-recent", sync);
   }, []);
   const publicFeatured = useMemo(() => publicListings(featured), [featured]);
+  const claimedLive = useMemo(
+    () => publicFeatured.filter((row) => isClaimVerified(row)),
+    [publicFeatured],
+  );
   const liveCount = useMemo(() => publicFeatured.filter((r) => r.live).length, [publicFeatured]);
   const strip = homeLiveStrip(liveCount, publicFeatured.length);
   const featuredAgreement = featuredHomeAgreement(publicFeatured.length);
@@ -352,8 +362,8 @@ export function HomePage({ boot }: { boot: ProductHomeBoot }) {
         radiusKm={radiusKm}
         onRadiusChange={setRadiusKm}
         onLocate={() => void pinLocation()}
-        onSubmit={() => {
-          const typed = place.trim();
+        onSubmit={(typedWhere) => {
+          const typed = (typedWhere ?? place).trim();
           const nearMe = typed === t("nearMe") || typed === t("whereNearby");
           if (!typed || nearMe) {
             goSearch(origin.label, {
@@ -365,8 +375,17 @@ export function HomePage({ boot }: { boot: ProductHomeBoot }) {
             return;
           }
           void applyPlace(typed).then((hit) => {
-            goSearch(hit?.label || typed || origin.label, {
-              name: homeName,
+            if (hit) {
+              goSearch(hit.label, {
+                name: homeName,
+                from: homeFrom,
+                to: homeTo,
+                start: homeStart || undefined,
+              });
+              return;
+            }
+            goSearch(origin.label, {
+              name: homeName.trim() || typed,
               from: homeFrom,
               to: homeTo,
               start: homeStart || undefined,
@@ -433,13 +452,24 @@ export function HomePage({ boot }: { boot: ProductHomeBoot }) {
           <TrustBar />
         </div>
 
+        {claimedLive.length ? (
+          <section className="ke-gutter mx-auto w-full pt-6" data-ke="home-live-on-kidease">
+            <ListingRail
+              title={t("liveOnKidEase")}
+              items={claimedLive.slice(0, 12)}
+              visual
+              seeAllHref={`${localePath("/search", locale)}?live=1`}
+            />
+          </section>
+        ) : null}
+
         {!featuredReady || featuredAgreement.showSection ? (
         <section id="featured" className="ke-gutter mx-auto w-full pb-8 pt-4 md:pb-12 md:pt-5">
           <h2 className="text-xl tracking-[-0.03em] md:text-2xl">{t(strip.featuredTitleKey)}</h2>
           <p className="mt-2 max-w-2xl text-sm text-muted">{t("featuredBody")}</p>
           <HomeDiscovery
             ready={featuredReady}
-            shown={shown}
+            shown={liveClaimed ? claimedLive : shown}
             availableNow={availableNow}
             availableNextMonth={availableNextMonth}
             liveOnly={liveOnly}
@@ -559,10 +589,20 @@ export function HomePage({ boot }: { boot: ProductHomeBoot }) {
         </section>
         <section className="ke-gutter mx-auto w-full pb-6 pt-6">
           <TrustBar />
+          {claimedLive.length ? (
+            <div className="mt-4" data-ke="home-live-on-kidease">
+              <ListingRail
+                title={t("liveOnKidEase")}
+                items={claimedLive.slice(0, 12)}
+                visual
+                seeAllHref={`${localePath("/search", locale)}?live=1`}
+              />
+            </div>
+          ) : null}
           <h2 className="mt-4 text-xl tracking-[-0.03em]">{t(strip.featuredTitleKey)}</h2>
           <HomeDiscovery
             ready={featuredReady}
-            shown={shown}
+            shown={liveClaimed ? claimedLive : shown}
             availableNow={availableNow}
             availableNextMonth={availableNextMonth}
             liveOnly={liveOnly}

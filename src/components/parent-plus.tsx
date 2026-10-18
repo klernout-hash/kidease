@@ -23,16 +23,20 @@ export function ParentPlusPanel({
   upgradeSearch = null,
   billingReturn = false,
   quiet = false,
+  alwaysOffer = false,
 }: {
   offerCheckout?: boolean;
   plusReturn?: "success" | "cancel" | null;
   upgradeSearch?: UpgradeSearch | null;
   billingReturn?: boolean;
   quiet?: boolean;
+  /** Parent desk plan page stays open even when pay chrome is off. */
+  alwaysOffer?: boolean;
 }) {
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
   const showPay = useShowPayCtas();
+  const offerPlans = showPay || alwaysOffer;
   const [state, setState] = useState<ParentPlusState | null>(null);
   const [interval, setInterval] = useState<PlusInterval>("year");
   const [busy, setBusy] = useState(false);
@@ -101,7 +105,7 @@ export function ParentPlusPanel({
   if (!state) return null;
   const current = state;
   const manageable = Boolean(current.stripeLive && current.subscriptionId && subscriptionAccessOpen(current.status) && current.plan !== "free");
-  if (!showPay && !manageable) return null;
+  if (!showPay && !manageable && !alwaysOffer) return null;
 
   const plusOn = subscriptionAccessOpen(state.status);
   const familyPlans = PARENT_UPGRADE_PLANS.filter((plan) => paidPlanVisible(plan.id, interval, state.prices));
@@ -153,7 +157,9 @@ export function ParentPlusPanel({
   return (
     <div className="ke-digital-plan rounded-xl bg-surface p-5 ring-1 ring-border" data-ke="digital-plan">
       {quiet ? null : <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Upgrade</p>}
-      <h2 className="mt-1 font-display text-3xl">{quiet ? t("navUpgrade") : t("parentPlusTitle")}</h2>
+      <h2 className="mt-1 font-display text-3xl">
+        {quiet ? t(manageable || (state.plan !== "free" && plusOn) ? "navMyPlan" : "navUpgrade") : t("parentPlusTitle")}
+      </h2>
       <p className="mt-1 text-sm text-muted">{t("parentPlusLead")}</p>
       {returnPhase ? (
         <div className="mt-3">
@@ -177,7 +183,7 @@ export function ParentPlusPanel({
           />
         </div>
       ) : null}
-      {showPay ? (
+      {offerPlans ? (
       <>
       <div className="mt-4">
         <BillingIntervalToggle
