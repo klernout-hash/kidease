@@ -9,12 +9,14 @@ import {
   catalogMonths,
   catalogNamedCityFromJson,
   catalogNear,
+  getPublicCatalog,
   type CatalogDaycare,
 } from "@/lib/catalog";
+import { filterByDaycareName } from "@/lib/explore-search";
 import { hideListingFromPublicPage, isAdminOnlyListing, isPublicListing, publicListings } from "@/lib/listing-visibility";
 import { parseAnchorMode, resolveSearchAnchors } from "@/lib/dual-anchor";
 import { nearbyListings, nearbyListingsAlong, nearbyListingsDual, type NearbyListing } from "./nearby";
-import { callerIsAdmin } from "./public-listing";
+import { callerMayViewHiddenListing } from "./public-listing";
 import { upsertDaycare } from "./seed";
 import { applyListingReadiness, compareFreshOpenSpots } from "@/lib/listing-readiness";
 import { listingAgeUnknown } from "@/lib/now-loops";
@@ -96,6 +98,8 @@ type SearchInput = {
   countDemand?: boolean;
   /** Signed-in parent only. Guests omit this and keep fresh-first order. */
   parentFit?: ParentFitProfile | null;
+  /** Centre name. When set, matches ignore radius and the location lock. */
+  name?: string;
 };
 
 function parseSort(raw: unknown): SearchSort {
@@ -435,7 +439,19 @@ function unionLiveCards(primary: DaycareCard[], live: DaycareCard[]): DaycareCar
   return missing.length ? [...missing, ...primary] : primary;
 }
 
+/** Public catalogue matches for a centre name. Distance is display-only. */
+async function searchByName(data: SearchInput): Promise<DaycareCard[]> {
+  const q = (data.name || "").trim();
+  if (q.length < 2) return [];
+  const origin = { lat: data.lat, lng: data.lng };
+  const matched = filterByDaycareName(await getPublicCatalog(), q);
+  const cards = matched.map((row) => slimCard(toCard(row, origin, data.fsa)));
+  cards.sort((a, b) => a.distanceKm - b.distanceKm || a.name.localeCompare(b.name));
+  return cards;
+}
+
 async function searchIncludingLive(data: SearchInput): Promise<DaycareCard[]> {
+  if ((data.name || "").trim().length >= 2) return searchByName(data);
   const decision = resolveSearchDirectory({ q: data.q, city: data.city });
   if (decision.kind === "unknown") return [];
   const hub = decision.kind === "hub" ? cityHubDefBySlug(decision.slug) : null;
@@ -646,6 +662,7 @@ function normalizeSearchInput(input: SearchInput): SearchInput {
     schedules: parseSchedules(input.schedules),
     countDemand: input.countDemand === true,
     parentFit: parseParentFit(input.parentFit),
+    name: typeof input.name === "string" ? input.name.trim().slice(0, 80) : "",
     facility: listedDaycareTypeFromSearch(
       input.facility === "before_after" ? { cat: "before-after" } : { fac: input.facility },
     ),
@@ -734,7 +751,7 @@ export const getDaycare = createServerFn({ method: "GET" })
   .handler(async ({ data: slug }) => {
     const found = await catalogBySlugGet(slug);
     if (!found) return null;
-    if (hideListingFromPublicPage(found, await callerIsAdmin())) return null;
+    if (hideListingFromPublicPage(found, await callerMayViewHiddenListing(found.id))) return null;
     const origin = { lat: found.lat, lng: found.lng };
     const nearby = uniqueById(
       (await catalogNear(origin, 15))
@@ -748,8 +765,13 @@ export const getDaycare = createServerFn({ method: "GET" })
     );
     const catalogDaycare = toDaycare(found);
     const catalogScored = await overlayQuality([catalogDaycare, ...metroPeers]);
+    const stampHidden = <T extends { visibility?: "public" | "admin_only"; isTest?: boolean }>(daycare: T): T => ({
+      ...daycare,
+      visibility: found.visibility,
+      isTest: found.isTest,
+    });
     const catalogPayload = {
-      daycare: withInboxReady(catalogScored[0] ?? catalogDaycare),
+      daycare: stampHidden(withInboxReady(catalogScored[0] ?? catalogDaycare)),
       reviews: [] as Review[],
       availability: catalogAvailability(found),
       nearby: withQualityCards(nearby, catalogScored),
@@ -836,7 +858,7 @@ export const getDaycare = createServerFn({ method: "GET" })
       const mainStamped = await withProvincial([overlayed[0] ?? daycare]);
       const nearbyStamped = await withProvincial(withQualityCards(nearby, overlayed));
       return {
-        daycare: withInboxReady(mainStamped[0] ?? daycare),
+        daycare: stampHidden(withInboxReady(mainStamped[0] ?? daycare)),
         reviews: mapReviews(reviews),
         availability,
         nearby: nearbyStamped,
@@ -867,7 +889,7 @@ export const getListingSeo = createServerFn({ method: "GET" })
   .handler(async ({ data: slug }) => {
     const found = await catalogBySlugGet(slug);
     if (!found) return null;
-    if (hideListingFromPublicPage(found, await callerIsAdmin())) return null;
+    if (hideListingFromPublicPage(found, await callerMayViewHiddenListing(found.id))) return null;
     return {
       slug: found.slug,
       name: found.name,

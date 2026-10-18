@@ -58,6 +58,10 @@ import {
 import { socialSignupCallbackPath } from "@/lib/auth/social-callback";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { isSignupWhy, SIGNUP_FUNNEL_EVENT, signupFunnelPayload, type SignupWhy } from "@/lib/signup-funnel";
+import { parentMobileIssue, smsOptInWasBlocked, stashParentSmsOptIn, takeParentSmsOptIn } from "@/lib/parent-sms-consent";
+import { toast } from "sonner";
+import { saveParentSmsOptIn } from "@/lib/server/parent-sms-consent";
+import { ParentSmsFields } from "@/components/parent-sms-fields";
 import type { CopyKey } from "@/lib/copy";
 
 type Role = "parent" | "provider" | "admin";
@@ -145,7 +149,10 @@ export function LoginScreen({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const operator = email.trim().toLowerCase() === OPERATOR_EMAIL;
+  const parentSignup = mode === "up" && !operator && role !== "provider";
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [smsConsent, setSmsConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
@@ -210,6 +217,13 @@ export function LoginScreen({
       // keepContinued stays true on failure so this effect cannot re-arm.
       if (await holdForAdminPassword(id)) return;
       if (attempt.current !== id) return;
+      if ((search.intent === "up" || mode === "up") && role !== "provider") {
+        const stashed = takeParentSmsOptIn();
+        if (stashed) {
+          const savedSms = await withTimeoutFallback(saveParentSmsOptIn({ data: stashed }), LOGIN_CONTINUE_MS, undefined);
+          if (smsOptInWasBlocked(savedSms)) toast.message(t("smsUnreachable"));
+        }
+      }
       if (search.intent === "up" && (role === "parent" || role === "provider")) {
         await withTimeoutFallback(setRole({ data: role }), LOGIN_CONTINUE_MS, undefined);
       }
@@ -232,7 +246,7 @@ export function LoginScreen({
       setError(released.error);
       setBusy(released.busy);
     });
-  }, [sessionPending, user, dest, busy, search.next, search.intent, deskHint, role, urlOperator]);
+  }, [sessionPending, user, dest, busy, search.next, search.intent, deskHint, role, urlOperator, mode]);
 
   async function finish() {
     const session = await waitForSignedInSession(() => authClient.getSession());
@@ -312,6 +326,10 @@ export function LoginScreen({
       if (mode === "up") {
         const hygiene = localPasswordIssue(password, email);
         if (hygiene) throw new Error(hygiene);
+        if (parentSignup) {
+          const phoneIssue = parentMobileIssue(phone);
+          if (phoneIssue) throw new Error(phoneIssue);
+        }
         const res = await withTimeout(
           authClient.signUp.email({
             email,
@@ -324,6 +342,14 @@ export function LoginScreen({
         );
         if (res.error) throw new Error(friendlyAuthError(authClientErrorMessage(res.error)));
         rememberToken(res.data);
+        if (parentSignup) {
+          const savedSms = await withTimeoutFallback(
+            saveParentSmsOptIn({ data: { phone, smsConsent } }),
+            LOGIN_CONTINUE_MS,
+            undefined,
+          );
+          if (smsOptInWasBlocked(savedSms)) toast.message(t("smsUnreachable"));
+        }
         confirmAction(t, "accountCreated");
       } else {
         const res = await withTimeout(
@@ -356,6 +382,7 @@ export function LoginScreen({
     setStalled(false);
     setError(null);
     if (role === "parent" || role === "provider") rememberRole(role);
+    if (parentSignup) stashParentSmsOptIn(phone, smsConsent);
     try {
       captureLoginFunnel({ step: "submitted", method: "social", native: isNative() });
       if (search.why && providerId.includes("google")) {
@@ -474,6 +501,9 @@ export function LoginScreen({
               autoComplete={mode === "up" ? "new-password" : "current-password"}
             />
             {mode === "up" && !operator ? <PasswordRules password={password} /> : null}
+            {parentSignup ? (
+              <ParentSmsFields phone={phone} onPhone={setPhone} consent={smsConsent} onConsent={setSmsConsent} />
+            ) : null}
             <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
             {error ? <p className="text-sm text-danger" data-ke="auth-error">{presentAuthCopy(locale, error)}</p> : null}
             {stalled || error ? (

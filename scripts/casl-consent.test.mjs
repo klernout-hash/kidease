@@ -9,6 +9,7 @@ import {
   CASL_STATEMENTS,
   caslStatement,
   decideCaslSend,
+  isHelpKeyword,
   isStartKeyword,
   isStopKeyword,
   normalizeCaslAddress,
@@ -44,6 +45,10 @@ test("STOP / ARRÊT and START parse from body or OptOutType", () => {
   assert.equal(isStartKeyword("START"), true);
   assert.equal(parseInboundOptOut({ OptOutType: "STOP" }), "stop");
   assert.equal(parseInboundOptOut({ Body: "STOP" }), "stop");
+  assert.equal(parseInboundOptOut({ OptOutType: "HELP" }), "help");
+  assert.equal(parseInboundOptOut({ Body: "HELP" }), "help");
+  assert.equal(isHelpKeyword("AIDE"), true);
+  assert.equal(isHelpKeyword("info about my tour next week please"), false);
   assert.equal(parseInboundOptOut({ Body: "thanks" }), null);
 });
 

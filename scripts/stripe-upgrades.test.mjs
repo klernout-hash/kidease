@@ -698,7 +698,7 @@ test("parents and daycares cannot buy or receive each other's upgrades", () => {
     centreOwner: false,
     centreLinked: true,
   }).some((item) => item.id === "subscription");
-  assert.equal(staffHidden, false);
+  assert.equal(staffHidden, true);
   assert.equal(staffLinked, true);
   assert.equal(
     visibleDeskNav("parent", { providerSubscriptions: true, centreLinked: true }).some((item) => item.id === "subscription"),

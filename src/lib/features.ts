@@ -93,7 +93,7 @@ export function openSpotsCheckinMailEnabled(env?: EnvMap): boolean {
 
 /**
  * Weekly open-spots SMS. Default OFF. sendSms still requires FEATURE_SMS,
- * CASL consent, and Twilio. Toll-free is not approved yet.
+ * CASL consent, and Twilio. The toll-free sender is approved. This flag stays off.
  */
 export function openSpotsCheckinSmsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_OPEN_SPOTS_CHECKIN_SMS", env);

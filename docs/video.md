@@ -44,16 +44,14 @@ Do **not** put `sk_live_` or Twilio secrets in git.
 - Room name is `ke-{thread|booking|claim|admin}-{id}` (inbox Video uses the conversation id).
 - `createVideoRoom` / `createVideoAccessToken` in `src/lib/server/video.ts` — no-ops when the flag is off or the API key is missing. Token TTL is 15 minutes.
 - Plus gate in `src/lib/video.ts`: live Stripe + `plus_plan=plus` and `plus_status` `active`/`trialing` for parents; providers and admins skip Plus.
-- `/video/$roomId` — Join mints a room + token server-side, then shows **scaffold — connect Twilio Video SDK next**. The JWT is not painted on the page.
+- `/video/$roomId` — Join mints a room + token server-side, then `twilio-video` connects. The JWT is not painted on the page. Leave, mute, and camera controls work on a phone browser.
 - Inbox thread Video icon → `/video/{conversationId}` (paywall CTA when the parent is not Plus).
 - Admin → Chat lab shows FEATURE_VIDEO on/off, source (env / PostHog), env-name presence (no secret values), a coming-soon / flag-off state, and the Twilio Video next-build checklist. Staff can open `/video/lab`. See `docs/chat.md`.
-- `/video/$roomId` shows **coming soon** when `FEATURE_VIDEO` is off, or an honest credentials-missing card. It does not attach the camera SDK or charge Plus.
+- `/video/$roomId` shows **coming soon** when `FEATURE_VIDEO` is off, or an honest credentials-missing card. It does not charge Plus. When the flag and API key are on, Join starts the camera.
 - `/checkin/$id` stays the local camera preview on a listing. It is not Twilio Video.
 
 ## Later (not this PR)
 
-- Wire `@twilio/video` (or the Video JS SDK) on `/video/$roomId` using the minted token.
-- Add Twilio hosts to CSP `connect-src` when the SDK is attached (`https://*.twilio.com`, `wss://*.twilio.com`).
 - Enforce monthly minute limits (hook already returns `enforced: false`).
 - Persist room status-callback rows.
 - Camera / microphone `Permissions-Policy` on `/video` only, if the global policy stays locked down.

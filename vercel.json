@@ -1,4 +1,5 @@
 {
+  "ignoreCommand": "node scripts/vercel-ignore.mjs",
   "crons": [
     {
       "path": "/api/digest",
@@ -48,7 +49,6 @@
     }
   ],
   "redirects": [
-    { "source": "/signup", "destination": "/login?intent=up", "statusCode": 301 },
     { "source": "/for-daycares", "destination": "/claim", "statusCode": 301 },
     { "source": "/.well-known/change-password", "destination": "/forgot-password", "permanent": false },
     {
@@ -156,6 +156,20 @@
     {
       "source": "/admin-chat/(.*)",
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/call",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(self), geolocation=(self), payment=(self)" }
+      ]
+    },
+    {
+      "source": "/call/(.*)",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(self), geolocation=(self), payment=(self)" }
+      ]
     },
     {
       "source": "/video",

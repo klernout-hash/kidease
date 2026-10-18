@@ -3,6 +3,7 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { parseTrackStatus } from "@/lib/parent-tracker";
 import { shortlistUserId } from "@/lib/server/parent-tracker";
+import { parentRequestSms } from "@/lib/sms-copy";
 import { nid } from "@/lib/utils";
 import { ensureSeed, upsertDaycare } from "./seed";
 import { lookupUser, notifyNewAccountFromUser, notifyPlatform, notifyProviderJoined } from "./notify";
@@ -805,6 +806,10 @@ export const createSpotRequest = createServerFn({ method: "POST" })
       console.error("[kidease-mail] spot request notify failed", err);
     }
 
+    void import("@/lib/server/sms-notify")
+      .then((mod) => mod.notifyCentreSms({ daycareId: data.daycareId, body: parentRequestSms(d.name) }))
+      .catch(() => undefined);
+
     return {
       id: bookingId,
       status: "requested" as const,
@@ -971,9 +976,12 @@ export const getThread = createServerFn({ method: "GET" })
       );
     }
     const { videoSurfaceEnabled } = await import("@/lib/channel-readiness");
+    const { voiceCredentialsPresent } = await import("@/lib/voice");
     return {
       id: conv[0].id,
       videoSurfaceEnabled: videoSurfaceEnabled(),
+      voiceReady: voiceCredentialsPresent(),
+      viewerRole: access.role,
       daycareId: conv[0].daycare_id,
       daycareName: conv[0].name,
       daycareSlug: conv[0].slug,
@@ -1022,54 +1030,8 @@ export const openConversation = createServerFn({ method: "POST" })
     if (!gate.ok) throw new Error(gate.error);
     const id = nid("cv");
     await sql`insert into conversations (id, user_id, daycare_id) values (${id}, ${context.userId}, ${daycareId})`;
-    const d = await sql<{ name: string }>`select name from daycares where id = ${daycareId}`;
-    await sql`
-      insert into messages (id, conversation_id, sender, body)
-      values (${nid("msg")}, ${id}, 'provider', ${`Hi: this is ${d[0]?.name ?? "the centre"}. How can we help?`})
-    `;
     return { id };
   });
-
-export const sendMessage = createServerFn({ method: "POST" })
-  .middleware([authMiddleware])
-  .validator((input: { conversationId: string; body: string }) => input)
-  .handler(async ({ context, data }) => {
-    const sql = await getSql();
-    const { requireConversationWrite } = await import("@/lib/server/thread-access");
-    const access = await requireConversationWrite(sql, data.conversationId, context.userId);
-    const conv = [access.conversation];
-    if (!conv[0]) throw new Error("Conversation not found");
-    const body = data.body.trim();
-    if (!body) return { ok: false };
-    const sender = access.role === "parent" ? "parent" : "provider";
-    await sql`
-      insert into messages (id, conversation_id, sender, body, kind)
-      values (${nid("msg")}, ${data.conversationId}, ${sender}, ${body}, ${"chat"})
-    `;
-    await sql`update conversations set last_at = now() where id = ${data.conversationId}`;
-    if (sender === "parent") {
-      const reply = autoReply(body, conv[0].name);
-      await sql`
-        insert into messages (id, conversation_id, sender, body, kind)
-        values (${nid("msg")}, ${data.conversationId}, ${"provider"}, ${reply}, ${"chat"})
-      `;
-    }
-    return { ok: true };
-  });
-
-function autoReply(body: string, centre: string) {
-  const q = body.toLowerCase();
-  if (q.includes("tour") || q.includes("visit") || q.includes("visite")) {
-    return `${centre}: We tour Thursday mornings at 9:30. Reply with a date and we'll hold a slot.`;
-  }
-  if (q.includes("wait") || q.includes("attente")) {
-    return `${centre}: Waitlist movement is usually 4–8 weeks for toddler rooms, longer for infants. We'll email the moment a spot opens.`;
-  }
-  if (q.includes("subsidy") || q.includes("subvention")) {
-    return `${centre}: We bill the parent fee after the provincial subsidy. Bring your subsidy letter to enrolment and we'll set the monthly amount.`;
-  }
-  return `${centre}: Thanks: an educator will follow up during office hours. If this is about a held spot, you can pay the deposit from My requests.`;
-}
 
 export const updateRequestStatus = createServerFn({ method: "POST" })
   .middleware([authMiddleware])

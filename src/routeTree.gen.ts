@@ -86,6 +86,7 @@ import { Route as ApiSpotOffersRouteImport } from './routes/api/spot-offers'
 import { Route as ApiTourHoldsRouteImport } from './routes/api/tour-holds'
 import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
+import { Route as CallConversationIdRouteImport } from './routes/call.$conversationId'
 import { Route as CheckinIdRouteImport } from './routes/checkin.$id'
 import { Route as DaycareSlugRouteImport } from './routes/daycare.$slug'
 import { Route as DaycaresCityRouteImport } from './routes/daycares_.$city'
@@ -133,6 +134,7 @@ import { Route as JobsPostRouteImport } from './routes/jobs_.post'
 import { Route as ListingSlugRouteImport } from './routes/listing.$slug'
 import { Route as MilieuxFamiliauxIdRouteImport } from './routes/milieux-familiaux_.$id'
 import { Route as OfferTokenRouteImport } from './routes/offer.$token'
+import { Route as ParentSignupRouteImport } from './routes/parent.signup'
 import { Route as ParentSpotOffersRouteImport } from './routes/parent.spot-offers'
 import { Route as PayIndexRouteImport } from './routes/pay.index'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
@@ -156,6 +158,9 @@ import { Route as ApiScreeningDocumentsIdRouteImport } from './routes/api/screen
 import { Route as ApiSmsInboundRouteImport } from './routes/api/sms.inbound'
 import { Route as ApiSmsStatusRouteImport } from './routes/api/sms.status'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe.webhook'
+import { Route as ApiVoiceConnectRouteImport } from './routes/api/voice.connect'
+import { Route as ApiVoiceIncomingRouteImport } from './routes/api/voice.incoming'
+import { Route as ApiVoiceRecordingRouteImport } from './routes/api/voice.recording'
 import { Route as ApiWebhooksResendRouteImport } from './routes/api/webhooks.resend'
 import { Route as DaycareCityAgeRouteImport } from './routes/daycare.$city.$age'
 import { Route as DaycareCityCityRouteImport } from './routes/daycare.city.$city'
@@ -554,6 +559,11 @@ const BookSlugRoute = BookSlugRouteImport.update({
   path: '/book/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CallConversationIdRoute = CallConversationIdRouteImport.update({
+  id: '/call/$conversationId',
+  path: '/call/$conversationId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CheckinIdRoute = CheckinIdRouteImport.update({
   id: '/checkin/$id',
   path: '/checkin/$id',
@@ -790,6 +800,11 @@ const OfferTokenRoute = OfferTokenRouteImport.update({
   path: '/offer/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ParentSignupRoute = ParentSignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => ParentRoute,
+} as any)
 const ParentSpotOffersRoute = ParentSpotOffersRouteImport.update({
   id: '/spot-offers',
   path: '/spot-offers',
@@ -904,6 +919,21 @@ const ApiSmsStatusRoute = ApiSmsStatusRouteImport.update({
 const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   id: '/api/stripe/webhook',
   path: '/api/stripe/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiVoiceConnectRoute = ApiVoiceConnectRouteImport.update({
+  id: '/api/voice/connect',
+  path: '/api/voice/connect',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiVoiceIncomingRoute = ApiVoiceIncomingRouteImport.update({
+  id: '/api/voice/incoming',
+  path: '/api/voice/incoming',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiVoiceRecordingRoute = ApiVoiceRecordingRouteImport.update({
+  id: '/api/voice/recording',
+  path: '/api/voice/recording',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiWebhooksResendRoute = ApiWebhooksResendRouteImport.update({
@@ -1040,6 +1070,7 @@ export interface FileRoutesByFullPath {
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
+  '/call/$conversationId': typeof CallConversationIdRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
   '/daycares/$city': typeof DaycaresCityRoute
@@ -1086,6 +1117,7 @@ export interface FileRoutesByFullPath {
   '/listing/$slug': typeof ListingSlugRoute
   '/milieux-familiaux/$id': typeof MilieuxFamiliauxIdRoute
   '/offer/$token': typeof OfferTokenRoute
+  '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
@@ -1110,6 +1142,9 @@ export interface FileRoutesByFullPath {
   '/api/sms/inbound': typeof ApiSmsInboundRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/voice/connect': typeof ApiVoiceConnectRoute
+  '/api/voice/incoming': typeof ApiVoiceIncomingRoute
+  '/api/voice/recording': typeof ApiVoiceRecordingRoute
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
@@ -1198,6 +1233,7 @@ export interface FileRoutesByTo {
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
+  '/call/$conversationId': typeof CallConversationIdRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
   '/daycares/$city': typeof DaycaresCityRoute
@@ -1244,6 +1280,7 @@ export interface FileRoutesByTo {
   '/listing/$slug': typeof ListingSlugRoute
   '/milieux-familiaux/$id': typeof MilieuxFamiliauxIdRoute
   '/offer/$token': typeof OfferTokenRoute
+  '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
@@ -1268,6 +1305,9 @@ export interface FileRoutesByTo {
   '/api/sms/inbound': typeof ApiSmsInboundRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/voice/connect': typeof ApiVoiceConnectRoute
+  '/api/voice/incoming': typeof ApiVoiceIncomingRoute
+  '/api/voice/recording': typeof ApiVoiceRecordingRoute
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
@@ -1359,6 +1399,7 @@ export interface FileRoutesById {
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
+  '/call/$conversationId': typeof CallConversationIdRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
   '/daycares_/$city': typeof DaycaresCityRoute
@@ -1405,6 +1446,7 @@ export interface FileRoutesById {
   '/listing/$slug': typeof ListingSlugRoute
   '/milieux-familiaux_/$id': typeof MilieuxFamiliauxIdRoute
   '/offer/$token': typeof OfferTokenRoute
+  '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
@@ -1429,6 +1471,9 @@ export interface FileRoutesById {
   '/api/sms/inbound': typeof ApiSmsInboundRoute
   '/api/sms/status': typeof ApiSmsStatusRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/voice/connect': typeof ApiVoiceConnectRoute
+  '/api/voice/incoming': typeof ApiVoiceIncomingRoute
+  '/api/voice/recording': typeof ApiVoiceRecordingRoute
   '/api/webhooks/resend': typeof ApiWebhooksResendRoute
   '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
@@ -1521,6 +1566,7 @@ export interface FileRouteTypes {
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/book/$slug'
+    | '/call/$conversationId'
     | '/checkin/$id'
     | '/daycare/$slug'
     | '/daycares/$city'
@@ -1567,6 +1613,7 @@ export interface FileRouteTypes {
     | '/listing/$slug'
     | '/milieux-familiaux/$id'
     | '/offer/$token'
+    | '/parent/signup'
     | '/parent/spot-offers'
     | '/pay/$bookingId'
     | '/provider/subscription'
@@ -1591,6 +1638,9 @@ export interface FileRouteTypes {
     | '/api/sms/inbound'
     | '/api/sms/status'
     | '/api/stripe/webhook'
+    | '/api/voice/connect'
+    | '/api/voice/incoming'
+    | '/api/voice/recording'
     | '/api/webhooks/resend'
     | '/daycare/$city/$age'
     | '/daycare/city/$city'
@@ -1679,6 +1729,7 @@ export interface FileRouteTypes {
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/book/$slug'
+    | '/call/$conversationId'
     | '/checkin/$id'
     | '/daycare/$slug'
     | '/daycares/$city'
@@ -1725,6 +1776,7 @@ export interface FileRouteTypes {
     | '/listing/$slug'
     | '/milieux-familiaux/$id'
     | '/offer/$token'
+    | '/parent/signup'
     | '/parent/spot-offers'
     | '/pay/$bookingId'
     | '/provider/subscription'
@@ -1749,6 +1801,9 @@ export interface FileRouteTypes {
     | '/api/sms/inbound'
     | '/api/sms/status'
     | '/api/stripe/webhook'
+    | '/api/voice/connect'
+    | '/api/voice/incoming'
+    | '/api/voice/recording'
     | '/api/webhooks/resend'
     | '/daycare/$city/$age'
     | '/daycare/city/$city'
@@ -1839,6 +1894,7 @@ export interface FileRouteTypes {
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/book/$slug'
+    | '/call/$conversationId'
     | '/checkin/$id'
     | '/daycare/$slug'
     | '/daycares_/$city'
@@ -1885,6 +1941,7 @@ export interface FileRouteTypes {
     | '/listing/$slug'
     | '/milieux-familiaux_/$id'
     | '/offer/$token'
+    | '/parent/signup'
     | '/parent/spot-offers'
     | '/pay/$bookingId'
     | '/provider/subscription'
@@ -1909,6 +1966,9 @@ export interface FileRouteTypes {
     | '/api/sms/inbound'
     | '/api/sms/status'
     | '/api/stripe/webhook'
+    | '/api/voice/connect'
+    | '/api/voice/incoming'
+    | '/api/voice/recording'
     | '/api/webhooks/resend'
     | '/daycare/$city/$age'
     | '/daycare/city/$city'
@@ -1999,6 +2059,7 @@ export interface RootRouteChildren {
   ApiTourHoldsRoute: typeof ApiTourHoldsRoute
   ApiUnsubscribeRoute: typeof ApiUnsubscribeRoute
   BookSlugRoute: typeof BookSlugRoute
+  CallConversationIdRoute: typeof CallConversationIdRoute
   CheckinIdRoute: typeof CheckinIdRoute
   DaycareSlugRoute: typeof DaycareSlugRoute
   DaycaresCityRoute: typeof DaycaresCityRoute
@@ -2024,6 +2085,9 @@ export interface RootRouteChildren {
   ApiSmsInboundRoute: typeof ApiSmsInboundRoute
   ApiSmsStatusRoute: typeof ApiSmsStatusRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
+  ApiVoiceConnectRoute: typeof ApiVoiceConnectRoute
+  ApiVoiceIncomingRoute: typeof ApiVoiceIncomingRoute
+  ApiVoiceRecordingRoute: typeof ApiVoiceRecordingRoute
   ApiWebhooksResendRoute: typeof ApiWebhooksResendRoute
   DaycareCityAgeRoute: typeof DaycareCityAgeRoute
   DaycareCityCityRoute: typeof DaycareCityCityRoute
@@ -2571,6 +2635,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/call/$conversationId': {
+      id: '/call/$conversationId'
+      path: '/call/$conversationId'
+      fullPath: '/call/$conversationId'
+      preLoaderRoute: typeof CallConversationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/checkin/$id': {
       id: '/checkin/$id'
       path: '/checkin/$id'
@@ -2900,6 +2971,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OfferTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/parent/signup': {
+      id: '/parent/signup'
+      path: '/signup'
+      fullPath: '/parent/signup'
+      preLoaderRoute: typeof ParentSignupRouteImport
+      parentRoute: typeof ParentRoute
+    }
     '/parent/spot-offers': {
       id: '/parent/spot-offers'
       path: '/spot-offers'
@@ -3059,6 +3137,27 @@ declare module '@tanstack/react-router' {
       path: '/api/stripe/webhook'
       fullPath: '/api/stripe/webhook'
       preLoaderRoute: typeof ApiStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/voice/connect': {
+      id: '/api/voice/connect'
+      path: '/api/voice/connect'
+      fullPath: '/api/voice/connect'
+      preLoaderRoute: typeof ApiVoiceConnectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/voice/incoming': {
+      id: '/api/voice/incoming'
+      path: '/api/voice/incoming'
+      fullPath: '/api/voice/incoming'
+      preLoaderRoute: typeof ApiVoiceIncomingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/voice/recording': {
+      id: '/api/voice/recording'
+      path: '/api/voice/recording'
+      fullPath: '/api/voice/recording'
+      preLoaderRoute: typeof ApiVoiceRecordingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/webhooks/resend': {
@@ -3277,10 +3376,12 @@ const InboxRouteChildren: InboxRouteChildren = {
 const InboxRouteWithChildren = InboxRoute._addFileChildren(InboxRouteChildren)
 
 interface ParentRouteChildren {
+  ParentSignupRoute: typeof ParentSignupRoute
   ParentSpotOffersRoute: typeof ParentSpotOffersRoute
 }
 
 const ParentRouteChildren: ParentRouteChildren = {
+  ParentSignupRoute: ParentSignupRoute,
   ParentSpotOffersRoute: ParentSpotOffersRoute,
 }
 
@@ -3414,6 +3515,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiTourHoldsRoute: ApiTourHoldsRoute,
   ApiUnsubscribeRoute: ApiUnsubscribeRoute,
   BookSlugRoute: BookSlugRoute,
+  CallConversationIdRoute: CallConversationIdRoute,
   CheckinIdRoute: CheckinIdRoute,
   DaycareSlugRoute: DaycareSlugRoute,
   DaycaresCityRoute: DaycaresCityRoute,
@@ -3439,6 +3541,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSmsInboundRoute: ApiSmsInboundRoute,
   ApiSmsStatusRoute: ApiSmsStatusRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
+  ApiVoiceConnectRoute: ApiVoiceConnectRoute,
+  ApiVoiceIncomingRoute: ApiVoiceIncomingRoute,
+  ApiVoiceRecordingRoute: ApiVoiceRecordingRoute,
   ApiWebhooksResendRoute: ApiWebhooksResendRoute,
   DaycareCityAgeRoute: DaycareCityAgeRoute,
   DaycareCityCityRoute: DaycareCityCityRoute,

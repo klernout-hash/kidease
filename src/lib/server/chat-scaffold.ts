@@ -28,6 +28,7 @@ import {
 import { smsEnvPresence, type SmsEnvPresence } from "@/lib/sms";
 import {
   TWILIO_VIDEO_LAB_NEXT_STEPS,
+  VIDEO_SDK_WIRED,
   videoEnvPresence,
   type VideoEnvPresence,
   type VideoLabNextStep,
@@ -67,7 +68,7 @@ export type LabStatus = {
   video: ChannelLab & {
     credentialsPresent: boolean;
     presence: VideoEnvPresence;
-    sdkWired: false;
+    sdkWired: boolean;
     nextSteps: readonly VideoLabNextStep[];
   };
   subscriptions: FlagLab;
@@ -140,7 +141,7 @@ export async function resolveLabStatus(): Promise<LabStatus> {
       ...toChannelLab(videoReady),
       credentialsPresent: videoReady.credentialsPresent,
       presence: videoEnvPresence(),
-      sdkWired: false,
+      sdkWired: VIDEO_SDK_WIRED,
       nextSteps: TWILIO_VIDEO_LAB_NEXT_STEPS,
     },
     subscriptions: toFlagLab("FEATURE_PROVIDER_SUBSCRIPTIONS"),

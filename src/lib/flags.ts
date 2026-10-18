@@ -164,7 +164,7 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     key: "FEATURE_OPEN_SPOTS_CHECKIN_SMS",
     defaultOn: false,
     docs: "docs/flags.md",
-    summary: "Weekly open-spots SMS. Default off. Also needs FEATURE_SMS. Toll-free is not approved.",
+    summary: "Weekly open-spots SMS. Default off. Also needs FEATURE_SMS and consent. The toll-free sender is approved.",
   },
   {
     key: "FEATURE_QC_HOME_DAYCARES",

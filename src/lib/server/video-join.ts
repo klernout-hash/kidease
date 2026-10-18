@@ -38,7 +38,7 @@ export type VideoJoinStatus = {
   gateOk: boolean;
   reason: VideoJoinGateReason | null;
   error: string;
-  sdkWired: false;
+  sdkWired: boolean;
   recording: false;
   minutesEnforced: false;
   minutesMessage: string;
@@ -53,8 +53,9 @@ export type VideoJoinResult =
       identity: string;
       ttlSeconds: number;
       expiresAt: number;
+      token: string;
       tokenMinted: true;
-      sdkWired: false;
+      sdkWired: boolean;
       recording: false;
       minutesEnforced: false;
       minutesMessage: string;
@@ -179,7 +180,7 @@ async function buildStatus(userId: string, roomId: string): Promise<VideoJoinSta
     gateOk: Boolean(allowed && gate.ok),
     reason,
     error: !allowed ? "This video room was not found." : gate.ok ? "" : gate.error,
-    sdkWired: false,
+    sdkWired: VIDEO_SDK_WIRED,
     recording: false,
     minutesEnforced: false,
     minutesMessage: VIDEO_MINUTES_NOT_ENFORCED_MESSAGE,
@@ -244,6 +245,7 @@ export const joinVideoRoom = createServerFn({ method: "POST" })
       identity: token.identity,
       ttlSeconds: token.ttlSeconds,
       expiresAt: token.expiresAt,
+      token: token.token,
       tokenMinted: true,
       sdkWired: VIDEO_SDK_WIRED,
       recording: false,

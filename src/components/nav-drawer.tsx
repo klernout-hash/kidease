@@ -21,6 +21,7 @@ import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import type { MenuIconId } from "@/lib/menu-icons";
 import { nextDrawerLatch, type DrawerLatch } from "@/lib/drawer-latch";
+import { SmartMatchEntry } from "@/components/smart-match";
 
 type Item = { to: string; label: string; search?: Record<string, string>; icon: MenuIconId; marker?: string };
 
@@ -56,6 +57,9 @@ function GuestDrawerLinks({
     <nav data-ke="role-nav" data-role="guest" aria-label={title}>
       <DrawerSection title={t("navFindCare")} marker="drawer-find-care">
         {navExtra}
+        <div className="px-3 py-1">
+          <SmartMatchEntry inline />
+        </div>
         <MenuRow to={localePath("/search", locale)} label={t("search")} icon="explore" appearance="drawer" marker="search" onClick={onClose} />
         <MenuRow to={localePath("/search", locale)} search={{ view: "map" }} label={t("navMap")} icon="explore" appearance="drawer" marker="map" onClick={onClose} />
         <MenuRow to={localePath("/cities", locale)} label={t("browseCities")} icon="explore" appearance="drawer" onClick={onClose} />
@@ -224,6 +228,9 @@ export function NavDrawer({
           ) : (
             <>
           {navExtra ? <DrawerSection title={t("navFindCare")} marker="drawer-find-care">{navExtra}</DrawerSection> : null}
+          <div className="px-3 py-1">
+            <SmartMatchEntry inline />
+          </div>
           {roleList ? (
             <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">KidEase</p>
           ) : null}
@@ -240,6 +247,7 @@ export function NavDrawer({
                 return (
                 <details
                   key={group.id}
+                  open={group.open || undefined}
                   ref={(node) => {
                     if (node && group.open && node.dataset.keGroup !== "1") {
                       node.dataset.keGroup = "1";
@@ -249,7 +257,7 @@ export function NavDrawer({
                   className="py-0.5"
                 >
                   <summary className={drawerSummaryClass}>
-                    {group.labelKey ? t(group.labelKey) : group.label}
+                    <span>{group.labelKey ? t(group.labelKey) : group.label}</span>
                   </summary>
                   <div>
                     {group.id === "settings" ? (
@@ -264,7 +272,6 @@ export function NavDrawer({
                         const on = deskMenu.active === item.id;
                         const rowClass = cn(
                           "flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-base font-medium",
-                          plan && "max-md:hidden",
                           on ? "bg-primary text-primary-fg" : "text-fg hover:bg-surface",
                         );
                         const body = (

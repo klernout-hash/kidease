@@ -458,10 +458,11 @@ export function HomePage({ boot }: { boot: ProductHomeBoot }) {
         </section>
         ) : null}
 
-        <HomeHowVideo />
-
-        <section id="how" className="ke-gutter mx-auto w-full py-16">
-          <h2 className="max-w-2xl text-[clamp(1.75rem,4vw,2.25rem)]">{t("howStressFree")}</h2>
+        <section id="how" aria-labelledby="how-kidease-heading" className="ke-gutter mx-auto w-full py-10 md:py-16">
+          <h2 id="how-kidease-heading" className="text-center text-xl tracking-[-0.03em] text-fg md:text-2xl">
+            {t("howVideoTitle")}
+          </h2>
+          <HomeHowVideo />
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <Step
               n="1"

@@ -21,6 +21,37 @@ This repo now stores **express consent** before a parent or provider SMS can lea
 - `sendSms` fails closed for `audience: "user"` unless `consentGranted` is true. Admin SMS to Kyle uses `audience: "internal"`.
 - Claim-status SMS looks up `casl_consents` + the address block list. Search-alert **email** is also gated on stored email-service consent and includes List-Unsubscribe.
 - Honour **STOP / ARRÊT** immediately: Messaging Service Advanced Opt-Out **and** `POST /api/sms/inbound` (persists the withdrawal). Public page: `/unsubscribe`.
+- Inbound SMS never becomes an in-app message. Chat and texts stay separate.
+
+## Advanced Opt-Out wording (set in Console)
+
+Production already calls `POST https://www.kidease.ca/api/sms/inbound`. Vercel logged both of Kyle’s texts as **200** with a valid signature: `{event:'inbound', opt:'help'}` at 14:51:30 CDT, and `{event:'inbound', opt:null}` at 14:57:58 CDT. The HELP reply he saw was Twilio’s default Advanced Opt-Out text (“Reply STOP to unsubscribe”). Our route returned empty TwiML for that keyword, so it did not send a second text. The later non-keyword text also reached this route.
+
+The Sep 7 `TWILIO_AUTH_TOKEN` on Vercel signed those requests. It is not stale. A bad token later would be HTTP **401** from `/api/sms/inbound` or `/api/sms/status`, a security event `webhook_reject` / `twilio inbound signature`, and Twilio debugger error **11200**. Zero HTTP requests would mean Twilio never called us. These two texts were neither of those.
+
+Paste the lines below in **Twilio Console → Messaging → Services → KidEase SMS → Opt-out management**. Turn on Advanced Opt-Out if it is off. Twilio support has to turn it off later, so save the keyword text before you rely on it. Edit each group (pencil) and Save.
+
+Standard (English). Keywords are not case-sensitive. Keep the reserved words.
+
+- Opt-out keywords: `stop`, `stopall`, `unsubscribe`, `cancel`, `end`, `quit`  
+  `KidEase: you are opted out. We will not text this number. Reply START to opt back in. Help: support@kidease.ca`
+- Opt-in keywords: `start`, `unstop`  
+  Do not rely on `yes` for this toll-free number. Only START and UNSTOP fully undo a toll-free block.  
+  `KidEase: you are opted in again for daycare request texts. Reply STOP to opt out. Help: support@kidease.ca`
+- Help keywords: `help`, `info`  
+  `KidEase: texts about daycare requests and your account. Reply STOP to opt out. Email support@kidease.ca or call 1-877-502-7728.`
+
+Add a French language. Do not put these words on the English list. The same word cannot be in two languages for Canada.
+
+- Opt-out: `arrêt`, `arret`  
+  `KidEase : vous êtes désabonné. Plus de textos à ce numéro. Répondez START pour revenir. Aide : support@kidease.ca`
+- Opt-in: `oui`  
+  Toll-free re-subscribe is still START or UNSTOP. `oui` does not by itself undo the carrier block.  
+  `KidEase : vous recevez de nouveau les textos KidEase. Répondez STOP pour arrêter. Aide : support@kidease.ca`
+- Help: `aide`  
+  `KidEase : textos sur vos demandes de garderie. Répondez STOP pour arrêter. Aide : support@kidease.ca ou 1-877-502-7728.`
+
+Toll-free caveat: for +1 877 numbers, Twilio still shows the carrier STOP line. Our custom STOP text may not replace it. START / UNSTOP can show both the carrier line and our line. HELP is the one these custom lines replace. After Opt-Out is on, keyword texts still POST here with `OptOutType` set, and we answer with empty TwiML so the person does not get two bubbles. A non-keyword text (for example “tour Thursday”) should keep returning HTTP 200 and an empty `<Response>`, with a row in `sms_delivery_status` and nothing new in Messages.
 - Do not buy lists or send promotional “spots near you” campaigns from this path.
 - Full **CRTC / Canadian carrier registration** (if required for your traffic mix) is Console / Dashboard operations later — not an app deploy.
 
@@ -36,6 +67,7 @@ Set the same keys on **Production and Preview** (encrypted). Never prefix `VITE_
 | `TWILIO_API_KEY_SID` + `TWILIO_API_KEY_SECRET` | API-key mode | Preferred for production send. `SK…` + secret. |
 | `TWILIO_MESSAGING_SERVICE_SID` | recommended | `MG…`. Prefer this over a raw From for Canada. |
 | `TWILIO_FROM_NUMBER` | if no Messaging Service | E.164 Canadian number you own in Twilio. |
+| `TWILIO_PHONE_NUMBER` | if no Messaging Service and no From | Approved toll-free, E.164. Same value used for voice. |
 | `TWILIO_STATUS_CALLBACK_URL` | optional | Exact HTTPS URL, e.g. `https://www.kidease.ca/api/sms/status`. |
 | `TWILIO_INBOUND_CALLBACK_URL` | optional | Exact HTTPS URL Twilio signs for STOP, e.g. `https://www.kidease.ca/api/sms/inbound`. |
 
@@ -71,13 +103,13 @@ The send path is fully wired. Flip **only** after all of these are true:
 - `sendSms({ to, body })` in `src/lib/server/sms.ts` — no-ops when the flag is off, env is incomplete, or a user SMS lacks stored consent; validates E.164; never logs the auth token.
 - Admin claim decision (`decideCentre`) may SMS the provider profile mobile **only after** a CASL grant. Email still sends if SMS skips.
 - Platform admin SMS (Kyle) uses `audience: "internal"` and is still gated by the feature flag.
-- `POST /api/sms/status` validates Twilio signatures (needs `TWILIO_AUTH_TOKEN`) and returns `204`. No delivery table yet.
-- `POST /api/sms/inbound` persists STOP / START. `/unsubscribe` and `GET|POST /api/unsubscribe` honour email one-click.
+- `POST /api/sms/status` validates Twilio signatures (needs `TWILIO_AUTH_TOKEN`), stores `MessageSid` and status in `sms_delivery_status`, and returns `204`.
+- `POST /api/sms/inbound` persists STOP / START (including `profiles.sms_consent`) and answers HELP in TwiML only when Advanced Opt-Out did not already set `OptOutType`. It never inserts the SMS body into Messages. `/unsubscribe` and `GET|POST /api/unsubscribe` honour email one-click.
+- A new parent request or message texts the daycare, and a daycare reply texts the parent, only when that person has SMS consent and is not opted out. The send uses `TWILIO_MESSAGING_SERVICE_SID`. Every text starts with KidEase.
 - Admin → Chat lab shows FEATURE_SMS on/off, source (env / PostHog), and whether env names are present (no secret values).
 - Waitlist pulse (`docs/waitlist-pulse.md`) texts matched parents only after a stored CASL grant. The job still no-ops while `FEATURE_SMS` is off.
 
 ## Later (not this PR)
 
 - Bill / pay reminder SMS (do not mix into Stripe webhook apply).
-- Persist status-callback rows.
 - Street mailing address on CASL copy if Kyle adds one (today: KidEase, Winnipeg, Manitoba + support@kidease.ca).

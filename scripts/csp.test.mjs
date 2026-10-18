@@ -39,6 +39,9 @@ test("nonce CSP drops script-src unsafe-inline and keeps product hosts", () => {
   assert.match(csp, /connect-src[^;]*https:\/\/api\.stripe\.com/);
   assert.match(csp, /connect-src[^;]*https:\/\/challenges\.cloudflare\.com/);
   assert.match(csp, /connect-src[^;]*https:\/\/us\.i\.posthog\.com/);
+  assert.match(csp, /connect-src[^;]*https:\/\/\*\.twilio\.com/);
+  assert.match(csp, /connect-src[^;]*wss:\/\/\*\.twilio\.com/);
+  assert.match(csp, /media-src 'self' blob: mediastream:/);
   assert.match(csp, /worker-src 'self' blob: data:/);
   assert.match(csp, /img-src 'self' data: blob: https: https:\/\/media\.kidease\.ca https:\/\/pub-9e5f137809844fcdb6d6671cd909f312\.r2\.dev https:\/\/\*\.r2\.dev/);
   assert.match(csp, /script-src[^;]*'wasm-unsafe-eval'/);

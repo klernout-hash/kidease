@@ -130,6 +130,8 @@ const STOP_WORDS = new Set([
 
 const START_WORDS = new Set(["start", "unstop", "oui", "yes"]);
 
+const HELP_WORDS = new Set(["help", "aide", "info"]);
+
 function firstWord(raw: string): string {
   return String(raw || "")
     .normalize("NFD")
@@ -150,11 +152,18 @@ export function isStartKeyword(raw: string): boolean {
   return START_WORDS.has(firstWord(raw));
 }
 
-export type InboundOpt = "stop" | "start" | null;
+/** HELP / AIDE / INFO only when the text is a short keyword, not a sentence. */
+export function isHelpKeyword(raw: string): boolean {
+  const trimmed = String(raw || "").trim();
+  if (!trimmed || trimmed.length > 24) return false;
+  return HELP_WORDS.has(firstWord(trimmed));
+}
+
+export type InboundOpt = "stop" | "start" | "help" | null;
 
 /**
  * Twilio Advanced Opt-Out sets OptOutType=STOP|START|HELP.
- * Also honour STOP / ARRÊT in the body when the Messaging Service is not used.
+ * Also honour STOP / ARRÊT / HELP in the body when the Messaging Service is not used.
  */
 export function parseInboundOptOut(params: Record<string, string>): InboundOpt {
   const typed = String(params.OptOutType || params.optOutType || "")
@@ -162,9 +171,11 @@ export function parseInboundOptOut(params: Record<string, string>): InboundOpt {
     .toUpperCase();
   if (typed === "STOP") return "stop";
   if (typed === "START") return "start";
+  if (typed === "HELP") return "help";
   const body = params.Body || params.body || "";
   if (isStopKeyword(body)) return "stop";
   if (isStartKeyword(body)) return "start";
+  if (isHelpKeyword(body)) return "help";
   return null;
 }
 

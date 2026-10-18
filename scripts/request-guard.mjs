@@ -175,16 +175,62 @@ export function shouldCanonicalizeApexPath(pathname) {
   return true;
 }
 
+const SESSION_COOKIE_RE =
+  /(?:^|;\s*)(?:__Host-grok-auth\.session_token|__Secure-kidease\.session_token)=([^;]*)/;
+
+/** A real sign-in cookie. Empty values do not count. */
+export function hasAuthSessionCookie(cookieHeader) {
+  const match = SESSION_COOKIE_RE.exec(String(cookieHeader || ""));
+  if (!match) return false;
+  let value = match[1] || "";
+  try {
+    value = decodeURIComponent(value);
+  } catch {
+    /* keep the raw value */
+  }
+  return value.trim().length > 8;
+}
+
+/** Styled document for a guard 404. Same words as the in-app not-found page. */
+export function notFoundDocument(kind = "page") {
+  const listing = kind === "listing";
+  const title = listing ? "Listing not found" : "Page not found";
+  const body = listing
+    ? "This centre is not on KidEase, or the link is out of date."
+    : "This page is not on KidEase, or the link is out of date.";
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex, nofollow" />
+<title>${title} · KidEase</title>
+<style>
+  body{margin:0;min-height:100dvh;background:#f6f3ee;color:#1c2438;font-family:"Plus Jakarta Sans",Segoe UI,sans-serif}
+  header{border-bottom:1px solid #e4ddd2;padding:max(12px,env(safe-area-inset-top)) 20px}
+  main{max-width:32rem;margin:0 auto;padding:64px 20px}
+  h1{font-size:1.75rem;line-height:1.2;margin:0 0 8px}
+  p{color:#5c6578;line-height:1.5}
+  a{display:inline-flex;min-height:44px;align-items:center;margin-right:12px;font-weight:600;color:#1a3790}
+</style>
+</head>
+<body>
+<header><a href="/" style="font-weight:700;color:#1c2438;text-decoration:none">KidEase</a></header>
+<main>
+  <h1>${title}</h1>
+  <p>${body}</p>
+  <p><a href="/search">Search daycares</a><a href="/">Go home</a></p>
+</main>
+</body>
+</html>`;
+}
+
 /**
- * @param {{ host?: string | null, pathname?: string | null, search?: string | null, method?: string | null }} input
+ * @param {{ host?: string | null, pathname?: string | null, search?: string | null, method?: string | null, cookie?: string | null }} input
  * @returns {{ action: "next" } | { action: "redirect", status: 301 | 302 | 308, location: string } | { action: "not_found", status: 404 }}
  */
 export function decideRequest(input = {}) {
   const path = normalizePath(input.pathname);
-
-  if (path === "/signup") {
-    return { action: "redirect", status: 301, location: "/login?intent=up" };
-  }
 
   if (path === "/for-daycares") {
     return { action: "redirect", status: 301, location: "/claim" };
@@ -199,6 +245,7 @@ export function decideRequest(input = {}) {
   }
 
   if (isHiddenListingPath(path)) {
+    if (hasAuthSessionCookie(input.cookie)) return { action: "next" };
     return { action: "not_found", status: 404 };
   }
 

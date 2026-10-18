@@ -191,6 +191,7 @@ function ProfilePane() {
     emailService: false,
     emailCommercial: false,
   });
+  const [smsNote, setSmsNote] = useState("");
   const origin = useAppStore((s) => s.origin);
   const workOrigin = useAppStore((s) => s.workOrigin);
   const setWorkOrigin = useAppStore((s) => s.setWorkOrigin);
@@ -251,7 +252,17 @@ function ProfilePane() {
           method: "profile_checkbox",
         },
       });
-      setConsents(nextConsent);
+      setConsents({
+        smsService: nextConsent.smsService,
+        emailService: nextConsent.emailService,
+        emailCommercial: nextConsent.emailCommercial,
+      });
+      if (nextConsent.smsUnreachable) {
+        setSmsNote(t("smsUnreachable"));
+        toast.message(t("smsUnreachable"));
+      } else {
+        setSmsNote("");
+      }
       if (saved.name) {
         try {
           await authClient.updateUser({ name: saved.name });
@@ -440,6 +451,11 @@ function ProfilePane() {
             </label>
             <p className="text-right text-[12px] text-subtle">{bio.length}/400</p>
             <CaslConsentFields value={consents} onChange={setConsents} />
+            {smsNote ? (
+              <p className="text-sm text-danger" role="alert">
+                {smsNote}
+              </p>
+            ) : null}
             <p className="text-[12px] text-subtle">
               <Link
                 to="/unsubscribe"

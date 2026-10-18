@@ -28,6 +28,7 @@ import { lookupUser, notifyPlatform, notifyThreadParty } from "@/lib/server/noti
 import { requireAdmin } from "@/lib/server/roles";
 import { listCentreOwnerEmails } from "@/lib/server/thread-access";
 import { upsertDaycare } from "@/lib/server/seed";
+import { parentRequestSms } from "@/lib/sms-copy";
 import { nid } from "@/lib/utils";
 
 type LeadRow = {
@@ -261,6 +262,9 @@ async function notifyNewLead(
     ),
   );
   const { dispatchCustomerAlert } = await import("@/lib/server/alert-dispatch");
+  void import("@/lib/server/sms-notify")
+    .then((mod) => mod.notifyCentreSms({ daycareId: input.daycareId, body: parentRequestSms(d.name) }))
+    .catch(() => undefined);
   await Promise.all(
     recipients.map((r) => {
       if (!r.userId) return Promise.resolve();
