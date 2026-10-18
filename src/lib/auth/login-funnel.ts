@@ -48,6 +48,7 @@ export type LoginFunnelStep =
   | "dest_failed"
   | "continued"
   | "two_factor_viewed"
+  | "two_factor_not_required"
   | "two_factor_skipped"
   | "two_factor_verified"
   | "two_factor_failed"
@@ -130,8 +131,9 @@ export async function shouldOpenTwoFactorPage(
   // Parent / provider 2FA is optional. Sending them to /verify-2fa while
   // TwoFactorGate still requires verified:true flash-loops parent ↔ code.
   if (!staffTwoFactorRequired(dest)) {
+    // Parent and daycare desks do not require a code. This is not a skip.
     captureLoginFunnel({
-      step: "two_factor_skipped",
+      step: "two_factor_not_required",
       reason: "optional_desk",
       ...funnelDestMeta(dest),
     });

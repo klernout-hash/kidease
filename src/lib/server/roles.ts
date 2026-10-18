@@ -329,18 +329,36 @@ export const getMyDesks = createServerFn({ method: "GET" })
   });
 
 /**
- * Document GET /admin* — session + profiles.role = admin. Not a desk hint.
- * 2FA stays on TwoFactorGate / requireAdmin (API + mutations). Requiring
- * the device cookie here dumped Kyle's Admin click to `/`.
+ * Document GET /admin* — session + admin role + email 2FA cookie.
+ * A missing cookie throws "Two-factor verification required", which
+ * beforeLoad sends to /verify-2fa (enrolment stays open). It must not
+ * 404 or send the admin home.
  */
 export const assertAdminDesk = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const access = await resolveAdminAccess(context.userId);
     if (!access.ok) throw new Error("Not authorized");
+    const { assertTwoFactorVerified } = await import("@/lib/server/two-factor.server");
+    assertTwoFactorVerified(context.userId);
     // Slide / mint idle when possible so /admin navigation keeps the desk
     // alive. Do not throw — data loaders still surface a real idle timeout.
     const { bootstrapAdminIdleFromSession } = await import("./reauth.server");
     await bootstrapAdminIdleFromSession(context.userId).catch(() => false);
+    return { ok: true as const };
+  });
+
+/**
+ * Document GET /support* — admin, support, or support_lead, plus the 2FA cookie.
+ * Signed-out and non-staff errors stay on the page (sign-in or the staff note).
+ * A staff session without the cookie is the only hard redirect.
+ */
+export const assertSupportDesk = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const access = await resolveSupportAccess(context.userId);
+    if (!access.ok) throw new Error("Not authorized");
+    const { assertTwoFactorVerified } = await import("@/lib/server/two-factor.server");
+    assertTwoFactorVerified(context.userId);
     return { ok: true as const };
   });
