@@ -50,7 +50,13 @@ export function ListingTourTimes({
       <p className="mt-1 text-sm text-muted">{timezoneLabel(timezone, loc)}</p>
       {empty ? (
         <p className="mt-3 max-w-prose text-sm text-muted" data-tour-empty={empty}>
-          {empty === "none_open" ? t("tourTimesNoneOpenLead") : t("tourTimesEmptyLead")}
+          {canBook
+            ? empty === "none_open"
+              ? t("tourTimesNoneOpenLead")
+              : t("tourTimesEmptyLead")
+            : empty === "none_open"
+              ? t("tourTimesNoneOpen")
+              : t("tourTimesEmpty")}
         </p>
       ) : (
         <ul className="mt-3 divide-y divide-border">

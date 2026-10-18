@@ -16,7 +16,9 @@ import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   dropStoredDuplicateAdditions,
+  licensedMasterFacilityIds,
   parseMasterFacilities,
+  planRemovedFromMasterRepublish,
   planStaleMasterHides,
   syncMasterCatalogue,
 } from "../src/lib/catalog-master-sync.ts";
@@ -102,6 +104,14 @@ New rows are appended. Existing rows are never deleted. Filled phone, email,
 and website are never replaced with blank. Fees, photos, open spots,
 and Live/claim fields are not taken from the master CSV.
 
+The 2026-10-06 licensed master has 25,872 rows. Pass --expect-master=25872
+with KidEase_Canada_Master_25872_20261006_1314.csv. A row is placed from the
+catalogue postal, FSA, or city, then the built-in city list, then the official
+postal-area centre (not a street pin). A row with no postal code is counted
+as skippedNoGeo and is not inserted. Quebec recognized homes (milieu familial,
+RSG, RSGE) are counted as skippedQcHome and are not inserted. British Columbia
+and Alberta family homes stay. Do not turn on FEATURE_QC_HOME_DAYCARES here.
+
 Approved ages come from data/ops/ages-sourced-20261002.csv, matched by listing id.
 That file sets age_min_months, age_max_months, ages_confirmed = 1, ages_source,
 and ages_source_url. It never overwrites ages_confirmed = 1, a claimed listing,
@@ -112,6 +122,11 @@ With a master CSV, mx- rows whose facility_id is gone are hidden
 Claimed rows and kids-world-daycare-kh2t are not hidden. If the hide count is
 above the safety cap, the seed stops and writes nothing. --no-hide-stale skips
 that step. A dry-run with DATABASE_URL prints the count and does not write.
+
+mx- rows already hidden as removed_from_master are made public again when
+their facility is in this licensed master. Quebec recognized homes are not
+restored onto the public catalogue. If that restore count is above 500, the
+seed stops and writes nothing.
 
 Claimed, provider-owned, and staffed listings are left unchanged by the upsert.
 /api/seed-catalog does not read the private master CSV. Use this script for the
@@ -152,7 +167,12 @@ export function assertMasterLock(summary, expectMaster) {
   const expected = Math.floor(expectMaster);
   if (!summary) throw new Error(`--expect-master=${expected} requires MASTER_CSV_PATH`);
   const accounted =
-    summary.matched + summary.added + summary.skippedNoGeo + summary.skippedNonCanada + summary.skippedInvalid;
+    summary.matched +
+    summary.added +
+    summary.skippedNoGeo +
+    summary.skippedNonCanada +
+    summary.skippedInvalid +
+    (summary.skippedQcHome || 0);
   if (summary.masterRows !== expected) {
     throw new Error(`master rows ${summary.masterRows} !== lock ${expected}`);
   }
@@ -215,6 +235,7 @@ async function main() {
   let pool = null;
   let sql = null;
   let staleHide = null;
+  let republish = null;
   try {
     if (databaseUrlReady) {
       const { default: pg } = await import("pg");
@@ -256,12 +277,21 @@ async function main() {
           master.rows.map((row) => row.facilityId),
         );
         staleHide = stale;
+        republish = planRemovedFromMasterRepublish(stored, licensedMasterFacilityIds(master.rows));
         console.log(
           `[seed-catalog] staleMaster=${stale.count} cap=${stale.cap} overCap=${stale.overCap}`,
+        );
+        console.log(
+          `[seed-catalog] republishRemoved=${republish.count} cap=${republish.cap} overCap=${republish.overCap}`,
         );
         if (stale.overCap && !opts.dryRun) {
           throw new Error(
             `stale master hide count ${stale.count} is above the cap ${stale.cap}. Nothing was hidden.`,
+          );
+        }
+        if (republish.overCap && !opts.dryRun) {
+          throw new Error(
+            `removed-from-master restore count ${republish.count} is above the cap ${republish.cap}. Nothing was written.`,
           );
         }
       } else if (opts.masterCsvPath && !opts.hideStale) {
@@ -282,7 +312,7 @@ async function main() {
     );
     if (summary) {
       console.log(
-        `[seed-catalog] masterRows=${summary.masterRows} matched=${summary.matched} added=${summary.added} skippedNoGeo=${summary.skippedNoGeo} skippedNonCanada=${summary.skippedNonCanada} skippedInvalid=${summary.skippedInvalid} catalogueRows=${summary.catalogueRows} publicSlugs=${summary.publicSlugs}`,
+        `[seed-catalog] masterRows=${summary.masterRows} matched=${summary.matched} added=${summary.added} skippedNoGeo=${summary.skippedNoGeo} skippedNonCanada=${summary.skippedNonCanada} skippedQcHome=${summary.skippedQcHome || 0} skippedInvalid=${summary.skippedInvalid} catalogueRows=${summary.catalogueRows} publicSlugs=${summary.publicSlugs}`,
       );
     }
     assertMasterLock(summary, opts.expectMaster);
@@ -323,6 +353,26 @@ async function main() {
         [REMOVED_FROM_MASTER_FAULT, staleHide.ids],
       );
       console.log(`[seed-catalog] staleHidden=${staleHide.count}`);
+    }
+    if (republish && republish.count > 0 && !republish.overCap) {
+      await sql.query(
+        `update daycares
+            set listing_active = 1,
+                import_fault = null
+          where id = any($1::text[])
+            and import_fault = $2
+            and merged_into is null
+            and claimed_at is null
+            and coalesce(claim_status, 'unclaimed') not in ('approved', 'live', 'active', 'published', 'pending', 'waiting', 'verified')
+            and not exists (select 1 from provider_daycares p where p.daycare_id = daycares.id)
+            and not exists (
+              select 1 from listing_claims lc
+               where lc.daycare_id = daycares.id
+                 and coalesce(lc.status, '') not in ('rejected', 'withdrawn', 'cancelled')
+            )`,
+        [republish.ids, REMOVED_FROM_MASTER_FAULT],
+      );
+      console.log(`[seed-catalog] republished=${republish.count}`);
     }
   } finally {
     if (pool) await pool.end();

@@ -143,6 +143,30 @@ export function formatExploreDateRange(from?: string, to?: string, locale = "en"
   return fmt(from || to || "");
 }
 
+/** Name-search cards farther than this show the province and the kilometres. */
+export const FAR_NAME_KM = 80;
+
+/** Closest centre first. A name search does not prefer a complete card in another city. */
+export function orderNameMatches<T extends { distanceKm: number; name: string }>(rows: readonly T[]): T[] {
+  return [...rows].sort((a, b) => a.distanceKm - b.distanceKm || a.name.localeCompare(b.name));
+}
+
+/**
+ * Licensed count stays on the line.
+ * A live count is extra text, never a replacement for the centre count.
+ */
+export function licensedSearchCountLine(input: {
+  nameSearch: boolean;
+  liveCount: number;
+  licensed: string;
+  liveHint: string;
+}): string {
+  if (!input.nameSearch && input.liveCount > 0 && input.liveHint) {
+    return `${input.licensed} · ${input.liveHint}`;
+  }
+  return input.licensed;
+}
+
 export function compactExploreSearch(values: {
   q?: string;
   name?: string;
