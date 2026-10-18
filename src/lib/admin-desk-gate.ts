@@ -1,7 +1,6 @@
 /**
- * /admin beforeLoad outcomes. Role is checked by assertAdminDesk.
- * 2FA is TwoFactorGate's job — a missing device cookie must not dump
- * an admin-role session on `/` (that looks like a broken Admin pill).
+ * /admin beforeLoad outcomes. Role and the 2FA cookie are checked by assertAdminDesk.
+ * A missing device cookie goes to /verify-2fa, never to `/` and never to a 404.
  */
 
 export const ADMIN_LOGIN_SEARCH = {

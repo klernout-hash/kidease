@@ -84,7 +84,9 @@ Conversion window: **30 minutes**. Break down by `desk`, `dest_kind`, `method` (
 | `dest_resolved` | Post-login path chosen (`dest_kind`, `dest_path`, `desk`) |
 | `dest_failed` | Dest resolve / leave threw; a fallback dest still continues |
 | `continued` | Browser assigned onward (desk or public next) |
-| `two_factor_viewed` / `_skipped` / `_verified` / `_failed` | Email-code page |
+| `two_factor_viewed` / `_verified` / `_failed` | Email-code page |
+| `two_factor_not_required` | Parent or daycare dest. Not a skip. Reason `optional_desk`. |
+| `two_factor_skipped` | Staff only: `already_verified`, or a real leave (`status_unavailable`, `stall_continue`, `continue_without_code`). |
 | `desk_landed` | Parent / Daycare / Admin / Support desk painted after 2FA |
 
 `dest_path` is a coarse label (`/parent`, `/search`, `/daycare`, `/other`) — never a listing slug or query string. Identify stays Better Auth user id only.

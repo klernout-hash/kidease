@@ -6,9 +6,11 @@ import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
+import { beforeLoadSupportDesk } from "@/lib/server/support-route";
 import { SESSION_SETTLE_MS } from "@/lib/timeout";
 
 export const Route = createFileRoute("/support")({
+  beforeLoad: () => beforeLoadSupportDesk("/support"),
   head: () => ({
     meta: [
       { title: "Support · KidEase" },
