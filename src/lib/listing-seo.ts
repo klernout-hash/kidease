@@ -11,6 +11,7 @@ import { classifyFacilityType, facilityTypeSeoKind } from "./facility-type.ts";
 import { cityHubCityName, cityHubDefForPlace, cityHubUrl } from "./city-hubs.ts";
 import { normalizeListingSlug } from "./listing-slug.ts";
 import { breadcrumbJsonLd, breadcrumbJsonLdScript } from "./page-seo.ts";
+import { isMissingCatalogueBuilding } from "./catalogue-buildings.ts";
 import { isUnflaggedSharedFallbackSrc } from "./photo-honesty.ts";
 import { SITEMAP_ORIGIN, sitemapListingPath } from "./sitemap.ts";
 
@@ -22,7 +23,7 @@ function isSeoPhoto(src?: string | null) {
   if (!p) return false;
   if (p.includes("placeholder") || p.includes("-logo") || p.includes("/photos/wpg/")) return false;
   if (isUnflaggedSharedFallbackSrc(p)) return false;
-  if (p.startsWith("/photos/buildings/")) return true;
+  if (p.startsWith("/photos/buildings/")) return !isMissingCatalogueBuilding(p);
   if (p.startsWith("https://")) return true;
   return false;
 }

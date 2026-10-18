@@ -176,10 +176,14 @@ export function listingInteriors(raw: string | string[] | null | undefined): str
   return classifyListingPhotos(raw).interiors;
 }
 
-/** First photo the listing hero should paint. Empty when the centre has none. */
+/** First photo the listing hero should paint. Empty when the centre has none.
+ *  A mapped `/photos/buildings/` path with no JPEG on disk is not a photo:
+ *  preloading it hits a 404 on media.kidease.ca and a placeholder from `/img`. */
 export function primaryListingPhoto(raw: string | string[] | null | undefined): string {
   const classified = classifyListingPhotos(raw);
-  const list = [classified.storefront, ...classified.interiors].filter(Boolean);
+  const list = [classified.storefront, ...classified.interiors].filter(
+    (p) => p && !isMissingCatalogueBuilding(p),
+  );
   list.sort((a, b) => Number(isOfficialBuildingPhoto(b)) - Number(isOfficialBuildingPhoto(a)));
   return list[0] || "";
 }
