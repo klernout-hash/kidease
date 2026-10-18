@@ -4,6 +4,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import {
+  hasAuthSessionCookie,
+  notFoundDocument,
   CANONICAL_ORIGIN,
   CHANGE_PASSWORD_DESTINATION,
   CHANGE_PASSWORD_PATH,
@@ -328,4 +330,36 @@ test("nitro middleware and vercel.json stay wired to the guard", () => {
   assert.match(vercel, /"source": "\/"/);
   assert.match(vercel, /max-age=0, must-revalidate/);
   assert.doesNotMatch(vercel, /"source": "\/parent"/);
+  assert.match(middleware, /notFoundDocument/);
+  assert.match(middleware, /text\/html/);
+  assert.doesNotMatch(middleware, /new Response\("Not Found"/);
+});
+
+test("a signed-in request can open a hidden listing document; guests get a styled 404", () => {
+  const path = "/daycare/qa-reviewer-demo-centre";
+  assert.equal(isHiddenListingPath(path), true);
+  assert.deepEqual(decideRequest({ host: "www.kidease.ca", pathname: path }), {
+    action: "not_found",
+    status: 404,
+  });
+  assert.equal(hasAuthSessionCookie(""), false);
+  assert.equal(hasAuthSessionCookie("__Host-grok-auth.session_token="), false);
+  assert.equal(hasAuthSessionCookie("__Host-grok-auth.session_token=abc"), false);
+  assert.equal(
+    hasAuthSessionCookie("__Host-grok-auth.session_token=session-token-value"),
+    true,
+  );
+  assert.deepEqual(
+    decideRequest({
+      host: "www.kidease.ca",
+      pathname: path,
+      cookie: "__Secure-kidease.session_token=session-token-value",
+    }),
+    { action: "next" },
+  );
+  const html = notFoundDocument("listing");
+  assert.match(html, /Listing not found/);
+  assert.match(html, /href="\/search"/);
+  assert.match(html, /KidEase/);
+  assert.doesNotMatch(html, /^Not Found$/);
 });

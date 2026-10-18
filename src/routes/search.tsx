@@ -168,6 +168,10 @@ export async function searchLoader({ location }: { location: { search: unknown }
           city: city || undefined,
           facility: listedDaycareTypeFromSearch(location.search),
           page,
+          name:
+            location.search && typeof location.search === "object" && "name" in location.search
+              ? String((location.search as { name?: unknown }).name || "")
+              : "",
         },
       }),
       PAINT_BUDGET_MS,
@@ -318,11 +322,13 @@ export function SearchScreen({
   const query = useAppStore((s) => s.query);
   const setQuery = useAppStore((s) => s.setQuery);
   const [items, setItems] = useState<Card[] | null>(
-    boot.items.length > 0 && originsMatchSearchQuery(boot.origin, incoming.q)
-      ? filterByLocationLock(
-          boot.items,
-          resolveLocationLock({ ...boot.origin, q: incoming.q }),
-        )
+    boot.items.length > 0 && (Boolean(incoming.name) || originsMatchSearchQuery(boot.origin, incoming.q))
+      ? incoming.name
+        ? boot.items
+        : filterByLocationLock(
+            boot.items,
+            resolveLocationLock({ ...boot.origin, q: incoming.q }),
+          )
       : null,
   );
   const resultPage = incoming.page ?? 1;
@@ -439,10 +445,6 @@ export function SearchScreen({
   }, [radiusKm, setRadiusKm]);
 
   useEffect(() => {
-    if (workOrigin?.label && !workQuery) setWorkQuery(workOrigin.label);
-  }, [workOrigin?.label, workQuery]);
-
-  useEffect(() => {
     if (!user) {
       setAnchorsHydrated(true);
       return;
@@ -454,7 +456,6 @@ export function SearchScreen({
         const localWork = useAppStore.getState().workOrigin;
         if (saved.work && !localWork) {
           setWorkOrigin(saved.work);
-          setWorkQuery(saved.work.label);
         }
         if (saved.mode !== "home" && useAppStore.getState().anchorMode === "home") {
           setAnchorMode(saved.mode);
@@ -497,6 +498,7 @@ export function SearchScreen({
   const unknownCity = Boolean(
     (incoming.city || "").trim() && !(incoming.q || "").trim() && !originFromSearchQuery(incoming.city),
   );
+  const workForSearch = workQuery.trim() && workOrigin ? workOrigin : null;
   const viewAnchors = useMemo(
     () =>
       anchorsForSearchMap({
@@ -506,7 +508,7 @@ export function SearchScreen({
         q: requestedPlace,
         query,
         label: origin.label,
-        work: workOrigin,
+        work: workForSearch,
         mode: anchorMode,
       }),
     [
@@ -516,8 +518,9 @@ export function SearchScreen({
       radiusKm,
       requestedPlace,
       query,
-      workOrigin?.lat,
-      workOrigin?.lng,
+      workQuery,
+      workForSearch?.lat,
+      workForSearch?.lng,
       anchorMode,
     ],
   );
@@ -548,13 +551,14 @@ export function SearchScreen({
     city: (incoming.city || "").trim() || undefined,
     facility: listedDaycareTypeFromSearch(incoming),
     startDate: needBy || null,
-    lat2: viewAnchors.cityOwned ? undefined : workOrigin?.lat,
-    lng2: viewAnchors.cityOwned ? undefined : workOrigin?.lng,
+    name: nameQuery.trim() || undefined,
+    lat2: viewAnchors.cityOwned ? undefined : workForSearch?.lat,
+    lng2: viewAnchors.cityOwned ? undefined : workForSearch?.lng,
     mode: viewAnchors.mode,
     parentFit: parentFitFromSearch({
       facts: fitFacts,
       home: { lat: cameraHome.lat, lng: cameraHome.lng },
-      work: viewAnchors.cityOwned || !workOrigin ? null : { lat: workOrigin.lat, lng: workOrigin.lng },
+      work: viewAnchors.cityOwned || !workForSearch ? null : { lat: workForSearch.lat, lng: workForSearch.lng },
       radiusKm,
       budgetMonthly: Number(budgetMonthly) > 0 ? Math.round(Number(budgetMonthly)) : null,
       wantSubsidy: ten,
@@ -573,8 +577,9 @@ export function SearchScreen({
     city: (incoming.city || "").trim() || undefined,
     facility: listedDaycareTypeFromSearch(incoming),
     startDate: needBy || null,
-    lat2: viewAnchors.cityOwned ? undefined : workOrigin?.lat,
-    lng2: viewAnchors.cityOwned ? undefined : workOrigin?.lng,
+    name: nameQuery.trim() || undefined,
+    lat2: viewAnchors.cityOwned ? undefined : workForSearch?.lat,
+    lng2: viewAnchors.cityOwned ? undefined : workForSearch?.lng,
     mode: viewAnchors.mode,
     page: resultPage,
     parentFit: fitKey,
@@ -591,7 +596,7 @@ export function SearchScreen({
   );
 
   useEffect(() => {
-    if (unknownCity) {
+    if (unknownCity && !nameQuery.trim()) {
       setItems([]);
       setRefreshing(false);
       setSearchFailed(false);
@@ -600,8 +605,9 @@ export function SearchScreen({
     let live = true;
     const key = searchCacheKey(cacheInput);
     const cached = readSearchCache(key);
+    const lockRows = (rows: Card[]) => (nameQuery.trim() ? rows : filterByLocationLock(rows, locationLock));
     if (cached) {
-      setItems(filterByLocationLock(cached, locationLock));
+      setItems(lockRows(cached));
       setHasMore(cached.length >= SEARCH_PAGE_SIZE);
       setSearchFailed(false);
     } else {
@@ -612,7 +618,7 @@ export function SearchScreen({
       void dedupedQuery(`search-page:${key}`, QUERY_STALE_MS, () => searchDaycarePage({ data: searchData }))
         .then((result) => {
           if (!live) return;
-          const locked = filterByLocationLock(result.items, locationLock);
+          const locked = lockRows(result.items);
           setItems(locked);
           setHasMore(result.hasMore);
           setResultTotal(result.total);
@@ -655,12 +661,14 @@ export function SearchScreen({
     query,
     origin.label,
     incoming.q,
+    nameQuery,
     incoming.city,
     incoming.fac,
     incoming.cat,
     needBy,
-    workOrigin?.lat,
-    workOrigin?.lng,
+    workQuery,
+    workForSearch?.lat,
+    workForSearch?.lng,
     anchorMode,
     extended,
     rankSchedules.join(","),
@@ -974,7 +982,7 @@ export function SearchScreen({
   }
 
   function retrySearch() {
-    if (unknownCity) {
+    if (unknownCity && !nameQuery.trim()) {
       setItems([]);
       setSearchFailed(false);
       setRefreshing(false);
@@ -988,7 +996,7 @@ export function SearchScreen({
       { fresh: true },
     )
       .then((result) => {
-        const locked = filterByLocationLock(result.items, locationLock);
+        const locked = nameQuery.trim() ? result.items : filterByLocationLock(result.items, locationLock);
         setItems(locked);
         setHasMore(result.hasMore);
         setResultTotal(result.total);
@@ -1025,7 +1033,7 @@ export function SearchScreen({
   }
 
   const list = useMemo(() => {
-    let rows = publicListings(filterByLocationLock(items ?? [], locationLock));
+    let rows = publicListings(nameQuery.trim() ? (items ?? []) : filterByLocationLock(items ?? [], locationLock));
     if (liveOnly) rows = rows.filter((r) => r.live && !r.isTest);
     if (avail === "open") rows = rows.filter((r) => honestVacancy(r).kind === "open");
     if (avail === "waitlist") rows = rows.filter((r) => honestVacancy(r).kind === "waitlist");
@@ -1256,7 +1264,7 @@ export function SearchScreen({
         secondary: t("changeLocation"),
         secondaryTo: "/?change=1",
       }
-    : nameQuery.trim() && (items?.length ?? 0) > 0
+    : nameQuery.trim()
       ? {
           title: t("noNameResults"),
           body: undefined as string | undefined,
@@ -1327,9 +1335,10 @@ export function SearchScreen({
   const headingCity = locationKnown ? city : t("searchPlacePending");
   const whereSet = Boolean(whereLabel);
   const mapOrigin = anchors.primary;
-  const centreCount = extraFilters ? visualItems.length : resultTotal;
+  const nameSearch = Boolean(nameQuery.trim());
+  const centreCount = nameSearch || extraFilters ? visualItems.length : resultTotal;
   const searchCountLine =
-    fabric.live > 0
+    !nameSearch && fabric.live > 0
       ? t("exploreBrowseHint").replace("{n}", String(fabric.live))
       : centreCount === 1
         ? t("searchLicensedCountOne")

@@ -73,7 +73,7 @@ test("session staff hide Money / licence / claim; owners keep them", () => {
   assert.equal(hidden.includes("contract"), false);
   assert.equal(hidden.includes("claim"), false);
   assert.equal(hidden.includes("add"), false);
-  assert.equal(hidden.includes("subscription"), false);
+  assert.equal(hidden.includes("subscription"), true);
   assert.equal(hidden.includes("requests"), true);
   assert.equal(hidden.includes("listings"), true);
   assert.equal(hidden.includes("screening"), true);

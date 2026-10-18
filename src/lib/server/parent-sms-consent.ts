@@ -11,8 +11,28 @@ export const saveParentSmsOptIn = createServerFn({ method: "POST" })
   .validator((input: { phone?: string; smsConsent?: boolean }) => parentSmsOptInInput(input))
   .handler(async ({ context, data }) => {
     if (data.issue) return { ok: false as const, error: data.issue };
-    const phone = data.phone || null;
-    const flag = data.smsConsent ? 1 : 0;
+    let phone = data.phone || null;
+    let smsConsent = data.smsConsent;
+    let smsUnreachable = false;
+    if (phone) {
+      const { isE164, normalizeE164 } = await import("@/lib/sms");
+      const e164 = normalizeE164(phone);
+      if (isE164(e164)) phone = e164;
+    }
+    if (smsConsent && phone) {
+      try {
+        const { decideSmsLookup } = await import("@/lib/sms-lookup");
+        const decision = await decideSmsLookup(phone);
+        if (decision.phone) phone = decision.phone;
+        if (decision.block) {
+          smsConsent = false;
+          smsUnreachable = true;
+        }
+      } catch {
+        /* Lookup failed. Keep the opt-in. */
+      }
+    }
+    const flag = smsConsent ? 1 : 0;
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
     await sql`
@@ -29,7 +49,7 @@ export const saveParentSmsOptIn = createServerFn({ method: "POST" })
         sms_consent = excluded.sms_consent,
         sms_consent_at = case when excluded.sms_consent = 1 then now() else null end
     `;
-    if (data.smsConsent) {
+    if (smsConsent) {
       const { setConsent } = await import("./casl-consent");
       await setConsent({
         userId: context.userId,
@@ -42,5 +62,5 @@ export const saveParentSmsOptIn = createServerFn({ method: "POST" })
         locale: "en",
       });
     }
-    return { ok: true as const, phone: phone ?? "", smsConsent: data.smsConsent };
+    return { ok: true as const, phone: phone ?? "", smsConsent, smsUnreachable };
   });

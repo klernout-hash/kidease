@@ -12,6 +12,8 @@ import { canProposeTourTime, declineReasonValid } from "@/lib/tour-hold";
 import { formatTourSlotRange, type PublicTourSlot } from "@/lib/tour-calendar";
 import type { CopyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
+import { ConversationDetailsBody } from "@/components/conversation-details";
+import type { ConversationDetails } from "@/lib/inbox-thread-ui";
 import type { LeadRequest } from "@/lib/lead-requests";
 import type { TourRequest } from "@/lib/types";
 
@@ -29,6 +31,12 @@ export function InboxDetailRail({
   centreName,
   canWrite,
   onChanged,
+  details = null,
+  viewerId = "",
+  stateBusy = false,
+  onMarkUnread,
+  onToggleStar,
+  onToggleArchive,
 }: {
   thread: CentreInboxThread;
   tour: TourRequest | null;
@@ -36,6 +44,12 @@ export function InboxDetailRail({
   centreName: string;
   canWrite: boolean;
   onChanged: () => void;
+  details?: ConversationDetails | null;
+  viewerId?: string;
+  stateBusy?: boolean;
+  onMarkUnread?: () => void;
+  onToggleStar?: () => void;
+  onToggleArchive?: () => void;
 }) {
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
@@ -142,15 +156,27 @@ export function InboxDetailRail({
 
   return (
     <aside data-ke="inbox-detail" className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto p-4">
-      <div className="flex items-center gap-3">
-        <span className="grid size-12 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-          {inboxInitials(thread.parentName)}
-        </span>
-        <div className="min-w-0">
-          <p className="truncate font-medium">{thread.parentName}</p>
-          <p className="text-xs text-muted">{t(INBOX_STAGE_COPY[thread.stage] as CopyKey)}</p>
+      {details && onMarkUnread && onToggleStar && onToggleArchive ? (
+        <ConversationDetailsBody
+          details={details}
+          viewerId={viewerId}
+          busy={stateBusy}
+          onMarkUnread={onMarkUnread}
+          onToggleStar={onToggleStar}
+          onToggleArchive={onToggleArchive}
+        />
+      ) : null}
+      {details ? null : (
+        <div className="flex items-center gap-3">
+          <span className="grid size-12 place-items-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+            {inboxInitials(thread.parentName)}
+          </span>
+          <div className="min-w-0">
+            <p className="truncate font-medium">{thread.parentName}</p>
+            <p className="text-xs text-muted">{t(INBOX_STAGE_COPY[thread.stage] as CopyKey)}</p>
+          </div>
         </div>
-      </div>
+      )}
 
       {slaLabel ? <p className={sla.overdue ? "text-sm text-danger" : "text-sm text-muted"}>{slaLabel}</p> : null}
 

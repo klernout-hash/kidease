@@ -211,7 +211,7 @@ test("EN footer labels stay in use order", () => {
   ]);
   assert.deepEqual(labels(FOOTER_DAYCARES, "en"), [
     "List your daycare",
-    "Subscription",
+    "Plans",
     "How we verify listings",
     "Daycare requirements",
     "Start a Daycare",
@@ -242,7 +242,7 @@ test("FR footer labels stay in the same use order", () => {
   ]);
   assert.deepEqual(labels(FOOTER_DAYCARES, "fr"), [
     "Inscrire votre garderie",
-    "Abonnement",
+    "Forfaits",
     "Comment nous vérifions les fiches",
     "Exigences pour les garderies",
     "Ouvrir une garderie",
