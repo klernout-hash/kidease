@@ -132,9 +132,6 @@ function ParentPage() {
       </Shell>
     );
   }
-  if (upgradeSurface && !chrome.pending && chrome.role === "parent" && !chrome.subscriptionsEnabled) {
-    return <Navigate to="/parent" search={{ tab: "explore" }} />;
-  }
   if (
     upgradeSurface &&
     session &&

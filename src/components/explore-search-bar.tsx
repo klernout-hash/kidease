@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { LocateFixed, Search } from "lucide-react";
 import { ChipButton } from "@/components/chip";
 import { DaycareNameField } from "@/components/daycare-name-field";
@@ -175,7 +176,7 @@ export function ExploreSearchBar({
   onDatesChange: (next: { from: string; to: string }) => void;
   start?: SearchStart | "";
   onStartChange?: (start: SearchStart | "") => void;
-  onSubmit: () => void;
+  onSubmit: (where?: string) => void;
   onLocate?: () => void;
   origin?: { lat: number; lng: number };
   className?: string;
@@ -193,6 +194,7 @@ export function ExploreSearchBar({
   onRadiusChange?: (km: number) => void;
 }) {
   const { t, locale } = useCopy();
+  const navigate = useNavigate();
   const whereId = useId();
   const nameId = useId();
   const whereLabelId = useId();
@@ -274,7 +276,7 @@ export function ExploreSearchBar({
         aria-label={t("searchBarAria")}
         onSubmit={(e) => {
           e.preventDefault();
-          onSubmit();
+          onSubmit(values.where);
         }}
       >
         <div className="flex min-h-14 w-full items-center gap-2 rounded-full bg-surface py-1 pl-4 pr-1.5 shadow-card ring-1 ring-border">
@@ -316,7 +318,9 @@ export function ExploreSearchBar({
       onSubmit={(e) => {
         e.preventDefault();
         setActive(null);
-        onSubmit();
+        const input = e.currentTarget.querySelector("[data-ke=where-field] input");
+        const typed = input instanceof HTMLInputElement ? input.value : values.where;
+        onSubmit(typed);
         if (startCollapsed) setExpanded(false);
       }}
     >
@@ -373,6 +377,9 @@ export function ExploreSearchBar({
                 origin={origin}
                 ariaLabelledBy={whereLabelId}
                 className={prominent ? "h-4 min-h-0" : "min-h-6"}
+                onCentre={(hit) => {
+                  void navigate({ to: "/daycare/$slug", params: { slug: hit.slug } });
+                }}
                 emptyMenu={{
                   title: t("whereSuggested"),
                   nearby: t("whereNearby"),

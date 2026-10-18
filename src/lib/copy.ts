@@ -258,6 +258,7 @@ export const copy = {
     licensedNotLiveLead:
       "{n} licensed centres are in this area. None have gone live on KidEase, so fees and spots may be out of date. Browse All listings, or a director can claim a listing.",
     exploreBrowseHint: "{n} live · browse directory",
+    liveOnKidEase: "Live on KidEase",
     searchLicensedCount: "{n} licensed centres",
     searchLicensedCountOne: "1 licensed centre",
     openingsRail: "Openings",
@@ -3398,6 +3399,7 @@ export const copy = {
     licensedNotLiveLead:
       "{n} centres permis sont dans ce secteur. Aucun n’est encore actif sur KidEase, donc les tarifs et les places peuvent être périmés. Consultez Toutes les fiches, ou un directeur peut réclamer une fiche.",
     exploreBrowseHint: "{n} en ligne · parcourir le répertoire",
+    liveOnKidEase: "En ligne sur KidEase",
     searchLicensedCount: "{n} centres permis",
     searchLicensedCountOne: "1 centre permis",
     openingsRail: "Places libres",
