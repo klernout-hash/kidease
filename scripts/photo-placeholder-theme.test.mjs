@@ -12,13 +12,21 @@ function src(path) {
   return readFileSync(join(root, path), "utf8");
 }
 
-test("catalogue building manifest matches files on disk", () => {
+function isJpegFile(path) {
+  const buf = readFileSync(path);
+  return buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff;
+}
+
+test("catalogue building manifest matches decodable JPEGs on disk", () => {
   const listed = JSON.parse(readFileSync(join(root, "src/lib/data/catalogue-building-files.json"), "utf8"));
-  const onDisk = readdirSync(join(root, "public/photos/buildings"))
-    .filter((name) => name.endsWith(".jpg"))
+  const dir = join(root, "public/photos/buildings");
+  const onDisk = readdirSync(dir)
+    .filter((name) => name.endsWith(".jpg") && isJpegFile(join(dir, name)))
     .map((name) => `/photos/buildings/${name}`)
     .sort();
   assert.deepEqual(listed, onDisk);
+  assert.equal(isMissingCatalogueBuilding("/photos/buildings/mb-1014.jpg"), true);
+  assert.equal(isMissingCatalogueBuilding("/photos/buildings/mb-102700.jpg"), true);
 });
 
 test("a mapped building with no file is not a paintable photo", () => {
