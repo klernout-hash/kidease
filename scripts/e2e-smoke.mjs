@@ -582,6 +582,65 @@ async function runRoleFixture(page, base) {
       });
     }
 
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await setFixture(context, base, { role: "provider", activity: true });
+    await context.clearCookies();
+    await page.goto(new URL("/search?q=Winnipeg%2C+MB", base).href, {
+      waitUntil: "domcontentloaded",
+      timeout: timeoutMs,
+    });
+    const liveChip = page.locator('[data-ke="live-on-kidease"]').first();
+    await liveChip.waitFor({ state: "visible", timeout: timeoutMs });
+    await liveChip.click();
+    await page.waitForURL(/[?&]live=1(?:&|$)/, { timeout: timeoutMs }).catch(() => {});
+    const liveUrl = page.url();
+    const liveQuoted = /live=%22|live=%221%22|live="1"/.test(liveUrl);
+    const liveParam = /[?&]live=1(?:&|$)/.test(liveUrl);
+    const countLine = page.locator('[data-ke="search-count"]');
+    const countText = await countLine
+      .waitFor({ state: "visible", timeout: timeoutMs })
+      .then(() =>
+        page.waitForFunction(
+          () => {
+            const text = document.querySelector('[data-ke="search-count"]')?.textContent || "";
+            return /[1-9]\d*\s+licensed centre/i.test(text);
+          },
+          null,
+          { timeout: timeoutMs },
+        ),
+      )
+      .then(async () => ((await countLine.innerText()) || "").replace(/\s+/g, " ").trim())
+      .catch(async () => ((await countLine.innerText().catch(() => "")) || "").replace(/\s+/g, " ").trim());
+    const liveCountOk = /[1-9]\d*\s+licensed centre/i.test(countText);
+    const browse = page.locator('[data-ke="browse-directory"]');
+    const browseHref = (await browse.first().getAttribute("href").catch(() => "")) || "";
+    const browseOk = /\/daycare\/city\/winnipeg(?:[/?#]|$)/.test(browseHref);
+    record("live-chip-url", liveParam && !liveQuoted && liveCountOk && browseOk, {
+      note: `${liveUrl} count=${countText} browse=${browseHref}`,
+    });
+    await shot(page, "live-chip", 1280, '[data-ke="live-on-kidease"]');
+    await shot(page, "live-chip-390", 390, '[data-ke="live-on-kidease"]');
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(new URL("/search?q=Edmonton%2C+AB&live=1", base).href, {
+      waitUntil: "domcontentloaded",
+      timeout: timeoutMs,
+    });
+    await page.waitForURL(/[?&]live=1(?:&|$)/, { timeout: timeoutMs }).catch(() => {});
+    const edmontonUrl = page.url();
+    const edmontonQuoted = /live=%22|live=%221%22|live="1"/.test(edmontonUrl);
+    const edmontonParam = /[?&]live=1(?:&|$)/.test(edmontonUrl);
+    const kidsWorld = page.locator('[data-slug="kids-world-daycare-kh2t"]');
+    const kidsWorldVisible = await kidsWorld
+      .first()
+      .waitFor({ state: "visible", timeout: timeoutMs })
+      .then(() => true)
+      .catch(() => false);
+    const edmontonBrowse = (await page.locator('[data-ke="browse-directory"]').first().getAttribute("href").catch(() => "")) || "";
+    record("live-edmonton-kids-world", edmontonParam && !edmontonQuoted && kidsWorldVisible && /\/daycare\/city\/edmonton(?:[/?#]|$)/.test(edmontonBrowse), {
+      note: `${edmontonUrl} card=${kidsWorldVisible} browse=${edmontonBrowse}`,
+    });
+
     await setFixture(context, base, { role: "parent" });
     const parentAdmin = await page.goto(new URL("/admin", base).href, {
       waitUntil: "domcontentloaded",

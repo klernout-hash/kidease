@@ -3,7 +3,14 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { FAR_NAME_KM, licensedSearchCountLine, orderNameMatches } from "../src/lib/explore-search.ts";
+import {
+  FAR_NAME_KM,
+  licensedSearchCountLine,
+  liveSearchParam,
+  orderNameMatches,
+  readLiveSearchFlag,
+  splitLiveBrowseHint,
+} from "../src/lib/explore-search.ts";
 import { rankPlaceSuggestions, suggestLocalPlaces } from "../src/lib/place-suggest.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -56,11 +63,23 @@ test("search header keeps the licensed count when a city also has live centres",
 
 test("Live on KidEase is a shareable claim-verified filter", () => {
   const search = src("src/routes/search.tsx");
-  assert.match(search, /s\.live === "1" \|\| s\.live === true \|\| s\.live === 1/);
-  assert.match(src("src/routes/index.tsx"), /live \? \{ live: "1" as const \}/);
+  assert.equal(readLiveSearchFlag(1), true);
+  assert.equal(readLiveSearchFlag(true), true);
+  assert.equal(readLiveSearchFlag("1"), true);
+  assert.equal(readLiveSearchFlag('"1"'), true);
+  assert.equal(readLiveSearchFlag("true"), false);
+  assert.equal(liveSearchParam(true), 1);
+  assert.equal(liveSearchParam(false), undefined);
+  assert.match(search, /readLiveSearchFlag\(s\.live\)/);
+  assert.match(search, /out\.live = 1/);
+  assert.match(src("src/routes/index.tsx"), /live \? \{ live: 1 as const \}/);
   assert.match(search, /isClaimVerified/);
   assert.match(search, /writeLiveClaimed/);
-  assert.match(search, /live: liveOn \? "1"/);
+  assert.match(search, /liveSearchParam\(liveOn\)/);
+  assert.doesNotMatch(search, /live: liveOn \? "1"/);
+  assert.match(search, /data-ke="browse-directory"/);
+  assert.equal(splitLiveBrowseHint("1 live · browse directory").browse, "browse directory");
+  assert.equal(splitLiveBrowseHint("1 live · browse directory").count, "1 live");
   assert.match(src("src/components/explore-filter-bar.tsx"), /data-ke="live-on-kidease"/);
   assert.match(src("src/components/shell.tsx"), /data-ke="live-on-kidease-tab"/);
   assert.match(src("src/routes/index.tsx"), /data-ke="home-live-on-kidease"/);

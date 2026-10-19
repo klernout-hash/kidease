@@ -47,6 +47,7 @@ async function seed(request: Request) {
     });
   }
   const { getSql } = await import("@/lib/db");
+  const { flushSearchMemo } = await import("@/lib/server/search-memo");
   const sql = await getSql();
   const users = await sql<{ id: string }>`select id from "user" where lower(email) = lower(${email}) limit 1`;
   const userId = users[0]?.id;
@@ -123,9 +124,20 @@ async function seed(request: Request) {
       if (activity) {
         await sql`
           update daycares
-          set claimed_at = coalesce(claimed_at, now()), claim_status = 'approved'
+          set claimed_at = coalesce(claimed_at, now()),
+              claim_status = 'approved',
+              license_number = 'MB-100200',
+              license_status = 'matched',
+              registry_match_state = 'matched',
+              license_verification_source = 'admin',
+              listing_active = 1,
+              visibility = 'public',
+              is_test = 0,
+              city = 'Winnipeg',
+              province = 'MB'
           where id = ${id}
         `;
+        flushSearchMemo();
       }
     }
   }
@@ -193,7 +205,70 @@ async function seed(request: Request) {
   await sql`
     update profiles set upgrade_card_dismissed_at = null where user_id = ${userId}
   `;
+  if (activity) {
+    await seedKidsWorldLive(sql);
+    flushSearchMemo();
+  }
   return response;
+}
+
+/**
+ * Preview stand-in for the production Edmonton listing. Facts are the published
+ * street, hours, and parent fee from migration 0068. No invented postal, spots, or rating.
+ */
+async function seedKidsWorldLive(sql: Awaited<ReturnType<typeof import("@/lib/db").getSql>>) {
+  const id = "kids-world-daycare-kh2t";
+  await sql`
+    insert into daycares (
+      id, slug, name, name_fr, tagline, tagline_fr, description, description_fr,
+      address, city, province, postal_code, lat, lng, hours, hours_fr,
+      age_min_months, age_max_months, photos, website,
+      infant_monthly, toddler_monthly, preschool_monthly,
+      rating_x10, review_count
+    ) values (
+      ${id}, ${id}, ${"Kids World Daycare"}, ${"Kids World Daycare"},
+      ${""}, ${""}, ${""}, ${""},
+      ${"11012 105 Avenue NW"}, ${"Edmonton"}, ${"AB"}, ${""},
+      ${53.5483389}, ${-113.5107201},
+      ${"7:00 a.m. – 5:30 p.m., Monday to Friday"},
+      ${"7:00 a.m. – 5:30 p.m., Monday to Friday"},
+      ${12}, ${60}, ${""}, ${"https://kidsworlddaycare.ca/"},
+      ${326.25}, ${326.25}, ${326.25},
+      ${0}, ${0}
+    )
+    on conflict (slug) do update set
+      name = excluded.name,
+      address = excluded.address,
+      city = excluded.city,
+      province = excluded.province,
+      lat = excluded.lat,
+      lng = excluded.lng,
+      hours = excluded.hours,
+      hours_fr = excluded.hours_fr,
+      age_min_months = excluded.age_min_months,
+      age_max_months = excluded.age_max_months,
+      website = excluded.website,
+      infant_monthly = excluded.infant_monthly,
+      toddler_monthly = excluded.toddler_monthly,
+      preschool_monthly = excluded.preschool_monthly,
+      rating_x10 = excluded.rating_x10,
+      review_count = excluded.review_count
+  `;
+  await sql`
+    update daycares
+    set claimed_at = coalesce(claimed_at, now()),
+        claim_status = 'approved',
+        license_number = '70051797',
+        license_status = 'matched',
+        registry_match_state = 'matched',
+        license_verification_source = 'admin',
+        listing_active = 1,
+        visibility = 'public',
+        is_test = 0,
+        city = 'Edmonton',
+        province = 'AB'
+    where slug = ${id}
+  `;
 }
 
 export const Route = createFileRoute("/api/e2e-seed")({

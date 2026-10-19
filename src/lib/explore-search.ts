@@ -152,6 +152,29 @@ export function orderNameMatches<T extends { distanceKm: number; name: string }>
 }
 
 /**
+ * `live=1` in the URL. Also accept `true` and a quoted `"1"` from older links.
+ * A number is what the router writes without extra quotes.
+ */
+export function readLiveSearchFlag(value: unknown): boolean {
+  if (value === 1 || value === true || value === "1") return true;
+  if (typeof value !== "string") return false;
+  const bare = value.trim().replace(/^["']+|["']+$/g, "");
+  return bare === "1";
+}
+
+/** On writes `live=1`. Off drops the param. */
+export function liveSearchParam(on: boolean): 1 | undefined {
+  return on ? 1 : undefined;
+}
+
+/** "{n} live · browse directory" splits so the second half can be a real link. */
+export function splitLiveBrowseHint(hint: string): { count: string; browse: string } {
+  const parts = hint.split(" · ");
+  if (parts.length < 2) return { count: hint.trim(), browse: "" };
+  return { count: parts[0]?.trim() || hint.trim(), browse: parts.slice(1).join(" · ").trim() };
+}
+
+/**
  * Licensed count stays on the line.
  * A live count is extra text, never a replacement for the centre count.
  */

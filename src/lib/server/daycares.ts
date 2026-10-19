@@ -12,7 +12,7 @@ import {
   getPublicCatalog,
   type CatalogDaycare,
 } from "@/lib/catalog";
-import { filterByDaycareName } from "@/lib/explore-search";
+import { filterByDaycareName, readLiveSearchFlag } from "@/lib/explore-search";
 import { hideListingFromPublicPage, isAdminOnlyListing, isPublicListing, publicListings } from "@/lib/listing-visibility";
 import { parseAnchorMode, resolveSearchAnchors } from "@/lib/dual-anchor";
 import { nearbyListings, nearbyListingsAlong, nearbyListingsDual, type NearbyListing } from "./nearby";
@@ -45,7 +45,7 @@ import { compareParentUrgency } from "@/lib/parent-urgency";
 import { parentReviewSummary } from "@/lib/review-gate";
 import { hasLicenceEvidence } from "@/lib/approve-live";
 import { isPlatformLive } from "@/lib/live";
-import { defaultTrustFields, normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
+import { defaultTrustFields, isClaimVerified, normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
 import { applyLocalRegistryTrust } from "@/lib/server/license-match";
 import { listingThumb } from "@/lib/photo";
 import { uniqueById } from "@/lib/utils";
@@ -100,6 +100,8 @@ type SearchInput = {
   parentFit?: ParentFitProfile | null;
   /** Centre name. When set, matches ignore radius and the location lock. */
   name?: string;
+  /** Live on KidEase. Same centres as Claim verified. Filtered before paging. */
+  live?: boolean;
 };
 
 function parseSort(raw: unknown): SearchSort {
@@ -528,18 +530,21 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
     !directory && anchors.intersect && anchors.secondary
       ? await nearbyListingsAlong(anchors.primary, anchors.secondary, data.radiusKm)
       : [];
-  const nearby = directory
+  const pool = directory
     ? await listingsForCityHub(directory.slug)
-    : await mergeApprovedCityListings(
-        filterByLocationLock(
-          anchors.intersect && anchors.secondary
-            ? await nearbyListingsDual(anchors.primary, anchors.secondary, data.radiusKm)
-            : await nearbyListings(origin, data.radiusKm, data.facility ? CITY_TYPE_LIST_CAP : 400),
-          lock,
-        ),
-        { origin, radiusKm: data.radiusKm, lock, label: data.label || data.q },
+    : filterByLocationLock(
+        anchors.intersect && anchors.secondary
+          ? await nearbyListingsDual(anchors.primary, anchors.secondary, data.radiusKm)
+          : await nearbyListings(origin, data.radiusKm, data.facility ? CITY_TYPE_LIST_CAP : 400),
+        lock,
       );
-  const listings = directory ? nearby : await withNamedCityListings(nearby, lock);
+  const merged = await mergeApprovedCityListings(pool, {
+    origin,
+    radiusKm: data.radiusKm,
+    lock,
+    label: data.label || data.q,
+  });
+  const listings = directory ? merged : await withNamedCityListings(merged, lock);
   let cards: DaycareCard[] = [];
   for (const d of listings) {
     cards.push(toCard(d, origin, data.fsa));
@@ -638,7 +643,12 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
   const facility = data.facility;
   const listed = publicListings(uniqueById(filterByLocationLock(cards, lock)))
     .filter((card) => (facility ? matchesListedDaycareType(card, facility) : true))
-    .filter((card) => (directory ? listingBelongsToHub(card, directory) : true));
+    .filter((card) => {
+      if (!directory) return true;
+      if (listingBelongsToHub(card, directory)) return true;
+      // Approved centres can sit outside the hub city string and still belong in Live search.
+      return isClaimVerified(card);
+    });
   if (data.countDemand) {
     await recordRankingSearch({
       city: data.city || data.label || data.q,
@@ -673,6 +683,7 @@ function normalizeSearchInput(input: SearchInput): SearchInput {
     countDemand: input.countDemand === true,
     parentFit: parseParentFit(input.parentFit),
     name: typeof input.name === "string" ? input.name.trim().slice(0, 80) : "",
+    live: readLiveSearchFlag(input.live),
     facility: listedDaycareTypeFromSearch(
       input.facility === "before_after" ? { cat: "before-after" } : { fac: input.facility },
     ),
@@ -693,10 +704,11 @@ export const searchDaycarePage = createServerFn({ method: "GET" })
   })
   .handler(async ({ data }) => {
     const { page, ...query } = data;
-    const all = await rememberSearch(
+    const found = await rememberSearch(
       `${searchMemoKey(query)}:${parentFitCacheKey(query.parentFit ?? null)}`,
       () => searchIncludingLive(query),
     );
+    const all = query.live ? found.filter((card) => isClaimVerified(card) && !card.isTest) : found;
     return sliceSearchPage(all, page);
   });
 

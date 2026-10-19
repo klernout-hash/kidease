@@ -46,7 +46,7 @@ import { isSafeSitemapSlug } from "@/lib/sitemap";
 import { ExploreSearchBar } from "@/components/explore-search-bar";
 import { SmartMatchEntry } from "@/components/smart-match";
 import { resolveLocationQuery } from "@/components/place-search";
-import { compactExploreSearch } from "@/lib/explore-search";
+import { compactExploreSearch, readLiveSearchFlag } from "@/lib/explore-search";
 import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
 import { ResumeVisitCard } from "@/components/resume-visit";
@@ -70,10 +70,10 @@ const RoleEnrollDialog = lazy(() =>
 
 export function homeValidateSearch(s: Record<string, unknown>) {
   const change = s.change === "1" || s.change === true;
-  const live = s.live === "1" || s.live === true || s.live === 1;
+  const live = readLiveSearchFlag(s.live);
   return {
     ...(change ? { change: "1" as const } : {}),
-    ...(live ? { live: "1" as const } : {}),
+    ...(live ? { live: 1 as const } : {}),
   };
 }
 
@@ -105,7 +105,7 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const search = Route.useSearch();
-  return <HomePage boot={Route.useLoaderData()} liveClaimed={search.live === "1"} />;
+  return <HomePage boot={Route.useLoaderData()} liveClaimed={search.live === 1} />;
 }
 
 export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot; liveClaimed?: boolean }) {
