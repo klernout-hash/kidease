@@ -18,9 +18,11 @@ export function searchCacheKey(input: {
   page?: number;
   parentFit?: string;
   name?: string;
+  /** Live on KidEase. Kept out of the unfiltered page cache. */
+  claimLive?: boolean;
 }) {
   return [
-    "live5",
+    "live6",
     input.lat.toFixed(3),
     input.lng.toFixed(3),
     input.radiusKm,
@@ -36,6 +38,7 @@ export function searchCacheKey(input: {
     input.page && input.page > 1 ? String(input.page) : "",
     input.parentFit || "",
     (input.name || "").trim().toLowerCase(),
+    input.claimLive ? "claim" : "",
   ].join(":");
 }
 

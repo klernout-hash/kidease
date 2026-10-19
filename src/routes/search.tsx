@@ -57,10 +57,13 @@ import { resolveLocationQuery } from "@/components/place-search";
 import {
   compactExploreSearch,
   dateAsksForOpenSpot,
+  liveSearchParam,
   matchesDaycareName,
   orderNameMatches,
   parseExploreSearchFields,
   licensedSearchCountLine,
+  readLiveSearchFlag,
+  splitLiveBrowseHint,
 } from "@/lib/explore-search";
 import {
   compactParentListingSearch,
@@ -126,6 +129,8 @@ import {
   type SavedSearchFilters,
 } from "@/lib/saved-search";
 import { CityHubLinks } from "@/components/city-hub-links";
+import { cityHubDefForPlace, cityHubPath } from "@/lib/city-hubs";
+import { normalizeProvinceCode } from "@/lib/location-lock";
 import { EXPLORE_AGE_RAIL_COPY, preferCompleteCards } from "@/lib/explore-category-rails";
 import { dismissPopovers } from "@/lib/dismiss-popovers";
 import { MARKETING_PAGE_SEO, MARKETING_PAGE_SEO_FR, pageSeoHead } from "@/lib/page-seo";
@@ -174,6 +179,11 @@ export async function searchLoader({ location }: { location: { search: unknown }
             location.search && typeof location.search === "object" && "name" in location.search
               ? String((location.search as { name?: unknown }).name || "")
               : "",
+          live: readLiveSearchFlag(
+            location.search && typeof location.search === "object" && "live" in location.search
+              ? (location.search as { live?: unknown }).live
+              : undefined,
+          ),
         },
       }),
       PAINT_BUDGET_MS,
@@ -210,7 +220,7 @@ export function searchValidateSearch(s: Record<string, unknown>) {
       city?: string;
       rank?: "best" | "nearest";
       page?: number;
-      live?: "1";
+      live?: 1;
     } = { ...fields };
     const city = typeof s.city === "string" ? s.city.trim().slice(0, 80) : "";
     if (city) out.city = city;
@@ -229,7 +239,7 @@ export function searchValidateSearch(s: Record<string, unknown>) {
     const ageCsv = formatExploreRailAges(parseExploreRailAges({ age: s.age, cat: s.cat }));
     if (ageCsv) out.age = ageCsv;
     if (s.openings === "1" || s.openings === true || s.openings === 1) out.openings = "1";
-    if (s.live === "1" || s.live === true || s.live === 1) out.live = "1";
+    if (readLiveSearchFlag(s.live)) out.live = 1;
     if (typeof s.start === "string" && isSearchStart(s.start)) out.start = s.start;
     if (typeof s.cat === "string" && isExploreCategory(s.cat)) out.cat = s.cat;
     if (typeof s.care === "string" && isCareType(s.care)) out.care = s.care;
@@ -354,7 +364,7 @@ export function SearchScreen({
   const [catchmentOnly, setCatchmentOnly] = useState(false);
   const [confirmedOnly, setConfirmedOnly] = useState(false);
   const [readyOnly, setReadyOnly] = useState(false);
-  const [claimVerifiedOnly, setClaimVerifiedOnly] = useState(incoming.live === "1");
+  const [claimVerifiedOnly, setClaimVerifiedOnly] = useState(readLiveSearchFlag(incoming.live));
   const [needBy, setNeedBy] = useState(incoming.from ?? "");
   const [needUntil, setNeedUntil] = useState(incoming.to ?? "");
   const [nameQuery, setNameQuery] = useState(incoming.name ?? "");
@@ -408,7 +418,7 @@ export function SearchScreen({
   }, [incoming.sort, incoming.age, incoming.cat, incoming.care, incoming.favorites, incoming.start, incoming.openings, setSort, setAgeGroup]);
 
   useEffect(() => {
-    if (incoming.live === "1") setClaimVerifiedOnly(true);
+    if (readLiveSearchFlag(incoming.live)) setClaimVerifiedOnly(true);
   }, [incoming.live]);
 
   useEffect(() => {
@@ -560,6 +570,7 @@ export function SearchScreen({
     facility: listedDaycareTypeFromSearch(incoming),
     startDate: needBy || null,
     name: nameQuery.trim() || undefined,
+    live: claimVerifiedOnly || readLiveSearchFlag(incoming.live),
     lat2: viewAnchors.cityOwned ? undefined : workForSearch?.lat,
     lng2: viewAnchors.cityOwned ? undefined : workForSearch?.lng,
     mode: viewAnchors.mode,
@@ -591,6 +602,7 @@ export function SearchScreen({
     mode: viewAnchors.mode,
     page: resultPage,
     parentFit: fitKey,
+    claimLive: claimVerifiedOnly || readLiveSearchFlag(incoming.live),
   };
   const locationLock = useMemo(
     () =>
@@ -669,6 +681,8 @@ export function SearchScreen({
     query,
     origin.label,
     incoming.q,
+    incoming.live,
+    claimVerifiedOnly,
     nameQuery,
     incoming.city,
     incoming.fac,
@@ -694,7 +708,7 @@ export function SearchScreen({
     return { ...search, ...compactParentListingSearch(parentFilters) };
   }
 
-  const liveOn = claimVerifiedOnly || incoming.live === "1";
+  const liveOn = claimVerifiedOnly || readLiveSearchFlag(incoming.live);
 
   function listingPageSearch(page: number) {
     return withParentSearch({
@@ -711,7 +725,7 @@ export function SearchScreen({
       openings: incoming.openings,
       city: incoming.city,
       rank: incoming.rank,
-      live: liveOn ? "1" : undefined,
+      live: liveSearchParam(liveOn),
       page: page > 1 ? page : undefined,
     });
   }
@@ -730,7 +744,7 @@ export function SearchScreen({
         care: incoming.care,
         favorites: incoming.favorites,
         openings: incoming.openings,
-        live: liveOn ? "1" : undefined,
+        live: liveSearchParam(liveOn),
         ages: undefined,
         open: undefined,
         sched: undefined,
@@ -792,7 +806,7 @@ export function SearchScreen({
         care: incoming.care,
         favorites: incoming.favorites,
         openings: incoming.openings,
-        live: liveOn ? "1" : undefined,
+        live: liveSearchParam(liveOn),
       }),
     });
   }
@@ -820,7 +834,7 @@ export function SearchScreen({
         care: incoming.care,
         favorites: incoming.favorites,
         openings: incoming.openings,
-        live: liveOn ? "1" : undefined,
+        live: liveSearchParam(liveOn),
       }),
     });
   }
@@ -849,7 +863,7 @@ export function SearchScreen({
       start: incoming.start,
       favorites: incoming.favorites,
       openings,
-      live: liveOn ? "1" : undefined,
+      live: liveSearchParam(liveOn),
     });
   }
 
@@ -875,7 +889,7 @@ export function SearchScreen({
           care: incoming.care,
           favorites: incoming.favorites,
           openings: incoming.openings,
-          live: liveOn ? "1" : undefined,
+          live: liveSearchParam(liveOn),
         }),
         fac,
       },
@@ -1386,12 +1400,16 @@ export function SearchScreen({
     centreCount === 1
       ? t("searchLicensedCountOne")
       : t("searchLicensedCount").replace("{n}", String(centreCount));
+  const browseHint = splitLiveBrowseHint(t("exploreBrowseHint").replace("{n}", String(fabric.live)));
+  const placeBits = (whereLabel || origin.label).split(",").map((part) => part.trim());
+  const browseHub = cityHubDefForPlace(placeBits[0], normalizeProvinceCode(placeBits[1]) || placeBits[1]);
   const searchCountLine = licensedSearchCountLine({
     nameSearch,
     liveCount: fabric.live,
     licensed: licensedCount,
-    liveHint: t("exploreBrowseHint").replace("{n}", String(fabric.live)),
+    liveHint: browseHint.count,
   });
+  const showBrowseLink = Boolean(browseHub && browseHint.browse && !nameSearch && fabric.live > 0);
 
   function chip(on: boolean, label: string, action: () => void) {
     return (
@@ -1511,16 +1529,31 @@ export function SearchScreen({
             >
               {locale === "fr" ? "Besoin de garde vite" : "Need care fast"}
             </Link>
-            <p className="mt-0.5 min-h-5 text-sm text-muted text-balance" aria-live="polite">
+            <p className="mt-0.5 min-h-5 text-sm text-muted text-balance" aria-live="polite" data-ke="search-count">
               {items === null ? (
                 <span className="inline-flex items-center gap-2">
                   <span className="ke-skel inline-block h-3.5 w-28" aria-hidden="true" />
                   <span>{t("searchCountLoading")}</span>
                 </span>
-              ) : parentFilters.fac.length === 1 || incoming.cat === "before-after" ? (
-                `${locationKnown ? `${city} · ` : ""}${searchCountLine}`
               ) : (
-                searchCountLine
+                <>
+                  {(parentFilters.fac.length === 1 || incoming.cat === "before-after") && locationKnown
+                    ? `${city} · `
+                    : ""}
+                  {searchCountLine}
+                  {showBrowseLink && browseHub ? (
+                    <>
+                      {" · "}
+                      <Link
+                        to={localePath(cityHubPath(browseHub.slug), locale)}
+                        data-ke="browse-directory"
+                        className="inline-flex min-h-11 items-center font-medium text-primary underline underline-offset-4 hover:text-primary/80"
+                      >
+                        {browseHint.browse}
+                      </Link>
+                    </>
+                  ) : null}
+                </>
               )}
             </p>
           </div>
@@ -1601,7 +1634,7 @@ export function SearchScreen({
           listingCount={items !== null ? resultCount : undefined}
           liveOn={liveOn}
           onLive={() => writeLiveClaimed(!liveOn)}
-          liveSearch={{ ...exploreSearchPatch({}), live: liveOn ? undefined : "1" }}
+          liveSearch={{ ...exploreSearchPatch({}), live: liveSearchParam(!liveOn) }}
           ageChips={
             <ExploreCategoryChips
               selected={selectedAges}

@@ -29,6 +29,7 @@ import {
 import { useRoleChrome } from "@/components/role-chrome";
 import { accountSearch, canSeeAdminDesk } from "@/lib/desks";
 import { SiteFooter } from "@/components/site-footer";
+import { readLiveSearchFlag } from "@/lib/explore-search";
 import { rememberResumePath } from "@/lib/retention";
 import { ApplyPendingShortlist } from "@/components/apply-pending-shortlist";
 
@@ -45,7 +46,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const headerLive = useRouterState({
     select: (s) => {
       const search = s.location.search as { live?: unknown } | undefined;
-      return search?.live === "1";
+      return readLiveSearchFlag(search?.live);
     },
   });
   const { user } = useCurrentUserState();
@@ -141,7 +142,7 @@ export function Shell({ children }: { children: ReactNode }) {
                       ? headerCity
                         ? { q: headerCity }
                         : {}
-                      : { ...(headerCity ? { q: headerCity } : {}), live: "1" as const }
+                      : { ...(headerCity ? { q: headerCity } : {}), live: 1 as const }
                   }
                   data-ke="live-on-kidease-tab"
                   aria-pressed={headerLive}
@@ -217,7 +218,7 @@ export function Shell({ children }: { children: ReactNode }) {
                     ? headerCity
                       ? { q: headerCity }
                       : {}
-                    : { ...(headerCity ? { q: headerCity } : {}), live: "1" as const }
+                    : { ...(headerCity ? { q: headerCity } : {}), live: 1 as const }
                 }
                 data-ke="live-on-kidease-tab"
                 aria-pressed={headerLive}
