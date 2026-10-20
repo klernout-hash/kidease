@@ -64,7 +64,7 @@ import { trackLocation } from "@/lib/telemetry";
 import { useAppStore } from "@/lib/store";
 import { parentMatchScore } from "@/lib/parent-match";
 import { parentUrgencyScore } from "@/lib/parent-urgency";
-import { distanceKm } from "@/lib/proximity";
+import { doorDistanceKm } from "@/lib/card-distance";
 import { ListingBadges } from "@/components/listing-badges";
 import { CompletenessBanner } from "@/components/listing-completeness";
 import { ListingReviewForm } from "@/components/listing-review-form";
@@ -414,11 +414,11 @@ export function Listing() {
   });
   const parentActions = showsParentListingActions(actionMode);
   const ownEdit = showsOwnListingEdit(actionMode, ownsListing);
-  const km = distanceKm(origin, { lat: d.lat, lng: d.lng });
+  const km = doorDistanceKm(origin, { lat: d.lat, lng: d.lng });
   const ranked = {
     ...d,
     matchScore: parentMatchScore(
-      { ...d, distanceKm: km },
+      { ...d, distanceKm: km ?? undefined },
       { ageGroup, radiusKm, distanceKnown: located },
     ),
     urgencyScore: parentUrgencyScore(d, { ageGroup }),

@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { filterByLocationLock, resolveLocationLock } from "@/lib/location-lock";
-import { catchmentMatch, clampRadiusKm, compareProximity, distanceKm, recommendedRank } from "@/lib/proximity";
+import { cardSortKm, includeCardInRadius } from "@/lib/card-distance";
+import { catchmentMatch, clampRadiusKm, compareProximity, recommendedRank } from "@/lib/proximity";
 import { resolveListingTourTimezone } from "@/lib/tour-calendar";
 import {
   catalogByIdsGet,
@@ -256,7 +257,7 @@ function toDaycare(d: CatalogDaycare): Daycare {
 
 function toCard(d: NearbyListing, origin: { lat: number; lng: number }, originFsa?: string): DaycareCard {
   const daycare = toDaycare(d);
-  const km = typeof d.distanceKm === "number" ? d.distanceKm : distanceKm(origin, { lat: d.lat, lng: d.lng });
+  const km = cardSortKm(origin, { lat: d.lat, lng: d.lng });
   const catchm = catchmentMatch(origin, { lat: d.lat, lng: d.lng, postalCode: d.postalCode }, km, originFsa);
   return {
     ...daycare,
@@ -431,7 +432,9 @@ async function liveCardsForSearch(data: SearchInput): Promise<DaycareCard[]> {
     lock,
     label: data.label || data.q,
   });
-  const listed = publicListings(uniqueById(listings.map((row) => toCard(row, origin, data.fsa))));
+  const listed = publicListings(uniqueById(listings.map((row) => toCard(row, origin, data.fsa)))).filter((card) =>
+    includeCardInRadius(card, origin, data.radiusKm),
+  );
   return withProvincial(listed).then((rows) => rows.map(slimCard));
 }
 
@@ -736,7 +739,7 @@ async function loadFeatured(
   const scored = await overlayParentRank(merged, { distanceKnown: true, radiusKm: radius, ageGroup: "any" });
   const ranked = sortFeaturedCityAfterPriority(
     await overlayFeaturedCity(await overlayPriority(scored)),
-  );
+  ).filter((card) => includeCardInRadius(card, origin, radius));
   return withProvincial(publicListings(uniqueById(filterByLocationLock(ranked, lock))).slice(0, HOME_TYPE_POOL)).then((rows) => rows.map(slimCard));
 }
 

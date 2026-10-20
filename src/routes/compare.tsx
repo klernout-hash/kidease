@@ -25,7 +25,7 @@ import { captureRankingEvent } from "@/lib/ranking/events";
 import { rankingContextFor } from "@/lib/ranking/context";
 import { parentUrgencyScore } from "@/lib/parent-urgency";
 import { useAppStore } from "@/lib/store";
-import { distanceKm } from "@/lib/proximity";
+import { doorDistanceKm } from "@/lib/card-distance";
 import {
   formatListingAges,
   formatListingCulture,
@@ -129,10 +129,10 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
                 <tr className="border-t border-border">
                   <th className="p-2 font-medium text-fg">{t("matchScore")}</th>
                   {items.map((d) => {
-                    const km = distanceKm(origin, { lat: d.lat, lng: d.lng });
+                    const km = doorDistanceKm(origin, { lat: d.lat, lng: d.lng });
                     const score = canShowMatchScore(d)
                       ? parentMatchScore(
-                          { ...d, distanceKm: km },
+                          { ...d, distanceKm: km ?? undefined },
                           { ageGroup, radiusKm, distanceKnown: located },
                         )
                       : undefined;
@@ -176,7 +176,7 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
                 <Row
                   label={t("compareDistance")}
                   values={items.map((d) => {
-                    const km = distanceKm(origin, { lat: d.lat, lng: d.lng });
+                    const km = doorDistanceKm(origin, { lat: d.lat, lng: d.lng });
                     return (
                       parentDistanceLabel({ km, away: t("kmAway"), show: located }) || t("noneListed")
                     );
