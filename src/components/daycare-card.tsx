@@ -13,6 +13,7 @@ import { useCopy } from "@/lib/use-copy";
 import { useRoleChrome } from "@/components/role-chrome";
 import { showsParentBrowseActions } from "@/lib/role-access";
 import { cn, displayCentreName, displayListingText, money } from "@/lib/utils";
+import { isDoorPin } from "@/lib/card-distance";
 import { distanceKm as kmBetween } from "@/lib/proximity";
 import { useAppStore } from "@/lib/store";
 import type { CopyKey } from "@/lib/copy";
@@ -229,7 +230,8 @@ export const DaycareCard = memo(function DaycareCard({
   const origin = useAppStore((s) => s.origin);
   const originSource = useAppStore((s) => s.originSource);
   const sort = useAppStore((s) => s.sort);
-  const distanceKm = kmBetween(origin, { lat: item.lat, lng: item.lng });
+  const rawKm = kmBetween(origin, { lat: item.lat, lng: item.lng });
+  const distanceKm = isDoorPin(item.lat, item.lng) ? rawKm : null;
   const subsidy = listingSubsidy(item);
   const feeOk = item.fromPrice > 0 && (live || Boolean(item.feeConfirmed) || Boolean(subsidy));
   const gaps = liveLookingGaps(item);

@@ -31,7 +31,7 @@ import { BillStatusBadge } from "@/components/bill-status";
 import { periodLabel } from "@/lib/stripe-methods";
 import { parentMatchScore } from "@/lib/parent-match";
 import { parentUrgencyScore, soonestStartDate } from "@/lib/parent-urgency";
-import { distanceKm } from "@/lib/proximity";
+import { doorDistanceKm } from "@/lib/card-distance";
 import { useAppStore } from "@/lib/store";
 import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
@@ -326,7 +326,7 @@ export function ParentDesk({
         const child = children[0];
         const ageGroup = child?.birthdate ? ageGroupFromMonths(monthsBetween(child.birthdate)) : "any";
         const startDate = soonestStartDate(bookings.filter((b) => b.daycareId === item.id));
-        const km = distanceKm(origin, { lat: item.lat, lng: item.lng });
+        const km = doorDistanceKm(origin, { lat: item.lat, lng: item.lng }) ?? Number.NaN;
         return {
           ...item,
           distanceKm: km,

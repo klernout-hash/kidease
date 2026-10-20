@@ -85,6 +85,7 @@ import {
 import { BuildingPhoto } from "@/components/building-photo";
 import { mapPinThumb } from "@/lib/listing-photo";
 import { listingAgeRangeText } from "@/lib/listing-ages";
+import { UNMEASURED_DISTANCE_KM, isDoorPin } from "@/lib/card-distance";
 import { parentDistanceLabel } from "@/lib/distance-label";
 import { originIsParentLocation } from "@/lib/presence";
 import { displayDistance } from "@/lib/units";
@@ -1041,6 +1042,8 @@ function MapPinPopup({
     km: item.distanceKm,
     away: t("km"),
     show:
+      isDoorPin(item.lat, item.lng) &&
+      item.distanceKm < UNMEASURED_DISTANCE_KM &&
       originIsParentLocation(originSource) &&
       plausibleListingKm(item.distanceKm, item.city, origin.label),
   });
