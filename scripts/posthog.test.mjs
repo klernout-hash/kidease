@@ -216,6 +216,47 @@ describe("PostHog client wiring", () => {
     assert.equal(readAnalyticsConsent(memoryStorage({ [ANALYTICS_CONSENT_KEY]: "essential" })), "denied");
     applyPostHogRecordingGate(null);
 
+    const prevWindow = globalThis.window;
+    const prevLocalStorage = globalThis.localStorage;
+    globalThis.localStorage = memoryStorage({ [ANALYTICS_CONSENT_KEY]: "granted" });
+    globalThis.window = { localStorage: globalThis.localStorage };
+    const calls = [];
+    const optedOut = {
+      has_opted_out_capturing: () => true,
+      opt_in_capturing: () => calls.push("opt_in"),
+      opt_out_capturing: () => calls.push("opt_out"),
+      stopSessionRecording: () => calls.push("stop"),
+      startSessionRecording: () => calls.push("start"),
+      isFeatureEnabled: () => true,
+    };
+    applyPostHogRecordingGate(optedOut);
+    assert.equal(calls[0], "opt_in");
+    assert.equal(calls.includes("opt_out"), false);
+    const stillIn = {
+      has_opted_out_capturing: () => false,
+      opt_in_capturing: () => calls.push("opt_in_again"),
+      opt_out_capturing: () => calls.push("opt_out"),
+      stopSessionRecording: () => calls.push("stop"),
+      startSessionRecording: () => calls.push("start"),
+      isFeatureEnabled: () => true,
+    };
+    applyPostHogRecordingGate(stillIn);
+    assert.equal(calls.includes("opt_in_again"), false);
+    globalThis.localStorage = memoryStorage({ [ANALYTICS_CONSENT_KEY]: "denied" });
+    globalThis.window = { localStorage: globalThis.localStorage };
+    const deniedCalls = [];
+    applyPostHogRecordingGate({
+      has_opted_out_capturing: () => false,
+      opt_in_capturing: () => deniedCalls.push("opt_in"),
+      opt_out_capturing: () => deniedCalls.push("opt_out"),
+      stopSessionRecording: () => deniedCalls.push("stop"),
+      startSessionRecording: () => deniedCalls.push("start"),
+      isFeatureEnabled: () => true,
+    });
+    assert.deepEqual(deniedCalls, ["stop", "opt_out"]);
+    globalThis.window = prevWindow;
+    globalThis.localStorage = prevLocalStorage;
+
     const banner = read("src/components/cookie-consent-banner.tsx");
     const rootRoute = read("src/routes/__root.tsx");
     const start = read("src/lib/posthog.ts");
