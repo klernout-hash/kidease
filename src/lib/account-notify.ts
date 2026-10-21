@@ -124,6 +124,23 @@ export function adminPersonEligible(row: {
   return Boolean((row.email || "").trim() || (row.name || "").trim());
 }
 
+/**
+ * QA mailboxes and "Test Test" style names. Hidden on Admin People until
+ * Show QA accounts is on. Real centres named Testing Academy stay (separator rule).
+ */
+export function isQaPersonAccount(row: { name?: string | null; email?: string | null }): boolean {
+  const name = (row.name || "").trim();
+  if (/^test([ _-]|$)/i.test(name) || /^qa[ _-]/i.test(name)) return true;
+  if (/\bqa\s+test\b/i.test(name) || /ghost claim/i.test(name) || /ghost listing/i.test(name)) return true;
+  const email = (row.email || "").trim().toLowerCase();
+  if (!email) return false;
+  if (email.endsWith("@example.com") || email.endsWith("@example.test") || email.endsWith("@test.local")) return true;
+  const local = email.split("@")[0] || "";
+  if (/^(test|qa)([._+-]|$)/.test(local)) return true;
+  if (/\+(test|qa)\b/.test(local)) return true;
+  return false;
+}
+
 export function accountRoleFromKind(kind?: string | null): AccountNotifyRole | null {
   if (kind === "signup") return "provider";
   if (kind === "account") return "parent";

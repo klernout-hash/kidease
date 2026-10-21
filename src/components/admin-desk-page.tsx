@@ -15,6 +15,7 @@ import {
   ACTIVITY_KIND_CHIPS,
   ADMIN_PEOPLE_DAYS,
   adminDeskHref,
+  isQaPersonAccount,
   activityAccountHeadline,
   activityEmailFailed,
   activityEmailStatusLabel,
@@ -139,6 +140,7 @@ export function AdminPage() {
   const [activityQ, setActivityQ] = useState("");
   const [peopleQ, setPeopleQ] = useState(search.q || "");
   const [showQaFixtures, setShowQaFixtures] = useState(false);
+  const [showQaPeople, setShowQaPeople] = useState(false);
   const [openProv, setOpenProv] = useState<Record<string, boolean>>({});
   const [jurisdictions, setJurisdictions] = useState<Awaited<ReturnType<typeof listJurisdictions>>>([]);
   const [reports, setReports] = useState<AdminReportRow[]>([]);
@@ -173,10 +175,22 @@ export function AdminPage() {
   }
 
   async function refresh() {
-    const [events, accounts, centresLoad, cash, envelopes] = await Promise.all([
+    // Centre rows paint as soon as they return. Money, contracts, and the
+    // second batch must not keep Daycares or Needs complete on the skeleton.
+    const centresPromise = settleAdminCentresLoad(() => listAdminCentres());
+    const applyCentres = centresPromise.then((centresLoad) => {
+      if (centresLoad.ok) {
+        setCentres(centresLoad.list);
+        setCentresError(null);
+        setCentresReady(true);
+      } else {
+        setCentresError(adminCentresLoadMessage(centresLoad.error));
+      }
+    });
+    const [events, accounts, , cash, envelopes] = await Promise.all([
       listPlatformEvents().catch(() => []),
       listAdminPeople().catch(() => []),
-      settleAdminCentresLoad(() => listAdminCentres()),
+      centresPromise,
       listAdminMoney().catch(() => ({ rows: [], inPaid: 0, inPending: 0, outPaid: 0, outPending: 0, fees: 0 })),
       listAdminContracts().catch(() => ({
         mode: "demo" as const,
@@ -189,6 +203,7 @@ export function AdminPage() {
         docusignLoadFailed: true,
       })),
     ]);
+    await applyCentres;
     const [regs, flags, health, leads, screening] = await Promise.all([
       listJurisdictions().catch(() => []),
       listListingReports().catch(() => []),
@@ -198,13 +213,6 @@ export function AdminPage() {
     ]);
     setRows(events);
     setPeople(accounts);
-    if (centresLoad.ok) {
-      setCentres(centresLoad.list);
-      setCentresError(null);
-      setCentresReady(true);
-    } else {
-      setCentresError(adminCentresLoadMessage(centresLoad.error));
-    }
     setLedger(cash);
     setContracts(envelopes.rows);
     setContractMode(envelopes.mode);
@@ -330,14 +338,20 @@ export function AdminPage() {
     return [...ACTIVITY_KIND_CHIPS, ...extra.map((id) => ({ id, label: id }))];
   }, [rows]);
 
+  const peopleQaCount = useMemo(() => people.filter((p) => isQaPersonAccount(p)).length, [people]);
   const peopleRows = useMemo(() => {
     const needle = peopleQ.trim().toLowerCase();
     return people.filter((p) => {
+      if (!showQaPeople && isQaPersonAccount(p)) return false;
       if (peopleRole !== "all" && p.role !== peopleRole) return false;
       if (!needle) return true;
       return [p.name, p.email, p.phone, p.city, p.role].filter(Boolean).join(" ").toLowerCase().includes(needle);
     });
-  }, [people, peopleQ, peopleRole]);
+  }, [people, peopleQ, peopleRole, showQaPeople]);
+  const peopleLive = useMemo(
+    () => (showQaPeople ? people : people.filter((p) => !isQaPersonAccount(p))),
+    [people, showQaPeople],
+  );
 
   const moneyRows = useMemo(() => {
     const needle = moneyQ.trim().toLowerCase();
@@ -785,7 +799,10 @@ export function AdminPage() {
       ) : tab === "people" ? (
         <PeoplePanel
           rows={peopleRows}
-          all={people}
+          all={peopleLive}
+          qaCount={peopleQaCount}
+          showQa={showQaPeople}
+          onShowQa={setShowQaPeople}
           q={peopleQ}
           setQ={(v) => {
             setPeopleQ(v);
@@ -942,6 +959,9 @@ function RoleBadge({ label }: { label: string }) {
 function PeoplePanel({
   rows,
   all,
+  qaCount,
+  showQa,
+  onShowQa,
   q,
   setQ,
   role,
@@ -949,6 +969,9 @@ function PeoplePanel({
 }: {
   rows: AdminPersonRow[];
   all: AdminPersonRow[];
+  qaCount: number;
+  showQa: boolean;
+  onShowQa: (on: boolean) => void;
   q: string;
   setQ: (v: string) => void;
   role: "all" | AccountNotifyRole;
@@ -974,6 +997,10 @@ function PeoplePanel({
           placeholder="Search name or email…"
           className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border"
         />
+        <label className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
+          <input type="checkbox" checked={showQa} onChange={(e) => onShowQa(e.target.checked)} />
+          Show QA accounts{qaCount ? ` · ${qaCount}` : ""}
+        </label>
         <div className="flex flex-wrap gap-2">
           {([
             ["all", "All"],
