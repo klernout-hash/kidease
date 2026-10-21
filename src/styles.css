@@ -1950,8 +1950,20 @@ select.ke-lang-select.ke-header-chrome {
     align-items: start;
   }
   .ke-video-stage {
-    min-height: 28rem;
+    min-height: min(28rem, 62dvh);
   }
+}
+
+/* A fold, rotation, or Split View resize must not crop the other person. */
+.ke-video-stage video:not(.ke-video-self) {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #141820;
+}
+html[data-ke-shape="square"] .ke-video-stage,
+html[data-ke-shape="wide"] .ke-video-stage {
+  min-height: min(22rem, 58dvh);
 }
 
 .ke-apple-button {

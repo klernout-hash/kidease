@@ -35,6 +35,12 @@ class KidEaseBridgeViewController: CAPBridgeViewController {
         NotificationCenter.default.removeObserver(self)
     }
 
+    /// Fold, unfold, rotation, and iPad Split View change the window size.
+    /// The web view follows Auto Layout. Reloading here would drop a call.
+    override open func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+    }
+
     @objc private func contentSizeChanged() {
         if let controller = webView?.configuration.userContentController {
             installTextScaleScript(on: controller)

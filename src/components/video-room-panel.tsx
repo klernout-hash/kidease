@@ -16,7 +16,7 @@ function attachTrack(track: { kind: string }, host: HTMLElement, local: boolean)
     el.playsInline = true;
     el.autoplay = true;
     el.muted = local;
-    el.className = "h-full w-full object-cover";
+    el.className = local ? "ke-video-self h-full w-full object-cover" : "h-full w-full object-contain";
   }
   if (el instanceof HTMLAudioElement) el.autoplay = true;
   host.appendChild(el);
@@ -58,6 +58,18 @@ export function VideoRoomPanel({
   const [muted, setMuted] = useState(false);
   const [cameraOff, setCameraOff] = useState(false);
 
+  useEffect(() => {
+    const stage = remoteRef.current?.closest("[data-ke='video-room']");
+    if (!stage || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => {
+      stage.setAttribute("data-ke-fit", "live");
+    });
+    observer.observe(stage);
+    return () => observer.disconnect();
+  }, []);
+
+  // Room connect depends on the token only. A fold or Split View resize
+  // must not re-run this effect, or the call would disconnect.
   useEffect(() => {
     let cancelled = false;
     const localHost = localRef.current;
@@ -153,12 +165,12 @@ export function VideoRoomPanel({
     phase === "joining" ? t("loading") : phase === "live" ? t("videoInCall") : phase === "waiting" ? t("videoWaitingRoom") : note;
 
   return (
-    <div className="ke-video-room mt-6" data-ke="video-room">
+    <div className="ke-video-room mt-6" data-ke="video-room" data-ke-live="video">
       <div className="ke-video-stage relative overflow-hidden rounded-2xl bg-fg/5 ring-1 ring-border">
-        <div ref={remoteRef} className="aspect-video w-full bg-fg/10" aria-label={t("videoInCall")} />
+        <div ref={remoteRef} className="aspect-video w-full min-h-0 bg-[#141820]" aria-label={t("videoInCall")} />
         <div
           ref={localRef}
-          className="absolute bottom-3 right-3 aspect-video w-[28%] overflow-hidden rounded-xl bg-fg/20 ring-1 ring-border"
+          className="absolute bottom-3 right-3 aspect-video w-[clamp(5.5rem,28%,9rem)] max-h-[40%] overflow-hidden rounded-xl bg-fg/20 ring-1 ring-border"
           aria-label={t("camera")}
         />
       </div>

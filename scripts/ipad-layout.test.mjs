@@ -102,3 +102,25 @@ test("iPhone sizes, landscape, and Dynamic Type are in the viewport pass", () =>
   assert.match(src("ios/App/App/Info.plist"), /UIInterfaceOrientationLandscapeLeft/);
   assert.doesNotMatch(src("ios/App/App/Info.plist").split("UISupportedInterfaceOrientations~ipad")[0], /UIInterfaceOrientationPortraitUpsideDown/);
 });
+
+test("fold and split-view resize stays on one page", () => {
+  const fold = src("scripts/fold-resize.mjs");
+  const boot = src("public/channel-boot.js");
+  const bridge = src("ios/App/App/KidEaseBridgeViewController.swift");
+  const video = src("src/components/video-room-panel.tsx");
+  const voice = src("src/components/voice-call-panel.tsx");
+  assert.match(src("scripts/e2e-smoke.mjs"), /runFoldResizePass/);
+  assert.match(fold, /square-/);
+  assert.match(fold, /320/);
+  assert.match(fold, /1032/);
+  assert.match(fold, /__keFoldMark/);
+  assert.match(boot, /addEventListener\("resize", paintFrame\)/);
+  assert.match(boot, /keShape/);
+  assert.match(bridge, /viewWillTransition/);
+  assert.doesNotMatch(bridge, /webView\?\.reload|UIScreen\.main/);
+  assert.match(video, /object-contain/);
+  assert.match(video, /data-ke-live="video"/);
+  assert.match(voice, /data-ke-live="voice"/);
+  assert.match(src("src/styles.css"), /object-fit: contain/);
+  assert.doesNotMatch(video.slice(video.indexOf("sdk.connect"), video.indexOf("function toggleMute")), /innerWidth|resize/);
+});

@@ -18,6 +18,8 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
   const [muted, setMuted] = useState(false);
   const [busy, setBusy] = useState(true);
 
+  // Device setup depends on the conversation only. Resizing must not
+  // destroy the Twilio device or drop a connected call.
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -149,7 +151,7 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
   const incoming = phase === "incoming";
 
   return (
-    <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border">
+    <div className="mt-6 min-w-0 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke-live="voice">
       <p className="text-sm text-muted" aria-live="polite">
         {busy ? t("loading") : note || t("voiceWaitingHint")}
       </p>
