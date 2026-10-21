@@ -13,6 +13,8 @@ import {
   paidPlanVisible,
   visibleYearlySavings,
 } from "@/lib/upgrade-plans";
+import { plansVisibleInShell } from "@/lib/native-entitlements";
+import { useInNativeShell } from "@/lib/use-native-shell";
 
 const COPY = {
   en: {
@@ -62,6 +64,7 @@ export function OptionalUpgrades({
   signedIn?: boolean;
   initialFlags?: Record<string, boolean> | null;
 }) {
+  const nativeShell = useInNativeShell();
   const { locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
   const t = COPY[loc];
@@ -76,8 +79,15 @@ export function OptionalUpgrades({
       .catch(() => setFlags({}));
   }, []);
   const prices = Object.fromEntries(PROVIDER_PLANS.map((plan) => [plan.id, plan]));
-  const familyPlans = PARENT_UPGRADE_PLANS.filter((plan) => paidPlanVisible(plan.id, parentInterval, flags));
-  const daycarePlans = DAYCARE_UPGRADE_PLANS.filter((plan) => paidPlanVisible(plan.id, daycareInterval, flags));
+  const familyPlans = plansVisibleInShell(
+    PARENT_UPGRADE_PLANS.filter((plan) => paidPlanVisible(plan.id, parentInterval, flags)),
+    nativeShell,
+  );
+  const daycarePlans = plansVisibleInShell(
+    DAYCARE_UPGRADE_PLANS.filter((plan) => paidPlanVisible(plan.id, daycareInterval, flags)),
+    nativeShell,
+  );
+  if (nativeShell) return null;
   return (
     <section className="ke-digital-plan ke-gutter mx-auto max-w-6xl py-12" data-ke="optional-upgrades">
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subtle">{t.kicker}</p>

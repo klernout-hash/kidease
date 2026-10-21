@@ -12,6 +12,7 @@ import {
 } from "@/lib/alert-push";
 import { confirmStillLooking, getMyAlertPrefs, saveMyAlertPrefs } from "@/lib/server/alert-push-api";
 import { useCopy } from "@/lib/use-copy";
+import { useInNativeShell } from "@/lib/use-native-shell";
 
 export function AlertPushSettings({
   audience,
@@ -20,6 +21,7 @@ export function AlertPushSettings({
   audience: AlertAudience;
   subscriptionsOn: boolean;
 }) {
+  const nativeShell = useInNativeShell();
   const { t, locale } = useCopy();
   const loc: AlertLocale = locale === "fr" ? "fr" : "en";
   const intro = alertSettingsIntro(loc, audience);
@@ -31,6 +33,7 @@ export function AlertPushSettings({
   const [loadNote, setLoadNote] = useState("");
 
   useEffect(() => {
+    if (nativeShell) return;
     let cancelled = false;
     void getMyAlertPrefs()
       .then((next) => {
@@ -42,7 +45,9 @@ export function AlertPushSettings({
     return () => {
       cancelled = true;
     };
-  }, [intro.loadError]);
+  }, [intro.loadError, nativeShell]);
+
+  if (nativeShell) return null;
 
   return (
     <section className="mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="alert-settings">

@@ -1,4 +1,5 @@
 import { isNative, nativePlatform, type NativePlatform } from "@/lib/native";
+import { isNativeUserAgent } from "./native-entitlements.ts";
 
 /** One codebase, two looks. Same listings and accounts. */
 export type Runtime = NativePlatform; // "web" | "ios" | "android"
@@ -39,7 +40,8 @@ export function readWidth(): number {
 }
 
 export function channel(): Channel {
-  return resolveChannel({ native: isNative(), widthPx: readWidth(), forceApp: forceAppFromUrl() });
+  const uaNative = typeof navigator !== "undefined" && isNativeUserAgent(navigator.userAgent);
+  return resolveChannel({ native: isNative() || uaNative, widthPx: readWidth(), forceApp: forceAppFromUrl() });
 }
 
 export function isApp() {
@@ -59,7 +61,10 @@ export function isWebsite() {
 export function paintRuntime() {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
-  root.dataset.runtime = runtime();
+  const platform = nativePlatform();
+  if (platform === "ios" || platform === "android") root.dataset.runtime = platform;
+  else if (typeof navigator !== "undefined" && isNativeUserAgent(navigator.userAgent)) root.dataset.runtime = "native";
+  else root.dataset.runtime = "web";
   root.dataset.channel = channel();
 }
 

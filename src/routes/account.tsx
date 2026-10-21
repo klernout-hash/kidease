@@ -27,6 +27,7 @@ import { PlaceSearch } from "@/components/place-search";
 import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anchors";
 import { useAppStore } from "@/lib/store";
 import { AppearanceControl } from "@/components/appearance-control";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import { SignedInDevices } from "@/components/signed-in-devices";
 import { AccountSecurity } from "@/components/account-security";
 import { DeleteAccountPanel } from "@/components/delete-account-panel";
@@ -174,6 +175,7 @@ function AccountDeskFrame({ desk, children }: { desk: DeskKey | null; children: 
 
 function ProfilePane() {
   const { user } = useCurrentUserState();
+  const nativeShell = useInNativeShell();
   const { t, locale } = useCopy();
   const search = Route.useSearch();
   const chrome = useRoleChrome();
@@ -290,7 +292,10 @@ function ProfilePane() {
             : null;
 
   const hideParentPlan = !chrome.pending && chrome.role === "parent" && !chrome.subscriptionsEnabled;
-  const section = hideParentPlan && search.section === "subscription" ? "profile" : (search.section ?? "profile");
+  const section =
+    nativeShell && (search.section === "subscription" || search.section === "alerts")
+      ? "profile"
+      : (hideParentPlan && search.section === "subscription" ? "profile" : (search.section ?? "profile"));
   const sectionSearch = (next: "profile" | "alerts" | "appearance" | "subscription" | "delete") => ({
     tab: "profile" as const,
     ...(search.desk ? { desk: search.desk } : {}),
@@ -302,7 +307,11 @@ function ProfilePane() {
     { id: "appearance" as const, label: t("appearance") },
     { id: "subscription" as const, label: t("navUpgrade") },
     { id: "delete" as const, label: t("deleteAccount") },
-  ].filter((item) => item.id !== "subscription" || !hideParentPlan);
+  ].filter((item) => {
+    if (nativeShell && (item.id === "alerts" || item.id === "subscription")) return false;
+    if (item.id === "subscription" && hideParentPlan) return false;
+    return true;
+  });
 
   return (
     <AccountDeskFrame desk={desk}>
@@ -350,7 +359,7 @@ function ProfilePane() {
             </Link>
           ))}
         </nav>
-        {section === "alerts" && user ? (
+        {section === "alerts" && user && !nativeShell ? (
           <AlertPushSettings
             audience={desk === "provider" ? "daycare" : "parent"}
             subscriptionsOn={chrome.subscriptionsEnabled === true}
@@ -362,7 +371,7 @@ function ProfilePane() {
           </section>
         ) : null}
         {section === "subscription" ? (
-          <section className="mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
+          <section className="ke-digital-plan mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="digital-plan">
             <h2 className="font-display text-xl">{t("navUpgrade")}</h2>
             <p className="mt-2 text-sm text-muted">{t("accountSubscriptionLead")}</p>
             <Button className="mt-4" asChild>

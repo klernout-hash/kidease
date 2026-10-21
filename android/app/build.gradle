@@ -41,6 +41,16 @@ android {
             }
         }
     }
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
+}
+
+configurations.configureEach {
+    exclude group: "com.google.firebase", module: "firebase-analytics"
+    exclude group: "com.google.firebase", module: "firebase-analytics-ktx"
 }
 
 repositories {

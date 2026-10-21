@@ -12,9 +12,8 @@ The WebView loads `https://www.kidease.ca`. JavaScript SDKs are not Android libr
 | --- | --- | --- |
 | capacitor-android | WebView shell. Loads `https://www.kidease.ca`. | Always, to show the site. |
 | @capacitor/geolocation | Precise location (fine + coarse) while the app is open. | After the search permission prompt. Not background. Not used for ads. |
-| @capacitor/push-notifications | Pulls `com.google.firebase:firebase-messaging` 25.0.1 into the AAB. That library can collect a Firebase installation id and an FCM token once Firebase is initialized. This repo has no `google-services.json`, so the Google Services plugin is not applied and Firebase does not auto-start. The manifest still declares `POST_NOTIFICATIONS`. | `FEATURE_PUSH` is off. The app does not call `requestPermissions` on launch, on the first open, or while the flag is off. No token is read in v1. If a later upload adds `google-services.json`, add Device or other IDs on the form before you ship that build. |
-| @capacitor/preferences | On-device key/value (review cooldown, push seen flag, saved centres). | Stays on the phone. The plugin does not upload it. |
-| @capacitor/browser | Opens the system browser for childcare Stripe Checkout and store links. | The app does not see card numbers. |
+| @capacitor/preferences | On-device key/value (review cooldown, saved centres). | Stays on the phone. The plugin does not upload it. |
+| @capacitor/browser | Not used for Stripe Checkout in v1. | Payments are not part of the app. |
 | @capacitor/share | Share sheet. | No personal data stored by the plugin. |
 | @capacitor/haptics | Vibration (`VIBRATE`). | None collected. |
 | @capacitor/splash-screen | Launch splash. | None. |
@@ -27,13 +26,26 @@ The WebView loads `https://www.kidease.ca`. JavaScript SDKs are not Android libr
 
 | SDK | Data it collects | When |
 | --- | --- | --- |
-| posthog-js | Page views, product events, account id if signed in. The property scrubber drops password, email, phone, child name, allergy, and birth date. Session replay stays off unless `VITE_PUBLIC_POSTHOG_REPLAY_NATIVE` is on (default off). | Only after the person taps Allow analytics. Essential or no choice means PostHog does not start and the app does not queue events. First-party `/ingest` proxy. |
-| @sentry/react | Crash and performance traces if `VITE_PUBLIC_SENTRY_DSN` is set. Data collection is limited: no user info, cookies, headers, query params, or request bodies. Stack trace and route tag. No email or child name. | In the app, only after the same Allow tap. The website still starts Sentry without that banner. Leave it off the form when the DSN is unset. |
-| Stripe Checkout (hosted page, not an Android library) | Childcare payments (spots, tours, fees). | Card data stays on Stripe. Not used for Parent Plus or centre plans inside the app — those screens are hidden. |
+| posthog-js | Page views and product events. When the person is signed in, that usage is linked to the account id. The property scrubber drops password, email, phone, child name, birth date, and health text (allergies, medications, medical notes). Session replay stays off unless `VITE_PUBLIC_POSTHOG_REPLAY_NATIVE` is on (default off). | Only after the person taps Allow analytics. Essential or no choice means PostHog does not start and the app does not queue events. First-party `/ingest` proxy. On the Data safety form, mark App activity as collected and linked to the account. |
+| @sentry/react | Crash and performance traces if `VITE_PUBLIC_SENTRY_DSN` is set. Data collection is limited: no user info, cookies, headers, query params, or request bodies. Stack trace and route tag. No email, child name, or health text. | Website and app both wait for the same Allow tap. Unset or Essential does not start Sentry. Leave it off the form when the DSN is unset. |
+| twilio-video and @twilio/voice-sdk | Live audio on a voice call. Live audio and video on a video tour. Not a native AAR. The scripts load only on `/call` and `/video`. KidEase does not record the call. Phone numbers stay hidden. | After the person opens a call and the phone shows the camera and microphone prompt. Declare Audio and Photos and videos. Not used for ads. Not collected in the background. |
+
+## Health information
+
+Parents can type child health details in KidEase: allergies, medications, and medical notes. On the Play Data safety form, declare **Health info**. Those fields stay in the KidEase database. PostHog and Sentry scrub keys and values that look like allergy, medication, medical, or health notes. They are not sent to analytics or crash reports.
+
+Also declare these, each linked to the account:
+
+- **Phone number.** A parent or centre can save a phone number on the profile. A call does not reveal the other person's number.
+- **Search history.** Searches and saved searches are used to find licensed centres. They are not used for ads.
+- **Customer support.** Messages sent to KidEase support stay on that thread.
+- **Files and docs.** A provider can upload a licence or screening file. Those files stay with that centre. Parents do not receive the raw file.
+- Stripe Checkout is not opened from the Android app. Plan prices, upgrade buttons, and Stripe links are removed from the native shell. A plan already bought on the website still unlocks after sign-in.
 
 ## Not in this build
 
-- SMS, call log, contacts, photo library, advertising ID, microphone, background location.
+- SMS, call log, contacts, photo library, advertising ID, and background location. The microphone and camera are used only during a voice or video call.
+- `@capacitor/push-notifications`, `POST_NOTIFICATIONS`, and `firebase-messaging`. Push is not in this version.
 - Play Billing. Digital plans are not sold in the app.
 - `FEATURE_SMS` and in-app chat stay off. SMS checkboxes, the chat lab, and “coming soon” store badges are hidden when `data-runtime` is `ios` or `android`.
-- Parent Plus and centre-plan prices and Stripe checkout for those digital plans are hidden on iOS and Android. Childcare bills stay.
+- Parent Plus, Parent Alerts, centre-plan prices, and every Stripe checkout are not shown in the app. A video tour that needs Parent Plus is blocked with no price and no subscribe button. Firebase Analytics is excluded from the release. Firebase Messaging is not in the AAB. Twilio voice and video are JavaScript on the call pages, not native libraries. Google Maps and Places load in the WebView for search. Age rating is 18+. Not the Families program. 16 KB page size: `useLegacyPackaging = false`. Target API 36. Declare Health info for allergies, medications, and medical notes. Declare Audio and Photos and videos for Twilio calls.

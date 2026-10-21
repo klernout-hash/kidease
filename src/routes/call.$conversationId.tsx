@@ -102,7 +102,9 @@ function CallPage() {
           </div>
         ) : null}
 
-        {status?.allowed && status.credentialsPresent ? <VoiceCallPanel conversationId={conversationId} /> : null}
+        {status?.allowed && status.credentialsPresent ? (
+          <VoiceCallPanel conversationId={conversationId} />
+        ) : null}
       </main>
     </Shell>
   );

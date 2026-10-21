@@ -1237,6 +1237,7 @@ export const copy = {
       "Plus required (billing not live). Video stays off for free parents until Stripe live keys and an active Plus subscription.",
     videoJoin: "Join call",
     videoJoinHint: "Join a private video call. Your mobile number stays hidden. This call is not recorded.",
+    nativeVideoNeedsPlus: "Video tours are included with Parent Plus on this account. This app does not sell plans.",
     videoLeave: "Leave",
     videoWaitingRoom: "Waiting for the other person to join.",
     videoInCall: "In the call",
@@ -1543,7 +1544,7 @@ export const copy = {
     accountSubscriptionLead: "Manage your KidEase subscription.",
     deleteAccountKeepBilling: "Billing records: kept because tax law requires them.",
     deleteAccountKeepLogs: "Fraud and security logs: kept to protect the service. These records are not deleted.",
-    nativePlansHidden: "Digital plans are not sold in this app. Childcare fees, tours, and spots still use the centre’s bill.",
+    nativePlansHidden: "Plans are not sold in this app.",
     deleteAccountGuestLead:
       "Sign in to delete your KidEase account. This is the same path App Store and PIPEDA reviews look for.",
     deleteAccountSignIn: "Sign in to delete my account",
@@ -4383,6 +4384,7 @@ export const copy = {
       "Plus requis (facturation pas en direct). La vidéo reste fermée pour les parents sans Plus tant que les clés Stripe en direct et un abonnement Plus actif ne sont pas en place.",
     videoJoin: "Joindre l’appel",
     videoJoinHint: "Joignez un appel vidéo privé. Votre numéro de mobile reste caché. Cet appel n’est pas enregistré.",
+    nativeVideoNeedsPlus: "Les visites vidéo sont incluses avec Plus parents sur ce compte. Cette appli ne vend pas de forfaits.",
     videoLeave: "Quitter",
     videoWaitingRoom: "En attente de l’autre personne.",
     videoInCall: "Dans l’appel",
@@ -4689,7 +4691,7 @@ export const copy = {
     accountSubscriptionLead: "Gérez votre abonnement KidEase.",
     deleteAccountKeepBilling: "Dossiers de facturation : conservés parce que la loi fiscale l’exige.",
     deleteAccountKeepLogs: "Journaux de fraude et de sécurité : conservés pour protéger le service. Ces dossiers ne sont pas effacés.",
-    nativePlansHidden: "Les forfaits numériques ne se vendent pas dans cette appli. Les frais de garde, les visites et les places passent encore par la facture du centre.",
+    nativePlansHidden: "Les forfaits ne se vendent pas dans cette appli.",
     deleteAccountGuestLead:
       "Connectez-vous pour supprimer votre compte KidEase. C’est le chemin que les revues App Store et PIPEDA recherchent.",
     deleteAccountSignIn: "Se connecter pour supprimer mon compte",

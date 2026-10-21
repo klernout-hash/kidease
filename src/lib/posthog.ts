@@ -144,7 +144,13 @@ export function sanitizePostHogProperties(
   const next: Record<string, unknown> = { ...properties };
   for (const key of Object.keys(next)) {
     if (key.startsWith("$lib_")) continue;
-    if (SENSITIVE_PROP.test(key)) delete next[key];
+    if (SENSITIVE_PROP.test(key)) {
+      delete next[key];
+      continue;
+    }
+    if (typeof next[key] === "string" && SENSITIVE_PROP.test(String(next[key]))) {
+      next[key] = "[Filtered]";
+    }
   }
   return next;
 }
@@ -201,7 +207,7 @@ export function posthogInitOptions(input: SessionReplayGateInput = {}): Partial<
     person_profiles: "identified_only",
     disable_session_recording: !replayOn,
     advanced_disable_feature_flags: false,
-    mask_all_text: false,
+    mask_all_text: Boolean(input.native),
     session_recording: {
       maskAllInputs: true,
       maskTextSelector: "*",
@@ -339,7 +345,7 @@ export function startPostHog(): void {
   started = true;
   void import("posthog-js")
     .then(({ default: posthog }) => {
-      posthog.init(key, posthogInitOptions());
+      posthog.init(key, posthogInitOptions({ native: isNative() }));
       client = posthog;
       flushQueuedPostHogEvents(posthog);
       if (pendingIdentify) {

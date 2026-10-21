@@ -1,3 +1,5 @@
+import { isNativeUserAgent } from "./native-entitlements.ts";
+
 export type NativePlatform = "ios" | "android" | "web";
 
 type CapWindow = Window & {
@@ -9,7 +11,8 @@ type CapWindow = Window & {
 
 export function isNative(): boolean {
   if (typeof window === "undefined") return false;
-  return Boolean((window as CapWindow).Capacitor?.isNativePlatform?.());
+  if ((window as CapWindow).Capacitor?.isNativePlatform?.()) return true;
+  return isNativeUserAgent(window.navigator.userAgent);
 }
 
 export function nativePlatform(): NativePlatform {

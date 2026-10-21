@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useSessionDesks } from "@/components/session-desks";
 import type { ChromeRole } from "@/lib/role-access";
 import { useCopy } from "@/lib/use-copy";
+import { useInNativeShell } from "@/lib/use-native-shell";
 
 /** Dedicated plan card. Free KidEase stays usable; this is the obvious way to the plans. */
 export function RoleUpgradeCard({
@@ -17,8 +18,10 @@ export function RoleUpgradeCard({
   renewsOn?: string | null;
   onDismiss?: () => void;
 }) {
+  const nativeShell = useInNativeShell();
   const { locale, t } = useCopy();
   const { session } = useSessionDesks();
+  if (nativeShell) return null;
   if (session?.subscriptionsEnabled !== true) return null;
   if (role !== "parent" && role !== "provider") return null;
   const parent = role === "parent";
@@ -76,7 +79,9 @@ export function RoleUpgradeCard({
 
 /** Sits beside a Pro benefit (featured city, listing boost) on a free centre. */
 export function UpgradeToProLink({ className = "" }: { className?: string }) {
+  const nativeShell = useInNativeShell();
   const { t } = useCopy();
+  if (nativeShell) return null;
   return (
     <Link
       to="/provider/subscription"

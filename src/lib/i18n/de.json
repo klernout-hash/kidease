@@ -995,6 +995,7 @@
   "videoPlusRequiredBilling": "Plus erforderlich (Abrechnung nicht live). Video bleibt für Eltern im kostenlosen Tarif deaktiviert, bis Stripe-Live-Schlüssel und ein aktives Plus-Abonnement vorliegen.",
   "videoJoin": "Anruf beitreten",
   "videoJoinHint": "Treten Sie einem privaten Videoanruf bei. Ihre Handynummer bleibt verborgen. Dieser Anruf wird nicht aufgezeichnet.",
+  "nativeVideoNeedsPlus": "Videobesuche sind in Parent Plus für dieses Konto enthalten. Diese App verkauft keine Tarife.",
   "videoLeave": "Verlassen",
   "videoWaitingRoom": "Warten, bis die andere Person beitritt.",
   "videoInCall": "Im Anruf",

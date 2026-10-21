@@ -995,6 +995,7 @@
   "videoPlusRequiredBilling": "Plus necessario (fatturazione non attiva). Il video resta disattivato per i genitori con piano gratuito finché non sono attive le chiavi live di Stripe e un abbonamento Plus.",
   "videoJoin": "Entra nella chiamata",
   "videoJoinHint": "Entra in una videochiamata privata. Il tuo numero di cellulare resta nascosto. Questa chiamata non viene registrata.",
+  "nativeVideoNeedsPlus": "I video tour sono inclusi in Parent Plus su questo account. Questa app non vende piani.",
   "videoLeave": "Esci",
   "videoWaitingRoom": "In attesa che l’altra persona entri.",
   "videoInCall": "In chiamata",

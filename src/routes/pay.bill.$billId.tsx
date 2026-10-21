@@ -15,6 +15,8 @@ import { periodLabel, platformFeePercentLabel } from "@/lib/stripe-methods";
 import { type Bill, billDollars } from "@/lib/bill";
 import { WalletMethodHints } from "@/components/wallet-methods";
 import { openStripeCheckout } from "@/lib/wallets";
+import { NativePayNote } from "@/components/native-pay-note";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import { CaslConsentFields } from "@/components/casl-consent-fields";
 import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent-api";
 import type { CaslPrefs } from "@/lib/casl";
@@ -28,6 +30,7 @@ export const Route = createFileRoute("/pay/bill/$billId")({
 });
 
 function PayBillPage() {
+  const nativePay = useInNativeShell();
   const { billId } = Route.useParams();
   const search = Route.useSearch();
   const { user, isPending } = useCurrentUserState();
@@ -94,6 +97,13 @@ function PayBillPage() {
     );
   }
   if (!user) return <RedirectToSignIn />;
+  if (nativePay) {
+    return (
+      <Shell>
+        <NativePayNote locale={locale} />
+      </Shell>
+    );
+  }
 
   const alreadyPaid = bill?.status === "paid";
   const canPay = Boolean(stripeLive && bill?.status === "sent");
