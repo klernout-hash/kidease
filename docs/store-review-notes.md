@@ -17,7 +17,7 @@ The iPhone and Android apps are a Capacitor shell around https://www.kidease.ca.
 
 Push notifications are not in this version. The app does not ask for notification permission.
 
-- Voice and video calls use the camera and microphone only while the call screen is open. Twilio’s scripts load on those pages. The app does not record the call. A video tour that needs Parent Plus stays closed here, with no price and no subscribe button. There is no background-audio mode and no VoIP mode. Calls run while the app is on screen.
+- Voice and video calls use the camera and microphone only while the call screen is open. Twilio’s scripts load on those pages. The app does not record the call. The reviewer parent account has complimentary Parent Plus, so a video tour opens with the normal join button. No purchase and no price. A parent without Parent Plus sees a closed note with no price and no subscribe button. There is no background-audio mode and no VoIP mode. Calls run while the app is on screen.
 
 ## Reviewer sign-in
 
@@ -30,9 +30,10 @@ Kyle runs this once, from a machine that already has the production database URL
 1. Export `REVIEWER_PARENT_PASSWORD` and `REVIEWER_DAYCARE_PASSWORD`. Optional email overrides: `REVIEWER_PARENT_EMAIL` and `REVIEWER_DAYCARE_EMAIL`.
 2. Run `npm run ops:reviewer-demo`.
 3. Confirm the centre `qa-reviewer-demo-centre` stays `admin_only` with `is_test = 1`, and that public search does not list it.
-4. Sign in on https://www.kidease.ca with each account. Open Search, Saved, Messages, and Account.
+4. Confirm the parent profile has complimentary Parent Plus (`plus_plan` plus, `plus_status` active) and no Stripe subscription id. The daycare profile does not get Plus.
+5. Sign in on https://www.kidease.ca with each account. Open Search, Saved, Messages, and Account. From Messages, the parent can open a video tour. The app shows the join button. It does not show a price or a subscribe button.
 
-Defaults if the email vars are unset: `reviewer.parent@kidease.ca` and `reviewer.daycare@kidease.ca`. Both profiles are marked test accounts.
+Defaults if the email vars are unset: `reviewer.parent@kidease.ca` and `reviewer.daycare@kidease.ca`. Both profiles are marked test accounts. The parent account’s Parent Plus is complimentary. Nothing is charged.
 
 This document does not run that command.
 

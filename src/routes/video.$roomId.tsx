@@ -103,7 +103,7 @@ function VideoRoomPage() {
         <p className="mt-2 text-xs text-subtle">{t("videoNoRecording")}</p>
         <p className="mt-1 text-xs text-subtle">{t("videoMinutesNote")}</p>
 
-        {nativeShell && paywall ? (
+        {nativeShell && paywall && !canMint ? (
           <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="native-video-entitlement">
             <p className="text-sm text-muted">{t("nativeVideoNeedsPlus")}</p>
             <Button variant="secondary" asChild className="mt-4">
@@ -167,7 +167,7 @@ function VideoRoomPage() {
         ) : null}
 
         {canMint && !joined ? (
-          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border">
+          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="video-join">
             <p className="text-sm text-muted">{t("videoJoinHint")}</p>
             <Button className="mt-4" disabled={busy} onClick={() => void onJoin()}>
               {busy ? t("loading") : t("videoJoin")}
