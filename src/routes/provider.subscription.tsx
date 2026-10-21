@@ -11,6 +11,7 @@ import { useRoleChrome } from "@/components/role-chrome";
 import { useCopy } from "@/lib/use-copy";
 import { parseAppRole } from "@/lib/desks";
 import { providerNavSearch } from "@/lib/desk-nav";
+import { FOUNDING_FREE_FEATURES, FOUNDING_PAGE, foundingLocale } from "@/lib/founding-period";
 
 export const Route = createFileRoute("/provider/subscription")({
   validateSearch: (s: Record<string, unknown>) => {
@@ -42,7 +43,7 @@ export const Route = createFileRoute("/provider/subscription")({
 });
 
 function ProviderSubscriptionPage() {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const navigate = useNavigate();
   const upgradeSearch = Route.useSearch();
   const { user, isPending } = useCurrentUserState();
@@ -107,14 +108,30 @@ function ProviderSubscriptionPage() {
     return <Navigate to="/parent" />;
   }
   if (!allowed) {
+    const lang = foundingLocale(locale);
+    const copy = FOUNDING_PAGE[lang];
     return (
       <Shell>
-        <main className="mx-auto max-w-lg px-4 py-16 text-center">
-          <h1 className="font-display text-3xl">Not found</h1>
-          <p className="mt-3 text-muted">
-            Centre plans are for directors. Sign in on the centre desk, or ask KidEase staff if this tab is
-            turned off.
+        <main className="mx-auto max-w-lg px-4 py-10">
+          <p className="text-sm font-semibold text-primary">{copy.daycarePill}</p>
+          <h1 className="mt-2 font-display text-3xl">{copy.daycareName}</h1>
+          <p className="mt-2 text-sm font-medium">{lang === "fr" ? "Sans frais" : "No charge"}</p>
+          <p className="mt-3 text-sm text-muted">{copy.daycareBody}</p>
+          <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-muted">
+            {FOUNDING_FREE_FEATURES.map((row) => (
+              <li key={row.en}>{row[lang]}</li>
+            ))}
+          </ul>
+          <p className="mt-4 text-sm text-muted">
+            Centre plans are for directors. Paid extras stay off during the free founding period.
           </p>
+          <div className="mt-6">
+            <Button asChild>
+              <Link to="/provider" search={{ desk: "today" }}>
+                {t("todayHome")}
+              </Link>
+            </Button>
+          </div>
         </main>
       </Shell>
     );

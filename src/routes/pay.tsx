@@ -1,6 +1,12 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/pay")({
+  head: () => ({
+    meta: [
+      { title: "Pay a centre bill · KidEase" },
+      { name: "description", content: "Pay a bill your daycare sent. Search stays separate from centre bills." },
+    ],
+  }),
   component: PayLayout,
 });
 

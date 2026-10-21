@@ -5,6 +5,9 @@ import { Shell } from "@/components/shell";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/pay/")({
+  head: () => ({
+    meta: [{ title: "Pay a centre bill · KidEase" }],
+  }),
   component: PayHubPage,
 });
 

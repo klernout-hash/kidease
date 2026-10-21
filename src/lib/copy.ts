@@ -344,7 +344,7 @@ export const copy = {
     rankingMarketListings: "Listings",
     rankingMarketOpenings: "Confirmed openings",
     rankingMarketAsOf: "Day",
-    adminToolOff: "This tool is off.",
+    adminToolOff: "This tool is off. Nothing changes until it is turned on.",
     adminToolBack: "Back to the desk",
     adminToolCancel: "Cancel",
     adminTruthTitle: "Listing changes",
@@ -1117,7 +1117,7 @@ export const copy = {
     markAlertsRead: "Mark all read",
     noChildrenLead: "Add a child profile first. Centres only see the details you send.",
     noPaymentsLead:
-      "No centre bills yet. Search and messages stay free. Parent Plus, above, is an optional upgrade in CAD: it is not a centre bill. When a bill arrives, you pay the centre amount with Stripe Checkout. KidEase’s platform fee comes from the daycare payout.",
+      "No centre bills yet. When a centre sends one, it shows under Open bills. You pay the centre with Stripe Checkout. An optional KidEase plan is separate: it is not a centre bill.",
     parentPlusNoBill:
       "Parent Plus is optional. KidEase search and centre bills stay free without it.",
     emptyFindCare: "Find licensed care",
@@ -1730,7 +1730,7 @@ export const copy = {
     carePhotoVideoBlocked: "Video is out of scope for this phase. Photos only.",
     careNoEnrolled: "No enrolled children yet",
     careNoEnrolledLead:
-      "Daily care is for claimed centres and enrolled or linked children. Guests can still browse Search. Send a request or claim a listing first.",
+      "Daily care shows up after a centre links a child. Search for care, or send a request.",
     careMessage: "Message the other side",
     careMessagePh: "On-the-go update: this stays on the in-app thread.",
     careMessageSent: "Message sent",
@@ -3486,7 +3486,7 @@ export const copy = {
     rankingMarketListings: "Fiches",
     rankingMarketOpenings: "Places confirmées",
     rankingMarketAsOf: "Jour",
-    adminToolOff: "Cet outil est éteint.",
+    adminToolOff: "Cet outil est éteint. Rien ne change tant qu’il n’est pas activé.",
     adminToolBack: "Retour au bureau",
     adminToolCancel: "Annuler",
     adminTruthTitle: "Changements de fiche",
@@ -4263,7 +4263,7 @@ export const copy = {
     markAlertsRead: "Tout marquer comme lu",
     noChildrenLead: "Ajoutez d’abord un profil d’enfant. Les centres ne voient que ce que vous envoyez.",
     noPaymentsLead:
-      "Aucune facture de centre pour l’instant. La recherche et les messages restent gratuits. Plus parents, ci-dessus, est une option en dollars canadiens : ce n’est pas une facture de centre. Quand une facture arrive, vous payez le montant du centre avec Stripe Checkout. Les frais de plateforme KidEase viennent du versement à la garderie.",
+      "Aucune facture de centre pour l’instant. Quand un centre en envoie une, elle s’affiche sous Factures ouvertes. Vous payez le centre avec Stripe Checkout.",
     parentPlusNoBill:
       "Plus parents est facultatif. La recherche KidEase et les factures de centre restent gratuites sans lui.",
     emptyFindCare: "Trouver une place",
@@ -4876,7 +4876,7 @@ export const copy = {
     carePhotoVideoBlocked: "La vidéo n’est pas dans cette phase. Photos seulement.",
     careNoEnrolled: "Aucun enfant inscrit pour l’instant",
     careNoEnrolledLead:
-      "Les soins du jour sont pour les centres revendiqués et les enfants inscrits ou liés. Les visiteurs peuvent encore parcourir la recherche. Envoyez une demande ou revendiquez une fiche d’abord.",
+      "La garde quotidienne s’affiche quand un centre relie un enfant. Cherchez une place, ou envoyez une demande.",
     careMessage: "Écrire à l’autre partie",
     careMessagePh: "Mise à jour en déplacement : ça reste sur le fil interne.",
     careMessageSent: "Message envoyé",

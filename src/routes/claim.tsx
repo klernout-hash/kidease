@@ -320,8 +320,8 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
                 required
                 type="file"
                 accept="application/pdf,image/jpeg,image/png,image/webp"
-                className="mt-2 block w-full text-sm"
-                data-ke="claim-license-file"
+              className="mt-2 block min-h-11 w-full rounded-xl bg-bg px-3 py-2 text-sm text-fg ring-1 ring-border file:mr-3 file:min-h-11 file:rounded-full file:border-0 file:bg-primary file:px-4 file:text-sm file:font-medium file:text-primary-fg"
+              data-ke="claim-license-file"
                 onChange={(e) => readLicense(e.target.files?.[0], "claim", e.currentTarget)}
               />
               <UploadLimitHint hint={t("uploadClaimDocHint")} error={licenseError} />
@@ -430,7 +430,9 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
           <p className="mt-4 text-sm text-muted">{t("providerTrustBody")}</p>
         </details>
 
-        <form id="enroll" onSubmit={sendEnroll} className="mt-12 scroll-mt-24 space-y-3 rounded-xl bg-surface p-5 ring-1 ring-border">
+        <details id="enroll" className="mt-12 scroll-mt-24 rounded-xl bg-surface ring-1 ring-border">
+          <summary className="flex min-h-11 cursor-pointer items-center px-5 py-3 text-sm font-semibold">{t("enrollFormTitle")}</summary>
+        <form onSubmit={sendEnroll} className="space-y-3 px-5 pb-5">
           <h2 className="font-display text-2xl">{t("enrollFormTitle")}</h2>
           <p className="text-sm text-muted">{t("enrollFormLead")}</p>
           <p className="text-sm font-semibold">{t("daycareEnrollLead")}</p>
@@ -458,7 +460,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
                 }}
               />
               {enrollOpen ? (
-                <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-xl bg-surface py-1 shadow-card ring-1 ring-border">
+                <ul className="z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-xl bg-surface py-1 shadow-card ring-1 ring-border">
                   <li>
                     <button
                       type="button"
@@ -521,7 +523,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
               required
               type="file"
               accept="application/pdf,image/jpeg,image/png,image/webp"
-              className="mt-2 block w-full text-sm"
+              className="mt-2 block min-h-11 w-full rounded-xl bg-bg px-3 py-2 text-sm text-fg ring-1 ring-border file:mr-3 file:min-h-11 file:rounded-full file:border-0 file:bg-primary file:px-4 file:text-sm file:font-medium file:text-primary-fg"
               data-ke="enroll-license-file"
               onChange={(e) => readLicense(e.target.files?.[0], "enroll", e.currentTarget)}
             />
@@ -548,6 +550,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
             {t("sendClaimRequest")}
           </Button>
         </form>
+        </details>
       </main>
     </Shell>
   );

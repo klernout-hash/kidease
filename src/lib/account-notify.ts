@@ -180,6 +180,33 @@ export const ACTIVITY_KIND_CHIPS: Array<{ id: string; label: string }> = [
   { id: "claim", label: "Claims" },
 ];
 
+const ACTIVITY_KIND_EXTRA: Record<string, string> = {
+  message: "Messages",
+  messages: "Messages",
+  mail: "Messages",
+  tour: "Tours",
+  tours: "Tours",
+  review: "Reviews",
+  reviews: "Reviews",
+  billing: "Bills",
+  money: "Bills",
+  payment: "Bills",
+  payments: "Bills",
+  email: "Email",
+  chat: "Messages",
+};
+
+/** Readable chip text. Raw event kinds such as `money` are not shown as-is. */
+export function activityKindChipLabel(id: string): string {
+  const known = ACTIVITY_KIND_CHIPS.find((chip) => chip.id === id);
+  if (known) return known.label;
+  const extra = ACTIVITY_KIND_EXTRA[id];
+  if (extra) return extra;
+  const words = id.replace(/[_-]+/g, " ").trim();
+  if (!words) return "Other";
+  return words.replace(/\b[a-z]/g, (ch) => ch.toUpperCase());
+}
+
 export function activityPeopleSearch(row: {
   kind?: string | null;
   provider_email?: string | null;

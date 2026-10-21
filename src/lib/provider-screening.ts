@@ -94,7 +94,7 @@ const MB_CAR_NOTE =
 const MB_PRIOR_NOTE =
   "Prior Contact Check (Child and Family Services) for home-based licensees and adult household residents where the regulation applies.";
 const STUB_VSC_NOTE =
-  "Stub pack: Vulnerable Sector Check required for this role. Provincial extras (abuse registry, prior contact, CRRP) will be added later. KidEase does not issue police checks.";
+  "Vulnerable Sector Check is required for this role. More provincial checks will be added later. KidEase does not issue police checks.";
 
 function req(
   province: CaProvinceCode,
@@ -191,6 +191,26 @@ export function requirementsFor(
 
 export function startOfUtcDay(now: Date = new Date()): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
+/** A cleared file with no dates is not shown as cleared. The dates are what make the status true. */
+export function screeningPublicStatus(doc: {
+  status: ScreeningDocStatus;
+  issuedOn?: string | null;
+  expiresOn?: string | null;
+}): ScreeningDocStatus {
+  const issued = String(doc.issuedOn || "").trim();
+  const expires = String(doc.expiresOn || "").trim();
+  if (doc.status === "cleared" && !issued && !expires) return "uploaded";
+  return doc.status;
+}
+
+export function screeningPublicNotes(notes: string): string {
+  const text = notes.trim();
+  if (/^stub pack\b/i.test(text)) {
+    return "Vulnerable Sector Check is required for this role. KidEase does not issue police checks. Local police or the RCMP do.";
+  }
+  return notes;
 }
 
 export function effectiveDocStatus(

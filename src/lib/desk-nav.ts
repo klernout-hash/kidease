@@ -58,9 +58,9 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "profile", label: "Profile", labelKey: "profile", href: "/account", search: { tab: "profile", section: "profile", desk: "admin" } },
     { id: "appearance", label: "Appearance", labelKey: "appearance", href: "/account", search: { tab: "profile", section: "appearance", desk: "admin" } },
     { id: "delete", label: "Delete account", labelKey: "deleteAccount", href: "/account", search: { tab: "profile", section: "delete", desk: "admin" } },
-    { id: "notify-prefs", label: "Notification preferences", labelKey: "notificationPrefs", href: "/notifications" },
-    { id: "security", label: "Login and security", labelKey: "loginSecurity", href: "/account", search: { tab: "profile", section: "profile", desk: "admin" } },
-    { id: "email-sms", label: "Email and SMS", labelKey: "emailAndSms", href: "/unsubscribe" },
+    { id: "notify-prefs", label: "Notification preferences", labelKey: "notificationPrefs", href: "/account", search: { tab: "profile", section: "alerts", desk: "admin" } },
+    { id: "security", label: "Login and security", labelKey: "loginSecurity", href: "/account", search: { tab: "profile", section: "security", desk: "admin" } },
+    { id: "email-sms", label: "Email and SMS", labelKey: "emailAndSms", href: "/account", search: { tab: "profile", section: "email-sms", desk: "admin" } },
     { id: "account", label: "Account", hint: "Profile and preferences", href: "/account", search: { tab: "profile", desk: "admin" } },
   ],
   support: [
@@ -85,9 +85,9 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "profile", label: "Profile", labelKey: "profile", href: "/account", search: { tab: "profile", section: "profile", desk: "director" } },
     { id: "appearance", label: "Appearance", labelKey: "appearance", href: "/account", search: { tab: "profile", section: "appearance", desk: "director" } },
     { id: "delete", label: "Delete account", labelKey: "deleteAccount", href: "/account", search: { tab: "profile", section: "delete", desk: "director" } },
-    { id: "notify-prefs", label: "Notification preferences", labelKey: "notificationPrefs", href: "/notifications" },
-    { id: "security", label: "Login and security", labelKey: "loginSecurity", href: "/account", search: { tab: "profile", section: "profile", desk: "director" } },
-    { id: "email-sms", label: "Email and SMS", labelKey: "emailAndSms", href: "/unsubscribe" },
+    { id: "notify-prefs", label: "Notification preferences", labelKey: "notificationPrefs", href: "/account", search: { tab: "profile", section: "alerts", desk: "director" } },
+    { id: "security", label: "Login and security", labelKey: "loginSecurity", href: "/account", search: { tab: "profile", section: "security", desk: "director" } },
+    { id: "email-sms", label: "Email and SMS", labelKey: "emailAndSms", href: "/account", search: { tab: "profile", section: "email-sms", desk: "director" } },
     { id: "claim", label: "Claim a centre", labelKey: "deskNavClaim", href: "/claim" },
     { id: "add", label: "Add a new Daycare listing", hint: "Another location", labelKey: "deskNavAddListing", hintKey: "deskNavAddListingHint" },
     { id: "account", label: "Account", hint: "Sign-in and preferences", labelKey: "account", hintKey: "deskNavAccountHint", href: "/account", search: { tab: "profile", desk: "director" } },
@@ -107,9 +107,9 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "profile", label: "Profile", labelKey: "profile", href: "/account", search: { tab: "profile", section: "profile", desk: "parent" } },
     { id: "appearance", label: "Appearance", labelKey: "appearance", href: "/account", search: { tab: "profile", section: "appearance", desk: "parent" } },
     { id: "delete", label: "Delete account", labelKey: "deleteAccount", href: "/account", search: { tab: "profile", section: "delete", desk: "parent" } },
-    { id: "notify-prefs", label: "Notification preferences", labelKey: "notificationPrefs", href: "/notifications" },
-    { id: "security", label: "Login and security", labelKey: "loginSecurity", href: "/account", search: { tab: "profile", section: "profile", desk: "parent" } },
-    { id: "email-sms", label: "Email and SMS", labelKey: "emailAndSms", href: "/unsubscribe" },
+    { id: "notify-prefs", label: "Notification preferences", labelKey: "notificationPrefs", href: "/account", search: { tab: "profile", section: "alerts", desk: "parent" } },
+    { id: "security", label: "Login and security", labelKey: "loginSecurity", href: "/account", search: { tab: "profile", section: "security", desk: "parent" } },
+    { id: "email-sms", label: "Email and SMS", labelKey: "emailAndSms", href: "/account", search: { tab: "profile", section: "email-sms", desk: "parent" } },
     { id: "account", label: "Account", hint: "Family profile and alerts", labelKey: "account", hintKey: "deskNavParentAccountHint", href: "/account", search: { tab: "profile", desk: "parent" } },
   ],
 };
@@ -266,6 +266,45 @@ export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
     { id: "account", label: "Account", labelKey: "account", itemIds: ["account"] },
   ],
 };
+
+const DESK_GROUP_KEY = "ke-desk-group";
+
+export function deskGroupStorageKey(desk: string, groupId: string): string {
+  return `${DESK_GROUP_KEY}:${desk}:${groupId}`;
+}
+
+/** Remember which sidebar groups the visitor left open. A route change must not snap them shut. */
+export function readDeskGroupOpen(desk: string, groupId: string, fallback: boolean): boolean {
+  if (typeof sessionStorage === "undefined") return fallback;
+  try {
+    const saved = sessionStorage.getItem(deskGroupStorageKey(desk, groupId));
+    if (saved === "1") return true;
+    if (saved === "0") return false;
+  } catch {
+    /* private mode */
+  }
+  return fallback;
+}
+
+export function writeDeskGroupOpen(desk: string, groupId: string, open: boolean): void {
+  if (typeof sessionStorage === "undefined") return;
+  try {
+    sessionStorage.setItem(deskGroupStorageKey(desk, groupId), open ? "1" : "0");
+  } catch {
+    /* private mode */
+  }
+}
+
+export function bindDeskGroup(
+  node: HTMLDetailsElement | null,
+  desk: string,
+  groupId: string,
+  fallback: boolean,
+): void {
+  if (!node || node.dataset.keGroup === "1") return;
+  node.dataset.keGroup = "1";
+  node.open = readDeskGroupOpen(desk, groupId, fallback);
+}
 
 export function visibleDeskGroups(
   desk: DeskId,

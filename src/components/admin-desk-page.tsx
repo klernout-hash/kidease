@@ -13,6 +13,7 @@ import { canVisitDesk } from "@/lib/desks";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import {
   ACTIVITY_KIND_CHIPS,
+  activityKindChipLabel,
   ADMIN_PEOPLE_DAYS,
   adminDeskHref,
   activityAccountHeadline,
@@ -327,7 +328,7 @@ export function AdminPage() {
   }, [rows, activityKind, activityQ]);
   const activityKinds = useMemo(() => {
     const extra = [...new Set(rows.map((r) => r.kind).filter((k) => k && !ACTIVITY_KIND_CHIPS.some((c) => c.id === k)))].sort();
-    return [...ACTIVITY_KIND_CHIPS, ...extra.map((id) => ({ id, label: id }))];
+    return [...ACTIVITY_KIND_CHIPS, ...extra.map((id) => ({ id, label: activityKindChipLabel(id) }))];
   }, [rows]);
 
   const peopleRows = useMemo(() => {
