@@ -16,15 +16,15 @@ export function ShellLite({
   appTabs?: boolean;
 }) {
   return (
-    <div className="min-h-dvh bg-bg text-fg">
-      <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
+    <div className="min-h-dvh bg-bg pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] text-fg">
+      <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[var(--ke-safe-top,env(safe-area-inset-top))]">
         <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
           <Link to="/" className="shrink-0" aria-label="KidEase">
             <BrandMark size="sm" />
           </Link>
         </div>
       </header>
-      <div className={appTabs ? "[[data-channel=app]_&]:pb-[calc(6rem+env(safe-area-inset-bottom))]" : undefined}>
+      <div className={appTabs ? "[[data-channel=app]_&]:pb-[calc(6rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]" : undefined}>
         {children}
       </div>
       {appTabs ? <AppTabBar /> : null}

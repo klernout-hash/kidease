@@ -112,7 +112,7 @@
   }
   html {
     color-scheme: light;
-    font-size: 14px;
+    font-size: calc(14px * var(--ke-text-scale, 1));
   }
   html,
   body,
@@ -122,6 +122,10 @@
     background: var(--color-bg);
     color: var(--color-fg);
     pointer-events: auto;
+  }
+  /* Long words, including emails, stay inside the screen when Dynamic Type enlarges text. */
+  body {
+    overflow-wrap: break-word;
   }
   /* Closed portals / inactive channel chrome must never catch clicks.
      `display:none` + fixed descendants can still hit-test in some WebKits. */
@@ -1804,9 +1808,16 @@ html[data-channel="website"] .ke-web-grid > article {
   }
 }
 
-/* Header hugs the smaller mark. Sticky filters track the same height. */
+/* Header hugs the smaller mark. Sticky filters track the same height.
+   --ke-text-scale follows iOS Dynamic Type. 1 is the current size.
+   Safe-area variables follow the notch, Dynamic Island, and home indicator. */
 html {
-  font-size: 14px;
+  --ke-text-scale: 1;
+  --ke-safe-top: env(safe-area-inset-top, 0px);
+  --ke-safe-right: env(safe-area-inset-right, 0px);
+  --ke-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --ke-safe-left: env(safe-area-inset-left, 0px);
+  font-size: calc(14px * var(--ke-text-scale, 1));
 }
 header .min-h-16 {
   min-height: 3.2rem;
@@ -1828,7 +1839,12 @@ header :is(button, a) .size-9 {
 input,
 select:not(.ke-header-chrome),
 textarea {
-  font-size: 16px;
+  font-size: max(16px, 1rem);
+  max-width: 100%;
+}
+input[type="file"] {
+  min-width: 0;
+  overflow: hidden;
 }
 select.ke-lang-select.ke-header-chrome {
   font-size: 11px;
@@ -1868,7 +1884,7 @@ select.ke-lang-select.ke-header-chrome {
 @media (min-width: 768px) {
   .ke-split {
     display: grid;
-    grid-template-columns: minmax(15rem, 22rem) minmax(0, 1fr);
+    grid-template-columns: minmax(min(15rem, 42%), min(22rem, 48%)) minmax(0, 1fr);
     gap: 1rem;
     align-items: start;
   }
@@ -1886,7 +1902,7 @@ select.ke-lang-select.ke-header-chrome {
 @media (min-width: 768px) {
   .ke-rail--visual {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(16rem, 100%), 1fr));
     overflow: visible;
     scroll-snap-type: none;
   }
@@ -1901,7 +1917,7 @@ select.ke-lang-select.ke-header-chrome {
     display: none;
   }
   html[data-channel="app"] .ke-listings-narrow {
-    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(16rem, 100%), 1fr));
   }
 }
 
@@ -1929,7 +1945,7 @@ select.ke-lang-select.ke-header-chrome {
   .ke-call-stage,
   .ke-video-room {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
+    grid-template-columns: minmax(0, 1fr) minmax(min(16rem, 38%), min(20rem, 44%));
     gap: 1.25rem;
     align-items: start;
   }
@@ -1946,8 +1962,8 @@ select.ke-lang-select.ke-header-chrome {
 }
 
 html {
-  scroll-padding-top: calc(4.5rem + env(safe-area-inset-top, 0px));
-  scroll-padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px) + var(--ke-keyboard, 0px));
+  scroll-padding-top: calc(4.5rem + var(--ke-safe-top, env(safe-area-inset-top, 0px)));
+  scroll-padding-bottom: calc(6rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
 }
 
 /* Cookie bar must not eat Request info clicks outside the consent card. */

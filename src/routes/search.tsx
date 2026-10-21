@@ -1514,10 +1514,10 @@ export function SearchScreen({
   return (
     <Shell>
       <div className="ke-dense ke-gutter mx-auto max-w-7xl pb-6 pt-2">
-        <div className="flex items-end justify-between gap-3">
-          <div className="min-w-0">
+        <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
+          <div className="min-w-0 max-w-full flex-1 basis-[min(100%,12rem)]">
             <h1
-              className="font-display text-[1.35rem] leading-tight tracking-[-0.03em] text-balance"
+              className="break-words font-display text-[1.35rem] leading-tight tracking-[-0.03em] text-balance"
               data-search-h1=""
             >
               {parentFilters.fac.length === 1
@@ -1564,7 +1564,7 @@ export function SearchScreen({
           <Link
             to="/"
             search={{ change: "1" }}
-            className="inline-flex min-h-11 shrink-0 items-center text-sm font-medium text-primary"
+            className="inline-flex min-h-11 shrink-0 items-center text-sm font-medium text-primary max-w-full text-left"
           >
             {t("changeLocation")}
           </Link>

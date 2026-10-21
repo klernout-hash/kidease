@@ -96,9 +96,9 @@ export function Shell({ children }: { children: ReactNode }) {
 
   if (verifyLite) {
     return (
-      <div className="min-h-dvh bg-bg pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] text-fg">
+      <div className="min-h-dvh bg-bg pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] text-fg">
         <KeyboardInset />
-        <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
+        <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[var(--ke-safe-top,env(safe-area-inset-top))]">
           <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
             <Link to={homeTo} className="shrink-0" aria-label="KidEase">
               <BrandMark size="sm" />
@@ -114,16 +114,16 @@ export function Shell({ children }: { children: ReactNode }) {
 
   if (menuLite) {
     return (
-      <div className="min-h-dvh bg-bg pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] text-fg">
+      <div className="min-h-dvh bg-bg pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] text-fg">
         <KeyboardInset />
-        <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
+        <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[var(--ke-safe-top,env(safe-area-inset-top))]">
           <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
             <Link to={homeTo} className="shrink-0" aria-label="KidEase">
               <BrandMark size="sm" />
             </Link>
           </div>
         </header>
-        <div className="[[data-channel=app]_&]:pb-[calc(6rem+env(safe-area-inset-bottom))]">
+        <div className="[[data-channel=app]_&]:pb-[calc(6rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]">
           <div className="ke-page" data-ke="page">
             {children}
           </div>
@@ -134,11 +134,11 @@ export function Shell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-dvh bg-bg pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] text-fg">
+    <div className="min-h-dvh bg-bg pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] text-fg">
       <KeyboardInset />
-      <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
-        <div className="ke-gutter relative mx-auto max-w-6xl">
-          <div className="flex h-14 items-center gap-3 md:h-16">
+      <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[var(--ke-safe-top,env(safe-area-inset-top))]">
+        <div className="ke-gutter relative mx-auto min-w-0 max-w-6xl">
+          <div className="flex min-h-14 w-full min-w-0 items-center gap-2 sm:gap-3 md:min-h-16">
             {menuLeaf ? <MenuLeafBack /> : null}
             <Link to={homeTo} className="relative z-20 shrink-0" aria-label="KidEase">
               <BrandMark size="sm" />
@@ -171,15 +171,15 @@ export function Shell({ children }: { children: ReactNode }) {
                 />
               </div>
             ) : null}
-            <div className="relative z-20 ml-auto flex shrink-0 items-center gap-2 bg-bg pl-1 [[data-channel=website]_&]:flex">
+            <div className="relative z-20 ml-auto flex min-w-0 max-w-full items-center justify-end gap-1.5 bg-bg pl-1 sm:gap-2 [[data-channel=website]_&]:flex">
               {user ? <NotificationBell className="hidden md:grid" /> : (
                 <Link
                   to={localePath("/claim", locale)}
                   data-ke="list-your-daycare"
-                  className="inline-flex min-h-11 shrink-0 touch-manipulation items-center gap-1.5 whitespace-nowrap rounded-full border border-primary px-2.5 text-[13px] font-medium text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 sm:px-3 sm:text-sm"
+                  className="inline-flex min-h-11 min-w-0 touch-manipulation items-center gap-1.5 overflow-hidden rounded-full border border-primary px-2.5 text-[0.93rem] font-medium text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 sm:px-3"
                 >
                   <Building2 className="size-4 shrink-0" aria-hidden />
-                  {t("navForDaycares")}
+                  <span className="truncate whitespace-nowrap">{t("navForDaycares")}</span>
                 </Link>
               )}
               {user ? (
@@ -285,7 +285,7 @@ export function Shell({ children }: { children: ReactNode }) {
         headerExtra={null}
         navExtra={hiddenCare.length ? <HeaderCareOverflow types={hiddenCare} city={headerCity} onNavigate={close} /> : null}
       />
-      <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(6rem+env(safe-area-inset-bottom))]"}>
+      <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(6rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]"}>
         <ApplyPendingShortlist />
         <div className="ke-page" data-ke="page">
           {children}

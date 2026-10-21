@@ -16,6 +16,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { runIpadViewportPass } from "./ipad-viewports.mjs";
+import { runPhoneViewportPass } from "./phone-viewports.mjs";
 import { checkedOutputPath, checkedUrl, smokeAllowedOutputDirs } from "./browser-guard.mjs";
 import {
   ADMIN_API_SMOKE_PATHS,
@@ -1153,6 +1154,11 @@ try {
   const ipadProblems = await runIpadViewportPass(browser, base);
   record("ipad-viewports", ipadProblems.length === 0, {
     note: ipadProblems.length ? ipadProblems.slice(0, 6).join(" | ") : `${7} sizes`,
+  });
+
+  const phoneProblems = await runPhoneViewportPass(browser, base);
+  record("phone-viewports", phoneProblems.length === 0, {
+    note: phoneProblems.length ? phoneProblems.slice(0, 8).join(" | ") : "iphone sizes",
   });
 
   const failed = results.filter((r) => !r.ok);

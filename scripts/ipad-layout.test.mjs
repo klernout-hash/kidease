@@ -31,7 +31,7 @@ test("iPad layout caps the page and splits list plus detail", () => {
   assert.match(css, /\.ke-page[\s\S]*max-width: 720px/);
   assert.match(css, /max-width: 880px/);
   assert.match(css, /max-width: 1040px/);
-  assert.match(css, /\.ke-split[\s\S]*grid-template-columns: minmax\(15rem, 22rem\) minmax\(0, 1fr\)/);
+  assert.match(css, /\.ke-split[\s\S]*minmax\(min\(15rem, 42%\), min\(22rem, 48%\)\)/);
   assert.match(css, /\.ke-rail--visual[\s\S]*display: grid/);
   assert.match(css, /\.ke-apple-button[\s\S]*max-width: 375px/);
   assert.match(css, /var\(--ke-keyboard, 0px\)/);
@@ -77,4 +77,28 @@ test("iPad viewport pass is part of the e2e smoke", () => {
   assert.match(src("scripts/ipad-viewports.mjs"), /320/);
   assert.match(src("scripts/ipad-viewports.mjs"), /688/);
   assert.match(src("scripts/ipad-viewports.mjs"), /917/);
+});
+
+test("iPhone sizes, landscape, and Dynamic Type are in the viewport pass", () => {
+  const phone = src("scripts/phone-viewports.mjs");
+  const plist = src("ios/App/App.xcodeproj/project.pbxproj");
+  assert.match(plist, /IPHONEOS_DEPLOYMENT_TARGET = 15.0/);
+  for (const size of ["320", "375", "390", "393", "402", "414", "420", "428", "430", "440", "568", "667", "812", "844", "852", "874", "896", "912", "926", "932", "956"]) {
+    assert.match(phone, new RegExp(size));
+  }
+  assert.match(phone, /1\.35/);
+  assert.match(phone, /1\.64/);
+  assert.match(phone, /2\.12/);
+  assert.match(src("scripts/e2e-smoke.mjs"), /runPhoneViewportPass/);
+  const css = src("src/styles.css");
+  assert.match(css, /--ke-text-scale/);
+  assert.match(css, /--ke-safe-top: env\(safe-area-inset-top/);
+  assert.match(css, /calc\(14px \* var\(--ke-text-scale, 1\)\)/);
+  const bridge = src("ios/App/App/KidEaseBridgeViewController.swift");
+  assert.match(bridge, /preferredContentSizeCategory/);
+  assert.match(bridge, /accessibilityExtraExtraExtraLarge/);
+  assert.match(bridge, /--ke-text-scale/);
+  assert.match(src("capacitor.config.ts"), /contentInset: "never"/);
+  assert.match(src("ios/App/App/Info.plist"), /UIInterfaceOrientationLandscapeLeft/);
+  assert.doesNotMatch(src("ios/App/App/Info.plist").split("UISupportedInterfaceOrientations~ipad")[0], /UIInterfaceOrientationPortraitUpsideDown/);
 });
