@@ -1,19 +1,15 @@
 import { useEffect } from "react";
-import { isNative } from "@/lib/native";
-import { isNativeUserAgent, NATIVE_COMMERCE_SELECTORS } from "@/lib/native-entitlements";
+import { NATIVE_COMMERCE_SELECTORS, readClientStoreChannel, shellBlocksCommerce } from "@/lib/native-entitlements";
 
-function shellIsNative(): boolean {
+function shellBlocks(): boolean {
   if (typeof document === "undefined") return false;
-  const runtime = document.documentElement.dataset.runtime;
-  if (runtime === "ios" || runtime === "android" || runtime === "native") return true;
-  if (typeof navigator !== "undefined" && isNativeUserAgent(navigator.userAgent)) return true;
-  return isNative();
+  return shellBlocksCommerce(readClientStoreChannel());
 }
 
 /** Unmounts click targets for digital goods inside the native shell. CSS hides them before this runs. */
 export function NativeCommerceStrip() {
   useEffect(() => {
-    if (!shellIsNative()) return;
+    if (!shellBlocks()) return;
     const disarm = () => {
       document.querySelectorAll(NATIVE_COMMERCE_SELECTORS).forEach((node) => {
         if (!(node instanceof HTMLElement)) return;

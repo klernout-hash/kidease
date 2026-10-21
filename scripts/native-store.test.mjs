@@ -140,4 +140,5 @@ test("a call opened from messages can use the camera and microphone", () => {
   assert.match(inbox, /to="\/video\/\$roomId"[\s\S]*reloadDocument/);
   assert.doesNotMatch(src("src/routes/__root.tsx"), /@tanstack\/react-start\/server/);
   assert.match(src("src/lib/native-shell-request.ts"), /readNativeShell/);
+  assert.match(src("src/lib/store-channel-request.ts"), /readServerStoreChannel/);
 });

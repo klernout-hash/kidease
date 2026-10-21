@@ -46,7 +46,7 @@ Do **not** invent these values. Leave env vars blank until the consoles show rea
 | Play Console (~$25) | play.google.com/console | Create app package `ca.kidease.app` |
 | Upload keystore | Local `keytool` (gitignored) | `android/key.properties` from `android/key.properties.example` |
 | Play App Signing SHA-256 | Play → App integrity → App signing | Set `ANDROID_CERT_SHA256S` on Vercel. Until then `sha256_cert_fingerprints` stays `[]` |
-| Play internal AAB | `./gradlew bundleRelease` on a signed machine | Upload to Internal testing — not this PR |
+| Play internal AAB | `./gradlew bundlePlayRelease` on a signed machine | Upload to Internal testing — not this PR |
 | Push (optional for 1 Nov) | Firebase + APNs `.p8` | Keep `FEATURE_PUSH=0`. Run `npx cap sync` when you cut a binary that should include the plugin |
 | Video / camera strings | Only if `FEATURE_VIDEO=1` ships | Do not add unused camera / mic purpose strings |
 
@@ -78,7 +78,7 @@ npm run cap:prepare
 # iOS: opens Xcode — select Team, then Product → Archive → App Store Connect
 npm run cap:ios
 # Android: copy android/key.properties.example → android/key.properties, then
-cd android && ./gradlew bundleRelease
+cd android && ./gradlew bundlePlayRelease
 ```
 
 Never commit `.p12`, `.jks`, `key.properties`, `google-services.json`, or `GoogleService-Info.plist`.

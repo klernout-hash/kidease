@@ -1,6 +1,6 @@
 # Play Data safety — Android binary
 
-Fill the Data safety form from this list. Do not add a row for an SDK that is not here. The application id in the project is `ca.kidease.app` (Capacitor `appId`, iOS bundle, and Android `applicationId`). `targetSdkVersion` and `compileSdk` are 36. The store file is an Android App Bundle from `./gradlew bundleRelease` (`android/app/build/outputs/bundle/release/app-release.aab`), not an APK. `assembleRelease` exists because the Android Gradle plugin always offers it. Do not upload that APK.
+Fill the Data safety form from this list. Do not add a row for an SDK that is not here. The application id in the project is `ca.kidease.app` (Capacitor `appId`, iOS bundle, and Android `applicationId`). `targetSdkVersion` and `compileSdk` are 36. The Play store file is an Android App Bundle from `./gradlew bundlePlayRelease` (`android/app/build/outputs/bundle/playRelease/app-play-release.aab`), not an APK. `assemblePlayRelease` builds an APK. Do not upload that APK. Samsung and Huawei use their own flavours (`docs/other-stores.md`).
 
 `ANDROID_CERT_SHA256S` stays empty until the first Play App Signing upload.
 
@@ -33,7 +33,6 @@ The WebView loads `https://www.kidease.ca`. JavaScript SDKs are not Android libr
 ## Health information
 
 Parents can type child health details in KidEase: allergies, medications, and medical notes. On the Play Data safety form, declare **Health info**. Those fields stay in the KidEase database. PostHog and Sentry scrub keys and values that look like allergy, medication, medical, or health notes. They are not sent to analytics or crash reports.
-
 Also declare these, each linked to the account:
 
 - **Phone number.** A parent or centre can save a phone number on the profile. A call does not reveal the other person's number.

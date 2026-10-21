@@ -1,5 +1,5 @@
 import { isNative, nativePlatform, type NativePlatform } from "@/lib/native";
-import { isNativeUserAgent } from "./native-entitlements.ts";
+import { isNativeUserAgent, readClientStoreChannel, shellBlocksCommerce } from "./native-entitlements.ts";
 
 /** One codebase, two looks. Same listings and accounts. */
 export type Runtime = NativePlatform; // "web" | "ios" | "android"
@@ -61,8 +61,13 @@ export function isWebsite() {
 export function paintRuntime() {
   if (typeof document === "undefined") return;
   const root = document.documentElement;
+  const store = readClientStoreChannel();
+  root.dataset.store = store;
   const platform = nativePlatform();
-  if (platform === "ios" || platform === "android") root.dataset.runtime = platform;
+  // Samsung and Microsoft keep website commerce. Their runtime stays web so
+  // the Play/Apple hide rules do not fire. Huawei stays on the native hide.
+  if (!shellBlocksCommerce(store)) root.dataset.runtime = "web";
+  else if (platform === "ios" || platform === "android") root.dataset.runtime = platform;
   else if (typeof navigator !== "undefined" && isNativeUserAgent(navigator.userAgent)) root.dataset.runtime = "native";
   else root.dataset.runtime = "web";
   root.dataset.channel = channel();
