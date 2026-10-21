@@ -18,6 +18,7 @@ import { chromium } from "playwright";
 import { runIpadViewportPass } from "./ipad-viewports.mjs";
 import { runPhoneViewportPass } from "./phone-viewports.mjs";
 import { runFoldResizePass } from "./fold-resize.mjs";
+import { runStoreViewportPass } from "./store-viewports.mjs";
 import { checkedOutputPath, checkedUrl, smokeAllowedOutputDirs } from "./browser-guard.mjs";
 import {
   ADMIN_API_SMOKE_PATHS,
@@ -1165,6 +1166,11 @@ try {
   const foldProblems = await runFoldResizePass(browser, base);
   record("fold-resize", foldProblems.length === 0, {
     note: foldProblems.length ? foldProblems.slice(0, 8).join(" | ") : "live resize",
+  });
+
+  const storeProblems = await runStoreViewportPass(browser, base);
+  record("store-viewports", storeProblems.length === 0, {
+    note: storeProblems.length ? storeProblems.slice(0, 8).join(" | ") : "android and windows",
   });
 
   const failed = results.filter((r) => !r.ok);

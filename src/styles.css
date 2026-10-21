@@ -393,6 +393,14 @@
     .ke-listing-rail .ke-rail-card:hover {
       transform: translateY(-2px);
     }
+    html[data-channel="website"] .ke-card:hover,
+    html[data-channel="website"] .ke-web-grid > article:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lift);
+    }
+    html[data-channel="website"] .ke-care-tile:hover {
+      border-color: var(--color-fg);
+    }
   }
   .ke-chip-carousel {
     overflow-x: auto;
@@ -1971,6 +1979,14 @@ html[data-ke-shape="wide"] .ke-video-stage {
   max-width: 375px;
   min-height: 44px;
   margin-inline: auto;
+}
+
+/* A wide Windows window uses the website column. Mouse hover lifts a card.
+   Touch keeps the same layout without a stuck hover. */
+html[data-channel="website"] .ke-card,
+html[data-channel="website"] .ke-web-grid > article,
+html[data-channel="website"] .ke-care-tile {
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
 }
 
 html {

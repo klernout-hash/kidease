@@ -200,7 +200,7 @@ export function Shell({ children }: { children: ReactNode }) {
               ) : null}
               <button
                 type="button"
-                className="relative grid size-12 shrink-0 place-items-center rounded-full text-fg transition-colors duration-150 ease-out hover:bg-surface [[data-channel=website]_&]:grid"
+                className="relative grid size-12 shrink-0 place-items-center rounded-full text-fg transition-colors duration-150 ease-out hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation [[data-channel=website]_&]:grid"
                 aria-label="Menu"
                 aria-expanded={open}
                 aria-controls="ke-nav-drawer"

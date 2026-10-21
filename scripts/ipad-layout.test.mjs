@@ -124,3 +124,24 @@ test("fold and split-view resize stays on one page", () => {
   assert.match(src("src/styles.css"), /object-fit: contain/);
   assert.doesNotMatch(video.slice(video.indexOf("sdk.connect"), video.indexOf("function toggleMute")), /innerWidth|resize/);
 });
+
+test("Play, Samsung, Huawei, and Windows sizes stay resizable", () => {
+  const manifest = src("android/app/src/main/AndroidManifest.xml");
+  const huawei = src("android/app/src/huawei/AndroidManifest.xml");
+  const store = src("scripts/store-viewports.mjs");
+  assert.match(manifest, /android:resizeableActivity="true"/);
+  assert.match(manifest, /smallestScreenSize\|screenLayout/);
+  assert.doesNotMatch(manifest, /screenOrientation|supports-screens|compatible-screens|maxAspectRatio/);
+  assert.doesNotMatch(huawei, /screenOrientation|supports-screens|compatible-screens|maxAspectRatio/);
+  assert.doesNotMatch(src("android/app/src/main/java/ca/kidease/app/MainActivity.java"), /onConfigurationChanged|webView\.reload|loadUrl\(/);
+  assert.match(src("scripts/e2e-smoke.mjs"), /runStoreViewportPass/);
+  assert.match(store, /__keFoldMark/);
+  assert.match(store, /KidEaseStoreSamsung/);
+  assert.match(store, /KidEaseStoreHuawei/);
+  assert.match(store, /KidEaseStoreMicrosoft/);
+  for (const size of ["344", "360", "384", "393", "412", "480", "500", "600", "640", "673", "712", "720", "740", "768", "800", "804", "841", "854", "873", "880", "882", "884", "900", "912", "915", "960", "1040", "1080", "1104", "1138", "1280", "1368", "1440", "1920", "2560"]) {
+    assert.match(store, new RegExp(`\\b${size}\\b`));
+  }
+  assert.match(src("src/styles.css"), /@media \(hover: hover\) and \(pointer: fine\)/);
+  assert.match(src("src/components/shell.tsx"), /focus-visible:ring-2/);
+});
