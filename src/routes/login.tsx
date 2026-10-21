@@ -4,8 +4,9 @@ import { authClient, authEnabled, dropExistingSession, signIn, turnstileFetchOpt
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
-import type { GrokProvider } from "@/lib/auth/providers";
+import { providersForStore, type GrokProvider } from "@/lib/auth/providers";
 import { getSignInProviders } from "@/lib/server/sign-in-providers";
+import { useStoreChannel } from "@/lib/use-native-shell";
 import { LOADER_SETTLE_MS, withTimeout, withTimeoutFallback } from "@/lib/timeout";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
@@ -129,6 +130,8 @@ export function LoginScreen({
   search: LoginSearch;
 }) {
   const { t, locale } = useCopy();
+  const storeChannel = useStoreChannel();
+  const shownProviders = providersForStore(providers, storeChannel);
   const deskHint = parseDeskQuery(search.desk);
   const role = search.role ?? (deskHint ? loginRoleFromDesk(deskHint) : undefined);
   // URL role=admin / next=/admin must not paint an operator page. Kyle types his email.
@@ -560,7 +563,7 @@ export function LoginScreen({
                 </a>
               </div>
             ) : null}
-            {authEnabled && providers.length === 0 && !operator ? (
+            {authEnabled && shownProviders.length === 0 && !operator ? (
               <p className="text-xs text-muted">
                 {t("loginMethodsFailed")}
               </p>
@@ -598,7 +601,7 @@ export function LoginScreen({
             {mode === "up" ? t("haveAccount") : t("needAccount")}
           </button>
           ) : null}
-          {!operator && (providers.length > 0 || !authEnabled) ? (
+          {!operator && (shownProviders.length > 0 || !authEnabled) ? (
           <div className="mt-6">
             <div className="mb-4 flex items-center gap-3 text-xs uppercase tracking-wider text-subtle">
               <span className="h-px flex-1 bg-border" />
@@ -623,7 +626,7 @@ export function LoginScreen({
                 </label>
               ) : null}
               {authEnabled ? (
-                providers.map((p: GrokProvider) => (
+                shownProviders.map((p: GrokProvider) => (
                   <Button
                     key={p.providerId}
                     type="button"

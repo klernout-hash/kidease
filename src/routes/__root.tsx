@@ -28,6 +28,7 @@ import { reportError } from "@/lib/observe";
 import { getRoleChrome } from "@/lib/server/role-route";
 import { STYLE_NONCE_BOOT } from "@/lib/style-nonce-boot";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
+import { shellBlocksCommerce, storeChannelFromSignals, type StoreChannel } from "@/lib/native-entitlements";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "KidEase";
@@ -62,21 +63,9 @@ export const Route = createRootRoute({
     if (visitorLocale.redirectTo) {
       throw redirect({ href: visitorLocale.redirectTo, statusCode: 302 });
     }
-    let nativeShell = false;
-    if (typeof window !== "undefined") {
-      const { isNativeUserAgent } = await import("@/lib/native-entitlements");
-      const { isNative } = await import("@/lib/native");
-      nativeShell = isNativeUserAgent(window.navigator.userAgent) || isNative();
-    } else {
-      try {
-        const { getRequest } = await import("@tanstack/react-start/server");
-        const { isNativeUserAgent } = await import("@/lib/native-entitlements");
-        nativeShell = isNativeUserAgent(getRequest().headers.get("user-agent"));
-      } catch {
-        nativeShell = false;
-      }
-    }
-    return { roleChrome, visitorLocale, nativeShell };
+    const storeChannel = await readRequestStoreChannel(location.searchStr || "");
+    const nativeShell = shellBlocksCommerce(storeChannel);
+    return { roleChrome, visitorLocale, nativeShell, storeChannel };
   },
   errorComponent: ({ error }) => {
     reportError(error, {
@@ -163,9 +152,37 @@ export const Route = createRootRoute({
   component: RootDocument,
 });
 
+async function readRequestStoreChannel(search: string): Promise<StoreChannel> {
+  if (typeof window !== "undefined") {
+    return storeChannelFromSignals({
+      userAgent: window.navigator.userAgent,
+      search: window.location.search || search,
+      cookie: document.cookie,
+    });
+  }
+  try {
+    const { getRequest } = await import("@tanstack/react-start/server");
+    const req = getRequest();
+    let fromUrl = "";
+    try {
+      fromUrl = new URL(req.url, "https://www.kidease.ca").search;
+    } catch {
+      fromUrl = "";
+    }
+    return storeChannelFromSignals({
+      userAgent: req.headers.get("user-agent"),
+      search: fromUrl || search,
+      cookie: req.headers.get("cookie"),
+    });
+  } catch {
+    return storeChannelFromSignals({ search });
+  }
+}
+
 function RootDocument() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const nativeShell = Route.useRouteContext({ select: (s) => Boolean(s.nativeShell) });
+  const storeChannel = Route.useRouteContext({ select: (s) => s.storeChannel ?? "web" });
   const { locale } = useCopy();
   const lang =
     pathLocale(pathname) === "fr" || locale === "fr" ? "fr-CA" : locale === "en" ? "en" : localeTag(locale);
@@ -175,6 +192,7 @@ function RootDocument() {
       className="antialiased"
       data-channel="website"
       data-runtime={nativeShell ? "native" : "web"}
+      data-store={storeChannel}
       data-theme="system"
       suppressHydrationWarning
     >
