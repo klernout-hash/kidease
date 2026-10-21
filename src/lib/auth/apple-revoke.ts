@@ -1,8 +1,10 @@
 /**
  * Apple token revocation (App Store 5.1.1(v)).
  * POST https://appleid.apple.com/auth/revoke
- * No secrets are logged. Tests pass a mock fetch.
+ * Failures log the HTTP status and Apple's error code. Token values are never logged.
+ * Tests pass a mock fetch.
  */
+import { logAppleAuthFailure } from "./apple-auth-log.ts";
 
 export const APPLE_REVOKE_URL = "https://appleid.apple.com/auth/revoke";
 
@@ -54,7 +56,18 @@ export async function revokeAppleSignInTokens(input: {
         tokenTypeHint: item.tokenTypeHint,
       }),
     });
-    if (response.ok) ok += 1;
+    if (response.ok) {
+      ok += 1;
+      continue;
+    }
+    let appleError = "unknown";
+    try {
+      const body = (await response.json()) as { error?: unknown };
+      if (typeof body?.error === "string" && body.error.trim()) appleError = body.error.trim();
+    } catch {
+      appleError = "unreadable";
+    }
+    logAppleAuthFailure("revoke", { status: response.status, error: appleError, clientId: input.clientId });
   }
   return { skipped: false, attempted: tokens.length, ok };
 }

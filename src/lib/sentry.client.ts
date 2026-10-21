@@ -27,7 +27,7 @@ export function sentryBrowserEnabled() {
   return Boolean(publicDsn() && Sentry.getClient());
 }
 
-/** Website starts immediately. The native app waits for Allow analytics. */
+/** Website and the native app both wait for Allow analytics. */
 export function shouldStartSentryBrowser(input?: { native?: boolean; consent?: AnalyticsConsent }): boolean {
   if (input) return shouldStartTelemetry("sentry", input);
   if (typeof window === "undefined") return false;

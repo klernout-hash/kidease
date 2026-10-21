@@ -204,24 +204,9 @@ ${schemes}
       "",
     );
     plist = plist.replace(/\s*<string>location<\/string>/g, "");
-    if (!plist.includes("<string>remote-notification</string>")) {
-      if (plist.includes("<key>UIBackgroundModes</key>")) {
-        plist = plist.replace(
-          /<key>UIBackgroundModes<\/key>\s*<array>/,
-          "<key>UIBackgroundModes</key>\n\t<array>\n\t\t<string>remote-notification</string>",
-        );
-      } else {
-        plist = plist.replace(
-          "</dict>\n</plist>",
-          `\t<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
-</dict>
-</plist>`,
-        );
-      }
-    }
+    // Push is not in v1. Strip the remote-notification background mode if a plugin added it.
+    plist = plist.replace(/\s*<string>remote-notification<\/string>/g, "");
+    plist = plist.replace(/\s*<key>UIBackgroundModes<\/key>\s*<array>\s*<\/array>/g, "");
     await writeFile(infoPlist, plist);
     console.log("[native-permissions] patched ios Info.plist");
 

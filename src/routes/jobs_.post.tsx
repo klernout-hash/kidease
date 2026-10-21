@@ -4,6 +4,7 @@ import { JobsInterestForm } from "@/components/jobs-interest-form";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
+import { useInNativeShell } from "@/lib/use-native-shell";
 
 export const Route = createFileRoute("/jobs_/post")({
   head: () => pageSeoHead(MARKETING_PAGE_SEO.jobsPost),
@@ -12,9 +13,14 @@ export const Route = createFileRoute("/jobs_/post")({
 
 export function JobsPost() {
   const { t, locale } = useCopy();
+  const nativeShell = useInNativeShell();
   return (
     <Shell>
-      <main className="ke-gutter mx-auto max-w-lg py-12 md:py-16">
+      <main
+        className="ke-gutter mx-auto max-w-lg py-12 md:py-16"
+        data-ke="jobs-post"
+        data-commerce={nativeShell ? "hidden" : "web"}
+      >
         <p className="text-sm font-semibold tracking-wide text-primary">{t("jobsPostKicker")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{t("jobsPostTitle")}</h1>
         <p className="mt-6 text-muted">{t("jobsPostLead")}</p>

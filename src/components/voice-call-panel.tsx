@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { Call, Device } from "@twilio/voice-sdk";
 import { Button } from "@/components/ui/button";
+import { isNative } from "@/lib/native";
 import { useCopy } from "@/lib/use-copy";
 import { mintThreadVoiceToken } from "@/lib/server/voice-call";
 
@@ -19,6 +20,12 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
 
   useEffect(() => {
     let cancelled = false;
+    if (isNative()) {
+      setPhase("error");
+      setNote(t("comingSoon"));
+      setBusy(false);
+      return;
+    }
     void (async () => {
       try {
         const minted = await mintThreadVoiceToken({ data: { conversationId } });

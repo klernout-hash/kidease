@@ -214,7 +214,7 @@ function RootDocument() {
           <NativeBoot />
           <NativeCommerceStrip />
           <PushExplain />
-          <GetAlertsPrompt />
+          {nativeShell ? null : <GetAlertsPrompt />}
           <PostHogBoot />
           <RoleBoot />
           <RouteProgress />

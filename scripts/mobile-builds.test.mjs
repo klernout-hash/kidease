@@ -89,7 +89,7 @@ describe("native project scaffolding", () => {
     assert.match(info, /licensed daycares near you/);
     assert.doesNotMatch(info, /NSLocationAlways/);
     assert.doesNotMatch(info, /<string>location<\/string>/);
-    assert.match(info, /<string>remote-notification<\/string>/);
+    assert.doesNotMatch(info, /<string>remote-notification<\/string>/);
 
     const manifest = read("android/app/src/main/AndroidManifest.xml");
     assert.match(manifest, /ACCESS_COARSE_LOCATION/);
@@ -106,8 +106,7 @@ describe("native project scaffolding", () => {
     assert.match(entitlements, /applinks:www\.kidease\.ca/);
     assert.match(entitlements, /applinks:kidease\.ca/);
     assert.match(entitlements, /webcredentials:www\.kidease\.ca/);
-    assert.match(entitlements, /aps-environment/);
-    assert.match(entitlements, /<string>production<\/string>/);
+    assert.doesNotMatch(entitlements, /aps-environment/);
     assert.match(entitlements, /com\.apple\.developer\.applesignin/);
     assert.match(read("ios/App/App.xcodeproj/project.pbxproj"), /CODE_SIGN_ENTITLEMENTS = App\/App.entitlements/);
     assert.doesNotMatch(read("ios/App/App.xcodeproj/project.pbxproj"), /DEVELOPMENT_TEAM = [A-Z0-9]{10}/);

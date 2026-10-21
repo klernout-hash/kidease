@@ -27,8 +27,12 @@ The WebView loads `https://www.kidease.ca`. JavaScript SDKs are not Android libr
 
 | SDK | Data it collects | When |
 | --- | --- | --- |
-| posthog-js | Page views, product events, account id if signed in. The property scrubber drops password, email, phone, child name, allergy, and birth date. Session replay stays off unless `VITE_PUBLIC_POSTHOG_REPLAY_NATIVE` is on (default off). | Only after the person taps Allow analytics. Essential or no choice means PostHog does not start and the app does not queue events. First-party `/ingest` proxy. |
-| @sentry/react | Crash and performance traces if `VITE_PUBLIC_SENTRY_DSN` is set. Data collection is limited: no user info, cookies, headers, query params, or request bodies. Stack trace and route tag. No email or child name. | In the app, only after the same Allow tap. The website still starts Sentry without that banner. Leave it off the form when the DSN is unset. |
+| posthog-js | Page views, product events, account id if signed in. The property scrubber drops password, email, phone, child name, birth date, and health text (allergies, medications, medical notes). Session replay stays off unless `VITE_PUBLIC_POSTHOG_REPLAY_NATIVE` is on (default off). | Only after the person taps Allow analytics. Essential or no choice means PostHog does not start and the app does not queue events. First-party `/ingest` proxy. |
+| @sentry/react | Crash and performance traces if `VITE_PUBLIC_SENTRY_DSN` is set. Data collection is limited: no user info, cookies, headers, query params, or request bodies. Stack trace and route tag. No email, child name, or health text. | Website and app both wait for the same Allow tap. Unset or Essential does not start Sentry. Leave it off the form when the DSN is unset. |
+
+## Health information
+
+Parents can type child health details in KidEase: allergies, medications, and medical notes. On the Play Data safety form, declare **Health info**. Those fields stay in the KidEase database. PostHog and Sentry scrub keys and values that look like allergy, medication, medical, or health notes. They are not sent to analytics or crash reports.
 | Stripe Checkout | Not opened from the Android app. | Plan prices, upgrade buttons, and Stripe links are removed from the native shell. A plan already bought on the website still unlocks after sign-in. |
 
 ## Not in this build
@@ -36,4 +40,4 @@ The WebView loads `https://www.kidease.ca`. JavaScript SDKs are not Android libr
 - SMS, call log, contacts, photo library, advertising ID, microphone, background location.
 - Play Billing. Digital plans are not sold in the app.
 - `FEATURE_SMS` and in-app chat stay off. SMS checkboxes, the chat lab, and “coming soon” store badges are hidden when `data-runtime` is `ios` or `android`.
-- Parent Plus, Parent Alerts, centre-plan prices, and every Stripe checkout are not shown in the app. Firebase Analytics is excluded from the release. Twilio voice and video SDKs are not in the AAB. Google Maps and Places load in the WebView for search. Age rating is 18+. Not the Families program. 16 KB page size: `useLegacyPackaging = false`. Target API 36.
+- Parent Plus, Parent Alerts, centre-plan prices, and every Stripe checkout are not shown in the app. Firebase Analytics is excluded from the release. Twilio voice and video SDKs are not in the AAB, and the native WebView does not load `twilio-video` or `@twilio/voice-sdk`. Google Maps and Places load in the WebView for search. Age rating is 18+. Not the Families program. 16 KB page size: `useLegacyPackaging = false`. Target API 36. Declare Health info for allergies, medications, and medical notes.

@@ -7,6 +7,7 @@ import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getVoiceCallStatus, type VoiceCallStatus } from "@/lib/server/voice-call";
 import { useCopy } from "@/lib/use-copy";
+import { useInNativeShell } from "@/lib/use-native-shell";
 
 export const Route = createFileRoute("/call/$conversationId")({
   head: () => ({
@@ -23,6 +24,7 @@ function CallPage() {
   const { conversationId } = Route.useParams();
   const { user, isPending } = useCurrentUserState();
   const { t } = useCopy();
+  const nativeShell = useInNativeShell();
   const [status, setStatus] = useState<VoiceCallStatus | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -102,7 +104,11 @@ function CallPage() {
           </div>
         ) : null}
 
-        {status?.allowed && status.credentialsPresent ? <VoiceCallPanel conversationId={conversationId} /> : null}
+        {nativeShell ? (
+          <p className="mt-6 text-sm text-muted" data-ke="native-voice-off">{t("comingSoon")}</p>
+        ) : status?.allowed && status.credentialsPresent ? (
+          <VoiceCallPanel conversationId={conversationId} />
+        ) : null}
       </main>
     </Shell>
   );

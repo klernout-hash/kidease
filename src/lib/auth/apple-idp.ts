@@ -50,8 +50,16 @@ const loaded = readAppleIdpConfig();
 export const APPLE_CLIENT_ID = loaded?.clientId;
 export const appleIdpConfigured = Boolean(loaded);
 
-/** ES256 client-secret JWT Apple requires at the token endpoint. Valid 180 days. */
-export function appleClientSecretFrom(config: AppleIdpConfig, nowSec = Math.floor(Date.now() / 1000)): string {
+/**
+ * ES256 client-secret JWT Apple requires at the token endpoint. Valid 180 days.
+ * `subject` is the client_id that issued the token: the Services ID on the web,
+ * or the bundle id `ca.kidease.app` for the native sheet.
+ */
+export function appleClientSecretFrom(
+  config: AppleIdpConfig,
+  nowSec = Math.floor(Date.now() / 1000),
+  subject = config.clientId,
+): string {
   const header = b64url(JSON.stringify({ alg: "ES256", kid: config.keyId, typ: "JWT" }));
   const payload = b64url(
     JSON.stringify({
@@ -59,7 +67,7 @@ export function appleClientSecretFrom(config: AppleIdpConfig, nowSec = Math.floo
       iat: nowSec,
       exp: nowSec + 60 * 60 * 24 * 180,
       aud: "https://appleid.apple.com",
-      sub: config.clientId,
+      sub: subject,
     }),
   );
   const key = createPrivateKey(config.privateKey);

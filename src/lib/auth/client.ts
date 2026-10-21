@@ -128,6 +128,20 @@ export async function signIn(
           idToken: { token: credential.identityToken, nonce: nonce.raw },
         });
         if (error) throw new Error(error.message || "Sign in with Apple failed");
+        const authorizationCode = credential.authorizationCode?.trim();
+        if (!authorizationCode) {
+          console.error("[apple-auth] exchange failed status=0 error=missing_authorization_code client=ca.kidease.app");
+        } else {
+          try {
+            const { storeNativeAppleAuthorization } = await import("@/lib/server/apple-native-token");
+            const stored = await storeNativeAppleAuthorization({ data: { authorizationCode } });
+            if (!stored?.ok) {
+              console.error("[apple-auth] exchange failed status=0 error=not_stored client=ca.kidease.app");
+            }
+          } catch {
+            console.error("[apple-auth] exchange failed status=0 error=client_call client=ca.kidease.app");
+          }
+        }
         if (data?.url) window.location.href = data.url;
         return;
       }

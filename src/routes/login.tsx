@@ -153,6 +153,7 @@ export function LoginScreen({
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [smsConsent, setSmsConsent] = useState(false);
+  const [adult, setAdult] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
@@ -324,6 +325,9 @@ export function LoginScreen({
         await dropExistingSession();
       }
       if (mode === "up") {
+        if (!operator && !adult) {
+          throw new Error(locale === "fr" ? "Confirmez que vous avez 18 ans ou plus." : "Confirm you are 18 or older.");
+        }
         const hygiene = localPasswordIssue(password, email);
         if (hygiene) throw new Error(hygiene);
         if (parentSignup) {
@@ -378,6 +382,10 @@ export function LoginScreen({
   }
 
   async function onSocial(providerId: string) {
+    if (mode === "up" && !operator && !adult) {
+      setError(locale === "fr" ? "Confirmez que vous avez 18 ans ou plus." : "Confirm you are 18 or older.");
+      return;
+    }
     setBusy(true);
     setStalled(false);
     setError(null);
@@ -501,11 +509,28 @@ export function LoginScreen({
               autoComplete={mode === "up" ? "new-password" : "current-password"}
             />
             {mode === "up" && !operator ? <PasswordRules password={password} /> : null}
+            {mode === "up" && !operator ? (
+              <label className="flex min-h-11 items-start gap-3 text-sm" htmlFor="signup-adult">
+                <input
+                  id="signup-adult"
+                  type="checkbox"
+                  className="mt-1 size-5"
+                  checked={adult}
+                  onChange={(event) => setAdult(event.target.checked)}
+                  required
+                />
+                <span>
+                  {locale === "fr"
+                    ? "J’ai 18 ans ou plus. KidEase est pour les parents et les garderies."
+                    : "I am 18 or older. KidEase is for parents and daycares."}
+                </span>
+              </label>
+            ) : null}
             {parentSignup ? (
               <ParentSmsFields phone={phone} onPhone={setPhone} consent={smsConsent} onConsent={setSmsConsent} />
             ) : null}
             <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
-            {error ? <p className="text-sm text-danger" data-ke="auth-error">{presentAuthCopy(locale, error)}</p> : null}
+            {error ? <p className="text-sm text-danger" role="alert" data-ke="auth-error">{presentAuthCopy(locale, error)}</p> : null}
             {stalled || error ? (
               <div className="flex flex-wrap gap-3 text-sm" data-ke="login-recovery">
                 <button

@@ -5,8 +5,10 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { appleClientSecretFrom, readAppleIdpConfig } from "../src/lib/auth/apple-idp.ts";
+import { NATIVE_APPLE_SCOPE, persistNativeAppleTokens } from "../src/lib/auth/apple-native-store.ts";
 import { appleNativeIdToken, appleNoncePair, appleSignInRoute, sha256Hex } from "../src/lib/auth/apple-native.ts";
 import { APPLE_REVOKE_URL, appleRevokeForm, revokeAppleSignInTokens } from "../src/lib/auth/apple-revoke.ts";
+import { APPLE_TOKEN_URL, exchangeAppleAuthorizationCode, NATIVE_APPLE_CLIENT_ID } from "../src/lib/auth/apple-token.ts";
 import { visibleSignInProviders } from "../src/lib/auth/providers.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -122,8 +124,123 @@ test("revoke posts refresh then access tokens and skips when Apple is not config
   }), /client_id=ca\.kidease\.web/);
 });
 
+function testKey() {
+  const { privateKey } = generateKeyPairSync("ec", { namedCurve: "prime256v1" });
+  return privateKey.export({ type: "pkcs8", format: "pem" }).toString();
+}
+
+test("native client secret subject is the bundle id", () => {
+  const token = appleClientSecretFrom(
+    {
+      clientId: "ca.kidease.web",
+      teamId: "TEAMID1234",
+      keyId: "KEYID12345",
+      privateKey: testKey(),
+      bundleId: NATIVE_APPLE_CLIENT_ID,
+    },
+    1_700_000_000,
+    NATIVE_APPLE_CLIENT_ID,
+  );
+  const body = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString());
+  assert.equal(body.sub, "ca.kidease.app");
+});
+
+test("native code exchange uses the bundle id and logs failures without the code", async () => {
+  const logs = [];
+  const original = console.error;
+  console.error = (...args) => {
+    logs.push(args.map(String).join(" "));
+  };
+  const code = "SUPER_SECRET_AUTH_CODE";
+  try {
+    const result = await exchangeAppleAuthorizationCode({
+      clientId: NATIVE_APPLE_CLIENT_ID,
+      clientSecret: "jwt",
+      code,
+      fetchImpl: async (url, init) => {
+        assert.equal(url, APPLE_TOKEN_URL);
+        assert.match(String(init?.body), /client_id=ca\.kidease\.app/);
+        assert.match(String(init?.body), /grant_type=authorization_code/);
+        assert.doesNotMatch(String(init?.body), /redirect_uri/);
+        return { ok: false, status: 400, json: async () => ({ error: "invalid_grant" }) };
+      },
+    });
+    assert.equal(result.ok, false);
+    assert.equal(result.error, "invalid_grant");
+    const text = logs.join("\n");
+    assert.match(text, /exchange failed status=400 error=invalid_grant client=ca\.kidease\.app/);
+    assert.doesNotMatch(text, new RegExp(code));
+  } finally {
+    console.error = original;
+  }
+});
+
+test("native refresh token is stored and revoke failures do not log the token", async () => {
+  const pem = testKey();
+  const previous = {
+    APPLE_CLIENT_ID: process.env.APPLE_CLIENT_ID,
+    APPLE_TEAM_ID: process.env.APPLE_TEAM_ID,
+    APPLE_KEY_ID: process.env.APPLE_KEY_ID,
+    APPLE_PRIVATE_KEY: process.env.APPLE_PRIVATE_KEY,
+    APPLE_BUNDLE_ID: process.env.APPLE_BUNDLE_ID,
+  };
+  process.env.APPLE_CLIENT_ID = "ca.kidease.web";
+  process.env.APPLE_TEAM_ID = "TEAMID1234";
+  process.env.APPLE_KEY_ID = "KEYID12345";
+  process.env.APPLE_PRIVATE_KEY = pem;
+  delete process.env.APPLE_BUNDLE_ID;
+  const refresh = "refresh-secret-value";
+  const stored = [];
+  const logs = [];
+  const original = console.error;
+  console.error = (...args) => {
+    logs.push(args.map(String).join(" "));
+  };
+  try {
+    const saved = await persistNativeAppleTokens({
+      userId: "user-1",
+      authorizationCode: "auth-code-secret",
+      encrypt: async (value) => `enc:${value}`,
+      fetchImpl: async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({ refresh_token: refresh, access_token: "access-secret-value" }),
+      }),
+      sql: async (_strings, ...values) => {
+        stored.push(values);
+        return [{ id: "acct" }];
+      },
+    });
+    assert.equal(saved.ok, true);
+    assert.equal(stored[0][0], `enc:${refresh}`);
+    assert.equal(stored[0][2], NATIVE_APPLE_SCOPE);
+    assert.doesNotMatch(logs.join("\n"), new RegExp(refresh));
+
+    const failed = await revokeAppleSignInTokens({
+      clientId: NATIVE_APPLE_CLIENT_ID,
+      clientSecret: "jwt",
+      refreshToken: refresh,
+      fetchImpl: async () => ({ ok: false, status: 400, json: async () => ({ error: "invalid_client" }) }),
+    });
+    assert.equal(failed.ok, 0);
+    const text = logs.join("\n");
+    assert.match(text, /revoke failed status=400 error=invalid_client client=ca\.kidease\.app/);
+    assert.doesNotMatch(text, new RegExp(refresh));
+  } finally {
+    console.error = original;
+    for (const [key, value] of Object.entries(previous)) {
+      if (value == null) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+});
+
 test("native plugin, entitlement, and delete-account revoke are wired", () => {
   assert.match(src("ios/App/App/App.entitlements"), /com\.apple\.developer\.applesignin/);
+  assert.doesNotMatch(src("ios/App/App/App.entitlements"), /aps-environment/);
+  assert.match(src("src/lib/auth/client.ts"), /storeNativeAppleAuthorization/);
+  assert.match(src("src/lib/server/apple-account-revoke.ts"), /bundleId/);
+  assert.match(src("src/lib/auth/apple-native-store.ts"), /NATIVE_APPLE_SCOPE/);
   assert.match(src("ios/App/App/AppleSignInPlugin.swift"), /request\.nonce/);
   assert.match(src("ios/App/App/KidEaseBridgeViewController.swift"), /registerPluginInstance/);
   assert.match(src("src/lib/auth/client.ts"), /authorizeNativeApple/);

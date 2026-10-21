@@ -70,7 +70,9 @@ test("native telemetry waits for Allow; the website Sentry path does not", () =>
   assert.equal(shouldStartTelemetry("sentry", { native: true, consent: "unset" }), false);
   assert.equal(shouldStartTelemetry("posthog", { native: true, consent: "denied" }), false);
   assert.equal(shouldStartTelemetry("web-vitals", { native: true, consent: "granted" }), true);
-  assert.equal(shouldStartTelemetry("sentry", { native: false, consent: "unset" }), true);
+  assert.equal(shouldStartTelemetry("sentry", { native: false, consent: "unset" }), false);
+  assert.equal(shouldStartTelemetry("sentry", { native: false, consent: "granted" }), true);
+  assert.equal(shouldStartTelemetry("web-vitals", { native: false, consent: "unset" }), true);
   assert.equal(shouldStartTelemetry("posthog", { native: false, consent: "unset" }), false);
   assert.match(src("src/lib/sentry.client.ts"), /shouldStartTelemetry\("sentry"/);
   assert.match(src("src/lib/web-vitals.ts"), /shouldStartWebVitals/);
@@ -89,6 +91,7 @@ test("health phrases are scrubbed from Sentry text and PostHog values", () => {
 });
 
 test("store listing is 18+ and does not promise in-app checkout", () => {
+  assert.equal(STORE.secondaryCategory, "Productivity");
   assert.equal(STORE.ageRating, "18+");
   assert.equal(STORE.ageRatingAnswers.madeForKids, false);
   assert.doesNotMatch(STORE.description, /Apple Pay|in-app/i);

@@ -8,7 +8,7 @@ export const STORE = {
   version: "1.0.0",
   build: "1",
   category: "Lifestyle",
-  secondaryCategory: "Education",
+  secondaryCategory: "Productivity",
   playCategory: "PARENTING",
   ageRating: "18+",
   price: "Free",
@@ -46,12 +46,12 @@ What you can do
 • Switch map and list views
 • Filter by infant, toddler, or preschool age groups
 • Save centres and send a tour request
-• Use the tab bar: Search, Saved, Messages, Account
+• Use the bottom navigation: Search, Saved, Messages, Account
 
 Adults only
 KidEase is for parents and daycare providers. Accounts are 18+. It is not in the Kids category.
 
-Nothing is sold inside the app. A plan bought on kidease.ca still unlocks after you sign in. Push alerts are off until you turn them on.
+Nothing is sold inside the app. A plan bought on kidease.ca still unlocks after you sign in.
 
 Privacy policy, terms, and account deletion are in the app.`,
   descriptionFr: `KidEase aide les parents et les garderies du Canada à trouver une garde permise dans un rayon en kilomètres.

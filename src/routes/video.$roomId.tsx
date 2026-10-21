@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import { VideoRoomPanel } from "@/components/video-room-panel";
 import { PayCtas } from "@/components/pay-chrome";
 import {
@@ -28,6 +29,7 @@ function VideoRoomPage() {
   const { roomId } = Route.useParams();
   const { user, isPending } = useCurrentUserState();
   const { t } = useCopy();
+  const nativeShell = useInNativeShell();
   const [status, setStatus] = useState<VideoJoinStatus | null>(null);
   const [statusFailed, setStatusFailed] = useState(false);
   const [joined, setJoined] = useState<Extract<VideoJoinResult, { ok: true }> | null>(null);
@@ -144,7 +146,7 @@ function VideoRoomPage() {
           </div>
         ) : null}
 
-        {canMint && !joined ? (
+        {nativeShell ? null : canMint && !joined ? (
           <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border">
             <p className="text-sm text-muted">{t("videoJoinHint")}</p>
             <Button className="mt-4" disabled={busy} onClick={() => void onJoin()}>
@@ -153,7 +155,9 @@ function VideoRoomPage() {
           </div>
         ) : null}
 
-        {joined ? (
+        {nativeShell ? (
+          <p className="mt-6 text-sm text-muted" data-ke="native-video-off">{t("comingSoon")}</p>
+        ) : joined ? (
           <VideoRoomPanel token={joined.token} roomName={joined.roomName} onLeft={() => setJoined(null)} />
         ) : null}
 

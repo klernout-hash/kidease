@@ -16,7 +16,7 @@ App name: **KidEase**
 - `native-www/` — tiny fallback shell (production builds use the remote URL).
 - `resources/` — icon + splash generated from the existing pin pipeline (`public/logo-transparent.png`).
 - `ios/` and `android/` — Capacitor 8 native projects, permission strings, and icons. Regenerable (see below).
-- `ios/App/App/App.entitlements` — Associated Domains, Sign in with Apple, and `aps-environment` = `production`. A debug device push test may need `development` until you archive. Archive with Xcode 26 and the iOS 26 SDK. This repo cannot archive on Linux. Deployment target stays iOS 15.0.
+- `ios/App/App/App.entitlements` — Associated Domains and Sign in with Apple. Push is not in v1, so `aps-environment` is not set. Archive with Xcode 26 and the iOS 26 SDK. This repo cannot archive on Linux. Deployment target stays iOS 15.0.
 - `AndroidManifest.xml` — App Links `autoVerify` for those hosts plus `KidEase://` / `ca.kidease.app://`.
 - Location is **while-using only**. No background location permission, no `UIBackgroundModes: location`.
 

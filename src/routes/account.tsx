@@ -293,7 +293,9 @@ function ProfilePane() {
 
   const hideParentPlan = !chrome.pending && chrome.role === "parent" && !chrome.subscriptionsEnabled;
   const section =
-    (hideParentPlan || nativeShell) && search.section === "subscription" ? "profile" : (search.section ?? "profile");
+    nativeShell && (search.section === "subscription" || search.section === "alerts")
+      ? "profile"
+      : (hideParentPlan && search.section === "subscription" ? "profile" : (search.section ?? "profile"));
   const sectionSearch = (next: "profile" | "alerts" | "appearance" | "subscription" | "delete") => ({
     tab: "profile" as const,
     ...(search.desk ? { desk: search.desk } : {}),
@@ -305,7 +307,11 @@ function ProfilePane() {
     { id: "appearance" as const, label: t("appearance") },
     { id: "subscription" as const, label: t("navUpgrade") },
     { id: "delete" as const, label: t("deleteAccount") },
-  ].filter((item) => item.id !== "subscription" || (!hideParentPlan && !nativeShell));
+  ].filter((item) => {
+    if (nativeShell && (item.id === "alerts" || item.id === "subscription")) return false;
+    if (item.id === "subscription" && hideParentPlan) return false;
+    return true;
+  });
 
   return (
     <AccountDeskFrame desk={desk}>
@@ -353,7 +359,7 @@ function ProfilePane() {
             </Link>
           ))}
         </nav>
-        {section === "alerts" && user ? (
+        {section === "alerts" && user && !nativeShell ? (
           <AlertPushSettings
             audience={desk === "provider" ? "daycare" : "parent"}
             subscriptionsOn={chrome.subscriptionsEnabled === true}

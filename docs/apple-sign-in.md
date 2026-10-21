@@ -8,7 +8,7 @@ Enrolment id `B7UM5AC9JQ` is **not** the Team ID. After Apple approves the enrol
 
 1. **App ID** `ca.kidease.app`
    - Capability: **Sign in with Apple**
-   - Also enable **Push Notifications** when you create the APNs key (separate from this Sign in with Apple key). See `docs/push.md`.
+   - Push is not in this version. Do not enable Push Notifications for the v1 upload.
 2. **Services ID** (example: `ca.kidease.web`)
    - Enable **Sign in with Apple**
    - Primary app: the App ID `ca.kidease.app`
@@ -39,9 +39,9 @@ The same `APPLE_TEAM_ID` fills the Apple App Site Association (`docs/STORE-LAUNC
 ## What the app does
 
 - **Website:** Better Auth social provider `apple`. Redirect return URL `https://www.kidease.ca/api/auth/callback/apple`. Client secret is an ES256 JWT (180 days) built from the `.p8` at process start.
-- **iPhone app:** `AppleSignInPlugin.swift` presents the system sheet. The hashed nonce goes to Apple. The raw nonce goes to `signIn.social` with the identity token. Android and the website keep the web redirect.
-- **Entitlement:** `ios/App/App/App.entitlements` includes `com.apple.developer.applesignin` = `Default`, and `aps-environment` = `production` for App Store push. A debug device build of push may need `development` until you archive.
-- **Account deletion:** `revokeStoredAppleSignIn` POSTs to `https://appleid.apple.com/auth/revoke` before the account is closed. If Apple is not configured, or revoke fails, deletion still finishes. Tokens are not logged.
+- **iPhone app:** `AppleSignInPlugin.swift` presents the system sheet. The hashed nonce goes to Apple. The raw nonce goes to `signIn.social` with the identity token. The authorization code is exchanged for a refresh token (`grant_type=authorization_code`, no `redirect_uri`) and stored on the Apple account row. `client_id` and the client-secret `sub` for that exchange are the bundle id `ca.kidease.app`, not the Services ID. Android and the website keep the web redirect.
+- **Entitlement:** `ios/App/App/App.entitlements` includes `com.apple.developer.applesignin` = `Default`. Push is not in v1, so `aps-environment` is not set.
+- **Account deletion:** `revokeStoredAppleSignIn` POSTs to `https://appleid.apple.com/auth/revoke` before the account is closed. Native tokens use `client_id` `ca.kidease.app`. Web tokens use the Services ID. If Apple is not configured, or revoke fails, deletion still finishes. Failures log the HTTP status and Apple's error code. Tokens are not logged.
 - **Button:** `getSignInProviders` lists Apple only when `APPLE_CLIENT_ID`, `APPLE_TEAM_ID`, `APPLE_KEY_ID`, and `APPLE_PRIVATE_KEY` are all set.
 
 ## Xcode

@@ -242,7 +242,7 @@ export type TelemetryKind = "posthog" | "sentry" | "web-vitals";
 
 /**
  * Native shell: PostHog, Sentry, and web vitals wait for Allow.
- * Website: PostHog waits for Allow. Sentry and web vitals stay as they are today.
+ * Website: PostHog and Sentry wait for Allow. Web vitals stay as they are today.
  */
 export function shouldStartTelemetry(
   kind: TelemetryKind,
@@ -257,6 +257,6 @@ export function shouldStartTelemetry(
           (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.(),
         )));
   if (native) return consent === "granted";
-  if (kind === "posthog") return consent === "granted";
+  if (kind === "posthog" || kind === "sentry") return consent === "granted";
   return true;
 }
