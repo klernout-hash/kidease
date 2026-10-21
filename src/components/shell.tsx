@@ -32,6 +32,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { readLiveSearchFlag } from "@/lib/explore-search";
 import { rememberResumePath } from "@/lib/retention";
 import { ApplyPendingShortlist } from "@/components/apply-pending-shortlist";
+import { KeyboardInset } from "@/components/keyboard-inset";
 
 export function Shell({ children }: { children: ReactNode }) {
   const { t, locale } = useCopy();
@@ -95,7 +96,8 @@ export function Shell({ children }: { children: ReactNode }) {
 
   if (verifyLite) {
     return (
-      <div className="min-h-dvh bg-bg text-fg">
+      <div className="min-h-dvh bg-bg pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] text-fg">
+        <KeyboardInset />
         <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
           <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
             <Link to={homeTo} className="shrink-0" aria-label="KidEase">
@@ -103,14 +105,17 @@ export function Shell({ children }: { children: ReactNode }) {
             </Link>
           </div>
         </header>
-        {children}
+        <div className="ke-page" data-ke="page">
+          {children}
+        </div>
       </div>
     );
   }
 
   if (menuLite) {
     return (
-      <div className="min-h-dvh bg-bg text-fg">
+      <div className="min-h-dvh bg-bg pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] text-fg">
+        <KeyboardInset />
         <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
           <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
             <Link to={homeTo} className="shrink-0" aria-label="KidEase">
@@ -118,14 +123,19 @@ export function Shell({ children }: { children: ReactNode }) {
             </Link>
           </div>
         </header>
-        <div className="[[data-channel=app]_&]:pb-[calc(6rem+env(safe-area-inset-bottom))]">{children}</div>
+        <div className="[[data-channel=app]_&]:pb-[calc(6rem+env(safe-area-inset-bottom))]">
+          <div className="ke-page" data-ke="page">
+            {children}
+          </div>
+        </div>
         <AppTabBar />
       </div>
     );
   }
 
   return (
-    <div className="min-h-dvh bg-bg text-fg">
+    <div className="min-h-dvh bg-bg pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] text-fg">
+      <KeyboardInset />
       <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
         <div className="ke-gutter relative mx-auto max-w-6xl">
           <div className="flex h-14 items-center gap-3 md:h-16">
@@ -277,8 +287,10 @@ export function Shell({ children }: { children: ReactNode }) {
       />
       <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(6rem+env(safe-area-inset-bottom))]"}>
         <ApplyPendingShortlist />
-        {children}
-        {hideFooter ? null : <SiteFooter />}
+        <div className="ke-page" data-ke="page">
+          {children}
+          {hideFooter ? null : <SiteFooter />}
+        </div>
       </div>
       {hideTabs ? null : <AppTabBar />}
       {hideTabs || pathname.startsWith("/search") || pathname.startsWith("/parent") || pathname.startsWith("/menu") ? null : <LiveChatSlot />}

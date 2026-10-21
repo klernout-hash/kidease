@@ -185,7 +185,8 @@ test("centre inbox ships three-pane, empty truth, and ops composer — not CMS",
   const rail = src("src/components/inbox-detail-rail.tsx");
   const copy = src("src/lib/copy.ts");
   assert.match(desk, /data-ke="centre-inbox"/);
-  assert.match(desk, /lg:grid-cols/);
+  assert.match(desk, /md:grid-cols/);
+  assert.match(desk, /xl:grid-cols/);
   assert.match(desk, /No parent threads need you|inboxEmptyNeedYou/);
   assert.match(desk, /inboxAttachSoon|Attachments aren't available/);
   assert.match(rail, /Staff only|inboxStaffOnly/);

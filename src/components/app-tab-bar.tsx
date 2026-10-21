@@ -49,11 +49,11 @@ export function AppTabBar() {
     <nav
       data-ke="app-tab-bar"
       data-bar={storeTabs ? "store" : kind}
-      className="ke-app-only fixed inset-x-0 bottom-0 z-50 hidden border-t border-border bg-surface [[data-channel=app]_&]:block"
+      className="ke-app-only fixed inset-x-0 bottom-0 z-50 hidden border-t border-border bg-surface pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] [[data-channel=app]_&]:block"
     >
       <div
         className={cn(
-          "mx-auto grid max-w-lg px-0.5 pb-[env(safe-area-inset-bottom)] pt-1",
+          "mx-auto grid max-w-lg px-0.5 pb-[env(safe-area-inset-bottom)] pt-1 md:max-w-3xl",
           storeTabs || kind === "guest" ? "grid-cols-4" : "grid-cols-5",
         )}
       >

@@ -3,6 +3,7 @@ import type { Call, Device } from "@twilio/voice-sdk";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
 import { mintThreadVoiceToken } from "@/lib/server/voice-call";
+import { primeCallMedia } from "@/lib/call-permissions";
 
 /**
  * Browser call through Twilio. The access token stays in memory.
@@ -94,9 +95,20 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
     });
   }
 
+  async function allowMic() {
+    const media = await primeCallMedia("audio");
+    if (media === "denied") {
+      setPhase("error");
+      setNote(t("mediaPermissionDenied"));
+      return false;
+    }
+    return true;
+  }
+
   async function start() {
     const device = deviceRef.current;
     if (!device) return;
+    if (!(await allowMic())) return;
     setNote(t("voiceWaiting"));
     setPhase("ringing");
     try {
@@ -108,9 +120,10 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
     }
   }
 
-  function answer() {
+  async function answer() {
     const call = callRef.current;
     if (!call) return;
+    if (!(await allowMic())) return;
     call.accept();
     setPhase("connected");
     setNote(t("voiceConnected"));
@@ -140,9 +153,10 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
       <p className="text-sm text-muted" aria-live="polite">
         {busy ? t("loading") : note || t("voiceWaitingHint")}
       </p>
+      <p className="mt-2 text-xs text-subtle" data-ke="media-permission-note">{t("mediaPermissionNote")}</p>
       <div className="mt-4 flex flex-wrap gap-2">
         {incoming ? (
-          <Button type="button" className="min-w-11" onClick={answer}>
+          <Button type="button" className="min-w-11" onClick={() => void answer()}>
             {t("voiceAnswer")}
           </Button>
         ) : live ? (

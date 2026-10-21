@@ -1834,6 +1834,122 @@ select.ke-lang-select.ke-header-chrome {
   font-size: 11px;
 }
 
+/* iPad and other wide windows: a column, not edge to edge.
+   Root font size is 14px, so these caps are in px. */
+.ke-page {
+  width: 100%;
+  margin-inline: auto;
+}
+@media (min-width: 768px) {
+  .ke-page {
+    max-width: 720px;
+  }
+}
+@media (min-width: 1024px) {
+  .ke-page {
+    max-width: 880px;
+  }
+}
+@media (min-width: 1200px) {
+  .ke-page {
+    max-width: 1040px;
+  }
+}
+
+/* List plus detail from the 11" portrait width up. Slide Over and a
+   narrow Split View stay one column. */
+.ke-split {
+  display: block;
+}
+.ke-split-list,
+.ke-split-detail {
+  min-width: 0;
+}
+@media (min-width: 768px) {
+  .ke-split {
+    display: grid;
+    grid-template-columns: minmax(15rem, 22rem) minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+  }
+}
+@media (max-width: 767px) {
+  .ke-split[data-selected="true"] > .ke-split-list {
+    display: none;
+  }
+  .ke-split[data-selected="false"] > .ke-split-detail {
+    display: none;
+  }
+}
+
+/* Home and search photo rails become a card grid on a tablet. */
+@media (min-width: 768px) {
+  .ke-rail--visual {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    overflow: visible;
+    scroll-snap-type: none;
+  }
+  .ke-rail--visual .ke-rail-card {
+    flex: none;
+    width: auto;
+    max-width: none;
+    min-width: 0;
+    contain-intrinsic-size: auto;
+  }
+  .ke-listing-rail:has(.ke-rail--visual) .ke-listing-rail-arrows {
+    display: none;
+  }
+  html[data-channel="app"] .ke-listings-narrow {
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  }
+}
+
+/* Search map sheet: a side panel on iPad, not a short phone sheet. */
+@media (min-width: 768px) {
+  .ke-sheet {
+    top: 0.75rem;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    left: auto;
+    width: min(28rem, 46%);
+    height: auto;
+    max-height: none;
+    border-radius: 1rem;
+  }
+  .ke-sheet[data-snap="peek"],
+  .ke-sheet[data-snap="mid"],
+  .ke-sheet[data-snap="full"] {
+    height: auto;
+  }
+}
+
+/* Calls and video use the wide column instead of a phone stack. */
+@media (min-width: 768px) {
+  .ke-call-stage,
+  .ke-video-room {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
+    gap: 1.25rem;
+    align-items: start;
+  }
+  .ke-video-stage {
+    min-height: 28rem;
+  }
+}
+
+.ke-apple-button {
+  width: 100%;
+  max-width: 375px;
+  min-height: 44px;
+  margin-inline: auto;
+}
+
+html {
+  scroll-padding-top: calc(4.5rem + env(safe-area-inset-top, 0px));
+  scroll-padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px) + var(--ke-keyboard, 0px));
+}
+
 /* Cookie bar must not eat Request info clicks outside the consent card. */
 html[data-cookie-banner="open"] body {
   padding-bottom: 7.5rem;

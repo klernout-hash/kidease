@@ -407,20 +407,20 @@ export function CentreInboxDesk({
     >
       <div
         data-ke="centre-inbox"
-        className="grid min-h-[70dvh] overflow-hidden rounded-xl bg-surface ring-1 ring-border lg:grid-cols-[minmax(18rem,24rem)_minmax(0,1fr)_minmax(16rem,20rem)]"
+        className="grid min-h-[70dvh] overflow-hidden rounded-xl bg-surface ring-1 ring-border md:grid-cols-[minmax(15rem,20rem)_minmax(0,1fr)] xl:grid-cols-[minmax(16rem,22rem)_minmax(0,1fr)_minmax(15rem,18rem)]"
       >
-        <div className={cn(selectedId ? "hidden lg:flex lg:flex-col" : "flex flex-col")}>{listPane}</div>
-        <div className={cn(!selectedId ? "hidden lg:flex lg:flex-col" : "flex flex-col")}>{threadPane}</div>
-        <div className="hidden border-l border-border lg:block">{detailPane()}</div>
+        <div className={cn(selectedId ? "hidden md:flex md:flex-col" : "flex flex-col")}>{listPane}</div>
+        <div className={cn(!selectedId ? "hidden md:flex md:flex-col" : "flex flex-col")}>{threadPane}</div>
+        <div className="hidden border-l border-border xl:block">{detailPane()}</div>
       </div>
       {detailOpen && selected ? (
-        <div className="fixed inset-0 z-50 flex items-end justify-center lg:hidden" role="presentation">
+        <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center xl:hidden" role="presentation">
           <button type="button" className="absolute inset-0 bg-fg/40" aria-label={t("inboxDetailClose")} onClick={() => setDetailOpen(false)} />
           <div
             role="dialog"
             aria-modal="true"
             aria-label={t("inboxDetail")}
-            className="relative z-10 flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-xl bg-surface shadow-card ring-1 ring-border"
+            className="relative z-10 flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-xl bg-surface shadow-card ring-1 ring-border md:max-h-[min(40rem,85dvh)] md:max-w-lg md:rounded-xl"
           >
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <p className="font-medium">{t("inboxDetail")}</p>

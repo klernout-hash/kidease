@@ -121,6 +121,8 @@ export function ParentDesk({
   const [upgradeDismissed, setUpgradeDismissed] = useState(false);
   const [homeSettled, setHomeSettled] = useState(false);
   const [editing, setEditing] = useState<Child | null | "new">(null);
+  const [childFocus, setChildFocus] = useState<string | null>(null);
+  const [childOpen, setChildOpen] = useState(false);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [picked, setPicked] = useState<Record<string, string[]>>({});
   const [savedReady, setSavedReady] = useState(false);
@@ -353,6 +355,7 @@ export function ParentDesk({
     if (desks.home === "/support") return <Navigate to="/support" />;
   }
   const showParentPlus = Boolean(desksReady && canBuyParentUpgrade(upgradeBuyer));
+  const activeChild = children.find((c) => c.id === childFocus) ?? children[0] ?? null;
 
   return (
     <DeskShell desk="parent" active={tab === "subscription" ? "upgrade" : tab} onSelect={selectTab}>
@@ -659,11 +662,40 @@ export function ParentDesk({
         <div className="mt-6 space-y-4">
           <div>
             <h2 className="font-display text-2xl">{t("childProfileTitle")}</h2>
-            <p className="mt-1 text-sm text-muted">
-              Save the child profile, then send it to saved centres. Each centre sees it in Incoming requests and can approve, wait, or decline.
-            </p>
+            <p className="mt-1 text-sm text-muted">{t("childProfileLead")}</p>
           </div>
-          {editing ? (
+          {children.length === 0 && !editing ? (
+            <EmptyState title={t("noChildren")} body={t("noChildrenLead")} action={t("emptyAddChild")} onAction={() => { setEditing("new"); setChildOpen(true); }} />
+          ) : (
+          <div className="ke-split" data-ke="children-split" data-selected={childOpen || editing ? "true" : "false"}>
+            <div className="ke-split-list min-w-0">
+              <ul className="divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
+                {children.map((c) => (
+                  <li key={c.id}>
+                    <button
+                      type="button"
+                      aria-pressed={activeChild?.id === c.id}
+                      className="flex min-h-11 w-full items-center px-4 text-left font-medium touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                      onClick={() => {
+                        setChildFocus(c.id);
+                        setChildOpen(true);
+                        setEditing(null);
+                      }}
+                    >
+                      {c.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <Button className="mt-3" onClick={() => { setEditing("new"); setChildOpen(true); }}>
+                {children.length ? t("newChild") : t("addChild")}
+              </Button>
+            </div>
+            <div className="ke-split-detail min-w-0" data-ke="children-detail">
+              <Button variant="ghost" className="mb-3 md:hidden" onClick={() => { setChildOpen(false); setEditing(null); }}>
+                {t("back")}
+              </Button>
+              {editing ? (
             <div className="rounded-xl bg-surface p-4 ring-1 ring-border">
               <Suspense fallback={<div className="ke-skel h-48 rounded-xl" aria-hidden="true" />}>
                 <ChildProfileForm
@@ -676,15 +708,10 @@ export function ParentDesk({
                 />
               </Suspense>
             </div>
-          ) : (
+              ) : (
             <>
               <ul className="divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
-                {children.length === 0 ? (
-                  <li className="p-2">
-                    <EmptyState title={t("noChildren")} body={t("noChildrenLead")} action={t("emptyAddChild")} onAction={() => setEditing("new")} />
-                  </li>
-                ) : (
-                  children.map((c) => {
+                  {(activeChild ? [activeChild] : []).map((c) => {
                     const selected = picked[c.id] ?? [];
                     return (
                     <li key={c.id} className="ph-no-capture p-4">
@@ -795,11 +822,12 @@ export function ParentDesk({
                       </div>
                     </li>
                     );
-                  })
-                )}
+                  })}
               </ul>
-              <Button onClick={() => setEditing("new")}>{children.length ? t("newChild") : t("addChild")}</Button>
             </>
+              )}
+            </div>
+          </div>
           )}
         </div>
       ) : null}
