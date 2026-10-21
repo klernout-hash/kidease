@@ -9,11 +9,17 @@
     var w = window.innerWidth || 0;
     var r = document.documentElement;
     var store = "web";
-    if (ua.indexOf("KidEaseStoreHuawei") !== -1) store = "huawei";
-    else if (ua.indexOf("KidEaseStoreSamsung") !== -1) store = "samsung";
-    else if (uaNative) store = /iPhone|iPad|iPod/i.test(ua) ? "apple" : "google";
+    var ios = /iPhone|iPad|iPod/i.test(ua);
+    var samsungBuild = !ios && ua.indexOf("KidEaseStoreSamsung") !== -1;
+    if (ios && uaNative) store = "apple";
+    else if (!ios && ua.indexOf("KidEaseStoreHuawei") !== -1) store = "huawei";
+    else if (samsungBuild) store = "samsung";
+    else if (uaNative) store = "google";
     else if (ua.indexOf("KidEaseStoreMicrosoft") !== -1 || q.get("store") === "microsoft" || /(?:^|;\s*)ke_store=microsoft(?:;|$)/.test(document.cookie || "")) store = "microsoft";
-    if (uaNative && /(?:^|;\s*)ke_store=microsoft(?:;|$)/.test(document.cookie || "")) {
+    var cookie = document.cookie || "";
+    var dropMicrosoft = uaNative && /(?:^|;\s*)ke_store=microsoft(?:;|$)/.test(cookie);
+    var dropSamsung = /(?:^|;\s*)ke_store=samsung(?:;|$)/.test(cookie) && !samsungBuild;
+    if (dropMicrosoft || dropSamsung) {
       document.cookie = "ke_store=; Path=/; Max-Age=0; SameSite=Lax";
     } else if (q.get("store") === "microsoft" && !uaNative) {
       var secure = location.protocol === "https:" ? "; Secure" : "";

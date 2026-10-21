@@ -9,6 +9,8 @@ import {
   googleServicesHidden,
   shellBlocksCommerce,
   storeChannelFromSignals,
+  userAgentForStoreBuild,
+  withoutSamsungStoreQuery,
 } from "../src/lib/native-entitlements.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -114,6 +116,92 @@ test("PWA manifest for Partner Center stays installable and does not retag the w
   assert.match(src("public/channel-boot.js"), /ke_store=microsoft/);
   assert.match(src("public/channel-boot.js"), /q\.get\("store"\) === "microsoft" && !uaNative/);
   assert.match(src("public/channel-boot.js"), /Max-Age=0/);
+});
+
+test("iOS and Play never send or set the Samsung store token", () => {
+  assert.equal(
+    storeChannelFromSignals({
+      userAgent: "iPhone OS 18_0 KidEaseNative KidEaseStoreSamsung",
+      search: "?store=samsung",
+      cookie: "ke_store=samsung",
+    }),
+    "apple",
+  );
+  assert.equal(
+    storeChannelFromSignals({
+      userAgent: "Android KidEaseNative",
+      search: "?store=samsung",
+      cookie: "ke_store=samsung",
+    }),
+    "google",
+  );
+  assert.equal(
+    shellBlocksCommerce(
+      storeChannelFromSignals({
+        userAgent: "Android KidEaseNative",
+        search: "?store=samsung",
+        cookie: "ke_store=samsung",
+      }),
+    ),
+    true,
+  );
+  assert.equal(
+    storeChannelFromSignals({
+      userAgent: "Android KidEaseNative KidEaseStoreSamsung",
+      search: "?store=samsung",
+      cookie: "ke_store=samsung",
+    }),
+    "samsung",
+  );
+  assert.equal(userAgentForStoreBuild("play", "KidEaseNative", ""), "KidEaseNative");
+  assert.equal(
+    userAgentForStoreBuild("play", "KidEaseNative KidEaseStoreSamsung", "KidEaseStoreSamsung"),
+    "KidEaseNative",
+  );
+  assert.equal(userAgentForStoreBuild("ios", "KidEaseNative KidEaseStoreSamsung", "KidEaseStoreSamsung"), "KidEaseNative");
+  assert.equal(
+    userAgentForStoreBuild("samsung", "KidEaseNative", "KidEaseStoreSamsung"),
+    "KidEaseNative KidEaseStoreSamsung",
+  );
+  assert.equal(
+    userAgentForStoreBuild("huawei", "KidEaseNative KidEaseStoreSamsung", "KidEaseStoreHuawei"),
+    "KidEaseNative KidEaseStoreHuawei",
+  );
+  assert.equal(withoutSamsungStoreQuery("https://www.kidease.ca/?store=samsung"), "https://www.kidease.ca/");
+  assert.equal(withoutSamsungStoreQuery("https://www.kidease.ca/?store=microsoft"), "https://www.kidease.ca/?store=microsoft");
+
+  const gradle = src("android/app/build.gradle");
+  const play = gradle.slice(gradle.indexOf("play {"), gradle.indexOf("samsung {"));
+  const samsung = gradle.slice(gradle.indexOf("samsung {"), gradle.indexOf("huawei {"));
+  assert.match(play, /STORE_UA_TOKEN", "\\"/);
+  assert.doesNotMatch(play, /KidEaseStore/);
+  assert.match(samsung, /KidEaseStoreSamsung/);
+  assert.equal((gradle.match(/KidEaseStoreSamsung/g) || []).length, 1);
+
+  const activity = src("android/app/src/main/java/ca/kidease/app/MainActivity.java");
+  assert.match(activity, /userAgentForStoreBuild/);
+  assert.match(activity, /"samsung"\.equals\(flavor\) && "KidEaseStoreSamsung"\.equals\(configured\)/);
+  assert.match(activity, /!"samsung"\.equals\(flavor\)/);
+  assert.match(activity, /withoutSamsungStoreQuery/);
+
+  const ios = src("ios/App/App/KidEaseBridgeViewController.swift");
+  assert.match(ios, /withoutForeignStoreToken/);
+  assert.match(ios, /KidEaseStoreSamsung/);
+  assert.match(ios, /withoutSamsungStoreQuery/);
+  assert.doesNotMatch(ios, /appendUserAgent/);
+
+  assert.match(src("capacitor.config.ts"), /appendUserAgent: "KidEaseNative"/);
+  assert.doesNotMatch(src("capacitor.config.ts"), /KidEaseStoreSamsung/);
+  assert.doesNotMatch(src("ios/App/App/capacitor.config.json"), /KidEaseStoreSamsung/);
+  assert.doesNotMatch(src("android/app/src/main/assets/capacitor.config.json"), /KidEaseStoreSamsung/);
+  assert.doesNotMatch(src("ios/App/App/capacitor.config.json"), /store=samsung/);
+  assert.doesNotMatch(src("android/app/src/main/assets/capacitor.config.json"), /store=samsung/);
+
+  const boot = src("public/channel-boot.js");
+  assert.match(boot, /samsungBuild/);
+  assert.match(boot, /ke_store=samsung/);
+  assert.doesNotMatch(boot, /ke_store=samsung;/);
+  assert.doesNotMatch(boot, /q\.get\("store"\) === "samsung"/);
 });
 
 test("Android flavours name the store and Huawei skips Google startup", () => {

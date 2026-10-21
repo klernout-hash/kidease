@@ -15,7 +15,7 @@
 
 export const NATIVE_UA_TOKEN = "KidEaseNative";
 
-/** Samsung and Huawei tokens are checked before KidEaseNative. Microsoft is not. */
+/** Android flavour tokens. iOS ignores them. Microsoft is a website package, not a native token. */
 export const STORE_UA_SAMSUNG = "KidEaseStoreSamsung";
 export const STORE_UA_HUAWEI = "KidEaseStoreHuawei";
 export const STORE_UA_MICROSOFT = "KidEaseStoreMicrosoft";
@@ -98,10 +98,48 @@ function cookieHasMicrosoft(cookie: string | null | undefined): boolean {
 }
 
 /**
+ * User-agent string a store binary may send.
+ * Only the Samsung flavour may include KidEaseStoreSamsung.
+ * Only the Huawei flavour may include KidEaseStoreHuawei.
+ * iOS and Play drop both, even if a shared config still has them.
+ */
+export function userAgentForStoreBuild(
+  flavor: string | null | undefined,
+  base: string | null | undefined,
+  configured: string | null | undefined,
+): string {
+  let next = String(base || "");
+  if (flavor !== "samsung") next = next.replaceAll(STORE_UA_SAMSUNG, "");
+  if (flavor !== "huawei") next = next.replaceAll(STORE_UA_HUAWEI, "");
+  next = next.replace(/\s+/g, " ").trim();
+  const token =
+    flavor === "samsung" && configured === STORE_UA_SAMSUNG
+      ? STORE_UA_SAMSUNG
+      : flavor === "huawei" && configured === STORE_UA_HUAWEI
+        ? STORE_UA_HUAWEI
+        : "";
+  if (!token) return next;
+  if (!next) return token;
+  if (next.includes(token)) return next;
+  return `${next} ${token}`;
+}
+
+/** Drop a Samsung store link. iOS and Play must not open with ?store=samsung. */
+export function withoutSamsungStoreQuery(url: string | null | undefined): string {
+  const raw = String(url || "");
+  if (!raw.includes("store=samsung")) return raw;
+  return raw
+    .replace("?store=samsung&", "?")
+    .replace("&store=samsung&", "&")
+    .replace("?store=samsung", "")
+    .replace("&store=samsung", "");
+}
+
+/**
  * Which store wrapped this page.
  * Samsung and Microsoft keep Stripe. Apple, Google Play, and Huawei do not.
- * KidEaseNative (iOS and Play) wins over ?store=microsoft and the ke_store cookie.
- * Samsung and Huawei tokens still win over the bare native token.
+ * KidEaseNative (iOS and Play) wins over ?store=microsoft, ?store=samsung, and the ke_store cookie.
+ * The Samsung token applies only when it is on the user agent and the device is not iOS.
  * A home-screen install of the website is "web", not Microsoft.
  */
 export function storeChannelFromSignals(input: {
@@ -110,12 +148,11 @@ export function storeChannelFromSignals(input: {
   cookie?: string | null;
 }): StoreChannel {
   const ua = String(input.userAgent || "");
-  if (ua.includes(STORE_UA_HUAWEI)) return "huawei";
-  if (ua.includes(STORE_UA_SAMSUNG)) return "samsung";
-  if (ua.includes(NATIVE_UA_TOKEN)) {
-    if (/iPhone|iPad|iPod/i.test(ua)) return "apple";
-    return "google";
-  }
+  const ios = /iPhone|iPad|iPod/i.test(ua);
+  if (ios && ua.includes(NATIVE_UA_TOKEN)) return "apple";
+  if (!ios && ua.includes(STORE_UA_HUAWEI)) return "huawei";
+  if (!ios && ua.includes(STORE_UA_SAMSUNG)) return "samsung";
+  if (ua.includes(NATIVE_UA_TOKEN)) return "google";
   if (ua.includes(STORE_UA_MICROSOFT)) return "microsoft";
   const store = searchParams(input.search).get("store");
   if (store === "microsoft" || cookieHasMicrosoft(input.cookie)) return "microsoft";

@@ -92,7 +92,7 @@ Same application id as Play. From `android/`:
 
 AAB: `android/app/build/outputs/bundle/samsungRelease/app-samsung-release.aab`
 
-`MainActivity` appends `KidEaseStoreSamsung` to the WebView user agent, on top of `KidEaseNative`. The site sees that token first and leaves checkout on. The Play token alone still hides checkout.
+`MainActivity` appends `KidEaseStoreSamsung` only for the `samsung` flavour, on top of `KidEaseNative`. The iOS app and the Play flavour strip that token and do not set a `ke_store=samsung` cookie. A `?store=samsung` link does not switch them. The site sees the Samsung token first and leaves checkout on. The Play token alone still hides checkout.
 
 Play’s `google-services.json` may be used for this flavour if you want FCM. Do not commit that file.
 
@@ -168,7 +168,7 @@ cd android
 
 AAB: `android/app/build/outputs/bundle/playRelease/app-play-release.aab`
 
-The GitHub workflow job is still named `bundleRelease`. It runs `bundlePlayRelease`. `STORE_UA_TOKEN` is empty on Play, so the WebView keeps `KidEaseNative` only and Stripe stays hidden.
+The GitHub workflow job is still named `bundleRelease`. It runs `bundlePlayRelease`. `STORE_UA_TOKEN` is empty on Play. Play and iOS never send `KidEaseStoreSamsung`. Stripe stays hidden.
 
 ## Required assets
 
