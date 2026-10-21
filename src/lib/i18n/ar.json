@@ -1633,7 +1633,7 @@
   "yes": "نعم",
   "no": "لا",
   "howStressFree": "إليك كيف يعمل KidEase",
-  "featuredBody": "مراكز مرخصة ضمن نطاق بحثك. تُعرض الصورة فقط عندما تكون لدى المركز صورة في الملف.",
+  "featuredBody": "مراكز مرخصة ضمن نطاق بحثك. يُعلَّم الظهور المميز المدفوع بعبارة برعاية. تُعرض الصورة فقط عندما تكون لدى المركز صورة في الملف.",
   "viewDetails": "عرض التفاصيل",
   "kmAway": "كم بعيدًا",
   "bandWalk": "مسافة مشي",
@@ -2923,5 +2923,6 @@
   "reportListing": "Listing name (optional)",
   "reportChooseProvince": "Choose a province or territory",
   "reportOrEmail": "Or email",
-  "reportOfficialPage": "Official page"
+  "reportOfficialPage": "Official page",
+  "sponsored": "برعاية"
 }

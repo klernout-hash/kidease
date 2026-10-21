@@ -45,6 +45,7 @@ import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
 import { listingSubsidy } from "@/lib/fee-program";
 import { SubsidyPill } from "@/components/subsidy-pill";
+import { SponsoredMark } from "@/components/sponsored-mark";
 
 function whyMatchLine(
   item: Card,
@@ -114,6 +115,7 @@ function CardPhotoBadges({
         compact ? "left-2 top-2 gap-1" : "left-3 top-3 gap-1.5",
       )}
     >
+      <SponsoredMark show={item.featuredCity} />
       {showLivePill || listingSubsidy(item) ? (
         <div className="flex flex-wrap items-center gap-1" data-ke="card-photo-pills">
           {showLivePill ? (

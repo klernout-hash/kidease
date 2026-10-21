@@ -798,6 +798,7 @@ export const copy = {
     promoteActive: "Priority placement is on until",
     promoteSecure: "Secure card payment. Priority starts immediately after checkout.",
     priority: "Priority",
+    sponsored: "Sponsored",
     contactEmail: "Business email",
     businessDetails: "Business details",
     claimCta: "Claim your daycare",
@@ -1959,7 +1960,7 @@ export const copy = {
     no: "No",
     howStressFree: "Here’s how KidEase works",
     featuredBody:
-      "Licensed centres within your search radius. A photo is shown only when the centre has one on file.",
+      "Licensed centres within your search radius. A paid Featured placement is marked Sponsored. A photo is shown only when the centre has one on file.",
     viewDetails: "View Details",
     kmAway: "km away",
     bandWalk: "walkable",
@@ -3942,6 +3943,7 @@ export const copy = {
     promoteActive: "Mise en avant active jusqu’au",
     promoteSecure: "Paiement par carte sécurisé. La visibilité prioritaire commence tout de suite.",
     priority: "Prioritaire",
+    sponsored: "Commandité",
     contactEmail: "Courriel d’affaires",
     businessDetails: "Coordonnées",
     claimCta: "Réclamez votre garderie",
@@ -5106,7 +5108,7 @@ export const copy = {
     no: "Non",
     howStressFree: "Trouver une place ne devrait pas être stressant. Voici comment KidEase fonctionne :",
     featuredBody:
-      "Centres permis dans votre rayon de recherche. Une photo s’affiche seulement lorsque le centre en a une au dossier.",
+      "Centres permis dans votre rayon de recherche. Une mise en vedette payée porte la mention Commandité. Une photo s’affiche seulement lorsque le centre en a une au dossier.",
     viewDetails: "Voir les détails",
     kmAway: "km",
     bandWalk: "à pied",

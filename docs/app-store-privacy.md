@@ -4,6 +4,8 @@ Use this list when filling Apple's privacy nutrition labels and Google's Data sa
 
 Bundle id: `ca.kidease.app`
 
+Support: support@kidease.ca
+
 ## SDKs in the app
 
 | SDK | What it is | Data | Linked to a person | Used to track | Notes |

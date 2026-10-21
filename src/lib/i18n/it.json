@@ -1633,7 +1633,7 @@
   "yes": "Sì",
   "no": "No",
   "howStressFree": "Ecco come funziona KidEase",
-  "featuredBody": "Centri con licenza nel Suo raggio di ricerca. Una foto viene mostrata solo quando il centro ne ha una in archivio.",
+  "featuredBody": "Centri con licenza nel Suo raggio di ricerca. Un’inserzione in evidenza a pagamento è contrassegnata Sponsorizzato. Una foto viene mostrata solo quando il centro ne ha una in archivio.",
   "viewDetails": "Visualizzi i dettagli",
   "kmAway": "km di distanza",
   "bandWalk": "a piedi",
@@ -2923,5 +2923,6 @@
   "reportListing": "Listing name (optional)",
   "reportChooseProvince": "Choose a province or territory",
   "reportOrEmail": "Or email",
-  "reportOfficialPage": "Official page"
+  "reportOfficialPage": "Official page",
+  "sponsored": "Sponsorizzato"
 }

@@ -1,6 +1,7 @@
 import { GuestFavoriteBadge } from "@/components/guest-favorite";
 import { MatchCue, UrgencyCue } from "@/components/rank-cues";
 import { PriorityPill } from "@/components/priority-pill";
+import { SponsoredMark } from "@/components/sponsored-mark";
 import { TrustSignals } from "@/components/trust-badge";
 import { photoLine, vacancyLine } from "@/components/vacancy-freshness";
 import { SubsidyPill } from "@/components/subsidy-pill";
@@ -50,6 +51,7 @@ export function ListingBadges({
       <span className={cn(pill, "text-muted")} data-facility-type={facility.type}>
         {t(FACILITY_BADGE[facility.type])}
       </span>
+      <SponsoredMark show={item.featuredCity} />
       {item.priority ? <PriorityPill /> : null}
       {!compact ? <GuestFavoriteBadge item={item} compact={compact} /> : null}
       <TrustSignals item={item} surface="parent" compact={compact} />

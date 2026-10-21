@@ -1,5 +1,7 @@
 # App Review notes (paste into App Store Connect and Play Console)
 
+Support: support@kidease.ca
+
 KidEase is for adults. Parents and daycare providers. Accounts confirm they are 18 or older. Do not place it in the Kids category or the Google Play Families program.
 
 Nothing is sold in the app. There is no Apple In-App Purchase and no Google Play Billing in this version. A daycare plan already bought on https://www.kidease.ca still unlocks after sign-in. The app does not link out to a subscribe or pay page.

@@ -1633,7 +1633,7 @@
   "yes": "係",
   "no": "唔係",
   "howStressFree": "KidEase 係咁運作",
-  "featuredBody": "你搜尋範圍入面嘅持牌中心。只有中心檔案有相片，先至會顯示。",
+  "featuredBody": "你搜尋範圍入面嘅持牌中心。付費精選展示會標做「贊助」。只有中心檔案有相片，先至會顯示。",
   "viewDetails": "睇詳情",
   "kmAway": "km 外",
   "bandWalk": "行到",
@@ -2923,5 +2923,6 @@
   "reportListing": "Listing name (optional)",
   "reportChooseProvince": "Choose a province or territory",
   "reportOrEmail": "Or email",
-  "reportOfficialPage": "Official page"
+  "reportOfficialPage": "Official page",
+  "sponsored": "贊助"
 }
