@@ -30,6 +30,32 @@ test("store channel blocks Stripe on Apple, Play, and Huawei only", () => {
   );
   assert.equal(storeChannelFromSignals({ search: "?store=microsoft" }), "microsoft");
   assert.equal(storeChannelFromSignals({ cookie: "ke_store=microsoft" }), "microsoft");
+  assert.equal(
+    storeChannelFromSignals({
+      userAgent: "iPhone KidEaseNative",
+      search: "?store=microsoft",
+      cookie: "ke_store=microsoft",
+    }),
+    "apple",
+  );
+  assert.equal(
+    shellBlocksCommerce(
+      storeChannelFromSignals({
+        userAgent: "Android KidEaseNative",
+        search: "?store=microsoft",
+        cookie: "ke_store=microsoft",
+      }),
+    ),
+    true,
+  );
+  assert.equal(
+    storeChannelFromSignals({
+      userAgent: "Android KidEaseNative KidEaseStoreSamsung",
+      search: "?store=microsoft",
+      cookie: "ke_store=microsoft",
+    }),
+    "samsung",
+  );
   assert.equal(storeChannelFromSignals({ userAgent: "Mozilla" }), "web");
   assert.equal(shellBlocksCommerce("samsung"), false);
   assert.equal(shellBlocksCommerce("microsoft"), false);
@@ -86,6 +112,8 @@ test("PWA manifest for Partner Center stays installable and does not retag the w
   assert.match(src("public/offline.html"), /support@kidease\.ca/);
   assert.match(src("public/channel-boot.js"), /KidEaseStoreSamsung/);
   assert.match(src("public/channel-boot.js"), /ke_store=microsoft/);
+  assert.match(src("public/channel-boot.js"), /q\.get\("store"\) === "microsoft" && !uaNative/);
+  assert.match(src("public/channel-boot.js"), /Max-Age=0/);
 });
 
 test("Android flavours name the store and Huawei skips Google startup", () => {

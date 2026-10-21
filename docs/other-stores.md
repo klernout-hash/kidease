@@ -49,7 +49,7 @@ The live site is the app. [PWABuilder](https://www.pwabuilder.com) wraps it as a
 - Store manifest: `public/manifest.microsoft.webmanifest`, start URL `/?store=microsoft`.
 - Icons already on the site: 192, 512, and a 512 maskable icon.
 - Service worker `public/sw.js` (`kidease-shell-v5`) serves `public/offline.html` when a page load fails. It does not cache HTML. Hashed `/assets/` stay network-only.
-- The first launch sets a `ke_store=microsoft` cookie so later pages still know this is the Store package. Stripe stays visible either way. The cookie is how we avoid treating that package as the Capacitor shell.
+- The first launch sets a `ke_store=microsoft` cookie so later pages still know this is the Store package. Stripe stays visible on that package. The cookie is set only when the user agent is not `KidEaseNative`. An iOS or Play WebView ignores `?store=microsoft` and clears a leftover `ke_store` cookie, so a link cannot turn Stripe back on in those builds.
 
 PWABuilder steps:
 

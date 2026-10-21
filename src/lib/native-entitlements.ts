@@ -15,7 +15,7 @@
 
 export const NATIVE_UA_TOKEN = "KidEaseNative";
 
-/** Extra WebView tokens. Checked before KidEaseNative so a store can opt out of the Play/Apple rule. */
+/** Samsung and Huawei tokens are checked before KidEaseNative. Microsoft is not. */
 export const STORE_UA_SAMSUNG = "KidEaseStoreSamsung";
 export const STORE_UA_HUAWEI = "KidEaseStoreHuawei";
 export const STORE_UA_MICROSOFT = "KidEaseStoreMicrosoft";
@@ -100,6 +100,8 @@ function cookieHasMicrosoft(cookie: string | null | undefined): boolean {
 /**
  * Which store wrapped this page.
  * Samsung and Microsoft keep Stripe. Apple, Google Play, and Huawei do not.
+ * KidEaseNative (iOS and Play) wins over ?store=microsoft and the ke_store cookie.
+ * Samsung and Huawei tokens still win over the bare native token.
  * A home-screen install of the website is "web", not Microsoft.
  */
 export function storeChannelFromSignals(input: {
@@ -110,13 +112,13 @@ export function storeChannelFromSignals(input: {
   const ua = String(input.userAgent || "");
   if (ua.includes(STORE_UA_HUAWEI)) return "huawei";
   if (ua.includes(STORE_UA_SAMSUNG)) return "samsung";
-  if (ua.includes(STORE_UA_MICROSOFT)) return "microsoft";
-  const store = searchParams(input.search).get("store");
-  if (store === "microsoft" || cookieHasMicrosoft(input.cookie)) return "microsoft";
   if (ua.includes(NATIVE_UA_TOKEN)) {
     if (/iPhone|iPad|iPod/i.test(ua)) return "apple";
     return "google";
   }
+  if (ua.includes(STORE_UA_MICROSOFT)) return "microsoft";
+  const store = searchParams(input.search).get("store");
+  if (store === "microsoft" || cookieHasMicrosoft(input.cookie)) return "microsoft";
   return "web";
 }
 

@@ -11,9 +11,11 @@
     var store = "web";
     if (ua.indexOf("KidEaseStoreHuawei") !== -1) store = "huawei";
     else if (ua.indexOf("KidEaseStoreSamsung") !== -1) store = "samsung";
-    else if (ua.indexOf("KidEaseStoreMicrosoft") !== -1 || q.get("store") === "microsoft" || /(?:^|;\s*)ke_store=microsoft(?:;|$)/.test(document.cookie || "")) store = "microsoft";
     else if (uaNative) store = /iPhone|iPad|iPod/i.test(ua) ? "apple" : "google";
-    if (q.get("store") === "microsoft") {
+    else if (ua.indexOf("KidEaseStoreMicrosoft") !== -1 || q.get("store") === "microsoft" || /(?:^|;\s*)ke_store=microsoft(?:;|$)/.test(document.cookie || "")) store = "microsoft";
+    if (uaNative && /(?:^|;\s*)ke_store=microsoft(?:;|$)/.test(document.cookie || "")) {
+      document.cookie = "ke_store=; Path=/; Max-Age=0; SameSite=Lax";
+    } else if (q.get("store") === "microsoft" && !uaNative) {
       var secure = location.protocol === "https:" ? "; Secure" : "";
       document.cookie = "ke_store=microsoft; Path=/; Max-Age=31536000; SameSite=Lax" + secure;
     }
