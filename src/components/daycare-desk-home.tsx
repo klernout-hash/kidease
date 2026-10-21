@@ -6,6 +6,7 @@ import { listingCompleteness, vacancyUpdatedThisWeek, type CompletenessField } f
 import { isOpenLeadStatus, type LeadRequest } from "@/lib/lead-requests";
 import { daycareCapPrompt, daycareHomeCardEligible, showHomeUpgradeCard } from "@/lib/upgrade-prompt";
 import { useCopy } from "@/lib/use-copy";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import type { CopyKey } from "@/lib/copy";
 import type { Daycare, TourRequest } from "@/lib/types";
 
@@ -44,6 +45,7 @@ export function DaycareDeskHome({
   onDismiss?: () => void;
 }) {
   const { t } = useCopy();
+  const nativeShell = useInNativeShell();
   const { session } = useSessionDesks();
   const subscriptionsOn = session?.subscriptionsEnabled === true;
   const waitingLeads = leads.filter((lead) => isOpenLeadStatus(lead.status));
@@ -127,6 +129,7 @@ export function DaycareDeskHome({
         </Link>
       </section>
 
+      {nativeShell ? null : (
       <section className="rounded-xl bg-surface px-4 py-3 ring-1 ring-border" data-ke="daycare-plan">
         <h2 className="font-display text-xl">{t("deskHomeCurrentPlan")}</h2>
         <p className="mt-1 text-sm text-fg">{paid ? planName : t("deskHomeFree")}</p>
@@ -135,6 +138,7 @@ export function DaycareDeskHome({
           {t("navPlans")}
         </Link>
       </section>
+      )}
 
     </div>
   );

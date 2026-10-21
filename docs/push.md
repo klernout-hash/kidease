@@ -17,7 +17,7 @@ The same outbox sends website Web Push when the flag is armed and both VAPID key
 Leave `FEATURE_PUSH` unset (or `0`) on Production until Chat lab shows a real secret for the channel you want:
 
 1. Website: both VAPID keys (and `VITE_FCM_VAPID_PUBLIC_KEY` in the web build).
-2. Phones: a Firebase project + APNs `.p8` (placeholders only in `.env.example`), then a TestFlight / Play build with `@capacitor/push-notifications` (`npx cap sync`) and the Push Notifications entitlement.
+2. Phones, later: a Firebase project + APNs `.p8` (placeholders only in `.env.example`), then add `@capacitor/push-notifications` back with `npx cap sync` and the Push Notifications entitlement. v1 does not include that plugin, `POST_NOTIFICATIONS`, or Firebase Messaging.
 3. You have confirmed Chat lab: secret present, never the value. Native dry-run counts tokens and still does not send.
 
 Do not set the flag “to see if it works” on the public site with no secrets. Production ignores `FEATURE_PUSH=1` until FCM, APNs, or the VAPID pair exists. Email and the in-app bell still notify without push. Do not set `FEATURE_SMS=1` as part of this work.
@@ -63,18 +63,19 @@ Do **not** put `.p8` files, `google-services.json`, `GoogleService-Info.plist`, 
    - Signing & Capabilities → **+ Push Notifications**.
    - **Background Modes** → Remote notifications. v1 does not list `remote-notification` in Info.plist. Add it when push ships.
    - Entitlements: add `aps-environment` when push ships (`development` for debug, **`production` for TestFlight and App Store**). v1 does not set it. TestFlight uses the production APNs environment — set `APNS_PRODUCTION=1` on Vercel before relying on TestFlight.
-4. Rebuild (`npx cap sync ios`) so `@capacitor/push-notifications` is in the binary. A web-only Vercel deploy does not add the entitlement.
+4. When push ships, add the plugin and run `npx cap sync ios`. v1 does not include `@capacitor/push-notifications`. A web-only Vercel deploy does not add the entitlement.
 5. Confirm the provisioned profile includes Push. Archive → TestFlight. First launch after `FEATURE_PUSH=1` should prompt once and `POST /api/push/register`.
 
 ## Capacitor plugin
 
-`@capacitor/push-notifications` is a dependency. `capacitor.config.ts` sets presentation options. Native projects (`ios/`, `android/`) are checked in — run `npx cap sync` on a laptop when you cut a store build.
+v1 does not depend on `@capacitor/push-notifications`. `capacitor.config.ts` has no push block. Native projects (`ios/`, `android/`) are checked in without the plugin, so the AAB does not pull Firebase Messaging. Add the plugin back only when push ships.
 
-The web client dynamically imports the plugin only when:
+The native client does not import the plugin in v1. `registerPushDevice` returns `no-plugin` even when `FEATURE_PUSH` is on. www.kidease.ca does not register a native token. Add the import back with the plugin. A later build registers only when all of these are true:
 
 - the session is signed in,
 - `Capacitor.isNativePlatform()` is true,
-- `getPushClientStatus()` says `FEATURE_PUSH` is on.
+- `getPushClientStatus()` says `FEATURE_PUSH` is on,
+- the plugin is in the binary.
 
 www calls `Notification.requestPermission()` only from the Get alerts button, and only when the visitor is signed in, Web Push is supported, both VAPID keys exist, and `FEATURE_PUSH` is armed. The first view in a browser tab does not ask. Unsigned visitors never see the prompt.
 

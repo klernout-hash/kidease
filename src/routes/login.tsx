@@ -382,7 +382,7 @@ export function LoginScreen({
   }
 
   async function onSocial(providerId: string) {
-    if (mode === "up" && !operator && !adult) {
+    if (!operator && !adult) {
       setError(locale === "fr" ? "Confirmez que vous avez 18 ans ou plus." : "Confirm you are 18 or older.");
       return;
     }
@@ -606,6 +606,22 @@ export function LoginScreen({
               <span className="h-px flex-1 bg-border" />
             </div>
             <div className="space-y-2" data-ke="social-sign-in">
+              {mode === "in" ? (
+                <label className="flex min-h-11 items-start gap-3 text-sm" htmlFor="signin-adult">
+                  <input
+                    id="signin-adult"
+                    type="checkbox"
+                    className="mt-1 size-5"
+                    checked={adult}
+                    onChange={(event) => setAdult(event.target.checked)}
+                  />
+                  <span>
+                    {locale === "fr"
+                      ? "J’ai 18 ans ou plus. KidEase est pour les parents et les garderies."
+                      : "I am 18 or older. KidEase is for parents and daycares."}
+                  </span>
+                </label>
+              ) : null}
               {authEnabled ? (
                 providers.map((p: GrokProvider) => (
                   <Button

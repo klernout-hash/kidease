@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { LocalAudioTrack, LocalVideoTrack, RemoteAudioTrack, RemoteParticipant, RemoteVideoTrack, Room } from "twilio-video";
 import { Button } from "@/components/ui/button";
-import { isNative } from "@/lib/native";
 import { useCopy } from "@/lib/use-copy";
 
 type MediaTrack = RemoteAudioTrack | RemoteVideoTrack | LocalAudioTrack | LocalVideoTrack;
@@ -63,11 +62,6 @@ export function VideoRoomPanel({
     let cancelled = false;
     const localHost = localRef.current;
     const remoteHost = remoteRef.current;
-    if (isNative()) {
-      setPhase("error");
-      setNote(t("comingSoon"));
-      return;
-    }
     void (async () => {
       try {
         const sdk = await import("twilio-video");

@@ -65,10 +65,6 @@ const config: CapacitorConfig = {
     Geolocation: {
       // When-in-use / precise only. Do not add background location permissions.
     },
-    PushNotifications: {
-      // Native only. FEATURE_PUSH defaults off — this does not send or prompt on www.
-      presentationOptions: ["badge", "sound", "alert"],
-    },
     InAppReview: {
       // Native OS 1–5 sheet only. See docs/store-review.md. No launch prompt.
     },

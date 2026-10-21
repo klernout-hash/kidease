@@ -15,6 +15,8 @@ The iPhone and Android apps are a Capacitor shell around https://www.kidease.ca.
 
 Push notifications are not in this version. The app does not ask for notification permission.
 
+- Voice and video calls use the camera and microphone only while the call screen is open. Twilio’s scripts load on those pages. The app does not record the call. A video tour that needs Parent Plus stays closed here, with no price and no subscribe button. There is no background-audio mode and no VoIP mode. Calls run while the app is on screen.
+
 ## Reviewer sign-in
 
 App Review signs in on the live site, https://www.kidease.ca. The two accounts have to exist in the production database before you submit.

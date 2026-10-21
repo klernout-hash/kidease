@@ -995,6 +995,7 @@
   "videoPlusRequiredBilling": "Kailangan ang Plus (hindi pa live ang billing). Naka-off ang video para sa mga libreng magulang hanggang naka-on ang Stripe live keys at may aktibong subscription sa Plus.",
   "videoJoin": "Sumali sa tawag",
   "videoJoinHint": "Sumali sa pribadong video call. Nakatago ang numero ng mobile mo. Hindi nire-record ang tawag na ito.",
+  "nativeVideoNeedsPlus": "Kasama ang video tour sa Parent Plus ng account na ito. Hindi nagbebenta ng mga plano ang app na ito.",
   "videoLeave": "Umalis",
   "videoWaitingRoom": "Hinihintay na sumali ang kabilang tao.",
   "videoInCall": "Nasa tawag",

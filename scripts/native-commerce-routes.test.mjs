@@ -41,9 +41,36 @@ test("native commerce is guarded in the page and the component", () => {
   assert.match(rootDoc, /nativeShell \? null : <GetAlertsPrompt \/>/);
   const video = src("src/components/video-room-panel.tsx");
   const voice = src("src/components/voice-call-panel.tsx");
-  assert.ok(video.indexOf("isNative()") < video.indexOf('import("twilio-video")'));
-  assert.ok(voice.indexOf("isNative()") < voice.indexOf('import("@twilio/voice-sdk")'));
-  assert.match(src("src/routes/login.tsx"), /signup-adult/);
+  const videoRoute = src("src/routes/video.$roomId.tsx");
+  const callRoute = src("src/routes/call.$conversationId.tsx");
+  const desk = src("src/components/daycare-desk-home.tsx");
+  assert.match(video, /import\("twilio-video"\)/);
+  assert.doesNotMatch(video, /isNative\(\)/);
+  assert.match(voice, /import\("@twilio\/voice-sdk"\)/);
+  assert.doesNotMatch(voice, /isNative\(\)/);
+  assert.match(videoRoute, /nativeVideoNeedsPlus/);
+  assert.match(videoRoute, /data-ke="native-video-entitlement"/);
+  assert.doesNotMatch(videoRoute, /data-ke="native-video-off"/);
+  assert.match(videoRoute, /nativeShell \? t\("videoJoinHint"\) : t\("videoTourLead"\)/);
+  assert.match(callRoute, /VoiceCallPanel/);
+  assert.doesNotMatch(callRoute, /comingSoon/);
+  assert.match(desk, /nativeShell \? null : \(/);
+  assert.match(desk, /data-ke="daycare-plan"/);
+  const login = src("src/routes/login.tsx");
+  assert.match(login, /signup-adult/);
+  assert.match(login, /signin-adult/);
+  assert.match(login, /if \(!operator && !adult\)/);
+  assert.match(src("package.json"), /"node": ">=22"/);
+  assert.equal(src(".nvmrc").trim(), "22");
+  assert.match(src("ios/App/App.xcodeproj/project.pbxproj"), /SdkPrivacy/);
+  assert.match(src("ios/App/SdkPrivacy/Package.swift"), /SentryPrivacy/);
+  assert.match(src("ios/App/SdkPrivacy/Package.swift"), /PostHogPrivacy/);
+  assert.match(src("ios/App/SdkPrivacy/Sources/CapacitorGeolocationPrivacy/PrivacyInfo.xcprivacy"), /PreciseLocation/);
+  assert.match(src("ios/App/App/PrivacyInfo.xcprivacy"), /NSPrivacyCollectedDataTypeAudioData/);
+  assert.doesNotMatch(src("ios/App/SdkPrivacy/Package.swift"), /Push/);
+  assert.match(src("docs/app-store-privacy.md"), /Twilio Voice/);
+  assert.match(src("docs/play-data-safety.md"), /twilio-video/);
+  assert.match(src("src/lib/legal-copy.ts"), /Twilio, for voice and video calls/);
   assert.match(src("src/lib/store-listing.ts"), /secondaryCategory: "Productivity"/);
   assert.doesNotMatch(src("ios/App/App/App.entitlements"), /aps-environment/);
   assert.match(src("docs/store-review-notes.md"), /production database/);
@@ -79,6 +106,9 @@ test("key routes with the native user agent have no prices, Stripe, or upgrade t
     "/provider?desk=promote",
     "/account?section=alerts",
     "/pay",
+    "/provider",
+    "/call/reviewer-demo",
+    "/video/reviewer-demo",
   ];
   try {
     const deadline = Date.now() + 90_000;
@@ -112,6 +142,24 @@ test("key routes with the native user agent have no prices, Stripe, or upgrade t
       assert.doesNotMatch(text, /Job post/, path);
       assert.doesNotMatch(text, /Payments processed in the app/, path);
       assert.doesNotMatch(html, /data-ke="alert-settings"/, path);
+      assert.doesNotMatch(text, /data-ke="native-video-off"/, path);
+      assert.doesNotMatch(text, /data-ke="native-voice-off"/, path);
+      assert.doesNotMatch(text, /data-ke="daycare-plan"/, path);
+      assert.doesNotMatch(text, /FEATURE_VIDEO is off/, path);
+      assert.doesNotMatch(text, /Parent Plus is required/, path);
+      assert.doesNotMatch(text, /Start Plus/, path);
+      assert.doesNotMatch(text, /Activer Plus/, path);
+    }
+    for (const path of ["/call/reviewer-demo", "/video/reviewer-demo"]) {
+      const response = await fetch(`${BASE}${path}`, { headers: { "user-agent": UA }, redirect: "follow" });
+      const html = await response.text();
+      const text = visible(html);
+      assert.ok(response.status < 500, path);
+      assert.match(html, /data-runtime="native"/, path);
+      assert.doesNotMatch(text, /CA\$/, path);
+      assert.doesNotMatch(text, /Coming soon\. FEATURE_VIDEO/, path);
+      assert.match(src("src/routes/call.$conversationId.tsx"), /VoiceCallPanel/);
+      assert.match(src("src/components/video-room-panel.tsx"), /twilio-video/);
     }
     const jobs = await fetch(`${BASE}/jobs/post`, { headers: { "user-agent": UA } });
     assert.match(await jobs.text(), /data-commerce="hidden"/);
