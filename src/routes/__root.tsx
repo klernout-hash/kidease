@@ -9,6 +9,7 @@ import {
 import { localeTag } from "@/lib/languages";
 import { pathLocale } from "@/lib/locale-path";
 import { getVisitorLocale } from "@/lib/locale-choice";
+import { readNativeShell } from "@/lib/native-shell-request";
 import { LocaleChoiceSync } from "@/components/language-select";
 import { useCopy } from "@/lib/use-copy";
 import { AuthProvider } from "@/lib/auth/provider";
@@ -68,13 +69,7 @@ export const Route = createRootRoute({
       const { isNative } = await import("@/lib/native");
       nativeShell = isNativeUserAgent(window.navigator.userAgent) || isNative();
     } else {
-      try {
-        const { getRequest } = await import("@tanstack/react-start/server");
-        const { isNativeUserAgent } = await import("@/lib/native-entitlements");
-        nativeShell = isNativeUserAgent(getRequest().headers.get("user-agent"));
-      } catch {
-        nativeShell = false;
-      }
+      nativeShell = await readNativeShell().catch(() => false);
     }
     return { roleChrome, visitorLocale, nativeShell };
   },

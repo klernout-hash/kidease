@@ -3,7 +3,7 @@
 export const STORE = {
   name: "KidEase",
   subtitle: "Licensed childcare nearby",
-  subtitleFr: "Garde permise près de chez vous",
+  subtitleFr: "Garde permise près de vous",
   bundleId: "ca.kidease.app",
   version: "1.0.0",
   build: "1",
@@ -51,7 +51,7 @@ What you can do
 Adults only
 KidEase is for parents and daycare providers. Accounts are 18+. It is not in the Kids category.
 
-Nothing is sold inside the app. A plan bought on kidease.ca still unlocks after you sign in.
+Nothing is sold inside the app.
 
 Privacy policy, terms, and account deletion are in the app.`,
   descriptionFr: `KidEase aide les parents et les garderies du Canada à trouver une garde permise dans un rayon en kilomètres.
@@ -63,7 +63,7 @@ Enregistrez des centres, même hors ligne. Partagez une fiche. Demandez une visi
 Adultes seulement
 KidEase est pour les parents et les garderies. Les comptes sont 18 ans et plus. Ce n’est pas une catégorie Enfants.
 
-Rien ne se vend dans l’appli. Un forfait acheté sur kidease.ca reste ouvert après la connexion.
+Rien ne se vend dans l’appli.
 
 Politique de confidentialité, conditions et suppression du compte sont dans l’appli.`,
   ageRatingAnswers: {
