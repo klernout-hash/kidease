@@ -7,6 +7,7 @@ import { CheckoutReturnNote, upgradeReturnFromSearch, useUpgradeCelebration, typ
 import { Button } from "@/components/ui/button";
 import { DaycareAddons } from "@/components/daycare-addons";
 import { useCopy } from "@/lib/use-copy";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import { centrePickerLabel } from "@/lib/centre-label";
 import {
   PROVIDER_COMPARE,
@@ -110,6 +111,7 @@ export function ProviderSubscriptionPanel({
   upgradeSearch?: UpgradeSearch | null;
   billingReturn?: boolean;
 }) {
+  const nativeShell = useInNativeShell();
   const { locale, t: tx } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
   const t = COPY[loc];
@@ -190,6 +192,7 @@ export function ProviderSubscriptionPanel({
       .catch(() => undefined);
   }, [reloadSubscription]);
 
+  if (nativeShell) return null;
   if (loadError) {
     return (
       <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">

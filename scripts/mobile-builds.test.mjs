@@ -106,7 +106,9 @@ describe("native project scaffolding", () => {
     assert.match(entitlements, /applinks:www\.kidease\.ca/);
     assert.match(entitlements, /applinks:kidease\.ca/);
     assert.match(entitlements, /webcredentials:www\.kidease\.ca/);
-    assert.doesNotMatch(entitlements, /aps-environment/);
+    assert.match(entitlements, /aps-environment/);
+    assert.match(entitlements, /<string>production<\/string>/);
+    assert.match(entitlements, /com\.apple\.developer\.applesignin/);
     assert.match(read("ios/App/App.xcodeproj/project.pbxproj"), /CODE_SIGN_ENTITLEMENTS = App\/App.entitlements/);
     assert.doesNotMatch(read("ios/App/App.xcodeproj/project.pbxproj"), /DEVELOPMENT_TEAM = [A-Z0-9]{10}/);
 

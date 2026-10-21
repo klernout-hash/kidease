@@ -66,18 +66,12 @@ export function visibleWalletLabels(wallets: WalletAvailability): Array<"card" |
   return labels;
 }
 
-/** Open hosted Stripe Checkout. Native apps use the system browser so wallets can appear. */
+/** Open hosted Stripe Checkout on the website. The native shell does not open Stripe. */
 export async function openStripeCheckout(url: string): Promise<void> {
   const href = String(url || "").trim();
   if (!href) throw new Error("Pay link was not ready.");
   if (typeof window !== "undefined" && isNative()) {
-    try {
-      const { Browser } = await import("@capacitor/browser");
-      await Browser.open({ url: href });
-      return;
-    } catch {
-      /* fall through to same-webview navigation */
-    }
+    throw new Error("Payments are not part of this app.");
   }
   if (typeof window !== "undefined") window.location.assign(href);
 }

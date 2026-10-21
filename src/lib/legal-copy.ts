@@ -41,8 +41,8 @@ export type LegalDoc = {
   disclaimer: string;
 };
 
-const UPDATED_EN = "Effective 5 October 2026 · KidEase · Canada";
-const UPDATED_FR = "En vigueur le 5 octobre 2026 · KidEase · Canada";
+const UPDATED_EN = "Effective 21 October 2026 · KidEase · Canada";
+const UPDATED_FR = "En vigueur le 21 octobre 2026 · KidEase · Canada";
 
 const DISCLAIMER_EN =
   "This page explains how KidEase handles personal information and how the service works. It is not legal advice. Official PIPEDA text lives on the Privacy Commissioner of Canada website.";
@@ -66,7 +66,7 @@ export const PRIVACY_EN: LegalDoc = {
           type: "ul",
           items: [
             "Account: name, email, password or sign-in provider, optional phone and profile photo, role (parent or centre director).",
-            "Child profiles you add: name and birthdate if you choose to add a child. Allergies, epi-pen flag, medical notes, medications, doctor name and phone, foods, routines, comfort items, emergency contacts, pickup people, and care notes are optional. You control them. You can leave them blank or delete them.",
+            "Child profiles you add: name and birthdate if you choose to add a child. Allergies, epi-pen flag, medical notes, medications, doctor name and phone, foods, routines, comfort items, emergency contacts, pickup people, and care notes are optional health and care details. You control them. You can leave them blank or delete them. PostHog and Sentry do not receive those health fields.",
             "Search location you choose: a GPS fix while you search, or a typed address, city, or postal code.",
             "Requests and messages: inquire, book-a-tour, and request-a-spot fields, plus in-app chat with that centre.",
             "Claim and enrol (directors): centre identity, licence photo, verification code, and the enrol form (name, email, centre, city, phone, message).",
@@ -189,6 +189,13 @@ export const PRIVACY_EN: LegalDoc = {
                 "Crash and performance reports so we can fix production bugs. We send stack traces and a route tag: not cookies, Authorization headers, emails, tokens, or child names. Sentry is not an advertising pixel. In the iPhone and Android app it starts only after you tap Allow analytics.",
               href: "https://sentry.io/privacy/",
               hrefLabel: "Sentry Privacy Policy",
+            },
+            {
+              name: "Parent helper, when that guide is on",
+              purpose:
+                "Short answers drawn from KidEase guide pages (fees programs, tours, search). It does not receive child health fields, and it does not invent a spot, a fee, or a licence.",
+              href: "/help",
+              hrefLabel: "KidEase Help",
             },
           ],
         },
@@ -470,7 +477,7 @@ export const PRIVACY_FR: LegalDoc = {
           type: "ul",
           items: [
             "Compte : nom, courriel, mot de passe ou fournisseur de connexion, téléphone et photo facultatifs, rôle (parent ou direction).",
-            "Profils d’enfants que vous ajoutez : nom et date de naissance si vous ajoutez un enfant. Allergies, stylo épinéphrine, notes médicales, médicaments, nom et téléphone du médecin, aliments, routines, objets réconfort, contacts d’urgence, personnes autorisées au ramassage et notes de garde sont facultatifs. Vous les contrôlez. Vous pouvez les laisser vides ou les effacer.",
+            "Profils d’enfants que vous ajoutez : nom et date de naissance si vous ajoutez un enfant. Allergies, stylo épinéphrine, notes médicales, médicaments, nom et téléphone du médecin, aliments, routines, objets réconfort, contacts d’urgence, personnes autorisées au ramassage et notes de garde sont des détails de santé et de garde facultatifs. Vous les contrôlez. Vous pouvez les laisser vides ou les effacer. PostHog et Sentry ne reçoivent pas ces champs de santé.",
             "Lieu de recherche : position GPS pendant la recherche, ou une adresse, une ville ou un code postal saisi.",
             "Demandes et messages : inquiry, visite et demande de place, plus le clavardage avec ce centre.",
             "Revendication et inscription (directions) : identité du centre, photo du permis, code de vérification, et le formulaire (nom, courriel, centre, ville, téléphone, message).",
@@ -592,6 +599,13 @@ export const PRIVACY_FR: LegalDoc = {
                 "Rapports de plantage et de performance pour corriger la production. Nous envoyons des traces et une route: pas les témoins, les en-têtes Authorization, les courriels, les jetons ni les noms d’enfants. Sentry n’est pas un pixel publicitaire. Dans l’appli iPhone et Android, il démarre seulement après Autoriser l’analytique.",
               href: "https://sentry.io/privacy/",
               hrefLabel: "Politique de confidentialité Sentry",
+            },
+            {
+              name: "Aide parent, lorsque ce guide est actif",
+              purpose:
+                "Courtes réponses tirées des pages d’aide KidEase. Elle ne reçoit pas les renseignements de santé de l’enfant et n’invente ni place, ni frais, ni permis.",
+              href: "/help",
+              hrefLabel: "Aide KidEase",
             },
           ],
         },

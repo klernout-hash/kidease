@@ -475,7 +475,7 @@ function ThreadPage() {
                     {openBill ? <p className="mt-1 text-sm text-primary-fg/90">{t("connectFeeParentPay")}</p> : null}
                     <Button size="sm" variant="secondary" className="mt-3" asChild>
                       {openBill ? (
-                        <Link to="/pay/bill/$billId" params={{ billId: openBill.id }} search={{}}>
+                        <Link to="/pay/bill/$billId" params={{ billId: openBill.id }} search={{}} data-ke="native-checkout">
                           {t("pay")} · {money(billDollars(openBill), locale)}
                         </Link>
                       ) : (

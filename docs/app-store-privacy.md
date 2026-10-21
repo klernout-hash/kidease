@@ -10,9 +10,9 @@ Bundle id: `ca.kidease.app`
 | --- | --- | --- | --- | --- | --- |
 | Better Auth | Sign-in | Email, name, session | Yes | No | Account data. Sign in with Apple is added only when its four env keys are set. |
 | Neon Postgres | App database | Account, saved centres, messages, bookings | Yes | No | Hosted database. Not a phone SDK, but the data is collected. |
-| Stripe | Web payments | Payment status for daycare plans | Yes | No | Checkout opens in the browser, not as an in-app purchase. Billing rows are kept after account deletion. |
-| PostHog | Product analytics | Pages and actions, approximate location from IP | No, if identified calls stay off | No | Do not mark tracking unless a build actually identifies people. |
-| Sentry | Crash reports | Crash logs, device type | No | No | No ads identifier. |
+| Stripe | Website payments only | Payment status for plans bought on kidease.ca | Yes | No | The iOS and Android shells do not open Stripe or show plan prices. Billing rows are kept after account deletion. |
+| PostHog | Product analytics | Pages and actions, approximate location from IP | No, if identified calls stay off | No | Starts only after Allow. Health fields (allergies, medications, medical notes) are scrubbed. Native replay masks all text. Not tracking. |
+| Sentry | Crash reports | Crash logs, device type | No | No | Native shell waits for Allow. Health phrases in messages are scrubbed. No ads identifier. |
 | Capacitor Geolocation | Near me | Precise location, only while searching | No | No | Not used in the background. City search works if permission is denied. |
 | Capacitor Push | Notifications | Push token | Yes, when the person turns notifications on | No | Off until `FEATURE_PUSH` is on. The app does not ask on first launch. |
 | Capacitor Preferences | On-phone storage | Saved centre names saved for offline | Stays on the phone | No | Not sent to KidEase by itself. |
@@ -29,7 +29,9 @@ Bundle id: `ca.kidease.app`
 `ios/App/App/PrivacyInfo.xcprivacy` declares:
 
 - No tracking
-- Precise location for app functionality
-- UserDefaults reason `CA92.1` (saved preferences on device)
+- Precise and coarse location, email, name, user id, other user content, health (allergies, medications, medical notes), product interaction, crash data, performance data, device id
+- No tracking (`NSPrivacyTracking` false)
+- Required-reason APIs: UserDefaults `CA92.1`, file timestamps `C617.1`, disk space `E174.1`
+- Google Maps and Places for search maps. Age rating 18+. Not the Kids category.
 
 Add a new reason API only when a new native API is actually called.

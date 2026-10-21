@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/react";
-import { analyticsConsentAllowsCapture } from "@/lib/analytics-consent";
+import { shouldStartTelemetry, type AnalyticsConsent } from "@/lib/analytics-consent";
 import { isNative } from "@/lib/native";
 import { registerErrorCapture, type ObserveContext } from "@/lib/observe";
 import {
@@ -28,10 +28,10 @@ export function sentryBrowserEnabled() {
 }
 
 /** Website starts immediately. The native app waits for Allow analytics. */
-export function shouldStartSentryBrowser(): boolean {
+export function shouldStartSentryBrowser(input?: { native?: boolean; consent?: AnalyticsConsent }): boolean {
+  if (input) return shouldStartTelemetry("sentry", input);
   if (typeof window === "undefined") return false;
-  if (!isNative()) return true;
-  return analyticsConsentAllowsCapture();
+  return shouldStartTelemetry("sentry", { native: isNative() });
 }
 
 /** Init once in the browser. No-op when the public DSN is unset or consent is missing. */

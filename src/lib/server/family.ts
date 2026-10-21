@@ -1756,6 +1756,8 @@ export const updateCapacity = createServerFn({ method: "POST" })
  * Tax rules need the billing record after the account is gone.
  */
 export async function purgeAccountData(uid: string) {
+  const { revokeStoredAppleSignIn } = await import("@/lib/server/apple-account-revoke");
+  await revokeStoredAppleSignIn(uid);
   const sql = await getSql();
   await sql`delete from messages where conversation_id in (select id from conversations where user_id = ${uid})`;
   await sql`delete from conversations where user_id = ${uid}`;
@@ -1805,6 +1807,8 @@ export const deleteAccount = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const sql = await getSql();
     const uid = context.userId;
+    const { revokeStoredAppleSignIn } = await import("@/lib/server/apple-account-revoke");
+    await revokeStoredAppleSignIn(uid);
     await sql`
       insert into profiles (user_id, role, deleted_at)
       values (${uid}, 'parent', now())

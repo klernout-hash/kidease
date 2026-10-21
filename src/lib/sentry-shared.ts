@@ -21,7 +21,7 @@ export const SENTRY_CSP_CONNECT = [
 ] as const;
 
 const PII_KEY =
-  /email|e-mail|authorization|cookie|token|password|passwd|secret|otp|bearer|child[_-]?name|first[_-]?name|last[_-]?name|full[_-]?name|phone|ssn/i;
+  /email|e-mail|authorization|cookie|token|password|passwd|secret|otp|bearer|child[_-]?name|first[_-]?name|last[_-]?name|full[_-]?name|phone|ssn|allerg|medic|medical|health|epi[-_ ]?pen/i;
 
 export const SENTRY_IGNORE_ERRORS = [
   /^Script error\.?$/,
@@ -101,7 +101,8 @@ export function scrubPiiString(value: string) {
   return value
     .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[email]")
     .replace(/Bearer\s+\S+/gi, "Bearer [Filtered]")
-    .replace(/(authorization|cookie)\s*[:=]\s*\S+/gi, "$1=[Filtered]");
+    .replace(/(authorization|cookie)\s*[:=]\s*\S+/gi, "$1=[Filtered]")
+    .replace(/\b(allerg(?:y|ies|ic)|medications?|medical notes?|epi-?pen|anaphylaxis)\b[^.\n]{0,80}/gi, "[health]");
 }
 
 export function scrubPiiValue(value: unknown, depth = 0): unknown {

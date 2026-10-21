@@ -16,6 +16,7 @@ import { CaslConsentFields } from "@/components/casl-consent-fields";
 import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent-api";
 import type { CaslPrefs } from "@/lib/casl";
 import { useShowPayCtas } from "@/components/pay-chrome";
+import { useInNativeShell } from "@/lib/use-native-shell";
 
 export function ParentPlusPanel({
   offerCheckout = true,
@@ -36,6 +37,7 @@ export function ParentPlusPanel({
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
   const showPay = useShowPayCtas();
+  const nativeShell = useInNativeShell();
   const offerPlans = showPay || alwaysOffer;
   const [state, setState] = useState<ParentPlusState | null>(null);
   const [interval, setInterval] = useState<PlusInterval>("year");
@@ -102,6 +104,7 @@ export function ParentPlusPanel({
       .catch(() => undefined);
   }, [reloadPlus]);
 
+  if (nativeShell) return null;
   if (!state) return null;
   const current = state;
   const manageable = Boolean(current.stripeLive && current.subscriptionId && subscriptionAccessOpen(current.status) && current.plan !== "free");

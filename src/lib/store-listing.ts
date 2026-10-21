@@ -10,7 +10,7 @@ export const STORE = {
   category: "Lifestyle",
   secondaryCategory: "Education",
   playCategory: "PARENTING",
-  ageRating: "4+",
+  ageRating: "18+",
   price: "Free",
   privacyPolicyPath: "/privacy",
   supportPath: "/help",
@@ -33,40 +33,39 @@ export const STORE = {
   /** Google Play short description: max 80 characters. */
   shortDescription: "Find licensed Canadian daycares by km radius. Fees, spots, enrolment.",
   shortDescriptionFr: "Trouvez des garderies permises au Canada. Frais, places, inscription.",
-  description: `KidEase helps Canadian parents find licensed childcare within a kilometre radius they choose.
+  description: `KidEase helps Canadian parents and daycare providers find licensed childcare within a kilometre radius they choose.
 
-Search from GPS or a postal code. See monthly parent fees (including $10-a-day or reduced-fee spaces where a province funds them), open spots, hours, languages, and a street-level storefront photo of the building.
+Search from your location or a postal code. See fees, open spots, hours, and languages only when that centre has entered them. A $10-a-day label appears only when the listing data says so.
 
-Request a spot, message the centre, and pay a first-month deposit in-app. Providers manage listings, capacity, and family conversations from the same app.
+Save centres for later, including when you are offline. Share a listing. Request a tour. Message the centre. Providers manage their listing from the same app.
 
-This directory covers licensed centres in every Canadian province and territory, sourced from provincial and territorial registries. Listings show the building storefront from street level.
+This directory covers licensed centres in every Canadian province and territory.
 
 What you can do
-• Set a search radius in kilometres (5, 10, 15, 25, 50, or custom)
+• Set a search radius in kilometres
 • Switch map and list views
-• Filter by infant, toddler, or preschool
-• Save centres, add children, and send enrolment requests
-• Message educators and join a parent-initiated video check-in
-• Pay deposits by card, Apple Pay, Google Pay, PayPal, or Interac e-Transfer
+• Filter by infant, toddler, or preschool age groups
+• Save centres and send a tour request
+• Use the tab bar: Search, Saved, Messages, Account
 
-Child safety
-KidEase is a parent and provider app: not a children’s app. Child first names and birthdates are visible only to you and to a centre you contact. We do not sell personal information. Video check-in is started by the parent; we do not livestream children.
+Adults only
+KidEase is for parents and daycare providers. Accounts are 18+. It is not in the Kids category.
 
-Payments for childcare deposits are real-world services (not digital in-app purchases).
+Nothing is sold inside the app. A plan bought on kidease.ca still unlocks after you sign in. Push alerts are off until you turn them on.
 
-Privacy policy, terms, cookie policy, and account deletion live in the app.`,
-  descriptionFr: `KidEase aide les parents canadiens à trouver une garde permise dans un rayon en kilomètres.
+Privacy policy, terms, and account deletion are in the app.`,
+  descriptionFr: `KidEase aide les parents et les garderies du Canada à trouver une garde permise dans un rayon en kilomètres.
 
-Cherchez par GPS ou code postal. Voyez les frais mensuels (y compris les places à 10 $ par jour ou à tarif réduit là où une province les finance), les places ouvertes, les heures, les langues et une photo aérienne du bâtiment.
+Cherchez par position ou code postal. Les frais et les places s’affichent seulement si le centre les a inscrits.
 
-Demandez une place, écrivez au centre et versez un dépôt du premier mois. Les fournisseurs gèrent fiches, capacité et messages.
+Enregistrez des centres, même hors ligne. Partagez une fiche. Demandez une visite. Écrivez au centre.
 
-Le répertoire couvre les centres permis de chaque province et territoire, d’après les registres provinciaux.
+Adultes seulement
+KidEase est pour les parents et les garderies. Les comptes sont 18 ans et plus. Ce n’est pas une catégorie Enfants.
 
-Sécurité des enfants
-Application pour parents et fournisseurs: pas une appli pour enfants. Les prénoms et dates de naissance ne sont visibles que par vous et le centre contacté. Pas de vente de données. Pas de diffusion continue d’enfants.
+Rien ne se vend dans l’appli. Un forfait acheté sur kidease.ca reste ouvert après la connexion.
 
-Les dépôts sont un service réel, pas un achat intégré numérique.`,
+Politique de confidentialité, conditions et suppression du compte sont dans l’appli.`,
   ageRatingAnswers: {
     madeForKids: false,
     unrestrictedWebAccess: false,

@@ -14,6 +14,7 @@ import { useCopy } from "@/lib/use-copy";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { NativeBoot } from "@/components/native-boot";
+import { NativeCommerceStrip } from "@/components/native-commerce-strip";
 import { PushExplain } from "@/components/push-explain";
 import { GetAlertsPrompt } from "@/components/get-alerts-prompt";
 import { ThemeBoot } from "@/components/theme-boot";
@@ -61,7 +62,21 @@ export const Route = createRootRoute({
     if (visitorLocale.redirectTo) {
       throw redirect({ href: visitorLocale.redirectTo, statusCode: 302 });
     }
-    return { roleChrome, visitorLocale };
+    let nativeShell = false;
+    if (typeof window !== "undefined") {
+      const { isNativeUserAgent } = await import("@/lib/native-entitlements");
+      const { isNative } = await import("@/lib/native");
+      nativeShell = isNativeUserAgent(window.navigator.userAgent) || isNative();
+    } else {
+      try {
+        const { getRequest } = await import("@tanstack/react-start/server");
+        const { isNativeUserAgent } = await import("@/lib/native-entitlements");
+        nativeShell = isNativeUserAgent(getRequest().headers.get("user-agent"));
+      } catch {
+        nativeShell = false;
+      }
+    }
+    return { roleChrome, visitorLocale, nativeShell };
   },
   errorComponent: ({ error }) => {
     reportError(error, {
@@ -150,6 +165,7 @@ export const Route = createRootRoute({
 
 function RootDocument() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const nativeShell = Route.useRouteContext({ select: (s) => Boolean(s.nativeShell) });
   const { locale } = useCopy();
   const lang =
     pathLocale(pathname) === "fr" || locale === "fr" ? "fr-CA" : locale === "en" ? "en" : localeTag(locale);
@@ -158,7 +174,7 @@ function RootDocument() {
       lang={lang}
       className="antialiased"
       data-channel="website"
-      data-runtime="web"
+      data-runtime={nativeShell ? "native" : "web"}
       data-theme="system"
       suppressHydrationWarning
     >
@@ -196,6 +212,7 @@ function RootDocument() {
           <ThemeBoot />
           <LocaleChoiceSync />
           <NativeBoot />
+          <NativeCommerceStrip />
           <PushExplain />
           <GetAlertsPrompt />
           <PostHogBoot />

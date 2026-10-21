@@ -34,6 +34,8 @@ const config: CapacitorConfig = {
   appId: CAP_APP_ID,
   appName: CAP_APP_NAME,
   webDir: "native-www",
+  // Server-render native commerce hide before paint. Not a secret.
+  appendUserAgent: "KidEaseNative",
   server: {
     androidScheme: "https",
     iosScheme: "https",
