@@ -39,7 +39,7 @@ export function AdminMailPanel() {
       setInboxError(inbox.error);
     } catch (err) {
       setMessages([]);
-      setInboxError(err instanceof Error ? err.message : "Could not load the Titan inbox.");
+      setInboxError("Could not load the Titan inbox.");
     } finally {
       setInboxLoading(false);
     }

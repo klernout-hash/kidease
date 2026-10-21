@@ -26,6 +26,8 @@ export type DeskItem = {
   href?: string;
   search?: Record<string, string>;
   icon?: DeskIcon;
+  /** Hidden on the production site. Stays available in local and preview builds. */
+  devOnly?: boolean;
 };
 
 /** Swap these labels anytime. Ids stay stable. */
@@ -36,15 +38,15 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "winnipeg", label: "Winnipeg gaps", hint: "Ages, fees, real photos", labelKey: "adminWinnipegNav", hintKey: "adminWinnipegNavHint" },
     { id: "verify", label: "Licence and photos", hint: "Review uploads" },
     { id: "daycares", label: "Daycares", hint: "By province" },
-    { id: "trust", label: "Trust", hint: "Registries + reports" },
+    { id: "trust", label: "Registries", hint: "Licensing bodies and parent reports" },
     { id: "screening", label: "Screening", hint: "Document review" },
     { id: "mail", label: "Messages", hint: "Mail" },
     { id: "contracts", label: "Contracts", hint: "Provider agreement + enrolment packs" },
-    { id: "money", label: "Money", hint: "Bills and fees" },
+    { id: "money", label: "Bills", hint: "Parent bills and fees" },
     { id: "people", label: "People", hint: "Parents and daycare accounts" },
     { id: "activity", label: "Activity", hint: "Platform log" },
     { id: "reviews", label: "Reviews", hint: "Publish or hide gated parent reviews" },
-    { id: "chat", label: "Chat lab", hint: "Scaffold only", href: "/admin-chat" },
+    { id: "chat", label: "Chat lab", hint: "Scaffold only", href: "/admin-chat", devOnly: true },
     { id: "ranking", label: "Demand and supply", hint: "Searches vs openings", href: "/admin-ranking" },
     { id: "truth", label: "Listing changes", hint: "Approve each change", labelKey: "adminTruthTitle", hintKey: "adminNavTruthHint", href: "/admin-truth" },
     { id: "spam", label: "Spam and fraud", hint: "High scores only", labelKey: "adminSpamTitle", hintKey: "adminNavSpamHint", href: "/admin-spam" },
@@ -191,6 +193,7 @@ const OWNER_ONLY_NAV = new Set([
 
 export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
   return DESK_NAV[desk].filter((item) => {
+    if (item.devOnly && import.meta.env?.PROD === true) return false;
     if (item.id === "upgrade" || item.id === "subscription") return true;
     if (item.id === "promote") {
       if (opts?.showPayCtas === false) return false;
