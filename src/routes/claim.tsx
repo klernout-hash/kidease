@@ -125,6 +125,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
     if (window.location.hash !== "#enroll") return;
     const el = document.getElementById("enroll");
     if (!el) return;
+    if (el instanceof HTMLDetailsElement) el.open = true;
     const tmr = window.setTimeout(() => {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 80);

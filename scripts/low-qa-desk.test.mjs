@@ -80,3 +80,11 @@ test("how it works is a page, and empty compare or report search is omitted", ()
   assert.match(src("src/routes/report.tsx"), /return province \? \{ province \} : \{\}/);
   assert.equal(readDeskGroupOpen("admin", "missing", true), true);
 });
+
+test("claim keeps one find form open and the enrol form opens from the hash", () => {
+  const claim = src("src/routes/claim.tsx");
+  assert.match(claim, /<details id="enroll"/);
+  assert.match(claim, /el instanceof HTMLDetailsElement\) el\.open = true/);
+  assert.match(claim, /data-ke="claim-license-file"/);
+  assert.match(claim, /file:min-h-11/);
+});
