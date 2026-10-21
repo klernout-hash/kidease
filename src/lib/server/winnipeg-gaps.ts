@@ -17,7 +17,8 @@ import {
   mergePhotoList,
   planCompletenessFill,
   summarizeLiveLooking,
-  winnipegGapsCsv,
+  gapListLabel,
+  winnipegGapsPublicCsv,
   type CompletenessInput,
   type FillPatch,
 } from "@/lib/winnipeg-completeness";
@@ -111,10 +112,6 @@ export type WinnipegGapClientRow = {
   slug: string;
   name: string;
   city: string;
-  phone: string | null;
-  website: string | null;
-  licenseNumber: string | null;
-  address: string;
   missingAges: boolean;
   missingFees: boolean;
   missingPhoto: boolean;
@@ -135,12 +132,8 @@ function toClient(row: CompletenessInput): WinnipegGapClientRow {
   return {
     id: row.id || "",
     slug: row.slug || "",
-    name: decodeBasicEntities(row.name || ""),
+    name: gapListLabel(decodeBasicEntities(row.name || "")),
     city: row.city || "",
-    phone: row.phone || null,
-    website: row.website || null,
-    licenseNumber: row.licenseNumber || null,
-    address: row.address || "",
     missingAges: gaps.includes("ages"),
     missingFees: gaps.includes("fees"),
     missingPhoto: gaps.includes("photo"),
@@ -165,7 +158,7 @@ export const listWinnipegGaps = createServerFn({ method: "GET" })
       database: dbSource,
       summary,
       rows: gaps.map(toClient),
-      csv: winnipegGapsCsv(listings),
+      csv: winnipegGapsPublicCsv(listings),
     };
   });
 

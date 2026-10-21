@@ -2458,6 +2458,7 @@
   "adminWinnipegFeeProgramHint": "mb-10-day cuando una fuente muestra que este centro está financiado al tope diario regulado. Deja las tarifas mensuales en blanco.",
   "adminWinnipegDownload": "Descargar CSV de faltantes",
   "adminWinnipegEmpty": "No hay listados públicos de Winnipeg en esta base de datos.",
+  "adminWinnipegUnavailable": "Esta lista no está disponible ahora. Vuelve al admin, o inténtalo de nuevo.",
   "adminWinnipegLoading": "Midiendo listados de Winnipeg…",
   "adminWinnipegSearchVisible": "Visible en la búsqueda",
   "adminWinnipegPlatformLive": "En vivo en la plataforma",

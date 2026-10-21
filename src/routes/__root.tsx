@@ -23,7 +23,8 @@ import { PostHogBoot } from "@/components/posthog-boot";
 import { RoleBoot } from "@/components/role-boot";
 import { KidEaseToaster } from "@/components/kidease-toaster";
 import { SuccessConfirmHost } from "@/components/success-confirm";
-import { reportError } from "@/lib/observe";
+import { SafeRouteError } from "@/components/safe-error-boundary";
+import { safeErrorCopy } from "@/lib/safe-error";
 import { getRoleChrome } from "@/lib/server/role-route";
 import { STYLE_NONCE_BOOT } from "@/lib/style-nonce-boot";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
@@ -63,45 +64,21 @@ export const Route = createRootRoute({
     }
     return { roleChrome, visitorLocale };
   },
-  errorComponent: ({ error }) => {
-    reportError(error, {
-      route: typeof window !== "undefined" ? window.location.pathname : "root",
-    });
+  errorComponent: (props) => {
+    const path = typeof window !== "undefined" ? window.location.pathname : "";
+    const copy = safeErrorCopy(path);
     return (
-      <>
-        <style
-          dangerouslySetInnerHTML={{
-            __html:
-              ".ke-crash{font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:48px;min-height:100vh}" +
-              ".ke-crash-kicker{font-size:12px;letter-spacing:.16em;text-transform:uppercase}" +
-              ".ke-crash-title{font-size:28px}" +
-              ".ke-crash-detail{color:#5c6578;font-size:13px}",
-          }}
-        />
-        <div className="ke-crash">
-          <p className="ke-crash-kicker">KidEase</p>
-          <h1 className="ke-crash-title">Something went wrong</h1>
-          <p>
-            Refresh the page, or go back to kidease.ca. If it keeps happening, email{" "}
-            {SUPPORT_INBOX_EMAIL}.
-          </p>
-          <p
-            className="ke-crash-actions"
-            style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginTop: "16px" }}
-          >
-            <a href="/search" style={{ fontWeight: 600 }}>
-              Explore
-            </a>
-            <a href="/" style={{ fontWeight: 600 }}>
-              Home
-            </a>
-            <a href={`mailto:${SUPPORT_INBOX_EMAIL}`}>Email support</a>
-          </p>
-          <p className="ke-crash-detail">
-            {error instanceof Error ? error.message : "Please try again."}
-          </p>
-        </div>
-      </>
+      <SafeRouteError
+        {...props}
+        links={
+          <>
+            {path.startsWith("/admin") ? <a href="/admin">{copy.admin}</a> : null}
+            <a href="/search">{copy.explore}</a>
+            <a href="/">{copy.home}</a>
+            <a href={`mailto:${SUPPORT_INBOX_EMAIL}`}>{copy.support}</a>
+          </>
+        }
+      />
     );
   },
   head: () => ({

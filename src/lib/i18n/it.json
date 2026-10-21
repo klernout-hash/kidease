@@ -2458,6 +2458,7 @@
   "adminWinnipegFeeProgramHint": "mb-10-day quando una fonte indica che questo centro è finanziato al tetto giornaliero regolamentato. Lasci vuote le rette mensili.",
   "adminWinnipegDownload": "Scarichi il CSV delle lacune",
   "adminWinnipegEmpty": "Nessuna scheda pubblica di Winnipeg in questo database.",
+  "adminWinnipegUnavailable": "Questo elenco non è disponibile adesso. Torna all'admin, oppure riprova.",
   "adminWinnipegLoading": "Misurazione delle schede di Winnipeg…",
   "adminWinnipegSearchVisible": "Visibile in ricerca",
   "adminWinnipegPlatformLive": "Piattaforma Live",

@@ -202,6 +202,21 @@ function csvCell(value: string | number | null | undefined): string {
   return text;
 }
 
+const BUSINESS_NAME =
+  /\b(daycare|day[\s-]?care|child|children|centre|center|school|academy|learning|montessori|ymca|ywca|nursery|preschool|pre-school|garderie|école|ecole|kids|kid|play|early|coop|co-op|church|parish|community)\b/i;
+
+/** Public listing title, or a masked personal name. Phones are never part of this label. */
+export function gapListLabel(name: string | null | undefined): string {
+  const clean = String(name || "").replace(/\s+/g, " ").trim();
+  if (!clean) return "Listing";
+  if (BUSINESS_NAME.test(clean)) return clean;
+  return clean
+    .split(" ")
+    .map((part) => (part ? `${part.slice(0, 1)}···` : ""))
+    .filter(Boolean)
+    .join(" ");
+}
+
 /** Outreach CSV. Fill columns stay blank: the catalogue fee guess is not copied. */
 export function winnipegGapsCsv(rows: readonly CompletenessInput[]): string {
   const visible = rows.filter((row) => isSearchVisibleListing(row) && isWinnipegOutreachCity(row.city));
@@ -224,6 +239,61 @@ export function winnipegGapsCsv(rows: readonly CompletenessInput[]): string {
         row.licenseNumber || "",
         row.website || "",
         row.address || "",
+        isPlatformLiveListing(row) ? 1 : 0,
+        hasRealPhoto(row) ? 1 : 0,
+        gaps.includes("ages") ? 1 : 0,
+        gaps.includes("fees") ? 1 : 0,
+        gaps.includes("photo") ? 1 : 0,
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+      ]
+        .map(csvCell)
+        .join(","),
+    );
+  }
+  return `${lines.join("\n")}\n`;
+}
+
+const ADMIN_GAP_HEADERS = [
+  "id",
+  "slug",
+  "name",
+  "city",
+  "platform_live",
+  "has_real_photo",
+  "missing_ages",
+  "missing_fees",
+  "missing_photo",
+  "age_min_months",
+  "age_max_months",
+  "infant_monthly",
+  "toddler_monthly",
+  "preschool_monthly",
+  "part_time_monthly",
+  "fee_program",
+  "photo_url",
+  "source",
+] as const;
+
+/** Admin download. No phone, address, website, or licence. Personal names are masked. */
+export function winnipegGapsPublicCsv(rows: readonly CompletenessInput[]): string {
+  const visible = rows.filter((row) => isSearchVisibleListing(row) && isWinnipegOutreachCity(row.city));
+  const lines = [ADMIN_GAP_HEADERS.join(",")];
+  for (const row of visible) {
+    const gaps = liveLookingGaps(row);
+    lines.push(
+      [
+        row.id,
+        row.slug,
+        gapListLabel(row.name),
+        row.city,
         isPlatformLiveListing(row) ? 1 : 0,
         hasRealPhoto(row) ? 1 : 0,
         gaps.includes("ages") ? 1 : 0,

@@ -11,8 +11,10 @@ import {
   liveLookingGaps,
   parseGapCsv,
   planCompletenessFill,
+  gapListLabel,
   summarizeLiveLooking,
   winnipegGapsCsv,
+  winnipegGapsPublicCsv,
 } from "../src/lib/winnipeg-completeness.ts";
 import { loadWinnipegCatalogue } from "./winnipeg-live-looking.mjs";
 
@@ -229,6 +231,22 @@ test("sourced fill writes only empty cells and refuses guesses", () => {
     },
   );
   assert.equal(already.action, "skip");
+});
+
+test("admin gap list masks a personal name and drops the phone", () => {
+  assert.equal(gapListLabel("Peninsula Montessori"), "Peninsula Montessori");
+  assert.equal(gapListLabel("Jane Smith"), "J··· S···");
+  const csv = winnipegGapsPublicCsv([
+    centre({ id: "mb-9", name: "Jane Smith", phone: "204-555-0199", address: "9 Private Lane", website: "https://jane.example" }),
+  ]);
+  assert.match(csv, /J··· S···/);
+  assert.doesNotMatch(csv, /Jane Smith/);
+  assert.doesNotMatch(csv, /204-555-0199/);
+  assert.doesNotMatch(csv, /9 Private Lane/);
+  assert.doesNotMatch(csv, /jane\.example/);
+  assert.doesNotMatch(csv, /phone/);
+  const ui = readFileSync(join(root, "src/components/admin-winnipeg-gaps.tsx"), "utf8");
+  assert.doesNotMatch(ui, /row\.phone/);
 });
 
 test("gap CSV round-trips blank cells and keeps a filled source", () => {

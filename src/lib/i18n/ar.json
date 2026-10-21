@@ -2458,6 +2458,7 @@
   "adminWinnipegFeeProgramHint": "mb-10-day عندما يُظهر مصدر أن هذا المركز ممول عند السقف اليومي المنظَّم. اترك الرسوم الشهرية فارغة.",
   "adminWinnipegDownload": "تنزيل CSV الفجوات",
   "adminWinnipegEmpty": "لا توجد إدراجات عامة لوينيبيغ في قاعدة البيانات هذه.",
+  "adminWinnipegUnavailable": "هذه القائمة غير متاحة الآن. ارجع إلى الإدارة، أو حاول مرة أخرى.",
   "adminWinnipegLoading": "جارٍ قياس إدراجات وينيبيغ…",
   "adminWinnipegSearchVisible": "ظاهر في البحث",
   "adminWinnipegPlatformLive": "مباشر على المنصة",

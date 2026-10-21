@@ -2458,6 +2458,7 @@
   "adminWinnipegFeeProgramHint": "mb-10-day, wenn eine Quelle zeigt, dass diese Einrichtung zur gesetzlich geregelten Tagesobergrenze gefördert wird. Lassen Sie die monatlichen Gebühren leer.",
   "adminWinnipegDownload": "Lücken-CSV herunterladen",
   "adminWinnipegEmpty": "Keine öffentlichen Winnipeg-Einträge in dieser Datenbank.",
+  "adminWinnipegUnavailable": "Diese Liste ist gerade nicht verfügbar. Zurück zum Admin, oder erneut versuchen.",
   "adminWinnipegLoading": "Winnipeg-Einträge werden gemessen…",
   "adminWinnipegSearchVisible": "In der Suche sichtbar",
   "adminWinnipegPlatformLive": "Plattform Live",
