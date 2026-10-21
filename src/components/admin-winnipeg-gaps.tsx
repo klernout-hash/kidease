@@ -5,13 +5,14 @@ import { applyWinnipegGaps, listWinnipegGaps, type WinnipegGapReport } from "@/l
 import { MB_FUNDED_10_DAY } from "@/lib/fee-program";
 import { parseGapCsv, type FillPatch } from "@/lib/winnipeg-completeness";
 import { useCopy } from "@/lib/use-copy";
+import { standardAgeLabelsForListing } from "@/lib/standard-age-groups";
 
 function percent(share: number) {
   return `${(share * 100).toFixed(1)}%`;
 }
 
 export function AdminWinnipegGaps() {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const reauth = useReauthPrompt();
   const [report, setReport] = useState<WinnipegGapReport | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -181,6 +182,17 @@ export function AdminWinnipegGaps() {
           {t("adminWinnipegAgeMax")}
           <input inputMode="numeric" value={ageMax} onChange={(event) => setAgeMax(event.target.value)} className="mt-1 h-11 w-full rounded-xl bg-surface-2 px-3 ring-1 ring-border" />
         </label>
+        {standardAgeLabelsForListing(
+          { agesKnown: true, ageMinMonths: Number(ageMin), ageMaxMonths: Number(ageMax) },
+          locale === "fr" ? "fr" : "en",
+        ).join(" · ") ? (
+          <p className="sm:col-span-2 text-sm text-muted" data-ke="admin-age-groups">
+            {standardAgeLabelsForListing(
+              { agesKnown: true, ageMinMonths: Number(ageMin), ageMaxMonths: Number(ageMax) },
+              locale === "fr" ? "fr" : "en",
+            ).join(" · ")}
+          </p>
+        ) : null}
         <label className="text-sm">
           {t("adminWinnipegInfant")}
           <input inputMode="numeric" value={infant} onChange={(event) => setInfant(event.target.value)} className="mt-1 h-11 w-full rounded-xl bg-surface-2 px-3 ring-1 ring-border" />

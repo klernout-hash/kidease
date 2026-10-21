@@ -33,11 +33,11 @@ import { checkListingPhoto } from "@/lib/server/photo-check";
 import { ProviderParentFields, parentDeskFromDaycare } from "@/components/provider-parent-fields";
 import { WaitlistPulseButton } from "@/components/waitlist-pulse-button";
 import { useCopy } from "@/lib/use-copy";
+import { standardAgeLabelsForListing } from "@/lib/standard-age-groups";
 import type { CopyKey } from "@/lib/copy";
 import { isReauthRequiredMessage } from "@/lib/reauth";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { useReauthPrompt } from "@/components/reauth-dialog";
-import { formatAgeRange } from "@/lib/utils";
 import { formatPlanCad } from "@/lib/upgrade-plans";
 import { planPriceHint, PROVIDER_ADDONS, PROVIDER_PLANS, type ProviderAddonId } from "@/lib/provider-plans";
 import { startProviderAddonCheckout, startProviderCheckout } from "@/lib/server/provider-subscriptions";
@@ -774,9 +774,20 @@ export function CapacityForm({
           <div id="listing-health-ages" className="grid gap-3 sm:grid-cols-2">
             <Num label={t("ageMin")} value={state.ageMinMonths} onChange={(n) => setState({ ...state, ageMinMonths: n })} />
             <Num label={t("ageMax")} value={state.ageMaxMonths} onChange={(n) => setState({ ...state, ageMaxMonths: n })} />
-            <p className="text-sm tabular-nums text-muted sm:col-span-2">
-              {t("agesAccepted")}: {formatAgeRange(state.ageMinMonths, state.ageMaxMonths)}
-            </p>
+            {(() => {
+              const guessed = !daycare.agesKnown && state.ageMinMonths === 12 && state.ageMaxMonths === 60;
+              if (guessed) return null;
+              const labels = standardAgeLabelsForListing(
+                { agesKnown: true, ageMinMonths: state.ageMinMonths, ageMaxMonths: state.ageMaxMonths },
+                locale === "fr" ? "fr" : "en",
+              );
+              if (!labels.length) return null;
+              return (
+                <p className="text-sm text-muted sm:col-span-2">
+                  {t("agesAccepted")}: {labels.join(" · ")}
+                </p>
+              );
+            })()}
           </div>
           <ListingCultureFields
             value={{

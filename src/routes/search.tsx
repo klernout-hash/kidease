@@ -104,6 +104,7 @@ import {
   type CareType,
   type RailAge,
 } from "@/lib/care-type";
+import { standardAgeLabel } from "@/lib/standard-age-groups";
 import {
   EXPLORE_CATEGORY_COPY,
   countExploreCategories,
@@ -1106,7 +1107,7 @@ export function SearchScreen({
       );
     if (inclusive) rows = rows.filter((r) => hasAmenity(r.amenities, "inclusive"));
     if (extended) rows = rows.filter((r) => staysLate(r.hours, r.amenities) || opensEarly(r.hours));
-    if (infantOnly) rows = rows.filter((r) => r.agesKnown && r.ageMinMonths <= 18);
+    if (infantOnly) rows = rows.filter((r) => matchesRailAge(r, "infant"));
     if (catchmentOnly) rows = rows.filter((r) => r.inCatchment);
     if (confirmedOnly)
       rows = rows.filter((r) => vacancyFreshness(vacancyTimestamp(r)).kind === "fresh");
@@ -1498,7 +1499,7 @@ export function SearchScreen({
       {chip(outdoor, t("filterOutdoor"), () => setOutdoor((v) => !v))}
       {chip(inclusive, t("filterInclusive"), () => setInclusive((v) => !v))}
       {chip(extended, t("filterExtended"), () => setExtended((v) => !v))}
-      {chip(infantOnly, t("filterInfant"), () => setInfantOnly((v) => !v))}
+      {chip(infantOnly, standardAgeLabel("infant", locale), () => setInfantOnly((v) => !v))}
       {chip(catchmentOnly, t("filterCatchment"), () => setCatchmentOnly((v) => !v))}
       {chip(favoritesOnly, t("filterFavorites"), () => setFavoritesOnly((v) => !v))}
     </div>
@@ -1579,7 +1580,7 @@ export function SearchScreen({
               />
             </label>
             <p className="mt-2 text-xs text-subtle">
-              {origin.label} · {shownRadius} {u} · {ageGroup === "any" ? t("anyAge") : t(ageGroup)}
+              {origin.label} · {shownRadius} {u} · {ageGroup === "any" ? t("anyAge") : standardAgeLabel(ageGroup, locale)}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button
@@ -1700,7 +1701,7 @@ export function SearchScreen({
                     [meals, t("filterMeals"), () => setMeals((v) => !v)],
                     [outdoor, t("filterOutdoor"), () => setOutdoor((v) => !v)],
                     [extended, t("filterExtended"), () => setExtended((v) => !v)],
-                    [infantOnly, t("filterInfant"), () => setInfantOnly((v) => !v)],
+                    [infantOnly, standardAgeLabel("infant", locale), () => setInfantOnly((v) => !v)],
                     [ten, t("filterTen"), () => setTen((v) => !v)],
                   ] as [boolean, string, () => void][]
                 ).map(([on, label, toggle]) => (

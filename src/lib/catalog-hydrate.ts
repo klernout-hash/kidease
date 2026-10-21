@@ -40,6 +40,11 @@ export type CatalogDaycare = {
   hoursFr: string;
   ageMinMonths: number;
   ageMaxMonths: number;
+  /** Set from Neon ages_confirmed. Missing means the month range can still be used. */
+  agesKnown?: boolean;
+  /** Official source sentence, shown on the listing page only. */
+  agesSource?: string | null;
+  agesSourceUrl?: string | null;
   infantMonthly: number | null;
   toddlerMonthly: number | null;
   preschoolMonthly: number | null;

@@ -84,7 +84,7 @@ import {
 } from "@/lib/google-maps";
 import { BuildingPhoto } from "@/components/building-photo";
 import { mapPinThumb } from "@/lib/listing-photo";
-import { listingAgeRangeText } from "@/lib/listing-ages";
+import { standardAgeLabelsForListing } from "@/lib/standard-age-groups";
 import { UNMEASURED_DISTANCE_KM, isDoorPin } from "@/lib/card-distance";
 import { parentDistanceLabel } from "@/lib/distance-label";
 import { originIsParentLocation } from "@/lib/presence";
@@ -1052,7 +1052,7 @@ function MapPinPopup({
     city: item.city,
     away,
   });
-  const ages = listingAgeRangeText(item, "months", locale === "fr" ? "fr" : "en");
+  const ages = standardAgeLabelsForListing(item, locale === "fr" ? "fr" : "en").join(" · ");
   const vacancy = honestVacancy(item);
   const facts = [
     ages,

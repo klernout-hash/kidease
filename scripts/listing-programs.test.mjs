@@ -24,9 +24,9 @@ test("age bands clip to the centre and drop zero-width and younger-band edges", 
   assert.deepEqual(clipAgeBand(72, 144, "school-age"), { min: 72, max: 144 });
   assert.equal(clipAgeBand(24, 72, "school-age"), null);
   assert.equal(clipAgeBand(3, 36, "preschool"), null);
-  assert.deepEqual(clipAgeBand(3, 72, "preschool"), { min: 30, max: 72 });
+  assert.deepEqual(clipAgeBand(3, 72, "preschool"), { min: 36, max: 60 });
   assert.equal(clipAgeBand(60, 72, "school-age"), null);
-  assert.deepEqual(clipAgeBand(60, 144, "school-age"), { min: 60, max: 144 });
+  assert.deepEqual(clipAgeBand(60, 144, "school-age"), { min: 72, max: 144 });
 });
 
 test("part-time is its own fee and never a school-age amount", () => {

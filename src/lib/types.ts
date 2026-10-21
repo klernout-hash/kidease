@@ -135,6 +135,9 @@ export type Daycare = {
   /** Paid placement pin (Pro / featured-city add-on). Never part of quality score. */
   featuredCity?: boolean;
   agesKnown?: boolean;
+  /** Official provincial age wording. Shown on the listing page only. */
+  agesSource?: string | null;
+  agesSourceUrl?: string | null;
   visibility?: "public" | "admin_only";
   isTest?: boolean;
   /** Provider-set Canada facility class. Null = derive from amenities (never a name guess). */

@@ -402,7 +402,7 @@ test("search and explore wire one Top 7 chip row and ?cat=", () => {
   assert.match(chips, /data-explore-cat/);
   assert.match(chips, /RAIL_AGES/);
   assert.match(lib, /listingAgeUnknown/);
-  assert.match(chips, /EXPLORE_CATEGORY_COPY/);
+  assert.match(chips, /standardAgeLabel/);
   assert.match(src("src/lib/copy.ts"), /catInfants: "Infants"/);
   assert.match(src("src/lib/copy.ts"), /catBeforeAfter: "Before & after"/);
   assert.match(explore, /redirect\(\{ to: "\/search" \}\)/);
