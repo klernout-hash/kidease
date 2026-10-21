@@ -335,14 +335,14 @@ function ThreadPage() {
               <div className="flex shrink-0">
                 {id && voiceReady ? (
                   <Button variant="ghost" size="icon" asChild>
-                    <Link to="/call/$conversationId" params={{ conversationId: id }} aria-label={t("voiceStart")}>
+                    <Link to="/call/$conversationId" params={{ conversationId: id }} reloadDocument aria-label={t("voiceStart")}>
                       <Phone className="size-5" />
                     </Link>
                   </Button>
                 ) : null}
                 {id && videoSurface ? (
                   <Button variant="ghost" size="icon" asChild>
-                    <Link to="/video/$roomId" params={{ roomId: id }} aria-label={t("videoCall")}>
+                    <Link to="/video/$roomId" params={{ roomId: id }} reloadDocument aria-label={t("videoCall")}>
                       <Video className="size-5" />
                     </Link>
                   </Button>

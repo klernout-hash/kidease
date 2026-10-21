@@ -9,6 +9,7 @@ import {
 import { localeTag } from "@/lib/languages";
 import { pathLocale } from "@/lib/locale-path";
 import { getVisitorLocale } from "@/lib/locale-choice";
+import { readServerStoreChannel } from "@/lib/store-channel-request";
 import { LocaleChoiceSync } from "@/components/language-select";
 import { useCopy } from "@/lib/use-copy";
 import { AuthProvider } from "@/lib/auth/provider";
@@ -160,23 +161,7 @@ async function readRequestStoreChannel(search: string): Promise<StoreChannel> {
       cookie: document.cookie,
     });
   }
-  try {
-    const { getRequest } = await import("@tanstack/react-start/server");
-    const req = getRequest();
-    let fromUrl = "";
-    try {
-      fromUrl = new URL(req.url, "https://www.kidease.ca").search;
-    } catch {
-      fromUrl = "";
-    }
-    return storeChannelFromSignals({
-      userAgent: req.headers.get("user-agent"),
-      search: fromUrl || search,
-      cookie: req.headers.get("cookie"),
-    });
-  } catch {
-    return storeChannelFromSignals({ search });
-  }
+  return readServerStoreChannel({ data: { search } }).catch(() => storeChannelFromSignals({ search }));
 }
 
 function RootDocument() {

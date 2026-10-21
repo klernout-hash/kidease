@@ -26,14 +26,20 @@ The WebView loads `https://www.kidease.ca`. JavaScript SDKs are not Android libr
 
 | SDK | Data it collects | When |
 | --- | --- | --- |
-| posthog-js | Page views, product events, account id if signed in. The property scrubber drops password, email, phone, child name, birth date, and health text (allergies, medications, medical notes). Session replay stays off unless `VITE_PUBLIC_POSTHOG_REPLAY_NATIVE` is on (default off). | Only after the person taps Allow analytics. Essential or no choice means PostHog does not start and the app does not queue events. First-party `/ingest` proxy. |
+| posthog-js | Page views and product events. When the person is signed in, that usage is linked to the account id. The property scrubber drops password, email, phone, child name, birth date, and health text (allergies, medications, medical notes). Session replay stays off unless `VITE_PUBLIC_POSTHOG_REPLAY_NATIVE` is on (default off). | Only after the person taps Allow analytics. Essential or no choice means PostHog does not start and the app does not queue events. First-party `/ingest` proxy. On the Data safety form, mark App activity as collected and linked to the account. |
 | @sentry/react | Crash and performance traces if `VITE_PUBLIC_SENTRY_DSN` is set. Data collection is limited: no user info, cookies, headers, query params, or request bodies. Stack trace and route tag. No email, child name, or health text. | Website and app both wait for the same Allow tap. Unset or Essential does not start Sentry. Leave it off the form when the DSN is unset. |
 | twilio-video and @twilio/voice-sdk | Live audio on a voice call. Live audio and video on a video tour. Not a native AAR. The scripts load only on `/call` and `/video`. KidEase does not record the call. Phone numbers stay hidden. | After the person opens a call and the phone shows the camera and microphone prompt. Declare Audio and Photos and videos. Not used for ads. Not collected in the background. |
 
 ## Health information
 
 Parents can type child health details in KidEase: allergies, medications, and medical notes. On the Play Data safety form, declare **Health info**. Those fields stay in the KidEase database. PostHog and Sentry scrub keys and values that look like allergy, medication, medical, or health notes. They are not sent to analytics or crash reports.
-| Stripe Checkout | Not opened from the Android app. | Plan prices, upgrade buttons, and Stripe links are removed from the native shell. A plan already bought on the website still unlocks after sign-in. |
+Also declare these, each linked to the account:
+
+- **Phone number.** A parent or centre can save a phone number on the profile. A call does not reveal the other person's number.
+- **Search history.** Searches and saved searches are used to find licensed centres. They are not used for ads.
+- **Customer support.** Messages sent to KidEase support stay on that thread.
+- **Files and docs.** A provider can upload a licence or screening file. Those files stay with that centre. Parents do not receive the raw file.
+- Stripe Checkout is not opened from the Android app. Plan prices, upgrade buttons, and Stripe links are removed from the native shell. A plan already bought on the website still unlocks after sign-in.
 
 ## Not in this build
 

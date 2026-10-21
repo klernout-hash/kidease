@@ -95,10 +95,50 @@ test("store listing is 18+ and does not promise in-app checkout", () => {
   assert.equal(STORE.ageRating, "18+");
   assert.equal(STORE.ageRatingAnswers.madeForKids, false);
   assert.doesNotMatch(STORE.description, /Apple Pay|in-app/i);
+  assert.doesNotMatch(STORE.description, /kidease\.ca/i);
+  assert.doesNotMatch(STORE.descriptionFr, /kidease\.ca/i);
+  assert.ok(STORE.subtitleFr.length <= 30, STORE.subtitleFr);
   assert.match(STORE.description, /18\+/);
-  assert.match(src("ios/App/App/PrivacyInfo.xcprivacy"), /NSPrivacyCollectedDataTypeHealth/);
-  assert.match(src("ios/App/App/PrivacyInfo.xcprivacy"), /NSPrivacyTracking/);
+  const manifest = src("ios/App/App/PrivacyInfo.xcprivacy");
+  assert.match(manifest, /NSPrivacyCollectedDataTypeHealth/);
+  assert.match(manifest, /NSPrivacyCollectedDataTypePhoneNumber/);
+  assert.match(manifest, /NSPrivacyCollectedDataTypeSearchHistory/);
+  assert.match(manifest, /NSPrivacyCollectedDataTypeCustomerSupport/);
+  assert.match(manifest, /NSPrivacyCollectedDataTypeOtherUserContent/);
+  const usage = manifest.slice(
+    manifest.indexOf("NSPrivacyCollectedDataTypeProductInteraction"),
+    manifest.indexOf("NSPrivacyCollectedDataTypeCrashData"),
+  );
+  assert.match(usage, /NSPrivacyCollectedDataTypeLinked[\s\S]*<true\/>/);
+  assert.match(manifest, /NSPrivacyTracking/);
+  assert.match(src("docs/app-store-privacy.md"), /linked to the account id/);
+  assert.match(src("docs/play-data-safety.md"), /linked to the account id/);
+  assert.match(src("docs/play-data-safety.md"), /Search history/);
+  assert.match(src("docs/app-store-privacy.md"), /screening/);
   assert.match(src("android/app/build.gradle"), /useLegacyPackaging = false/);
   assert.match(src("android/app/build.gradle"), /firebase-analytics/);
   assert.match(src("src/components/parent-signup-form.tsx"), /18 or older/);
+});
+
+test("a call opened from messages can use the camera and microphone", () => {
+  const vercel = JSON.parse(src("vercel.json"));
+  const headers = vercel.headers;
+  const policyFor = (source) => {
+    const block = headers.find((entry) => entry.source === source);
+    const row = block?.headers?.find((header) => header.key === "Permissions-Policy");
+    return row?.value || "";
+  };
+  for (const source of ["/(.*)", "/call", "/call/(.*)", "/video", "/video/(.*)"]) {
+    const policy = policyFor(source);
+    assert.match(policy, /camera=\(self\)/, source);
+    assert.match(policy, /microphone=\(self\)/, source);
+    assert.doesNotMatch(policy, /camera=\(\)/, source);
+    assert.doesNotMatch(policy, /microphone=\(\)/, source);
+  }
+  const inbox = src("src/routes/inbox.$id.tsx");
+  assert.match(inbox, /to="\/call\/\$conversationId"[\s\S]*reloadDocument/);
+  assert.match(inbox, /to="\/video\/\$roomId"[\s\S]*reloadDocument/);
+  assert.doesNotMatch(src("src/routes/__root.tsx"), /@tanstack\/react-start\/server/);
+  assert.match(src("src/lib/native-shell-request.ts"), /readNativeShell/);
+  assert.match(src("src/lib/store-channel-request.ts"), /readServerStoreChannel/);
 });

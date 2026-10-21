@@ -56,6 +56,11 @@ test("native commerce is guarded in the page and the component", () => {
   assert.doesNotMatch(callRoute, /comingSoon/);
   assert.match(desk, /nativeShell \? null : \(/);
   assert.match(desk, /data-ke="daycare-plan"/);
+  const drawer = src("src/components/nav-drawer.tsx");
+  assert.match(drawer, /useInNativeShell/);
+  assert.match(drawer, /nativeShell \? null : \(/);
+  assert.match(drawer, /localePath\("\/plans"/);
+  assert.match(drawer, /marker="plans"/);
   const login = src("src/routes/login.tsx");
   assert.match(login, /signup-adult/);
   assert.match(login, /signin-adult/);
