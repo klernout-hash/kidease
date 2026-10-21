@@ -170,9 +170,10 @@ async function sweepSizes(page, base, viewports, problems) {
         for (const note of found.notes) problems.push(`${label} ${note}`);
         if (vp.width >= 768 && CAPPED.has(path) && found.pageWidth != null) {
           const cap = pageCap(vp.width);
-          if (found.pageWidth > cap + 1) problems.push(`${label} page ${found.pageWidth}>${cap}`);
-          if (expectedChannel(vp.store, vp.width) === "website" && found.pageWidth > vp.width - 16) {
-            problems.push(`${label} edge ${found.pageWidth}`);
+          const channel = expectedChannel(vp.store, vp.width);
+          if (channel === "app" && found.pageWidth > cap + 1) problems.push(`${label} page ${found.pageWidth}>${cap}`);
+          if (channel === "website" && vp.width >= 1280 && found.pageWidth < vp.width - 80) {
+            problems.push(`${label} desktop-capped ${found.pageWidth}`);
           }
         }
         if (path === "/" && expectedChannel(vp.store, vp.width) === "website" && vp.width >= 1024 && found.desktop) {
@@ -321,7 +322,7 @@ async function liveWindow(page, base, problems) {
         shape: expectedShape(step.width, step.height),
         field: "[data-ke='where-field'] input",
         value: "Winnipeg",
-        cap: step.width >= 768 ? pageCap(step.width) : 0,
+        cap: channel === "app" && step.width >= 768 ? pageCap(step.width) : 0,
       });
       for (const note of found.notes) problems.push(`win-live ${step.name} ${note}`);
       if (found.origin !== armed.origin) problems.push(`win-live ${step.name} new-document`);

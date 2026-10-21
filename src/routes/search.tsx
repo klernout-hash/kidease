@@ -1514,10 +1514,10 @@ export function SearchScreen({
   return (
     <Shell>
       <div className="ke-dense ke-gutter mx-auto max-w-7xl pb-6 pt-2">
-        <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-1">
-          <div className="min-w-0 max-w-full flex-1 basis-[min(100%,12rem)]">
+        <div className="flex items-end justify-between gap-3 max-md:flex-wrap max-md:gap-y-1">
+          <div className="min-w-0 max-md:max-w-full max-md:flex-1 max-md:basis-[min(100%,12rem)]">
             <h1
-              className="break-words font-display text-[1.35rem] leading-tight tracking-[-0.03em] text-balance"
+              className="font-display text-[1.35rem] leading-tight tracking-[-0.03em] text-balance max-md:break-words"
               data-search-h1=""
             >
               {parentFilters.fac.length === 1

@@ -138,7 +138,7 @@ export function Shell({ children }: { children: ReactNode }) {
       <KeyboardInset />
       <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[var(--ke-safe-top,env(safe-area-inset-top))]">
         <div className="ke-gutter relative mx-auto min-w-0 max-w-6xl">
-          <div className="flex min-h-14 w-full min-w-0 items-center gap-2 sm:gap-3 md:min-h-16">
+          <div className="flex h-14 w-full min-w-0 items-center gap-3 max-md:h-auto max-md:min-h-14 max-md:gap-2 md:h-16">
             {menuLeaf ? <MenuLeafBack /> : null}
             <Link to={homeTo} className="relative z-20 shrink-0" aria-label="KidEase">
               <BrandMark size="sm" />
@@ -171,15 +171,15 @@ export function Shell({ children }: { children: ReactNode }) {
                 />
               </div>
             ) : null}
-            <div className="relative z-20 ml-auto flex min-w-0 max-w-full items-center justify-end gap-1.5 bg-bg pl-1 sm:gap-2 [[data-channel=website]_&]:flex">
+            <div className="relative z-20 ml-auto flex items-center gap-2 bg-bg pl-1 max-md:min-w-0 max-md:max-w-full max-md:gap-1.5 md:shrink-0 [[data-channel=website]_&]:flex">
               {user ? <NotificationBell className="hidden md:grid" /> : (
                 <Link
                   to={localePath("/claim", locale)}
                   data-ke="list-your-daycare"
-                  className="inline-flex min-h-11 min-w-0 touch-manipulation items-center gap-1.5 overflow-hidden rounded-full border border-primary px-2.5 text-[0.93rem] font-medium text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 sm:px-3"
+                  className="inline-flex min-h-11 shrink-0 touch-manipulation items-center gap-1.5 whitespace-nowrap rounded-full border border-primary px-2.5 text-[13px] font-medium text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 sm:px-3 sm:text-sm"
                 >
                   <Building2 className="size-4 shrink-0" aria-hidden />
-                  <span className="truncate whitespace-nowrap">{t("navForDaycares")}</span>
+                  {t("navForDaycares")}
                 </Link>
               )}
               {user ? (

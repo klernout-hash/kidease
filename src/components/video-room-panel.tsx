@@ -16,7 +16,7 @@ function attachTrack(track: { kind: string }, host: HTMLElement, local: boolean)
     el.playsInline = true;
     el.autoplay = true;
     el.muted = local;
-    el.className = local ? "ke-video-self h-full w-full object-cover" : "h-full w-full object-contain";
+    el.className = local ? "ke-video-self h-full w-full object-cover" : "h-full w-full object-cover";
   }
   if (el instanceof HTMLAudioElement) el.autoplay = true;
   host.appendChild(el);
@@ -167,10 +167,10 @@ export function VideoRoomPanel({
   return (
     <div className="ke-video-room mt-6" data-ke="video-room" data-ke-live="video">
       <div className="ke-video-stage relative overflow-hidden rounded-2xl bg-fg/5 ring-1 ring-border">
-        <div ref={remoteRef} className="aspect-video w-full min-h-0 bg-[#141820]" aria-label={t("videoInCall")} />
+        <div ref={remoteRef} className="aspect-video w-full min-h-0 bg-fg/10 [[data-channel=app]_&]:bg-[#141820]" aria-label={t("videoInCall")} />
         <div
           ref={localRef}
-          className="absolute bottom-3 right-3 aspect-video w-[clamp(5.5rem,28%,9rem)] max-h-[40%] overflow-hidden rounded-xl bg-fg/20 ring-1 ring-border"
+          className="absolute bottom-3 right-3 aspect-video w-[28%] overflow-hidden rounded-xl bg-fg/20 ring-1 ring-border [[data-channel=app]_&]:max-h-[40%] [[data-channel=app]_&]:w-[clamp(5.5rem,28%,9rem)]"
           aria-label={t("camera")}
         />
       </div>

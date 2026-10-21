@@ -28,12 +28,13 @@ test("iPad keeps all four orientations", () => {
 
 test("iPad layout caps the page and splits list plus detail", () => {
   const css = src("src/styles.css");
-  assert.match(css, /\.ke-page[\s\S]*max-width: 720px/);
-  assert.match(css, /max-width: 880px/);
-  assert.match(css, /max-width: 1040px/);
-  assert.match(css, /\.ke-split[\s\S]*minmax\(min\(15rem, 42%\), min\(22rem, 48%\)\)/);
-  assert.match(css, /\.ke-rail--visual[\s\S]*display: grid/);
-  assert.match(css, /\.ke-apple-button[\s\S]*max-width: 375px/);
+  assert.match(css, /html\[data-channel="app"\] \.ke-page[\s\S]*max-width: 720px/);
+  assert.match(css, /html\[data-channel="app"\] \.ke-page[\s\S]*max-width: 880px/);
+  assert.match(css, /html\[data-channel="app"\] \.ke-page[\s\S]*max-width: 1040px/);
+  assert.doesNotMatch(css, /(?<!html\[data-channel="app"\] )\.ke-page \{\s*max-width/);
+  assert.match(css, /html\[data-channel="app"\] \.ke-split[\s\S]*minmax\(min\(15rem, 42%\), min\(22rem, 48%\)\)/);
+  assert.match(css, /html\[data-channel="app"\] \.ke-rail--visual[\s\S]*display: grid/);
+  assert.match(css, /html\[data-channel="app"\] \.ke-apple-button[\s\S]*max-width: 375px/);
   assert.match(css, /var\(--ke-keyboard, 0px\)/);
   const shell = src("src/components/shell.tsx");
   assert.match(shell, /data-ke="page"/);
@@ -118,7 +119,8 @@ test("fold and split-view resize stays on one page", () => {
   assert.match(boot, /keShape/);
   assert.match(bridge, /viewWillTransition/);
   assert.doesNotMatch(bridge, /webView\?\.reload|UIScreen\.main/);
-  assert.match(video, /object-contain/);
+  assert.match(src("src/styles.css"), /html\[data-channel="app"\] \.ke-video-stage video:not\(\.ke-video-self\)[\s\S]*object-fit: contain/);
+  assert.match(video, /object-cover/);
   assert.match(video, /data-ke-live="video"/);
   assert.match(voice, /data-ke-live="voice"/);
   assert.match(src("src/styles.css"), /object-fit: contain/);
@@ -135,6 +137,11 @@ test("Play, Samsung, Huawei, and Windows sizes stay resizable", () => {
   assert.doesNotMatch(huawei, /screenOrientation|supports-screens|compatible-screens|maxAspectRatio/);
   assert.doesNotMatch(src("android/app/src/main/java/ca/kidease/app/MainActivity.java"), /onConfigurationChanged|webView\.reload|loadUrl\(/);
   assert.match(src("scripts/e2e-smoke.mjs"), /runStoreViewportPass/);
+  assert.match(src("scripts/e2e-smoke.mjs"), /runDesktopVisualPass/);
+  assert.match(src("scripts/desktop-visual.mjs"), /1280/);
+  assert.match(src("scripts/desktop-visual.mjs"), /1440/);
+  assert.match(src("scripts/desktop-visual.mjs"), /1920/);
+  assert.match(src("scripts/desktop-visual.mjs"), /2560/);
   assert.match(store, /__keFoldMark/);
   assert.match(store, /KidEaseStoreSamsung/);
   assert.match(store, /KidEaseStoreHuawei/);

@@ -41,7 +41,7 @@ function InboxLayout() {
     );
   }
   const onThread = Boolean(selectedId);
-  return (
+  const split = (
     <DeskShell
       desk="parent"
       active="messages"
@@ -66,5 +66,11 @@ function InboxLayout() {
         </div>
       </div>
     </DeskShell>
+  );
+  return (
+    <>
+      <div className="ke-site-desktop">{pathname !== "/inbox" ? <Outlet /> : <InboxList />}</div>
+      <div className="ke-site-compact">{split}</div>
+    </>
   );
 }

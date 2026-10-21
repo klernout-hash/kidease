@@ -19,6 +19,7 @@ import { runIpadViewportPass } from "./ipad-viewports.mjs";
 import { runPhoneViewportPass } from "./phone-viewports.mjs";
 import { runFoldResizePass } from "./fold-resize.mjs";
 import { runStoreViewportPass } from "./store-viewports.mjs";
+import { runDesktopVisualPass } from "./desktop-visual.mjs";
 import { checkedOutputPath, checkedUrl, smokeAllowedOutputDirs } from "./browser-guard.mjs";
 import {
   ADMIN_API_SMOKE_PATHS,
@@ -1171,6 +1172,11 @@ try {
   const storeProblems = await runStoreViewportPass(browser, base);
   record("store-viewports", storeProblems.length === 0, {
     note: storeProblems.length ? storeProblems.slice(0, 8).join(" | ") : "android and windows",
+  });
+
+  const desktopProblems = await runDesktopVisualPass(browser, base);
+  record("desktop-visual", desktopProblems.length === 0, {
+    note: desktopProblems.length ? desktopProblems.slice(0, 6).join(" | ") : "1280 to 2560",
   });
 
   const failed = results.filter((r) => !r.ok);

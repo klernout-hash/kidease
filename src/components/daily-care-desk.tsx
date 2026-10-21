@@ -384,14 +384,13 @@ export function DailyCareDesk({
               {t("back")}
             </button>
             <ul className="space-y-4">
-          {byChild
-            .filter(({ row }) => childKey(row) === (careFocus ?? childKey(byChild[0].row)))
-            .map(({ row, journals: childJournals }) => {
+          {byChild.map(({ row, journals: childJournals }) => {
             const key = childKey(row);
+            const rest = key !== (careFocus ?? childKey(byChild[0].row));
             const presence = presenceFromAttendance(row.status);
             const draft = drafts[key] ?? { body: "", photos: [] };
             return (
-              <li key={key} className="rounded-xl bg-surface p-4 shadow-card ring-1 ring-border">
+              <li key={key} className={`rounded-xl bg-surface p-4 shadow-card ring-1 ring-border${rest ? " ke-child-rest" : ""}`}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-medium">{row.childName}</p>

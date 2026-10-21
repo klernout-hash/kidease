@@ -1,0 +1,158 @@
+/**
+ * Desktop visual check for kidease.ca.
+ * Baselines are the site before the phone, tablet, and foldable layout.
+ * A website window at 1280 and wider must match those pictures.
+ * Mobile, tablet, and foldable layout stays on the app channel.
+ */
+
+import { readFileSync, mkdirSync, existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+export const DESKTOP_WIDTHS = [
+  { width: 1280, height: 800 },
+  { width: 1440, height: 900 },
+  { width: 1920, height: 1080 },
+  { width: 2560, height: 1440 },
+];
+
+export const DESKTOP_ROUTES = [
+  { path: "/", name: "home" },
+  { path: "/search", name: "search" },
+  { path: "/login", name: "login" },
+  { path: "/signup", name: "signup" },
+  { path: "/help", name: "help" },
+  { path: "/for-daycares", name: "for-daycares" },
+  { path: "/plans", name: "plans" },
+  { path: "/how-it-works", name: "how-it-works" },
+  { path: "/faq", name: "faq" },
+  { path: "/about", name: "about" },
+  { path: "/contact", name: "contact" },
+  { path: "/fr", name: "fr" },
+  { path: "/daycares", name: "daycares" },
+  { path: "/claim", name: "claim" },
+  { path: "/parent", name: "parent" },
+  { path: "/inbox", name: "inbox" },
+  { path: "/provider", name: "provider" },
+  { path: "/account", name: "account" },
+  { path: "/admin", name: "admin" },
+];
+
+export const DESKTOP_BASELINE_DIR = join(root, "e2e/desktop-baselines");
+
+export function desktopShotName(width, height, name) {
+  return `${width}x${height}__${name}.png`;
+}
+
+async function openRoute(page, base, path) {
+  const url = new URL(path, base).href;
+  const res = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 25000 }).catch(async () => {
+    return page.goto(url, { waitUntil: "domcontentloaded", timeout: 25000 });
+  });
+  await page.evaluate(async () => {
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+  });
+  await page.waitForTimeout(250);
+  return res?.status() ?? 0;
+}
+
+export async function captureDesktopShots(browser, base, outDir) {
+  mkdirSync(outDir, { recursive: true });
+  const notes = [];
+  for (const size of DESKTOP_WIDTHS) {
+    const context = await browser.newContext({
+      viewport: size,
+      deviceScaleFactor: 1,
+      reducedMotion: "reduce",
+    });
+    await context.addInitScript(() => {
+      const style = document.createElement("style");
+      style.setAttribute("data-ke-visual", "stable");
+      style.textContent = "*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}";
+      document.documentElement.appendChild(style);
+    });
+    for (const route of DESKTOP_ROUTES) {
+      const file = join(outDir, desktopShotName(size.width, size.height, route.name));
+      const page = await context.newPage();
+      try {
+        const status = await openRoute(page, base, route.path);
+        if (status >= 500) notes.push(`${route.name} ${size.width} status ${status}`);
+        else await page.screenshot({ path: file, fullPage: false, animations: "disabled" });
+      } catch (err) {
+        notes.push(`${route.name} ${size.width} ${err instanceof Error ? err.message.split("\n")[0] : String(err)}`);
+      }
+      await page.close().catch(() => {});
+    }
+    await context.close();
+  }
+  return notes;
+}
+
+export async function compareDesktopShots(browser, actualDir, baselineDir) {
+  const problems = [];
+  const page = await browser.newPage({ viewport: { width: 800, height: 600 } });
+  for (const size of DESKTOP_WIDTHS) {
+    for (const route of DESKTOP_ROUTES) {
+      const name = desktopShotName(size.width, size.height, route.name);
+      const baseFile = join(baselineDir, name);
+      const actualFile = join(actualDir, name);
+      if (!existsSync(baseFile) || !existsSync(actualFile)) {
+        problems.push(`${name} missing`);
+        continue;
+      }
+      const found = await page.evaluate(
+        async ({ a, b }) => {
+          const load = (src) =>
+            new Promise((resolve, reject) => {
+              const img = new Image();
+              img.onload = () => resolve(img);
+              img.onerror = () => reject(new Error("png"));
+              img.src = src;
+            });
+          const [ia, ib] = await Promise.all([load(a), load(b)]);
+          if (ia.width !== ib.width || ia.height !== ib.height) {
+            return { ratio: 1, mismatch: true, reason: `size ${ia.width}x${ia.height}!=${ib.width}x${ib.height}` };
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = ia.width;
+          canvas.height = ia.height;
+          const ctx = canvas.getContext("2d", { willReadFrequently: true });
+          ctx.drawImage(ia, 0, 0);
+          const da = ctx.getImageData(0, 0, ia.width, ia.height).data;
+          ctx.clearRect(0, 0, ia.width, ia.height);
+          ctx.drawImage(ib, 0, 0);
+          const db = ctx.getImageData(0, 0, ia.width, ia.height).data;
+          let diff = 0;
+          const pixels = ia.width * ia.height;
+          for (let i = 0; i < da.length; i += 16) {
+            const delta = Math.abs(da[i] - db[i]) + Math.abs(da[i + 1] - db[i + 1]) + Math.abs(da[i + 2] - db[i + 2]);
+            if (delta > 36) diff += 4;
+          }
+          const ratio = diff / pixels;
+          return { ratio, mismatch: ratio > 0.004 };
+        },
+        {
+          a: `data:image/png;base64,${readFileSync(baseFile).toString("base64")}`,
+          b: `data:image/png;base64,${readFileSync(actualFile).toString("base64")}`,
+        },
+      );
+      if (found.mismatch) problems.push(`${name} ${(found.ratio * 100).toFixed(2)}% ${found.reason || ""}`.trim());
+    }
+  }
+  await page.close();
+  return problems;
+}
+
+export async function runDesktopVisualPass(browser, base, baselineDir = DESKTOP_BASELINE_DIR) {
+  const actualDir = join(root, "artifacts/desktop-actual");
+  const notes = await captureDesktopShots(browser, base, actualDir);
+  const problems = [...notes];
+  if (!existsSync(baselineDir)) {
+    problems.push("baselines missing");
+    return problems;
+  }
+  const diffs = await compareDesktopShots(browser, actualDir, baselineDir);
+  return problems.concat(diffs);
+}

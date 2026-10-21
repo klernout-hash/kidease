@@ -662,7 +662,10 @@ export function ParentDesk({
         <div className="mt-6 space-y-4">
           <div>
             <h2 className="font-display text-2xl">{t("childProfileTitle")}</h2>
-            <p className="mt-1 text-sm text-muted">{t("childProfileLead")}</p>
+            <p className="mt-1 text-sm text-muted">
+              <span className="ke-site-compact">{t("childProfileLead")}</span>
+              <span className="ke-site-desktop">Save the child profile, then send it to saved centres. Each centre sees it in Incoming requests and can approve, wait, or decline.</span>
+            </p>
           </div>
           {children.length === 0 && !editing ? (
             <EmptyState title={t("noChildren")} body={t("noChildrenLead")} action={t("emptyAddChild")} onAction={() => { setEditing("new"); setChildOpen(true); }} />
@@ -711,10 +714,10 @@ export function ParentDesk({
               ) : (
             <>
               <ul className="divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
-                  {(activeChild ? [activeChild] : []).map((c) => {
+                  {children.map((c) => {
                     const selected = picked[c.id] ?? [];
                     return (
-                    <li key={c.id} className="ph-no-capture p-4">
+                    <li key={c.id} className={c.id === activeChild?.id ? "ph-no-capture p-4" : "ke-child-rest ph-no-capture p-4"}>
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="font-medium">
