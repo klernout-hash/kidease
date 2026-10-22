@@ -169,8 +169,11 @@ export function maskCapturedNetworkRequest(
 
 /**
  * Apply consent + env + `session-replay-web` after init or flag reload.
- * Essential (denied) opts out of capture on the website. A missing PostHog
- * flag does not block sampled replay once the visitor has allowed analytics.
+ * Essential (denied) opts out of capture on the website. Allow must opt back
+ * in: PostHog stores that choice separately from kidease-analytics-consent,
+ * and capture() stays silent while /ingest/flags still returns 200.
+ * A missing PostHog flag does not block sampled replay once the visitor has
+ * allowed analytics.
  */
 export function applyPostHogRecordingGate(ph?: PostHog | null): void {
   const consent = readAnalyticsConsent();
@@ -181,6 +184,9 @@ export function applyPostHogRecordingGate(ph?: PostHog | null): void {
     clientPh.stopSessionRecording();
     clientPh.opt_out_capturing();
     return;
+  }
+  if (consent === "granted" && clientPh.has_opted_out_capturing()) {
+    clientPh.opt_in_capturing();
   }
   if (!sessionReplayEnabled({ consent })) {
     clientPh.stopSessionRecording();

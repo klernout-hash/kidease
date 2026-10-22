@@ -2,17 +2,20 @@
  * Vercel Ignored Build Step for kidease-git.
  * Exit 0 skips the deployment. Exit 1 builds it.
  *
- * The project skips every cursor/* preview. This branch needs a public
- * preview of the parent sign-up form. Other cursor branches stay skipped.
- * main and every other ref still build.
+ * The project skips every cursor/* preview. Two branches need a public
+ * preview: the parent sign-up form, and the PostHog Allow opt-in fix.
+ * Other cursor branches stay skipped. main and every other ref still build.
  */
 import { pathToFileURL } from "node:url";
 
-const PREVIEW_BRANCH = "cursor/parent-sms-signup-ba39";
+const PREVIEW_BRANCHES = new Set([
+  "cursor/parent-sms-signup-ba39",
+  "cursor/posthog-opt-in-allow-e792",
+]);
 
 export function shouldIgnoreVercelBuild(ref) {
   const name = String(ref || "");
-  if (name === PREVIEW_BRANCH) return false;
+  if (PREVIEW_BRANCHES.has(name)) return false;
   return name.startsWith("cursor/");
 }
 
