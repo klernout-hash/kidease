@@ -1326,6 +1326,27 @@
   }
 }
 
+/* Home radius labels ("10 km", "25 km", "50 km") stay whole from 320px up.
+   Desktop 1024px and wider keeps the existing select width. */
+@media (max-width: 1023px) {
+  select[data-ke="search-radius"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: auto;
+    min-width: 9rem;
+    max-width: none;
+    padding-left: 0.55rem;
+    padding-right: 1.75rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 L6 6.5 L11 1.5' fill='none' stroke='%235c6578' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 0.75rem 0.5rem;
+  }
+  html[data-resolved-theme="dark"] select[data-ke="search-radius"] {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 L6 6.5 L11 1.5' fill='none' stroke='%23b0b6c4' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
+}
+
 html[data-channel="website"] .ke-listings {
   grid-template-columns: 1fr;
   gap: 0.65rem 0.5rem;
