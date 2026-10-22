@@ -1281,6 +1281,8 @@
   "supportLead": "Eltern und Anbieter: wir lesen jede Nachricht. Schreiben Sie uns eine E-Mail oder senden Sie unten eine Nachricht.",
   "supportSent": "Nachricht gesendet. Wir antworten per E-Mail.",
   "deleteAccount": "Mein Konto löschen",
+  "deleteAccountPendingNow": "Offene Platzanfragen, Wartelisten und Besuchstermine werden jetzt storniert. Wenn Sie das Konto wiederherstellen, bleiben diese Anfragen storniert.",
+  "deleteAccountWeb": "Webseite zum Löschen eines Kontos: https://www.kidease.ca/delete-account",
   "deleteAccountLead": "Damit werden Ihre Kinder, Nachrichten, Buchungen und gespeicherten Kitas entfernt. Wir behalten die gesetzlich vorgeschriebenen Abrechnungsunterlagen. Betrugs- und Sicherheitsprotokolle bleiben ebenfalls. Dies kann nicht rückgängig gemacht werden.",
   "deleteAccountGuestLead": "Melden Sie sich an, um Ihr KidEase-Konto zu löschen. Sie können auch an support@kidease.ca schreiben, und wir löschen es für Sie.",
   "deleteAccountSignIn": "Anmelden, um mein Konto zu löschen",

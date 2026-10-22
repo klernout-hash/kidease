@@ -1281,6 +1281,8 @@
   "supportLead": "Mga magulang at provider: binabasa namin ang bawat tala. Mag-email sa amin o magpadala ng mensahe sa ibaba.",
   "supportSent": "Naipadala ang mensahe. Sasagot kami sa email.",
   "deleteAccount": "Burahin ang aking account",
+  "deleteAccountPendingNow": "Kinakansela na ngayon ang bukas na kahilingan sa puwesto, mga waitlist, at mga tour hold. Kung ibabalik mo ang account, mananatiling kanselado ang mga iyon.",
+  "deleteAccountWeb": "Web page para burahin ang account: https://www.kidease.ca/delete-account",
   "deleteAccountLead": "Aalisin nito ang mga anak mo, mga mensahe, booking, at naka-save na mga sentro. Pinapanatili namin ang mga billing record na hinihingi ng batas. Nananatili rin ang mga log ng pandaraya at seguridad. Hindi na ito maaaring bawiin.",
   "deleteAccountGuestLead": "Mag-sign in para burahin ang iyong KidEase account. Maaari ka ring mag-email sa support@kidease.ca at buburahin namin ito para sa iyo.",
   "deleteAccountSignIn": "Mag-sign in para burahin ang aking account",

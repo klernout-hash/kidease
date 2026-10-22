@@ -1546,6 +1546,9 @@ export const copy = {
     deleteAccountLead: "This schedules your account to close. You can restore it for 30 days. After that we remove your children, messages, bookings, and saved centres. We keep billing records the law requires. Fraud and security logs stay too.",
     deleteAccountType: "Type DELETE to confirm",
     deleteAccountRestoreNote: "You can restore this account for 30 days. After that, we close it.",
+    deleteAccountPendingNow:
+      "Open spot requests, waitlists, and tour holds are cancelled now. If you restore the account, those requests stay cancelled.",
+    deleteAccountWeb: "Web page to delete an account: https://www.kidease.ca/delete-account",
     accountRestoreTitle: "Restore account",
     accountRestoreBody: "This account is set to close. You can still restore it.",
     accountRestoreAction: "Restore account",
@@ -4720,6 +4723,9 @@ export const copy = {
     deleteAccountLead: "Ceci planifie la fermeture de votre compte. Vous pouvez le restaurer pendant 30 jours. Ensuite nous effaçons vos enfants, messages, demandes et centres enregistrés. Nous gardons les dossiers de facturation exigés par la loi. Les journaux de fraude et de sécurité restent aussi.",
     deleteAccountType: "Tapez DELETE pour confirmer",
     deleteAccountRestoreNote: "Vous pouvez restaurer ce compte pendant 30 jours. Ensuite, nous le fermons.",
+    deleteAccountPendingNow:
+      "Les demandes de place ouvertes, les listes d’attente et les visites en attente sont annulées maintenant. Si vous restaurez le compte, ces demandes restent annulées.",
+    deleteAccountWeb: "Page web pour supprimer un compte : https://www.kidease.ca/fr/delete-account",
     accountRestoreTitle: "Restaurer le compte",
     accountRestoreBody: "Ce compte est prévu pour fermer. Vous pouvez encore le restaurer.",
     accountRestoreAction: "Restaurer le compte",

@@ -39,6 +39,8 @@ export function DeleteAccountPanel({ signedIn }: { signedIn: boolean }) {
       <h2 className="font-display text-xl">{t("deleteAccount")}</h2>
       <p className="mt-2 text-sm text-muted">{t("deleteAccountLead")}</p>
       <p className="mt-2 text-sm text-muted">{t("deleteAccountRestoreNote")}</p>
+      <p className="mt-2 text-sm text-muted">{t("deleteAccountPendingNow")}</p>
+      <p className="mt-2 break-words text-sm text-muted">{t("deleteAccountWeb")}</p>
       <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">
         <li>{t("deleteAccountKeepBilling")}</li>
         <li>{t("deleteAccountKeepLogs")}</li>

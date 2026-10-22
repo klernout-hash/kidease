@@ -1281,6 +1281,8 @@
   "supportLead": "Padres y proveedores: leemos cada nota. Envíenos un correo o un mensaje abajo.",
   "supportSent": "Mensaje enviado. Te responderemos por correo electrónico.",
   "deleteAccount": "Eliminar mi cuenta",
+  "deleteAccountPendingNow": "Las solicitudes de cupo abiertas, las listas de espera y las visitas en espera se cancelan ahora. Si restauras la cuenta, esas solicitudes siguen canceladas.",
+  "deleteAccountWeb": "Página web para eliminar una cuenta: https://www.kidease.ca/delete-account",
   "deleteAccountLead": "Esto elimina a tus hijos, mensajes, reservas y centros guardados. Conservamos los registros de facturación que exige la ley. También se quedan los registros de fraude y seguridad. Esta acción no se puede deshacer.",
   "deleteAccountGuestLead": "Inicia sesión para eliminar tu cuenta de KidEase. También puedes escribir a support@kidease.ca y la eliminaremos por ti.",
   "deleteAccountSignIn": "Iniciar sesión para eliminar mi cuenta",
