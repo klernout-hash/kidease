@@ -32,6 +32,8 @@ import {
 } from "@/lib/account-notify";
 import { listPlatformEvents } from "@/lib/server/notify";
 import { listAdminPeople, type AdminPersonRow } from "@/lib/server/admin-people";
+import { AdminViewAsPicker } from "@/components/admin-view-as-picker";
+import { ViewAsButton } from "@/components/view-as-button";
 import {
   ADMIN_IDLE_TIMEOUT_MESSAGE,
   adminCentresLoadMessage,
@@ -956,6 +958,7 @@ function PeoplePanel({
 }) {
   return (
     <>
+      <AdminViewAsPicker />
       <div className="mb-4">
         <h2 className="font-display text-2xl">People</h2>
         <p className="mt-1 text-sm text-muted">
@@ -1020,13 +1023,16 @@ function PeoplePanel({
                     {[p.city, p.phone].filter(Boolean).join(" · ") || "—"}
                   </p>
                 </div>
-                <p className="text-right text-xs text-muted">
-                  {new Date(p.createdAt).toLocaleString("en-CA", {
-                    timeZone: "America/Winnipeg",
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })}
-                </p>
+                <div className="flex flex-col items-end gap-2">
+                  <p className="text-right text-xs text-muted">
+                    {new Date(p.createdAt).toLocaleString("en-CA", {
+                      timeZone: "America/Winnipeg",
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    })}
+                  </p>
+                  <ViewAsButton userId={p.userId} />
+                </div>
               </div>
             </li>
           ))

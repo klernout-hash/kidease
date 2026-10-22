@@ -13,6 +13,7 @@ import { readServerStoreChannel } from "@/lib/store-channel-request";
 import { LocaleChoiceSync } from "@/components/language-select";
 import { useCopy } from "@/lib/use-copy";
 import { AuthProvider } from "@/lib/auth/provider";
+import { ViewAsProvider } from "@/components/view-as-banner";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { NativeBoot } from "@/components/native-boot";
 import { NativeCommerceStrip } from "@/components/native-commerce-strip";
@@ -212,6 +213,7 @@ function RootDocument() {
       <body>
         <PreviewHostBridge />
         <AuthProvider>
+          <ViewAsProvider>
           <ThemeBoot />
           <LocaleChoiceSync />
           <NativeBoot />
@@ -222,6 +224,7 @@ function RootDocument() {
           <RoleBoot />
           <RouteProgress />
           <Outlet />
+          </ViewAsProvider>
           <CookieConsentBanner />
           <KidEaseToaster />
           <SuccessConfirmHost />

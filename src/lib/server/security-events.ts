@@ -31,7 +31,12 @@ export type SecurityKind =
   | "employee_accept"
   | "employee_revoke"
   | "open_spots_checkin_denied"
-  | "open_spots_checkin_run";
+  | "open_spots_checkin_run"
+  | "view_as_start"
+  | "view_as_exit"
+  | "view_as_expired"
+  | "view_as_denied"
+  | "view_as_blocked";
 
 /** Insert-only audit row. Never pass secrets, card data, or medical notes. */
 export async function logSecurityEvent(input: {

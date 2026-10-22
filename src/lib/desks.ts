@@ -1,4 +1,5 @@
 import { isKidEaseOperatorEmail } from "./admin-email.ts";
+import type { ViewAsPublic } from "./view-as-public.ts";
 
 export type AppRole = "admin" | "support_lead" | "support" | "provider" | "parent";
 export type DeskKey = "admin" | "support" | "provider" | "parent";
@@ -659,6 +660,11 @@ export type SessionDesks = {
   attention?: import("@/lib/attention").AttentionCounts;
   /** ISO time the 30-day restore window ends. Null when the account is active. */
   restoreUntil?: string | null;
+  /**
+   * Set while an operator is viewing this session's desks.
+   * The role and desk list are the other person's, not the operator's.
+   */
+  viewAs?: ViewAsPublic | null;
 };
 
 /**
