@@ -4,6 +4,7 @@ import { useCopy } from "@/lib/use-copy";
 import { inquiryRemaining, type ProviderEntitlements } from "@/lib/provider-entitlements";
 import { daycareCapPrompt } from "@/lib/upgrade-prompt";
 import { providerPlan } from "@/lib/provider-plans";
+import { useInNativeShell } from "@/lib/use-native-shell";
 
 export type ProviderDeskSubscription = {
   selectedPlan: ProviderEntitlements["selectedPlan"];
@@ -20,7 +21,9 @@ export type ProviderDeskSubscription = {
 };
 
 export function ProviderPlanBanner({ subscription }: { subscription: ProviderDeskSubscription }) {
+  const nativeShell = useInNativeShell();
   const { t, locale } = useCopy();
+  if (nativeShell) return null;
   const loc = locale === "fr" ? "fr" : "en";
   const plan = providerPlan(subscription.entitledPlan);
   const remaining = inquiryRemaining(subscription.inquiryUsed, subscription.inquiryCap);

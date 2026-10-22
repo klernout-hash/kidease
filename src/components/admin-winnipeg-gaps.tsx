@@ -36,8 +36,8 @@ export function AdminWinnipegGaps() {
     setError(null);
     try {
       setReport(await listWinnipegGaps());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("adminWinnipegEmpty"));
+    } catch {
+      setError(t("adminWinnipegUnavailable"));
     } finally {
       setPending(false);
     }
@@ -50,8 +50,8 @@ export function AdminWinnipegGaps() {
       .then((next) => {
         if (!cancelled) setReport(next);
       })
-      .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : t("adminWinnipegEmpty"));
+      .catch(() => {
+        if (!cancelled) setError(t("adminWinnipegUnavailable"));
       })
       .finally(() => {
         if (!cancelled) setPending(false);
@@ -86,8 +86,8 @@ export function AdminWinnipegGaps() {
       if (outcome.rejected[0]) setError(`${outcome.rejected[0].id}: ${outcome.rejected[0].reason}`);
       else setError(null);
       await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("adminWinnipegEmpty"));
+    } catch {
+      setError(t("adminWinnipegUnavailable"));
     } finally {
       setBusy(false);
     }
@@ -273,7 +273,6 @@ export function AdminWinnipegGaps() {
               <span className="font-medium">{row.name}</span>
               <span className="mt-0.5 block text-sm text-muted">
                 {row.city}
-                {row.phone ? ` · ${row.phone}` : ""}
                 {row.hasRealPhoto ? ` · ${t("adminWinnipegHasPhoto")}` : ""}
               </span>
               <span className="mt-1 block text-xs text-subtle">

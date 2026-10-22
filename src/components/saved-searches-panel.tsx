@@ -45,7 +45,7 @@ export function SavedSearchesPanel() {
   const navigate = useNavigate();
   const [searches, setSearches] = useState<SavedSearch[] | null>(null);
   const [prefs, setPrefs] = useState<SearchAlertPrefs>({
-    emailEnabled: true,
+    emailEnabled: false,
     inAppEnabled: true,
     smsEnabled: false,
     emailCommercial: false,
@@ -53,6 +53,7 @@ export function SavedSearchesPanel() {
     emailConfigured: true,
     smsChannelLive: false,
   });
+  const [prefsReady, setPrefsReady] = useState(false);
   const [notices, setNotices] = useState<SearchAlertNotice[]>([]);
   const [editing, setEditing] = useState<SavedSearch | null>(null);
   const [savingPrefs, setSavingPrefs] = useState(false);
@@ -64,7 +65,13 @@ export function SavedSearchesPanel() {
       listSearchAlertNotices(),
     ]);
     setSearches(list);
-    setPrefs(pref);
+    setPrefs({
+      ...pref,
+      emailEnabled: pref.emailEnabled === true,
+      smsEnabled: pref.smsEnabled === true,
+      emailCommercial: pref.emailCommercial === true,
+    });
+    setPrefsReady(true);
     setNotices(inbox);
   }
 
@@ -90,7 +97,7 @@ export function SavedSearchesPanel() {
               type="checkbox"
               className="mt-1 size-4 accent-primary"
               autoComplete="off"
-              checked={prefs.emailEnabled}
+              checked={prefsReady && prefs.emailEnabled === true}
               onChange={(e) => setPrefs((cur) => ({ ...cur, emailEnabled: e.target.checked }))}
             />
             <span>
@@ -116,7 +123,12 @@ export function SavedSearchesPanel() {
               type="checkbox"
               className="mt-1 size-4 accent-primary"
               autoComplete="off"
-              checked={prefs.smsEnabled}
+              autoCorrect="off"
+              data-lpignore="true"
+              data-1p-ignore="true"
+              data-form-type="other"
+              data-ke="casl-sms"
+              checked={prefsReady && prefs.smsEnabled === true}
               onChange={(e) => setPrefs((cur) => ({ ...cur, smsEnabled: e.target.checked }))}
             />
             <span>
@@ -131,7 +143,13 @@ export function SavedSearchesPanel() {
             <input
               type="checkbox"
               className="mt-1 size-4 accent-primary"
-              checked={prefs.emailCommercial}
+              autoComplete="off"
+              autoCorrect="off"
+              data-lpignore="true"
+              data-1p-ignore="true"
+              data-form-type="other"
+              data-ke="casl-news-offers"
+              checked={prefsReady && prefs.emailCommercial === true}
               onChange={(e) => setPrefs((cur) => ({ ...cur, emailCommercial: e.target.checked }))}
             />
             <span>
@@ -141,8 +159,9 @@ export function SavedSearchesPanel() {
           </label>
           <p className="text-xs text-subtle">{t("caslWithdrawHint")}</p>
           <Button
+            type="button"
             size="sm"
-            disabled={savingPrefs}
+            disabled={savingPrefs || !prefsReady}
             onClick={() => {
               setSavingPrefs(true);
               void saveSearchAlertPrefs({

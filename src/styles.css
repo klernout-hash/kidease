@@ -172,24 +172,40 @@
   }
   html[data-runtime="ios"] .ke-digital-plan,
   html[data-runtime="android"] .ke-digital-plan,
+  html[data-runtime="native"] .ke-digital-plan,
   html[data-runtime="ios"] .ke-digital-plan-slot,
   html[data-runtime="android"] .ke-digital-plan-slot,
+  html[data-runtime="native"] .ke-digital-plan-slot,
   html[data-runtime="ios"] [data-ke="digital-plan"],
   html[data-runtime="android"] [data-ke="digital-plan"],
+  html[data-runtime="native"] [data-ke="digital-plan"],
   html[data-runtime="ios"] [data-nav="upgrade"],
   html[data-runtime="android"] [data-nav="upgrade"],
+  html[data-runtime="native"] [data-nav="upgrade"],
   html[data-runtime="ios"] [data-nav="plans"],
   html[data-runtime="android"] [data-nav="plans"],
+  html[data-runtime="native"] [data-nav="plans"],
   html[data-runtime="ios"] [data-nav="promote"],
   html[data-runtime="android"] [data-nav="promote"],
+  html[data-runtime="native"] [data-nav="promote"],
   html[data-runtime="ios"] [data-nav="chat"],
   html[data-runtime="android"] [data-nav="chat"],
+  html[data-runtime="native"] [data-nav="chat"],
   html[data-runtime="ios"] [data-ke="store-coming-soon"],
   html[data-runtime="android"] [data-ke="store-coming-soon"],
+  html[data-runtime="native"] [data-ke="store-coming-soon"],
   html[data-runtime="ios"] [data-nav="store-coming-soon"],
   html[data-runtime="android"] [data-nav="store-coming-soon"],
+  html[data-runtime="native"] [data-nav="store-coming-soon"],
   html[data-runtime="ios"] [data-ke="sms-entry"],
-  html[data-runtime="android"] [data-ke="sms-entry"] {
+  html[data-runtime="android"] [data-ke="sms-entry"],
+  html[data-runtime="native"] [data-ke="sms-entry"],
+  html[data-runtime="ios"] [data-ke="native-checkout"],
+  html[data-runtime="android"] [data-ke="native-checkout"],
+  html[data-runtime="native"] [data-ke="native-checkout"],
+  html[data-runtime="ios"] [data-ke="plan-checkout"],
+  html[data-runtime="android"] [data-ke="plan-checkout"],
+  html[data-runtime="native"] [data-ke="plan-checkout"] {
     display: none !important;
     pointer-events: none !important;
   }
@@ -197,7 +213,8 @@
     display: none;
   }
   html[data-runtime="ios"] .ke-native-plan-note,
-  html[data-runtime="android"] .ke-native-plan-note {
+  html[data-runtime="android"] .ke-native-plan-note,
+  html[data-runtime="native"] .ke-native-plan-note {
     display: block;
   }
   [data-sonner-toaster] {

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createKidEaseMap, hasGoogleMapsBrowserKey, loadGoogleMaps } from "@/lib/google-maps";
+import { useStoreChannel } from "@/lib/use-native-shell";
 
 type Props = {
   lat: number;
@@ -12,12 +13,13 @@ type Props = {
 /** Municipality circle only. Never draws a pin. */
 export function QcAreaMap({ lat, lng, radiusM, label, caption }: Props) {
   const host = useRef<HTMLDivElement>(null);
+  const channel = useStoreChannel();
   const valid = Number.isFinite(lat) && Number.isFinite(lng) && radiusM >= 1500;
   const [live, setLive] = useState(false);
 
   useEffect(() => {
     const el = host.current;
-    if (!el || !valid || !hasGoogleMapsBrowserKey()) return;
+    if (channel === "huawei" || !el || !valid || !hasGoogleMapsBrowserKey()) return;
     let cancelled = false;
     let circle: google.maps.Circle | null = null;
     void (async () => {
@@ -53,13 +55,18 @@ export function QcAreaMap({ lat, lng, radiusM, label, caption }: Props) {
       cancelled = true;
       circle?.setMap(null);
     };
-  }, [lat, lng, radiusM, valid]);
+  }, [channel, lat, lng, radiusM, valid]);
 
   if (!valid) return null;
 
   return (
     <figure className="w-full min-w-0">
-      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-[#F7F4EF]" role="img" aria-label={label}>
+      <div
+        className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-[#F7F4EF]"
+        role="img"
+        aria-label={label}
+        data-ke={channel === "huawei" ? "map-fallback" : undefined}
+      >
         <div className="grid h-full place-items-center">
           <div className="size-[min(68%,16rem)] rounded-full border-2 border-primary/80 bg-primary/10" />
           <p className="absolute max-w-[90%] px-4 text-center text-sm font-medium text-fg">{caption}</p>

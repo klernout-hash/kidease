@@ -7,6 +7,7 @@
  * hosted Checkout must open in the system browser there.
  */
 
+import { readClientStoreChannel, shellBlocksCommerce } from "./native-entitlements.ts";
 import { isNative, nativePlatform, type NativePlatform } from "./native.ts";
 
 export type WalletAvailability = {
@@ -66,18 +67,12 @@ export function visibleWalletLabels(wallets: WalletAvailability): Array<"card" |
   return labels;
 }
 
-/** Open hosted Stripe Checkout. Native apps use the system browser so wallets can appear. */
+/** Open hosted Stripe Checkout. Apple, Google Play, and Huawei do not. Samsung and Microsoft do. */
 export async function openStripeCheckout(url: string): Promise<void> {
   const href = String(url || "").trim();
   if (!href) throw new Error("Pay link was not ready.");
-  if (typeof window !== "undefined" && isNative()) {
-    try {
-      const { Browser } = await import("@capacitor/browser");
-      await Browser.open({ url: href });
-      return;
-    } catch {
-      /* fall through to same-webview navigation */
-    }
+  if (typeof window !== "undefined" && shellBlocksCommerce(readClientStoreChannel())) {
+    throw new Error("Payments are not part of this app.");
   }
   if (typeof window !== "undefined") window.location.assign(href);
 }

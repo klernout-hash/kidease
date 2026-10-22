@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { searchClaimable, startClaim, submitEnrollLicense, verifyClaim, type ClaimHit } from "@/lib/server/claims";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { localePath } from "@/lib/locale-path";
@@ -59,6 +60,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
   const q0 = search.q ?? "";
   const id0 = search.id ?? "";
   const { t, locale } = useCopy();
+  const nativeShell = useInNativeShell();
   const { user, isPending } = useCurrentUserState();
   const navigate = useNavigate();
   const [q, setQ] = useState(q0);
@@ -125,6 +127,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
     if (window.location.hash !== "#enroll") return;
     const el = document.getElementById("enroll");
     if (!el) return;
+    if (el instanceof HTMLDetailsElement) el.open = true;
     const tmr = window.setTimeout(() => {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 80);
@@ -286,9 +289,23 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
     }
   }
 
+  const partnerPerks = (
+    [
+      [Users, "perkParents"],
+      [Megaphone, "perkBrand"],
+      [Globe, "perkPage"],
+      [CalendarCheck, "perkSpots"],
+      [MessageCircle, "perkChat"],
+      [MapPin, "perkNear"],
+      [Smartphone, "perkMobile"],
+      [Wallet, "perkPayLive"],
+      [TrendingUp, "perkGrow"],
+    ] as const
+  ).filter((entry) => !(nativeShell && entry[1] === "perkPayLive"));
+
   return (
     <Shell>
-      <main className="mx-auto max-w-3xl px-4 py-10">
+      <main className="mx-auto max-w-3xl px-4 py-10" data-ke="claim-page" data-commerce={nativeShell ? "hidden" : "web"}>
         <h1 className="font-display text-4xl">{t("claimFindTitle")}</h1>
         <p className="mt-3 max-w-xl text-muted">{t("claimFindLead")}</p>
         {pending ? (
@@ -320,8 +337,8 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
                 required
                 type="file"
                 accept="application/pdf,image/jpeg,image/png,image/webp"
-                className="mt-2 block w-full text-sm"
-                data-ke="claim-license-file"
+              className="mt-2 block min-h-11 w-full rounded-xl bg-bg px-3 py-2 text-sm text-fg ring-1 ring-border file:mr-3 file:min-h-11 file:rounded-full file:border-0 file:bg-primary file:px-4 file:text-sm file:font-medium file:text-primary-fg"
+              data-ke="claim-license-file"
                 onChange={(e) => readLicense(e.target.files?.[0], "claim", e.currentTarget)}
               />
               <UploadLimitHint hint={t("uploadClaimDocHint")} error={licenseError} />
@@ -408,19 +425,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
           <summary className="flex min-h-11 cursor-pointer items-center text-sm font-semibold">{t("partnerPerksTitle")}</summary>
           <FeelBanner src="/photos/brick.jpg" className="mt-4" />
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-            {(
-              [
-                [Users, "perkParents"],
-                [Megaphone, "perkBrand"],
-                [Globe, "perkPage"],
-                [CalendarCheck, "perkSpots"],
-                [MessageCircle, "perkChat"],
-                [MapPin, "perkNear"],
-                [Smartphone, "perkMobile"],
-                [Wallet, "perkPayLive"],
-                [TrendingUp, "perkGrow"],
-              ] as const
-            ).map(([Icon, key]) => (
+            {partnerPerks.map(([Icon, key]) => (
               <li key={key} className="flex gap-3 text-sm font-medium leading-6">
                 <Icon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
                 {t(key)}
@@ -430,7 +435,9 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
           <p className="mt-4 text-sm text-muted">{t("providerTrustBody")}</p>
         </details>
 
-        <form id="enroll" onSubmit={sendEnroll} className="mt-12 scroll-mt-24 space-y-3 rounded-xl bg-surface p-5 ring-1 ring-border">
+        <details id="enroll" className="mt-12 scroll-mt-24 rounded-xl bg-surface ring-1 ring-border">
+          <summary className="flex min-h-11 cursor-pointer items-center px-5 py-3 text-sm font-semibold">{t("enrollFormTitle")}</summary>
+        <form onSubmit={sendEnroll} className="space-y-3 px-5 pb-5">
           <h2 className="font-display text-2xl">{t("enrollFormTitle")}</h2>
           <p className="text-sm text-muted">{t("enrollFormLead")}</p>
           <p className="text-sm font-semibold">{t("daycareEnrollLead")}</p>
@@ -458,7 +465,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
                 }}
               />
               {enrollOpen ? (
-                <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-xl bg-surface py-1 shadow-card ring-1 ring-border">
+                <ul className="z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-xl bg-surface py-1 shadow-card ring-1 ring-border">
                   <li>
                     <button
                       type="button"
@@ -521,7 +528,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
               required
               type="file"
               accept="application/pdf,image/jpeg,image/png,image/webp"
-              className="mt-2 block w-full text-sm"
+              className="mt-2 block min-h-11 w-full rounded-xl bg-bg px-3 py-2 text-sm text-fg ring-1 ring-border file:mr-3 file:min-h-11 file:rounded-full file:border-0 file:bg-primary file:px-4 file:text-sm file:font-medium file:text-primary-fg"
               data-ke="enroll-license-file"
               onChange={(e) => readLicense(e.target.files?.[0], "enroll", e.currentTarget)}
             />
@@ -548,6 +555,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
             {t("sendClaimRequest")}
           </Button>
         </form>
+        </details>
       </main>
     </Shell>
   );

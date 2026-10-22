@@ -1,8 +1,12 @@
-/* Chrome-only KidEase PWA worker. Never intercepts HTML or hashed /assets/. */
-const VERSION = "kidease-shell-v4";
+/* KidEase PWA worker for Chromium, including the Microsoft Store app (Edge).
+ * The iOS and Android shells do not register this file.
+ * Documents are network-only. A failed navigation falls back to /offline.html.
+ * HTML is never written to the cache (stale /assets hashes break the page). */
+const VERSION = "kidease-shell-v6";
 const PRECACHE = [
   "/offline.html",
   "/manifest.webmanifest",
+  "/manifest.microsoft.webmanifest",
   "/favicon.svg",
   "/icon-512.png",
   "/fonts/plus-jakarta-sans-latin.woff2",
@@ -51,17 +55,15 @@ function isChromeAsset(url) {
     path === "/icon-512.png" ||
     path === "/apple-touch-icon.png" ||
     path === "/manifest.webmanifest" ||
+    path === "/manifest.microsoft.webmanifest" ||
     path === "/offline.html"
   );
 }
 
-function shouldBypass(url, request) {
+function shouldBypass(url) {
   if (!sameOrigin(url)) return true;
   const path = url.pathname;
-  // Documents and hashed CSS/JS must always come from the current deploy.
-  // A stale HTML document pointing at deleted /assets/* hashes is the
-  // production “giant logo + dead clicks” failure.
-  if (request.mode === "navigate" || request.destination === "document") return true;
+  // Hashed CSS/JS must always come from the current deploy.
   return (
     path.startsWith("/api/") ||
     path.startsWith("/ingest") ||
@@ -114,11 +116,23 @@ self.addEventListener("notificationclick", (event) => {
   event.waitUntil(self.clients.openWindow(url));
 });
 
+function isDocument(request) {
+  return request.mode === "navigate" || request.destination === "document";
+}
+
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
   const url = new URL(request.url);
-  if (shouldBypass(url, request)) return;
+  if (!sameOrigin(url)) return;
+  // Do not cache HTML. Offline only when the network itself fails.
+  if (isDocument(request)) {
+    event.respondWith(
+      fetch(request).catch(() => caches.match("/offline.html")),
+    );
+    return;
+  }
+  if (shouldBypass(url)) return;
   if (!isChromeAsset(url)) return;
 
   event.respondWith(

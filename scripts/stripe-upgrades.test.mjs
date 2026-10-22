@@ -469,7 +469,8 @@ test("success copy waits for a confirmed checkout and hides raw Stripe errors", 
   assert.doesNotMatch(cheer.slice(0, cheer.indexOf("points:")), /kicker:/);
   assert.match(cheer, /confetti:\s*true/);
   assert.match(src("src/components/success-confirm.tsx"), /upgrade-success-benefits/);
-  assert.match(src("src/lib/wallets.ts"), /Browser\.open/);
+  assert.match(src("src/lib/wallets.ts"), /Payments are not part of this app/);
+  assert.doesNotMatch(src("src/lib/wallets.ts"), /Browser\.open/);
   assert.match(src("src/lib/wallets.ts"), /window\.location\.assign\(href\)/);
   assert.match(src("src/routes/__root.tsx"), /SuccessConfirmHost/);
 

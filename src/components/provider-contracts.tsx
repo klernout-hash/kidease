@@ -7,7 +7,7 @@ import { useCopy } from "@/lib/use-copy";
 import { listProviderContracts, type ProviderContractRow } from "@/lib/server/contracts";
 
 export function ProviderContractsPanel() {
-  const { locale } = useCopy();
+  const { t, locale } = useCopy();
   const [rows, setRows] = useState<ProviderContractRow[]>([]);
   const [loaded, setLoaded] = useState(false);
 
@@ -21,9 +21,14 @@ export function ProviderContractsPanel() {
 
   if (rows.length === 0) {
     return (
-      <section className="rounded-xl bg-surface px-5 py-8 text-center ring-1 ring-border">
+      <section className="rounded-xl bg-surface px-5 py-6 text-left ring-1 ring-border">
         <h2 className="font-display text-2xl">{ds(locale, "providerTitle")}</h2>
-        <p className="mt-2 text-sm text-muted">{ds(locale, "providerEmpty")}</p>
+        <p className="mt-2 max-w-prose text-sm text-muted">{ds(locale, "providerEmpty")}</p>
+        <p className="mt-4">
+          <Link to="/provider" search={{ desk: "listings" }} className="inline-flex min-h-11 items-center text-sm font-medium text-primary">
+            {t("deskNavListings")}
+          </Link>
+        </p>
       </section>
     );
   }

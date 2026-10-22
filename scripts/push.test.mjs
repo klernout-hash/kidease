@@ -260,10 +260,15 @@ test("docs, migration, API, hook, and plugin are wired but off by default", () =
   assert.match(boot, /usePushRegistration/);
 
   assert.match(client, /registerPushDevice/);
-  assert.match(client, /@capacitor\/push-notifications/);
+  assert.match(client, /no-plugin/);
+  assert.doesNotMatch(client, /@capacitor\/push-notifications/);
   assert.match(client, /enabled !== true/);
-  assert.match(cap, /PushNotifications/);
-  assert.match(pkg, /"@capacitor\/push-notifications"/);
+  assert.doesNotMatch(cap, /PushNotifications/);
+  assert.doesNotMatch(pkg, /"@capacitor\/push-notifications"/);
+  assert.doesNotMatch(src("android/app/capacitor.build.gradle"), /capacitor-push-notifications/);
+  assert.doesNotMatch(src("android/capacitor.settings.gradle"), /capacitor-push-notifications/);
+  assert.doesNotMatch(src("ios/App/CapApp-SPM/Package.swift"), /CapacitorPushNotifications/);
+  assert.doesNotMatch(src("android/app/src/main/AndroidManifest.xml"), /POST_NOTIFICATIONS/);
 
   assert.match(tree, /\/api\/push\/register/);
   assert.match(tree, /\/api\/admin\/push-dry-run/);

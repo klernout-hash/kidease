@@ -178,6 +178,7 @@ function subsidyChip(kind: ParentFitSubsidy): { en: string; fr: string } {
 
 function monthChip(months: number): { en: string; fr: string } {
   const n = Math.round(months);
+  if (n < 1) return { en: "Takes newborns", fr: "Accueille les nouveau-nés" };
   if (n === 1) return { en: "Takes 1 month", fr: "Accueille 1 mois" };
   return { en: `Takes ${n} months`, fr: `Accueille ${n} mois` };
 }

@@ -41,8 +41,9 @@ import { MultiApplyPanel } from "@/components/multi-apply-sheet";
 import { localePath } from "@/lib/locale-path";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 
-export function compareValidateSearch(s: Record<string, unknown>) {
-  return { slugs: parseCompareSlugs(s.slugs) };
+export function compareValidateSearch(s: Record<string, unknown>): { slugs?: string[] } {
+  const slugs = parseCompareSlugs(s.slugs);
+  return slugs.length ? { slugs } : {};
 }
 
 export const Route = createFileRoute("/compare")({
@@ -52,7 +53,7 @@ export const Route = createFileRoute("/compare")({
 });
 
 function CompareRoute() {
-  return <ComparePage slugs={Route.useSearch().slugs} />;
+  return <ComparePage slugs={Route.useSearch().slugs ?? []} />;
 }
 
 export function ComparePage({ slugs }: { slugs: string[] }) {

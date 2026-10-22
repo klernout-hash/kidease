@@ -3,13 +3,26 @@ import { Wallet } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { Shell } from "@/components/shell";
 import { useCopy } from "@/lib/use-copy";
+import { NativePayNote } from "@/components/native-pay-note";
+import { useInNativeShell } from "@/lib/use-native-shell";
 
 export const Route = createFileRoute("/pay/")({
+  head: () => ({
+    meta: [{ title: "Pay a centre bill · KidEase" }],
+  }),
   component: PayHubPage,
 });
 
 function PayHubPage() {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
+  const nativePay = useInNativeShell();
+  if (nativePay) {
+    return (
+      <Shell>
+        <NativePayNote locale={locale} />
+      </Shell>
+    );
+  }
 
   return (
     <Shell>

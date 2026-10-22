@@ -37,14 +37,19 @@ export function DirectorNudgeQueue({
   listings,
   stats,
   onConfirmed,
+  skipConfirmSpots = false,
 }: {
   listings: Daycare[];
   stats: Array<{ daycareId: string; demand?: DemandSnapshot | null }>;
   onConfirmed: () => void | Promise<void>;
+  /** The listings desk already has a confirm row for every centre. */
+  skipConfirmSpots?: boolean;
 }) {
   const { t } = useCopy();
   const [busyId, setBusyId] = useState<string | null>(null);
-  const nudges = collectDirectorNudges(listings, stats).slice(0, 8);
+  const nudges = collectDirectorNudges(listings, stats)
+    .filter((nudge) => !skipConfirmSpots || nudge.cta !== "confirm_spots")
+    .slice(0, 8);
   if (!nudges.length) return null;
 
   return (

@@ -14,9 +14,10 @@ import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/report")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    province: reportSearchProvince(search.province),
-  }),
+  validateSearch: (search: Record<string, unknown>) => {
+    const province = reportSearchProvince(search.province);
+    return province ? { province } : {};
+  },
   head: () => pageSeoHead(MARKETING_PAGE_SEO.report),
   component: ReportPage,
 });

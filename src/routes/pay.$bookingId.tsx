@@ -11,11 +11,14 @@ import { useSessionDesks } from "@/components/desk-switcher";
 import { LedgerHonesty } from "@/components/listing-status-badge";
 import { money } from "@/lib/utils";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
+import { NativePayNote } from "@/components/native-pay-note";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import type { Booking } from "@/lib/types";
 
 export const Route = createFileRoute("/pay/$bookingId")({ component: PayPage });
 
 function PayPage() {
+  const nativePay = useInNativeShell();
   const { bookingId } = Route.useParams();
   const { user, isPending } = useCurrentUserState();
   const { t, locale } = useCopy();
@@ -49,6 +52,13 @@ function PayPage() {
     );
   }
   if (!user) return <RedirectToSignIn />;
+  if (nativePay) {
+    return (
+      <Shell>
+        <NativePayNote locale={locale} />
+      </Shell>
+    );
+  }
 
   const alreadyPaid = booking?.status === "active" || booking?.paymentStatus === "paid" || result?.status === "paid";
   const canStartInterac = Boolean(booking?.status === "accepted" && booking.paymentStatus !== "paid" && !result);
