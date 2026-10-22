@@ -17,7 +17,7 @@ import { useCopy } from "@/lib/use-copy";
 import type { CentreInboxThread } from "@/lib/inbox-stages";
 import { cn } from "@/lib/utils";
 
-export function InboxList() {
+export function InboxList({ bare = false }: { bare?: boolean }) {
   const { user, isPending } = useCurrentUserState();
   const { t } = useCopy();
   const navigate = useNavigate();
@@ -40,6 +40,7 @@ export function InboxList() {
   );
 
   if (isPending) {
+    if (bare) return <DeskSkeleton />;
     return (
       <Shell>
         <DeskSkeleton />
@@ -112,6 +113,8 @@ export function InboxList() {
       </ul>
     </div>
   );
+
+  if (bare) return list;
 
   if (view === "centre") {
     return (

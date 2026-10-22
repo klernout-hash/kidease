@@ -149,7 +149,7 @@ export function SmartMatchEntry({ inline = false, quiet = false }: { inline?: bo
     <Button
       type="button"
       variant="secondary"
-      className="whitespace-nowrap"
+      className="whitespace-nowrap max-md:h-auto max-md:max-w-full max-md:whitespace-normal max-md:px-4 max-md:text-center"
       data-ke="smart-match-open"
       data-flag={on ? "on" : "off"}
       onClick={() => setOpen(true)}

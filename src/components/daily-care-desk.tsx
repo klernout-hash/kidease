@@ -65,6 +65,8 @@ export function DailyCareDesk({
   const [monthLabel, setMonthLabel] = useState(day.slice(0, 7));
   const [dayDrafts, setDayDrafts] = useState<Record<string, { food: string; nap: string; incident: string; photo: string }>>({});
   const [splitDrafts, setSplitDrafts] = useState<Record<string, { parent: string; program: string; kind: string; label: string }>>({});
+  const [careFocus, setCareFocus] = useState<string | null>(null);
+  const [careOpen, setCareOpen] = useState(false);
 
   const load = useCallback(async () => {
     const [week, feed, careOps, month] = await Promise.all([
@@ -352,13 +354,49 @@ export function DailyCareDesk({
           actionTo={role === "provider" ? "/inbox?view=centre" : "/search"}
         />
       ) : (
-        <ul className="space-y-4">
+        <div className="ke-split" data-ke="care-split" data-selected={careOpen ? "true" : "false"}>
+          <div className="ke-split-list min-w-0">
+            <ul className="divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
+              {byChild.map(({ row }) => {
+                const key = childKey(row);
+                const on = key === (careFocus ?? childKey(byChild[0].row));
+                return (
+                  <li key={key}>
+                    <button
+                      type="button"
+                      aria-pressed={on}
+                      className="flex min-h-11 w-full items-center px-4 text-left touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                      onClick={() => {
+                        setCareFocus(key);
+                        setCareOpen(true);
+                      }}
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium">{row.childName}</span>
+                        <span className="block truncate text-xs text-muted">{row.daycareName}</span>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+          <div className="ke-split-detail min-w-0" data-ke="care-detail">
+            <button
+              type="button"
+              className="mb-3 inline-flex min-h-11 items-center text-sm font-medium md:hidden"
+              onClick={() => setCareOpen(false)}
+            >
+              {t("back")}
+            </button>
+            <ul className="space-y-4">
           {byChild.map(({ row, journals: childJournals }) => {
             const key = childKey(row);
+            const rest = key !== (careFocus ?? childKey(byChild[0].row));
             const presence = presenceFromAttendance(row.status);
             const draft = drafts[key] ?? { body: "", photos: [] };
             return (
-              <li key={key} className="rounded-xl bg-surface p-4 shadow-card ring-1 ring-border">
+              <li key={key} className={`rounded-xl bg-surface p-4 shadow-card ring-1 ring-border${rest ? " ke-child-rest" : ""}`}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-medium">{row.childName}</p>
@@ -556,7 +594,9 @@ export function DailyCareDesk({
               </li>
             );
           })}
-        </ul>
+            </ul>
+          </div>
+        </div>
       )}
       {ready && monthChildren.length ? (
         <MonthShares

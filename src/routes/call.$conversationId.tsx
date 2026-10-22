@@ -60,7 +60,9 @@ function CallPage() {
 
   return (
     <Shell>
-      <main className="mx-auto w-full max-w-lg px-4 py-8 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
+      <main className="w-full px-4 py-8 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
+        <div className="ke-call-stage" data-ke="call-stage">
+        <div className="min-w-0">
         <Link to="/inbox/$id" params={{ id: conversationId }} className="text-sm text-muted">
           ← {t("voiceBackInbox")}
         </Link>
@@ -68,6 +70,7 @@ function CallPage() {
         <h1 className="mt-2 font-display text-3xl">{t("voiceCallTitle")}</h1>
         {lead ? <p className="mt-3 text-sm text-muted">{lead}</p> : null}
         {status?.peerLabel ? <p className="mt-2 text-sm font-medium">{status.peerLabel}</p> : null}
+        <p className="mt-3 text-sm text-muted" data-ke="media-permission-note">{t("mediaPermissionNote")}</p>
 
         {!status && !failed ? <p className="mt-6 text-sm text-muted">{t("loading")}</p> : null}
 
@@ -102,9 +105,13 @@ function CallPage() {
           </div>
         ) : null}
 
+        </div>
+        <div className="min-w-0">
         {status?.allowed && status.credentialsPresent ? (
           <VoiceCallPanel conversationId={conversationId} />
         ) : null}
+        </div>
+        </div>
       </main>
     </Shell>
   );

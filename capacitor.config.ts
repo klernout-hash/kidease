@@ -75,7 +75,9 @@ const config: CapacitorConfig = {
     backgroundColor: "#F6F3EE",
   },
   ios: {
-    contentInset: "automatic",
+    // CSS safe-area insets cover the notch, Dynamic Island, and home indicator.
+    // "never" keeps UIKit from padding the webview a second time.
+    contentInset: "never",
     backgroundColor: "#F6F3EE",
     preferredContentMode: "mobile",
     scheme: "KidEase",

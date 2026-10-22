@@ -6,7 +6,6 @@
     var uaNative = ua.indexOf("KidEaseNative") !== -1;
     var q = new URLSearchParams(location.search);
     var force = q.get("app") === "1" || q.get("channel") === "app";
-    var w = window.innerWidth || 0;
     var r = document.documentElement;
     var store = "web";
     var ios = /iPhone|iPad|iPod/i.test(ua);
@@ -44,7 +43,15 @@
     }
     r.dataset.store = store;
     var blocksCommerce = Object.prototype.hasOwnProperty.call(STORE_PAYMENTS_ENABLED, store) && STORE_PAYMENTS_ENABLED[store] === false;
-    r.dataset.channel = force || n || uaNative || w < 1024 ? "app" : "website";
+    var paintFrame = function () {
+      var w = window.innerWidth || 0;
+      var h = window.innerHeight || 0;
+      var ratio = h > 0 ? w / h : 1;
+      r.dataset.channel = force || n || uaNative || w < 1024 ? "app" : "website";
+      r.dataset.keShape = ratio >= 0.85 && ratio <= 1.18 ? "square" : ratio > 1.18 ? "wide" : "tall";
+    };
+    paintFrame();
+    window.addEventListener("resize", paintFrame);
     if (!blocksCommerce) r.dataset.runtime = "web";
     else if (n && c.getPlatform) r.dataset.runtime = c.getPlatform();
     else r.dataset.runtime = "native";

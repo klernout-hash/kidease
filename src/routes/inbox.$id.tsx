@@ -3,7 +3,6 @@ import { inboxSearch, parseInboxSearch, resolveInboxView } from "@/lib/inbox-vie
 import { Phone, Video, X } from "lucide-react";
 import { toast } from "sonner";
 import { useEffect, useRef, useState } from "react";
-import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { PipelineBadge } from "@/components/pipeline-badge";
 import { ConversationDetailsBody } from "@/components/conversation-details";
@@ -203,11 +202,7 @@ function ThreadPage() {
   }, [search.tour, tours]);
 
   if (isPending) {
-    return (
-      <Shell>
-        <p className="p-8 text-muted">{t("loading")}</p>
-      </Shell>
-    );
+    return <p className="p-8 text-muted">{t("loading")}</p>;
   }
   if (!user) return <RedirectToSignIn />;
 
@@ -320,7 +315,6 @@ function ThreadPage() {
   }));
 
   return (
-    <Shell>
       <main className="mx-auto flex min-h-[70dvh] w-full max-w-3xl flex-col">
         {loadState === "ready" ? (
           <ThreadHeader
@@ -519,6 +513,5 @@ function ThreadPage() {
           </div>
         ) : null}
       </main>
-    </Shell>
   );
 }
