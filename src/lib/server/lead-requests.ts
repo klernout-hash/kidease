@@ -325,6 +325,8 @@ export const createLeadRequest = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { daycareId: string; kind: LeadKind; message?: string }) => input)
   .handler(async ({ context, data }) => {
+    const { assertFacebookContactEmail } = await import("@/lib/server/facebook-email");
+    await assertFacebookContactEmail(context.userId);
     if (!isLeadKind(data.kind)) throw new Error("Invalid request type");
     const daycareId = (data.daycareId || "").trim();
     if (!daycareId) throw new Error("Centre not found");

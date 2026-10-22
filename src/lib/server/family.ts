@@ -553,6 +553,8 @@ export const createBooking = createServerFn({ method: "POST" })
     }) => input,
   )
   .handler(async ({ context, data }) => {
+    const { assertFacebookContactEmail } = await import("@/lib/server/facebook-email");
+    await assertFacebookContactEmail(context.userId);
     const sql = await getSql();
     const listed = await catalogByIdGet(data.daycareId);
     if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerIsAdmin())) {
@@ -1016,6 +1018,8 @@ export const openConversation = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((daycareId: string) => daycareId)
   .handler(async ({ context, data: daycareId }) => {
+    const { assertFacebookContactEmail } = await import("@/lib/server/facebook-email");
+    await assertFacebookContactEmail(context.userId);
     const sql = await getSql();
     const listed = await catalogByIdGet(daycareId);
     if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerIsAdmin())) {
@@ -1764,6 +1768,8 @@ export const updateCapacity = createServerFn({ method: "POST" })
 export async function purgeAccountData(uid: string) {
     const { revokeStoredAppleSignIn } = await import("@/lib/server/apple-account-revoke");
     await revokeStoredAppleSignIn(uid);
+    const { unlinkStoredFacebook } = await import("@/lib/server/facebook-account-unlink");
+    await unlinkStoredFacebook(uid);
     const { purgeAccountExtras } = await import("@/lib/server/account-close");
     await purgeAccountExtras(uid);
     const sql = await getSql();
@@ -1819,6 +1825,8 @@ export const deleteAccount = createServerFn({ method: "POST" })
     const uid = context.userId;
     const { revokeStoredAppleSignIn } = await import("@/lib/server/apple-account-revoke");
     await revokeStoredAppleSignIn(uid);
+    const { unlinkStoredFacebook } = await import("@/lib/server/facebook-account-unlink");
+    await unlinkStoredFacebook(uid);
     const { cancelPendingAccountWork } = await import("@/lib/server/account-close");
     await cancelPendingAccountWork(uid);
     await sql`
