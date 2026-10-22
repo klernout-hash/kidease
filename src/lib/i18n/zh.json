@@ -1281,6 +1281,8 @@
   "supportLead": "家长与服务方：我们会阅读每一条备注。请给我们发电子邮件，或在下方留言。",
   "supportSent": "消息已发送。我们将通过电子邮件回复。",
   "deleteAccount": "删除我的账户",
+  "deleteAccountPendingNow": "未完成的学位申请、等候名单和参观预约现在取消。如果您恢复账户，这些申请仍保持取消。",
+  "deleteAccountWeb": "删除账户的网页：https://www.kidease.ca/delete-account",
   "deleteAccountLead": "将移除您的子女资料、消息、预订以及已保存的中心。我们会依法保留账单记录。欺诈与安全日志也会保留。此操作无法撤销。",
   "deleteAccountGuestLead": "请登录以删除您的 KidEase 账户。您也可以发邮件至 support@kidease.ca，我们会为您删除。",
   "deleteAccountSignIn": "登录以删除我的账户",

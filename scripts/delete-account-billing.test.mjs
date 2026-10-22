@@ -11,7 +11,8 @@ const copy = readFileSync(join(root, "src/lib/copy.ts"), "utf8");
 test("account deletion keeps billing rows and says so", () => {
   const start = family.indexOf("export async function purgeAccountData");
   assert.ok(start > 0);
-  const body = family.slice(start, start + 1800);
+  const next = family.indexOf("\nexport ", start + 20);
+  const body = family.slice(start, next > start ? next : start + 4000);
   assert.doesNotMatch(body, /delete from payments/);
   assert.doesNotMatch(body, /delete from invoices/);
   assert.match(body, /delete from "user"/);
