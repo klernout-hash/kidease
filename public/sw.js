@@ -1,10 +1,12 @@
-/* Chrome-only KidEase PWA worker.
+/* KidEase PWA worker for Chromium, including the Microsoft Store app (Edge).
+ * The iOS and Android shells do not register this file.
  * Documents are network-only. A failed navigation falls back to /offline.html.
  * HTML is never written to the cache (stale /assets hashes break the page). */
-const VERSION = "kidease-shell-v5";
+const VERSION = "kidease-shell-v6";
 const PRECACHE = [
   "/offline.html",
   "/manifest.webmanifest",
+  "/manifest.microsoft.webmanifest",
   "/favicon.svg",
   "/icon-512.png",
   "/fonts/plus-jakarta-sans-latin.woff2",
@@ -53,6 +55,7 @@ function isChromeAsset(url) {
     path === "/icon-512.png" ||
     path === "/apple-touch-icon.png" ||
     path === "/manifest.webmanifest" ||
+    path === "/manifest.microsoft.webmanifest" ||
     path === "/offline.html"
   );
 }

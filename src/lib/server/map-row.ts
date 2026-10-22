@@ -8,6 +8,7 @@ import type { Daycare } from "@/lib/types";
 import { hasLicenceEvidence } from "@/lib/approve-live";
 import { isPlatformLive } from "@/lib/live";
 import { applyListingReadiness } from "@/lib/listing-readiness";
+import { agesKnownFromConfirmedFlag } from "@/lib/standard-age-groups";
 import { isAdminOnlyListing, listingVisibilityOf } from "@/lib/listing-visibility";
 import { applyLocalRegistryTrust } from "@/lib/server/license-match";
 import { applyMasterCareType } from "@/lib/server/master-care-type";
@@ -67,6 +68,8 @@ export type DaycareRow = {
   claim_status?: string | null;
   priority_until?: string | null;
   ages_confirmed?: number | boolean | null;
+  ages_source?: string | null;
+  ages_source_url?: string | null;
   listing_active?: number | boolean | null;
   pause_code?: string | null;
   pause_reason?: string | null;
@@ -190,7 +193,9 @@ export function mapDaycare(r: DaycareRow): Daycare {
     stripeIdentityVerified: r.stripe_identity_verified === 1 || r.stripe_identity_verified === true,
     priority: Boolean(r.priority_until && Date.parse(r.priority_until) > Date.now()),
     priorityUntil: r.priority_until ?? null,
-    agesKnown: Boolean(r.ages_confirmed),
+    agesKnown: agesKnownFromConfirmedFlag(r.ages_confirmed),
+    agesSource: r.ages_source?.trim() || null,
+    agesSourceUrl: r.ages_source_url?.trim() || null,
     visibility: listingVisibilityOf({
       id: r.id,
       slug: r.slug,

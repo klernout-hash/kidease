@@ -4,6 +4,8 @@
  * serves one age group, or when the tap is 0. Never invent a split.
  */
 
+import { standardGroupsForRange, usableAgeRange } from "./standard-age-groups.ts";
+
 export const OPEN_SPOTS_BANDS = [0, 1, 2, 3] as const;
 export type OpenSpotsBand = (typeof OPEN_SPOTS_BANDS)[number];
 export type SpotAge = "infant" | "toddler" | "preschool";
@@ -37,16 +39,8 @@ export function viewsWindowStart(now = Date.now()): string {
 }
 
 export function ageGroupsInRange(minMonths: number | null, maxMonths: number | null): SpotAge[] {
-  if (minMonths == null || maxMonths == null || !Number.isFinite(minMonths) || !Number.isFinite(maxMonths)) {
-    return ["infant", "toddler", "preschool"];
-  }
-  const min = Math.max(0, Math.round(minMonths));
-  const max = Math.max(min, Math.round(maxMonths));
-  const groups: SpotAge[] = [];
-  if (min < 18) groups.push("infant");
-  if (max >= 18 && min < 36) groups.push("toddler");
-  if (max >= 36) groups.push("preschool");
-  return groups.length ? groups : ["infant", "toddler", "preschool"];
+  if (!usableAgeRange(minMonths, maxMonths)) return [];
+  return standardGroupsForRange(minMonths, maxMonths).filter((id): id is SpotAge => id !== "school-age");
 }
 
 export function applyOpenSpotsBand(

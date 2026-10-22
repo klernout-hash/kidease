@@ -20,7 +20,8 @@ import type { CopyKey } from "@/lib/copy";
 import { parentDistanceLabel } from "@/lib/distance-label";
 import { originIsParentLocation } from "@/lib/presence";
 import { plausibleListingKm } from "@/lib/plausible-distance";
-import { listingAgeRangeText } from "@/lib/listing-ages";
+import { listingAgeChips, parentAgeLabel } from "@/lib/parent-listing";
+import { standardAgeLabelsForListing } from "@/lib/standard-age-groups";
 import { classifyFacilityType, facilityTypeSeoKind } from "@/lib/facility-type";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { isCatalogueMatchedBadge, trustBadgesFor, type TrustBadge as TrustBadgeModel } from "@/lib/trust";
@@ -40,7 +41,6 @@ import {
   honestVacancy,
   liveLookingGaps,
 } from "@/lib/now-loops";
-import { listingAgeChips, parentAgeLabel } from "@/lib/parent-listing";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
 import { listingSubsidy } from "@/lib/fee-program";
@@ -266,12 +266,12 @@ export const DaycareCard = memo(function DaycareCard({
   const licenseWarning =
     license && !isCatalogueMatchedBadge(license) && cardPhotoLicenseWarning(license.id) ? license : null;
   const loc = locale === "fr" ? "fr" : "en";
-  const ages = listingAgeRangeText(item, "months", loc);
+  const ages = standardAgeLabelsForListing(item, loc).join(" · ");
   const hours = displayListingText(item.hours).replace(/Monday to Friday/i, "Mon–Fri").trim();
   const facility = classifyFacilityType(item);
   const typeLabel = facilityTypeSeoKind(facility.type, loc);
   const ageChips = listingAgeChips(item);
-  const line3 = [typeLabel, ages, hours].filter(Boolean).join(" · ");
+  const line3 = [typeLabel, hours].filter(Boolean).join(" · ");
   const photosAge = photoLine(item, t, locale);
   const photoText = photosAge.kind === "unknown" ? "" : photosAge.text;
   const spotsKnown =
@@ -495,7 +495,7 @@ export const DaycareCard = memo(function DaycareCard({
             </p>
           ) : null}
           <ProvincialOpeningLine item={item} />
-          {!compact && ageChips.length ? (
+          {ageChips.length ? (
             <div className="flex flex-wrap gap-1 pt-1">
               {ageChips.map((band) => (
                 <span key={band} className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-medium">

@@ -25,6 +25,7 @@ import {
 import { FACILITY_TYPES, normalizeFacilityType, type FacilityType } from "@/lib/facility-type";
 import { amenityLabel } from "@/lib/amenities";
 import { useCopy } from "@/lib/use-copy";
+import { standardAgeGroup } from "@/lib/standard-age-groups";
 import type { Daycare } from "@/lib/types";
 
 export type ParentDeskState = {
@@ -71,14 +72,14 @@ function toggle<T extends string>(list: T[], token: T): T[] {
 }
 
 function defaultProgram(band: AgeProgram["band"]): AgeProgram {
-  const ranges = {
-    infant: [0, 18],
-    toddler: [18, 36],
-    preschool: [30, 72],
-    "school-age": [60, 144],
-  } as const;
-  const [ageMinMonths, ageMaxMonths] = ranges[band];
-  return { band, ageMinMonths, ageMaxMonths, schedules: ["full"], monthlyFee: null };
+  const range = standardAgeGroup(band);
+  return {
+    band,
+    ageMinMonths: range.minMonths,
+    ageMaxMonths: range.maxMonths,
+    schedules: ["full"],
+    monthlyFee: null,
+  };
 }
 
 export function ProviderParentFields({

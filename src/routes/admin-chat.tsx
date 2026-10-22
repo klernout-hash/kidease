@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { beforeLoadAdminDesk } from "@/lib/server/admin-route";
 import { DeskSkeleton } from "@/components/page-skeleton";
 
@@ -8,7 +8,10 @@ const AdminChatPage = lazy(() =>
 );
 
 export const Route = createFileRoute("/admin-chat")({
-  beforeLoad: beforeLoadAdminDesk,
+  beforeLoad: async () => {
+    if (import.meta.env.PROD) throw redirect({ to: "/admin" });
+    await beforeLoadAdminDesk();
+  },
   head: () => ({
     meta: [
       { title: "Chat lab · KidEase" },

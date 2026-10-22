@@ -122,8 +122,7 @@
       "permanent": true
     },
     { "source": "/childcare-benefits-program", "destination": "/benefits", "permanent": true },
-    { "source": "/meet-the-team", "destination": "/team", "permanent": true },
-    { "source": "/how-it-works", "destination": "/#how", "permanent": false }
+    { "source": "/meet-the-team", "destination": "/team", "permanent": true }
   ],
   "headers": [
     {

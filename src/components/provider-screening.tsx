@@ -10,7 +10,8 @@ import {
   type ScreeningDocView,
   type ScreeningPersonView,
 } from "@/lib/server/provider-screening";
-import { docKindLabel, type ScreeningDocStatus } from "@/lib/provider-screening";
+import { docKindLabel, screeningPublicNotes, screeningPublicStatus, type ScreeningDocStatus } from "@/lib/provider-screening";
+import { LICENSING_OFFICES } from "@/lib/licensing-offices";
 import { isPrivateDocTooBig } from "@/lib/upload-limits";
 import { UploadLimitHint } from "@/components/upload-limit-hint";
 import {
@@ -63,6 +64,15 @@ const ROLE_COPY: Record<string, CopyKey> = {
   home_resident: "screeningRoleResident",
 };
 
+function screeningPlace(city: string, province: string, locale: "en" | "fr"): string {
+  const code = province.trim().toUpperCase();
+  const office = LICENSING_OFFICES.find((row) => row.code === code);
+  const name = office ? (locale === "fr" ? office.nameFr : office.nameEn) : province.trim();
+  const town = city.trim();
+  if (town && name) return `${town}, ${name}`;
+  return name || town;
+}
+
 function readScreeningFile(file: File | undefined, onReady: (file: File) => void, onBad: () => void) {
   if (!file) return;
   if (isPrivateDocTooBig(file.size)) {
@@ -107,9 +117,9 @@ function DocRow({
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="text-sm font-medium">{docKindLabel(doc.kind, locale)}</p>
-          <p className="mt-1 text-xs leading-5 text-muted">{doc.notes}</p>
+          <p className="mt-1 text-xs leading-5 text-muted">{screeningPublicNotes(doc.notes)}</p>
         </div>
-        <StatusPill status={doc.status} />
+        <StatusPill status={screeningPublicStatus(doc)} />
       </div>
       {doc.reviewerNotes ? <p className="mt-2 text-xs text-danger">{doc.reviewerNotes}</p> : null}
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -339,10 +349,7 @@ export function ProviderScreeningPanel() {
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <h3 className="font-display text-xl">{centre.daycareName}</h3>
-              <p className="mt-1 text-xs text-muted">
-                {centre.province}
-                {centre.packStatus === "stub" ? ` · ${t("screeningPackStub")}` : ""}
-              </p>
+              <p className="mt-1 text-xs text-muted">{screeningPlace(centre.city, centre.province, loc)}</p>
             </div>
             {centre.screeningOnFile ? (
               <span className="rounded-full bg-ok/15 px-2.5 py-1 text-xs font-medium text-ok">{t("trustScreeningOnFile")}</span>

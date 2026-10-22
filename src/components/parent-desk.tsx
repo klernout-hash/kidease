@@ -39,6 +39,7 @@ import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { WINNIPEG } from "@/lib/geo";
 import { yieldToMain } from "@/lib/yield-main";
 import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
+import { PARENT_UPGRADE_PLANS } from "@/lib/upgrade-plans";
 import { ParentHome } from "@/components/parent-home";
 import { useRoleChrome } from "@/components/role-chrome";
 import { useParentPlusAccess } from "@/lib/use-parent-plus";
@@ -537,7 +538,7 @@ export function ParentDesk({
               </Suspense>
             </div>
           ) : (
-            <p className="mt-4 text-sm text-muted">{t("accountSubscriptionLead")}</p>
+            <CurrentParentPlan />
           )}
         </div>
       ) : null}
@@ -559,11 +560,10 @@ export function ParentDesk({
               className="mt-2"
               ready={desksReady}
             />
-            <p className="mt-2 text-sm text-muted">{t("connectFeeParentPay")}</p>
           </div>
-          {bills.filter((b) => billIsOpen(b.status)).length ? (
-            <div>
-              <h3 className="font-display text-xl">{t("openBills")}</h3>
+          <div>
+            <h3 className="font-display text-xl">{t("openBills")}</h3>
+            {bills.filter((b) => billIsOpen(b.status)).length ? (
               <ul className="mt-3 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
                 {bills
                   .filter((b) => billIsOpen(b.status))
@@ -591,8 +591,10 @@ export function ParentDesk({
                     </li>
                   ))}
               </ul>
-            </div>
-          ) : null}
+            ) : (
+              <p className="mt-3 text-sm text-muted">{t("noPayments")}</p>
+            )}
+          </div>
           <div>
             <h3 className="font-display text-xl">{t("paidBills")}</h3>
             <ul className="mt-3 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
@@ -798,11 +800,31 @@ export function ParentDesk({
                   })
                 )}
               </ul>
-              <Button onClick={() => setEditing("new")}>{children.length ? t("newChild") : t("addChild")}</Button>
+              {children.length ? (
+                <Button onClick={() => setEditing("new")}>{t("newChild")}</Button>
+              ) : null}
             </>
           )}
         </div>
       ) : null}
     </DeskShell>
+  );
+}
+
+function CurrentParentPlan() {
+  const { t, locale } = useCopy();
+  const plan = PARENT_UPGRADE_PLANS.find((row) => row.id === "free") ?? PARENT_UPGRADE_PLANS[0];
+  const lang = locale === "fr" ? "fr" : "en";
+  return (
+    <section className="mt-4 rounded-xl bg-surface p-5 ring-1 ring-border" data-ke="parent-plan-view">
+      <h3 className="font-display text-xl">{plan?.name[lang]}</h3>
+      <p className="mt-1 text-sm font-medium text-fg">{lang === "fr" ? "Sans frais" : "No charge"}</p>
+      <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">
+        {plan?.benefits.map((row) => (
+          <li key={row.en}>{row[lang]}</li>
+        ))}
+      </ul>
+      <p className="mt-4 text-sm text-muted">{t("plansNotOffered")}</p>
+    </section>
   );
 }

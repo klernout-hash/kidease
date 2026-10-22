@@ -1248,7 +1248,10 @@ export const setRole = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((role: "parent" | "provider") => role)
   .handler(async ({ context, data: role }) => {
+    const { isViewAsReadOnly } = await import("@/lib/view-as-public");
     const written = await writeProfileRole(context.userId, role);
+    // Remembered-role boot must not file daycare intake on the person being viewed.
+    if (isViewAsReadOnly()) return { role: written.role };
     if (written.role === "provider") {
       await ensureCrmIntake(context.userId, "provider");
     } else if (written.role === "parent") {
@@ -1805,6 +1808,8 @@ export async function purgeAccountIfExpired(userId: string): Promise<"active" | 
 export const deleteAccount = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
+    const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
+    blockViewAsSideEffect("delete");
     const sql = await getSql();
     const uid = context.userId;
     const { revokeStoredAppleSignIn } = await import("@/lib/server/apple-account-revoke");
@@ -1822,6 +1827,8 @@ export const deleteAccount = createServerFn({ method: "POST" })
 export const restoreMyAccount = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
+    const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
+    blockViewAsSideEffect("write");
     const deletedAt = await readDeletedAt(context.userId);
     if (!deletedAt) return { ok: true as const, restored: false as const };
     const { withinRestoreWindow } = await import("@/lib/account-delete");

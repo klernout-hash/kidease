@@ -20,6 +20,26 @@ const ROLE_COPY: Record<string, CopyKey> = {
   read_only: "employeeRoleReadOnly",
 };
 
+type TeamPerson = CentreTeamPayload["people"][number];
+
+function groupTeamPeople(rows: TeamPerson[]): Array<TeamPerson & { key: string; centres: string[] }> {
+  const grouped = new Map<string, TeamPerson & { key: string; centres: string[] }>();
+  for (const row of rows) {
+    const email = row.email.trim().toLowerCase();
+    const key = email || `${row.kind}-${row.id}`;
+    const centre = centrePickerLabel(row.daycareName, null, row.daycareId);
+    const prev = grouped.get(key);
+    if (!prev) {
+      grouped.set(key, { ...row, key, centres: [centre] });
+      continue;
+    }
+    if (!prev.centres.includes(centre)) prev.centres.push(centre);
+    if (row.role === "owner") prev.role = row.role;
+    if (row.canRevoke) prev.canRevoke = true;
+  }
+  return [...grouped.values()];
+}
+
 const STATUS_COPY: Record<string, CopyKey> = {
   active: "employeeStatusActive",
   pending: "employeeStatusPending",
@@ -169,13 +189,13 @@ export function CentreEmployeesPanel({ canInvite }: { canInvite: boolean }) {
         {!team?.people.length ? (
           <li className="px-5 py-8 text-center text-sm text-muted">{t("employeeEmpty")}</li>
         ) : (
-          team.people.map((row) => (
-            <li key={`${row.kind}-${row.id}`} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+          groupTeamPeople(team.people).map((row) => (
+            <li key={row.key} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <p className="font-medium break-words">{row.name || row.email || t("employeeNoName")}</p>
                 <p className="text-sm text-muted break-all">{row.email}</p>
                 <p className="mt-1 text-xs text-subtle">
-                  {centrePickerLabel(row.daycareName, null, row.daycareId)} · {t(ROLE_COPY[row.role] ?? "employeeRoleStaff")} ·{" "}
+                  {row.centres.join(" · ")} · {t(ROLE_COPY[row.role] ?? "employeeRoleStaff")} ·{" "}
                   {t(STATUS_COPY[row.status] ?? "employeeStatusPending")}
                 </p>
               </div>

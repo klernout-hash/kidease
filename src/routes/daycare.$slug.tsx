@@ -89,7 +89,7 @@ import { decideListingLoader, listingNotFoundHead, shouldNotFoundListing } from 
 import { ListingNotFoundPage } from "@/components/page-not-found";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { classifyFacilityType, type FacilityType } from "@/lib/facility-type";
-import { listingAgeRangeText } from "@/lib/listing-ages";
+import { provinceAgeSourceText, standardAgeLabelsForListing } from "@/lib/standard-age-groups";
 import type { ListingSeoSource } from "@/lib/listing-seo";
 import { formatMonth, money, displayCentreName, displayListingText } from "@/lib/utils";
 import { openDirections } from "@/lib/maps";
@@ -455,7 +455,8 @@ export function Listing() {
         day: "numeric",
       })
     : "";
-  const agesLabel = listingAgeRangeText(d, "short", loc);
+  const agesLabel = standardAgeLabelsForListing(d, loc).join(" · ");
+  const provinceAge = provinceAgeSourceText(d.agesSource);
   const feeNotes = listingFeeNotes(d);
   const subsidy = listingSubsidy(d);
   const directionsPlace = {
@@ -768,6 +769,13 @@ export function Listing() {
             </div>
           ) : null}
           <ListingHeaderPills item={d} agesLabel={agesLabel} hours={hours} feeFrom={from} />
+          {provinceAge ? (
+            <p className="mt-1 text-xs leading-5 text-muted" data-ke="province-age-label">
+              {t("provinceAgeCaption")}
+              {locale === "fr" ? " : " : ": "}
+              {provinceAge}
+            </p>
+          ) : null}
           {offerClaim ? (
             <div className="mt-3" data-ke="listing-claim-button">
               <ClaimListingButton id={d.id} name={name} />

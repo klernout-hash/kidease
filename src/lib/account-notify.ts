@@ -124,6 +124,23 @@ export function adminPersonEligible(row: {
   return Boolean((row.email || "").trim() || (row.name || "").trim());
 }
 
+/**
+ * QA mailboxes and "Test Test" style names. Hidden on Admin People until
+ * Show QA accounts is on. Real centres named Testing Academy stay (separator rule).
+ */
+export function isQaPersonAccount(row: { name?: string | null; email?: string | null }): boolean {
+  const name = (row.name || "").trim();
+  if (/^test([ _-]|$)/i.test(name) || /^qa[ _-]/i.test(name)) return true;
+  if (/\bqa\s+test\b/i.test(name) || /ghost claim/i.test(name) || /ghost listing/i.test(name)) return true;
+  const email = (row.email || "").trim().toLowerCase();
+  if (!email) return false;
+  if (email.endsWith("@example.com") || email.endsWith("@example.test") || email.endsWith("@test.local")) return true;
+  const local = email.split("@")[0] || "";
+  if (/^(test|qa)([._+-]|$)/.test(local)) return true;
+  if (/\+(test|qa)\b/.test(local)) return true;
+  return false;
+}
+
 export function accountRoleFromKind(kind?: string | null): AccountNotifyRole | null {
   if (kind === "signup") return "provider";
   if (kind === "account") return "parent";
@@ -179,6 +196,33 @@ export const ACTIVITY_KIND_CHIPS: Array<{ id: string; label: string }> = [
   { id: "listing", label: "Listings" },
   { id: "claim", label: "Claims" },
 ];
+
+const ACTIVITY_KIND_EXTRA: Record<string, string> = {
+  message: "Messages",
+  messages: "Messages",
+  mail: "Messages",
+  tour: "Tours",
+  tours: "Tours",
+  review: "Reviews",
+  reviews: "Reviews",
+  billing: "Bills",
+  money: "Bills",
+  payment: "Bills",
+  payments: "Bills",
+  email: "Email",
+  chat: "Messages",
+};
+
+/** Readable chip text. Raw event kinds such as `money` are not shown as-is. */
+export function activityKindChipLabel(id: string): string {
+  const known = ACTIVITY_KIND_CHIPS.find((chip) => chip.id === id);
+  if (known) return known.label;
+  const extra = ACTIVITY_KIND_EXTRA[id];
+  if (extra) return extra;
+  const words = id.replace(/[_-]+/g, " ").trim();
+  if (!words) return "Other";
+  return words.replace(/\b[a-z]/g, (ch) => ch.toUpperCase());
+}
 
 export function activityPeopleSearch(row: {
   kind?: string | null;
@@ -283,12 +327,18 @@ export function activityAccountHeadline(row: {
   return (row.daycare_name || "").trim() || "Activity";
 }
 
-export function activityRoleBadge(kind?: string | null, detail?: string | null): string | null {
+export function activityRoleBadge(
+  kind?: string | null,
+  detail?: string | null,
+  profileRole?: string | null,
+): string | null {
+  // People uses the live profile. Prefer that over an older account/signup kind.
+  if (profileRole === "provider" || profileRole === "parent") return accountRoleLabel(profileRole);
+  const parsed = parseAccountEventDetail(detail);
+  if (parsed.role) return accountRoleLabel(parsed.role);
   if (kind === "listing") return accountRoleLabel("provider");
   const fromKind = accountRoleFromKind(kind);
   if (fromKind) return accountRoleLabel(fromKind);
-  const parsed = parseAccountEventDetail(detail);
-  if (parsed.role) return accountRoleLabel(parsed.role);
   return null;
 }
 
@@ -303,8 +353,9 @@ export function activitySignupMeta(row: {
   email_status?: string | null;
   created_at?: string | null;
   detail?: string | null;
+  profile_role?: string | null;
 }): { who: string; role: string; city: string; time: string; emailFailed: boolean } {
-  const role = activityRoleBadge(row.kind, row.detail) || accountRoleLabel(accountRoleFromKind(row.kind) || "parent");
+  const role = activityRoleBadge(row.kind, row.detail, row.profile_role) || accountRoleLabel(accountRoleFromKind(row.kind) || "parent");
   const city = formatPlace(row.city, row.province) || (row.daycare_name || "").trim() || "—";
   const at = row.created_at ? new Date(row.created_at) : new Date();
   const time = Number.isNaN(at.getTime()) ? "—" : formatWinnipegFull(at);

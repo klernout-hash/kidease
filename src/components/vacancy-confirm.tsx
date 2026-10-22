@@ -4,6 +4,7 @@ import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { vacancyConfirmPriority } from "@/lib/director-nudges";
+import { dedupeConfirmListings } from "@/lib/confirm-listings";
 import { refreshVacancy } from "@/lib/server/claims";
 import { WaitlistPulseButton } from "@/components/waitlist-pulse-button";
 import { useCopy } from "@/lib/use-copy";
@@ -44,8 +45,9 @@ export function VacancyConfirmLoop({
   const { t, locale } = useCopy();
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  if (!listings.length) return null;
-  const ordered = vacancyConfirmPriority(listings);
+  const unique = dedupeConfirmListings(listings);
+  if (!unique.length) return null;
+  const ordered = vacancyConfirmPriority(unique);
 
   return (
     <section className="mb-8 rounded-xl bg-surface p-5 ring-1 ring-border">

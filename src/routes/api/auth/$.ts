@@ -20,6 +20,7 @@ import { readTurnstileToken, readTurnstileTokenFromBody } from "@/lib/server/tur
 import { SQL_SETTLE_MS, resolveAfter } from "@/lib/timeout";
 import { parseRetryAfterSeconds, rateLimitWaitCopy } from "@/lib/auth-rate-limit";
 import { assertPasswordAllowed } from "@/lib/server/password-hygiene";
+import { authMutationAction, VIEW_AS_READ_ONLY_MESSAGE } from "@/lib/view-as";
 
 const TURNSTILE_AUTH_PATHS = [
   "/sign-in/email",
@@ -49,6 +50,12 @@ async function handleAuth(request: Request) {
     if (request.method === "POST") {
       const url = new URL(request.url);
       const path = url.pathname.replace(/\/+$/, "");
+      if (authMutationAction("POST", path)) {
+        const { viewAsBlocksThisRequest } = await import("@/lib/server/view-as");
+        if (await viewAsBlocksThisRequest()) {
+          return Response.json({ message: VIEW_AS_READ_ONLY_MESSAGE, code: "VIEW_AS_READ_ONLY" }, { status: 403 });
+        }
+      }
       if (path.endsWith("/forget-password") || path.endsWith("/request-password-reset")) {
         try {
           assertResetMailConfigured();

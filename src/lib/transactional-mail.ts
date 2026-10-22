@@ -10,6 +10,7 @@
  */
 
 import { KIDEASE_OPERATOR_EMAIL, normalizeEmail } from "./admin-email.ts";
+import { resendCampaignTags } from "./email-suppressions.ts";
 import {
   DEFAULT_TRANSACTIONAL_MAIL_FROM,
   isApexKidEaseFrom,
@@ -327,6 +328,7 @@ export async function sendTransactionalMail(
   input: TransactionalMailInput,
   deps: TransactionalMailDeps = {},
 ): Promise<TransactionalMailResult> {
+  (globalThis as { __kideaseViewAsSideEffect__?: (action: "email") => void }).__kideaseViewAsSideEffect__?.("email");
   const env = deps.env ?? process.env;
   const fetchFn = deps.fetch ?? fetch;
   const to = normalizeEmail(input.to);
@@ -352,6 +354,7 @@ export async function sendTransactionalMail(
           subject: input.subject,
           text: input.text,
           html: input.html,
+          tags: resendCampaignTags(`txn-${input.purpose}`),
         },
       );
       if (result.ok) {

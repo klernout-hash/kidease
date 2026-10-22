@@ -260,49 +260,113 @@ export async function runProvincialVacancyJob(input: { dryRun?: boolean } = {}) 
   return { ok: mb.ok || nb.ok, dryRun, mb, nb };
 }
 
+const PUBLIC_RUN_REASONS = new Set([
+  "empty",
+  "fetch_failed",
+  "bad_payload",
+  "no_vacancy_field",
+  "listings_unavailable",
+]);
+
+function asText(value: unknown, max = 180): string {
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? "" : value.toISOString();
+  if (value == null) return "";
+  return String(value).replace(/\s+/g, " ").trim().slice(0, max);
+}
+
+function asCount(value: unknown): number {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function asIntOrNull(value: unknown): number | null {
+  if (value == null || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.round(n) : null;
+}
+
+function publicReason(value: unknown): string | null {
+  const text = asText(value, 80);
+  return PUBLIC_RUN_REASONS.has(text) ? text : null;
+}
+
+function publicHttps(value: unknown): string {
+  const text = asText(value, 300);
+  if (!text.startsWith("https://")) return "";
+  if (/[\s"'<>]/.test(text)) return "";
+  return text;
+}
+
 export async function listProvincialVacancyReport() {
-  await ensureTables();
-  const sql = await getSql();
-  const runs = await sql<{
-    province: string;
-    status: string;
-    reason: string | null;
-    source_url: string;
-    fetched_at: string;
-    matched: number;
-    unmatched: number;
-    changed: number;
-    dry_run: boolean;
-  }>`
-    select province, status, reason, source_url, fetched_at, matched, unmatched, changed, dry_run
-    from provincial_vacancy_runs
-    order by created_at desc
-    limit 8
-  `.catch(() => []);
-  const rows = await sql<{
-    province: string;
-    source_name: string;
-    source_city: string | null;
-    licence: string | null;
-    match_method: string;
-    total: number | null;
-    age_label: string;
-    fetched_at: string;
-    changed_at: string | null;
-    source_url: string;
-  }>`
-    select province, source_name, source_city, licence, match_method, total, age_label, fetched_at, changed_at, source_url
-    from provincial_vacancy
-    order by updated_at desc
-    limit 400
-  `.catch(() => []);
-  return {
-    runs,
-    matched: rows.filter((row) => row.match_method !== "unmatched").slice(0, 40),
-    unmatched: rows.filter((row) => row.match_method === "unmatched").slice(0, 40),
-    changed: rows.filter((row) => row.changed_at).slice(0, 40),
-    note: NB_SOURCE_PAGE,
-  };
+  try {
+    await ensureTables();
+    const sql = await getSql();
+    const runs = await sql<{
+      province: string;
+      status: string;
+      reason: string | null;
+      source_url: string;
+      fetched_at: string;
+      matched: number;
+      unmatched: number;
+      changed: number;
+      dry_run: boolean | number | null;
+    }>`
+      select province, status, reason, source_url, fetched_at, matched, unmatched, changed, dry_run
+      from provincial_vacancy_runs
+      order by created_at desc
+      limit 8
+    `.catch(() => []);
+    const rows = await sql<{
+      province: string;
+      source_name: string;
+      source_city: string | null;
+      licence: string | null;
+      match_method: string;
+      total: number | null;
+      age_label: string;
+      fetched_at: string;
+      changed_at: string | null;
+      source_url: string;
+    }>`
+      select province, source_name, source_city, licence, match_method, total, age_label, fetched_at, changed_at, source_url
+      from provincial_vacancy
+      order by updated_at desc
+      limit 400
+    `.catch(() => []);
+    const safeRows = rows.map((row) => ({
+      province: asText(row.province, 8),
+      source_name: asText(row.source_name),
+      source_city: asText(row.source_city, 80) || null,
+      licence: asText(row.licence, 40) || null,
+      match_method: asText(row.match_method, 40),
+      total: asIntOrNull(row.total),
+      age_label: asText(row.age_label, 80),
+      fetched_at: asText(row.fetched_at, 40),
+      changed_at: asText(row.changed_at, 40) || null,
+      source_url: publicHttps(row.source_url),
+    }));
+    return {
+      runs: runs.map((run) => ({
+        province: asText(run.province, 8),
+        status: asText(run.status, 40),
+        reason: publicReason(run.reason),
+        source_url: publicHttps(run.source_url),
+        fetched_at: asText(run.fetched_at, 40),
+        matched: asCount(run.matched),
+        unmatched: asCount(run.unmatched),
+        changed: asCount(run.changed),
+        dry_run: run.dry_run === true || run.dry_run === 1,
+      })),
+      matched: safeRows.filter((row) => row.match_method !== "unmatched").slice(0, 40),
+      unmatched: safeRows.filter((row) => row.match_method === "unmatched").slice(0, 40),
+      changed: safeRows.filter((row) => row.changed_at).slice(0, 40),
+      note: NB_SOURCE_PAGE,
+    };
+  } catch {
+    console.error("[admin-vacancies] report unavailable");
+    throw new Error("vacancies-unavailable");
+  }
 }
 
 export async function stampProvincialOpenings<T extends { id: string; claimed?: boolean; lastVacancyUpdatedAt?: string | null; provincialOpening?: ProvincialOpening | null }>(cards: T[]): Promise<T[]> {
