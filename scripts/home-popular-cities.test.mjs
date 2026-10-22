@@ -141,6 +141,8 @@ test("guest home hero keeps the search bar and drops the city grid and trust dup
   assert.match(src("src/components/shell.tsx"), /data-ke="list-your-daycare"/);
   assert.match(src("src/components/shell.tsx"), /header-overflow-types/);
   assert.match(src("src/components/facility-type-rails.tsx"), /ResizeObserver/);
+  assert.match(src("src/components/facility-type-rails.tsx"), /fonts\?\.ready/);
+  assert.match(src("src/components/facility-type-rails.tsx"), /loadingdone/);
   assert.doesNotMatch(src("src/components/shell.tsx"), /<RoleNavLinks role=\{chrome\.role\}/);
   assert.doesNotMatch(hero, /HeroYard/);
 });
