@@ -80,6 +80,7 @@ import { Route as ApiInngestRouteImport } from './routes/api/inngest'
 import { Route as ApiOpenSpotsCheckinRouteImport } from './routes/api/open-spots-checkin'
 import { Route as ApiProvincialVacancyRouteImport } from './routes/api/provincial-vacancy'
 import { Route as ApiRankingMarketRouteImport } from './routes/api/ranking-market'
+import { Route as ApiReferralsRouteImport } from './routes/api/referrals'
 import { Route as ApiScreeningDocumentsRouteImport } from './routes/api/screening-documents'
 import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
 import { Route as ApiSeedCatalogRouteImport } from './routes/api/seed-catalog'
@@ -141,6 +142,7 @@ import { Route as ParentSpotOffersRouteImport } from './routes/parent.spot-offer
 import { Route as PayIndexRouteImport } from './routes/pay.index'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
 import { Route as ProviderSubscriptionRouteImport } from './routes/provider.subscription'
+import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as SignIdRouteImport } from './routes/sign.$id'
 import { Route as SpotsTokenRouteImport } from './routes/spots.$token'
 import { Route as SupportCaseIdRouteImport } from './routes/support.$caseId'
@@ -170,6 +172,7 @@ import { Route as FrDaycareSlugRouteImport } from './routes/fr.daycare.$slug'
 import { Route as FrGuidesCodeRouteImport } from './routes/fr.guides.$code'
 import { Route as FrJobsPostRouteImport } from './routes/fr.jobs_.post'
 import { Route as FrMilieuxFamiliauxIdRouteImport } from './routes/fr.milieux-familiaux_.$id'
+import { Route as FrRCodeRouteImport } from './routes/fr.r.$code'
 import { Route as PayBillBillIdRouteImport } from './routes/pay.bill.$billId'
 import { Route as ApiContractsIdPdfRouteImport } from './routes/api/contracts.$id.pdf'
 import { Route as FrDaycareCityAgeRouteImport } from './routes/fr.daycare.$city.$age'
@@ -531,6 +534,11 @@ const ApiRankingMarketRoute = ApiRankingMarketRouteImport.update({
   path: '/api/ranking-market',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiReferralsRoute = ApiReferralsRouteImport.update({
+  id: '/api/referrals',
+  path: '/api/referrals',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiScreeningDocumentsRoute = ApiScreeningDocumentsRouteImport.update({
   id: '/api/screening-documents',
   path: '/api/screening-documents',
@@ -837,6 +845,11 @@ const ProviderSubscriptionRoute = ProviderSubscriptionRouteImport.update({
   path: '/subscription',
   getParentRoute: () => ProviderRoute,
 } as any)
+const RCodeRoute = RCodeRouteImport.update({
+  id: '/r/$code',
+  path: '/r/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignIdRoute = SignIdRouteImport.update({
   id: '/sign/$id',
   path: '/sign/$id',
@@ -983,6 +996,11 @@ const FrMilieuxFamiliauxIdRoute = FrMilieuxFamiliauxIdRouteImport.update({
   path: '/milieux-familiaux/$id',
   getParentRoute: () => FrRoute,
 } as any)
+const FrRCodeRoute = FrRCodeRouteImport.update({
+  id: '/r/$code',
+  path: '/r/$code',
+  getParentRoute: () => FrRoute,
+} as any)
 const PayBillBillIdRoute = PayBillBillIdRouteImport.update({
   id: '/bill/$billId',
   path: '/bill/$billId',
@@ -1076,6 +1094,7 @@ export interface FileRoutesByFullPath {
   '/api/open-spots-checkin': typeof ApiOpenSpotsCheckinRoute
   '/api/provincial-vacancy': typeof ApiProvincialVacancyRoute
   '/api/ranking-market': typeof ApiRankingMarketRoute
+  '/api/referrals': typeof ApiReferralsRoute
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
@@ -1135,6 +1154,7 @@ export interface FileRoutesByFullPath {
   '/parent/spot-offers': typeof ParentSpotOffersRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
   '/support/$caseId': typeof SupportCaseIdRoute
@@ -1166,6 +1186,7 @@ export interface FileRoutesByFullPath {
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/fr/milieux-familiaux/$id': typeof FrMilieuxFamiliauxIdRoute
+  '/fr/r/$code': typeof FrRCodeRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
   '/fr/daycare/$city/$age': typeof FrDaycareCityAgeRoute
@@ -1241,6 +1262,7 @@ export interface FileRoutesByTo {
   '/api/open-spots-checkin': typeof ApiOpenSpotsCheckinRoute
   '/api/provincial-vacancy': typeof ApiProvincialVacancyRoute
   '/api/ranking-market': typeof ApiRankingMarketRoute
+  '/api/referrals': typeof ApiReferralsRoute
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
@@ -1300,6 +1322,7 @@ export interface FileRoutesByTo {
   '/parent/spot-offers': typeof ParentSpotOffersRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
   '/support/$caseId': typeof SupportCaseIdRoute
@@ -1331,6 +1354,7 @@ export interface FileRoutesByTo {
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/fr/milieux-familiaux/$id': typeof FrMilieuxFamiliauxIdRoute
+  '/fr/r/$code': typeof FrRCodeRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
   '/fr/daycare/$city/$age': typeof FrDaycareCityAgeRoute
@@ -1409,6 +1433,7 @@ export interface FileRoutesById {
   '/api/open-spots-checkin': typeof ApiOpenSpotsCheckinRoute
   '/api/provincial-vacancy': typeof ApiProvincialVacancyRoute
   '/api/ranking-market': typeof ApiRankingMarketRoute
+  '/api/referrals': typeof ApiReferralsRoute
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
@@ -1468,6 +1493,7 @@ export interface FileRoutesById {
   '/parent/spot-offers': typeof ParentSpotOffersRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
   '/support/$caseId': typeof SupportCaseIdRoute
@@ -1499,6 +1525,7 @@ export interface FileRoutesById {
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/jobs_/post': typeof FrJobsPostRoute
   '/fr/milieux-familiaux_/$id': typeof FrMilieuxFamiliauxIdRoute
+  '/fr/r/$code': typeof FrRCodeRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
   '/fr/daycare/$city/$age': typeof FrDaycareCityAgeRoute
@@ -1578,6 +1605,7 @@ export interface FileRouteTypes {
     | '/api/open-spots-checkin'
     | '/api/provincial-vacancy'
     | '/api/ranking-market'
+    | '/api/referrals'
     | '/api/screening-documents'
     | '/api/search-alerts'
     | '/api/seed-catalog'
@@ -1637,6 +1665,7 @@ export interface FileRouteTypes {
     | '/parent/spot-offers'
     | '/pay/$bookingId'
     | '/provider/subscription'
+    | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
     | '/support/$caseId'
@@ -1668,6 +1697,7 @@ export interface FileRouteTypes {
     | '/fr/guides/$code'
     | '/fr/jobs/post'
     | '/fr/milieux-familiaux/$id'
+    | '/fr/r/$code'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
     | '/fr/daycare/$city/$age'
@@ -1743,6 +1773,7 @@ export interface FileRouteTypes {
     | '/api/open-spots-checkin'
     | '/api/provincial-vacancy'
     | '/api/ranking-market'
+    | '/api/referrals'
     | '/api/screening-documents'
     | '/api/search-alerts'
     | '/api/seed-catalog'
@@ -1802,6 +1833,7 @@ export interface FileRouteTypes {
     | '/parent/spot-offers'
     | '/pay/$bookingId'
     | '/provider/subscription'
+    | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
     | '/support/$caseId'
@@ -1833,6 +1865,7 @@ export interface FileRouteTypes {
     | '/fr/guides/$code'
     | '/fr/jobs/post'
     | '/fr/milieux-familiaux/$id'
+    | '/fr/r/$code'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
     | '/fr/daycare/$city/$age'
@@ -1910,6 +1943,7 @@ export interface FileRouteTypes {
     | '/api/open-spots-checkin'
     | '/api/provincial-vacancy'
     | '/api/ranking-market'
+    | '/api/referrals'
     | '/api/screening-documents'
     | '/api/search-alerts'
     | '/api/seed-catalog'
@@ -1969,6 +2003,7 @@ export interface FileRouteTypes {
     | '/parent/spot-offers'
     | '/pay/$bookingId'
     | '/provider/subscription'
+    | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
     | '/support/$caseId'
@@ -2000,6 +2035,7 @@ export interface FileRouteTypes {
     | '/fr/guides/$code'
     | '/fr/jobs_/post'
     | '/fr/milieux-familiaux_/$id'
+    | '/fr/r/$code'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
     | '/fr/daycare/$city/$age'
@@ -2077,6 +2113,7 @@ export interface RootRouteChildren {
   ApiOpenSpotsCheckinRoute: typeof ApiOpenSpotsCheckinRoute
   ApiProvincialVacancyRoute: typeof ApiProvincialVacancyRoute
   ApiRankingMarketRoute: typeof ApiRankingMarketRoute
+  ApiReferralsRoute: typeof ApiReferralsRoute
   ApiScreeningDocumentsRoute: typeof ApiScreeningDocumentsRouteWithChildren
   ApiSearchAlertsRoute: typeof ApiSearchAlertsRoute
   ApiSeedCatalogRoute: typeof ApiSeedCatalogRoute
@@ -2093,6 +2130,7 @@ export interface RootRouteChildren {
   ListingSlugRoute: typeof ListingSlugRoute
   MilieuxFamiliauxIdRoute: typeof MilieuxFamiliauxIdRoute
   OfferTokenRoute: typeof OfferTokenRoute
+  RCodeRoute: typeof RCodeRoute
   SignIdRoute: typeof SignIdRoute
   SpotsTokenRoute: typeof SpotsTokenRoute
   VideoRoomIdRoute: typeof VideoRoomIdRoute
@@ -2618,6 +2656,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRankingMarketRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/referrals': {
+      id: '/api/referrals'
+      path: '/api/referrals'
+      fullPath: '/api/referrals'
+      preLoaderRoute: typeof ApiReferralsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/screening-documents': {
       id: '/api/screening-documents'
       path: '/api/screening-documents'
@@ -3045,6 +3090,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProviderSubscriptionRouteImport
       parentRoute: typeof ProviderRoute
     }
+    '/r/$code': {
+      id: '/r/$code'
+      path: '/r/$code'
+      fullPath: '/r/$code'
+      preLoaderRoute: typeof RCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sign/$id': {
       id: '/sign/$id'
       path: '/sign/$id'
@@ -3248,6 +3300,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrMilieuxFamiliauxIdRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/r/$code': {
+      id: '/fr/r/$code'
+      path: '/r/$code'
+      fullPath: '/fr/r/$code'
+      preLoaderRoute: typeof FrRCodeRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/pay/bill/$billId': {
       id: '/pay/bill/$billId'
       path: '/bill/$billId'
@@ -3343,6 +3402,7 @@ interface FrRouteChildren {
   FrDaycareSlugRoute: typeof FrDaycareSlugRoute
   FrJobsPostRoute: typeof FrJobsPostRoute
   FrMilieuxFamiliauxIdRoute: typeof FrMilieuxFamiliauxIdRoute
+  FrRCodeRoute: typeof FrRCodeRoute
   FrDaycareCityAgeRoute: typeof FrDaycareCityAgeRoute
   FrDaycareCityCityRoute: typeof FrDaycareCityCityRoute
 }
@@ -3389,6 +3449,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrDaycareSlugRoute: FrDaycareSlugRoute,
   FrJobsPostRoute: FrJobsPostRoute,
   FrMilieuxFamiliauxIdRoute: FrMilieuxFamiliauxIdRoute,
+  FrRCodeRoute: FrRCodeRoute,
   FrDaycareCityAgeRoute: FrDaycareCityAgeRoute,
   FrDaycareCityCityRoute: FrDaycareCityCityRoute,
 }
@@ -3550,6 +3611,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiOpenSpotsCheckinRoute: ApiOpenSpotsCheckinRoute,
   ApiProvincialVacancyRoute: ApiProvincialVacancyRoute,
   ApiRankingMarketRoute: ApiRankingMarketRoute,
+  ApiReferralsRoute: ApiReferralsRoute,
   ApiScreeningDocumentsRoute: ApiScreeningDocumentsRouteWithChildren,
   ApiSearchAlertsRoute: ApiSearchAlertsRoute,
   ApiSeedCatalogRoute: ApiSeedCatalogRoute,
@@ -3566,6 +3628,7 @@ const rootRouteChildren: RootRouteChildren = {
   ListingSlugRoute: ListingSlugRoute,
   MilieuxFamiliauxIdRoute: MilieuxFamiliauxIdRoute,
   OfferTokenRoute: OfferTokenRoute,
+  RCodeRoute: RCodeRoute,
   SignIdRoute: SignIdRoute,
   SpotsTokenRoute: SpotsTokenRoute,
   VideoRoomIdRoute: VideoRoomIdRoute,

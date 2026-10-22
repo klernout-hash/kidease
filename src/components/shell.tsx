@@ -32,6 +32,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { readLiveSearchFlag } from "@/lib/explore-search";
 import { rememberResumePath } from "@/lib/retention";
 import { ApplyPendingShortlist } from "@/components/apply-pending-shortlist";
+import { ApplyReferral } from "@/components/apply-referral";
 import { KeyboardInset } from "@/components/keyboard-inset";
 
 export function Shell({ children }: { children: ReactNode }) {
@@ -287,6 +288,7 @@ export function Shell({ children }: { children: ReactNode }) {
       />
       <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(6rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]"}>
         <ApplyPendingShortlist />
+        <ApplyReferral />
         <div className="ke-page" data-ke="page">
           {children}
           {hideFooter ? null : <SiteFooter />}
