@@ -66,6 +66,7 @@ import { parentMatchScore } from "@/lib/parent-match";
 import { parentUrgencyScore } from "@/lib/parent-urgency";
 import { doorDistanceKm } from "@/lib/card-distance";
 import { ListingBadges } from "@/components/listing-badges";
+import { SponsoredMark } from "@/components/sponsored-mark";
 import { CompletenessBanner } from "@/components/listing-completeness";
 import { ListingReviewForm } from "@/components/listing-review-form";
 import { ListingOwnerReply } from "@/components/listing-owner-reply";
@@ -742,6 +743,7 @@ export function Listing() {
           <p className="mt-1 text-sm text-muted">
             {d.city}, {d.province}
           </p>
+          <SponsoredMark show={d.featuredCity} className="mt-2" />
           <FoundingMemberBadge show={d.foundingMember} className="mt-2" />
           {tagline.trim() ? <p className="mt-0.5 text-sm text-muted">{tagline}</p> : null}
           {approved || licensed ? (

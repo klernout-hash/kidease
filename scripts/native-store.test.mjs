@@ -95,8 +95,14 @@ test("store listing is 18+ and does not promise in-app checkout", () => {
   assert.equal(STORE.ageRating, "18+");
   assert.equal(STORE.ageRatingAnswers.madeForKids, false);
   assert.doesNotMatch(STORE.description, /Apple Pay|in-app/i);
-  assert.doesNotMatch(STORE.description, /kidease\.ca/i);
-  assert.doesNotMatch(STORE.descriptionFr, /kidease\.ca/i);
+  assert.equal(STORE.supportEmail, "support@kidease.ca");
+  assert.match(STORE.description, /Support: support@kidease\.ca/);
+  assert.match(STORE.descriptionFr, /Soutien : support@kidease\.ca/);
+  assert.doesNotMatch(STORE.description, /bought on kidease\.ca/i);
+  assert.doesNotMatch(STORE.descriptionFr, /acheté sur kidease\.ca/i);
+  assert.match(src("docs/store-review-notes.md"), /Support: support@kidease\.ca/);
+  assert.match(src("docs/app-store-privacy.md"), /Support: support@kidease\.ca/);
+  assert.match(src("docs/play-data-safety.md"), /Support: support@kidease\.ca/);
   assert.ok(STORE.subtitleFr.length <= 30, STORE.subtitleFr);
   assert.match(STORE.description, /18\+/);
   const manifest = src("ios/App/App/PrivacyInfo.xcprivacy");

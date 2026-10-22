@@ -1634,7 +1634,7 @@
   "yes": "Oo",
   "no": "Hindi",
   "howStressFree": "Ganito gumagana ang KidEase",
-  "featuredBody": "Mga lisensyadong sentro sa loob ng radius ng paghahanap mo. May litrato lang kapag may naka-file ang sentro.",
+  "featuredBody": "Mga lisensyadong sentro sa loob ng radius ng paghahanap mo. Ang bayad na Featured placement ay may markang Sponsored. May litrato lang kapag may naka-file ang sentro.",
   "viewDetails": "Tingnan ang Detalye",
   "kmAway": "km ang layo",
   "bandWalk": "malalakad",
@@ -2943,5 +2943,6 @@
   "viewAsParent": "Magulang",
   "viewAsDaycare": "Daycare",
   "viewAsStarting": "Nagsisimula…",
-  "viewAsUnknown": "ang taong ito"
+  "viewAsUnknown": "ang taong ito",
+  "sponsored": "Sponsored"
 }

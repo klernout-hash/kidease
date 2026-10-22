@@ -102,6 +102,29 @@ test("Plus gate fails closed when billing is not live", () => {
   }
 });
 
+test("complimentary Parent Plus opens video tours with no Stripe purchase", () => {
+  assert.deepEqual(
+    parentPlusEntitlesVideo({ role: "parent", plusPlan: "plus", plusStatus: "active" }, false),
+    { ok: true },
+  );
+  assert.deepEqual(
+    parentPlusEntitlesVideo({ role: "parent", plusPlan: "alerts", plusStatus: "active" }, false),
+    { ok: true },
+  );
+  const gate = videoJoinGate({
+    featureOn: true,
+    credentialsPresent: true,
+    stripeLive: false,
+    actor: { role: "parent", plusPlan: "plus", plusStatus: "active" },
+    sdkWired: true,
+  });
+  assert.equal(gate.ok, true);
+  assert.deepEqual(
+    parentPlusEntitlesVideo({ role: "parent", plusPlan: "free", plusStatus: null }, false),
+    { ok: false, reason: "plus_required_billing_not_live" },
+  );
+});
+
 test("Plus gate allows admin, provider, and live Plus parent", () => {
   assert.deepEqual(parentPlusEntitlesVideo({ role: "admin", plusPlan: "free" }, true), { ok: true });
   assert.deepEqual(parentPlusEntitlesVideo({ role: "provider", plusPlan: "free" }, true), { ok: true });

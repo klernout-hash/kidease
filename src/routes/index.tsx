@@ -600,6 +600,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
             </div>
           ) : null}
           <h2 className="mt-4 text-xl tracking-[-0.03em]">{t(strip.featuredTitleKey)}</h2>
+          <p className="mt-2 max-w-2xl text-sm text-muted">{t("featuredBody")}</p>
           <HomeDiscovery
             ready={featuredReady}
             shown={liveClaimed ? claimedLive : shown}

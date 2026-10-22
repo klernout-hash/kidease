@@ -1634,7 +1634,7 @@
   "yes": "是",
   "no": "否",
   "howStressFree": "KidEase 是这样运作的",
-  "featuredBody": "搜索半径内的持牌中心。仅当中心存有照片时才显示照片。",
+  "featuredBody": "搜索半径内的持牌中心。付费精选展示标为“赞助”。仅当中心存有照片时才显示照片。",
   "viewDetails": "查看详情",
   "kmAway": "公里外",
   "bandWalk": "步行可达",
@@ -2943,5 +2943,6 @@
   "viewAsParent": "家长",
   "viewAsDaycare": "托儿所",
   "viewAsStarting": "正在开始…",
-  "viewAsUnknown": "此人"
+  "viewAsUnknown": "此人",
+  "sponsored": "赞助"
 }

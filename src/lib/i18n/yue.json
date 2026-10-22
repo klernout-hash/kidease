@@ -1634,7 +1634,7 @@
   "yes": "係",
   "no": "唔係",
   "howStressFree": "KidEase 係咁運作",
-  "featuredBody": "你搜尋範圍入面嘅持牌中心。只有中心檔案有相片，先至會顯示。",
+  "featuredBody": "你搜尋範圍入面嘅持牌中心。付費精選展示會標做「贊助」。只有中心檔案有相片，先至會顯示。",
   "viewDetails": "睇詳情",
   "kmAway": "km 外",
   "bandWalk": "行到",
@@ -2943,5 +2943,6 @@
   "viewAsParent": "家長",
   "viewAsDaycare": "托兒所",
   "viewAsStarting": "開始緊…",
-  "viewAsUnknown": "呢個人"
+  "viewAsUnknown": "呢個人",
+  "sponsored": "贊助"
 }

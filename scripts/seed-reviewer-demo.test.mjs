@@ -67,4 +67,37 @@ describe("reviewer demo seed", () => {
     assert.match(read(".env.example"), /# REVIEWER_DAYCARE_PASSWORD=/);
     assert.doesNotMatch(read(".env.example"), /^REVIEWER_PARENT_PASSWORD=.+/m);
   });
+
+  it("grants the reviewer parent complimentary Parent Plus with no purchase and no price", () => {
+    const script = read("scripts/seed-reviewer-demo.mjs");
+    assert.match(script, /grantComplimentaryParentPlus\(client, parentId\)/);
+    assert.match(script, /plus_plan = 'plus'/);
+    assert.match(script, /plus_status = 'active'/);
+    assert.match(script, /plus_subscription_id = null/);
+    assert.match(script, /and role = 'parent'/);
+    assert.doesNotMatch(script, /grantComplimentaryParentPlus\(client, daycareId\)/);
+    assert.doesNotMatch(script, /CA\$|price_|checkout\.session|stripe_subscription_id = 'sub_|plus_subscription_id = 'sub_/);
+    assert.match(script, /parentPlus=complimentary/);
+    assert.match(read("docs/store-review-notes.md"), /complimentary Parent Plus/);
+    assert.match(read("docs/store-review-notes.md"), /No purchase and no price/);
+    assert.doesNotMatch(read("docs/store-review-notes.md"), /CA\$/);
+
+    const videoRoute = read("src/routes/video.$roomId.tsx");
+    assert.match(videoRoute, /nativeShell && paywall && !canMint/);
+    assert.match(videoRoute, /data-ke="native-video-entitlement"/);
+    assert.match(videoRoute, /data-ke="video-join"/);
+    const nativeAt = videoRoute.indexOf('data-ke="native-video-entitlement"');
+    const joinAt = videoRoute.indexOf('data-ke="video-join"');
+    assert.ok(nativeAt > 0 && joinAt > nativeAt);
+    const nativeBlock = videoRoute.slice(Math.max(0, nativeAt - 180), nativeAt + 420);
+    const joinBlock = videoRoute.slice(joinAt, joinAt + 420);
+    assert.match(nativeBlock, /nativeVideoNeedsPlus/);
+    assert.doesNotMatch(nativeBlock, /parentPlusSubscribe|videoPlusRequired|CA\$|plusPrice/);
+    assert.match(joinBlock, /t\("videoJoin"\)/);
+    assert.doesNotMatch(joinBlock, /parentPlusSubscribe|nativeVideoNeedsPlus|videoPlusRequired|CA\$|plusPrice/);
+    const promptAt = videoRoute.indexOf('data-ke="parent-plus-prompt"');
+    const webPaywall = videoRoute.slice(promptAt - 220, joinAt);
+    assert.match(webPaywall, /!nativeShell && paywall/);
+    assert.match(webPaywall, /parentPlusSubscribe/);
+  });
 });

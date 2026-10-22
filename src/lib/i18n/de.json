@@ -1634,7 +1634,7 @@
   "yes": "Ja",
   "no": "Nein",
   "howStressFree": "So funktioniert KidEase",
-  "featuredBody": "Lizenzierte Einrichtungen in Ihrem Suchradius. Ein Foto wird nur angezeigt, wenn die Einrichtung eines hinterlegt hat.",
+  "featuredBody": "Lizenzierte Einrichtungen in Ihrem Suchradius. Eine bezahlte Hervorhebung ist mit Gesponsert gekennzeichnet. Ein Foto wird nur angezeigt, wenn die Einrichtung eines hinterlegt hat.",
   "viewDetails": "Details ansehen",
   "kmAway": "km entfernt",
   "bandWalk": "fußläufig",
@@ -2943,5 +2943,6 @@
   "viewAsParent": "Eltern",
   "viewAsDaycare": "Kita",
   "viewAsStarting": "Startet…",
-  "viewAsUnknown": "diese Person"
+  "viewAsUnknown": "diese Person",
+  "sponsored": "Gesponsert"
 }

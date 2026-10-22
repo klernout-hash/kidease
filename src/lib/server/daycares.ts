@@ -396,6 +396,12 @@ async function withProvincial<T extends { id: string; claimed?: boolean; lastVac
   }
 }
 
+async function stampPaidPlacement<T extends { id: string; priority?: boolean; priorityUntil?: string | null; featuredCity?: boolean }>(
+  items: T[],
+): Promise<T[]> {
+  return overlayFeaturedCity(await overlayPriority(items));
+}
+
 function slimCard(card: DaycareCard): DaycareCard {
   return {
     ...card,
@@ -444,7 +450,8 @@ async function liveCardsForSearch(data: SearchInput): Promise<DaycareCard[]> {
   const listed = publicListings(uniqueById(listings.map((row) => toCard(row, origin, data.fsa)))).filter((card) =>
     includeCardInRadius(card, origin, data.radiusKm),
   );
-  return withProvincial(listed).then((rows) => rows.map(slimCard));
+  const pinned = await stampPaidPlacement(listed);
+  return withProvincial(pinned).then((rows) => rows.map(slimCard));
 }
 
 function unionLiveCards(primary: DaycareCard[], live: DaycareCard[]): DaycareCard[] {
@@ -459,7 +466,7 @@ async function searchByName(data: SearchInput): Promise<DaycareCard[]> {
   if (q.length < 2) return [];
   const origin = { lat: data.lat, lng: data.lng };
   const matched = filterByDaycareName(await getPublicCatalog(), q);
-  const cards = matched.map((row) => slimCard(toCard(row, origin, data.fsa)));
+  const cards = await stampPaidPlacement(matched.map((row) => slimCard(toCard(row, origin, data.fsa))));
   cards.sort((a, b) => a.distanceKm - b.distanceKm || a.name.localeCompare(b.name));
   return cards;
 }
@@ -803,11 +810,14 @@ export const getDaycare = createServerFn({ method: "GET" })
       visibility: found.visibility,
       isTest: found.isTest,
     });
+    const catalogDaycareOut = stampHidden(withInboxReady(catalogScored[0] ?? catalogDaycare));
+    const [catalogPinned] = await stampPaidPlacement([catalogDaycareOut]);
+    const catalogNearby = await stampPaidPlacement(withQualityCards(nearby, catalogScored));
     const catalogPayload = {
-      daycare: stampHidden(withInboxReady(catalogScored[0] ?? catalogDaycare)),
+      daycare: catalogPinned ?? catalogDaycareOut,
       reviews: [] as Review[],
       availability: catalogAvailability(found),
-      nearby: withQualityCards(nearby, catalogScored),
+      nearby: catalogNearby,
       jobs: [] as CentreJobPost[],
     };
     try {
@@ -890,11 +900,14 @@ export const getDaycare = createServerFn({ method: "GET" })
       }));
       const mainStamped = await withProvincial([overlayed[0] ?? daycare]);
       const nearbyStamped = await withProvincial(withQualityCards(nearby, overlayed));
+      const mainReady = stampHidden(withInboxReady(mainStamped[0] ?? daycare));
+      const [mainPinned] = await stampPaidPlacement([mainReady]);
+      const nearbyPinned = await stampPaidPlacement(nearbyStamped);
       return {
-        daycare: stampHidden(withInboxReady(mainStamped[0] ?? daycare)),
+        daycare: mainPinned ?? mainReady,
         reviews: mapReviews(reviews),
         availability,
-        nearby: nearbyStamped,
+        nearby: nearbyPinned,
         jobs,
       };
     } catch {
@@ -964,5 +977,5 @@ export const getDaycaresByIds = createServerFn({ method: "GET" })
     const found = [...byId, ...extras].filter(isPublicListing);
     const cards = uniqueById(found.map((d) => toCard(d, origin)));
     const claimed = await overlayQuality(await overlayParentReviews(await overlayClaimed(cards, mergeClaimedCard)));
-    return overlayParentRank(claimed, { distanceKnown: false, ageGroup: "any" });
+    return stampPaidPlacement(await overlayParentRank(claimed, { distanceKnown: false, ageGroup: "any" }));
   });

@@ -1634,7 +1634,7 @@
   "yes": "Sí",
   "no": "No",
   "howStressFree": "Así funciona KidEase",
-  "featuredBody": "Centros con licencia dentro de tu radio de búsqueda. Solo se muestra una foto cuando el centro tiene una en archivo.",
+  "featuredBody": "Centros con licencia dentro de tu radio de búsqueda. Una ubicación destacada de pago se marca como Patrocinado. Solo se muestra una foto cuando el centro tiene una en archivo.",
   "viewDetails": "Ver detalles",
   "kmAway": "km de distancia",
   "bandWalk": "a pie",
@@ -2943,5 +2943,6 @@
   "viewAsParent": "Padre",
   "viewAsDaycare": "Guardería",
   "viewAsStarting": "Iniciando…",
-  "viewAsUnknown": "esta persona"
+  "viewAsUnknown": "esta persona",
+  "sponsored": "Patrocinado"
 }
