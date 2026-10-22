@@ -1719,6 +1719,9 @@ export const updateCapacity = createServerFn({ method: "POST" })
       )
       .catch(() => undefined);
     if (nextTotal > prevTotal) {
+      void import("@/lib/server/alert-fanout")
+        .then((mod) => mod.notifySavedSpotOpened({ daycareId: data.daycareId }))
+        .catch(() => undefined);
       try {
         const { pulseRateLimited } = await import("@/lib/waitlist-pulse");
         const last = await sql<{ created_at: string | Date }>`
