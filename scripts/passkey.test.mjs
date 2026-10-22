@@ -75,9 +75,9 @@ test("login, settings, and Android fallback are wired", () => {
   assert.match(plugin, /passkeySatisfiesAdminEmailStep/);
   assert.match(plugin, /TWO_FACTOR_COOKIE/);
   assert.match(read("src/lib/auth/server.ts"), /passkeyPlugin\(\)/);
-  assert.match(read("migrations/0091_passkeys.sql"), /passkey_credentials/);
-  assert.match(read("migrations/0091_passkeys.sql"), /public_key/);
-  assert.match(read("migrations/0091_passkeys.sql"), /passkey_challenges/);
+  assert.match(read("migrations/0092_passkeys.sql"), /passkey_credentials/);
+  assert.match(read("migrations/0092_passkeys.sql"), /public_key/);
+  assert.match(read("migrations/0092_passkeys.sql"), /passkey_challenges/);
   assert.equal(authMutationAction("POST", "/api/auth/passkey/register/verify"), "two_factor");
   assert.equal(authMutationAction("POST", "/api/auth/passkey/delete"), "two_factor");
   assert.equal(authMutationAction("POST", "/api/auth/passkey/login/verify"), null);
