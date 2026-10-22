@@ -19,6 +19,7 @@ import {
   type CareDeskRole,
   type JournalPhoto,
 } from "@/lib/daily-care";
+import { safetyText } from "@/lib/safety";
 import { sendConnectedMessage } from "@/lib/server/inbox";
 import { listDailyJournals, postDailyJournal, type DailyJournalRow } from "@/lib/server/daily-care";
 import { listCareOps, getLicensedMonth, saveDayNote, saveEnrolmentSplit, type CareOpsPayload, type LicensedMonthChild } from "@/lib/server/care-ops";
@@ -163,7 +164,9 @@ export function DailyCareDesk({
     setBusy(`${childKey(row)}:note`);
     try {
       const res = await sendConnectedMessage({ data: { conversationId: row.conversationId, body: text } });
-      if (!res.ok) throw new Error(t("tourRespondFailed"));
+      if (!res.ok) {
+        throw new Error("blocked" in res && res.blocked ? safetyText(locale).blockedSend : t("tourRespondFailed"));
+      }
       confirmSuccess({ variant: "toast", title: t("careMessageSent") });
       setNotes((prev) => ({ ...prev, [childKey(row)]: "" }));
     } catch (err) {

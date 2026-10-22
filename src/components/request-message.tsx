@@ -10,6 +10,7 @@ import { holdSendBeat, requestSentThumb } from "@/lib/request-sent";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { captureRankingEvent } from "@/lib/ranking/events";
 import { rankingContextFor } from "@/lib/ranking/context";
+import { safetyText } from "@/lib/safety";
 import { useCopy } from "@/lib/use-copy";
 import { useViewAs } from "@/components/view-as-banner";
 import type { Daycare } from "@/lib/types";
@@ -89,7 +90,9 @@ export function RequestMessageSheet({ daycare, open, onClose }: Props) {
     try {
       const thread = await openConversation({ data: daycare.id });
       const sent = await sendConnectedMessage({ data: { conversationId: thread.id, body: text } });
-      if (!sent.ok) throw new Error(t("requestSentFailed"));
+      if (!sent.ok) {
+        throw new Error("blocked" in sent && sent.blocked ? safetyText(locale).blockedSend : t("requestSentFailed"));
+      }
       capturePostHogEvent("listing_request_submitted", { intent: "message" });
       {
         const ctx = rankingContextFor(daycare.id);

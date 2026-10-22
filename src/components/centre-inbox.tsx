@@ -30,6 +30,7 @@ import { chatBodyWithoutSmsFooter } from "@/lib/sms-copy";
 import { getConversationDetails, setConversationUserState } from "@/lib/server/conversation-state";
 import { getThread } from "@/lib/server/family";
 import { listLeadRequests } from "@/lib/server/lead-requests";
+import { safetyText } from "@/lib/safety";
 import { useCopy } from "@/lib/use-copy";
 import { confirmAction } from "@/lib/success-confirm";
 import { cn } from "@/lib/utils";
@@ -133,7 +134,7 @@ export function CentreInboxDesk({
     try {
       const sent = await sendConnectedMessage({ data: { conversationId: selectedId, body } });
       if (!sent.ok) {
-        setSendError(t("threadSendEmpty"));
+        setSendError("blocked" in sent && sent.blocked ? safetyText(locale).blockedSend : t("threadSendEmpty"));
         return;
       }
       setBody("");

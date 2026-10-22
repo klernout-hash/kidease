@@ -11,6 +11,8 @@ import { submitPublicMessage } from "@/lib/server/notify";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { publicFormErrorMessage } from "@/lib/public-form-error";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
+import { companyAddress, PRIVACY_CONTACT_EMAIL } from "@/lib/company";
+import { safetyText } from "@/lib/safety";
 import { ParentHelperPanel } from "@/components/parent-helper";
 import { localePath } from "@/lib/locale-path";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
@@ -78,6 +80,7 @@ export function Help() {
             {t("reportSafetyConcern")}
           </Link>
         </p>
+        <SafetyContact locale={locale} />
         <ParentHelperPanel />
         <FeelBanner src="/photos/cottage.jpg" className="mt-8" />
 
@@ -146,5 +149,37 @@ export function Help() {
         )}
       </main>
     </Shell>
+  );
+}
+
+function SafetyContact({ locale }: { locale: string }) {
+  const text = safetyText(locale);
+  const address = companyAddress(locale === "fr" ? "fr" : "en");
+  return (
+    <section className="mt-8 rounded-xl bg-surface p-5 ring-1 ring-border" data-ke="safety-contact">
+      <h2 className="font-display text-2xl">{text.helpTitle}</h2>
+      <p className="mt-2 text-sm text-muted">{text.helpLead}</p>
+      <p className="mt-2 text-sm text-muted">{text.helpReview}</p>
+      <ul className="mt-4 space-y-2 text-sm">
+        <li>
+          <span className="font-medium">{text.helpEmail}: </span>
+          <a className="text-primary underline-offset-4 hover:underline" href={`mailto:${SUPPORT_INBOX_EMAIL}`}>
+            {SUPPORT_INBOX_EMAIL}
+          </a>
+        </li>
+        <li>
+          <span className="font-medium">{text.helpPrivacy}: </span>
+          <a className="text-primary underline-offset-4 hover:underline" href={`mailto:${PRIVACY_CONTACT_EMAIL}`}>
+            {PRIVACY_CONTACT_EMAIL}
+          </a>
+        </li>
+        {address ? (
+          <li>
+            <span className="font-medium">{text.helpMail}: </span>
+            {address}
+          </li>
+        ) : null}
+      </ul>
+    </section>
   );
 }

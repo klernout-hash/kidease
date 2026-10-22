@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { PipelineBadge } from "@/components/pipeline-badge";
 import { ConversationDetailsBody } from "@/components/conversation-details";
 import { ThreadComposer, ThreadHeader, ThreadTranscript } from "@/components/thread-chrome";
+import { BlockMessagesButton, SafetyReportButton } from "@/components/safety-actions";
+import { safetyText } from "@/lib/safety";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { ChildCareCard } from "@/components/child-care-card";
@@ -219,7 +221,7 @@ function ThreadPage() {
     try {
       const sent = await sendConnectedMessage({ data: { conversationId: id, body } });
       if (!sent.ok) {
-        setSendError(t("threadSendEmpty"));
+        setSendError("blocked" in sent && sent.blocked ? safetyText(locale).blockedSend : t("threadSendEmpty"));
         return;
       }
       setBody("");
@@ -351,6 +353,12 @@ function ThreadPage() {
             </Link>
           </div>
         )}
+        {loadState === "ready" ? (
+          <div className="flex flex-wrap gap-x-4 px-4 pt-1">
+            <SafetyReportButton target="thread" conversationId={id} />
+            <BlockMessagesButton conversationId={id} />
+          </div>
+        ) : null}
         {tours[0] || booking ? (
           <div className="px-4 pt-2">
             <PipelineBadge tourStatus={tours[0]?.status} bookingStatus={booking?.status ?? null} />

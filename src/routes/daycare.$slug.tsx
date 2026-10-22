@@ -50,6 +50,7 @@ import { listingSubsidy, subsidyNote, subsidyNoteKey } from "@/lib/fee-program";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { TrustBadge } from "@/components/trust-badge";
 import { ListingReport } from "@/components/listing-report";
+import { SafetyReportButton } from "@/components/safety-actions";
 import type { CopyKey } from "@/lib/copy";
 import { hasCompare, toggleCompareItem } from "@/lib/compare";
 import { useParentPlusAccess } from "@/lib/use-parent-plus";
@@ -1021,8 +1022,10 @@ export function Listing() {
                   {t("learnMore")}
                 </Link>
               </div>
-              <div className="mt-3">
+              <div className="mt-3 flex flex-col items-start gap-1">
                 <ListingReport daycareId={d.id} centreName={name} />
+                <SafetyReportButton target="listing" daycareId={d.id} />
+                <SafetyReportButton target="centre" daycareId={d.id} />
               </div>
             </section>
 
