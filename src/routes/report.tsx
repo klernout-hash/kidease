@@ -124,7 +124,7 @@ export function ReportPage() {
                   </ul>
                   {note ? <p className="mt-1 text-sm leading-6 text-muted">{note}</p> : null}
                   <a
-                    href={office.href}
+                    href={fr && office.hrefFr ? office.hrefFr : office.href}
                     target="_blank"
                     rel="noreferrer"
                     className="mt-1 inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"

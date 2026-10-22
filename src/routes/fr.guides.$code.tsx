@@ -14,7 +14,7 @@ export const Route = createFileRoute("/fr/guides/$code")({
     if (!loaderData) return { meta: [{ title: "Guide · KidEase" }] };
     return pageSeoHead({
       title: `Guide de garde : ${loaderData.nameFr} · KidEase`,
-      description: `Liens officiels pour les frais, les subventions, les listes d'attente et les permis ${provinceLocativeFr(loaderData.code)}.`,
+      description: `Liens officiels pour les frais, les subventions, les listes d’attente et les permis ${provinceLocativeFr(loaderData.code)}. Confirmez sur la page du gouvernement.`,
       path: `/fr${provincialGuidePath(loaderData.code)}`,
     });
   },

@@ -13,11 +13,12 @@ import {
   type CityHubListing,
   type CityHubSnapshot,
 } from "@/lib/city-hubs";
+import { localeLine } from "@/lib/french-type";
 import { breadcrumbJsonLdScript, faqPageJsonLdScript } from "@/lib/page-seo";
 import { cityHubHead, loadCityHub } from "@/lib/city-hub-page";
 import { isFrPath, localePath } from "@/lib/locale-path";
 import { provinceAbbrev } from "@/lib/province-phrase";
-import { formatCount } from "@/lib/utils";
+import { displayCentreName, formatCount } from "@/lib/utils";
 import { SITEMAP_ORIGIN, isSafeSitemapSlug } from "@/lib/sitemap";
 import { useCopy } from "@/lib/use-copy";
 
@@ -45,22 +46,31 @@ export function CityHubPage({ hub }: { hub: CityHubSnapshot }) {
   const faqItems = [
     {
       q: fr
-        ? `KidEase liste-t-il des nounous à ${cityName}?`
+        ? localeLine("fr", `KidEase liste-t-il des nounous à ${cityName}?`)
         : `Does KidEase list nannies in ${cityName}?`,
       a: fr
-        ? "Non. KidEase répertorie seulement les centres, nurseries et milieux familiaux permis par la province ou le territoire. Pas de nounous, de gardiennes non permises, ni de babysitting."
+        ? localeLine(
+            "fr",
+            "Non. KidEase répertorie seulement les centres, nurseries et milieux familiaux permis par la province ou le territoire. Pas de nounous, de gardiennes non permises, ni de gardiennage.",
+          )
         : "No. KidEase lists provincially or territorially licensed centres, nurseries, and homes only: not nannies, sitters, or unlicensed care.",
     },
     {
-      q: fr ? "Comment obtenir une subvention?" : "How do childcare subsidies work?",
+      q: fr ? localeLine("fr", "Comment obtenir une subvention?") : "How do child care subsidies work?",
       a: fr
-        ? `KidEase n’accepte aucune demande et n’héberge aucun formulaire. Consultez le site officiel : ${hub.subsidyLabel}.`
+        ? localeLine(
+            "fr",
+            `KidEase n’accepte aucune demande et n’héberge aucun formulaire. Consultez le site officiel : ${hub.subsidyLabel}.`,
+          )
         : `KidEase does not process applications or host government forms. Apply on the official site: ${hub.subsidyLabel}.`,
     },
     {
-      q: fr ? "Faut-il un compte pour parcourir ces fiches?" : "Do I need an account to browse these listings?",
+      q: fr ? localeLine("fr", "Faut-il un compte pour parcourir ces fiches?") : "Do I need an account to browse these listings?",
       a: fr
-        ? "Non. La recherche et l’ouverture des fiches sont gratuites. Connectez-vous seulement pour enregistrer, demander une place ou écrire à un centre En ligne."
+        ? localeLine(
+            "fr",
+            "Non. La recherche et l’ouverture des fiches sont gratuites. Connectez-vous seulement pour enregistrer, demander une place ou écrire à un centre En ligne.",
+          )
         : "No. Searching and opening listings is free. Sign in only to save a centre, request a spot, or message a live listing.",
     },
   ];
@@ -91,7 +101,10 @@ export function CityHubPage({ hub }: { hub: CityHubSnapshot }) {
         </h1>
         <p className="mt-6 text-lg text-muted">
           {fr
-            ? `KidEase répertorie ${formatCount(hub.count, "fr")} établissements permis à ${cityName}: centres, prématernelles et milieux familiaux. La recherche est gratuite. Nous ne listons pas les nounous ni les gardiennes.`
+            ? localeLine(
+                "fr",
+                `KidEase répertorie ${formatCount(hub.count, "fr")} établissements permis à ${cityName}: centres, prématernelles et milieux familiaux. La recherche est gratuite. Nous ne listons pas les nounous ni les gardiennes.`,
+              )
             : `KidEase lists ${formatCount(hub.count, "en")} licensed centres, nurseries, and homes in ${cityName}. Search is free. We do not list nannies or sitters.`}
         </p>
         <p className="mt-4 text-sm text-muted">
@@ -132,7 +145,7 @@ export function CityHubPage({ hub }: { hub: CityHubSnapshot }) {
                 params={{ slug: listing.slug }}
                 className="flex min-h-11 items-center px-4 py-3 text-sm font-medium hover:bg-bg"
               >
-                {listing.name}
+                {displayCentreName(listing.name)}
               </Link>
             </li>
           ))}

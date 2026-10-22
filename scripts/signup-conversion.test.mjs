@@ -107,7 +107,7 @@ test("high-intent sign-up and claim CTA are wired", () => {
   assert.match(src("src/routes/provider.tsx"), /ClaimProgressMeter/);
   const copy = src("src/lib/copy.ts");
   assert.match(copy, /claimFreeListing: "Claim your free listing"/);
-  assert.match(copy, /claimFreeListing: "Réclamez votre fiche gratuite"/);
+  assert.match(copy, /claimFreeListing: "Revendiquez votre fiche gratuite"/);
   assert.doesNotMatch(copy, /claimFreeListing:[\s\S]{0,80}free forever/i);
   assert.doesNotMatch(src("src/lib/signup-funnel.ts"), /—/);
 });

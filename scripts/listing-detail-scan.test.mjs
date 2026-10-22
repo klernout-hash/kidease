@@ -38,7 +38,7 @@ test("mobile listing CTAs use short labels that stay inside pills", () => {
   assert.match(copy, /searchNearbyShort: "Search nearby"/);
   assert.match(copy, /claimCtaShort: "Claim daycare"/);
   assert.match(copy, /searchNearbyShort: "Chercher près d’ici"/);
-  assert.match(copy, /claimCtaShort: "Réclamer"/);
+  assert.match(copy, /claimCtaShort: "Revendiquer"/);
 });
 
 test("Support verify page holds listing explanations", () => {

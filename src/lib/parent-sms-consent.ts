@@ -1,4 +1,5 @@
 import { normalizeCaslPhone } from "./casl.ts";
+import { pageSeoHead } from "./page-seo.ts";
 
 /**
  * Toll-free opt-in sentence for +1 877-502-7728.
@@ -6,6 +7,14 @@ import { normalizeCaslPhone } from "./casl.ts";
  */
 export const PARENT_SMS_CONSENT_TEXT =
   "I agree to receive text messages from KidEase about my daycare requests and account. Message frequency varies. Msg & data rates may apply. Reply STOP to opt out, HELP for help.";
+
+/** Shown on /fr/signup. ARRÊT and AIDE are accepted by the inbound keyword parser. */
+export const PARENT_SMS_CONSENT_TEXT_FR =
+  "J’accepte de recevoir des textos de KidEase au sujet de mes demandes de garde et de mon compte. La fréquence des messages varie. Des frais de messagerie et de données peuvent s’appliquer. Répondez ARRÊT pour vous désabonner, AIDE pour obtenir de l’aide.";
+
+export function parentSmsConsentText(locale: string): string {
+  return locale === "fr" ? PARENT_SMS_CONSENT_TEXT_FR : PARENT_SMS_CONSENT_TEXT;
+}
 
 export const PARENT_SMS_TERMS_URL = "https://www.kidease.ca/terms";
 
@@ -29,17 +38,23 @@ export function parentMobileIssue(value: string): string | null {
   return null;
 }
 
-export function parentSignupHead() {
-  return {
-    meta: [
-      { title: "Create a parent account · KidEase" },
-      {
-        name: "description",
-        content:
-          "KidEase helps parents find licensed daycare in Canada. Create an account to save centres and ask for a tour. A mobile number is optional.",
-      },
-    ],
-  };
+export function parentSignupHead(locale: "en" | "fr" = "en") {
+  if (locale === "fr") {
+    return pageSeoHead({
+      title: "Créer un compte parent · KidEase",
+      description:
+        "KidEase aide les parents à trouver une garderie permise au Canada. Créez un compte pour enregistrer des centres et demander une visite. Le cellulaire est facultatif.",
+      path: "/fr/signup",
+      locale: "fr",
+    });
+  }
+  return pageSeoHead({
+    title: "Create a parent account · KidEase",
+    description:
+      "KidEase helps parents find licensed child care in Canada. Create an account to save centres and ask for a tour. A mobile number is optional.",
+    path: "/signup",
+    locale: "en",
+  });
 }
 
 export function parentSmsOptInInput(input: { phone?: unknown; smsConsent?: unknown }): {

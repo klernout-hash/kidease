@@ -102,7 +102,7 @@ test("free landing page keeps claim free and never invents $10-a-day fees", () =
   assert.match(listing, /ListingPhotoFallback/);
   assert.match(listing, /claim=\{offerClaim\}/);
   assert.match(src("src/components/listing-hero-gallery.tsx"), /claimQuery/);
-  assert.match(src("src/lib/copy.ts"), /claimListingFrame: "Claim Listing"/);
+  assert.match(src("src/lib/copy.ts"), /claimListingFrame: "Claim listing"/);
   assert.match(listing, /claimFreeListing/);
   assert.match(listing, /parentRequestNotLive/);
   assert.match(listing, /FreeListingShareActions/);

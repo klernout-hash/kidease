@@ -25,9 +25,9 @@ function copyValue(key, locale) {
   return match[1];
 }
 
-test("Kyle’s EN label stays Donate to Kids and FR matches the footer pattern", () => {
-  assert.equal(copyValue("donateToKids", "en"), "Donate to Kids");
-  assert.equal(copyValue("donateTitle", "en"), "Donate to Kids");
+test("Kyle’s EN label stays Donate to kids and FR matches the footer pattern", () => {
+  assert.equal(copyValue("donateToKids", "en"), "Donate to kids");
+  assert.equal(copyValue("donateTitle", "en"), "Donate to kids");
   assert.equal(copyValue("donateToKids", "fr"), "Faire un don aux enfants");
   assert.equal(
     copyValue("donateMatch", "en"),
@@ -39,7 +39,7 @@ test("Kyle’s EN label stays Donate to Kids and FR matches the footer pattern",
   const t = (key) => copyValue(key, "en");
   const donate = FOOTER_KIDEASE.find((link) => link.to === "/donate");
   assert.ok(donate);
-  assert.equal(footerLinkLabel(donate, t, "en"), "Donate to Kids");
+  assert.equal(footerLinkLabel(donate, t, "en"), "Donate to kids");
   assert.equal(donate.localePaired, true);
   assert.ok(!FOOTER_SUPPORT.some((link) => link.to === "/donate"));
 });

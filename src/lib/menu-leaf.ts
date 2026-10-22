@@ -5,11 +5,11 @@ import { stripLocalePrefix } from "./locale-path.ts";
  * Hierarchical back belongs here — not on Search / Saved / Enrolled /
  * Messages / Menu, and not on listing, compare, or auth stacks.
  *
- * `/how-it-works` is its own page in English and French.
+ * `/how-it-works` is a real page in English and French, so back returns to the menu.
  */
 export const MENU_LEAF_PATHS = [
-  "/how-it-works",
   "/get-app",
+  "/how-it-works",
   "/benefits",
   "/about",
   "/start-a-daycare",

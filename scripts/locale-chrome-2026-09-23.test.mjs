@@ -65,14 +65,14 @@ test("French and English copy keys match", async () => {
     [],
   );
   assert.equal(tx("en", "forgotPassword"), "Forgot password?");
-  assert.equal(tx("fr", "forgotPassword"), "Mot de passe oublié ?");
+  assert.equal(tx("fr", "forgotPassword"), "Mot de passe oublié\u202f?");
   assert.match(tx("fr", "forgotPasswordLead"), /Si aucun des mots de passe/);
   assert.match(tx("fr", "forgotPasswordTitle"), /Mot de passe oublié/);
   assert.match(tx("fr", "forgotPasswordPageLead"), /lien de réinitialisation/);
   assert.match(tx("fr", "resetPasswordTitle"), /nouveau mot de passe/i);
   assert.equal(
     tx("fr", "plansNotOffered"),
-    "Les forfaits ne sont pas offerts sur ce site pour le moment. La fiche et la réclamation restent gratuites.",
+    "Les forfaits ne sont pas offerts sur ce site pour le moment. La fiche et la revendication restent gratuites.",
   );
   assert.doesNotMatch(tx("fr", "forgotPasswordSubmit"), /Email reset link/);
   assert.notEqual(tx("zh", "forgotPassword"), tx("en", "forgotPassword"));

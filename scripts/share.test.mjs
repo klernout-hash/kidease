@@ -40,9 +40,9 @@ test("share URLs stay on the public www origin without store IDs", () => {
   assert.equal(SHARE_APP_URL, "https://www.kidease.ca");
   assert.equal(listingShareUrl("bright-beginnings"), "https://www.kidease.ca/daycare/bright-beginnings");
   assert.equal(listingShareUrl("/daycare/harrow-house/"), "https://www.kidease.ca/daycare/harrow-house");
-  const app = appSharePayload({ title: "KidEase", text: "Find licensed childcare near you on KidEase" });
+  const app = appSharePayload({ title: "KidEase", text: "Find licensed child care near you on KidEase" });
   assert.equal(app.url, "https://www.kidease.ca");
-  assert.match(app.text, /Find licensed childcare near you on KidEase/);
+  assert.match(app.text, /Find licensed child care near you on KidEase/);
   const listing = listingSharePayload({
     name: "Harrow House",
     slug: "harrow-house",
@@ -107,7 +107,7 @@ test("desktop Chrome skips a phantom Web Share sheet", () => {
 test("shareOrCopy uses Web Share when available and copies the link otherwise", async () => {
   const originalShare = globalThis.navigator?.share;
   const originalClipboard = globalThis.navigator?.clipboard;
-  const payload = appSharePayload({ title: "KidEase", text: "Find licensed childcare near you on KidEase" });
+  const payload = appSharePayload({ title: "KidEase", text: "Find licensed child care near you on KidEase" });
   installMatchMedia(true);
 
   const sharedNav = {
@@ -204,7 +204,7 @@ test("share copy is present in English and French", () => {
   const copy = src("src/lib/copy.ts");
   assert.match(copy, /shareKidEase: "Share KidEase"/);
   assert.match(copy, /shareKidEase: "Partager KidEase"/);
-  assert.match(copy, /shareKidEaseText: "Find licensed childcare near you on KidEase"/);
+  assert.match(copy, /shareKidEaseText: "Find licensed child care near you on KidEase"/);
   assert.match(copy, /shareKidEaseText: "Trouvez une garde d’enfants permise près de chez vous sur KidEase"/);
   assert.match(copy, /linkCopied: "Link copied"/);
   assert.match(copy, /linkCopied: "Lien copié"/);

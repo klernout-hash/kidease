@@ -351,7 +351,7 @@ export function LoginScreen({
         rememberToken(res.data);
         if (parentSignup) {
           const savedSms = await withTimeoutFallback(
-            saveParentSmsOptIn({ data: { phone, smsConsent } }),
+            saveParentSmsOptIn({ data: { phone, smsConsent, locale } }),
             LOGIN_CONTINUE_MS,
             undefined,
           );
@@ -469,7 +469,7 @@ export function LoginScreen({
             <div className="flex justify-center">
               <BrandMark size="md" />
             </div>
-            <h1 className="mt-4 font-display text-2xl sm:mt-6 sm:text-3xl">{mode === "up" && role && !operator ? t("createAccount") : title}</h1>
+            <h1 className="mt-4 font-display text-2xl sm:mt-6 sm:text-3xl">{mode === "up" && !operator && role !== "provider" ? t("createParentAccount") : title}</h1>
             <p className="mt-2 text-sm text-muted" data-ke="login-lead">{busy && !error ? t("openingDesk") : lead}</p>
             {operator && !user ? (
               <p className="mt-1 text-xs text-subtle" data-ke="admin-titan-note">

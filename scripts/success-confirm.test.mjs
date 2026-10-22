@@ -19,7 +19,7 @@ function src(rel) {
 
 test("each success action has a specific title and the right variant", () => {
   assert.equal(tx("en", "successKicker"), "Good job!");
-  assert.equal(tx("fr", "successKicker"), "Bien joué !");
+  assert.equal(tx("fr", "successKicker"), "Bien joué\u202f!");
   assert.equal(SUCCESS_TOAST_MS, 2500);
   for (const [id, action] of Object.entries(SUCCESS_ACTIONS)) {
     const title = tx("en", action.titleKey);

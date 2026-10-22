@@ -4,6 +4,10 @@ import type { LegalSection } from "./legal-copy";
 export const SMS_TWILIO_REQUIRED =
   "All the above categories exclude text messaging originator opt-in data and consent; this information won't be shared with any third parties.";
 
+/** French privacy page. The English sentence stays word for word on /privacy for Twilio. */
+export const SMS_TWILIO_REQUIRED_FR =
+  "Les catégories ci-dessus excluent les données d’adhésion et de consentement aux textos ; ces renseignements ne seront communiqués à aucun tiers.";
+
 export const SMS_NO_SHARE = SMS_TWILIO_REQUIRED;
 
 export const SMS_PRIVACY_EN: LegalSection = {
@@ -23,7 +27,7 @@ export const SMS_PRIVACY_EN: LegalSection = {
       items: [
         "Consent is not a condition of using KidEase or of purchasing a plan.",
         "Reply STOP to cancel. You will get one confirmation text and then no further program messages.",
-        "Reply HELP for help, or email kyle@kidease.ca.",
+        "Reply HELP for help, or email support@kidease.ca.",
         "You can also turn SMS off in account or alert settings and at /unsubscribe.",
         "No mobile information will be shared with third parties or affiliates for marketing or promotional purposes.",
         "Twilio is our text-message processor. It receives the destination number and message body only to deliver that text. See https://www.twilio.com/en-us/legal/privacy",
@@ -44,14 +48,14 @@ export const SMS_PRIVACY_FR: LegalSection = {
     },
     {
       type: "p",
-      text: SMS_TWILIO_REQUIRED,
+      text: SMS_TWILIO_REQUIRED_FR,
     },
     {
       type: "ul",
       items: [
         "Le consentement n’est pas une condition d’utilisation de KidEase ni d’un achat.",
         "Répondez STOP pour vous désinscrire. Vous recevrez un accusé, puis plus de textos du programme.",
-        "Répondez HELP pour de l’aide, ou écrivez à kyle@kidease.ca.",
+        "Répondez AIDE pour obtenir de l’aide, ou écrivez à support@kidease.ca.",
         "Vous pouvez aussi désactiver les SMS dans le compte et à /unsubscribe.",
         "Twilio traite l’envoi des textos. Il reçoit le numéro et le message seulement pour livrer ce texte. https://www.twilio.com/en-us/legal/privacy",
       ],
@@ -77,7 +81,7 @@ export const SMS_TERMS_EN: LegalSection = {
       type: "ul",
       items: [
         "Reply STOP to cancel. You will get one confirmation text and then no further program messages.",
-        "Reply HELP for help, or email kyle@kidease.ca.",
+        "Reply HELP for help, or email support@kidease.ca.",
         "Consent is not required to use the website or app.",
         "Privacy Policy: https://kidease.ca/privacy",
       ],
@@ -95,13 +99,13 @@ export const SMS_TERMS_FR: LegalSection = {
     },
     {
       type: "p",
-      text: SMS_TWILIO_REQUIRED,
+      text: SMS_TWILIO_REQUIRED_FR,
     },
     {
       type: "ul",
       items: [
         "Répondez STOP pour vous désinscrire. Vous recevrez un accusé, puis plus de textos du programme.",
-        "Répondez HELP pour de l’aide, ou écrivez à kyle@kidease.ca.",
+        "Répondez AIDE pour obtenir de l’aide, ou écrivez à support@kidease.ca.",
         "Le consentement n’est pas exigé pour utiliser le site ou l’appli.",
         "Politique de confidentialité : https://kidease.ca/privacy",
       ],

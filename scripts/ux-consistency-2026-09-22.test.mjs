@@ -112,7 +112,7 @@ describe("subscription honesty is one localized line", () => {
     assert.match(copy, /plansNotOffered: "Plans are not offered on this site yet. Listing and claim stay free."/);
     assert.match(
       copy,
-      /plansNotOffered: "Les forfaits ne sont pas offerts sur ce site pour le moment. La fiche et la réclamation restent gratuites."/,
+      /plansNotOffered: "Les forfaits ne sont pas offerts sur ce site pour le moment. La fiche et la revendication restent gratuites."/,
     );
   });
 });

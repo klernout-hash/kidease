@@ -163,9 +163,9 @@ export function ShotHome() {
           <div className="overflow-hidden rounded-lg">
             <img src="/photos/hero-1200.jpg" alt="" className="aspect-[16/9] w-full object-cover" />
           </div>
-          <h1 className="mt-2 font-display text-[17px] leading-[1.15] tracking-tight">
+          <div className="mt-2 font-display text-[17px] leading-[1.15] tracking-tight">
             {t("shotFindTitle")}
-          </h1>
+          </div>
           <div className="mt-3 flex h-8 items-center justify-center rounded-full text-[10px] font-medium text-white" style={{ background: NAVY }}>
             {t("useLocation")}
           </div>
@@ -264,7 +264,7 @@ export function ShotListing() {
           <p className="mt-1.5 text-[8px]" style={{ color: MUTED }}>
             {locale === "fr" ? "123, rue Osborne, Winnipeg, Man." : "123 Osborne St, Winnipeg, MB"}
           </p>
-          <h1 className="mt-0.5 font-display text-[14px] leading-tight tracking-tight">River Heights Child Care</h1>
+          <div className="mt-0.5 font-display text-[14px] leading-tight tracking-tight">River Heights Child Care</div>
           <div className="mt-1.5 flex flex-wrap gap-1">
             <Pill solid>{t("licensed")}</Pill>
             <Pill solid>{t("shotTenADay")}</Pill>
@@ -318,7 +318,7 @@ export function ShotLogin() {
         <div className="flex flex-1 flex-col rounded-2xl px-3.5 py-3.5" style={{ background: PAPER, boxShadow: `inset 0 0 0 1px ${LINE}` }}>
           <div className="mx-auto">{PIN}</div>
           <p className="mt-1 text-center font-display text-[12px]">KidEase</p>
-          <h1 className="mt-2.5 font-display text-[18px] tracking-tight">{t("signIn")}</h1>
+          <div className="mt-2.5 font-display text-[18px] tracking-tight">{t("signIn")}</div>
           <p className="mt-1 text-[8px] leading-snug" style={{ color: MUTED }}>
             {t("shotLoginLead")}
           </p>

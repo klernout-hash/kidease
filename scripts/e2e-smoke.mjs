@@ -934,7 +934,7 @@ const FR_CHROME_BANNED = [
   /\bFor daycares\b/,
   /\bClaim listing\b/,
   /\bList your daycare\b/,
-  /\bContact Us\b/,
+  /\bContact us\b/,
   /\bBrowse by city\b/,
   /\bHow we verify listings\b/,
   /\bDaycare requirements\b/,
@@ -948,7 +948,7 @@ async function frenchChromeSmoke(page, base) {
     ["/fr/plans", "/fr/plans"],
     ["/fr/compare", "/fr/compare"],
     ["/fr/cities", "/fr/cities"],
-    ["/fr/signup", "/fr/login"],
+    ["/fr/signup", "/fr/signup"],
     ["/fr/verify", "/fr/verify"],
     ["/fr/report", "/fr/report"],
     ["/fr/daycare-requirements", "/fr/daycare-requirements"],
@@ -984,6 +984,78 @@ async function frenchChromeSmoke(page, base) {
   }
   record("fr-public-chrome", misses.length === 0, {
     note: misses.length ? misses.join(" ") : `${pages.length} French pages`,
+  });
+}
+
+const RADIUS_LABEL_WIDTHS = [320, 360, 390, 412, 430, 480, 640, 767, 834, 1023];
+const RADIUS_LABEL_OPTIONS = ["5", "10", "25", "50"];
+
+/** Every home radius option stays fully visible from 320px up. Desktop width stays capped. */
+async function radiusLabelSmoke(page, base) {
+  const misses = [];
+  for (const width of RADIUS_LABEL_WIDTHS) {
+    await page.setViewportSize({ width, height: 800 });
+    for (const path of ["/", "/fr"]) {
+      const res = await page.goto(new URL(path, base).href, {
+        waitUntil: "domcontentloaded",
+        timeout: timeoutMs,
+      });
+      if ((res?.status() ?? 0) >= 400) {
+        misses.push(`${path}@${width}:status`);
+        continue;
+      }
+      await page.evaluate(() => document.fonts?.ready).catch(() => {});
+      const report = await page.evaluate((options) => {
+        const select = [...document.querySelectorAll('[data-ke="search-radius"]')].find(
+          (el) => el.getBoundingClientRect().width > 0,
+        );
+        if (!select) return { missing: true };
+        const bad = [];
+        for (const km of options) {
+          select.value = km;
+          const cs = getComputedStyle(select);
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+          const label = (select.selectedOptions[0]?.textContent || "").trim();
+          const textW = ctx.measureText(label).width;
+          const padL = parseFloat(cs.paddingLeft) || 0;
+          const padR = parseFloat(cs.paddingRight) || 0;
+          const border = (parseFloat(cs.borderLeftWidth) || 0) + (parseFloat(cs.borderRightWidth) || 0);
+          const appearance = cs.appearance || cs.webkitAppearance || "";
+          const arrow = appearance === "none" ? 0 : 28;
+          const available = select.clientWidth - padL - padR - border - arrow;
+          const box = select.getBoundingClientRect();
+          const pageOverflow = document.documentElement.scrollWidth > window.innerWidth + 1;
+          const fits =
+            label === `${km} km` &&
+            available + 0.5 >= textW &&
+            box.left >= -1 &&
+            box.right <= window.innerWidth + 1 &&
+            !pageOverflow;
+          if (!fits) bad.push(`${label}:${Math.round(available)}/${Math.round(textW)}`);
+        }
+        return { bad };
+      }, RADIUS_LABEL_OPTIONS);
+      if (report.missing) misses.push(`${path}@${width}:missing`);
+      else if (report.bad?.length) misses.push(`${path}@${width}:${report.bad.join(",")}`);
+    }
+  }
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(new URL("/", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+  const desktop = await page.evaluate(() => {
+    const select = [...document.querySelectorAll('[data-ke="search-radius"]')].find(
+      (el) => el.getBoundingClientRect().width > 0,
+    );
+    if (!select) return { missing: true };
+    const cs = getComputedStyle(select);
+    return { maxWidth: parseFloat(cs.maxWidth), appearance: cs.appearance || cs.webkitAppearance || "" };
+  });
+  if (desktop.missing || !(desktop.maxWidth > 0 && desktop.maxWidth < 80) || desktop.appearance === "none") {
+    misses.push(`desktop:${desktop.maxWidth}:${desktop.appearance}`);
+  }
+  record("radius-labels", misses.length === 0, {
+    note: misses.length ? misses.join(" ") : `${RADIUS_LABEL_WIDTHS.length} widths, EN and FR`,
   });
 }
 
@@ -1039,6 +1111,7 @@ try {
   await page.screenshot({ path: join(dirname(outDir), "home.png"), fullPage: false }).catch(() => {});
   record("homepage", home.ok, { note: home.reason, status: homeResp?.status() ?? 0 });
 
+  await radiusLabelSmoke(page, base);
   await rankingSortSmoke(page, base);
   await frenchCityHubSmoke(page, base);
   await frenchChromeSmoke(page, base);

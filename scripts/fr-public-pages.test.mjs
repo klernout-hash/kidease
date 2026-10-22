@@ -46,7 +46,8 @@ test("public French routes share the English page and canonicalise to /fr", () =
     }
     assert.equal(hreflangLinks(path).length, 3);
   }
-  assert.match(src("src/routes/fr.signup.tsx"), /to: "\/fr\/login"/);
+  assert.match(src("src/routes/fr.signup.tsx"), /ParentSignupForm/);
+  assert.match(src("src/routes/fr.signup.tsx"), /parentSignupHead\("fr"\)/);
   assert.match(src("src/routes/fr.search.tsx"), /from "@\/routes\/search"/);
   assert.doesNotMatch(src("src/routes/fr.search.tsx"), /function FrExplore/);
   for (const path of ["/claim", "/plans", "/compare", "/cities", "/verify", "/daycare-requirements"]) {

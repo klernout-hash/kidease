@@ -11,7 +11,7 @@ export const Route = createFileRoute("/daycare-requirements")({
     pageSeoHead({
       title: "Daycare requirements · KidEase",
       description:
-        "What parents should expect and what licensed daycares must provide: a provincial or territorial licence, Vulnerable Sector Checks from police, and any extra provincial registry documents. KidEase reviews files. It does not issue police checks.",
+        "What a licensed daycare must show: a provincial licence and police screening. KidEase reviews files and does not issue police checks.",
       path: "/daycare-requirements",
     }),
   component: DaycareRequirementsPage,

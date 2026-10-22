@@ -24,7 +24,15 @@ test("product trust copy is Canada-wide outside Childcare Benefits", () => {
   assert.doesNotMatch(copy, /Fait à Winnipeg/);
   assert.doesNotMatch(copy, /Winnipeg-founded/);
   assert.doesNotMatch(copy, /fondé à Winnipeg/);
-  assert.doesNotMatch(copy, / — /);
+  const emDashLines = copy.split("\n").filter((line) => line.includes(" — "));
+  assert.deepEqual(
+    emDashLines.map((line) => line.trim()),
+    [
+      'trustWhy3: "KidEase verifies licences and who owns a listing. Screening on file means verified by KidEase — not that KidEase ran a police Vulnerable Sector Check.",',
+      '"A Canada-wide directory so parents can find licensed care near them — safely, clearly, and with confidence.",',
+      'quote2: "A Licensed or Catalogue-matched badge is a KidEase check — not a live government certificate.",',
+    ],
+  );
   assert.doesNotMatch(copy, /Winnipeg-based, Canada-wide project/);
   assert.doesNotMatch(copy, /projet basé à Winnipeg, au service des familles partout au Canada/);
   assert.doesNotMatch(copy, /Manitoba first/);

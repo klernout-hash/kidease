@@ -260,7 +260,7 @@ export function hydrateCentre(
           ? "licensed group child care home"
           : facility.type === "school_age"
             ? "licensed school-age program"
-            : "licensed childcare centre";
+            : "licensed child care centre";
   const kindFr =
     facility.type === "nursery_preschool"
       ? "nursery / prématernelle permise"

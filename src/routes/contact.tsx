@@ -104,7 +104,7 @@ export function Contact() {
             <p className="text-base font-semibold">{t("daycareEnrollLead")}</p>
             <Button asChild size="lg" className="mt-4 w-full">
               <Link to="/claim" hash="enroll">
-                {t("enrollNow")}
+                {t("heroClaimListing")}
               </Link>
             </Button>
           </div>

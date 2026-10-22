@@ -83,7 +83,7 @@ export function ParentSignupForm() {
       rememberRole("parent");
       await withTimeoutFallback(setRole({ data: "parent" }), LOGIN_CONTINUE_MS, undefined);
       const savedSms = await withTimeoutFallback(
-        saveParentSmsOptIn({ data: { phone, smsConsent } }),
+        saveParentSmsOptIn({ data: { phone, smsConsent, locale } }),
         LOGIN_CONTINUE_MS,
         undefined,
       );

@@ -1,20 +1,25 @@
 import { Link } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
+import { localeLine } from "@/lib/french-type";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import type { LegalDoc, LegalBlock } from "@/lib/legal-copy";
 import { companyAddress, companyOperatorLine, privacyOfficerLine } from "@/lib/company";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
-function Block({ block }: { block: LegalBlock }) {
+function line(locale: string, text: string) {
+  return localeLine(locale, text);
+}
+
+function Block({ block, locale }: { block: LegalBlock; locale: string }) {
   if (block.type === "p") {
-    return <p className="mt-2 text-sm leading-6 text-muted">{block.text}</p>;
+    return <p className="mt-2 text-sm leading-6 text-muted">{line(locale, block.text)}</p>;
   }
   if (block.type === "ul") {
     return (
       <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-muted">
         {block.items.map((item) => (
-          <li key={item}>{item}</li>
+          <li key={item}>{line(locale, item)}</li>
         ))}
       </ul>
     );
@@ -23,7 +28,7 @@ function Block({ block }: { block: LegalBlock }) {
     return (
       <p className="mt-3 text-sm">
         <Link to={block.to} className="font-medium text-primary underline-offset-4 hover:underline">
-          {block.label}
+          {line(locale, block.label)}
         </Link>
       </p>
     );
@@ -33,12 +38,18 @@ function Block({ block }: { block: LegalBlock }) {
       <ul className="mt-3 list-disc space-y-3 pl-5 text-sm leading-6 text-muted">
         {block.items.map((item) => (
           <li key={item.name}>
-            <span className="font-medium text-fg">{item.name}.</span> {item.purpose}
+            {item.purpose.startsWith(item.name) ? (
+              <span className="font-medium text-fg">{line(locale, item.purpose)}</span>
+            ) : (
+              <>
+                <span className="font-medium text-fg">{line(locale, item.name)}.</span> {line(locale, item.purpose)}
+              </>
+            )}
             {item.href ? (
               <>
                 {" "}
                 <a href={item.href} target="_blank" rel="noreferrer" className="text-primary underline-offset-4 hover:underline">
-                  {item.hrefLabel ?? "Privacy notice"} ↗
+                  {line(locale, item.hrefLabel ?? "Privacy notice")} ↗
                 </a>
               </>
             ) : null}
@@ -49,13 +60,13 @@ function Block({ block }: { block: LegalBlock }) {
   }
   return (
     <div className="mt-3 overflow-x-auto">
-      {block.caption ? <p className="text-sm font-medium text-fg">{block.caption}</p> : null}
+      {block.caption ? <p className="text-sm font-medium text-fg">{line(locale, block.caption)}</p> : null}
       <table className="mt-2 w-full min-w-[28rem] border-collapse text-left text-sm text-muted">
         <thead>
           <tr>
             {block.headers.map((h) => (
               <th key={h} className="border-b border-border py-2 pr-3 font-medium text-fg">
-                {h}
+                {line(locale, h)}
               </th>
             ))}
           </tr>
@@ -65,7 +76,7 @@ function Block({ block }: { block: LegalBlock }) {
             <tr key={row.join("|")}>
               {row.map((cell, i) => (
                 <td key={`${row[0]}-${i}`} className="border-b border-border/80 py-2 pr-3 align-top">
-                  {cell}
+                  {line(locale, cell)}
                 </td>
               ))}
             </tr>
@@ -81,12 +92,12 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
   return (
     <Shell>
       <main className="ke-gutter mx-auto max-w-2xl py-10 md:py-14">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">{doc.kicker}</p>
-        <h1 className="mt-2 font-display text-3xl md:text-4xl">{doc.title}</h1>
-        <p className="mt-2 text-sm text-subtle">{doc.updated}</p>
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">{line(locale, doc.kicker)}</p>
+        <h1 className="mt-2 font-display text-3xl md:text-4xl">{line(locale, doc.title)}</h1>
+        <p className="mt-2 text-sm text-subtle">{line(locale, doc.updated)}</p>
         {doc.intro.map((p) => (
           <p key={p} className="mt-4 text-muted">
-            {p}
+            {line(locale, p)}
           </p>
         ))}
 
@@ -107,9 +118,9 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
         <div className="mt-8 space-y-8">
           {doc.sections.map((section) => (
             <section key={section.id} id={section.id}>
-              <h2 className="font-display text-xl">{section.title}</h2>
+              <h2 className="font-display text-xl">{line(locale, section.title)}</h2>
               {section.blocks.map((block, i) => (
-                <Block key={`${section.id}-${i}`} block={block} />
+                <Block key={`${section.id}-${i}`} block={block} locale={locale} />
               ))}
             </section>
           ))}
@@ -117,10 +128,10 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
 
         {doc.storeLabel ? (
           <>
-            <h2 className="mt-12 font-display text-2xl">{doc.storeLabel}</h2>
+            <h2 className="mt-12 font-display text-2xl">{line(locale, doc.storeLabel)}</h2>
             <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-muted">
               {doc.storeItems?.map((item) => (
-                <li key={item}>{item}</li>
+                <li key={item}>{line(locale, item)}</li>
               ))}
             </ul>
           </>
@@ -133,7 +144,7 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
             rel="noreferrer"
             className="mt-8 inline-block text-sm font-medium text-primary underline-offset-4 hover:underline"
           >
-            {doc.officialLabel} ↗
+            {line(locale, doc.officialLabel ?? "")} ↗
           </a>
         ) : null}
 
@@ -150,7 +161,7 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
         ) : null}
 
         <p className="mt-8 text-sm text-muted">
-          {doc.contactLead}{" "}
+          {line(locale, doc.contactLead)}{" "}
           <a href={`mailto:${doc.contactEmail || SUPPORT_INBOX_EMAIL}`} className="text-primary underline-offset-4 hover:underline">
             {doc.contactEmail || SUPPORT_INBOX_EMAIL}
           </a>
@@ -163,7 +174,7 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
             {t("support")}
           </Link>
         </p>
-        <p className="mt-6 text-xs text-subtle">{doc.disclaimer}</p>
+        <p className="mt-6 text-xs text-subtle">{line(locale, doc.disclaimer)}</p>
       </main>
     </Shell>
   );

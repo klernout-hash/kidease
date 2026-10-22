@@ -231,7 +231,7 @@ export function roleNavItems(input: { role: ChromeRole; paid?: boolean; subscrip
     { id: "list", label: "List your daycare", to: "/claim", icon: "claim" },
     { id: "plans", label: "Plans", to: "/plans", icon: "benefits" },
     { id: "search", label: "Search", to: "/search", icon: "explore" },
-    { id: "help", label: "Help Centre", to: "/help", icon: "help" },
+    { id: "help", label: "Help centre", to: "/help", icon: "help" },
   ];
 }
 

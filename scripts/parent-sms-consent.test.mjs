@@ -23,7 +23,7 @@ test("parent SMS consent sentence stays exact for toll-free verification", () =>
   assert.equal(PARENT_SMS_CONSENT_TEXT, CONSENT);
   assert.equal(PARENT_SMS_TERMS_URL, "https://www.kidease.ca/terms");
   const fields = src("src/components/parent-sms-fields.tsx");
-  assert.match(fields, /PARENT_SMS_CONSENT_TEXT/);
+  assert.match(fields, /parentSmsConsentText/);
   assert.match(fields, /href=\{PARENT_SMS_TERMS_URL\}/);
   assert.match(fields, /to="\/privacy"/);
   assert.match(fields, /checked=\{consent\}/);
@@ -65,7 +65,7 @@ test("sign-up pages show the logo, phone field, and consent, and the schema stor
   assert.match(form, /saveParentSmsOptIn/);
   assert.match(server, /sms_consent/);
   assert.match(server, /sms_consent_at/);
-  assert.match(server, /PARENT_SMS_CONSENT_TEXT/);
+  assert.match(server, /parentSmsConsentText/);
   assert.match(migration, /sms_consent/);
   assert.match(migration, /sms_consent_at/);
   assert.doesNotMatch(guard, /\/signup"/);

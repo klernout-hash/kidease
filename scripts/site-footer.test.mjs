@@ -129,7 +129,7 @@ test("Support column keeps help and contact; legal links sit on the bottom row",
   assert.doesNotMatch(footer, /mailto:/);
   assert.doesNotMatch(nav, /SUPPORT_INBOX_EMAIL/);
   assert.doesNotMatch(nav, /mailto:/);
-  assert.match(copySrc, /contactTitle: "Contact Us"/);
+  assert.match(copySrc, /contactTitle: "Contact us"/);
   assert.match(copySrc, /contactTitle: "Nous joindre"/);
 });
 
@@ -207,27 +207,27 @@ test("EN footer labels stay in use order", () => {
     "Browse by city",
     "Compare",
     "Tour checklist",
-    "Childcare Benefits Program",
+    "Child care benefits program",
   ]);
   assert.deepEqual(labels(FOOTER_DAYCARES, "en"), [
     "List your daycare",
     "Plans",
     "How we verify listings",
     "Daycare requirements",
-    "Start a Daycare",
+    "Start a daycare",
     "Find daycare jobs",
   ]);
   assert.deepEqual(labels(FOOTER_SUPPORT, "en"), [
-    "Help Centre",
+    "Help centre",
     "FAQ",
-    "How It Works",
-    "Contact Us",
+    "How it works",
+    "Contact us",
     "Report a safety concern",
   ]);
   assert.deepEqual(labels(FOOTER_KIDEASE, "en"), [
     "About",
-    "Meet the Team",
-    "Donate to Kids",
+    "Meet the team",
+    "Donate to kids",
     "Get the app",
   ]);
 });

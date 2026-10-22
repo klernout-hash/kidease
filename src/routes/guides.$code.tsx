@@ -3,7 +3,8 @@ import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { provincialGuideCopy } from "@/lib/provincial-guide-copy";
-import { CANADA_WIDE_CHILD_CARE_URL, provincialGuideByCode, provincialGuidePath } from "@/lib/provincial-guides";
+import { canadaWideChildCareUrl, provincialGuideByCode, provincialGuidePath } from "@/lib/provincial-guides";
+import { localeLine } from "@/lib/french-type";
 import { pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 import { isFrPath, localePath } from "@/lib/locale-path";
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/guides/$code")({
     if (!loaderData) return { meta: [{ title: "Guide · KidEase" }] };
     return pageSeoHead({
       title: `${loaderData.nameEn} child care guide · KidEase`,
-      description: `Official links for fees, subsidy, waitlists, and licensing in ${loaderData.nameEn}.`,
+      description: `Official links for fees, subsidy, waitlists, and licensing in ${loaderData.nameEn}. Confirm amounts on the government page.`,
       path: provincialGuidePath(loaderData.code),
     });
   },
@@ -40,6 +41,7 @@ export function GuideView({
     fundingEn: string;
     fundingFr: string;
     fundingUrl: string;
+    fundingUrlFr?: string;
   };
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -47,8 +49,10 @@ export function GuideView({
   const fr = isFrPath(pathname) || locale === "fr";
   const copy = provincialGuideCopy(fr ? "fr" : "en");
   const name = fr ? pt.nameFr : pt.nameEn;
-  const first = fr ? pt.licensingFirstFr : pt.licensingFirstEn;
-  const funding = fr ? pt.fundingFr : pt.fundingEn;
+  const lang = fr ? "fr" : "en";
+  const first = localeLine(lang, fr ? pt.licensingFirstFr : pt.licensingFirstEn);
+  const funding = localeLine(lang, fr ? pt.fundingFr : pt.fundingEn);
+  const fundingHref = fr && pt.fundingUrlFr ? pt.fundingUrlFr : pt.fundingUrl;
   return (
     <Shell>
       <main className="ke-gutter mx-auto w-full max-w-3xl py-8">
@@ -67,12 +71,12 @@ export function GuideView({
           <p className="mt-2 text-muted">{copy.feesBody}</p>
           <p className="mt-2 text-muted">{funding}</p>
           <p className="mt-2">
-            <a className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline" href={CANADA_WIDE_CHILD_CARE_URL}>
+            <a className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline" href={canadaWideChildCareUrl(lang)}>
               {copy.canadaWide}
             </a>
           </p>
           <p>
-            <a className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline" href={pt.fundingUrl}>
+            <a className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline" href={fundingHref}>
               {copy.official}
             </a>
           </p>
@@ -81,7 +85,7 @@ export function GuideView({
           <h2 className="font-display text-2xl">{copy.subsidyTitle}</h2>
           <p className="mt-2 text-muted">{copy.subsidyBody}</p>
           <p className="mt-2">
-            <a className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline" href={pt.fundingUrl}>
+            <a className="inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline" href={fundingHref}>
               {copy.official}
             </a>
           </p>

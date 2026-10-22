@@ -17,6 +17,7 @@ export type LicensingOffice = {
   nameEn: string;
   nameFr: string;
   href: string;
+  hrefFr?: string;
   phones: LicensingPhone[];
   noteEn?: string;
   noteFr?: string;
@@ -98,7 +99,8 @@ export const LICENSING_OFFICES: LicensingOffice[] = [
     code: "ON",
     nameEn: "Ontario",
     nameFr: "Ontario",
-    href: "https://www.ontario.ca/page/make-a-child-care-complaint",
+    href: "https://www.ontario.ca/page/make-child-care-complaint",
+    hrefFr: "https://www.ontario.ca/fr/page/comment-deposer-une-plainte-concernant-un-service-de-garde-denfants",
     phones: [
       {
         labelEn: "Ministry of Education, toll-free",

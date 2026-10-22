@@ -30,20 +30,20 @@ const NAV: readonly NavPage[] = [
   {
     path: "/search",
     phrases: ["search", "find a daycare", "find daycares", "find a centre", "trouver une garderie", "trouver un centre", "chercher"],
-    en: "Open Search and type a city. You can filter by age. KidEase lists licensed childcare. A fee or an open spot is shown only when that centre entered it.",
+    en: "Open Search and type a city. You can filter by age. KidEase lists licensed child care. A fee or an open spot is shown only when that centre entered it.",
     fr: "Ouvrez Recherche et tapez une ville. Vous pouvez filtrer par âge. KidEase affiche la garde permise. Des frais ou une place libre s'affichent seulement si le centre les a inscrits.",
   },
   {
     path: "/claim",
     phrases: ["claim", "claim a listing", "reclamer", "reclamez"],
     en: "To claim a listing, open Claim and confirm you run that centre. Then edit it from the daycare desk. Claiming does not invent a fee or a spot.",
-    fr: "Pour réclamer une fiche, ouvrez Réclamer et confirmez que vous dirigez ce centre. Modifiez-la ensuite dans le bureau de la garderie. Réclamer n'invente pas des frais ni une place.",
+    fr: "Pour revendiquer une fiche, ouvrez Revendiquer et confirmez que vous dirigez ce centre. Modifiez-la ensuite dans le bureau de la garderie. Revendiquer n'invente pas des frais ni une place.",
   },
   {
     path: "/how-it-works",
     phrases: ["how it works", "how do i use", "how does kidease", "comment ca marche", "comment utiliser"],
     en: "Search finds licensed daycares. Open a listing to request info or a tour. Parents track requests on the parent desk. Daycares claim a listing, then use the daycare desk.",
-    fr: "Recherche trouve les garderies permises. Ouvrez une fiche pour demander des infos ou une visite. Les parents suivent les demandes dans le bureau parent. Les garderies réclament une fiche, puis utilisent le bureau garderie.",
+    fr: "Recherche trouve les garderies permises. Ouvrez une fiche pour demander des infos ou une visite. Les parents suivent les demandes dans le bureau parent. Les garderies revendiquent une fiche, puis utilisent le bureau garderie.",
   },
   {
     path: "/parent",
@@ -72,7 +72,7 @@ const NAV: readonly NavPage[] = [
   {
     path: "/faq",
     phrases: ["invent a fee", "invent a spot", "is a fee real", "frais invent"],
-    en: "KidEase lists licensed childcare. A fee or an open spot is shown only when that centre entered it. KidEase does not invent a spot, a fee, or a licence.",
+    en: "KidEase lists licensed child care. A fee or an open spot is shown only when that centre entered it. KidEase does not invent a spot, a fee, or a licence.",
     fr: "KidEase affiche la garde permise. Des frais ou une place libre s'affichent seulement si le centre les a inscrits. KidEase n'invente pas une place, des frais ou un permis.",
   },
   {
@@ -97,7 +97,7 @@ const NAV: readonly NavPage[] = [
     path: "/plans",
     phrases: ["parent plus", "subscription", "abonnement", "pricing", "plans"],
     en: "Plans are on the Plans page. The free listing and claim stay available. This chat does not change your plan.",
-    fr: "Les forfaits sont sur la page Forfaits. La fiche et la réclamation gratuites restent offertes. Ce clavardage ne change pas votre forfait.",
+    fr: "Les forfaits sont sur la page Forfaits. La fiche gratuite et la revendication restent offertes. Ce clavardage ne change pas votre forfait.",
   },
   {
     path: "/cities",
@@ -115,7 +115,7 @@ const NAV: readonly NavPage[] = [
     path: "/signup",
     phrases: ["sign up", "create an account", "creer un compte"],
     en: "Parents create an account on Sign up. A mobile number is optional. Daycare owners claim a listing. This chat cannot create the account for you.",
-    fr: "Les parents créent un compte sur Inscription. Le numéro mobile est facultatif. Les garderies réclament une fiche. Ce clavardage ne peut pas créer le compte.",
+    fr: "Les parents créent un compte sur Inscription. Le numéro mobile est facultatif. Les garderies revendiquent une fiche. Ce clavardage ne peut pas créer le compte.",
   },
   {
     path: "/guides",
@@ -145,7 +145,7 @@ const NAV: readonly NavPage[] = [
     path: "/for-daycares",
     phrases: ["for daycares", "i run a daycare", "je dirige"],
     en: "For daycares is the page for owners. Claim your free listing, then manage messages and tours from the daycare desk.",
-    fr: "Pour les garderies est la page pour les propriétaires. Réclamez votre fiche gratuite, puis gérez les messages et les visites dans le bureau garderie.",
+    fr: "Pour les garderies est la page pour les propriétaires. Revendiquez votre fiche gratuite, puis gérez les messages et les visites dans le bureau garderie.",
   },
   {
     path: "/delete-account",

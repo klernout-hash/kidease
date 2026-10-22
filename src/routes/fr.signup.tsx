@@ -1,7 +1,17 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { Shell } from "@/components/shell";
+import { ParentSignupForm } from "@/components/parent-signup-form";
+import { parentSignupHead } from "@/lib/parent-sms-consent";
 
 export const Route = createFileRoute("/fr/signup")({
-  beforeLoad: () => {
-    throw redirect({ to: "/fr/login", search: { intent: "up" }, statusCode: 301 });
-  },
+  head: () => parentSignupHead("fr"),
+  component: FrSignupPage,
 });
+
+function FrSignupPage() {
+  return (
+    <Shell>
+      <ParentSignupForm />
+    </Shell>
+  );
+}

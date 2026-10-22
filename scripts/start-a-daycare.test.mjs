@@ -49,7 +49,7 @@ test("Start a Daycare is one page with honesty first and live claim CTAs", () =>
   assert.doesNotMatch(page, /childcaresearch\.gov\.mb\.ca/);
   assert.doesNotMatch(page, /pay us to become licensed/i);
   const copy = src("src/lib/copy.ts");
-  assert.match(copy, /startADaycare: "Start a Daycare"/);
+  assert.match(copy, /startADaycare: "Start a daycare"/);
   assert.match(copy, /startADaycare: "Ouvrir une garderie"/);
   assert.match(copy, /enrollToday: "Enroll today!"/);
   assert.match(copy, /createKideaseListing: "Create your KidEase listing"/);

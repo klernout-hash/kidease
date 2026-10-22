@@ -9,7 +9,13 @@ test("display names clean scraped registry text without rewriting mixed-case nam
   assert.equal(displayCentreName("ABC MONTESSORI"), "ABC Montessori");
   assert.equal(displayCentreName("YMCA Child Care"), "YMCA Child Care");
   assert.equal(displayCentreName("Beanstalk Daycare, The"), "The Beanstalk Daycare");
-  assert.equal(displayCentreName("Play, Learn And Grow Childcare"), "Play, Learn And Grow Childcare");
+  assert.equal(displayCentreName("Play, Learn And Grow Childcare"), "Play, Learn and Grow Childcare");
+  assert.equal(displayCentreName("mcgregor child care"), "McGregor child care");
+  assert.equal(displayCentreName("ywca crabtree corner"), "YWCA crabtree corner");
+  assert.equal(displayCentreName("Creekview (<36Mos)"), "Creekview (under 36 months)");
+  assert.equal(displayCentreName("McGregor Child Care Centre 0 - 3 Gdc"), "McGregor Child Care Centre 0–3 GDC");
+  assert.equal(displayCentreName("Bright Future Child Care Center Inc."), "Bright Future Child Care Centre Inc.");
+  assert.equal(displayCentreName("A & A Daycare Centre"), "A & A Daycare Centre");
   assert.equal(displayCentreName("Neighbourhood Club -"), "Neighbourhood Club");
   assert.equal(displayCentreName("Tiny Tots Inc."), "Tiny Tots Inc.");
 });

@@ -18,7 +18,7 @@ export const Route = createFileRoute("/unsubscribe")({
   head: () =>
     pageSeoHead({
       title: "Unsubscribe · KidEase",
-      description: "Stop KidEase email or SMS. CASL unsubscribe: no login required.",
+      description: "Stop KidEase marketing email or text messages. This CASL unsubscribe page works with no account.",
       path: "/unsubscribe",
     }),
   component: UnsubscribeRoute,

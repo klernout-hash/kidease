@@ -164,7 +164,21 @@ export function HomeCareTypeRow({
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(node);
-    return () => observer.disconnect();
+    // The row is measured once on the first paint. Emoji and text fonts
+    // can still be loading then, and a wider font hides the last type at
+    // 1440px. Measure again when those fonts are in.
+    const fonts = document.fonts;
+    const onFonts = () => measure();
+    fonts?.addEventListener("loadingdone", onFonts);
+    let cancelled = false;
+    void fonts?.ready.then(() => {
+      if (!cancelled) measure();
+    });
+    return () => {
+      cancelled = true;
+      observer.disconnect();
+      fonts?.removeEventListener("loadingdone", onFonts);
+    };
   }, [fit, onOverflow]);
 
   return (
