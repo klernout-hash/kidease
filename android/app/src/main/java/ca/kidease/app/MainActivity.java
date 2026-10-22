@@ -2,6 +2,8 @@ package ca.kidease.app;
 
 import android.util.Log;
 import android.webkit.WebView;
+import androidx.webkit.WebSettingsCompat;
+import androidx.webkit.WebViewFeature;
 import com.getcapacitor.BridgeActivity;
 
 /**
@@ -17,6 +19,8 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void load() {
+        // Register before the bridge is created. Capacitor copies initial plugins in super.load().
+        registerPlugin(PasskeyPlugin.class);
         super.load();
         String flavor = BuildConfig.FLAVOR == null ? "" : BuildConfig.FLAVOR;
         applyStoreUserAgent(flavor);
@@ -38,6 +42,7 @@ public class MainActivity extends BridgeActivity {
         if (changed) {
             webView.getSettings().setUserAgentString(next);
         }
+        enableWebAuthn(webView);
         String applied = webView.getSettings().getUserAgentString();
         if (!configured.isEmpty() && (applied == null || !applied.contains(configured))) {
             failStoreToken(flavor, "User-Agent is missing " + configured);
@@ -66,6 +71,24 @@ public class MainActivity extends BridgeActivity {
         String cleaned = withoutSamsungStoreQuery(url);
         if (url != null && !cleaned.equals(url)) {
             getBridge().getWebView().loadUrl(cleaned);
+        }
+    }
+
+    /**
+     * Android System WebView can run WebAuthn as the app (asset-links origin)
+     * from androidx.webkit 1.12. Older WebViews have no PublicKeyCredential;
+     * PasskeyPlugin uses Credential Manager for those.
+     */
+    private void enableWebAuthn(WebView webView) {
+        try {
+            if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_AUTHENTICATION)) {
+                WebSettingsCompat.setWebAuthenticationSupport(
+                    webView.getSettings(),
+                    WebSettingsCompat.WEB_AUTHENTICATION_SUPPORT_FOR_APP
+                );
+            }
+        } catch (RuntimeException ex) {
+            Log.w(TAG, "WebAuthn support was not enabled", ex);
         }
     }
 

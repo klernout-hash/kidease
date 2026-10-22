@@ -133,6 +133,9 @@ const BLOCKED_AUTH_SUFFIXES: Array<{ suffix: string; action: ViewAsAction }> = [
   { suffix: "/revoke-session", action: "write" },
   { suffix: "/revoke-sessions", action: "write" },
   { suffix: "/revoke-other-sessions", action: "write" },
+  { suffix: "/passkey/register/options", action: "two_factor" },
+  { suffix: "/passkey/register/verify", action: "two_factor" },
+  { suffix: "/passkey/delete", action: "two_factor" },
 ];
 
 /**
