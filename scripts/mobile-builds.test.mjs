@@ -61,7 +61,7 @@ describe("when-in-use location purpose", () => {
     assert.match(patch, /NSLocationWhenInUseUsageDescription/);
     assert.match(patch, /ACCESS_FINE_LOCATION/);
     assert.match(patch, /ACCESS_COARSE_LOCATION/);
-    assert.match(patch, /stripAndroidPermission[\s\S]*POST_NOTIFICATIONS/);
+    assert.match(patch, /ensureAndroidPermission[\s\S]*POST_NOTIFICATIONS/);
     assert.match(patch, /RECORD_AUDIO/);
     assert.match(patch, /NSCameraUsageDescription/);
     assert.match(patch, /NSMicrophoneUsageDescription/);
@@ -100,7 +100,7 @@ describe("native project scaffolding", () => {
     const manifest = read("android/app/src/main/AndroidManifest.xml");
     assert.match(manifest, /ACCESS_COARSE_LOCATION/);
     assert.match(manifest, /ACCESS_FINE_LOCATION/);
-    assert.doesNotMatch(manifest, /POST_NOTIFICATIONS/);
+    assert.match(manifest, /POST_NOTIFICATIONS/);
     assert.match(manifest, /android.permission.CAMERA/);
     assert.match(manifest, /RECORD_AUDIO/);
     assert.match(manifest, /MODIFY_AUDIO_SETTINGS/);

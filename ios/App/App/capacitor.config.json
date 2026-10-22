@@ -47,6 +47,7 @@
 		"HapticsPlugin",
 		"KeyboardPlugin",
 		"PreferencesPlugin",
+		"PushNotificationsPlugin",
 		"SharePlugin",
 		"SplashScreenPlugin",
 		"StatusBarPlugin"
