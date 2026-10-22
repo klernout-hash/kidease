@@ -48,14 +48,15 @@ The live site is the app. [PWABuilder](https://www.pwabuilder.com) wraps it as a
 - Site manifest (browsers and “Add to home screen”): `public/manifest.webmanifest`, start URL `/`.
 - Store manifest: `public/manifest.microsoft.webmanifest`, start URL `/?store=microsoft`.
 - Icons already on the site: 192, 512, and a 512 maskable icon.
-- Service worker `public/sw.js` (`kidease-shell-v5`) serves `public/offline.html` when a page load fails. It does not cache HTML. Hashed `/assets/` stay network-only.
-- The first launch sets a `ke_store=microsoft` cookie so later pages still know this is the Store package. Stripe stays visible on that package. The cookie is set only when the user agent is not `KidEaseNative`. An iOS or Play WebView ignores `?store=microsoft` and clears a leftover `ke_store` cookie, so a link cannot turn Stripe back on in those builds.
+- Service worker `public/sw.js` (`kidease-shell-v6`) serves `public/offline.html` when a page load fails. It does not cache HTML. Hashed `/assets/` stay network-only. A standalone window and the Microsoft channel register it on load. The iOS and Android shells do not.
+- The page at `/?store=microsoft` links `manifest.microsoft.webmanifest` (also when the user agent is `KidEaseStoreMicrosoft` or the `ke_store=microsoft` cookie is already set). A normal visit keeps `manifest.webmanifest`.
+- The first launch sets a `ke_store=microsoft` cookie (`Path=/; Max-Age=31536000; SameSite=Lax; Secure` on https) so later pages still know this is the Store package. Stripe stays visible on that package. The cookie is set only when the user agent is not `KidEaseNative`. An iOS or Play WebView ignores `?store=microsoft` and clears a leftover `ke_store` cookie, so a link cannot turn Stripe back on in those builds.
 
 PWABuilder steps:
 
 1. Open [https://www.pwabuilder.com](https://www.pwabuilder.com).
-2. Enter `https://www.kidease.ca`.
-3. Point the package at `https://www.kidease.ca/manifest.microsoft.webmanifest` so the installed app opens `/?store=microsoft`.
+2. Enter `https://www.kidease.ca/?store=microsoft`. That page links the Microsoft manifest.
+3. Confirm the report uses `manifest.microsoft.webmanifest` and start URL `/?store=microsoft`.
 4. Package **Windows** as MSIX.
 5. Publisher identity (the `CN=` name) comes from Partner Center. Do not invent it.
 6. Upload the MSIX. Mark the age rating **18+**. Audience is parents and daycare providers, not a kids category.

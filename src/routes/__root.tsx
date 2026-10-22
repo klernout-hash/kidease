@@ -9,10 +9,11 @@ import {
 import { localeTag } from "@/lib/languages";
 import { pathLocale } from "@/lib/locale-path";
 import { getVisitorLocale } from "@/lib/locale-choice";
-import { readServerStoreChannel } from "@/lib/store-channel-request";
+import { readServerStoreChannel, type ServerStoreRead } from "@/lib/store-channel-request";
 import { LocaleChoiceSync } from "@/components/language-select";
 import { useCopy } from "@/lib/use-copy";
 import { AuthProvider } from "@/lib/auth/provider";
+import { ViewAsProvider } from "@/components/view-as-banner";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { NativeBoot } from "@/components/native-boot";
 import { NativeCommerceStrip } from "@/components/native-commerce-strip";
@@ -25,16 +26,27 @@ import { PostHogBoot } from "@/components/posthog-boot";
 import { RoleBoot } from "@/components/role-boot";
 import { KidEaseToaster } from "@/components/kidease-toaster";
 import { SuccessConfirmHost } from "@/components/success-confirm";
-import { reportError } from "@/lib/observe";
+import { SafeRouteError } from "@/components/safe-error-boundary";
+import { safeErrorCopy } from "@/lib/safe-error";
 import { getRoleChrome } from "@/lib/server/role-route";
 import { STYLE_NONCE_BOOT } from "@/lib/style-nonce-boot";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
-import { shellBlocksCommerce, storeChannelFromSignals, type StoreChannel } from "@/lib/native-entitlements";
+import {
+  microsoftStoreCookieHeader,
+  shellBlocksCommerce,
+  storeChannelFromSignals,
+  type StoreChannel,
+} from "@/lib/native-entitlements";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "KidEase";
 const ICON_VER = "20";
 const APP_ICON = `/icon-512.png?v=${ICON_VER}`;
+
+function manifestHref(channel: StoreChannel | undefined): string {
+  const file = channel === "microsoft" ? "/manifest.microsoft.webmanifest" : "/manifest.webmanifest";
+  return `${file}?v=${ICON_VER}`;
+}
 
 const GUEST_LOCALE = {
   locale: "en" as const,
@@ -46,6 +58,10 @@ const GUEST_LOCALE = {
 
 export const Route = createRootRoute({
   beforeLoad: async ({ location }) => {
+    if (location.pathname === "/fr/parent" || location.pathname.startsWith("/fr/parent/")) {
+      const rest = location.pathname.replace(/^\/fr/, "") || "/parent";
+      throw redirect({ href: `${rest}${location.searchStr || ""}`, statusCode: 302 });
+    }
     const search = `${location.searchStr || ""}${location.hash || ""}`;
     const [roleChrome, visitorLocale] = await Promise.all([
       getRoleChrome().catch(() => ({
@@ -64,52 +80,34 @@ export const Route = createRootRoute({
     if (visitorLocale.redirectTo) {
       throw redirect({ href: visitorLocale.redirectTo, statusCode: 302 });
     }
-    const storeChannel = await readRequestStoreChannel(location.searchStr || "");
+    const storeRead = await readRequestStoreChannel(location.searchStr || "");
+    const storeChannel = storeRead.channel;
     const nativeShell = shellBlocksCommerce(storeChannel);
-    return { roleChrome, visitorLocale, nativeShell, storeChannel };
+    return { roleChrome, visitorLocale, nativeShell, storeChannel, microsoftSetCookie: storeRead.setCookie };
   },
-  errorComponent: ({ error }) => {
-    reportError(error, {
-      route: typeof window !== "undefined" ? window.location.pathname : "root",
-    });
+  errorComponent: (props) => {
+    const path = typeof window !== "undefined" ? window.location.pathname : "";
+    const copy = safeErrorCopy(path);
     return (
-      <>
-        <style
-          dangerouslySetInnerHTML={{
-            __html:
-              ".ke-crash{font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:48px;min-height:100vh}" +
-              ".ke-crash-kicker{font-size:12px;letter-spacing:.16em;text-transform:uppercase}" +
-              ".ke-crash-title{font-size:28px}" +
-              ".ke-crash-detail{color:#5c6578;font-size:13px}",
-          }}
-        />
-        <div className="ke-crash">
-          <p className="ke-crash-kicker">KidEase</p>
-          <h1 className="ke-crash-title">Something went wrong</h1>
-          <p>
-            Refresh the page, or go back to kidease.ca. If it keeps happening, email{" "}
-            {SUPPORT_INBOX_EMAIL}.
-          </p>
-          <p
-            className="ke-crash-actions"
-            style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginTop: "16px" }}
-          >
-            <a href="/search" style={{ fontWeight: 600 }}>
-              Explore
-            </a>
-            <a href="/" style={{ fontWeight: 600 }}>
-              Home
-            </a>
-            <a href={`mailto:${SUPPORT_INBOX_EMAIL}`}>Email support</a>
-          </p>
-          <p className="ke-crash-detail">
-            {error instanceof Error ? error.message : "Please try again."}
-          </p>
-        </div>
-      </>
+      <SafeRouteError
+        {...props}
+        links={
+          <>
+            {path.startsWith("/admin") ? <a href="/admin">{copy.admin}</a> : null}
+            <a href="/search">{copy.explore}</a>
+            <a href="/">{copy.home}</a>
+            <a href={`mailto:${SUPPORT_INBOX_EMAIL}`}>{copy.support}</a>
+          </>
+        }
+      />
     );
   },
-  head: () => ({
+  headers: ({ match }) => {
+    const setCookie = match.context.microsoftSetCookie;
+    if (!setCookie) return undefined;
+    return { "set-cookie": setCookie };
+  },
+  head: ({ match }) => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
@@ -119,6 +117,12 @@ export const Route = createRootRoute({
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
       { name: "apple-mobile-web-app-title", content: APP_NAME },
       { name: "application-name", content: APP_NAME },
+      ...(match.context.storeChannel === "microsoft"
+        ? [
+            { name: "msapplication-TileColor", content: "#1A3790" },
+            { name: "msapplication-TileImage", content: APP_ICON },
+          ]
+        : []),
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: `/favicon.svg?v=${ICON_VER}` },
@@ -133,7 +137,7 @@ export const Route = createRootRoute({
       },
       { rel: "icon", type: "image/png", sizes: "512x512", href: APP_ICON },
       { rel: "stylesheet", href: appCss },
-      { rel: "manifest", href: `/manifest.webmanifest?v=${ICON_VER}` },
+      { rel: "manifest", href: manifestHref(match.context.storeChannel) },
       { rel: "apple-touch-icon", sizes: "180x180", href: `/apple-touch-icon.png?v=${ICON_VER}` },
       { rel: "apple-touch-icon", sizes: "512x512", href: APP_ICON },
       { rel: "apple-touch-icon", href: APP_ICON },
@@ -153,15 +157,22 @@ export const Route = createRootRoute({
   component: RootDocument,
 });
 
-async function readRequestStoreChannel(search: string): Promise<StoreChannel> {
+async function readRequestStoreChannel(search: string): Promise<ServerStoreRead> {
   if (typeof window !== "undefined") {
-    return storeChannelFromSignals({
+    const signals = {
       userAgent: window.navigator.userAgent,
       search: window.location.search || search,
       cookie: document.cookie,
-    });
+    };
+    return {
+      channel: storeChannelFromSignals(signals),
+      setCookie: microsoftStoreCookieHeader(signals, { secure: window.location.protocol === "https:" }),
+    };
   }
-  return readServerStoreChannel({ data: { search } }).catch(() => storeChannelFromSignals({ search }));
+  return readServerStoreChannel({ data: { search } }).catch(() => ({
+    channel: storeChannelFromSignals({ search }),
+    setCookie: null,
+  }));
 }
 
 function RootDocument() {
@@ -212,6 +223,7 @@ function RootDocument() {
       <body>
         <PreviewHostBridge />
         <AuthProvider>
+          <ViewAsProvider>
           <ThemeBoot />
           <LocaleChoiceSync />
           <NativeBoot />
@@ -222,6 +234,7 @@ function RootDocument() {
           <RoleBoot />
           <RouteProgress />
           <Outlet />
+          </ViewAsProvider>
           <CookieConsentBanner />
           <KidEaseToaster />
           <SuccessConfirmHost />

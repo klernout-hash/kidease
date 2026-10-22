@@ -55,13 +55,36 @@ export function isHardBounceType(bounceType: string | null | undefined): boolean
   return (bounceType || "").trim().toLowerCase() === "permanent";
 }
 
+function tagValue(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed.slice(0, 120) : null;
+}
+
+/** Resend accepts tags as { name, value } pairs. Webhooks may echo that array or a map. */
+export function resendCampaignTags(tag: string): Array<{ name: "campaign"; value: string }> {
+  const value = tag.trim().slice(0, 120);
+  return value ? [{ name: "campaign", value }] : [];
+}
+
 export function campaignTagFromPayload(data: Record<string, unknown>): string | null {
   const tags = data.tags;
-  if (tags && typeof tags === "object" && !Array.isArray(tags)) {
+  if (Array.isArray(tags)) {
+    for (const entry of tags) {
+      if (!entry || typeof entry !== "object") continue;
+      const row = entry as Record<string, unknown>;
+      const name = typeof row.name === "string" ? row.name.trim().toLowerCase() : "";
+      if (name && name !== "campaign" && name !== "category") continue;
+      const value = tagValue(row.value);
+      if (value) return value;
+    }
+    return null;
+  }
+  if (tags && typeof tags === "object") {
     const row = tags as Record<string, unknown>;
     for (const key of ["campaign", "category"]) {
-      const value = row[key];
-      if (typeof value === "string" && value.trim()) return value.trim().slice(0, 120);
+      const value = tagValue(row[key]);
+      if (value) return value;
     }
   }
   return null;

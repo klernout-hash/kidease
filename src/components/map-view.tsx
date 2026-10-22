@@ -86,7 +86,7 @@ import {
 } from "@/lib/google-maps";
 import { BuildingPhoto } from "@/components/building-photo";
 import { mapPinThumb } from "@/lib/listing-photo";
-import { listingAgeRangeText } from "@/lib/listing-ages";
+import { standardAgeLabelsForListing } from "@/lib/standard-age-groups";
 import { UNMEASURED_DISTANCE_KM, isDoorPin } from "@/lib/card-distance";
 import { parentDistanceLabel } from "@/lib/distance-label";
 import { originIsParentLocation } from "@/lib/presence";
@@ -1060,7 +1060,7 @@ function MapPinPopup({
     city: item.city,
     away,
   });
-  const ages = listingAgeRangeText(item, "months", locale === "fr" ? "fr" : "en");
+  const ages = standardAgeLabelsForListing(item, locale === "fr" ? "fr" : "en").join(" · ");
   const vacancy = honestVacancy(item);
   const facts = [
     ages,
@@ -1100,11 +1100,11 @@ function MapPinPopup({
           params={{ slug: item.slug }}
           className="flex items-start gap-2 px-2 pb-1.5 pt-2 text-inherit no-underline"
         >
-          <PinPopupSummary thumb={thumb} name={name} place={place} facts={facts} approved={approved} approvedLabel={t("kideaseApprovedMarker")} />
+          <PinPopupSummary thumb={thumb} name={name} place={place} facts={facts} approved={approved} approvedLabel={t("kideaseApprovedMarker")} sponsored={item.featuredCity ? t("sponsored") : ""} />
         </Link>
       ) : (
         <div className="flex items-start gap-2 px-2 pb-1.5 pt-2">
-          <PinPopupSummary thumb={thumb} name={name} place={place} facts={facts} approved={approved} approvedLabel={t("kideaseApprovedMarker")} />
+          <PinPopupSummary thumb={thumb} name={name} place={place} facts={facts} approved={approved} approvedLabel={t("kideaseApprovedMarker")} sponsored={item.featuredCity ? t("sponsored") : ""} />
         </div>
       )}
       <div className="px-2 pb-2">
@@ -1138,6 +1138,7 @@ function PinPopupSummary({
   facts,
   approved,
   approvedLabel,
+  sponsored,
 }: {
   thumb: string | null;
   name: string;
@@ -1145,6 +1146,7 @@ function PinPopupSummary({
   facts: string;
   approved: boolean;
   approvedLabel: string;
+  sponsored?: string;
 }) {
   return (
     <>
@@ -1161,6 +1163,13 @@ function PinPopupSummary({
       ) : null}
       <span className="min-w-0 flex-1 pr-9">
         <p className="line-clamp-2 text-[15px] font-semibold leading-5 tracking-[-0.02em]">{name}</p>
+        {sponsored ? (
+          <p className="mt-1">
+            <span data-ke="sponsored" className="inline-flex items-center rounded-full bg-[#1c2438] px-2 py-0.5 text-[11px] font-semibold leading-none text-white">
+              {sponsored}
+            </span>
+          </p>
+        ) : null}
         {place ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{place}</p> : null}
         {facts ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{facts}</p> : null}
         {approved ? (

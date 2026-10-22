@@ -42,6 +42,7 @@ import { refineSmartMatch } from "@/lib/server/smart-match";
 import type { CopyKey } from "@/lib/copy";
 import type { DaycareCard } from "@/lib/types";
 import { useCopy } from "@/lib/use-copy";
+import { standardAgeLabel } from "@/lib/standard-age-groups";
 import { cn } from "@/lib/utils";
 
 const AGES: Array<{ id: SmartMatchAge; label: CopyKey }> = [
@@ -79,8 +80,9 @@ function track(
   capturePostHogEvent(event, smartMatchEventProps(props));
 }
 
-function ageLabel(age: SmartMatchAge) {
-  return AGES.find((item) => item.id === age)?.label ?? "anyAge";
+function matchAgeText(age: SmartMatchAge, t: (key: CopyKey) => string, locale: string) {
+  if (age === "any") return t("anyAge");
+  return standardAgeLabel(age, locale);
 }
 
 function priorityLine(answers: MatchChatAnswers, t: (key: CopyKey) => string) {
@@ -93,13 +95,13 @@ function priorityLine(answers: MatchChatAnswers, t: (key: CopyKey) => string) {
   return bits.join(" · ");
 }
 
-function matchBubbles(answers: MatchChatAnswers, t: (key: CopyKey) => string): Bubble[] {
+function matchBubbles(answers: MatchChatAnswers, t: (key: CopyKey) => string, locale: string): Bubble[] {
   const out: Bubble[] = [
     { who: "bot", text: t("smartMatchLead") },
     { who: "bot", text: t("smartMatchAge") },
   ];
   if (!answers.age) return out;
-  out.push({ who: "user", text: t(ageLabel(answers.age)) });
+  out.push({ who: "user", text: matchAgeText(answers.age, t, locale) });
   out.push({ who: "bot", text: t("smartMatchBotPlace") });
   if (!answers.place.trim() && !answers.radiusKm) return out;
   const placeBits = [
@@ -397,7 +399,7 @@ function SmartMatchChat({
     }
   }
 
-  const lines = matchBubbles(answers, t);
+  const lines = matchBubbles(answers, t, locale);
   if (step === "results") {
     lines.push({
       who: "bot",
@@ -542,7 +544,7 @@ function SmartMatchChat({
               {step === "age"
                 ? AGES.map((item) => (
                     <Chip key={item.id} onClick={() => patch({ ...answers, age: item.id })}>
-                      {t(item.label)}
+                      {item.id === "any" ? t(item.label) : standardAgeLabel(item.id, locale)}
                     </Chip>
                   ))
                 : null}

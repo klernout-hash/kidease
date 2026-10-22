@@ -10,6 +10,7 @@ import { localPasswordIssue } from "@/lib/password-hygiene";
 import { isReauthRequiredMessage } from "@/lib/reauth";
 import { ReauthDialog } from "@/components/reauth-dialog";
 import { useCopy } from "@/lib/use-copy";
+import { ViewAsWriteLock } from "@/components/view-as-banner";
 
 export function AccountSecurity({ email }: { email: string }) {
   const { t, locale } = useCopy();
@@ -76,6 +77,7 @@ export function AccountSecurity({ email }: { email: string }) {
   }
 
   return (
+    <ViewAsWriteLock>
     <>
       <section className="mt-8 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="account-password">
         <h2 className="font-display text-lg tracking-[-0.02em]">{t("accountChangePassword")}</h2>
@@ -150,5 +152,6 @@ export function AccountSecurity({ email }: { email: string }) {
         }}
       />
     </>
+    </ViewAsWriteLock>
   );
 }

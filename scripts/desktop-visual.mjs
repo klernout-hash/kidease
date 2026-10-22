@@ -146,7 +146,7 @@ export async function compareDesktopShots(browser, actualDir, baselineDir) {
 }
 
 export async function runDesktopVisualPass(browser, base, baselineDir = DESKTOP_BASELINE_DIR) {
-  const actualDir = join(root, "artifacts/desktop-actual");
+  const actualDir = join(root, "artifacts/e2e/desktop-actual");
   const notes = await captureDesktopShots(browser, base, actualDir);
   const problems = [...notes];
   if (!existsSync(baselineDir)) {

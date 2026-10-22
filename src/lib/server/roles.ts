@@ -25,6 +25,7 @@ import {
 import { isActiveCentreMember, listOwnedDaycareIds } from "@/lib/server/centre-access";
 import { EMPTY_ATTENTION, type AttentionCounts } from "@/lib/attention";
 import { restoreDeadline, withinRestoreWindow } from "@/lib/account-delete";
+import { isViewAsReadOnly, readViewAsPublic } from "@/lib/view-as-public";
 
 export const ADMIN_PROMOTE_SQL =
   "update profiles set role = 'admin' where user_id = '…';";
@@ -174,10 +175,13 @@ async function loadAttention(
  */
 export async function resolveAdminAccess(userId: string) {
   const sql = await getSql();
-  await sql`
-    insert into profiles (user_id, role) values (${userId}, 'parent')
-    on conflict (user_id) do nothing
-  `.catch(() => undefined);
+  // Viewing as someone must not create a profile row for them.
+  if (!readViewAsPublic()) {
+    await sql`
+      insert into profiles (user_id, role) values (${userId}, 'parent')
+      on conflict (user_id) do nothing
+    `.catch(() => undefined);
+  }
 
   const stored = parseAppRole(await profileRole(sql, userId));
   const actor = await lookupUser(userId);
@@ -241,10 +245,13 @@ export async function requireSupport(userId: string) {
 
 export async function resolveSessionDesks(userId: string): Promise<SessionDesks> {
   const sql = await getSql();
-  await sql`
-    insert into profiles (user_id, role) values (${userId}, 'parent')
-    on conflict (user_id) do nothing
-  `.catch(() => undefined);
+  const viewing = readViewAsPublic();
+  if (!viewing) {
+    await sql`
+      insert into profiles (user_id, role) values (${userId}, 'parent')
+      on conflict (user_id) do nothing
+    `.catch(() => undefined);
+  }
 
   const access = await resolveAdminAccess(userId);
   const stored = access.ok ? "admin" : access.role;
@@ -254,12 +261,13 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
   // before setRole("provider") lands. That filed providers on Parent Onboard.
   // Parent intake stays on an explicit parent choice. Provider intake still
   // runs once the stored role or an owned centre says this is a daycare.
-  if (stored === "provider" || owned) await claimProviderCrmIntake(userId);
+  // View-as never files intake or closes an account.
+  if (!viewing && (stored === "provider" || owned)) await claimProviderCrmIntake(userId);
   const member = owned ? false : await isActiveCentreMember(sql, userId);
   const desks = desksFor({ role: stored, ownsCentre: owned || member });
   const { purgeAccountIfExpired, readDeletedAt } = await import("@/lib/server/family");
   const deletedAt = await readDeletedAt(userId);
-  if (deletedAt && !withinRestoreWindow(deletedAt)) {
+  if (!viewing && deletedAt && !withinRestoreWindow(deletedAt)) {
     await purgeAccountIfExpired(userId);
     throw new Error("Account closed");
   }
@@ -295,6 +303,7 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
     centreLinked: owned || member,
     attention,
     restoreUntil,
+    viewAs: viewing,
   };
 }
 
@@ -302,6 +311,9 @@ export async function writeProfileRole(userId: string, requested: "parent" | "pr
   const sql = await getSql();
   const row = await profileRoleRow(sql, userId);
   const prev = row?.role ?? null;
+  if (isViewAsReadOnly()) {
+    return { role: parseAppRole(prev), previous: prev };
+  }
   const created = row?.created_at ? new Date(row.created_at).getTime() : null;
   const ageMs = created != null && !Number.isNaN(created) ? Date.now() - created : null;
   const next = nextStoredRole(prev, requested);

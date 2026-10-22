@@ -98,7 +98,7 @@ export function Shell({ children }: { children: ReactNode }) {
     return (
       <div className="min-h-dvh bg-bg pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] text-fg">
         <KeyboardInset />
-        <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[var(--ke-safe-top,env(safe-area-inset-top))]">
+        <header className="sticky top-[var(--ke-view-as-h,0px)] z-50 border-b border-border bg-bg pt-[var(--ke-safe-top,env(safe-area-inset-top))]">
           <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
             <Link to={homeTo} className="shrink-0" aria-label="KidEase">
               <BrandMark size="sm" />
@@ -116,7 +116,7 @@ export function Shell({ children }: { children: ReactNode }) {
     return (
       <div className="min-h-dvh bg-bg pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] text-fg">
         <KeyboardInset />
-        <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[var(--ke-safe-top,env(safe-area-inset-top))]">
+        <header className="sticky top-[var(--ke-view-as-h,0px)] z-50 border-b border-border bg-bg pt-[var(--ke-safe-top,env(safe-area-inset-top))]">
           <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
             <Link to={homeTo} className="shrink-0" aria-label="KidEase">
               <BrandMark size="sm" />
@@ -136,7 +136,7 @@ export function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-dvh bg-bg pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] text-fg">
       <KeyboardInset />
-      <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[var(--ke-safe-top,env(safe-area-inset-top))]">
+      <header className="sticky top-[var(--ke-view-as-h,0px)] z-50 border-b border-border bg-bg pt-[var(--ke-safe-top,env(safe-area-inset-top))]">
         <div className="ke-gutter relative mx-auto min-w-0 max-w-6xl">
           <div className="flex h-14 w-full min-w-0 items-center gap-3 max-md:h-auto max-md:min-h-14 max-md:gap-2 md:h-16">
             {menuLeaf ? <MenuLeafBack /> : null}

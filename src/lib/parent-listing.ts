@@ -16,6 +16,7 @@ import { hasAmenity } from "@/lib/licensing";
 import { hasConfirmedAges } from "@/lib/listing-readiness";
 import { clipAgeBand, generatedAgeBands } from "@/lib/public-programs";
 import { matchesRailAge } from "@/lib/care-type";
+import { listingStandardGroups, standardAgeGroup, standardAgeLabel } from "@/lib/standard-age-groups";
 import { honestVacancy, isLiveOrClaimed, type VacancyHonestyInput } from "@/lib/now-loops";
 import type { Daycare } from "@/lib/types";
 
@@ -125,11 +126,16 @@ const CURR_IDS = new Set<string>(CURRICULUM_TAGS);
 const SAFE_IDS = new Set<string>(SAFETY_FEATURES);
 const AMENITY_IDS = new Set<string>(DESK_AMENITIES);
 
+function bandSpan(band: ParentAgeBand): { min: number; max: number } {
+  const group = standardAgeGroup(band);
+  return { min: group.minMonths, max: group.maxMonths };
+}
+
 const BAND_RANGE: Record<ParentAgeBand, { min: number; max: number }> = {
-  infant: { min: 0, max: 18 },
-  toddler: { min: 18, max: 36 },
-  preschool: { min: 30, max: 72 },
-  "school-age": { min: 60, max: 144 },
+  infant: bandSpan("infant"),
+  toddler: bandSpan("toddler"),
+  preschool: bandSpan("preschool"),
+  "school-age": bandSpan("school-age"),
 };
 
 export function emptyFinancial(): ListingFinancial {
@@ -504,24 +510,9 @@ export function programFeeKnown(
 }
 
 export function listingAgeChips(
-  d: Pick<
-    Daycare,
-    | "agesKnown"
-    | "ageMinMonths"
-    | "ageMaxMonths"
-    | "amenities"
-    | "programs"
-    | "infantMonthly"
-    | "toddlerMonthly"
-    | "preschoolMonthly"
-    | "partTimeMonthly"
-    | "scheduleOptions"
-  >,
+  d: Pick<Daycare, "agesKnown" | "ageMinMonths" | "ageMaxMonths" | "province">,
 ): ParentAgeBand[] {
-  return listingPrograms(d)
-    .map((row) => row.band)
-    .filter((band, i, all) => all.indexOf(band) === i)
-    .slice(0, 2);
+  return listingStandardGroups(d);
 }
 
 export function matchesParentAge(d: Pick<Daycare, "agesKnown" | "ageMinMonths" | "ageMaxMonths" | "amenities">, age: ParentAgeBand): boolean {
@@ -641,13 +632,7 @@ export function safetyLabel(id: string, locale: string): string {
 }
 
 export function parentAgeLabel(band: ParentAgeBand, locale: string): string {
-  const map: Record<ParentAgeBand, { en: string; fr: string }> = {
-    infant: { en: "Infants (0–18 mo)", fr: "Nourrissons (0–18 mois)" },
-    toddler: { en: "Toddlers (18–36 mo)", fr: "Tout-petits (18–36 mois)" },
-    preschool: { en: "Preschool (2.5–6 yr)", fr: "Préscolaire (2,5–6 ans)" },
-    "school-age": { en: "School-age", fr: "Âge scolaire" },
-  };
-  return locale === "fr" ? map[band].fr : map[band].en;
+  return standardAgeLabel(band, locale);
 }
 
 export function parentScheduleLabel(id: ParentSchedule, locale: string): string {

@@ -16,6 +16,7 @@ import { CaslConsentFields } from "@/components/casl-consent-fields";
 import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent-api";
 import type { CaslPrefs } from "@/lib/casl";
 import { useShowPayCtas } from "@/components/pay-chrome";
+import { useViewAs } from "@/components/view-as-banner";
 import { useInNativeShell } from "@/lib/use-native-shell";
 
 export function ParentPlusPanel({
@@ -35,6 +36,7 @@ export function ParentPlusPanel({
   alwaysOffer?: boolean;
 }) {
   const { t, locale } = useCopy();
+  const viewing = useViewAs();
   const loc = locale === "fr" ? "fr" : "en";
   const showPay = useShowPayCtas();
   const nativeShell = useInNativeShell();
@@ -114,6 +116,10 @@ export function ParentPlusPanel({
   const familyPlans = PARENT_UPGRADE_PLANS.filter((plan) => paidPlanVisible(plan.id, interval, state.prices));
 
   async function start(plan: PlusPlanId) {
+    if (viewing) {
+      toast.error(t("viewAsReadOnly"));
+      return;
+    }
     setBusy(true);
     try {
       await saveMyCaslConsents({
@@ -131,6 +137,10 @@ export function ParentPlusPanel({
   }
 
   async function portal() {
+    if (viewing) {
+      toast.error(t("viewAsReadOnly"));
+      return;
+    }
     setBusy(true);
     try {
       const { url } = await startParentPlusPortal();
@@ -143,6 +153,10 @@ export function ParentPlusPanel({
   }
 
   async function setCancel(cancel: boolean) {
+    if (viewing) {
+      toast.error(t("viewAsReadOnly"));
+      return;
+    }
     setBusy(true);
     try {
       const saved = await setParentPlusCancel({ data: { cancel } });

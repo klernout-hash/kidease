@@ -97,7 +97,7 @@ export function EmailHealthPage() {
     <TwoFactorGate next="/admin-email-health">
       <DeskShell
         desk="admin"
-        active="mail"
+        active="email-health"
         onSelect={() => {
           if (typeof window !== "undefined") window.location.assign("/admin?tab=mail");
         }}
@@ -129,6 +129,13 @@ export function EmailHealthPage() {
             </div>
           </div>
 
+          {campaigns.some((row) => row.campaign === "(untagged)") ? (
+            <p className="mt-4 rounded-2xl bg-surface px-5 py-4 text-sm text-muted ring-1 ring-border">
+              Untagged is mail that left without a campaign name. Two permanent bounces in that bucket are enough to
+              pass 2% when only a few dozen messages went out. New sign-in, alert, and admin mail now carries a campaign
+              name. Older rows stay in this bucket.
+            </p>
+          ) : null}
           {anyWarn ? (
             <p className="mt-4 rounded-2xl bg-surface px-5 py-4 text-sm text-danger ring-1 ring-danger">
               Pause the highlighted campaign before the next blast. Bounce rate is at least {bounceLine}% or complaint

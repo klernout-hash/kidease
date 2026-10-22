@@ -180,8 +180,10 @@ export function parseVideoRoomParam(raw: string | null | undefined): { kind: Vid
  * Parent Plus entitlement for video.
  * Providers join without paying. Admins may test.
  * When subscriptions are off: a signed-in parent is entitled. FEATURE_VIDEO still gates the join.
- * When Stripe is live and subscriptions are on: parent needs plus_plan plus or alerts, and plus_status active/trialing.
- * When Stripe is not live and subscriptions are on: fail closed for parents (honest billing-not-live).
+ * A parent with plus or alerts and an open status (active, trialing, past_due) can join.
+ * That includes a complimentary grant with no Stripe subscription and no price.
+ * A parent who is not entitled fails closed: plus_required when Stripe is live,
+ * plus_required_billing_not_live when it is not.
  */
 export function parentPlusEntitlesVideo(
   actor: VideoActor,
@@ -194,10 +196,8 @@ export function parentPlusEntitlesVideo(
   if (role === "admin") return { ok: true };
   if (role === "provider") return { ok: true };
   if (!subscriptionsOn && role === "parent") return { ok: true };
-  if (stripeLive) {
-    if (parentVideoEntitled(actor.plusPlan, actor.plusStatus)) return { ok: true };
-    return { ok: false, reason: "plus_required" };
-  }
+  if (parentVideoEntitled(actor.plusPlan, actor.plusStatus)) return { ok: true };
+  if (stripeLive) return { ok: false, reason: "plus_required" };
   return { ok: false, reason: "plus_required_billing_not_live" };
 }
 

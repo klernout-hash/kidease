@@ -16,6 +16,7 @@ import { hiddenReviewPlaceFromRow } from "@/lib/hidden-review";
 import { isPublicListing, listingVisibilityOf, PUBLIC_LISTING_SQL, SUPPRESSED_CATALOG_SQL } from "@/lib/listing-visibility";
 import { correctCentreNameTypos, listingSlugLookupKeys, normalizeListingSlug } from "@/lib/listing-slug";
 import { listingCultureFrom } from "@/lib/listing-culture";
+import { agesKnownFromConfirmedFlag } from "@/lib/standard-age-groups";
 import { normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
 import {
   LISTING_DISTANCE_KM_SQL,
@@ -43,6 +44,9 @@ export type CatalogDbRow = {
   hours_fr: string | null;
   age_min_months: number | null;
   age_max_months: number | null;
+  ages_confirmed?: number | boolean | null;
+  ages_source?: string | null;
+  ages_source_url?: string | null;
   infant_monthly: number | null;
   toddler_monthly: number | null;
   preschool_monthly: number | null;
@@ -84,7 +88,7 @@ export type CatalogDbRow = {
 export const CATALOG_SELECT = `
 id, slug, name, name_fr, tagline, tagline_fr, description, description_fr,
 address, city, province, postal_code, lat, lng, phone, hours, hours_fr,
-age_min_months, age_max_months, infant_monthly, toddler_monthly,
+age_min_months, age_max_months, ages_confirmed, ages_source, ages_source_url, infant_monthly, toddler_monthly,
 preschool_monthly, part_time_monthly, fee_program, fact_source, spots_infant, spots_toddler,
 spots_preschool, waitlist, rating_x10, review_count, license_number,
 license_status, registry_match_state, license_verification_source,
@@ -279,6 +283,9 @@ export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
     hoursFr: row.hours_fr || "",
     ageMinMonths: Number(row.age_min_months) || 0,
     ageMaxMonths: Number(row.age_max_months) || 0,
+    agesKnown: agesKnownFromConfirmedFlag(row.ages_confirmed),
+    agesSource: row.ages_source?.trim() || null,
+    agesSourceUrl: row.ages_source_url?.trim() || null,
     infantMonthly: row.infant_monthly,
     toddlerMonthly: row.toddler_monthly,
     preschoolMonthly: row.preschool_monthly,

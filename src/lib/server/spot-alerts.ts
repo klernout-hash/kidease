@@ -24,6 +24,7 @@ import { assertCentreCanMutateListing } from "@/lib/server/centre-access";
 import { evaluateCaslSend, caslOneClickUrl, caslUnsubscribeUrl } from "@/lib/server/casl-consent";
 import { isSuppressed } from "@/lib/server/email-suppressions";
 import { transactionalMailFrom } from "@/lib/mail-from";
+import { resendCampaignTags } from "@/lib/email-suppressions";
 import { nid } from "@/lib/utils";
 
 type DaycareSpotRow = {
@@ -168,6 +169,7 @@ async function sendSpotMail(input: { to: string; userId: string; subject: string
         text: input.text,
         html: input.html,
         headers,
+        tags: resendCampaignTags("spot-alert"),
       }),
     });
     if (!res.ok) return "failed" as const;

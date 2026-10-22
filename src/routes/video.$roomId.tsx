@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
+import { useViewAs } from "@/components/view-as-banner";
 import { useInNativeShell } from "@/lib/use-native-shell";
 import { VideoRoomPanel } from "@/components/video-room-panel";
 import { PayCtas } from "@/components/pay-chrome";
@@ -30,6 +31,7 @@ function VideoRoomPage() {
   const { roomId } = Route.useParams();
   const { user, isPending } = useCurrentUserState();
   const { t } = useCopy();
+  const viewing = useViewAs();
   const nativeShell = useInNativeShell();
   const [status, setStatus] = useState<VideoJoinStatus | null>(null);
   const [statusFailed, setStatusFailed] = useState(false);
@@ -70,6 +72,10 @@ function VideoRoomPage() {
   const canMint = Boolean(status?.gateOk);
 
   async function onJoin() {
+    if (viewing) {
+      setError(t("viewAsReadOnly"));
+      return;
+    }
     setBusy(true);
     setError("");
     const media = await primeCallMedia("video");
@@ -113,7 +119,7 @@ function VideoRoomPage() {
 
         <div className="ke-call-stage mt-6" data-ke="call-stage">
         <div className="min-w-0">
-        {nativeShell && paywall ? (
+        {nativeShell && paywall && !canMint ? (
           <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="native-video-entitlement">
             <p className="text-sm text-muted">{t("nativeVideoNeedsPlus")}</p>
             <Button variant="secondary" asChild className="mt-4">

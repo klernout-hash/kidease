@@ -7,6 +7,9 @@ import { NativePayNote } from "@/components/native-pay-note";
 import { useInNativeShell } from "@/lib/use-native-shell";
 
 export const Route = createFileRoute("/pay/")({
+  head: () => ({
+    meta: [{ title: "Pay a centre bill · KidEase" }],
+  }),
   component: PayHubPage,
 });
 

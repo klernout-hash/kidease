@@ -231,7 +231,11 @@ function hashedStylesheetsApplied(): boolean {
   return [...sheets].every((link) => Boolean(link.sheet));
 }
 
-/** Register the chrome-only service worker (web PWA, not Capacitor). */
+/**
+ * Register /sw.js on load for the website.
+ * A standalone window or the Microsoft Store channel also registers from
+ * channel-boot.js, before this bundle runs. Never inside the iOS or Android shells.
+ */
 export function registerOfflineShell(): void {
   if (typeof window === "undefined") return;
   if (!("serviceWorker" in navigator)) return;

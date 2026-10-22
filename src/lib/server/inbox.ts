@@ -297,6 +297,8 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { conversationId: string; body: string }) => input)
   .handler(async ({ context, data }) => {
+    const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
+    blockViewAsSideEffect("message");
     const sql = await getSql();
     const body = chatBodyWithoutSmsFooter(data.body);
     if (!body) return { ok: false as const };

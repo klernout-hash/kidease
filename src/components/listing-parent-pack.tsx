@@ -9,19 +9,13 @@ import {
   parentScheduleLabel,
   safetyLabel,
 } from "@/lib/parent-listing";
-import { formatPublicAgeRange } from "@/lib/listing-ages";
+import { formatMonthlyFee, monthlyFeeVisible, partTimeMonthlyFee } from "@/lib/public-programs";
+import { standardAgeLabel } from "@/lib/standard-age-groups";
 import { listingSubsidy, subsidyLabel } from "@/lib/fee-program";
 import { honestVacancy } from "@/lib/now-loops";
-import {
-  formatMonthlyFee,
-  monthlyFeeVisible,
-  partTimeMonthlyFee,
-} from "@/lib/public-programs";
 import { useCopy } from "@/lib/use-copy";
 import { displayListingText, money } from "@/lib/utils";
-import type { CopyKey } from "@/lib/copy";
 import type { Daycare } from "@/lib/types";
-import type { ParentAgeBand } from "@/lib/parent-listing";
 
 /** Openings, ages, hours, and a starting fee. City, type, and trust stay elsewhere. */
 export function ListingHeaderPills({
@@ -119,13 +113,6 @@ export function ListingJumpNav() {
   );
 }
 
-const BAND_NAME: Record<ParentAgeBand, CopyKey> = {
-  infant: "infant",
-  toddler: "toddler",
-  preschool: "preschool",
-  "school-age": "schoolAge",
-};
-
 export function ListingProgramsTable({ item }: { item: Daycare }) {
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
@@ -149,10 +136,7 @@ export function ListingProgramsTable({ item }: { item: Daycare }) {
               {rows.map((row) => (
                 <tr key={row.band}>
                   <td className="px-3 py-2">
-                    <p className="font-medium">{t(BAND_NAME[row.band])}</p>
-                    <p className="text-xs text-muted">
-                      {formatPublicAgeRange(row.ageMinMonths, row.ageMaxMonths, loc)}
-                    </p>
+                    <p className="font-medium">{standardAgeLabel(row.band, loc)}</p>
                   </td>
                   <td className="px-3 py-2 text-muted">
                     {row.schedules.length

@@ -13,6 +13,9 @@
  * no fee, no rating, no photo, licence marked QA.
  *
  * Not wired into db:migrate. Re-running updates the same rows.
+ *
+ * The parent account gets complimentary Parent Plus (video tours). There is
+ * no Stripe customer, subscription, or price. The daycare account is not granted Plus.
  */
 import { randomBytes } from "node:crypto";
 import { fileURLToPath } from "node:url";
@@ -150,6 +153,25 @@ async function upsertCredential(client, { email, name, password, role }) {
     [userId, role, name],
   );
   return userId;
+}
+
+/**
+ * Complimentary Parent Plus for the reviewer parent only.
+ * Video tours read plus_plan and plus_status. No Stripe object and no price.
+ */
+async function grantComplimentaryParentPlus(client, parentUserId) {
+  await client.query(
+    `update profiles
+        set plus_plan = 'plus',
+            plus_status = 'active',
+            plus_interval = 'month',
+            plus_subscription_id = null,
+            plus_cancel_at_period_end = false,
+            plus_current_period_end = null
+      where user_id = $1
+        and role = 'parent'`,
+    [parentUserId],
+  );
 }
 
 async function upsertListing(client, daycareUserId) {
@@ -309,6 +331,7 @@ export async function applyReviewerDemoFromEnv(databaseUrl, env = process.env) {
       password: plan.parentPassword,
       role: "parent",
     });
+    await grantComplimentaryParentPlus(client, parentId);
     const daycareId = await upsertCredential(client, {
       email: plan.daycareEmail,
       name: "Reviewer Daycare",
@@ -318,7 +341,7 @@ export async function applyReviewerDemoFromEnv(databaseUrl, env = process.env) {
     await upsertListing(client, daycareId);
     await upsertParentSamples(client, parentId);
     await client.query("COMMIT");
-    return `ready parent=${plan.parentEmail} daycare=${plan.daycareEmail} listing=${plan.listing.slug} hidden=admin_only`;
+    return `ready parent=${plan.parentEmail} daycare=${plan.daycareEmail} listing=${plan.listing.slug} hidden=admin_only parentPlus=complimentary`;
   } catch (err) {
     try {
       await client.query("ROLLBACK");

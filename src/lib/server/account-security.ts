@@ -5,6 +5,7 @@ import { isKidEaseOperatorEmail, KIDEASE_OPERATOR_EMAIL } from "@/lib/admin-emai
 import { assertPasswordAllowed } from "@/lib/server/password-hygiene";
 import { setUserPasswordHash, verifyUserPassword } from "@/lib/server/reauth";
 import { REAUTH_REQUIRED_MESSAGE } from "@/lib/reauth";
+import { blockViewAsSideEffect } from "@/lib/view-as-public";
 
 function cleanEmail(value: unknown) {
   return String(value ?? "").trim().toLowerCase();
@@ -28,6 +29,7 @@ export const changeAccountPassword = createServerFn({ method: "POST" })
     newPassword: String(input?.newPassword || ""),
   }))
   .handler(async ({ context, data }) => {
+    blockViewAsSideEffect("password");
     const { assertRecentReauth, isCurrentUserRecentlyReauthed, writeReauthCookie } =
       await import("./reauth.server");
     if (!isCurrentUserRecentlyReauthed(context.userId)) {
@@ -60,6 +62,7 @@ export const changeAccountEmail = createServerFn({ method: "POST" })
     currentPassword: String(input?.currentPassword || ""),
   }))
   .handler(async ({ context, data }) => {
+    blockViewAsSideEffect("email");
     const { assertRecentReauth, isCurrentUserRecentlyReauthed, writeReauthCookie } =
       await import("./reauth.server");
     const current = await lookupEmail(context.userId);

@@ -96,7 +96,7 @@ export function ListingPhotoFallback({
         decoding="async"
         className="h-11 w-11 object-contain [.ke-listing-hero_&]:h-16 [.ke-listing-hero_&]:w-16"
       />
-      <span className="text-[13px] font-semibold leading-4 tracking-[-0.01em] text-primary">{t("claimListingFrame")}</span>
+      <span className="sr-only">{t("claimListingFrame")}</span>
     </span>
   );
   return (

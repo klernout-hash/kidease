@@ -10,6 +10,7 @@ import { splitPhotoList } from "@/lib/listing-photo";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { compareTimeDesc } from "@/lib/sort-time";
 import { transactionalMailFrom } from "@/lib/mail-from";
+import { resendCampaignTags } from "@/lib/email-suppressions";
 import { licenseReviewMarker } from "@/lib/private-docs";
 import { overlayStoredLicensePhotos } from "@/lib/server/license-photo-ref";
 import { collapseDuplicateReviewCards, hasLicenceEvidence } from "@/lib/approve-live";
@@ -105,7 +106,15 @@ async function deliverToProvider(to: string, subject: string, text: string) {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${resend}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to: [to], reply_to: ADMIN_EMAIL, subject, text, html }),
+      body: JSON.stringify({
+        from,
+        to: [to],
+        reply_to: ADMIN_EMAIL,
+        subject,
+        text,
+        html,
+        tags: resendCampaignTags("centre-decision"),
+      }),
     });
     if (!res.ok) throw new Error(`Resend ${res.status}: ${await res.text()}`);
     return "sent";

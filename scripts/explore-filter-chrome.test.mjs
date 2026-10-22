@@ -87,7 +87,7 @@ test("Explore filter chrome is one Airbnb/Maps bar, not three pill rows", () => 
   assert.match(filters, /hideKeys/);
   assert.match(chips, /isRailAge/);
   assert.match(chips, /RAIL_AGES/);
-  assert.match(chips, /catInfants|EXPLORE_CATEGORY_COPY/);
+  assert.match(chips, /standardAgeLabel/);
   assert.doesNotMatch(chips, /visibleExploreCategories/);
 
   assert.match(copy, /catAllAges: "All ages"/);

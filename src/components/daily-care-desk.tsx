@@ -28,6 +28,7 @@ import { buildMonthLedger, canWriteDayNote, dollarsToDailyCents, parentShareDoll
 import { CareChildOps } from "@/components/care-child-ops";
 import { CareChildRoomSelect, CareOpsPanel } from "@/components/care-ops-panel";
 import { useCopy } from "@/lib/use-copy";
+import { useViewAs } from "@/components/view-as-banner";
 import type { CopyKey } from "@/lib/copy";
 
 const PRESENCE_COPY: Record<ReturnType<typeof presenceFromAttendance>, CopyKey> = {
@@ -51,6 +52,7 @@ export function DailyCareDesk({
   daycareId?: string;
 }) {
   const { t, locale } = useCopy();
+  const viewing = useViewAs();
   const day = todayYmd();
   const [items, setItems] = useState<AttendanceRow[]>([]);
   const [journals, setJournals] = useState<DailyJournalRow[]>([]);
@@ -151,6 +153,10 @@ export function DailyCareDesk({
   }
 
   async function sendNote(row: AttendanceRow) {
+    if (viewing) {
+      toast.error(t("viewAsReadOnly"));
+      return;
+    }
     const text = (notes[childKey(row)] || "").trim();
     if (!text || !row.conversationId) return;
     if (!parentCanMessageCentre({ hasConversation: Boolean(row.conversationId), enrolled: true })) return;

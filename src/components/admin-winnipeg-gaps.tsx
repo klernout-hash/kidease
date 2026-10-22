@@ -5,13 +5,14 @@ import { applyWinnipegGaps, listWinnipegGaps, type WinnipegGapReport } from "@/l
 import { MB_FUNDED_10_DAY } from "@/lib/fee-program";
 import { parseGapCsv, type FillPatch } from "@/lib/winnipeg-completeness";
 import { useCopy } from "@/lib/use-copy";
+import { standardAgeLabelsForListing } from "@/lib/standard-age-groups";
 
 function percent(share: number) {
   return `${(share * 100).toFixed(1)}%`;
 }
 
 export function AdminWinnipegGaps() {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const reauth = useReauthPrompt();
   const [report, setReport] = useState<WinnipegGapReport | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -35,8 +36,8 @@ export function AdminWinnipegGaps() {
     setError(null);
     try {
       setReport(await listWinnipegGaps());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("adminWinnipegEmpty"));
+    } catch {
+      setError(t("adminWinnipegUnavailable"));
     } finally {
       setPending(false);
     }
@@ -49,8 +50,8 @@ export function AdminWinnipegGaps() {
       .then((next) => {
         if (!cancelled) setReport(next);
       })
-      .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : t("adminWinnipegEmpty"));
+      .catch(() => {
+        if (!cancelled) setError(t("adminWinnipegUnavailable"));
       })
       .finally(() => {
         if (!cancelled) setPending(false);
@@ -85,8 +86,8 @@ export function AdminWinnipegGaps() {
       if (outcome.rejected[0]) setError(`${outcome.rejected[0].id}: ${outcome.rejected[0].reason}`);
       else setError(null);
       await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("adminWinnipegEmpty"));
+    } catch {
+      setError(t("adminWinnipegUnavailable"));
     } finally {
       setBusy(false);
     }
@@ -181,6 +182,17 @@ export function AdminWinnipegGaps() {
           {t("adminWinnipegAgeMax")}
           <input inputMode="numeric" value={ageMax} onChange={(event) => setAgeMax(event.target.value)} className="mt-1 h-11 w-full rounded-xl bg-surface-2 px-3 ring-1 ring-border" />
         </label>
+        {standardAgeLabelsForListing(
+          { agesKnown: true, ageMinMonths: Number(ageMin), ageMaxMonths: Number(ageMax) },
+          locale === "fr" ? "fr" : "en",
+        ).join(" · ") ? (
+          <p className="sm:col-span-2 text-sm text-muted" data-ke="admin-age-groups">
+            {standardAgeLabelsForListing(
+              { agesKnown: true, ageMinMonths: Number(ageMin), ageMaxMonths: Number(ageMax) },
+              locale === "fr" ? "fr" : "en",
+            ).join(" · ")}
+          </p>
+        ) : null}
         <label className="text-sm">
           {t("adminWinnipegInfant")}
           <input inputMode="numeric" value={infant} onChange={(event) => setInfant(event.target.value)} className="mt-1 h-11 w-full rounded-xl bg-surface-2 px-3 ring-1 ring-border" />
@@ -261,7 +273,6 @@ export function AdminWinnipegGaps() {
               <span className="font-medium">{row.name}</span>
               <span className="mt-0.5 block text-sm text-muted">
                 {row.city}
-                {row.phone ? ` · ${row.phone}` : ""}
                 {row.hasRealPhoto ? ` · ${t("adminWinnipegHasPhoto")}` : ""}
               </span>
               <span className="mt-1 block text-xs text-subtle">

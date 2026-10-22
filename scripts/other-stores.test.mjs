@@ -7,6 +7,7 @@ import { providersForStore } from "../src/lib/auth/providers.ts";
 import {
   commercePolicyForChannel,
   googleServicesHidden,
+  microsoftStoreCookieHeader,
   shellBlocksCommerce,
   storeChannelFromSignals,
   userAgentForStoreBuild,
@@ -65,6 +66,42 @@ test("store channel blocks Stripe on Apple, Play, and Huawei only", () => {
   assert.equal(shellBlocksCommerce("huawei"), true);
   assert.equal(shellBlocksCommerce("google"), true);
   assert.equal(shellBlocksCommerce("apple"), true);
+  assert.equal(
+    microsoftStoreCookieHeader({ search: "?store=microsoft", userAgent: "Mozilla/5.0" }),
+    "ke_store=microsoft; Path=/; Max-Age=31536000; SameSite=Lax; Secure",
+  );
+  assert.equal(
+    microsoftStoreCookieHeader(
+      { search: "?store=microsoft", userAgent: "Mozilla/5.0" },
+      { secure: false },
+    ),
+    "ke_store=microsoft; Path=/; Max-Age=31536000; SameSite=Lax",
+  );
+  assert.equal(
+    microsoftStoreCookieHeader({
+      search: "?store=microsoft",
+      userAgent: "Android KidEaseNative",
+    }),
+    null,
+  );
+  assert.equal(
+    microsoftStoreCookieHeader({
+      search: "?store=microsoft",
+      userAgent: "iPhone KidEaseNative",
+    }),
+    null,
+  );
+  assert.equal(
+    microsoftStoreCookieHeader({ search: "/", cookie: "ke_store=microsoft", userAgent: "Mozilla/5.0" }),
+    null,
+  );
+  assert.equal(
+    storeChannelFromSignals({
+      userAgent: "Android KidEaseNative",
+      cookie: "ke_store=microsoft",
+    }),
+    "google",
+  );
   assert.equal(commercePolicyForChannel("samsung").showCheckout, true);
   assert.equal(commercePolicyForChannel("microsoft").showStripeLinks, true);
   assert.equal(commercePolicyForChannel("huawei").showCheckout, false);
@@ -107,7 +144,10 @@ test("PWA manifest for Partner Center stays installable and does not retag the w
   assert.equal(existsSync(join(root, "public/icons/icon-192.png")), true);
   assert.equal(existsSync(join(root, "public/icons/icon-maskable-512.png")), true);
   const sw = src("public/sw.js");
-  assert.match(sw, /kidease-shell-v5/);
+  assert.match(sw, /kidease-shell-v6/);
+  assert.doesNotMatch(sw, /Chrome-only/);
+  assert.match(sw, /Microsoft Store/);
+  assert.match(sw, /manifest\.microsoft\.webmanifest/);
   assert.match(sw, /caches\.match\("\/offline\.html"\)/);
   assert.match(sw, /Do not cache HTML/);
   assert.doesNotMatch(sw, /if \(cached\) return cached/);
@@ -116,6 +156,18 @@ test("PWA manifest for Partner Center stays installable and does not retag the w
   assert.match(src("public/channel-boot.js"), /ke_store=microsoft/);
   assert.match(src("public/channel-boot.js"), /q\.get\("store"\) === "microsoft" && !uaNative/);
   assert.match(src("public/channel-boot.js"), /Max-Age=0/);
+  assert.match(src("public/channel-boot.js"), /display-mode: standalone/);
+  assert.match(src("public/channel-boot.js"), /serviceWorker\.register\("\/sw\.js"/);
+  assert.match(src("public/channel-boot.js"), /!n && !uaNative && \(store === "microsoft" \|\| standalone\)/);
+  const rootHead = src("src/routes/__root.tsx");
+  assert.match(rootHead, /manifest\.microsoft\.webmanifest/);
+  assert.match(rootHead, /manifestHref/);
+  assert.match(rootHead, /msapplication-TileColor/);
+  assert.match(rootHead, /set-cookie/);
+  assert.match(rootHead, /microsoftSetCookie/);
+  assert.doesNotMatch(rootHead, /@tanstack\/react-start\/server/);
+  assert.match(src("src/lib/store-channel-request.ts"), /microsoftStoreCookieHeader/);
+  assert.match(src("src/components/native-boot.tsx"), /microsoftStoreCookieHeader/);
 });
 
 test("iOS and Play never send or set the Samsung store token", () => {
