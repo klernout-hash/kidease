@@ -4,8 +4,9 @@ import { authClient, authEnabled, dropExistingSession, signIn, turnstileFetchOpt
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
-import type { GrokProvider } from "@/lib/auth/providers";
+import { providersForStore, type GrokProvider } from "@/lib/auth/providers";
 import { getSignInProviders } from "@/lib/server/sign-in-providers";
+import { useStoreChannel } from "@/lib/use-native-shell";
 import { LOADER_SETTLE_MS, withTimeout, withTimeoutFallback } from "@/lib/timeout";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
@@ -129,6 +130,8 @@ export function LoginScreen({
   search: LoginSearch;
 }) {
   const { t, locale } = useCopy();
+  const storeChannel = useStoreChannel();
+  const shownProviders = providersForStore(providers, storeChannel);
   const deskHint = parseDeskQuery(search.desk);
   const role = search.role ?? (deskHint ? loginRoleFromDesk(deskHint) : undefined);
   // URL role=admin / next=/admin must not paint an operator page. Kyle types his email.
@@ -153,6 +156,7 @@ export function LoginScreen({
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [smsConsent, setSmsConsent] = useState(false);
+  const [adult, setAdult] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
@@ -324,6 +328,9 @@ export function LoginScreen({
         await dropExistingSession();
       }
       if (mode === "up") {
+        if (!operator && !adult) {
+          throw new Error(locale === "fr" ? "Confirmez que vous avez 18 ans ou plus." : "Confirm you are 18 or older.");
+        }
         const hygiene = localPasswordIssue(password, email);
         if (hygiene) throw new Error(hygiene);
         if (parentSignup) {
@@ -378,6 +385,10 @@ export function LoginScreen({
   }
 
   async function onSocial(providerId: string) {
+    if (!operator && !adult) {
+      setError(locale === "fr" ? "Confirmez que vous avez 18 ans ou plus." : "Confirm you are 18 or older.");
+      return;
+    }
     setBusy(true);
     setStalled(false);
     setError(null);
@@ -501,11 +512,28 @@ export function LoginScreen({
               autoComplete={mode === "up" ? "new-password" : "current-password"}
             />
             {mode === "up" && !operator ? <PasswordRules password={password} /> : null}
+            {mode === "up" && !operator ? (
+              <label className="flex min-h-11 items-start gap-3 text-sm" htmlFor="signup-adult">
+                <input
+                  id="signup-adult"
+                  type="checkbox"
+                  className="mt-1 size-5"
+                  checked={adult}
+                  onChange={(event) => setAdult(event.target.checked)}
+                  required
+                />
+                <span>
+                  {locale === "fr"
+                    ? "J’ai 18 ans ou plus. KidEase est pour les parents et les garderies."
+                    : "I am 18 or older. KidEase is for parents and daycares."}
+                </span>
+              </label>
+            ) : null}
             {parentSignup ? (
               <ParentSmsFields phone={phone} onPhone={setPhone} consent={smsConsent} onConsent={setSmsConsent} />
             ) : null}
             <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
-            {error ? <p className="text-sm text-danger" data-ke="auth-error">{presentAuthCopy(locale, error)}</p> : null}
+            {error ? <p className="text-sm text-danger" role="alert" data-ke="auth-error">{presentAuthCopy(locale, error)}</p> : null}
             {stalled || error ? (
               <div className="flex flex-wrap gap-3 text-sm" data-ke="login-recovery">
                 <button
@@ -535,7 +563,7 @@ export function LoginScreen({
                 </a>
               </div>
             ) : null}
-            {authEnabled && providers.length === 0 && !operator ? (
+            {authEnabled && shownProviders.length === 0 && !operator ? (
               <p className="text-xs text-muted">
                 {t("loginMethodsFailed")}
               </p>
@@ -573,7 +601,7 @@ export function LoginScreen({
             {mode === "up" ? t("haveAccount") : t("needAccount")}
           </button>
           ) : null}
-          {!operator && (providers.length > 0 || !authEnabled) ? (
+          {!operator && (shownProviders.length > 0 || !authEnabled) ? (
           <div className="mt-6">
             <div className="mb-4 flex items-center gap-3 text-xs uppercase tracking-wider text-subtle">
               <span className="h-px flex-1 bg-border" />
@@ -581,8 +609,24 @@ export function LoginScreen({
               <span className="h-px flex-1 bg-border" />
             </div>
             <div className="space-y-2" data-ke="social-sign-in">
+              {mode === "in" ? (
+                <label className="flex min-h-11 items-start gap-3 text-sm" htmlFor="signin-adult">
+                  <input
+                    id="signin-adult"
+                    type="checkbox"
+                    className="mt-1 size-5"
+                    checked={adult}
+                    onChange={(event) => setAdult(event.target.checked)}
+                  />
+                  <span>
+                    {locale === "fr"
+                      ? "J’ai 18 ans ou plus. KidEase est pour les parents et les garderies."
+                      : "I am 18 or older. KidEase is for parents and daycares."}
+                  </span>
+                </label>
+              ) : null}
               {authEnabled ? (
-                providers.map((p: GrokProvider) => (
+                shownProviders.map((p: GrokProvider) => (
                   <Button
                     key={p.providerId}
                     type="button"

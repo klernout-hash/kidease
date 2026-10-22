@@ -148,6 +148,7 @@ export function createVideoAccessToken(
   input: CreateVideoAccessTokenInput,
   options: VideoServerOptions = {},
 ): CreateVideoAccessTokenResult {
+  (globalThis as { __kideaseViewAsSideEffect__?: (action: "video") => void }).__kideaseViewAsSideEffect__?.("video");
   const env = options.env ?? process.env;
   const identity = String(input.identity || "")
     .trim()
@@ -227,6 +228,7 @@ export async function createVideoRoom(
   input: CreateVideoRoomInput,
   options: VideoServerOptions = {},
 ): Promise<CreateVideoRoomResult> {
+  (globalThis as { __kideaseViewAsSideEffect__?: (action: "video") => void }).__kideaseViewAsSideEffect__?.("video");
   const env = options.env ?? process.env;
   const fetchImpl = options.fetchImpl ?? fetch;
   const roomName = String(input.roomName || "")

@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useCopy } from "@/lib/use-copy";
+import { useInNativeShell } from "@/lib/use-native-shell";
 
 export function DirectorProStrip({
   views,
@@ -8,7 +9,9 @@ export function DirectorProStrip({
   views: number;
   requests: number;
 }) {
+  const nativeShell = useInNativeShell();
   const { t } = useCopy();
+  if (nativeShell) return null;
   const weekViews = Number.isFinite(views) ? Math.max(0, Math.floor(views)) : 0;
   const weekRequests = Number.isFinite(requests) ? Math.max(0, Math.floor(requests)) : 0;
   return (

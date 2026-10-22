@@ -41,6 +41,14 @@ function stripPlistKey(plist, key) {
   return plist.replace(new RegExp(`\\s*<key>${key}</key>\\s*<string>[\\s\\S]*?</string>`), "");
 }
 
+function ensurePlistString(plist, key, value) {
+  if (plist.includes(`<key>${key}</key>`)) return plist;
+  return plist.replace(
+    "<key>ITSAppUsesNonExemptEncryption</key>",
+    `<key>${key}</key>\n\t<string>${escapeXml(value)}</string>\n\t<key>ITSAppUsesNonExemptEncryption</key>`,
+  );
+}
+
 function escapeXml(value) {
   return value
     .replaceAll("&", "&amp;")
@@ -197,6 +205,16 @@ ${schemes}
       }
     }
     // Plugin binaries may mention always-on APIs; do not request background location.
+    plist = ensurePlistString(
+      plist,
+      "NSCameraUsageDescription",
+      "KidEase uses the camera during a video call with a daycare. The camera is not used in the background.",
+    );
+    plist = ensurePlistString(
+      plist,
+      "NSMicrophoneUsageDescription",
+      "KidEase uses the microphone during a voice or video call. The microphone is not used in the background.",
+    );
     plist = stripPlistKey(plist, "NSLocationAlwaysUsageDescription");
     plist = stripPlistKey(plist, "NSLocationAlwaysAndWhenInUseUsageDescription");
     plist = plist.replace(
@@ -204,24 +222,9 @@ ${schemes}
       "",
     );
     plist = plist.replace(/\s*<string>location<\/string>/g, "");
-    if (!plist.includes("<string>remote-notification</string>")) {
-      if (plist.includes("<key>UIBackgroundModes</key>")) {
-        plist = plist.replace(
-          /<key>UIBackgroundModes<\/key>\s*<array>/,
-          "<key>UIBackgroundModes</key>\n\t<array>\n\t\t<string>remote-notification</string>",
-        );
-      } else {
-        plist = plist.replace(
-          "</dict>\n</plist>",
-          `\t<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
-</dict>
-</plist>`,
-        );
-      }
-    }
+    // Push is not in v1. Strip the remote-notification background mode if a plugin added it.
+    plist = plist.replace(/\s*<string>remote-notification<\/string>/g, "");
+    plist = plist.replace(/\s*<key>UIBackgroundModes<\/key>\s*<array>\s*<\/array>/g, "");
     await writeFile(infoPlist, plist);
     console.log("[native-permissions] patched ios Info.plist");
 
@@ -234,11 +237,17 @@ ${schemes}
     await mkdir(frDir, { recursive: true });
     await writeFile(
       join(enDir, "InfoPlist.strings"),
-      `"NSLocationWhenInUseUsageDescription" = "${LOCATION_WHEN_IN_USE_EN.replaceAll('"', '\\"')}";\n`,
+      `"NSLocationWhenInUseUsageDescription" = "${LOCATION_WHEN_IN_USE_EN.replaceAll('"', '\\"')}";
+"NSCameraUsageDescription" = "KidEase uses the camera during a video call with a daycare. The camera is not used in the background.";
+"NSMicrophoneUsageDescription" = "KidEase uses the microphone during a voice or video call. The microphone is not used in the background.";
+`,
     );
     await writeFile(
       join(frDir, "InfoPlist.strings"),
-      `"NSLocationWhenInUseUsageDescription" = "${LOCATION_WHEN_IN_USE_FR.replaceAll('"', '\\"')}";\n`,
+      `"NSLocationWhenInUseUsageDescription" = "${LOCATION_WHEN_IN_USE_FR.replaceAll('"', '\\"')}";
+"NSCameraUsageDescription" = "KidEase utilise la caméra pendant une visite vidéo avec une garderie. La caméra n’est pas utilisée en arrière-plan.";
+"NSMicrophoneUsageDescription" = "KidEase utilise le microphone pendant un appel ou une visite vidéo. Le microphone n’est pas utilisé en arrière-plan.";
+`,
     );
   }
 
@@ -247,8 +256,19 @@ ${schemes}
     let manifest = await readFile(manifestPath, "utf8");
     manifest = ensureAndroidPermission(manifest, "android.permission.ACCESS_COARSE_LOCATION");
     manifest = ensureAndroidPermission(manifest, "android.permission.ACCESS_FINE_LOCATION");
-    manifest = ensureAndroidPermission(manifest, "android.permission.POST_NOTIFICATIONS");
+    manifest = stripAndroidPermission(manifest, "android.permission.POST_NOTIFICATIONS");
+    manifest = ensureAndroidPermission(manifest, "android.permission.CAMERA");
+    manifest = ensureAndroidPermission(manifest, "android.permission.RECORD_AUDIO");
+    manifest = ensureAndroidPermission(manifest, "android.permission.MODIFY_AUDIO_SETTINGS");
     manifest = stripAndroidPermission(manifest, "android.permission.ACCESS_BACKGROUND_LOCATION");
+    for (const feature of ["android.hardware.camera", "android.hardware.microphone"]) {
+      if (!manifest.includes(`android:name="${feature}"`)) {
+        manifest = manifest.replace(
+          "<application",
+          `    <uses-feature android:name="${feature}" android:required="false" />\n\n    <application`,
+        );
+      }
+    }
     manifest = ensureAndroidAppLinks(manifest);
     if (!manifest.includes("android.hardware.location.gps")) {
       manifest = manifest.replace(

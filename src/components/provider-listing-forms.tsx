@@ -38,6 +38,7 @@ import { isReauthRequiredMessage } from "@/lib/reauth";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { useReauthPrompt } from "@/components/reauth-dialog";
 import { formatAgeRange } from "@/lib/utils";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import { formatPlanCad } from "@/lib/upgrade-plans";
 import { planPriceHint, PROVIDER_ADDONS, PROVIDER_PLANS, type ProviderAddonId } from "@/lib/provider-plans";
 import { startProviderAddonCheckout, startProviderCheckout } from "@/lib/server/provider-subscriptions";
@@ -57,6 +58,7 @@ import {
 } from "@/lib/private-docs";
 
 export function PromotePanel({ daycare }: { daycare: Daycare; onSaved: () => void }) {
+  const nativeShell = useInNativeShell();
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
   const [busy, setBusy] = useState<string | null>(null);
@@ -105,8 +107,10 @@ export function PromotePanel({ daycare }: { daycare: Daycare; onSaved: () => voi
     }
   }
 
+  if (nativeShell) return null;
+
   return (
-    <div className="mt-4 rounded-xl bg-surface p-4 ring-1 ring-border">
+    <div className="ke-digital-plan mt-4 rounded-xl bg-surface p-4 ring-1 ring-border" data-ke="digital-plan">
       <h3 className="inline-flex items-center gap-2 font-display text-xl">
         <Megaphone className="size-5 text-primary" />
         {t("promoteTitle")}
