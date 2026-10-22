@@ -2592,6 +2592,9 @@ export const copy = {
     reviewerGranted: "Reviewer flag saved.",
     reviewDecisionNote: "Optional note on next decision",
     trustLicensedMatched: "Registry-checked",
+    trustLicenceVerified: "Licence verified",
+    trustLicenceVerifiedTip:
+      "A KidEase operator confirmed this licence. Inspections stay on the official provincial registry.",
     trustLicensedMatchedTip:
       "A KidEase operator confirmed this licence against the official registry. This is not a live government scrape: confirm inspections on the official record.",
     trustLicensedMatchedMbTip:
@@ -5774,6 +5777,9 @@ export const copy = {
     reviewerGranted: "Autorisation enregistrée.",
     reviewDecisionNote: "Note facultative pour la prochaine décision",
     trustLicensedMatched: "Vérifié au registre",
+    trustLicenceVerified: "Permis vérifié",
+    trustLicenceVerifiedTip:
+      "Un opérateur KidEase a confirmé ce permis. Les inspections restent sur le registre provincial officiel.",
     trustLicensedMatchedTip:
       "Un opérateur KidEase a confirmé ce permis auprès du registre officiel. Ce n’est pas une collecte en direct : confirmez les inspections sur le dossier officiel.",
     trustLicensedMatchedMbTip:

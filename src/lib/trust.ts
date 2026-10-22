@@ -16,6 +16,7 @@ import {
   isOperatorLicenseSource,
   normalizeLicenseStatus,
   normalizeMatchState,
+  showLicenceVerifiedBadge,
   type LicenseStatus,
   type RegistryMatchState,
 } from "@/lib/license-status";
@@ -27,6 +28,7 @@ export {
   isOperatorLicenseSource,
   normalizeLicenseStatus,
   normalizeMatchState,
+  showLicenceVerifiedBadge,
 };
 export type { LicenseStatus, RegistryMatchState };
 
@@ -38,6 +40,7 @@ export type TrustTone = (typeof TRUST_TONES)[number];
 
 export const TRUST_BADGE_IDS = [
   "license_matched",
+  "license_verified",
   "license_unverified",
   "license_expired",
   "license_suspended",
@@ -63,6 +66,8 @@ export type TrustBadge = {
 /** Copy keys owned by this vocabulary. Keep in sync with copy.ts (EN + FR). */
 export type TrustCopyKey =
   | "trustLicensedMatched"
+  | "trustLicenceVerified"
+  | "trustLicenceVerifiedTip"
   | "trustLicensedMatchedTip"
   | "trustLicensedMatchedMbTip"
   | "trustCatalogueMatched"
@@ -198,6 +203,14 @@ export function licenseBadge(item: TrustListing): TrustBadge {
   if (isHonestLicenseMatch(item)) {
     const mb = (item.province || "").trim().toUpperCase() === "MB";
     const catalogueOnly = !isOperatorLicenseSource(item.licenseVerificationSource);
+    if (showLicenceVerifiedBadge(item)) {
+      return {
+        id: "license_verified",
+        tone: "ok",
+        labelKey: "trustLicenceVerified",
+        tipKey: "trustLicenceVerifiedTip",
+      };
+    }
     return {
       id: "license_matched",
       tone: "ok",

@@ -2155,6 +2155,8 @@
   "reviewerGranted": "Bewertungsberechtigung gespeichert.",
   "reviewDecisionNote": "Optionaler Hinweis zur nächsten Entscheidung",
   "trustLicensedMatched": "Registergeprüft",
+  "trustLicenceVerified": "Lizenz geprüft",
+  "trustLicenceVerifiedTip": "Ein KidEase-Mitarbeiter hat diese Lizenz bestätigt. Inspektionen bleiben im offiziellen Provinzregister.",
   "trustLicensedMatchedTip": "Eine Person bei KidEase hat diese Lizenz mit dem amtlichen Register abgeglichen. Dies ist kein Live-Abruf der amtlichen Website: bestätigen Sie Inspektionen anhand des amtlichen Nachweises.",
   "trustLicensedMatchedMbTip": "KidEase hat diese Lizenznummer aus Manitoba mit der mitgelieferten Momentaufnahme des Registers abgeglichen. Amtliche Inspektionen bleiben auf childcaresearch.gov.mb.ca.",
   "trustCatalogueMatched": "Katalogabgeglichen",

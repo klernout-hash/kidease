@@ -2155,6 +2155,8 @@
   "reviewerGranted": "تم حفظ علامة المُقيّم.",
   "reviewDecisionNote": "ملاحظة اختيارية على القرار التالي",
   "trustLicensedMatched": "تم التحقق من السجل",
+  "trustLicenceVerified": "الرخصة موثّقة",
+  "trustLicenceVerifiedTip": "أكد مشغّل في KidEase هذه الرخصة. تبقى عمليات التفتيش في السجل الإقليمي الرسمي.",
   "trustLicensedMatchedTip": "أكّد مشغّل لدى KidEase هذا الترخيص مقابل السجل الرسمي. هذا ليس سحبًا حكوميًا مباشرًا: أكّد عمليات التفتيش في السجل الرسمي.",
   "trustLicensedMatchedMbTip": "طابق KidEase رقم ترخيص مانيتوبا هذا مع لقطة السجل المضمّنة. تبقى عمليات التفتيش الرسمية على childcaresearch.gov.mb.ca.",
   "trustCatalogueMatched": "مطابق للكتالوج",
