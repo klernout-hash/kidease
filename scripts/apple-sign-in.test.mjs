@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
+import { appleLoginVisible } from "../src/lib/auth/apple-login-flag.ts";
 import { appleClientSecretFrom, readAppleIdpConfig } from "../src/lib/auth/apple-idp.ts";
 import { NATIVE_APPLE_SCOPE, persistNativeAppleTokens } from "../src/lib/auth/apple-native-store.ts";
 import { appleNativeIdToken, appleNoncePair, appleSignInRoute, sha256Hex } from "../src/lib/auth/apple-native.ts";
@@ -16,6 +17,29 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
+
+test("Apple stays hidden until the keys and FEATURE_APPLE_LOGIN are on", () => {
+  const keys = {
+    APPLE_CLIENT_ID: "ca.kidease.web",
+    APPLE_TEAM_ID: "TEAMID1234",
+    APPLE_KEY_ID: "KEYID12345",
+    APPLE_PRIVATE_KEY: "pem",
+  };
+  assert.equal(appleLoginVisible({}), false);
+  assert.equal(appleLoginVisible({ ...keys, FEATURE_APPLE_LOGIN: "0" }), false);
+  assert.equal(appleLoginVisible({ FEATURE_APPLE_LOGIN: "1" }), false);
+  assert.equal(appleLoginVisible({ ...keys, FEATURE_APPLE_LOGIN: "1" }), true);
+  const example = src(".env.example");
+  assert.match(example, /^FEATURE_APPLE_LOGIN=0$/m);
+  assert.doesNotMatch(example, /^FEATURE_APPLE_LOGIN=1$/m);
+  const login = src("src/routes/login.tsx");
+  assert.match(login, /ke-social-button ke-apple-button/);
+  assert.match(login, /ke-social-button w-full/);
+  assert.doesNotMatch(login, /variant=\{p\.idp === "apple" \? "apple"/);
+  const server = src("src/lib/auth/server.ts");
+  assert.match(server, /appleLoginVisible/);
+  assert.match(src("src/lib/server/family.ts"), /revokeStoredAppleSignIn/);
+});
 
 test("Apple button stays hidden until nativeApple is true", () => {
   const hidden = visibleSignInProviders({ nativeGoogle: true, broker: false, nativeApple: false });

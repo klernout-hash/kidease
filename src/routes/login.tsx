@@ -630,9 +630,13 @@ export function LoginScreen({
                   <Button
                     key={p.providerId}
                     type="button"
-                    variant={p.idp === "apple" ? "apple" : "secondary"}
+                    variant="secondary"
                     size="md"
-                    className={p.idp === "apple" ? "ke-apple-button w-full font-normal" : "w-full font-normal"}
+                    className={
+                      p.idp === "apple"
+                        ? "ke-social-button ke-apple-button w-full font-normal"
+                        : "ke-social-button w-full font-normal"
+                    }
                     data-ke="social-secondary"
                     data-provider={p.idp}
                     disabled={busy}
