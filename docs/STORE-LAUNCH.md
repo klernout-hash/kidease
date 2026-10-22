@@ -45,7 +45,7 @@ Do **not** invent these values. Leave env vars blank until the consoles show rea
 | Numeric App Store id | App Store Connect URL (`idNNNN`) | Set `VITE_APPLE_APP_STORE_ID` — never guess |
 | Play Console (~$25) | play.google.com/console | Create app package `ca.kidease.app` |
 | Upload keystore | Local `keytool` (gitignored) | `android/key.properties` from `android/key.properties.example` |
-| Play App Signing SHA-256 | Play → App integrity → App signing | Set `ANDROID_CERT_SHA256S` on Vercel. Until then `sha256_cert_fingerprints` stays `[]` |
+| Play App Signing SHA-256 | Play → App integrity → App signing | `assetlinks.json` lists the Play App Signing cert and the upload key. `ANDROID_CERT_SHA256S` on Vercel replaces that list when set |
 | Play internal AAB | `./gradlew bundlePlayRelease` on a signed machine | Upload to Internal testing — not this PR |
 | Push (optional for 1 Nov) | Firebase + APNs `.p8` | Keep `FEATURE_PUSH=0`. Run `npx cap sync` when you cut a binary that should include the plugin |
 | Video / camera strings | Only if `FEATURE_VIDEO=1` ships | Do not add unused camera / mic purpose strings |
