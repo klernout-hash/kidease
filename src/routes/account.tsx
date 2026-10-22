@@ -33,6 +33,7 @@ import { AccountSecurity } from "@/components/account-security";
 import { DeleteAccountPanel } from "@/components/delete-account-panel";
 import { NotificationBell } from "@/components/notification-bell";
 import { AlertPushSettings } from "@/components/alert-push-settings";
+import { ReferFriendPanel } from "@/components/refer-friend-panel";
 
 export const Route = createFileRoute("/account")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
@@ -46,7 +47,7 @@ export const Route = createFileRoute("/account")({
     const out: {
       tab?: "saved" | "enrolled" | "profile" | "payments";
       desk?: "parent" | "director" | "admin" | "support";
-      section?: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms";
+      section?: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "refer";
     } = {};
     const tab = s.tab;
     if (tab === "saved" || tab === "enrolled" || tab === "profile" || tab === "payments") out.tab = tab;
@@ -58,7 +59,8 @@ export const Route = createFileRoute("/account")({
       section === "subscription" ||
       section === "delete" ||
       section === "security" ||
-      section === "email-sms"
+      section === "email-sms" ||
+      section === "refer"
     ) {
       out.section = section;
     }
@@ -302,7 +304,7 @@ function ProfilePane() {
         ? "profile"
         : (search.section ?? "profile");
   const sectionSearch = (
-    next: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms",
+    next: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "refer",
   ) => ({
     tab: "profile" as const,
     ...(search.desk ? { desk: search.desk } : {}),
@@ -314,6 +316,7 @@ function ProfilePane() {
     { id: "security" as const, label: t("loginSecurity") },
     { id: "email-sms" as const, label: t("emailAndSms") },
     { id: "appearance" as const, label: t("appearance") },
+    { id: "refer" as const, label: t("referFriend") },
     { id: "subscription" as const, label: t("navUpgrade") },
     { id: "delete" as const, label: t("deleteAccount") },
   ].filter((item) => {
@@ -379,6 +382,7 @@ function ProfilePane() {
             <AppearanceControl />
           </section>
         ) : null}
+        {section === "refer" && user ? <ReferFriendPanel /> : null}
         {section === "subscription" ? (
           <section className="ke-digital-plan mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="digital-plan">
             <h2 className="font-display text-xl">{t("navUpgrade")}</h2>

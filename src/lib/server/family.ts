@@ -1762,6 +1762,8 @@ export async function purgeAccountData(uid: string) {
   const { revokeStoredAppleSignIn } = await import("@/lib/server/apple-account-revoke");
   await revokeStoredAppleSignIn(uid);
   const sql = await getSql();
+  const { purgeReferralRows } = await import("@/lib/server/referrals");
+  await purgeReferralRows(sql, uid);
   await sql`delete from messages where conversation_id in (select id from conversations where user_id = ${uid})`;
   await sql`delete from conversations where user_id = ${uid}`;
   await sql`delete from bookings where user_id = ${uid}`;
