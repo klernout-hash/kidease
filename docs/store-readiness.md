@@ -154,15 +154,18 @@ Expected `assetlinks.json` shape:
     "target": {
       "namespace": "android_app",
       "package_name": "ca.kidease.app",
-      "sha256_cert_fingerprints": []
+      "sha256_cert_fingerprints": [
+        "33:89:F7:45:7E:33:5B:02:97:6F:27:BF:2A:49:DD:73:15:52:6A:9F:48:25:23:02:31:C1:1E:0A:51:27:BD:91",
+        "E3:02:0E:FD:A0:52:21:22:FD:9D:F9:FE:C7:D8:D7:8D:F9:D0:8E:C3:53:D0:6F:A5:55:21:82:76:AD:64:16:E5"
+      ]
     }
   }
 ]
 ```
 
-`sha256_cert_fingerprints` stays **empty on purpose** until Play App Signing exists. After Play Console enroll: App integrity → App signing → copy the **App signing** certificate SHA-256 (and the upload cert if shown). Set `ANDROID_CERT_SHA256S` on Vercel (comma-separated if both). `ANDROID_SHA256_CERT_FINGERPRINTS` is still accepted as an alias. Do not invent a hash.
+`sha256_cert_fingerprints` lists the Play App Signing certificate and the upload key for `ca.kidease.app`. Set `ANDROID_CERT_SHA256S` on Vercel (comma-separated) only to replace that list. `ANDROID_SHA256_CERT_FINGERPRINTS` is still accepted as an alias. Do not invent a hash.
 
-Xcode already has Associated Domains in `ios/App/App/App.entitlements` (`applinks` + `webcredentials` for `www.kidease.ca` and `kidease.ca`). Selecting Kyle’s Team in Signing & Capabilities is still required so Apple can issue a profile that includes them. Android already has an `https` VIEW / BROWSABLE intent-filter with `android:autoVerify="true"` for those hosts — verification stays red until `ANDROID_CERT_SHA256S` is a real Play signing hash.
+Xcode already has Associated Domains in `ios/App/App/App.entitlements` (`applinks` + `webcredentials` for `www.kidease.ca` and `kidease.ca`). Selecting Kyle’s Team in Signing & Capabilities is still required so Apple can issue a profile that includes them. Android already has an `https` VIEW / BROWSABLE intent-filter with `android:autoVerify="true"` for those hosts. The statement file lists the Play signing hashes; a signed Play binary still has to match them.
 
 #### Kyle — paste on Vercel Production (`kidease-git`) once the store apps exist
 
@@ -187,7 +190,7 @@ curl -sI https://www.kidease.ca/.well-known/apple-developer-merchantid-domain-as
 ```
 
 - [ ] `APPLE_TEAM_ID` set on Vercel after Apple enroll
-- [ ] `ANDROID_CERT_SHA256S` set on Vercel after Play App Signing
+- [x] Play App Signing and upload SHA-256 are in `assetlinks.json` (`ANDROID_CERT_SHA256S` replaces them when set)
 - [x] Associated Domains + Android App Links intent-filter committed (unsigned until Team / Play signing exist)
 - [ ] Associated Domains + App Links **verify** on a signed TestFlight / Play binary
 

@@ -9,17 +9,16 @@
  *   /.well-known/assetlinks.json
  *
  * Bundle / application id is the Capacitor appId already in the repo
- * (`ca.kidease.app`). Apple Team ID and Play SHA-256 fingerprints are
- * NOT in git — do not invent production signing hashes.
+ * (`ca.kidease.app`). Apple Team ID is NOT in git — do not invent one.
  *
- * TODO (Kyle, after Apple Developer + Play Console enroll):
- *   1. Set APPLE_TEAM_ID (or APNS_TEAM_ID) on Vercel — 10-char Team ID.
- *      Until then the JSON uses the documented placeholder XXXXXXXXXX.
- *   2. Set ANDROID_CERT_SHA256S (alias ANDROID_SHA256_CERT_FINGERPRINTS) to
- *      the Play App Signing cert (and the upload cert if Play shows both),
- *      colon-separated hex, comma-separated if more than one. Until then
- *      sha256_cert_fingerprints is an empty array so we do not publish a
- *      fake hash.
+ * Play App Signing and the upload key SHA-256 are the default
+ * sha256_cert_fingerprints for ca.kidease.app. Set ANDROID_CERT_SHA256S
+ * (alias ANDROID_SHA256_CERT_FINGERPRINTS) on Vercel only to replace that
+ * list. Colon hex, comma-separated if more than one.
+ *
+ * TODO (Kyle, after Apple Developer enroll):
+ *   Set APPLE_TEAM_ID (or APNS_TEAM_ID) on Vercel — 10-char Team ID.
+ *   Until then the AASA JSON uses the documented placeholder XXXXXXXXXX.
  *
  * Vite (dev/preview) uses wellKnownAppLinksPlugin(); Nitro production uses
  * server/middleware/well-known-app-links.ts. Both call these builders so the
@@ -69,9 +68,18 @@ export function resolveAppleTeamId(env = process.env) {
 }
 
 /**
+ * Play App Signing certificate, then the upload key.
+ * These are the fingerprints Play shows for ca.kidease.app.
+ */
+export const PLAY_SHA256_CERT_FINGERPRINTS = [
+  "33:89:F7:45:7E:33:5B:02:97:6F:27:BF:2A:49:DD:73:15:52:6A:9F:48:25:23:02:31:C1:1E:0A:51:27:BD:91",
+  "E3:02:0E:FD:A0:52:21:22:FD:9D:F9:FE:C7:D8:D7:8D:F9:D0:8E:C3:53:D0:6F:A5:55:21:82:76:AD:64:16:E5",
+];
+
+/**
  * Parse ANDROID_CERT_SHA256S, then ANDROID_SHA256_CERT_FINGERPRINTS
- * (comma / semicolon / newline separated). Returns [] when unset —
- * never invent a Play signing hash.
+ * (comma / semicolon / newline separated). A set value replaces the
+ * Play fingerprints. Blank or missing env keeps those fingerprints.
  */
 export function resolveAndroidSha256Fingerprints(env = process.env) {
   for (const key of ["ANDROID_CERT_SHA256S", "ANDROID_SHA256_CERT_FINGERPRINTS"]) {
@@ -82,7 +90,7 @@ export function resolveAndroidSha256Fingerprints(env = process.env) {
       .map((part) => part.trim())
       .filter(Boolean);
   }
-  return [];
+  return [...PLAY_SHA256_CERT_FINGERPRINTS];
 }
 
 export function buildAppleAppSiteAssociation(env = process.env) {

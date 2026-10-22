@@ -13,6 +13,7 @@ import {
   buildAppleAppSiteAssociation,
   buildAssetLinks,
   isWellKnownAppLinksPath,
+  PLAY_SHA256_CERT_FINGERPRINTS,
   resolveAndroidSha256Fingerprints,
   resolveAppleTeamId,
   wellKnownAppLinksPayload,
@@ -36,11 +37,12 @@ test("uses the Capacitor appId and a documented Team ID placeholder", () => {
   );
 });
 
-test("does not invent Android signing fingerprints", () => {
-  assert.deepEqual(resolveAndroidSha256Fingerprints({}), []);
-  assert.deepEqual(resolveAndroidSha256Fingerprints({ ANDROID_SHA256_CERT_FINGERPRINTS: "" }), []);
-  assert.deepEqual(resolveAndroidSha256Fingerprints({ ANDROID_CERT_SHA256S: "" }), []);
-  assert.deepEqual(resolveAndroidSha256Fingerprints({ ANDROID_SHA256_CERT_FINGERPRINTS: "  " }), []);
+test("uses the Play signing fingerprints when env is blank", () => {
+  assert.equal(PLAY_SHA256_CERT_FINGERPRINTS.length, 2);
+  assert.deepEqual(resolveAndroidSha256Fingerprints({}), PLAY_SHA256_CERT_FINGERPRINTS);
+  assert.deepEqual(resolveAndroidSha256Fingerprints({ ANDROID_SHA256_CERT_FINGERPRINTS: "" }), PLAY_SHA256_CERT_FINGERPRINTS);
+  assert.deepEqual(resolveAndroidSha256Fingerprints({ ANDROID_CERT_SHA256S: "" }), PLAY_SHA256_CERT_FINGERPRINTS);
+  assert.deepEqual(resolveAndroidSha256Fingerprints({ ANDROID_SHA256_CERT_FINGERPRINTS: "  " }), PLAY_SHA256_CERT_FINGERPRINTS);
   assert.deepEqual(
     resolveAndroidSha256Fingerprints({
       ANDROID_SHA256_CERT_FINGERPRINTS: "AA:BB:CC, DD:EE:FF",
@@ -80,13 +82,13 @@ test("AASA JSON names the Team ID + bundle id and covers all paths", () => {
   assert.equal(filled.applinks.details[0].appID, `TEAMID0001.${CAP_APP_ID}`);
 });
 
-test("assetlinks.json uses package id and empty fingerprints by default", () => {
+test("assetlinks.json uses package id and the Play fingerprints by default", () => {
   const links = buildAssetLinks({});
   assert.equal(links.length, 1);
   assert.deepEqual(links[0].relation, ["delegate_permission/common.handle_all_urls"]);
   assert.equal(links[0].target.namespace, "android_app");
   assert.equal(links[0].target.package_name, CAP_APP_ID);
-  assert.deepEqual(links[0].target.sha256_cert_fingerprints, []);
+  assert.deepEqual(links[0].target.sha256_cert_fingerprints, PLAY_SHA256_CERT_FINGERPRINTS);
 
   const filled = buildAssetLinks({
     ANDROID_CERT_SHA256S:

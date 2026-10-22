@@ -87,7 +87,7 @@ Debug USB installs (`./gradlew installDebug`) use the debug keystore and are eno
 
 ### Signed `app-release.aab` (upload keystore + GitHub Actions)
 
-Nothing has been uploaded yet, so this upload key is the one Play will record on the first internal release. After that, Play re-signs with its app signing key. Leave `ANDROID_CERT_SHA256S` empty until Play shows that certificate. Do not invent a fingerprint.
+Play re-signs uploads with its app signing key. `assetlinks.json` lists that Play App Signing cert and the upload key. Set `ANDROID_CERT_SHA256S` only to replace that list. Do not invent a fingerprint.
 
 Create the upload keystore once, on a machine you control:
 

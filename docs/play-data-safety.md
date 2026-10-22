@@ -4,7 +4,7 @@ Support: support@kidease.ca
 
 Fill the Data safety form from this list. Do not add a row for an SDK that is not here. The application id in the project is `ca.kidease.app` (Capacitor `appId`, iOS bundle, and Android `applicationId`). `targetSdkVersion` and `compileSdk` are 36. The Play store file is an Android App Bundle from `./gradlew bundlePlayRelease` (`android/app/build/outputs/bundle/playRelease/app-play-release.aab`), not an APK. `assemblePlayRelease` builds an APK. Do not upload that APK. Samsung and Huawei use their own flavours (`docs/other-stores.md`).
 
-`ANDROID_CERT_SHA256S` stays empty until the first Play App Signing upload.
+`assetlinks.json` lists the Play App Signing cert and the upload key. `ANDROID_CERT_SHA256S` on Vercel replaces that list when set.
 
 The WebView loads `https://www.kidease.ca`. JavaScript SDKs are not Android libraries inside the AAB. They still count on the form because the app collects that data after it opens.
 
