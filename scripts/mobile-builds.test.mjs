@@ -61,7 +61,10 @@ describe("when-in-use location purpose", () => {
     assert.match(patch, /NSLocationWhenInUseUsageDescription/);
     assert.match(patch, /ACCESS_FINE_LOCATION/);
     assert.match(patch, /ACCESS_COARSE_LOCATION/);
-    assert.match(patch, /POST_NOTIFICATIONS/);
+    assert.match(patch, /stripAndroidPermission[\s\S]*POST_NOTIFICATIONS/);
+    assert.match(patch, /RECORD_AUDIO/);
+    assert.match(patch, /NSCameraUsageDescription/);
+    assert.match(patch, /NSMicrophoneUsageDescription/);
     assert.match(patch, /remote-notification/);
     assert.match(patch, /stripAndroidPermission[\s\S]*ACCESS_BACKGROUND_LOCATION/);
     assert.match(patch, /stripPlistKey[\s\S]*NSLocationAlways/);
@@ -89,12 +92,18 @@ describe("native project scaffolding", () => {
     assert.match(info, /licensed daycares near you/);
     assert.doesNotMatch(info, /NSLocationAlways/);
     assert.doesNotMatch(info, /<string>location<\/string>/);
-    assert.match(info, /<string>remote-notification<\/string>/);
+    assert.doesNotMatch(info, /<string>remote-notification<\/string>/);
+    assert.match(info, /NSCameraUsageDescription/);
+    assert.match(info, /NSMicrophoneUsageDescription/);
+    assert.doesNotMatch(info, /UIBackgroundModes/);
 
     const manifest = read("android/app/src/main/AndroidManifest.xml");
     assert.match(manifest, /ACCESS_COARSE_LOCATION/);
     assert.match(manifest, /ACCESS_FINE_LOCATION/);
-    assert.match(manifest, /POST_NOTIFICATIONS/);
+    assert.doesNotMatch(manifest, /POST_NOTIFICATIONS/);
+    assert.match(manifest, /android.permission.CAMERA/);
+    assert.match(manifest, /RECORD_AUDIO/);
+    assert.match(manifest, /MODIFY_AUDIO_SETTINGS/);
     assert.doesNotMatch(manifest, /ACCESS_BACKGROUND_LOCATION/);
     assert.match(manifest, /android:autoVerify="true"/);
     assert.match(manifest, /android:host="www\.kidease\.ca"/);
@@ -107,6 +116,7 @@ describe("native project scaffolding", () => {
     assert.match(entitlements, /applinks:kidease\.ca/);
     assert.match(entitlements, /webcredentials:www\.kidease\.ca/);
     assert.doesNotMatch(entitlements, /aps-environment/);
+    assert.match(entitlements, /com\.apple\.developer\.applesignin/);
     assert.match(read("ios/App/App.xcodeproj/project.pbxproj"), /CODE_SIGN_ENTITLEMENTS = App\/App.entitlements/);
     assert.doesNotMatch(read("ios/App/App.xcodeproj/project.pbxproj"), /DEVELOPMENT_TEAM = [A-Z0-9]{10}/);
 

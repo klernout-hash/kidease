@@ -4,6 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight, Building2, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
+import { localePath } from "@/lib/locale-path";
 import { cn } from "@/lib/utils";
 
 export function RoleEnrollChooser({
@@ -15,7 +16,10 @@ export function RoleEnrollChooser({
   titleId?: string;
   className?: string;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
+  const loginTo = (localePath("/login", locale) === "/fr/login" ? "/fr/login" : "/login") as "/login" | "/fr/login";
+  const contactTo = (localePath("/contact", locale) === "/fr/contact" ? "/fr/contact" : "/contact") as "/contact" | "/fr/contact";
+  const claimTo = (localePath("/claim", locale) === "/fr/claim" ? "/fr/claim" : "/claim") as "/claim" | "/fr/claim";
   const Title = heading;
   const CardTitle = heading === "h2" ? "h3" : "h4";
   return (
@@ -35,7 +39,7 @@ export function RoleEnrollChooser({
           <CardTitle className="mt-4 text-xl font-semibold text-fg">{t("roleParentTitle")}</CardTitle>
           <p className="mt-2 flex-1 text-sm leading-6 text-muted">{t("roleParentBody")}</p>
           <Button size="lg" className="mt-6 w-full min-h-12" asChild>
-            <Link to="/contact" search={{ intent: "parent" }}>
+            <Link to={contactTo} search={{ intent: "parent" }}>
               <ArrowRight className="size-4" aria-hidden />
               {t("roleParentCta")}
             </Link>
@@ -48,7 +52,7 @@ export function RoleEnrollChooser({
           <CardTitle className="mt-4 text-xl font-semibold text-primary-fg">{t("roleDaycareTitle")}</CardTitle>
           <p className="mt-2 flex-1 text-sm leading-6 text-primary-fg/85">{t("roleDaycareBody")}</p>
           <Button size="lg" variant="secondary" className="mt-6 w-full min-h-12" asChild>
-            <Link to="/claim" hash="enroll">
+            <Link to={claimTo} hash="enroll">
               <ArrowRight className="size-4" aria-hidden />
               {t("roleDaycareCta")}
             </Link>
@@ -57,7 +61,7 @@ export function RoleEnrollChooser({
       </div>
       <p className="mt-5 text-center text-sm text-muted">
         {t("alreadyAccount")}{" "}
-        <Link to="/login" className="font-medium text-primary underline-offset-4 hover:underline">
+        <Link to={loginTo} className="font-medium text-primary underline-offset-4 hover:underline">
           {t("signIn")}
         </Link>
       </p>

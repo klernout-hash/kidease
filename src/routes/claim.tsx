@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { searchClaimable, startClaim, submitEnrollLicense, verifyClaim, type ClaimHit } from "@/lib/server/claims";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { localePath } from "@/lib/locale-path";
@@ -59,6 +60,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
   const q0 = search.q ?? "";
   const id0 = search.id ?? "";
   const { t, locale } = useCopy();
+  const nativeShell = useInNativeShell();
   const { user, isPending } = useCurrentUserState();
   const navigate = useNavigate();
   const [q, setQ] = useState(q0);
@@ -287,9 +289,23 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
     }
   }
 
+  const partnerPerks = (
+    [
+      [Users, "perkParents"],
+      [Megaphone, "perkBrand"],
+      [Globe, "perkPage"],
+      [CalendarCheck, "perkSpots"],
+      [MessageCircle, "perkChat"],
+      [MapPin, "perkNear"],
+      [Smartphone, "perkMobile"],
+      [Wallet, "perkPayLive"],
+      [TrendingUp, "perkGrow"],
+    ] as const
+  ).filter((entry) => !(nativeShell && entry[1] === "perkPayLive"));
+
   return (
     <Shell>
-      <main className="mx-auto max-w-3xl px-4 py-10">
+      <main className="mx-auto max-w-3xl px-4 py-10" data-ke="claim-page" data-commerce={nativeShell ? "hidden" : "web"}>
         <h1 className="font-display text-4xl">{t("claimFindTitle")}</h1>
         <p className="mt-3 max-w-xl text-muted">{t("claimFindLead")}</p>
         {pending ? (
@@ -409,19 +425,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
           <summary className="flex min-h-11 cursor-pointer items-center text-sm font-semibold">{t("partnerPerksTitle")}</summary>
           <FeelBanner src="/photos/brick.jpg" className="mt-4" />
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-            {(
-              [
-                [Users, "perkParents"],
-                [Megaphone, "perkBrand"],
-                [Globe, "perkPage"],
-                [CalendarCheck, "perkSpots"],
-                [MessageCircle, "perkChat"],
-                [MapPin, "perkNear"],
-                [Smartphone, "perkMobile"],
-                [Wallet, "perkPayLive"],
-                [TrendingUp, "perkGrow"],
-              ] as const
-            ).map(([Icon, key]) => (
+            {partnerPerks.map(([Icon, key]) => (
               <li key={key} className="flex gap-3 text-sm font-medium leading-6">
                 <Icon className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
                 {t(key)}

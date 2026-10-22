@@ -136,6 +136,9 @@ import { dismissPopovers } from "@/lib/dismiss-popovers";
 import { MARKETING_PAGE_SEO, MARKETING_PAGE_SEO_FR, pageSeoHead } from "@/lib/page-seo";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 
+import { StoreMapFallback } from "@/components/store-map-fallback";
+import { useStoreChannel } from "@/lib/use-native-shell";
+
 const MapView = lazy(() => import("@/components/map-view").then((m) => ({ default: m.MapView })));
 const CompareBar = lazy(() =>
   import("@/components/compare-bar").then((m) => ({ default: m.CompareBar })),
@@ -381,6 +384,7 @@ export function SearchScreen({
   const setLocationConsent = useAppStore((s) => s.setLocationConsent);
   const [askLocation, setAskLocation] = useState(false);
   const [mapEnabled, setMapEnabled] = useState(false);
+  const storeChannel = useStoreChannel();
   const [searchFailed, setSearchFailed] = useState(false);
   useLivePresence(locationConsent === "granted");
 
@@ -1868,7 +1872,11 @@ export function SearchScreen({
           )}
         >
           {view === "map" ? (
-            mapEnabled ? (
+            storeChannel === "huawei" ? (
+              <div className="mt-4 h-[min(72dvh,36rem)] min-h-[18rem] overflow-hidden rounded-[14px] shadow-card ring-1 ring-border lg:h-[min(62vh,34rem)]">
+                <StoreMapFallback />
+              </div>
+            ) : mapEnabled ? (
               <div className="mt-4 space-y-3">
                 <div className="h-[min(72dvh,36rem)] min-h-[18rem] overflow-hidden rounded-[14px] shadow-card ring-1 ring-border lg:h-[min(62vh,34rem)]">
                   <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>

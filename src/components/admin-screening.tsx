@@ -9,6 +9,7 @@ import { docKindLabel } from "@/lib/provider-screening";
 import { openPrivateDocHref, screeningDocHref } from "@/lib/private-docs";
 import { useCopy } from "@/lib/use-copy";
 import { useReauthPrompt, withReauth } from "@/components/reauth-dialog";
+import { looksLikeTestFixture } from "@/lib/listing-visibility";
 
 export function AdminScreeningQueue({
   rows,
@@ -21,7 +22,10 @@ export function AdminScreeningQueue({
   const loc = locale === "fr" ? "fr" : "en";
   const [busy, setBusy] = useState<string | null>(null);
   const [reason, setReason] = useState<Record<string, string>>({});
+  const [showQa, setShowQa] = useState(false);
   const reauth = useReauthPrompt();
+  const qaCount = rows.filter((row) => looksLikeTestFixture({ name: row.daycareName, slug: row.slug })).length;
+  const visible = showQa ? rows : rows.filter((row) => !looksLikeTestFixture({ name: row.daycareName, slug: row.slug }));
 
   async function decide(id: string, action: "approve" | "reject") {
     setBusy(id);
@@ -49,11 +53,15 @@ export function AdminScreeningQueue({
     <section>
       <h2 className="font-display text-2xl">{t("screeningQueueTitle")}</h2>
       <p className="mt-1 text-sm text-muted">{t("screeningQueueLead")}</p>
+      <label className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
+        <input type="checkbox" checked={showQa} onChange={(e) => setShowQa(e.target.checked)} />
+        Show QA listings{qaCount ? ` · ${qaCount}` : ""}
+      </label>
       <ul className="mt-5 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
-        {rows.length === 0 ? (
+        {visible.length === 0 ? (
           <li className="px-5 py-8 text-center text-muted">{t("screeningQueueEmpty")}</li>
         ) : (
-          rows.map((row) => (
+          visible.map((row) => (
             <li key={row.id} className="space-y-3 px-5 py-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>

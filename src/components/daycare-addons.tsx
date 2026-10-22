@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import { DAYCARE_ADDONS, daycareAddonVisible, formatPlanCad, type DaycareAddon, type PlanLocale } from "@/lib/upgrade-plans";
 
 function cadenceLabel(addon: DaycareAddon, locale: PlanLocale): string {
@@ -16,10 +17,11 @@ export function DaycareAddons({
   flags: Partial<Record<string, boolean>> | null | undefined;
   action?: (addon: DaycareAddon) => ReactNode;
 }) {
+  const nativeShell = useInNativeShell();
   const visible = DAYCARE_ADDONS.filter((addon) => daycareAddonVisible(addon.id, flags));
-  if (!visible.length) return null;
+  if (nativeShell || !visible.length) return null;
   return (
-    <div className="mt-4" data-ke="daycare-addons">
+    <div className="ke-digital-plan mt-4" data-ke="daycare-addons">
       <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subtle">
         {locale === "fr" ? "Options" : "Add-ons"}
       </p>

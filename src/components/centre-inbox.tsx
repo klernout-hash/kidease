@@ -25,6 +25,7 @@ import {
   type MessageFilter,
 } from "@/lib/inbox-thread-ui";
 import { listInbox, sendConnectedMessage } from "@/lib/server/inbox";
+import { useViewAs } from "@/components/view-as-banner";
 import { chatBodyWithoutSmsFooter } from "@/lib/sms-copy";
 import { getConversationDetails, setConversationUserState } from "@/lib/server/conversation-state";
 import { getThread } from "@/lib/server/family";
@@ -44,6 +45,7 @@ export function CentreInboxDesk({
 }) {
   const { user, isPending } = useCurrentUserState();
   const { t, locale } = useCopy();
+  const viewing = useViewAs();
   const navigate = useNavigate();
   const [items, setItems] = useState<CentreInboxThread[] | null>(null);
   const [filter, setFilter] = useState<MessageFilter>("all");
@@ -122,6 +124,10 @@ export function CentreInboxDesk({
 
   async function onSend(e: React.FormEvent) {
     e.preventDefault();
+    if (viewing) {
+      setSendError(t("viewAsReadOnly"));
+      return;
+    }
     if (!selectedId || !body.trim()) return;
     setSendError("");
     try {
@@ -326,7 +332,11 @@ export function CentreInboxDesk({
               />
             )}
           </div>
-          {canWrite ? (
+          {viewing ? (
+            <p className="border-t border-border px-3 py-3 text-sm text-muted" role="status" data-ke="view-as-lock">
+              {t("viewAsReadOnly")}
+            </p>
+          ) : canWrite ? (
             <ThreadComposer
               inputId="centre-thread-reply"
               value={body}

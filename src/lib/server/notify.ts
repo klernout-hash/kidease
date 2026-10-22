@@ -1,4 +1,5 @@
 import { getSql } from "@/lib/db";
+import { resendCampaignTags } from "@/lib/email-suppressions";
 import { nid } from "@/lib/utils";
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
@@ -436,6 +437,7 @@ async function deliverEmail(subject: string, text: string, html: string, to = AD
         subject,
         text,
         html,
+        tags: resendCampaignTags("admin-notify"),
       }),
     });
     if (!res.ok) throw new Error(`Resend ${res.status}: ${await res.text()}`);
@@ -844,11 +846,21 @@ export const listPlatformEvents = createServerFn({ method: "GET" })
       email_status: string;
       detail: string | null;
       created_at: string;
+      profile_role: string | null;
     }>`
-      select id, kind, daycare_name, address, city, province, slug,
-             provider_name, provider_email, listing_url, email_status, detail, created_at
-      from platform_events
-      order by created_at desc
+      select e.id, e.kind, e.daycare_name, e.address, e.city, e.province, e.slug,
+             e.provider_name, e.provider_email, e.listing_url, e.email_status, e.detail, e.created_at,
+             p.role as profile_role
+      from platform_events e
+      left join lateral (
+        select pr.role
+        from "user" u
+        join profiles pr on pr.user_id = u.id
+        where e.provider_email is not null
+          and lower(u.email) = lower(e.provider_email)
+        limit 1
+      ) p on true
+      order by e.created_at desc
       limit 100
     `.catch(() => []);
     return rows;

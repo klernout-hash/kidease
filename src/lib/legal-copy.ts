@@ -41,8 +41,8 @@ export type LegalDoc = {
   disclaimer: string;
 };
 
-const UPDATED_EN = "Effective 5 October 2026 · KidEase · Canada";
-const UPDATED_FR = "En vigueur le 5 octobre 2026 · KidEase · Canada";
+const UPDATED_EN = "Effective 21 October 2026 · KidEase · Canada";
+const UPDATED_FR = "En vigueur le 21 octobre 2026 · KidEase · Canada";
 
 const DISCLAIMER_EN =
   "This page explains how KidEase handles personal information and how the service works. It is not legal advice. Official PIPEDA text lives on the Privacy Commissioner of Canada website.";
@@ -66,9 +66,10 @@ export const PRIVACY_EN: LegalDoc = {
           type: "ul",
           items: [
             "Account: name, email, password or sign-in provider, optional phone and profile photo, role (parent or centre director).",
-            "Child profiles you add: name and birthdate if you choose to add a child. Allergies, epi-pen flag, medical notes, medications, doctor name and phone, foods, routines, comfort items, emergency contacts, pickup people, and care notes are optional. You control them. You can leave them blank or delete them.",
+            "Child profiles you add: name and birthdate if you choose to add a child. Allergies, epi-pen flag, medical notes, medications, doctor name and phone, foods, routines, comfort items, emergency contacts, pickup people, and care notes are optional health and care details. You control them. You can leave them blank or delete them. PostHog and Sentry do not receive those health fields.",
             "Search location you choose: a GPS fix while you search, or a typed address, city, or postal code.",
             "Requests and messages: inquire, book-a-tour, and request-a-spot fields, plus in-app chat with that centre.",
+            "Calls: live audio on a KidEase voice call, and live audio and video on a video tour. Twilio carries the call. KidEase does not record it. Your phone number stays hidden.",
             "Claim and enrol (directors): centre identity, licence photo, verification code, and the enrol form (name, email, centre, city, phone, message).",
             "Payments: amount, method, status, and a KidEase reference: only if a deposit is recorded in-app. We do not store full card numbers.",
             "Technical: session cookies, device/browser needed to run the site, and first-party search telemetry (a coarse geohash, not a street address).",
@@ -85,6 +86,7 @@ export const PRIVACY_EN: LegalDoc = {
           items: [
             "Show licensed centres near the place you chose and let you filter by distance.",
             "Send your inquiry, tour, or enrolment request to that centre and keep the conversation.",
+            "Connect a voice call or video tour between you and that centre. The camera and microphone are used only while that call is open.",
             "Let a claimed director manage spots, fees, photos, and family messages.",
             "Notify KidEase support at support@kidease.ca of new accounts, claims, and requests so we can run the service.",
             "Send transactional email (sign-in codes, password reset, claim codes, request notices).",
@@ -189,6 +191,20 @@ export const PRIVACY_EN: LegalDoc = {
                 "Crash and performance reports so we can fix production bugs. We send stack traces and a route tag: not cookies, Authorization headers, emails, tokens, or child names. Sentry is not an advertising pixel. In the iPhone and Android app it starts only after you tap Allow analytics.",
               href: "https://sentry.io/privacy/",
               hrefLabel: "Sentry Privacy Policy",
+            },
+            {
+              name: "Twilio, for voice and video calls",
+              purpose:
+                "Live audio on a voice call, and live audio plus video on a video tour, between a parent and a daycare. Twilio receives that call media so the two people can hear and see each other. KidEase does not record the call. Phone numbers stay hidden. The Twilio scripts load only on the call page and the video page.",
+              href: "https://www.twilio.com/en-us/legal/privacy",
+              hrefLabel: "Twilio Privacy Policy",
+            },
+            {
+              name: "Parent helper, when that guide is on",
+              purpose:
+                "Short answers drawn from KidEase guide pages (fees programs, tours, search). It does not receive child health fields, and it does not invent a spot, a fee, or a licence.",
+              href: "/help",
+              hrefLabel: "KidEase Help",
             },
           ],
         },
@@ -319,6 +335,7 @@ export const PRIVACY_EN: LegalDoc = {
             ["Location", "GPS or typed place", "Distance search only"],
             ["Child profile", "Name, birthdate, allergies, emergency", "You, plus a centre you contact"],
             ["Requests & chat", "Tour, spot request, messages", "Connect that family and that centre"],
+            ["Calls", "Live audio, and video on a tour", "Voice or video call with that centre. Not recorded."],
             ["Claim docs", "Licence photo, claim code", "Verify the director runs that centre"],
             ["Payments", "Amount, method, reference", "Hold a spot when payment is used"],
             ["Technical", "Session cookie, coarse geohash, product analytics id", "Stay signed in; improve search and the product"],
@@ -332,7 +349,7 @@ export const PRIVACY_EN: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "KidEase is a Canadian company. Hosting and processors above may store or see data in the United States (Google, Vercel, Resend, Neon, Stripe, DocuSign when centre paperwork is sent, Cloudflare when proxied, PostHog when analytics is on, Sentry when error monitoring is on). We use them only to run this service and rely on their contracts and safeguards. We do not sell the data because it sits on a US server.",
+          text: "KidEase is a Canadian company. Hosting and processors above may store or see data in the United States (Google, Vercel, Resend, Neon, Stripe, DocuSign when centre paperwork is sent, Cloudflare when proxied, PostHog when analytics is on, Sentry when error monitoring is on, Twilio when a voice or video call is open). We use them only to run this service and rely on their contracts and safeguards. We do not sell the data because it sits on a US server.",
         },
       ],
     },
@@ -470,9 +487,10 @@ export const PRIVACY_FR: LegalDoc = {
           type: "ul",
           items: [
             "Compte : nom, courriel, mot de passe ou fournisseur de connexion, téléphone et photo facultatifs, rôle (parent ou direction).",
-            "Profils d’enfants que vous ajoutez : nom et date de naissance si vous ajoutez un enfant. Allergies, stylo épinéphrine, notes médicales, médicaments, nom et téléphone du médecin, aliments, routines, objets réconfort, contacts d’urgence, personnes autorisées au ramassage et notes de garde sont facultatifs. Vous les contrôlez. Vous pouvez les laisser vides ou les effacer.",
+            "Profils d’enfants que vous ajoutez : nom et date de naissance si vous ajoutez un enfant. Allergies, stylo épinéphrine, notes médicales, médicaments, nom et téléphone du médecin, aliments, routines, objets réconfort, contacts d’urgence, personnes autorisées au ramassage et notes de garde sont des détails de santé et de garde facultatifs. Vous les contrôlez. Vous pouvez les laisser vides ou les effacer. PostHog et Sentry ne reçoivent pas ces champs de santé.",
             "Lieu de recherche : position GPS pendant la recherche, ou une adresse, une ville ou un code postal saisi.",
             "Demandes et messages : inquiry, visite et demande de place, plus le clavardage avec ce centre.",
+            "Appels : audio en direct pour un appel KidEase, et audio et vidéo en direct pour une visite vidéo. Twilio transporte l’appel. KidEase ne l’enregistre pas. Votre numéro de téléphone reste caché.",
             "Revendication et inscription (directions) : identité du centre, photo du permis, code de vérification, et le formulaire (nom, courriel, centre, ville, téléphone, message).",
             "Paiements : montant, mode, statut et une référence KidEase: seulement si un dépôt est inscrit. Nous ne conservons pas les numéros de carte complets.",
             "Technique : témoins de session, données du navigateur nécessaires au site, et télémétrie de recherche (géohachage grossier, pas une adresse municipale).",
@@ -489,6 +507,7 @@ export const PRIVACY_FR: LegalDoc = {
           items: [
             "Afficher les centres permis près du lieu choisi et filtrer par distance.",
             "Transmettre la demande de renseignement, de visite ou d’inscription à ce centre.",
+            "Relier un appel vocal ou une visite vidéo entre vous et ce centre. La caméra et le microphone servent seulement pendant cet appel.",
             "Laisser une direction réclamée gérer places, tarifs, photos et messages.",
             "Aviser le soutien KidEase à support@kidease.ca des nouveaux comptes, revendications et demandes.",
             "Envoyer des courriels transactionnels (codes, réinitialisation, avis de demande).",
@@ -592,6 +611,20 @@ export const PRIVACY_FR: LegalDoc = {
                 "Rapports de plantage et de performance pour corriger la production. Nous envoyons des traces et une route: pas les témoins, les en-têtes Authorization, les courriels, les jetons ni les noms d’enfants. Sentry n’est pas un pixel publicitaire. Dans l’appli iPhone et Android, il démarre seulement après Autoriser l’analytique.",
               href: "https://sentry.io/privacy/",
               hrefLabel: "Politique de confidentialité Sentry",
+            },
+            {
+              name: "Twilio, pour les appels vocaux et vidéo",
+              purpose:
+                "Audio en direct pour un appel vocal, et audio plus vidéo en direct pour une visite vidéo, entre un parent et une garderie. Twilio reçoit ce média pour que les deux personnes s’entendent et se voient. KidEase n’enregistre pas l’appel. Les numéros restent cachés. Les scripts Twilio se chargent seulement sur la page d’appel et la page vidéo.",
+              href: "https://www.twilio.com/en-us/legal/privacy",
+              hrefLabel: "Politique de confidentialité Twilio",
+            },
+            {
+              name: "Aide parent, lorsque ce guide est actif",
+              purpose:
+                "Courtes réponses tirées des pages d’aide KidEase. Elle ne reçoit pas les renseignements de santé de l’enfant et n’invente ni place, ni frais, ni permis.",
+              href: "/help",
+              hrefLabel: "Aide KidEase",
             },
           ],
         },
@@ -722,6 +755,7 @@ export const PRIVACY_FR: LegalDoc = {
             ["Position", "GPS ou lieu saisi", "Recherche par distance seulement"],
             ["Profil d’enfant", "Nom, naissance, allergies, urgence", "Vous, plus le centre contacté"],
             ["Demandes et messages", "Visite, place, clavardage", "Relier cette famille et ce centre"],
+            ["Appels", "Audio en direct, et vidéo pour une visite", "Appel vocal ou vidéo avec ce centre. Pas d’enregistrement."],
             ["Pièces de revendication", "Photo du permis, code", "Vérifier que la direction exploite le centre"],
             ["Paiements", "Montant, mode, référence", "Retenir une place si un dépôt est utilisé"],
             ["Technique", "Témoin de session, géohachage, identifiant d’analytique", "Rester connecté; améliorer la recherche et le produit"],
@@ -735,7 +769,7 @@ export const PRIVACY_FR: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: "KidEase est une entreprise canadienne. Les sous-traitants ci-dessus peuvent traiter des données aux États-Unis (Google, Vercel, Resend, Neon, Stripe, DocuSign si les documents du centre sont envoyés, Cloudflare si proxifié, PostHog si l’analytique est active, Sentry si le suivi des erreurs est actif). Nous les utilisons seulement pour le service. Nous ne vendons pas les données parce qu’elles passent par un serveur américain.",
+          text: "KidEase est une entreprise canadienne. Les sous-traitants ci-dessus peuvent traiter des données aux États-Unis (Google, Vercel, Resend, Neon, Stripe, DocuSign si les documents du centre sont envoyés, Cloudflare si proxifié, PostHog si l’analytique est active, Sentry si le suivi des erreurs est actif, Twilio lorsqu’un appel vocal ou vidéo est ouvert). Nous les utilisons seulement pour le service. Nous ne vendons pas les données parce qu’elles passent par un serveur américain.",
         },
       ],
     },

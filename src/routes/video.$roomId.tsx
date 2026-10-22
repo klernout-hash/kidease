@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
+import { useViewAs } from "@/components/view-as-banner";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import { VideoRoomPanel } from "@/components/video-room-panel";
 import { PayCtas } from "@/components/pay-chrome";
 import {
@@ -28,6 +30,8 @@ function VideoRoomPage() {
   const { roomId } = Route.useParams();
   const { user, isPending } = useCurrentUserState();
   const { t } = useCopy();
+  const viewing = useViewAs();
+  const nativeShell = useInNativeShell();
   const [status, setStatus] = useState<VideoJoinStatus | null>(null);
   const [statusFailed, setStatusFailed] = useState(false);
   const [joined, setJoined] = useState<Extract<VideoJoinResult, { ok: true }> | null>(null);
@@ -67,6 +71,10 @@ function VideoRoomPage() {
   const canMint = Boolean(status?.gateOk);
 
   async function onJoin() {
+    if (viewing) {
+      setError(t("viewAsReadOnly"));
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -93,13 +101,33 @@ function VideoRoomPage() {
         <Link to="/inbox" className="text-sm text-muted">
           ← {t("inbox")}
         </Link>
-        <p className="mt-4 text-xs font-medium uppercase tracking-[0.18em] text-subtle">{t("videoTourKicker")}</p>
+        {nativeShell ? null : (
+          <p className="mt-4 text-xs font-medium uppercase tracking-[0.18em] text-subtle">{t("videoTourKicker")}</p>
+        )}
         <h1 className="mt-2 font-display text-3xl">{t("videoTourTitle")}</h1>
-        <p className="mt-3 text-sm text-muted">{t("videoTourLead")}</p>
+        <p className="mt-3 text-sm text-muted">{nativeShell ? t("videoJoinHint") : t("videoTourLead")}</p>
         <p className="mt-2 text-xs text-subtle">{t("videoNoRecording")}</p>
         <p className="mt-1 text-xs text-subtle">{t("videoMinutesNote")}</p>
 
-        {blockedScaffold && !joined ? (
+        {nativeShell && paywall ? (
+          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="native-video-entitlement">
+            <p className="text-sm text-muted">{t("nativeVideoNeedsPlus")}</p>
+            <Button variant="secondary" asChild className="mt-4">
+              <Link to="/inbox">{t("inbox")}</Link>
+            </Button>
+          </div>
+        ) : null}
+
+        {nativeShell && blockedScaffold && !joined ? (
+          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="native-video-unavailable">
+            <p className="text-sm text-muted">{t("videoNoCredentials")}</p>
+            <Button variant="secondary" asChild className="mt-4">
+              <Link to="/inbox">{t("inbox")}</Link>
+            </Button>
+          </div>
+        ) : null}
+
+        {!nativeShell && blockedScaffold && !joined ? (
           <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="store-coming-soon">
             <p className="text-xs font-medium uppercase tracking-[0.16em] text-subtle">{t("comingSoon")}</p>
             <p className="mt-2 font-medium">
@@ -118,12 +146,12 @@ function VideoRoomPage() {
           </div>
         ) : null}
 
-        {status?.error && !paywall && !blockedScaffold && !joined ? (
+        {!nativeShell && status?.error && !paywall && !blockedScaffold && !joined ? (
           <p className="mt-4 text-sm text-danger">{status.error}</p>
         ) : null}
         {error && !blockedScaffold ? <p className="mt-4 text-sm text-danger">{error}</p> : null}
 
-        {paywall ? (
+        {!nativeShell && paywall ? (
           <div className="ke-digital-plan mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="parent-plus-prompt">
             <p className="font-medium">{t("parentPlusTitle")}</p>
             <p className="mt-2 text-sm text-muted">

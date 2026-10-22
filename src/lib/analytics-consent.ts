@@ -237,3 +237,26 @@ export function scheduleAnalyticsConsentBannerReveal(
 export function shouldStartPostHog(input: AnalyticsConsentSurfaceInput = {}): boolean {
   return analyticsConsentAllowsCapture(input.consent ?? readAnalyticsConsent());
 }
+
+export type TelemetryKind = "posthog" | "sentry" | "web-vitals";
+
+/**
+ * Native shell: PostHog, Sentry, and web vitals wait for Allow.
+ * Website: PostHog and Sentry wait for Allow. Web vitals stay as they are today.
+ */
+export function shouldStartTelemetry(
+  kind: TelemetryKind,
+  input: { native?: boolean; consent?: AnalyticsConsent } = {},
+): boolean {
+  const consent = input.consent ?? readAnalyticsConsent();
+  const native =
+    input.native ??
+    (typeof window !== "undefined" &&
+      (window.navigator.userAgent.includes("KidEaseNative") ||
+        Boolean(
+          (window as Window & { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.(),
+        )));
+  if (native) return consent === "granted";
+  if (kind === "posthog" || kind === "sentry") return consent === "granted";
+  return true;
+}

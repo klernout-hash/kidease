@@ -109,6 +109,43 @@ export async function signIn(
   setBearerToken(null);
 
   if (isNativeSocialProvider(providerId)) {
+    if (providerId === "apple" && !inLivePreview()) {
+      const { isNative, nativePlatform } = await import("@/lib/native");
+      const { appleNoncePair, appleSignInRoute } = await import("./apple-native");
+      const route = appleSignInRoute({
+        configured: true,
+        native: isNative(),
+        platform: nativePlatform(),
+      });
+      if (route === "native") {
+        const { authorizeNativeApple } = await import("./apple-native-client");
+        const nonce = await appleNoncePair();
+        const credential = await authorizeNativeApple(nonce.hashed);
+        const { data, error } = await authClient.signIn.social({
+          provider: "apple",
+          callbackURL,
+          errorCallbackURL,
+          idToken: { token: credential.identityToken, nonce: nonce.raw },
+        });
+        if (error) throw new Error(error.message || "Sign in with Apple failed");
+        const authorizationCode = credential.authorizationCode?.trim();
+        if (!authorizationCode) {
+          console.error("[apple-auth] exchange failed status=0 error=missing_authorization_code client=ca.kidease.app");
+        } else {
+          try {
+            const { storeNativeAppleAuthorization } = await import("@/lib/server/apple-native-token");
+            const stored = await storeNativeAppleAuthorization({ data: { authorizationCode } });
+            if (!stored?.ok) {
+              console.error("[apple-auth] exchange failed status=0 error=not_stored client=ca.kidease.app");
+            }
+          } catch {
+            console.error("[apple-auth] exchange failed status=0 error=client_call client=ca.kidease.app");
+          }
+        }
+        if (data?.url) window.location.href = data.url;
+        return;
+      }
+    }
     if (inLivePreview()) {
       if (!popup) throw new Error("Pop-up blocked: allow pop-ups for sign-in");
       const token = await waitForPopupToken(popup);

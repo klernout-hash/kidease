@@ -205,6 +205,7 @@ test("money path uses Bill / Pay / Paid and extends invoices", () => {
   assert.match(checkout, /platformFeeBps: platformFeeBps\(\)/);
 
   const nav = src("src/lib/desk-nav.ts");
-  assert.match(nav, /label: "Money"/);
+  assert.match(nav, /id: "money"/);
+  assert.match(nav, /label: "Bills"/);
   assert.match(nav, /label: "Pay"/);
 });

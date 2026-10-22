@@ -1,1 +1,3 @@
 "NSLocationWhenInUseUsageDescription" = "KidEase utilise votre position uniquement pendant la recherche afin d’afficher les garderies autorisées près de vous. La position n’est pas utilisée en arrière-plan.";
+"NSCameraUsageDescription" = "KidEase utilise la caméra pendant une visite vidéo avec une garderie. La caméra n’est pas utilisée en arrière-plan.";
+"NSMicrophoneUsageDescription" = "KidEase utilise le microphone pendant un appel ou une visite vidéo. Le microphone n’est pas utilisé en arrière-plan.";

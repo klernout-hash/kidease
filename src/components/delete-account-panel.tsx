@@ -6,6 +6,7 @@ import { signOut } from "@/lib/auth/client";
 import { DELETE_CONFIRM_PHRASE } from "@/lib/account-delete";
 import { deleteAccount } from "@/lib/server/family";
 import { useCopy } from "@/lib/use-copy";
+import { ViewAsWriteLock } from "@/components/view-as-banner";
 
 export function DeleteAccountPanel({ signedIn }: { signedIn: boolean }) {
   const { t } = useCopy();
@@ -33,6 +34,7 @@ export function DeleteAccountPanel({ signedIn }: { signedIn: boolean }) {
   }
 
   return (
+    <ViewAsWriteLock>
     <div className="mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="account-delete">
       <h2 className="font-display text-xl">{t("deleteAccount")}</h2>
       <p className="mt-2 text-sm text-muted">{t("deleteAccountLead")}</p>
@@ -77,5 +79,6 @@ export function DeleteAccountPanel({ signedIn }: { signedIn: boolean }) {
         {t("deleteAccountConfirm")}
       </Button>
     </div>
+    </ViewAsWriteLock>
   );
 }
