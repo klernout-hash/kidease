@@ -35,6 +35,7 @@ import { publicListings } from "@/lib/listing-visibility";
 import { fsaOf, MAX_SEARCH_RADIUS_KM } from "@/lib/proximity";
 import { areaPresence } from "@/lib/presence";
 import { readSearchCache, searchCacheKey, writeSearchCache } from "@/lib/search-cache";
+import { readRecentSearches, rememberSearch, writeRecentSearches, type RecentSearch } from "@/lib/recent-searches";
 import { parentFitCacheKey } from "@/lib/parent-fit";
 import { parentFitFromSearch, useParentFitFacts } from "@/lib/use-parent-fit";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
@@ -303,6 +304,7 @@ export function SearchScreen({
   const { user } = useCurrentUserState();
   const fitFacts = useParentFitFacts();
   const [budgetMonthly, setBudgetMonthly] = useState("");
+  const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
   const navigate = useNavigate({ from: locale === "fr" ? "/fr/search" : "/search" });
   const origin = useAppStore((s) => s.origin);
   const located = useAppStore((s) => s.located);
@@ -781,9 +783,19 @@ export function SearchScreen({
     });
   }
 
-  function applyPlace(place: { lat: number; lng: number; label: string }) {
+  function noteSearch(label: string, replace?: string) {
+    const prior = readRecentSearches().filter(
+      (item) => !replace || item.label.toLowerCase() !== replace.trim().toLowerCase(),
+    );
+    const next = rememberSearch(prior, label);
+    writeRecentSearches(next);
+    setRecentSearches(next);
+  }
+
+  function applyPlace(place: { lat: number; lng: number; label: string }, replace?: string) {
     setOrigin({ ...place, explicit: true }, "manual");
     setQuery(place.label);
+    noteSearch(place.label, replace);
     writeExploreSearch({ q: place.label, name: nameQuery, from: needBy, to: needUntil });
   }
 
@@ -920,14 +932,19 @@ export function SearchScreen({
     writeRailSelection({ ages: toggleExploreRailAge(parseExploreRailAges(incoming), age) });
   }
 
+  useEffect(() => {
+    setRecentSearches(readRecentSearches());
+  }, []);
+
   async function applyQuery(typed?: string) {
     const label = (typed ?? query).trim();
     if (label) {
       const hit = await resolveLocationQuery(label);
       if (hit) {
-        applyPlace(hit);
+        applyPlace(hit, label);
         return;
       }
+      noteSearch(label);
       const kept = (incoming.q || origin.label || "").trim();
       writeExploreSearch({
         q: kept || undefined,
@@ -1633,6 +1650,23 @@ export function SearchScreen({
           onLocate={() => void geo()}
           onSubmit={(typed) => void applyQuery(typed)}
         />
+        {recentSearches.length ? (
+          <div className="mt-2" data-ke="recent-searches">
+            <p className="text-xs font-medium text-muted">{t("recentSearches")}</p>
+            <div className="mt-1 flex flex-wrap gap-2">
+              {recentSearches.map((item) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  className="inline-flex min-h-11 max-w-full items-center rounded-full bg-surface px-3 text-sm ring-1 ring-border"
+                  onClick={() => void applyQuery(item.label)}
+                >
+                  <span className="truncate">{item.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
         <SmartMatchEntry />
         <div className="ke-explore-filter-sticky mt-3">
         <ExploreFilterBar
