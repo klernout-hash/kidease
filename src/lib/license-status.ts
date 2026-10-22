@@ -33,3 +33,20 @@ export function isOperatorLicenseSource(source?: string | null) {
 export function isLocalCatalogSource(source?: string | null) {
   return (source || "").trim().toLowerCase() === "local_catalog";
 }
+
+/**
+ * Parent-facing "Licence verified" only after an operator confirmation.
+ * A catalogue snapshot, a blank timestamp, or an expired/suspended licence never qualifies.
+ */
+export function showLicenceVerifiedBadge(input: {
+  licenseStatus?: string | null;
+  registryMatchState?: string | null;
+  licenseVerificationSource?: string | null;
+  licenseVerifiedAt?: string | null;
+}): boolean {
+  const status = normalizeLicenseStatus(input.licenseStatus);
+  if (status === "expired" || status === "suspended") return false;
+  if (!isOperatorLicenseSource(input.licenseVerificationSource)) return false;
+  if (!input.licenseVerifiedAt?.trim()) return false;
+  return status === "matched" || input.registryMatchState === "matched";
+}
