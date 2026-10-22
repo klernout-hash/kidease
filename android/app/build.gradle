@@ -72,6 +72,13 @@ configurations.configureEach {
     exclude group: "com.google.firebase", module: "firebase-analytics-ktx"
 }
 
+// AppGallery phones have no Play Services. Keep GMS, Play, and Firebase out of that flavour.
+configurations.matching { it.name.toLowerCase().contains("huawei") }.configureEach {
+    exclude group: "com.google.android.gms"
+    exclude group: "com.google.android.play"
+    exclude group: "com.google.firebase"
+}
+
 repositories {
     flatDir{
         dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
@@ -91,6 +98,20 @@ dependencies {
 }
 
 apply from: 'capacitor.build.gradle'
+
+// capacitor.build.gradle adds every plugin to `implementation`.
+// Geolocation and in-app review call Play Services. Play and Samsung keep them.
+// Huawei does not, or the AppGallery binary still ships those libraries.
+def storeGmsPlugins = [":capacitor-geolocation", ":capacitor-community-in-app-review"]
+configurations.implementation.dependencies.removeAll { dep ->
+    storeGmsPlugins.contains(dep.properties.get("path"))
+}
+dependencies {
+    playImplementation project(":capacitor-geolocation")
+    playImplementation project(":capacitor-community-in-app-review")
+    samsungImplementation project(":capacitor-geolocation")
+    samsungImplementation project(":capacitor-community-in-app-review")
+}
 
 try {
     def servicesJSON = file('google-services.json')

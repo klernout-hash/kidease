@@ -93,7 +93,9 @@ Same application id as Play. From `android/`:
 
 AAB: `android/app/build/outputs/bundle/samsungRelease/app-samsung-release.aab`
 
-`MainActivity` appends `KidEaseStoreSamsung` only for the `samsung` flavour, on top of `KidEaseNative`. The iOS app and the Play flavour strip that token and do not set a `ke_store=samsung` cookie. A `?store=samsung` link does not switch them. The site sees the Samsung token first and leaves checkout on. The Play token alone still hides checkout.
+`MainActivity` writes the user-agent on the WebView after the bridge starts. The Samsung asset config already asks Capacitor to append `KidEaseNative KidEaseStoreSamsung`, so the first request is the Galaxy Store channel. If that token is missing, the activity sets it and reloads. It does not swallow the failure. The iOS app and the Play flavour strip that token and do not set a `ke_store=samsung` cookie. A `?store=samsung` link does not switch them. The site sees the Samsung token first and leaves checkout on. The Play token alone still hides checkout.
+
+The Play review sheet and any `play.google.com` listing link stay off in this build. Rate KidEase sends the parent to `/get-app` until a Galaxy Store listing exists. Do not invent that URL.
 
 Play’s `google-services.json` may be used for this flavour if you want FCM. Do not commit that file.
 
@@ -134,7 +136,9 @@ Huawei phones do not ship Google Play Services. This flavour degrades on purpose
 | “Near me” | Uses the phone location through the WebView, not the Google location plugin. If the phone denies location, search by city still works. |
 | Stripe | Blocked |
 
-The user-agent token is `KidEaseStoreHuawei`. `google-services.json` must not be applied to this variant. The Gradle task that processes it is turned off for the Huawei flavour, and `android/app/src/huawei/AndroidManifest.xml` removes `FirebaseInitProvider`.
+The user-agent token is `KidEaseStoreHuawei`, set in `android/app/src/huawei/assets/capacitor.config.json` and checked again on the WebView. A Huawei debug build crashes if that token is missing, so a broken build cannot fall through to the Play channel. A release build logs the same error. `google-services.json` must not be applied to this variant. The Gradle task that processes it is turned off for the Huawei flavour, and `android/app/src/huawei/AndroidManifest.xml` removes `FirebaseInitProvider`.
+
+The Huawei flavour also drops `com.google.android.gms`, `com.google.android.play`, and `com.google.firebase`. The Play geolocation plugin and the Play in-app review plugin are not in this binary. Location uses the WebView. The first HTML for this channel does not dns-prefetch `maps.googleapis.com`. The website, Play, and Samsung pages still do. The Plans row in the phone menu stays hidden, the same as Apple and Play.
 
 Trade-off to tell parents in the store listing: message alerts are not delivered on this Huawei build yet. Saved centres in the browser cache are not the same as the Capacitor offline shortlist. City search is the way to find a daycare.
 

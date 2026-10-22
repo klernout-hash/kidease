@@ -48,6 +48,15 @@ function manifestHref(channel: StoreChannel | undefined): string {
   return `${file}?v=${ICON_VER}`;
 }
 
+/** Huawei phones do not use Google Maps. Other channels can still warm the map hosts. */
+function mapDnsPrefetch(channel: StoreChannel | undefined): { rel: "dns-prefetch"; href: string }[] {
+  if (channel === "huawei") return [];
+  return [
+    { rel: "dns-prefetch", href: "https://maps.googleapis.com" },
+    { rel: "dns-prefetch", href: "https://maps.gstatic.com" },
+  ];
+}
+
 const GUEST_LOCALE = {
   locale: "en" as const,
   explicit: false,
@@ -150,8 +159,7 @@ export const Route = createRootRoute({
         crossOrigin: "anonymous",
       },
       { rel: "preload", href: "/logo-transparent.svg?v=17", as: "image", type: "image/svg+xml" },
-      { rel: "dns-prefetch", href: "https://maps.googleapis.com" },
-      { rel: "dns-prefetch", href: "https://maps.gstatic.com" },
+      ...mapDnsPrefetch(match.context.storeChannel),
     ],
   }),
   component: RootDocument,

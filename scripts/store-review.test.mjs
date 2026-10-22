@@ -12,6 +12,8 @@ import {
   isAssignedAppleAppStoreId,
   isHappyMomentReason,
   isPlayPackageName,
+  inAppReviewAllowed,
+  playListingAllowed,
   playPackageName,
   playStoreListingUrl,
   playWriteReviewUrl,
@@ -94,6 +96,17 @@ describe("plugin wiring and honest copy", () => {
     assert.match(src("ios/App/App/capacitor.config.json"), /InAppReviewPlugin/);
     assert.match(src("src/lib/store-review.ts"), /@capacitor-community\/in-app-review/);
     assert.match(src("src/lib/store-review.ts"), /InAppReview\.requestReview/);
+    assert.match(src("src/lib/store-review.ts"), /inAppReviewAllowed\(readClientStoreChannel\(\)\)/);
+    assert.equal(inAppReviewAllowed("apple"), true);
+    assert.equal(inAppReviewAllowed("google"), true);
+    assert.equal(inAppReviewAllowed("samsung"), false);
+    assert.equal(inAppReviewAllowed("huawei"), false);
+    assert.equal(inAppReviewAllowed("microsoft"), false);
+    assert.equal(inAppReviewAllowed("web"), false);
+    assert.equal(playListingAllowed("google"), true);
+    assert.equal(playListingAllowed("apple"), true);
+    assert.equal(playListingAllowed("samsung"), false);
+    assert.equal(playListingAllowed("huawei"), false);
     assert.doesNotMatch(src("src/lib/store-review.ts"), /type=["']range["']|star-picker|fakeStars/);
   });
 

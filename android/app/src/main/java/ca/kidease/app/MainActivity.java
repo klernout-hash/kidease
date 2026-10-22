@@ -1,43 +1,89 @@
 package ca.kidease.app;
 
+import android.util.Log;
+import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
-import com.getcapacitor.CapConfig;
 
 /**
- * Play keeps the KidEaseNative token from capacitor.config.json.
- * Only the Samsung flavour may append KidEaseStoreSamsung, and only the
- * Huawei flavour may append KidEaseStoreHuawei. Play strips both.
- * The field is private on CapConfig; the public builder would drop SplashScreen and server.url.
- * Keep this in step with userAgentForStoreBuild in native-entitlements.ts.
+ * Play sends KidEaseNative only. Samsung also sends KidEaseStoreSamsung.
+ * Huawei also sends KidEaseStoreHuawei. The token is written on the WebView
+ * after the bridge starts, then the page reloads if the first request missed it.
+ * A Huawei debug build crashes when its token is missing. Release builds log that error.
+ * Keep userAgentForStoreBuild in step with native-entitlements.ts.
  */
 public class MainActivity extends BridgeActivity {
+    private static final String TAG = "KidEase";
+    private static final String NATIVE_TOKEN = "KidEaseNative";
+
     @Override
     protected void load() {
-        try {
-            CapConfig defaults = CapConfig.loadDefault(this);
-            String flavor = BuildConfig.FLAVOR;
-            java.lang.reflect.Field uaField = CapConfig.class.getDeclaredField("appendedUserAgentString");
-            uaField.setAccessible(true);
-            String base = (String) uaField.get(defaults);
-            String next = userAgentForStoreBuild(flavor, base, BuildConfig.STORE_UA_TOKEN);
-            if (!next.equals(base == null ? "" : base)) {
-                uaField.set(defaults, next.isEmpty() ? null : next);
-                this.config = defaults;
-            }
-            if (!"samsung".equals(flavor)) {
-                java.lang.reflect.Field urlField = CapConfig.class.getDeclaredField("serverUrl");
-                urlField.setAccessible(true);
-                String url = (String) urlField.get(defaults);
-                String cleaned = withoutSamsungStoreQuery(url);
-                if (url != null && !cleaned.equals(url)) {
-                    urlField.set(defaults, cleaned);
-                    this.config = defaults;
-                }
-            }
-        } catch (Exception ignored) {
-            // The site still loads. Without a store token this build looks like Play.
-        }
         super.load();
+        String flavor = BuildConfig.FLAVOR == null ? "" : BuildConfig.FLAVOR;
+        applyStoreUserAgent(flavor);
+        if (!"samsung".equals(flavor)) {
+            dropSamsungStoreLink();
+        }
+    }
+
+    private void applyStoreUserAgent(String flavor) {
+        WebView webView = webViewOrNull();
+        if (webView == null) {
+            failStoreToken(flavor, "WebView was not ready");
+            return;
+        }
+        String configured = BuildConfig.STORE_UA_TOKEN == null ? "" : BuildConfig.STORE_UA_TOKEN;
+        String current = webView.getSettings().getUserAgentString();
+        String next = ensureNativeToken(userAgentForStoreBuild(flavor, current, configured));
+        boolean changed = current == null || !current.equals(next);
+        if (changed) {
+            webView.getSettings().setUserAgentString(next);
+        }
+        String applied = webView.getSettings().getUserAgentString();
+        if (!configured.isEmpty() && (applied == null || !applied.contains(configured))) {
+            failStoreToken(flavor, "User-Agent is missing " + configured);
+            return;
+        }
+        if (applied == null || !applied.contains(NATIVE_TOKEN)) {
+            failStoreToken(flavor, "User-Agent is missing " + NATIVE_TOKEN);
+            return;
+        }
+        if (changed) {
+            webView.reload();
+        }
+    }
+
+    /** Play, Samsung, and Huawei must send KidEaseNative so the site can tell a shell from the website. */
+    static String ensureNativeToken(String agent) {
+        String next = agent == null ? "" : agent.trim();
+        if (next.contains(NATIVE_TOKEN)) return next;
+        if (next.isEmpty()) return NATIVE_TOKEN;
+        return next + " " + NATIVE_TOKEN;
+    }
+
+    private void dropSamsungStoreLink() {
+        if (getBridge() == null || getBridge().getWebView() == null) return;
+        String url = getBridge().getServerUrl();
+        String cleaned = withoutSamsungStoreQuery(url);
+        if (url != null && !cleaned.equals(url)) {
+            getBridge().getWebView().loadUrl(cleaned);
+        }
+    }
+
+    private WebView webViewOrNull() {
+        try {
+            if (getBridge() == null) return null;
+            return getBridge().getWebView();
+        } catch (RuntimeException ex) {
+            Log.e(TAG, "WebView was not ready", ex);
+            return null;
+        }
+    }
+
+    private void failStoreToken(String flavor, String reason) {
+        Log.e(TAG, "Store user-agent failed for " + flavor + ": " + reason);
+        if ("huawei".equals(flavor) && BuildConfig.DEBUG) {
+            throw new IllegalStateException("Huawei build is missing KidEaseStoreHuawei: " + reason);
+        }
     }
 
     /** Play returns the shared KidEaseNative token only. Samsung and Huawei add their own. */
