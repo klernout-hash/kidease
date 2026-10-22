@@ -83,8 +83,8 @@ function expectedChannel(store, width) {
   return "app";
 }
 
-function expectedRuntime(store) {
-  if (store === "samsung" || store === "microsoft") return "web";
+/** v1 payments are off in every store, so the boot script marks those shells native. */
+function expectedRuntime() {
   return "native";
 }
 
@@ -163,7 +163,7 @@ async function sweepSizes(page, base, viewports, problems) {
             safe: safeFor(vp),
             shape: expectedShape(vp.width, vp.height),
             channel: expectedChannel(vp.store, vp.width),
-            runtime: expectedRuntime(vp.store),
+            runtime: expectedRuntime(),
             store: vp.store,
           },
         );

@@ -5,11 +5,13 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { providersForStore } from "../src/lib/auth/providers.ts";
 import {
+  STORE_PAYMENTS_ENABLED,
   commercePolicyForChannel,
   googleServicesHidden,
   microsoftStoreCookieHeader,
   shellBlocksCommerce,
   storeChannelFromSignals,
+  storePaymentsEnabled,
   userAgentForStoreBuild,
   withoutSamsungStoreQuery,
 } from "../src/lib/native-entitlements.ts";
@@ -20,7 +22,40 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("store channel blocks Stripe on Apple, Play, and Huawei only", () => {
+test("v1 payments are off in every store and on for a normal browser", () => {
+  const stores = ["apple", "google", "microsoft", "samsung", "huawei"];
+  for (const channel of stores) {
+    assert.equal(STORE_PAYMENTS_ENABLED[channel], false, channel);
+    assert.equal(storePaymentsEnabled(channel), false, channel);
+    assert.equal(shellBlocksCommerce(channel), true, channel);
+    const policy = commercePolicyForChannel(channel);
+    assert.equal(policy.sellDigitalGoods, false, channel);
+    assert.equal(policy.showPrices, false, channel);
+    assert.equal(policy.showUpgrade, false, channel);
+    assert.equal(policy.showCheckout, false, channel);
+    assert.equal(policy.showStripeLinks, false, channel);
+    assert.equal(policy.showSubscribeOnWeb, false, channel);
+    assert.equal(policy.showParentPlus, false, channel);
+    assert.equal(policy.parentPlusIap, null, channel);
+    assert.equal(policy.daycarePurchasesUnlock, true, channel);
+  }
+  assert.equal(storePaymentsEnabled("web"), true);
+  assert.equal(shellBlocksCommerce("web"), false);
+  const web = commercePolicyForChannel("web");
+  assert.equal(web.showCheckout, true);
+  assert.equal(web.showPrices, true);
+  assert.equal(web.showStripeLinks, true);
+  assert.equal(web.showUpgrade, true);
+  assert.equal(web.daycarePurchasesUnlock, true);
+  assert.equal(web.parentPlusIap, null);
+  const boot = src("public/channel-boot.js");
+  assert.match(boot, /STORE_PAYMENTS_ENABLED = \{ apple: false, google: false, microsoft: false, samsung: false, huawei: false \}/);
+  assert.match(boot, /STORE_PAYMENTS_ENABLED\[store\] === false/);
+  assert.match(src("src/lib/runtime.ts"), /root\.dataset\.runtime = "native"/);
+  assert.doesNotMatch(src("src/lib/native-entitlements.ts"), /channel === "apple" \|\| channel === "google" \|\| channel === "huawei"/);
+});
+
+test("store channel resolution keeps native shells ahead of store links", () => {
   assert.equal(storeChannelFromSignals({ userAgent: "Mozilla KidEaseNative" }), "google");
   assert.equal(storeChannelFromSignals({ userAgent: "iPhone KidEaseNative" }), "apple");
   assert.equal(
@@ -60,8 +95,8 @@ test("store channel blocks Stripe on Apple, Play, and Huawei only", () => {
     "samsung",
   );
   assert.equal(storeChannelFromSignals({ userAgent: "Mozilla" }), "web");
-  assert.equal(shellBlocksCommerce("samsung"), false);
-  assert.equal(shellBlocksCommerce("microsoft"), false);
+  assert.equal(shellBlocksCommerce("samsung"), true);
+  assert.equal(shellBlocksCommerce("microsoft"), true);
   assert.equal(shellBlocksCommerce("web"), false);
   assert.equal(shellBlocksCommerce("huawei"), true);
   assert.equal(shellBlocksCommerce("google"), true);
@@ -102,8 +137,8 @@ test("store channel blocks Stripe on Apple, Play, and Huawei only", () => {
     }),
     "google",
   );
-  assert.equal(commercePolicyForChannel("samsung").showCheckout, true);
-  assert.equal(commercePolicyForChannel("microsoft").showStripeLinks, true);
+  assert.equal(commercePolicyForChannel("samsung").showCheckout, false);
+  assert.equal(commercePolicyForChannel("microsoft").showStripeLinks, false);
   assert.equal(commercePolicyForChannel("huawei").showCheckout, false);
   assert.equal(commercePolicyForChannel("huawei").showSubscribeOnWeb, false);
   assert.equal(googleServicesHidden("huawei"), true);
@@ -161,7 +196,7 @@ test("PWA manifest for Partner Center stays installable and does not retag the w
   assert.match(src("public/channel-boot.js"), /Max-Age=0/);
   assert.match(src("public/channel-boot.js"), /display-mode: standalone/);
   assert.match(src("public/channel-boot.js"), /serviceWorker\.register\("\/sw\.js\?v=6"/);
-  assert.match(src("src/routes/__root.tsx"), /channel-boot\.js\?v=6/);
+  assert.match(src("src/routes/__root.tsx"), /channel-boot\.js\?v=7/);
   assert.match(src("src/lib/native.ts"), /register\("\/sw\.js\?v=6"/);
   assert.match(src("public/channel-boot.js"), /!n && !uaNative && \(store === "microsoft" \|\| standalone\)/);
   const rootHead = src("src/routes/__root.tsx");
