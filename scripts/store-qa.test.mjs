@@ -65,7 +65,8 @@ test("listing, turnstile, login, radius, contact, and the menu match the QA note
   assert.match(login, /href="\/parent" className="[^"]*text-fg/);
   assert.doesNotMatch(login, /href="\/parent" className="[^"]*text-subtle/);
   const radius = src("src/components/explore-search-bar.tsx");
-  assert.match(radius, /min-w-\[7\.5rem\]/);
+  assert.match(radius, /min-w-\[9rem\]/);
+  assert.match(src("src/styles.css"), /min-width: 9rem !important/);
   assert.doesNotMatch(radius, /max-w-\[4\.75rem\]/);
   const contact = src("src/routes/contact.tsx");
   assert.match(contact, /\/photos\/kitchen\.jpg/);
