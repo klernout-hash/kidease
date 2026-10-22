@@ -54,8 +54,8 @@ async function openRoute(page, base, path) {
   await page.evaluate(async () => {
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
   });
-  // Home stills are lazy. A wide window sometimes shoots the placeholder.
-  if (path === "/" || path === "/fr") {
+  // Home and contact stills are lazy. A wide window sometimes shoots the placeholder.
+  if (path === "/" || path === "/fr" || path === "/contact") {
     await page
       .waitForFunction(() => {
         const imgs = [...document.images].filter((img) => {
