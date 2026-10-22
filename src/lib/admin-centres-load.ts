@@ -5,6 +5,8 @@
 
 export const ADMIN_IDLE_TIMEOUT_MESSAGE = "Admin session timed out. Sign in again.";
 export const ADMIN_CENTRES_LOAD_FALLBACK = "Could not load the admin queue.";
+/** A hung centre query must leave the skeleton. Twelve seconds is long enough for Neon. */
+export const ADMIN_CENTRES_LOAD_TIMEOUT_MS = 12_000;
 
 export type AdminCentresLoadResult<T = unknown> =
   | { ok: true; list: T[] }
@@ -51,11 +53,20 @@ export function adminCentresLoadMessage(err: unknown): string {
 
 export async function settleAdminCentresLoad<T>(
   load: () => Promise<T[]>,
+  timeoutMs = ADMIN_CENTRES_LOAD_TIMEOUT_MS,
 ): Promise<AdminCentresLoadResult<T>> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    const list = await load();
+    const list = await Promise.race([
+      load(),
+      new Promise<T[]>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(ADMIN_CENTRES_LOAD_FALLBACK)), timeoutMs);
+      }),
+    ]);
     return { ok: true, list };
   } catch (err) {
     return { ok: false, error: adminCentresLoadMessage(err) };
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }

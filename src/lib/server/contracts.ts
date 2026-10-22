@@ -26,6 +26,7 @@ import { templateRoleName, type DocusignTemplateOption } from "@/lib/docusign-pa
 import { classifyDocusignFailure, docusignRateLimitIssue, type DocusignConnectIssue } from "@/lib/docusign-errors";
 import { docusignIsRateLimited } from "@/lib/docusign-template-cache";
 import { runtimeProcessEnv } from "@/lib/runtime-env";
+import { isAdminOnlyListing } from "@/lib/listing-visibility";
 
 export type ContractStatus = "draft" | "sent" | "viewed" | "signed" | "declined" | "voided";
 
@@ -57,6 +58,8 @@ export type AdminContractRow = {
   providerName: string | null;
   providerEmail: string | null;
   contactEmail: string | null;
+  /** QA / Claim Lab centre. Send to sign stays off. */
+  isTest?: boolean;
   packs: AdminPackRow[];
 };
 
@@ -160,6 +163,8 @@ async function loadAdminContractsPayload(): Promise<AdminContractsPayload> {
       provider_name: string | null;
       provider_email: string | null;
       contact_email: string | null;
+      is_test: number | boolean | null;
+      visibility: string | null;
     }>`
       select distinct on (d.id)
         d.id as daycare_id,
@@ -172,7 +177,9 @@ async function loadAdminContractsPayload(): Promise<AdminContractsPayload> {
         coalesce(pd.user_id, c.user_id) as provider_user_id,
         u.name as provider_name,
         u.email as provider_email,
-        d.contact_email
+        d.contact_email,
+        d.is_test,
+        d.visibility
       from daycares d
       left join provider_daycares pd on pd.daycare_id = d.id
       left join listing_claims c on c.daycare_id = d.id
@@ -249,6 +256,15 @@ async function loadAdminContractsPayload(): Promise<AdminContractsPayload> {
         providerName: r.provider_name,
         providerEmail: r.provider_email,
         contactEmail: r.contact_email,
+        isTest: isAdminOnlyListing({
+          id: r.daycare_id,
+          slug: r.slug,
+          name: r.name,
+          licenseNumber: r.licence,
+          address: r.address,
+          visibility: r.visibility,
+          isTest: r.is_test,
+        }),
         packs,
       };
     });
@@ -310,12 +326,27 @@ export const sendCentreContract = createServerFn({ method: "POST" })
       province: string;
       license_number: string | null;
       contact_email: string | null;
+      is_test: number | boolean | null;
+      visibility: string | null;
     }>`
-      select id, slug, name, address, city, province, license_number, contact_email
+      select id, slug, name, address, city, province, license_number, contact_email, is_test, visibility
       from daycares where id = ${data.daycareId} limit 1
     `;
     const centre = listed[0];
     if (!centre) throw new Error("Centre not found");
+    if (
+      isAdminOnlyListing({
+        id: centre.id,
+        slug: centre.slug,
+        name: centre.name,
+        licenseNumber: centre.license_number,
+        address: centre.address,
+        visibility: centre.visibility,
+        isTest: centre.is_test,
+      })
+    ) {
+      throw new Error("Test centres cannot be sent a contract.");
+    }
 
     const owner = await sql<{ user_id: string; name: string | null; email: string | null }>`
       select coalesce(pd.user_id, c.user_id) as user_id, u.name, u.email
