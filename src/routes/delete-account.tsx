@@ -5,8 +5,6 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { localePath } from "@/lib/locale-path";
 import { pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
-import { DeskSkeleton } from "@/components/page-skeleton";
-
 export const Route = createFileRoute("/delete-account")({
   head: () =>
     pageSeoHead({
@@ -32,14 +30,12 @@ export function DeleteAccountPage() {
         <h1 className="mt-2 font-display text-3xl tracking-[-0.03em]">{t("deleteAccount")}</h1>
         <p className="mt-3 text-muted">{t("deleteAccountLead")}</p>
         <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-muted" data-ke="delete-account-kept">
+          <li>{t("deleteAccountPendingNow")}</li>
+          <li className="break-words">{t("deleteAccountWeb")}</li>
           <li>{t("deleteAccountKeepBilling")}</li>
           <li>{t("deleteAccountKeepLogs")}</li>
         </ul>
-        {isPending ? (
-          <DeskSkeleton />
-        ) : (
-          <DeleteAccountPanel signedIn={Boolean(user)} />
-        )}
+        <DeleteAccountPanel signedIn={false} />
         <p className="mt-8 text-sm text-muted">
           <Link to={localePath("/unsubscribe", locale)} className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
             {t("unsubscribe")}
