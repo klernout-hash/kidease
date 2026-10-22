@@ -881,7 +881,7 @@ export function AdminPage() {
             </li>
           ) : (
             activityRows.map((r) => {
-              const badge = activityRoleBadge(r.kind, r.detail);
+              const badge = activityRoleBadge(r.kind, r.detail, r.profile_role);
               const extra = parseAccountEventDetail(r.detail);
               const who = activityWhoLine(r);
               const meta = activitySignupMeta(r);

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { transactionalMailFrom } from "@/lib/mail-from";
+import { resendCampaignTags } from "@/lib/email-suppressions";
 import { ADMIN_EMAIL } from "@/lib/server/notify";
 import { requireAdmin } from "@/lib/server/roles";
 import { reportError } from "@/lib/observe";
@@ -133,6 +134,7 @@ export const sendAdminMail = createServerFn({ method: "POST" })
           subject: data.subject,
           text: data.body,
           html,
+          tags: resendCampaignTags("admin-reply"),
           headers: {
             ...(data.inReplyTo ? { "In-Reply-To": data.inReplyTo } : {}),
             ...(data.references ? { References: data.references } : {}),

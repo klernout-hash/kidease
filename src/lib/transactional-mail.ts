@@ -10,6 +10,7 @@
  */
 
 import { KIDEASE_OPERATOR_EMAIL, normalizeEmail } from "./admin-email.ts";
+import { resendCampaignTags } from "./email-suppressions.ts";
 import {
   DEFAULT_TRANSACTIONAL_MAIL_FROM,
   isApexKidEaseFrom,
@@ -353,6 +354,7 @@ export async function sendTransactionalMail(
           subject: input.subject,
           text: input.text,
           html: input.html,
+          tags: resendCampaignTags(`txn-${input.purpose}`),
         },
       );
       if (result.ok) {

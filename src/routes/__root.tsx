@@ -48,6 +48,10 @@ const GUEST_LOCALE = {
 
 export const Route = createRootRoute({
   beforeLoad: async ({ location }) => {
+    if (location.pathname === "/fr/parent" || location.pathname.startsWith("/fr/parent/")) {
+      const rest = location.pathname.replace(/^\/fr/, "") || "/parent";
+      throw redirect({ href: `${rest}${location.searchStr || ""}`, statusCode: 302 });
+    }
     const search = `${location.searchStr || ""}${location.hash || ""}`;
     const [roleChrome, visitorLocale] = await Promise.all([
       getRoleChrome().catch(() => ({

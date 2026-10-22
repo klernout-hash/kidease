@@ -300,12 +300,18 @@ export function activityAccountHeadline(row: {
   return (row.daycare_name || "").trim() || "Activity";
 }
 
-export function activityRoleBadge(kind?: string | null, detail?: string | null): string | null {
+export function activityRoleBadge(
+  kind?: string | null,
+  detail?: string | null,
+  profileRole?: string | null,
+): string | null {
+  // People uses the live profile. Prefer that over an older account/signup kind.
+  if (profileRole === "provider" || profileRole === "parent") return accountRoleLabel(profileRole);
+  const parsed = parseAccountEventDetail(detail);
+  if (parsed.role) return accountRoleLabel(parsed.role);
   if (kind === "listing") return accountRoleLabel("provider");
   const fromKind = accountRoleFromKind(kind);
   if (fromKind) return accountRoleLabel(fromKind);
-  const parsed = parseAccountEventDetail(detail);
-  if (parsed.role) return accountRoleLabel(parsed.role);
   return null;
 }
 
@@ -320,8 +326,9 @@ export function activitySignupMeta(row: {
   email_status?: string | null;
   created_at?: string | null;
   detail?: string | null;
+  profile_role?: string | null;
 }): { who: string; role: string; city: string; time: string; emailFailed: boolean } {
-  const role = activityRoleBadge(row.kind, row.detail) || accountRoleLabel(accountRoleFromKind(row.kind) || "parent");
+  const role = activityRoleBadge(row.kind, row.detail, row.profile_role) || accountRoleLabel(accountRoleFromKind(row.kind) || "parent");
   const city = formatPlace(row.city, row.province) || (row.daycare_name || "").trim() || "—";
   const at = row.created_at ? new Date(row.created_at) : new Date();
   const time = Number.isNaN(at.getTime()) ? "—" : formatWinnipegFull(at);
