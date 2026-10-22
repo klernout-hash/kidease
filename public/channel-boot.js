@@ -25,6 +25,21 @@
       var secure = location.protocol === "https:" ? "; Secure" : "";
       document.cookie = "ke_store=microsoft; Path=/; Max-Age=31536000; SameSite=Lax" + secure;
     }
+    var standalone = window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
+    if (!n && !uaNative && (store === "microsoft" || standalone)) {
+      window.addEventListener("load", function () {
+        try {
+          if (!("serviceWorker" in navigator) || !window.isSecureContext) return;
+          var sheets = document.querySelectorAll('link[rel="stylesheet"][href*="/assets/"]');
+          for (var i = 0; i < sheets.length; i++) {
+            if (!sheets[i].sheet) return;
+          }
+          navigator.serviceWorker.register("/sw.js", { scope: "/", updateViaCache: "none" }).catch(function () {});
+        } catch (e) {
+          /* registration is best-effort */
+        }
+      });
+    }
     r.dataset.store = store;
     var blocksCommerce = store === "apple" || store === "google" || store === "huawei";
     r.dataset.channel = force || n || uaNative || w < 1024 ? "app" : "website";
