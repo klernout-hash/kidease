@@ -1,4 +1,6 @@
 import { useEffect, useLayoutEffect } from "react";
+import { useRouterState } from "@tanstack/react-router";
+import { microsoftStoreCookieHeader } from "@/lib/native-entitlements";
 import {
   captureInstallPrompt,
   getDeviceLocation,
@@ -37,6 +39,7 @@ import { applyTheme, readThemePreference } from "@/lib/theme";
  */
 export function NativeBoot() {
   usePushRegistration();
+  const searchStr = useRouterState({ select: (s) => s.location.searchStr });
   const setOrigin = useAppStore((s) => s.setOrigin);
   const setWorkOrigin = useAppStore((s) => s.setWorkOrigin);
   const setAnchorMode = useAppStore((s) => s.setAnchorMode);
@@ -99,6 +102,17 @@ export function NativeBoot() {
       cancelAnimationFrame(inner);
     };
   }, []);
+
+  useEffect(() => {
+    const header = microsoftStoreCookieHeader(
+      {
+        userAgent: window.navigator.userAgent,
+        search: searchStr || window.location.search,
+      },
+      { secure: window.location.protocol === "https:" },
+    );
+    if (header) document.cookie = header;
+  }, [searchStr]);
 
   useEffect(() => {
     captureInstallPrompt();

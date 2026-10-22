@@ -98,6 +98,21 @@ function cookieHasMicrosoft(cookie: string | null | undefined): boolean {
 }
 
 /**
+ * Cookie for a Microsoft Store launch (`?store=microsoft`).
+ * iOS and Play (`KidEaseNative`) never receive it, so the cookie cannot turn
+ * those shells into the website channel. Secure is included for https.
+ */
+export function microsoftStoreCookieHeader(
+  input: { userAgent?: string | null; search?: string | null },
+  options?: { secure?: boolean },
+): string | null {
+  if (String(input.userAgent || "").includes(NATIVE_UA_TOKEN)) return null;
+  if (searchParams(input.search).get("store") !== "microsoft") return null;
+  const secure = options?.secure !== false;
+  return `ke_store=microsoft; Path=/; Max-Age=31536000; SameSite=Lax${secure ? "; Secure" : ""}`;
+}
+
+/**
  * User-agent string a store binary may send.
  * Only the Samsung flavour may include KidEaseStoreSamsung.
  * Only the Huawei flavour may include KidEaseStoreHuawei.

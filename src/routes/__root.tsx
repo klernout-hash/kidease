@@ -9,7 +9,7 @@ import {
 import { localeTag } from "@/lib/languages";
 import { pathLocale } from "@/lib/locale-path";
 import { getVisitorLocale } from "@/lib/locale-choice";
-import { readServerStoreChannel } from "@/lib/store-channel-request";
+import { readServerStoreChannel, type ServerStoreRead } from "@/lib/store-channel-request";
 import { LocaleChoiceSync } from "@/components/language-select";
 import { useCopy } from "@/lib/use-copy";
 import { AuthProvider } from "@/lib/auth/provider";
@@ -31,12 +31,22 @@ import { safeErrorCopy } from "@/lib/safe-error";
 import { getRoleChrome } from "@/lib/server/role-route";
 import { STYLE_NONCE_BOOT } from "@/lib/style-nonce-boot";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
-import { shellBlocksCommerce, storeChannelFromSignals, type StoreChannel } from "@/lib/native-entitlements";
+import {
+  microsoftStoreCookieHeader,
+  shellBlocksCommerce,
+  storeChannelFromSignals,
+  type StoreChannel,
+} from "@/lib/native-entitlements";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "KidEase";
 const ICON_VER = "20";
 const APP_ICON = `/icon-512.png?v=${ICON_VER}`;
+
+function manifestHref(channel: StoreChannel | undefined): string {
+  const file = channel === "microsoft" ? "/manifest.microsoft.webmanifest" : "/manifest.webmanifest";
+  return `${file}?v=${ICON_VER}`;
+}
 
 const GUEST_LOCALE = {
   locale: "en" as const,
@@ -70,9 +80,10 @@ export const Route = createRootRoute({
     if (visitorLocale.redirectTo) {
       throw redirect({ href: visitorLocale.redirectTo, statusCode: 302 });
     }
-    const storeChannel = await readRequestStoreChannel(location.searchStr || "");
+    const storeRead = await readRequestStoreChannel(location.searchStr || "");
+    const storeChannel = storeRead.channel;
     const nativeShell = shellBlocksCommerce(storeChannel);
-    return { roleChrome, visitorLocale, nativeShell, storeChannel };
+    return { roleChrome, visitorLocale, nativeShell, storeChannel, microsoftSetCookie: storeRead.setCookie };
   },
   errorComponent: (props) => {
     const path = typeof window !== "undefined" ? window.location.pathname : "";
@@ -91,7 +102,12 @@ export const Route = createRootRoute({
       />
     );
   },
-  head: () => ({
+  headers: ({ match }) => {
+    const setCookie = match.context.microsoftSetCookie;
+    if (!setCookie) return undefined;
+    return { "set-cookie": setCookie };
+  },
+  head: ({ match }) => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
@@ -101,6 +117,12 @@ export const Route = createRootRoute({
       { name: "apple-mobile-web-app-status-bar-style", content: "default" },
       { name: "apple-mobile-web-app-title", content: APP_NAME },
       { name: "application-name", content: APP_NAME },
+      ...(match.context.storeChannel === "microsoft"
+        ? [
+            { name: "msapplication-TileColor", content: "#1A3790" },
+            { name: "msapplication-TileImage", content: APP_ICON },
+          ]
+        : []),
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: `/favicon.svg?v=${ICON_VER}` },
@@ -115,7 +137,7 @@ export const Route = createRootRoute({
       },
       { rel: "icon", type: "image/png", sizes: "512x512", href: APP_ICON },
       { rel: "stylesheet", href: appCss },
-      { rel: "manifest", href: `/manifest.webmanifest?v=${ICON_VER}` },
+      { rel: "manifest", href: manifestHref(match.context.storeChannel) },
       { rel: "apple-touch-icon", sizes: "180x180", href: `/apple-touch-icon.png?v=${ICON_VER}` },
       { rel: "apple-touch-icon", sizes: "512x512", href: APP_ICON },
       { rel: "apple-touch-icon", href: APP_ICON },
@@ -135,15 +157,22 @@ export const Route = createRootRoute({
   component: RootDocument,
 });
 
-async function readRequestStoreChannel(search: string): Promise<StoreChannel> {
+async function readRequestStoreChannel(search: string): Promise<ServerStoreRead> {
   if (typeof window !== "undefined") {
-    return storeChannelFromSignals({
+    const signals = {
       userAgent: window.navigator.userAgent,
       search: window.location.search || search,
       cookie: document.cookie,
-    });
+    };
+    return {
+      channel: storeChannelFromSignals(signals),
+      setCookie: microsoftStoreCookieHeader(signals, { secure: window.location.protocol === "https:" }),
+    };
   }
-  return readServerStoreChannel({ data: { search } }).catch(() => storeChannelFromSignals({ search }));
+  return readServerStoreChannel({ data: { search } }).catch(() => ({
+    channel: storeChannelFromSignals({ search }),
+    setCookie: null,
+  }));
 }
 
 function RootDocument() {

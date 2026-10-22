@@ -51,7 +51,7 @@ test("service worker caches chrome only and registers from NativeBoot", () => {
   assert.equal(existsSync(join(root, "public/offline.html")), true);
   const sw = src("public/sw.js");
   assert.match(sw, /\/offline\.html/);
-  assert.match(sw, /kidease-shell-v5/);
+  assert.match(sw, /kidease-shell-v6/);
   assert.match(sw, /caches\.match\("\/offline\.html"\)/);
   assert.match(sw, /Do not cache HTML/);
   assert.match(sw, /request\.mode === "navigate"/);
