@@ -40,6 +40,7 @@ import { useCopy } from "@/lib/use-copy";
 import { useInNativeShell } from "@/lib/use-native-shell";
 import type { CopyKey } from "@/lib/copy";
 import { storedCentreName } from "@/lib/utils";
+import { FOUNDING_PAGE, foundingLocale } from "@/lib/founding-period";
 import { formatAgeLabel, formatStart, scheduleLabel } from "@/lib/templates";
 import type { Child, Daycare, SpotRequest, TourRequest } from "@/lib/types";
 import { ProviderContractsPanel } from "@/components/provider-contracts";
@@ -351,7 +352,7 @@ function ProviderPage() {
               ? subscription.selectedPlan === "network"
                 ? "Network"
                 : "Pro"
-              : "Free"
+              : FOUNDING_PAGE[foundingLocale(locale)].daycarePill
           }
           paid={Boolean(subscription?.paid)}
           renewsOn={chrome.renewsOn}

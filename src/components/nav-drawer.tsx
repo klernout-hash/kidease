@@ -14,7 +14,7 @@ import { CountBadge } from "@/components/count-badge";
 import { useDeskMenu } from "@/components/desk-menu";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
 import { attentionForItem } from "@/lib/attention";
-import { visibleDeskGroups } from "@/lib/desk-nav";
+import { bindDeskGroup, visibleDeskGroups, writeDeskGroupOpen } from "@/lib/desk-nav";
 import { showDeskSwitcher } from "@/lib/desks";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
@@ -252,13 +252,8 @@ export function NavDrawer({
                 return (
                 <details
                   key={group.id}
-                  open={group.open || undefined}
-                  ref={(node) => {
-                    if (node && group.open && node.dataset.keGroup !== "1") {
-                      node.dataset.keGroup = "1";
-                      node.open = true;
-                    }
-                  }}
+                  ref={(node) => bindDeskGroup(node, deskMenu.desk, group.id, Boolean(group.open))}
+                  onToggle={(event) => writeDeskGroupOpen(deskMenu.desk, group.id, event.currentTarget.open)}
                   className="py-0.5"
                 >
                   <summary className={drawerSummaryClass}>

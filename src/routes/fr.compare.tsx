@@ -9,5 +9,5 @@ export const Route = createFileRoute("/fr/compare")({
 });
 
 function FrCompare() {
-  return <ComparePage slugs={Route.useSearch().slugs} />;
+  return <ComparePage slugs={Route.useSearch().slugs ?? []} />;
 }

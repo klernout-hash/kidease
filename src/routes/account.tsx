@@ -46,7 +46,7 @@ export const Route = createFileRoute("/account")({
     const out: {
       tab?: "saved" | "enrolled" | "profile" | "payments";
       desk?: "parent" | "director" | "admin" | "support";
-      section?: "profile" | "alerts" | "appearance" | "subscription" | "delete";
+      section?: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms";
     } = {};
     const tab = s.tab;
     if (tab === "saved" || tab === "enrolled" || tab === "profile" || tab === "payments") out.tab = tab;
@@ -56,7 +56,9 @@ export const Route = createFileRoute("/account")({
       section === "alerts" ||
       section === "appearance" ||
       section === "subscription" ||
-      section === "delete"
+      section === "delete" ||
+      section === "security" ||
+      section === "email-sms"
     ) {
       out.section = section;
     }
@@ -292,11 +294,16 @@ function ProfilePane() {
             : null;
 
   const hideParentPlan = !chrome.pending && chrome.role === "parent" && !chrome.subscriptionsEnabled;
+  const hideUpgrade = desk === "admin" || hideParentPlan;
   const section =
     nativeShell && (search.section === "subscription" || search.section === "alerts")
       ? "profile"
-      : (hideParentPlan && search.section === "subscription" ? "profile" : (search.section ?? "profile"));
-  const sectionSearch = (next: "profile" | "alerts" | "appearance" | "subscription" | "delete") => ({
+      : hideUpgrade && search.section === "subscription"
+        ? "profile"
+        : (search.section ?? "profile");
+  const sectionSearch = (
+    next: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms",
+  ) => ({
     tab: "profile" as const,
     ...(search.desk ? { desk: search.desk } : {}),
     section: next,
@@ -304,12 +311,14 @@ function ProfilePane() {
   const sections = [
     { id: "profile" as const, label: t("profile") },
     { id: "alerts" as const, label: t("accountAlerts") },
+    { id: "security" as const, label: t("loginSecurity") },
+    { id: "email-sms" as const, label: t("emailAndSms") },
     { id: "appearance" as const, label: t("appearance") },
     { id: "subscription" as const, label: t("navUpgrade") },
     { id: "delete" as const, label: t("deleteAccount") },
   ].filter((item) => {
     if (nativeShell && (item.id === "alerts" || item.id === "subscription")) return false;
-    if (item.id === "subscription" && hideParentPlan) return false;
+    if (item.id === "subscription" && hideUpgrade) return false;
     return true;
   });
 
@@ -388,6 +397,36 @@ function ProfilePane() {
           <div data-ke="account-delete">
             <DeleteAccountPanel signedIn />
           </div>
+        ) : null}
+        {section === "security" && user ? (
+          <div className="mt-8" data-ke="account-security">
+            <AccountSecurity email={email || user.primaryEmail || ""} />
+            <SignedInDevices />
+          </div>
+        ) : null}
+        {section === "email-sms" && user ? (
+          <form onSubmit={onSave} className="mt-8 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="account-email-sms">
+            <h2 className="font-display text-lg tracking-[-0.02em]">{t("emailAndSms")}</h2>
+            <p className="text-[13px] text-muted">{t("accountEmailNote")}</p>
+            <CaslConsentFields value={consents} onChange={setConsents} />
+            {smsNote ? (
+              <p className="text-sm text-danger" role="alert">
+                {smsNote}
+              </p>
+            ) : null}
+            <Button type="submit" className="w-full" disabled={saving}>
+              {saving ? t("loading") : t("accountSaveDetails")}
+            </Button>
+            <p className="text-[12px] text-subtle">
+              <Link
+                to="/unsubscribe"
+                search={{ token: undefined, channel: undefined }}
+                className="underline-offset-4 hover:underline"
+              >
+                {t("unsubscribe")}
+              </Link>
+            </p>
+          </form>
         ) : null}
         {section !== "profile" ? null : (
         <>
@@ -500,12 +539,6 @@ function ProfilePane() {
         ) : (
           <p className="mt-8 text-center text-sm text-muted">{t("accountSettingsGuest")}</p>
         )}
-        {user ? (
-          <>
-            <AccountSecurity email={email || user.primaryEmail || ""} />
-            <SignedInDevices />
-          </>
-        ) : null}
         </>
         )}
       </main>

@@ -58,6 +58,7 @@ export type ScreeningPersonView = {
 export type ScreeningCentreView = {
   daycareId: string;
   daycareName: string;
+  city: string;
   province: string;
   facilityType: string | null;
   packStatus: "seeded" | "stub";
@@ -363,11 +364,12 @@ async function loadCentreScreening(
   const centre = await sql<{
     id: string;
     name: string;
+    city: string | null;
     province: string;
     facility_type: string | null;
     screening_on_file: number | boolean | null;
   }>`
-    select id, name, province, facility_type, screening_on_file
+    select id, name, city, province, facility_type, screening_on_file
     from daycares where id = ${daycareId} limit 1
   `.catch(() => []);
   const row = centre[0];
@@ -402,6 +404,7 @@ async function loadCentreScreening(
   return {
     daycareId: row.id,
     daycareName: row.name,
+    city: row.city || "",
     province: row.province,
     facilityType: row.facility_type,
     packStatus,

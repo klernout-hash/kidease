@@ -9,7 +9,9 @@ import { attentionForItem } from "@/lib/attention";
 import { showDeskSwitcher } from "@/lib/desks";
 import {
   DESK_META,
+  bindDeskGroup,
   visibleDeskGroups,
+  writeDeskGroupOpen,
   visibleDeskNav,
   type DeskIcon,
   type DeskId,
@@ -202,13 +204,8 @@ export function DeskShell({
                 {visibleDeskGroups(desk, allItems).map(({ group, items }) => (
                   <details
                     key={group.id}
-                    open={group.open || undefined}
-                    ref={(node) => {
-                      if (node && group.open && node.dataset.keGroup !== "1") {
-                        node.dataset.keGroup = "1";
-                        node.open = true;
-                      }
-                    }}
+                    ref={(node) => bindDeskGroup(node, desk, group.id, Boolean(group.open))}
+                    onToggle={(event) => writeDeskGroupOpen(desk, group.id, event.currentTarget.open)}
                     className="py-0.5"
                   >
                     <summary className="flex min-h-11 cursor-pointer list-none items-center rounded-lg px-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-subtle [&::-webkit-details-marker]:hidden">
