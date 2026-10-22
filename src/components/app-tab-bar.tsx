@@ -49,11 +49,11 @@ export function AppTabBar() {
     <nav
       data-ke="app-tab-bar"
       data-bar={storeTabs ? "store" : kind}
-      className="ke-app-only fixed inset-x-0 bottom-0 z-50 hidden border-t border-border bg-surface [[data-channel=app]_&]:block"
+      className="ke-app-only fixed inset-x-0 bottom-0 z-50 hidden border-t border-border bg-surface pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] [[data-channel=app]_&]:block"
     >
       <div
         className={cn(
-          "mx-auto grid max-w-lg px-0.5 pb-[env(safe-area-inset-bottom)] pt-1",
+          "mx-auto grid max-w-lg px-0.5 pb-[var(--ke-safe-bottom,env(safe-area-inset-bottom))] pt-1 md:max-w-3xl",
           storeTabs || kind === "guest" ? "grid-cols-4" : "grid-cols-5",
         )}
       >
@@ -203,7 +203,7 @@ function AvatarTab({
       aria-label="Account"
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex h-[3.35rem] min-w-11 flex-col items-center justify-center",
+        "flex min-h-11 min-w-11 flex-col items-center justify-center",
         active ? "text-primary" : "text-muted",
       )}
     >
@@ -238,7 +238,7 @@ function Tab({
       data-nav={marker}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex h-[3.35rem] min-w-0 flex-col items-center justify-center gap-0.5 overflow-hidden px-0.5 text-center text-[10px] font-medium leading-[1.05] sm:text-[11px]",
+        "flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 overflow-hidden px-0.5 text-center text-[0.72rem] font-medium leading-[1.05]",
         active ? "text-primary" : "text-muted",
       )}
     >

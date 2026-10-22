@@ -9,6 +9,7 @@
 
 import { haversineKm } from "./geo.ts";
 import { winnipegDayKey } from "./search-alert-policy.ts";
+import { spotAgeForMonths, standardGroupsForRange } from "./standard-age-groups.ts";
 
 export const OPEN_SPOT_DAILY_CAP = 3;
 export const OPEN_SPOT_START_DAYS = 90;
@@ -82,11 +83,7 @@ function spotCount(spot: PostedSpot, band: "infant" | "toddler" | "preschool") {
 }
 
 function ageBucket(months: number): "infant" | "toddler" | "preschool" | null {
-  if (!Number.isFinite(months) || months < 0) return null;
-  if (months < 18) return "infant";
-  if (months < 36) return "toddler";
-  if (months < 72) return "preschool";
-  return null;
+  return spotAgeForMonths(months);
 }
 
 /** Confirmed age range and a real spot in that band. Unknown ages do not match a named age. */
@@ -101,14 +98,11 @@ export function spotAgeFits(watch: Pick<SpotSearchWatch, "ageBand" | "childAgeMo
   }
   if (watch.ageBand === "any") return true;
   if (spot.agesKnown !== true) return false;
-  if (watch.ageBand === "infant") {
-    return spotCount(spot, "infant") > 0 && spot.ageMinMonths <= 18 && spot.ageMaxMonths >= 0;
-  }
-  if (watch.ageBand === "toddler") {
-    return spotCount(spot, "toddler") > 0 && spot.ageMinMonths < 36 && spot.ageMaxMonths >= 18;
-  }
-  if (watch.ageBand === "preschool") {
-    return spotCount(spot, "preschool") > 0 && spot.ageMaxMonths >= 30 && spot.ageMinMonths < 72;
+  if (watch.ageBand === "infant" || watch.ageBand === "toddler" || watch.ageBand === "preschool") {
+    return (
+      spotCount(spot, watch.ageBand) > 0 &&
+      standardGroupsForRange(spot.ageMinMonths, spot.ageMaxMonths).includes(watch.ageBand)
+    );
   }
   return false;
 }

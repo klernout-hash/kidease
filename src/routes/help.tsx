@@ -85,10 +85,10 @@ export function Help() {
           <p className="text-sm font-semibold">{t("contactDirect")}</p>
           <a
             href={`mailto:${SUPPORT_INBOX_EMAIL}`}
-            className="mt-2 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary hover:underline"
+            className="mt-2 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary hover:underline max-md:flex max-md:max-w-full"
           >
-            <Mail className="size-4" />
-            {SUPPORT_INBOX_EMAIL}
+            <Mail className="size-4 max-md:shrink-0" aria-hidden />
+            <span className="min-w-0 max-md:break-all">{SUPPORT_INBOX_EMAIL}</span>
           </a>
         </div>
 

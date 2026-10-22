@@ -26,7 +26,7 @@ export function BrandMark({
   return (
     <span
       data-ke-mark={size}
-      className={cn("inline-flex flex-col", align === "start" ? "items-start" : "items-center")}
+      className={cn("inline-flex max-w-full flex-col max-md:min-w-0", align === "start" ? "items-start" : "items-center")}
       style={{ display: "inline-flex", flexDirection: "column", alignItems: align === "start" ? "flex-start" : "center" }}
     >
       <img
@@ -39,7 +39,7 @@ export function BrandMark({
         className={cn(logo, "bg-transparent object-contain")}
         style={{ width: px, height: px, maxWidth: px, maxHeight: px, objectFit: "contain" }}
       />
-      <span className={cn("font-sans text-primary", name)}>KidEase</span>
+      <span className={cn("max-w-full font-sans text-primary max-md:block max-md:truncate", name)}>KidEase</span>
     </span>
   );
 }

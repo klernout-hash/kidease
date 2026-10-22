@@ -6,8 +6,8 @@ KidEase asks for an App Store / Play rating only after a real happy moment, usin
 
 | Surface | Behaviour |
 | --- | --- |
-| Happy moment (Capacitor iOS / Android) | `@capacitor-community/in-app-review` → `SKStoreReviewController` / Play In-App Review |
-| Menu + Account + guest home “Rate KidEase” | Native: App Store / Play **write-review** URL. Web: `/get-app` |
+| Happy moment (App Store and Google Play only) | `@capacitor-community/in-app-review` → `SKStoreReviewController` / Play In-App Review. Samsung Galaxy Store and Huawei AppGallery do not open this sheet. |
+| Menu + Account + guest home “Rate KidEase” | App Store and Play: write-review URL. Samsung and Huawei: `/get-app`, not a Play listing. Web: `/get-app` |
 | Website (logged-out `/`) | Same Account prompt on guest home. Footer + website drawer also expose it. No native sheet. `/get-app` unchanged |
 
 Happy moments (only these call the native sheet):

@@ -55,7 +55,7 @@ test("compare field helpers live next to ages, hours, language, culture, spots",
   assert.match(lib, /inclusive/);
   assert.match(lib, /export function listingSpotsTotal/);
   assert.match(lib, /export function listingIsVerified/);
-  assert.match(lib, /listingAgeRangeText/);
+  assert.match(lib, /standardAgeLabelsForListing/);
 });
 
 test("Neon persists shortlist per parent user", () => {

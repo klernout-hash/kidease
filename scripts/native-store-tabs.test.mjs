@@ -26,7 +26,7 @@ test("the phone website keeps the five-tab bar; native opts into the store set",
   const bar = readFileSync(join(root, "src/components/app-tab-bar.tsx"), "utf8");
   assert.match(bar, /isNative\(\)/);
   assert.match(bar, /nativeStoreTabs/);
-  assert.match(bar, /pb-\[env\(safe-area-inset-bottom\)\]/);
+  assert.match(bar, /pb-\[var\(--ke-safe-bottom,env\(safe-area-inset-bottom\)\)\]/);
   assert.match(bar, /t\("messages"\)/);
   assert.doesNotMatch(bar, /coming soon/i);
 });

@@ -98,6 +98,21 @@ function cookieHasMicrosoft(cookie: string | null | undefined): boolean {
 }
 
 /**
+ * Cookie for a Microsoft Store launch (`?store=microsoft`).
+ * iOS and Play (`KidEaseNative`) never receive it, so the cookie cannot turn
+ * those shells into the website channel. Secure is included for https.
+ */
+export function microsoftStoreCookieHeader(
+  input: { userAgent?: string | null; search?: string | null },
+  options?: { secure?: boolean },
+): string | null {
+  if (String(input.userAgent || "").includes(NATIVE_UA_TOKEN)) return null;
+  if (searchParams(input.search).get("store") !== "microsoft") return null;
+  const secure = options?.secure !== false;
+  return `ke_store=microsoft; Path=/; Max-Age=31536000; SameSite=Lax${secure ? "; Secure" : ""}`;
+}
+
+/**
  * User-agent string a store binary may send.
  * Only the Samsung flavour may include KidEaseStoreSamsung.
  * Only the Huawei flavour may include KidEaseStoreHuawei.
@@ -137,10 +152,11 @@ export function withoutSamsungStoreQuery(url: string | null | undefined): string
 
 /**
  * Which store wrapped this page.
- * Samsung and Microsoft keep Stripe. Apple, Google Play, and Huawei do not.
  * KidEaseNative (iOS and Play) wins over ?store=microsoft, ?store=samsung, and the ke_store cookie.
  * The Samsung token applies only when it is on the user agent and the device is not iOS.
  * A home-screen install of the website is "web", not Microsoft.
+ *
+ * v1 payments are off in every store. See STORE_PAYMENTS_ENABLED.
  */
 export function storeChannelFromSignals(input: {
   userAgent?: string | null;
@@ -159,9 +175,26 @@ export function storeChannelFromSignals(input: {
   return "web";
 }
 
-/** Apple, Google Play, and Huawei hide in-app Stripe. Samsung and Microsoft do not. */
+/**
+ * v1: payments stay off in every store app until that store has approved the app.
+ * v2 turns one store back on by flipping its entry to true. A normal browser (`web`) is not in this list and always keeps checkout.
+ */
+export const STORE_PAYMENTS_ENABLED: Record<Exclude<StoreChannel, "web">, boolean> = {
+  apple: false,
+  google: false,
+  microsoft: false,
+  samsung: false,
+  huawei: false,
+};
+
+export function storePaymentsEnabled(channel: StoreChannel): boolean {
+  if (channel === "web") return true;
+  return STORE_PAYMENTS_ENABLED[channel];
+}
+
+/** True when this store must hide prices, Stripe, and upgrade buttons. */
 export function shellBlocksCommerce(channel: StoreChannel): boolean {
-  return channel === "apple" || channel === "google" || channel === "huawei";
+  return !storePaymentsEnabled(channel);
 }
 
 export function commercePolicyForChannel(channel: StoreChannel): NativeCommercePolicy {

@@ -2,6 +2,7 @@
 	"appId": "ca.kidease.app",
 	"appName": "KidEase",
 	"webDir": "native-www",
+	"appendUserAgent": "KidEaseNative",
 	"server": {
 		"androidScheme": "https",
 		"iosScheme": "https",
@@ -34,7 +35,7 @@
 		"backgroundColor": "#F6F3EE"
 	},
 	"ios": {
-		"contentInset": "automatic",
+		"contentInset": "never",
 		"backgroundColor": "#F6F3EE",
 		"preferredContentMode": "mobile",
 		"scheme": "KidEase"

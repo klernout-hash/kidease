@@ -6,7 +6,8 @@
 
 import { confirmedFeeProgramBadge, confirmedStoredFeeProgram } from "./fee-program.ts";
 import { decodeHtml } from "./html-text.ts";
-import { formatPublicAgeRange, listingAgesConfirmed } from "./listing-ages.ts";
+import { listingAgesConfirmed } from "./listing-ages.ts";
+import { standardAgeLabelsForListing } from "./standard-age-groups.ts";
 import { classifyFacilityType, facilityTypeSeoKind } from "./facility-type.ts";
 import { cityHubCityName, cityHubDefForPlace, cityHubUrl } from "./city-hubs.ts";
 import { normalizeListingSlug } from "./listing-slug.ts";
@@ -104,7 +105,10 @@ function feeProgramPhrase(src: ListingSeoSource, locale: ListingSeoLocale) {
 
 function agePhrase(src: ListingSeoSource, locale: ListingSeoLocale) {
   if (!agesKnown(src)) return "";
-  return formatPublicAgeRange(Number(src.ageMinMonths), Number(src.ageMaxMonths), locale);
+  return standardAgeLabelsForListing(
+    { agesKnown: true, ageMinMonths: Number(src.ageMinMonths), ageMaxMonths: Number(src.ageMaxMonths) },
+    locale,
+  ).join(", ");
 }
 
 export function listingCanonicalUrl(slug: string | null | undefined) {
@@ -157,11 +161,11 @@ export function listingMetaDescription(src: ListingSeoSource, locale: ListingSeo
   const program = feeProgramPhrase(src, locale);
   if (locale === "fr") {
     const where = area ? ` à ${area}` : "";
-    const ageBit = ages ? ` Âges ${ages}.` : "";
+    const ageBit = ages ? ` ${ages}.` : "";
     return `${kind} chez ${name}${where}.${ageBit}${program} Consultez les heures et les places sur KidEase.`;
   }
   const where = area ? ` in ${area}` : "";
-  const ageBit = ages ? ` Ages ${ages}.` : "";
+  const ageBit = ages ? ` ${ages}.` : "";
   return `${kind} at ${name}${where}.${ageBit}${program} See hours and spots on KidEase.`;
 }
 

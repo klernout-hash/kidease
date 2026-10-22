@@ -159,7 +159,11 @@ export function hasVerifiedLicense(item: Pick<ListingVerifiedInput, "licenseNumb
   if (status === "expired" || status === "suspended") return false;
   const n = officialLicenceNumber(item.licenseNumber, item.id);
   if (!n) return false;
-  if (n === item.id || n === (item.id || "").split("-").pop()) return false;
+  if (n === item.id) return false;
+  // Short catalogue tails (bc-12 → 12) are not a licence. A real number such as
+  // 3572 can match the id tail and still be on file.
+  const tail = (item.id || "").split("-").pop() || "";
+  if (/^\d{1,3}$/.test(n) && n === tail) return false;
   return true;
 }
 
@@ -178,8 +182,10 @@ export function hasConfirmedAges(item: Pick<ListingVerifiedInput, "agesKnown" | 
   return max > min && max > 0;
 }
 
-export function hasListedCapacity(capacity?: number | null): boolean {
-  return typeof capacity === "number" && Number.isFinite(capacity) && capacity > 0;
+export function hasListedCapacity(capacity?: number | string | null): boolean {
+  if (capacity == null || capacity === "") return false;
+  const n = typeof capacity === "number" ? capacity : Number(String(capacity).trim());
+  return Number.isFinite(n) && n > 0;
 }
 
 export function hasFeeOrProgram(

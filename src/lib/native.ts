@@ -231,7 +231,11 @@ function hashedStylesheetsApplied(): boolean {
   return [...sheets].every((link) => Boolean(link.sheet));
 }
 
-/** Register the chrome-only service worker (web PWA, not Capacitor). */
+/**
+ * Register /sw.js on load for the website.
+ * A standalone window or the Microsoft Store channel also registers from
+ * channel-boot.js, before this bundle runs. Never inside the iOS or Android shells.
+ */
 export function registerOfflineShell(): void {
   if (typeof window === "undefined") return;
   if (!("serviceWorker" in navigator)) return;
@@ -242,7 +246,7 @@ export function registerOfflineShell(): void {
     // worker that can keep serving it — asset-recover.js will reload once.
     if (!hashedStylesheetsApplied()) return;
     void navigator.serviceWorker
-      .register("/sw.js", { scope: "/", updateViaCache: "none" })
+      .register("/sw.js?v=6", { scope: "/", updateViaCache: "none" })
       .then((reg) => {
         void reg.update();
       })

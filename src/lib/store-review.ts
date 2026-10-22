@@ -12,6 +12,7 @@
  *   - Guest www homepage is intentional (not Account-only). Same helper, no live store API.
  */
 
+import { readClientStoreChannel, type StoreChannel } from "./native-entitlements.ts";
 import { isNative, nativePlatform, shareText, type NativePlatform } from "./native.ts";
 import { STORE } from "./store-listing.ts";
 
@@ -65,11 +66,28 @@ export function appleWriteReviewUrl(id = appleAppStoreId()): string | null {
   return listing ? `${listing}?action=write-review` : null;
 }
 
+/** Play In-App Review exists on Apple and Google Play only. Samsung and Huawei must not open it. */
+export function inAppReviewAllowed(channel: StoreChannel): boolean {
+  return channel === "apple" || channel === "google";
+}
+
+/** A Play listing URL on a Galaxy Store or AppGallery install sends the parent to the wrong store. */
+export function playListingAllowed(channel: StoreChannel): boolean {
+  return channel !== "samsung" && channel !== "huawei";
+}
+
+function clientBlocksPlayListing(): boolean {
+  if (typeof window === "undefined") return false;
+  return !playListingAllowed(readClientStoreChannel());
+}
+
 /**
  * Public Play listing URL — only when ops set `VITE_PLAY_STORE_URL`.
  * Package name alone is not a live listing. Do not invent a store URL.
+ * Samsung and Huawei never receive this link.
  */
 export function playStoreListingUrl(): string | null {
+  if (clientBlocksPlayListing()) return null;
   const raw = readPublicEnv("VITE_PLAY_STORE_URL");
   if (!raw) return null;
   try {
@@ -83,6 +101,7 @@ export function playStoreListingUrl(): string | null {
 }
 
 export function playWriteReviewUrl(pkg = playPackageName()): string | null {
+  if (clientBlocksPlayListing()) return null;
   const id = pkg.trim();
   if (!isPlayPackageName(id)) return null;
   return `https://play.google.com/store/apps/details?id=${encodeURIComponent(id)}`;
@@ -177,6 +196,7 @@ async function openExternalUrl(url: string): Promise<boolean> {
 /** Native OS sheet only. Never a custom 1–5 control. Web is a no-op. */
 export async function requestInAppReview(opts?: { force?: boolean; now?: number }): Promise<boolean> {
   if (!isNative()) return false;
+  if (!inAppReviewAllowed(readClientStoreChannel())) return false;
   const now = opts?.now ?? Date.now();
   if (!opts?.force) {
     const last = await readLastReviewAt();

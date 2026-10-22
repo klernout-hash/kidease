@@ -254,13 +254,18 @@ function PackRow({
             <p className="text-sm font-medium">{packLabel}</p>
             <StatusChip status={pack.status} locale={locale} />
           </div>
+          {centre.isTest ? <p className="mt-0.5 text-xs text-muted">Test centre. Sending is off.</p> : null}
           {pack.sentAt ? <p className="mt-0.5 text-xs text-subtle">Sent {new Date(pack.sentAt).toLocaleString()}</p> : null}
           {pack.signedAt ? <p className="mt-0.5 text-xs text-subtle">Signed {new Date(pack.signedAt).toLocaleString()}</p> : null}
         </div>
         <div className="flex flex-wrap justify-end gap-2">
-          {mode === "live" ? (
+          {mode === "live" && !centre.isTest ? (
             <Button size="sm" disabled={busy !== null} onClick={() => void send()}>
               {pack.status === "signed" ? ds(locale, "resend") : pack.status === "sent" || pack.status === "viewed" ? ds(locale, "sendAgain") : ds(locale, "send")}
+            </Button>
+          ) : centre.isTest ? (
+            <Button size="sm" disabled>
+              {ds(locale, "send")}
             </Button>
           ) : (
             <Button size="sm" disabled>

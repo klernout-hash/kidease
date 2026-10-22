@@ -6,30 +6,31 @@
 
 import { confirmedStoredFeeProgram, hasListedMonthlyFees } from "./fee-program.ts";
 import { localeTag } from "./languages.ts";
+import { STANDARD_YOUNGER_MAX, standardAgeGroup } from "./standard-age-groups.ts";
 import type { Locale } from "./types.ts";
 
 export const PUBLIC_AGE_BANDS = ["infant", "toddler", "preschool", "school-age"] as const;
 export type PublicAgeBand = (typeof PUBLIC_AGE_BANDS)[number];
 
-/** Canonical spans. Neighbours overlap; display uses the younger band's max as the fence. */
+/** Canonical spans. Neighbours share an edge; a range that ends there stays in the younger band. */
+function bandSpan(id: PublicAgeBand): { min: number; max: number } {
+  const group = standardAgeGroup(id);
+  return { min: group.minMonths, max: group.maxMonths };
+}
+
 export const PUBLIC_BAND_RANGE: Record<PublicAgeBand, { min: number; max: number }> = {
-  infant: { min: 0, max: 18 },
-  toddler: { min: 18, max: 36 },
-  preschool: { min: 30, max: 72 },
-  "school-age": { min: 60, max: 144 },
+  infant: bandSpan("infant"),
+  toddler: bandSpan("toddler"),
+  preschool: bandSpan("preschool"),
+  "school-age": bandSpan("school-age"),
 };
 
 /**
  * A centre that stops at this age still belongs to the younger band.
- * Preschool ends at 72 months, so a 72-month max is not school-age.
+ * Preschool ends at 60 months. School-age starts at 72, so a 72-month max is not school-age.
  * Toddler ends at 36 months, so a 36-month max is not preschool.
  */
-const YOUNGER_BAND_MAX: Record<PublicAgeBand, number | null> = {
-  infant: null,
-  toddler: 18,
-  preschool: 36,
-  "school-age": 72,
-};
+const YOUNGER_BAND_MAX: Record<PublicAgeBand, number | null> = STANDARD_YOUNGER_MAX;
 
 export type GeneratedAgeBand = {
   band: PublicAgeBand;

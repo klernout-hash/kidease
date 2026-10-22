@@ -1,20 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SafeRouteError } from "@/components/safe-error-boundary";
 import { beforeLoadAdminDesk } from "@/lib/server/admin-route";
-import { listRankingMarket } from "@/lib/server/ranking-market";
+import { loadRankingMarketDesk } from "@/lib/server/admin-listings-desk";
 import { rankingMarketCsv, type MarketRow } from "@/lib/ranking/market";
-import { demandMapCells } from "@/lib/admin-tools";
-import { AI_FLAGS } from "@/lib/ai/flags";
-import { aiFeatureOn } from "@/lib/server/ai-feature";
 import { useCopy } from "@/lib/use-copy";
 import { Shell } from "@/components/shell";
 
 export const Route = createFileRoute("/admin-ranking")({
   beforeLoad: beforeLoadAdminDesk,
-  loader: async () => {
-    const rows = await listRankingMarket();
-    const on = await aiFeatureOn(AI_FLAGS.demandMap, "kidease-admin");
-    return { rows, cells: on ? demandMapCells(rows) : null };
-  },
+  loader: () => loadRankingMarketDesk(),
+  errorComponent: SafeRouteError,
   head: () => ({
     meta: [
       { title: "Demand and supply · KidEase" },
@@ -36,9 +31,11 @@ function downloadCsv(rows: MarketRow[]) {
 
 function RankingMarketPage() {
   const data = Route.useLoaderData();
-  const rows = data.rows;
-  const { t } = useCopy();
-  const max = data.cells?.reduce((peak, cell) => Math.max(peak, cell.demand, cell.supply), 1) ?? 1;
+  const rows = Array.isArray(data.rows) ? data.rows : [];
+  const cells = Array.isArray(data.cells) ? data.cells : null;
+  const { t, locale } = useCopy();
+  const fr = locale === "fr";
+  const max = cells?.reduce((peak, cell) => Math.max(peak, Number(cell.demand) || 0, Number(cell.supply) || 0), 1) ?? 1;
   return (
     <Shell>
       <main className="mx-auto w-full max-w-5xl px-4 py-8">
@@ -46,6 +43,16 @@ function RankingMarketPage() {
           <div>
             <h1 className="font-display text-3xl">{t("rankingMarketTitle")}</h1>
             <p className="mt-2 max-w-prose text-sm text-muted">{t("rankingMarketLead")}</p>
+            {data.ok ? null : (
+              <p className="mt-4 max-w-prose text-sm text-muted" role="alert">
+                {fr
+                  ? "Ce rapport n'est pas disponible pour le moment."
+                  : "This report is not available right now."}{" "}
+                <a href="/admin" className="inline-flex min-h-11 items-center font-medium underline-offset-2 hover:underline">
+                  {fr ? "Retour à l'admin" : "Back to Admin"}
+                </a>
+              </p>
+            )}
           </div>
           <button
             type="button"
@@ -56,12 +63,12 @@ function RankingMarketPage() {
             {t("rankingMarketExport")}
           </button>
         </div>
-        {data.cells ? (
+        {cells ? (
           <section className="mt-8" data-ke="admin-demand-map">
             <h2 className="font-display text-2xl">{t("adminDemandTitle")}</h2>
             <p className="mt-2 max-w-prose text-sm text-muted">{t("adminDemandLead")}</p>
             <ul className="mt-4 space-y-3">
-              {data.cells.map((cell) => (
+              {cells.map((cell) => (
                 <li key={`${cell.city}-${cell.ageGroup}`}>
                   <p className="text-sm font-medium">
                     {cell.city} · {cell.ageGroup}

@@ -632,8 +632,9 @@ export function LoginScreen({
                     type="button"
                     variant={p.idp === "apple" ? "apple" : "secondary"}
                     size="md"
-                    className="w-full font-normal"
+                    className={p.idp === "apple" ? "ke-apple-button w-full font-normal" : "w-full font-normal"}
                     data-ke="social-secondary"
+                    data-provider={p.idp}
                     disabled={busy}
                     onClick={() => void onSocial(p.providerId)}
                   >

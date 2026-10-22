@@ -19,7 +19,8 @@ import { parseAnchorMode, resolveSearchAnchors } from "@/lib/dual-anchor";
 import { nearbyListings, nearbyListingsAlong, nearbyListingsDual, type NearbyListing } from "./nearby";
 import { callerMayViewHiddenListing } from "./public-listing";
 import { upsertDaycare } from "./seed";
-import { applyListingReadiness, compareFreshOpenSpots } from "@/lib/listing-readiness";
+import { applyListingReadiness, compareFreshOpenSpots, hasConfirmedAges } from "@/lib/listing-readiness";
+import { standardGroupsForRange } from "@/lib/standard-age-groups";
 import { listingAgeUnknown } from "@/lib/now-loops";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { overlayClaimed } from "./claims";
@@ -244,7 +245,13 @@ function toDaycare(d: CatalogDaycare): Daycare {
     priority: false,
     priorityUntil: null,
     featuredCity: false,
-    agesKnown: d.ageMaxMonths > d.ageMinMonths && d.ageMaxMonths > 0,
+    agesKnown: hasConfirmedAges({
+      agesKnown: d.agesKnown,
+      ageMinMonths: d.ageMinMonths,
+      ageMaxMonths: d.ageMaxMonths,
+    }),
+    agesSource: d.agesSource || null,
+    agesSourceUrl: d.agesSourceUrl || null,
     visibility: d.visibility,
     isTest: d.isTest,
     timezone: resolveListingTourTimezone(null, d.province),
@@ -320,7 +327,9 @@ function mergeClaimedCard<T extends DaycareCard>(card: T, claimed: Daycare): T {
     priorityUntil: claimed.priorityUntil,
     ageMinMonths: claimed.agesKnown ? claimed.ageMinMonths : card.ageMinMonths,
     ageMaxMonths: claimed.agesKnown ? claimed.ageMaxMonths : card.ageMaxMonths,
-    agesKnown: Boolean(claimed.agesKnown) || Boolean(card.agesKnown),
+    agesKnown: claimed.agesKnown === true || (claimed.agesKnown !== false && Boolean(card.agesKnown)),
+    agesSource: claimed.agesSource || card.agesSource || null,
+    agesSourceUrl: claimed.agesSourceUrl || card.agesSourceUrl || null,
     hours: claimed.hours || card.hours,
     hoursFr: claimed.hoursFr || card.hoursFr,
     licenseNumber: claimed.licenseNumber || card.licenseNumber,
@@ -387,6 +396,12 @@ async function withProvincial<T extends { id: string; claimed?: boolean; lastVac
   }
 }
 
+async function stampPaidPlacement<T extends { id: string; priority?: boolean; priorityUntil?: string | null; featuredCity?: boolean }>(
+  items: T[],
+): Promise<T[]> {
+  return overlayFeaturedCity(await overlayPriority(items));
+}
+
 function slimCard(card: DaycareCard): DaycareCard {
   return {
     ...card,
@@ -435,7 +450,8 @@ async function liveCardsForSearch(data: SearchInput): Promise<DaycareCard[]> {
   const listed = publicListings(uniqueById(listings.map((row) => toCard(row, origin, data.fsa)))).filter((card) =>
     includeCardInRadius(card, origin, data.radiusKm),
   );
-  return withProvincial(listed).then((rows) => rows.map(slimCard));
+  const pinned = await stampPaidPlacement(listed);
+  return withProvincial(pinned).then((rows) => rows.map(slimCard));
 }
 
 function unionLiveCards(primary: DaycareCard[], live: DaycareCard[]): DaycareCard[] {
@@ -450,7 +466,7 @@ async function searchByName(data: SearchInput): Promise<DaycareCard[]> {
   if (q.length < 2) return [];
   const origin = { lat: data.lat, lng: data.lng };
   const matched = filterByDaycareName(await getPublicCatalog(), q);
-  const cards = matched.map((row) => slimCard(toCard(row, origin, data.fsa)));
+  const cards = await stampPaidPlacement(matched.map((row) => slimCard(toCard(row, origin, data.fsa))));
   cards.sort((a, b) => a.distanceKm - b.distanceKm || a.name.localeCompare(b.name));
   return cards;
 }
@@ -582,12 +598,11 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
   cards = await overlayPriority(cards);
   cards = await overlayFeaturedCity(cards);
   if (distanceTail.length) cards = cards.concat(distanceTail);
-  if (data.ageGroup !== "any") {
+  const ageGroup = data.ageGroup;
+  if (ageGroup !== "any") {
     cards = cards.filter((c) => {
       if (listingAgeUnknown(c)) return true;
-      if (data.ageGroup === "infant") return c.ageMinMonths <= 18;
-      if (data.ageGroup === "toddler") return c.ageMinMonths < 36 && c.ageMaxMonths >= 18;
-      return c.ageMaxMonths >= 30 && c.ageMinMonths < 72;
+      return standardGroupsForRange(c.ageMinMonths, c.ageMaxMonths).includes(ageGroup);
     });
   }
   const fit = parentFitApplies(data.parentFit) ? data.parentFit : null;
@@ -795,11 +810,14 @@ export const getDaycare = createServerFn({ method: "GET" })
       visibility: found.visibility,
       isTest: found.isTest,
     });
+    const catalogDaycareOut = stampHidden(withInboxReady(catalogScored[0] ?? catalogDaycare));
+    const [catalogPinned] = await stampPaidPlacement([catalogDaycareOut]);
+    const catalogNearby = await stampPaidPlacement(withQualityCards(nearby, catalogScored));
     const catalogPayload = {
-      daycare: stampHidden(withInboxReady(catalogScored[0] ?? catalogDaycare)),
+      daycare: catalogPinned ?? catalogDaycareOut,
       reviews: [] as Review[],
       availability: catalogAvailability(found),
-      nearby: withQualityCards(nearby, catalogScored),
+      nearby: catalogNearby,
       jobs: [] as CentreJobPost[],
     };
     try {
@@ -882,11 +900,14 @@ export const getDaycare = createServerFn({ method: "GET" })
       }));
       const mainStamped = await withProvincial([overlayed[0] ?? daycare]);
       const nearbyStamped = await withProvincial(withQualityCards(nearby, overlayed));
+      const mainReady = stampHidden(withInboxReady(mainStamped[0] ?? daycare));
+      const [mainPinned] = await stampPaidPlacement([mainReady]);
+      const nearbyPinned = await stampPaidPlacement(nearbyStamped);
       return {
-        daycare: stampHidden(withInboxReady(mainStamped[0] ?? daycare)),
+        daycare: mainPinned ?? mainReady,
         reviews: mapReviews(reviews),
         availability,
-        nearby: nearbyStamped,
+        nearby: nearbyPinned,
         jobs,
       };
     } catch {
@@ -924,7 +945,11 @@ export const getListingSeo = createServerFn({ method: "GET" })
       address: found.address,
       postalCode: found.postalCode,
       phone: found.phone || null,
-      agesKnown: found.ageMaxMonths > found.ageMinMonths && found.ageMaxMonths > 0,
+      agesKnown: hasConfirmedAges({
+        agesKnown: found.agesKnown,
+        ageMinMonths: found.ageMinMonths,
+        ageMaxMonths: found.ageMaxMonths,
+      }),
       ageMinMonths: found.ageMinMonths,
       ageMaxMonths: found.ageMaxMonths,
       photos: found.photos,
@@ -952,5 +977,5 @@ export const getDaycaresByIds = createServerFn({ method: "GET" })
     const found = [...byId, ...extras].filter(isPublicListing);
     const cards = uniqueById(found.map((d) => toCard(d, origin)));
     const claimed = await overlayQuality(await overlayParentReviews(await overlayClaimed(cards, mergeClaimedCard)));
-    return overlayParentRank(claimed, { distanceKnown: false, ageGroup: "any" });
+    return stampPaidPlacement(await overlayParentRank(claimed, { distanceKnown: false, ageGroup: "any" }));
   });

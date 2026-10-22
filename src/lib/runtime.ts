@@ -64,12 +64,10 @@ export function paintRuntime() {
   const store = readClientStoreChannel();
   root.dataset.store = store;
   const platform = nativePlatform();
-  // Samsung and Microsoft keep website commerce. Their runtime stays web so
-  // the Play/Apple hide rules do not fire. Huawei stays on the native hide.
+  // Any store with payments off uses the native hide, including the Microsoft package.
   if (!shellBlocksCommerce(store)) root.dataset.runtime = "web";
   else if (platform === "ios" || platform === "android") root.dataset.runtime = platform;
-  else if (typeof navigator !== "undefined" && isNativeUserAgent(navigator.userAgent)) root.dataset.runtime = "native";
-  else root.dataset.runtime = "web";
+  else root.dataset.runtime = "native";
   root.dataset.channel = channel();
 }
 

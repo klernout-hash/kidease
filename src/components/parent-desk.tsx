@@ -39,6 +39,7 @@ import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { WINNIPEG } from "@/lib/geo";
 import { yieldToMain } from "@/lib/yield-main";
 import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
+import { PARENT_UPGRADE_PLANS } from "@/lib/upgrade-plans";
 import { ParentHome } from "@/components/parent-home";
 import { useRoleChrome } from "@/components/role-chrome";
 import { useParentPlusAccess } from "@/lib/use-parent-plus";
@@ -121,6 +122,8 @@ export function ParentDesk({
   const [upgradeDismissed, setUpgradeDismissed] = useState(false);
   const [homeSettled, setHomeSettled] = useState(false);
   const [editing, setEditing] = useState<Child | null | "new">(null);
+  const [childFocus, setChildFocus] = useState<string | null>(null);
+  const [childOpen, setChildOpen] = useState(false);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [picked, setPicked] = useState<Record<string, string[]>>({});
   const [savedReady, setSavedReady] = useState(false);
@@ -353,6 +356,7 @@ export function ParentDesk({
     if (desks.home === "/support") return <Navigate to="/support" />;
   }
   const showParentPlus = Boolean(desksReady && canBuyParentUpgrade(upgradeBuyer));
+  const activeChild = children.find((c) => c.id === childFocus) ?? children[0] ?? null;
 
   return (
     <DeskShell desk="parent" active={tab === "subscription" ? "upgrade" : tab} onSelect={selectTab}>
@@ -537,7 +541,7 @@ export function ParentDesk({
               </Suspense>
             </div>
           ) : (
-            <p className="mt-4 text-sm text-muted">{t("accountSubscriptionLead")}</p>
+            <CurrentParentPlan />
           )}
         </div>
       ) : null}
@@ -559,11 +563,10 @@ export function ParentDesk({
               className="mt-2"
               ready={desksReady}
             />
-            <p className="mt-2 text-sm text-muted">{t("connectFeeParentPay")}</p>
           </div>
-          {bills.filter((b) => billIsOpen(b.status)).length ? (
-            <div>
-              <h3 className="font-display text-xl">{t("openBills")}</h3>
+          <div>
+            <h3 className="font-display text-xl">{t("openBills")}</h3>
+            {bills.filter((b) => billIsOpen(b.status)).length ? (
               <ul className="mt-3 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
                 {bills
                   .filter((b) => billIsOpen(b.status))
@@ -591,8 +594,10 @@ export function ParentDesk({
                     </li>
                   ))}
               </ul>
-            </div>
-          ) : null}
+            ) : (
+              <p className="mt-3 text-sm text-muted">{t("noPayments")}</p>
+            )}
+          </div>
           <div>
             <h3 className="font-display text-xl">{t("paidBills")}</h3>
             <ul className="mt-3 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
@@ -660,10 +665,42 @@ export function ParentDesk({
           <div>
             <h2 className="font-display text-2xl">{t("childProfileTitle")}</h2>
             <p className="mt-1 text-sm text-muted">
-              Save the child profile, then send it to saved centres. Each centre sees it in Incoming requests and can approve, wait, or decline.
+              <span className="ke-site-compact">{t("childProfileLead")}</span>
+              <span className="ke-site-desktop">Save the child profile, then send it to saved centres. Each centre sees it in Incoming requests and can approve, wait, or decline.</span>
             </p>
           </div>
-          {editing ? (
+          {children.length === 0 && !editing ? (
+            <EmptyState title={t("noChildren")} body={t("noChildrenLead")} action={t("emptyAddChild")} onAction={() => { setEditing("new"); setChildOpen(true); }} />
+          ) : (
+          <div className="ke-split" data-ke="children-split" data-selected={childOpen || editing ? "true" : "false"}>
+            <div className="ke-split-list min-w-0">
+              <ul className="divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
+                {children.map((c) => (
+                  <li key={c.id}>
+                    <button
+                      type="button"
+                      aria-pressed={activeChild?.id === c.id}
+                      className="flex min-h-11 w-full items-center px-4 text-left font-medium touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                      onClick={() => {
+                        setChildFocus(c.id);
+                        setChildOpen(true);
+                        setEditing(null);
+                      }}
+                    >
+                      {c.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <Button className="mt-3" onClick={() => { setEditing("new"); setChildOpen(true); }}>
+                {children.length ? t("newChild") : t("addChild")}
+              </Button>
+            </div>
+            <div className="ke-split-detail min-w-0" data-ke="children-detail">
+              <Button variant="ghost" className="mb-3 md:hidden" onClick={() => { setChildOpen(false); setEditing(null); }}>
+                {t("back")}
+              </Button>
+              {editing ? (
             <div className="rounded-xl bg-surface p-4 ring-1 ring-border">
               <Suspense fallback={<div className="ke-skel h-48 rounded-xl" aria-hidden="true" />}>
                 <ChildProfileForm
@@ -676,18 +713,13 @@ export function ParentDesk({
                 />
               </Suspense>
             </div>
-          ) : (
+              ) : (
             <>
               <ul className="divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
-                {children.length === 0 ? (
-                  <li className="p-2">
-                    <EmptyState title={t("noChildren")} body={t("noChildrenLead")} action={t("emptyAddChild")} onAction={() => setEditing("new")} />
-                  </li>
-                ) : (
-                  children.map((c) => {
+                  {children.map((c) => {
                     const selected = picked[c.id] ?? [];
                     return (
-                    <li key={c.id} className="ph-no-capture p-4">
+                    <li key={c.id} className={c.id === activeChild?.id ? "ph-no-capture p-4" : "ke-child-rest ph-no-capture p-4"}>
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="font-medium">
@@ -795,14 +827,33 @@ export function ParentDesk({
                       </div>
                     </li>
                     );
-                  })
-                )}
+                  })}
               </ul>
-              <Button onClick={() => setEditing("new")}>{children.length ? t("newChild") : t("addChild")}</Button>
             </>
+              )}
+            </div>
+          </div>
           )}
         </div>
       ) : null}
     </DeskShell>
+  );
+}
+
+function CurrentParentPlan() {
+  const { t, locale } = useCopy();
+  const plan = PARENT_UPGRADE_PLANS.find((row) => row.id === "free") ?? PARENT_UPGRADE_PLANS[0];
+  const lang = locale === "fr" ? "fr" : "en";
+  return (
+    <section className="mt-4 rounded-xl bg-surface p-5 ring-1 ring-border" data-ke="parent-plan-view">
+      <h3 className="font-display text-xl">{plan?.name[lang]}</h3>
+      <p className="mt-1 text-sm font-medium text-fg">{lang === "fr" ? "Sans frais" : "No charge"}</p>
+      <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted">
+        {plan?.benefits.map((row) => (
+          <li key={row.en}>{row[lang]}</li>
+        ))}
+      </ul>
+      <p className="mt-4 text-sm text-muted">{t("plansNotOffered")}</p>
+    </section>
   );
 }

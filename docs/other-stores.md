@@ -10,14 +10,16 @@ Application id for the Android flavours: `ca.kidease.app`. One id for Play, Gala
 
 ## Which stores can use Stripe
 
-| Store | In-app Stripe for KidEase digital plans | What this repo does |
+| Store | In-app Stripe for KidEase digital plans | What this repo does in v1 |
 | --- | --- | --- |
-| Microsoft Store (PWA) | Allowed | Prices and Stripe Checkout stay |
-| Samsung Galaxy Store | Allowed | Prices and Stripe Checkout stay |
-| Huawei AppGallery | Not allowed for digital goods | Same hide as the Apple and Play shells |
-| Apple App Store / Google Play | Not allowed in v1 | Unchanged from the store-readiness work |
+| Microsoft Store (PWA) | Allowed by store policy | Payments off until every store has approved v1 |
+| Samsung Galaxy Store | Allowed by store policy | Payments off until every store has approved v1 |
+| Huawei AppGallery | Not allowed for digital goods | Payments off |
+| Apple App Store / Google Play | Not allowed in v1 | Payments off |
 
-Childcare fees printed on a listing are directory facts. Checkout buttons are a different thing. On Huawei, Apple, and Play, checkout stays closed, including a childcare bill, until that store has its own billing. Samsung and Microsoft keep the website checkout.
+`STORE_PAYMENTS_ENABLED` in `src/lib/native-entitlements.ts` is the switch. Every store is `false` in v1. A later version turns one store back on by setting that store to `true`. A normal browser is not in the list, so checkout on kidease.ca stays on.
+
+Childcare fees printed on a listing are directory facts. Checkout buttons are a different thing. In every store app, checkout stays closed, including a childcare bill, until that store has its own billing. A centre that already paid on the website still unlocks after sign-in.
 
 Nothing here adds Apple IAP, Google Play Billing, Microsoft IAP, Samsung IAP, or Huawei IAP. `parentPlusIap` stays null.
 
@@ -29,9 +31,9 @@ Nothing here adds Apple IAP, Google Play Billing, Microsoft IAP, Samsung IAP, or
 
 Games and Xbox products must use Microsoft’s purchase API. **Non-game products on PC may use a secure third-party purchase API or the Microsoft Store purchase API** for digital goods used inside the product.
 
-KidEase is not a game. It is a childcare directory for parents and daycare providers. **Stripe hosted Checkout stays** in the Microsoft Store package.
+KidEase is not a game. It is a childcare directory for parents and daycare providers. Store policy allows Stripe in this package. v1 still hides prices and Stripe here, the same as the other store apps, until every store has approved v1.
 
-Also follow **10.8.2** when a purchase happens:
+When a later version turns Microsoft payments on, follow **10.8.2**:
 
 - The pay screen shows who takes the payment. Stripe Checkout already shows Stripe.
 - The person is signed in, and they confirm the payment. KidEase sign-in plus Stripe do this.
@@ -48,14 +50,15 @@ The live site is the app. [PWABuilder](https://www.pwabuilder.com) wraps it as a
 - Site manifest (browsers and “Add to home screen”): `public/manifest.webmanifest`, start URL `/`.
 - Store manifest: `public/manifest.microsoft.webmanifest`, start URL `/?store=microsoft`.
 - Icons already on the site: 192, 512, and a 512 maskable icon.
-- Service worker `public/sw.js` (`kidease-shell-v5`) serves `public/offline.html` when a page load fails. It does not cache HTML. Hashed `/assets/` stay network-only.
-- The first launch sets a `ke_store=microsoft` cookie so later pages still know this is the Store package. Stripe stays visible on that package. The cookie is set only when the user agent is not `KidEaseNative`. An iOS or Play WebView ignores `?store=microsoft` and clears a leftover `ke_store` cookie, so a link cannot turn Stripe back on in those builds.
+- Service worker `public/sw.js` (`kidease-shell-v6`) serves `public/offline.html` when a page load fails. It does not cache HTML. Hashed `/assets/` stay network-only. A standalone window and the Microsoft channel register it on load. The iOS and Android shells do not.
+- The page at `/?store=microsoft` links `manifest.microsoft.webmanifest` (also when the user agent is `KidEaseStoreMicrosoft` or the `ke_store=microsoft` cookie is already set). A normal visit keeps `manifest.webmanifest`.
+- The first launch sets a `ke_store=microsoft` cookie (`Path=/; Max-Age=31536000; SameSite=Lax; Secure` on https) so later pages still know this is the Store package. Prices and Stripe stay hidden on that package. The cookie is set only when the user agent is not `KidEaseNative`. An iOS or Play WebView ignores `?store=microsoft` and clears a leftover `ke_store` cookie.
 
 PWABuilder steps:
 
 1. Open [https://www.pwabuilder.com](https://www.pwabuilder.com).
-2. Enter `https://www.kidease.ca`.
-3. Point the package at `https://www.kidease.ca/manifest.microsoft.webmanifest` so the installed app opens `/?store=microsoft`.
+2. Enter `https://www.kidease.ca/?store=microsoft`. That page links the Microsoft manifest.
+3. Confirm the report uses `manifest.microsoft.webmanifest` and start URL `/?store=microsoft`.
 4. Package **Windows** as MSIX.
 5. Publisher identity (the `CN=` name) comes from Partner Center. Do not invent it.
 6. Upload the MSIX. Mark the age rating **18+**. Audience is parents and daycare providers, not a kids category.
@@ -80,7 +83,7 @@ PWABuilder steps:
 
 [Distribution guide](https://developer.samsung.com/galaxy-store/distribution-guide.html) (section 1.1.10): Samsung In-App Purchase is **recommended**, not required, for non-game apps.
 
-**Stripe stays** in the Galaxy Store build. The flavour exists so the binary is identifiable. It does not hide prices.
+The Galaxy Store build is identifiable, and v1 hides prices and Stripe in it. A normal browser still shows checkout.
 
 ### Build
 
@@ -92,7 +95,9 @@ Same application id as Play. From `android/`:
 
 AAB: `android/app/build/outputs/bundle/samsungRelease/app-samsung-release.aab`
 
-`MainActivity` appends `KidEaseStoreSamsung` only for the `samsung` flavour, on top of `KidEaseNative`. The iOS app and the Play flavour strip that token and do not set a `ke_store=samsung` cookie. A `?store=samsung` link does not switch them. The site sees the Samsung token first and leaves checkout on. The Play token alone still hides checkout.
+`MainActivity` writes the user-agent on the WebView after the bridge starts. The Samsung asset config already asks Capacitor to append `KidEaseNative KidEaseStoreSamsung`, so the first request is the Galaxy Store channel. If that token is missing, the activity sets it and reloads. It does not swallow the failure. The iOS app and the Play flavour strip that token and do not set a `ke_store=samsung` cookie. A `?store=samsung` link does not switch them. The site sees the Samsung token first and hides checkout. The Play token hides checkout as well.
+
+The Play review sheet and any `play.google.com` listing link stay off in this build. Rate KidEase sends the parent to `/get-app` until a Galaxy Store listing exists. Do not invent that URL.
 
 Play’s `google-services.json` may be used for this flavour if you want FCM. Do not commit that file.
 
@@ -133,7 +138,9 @@ Huawei phones do not ship Google Play Services. This flavour degrades on purpose
 | “Near me” | Uses the phone location through the WebView, not the Google location plugin. If the phone denies location, search by city still works. |
 | Stripe | Blocked |
 
-The user-agent token is `KidEaseStoreHuawei`. `google-services.json` must not be applied to this variant. The Gradle task that processes it is turned off for the Huawei flavour, and `android/app/src/huawei/AndroidManifest.xml` removes `FirebaseInitProvider`.
+The user-agent token is `KidEaseStoreHuawei`, set in `android/app/src/huawei/assets/capacitor.config.json` and checked again on the WebView. A Huawei debug build crashes if that token is missing, so a broken build cannot fall through to the Play channel. A release build logs the same error. `google-services.json` must not be applied to this variant. The Gradle task that processes it is turned off for the Huawei flavour, and `android/app/src/huawei/AndroidManifest.xml` removes `FirebaseInitProvider`.
+
+The Huawei flavour also drops `com.google.android.gms`, `com.google.android.play`, and `com.google.firebase`. The Play geolocation plugin and the Play in-app review plugin are not in this binary. Location uses the WebView. The first HTML for this channel does not dns-prefetch `maps.googleapis.com`. The website, Play, and Samsung pages still do. The Plans row in the phone menu stays hidden, the same as Apple and Play.
 
 Trade-off to tell parents in the store listing: message alerts are not delivered on this Huawei build yet. Saved centres in the browser cache are not the same as the Capacitor offline shortlist. City search is the way to find a daycare.
 
@@ -196,7 +203,7 @@ Do not draw fake fees, ratings, or open spots into screenshots.
 - [ ] Age 18+, not a kids product
 - [ ] Privacy policy and support email set
 - [ ] Offline page checked: airplane mode shows “You’re offline” and a way back, and does not show a stale app shell
-- [ ] A signed-in parent can still open plans and Stripe Checkout
+- [ ] A signed-in parent in the Microsoft package does not see prices or Stripe. The same parent in a normal browser still does.
 - [ ] Store listing does not say the iOS or Android apps are already in those stores
 
 ### Samsung
@@ -204,7 +211,7 @@ Do not draw fake fees, ratings, or open spots into screenshots.
 - [ ] Seller account for 10037493 MANITOBA LTD. is verified
 - [ ] `bundleSamsungRelease` uploaded
 - [ ] Package name `ca.kidease.app`
-- [ ] A signed-in parent still sees plan prices and can open Stripe
+- [ ] A signed-in parent in the Galaxy Store build does not see plan prices or Stripe. The same parent in a normal browser still does.
 - [ ] Content rating and privacy policy set
 - [ ] Age 18+
 - [ ] No Samsung IAP product created for this version

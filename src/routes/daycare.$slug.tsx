@@ -66,6 +66,7 @@ import { parentMatchScore } from "@/lib/parent-match";
 import { parentUrgencyScore } from "@/lib/parent-urgency";
 import { doorDistanceKm } from "@/lib/card-distance";
 import { ListingBadges } from "@/components/listing-badges";
+import { SponsoredMark } from "@/components/sponsored-mark";
 import { CompletenessBanner } from "@/components/listing-completeness";
 import { ListingReviewForm } from "@/components/listing-review-form";
 import { ListingOwnerReply } from "@/components/listing-owner-reply";
@@ -88,7 +89,7 @@ import { decideListingLoader, listingNotFoundHead, shouldNotFoundListing } from 
 import { ListingNotFoundPage } from "@/components/page-not-found";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { classifyFacilityType, type FacilityType } from "@/lib/facility-type";
-import { listingAgeRangeText } from "@/lib/listing-ages";
+import { provinceAgeSourceText, standardAgeLabelsForListing } from "@/lib/standard-age-groups";
 import type { ListingSeoSource } from "@/lib/listing-seo";
 import { formatMonth, money, displayCentreName, displayListingText } from "@/lib/utils";
 import { openDirections } from "@/lib/maps";
@@ -454,7 +455,8 @@ export function Listing() {
         day: "numeric",
       })
     : "";
-  const agesLabel = listingAgeRangeText(d, "short", loc);
+  const agesLabel = standardAgeLabelsForListing(d, loc).join(" · ");
+  const provinceAge = provinceAgeSourceText(d.agesSource);
   const feeNotes = listingFeeNotes(d);
   const subsidy = listingSubsidy(d);
   const directionsPlace = {
@@ -741,6 +743,7 @@ export function Listing() {
           <p className="mt-1 text-sm text-muted">
             {d.city}, {d.province}
           </p>
+          <SponsoredMark show={d.featuredCity} className="mt-2" />
           <FoundingMemberBadge show={d.foundingMember} className="mt-2" />
           {tagline.trim() ? <p className="mt-0.5 text-sm text-muted">{tagline}</p> : null}
           {approved || licensed ? (
@@ -766,6 +769,13 @@ export function Listing() {
             </div>
           ) : null}
           <ListingHeaderPills item={d} agesLabel={agesLabel} hours={hours} feeFrom={from} />
+          {provinceAge ? (
+            <p className="mt-1 text-xs leading-5 text-muted" data-ke="province-age-label">
+              {t("provinceAgeCaption")}
+              {locale === "fr" ? " : " : ": "}
+              {provinceAge}
+            </p>
+          ) : null}
           {offerClaim ? (
             <div className="mt-3" data-ke="listing-claim-button">
               <ClaimListingButton id={d.id} name={name} />

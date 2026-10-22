@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
+import { useViewAs } from "@/components/view-as-banner";
 import { useInNativeShell } from "@/lib/use-native-shell";
 import { VideoRoomPanel } from "@/components/video-room-panel";
 import { PayCtas } from "@/components/pay-chrome";
@@ -14,6 +15,7 @@ import {
   type VideoJoinResult,
   type VideoJoinStatus,
 } from "@/lib/server/video-join";
+import { primeCallMedia } from "@/lib/call-permissions";
 
 export const Route = createFileRoute("/video/$roomId")({
   head: () => ({
@@ -29,6 +31,7 @@ function VideoRoomPage() {
   const { roomId } = Route.useParams();
   const { user, isPending } = useCurrentUserState();
   const { t } = useCopy();
+  const viewing = useViewAs();
   const nativeShell = useInNativeShell();
   const [status, setStatus] = useState<VideoJoinStatus | null>(null);
   const [statusFailed, setStatusFailed] = useState(false);
@@ -69,8 +72,18 @@ function VideoRoomPage() {
   const canMint = Boolean(status?.gateOk);
 
   async function onJoin() {
+    if (viewing) {
+      setError(t("viewAsReadOnly"));
+      return;
+    }
     setBusy(true);
     setError("");
+    const media = await primeCallMedia("video");
+    if (media === "denied") {
+      setError(t("mediaPermissionDenied"));
+      setBusy(false);
+      return;
+    }
     try {
       const result = await joinVideoRoom({ data: { roomId } });
       if (result.ok) {
@@ -91,7 +104,7 @@ function VideoRoomPage() {
 
   return (
     <Shell>
-      <main className="mx-auto max-w-lg px-4 py-10">
+      <main className="w-full px-4 py-10 pb-[calc(env(safe-area-inset-bottom)+5rem)]">
         <Link to="/inbox" className="text-sm text-muted">
           ← {t("inbox")}
         </Link>
@@ -100,10 +113,13 @@ function VideoRoomPage() {
         )}
         <h1 className="mt-2 font-display text-3xl">{t("videoTourTitle")}</h1>
         <p className="mt-3 text-sm text-muted">{nativeShell ? t("videoJoinHint") : t("videoTourLead")}</p>
-        <p className="mt-2 text-xs text-subtle">{t("videoNoRecording")}</p>
+        <p className="mt-2 text-xs text-subtle" data-ke="media-permission-note">{t("mediaPermissionNote")}</p>
+        <p className="mt-1 text-xs text-subtle">{t("videoNoRecording")}</p>
         <p className="mt-1 text-xs text-subtle">{t("videoMinutesNote")}</p>
 
-        {nativeShell && paywall ? (
+        <div className="ke-call-stage mt-6" data-ke="call-stage">
+        <div className="min-w-0">
+        {nativeShell && paywall && !canMint ? (
           <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="native-video-entitlement">
             <p className="text-sm text-muted">{t("nativeVideoNeedsPlus")}</p>
             <Button variant="secondary" asChild className="mt-4">
@@ -167,16 +183,12 @@ function VideoRoomPage() {
         ) : null}
 
         {canMint && !joined ? (
-          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border">
+          <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke="video-join">
             <p className="text-sm text-muted">{t("videoJoinHint")}</p>
             <Button className="mt-4" disabled={busy} onClick={() => void onJoin()}>
               {busy ? t("loading") : t("videoJoin")}
             </Button>
           </div>
-        ) : null}
-
-        {joined ? (
-          <VideoRoomPanel token={joined.token} roomName={joined.roomName} onLeft={() => setJoined(null)} />
         ) : null}
 
         {!status && !statusFailed && user ? <p className="mt-6 text-sm text-muted">{t("loading")}</p> : null}
@@ -187,6 +199,15 @@ function VideoRoomPage() {
               <Link to="/inbox">{t("inbox")}</Link>
             </Button>
           </div>
+        ) : null}
+        </div>
+        <div className="hidden min-w-0 rounded-2xl bg-surface p-6 ring-1 ring-border md:block">
+          <p className="text-sm text-muted">{t("videoJoinHint")}</p>
+        </div>
+        </div>
+
+        {joined ? (
+          <VideoRoomPanel token={joined.token} roomName={joined.roomName} onLeft={() => setJoined(null)} />
         ) : null}
       </main>
     </Shell>

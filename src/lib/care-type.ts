@@ -3,12 +3,12 @@
  * Facility types (centre / family home / group home / nursery / school-age)
  * come from the provider column or real amenities only.
  * Before-after is a program signal from amenities and hours — not a facility class.
- * School-age is amenity or confirmed max age — never invented.
+ * School-age is a confirmed age overlap — never an amenity guess.
  */
 
 import { hasAmenity, opensEarly, staysLate } from "@/lib/licensing";
 import { hasConfirmedAges } from "@/lib/listing-readiness";
-import { matchesAgeBand } from "@/lib/saved-search";
+import { standardGroupsForRange } from "@/lib/standard-age-groups";
 import {
   FACILITY_TYPES,
   classifyFacilityType,
@@ -99,12 +99,8 @@ export function matchesRailAge(
   item: Pick<Daycare, "agesKnown" | "ageMinMonths" | "ageMaxMonths" | "amenities">,
   age: RailAge,
 ): boolean {
-  if (age === "school-age") {
-    if (hasAmenity(item.amenities || "", "school-age")) return true;
-    return hasConfirmedAges(item) && item.ageMaxMonths >= 60;
-  }
   if (!hasConfirmedAges(item)) return false;
-  return matchesAgeBand(age, { ...item, agesKnown: true });
+  return standardGroupsForRange(item.ageMinMonths, item.ageMaxMonths).includes(age);
 }
 
 export function railAgeToSearchAge(age: RailAge): "any" | AgeGroup {

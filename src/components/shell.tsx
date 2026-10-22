@@ -32,6 +32,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { readLiveSearchFlag } from "@/lib/explore-search";
 import { rememberResumePath } from "@/lib/retention";
 import { ApplyPendingShortlist } from "@/components/apply-pending-shortlist";
+import { KeyboardInset } from "@/components/keyboard-inset";
 
 export function Shell({ children }: { children: ReactNode }) {
   const { t, locale } = useCopy();
@@ -95,40 +96,49 @@ export function Shell({ children }: { children: ReactNode }) {
 
   if (verifyLite) {
     return (
-      <div className="min-h-dvh bg-bg text-fg">
-        <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
+      <div className="min-h-dvh bg-bg pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] text-fg">
+        <KeyboardInset />
+        <header className="sticky top-[var(--ke-view-as-h,0px)] z-50 border-b border-border bg-bg pt-[var(--ke-safe-top,env(safe-area-inset-top))]">
           <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
             <Link to={homeTo} className="shrink-0" aria-label="KidEase">
               <BrandMark size="sm" />
             </Link>
           </div>
         </header>
-        {children}
+        <div className="ke-page" data-ke="page">
+          {children}
+        </div>
       </div>
     );
   }
 
   if (menuLite) {
     return (
-      <div className="min-h-dvh bg-bg text-fg">
-        <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
+      <div className="min-h-dvh bg-bg pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] text-fg">
+        <KeyboardInset />
+        <header className="sticky top-[var(--ke-view-as-h,0px)] z-50 border-b border-border bg-bg pt-[var(--ke-safe-top,env(safe-area-inset-top))]">
           <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
             <Link to={homeTo} className="shrink-0" aria-label="KidEase">
               <BrandMark size="sm" />
             </Link>
           </div>
         </header>
-        <div className="[[data-channel=app]_&]:pb-[calc(6rem+env(safe-area-inset-bottom))]">{children}</div>
+        <div className="[[data-channel=app]_&]:pb-[calc(6rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]">
+          <div className="ke-page" data-ke="page">
+            {children}
+          </div>
+        </div>
         <AppTabBar />
       </div>
     );
   }
 
   return (
-    <div className="min-h-dvh bg-bg text-fg">
-      <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
-        <div className="ke-gutter relative mx-auto max-w-6xl">
-          <div className="flex h-14 items-center gap-3 md:h-16">
+    <div className="min-h-dvh bg-bg pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] text-fg">
+      <KeyboardInset />
+      <header className="sticky top-[var(--ke-view-as-h,0px)] z-50 border-b border-border bg-bg pt-[var(--ke-safe-top,env(safe-area-inset-top))]">
+        <div className="ke-gutter relative mx-auto min-w-0 max-w-6xl">
+          <div className="flex h-14 w-full min-w-0 items-center gap-3 max-md:h-auto max-md:min-h-14 max-md:gap-2 md:h-16">
             {menuLeaf ? <MenuLeafBack /> : null}
             <Link to={homeTo} className="relative z-20 shrink-0" aria-label="KidEase">
               <BrandMark size="sm" />
@@ -161,7 +171,7 @@ export function Shell({ children }: { children: ReactNode }) {
                 />
               </div>
             ) : null}
-            <div className="relative z-20 ml-auto flex shrink-0 items-center gap-2 bg-bg pl-1 [[data-channel=website]_&]:flex">
+            <div className="relative z-20 ml-auto flex items-center gap-2 bg-bg pl-1 max-md:min-w-0 max-md:max-w-full max-md:gap-1.5 md:shrink-0 [[data-channel=website]_&]:flex">
               {user ? <NotificationBell className="hidden md:grid" /> : (
                 <Link
                   to={localePath("/claim", locale)}
@@ -190,7 +200,7 @@ export function Shell({ children }: { children: ReactNode }) {
               ) : null}
               <button
                 type="button"
-                className="relative grid size-12 shrink-0 place-items-center rounded-full text-fg transition-colors duration-150 ease-out hover:bg-surface [[data-channel=website]_&]:grid"
+                className="relative grid size-12 shrink-0 place-items-center rounded-full text-fg transition-colors duration-150 ease-out hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation [[data-channel=website]_&]:grid"
                 aria-label="Menu"
                 aria-expanded={open}
                 aria-controls="ke-nav-drawer"
@@ -275,10 +285,12 @@ export function Shell({ children }: { children: ReactNode }) {
         headerExtra={null}
         navExtra={hiddenCare.length ? <HeaderCareOverflow types={hiddenCare} city={headerCity} onNavigate={close} /> : null}
       />
-      <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(6rem+env(safe-area-inset-bottom))]"}>
+      <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(6rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]"}>
         <ApplyPendingShortlist />
-        {children}
-        {hideFooter ? null : <SiteFooter />}
+        <div className="ke-page" data-ke="page">
+          {children}
+          {hideFooter ? null : <SiteFooter />}
+        </div>
       </div>
       {hideTabs ? null : <AppTabBar />}
       {hideTabs || pathname.startsWith("/search") || pathname.startsWith("/parent") || pathname.startsWith("/menu") ? null : <LiveChatSlot />}

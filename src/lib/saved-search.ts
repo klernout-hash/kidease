@@ -5,6 +5,7 @@
 
 import { confirmedFeeProgramBadge } from "@/lib/fee-program";
 import { hasAmenity, opensEarly, staysLate } from "@/lib/licensing";
+import { standardGroupsForRange } from "@/lib/standard-age-groups";
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { clampRadiusKm } from "@/lib/proximity";
 import { isClaimVerified } from "@/lib/trust";
@@ -162,10 +163,7 @@ export function matchesAgeBand(
   if (ageBand === "any") return true;
   // Unknown ages never match a specific band — including school-age.
   if (row.agesKnown !== true) return false;
-  if (ageBand === "infant") return row.ageMinMonths <= 18;
-  if (ageBand === "toddler") return row.ageMinMonths < 36 && row.ageMaxMonths >= 18;
-  if (ageBand === "school-age") return row.ageMaxMonths >= 60;
-  return row.ageMaxMonths >= 30 && row.ageMinMonths < 72;
+  return standardGroupsForRange(row.ageMinMonths, row.ageMaxMonths).includes(ageBand);
 }
 
 export type FilterableListing = {
