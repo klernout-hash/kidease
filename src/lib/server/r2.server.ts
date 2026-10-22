@@ -44,7 +44,7 @@ function requireConfig(env: Record<string, string | undefined> = process.env): R
 
 async function r2Fetch(
   signed: { url: string; headers: Record<string, string> },
-  method: "GET" | "PUT" | "HEAD",
+  method: "GET" | "PUT" | "HEAD" | "DELETE",
   body?: Buffer | null,
 ) {
   const headers = new Headers();
@@ -156,7 +156,7 @@ export async function putPrivateDoc(input: {
   const config = requireConfig();
   const key = sanitizeObjectKey(input.key);
   if (!isPrivateDocKey(key)) {
-    throw new Error("Private document key must stay under screening/ or licenses/.");
+    throw new Error("Private document key must stay under screening/, licenses/, or family-docs/.");
   }
   const contentType = allowPrivateDocType(input.contentType);
   const body = input.body;
@@ -186,6 +186,27 @@ export async function putPrivateDoc(input: {
     };
   } catch (err) {
     throw new Error(humanR2Error(err, config.secretAccessKey));
+  }
+}
+
+/** Remove a parent vault object. Refuses every other prefix. */
+export async function deleteFamilyDocObject(keyInput: string): Promise<void> {
+  const config = requireConfig();
+  const key = sanitizeObjectKey(keyInput);
+  if (!key.startsWith("family-docs/")) throw new Error("File not found");
+  const url = objectUrl(config, key);
+  const signed = signS3Request({
+    method: "DELETE",
+    url,
+    accessKeyId: config.accessKeyId,
+    secretAccessKey: config.secretAccessKey,
+  });
+  try {
+    await r2Fetch(signed, "DELETE");
+  } catch (err) {
+    const message = humanR2Error(err, config.secretAccessKey);
+    if (/not found/i.test(message)) return;
+    throw new Error(message);
   }
 }
 

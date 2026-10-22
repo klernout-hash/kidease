@@ -112,6 +112,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "notify-prefs", label: "Notification preferences", labelKey: "notificationPrefs", href: "/account", search: { tab: "profile", section: "alerts", desk: "parent" } },
     { id: "security", label: "Login and security", labelKey: "loginSecurity", href: "/account", search: { tab: "profile", section: "security", desk: "parent" } },
     { id: "email-sms", label: "Email and SMS", labelKey: "emailAndSms", href: "/account", search: { tab: "profile", section: "email-sms", desk: "parent" } },
+    { id: "documents", label: "Documents", hint: "Immunization records and subsidy forms", labelKey: "familyDocs", hintKey: "familyDocsHint", href: "/account", search: { tab: "profile", section: "documents", desk: "parent" } },
     { id: "account", label: "Account", hint: "Family profile and alerts", labelKey: "account", hintKey: "deskNavParentAccountHint", href: "/account", search: { tab: "profile", desk: "parent" } },
   ],
 };
