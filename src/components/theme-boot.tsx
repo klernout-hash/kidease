@@ -4,6 +4,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getMyTheme, saveMyTheme } from "@/lib/server/account-prefs";
 import { useAppStore } from "@/lib/store";
 import { applyTheme, readThemePreference, setThemePersister, subscribeSystemTheme } from "@/lib/theme";
+import { applyTextScale, readTextScale } from "@/lib/text-scale";
 
 /** Hydrate the stored Appearance preference and keep System in sync with the OS. */
 export function ThemeBoot() {
@@ -13,7 +14,9 @@ export function ThemeBoot() {
   useLayoutEffect(() => {
     const pref = readThemePreference();
     const resolved = applyTheme(pref);
-    useAppStore.setState({ theme: pref, resolvedTheme: resolved });
+    const textScale = readTextScale();
+    applyTextScale(textScale);
+    useAppStore.setState({ theme: pref, resolvedTheme: resolved, textScale });
     return subscribeSystemTheme(() => {
       const current = useAppStore.getState().theme;
       if (current !== "system") return;

@@ -8,6 +8,7 @@ import { writeLocationConsent, type LocationConsent } from "./location-consent";
 import { clampRadiusKm } from "./proximity";
 import { parseAnchorMode, writeDualAnchorPrefs, type AnchorMode } from "./dual-anchor";
 import { applyTheme, persistThemePreference, writeThemePreference, type ResolvedTheme, type ThemePreference } from "./theme";
+import { writeTextScale, type TextScale } from "./text-scale";
 
 export type SortKey = "distance" | "price" | "rating" | "availability" | "recommended" | "match" | "urgency" | "best";
 
@@ -49,6 +50,8 @@ type SearchState = {
   theme: ThemePreference;
   resolvedTheme: ResolvedTheme;
   setTheme: (theme: ThemePreference) => void;
+  textScale: TextScale;
+  setTextScale: (scale: TextScale) => void;
 };
 
 export const useAppStore = create<SearchState>()((set) => ({
@@ -145,5 +148,10 @@ export const useAppStore = create<SearchState>()((set) => ({
     const resolvedTheme = applyTheme(theme);
     set({ theme, resolvedTheme });
     persistThemePreference(theme);
+  },
+  textScale: "md",
+  setTextScale: (textScale) => {
+    writeTextScale(textScale);
+    set({ textScale });
   },
 }));

@@ -3,12 +3,19 @@ import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import { THEME_PREFERENCES, type ThemePreference } from "@/lib/theme";
+import { TEXT_SCALES, type TextScale } from "@/lib/text-scale";
 import type { CopyKey } from "@/lib/copy";
 
 const THEME_LABEL: Record<ThemePreference, CopyKey> = {
   light: "appearanceLight",
   dark: "appearanceDark",
   system: "appearanceSystem",
+};
+
+const TEXT_LABEL: Record<TextScale, CopyKey> = {
+  md: "textSizeMd",
+  lg: "textSizeLg",
+  xl: "textSizeXl",
 };
 
 export function AppearanceControl({
@@ -23,6 +30,8 @@ export function AppearanceControl({
   const { t } = useCopy();
   const theme = useAppStore((s) => s.theme);
   const setTheme = useAppStore((s) => s.setTheme);
+  const textScale = useAppStore((s) => s.textScale);
+  const setTextScale = useAppStore((s) => s.setTextScale);
   const groupRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -103,6 +112,27 @@ export function AppearanceControl({
               )}
             >
               {t(THEME_LABEL[pref])}
+            </button>
+          );
+        })}
+      </div>
+      <p className="mt-4 text-sm font-medium text-fg" id="text-size-label">
+        {t("textSize")}
+      </p>
+      <p className="mt-1 text-[13px] text-muted">{t("textSizeHint")}</p>
+      <div role="radiogroup" aria-labelledby="text-size-label" className="mt-3 flex h-11 overflow-hidden rounded-full bg-bg ring-1 ring-border">
+        {TEXT_SCALES.map((scale) => {
+          const on = textScale === scale;
+          return (
+            <button
+              key={scale}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => setTextScale(scale)}
+              className={cn("min-h-11 flex-1 px-2 text-sm font-semibold", on ? "bg-fg text-bg" : "text-muted hover:text-fg")}
+            >
+              {t(TEXT_LABEL[scale])}
             </button>
           );
         })}
