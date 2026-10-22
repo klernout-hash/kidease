@@ -135,7 +135,10 @@ test("Play, Samsung, Huawei, and Windows sizes stay resizable", () => {
   assert.match(manifest, /smallestScreenSize\|screenLayout/);
   assert.doesNotMatch(manifest, /screenOrientation|supports-screens|compatible-screens|maxAspectRatio/);
   assert.doesNotMatch(huawei, /screenOrientation|supports-screens|compatible-screens|maxAspectRatio/);
-  assert.doesNotMatch(src("android/app/src/main/java/ca/kidease/app/MainActivity.java"), /onConfigurationChanged|webView\.reload|loadUrl\(/);
+  const activity = src("android/app/src/main/java/ca/kidease/app/MainActivity.java");
+  // Rotate and unfold must not rebuild the page. The one-time reload applies the store user agent at startup.
+  assert.doesNotMatch(activity, /onConfigurationChanged/);
+  assert.match(activity, /webView\.reload\(\)/);
   assert.match(src("scripts/e2e-smoke.mjs"), /runStoreViewportPass/);
   assert.match(src("scripts/e2e-smoke.mjs"), /runDesktopVisualPass/);
   assert.match(src("scripts/desktop-visual.mjs"), /1280/);
