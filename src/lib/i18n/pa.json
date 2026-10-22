@@ -2459,6 +2459,7 @@
   "adminWinnipegFeeProgramHint": "mb-10-day ਜਦੋਂ ਕੋਈ ਸਰੋਤ ਦਿਖਾਵੇ ਕਿ ਇਹ ਕੇਂਦਰ ਨਿਯੰਤਰਿਤ ਰੋਜ਼ਾਨਾ ਸੀਮਾ 'ਤੇ ਫੰਡ ਕੀਤਾ ਗਿਆ ਹੈ। ਮਹੀਨਾਵਾਰ ਫ਼ੀਸਾਂ ਖਾਲੀ ਛੱਡੋ।",
   "adminWinnipegDownload": "ਗੈਪ CSV ਡਾਊਨਲੋਡ ਕਰੋ",
   "adminWinnipegEmpty": "ਇਸ ਡਾਟਾਬੇਸ ਵਿੱਚ ਕੋਈ ਜਨਤਕ ਵਿਨੀਪੈਗ ਲਿਸਟਿੰਗ ਨਹੀਂ।",
+  "adminWinnipegUnavailable": "ਇਹ ਸੂਚੀ ਇਸ ਵੇਲੇ ਉਪਲਬਧ ਨਹੀਂ। ਐਡਮਿਨ ਉੱਤੇ ਵਾਪਸ ਜਾਓ, ਜਾਂ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
   "adminWinnipegLoading": "ਵਿਨੀਪੈਗ ਲਿਸਟਿੰਗਾਂ ਮਾਪੀਆਂ ਜਾ ਰਹੀਆਂ ਹਨ…",
   "adminWinnipegSearchVisible": "ਖੋਜ ਵਿੱਚ ਦਿਸਦੀਆਂ",
   "adminWinnipegPlatformLive": "ਪਲੇਟਫਾਰਮ ਲਾਈਵ",

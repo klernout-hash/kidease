@@ -2459,6 +2459,7 @@
   "adminWinnipegFeeProgramHint": "有來源顯示呢間中心係按受規管每日上限獲資助時，用 mb-10-day。月費留空。",
   "adminWinnipegDownload": "下載缺口 CSV",
   "adminWinnipegEmpty": "呢個資料庫冇公開嘅溫尼伯刊登。",
+  "adminWinnipegUnavailable": "呢份名單而家打唔開。返去管理頁，或者再試一次。",
   "adminWinnipegLoading": "量度緊溫尼伯刊登…",
   "adminWinnipegSearchVisible": "搜尋可見",
   "adminWinnipegPlatformLive": "平台 Live",

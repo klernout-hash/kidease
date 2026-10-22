@@ -2459,6 +2459,7 @@
   "adminWinnipegFeeProgramHint": "mb-10-day kapag ipinapakita ng source na funded ang centre na ito sa regulated daily cap. Iwanang blangko ang mga buwanang bayad.",
   "adminWinnipegDownload": "I-download ang gap CSV",
   "adminWinnipegEmpty": "Walang pampublikong listing sa Winnipeg sa database na ito.",
+  "adminWinnipegUnavailable": "Hindi available ang listahang ito ngayon. Bumalik sa Admin, o subukan muli.",
   "adminWinnipegLoading": "Sinusukat ang mga listing sa Winnipeg…",
   "adminWinnipegSearchVisible": "Nakikita sa search",
   "adminWinnipegPlatformLive": "Live sa platform",

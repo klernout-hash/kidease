@@ -2459,6 +2459,7 @@
   "adminWinnipegFeeProgramHint": "当来源显示该中心按规定的每日上限获得资助时，使用 mb-10-day。月费留空。",
   "adminWinnipegDownload": "下载缺口 CSV",
   "adminWinnipegEmpty": "此数据库中没有公开的温尼伯名录。",
+  "adminWinnipegUnavailable": "这份名单现在打不开。请回到管理页，或再试一次。",
   "adminWinnipegLoading": "正在评估温尼伯名录…",
   "adminWinnipegSearchVisible": "搜索可见",
   "adminWinnipegPlatformLive": "平台已上线",
