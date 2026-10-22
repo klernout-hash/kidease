@@ -131,8 +131,7 @@ export async function compareDesktopShots(browser, actualDir, baselineDir) {
             if (delta > 36) diff += 4;
           }
           const ratio = diff / pixels;
-          // Header glyphs on CI can differ by about 0.7% with no layout change.
-          return { ratio, mismatch: ratio > 0.008 };
+          return { ratio, mismatch: ratio > 0.004 };
         },
         {
           a: `data:image/png;base64,${readFileSync(baseFile).toString("base64")}`,
