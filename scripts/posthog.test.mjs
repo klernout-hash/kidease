@@ -219,7 +219,10 @@ describe("PostHog client wiring", () => {
     const prevWindow = globalThis.window;
     const prevLocalStorage = globalThis.localStorage;
     globalThis.localStorage = memoryStorage({ [ANALYTICS_CONSENT_KEY]: "granted" });
-    globalThis.window = { localStorage: globalThis.localStorage };
+    globalThis.window = {
+      localStorage: globalThis.localStorage,
+      navigator: { userAgent: "Mozilla/5.0 (compatible; KidEaseTest)" },
+    };
     const calls = [];
     const optedOut = {
       has_opted_out_capturing: () => true,
@@ -243,7 +246,10 @@ describe("PostHog client wiring", () => {
     applyPostHogRecordingGate(stillIn);
     assert.equal(calls.includes("opt_in_again"), false);
     globalThis.localStorage = memoryStorage({ [ANALYTICS_CONSENT_KEY]: "denied" });
-    globalThis.window = { localStorage: globalThis.localStorage };
+    globalThis.window = {
+      localStorage: globalThis.localStorage,
+      navigator: { userAgent: "Mozilla/5.0 (compatible; KidEaseTest)" },
+    };
     const deniedCalls = [];
     applyPostHogRecordingGate({
       has_opted_out_capturing: () => false,
