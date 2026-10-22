@@ -2,6 +2,7 @@
 	"appId": "ca.kidease.app",
 	"appName": "KidEase",
 	"webDir": "native-www",
+	"appendUserAgent": "KidEaseNative",
 	"server": {
 		"androidScheme": "https",
 		"iosScheme": "https",

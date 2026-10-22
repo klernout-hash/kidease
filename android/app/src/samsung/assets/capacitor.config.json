@@ -1,0 +1,43 @@
+{
+	"appId": "ca.kidease.app",
+	"appName": "KidEase",
+	"webDir": "native-www",
+	"appendUserAgent": "KidEaseNative KidEaseStoreSamsung",
+	"server": {
+		"androidScheme": "https",
+		"iosScheme": "https",
+		"hostname": "www.kidease.ca",
+		"url": "https://www.kidease.ca",
+		"cleartext": false
+	},
+	"plugins": {
+		"SplashScreen": {
+			"launchShowDuration": 0,
+			"launchAutoHide": false,
+			"backgroundColor": "#F6F3EE",
+			"androidScaleType": "CENTER_CROP",
+			"showSpinner": false,
+			"splashFullScreen": true,
+			"splashImmersive": true
+		},
+		"StatusBar": {
+			"style": "DARK",
+			"backgroundColor": "#F6F3EE"
+		},
+		"Keyboard": {
+			"resize": "body"
+		},
+		"Geolocation": {},
+		"InAppReview": {}
+	},
+	"android": {
+		"allowMixedContent": false,
+		"backgroundColor": "#F6F3EE"
+	},
+	"ios": {
+		"contentInset": "automatic",
+		"backgroundColor": "#F6F3EE",
+		"preferredContentMode": "mobile",
+		"scheme": "KidEase"
+	}
+}

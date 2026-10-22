@@ -125,6 +125,9 @@ test("Huawei hides Google sign-in and the other stores do not", () => {
   assert.match(src("src/routes/login.tsx"), /providersForStore/);
   assert.match(src("src/components/map-view.tsx"), /StoreMapFallback/);
   assert.match(src("src/routes/search.tsx"), /storeChannel === "huawei"/);
+  assert.match(src("src/routes/__root.tsx"), /mapDnsPrefetch/);
+  assert.match(src("src/routes/__root.tsx"), /channel === "huawei"/);
+  assert.match(src("src/components/nav-drawer.tsx"), /nativeShell \? null/);
   assert.match(src("src/components/listing-map.tsx"), /StoreMapFallback/);
   assert.match(src("src/lib/push-client.ts"), /googleServicesHidden/);
   assert.match(src("src/lib/native.ts"), /googleServicesHidden/);
@@ -237,6 +240,27 @@ test("iOS and Play never send or set the Samsung store token", () => {
   assert.match(activity, /"samsung"\.equals\(flavor\) && "KidEaseStoreSamsung"\.equals\(configured\)/);
   assert.match(activity, /!"samsung"\.equals\(flavor\)/);
   assert.match(activity, /withoutSamsungStoreQuery/);
+  assert.match(activity, /setUserAgentString/);
+  assert.match(activity, /Log\.e/);
+  assert.match(activity, /BuildConfig\.DEBUG/);
+  assert.match(activity, /KidEaseStoreHuawei/);
+  assert.doesNotMatch(activity, /getDeclaredField|setAccessible|catch \(Exception ignored\)/);
+  const playConfig = src("android/app/src/main/assets/capacitor.config.json");
+  const samsungConfig = src("android/app/src/samsung/assets/capacitor.config.json");
+  const huaweiConfig = src("android/app/src/huawei/assets/capacitor.config.json");
+  assert.match(playConfig, /"appendUserAgent": "KidEaseNative"/);
+  assert.doesNotMatch(playConfig, /KidEaseStoreSamsung|KidEaseStoreHuawei/);
+  assert.match(samsungConfig, /"appendUserAgent": "KidEaseNative KidEaseStoreSamsung"/);
+  assert.doesNotMatch(samsungConfig, /KidEaseStoreHuawei/);
+  assert.match(huaweiConfig, /"appendUserAgent": "KidEaseNative KidEaseStoreHuawei"/);
+  assert.doesNotMatch(huaweiConfig, /KidEaseStoreSamsung/);
+  const huaweiPlugins = src("android/app/src/huawei/assets/capacitor.plugins.json");
+  assert.match(huaweiPlugins, /AppPlugin/);
+  assert.doesNotMatch(huaweiPlugins, /GeolocationPlugin|InAppReviewPlugin/);
+  const agentTest = src("android/app/src/androidTest/java/ca/kidease/app/StoreUserAgentTest.java");
+  assert.match(agentTest, /getUserAgentString/);
+  assert.match(agentTest, /KidEaseStoreSamsung/);
+  assert.match(agentTest, /KidEaseStoreHuawei/);
 
   const ios = src("ios/App/App/KidEaseBridgeViewController.swift");
   assert.match(ios, /withoutForeignStoreToken/);
@@ -264,6 +288,16 @@ test("Android flavours name the store and Huawei skips Google startup", () => {
   assert.match(gradle, /KidEaseStoreSamsung/);
   assert.match(gradle, /KidEaseStoreHuawei/);
   assert.match(gradle, /googleservices/);
+  assert.match(gradle, /exclude group: "com\.google\.android\.gms"/);
+  assert.match(gradle, /exclude group: "com\.google\.android\.play"/);
+  assert.match(gradle, /exclude group: "com\.google\.firebase"/);
+  assert.match(gradle, /contains\("huawei"\)/);
+  assert.match(gradle, /playImplementation project\(":capacitor-geolocation"\)/);
+  assert.match(gradle, /samsungImplementation project\(":capacitor-community-in-app-review"\)/);
+  assert.doesNotMatch(
+    gradle.slice(gradle.indexOf("dependencies {"), gradle.indexOf("apply from: 'capacitor.build.gradle'")),
+    /huaweiImplementation project\(":capacitor-geolocation"\)/,
+  );
   assert.match(gradle, /applicationId "ca\.kidease\.app"/);
   assert.match(src("android/app/src/main/java/ca/kidease/app/MainActivity.java"), /STORE_UA_TOKEN/);
   assert.match(src("android/app/src/huawei/AndroidManifest.xml"), /FirebaseInitProvider/);
