@@ -8,7 +8,7 @@ import {
 
 /**
  * True when this shell must hide KidEase prices and Stripe.
- * Apple, Google Play, and Huawei. Samsung and the Microsoft Store PWA stay false.
+ * Every store app is off in v1. A normal browser stays false.
  */
 export function useInNativeShell(): boolean {
   const nativeShell = useRouteContext({

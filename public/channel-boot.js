@@ -25,6 +25,8 @@
       var secure = location.protocol === "https:" ? "; Secure" : "";
       document.cookie = "ke_store=microsoft; Path=/; Max-Age=31536000; SameSite=Lax" + secure;
     }
+    /* Keep in step with STORE_PAYMENTS_ENABLED in native-entitlements.ts. v2 flips one store to true. */
+    var STORE_PAYMENTS_ENABLED = { apple: false, google: false, microsoft: false, samsung: false, huawei: false };
     var standalone = window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
     if (!n && !uaNative && (store === "microsoft" || standalone)) {
       window.addEventListener("load", function () {
@@ -41,12 +43,11 @@
       });
     }
     r.dataset.store = store;
-    var blocksCommerce = store === "apple" || store === "google" || store === "huawei";
+    var blocksCommerce = Object.prototype.hasOwnProperty.call(STORE_PAYMENTS_ENABLED, store) && STORE_PAYMENTS_ENABLED[store] === false;
     r.dataset.channel = force || n || uaNative || w < 1024 ? "app" : "website";
     if (!blocksCommerce) r.dataset.runtime = "web";
     else if (n && c.getPlatform) r.dataset.runtime = c.getPlatform();
-    else if (uaNative) r.dataset.runtime = "native";
-    else r.dataset.runtime = "web";
+    else r.dataset.runtime = "native";
     if (r.dataset.channel === "app") {
       var dropJakarta = function () {
         document.querySelectorAll('link[rel="preload"][href*="plus-jakarta"]').forEach(function (el) {
