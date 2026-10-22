@@ -177,9 +177,9 @@ async function sweepSizes(page, base, viewports, problems) {
           }
         }
         if (path === "/" && expectedChannel(vp.store, vp.width) === "website" && vp.width >= 1024 && found.desktop) {
-          if (found.desktop.video === "none" || found.desktop.video === "missing") {
-            problems.push(`${label} desktop-video ${found.desktop.video}`);
-          }
+          // Store shells are runtime native, so the desktop explainer stays hidden at every width.
+          const shown = found.desktop.video !== "none" && found.desktop.video !== "missing";
+          if (shown) problems.push(`${label} desktop-video ${found.desktop.video}`);
         }
       } catch (err) {
         problems.push(`${label} ${err instanceof Error ? err.message.split("\n")[0] : String(err)}`);
