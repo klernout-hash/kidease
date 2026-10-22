@@ -58,6 +58,10 @@ function fromCoords(coords: { latitude: number; longitude: number; accuracy?: nu
 export async function getDeviceLocation(opts?: { precise?: boolean }): Promise<DeviceLocation | null> {
   const enableHighAccuracy = opts?.precise !== false;
   const huawei = googleServicesHidden(readClientStoreChannel());
+  if (huawei) {
+    const { huaweiDeviceLocation } = await import("./huawei-location");
+    return huaweiDeviceLocation(opts);
+  }
   if (isNative() && !huawei) {
     try {
       const { Geolocation } = await import("@capacitor/geolocation");
