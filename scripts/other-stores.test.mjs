@@ -157,7 +157,9 @@ test("PWA manifest for Partner Center stays installable and does not retag the w
   assert.match(src("public/channel-boot.js"), /q\.get\("store"\) === "microsoft" && !uaNative/);
   assert.match(src("public/channel-boot.js"), /Max-Age=0/);
   assert.match(src("public/channel-boot.js"), /display-mode: standalone/);
-  assert.match(src("public/channel-boot.js"), /serviceWorker\.register\("\/sw\.js"/);
+  assert.match(src("public/channel-boot.js"), /serviceWorker\.register\("\/sw\.js\?v=6"/);
+  assert.match(src("src/routes/__root.tsx"), /channel-boot\.js\?v=6/);
+  assert.match(src("src/lib/native.ts"), /register\("\/sw\.js\?v=6"/);
   assert.match(src("public/channel-boot.js"), /!n && !uaNative && \(store === "microsoft" \|\| standalone\)/);
   const rootHead = src("src/routes/__root.tsx");
   assert.match(rootHead, /manifest\.microsoft\.webmanifest/);
