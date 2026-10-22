@@ -1,4 +1,5 @@
 /* KidEase PWA worker for Chromium, including the Microsoft Store app (Edge).
+ * Pages register /sw.js?v=6 so a cached copy of /sw.js cannot stay behind.
  * The iOS and Android shells do not register this file.
  * Documents are network-only. A failed navigation falls back to /offline.html.
  * HTML is never written to the cache (stale /assets hashes break the page). */

@@ -77,7 +77,7 @@ test("service worker caches chrome only and registers from NativeBoot", () => {
   assert.doesNotMatch(offline, /kyle@kidease\.ca/);
   const native = src("src/lib/native.ts");
   assert.match(native, /registerOfflineShell/);
-  assert.match(native, /\.register\("\/sw\.js"/);
+  assert.match(native, /\.register\("\/sw\.js\?v=6"/);
   assert.match(src("src/components/native-boot.tsx"), /registerOfflineShell/);
   const vercel = src("vercel.json");
   assert.match(vercel, /"source": "\/sw\.js"/);
