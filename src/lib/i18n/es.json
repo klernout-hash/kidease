@@ -2973,5 +2973,19 @@
   "viewAsDaycare": "Guardería",
   "viewAsStarting": "Iniciando…",
   "viewAsUnknown": "esta persona",
-  "sponsored": "Patrocinado"
+  "sponsored": "Patrocinado",
+  "facebookRoleTitle": "¿Para quién es esta cuenta?",
+  "facebookRoleLead": "KidEase es para padres y personal de centros en Canadá. Debes tener 18 años o más. Un niño no puede tener una cuenta.",
+  "facebookRoleAdult": "Confirmaste que tienes 18 años o más.",
+  "facebookRoleParent": "Soy padre o madre",
+  "facebookRoleCentre": "Trabajo en un centro",
+  "facebookEmailTitle": "Añade tu correo",
+  "facebookEmailLead": "Facebook no compartió un correo. Añade uno y confírmalo antes de escribir a un centro o reservar una visita.",
+  "facebookEmailLabel": "Correo",
+  "facebookEmailSend": "Enviar el enlace",
+  "facebookEmailPending": "Abre el enlace en tu bandeja para confirmar este correo. Después podrás escribir a un centro o reservar una visita.",
+  "facebookEmailResend": "Enviar el enlace otra vez",
+  "facebookEmailSaved": "El enlace va en camino. Revisa también el correo no deseado.",
+  "facebookEmailRequired": "Añade y confirma un correo antes de escribir a un centro o reservar una visita.",
+  "facebookHostUnavailable": "Continuar con Facebook no está disponible en esta dirección. Abre kidease.ca."
 }

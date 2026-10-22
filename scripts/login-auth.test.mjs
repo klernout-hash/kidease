@@ -240,7 +240,10 @@ describe("apex/www session cookies", () => {
     assert.doesNotMatch(popup, /signInWithOAuth2/);
     assert.match(client, /signIn\.social/);
     assert.match(popup, /signInSocial/);
-    assert.match(server, /callbackPath: `\/oauth2\/callback\/\$\{provider\.id\}`/);
+    const preview = read("src/lib/auth/preview.ts");
+    assert.match(server, /brokerOAuthCallbackPath/);
+    assert.match(preview, /providerId === "facebook"/);
+    assert.match(preview, /return `\/oauth2\/callback\/\$\{providerId\}`/);
     assert.match(authApi, /requestWithLegacyOAuthCallback/);
     const rewritten = requestWithLegacyOAuthCallback(
       new Request("https://www.kidease.ca/api/auth/oauth2/callback/grok-google?code=1"),

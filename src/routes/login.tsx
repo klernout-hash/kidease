@@ -64,7 +64,6 @@ import {
   facebookSignupRole,
   socialSignupCallbackPath,
 } from "@/lib/auth/social-callback";
-import { markAdultConfirmedForSession } from "@/lib/adult-confirm";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { isSignupWhy, SIGNUP_FUNNEL_EVENT, signupFunnelPayload, type SignupWhy } from "@/lib/signup-funnel";
 import { parentMobileIssue, smsOptInWasBlocked, stashParentSmsOptIn, takeParentSmsOptIn } from "@/lib/parent-sms-consent";

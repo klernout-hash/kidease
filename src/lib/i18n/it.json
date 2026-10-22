@@ -2973,5 +2973,19 @@
   "viewAsDaycare": "Asilo",
   "viewAsStarting": "Avvio…",
   "viewAsUnknown": "questa persona",
-  "sponsored": "Sponsorizzato"
+  "sponsored": "Sponsorizzato",
+  "facebookRoleTitle": "Questo account è per chi?",
+  "facebookRoleLead": "KidEase è per genitori e personale dei centri in Canada. Devi avere 18 anni o più. Un bambino non può avere un account.",
+  "facebookRoleAdult": "Hai confermato di avere 18 anni o più.",
+  "facebookRoleParent": "Sono un genitore",
+  "facebookRoleCentre": "Lavoro in un centro",
+  "facebookEmailTitle": "Aggiungi la tua email",
+  "facebookEmailLead": "Facebook non ha condiviso un’email. Aggiungine una e confermala prima di scrivere a un centro o prenotare una visita.",
+  "facebookEmailLabel": "Email",
+  "facebookEmailSend": "Invia il link",
+  "facebookEmailPending": "Apri il link nella posta per confermare questa email. Poi puoi scrivere a un centro o prenotare una visita.",
+  "facebookEmailResend": "Invia di nuovo il link",
+  "facebookEmailSaved": "Il link è in arrivo. Controlla anche la posta indesiderata.",
+  "facebookEmailRequired": "Aggiungi e conferma un’email prima di scrivere a un centro o prenotare una visita.",
+  "facebookHostUnavailable": "Continua con Facebook non è disponibile su questo indirizzo. Apri kidease.ca."
 }

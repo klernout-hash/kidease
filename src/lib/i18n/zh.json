@@ -2973,5 +2973,19 @@
   "viewAsDaycare": "托儿所",
   "viewAsStarting": "正在开始…",
   "viewAsUnknown": "此人",
-  "sponsored": "赞助"
+  "sponsored": "赞助",
+  "facebookRoleTitle": "这个账户是给谁的？",
+  "facebookRoleLead": "KidEase 面向加拿大的家长和托儿所工作人员。您必须年满 18 岁。儿童不能拥有账户。",
+  "facebookRoleAdult": "您已确认年满 18 岁。",
+  "facebookRoleParent": "我是家长",
+  "facebookRoleCentre": "我在托儿所工作",
+  "facebookEmailTitle": "添加您的电子邮箱",
+  "facebookEmailLead": "Facebook 没有分享电子邮箱。请添加并确认一个邮箱，然后再给托儿所发消息或预约参观。",
+  "facebookEmailLabel": "电子邮箱",
+  "facebookEmailSend": "发送链接",
+  "facebookEmailPending": "打开收件箱里的链接以确认这个电子邮箱。之后您就可以给托儿所发消息或预约参观。",
+  "facebookEmailResend": "再次发送链接",
+  "facebookEmailSaved": "链接已发出。也请查看垃圾邮件。",
+  "facebookEmailRequired": "给托儿所发消息或预约参观之前，请添加并确认电子邮箱。",
+  "facebookHostUnavailable": "此地址不能使用通过 Facebook 继续。请打开 kidease.ca。"
 }
