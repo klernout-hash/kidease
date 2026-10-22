@@ -76,6 +76,7 @@ export function createVoiceAccessToken(
   input: { identity: string },
   options: { env?: EnvMap; nowMs?: number } = {},
 ): CreateVoiceAccessTokenResult {
+  (globalThis as { __kideaseViewAsSideEffect__?: (action: "call") => void }).__kideaseViewAsSideEffect__?.("call");
   const env = options.env ?? process.env;
   const identity = String(input.identity || "")
     .trim()

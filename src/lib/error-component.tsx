@@ -1,6 +1,7 @@
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { TriangleAlert } from "lucide-react";
 import { useEffect } from "react";
+import { safeErrorCopy } from "@/lib/safe-error";
 import { reportError } from "@/lib/observe";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
@@ -13,20 +14,10 @@ function isStaleChunk(error: unknown) {
   );
 }
 
-function publicErrorMessage(error: unknown) {
-  const msg = error instanceof Error ? error.message : String(error ?? "");
-  if (!msg.trim()) return "An unexpected error occurred. Try reloading the page.";
-  if (
-    msg.length > 140 ||
-    /stack|TypeError|ReferenceError|SyntaxError|at https?:|\/src\/|node_modules/i.test(msg)
-  ) {
-    return "An unexpected error occurred. Try reloading the page.";
-  }
-  return msg;
-}
-
 export function AppErrorComponent({ error }: ErrorComponentProps) {
-  reportError(error, { route: typeof window !== "undefined" ? window.location.pathname : "app" });
+  const path = typeof window !== "undefined" ? window.location.pathname : "";
+  reportError(error, { route: path || "app" });
+  const copy = safeErrorCopy(path);
 
   useEffect(() => {
     if (typeof window === "undefined" || !isStaleChunk(error)) return;
@@ -37,12 +28,12 @@ export function AppErrorComponent({ error }: ErrorComponentProps) {
   }, [error]);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-bg px-6 text-center text-fg">
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-3 bg-bg px-6 text-center text-fg" data-ke="safe-error">
       <span className="text-danger" aria-hidden="true">
         <TriangleAlert className="size-10" strokeWidth={2} />
       </span>
-      <h1 className="font-display text-lg">Something went wrong</h1>
-      <p className="max-w-md text-sm break-words text-muted">{publicErrorMessage(error)}</p>
+      <h1 className="font-display text-lg">{copy.title}</h1>
+      <p className="max-w-md text-sm text-muted">{copy.body}</p>
       <div className="mt-3 flex flex-col items-center gap-2 sm:flex-row">
         <button
           type="button"
@@ -64,7 +55,7 @@ export function AppErrorComponent({ error }: ErrorComponentProps) {
         >
           Back to home
         </a>
-        <a href={`mailto:${SUPPORT_INBOX_EMAIL}`} className="text-sm font-medium text-muted underline-offset-4 hover:underline">
+        <a href={`mailto:${SUPPORT_INBOX_EMAIL}`} className="inline-flex min-h-11 items-center text-sm font-medium text-muted underline-offset-4 hover:underline">
           Email support
         </a>
       </div>

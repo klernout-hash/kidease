@@ -37,6 +37,7 @@ import { CentrePipeline } from "@/components/centre-pipeline";
 import type { PipelineCard } from "@/lib/crm-pipeline";
 import { TourCard } from "@/components/tour-card";
 import { useCopy } from "@/lib/use-copy";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import type { CopyKey } from "@/lib/copy";
 import { storedCentreName } from "@/lib/utils";
 import { formatAgeLabel, formatStart, scheduleLabel } from "@/lib/templates";
@@ -135,6 +136,7 @@ function ProviderPage() {
   const { user, isPending } = useSettledUser();
   const chrome = useRoleChrome();
   const { t, locale } = useCopy();
+  const nativeShell = useInNativeShell();
   const showPay = useShowPayCtas();
   const { session } = useSessionDesks();
   const centreOwner = session?.centreOwner !== false;
@@ -764,11 +766,14 @@ function ProviderPage() {
         <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>
       ) : null}
 
-      {desk === "promote" && centreOwner ? (
+      {desk === "promote" && centreOwner && nativeShell ? (
+        <p className="mb-4 text-sm text-muted" data-ke="native-plan-note">
+          {t("nativePlansHidden")}
+        </p>
+      ) : null}
+
+      {desk === "promote" && centreOwner && !nativeShell ? (
         <>
-          <p className="ke-native-plan-note mb-4 text-sm text-muted" data-ke="native-plan-note">
-            {t("nativePlansHidden")}
-          </p>
           <div className="ke-digital-plan" data-ke="digital-plan">
             {!showPay ? (
               <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("plansNotOffered")}</p>

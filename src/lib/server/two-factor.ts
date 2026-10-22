@@ -79,6 +79,8 @@ export const startTwoFactor = createServerFn({ method: "POST" })
     force: Boolean(input?.force),
   }))
   .handler(async ({ context, data }) => {
+    const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
+    blockViewAsSideEffect("two_factor");
     const actor = await lookupUser(context.userId);
     const email = (actor.email || "").trim().toLowerCase();
     const emailed = email.replace(/(^.).*(@.*$)/, "$1•••$2");
@@ -201,6 +203,8 @@ export const verifyTwoFactor = createServerFn({ method: "POST" })
     turnstileToken: String(input.turnstileToken || ""),
   }))
   .handler(async ({ context, data }) => {
+    const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
+    blockViewAsSideEffect("two_factor");
     const { assertTurnstileToken } = await import("@/lib/server/turnstile");
     await assertTurnstileToken(data.turnstileToken);
     await consumeTwoFactorCode(context.userId, data.code);

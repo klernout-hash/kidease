@@ -5,9 +5,11 @@ import { FOUNDING_FREE_FEATURES, FOUNDING_PAGE, foundingLocale } from "@/lib/fou
 import { localePath } from "@/lib/locale-path";
 import { formatPlanCad } from "@/lib/upgrade-plans";
 import { useCopy } from "@/lib/use-copy";
+import { useInNativeShell } from "@/lib/use-native-shell";
 
 /** Public plans while SUBSCRIPTIONS_ENABLED is off. No prices beyond the free tier. */
 export function FoundingPlans({ embedded = false }: { embedded?: boolean }) {
+  const nativeShell = useInNativeShell();
   const { locale } = useCopy();
   const loc = foundingLocale(locale);
   const copy = FOUNDING_PAGE[loc];
@@ -39,10 +41,12 @@ export function FoundingPlans({ embedded = false }: { embedded?: boolean }) {
           <h2 className="font-display text-xl">{copy.daycareTitle}</h2>
           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">{copy.daycarePill}</span>
         </div>
-        <p className="mt-3 font-display text-3xl tabular-nums leading-none">
-          {price}
-          <span className={`${copy.priceUnit.startsWith("/") ? "" : "ml-1 "}text-sm font-normal text-muted`}>{copy.priceUnit}</span>
-        </p>
+        {nativeShell ? null : (
+          <p className="ke-digital-plan mt-3 font-display text-3xl tabular-nums leading-none" data-ke="digital-plan">
+            {price}
+            <span className={`${copy.priceUnit.startsWith("/") ? "" : "ml-1 "}text-sm font-normal text-muted`}>{copy.priceUnit}</span>
+          </p>
+        )}
         <p className="mt-1 text-sm font-medium">{copy.daycareName}</p>
         <p className="mt-3 text-sm text-muted">{copy.daycareBody}</p>
         <ul className="mt-4 space-y-2 text-sm">

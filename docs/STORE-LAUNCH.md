@@ -9,7 +9,7 @@ Bundle / application id: `ca.kidease.app`
 App name: KidEase  
 Support: support@kidease.ca
 
-Reviewer sign-in (not created until Kyle runs it): set `REVIEWER_PARENT_PASSWORD` and `REVIEWER_DAYCARE_PASSWORD` in the shell, never in git, then `npm run ops:reviewer-demo`. Default emails are `reviewer.parent@kidease.ca` and `reviewer.daycare@kidease.ca`. The demo centre `qa-reviewer-demo-centre` stays out of public search. The thread already has a parent note and a daycare reply, both in KidEase messages. The command does not print the passwords.
+Reviewer sign-in: App Review uses production. Set `REVIEWER_PARENT_PASSWORD` and `REVIEWER_DAYCARE_PASSWORD` in the shell (never in git), point `DATABASE_URL` at production locally, then run `npm run ops:reviewer-demo` once. Do not print the URL or the passwords. Default emails are `reviewer.parent@kidease.ca` and `reviewer.daycare@kidease.ca`. The demo centre `qa-reviewer-demo-centre` stays `admin_only` and `is_test`. Steps are in `docs/store-review-notes.md`. This checklist does not run the command.
 
 Longer engineering notes: [`mobile-builds.md`](mobile-builds.md). Account + review policy: [`store-readiness.md`](store-readiness.md).
 
@@ -46,7 +46,7 @@ Do **not** invent these values. Leave env vars blank until the consoles show rea
 | Play Console (~$25) | play.google.com/console | Create app package `ca.kidease.app` |
 | Upload keystore | Local `keytool` (gitignored) | `android/key.properties` from `android/key.properties.example` |
 | Play App Signing SHA-256 | Play → App integrity → App signing | Set `ANDROID_CERT_SHA256S` on Vercel. Until then `sha256_cert_fingerprints` stays `[]` |
-| Play internal AAB | `./gradlew bundleRelease` on a signed machine | Upload to Internal testing — not this PR |
+| Play internal AAB | `./gradlew bundlePlayRelease` on a signed machine | Upload to Internal testing — not this PR |
 | Push (optional for 1 Nov) | Firebase + APNs `.p8` | Keep `FEATURE_PUSH=0`. Run `npx cap sync` when you cut a binary that should include the plugin |
 | Video / camera strings | Only if `FEATURE_VIDEO=1` ships | Do not add unused camera / mic purpose strings |
 
@@ -78,7 +78,7 @@ npm run cap:prepare
 # iOS: opens Xcode — select Team, then Product → Archive → App Store Connect
 npm run cap:ios
 # Android: copy android/key.properties.example → android/key.properties, then
-cd android && ./gradlew bundleRelease
+cd android && ./gradlew bundlePlayRelease
 ```
 
 Never commit `.p12`, `.jks`, `key.properties`, `google-services.json`, or `GoogleService-Info.plist`.

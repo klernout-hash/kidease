@@ -130,6 +130,12 @@ type AutocompleteService = {
 async function mapsApi(): Promise<MapsPlaces | null> {
   if (typeof window === "undefined") return null;
   try {
+    const { googleServicesHidden, readClientStoreChannel } = await import("./native-entitlements.ts");
+    if (googleServicesHidden(readClientStoreChannel())) return null;
+  } catch {
+    return null;
+  }
+  try {
     const { loadGoogleMaps } = await import("./google-maps.ts");
     return (await loadGoogleMaps()) as MapsPlaces;
   } catch {

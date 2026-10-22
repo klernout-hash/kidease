@@ -1248,7 +1248,10 @@ export const setRole = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((role: "parent" | "provider") => role)
   .handler(async ({ context, data: role }) => {
+    const { isViewAsReadOnly } = await import("@/lib/view-as-public");
     const written = await writeProfileRole(context.userId, role);
+    // Remembered-role boot must not file daycare intake on the person being viewed.
+    if (isViewAsReadOnly()) return { role: written.role };
     if (written.role === "provider") {
       await ensureCrmIntake(context.userId, "provider");
     } else if (written.role === "parent") {
@@ -1756,6 +1759,8 @@ export const updateCapacity = createServerFn({ method: "POST" })
  * Tax rules need the billing record after the account is gone.
  */
 export async function purgeAccountData(uid: string) {
+  const { revokeStoredAppleSignIn } = await import("@/lib/server/apple-account-revoke");
+  await revokeStoredAppleSignIn(uid);
   const sql = await getSql();
   await sql`delete from messages where conversation_id in (select id from conversations where user_id = ${uid})`;
   await sql`delete from conversations where user_id = ${uid}`;
@@ -1803,8 +1808,12 @@ export async function purgeAccountIfExpired(userId: string): Promise<"active" | 
 export const deleteAccount = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
+    const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
+    blockViewAsSideEffect("delete");
     const sql = await getSql();
     const uid = context.userId;
+    const { revokeStoredAppleSignIn } = await import("@/lib/server/apple-account-revoke");
+    await revokeStoredAppleSignIn(uid);
     await sql`
       insert into profiles (user_id, role, deleted_at)
       values (${uid}, 'parent', now())
@@ -1818,6 +1827,8 @@ export const deleteAccount = createServerFn({ method: "POST" })
 export const restoreMyAccount = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
+    const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
+    blockViewAsSideEffect("write");
     const deletedAt = await readDeletedAt(context.userId);
     if (!deletedAt) return { ok: true as const, restored: false as const };
     const { withinRestoreWindow } = await import("@/lib/account-delete");

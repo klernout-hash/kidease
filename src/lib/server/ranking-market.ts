@@ -120,30 +120,35 @@ export async function runRankingMarketJob(options: { dryRun?: boolean; asOf?: st
 }
 
 export async function listRankingMarket(): Promise<MarketRow[]> {
-  const sql = await getSql();
-  const rows = await sql<{
-    city: string;
-    age_group: string;
-    as_of: string;
-    searches: number;
-    saves: number;
-    spot_requests: number;
-    listings: number;
-    confirmed_openings: number;
-  }>`
-    select city, age_group, as_of::text as as_of, searches, saves, spot_requests, listings, confirmed_openings
-    from ranking_market_daily
-    order by as_of desc, city asc, age_group asc
-    limit 500
-  `;
-  return rows.map((row) => ({
-    city: row.city,
-    ageGroup: rankingAgeGroup(row.age_group),
-    asOf: String(row.as_of).slice(0, 10),
-    searches: Number(row.searches) || 0,
-    saves: Number(row.saves) || 0,
-    spotRequests: Number(row.spot_requests) || 0,
-    listings: Number(row.listings) || 0,
-    confirmedOpenings: Number(row.confirmed_openings) || 0,
-  }));
+  try {
+    const sql = await getSql();
+    const rows = await sql<{
+      city: string | null;
+      age_group: string | null;
+      as_of: string | Date | null;
+      searches: number | string | null;
+      saves: number | string | null;
+      spot_requests: number | string | null;
+      listings: number | string | null;
+      confirmed_openings: number | string | null;
+    }>`
+      select city, age_group, as_of::text as as_of, searches, saves, spot_requests, listings, confirmed_openings
+      from ranking_market_daily
+      order by as_of desc, city asc, age_group asc
+      limit 500
+    `;
+    return rows.map((row) => ({
+      city: String(row.city ?? "").replace(/\s+/g, " ").trim().slice(0, 80),
+      ageGroup: rankingAgeGroup(row.age_group),
+      asOf: String(row.as_of ?? "").slice(0, 10),
+      searches: Number(row.searches) || 0,
+      saves: Number(row.saves) || 0,
+      spotRequests: Number(row.spot_requests) || 0,
+      listings: Number(row.listings) || 0,
+      confirmedOpenings: Number(row.confirmed_openings) || 0,
+    }));
+  } catch {
+    console.error("[admin-ranking] report unavailable");
+    throw new Error("ranking-unavailable");
+  }
 }

@@ -27,13 +27,6 @@
 			"resize": "body"
 		},
 		"Geolocation": {},
-		"PushNotifications": {
-			"presentationOptions": [
-				"badge",
-				"sound",
-				"alert"
-			]
-		},
 		"InAppReview": {}
 	},
 	"android": {
@@ -54,7 +47,6 @@
 		"HapticsPlugin",
 		"KeyboardPlugin",
 		"PreferencesPlugin",
-		"PushNotificationsPlugin",
 		"SharePlugin",
 		"SplashScreenPlugin",
 		"StatusBarPlugin"

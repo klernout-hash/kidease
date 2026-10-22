@@ -38,6 +38,7 @@ export function ParentSignupForm() {
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [smsConsent, setSmsConsent] = useState(false);
+  const [adult, setAdult] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } =
@@ -52,8 +53,12 @@ export function ParentSignupForm() {
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     if (busy) return;
-    setBusy(true);
     setError(null);
+    if (!adult) {
+      setError(locale === "fr" ? "Confirmez que vous avez 18 ans ou plus." : "Confirm you are 18 or older.");
+      return;
+    }
+    setBusy(true);
     try {
       const phoneIssue = parentMobileIssue(phone);
       if (phoneIssue) throw new Error(phoneIssue);
@@ -144,6 +149,21 @@ export function ParentSignupForm() {
           />
           <PasswordRules password={password} />
           <ParentSmsFields phone={phone} onPhone={setPhone} consent={smsConsent} onConsent={setSmsConsent} />
+          <label className="flex min-h-11 items-start gap-3 text-sm" htmlFor="parent-signup-adult">
+            <input
+              id="parent-signup-adult"
+              type="checkbox"
+              className="mt-1 size-5"
+              checked={adult}
+              onChange={(event) => setAdult(event.target.checked)}
+              required
+            />
+            <span>
+              {locale === "fr"
+                ? "J’ai 18 ans ou plus. KidEase est pour les parents et les garderies."
+                : "I am 18 or older. KidEase is for parents and daycares."}
+            </span>
+          </label>
           <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
           {error ? (
             <p className="text-sm text-danger" role="alert" data-ke="auth-error">

@@ -9,6 +9,25 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "ca.kidease.app"
     compileSdk = rootProject.ext.compileSdkVersion
+    buildFeatures {
+        buildConfig true
+    }
+    flavorDimensions += "store"
+    productFlavors {
+        play {
+            dimension "store"
+            isDefault = true
+            buildConfigField "String", "STORE_UA_TOKEN", "\"\""
+        }
+        samsung {
+            dimension "store"
+            buildConfigField "String", "STORE_UA_TOKEN", "\"KidEaseStoreSamsung\""
+        }
+        huawei {
+            dimension "store"
+            buildConfigField "String", "STORE_UA_TOKEN", "\"KidEaseStoreHuawei\""
+        }
+    }
     defaultConfig {
         applicationId "ca.kidease.app"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -41,6 +60,16 @@ android {
             }
         }
     }
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
+}
+
+configurations.configureEach {
+    exclude group: "com.google.firebase", module: "firebase-analytics"
+    exclude group: "com.google.firebase", module: "firebase-analytics-ktx"
 }
 
 repositories {
@@ -70,4 +99,15 @@ try {
     }
 } catch(Exception e) {
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}
+
+// Huawei has no Google Play Services. Skip the google-services task on that flavour
+// so a Play google-services.json cannot be baked into the AppGallery bundle.
+gradle.taskGraph.whenReady { graph ->
+    graph.allTasks.each { task ->
+        def name = task.name.toLowerCase()
+        if (name.contains("huawei") && name.contains("googleservices")) {
+            task.enabled = false
+        }
+    }
 }

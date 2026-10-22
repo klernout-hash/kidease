@@ -172,6 +172,7 @@ export async function sendSms(input: SendSmsInput, options: SendSmsOptions = {})
   const statusCallback = envStr(env, "TWILIO_STATUS_CALLBACK_URL");
   if (statusCallback) params.set("StatusCallback", statusCallback);
 
+  (globalThis as { __kideaseViewAsSideEffect__?: (action: "message") => void }).__kideaseViewAsSideEffect__?.("message");
   const credentials = `${auth.username}:${auth.password}`;
   let encoded: string;
   try {

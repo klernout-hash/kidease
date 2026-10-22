@@ -55,6 +55,12 @@ export function isNativeSocialProvider(providerId: string): boolean {
   return providerId === "apple" || providerId === "google" || providerId === "facebook";
 }
 
+/** Huawei has no Google Play Services, so the Google button stays off that build. */
+export function providersForStore<T extends { idp: string }>(providers: readonly T[], channel: string): T[] {
+  if (channel !== "huawei") return [...providers];
+  return providers.filter((provider) => provider.idp !== "google");
+}
+
 export function visibleSignInProviders(opts: {
   nativeGoogle: boolean;
   broker: boolean;

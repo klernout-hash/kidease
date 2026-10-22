@@ -6,6 +6,7 @@ import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { canRegisterWebPush, getAlertsPromptCopy, webAlertPromptStep, webPushPermissionAllowed } from "@/lib/alert-push";
 import { isNative } from "@/lib/native";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import { getWebAlertStatus, registerWebPush } from "@/lib/server/alert-push-api";
 import { useCopy } from "@/lib/use-copy";
 
@@ -32,6 +33,7 @@ function urlBase64ToUint8Array(value: string): Uint8Array {
  * The system permission sheet opens only when the browser can register and push is armed.
  */
 export function GetAlertsPrompt() {
+  const nativeShell = useInNativeShell();
   const { locale } = useCopy();
   const { user, isPending } = useCurrentUserState();
   const navigate = useNavigate();
@@ -40,7 +42,7 @@ export function GetAlertsPrompt() {
   const copy = getAlertsPromptCopy(locale === "fr" ? "fr" : "en");
 
   useEffect(() => {
-    if (typeof window === "undefined" || isNative() || isPending) return;
+    if (typeof window === "undefined" || nativeShell || isNative() || isPending) return;
     if (!user?.id) return;
     const choice = window.localStorage.getItem(CHOICE_KEY);
     const seen = window.sessionStorage.getItem(SEEN_KEY);
@@ -61,7 +63,7 @@ export function GetAlertsPrompt() {
         ),
       )
       .catch(() => undefined);
-  }, [user?.id, isPending]);
+  }, [user?.id, isPending, nativeShell]);
 
   async function turnOn() {
     if (!user?.id) {
@@ -125,7 +127,7 @@ export function GetAlertsPrompt() {
     setOpen(false);
   }
 
-  if (!open) return null;
+  if (nativeShell || !open) return null;
 
   return (
     <div className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 px-4">

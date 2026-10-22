@@ -11,6 +11,7 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { captureRankingEvent } from "@/lib/ranking/events";
 import { rankingContextFor } from "@/lib/ranking/context";
 import { useCopy } from "@/lib/use-copy";
+import { useViewAs } from "@/components/view-as-banner";
 import type { Daycare } from "@/lib/types";
 
 type Props = {
@@ -21,6 +22,7 @@ type Props = {
 
 export function RequestMessageSheet({ daycare, open, onClose }: Props) {
   const { t, locale } = useCopy();
+  const viewing = useViewAs();
   const titleId = useId();
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
@@ -75,6 +77,10 @@ export function RequestMessageSheet({ daycare, open, onClose }: Props) {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (viewing) {
+      setError(t("viewAsReadOnly"));
+      return;
+    }
     const text = body.trim();
     if (!text) return;
     const token = send.start();

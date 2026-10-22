@@ -213,13 +213,13 @@ function draftFor(tag: SupportTag): string {
 }
 
 export function demandMapCells(rows: DemandInput[]): DemandCell[] {
-  return rows
+  return (Array.isArray(rows) ? rows : [])
     .map((row) => {
-      const demand = row.searches + row.saves + row.spotRequests;
-      const supply = row.listings + row.confirmedOpenings;
+      const demand = (Number(row?.searches) || 0) + (Number(row?.saves) || 0) + (Number(row?.spotRequests) || 0);
+      const supply = (Number(row?.listings) || 0) + (Number(row?.confirmedOpenings) || 0);
       return {
-        city: row.city,
-        ageGroup: row.ageGroup,
+        city: String(row?.city ?? ""),
+        ageGroup: String(row?.ageGroup ?? ""),
         demand,
         supply,
         gap: demand - supply,

@@ -118,6 +118,7 @@ export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
   return (
     <div
       data-ke="desk-switcher"
+      data-view-as={session.viewAs ? "on" : undefined}
       role="navigation"
       aria-label={t("deskSwitcherLabel")}
       className={compact ? "flex w-full min-w-0 flex-col gap-0.5" : "flex w-full min-w-0 flex-col gap-0.5"}
