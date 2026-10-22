@@ -141,7 +141,7 @@ test("listing route sets unique head tags and JSON-LD; grok OG does not overwrit
   assert.match(grok, /path\.startsWith\("\/daycare\/"\)/);
   const copy = src("src/lib/copy.ts");
   assert.match(copy, /noLiveResultsClaim: "Directors: claim your listing"/);
-  assert.match(copy, /noLiveResultsClaim: "Directeurs : réclamez votre fiche"/);
+  assert.match(copy, /noLiveResultsClaim: "Directeurs : revendiquez votre fiche"/);
   assert.match(copy, /liveToggleCount: "Live · \{n\}"/);
   assert.match(copy, /liveToggleCount: "En ligne · \{n\}"/);
   const search = src("src/routes/search.tsx");

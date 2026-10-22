@@ -34,6 +34,47 @@ export function storedCentreName(name?: string | null, nameFr?: string | null) {
   return displayCentreName(primary || french);
 }
 
+const NAME_KEEP_UPPER = new Set(["ymca", "ywca", "abc", "ece", "cpr", "gdc"]);
+const NAME_SMALL_WORDS = new Set(["a", "an", "and", "for", "of", "on", "or", "the", "to"]);
+
+/**
+ * Display-only name polish. Mixed-case registry text stays a proper name,
+ * with Canadian spelling, age shorthand, and small words fixed.
+ */
+function polishCentreName(value: string) {
+  const text = value
+    .replace(/\(\s*<\s*(\d+)\s*mos\s*\)/gi, "(under $1 months)")
+    .replace(/<\s*(\d+)\s*mos\b/gi, "(under $1 months)")
+    .replace(/\bcenters\b/gi, "Centres")
+    .replace(/\bcenter\b/gi, "Centre")
+    .replace(/(\d)\s*[–—-]\s*(\d)/g, "$1–$2")
+    .replace(/(^|[^A-Za-zÀ-ÿ])mc([a-zà-ÿ])/gi, (_match, pre: string, ch: string) => `${pre}Mc${ch.toUpperCase()}`);
+
+  let seenWord = false;
+  let prev = "";
+  return text
+    .split(/(\s+)/)
+    .map((token) => {
+      if (!token || /^\s+$/.test(token)) return token;
+      const match = token.match(/^([^A-Za-zÀ-ÿ]*)([A-Za-zÀ-ÿ]+)([^A-Za-zÀ-ÿ]*)$/);
+      if (!match) {
+        prev = token;
+        return token;
+      }
+      const lead = match[1] ?? "";
+      const word = match[2] ?? "";
+      const trail = match[3] ?? "";
+      const lower = word.toLowerCase();
+      let next = word;
+      if (NAME_KEEP_UPPER.has(lower)) next = lower.toUpperCase();
+      else if (seenWord && NAME_SMALL_WORDS.has(lower) && !(word.length === 1 && prev === "&")) next = lower;
+      seenWord = true;
+      prev = next;
+      return `${lead}${next}${trail}`;
+    })
+    .join("");
+}
+
 /** Registry typos we refuse to show on parent-facing cards. Display only — the master row stays as stored. */
 export function displayCentreName(value: string | null | undefined) {
   const decoded = decodeHtml(value)
@@ -51,10 +92,8 @@ export function displayCentreName(value: string | null | undefined) {
   const stripped = decoded.replace(/,\s+the$/i, "");
   const named =
     stripped === decoded ? decoded : /^the\b/i.test(stripped) ? stripped : `The ${stripped}`;
-  return titleCaseScrapedName(named);
+  return polishCentreName(titleCaseScrapedName(named));
 }
-
-const NAME_KEEP_UPPER = new Set(["ymca", "ywca", "abc", "ece", "cpr"]);
 
 /** Registries ship ALL CAPS. Title-case those only. Mixed-case names stay put. */
 function titleCaseScrapedName(value: string) {

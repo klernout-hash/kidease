@@ -9,7 +9,7 @@ import { AB_K_FACILITY_MAX_UNDER_50K, CCB } from "../benefits-facts.ts";
 export const PARENT_PAGES = [
   {
     path: "/faq",
-    text: "KidEase lists licensed childcare. A fee or an open spot is shown only when that centre entered it. KidEase does not invent a spot, a fee, or a licence.",
+    text: "KidEase lists licensed child care. A fee or an open spot is shown only when that centre entered it. KidEase does not invent a spot, a fee, or a licence.",
   },
   {
     path: "/benefits",

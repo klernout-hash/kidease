@@ -167,7 +167,8 @@ test("public Help / contact / legal copy use SUPPORT_INBOX_EMAIL, not kyle@", ()
   assert.match(legal, /SUPPORT_INBOX_EMAIL/);
   assert.match(legal, /Email \$\{SUPPORT_INBOX_EMAIL\} if a deposit looks wrong/);
   assert.match(legal, /Notify KidEase support at support@kidease\.ca of new accounts/);
-  assert.match(legal, /operator mail for kyle@kidease\.ca/);
+  assert.match(legal, /Titan Email: hosts our support mailbox \(support@kidease\.ca\)\./);
+  assert.doesNotMatch(legal, /kyle@kidease\.ca/);
 
   const docs = readFileSync(join(root, "docs/support.md"), "utf8");
   assert.doesNotMatch(docs, /still offers kyle@kidease\.ca/);
@@ -184,11 +185,11 @@ test("public Help / contact / legal copy use SUPPORT_INBOX_EMAIL, not kyle@", ()
   const help = readFileSync(join(root, "src/routes/help.tsx"), "utf8");
   const pageSeo = readFileSync(join(root, "src/lib/page-seo.ts"), "utf8");
   assert.match(help, /pageSeoHead\(MARKETING_PAGE_SEO\.help\)/);
-  assert.match(pageSeo, /Help Centre · KidEase/);
+  assert.match(pageSeo, /Help centre · KidEase/);
   assert.match(help, /t\("helpTitle"\)/);
   assert.match(help, /t\("helpKicker"\)/);
   assert.doesNotMatch(help, /t\("support"\)/);
   const copy = readFileSync(join(root, "src/lib/copy.ts"), "utf8");
   assert.match(copy, /helpKicker: "Help"/);
-  assert.match(copy, /helpTitle: "Help Centre"/);
+  assert.match(copy, /helpTitle: "Help centre"/);
 });

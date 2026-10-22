@@ -15,6 +15,7 @@ import {
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { canadaFallbackUrl } from "@/lib/province-registry";
+import { localeLine } from "@/lib/french-type";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import {
   filterStartDaycarePts,
@@ -92,18 +93,18 @@ function ProvincePanel({ pt, locale }: { pt: StartDaycarePt; locale: string }) {
       <div className="mt-6 grid gap-5 md:grid-cols-2">
         <section>
           <h4 className="text-lg font-semibold">{t("startDaycareLicensingT")}</h4>
-          <p className="mt-2 text-sm leading-6 text-fg">{fr ? pt.licensingWhoFr : pt.licensingWhoEn}</p>
-          <p className="mt-2 text-sm leading-6 text-muted">{fr ? pt.licensingFirstFr : pt.licensingFirstEn}</p>
+          <p className="mt-2 text-sm leading-6 text-fg">{localeLine(locale, fr ? pt.licensingWhoFr : pt.licensingWhoEn)}</p>
+          <p className="mt-2 text-sm leading-6 text-muted">{localeLine(locale, fr ? pt.licensingFirstFr : pt.licensingFirstEn)}</p>
           <p className="mt-3 text-sm">
             <OfficialLink href={pt.licensingUrl}>{t("startDaycareOfficialLink")}</OfficialLink>
           </p>
         </section>
         <section>
           <h4 className="text-lg font-semibold">{t("startDaycareFundingT")}</h4>
-          <p className="mt-2 text-sm leading-6 text-muted">{fr ? pt.fundingFr : pt.fundingEn}</p>
+          <p className="mt-2 text-sm leading-6 text-muted">{localeLine(locale, fr ? pt.fundingFr : pt.fundingEn)}</p>
           {pt.competitive ? <p className="mt-2 text-sm font-medium text-fg">{t("startDaycareCompetitive")}</p> : null}
           <p className="mt-3 text-sm">
-            <OfficialLink href={pt.fundingUrl}>{t("startDaycareOfficialLink")}</OfficialLink>
+            <OfficialLink href={fr && pt.fundingUrlFr ? pt.fundingUrlFr : pt.fundingUrl}>{t("startDaycareOfficialLink")}</OfficialLink>
           </p>
         </section>
       </div>

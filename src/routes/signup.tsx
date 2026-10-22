@@ -4,7 +4,7 @@ import { ParentSignupForm } from "@/components/parent-signup-form";
 import { parentSignupHead } from "@/lib/parent-sms-consent";
 
 export const Route = createFileRoute("/signup")({
-  head: parentSignupHead,
+  head: () => parentSignupHead("en"),
   component: SignupPage,
 });
 

@@ -60,7 +60,6 @@ test("menu page destinations are classified as leaf, excluded, or redirect", () 
     "/account",
     "/compare",
     "/provider",
-    "/how-it-works",
   ]);
   const unknown = [];
   for (const to of tos) {

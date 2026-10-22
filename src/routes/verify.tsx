@@ -12,7 +12,7 @@ export const Route = createFileRoute("/verify")({
     pageSeoHead({
       title: "How we verify listings · KidEase",
       description:
-        "How KidEase badges work: catalogue matches, staff review against the official registry, claim checks, and links to government records. KidEase is a Canadian company.",
+        "How KidEase badges work: catalogue matches, staff review against the registry, claim checks, and links to government records.",
       path: "/verify",
     }),
   component: VerifyPage,

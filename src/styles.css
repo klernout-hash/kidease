@@ -1235,6 +1235,23 @@
     bottom: 1.5rem;
     right: 1.5rem;
   }
+  @media (max-width: 767px) {
+    .ke-help-bot > button > span {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    html[data-channel="app"] .ke-help-bot {
+      bottom: calc(5.75rem + env(safe-area-inset-bottom));
+      right: 0.75rem;
+    }
+  }
   html[data-channel="app"]:has(.ke-app-search) .ke-help-bot {
     display: none;
   }

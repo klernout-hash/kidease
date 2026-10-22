@@ -54,7 +54,7 @@ export const PRIVACY_EN: LegalDoc = {
   title: "PIPEDA & child safety",
   updated: UPDATED_EN,
   intro: [
-    "KidEase is a Canadian directory and enrolment tool for provincially or territorially licensed childcare across Canada. Parents search nearby centres. Directors claim listings. We are not the care provider. Your care agreement is with the centre. We do not invent licences.",
+    "KidEase is a Canadian directory and enrolment tool for provincially or territorially licensed child care across Canada. Parents search nearby centres. Directors claim listings. We are not the care provider. Your care agreement is with the centre. We do not invent licences.",
     "We follow PIPEDA’s consent, limiting-collection, and safeguarding principles. We do not sell or rent personal information. Children’s details are used only to help a parent and a centre they choose. KidEase is a parent-and-director tool: not a children’s app.",
   ],
   sections: [
@@ -139,9 +139,8 @@ export const PRIVACY_EN: LegalDoc = {
               hrefLabel: "Resend Privacy Policy",
             },
             {
-              name: "Titan Email, when the kyle@kidease.ca inbox is connected",
-              purpose:
-                "Receiving and sending operator mail for kyle@kidease.ca (support, claims, and replies). If Titan is not connected, those messages still go through Resend or stay in the app.",
+              name: "Titan Email",
+              purpose: "Titan Email: hosts our support mailbox (support@kidease.ca).",
               href: "https://support.titan.email/hc/en-us/articles/360038535773-Titan-Privacy-Policy",
               hrefLabel: "Titan Privacy Policy",
             },
@@ -285,7 +284,7 @@ export const PRIVACY_EN: LegalDoc = {
             "Keep licence, spots, hours, and fees truthful. A false claim can get the listing paused.",
             "If a parent asks you to correct or delete what they sent, handle that request. Deleting a KidEase account does not pull copies off your own paper files or inbox.",
             "Screening certificates (Vulnerable Sector Checks, Child Abuse Registry, Prior Contact) stay with the daycare and the KidEase team. Parents never see the PDF or the person’s name. KidEase reviews files; it does not issue police checks.",
-            "You remain responsible for your own PIPEDA (or provincial) duties as a childcare operator. KidEase is the platform, not the provider.",
+            "You remain responsible for your own PIPEDA (or provincial) duties as a child care operator. KidEase is the platform, not the provider.",
           ],
         },
       ],
@@ -297,7 +296,7 @@ export const PRIVACY_EN: LegalDoc = {
         {
           type: "ul",
           items: [
-            "Roles: a parent may pay a first-month deposit after the centre offers a spot. KidEase records the payment. The care contract stays between the parent and the centre. Childcare is a real-world service, not a digital in-app purchase.",
+            "Roles: a parent may pay a first-month deposit after the centre offers a spot. KidEase records the payment. The care contract stays between the parent and the centre. Child care is a real-world service, not a digital in-app purchase.",
             "Stripe processes the card, Apple Pay, or Google Pay. KidEase never stores the full card number. We may send Stripe the amount, CAD, payment method type, and identifiers for the booking, parent, and centre: not allergy or medical notes.",
             "Interac e-Transfer and other bank methods may be added later. We will say so on the pay screen when they are on.",
             `Refunds follow the centre’s policy. Chargebacks go through Stripe. Email ${SUPPORT_INBOX_EMAIL} if a deposit looks wrong.`,
@@ -361,7 +360,7 @@ export const PRIVACY_EN: LegalDoc = {
           type: "ul",
           items: [
             "Transactional mail we send without a marketing opt-in: sign-in codes, password reset, claim codes, request and support notices, and similar service mail. These are not promotional.",
-            "Search-alert email and any future KidEase news or offers need an unchecked-by-default CASL checkbox. We store who consented, when, the wording they saw, and the email or mobile. Unsubscribe at kidease.ca/unsubscribe, in alert or profile settings, or by replying STOP / ARRÊT to a text.",
+            "Search-alert email and any future KidEase news or offers need an unchecked-by-default CASL checkbox. We store who consented, when, the wording they saw, and the email or mobile. Unsubscribe on the Unsubscribe page, in alert or profile settings, or by replying STOP / ARRÊT to a text.",
             "We do not send promotional KidEase campaigns today. SMS alerts stay off until you grant express consent in your profile or alert settings. When enabled, we only text people who opted in, and we honour STOP immediately.",
             "Push or lock-screen alerts, when we enable them, will be opt-in on the device. You can turn them off in the operating system. We will not use push for ads.",
           ],
@@ -377,13 +376,14 @@ export const PRIVACY_EN: LegalDoc = {
           type: "ul",
           items: [
             "We keep account, request, message, and payment records while the account is open.",
-            "Delete account, under Account, schedules the close. You can restore the account for 30 days. After that KidEase removes your children, messages, bookings, saved centres, director links, profile, and sign-in rows. We keep billing records because tax law requires them, and we keep fraud and security logs. Marketing email or SMS stops at /unsubscribe without deleting the account.",
-            "Deletion does not erase copies a centre already received, emails already sitting in kyle@kidease.ca or Titan, or records a law or chargeback requires us to keep for a time.",
+            "Delete account, under Account, schedules the close. You can restore the account for 30 days. After that KidEase removes your children, messages, bookings, saved centres, director links, profile, and sign-in rows. We keep billing records because tax law requires them, and we keep fraud and security logs. Marketing email or SMS stops on the Unsubscribe page without deleting the account.",
+            "Deletion does not erase copies a centre already received, emails already sent to support@kidease.ca, or records a law or chargeback requires us to keep for a time.",
             `You can also email ${PRIVACY_CONTACT_EMAIL} to access, correct, or delete.`,
             "Security we actually use: HTTPS in transit; signed-in sessions in first-party cookies; OAuth tokens encrypted at rest; email sign-in codes; access checks on parent and director desks; payment card data stays with Stripe; audit events do not store card numbers or medical notes.",
             "We do not claim the internet is risk-free. If a breach creates a real risk of significant harm, we will notify affected people and the Office of the Privacy Commissioner of Canada as PIPEDA requires.",
           ],
         },
+        { type: "link", to: "/delete-account", label: "Delete account" },
       ],
     },
     {
@@ -398,10 +398,10 @@ export const PRIVACY_EN: LegalDoc = {
           type: "ul",
           items: [
             `Person in charge of the protection of personal information: ${privacyOfficerLine("en")}.`,
-            `Access or correction: email ${PRIVACY_CONTACT_EMAIL}. Say what you want to see or change. You can also edit a child profile in your account, or close the account at /delete-account. We may ask you to confirm you hold the account before we change it.`,
+            `Access or correction: email ${PRIVACY_CONTACT_EMAIL}. Say what you want to see or change. You can also edit a child profile in your account, or close the account on the Delete account page. We may ask you to confirm you hold the account before we change it.`,
             "Consent: an account needs a name and an email. Allergies, medical notes, medications, and a doctor’s name and phone are optional. You type them, you can leave them blank, and you can change or delete them. A centre sees those details only after you contact that centre. We ask before using precise location. Marketing email and text stay off unless you check the box. Analytics loads only after you choose Allow analytics.",
             "Retention: we keep account, request, message, and payment records while the account is open. Delete account waits 30 days, then removes children, messages, bookings, saved centres, director links, the profile, and sign-in rows. We keep billing records because tax law requires them. We keep fraud and security logs. A centre that already received a message keeps its own copy.",
-            "Where data is stored: accounts, listings, messages, child profiles, and payment records are in Neon Postgres. The website and server functions run on Vercel. When Cloudflare R2 is configured, listing photos, licence uploads, screening files, and signed contracts are stored in the kidease-media bucket. Our setup notes place that bucket in Western North America. Email we send goes through Resend. Card payments are processed by Stripe. KidEase does not store the full card number. Search maps can use Google. PostHog analytics and Sentry error reports run only when those tools are on. Analytics waits for Allow analytics. Centre paperwork can use DocuSign when that service is connected. Mail to the privacy address can be read in Titan Email when that mailbox is connected.",
+            "Where data is stored: accounts, listings, messages, child profiles, and payment records are in Neon Postgres. The website and server functions run on Vercel. When Cloudflare R2 is configured, listing photos, licence uploads, screening files, and signed contracts are stored in the kidease-media bucket. Our setup notes place that bucket in Western North America. Email we send goes through Resend. Card payments are processed by Stripe. KidEase does not store the full card number. Search maps can use Google. PostHog analytics and Sentry error reports run only when those tools are on. Analytics waits for Allow analytics. Centre paperwork can use DocuSign when that service is connected. Support mail is hosted in Titan Email at support@kidease.ca.",
             "Confidentiality incidents: if an incident creates a risk of serious injury, we will tell the people affected. We will tell the Commission d'accès à l'information du Québec when Quebec law requires it, and the Office of the Privacy Commissioner of Canada when PIPEDA requires it.",
             `Transfers outside Quebec: Quebec law requires a privacy impact assessment before personal information is communicated outside Quebec. Some processors named on this page may store or see information outside Quebec, including in the United States. We send only what that job needs and rely on their contracts. We do not publish a separate assessment file for each processor on this site. Questions about a transfer go to ${PRIVACY_CONTACT_EMAIL}.`,
           ],
@@ -426,7 +426,7 @@ export const PRIVACY_EN: LegalDoc = {
             "Phone and email stay hidden until a visitor chooses to show them.",
             "Open spots, when the source lists a number, are shown with that date. The number may be out of date. We do not invent a number.",
             "We do not email or text these providers. Canada's anti-spam law (CASL) applies. The provider can ask us to correct or remove the listing from the page. We store that request for an admin to review. We do not send a message back.",
-            "The public directory is at /milieux-familiaux when this list is turned on.",
+            "The public directory is on the Recognized home child care page when this list is turned on.",
             `Person in charge of the protection of personal information: ${privacyOfficerLine("en")}. You can also contact the Commission d'accès à l'information du Québec, or the Office of the Privacy Commissioner of Canada.`,
           ],
         },
@@ -438,7 +438,7 @@ export const PRIVACY_EN: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: `You can access, correct, or delete your account and child profiles at /delete-account, in the app, or by emailing ${PRIVACY_CONTACT_EMAIL}. You can withdraw marketing consent at /unsubscribe, by closing the account, or by turning off location in the OS. For a PIPEDA complaint you can also contact the Office of the Privacy Commissioner of Canada.`,
+          text: `You can access, correct, or delete your account and child profiles on the Delete account page, in the app, or by emailing ${PRIVACY_CONTACT_EMAIL}. You can withdraw marketing consent on the Unsubscribe page, by closing the account, or by turning off location in the OS. For a PIPEDA complaint you can also contact the Office of the Privacy Commissioner of Canada.`,
         },
       ],
     },
@@ -560,9 +560,9 @@ export const PRIVACY_FR: LegalDoc = {
               hrefLabel: "Politique de confidentialité Resend",
             },
             {
-              name: "Titan Email, lorsque la boîte kyle@kidease.ca est liée",
+              name: "Titan Email",
               purpose:
-                "Courrier de l’opérateur pour kyle@kidease.ca. Si Titan n’est pas lié, ces messages passent par Resend ou restent dans l’appli.",
+                "Titan Email : héberge notre boîte de soutien (support@kidease.ca).",
               href: "https://support.titan.email/hc/en-us/articles/360038535773-Titan-Privacy-Policy",
               hrefLabel: "Politique de confidentialité Titan",
             },
@@ -781,7 +781,7 @@ export const PRIVACY_FR: LegalDoc = {
           type: "ul",
           items: [
             "Courriels transactionnels sans consentement marketing : codes, réinitialisation, codes de revendication, avis de demande et de soutien.",
-            "Les alertes de recherche et toute nouvelle ou offre KidEase exigent une case LCAP non cochée par défaut. Nous enregistrons qui a consenti, quand, le texte vu, et le courriel ou le cellulaire. Désabonnement à kidease.ca/unsubscribe, dans le profil, ou en répondant STOP / ARRÊT.",
+            "Les alertes de recherche et toute nouvelle ou offre KidEase exigent une case LCAP non cochée par défaut. Nous enregistrons qui a consenti, quand, le texte vu, et le courriel ou le cellulaire. Désabonnement sur la page Se désabonner, dans le profil, ou en répondant STOP / ARRÊT.",
             "Nous n’envoyons pas de campagnes promotionnelles aujourd’hui. Les textos restent fermés tant que vous n’avez pas donné un consentement exprès dans votre profil ou vos alertes. Une fois activé, nous n’écrivons qu’aux personnes qui ont consenti, et nous honorons STOP tout de suite.",
             "Les notifications push, lorsqu’elles seront activées, seront facultatives sur l’appareil. Pas de publicité par push.",
           ],
@@ -797,13 +797,14 @@ export const PRIVACY_FR: LegalDoc = {
           type: "ul",
           items: [
             "Nous gardons le compte, les demandes, les messages et les paiements tant que le compte est ouvert.",
-            "Supprimer le compte, sous Compte, planifie la fermeture. Vous pouvez restaurer le compte pendant 30 jours. Ensuite KidEase efface enfants, messages, demandes, centres enregistrés, liens de direction, profil et sessions. Nous gardons les dossiers de facturation exigés par la loi fiscale, ainsi que les journaux de fraude et de sécurité. /unsubscribe arrête les messages marketing sans supprimer le compte.",
-            "La suppression n’efface pas les copies déjà reçues par un centre, les courriels déjà reçus, ni les dossiers qu’une loi ou une rétrofacturation exige.",
+            "Supprimer le compte, sous Compte, planifie la fermeture. Vous pouvez restaurer le compte pendant 30 jours. Ensuite KidEase efface enfants, messages, demandes, centres enregistrés, liens de direction, profil et sessions. Nous gardons les dossiers de facturation exigés par la loi fiscale, ainsi que les journaux de fraude et de sécurité. La page Se désabonner arrête les messages marketing sans supprimer le compte.",
+            "La suppression n’efface pas les copies déjà reçues par un centre, les courriels déjà envoyés à support@kidease.ca, ni les dossiers qu’une loi ou une rétrofacturation exige.",
             `Vous pouvez aussi écrire à ${PRIVACY_CONTACT_EMAIL}.`,
             "Sécurité réelle : HTTPS; sessions en témoins internes; jetons OAuth chiffrés; codes par courriel; contrôles d’accès; les cartes restent chez Stripe; les journaux d’audit ne stockent pas les numéros de carte ni les notes médicales.",
             "Si une atteinte crée un risque réel de préjudice important, nous aviserons les personnes concernées et le Commissariat, comme l’exige la LPRPDE.",
           ],
         },
+        { type: "link", to: "/delete-account", label: "Supprimer le compte" },
       ],
     },
     {
@@ -818,10 +819,10 @@ export const PRIVACY_FR: LegalDoc = {
           type: "ul",
           items: [
             `Personne chargée de la protection des renseignements personnels : ${privacyOfficerLine("fr")}.`,
-            `Accès ou correction : écrivez à ${PRIVACY_CONTACT_EMAIL}. Dites ce que vous voulez voir ou changer. Vous pouvez aussi modifier un profil d’enfant dans votre compte, ou fermer le compte à /delete-account. Nous pouvons vous demander de confirmer que le compte est le vôtre avant de le modifier.`,
+            `Accès ou correction : écrivez à ${PRIVACY_CONTACT_EMAIL}. Dites ce que vous voulez voir ou changer. Vous pouvez aussi modifier un profil d’enfant dans votre compte, ou fermer le compte sur la page Supprimer le compte. Nous pouvons vous demander de confirmer que le compte est le vôtre avant de le modifier.`,
             "Consentement : un compte exige un nom et un courriel. Les allergies, les notes médicales, les médicaments et le nom et le téléphone du médecin sont facultatifs. Vous les inscrivez, vous pouvez les laisser vides, et vous pouvez les changer ou les effacer. Un centre voit ces détails seulement après que vous le contactez. Nous demandons avant d’utiliser la position précise. Les courriels et textos marketing restent désactivés tant que vous ne cochez pas la case. L’analytique se charge seulement après Autoriser l’analytique.",
             "Conservation : nous gardons le compte, les demandes, les messages et les paiements tant que le compte est ouvert. Supprimer le compte attend 30 jours, puis retire les enfants, les messages, les demandes, les centres enregistrés, les liens de direction, le profil et les sessions. Nous gardons les dossiers de facturation exigés par la loi fiscale. Nous gardons les journaux de fraude et de sécurité. Un centre qui a déjà reçu un message garde sa propre copie.",
-            "Lieu de stockage : les comptes, les fiches, les messages, les profils d’enfants et les dossiers de paiement sont dans Neon Postgres. Le site et les fonctions serveur tournent sur Vercel. Quand Cloudflare R2 est configuré, les photos de fiche, les permis téléversés, les dossiers de filtrage et les contrats signés sont dans le seau kidease-media. Nos notes de configuration placent ce seau dans l’ouest de l’Amérique du Nord. Les courriels que nous envoyons passent par Resend. Les paiements par carte sont traités par Stripe. KidEase ne conserve pas le numéro complet de la carte. Les cartes de recherche peuvent utiliser Google. L’analytique PostHog et les rapports d’erreur Sentry fonctionnent seulement quand ces outils sont activés. L’analytique attend Autoriser l’analytique. Les documents du centre peuvent utiliser DocuSign quand ce service est branché. Le courrier à l’adresse de confidentialité peut être lu dans Titan Email quand cette boîte est branchée.",
+            "Lieu de stockage : les comptes, les fiches, les messages, les profils d’enfants et les dossiers de paiement sont dans Neon Postgres. Le site et les fonctions serveur tournent sur Vercel. Quand Cloudflare R2 est configuré, les photos de fiche, les permis téléversés, les dossiers de filtrage et les contrats signés sont dans le seau kidease-media. Nos notes de configuration placent ce seau dans l’ouest de l’Amérique du Nord. Les courriels que nous envoyons passent par Resend. Les paiements par carte sont traités par Stripe. KidEase ne conserve pas le numéro complet de la carte. Les cartes de recherche peuvent utiliser Google. L’analytique PostHog et les rapports d’erreur Sentry fonctionnent seulement quand ces outils sont activés. L’analytique attend Autoriser l’analytique. Les documents du centre peuvent utiliser DocuSign quand ce service est branché. Le courrier de soutien est hébergé dans Titan Email à support@kidease.ca.",
             "Incidents de confidentialité : si un incident crée un risque de préjudice sérieux, nous aviserons les personnes concernées. Nous aviserons la Commission d’accès à l’information du Québec quand la loi québécoise l’exige, et le Commissariat à la protection de la vie privée du Canada quand la LPRPDE l’exige.",
             `Communications hors du Québec : la loi québécoise exige une évaluation des facteurs relatifs à la vie privée avant de communiquer des renseignements personnels hors du Québec. Certains sous-traitants nommés sur cette page peuvent stocker ou voir des renseignements hors du Québec, y compris aux États-Unis. Nous n’envoyons que ce que la tâche exige et nous nous fions à leurs contrats. Nous ne publions pas un dossier d’évaluation distinct pour chaque sous-traitant sur ce site. Les questions sur un transfert vont à ${PRIVACY_CONTACT_EMAIL}.`,
           ],
@@ -846,7 +847,7 @@ export const PRIVACY_FR: LegalDoc = {
             "Le téléphone et le courriel restent cachés tant que le visiteur ne choisit pas de les afficher.",
             "Les places libres, quand la source donne un nombre, sont montrées avec la date. Le nombre peut ne plus être à jour. Nous n'inventons pas de nombre.",
             "Nous n'envoyons pas de courriel ni de texto à ces services. La LCAP s'applique. Le service peut demander une correction ou un retrait sur la fiche. Nous gardons la demande pour qu'un admin la révise. Nous n'envoyons pas de message en retour.",
-            "Le répertoire public est à /milieux-familiaux quand cette liste est activée.",
+            "Le répertoire public est sur la page Milieux familiaux reconnus quand cette liste est activée.",
             `Personne responsable de la protection des renseignements personnels : ${privacyOfficerLine("fr")}. Vous pouvez aussi joindre la Commission d'accès à l'information du Québec, ou le Commissariat à la protection de la vie privée du Canada.`,
           ],
         },
@@ -858,7 +859,7 @@ export const PRIVACY_FR: LegalDoc = {
       blocks: [
         {
           type: "p",
-          text: `Vous pouvez consulter, corriger ou supprimer votre compte à /delete-account, dans l’appli, ou en écrivant à ${PRIVACY_CONTACT_EMAIL}. Vous pouvez retirer le consentement marketing à /unsubscribe, en fermant le compte ou en coupant la position. Une plainte LPRPDE peut aussi aller au Commissariat à la protection de la vie privée du Canada.`,
+          text: `Vous pouvez consulter, corriger ou supprimer votre compte sur la page Supprimer le compte, dans l’appli, ou en écrivant à ${PRIVACY_CONTACT_EMAIL}. Vous pouvez retirer le consentement marketing sur la page Se désabonner, en fermant le compte ou en coupant la position. Une plainte LPRPDE peut aussi aller au Commissariat à la protection de la vie privée du Canada.`,
         },
       ],
     },
@@ -1089,7 +1090,7 @@ export const TERMS_EN: LegalDoc = {
   title: "Terms of use",
   updated: UPDATED_EN,
   intro: [
-    "These terms cover kidease.ca and the KidEase app. They are a two-sided marketplace: parents look for licensed care; centre directors list and manage a centre. KidEase is the platform, not the childcare provider.",
+    "These terms cover kidease.ca and the KidEase app. They are a two-sided marketplace: parents look for licensed care; centre directors list and manage a centre. KidEase is the platform, not the child care provider.",
   ],
   sections: [
     {

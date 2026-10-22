@@ -4,6 +4,7 @@
  * Relative .ts imports so Node tests can load this file.
  */
 
+import { frenchTypography } from "./french-type.ts";
 import { SUPPORT_INBOX_EMAIL } from "./support.ts";
 import { FACEBOOK_PROFILE_URL, INSTAGRAM_PROFILE_URL } from "./social.ts";
 import { SITEMAP_ORIGIN } from "./sitemap.ts";
@@ -11,7 +12,7 @@ import { hreflangLinks, pathLocale } from "./locale-path.ts";
 
 export const HOME_SEO_TITLE = "KidEase · Licensed daycare near you";
 export const HOME_SEO_DESCRIPTION =
-  "Find licensed childcare in Canada within a kilometre radius. Monthly fees, open spots, and enrolment in your pocket.";
+  "Find licensed child care in Canada within a kilometre radius. Monthly fees, open spots, and enrolment in your pocket.";
 
 const DEFAULT_OG_IMAGE = `${SITEMAP_ORIGIN}/og.jpg`;
 const LOGO_URL = `${SITEMAP_ORIGIN}/icon-512.png`;
@@ -43,12 +44,15 @@ export function pageCanonicalUrl(path: string) {
 
 export function pageSeoMeta(input: PageSeoInput): PageSeoMeta {
   const url = pageCanonicalUrl(input.path);
+  const fr = (input.locale ?? pathLocale(input.path)) === "fr";
+  const title = fr ? frenchTypography(input.title) : input.title;
+  const description = fr ? frenchTypography(input.description) : input.description;
   return {
-    title: input.title,
-    description: input.description,
+    title,
+    description,
     url,
-    ogTitle: input.title,
-    ogDescription: input.description,
+    ogTitle: title,
+    ogDescription: description,
     ogImage: DEFAULT_OG_IMAGE,
     ogType: input.ogType ?? "website",
   };
@@ -150,7 +154,7 @@ export function faqPageJsonLdScript(items: FaqSeoItem[]) {
 
 /**
  * Organization facts we can stand behind: a Canadian company,
- * Canada-wide licensed childcare discovery, free to search. No street
+ * Canada-wide licensed child care discovery, free to search. No street
  * address, ratings, or review counts.
  */
 export function organizationJsonLd(locale: "en" | "fr" = "en") {
@@ -192,7 +196,7 @@ export function softwareApplicationJsonLd() {
       priceCurrency: "CAD",
     },
     description:
-      "Free search for licensed Canadian childcare listings. Monthly fees, open spots, and enrolment: App Store and Google Play coming soon.",
+      "Free search for licensed Canadian child care listings. Monthly fees, open spots, and enrolment. App Store and Google Play coming soon.",
     publisher: {
       "@type": "Organization",
       name: "KidEase",
@@ -230,21 +234,21 @@ export const MARKETING_PAGE_SEO = {
     path: "/about",
   },
   benefits: {
-    title: "Childcare benefits and subsidies · KidEase",
+    title: "Child care benefits and subsidies · KidEase",
     description:
-      "Canada Child Benefit 2026–27 amounts, CWELCC $10-a-day fees, and provincial fee subsidies. Official government links only: KidEase does not process applications.",
+      "Canada Child Benefit amounts, $10-a-day fees, and provincial subsidies. Official links only. KidEase does not process applications.",
     path: "/benefits",
   },
   help: {
-    title: "Help Centre · KidEase",
+    title: "Help centre · KidEase",
     description:
-      "Parents and licensed centres: email support or send a note. KidEase reads every message. App Store and Google Play also use this page.",
+      "Parents and licensed centres: email support or send a note. KidEase reads every message.",
     path: "/help",
   },
   report: {
     title: "Report a safety concern · KidEase",
     description:
-      "KidEase is a licensed child care directory. For a safety concern, contact the provincial licensing office. Call 911 in an emergency. Tell KidEase about a listing error.",
+      "For a safety concern, contact the provincial licensing office. Call 911 in an emergency. Tell KidEase about a listing error.",
     path: "/report",
   },
   faq: {
@@ -256,13 +260,13 @@ export const MARKETING_PAGE_SEO = {
   getApp: {
     title: "Get the KidEase app · iPhone, Android, Mac",
     description:
-      "Put licensed Canadian childcare search on your home screen. GPS, listings, and enrolment. App Store and Google Play coming soon.",
+      "Put licensed Canadian child care search on your home screen. GPS and listings. The phone apps are coming soon.",
     path: "/get-app",
   },
   contact: {
-    title: "Contact Us · KidEase",
+    title: "Contact us · KidEase",
     description:
-      "Write KidEase about licensed childcare listings, a centre claim, or a technical issue. We read every note at support@kidease.ca.",
+      "Write KidEase about a licensed listing, a centre claim, or a technical issue. We read every note at support@kidease.ca.",
     path: "/contact",
   },
   compare: {
@@ -295,13 +299,13 @@ export const MARKETING_PAGE_SEO = {
     path: "/claim",
   },
   team: {
-    title: "Meet the Team · KidEase",
+    title: "Meet the team · KidEase",
     description:
       "Kyle Lernout and Kevin Lamont started KidEase, a Canadian company, to help families find licensed daycare.",
     path: "/team",
   },
   donate: {
-    title: "Donate to Kids · KidEase",
+    title: "Donate to kids · KidEase",
     description:
       "Donate to SickKids Foundation or Canada’s Children’s Hospital Foundations. Gifts go to the foundation you choose. Giving is optional.",
     path: "/donate",
@@ -315,7 +319,7 @@ export const MARKETING_PAGE_SEO = {
   search: {
     title: "Search licensed daycare near you · KidEase",
     description:
-      "Search licensed centres, nurseries, and homes by kilometre radius. Filter by facility type, age, and open spots, or open a city directory for Winnipeg, Toronto, and more.",
+      "Search licensed centres and homes by kilometre. Filter by age and open spots, or open a city directory.",
     path: "/search",
   },
   jobs: {
@@ -333,7 +337,7 @@ export const MARKETING_PAGE_SEO = {
   startADaycare: {
     title: "Start a licensed daycare in Canada · KidEase",
     description:
-      "How to start licensed child care in Canada, with a province finder for official licensing and grant pages. KidEase does not issue licences or award grants. Enroll today joins KidEase as a provider.",
+      "How to start licensed child care in Canada, with official licensing and grant pages by province. KidEase does not issue licences.",
     path: "/start-a-daycare",
   },
 } as const;
@@ -349,13 +353,13 @@ export const MARKETING_PAGE_SEO_FR = {
   help: {
     title: "Centre d’aide · KidEase",
     description:
-      "Parents et centres permis: écrivez-nous ou envoyez une note. KidEase lit chaque message. L’App Store et Google Play utilisent aussi cette page.",
+      "Parents et centres permis : écrivez-nous ou envoyez une note. KidEase lit chaque message.",
     path: "/fr/help",
   },
   report: {
     title: "Signaler une préoccupation de sécurité · KidEase",
     description:
-      "KidEase est un répertoire de garde permise. Pour une préoccupation de sécurité, contactez le bureau de permis. Appelez le 911 en urgence. Signalez une erreur de fiche à KidEase.",
+      "Pour une préoccupation de sécurité, contactez le bureau de permis. Appelez le 911 en urgence. Signalez une erreur de fiche.",
     path: "/fr/report",
   },
   faq: {
@@ -373,7 +377,7 @@ export const MARKETING_PAGE_SEO_FR = {
   about: {
     title: "À propos de KidEase · Répertoire de garderies permises",
     description:
-      "KidEase est une entreprise canadienne et un répertoire pancanadien de garderies permises. De vraies photos de devanture et une recherche au kilomètre: pas de nounous ni de gardiens.",
+      "KidEase est une entreprise canadienne et un répertoire de garderies permises. Photos de devanture et recherche au kilomètre.",
     path: "/fr/about",
   },
   donate: {
@@ -385,7 +389,7 @@ export const MARKETING_PAGE_SEO_FR = {
   search: {
     title: "Chercher une garderie permise près de vous · KidEase",
     description:
-      "Cherchez des centres, prématernelles et milieux familiaux permis par rayon en kilomètres. Filtrez par type, âge et places ouvertes, ou ouvrez un répertoire de ville.",
+      "Cherchez des centres et milieux familiaux permis par kilomètre. Filtrez par âge et places, ou ouvrez une ville.",
     path: "/fr/search",
   },
   getApp: {
@@ -397,7 +401,7 @@ export const MARKETING_PAGE_SEO_FR = {
   benefits: {
     title: "Prestations et subventions pour la garde · KidEase",
     description:
-      "Montants de l’Allocation canadienne pour enfants 2026-2027, tarifs AGJE et subventions provinciales. Liens officiels seulement: KidEase ne traite pas les demandes.",
+      "Montants de l’Allocation canadienne pour enfants, tarifs AGJE et subventions provinciales. Liens officiels seulement.",
     path: "/fr/benefits",
   },
   login: {
@@ -421,30 +425,30 @@ export const MARKETING_PAGE_SEO_FR = {
   startADaycare: {
     title: "Ouvrir une garderie permise au Canada · KidEase",
     description:
-      "Comment ouvrir un service de garde permis au Canada, avec un filtre par province pour les pages officielles de permis et de subventions. KidEase ne délivre pas de permis et n’accorde pas de subventions.",
+      "Comment ouvrir un service de garde permis au Canada, avec les pages officielles par province. KidEase ne délivre pas de permis.",
     path: "/fr/start-a-daycare",
   },
   plans: {
     title: "Forfaits · KidEase",
     description:
-      "Recherche, favoris (jusqu’à cinq centres) et messages aux garderies, sans frais. Les garderies utilisent tous les outils pendant la période fondatrice gratuite. KidEase est une entreprise canadienne.",
+      "Recherche, favoris et messages aux garderies, sans frais. Les garderies ont tous les outils pendant la période fondatrice gratuite.",
     path: "/fr/plans",
   },
   plansPaid: {
     title: "Forfaits · KidEase",
     description:
-      "Recherche, favoris (jusqu’à cinq centres) et messages, sans frais. Parent Plus et les forfaits de centre sont facultatifs et facturés en dollars canadiens. KidEase est une entreprise canadienne.",
+      "Recherche, favoris et messages, sans frais. Parent Plus et les forfaits de centre sont facultatifs, en dollars canadiens.",
     path: "/fr/plans",
   },
   claim: {
-    title: "Réclamez la fiche de votre garderie · KidEase",
+    title: "Revendiquez la fiche de votre garderie · KidEase",
     description:
-      "Directeurs : réclamez la fiche de votre garderie permise sur KidEase, une entreprise canadienne. Indiquez les places et les frais mensuels. Réclamer la fiche est gratuit.",
+      "Directeurs : revendiquez la fiche de votre garderie permise. Indiquez les places et les frais. C’est gratuit.",
     path: "/fr/claim",
   },
   cities: {
     title: "Villes au Canada · KidEase",
-    description: "Répertoires de garderies permises, regroupés par province, partout au Canada.",
+    description: "Répertoires de garderies permises pour chaque province et territoire du Canada. Ouvrez une ville pour voir les centres.",
     path: "/fr/cities",
   },
   compare: {
@@ -456,13 +460,13 @@ export const MARKETING_PAGE_SEO_FR = {
   verify: {
     title: "Comment nous vérifions les fiches · KidEase",
     description:
-      "Badges KidEase : correspondance au catalogue, revue avec le registre officiel, vérifications de réclamation et liens vers les dossiers du gouvernement. KidEase est une entreprise canadienne.",
+      "Badges KidEase : catalogue, revue du registre officiel et vérifications de revendication. Liens vers les dossiers du gouvernement.",
     path: "/fr/verify",
   },
   daycareRequirements: {
     title: "Exigences pour les garderies · KidEase",
     description:
-      "Ce que les parents peuvent attendre et ce que les garderies permises doivent fournir : un permis, une vérification du secteur vulnérable et les documents de registre exigés. KidEase ne délivre pas les vérifications policières.",
+      "Ce qu’une garderie permise doit fournir : un permis et une vérification policière. KidEase ne délivre pas ces documents.",
     path: "/fr/daycare-requirements",
   },
   tourChecklist: {
@@ -479,7 +483,7 @@ export const MARKETING_PAGE_SEO_FR = {
   },
   unsubscribe: {
     title: "Se désabonner · KidEase",
-    description: "Arrêtez les courriels ou les SMS de KidEase. Désabonnement selon la LCAP : aucun compte requis.",
+    description: "Arrêtez les courriels ou les textos marketing de KidEase. Ce désabonnement LCAP ne demande pas de compte.",
     path: "/fr/unsubscribe",
   },
   deleteAccount: {
@@ -498,7 +502,7 @@ export const LEGAL_PAGE_SEO = {
   },
   terms: {
     title: "Terms · KidEase",
-    description: "KidEase terms of use for parents and licensed childcare centres.",
+    description: "KidEase terms of use for parents and licensed child care centres in Canada, including search, messages, and claims.",
     path: "/terms",
   },
   cookies: {

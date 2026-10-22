@@ -81,7 +81,7 @@ export function centreAgreementBody(input: CentreFields) {
   const where = whereLine(input);
   return `KIDEASE LICENSED CENTRE AGREEMENT / ENTENTE DU CENTRE PERMIS KIDEASE
 
-This agreement is between KidEase (operated from Winnipeg, Manitoba) and the licensed childcare centre named below.
+This agreement is between KidEase (operated from Winnipeg, Manitoba) and the licensed child care centre named below.
 La présente entente est conclue entre KidEase (Winnipeg, Manitoba) et le service de garde permis nommé ci-dessous.
 
 Centre: ${input.centreName}

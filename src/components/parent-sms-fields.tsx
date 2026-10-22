@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { PARENT_SMS_CONSENT_TEXT, PARENT_SMS_FROM_DISPLAY, PARENT_SMS_TERMS_URL } from "@/lib/parent-sms-consent";
+import { parentSmsConsentText, PARENT_SMS_FROM_DISPLAY, PARENT_SMS_TERMS_URL } from "@/lib/parent-sms-consent";
 import { useCopy } from "@/lib/use-copy";
 
 export function ParentSmsFields({
@@ -54,7 +54,7 @@ export function ParentSmsFields({
               data-ke="parent-sms-checkbox"
             />
           </span>
-          <span className="pt-2.5">{PARENT_SMS_CONSENT_TEXT}</span>
+          <span className="pt-2.5">{parentSmsConsentText(locale)}</span>
         </label>
         <p id="parent-sms-links" className="mt-1 flex flex-wrap items-center gap-x-2 pl-2 text-sm">
           <a

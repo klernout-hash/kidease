@@ -14,6 +14,7 @@ import { breadcrumbJsonLd, breadcrumbJsonLdScript } from "./page-seo.ts";
 import { isMissingCatalogueBuilding } from "./catalogue-buildings.ts";
 import { isUnflaggedSharedFallbackSrc } from "./photo-honesty.ts";
 import { SITEMAP_ORIGIN, sitemapListingPath } from "./sitemap.ts";
+import { displayCentreName } from "./utils.ts";
 
 /** Official storefront or https media only. Placeholders and street-view stock stay out of OG.
  *  Winnipeg `/photos/wpg/` rows are street stock — they stay out, so many WPG listings
@@ -91,7 +92,7 @@ function feeProgramPhrase(src: ListingSeoSource, locale: ListingSeoLocale) {
   if (pill === "badgeQc965") {
     return locale === "fr"
       ? " Service de garde subventionné du Québec. Contribution réduite de 9,65 $ par jour en 2026."
-      : " Quebec subsidized childcare. The 2026 reduced contribution is $9.65 a day.";
+      : " Quebec subsidized child care. The 2026 reduced contribution is $9.65 a day.";
   }
   if (pill === "badgeReduced") {
     return locale === "fr"
@@ -113,7 +114,7 @@ export function listingCanonicalUrl(slug: string | null | undefined) {
 }
 
 export function listingDisplayName(src: ListingSeoSource, locale: ListingSeoLocale = "en") {
-  return clean(locale === "fr" ? src.nameFr || src.name : src.name);
+  return displayCentreName(locale === "fr" ? src.nameFr || src.name : src.name);
 }
 
 export function listingAreaLine(src: ListingSeoSource) {

@@ -51,6 +51,6 @@ test("explore and search share six daycare-type rows with in-row show more", () 
   assert.match(copy, /showMoreListings: "Show more listings"/);
   assert.match(copy, /showMoreListings: "Voir plus de garderies"/);
   assert.match(copy, /seeMoreListings: "See more listings"/);
-  assert.match(copy, /seeMoreListings: "Voir d'autres garderies"/);
+  assert.match(copy, /seeMoreListings: "Voir d’autres garderies"/);
   assert.match(daycares, /HOME_TYPE_POOL = 72/);
 });

@@ -37,7 +37,7 @@ test("provincial guides cite official pages and add no new fee figures", () => {
   const blob = `${copy.feesBody} ${copy.waitlistBody} ${fr.waitlistBody} ${fr.feesBody}`;
   assert.doesNotMatch(blob, /—|free forever|Winnipeg-based|\$\d/);
   assert.match(copy.waitlistBody, /does not charge a waitlist fee/);
-  assert.match(readFileSync(join(root, "src/routes/guides.$code.tsx"), "utf8"), /CANADA_WIDE_CHILD_CARE_URL/);
+  assert.match(readFileSync(join(root, "src/routes/guides.$code.tsx"), "utf8"), /canadaWideChildCareUrl/);
   assert.match(readFileSync(join(root, "src/routes/guides.$code.tsx"), "utf8"), /localePath\("\/claim"/);
   const index = readFileSync(join(root, "src/routes/guides.tsx"), "utf8");
   const frIndex = readFileSync(join(root, "src/routes/fr.guides.tsx"), "utf8");

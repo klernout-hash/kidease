@@ -65,7 +65,7 @@ export const ON_SUBSIDY_HREF_FR = "https://www.ontario.ca/fr/page/subventions-po
 export const ON_CMSM_HREF =
   "https://www.ontario.ca/page/service-system-managers-child-care-and-early-years-programs";
 export const ON_CMSM_HREF_FR =
-  "https://www.ontario.ca/fr/page/gestionnaires-de-systeme-de-services-pour-les-programmes-de-garde-denfants-et-de-la";
+  "https://www.ontario.ca/fr/page/gestionnaires-de-systeme-de-services-pour-les-programmes-de-garde-denfants-et-de-la-petite";
 
 export const BC_ACCB_HREF = "https://www.gov.bc.ca/affordablechildcarebenefit";
 export const BC_ESTIMATOR_HREF = "https://myfamilyservices.gov.bc.ca/s/estimator";

@@ -130,7 +130,7 @@ export function verifyEmailText(url: string, name?: string | null, audience?: "p
     "This link expires in about 24 hours. If you did not create a KidEase account, you can ignore this email.",
     "",
     "KidEase",
-    "kyle@kidease.ca",
+    "support@kidease.ca",
     "",
     "---",
     "",
@@ -146,7 +146,7 @@ export function verifyEmailText(url: string, name?: string | null, audience?: "p
     "Ce lien expire dans environ 24 heures. Si vous n’avez pas créé de compte KidEase, ignorez ce message.",
     "",
     "KidEase",
-    "kyle@kidease.ca",
+    "support@kidease.ca",
   ].join("\n");
 }
 
@@ -210,7 +210,7 @@ export function providerOnboardText(origin?: string | null, name?: string | null
     `4. When you are ready, upload a current Vulnerable Sector Check on Screening. Your province may also require extra registry checks (for example a Child Abuse Registry check, and a Prior Contact check for home-based households): ${screening}`,
     "5. The KidEase team reviews those files. Parents may see a centre-level “Screening on file” badge after required current documents are cleared. Individual PDFs and names stay private.",
     "",
-    "Questions: kyle@kidease.ca",
+    "Questions: support@kidease.ca",
     "",
     "---",
     "",
@@ -224,11 +224,11 @@ export function providerOnboardText(origin?: string | null, name?: string | null
     "",
     frStep1,
     "2. Ajoutez votre numéro de permis actuel.",
-    `3. Réclamez la fiche si nous l’avons déjà à partir du registre public : ${claim}`,
+    `3. Revendiquez la fiche si nous l’avons déjà à partir du registre public : ${claim}`,
     `4. Quand vous êtes prêt, téléversez une vérification du secteur vulnérable à jour dans Filtrage. Votre province peut aussi exiger d’autres vérifications de registre (par exemple le registre des mauvais traitements et, pour un milieu familial, une vérification des contacts antérieurs) : ${screening}`,
     "5. L’équipe KidEase examine ces dossiers. Les parents peuvent voir un badge « Dossier de filtrage » au niveau du centre lorsque les documents requis et à jour sont acceptés. Les PDF et les noms restent privés.",
     "",
-    "Questions : kyle@kidease.ca",
+    "Questions : support@kidease.ca",
   ].join("\n");
 }
 

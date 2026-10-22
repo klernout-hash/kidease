@@ -117,7 +117,7 @@ function MenuPage() {
         </Group> : null}
 
         <Group title={fr ? "Soutien" : "Support"} defer>
-          <MenuRow to={to("/help")} label={fr ? "Centre d’aide" : "Help Centre"} icon="help" />
+          <MenuRow to={to("/help")} label={fr ? "Centre d’aide" : "Help centre"} icon="help" />
           <MenuRow to={to("/faq")} label="FAQ" icon="faq" />
           <MenuRow to={to("/how-it-works")} label={t("howItWorksCta")} icon="howItWorks" />
           <MenuRow to="/verify" label={t("verifyListings")} icon="verify" />

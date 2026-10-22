@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
-import { PARENT_SMS_CONSENT_TEXT, parentSmsOptInInput } from "@/lib/parent-sms-consent";
+import { parentSmsConsentText, parentSmsOptInInput } from "@/lib/parent-sms-consent";
 
 /**
  * Writes the optional mobile number and SMS checkbox onto the parent profile.
@@ -8,7 +8,10 @@ import { PARENT_SMS_CONSENT_TEXT, parentSmsOptInInput } from "@/lib/parent-sms-c
  */
 export const saveParentSmsOptIn = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { phone?: string; smsConsent?: boolean }) => parentSmsOptInInput(input))
+  .validator((input: { phone?: string; smsConsent?: boolean; locale?: string }) => ({
+    ...parentSmsOptInInput(input),
+    locale: input?.locale === "fr" ? ("fr" as const) : ("en" as const),
+  }))
   .handler(async ({ context, data }) => {
     if (data.issue) return { ok: false as const, error: data.issue };
     let phone = data.phone || null;
@@ -57,9 +60,9 @@ export const saveParentSmsOptIn = createServerFn({ method: "POST" })
         purpose: "service",
         granted: true,
         method: "profile_checkbox",
-        statement: PARENT_SMS_CONSENT_TEXT,
+        statement: parentSmsConsentText(data.locale),
         address: phone,
-        locale: "en",
+        locale: data.locale,
       });
     }
     return { ok: true as const, phone: phone ?? "", smsConsent, smsUnreachable };

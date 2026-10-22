@@ -90,9 +90,9 @@ test("home search bar is a slim pill with a claim strip and a daycare header pil
   assert.match(strip, /data-ke="home-claim-strip"/);
   assert.match(strip, /localePath\("\/claim"/);
   assert.match(copy, /heroDaycareLead: "Run a daycare\? Claim your free listing in 2 minutes"/);
-  assert.match(copy, /heroDaycareLead: "Vous gérez une garderie\? Réclamez votre fiche gratuite en 2 minutes"/);
+  assert.match(copy, /heroDaycareLead: "Vous gérez une garderie\? Revendiquez votre fiche gratuite en 2 minutes"/);
   assert.match(copy, /heroClaimListing: "Claim listing"/);
-  assert.match(copy, /heroClaimListing: "Réclamer la fiche"/);
+  assert.match(copy, /heroClaimListing: "Revendiquer la fiche"/);
   assert.match(copy, /heroTrustLicensed: "Licensed centres only"/);
   assert.match(copy, /heroTrustLicensed: "Centres permis seulement"/);
   assert.match(copy, /heroTrustCount: "20,000\+ centres listed"/);

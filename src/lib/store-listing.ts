@@ -2,7 +2,7 @@
 
 export const STORE = {
   name: "KidEase",
-  subtitle: "Licensed childcare nearby",
+  subtitle: "Licensed child care nearby",
   subtitleFr: "Garde permise près de vous",
   bundleId: "ca.kidease.app",
   version: "1.0.0",
@@ -33,7 +33,7 @@ export const STORE = {
   /** Google Play short description: max 80 characters. */
   shortDescription: "Find licensed Canadian daycares by km radius. Fees, spots, enrolment.",
   shortDescriptionFr: "Trouvez des garderies permises au Canada. Frais, places, inscription.",
-  description: `KidEase helps Canadian parents and daycare providers find licensed childcare within a kilometre radius they choose.
+  description: `KidEase helps Canadian parents and daycare providers find licensed child care within a kilometre radius they choose.
 
 Search from your location or a postal code. See fees, open spots, hours, and languages only when that centre has entered them. A $10-a-day label appears only when the listing data says so.
 

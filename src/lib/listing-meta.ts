@@ -75,9 +75,9 @@ export function listingPageDescription(input: ListingMetaInput): string {
   }
   const fromSlug = listingLabelFromSlug(input.slug);
   if (fromSlug) {
-    return `Licensed childcare listing for ${fromSlug} on ${LISTING_META_BRAND}. Hours, fees, and open spots.`;
+    return `Licensed child care listing for ${fromSlug} on ${LISTING_META_BRAND}. Hours, fees, and open spots.`;
   }
-  return `Find licensed childcare in Canada. Hours, fees, and open spots on ${LISTING_META_BRAND}.`;
+  return `Find licensed child care in Canada. Hours, fees, and open spots on ${LISTING_META_BRAND}.`;
 }
 
 export function listingPageMeta(input: ListingMetaInput): { title: string; description: string } {

@@ -22,7 +22,7 @@ test("success copy stays honest and matches the request kind", () => {
   assert.equal(tx("en", requestSentTitleKey("message")), "Request sent!");
   assert.equal(tx("en", requestSentTitleKey("spot")), "Request sent!");
   assert.equal(tx("en", requestSentTitleKey("tour")), "Tour request sent!");
-  assert.equal(tx("fr", requestSentTitleKey("tour")), "Demande de visite envoyée !");
+  assert.equal(tx("fr", requestSentTitleKey("tour")), "Demande de visite envoyée\u202f!");
   assert.match(tx("en", requestSentBodyKey("info")), /\{name\}/);
   assert.match(tx("en", requestSentBodyKey("info")), /email/i);
   assert.match(tx("en", requestSentBodyKey("tour")), /Messages/);

@@ -56,6 +56,7 @@ import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as ParentRouteImport } from './routes/parent'
 import { Route as PayRouteImport } from './routes/pay'
 import { Route as PlansRouteImport } from './routes/plans'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProviderRouteImport } from './routes/provider'
 import { Route as ReportRouteImport } from './routes/report'
@@ -116,6 +117,7 @@ import { Route as FrMeetTheTeamRouteImport } from './routes/fr.meet-the-team'
 import { Route as FrMilieuxFamiliauxRouteImport } from './routes/fr.milieux-familiaux'
 import { Route as FrNeedCareFastRouteImport } from './routes/fr.need-care-fast'
 import { Route as FrPlansRouteImport } from './routes/fr.plans'
+import { Route as FrPricingRouteImport } from './routes/fr.pricing'
 import { Route as FrPrivacyRouteImport } from './routes/fr.privacy'
 import { Route as FrReportRouteImport } from './routes/fr.report'
 import { Route as FrSearchRouteImport } from './routes/fr.search'
@@ -407,6 +409,11 @@ const PayRoute = PayRouteImport.update({
 const PlansRoute = PlansRouteImport.update({
   id: '/plans',
   path: '/plans',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -708,6 +715,11 @@ const FrNeedCareFastRoute = FrNeedCareFastRouteImport.update({
 const FrPlansRoute = FrPlansRouteImport.update({
   id: '/plans',
   path: '/plans',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrPricingRoute = FrPricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => FrRoute,
 } as any)
 const FrPrivacyRoute = FrPrivacyRouteImport.update({
@@ -1040,6 +1052,7 @@ export interface FileRoutesByFullPath {
   '/parent': typeof ParentRouteWithChildren
   '/pay': typeof PayRouteWithChildren
   '/plans': typeof PlansRoute
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRouteWithChildren
   '/report': typeof ReportRoute
@@ -1099,6 +1112,7 @@ export interface FileRoutesByFullPath {
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
   '/fr/plans': typeof FrPlansRoute
+  '/fr/pricing': typeof FrPricingRoute
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/report': typeof FrReportRoute
   '/fr/search': typeof FrSearchRoute
@@ -1203,6 +1217,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRouteWithChildren
   '/plans': typeof PlansRoute
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRouteWithChildren
   '/report': typeof ReportRoute
@@ -1262,6 +1277,7 @@ export interface FileRoutesByTo {
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
   '/fr/plans': typeof FrPlansRoute
+  '/fr/pricing': typeof FrPricingRoute
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/report': typeof FrReportRoute
   '/fr/search': typeof FrSearchRoute
@@ -1369,6 +1385,7 @@ export interface FileRoutesById {
   '/parent': typeof ParentRouteWithChildren
   '/pay': typeof PayRouteWithChildren
   '/plans': typeof PlansRoute
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRouteWithChildren
   '/report': typeof ReportRoute
@@ -1428,6 +1445,7 @@ export interface FileRoutesById {
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
   '/fr/plans': typeof FrPlansRoute
+  '/fr/pricing': typeof FrPricingRoute
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/report': typeof FrReportRoute
   '/fr/search': typeof FrSearchRoute
@@ -1536,6 +1554,7 @@ export interface FileRouteTypes {
     | '/parent'
     | '/pay'
     | '/plans'
+    | '/pricing'
     | '/privacy'
     | '/provider'
     | '/report'
@@ -1595,6 +1614,7 @@ export interface FileRouteTypes {
     | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
     | '/fr/plans'
+    | '/fr/pricing'
     | '/fr/privacy'
     | '/fr/report'
     | '/fr/search'
@@ -1699,6 +1719,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/parent'
     | '/plans'
+    | '/pricing'
     | '/privacy'
     | '/provider'
     | '/report'
@@ -1758,6 +1779,7 @@ export interface FileRouteTypes {
     | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
     | '/fr/plans'
+    | '/fr/pricing'
     | '/fr/privacy'
     | '/fr/report'
     | '/fr/search'
@@ -1864,6 +1886,7 @@ export interface FileRouteTypes {
     | '/parent'
     | '/pay'
     | '/plans'
+    | '/pricing'
     | '/privacy'
     | '/provider'
     | '/report'
@@ -1923,6 +1946,7 @@ export interface FileRouteTypes {
     | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
     | '/fr/plans'
+    | '/fr/pricing'
     | '/fr/privacy'
     | '/fr/report'
     | '/fr/search'
@@ -2030,6 +2054,7 @@ export interface RootRouteChildren {
   ParentRoute: typeof ParentRouteWithChildren
   PayRoute: typeof PayRouteWithChildren
   PlansRoute: typeof PlansRoute
+  PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   ProviderRoute: typeof ProviderRouteWithChildren
   ReportRoute: typeof ReportRoute
@@ -2423,6 +2448,13 @@ declare module '@tanstack/react-router' {
       path: '/plans'
       fullPath: '/plans'
       preLoaderRoute: typeof PlansRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -2843,6 +2875,13 @@ declare module '@tanstack/react-router' {
       path: '/plans'
       fullPath: '/fr/plans'
       preLoaderRoute: typeof FrPlansRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/pricing': {
+      id: '/fr/pricing'
+      path: '/pricing'
+      fullPath: '/fr/pricing'
+      preLoaderRoute: typeof FrPricingRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/privacy': {
@@ -3288,6 +3327,7 @@ interface FrRouteChildren {
   FrMilieuxFamiliauxRoute: typeof FrMilieuxFamiliauxRoute
   FrNeedCareFastRoute: typeof FrNeedCareFastRoute
   FrPlansRoute: typeof FrPlansRoute
+  FrPricingRoute: typeof FrPricingRoute
   FrPrivacyRoute: typeof FrPrivacyRoute
   FrReportRoute: typeof FrReportRoute
   FrSearchRoute: typeof FrSearchRoute
@@ -3333,6 +3373,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrMilieuxFamiliauxRoute: FrMilieuxFamiliauxRoute,
   FrNeedCareFastRoute: FrNeedCareFastRoute,
   FrPlansRoute: FrPlansRoute,
+  FrPricingRoute: FrPricingRoute,
   FrPrivacyRoute: FrPrivacyRoute,
   FrReportRoute: FrReportRoute,
   FrSearchRoute: FrSearchRoute,
@@ -3486,6 +3527,7 @@ const rootRouteChildren: RootRouteChildren = {
   ParentRoute: ParentRouteWithChildren,
   PayRoute: PayRouteWithChildren,
   PlansRoute: PlansRoute,
+  PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   ProviderRoute: ProviderRouteWithChildren,
   ReportRoute: ReportRoute,

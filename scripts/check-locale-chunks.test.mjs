@@ -14,7 +14,7 @@ test("english and french do not wait on an extra language pack", async () => {
   assert.equal(isExtraLocale("fr"), false);
   assert.equal(isExtraLocale("zh"), true);
   assert.equal(tx("en", "forgotPassword"), "Forgot password?");
-  assert.equal(tx("fr", "forgotPassword"), "Mot de passe oublié ?");
+  assert.equal(tx("fr", "forgotPassword"), "Mot de passe oublié\u202f?");
   assert.equal(extraPack("de"), undefined);
   assert.equal(await activateLocale("en"), true);
   assert.equal(await activateLocale("fr"), true);

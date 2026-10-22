@@ -19,6 +19,7 @@ export type StartDaycarePt = {
   fundingEn: string;
   fundingFr: string;
   fundingUrl: string;
+  fundingUrlFr?: string;
   competitive: boolean;
 };
 
@@ -120,7 +121,8 @@ export const START_DAYCARE_PTS: readonly StartDaycarePt[] = [
       "CWELCC Start-up Grants are administered by your local CMSM or DSSAB under Directed Growth: not by KidEase and not as a walk-in provincial form. Centre projects have been described as up to about $350,000 per 20 spaces; homes up to about $1,200/space (often capped around $7,200 per provider). Caps, spend deadlines, and who is invited change. Confirm with your service system manager.",
     fundingFr:
       "Les subventions de démarrage AGJE sont gérées par votre CMSM ou SSAB local selon la croissance dirigée: pas par KidEase et pas comme un formulaire provincial libre-service. Les projets en centre ont été décrits jusqu’à environ 350 000 $ par 20 places; les milieux familiaux jusqu’à environ 1 200 $/place (souvent plafonnés autour de 7 200 $ par responsable). Plafonds, délais et admissibilité changent. Confirmez auprès de votre gestionnaire de système de services.",
-    fundingUrl: "https://www.ontario.ca/page/child-care-and-early-years",
+    fundingUrl: "https://www.ontario.ca/page/find-and-pay-child-care",
+    fundingUrlFr: "https://www.ontario.ca/fr/page/trouver-un-service-de-garde-denfants-et-de-laide-financiere",
     competitive: true,
   },
   {

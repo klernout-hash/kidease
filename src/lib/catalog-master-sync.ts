@@ -358,7 +358,7 @@ function buildNewRow(master: MasterFacility, point: { lat: number; lng: number }
           ? "licensed group child care home"
           : facility === "school_age"
             ? "licensed school-age program"
-            : "licensed childcare centre";
+            : "licensed child care centre";
   const kindFr =
     facility === "nursery_preschool"
       ? "nursery / prématernelle permise"

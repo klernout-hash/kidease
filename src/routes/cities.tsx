@@ -24,7 +24,7 @@ export const Route = createFileRoute("/cities")({
   head: () =>
     pageSeoHead({
       title: "Cities in Canada · KidEase",
-      description: "Licensed daycare directories grouped by province across Canada.",
+      description: "Licensed daycare directories for every province and territory in Canada. Open a city to browse centres.",
       path: "/cities",
     }),
   component: CitiesRoute,

@@ -10,7 +10,7 @@ export const PROTECTED_LISTING_ID = "d_d85jtifbkh2t";
 export type FoundingLocale = "en" | "fr";
 
 export const FOUNDING_FREE_FEATURES: Array<{ en: string; fr: string }> = [
-  { en: "Claimed listing", fr: "Fiche réclamée" },
+  { en: "Claimed listing", fr: "Fiche revendiquée" },
   { en: "Photos", fr: "Photos" },
   { en: "Fees you set", fr: "Les frais que vous indiquez" },
   { en: "Open-spot posting", fr: "Annonce de places ouvertes" },
@@ -34,7 +34,7 @@ export const FOUNDING_PAGE = {
     foundingBody:
       "Daycares that claim during launch get a Founding member badge. Founding members keep a locked-in discount when paid extras arrive.",
     claim: "Claim your listing",
-    priceUnit: "/ month",
+    priceUnit: "/month",
   },
   fr: {
     kicker: "KidEase",
@@ -46,11 +46,11 @@ export const FOUNDING_PAGE = {
     daycareTitle: "Pour les garderies",
     daycareName: "Gratuit",
     daycarePill: "Période fondatrice gratuite",
-    daycareBody: "Réclamez votre fiche et utilisez tous les outils de garderie pendant la période fondatrice gratuite. Aucune carte n’est débitée.",
+    daycareBody: "Revendiquez votre fiche et utilisez tous les outils de garderie pendant la période fondatrice gratuite. Aucune carte n’est débitée.",
     foundingTitle: "Membre fondateur",
     foundingBody:
-      "Les garderies qui réclament leur fiche pendant le lancement reçoivent un badge Membre fondateur. Les membres fondateurs gardent un rabais bloqué quand les extras payants arrivent.",
-    claim: "Réclamer votre fiche",
+      "Les garderies qui revendiquent leur fiche pendant le lancement reçoivent un badge Membre fondateur. Les membres fondateurs gardent un rabais bloqué quand les extras payants arrivent.",
+    claim: "Revendiquer votre fiche",
     priceUnit: "/mois",
   },
 } as const;
