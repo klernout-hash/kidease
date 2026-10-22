@@ -1784,6 +1784,8 @@ export async function purgeAccountData(uid: string) {
   await sql`delete from casl_consent_events where user_id = ${uid}`.catch(() => undefined);
   await sql`delete from casl_consents where user_id = ${uid}`.catch(() => undefined);
   await sql`delete from user_notifications where user_id = ${uid}`.catch(() => undefined);
+  const { purgeFamilyDocuments } = await import("@/lib/server/family-vault");
+  await purgeFamilyDocuments(uid);
   await sql`delete from profiles where user_id = ${uid}`;
   await sql`delete from "session" where "userId" = ${uid}`;
   await sql`delete from "account" where "userId" = ${uid}`;
