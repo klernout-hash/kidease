@@ -2,9 +2,10 @@ import type { ComponentProps } from "react";
 import { Link } from "@tanstack/react-router";
 import { Baby, Backpack, Shapes, Smile, type LucideIcon } from "lucide-react";
 import { isRailAge, RAIL_AGES, type RailAge } from "@/lib/care-type";
-import { EXPLORE_CATEGORY_COPY, type ExploreCategory } from "@/lib/explore-categories";
 import { localePath } from "@/lib/locale-path";
+import { standardAgeLabel } from "@/lib/standard-age-groups";
 import { useCopy } from "@/lib/use-copy";
+import type { ExploreCategory } from "@/lib/explore-categories";
 import { cn } from "@/lib/utils";
 
 const CAT_ICON: Partial<Record<ExploreCategory, LucideIcon>> = {
@@ -48,7 +49,7 @@ export function ExploreCategoryChips({
           <ExploreCatChip
             key={cat}
             icon={Icon}
-            label={t(EXPLORE_CATEGORY_COPY[cat])}
+            label={standardAgeLabel(cat, locale)}
             on={on}
             aria-pressed={on}
             data-explore-cat={cat}

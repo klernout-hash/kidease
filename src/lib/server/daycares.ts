@@ -19,7 +19,8 @@ import { parseAnchorMode, resolveSearchAnchors } from "@/lib/dual-anchor";
 import { nearbyListings, nearbyListingsAlong, nearbyListingsDual, type NearbyListing } from "./nearby";
 import { callerMayViewHiddenListing } from "./public-listing";
 import { upsertDaycare } from "./seed";
-import { applyListingReadiness, compareFreshOpenSpots } from "@/lib/listing-readiness";
+import { applyListingReadiness, compareFreshOpenSpots, hasConfirmedAges } from "@/lib/listing-readiness";
+import { standardGroupsForRange } from "@/lib/standard-age-groups";
 import { listingAgeUnknown } from "@/lib/now-loops";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { overlayClaimed } from "./claims";
@@ -244,7 +245,13 @@ function toDaycare(d: CatalogDaycare): Daycare {
     priority: false,
     priorityUntil: null,
     featuredCity: false,
-    agesKnown: d.ageMaxMonths > d.ageMinMonths && d.ageMaxMonths > 0,
+    agesKnown: hasConfirmedAges({
+      agesKnown: d.agesKnown,
+      ageMinMonths: d.ageMinMonths,
+      ageMaxMonths: d.ageMaxMonths,
+    }),
+    agesSource: d.agesSource || null,
+    agesSourceUrl: d.agesSourceUrl || null,
     visibility: d.visibility,
     isTest: d.isTest,
     timezone: resolveListingTourTimezone(null, d.province),
@@ -320,7 +327,9 @@ function mergeClaimedCard<T extends DaycareCard>(card: T, claimed: Daycare): T {
     priorityUntil: claimed.priorityUntil,
     ageMinMonths: claimed.agesKnown ? claimed.ageMinMonths : card.ageMinMonths,
     ageMaxMonths: claimed.agesKnown ? claimed.ageMaxMonths : card.ageMaxMonths,
-    agesKnown: Boolean(claimed.agesKnown) || Boolean(card.agesKnown),
+    agesKnown: claimed.agesKnown === true || (claimed.agesKnown !== false && Boolean(card.agesKnown)),
+    agesSource: claimed.agesSource || card.agesSource || null,
+    agesSourceUrl: claimed.agesSourceUrl || card.agesSourceUrl || null,
     hours: claimed.hours || card.hours,
     hoursFr: claimed.hoursFr || card.hoursFr,
     licenseNumber: claimed.licenseNumber || card.licenseNumber,
@@ -582,12 +591,11 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
   cards = await overlayPriority(cards);
   cards = await overlayFeaturedCity(cards);
   if (distanceTail.length) cards = cards.concat(distanceTail);
-  if (data.ageGroup !== "any") {
+  const ageGroup = data.ageGroup;
+  if (ageGroup !== "any") {
     cards = cards.filter((c) => {
       if (listingAgeUnknown(c)) return true;
-      if (data.ageGroup === "infant") return c.ageMinMonths <= 18;
-      if (data.ageGroup === "toddler") return c.ageMinMonths < 36 && c.ageMaxMonths >= 18;
-      return c.ageMaxMonths >= 30 && c.ageMinMonths < 72;
+      return standardGroupsForRange(c.ageMinMonths, c.ageMaxMonths).includes(ageGroup);
     });
   }
   const fit = parentFitApplies(data.parentFit) ? data.parentFit : null;
@@ -924,7 +932,11 @@ export const getListingSeo = createServerFn({ method: "GET" })
       address: found.address,
       postalCode: found.postalCode,
       phone: found.phone || null,
-      agesKnown: found.ageMaxMonths > found.ageMinMonths && found.ageMaxMonths > 0,
+      agesKnown: hasConfirmedAges({
+        agesKnown: found.agesKnown,
+        ageMinMonths: found.ageMinMonths,
+        ageMaxMonths: found.ageMaxMonths,
+      }),
       ageMinMonths: found.ageMinMonths,
       ageMaxMonths: found.ageMaxMonths,
       photos: found.photos,

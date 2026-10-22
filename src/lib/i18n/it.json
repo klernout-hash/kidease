@@ -608,6 +608,7 @@
   "phoneLabel": "Telefono",
   "cityLabel": "Città",
   "provinceLabel": "Provincia",
+  "provinceAgeCaption": "Etichetta della provincia",
   "postalLabel": "Codice postale",
   "addressLabel": "Indirizzo",
   "privacyNote": "Pensato per le famiglie in Canada. Non vendiamo i dati dei bambini.",
