@@ -1043,16 +1043,41 @@ async function radiusLabelSmoke(page, base) {
   }
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto(new URL("/", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-  const desktop = await page.evaluate(() => {
+  await page.evaluate(() => document.fonts?.ready).catch(() => {});
+  const desktop = await page.evaluate((options) => {
     const select = [...document.querySelectorAll('[data-ke="search-radius"]')].find(
       (el) => el.getBoundingClientRect().width > 0,
     );
     if (!select) return { missing: true };
     const cs = getComputedStyle(select);
-    return { maxWidth: parseFloat(cs.maxWidth), appearance: cs.appearance || cs.webkitAppearance || "" };
-  });
-  if (desktop.missing || !(desktop.maxWidth > 0 && desktop.maxWidth < 80) || desktop.appearance === "none") {
-    misses.push(`desktop:${desktop.maxWidth}:${desktop.appearance}`);
+    const bad = [];
+    for (const km of options) {
+      select.value = km;
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      const label = (select.selectedOptions[0]?.textContent || "").trim();
+      const textW = ctx.measureText(label).width;
+      const padL = parseFloat(cs.paddingLeft) || 0;
+      const padR = parseFloat(cs.paddingRight) || 0;
+      const border = (parseFloat(cs.borderLeftWidth) || 0) + (parseFloat(cs.borderRightWidth) || 0);
+      const available = select.clientWidth - padL - padR - border;
+      if (!(label === `${km} km` && available + 0.5 >= textW)) bad.push(`${label}:${Math.round(available)}/${Math.round(textW)}`);
+    }
+    return {
+      bad,
+      maxWidth: parseFloat(cs.maxWidth),
+      appearance: cs.appearance || cs.webkitAppearance || "",
+    };
+  }, RADIUS_LABEL_OPTIONS);
+  // Desktop uses the custom chevron (appearance none) and a 10rem cap so "25 km" stays whole.
+  if (
+    desktop.missing ||
+    desktop.bad?.length ||
+    !(desktop.maxWidth > 80 && desktop.maxWidth <= 176) ||
+    desktop.appearance !== "none"
+  ) {
+    misses.push(`desktop:${desktop.maxWidth}:${desktop.appearance}:${(desktop.bad || []).join(",")}`);
   }
   record("radius-labels", misses.length === 0, {
     note: misses.length ? misses.join(" ") : `${RADIUS_LABEL_WIDTHS.length} widths, EN and FR`,

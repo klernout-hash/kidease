@@ -25,4 +25,6 @@ test("home radius select is wide enough below desktop and the smoke covers 320px
   assert.match(e2e, /RADIUS_LABEL_OPTIONS = \["5", "10", "25", "50"\]/);
   assert.match(e2e, /radiusLabelSmoke/);
   assert.match(e2e, /path of \["\/", "\/fr"\]/);
+  assert.match(e2e, /desktop\.appearance !== "none"/);
+  assert.doesNotMatch(e2e, /maxWidth < 80/);
 });
