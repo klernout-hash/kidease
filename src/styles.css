@@ -2051,6 +2051,7 @@ html[data-channel="app"][data-ke-shape="wide"] .ke-video-stage {
   }
 }
 
+html[data-channel="app"] .ke-social-button,
 html[data-channel="app"] .ke-apple-button {
   width: 100%;
   max-width: 375px;

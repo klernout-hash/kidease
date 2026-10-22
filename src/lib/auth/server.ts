@@ -45,6 +45,7 @@ import { Pool } from "pg";
 import { ensureDbReady, getPglite } from "../db";
 import { emailAndPasswordConfig, emailAndPasswordEnabled, emailVerificationConfig } from "./email-password";
 import { GROK_PROVIDERS, BROKER_PROVIDERS } from "./providers";
+import { appleLoginVisible } from "./apple-login-flag";
 import { APPLE_CLIENT_ID, appleClientSecret, appleIdpConfigured } from "./apple-idp";
 import {
   GOOGLE_CLIENT_ID,
@@ -304,7 +305,7 @@ if (process.env.VERCEL && !betterAuthSecret) {
 // password hashes (account.password is scrypt/bcrypt, not keyed by this).
 
 const socialProviders = {
-  ...(appleIdpConfigured && APPLE_CLIENT_ID
+  ...(appleIdpConfigured && appleLoginVisible(process.env) && APPLE_CLIENT_ID
     ? {
         apple: {
           clientId: APPLE_CLIENT_ID,
