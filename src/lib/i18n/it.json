@@ -1900,6 +1900,7 @@
   "removeTime": "Rimuova l’orario",
   "sendTourRequest": "Richieda una visita",
   "tourTimes": "Orari delle visite",
+  "tourAddCalendar": "Aggiungi al calendario",
   "tourTimesLead": "I genitori prenotano questi orari sulla Sua scheda pubblica. Se non ne aggiunge nessuno, «Prenoti una visita» mostra uno stato vuoto sincero: «Richieda informazioni» continua a funzionare.",
   "tourTimesListingLead": "Scelga un orario pubblicato. È una richiesta di visita, non un’iscrizione.",
   "tourTimesEmpty": "Questo asilo nido non ha ancora pubblicato gli orari delle visite.",

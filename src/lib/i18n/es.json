@@ -1900,6 +1900,7 @@
   "removeTime": "Eliminar horario",
   "sendTourRequest": "Solicitar visita",
   "tourTimes": "Horarios de visita",
+  "tourAddCalendar": "Añadir al calendario",
   "tourTimesLead": "Los padres reservan estos horarios en tu ficha pública. Si no agregas ninguno, Reservar una visita muestra con honestidad que no hay horarios: Solicitar información sigue funcionando.",
   "tourTimesListingLead": "Elige un horario publicado. Esto es una solicitud de visita, no una inscripción.",
   "tourTimesEmpty": "Esta guardería aún no ha publicado horarios de visita.",

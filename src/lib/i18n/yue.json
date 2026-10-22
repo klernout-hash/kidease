@@ -1900,6 +1900,7 @@
   "removeTime": "移除時間",
   "sendTourRequest": "申請參觀",
   "tourTimes": "參觀時間",
+  "tourAddCalendar": "加到日曆",
   "tourTimesLead": "家長會喺你嘅公開列表預約呢啲時間。如果你一個都唔加，預約參觀會老實顯示空白: 查詢資料仍然用得。",
   "tourTimesListingLead": "揀一個已公布嘅時間。呢個係參觀申請，唔係入學。",
   "tourTimesEmpty": "呢間托兒所仲未公布參觀時間。",
