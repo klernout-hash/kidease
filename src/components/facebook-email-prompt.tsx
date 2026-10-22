@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { isFacebookPlaceholderEmail } from "@/lib/auth/facebook-idp";
+import { isFacebookPlaceholderEmail } from "@/lib/auth/facebook-address";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { saveFacebookContactEmail } from "@/lib/server/facebook-email";

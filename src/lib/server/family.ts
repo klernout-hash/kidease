@@ -553,7 +553,7 @@ export const createBooking = createServerFn({ method: "POST" })
     }) => input,
   )
   .handler(async ({ context, data }) => {
-    const { assertFacebookContactEmail } = await import("@/lib/server/facebook-email");
+    const { assertFacebookContactEmail } = await import("@/lib/server/facebook-contact");
     await assertFacebookContactEmail(context.userId);
     const sql = await getSql();
     const listed = await catalogByIdGet(data.daycareId);
@@ -1018,7 +1018,7 @@ export const openConversation = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((daycareId: string) => daycareId)
   .handler(async ({ context, data: daycareId }) => {
-    const { assertFacebookContactEmail } = await import("@/lib/server/facebook-email");
+    const { assertFacebookContactEmail } = await import("@/lib/server/facebook-contact");
     await assertFacebookContactEmail(context.userId);
     const sql = await getSql();
     const listed = await catalogByIdGet(daycareId);

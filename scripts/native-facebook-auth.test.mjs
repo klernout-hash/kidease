@@ -356,7 +356,9 @@ describe("native Facebook auth (Better Auth socialProviders.facebook)", () => {
     assert.match(login, /FACEBOOK_ROLE_PENDING_KEY/);
     assert.match(login, /markAdultConfirmedForSession/);
     assert.match(read("src/components/facebook-role-boot.tsx"), /step=role/);
-    assert.doesNotMatch(read("src/lib/server/facebook-email.ts"), /'parent'/);
+    assert.doesNotMatch(read("src/lib/server/facebook-contact.ts"), /'parent'/);
+    assert.match(read("src/components/facebook-email-prompt.tsx"), /facebook-address/);
+    assert.doesNotMatch(read("src/components/facebook-email-prompt.tsx"), /facebook-idp/);
     assert.match(login, /I confirm I am 18 or older\./);
     assert.match(login, /Je confirme que j’ai 18 ans ou plus\./);
     assert.doesNotMatch(login, /chooseAccountRole\("child"\)/);

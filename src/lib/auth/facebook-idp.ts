@@ -20,6 +20,8 @@
  *   FACEBOOK_CLIENT_ID
  *   FACEBOOK_CLIENT_SECRET
  */
+import { facebookPlaceholderEmail, isFacebookPlaceholderEmail } from "./facebook-address.ts";
+
 const env = (key: string): string | undefined => {
   const value = process.env[key]?.trim();
   return value ? value : undefined;
@@ -77,12 +79,13 @@ export type FacebookOauthHost = (typeof FACEBOOK_OAUTH_HOSTS)[number];
 export const FACEBOOK_HOST_UNAVAILABLE =
   "Continue with Facebook is not available on this address. Open kidease.ca.";
 
-/** Thrown when a Facebook account still has no confirmed email. */
-export const FACEBOOK_EMAIL_REQUIRED_MESSAGE =
-  "Add and confirm an email before you message a centre or book a tour.";
-
-/** Reserved domain. Mail must never be sent here. Account is keyed on the Facebook id. */
-export const FACEBOOK_PLACEHOLDER_DOMAIN = "facebook.invalid";
+export {
+  FACEBOOK_EMAIL_REQUIRED_MESSAGE,
+  FACEBOOK_PLACEHOLDER_DOMAIN,
+  facebookContactBlocksAction,
+  facebookPlaceholderEmail,
+  isFacebookPlaceholderEmail,
+} from "./facebook-address.ts";
 
 export function facebookHostname(hostHeader: string | null | undefined): string {
   const first = String(hostHeader || "")
@@ -149,30 +152,6 @@ export type FacebookProfileEmailInput = {
   sub?: string;
   email?: string | null;
 };
-
-export function facebookContactBlocksAction(input: {
-  email?: string | null;
-  emailVerified?: boolean | null;
-  facebookEmailRequired?: boolean | null;
-}): boolean {
-  if (isFacebookPlaceholderEmail(input.email) || !String(input.email || "").includes("@")) return true;
-  return Boolean(input.facebookEmailRequired) && input.emailVerified !== true;
-}
-
-export function isFacebookPlaceholderEmail(email: string | null | undefined): boolean {
-  const value = String(email || "")
-    .trim()
-    .toLowerCase();
-  const at = value.lastIndexOf("@");
-  if (at <= 0) return false;
-  return value.slice(at + 1) === FACEBOOK_PLACEHOLDER_DOMAIN;
-}
-
-export function facebookPlaceholderEmail(facebookId: string): string | null {
-  const id = facebookId.trim().replace(/[^a-zA-Z0-9]/g, "");
-  if (!id) return null;
-  return `${id}@${FACEBOOK_PLACEHOLDER_DOMAIN}`;
-}
 
 /**
  * Facebook often omits email (permission declined, phone-only account, or Meta

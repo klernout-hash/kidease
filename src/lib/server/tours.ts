@@ -129,7 +129,7 @@ export const createTourRequest = createServerFn({ method: "POST" })
     }) => input,
   )
   .handler(async ({ context, data }) => {
-    const { assertFacebookContactEmail } = await import("@/lib/server/facebook-email");
+    const { assertFacebookContactEmail } = await import("@/lib/server/facebook-contact");
     await assertFacebookContactEmail(context.userId);
     const times = parsePreferredTimes(data.preferredTimes);
     if (!preferredTimesValid(times)) throw new Error("Pick at least one preferred time");

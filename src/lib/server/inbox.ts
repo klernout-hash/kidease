@@ -299,7 +299,7 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
     blockViewAsSideEffect("message");
-    const { assertFacebookContactEmail } = await import("@/lib/server/facebook-email");
+    const { assertFacebookContactEmail } = await import("@/lib/server/facebook-contact");
     await assertFacebookContactEmail(context.userId);
     const sql = await getSql();
     const body = chatBodyWithoutSmsFooter(data.body);
