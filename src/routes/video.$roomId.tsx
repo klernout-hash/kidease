@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
+import { useViewAs } from "@/components/view-as-banner";
 import { useInNativeShell } from "@/lib/use-native-shell";
 import { VideoRoomPanel } from "@/components/video-room-panel";
 import { PayCtas } from "@/components/pay-chrome";
@@ -29,6 +30,7 @@ function VideoRoomPage() {
   const { roomId } = Route.useParams();
   const { user, isPending } = useCurrentUserState();
   const { t } = useCopy();
+  const viewing = useViewAs();
   const nativeShell = useInNativeShell();
   const [status, setStatus] = useState<VideoJoinStatus | null>(null);
   const [statusFailed, setStatusFailed] = useState(false);
@@ -69,6 +71,10 @@ function VideoRoomPage() {
   const canMint = Boolean(status?.gateOk);
 
   async function onJoin() {
+    if (viewing) {
+      setError(t("viewAsReadOnly"));
+      return;
+    }
     setBusy(true);
     setError("");
     try {

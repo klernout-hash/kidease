@@ -71,6 +71,11 @@ const identity = (v: string) => v;
 
 type Run = <T>(text: string, params: unknown[]) => Promise<T[]>;
 
+function guardViewAsSql(text: string) {
+  const guard = (globalThis as { __kideaseSqlGuard__?: (sql: string) => void }).__kideaseSqlGuard__;
+  guard?.(text);
+}
+
 /** Wrap a query runner in the tagged-template + `.query()` `Sql` surface. */
 function toSql(run: Run): Sql {
   const sql = (async <T = Record<string, unknown>>(
@@ -80,10 +85,13 @@ function toSql(run: Run): Sql {
     // Rebuild with $1, $2, … placeholders so values stay parameterized.
     let text = strings[0];
     for (let i = 0; i < values.length; i += 1) text += `$${i + 1}${strings[i + 1]}`;
+    guardViewAsSql(text);
     return run<T>(text, values);
   }) as unknown as Sql;
-  sql.query = <T = Record<string, unknown>>(text: string, params: unknown[] = []) =>
-    run<T>(text, params);
+  sql.query = <T = Record<string, unknown>>(text: string, params: unknown[] = []) => {
+    guardViewAsSql(text);
+    return run<T>(text, params);
+  };
   return sql;
 }
 

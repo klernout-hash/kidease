@@ -104,7 +104,12 @@ export async function getSessionUser(
   bearerToken?: string,
 ): Promise<VerifiedUser | null> {
   const session = await getVerifiedAuthSession(bearerToken);
-  return session ? { id: session.id, email: session.email } : null;
+  if (!session) return null;
+  // Browser bundles never overlay. The server re-checks admin, then may
+  // return the person being viewed instead of the operator.
+  if (typeof window !== "undefined") return { id: session.id, email: session.email };
+  const { effectiveSessionUser } = await import("@/lib/server/view-as");
+  return effectiveSessionUser(session);
 }
 
 /**

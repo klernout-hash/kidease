@@ -100,6 +100,8 @@ export const mintThreadVoiceToken = createServerFn({ method: "POST" })
     conversationId: String(input?.conversationId || "").trim(),
   }))
   .handler(async ({ context, data }): Promise<VoiceTokenResult> => {
+    const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
+    blockViewAsSideEffect("call");
     const status = await loadThread(context.userId, data.conversationId);
     if (!status.allowed || !status.desk) return { ok: false, error: "This call was not found." };
     if (!status.credentialsPresent) return { ok: false, error: status.error || VOICE_CREDENTIALS_MESSAGE };
