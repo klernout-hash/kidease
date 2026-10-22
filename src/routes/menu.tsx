@@ -9,6 +9,8 @@ import { signOut } from "@/lib/auth/client";
 import { ShareKidEaseButton } from "@/components/share-button";
 import { RoleNavLinks } from "@/components/role-nav";
 import { useRoleChrome } from "@/components/role-chrome";
+import { showStoreComingSoon } from "@/lib/store-placeholders";
+import { useStoreChannel } from "@/lib/use-native-shell";
 
 const MenuDeskTools = lazy(() =>
   import("@/components/menu-desk-tools").then((m) => ({ default: m.MenuDeskTools })),
@@ -47,6 +49,7 @@ function Group({
 
 function MenuPage() {
   const { t, locale } = useCopy();
+  const showStores = showStoreComingSoon(useStoreChannel());
   const { user } = useCurrentUserState();
   const chrome = useRoleChrome();
   const fr = locale === "fr";
@@ -85,7 +88,9 @@ function MenuPage() {
 
         <Group title="KidEase" defer>
           <MenuRow to={to("/benefits")} label={t("benefitsTab")} icon="benefits" />
-          <MenuRow to={to("/get-app")} label={t("getApp")} icon="getApp" marker="store-coming-soon" />
+          {showStores ? (
+            <MenuRow to={to("/get-app")} label={t("getApp")} icon="getApp" marker="store-coming-soon" />
+          ) : null}
           <ShareKidEaseButton appearance="row" />
           <MenuRow to={to("/about")} label={t("about")} icon="about" />
           <MenuRow to={to("/start-a-daycare")} label={t("startADaycare")} icon="startDaycare" />
