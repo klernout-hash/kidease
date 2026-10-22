@@ -73,7 +73,11 @@ configurations.configureEach {
 }
 
 // AppGallery phones have no Play Services. Keep GMS, Play, and Firebase out of that flavour.
+// Play and Samsung keep these libraries. Only the huawei* classpaths drop them.
 configurations.matching { it.name.toLowerCase().contains("huawei") }.configureEach {
+    exclude group: "com.google.android.gms", module: "play-services-location"
+    exclude group: "com.google.android.play", module: "review"
+    exclude group: "com.google.firebase", module: "firebase-messaging"
     exclude group: "com.google.android.gms"
     exclude group: "com.google.android.play"
     exclude group: "com.google.firebase"
