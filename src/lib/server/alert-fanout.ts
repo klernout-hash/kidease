@@ -94,6 +94,36 @@ export async function readListingWatch(sql: Sql, daycareId: string): Promise<Lis
   };
 }
 
+/** Parents who saved this centre, when the open-spot count goes up. Prefs and quiet hours stay in dispatch. */
+export async function notifySavedSpotOpened(input: {
+  daycareId: string;
+  now?: Date;
+}): Promise<number> {
+  const sql = await getSql();
+  const centre = await centreOf(sql, input.daycareId);
+  if (!centre) return 0;
+  const parents = await savedParents(sql, centre.id);
+  if (!parents.length) return 0;
+  const now = input.now ?? new Date();
+  const { dispatchCustomerAlert } = await import("@/lib/server/alert-dispatch");
+  const href = centre.slug ? `/daycare/${centre.slug}` : "/search";
+  const day = winnipegDayKey(now);
+  let sent = 0;
+  for (const userId of parents) {
+    const result = await dispatchCustomerAlert({
+      userId,
+      category: "spot_opened",
+      vars: { name: centre.name },
+      href,
+      dedupeKey: `saved-spot:${centre.id}:${userId}:${day}`.slice(0, 180),
+      emailFallback: true,
+      now,
+    }).catch(() => null);
+    if (result && result.status !== "skipped") sent += 1;
+  }
+  return sent;
+}
+
 export async function notifySavedListingChange(input: {
   daycareId: string;
   before: ListingWatchFacts | null;
