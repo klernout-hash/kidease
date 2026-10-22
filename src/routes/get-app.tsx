@@ -17,6 +17,8 @@ import {
 import { STORE } from "@/lib/store-listing";
 import { appleStoreListingUrl, playStoreListingUrl } from "@/lib/store-review";
 import { localePath } from "@/lib/locale-path";
+import { showStoreComingSoon } from "@/lib/store-placeholders";
+import { useStoreChannel } from "@/lib/use-native-shell";
 import { useCopy } from "@/lib/use-copy";
 import { HomeScreenGuide } from "@/components/home-screen-guide";
 import { JsonLd } from "@/components/json-ld";
@@ -48,6 +50,7 @@ export function GetApp() {
 
 export function GetAppScreen({ dev }: { dev?: "1" }) {
   const { t, locale } = useCopy();
+  const showStores = showStoreComingSoon(useStoreChannel());
   const showDev = dev === "1";
   const [canPrompt, setCanPrompt] = useState(false);
   const [installed, setInstalled] = useState(false);
@@ -109,11 +112,21 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
                 </Link>
               </Button>
             </div>
+            {showStores ? (
+              <>
             <div className="mt-5 flex flex-wrap gap-2" data-ke="store-coming-soon">
               <StoreBadge store="apple" label={locale === "fr" ? "App Store \u00b7 Bient\u00f4t" : "App Store \u00b7 Coming soon"} />
               <StoreBadge store="play" label={locale === "fr" ? "Google Play \u00b7 Bient\u00f4t" : "Google Play \u00b7 Coming soon"} />
             </div>
             <p className="mt-3 max-w-md text-xs text-subtle" data-ke="store-coming-soon">{coming}</p>
+              </>
+            ) : (
+              <p className="mt-5 max-w-md text-sm text-muted" data-ke="store-already-in-app">
+                {locale === "fr"
+                  ? "Vous êtes dans l’appli KidEase. Cherchez une garderie permise au Canada."
+                  : "You are in the KidEase app. Search licensed daycares in Canada."}
+              </p>
+            )}
           </div>
           <DeviceFrame device="iphone">
             <ShotSearch />

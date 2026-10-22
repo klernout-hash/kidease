@@ -3,7 +3,9 @@ import { companyOperatorLine } from "@/lib/company";
 import { localePath } from "@/lib/locale-path";
 import { isKidEaseOperatorEmail } from "@/lib/admin-email";
 import type { CopyKey } from "@/lib/copy";
+import { showStoreComingSoon } from "@/lib/store-placeholders";
 import { useCopy } from "@/lib/use-copy";
+import { useStoreChannel } from "@/lib/use-native-shell";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { HeaderSocial } from "@/components/header-social";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -103,6 +105,7 @@ function Column({
 
 export function SiteFooter() {
   const { t, locale } = useCopy();
+  const showStores = showStoreComingSoon(useStoreChannel());
   const { user, isPending } = useCurrentUserState();
   const chrome = useRoleChrome();
   const fr = locale === "fr";
@@ -161,6 +164,7 @@ export function SiteFooter() {
             </div>
             <div className="ke-footer-legal-meta">
               <HeaderSocial />
+              {showStores ? (
               <p data-ke="store-coming-soon">
                 {t("appStore")}
                 <span className="mx-1.5" aria-hidden>
@@ -176,6 +180,7 @@ export function SiteFooter() {
                 </span>
                 {t("comingSoon")}
               </p>
+              ) : null}
             </div>
           </div>
         </div>
