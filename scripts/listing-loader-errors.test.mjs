@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { isNotFound, isRedirect, notFound, redirect } from "@tanstack/react-router";
-import { rethrowRouterControl } from "../src/lib/listing-loader-errors.ts";
+import { isTransientListingError, rethrowRouterControl } from "../src/lib/listing-loader-errors.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -45,6 +45,17 @@ test("a 301 redirect and notFound are rethrown; a plain Error becomes not-found"
   assert.deepEqual(seen, [
     ["[listing-loader]", "frontenac-before-and-after-school-program-96e01725", failure],
   ]);
+});
+
+test("a 429 stays a retry, not a missing listing", () => {
+  const busy = new Error("Too many requests");
+  assert.equal(isTransientListingError(busy), true);
+  assert.equal(isTransientListingError({ status: 429 }), true);
+  assert.equal(isTransientListingError(new Error("catalogue lookup failed")), false);
+  assert.throws(
+    () => rethrowRouterControl(busy, "little-fox-child-care-centre-103205"),
+    (error) => error === busy,
+  );
 });
 
 test("no route detects redirects with the isRedirect in operator", () => {

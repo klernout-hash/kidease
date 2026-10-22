@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { useRouteContext, useRouterState } from "@tanstack/react-router";
 import { tx, type CopyKey } from "./copy";
 import { isShippedLocale, type ShippedLocale } from "./languages";
@@ -21,8 +22,8 @@ export function useCopy() {
   const fromHint = isShippedLocale(hinted.visitorLocale?.locale) ? hinted.visitorLocale.locale : null;
   const locale: ShippedLocale =
     pathLocale(pathname) === "fr" ? "fr" : localeLocked ? stored : (fromHint ?? stored);
-  return {
-    locale,
-    t: (key: CopyKey) => tx(locale, key),
-  };
+  // A new `t` every render retriggers effects that load server functions
+  // (parent desk, listing) until the throttle returns 429.
+  const t = useCallback((key: CopyKey) => tx(locale, key), [locale]);
+  return { locale, t };
 }

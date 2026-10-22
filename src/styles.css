@@ -1333,7 +1333,7 @@
 }
 
 /* Home radius labels ("10 km", "25 km", "50 km") stay whole from 320px up.
-   Desktop 1024px and wider keeps the existing select width. */
+   Desktop keeps at least 7.5rem so "25 km" is not clipped to "25 k". */
 @media (max-width: 1023px) {
   select[data-ke="search-radius"] {
     -webkit-appearance: none;

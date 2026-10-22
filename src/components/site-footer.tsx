@@ -9,6 +9,9 @@ import { HeaderSocial } from "@/components/header-social";
 import { useRoleChrome } from "@/components/role-chrome";
 import type { ChromeRole } from "@/lib/role-access";
 import { LanguageSelect } from "@/components/language-select";
+import { comingSoonStores } from "@/lib/native-entitlements";
+import { isStorePurchasePath } from "@/lib/store-purchase-copy";
+import { useInNativeShell, useStoreChannel } from "@/lib/use-native-shell";
 import { ShareKidEaseButton } from "@/components/share-button";
 import {
   FOOTER_COLUMNS,
@@ -34,6 +37,11 @@ function Item({
       </Link>
     </li>
   );
+}
+
+function footerLinks(links: FooterLinkDef[], hideCommerce: boolean): FooterLinkDef[] {
+  if (!hideCommerce) return links;
+  return links.filter((link) => !isStorePurchasePath(link.to));
 }
 
 function isSignInLink(link: FooterLinkDef): boolean {
@@ -105,6 +113,8 @@ export function SiteFooter() {
   const { t, locale } = useCopy();
   const { user, isPending } = useCurrentUserState();
   const chrome = useRoleChrome();
+  const hideCommerce = useInNativeShell();
+  const storeBadges = comingSoonStores(useStoreChannel());
   const fr = locale === "fr";
   // Operator sign-in is not linked from the public footer. Kyle uses /login.
   void isPending;
@@ -118,19 +128,19 @@ export function SiteFooter() {
             <Column
               id="parents"
               title="Parents"
-              links={linksForRole(FOOTER_COLUMNS.parents, chrome.role, "parents", chrome.pending || chrome.role !== "guest")}
+              links={footerLinks(linksForRole(FOOTER_COLUMNS.parents, chrome.role, "parents", chrome.pending || chrome.role !== "guest"), hideCommerce)}
               locale={locale}
               t={t}
             />
             <Column
               id="daycares"
               title={fr ? "Garderies" : "Daycares"}
-              links={linksForRole(FOOTER_COLUMNS.daycares, chrome.role, "daycares", chrome.pending || chrome.role !== "guest")}
+              links={footerLinks(linksForRole(FOOTER_COLUMNS.daycares, chrome.role, "daycares", chrome.pending || chrome.role !== "guest"), hideCommerce)}
               locale={locale}
               t={t}
             />
-            <Column id="support" title={t("support")} links={linksForRole(FOOTER_COLUMNS.support, chrome.role, "support", chrome.pending || chrome.role !== "guest")} locale={locale} t={t} />
-            <Column id="kidease" title={t("app")} links={linksForRole(FOOTER_COLUMNS.kidease, chrome.role, "kidease", chrome.pending || chrome.role !== "guest")} locale={locale} t={t} />
+            <Column id="support" title={t("support")} links={footerLinks(linksForRole(FOOTER_COLUMNS.support, chrome.role, "support", chrome.pending || chrome.role !== "guest"), hideCommerce)} locale={locale} t={t} />
+            <Column id="kidease" title={t("app")} links={footerLinks(linksForRole(FOOTER_COLUMNS.kidease, chrome.role, "kidease", chrome.pending || chrome.role !== "guest"), hideCommerce)} locale={locale} t={t} />
           </nav>
           <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
             {FOOTER_LEGAL.map((link) => (
@@ -161,21 +171,31 @@ export function SiteFooter() {
             </div>
             <div className="ke-footer-legal-meta">
               <HeaderSocial />
-              <p data-ke="store-coming-soon">
-                {t("appStore")}
-                <span className="mx-1.5" aria-hidden>
-                  ·
-                </span>
-                {t("comingSoon")}
-                <span className="mx-1.5" aria-hidden>
-                  ·
-                </span>
-                {t("googlePlay")}
-                <span className="mx-1.5" aria-hidden>
-                  ·
-                </span>
-                {t("comingSoon")}
-              </p>
+              {storeBadges.length === 2 ? (
+                <p data-ke="store-coming-soon">
+                  {t("appStore")}
+                  <span className="mx-1.5" aria-hidden>
+                    ·
+                  </span>
+                  {t("comingSoon")}
+                  <span className="mx-1.5" aria-hidden>
+                    ·
+                  </span>
+                  {t("googlePlay")}
+                  <span className="mx-1.5" aria-hidden>
+                    ·
+                  </span>
+                  {t("comingSoon")}
+                </p>
+              ) : storeBadges.length === 1 ? (
+                <p data-ke="store-badge">
+                  {storeBadges[0] === "apple" ? t("appStore") : t("googlePlay")}
+                  <span className="mx-1.5" aria-hidden>
+                    ·
+                  </span>
+                  {t("comingSoon")}
+                </p>
+              ) : null}
             </div>
           </div>
         </div>

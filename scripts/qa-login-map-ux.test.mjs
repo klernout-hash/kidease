@@ -31,8 +31,8 @@ describe("QA 2026-09-10: Turnstile token pass-through", () => {
     assert.match(client, /x-turnstile-token/);
     assert.match(field, /turnstileExpired/);
     assert.match(src("src/lib/copy.ts"), /Security check expired/);
-    assert.match(field, /max-width: 399px/);
-    assert.match(field, /size: narrow \? "compact" : "flexible"/);
+    assert.match(field, /size: "flexible"/);
+    assert.match(field, /resolvedTheme/);
     assert.match(field, /appearance: "always"/);
     assert.match(field, /data-ke="turnstile"/);
     assert.match(field, /script\[data-ke-style-nonce\]/);

@@ -123,8 +123,8 @@ function SearchRadiusSelect({
       onClick={(e) => e.stopPropagation()}
       className={
         quiet
-          ? "h-[44px] max-w-[4.75rem] max-lg:min-w-[9rem] max-lg:max-w-none max-lg:pl-2 max-lg:pr-7 shrink-0 cursor-pointer rounded-full border border-border bg-transparent px-2 font-normal text-muted"
-          : "h-11 max-w-[5.75rem] max-lg:min-w-[9rem] max-lg:max-w-none max-lg:pl-2 max-lg:pr-7 shrink-0 rounded-full bg-bg px-2 text-sm font-medium text-fg ring-1 ring-border"
+          ? "h-[44px] min-w-[7.5rem] max-w-[8.5rem] max-lg:min-w-[9rem] max-lg:max-w-none max-lg:pl-2 max-lg:pr-7 shrink-0 cursor-pointer rounded-full border border-border bg-transparent px-2 font-normal text-muted"
+          : "h-11 min-w-[7.5rem] max-w-[8.5rem] max-lg:min-w-[9rem] max-lg:max-w-none max-lg:pl-2 max-lg:pr-7 shrink-0 rounded-full bg-bg px-2 text-sm font-medium text-fg ring-1 ring-border"
       }
     >
       {(RADIUS_KM_OPTIONS.includes(value as (typeof RADIUS_KM_OPTIONS)[number])

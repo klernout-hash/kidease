@@ -222,7 +222,7 @@ test("server overlay, search sorts, desks, and docs stay honest", () => {
   assert.match(src("src/components/rank-cues.tsx"), /DemandCues/);
   const listing = src("src/routes/daycare.$slug.tsx");
   assert.match(listing, /parentMatchScore/);
-  assert.ok(listing.indexOf("useAppStore") < listing.indexOf("if (missing)"));
+  assert.ok(listing.indexOf("useAppStore") < listing.indexOf("if (gap)"));
   assert.match(src("src/routes/compare.tsx"), /matchScore/);
   assert.match(src("src/components/parent-desk.tsx"), /parentMatchScore/);
   assert.match(src("src/routes/provider.tsx"), /DemandCues/);

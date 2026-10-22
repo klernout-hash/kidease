@@ -14,7 +14,8 @@ test("home radius select is wide enough below desktop and the smoke covers 320px
   const bar = src("src/components/explore-search-bar.tsx");
   const css = src("src/styles.css");
   const e2e = src("scripts/e2e-smoke.mjs");
-  assert.match(bar, /max-w-\[4\.75rem\]/);
+  assert.match(bar, /min-w-\[7\.5rem\]/);
+  assert.match(bar, /max-w-\[8\.5rem\]/);
   assert.match(bar, /max-lg:min-w-\[9rem\]/);
   assert.match(bar, /max-lg:max-w-none/);
   assert.match(css, /@media \(max-width: 1023px\) \{\s*select\[data-ke="search-radius"\]/);
