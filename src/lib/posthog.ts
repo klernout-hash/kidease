@@ -144,7 +144,13 @@ export function sanitizePostHogProperties(
   const next: Record<string, unknown> = { ...properties };
   for (const key of Object.keys(next)) {
     if (key.startsWith("$lib_")) continue;
-    if (SENSITIVE_PROP.test(key)) delete next[key];
+    if (SENSITIVE_PROP.test(key)) {
+      delete next[key];
+      continue;
+    }
+    if (typeof next[key] === "string" && SENSITIVE_PROP.test(String(next[key]))) {
+      next[key] = "[Filtered]";
+    }
   }
   return next;
 }
@@ -163,8 +169,11 @@ export function maskCapturedNetworkRequest(
 
 /**
  * Apply consent + env + `session-replay-web` after init or flag reload.
- * Essential (denied) opts out of capture on the website. A missing PostHog
- * flag does not block sampled replay once the visitor has allowed analytics.
+ * Essential (denied) opts out of capture on the website. Allow must opt back
+ * in: PostHog stores that choice separately from kidease-analytics-consent,
+ * and capture() stays silent while /ingest/flags still returns 200.
+ * A missing PostHog flag does not block sampled replay once the visitor has
+ * allowed analytics.
  */
 export function applyPostHogRecordingGate(ph?: PostHog | null): void {
   const consent = readAnalyticsConsent();
@@ -175,6 +184,9 @@ export function applyPostHogRecordingGate(ph?: PostHog | null): void {
     clientPh.stopSessionRecording();
     clientPh.opt_out_capturing();
     return;
+  }
+  if (consent === "granted" && clientPh.has_opted_out_capturing()) {
+    clientPh.opt_in_capturing();
   }
   if (!sessionReplayEnabled({ consent })) {
     clientPh.stopSessionRecording();
@@ -201,7 +213,7 @@ export function posthogInitOptions(input: SessionReplayGateInput = {}): Partial<
     person_profiles: "identified_only",
     disable_session_recording: !replayOn,
     advanced_disable_feature_flags: false,
-    mask_all_text: false,
+    mask_all_text: Boolean(input.native),
     session_recording: {
       maskAllInputs: true,
       maskTextSelector: "*",
@@ -339,7 +351,7 @@ export function startPostHog(): void {
   started = true;
   void import("posthog-js")
     .then(({ default: posthog }) => {
-      posthog.init(key, posthogInitOptions());
+      posthog.init(key, posthogInitOptions({ native: isNative() }));
       client = posthog;
       flushQueuedPostHogEvents(posthog);
       if (pendingIdentify) {

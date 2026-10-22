@@ -197,6 +197,8 @@ export const joinVideoRoom = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { roomId: string }) => ({ roomId: String(input.roomId || "").trim() }))
   .handler(async ({ context, data }): Promise<VideoJoinResult> => {
+    const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
+    blockViewAsSideEffect("video");
     const status = await buildStatus(context.userId, data.roomId);
     if (!status.allowed) {
       return { ok: false, reason: "not_found", error: "This video room was not found.", paywall: false };

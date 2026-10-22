@@ -1,3 +1,5 @@
+import { googleServicesHidden, isNativeUserAgent, readClientStoreChannel } from "./native-entitlements.ts";
+
 export type NativePlatform = "ios" | "android" | "web";
 
 type CapWindow = Window & {
@@ -9,7 +11,8 @@ type CapWindow = Window & {
 
 export function isNative(): boolean {
   if (typeof window === "undefined") return false;
-  return Boolean((window as CapWindow).Capacitor?.isNativePlatform?.());
+  if ((window as CapWindow).Capacitor?.isNativePlatform?.()) return true;
+  return isNativeUserAgent(window.navigator.userAgent);
 }
 
 export function nativePlatform(): NativePlatform {
@@ -54,7 +57,8 @@ function fromCoords(coords: { latitude: number; longitude: number; accuracy?: nu
 /** Precise location while the app is in use. Never request background location. */
 export async function getDeviceLocation(opts?: { precise?: boolean }): Promise<DeviceLocation | null> {
   const enableHighAccuracy = opts?.precise !== false;
-  if (isNative()) {
+  const huawei = googleServicesHidden(readClientStoreChannel());
+  if (isNative() && !huawei) {
     try {
       const { Geolocation } = await import("@capacitor/geolocation");
       const pos = await Geolocation.getCurrentPosition({
@@ -78,7 +82,7 @@ export async function getDeviceLocation(opts?: { precise?: boolean }): Promise<D
 
 export function watchDeviceLocation(onFix: (pos: DeviceLocation) => void): () => void {
   let stopped = false;
-  if (isNative()) {
+  if (isNative() && !googleServicesHidden(readClientStoreChannel())) {
     let watchId: string | undefined;
     void import("@capacitor/geolocation").then(({ Geolocation }) => {
       if (stopped) return;

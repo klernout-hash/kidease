@@ -33,6 +33,7 @@ import type { AdminContractRow, AdminPackRow } from "@/lib/server/contracts";
 import type { LicenseReviewAction } from "@/lib/server/trust";
 import { trustBadgesFor, type TrustListing } from "@/lib/trust";
 import { useCopy } from "@/lib/use-copy";
+import { ViewAsButton } from "@/components/view-as-button";
 import { cn } from "@/lib/utils";
 
 const FACT_TONE: Record<ReviewFactTone, string> = {
@@ -445,6 +446,11 @@ export function AdminReviewCard({
           <span className="text-muted">No email on file</span>
         )}
       </p>
+      {centre.providerUserId ? (
+        <div className="mt-2">
+          <ViewAsButton userId={centre.providerUserId} />
+        </div>
+      ) : null}
       {submitted ? <p className="mt-1 text-xs text-subtle">Submitted {submitted}</p> : null}
 
       <dl className="mt-3 grid grid-cols-1 divide-y divide-border border-y border-border sm:grid-cols-3 sm:divide-x sm:divide-y-0" data-ke="admin-review-facts">

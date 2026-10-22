@@ -1,8 +1,17 @@
+import { shouldStartTelemetry, type AnalyticsConsent } from "@/lib/analytics-consent";
+import { isNative } from "@/lib/native";
 import { ingestTelemetry } from "@/lib/server/telemetry";
+
+export function shouldStartWebVitals(input?: { native?: boolean; consent?: AnalyticsConsent }): boolean {
+  if (input) return shouldStartTelemetry("web-vitals", input);
+  if (typeof window === "undefined") return false;
+  return shouldStartTelemetry("web-vitals", { native: isNative() });
+}
 
 export function startWebVitals() {
   if (typeof window === "undefined") return;
   if ((window as { __keVitals?: boolean }).__keVitals) return;
+  if (!shouldStartWebVitals()) return;
   (window as { __keVitals?: boolean }).__keVitals = true;
 
   let lcp = 0;
