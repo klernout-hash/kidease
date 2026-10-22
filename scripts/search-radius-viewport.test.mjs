@@ -19,7 +19,7 @@ test("home radius select is wide enough below desktop and the smoke covers 320px
   assert.match(bar, /max-lg:max-w-none/);
   assert.match(css, /@media \(max-width: 1023px\) \{\s*select\[data-ke="search-radius"\]/);
   assert.match(css, /appearance: none/);
-  assert.match(css, /min-width: 9rem/);
+  assert.match(css, /min-width: min\(9rem, 42vw\)/);
   assert.match(e2e, /RADIUS_LABEL_WIDTHS = \[320, 360, 390, 412, 430, 480, 640, 767, 834, 1023\]/);
   assert.match(e2e, /RADIUS_LABEL_OPTIONS = \["5", "10", "25", "50"\]/);
   assert.match(e2e, /radiusLabelSmoke/);
