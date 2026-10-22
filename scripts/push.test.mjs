@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
@@ -261,14 +261,18 @@ test("docs, migration, API, hook, and plugin are wired but off by default", () =
 
   assert.match(client, /registerPushDevice/);
   assert.match(client, /no-plugin/);
-  assert.doesNotMatch(client, /@capacitor\/push-notifications/);
+  assert.match(client, /@capacitor\/push-notifications/);
+  assert.match(client, /googleServicesHidden/);
   assert.match(client, /enabled !== true/);
   assert.doesNotMatch(cap, /PushNotifications/);
-  assert.doesNotMatch(pkg, /"@capacitor\/push-notifications"/);
-  assert.doesNotMatch(src("android/app/capacitor.build.gradle"), /capacitor-push-notifications/);
-  assert.doesNotMatch(src("android/capacitor.settings.gradle"), /capacitor-push-notifications/);
-  assert.doesNotMatch(src("ios/App/CapApp-SPM/Package.swift"), /CapacitorPushNotifications/);
-  assert.doesNotMatch(src("android/app/src/main/AndroidManifest.xml"), /POST_NOTIFICATIONS/);
+  assert.match(pkg, /"@capacitor\/push-notifications"/);
+  assert.match(src("android/app/capacitor.build.gradle"), /capacitor-push-notifications/);
+  assert.match(src("android/capacitor.settings.gradle"), /capacitor-push-notifications/);
+  assert.match(src("android/app/build.gradle"), /playImplementation project\(":capacitor-push-notifications"\)/);
+  assert.doesNotMatch(src("android/app/build.gradle"), /huaweiImplementation project\(":capacitor-push-notifications"\)/);
+  assert.match(src("ios/App/CapApp-SPM/Package.swift"), /CapacitorPushNotifications/);
+  assert.match(src("android/app/src/main/AndroidManifest.xml"), /POST_NOTIFICATIONS/);
+  assert.equal(existsSync(join(root, "android/app/google-services.json")), false);
 
   assert.match(tree, /\/api\/push\/register/);
   assert.match(tree, /\/api\/admin\/push-dry-run/);

@@ -102,7 +102,7 @@ apply from: 'capacitor.build.gradle'
 // capacitor.build.gradle adds every plugin to `implementation`.
 // Geolocation and in-app review call Play Services. Play and Samsung keep them.
 // Huawei does not, or the AppGallery binary still ships those libraries.
-def storeGmsPlugins = [":capacitor-geolocation", ":capacitor-community-in-app-review"]
+def storeGmsPlugins = [":capacitor-geolocation", ":capacitor-community-in-app-review", ":capacitor-push-notifications"]
 configurations.implementation.dependencies.removeAll { dep ->
     storeGmsPlugins.contains(dep.properties.get("path"))
 }
@@ -111,6 +111,8 @@ dependencies {
     playImplementation project(":capacitor-community-in-app-review")
     samsungImplementation project(":capacitor-geolocation")
     samsungImplementation project(":capacitor-community-in-app-review")
+    playImplementation project(":capacitor-push-notifications")
+    samsungImplementation project(":capacitor-push-notifications")
 }
 
 try {

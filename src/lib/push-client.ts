@@ -6,6 +6,8 @@ export type PushRegisterResult =
   | { ok: true; platform: "ios" | "android" }
   | { ok: false; reason: "disabled" | "no-plugin" | "denied" | "register-failed"; error: string };
 
+let registrationListening = false;
+
 /**
  * Native Capacitor registration. No-ops on www and when the caller has not
  * confirmed FEATURE_PUSH is on. Safe to call from NativeBoot.
@@ -27,6 +29,36 @@ export async function registerPushDevice(opts?: { enabled?: boolean }): Promise<
     return { ok: false, reason: "disabled", error: PUSH_WEB_BLOCKED_MESSAGE };
   }
 
-  // v1 store binaries do not include the push plugin or Firebase Messaging.
-  return { ok: false, reason: "no-plugin", error: PUSH_SCAFFOLD_MESSAGE };
+  try {
+    const { PushNotifications } = await import("@capacitor/push-notifications");
+    const current = await PushNotifications.checkPermissions();
+    const receive =
+      current.receive === "prompt" || current.receive === "prompt-with-rationale"
+        ? (await PushNotifications.requestPermissions()).receive
+        : current.receive;
+    if (receive !== "granted") {
+      return { ok: false, reason: "denied", error: "Notifications are off for KidEase." };
+    }
+    if (!registrationListening) {
+      registrationListening = true;
+      await PushNotifications.addListener("registration", (event) => {
+        const token = String(event?.value || "").trim();
+        if (!token) return;
+        void import("@/lib/server/push-api").then(({ registerPushToken }) =>
+          registerPushToken({
+            data: {
+              token,
+              platform,
+              provider: platform === "ios" ? "apns" : "fcm",
+            },
+          }),
+        );
+      });
+    }
+    await PushNotifications.register();
+    return { ok: true, platform };
+  } catch {
+    // Plugin missing, or FCM / APNs is not in this binary yet.
+    return { ok: false, reason: "no-plugin", error: PUSH_SCAFFOLD_MESSAGE };
+  }
 }

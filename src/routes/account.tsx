@@ -317,7 +317,7 @@ function ProfilePane() {
     { id: "subscription" as const, label: t("navUpgrade") },
     { id: "delete" as const, label: t("deleteAccount") },
   ].filter((item) => {
-    if (nativeShell && (item.id === "alerts" || item.id === "subscription")) return false;
+    if (nativeShell && item.id === "subscription") return false;
     if (item.id === "subscription" && hideUpgrade) return false;
     return true;
   });
@@ -368,7 +368,7 @@ function ProfilePane() {
             </Link>
           ))}
         </nav>
-        {section === "alerts" && user && !nativeShell ? (
+        {section === "alerts" && user ? (
           <AlertPushSettings
             audience={desk === "provider" ? "daycare" : "parent"}
             subscriptionsOn={chrome.subscriptionsEnabled === true}

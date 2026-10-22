@@ -11,8 +11,8 @@ import {
   type AlertLocale,
 } from "@/lib/alert-push";
 import { confirmStillLooking, getMyAlertPrefs, saveMyAlertPrefs } from "@/lib/server/alert-push-api";
+import { isNative } from "@/lib/native";
 import { useCopy } from "@/lib/use-copy";
-import { useInNativeShell } from "@/lib/use-native-shell";
 
 export function AlertPushSettings({
   audience,
@@ -21,7 +21,7 @@ export function AlertPushSettings({
   audience: AlertAudience;
   subscriptionsOn: boolean;
 }) {
-  const nativeShell = useInNativeShell();
+  const inPhoneApp = isNative();
   const { t, locale } = useCopy();
   const loc: AlertLocale = locale === "fr" ? "fr" : "en";
   const intro = alertSettingsIntro(loc, audience);
@@ -33,7 +33,6 @@ export function AlertPushSettings({
   const [loadNote, setLoadNote] = useState("");
 
   useEffect(() => {
-    if (nativeShell) return;
     let cancelled = false;
     void getMyAlertPrefs()
       .then((next) => {
@@ -45,9 +44,7 @@ export function AlertPushSettings({
     return () => {
       cancelled = true;
     };
-  }, [intro.loadError, nativeShell]);
-
-  if (nativeShell) return null;
+  }, [intro.loadError]);
 
   return (
     <section className="mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="alert-settings">
@@ -111,7 +108,7 @@ export function AlertPushSettings({
           {intro.unsub}
         </Link>
       </p>
-      <p className="mt-2 text-sm text-muted">{intro.apps}</p>
+      {inPhoneApp ? null : <p className="mt-2 text-sm text-muted">{intro.apps}</p>}
     </section>
   );
 }
