@@ -1900,6 +1900,7 @@
   "removeTime": "移除时间",
   "sendTourRequest": "申请参观",
   "tourTimes": "参观时间",
+  "tourAddCalendar": "添加到日历",
   "tourTimesLead": "家长会在您的公开资料上预约这些时间。如果您不添加任何时间，「预约参观」会如实显示空白状态：「咨询信息」仍然可用。",
   "tourTimesListingLead": "请选择已公布的时间。这是参观申请，不是入托。",
   "tourTimesEmpty": "该托儿所尚未公布参观时间。",

@@ -1900,6 +1900,7 @@
   "removeTime": "Termin entfernen",
   "sendTourRequest": "Besichtigung anfragen",
   "tourTimes": "Besichtigungszeiten",
+  "tourAddCalendar": "Zum Kalender hinzufügen",
   "tourTimesLead": "Eltern buchen diese Zeiten über Ihren öffentlichen Eintrag. Wenn Sie keine hinzufügen, zeigt „Besichtigung buchen“ ehrlich einen leeren Zustand: „Informationen anfragen“ funktioniert weiterhin.",
   "tourTimesListingLead": "Wählen Sie eine veröffentlichte Zeit. Dies ist eine Besuchsanfrage, keine Anmeldung.",
   "tourTimesEmpty": "Diese Kita hat noch keine Besichtigungszeiten veröffentlicht.",

@@ -6,6 +6,7 @@ import { RequestSentDialog } from "@/components/request-sent-dialog";
 import { useLiveSubmit } from "@/components/use-live-submit";
 import { getFamily } from "@/lib/server/family";
 import { bookTourSlot, listPublicTourSlots } from "@/lib/server/tour-calendar";
+import { buildTourIcs, tourSlotInstants } from "@/lib/tour-ics";
 import { holdSendBeat, requestSentThumb } from "@/lib/request-sent";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { captureRankingEvent } from "@/lib/ranking/events";
@@ -121,6 +122,33 @@ export function RequestTourSheet({ daycare, open, onClose, onRequestInfo }: Prop
         detail={done.detail}
         conversationId={done.conversationId}
         canOpenMessages={!done.guest}
+        onAddCalendar={
+          selected
+            ? () => {
+                const range = tourSlotInstants({
+                  startAt: selected.startAt,
+                  startTime: selected.startTime,
+                  endTime: selected.endTime,
+                });
+                if (!range) return;
+                const ics = buildTourIcs({
+                  uid: done.conversationId || selected.id,
+                  title: `${name}`,
+                  start: range.start,
+                  end: range.end,
+                  location: [daycare.address, daycare.city, daycare.province].filter(Boolean).join(", "),
+                  description: locale === "fr" ? "Le centre doit encore confirmer." : "The centre still has to confirm.",
+                });
+                const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = "kidease-visit.ics";
+                link.click();
+                URL.revokeObjectURL(url);
+              }
+            : undefined
+        }
         onClose={() => {
           setDone(null);
           onClose();

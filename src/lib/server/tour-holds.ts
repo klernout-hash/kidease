@@ -80,5 +80,11 @@ export function nextHoldExpiresAt(): string {
 }
 
 export async function runExpireTourHoldsJob(input?: { dryRun?: boolean }): Promise<ExpireTourHoldsResult> {
-  return expireDueTourHolds({ dryRun: input?.dryRun, notify: true });
+  const result = await expireDueTourHolds({ dryRun: input?.dryRun, notify: true });
+  await import("@/lib/server/tour-reminders")
+    .then((mod) => mod.sendDueTourReminders({ dryRun: input?.dryRun }))
+    .catch((err) => {
+      console.error("[kidease-tour] reminders skipped", err);
+    });
+  return result;
 }
