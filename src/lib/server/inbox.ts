@@ -304,6 +304,19 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
     if (!body) return { ok: false as const };
     const access = await requireConversationWrite(sql, data.conversationId, context.userId);
     const row = access.conversation;
+    const { assertChatNotBlocked } = await import("@/lib/server/safety");
+    try {
+      await assertChatNotBlocked(sql, {
+        senderId: context.userId,
+        parentUserId: row.user_id,
+        daycareId: row.daycare_id,
+      });
+    } catch (err) {
+      if (err instanceof Error && err.message === "safety_blocked") {
+        return { ok: false as const, blocked: true as const };
+      }
+      throw err;
+    }
 
     const sender = access.role === "parent" ? "parent" : "provider";
     const messageId = nid("msg");

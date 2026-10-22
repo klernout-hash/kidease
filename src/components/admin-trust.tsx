@@ -3,6 +3,7 @@ import { TrustSignals } from "@/components/trust-badge";
 import type { TrustListing } from "@/lib/trust";
 import { adapterStatusHint, adapterStatusLabel, adapterStatusTone, JURISDICTIONS, type AdapterStatus } from "@/lib/province-registry";
 import type { AdminReportRow } from "@/lib/server/trust";
+import { SafetyReviewQueue } from "@/components/safety-review-queue";
 
 type JurisdictionRow = {
   code: string;
@@ -100,6 +101,7 @@ export function AdminTrustPanel({
           )}
         </ul>
       </section>
+      <SafetyReviewQueue />
     </div>
   );
 }
