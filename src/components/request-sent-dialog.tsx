@@ -19,6 +19,7 @@ type Props = MarkerProps & {
   conversationId?: string | null;
   /** Signed-in parents can open Messages. Guest inquiries cannot. */
   canOpenMessages?: boolean;
+  onAddCalendar?: () => void;
   onClose: () => void;
 };
 
@@ -30,6 +31,7 @@ export function RequestSentDialog({
   detail,
   conversationId,
   canOpenMessages = false,
+  onAddCalendar,
   onClose,
   ...markers
 }: Props) {
@@ -67,9 +69,16 @@ export function RequestSentDialog({
         ) : null
       }
       secondary={
-        <Button type="button" variant={showMessages ? "secondary" : "primary"} onClick={onClose}>
-          {t("requestSentBackToListing")}
-        </Button>
+        <div className="flex w-full flex-col gap-2">
+          {onAddCalendar ? (
+            <Button type="button" variant="secondary" className="min-h-11 w-full" onClick={onAddCalendar}>
+              {t("tourAddCalendar")}
+            </Button>
+          ) : null}
+          <Button type="button" variant={showMessages ? "secondary" : "primary"} className="min-h-11 w-full" onClick={onClose}>
+            {t("requestSentBackToListing")}
+          </Button>
+        </div>
       }
     />
   );

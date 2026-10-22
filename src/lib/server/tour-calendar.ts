@@ -506,5 +506,20 @@ export const bookTourSlot = createServerFn({ method: "POST" })
       ),
     );
 
+    try {
+      const { scheduleTourReminder, sendTourBookedMail } = await import("@/lib/server/tour-reminders");
+      await scheduleTourReminder({
+        tourId,
+        userId,
+        daycareName: d.name,
+        startAt: slot.startAt,
+        email: email || null,
+        locale,
+      });
+      if (email) await sendTourBookedMail({ email, centre: d.name, locale });
+    } catch (err) {
+      console.error("[kidease-tour] reminder skipped", err);
+    }
+
     return { id: tourId, conversationId: cid, status: "pending" as const, guest: userId.startsWith("guest:") };
   });
