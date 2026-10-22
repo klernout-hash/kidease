@@ -71,10 +71,15 @@ export const Route = createFileRoute("/account")({
 
 function AccountPage() {
   const { user, isPending } = useCurrentUserState();
+  const chrome = useRoleChrome();
   const { t } = useCopy();
   const search = Route.useSearch();
+  // Role chrome is already in the server payload. Paint the account when that
+  // role is known, so Face ID settings are in the first HTML instead of a
+  // skeleton that waits on the client session.
+  const sessionReady = !isPending || (chrome.signedIn && !chrome.pending);
 
-  if (isPending) {
+  if (!sessionReady) {
     return (
       <Shell>
         <DeskSkeleton />
@@ -398,9 +403,9 @@ function ProfilePane() {
             <DeleteAccountPanel signedIn />
           </div>
         ) : null}
-        {section === "security" && user ? (
+        {section === "security" && (user || (chrome.signedIn && !chrome.pending)) ? (
           <div className="mt-8" data-ke="account-security">
-            <AccountSecurity email={email || user.primaryEmail || ""} />
+            <AccountSecurity email={email || user?.primaryEmail || ""} />
             <SignedInDevices />
           </div>
         ) : null}

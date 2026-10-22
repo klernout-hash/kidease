@@ -65,6 +65,16 @@ import { parentMobileIssue, smsOptInWasBlocked, stashParentSmsOptIn, takeParentS
 import { toast } from "sonner";
 import { saveParentSmsOptIn } from "@/lib/server/parent-sms-consent";
 import { ParentSmsFields } from "@/components/parent-sms-fields";
+import { PasskeyOffer } from "@/components/passkey-offer";
+import {
+  PasskeyRequestError,
+  cancelPasskeyCeremony,
+  markPasskeyOfferSeen,
+  passkeyWasCancelled,
+  registerPasskey,
+  shouldOfferPasskey,
+  signInWithPasskey,
+} from "@/lib/passkey-client";
 import type { CopyKey } from "@/lib/copy";
 
 type Role = "parent" | "provider" | "admin";
@@ -166,6 +176,7 @@ export function LoginScreen({
   const continued = useRef(false);
   const attempt = useRef(0);
   const [stalled, setStalled] = useState(false);
+  const [passkeyOffer, setPasskeyOffer] = useState(false);
 
   useEffect(() => {
     if (role === "parent" || role === "provider") rememberRole(role);
@@ -254,7 +265,15 @@ export function LoginScreen({
     });
   }, [sessionPending, user, dest, busy, search.next, search.intent, deskHint, role, urlOperator, mode]);
 
-  async function finish() {
+  function passkeyMessage(err: unknown): string {
+    if (err instanceof PasskeyRequestError && (err.code === "PASSKEY_RATE_LIMIT" || err.status === 429)) {
+      return t("passkeyRateLimited");
+    }
+    if (err instanceof PasskeyRequestError && err.code === "PASSKEY_UNSUPPORTED") return t("passkeyUnsupported");
+    return t("passkeyFailed");
+  }
+
+  async function finish(method: "email" | "session" = "email") {
     const session = await waitForSignedInSession(() => authClient.getSession());
     if (mode === "up" && (role === "parent" || role === "provider")) {
       await withTimeoutFallback(setRole({ data: role }), LOGIN_CONTINUE_MS, undefined);
@@ -262,17 +281,73 @@ export function LoginScreen({
     continued.current = true;
     captureLoginFunnel({
       step: "succeeded",
-      method: "email",
+      method,
       native: isNative(),
       ...(session?.data?.user ? {} : { reason: "session_pending" }),
     });
+    if (method === "email") {
+      const offer = await shouldOfferPasskey();
+      if (attempt.current && offer) {
+        setPasskeyOffer(true);
+        setBusy(false);
+        return;
+      }
+    }
     await continueAfterSignIn({
       next: search.next,
       desk: deskHint,
       role: role ?? null,
       sticky: readStickyDesk(),
-      method: "email",
+      method,
     });
+  }
+
+  async function onPasskey() {
+    if (submitLock.current) return;
+    submitLock.current = true;
+    const id = ++attempt.current;
+    setBusy(true);
+    setStalled(false);
+    setError(null);
+    try {
+      await cancelPasskeyCeremony();
+      await signInWithPasskey();
+      if (attempt.current !== id) return;
+      await finish("session");
+    } catch (err) {
+      if (attempt.current !== id || passkeyWasCancelled(err)) return;
+      setError(passkeyMessage(err));
+    } finally {
+      if (attempt.current === id) {
+        submitLock.current = false;
+        setBusy(false);
+      }
+    }
+  }
+
+  async function onEnablePasskey() {
+    setBusy(true);
+    setError(null);
+    try {
+      await registerPasskey();
+      markPasskeyOfferSeen();
+      await finish("session");
+    } catch (err) {
+      if (!passkeyWasCancelled(err)) setError(passkeyMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onLaterPasskey() {
+    markPasskeyOfferSeen();
+    setPasskeyOffer(false);
+    setBusy(true);
+    try {
+      await finish("email");
+    } catch {
+      setBusy(false);
+    }
   }
 
   function openDesk() {
@@ -304,8 +379,31 @@ export function LoginScreen({
     });
   }
 
+  const finishRef = useRef(finish);
+  finishRef.current = finish;
+
+  useEffect(() => {
+    if (mode !== "in" || passkeyOffer) return;
+    let stopped = false;
+    void (async () => {
+      try {
+        await signInWithPasskey({ autofill: true });
+        if (stopped) return;
+        await finishRef.current("session");
+      } catch (err) {
+        if (stopped || passkeyWasCancelled(err)) return;
+        if (err instanceof PasskeyRequestError && (err.code === "PASSKEY_AUTOFILL_SKIP" || err.code === "PASSKEY_UNSUPPORTED")) return;
+      }
+    })();
+    return () => {
+      stopped = true;
+      void cancelPasskeyCeremony();
+    };
+  }, [mode, passkeyOffer]);
+
   async function onEmail(e: React.FormEvent) {
     e.preventDefault();
+    void cancelPasskeyCeremony();
     if (submitLock.current) return;
     submitLock.current = true;
     const id = ++attempt.current;
@@ -482,6 +580,15 @@ export function LoginScreen({
                 Use email and password for this address.
               </p>
             ) : null}
+          {passkeyOffer ? (
+            <PasskeyOffer
+              busy={busy}
+              error={error}
+              onEnable={() => void onEnablePasskey()}
+              onLater={() => void onLaterPasskey()}
+            />
+          ) : (
+          <>
           <form onSubmit={onEmail} className="mt-6 space-y-3 ph-no-capture" data-ke={operator ? "admin-email-first" : "email-sign-in"}>
             {mode === "up" && !operator ? (
               <label className="block text-sm">
@@ -502,7 +609,7 @@ export function LoginScreen({
                   className="ke-input mt-1"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
+                  autoComplete={mode === "in" ? "username webauthn" : "email"}
                   autoCapitalize="none"
                   autoCorrect="off"
                   inputMode="email"
@@ -583,6 +690,19 @@ export function LoginScreen({
             >
               {busy ? t("openingDesk") : mode === "up" && !operator ? t("createAccount") : t("signIn")}
             </Button>
+            {mode === "in" ? (
+              <Button
+                type="button"
+                variant="secondary"
+                size="lg"
+                className="w-full min-h-12"
+                data-ke="passkey-sign-in"
+                disabled={busy}
+                onClick={() => void onPasskey()}
+              >
+                {t("passkeySignIn")}
+              </Button>
+            ) : null}
           </form>
           {mode === "in" ? (
             <div className="mt-3">
@@ -664,6 +784,8 @@ export function LoginScreen({
             </div>
           </div>
           ) : null}
+          </>
+          )}
           <p className="mt-6 text-center text-xs text-subtle">
             <a
               href={search.next && search.next.startsWith("/") ? search.next : "/"}

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { PasswordField } from "@/components/password-field";
@@ -11,6 +10,7 @@ import { isReauthRequiredMessage } from "@/lib/reauth";
 import { ReauthDialog } from "@/components/reauth-dialog";
 import { useCopy } from "@/lib/use-copy";
 import { ViewAsWriteLock } from "@/components/view-as-banner";
+import { PasskeySettings } from "@/components/passkey-settings";
 
 export function AccountSecurity({ email }: { email: string }) {
   const { t, locale } = useCopy();
@@ -79,6 +79,9 @@ export function AccountSecurity({ email }: { email: string }) {
   return (
     <ViewAsWriteLock>
     <>
+      <div data-ke="passkey-setup">
+        <PasskeySettings />
+      </div>
       <section className="mt-8 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="account-password">
         <h2 className="font-display text-lg tracking-[-0.02em]">{t("accountChangePassword")}</h2>
         <p className="text-[13px] text-muted">{t("passwordPolicyHint")}</p>

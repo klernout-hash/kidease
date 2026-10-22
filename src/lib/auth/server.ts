@@ -76,6 +76,8 @@ import {
   unsignedSessionToken,
 } from "./cookies";
 import { AUTH_FORGOT_MAX, AUTH_LOGIN_MAX, AUTH_SIGNUP_MAX } from "@/lib/auth-rate-limit";
+import { passkeyPlugin } from "./passkey-plugin";
+import { PASSKEY_RATE_MAX } from "@/lib/passkey-policy";
 
 // Kick (and share) PGLite bootstrap as soon as the auth server module loads.
 void ensureDbReady();
@@ -389,6 +391,10 @@ export const auth = betterAuth({
       "/sign-up/email": { window: 60, max: AUTH_SIGNUP_MAX },
       "/forget-password": { window: 60, max: AUTH_FORGOT_MAX },
       "/request-password-reset": { window: 60, max: AUTH_FORGOT_MAX },
+      "/passkey/login/options": { window: 600, max: PASSKEY_RATE_MAX },
+      "/passkey/login/verify": { window: 600, max: PASSKEY_RATE_MAX },
+      "/passkey/register/options": { window: 600, max: PASSKEY_RATE_MAX },
+      "/passkey/register/verify": { window: 600, max: PASSKEY_RATE_MAX },
     },
   },
 
@@ -429,6 +435,10 @@ export const auth = betterAuth({
     // One genericOAuth provider per upstream (when auth is on), all federating
     // to the broker with the SAME client and differing only by the `idp` hint.
     ...(grokOAuthPlugin ? [grokOAuthPlugin] : []),
+
+    // WebAuthn passkeys. Before bearer() so a new session still sets
+    // set-auth-token for the Capacitor shell. tanstackStartCookies stays last.
+    passkeyPlugin(),
 
     // Accept `Authorization: Bearer <session-token>` as an alternative to the
     // cookie. Needed for the LIVE PREVIEW: the app runs in an embedded iframe

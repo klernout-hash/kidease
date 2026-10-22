@@ -74,6 +74,12 @@ export function getBearerToken(): string | null {
   }
 }
 
+/** Native shells read this header after a passkey session is minted. */
+export function captureAuthTokenFromResponse(response: Response): void {
+  const header = response.headers.get("set-auth-token");
+  if (header) setBearerToken(header);
+}
+
 function setBearerToken(token: string | null): void {
   if (typeof window === "undefined") return;
   try {
