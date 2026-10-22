@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { PARENT_UPGRADE_PLANS, DAYCARE_UPGRADE_PLANS, formatPlanCad } from "@/lib/upgrade-plans";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import { PROVIDER_PLANS } from "@/lib/provider-plans";
 import { ALERTS_MONTHLY_CAD, PLUS_MONTHLY_CAD } from "@/lib/parent-plus";
 
@@ -8,7 +9,9 @@ import { ALERTS_MONTHLY_CAD, PLUS_MONTHLY_CAD } from "@/lib/parent-plus";
  * Live checkout stays on ProviderSubscriptionPanel and ParentPlusPanel.
  */
 export function PlanChoiceShelf({ role }: { role: "parent" | "provider" }) {
+  const nativeShell = useInNativeShell();
   const [picked, setPicked] = useState<string | null>(null);
+  if (nativeShell) return null;
   const parent = role === "parent";
   const plans = parent ? PARENT_UPGRADE_PLANS : DAYCARE_UPGRADE_PLANS;
 

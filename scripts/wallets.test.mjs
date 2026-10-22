@@ -132,17 +132,18 @@ test("Apple Pay domain association is env-only and never invented in git", () =>
   assert.match(src(".env.example"), /STRIPE_APPLE_PAY_DOMAIN_ASSOCIATION=/);
 });
 
-test("Pay bill and catalog checkout open Stripe in the system browser on native", () => {
+test("Pay bill and catalog checkout do not open Stripe inside the native app", () => {
   const billPay = src("src/routes/pay.bill.$billId.tsx");
   assert.match(billPay, /openStripeCheckout/);
   assert.match(billPay, /WalletMethodHints/);
   assert.match(billPay, /payCadNote/);
+  assert.match(billPay, /NativePayNote/);
   assert.doesNotMatch(billPay, /window\.location\.assign\(res\.url\)/);
 
   assert.match(src("src/components/parent-plus.tsx"), /openStripeCheckout/);
   assert.match(src("src/components/provider-subscription.tsx"), /openStripeCheckout/);
-  assert.match(src("src/lib/wallets.ts"), /@capacitor\/browser/);
-  assert.match(src("src/lib/wallets.ts"), /Browser\.open/);
+  assert.match(src("src/lib/wallets.ts"), /Payments are not part of this app/);
+  assert.doesNotMatch(src("src/lib/wallets.ts"), /Browser\.open/);
 
   const copy = src("src/lib/copy.ts");
   assert.match(copy, /payWalletsNative/);

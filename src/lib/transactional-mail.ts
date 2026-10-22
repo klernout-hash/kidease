@@ -328,6 +328,7 @@ export async function sendTransactionalMail(
   input: TransactionalMailInput,
   deps: TransactionalMailDeps = {},
 ): Promise<TransactionalMailResult> {
+  (globalThis as { __kideaseViewAsSideEffect__?: (action: "email") => void }).__kideaseViewAsSideEffect__?.("email");
   const env = deps.env ?? process.env;
   const fetchFn = deps.fetch ?? fetch;
   const to = normalizeEmail(input.to);

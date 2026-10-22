@@ -215,7 +215,7 @@ curl -sI https://www.kidease.ca/.well-known/apple-developer-merchantid-domain-as
 ## 5) Google Play upload path
 
 - [ ] Create upload keystore (backed up securely — never commit)
-- [ ] Build AAB (`bundleRelease`)
+- [ ] Build AAB (`bundlePlayRelease`)
 - [ ] Play App Signing accepted
 - [ ] Internal testing track upload
 - [ ] Testers smoke on a real Android device

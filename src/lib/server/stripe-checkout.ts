@@ -307,6 +307,11 @@ export async function stripeRequest<T>(
   method: "POST" | "GET" = "POST",
   opts?: { idempotencyKey?: string },
 ): Promise<T> {
+  if (method !== "GET") {
+    // No @/ import: node tests load this file without the Vite alias.
+    // The view-as frame installs this hook before a signed-in request runs.
+    (globalThis as { __kideaseViewAsSideEffect__?: (action: "payment") => void }).__kideaseViewAsSideEffect__?.("payment");
+  }
   const key = (process.env.STRIPE_SECRET_KEY || "").trim();
   if (!key) throw new Error("Stripe is not configured");
   const url = path.startsWith("http") ? path : `https://api.stripe.com/v1${path}`;

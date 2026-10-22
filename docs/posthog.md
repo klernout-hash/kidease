@@ -34,7 +34,7 @@ Recordings are for product UX, not for reading medical notes or family messages.
 | Event property scrub | Keys that look like email, phone, child name, allergy, medical, birthdate are dropped. |
 | Identify | Better Auth user id only. No email, no name. `dev-user` is skipped. |
 
-The **website and the Capacitor app** show an Essential vs Allow analytics banner. Until the person taps **Allow analytics**, `posthog-js` is not loaded (no pageviews, no replay). **Essential** stores `denied` and keeps required cookies only. The choice is saved in `localStorage` as `kidease-analytics-consent` (`granted` / `denied`). In the app, events are not queued before Allow. Denied calls `applyPostHogRecordingGate()` and opts out of capture. Native crash reports (Sentry) use the same Allow tap. The website still starts Sentry without that banner.
+The **website and the Capacitor app** show an Essential vs Allow analytics banner. Until the person taps **Allow analytics**, `posthog-js` is not loaded (no pageviews, no replay). **Essential** stores `denied` and keeps required cookies only. The choice is saved in `localStorage` as `kidease-analytics-consent` (`granted` / `denied`). In the app, events are not queued before Allow. Denied calls `applyPostHogRecordingGate()` and opts out of capture. Crash reports (Sentry) use the same Allow tap on the website and in the app. Unset or Essential does not start Sentry.
 
 ## Vercel env (kidease-git)
 

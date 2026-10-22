@@ -9,11 +9,14 @@ import {
 import { localeTag } from "@/lib/languages";
 import { pathLocale } from "@/lib/locale-path";
 import { getVisitorLocale } from "@/lib/locale-choice";
+import { readServerStoreChannel } from "@/lib/store-channel-request";
 import { LocaleChoiceSync } from "@/components/language-select";
 import { useCopy } from "@/lib/use-copy";
 import { AuthProvider } from "@/lib/auth/provider";
+import { ViewAsProvider } from "@/components/view-as-banner";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { NativeBoot } from "@/components/native-boot";
+import { NativeCommerceStrip } from "@/components/native-commerce-strip";
 import { PushExplain } from "@/components/push-explain";
 import { GetAlertsPrompt } from "@/components/get-alerts-prompt";
 import { ThemeBoot } from "@/components/theme-boot";
@@ -23,10 +26,12 @@ import { PostHogBoot } from "@/components/posthog-boot";
 import { RoleBoot } from "@/components/role-boot";
 import { KidEaseToaster } from "@/components/kidease-toaster";
 import { SuccessConfirmHost } from "@/components/success-confirm";
-import { reportError } from "@/lib/observe";
+import { SafeRouteError } from "@/components/safe-error-boundary";
+import { safeErrorCopy } from "@/lib/safe-error";
 import { getRoleChrome } from "@/lib/server/role-route";
 import { STYLE_NONCE_BOOT } from "@/lib/style-nonce-boot";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
+import { shellBlocksCommerce, storeChannelFromSignals, type StoreChannel } from "@/lib/native-entitlements";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "KidEase";
@@ -65,47 +70,25 @@ export const Route = createRootRoute({
     if (visitorLocale.redirectTo) {
       throw redirect({ href: visitorLocale.redirectTo, statusCode: 302 });
     }
-    return { roleChrome, visitorLocale };
+    const storeChannel = await readRequestStoreChannel(location.searchStr || "");
+    const nativeShell = shellBlocksCommerce(storeChannel);
+    return { roleChrome, visitorLocale, nativeShell, storeChannel };
   },
-  errorComponent: ({ error }) => {
-    reportError(error, {
-      route: typeof window !== "undefined" ? window.location.pathname : "root",
-    });
+  errorComponent: (props) => {
+    const path = typeof window !== "undefined" ? window.location.pathname : "";
+    const copy = safeErrorCopy(path);
     return (
-      <>
-        <style
-          dangerouslySetInnerHTML={{
-            __html:
-              ".ke-crash{font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:48px;min-height:100vh}" +
-              ".ke-crash-kicker{font-size:12px;letter-spacing:.16em;text-transform:uppercase}" +
-              ".ke-crash-title{font-size:28px}" +
-              ".ke-crash-detail{color:#5c6578;font-size:13px}",
-          }}
-        />
-        <div className="ke-crash">
-          <p className="ke-crash-kicker">KidEase</p>
-          <h1 className="ke-crash-title">Something went wrong</h1>
-          <p>
-            Refresh the page, or go back to kidease.ca. If it keeps happening, email{" "}
-            {SUPPORT_INBOX_EMAIL}.
-          </p>
-          <p
-            className="ke-crash-actions"
-            style={{ display: "flex", gap: "12px", flexWrap: "wrap", marginTop: "16px" }}
-          >
-            <a href="/search" style={{ fontWeight: 600 }}>
-              Explore
-            </a>
-            <a href="/" style={{ fontWeight: 600 }}>
-              Home
-            </a>
-            <a href={`mailto:${SUPPORT_INBOX_EMAIL}`}>Email support</a>
-          </p>
-          <p className="ke-crash-detail">
-            {error instanceof Error ? error.message : "Please try again."}
-          </p>
-        </div>
-      </>
+      <SafeRouteError
+        {...props}
+        links={
+          <>
+            {path.startsWith("/admin") ? <a href="/admin">{copy.admin}</a> : null}
+            <a href="/search">{copy.explore}</a>
+            <a href="/">{copy.home}</a>
+            <a href={`mailto:${SUPPORT_INBOX_EMAIL}`}>{copy.support}</a>
+          </>
+        }
+      />
     );
   },
   head: () => ({
@@ -152,8 +135,21 @@ export const Route = createRootRoute({
   component: RootDocument,
 });
 
+async function readRequestStoreChannel(search: string): Promise<StoreChannel> {
+  if (typeof window !== "undefined") {
+    return storeChannelFromSignals({
+      userAgent: window.navigator.userAgent,
+      search: window.location.search || search,
+      cookie: document.cookie,
+    });
+  }
+  return readServerStoreChannel({ data: { search } }).catch(() => storeChannelFromSignals({ search }));
+}
+
 function RootDocument() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const nativeShell = Route.useRouteContext({ select: (s) => Boolean(s.nativeShell) });
+  const storeChannel = Route.useRouteContext({ select: (s) => s.storeChannel ?? "web" });
   const { locale } = useCopy();
   const lang =
     pathLocale(pathname) === "fr" || locale === "fr" ? "fr-CA" : locale === "en" ? "en" : localeTag(locale);
@@ -162,7 +158,8 @@ function RootDocument() {
       lang={lang}
       className="antialiased"
       data-channel="website"
-      data-runtime="web"
+      data-runtime={nativeShell ? "native" : "web"}
+      data-store={storeChannel}
       data-theme="system"
       suppressHydrationWarning
     >
@@ -197,15 +194,18 @@ function RootDocument() {
       <body>
         <PreviewHostBridge />
         <AuthProvider>
+          <ViewAsProvider>
           <ThemeBoot />
           <LocaleChoiceSync />
           <NativeBoot />
+          <NativeCommerceStrip />
           <PushExplain />
-          <GetAlertsPrompt />
+          {nativeShell ? null : <GetAlertsPrompt />}
           <PostHogBoot />
           <RoleBoot />
           <RouteProgress />
           <Outlet />
+          </ViewAsProvider>
           <CookieConsentBanner />
           <KidEaseToaster />
           <SuccessConfirmHost />

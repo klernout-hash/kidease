@@ -492,7 +492,7 @@ export function ParentDesk({
                     if (openBill) {
                       return (
                         <Button size="sm" asChild>
-                          <Link to="/pay/bill/$billId" params={{ billId: openBill.id }} search={{}}>
+                          <Link to="/pay/bill/$billId" params={{ billId: openBill.id }} search={{}} data-ke="native-checkout">
                             {t("pay")}
                           </Link>
                         </Button>
@@ -583,7 +583,7 @@ export function ParentDesk({
                       <div className="flex items-center gap-3">
                         <span className="font-display text-xl tabular-nums">{money(billDollars(b), locale)}</span>
                         <Button size="sm" asChild>
-                          <Link to="/pay/bill/$billId" params={{ billId: b.id }} search={{}}>
+                          <Link to="/pay/bill/$billId" params={{ billId: b.id }} search={{}} data-ke="native-checkout">
                             {t("pay")}
                           </Link>
                         </Button>
@@ -627,7 +627,7 @@ export function ParentDesk({
                             </Button>
                           ) : (
                             <Button size="sm" variant="secondary" asChild>
-                              <Link to="/pay/bill/$billId" params={{ billId: b.id }} search={{}}>
+                              <Link to="/pay/bill/$billId" params={{ billId: b.id }} search={{}} data-ke="native-checkout">
                                 {t("viewReceipt")}
                               </Link>
                             </Button>

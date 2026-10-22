@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Call, Device } from "@twilio/voice-sdk";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
+import { useViewAs } from "@/components/view-as-banner";
 import { mintThreadVoiceToken } from "@/lib/server/voice-call";
 
 /**
@@ -10,6 +11,7 @@ import { mintThreadVoiceToken } from "@/lib/server/voice-call";
  */
 export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
   const { t } = useCopy();
+  const viewing = useViewAs();
   const deviceRef = useRef<Device | null>(null);
   const callRef = useRef<Call | null>(null);
   const [phase, setPhase] = useState<"ready" | "ringing" | "incoming" | "connected" | "error">("ready");
@@ -18,6 +20,10 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
   const [busy, setBusy] = useState(true);
 
   useEffect(() => {
+    if (viewing) {
+      setBusy(false);
+      return;
+    }
     let cancelled = false;
     void (async () => {
       try {
@@ -68,7 +74,7 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
       deviceRef.current?.destroy();
       deviceRef.current = null;
     };
-  }, [conversationId, t]);
+  }, [conversationId, t, viewing]);
 
   function watch(call: Call) {
     callRef.current = call;
@@ -130,6 +136,14 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
     const next = !muted;
     call.mute(next);
     setMuted(next);
+  }
+
+  if (viewing) {
+    return (
+      <p className="mt-6 text-sm text-muted" role="status" data-ke="view-as-lock">
+        {t("viewAsReadOnly")}
+      </p>
+    );
   }
 
   const live = phase === "connected";

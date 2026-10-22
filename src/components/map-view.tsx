@@ -8,6 +8,8 @@ import { cn, displayCentreName, displayListingText, money } from "@/lib/utils";
 import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
+import { useStoreChannel } from "@/lib/use-native-shell";
+import { StoreMapFallback } from "@/components/store-map-fallback";
 import {
   MAP_RADIUS_FIT_PAD,
   mapZoomForRadius,
@@ -131,7 +133,13 @@ type SlugPin = AnyPin & {
 
 const MAP_CLUSTER_PAD = { top: 72, right: 64, bottom: 28, left: 16 };
 
-export function MapView({
+export function MapView(props: Props) {
+  const channel = useStoreChannel();
+  if (channel === "huawei") return <StoreMapFallback />;
+  return <GoogleMapView {...props} />;
+}
+
+function GoogleMapView({
   items,
   origin,
   secondOrigin,

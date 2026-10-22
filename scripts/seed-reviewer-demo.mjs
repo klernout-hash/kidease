@@ -144,9 +144,9 @@ async function upsertCredential(client, { email, name, password, role }) {
     );
   }
   await client.query(
-    `insert into profiles (user_id, role, display_name, city)
-     values ($1, $2, $3, 'Winnipeg')
-     on conflict (user_id) do update set role = excluded.role, display_name = excluded.display_name`,
+    `insert into profiles (user_id, role, display_name, city, is_test)
+     values ($1, $2, $3, 'Winnipeg', 1)
+     on conflict (user_id) do update set role = excluded.role, display_name = excluded.display_name, is_test = 1`,
     [userId, role, name],
   );
   return userId;
@@ -223,9 +223,15 @@ async function upsertListing(client, daycareUserId) {
 async function upsertParentSamples(client, parentUserId) {
   const listingId = REVIEWER_LISTING.id;
   await client.query(
-    `insert into children (id, user_id, name, birthdate, notes)
-     values ($1, $2, 'Demo Child', '2023-06-15', 'App review sample. Not a real child.')
-     on conflict (id) do update set user_id = excluded.user_id, name = excluded.name, notes = excluded.notes`,
+    `insert into children (id, user_id, name, birthdate, notes, allergies, medications, medical_notes)
+     values ($1, $2, 'Demo Child', '2023-06-15', 'App review sample. Not a real child.', 'Sample: peanuts', 'Sample: none', 'Sample medical note for review only. Not a real child.')
+     on conflict (id) do update set
+       user_id = excluded.user_id,
+       name = excluded.name,
+       notes = excluded.notes,
+       allergies = excluded.allergies,
+       medications = excluded.medications,
+       medical_notes = excluded.medical_notes`,
     [CHILD_ID, parentUserId],
   );
   await client.query(

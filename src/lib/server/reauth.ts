@@ -37,6 +37,8 @@ export const confirmReauthPassword = createServerFn({ method: "POST" })
     turnstileToken: String(input?.turnstileToken || ""),
   }))
   .handler(async ({ context, data }) => {
+    const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
+    blockViewAsSideEffect("password");
     const { assertTurnstileToken } = await import("./turnstile");
     await assertTurnstileToken(data.turnstileToken);
     if (!data.password) throw new Error("Enter your current password.");
@@ -61,6 +63,8 @@ export const confirmReauthOtp = createServerFn({ method: "POST" })
     turnstileToken: String(input?.turnstileToken || ""),
   }))
   .handler(async ({ context, data }) => {
+    const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
+    blockViewAsSideEffect("two_factor");
     const { assertTurnstileToken } = await import("./turnstile");
     await assertTurnstileToken(data.turnstileToken);
     if (data.code.length !== 6) throw new Error("Enter the 6-digit code from your email.");
@@ -91,6 +95,8 @@ export async function verifyUserPassword(userId: string, password: string): Prom
 }
 
 export async function setUserPasswordHash(userId: string, password: string) {
+  const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
+  blockViewAsSideEffect("password");
   const hash = await hashPassword(password);
   const sql = await getSql();
   const existing = await sql<{ id: string }>`

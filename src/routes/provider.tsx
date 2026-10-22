@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tan
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { privateReturnPath } from "@/lib/role-access";
 import { useEffect, useState } from "react";
+import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { toast } from "sonner";
 import { confirmSuccess } from "@/lib/success-confirm";
 import { Shell } from "@/components/shell";
@@ -36,6 +37,7 @@ import { CentrePipeline } from "@/components/centre-pipeline";
 import type { PipelineCard } from "@/lib/crm-pipeline";
 import { TourCard } from "@/components/tour-card";
 import { useCopy } from "@/lib/use-copy";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import type { CopyKey } from "@/lib/copy";
 import { storedCentreName } from "@/lib/utils";
 import { formatAgeLabel, formatStart, scheduleLabel } from "@/lib/templates";
@@ -134,6 +136,7 @@ function ProviderPage() {
   const { user, isPending } = useSettledUser();
   const chrome = useRoleChrome();
   const { t, locale } = useCopy();
+  const nativeShell = useInNativeShell();
   const showPay = useShowPayCtas();
   const { session } = useSessionDesks();
   const centreOwner = session?.centreOwner !== false;
@@ -144,6 +147,7 @@ function ProviderPage() {
   const [desk, setDesk] = useState<DaycareDesk>(search.desk ?? DEFAULT_DESK);
   const [showNewForm, setShowNewForm] = useState(false);
   const [listings, setListings] = useState<Daycare[]>([]);
+  const [showTestListings, setShowTestListings] = useState(false);
   const [stats, setStats] = useState<
     Array<{
       daycareId: string;
@@ -296,6 +300,8 @@ function ProviderPage() {
 
   const waiting = requests.filter((r) => r.status === "requested" || r.status === "under_review");
   const later = requests.filter((r) => r.status !== "requested" && r.status !== "under_review");
+  const testListingCount = listings.filter((d) => isAdminOnlyListing(d)).length;
+  const deskListings = showTestListings ? listings : listings.filter((d) => !isAdminOnlyListing(d));
 
   return (
     <TwoFactorGate next={search.desk ? `/provider?desk=${search.desk}` : "/provider"}>
@@ -442,13 +448,17 @@ function ProviderPage() {
 
       {desk === "listings" ? (
         <>
-          <ActionRequiredBanner listings={listings} />
-          <DirectorNudgeQueue listings={listings} stats={stats} onConfirmed={() => void load()} />
-          <VacancyConfirmLoop listings={listings} onConfirmed={() => void load()} />
+          <label className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
+            <input type="checkbox" checked={showTestListings} onChange={(e) => setShowTestListings(e.target.checked)} />
+            Show test listings{testListingCount ? ` · ${testListingCount}` : ""}
+          </label>
+          <ActionRequiredBanner listings={deskListings} />
+          <DirectorNudgeQueue listings={deskListings} stats={stats} onConfirmed={() => void load()} skipConfirmSpots />
+          <VacancyConfirmLoop listings={deskListings} onConfirmed={() => void load()} />
           <SpotOfferDesk />
-          {listings.length ? (
+          {deskListings.length ? (
             <FreePageExplainer
-              listings={listings.map((d) => ({
+              listings={deskListings.map((d) => ({
                 slug: d.slug,
                 name: d.name,
                 nameFr: d.nameFr,
@@ -462,7 +472,7 @@ function ProviderPage() {
             />
           ) : null}
           <PayCtas>{subscription ? <ProviderPlanBanner subscription={subscription} /> : null}</PayCtas>
-          {listings.map((d) => {
+          {deskListings.map((d) => {
             const st = stats.find((s) => s.daycareId === d.id);
             const declined = listingStatusFromClaim(d.claimStatus, { live: d.live }) === "declined";
             return (
@@ -756,11 +766,14 @@ function ProviderPage() {
         <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>
       ) : null}
 
-      {desk === "promote" && centreOwner ? (
+      {desk === "promote" && centreOwner && nativeShell ? (
+        <p className="mb-4 text-sm text-muted" data-ke="native-plan-note">
+          {t("nativePlansHidden")}
+        </p>
+      ) : null}
+
+      {desk === "promote" && centreOwner && !nativeShell ? (
         <>
-          <p className="ke-native-plan-note mb-4 text-sm text-muted" data-ke="native-plan-note">
-            {t("nativePlansHidden")}
-          </p>
           <div className="ke-digital-plan" data-ke="digital-plan">
             {!showPay ? (
               <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("plansNotOffered")}</p>

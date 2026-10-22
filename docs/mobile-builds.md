@@ -16,7 +16,7 @@ App name: **KidEase**
 - `native-www/` — tiny fallback shell (production builds use the remote URL).
 - `resources/` — icon + splash generated from the existing pin pipeline (`public/logo-transparent.png`).
 - `ios/` and `android/` — Capacitor 8 native projects, permission strings, and icons. Regenerable (see below).
-- `ios/App/App/App.entitlements` — Associated Domains for `www.kidease.ca` and `kidease.ca` (no Team ID, no `aps-environment` yet).
+- `ios/App/App/App.entitlements` — Associated Domains and Sign in with Apple. Push is not in v1, so `aps-environment` is not set. Archive with Xcode 26 and the iOS 26 SDK. This repo cannot archive on Linux. Deployment target stays iOS 15.0.
 - `AndroidManifest.xml` — App Links `autoVerify` for those hosts plus `KidEase://` / `ca.kidease.app://`.
 - Location is **while-using only**. No background location permission, no `UIBackgroundModes: location`.
 
@@ -68,6 +68,8 @@ Xcode will ask you to register the bundle ID in the developer portal the first t
 
 ## Android — `bundleRelease` → Play internal
 
+Play, Samsung Galaxy Store, and Huawei AppGallery are three flavours of the same application id. The Play command is `bundlePlayRelease`. Galaxy Store and AppGallery commands, and what each store allows for Stripe, are in [`other-stores.md`](other-stores.md).
+
 Needs a Play Console account and an app created with application id `ca.kidease.app`. This PR does not sign up for Play.
 
 1. Copy `android/key.properties.example` to `android/key.properties` and point at a **local** upload keystore you created (`keytool`). Never commit the keystore or passwords. `android/app/build.gradle` reads that file only when it exists.
@@ -75,10 +77,10 @@ Needs a Play Console account and an app created with application id `ca.kidease.
 
    ```bash
    cd android
-   ./gradlew bundleRelease
+   ./gradlew bundlePlayRelease
    ```
 
-   The AAB lands at `android/app/build/outputs/bundle/release/app-release.aab` (gitignored).
+   The Play AAB lands at `android/app/build/outputs/bundle/playRelease/app-play-release.aab` (gitignored). The GitHub workflow job is still named bundleRelease and runs this Play task.
 3. Play Console → Testing → Internal testing → create a release → upload the AAB → add testers by email.
 
 Debug USB installs (`./gradlew installDebug`) use the debug keystore and are enough for the physical-device smoke list below.
@@ -122,8 +124,8 @@ CI does not run this on every pull request (the secrets are not required for che
 
 1. Decodes `ANDROID_KEYSTORE_BASE64` to `android/kidease-upload.jks`.
 2. Writes `android/key.properties` with the alias and passwords. `storeFile` is an absolute path so Gradle can see it from the app module.
-3. Runs `./gradlew bundleRelease` with Java 21.
-4. Uploads `android/app/build/outputs/bundle/release/app-release.aab` as the `app-release-aab` artifact.
+3. Runs `./gradlew bundlePlayRelease` with Java 21.
+4. Uploads `android/app/build/outputs/bundle/playRelease/app-play-release.aab` as the `app-release-aab` artifact.
 
 Download that artifact and upload it in Play Console. Do not upload `app-release.apk`.
 
