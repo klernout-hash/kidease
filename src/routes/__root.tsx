@@ -23,6 +23,7 @@ import { ThemeBoot } from "@/components/theme-boot";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { RouteProgress } from "@/components/route-progress";
 import { PostHogBoot } from "@/components/posthog-boot";
+import { AdultConfirmBoot } from "@/components/adult-confirm-boot";
 import { RoleBoot } from "@/components/role-boot";
 import { KidEaseToaster } from "@/components/kidease-toaster";
 import { SuccessConfirmHost } from "@/components/success-confirm";
@@ -240,6 +241,7 @@ function RootDocument() {
           {nativeShell ? null : <GetAlertsPrompt />}
           <PostHogBoot />
           <RoleBoot />
+          <AdultConfirmBoot />
           <RouteProgress />
           <Outlet />
           </ViewAsProvider>

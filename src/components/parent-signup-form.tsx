@@ -8,6 +8,7 @@ import { parentMobileIssue, smsOptInWasBlocked } from "@/lib/parent-sms-consent"
 import { toast } from "sonner";
 import { saveParentSmsOptIn } from "@/lib/server/parent-sms-consent";
 import { setRole } from "@/lib/server/family";
+import { confirmAdultAge } from "@/lib/server/adult-confirm";
 import { localPasswordIssue } from "@/lib/password-hygiene";
 import { LOGIN_CONTINUE_MS, LOGIN_POST_MS } from "@/lib/auth/login-stall";
 import { withTimeout, withTimeoutFallback } from "@/lib/timeout";
@@ -81,6 +82,7 @@ export function ParentSignupForm() {
       if (res.error) throw new Error(friendlyAuthError(authClientErrorMessage(res.error)));
       rememberToken(res.data);
       rememberRole("parent");
+      await withTimeoutFallback(confirmAdultAge(), LOGIN_CONTINUE_MS, undefined);
       await withTimeoutFallback(setRole({ data: "parent" }), LOGIN_CONTINUE_MS, undefined);
       const savedSms = await withTimeoutFallback(
         saveParentSmsOptIn({ data: { phone, smsConsent, locale } }),
@@ -160,8 +162,8 @@ export function ParentSignupForm() {
             />
             <span>
               {locale === "fr"
-                ? "J’ai 18 ans ou plus. KidEase est pour les parents et les garderies."
-                : "I am 18 or older. KidEase is for parents and daycares."}
+                ? "Je confirme que j’ai 18 ans ou plus."
+                : "I confirm I am 18 or older."}
             </span>
           </label>
           <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />

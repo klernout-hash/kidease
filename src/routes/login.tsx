@@ -18,6 +18,8 @@ import { headChromeLocale } from "@/lib/head-locale";
 import { MARKETING_PAGE_SEO, MARKETING_PAGE_SEO_FR, pageSeoHead } from "@/lib/page-seo";
 import { rememberRole } from "@/components/role-boot";
 import { setRole } from "@/lib/server/family";
+import { confirmAdultAge } from "@/lib/server/adult-confirm";
+import { markAdultConfirmedForSession } from "@/lib/adult-confirm";
 import { KIDEASE_OPERATOR_EMAIL } from "@/lib/admin-email";
 import {
   consumeJustSignedOut,
@@ -357,6 +359,9 @@ export function LoginScreen({
           );
           if (smsOptInWasBlocked(savedSms)) toast.message(t("smsUnreachable"));
         }
+        if (!operator) {
+          await withTimeoutFallback(confirmAdultAge(), LOGIN_CONTINUE_MS, undefined);
+        }
         confirmAction(t, "accountCreated");
       } else {
         const res = await withTimeout(
@@ -392,6 +397,7 @@ export function LoginScreen({
     setBusy(true);
     setStalled(false);
     setError(null);
+    if (!operator) markAdultConfirmedForSession();
     if (role === "parent" || role === "provider") rememberRole(role);
     if (parentSignup) stashParentSmsOptIn(phone, smsConsent);
     try {
@@ -524,8 +530,8 @@ export function LoginScreen({
                 />
                 <span>
                   {locale === "fr"
-                    ? "J’ai 18 ans ou plus. KidEase est pour les parents et les garderies."
-                    : "I am 18 or older. KidEase is for parents and daycares."}
+                    ? "Je confirme que j’ai 18 ans ou plus."
+                    : "I confirm I am 18 or older."}
                 </span>
               </label>
             ) : null}
@@ -620,8 +626,8 @@ export function LoginScreen({
                   />
                   <span>
                     {locale === "fr"
-                      ? "J’ai 18 ans ou plus. KidEase est pour les parents et les garderies."
-                      : "I am 18 or older. KidEase is for parents and daycares."}
+                      ? "Je confirme que j’ai 18 ans ou plus."
+                      : "I confirm I am 18 or older."}
                   </span>
                 </label>
               ) : null}
