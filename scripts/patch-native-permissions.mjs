@@ -256,7 +256,7 @@ ${schemes}
     let manifest = await readFile(manifestPath, "utf8");
     manifest = ensureAndroidPermission(manifest, "android.permission.ACCESS_COARSE_LOCATION");
     manifest = ensureAndroidPermission(manifest, "android.permission.ACCESS_FINE_LOCATION");
-    manifest = stripAndroidPermission(manifest, "android.permission.POST_NOTIFICATIONS");
+    manifest = ensureAndroidPermission(manifest, "android.permission.POST_NOTIFICATIONS");
     manifest = ensureAndroidPermission(manifest, "android.permission.CAMERA");
     manifest = ensureAndroidPermission(manifest, "android.permission.RECORD_AUDIO");
     manifest = ensureAndroidPermission(manifest, "android.permission.MODIFY_AUDIO_SETTINGS");

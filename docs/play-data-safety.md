@@ -46,7 +46,7 @@ Also declare these, each linked to the account:
 ## Not in this build
 
 - SMS, call log, contacts, photo library, advertising ID, and background location. The microphone and camera are used only during a voice or video call.
-- `@capacitor/push-notifications`, `POST_NOTIFICATIONS`, and `firebase-messaging`. Push is not in this version.
+- Push sending stays off until `FEATURE_PUSH` and a Firebase project exist. `POST_NOTIFICATIONS` and `@capacitor/push-notifications` are in the Play and Samsung binaries. Huawei does not include the Firebase plugin. `google-services.json` is not in the repo, so Firebase Messaging is not in the AAB yet.
 - Play Billing. Digital plans are not sold in the app.
 - `FEATURE_SMS` and in-app chat stay off. SMS checkboxes, the chat lab, and “coming soon” store badges are hidden when `data-runtime` is `ios` or `android`.
 - Parent Plus, Parent Alerts, centre-plan prices, and every Stripe checkout are not shown in the app. A video tour that needs Parent Plus is blocked with no price and no subscribe button. Firebase Analytics is excluded from the release. Firebase Messaging is not in the AAB. Twilio voice and video are JavaScript on the call pages, not native libraries. Google Maps and Places load in the WebView for search. Age rating is 18+. Not the Families program. 16 KB page size: `useLegacyPackaging = false`. Target API 36. Declare Health info for allergies, medications, and medical notes. Declare Audio and Photos and videos for Twilio calls.
