@@ -56,7 +56,7 @@ describe("Sentry wiring", () => {
   });
 
   it("does not send events when DSN is unset and uses a low prod trace rate", () => {
-    assert.equal(sentryTracesSampleRate("production"), 0.1);
+    assert.equal(sentryTracesSampleRate("production"), 0.02);
     assert.equal(sentryTracesSampleRate("preview"), 0);
     assert.equal(sentryTracesSampleRate("development"), 0);
     assert.match(read("src/lib/sentry.client.ts"), /if \(!dsn\) return false/);

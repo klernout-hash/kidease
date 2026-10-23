@@ -18,6 +18,25 @@ test("parent sign-up branch builds and other cursor branches stay skipped", () =
   assert.equal(shouldIgnoreVercelBuild("main"), false);
   assert.equal(shouldIgnoreVercelBuild("feat/site-guide-chat"), false);
   assert.equal(shouldIgnoreVercelBuild(""), false);
+  assert.equal(shouldIgnoreVercelBuild("main", { changedFiles: ["docs/billing.md", "README.md"] }), true);
+  assert.equal(shouldIgnoreVercelBuild("main", { changedFiles: ["android/app/build.gradle", "e2e/desktop-baselines/home.png"] }), true);
+  assert.equal(shouldIgnoreVercelBuild("main", { changedFiles: ["docs/billing.md", "src/routes/index.tsx"] }), false);
+  assert.equal(
+    shouldIgnoreVercelBuild("feat/site", {
+      vercelEnv: "preview",
+      commitSha: "abc",
+      previousSha: "abc",
+    }),
+    true,
+  );
+  assert.equal(
+    shouldIgnoreVercelBuild("main", {
+      vercelEnv: "production",
+      commitSha: "abc",
+      previousSha: "abc",
+    }),
+    false,
+  );
   assert.equal(exitFor("cursor/parent-sms-signup-ba39"), 1);
   assert.equal(exitFor("cursor/other-ba39"), 0);
   assert.equal(exitFor("main"), 1);

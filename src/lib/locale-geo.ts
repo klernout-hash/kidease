@@ -107,10 +107,13 @@ export function isLocaleDocumentRequest(input: {
   if (
     path.startsWith("/api/") ||
     path === "/api" ||
+    path === "/img" ||
     path.startsWith("/_serverFn") ||
     path.startsWith("/assets/") ||
     path.startsWith("/fonts/") ||
-    path.startsWith("/icons/")
+    path.startsWith("/icons/") ||
+    path.startsWith("/ingest") ||
+    path.startsWith("/photos/")
   ) {
     return false;
   }

@@ -18,7 +18,6 @@ import { hideListingFromPublicPage, isAdminOnlyListing, isPublicListing, publicL
 import { parseAnchorMode, resolveSearchAnchors } from "@/lib/dual-anchor";
 import { nearbyListings, nearbyListingsAlong, nearbyListingsDual, type NearbyListing } from "./nearby";
 import { callerMayViewHiddenListing } from "./public-listing";
-import { upsertDaycare } from "./seed";
 import { applyListingReadiness, compareFreshOpenSpots, hasConfirmedAges } from "@/lib/listing-readiness";
 import { standardGroupsForRange } from "@/lib/standard-age-groups";
 import { listingAgeUnknown } from "@/lib/now-loops";
@@ -465,7 +464,21 @@ async function searchByName(data: SearchInput): Promise<DaycareCard[]> {
   const q = (data.name || "").trim();
   if (q.length < 2) return [];
   const origin = { lat: data.lat, lng: data.lng };
-  const matched = filterByDaycareName(await getPublicCatalog(), q);
+  let matched: CatalogDaycare[] | null = null;
+  try {
+    const { queryNeonListingsByIds, queryNeonPublicNameIndex } = await import("@/lib/server/catalog-neon");
+    const index = await queryNeonPublicNameIndex();
+    if (index) {
+      const hits = filterByDaycareName(
+        index.map((row) => ({ id: row.id, name: row.name, nameFr: row.name_fr || "" })),
+        q,
+      );
+      matched = hits.length === 0 ? [] : await queryNeonListingsByIds(hits.map((row) => row.id));
+    }
+  } catch {
+    matched = null;
+  }
+  if (!matched) matched = filterByDaycareName(await getPublicCatalog(), q);
   const cards = await stampPaidPlacement(matched.map((row) => slimCard(toCard(row, origin, data.fsa))));
   cards.sort((a, b) => a.distanceKm - b.distanceKm || a.name.localeCompare(b.name));
   return cards;
@@ -793,36 +806,21 @@ export const getDaycare = createServerFn({ method: "GET" })
     if (!found) return null;
     if (hideListingFromPublicPage(found, await callerMayViewHiddenListing(found.id))) return null;
     const origin = { lat: found.lat, lng: found.lng };
-    const nearby = uniqueById(
-      (await catalogNear(origin, 15))
-        .filter((d) => d.id !== found.id)
-        .map((d) => toCard(d, origin)),
-    ).slice(0, 4);
+    // The nearest 400 within 40 km include every centre the 15 km query would return.
     const metroPeers = uniqueById(
       (await catalogNear(origin, 40))
         .filter((d) => d.id !== found.id)
         .map((d) => toCard(d, origin)),
     );
+    const nearby = metroPeers.filter((card) => card.distanceKm <= 15).slice(0, 4);
     const catalogDaycare = toDaycare(found);
-    const catalogScored = await overlayQuality([catalogDaycare, ...metroPeers]);
     const stampHidden = <T extends { visibility?: "public" | "admin_only"; isTest?: boolean }>(daycare: T): T => ({
       ...daycare,
       visibility: found.visibility,
       isTest: found.isTest,
     });
-    const catalogDaycareOut = stampHidden(withInboxReady(catalogScored[0] ?? catalogDaycare));
-    const [catalogPinned] = await stampPaidPlacement([catalogDaycareOut]);
-    const catalogNearby = await stampPaidPlacement(withQualityCards(nearby, catalogScored));
-    const catalogPayload = {
-      daycare: catalogPinned ?? catalogDaycareOut,
-      reviews: [] as Review[],
-      availability: catalogAvailability(found),
-      nearby: catalogNearby,
-      jobs: [] as CentreJobPost[],
-    };
     try {
       const sql = await Promise.race([getSql(), rejectAfter(6000, "listing-sql-timeout")]);
-      await upsertDaycare(sql, found);
       const claimedRow = await sql<DaycareRow>`
         select * from daycares d
         where d.id = ${found.id}
@@ -911,7 +909,17 @@ export const getDaycare = createServerFn({ method: "GET" })
         jobs,
       };
     } catch {
-      return catalogPayload;
+      const catalogScored = await overlayQuality([catalogDaycare, ...metroPeers]);
+      const catalogDaycareOut = stampHidden(withInboxReady(catalogScored[0] ?? catalogDaycare));
+      const [catalogPinned] = await stampPaidPlacement([catalogDaycareOut]);
+      const catalogNearby = await stampPaidPlacement(withQualityCards(nearby, catalogScored));
+      return {
+        daycare: catalogPinned ?? catalogDaycareOut,
+        reviews: [] as Review[],
+        availability: catalogAvailability(found),
+        nearby: catalogNearby,
+        jobs: [] as CentreJobPost[],
+      };
     }
   });
 

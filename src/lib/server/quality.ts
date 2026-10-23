@@ -79,12 +79,17 @@ async function persistQuality(
 ) {
   for (const item of items) {
     if (typeof item.qualityScore !== "number") continue;
+    const favorite = Boolean(item.guestFavorite);
     await sql`
       update daycares
       set quality_score = ${item.qualityScore},
-          guest_favorite = ${Boolean(item.guestFavorite)},
+          guest_favorite = ${favorite},
           quality_scored_at = now()
       where id = ${item.id}
+        and (
+          quality_score is distinct from ${item.qualityScore}
+          or guest_favorite is distinct from ${favorite}
+        )
     `.catch(() => undefined);
   }
 }
