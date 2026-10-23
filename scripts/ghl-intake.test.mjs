@@ -89,6 +89,17 @@ test("payload is email, name, phone, company, tags, kidease_event_id", () => {
   assert.equal(ghlAudienceForTrigger("provider_signup"), "daycare");
   assert.equal(ghlAudienceForTrigger("claim_verify"), "daycare");
   assert.equal(ghlAudienceForTrigger("enroll"), "daycare");
+  const parentOnly = ghlIntakeTags("parent", "parent_signup");
+  assert.equal(parentOnly.includes("type:parent"), true);
+  assert.equal(parentOnly.includes("type:daycare"), false);
+  assert.equal(parentOnly.includes("claim:claimed"), false);
+  const claimOnly = ghlIntakeTags("daycare", "claim_verify");
+  assert.equal(claimOnly.includes("type:daycare"), true);
+  assert.equal(claimOnly.includes("claim:claimed"), true);
+  assert.equal(claimOnly.includes("type:parent"), false);
+  const signupOnly = ghlIntakeTags("daycare", "provider_signup");
+  assert.equal(signupOnly.includes("type:daycare"), true);
+  assert.equal(signupOnly.includes("type:parent"), false);
   assert.deepEqual(
     buildGhlSignupPayload({
       trigger: "provider_signup",
@@ -273,11 +284,22 @@ test("signup and claim verify fire GHL after notify, even when mail fails", () =
   assert.match(family, /role is distinct from 'provider'/);
   assert.match(family, /explicitParent/);
   assert.match(family, /provider_daycares p/);
+  assert.match(family, /if \(role === "parent" && extra\?\.explicitParent !== true\) return false/);
   assert.match(setRoleFn, /explicitParent: true/);
   assert.match(roles, /ensureCrmIntake/);
-  assert.match(src("src/lib/server/claims.ts"), /ensureCrmIntake/);
-  assert.match(src("src/lib/server/profile-contact.ts"), /ensureCrmIntake/);
-  assert.match(src("src/lib/server/search-anchors.ts"), /ensureCrmIntake/);
+  const getFamilyFn = family.slice(family.indexOf("export const getFamily"));
+  const getFamilyBody = getFamilyFn.slice(0, getFamilyFn.indexOf("\nexport const "));
+  assert.doesNotMatch(getFamilyBody, /ensureCrmIntake/);
+  assert.doesNotMatch(src("src/lib/server/profile-contact.ts"), /ensureCrmIntake/);
+  assert.doesNotMatch(src("src/lib/server/search-anchors.ts"), /ensureCrmIntake/);
+  const startClaim = claims.slice(claims.indexOf("export const startClaim"), claims.indexOf("export const verifyClaim"));
+  assert.match(startClaim, /syncDaycareCrm/);
+  assert.match(startClaim, /trigger: "claim_verify"/);
+  assert.match(claims, /async function syncDaycareCrm/);
+  assert.match(claims, /Never Parent Onboard/);
+  const verifyClaim = claims.slice(claims.indexOf("export const verifyClaim"), claims.indexOf("export const submitEnrollLicense"));
+  assert.match(verifyClaim, /syncDaycareCrm/);
+  assert.match(verifyClaim, /trigger: "claim_verify"/);
   const migration = src("migrations/0059_crm_intake_at.sql");
   assert.match(migration, /crm_signup_at timestamptz/);
   assert.match(migration, /crm_provider_at timestamptz/);
