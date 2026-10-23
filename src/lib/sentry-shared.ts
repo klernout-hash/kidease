@@ -94,7 +94,7 @@ export function parseSentryDsn(dsn: string) {
 }
 
 export function sentryTracesSampleRate(environment: string) {
-  return environment === "production" ? 0.1 : 0;
+  return environment === "production" ? 0.02 : 0;
 }
 
 export function scrubPiiString(value: string) {

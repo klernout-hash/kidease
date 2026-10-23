@@ -67,7 +67,24 @@ const serverFnThrottleMiddleware = createMiddleware({ type: "request" }).server(
  * renders so a Quebec visitor gets the French URL in one temporary hop.
  * A failure serves the URL they asked for.
  */
+function skipDocumentLocale(request: Request): boolean {
+  try {
+    const path = new URL(request.url).pathname;
+    return (
+      path === "/img" ||
+      path.startsWith("/assets/") ||
+      path.startsWith("/photos/") ||
+      path.startsWith("/fonts/") ||
+      path.startsWith("/icons/") ||
+      path.startsWith("/ingest")
+    );
+  } catch {
+    return false;
+  }
+}
+
 const localeRequestMiddleware = createMiddleware({ type: "request" }).server(async ({ next, request }) => {
+  if (skipDocumentLocale(request)) return next();
   const { localeDocumentDecision, stampProfileLocaleCookie } = await import("@/lib/locale-choice.server");
   const decision = await localeDocumentDecision(request);
   if (decision.redirect) return decision.redirect;
