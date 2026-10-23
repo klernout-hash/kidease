@@ -33,6 +33,7 @@ export const R2_CONTRACT_MAX_BYTES = 15 * 1024 * 1024;
 export const R2_CONTRACT_PREFIX = "contracts";
 export const R2_SCREENING_PREFIX = "screening";
 export const R2_LICENSE_PREFIX = "licenses";
+export const R2_FAMILY_PREFIX = "family-docs";
 export const R2_PRESIGN_TTL_SEC = 5 * 60;
 export const R2_KEY_MAX = 512;
 export const R2_ORIGINALS_PREFIX = "originals";
@@ -279,7 +280,11 @@ export function allowPrivateDocType(raw: string): string {
 }
 
 export function isPrivateDocKey(key: string): boolean {
-  return key.startsWith(`${R2_SCREENING_PREFIX}/`) || key.startsWith(`${R2_LICENSE_PREFIX}/`);
+  return (
+    key.startsWith(`${R2_SCREENING_PREFIX}/`) ||
+    key.startsWith(`${R2_LICENSE_PREFIX}/`) ||
+    key.startsWith(`${R2_FAMILY_PREFIX}/`)
+  );
 }
 
 export function decodeObjectBody(bodyBase64: string): Buffer {

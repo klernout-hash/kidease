@@ -56,6 +56,7 @@ import {
   adminAutoContinueDecision,
   LOGIN_CONTINUE_MS,
   LOGIN_POST_MS,
+  PASSWORD_CONTINUE_MESSAGE,
   releaseStuckLogin,
 } from "@/lib/auth/login-stall";
 import { socialSignupCallbackPath } from "@/lib/auth/social-callback";
@@ -216,7 +217,10 @@ export function LoginScreen({
     const released = releaseStuckLogin("admin-password");
     continued.current = released.keepContinued;
     setBusy(released.busy);
-    setError(released.error);
+    const sessionEmail = String(user?.primaryEmail || "").trim().toLowerCase();
+    const owner = String(OPERATOR_EMAIL || "").trim().toLowerCase();
+    const showAdminCopy = urlOperator && sessionEmail.length > 0 && sessionEmail === owner;
+    setError(showAdminCopy ? released.error : PASSWORD_CONTINUE_MESSAGE);
     return true;
   }
 
@@ -671,7 +675,7 @@ export function LoginScreen({
                 >
                   {dest.startsWith("/search") ? t("loginBackExplore") : dest.startsWith("/daycare/") ? t("loginBackListing") : t("loginOpenDesk")}
                 </button>
-                <a href="/parent" className="min-h-11 font-medium text-subtle underline-offset-4 hover:underline">
+                <a href="/parent" className="min-h-11 font-medium text-fg underline underline-offset-4 hover:underline">
                   {t("loginParentDesk")}
                 </a>
               </div>

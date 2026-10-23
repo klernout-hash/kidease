@@ -6,6 +6,7 @@ import { TrustExplainer } from "@/components/trust-badge";
 import { localePath } from "@/lib/locale-path";
 import { pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
+import { useInNativeShell } from "@/lib/use-native-shell";
 
 export const Route = createFileRoute("/verify")({
   head: () =>
@@ -20,11 +21,12 @@ export const Route = createFileRoute("/verify")({
 
 export function VerifyPage() {
   const { t, locale } = useCopy();
+  const hideCommerce = useInNativeShell();
   const items = [
     { icon: BadgeCheck, title: t("verifyMbTitle"), body: t("verifyMbBody") },
     { icon: Shield, title: t("verifyStubTitle"), body: t("verifyStubBody") },
     { icon: BookOpen, title: t("verifyClaimTitle"), body: t("verifyClaimBody") },
-    { icon: Wallet, title: t("verifyPayTitle"), body: t("verifyPayBody") },
+    ...(hideCommerce ? [] : [{ icon: Wallet, title: t("verifyPayTitle"), body: t("verifyPayBody") }]),
   ];
   return (
     <Shell>

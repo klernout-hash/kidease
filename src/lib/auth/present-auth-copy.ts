@@ -17,6 +17,7 @@ import {
   ADMIN_SESSION_TIMEOUT_MESSAGE,
   LOGIN_OPEN_FAILED_MESSAGE,
   LOGIN_TAKING_TOO_LONG_MESSAGE,
+  PASSWORD_CONTINUE_MESSAGE,
 } from "./login-stall.ts";
 
 const EXACT: Array<[string, CopyKey]> = [
@@ -29,6 +30,7 @@ const EXACT: Array<[string, CopyKey]> = [
   [LOGIN_TAKING_TOO_LONG_MESSAGE, "authTakingTooLong"],
   [LOGIN_OPEN_FAILED_MESSAGE, "authOpenFailed"],
   [ADMIN_SESSION_TIMEOUT_MESSAGE, "authAdminTimeout"],
+  [PASSWORD_CONTINUE_MESSAGE, "authEnterPassword"],
   [PASSWORD_TOO_SHORT, "passwordTooShort"],
   [PASSWORD_COMMON_MESSAGE, "passwordCommon"],
   [PASSWORD_BREACHED_MESSAGE, "passwordBreached"],

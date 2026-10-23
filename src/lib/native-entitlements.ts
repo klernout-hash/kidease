@@ -197,6 +197,17 @@ export function shellBlocksCommerce(channel: StoreChannel): boolean {
   return !storePaymentsEnabled(channel);
 }
 
+/**
+ * Apple 2.3.10: a store build names only its own store, or none.
+ * The website still says both apps are coming soon.
+ */
+export function comingSoonStores(channel: StoreChannel): Array<"apple" | "play"> {
+  if (channel === "apple") return ["apple"];
+  if (channel === "google") return ["play"];
+  if (channel === "web") return ["apple", "play"];
+  return [];
+}
+
 export function commercePolicyForChannel(channel: StoreChannel): NativeCommercePolicy {
   return shellBlocksCommerce(channel) ? NATIVE_V1 : WEBSITE;
 }

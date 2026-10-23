@@ -7,6 +7,7 @@ import {
   PRIVATE_DOC_FALLBACK_MAX_BYTES,
   PRIVATE_DOC_MAX_BYTES,
   privateDocExt,
+  R2_FAMILY_PREFIX,
   R2_LICENSE_PREFIX,
   R2_SCREENING_PREFIX,
   safeDocKeyPart,
@@ -14,7 +15,10 @@ import {
 import { R2_SETUP_MESSAGE, resolveR2Config } from "@/lib/server/r2";
 import { nid } from "@/lib/utils";
 
-export type PrivateDocPrefix = typeof R2_SCREENING_PREFIX | typeof R2_LICENSE_PREFIX;
+export type PrivateDocPrefix =
+  | typeof R2_SCREENING_PREFIX
+  | typeof R2_LICENSE_PREFIX
+  | typeof R2_FAMILY_PREFIX;
 
 export type LoadedPrivateDoc = {
   body: Buffer;

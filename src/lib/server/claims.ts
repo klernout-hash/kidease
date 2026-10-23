@@ -85,6 +85,56 @@ async function storeLicensePhoto(sql: Awaited<ReturnType<typeof getSql>>, daycar
   if (!rows[0]) throw new Error(LISTING_NOT_FOUND);
 }
 
+/**
+ * Daycare Sign Up only, after a licence is submitted or a person explicitly
+ * chooses the daycare role. Never Parent Onboard. A missed slot still posts,
+ * so a licence submit is not dropped when signup already stamped crm_provider_at.
+ * Starting a claim does not call this and does not change profiles.role.
+ */
+async function syncDaycareCrm(input: {
+  userId: string;
+  trigger: "provider_signup" | "claim_verify";
+  company?: string | null;
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  testListing?: boolean;
+  eventId?: string | null;
+}) {
+  let providerIntake = false;
+  try {
+    const { ensureCrmIntake } = await import("@/lib/server/family");
+    providerIntake = await ensureCrmIntake(input.userId, "provider", {
+      company: input.company,
+      name: input.name,
+      email: input.email,
+      phone: input.phone,
+      trigger: input.trigger,
+      testListing: input.testListing,
+    });
+  } catch (err) {
+    console.error("[kidease-ghl] claim intake failed", err);
+  }
+  if (!providerIntake) {
+    try {
+      const { captureSignupIntakeFromUser } = await import("@/lib/server/ghl-intake");
+      await captureSignupIntakeFromUser({
+        userId: input.userId,
+        role: "provider",
+        trigger: input.trigger,
+        eventId: input.eventId,
+        company: input.company,
+        name: input.name,
+        email: input.email,
+        phone: input.phone,
+        testListing: input.testListing,
+      });
+    } catch (err) {
+      console.error("[kidease-ghl] claim intake failed", err);
+    }
+  }
+}
+
 export const searchClaimable = createServerFn({ method: "POST" })
   .validator((query: string) => query)
   .handler(async ({ data: query }) => {
@@ -182,9 +232,11 @@ export const startClaim = createServerFn({ method: "POST" })
       daycareId,
       actorUserId: context.userId,
       kind: "claim_pending",
-      note: pending[0] ? "Existing pending claim reused" : "Provider started a claim",
+      note: pending[0] ? "Existing pending claim reused" : "Someone started a claim",
     });
-    await writeProfileRole(context.userId, "provider");
+    // Do not set profiles.role to provider and do not call syncDaycareCrm.
+    // A parent can open this step by mistake. Daycare Sign Up waits for the
+    // licence submit below, or for an explicit daycare role choice.
     return {
       alreadyOwned: false as const,
       daycareId,
@@ -297,39 +349,16 @@ export const verifyClaim = createServerFn({ method: "POST" })
     } catch (err) {
       console.error("[kidease-mail] claim notify failed", err);
     }
-    const testListing = flags.isTest === 1;
-    let providerIntake = false;
-    try {
-      const { ensureCrmIntake } = await import("@/lib/server/family");
-      providerIntake = await ensureCrmIntake(context.userId, "provider", {
-        company: listedAfter?.name,
-        name: actor.name,
-        email: actor.email,
-        phone: actor.phone,
-        trigger: "claim_verify",
-        testListing,
-      });
-    } catch (err) {
-      console.error("[kidease-ghl] claim intake failed", err);
-    }
-    if (!providerIntake) {
-      try {
-        const { captureSignupIntakeFromUser } = await import("@/lib/server/ghl-intake");
-        await captureSignupIntakeFromUser({
-          userId: context.userId,
-          role: "provider",
-          trigger: "claim_verify",
-          eventId,
-          company: listedAfter?.name,
-          name: actor.name,
-          email: actor.email,
-          phone: actor.phone,
-          testListing,
-        });
-      } catch (err) {
-        console.error("[kidease-ghl] claim intake failed", err);
-      }
-    }
+    await syncDaycareCrm({
+      userId: context.userId,
+      trigger: "claim_verify",
+      company: listedAfter?.name,
+      name: actor.name,
+      email: actor.email,
+      phone: actor.phone,
+      testListing: flags.isTest === 1,
+      eventId,
+    });
     return { ok: true as const, status: "waiting" as const };
   });
 

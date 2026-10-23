@@ -113,7 +113,7 @@ describe("PostHog client wiring", () => {
     );
   });
 
-  it("masks session replay inputs and all on-screen text, and keeps flags on", () => {
+  it("masks session replay inputs and all on-screen text, and does not poll flags", () => {
     const options = posthogInitOptions({ native: false, consent: "granted" });
     assert.equal(options.api_host, `${POSTHOG_FIRST_PARTY_ORIGIN}${POSTHOG_PROXY_PATH}`);
     assert.equal(options.ui_host, POSTHOG_UI_HOST);
@@ -122,9 +122,9 @@ describe("PostHog client wiring", () => {
     assert.match(read("src/lib/server/posthog-proxy.ts"), /x-forwarded-proto/);
     assert.match(read("src/lib/server/posthog-proxy.ts"), /x-forwarded-for/);
     assert.equal(options.capture_pageview, "history_change");
-    assert.equal(options.autocapture, true);
+    assert.equal(options.autocapture, false);
     assert.equal(options.disable_session_recording, false);
-    assert.equal(options.advanced_disable_feature_flags, false);
+    assert.equal(options.advanced_disable_feature_flags, true);
     assert.equal(options.person_profiles, "identified_only");
     assert.equal(options.session_recording?.maskAllInputs, true);
     assert.equal(options.session_recording?.maskTextSelector, "*");

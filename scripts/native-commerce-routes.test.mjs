@@ -35,7 +35,9 @@ test("native commerce is guarded in the page and the component", () => {
   assert.match(jobs, /data-commerce=\{nativeShell \? "hidden" : "web"\}/);
   assert.match(claim, /data-commerce=\{nativeShell \? "hidden" : "web"\}/);
   assert.match(claim, /nativeShell && entry\[1\] === "perkPayLive"/);
-  assert.match(account, /search\.section === "alerts"/);
+  assert.match(account, /nativeShell && search\.section === "subscription"/);
+  assert.doesNotMatch(account, /search\.section === "alerts"/);
+  assert.match(account, /section === "alerts" && user/);
   assert.match(account, /nativeShell && item\.id === "subscription"/);
   assert.match(alerts, /if \(nativeShell \|\| !open\) return null/);
   assert.match(rootDoc, /nativeShell \? null : <GetAlertsPrompt \/>/);

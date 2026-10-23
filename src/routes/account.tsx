@@ -21,6 +21,7 @@ import { compressProfileFile, writeProfilePhoto } from "@/lib/profile-photo";
 import { authClient } from "@/lib/auth/client";
 import { getMyContact, saveMyContact } from "@/lib/server/profile-contact";
 import { CaslConsentFields } from "@/components/casl-consent-fields";
+import { FamilyVaultPanel } from "@/components/family-vault";
 import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent-api";
 import type { CaslPrefs } from "@/lib/casl";
 import { PlaceSearch } from "@/components/place-search";
@@ -46,7 +47,7 @@ export const Route = createFileRoute("/account")({
     const out: {
       tab?: "saved" | "enrolled" | "profile" | "payments";
       desk?: "parent" | "director" | "admin" | "support";
-      section?: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms";
+      section?: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents";
     } = {};
     const tab = s.tab;
     if (tab === "saved" || tab === "enrolled" || tab === "profile" || tab === "payments") out.tab = tab;
@@ -58,7 +59,8 @@ export const Route = createFileRoute("/account")({
       section === "subscription" ||
       section === "delete" ||
       section === "security" ||
-      section === "email-sms"
+      section === "email-sms" ||
+      section === "documents"
     ) {
       out.section = section;
     }
@@ -301,13 +303,13 @@ function ProfilePane() {
   const hideParentPlan = !chrome.pending && chrome.role === "parent" && !chrome.subscriptionsEnabled;
   const hideUpgrade = desk === "admin" || hideParentPlan;
   const section =
-    nativeShell && (search.section === "subscription" || search.section === "alerts")
+    nativeShell && search.section === "subscription"
       ? "profile"
       : hideUpgrade && search.section === "subscription"
         ? "profile"
         : (search.section ?? "profile");
   const sectionSearch = (
-    next: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms",
+    next: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents",
   ) => ({
     tab: "profile" as const,
     ...(search.desk ? { desk: search.desk } : {}),
@@ -318,6 +320,7 @@ function ProfilePane() {
     { id: "alerts" as const, label: t("accountAlerts") },
     { id: "security" as const, label: t("loginSecurity") },
     { id: "email-sms" as const, label: t("emailAndSms") },
+    { id: "documents" as const, label: t("familyDocs") },
     { id: "appearance" as const, label: t("appearance") },
     { id: "subscription" as const, label: t("navUpgrade") },
     { id: "delete" as const, label: t("deleteAccount") },
@@ -373,6 +376,7 @@ function ProfilePane() {
             </Link>
           ))}
         </nav>
+        {section === "documents" ? <FamilyVaultPanel signedIn={Boolean(user)} /> : null}
         {section === "alerts" && user ? (
           <AlertPushSettings
             audience={desk === "provider" ? "daycare" : "parent"}

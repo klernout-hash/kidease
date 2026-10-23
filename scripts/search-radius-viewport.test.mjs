@@ -14,7 +14,8 @@ test("home radius select is wide enough below desktop and the smoke covers 320px
   const bar = src("src/components/explore-search-bar.tsx");
   const css = src("src/styles.css");
   const e2e = src("scripts/e2e-smoke.mjs");
-  assert.match(bar, /max-w-\[4\.75rem\]/);
+  assert.match(bar, /min-w-\[9rem\]/);
+  assert.match(bar, /max-w-\[10rem\]/);
   assert.match(bar, /max-lg:min-w-\[9rem\]/);
   assert.match(bar, /max-lg:max-w-none/);
   assert.match(css, /@media \(max-width: 1023px\) \{\s*select\[data-ke="search-radius"\]/);
@@ -24,4 +25,6 @@ test("home radius select is wide enough below desktop and the smoke covers 320px
   assert.match(e2e, /RADIUS_LABEL_OPTIONS = \["5", "10", "25", "50"\]/);
   assert.match(e2e, /radiusLabelSmoke/);
   assert.match(e2e, /path of \["\/", "\/fr"\]/);
+  assert.match(e2e, /desktop\.appearance !== "none"/);
+  assert.doesNotMatch(e2e, /maxWidth < 80/);
 });

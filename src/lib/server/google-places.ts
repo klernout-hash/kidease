@@ -87,10 +87,40 @@ export const resolvePlaceId = createServerFn({ method: "POST" })
     };
   });
 
+const GEO_TTL_MS = 24 * 60 * 60 * 1000;
+const GEO_MISS_TTL_MS = 10 * 60 * 1000;
+const GEO_MAX = 200;
+const geoCache = new Map<string, { at: number; value: ResolvedPlace | null }>();
+
+function readGeo(key: string): ResolvedPlace | null | undefined {
+  const hit = geoCache.get(key);
+  if (!hit) return undefined;
+  const ttl = hit.value ? GEO_TTL_MS : GEO_MISS_TTL_MS;
+  if (Date.now() - hit.at > ttl) {
+    geoCache.delete(key);
+    return undefined;
+  }
+  return hit.value;
+}
+
+function trimCache(map: Map<string, unknown>) {
+  if (map.size <= GEO_MAX) return;
+  const oldest = map.keys().next().value;
+  if (typeof oldest === "string") map.delete(oldest);
+}
+
+function storeGeo(key: string, value: ResolvedPlace | null) {
+  geoCache.set(key, { at: Date.now(), value });
+  trimCache(geoCache);
+}
+
 export const geocodePlace = createServerFn({ method: "POST" })
   .validator((q: string) => String(q ?? "").trim().slice(0, 160))
   .handler(async ({ data }): Promise<ResolvedPlace | null> => {
     if (!placesKey() || !data) return null;
+    const cacheKey = data.toLowerCase();
+    const cached = readGeo(cacheKey);
+    if (cached !== undefined) return cached;
     const bias = placesBiasOrigin();
     const params = new URLSearchParams({
       address: data,
@@ -109,13 +139,22 @@ export const geocodePlace = createServerFn({ method: "POST" })
     };
     const hit = json.results?.[0];
     const loc = hit?.geometry?.location;
-    if (typeof loc?.lat !== "number" || typeof loc?.lng !== "number") return null;
-    return { lat: loc.lat, lng: loc.lng, label: hit?.formatted_address || data };
+    if (typeof loc?.lat !== "number" || typeof loc?.lng !== "number") {
+      storeGeo(cacheKey, null);
+      return null;
+    }
+    const place = { lat: loc.lat, lng: loc.lng, label: hit?.formatted_address || data };
+    storeGeo(cacheKey, place);
+    return place;
   });
 
+const placeCache = new Map<string, { at: number; value: PlaceHit | null }>();
 
 async function lookupPlace(name: string, address: string): Promise<PlaceHit | null> {
   if (!KEY) return null;
+  const cacheKey = `${name}|${address}`.toLowerCase();
+  const saved = placeCache.get(cacheKey);
+  if (saved && Date.now() - saved.at < (saved.value ? GEO_TTL_MS : GEO_MISS_TTL_MS)) return saved.value;
   const q = encodeURIComponent(`${name} ${address}`);
   const url = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${q}&inputtype=textquery&fields=place_id,rating,user_ratings_total&key=${KEY}`;
   const res = await fetch(url);
@@ -124,12 +163,19 @@ async function lookupPlace(name: string, address: string): Promise<PlaceHit | nu
     candidates?: Array<{ place_id?: string; rating?: number; user_ratings_total?: number }>;
   };
   const hit = json.candidates?.[0];
-  if (!hit?.place_id) return null;
-  return {
+  if (!hit?.place_id) {
+    placeCache.set(cacheKey, { at: Date.now(), value: null });
+    trimCache(placeCache);
+    return null;
+  }
+  const place = {
     placeId: hit.place_id,
     ratingX10: Math.round((hit.rating ?? 0) * 10),
     reviewCount: hit.user_ratings_total ?? 0,
   };
+  placeCache.set(cacheKey, { at: Date.now(), value: place });
+  trimCache(placeCache);
+  return place;
 }
 
 export const refreshGoogleRating = createServerFn({ method: "POST" })

@@ -75,6 +75,7 @@ import { Route as Verify2faRouteImport } from './routes/verify-2fa'
 import { Route as AdminFeaturesRouteImport } from './routes/admin.features'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiE2eSeedRouteImport } from './routes/api/e2e-seed'
+import { Route as ApiFamilyDocumentsRouteImport } from './routes/api/family-documents'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiInngestRouteImport } from './routes/api/inngest'
 import { Route as ApiOpenSpotsCheckinRouteImport } from './routes/api/open-spots-checkin'
@@ -154,6 +155,7 @@ import { Route as ApiAdminStripeCatalogRouteImport } from './routes/api/admin.st
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiDocusignPollRouteImport } from './routes/api/docusign.poll'
 import { Route as ApiDocusignWebhookRouteImport } from './routes/api/docusign.webhook'
+import { Route as ApiFamilyDocumentsIdRouteImport } from './routes/api/family-documents.$id'
 import { Route as ApiLicenseDocsDaycareIdRouteImport } from './routes/api/license-docs.$daycareId'
 import { Route as ApiPushRegisterRouteImport } from './routes/api/push.register'
 import { Route as ApiScreeningDocumentsIdRouteImport } from './routes/api/screening-documents.$id'
@@ -504,6 +506,11 @@ const ApiDigestRoute = ApiDigestRouteImport.update({
 const ApiE2eSeedRoute = ApiE2eSeedRouteImport.update({
   id: '/api/e2e-seed',
   path: '/api/e2e-seed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiFamilyDocumentsRoute = ApiFamilyDocumentsRouteImport.update({
+  id: '/api/family-documents',
+  path: '/api/family-documents',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
@@ -903,6 +910,11 @@ const ApiDocusignWebhookRoute = ApiDocusignWebhookRouteImport.update({
   path: '/api/docusign/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiFamilyDocumentsIdRoute = ApiFamilyDocumentsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => ApiFamilyDocumentsRoute,
+} as any)
 const ApiLicenseDocsDaycareIdRoute = ApiLicenseDocsDaycareIdRouteImport.update({
   id: '/api/license-docs/$daycareId',
   path: '/api/license-docs/$daycareId',
@@ -1071,6 +1083,7 @@ export interface FileRoutesByFullPath {
   '/admin/features': typeof AdminFeaturesRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
+  '/api/family-documents': typeof ApiFamilyDocumentsRouteWithChildren
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/api/open-spots-checkin': typeof ApiOpenSpotsCheckinRoute
@@ -1150,6 +1163,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/docusign/poll': typeof ApiDocusignPollRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
+  '/api/family-documents/$id': typeof ApiFamilyDocumentsIdRoute
   '/api/license-docs/$daycareId': typeof ApiLicenseDocsDaycareIdRoute
   '/api/push/register': typeof ApiPushRegisterRoute
   '/api/screening-documents/$id': typeof ApiScreeningDocumentsIdRoute
@@ -1236,6 +1250,7 @@ export interface FileRoutesByTo {
   '/admin/features': typeof AdminFeaturesRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
+  '/api/family-documents': typeof ApiFamilyDocumentsRouteWithChildren
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/api/open-spots-checkin': typeof ApiOpenSpotsCheckinRoute
@@ -1315,6 +1330,7 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/docusign/poll': typeof ApiDocusignPollRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
+  '/api/family-documents/$id': typeof ApiFamilyDocumentsIdRoute
   '/api/license-docs/$daycareId': typeof ApiLicenseDocsDaycareIdRoute
   '/api/push/register': typeof ApiPushRegisterRoute
   '/api/screening-documents/$id': typeof ApiScreeningDocumentsIdRoute
@@ -1404,6 +1420,7 @@ export interface FileRoutesById {
   '/admin/features': typeof AdminFeaturesRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
+  '/api/family-documents': typeof ApiFamilyDocumentsRouteWithChildren
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
   '/api/open-spots-checkin': typeof ApiOpenSpotsCheckinRoute
@@ -1483,6 +1500,7 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/docusign/poll': typeof ApiDocusignPollRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
+  '/api/family-documents/$id': typeof ApiFamilyDocumentsIdRoute
   '/api/license-docs/$daycareId': typeof ApiLicenseDocsDaycareIdRoute
   '/api/push/register': typeof ApiPushRegisterRoute
   '/api/screening-documents/$id': typeof ApiScreeningDocumentsIdRoute
@@ -1573,6 +1591,7 @@ export interface FileRouteTypes {
     | '/admin/features'
     | '/api/digest'
     | '/api/e2e-seed'
+    | '/api/family-documents'
     | '/api/health'
     | '/api/inngest'
     | '/api/open-spots-checkin'
@@ -1652,6 +1671,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/docusign/poll'
     | '/api/docusign/webhook'
+    | '/api/family-documents/$id'
     | '/api/license-docs/$daycareId'
     | '/api/push/register'
     | '/api/screening-documents/$id'
@@ -1738,6 +1758,7 @@ export interface FileRouteTypes {
     | '/admin/features'
     | '/api/digest'
     | '/api/e2e-seed'
+    | '/api/family-documents'
     | '/api/health'
     | '/api/inngest'
     | '/api/open-spots-checkin'
@@ -1817,6 +1838,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/docusign/poll'
     | '/api/docusign/webhook'
+    | '/api/family-documents/$id'
     | '/api/license-docs/$daycareId'
     | '/api/push/register'
     | '/api/screening-documents/$id'
@@ -1905,6 +1927,7 @@ export interface FileRouteTypes {
     | '/admin/features'
     | '/api/digest'
     | '/api/e2e-seed'
+    | '/api/family-documents'
     | '/api/health'
     | '/api/inngest'
     | '/api/open-spots-checkin'
@@ -1984,6 +2007,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/docusign/poll'
     | '/api/docusign/webhook'
+    | '/api/family-documents/$id'
     | '/api/license-docs/$daycareId'
     | '/api/push/register'
     | '/api/screening-documents/$id'
@@ -2072,6 +2096,7 @@ export interface RootRouteChildren {
   Verify2faRoute: typeof Verify2faRoute
   ApiDigestRoute: typeof ApiDigestRoute
   ApiE2eSeedRoute: typeof ApiE2eSeedRoute
+  ApiFamilyDocumentsRoute: typeof ApiFamilyDocumentsRouteWithChildren
   ApiHealthRoute: typeof ApiHealthRoute
   ApiInngestRoute: typeof ApiInngestRoute
   ApiOpenSpotsCheckinRoute: typeof ApiOpenSpotsCheckinRoute
@@ -2581,6 +2606,13 @@ declare module '@tanstack/react-router' {
       path: '/api/e2e-seed'
       fullPath: '/api/e2e-seed'
       preLoaderRoute: typeof ApiE2eSeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/family-documents': {
+      id: '/api/family-documents'
+      path: '/api/family-documents'
+      fullPath: '/api/family-documents'
+      preLoaderRoute: typeof ApiFamilyDocumentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/health': {
@@ -3136,6 +3168,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiDocusignWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/family-documents/$id': {
+      id: '/api/family-documents/$id'
+      path: '/$id'
+      fullPath: '/api/family-documents/$id'
+      preLoaderRoute: typeof ApiFamilyDocumentsIdRouteImport
+      parentRoute: typeof ApiFamilyDocumentsRoute
+    }
     '/api/license-docs/$daycareId': {
       id: '/api/license-docs/$daycareId'
       path: '/api/license-docs/$daycareId'
@@ -3466,6 +3505,17 @@ const SupportRouteChildren: SupportRouteChildren = {
 const SupportRouteWithChildren =
   SupportRoute._addFileChildren(SupportRouteChildren)
 
+interface ApiFamilyDocumentsRouteChildren {
+  ApiFamilyDocumentsIdRoute: typeof ApiFamilyDocumentsIdRoute
+}
+
+const ApiFamilyDocumentsRouteChildren: ApiFamilyDocumentsRouteChildren = {
+  ApiFamilyDocumentsIdRoute: ApiFamilyDocumentsIdRoute,
+}
+
+const ApiFamilyDocumentsRouteWithChildren =
+  ApiFamilyDocumentsRoute._addFileChildren(ApiFamilyDocumentsRouteChildren)
+
 interface ApiScreeningDocumentsRouteChildren {
   ApiScreeningDocumentsIdRoute: typeof ApiScreeningDocumentsIdRoute
 }
@@ -3545,6 +3595,7 @@ const rootRouteChildren: RootRouteChildren = {
   Verify2faRoute: Verify2faRoute,
   ApiDigestRoute: ApiDigestRoute,
   ApiE2eSeedRoute: ApiE2eSeedRoute,
+  ApiFamilyDocumentsRoute: ApiFamilyDocumentsRouteWithChildren,
   ApiHealthRoute: ApiHealthRoute,
   ApiInngestRoute: ApiInngestRoute,
   ApiOpenSpotsCheckinRoute: ApiOpenSpotsCheckinRoute,

@@ -37,7 +37,7 @@ import {
   type MapViewData,
 } from "@/lib/map-cluster";
 
-const TTL_MS = 60_000;
+const TTL_MS = 3 * 60 * 1000;
 const MAX_ENTRIES = 48;
 
 type CacheEntry = { at: number; value: MapViewData };

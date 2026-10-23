@@ -10,6 +10,8 @@ export const PRIVATE_DOC_FALLBACK_MAX_BYTES = 350_000;
 export const PRIVATE_DOC_MIME = ["application/pdf", "image/jpeg", "image/png", "image/webp"] as const;
 export const R2_SCREENING_PREFIX = "screening";
 export const R2_LICENSE_PREFIX = "licenses";
+/** Parent immunization and subsidy files. Never a public listing prefix. */
+export const R2_FAMILY_PREFIX = "family-docs";
 export const SCREENING_DOC_API = "/api/screening-documents";
 export const LICENSE_DOC_API = "/api/license-docs";
 
@@ -84,7 +86,11 @@ export function privateDocExt(mime: string): string {
 
 export function isPrivateR2Key(ref: string | null | undefined): boolean {
   const key = (ref || "").trim();
-  return key.startsWith(`${R2_SCREENING_PREFIX}/`) || key.startsWith(`${R2_LICENSE_PREFIX}/`);
+  return (
+    key.startsWith(`${R2_SCREENING_PREFIX}/`) ||
+    key.startsWith(`${R2_LICENSE_PREFIX}/`) ||
+    key.startsWith(`${R2_FAMILY_PREFIX}/`)
+  );
 }
 
 export function isLegacyPrivateDataUrl(ref: string | null | undefined): boolean {

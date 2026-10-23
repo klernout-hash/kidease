@@ -139,17 +139,15 @@ export const TurnstileField = memo(function TurnstileField({
     void loadTurnstile()
       .then((api) => {
         if (cancelled || !api || !host.current || widgetId.current) return;
-        const narrow =
-          typeof window !== "undefined" &&
-          typeof window.matchMedia === "function" &&
-          window.matchMedia("(max-width: 399px)").matches;
+        const resolvedTheme = document.documentElement.dataset.resolvedTheme === "dark" ? "dark" : "light";
         widgetId.current = api.render(host.current, {
           sitekey: siteKey,
-          size: narrow ? "compact" : "flexible",
+          size: "flexible",
           // Managed/checkbox must stay visible so parents and daycares see
           // Cloudflare branding. interaction-only hid the widget on most logins.
+          // Compact on a phone clipped the widget into a white "Verifying…" box.
           appearance: "always",
-          theme: "auto",
+          theme: resolvedTheme,
           language: copyLocale,
           retry: "auto",
           "refresh-expired": "auto",
@@ -235,7 +233,7 @@ export const TurnstileField = memo(function TurnstileField({
 
   if (siteKey === undefined || siteKey === null) return null;
   return (
-    <div className="min-h-[65px] max-w-full overflow-x-hidden" data-ke="turnstile">
+    <div className="min-h-[65px] w-full max-w-full" data-ke="turnstile">
       {/* No cf-turnstile class: implicit api.js auto-renders that class
           without our callback, so Success never enables the button. */}
       <div ref={host} className="w-full max-w-full" data-ke-turnstile-host="" />

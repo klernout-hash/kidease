@@ -26,6 +26,7 @@ import { decideParentRequest, listDaycareIncoming } from "@/lib/server/enrol-que
 import { listTourRequests } from "@/lib/server/tours";
 import { listLeadRequests } from "@/lib/server/lead-requests";
 import { DaycareLeadInbox } from "@/components/daycare-lead-inbox";
+import { CentreFamilyDocs } from "@/components/family-vault";
 import { EmptyState } from "@/components/empty-state";
 import { TodayUrgencyHome } from "@/components/today-urgency-home";
 import { DirectorProStrip } from "@/components/director-pro-strip";
@@ -376,7 +377,9 @@ function ProviderPage() {
         </>
       ) : null}
       {desk === "requests" ? (
-        leads.length === 0 && tours.length === 0 && pipeline.length === 0 && waiting.length === 0 ? (
+        <div className="space-y-6">
+        <CentreFamilyDocs />
+        {leads.length === 0 && tours.length === 0 && pipeline.length === 0 && waiting.length === 0 ? (
           <EmptyState title={t("enquiriesEmptyTitle")} body={t("enquiriesEmptyLead")} />
         ) : (
         <section className="space-y-8">
@@ -442,7 +445,8 @@ function ProviderPage() {
           </div>
           ) : null}
         </section>
-        )
+        )}
+        </div>
       ) : null}
 
       {desk === "tours" ? <TourAvailabilityDesk listings={listings} onSaved={() => void load()} /> : null}

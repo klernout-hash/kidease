@@ -79,7 +79,7 @@ test("Listing has one primary CTA, sticky enquire, and a hero that shares the ti
   assert.doesNotMatch(src("src/components/shell.tsx"), /DeskSwitcher/);
   assert.doesNotMatch(listing, /DeskSwitcher/);
   assert.doesNotMatch(listing, /md:aspect-\[2\/1\]/);
-  assert.match(listing, /lg:grid-cols-\[minmax\(0,1\.15fr\)_minmax\(16rem,20rem\)\]/);
+  assert.match(listing, /md:grid-cols-\[minmax\(0,1\.15fr\)_minmax\(16rem,20rem\)\]/);
   assert.match(listing, /claimCtaShort/);
   assert.doesNotMatch(listing, /<CompareChip/);
   assert.match(more, /data-ke="listing-more"/);

@@ -4,6 +4,7 @@ import { BuildingPhoto, ListingPhotoFallback } from "@/components/building-photo
 import { isMissingCatalogueBuilding } from "@/lib/catalogue-buildings";
 import { healMediaUrl, isFailedPhotoUrl, isStockListingPhoto } from "@/lib/listing-photo";
 import { cn } from "@/lib/utils";
+import { useCopy } from "@/lib/use-copy";
 
 export function ListingCarousel({
   photos,
@@ -16,6 +17,7 @@ export function ListingCarousel({
   aspect?: "4/3" | "20/19" | "1/1";
   className?: string;
 }) {
+  const { t } = useCopy();
   const shots = photos
     .map((p) => healMediaUrl(p))
     .filter((p) => p && !isStockListingPhoto(p) && !isMissingCatalogueBuilding(p) && !isFailedPhotoUrl(p))
@@ -62,25 +64,25 @@ export function ListingCarousel({
         <>
           <button
             type="button"
-            aria-label="Previous photo"
+            aria-label={t("photoPrev")}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               go(index - 1);
             }}
-            className="absolute left-2 top-1/2 z-[2] hidden size-8 -translate-y-1/2 place-items-center rounded-full bg-white text-[#222] shadow-[0_2px_6px_rgba(0,0,0,0.18)] opacity-0 transition-opacity duration-150 group-hover/photo:opacity-100 md:grid"
+            className="absolute left-2 top-1/2 z-[2] grid size-11 min-h-11 min-w-11 -translate-y-1/2 place-items-center rounded-full bg-white text-[#222] shadow-[0_2px_6px_rgba(0,0,0,0.18)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <ChevronLeft className="size-4" strokeWidth={2} />
           </button>
           <button
             type="button"
-            aria-label="Next photo"
+            aria-label={t("photoNext")}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               go(index + 1);
             }}
-            className="absolute right-2 top-1/2 z-[2] hidden size-8 -translate-y-1/2 place-items-center rounded-full bg-white text-[#222] shadow-[0_2px_6px_rgba(0,0,0,0.18)] opacity-0 transition-opacity duration-150 group-hover/photo:opacity-100 md:grid"
+            className="absolute right-2 top-1/2 z-[2] grid size-11 min-h-11 min-w-11 -translate-y-1/2 place-items-center rounded-full bg-white text-[#222] shadow-[0_2px_6px_rgba(0,0,0,0.18)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <ChevronRight className="size-4" strokeWidth={2} />
           </button>
