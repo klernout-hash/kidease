@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound, redirect, useNavigate, useParams, useSearch, useLoaderData } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, redirect, useNavigate, useParams, useSearch, useLoaderData, type ErrorComponentProps } from "@tanstack/react-router";
 import { MapPinned, MessageCircle, Star } from "lucide-react";
 import { parentLoginSearch, parentSignupSearch } from "@/lib/auth/parent-login";
 import { FoundingMemberBadge } from "@/components/founding-member-badge";
@@ -85,7 +85,7 @@ import { listingPageTitle } from "@/lib/listing-meta";
 import { hreflangLinks, localePath } from "@/lib/locale-path";
 import { captureRankingEvent, publicTelHref, publicWebsiteHref } from "@/lib/ranking/events";
 import { rankingContextFor } from "@/lib/ranking/context";
-import { rethrowRouterControl } from "@/lib/listing-loader-errors";
+import { isTransientListingError, rethrowRouterControl } from "@/lib/listing-loader-errors";
 import { decideListingLoader, listingNotFoundHead, shouldNotFoundListing } from "@/lib/listing-not-found";
 import { ListingNotFoundPage } from "@/components/page-not-found";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
@@ -136,6 +136,7 @@ export const Route = createFileRoute("/daycare/$slug")({
     }
   },
   notFoundComponent: ListingNotFoundPage,
+  errorComponent: ListingRetryPage,
   head: ({ loaderData }) => {
     if (!loaderData) return listingNotFoundHead();
     const canonical = listingCanonicalUrl(loaderData.slug);
@@ -170,6 +171,24 @@ export const Route = createFileRoute("/daycare/$slug")({
   component: Listing,
 });
 
+export function ListingRetryPage({ reset }: ErrorComponentProps) {
+  const { t } = useCopy();
+  return (
+    <Shell>
+      <main className="ke-gutter mx-auto max-w-lg py-16" data-ke="listing-retry">
+        <EmptyState
+          title={t("listingRetry")}
+          body={t("listingRetryLead")}
+          action={t("tryAgain")}
+          onAction={() => reset()}
+          secondary={t("search")}
+          secondaryTo="/search"
+        />
+      </main>
+    </Shell>
+  );
+}
+
 function ClaimListingButton({ id, name, className = "" }: { id: string; name: string; className?: string }) {
   return <ClaimListingCta daycareId={id} name={name} source="listing" className={className} />;
 }
@@ -200,7 +219,7 @@ export function Listing() {
   const [infoOpen, setInfoOpen] = useState(false);
   const [messageOpen, setMessageOpen] = useState(false);
   const [comparing, setComparing] = useState(false);
-  const [missing, setMissing] = useState(false);
+  const [gap, setGap] = useState<"missing" | "retry" | null>(null);
   const [reload, setReload] = useState(0);
   const origin = useAppStore((s) => s.origin);
   const located = useAppStore((s) => s.located);
@@ -209,27 +228,28 @@ export function Listing() {
 
   useEffect(() => {
     let live = true;
-    setMissing(false);
+    setGap(null);
     setData(null);
     const watchdog = window.setTimeout(() => {
       if (!live) return;
       setData((cur) => {
         if (cur) return cur;
-        setMissing(true);
+        setGap("retry");
         return cur;
       });
     }, 12_000);
     void getDaycare({ data: slug })
       .then((res) => {
         if (!live) return;
-        if (!res) setMissing(true);
+        if (!res) setGap("missing");
         else {
-          setMissing(false);
+          setGap(null);
           setData(res);
         }
       })
-      .catch(() => {
-        if (live) setMissing(true);
+      .catch((error) => {
+        if (!live) return;
+        setGap(isTransientListingError(error) ? "retry" : "missing");
       });
     return () => {
       live = false;
@@ -300,21 +320,36 @@ export function Listing() {
     document.title = listingSeoPageTitle(d, locale === "fr" ? "fr" : "en") || listingPageTitle(d);
   }, [data, locale]);
 
-  if (missing) {
+  if (gap) {
+    const retrying = gap === "retry";
     return (
       <Shell>
-        <main className="ke-gutter mx-auto max-w-lg py-16">
+        <main className="ke-gutter mx-auto max-w-lg py-16" data-ke={retrying ? "listing-retry" : "listing-missing"}>
           <EmptyState
-            title={t("listingMissing")}
-            body={t("listingMissingLead")}
-            action={t("search")}
-            actionTo="/search"
-            secondary={t("tryAgain")}
-            onSecondary={() => {
-              setMissing(false);
-              setData(null);
-              setReload((n) => n + 1);
-            }}
+            title={t(retrying ? "listingRetry" : "listingMissing")}
+            body={t(retrying ? "listingRetryLead" : "listingMissingLead")}
+            action={retrying ? t("tryAgain") : t("search")}
+            actionTo={retrying ? undefined : "/search"}
+            onAction={
+              retrying
+                ? () => {
+                    setGap(null);
+                    setData(null);
+                    setReload((n) => n + 1);
+                  }
+                : undefined
+            }
+            secondary={retrying ? t("search") : t("tryAgain")}
+            secondaryTo={retrying ? "/search" : undefined}
+            onSecondary={
+              retrying
+                ? undefined
+                : () => {
+                    setGap(null);
+                    setData(null);
+                    setReload((n) => n + 1);
+                  }
+            }
           />
         </main>
       </Shell>
@@ -684,7 +719,7 @@ export function Listing() {
 
   return (
     <Shell>
-      <article className="ke-dense mx-auto max-w-5xl overflow-x-hidden pb-[calc(8.75rem+env(safe-area-inset-bottom))] lg:pb-10">
+      <article className="ke-dense mx-auto max-w-5xl overflow-x-hidden pb-[calc(11rem+env(safe-area-inset-bottom))] md:pb-10">
         <div className="lg:ke-gutter lg:pt-4">
           <ListingHeroGallery
             photos={gallery}
@@ -785,7 +820,7 @@ export function Listing() {
           <ListingBadges item={ranked} compact feeOnly />
         </header>
         <ListingJumpNav />
-        <div className="mt-6 grid items-start gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(16rem,20rem)]">
+        <div className="mt-6 grid items-start gap-8 md:grid-cols-[minmax(0,1.15fr)_minmax(16rem,20rem)]">
         <div id="listing-overview" className="ke-listing-sections min-w-0 scroll-mt-24">
             {!live && d.claimStatus && d.claimStatus !== "unclaimed" ? (
               <ListingStatusBadge claimStatus={d.claimStatus} live={live} />
@@ -1083,7 +1118,7 @@ export function Listing() {
                 .join(" · ")}
             </p>
         </div>
-        <aside className="ke-panel hidden h-fit px-4 py-4 shadow-card lg:sticky lg:top-20 lg:block">
+        <aside className="ke-panel hidden h-fit px-4 py-4 shadow-card md:sticky md:top-20 md:block">
           {offerClaim ? <ClaimListingButton id={d.id} name={name} className="mb-3 w-full" /> : null}
           <ListingCtaSnippet live={live} from={from} hours={hours} prominent />
           <p className="mt-1 text-sm text-muted">{live ? t("listingCtaLead") : t("guestListingTrust")}</p>
@@ -1113,9 +1148,16 @@ export function Listing() {
       </article>
 
       {!requestOpen ? (
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden [[data-channel=app]_&]:bottom-20">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden [[data-channel=app]_&]:bottom-20">
         <div className="mx-auto max-w-lg">
           <ListingCtaSnippet live={live} from={from} hours={hours} />
+          {parentActions && !live && offerClaim ? (
+            <ClaimListingButton
+              id={d.id}
+              name={name}
+              className="mb-2 h-auto min-h-11 w-full whitespace-normal px-3 py-2 text-center text-sm leading-tight"
+            />
+          ) : null}
           <div className="flex items-center gap-2">
           {ownEdit ? <ListingEditLink /> : null}
           <DirectionsButton className="shrink-0" />
@@ -1128,9 +1170,6 @@ export function Listing() {
                 {t("bookTour")}
               </Button>
             </div>
-          ) : null}
-          {parentActions && !live && offerClaim ? (
-            <ClaimListingButton id={d.id} name={name} className="h-12 min-h-12 flex-1" />
           ) : null}
           {parentActions && !live ? (
             <Button className="h-12 min-h-12 flex-1 rounded-[14px]" data-ke="listing-sticky-cta" asChild>

@@ -15,6 +15,9 @@ export const ADMIN_IDLE_CHECK_MS = 6_000;
 export const ADMIN_SESSION_TIMEOUT_MESSAGE =
   "Admin session timed out. Enter your password to continue.";
 
+/** Shown when a public session must type a password. Never names the admin desk. */
+export const PASSWORD_CONTINUE_MESSAGE = "Enter your password to continue.";
+
 export const LOGIN_TAKING_TOO_LONG_MESSAGE =
   "Sign-in is taking too long. Retry, or open your desk. If this keeps happening, Cloudflare is still checking the sign-in request.";
 

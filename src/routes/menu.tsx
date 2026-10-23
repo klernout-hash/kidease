@@ -9,6 +9,7 @@ import { signOut } from "@/lib/auth/client";
 import { ShareKidEaseButton } from "@/components/share-button";
 import { RoleNavLinks } from "@/components/role-nav";
 import { useRoleChrome } from "@/components/role-chrome";
+import { useInNativeShell } from "@/lib/use-native-shell";
 
 const MenuDeskTools = lazy(() =>
   import("@/components/menu-desk-tools").then((m) => ({ default: m.MenuDeskTools })),
@@ -49,6 +50,7 @@ function MenuPage() {
   const { t, locale } = useCopy();
   const { user } = useCurrentUserState();
   const chrome = useRoleChrome();
+  const hideCommerce = useInNativeShell();
   const fr = locale === "fr";
   const to = (path: string) => localePath(path, locale);
   const showParents = !chrome.pending && (chrome.role === "guest" || chrome.role === "parent" || chrome.role === "admin");
@@ -89,7 +91,7 @@ function MenuPage() {
           <ShareKidEaseButton appearance="row" />
           <MenuRow to={to("/about")} label={t("about")} icon="about" />
           <MenuRow to={to("/start-a-daycare")} label={t("startADaycare")} icon="startDaycare" />
-          <MenuRow to={to("/donate")} label={t("donateToKids")} icon="donate" />
+          {hideCommerce ? null : <MenuRow to={to("/donate")} label={t("donateToKids")} icon="donate" />}
           <MenuRow to="/team" label={t("team")} icon="team" />
           <MenuRow to={to("/contact")} label={t("contact")} icon="contact" />
         </Group>

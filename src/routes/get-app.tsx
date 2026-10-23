@@ -17,7 +17,9 @@ import {
 import { STORE } from "@/lib/store-listing";
 import { appleStoreListingUrl, playStoreListingUrl } from "@/lib/store-review";
 import { localePath } from "@/lib/locale-path";
+import { comingSoonStores } from "@/lib/native-entitlements";
 import { useCopy } from "@/lib/use-copy";
+import { useInNativeShell, useStoreChannel } from "@/lib/use-native-shell";
 import { HomeScreenGuide } from "@/components/home-screen-guide";
 import { JsonLd } from "@/components/json-ld";
 import { MARKETING_PAGE_SEO, organizationGraphJsonLdScript, pageSeoHead } from "@/lib/page-seo";
@@ -46,8 +48,20 @@ export function GetApp() {
   return <GetAppScreen dev={dev} />;
 }
 
+function storeComingLine(locale: string, badges: Array<"apple" | "play">): string {
+  const fr = locale === "fr";
+  if (badges.length === 2) {
+    return fr ? "Bientôt dans l’App Store et sur Google Play." : "Coming soon on the App Store and Google Play.";
+  }
+  if (badges[0] === "apple") return fr ? "Bientôt dans l’App Store." : "Coming soon on the App Store.";
+  if (badges[0] === "play") return fr ? "Bientôt sur Google Play." : "Coming soon on Google Play.";
+  return "";
+}
+
 export function GetAppScreen({ dev }: { dev?: "1" }) {
   const { t, locale } = useCopy();
+  const hideCommerce = useInNativeShell();
+  const storeBadges = comingSoonStores(useStoreChannel());
   const showDev = dev === "1";
   const [canPrompt, setCanPrompt] = useState(false);
   const [installed, setInstalled] = useState(false);
@@ -69,8 +83,7 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
 
   const desc = locale === "fr" ? STORE.descriptionFr : STORE.description;
   const phoneLead = t("getAppPhoneLead");
-  const coming =
-    locale === "fr" ? "Bient\u00f4t dans l\u2019App Store et sur Google Play." : "Coming soon on the App Store and Google Play.";
+  const coming = storeComingLine(locale, storeBadges);
 
   return (
     <Shell>
@@ -79,7 +92,7 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
         <section className="grid items-center gap-10 md:grid-cols-[1fr_minmax(16rem,20rem)]">
           <div>
             <BrandMark size="md" align="start" />
-            <p className="mt-6 text-xs font-medium uppercase tracking-[0.16em] text-muted">{t("getAppKicker")}</p>
+            <p className="mt-6 text-xs font-medium uppercase tracking-[0.16em] text-muted">{storeBadges.length === 2 ? t("getAppKicker") : t("onYourPhone")}</p>
             <h1 className="mt-3 font-display text-4xl md:text-5xl">{t("getApp")}</h1>
             <p className="mt-4 max-w-md text-muted">{t("getAppLead")}</p>
             <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -109,11 +122,28 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
                 </Link>
               </Button>
             </div>
-            <div className="mt-5 flex flex-wrap gap-2" data-ke="store-coming-soon">
-              <StoreBadge store="apple" label={locale === "fr" ? "App Store \u00b7 Bient\u00f4t" : "App Store \u00b7 Coming soon"} />
-              <StoreBadge store="play" label={locale === "fr" ? "Google Play \u00b7 Bient\u00f4t" : "Google Play \u00b7 Coming soon"} />
-            </div>
-            <p className="mt-3 max-w-md text-xs text-subtle" data-ke="store-coming-soon">{coming}</p>
+            {storeBadges.length === 2 ? (
+              <div className="mt-5 flex flex-wrap gap-2" data-ke="store-coming-soon">
+                <StoreBadge store="apple" label={locale === "fr" ? "App Store \u00b7 Bient\u00f4t" : "App Store \u00b7 Coming soon"} />
+                <StoreBadge store="play" label={locale === "fr" ? "Google Play \u00b7 Bient\u00f4t" : "Google Play \u00b7 Coming soon"} />
+              </div>
+            ) : storeBadges.length === 1 ? (
+              <div className="mt-5 flex flex-wrap gap-2" data-ke="store-badge">
+                <StoreBadge
+                  store={storeBadges[0]}
+                  label={
+                    storeBadges[0] === "apple"
+                      ? locale === "fr"
+                        ? "App Store \u00b7 Bient\u00f4t"
+                        : "App Store \u00b7 Coming soon"
+                      : locale === "fr"
+                        ? "Google Play \u00b7 Bient\u00f4t"
+                        : "Google Play \u00b7 Coming soon"
+                  }
+                />
+              </div>
+            ) : null}
+            {coming ? <p className="mt-3 max-w-md text-xs text-subtle" data-ke={storeBadges.length === 2 ? "store-coming-soon" : "store-badge"}>{coming}</p> : null}
           </div>
           <DeviceFrame device="iphone">
             <ShotSearch />
@@ -159,15 +189,22 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
         <section className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Feat icon={MapPinned} title={t("featGps")} body={t("featGpsBody")} />
           <Feat icon={Check} title={t("featCentres")} body={t("featCentresBody")} />
-          <Feat icon={Wallet} title={t("featPay")} body={t("featPayBody")} />
+          {hideCommerce ? null : <Feat icon={Wallet} title={t("featPay")} body={t("featPayBody")} />}
           <Feat icon={ShieldCheck} title={t("featSafe")} body={t("featSafeBody")} />
         </section>
 
         <section className="mt-14 overflow-hidden rounded-xl bg-primary px-4 py-10 text-primary-fg sm:px-8 md:px-10 md:py-14">
           <h2 className="font-display text-2xl text-primary-fg md:text-3xl">{t("onYourPhone")}</h2>
-          <p className="mt-2 max-w-xl text-sm text-primary-fg/80">{phoneLead}</p>
+          <p className="mt-2 max-w-xl text-sm text-primary-fg/80">{storeBadges.length === 2 ? phoneLead : t("getAppLead")}</p>
           <ul className="mt-10 grid grid-cols-2 items-center gap-5 lg:grid-cols-4 lg:gap-8">
-            {SHOTS.map((s) => (
+            {(storeBadges[0] === "apple"
+              ? SHOTS.filter((s) => s.device === "iphone")
+              : storeBadges[0] === "play"
+                ? SHOTS.filter((s) => s.device === "android")
+                : storeBadges.length === 2
+                  ? SHOTS
+                  : []
+            ).map((s) => (
               <li key={s.key} className="min-w-0">
                 <DeviceFrame device={s.device}>{s.screen}</DeviceFrame>
                 <p className="mt-4 text-center text-xs font-medium tracking-wide text-primary-fg/75">
@@ -179,9 +216,15 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
         </section>
 
         <section id="store-ready" className="mt-14 rounded-xl bg-surface p-6 ring-1 ring-border md:p-8">
-          <h2 className="font-display text-2xl">{t("storeReady")}</h2>
-          <p className="mt-3 max-w-2xl text-sm text-muted">{coming}</p>
-          <p className="mt-3 max-w-2xl text-sm text-muted">{t("storeReadyBody")}</p>
+          {storeBadges.length === 2 ? (
+            <>
+              <h2 className="font-display text-2xl">{t("storeReady")}</h2>
+              <p className="mt-3 max-w-2xl text-sm text-muted">{coming}</p>
+              <p className="mt-3 max-w-2xl text-sm text-muted">{t("storeReadyBody")}</p>
+            </>
+          ) : (
+            <h2 className="font-display text-2xl">{t("getApp")}</h2>
+          )}
           {showDev ? (
             <>
               <dl className="mt-6 grid gap-3 text-sm sm:grid-cols-2">

@@ -1,5 +1,5 @@
 import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
-import { Listing } from "@/routes/daycare.$slug";
+import { Listing, ListingRetryPage } from "@/routes/daycare.$slug";
 import { listingCanonicalUrl, listingSeoHeadTags, listingBreadcrumbJsonLdScript, listingJsonLdScript } from "@/lib/listing-seo";
 import { primaryListingPhoto } from "@/lib/listing-photo";
 import { DETAIL_SIZES, HERO_WIDTHS, photoSrcSet, photoUrl } from "@/lib/photo";
@@ -37,6 +37,7 @@ export const Route = createFileRoute("/fr/daycare/$slug")({
     }
   },
   notFoundComponent: ListingNotFoundPage,
+  errorComponent: ListingRetryPage,
   head: ({ loaderData }) => {
     if (!loaderData) return listingNotFoundHead();
     const canonical = listingCanonicalUrl(loaderData.slug).replace(

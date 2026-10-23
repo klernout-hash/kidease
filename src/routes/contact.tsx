@@ -97,7 +97,7 @@ export function Contact() {
         <p className="text-sm font-semibold tracking-wide text-primary">{t("contact")}</p>
         <h1 className="mt-2 text-4xl md:text-5xl">{isParent ? t("parentContactTitle") : t("contactTitle")}</h1>
         <p className="mt-6 text-muted">{isParent ? t("parentContactIntro") : t("contactIntro")}</p>
-        <FeelBanner src={isParent ? "/photos/cottage.jpg" : "/photos/brick.jpg"} className="mt-8" />
+        <FeelBanner src={isParent ? "/photos/cottage.jpg" : "/photos/kitchen.jpg"} className="mt-8" eager />
 
         {isParent ? null : (
           <div className="mt-8 rounded-xl bg-surface p-5 text-center ring-1 ring-border">

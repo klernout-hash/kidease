@@ -54,6 +54,18 @@ async function openRoute(page, base, path) {
   await page.evaluate(async () => {
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
   });
+  // Home and contact stills are lazy. A wide window sometimes shoots the placeholder.
+  if (path === "/" || path === "/fr" || path === "/contact") {
+    await page
+      .waitForFunction(() => {
+        const imgs = [...document.images].filter((img) => {
+          const box = img.getBoundingClientRect();
+          return box.width > 40 && box.bottom > 0 && box.top < window.innerHeight;
+        });
+        return imgs.length > 0 && imgs.every((img) => img.complete && img.naturalWidth > 0);
+      }, { timeout: 8000 })
+      .catch(() => {});
+  }
   await page.waitForTimeout(250);
   return res?.status() ?? 0;
 }
