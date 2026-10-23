@@ -19,9 +19,10 @@ test("nearby search returns catalogue instead of awaiting a Neon import", () => 
 
 test("listing detail can render catalogue data when Neon is down", () => {
   const daycares = src("src/lib/server/daycares.ts");
-  assert.match(daycares, /catalogPayload/);
-  assert.match(daycares, /listing-sql-timeout/);
-  assert.match(daycares, /catch \{\s*return catalogPayload;/);
+  const listing = daycares.slice(daycares.indexOf("export const getDaycare"), daycares.indexOf("export const getHiddenReviewRedirect"));
+  assert.match(listing, /listing-sql-timeout/);
+  assert.match(listing, /catch \{[\s\S]*catalogAvailability\(found\)/);
+  assert.match(listing, /reviews: \[\] as Review\[\]/);
 });
 
 test("search count stays on a loading state instead of flashing 0 centres", () => {

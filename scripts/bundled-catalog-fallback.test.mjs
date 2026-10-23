@@ -213,7 +213,8 @@ describe("listing and sitemap call sites use the fallback gate", () => {
     );
     assert.match(slugFn, /resolveFoundCatalogRow/);
     assert.doesNotMatch(slugFn, /isNeonCatalogPreferred/);
-    assert.match(slugFn, /return catalogRowToListing\(chosen\.row\)/);
+    assert.match(slugFn, /const listing = catalogRowToListing\(chosen\.row\)/);
+    assert.match(slugFn, /return listing/);
     assert.match(src("src/lib/catalog.ts"), /chooseCatalogListing/);
     assert.match(src("src/lib/catalog.ts"), /omitSuppressedBundleCopies/);
     assert.match(src("src/routes/daycare.$slug.tsx"), /decideListingLoader/);
