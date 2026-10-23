@@ -86,9 +86,10 @@ async function storeLicensePhoto(sql: Awaited<ReturnType<typeof getSql>>, daycar
 }
 
 /**
- * Daycare Sign Up only. type:daycare, and claim:claimed when the trigger is
- * claim verify. Never Parent Onboard. A missed slot still posts, so a claim
- * is not dropped when signup already stamped crm_provider_at.
+ * Daycare Sign Up only, after a licence is submitted or a person explicitly
+ * chooses the daycare role. Never Parent Onboard. A missed slot still posts,
+ * so a licence submit is not dropped when signup already stamped crm_provider_at.
+ * Starting a claim does not call this and does not change profiles.role.
  */
 async function syncDaycareCrm(input: {
   userId: string;
@@ -231,23 +232,11 @@ export const startClaim = createServerFn({ method: "POST" })
       daycareId,
       actorUserId: context.userId,
       kind: "claim_pending",
-      note: pending[0] ? "Existing pending claim reused" : "Provider started a claim",
+      note: pending[0] ? "Existing pending claim reused" : "Someone started a claim",
     });
-    await writeProfileRole(context.userId, "provider");
-    const actor = await lookupUser(context.userId).catch(() => ({
-      name: null as string | null,
-      email: null as string | null,
-      phone: null as string | null,
-    }));
-    await syncDaycareCrm({
-      userId: context.userId,
-      trigger: "claim_verify",
-      company: listed.name,
-      name: actor.name,
-      email: actor.email,
-      phone: actor.phone,
-      testListing: Boolean(listed.isTest),
-    });
+    // Do not set profiles.role to provider and do not call syncDaycareCrm.
+    // A parent can open this step by mistake. Daycare Sign Up waits for the
+    // licence submit below, or for an explicit daycare role choice.
     return {
       alreadyOwned: false as const,
       daycareId,
