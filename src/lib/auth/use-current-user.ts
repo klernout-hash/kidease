@@ -8,6 +8,7 @@ export type AppUser = {
   displayName: string | null;
   primaryEmail: string | null;
   profileImageUrl: string | null;
+  emailVerified: boolean;
   /** True when this is the sandbox/dev fallback (auth not configured). */
   isDevFallback: boolean;
 };
@@ -24,6 +25,7 @@ export const DEV_USER: AppUser = {
   displayName: "Dev User",
   primaryEmail: "dev@example.com",
   profileImageUrl: null,
+  emailVerified: true,
   isDevFallback: true,
 };
 
@@ -74,7 +76,10 @@ export function useCurrentUser(): AppUser | null {
 }
 
 function mapAuthUser(
-  user: { id: string; name?: string | null; email?: string | null; image?: string | null } | null | undefined,
+  user:
+    | { id: string; name?: string | null; email?: string | null; image?: string | null; emailVerified?: boolean | null }
+    | null
+    | undefined,
 ): AppUser | null {
   if (!user) return null;
   return {
@@ -82,6 +87,7 @@ function mapAuthUser(
     displayName: user.name ?? null,
     primaryEmail: user.email ?? null,
     profileImageUrl: user.image ?? null,
+    emailVerified: user.emailVerified === true,
     isDevFallback: false,
   };
 }
@@ -113,12 +119,12 @@ export function useSettledUser(timeoutMs = SESSION_SETTLE_MS): CurrentUserState 
     () => mapAuthUser(data?.user),
     // Session fields, not the session object. A new object every render was the loop.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [data?.user?.id, data?.user?.name, data?.user?.email, data?.user?.image],
+    [data?.user?.id, data?.user?.name, data?.user?.email, data?.user?.image, data?.user?.emailVerified],
   );
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (mapped) setLastUser(mapped);
-  }, [mapped?.id, mapped?.displayName, mapped?.primaryEmail, mapped?.profileImageUrl]);
+  }, [mapped?.id, mapped?.displayName, mapped?.primaryEmail, mapped?.profileImageUrl, mapped?.emailVerified]);
   if (mapped) return { user: mapped, isPending: false };
   if (isPending && !expired) return { user: lastUser, isPending: !lastUser };
   if (expired) return { user: lastUser, isPending: false };

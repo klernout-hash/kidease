@@ -3005,5 +3005,19 @@
   "viewAsDaycare": "Kita",
   "viewAsStarting": "Startet…",
   "viewAsUnknown": "diese Person",
-  "sponsored": "Gesponsert"
+  "sponsored": "Gesponsert",
+  "facebookRoleTitle": "Für wen ist dieses Konto?",
+  "facebookRoleLead": "KidEase ist für Eltern und Personal von Betreuungseinrichtungen in Kanada. Sie müssen 18 Jahre oder älter sein. Ein Kind kann kein Konto haben.",
+  "facebookRoleAdult": "Sie haben bestätigt, dass Sie 18 Jahre oder älter sind.",
+  "facebookRoleParent": "Ich bin ein Elternteil",
+  "facebookRoleCentre": "Ich arbeite in einer Einrichtung",
+  "facebookEmailTitle": "E-Mail hinzufügen",
+  "facebookEmailLead": "Facebook hat keine E-Mail geteilt. Fügen Sie eine hinzu und bestätigen Sie sie, bevor Sie einer Einrichtung schreiben oder einen Besuch buchen.",
+  "facebookEmailLabel": "E-Mail",
+  "facebookEmailSend": "Link senden",
+  "facebookEmailPending": "Öffnen Sie den Link in Ihrem Posteingang, um diese E-Mail zu bestätigen. Danach können Sie einer Einrichtung schreiben oder einen Besuch buchen.",
+  "facebookEmailResend": "Link erneut senden",
+  "facebookEmailSaved": "Der Link ist unterwegs. Prüfen Sie auch den Spam-Ordner.",
+  "facebookEmailRequired": "Fügen Sie eine E-Mail hinzu und bestätigen Sie sie, bevor Sie einer Einrichtung schreiben oder einen Besuch buchen.",
+  "facebookHostUnavailable": "Weiter mit Facebook ist unter dieser Adresse nicht verfügbar. Öffnen Sie kidease.ca."
 }

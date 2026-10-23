@@ -33,6 +33,8 @@ import { readLiveSearchFlag } from "@/lib/explore-search";
 import { rememberResumePath } from "@/lib/retention";
 import { ApplyPendingShortlist } from "@/components/apply-pending-shortlist";
 import { KeyboardInset } from "@/components/keyboard-inset";
+import { FacebookEmailPrompt } from "@/components/facebook-email-prompt";
+import { FacebookRoleBoot } from "@/components/facebook-role-boot";
 
 export function Shell({ children }: { children: ReactNode }) {
   const { t, locale } = useCopy();
@@ -265,6 +267,8 @@ export function Shell({ children }: { children: ReactNode }) {
           </button>
         </div>
       ) : null}
+      <FacebookRoleBoot />
+      <FacebookEmailPrompt />
       <NavDrawer
         open={open}
         onClose={close}

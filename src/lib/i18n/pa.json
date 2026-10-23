@@ -3005,5 +3005,19 @@
   "viewAsDaycare": "ਡੇਅਕੇਅਰ",
   "viewAsStarting": "ਸ਼ੁਰੂ ਹੋ ਰਿਹਾ ਹੈ…",
   "viewAsUnknown": "ਇਹ ਵਿਅਕਤੀ",
-  "sponsored": "ਸਪਾਂਸਰਡ"
+  "sponsored": "ਸਪਾਂਸਰਡ",
+  "facebookRoleTitle": "ਇਹ ਖਾਤਾ ਕਿਸ ਲਈ ਹੈ?",
+  "facebookRoleLead": "KidEase ਕੈਨੇਡਾ ਦੇ ਮਾਪਿਆਂ ਅਤੇ ਸੈਂਟਰ ਦੇ ਸਟਾਫ਼ ਲਈ ਹੈ। ਤੁਹਾਡੀ ਉਮਰ 18 ਸਾਲ ਜਾਂ ਵੱਧ ਹੋਣੀ ਚਾਹੀਦੀ ਹੈ। ਬੱਚੇ ਦਾ ਖਾਤਾ ਨਹੀਂ ਹੋ ਸਕਦਾ।",
+  "facebookRoleAdult": "ਤੁਸੀਂ ਪੁਸ਼ਟੀ ਕੀਤੀ ਹੈ ਕਿ ਤੁਹਾਡੀ ਉਮਰ 18 ਸਾਲ ਜਾਂ ਵੱਧ ਹੈ।",
+  "facebookRoleParent": "ਮੈਂ ਮਾਪਾ ਹਾਂ",
+  "facebookRoleCentre": "ਮੈਂ ਇੱਕ ਸੈਂਟਰ ਵਿੱਚ ਕੰਮ ਕਰਦਾ ਹਾਂ",
+  "facebookEmailTitle": "ਆਪਣੀ ਈਮੇਲ ਜੋੜੋ",
+  "facebookEmailLead": "Facebook ਨੇ ਈਮੇਲ ਨਹੀਂ ਦਿੱਤੀ। ਸੈਂਟਰ ਨੂੰ ਸੁਨੇਹਾ ਭੇਜਣ ਜਾਂ ਟੂਰ ਬੁੱਕ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ ਇੱਕ ਈਮੇਲ ਜੋੜੋ ਅਤੇ ਪੁਸ਼ਟੀ ਕਰੋ।",
+  "facebookEmailLabel": "ਈਮੇਲ",
+  "facebookEmailSend": "ਲਿੰਕ ਭੇਜੋ",
+  "facebookEmailPending": "ਇਸ ਈਮੇਲ ਦੀ ਪੁਸ਼ਟੀ ਲਈ ਆਪਣੇ ਇਨਬਾਕਸ ਵਿੱਚ ਲਿੰਕ ਖੋਲ੍ਹੋ। ਫਿਰ ਤੁਸੀਂ ਸੈਂਟਰ ਨੂੰ ਸੁਨੇਹਾ ਭੇਜ ਸਕਦੇ ਹੋ ਜਾਂ ਟੂਰ ਬੁੱਕ ਕਰ ਸਕਦੇ ਹੋ।",
+  "facebookEmailResend": "ਲਿੰਕ ਦੁਬਾਰਾ ਭੇਜੋ",
+  "facebookEmailSaved": "ਲਿੰਕ ਭੇਜ ਦਿੱਤਾ ਗਿਆ ਹੈ। ਜੰਕ ਮੇਲ ਵੀ ਦੇਖੋ।",
+  "facebookEmailRequired": "ਸੈਂਟਰ ਨੂੰ ਸੁਨੇਹਾ ਭੇਜਣ ਜਾਂ ਟੂਰ ਬੁੱਕ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ ਈਮੇਲ ਜੋੜੋ ਅਤੇ ਪੁਸ਼ਟੀ ਕਰੋ।",
+  "facebookHostUnavailable": "ਇਸ ਪਤੇ ਉੱਤੇ Facebook ਨਾਲ ਜਾਰੀ ਰੱਖਣਾ ਉਪਲਬਧ ਨਹੀਂ। kidease.ca ਖੋਲ੍ਹੋ।"
 }
