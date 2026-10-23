@@ -9,6 +9,13 @@ export function isTextScale(value: string | null | undefined): value is TextScal
   return value === "md" || value === "lg" || value === "xl";
 }
 
+/** Relative to the site's 14px root. 1 leaves the current size unchanged. */
+export function textScaleFactor(scale: TextScale): string {
+  if (scale === "lg") return "1.125";
+  if (scale === "xl") return "1.25";
+  return "1";
+}
+
 export function textScalePercent(scale: TextScale): string {
   if (scale === "lg") return "112.5%";
   if (scale === "xl") return "125%";
@@ -27,12 +34,15 @@ export function readTextScale(): TextScale {
 
 export function applyTextScale(
   scale: TextScale,
-  root: { style: { fontSize: string }; dataset: { textScale?: string } } | null = typeof document === "undefined"
-    ? null
-    : document.documentElement,
+  root: {
+    style: { fontSize: string; setProperty?: (name: string, value: string) => void };
+    dataset: { textScale?: string };
+  } | null = typeof document === "undefined" ? null : document.documentElement,
 ) {
   if (!root) return;
-  root.style.fontSize = textScalePercent(scale);
+  // The stylesheet sizes the page at 14px. An inline 100% would jump that to 16px.
+  root.style.fontSize = "";
+  root.style.setProperty?.("--ke-text-scale", textScaleFactor(scale));
   root.dataset.textScale = scale;
 }
 
