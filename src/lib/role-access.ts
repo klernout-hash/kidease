@@ -200,14 +200,17 @@ export function roleNavItems(input: { role: ChromeRole; paid?: boolean; subscrip
     ];
   }
   if (input.role === "provider") {
-    return [
+    const items: RoleNavItem[] = [
       { id: "desk", label: "Today", to: "/provider", search: { desk: "today" }, icon: "daycare" },
       { id: "requests", label: "Requests", to: "/provider", search: { desk: "requests" }, icon: "tourChecklist" },
       { id: "listing", label: "Listings", to: "/provider", search: { desk: "listings" }, icon: "claim" },
       { id: "messages", label: "Messages", to: "/inbox", search: { view: "centre" }, icon: "messages" },
-      { id: "upgrade", label: planLabel, to: "/provider/subscription", icon: "benefits" },
       { id: "account", label: "Account", to: "/account", search: { tab: "profile" }, icon: "account" },
     ];
+    if (input.subscriptionsOn === true) {
+      items.splice(4, 0, { id: "upgrade", label: planLabel, to: "/provider/subscription", icon: "benefits" });
+    }
+    return items;
   }
   if (input.role === "admin") {
     return [

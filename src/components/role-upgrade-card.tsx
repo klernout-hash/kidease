@@ -81,7 +81,9 @@ export function RoleUpgradeCard({
 export function UpgradeToProLink({ className = "" }: { className?: string }) {
   const nativeShell = useInNativeShell();
   const { t } = useCopy();
+  const { session } = useSessionDesks();
   if (nativeShell) return null;
+  if (session?.subscriptionsEnabled !== true) return null;
   return (
     <Link
       to="/provider/subscription"

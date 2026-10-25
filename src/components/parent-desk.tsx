@@ -22,7 +22,7 @@ import { shareChildWithCentres } from "@/lib/server/enrol-queue";
 import { hasCareDetails } from "@/lib/child-profile";
 import { useCopy } from "@/lib/use-copy";
 import { formatAgeLabel } from "@/lib/templates";
-import { ageGroupFromMonths, formatMonth, money, monthsBetween } from "@/lib/utils";
+import { ageGroupFromMonths, asList, formatMonth, money, monthsBetween } from "@/lib/utils";
 import { useSessionDesks } from "@/components/desk-switcher";
 import type { Booking, Child, DaycareCard as Card, Payment, TourRequest } from "@/lib/types";
 import type { Bill } from "@/lib/bill";
@@ -111,7 +111,7 @@ export function ParentDesk({
   const [contentTab, setContentTab] = useState<ParentTab>(initialTab ?? "explore");
   const [explore, setExplore] = useState<Card[]>([]);
   const [exploreReady, setExploreReady] = useState(false);
-  const [saved, setSaved] = useState<Card[]>(initialSaved);
+  const [saved, setSaved] = useState<Card[]>(() => asList(initialSaved));
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [bills, setBills] = useState<Bill[]>([]);
@@ -154,7 +154,7 @@ export function ParentDesk({
         };
         const rows = await withTimeoutFallback(
           dedupedQuery(`parent-search:${JSON.stringify(data)}`, QUERY_STALE_MS, () => searchDaycares({ data }), {
-            cacheIf: (value) => value.length > 0,
+            cacheIf: (value) => Array.isArray(value) && value.length > 0,
             fresh,
           }),
           LOADER_SETTLE_MS,
@@ -167,12 +167,12 @@ export function ParentDesk({
                 `parent-featured:${loc.lat},${loc.lng},${loc.label ?? ""}`,
                 QUERY_STALE_MS,
                 () => featuredDaycares({ data: loc }),
-                { cacheIf: (value) => value.length > 0, fresh },
+                { cacheIf: (value) => Array.isArray(value) && value.length > 0, fresh },
               ),
               LOADER_SETTLE_MS,
               [] as Card[],
             );
-        startTransition(() => setExplore(next));
+        startTransition(() => setExplore(asList(next)));
       } finally {
         startTransition(() => setExploreReady(true));
       }
@@ -202,10 +202,10 @@ export function ParentDesk({
     });
     await yieldToMain();
     startTransition(() => {
-      setSaved(f.saved);
-      setBookings(f.bookings);
-      setPayments(f.payments);
-      setChildren(f.children);
+      setSaved(asList(f?.saved));
+      setBookings(asList(f?.bookings));
+      setPayments(asList(f?.payments));
+      setChildren(asList(f?.children));
       setCentreMessages(f.centreMessages ?? 0);
       setUpgradeDismissed(Boolean(f.upgradeCardDismissed));
       setShortlistShared(Boolean(f.shortlistShared));
@@ -236,9 +236,9 @@ export function ParentDesk({
       ),
     ]);
     startTransition(() => {
-      setBills(billed.bills);
-      setTours(tourRows);
-      setLeads(leadRows);
+      setBills(asList(billed?.bills));
+      setTours(asList(tourRows));
+      setLeads(asList(leadRows));
     });
   }, [user?.id]);
 
@@ -324,11 +324,11 @@ export function ParentDesk({
   const deferredSaved = useDeferredValue(saved);
   const rankedSaved = useMemo(() => {
     if (contentTab !== "saved") return [] as Array<Card & { matchScore: number; urgencyScore: number; distanceKm: number }>;
-    return [...deferredSaved]
+    return asList(deferredSaved)
       .map((item) => {
-        const child = children[0];
+        const child = asList(children)[0];
         const ageGroup = child?.birthdate ? ageGroupFromMonths(monthsBetween(child.birthdate)) : "any";
-        const startDate = soonestStartDate(bookings.filter((b) => b.daycareId === item.id));
+        const startDate = soonestStartDate(asList(bookings).filter((b) => b.daycareId === item.id));
         const km = doorDistanceKm(origin, { lat: item.lat, lng: item.lng }) ?? Number.NaN;
         return {
           ...item,
@@ -351,7 +351,8 @@ export function ParentDesk({
   };
   const onPlusSurface = contentTab === "subscription" || plusReturn != null;
   if (onPlusSurface && desksReady && desks && !canBuyParentUpgrade(upgradeBuyer)) {
-    if (canBuyDaycareUpgrade(upgradeBuyer)) return <Navigate to="/provider/subscription" />;
+    if (canBuyDaycareUpgrade(upgradeBuyer) && desks.subscriptionsEnabled) return <Navigate to="/provider/subscription" />;
+    if (canBuyDaycareUpgrade(upgradeBuyer)) return <Navigate to="/provider" search={{ desk: "today" }} />;
     if (desks.home === "/admin") return <Navigate to="/admin" />;
     if (desks.home === "/support") return <Navigate to="/support" />;
   }

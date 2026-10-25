@@ -58,6 +58,7 @@ import {
   mapTilesForCamera,
   mapViewCacheKey,
   markersForMapView,
+  projectMapRows,
   pickNearestMapDot,
   pointInBbox,
   runMapTileBatch,
@@ -188,6 +189,7 @@ function GoogleMapView({
   const [picked, setPicked] = useState<string | null>(null);
   const [pickedPin, setPickedPin] = useState<MapPin | null>(null);
   const [viewData, setViewData] = useState<MapViewData | null>(null);
+  const [mapEpoch, setMapEpoch] = useState(0);
   const [locating, setLocating] = useState(false);
   const [loadGen, setLoadGen] = useState(0);
   const appliedViewKey = useRef("");
@@ -282,11 +284,32 @@ function GoogleMapView({
         if (cancelled || !el) return;
         el.innerHTML = "";
         const framed = originRef.current;
-        const created = await createKidEaseMap(maps, el, {
-          center: { lat: framed.lat, lng: framed.lng },
-          zoom: mapZoomForRadius(radiusRef.current),
-          mapTypeId: googleMapTypeId(readMapBase()),
-        });
+        const created = await createKidEaseMap(
+          maps,
+          el,
+          {
+            center: { lat: framed.lat, lng: framed.lng },
+            zoom: mapZoomForRadius(radiusRef.current),
+            mapTypeId: googleMapTypeId(readMapBase()),
+          },
+          undefined,
+          {
+            onPaint: (painted, usedMapId) => {
+              if (cancelled) return;
+              map = painted;
+              mapRef.current = painted;
+              mapsApiRef.current = maps;
+              setBasemapReady(true);
+              void loadAdvancedMarkerElement(maps, usedMapId).then((AdvancedMarker) => {
+                if (cancelled || mapRef.current !== painted) return;
+                advancedMarkerRef.current = AdvancedMarker;
+                overlayFactoryRef.current = createListingOverlayFactory(maps, AdvancedMarker);
+                setReady(true);
+                setMapEpoch((n) => n + 1);
+              });
+            },
+          },
+        );
         if (cancelled) return;
         map = created.map;
         // Google Maps can ignore a later fitBounds if it runs before the
@@ -495,7 +518,7 @@ function GoogleMapView({
       if (idle) maps.event?.removeListener?.(idle);
       maps.event.removeListener(drag);
     };
-  }, [origin.lat, origin.lng, secondOrigin?.lat, secondOrigin?.lng, radiusKm, ready]);
+  }, [origin.lat, origin.lng, secondOrigin?.lat, secondOrigin?.lng, radiusKm, ready, mapEpoch]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -635,7 +658,8 @@ function GoogleMapView({
     };
     const schedule = () => {
       window.clearTimeout(timer);
-      timer = window.setTimeout(run, MAP_FETCH_DEBOUNCE_MS);
+      const wait = loadedView.current || tileCache.current.size > 0 ? MAP_FETCH_DEBOUNCE_MS : 0;
+      timer = window.setTimeout(run, wait);
     };
     const listener = maps.event.addListener(map, "idle", schedule);
     schedule();
@@ -644,7 +668,45 @@ function GoogleMapView({
       window.clearTimeout(timer);
       maps.event.removeListener(listener);
     };
-  }, [ready]);
+  }, [ready, mapEpoch]);
+
+  useEffect(() => {
+    if (loadedView.current) return;
+    const zoomNow = mapZoomForRadius(radiusKm);
+    if (mapLoadMode(zoomNow) !== "pins") return;
+    const pins: MapPin[] = [];
+    for (const item of items) {
+      if (!item?.id || !Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
+      pins.push({
+        id: item.id,
+        slug: item.slug || "",
+        name: item.name || "",
+        nameFr: item.nameFr || "",
+        lat: item.lat,
+        lng: item.lng,
+        address: item.address || "",
+        city: item.city || "",
+        province: item.province || "",
+        postalCode: item.postalCode || "",
+      });
+    }
+    if (!pins.length) return;
+    const box = bboxFromRadius(origin, radiusKm);
+    const latPad = (box.maxLat - box.minLat) * 0.35;
+    const lngPad = (box.maxLng - box.minLng) * 0.35;
+    const seeded = projectMapRows(pins, zoomNow, {
+      minLat: box.minLat - latPad,
+      maxLat: box.maxLat + latPad,
+      minLng: box.minLng - lngPad,
+      maxLng: box.maxLng + lngPad,
+    });
+    if (seeded.mode !== "pins" || seeded.pins.length === 0) return;
+    const signature = seeded.pins.map((pin) => pin.id).join(",");
+    setViewData((current) => {
+      if (current?.mode === "pins" && current.pins.map((pin) => pin.id).join(",") === signature) return current;
+      return seeded;
+    });
+  }, [items, origin, radiusKm]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -742,7 +804,7 @@ function GoogleMapView({
     }, 50);
 
     return () => window.clearTimeout(timer);
-  }, [items, locale, picked, ready, zoom, viewData]);
+  }, [items, locale, picked, ready, zoom, viewData, mapEpoch]);
 
   useEffect(() => {
     const maps = mapsApiRef.current;

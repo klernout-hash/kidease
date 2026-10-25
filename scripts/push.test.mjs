@@ -281,7 +281,8 @@ test("docs, migration, API, hook, and plugin are wired but off by default", () =
   assert.match(src("src/lib/server/push-send.ts"), /fcm\.googleapis\.com\/v1\/projects/);
   assert.match(src("src/lib/server/push-send.ts"), /api\.push\.apple\.com/);
   assert.match(src("src/lib/server/push-send.ts"), /FEATURE_PUSH/);
-  assert.match(vercel, /notifications=\(self\)/);
+  assert.doesNotMatch(vercel, /notifications=/);
+  assert.match(vercel, /camera=\(self\)/);
   assert.match(docs, /Leave `FEATURE_PUSH` unset/);
   assert.match(envExample, /FEATURE_SMS=0/);
   assert.doesNotMatch(envExample, /FEATURE_PUSH=1/);

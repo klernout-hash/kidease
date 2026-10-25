@@ -33,7 +33,8 @@ test("guests reach plans from the main menu and the footer", () => {
   assert.equal(plans?.label, "Plans");
   assert.equal(plans?.to, "/plans");
   assert.equal(roleNavItems({ role: "parent" }).some((item) => item.id === "plans"), false);
-  assert.equal(roleNavItems({ role: "provider" }).some((item) => item.id === "upgrade"), true);
+  assert.equal(roleNavItems({ role: "provider" }).some((item) => item.id === "upgrade"), false);
+  assert.equal(roleNavItems({ role: "provider", subscriptionsOn: true }).some((item) => item.id === "upgrade"), true);
   assert.ok(FOOTER_DAYCARES.some((link) => link.to === "/plans" && link.labelKey === "navPlans"));
   assert.match(src("src/components/role-nav.tsx"), /plans: "navPlans"/);
   assert.match(src("src/lib/copy.ts"), /navPlans: "Plans"/);

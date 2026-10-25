@@ -148,8 +148,8 @@ export function confirmedStoredFeeProgram(d: {
   return code;
 }
 
-function hasAmenity(amenities: string, key: string) {
-  return amenities
+function hasAmenity(amenities: string | null | undefined, key: string) {
+  return String(amenities ?? "")
     .split(",")
     .map((part) => part.trim())
     .includes(key);

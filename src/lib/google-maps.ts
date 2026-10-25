@@ -193,6 +193,7 @@ export async function createKidEaseMap(
   el: HTMLElement,
   input: Omit<Parameters<typeof listingMapConstructorOptions>[0], "maps">,
   tileWaitMs = MAP_TILES_WAIT_MS,
+  hooks?: { onPaint?: (map: google.maps.Map, usedMapId: string) => void },
 ): Promise<{ map: google.maps.Map; usedMapId: string; tilesReady: boolean }> {
   const preferredId = String(input.mapId ?? googleMapsMapId()).trim();
   const build = (mapId: string) =>
@@ -200,11 +201,13 @@ export async function createKidEaseMap(
 
   let usedMapId = preferredId;
   let map = build(usedMapId);
+  hooks?.onPaint?.(map, usedMapId);
   let tilesReady = await waitForMapTiles(map, el, maps, tileWaitMs);
   if (!tilesReady && usedMapId) {
     el.innerHTML = "";
     usedMapId = "";
     map = build("");
+    hooks?.onPaint?.(map, usedMapId);
     tilesReady = await waitForMapTiles(map, el, maps, tileWaitMs);
   }
   return { map, usedMapId, tilesReady };

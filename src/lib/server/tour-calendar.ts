@@ -5,7 +5,7 @@ import { nid } from "@/lib/utils";
 import { catalogByIdGet } from "@/lib/catalog";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { guestInfoUserId, normalizeInfoContact } from "@/lib/parent-listing";
-import { callerIsAdmin } from "@/lib/server/public-listing";
+import { callerMayUseAdminOnlyListing } from "@/lib/server/public-listing";
 import { upsertDaycare } from "@/lib/server/seed";
 import { centreCanAcceptInquiry } from "@/lib/server/provider-entitlements";
 import { lookupUser, notifyPlatform, notifyThreadParty } from "@/lib/server/notify";
@@ -116,7 +116,7 @@ export const listPublicTourSlots = createServerFn({ method: "GET" })
     const daycareId = (data.daycareId || "").trim();
     if (!daycareId) return { timezone: resolveTourTimezone(null), slots: [] as PublicTourSlot[], empty: "none_posted" as const };
     const listed = await catalogByIdGet(daycareId);
-    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerIsAdmin())) {
+    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerMayUseAdminOnlyListing())) {
       return { timezone: resolveTourTimezone(null), slots: [] as PublicTourSlot[], empty: "none_posted" as const };
     }
     const sql = await getSql();
@@ -288,7 +288,7 @@ export const bookTourSlot = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const sql = await getSql();
     const listed = await catalogByIdGet(data.daycareId);
-    if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerIsAdmin())) {
+    if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerMayUseAdminOnlyListing())) {
       throw new Error("Listing not found");
     }
     if (listed) await upsertDaycare(sql, listed);

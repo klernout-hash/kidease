@@ -4,7 +4,7 @@ import { DeskShell } from "@/components/desk-shell";
 import { ProviderSubscriptionPanel } from "@/components/provider-subscription";
 import { Button } from "@/components/ui/button";
 import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
-import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useCurrentUserState, useLocallySignedOut } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { canBuyDaycareUpgrade } from "@/lib/upgrade-role";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -47,6 +47,7 @@ function ProviderSubscriptionPage() {
   const navigate = useNavigate();
   const upgradeSearch = Route.useSearch();
   const { user, isPending } = useCurrentUserState();
+  const locallyOut = useLocallySignedOut();
   const chrome = useRoleChrome();
   const { session, ready } = useSessionDesks();
   const daycareBuyer = Boolean(
@@ -57,8 +58,15 @@ function ProviderSubscriptionPage() {
         linkedToCentre: session.centreLinked,
       }),
   );
-  const allowed = Boolean(daycareBuyer && session?.providerSubscriptions);
+  const allowed = Boolean(daycareBuyer && session?.providerSubscriptions && session.subscriptionsEnabled);
 
+  if (locallyOut) {
+    return (
+      <Shell>
+        <p className="p-8 text-muted">Loading…</p>
+      </Shell>
+    );
+  }
   if (isPending || chrome.pending || (user && !ready)) {
     return (
       <Shell>

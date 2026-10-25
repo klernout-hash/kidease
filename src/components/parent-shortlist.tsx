@@ -26,7 +26,7 @@ const MapView = lazy(() => import("@/components/map-view").then((m) => ({ defaul
 const SAVED_EAGER_CARDS = 4;
 
 export function ParentShortlist({
-  items,
+  items: rawItems,
   ready,
   located,
   tours,
@@ -47,6 +47,7 @@ export function ParentShortlist({
   onTrack?: (id: string, next: { trackStatus: TrackStatus; callNote: string; tourNote: string }) => void;
   onLeave?: () => void;
 }) {
+  const items = useMemo(() => (Array.isArray(rawItems) ? rawItems : []), [rawItems]);
   const { t, locale } = useCopy();
   const storeChannel = useStoreChannel();
   const { plusOpen } = useParentPlusAccess();

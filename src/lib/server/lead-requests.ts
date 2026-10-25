@@ -23,7 +23,7 @@ import {
   type LeadSourceKind,
 } from "@/lib/lead-requests";
 import { guestInfoUserId, normalizeInfoContact } from "@/lib/parent-listing";
-import { callerIsAdmin } from "@/lib/server/public-listing";
+import { callerIsAdmin, callerMayUseAdminOnlyListing } from "@/lib/server/public-listing";
 import { lookupUser, notifyPlatform, notifyThreadParty } from "@/lib/server/notify";
 import { requireAdmin } from "@/lib/server/roles";
 import { listCentreOwnerEmails } from "@/lib/server/thread-access";
@@ -329,7 +329,7 @@ export const createLeadRequest = createServerFn({ method: "POST" })
     const daycareId = (data.daycareId || "").trim();
     if (!daycareId) throw new Error("Centre not found");
     const listed = await catalogByIdGet(daycareId);
-    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerIsAdmin())) {
+    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerMayUseAdminOnlyListing())) {
       throw new Error("Listing not found");
     }
     const sql = await getSql();
@@ -362,7 +362,7 @@ export const createInfoRequest = createServerFn({ method: "POST" })
     const daycareId = (data.daycareId || "").trim();
     if (!daycareId) throw new Error("Centre not found");
     const listed = await catalogByIdGet(daycareId);
-    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerIsAdmin())) {
+    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerMayUseAdminOnlyListing())) {
       throw new Error("Listing not found");
     }
     const sql = await getSql();

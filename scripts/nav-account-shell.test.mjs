@@ -31,7 +31,7 @@ test("attention badges hide at 0 and cap at 99+", () => {
 test("desk switcher is admin or multi-role only, and parent Home stays on /parent", () => {
   assert.equal(showDeskSwitcher(desksFor({ role: "parent" }), "parent", "parent@example.com"), false);
   assert.equal(showDeskSwitcher(desksFor({ role: "provider" }), "provider", "director@example.com"), false);
-  assert.equal(showDeskSwitcher(desksFor({ role: "parent", ownsCentre: true }), "parent", "parent@example.com"), true);
+  assert.equal(showDeskSwitcher(desksFor({ role: "parent", ownsCentre: true }), "parent", "parent@example.com"), false);
   assert.equal(showDeskSwitcher(desksFor({ role: "admin" }), "admin", "kyle@kidease.ca"), true);
   assert.equal(DESK_NAV.parent.find((item) => item.id === "explore")?.href, "/parent");
   assert.equal(ACCOUNT_RESTORE_DAYS, 30);

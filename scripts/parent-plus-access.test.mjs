@@ -33,15 +33,20 @@ test("paid compare and parent upgrade return when subscriptions are on", () => {
   assert.equal(showParentUpgradeCta(true), true);
   assert.equal(roleNavItems({ role: "parent", subscriptionsOn: true }).some((item) => item.id === "upgrade"), true);
   assert.equal(roleNavItems({ role: "parent", subscriptionsOn: false }).some((item) => item.id === "upgrade"), true);
-  assert.equal(roleNavItems({ role: "provider", subscriptionsOn: false }).some((item) => item.id === "upgrade"), true);
+  assert.equal(roleNavItems({ role: "provider", subscriptionsOn: false }).some((item) => item.id === "upgrade"), false);
+  assert.equal(roleNavItems({ role: "provider", subscriptionsOn: true }).some((item) => item.id === "upgrade"), true);
   assert.equal(visibleDeskNav("parent", { subscriptionsEnabled: false }).some((item) => item.id === "upgrade"), true);
   assert.equal(
     visibleDeskNav("daycare", { subscriptionsEnabled: false, centreOwner: false }).some((item) => item.id === "subscription"),
-    true,
+    false,
   );
   assert.equal(visibleDeskNav("parent").some((item) => item.id === "upgrade"), true);
   assert.equal(
     visibleDeskNav("daycare", { subscriptionsEnabled: false, centreOwner: true }).some((item) => item.id === "subscription"),
+    false,
+  );
+  assert.equal(
+    visibleDeskNav("daycare", { subscriptionsEnabled: true, centreOwner: true }).some((item) => item.id === "subscription"),
     true,
   );
 });
