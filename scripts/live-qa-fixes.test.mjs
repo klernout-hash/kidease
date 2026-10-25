@@ -61,7 +61,7 @@ test("plan links stay hidden until subscriptions are on, and group labels stay v
     true,
   );
   const parent = visibleDeskGroups("parent", visibleDeskNav("parent", { subscriptionsEnabled: true }));
-  for (const id of ["search-tools", "account", "settings"]) {
+  for (const id of ["find-care", "my-requests", "my-family", "account", "settings"]) {
     const group = parent.find((row) => row.group.id === id);
     assert.ok(group, id);
     assert.equal(group.group.open, true);
@@ -87,7 +87,8 @@ test("daycare accounts do not get parent actions, and owners still get edit", ()
   assert.match(listing, /data-ke="get-directions"/);
   assert.match(listing, /t\("getDirections"\)/);
   assert.match(listing, /t\("deskHomeEdit"\)/);
-  assert.match(listing, /\{parentActions \? <JoinWaitlist/);
+  assert.match(listing, /parentActions \? \([\s\S]*<JoinWaitlist/);
+  assert.match(listing, /unclaimed=\{centreHasNotJoined\(d\)\}/);
   assert.match(src("src/components/daycare-card.tsx"), /showsParentBrowseActions/);
   assert.match(src("src/lib/server/daycares.ts"), /callerMayViewHiddenListing/);
 });
