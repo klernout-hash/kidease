@@ -22,6 +22,7 @@ import {
 } from "@/components/listing-parent-pack";
 import { WaitlistOptIn } from "@/components/waitlist-opt-in";
 import { JoinWaitlist } from "@/components/join-waitlist";
+import { centreHasNotJoined } from "@/lib/centre-joined";
 import { GoogleRating } from "@/components/google-rating";
 import { BuildingPhoto, ListingPhotoFallback } from "@/components/building-photo";
 import { LISTING_PLACEHOLDER, classifyListingPhotos, isOfficialBuildingPhoto, primaryListingPhoto } from "@/lib/listing-photo";
@@ -1009,7 +1010,13 @@ export function Listing() {
                   <WaitlistOptIn daycareId={d.id} province={d.province} next={`/daycare/${d.slug}`} />
                 </div>
               ) : null}
-              {parentActions ? <JoinWaitlist daycareId={d.id} next={`/daycare/${d.slug}`} /> : null}
+              {parentActions ? (
+                <JoinWaitlist
+                  daycareId={d.id}
+                  next={`/daycare/${d.slug}`}
+                  unclaimed={centreHasNotJoined(d)}
+                />
+              ) : null}
             </section>
 
             {String(d.amenities ?? "").split(",").filter(Boolean).length ? (
