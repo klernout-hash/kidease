@@ -6,9 +6,7 @@ import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
 import {
   deleteSavedSearch,
-  getSearchAlertPrefs,
-  listSavedSearches,
-  listSearchAlertNotices,
+  loadSearchAlertsDesk,
   markSearchAlertRead,
   saveSearchAlertPrefs,
   updateSavedSearch,
@@ -59,20 +57,16 @@ export function SavedSearchesPanel() {
   const [savingPrefs, setSavingPrefs] = useState(false);
 
   async function load() {
-    const [list, pref, inbox] = await Promise.all([
-      listSavedSearches(),
-      getSearchAlertPrefs(),
-      listSearchAlertNotices(),
-    ]);
-    setSearches(list);
+    const desk = await loadSearchAlertsDesk();
+    setSearches(desk.searches);
     setPrefs({
-      ...pref,
-      emailEnabled: pref.emailEnabled === true,
-      smsEnabled: pref.smsEnabled === true,
-      emailCommercial: pref.emailCommercial === true,
+      ...desk.prefs,
+      emailEnabled: desk.prefs.emailEnabled === true,
+      smsEnabled: desk.prefs.smsEnabled === true,
+      emailCommercial: desk.prefs.emailCommercial === true,
     });
     setPrefsReady(true);
-    setNotices(inbox);
+    setNotices(desk.notices);
   }
 
   useEffect(() => {
@@ -87,11 +81,9 @@ export function SavedSearchesPanel() {
   }
 
   return (
-    <div className="mt-6 space-y-8">
+    <div className="space-y-8">
       <section>
-        <h2 className="font-display text-2xl">{t("alertPrefs")}</h2>
-        <p className="mt-1 text-sm text-muted">{t("alertPrefsLead")}</p>
-        <div className="mt-3 space-y-2 rounded-xl bg-surface p-4 ring-1 ring-border">
+        <div className="space-y-2 rounded-xl bg-surface p-4 ring-1 ring-border">
           <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm">
             <input
               type="checkbox"

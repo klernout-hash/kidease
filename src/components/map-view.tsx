@@ -57,6 +57,7 @@ import {
   mapTileKey,
   mapTilesForCamera,
   mapViewCacheKey,
+  listPinsForCamera,
   markersForMapView,
   projectMapRows,
   pickNearestMapDot,
@@ -95,6 +96,26 @@ import { displayDistance } from "@/lib/units";
 import { plausibleListingKm } from "@/lib/plausible-distance";
 import { honestVacancy } from "@/lib/now-loops";
 import { publicApprovalEligible } from "@/lib/approve-live";
+
+function searchCardsToMapPins(items: DaycareCard[]): MapPin[] {
+  const pins: MapPin[] = [];
+  for (const item of items) {
+    if (!item?.id || !Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
+    pins.push({
+      id: item.id,
+      slug: item.slug || "",
+      name: item.name || "",
+      nameFr: item.nameFr || "",
+      lat: item.lat,
+      lng: item.lng,
+      address: item.address || "",
+      city: item.city || "",
+      province: item.province || "",
+      postalCode: item.postalCode || "",
+    });
+  }
+  return pins;
+}
 
 type Props = {
   items: DaycareCard[];
@@ -674,26 +695,11 @@ function GoogleMapView({
     if (loadedView.current) return;
     const zoomNow = mapZoomForRadius(radiusKm);
     if (mapLoadMode(zoomNow) !== "pins") return;
-    const pins: MapPin[] = [];
-    for (const item of items) {
-      if (!item?.id || !Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
-      pins.push({
-        id: item.id,
-        slug: item.slug || "",
-        name: item.name || "",
-        nameFr: item.nameFr || "",
-        lat: item.lat,
-        lng: item.lng,
-        address: item.address || "",
-        city: item.city || "",
-        province: item.province || "",
-        postalCode: item.postalCode || "",
-      });
-    }
+    const pins = searchCardsToMapPins(items);
     if (!pins.length) return;
     const box = bboxFromRadius(origin, radiusKm);
-    const latPad = (box.maxLat - box.minLat) * 0.35;
-    const lngPad = (box.maxLng - box.minLng) * 0.35;
+    const latPad = (box.maxLat - box.minLat) * 1;
+    const lngPad = (box.maxLng - box.minLng) * 1;
     const seeded = projectMapRows(pins, zoomNow, {
       minLat: box.minLat - latPad,
       maxLat: box.maxLat + latPad,
@@ -714,7 +720,7 @@ function GoogleMapView({
     const createOverlay = overlayFactoryRef.current;
     if (!map || !maps || !createOverlay || !ready) return;
 
-    const timer = window.setTimeout(() => {
+    const paint = () => {
       for (const pin of pinsRef.current) pin.setMap(null);
       pinsRef.current = [];
       markersBySlug.current.clear();
@@ -731,9 +737,14 @@ function GoogleMapView({
               maxLng: ne.lng(),
             })
           : null;
+      const seeded =
+        frame && (!viewData || !bboxCovers(viewData.bbox, frame))
+          ? listPinsForCamera(searchCardsToMapPins(items), zoom, frame)
+          : null;
+      const view = seeded && frame && bboxCovers(seeded.bbox, frame) ? seeded : viewData;
       const drawn = markersForMapView({
         items,
-        view: viewData,
+        view,
         zoom,
         bounds: frame,
         atLat: originRef.current.lat,
@@ -801,9 +812,15 @@ function GoogleMapView({
         markersBySlug.current.set(selectedItem.slug, wrapOverlayPin(overlay));
       }
       pinsRef.current = nextPins;
-    }, 50);
+    };
 
-    return () => window.clearTimeout(timer);
+    const timer = window.setTimeout(paint, 50);
+    const idle = maps.event.addListenerOnce(map, "idle", paint);
+
+    return () => {
+      window.clearTimeout(timer);
+      maps.event.removeListener(idle);
+    };
   }, [items, locale, picked, ready, zoom, viewData, mapEpoch]);
 
   useEffect(() => {

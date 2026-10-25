@@ -45,6 +45,7 @@ import {
   markerCount,
   pickNearestMapDot,
   viewportNeedsFetch,
+  listPinsForCamera,
   markersForMapView,
   mergeMapClusters,
   projectMapRows,
@@ -227,6 +228,39 @@ test("viewport payload replaces a capped search list without dropping rows", () 
   });
   assert.equal(fallback.source, "viewport");
   assert.equal(fallback.markers.length, 0);
+  const wide = {
+    minLat: WINNIPEG.lat - 0.7,
+    maxLat: WINNIPEG.lat + 0.7,
+    minLng: WINNIPEG.lng - 1.4,
+    maxLng: WINNIPEG.lng + 1.4,
+  };
+  const early = listPinsForCamera(
+    [
+      {
+        id: "w1",
+        slug: "winnipeg-centre",
+        name: "Winnipeg Centre",
+        nameFr: "",
+        lat: WINNIPEG.lat,
+        lng: WINNIPEG.lng,
+        address: "1 Main St",
+        city: "Winnipeg",
+        province: "MB",
+        postalCode: "R3C 0A1",
+      },
+    ],
+    10,
+    wide,
+  );
+  assert.ok(early);
+  const earlyShown = markersForMapView({
+    view: early,
+    zoom: 10,
+    bounds: wide,
+    atLat: WINNIPEG.lat,
+  });
+  assert.equal(markerCount(earlyShown.markers), 1);
+  assert.equal(listPinsForCamera([], 10, wide), null);
   const staleClusters = markersForMapView({
     items: capped,
     view: {

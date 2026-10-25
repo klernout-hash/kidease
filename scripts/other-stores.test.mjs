@@ -162,7 +162,7 @@ test("Huawei hides Google sign-in and the other stores do not", () => {
   assert.match(src("src/routes/search.tsx"), /storeChannel === "huawei"/);
   assert.match(src("src/routes/__root.tsx"), /mapDnsPrefetch/);
   assert.match(src("src/routes/__root.tsx"), /channel === "huawei"/);
-  assert.match(src("src/components/nav-drawer.tsx"), /nativeShell \? null/);
+  assert.match(src("src/components/nav-drawer.tsx"), /showPlans = !nativeShell && chrome\.subscriptionsEnabled === true/);
   assert.match(src("src/components/listing-map.tsx"), /StoreMapFallback/);
   assert.match(src("src/lib/push-client.ts"), /googleServicesHidden/);
   assert.match(src("src/lib/native.ts"), /googleServicesHidden/);

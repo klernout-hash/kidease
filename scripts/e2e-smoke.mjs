@@ -200,21 +200,44 @@ async function runRoleFixture(page, base) {
     const guestFooterPlans = await guestFooterLink.count();
     const guestFooterLabel = ((await guestFooterLink.first().innerText().catch(() => "")) || "").replace(/\s+/g, " ").trim();
     record("guest-no-pricing", guestPricing === 0, { note: `pricing blocks ${guestPricing}` });
-    record("guest-plans-links", guestPlans > 0 && guestFooterPlans > 0 && guestPlanLabel === "Plans" && guestFooterLabel === "Plans", {
-      note: `nav=${guestPlans}:${guestPlanLabel} footer=${guestFooterPlans}:${guestFooterLabel}`,
+    // Preview forces SUBSCRIPTIONS_ENABLED=1. Production and a default dev server leave it off.
+    const plansHidden = guestPlans === 0 && guestFooterPlans === 0;
+    const plansShown =
+      guestPlans > 0 &&
+      guestFooterPlans > 0 &&
+      /^plans$/i.test(guestPlanLabel) &&
+      /^plans$/i.test(guestFooterLabel);
+    record("guest-plans-links", plansHidden || plansShown, {
+      note: plansHidden
+        ? "hidden while subscriptions are off"
+        : `nav=${guestPlans}:${guestPlanLabel} footer=${guestFooterPlans}:${guestFooterLabel}`,
     });
     const plansResp = await page.goto(new URL("/plans", base).href, {
       waitUntil: "domcontentloaded",
       timeout: timeoutMs,
     });
-    await page.locator("[data-ke='plans-page']").waitFor({ timeout: timeoutMs }).catch(() => {});
-    const freeTier = page.locator("[data-ke='plans-page'] [data-plan='free']");
-    await freeTier.first().waitFor({ timeout: timeoutMs }).catch(() => {});
-    const plansText = ((await page.locator("[data-ke='plans-page']").innerText().catch(() => "")) || "").replace(/\s+/g, " ");
-    record("plans-free-tier", (plansResp?.status() ?? 0) < 500 && (await freeTier.count()) > 0 && /free|gratuit/i.test(plansText), {
-      note: plansText.slice(0, 180),
-      status: plansResp?.status() ?? 0,
-    });
+    if (plansHidden) {
+      await page
+        .waitForURL((url) => {
+          const path = new URL(url).pathname.replace(/\/$/, "") || "/";
+          return path === "/" || path === "/fr";
+        }, { timeout: timeoutMs })
+        .catch(() => {});
+    } else {
+      await page.locator("[data-ke='plans-page']").first().waitFor({ timeout: timeoutMs }).catch(() => {});
+    }
+    const plansPath = new URL(page.url()).pathname.replace(/\/$/, "") || "/";
+    const plansPage = await page.locator("[data-ke='plans-page']").count();
+    const redirectedHome = (plansPath === "/" || plansPath === "/fr") && plansPage === 0;
+    const catalogue = plansPath === "/plans" && plansPage > 0;
+    record(
+      "plans-follows-flag",
+      (plansResp?.status() ?? 0) < 500 && ((plansHidden && redirectedHome) || (!plansHidden && catalogue)),
+      {
+        note: `${plansHidden ? "off" : "on"} ${plansPath}`,
+        status: plansResp?.status() ?? 0,
+      },
+    );
     await page.goto(new URL("/", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await shot(page, "guest-desktop", 1280, "h1");
     await page.keyboard.press("Escape");
@@ -954,7 +977,8 @@ const FR_CHROME_BANNED = [
 async function frenchChromeSmoke(page, base) {
   const pages = [
     ["/fr/claim", "/fr/claim"],
-    ["/fr/plans", "/fr/plans"],
+    // Flag off redirects to the French home. Flag on stays on /fr/plans. Both start with /fr.
+    ["/fr/plans", "/fr"],
     ["/fr/compare", "/fr/compare"],
     ["/fr/cities", "/fr/cities"],
     ["/fr/signup", "/fr/signup"],

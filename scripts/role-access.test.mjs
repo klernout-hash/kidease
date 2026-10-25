@@ -59,14 +59,18 @@ test("sign-in lands on the stored role home unless the next path is allowed", ()
 test("menus stay on one role and the plan label switches when paid", () => {
   assert.equal(upgradeNavLabel(false), "Upgrade");
   assert.equal(upgradeNavLabel(true), "My plan");
-  const parent = roleNavItems({ role: "parent", paid: false }).map((item) => item.label);
-  const parentPaid = roleNavItems({ role: "parent", paid: true }).map((item) => item.label);
+  const parent = roleNavItems({ role: "parent", paid: false, subscriptionsOn: true }).map((item) => item.label);
+  const parentPaid = roleNavItems({ role: "parent", paid: true, subscriptionsOn: true }).map((item) => item.label);
+  const parentHidden = roleNavItems({ role: "parent", paid: false }).map((item) => item.label);
   const daycare = roleNavItems({ role: "provider", paid: true, subscriptionsOn: true }).map((item) => item.label);
   const daycareFree = roleNavItems({ role: "provider", paid: false, subscriptionsOn: true }).map((item) => item.label);
   const daycareHidden = roleNavItems({ role: "provider", paid: false }).map((item) => item.label);
-  const guest = roleNavItems({ role: "guest" }).map((item) => item.label);
+  const guest = roleNavItems({ role: "guest", subscriptionsOn: true }).map((item) => item.label);
+  const guestHidden = roleNavItems({ role: "guest" }).map((item) => item.label);
   assert.ok(parent.includes("Saved"));
   assert.ok(parent.includes("Upgrade"));
+  assert.equal(parentHidden.includes("Upgrade"), false);
+  assert.equal(parentHidden.includes("My plan"), false);
   assert.equal(parent.includes("My plan"), false);
   assert.ok(parentPaid.includes("My plan"));
   assert.equal(parentPaid.includes("Upgrade"), false);
@@ -81,11 +85,13 @@ test("menus stay on one role and the plan label switches when paid", () => {
   assert.ok(guest.includes("List your daycare"));
   assert.equal(guest.includes("I'm a parent"), false);
   assert.ok(guest.includes("Plans"));
+  assert.equal(guestHidden.includes("Plans"), false);
   assert.equal(guest.includes("Subscription"), false);
   assert.equal(guest.includes("Upgrade"), false);
   assert.equal(guest.includes("My plan"), false);
   assert.equal(roleNavItems({ role: "parent" }).find((item) => item.id === "home")?.to, "/parent");
-  assert.equal(roleNavItems({ role: "guest" }).find((item) => item.id === "plans")?.to, "/plans");
+  assert.equal(roleNavItems({ role: "guest", subscriptionsOn: true }).find((item) => item.id === "plans")?.to, "/plans");
+  assert.equal(roleNavItems({ role: "guest" }).some((item) => item.id === "plans"), false);
   assert.equal(guest.includes("Admin"), false);
   assert.equal(roleNavItems({ role: "admin" }).some((item) => item.label === "Admin"), false);
 });

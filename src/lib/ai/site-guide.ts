@@ -6,6 +6,7 @@
 
 import { AB_K_FACILITY_MAX_UNDER_50K, CCB } from "../benefits-facts.ts";
 import { CITY_HUB_DEFS, cityHubCityName, cityHubPath, normalizeCityKey, type CityHubDef } from "../city-hubs.ts";
+import { subscriptionsEnabled } from "../features.ts";
 import { localePath } from "../locale-path.ts";
 import { RANKING_BEST_MATCH_FLAG } from "../ranking/weights.ts";
 import { AI_FLAGS } from "./flags.ts";
@@ -456,9 +457,10 @@ export type GuideTurn = {
 };
 
 function guidePages(locale: GuideLocale, extra: GuidePage[]): GuidePage[] {
+  const nav = subscriptionsEnabled() ? NAV : NAV.filter((page) => page.path !== "/plans");
   const base = [
     ...extra,
-    ...NAV.map((page) => ({ path: cite(page.path, locale), text: loc(locale, page.en, page.fr) })),
+    ...nav.map((page) => ({ path: cite(page.path, locale), text: loc(locale, page.en, page.fr) })),
     ...PARENT_PAGES.map((page) => ({ path: cite(page.path, locale), text: page.text })),
   ];
   const seen = new Set<string>();
@@ -508,7 +510,16 @@ export function prepareGuideTurn(input: {
   } else {
     const nav = bestNav(question);
     if (nav && nav.score >= 2 && nav.score > nav.second) {
-      direct = answer(locale, nav.page.path, nav.page.en, nav.page.fr);
+      if (nav.page.path === "/plans" && !subscriptionsEnabled()) {
+        direct = answer(
+          locale,
+          "/search",
+          "Plans are not offered on this site yet. Search and messages stay open. Listing and claim stay free.",
+          "Les forfaits ne sont pas offerts sur ce site pour le moment. La recherche et les messages restent ouverts. La fiche et la revendication restent gratuites.",
+        );
+      } else {
+        direct = answer(locale, nav.page.path, nav.page.en, nav.page.fr);
+      }
     }
   }
 

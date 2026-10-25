@@ -195,8 +195,7 @@ const OWNER_ONLY_NAV = new Set([
 export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
   return DESK_NAV[desk].filter((item) => {
     if (item.devOnly && import.meta.env?.PROD === true) return false;
-    if (item.id === "upgrade") return true;
-    if (item.id === "subscription") return opts?.subscriptionsEnabled === true;
+    if (item.id === "upgrade" || item.id === "subscription") return opts?.subscriptionsEnabled === true;
     if (item.id === "promote") {
       if (opts?.showPayCtas === false) return false;
       if (opts?.centreOwner === false) return false;

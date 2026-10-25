@@ -60,7 +60,8 @@ test("Upgrade stays on the parent desk and returns to the daycare desk when plan
   assert.equal(centre?.label, "Upgrade");
   assert.equal(centre?.icon, "credit-card");
   assert.equal(centre?.href, "/provider/subscription");
-  const parent = visibleDeskNav("parent", { providerSubscriptions: false }).find((i) => i.id === "upgrade");
+  const parent = visibleDeskNav("parent", { providerSubscriptions: false, subscriptionsEnabled: true }).find((i) => i.id === "upgrade");
+  assert.equal(visibleDeskNav("parent", { subscriptionsEnabled: false }).some((i) => i.id === "upgrade"), false);
   assert.equal(parent?.label, "Upgrade");
   assert.equal(parent?.href, "/parent");
   assert.equal(parent?.search?.tab, "subscription");

@@ -119,18 +119,77 @@ function validateSaveInput(input: SaveSearchInput) {
   };
 }
 
+async function readSavedSearches(sql: Awaited<ReturnType<typeof getSql>>, userId: string): Promise<SavedSearch[]> {
+  const rows = await sql<SavedSearchRow>`
+    select id, name, center_lat, center_lng, center_label, radius_km, age_band,
+           filters, alerts_enabled, last_checked_at, created_at, updated_at
+    from saved_searches
+    where user_id = ${userId}
+    order by updated_at desc
+  `.catch(() => [] as SavedSearchRow[]);
+  return rows.map(mapSearch);
+}
+
+async function readSearchAlertPrefs(sql: Awaited<ReturnType<typeof getSql>>, userId: string): Promise<SearchAlertPrefs> {
+  const rows = await sql<{ email_enabled: number | boolean; in_app_enabled: number | boolean; updated_at: string | Date | null }>`
+    select email_enabled, in_app_enabled, updated_at
+    from search_alert_prefs
+    where user_id = ${userId}
+    limit 1
+  `.catch(() => []);
+  const row = rows[0];
+  const emailConfigured = resetMailConfigured();
+  const { smsSendEnabled } = await import("@/lib/channel-readiness");
+  const smsChannelLive = smsSendEnabled();
+  const { listConsents } = await import("@/lib/server/casl-consent");
+  const consents = await listConsents(userId);
+  if (!row) {
+    return {
+      emailEnabled: consents.emailService,
+      inAppEnabled: true,
+      smsEnabled: consents.smsService,
+      emailCommercial: consents.emailCommercial,
+      updatedAt: null,
+      emailConfigured,
+      smsChannelLive,
+    };
+  }
+  return {
+    emailEnabled: consents.emailService,
+    inAppEnabled: row.in_app_enabled !== 0 && row.in_app_enabled !== false,
+    smsEnabled: consents.smsService,
+    emailCommercial: consents.emailCommercial,
+    updatedAt: iso(row.updated_at),
+    emailConfigured,
+    smsChannelLive,
+  };
+}
+
+async function readSearchAlertNotices(sql: Awaited<ReturnType<typeof getSql>>, userId: string): Promise<SearchAlertNotice[]> {
+  const rows = await sql<NoticeRow>`
+    select id, saved_search_id, daycare_id, kind, title, body, link_path, read_at, created_at
+    from search_alert_notices
+    where user_id = ${userId}
+    order by created_at desc
+    limit 40
+  `.catch(async () => {
+    const fallback = await sql<Omit<NoticeRow, "link_path"> & { link_path?: string | null }>`
+      select id, saved_search_id, daycare_id, kind, title, body, read_at, created_at
+      from search_alert_notices
+      where user_id = ${userId}
+      order by created_at desc
+      limit 40
+    `.catch(() => [] as NoticeRow[]);
+    return fallback.map((row) => ({ ...row, link_path: row.link_path ?? null }));
+  });
+  return rows.map(mapNotice);
+}
+
 export const listSavedSearches = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }): Promise<SavedSearch[]> => {
     const sql = await getSql();
-    const rows = await sql<SavedSearchRow>`
-      select id, name, center_lat, center_lng, center_label, radius_km, age_band,
-             filters, alerts_enabled, last_checked_at, created_at, updated_at
-      from saved_searches
-      where user_id = ${context.userId}
-      order by updated_at desc
-    `.catch(() => [] as SavedSearchRow[]);
-    return rows.map(mapSearch);
+    return readSavedSearches(sql, context.userId);
   });
 
 export const saveSearch = createServerFn({ method: "POST" })
@@ -230,38 +289,7 @@ export const getSearchAlertPrefs = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }): Promise<SearchAlertPrefs> => {
     const sql = await getSql();
-    const rows = await sql<{ email_enabled: number | boolean; in_app_enabled: number | boolean; updated_at: string | Date | null }>`
-      select email_enabled, in_app_enabled, updated_at
-      from search_alert_prefs
-      where user_id = ${context.userId}
-      limit 1
-    `.catch(() => []);
-    const row = rows[0];
-    const emailConfigured = resetMailConfigured();
-    const { smsSendEnabled } = await import("@/lib/channel-readiness");
-    const smsChannelLive = smsSendEnabled();
-    const { listConsents } = await import("@/lib/server/casl-consent");
-    const consents = await listConsents(context.userId);
-    if (!row) {
-      return {
-        emailEnabled: consents.emailService,
-        inAppEnabled: true,
-        smsEnabled: consents.smsService,
-        emailCommercial: consents.emailCommercial,
-        updatedAt: null,
-        emailConfigured,
-        smsChannelLive,
-      };
-    }
-    return {
-      emailEnabled: consents.emailService,
-      inAppEnabled: row.in_app_enabled !== 0 && row.in_app_enabled !== false,
-      smsEnabled: consents.smsService,
-      emailCommercial: consents.emailCommercial,
-      updatedAt: iso(row.updated_at),
-      emailConfigured,
-      smsChannelLive,
-    };
+    return readSearchAlertPrefs(sql, context.userId);
   });
 
 export const saveSearchAlertPrefs = createServerFn({ method: "POST" })
@@ -338,23 +366,18 @@ export const listSearchAlertNotices = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }): Promise<SearchAlertNotice[]> => {
     const sql = await getSql();
-    const rows = await sql<NoticeRow>`
-      select id, saved_search_id, daycare_id, kind, title, body, link_path, read_at, created_at
-      from search_alert_notices
-      where user_id = ${context.userId}
-      order by created_at desc
-      limit 40
-    `.catch(async () => {
-      const fallback = await sql<Omit<NoticeRow, "link_path"> & { link_path?: string | null }>`
-        select id, saved_search_id, daycare_id, kind, title, body, read_at, created_at
-        from search_alert_notices
-        where user_id = ${context.userId}
-        order by created_at desc
-        limit 40
-      `.catch(() => [] as NoticeRow[]);
-      return fallback.map((row) => ({ ...row, link_path: row.link_path ?? null }));
-    });
-    return rows.map(mapNotice);
+    return readSearchAlertNotices(sql, context.userId);
+  });
+
+/** One round trip for the Search alerts tab: searches, prefs, and notices. */
+export const loadSearchAlertsDesk = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const sql = await getSql();
+    const searches = await readSavedSearches(sql, context.userId);
+    const prefs = await readSearchAlertPrefs(sql, context.userId);
+    const notices = await readSearchAlertNotices(sql, context.userId);
+    return { searches, prefs, notices };
   });
 
 export const previewSavedSearchMatches = createServerFn({ method: "GET" })
