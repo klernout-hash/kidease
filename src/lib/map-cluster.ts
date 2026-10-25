@@ -843,6 +843,21 @@ export function projectMapRows(rows: MapPin[], zoom: number, box: MapBbox): MapV
   return { mode: "clusters", clusters, total, truncated: false, bbox: box, zoom: zoomed };
 }
 
+/**
+ * Frame pins the search page already has so the map can draw them before the
+ * viewport query returns. `markersForMapView` still draws nothing when `view`
+ * is null. A camera wider than the search circle is covered by a small pad.
+ */
+export function listPinsForCamera(pins: MapPin[], zoom: number, camera: MapBbox): MapViewData | null {
+  if (!pins.length) return null;
+  const latSpan = camera.maxLat - camera.minLat;
+  const lngSpan = camera.maxLng - camera.minLng;
+  if (latSpan < 0.02 || lngSpan < 0.02 || latSpan > 8 || lngSpan > 12) return null;
+  const box = paddedMapBbox(camera, 0.05);
+  if (!bboxCovers(box, camera)) return null;
+  return projectMapRows(pins, zoom, box);
+}
+
 /** Same merge the point grid uses, for SQL cells that are already bucketed. */
 export function mergeMapClusters(clusters: MapCluster[], minSepKm: number): MapCluster[] {
   const weighted: Weighted<MapPin>[] = clusters.map((cluster) => ({

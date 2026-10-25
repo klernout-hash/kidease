@@ -28,15 +28,20 @@ test("guests do not see pricing on the public home", () => {
   assert.doesNotMatch(src("src/lib/role-access.ts"), /pathname === "\/plans"|startsWith\("\/plans"\)/);
 });
 
-test("guests reach plans from the main menu and the footer", () => {
-  const plans = roleNavItems({ role: "guest" }).find((item) => item.id === "plans");
+test("guests reach plans from the main menu only while subscriptions are on", () => {
+  const plans = roleNavItems({ role: "guest", subscriptionsOn: true }).find((item) => item.id === "plans");
   assert.equal(plans?.label, "Plans");
   assert.equal(plans?.to, "/plans");
+  assert.equal(roleNavItems({ role: "guest" }).some((item) => item.id === "plans"), false);
   assert.equal(roleNavItems({ role: "parent" }).some((item) => item.id === "plans"), false);
+  assert.equal(roleNavItems({ role: "parent", subscriptionsOn: true }).some((item) => item.id === "upgrade"), true);
+  assert.equal(roleNavItems({ role: "parent" }).some((item) => item.id === "upgrade"), false);
   assert.equal(roleNavItems({ role: "provider" }).some((item) => item.id === "upgrade"), false);
   assert.equal(roleNavItems({ role: "provider", subscriptionsOn: true }).some((item) => item.id === "upgrade"), true);
   assert.ok(FOOTER_DAYCARES.some((link) => link.to === "/plans" && link.labelKey === "navPlans"));
   assert.match(src("src/components/role-nav.tsx"), /plans: "navPlans"/);
+  assert.match(src("src/components/role-chrome.tsx"), /subscriptionsEnabled: remote\.subscriptionsEnabled === true/);
+  assert.doesNotMatch(src("src/components/role-chrome.tsx"), /return GUEST;/);
   assert.match(src("src/lib/copy.ts"), /navPlans: "Plans"/);
   assert.match(src("src/lib/copy.ts"), /navPlans: "Forfaits"/);
 });

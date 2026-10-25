@@ -143,6 +143,18 @@ function ParentPage() {
       </Shell>
     );
   }
+  if (upgradeSurface && session && session.subscriptionsEnabled !== true) {
+    const buyer = {
+      role: session.role,
+      ownsCentre: session.ownsCentre,
+      linkedToCentre: session.centreLinked,
+    };
+    if (canBuyParentUpgrade(buyer)) return <Navigate to="/parent" search={{ tab: "explore" }} />;
+    if (canBuyDaycareUpgrade(buyer)) return <Navigate to="/provider" search={{ desk: "today" }} />;
+    if (session.home === "/admin") return <Navigate to="/admin" />;
+    if (session.home === "/support") return <Navigate to="/support" />;
+    return <Navigate to="/parent" search={{ tab: "explore" }} />;
+  }
   if (
     upgradeSurface &&
     session &&

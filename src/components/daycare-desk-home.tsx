@@ -131,7 +131,7 @@ export function DaycareDeskHome({
         </Link>
       </section>
 
-      {nativeShell ? null : (
+      {nativeShell || !subscriptionsOn ? null : (
       <section className="rounded-xl bg-surface px-4 py-3 ring-1 ring-border" data-ke="daycare-plan">
         <h2 className="font-display text-xl">{t("deskHomeCurrentPlan")}</h2>
         <p className="mt-1 text-sm text-fg">{paid ? planName : t("deskHomeFree")}</p>

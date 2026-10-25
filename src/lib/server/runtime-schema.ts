@@ -48,8 +48,23 @@ create table if not exists daily_journals (
   updated_at timestamptz not null default now()
 )`;
 
-export async function ensureDailyJournals(sql: Sql) {
-  await sql.query(ENSURE_JOURNALS).catch(() => undefined);
+const schemaReady = new Map<string, Promise<void>>();
+
+/** Run a CREATE TABLE script once per process. A failure is not cached, so the next request can retry. */
+function rememberSchema(key: string, run: () => Promise<unknown>): Promise<void> {
+  const hit = schemaReady.get(key);
+  if (hit) return hit;
+  const pending = run()
+    .then(() => undefined)
+    .catch(() => {
+      if (schemaReady.get(key) === pending) schemaReady.delete(key);
+    });
+  schemaReady.set(key, pending);
+  return pending;
+}
+
+export function ensureDailyJournals(sql: Sql) {
+  return rememberSchema("daily-journals", () => sql.query(ENSURE_JOURNALS));
 }
 
 const ENSURE_CARE_OPS = `
@@ -172,8 +187,8 @@ create unique index if not exists care_day_notes_child_day
   on care_day_notes (daycare_id, child_name, day);
 `;
 
-export async function ensureCareOps(sql: Sql) {
-  await sql.query(ENSURE_CARE_OPS).catch(() => undefined);
+export function ensureCareOps(sql: Sql) {
+  return rememberSchema("care-ops", () => sql.query(ENSURE_CARE_OPS));
 }
 
 export async function ensureUserNotifications(sql: Sql) {

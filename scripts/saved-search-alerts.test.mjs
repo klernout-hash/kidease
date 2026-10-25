@@ -158,13 +158,14 @@ test("parent can save list edit delete from search + family desk", () => {
   assert.match(search, /saveSearch/);
   assert.match(search, /takeSavedSearchToApply/);
   assert.match(src("src/components/parent-desk.tsx"), /SavedSearchesPanel/);
-  assert.match(src("src/components/saved-searches-panel.tsx"), /listSavedSearches/);
+  assert.match(src("src/components/saved-searches-panel.tsx"), /loadSearchAlertsDesk/);
   assert.match(src("src/components/saved-searches-panel.tsx"), /deleteSavedSearch/);
   assert.match(src("src/components/saved-searches-panel.tsx"), /updateSavedSearch/);
   assert.match(src("src/components/saved-searches-panel.tsx"), /saveSearchAlertPrefs/);
   assert.match(src("src/lib/desk-nav.ts"), /id: "alerts"/);
   const fns = src("src/lib/server/saved-searches.ts");
   assert.match(fns, /export const listSavedSearches/);
+  assert.match(fns, /export const loadSearchAlertsDesk/);
   assert.match(fns, /export const saveSearch/);
   assert.match(fns, /export const updateSavedSearch/);
   assert.match(fns, /export const deleteSavedSearch/);

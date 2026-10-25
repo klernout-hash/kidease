@@ -121,7 +121,8 @@ test("large city searches overlay the nearest cards first", () => {
 test("parent Upgrade opens the plan view and daycare viewers do not see Request info on tours", () => {
   const route = src("src/routes/parent.tsx");
   const desk = src("src/components/parent-desk.tsx");
-  assert.doesNotMatch(route, /Navigate to="\/parent" search=\{\{ tab: "explore" \}\}/);
+  assert.match(route, /subscriptionsEnabled !== true/);
+  assert.match(route, /Navigate to="\/parent" search=\{\{ tab: "explore" \}\}/);
   assert.match(desk, /data-ke="parent-plan-view"/);
   assert.match(desk, /alwaysOffer/);
   assert.match(desk, /chrome\.paid \? "navMyPlan" : "navUpgrade"/);

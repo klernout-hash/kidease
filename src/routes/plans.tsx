@@ -1,5 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { FoundingPlans } from "@/components/founding-plans";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { OptionalUpgrades } from "@/components/optional-upgrades";
 import { Shell } from "@/components/shell";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -21,7 +20,11 @@ export function plansHead(paid: boolean, locale: "en" | "fr" = "en") {
 }
 
 export const Route = createFileRoute("/plans")({
-  loader: () => getPlansGate(),
+  loader: async () => {
+    const gate = await getPlansGate();
+    if (!gate.subscriptionsOn) throw redirect({ to: "/" });
+    return gate;
+  },
   head: ({ loaderData }) => plansHead(Boolean(loaderData?.subscriptionsOn), "en"),
   component: PlansRoute,
 });
@@ -31,23 +34,19 @@ function PlansRoute() {
 }
 
 /**
- * Public plans. While subscriptions are off this is the free founding period,
- * rendered on the server so the page is not an empty nav shell.
- * While subscriptions are on, the existing catalogue stays.
+ * Public plans. Direct visits redirect home while SUBSCRIPTIONS_ENABLED is off.
+ * While it is on, the existing catalogue stays.
  */
 export function PlansPage({ subscriptionsOn }: { subscriptionsOn: boolean }) {
   const chrome = useRoleChrome();
+  if (!subscriptionsOn) return null;
   return (
     <Shell>
       <main data-ke="plans-page">
-        {subscriptionsOn ? (
-          <OptionalUpgrades
-            side={chrome.pending ? "both" : plansAudience(chrome.role)}
-            signedIn={chrome.signedIn && !chrome.pending}
-          />
-        ) : (
-          <FoundingPlans />
-        )}
+        <OptionalUpgrades
+          side={chrome.pending ? "both" : plansAudience(chrome.role)}
+          signedIn={chrome.signedIn && !chrome.pending}
+        />
       </main>
     </Shell>
   );

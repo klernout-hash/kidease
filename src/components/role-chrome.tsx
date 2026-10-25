@@ -57,5 +57,10 @@ export function useRoleChrome(): RoleChromeState {
   }
 
   if (!remote) return { ...GUEST, pending: true };
-  return GUEST;
+  // Guests have no role. The plans switch still arrives on this payload.
+  return {
+    ...GUEST,
+    e2e: remote.e2e,
+    subscriptionsEnabled: remote.subscriptionsEnabled === true,
+  };
 }

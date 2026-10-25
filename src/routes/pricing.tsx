@@ -1,7 +1,10 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { getPlansGate } from "@/lib/server/ui-chrome";
 
 export const Route = createFileRoute("/pricing")({
-  beforeLoad: () => {
+  loader: async () => {
+    const gate = await getPlansGate();
+    if (!gate.subscriptionsOn) throw redirect({ to: "/" });
     throw redirect({ to: "/plans", statusCode: 301 });
   },
 });

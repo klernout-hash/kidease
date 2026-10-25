@@ -72,7 +72,7 @@ const en: SpotOfferCopy = {
   place: "Your place",
   deskTitle: "Waitlist",
   deskLead:
-    "Families join from your listing. Offer one spot at a time. They have 48 hours. If they say no, or the time runs out, the next family gets the offer. No waitlist fee. Included on every plan.",
+    "Families join from your listing. Offer one spot at a time. They have 48 hours. If they say no, or the time runs out, the next family gets the offer. No waitlist fee.",
   offerSpot: "Offer this spot",
   openOffer: "Waiting for an answer",
   emptyDesk: "No families yet. Parents join from your listing.",
@@ -118,7 +118,7 @@ const fr: SpotOfferCopy = {
   place: "Votre place",
   deskTitle: "Liste d'attente",
   deskLead:
-    "Les familles joignent la liste depuis votre fiche. Offrez une place à la fois. Elles ont 48 heures. Si elles refusent, ou si le délai passe, la famille suivante reçoit l'offre. Aucuns frais. Inclus dans chaque forfait.",
+    "Les familles joignent la liste depuis votre fiche. Offrez une place à la fois. Elles ont 48 heures. Si elles refusent, ou si le délai passe, la famille suivante reçoit l'offre. Aucuns frais.",
   offerSpot: "Offrir cette place",
   openOffer: "En attente d'une réponse",
   emptyDesk: "Aucune famille pour le moment. Les parents joignent la liste depuis votre fiche.",

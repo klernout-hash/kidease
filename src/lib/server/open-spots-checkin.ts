@@ -14,7 +14,7 @@ import {
   type OpenSpotsBand,
   type SpotCounts,
 } from "@/lib/open-spots-checkin";
-import { openSpotsCheckinMailEnabled, openSpotsCheckinSmsEnabled, pushEnabled } from "@/lib/features";
+import { openSpotsCheckinMailEnabled, openSpotsCheckinSmsEnabled, pushEnabled, subscriptionsEnabled } from "@/lib/features";
 import {
   openSpotsTokenSecret,
   signOpenSpotsToken,
@@ -225,6 +225,7 @@ export async function runOpenSpotsCheckinJob(options: { dryRun?: boolean; now?: 
   let emailed = 0;
   let sms = 0;
   let pushed = 0;
+  const plansOn = subscriptionsEnabled();
   const { sendTransactionalMail } = await import("@/lib/transactional-mail");
   const { sendSms } = await import("@/lib/server/sms");
   const { readConsent } = await import("@/lib/server/casl-consent");
@@ -252,7 +253,7 @@ export async function runOpenSpotsCheckinJob(options: { dryRun?: boolean; now?: 
     if (plan.email && row.email && links) {
       const claimed = options.dryRun ? true : await claimSend(row.id, week, "email");
       if (claimed && !options.dryRun) {
-        const mail = checkinEmailText({ name: row.name, views, links });
+        const mail = checkinEmailText({ name: row.name, views, links, plansOn });
         try {
           await sendTransactionalMail({
             purpose: "open_spots_checkin",

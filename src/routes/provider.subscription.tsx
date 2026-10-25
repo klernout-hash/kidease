@@ -92,6 +92,14 @@ function ProviderSubscriptionPage() {
       </Shell>
     );
   }
+  if (session.subscriptionsEnabled !== true) {
+    if (daycareBuyer || parseAppRole(session.role) === "provider") {
+      return <Navigate to="/provider" search={{ desk: "today" }} />;
+    }
+    if (session.home === "/admin") return <Navigate to="/admin" />;
+    if (session.home === "/support") return <Navigate to="/support" />;
+    return <Navigate to="/parent" />;
+  }
   if (!daycareBuyer) {
     if (parseAppRole(session.role) === "provider") {
       return (

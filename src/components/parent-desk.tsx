@@ -350,13 +350,20 @@ export function ParentDesk({
     linkedToCentre: desks?.centreLinked,
   };
   const onPlusSurface = contentTab === "subscription" || plusReturn != null;
+  if (onPlusSurface && desksReady && desks && desks.subscriptionsEnabled !== true) {
+    if (canBuyParentUpgrade(upgradeBuyer)) return <Navigate to="/parent" search={{ tab: "explore" }} />;
+    if (canBuyDaycareUpgrade(upgradeBuyer)) return <Navigate to="/provider" search={{ desk: "today" }} />;
+    if (desks.home === "/admin") return <Navigate to="/admin" />;
+    if (desks.home === "/support") return <Navigate to="/support" />;
+    return <Navigate to="/parent" search={{ tab: "explore" }} />;
+  }
   if (onPlusSurface && desksReady && desks && !canBuyParentUpgrade(upgradeBuyer)) {
     if (canBuyDaycareUpgrade(upgradeBuyer) && desks.subscriptionsEnabled) return <Navigate to="/provider/subscription" />;
     if (canBuyDaycareUpgrade(upgradeBuyer)) return <Navigate to="/provider" search={{ desk: "today" }} />;
     if (desks.home === "/admin") return <Navigate to="/admin" />;
     if (desks.home === "/support") return <Navigate to="/support" />;
   }
-  const showParentPlus = Boolean(desksReady && canBuyParentUpgrade(upgradeBuyer));
+  const showParentPlus = Boolean(desksReady && desks?.subscriptionsEnabled === true && canBuyParentUpgrade(upgradeBuyer));
   const activeChild = children.find((c) => c.id === childFocus) ?? children[0] ?? null;
 
   return (
@@ -419,9 +426,13 @@ export function ParentDesk({
       ) : null}
 
       {contentTab === "alerts" ? (
-        <Suspense fallback={<div className="ke-skel mt-6 h-40 rounded-xl" aria-hidden="true" />}>
-          <SavedSearchesPanel />
-        </Suspense>
+        <div className="mt-6">
+          <h2 className="font-display text-2xl">{t("alertPrefs")}</h2>
+          <p className="mt-1 text-sm text-muted">{t("alertPrefsLead")}</p>
+          <Suspense fallback={<div className="ke-skel mt-3 h-24 rounded-xl" aria-hidden="true" />}>
+            <SavedSearchesPanel />
+          </Suspense>
+        </div>
       ) : null}
 
       {contentTab === "waitlists" ? (
