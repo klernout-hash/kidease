@@ -12,7 +12,7 @@ import { catalogByIdGet } from "@/lib/catalog";
 import { splitPhotoList } from "@/lib/listing-photo";
 import { cultureFieldsToSql } from "@/lib/listing-culture";
 import { isAdminOnlyListing, listingVisibilityForOwners, providerDeskListingVisible } from "@/lib/listing-visibility";
-import { callerIsAdmin } from "@/lib/server/public-listing";
+import { callerIsAdmin, callerIsTestAccount, callerMayUseAdminOnlyListing } from "@/lib/server/public-listing";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { emptyChild, mapChild, type ChildRow } from "@/lib/child-profile";
 import type { AgeGroup, Booking, BookingStatus, Child, Conversation, Locale, Message, PayMethod, Schedule } from "@/lib/types";
@@ -286,6 +286,7 @@ export const getFamily = createServerFn({ method: "GET" })
       where c.user_id = ${context.userId} and m.sender = 'parent'
     `;
     const admin = await callerIsAdmin();
+    const seeTestListings = admin || (await callerIsTestAccount());
     return {
       role: (profile[0]?.role === "admin" ? "admin" : profile[0]?.role === "provider" ? "provider" : "parent") as
         | "parent"
@@ -308,7 +309,7 @@ export const getFamily = createServerFn({ method: "GET" })
                   tourNote: String(r.tour_note ?? ""),
                 };
               })
-              .filter((d) => admin || !isAdminOnlyListing(d)),
+              .filter((d) => seeTestListings || !isAdminOnlyListing(d)),
           ),
           { distanceKnown: false, ageGroup: "any" },
         )
@@ -474,7 +475,7 @@ export const toggleSave = createServerFn({ method: "POST" })
   .handler(async ({ context, data: daycareId }) => {
     const sql = await getSql();
     const listed = await catalogByIdGet(daycareId);
-    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerIsAdmin())) {
+    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerMayUseAdminOnlyListing())) {
       throw new Error("Listing not found");
     }
     if (listed) await upsertDaycare(sql, listed);
@@ -521,7 +522,7 @@ export const saveDaycare = createServerFn({ method: "POST" })
   .handler(async ({ context, data: daycareId }) => {
     const sql = await getSql();
     const listed = await catalogByIdGet(daycareId);
-    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerIsAdmin())) {
+    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerMayUseAdminOnlyListing())) {
       throw new Error("Listing not found");
     }
     if (listed) await upsertDaycare(sql, listed);
@@ -558,7 +559,7 @@ export const createBooking = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const listed = await catalogByIdGet(data.daycareId);
-    if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerIsAdmin())) {
+    if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerMayUseAdminOnlyListing())) {
       throw new Error("Listing not found");
     }
     if (listed) await upsertDaycare(sql, listed);
@@ -665,7 +666,7 @@ export const createSpotRequest = createServerFn({ method: "POST" })
     const sql = await getSql();
     await ensureProfile(sql, context.userId);
     const listed = await catalogByIdGet(data.daycareId);
-    if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerIsAdmin())) {
+    if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerMayUseAdminOnlyListing())) {
       throw new Error("Listing not found");
     }
     if (listed) await upsertDaycare(sql, listed);
@@ -1021,7 +1022,7 @@ export const openConversation = createServerFn({ method: "POST" })
   .handler(async ({ context, data: daycareId }) => {
     const sql = await getSql();
     const listed = await catalogByIdGet(daycareId);
-    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerIsAdmin())) {
+    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerMayUseAdminOnlyListing())) {
       throw new Error("Listing not found");
     }
     if (listed) await upsertDaycare(sql, listed);

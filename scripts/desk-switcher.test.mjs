@@ -114,8 +114,10 @@ test("daycare-only and parent-only users do not get the 3-desk switcher", () => 
   assert.equal(headerDesks(desksFor({ role: "parent" }), "parent").includes("provider"), false);
   assert.equal(headerDesks(desksFor({ role: "parent" }), "parent").includes("admin"), false);
 
-  assert.equal(showDeskSwitcher(desksFor({ role: "parent", ownsCentre: true }), "parent"), true);
+  assert.equal(showDeskSwitcher(desksFor({ role: "parent", ownsCentre: true }), "parent"), false);
+  assert.deepEqual(headerDesks(desksFor({ role: "parent", ownsCentre: true }), "parent"), ["provider"]);
   assert.equal(headerDesks(["admin", "parent", "provider"], "parent", "parent@example.com").includes("admin"), false);
-  assert.equal(showDeskSwitcher(["admin", "parent", "provider"], "parent", "parent@example.com"), true);
+  assert.equal(headerDesks(["admin", "parent", "provider"], "parent", "parent@example.com").includes("parent"), false);
+  assert.equal(showDeskSwitcher(["admin", "parent", "provider"], "parent", "parent@example.com"), false);
   assert.equal(showDeskSwitcher(["provider", "parent"], "provider", "kyle@kidease.ca"), false);
 });

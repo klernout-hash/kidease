@@ -585,9 +585,9 @@ export function sanitizeStickyDesk(
  * Header pills — only desks this session is allowed to open.
  * Admin: kyle@kidease.ca + profiles.role = admin. Parent/Daycare-only never
  * see Admin, even if a stale desk list included it.
- * Parent: stored parent/admin/support only. Daycare-only (provider role) does
- * not get a Parent pill just because desksFor also keeps /parent reachable.
- * The operator admin sees Parent, then Daycare, then Admin. Support stays out of that row.
+ * Parent: a real parent, admin, or support account. A daycare account (provider
+ * role, or a parent who already owns a centre) does not get a Parent pill.
+ * One account, one role. The operator admin sees Parent, then Daycare, then Admin.
  */
 export function headerDesks(
   desks: DeskKey[],
@@ -599,7 +599,10 @@ export function headerDesks(
     if (desk === "admin") return canSeeAdminDesk(role, email);
     if (desk === "parent" && role != null) {
       const stored = parseAppRole(role);
-      return stored === "parent" || stored === "admin" || stored === "support" || stored === "support_lead";
+      if (stored === "admin" || stored === "support" || stored === "support_lead") return true;
+      if (stored !== "parent") return false;
+      if (desks.includes("provider")) return false;
+      return true;
     }
     return true;
   });

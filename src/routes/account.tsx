@@ -301,7 +301,8 @@ function ProfilePane() {
             : null;
 
   const hideParentPlan = !chrome.pending && chrome.role === "parent" && !chrome.subscriptionsEnabled;
-  const hideUpgrade = desk === "admin" || hideParentPlan;
+  const hideProviderPlan = desk === "provider" && chrome.subscriptionsEnabled !== true;
+  const hideUpgrade = desk === "admin" || hideParentPlan || hideProviderPlan;
   const section =
     nativeShell && search.section === "subscription"
       ? "profile"

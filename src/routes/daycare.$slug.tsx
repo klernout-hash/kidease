@@ -991,7 +991,7 @@ export function Listing() {
               <h2 className="font-display text-2xl">{t("availability")}</h2>
               {known ? (
                 <ul className="mt-3 divide-y divide-border text-sm">
-                  {data.availability.map((row) => (
+                  {(Array.isArray(data.availability) ? data.availability : []).map((row) => (
                     <li key={row.month} className="py-2.5">
                       <p className="font-medium">{formatMonth(row.month, locale)}</p>
                       <p className="mt-0.5 text-muted tabular-nums">
@@ -1012,11 +1012,11 @@ export function Listing() {
               {parentActions ? <JoinWaitlist daycareId={d.id} next={`/daycare/${d.slug}`} /> : null}
             </section>
 
-            {d.amenities.split(",").filter(Boolean).length ? (
+            {String(d.amenities ?? "").split(",").filter(Boolean).length ? (
               <section>
                 <h2 className="font-display text-2xl">{t("amenities")}</h2>
                 <ul className="mt-3 flex flex-wrap gap-2">
-                  {d.amenities
+                  {String(d.amenities ?? "")
                     .split(",")
                     .filter(Boolean)
                     .map((key) => (

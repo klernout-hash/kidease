@@ -61,8 +61,9 @@ test("menus stay on one role and the plan label switches when paid", () => {
   assert.equal(upgradeNavLabel(true), "My plan");
   const parent = roleNavItems({ role: "parent", paid: false }).map((item) => item.label);
   const parentPaid = roleNavItems({ role: "parent", paid: true }).map((item) => item.label);
-  const daycare = roleNavItems({ role: "provider", paid: true }).map((item) => item.label);
-  const daycareFree = roleNavItems({ role: "provider", paid: false }).map((item) => item.label);
+  const daycare = roleNavItems({ role: "provider", paid: true, subscriptionsOn: true }).map((item) => item.label);
+  const daycareFree = roleNavItems({ role: "provider", paid: false, subscriptionsOn: true }).map((item) => item.label);
+  const daycareHidden = roleNavItems({ role: "provider", paid: false }).map((item) => item.label);
   const guest = roleNavItems({ role: "guest" }).map((item) => item.label);
   assert.ok(parent.includes("Saved"));
   assert.ok(parent.includes("Upgrade"));
@@ -73,6 +74,8 @@ test("menus stay on one role and the plan label switches when paid", () => {
   assert.ok(daycare.includes("Today"));
   assert.ok(daycare.includes("My plan"));
   assert.ok(daycareFree.includes("Upgrade"));
+  assert.equal(daycareHidden.includes("Upgrade"), false);
+  assert.equal(daycareHidden.includes("My plan"), false);
   assert.equal(daycare.includes("Saved"), false);
   assert.ok(guest.includes("Sign in"));
   assert.ok(guest.includes("List your daycare"));

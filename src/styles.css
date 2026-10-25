@@ -1241,6 +1241,15 @@
     bottom: 1.5rem;
     right: 1.5rem;
   }
+  /* The chat bubble is fixed at the bottom-right. Clear it only while that bubble is on the page. */
+  @media (max-width: 767px) {
+    html:has(.ke-help-bot) [data-ke="recently-viewed"] {
+      margin-bottom: 5.5rem;
+    }
+    html:has(.ke-help-bot) [data-ke="recently-viewed"] .ke-chip-carousel {
+      margin-right: 5.5rem;
+    }
+  }
   @media (max-width: 767px) {
     .ke-help-bot > button > span {
       position: absolute;

@@ -48,8 +48,14 @@ test("addon parse keeps only known ids and a stable order", () => {
   assert.equal(serializeProviderAddons(["job_post", "featured_city", "x"]), "featured_city,job_post");
 });
 
-test("Upgrade stays on the parent and daycare desk panels", () => {
-  const daycare = visibleDeskNav("daycare", { providerSubscriptions: false, centreOwner: true });
+test("Upgrade stays on the parent desk and returns to the daycare desk when plans are on", () => {
+  const hidden = visibleDeskNav("daycare", { providerSubscriptions: false, centreOwner: true });
+  assert.equal(hidden.some((i) => i.id === "subscription"), false);
+  const daycare = visibleDeskNav("daycare", {
+    providerSubscriptions: false,
+    centreOwner: true,
+    subscriptionsEnabled: true,
+  });
   const centre = daycare.find((i) => i.id === "subscription");
   assert.equal(centre?.label, "Upgrade");
   assert.equal(centre?.icon, "credit-card");

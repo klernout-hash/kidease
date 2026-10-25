@@ -45,6 +45,7 @@ test("daycare phone tabs are Today, Requests, Listings, Messages, Account", () =
     providerSubscriptions: true,
     showPayCtas: true,
     centreOwner: true,
+    subscriptionsEnabled: true,
   }).map((i) => i.id);
   assert.equal(secondary.includes("tours"), true);
   assert.equal(secondary.includes("requests"), false);

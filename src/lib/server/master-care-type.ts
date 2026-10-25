@@ -19,10 +19,14 @@ export type MasterCareCode = keyof typeof CODES;
 
 const lookup = index as Record<string, string>;
 
-export function masterCareKey(province: string, postal: string, name: string): string {
-  const prov = province.trim().toUpperCase();
-  const pc = postal.toUpperCase().replace(/[^A-Z0-9]/g, "");
-  const nm = name
+function text(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+export function masterCareKey(province: unknown, postal: unknown, name: unknown): string {
+  const prov = text(province).trim().toUpperCase();
+  const pc = text(postal).toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const nm = text(name)
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
@@ -48,13 +52,15 @@ export function applyMasterCareType<
     facilityType?: FacilityType | null;
   },
 >(row: T): T {
-  if (row.facilityType) return row;
-  const code = masterCareCode(row.province, row.postalCode || "", row.name);
-  if (!code) return row;
+  const amenities = text(row.amenities);
+  const safe = amenities === row.amenities ? row : { ...row, amenities };
+  if (safe.facilityType) return safe;
+  const code = masterCareCode(safe.province, safe.postalCode || "", safe.name);
+  if (!code) return safe;
   if (code === "b") {
-    if (row.amenities.split(",").some((part) => part.trim() === "before-after")) return row;
-    const amenities = row.amenities ? `${row.amenities},before-after` : "before-after";
-    return { ...row, amenities };
+    if (amenities.split(",").some((part) => part.trim() === "before-after")) return safe;
+    const next = amenities ? `${amenities},before-after` : "before-after";
+    return { ...safe, amenities: next };
   }
-  return { ...row, facilityType: CODES[code] };
+  return { ...safe, facilityType: CODES[code] };
 }

@@ -51,6 +51,12 @@ test("parent and daycare menus keep the plan item and a visible group label", ()
   assert.equal(visibleDeskNav("parent", { subscriptionsEnabled: false }).some((item) => item.id === "upgrade"), true);
   assert.equal(
     visibleDeskNav("daycare", { centreOwner: false, centreLinked: false }).some((item) => item.id === "subscription"),
+    false,
+  );
+  assert.equal(
+    visibleDeskNav("daycare", { subscriptionsEnabled: true, centreOwner: false, centreLinked: false }).some(
+      (item) => item.id === "subscription",
+    ),
     true,
   );
   const parent = visibleDeskGroups("parent", visibleDeskNav("parent", { subscriptionsEnabled: false }));

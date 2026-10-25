@@ -89,10 +89,20 @@ test("public and desk chrome hide Upgrade / Subscribe unless flagged", () => {
   const video = src("src/routes/video.$roomId.tsx");
   assert.match(video, /PayCtas/);
   assert.match(video, /parentPlusSubscribe/);
-  const nav = visibleDeskNav("daycare", { providerSubscriptions: true, showPayCtas: false }).map((i) => i.id);
+  const nav = visibleDeskNav("daycare", {
+    providerSubscriptions: true,
+    showPayCtas: false,
+    subscriptionsEnabled: true,
+  }).map((i) => i.id);
   assert.equal(nav.includes("promote"), false);
   assert.equal(nav.includes("subscription"), true);
-  const on = visibleDeskNav("daycare", { providerSubscriptions: true, showPayCtas: true }).map((i) => i.id);
+  const hidden = visibleDeskNav("daycare", { providerSubscriptions: true, showPayCtas: false }).map((i) => i.id);
+  assert.equal(hidden.includes("subscription"), false);
+  const on = visibleDeskNav("daycare", {
+    providerSubscriptions: true,
+    showPayCtas: true,
+    subscriptionsEnabled: true,
+  }).map((i) => i.id);
   assert.equal(on.includes("promote"), true);
 });
 
