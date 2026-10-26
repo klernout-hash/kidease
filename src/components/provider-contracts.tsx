@@ -17,7 +17,7 @@ export function ProviderContractsPanel() {
       .finally(() => setLoaded(true));
   }, []);
 
-  if (!loaded) return <p className="text-muted">Loading contracts…</p>;
+  if (!loaded) return <p className="text-muted">{t("contractsLoading")}</p>;
 
   if (rows.length === 0) {
     return (

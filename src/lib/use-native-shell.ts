@@ -33,3 +33,10 @@ export function useStoreChannel(): StoreChannel {
   }, []);
   return channel;
 }
+
+/** Hide plan prices in every store shell, including the Microsoft `ke_store` cookie. */
+export function useStoreShell(): boolean {
+  const nativeShell = useInNativeShell();
+  const channel = useStoreChannel();
+  return nativeShell || shellBlocksCommerce(channel);
+}

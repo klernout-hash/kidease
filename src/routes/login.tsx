@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { authClient, authEnabled, clearLocalSignedOut, dropExistingSession, signIn, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
@@ -7,6 +7,7 @@ import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field"
 import { providersForStore, type GrokProvider } from "@/lib/auth/providers";
 import { getSignInProviders } from "@/lib/server/sign-in-providers";
 import { useStoreChannel } from "@/lib/use-native-shell";
+import { isFrPath } from "@/lib/locale-path";
 import { LOADER_SETTLE_MS, withTimeout, withTimeoutFallback } from "@/lib/timeout";
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
@@ -157,6 +158,8 @@ export function LoginScreen({
   search: LoginSearch;
 }) {
   const { t, locale } = useCopy();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const loginPath = isFrPath(pathname) ? "/fr/login" : "/login";
   const storeChannel = useStoreChannel();
   const shownProviders = providersForStore(providers, storeChannel);
   const deskHint = parseDeskQuery(search.desk);
@@ -560,6 +563,7 @@ export function LoginScreen({
         role,
         desk: search.desk,
         next: search.next,
+        loginPath,
       });
       await withTimeout(signIn(providerId, {
         callbackURL:
@@ -571,12 +575,14 @@ export function LoginScreen({
                 role,
                 desk: search.desk,
                 intent: search.intent === "up" || search.intent === "admin" ? search.intent : "in",
+                loginPath,
               })),
         errorCallbackURL: loginErrorCallbackUrl({
           next: search.next,
           role,
           desk: search.desk,
           intent: search.intent,
+          loginPath,
         }),
         ...(providerId === "facebook"
           ? {
@@ -584,7 +590,7 @@ export function LoginScreen({
                 role: facebookSignupRole(role),
                 desk: search.desk,
                 next: search.next,
-                locale,
+                locale: loginPath === "/fr/login" ? "fr" : locale,
               }),
             }
           : {}),

@@ -18,6 +18,7 @@ import { canUseOperatorTools } from "@/lib/operator-tools";
 import { parentDeskPath } from "@/lib/desk-nav";
 import { stripLocalePrefix } from "@/lib/locale-path";
 import { getFamily } from "@/lib/server/family";
+import { useCopy } from "@/lib/use-copy";
 
 const ParentDesk = lazy(() =>
   import("@/components/parent-desk").then((m) => ({ default: m.ParentDesk })),
@@ -89,6 +90,7 @@ export type ParentSearch = ReturnType<typeof parentValidateSearch>;
 export type ParentLoaded = Awaited<ReturnType<typeof parentLoader>>;
 
 export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loaded: ParentLoaded }) {
+  const { t } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, isPending } = useCurrentUserState();
   const locallyOut = useLocallySignedOut();
@@ -151,8 +153,8 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
     return (
       <Shell>
         <main className="mx-auto max-w-lg px-4 py-16 text-center">
-          <h1 className="font-display text-3xl">Couldn’t confirm this account</h1>
-          <p className="mt-3 text-muted">Refresh and try again. Nothing was charged.</p>
+          <h1 className="font-display text-3xl">{t("accountUnconfirmedTitle")}</h1>
+          <p className="mt-3 text-muted">{t("accountUnconfirmedBody")}</p>
         </main>
       </Shell>
     );

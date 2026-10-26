@@ -27,6 +27,7 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then(async (keys) => {
+      // Drop the previous shell cache. A reload does not clear cookies or sign anyone out.
       const stale = keys.filter((key) => key !== VERSION);
       await Promise.all(stale.map((key) => caches.delete(key)));
       await self.clients.claim();

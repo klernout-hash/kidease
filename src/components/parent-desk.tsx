@@ -39,7 +39,7 @@ import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { inboxThreadTo, parentDeskPath, parentNavSearch } from "@/lib/desk-nav";
 import { parentDeskTabOrDefault } from "@/lib/parent-tab";
-import { useInNativeShell } from "@/lib/use-native-shell";
+import { useStoreShell } from "@/lib/use-native-shell";
 import { yieldToMain } from "@/lib/yield-main";
 import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
 import { PARENT_UPGRADE_PLANS } from "@/lib/upgrade-plans";
@@ -127,12 +127,19 @@ export function ParentDesk({
 }) {
   const { user } = useCurrentUserState();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const urlTab = useRouterState({
+    select: (s) => {
+      const tab = (s.location.search as { tab?: unknown }).tab;
+      return typeof tab === "string" ? tab : "";
+    },
+  });
   const navigate = useNavigate();
-  const nativeShell = useInNativeShell();
+  const storeShell = useStoreShell();
   const chrome = useRoleChrome();
   const plus = useParentPlusAccess();
   const { t, locale } = useCopy();
   const { session: desks, ready: desksReady } = useSessionDesks();
+  const plansOn = !storeShell && desks?.subscriptionsEnabled === true;
   const origin = useAppStore((s) => s.origin);
   const located = useAppStore((s) => s.located);
   const radiusKm = useAppStore((s) => s.radiusKm);
@@ -163,13 +170,14 @@ export function ParentDesk({
     const next = parentDeskTabOrDefault(id);
     setTab(next);
     const search = parentNavSearch(id);
-    if (search.tab) {
-      void navigate({ to: parentDeskPath(pathname), search });
+    const target = search.tab ?? "";
+    if (target && target !== urlTab) {
+      void navigate({ to: parentDeskPath(pathname), search, replace: true });
     }
     void yieldToMain().then(() => {
       startTransition(() => setContentTab(next));
     });
-  }, [navigate, pathname]);
+  }, [navigate, pathname, urlTab]);
 
   const loadExplore = useCallback(
     async (startBookings: Booking[], fresh = false) => {
@@ -619,7 +627,7 @@ export function ParentDesk({
             <LedgerHonesty
               stripeLive={Boolean(desks?.stripeLive)}
               surface="parent"
-              plansOn={!nativeShell && desks?.subscriptionsEnabled === true}
+              plansOn={plansOn}
               className="mt-2"
               ready={desksReady}
             />
@@ -665,7 +673,7 @@ export function ParentDesk({
               payments.length === 0 &&
               bills.filter((b) => billIsOpen(b.status)).length === 0 ? (
                 <li className="p-2">
-                  <EmptyState title={t("noPayments")} body={t(parentPayEmptyKey(!nativeShell && desks?.subscriptionsEnabled === true))} action={t("emptyFindCare")} actionTo="/search" />
+                  <EmptyState title={t("noPayments")} body={t(parentPayEmptyKey(plansOn))} action={t("emptyFindCare")} actionTo="/search" />
                 </li>
               ) : (
                 <>

@@ -52,6 +52,8 @@ test("service worker caches chrome only and registers from NativeBoot", () => {
   const sw = src("public/sw.js");
   assert.match(sw, /\/offline\.html/);
   assert.match(sw, /kidease-shell-v8/);
+  assert.match(sw, /caches\.delete\(key\)/);
+  assert.doesNotMatch(sw, /signOut|document\.cookie|Clear-Site-Data/);
   assert.match(sw, /navigator\.onLine === false/);
   assert.match(sw, /startsWith\("\/_serverFn"\)/);
   assert.match(sw, /caches\.match\("\/offline\.html"\)/);

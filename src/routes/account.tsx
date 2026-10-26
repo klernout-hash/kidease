@@ -370,7 +370,7 @@ function ProfilePane() {
       }
       confirmAction(t, "profileSaved");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not save details");
+      toast.error(err instanceof Error ? err.message : t("accountSaveFailed"));
     } finally {
       setSaving(false);
     }

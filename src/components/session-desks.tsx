@@ -37,7 +37,7 @@ const SessionDesksContext = createContext<SessionDesksState>(EMPTY);
 
 /** Desk routes need the full session. Public pages use the lighter role chrome. */
 export function needsSessionDesks(pathname: string): boolean {
-  const path = stripLocalePrefix(pathname);
+  const path = stripLocalePrefix(pathname).replace(/\/+$/, "") || "/";
   return (
     path === "/parent" ||
     path.startsWith("/parent/") ||

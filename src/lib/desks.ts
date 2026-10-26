@@ -250,15 +250,16 @@ export function sanitizePostLoginNext(raw?: string | null, depth = 0): string | 
   if (depth > 4) return null;
   const trimmed = (raw || "").trim();
   if (!trimmed.startsWith("/") || trimmed.startsWith("//") || trimmed.length > 512) return null;
-  const path = pathnameOfDest(trimmed);
-  if (!path || path === "/") return null;
-  if (isAuthLoopPath(path)) {
-    const q = trimmed.indexOf("?");
+  const q = trimmed.indexOf("?");
+  const pathOnly = (q === -1 ? trimmed : trimmed.slice(0, q)).replace(/\/+$/, "") || "/";
+  const query = q === -1 ? "" : trimmed.slice(q);
+  if (!pathOnly.startsWith("/") || pathOnly.startsWith("//") || pathOnly === "/") return null;
+  if (isAuthLoopPath(pathOnly)) {
     if (q === -1) return null;
     const nested = new URLSearchParams(trimmed.slice(q + 1)).get("next");
     return nested ? sanitizePostLoginNext(nested, depth + 1) : null;
   }
-  return trimmed;
+  return `${pathOnly}${query}`;
 }
 
 export type PostLoginDestKind = "desk" | "public" | "home" | "auth";
@@ -337,6 +338,8 @@ export function loginErrorCallbackUrl(search: {
   role?: string;
   desk?: string;
   intent?: string;
+  /** French sign-in stays on /fr/login so intent, next, and 2FA survive. */
+  loginPath?: "/login" | "/fr/login";
 }): string {
   const params = new URLSearchParams();
   if (search.intent === "in" || search.intent === "up" || search.intent === "admin") {
@@ -348,8 +351,9 @@ export function loginErrorCallbackUrl(search: {
   if (search.desk) params.set("desk", search.desk);
   const next = sanitizePostLoginNext(search.next);
   if (next) params.set("next", next);
+  const base = search.loginPath === "/fr/login" ? "/fr/login" : "/login";
   const qs = params.toString();
-  return qs ? `/login?${qs}` : "/login";
+  return qs ? `${base}?${qs}` : base;
 }
 
 /**

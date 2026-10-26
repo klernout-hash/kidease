@@ -2,7 +2,7 @@ import { useRoleChrome } from "@/components/role-chrome";
 import { parentPayLeadKey } from "@/lib/copy";
 import { listingStatusFromClaim, listingStatusLabel } from "@/lib/listing-status";
 import { useCopy } from "@/lib/use-copy";
-import { useInNativeShell } from "@/lib/use-native-shell";
+import { useStoreShell } from "@/lib/use-native-shell";
 import { cn } from "@/lib/utils";
 
 export function ListingStatusBadge({
@@ -56,7 +56,7 @@ export function LedgerHonesty({
   plansOn?: boolean;
 }) {
   const { t } = useCopy();
-  const native = useInNativeShell();
+  const storeShell = useStoreShell();
   const chrome = useRoleChrome();
   if (!ready) {
     return (
@@ -66,7 +66,8 @@ export function LedgerHonesty({
     );
   }
   const subscriptionsOn = surface === "parent" ? plansOn : plansOn || chrome.subscriptionsEnabled === true;
-  const showPlans = !native && subscriptionsOn;
+  const showPlans = !storeShell && subscriptionsOn;
+  if (surface === "money" && !showPlans) return null;
   const text =
     surface === "parent"
       ? t(parentPayLeadKey(showPlans, stripeLive))

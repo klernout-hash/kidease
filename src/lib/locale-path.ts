@@ -85,10 +85,14 @@ export const LOCALE_REDIRECT_PATHS = [
 const PAIRED = new Set<string>(LOCALE_PAIRED_PATHS);
 const REDIRECT = new Set<string>(LOCALE_REDIRECT_PATHS);
 
+function dropTrailingSlashes(path: string): string {
+  if (path.length > 1 && path.endsWith("/")) return path.replace(/\/+$/, "") || "/";
+  return path || "/";
+}
+
 export function normalizePathname(pathname: string | null | undefined): string {
   const raw = String(pathname ?? "/").split("?")[0] || "/";
-  if (raw.length > 1 && raw.endsWith("/")) return raw.slice(0, -1);
-  return raw || "/";
+  return dropTrailingSlashes(raw);
 }
 
 export function isFrPath(pathname: string | null | undefined): boolean {
@@ -100,7 +104,7 @@ export function stripLocalePrefix(pathname: string | null | undefined): string {
   const path = normalizePathname(pathname);
   if (path === FR_PREFIX) return "/";
   if (path.startsWith(`${FR_PREFIX}/`)) {
-    const rest = path.slice(FR_PREFIX.length);
+    const rest = dropTrailingSlashes(path.slice(FR_PREFIX.length));
     return rest.startsWith("/") ? rest : `/${rest}`;
   }
   return path;

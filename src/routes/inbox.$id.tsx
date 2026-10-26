@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useParams, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { inboxSearch, parseInboxSearch, resolveInboxView } from "@/lib/inbox-view";
 import { Phone, Video, X } from "lucide-react";
 import { toast } from "sonner";
@@ -37,8 +37,14 @@ import type { BookingStatus, Child, Message, Schedule, TourRequest } from "@/lib
 
 export const Route = createFileRoute("/inbox/$id")({
   validateSearch: (s: Record<string, unknown>) => parseInboxSearch(s),
-  component: InboxThreadPage,
+  component: InboxThreadRoute,
 });
+
+function InboxThreadRoute() {
+  const { id } = Route.useParams();
+  const search = Route.useSearch();
+  return <InboxThreadPage id={id} search={search} />;
+}
 
 function showChatBubble(m: Message) {
   return m.kind === "status" || (m.kind !== "system" && m.kind !== "notify" && m.sender !== "system");
@@ -60,10 +66,7 @@ type BookingInfo = {
   daycareId?: string;
 };
 
-export function InboxThreadPage() {
-  const params = useParams({ strict: false });
-  const id = String(params.id || "");
-  const search = useSearch({ strict: false }) as ReturnType<typeof parseInboxSearch>;
+export function InboxThreadPage({ id, search }: { id: string; search: ReturnType<typeof parseInboxSearch> }) {
   const { user, isPending } = useCurrentUserState();
   const { t, locale } = useCopy();
   const { session: desks, sticky } = useSessionDesks();
@@ -93,6 +96,10 @@ export function InboxThreadPage() {
   const [stateBusy, setStateBusy] = useState(false);
 
   async function load() {
+    if (!id) {
+      setLoadState("missing");
+      return;
+    }
     const res = await getThread({ data: id });
     if (!res) {
       setLoadState("missing");
@@ -151,7 +158,7 @@ export function InboxThreadPage() {
   }
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !id) return;
     let cancelled = false;
     let timer = 0;
     let failures = 0;
@@ -232,7 +239,7 @@ export function InboxThreadPage() {
       confirmAction(t, "replySent");
       await load();
     } catch (err) {
-      setSendError(err instanceof Error ? err.message : "Could not send");
+      setSendError(err instanceof Error ? err.message : t("sendFailed"));
     }
   }
 
