@@ -426,7 +426,21 @@ export const GROUPS = [
         concealed: true,
         vercel: "both",
         required: false,
-        notes: "Connect HMAC. Header only — never ?secret=.",
+        notes: "Connect HMAC. Header only — never ?secret=. Unset answers 200 ignored, not 401.",
+      },
+      {
+        name: "DOCUSIGN_WEBHOOK_SECRETS",
+        concealed: true,
+        vercel: "both",
+        required: false,
+        notes: "Optional comma-separated extra Connect HMAC keys.",
+      },
+      {
+        name: "DOCUSIGN_CONNECT_ACCOUNT_IDS",
+        concealed: false,
+        vercel: "both",
+        required: false,
+        notes: "Optional comma-separated extra account ids. Other accounts are ignored.",
       },
       {
         name: "DOCUSIGN_ENV",
