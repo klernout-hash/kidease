@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -18,9 +18,11 @@ import { useCopy } from "@/lib/use-copy";
 export function AlertPushSettings({
   audience,
   subscriptionsOn,
+  children,
 }: {
   audience: AlertAudience;
   subscriptionsOn: boolean;
+  children?: ReactNode;
 }) {
   const inPhoneApp = isNative();
   const { t, locale } = useCopy();
@@ -65,11 +67,11 @@ export function AlertPushSettings({
   return (
     <details className="mt-8 rounded-xl bg-surface shadow-card ring-1 ring-border" data-ke="alert-settings">
       <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 marker:content-none [&::-webkit-details-marker]:hidden">
-        <span className="font-display text-lg tracking-[-0.03em]">{intro.title}</span>
+        <span className="font-display text-lg tracking-[-0.03em]">{t("alertPrefs")}</span>
         <span className="text-sm text-muted" data-ke="alert-settings-summary">{summary}</span>
       </summary>
       <div className="px-5 pb-5">
-      <h2 className="sr-only">{intro.title}</h2>
+      <h2 className="sr-only">{t("alertPrefs")}</h2>
       <p className="mt-2 text-sm text-muted">{intro.lead}</p>
       <p className="mt-2 text-sm text-muted">{intro.founding}</p>
       <p className="mt-2 text-sm text-fg">{intro.quiet}</p>
@@ -131,6 +133,7 @@ export function AlertPushSettings({
         </Link>
       </p>
       {inPhoneApp ? null : <p className="mt-2 text-sm text-muted">{intro.apps}</p>}
+      {children}
       </div>
     </details>
   );

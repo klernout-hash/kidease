@@ -18,6 +18,7 @@ import {
 import { ChipButton } from "@/components/chip";
 import { STEP_SIZES } from "@/lib/photo";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useRoleChrome } from "@/components/role-chrome";
 import { getMyRole } from "@/lib/server/family";
 import {
   consumeJustSignedOut,
@@ -119,6 +120,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
   const { t, locale } = useCopy();
   const navigate = useNavigate();
   const { user, isPending } = useCurrentUserState();
+  const guestView = useRoleChrome().guestView === true;
   const origin = useAppStore((s) => s.origin);
   const originSource = useAppStore((s) => s.originSource);
   const setOrigin = useAppStore((s) => s.setOrigin);
@@ -327,6 +329,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
   );
 
   useEffect(() => {
+    if (guestView) return;
     if (isPending) return;
     try {
       if (sessionStorage.getItem(DESK_LANDED_KEY) === "1") return;
@@ -343,7 +346,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
       /* ignore */
     }
     void navigate({ to: dest });
-  }, [isPending, user, role, navigate]);
+  }, [guestView, isPending, user, role, navigate]);
 
   const featuredSearch = (
     <>

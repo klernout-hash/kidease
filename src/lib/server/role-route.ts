@@ -35,6 +35,11 @@ export type RoleChromePayload = {
   degraded: boolean;
   /** SUBSCRIPTIONS_ENABLED. Server-evaluated. Default false. */
   subscriptionsEnabled: boolean;
+  /**
+   * kyle@kidease.ca asked to see the public site as a signed-out visitor.
+   * The session cookie stays. Admin and support paths ignore this flag.
+   */
+  guestView?: boolean;
 };
 
 const EMPTY: RoleChromePayload = {
@@ -154,13 +159,24 @@ async function computeRoleChrome(bearer: string | undefined, req: Request | null
   if (fixture) return { ...fixture, subscriptionsEnabled: plansOn };
 
   const { getSessionUser } = await import("@/lib/auth/verify.server");
-  let user: { id: string } | null = null;
+  let user: { id: string; email?: string | null } | null = null;
   try {
     user = await withTimeout(getSessionUser(bearerFrom(req, bearer)), SQL_SETTLE_MS, "role-chrome-auth");
   } catch {
     return { ...DEGRADED, subscriptionsEnabled: plansOn };
   }
   if (!user) return { ...EMPTY, subscriptionsEnabled: plansOn };
+
+  const { guestViewApplies, requestPathname } = await import("@/lib/guest-view");
+  if (
+    guestViewApplies({
+      cookie,
+      email: user.email,
+      pathname: requestPathname(req?.url),
+    })
+  ) {
+    return { ...EMPTY, subscriptionsEnabled: plansOn, guestView: true };
+  }
 
   try {
     const row = await withTimeout(queryRoleRow(user.id), SQL_SETTLE_MS, "role-chrome-sql");

@@ -553,7 +553,8 @@ export function LoginScreen({
         desk: deskFromPathname(dest) ?? undefined,
       });
       markContinued(dest, { method: "social" });
-      const socialDest = !operator && isCloudflareAccessPath(dest) ? "/parent" : dest;
+      const socialDest =
+        !operator && isCloudflareAccessPath(dest) ? (role === "provider" ? "/provider" : "/parent") : dest;
       const staged = socialSignupCallbackPath({
         intent: search.intent,
         role,
@@ -561,7 +562,16 @@ export function LoginScreen({
         next: search.next,
       });
       await withTimeout(signIn(providerId, {
-        callbackURL: staged ?? (staffTwoFactorRequired(socialDest) ? twoFactorUrl(socialDest) : socialDest),
+        callbackURL:
+          staged ??
+          (staffTwoFactorRequired(socialDest)
+            ? twoFactorUrl(socialDest)
+            : loginErrorCallbackUrl({
+                next: search.next,
+                role,
+                desk: search.desk,
+                intent: search.intent === "up" || search.intent === "admin" ? search.intent : "in",
+              })),
         errorCallbackURL: loginErrorCallbackUrl({
           next: search.next,
           role,

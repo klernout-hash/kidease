@@ -149,19 +149,37 @@ export function guardPrivatePath(input: {
   return { kind: "home", to: homeForRole(input.role) };
 }
 
+function parentDeskNext(next: string): boolean {
+  const path = (next.split("?")[0] || "/").replace(/\/+$/, "") || "/";
+  return path === "/parent" || path.startsWith("/parent/");
+}
+
 /**
  * After sign-in, honour a public return path. A private URL is kept only when
  * this role may open it. Otherwise send them to their own home.
+ * A daycare account (provider role, or a parent profile that owns or works at
+ * a centre) opens /provider. A leftover /parent next does not send them to
+ * the parent desk. Admin still keeps an explicit Parent next.
  */
 export function destinationAfterSignIn(input: {
   role?: string | null;
   next?: string | null;
+  /** Centre owner or active centre staff. Ignored for admin and support. */
+  ownsCentre?: boolean;
 }): string {
   const role = chromeRole(input.role);
-  const home = role === "guest" ? "/parent" : homeForRole(role);
+  const daycare =
+    role === "provider" ||
+    (input.ownsCentre === true && role !== "admin" && role !== "support");
+  const home = daycare ? "/provider" : role === "guest" ? "/parent" : homeForRole(role);
   const next = String(input.next || "").trim();
   if (!next.startsWith("/") || next.startsWith("//")) return home;
-  const decision = guardPrivatePath({ pathname: next, signedIn: true, role: input.role });
+  if (daycare && parentDeskNext(next)) return "/provider";
+  const decision = guardPrivatePath({
+    pathname: next,
+    signedIn: true,
+    role: daycare ? "provider" : input.role,
+  });
   if (decision.kind === "allow") return next;
   if (decision.kind === "home") return decision.to;
   return home;

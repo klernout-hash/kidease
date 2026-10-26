@@ -27,6 +27,7 @@ import {
   type BrowseDaycareType,
 } from "@/components/facility-type-rails";
 import { useRoleChrome } from "@/components/role-chrome";
+import { clearGuestViewCookie } from "@/lib/guest-view";
 import { accountSearch, canSeeAdminDesk } from "@/lib/desks";
 import { SiteFooter } from "@/components/site-footer";
 import { readLiveSearchFlag } from "@/lib/explore-search";
@@ -57,6 +58,8 @@ export function Shell({ children }: { children: ReactNode }) {
   const locallyOut = useLocallySignedOut();
   const { session, sticky } = useSessionDesks();
   const chrome = useRoleChrome();
+  const viewingGuest = chrome.guestView === true;
+  const headerUser = viewingGuest ? null : user;
   const [open, setOpen] = useState(false);
   const [hiddenCare, setHiddenCare] = useState<BrowseDaycareType[]>([]);
   const onCareOverflow = useCallback((hidden: BrowseDaycareType[]) => {
@@ -176,7 +179,7 @@ export function Shell({ children }: { children: ReactNode }) {
               </div>
             ) : null}
             <div className="relative z-20 ml-auto flex items-center gap-2 bg-bg pl-1 max-md:min-w-0 max-md:max-w-full max-md:gap-1.5 md:shrink-0 [[data-channel=website]_&]:flex">
-              {user ? <NotificationBell className="hidden md:grid" /> : (
+              {headerUser ? <NotificationBell className="hidden md:grid" /> : (
                 <Link
                   to={localePath("/claim", locale)}
                   data-ke="list-your-daycare"
@@ -186,7 +189,7 @@ export function Shell({ children }: { children: ReactNode }) {
                   {t("navForDaycares")}
                 </Link>
               )}
-              {user ? (
+              {headerUser ? (
                 <Link
                   to="/account"
                   search={accountSearch(sticky)}
@@ -195,9 +198,9 @@ export function Shell({ children }: { children: ReactNode }) {
                   className="hidden size-11 place-items-center rounded-full md:grid"
                 >
                   <ProfileAvatar
-                    userId={user.id}
-                    fallback={user.profileImageUrl}
-                    name={user.displayName}
+                    userId={headerUser.id}
+                    fallback={headerUser.profileImageUrl}
+                    name={headerUser.displayName}
                     size="sm"
                   />
                 </Link>
@@ -250,6 +253,18 @@ export function Shell({ children }: { children: ReactNode }) {
           ) : null}
         </div>
       </header>
+      {viewingGuest ? (
+        <div data-ke="admin-guest-view-banner" className="border-b border-border bg-surface px-4 py-3">
+          <p className="text-sm text-fg">{t("guestViewBanner")}</p>
+          <a
+            href="/admin"
+            className="mt-2 inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-fg"
+            onClick={() => clearGuestViewCookie()}
+          >
+            {t("guestViewExit")}
+          </a>
+        </div>
+      ) : null}
       {session?.restoreUntil ? (
         <div
           data-ke="account-restore"
@@ -278,14 +293,14 @@ export function Shell({ children }: { children: ReactNode }) {
         items={drawerItems}
         parentLabel={t("parentSignIn")}
         providerLabel={t("providerLogin")}
-        signedIn={(Boolean(user) || chrome.signedIn) && !locallyOut}
+        signedIn={(Boolean(headerUser) || chrome.signedIn) && !locallyOut && !viewingGuest}
         menusReady={!chrome.pending}
         accountLabel={t("account")}
         accountHref="/account"
         accountSearch={accountSearch(sticky)}
         role={chrome.role}
         paid={chrome.paid}
-        isAdmin={canSeeAdminDesk(session?.role, session?.email ?? user?.primaryEmail)}
+        isAdmin={!viewingGuest && canSeeAdminDesk(session?.role, session?.email ?? user?.primaryEmail)}
         onSignOut={() => void signOut("/")}
         headerExtra={null}
         navExtra={hiddenCare.length ? <HeaderCareOverflow types={hiddenCare} city={headerCity} onNavigate={close} /> : null}

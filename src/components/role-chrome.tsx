@@ -13,6 +13,8 @@ export type RoleChromeState = {
   ownedSlugs: string[];
   e2e: boolean;
   subscriptionsEnabled: boolean;
+  /** Operator is looking at the public site as a signed-out visitor. */
+  guestView?: boolean;
 };
 
 const GUEST: RoleChromeState = {
@@ -37,6 +39,14 @@ export function useRoleChrome(): RoleChromeState {
   const ctx = useRouteContext({ from: "__root__" }) as { roleChrome?: RoleChromePayload };
   const remote = ctx.roleChrome;
   const { user, isPending } = useCurrentUserState();
+
+  if (remote?.guestView) {
+    return {
+      ...GUEST,
+      guestView: true,
+      subscriptionsEnabled: remote.subscriptionsEnabled === true,
+    };
+  }
 
   if (remote?.role) {
     return {

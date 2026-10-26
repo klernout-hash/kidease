@@ -52,6 +52,9 @@ const ParentPlusPanel = lazy(() =>
 const SavedSearchesPanel = lazy(() =>
   import("@/components/saved-searches-panel").then((m) => ({ default: m.SavedSearchesPanel })),
 );
+const AlertPushSettings = lazy(() =>
+  import("@/components/alert-push-settings").then((m) => ({ default: m.AlertPushSettings })),
+);
 const ChildProfileForm = lazy(() =>
   import("@/components/child-profile-form").then((m) => ({ default: m.ChildProfileForm })),
 );
@@ -463,13 +466,11 @@ export function ParentDesk({
       ) : null}
 
       {contentTab === "alerts" ? (
-        <div className="mt-6">
-          <h2 className="font-display text-2xl">{t("alertPrefs")}</h2>
-          <p className="mt-1 text-sm text-muted">{t("alertPrefsLead")}</p>
-          <Suspense fallback={<div className="ke-skel mt-3 h-24 rounded-xl" aria-hidden="true" />}>
+        <Suspense fallback={<div className="ke-skel mt-6 h-24 rounded-xl" aria-hidden="true" />}>
+          <AlertPushSettings audience="parent" subscriptionsOn={chrome.subscriptionsEnabled === true}>
             <SavedSearchesPanel />
-          </Suspense>
-        </div>
+          </AlertPushSettings>
+        </Suspense>
       ) : null}
 
       {contentTab === "waitlists" ? (

@@ -13,6 +13,8 @@ import { useSessionDesks } from "@/components/session-desks";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import { cn } from "@/lib/utils";
+import { canUseOperatorTools } from "@/lib/operator-tools";
+import { startGuestViewCookie } from "@/lib/guest-view";
 
 export { useSessionDesks } from "@/components/session-desks";
 
@@ -124,6 +126,16 @@ export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
       className={compact ? "flex w-full min-w-0 flex-col gap-0.5" : "flex w-full min-w-0 flex-col gap-0.5"}
     >
       <SwitchRows desks={desks} current={current} onPick={setSticky} t={t} adminViewer={adminViewer} />
+      {adminViewer && canUseOperatorTools(session.email) ? (
+        <a
+          href="/?guest=1"
+          data-ke="admin-guest-view"
+          className="flex min-h-11 w-full items-center rounded-lg px-2.5 text-left text-sm font-medium text-fg hover:bg-surface"
+          onClick={() => startGuestViewCookie()}
+        >
+          {t("guestView")}
+        </a>
+      ) : null}
     </div>
   );
 }
