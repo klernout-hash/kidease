@@ -155,7 +155,7 @@ describe("appearance is wired across public + desks chrome", () => {
     assert.doesNotMatch(shell, /HeaderSocial/);
     assert.match(shell, /\[\[data-channel=website\]_&\]:flex/);
     assert.match(shell, /\[\[data-channel=website\]_&\]:grid/);
-    assert.match(shell, /aria-label=\{t\("menu"\)\}/);
+    assert.match(shell, /aria-label="Menu"/);
     assert.match(shell, /aria-controls="ke-nav-drawer"/);
     assert.match(shell, /size-12 shrink-0 place-items-center/);
     assert.match(header, /\[\[data-channel=website\]_&\]:flex/);

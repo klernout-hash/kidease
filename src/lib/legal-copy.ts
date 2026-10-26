@@ -174,7 +174,7 @@ export const PRIVACY_EN: LegalDoc = {
             {
               name: "DocuSign, when centre paperwork is sent",
               purpose:
-                "eSignature for the licensed centre agreement and enrolment paperwork packs. KidEase sends the provider’s name and email, the document or template, and the envelope status. The signed PDF is stored on that daycare’s KidEase profile for the operator and KidEase staff. Until DocuSign keys are set, centres can still sign the in-app document.",
+                "eSignature for the licensed centre agreement and enrolment paperwork packs. KidEase sends the provider’s name and email, the document or template, and the envelope status. The signed PDF is stored on that daycare’s KidEase profile for the operator and KidEase admin. Until DocuSign keys are set, centres can still sign the in-app document.",
               href: "https://www.docusign.com/privacy",
               hrefLabel: "DocuSign Privacy Policy",
             },
@@ -299,8 +299,8 @@ export const PRIVACY_EN: LegalDoc = {
           items: [
             "Roles: a parent may pay a first-month deposit after the centre offers a spot. KidEase records the payment. The care contract stays between the parent and the centre. Child care is a real-world service, not a digital in-app purchase.",
             "Stripe processes the card, Apple Pay, or Google Pay. KidEase never stores the full card number. We may send Stripe the amount, CAD, payment method type, and identifiers for the booking, parent, and centre: not allergy or medical notes.",
-            "Interac e-Transfer is reviewed by KidEase staff. The pay screen cannot mark that transfer paid.",
-            `Refunds follow the centre’s policy. Email ${SUPPORT_INBOX_EMAIL} if a deposit looks wrong. To ask for a refund or to dispute a charge, name the centre and the date. Card refunds go through Stripe after KidEase staff review the request.`,
+            "Interac e-Transfer and other bank methods may be added later. We will say so on the pay screen when they are on.",
+            `Refunds follow the centre’s policy. Chargebacks go through Stripe. Email ${SUPPORT_INBOX_EMAIL} if a deposit looks wrong.`,
           ],
         },
       ],
@@ -426,7 +426,7 @@ export const PRIVACY_EN: LegalDoc = {
             "A badge names the bureau coordonnateur and the date we checked their public page, and links to that page.",
             "Phone and email stay hidden until a visitor chooses to show them.",
             "Open spots, when the source lists a number, are shown with that date. The number may be out of date. We do not invent a number.",
-            "We do not email or text these providers. Canada's anti-spam law (CASL) applies. The provider can ask us to correct or remove the listing from the page. We store that request for KidEase staff to review. We do not send a message back.",
+            "We do not email or text these providers. Canada's anti-spam law (CASL) applies. The provider can ask us to correct or remove the listing from the page. We store that request for an admin to review. We do not send a message back.",
             "The public directory is on the Recognized home child care page when this list is turned on.",
             `Person in charge of the protection of personal information: ${privacyOfficerLine("en")}. You can also contact the Commission d'accès à l'information du Québec, or the Office of the Privacy Commissioner of Canada.`,
           ],
@@ -596,7 +596,7 @@ export const PRIVACY_FR: LegalDoc = {
             {
               name: "DocuSign, lorsque les documents du centre sont envoyés",
               purpose:
-                "Signature électronique de l’entente du centre permis et des trousses d’inscription. KidEase envoie le nom et le courriel du fournisseur, le document ou le modèle, et le statut de l’enveloppe. Le PDF signé est déposé sur le profil KidEase de cette garderie pour l’exploitant et le personnel KidEase. Tant que les clés DocuSign ne sont pas définies, le centre peut signer dans l’appli.",
+                "Signature électronique de l’entente du centre permis et des trousses d’inscription. KidEase envoie le nom et le courriel du fournisseur, le document ou le modèle, et le statut de l’enveloppe. Le PDF signé est déposé sur le profil KidEase de cette garderie pour l’exploitant et l’admin. Tant que les clés DocuSign ne sont pas définies, le centre peut signer dans l’appli.",
               href: "https://www.docusign.com/privacy",
               hrefLabel: "Politique de confidentialité DocuSign",
             },
@@ -721,8 +721,8 @@ export const PRIVACY_FR: LegalDoc = {
           items: [
             "Rôles : un parent peut verser un dépôt du premier mois après une offre de place. Le contrat de garde reste entre le parent et le centre. Ce n’est pas un achat numérique.",
             "Stripe traite la carte, Apple Pay ou Google Pay. KidEase ne conserve pas le numéro complet. Nous pouvons envoyer le montant, le CAD et des identifiants de réservation: pas les notes médicales.",
-            "Le virement Interac est revu par le personnel KidEase. L’écran de paiement ne peut pas le marquer payé.",
-            `Les remboursements suivent la politique du centre. Pour un remboursement ou une contestation, écrivez à ${SUPPORT_INBOX_EMAIL}. Nommez le centre et la date. Les rétrofacturations passent par Stripe après examen par le personnel KidEase.`,
+            "Le virement Interac et d’autres modes bancaires pourront s’ajouter plus tard.",
+            "Les remboursements suivent la politique du centre. Les rétrofacturations passent par Stripe.",
           ],
         },
       ],
@@ -848,7 +848,7 @@ export const PRIVACY_FR: LegalDoc = {
             "Un badge nomme le bureau coordonnateur et la date de vérification, et mène à la page du bureau.",
             "Le téléphone et le courriel restent cachés tant que le visiteur ne choisit pas de les afficher.",
             "Les places libres, quand la source donne un nombre, sont montrées avec la date. Le nombre peut ne plus être à jour. Nous n'inventons pas de nombre.",
-            "Nous n'envoyons pas de courriel ni de texto à ces services. La LCAP s'applique. Le service peut demander une correction ou un retrait sur la fiche. Nous gardons la demande pour que le personnel KidEase la révise. Nous n'envoyons pas de message en retour.",
+            "Nous n'envoyons pas de courriel ni de texto à ces services. La LCAP s'applique. Le service peut demander une correction ou un retrait sur la fiche. Nous gardons la demande pour qu'un admin la révise. Nous n'envoyons pas de message en retour.",
             "Le répertoire public est sur la page Milieux familiaux reconnus quand cette liste est activée.",
             `Personne responsable de la protection des renseignements personnels : ${privacyOfficerLine("fr")}. Vous pouvez aussi joindre la Commission d'accès à l'information du Québec, ou le Commissariat à la protection de la vie privée du Canada.`,
           ],
@@ -1175,8 +1175,7 @@ export const TERMS_EN: LegalDoc = {
           items: [
             "In-app deposits, when offered, hold a spot after the centre accepts a request. Refunds follow that centre’s policy.",
             "Cards, Apple Pay, and Google Pay are processed by Stripe. KidEase does not store full card numbers.",
-            "Interac e-Transfer is reviewed by KidEase staff. This page cannot mark that transfer paid.",
-            "To ask for a refund or to dispute a charge, email support@kidease.ca. Name the centre and the date. Card refunds go through Stripe after KidEase staff review the request.",
+            "Interac or other bank methods may be added later and will be labelled on the pay screen.",
           ],
         },
       ],
@@ -1320,8 +1319,7 @@ export const TERMS_FR: LegalDoc = {
           items: [
             "Les dépôts dans l’appli, le cas échéant, retiennent une place après acceptation. Les remboursements suivent la politique du centre.",
             "Les paiements par carte, Apple Pay et Google Pay sont traités par Stripe. KidEase ne conserve pas les numéros complets.",
-            "Le virement Interac est revu par le personnel KidEase. Cette page ne peut pas le marquer payé.",
-            "Pour un remboursement ou une contestation, écrivez à support@kidease.ca. Nommez le centre et la date. Les remboursements par carte passent par Stripe après examen par le personnel KidEase.",
+            "Le virement Interac ou d’autres modes pourront s’ajouter plus tard.",
           ],
         },
       ],

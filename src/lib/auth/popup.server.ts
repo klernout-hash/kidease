@@ -16,7 +16,6 @@
  * React route here paints the full app shell in the popup. The opener lives in
  * `client.ts` (`signIn` → `openSignInPopup`).
  */
-import { FACEBOOK_HOST_UNAVAILABLE, facebookRedirectUri } from "./facebook-idp";
 import { isNativeSocialProvider } from "./providers";
 import { readSessionTokenFromHeader } from "./cookies";
 import { auth } from "./server";
@@ -55,13 +54,6 @@ export async function handleAuthPopupRequest(request: Request): Promise<Response
   }
 
   const providerId = url.searchParams.get("providerId")?.trim();
-  if (providerId === "facebook" && !facebookRedirectUri(url.host)) {
-    return completionResponse({
-      source: "grok-auth-popup",
-      token: null,
-      error: FACEBOOK_HOST_UNAVAILABLE,
-    });
-  }
   if (!providerId) {
     return new Response("Missing providerId", {
       status: 400,

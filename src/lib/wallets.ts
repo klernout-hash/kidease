@@ -45,14 +45,15 @@ export function detectBrowserWallets(input: DetectWalletsInput = {}): WalletAvai
   const paymentRequest =
     input.paymentRequest ?? (typeof window !== "undefined" && "PaymentRequest" in window);
 
-  const ios = platform === "ios" || /iPhone|iPad|iPod/i.test(ua);
   const android = platform === "android" || /Android/i.test(ua);
+  const chromeLike = /Chrome|Chromium|CriOS|Edg\//i.test(ua);
+  const safariWithoutChrome = /Safari/i.test(ua) && !/Chrome|Chromium|CriOS|Edg\//i.test(ua);
 
-  // Apple Pay only on iPhone and iPad. Google Pay only on Android. Desktop browsers get a card.
-  const googlePay = Boolean(paymentRequest && !native && android);
+  // Google Pay: Chrome / Android Payment Request — not Safari, not the native WebView.
+  const googlePay = Boolean(paymentRequest && !native && (android || (chromeLike && !safariWithoutChrome)));
 
   return {
-    applePay: Boolean(applePayCapable) && !native && ios,
+    applePay: Boolean(applePayCapable) && !native,
     googlePay,
     nativeWebView: Boolean(native),
     paymentRequestApi: Boolean(paymentRequest),

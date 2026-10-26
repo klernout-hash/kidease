@@ -68,11 +68,8 @@ test("sign-up pages show the logo, phone field, and consent, and the schema stor
   assert.match(server, /parentSmsConsentText/);
   assert.match(migration, /sms_consent/);
   assert.match(migration, /sms_consent_at/);
-  assert.match(guard, /"\/sign-up": "\/signup"/);
-  assert.doesNotMatch(guard, /"\/signup": "/);
-  assert.match(vercel, /"source": "\/sign-up"/);
-  assert.match(vercel, /"destination": "\/signup"/);
-  assert.doesNotMatch(vercel, /"source": "\/signup"/);
+  assert.doesNotMatch(guard, /\/signup"/);
+  assert.doesNotMatch(vercel, /\/signup/);
   assert.match(src("src/routes/login.tsx"), /ParentSmsFields/);
   assert.match(src("src/routes/parent.tsx"), /\/parent\/signup/);
 });

@@ -248,7 +248,7 @@ function Tab({
         fill={active && Icon === Heart ? "currentColor" : "none"}
         aria-hidden
       />
-      <span className="line-clamp-1 w-full">{label}</span>
+      <span className="line-clamp-2 w-full break-words">{label}</span>
     </Link>
   );
 }

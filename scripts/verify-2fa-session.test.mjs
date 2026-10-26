@@ -71,13 +71,8 @@ test("mapAuthSessionUser accepts a Better Auth user and rejects junk", () => {
     displayName: "Kyle",
     primaryEmail: "k@example.com",
     profileImageUrl: null,
-    emailVerified: false,
     isDevFallback: false,
   });
-  assert.equal(
-    mapAuthSessionUser({ id: "u1", name: "Kyle", email: "k@example.com", emailVerified: true })?.emailVerified,
-    true,
-  );
   assert.equal(mapAuthSessionUser(null), null);
   assert.equal(mapAuthSessionUser({}), null);
   assert.equal(mapAuthSessionUser({ id: "" }), null);

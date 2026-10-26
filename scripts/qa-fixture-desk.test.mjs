@@ -41,7 +41,7 @@ test("screening and listings hide QA fixtures until the toggle", () => {
   assert.match(screening, /Show QA listings/);
   const provider = src("src/routes/provider.tsx");
   assert.match(provider, /isAdminOnlyListing/);
-  assert.match(provider, /showTestListings/);
+  assert.match(provider, /Show test listings/);
   assert.match(provider, /skipConfirmSpots/);
   const rows = dedupeConfirmListings([
     { id: "a", name: "Peninsula Montessori", city: "Winnipeg" },

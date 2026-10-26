@@ -557,8 +557,6 @@ export const createBooking = createServerFn({ method: "POST" })
     }) => input,
   )
   .handler(async ({ context, data }) => {
-    const { assertFacebookContactEmail } = await import("@/lib/server/facebook-contact");
-    await assertFacebookContactEmail(context.userId);
     const sql = await getSql();
     const listed = await catalogByIdGet(data.daycareId);
     if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerMayUseAdminOnlyListing())) {
@@ -1022,8 +1020,6 @@ export const openConversation = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((daycareId: string) => daycareId)
   .handler(async ({ context, data: daycareId }) => {
-    const { assertFacebookContactEmail } = await import("@/lib/server/facebook-contact");
-    await assertFacebookContactEmail(context.userId);
     const sql = await getSql();
     const listed = await catalogByIdGet(daycareId);
     if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerMayUseAdminOnlyListing())) {
@@ -1766,35 +1762,16 @@ export const updateCapacity = createServerFn({ method: "POST" })
   });
 
 /**
- * Hard wipe 30 days after the deletion request. Keeps invoices, payments, and
- * fraud logs, with the account link removed. Returns false when already gone.
+ * Final removal after the 30-day restore window. Keeps payment and invoice rows.
+ * Tax rules need the billing record after the account is gone.
  */
-export async function purgeAccountData(uid: string): Promise<boolean> {
-  const sql = await getSql();
-  const identity = await sql<{ stripe_customer_id: string | null; email: string | null }>`
-    select p.stripe_customer_id, u.email
-    from profiles p
-    left join "user" u on u.id = p.user_id
-    where p.user_id = ${uid}
-    limit 1
-  `.catch(() => []);
-  if (!identity[0]) return false;
-  const { revokeStoredAppleSignIn } = await import("@/lib/server/apple-account-revoke");
-  await revokeStoredAppleSignIn(uid);
-  const { unlinkStoredFacebook } = await import("@/lib/server/facebook-account-unlink");
-  await unlinkStoredFacebook(uid);
-  const { forgetExternalAccounts } = await import("@/lib/account-external");
-  await forgetExternalAccounts({
-    userId: uid,
-    email: identity[0].email,
-    stripeCustomerId: identity[0].stripe_customer_id,
-  }).catch(() => undefined);
-  const { anonymizeRetainedRecords, purgeAccountExtras } = await import("@/lib/server/account-close");
-  await anonymizeRetainedRecords(uid);
-  await purgeAccountExtras(uid);
-  const { purgeReferralRows } = await import("@/lib/server/referrals");
-  await purgeReferralRows(sql, uid);
-  await sql`delete from messages where conversation_id in (select id from conversations where user_id = ${uid})`;
+export async function purgeAccountData(uid: string) {
+    const { revokeStoredAppleSignIn } = await import("@/lib/server/apple-account-revoke");
+    await revokeStoredAppleSignIn(uid);
+    const { purgeAccountExtras } = await import("@/lib/server/account-close");
+    await purgeAccountExtras(uid);
+    const sql = await getSql();
+    await sql`delete from messages where conversation_id in (select id from conversations where user_id = ${uid})`;
   await sql`delete from conversations where user_id = ${uid}`;
   await sql`delete from bookings where user_id = ${uid}`;
   await sql`delete from children where user_id = ${uid}`;
@@ -1817,7 +1794,6 @@ export async function purgeAccountData(uid: string): Promise<boolean> {
   await sql`delete from "session" where "userId" = ${uid}`;
   await sql`delete from "account" where "userId" = ${uid}`;
   await sql`delete from "user" where "id" = ${uid}`;
-  return true;
 }
 
 export async function readDeletedAt(userId: string): Promise<string | null> {
@@ -1849,8 +1825,6 @@ export const deleteAccount = createServerFn({ method: "POST" })
     const uid = context.userId;
     const { revokeStoredAppleSignIn } = await import("@/lib/server/apple-account-revoke");
     await revokeStoredAppleSignIn(uid);
-    const { unlinkStoredFacebook } = await import("@/lib/server/facebook-account-unlink");
-    await unlinkStoredFacebook(uid);
     const { cancelPendingAccountWork } = await import("@/lib/server/account-close");
     await cancelPendingAccountWork(uid);
     await sql`

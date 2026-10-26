@@ -62,14 +62,6 @@ const EXACT: Array<[string, CopyKey]> = [
   ["A code is on its way. Use the latest email.", "reauthCodeSent"],
   ["Please wait a moment, then try again.", "reauthWaitMoment"],
   ["Could not send a code.", "reauthSendFailed"],
-  [
-    "Add and confirm an email before you message a centre or book a tour.",
-    "facebookEmailRequired",
-  ],
-  [
-    "Continue with Facebook is not available on this address. Open kidease.ca.",
-    "facebookHostUnavailable",
-  ],
 ];
 
 /**

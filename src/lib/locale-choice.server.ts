@@ -5,7 +5,6 @@ import {
   emptyVisitorLocale,
   isLocaleDocumentRequest,
   localeChoiceSetCookie,
-  localeFromSearch,
   localeRedirectHeaders,
   localeRedirectTarget,
   readLocaleCookie,
@@ -98,7 +97,6 @@ async function computeHint(request: Request, url: URL, asDocument: boolean): Pro
     profileLocale: profile.profileLocale,
     profileChosen: profile.profileChosen,
     profileUnreadable: profile.profileUnreadable,
-    queryLocale: localeFromSearch(search),
   };
   const decision = decideVisitorLocale(shared);
   // Route loads ask about the page. The server-fn request itself is not a document.

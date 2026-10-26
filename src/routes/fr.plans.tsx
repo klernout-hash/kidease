@@ -5,7 +5,7 @@ import { PlansPage, plansHead } from "@/routes/plans";
 export const Route = createFileRoute("/fr/plans")({
   loader: async () => {
     const gate = await getPlansGate();
-    if (!gate.plansOpen) throw redirect({ to: "/fr" });
+    if (!gate.subscriptionsOn) throw redirect({ to: "/fr" });
     return gate;
   },
   head: ({ loaderData }) => plansHead(Boolean(loaderData?.subscriptionsOn), "fr"),

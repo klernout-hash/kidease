@@ -168,8 +168,6 @@ export const TurnstileField = memo(function TurnstileField({
           "error-callback": () => {
             onTokenRef.current("");
             setLoadError(tx(copyLocale, "turnstileFailed"));
-            // A 401 or a blocked widget must not leave Sign in disabled on "Loading".
-            onRequired?.(false);
           },
         });
       })
@@ -225,12 +223,8 @@ export const TurnstileField = memo(function TurnstileField({
   useEffect(() => {
     if (!siteKey) return;
     const publish = () => {
-      try {
-        const live = readTurnstileResponseValue(host.current);
-        if (live) onTokenRef.current(live);
-      } catch {
-        /* widget host was removed mid-poll */
-      }
+      const live = readTurnstileResponseValue(host.current);
+      if (live) onTokenRef.current(live);
     };
     const id = window.setInterval(publish, 300);
     publish();

@@ -7,15 +7,10 @@
  *   REVIEWER_DAYCARE_PASSWORD=… \
  *   npm run ops:reviewer-demo
  *
- * Passwords come only from the environment, or from --password-file when
- * those vars are blank. This file never prints them. The password file
- * stays out of git.
- *
- *   node scripts/seed-reviewer-demo.mjs --password-file /path/demo-accounts.txt
- *
- * The centre is a fictional Winnipeg sample. Public search hides it
- * (visibility admin_only, is_test = 1). It is not a real licensed daycare:
- * no fee, no rating, no photo, no child photo, licence marked QA.
+ * Passwords come only from the environment. This file never prints them.
+ * The centre is named and flagged so public search hides it (QA name,
+ * visibility admin_only, is_test = 1). It is not a real licensed daycare:
+ * no fee, no rating, no photo, licence marked QA.
  *
  * Not wired into db:migrate. Re-running updates the same rows.
  *
@@ -23,8 +18,6 @@
  * no Stripe customer, subscription, or price. The daycare account is not granted Plus.
  */
 import { randomBytes } from "node:crypto";
-import { chmod, mkdir, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { hashPassword } from "better-auth/crypto";
@@ -36,19 +29,16 @@ export const REVIEWER_DAYCARE_EMAIL_DEFAULT = "reviewer.daycare@kidease.ca";
 export const REVIEWER_LISTING = {
   id: "qa-reviewer-demo",
   slug: "qa-reviewer-demo-centre",
-  name: "North Elm Family Daycare",
-  nameFr: "Garderie familiale North Elm",
-  address: "214 North Elm Crescent",
+  name: "QA Reviewer Demo Centre",
+  nameFr: "Centre démo QA Reviewer",
+  address: "100 KidEase Test Lane",
   city: "Winnipeg",
   province: "MB",
-  postalCode: "R3L 0P6",
+  postalCode: "R3C 0A1",
   lat: 49.8951,
   lng: -97.1384,
   licenseNumber: "QA-REVIEWER-0001",
 };
-
-export const REVIEWER_PARENT_NAME = "Alex Morgan";
-export const REVIEWER_PROVIDER_NAME = "Jordan Singh";
 
 const CHILD_ID = "qa-reviewer-child";
 const BOOKING_ID = "qa-reviewer-request";
@@ -68,38 +58,6 @@ function emailOf(env, key, fallback) {
 
 function passwordOf(env, key) {
   return String(env[key] || "").trim();
-}
-
-/** Fresh passwords for a reviewer run. Callers must not print the return value. */
-export function generatedReviewerPasswords() {
-  return {
-    parentPassword: randomBytes(18).toString("base64url"),
-    daycarePassword: randomBytes(18).toString("base64url"),
-  };
-}
-
-/**
- * Write emails and passwords to one file. Mode 0600. This function does not
- * log the body. The file must stay out of git.
- */
-export async function writeReviewerPasswordFile(filePath, plan) {
-  const body = [
-    "KidEase store-review demo accounts",
-    "Do not commit this file. Do not paste it into a pull request.",
-    `parent_email=${plan.parentEmail}`,
-    `parent_name=${REVIEWER_PARENT_NAME}`,
-    `parent_password=${plan.parentPassword}`,
-    `provider_email=${plan.daycareEmail}`,
-    `provider_name=${REVIEWER_PROVIDER_NAME}`,
-    `provider_password=${plan.daycarePassword}`,
-    `listing=${plan.listing.name}`,
-    `listing_slug=${plan.listing.slug}`,
-    `city=${plan.listing.city}, ${plan.listing.province}`,
-    "",
-  ].join("\n");
-  await mkdir(dirname(filePath), { recursive: true });
-  await writeFile(filePath, body, { mode: 0o600 });
-  await chmod(filePath, 0o600);
 }
 
 /**
@@ -219,7 +177,7 @@ async function grantComplimentaryParentPlus(client, parentUserId) {
 async function upsertListing(client, daycareUserId) {
   const row = REVIEWER_LISTING;
   const description =
-    "Fictional Winnipeg centre for store review only. Not a real licensed daycare and not a real family. Hidden from public search. No fee, rating, photo, child photo, or open spots are on file.";
+    "Demo centre for App Store and Play review. Not a real licensed daycare. Hidden from public search. No fee, rating, photo, or open spots are on file.";
   await client.query(
     `insert into daycares (
        id, slug, name, name_fr, tagline, tagline_fr, description, description_fr,
@@ -260,8 +218,8 @@ async function upsertListing(client, daycareUserId) {
       row.slug,
       row.name,
       row.nameFr,
-      "Fictional sample for store review. Not a real centre.",
-      "Exemple fictif pour la revue des boutiques. Pas un vrai centre.",
+      "Store review demo. Not a real centre.",
+      "Démo pour la revue des boutiques. Pas un vrai centre.",
       description,
       row.address,
       row.city,
@@ -288,7 +246,7 @@ async function upsertParentSamples(client, parentUserId) {
   const listingId = REVIEWER_LISTING.id;
   await client.query(
     `insert into children (id, user_id, name, birthdate, notes, allergies, medications, medical_notes)
-     values ($1, $2, 'Rowan Sample', '2023-06-15', 'Fictional child for store review. Not a real child. No photo is stored.', 'Sample: peanuts', 'Sample: none', 'Fictional note for review only. Not a real child. No photo.')
+     values ($1, $2, 'Demo Child', '2023-06-15', 'App review sample. Not a real child.', 'Sample: peanuts', 'Sample: none', 'Sample medical note for review only. Not a real child.')
      on conflict (id) do update set
        user_id = excluded.user_id,
        name = excluded.name,
@@ -335,7 +293,7 @@ async function upsertParentSamples(client, parentUserId) {
     [
       MESSAGE_ID,
       conversationId,
-      "Hello — this is a fictional message for store review. Not a real parent.",
+      "Hello — this is the App Review demo thread. Not a real parent.",
     ],
   );
   await client.query(
@@ -369,14 +327,14 @@ export async function applyReviewerDemoFromEnv(databaseUrl, env = process.env) {
     await client.query("BEGIN");
     const parentId = await upsertCredential(client, {
       email: plan.parentEmail,
-      name: REVIEWER_PARENT_NAME,
+      name: "Reviewer Parent",
       password: plan.parentPassword,
       role: "parent",
     });
     await grantComplimentaryParentPlus(client, parentId);
     const daycareId = await upsertCredential(client, {
       email: plan.daycareEmail,
-      name: REVIEWER_PROVIDER_NAME,
+      name: "Reviewer Daycare",
       password: plan.daycarePassword,
       role: "provider",
     });
@@ -397,38 +355,8 @@ export async function applyReviewerDemoFromEnv(databaseUrl, env = process.env) {
   }
 }
 
-function passwordFileArg(argv) {
-  const index = argv.indexOf("--password-file");
-  if (index === -1) return "";
-  return String(argv[index + 1] || "").trim();
-}
-
 async function main() {
-  const filePath = passwordFileArg(process.argv);
-  let env = process.env;
-  if (filePath) {
-    const current = reviewerCredentialPlan(env);
-    if (!current.parentPassword || !current.daycarePassword) {
-      const generated = generatedReviewerPasswords();
-      env = {
-        ...env,
-        REVIEWER_PARENT_PASSWORD: generated.parentPassword,
-        REVIEWER_DAYCARE_PASSWORD: generated.daycarePassword,
-      };
-    }
-    const plan = reviewerCredentialPlan(env);
-    assertReviewerPlan(plan);
-    await writeReviewerPasswordFile(filePath, plan);
-    console.log("[reviewer-demo] password file written; passwords were not printed");
-  }
-  if (!process.env.DATABASE_URL?.trim()) {
-    console.log("[reviewer-demo] DATABASE_URL unset — production accounts were not created");
-    if (!filePath && (env.REVIEWER_PARENT_PASSWORD || env.REVIEWER_DAYCARE_PASSWORD)) {
-      throw new Error("[reviewer-demo] DATABASE_URL is required when reviewer passwords are set");
-    }
-    return;
-  }
-  const result = await applyReviewerDemoFromEnv(process.env.DATABASE_URL, env);
+  const result = await applyReviewerDemoFromEnv(process.env.DATABASE_URL);
   if (result === "skipped") {
     console.log(
       "[reviewer-demo] REVIEWER_PARENT_PASSWORD or REVIEWER_DAYCARE_PASSWORD unset — skip",

@@ -52,7 +52,7 @@ export function MenuRow({
     <>
       <span className="flex min-w-0 items-center gap-3">
         <MenuGlyph id={icon} />
-        <span className={appearance === "drawer" ? "min-w-0 whitespace-normal break-words leading-snug" : "min-w-0 truncate"}>{label}</span>
+        <span className="truncate">{label}</span>
       </span>
       {trailing}
     </>

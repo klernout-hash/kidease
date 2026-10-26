@@ -19,7 +19,6 @@ import {
   viewAsAuthFailureEndsSession,
   viewAsHome,
   viewAsMinutesLeft,
-  viewAsMatchesAuthSession,
   viewAsWho,
   ViewAsReadOnlyError,
   assertViewAsAction,
@@ -213,25 +212,4 @@ test("server gates re-check requireAdmin and block writes before they run", () =
   assert.equal(typeof copy.fr.viewAsBanner, "string");
   assert.match(copy.en.viewAsBanner, /\{who\}/);
   assert.match(copy.fr.viewAsExit, /Quitter/);
-});
-
-test("a newer sign-in does not resume view-as, and sign-out closes it", () => {
-  const started = 1_700_000_000_000;
-  assert.equal(viewAsMatchesAuthSession({ sessionCreatedAtMs: started, viewStartedAtMs: started }), true);
-  assert.equal(viewAsMatchesAuthSession({ sessionCreatedAtMs: started + 5_000, viewStartedAtMs: started }), true);
-  assert.equal(viewAsMatchesAuthSession({ sessionCreatedAtMs: started + 5_001, viewStartedAtMs: started }), false);
-  assert.equal(viewAsMatchesAuthSession({ sessionCreatedAtMs: 0, viewStartedAtMs: started }), false);
-  assert.equal(viewAsMatchesAuthSession({ sessionCreatedAtMs: started, viewStartedAtMs: 0 }), false);
-  const server = src("src/lib/server/view-as.ts");
-  const banner = src("src/components/view-as-banner.tsx");
-  const auth = src("src/routes/api/auth/$.ts");
-  assert.match(server, /viewAsMatchesAuthSession/);
-  assert.match(server, /closeViewAsForCurrentUser/);
-  assert.match(server, /enterViewAsFrame\(frame\)/);
-  assert.match(server, /endReason: "exit"/);
-  assert.match(banner, /data-ke="view-as-banner"/);
-  assert.match(banner, /viewAsExit/);
-  assert.match(copy.en.viewAsExit, /Exit view as/);
-  assert.match(auth, /closeViewAsForCurrentUser/);
-  assert.match(auth, /isAuthSignOutPath/);
 });

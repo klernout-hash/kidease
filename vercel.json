@@ -32,10 +32,6 @@
     {
       "path": "/api/open-spots-checkin",
       "schedule": "15 15 * * 1"
-    },
-    {
-      "path": "/api/account-purge",
-      "schedule": "25 9 * * *"
     }
   ],
   "rewrites": [
@@ -53,10 +49,6 @@
     }
   ],
   "redirects": [
-    { "source": "/sign-in", "destination": "/login", "statusCode": 301 },
-    { "source": "/sign-up", "destination": "/signup", "statusCode": 301 },
-    { "source": "/fr/sign-in", "destination": "/fr/login", "statusCode": 301 },
-    { "source": "/fr/sign-up", "destination": "/fr/signup", "statusCode": 301 },
     { "source": "/for-daycares", "destination": "/claim", "statusCode": 301 },
     { "source": "/.well-known/change-password", "destination": "/forgot-password", "permanent": false },
     {

@@ -59,12 +59,7 @@ import {
   PASSWORD_CONTINUE_MESSAGE,
   releaseStuckLogin,
 } from "@/lib/auth/login-stall";
-import {
-  FACEBOOK_ROLE_PENDING_KEY,
-  facebookNewUserCallbackPath,
-  facebookSignupRole,
-  socialSignupCallbackPath,
-} from "@/lib/auth/social-callback";
+import { socialSignupCallbackPath } from "@/lib/auth/social-callback";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { isSignupWhy, SIGNUP_FUNNEL_EVENT, signupFunnelPayload, type SignupWhy } from "@/lib/signup-funnel";
 import { parentMobileIssue, smsOptInWasBlocked, stashParentSmsOptIn, takeParentSmsOptIn } from "@/lib/parent-sms-consent";
@@ -90,10 +85,8 @@ export type LoginSearch = {
   next?: string;
   role?: Role;
   intent?: "in" | "up" | "admin";
-  step?: "role";
   desk?: DeskAlias;
   why?: SignupWhy;
-  lang?: "en" | "fr";
 };
 
 const WHY_LEAD: Record<SignupWhy, CopyKey> = {
@@ -111,9 +104,7 @@ export function loginValidateSearch(s: Record<string, unknown>): LoginSearch {
   if (next) out.next = next;
   if (s.role === "parent" || s.role === "provider" || s.role === "admin") out.role = s.role;
   if (s.intent === "in" || s.intent === "up" || s.intent === "admin") out.intent = s.intent;
-  if (s.step === "role") out.step = "role";
   if (isSignupWhy(s.why)) out.why = s.why;
-  if (s.lang === "en" || s.lang === "fr") out.lang = s.lang;
   const desk = parseDeskQuery(typeof s.desk === "string" ? s.desk : "");
   if (desk) out.desk = deskQueryValue(desk);
   return out;
@@ -235,7 +226,6 @@ export function LoginScreen({
 
   useEffect(() => {
     if (sessionPending || !user || busy || continued.current) return;
-    if (search.step === "role" && !facebookSignupRole(role)) return;
     if (consumeJustSignedOut()) return;
     const id = ++attempt.current;
     continued.current = true;
@@ -277,7 +267,7 @@ export function LoginScreen({
       setError(released.error);
       setBusy(released.busy);
     });
-  }, [sessionPending, user, dest, busy, search.next, search.intent, search.step, deskHint, role, urlOperator, mode]);
+  }, [sessionPending, user, dest, busy, search.next, search.intent, deskHint, role, urlOperator, mode]);
 
   function passkeyMessage(err: unknown): string {
     if (err instanceof PasskeyRequestError && (err.code === "PASSKEY_RATE_LIMIT" || err.status === 429)) {
@@ -540,16 +530,6 @@ export function LoginScreen({
           desk: search.desk,
           intent: search.intent,
         }),
-        ...(providerId === "facebook"
-          ? {
-              newUserCallbackURL: facebookNewUserCallbackPath({
-                role: facebookSignupRole(role),
-                desk: search.desk,
-                next: search.next,
-                locale,
-              }),
-            }
-          : {}),
       }), LOGIN_POST_MS, "sign-in-timeout");
     } catch (err) {
       const message = err instanceof Error ? friendlyAuthError(err.message) : "Sign-in failed";
@@ -558,45 +538,6 @@ export function LoginScreen({
       setBusy(false);
     }
   }
-
-  async function chooseAccountRole(picked: "parent" | "provider") {
-    setBusy(true);
-    setError(null);
-    rememberRole(picked);
-    markAdultConfirmedForSession();
-    try {
-      await withTimeoutFallback(setRole({ data: picked }), LOGIN_CONTINUE_MS, undefined);
-      try {
-        sessionStorage.removeItem(FACEBOOK_ROLE_PENDING_KEY);
-      } catch {
-        /* private mode */
-      }
-      continued.current = true;
-      await continueAfterSignIn({
-        next: search.next,
-        desk: deskHint,
-        role: picked,
-        sticky: readStickyDesk(),
-        method: "social",
-      });
-    } catch {
-      const released = releaseStuckLogin("open-failed");
-      continued.current = released.keepContinued;
-      setError(released.error);
-      setBusy(released.busy);
-    }
-  }
-
-  const pickingRole = search.step === "role" && !facebookSignupRole(role);
-
-  useEffect(() => {
-    if (!pickingRole) return;
-    try {
-      sessionStorage.setItem(FACEBOOK_ROLE_PENDING_KEY, "1");
-    } catch {
-      /* private mode */
-    }
-  }, [pickingRole]);
 
   const title =
     role === "provider" ? t("providerSignIn") : role === "parent" ? t("parentSignIn") : t("signIn");
@@ -637,47 +578,14 @@ export function LoginScreen({
             <div className="flex justify-center">
               <BrandMark size="md" />
             </div>
-            <h1 className="mt-4 font-display text-2xl sm:mt-6 sm:text-3xl">
-              {pickingRole ? t("facebookRoleTitle") : mode === "up" && !operator && role !== "provider" ? t("createParentAccount") : title}
-            </h1>
-            <p className="mt-2 text-sm text-muted" data-ke="login-lead">
-              {pickingRole ? t("facebookRoleLead") : busy && !error ? t("openingDesk") : lead}
-            </p>
-            {pickingRole ? (
-              <div className="mt-6 space-y-3" data-ke="facebook-role">
-                <p className="text-sm text-muted">{t("facebookRoleAdult")}</p>
-                {error ? (
-                  <p className="text-sm text-danger" role="alert">
-                    {presentAuthCopy(locale, error)}
-                  </p>
-                ) : null}
-                <Button
-                  type="button"
-                  size="lg"
-                  className="w-full min-h-12"
-                  disabled={busy || !user}
-                  onClick={() => void chooseAccountRole("parent")}
-                >
-                  {busy ? t("openingDesk") : t("facebookRoleParent")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="lg"
-                  className="w-full min-h-12"
-                  disabled={busy || !user}
-                  onClick={() => void chooseAccountRole("provider")}
-                >
-                  {t("facebookRoleCentre")}
-                </Button>
-              </div>
-            ) : null}
+            <h1 className="mt-4 font-display text-2xl sm:mt-6 sm:text-3xl">{mode === "up" && !operator && role !== "provider" ? t("createParentAccount") : title}</h1>
+            <p className="mt-2 text-sm text-muted" data-ke="login-lead">{busy && !error ? t("openingDesk") : lead}</p>
             {operator && !user ? (
               <p className="mt-1 text-xs text-subtle" data-ke="admin-titan-note">
                 Use email and password for this address.
               </p>
             ) : null}
-          {passkeyOffer && !pickingRole ? (
+          {passkeyOffer ? (
             <PasskeyOffer
               busy={busy}
               error={error}
@@ -686,7 +594,7 @@ export function LoginScreen({
             />
           ) : (
           <>
-          <form onSubmit={onEmail} className={`mt-6 space-y-3 ph-no-capture ${pickingRole ? "hidden" : ""}`} data-ke={operator ? "admin-email-first" : "email-sign-in"}>
+          <form onSubmit={onEmail} className="mt-6 space-y-3 ph-no-capture" data-ke={operator ? "admin-email-first" : "email-sign-in"}>
             {mode === "up" && !operator ? (
               <label className="block text-sm">
                 {t("name")}
@@ -801,7 +709,7 @@ export function LoginScreen({
               </Button>
             ) : null}
           </form>
-          {mode === "in" && !pickingRole ? (
+          {mode === "in" ? (
             <div className="mt-3">
               <Link
                 to="/forgot-password"
@@ -815,7 +723,7 @@ export function LoginScreen({
               </p>
             </div>
           ) : null}
-          {!operator && !pickingRole ? (
+          {!operator ? (
           <button
             type="button"
             className="mt-4 text-sm text-muted underline-offset-4 hover:underline"
@@ -824,7 +732,7 @@ export function LoginScreen({
             {mode === "up" ? t("haveAccount") : t("needAccount")}
           </button>
           ) : null}
-          {!operator && !pickingRole && (shownProviders.length > 0 || !authEnabled) ? (
+          {!operator && (shownProviders.length > 0 || !authEnabled) ? (
           <div className="mt-6">
             <div className="mb-4 flex items-center gap-3 text-xs uppercase tracking-wider text-subtle">
               <span className="h-px flex-1 bg-border" />

@@ -50,7 +50,6 @@ export function parseE2eArgs(argv = [], env = {}) {
   let startPreview = false;
   let requireServer = false;
   let browserSmoke = false;
-  let signedIn = false;
   let outDir = "";
 
   for (let i = 0; i < argv.length; i++) {
@@ -69,8 +68,6 @@ export function parseE2eArgs(argv = [], env = {}) {
       requireServer = true;
     } else if (arg === "--browser-smoke") {
       browserSmoke = true;
-    } else if (arg === "--signed-in") {
-      signedIn = true;
     } else if (arg === "--out-dir") {
       const value = argv[++i];
       if (!value) return { error: "--out-dir requires a path" };
@@ -99,7 +96,6 @@ export function parseE2eArgs(argv = [], env = {}) {
     startPreview,
     requireServer: requireServer || requireFromEnv,
     browserSmoke,
-    signedIn,
     outDir: outDir || env.E2E_OUT_DIR || "artifacts/e2e",
     allowExternal: env.BROWSER_ALLOW_EXTERNAL_HOST === "1",
     explicitUrl: Boolean(explicitUrl),

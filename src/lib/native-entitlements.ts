@@ -228,18 +228,10 @@ export function readClientStoreChannel(): StoreChannel {
   });
 }
 
-/**
- * Store apps never show plan cards, even when SUBSCRIPTIONS_ENABLED is on.
- * A centre plan already bought on the website still unlocks in provider-entitlements.
- */
+/** Parent Alerts is omitted from the native shell, not merely flagged off. */
 export function plansVisibleInShell<T extends { id: string }>(plans: readonly T[], native: boolean): T[] {
-  if (native) return [];
-  return [...plans];
-}
-
-/** Paid plan pages and prices stay on the website. Every store channel is closed. */
-export function plansOpenInShell(input: { subscriptionsOn: boolean; channel: StoreChannel }): boolean {
-  return input.subscriptionsOn && input.channel === "web";
+  if (!native) return [...plans];
+  return plans.filter((plan) => plan.id !== "alerts" && plan.id !== "plus");
 }
 
 export const NATIVE_COMMERCE_SELECTORS = [

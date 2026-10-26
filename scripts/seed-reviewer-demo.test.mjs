@@ -1,17 +1,13 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
   REVIEWER_LISTING,
   assertReviewerPlan,
-  generatedReviewerPasswords,
   publicReviewerPlan,
   reviewerCredentialPlan,
-  writeReviewerPasswordFile,
 } from "./seed-reviewer-demo.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -43,11 +39,9 @@ describe("reviewer demo seed", () => {
   });
 
   it("marks the demo centre so public search drops it, with no invented fee or rating", () => {
-    assert.equal(REVIEWER_LISTING.name, "North Elm Family Daycare");
-    assert.equal(REVIEWER_LISTING.city, "Winnipeg");
-    assert.equal(REVIEWER_LISTING.province, "MB");
+    assert.match(REVIEWER_LISTING.name, /^QA[ _-]/);
     assert.match(REVIEWER_LISTING.slug, /^qa[_-]/);
-    assert.doesNotMatch(REVIEWER_LISTING.address, /William Gibson/i);
+    assert.match(REVIEWER_LISTING.address, /KidEase Test/i);
     assert.equal(REVIEWER_LISTING.licenseNumber.startsWith("QA-"), true);
     const script = read("scripts/seed-reviewer-demo.mjs");
     assert.match(script, /visibility = 'admin_only'/);
@@ -65,11 +59,6 @@ describe("reviewer demo seed", () => {
       assert.doesNotMatch(body, /parentPassword|daycarePassword/);
     }
     assert.doesNotMatch(read("scripts/migrate.mjs"), /applyReviewerDemoFromEnv/);
-    assert.match(script, /writeReviewerPasswordFile/);
-    assert.match(script, /--password-file/);
-    assert.match(script, /Rowan Sample/);
-    assert.match(script, /No photo/);
-    assert.doesNotMatch(script, /photos = 'https|photoUrl|unsplash|child\.jpg/i);
     assert.match(script, /qa-reviewer-reply/);
     assert.match(script, /daycare demo reply/);
     assert.doesNotMatch(script, /Reply STOP/);
@@ -110,28 +99,5 @@ describe("reviewer demo seed", () => {
     const webPaywall = videoRoute.slice(promptAt - 220, joinAt);
     assert.match(webPaywall, /!nativeShell && paywall/);
     assert.match(webPaywall, /parentPlusSubscribe/);
-  });
-
-  it("writes generated passwords to a private file and keeps them out of the script", async () => {
-    const generated = generatedReviewerPasswords();
-    assert.ok(generated.parentPassword.length >= 16);
-    assert.notEqual(generated.parentPassword, generated.daycarePassword);
-    const dir = await mkdtemp(join(tmpdir(), "ke-reviewer-"));
-    const file = join(dir, "demo-accounts.txt");
-    const plan = reviewerCredentialPlan({
-      REVIEWER_PARENT_PASSWORD: generated.parentPassword,
-      REVIEWER_DAYCARE_PASSWORD: generated.daycarePassword,
-    });
-    await writeReviewerPasswordFile(file, plan);
-    const info = await stat(file);
-    assert.equal(info.mode & 0o777, 0o600);
-    const body = await readFile(file, "utf8");
-    assert.match(body, /parent_email=reviewer\.parent@kidease\.ca/);
-    assert.match(body, /provider_email=reviewer\.daycare@kidease\.ca/);
-    assert.match(body, /North Elm Family Daycare/);
-    assert.equal(body.includes(generated.parentPassword), true);
-    assert.equal(body.includes(generated.daycarePassword), true);
-    assert.doesNotMatch(read("scripts/seed-reviewer-demo.mjs"), new RegExp(generated.parentPassword));
-    await rm(dir, { recursive: true, force: true });
   });
 });

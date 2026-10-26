@@ -32,10 +32,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { readLiveSearchFlag } from "@/lib/explore-search";
 import { rememberResumePath } from "@/lib/retention";
 import { ApplyPendingShortlist } from "@/components/apply-pending-shortlist";
-import { ApplyReferral } from "@/components/apply-referral";
 import { KeyboardInset } from "@/components/keyboard-inset";
-import { FacebookEmailPrompt } from "@/components/facebook-email-prompt";
-import { FacebookRoleBoot } from "@/components/facebook-role-boot";
 
 export function Shell({ children }: { children: ReactNode }) {
   const { t, locale } = useCopy();
@@ -180,7 +177,7 @@ export function Shell({ children }: { children: ReactNode }) {
                 <Link
                   to={localePath("/claim", locale)}
                   data-ke="list-your-daycare"
-                  className="inline-flex min-h-11 max-w-[9.5rem] touch-manipulation items-center gap-1.5 whitespace-normal rounded-full border border-primary px-2.5 text-center text-[13px] font-medium leading-tight text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 sm:max-w-none sm:px-3 sm:text-sm"
+                  className="inline-flex min-h-11 shrink-0 touch-manipulation items-center gap-1.5 whitespace-nowrap rounded-full border border-primary px-2.5 text-[13px] font-medium text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 sm:px-3 sm:text-sm"
                 >
                   <Building2 className="size-4 shrink-0" aria-hidden />
                   {t("navForDaycares")}
@@ -205,7 +202,7 @@ export function Shell({ children }: { children: ReactNode }) {
               <button
                 type="button"
                 className="relative grid size-12 shrink-0 place-items-center rounded-full text-fg transition-colors duration-150 ease-out hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation [[data-channel=website]_&]:grid"
-                aria-label={t("menu")}
+                aria-label="Menu"
                 aria-expanded={open}
                 aria-controls="ke-nav-drawer"
                 onClick={(e) => {
@@ -269,8 +266,6 @@ export function Shell({ children }: { children: ReactNode }) {
           </button>
         </div>
       ) : null}
-      <FacebookRoleBoot />
-      <FacebookEmailPrompt />
       <NavDrawer
         open={open}
         onClose={close}
@@ -290,9 +285,8 @@ export function Shell({ children }: { children: ReactNode }) {
         headerExtra={null}
         navExtra={hiddenCare.length ? <HeaderCareOverflow types={hiddenCare} city={headerCity} onNavigate={close} /> : null}
       />
-      <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(8.5rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]"}>
+      <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(6rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]"}>
         <ApplyPendingShortlist />
-        <ApplyReferral />
         <div className="ke-page" data-ke="page">
           {children}
           {hideFooter ? null : <SiteFooter />}

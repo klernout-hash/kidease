@@ -34,14 +34,13 @@ export function decideVerify2faSessionGate(input: {
 /** Better Auth `getSession().data.user` → the app user shape, or null. */
 export function mapAuthSessionUser(user: unknown): AppUser | null {
   if (!user || typeof user !== "object") return null;
-  const row = user as { id?: unknown; name?: unknown; email?: unknown; image?: unknown; emailVerified?: unknown };
+  const row = user as { id?: unknown; name?: unknown; email?: unknown; image?: unknown };
   if (typeof row.id !== "string" || !row.id.trim()) return null;
   return {
     id: row.id,
     displayName: typeof row.name === "string" ? row.name : null,
     primaryEmail: typeof row.email === "string" ? row.email : null,
     profileImageUrl: typeof row.image === "string" ? row.image : null,
-    emailVerified: row.emailVerified === true,
     isDevFallback: false,
   };
 }

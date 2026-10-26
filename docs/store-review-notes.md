@@ -27,9 +27,9 @@ Do not put passwords in this file or in git. Do not print them. Do not commit `D
 
 Kyle runs this once, from a machine that already has the production database URL in the environment:
 
-1. Export `REVIEWER_PARENT_PASSWORD` and `REVIEWER_DAYCARE_PASSWORD`. Optional email overrides: `REVIEWER_PARENT_EMAIL` and `REVIEWER_DAYCARE_EMAIL`. To generate passwords into a file instead of the shell history, run `node scripts/seed-reviewer-demo.mjs --password-file /path/demo-accounts.txt` on a machine that already has `DATABASE_URL`. The script writes the file mode 0600 and does not print the passwords.
-2. Run `npm run ops:reviewer-demo` when the password variables are already exported.
-3. Confirm the fictional centre `qa-reviewer-demo-centre` (North Elm Family Daycare, Winnipeg, Manitoba) stays `admin_only` with `is_test = 1`, and that public search does not list it. It is not a real licensed daycare. No fee, rating, photo, or child photo is stored.
+1. Export `REVIEWER_PARENT_PASSWORD` and `REVIEWER_DAYCARE_PASSWORD`. Optional email overrides: `REVIEWER_PARENT_EMAIL` and `REVIEWER_DAYCARE_EMAIL`.
+2. Run `npm run ops:reviewer-demo`.
+3. Confirm the centre `qa-reviewer-demo-centre` stays `admin_only` with `is_test = 1`, and that public search does not list it.
 4. Confirm the parent profile has complimentary Parent Plus (`plus_plan` plus, `plus_status` active) and no Stripe subscription id. The daycare profile does not get Plus.
 5. Sign in on https://www.kidease.ca with each account. Open Search, Saved, Messages, and Account. From Messages, the parent can open a video tour. The app shows the join button. It does not show a price or a subscribe button.
 

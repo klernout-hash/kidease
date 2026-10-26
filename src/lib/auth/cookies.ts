@@ -159,19 +159,11 @@ export function readTwoFactorFromHeader(header?: string | null): string | null {
  * Copy a shared `__Secure-kidease.*` cookie onto the `__Host-` name Better Auth
  * reads, so getSession works after a www↔apex hop.
  */
-/** A real session token is long. Empty or placeholder host cookies are not. */
-function inboundCookieUsable(value: string | undefined): boolean {
-  if (!value) return false;
-  const token = unsignedSessionToken(value);
-  return Boolean(token && token.length >= 16);
-}
-
 export function aliasInboundAuthCookies(cookieHeader?: string | null): string {
   const cookies = parseCookieHeader(cookieHeader);
   for (const [shared, host] of Object.entries(SHARED_TO_HOST)) {
     const value = cookies.get(shared);
-    // A blank or junk __Host- cookie must not hide the shared apex/www session.
-    if (value && !inboundCookieUsable(cookies.get(host))) cookies.set(host, value);
+    if (value && !cookies.get(host)) cookies.set(host, value);
   }
   return [...cookies.entries()].map(([name, value]) => `${name}=${value}`).join("; ");
 }

@@ -372,11 +372,8 @@ async function runRoleFixture(page, base) {
         /\bRequests\b/.test(parentSide) &&
         /\bWaitlists\b/.test(parentSide) &&
         /\bPay\b/.test(parentSide) &&
-        /Family desk/i.test(parentSide) &&
-        /Search tools/i.test(parentSide) &&
-        !/Find care/i.test(parentSide) &&
-        !/My requests/i.test(parentSide) &&
-        !/My shortlist/i.test(parentSide),
+        !/My shortlist/i.test(parentSide) &&
+        !/My requests/i.test(parentSide),
       { note: parentSide.slice(0, 200) },
     );
     await page.setViewportSize({ width: 390, height: 844 });
@@ -404,29 +401,6 @@ async function runRoleFixture(page, base) {
     const deleteLink = await deleteLinkLoc.count();
     record("delete-account-on-account", deleteOnAccount > 0 && deleteConfirmOnHome === 0 && deleteLink > 0, {
       note: `account=${deleteOnAccount} confirmOnHome=${deleteConfirmOnHome} link=${deleteLink}`,
-    });
-
-    await page.goto(new URL("/account?tab=profile&section=profile&desk=parent", base).href, {
-      waitUntil: "domcontentloaded",
-      timeout: timeoutMs,
-    });
-    const photoSignIn = await page.getByRole("link", { name: /sign in to add a photo/i }).count();
-    const bioBox = page.locator("textarea");
-    await bioBox.waitFor({ timeout: timeoutMs });
-    const bio = `Saved ${Date.now()}`;
-    await bioBox.fill(bio);
-    const saved = page.waitForResponse(
-      (res) => res.request().method() === "POST" && res.url().includes("/_serverFn/") && res.ok(),
-      { timeout: timeoutMs },
-    );
-    await page.getByRole("button", { name: /save details/i }).click();
-    await saved;
-    await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
-    await bioBox.waitFor({ timeout: timeoutMs });
-    const keptBio = await bioBox.inputValue();
-    const accountCrash = /Something went wrong/.test((await page.locator("body").innerText()) || "");
-    record("account-save-details", photoSignIn === 0 && !accountCrash && keptBio.includes(bio), {
-      note: `photoSignIn=${photoSignIn} bio=${keptBio.slice(0, 80)}`,
     });
 
     await page.setViewportSize({ width: 1280, height: 900 });
@@ -505,16 +479,8 @@ async function runRoleFixture(page, base) {
         /\bRequests\b/.test(daycareSide) &&
         /\bListings\b/.test(daycareSide) &&
         /\bEarnings\b/.test(daycareSide) &&
-        /\bPromote\b/.test(daycareSide) &&
-        /Daycare desk/i.test(daycareSide) &&
-        !/\bMoney\b/.test(daycareSide) &&
-        !/my centre/i.test(daycareSide),
+        !/\bMoney\b/.test(daycareSide),
       { note: daycareSide.slice(0, 200) },
-    );
-    record(
-      "signed-in-desks-no-error",
-      !/Something went wrong/.test(parentSide) && !/Something went wrong/.test(daycareSide),
-      { note: "parent and provider rendered" },
     );
 
     await page.setViewportSize({ width: 1280, height: 900 });
@@ -1168,174 +1134,6 @@ async function frenchCityHubSmoke(page, base) {
   });
 }
 
-const FIXTURE_PASSWORD = "E2e-role-fixture-pass-1";
-
-async function pageIsQuiet(page) {
-  const body = (await page.locator("body").innerText().catch(() => "")) || "";
-  return !/Something went wrong|Une erreur est survenue/i.test(body);
-}
-
-async function passwordLogin(page, base, email, locale) {
-  const context = page.context();
-  await page
-    .evaluate(() => {
-      try {
-        sessionStorage.clear();
-        localStorage.removeItem("kidease-locale");
-      } catch {
-        /* storage unavailable */
-      }
-    })
-    .catch(() => {});
-  await context.clearCookies();
-  await context.addCookies([
-    {
-      name: "kidease-locale",
-      value: locale === "fr" ? "fr" : "en",
-      url: base.endsWith("/") ? base : `${base}/`,
-    },
-  ]);
-  const path = locale === "fr" ? "/fr/login" : "/login";
-  await page.goto(new URL(path, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-  const emailBox = page.locator('input[type="email"]');
-  await emailBox.waitFor({ state: "visible", timeout: timeoutMs });
-  await page.waitForFunction(() => {
-    const form = document.querySelector('[data-ke="email-sign-in"]');
-    return Boolean(form && Object.keys(form).some((key) => key.startsWith("__react")));
-  }, { timeout: timeoutMs });
-  await emailBox.fill(email);
-  await page.locator('input[type="password"]').fill(FIXTURE_PASSWORD);
-  const posted = page.waitForResponse(
-    (res) => res.url().includes("/api/auth/sign-in/email") && res.request().method() === "POST",
-    { timeout: timeoutMs },
-  );
-  await page.locator('[data-ke="email-primary"]').click();
-  const signIn = await posted;
-  if (!signIn.ok()) {
-    const body = await signIn.text().catch(() => "");
-    throw new Error(`sign-in HTTP ${signIn.status()} ${body.slice(0, 180)}`);
-  }
-  const offer = page.locator('[data-ke="passkey-offer"]');
-  const deadline = Date.now() + timeoutMs;
-  let dismissedOffer = false;
-  while (Date.now() < deadline) {
-    const path = new URL(page.url()).pathname;
-    if (!/\/login\/?$/i.test(path)) return;
-    if (!dismissedOffer && (await offer.isVisible().catch(() => false))) {
-      dismissedOffer = true;
-      await offer.getByRole("button", { name: /not now|pas maintenant/i }).click();
-    }
-    const err = ((await page.locator('[data-ke="auth-error"]').innerText().catch(() => "")) || "").trim();
-    if (err) throw new Error(err);
-    await page.waitForTimeout(250);
-  }
-  if (!/\/login\/?$/i.test(new URL(page.url()).pathname)) return;
-  throw new Error(`still on ${page.url()}`);
-}
-
-/**
- * Real Better Auth session from the login form. Parent and daycare, English and French.
- * Login, reload, desk, messages, and Save details.
- */
-async function runSignedInSessions(page, base) {
-  const context = page.context();
-  await setFixture(context, base, { role: "parent" });
-  await setFixture(context, base, { role: "provider" });
-  const cases = [
-    {
-      role: "parent",
-      email: "e2e-parent@kidease.test",
-      locale: "en",
-      home: "/parent",
-      inbox: "/inbox?view=family",
-      account: "/account?tab=profile&section=profile&desk=parent",
-      menu: "Menu",
-    },
-    {
-      role: "parent",
-      email: "e2e-parent@kidease.test",
-      locale: "fr",
-      home: "/parent",
-      inbox: "/inbox?view=family",
-      account: "/account?tab=profile&section=profile&desk=parent",
-      menu: "Ouvrir le menu",
-    },
-    {
-      role: "provider",
-      email: "e2e-provider@kidease.test",
-      locale: "en",
-      home: "/provider",
-      inbox: "/inbox?view=centre",
-      account: "/account?tab=profile&section=profile&desk=provider",
-      menu: "Menu",
-    },
-    {
-      role: "provider",
-      email: "e2e-provider@kidease.test",
-      locale: "fr",
-      home: "/provider",
-      inbox: "/inbox?view=centre",
-      account: "/account?tab=profile&section=profile&desk=provider",
-      menu: "Ouvrir le menu",
-    },
-  ];
-  for (const item of cases) {
-    const tag = `${item.role}-${item.locale}`;
-    try {
-      await passwordLogin(page, base, item.email, item.locale);
-      await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
-      const reloaded = !/\/login\/?$/i.test(new URL(page.url()).pathname);
-      record(`signed-in-reload-${tag}`, reloaded && (await pageIsQuiet(page)), { note: page.url() });
-
-      const menuLabel = await page.locator('header button[aria-controls="ke-nav-drawer"]').getAttribute("aria-label");
-      record(`signed-in-menu-${tag}`, menuLabel === item.menu, { note: menuLabel || "" });
-
-      await page.goto(new URL(item.home, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-      record(`signed-in-desk-${tag}`, !/\/login/i.test(page.url()) && (await pageIsQuiet(page)), { note: page.url() });
-      if (tag === "parent-en") {
-        const shotDir = join(dirname(outDir), "shots");
-        mkdirSync(shotDir, { recursive: true });
-        await page.setViewportSize({ width: 1280, height: 900 });
-        await page.screenshot({ path: join(shotDir, "signed-in-parent-1280.png"), fullPage: false }).catch(() => {});
-        await page.setViewportSize({ width: 390, height: 844 });
-        await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs }).catch(() => {});
-        await page.screenshot({ path: join(shotDir, "signed-in-parent-390.png"), fullPage: false }).catch(() => {});
-        await page.setViewportSize({ width: 1280, height: 800 });
-      }
-
-      await page.goto(new URL(item.inbox, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-      record(`signed-in-messages-${tag}`, !/\/login/i.test(page.url()) && (await pageIsQuiet(page)), { note: page.url() });
-
-      await page.goto(new URL(item.account, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-      const photo = await page.getByRole("link", { name: /sign in to add a photo|connectez-vous pour ajouter une photo/i }).count();
-      const bioBox = page.locator("textarea").first();
-      await bioBox.waitFor({ timeout: timeoutMs });
-      const bio = `Saved ${tag} ${Date.now()}`;
-      await bioBox.fill(bio);
-      const saved = page.waitForResponse(
-        (res) => {
-          if (res.request().method() !== "POST" || !res.ok()) return false;
-          return (res.request().postData() || "").includes(bio);
-        },
-        { timeout: timeoutMs },
-      );
-      await page.locator('[data-ke="account-save-details"]').click();
-      await saved;
-      await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
-      await page.waitForFunction((expected) => {
-        const box = document.querySelector("textarea");
-        return Boolean(box && box.value.includes(expected));
-      }, bio, { timeout: timeoutMs });
-      const kept = await page.locator("textarea").first().inputValue();
-      record(`signed-in-account-${tag}`, photo === 0 && kept.includes(bio) && (await pageIsQuiet(page)), {
-        note: `photo=${photo} bio=${kept.slice(0, 72)}`,
-      });
-    } catch (err) {
-      record(`signed-in-${tag}`, false, { note: err instanceof Error ? err.message : String(err) });
-    }
-  }
-}
-
 let browser = null;
 try {
   if (args.startPreview && !args.explicitUrl) {
@@ -1356,9 +1154,6 @@ try {
   });
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 
-  if (args.signedIn) {
-    await runSignedInSessions(page, base);
-  } else {
   const homeResp = await page.goto(new URL(SMOKE_PATHS.home, base).href, {
     waitUntil: "domcontentloaded",
     timeout: timeoutMs,
@@ -1514,7 +1309,6 @@ try {
   record("desktop-visual", desktopProblems.length === 0, {
     note: desktopProblems.length ? desktopProblems.slice(0, 6).join(" | ") : "1280 to 2560",
   });
-  }
 
   const failed = results.filter((r) => !r.ok);
   const verdict = {

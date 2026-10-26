@@ -12,12 +12,11 @@ import {
   readViewAsSession,
   viewAsAuthFailureEndsSession,
   viewAsHome,
-  viewAsMatchesAuthSession,
   type ViewAsAudit,
   type ViewAsDenyReason,
   type ViewAsSessionRow,
 } from "@/lib/view-as";
-import { type ViewAsPublic, type ViewAsTarget, type ViewAsTargetKind } from "@/lib/view-as-public";
+import { readViewAsPublic, type ViewAsPublic, type ViewAsTarget, type ViewAsTargetKind } from "@/lib/view-as-public";
 import {
   enterViewAsFrame,
   getViewAsFrame,
@@ -180,30 +179,18 @@ async function actorFromCookie(): Promise<{ id: string; email: string | null }> 
 export async function effectiveSessionUser(session: {
   id: string;
   email: string | null;
-  createdAtMs?: number;
 }): Promise<{ id: string; email: string | null }> {
   if (isViewAsBypass()) return { id: session.id, email: session.email };
   const existing = getViewAsFrame();
   if (existing && existing.actorUserId === session.id) {
     return { id: existing.targetUserId, email: existing.targetEmail };
   }
-  const frame = await runWithoutViewAs(() => resolveViewAsFrame(session));
-  if (!frame) return { id: session.id, email: session.email };
-  enterViewAsFrame(frame);
-  return { id: frame.targetUserId, email: frame.targetEmail };
+  return runWithoutViewAs(() => applyOverlay(session));
 }
 
-async function resolveViewAsFrame(session: {
-  id: string;
-  email: string | null;
-  createdAtMs?: number;
-}): Promise<ViewAsFrame | null> {
+async function applyOverlay(session: { id: string; email: string | null }) {
   const open = await loadOpen(session.id);
-  if (!open) return null;
-  if (!viewAsMatchesAuthSession({ sessionCreatedAtMs: session.createdAtMs ?? 0, viewStartedAtMs: open.startedAtMs })) {
-    await persistClose({ ...open, endedAtMs: Date.now(), endReason: "exit" });
-    return null;
-  }
+  if (!open) return { id: session.id, email: session.email };
   const gate = await adminStillOk(session.id);
   const now = Date.now();
   if (!gate.ok) {
@@ -219,13 +206,13 @@ async function resolveViewAsFrame(session: {
         },
       ]);
     }
-    return null;
+    return { id: session.id, email: session.email };
   }
   const tick = readViewAsSession(open, now);
   if (tick.expired) {
     await persistClose(tick.expired);
     await writeAudits(tick.audits);
-    return null;
+    return { id: session.id, email: session.email };
   }
   const target = await loadTarget(open.targetUserId);
   const decision = decideStartViewAs({
@@ -246,10 +233,10 @@ async function resolveViewAsFrame(session: {
         detail: decision.ok ? "missing_target" : decision.reason,
       },
     ]);
-    return null;
+    return { id: session.id, email: session.email };
   }
   const role = parseAppRole(target.role) === "provider" ? "provider" : "parent";
-  return {
+  const frame: ViewAsFrame = {
     sessionId: open.id,
     actorUserId: session.id,
     targetUserId: target.id,
@@ -259,6 +246,8 @@ async function resolveViewAsFrame(session: {
     expiresAtMs: open.expiresAtMs,
     writeBypass: false,
   };
+  enterViewAsFrame(frame);
+  return { id: target.id, email: target.email };
 }
 
 /** True when this request is inside a live view-as frame after a fresh admin check. */
@@ -270,41 +259,9 @@ export async function viewAsBlocksThisRequest(): Promise<boolean> {
 }
 
 export async function readViewAsState(): Promise<{ active: false } | ({ active: true } & ViewAsPublic)> {
-  const real = await getVerifiedAuthSession();
-  if (!real?.id) return { active: false };
-  const frame = await runWithoutViewAs(() => resolveViewAsFrame(real));
-  if (!frame || frame.actorUserId !== real.id) return { active: false };
-  enterViewAsFrame(frame);
-  return {
-    active: true,
-    targetUserId: frame.targetUserId,
-    name: frame.targetName,
-    email: frame.targetEmail,
-    role: frame.targetRole,
-    expiresAt: new Date(frame.expiresAtMs).toISOString(),
-    readOnly: true,
-  };
-}
-
-/** Sign-out ends view-as. A later sign-in must not resume it. */
-export async function closeViewAsForCurrentUser(): Promise<void> {
-  const real = await getVerifiedAuthSession();
-  if (!real?.id) return;
-  await runWithoutViewAs(async () => {
-    const open = await loadOpen(real.id);
-    if (!open) return;
-    const now = Date.now();
-    await persistClose({ ...open, endedAtMs: now, endReason: "exit" });
-    await writeAudits([
-      {
-        kind: "view_as_exit",
-        actorUserId: real.id,
-        targetUserId: open.targetUserId,
-        atMs: now,
-        detail: "sign-out",
-      },
-    ]);
-  });
+  const view = readViewAsPublic();
+  if (!view) return { active: false };
+  return { active: true, ...view };
 }
 
 export async function searchViewAsPeople(query: string): Promise<ViewAsTarget[]> {

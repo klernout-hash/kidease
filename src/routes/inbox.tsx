@@ -1,5 +1,4 @@
 import { Outlet, createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
-import { parentNavSearch } from "@/lib/desk-nav";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { privateReturnPath } from "@/lib/role-access";
 import { CentreInboxDesk } from "@/components/centre-inbox";
@@ -8,48 +7,31 @@ import { InboxList } from "@/components/inbox-list";
 import { useSessionDesks } from "@/components/session-desks";
 import { parseInboxSearch, resolveInboxView } from "@/lib/inbox-view";
 import { useRoleChrome } from "@/components/role-chrome";
+import { parentNavSearch } from "@/lib/desk-nav";
 import { useCopy } from "@/lib/use-copy";
 
-export const inboxBeforeLoad = ({
-  context,
-  location,
-}: {
-  context: { roleChrome?: Parameters<typeof beforeLoadPrivate>[1] };
-  location: { pathname: string; href?: string; searchStr?: string };
-}) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome);
-
-export const inboxValidateSearch = (s: Record<string, unknown>) => parseInboxSearch(s);
-
-export function inboxHead({ match }: { match: { search: { view?: string } } }) {
-  return {
+export const Route = createFileRoute("/inbox")({
+  beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
+  validateSearch: (s: Record<string, unknown>) => parseInboxSearch(s),
+  head: ({ match }) => ({
     meta: [
       { title: match.search.view === "family" ? "Family messages · KidEase" : "Messages · KidEase" },
       { name: "robots", content: "noindex, nofollow" },
     ],
-  };
-}
+  }),
+  component: InboxLayout,
+});
 
-export function InboxDesk({
-  pathname,
-  search,
-  listPath,
-  onParent,
-}: {
-  pathname: string;
-  search: ReturnType<typeof parseInboxSearch>;
-  listPath: "/inbox" | "/fr/inbox";
-  onParent: (id: string) => void;
-}) {
+function InboxLayout() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const search = Route.useSearch();
+  const navigate = useNavigate();
   const { t } = useCopy();
   const { sticky } = useSessionDesks();
   const chrome = useRoleChrome();
   const forced = chrome.role === "provider" ? "centre" : chrome.role === "parent" ? "family" : null;
   const view = forced ?? resolveInboxView({ search: search.view, sticky });
-  const threadPrefix = `${listPath}/`;
-  const selectedId = pathname.startsWith(threadPrefix)
-    ? decodeURIComponent(pathname.slice(threadPrefix.length).split("/")[0] || "")
-    : undefined;
-  const onList = pathname === listPath;
+  const selectedId = pathname.startsWith("/inbox/") ? decodeURIComponent(pathname.slice("/inbox/".length).split("/")[0] || "") : undefined;
   if (view === "centre") {
     return (
       <CentreInboxDesk
@@ -65,7 +47,7 @@ export function InboxDesk({
       active="messages"
       onSelect={(id) => {
         if (id === "messages") return;
-        onParent(id);
+        void navigate({ to: "/parent", search: parentNavSearch(id) });
       }}
     >
       <div className="ke-split" data-ke="inbox-split" data-selected={onThread ? "true" : "false"}>
@@ -87,31 +69,8 @@ export function InboxDesk({
   );
   return (
     <>
-      <div className="ke-site-desktop">{onList ? <InboxList /> : <Outlet />}</div>
+      <div className="ke-site-desktop">{pathname !== "/inbox" ? <Outlet /> : <InboxList />}</div>
       <div className="ke-site-compact">{split}</div>
     </>
-  );
-}
-
-export const Route = createFileRoute("/inbox")({
-  beforeLoad: inboxBeforeLoad,
-  validateSearch: inboxValidateSearch,
-  head: inboxHead,
-  component: InboxLayout,
-});
-
-function InboxLayout() {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const search = Route.useSearch();
-  const navigate = useNavigate();
-  return (
-    <InboxDesk
-      pathname={pathname}
-      search={search}
-      listPath="/inbox"
-      onParent={(id) => {
-        void navigate({ to: "/parent", search: parentNavSearch(id) });
-      }}
-    />
   );
 }

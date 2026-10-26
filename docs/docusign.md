@@ -30,9 +30,7 @@ Set these as encrypted environment variables. Names only in `.env.example` — n
 | `DOCUSIGN_ACCOUNT_ID` | Apps and Keys → API Account ID |
 | `DOCUSIGN_PRIVATE_KEY` | RSA private key PEM. On Vercel, keep `\n` as the two characters `\` `n`. Quoted PEM and whole-PEM base64 are also accepted. |
 | `DOCUSIGN_ENV` | `demo` (developer account) or `production` |
-| `DOCUSIGN_WEBHOOK_SECRET` | Connect HMAC key (header only — never `?secret=` on the URL). If this and `DOCUSIGN_WEBHOOK_SECRETS` are both unset, the webhook answers 200 `{ ok: true, ignored: "not_configured" }` so Connect is not disabled. |
-| `DOCUSIGN_WEBHOOK_SECRETS` | Optional comma-separated extra HMAC keys (rotation). Any one key can sign. |
-| `DOCUSIGN_CONNECT_ACCOUNT_IDS` | Optional comma-separated extra account ids. `DOCUSIGN_ACCOUNT_ID` is always allowed. Any other account answers 200 and is not saved. |
+| `DOCUSIGN_WEBHOOK_SECRET` | Connect HMAC key (header only — never `?secret=` on the URL) |
 | `DOCUSIGN_TEMPLATE_PROVIDER_AGREEMENT` | Template ID for the provider agreement (optional) |
 | `DOCUSIGN_TEMPLATE_ENROLMENT_PACK` | Template ID for the enrolment pack (optional) |
 | `DOCUSIGN_TEMPLATE_ROLE` | Template role name. Default `Provider` |
@@ -87,8 +85,8 @@ Use `https://account.docusign.com` when `DOCUSIGN_ENV=production`. Accept. KidEa
 2. URL: `https://www.kidease.ca/api/docusign/webhook`  
    No query string. Do not put the HMAC on the URL.
 3. Enable envelope events: Sent, Delivered, Completed, Declined, Voided.
-4. Include HMAC signature. Generate a key and set it as `DOCUSIGN_WEBHOOK_SECRET` on Vercel. During rotation, put the previous key in `DOCUSIGN_WEBHOOK_SECRETS`.
-5. JSON REST v2.1 payload if offered. Events whose `accountId` is not `DOCUSIGN_ACCOUNT_ID` (and not in `DOCUSIGN_CONNECT_ACCOUNT_IDS`) are ignored with HTTP 200. A bad HMAC returns 401 only for a known account. A query-string secret still returns 401.
+4. Include HMAC signature. Generate a key and set it as `DOCUSIGN_WEBHOOK_SECRET` on Vercel.
+5. JSON REST v2.1 payload if offered.
 
 KidEase also attaches `eventNotification` on each envelope and polls `/api/docusign/poll` hourly if a webhook is missed.
 

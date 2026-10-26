@@ -51,7 +51,7 @@ test("public login URLs do not render an operator page; typed owner email still 
   assert.match(login, /data-ke="admin-titan-note"/);
   assert.match(login, /data-ke=\{operator \? "admin-email-first" : "email-sign-in"\}/);
   assert.match(login, /data-ke="social-sign-in"/);
-  assert.match(login, /\{!operator && !pickingRole \? \(/);
+  assert.match(login, /\{!operator \? \(/);
   assert.match(login, /t\("forgotPassword"\)/);
   assert.match(login, /KIDEASE_OPERATOR_EMAIL/);
   assert.doesNotMatch(login, /const operator = role === "admin"/);

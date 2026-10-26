@@ -26,7 +26,6 @@ import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent
 import type { CaslPrefs } from "@/lib/casl";
 import { PlaceSearch } from "@/components/place-search";
 import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anchors";
-import type { AnchorPoint } from "@/lib/dual-anchor";
 import { useAppStore } from "@/lib/store";
 import { AppearanceControl } from "@/components/appearance-control";
 import { useInNativeShell } from "@/lib/use-native-shell";
@@ -35,7 +34,6 @@ import { AccountSecurity } from "@/components/account-security";
 import { DeleteAccountPanel } from "@/components/delete-account-panel";
 import { NotificationBell } from "@/components/notification-bell";
 import { AlertPushSettings } from "@/components/alert-push-settings";
-import { ReferFriendPanel } from "@/components/refer-friend-panel";
 
 export const Route = createFileRoute("/account")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
@@ -49,7 +47,7 @@ export const Route = createFileRoute("/account")({
     const out: {
       tab?: "saved" | "enrolled" | "profile" | "payments";
       desk?: "parent" | "director" | "admin" | "support";
-      section?: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents" | "refer";
+      section?: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents";
     } = {};
     const tab = s.tab;
     if (tab === "saved" || tab === "enrolled" || tab === "profile" || tab === "payments") out.tab = tab;
@@ -62,8 +60,7 @@ export const Route = createFileRoute("/account")({
       section === "delete" ||
       section === "security" ||
       section === "email-sms" ||
-      section === "documents" ||
-      section === "refer"
+      section === "documents"
     ) {
       out.section = section;
     }
@@ -186,7 +183,7 @@ function AccountDeskFrame({ desk, children }: { desk: DeskKey | null; children: 
 }
 
 function ProfilePane() {
-  const { user, isPending } = useCurrentUserState();
+  const { user } = useCurrentUserState();
   const nativeShell = useInNativeShell();
   const { t, locale } = useCopy();
   const search = Route.useSearch();
@@ -200,13 +197,6 @@ function ProfilePane() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState(user?.primaryEmail ?? "");
   const [bio, setBio] = useState("");
-  const nameRef = useRef(user?.displayName ?? "");
-  const phoneRef = useRef("");
-  const bioRef = useRef("");
-  const contactDirty = useRef({ name: false, phone: false, bio: false });
-  const contactEpoch = useRef(0);
-  const contactLoaded = useRef(false);
-  const seenUserId = useRef<string | undefined>(undefined);
   const [consents, setConsents] = useState<CaslPrefs>({
     smsService: false,
     emailService: false,
@@ -219,40 +209,17 @@ function ProfilePane() {
   const anchorMode = useAppStore((s) => s.anchorMode);
   const setAnchorMode = useAppStore((s) => s.setAnchorMode);
   const [workQuery, setWorkQuery] = useState(workOrigin?.label ?? "");
-  const [savedHome, setSavedHome] = useState<AnchorPoint | null | undefined>(undefined);
 
   useEffect(() => {
     if (!user) return;
-    const switched = seenUserId.current !== undefined && seenUserId.current !== user.id;
-    seenUserId.current = user.id;
-    if (switched) contactDirty.current = { name: false, phone: false, bio: false };
-    const epoch = ++contactEpoch.current;
-    contactLoaded.current = false;
-    if (!contactDirty.current.name) {
-      const sessionName = user.displayName ?? "";
-      nameRef.current = sessionName;
-      setName(sessionName);
-    }
+    setName(user.displayName ?? "");
     setEmail(user.primaryEmail ?? "");
     void getMyContact()
       .then((row) => {
-        if (epoch !== contactEpoch.current) return;
-        const dirty = contactDirty.current;
-        if (!dirty.name) {
-          const nextName = row.name || user.displayName || "";
-          nameRef.current = nextName;
-          setName(nextName);
-        }
-        if (!dirty.phone) {
-          phoneRef.current = row.phone;
-          setPhone(row.phone);
-        }
+        setName(row.name || user.displayName || "");
+        setPhone(row.phone);
         setEmail(row.email || user.primaryEmail || "");
-        if (!dirty.bio) {
-          bioRef.current = row.bio;
-          setBio(row.bio);
-        }
-        contactLoaded.current = true;
+        setBio(row.bio);
       })
       .catch(() => {
         /* keep session name/email */
@@ -268,7 +235,6 @@ function ProfilePane() {
       .catch(() => undefined);
     void getMySearchAnchors()
       .then((saved) => {
-        setSavedHome(saved.home);
         if (saved.work) {
           setWorkOrigin(saved.work);
           setWorkQuery(saved.work.label);
@@ -281,48 +247,9 @@ function ProfilePane() {
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
     if (!user) return;
-    const typedWork = workQuery.trim();
-    const resolvedWork = workOrigin && typedWork === workOrigin.label.trim() ? workOrigin : null;
-    if (typedWork && !resolvedWork) {
-      toast.error(t("anchorWorkMiss"));
-      return;
-    }
-    contactEpoch.current += 1;
-    if (!contactLoaded.current) {
-      try {
-        const row = await getMyContact();
-        if (!contactDirty.current.name) {
-          nameRef.current = row.name || user.displayName || "";
-          setName(nameRef.current);
-        }
-        if (!contactDirty.current.phone) {
-          phoneRef.current = row.phone;
-          setPhone(row.phone);
-        }
-        if (!contactDirty.current.bio) {
-          bioRef.current = row.bio;
-          setBio(row.bio);
-        }
-        setEmail(row.email || user.primaryEmail || "");
-        contactLoaded.current = true;
-      } catch {
-        /* save the fields already on screen */
-      }
-    }
-    const nextName = nameRef.current;
-    const nextPhone = phoneRef.current;
-    const nextBio = bioRef.current.trim().slice(0, 400);
     setSaving(true);
     try {
-      const saved = await saveMyContact({ data: { name: nextName, phone: nextPhone, bio: nextBio } });
-      if (saved.bio !== nextBio) {
-        toast.error(t("trackSaveFailed"));
-        return;
-      }
-      nameRef.current = saved.name;
-      phoneRef.current = saved.phone;
-      bioRef.current = saved.bio;
-      contactDirty.current = { name: false, phone: false, bio: false };
+      const saved = await saveMyContact({ data: { name, phone, bio } });
       setName(saved.name);
       setPhone(saved.phone);
       setEmail(saved.email || email);
@@ -330,7 +257,7 @@ function ProfilePane() {
       const nextConsent = await saveMyCaslConsents({
         data: {
           ...consents,
-          phone: saved.phone,
+          phone,
           email: saved.email || email,
           locale,
           method: "profile_checkbox",
@@ -353,12 +280,6 @@ function ProfilePane() {
         } catch {
           /* profiles row is the source of truth */
         }
-      }
-      if (savedHome !== undefined && (resolvedWork || workOrigin)) {
-        const mode = resolvedWork && anchorMode === "home" ? "both" : anchorMode;
-        await saveMySearchAnchors({
-          data: { home: savedHome, work: resolvedWork, mode },
-        });
       }
       confirmAction(t, "profileSaved");
     } catch (err) {
@@ -387,7 +308,7 @@ function ProfilePane() {
         ? "profile"
         : (search.section ?? "profile");
   const sectionSearch = (
-    next: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents" | "refer",
+    next: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents",
   ) => ({
     tab: "profile" as const,
     ...(search.desk ? { desk: search.desk } : {}),
@@ -400,7 +321,6 @@ function ProfilePane() {
     { id: "email-sms" as const, label: t("emailAndSms") },
     { id: "documents" as const, label: t("familyDocs") },
     { id: "appearance" as const, label: t("appearance") },
-    { id: "refer" as const, label: t("referFriend") },
     { id: "subscription" as const, label: t("navUpgrade") },
     { id: "delete" as const, label: t("deleteAccount") },
   ].filter((item) => {
@@ -467,7 +387,6 @@ function ProfilePane() {
             <AppearanceControl />
           </section>
         ) : null}
-        {section === "refer" && user ? <ReferFriendPanel /> : null}
         {section === "subscription" ? (
           <section className="ke-digital-plan mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="digital-plan">
             <h2 className="font-display text-xl">{t("navUpgrade")}</h2>
@@ -546,11 +465,7 @@ function ProfilePane() {
                 .finally(() => setBusy(false));
             }}
           />
-          {isPending && !user ? (
-            <div className="mt-6 w-full">
-              <DeskSkeleton />
-            </div>
-          ) : user ? (
+          {user ? (
             <Button className="mt-6" size="lg" disabled={busy} onClick={() => inputRef.current?.click()}>
               {busy ? t("loading") : t("accountChangePhoto")}
             </Button>
@@ -563,39 +478,17 @@ function ProfilePane() {
           )}
         </div>
 
-        {isPending && !user ? null : user ? (
+        {user ? (
           <form onSubmit={onSave} className="mt-8 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
             <h2 className="font-display text-lg tracking-[-0.02em]">{t("accountContactTitle")}</h2>
             <p className="text-[13px] text-muted">{t("accountContactLead")}</p>
             <label className="block text-sm">
               {t("name")}
-              <input
-                className="ke-input mt-1"
-                value={name}
-                onChange={(e) => {
-                  contactDirty.current.name = true;
-                  nameRef.current = e.target.value;
-                  setName(e.target.value);
-                }}
-                autoComplete="name"
-                maxLength={80}
-              />
+              <input className="ke-input mt-1" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" maxLength={80} />
             </label>
             <label className="block text-sm">
               {t("accountPhone")}
-              <input
-                className="ke-input mt-1"
-                value={phone}
-                onChange={(e) => {
-                  contactDirty.current.phone = true;
-                  phoneRef.current = e.target.value;
-                  setPhone(e.target.value);
-                }}
-                autoComplete="tel"
-                inputMode="tel"
-                maxLength={32}
-                placeholder="204-555-0100"
-              />
+              <input className="ke-input mt-1" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" inputMode="tel" maxLength={32} placeholder="204-555-0100" />
             </label>
             <label className="block text-sm">
               {t("email")}
@@ -607,11 +500,7 @@ function ProfilePane() {
               <textarea
                 className="ke-input mt-1 min-h-24 resize-y"
                 value={bio}
-                onChange={(e) => {
-                  contactDirty.current.bio = true;
-                  bioRef.current = e.target.value;
-                  setBio(e.target.value);
-                }}
+                onChange={(e) => setBio(e.target.value)}
                 maxLength={400}
                 placeholder={t("accountBioPh")}
               />
@@ -642,19 +531,16 @@ function ProfilePane() {
                   setWorkOrigin(place);
                   setWorkQuery(place.label);
                   if (anchorMode === "home") setAnchorMode("both");
-                  if (savedHome === undefined) return;
                   void saveMySearchAnchors({
-                    data: { home: savedHome, work: place, mode: anchorMode === "home" ? "both" : anchorMode },
-                  }).catch((err) => {
-                    toast.error(err instanceof Error ? err.message : t("anchorWorkMiss"));
-                  });
+                    data: { home: origin, work: place, mode: anchorMode === "home" ? "both" : anchorMode },
+                  }).catch(() => undefined);
                 }}
                 placeholder={t("anchorWorkPh")}
                 origin={origin}
                 inputClassName="ke-input mt-2 w-full"
               />
             </div>
-            <Button type="submit" className="w-full" disabled={saving} data-ke="account-save-details">
+            <Button type="submit" className="w-full" disabled={saving}>
               {saving ? t("loading") : t("accountSaveDetails")}
             </Button>
           </form>

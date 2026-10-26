@@ -37,7 +37,7 @@ test("native shell sells nothing and still unlocks a centre plan bought on the w
     ],
     true,
   );
-  assert.deepEqual(plans.map((plan) => plan.id), []);
+  assert.deepEqual(plans.map((plan) => plan.id), ["pro"]);
   assert.equal(plansVisibleInShell([{ id: "alerts" }], false).length, 1);
   const paid = resolveProviderEntitlements({
     plan: "pro",

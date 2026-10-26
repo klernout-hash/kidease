@@ -35,14 +35,11 @@ function noticeKindKey(kind: SearchAlertNotice["kind"]): CopyKey {
   return "alertNewCentre";
 }
 import { caslStatement } from "@/lib/casl";
-import { showStoreComingSoon } from "@/lib/store-placeholders";
 import { useCopy } from "@/lib/use-copy";
-import { useStoreChannel } from "@/lib/use-native-shell";
 import { clampRadiusKm } from "@/lib/proximity";
 
 export function SavedSearchesPanel() {
   const { t, locale } = useCopy();
-  const showStoreAppsLine = showStoreComingSoon(useStoreChannel());
   const navigate = useNavigate();
   const [searches, setSearches] = useState<SavedSearch[] | null>(null);
   const [prefs, setPrefs] = useState<SearchAlertPrefs>({
@@ -112,9 +109,7 @@ export function SavedSearchesPanel() {
             />
             <span>{t("alertInApp")}</span>
           </label>
-          {showStoreAppsLine ? (
-            <p className="text-xs text-subtle">{t("alertPushOff")}</p>
-          ) : null}
+          <p className="text-xs text-subtle">{t("alertPushOff")}</p>
           <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm" data-ke="sms-entry">
             <input
               type="checkbox"

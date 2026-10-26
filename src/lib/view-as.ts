@@ -190,22 +190,6 @@ export function sqlAllowedDuringViewAs(sql: string): boolean {
   return statements.every((statement) => statementAllowed(statement));
 }
 
-/**
- * View-as belongs to the auth session that started it.
- * A newer sign-in must not resume an old row. A missing timestamp fails closed
- * so a fresh session is the person's own account.
- */
-export function viewAsMatchesAuthSession(input: {
-  sessionCreatedAtMs: number;
-  viewStartedAtMs: number;
-}): boolean {
-  const sessionAt = input.sessionCreatedAtMs;
-  const startedAt = input.viewStartedAtMs;
-  if (!Number.isFinite(sessionAt) || sessionAt <= 0) return false;
-  if (!Number.isFinite(startedAt) || startedAt <= 0) return false;
-  return sessionAt <= startedAt + 5_000;
-}
-
 export function viewAsAuthFailureEndsSession(message: string): boolean {
   return (
     message === "Not authorized" ||

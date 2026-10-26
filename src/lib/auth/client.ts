@@ -101,11 +101,10 @@ type PopupMessage = { source: "grok-auth-popup"; token: string | null; error?: s
 
 export async function signIn(
   providerId: string,
-  opts: { callbackURL?: string; errorCallbackURL?: string; newUserCallbackURL?: string } = {},
+  opts: { callbackURL?: string; errorCallbackURL?: string } = {},
 ): Promise<void> {
   const callbackURL = opts.callbackURL ?? "/";
   const errorCallbackURL = opts.errorCallbackURL ?? "/";
-  const newUserCallbackURL = opts.newUserCallbackURL;
 
   const popup = inLivePreview() ? openSignInPopup(providerId) : null;
 
@@ -176,7 +175,6 @@ export async function signIn(
       provider: providerId as "apple" | "google" | "facebook",
       callbackURL,
       errorCallbackURL,
-      ...(newUserCallbackURL ? { newUserCallbackURL } : {}),
     });
     window.location.href = resolveSocialSignInRedirect({ data, error }, providerId);
     return;

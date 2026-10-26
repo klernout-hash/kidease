@@ -20,7 +20,6 @@ import type { LeadRequest } from "@/lib/lead-requests";
 import { listParentBills } from "@/lib/server/billing";
 import { shareChildWithCentres } from "@/lib/server/enrol-queue";
 import { hasCareDetails } from "@/lib/child-profile";
-import { parentPayEmptyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
 import { formatAgeLabel } from "@/lib/templates";
 import { ageGroupFromMonths, asList, formatMonth, money, monthsBetween } from "@/lib/utils";
@@ -573,7 +572,6 @@ export function ParentDesk({
             <LedgerHonesty
               stripeLive={Boolean(desks?.stripeLive)}
               surface="parent"
-              plansOn={desks?.subscriptionsEnabled === true}
               className="mt-2"
               ready={desksReady}
             />
@@ -619,7 +617,7 @@ export function ParentDesk({
               payments.length === 0 &&
               bills.filter((b) => billIsOpen(b.status)).length === 0 ? (
                 <li className="p-2">
-                  <EmptyState title={t("noPayments")} body={t(parentPayEmptyKey(desks?.subscriptionsEnabled === true))} action={t("emptyFindCare")} actionTo="/search" />
+                  <EmptyState title={t("noPayments")} body={t("noPaymentsLead")} action={t("emptyFindCare")} actionTo="/search" />
                 </li>
               ) : (
                 <>
@@ -680,7 +678,7 @@ export function ParentDesk({
             <h2 className="font-display text-2xl">{t("childProfileTitle")}</h2>
             <p className="mt-1 text-sm text-muted">
               <span className="ke-site-compact">{t("childProfileLead")}</span>
-              <span className="ke-site-desktop">{t("childProfileSendLead")}</span>
+              <span className="ke-site-desktop">Save the child profile, then send it to saved centres. Each centre sees it in Incoming requests and can approve, wait, or decline.</span>
             </p>
           </div>
           {children.length === 0 && !editing ? (

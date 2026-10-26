@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getRequest } from "@tanstack/react-start/server";
 import { appleLoginVisible } from "@/lib/auth/apple-login-flag";
-import { facebookLoginVisible, facebookOauthHost } from "@/lib/auth/facebook-idp";
+import { facebookLoginVisible } from "@/lib/auth/facebook-idp";
 import { visibleSignInProviders, type GrokProvider } from "@/lib/auth/providers";
 
 /**
@@ -17,14 +16,7 @@ export const getSignInProviders = createServerFn({ method: "GET" }).handler((): 
   const nativeGoogle = Boolean(
     process.env.GOOGLE_CLIENT_ID?.trim() && process.env.GOOGLE_CLIENT_SECRET?.trim(),
   );
-  let host: string | null = null;
-  try {
-    host = getRequest()?.headers.get("host") ?? null;
-  } catch {
-    host = null;
-  }
-  // Random *.vercel.app previews and the broker host are not registered with Meta.
-  const nativeFacebook = facebookLoginVisible(process.env) && Boolean(facebookOauthHost(host));
+  const nativeFacebook = facebookLoginVisible(process.env);
   const nativeApple = appleLoginVisible(process.env);
   const explicitBroker = Boolean(
     process.env.GROK_AUTH_CLIENT_ID?.trim() && process.env.GROK_AUTH_CLIENT_SECRET?.trim(),

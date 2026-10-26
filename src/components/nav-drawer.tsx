@@ -28,10 +28,10 @@ import { SmartMatchEntry } from "@/components/smart-match";
 type Item = { to: string; label: string; search?: Record<string, string>; icon: MenuIconId; marker?: string };
 
 const drawerSummaryClass =
-  "flex min-h-11 cursor-pointer list-none items-center rounded-xl px-3 text-xs font-semibold uppercase tracking-normal text-subtle whitespace-normal break-words [&::-webkit-details-marker]:hidden";
+  "flex min-h-11 cursor-pointer list-none items-center rounded-xl px-3 text-xs font-semibold uppercase tracking-[0.12em] text-subtle [&::-webkit-details-marker]:hidden";
 
 const drawerHeadingClass =
-  "flex min-h-11 items-center rounded-xl px-3 text-xs font-semibold uppercase tracking-normal text-subtle whitespace-normal break-words";
+  "flex min-h-11 items-center rounded-xl px-3 text-xs font-semibold uppercase tracking-[0.12em] text-subtle";
 
 /** A heading with no links is not a section. Guest groups stay open so the links are on screen. */
 function DrawerSection({ title, marker, children }: { title: string; marker?: string; children: ReactNode }) {
@@ -205,7 +205,7 @@ export function NavDrawer({
             type="button"
             onClick={onClose}
             className="grid size-12 place-items-center rounded-full text-fg hover:bg-surface-2"
-            aria-label={t("close")}
+            aria-label="Close"
           >
             <X className="size-6" strokeWidth={1.75} />
           </button>

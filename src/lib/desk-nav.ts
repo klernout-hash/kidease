@@ -1,5 +1,4 @@
 import type { CopyKey } from "./copy.ts";
-import { frenchPath, isFrPath, stripLocalePrefix } from "./locale-path.ts";
 
 export type DeskId = "admin" | "support" | "daycare" | "parent";
 
@@ -97,13 +96,13 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
   ],
   parent: [
     { id: "explore", label: "Home", hint: "Matches near you", labelKey: "exploreForYou", hintKey: "deskNavForYouHint", href: "/parent", search: { tab: "explore" } },
-    { id: "care", label: "Daily care", hint: "Presence, journal, meds, rooms", labelKey: "dailyCare", hintKey: "dailyCareHint", href: "/parent", search: { tab: "care" } },
-    { id: "children", label: "Children", hint: "Up to 4 profiles", labelKey: "children", hintKey: "childrenLimit" },
+    { id: "care", label: "Daily care", hint: "Presence, journal, meds, rooms", labelKey: "dailyCare", hintKey: "dailyCareHint" },
+    { id: "children", label: "Children", hint: "Up to 4 profiles", labelKey: "children" },
     { id: "bookings", label: "Requests", hint: "Tours, waitlist, and spots", labelKey: "navRequestsShort", hintKey: "deskNavBookingsHint" },
     { id: "waitlists", label: "Waitlists", hint: "Your spot requests", labelKey: "navWaitlists", hintKey: "deskNavWaitlistsHint" },
     { id: "saved", label: "Saved", hint: "5 free · 10 on Plus", labelKey: "saved", hintKey: "deskNavShortlistHint" },
-    { id: "alerts", label: "Search alerts", hint: "Saved searches + notify", labelKey: "searchAlerts", hintKey: "deskNavAlertsHint", href: "/parent", search: { tab: "alerts" } },
-    { id: "payments", label: "Pay", hint: "Bills from your centre", labelKey: "payments", hintKey: "deskNavPaymentsHint", href: "/parent", search: { tab: "payments" } },
+    { id: "alerts", label: "Search alerts", hint: "Saved searches + notify", labelKey: "searchAlerts", hintKey: "deskNavAlertsHint" },
+    { id: "payments", label: "Pay", hint: "Bills from your centre", labelKey: "payments", hintKey: "deskNavPaymentsHint" },
     { id: "messages", label: "Messages", hint: "Centre threads + tours", labelKey: "messages", hintKey: "deskNavParentMessagesHint", href: "/inbox", search: { view: "family" } },
     { id: "search", label: "Search", labelKey: "search", href: "/search" },
     { id: "upgrade", label: "Upgrade", hint: "Parent Plus", labelKey: "deskNavUpgrade", hintKey: "deskNavUpgradeHint", icon: "credit-card", href: "/parent", search: { tab: "subscription" } },
@@ -180,11 +179,7 @@ type DeskNavOpts = {
   centreLinked?: boolean;
 };
 
-/**
- * Hide Upgrade and daycare Subscription unless SUBSCRIPTIONS_ENABLED is on.
- * Promote stays in the sidebar. The promote page itself still says plans are
- * not offered while pay buttons are off.
- */
+/** Hide the daycare Subscription item unless SUBSCRIPTIONS_ENABLED is on. Hide Promote when SHOW_PAY_CTAS is off. */
 const OWNER_ONLY_NAV = new Set([
   "money",
   "licence",
@@ -201,7 +196,11 @@ export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
   return DESK_NAV[desk].filter((item) => {
     if (item.devOnly && import.meta.env?.PROD === true) return false;
     if (item.id === "upgrade" || item.id === "subscription") return opts?.subscriptionsEnabled === true;
-    if (item.id === "promote") return opts?.centreOwner !== false;
+    if (item.id === "promote") {
+      if (opts?.showPayCtas === false) return false;
+      if (opts?.centreOwner === false) return false;
+      return true;
+    }
     if (OWNER_ONLY_NAV.has(item.id) && opts?.centreOwner === false) return false;
     return true;
   });
@@ -309,44 +308,6 @@ export function bindDeskGroup(
   if (!node || node.dataset.keGroup === "1") return;
   node.dataset.keGroup = "1";
   node.open = readDeskGroupOpen(desk, groupId, fallback);
-}
-
-/** Stable id for one sidebar destination. Buttons without a URL use their id. */
-export function sidebarDestination(item: DeskItem): string {
-  if (!item.href) return `id:${item.id}`;
-  const query = item.search ? new URLSearchParams(item.search).toString() : "";
-  return query ? `${item.href}?${query}` : item.href;
-}
-
-/** Every sidebar link a desk shows, for the owner and flag options given. */
-export function sidebarDestinations(desk: DeskId, opts?: DeskNavOpts): string[] {
-  return visibleDeskGroups(desk, visibleDeskNav(desk, opts))
-    .flatMap((row) => row.items.map(sidebarDestination))
-    .sort();
-}
-
-/** Parent and inbox links stay on /fr when the page is already French. */
-export function deskHrefForLocale(href: string, pathname: string): string {
-  if (!isFrPath(pathname)) return href;
-  const q = href.indexOf("?");
-  const pathOnly = q >= 0 ? href.slice(0, q) : href;
-  const search = q >= 0 ? href.slice(q) : "";
-  if (
-    pathOnly === "/parent" ||
-    pathOnly === "/inbox" ||
-    pathOnly.startsWith("/parent/") ||
-    pathOnly.startsWith("/inbox/")
-  ) {
-    return `${frenchPath(pathOnly)}${search}`;
-  }
-  return href;
-}
-
-export function deskPathIsCurrent(href: string, pathname: string): boolean {
-  const pathOnly = (href.split("?")[0] || href).replace(/\/$/, "") || "/";
-  const here = stripLocalePrefix(pathname);
-  const there = stripLocalePrefix(pathOnly);
-  return here === there || (there !== "/" && here.startsWith(`${there}/`));
 }
 
 export function visibleDeskGroups(

@@ -37,7 +37,6 @@
  * a verified id via `@/lib/auth/middleware`.
  */
 import { betterAuth } from "better-auth";
-import { APIError, createAuthMiddleware } from "better-auth/api";
 import { bearer, genericOAuth } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { getCookie, getRequest } from "@tanstack/react-start/server";
@@ -56,10 +55,8 @@ import {
 import {
   FACEBOOK_CLIENT_ID,
   FACEBOOK_CLIENT_SECRET,
-  FACEBOOK_HOST_UNAVAILABLE,
   FACEBOOK_LOGIN_SCOPES,
   facebookIdpConfigured,
-  facebookRedirectUri,
   mapFacebookProfileToUser,
 } from "./facebook-idp";
 import {
@@ -69,7 +66,7 @@ import {
   grokIssuer,
 } from "./broker-env";
 import { pgliteDialect } from "./pglite-dialect";
-import { brokerOAuthCallbackPath, PREVIEW_ALLOWED_HOSTS } from "./preview";
+import { PREVIEW_ALLOWED_HOSTS } from "./preview";
 import {
   aliasInboundAuthCookies,
   isKideasePublicHost,
@@ -147,9 +144,6 @@ const LOCAL_DEV_ORIGINS: string[] = [
   "http://localhost:8080",
   "http://127.0.0.1:8080",
   "http://[::1]:8080",
-  "http://localhost:8081",
-  "http://127.0.0.1:8081",
-  "http://[::1]:8081",
 ];
 // Public custom domain + platform aliases. BETTER_AUTH_URL is kidease.grok.me,
 // so without these, kidease.ca POSTs 403 Invalid origin and OAuth state cookies
@@ -215,8 +209,7 @@ const trustedOrigins = (request?: Request) => {
   const origin = requestOrigin(request);
   if (origin) {
     try {
-      // URL.host keeps the port (`127.0.0.1:8081`). hostAllowed compares hostnames.
-      if (hostAllowed(new URL(origin).hostname)) extra.push(origin);
+      if (hostAllowed(new URL(origin).host)) extra.push(origin);
     } catch {
       /* ignore */
     }
@@ -269,11 +262,10 @@ function genericOAuthWithBrokerCallback(
         ...result,
         context: {
           ...result.context,
-          socialProviders: result.context.socialProviders.map((provider) => {
-            const callbackPath = brokerOAuthCallbackPath(provider.id);
-            if (!callbackPath) return provider;
-            return { ...provider, callbackPath };
-          }),
+          socialProviders: result.context.socialProviders.map((provider) => ({
+            ...provider,
+            callbackPath: `/oauth2/callback/${provider.id}`,
+          })),
         },
       };
     },
@@ -338,9 +330,8 @@ const socialProviders = {
         facebook: {
           clientId: FACEBOOK_CLIENT_ID,
           clientSecret: FACEBOOK_CLIENT_SECRET,
-          // Better Auth docs show `scopes` (ignored). The provider reads `scope`.
-          // Defaults are also email + public_profile; disable them so the
-          // consent screen is not asked twice. No other permission is sent.
+          // Better Auth docs show `scopes` (ignored). The provider reads
+          // `scope` and otherwise defaults to `email` + `public_profile`.
           disableDefaultScope: true,
           scope: [...FACEBOOK_LOGIN_SCOPES],
           mapProfileToUser: mapFacebookProfileToUser,
@@ -438,22 +429,6 @@ export const auth = betterAuth({
       account_data: { name: "__Host-grok-auth.account_data" },
       dont_remember: { name: "__Host-grok-auth.dont_remember" },
     },
-  },
-
-  hooks: {
-    before: createAuthMiddleware(async (ctx) => {
-      if (ctx.path !== "/sign-in/social") return;
-      const body = ctx.body as { provider?: string; scopes?: unknown } | undefined;
-      if (body?.provider !== "facebook") return;
-      if (body && "scopes" in body) delete body.scopes;
-      const host = ctx.request?.headers.get("host");
-      if (!facebookRedirectUri(host)) {
-        throw APIError.from("BAD_REQUEST", {
-          message: FACEBOOK_HOST_UNAVAILABLE,
-          code: "FACEBOOK_HOST",
-        });
-      }
-    }),
   },
 
   plugins: [

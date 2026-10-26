@@ -76,19 +76,10 @@ test("browser wallet detection is honest about Capacitor and Safari vs Chrome", 
     paymentRequest: true,
     userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
   });
-  assert.equal(safari.applePay, false);
+  assert.equal(safari.applePay, true);
   assert.equal(safari.googlePay, false);
   assert.equal(safari.nativeWebView, false);
-  assert.deepEqual(visibleWalletLabels(safari), ["card"]);
-
-  const iphone = detectBrowserWallets({
-    native: false,
-    platform: "web",
-    applePayCapable: true,
-    paymentRequest: false,
-    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
-  });
-  assert.deepEqual(visibleWalletLabels(iphone), ["card", "apple"]);
+  assert.deepEqual(visibleWalletLabels(safari), ["card", "apple"]);
 
   const chrome = detectBrowserWallets({
     native: false,
@@ -98,17 +89,8 @@ test("browser wallet detection is honest about Capacitor and Safari vs Chrome", 
     userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
   });
   assert.equal(chrome.applePay, false);
-  assert.equal(chrome.googlePay, false);
-  assert.deepEqual(visibleWalletLabels(chrome), ["card"]);
-
-  const android = detectBrowserWallets({
-    native: false,
-    platform: "android",
-    applePayCapable: false,
-    paymentRequest: true,
-    userAgent: "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36",
-  });
-  assert.deepEqual(visibleWalletLabels(android), ["card", "google"]);
+  assert.equal(chrome.googlePay, true);
+  assert.deepEqual(visibleWalletLabels(chrome), ["card", "google"]);
 
   const nativeIos = detectBrowserWallets({
     native: true,

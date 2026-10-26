@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import {
   createRootRoute,
   HeadContent,
@@ -29,7 +28,7 @@ import { RoleBoot } from "@/components/role-boot";
 import { KidEaseToaster } from "@/components/kidease-toaster";
 import { SuccessConfirmHost } from "@/components/success-confirm";
 import { SafeRouteError } from "@/components/safe-error-boundary";
-import { installStaleChunkReload, safeErrorCopy } from "@/lib/safe-error";
+import { safeErrorCopy } from "@/lib/safe-error";
 import { getRoleChrome } from "@/lib/server/role-route";
 import { STYLE_NONCE_BOOT } from "@/lib/style-nonce-boot";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
@@ -69,6 +68,10 @@ const GUEST_LOCALE = {
 
 export const Route = createRootRoute({
   beforeLoad: async ({ location }) => {
+    if (location.pathname === "/fr/parent" || location.pathname.startsWith("/fr/parent/")) {
+      const rest = location.pathname.replace(/^\/fr/, "") || "/parent";
+      throw redirect({ href: `${rest}${location.searchStr || ""}`, statusCode: 302 });
+    }
     const search = `${location.searchStr || ""}${location.hash || ""}`;
     const [roleChrome, visitorLocale] = await Promise.all([
       getRoleChrome().catch(() => ({
@@ -182,7 +185,6 @@ async function readRequestStoreChannel(search: string): Promise<ServerStoreRead>
 }
 
 function RootDocument() {
-  useEffect(() => installStaleChunkReload(), []);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const nativeShell = Route.useRouteContext({ select: (s) => Boolean(s.nativeShell) });
   const storeChannel = Route.useRouteContext({ select: (s) => s.storeChannel ?? "web" });
