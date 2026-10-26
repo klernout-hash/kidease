@@ -464,7 +464,7 @@ function ProviderPage() {
         <>
           <label className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
             <input type="checkbox" checked={showTestListings} onChange={(e) => setShowTestListings(e.target.checked)} />
-            Show test listings{testListingCount ? ` · ${testListingCount}` : ""}
+            {t("showTestListings")}{testListingCount ? ` · ${testListingCount}` : ""}
           </label>
           <ActionRequiredBanner listings={deskListings} />
           <DirectorNudgeQueue listings={deskListings} stats={stats} onConfirmed={() => void load()} skipConfirmSpots />

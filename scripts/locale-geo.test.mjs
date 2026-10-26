@@ -181,6 +181,30 @@ test("Quebec document hops to French once, and crawlers stay on the URL", () => 
   );
 });
 
+test("an explicit lang param beats the saved locale and /fr/parent stays put", () => {
+  assert.equal(
+    localeRedirectTarget({ ...document, pathname: "/login", search: "?lang=en", cookie: "fr" }),
+    null,
+  );
+  assert.equal(
+    localeRedirectTarget({ ...document, pathname: "/fr/login", search: "?lang=en", cookie: "fr" }),
+    "/login?lang=en",
+  );
+  assert.equal(localeRedirectTarget({ ...document, pathname: "/login", cookie: "fr" }), "/fr/login");
+  assert.equal(localeRedirectTarget({ ...document, pathname: "/fr/parent", cookie: "en" }), null);
+  assert.equal(
+    localeRedirectTarget({ ...document, pathname: "/fr/parent", search: "?lang=en", cookie: "fr" }),
+    "/parent?lang=en",
+  );
+  assert.equal(decideVisitorLocale({ cookie: "fr", queryLocale: "en" }).locale, "en");
+  assert.equal(decideVisitorLocale({ cookie: "fr", queryLocale: "en" }).source, "query");
+  assert.match(src("src/lib/locale-choice.server.ts"), /localeRedirectTarget/);
+  assert.match(src("src/routes/__root.tsx"), /visitorLocale\.redirectTo/);
+  assert.doesNotMatch(src("src/routes/__root.tsx"), /\/fr\/parent/);
+  assert.match(src("src/lib/use-copy.ts"), /localeFromSearch/);
+  assert.match(src("src/routes/login.tsx"), /lang/);
+});
+
 test("New Brunswick stays English unless the region list includes it", () => {
   assert.deepEqual([...GEO_FRENCH_REGIONS], ["QC"]);
   assert.equal(decideVisitorLocale({ country: "CA", region: "NB" }).locale, "en");

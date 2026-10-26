@@ -23,7 +23,7 @@ import { gpsMayMoveSearchOrigin, searchQueryFromUnknown, urlHasGeocodableSearchQ
 import { readDualAnchorPrefs } from "@/lib/dual-anchor";
 import { activateLocale, isExtraLocale } from "@/lib/extra-copy";
 import { localeFromPreference } from "@/lib/languages";
-import { readLocaleCookie, writeLocaleChoiceCookie } from "@/lib/locale-geo";
+import { localeFromSearch, readLocaleCookie, writeLocaleChoiceCookie } from "@/lib/locale-geo";
 import { isFrPath } from "@/lib/locale-path";
 import { useAppStore } from "@/lib/store";
 import { readDistanceUnit } from "@/lib/units";
@@ -51,6 +51,11 @@ export function NativeBoot() {
 
   useLayoutEffect(() => {
     try {
+      const query = localeFromSearch(window.location.search);
+      if (query === "en" || query === "fr") {
+        setLocale(query);
+        return;
+      }
       const cookie = readLocaleCookie(document.cookie);
       const raw = window.localStorage.getItem("kidease-locale");
       // The old boot wrote "en" for everyone. Only a non-English stored value is a real choice.
@@ -71,7 +76,7 @@ export function NativeBoot() {
     } catch {
       /* ignore */
     }
-  }, [setLocale]);
+  }, [setLocale, searchStr]);
 
   useEffect(() => {
     try {

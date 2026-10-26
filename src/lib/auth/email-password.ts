@@ -22,6 +22,8 @@ export async function sendVerificationEmail({
   url: string;
 }) {
   try {
+    const { isFacebookPlaceholderEmail } = await import("./facebook-idp");
+    if (isFacebookPlaceholderEmail(user.email)) return;
     const { sendVerifyEmail } = await import("@/lib/server/verify-mail");
     await sendVerifyEmail({ to: user.email, url, name: user.name });
   } catch (err) {

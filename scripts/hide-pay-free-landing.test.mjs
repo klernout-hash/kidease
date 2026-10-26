@@ -93,8 +93,9 @@ test("public and desk chrome hide Upgrade / Subscribe unless flagged", () => {
     providerSubscriptions: true,
     showPayCtas: false,
     subscriptionsEnabled: true,
+    centreOwner: true,
   }).map((i) => i.id);
-  assert.equal(nav.includes("promote"), false);
+  assert.equal(nav.includes("promote"), true);
   assert.equal(nav.includes("subscription"), true);
   const hidden = visibleDeskNav("daycare", { providerSubscriptions: true, showPayCtas: false }).map((i) => i.id);
   assert.equal(hidden.includes("subscription"), false);

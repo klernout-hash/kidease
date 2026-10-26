@@ -1,3 +1,4 @@
+import { parentPayLeadKey } from "@/lib/copy";
 import { listingStatusFromClaim, listingStatusLabel } from "@/lib/listing-status";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -43,11 +44,14 @@ export function LedgerHonesty({
   className,
   surface = "money",
   ready = true,
+  plansOn = false,
 }: {
   stripeLive: boolean;
   className?: string;
   surface?: LedgerSurface;
   ready?: boolean;
+  /** Parent Pay only. Plan sentences stay hidden unless subscriptions are on. */
+  plansOn?: boolean;
 }) {
   const { t } = useCopy();
   if (!ready) {
@@ -59,9 +63,7 @@ export function LedgerHonesty({
   }
   const text =
     surface === "parent"
-      ? stripeLive
-        ? t("ledgerLiveParent")
-        : t("ledgerOffParent")
+      ? t(parentPayLeadKey(plansOn, stripeLive))
       : surface === "booking"
         ? stripeLive
           ? t("ledgerLiveBooking")

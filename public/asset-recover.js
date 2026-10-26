@@ -4,6 +4,7 @@
  */
 (function () {
   var FLAG = "ke-asset-recover";
+  var CHUNK = "ke-chunk-reload";
 
   function flagged() {
     try {
@@ -27,6 +28,28 @@
     } catch {
       /* ignore */
     }
+  }
+
+  function markChunk() {
+    try {
+      sessionStorage.setItem(CHUNK, "1");
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function chunkReloadPending() {
+    try {
+      return sessionStorage.getItem(CHUNK) === "1";
+    } catch {
+      return false;
+    }
+  }
+
+  function isChunkMiss(message) {
+    return /dynamically imported module|loading chunk|module script|mime type|text\/html|chunkloaderror/i.test(
+      String(message || ""),
+    );
   }
 
   function isHashedAsset(url) {
@@ -75,7 +98,13 @@
     "error",
     function (event) {
       var el = event.target;
-      if (!el || el === window) return;
+      if (!el || el === window) {
+        var message = event.message ? String(event.message) : "";
+        if (isBlockedAnalytics(message) || !isChunkMiss(message)) return;
+        markChunk();
+        recover();
+        return;
+      }
       var url = el.href || el.src || "";
       if (!isHashedAsset(url) || isBlockedAnalytics(url)) return;
       if (el.tagName === "LINK" || el.tagName === "SCRIPT") recover();
@@ -83,12 +112,26 @@
     true,
   );
 
+  window.addEventListener("unhandledrejection", function (event) {
+    var reason = event.reason;
+    var message = reason && reason.message ? String(reason.message) : String(reason || "");
+    if (isBlockedAnalytics(message) || !isChunkMiss(message)) return;
+    if (event.preventDefault) event.preventDefault();
+    markChunk();
+    recover();
+  });
+
   window.addEventListener("vite:preloadError", function (event) {
     var payload = event && event.payload;
     var message = payload && payload.message ? String(payload.message) : "";
     var url = payload && payload.url ? String(payload.url) : message;
-    if (!isBlockedAnalytics(url) && !isBlockedAnalytics(message)) return;
+    if (isBlockedAnalytics(url) || isBlockedAnalytics(message)) {
+      if (event.preventDefault) event.preventDefault();
+      return;
+    }
     if (event.preventDefault) event.preventDefault();
+    markChunk();
+    recover();
   });
 
   window.addEventListener("load", function () {
@@ -99,6 +142,8 @@
         return;
       }
     }
+    // A missing JS chunk must reload only once. CSS can be fine on that page.
+    if (chunkReloadPending()) return;
     clearFlag();
   });
 })();

@@ -99,9 +99,10 @@ test("footer legal bar stays compact and uses FR-CA copy keys", () => {
   assert.match(footer, /ke-footer-inner/);
   assert.match(footer, /t\("footerCopy"\)/);
   assert.match(footer, /t\("neverSell"\)/);
-  assert.match(footer, /t\("appStore"\)/);
-  assert.match(footer, /t\("googlePlay"\)/);
-  assert.match(footer, /t\("comingSoon"\)/);
+  assert.doesNotMatch(footer, /App Store/);
+  assert.doesNotMatch(footer, /Google Play/);
+  assert.doesNotMatch(footer, /t\("appStore"\)/);
+  assert.doesNotMatch(footer, /t\("googlePlay"\)/);
   assert.doesNotMatch(footer, /t\("operatorSignIn"\)/);
   assert.doesNotMatch(footer, /showOperatorSignIn/);
   assert.match(footer, /isKidEaseOperatorEmail\(user\?\.primaryEmail\)/);

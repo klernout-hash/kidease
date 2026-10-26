@@ -47,10 +47,16 @@ test("native shell hides digital plans and does not rename the application id", 
   assert.equal(pushPromptStep({ enabled: false, firstLaunch: true, choice: null }), "done");
   assert.equal(pushPromptStep({ enabled: false, firstLaunch: false, choice: null }), "done");
   assert.match(tx("en", "deleteAccount"), /^Delete account$/);
-  assert.match(tx("en", "deleteAccountLead"), /keep billing records the law requires/i);
+  assert.match(tx("en", "deleteAccountLead"), /within 30 days|after 30 days/i);
+  assert.match(tx("en", "deleteAccountLead"), /Stripe/);
+  assert.match(tx("en", "deleteAccountLead"), /PostHog/);
+  assert.match(tx("en", "deleteAccountLead"), /GoHighLevel/);
+  assert.match(tx("en", "deleteAccountLead"), /Sentry/);
   assert.match(tx("en", "deleteAccountKeepBilling"), /tax law/i);
   assert.match(tx("en", "deleteAccountKeepLogs"), /security logs/i);
-  assert.match(tx("fr", "deleteAccountLead"), /dossiers de facturation exigés par la loi/);
+  assert.match(tx("fr", "deleteAccountLead"), /30 jours/);
+  assert.match(tx("fr", "deleteAccountLead"), /Stripe/);
+  assert.match(tx("fr", "deleteAccountLead"), /GoHighLevel/);
   assert.match(tx("es", "deleteAccountLead"), /facturación/);
   assert.doesNotMatch(tx("es", "deleteAccountLead"), /pagos/);
   assert.match(tx("en", "nativePlansHidden"), /not sold in this app/i);
@@ -60,7 +66,7 @@ test("native shell hides digital plans and does not rename the application id", 
   assert.doesNotMatch(src("src/components/cookie-consent-banner.tsx"), /sentry\.client/);
   assert.match(src("src/instrument.client.ts"), /kidease:analytics-granted/);
   assert.match(src("src/instrument.client.ts"), /initSentryBrowser/);
-  assert.match(src("src/components/site-footer.tsx"), /data-ke="store-coming-soon"/);
+  assert.doesNotMatch(src("src/components/site-footer.tsx"), /App Store/);
   assert.match(src("src/lib/posthog.ts"), /consent !== "granted" && isNative\(\)/);
   assert.doesNotMatch(src("docs/posthog.md"), /does \*\*not\*\* show this banner/);
   assert.doesNotMatch(src(".env.example"), /ANDROID_CERT_SHA256S=[0-9A-F:]{10,}/);

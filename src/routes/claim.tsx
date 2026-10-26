@@ -301,7 +301,9 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
       [Wallet, "perkPayLive"],
       [TrendingUp, "perkGrow"],
     ] as const
-  ).filter((entry) => !(nativeShell && entry[1] === "perkPayLive"));
+  )
+    .filter((entry) => !(nativeShell && entry[1] === "perkPayLive"))
+    .filter((entry) => !(nativeShell && entry[1] === "perkMobile"));
 
   return (
     <Shell>

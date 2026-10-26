@@ -8,6 +8,8 @@ import {
   authorizedWebhook,
   mapEnvelopeStatus,
   parseConnectPayload,
+  planConnectWebhook,
+  webhookSecretsFromEnv,
   webhookUrlHasSecret,
 } from "../src/lib/server/docusign-connect.ts";
 import {
@@ -114,10 +116,101 @@ test("Connect HMAC accepts base64 or hex and rejects query secrets", () => {
   assert.equal(parseConnectPayload("<DocuSignEnvelopeInformation><EnvelopeStatus><EnvelopeID>xml-9</EnvelopeID><Status>Completed</Status></EnvelopeStatus></DocuSignEnvelopeInformation>")?.envelopeId, "xml-9");
 });
 
+function signedRequest(url, body, secret) {
+  const mac = createHmac("sha256", secret).update(body, "utf8").digest("base64");
+  return new Request(url, {
+    method: "POST",
+    headers: { "x-docusign-signature-1": mac },
+    body,
+  });
+}
+
+test("unset secret, foreign account, valid HMAC, and bad HMAC on a known account", () => {
+  const url = "https://www.kidease.ca/api/docusign/webhook";
+  const secret = "kid-hmac";
+  const rotated = "kid-hmac-next";
+  const account = "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE";
+  const ours = JSON.stringify({
+    event: "envelope-completed",
+    uri: `/restapi/v2.1/accounts/${account}/envelopes/env-1`,
+    data: {
+      accountId: account,
+      envelopeId: "env-1",
+      envelopeSummary: { envelopeId: "env-1", status: "completed" },
+    },
+  });
+  const foreignBody = JSON.stringify({
+    event: "envelope-completed",
+    data: {
+      accountId: "CG-BILLS-ACCOUNT",
+      envelopeId: "env-cg",
+      envelopeSummary: { envelopeId: "env-cg", status: "completed" },
+    },
+  });
+  const env = {
+    DOCUSIGN_WEBHOOK_SECRET: secret,
+    DOCUSIGN_WEBHOOK_SECRETS: ` ${rotated}, `,
+    DOCUSIGN_ACCOUNT_ID: account.toLowerCase(),
+  };
+  assert.deepEqual(webhookSecretsFromEnv(env), [secret, rotated]);
+
+  const unset = planConnectWebhook(signedRequest(url, ours, "anything"), ours, {});
+  assert.deepEqual(unset, { kind: "not_configured" });
+
+  const foreign = planConnectWebhook(
+    new Request(url, { method: "POST", headers: { "x-docusign-signature-1": "not-ours" }, body: foreignBody }),
+    foreignBody,
+    env,
+  );
+  assert.deepEqual(foreign, { kind: "foreign_account" });
+
+  const allowlisted = planConnectWebhook(
+    signedRequest(url, foreignBody, secret),
+    foreignBody,
+    { ...env, DOCUSIGN_CONNECT_ACCOUNT_IDS: "CG-BILLS-ACCOUNT" },
+  );
+  assert.equal(allowlisted.kind, "accept");
+
+  const valid = planConnectWebhook(signedRequest(url, ours, secret), ours, env);
+  assert.equal(valid.kind, "accept");
+  if (valid.kind === "accept") {
+    assert.equal(valid.parsed.envelopeId, "env-1");
+    assert.equal(valid.parsed.status, "signed");
+  }
+
+  const rotatedOk = planConnectWebhook(signedRequest(url, ours, rotated), ours, env);
+  assert.equal(rotatedOk.kind, "accept");
+
+  const bad = planConnectWebhook(
+    new Request(url, { method: "POST", headers: { "x-docusign-signature-1": "bad-hmac" }, body: ours }),
+    ours,
+    env,
+  );
+  assert.deepEqual(bad, { kind: "bad_signature" });
+
+  const leaked = planConnectWebhook(
+    signedRequest(`${url}?secret=${secret}`, ours, secret),
+    ours,
+    env,
+  );
+  assert.deepEqual(leaked, { kind: "query_secret" });
+
+  const xml = `<DocuSignEnvelopeInformation><EnvelopeStatus><AccountId>OTHER-CO</AccountId><EnvelopeID>xml-9</EnvelopeID><Status>Completed</Status></EnvelopeStatus></DocuSignEnvelopeInformation>`;
+  assert.deepEqual(planConnectWebhook(new Request(url, { method: "POST" }), xml, env), { kind: "foreign_account" });
+
+  const webhook = src("src/routes/api/docusign.webhook.ts");
+  assert.match(webhook, /ignored\("not_configured"\)/);
+  assert.match(webhook, /ignored\("foreign_account"\)/);
+  assert.ok(webhook.indexOf('return ignored("foreign_account")') < webhook.indexOf("await applyEnvelopeEvent"));
+  assert.match(webhook, /status: 401/);
+  assert.match(src(".env.example"), /DOCUSIGN_WEBHOOK_SECRETS=/);
+  assert.match(src(".env.example"), /DOCUSIGN_CONNECT_ACCOUNT_IDS=/);
+});
+
 test("webhook and poll routes fail closed without query secrets", () => {
   const webhook = src("src/routes/api/docusign.webhook.ts");
   assert.match(webhook, /webhookUrlHasSecret/);
-  assert.match(webhook, /DOCUSIGN_WEBHOOK_SECRET/);
+  assert.match(src("src/lib/server/docusign-connect.ts"), /DOCUSIGN_WEBHOOK_SECRET/);
   assert.match(webhook, /Method Not Allowed/);
   assert.doesNotMatch(webhook, /searchParams\.get\("secret"\)/);
   const poll = src("src/routes/api/docusign.poll.ts");

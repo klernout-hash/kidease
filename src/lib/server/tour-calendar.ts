@@ -339,6 +339,10 @@ export const bookTourSlot = createServerFn({ method: "POST" })
     if (!gate.ok) throw new Error(gate.error);
 
     const signedIn = (data.userId || "").trim();
+    if (signedIn && !signedIn.startsWith("guest:")) {
+      const { assertFacebookContactEmail } = await import("@/lib/server/facebook-contact");
+      await assertFacebookContactEmail(signedIn);
+    }
     let firstName = (data.firstName || "").trim();
     let lastName = (data.lastName || "").trim();
     let phone = (data.phone || "").trim();

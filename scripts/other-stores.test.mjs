@@ -182,7 +182,7 @@ test("PWA manifest for Partner Center stays installable and does not retag the w
   assert.equal(existsSync(join(root, "public/icons/icon-192.png")), true);
   assert.equal(existsSync(join(root, "public/icons/icon-maskable-512.png")), true);
   const sw = src("public/sw.js");
-  assert.match(sw, /kidease-shell-v6/);
+  assert.match(sw, /kidease-shell-v7/);
   assert.doesNotMatch(sw, /Chrome-only/);
   assert.match(sw, /Microsoft Store/);
   assert.match(sw, /manifest\.microsoft\.webmanifest/);
@@ -195,9 +195,9 @@ test("PWA manifest for Partner Center stays installable and does not retag the w
   assert.match(src("public/channel-boot.js"), /q\.get\("store"\) === "microsoft" && !uaNative/);
   assert.match(src("public/channel-boot.js"), /Max-Age=0/);
   assert.match(src("public/channel-boot.js"), /display-mode: standalone/);
-  assert.match(src("public/channel-boot.js"), /serviceWorker\.register\("\/sw\.js\?v=6"/);
+  assert.match(src("public/channel-boot.js"), /serviceWorker\.register\("\/sw\.js\?v=7"/);
   assert.match(src("src/routes/__root.tsx"), /channel-boot\.js\?v=7/);
-  assert.match(src("src/lib/native.ts"), /register\("\/sw\.js\?v=6"/);
+  assert.match(src("src/lib/native.ts"), /register\("\/sw\.js\?v=7"/);
   assert.match(src("public/channel-boot.js"), /!n && !uaNative && \(store === "microsoft" \|\| standalone\)/);
   const rootHead = src("src/routes/__root.tsx");
   assert.match(rootHead, /manifest\.microsoft\.webmanifest/);

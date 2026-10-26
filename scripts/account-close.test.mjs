@@ -51,7 +51,10 @@ test("delete and purge call the closer and do not touch payment tables", () => {
   assert.match(closer, /status = 'cancelled'/);
   assert.match(closer, /status = 'lost'/);
   assert.match(closer, /author = 'Parent'/);
-  assert.doesNotMatch(closer, /payments/);
+  assert.doesNotMatch(closer, /delete from payments/);
+  assert.doesNotMatch(closer, /delete from invoices/);
+  assert.match(closer, /update payments/);
+  assert.match(closer, /DELETED_ACCOUNT_TOMBSTONE/);
   assert.doesNotMatch(closer, /stripe/i);
   assert.match(src("src/lib/copy.ts"), /deleteAccountPendingNow/);
   assert.match(src("src/lib/copy.ts"), /Les demandes de place ouvertes/);

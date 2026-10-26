@@ -48,7 +48,9 @@ export function shouldSendVerifyEmail(input: {
   email?: string | null;
   emailVerified?: boolean | null;
 }): boolean {
-  return Boolean((input.email || "").trim()) && !input.emailVerified;
+  const email = (input.email || "").trim();
+  if (!email || email.toLowerCase().endsWith("@facebook.invalid")) return false;
+  return !input.emailVerified;
 }
 
 /** Signup never bundles next-steps with verify-your-email. */

@@ -9,9 +9,8 @@ import { HeaderSocial } from "@/components/header-social";
 import { useRoleChrome } from "@/components/role-chrome";
 import type { ChromeRole } from "@/lib/role-access";
 import { LanguageSelect } from "@/components/language-select";
-import { comingSoonStores } from "@/lib/native-entitlements";
 import { isStorePurchasePath } from "@/lib/store-purchase-copy";
-import { useInNativeShell, useStoreChannel } from "@/lib/use-native-shell";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import { ShareKidEaseButton } from "@/components/share-button";
 import {
   FOOTER_COLUMNS,
@@ -123,7 +122,6 @@ export function SiteFooter() {
   const chrome = useRoleChrome();
   const hideCommerce = useInNativeShell();
   const hidePlans = chrome.subscriptionsEnabled !== true;
-  const storeBadges = comingSoonStores(useStoreChannel());
   const fr = locale === "fr";
   // Operator sign-in is not linked from the public footer. Kyle uses /login.
   void isPending;
@@ -180,31 +178,6 @@ export function SiteFooter() {
             </div>
             <div className="ke-footer-legal-meta">
               <HeaderSocial />
-              {storeBadges.length === 2 ? (
-                <p data-ke="store-coming-soon">
-                  {t("appStore")}
-                  <span className="mx-1.5" aria-hidden>
-                    ·
-                  </span>
-                  {t("comingSoon")}
-                  <span className="mx-1.5" aria-hidden>
-                    ·
-                  </span>
-                  {t("googlePlay")}
-                  <span className="mx-1.5" aria-hidden>
-                    ·
-                  </span>
-                  {t("comingSoon")}
-                </p>
-              ) : storeBadges.length === 1 ? (
-                <p data-ke="store-badge">
-                  {storeBadges[0] === "apple" ? t("appStore") : t("googlePlay")}
-                  <span className="mx-1.5" aria-hidden>
-                    ·
-                  </span>
-                  {t("comingSoon")}
-                </p>
-              ) : null}
             </div>
           </div>
         </div>

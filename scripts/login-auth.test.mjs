@@ -169,6 +169,15 @@ describe("apex/www session cookies", () => {
     const aliased = aliasInboundAuthCookies(`${SHARED_SESSION_TOKEN_COOKIE}=abc`);
     assert.match(aliased, new RegExp(`${SESSION_TOKEN_COOKIE}=abc`));
     assert.equal(readSessionTokenFromHeader(`${SHARED_SESSION_TOKEN_COOKIE}=abc`), "abc");
+    const junkHost = aliasInboundAuthCookies(
+      `${SESSION_TOKEN_COOKIE}=x; ${SHARED_SESSION_TOKEN_COOKIE}=shared-token-value-ok`,
+    );
+    assert.match(junkHost, new RegExp(`${SESSION_TOKEN_COOKIE}=shared-token-value-ok`));
+    const hostTok = "a".repeat(32);
+    const kept = aliasInboundAuthCookies(
+      `${SESSION_TOKEN_COOKIE}=${hostTok}; ${SHARED_SESSION_TOKEN_COOKIE}=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb`,
+    );
+    assert.match(kept, new RegExp(`${SESSION_TOKEN_COOKIE}=${hostTok}`));
   });
 
   it("duplicates __Host- Set-Cookie as Domain=kidease.ca on public hosts only", () => {
@@ -240,7 +249,10 @@ describe("apex/www session cookies", () => {
     assert.doesNotMatch(popup, /signInWithOAuth2/);
     assert.match(client, /signIn\.social/);
     assert.match(popup, /signInSocial/);
-    assert.match(server, /callbackPath: `\/oauth2\/callback\/\$\{provider\.id\}`/);
+    const preview = read("src/lib/auth/preview.ts");
+    assert.match(server, /brokerOAuthCallbackPath/);
+    assert.match(preview, /providerId === "facebook"/);
+    assert.match(preview, /return `\/oauth2\/callback\/\$\{providerId\}`/);
     assert.match(authApi, /requestWithLegacyOAuthCallback/);
     const rewritten = requestWithLegacyOAuthCallback(
       new Request("https://www.kidease.ca/api/auth/oauth2/callback/grok-google?code=1"),

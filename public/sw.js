@@ -1,9 +1,10 @@
 /* KidEase PWA worker for Chromium, including the Microsoft Store app (Edge).
- * Pages register /sw.js?v=6 so a cached copy of /sw.js cannot stay behind.
+ * Pages register /sw.js?v=7 so a cached copy of /sw.js cannot stay behind.
  * The iOS and Android shells do not register this file.
- * Documents are network-only. A failed navigation falls back to /offline.html.
+ * Documents, /api/, and /_serverFn are never cached.
+ * The offline page is used only when the browser reports it is offline.
  * HTML is never written to the cache (stale /assets hashes break the page). */
-const VERSION = "kidease-shell-v6";
+const VERSION = "kidease-shell-v7";
 const PRECACHE = [
   "/offline.html",
   "/manifest.webmanifest",
@@ -67,6 +68,7 @@ function shouldBypass(url) {
   // Hashed CSS/JS must always come from the current deploy.
   return (
     path.startsWith("/api/") ||
+    path.startsWith("/_serverFn") ||
     path.startsWith("/ingest") ||
     path.startsWith("/assets/") ||
     path === "/img" ||
@@ -129,7 +131,12 @@ self.addEventListener("fetch", (event) => {
   // Do not cache HTML. Offline only when the network itself fails.
   if (isDocument(request)) {
     event.respondWith(
-      fetch(request).catch(() => caches.match("/offline.html")),
+      fetch(request).catch(() => {
+        if (typeof navigator !== "undefined" && navigator.onLine === false) {
+          return caches.match("/offline.html");
+        }
+        return Promise.reject(new Error("network"));
+      }),
     );
     return;
   }

@@ -73,6 +73,7 @@ import { Route as VacancyIndexRouteImport } from './routes/vacancy-index'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as Verify2faRouteImport } from './routes/verify-2fa'
 import { Route as AdminFeaturesRouteImport } from './routes/admin.features'
+import { Route as ApiAccountPurgeRouteImport } from './routes/api/account-purge'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiE2eSeedRouteImport } from './routes/api/e2e-seed'
 import { Route as ApiFamilyDocumentsRouteImport } from './routes/api/family-documents'
@@ -81,6 +82,7 @@ import { Route as ApiInngestRouteImport } from './routes/api/inngest'
 import { Route as ApiOpenSpotsCheckinRouteImport } from './routes/api/open-spots-checkin'
 import { Route as ApiProvincialVacancyRouteImport } from './routes/api/provincial-vacancy'
 import { Route as ApiRankingMarketRouteImport } from './routes/api/ranking-market'
+import { Route as ApiReferralsRouteImport } from './routes/api/referrals'
 import { Route as ApiScreeningDocumentsRouteImport } from './routes/api/screening-documents'
 import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
 import { Route as ApiSeedCatalogRouteImport } from './routes/api/seed-catalog'
@@ -112,11 +114,13 @@ import { Route as FrGetAppRouteImport } from './routes/fr.get-app'
 import { Route as FrGuidesRouteImport } from './routes/fr.guides'
 import { Route as FrHelpRouteImport } from './routes/fr.help'
 import { Route as FrHowItWorksRouteImport } from './routes/fr.how-it-works'
+import { Route as FrInboxRouteImport } from './routes/fr.inbox'
 import { Route as FrJobsRouteImport } from './routes/fr.jobs'
 import { Route as FrLoginRouteImport } from './routes/fr.login'
 import { Route as FrMeetTheTeamRouteImport } from './routes/fr.meet-the-team'
 import { Route as FrMilieuxFamiliauxRouteImport } from './routes/fr.milieux-familiaux'
 import { Route as FrNeedCareFastRouteImport } from './routes/fr.need-care-fast'
+import { Route as FrParentRouteImport } from './routes/fr.parent'
 import { Route as FrPlansRouteImport } from './routes/fr.plans'
 import { Route as FrPricingRouteImport } from './routes/fr.pricing'
 import { Route as FrPrivacyRouteImport } from './routes/fr.privacy'
@@ -142,6 +146,7 @@ import { Route as ParentSpotOffersRouteImport } from './routes/parent.spot-offer
 import { Route as PayIndexRouteImport } from './routes/pay.index'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
 import { Route as ProviderSubscriptionRouteImport } from './routes/provider.subscription'
+import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as SignIdRouteImport } from './routes/sign.$id'
 import { Route as SpotsTokenRouteImport } from './routes/spots.$token'
 import { Route as SupportCaseIdRouteImport } from './routes/support.$caseId'
@@ -172,6 +177,7 @@ import { Route as FrDaycareSlugRouteImport } from './routes/fr.daycare.$slug'
 import { Route as FrGuidesCodeRouteImport } from './routes/fr.guides.$code'
 import { Route as FrJobsPostRouteImport } from './routes/fr.jobs_.post'
 import { Route as FrMilieuxFamiliauxIdRouteImport } from './routes/fr.milieux-familiaux_.$id'
+import { Route as FrRCodeRouteImport } from './routes/fr.r.$code'
 import { Route as PayBillBillIdRouteImport } from './routes/pay.bill.$billId'
 import { Route as ApiContractsIdPdfRouteImport } from './routes/api/contracts.$id.pdf'
 import { Route as FrDaycareCityAgeRouteImport } from './routes/fr.daycare.$city.$age'
@@ -498,6 +504,11 @@ const AdminFeaturesRoute = AdminFeaturesRouteImport.update({
   path: '/features',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiAccountPurgeRoute = ApiAccountPurgeRouteImport.update({
+  id: '/api/account-purge',
+  path: '/api/account-purge',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiDigestRoute = ApiDigestRouteImport.update({
   id: '/api/digest',
   path: '/api/digest',
@@ -536,6 +547,11 @@ const ApiProvincialVacancyRoute = ApiProvincialVacancyRouteImport.update({
 const ApiRankingMarketRoute = ApiRankingMarketRouteImport.update({
   id: '/api/ranking-market',
   path: '/api/ranking-market',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiReferralsRoute = ApiReferralsRouteImport.update({
+  id: '/api/referrals',
+  path: '/api/referrals',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiScreeningDocumentsRoute = ApiScreeningDocumentsRouteImport.update({
@@ -694,6 +710,11 @@ const FrHowItWorksRoute = FrHowItWorksRouteImport.update({
   path: '/how-it-works',
   getParentRoute: () => FrRoute,
 } as any)
+const FrInboxRoute = FrInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrJobsRoute = FrJobsRouteImport.update({
   id: '/jobs',
   path: '/jobs',
@@ -717,6 +738,11 @@ const FrMilieuxFamiliauxRoute = FrMilieuxFamiliauxRouteImport.update({
 const FrNeedCareFastRoute = FrNeedCareFastRouteImport.update({
   id: '/need-care-fast',
   path: '/need-care-fast',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrParentRoute = FrParentRouteImport.update({
+  id: '/parent',
+  path: '/parent',
   getParentRoute: () => FrRoute,
 } as any)
 const FrPlansRoute = FrPlansRouteImport.update({
@@ -843,6 +869,11 @@ const ProviderSubscriptionRoute = ProviderSubscriptionRouteImport.update({
   id: '/subscription',
   path: '/subscription',
   getParentRoute: () => ProviderRoute,
+} as any)
+const RCodeRoute = RCodeRouteImport.update({
+  id: '/r/$code',
+  path: '/r/$code',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const SignIdRoute = SignIdRouteImport.update({
   id: '/sign/$id',
@@ -995,6 +1026,11 @@ const FrMilieuxFamiliauxIdRoute = FrMilieuxFamiliauxIdRouteImport.update({
   path: '/milieux-familiaux/$id',
   getParentRoute: () => FrRoute,
 } as any)
+const FrRCodeRoute = FrRCodeRouteImport.update({
+  id: '/r/$code',
+  path: '/r/$code',
+  getParentRoute: () => FrRoute,
+} as any)
 const PayBillBillIdRoute = PayBillBillIdRouteImport.update({
   id: '/bill/$billId',
   path: '/bill/$billId',
@@ -1081,6 +1117,7 @@ export interface FileRoutesByFullPath {
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
   '/admin/features': typeof AdminFeaturesRoute
+  '/api/account-purge': typeof ApiAccountPurgeRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/family-documents': typeof ApiFamilyDocumentsRouteWithChildren
@@ -1089,6 +1126,7 @@ export interface FileRoutesByFullPath {
   '/api/open-spots-checkin': typeof ApiOpenSpotsCheckinRoute
   '/api/provincial-vacancy': typeof ApiProvincialVacancyRoute
   '/api/ranking-market': typeof ApiRankingMarketRoute
+  '/api/referrals': typeof ApiReferralsRoute
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
@@ -1119,11 +1157,13 @@ export interface FileRoutesByFullPath {
   '/fr/guides': typeof FrGuidesRouteWithChildren
   '/fr/help': typeof FrHelpRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
+  '/fr/inbox': typeof FrInboxRoute
   '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
   '/fr/meet-the-team': typeof FrMeetTheTeamRoute
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
+  '/fr/parent': typeof FrParentRoute
   '/fr/plans': typeof FrPlansRoute
   '/fr/pricing': typeof FrPricingRoute
   '/fr/privacy': typeof FrPrivacyRoute
@@ -1148,6 +1188,7 @@ export interface FileRoutesByFullPath {
   '/parent/spot-offers': typeof ParentSpotOffersRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
   '/support/$caseId': typeof SupportCaseIdRoute
@@ -1180,6 +1221,7 @@ export interface FileRoutesByFullPath {
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/fr/milieux-familiaux/$id': typeof FrMilieuxFamiliauxIdRoute
+  '/fr/r/$code': typeof FrRCodeRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
   '/fr/daycare/$city/$age': typeof FrDaycareCityAgeRoute
@@ -1248,6 +1290,7 @@ export interface FileRoutesByTo {
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
   '/admin/features': typeof AdminFeaturesRoute
+  '/api/account-purge': typeof ApiAccountPurgeRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/family-documents': typeof ApiFamilyDocumentsRouteWithChildren
@@ -1256,6 +1299,7 @@ export interface FileRoutesByTo {
   '/api/open-spots-checkin': typeof ApiOpenSpotsCheckinRoute
   '/api/provincial-vacancy': typeof ApiProvincialVacancyRoute
   '/api/ranking-market': typeof ApiRankingMarketRoute
+  '/api/referrals': typeof ApiReferralsRoute
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
@@ -1286,11 +1330,13 @@ export interface FileRoutesByTo {
   '/fr/guides': typeof FrGuidesRouteWithChildren
   '/fr/help': typeof FrHelpRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
+  '/fr/inbox': typeof FrInboxRoute
   '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
   '/fr/meet-the-team': typeof FrMeetTheTeamRoute
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
+  '/fr/parent': typeof FrParentRoute
   '/fr/plans': typeof FrPlansRoute
   '/fr/pricing': typeof FrPricingRoute
   '/fr/privacy': typeof FrPrivacyRoute
@@ -1315,6 +1361,7 @@ export interface FileRoutesByTo {
   '/parent/spot-offers': typeof ParentSpotOffersRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
   '/support/$caseId': typeof SupportCaseIdRoute
@@ -1347,6 +1394,7 @@ export interface FileRoutesByTo {
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/fr/milieux-familiaux/$id': typeof FrMilieuxFamiliauxIdRoute
+  '/fr/r/$code': typeof FrRCodeRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
   '/fr/daycare/$city/$age': typeof FrDaycareCityAgeRoute
@@ -1418,6 +1466,7 @@ export interface FileRoutesById {
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
   '/admin/features': typeof AdminFeaturesRoute
+  '/api/account-purge': typeof ApiAccountPurgeRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/family-documents': typeof ApiFamilyDocumentsRouteWithChildren
@@ -1426,6 +1475,7 @@ export interface FileRoutesById {
   '/api/open-spots-checkin': typeof ApiOpenSpotsCheckinRoute
   '/api/provincial-vacancy': typeof ApiProvincialVacancyRoute
   '/api/ranking-market': typeof ApiRankingMarketRoute
+  '/api/referrals': typeof ApiReferralsRoute
   '/api/screening-documents': typeof ApiScreeningDocumentsRouteWithChildren
   '/api/search-alerts': typeof ApiSearchAlertsRoute
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
@@ -1456,11 +1506,13 @@ export interface FileRoutesById {
   '/fr/guides': typeof FrGuidesRouteWithChildren
   '/fr/help': typeof FrHelpRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
+  '/fr/inbox': typeof FrInboxRoute
   '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
   '/fr/meet-the-team': typeof FrMeetTheTeamRoute
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
+  '/fr/parent': typeof FrParentRoute
   '/fr/plans': typeof FrPlansRoute
   '/fr/pricing': typeof FrPricingRoute
   '/fr/privacy': typeof FrPrivacyRoute
@@ -1485,6 +1537,7 @@ export interface FileRoutesById {
   '/parent/spot-offers': typeof ParentSpotOffersRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
   '/support/$caseId': typeof SupportCaseIdRoute
@@ -1517,6 +1570,7 @@ export interface FileRoutesById {
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/jobs_/post': typeof FrJobsPostRoute
   '/fr/milieux-familiaux_/$id': typeof FrMilieuxFamiliauxIdRoute
+  '/fr/r/$code': typeof FrRCodeRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
   '/fr/daycare/$city/$age': typeof FrDaycareCityAgeRoute
@@ -1589,6 +1643,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/verify-2fa'
     | '/admin/features'
+    | '/api/account-purge'
     | '/api/digest'
     | '/api/e2e-seed'
     | '/api/family-documents'
@@ -1597,6 +1652,7 @@ export interface FileRouteTypes {
     | '/api/open-spots-checkin'
     | '/api/provincial-vacancy'
     | '/api/ranking-market'
+    | '/api/referrals'
     | '/api/screening-documents'
     | '/api/search-alerts'
     | '/api/seed-catalog'
@@ -1627,11 +1683,13 @@ export interface FileRouteTypes {
     | '/fr/guides'
     | '/fr/help'
     | '/fr/how-it-works'
+    | '/fr/inbox'
     | '/fr/jobs'
     | '/fr/login'
     | '/fr/meet-the-team'
     | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
+    | '/fr/parent'
     | '/fr/plans'
     | '/fr/pricing'
     | '/fr/privacy'
@@ -1656,6 +1714,7 @@ export interface FileRouteTypes {
     | '/parent/spot-offers'
     | '/pay/$bookingId'
     | '/provider/subscription'
+    | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
     | '/support/$caseId'
@@ -1688,6 +1747,7 @@ export interface FileRouteTypes {
     | '/fr/guides/$code'
     | '/fr/jobs/post'
     | '/fr/milieux-familiaux/$id'
+    | '/fr/r/$code'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
     | '/fr/daycare/$city/$age'
@@ -1756,6 +1816,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/verify-2fa'
     | '/admin/features'
+    | '/api/account-purge'
     | '/api/digest'
     | '/api/e2e-seed'
     | '/api/family-documents'
@@ -1764,6 +1825,7 @@ export interface FileRouteTypes {
     | '/api/open-spots-checkin'
     | '/api/provincial-vacancy'
     | '/api/ranking-market'
+    | '/api/referrals'
     | '/api/screening-documents'
     | '/api/search-alerts'
     | '/api/seed-catalog'
@@ -1794,11 +1856,13 @@ export interface FileRouteTypes {
     | '/fr/guides'
     | '/fr/help'
     | '/fr/how-it-works'
+    | '/fr/inbox'
     | '/fr/jobs'
     | '/fr/login'
     | '/fr/meet-the-team'
     | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
+    | '/fr/parent'
     | '/fr/plans'
     | '/fr/pricing'
     | '/fr/privacy'
@@ -1823,6 +1887,7 @@ export interface FileRouteTypes {
     | '/parent/spot-offers'
     | '/pay/$bookingId'
     | '/provider/subscription'
+    | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
     | '/support/$caseId'
@@ -1855,6 +1920,7 @@ export interface FileRouteTypes {
     | '/fr/guides/$code'
     | '/fr/jobs/post'
     | '/fr/milieux-familiaux/$id'
+    | '/fr/r/$code'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
     | '/fr/daycare/$city/$age'
@@ -1925,6 +1991,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/verify-2fa'
     | '/admin/features'
+    | '/api/account-purge'
     | '/api/digest'
     | '/api/e2e-seed'
     | '/api/family-documents'
@@ -1933,6 +2000,7 @@ export interface FileRouteTypes {
     | '/api/open-spots-checkin'
     | '/api/provincial-vacancy'
     | '/api/ranking-market'
+    | '/api/referrals'
     | '/api/screening-documents'
     | '/api/search-alerts'
     | '/api/seed-catalog'
@@ -1963,11 +2031,13 @@ export interface FileRouteTypes {
     | '/fr/guides'
     | '/fr/help'
     | '/fr/how-it-works'
+    | '/fr/inbox'
     | '/fr/jobs'
     | '/fr/login'
     | '/fr/meet-the-team'
     | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
+    | '/fr/parent'
     | '/fr/plans'
     | '/fr/pricing'
     | '/fr/privacy'
@@ -1992,6 +2062,7 @@ export interface FileRouteTypes {
     | '/parent/spot-offers'
     | '/pay/$bookingId'
     | '/provider/subscription'
+    | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
     | '/support/$caseId'
@@ -2024,6 +2095,7 @@ export interface FileRouteTypes {
     | '/fr/guides/$code'
     | '/fr/jobs_/post'
     | '/fr/milieux-familiaux_/$id'
+    | '/fr/r/$code'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
     | '/fr/daycare/$city/$age'
@@ -2094,6 +2166,7 @@ export interface RootRouteChildren {
   VacancyIndexRoute: typeof VacancyIndexRoute
   VerifyRoute: typeof VerifyRoute
   Verify2faRoute: typeof Verify2faRoute
+  ApiAccountPurgeRoute: typeof ApiAccountPurgeRoute
   ApiDigestRoute: typeof ApiDigestRoute
   ApiE2eSeedRoute: typeof ApiE2eSeedRoute
   ApiFamilyDocumentsRoute: typeof ApiFamilyDocumentsRouteWithChildren
@@ -2102,6 +2175,7 @@ export interface RootRouteChildren {
   ApiOpenSpotsCheckinRoute: typeof ApiOpenSpotsCheckinRoute
   ApiProvincialVacancyRoute: typeof ApiProvincialVacancyRoute
   ApiRankingMarketRoute: typeof ApiRankingMarketRoute
+  ApiReferralsRoute: typeof ApiReferralsRoute
   ApiScreeningDocumentsRoute: typeof ApiScreeningDocumentsRouteWithChildren
   ApiSearchAlertsRoute: typeof ApiSearchAlertsRoute
   ApiSeedCatalogRoute: typeof ApiSeedCatalogRoute
@@ -2118,6 +2192,7 @@ export interface RootRouteChildren {
   ListingSlugRoute: typeof ListingSlugRoute
   MilieuxFamiliauxIdRoute: typeof MilieuxFamiliauxIdRoute
   OfferTokenRoute: typeof OfferTokenRoute
+  RCodeRoute: typeof RCodeRoute
   SignIdRoute: typeof SignIdRoute
   SpotsTokenRoute: typeof SpotsTokenRoute
   VideoRoomIdRoute: typeof VideoRoomIdRoute
@@ -2594,6 +2669,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminFeaturesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/api/account-purge': {
+      id: '/api/account-purge'
+      path: '/api/account-purge'
+      fullPath: '/api/account-purge'
+      preLoaderRoute: typeof ApiAccountPurgeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/digest': {
       id: '/api/digest'
       path: '/api/digest'
@@ -2648,6 +2730,13 @@ declare module '@tanstack/react-router' {
       path: '/api/ranking-market'
       fullPath: '/api/ranking-market'
       preLoaderRoute: typeof ApiRankingMarketRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/referrals': {
+      id: '/api/referrals'
+      path: '/api/referrals'
+      fullPath: '/api/referrals'
+      preLoaderRoute: typeof ApiReferralsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/screening-documents': {
@@ -2867,6 +2956,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrHowItWorksRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/inbox': {
+      id: '/fr/inbox'
+      path: '/inbox'
+      fullPath: '/fr/inbox'
+      preLoaderRoute: typeof FrInboxRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/jobs': {
       id: '/fr/jobs'
       path: '/jobs'
@@ -2900,6 +2996,13 @@ declare module '@tanstack/react-router' {
       path: '/need-care-fast'
       fullPath: '/fr/need-care-fast'
       preLoaderRoute: typeof FrNeedCareFastRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/parent': {
+      id: '/fr/parent'
+      path: '/parent'
+      fullPath: '/fr/parent'
+      preLoaderRoute: typeof FrParentRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/plans': {
@@ -3076,6 +3179,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/provider/subscription'
       preLoaderRoute: typeof ProviderSubscriptionRouteImport
       parentRoute: typeof ProviderRoute
+    }
+    '/r/$code': {
+      id: '/r/$code'
+      path: '/r/$code'
+      fullPath: '/r/$code'
+      preLoaderRoute: typeof RCodeRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/sign/$id': {
       id: '/sign/$id'
@@ -3287,6 +3397,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrMilieuxFamiliauxIdRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/r/$code': {
+      id: '/fr/r/$code'
+      path: '/r/$code'
+      fullPath: '/fr/r/$code'
+      preLoaderRoute: typeof FrRCodeRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/pay/bill/$billId': {
       id: '/pay/bill/$billId'
       path: '/bill/$billId'
@@ -3360,11 +3477,13 @@ interface FrRouteChildren {
   FrGuidesRoute: typeof FrGuidesRouteWithChildren
   FrHelpRoute: typeof FrHelpRoute
   FrHowItWorksRoute: typeof FrHowItWorksRoute
+  FrInboxRoute: typeof FrInboxRoute
   FrJobsRoute: typeof FrJobsRoute
   FrLoginRoute: typeof FrLoginRoute
   FrMeetTheTeamRoute: typeof FrMeetTheTeamRoute
   FrMilieuxFamiliauxRoute: typeof FrMilieuxFamiliauxRoute
   FrNeedCareFastRoute: typeof FrNeedCareFastRoute
+  FrParentRoute: typeof FrParentRoute
   FrPlansRoute: typeof FrPlansRoute
   FrPricingRoute: typeof FrPricingRoute
   FrPrivacyRoute: typeof FrPrivacyRoute
@@ -3382,6 +3501,7 @@ interface FrRouteChildren {
   FrDaycareSlugRoute: typeof FrDaycareSlugRoute
   FrJobsPostRoute: typeof FrJobsPostRoute
   FrMilieuxFamiliauxIdRoute: typeof FrMilieuxFamiliauxIdRoute
+  FrRCodeRoute: typeof FrRCodeRoute
   FrDaycareCityAgeRoute: typeof FrDaycareCityAgeRoute
   FrDaycareCityCityRoute: typeof FrDaycareCityCityRoute
 }
@@ -3406,11 +3526,13 @@ const FrRouteChildren: FrRouteChildren = {
   FrGuidesRoute: FrGuidesRouteWithChildren,
   FrHelpRoute: FrHelpRoute,
   FrHowItWorksRoute: FrHowItWorksRoute,
+  FrInboxRoute: FrInboxRoute,
   FrJobsRoute: FrJobsRoute,
   FrLoginRoute: FrLoginRoute,
   FrMeetTheTeamRoute: FrMeetTheTeamRoute,
   FrMilieuxFamiliauxRoute: FrMilieuxFamiliauxRoute,
   FrNeedCareFastRoute: FrNeedCareFastRoute,
+  FrParentRoute: FrParentRoute,
   FrPlansRoute: FrPlansRoute,
   FrPricingRoute: FrPricingRoute,
   FrPrivacyRoute: FrPrivacyRoute,
@@ -3428,6 +3550,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrDaycareSlugRoute: FrDaycareSlugRoute,
   FrJobsPostRoute: FrJobsPostRoute,
   FrMilieuxFamiliauxIdRoute: FrMilieuxFamiliauxIdRoute,
+  FrRCodeRoute: FrRCodeRoute,
   FrDaycareCityAgeRoute: FrDaycareCityAgeRoute,
   FrDaycareCityCityRoute: FrDaycareCityCityRoute,
 }
@@ -3593,6 +3716,7 @@ const rootRouteChildren: RootRouteChildren = {
   VacancyIndexRoute: VacancyIndexRoute,
   VerifyRoute: VerifyRoute,
   Verify2faRoute: Verify2faRoute,
+  ApiAccountPurgeRoute: ApiAccountPurgeRoute,
   ApiDigestRoute: ApiDigestRoute,
   ApiE2eSeedRoute: ApiE2eSeedRoute,
   ApiFamilyDocumentsRoute: ApiFamilyDocumentsRouteWithChildren,
@@ -3601,6 +3725,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiOpenSpotsCheckinRoute: ApiOpenSpotsCheckinRoute,
   ApiProvincialVacancyRoute: ApiProvincialVacancyRoute,
   ApiRankingMarketRoute: ApiRankingMarketRoute,
+  ApiReferralsRoute: ApiReferralsRoute,
   ApiScreeningDocumentsRoute: ApiScreeningDocumentsRouteWithChildren,
   ApiSearchAlertsRoute: ApiSearchAlertsRoute,
   ApiSeedCatalogRoute: ApiSeedCatalogRoute,
@@ -3617,6 +3742,7 @@ const rootRouteChildren: RootRouteChildren = {
   ListingSlugRoute: ListingSlugRoute,
   MilieuxFamiliauxIdRoute: MilieuxFamiliauxIdRoute,
   OfferTokenRoute: OfferTokenRoute,
+  RCodeRoute: RCodeRoute,
   SignIdRoute: SignIdRoute,
   SpotsTokenRoute: SpotsTokenRoute,
   VideoRoomIdRoute: VideoRoomIdRoute,
