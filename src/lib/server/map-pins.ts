@@ -11,6 +11,7 @@
  */
 
 import { createServerFn } from "@tanstack/react-start";
+import { addressHiddenMapSql, isAddressHidden } from "@/lib/address-hidden";
 import { listRawMapPinsInBbox } from "@/lib/catalog";
 import { dbSource, getSql, type Sql } from "@/lib/db";
 import { correctCentreNameTypos } from "@/lib/listing-slug";
@@ -46,6 +47,7 @@ const cache = new Map<string, CacheEntry>();
 
 export const MAP_BBOX_WHERE_SQL = `
   ${PUBLIC_LISTING_SQL}
+  and ${addressHiddenMapSql()}
   and lat between $1 and $2
   and lng between $3 and $4
   and not (lat = 0 and lng = 0)
@@ -140,6 +142,7 @@ export function mapRowToPin(row: PinRow): MapPin | null {
   const lng = num(row.lng);
   if (!id || !name || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
   if (lat === 0 && lng === 0) return null;
+  if (isAddressHidden({ id, slug })) return null;
   return {
     id,
     slug,
@@ -415,7 +418,9 @@ export async function loadMapPinDetail(id: string): Promise<MapPin | null> {
     }
   }
   const { findRawMapPinById } = await import("@/lib/catalog");
-  return findRawMapPinById(wanted);
+  const pin = await findRawMapPinById(wanted);
+  if (!pin || isAddressHidden(pin)) return null;
+  return pin;
 }
 
 export const mapPinDetail = createServerFn({ method: "GET" })

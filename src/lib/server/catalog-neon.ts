@@ -1,3 +1,4 @@
+import { suppressHiddenAddress } from "@/lib/address-hidden";
 import { dbSource, getSql, type Sql } from "@/lib/db";
 import type { CatalogDaycare } from "@/lib/catalog";
 import {
@@ -326,7 +327,7 @@ export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
     visibility: row.visibility,
     isTest: row.is_test,
   });
-  return {
+  return suppressHiddenAddress({
     id,
     slug,
     name,
@@ -392,7 +393,7 @@ export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
     website: row.website || "",
     mergedInto: row.merged_into || null,
     importFault: row.import_fault || null,
-  };
+  });
 }
 
 function rejectAfter(ms: number, message: string) {

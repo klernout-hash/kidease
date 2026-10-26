@@ -14,6 +14,7 @@
  * Spot and match push follow the account alert toggles and quiet hours.
  * Email and in-app alerts stay on Free. Push and SMS still no-op while their flags are off.
  */
+import { HIDDEN_ADDRESS_AREA, isAddressHidden } from "@/lib/address-hidden";
 import { getSql, dbSource, type Sql } from "@/lib/db";
 import { SEARCH_ALERTS_CAMPAIGN_TAG } from "@/lib/email-suppressions";
 import { isSuppressed } from "@/lib/server/email-suppressions";
@@ -217,10 +218,12 @@ export async function queryCentresInRadius(
 }
 
 function rowToFilterable(row: MatchRow, origin: { lat: number; lng: number }, originFsa?: string) {
-  const lat = Number(row.lat);
-  const lng = Number(row.lng);
-  const km = Number(row.distance_km) || distanceKm(origin, { lat, lng });
-  const catchment = catchmentMatch(origin, { lat, lng, postalCode: row.postal_code }, km, originFsa);
+  const hidden = isAddressHidden({ id: row.id, slug: row.slug });
+  const lat = hidden ? HIDDEN_ADDRESS_AREA.lat : Number(row.lat);
+  const lng = hidden ? HIDDEN_ADDRESS_AREA.lng : Number(row.lng);
+  const km = hidden ? distanceKm(origin, { lat, lng }) : Number(row.distance_km) || distanceKm(origin, { lat, lng });
+  const postalCode = hidden ? "" : row.postal_code || "";
+  const catchment = catchmentMatch(origin, { lat, lng, postalCode }, km, originFsa);
   const vacancyAt = iso(row.last_vacancy_updated_at);
   const claimed = Boolean(row.claimed_at);
   const ready = applyListingReadiness({
@@ -235,7 +238,7 @@ function rowToFilterable(row: MatchRow, origin: { lat: number; lng: number }, or
     address: "",
     city: row.city || "",
     province: row.province || "",
-    postalCode: row.postal_code || "",
+    postalCode,
     lat,
     lng,
     phone: null,

@@ -1,3 +1,4 @@
+import { suppressHiddenAddress } from "@/lib/address-hidden";
 import { foundingBadgeEnabled } from "@/lib/features";
 import { foundingMemberVisible } from "@/lib/founding-period";
 import { splitPhotoList } from "@/lib/listing-photo";
@@ -232,10 +233,10 @@ export function mapDaycare(r: DaycareRow): Daycare {
     }),
     timezone: resolveListingTourTimezone(r.timezone, r.province),
   }));
-  return applyMasterCareType({
+  return suppressHiddenAddress(applyMasterCareType({
     ...mapped,
     live: Boolean(mapped.live) && hasLicenceEvidence(mapped) && !isAdminOnlyListing(mapped),
-  });
+  }));
 }
 
 export function fromPrice(d: Daycare) {

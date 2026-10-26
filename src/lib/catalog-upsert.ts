@@ -10,6 +10,7 @@
  * or source URL is never blanked. Listing d_d85jtifbkh2t is never age-written.
  */
 
+import { suppressHiddenAddress } from "./address-hidden.ts";
 import { correctCentreNameTypos, normalizeListingSlug } from "./listing-slug.ts";
 import { listingVisibilityWrite } from "./listing-visibility.ts";
 
@@ -225,21 +226,22 @@ export function daycareUpsertParams(d: CatalogUpsertInput): unknown[] {
     visibility: d.visibility,
     isTest: d.isTest,
   });
+  const hidden = suppressHiddenAddress(d);
   return [
-    d.id,
-    normalizeListingSlug(d.slug) || d.slug,
-    correctCentreNameTypos(d.name) || d.name,
-    correctCentreNameTypos(d.nameFr) || d.nameFr,
-    d.tagline,
-    d.taglineFr,
-    d.description,
-    d.descriptionFr,
-    d.address,
-    d.city,
-    d.province,
-    d.postalCode,
-    d.lat,
-    d.lng,
+    hidden.id,
+    normalizeListingSlug(hidden.slug) || hidden.slug,
+    correctCentreNameTypos(hidden.name) || hidden.name,
+    correctCentreNameTypos(hidden.nameFr) || hidden.nameFr,
+    hidden.tagline,
+    hidden.taglineFr,
+    hidden.description,
+    hidden.descriptionFr,
+    hidden.address,
+    hidden.city,
+    hidden.province,
+    hidden.postalCode,
+    hidden.lat,
+    hidden.lng,
     d.phone?.trim() || null,
     d.hours,
     d.hoursFr,

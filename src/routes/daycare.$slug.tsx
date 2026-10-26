@@ -93,6 +93,7 @@ import { classifyFacilityType, type FacilityType } from "@/lib/facility-type";
 import { provinceAgeSourceText, standardAgeLabelsForListing } from "@/lib/standard-age-groups";
 import type { ListingSeoSource } from "@/lib/listing-seo";
 import { formatMonth, money, displayCentreName, displayListingText } from "@/lib/utils";
+import { isAddressHidden, stripHiddenAddressText } from "@/lib/address-hidden";
 import { openDirections } from "@/lib/maps";
 import { ListingMap } from "@/components/listing-map";
 import type { AvailabilityRow, Daycare, DaycareCard as Card, Review } from "@/lib/types";
@@ -361,13 +362,18 @@ export function Listing() {
     const earlyReal =
       earlyPhoto && isRealListingPhoto(earlyPhoto) && !isMissingCatalogueBuilding(earlyPhoto) ? earlyPhoto : "";
     const earlyName = seo ? displayCentreName(locale === "fr" ? seo.nameFr : seo.name) : "";
-    const earlyDesc = displayListingText(locale === "fr" ? seo?.descriptionFr : seo?.description);
+    const hideStreet = isAddressHidden({ slug: seo?.slug });
+    const earlyDescRaw = displayListingText(locale === "fr" ? seo?.descriptionFr : seo?.description);
+    const earlyDesc = hideStreet ? stripHiddenAddressText(earlyDescRaw) : earlyDescRaw;
     const earlyHours = displayListingText(locale === "fr" ? seo?.hoursFr : seo?.hours);
-    const earlyAddress = [
-      displayListingText(seo?.address),
-      seo?.city,
-      [seo?.province, seo?.postalCode].filter(Boolean).join(" "),
-    ]
+    const earlyAddress = (hideStreet
+      ? [seo?.city, seo?.province]
+      : [
+          displayListingText(seo?.address),
+          seo?.city,
+          [seo?.province, seo?.postalCode].filter(Boolean).join(" "),
+        ]
+    )
       .map((part) => (part || "").trim())
       .filter(Boolean)
       .join(", ");
@@ -463,10 +469,14 @@ export function Listing() {
   const name = displayCentreName(locale === "fr" ? d.nameFr : d.name);
   const licenceHref = licenseRecordUrl(d.province, name, d.licenseNumber, locale === "fr" ? "fr" : "en");
   const loc = locale === "fr" ? "fr" : "en";
-  const desc = displayListingText(locale === "fr" ? d.descriptionFr : d.description);
+  const hideStreet = isAddressHidden(d);
+  const descRaw = displayListingText(locale === "fr" ? d.descriptionFr : d.description);
+  const desc = hideStreet ? stripHiddenAddressText(descRaw) : descRaw;
   const hours = displayListingText(locale === "fr" ? d.hoursFr : d.hours);
-  const tagline = displayListingText(locale === "fr" ? d.taglineFr : d.tagline);
-  const address = displayListingText(d.address);
+  const taglineRaw = displayListingText(locale === "fr" ? d.taglineFr : d.tagline);
+  const tagline = hideStreet ? stripHiddenAddressText(taglineRaw) : taglineRaw;
+  const address = hideStreet ? "" : displayListingText(d.address);
+  const postalCode = hideStreet ? "" : d.postalCode;
   const spots = d.spotsInfant + d.spotsToddler + d.spotsPreschool;
   const classified = classifyListingPhotos(d.photos);
   const interiors = classified.interiors;
@@ -499,9 +509,13 @@ export function Listing() {
     address,
     city: d.city,
     province: d.province,
-    postalCode: d.postalCode,
+    postalCode,
   };
-  const mapsQuery = encodeURIComponent(`${address}, ${d.city}, ${d.province} ${d.postalCode}`);
+  const mapsQuery = encodeURIComponent(
+    hideStreet
+      ? [d.city, d.province].filter(Boolean).join(", ")
+      : `${address}, ${d.city}, ${d.province} ${postalCode}`,
+  );
   const mapsPlace = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
   const parentRated = (d.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (d.parentRatingX10 ?? 0) > 0;
   const googleRated = d.reviewCount > 0 && d.ratingX10 > 0;
@@ -894,11 +908,13 @@ export function Listing() {
                 <h2 className="font-display text-2xl">{t("onMap")}</h2>
                 <DirectionsButton className="shrink-0" />
               </div>
-              <div className="mt-3 overflow-hidden rounded-lg ring-1 ring-border">
-                <ListingMap lat={d.lat} lng={d.lng} title={`${name}: Google Maps`} />
-              </div>
+              {hideStreet ? null : (
+                <div className="mt-3 overflow-hidden rounded-lg ring-1 ring-border">
+                  <ListingMap lat={d.lat} lng={d.lng} title={`${name}: Google Maps`} />
+                </div>
+              )}
               <p className="mt-3 text-sm text-muted">
-                {address}, {d.city}, {d.province} {d.postalCode}
+                {hideStreet ? [d.city, d.province].filter(Boolean).join(", ") : `${address}, ${d.city}, ${d.province} ${postalCode}`}
               </p>
               <a
                 href={mapsPlace}
