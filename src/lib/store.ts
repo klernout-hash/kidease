@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import { WINNIPEG, writeSavedOrigin, type StoredOrigin } from "./geo";
+import { CANADA_CAMERA } from "./canada-origin";
+import { writeSavedOrigin, type StoredOrigin } from "./geo";
 import type { OriginSource } from "./presence";
 import { applyDocumentLocale } from "./languages";
 import type { AgeGroup, Locale } from "./types";
@@ -71,7 +72,7 @@ export const useAppStore = create<SearchState>()((set) => ({
       localeLocked: opts?.lock ? true : state.localeLocked,
     }));
   },
-  origin: { lat: WINNIPEG.lat, lng: WINNIPEG.lng, label: WINNIPEG.label },
+  origin: { lat: CANADA_CAMERA.lat, lng: CANADA_CAMERA.lng, label: "" },
   setOrigin: (origin, source = "manual") => {
     const next = { lat: origin.lat, lng: origin.lng, label: origin.label };
     if (source === "manual" || source === "gps" || source === "saved") {
@@ -82,7 +83,7 @@ export const useAppStore = create<SearchState>()((set) => ({
       };
       writeSavedOrigin(stored);
     }
-    set({ origin: next, located: true, originSource: source, originAt: Date.now() });
+    set({ origin: next, located: source !== "default", originSource: source, originAt: Date.now() });
   },
   workOrigin: null,
   setWorkOrigin: (workOrigin) => {

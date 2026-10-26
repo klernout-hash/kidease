@@ -3048,5 +3048,9 @@
   "facebookEmailResend": "Enviar el enlace otra vez",
   "facebookEmailSaved": "El enlace va en camino. Revisa también el correo no deseado.",
   "facebookEmailRequired": "Añade y confirma un correo antes de escribir a un centro o reservar una visita.",
-  "facebookHostUnavailable": "Continuar con Facebook no está disponible en esta dirección. Abre kidease.ca."
+  "facebookHostUnavailable": "Continuar con Facebook no está disponible en esta dirección. Abre kidease.ca.",
+  "canadaSearchTitle": "Guarderías en todo Canadá",
+  "canadaSearchLead": "Elige una ciudad, o activa la ubicación, para ver centros cerca de ti.",
+  "canadaSearchChoose": "Elegir una ciudad",
+  "alertSummary": "{on} de {total} alertas activas"
 }

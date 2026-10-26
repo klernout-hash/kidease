@@ -266,8 +266,7 @@ function isDeskGhostFixture(d: ListingVisibilityInput): boolean {
 }
 
 function viewerOwnsDeskFixture(viewer?: ProviderDeskViewer | null): boolean {
-  if (!viewer) return false;
-  return Boolean(viewer.ownedByViewer) || isKidEaseOperatorEmail(viewer.viewerEmail);
+  return isKidEaseOperatorEmail(viewer?.viewerEmail);
 }
 
 /**

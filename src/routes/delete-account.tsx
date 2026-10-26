@@ -3,15 +3,15 @@ import { Shell } from "@/components/shell";
 import { DeleteAccountPanel } from "@/components/delete-account-panel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { localePath } from "@/lib/locale-path";
-import { pageSeoHead } from "@/lib/page-seo";
+import { pageSeoHead, withNoindex } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 export const Route = createFileRoute("/delete-account")({
   head: () =>
-    pageSeoHead({
+    withNoindex(pageSeoHead({
       title: "Delete account · KidEase",
       description: "PIPEDA account deletion for KidEase: sign in to remove your account and family data.",
       path: "/delete-account",
-    }),
+    })),
   component: DeleteAccountPage,
 });
 

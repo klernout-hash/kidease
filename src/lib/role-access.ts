@@ -91,7 +91,7 @@ function allowsArea(area: PrivateArea, role: ChromeRole): boolean {
   if (role === "guest") return false;
   if (area === "shared") return true;
   if (area === "admin") return role === "admin";
-  if (area === "parent") return role === "parent" || role === "admin";
+  if (area === "parent") return role === "parent" || role === "provider" || role === "admin";
   if (area === "provider") return role === "provider" || role === "admin";
   return false;
 }

@@ -27,8 +27,7 @@ test("public browse stays open and private URLs follow the role", () => {
     to: "/parent",
   });
   assert.deepEqual(guardPrivatePath({ pathname: "/parent", signedIn: true, role: "provider" }), {
-    kind: "home",
-    to: "/provider",
+    kind: "allow",
   });
   assert.equal(guardPrivatePath({ pathname: "/inbox", signedIn: true, role: "parent" }).kind, "allow");
   assert.equal(guardPrivatePath({ pathname: "/account", signedIn: true, role: "provider" }).kind, "allow");
@@ -52,7 +51,7 @@ test("sign-in lands on the stored role home unless the next path is allowed", ()
   assert.equal(destinationAfterSignIn({ role: "admin" }), "/admin");
   assert.equal(destinationAfterSignIn({ role: "parent", next: "/search" }), "/search");
   assert.equal(destinationAfterSignIn({ role: "parent", next: "/provider" }), "/parent");
-  assert.equal(destinationAfterSignIn({ role: "provider", next: "/parent?tab=saved" }), "/provider");
+  assert.equal(destinationAfterSignIn({ role: "provider", next: "/parent?tab=saved" }), "/parent?tab=saved");
   assert.equal(homeForRole("support"), "/support");
 });
 

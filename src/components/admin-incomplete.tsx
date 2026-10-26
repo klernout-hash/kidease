@@ -4,6 +4,7 @@ import { ListingStatusBadge } from "@/components/listing-status-badge";
 import type { IncompleteMissingField } from "@/lib/listing-incomplete";
 import type { AdminCentreRow, Decision } from "@/lib/server/admin-centres";
 import type { AdminPackRow } from "@/lib/server/contracts";
+import { formatStamp } from "@/lib/family-time";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import { CentrePackChips } from "@/components/admin-contracts";
@@ -30,11 +31,7 @@ function formatWhen(value: string | null | undefined, locale: string) {
   if (!value) return null;
   const at = new Date(value);
   if (Number.isNaN(at.getTime())) return null;
-  return at.toLocaleString(locale === "fr" ? "fr-CA" : "en-CA", {
-    timeZone: "America/Winnipeg",
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
+  return formatStamp(at, null, locale === "fr" ? "fr-CA" : "en-CA");
 }
 
 export function AdminIncompleteQueue({

@@ -78,8 +78,22 @@ export async function runFoldResizePass(browser, base) {
       }, route.field);
       if (armed.hasField) {
         const field = page.locator(route.field).first();
-        if (await field.isVisible().catch(() => false)) await field.fill(route.value);
-        else armed.hasField = false;
+        if (await field.isVisible().catch(() => false)) {
+          // A controlled input filled before hydration resets to empty. Fill again once React owns it.
+          let kept = false;
+          for (let attempt = 0; attempt < 6 && !kept; attempt += 1) {
+            await field.fill(route.value);
+            kept = await page
+              .waitForFunction(
+                ({ sel, value }) => document.querySelector(sel)?.value === value,
+                { sel: route.field, value: route.value },
+                { timeout: 500 },
+              )
+              .then(() => true)
+              .catch(() => false);
+          }
+          if (!kept) armed.hasField = false;
+        } else armed.hasField = false;
       }
       const selected = await page.evaluate(() => document.querySelector(".ke-split")?.getAttribute("data-selected") ?? null);
       for (const step of steps) {

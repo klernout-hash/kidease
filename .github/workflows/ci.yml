@@ -41,7 +41,8 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     # Phone, tablet, fold, store, and desktop shots run after the smoke suite.
-    timeout-minutes: 45
+    # WebKit system packages can take most of a slow runner before those shots start.
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -49,7 +50,7 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - name: Smoke against BASE_URL or local preview
         env:
           BASE_URL: ${{ github.event.inputs.base_url }}
@@ -71,7 +72,8 @@ jobs:
   # Kyle marks this check required in GitHub branch protection. This file does not change that setting.
   signed-in-e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # WebKit system packages can use most of a slow runner. Leave time for the suite.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -79,7 +81,7 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - name: Build preview
         run: npm run build
       - name: Signed-in parent and daycare, English and French

@@ -19,33 +19,29 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("popular home cities stay a short Winnipeg-first set", () => {
+test("popular home cities stay a short national set when location is unknown", () => {
   assert.deepEqual([...POPULAR_HOME_CITY_SLUGS], [
-    "winnipeg",
     "toronto",
+    "montreal",
     "vancouver",
     "calgary",
-    "montreal",
     "edmonton",
+    "winnipeg",
   ]);
   assert.equal(POPULAR_HOME_CITY_LIMIT, 6);
-  assert.equal(POPULAR_HOME_CITY_SLUGS[0], "winnipeg");
-  assert.notEqual(POPULAR_HOME_CITY_SLUGS[0], "toronto");
+  assert.notEqual(POPULAR_HOME_CITY_SLUGS[0], "winnipeg");
 
   const cities = popularHomeCities(null, "en");
   assert.deepEqual(
     cities.map((c) => c.slug),
-    ["winnipeg", "toronto", "vancouver", "calgary", "montreal", "edmonton"],
+    ["toronto", "montreal", "vancouver", "calgary", "edmonton", "winnipeg"],
   );
-  assert.deepEqual(
-    cities.map((c) => c.label),
-    ["Winnipeg", "Toronto", "Vancouver", "Calgary", "Montreal", "Edmonton"],
-  );
-  assert.equal(cities[0].q, "Winnipeg");
+  assert.equal(cities[0].q, "Toronto");
+  assert.ok(cities.some((c) => c.slug === "winnipeg"));
   assert.equal(popularHomeCities(null, "fr").find((c) => c.slug === "montreal")?.label, "Montréal");
 });
 
-test("nearby trusted geo leads the popular list; inferred Toronto does not", () => {
+test("nearby geo leads the popular list, including Toronto", () => {
   const calgary = popularHomeCities({
     lat: 51.0447,
     lng: -114.0719,
@@ -70,8 +66,7 @@ test("nearby trusted geo leads the popular list; inferred Toronto does not", () 
     label: "Toronto, ON",
     source: "ip",
   });
-  assert.equal(inferredToronto[0].slug, "winnipeg");
-  assert.ok(inferredToronto.some((c) => c.slug === "toronto"));
+  assert.equal(inferredToronto[0].slug, "toronto");
 
   const chosenToronto = popularHomeCities({
     lat: 43.6532,
@@ -89,7 +84,7 @@ test("nearby trusted geo leads the popular list; inferred Toronto does not", () 
     source: "ip",
     timeZone: "America/Winnipeg",
   });
-  assert.equal(mbTz[0].slug, "winnipeg");
+  assert.equal(mbTz[0].slug, "toronto");
 
   const ottawa = popularHomeCities({
     lat: 45.4215,
@@ -99,7 +94,7 @@ test("nearby trusted geo leads the popular list; inferred Toronto does not", () 
   });
   assert.equal(ottawa[0].slug, "ottawa");
   assert.equal(ottawa.length, 6);
-  assert.ok(!ottawa.some((c) => c.slug === "edmonton"));
+  assert.ok(!ottawa.some((c) => c.slug === "winnipeg"));
 
   assert.equal(pickPopularHomeLead({ label: "Winnipeg, MB" }).slug, "winnipeg");
   assert.ok(hubLatLng(cityHubDefBySlug("quebec-city")));

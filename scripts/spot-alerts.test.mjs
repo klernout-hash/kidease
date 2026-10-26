@@ -104,9 +104,11 @@ test("a failed model uses the real counts and does not invent a spot or a fee", 
   assert.doesNotMatch(spotAlertModelUser(facts), /@/);
 });
 
-test("nothing goes out after 9 PM Winnipeg", () => {
-  assert.equal(spotAlertQuiet(new Date("2026-10-01T02:30:00.000Z")), true);
-  assert.equal(spotAlertQuiet(new Date("2026-10-01T15:00:00.000Z")), false);
+test("nothing goes out after 9 p.m. in the family time zone", () => {
+  const zone = "America/Vancouver";
+  assert.equal(spotAlertQuiet(new Date("2026-10-01T02:30:00.000Z"), zone), false);
+  assert.equal(spotAlertQuiet(new Date("2026-10-01T04:30:00.000Z"), zone), true);
+  assert.equal(spotAlertQuiet(new Date("2026-10-01T15:00:00.000Z"), zone), false);
 });
 
 test("the pulse button drafts first and the server does not auto-send", () => {

@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
+import { formatStamp } from "@/lib/family-time";
 import { confirmAction } from "@/lib/success-confirm";
 import { Link } from "@tanstack/react-router";
 import { AdminLicenseActions } from "@/components/admin-trust";
@@ -46,14 +47,7 @@ function formatWhen(value: string | null | undefined) {
   if (!value) return null;
   const at = new Date(value);
   if (Number.isNaN(at.getTime())) return null;
-  return at.toLocaleString("en-CA", {
-    timeZone: "America/Winnipeg",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  return formatStamp(at);
 }
 
 function DetailTable({ rows }: { rows: { label: string; value: string; extra?: ReactNode }[] }) {

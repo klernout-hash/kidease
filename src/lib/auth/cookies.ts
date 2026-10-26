@@ -9,6 +9,7 @@
  * `__Secure-kidease.*` with `Domain=kidease.ca` so both public hosts share
  * the same session (and 2FA device) token.
  */
+import { loopbackHost } from "../e2e-role-cookie.ts";
 import {
   ADMIN_IDLE_COOKIE,
   REAUTH_COOKIE,
@@ -20,6 +21,11 @@ export { ADMIN_IDLE_COOKIE, REAUTH_COOKIE, SHARED_ADMIN_IDLE_COOKIE, SHARED_REAU
 
 export const SESSION_TOKEN_COOKIE = "__Host-grok-auth.session_token";
 export const SHARED_SESSION_TOKEN_COOKIE = "__Secure-kidease.session_token";
+/**
+ * Loopback preview only. WebKit will not keep a Secure `__Host-` cookie on
+ * http://127.0.0.1, so the e2e seed copies the same session token here.
+ */
+export const E2E_SESSION_COOKIE = "kidease.e2e_session";
 
 export const TWO_FACTOR_COOKIE = "__Host-kidease.2fa";
 export const SHARED_TWO_FACTOR_COOKIE = "__Secure-kidease.2fa";
@@ -166,6 +172,20 @@ function inboundCookieUsable(value: string | undefined): boolean {
   return Boolean(token && token.length >= 16);
 }
 
+/**
+ * On a loopback preview with E2E_ROLE_FIXTURE=1, copy the non-secure e2e
+ * session cookie onto the name Better Auth reads. Public hosts are unchanged.
+ */
+export function withE2eSessionCookie(cookieHeader?: string | null, host?: string | null): string {
+  const raw = cookieHeader || "";
+  if (process.env.E2E_ROLE_FIXTURE !== "1" || !loopbackHost(String(host || ""))) return raw;
+  const cookies = parseCookieHeader(raw);
+  const e2e = cookies.get(E2E_SESSION_COOKIE);
+  if (!e2e || inboundCookieUsable(cookies.get(SESSION_TOKEN_COOKIE))) return raw;
+  cookies.set(SESSION_TOKEN_COOKIE, e2e);
+  return [...cookies.entries()].map(([name, value]) => `${name}=${value}`).join("; ");
+}
+
 export function aliasInboundAuthCookies(cookieHeader?: string | null): string {
   const cookies = parseCookieHeader(cookieHeader);
   for (const [shared, host] of Object.entries(SHARED_TO_HOST)) {
@@ -178,13 +198,22 @@ export function aliasInboundAuthCookies(cookieHeader?: string | null): string {
 
 export function requestWithAliasedAuthCookies(request: Request): Request {
   const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
-  if (!isKideasePublicHost(host)) return request;
   const raw = request.headers.get("cookie");
-  const aliased = aliasInboundAuthCookies(raw);
-  if (aliased === (raw || "")) return request;
+  const aliased = isKideasePublicHost(host) ? aliasInboundAuthCookies(raw) : raw || "";
+  const next = withE2eSessionCookie(aliased, host);
+  if (next === (raw || "")) return request;
   const headers = new Headers(request.headers);
-  headers.set("cookie", aliased);
-  return new Request(request, { headers });
+  headers.set("cookie", next);
+  const method = request.method || "GET";
+  const init: RequestInit & { duplex?: "half" } = { method, headers };
+  if (method !== "GET" && method !== "HEAD") {
+    init.body = request.body;
+    init.duplex = "half";
+  }
+  const url = /^https?:/i.test(request.url)
+    ? request.url
+    : new URL(request.url || "/", `http://${host || "127.0.0.1"}`).href;
+  return new Request(url, init);
 }
 
 function cookieNameOf(setCookie: string): string {

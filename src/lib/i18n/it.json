@@ -3048,5 +3048,9 @@
   "facebookEmailResend": "Invia di nuovo il link",
   "facebookEmailSaved": "Il link è in arrivo. Controlla anche la posta indesiderata.",
   "facebookEmailRequired": "Aggiungi e conferma un’email prima di scrivere a un centro o prenotare una visita.",
-  "facebookHostUnavailable": "Continua con Facebook non è disponibile su questo indirizzo. Apri kidease.ca."
+  "facebookHostUnavailable": "Continua con Facebook non è disponibile su questo indirizzo. Apri kidease.ca.",
+  "canadaSearchTitle": "Asili in tutto il Canada",
+  "canadaSearchLead": "Scegli una città, o attiva la posizione, per vedere i centri vicino a te.",
+  "canadaSearchChoose": "Scegli una città",
+  "alertSummary": "{on} di {total} avvisi attivi"
 }

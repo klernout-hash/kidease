@@ -79,6 +79,9 @@ export function homeValidateSearch(s: Record<string, unknown>) {
 
 export async function loadProductHome() {
   const origin = await withTimeoutFallback(resolveRequestSearchOrigin(), ORIGIN_BUDGET_MS, productHomeOrigin());
+  if (origin.source === "default") {
+    return { featured: [], featuredReady: true, origin };
+  }
   try {
     const painted = await withPaintBudget(
       featuredDaycares({ data: { lat: origin.lat, lng: origin.lng, label: origin.label, radiusKm: 25 } }),
@@ -167,7 +170,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
       { lat: boot.origin.lat, lng: boot.origin.lng, label: boot.origin.label },
       boot.origin.source,
     );
-    setPlace(boot.origin.source === "manual" ? boot.origin.label : t("nearMe"));
+    setPlace(boot.origin.source === "manual" ? boot.origin.label : boot.origin.source === "default" ? "" : t("nearMe"));
   }, [boot.origin.lat, boot.origin.lng, boot.origin.label, boot.origin.source, setOrigin]);
 
   useEffect(() => {
@@ -178,14 +181,21 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
       const nearby = t("whereNearby");
       const untouched = !current.trim() || current === near || current === nearby || current === loc.label;
       if (!untouched && source !== "manual") return current;
+      if (source === "default" || !(loc.label || "").trim()) return "";
       return source === "manual" ? loc.label : near;
     });
   }, [origin.label, originSource, boot.origin.label, boot.origin.source, locale]);
 
   useEffect(() => {
     const loc = originSource ? origin : boot.origin;
+    const source = originSource || boot.origin.source;
     let cancelled = false;
     const loadFeatured = () => {
+      if (source === "default" || !(loc.label || "").trim()) {
+        setFeatured([]);
+        setFeaturedReady(true);
+        return;
+      }
       void dedupedQuery(
         `home-featured:${loc.lat},${loc.lng},${radiusKm},${loc.label ?? ""}`,
         QUERY_STALE_MS,
@@ -264,7 +274,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
       const resolved = originFromDeviceFix(pos, boot.origin, { timeZone: readClientTimeZone() });
       const label = resolved.source === "gps" ? reverseGeocode(pos.lat, pos.lng) : resolved.label;
       setOrigin({ lat: resolved.lat, lng: resolved.lng, label, explicit: resolved.source === "gps" }, resolved.source);
-      setPlace(resolved.source === "manual" ? label : t("nearMe"));
+      setPlace(resolved.source === "gps" && label ? t("nearMe") : label);
       void hapticLight();
       return true;
     }

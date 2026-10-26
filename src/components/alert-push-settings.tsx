@@ -10,6 +10,7 @@ import {
   type AlertAudience,
   type AlertLocale,
 } from "@/lib/alert-push";
+import { readClientTimeZone } from "@/lib/default-origin";
 import { confirmStillLooking, getMyAlertPrefs, saveMyAlertPrefs } from "@/lib/server/alert-push-api";
 import { isNative } from "@/lib/native";
 import { useCopy } from "@/lib/use-copy";
@@ -29,14 +30,27 @@ export function AlertPushSettings({
   const [prefs, setPrefs] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(rows.map((row) => [row.category, true])),
   );
+  const onCount = rows.filter((row) => prefs[row.category] !== false).length;
   const [saving, setSaving] = useState(false);
   const [loadNote, setLoadNote] = useState("");
 
   useEffect(() => {
     let cancelled = false;
+    const zone = readClientTimeZone();
     void getMyAlertPrefs()
       .then((next) => {
         if (!cancelled) setPrefs(next);
+        if (zone) {
+          void saveMyAlertPrefs({
+            data: {
+              items: rows.map((row) => ({
+                category: row.category,
+                enabled: (next[row.category] !== false),
+              })),
+              timeZone: zone,
+            },
+          }).catch(() => undefined);
+        }
       })
       .catch(() => {
         if (!cancelled) setLoadNote(intro.loadError);
@@ -46,9 +60,16 @@ export function AlertPushSettings({
     };
   }, [intro.loadError]);
 
+  const summary = t("alertSummary").replace("{on}", String(onCount)).replace("{total}", String(rows.length));
+
   return (
-    <section className="mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="alert-settings">
-      <h2 className="font-display text-2xl tracking-[-0.03em]">{intro.title}</h2>
+    <details className="mt-8 rounded-xl bg-surface shadow-card ring-1 ring-border" data-ke="alert-settings">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 marker:content-none [&::-webkit-details-marker]:hidden">
+        <span className="font-display text-lg tracking-[-0.03em]">{intro.title}</span>
+        <span className="text-sm text-muted" data-ke="alert-settings-summary">{summary}</span>
+      </summary>
+      <div className="px-5 pb-5">
+      <h2 className="sr-only">{intro.title}</h2>
       <p className="mt-2 text-sm text-muted">{intro.lead}</p>
       <p className="mt-2 text-sm text-muted">{intro.founding}</p>
       <p className="mt-2 text-sm text-fg">{intro.quiet}</p>
@@ -68,6 +89,7 @@ export function AlertPushSettings({
                 category: row.category,
                 enabled: prefs[row.category] !== false,
               })),
+              timeZone: readClientTimeZone() || undefined,
             },
           })
             .then((next) => {
@@ -109,7 +131,8 @@ export function AlertPushSettings({
         </Link>
       </p>
       {inPhoneApp ? null : <p className="mt-2 text-sm text-muted">{intro.apps}</p>}
-    </section>
+      </div>
+    </details>
   );
 }
 

@@ -6,6 +6,7 @@
 
 import { z } from "zod";
 import { isAlertQuietHours } from "../search-alert-policy.ts";
+import { readClientTimeZone } from "../default-origin.ts";
 
 export const replyDraftSchema = z
   .object({
@@ -81,6 +82,7 @@ export function groundReplyDraft(model: ReplyDraftModel | null, facts: ReplyDraf
   return { body, source: "model" };
 }
 
-export function replyDraftQuiet(now: Date = new Date()): boolean {
-  return isAlertQuietHours(now);
+export function replyDraftQuiet(now: Date = new Date(), timeZone?: string | null): boolean {
+  const zone = timeZone === undefined ? readClientTimeZone() : timeZone;
+  return isAlertQuietHours(now, zone);
 }

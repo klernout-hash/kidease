@@ -30,6 +30,7 @@ import {
 import { sendSms } from "@/lib/server/sms";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { transactionalMailFrom } from "@/lib/mail-from";
+import { dayKeyInTimeZone, formatInTimeZone } from "@/lib/family-time";
 
 /** Owner / admin notify. Support cases route through support@kidease.ca on the desk — not this address. */
 export const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "kyle@kidease.ca").trim();
@@ -163,8 +164,8 @@ function accountInputFromEvent(p: PlatformEvent): AccountNotifyInput {
   };
 }
 
-function whenWinnipeg() {
-  return new Date().toLocaleString("en-CA", { timeZone: "America/Winnipeg", dateStyle: "full", timeStyle: "short" });
+function whenClock() {
+  return formatInTimeZone(new Date(), null);
 }
 
 function defaultTitle(kind: PlatformKind) {
@@ -222,8 +223,14 @@ const KIND_LABEL: Record<string, string> = {
   lead_request: "Lead updates",
 };
 
-function winnipegDay() {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Winnipeg" }).format(new Date());
+function digestDay() {
+  return dayKeyInTimeZone(new Date(), "UTC");
+}
+
+function digestClock(iso: string) {
+  const when = new Date(iso);
+  if (Number.isNaN(when.getTime())) return "";
+  return formatInTimeZone(when, null);
 }
 
 function digestCopy(
@@ -248,11 +255,7 @@ function digestCopy(
   const lines = rows.map((r) => {
     const who = [r.provider_name, r.provider_email].filter(Boolean).join(" · ") || "—";
     const place = [r.daycare_name, r.city].filter(Boolean).join(" · ") || r.address || "—";
-    const when = new Date(r.created_at).toLocaleString("en-CA", {
-      timeZone: "America/Winnipeg",
-      hour: "numeric",
-      minute: "2-digit",
-    });
+    const when = digestClock(r.created_at);
     return `• ${KIND_LABEL[r.kind] || r.kind}: ${place} (${who}) at ${when}`;
   });
   const title = `KidEase daily digest: ${day}`;
@@ -278,11 +281,7 @@ function digestCopy(
     .map((r) => {
       const who = [r.provider_name, r.provider_email].filter(Boolean).join(" · ") || "—";
       const place = [r.daycare_name, r.city].filter(Boolean).join(" · ") || r.address || "—";
-      const when = new Date(r.created_at).toLocaleString("en-CA", {
-        timeZone: "America/Winnipeg",
-        hour: "numeric",
-        minute: "2-digit",
-      });
+      const when = digestClock(r.created_at);
       return `<tr>
         <td style="padding:10px 0;border-bottom:1px solid #e3ddd3;vertical-align:top;width:38%;">${esc(KIND_LABEL[r.kind] || r.kind)}<br/><span style="color:#5c6578;font-size:12px;">${esc(when)}</span></td>
         <td style="padding:10px 0;border-bottom:1px solid #e3ddd3;">${esc(place)}<br/><span style="color:#5c6578;font-size:12px;">${esc(who)}</span></td>
@@ -321,7 +320,7 @@ export async function sendDailyDigest() {
   await ensureEventsTable();
   await ensureDigestTable();
   const sql = await getSql();
-  const day = winnipegDay();
+  const day = digestDay();
   const already = await sql<{ day: string }>`select day from digest_sends where day = ${day}`.catch(
     () => [] as { day: string }[],
   );
@@ -369,7 +368,7 @@ export async function sendDailyDigest() {
 }
 
 function emailCopy(p: PlatformEvent) {
-  const when = whenWinnipeg();
+  const when = whenClock();
   const title = p.title || defaultTitle(p.kind);
   const link = eventLink(p);
   const account = isAccountEventKind(p.kind);
@@ -379,7 +378,7 @@ function emailCopy(p: PlatformEvent) {
         ["Who", [p.actorName, p.actorEmail].filter(Boolean).join(" · ") || "—"],
         ["Daycare", p.daycareName || "—"],
         ["Location", [p.address, p.city, p.province].filter(Boolean).join(", ") || "—"],
-        ["When", `${when} (Winnipeg)`],
+        ["When", when],
       ];
   if (p.detail && !account) rows.push(["Details", p.detail]);
   const text = account

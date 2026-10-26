@@ -3048,5 +3048,9 @@
   "facebookEmailResend": "再次发送链接",
   "facebookEmailSaved": "链接已发出。也请查看垃圾邮件。",
   "facebookEmailRequired": "给托儿所发消息或预约参观之前，请添加并确认电子邮箱。",
-  "facebookHostUnavailable": "此地址不能使用通过 Facebook 继续。请打开 kidease.ca。"
+  "facebookHostUnavailable": "此地址不能使用通过 Facebook 继续。请打开 kidease.ca。",
+  "canadaSearchTitle": "加拿大各地的日托",
+  "canadaSearchLead": "选择城市，或打开定位，查看您附近的中心。",
+  "canadaSearchChoose": "选择城市",
+  "alertSummary": "{total} 项提醒中已开启 {on} 项"
 }

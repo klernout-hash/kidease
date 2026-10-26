@@ -3,6 +3,8 @@ import { ViewAsButton } from "@/components/view-as-button";
 import { searchViewAsTargets } from "@/lib/server/view-as-api";
 import type { ViewAsTarget } from "@/lib/view-as-public";
 import { useCopy } from "@/lib/use-copy";
+import { useSessionDesks } from "@/components/desk-switcher";
+import { canUseOperatorTools } from "@/lib/operator-tools";
 import type { CopyKey } from "@/lib/copy";
 
 const KIND_KEY: Record<ViewAsTarget["kind"], CopyKey> = {
@@ -13,13 +15,15 @@ const KIND_KEY: Record<ViewAsTarget["kind"], CopyKey> = {
 
 export function AdminViewAsPicker() {
   const { t } = useCopy();
+  const { session } = useSessionDesks();
+  const operator = canUseOperatorTools(session?.email);
   const [query, setQuery] = useState("");
   const [rows, setRows] = useState<ViewAsTarget[]>([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
     const needle = query.trim();
-    if (needle.length < 2) {
+    if (!operator || needle.length < 2) {
       setRows([]);
       setError("");
       return;
@@ -44,7 +48,9 @@ export function AdminViewAsPicker() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [query, t]);
+  }, [operator, query, t]);
+
+  if (!operator) return null;
 
   return (
     <section className="mb-6 rounded-xl bg-surface p-4 shadow-card ring-1 ring-border" data-ke="view-as-picker">

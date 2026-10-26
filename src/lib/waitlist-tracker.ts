@@ -74,8 +74,8 @@ export function waitlistEmailAllowed(input: { quiet: boolean; emailConsent: bool
   return true;
 }
 
-export function waitlistQuietNow(now: Date = new Date()): boolean {
-  return isAlertQuietHours(now);
+export function waitlistQuietNow(now: Date = new Date(), timeZone?: string | null): boolean {
+  return isAlertQuietHours(now, timeZone);
 }
 
 export function waitlistEventProps(input: { daycareId?: string; status?: string; count?: number } = {}) {

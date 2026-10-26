@@ -10,6 +10,9 @@ import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { canVisitDesk } from "@/lib/desks";
+import { formatStamp } from "@/lib/family-time";
+import { canUseOperatorTools } from "@/lib/operator-tools";
+import { checkOperatorLocation } from "@/lib/server/location-check";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import {
   ACTIVITY_KIND_CHIPS,
@@ -253,7 +256,7 @@ export function AdminPage() {
     const needle = q.trim().toLowerCase();
     if (!needle) return staffCentres;
     return staffCentres.filter((c) =>
-      [c.name, c.city, c.province, c.address, c.providerName, c.providerEmail, c.contactEmail]
+      [c.name, c.slug, c.city, c.province, c.address, c.providerName, c.providerEmail, c.contactEmail]
         .filter(Boolean)
         .join(" ")
         .toLowerCase()
@@ -689,9 +692,11 @@ export function AdminPage() {
             <LeadStatPanel stat={stat} count={leadCounts[ADMIN_LEAD_STAT_META[stat].countKey]} />
           ) : (
             <section className="mt-8">
-              {catalogHealth ? (
+              {canUseOperatorTools(session?.email) ? <LocationChecker /> : null}
+              {catalogHealth && canUseOperatorTools(session?.email) ? (
                 <p
                   className="mb-5 rounded-xl bg-surface px-4 py-3 text-sm text-muted ring-1 ring-border"
+                  data-ke="site-health"
                   data-catalog-runtime={catalogHealth.runtime}
                 >
                   <span className="font-medium text-fg">
@@ -920,7 +925,7 @@ export function AdminPage() {
                     ) : null}
                   </div>
                   <div className="text-right text-xs text-muted">
-                    <p>{new Date(r.created_at).toLocaleString("en-CA", { timeZone: "America/Winnipeg", dateStyle: "medium", timeStyle: "short" })}</p>
+                    <p>{formatStamp(new Date(r.created_at))}</p>
                     {mailFailed ? null : <p className="mt-1">{activityEmailStatusLabel(r.email_status)}</p>}
                     {r.slug ? (
                       <Link to="/daycare/$slug" params={{ slug: r.slug }} className="text-primary underline-offset-4 hover:underline">
@@ -956,6 +961,20 @@ function RoleBadge({ label }: { label: string }) {
     <span className="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-muted">
       {label}
     </span>
+  );
+}
+
+function LocationChecker() {
+  const [label, setLabel] = useState("Canada");
+  useEffect(() => {
+    void checkOperatorLocation()
+      .then((row) => setLabel(row.label || "Canada"))
+      .catch(() => setLabel("Canada"));
+  }, []);
+  return (
+    <p className="mb-5 rounded-xl bg-surface px-4 py-3 text-sm text-muted ring-1 ring-border" data-ke="location-checker">
+      Location checker · {label}
+    </p>
   );
 }
 
@@ -999,6 +1018,7 @@ function PeoplePanel({
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search name or email…"
+          data-ke="people-search"
           className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border"
         />
         <label className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
@@ -1053,11 +1073,7 @@ function PeoplePanel({
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <p className="text-right text-xs text-muted">
-                    {new Date(p.createdAt).toLocaleString("en-CA", {
-                      timeZone: "America/Winnipeg",
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
+                    {formatStamp(new Date(p.createdAt))}
                   </p>
                   <ViewAsButton userId={p.userId} />
                 </div>

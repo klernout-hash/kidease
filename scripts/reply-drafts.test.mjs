@@ -67,9 +67,10 @@ test("a failed or invented reply is dropped and does not add a fee", () => {
   assert.doesNotMatch(user, /birthdate/i);
 });
 
-test("a drafted reply is not sent after 9 PM Winnipeg", () => {
-  assert.equal(replyDraftQuiet(new Date("2026-10-01T02:30:00.000Z")), true);
-  assert.equal(replyDraftQuiet(new Date("2026-10-01T15:00:00.000Z")), false);
+test("a drafted reply is not sent after 9 p.m. in the family time zone", () => {
+  const zone = "America/Toronto";
+  assert.equal(replyDraftQuiet(new Date("2026-10-01T02:30:00.000Z"), zone), true);
+  assert.equal(replyDraftQuiet(new Date("2026-10-01T15:00:00.000Z"), zone), false);
   const page = read("src/routes/inbox.$id.tsx");
   const server = read("src/lib/server/reply-drafts.ts");
   assert.match(page, /useAiFeatureFlag\(AI_FLAGS\.replyDrafts\)/);

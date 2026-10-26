@@ -30,7 +30,10 @@ import {
   isKideasePublicHost,
   mergeSetCookieHeaders,
   readSessionTokenFromHeader,
+  requestWithAliasedAuthCookies,
+  E2E_SESSION_COOKIE,
   SESSION_TOKEN_COOKIE,
+  withE2eSessionCookie,
   SHARED_SESSION_TOKEN_COOKIE,
   SHARED_TWO_FACTOR_DEVICE_COOKIE,
   TWO_FACTOR_DEVICE_COOKIE,
@@ -178,6 +181,29 @@ describe("apex/www session cookies", () => {
       `${SESSION_TOKEN_COOKIE}=${hostTok}; ${SHARED_SESSION_TOKEN_COOKIE}=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb`,
     );
     assert.match(kept, new RegExp(`${SESSION_TOKEN_COOKIE}=${hostTok}`));
+    const previous = process.env.E2E_ROLE_FIXTURE;
+    process.env.E2E_ROLE_FIXTURE = "1";
+    try {
+      const token = "e".repeat(24);
+      const bridged = withE2eSessionCookie(`${E2E_SESSION_COOKIE}=${token}`, "127.0.0.1:8081");
+      assert.match(bridged, new RegExp(`${SESSION_TOKEN_COOKIE}=${token}`));
+      assert.equal(withE2eSessionCookie(`${E2E_SESSION_COOKIE}=${token}`, "www.kidease.ca"), `${E2E_SESSION_COOKIE}=${token}`);
+      const bridgedRequest = requestWithAliasedAuthCookies(
+        new Request("http://127.0.0.1:8081/api/auth/get-session", {
+          headers: { host: "127.0.0.1:8081", cookie: `${E2E_SESSION_COOKIE}=${token}` },
+        }),
+      );
+      assert.match(bridgedRequest.headers.get("cookie") || "", new RegExp(`${SESSION_TOKEN_COOKIE}=${token}`));
+      const publicRequest = requestWithAliasedAuthCookies(
+        new Request("https://www.kidease.ca/api/auth/get-session", {
+          headers: { host: "www.kidease.ca", cookie: `${E2E_SESSION_COOKIE}=${token}` },
+        }),
+      );
+      assert.equal(publicRequest.headers.get("cookie"), `${E2E_SESSION_COOKIE}=${token}`);
+    } finally {
+      if (previous == null) delete process.env.E2E_ROLE_FIXTURE;
+      else process.env.E2E_ROLE_FIXTURE = previous;
+    }
   });
 
   it("duplicates __Host- Set-Cookie as Domain=kidease.ca on public hosts only", () => {

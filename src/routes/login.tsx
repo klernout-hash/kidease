@@ -15,7 +15,7 @@ import { PasswordRules } from "@/components/password-rules";
 import { localPasswordIssue } from "@/lib/password-hygiene";
 import { Shell } from "@/components/shell";
 import { headChromeLocale } from "@/lib/head-locale";
-import { MARKETING_PAGE_SEO, MARKETING_PAGE_SEO_FR, pageSeoHead } from "@/lib/page-seo";
+import { MARKETING_PAGE_SEO, MARKETING_PAGE_SEO_FR, pageSeoHead, withNoindex } from "@/lib/page-seo";
 import { rememberRole } from "@/components/role-boot";
 import { setRole } from "@/lib/server/family";
 import { confirmAdultAge } from "@/lib/server/adult-confirm";
@@ -131,9 +131,11 @@ export const Route = createFileRoute("/login")({
   validateSearch: loginValidateSearch,
   loader: loginLoader,
   head: ({ matches }) =>
-    headChromeLocale(matches) === "fr"
-      ? pageSeoHead({ ...MARKETING_PAGE_SEO_FR.login, path: "/login", locale: "fr" })
-      : pageSeoHead(MARKETING_PAGE_SEO.login),
+    withNoindex(
+      headChromeLocale(matches) === "fr"
+        ? pageSeoHead({ ...MARKETING_PAGE_SEO_FR.login, path: "/login", locale: "fr" })
+        : pageSeoHead(MARKETING_PAGE_SEO.login),
+    ),
   component: Login,
 });
 

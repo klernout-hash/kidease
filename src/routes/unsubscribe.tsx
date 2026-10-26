@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { applyPublicUnsubscribe } from "@/lib/server/casl-consent-api";
-import { pageSeoHead } from "@/lib/page-seo";
+import { pageSeoHead, withNoindex } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 
 export function unsubscribeValidateSearch(s: Record<string, unknown>) {
@@ -16,11 +16,11 @@ export function unsubscribeValidateSearch(s: Record<string, unknown>) {
 export const Route = createFileRoute("/unsubscribe")({
   validateSearch: unsubscribeValidateSearch,
   head: () =>
-    pageSeoHead({
+    withNoindex(pageSeoHead({
       title: "Unsubscribe · KidEase",
       description: "Stop KidEase marketing email or text messages. This CASL unsubscribe page works with no account.",
       path: "/unsubscribe",
-    }),
+    })),
   component: UnsubscribeRoute,
 });
 

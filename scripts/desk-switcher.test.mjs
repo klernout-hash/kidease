@@ -99,12 +99,12 @@ test("admin sees Parent, Daycare, and Admin as the top desk tabs", () => {
   assert.doesNotMatch(src("src/components/shell.tsx"), /<DeskSwitcher/);
 });
 
-test("daycare-only and parent-only users do not get the 3-desk switcher", () => {
-  assert.equal(showDeskSwitcher(desksFor({ role: "provider" }), "provider"), false);
-  assert.equal(showDeskSwitcher(desksFor({ role: "provider" }), "provider", "kyle@kidease.ca"), false);
-  assert.equal(showDeskSwitcher(desksFor({ role: "provider" }), "provider", "director@example.com"), false);
-  assert.deepEqual(headerDesks(desksFor({ role: "provider" }), "provider", "kyle@kidease.ca"), ["provider"]);
-  assert.equal(headerDesks(desksFor({ role: "provider" }), "provider").includes("parent"), false);
+test("daycare owners can switch to Parent; parent-only stays on Parent", () => {
+  assert.equal(showDeskSwitcher(desksFor({ role: "provider" }), "provider"), true);
+  assert.equal(showDeskSwitcher(desksFor({ role: "provider" }), "provider", "kyle@kidease.ca"), true);
+  assert.equal(showDeskSwitcher(desksFor({ role: "provider" }), "provider", "director@example.com"), true);
+  assert.deepEqual(headerDesks(desksFor({ role: "provider" }), "provider", "kyle@kidease.ca"), ["provider", "parent"]);
+  assert.equal(headerDesks(desksFor({ role: "provider" }), "provider").includes("parent"), true);
   assert.equal(headerDesks(desksFor({ role: "provider" }), "provider").includes("admin"), false);
 
   assert.equal(showDeskSwitcher(desksFor({ role: "parent" }), "parent"), false);
@@ -114,10 +114,10 @@ test("daycare-only and parent-only users do not get the 3-desk switcher", () => 
   assert.equal(headerDesks(desksFor({ role: "parent" }), "parent").includes("provider"), false);
   assert.equal(headerDesks(desksFor({ role: "parent" }), "parent").includes("admin"), false);
 
-  assert.equal(showDeskSwitcher(desksFor({ role: "parent", ownsCentre: true }), "parent"), false);
-  assert.deepEqual(headerDesks(desksFor({ role: "parent", ownsCentre: true }), "parent"), ["provider"]);
+  assert.equal(showDeskSwitcher(desksFor({ role: "parent", ownsCentre: true }), "parent"), true);
+  assert.deepEqual(headerDesks(desksFor({ role: "parent", ownsCentre: true }), "parent"), ["provider", "parent"]);
   assert.equal(headerDesks(["admin", "parent", "provider"], "parent", "parent@example.com").includes("admin"), false);
-  assert.equal(headerDesks(["admin", "parent", "provider"], "parent", "parent@example.com").includes("parent"), false);
-  assert.equal(showDeskSwitcher(["admin", "parent", "provider"], "parent", "parent@example.com"), false);
-  assert.equal(showDeskSwitcher(["provider", "parent"], "provider", "kyle@kidease.ca"), false);
+  assert.equal(headerDesks(["admin", "parent", "provider"], "parent", "parent@example.com").includes("parent"), true);
+  assert.equal(showDeskSwitcher(["admin", "parent", "provider"], "parent", "parent@example.com"), true);
+  assert.equal(showDeskSwitcher(["provider", "parent"], "provider", "kyle@kidease.ca"), true);
 });

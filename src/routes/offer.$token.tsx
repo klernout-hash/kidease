@@ -9,6 +9,7 @@ export const Route = createFileRoute("/offer/$token")({
         name: "description",
         content: "Answer a daycare spot offer on KidEase. You have 48 hours. There is no waitlist fee.",
       },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: OfferTokenPage,

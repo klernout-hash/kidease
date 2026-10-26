@@ -12,7 +12,7 @@ import { parseBillStatus, type BillStatus } from "@/lib/bill";
 import { vacancyFreshness } from "@/lib/listing-readiness";
 import { parseAppRole, type AppRole } from "@/lib/desks";
 import { createStripeRefund } from "@/lib/server/stripe-checkout";
-import { requireSupport } from "@/lib/server/roles";
+import { requireAdmin, requireSupport } from "@/lib/server/roles";
 import { reportError } from "@/lib/observe";
 import {
   type SupportCase,
@@ -299,7 +299,7 @@ export const searchSupportPeople = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .validator((q: string) => String(q || "").trim().slice(0, 80))
   .handler(async ({ context, data: q }) => {
-    await requireSupport(context.userId);
+    await requireAdmin(context.userId);
     if (q.length < 2) return [] as Array<{ userId: string; name: string | null; email: string | null; role: AppRole }>;
     const sql = await getSql();
     const needle = `%${q.toLowerCase()}%`;
@@ -955,7 +955,7 @@ export const logSupportPreview = createServerFn({ method: "POST" })
     return { caseId, desk: input.desk };
   })
   .handler(async ({ context, data }) => {
-    await requireSupport(context.userId);
+    await requireAdmin(context.userId);
     const sql = await getSql();
     const row = await loadCase(sql, data.caseId);
     if (!row) throw new Error("Case not found");

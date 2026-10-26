@@ -1,4 +1,5 @@
 import { createFileRoute, Navigate, Outlet, useRouterState } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { privateReturnPath } from "@/lib/role-access";
 import { lazy, Suspense } from "react";
@@ -12,6 +13,8 @@ import { useCurrentUserState, useLocallySignedOut } from "@/lib/auth/use-current
 import { useSessionDesks } from "@/components/desk-switcher";
 import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
 import { parseShareToken } from "@/lib/parent-tracker";
+import { parentUrlTab } from "@/lib/parent-tab";
+import { canUseOperatorTools } from "@/lib/operator-tools";
 import { getFamily } from "@/lib/server/family";
 
 const ParentDesk = lazy(() =>
@@ -67,8 +70,8 @@ export function parentValidateSearch(s: Record<string, unknown>) {
     billing?: "return";
     share?: string;
   } = {};
-  const tab = s.tab;
-  if (tab === "explore" || tab === "saved" || tab === "enrolled" || tab === "requests" || tab === "profile" || tab === "payments" || tab === "subscription" || tab === "alerts" || tab === "children" || tab === "care" || tab === "waitlists") out.tab = tab;
+  const tab = parentUrlTab(s.tab);
+  if (tab) out.tab = tab;
   if (s.preview === "support") out.preview = "support";
   if (s.plus === "success" || s.plus === "cancel") out.plus = s.plus;
   if (s.plan === "plus" || s.plan === "alerts") out.plan = s.plan;
@@ -192,7 +195,7 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
       }
     >
       <LoginFunnelDeskLand desk="parent" />
-      {search.preview === "support" ? <SupportPreviewBanner /> : null}
+      {search.preview === "support" && canUseOperatorTools(session?.email) ? <SupportPreviewBanner /> : null}
       <Suspense fallback={<DeskSkeleton />}>
         <ParentDesk
           initialTab={initialTab}
@@ -222,5 +225,12 @@ export const Route = createFileRoute("/parent")({
 });
 
 function ParentPage() {
-  return <ParentDeskPage search={Route.useSearch()} loaded={Route.useLoaderData()} />;
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  useEffect(() => {
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    if (!tab || parentUrlTab(tab)) return;
+    void navigate({ search: { ...search, tab: undefined }, replace: true });
+  }, [navigate, search]);
+  return <ParentDeskPage search={search} loaded={Route.useLoaderData()} />;
 }

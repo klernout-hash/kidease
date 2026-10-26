@@ -3048,5 +3048,9 @@
   "facebookEmailResend": "再發送連結",
   "facebookEmailSaved": "連結已寄出。都睇下垃圾郵件。",
   "facebookEmailRequired": "傳訊息畀托兒所或預約參觀之前，請加入並確認電郵。",
-  "facebookHostUnavailable": "呢個地址唔可以用 Facebook 繼續。請打開 kidease.ca。"
+  "facebookHostUnavailable": "呢個地址唔可以用 Facebook 繼續。請打開 kidease.ca。",
+  "canadaSearchTitle": "加拿大各地嘅托兒所",
+  "canadaSearchLead": "揀一個城市，或者打開定位，睇吓你附近嘅中心。",
+  "canadaSearchChoose": "揀一個城市",
+  "alertSummary": "{total} 項提醒入面開咗 {on} 項"
 }

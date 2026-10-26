@@ -5,6 +5,7 @@ export const Route = createFileRoute("/pay")({
     meta: [
       { title: "Pay a centre bill · KidEase" },
       { name: "description", content: "Pay a bill your daycare sent. Search stays separate from centre bills." },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: PayLayout,

@@ -3,6 +3,7 @@ import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { privateReturnPath } from "@/lib/role-access";
 import { useEffect, useState } from "react";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
+import { canUseOperatorTools } from "@/lib/operator-tools";
 import { toast } from "sonner";
 import { confirmSuccess } from "@/lib/success-confirm";
 import { Shell } from "@/components/shell";
@@ -311,13 +312,14 @@ function ProviderPage() {
 
   const waiting = requests.filter((r) => r.status === "requested" || r.status === "under_review");
   const later = requests.filter((r) => r.status !== "requested" && r.status !== "under_review");
+  const operatorTools = canUseOperatorTools(session?.email);
   const testListingCount = listings.filter((d) => isAdminOnlyListing(d)).length;
-  const deskListings = showTestListings ? listings : listings.filter((d) => !isAdminOnlyListing(d));
+  const deskListings = operatorTools && showTestListings ? listings : listings.filter((d) => !isAdminOnlyListing(d));
 
   return (
     <TwoFactorGate next={search.desk ? `/provider?desk=${search.desk}` : "/provider"}>
     <LoginFunnelDeskLand desk="provider" />
-    {search.preview === "support" ? <SupportPreviewBanner /> : null}
+    {search.preview === "support" && operatorTools ? <SupportPreviewBanner /> : null}
     <DeskShell
       desk="daycare"
       active={desk}
@@ -462,10 +464,12 @@ function ProviderPage() {
 
       {desk === "listings" ? (
         <>
-          <label className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
+          {operatorTools ? (
+          <label className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border" data-ke="test-listing-toggle">
             <input type="checkbox" checked={showTestListings} onChange={(e) => setShowTestListings(e.target.checked)} />
             {t("showTestListings")}{testListingCount ? ` · ${testListingCount}` : ""}
           </label>
+          ) : null}
           <ActionRequiredBanner listings={deskListings} />
           <DirectorNudgeQueue listings={deskListings} stats={stats} onConfirmed={() => void load()} skipConfirmSpots />
           <VacancyConfirmLoop listings={deskListings} onConfirmed={() => void load()} />

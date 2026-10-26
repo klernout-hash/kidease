@@ -1,5 +1,5 @@
 import { normalizeCaslPhone } from "./casl.ts";
-import { pageSeoHead } from "./page-seo.ts";
+import { pageSeoHead, withNoindex } from "./page-seo.ts";
 
 /**
  * Toll-free opt-in sentence for +1 877-502-7728.
@@ -40,21 +40,21 @@ export function parentMobileIssue(value: string): string | null {
 
 export function parentSignupHead(locale: "en" | "fr" = "en") {
   if (locale === "fr") {
-    return pageSeoHead({
+    return withNoindex(pageSeoHead({
       title: "Créer un compte parent · KidEase",
       description:
         "KidEase aide les parents à trouver une garderie permise au Canada. Créez un compte pour enregistrer des centres et demander une visite. Le cellulaire est facultatif.",
       path: "/fr/signup",
       locale: "fr",
-    });
+    }));
   }
-  return pageSeoHead({
+  return withNoindex(pageSeoHead({
     title: "Create a parent account · KidEase",
     description:
       "KidEase helps parents find licensed child care in Canada. Create an account to save centres and ask for a tour. A mobile number is optional.",
     path: "/signup",
     locale: "en",
-  });
+  }));
 }
 
 export function parentSmsOptInInput(input: { phone?: unknown; smsConsent?: unknown }): {

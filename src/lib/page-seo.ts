@@ -93,6 +93,14 @@ export function pageSeoHead(input: PageSeoInput) {
   };
 }
 
+/** Private, auth, and token pages stay out of search indexes. */
+export function withNoindex<T extends { meta: Array<Record<string, string>> }>(head: T): T {
+  return {
+    ...head,
+    meta: [...head.meta, { name: "robots", content: "noindex, nofollow" }],
+  };
+}
+
 export type BreadcrumbItem = {
   name: string;
   url: string;

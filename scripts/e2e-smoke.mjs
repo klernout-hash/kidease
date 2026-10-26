@@ -14,7 +14,7 @@ import https from "node:https";
 import { spawn } from "node:child_process";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium } from "playwright";
+import { chromium, webkit } from "playwright";
 import { runIpadViewportPass } from "./ipad-viewports.mjs";
 import { runPhoneViewportPass } from "./phone-viewports.mjs";
 import { runFoldResizePass } from "./fold-resize.mjs";
@@ -83,6 +83,39 @@ async function setFixture(context, base, { role, plan, own, activity, attention 
   if (!res.ok()) {
     throw new Error(`seed ${role || "parent"} ${res.status()} ${(await res.text()).slice(0, 200)}`);
   }
+  return res;
+}
+
+/**
+ * WebKit drops Secure `__Host-` cookies on http://127.0.0.1. Copy the session
+ * token into the loopback preview cookie the server accepts for this fixture.
+ */
+async function pinWebkitE2eSession(context, base, response) {
+  const headers = response.headersArray().filter((header) => header.name.toLowerCase() === "set-cookie");
+  const cookies = [];
+  for (const header of headers) {
+    const pair = header.value.split(";")[0] ?? "";
+    const eq = pair.indexOf("=");
+    if (eq < 1) continue;
+    const name = pair.slice(0, eq).trim();
+    if (!name.includes("session_token")) continue;
+    let value = pair.slice(eq + 1).trim();
+    try {
+      value = decodeURIComponent(value);
+    } catch {
+      /* keep the raw value */
+    }
+    cookies.push({
+      name: "kidease.e2e_session",
+      value,
+      url: base,
+      httpOnly: true,
+      secure: false,
+      sameSite: "Lax",
+    });
+  }
+  if (cookies.length === 0) throw new Error("seed did not set a session cookie");
+  await context.addCookies(cookies);
 }
 
 async function openHeaderMenu(page) {
@@ -446,7 +479,17 @@ async function runRoleFixture(page, base) {
 
     await page.setViewportSize({ width: 1280, height: 900 });
     await setFixture(context, base, { role: "provider" });
-    const daycareWrong = await page.goto(new URL("/parent", base).href, {
+    const daycareParent = await page.goto(new URL("/parent", base).href, {
+      waitUntil: "domcontentloaded",
+      timeout: timeoutMs,
+    });
+    await page.waitForURL(/\/parent/i, { timeout: timeoutMs }).catch(() => {});
+    const stayedParent = /\/parent/i.test(page.url());
+    record("provider-can-open-parent", stayedParent, {
+      note: page.url(),
+      status: daycareParent?.status() ?? 0,
+    });
+    const daycareWrong = await page.goto(new URL("/provider", base).href, {
       waitUntil: "domcontentloaded",
       timeout: timeoutMs,
     });
@@ -457,6 +500,12 @@ async function runRoleFixture(page, base) {
       status: daycareWrong?.status() ?? 0,
     });
     await page.locator('[data-ke="daycare-desk"][data-settled="1"]').waitFor({ timeout: timeoutMs });
+    const operatorLeaks = await page
+      .locator(
+        '[data-ke="guest-view"], [data-ke="view-as-picker"], [data-ke="test-listing-toggle"], [data-ke="site-health"], [data-ke="location-checker"], [data-ke="people-search"]',
+      )
+      .count();
+    record("operator-tools-hidden-provider", operatorLeaks === 0, { note: `widgets ${operatorLeaks}` });
     const daycareCardNew = await page.locator('[data-ke="upgrade-card"]').count();
     record("daycare-card-new", daycareCardNew === 0, { note: `cards ${daycareCardNew}` });
     await shot(page, "daycare-390", 390, '[data-ke="daycare-desk"]');
@@ -607,7 +656,7 @@ async function runRoleFixture(page, base) {
 
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.context().clearCookies();
-    await page.goto(new URL("/search", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await page.goto(new URL("/search?q=Winnipeg%2C+MB", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     const listingHref = await page.locator('a[href*="/daycare/"]').evaluateAll((els) => {
       for (const el of els) {
         const href = el.getAttribute("href") || "";
@@ -1300,6 +1349,19 @@ async function runSignedInSessions(page, base) {
 
       await page.goto(new URL(item.home, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
       record(`signed-in-desk-${tag}`, !/\/login/i.test(page.url()) && (await pageIsQuiet(page)), { note: page.url() });
+      if (tag === "provider-en") {
+        const parentSwitch = page.locator('[data-ke="desk-switch-tab"][data-desk="parent"]');
+        const switchText = ((await parentSwitch.innerText().catch(() => "")) || "").trim();
+        record("signed-in-switch-to-parent", /switch to parent/i.test(switchText), { note: switchText });
+      }
+      if (tag === "parent-en" || tag === "provider-en") {
+        const leaks = await page
+          .locator(
+            '[data-ke="guest-view"], [data-ke="view-as-picker"], [data-ke="test-listing-toggle"], [data-ke="site-health"], [data-ke="location-checker"], [data-ke="people-search"]',
+          )
+          .count();
+        record(`operator-tools-hidden-${tag}`, leaks === 0, { note: `widgets ${leaks}` });
+      }
       if (tag === "parent-en") {
         const shotDir = join(dirname(outDir), "shots");
         mkdirSync(shotDir, { recursive: true });
@@ -1370,6 +1432,27 @@ async function runSignedInSessions(page, base) {
         note: `photo=${photo} bio=${kept.slice(0, 72)}`,
       });
       if (tag === "parent-en") {
+        await page.goto(new URL("/parent?tab=saved", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+        const savedText = await page.locator("body").innerText().catch(() => "");
+        const savedOk = !/something went wrong/i.test(savedText) && (await pageIsQuiet(page));
+        record("signed-in-parent-saved", savedOk, { note: page.url() });
+        await page.goto(new URL("/parent?tab=not-a-real-tab", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+        await page.waitForFunction(() => !location.search.includes("not-a-real-tab"), { timeout: timeoutMs }).catch(() => {});
+        const badTab = await page.locator("body").innerText().catch(() => "");
+        record("signed-in-parent-bad-tab", !/something went wrong/i.test(badTab) && !/not-a-real-tab/.test(page.url()) && (await pageIsQuiet(page)), {
+          note: page.url(),
+        });
+        await page.goto(new URL("/account?tab=profile&section=alerts&desk=parent", base).href, {
+          waitUntil: "domcontentloaded",
+          timeout: timeoutMs,
+        });
+        const summary = page.locator('[data-ke="alert-settings-summary"]');
+        await summary.waitFor({ state: "visible", timeout: timeoutMs });
+        const summaryText = ((await summary.innerText()) || "").trim();
+        const openAttr = await page.locator('[data-ke="alert-settings"]').getAttribute("open");
+        record("signed-in-alert-summary", openAttr == null && /^\d+ of \d+ alerts on$/.test(summaryText), {
+          note: summaryText,
+        });
         await signOutFromMenu(page);
         await passwordLogin(page, base, item.email, item.locale);
         const lead = ((await page.locator('[data-ke="login-lead"]').innerText().catch(() => "")) || "").trim();
@@ -1380,6 +1463,55 @@ async function runSignedInSessions(page, base) {
     } catch (err) {
       record(`signed-in-${tag}`, false, { note: err instanceof Error ? err.message : String(err) });
     }
+  }
+}
+
+/** Safari on macOS crashed search and saved when a licence timestamp was a Date. */
+async function runWebkitSearchGuard(base) {
+  const engine = await webkit.launch({ headless: true });
+  const crashes = [];
+  try {
+    const context = await engine.newContext({
+      viewport: { width: 1280, height: 800 },
+      userAgent:
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Safari/605.1.15",
+    });
+    const page = await context.newPage();
+    page.on("pageerror", (err) => crashes.push(String(err?.message || err)));
+    async function quiet(path) {
+      crashes.length = 0;
+      await page.goto(new URL(path, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+      await page
+        .locator('[data-ke="safe-error"], [data-ke="search-count"], [data-ke="search-result-list"], [data-ke="parent-identity"], [data-ke="saved-fallback"]')
+        .first()
+        .waitFor({ timeout: timeoutMs })
+        .catch(() => {});
+      await page.waitForTimeout(1500);
+      const text = (await page.locator("body").innerText().catch(() => "")) || "";
+      const safe = await page.locator('[data-ke="safe-error"]').count();
+      const fallback = await page.locator('[data-ke="saved-fallback"]').count();
+      const threw = crashes.some((message) => /trim is not a function|something went wrong/i.test(message));
+      return {
+        ok: safe === 0 && fallback === 0 && !/Something went wrong|Une erreur est survenue/i.test(text) && !threw,
+        note: `${page.url()} safe=${safe} fallback=${fallback} ${crashes[0] || ""}`.trim(),
+      };
+    }
+    const edmonton = await quiet("/search?q=Edmonton%2C+AB");
+    record("webkit-search-edmonton", edmonton.ok, { note: edmonton.note });
+    const winnipeg = await quiet("/search?q=Winnipeg%2C+MB");
+    record("webkit-search-winnipeg", winnipeg.ok, { note: winnipeg.note });
+    try {
+      const seeded = await setFixture(context, base, { role: "parent" });
+      await pinWebkitE2eSession(context, base, seeded);
+    } catch (err) {
+      record("webkit-parent-saved", false, { note: err instanceof Error ? err.message : String(err) });
+      return;
+    }
+    const saved = await quiet("/parent?tab=saved");
+    const onParent = new URL(page.url()).pathname === "/parent";
+    record("webkit-parent-saved", saved.ok && onParent, { note: saved.note });
+  } finally {
+    await engine.close();
   }
 }
 
@@ -1452,6 +1584,39 @@ try {
   });
   await page.screenshot({ path: join(dirname(outDir), "login.png"), fullPage: false }).catch(() => {});
   record("login", login.ok, { note: login.reason, status: loginResp?.status() ?? 0 });
+  const robots = await page.locator('meta[name="robots"]').getAttribute("content").catch(() => "");
+  record("login-noindex", /noindex/i.test(robots || ""), { note: robots || "" });
+  for (const privatePath of ["/signup", "/forgot-password", "/reset-password", "/offer/e2e-token", "/sign/e2e-id"]) {
+    const resp = await page.request.get(new URL(privatePath, base).href).catch(() => null);
+    const html = (await resp?.text().catch(() => "")) || "";
+    record(`noindex:${privatePath}`, (resp?.status() ?? 500) < 500 && /noindex/i.test(html), {
+      note: String(resp?.status() ?? 0),
+      status: resp?.status() ?? 0,
+    });
+  }
+  const seedResp = await page.request.get(new URL("/api/e2e-seed", base).href).catch(() => null);
+  const seedBody = (await seedResp?.text().catch(() => "")) || "";
+  record("e2e-seed-get-404", (seedResp?.status() ?? 0) === 404 && !/<html/i.test(seedBody), {
+    note: seedBody.slice(0, 80),
+    status: seedResp?.status() ?? 0,
+  });
+  await page.goto(new URL("/search", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+  const searchUrl = page.url();
+  const searchText = await page.locator("body").innerText().catch(() => "");
+  const neutral = /daycares across canada/i.test(searchText) || !/[?&]q=/.test(searchUrl);
+  record("search-no-winnipeg-default", !/winnipeg/i.test(searchUrl) && neutral && (await pageIsQuiet(page)), {
+    note: searchUrl,
+  });
+  await page.goto(new URL("/search?q=qa-test-daycare-listing-zitu", base).href, {
+    waitUntil: "domcontentloaded",
+    timeout: timeoutMs,
+  });
+  const zituLinks = await page.locator('a[href*="/daycare/qa-test-daycare-listing-zitu"]').count();
+  record("qa-zitu-not-public", zituLinks === 0 && (await pageIsQuiet(page)), { note: `links ${zituLinks}` });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: join(dirname(outDir), "search-canada-390.png"), fullPage: false }).catch(() => {});
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.screenshot({ path: join(dirname(outDir), "search-canada-1280.png"), fullPage: false }).catch(() => {});
 
   const adminResp = await page.goto(new URL(SMOKE_PATHS.admin, base).href, {
     waitUntil: "domcontentloaded",
@@ -1532,6 +1697,7 @@ try {
   }
 
   await runRoleFixture(page, base);
+  await runWebkitSearchGuard(base);
 
   if (args.browserSmoke) {
     await runBrowserSmoke(base);

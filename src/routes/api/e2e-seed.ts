@@ -274,6 +274,7 @@ async function seedKidsWorldLive(sql: Awaited<ReturnType<typeof import("@/lib/db
 export const Route = createFileRoute("/api/e2e-seed")({
   server: {
     handlers: {
+      GET: () => new Response("Not found", { status: 404, headers: { "content-type": "text/plain; charset=utf-8", "x-robots-tag": "noindex, nofollow" } }),
       POST: ({ request }) => seed(request),
     },
   },

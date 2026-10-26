@@ -585,9 +585,9 @@ export function sanitizeStickyDesk(
  * Header pills — only desks this session is allowed to open.
  * Admin: kyle@kidease.ca + profiles.role = admin. Parent/Daycare-only never
  * see Admin, even if a stale desk list included it.
- * Parent: a real parent, admin, or support account. A daycare account (provider
- * role, or a parent who already owns a centre) does not get a Parent pill.
- * One account, one role. The operator admin sees Parent, then Daycare, then Admin.
+ * Parent: a parent, a daycare owner, admin, or support. Daycare owners keep
+ * Switch to Parent on the same account. The operator admin sees Parent, then
+ * Daycare, then Admin.
  */
 export function headerDesks(
   desks: DeskKey[],
@@ -600,9 +600,8 @@ export function headerDesks(
     if (desk === "parent" && role != null) {
       const stored = parseAppRole(role);
       if (stored === "admin" || stored === "support" || stored === "support_lead") return true;
-      if (stored !== "parent") return false;
-      if (desks.includes("provider")) return false;
-      return true;
+      if (stored === "parent" || stored === "provider") return true;
+      return false;
     }
     return true;
   });
@@ -615,8 +614,7 @@ export function headerDesks(
 /**
  * Parent | Daycare | Admin switcher. Shown for the operator admin
  * (profiles.role = admin, and kyle@kidease.ca when the mailbox is known)
- * and for a multi-role account that can open both Parent and Daycare.
- * Parent-only and daycare-only stay on their own desk.
+ * and for a daycare owner, who can open both Parent and Daycare.
  */
 export function showDeskSwitcher(
   desks?: DeskKey[] | null,

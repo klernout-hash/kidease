@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { ALERT_CATEGORIES, isAlertCategory, type AlertPrefMap } from "@/lib/alert-push";
+import { isValidTimeZone } from "@/lib/family-time";
 import { pushArmed } from "@/lib/channel-readiness";
 import { vapidPrivateKey, vapidPublicKey } from "@/lib/push";
 import { subscriptionsEnabled } from "@/lib/features";
@@ -32,9 +33,11 @@ export const getMyAlertPrefs = createServerFn({ method: "GET" })
 
 export const saveMyAlertPrefs = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { items?: Array<{ category?: string; enabled?: boolean }> }) => {
+  .validator((input: { items?: Array<{ category?: string; enabled?: boolean }>; timeZone?: string }) => {
     const items = Array.isArray(input?.items) ? input.items : [];
+    const timeZone = isValidTimeZone(input?.timeZone) ? input.timeZone.trim() : "";
     return {
+      timeZone,
       items: items
         .map((item) => ({
           category: String(item?.category || "").trim(),
@@ -45,7 +48,8 @@ export const saveMyAlertPrefs = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ context, data }): Promise<AlertPrefMap> => {
-    const { writeAlertPrefs } = await import("./alert-dispatch");
+    const { writeAlertPrefs, writeFamilyTimeZone } = await import("./alert-dispatch");
+    if (data.timeZone) await writeFamilyTimeZone(context.userId, data.timeZone).catch(() => undefined);
     return writeAlertPrefs(context.userId, data.items);
   });
 

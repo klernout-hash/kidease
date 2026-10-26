@@ -27,8 +27,9 @@ test("Explore hides empty category rails and keeps #209 single-bar filters", () 
   assert.match(bar, /data-ke="explore-map-toggle"/);
   assert.match(bar, /data-search-row="filter-bar"/);
   assert.doesNotMatch(search, /data-search-row="live-filters-map"/);
-  assert.match(origin, /WINNIPEG/);
-  assert.match(origin, /America\/Winnipeg/);
+  assert.match(origin, /CANADA_CAMERA/);
+  assert.match(origin, /isNeutralCanadaOrigin/);
+  assert.doesNotMatch(origin, /label: "Winnipeg, MB"/);
 });
 
 test("Cards quiet overlapping labels and keep a reserved photo aspect", () => {

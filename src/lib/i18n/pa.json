@@ -3048,5 +3048,9 @@
   "facebookEmailResend": "ਲਿੰਕ ਦੁਬਾਰਾ ਭੇਜੋ",
   "facebookEmailSaved": "ਲਿੰਕ ਭੇਜ ਦਿੱਤਾ ਗਿਆ ਹੈ। ਜੰਕ ਮੇਲ ਵੀ ਦੇਖੋ।",
   "facebookEmailRequired": "ਸੈਂਟਰ ਨੂੰ ਸੁਨੇਹਾ ਭੇਜਣ ਜਾਂ ਟੂਰ ਬੁੱਕ ਕਰਨ ਤੋਂ ਪਹਿਲਾਂ ਈਮੇਲ ਜੋੜੋ ਅਤੇ ਪੁਸ਼ਟੀ ਕਰੋ।",
-  "facebookHostUnavailable": "ਇਸ ਪਤੇ ਉੱਤੇ Facebook ਨਾਲ ਜਾਰੀ ਰੱਖਣਾ ਉਪਲਬਧ ਨਹੀਂ। kidease.ca ਖੋਲ੍ਹੋ।"
+  "facebookHostUnavailable": "ਇਸ ਪਤੇ ਉੱਤੇ Facebook ਨਾਲ ਜਾਰੀ ਰੱਖਣਾ ਉਪਲਬਧ ਨਹੀਂ। kidease.ca ਖੋਲ੍ਹੋ।",
+  "canadaSearchTitle": "ਕੈਨੇਡਾ ਭਰ ਦੇ ਡੇਅਕੇਅਰ",
+  "canadaSearchLead": "ਆਪਣੇ ਨੇੜੇ ਦੇ ਕੇਂਦਰ ਵੇਖਣ ਲਈ ਇੱਕ ਸ਼ਹਿਰ ਚੁਣੋ, ਜਾਂ ਟਿਕਾਣਾ ਚਾਲੂ ਕਰੋ।",
+  "canadaSearchChoose": "ਸ਼ਹਿਰ ਚੁਣੋ",
+  "alertSummary": "{total} ਵਿੱਚੋਂ {on} ਚੇਤਾਵਨੀਆਂ ਚਾਲੂ ਹਨ"
 }

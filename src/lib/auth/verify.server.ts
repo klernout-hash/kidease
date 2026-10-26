@@ -2,7 +2,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { DEV_FALLBACK_USER_ID, resolveRequiredUserId } from "@/lib/access-control";
 import { SQL_SETTLE_MS, withTimeout } from "@/lib/timeout";
 import { parseTimestampMs } from "@/lib/admin-idle";
-import { aliasInboundAuthCookies, isKideasePublicHost, unsignedSessionToken } from "./cookies";
+import { aliasInboundAuthCookies, isKideasePublicHost, unsignedSessionToken, withE2eSessionCookie } from "./cookies";
 import { auth, authConfigured } from "./server";
 
 /**
@@ -64,12 +64,13 @@ export async function getVerifiedAuthSession(
   if (!request) return null;
   let headers = request.headers;
   const host = request.headers.get("x-forwarded-host") || request.headers.get("host");
-  if (isKideasePublicHost(host)) {
-    const aliased = aliasInboundAuthCookies(request.headers.get("cookie"));
-    if (aliased !== (request.headers.get("cookie") || "")) {
-      headers = new Headers(headers);
-      headers.set("cookie", aliased);
-    }
+  let cookie = request.headers.get("cookie");
+  if (isKideasePublicHost(host)) cookie = aliasInboundAuthCookies(cookie);
+  const preview = withE2eSessionCookie(cookie, host);
+  if (preview !== (cookie || "")) cookie = preview;
+  if (typeof cookie === "string" && cookie !== (request.headers.get("cookie") || "")) {
+    headers = new Headers(headers);
+    headers.set("cookie", cookie);
   }
   if (bearerToken) {
     headers = new Headers(headers);

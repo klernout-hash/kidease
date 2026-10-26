@@ -9,6 +9,7 @@ export const Route = createFileRoute("/notifications")({
     meta: [
       { title: "Notifications · KidEase" },
       { name: "description", content: "Alerts for tours, requests, claims, and messages on KidEase." },
+      { name: "robots", content: "noindex, nofollow" },
     ],
   }),
   component: NotificationsInbox,

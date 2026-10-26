@@ -42,11 +42,10 @@ const TORONTO_IP = {
 const SAVED_TORONTO = { lat: 43.6532, lng: -79.3832, label: "Toronto, ON" };
 
 /**
- * Kyle in Winnipeg: Explore must not land on Toronto from CDN / stale
- * kidease-origin / IP-class geolocation. Repro: America/Winnipeg + inferred
- * Toronto from Vercel/CF or localStorage without explicit: true.
+ * KidEase covers every province. A Canadian IP or GPS fix is a real place,
+ * including Toronto. Winnipeg is never the fallback when location is unknown.
  */
-describe("Kyle Winnipeg: never default Explore to Toronto", () => {
+describe("Canada-wide Explore never falls back to Winnipeg", () => {
   it("parses CF YYZ colo and Vercel America/Winnipeg timezone", () => {
     assert.equal(parseCfColo("8f3a2b1c0d9e8f7a-YYZ"), "YYZ");
     const hint = parseIpGeoHeaders(
@@ -65,11 +64,12 @@ describe("Kyle Winnipeg: never default Explore to Toronto", () => {
     assert.equal(hint?.city, "Toronto");
     assert.equal(localeSuggestsManitoba({ timeZone: hint.timeZone, ip: hint }), true);
     const origin = originFromIpHint(hint);
-    assert.equal(origin.label, WINNIPEG.label);
-    assert.equal(origin.source, "default");
+    assert.equal(origin.label, "Toronto, ON");
+    assert.equal(origin.source, "ip");
+    assert.notEqual(origin.label, WINNIPEG.label);
   });
 
-  it("SSR Toronto + YYZ edge + Winnipeg timezone still falls back to Winnipeg", () => {
+  it("SSR Toronto + YYZ edge stays Toronto even if the clock header says Winnipeg", () => {
     const origin = resolveAnonymousOriginFromHeaders(
       headers({
         "cf-ipcountry": "CA",
@@ -81,12 +81,13 @@ describe("Kyle Winnipeg: never default Explore to Toronto", () => {
         "cf-ray": "abc123-YYZ",
       }),
     );
-    assert.equal(origin.label, WINNIPEG.label);
-    assert.notEqual(origin.label, "Toronto, ON");
+    assert.equal(origin.label, "Toronto, ON");
+    assert.equal(origin.source, "ip");
+    assert.notEqual(origin.label, WINNIPEG.label);
   });
 
-  it("discards stale localStorage Toronto when timezone is America/Winnipeg", () => {
-    assert.equal(trustedSavedOrigin(SAVED_TORONTO, { timeZone: "America/Winnipeg" }), null);
+  it("keeps a saved Toronto origin and prefers granted Canadian GPS", () => {
+    assert.equal(trustedSavedOrigin(SAVED_TORONTO, { timeZone: "America/Winnipeg" })?.label, "Toronto, ON");
     const resolved = resolveDefaultSearchOrigin({
       saved: SAVED_TORONTO,
       ip: TORONTO_IP,
@@ -94,8 +95,8 @@ describe("Kyle Winnipeg: never default Explore to Toronto", () => {
       gpsAllowed: true,
       gps: { lat: 43.6532, lng: -79.3832, accuracyM: 8_000 },
     });
-    assert.equal(resolved.label, WINNIPEG.label);
-    assert.equal(resolved.source, "default");
+    assert.match(resolved.label, /Toronto/);
+    assert.equal(resolved.source, "gps");
   });
 
   it("keeps explicit typed/Places Toronto even if the clock is Winnipeg", () => {
@@ -107,14 +108,14 @@ describe("Kyle Winnipeg: never default Explore to Toronto", () => {
     assert.equal(resolved.label, "Toronto, ON");
   });
 
-  it("rejects laptop/IP GPS that pins Toronto while the locale is Manitoba", () => {
+  it("keeps Canadian GPS, including a coarse Toronto fix", () => {
     const coarse = originFromDeviceFix(
       { lat: 43.6532, lng: -79.3832, accuracyM: 5_000 },
       PRODUCT_HOME,
       { timeZone: "America/Winnipeg" },
     );
-    assert.equal(coarse.label, WINNIPEG.label);
-    assert.equal(coarse.source, "default");
+    assert.match(coarse.label, /Toronto/);
+    assert.equal(coarse.source, "gps");
 
     const street = originFromDeviceFix(
       { lat: 43.66, lng: -79.39, accuracyM: 25 },
@@ -145,11 +146,19 @@ describe("Kyle Winnipeg: never default Explore to Toronto", () => {
     assert.equal(saved.label, WINNIPEG.label);
   });
 
-  it("requests browser geolocation on Explore when consent is unset and saved Toronto is untrusted", () => {
+  it("requests browser geolocation on Explore when consent is unset and nothing is saved", () => {
+    assert.equal(trustedSavedOrigin(SAVED_TORONTO, { timeZone: "America/Winnipeg" })?.label, "Toronto, ON");
     assert.equal(
       shouldRequestExploreGeolocation({
         consent: "unset",
         savedTrusted: Boolean(trustedSavedOrigin(SAVED_TORONTO, { timeZone: "America/Winnipeg" })),
+      }),
+      false,
+    );
+    assert.equal(
+      shouldRequestExploreGeolocation({
+        consent: "unset",
+        savedTrusted: false,
       }),
       true,
     );

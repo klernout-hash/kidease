@@ -154,14 +154,16 @@ test("vacancy copy is honest and request_reply points at /inbox/{id}", () => {
 });
 
 test("quiet hours hold email; push/SMS cap is 3 per search per day", () => {
+  const zone = "America/Winnipeg";
   const quiet = new Date("2026-09-09T22:15:00-05:00");
-  assert.equal(isAlertQuietHours(quiet), true);
-  assert.equal(canSendDigestEmail(null, quiet), false);
+  assert.equal(isAlertQuietHours(quiet), false);
+  assert.equal(isAlertQuietHours(quiet, zone), true);
+  assert.equal(canSendDigestEmail(null, quiet, zone), false);
   const morning = new Date("2026-09-09T08:05:00-05:00");
   assert.ok(winnipegHour(morning) >= 8);
-  assert.equal(isAlertQuietHours(morning), false);
-  assert.equal(canSendDigestEmail(null, morning), true);
-  assert.equal(canSendDigestEmail(morning.toISOString(), new Date(morning.getTime() + 60 * 60 * 1000)), false);
+  assert.equal(isAlertQuietHours(morning, zone), false);
+  assert.equal(canSendDigestEmail(null, morning, zone), true);
+  assert.equal(canSendDigestEmail(morning.toISOString(), new Date(morning.getTime() + 60 * 60 * 1000), zone), false);
   assert.equal(underPushSmsDailyCap(0), true);
   assert.equal(underPushSmsDailyCap(3), false);
 });
