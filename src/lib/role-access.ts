@@ -189,25 +189,31 @@ export function roleNavItems(input: { role: ChromeRole; paid?: boolean; subscrip
   const paid = Boolean(input.paid);
   const planLabel = upgradeNavLabel(paid);
   if (input.role === "parent") {
-    return [
+    const items: RoleNavItem[] = [
       { id: "home", label: "Home", to: "/parent", icon: "parent" },
       { id: "search", label: "Search", to: "/search", icon: "explore" },
       { id: "saved", label: "Saved", to: "/parent", search: { tab: "saved" }, icon: "saved" },
       { id: "requests", label: "Requests", to: "/parent", search: { tab: "requests" }, icon: "tourChecklist" },
       { id: "messages", label: "Messages", to: "/inbox", search: { view: "family" }, icon: "messages" },
-      { id: "upgrade", label: planLabel, to: "/parent", search: { tab: "subscription" }, icon: "benefits" },
-      { id: "account", label: "Account", to: "/account", search: { tab: "profile" }, icon: "account" },
     ];
+    if (input.subscriptionsOn === true) {
+      items.push({ id: "upgrade", label: planLabel, to: "/parent", search: { tab: "subscription" }, icon: "benefits" });
+    }
+    items.push({ id: "account", label: "Account", to: "/account", search: { tab: "profile" }, icon: "account" });
+    return items;
   }
   if (input.role === "provider") {
-    return [
+    const items: RoleNavItem[] = [
       { id: "desk", label: "Today", to: "/provider", search: { desk: "today" }, icon: "daycare" },
       { id: "requests", label: "Requests", to: "/provider", search: { desk: "requests" }, icon: "tourChecklist" },
       { id: "listing", label: "Listings", to: "/provider", search: { desk: "listings" }, icon: "claim" },
       { id: "messages", label: "Messages", to: "/inbox", search: { view: "centre" }, icon: "messages" },
-      { id: "upgrade", label: planLabel, to: "/provider/subscription", icon: "benefits" },
       { id: "account", label: "Account", to: "/account", search: { tab: "profile" }, icon: "account" },
     ];
+    if (input.subscriptionsOn === true) {
+      items.splice(4, 0, { id: "upgrade", label: planLabel, to: "/provider/subscription", icon: "benefits" });
+    }
+    return items;
   }
   if (input.role === "admin") {
     return [
@@ -225,14 +231,19 @@ export function roleNavItems(input: { role: ChromeRole; paid?: boolean; subscrip
       { id: "account", label: "Account", to: "/account", search: { tab: "profile" }, icon: "account" },
     ];
   }
-  return [
+  const guest: RoleNavItem[] = [
     { id: "signin", label: "Sign in", to: "/login", icon: "login" },
     { id: "create", label: "Create an account", to: "/login", search: { intent: "up" }, icon: "parent" },
     { id: "list", label: "List your daycare", to: "/claim", icon: "claim" },
-    { id: "plans", label: "Plans", to: "/plans", icon: "benefits" },
+  ];
+  if (input.subscriptionsOn === true) {
+    guest.push({ id: "plans", label: "Plans", to: "/plans", icon: "benefits" });
+  }
+  guest.push(
     { id: "search", label: "Search", to: "/search", icon: "explore" },
     { id: "help", label: "Help centre", to: "/help", icon: "help" },
-  ];
+  );
+  return guest;
 }
 
 export type ListingActionMode = "parent" | "edit" | "none" | "all";

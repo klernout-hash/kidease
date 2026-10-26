@@ -14,10 +14,10 @@ import {
   type CatalogDaycare,
 } from "@/lib/catalog";
 import { filterByDaycareName, readLiveSearchFlag } from "@/lib/explore-search";
-import { hideListingFromPublicPage, isAdminOnlyListing, isPublicListing, publicListings } from "@/lib/listing-visibility";
+import { hideListingFromPublicPage, isAdminOnlyListing, isHiddenTestListing, isPublicListing, publicListings } from "@/lib/listing-visibility";
 import { parseAnchorMode, resolveSearchAnchors } from "@/lib/dual-anchor";
 import { nearbyListings, nearbyListingsAlong, nearbyListingsDual, type NearbyListing } from "./nearby";
-import { callerMayViewHiddenListing } from "./public-listing";
+import { callerIsTestAccount, callerMayViewHiddenListing } from "./public-listing";
 import { applyListingReadiness, compareFreshOpenSpots, hasConfirmedAges } from "@/lib/listing-readiness";
 import { standardGroupsForRange } from "@/lib/standard-age-groups";
 import { listingAgeUnknown } from "@/lib/now-loops";
@@ -721,11 +721,61 @@ function normalizeSearchInput(input: SearchInput): SearchInput {
   };
 }
 
+/** Hidden QA fixtures for a flagged test account. Never written into the public search memo. */
+async function loadTestFixtureCards(data: SearchInput): Promise<DaycareCard[]> {
+  try {
+    const sql = await getSql();
+    const rows = await sql<DaycareRow>`
+      select * from daycares d
+      where d.is_test = 1
+         or d.slug ilike 'qa-%'
+         or d.slug ilike 'qa\\_%'
+         or d.name ilike '%qa test%'
+      limit 40
+    `;
+    const origin = { lat: data.lat, lng: data.lng };
+    const nameQ = (data.name || "").trim().toLowerCase();
+    const radius = clampRadiusKm(data.radiusKm);
+    const cards: DaycareCard[] = [];
+    for (const row of rows) {
+      const daycare = mapDaycare(row);
+      if (!isHiddenTestListing(daycare)) continue;
+      const km = cardSortKm(origin, { lat: daycare.lat, lng: daycare.lng });
+      if (nameQ.length >= 2) {
+        const blob = `${daycare.name} ${daycare.slug}`.toLowerCase();
+        if (!blob.includes(nameQ)) continue;
+      } else if (km > radius) {
+        continue;
+      }
+      cards.push({
+        ...daycare,
+        distanceKm: km,
+        spotsTotal: spotsTotal(daycare),
+        fromPrice: fromPrice(daycare),
+      });
+    }
+    return cards;
+  } catch {
+    return [];
+  }
+}
+
+async function appendTestAccountFixtures(data: SearchInput, cards: DaycareCard[]): Promise<DaycareCard[]> {
+  if (!(await callerIsTestAccount())) return cards;
+  const extra = await loadTestFixtureCards(data);
+  if (!extra.length) return cards;
+  return uniqueById([...extra, ...cards]);
+}
+
 export const searchDaycares = createServerFn({ method: "GET" })
   .validator((input: SearchInput) => normalizeSearchInput(input))
-  .handler(async ({ data }) =>
-    rememberSearch(`${searchMemoKey(data)}:${parentFitCacheKey(data.parentFit ?? null)}`, () => searchIncludingLive(data)),
-  );
+  .handler(async ({ data }) => {
+    const found = await rememberSearch(
+      `${searchMemoKey(data)}:${parentFitCacheKey(data.parentFit ?? null)}`,
+      () => searchIncludingLive(data),
+    );
+    return appendTestAccountFixtures(data, found);
+  });
 
 /** Same ranking as searchDaycares, then one page of 96 cards. */
 export const searchDaycarePage = createServerFn({ method: "GET" })
@@ -739,7 +789,8 @@ export const searchDaycarePage = createServerFn({ method: "GET" })
       `${searchMemoKey(query)}:${parentFitCacheKey(query.parentFit ?? null)}`,
       () => searchIncludingLive(query),
     );
-    const all = query.live ? found.filter((card) => isClaimVerified(card) && !card.isTest) : found;
+    const listed = query.live ? found.filter((card) => isClaimVerified(card) && !card.isTest) : found;
+    const all = await appendTestAccountFixtures(query, listed);
     return sliceSearchPage(all, page);
   });
 
@@ -804,7 +855,11 @@ export const getDaycare = createServerFn({ method: "GET" })
   .handler(async ({ data: slug }) => {
     const found = await catalogBySlugGet(slug);
     if (!found) return null;
-    if (hideListingFromPublicPage(found, await callerMayViewHiddenListing(found.id))) return null;
+    const [adminView, testAccount] = await Promise.all([
+      callerMayViewHiddenListing(found.id),
+      callerIsTestAccount(),
+    ]);
+    if (hideListingFromPublicPage(found, { admin: adminView, testAccount })) return null;
     const origin = { lat: found.lat, lng: found.lng };
     // The nearest 400 within 40 km include every centre the 15 km query would return.
     const metroPeers = uniqueById(
@@ -943,7 +998,11 @@ export const getListingSeo = createServerFn({ method: "GET" })
   .handler(async ({ data: slug }) => {
     const found = await catalogBySlugGet(slug);
     if (!found) return null;
-    if (hideListingFromPublicPage(found, await callerMayViewHiddenListing(found.id))) return null;
+    const [adminView, testAccount] = await Promise.all([
+      callerMayViewHiddenListing(found.id),
+      callerIsTestAccount(),
+    ]);
+    if (hideListingFromPublicPage(found, { admin: adminView, testAccount })) return null;
     return {
       slug: found.slug,
       name: found.name,

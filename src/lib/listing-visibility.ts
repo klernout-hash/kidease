@@ -189,19 +189,48 @@ export function isPublicListing(d: ListingVisibilityInput | null | undefined): b
 }
 
 /**
+ * QA / operator fixture a flagged test account may open by URL.
+ * US rows, hidden duplicates, and merged rows stay hidden from everyone.
+ * Public search and the sitemap still use isPublicListing.
+ */
+export function isHiddenTestListing(d: ListingVisibilityInput | null | undefined): boolean {
+  if (!d) return false;
+  if (isHiddenDuplicateSlug(d.slug)) return false;
+  if (isUsCatalogueRow(d)) return false;
+  if (isSupersededCatalogueRow(d)) return false;
+  // The catalogue exception slug is not "admin only" in code, but a paused or
+  // otherwise non-public QA row is still a test listing.
+  if (PUBLIC_CATALOGUE_SLUGS.has(norm(d.slug))) return !isPublicListing(d);
+  if (isAdminOnlyListing(d)) return true;
+  return looksLikeTestFixture(d);
+}
+
+/** `true` keeps the old admin short-circuit. A test account is not an admin. */
+export type PublicListingViewer = boolean | { admin?: boolean; testAccount?: boolean };
+
+function viewerFlags(viewer: PublicListingViewer | undefined): { admin: boolean; testAccount: boolean } {
+  if (typeof viewer === "boolean") return { admin: viewer, testAccount: false };
+  return { admin: Boolean(viewer?.admin), testAccount: Boolean(viewer?.testAccount) };
+}
+
+/**
  * Public listing document. Merged rows and import faults stay hidden from
  * everyone here (the loader 301s a merged slug to its keeper). An admin can
  * still open an admin-only or paused row that has no fault and no keeper.
+ * A test account can open a hidden test fixture, including a paused QA row,
+ * and still cannot open a declined or paused production centre.
  */
 export function hideListingFromPublicPage(
   d: ListingVisibilityInput | null | undefined,
-  viewerIsAdmin = false,
+  viewer: PublicListingViewer = false,
 ): boolean {
   if (!d) return true;
   if (isHiddenDuplicateSlug(d.slug)) return true;
   if (isUsCatalogueRow(d)) return true;
   if (isSupersededCatalogueRow(d)) return true;
-  if (viewerIsAdmin) return false;
+  const flags = viewerFlags(viewer);
+  if (flags.admin) return false;
+  if (flags.testAccount && isHiddenTestListing(d)) return false;
   if (isNonPublicClaimStatus(d.claimStatus)) return true;
   if (isInactiveListing(d)) return true;
   return isAdminOnlyListing(d);
@@ -264,7 +293,8 @@ export function providerDeskListingVisible(
   return PROVIDER_DESK_REVIEW_STATUSES.has(status);
 }
 
-export function publicListings<T extends ListingVisibilityInput>(rows: T[]): T[] {
+export function publicListings<T extends ListingVisibilityInput>(rows: readonly T[] | null | undefined): T[] {
+  if (!Array.isArray(rows)) return [];
   return rows.filter((row) => isPublicListing(row));
 }
 

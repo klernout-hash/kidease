@@ -46,6 +46,8 @@ export function sitePermissionsPolicy(input: {
 }): string {
   const camera = input.camera ? "camera=(self)" : "camera=()";
   const microphone = input.microphone ? "microphone=(self)" : "microphone=()";
-  const notifications = notificationsPolicyDirective(input.notifications);
-  return `${camera}, ${microphone}, geolocation=(self), payment=(self), ${notifications}`;
+  // Chromium rejects the notifications feature in Permissions-Policy.
+  // Notification.requestPermission() does not need that directive.
+  void input.notifications;
+  return `${camera}, ${microphone}, geolocation=(self), payment=(self)`;
 }

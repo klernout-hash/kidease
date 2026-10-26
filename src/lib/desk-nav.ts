@@ -172,14 +172,14 @@ export const DESK_META: Record<DeskId, { eyebrow: string; title: string; eyebrow
 type DeskNavOpts = {
   providerSubscriptions?: boolean;
   showPayCtas?: boolean;
-  /** When false, hide the parent Subscription item. Daycare subscription stays. */
+  /** Daycare Subscription and parent plan chrome. Off until SUBSCRIPTIONS_ENABLED. */
   subscriptionsEnabled?: boolean;
   centreOwner?: boolean;
-  /** Active centre member. Subscription stays hidden for staff unless this is true. */
+  /** Active centre member. Owner-only items stay hidden for staff unless this is true. */
   centreLinked?: boolean;
 };
 
-/** Hide Subscription only when the live director flag is off. Hide Promote pay chrome when SHOW_PAY_CTAS is off. */
+/** Hide the daycare Subscription item unless SUBSCRIPTIONS_ENABLED is on. Hide Promote when SHOW_PAY_CTAS is off. */
 const OWNER_ONLY_NAV = new Set([
   "money",
   "licence",
@@ -195,7 +195,7 @@ const OWNER_ONLY_NAV = new Set([
 export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
   return DESK_NAV[desk].filter((item) => {
     if (item.devOnly && import.meta.env?.PROD === true) return false;
-    if (item.id === "upgrade" || item.id === "subscription") return true;
+    if (item.id === "upgrade" || item.id === "subscription") return opts?.subscriptionsEnabled === true;
     if (item.id === "promote") {
       if (opts?.showPayCtas === false) return false;
       if (opts?.centreOwner === false) return false;

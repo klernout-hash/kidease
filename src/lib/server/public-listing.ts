@@ -41,3 +41,33 @@ export async function callerMayViewHiddenListing(daycareId: string, bearerToken?
   if (await callerIsAdmin(bearerToken)) return true;
   return callerOwnsDaycare(daycareId, bearerToken);
 }
+
+/** profiles.is_test. Accepts the int column and a boolean from a driver. */
+export function profileIsTestAccount(value: unknown): boolean {
+  return value === true || value === 1 || value === "1";
+}
+
+/** Signed-in profile flagged as a test account. Fail closed. */
+export async function callerIsTestAccount(bearerToken?: string): Promise<boolean> {
+  try {
+    const user = await getSessionUser(bearerToken);
+    if (!user) return false;
+    const { getSql } = await import("@/lib/db");
+    const sql = await getSql();
+    const rows = await sql<{ is_test: number | boolean | string | null }>`
+      select is_test from profiles where user_id = ${user.id} limit 1
+    `;
+    return profileIsTestAccount(rows[0]?.is_test);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Admin, or a flagged test account, may message, save, tour, and request a
+ * spot on a hidden test listing. Claim checks stay admin-only.
+ */
+export async function callerMayUseAdminOnlyListing(bearerToken?: string): Promise<boolean> {
+  if (await callerIsAdmin(bearerToken)) return true;
+  return callerIsTestAccount(bearerToken);
+}

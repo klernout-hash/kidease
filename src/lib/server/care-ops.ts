@@ -208,7 +208,7 @@ export const listCareOps = createServerFn({ method: "POST" })
       : await listAccessibleDaycareIds(sql, context.userId);
     const isProvider = accessible.length > 0;
 
-    const rooms = await sql
+    const roomsP = sql
       .query<{
         id: string;
         daycare_id: string;
@@ -239,7 +239,7 @@ export const listCareOps = createServerFn({ method: "POST" })
       )
       .catch(() => []);
 
-    const assignments = await sql
+    const assignmentsP = sql
       .query<{
         daycare_id: string;
         room_id: string;
@@ -262,7 +262,7 @@ export const listCareOps = createServerFn({ method: "POST" })
       )
       .catch(() => []);
 
-    const roster = await sql
+    const rosterP = sql
       .query<{
         id: string;
         daycare_id: string;
@@ -291,8 +291,8 @@ export const listCareOps = createServerFn({ method: "POST" })
       )
       .catch(() => []);
 
-    const staff = isProvider
-      ? await sql
+    const staffP = isProvider
+      ? sql
           .query<{ user_id: string; daycare_id: string; name: string | null; email: string | null; role: string }>(
             `select m.user_id, m.daycare_id, coalesce(nullif(btrim(u.name), ''), u.email) as name,
                     u.email, m.role
@@ -304,9 +304,9 @@ export const listCareOps = createServerFn({ method: "POST" })
             [accessible],
           )
           .catch(() => [])
-      : [];
+      : Promise.resolve([]);
 
-    const medications = await sql
+    const medicationsP = sql
       .query<{
         id: string;
         daycare_id: string;
@@ -346,7 +346,7 @@ export const listCareOps = createServerFn({ method: "POST" })
       )
       .catch(() => []);
 
-    const logs = await sql
+    const logsP = sql
       .query<{
         id: string;
         medication_id: string;
@@ -378,7 +378,7 @@ export const listCareOps = createServerFn({ method: "POST" })
       )
       .catch(() => []);
 
-    const incidents = await sql
+    const incidentsP = sql
       .query<{
         id: string;
         daycare_id: string;
@@ -419,7 +419,7 @@ export const listCareOps = createServerFn({ method: "POST" })
       )
       .catch(() => []);
 
-    const dayNotes = await sql
+    const dayNotesP = sql
       .query<{
         daycare_id: string;
         booking_id: string | null;
@@ -455,7 +455,7 @@ export const listCareOps = createServerFn({ method: "POST" })
       )
       .catch(() => []);
 
-    const splits = await sql
+    const splitsP = sql
       .query<{
         booking_id: string;
         daycare_id: string;
@@ -482,6 +482,18 @@ export const listCareOps = createServerFn({ method: "POST" })
         data.daycareId ? [context.userId, data.daycareId] : [context.userId],
       )
       .catch(() => []);
+
+    const [rooms, assignments, roster, staff, medications, logs, incidents, dayNotes, splits] = await Promise.all([
+      roomsP,
+      assignmentsP,
+      rosterP,
+      staffP,
+      medicationsP,
+      logsP,
+      incidentsP,
+      dayNotesP,
+      splitsP,
+    ]);
 
     const visibleRooms = isProvider
       ? rooms

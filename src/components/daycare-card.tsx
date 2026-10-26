@@ -256,7 +256,7 @@ export const DaycareCard = memo(function DaycareCard({
       (originIsParentLocation(originSource) &&
         plausibleListingKm(distanceKm, item.city, origin.label)),
   });
-  const photos = (item.photos ?? []).filter((p) => p && !p.includes("-logo"));
+  const photos = (Array.isArray(item.photos) ? item.photos : []).filter((p) => p && !p.includes("-logo"));
   const hollowPhoto = !photos.some((p) => isRealListingPhoto(p));
   const offerClaim = showPublicClaimPrompt(item);
 

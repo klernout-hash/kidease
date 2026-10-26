@@ -172,10 +172,10 @@ test("auth password, email, 2FA, and delete posts are blocked; sign-out stays op
   assert.equal(viewAsAuthFailureEndsSession("database down"), false);
 });
 
-test("a parent who also runs a daycare sees Parent and Daycare, not Admin", () => {
+test("a parent who also runs a daycare sees Daycare only", () => {
   const desks = desksFor({ role: "parent", ownsCentre: true });
-  assert.deepEqual(headerDesks(desks, "parent", "parent@example.com"), ["provider", "parent"]);
-  assert.equal(showDeskSwitcher(desks, "parent", "parent@example.com"), true);
+  assert.deepEqual(headerDesks(desks, "parent", "parent@example.com"), ["provider"]);
+  assert.equal(showDeskSwitcher(desks, "parent", "parent@example.com"), false);
   assert.equal(headerDesks(desks, "parent", "parent@example.com").includes("admin"), false);
   assert.equal(viewAsHome("parent", true), "/provider");
   assert.equal(viewAsHome("parent", false), "/parent");

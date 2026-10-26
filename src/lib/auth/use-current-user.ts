@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { SESSION_SETTLE_MS } from "@/lib/timeout";
-import { authClient, authEnabled } from "./client";
+import { authClient, authEnabled, isLocallySignedOut, subscribeLocalAuth } from "./client";
 
 /** Normalized user shape used across the app, auth on or off. */
 export type AppUser = {
@@ -64,6 +64,13 @@ export function useCurrentUserState(): CurrentUserState {
   return useSettledUser(SESSION_SETTLE_MS);
 }
 
+/** True from the moment this tab starts signing out until a new session is confirmed. */
+export function useLocallySignedOut(): boolean {
+  if (!authEnabled) return false;
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  return useSyncExternalStore(subscribeLocalAuth, isLocallySignedOut, () => false);
+}
+
 /**
  * Convenience view of `useCurrentUserState().user` for display (e.g.
  * `user?.displayName ?? "Guest"`). NOTE: `null` means *loading OR signed out* —
@@ -95,6 +102,8 @@ export function useSettledUser(timeoutMs = SESSION_SETTLE_MS): CurrentUserState 
   if (!authEnabled) return { user: DEV_USER, isPending: false };
   const { data, isPending } = authClient.useSession();
   // eslint-disable-next-line react-hooks/rules-of-hooks
+  const signedOut = useSyncExternalStore(subscribeLocalAuth, isLocallySignedOut, () => false);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [expired, setExpired] = useState(false);
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const [lastUser, setLastUser] = useState<AppUser | null>(null);
@@ -117,8 +126,14 @@ export function useSettledUser(timeoutMs = SESSION_SETTLE_MS): CurrentUserState 
   );
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
+    if (signedOut) {
+      setLastUser(null);
+      return;
+    }
     if (mapped) setLastUser(mapped);
-  }, [mapped?.id, mapped?.displayName, mapped?.primaryEmail, mapped?.profileImageUrl]);
+    else if (!isPending) setLastUser(null);
+  }, [signedOut, isPending, mapped, mapped?.id, mapped?.displayName, mapped?.primaryEmail, mapped?.profileImageUrl]);
+  if (signedOut) return { user: null, isPending: false };
   if (mapped) return { user: mapped, isPending: false };
   if (isPending && !expired) return { user: lastUser, isPending: !lastUser };
   if (expired) return { user: lastUser, isPending: false };

@@ -79,15 +79,19 @@ export function homeValidateSearch(s: Record<string, unknown>) {
 
 export async function loadProductHome() {
   const origin = await withTimeoutFallback(resolveRequestSearchOrigin(), ORIGIN_BUDGET_MS, productHomeOrigin());
-  const painted = await withPaintBudget(
-    featuredDaycares({ data: { lat: origin.lat, lng: origin.lng, label: origin.label, radiusKm: 25 } }),
-    HOME_PAINT_BUDGET_MS,
-  );
-  return {
-    featured: painted.value ?? [],
-    featuredReady: painted.ready,
-    origin,
-  };
+  try {
+    const painted = await withPaintBudget(
+      featuredDaycares({ data: { lat: origin.lat, lng: origin.lng, label: origin.label, radiusKm: 25 } }),
+      HOME_PAINT_BUDGET_MS,
+    );
+    return {
+      featured: Array.isArray(painted.value) ? painted.value : [],
+      featuredReady: painted.ready,
+      origin,
+    };
+  } catch {
+    return { featured: [], featuredReady: true, origin };
+  }
 }
 
 export type ProductHomeBoot = Awaited<ReturnType<typeof loadProductHome>>;
@@ -186,7 +190,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
         `home-featured:${loc.lat},${loc.lng},${radiusKm},${loc.label ?? ""}`,
         QUERY_STALE_MS,
         () => featuredDaycares({ data: { lat: loc.lat, lng: loc.lng, label: loc.label, radiusKm } }),
-        { cacheIf: (rows) => rows.length > 0 },
+        { cacheIf: (rows) => Array.isArray(rows) && rows.length > 0 },
       )
         .then((rows) => {
           if (cancelled) return;

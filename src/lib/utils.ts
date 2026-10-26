@@ -10,7 +10,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function uniqueById<T extends { id: string }>(rows: T[]) {
+export function asList<T>(value: readonly T[] | null | undefined): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
+export function uniqueById<T extends { id: string }>(rows: readonly T[] | null | undefined): T[] {
+  if (!Array.isArray(rows)) return [];
   const seen = new Set<string>();
   return rows.filter((row) => {
     if (seen.has(row.id)) return false;

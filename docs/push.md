@@ -79,7 +79,7 @@ The native client does not import the plugin in v1. `registerPushDevice` returns
 
 www calls `Notification.requestPermission()` only from the Get alerts button, and only when the visitor is signed in, Web Push is supported, both VAPID keys exist, and `FEATURE_PUSH` is armed. The first view in a browser tab does not ask. Unsigned visitors never see the prompt.
 
-`vercel.json` sets `notifications=(self)` so an armed site can ask. `notifications=()` would block the prompt even after keys exist. The button is the real gate. Chat lab shows whether each secret is present. It never shows the value.
+The site Permissions-Policy header omits `notifications`. Chromium logs an unrecognized-feature warning for that token, and `Notification.requestPermission()` still works without it. The button is the real gate. Chat lab shows whether each secret is present. It never shows the value.
 
 ## What is wired
 

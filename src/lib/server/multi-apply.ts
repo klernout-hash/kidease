@@ -9,7 +9,7 @@ import {
   planMultiApply,
   type MultiSkipReason,
 } from "@/lib/multi-apply";
-import { callerIsAdmin } from "@/lib/server/public-listing";
+import { callerMayUseAdminOnlyListing } from "@/lib/server/public-listing";
 import { centreCanAcceptInquiry } from "@/lib/server/provider-entitlements";
 import { recordLeadRequest } from "@/lib/server/lead-requests";
 import { upsertDaycare } from "@/lib/server/seed";
@@ -74,7 +74,7 @@ export const createMultiSpotRequest = createServerFn({ method: "POST" })
         and b.status <> 'cancelled'
     `;
     const loaded: Array<{ id: string; live: boolean; row: DaycareRow | null }> = [];
-    const admin = await callerIsAdmin();
+    const admin = await callerMayUseAdminOnlyListing();
     for (const id of ids) {
       const listed = await catalogByIdGet(id);
       if (isAdminOnlyListing(listed ?? { id }) && !admin) {

@@ -77,29 +77,26 @@ test("admin role unlocks all four desks; provider also gets parent", () => {
   assert.equal(showDeskSwitcher(["parent"]), false);
   assert.equal(showDeskSwitcher(["provider", "parent"]), false);
   assert.equal(showDeskSwitcher(["provider", "parent"], "provider"), false);
-  assert.equal(showDeskSwitcher(["provider", "parent"], "parent"), true);
+  assert.equal(showDeskSwitcher(["provider", "parent"], "parent"), false);
   assert.equal(showDeskSwitcher(["admin", "support", "provider", "parent"], "admin"), true);
   assert.equal(showDeskSwitcher(["admin", "support", "provider", "parent"], "admin", "kyle@kidease.ca"), true);
   assert.equal(showDeskSwitcher(["admin", "support", "provider", "parent"], "admin", "parent@example.com"), false);
   assert.equal(showDeskSwitcher(["admin", "parent"], "parent"), false);
-  assert.equal(showDeskSwitcher(["admin", "parent", "provider"], "parent"), true);
+  assert.equal(showDeskSwitcher(["admin", "parent", "provider"], "parent"), false);
   assert.equal(showDeskSwitcher(["provider", "parent"], "provider", "kyle@kidease.ca"), false);
-  assert.deepEqual(headerDesks(["admin", "parent", "provider"], "parent"), ["parent", "provider"]);
+  assert.deepEqual(headerDesks(["admin", "parent", "provider"], "parent"), ["provider"]);
   assert.deepEqual(headerDesks(["admin", "support", "provider", "parent"], "admin"), [
     "parent",
     "provider",
     "admin",
   ]);
-  assert.deepEqual(headerDesks(["admin", "parent", "provider"], "parent"), ["parent", "provider"]);
+  assert.deepEqual(headerDesks(["admin", "parent", "provider"], "parent"), ["provider"]);
   assert.deepEqual(headerDesks(["provider", "parent"], "provider"), ["provider"]);
   assert.deepEqual(headerDesks(["support", "parent"], "support"), ["support", "parent"]);
   assert.equal(headerDesks(desksFor({ role: "parent" }), "parent").includes("admin"), false);
   assert.equal(headerDesks(desksFor({ role: "provider" }), "provider").includes("admin"), false);
   assert.equal(headerDesks(desksFor({ role: "provider" }), "provider").includes("parent"), false);
-  assert.deepEqual(headerDesks(desksFor({ role: "parent", ownsCentre: true }), "parent"), [
-    "provider",
-    "parent",
-  ]);
+  assert.deepEqual(headerDesks(desksFor({ role: "parent", ownsCentre: true }), "parent"), ["provider"]);
   assert.deepEqual(headerDesks(desksFor({ role: "admin" }), "admin", "kyle@kidease.ca"), [
     "parent",
     "provider",
