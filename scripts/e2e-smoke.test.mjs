@@ -268,7 +268,7 @@ test("CI e2e job builds preview locally or accepts workflow_dispatch BASE_URL", 
   const ci = src(".github/workflows/ci.yml");
   assert.match(ci, /workflow_dispatch:/);
   assert.match(ci, /base_url:/);
-  assert.match(ci, /npx playwright install --with-deps chromium/);
+  assert.equal((ci.match(/npx playwright install --with-deps chromium webkit/g) || []).length, 2);
   assert.match(ci, /npm run build/);
   assert.match(ci, /npm run e2e:preview/);
   assert.match(ci, /BROWSER_ALLOW_EXTERNAL_HOST/);
