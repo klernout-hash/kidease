@@ -103,7 +103,7 @@ export function buildContentSecurityPolicy(nonce) {
     "style-src-attr 'unsafe-inline'",
     `img-src 'self' data: blob: https: ${CSP_IMG_HOSTS.join(" ")}`,
     "font-src 'self' data: https://fonts.gstatic.com",
-    `connect-src 'self' data: ${CSP_CONNECT_HOSTS.join(" ")}`,
+    `connect-src 'self' data: blob: ${CSP_CONNECT_HOSTS.join(" ")}`,
     "media-src 'self' blob: mediastream:",
     "worker-src 'self' blob: data:",
     `frame-src ${CSP_FRAME_HOSTS.join(" ")}`,

@@ -75,11 +75,15 @@ export async function getVerifiedAuthSession(
     headers = new Headers(headers);
     headers.set("Authorization", `Bearer ${bearerToken}`);
   }
+  // A timeout or database error must throw. Callers that paint private pages
+  // (role chrome) treat a throw as degraded and stay on the page. Swallowing
+  // it as null looks like a real sign-out and beforeLoad sends /account to
+  // /login?intent=in&next=/account with no save confirmation.
   const session = await withTimeout(
     auth.api.getSession({ headers }),
     SQL_SETTLE_MS,
     "get-session-timeout",
-  ).catch(() => null);
+  );
   if (!session?.user) return null;
   const rawToken = typeof session.session?.token === "string" ? session.session.token : null;
   return {

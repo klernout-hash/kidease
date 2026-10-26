@@ -54,6 +54,11 @@ describe("home / session / splash cannot stay pending forever", () => {
     assert.match(hook, /if \(expired\) return \{ user: lastUser, isPending: false \}/);
     const verify = src("src/lib/auth/verify.server.ts");
     assert.match(verify, /get-session-timeout/);
+    assert.doesNotMatch(verify, /\.catch\(\s*\(\)\s*=>\s*null\s*\)/);
+    assert.match(src("src/lib/server/role-route.ts"), /return \{ \.\.\.DEGRADED/);
+    const account = src("src/routes/account.tsx");
+    assert.doesNotMatch(account, /updateUser\(\{\s*name:/);
+    assert.match(account, /updateUser\(\{\s*image:/);
     const authApi = src("src/routes/api/auth/$.ts");
     assert.match(authApi, /get-session/);
     assert.doesNotMatch(authApi, /session: null, user: null/);

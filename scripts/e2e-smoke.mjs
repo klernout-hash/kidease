@@ -1235,8 +1235,16 @@ async function passwordLogin(page, base, email, locale) {
 
 /**
  * Real Better Auth session from the login form. Parent and daycare, English and French.
- * Login, reload, desk, messages, and Save details.
+ * Login, reload, desk, messages, an unchanged Save details, and Save details.
  */
+async function signOutFromMenu(page) {
+  await openHeaderMenu(page);
+  const button = page.locator("#ke-nav-drawer").getByRole("button", { name: /^sign out$/i });
+  await button.waitFor({ state: "visible", timeout: timeoutMs });
+  await button.click();
+  await page.waitForURL((url) => url.pathname === "/" || url.pathname === "", { timeout: timeoutMs });
+}
+
 async function runSignedInSessions(page, base) {
   const context = page.context();
   await setFixture(context, base, { role: "parent" });
@@ -1310,6 +1318,37 @@ async function runSignedInSessions(page, base) {
       const photo = await page.getByRole("link", { name: /sign in to add a photo|connectez-vous pour ajouter une photo/i }).count();
       const bioBox = page.locator("textarea").first();
       await bioBox.waitFor({ timeout: timeoutMs });
+      if (tag === "parent-en") {
+        await page.waitForFunction(() => {
+          const box = document.querySelector('input[autocomplete="name"]');
+          return Boolean(box && box.value.trim().length > 0);
+        }, { timeout: timeoutMs });
+        let rewroteSession = false;
+        const watchUpdate = (req) => {
+          if (req.url().includes("/update-user")) rewroteSession = true;
+        };
+        page.on("request", watchUpdate);
+        let afterSave = page.url();
+        try {
+          await page.locator('[data-ke="account-save-details"]').click();
+          await page.locator('[data-ke="success-toast"]').waitFor({ state: "visible", timeout: timeoutMs });
+          afterSave = page.url();
+        } finally {
+          page.off("request", watchUpdate);
+        }
+        const stayed = !/\/login/i.test(afterSave) && !rewroteSession;
+        await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
+        const saveAgain = page.locator('[data-ke="account-save-details"]');
+        const stillIn = await saveAgain
+          .waitFor({ state: "visible", timeout: timeoutMs })
+          .then(() => !/\/login/i.test(page.url()))
+          .catch(() => false);
+        record(`signed-in-account-unchanged-${tag}`, stayed && stillIn && (await pageIsQuiet(page)), {
+          note: `${page.url()} updateUser=${rewroteSession}`,
+        });
+        if (!stayed || !stillIn) throw new Error(`unchanged save left ${page.url()}`);
+        await bioBox.waitFor({ timeout: timeoutMs });
+      }
       const bio = `Saved ${tag} ${Date.now()}`;
       await bioBox.fill(bio);
       const saved = page.waitForResponse(
@@ -1330,6 +1369,14 @@ async function runSignedInSessions(page, base) {
       record(`signed-in-account-${tag}`, photo === 0 && kept.includes(bio) && (await pageIsQuiet(page)), {
         note: `photo=${photo} bio=${kept.slice(0, 72)}`,
       });
+      if (tag === "parent-en") {
+        await signOutFromMenu(page);
+        await passwordLogin(page, base, item.email, item.locale);
+        const lead = ((await page.locator('[data-ke="login-lead"]').innerText().catch(() => "")) || "").trim();
+        const backIn = !/\/login/i.test(page.url()) && !/opening your desk/i.test(lead);
+        record(`signed-in-again-${tag}`, backIn && (await pageIsQuiet(page)), { note: `${page.url()} lead=${lead}` });
+        if (!backIn) throw new Error(`sign-in hung on ${page.url()} ${lead}`);
+      }
     } catch (err) {
       record(`signed-in-${tag}`, false, { note: err instanceof Error ? err.message : String(err) });
     }
