@@ -156,7 +156,8 @@ test("signed-in header and menus show a bell; guests do not get a badge", () => 
   const drawer = src("src/components/nav-drawer.tsx");
   const menu = src("src/routes/menu.tsx");
   assert.match(shell, /NotificationBell/);
-  assert.match(shell, /user \? <NotificationBell/);
+  assert.match(shell, /const headerUser = viewingGuest \? null : user/);
+  assert.match(shell, /headerUser \? <NotificationBell/);
   assert.match(drawer, /signedIn \? \(/);
   assert.match(src("src/routes/account.tsx"), /NotificationBell/);
   assert.match(src("src/components/notification-bell.tsx"), /to=\{NOTIFICATIONS_PATH\}/);
