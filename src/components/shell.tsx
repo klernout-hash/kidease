@@ -4,7 +4,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Building2, Menu } from "lucide-react";
 import { AppTabBar } from "@/components/app-tab-bar";
 import { NotificationBell } from "@/components/notification-bell";
-import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useCurrentUserState, useLocallySignedOut } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
 import { useCopy } from "@/lib/use-copy";
 import { BrandMark } from "@/components/brand-mark";
@@ -51,6 +51,7 @@ export function Shell({ children }: { children: ReactNode }) {
     },
   });
   const { user } = useCurrentUserState();
+  const locallyOut = useLocallySignedOut();
   const { session, sticky } = useSessionDesks();
   const chrome = useRoleChrome();
   const [open, setOpen] = useState(false);
@@ -272,7 +273,7 @@ export function Shell({ children }: { children: ReactNode }) {
         items={drawerItems}
         parentLabel={t("parentSignIn")}
         providerLabel={t("providerLogin")}
-        signedIn={Boolean(user) || chrome.signedIn}
+        signedIn={(Boolean(user) || chrome.signedIn) && !locallyOut}
         menusReady={!chrome.pending}
         accountLabel={t("account")}
         accountHref="/account"

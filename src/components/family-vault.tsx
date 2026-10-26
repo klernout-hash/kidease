@@ -247,17 +247,17 @@ export function CentreFamilyDocs() {
   }, []);
 
   return (
-    <section className="rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="centre-family-docs">
+    <section className="min-w-0 max-w-full overflow-hidden rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="centre-family-docs">
       <h2 className="font-display text-xl">{t("familyDocsCentreTitle")}</h2>
       <p className="mt-2 text-sm text-muted">{t("familyDocsCentreLead")}</p>
       {loaded && documents.length === 0 ? <p className="mt-3 text-sm text-muted">{t("familyDocsCentreEmpty")}</p> : null}
       <ul className="mt-3 space-y-3">
         {documents.map((doc) => (
-          <li key={doc.documentId} className="text-sm">
-            <p className="font-medium">
+          <li key={doc.documentId} className="min-w-0 text-sm">
+            <p className="break-words font-medium">
               {t(KIND_KEY[doc.kind])} · {doc.parentName}
             </p>
-            <p className="text-muted">{doc.daycareName}</p>
+            <p className="break-words text-muted">{doc.daycareName}</p>
             <a className="inline-flex min-h-11 items-center font-medium text-primary" href={`/api/family-documents/${doc.documentId}`}>
               {t("familyDocsOpen")}
             </a>

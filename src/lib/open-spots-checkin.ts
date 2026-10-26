@@ -78,6 +78,8 @@ export function checkinEmailText(input: {
   name: string;
   views: number;
   links: Record<OpenSpotsBand, string>;
+  /** Plan sentence stays off until SUBSCRIPTIONS_ENABLED. */
+  plansOn?: boolean;
 }): { subject: string; text: string } {
   const name = input.name.replace(/\s+/g, " ").trim().slice(0, 80) || "your daycare";
   const views = Math.max(0, Math.round(input.views));
@@ -96,7 +98,7 @@ export function checkinEmailText(input: {
     `2: ${input.links[2]}`,
     `3+: ${input.links[3]}`,
     "",
-    "KidEase. This check-in is included on every plan.",
+    input.plansOn ? "KidEase. This check-in is included on every plan." : "KidEase.",
   ].join("\n");
   return { subject: `Any open spots at ${name}?`, text };
 }

@@ -105,8 +105,8 @@ export function pinFeeLabel(
   return "—";
 }
 
-export function hasAmenity(amenities: string, key: string) {
-  return amenities
+export function hasAmenity(amenities: string | null | undefined, key: string) {
+  return String(amenities ?? "")
     .split(",")
     .map((s) => s.trim())
     .includes(key);
@@ -116,8 +116,8 @@ export function opensEarly(hours: string) {
   return /6:\d|7:00|6 a/i.test(hours);
 }
 
-export function staysLate(hours: string, amenities: string) {
-  return hasAmenity(amenities, "extended") || hasAmenity(amenities, "evenings") || /18:|19:|6 p\.?m|7 p\.?m/i.test(hours);
+export function staysLate(hours: string | null | undefined, amenities: string | null | undefined) {
+  return hasAmenity(amenities, "extended") || hasAmenity(amenities, "evenings") || /18:|19:|6 p\.?m|7 p\.?m/i.test(String(hours ?? ""));
 }
 
 /**

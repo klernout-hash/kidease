@@ -13,7 +13,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { PriorityPill } from "@/components/priority-pill";
 import { TwoFactorGate } from "@/lib/auth/gates";
 import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
-import { useSettledUser } from "@/lib/auth/use-current-user";
+import { useLocallySignedOut, useSettledUser } from "@/lib/auth/use-current-user";
 import { createListing, getProvider } from "@/lib/server/family";
 import { dismissUpgradeCard } from "@/lib/server/upgrade-card";
 import {
@@ -136,6 +136,7 @@ function ProviderPending() {
 
 function ProviderPage() {
   const { user, isPending } = useSettledUser();
+  const locallyOut = useLocallySignedOut();
   const chrome = useRoleChrome();
   const { t, locale } = useCopy();
   const nativeShell = useInNativeShell();
@@ -207,16 +208,17 @@ function ProviderPage() {
       listCentrePipeline().catch(() => [] as PipelineCard[]),
       listLeadRequests({ data: { desk: "centre" } }).catch(() => [] as LeadRequest[]),
     ]);
-    setListings(res.listings);
-    if (res.listings.length === 0) setShowNewForm(true);
+    const nextListings = Array.isArray(res?.listings) ? res.listings : [];
+    setListings(nextListings);
+    if (nextListings.length === 0) setShowNewForm(true);
     setStats(res.stats);
     setSubscription(res.subscription);
     setUpgradeDismissed(Boolean(res.upgradeCardDismissed));
     setDeskSettled(true);
-    setRequests(incoming);
-    setTours(tourRows);
-    setPipeline(pipelineRows);
-    setLeads(leadRows);
+    setRequests(Array.isArray(incoming) ? incoming : []);
+    setTours(Array.isArray(tourRows) ? tourRows : []);
+    setPipeline(Array.isArray(pipelineRows) ? pipelineRows : []);
+    setLeads(Array.isArray(leadRows) ? leadRows : []);
   }
 
   useEffect(() => {
@@ -257,6 +259,13 @@ function ProviderPage() {
 
   if (childRoute) return <Outlet />;
 
+  if (locallyOut) {
+    return (
+      <Shell>
+        <DeskSkeleton />
+      </Shell>
+    );
+  }
   if (isPending) {
     return (
       <Shell>
@@ -377,7 +386,7 @@ function ProviderPage() {
         </>
       ) : null}
       {desk === "requests" ? (
-        <div className="space-y-6">
+        <div className="min-w-0 max-w-full space-y-6">
         <CentreFamilyDocs />
         {leads.length === 0 && tours.length === 0 && pipeline.length === 0 && waiting.length === 0 ? (
           <EmptyState title={t("enquiriesEmptyTitle")} body={t("enquiriesEmptyLead")} />

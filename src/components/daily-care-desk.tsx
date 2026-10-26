@@ -58,7 +58,7 @@ export function DailyCareDesk({
   const [items, setItems] = useState<AttendanceRow[]>([]);
   const [journals, setJournals] = useState<DailyJournalRow[]>([]);
   const [ops, setOps] = useState<CareOpsPayload | null>(null);
-  const [ready, setReady] = useState(false);
+  const [scheduleReady, setScheduleReady] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, { body: string; photos: JournalPhoto[] }>>({});
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -70,28 +70,36 @@ export function DailyCareDesk({
   const [careOpen, setCareOpen] = useState(false);
 
   const load = useCallback(async () => {
-    const [week, feed, careOps, month] = await Promise.all([
+    const schedule = Promise.all([
       getWeekSchedule({ data: { daycareId, weekStart: day } }).catch(() => ({
         days: [day],
         items: [] as AttendanceRow[],
         role,
       })),
       listDailyJournals({ data: { daycareId, day } }).catch(() => ({ day, items: [] as DailyJournalRow[] })),
+    ]).then(([week, feed]) => {
+      setItems(week.items.filter((row) => row.day === day));
+      setJournals(feed.items);
+      setScheduleReady(true);
+    });
+    const extras = Promise.all([
       listCareOps({ data: { daycareId, day } }).catch(() => null),
       getLicensedMonth({ data: { daycareId, month: day.slice(0, 7) } }).catch(() => ({
         month: day.slice(0, 7),
         children: [] as LicensedMonthChild[],
       })),
-    ]);
-    setItems(week.items.filter((row) => row.day === day));
-    setJournals(feed.items);
-    setOps(careOps);
-    setMonthChildren(month.children);
-    setMonthLabel(month.month);
-    setReady(true);
+    ]).then(([careOps, month]) => {
+      setOps(careOps);
+      setMonthChildren(month.children);
+      setMonthLabel(month.month);
+    });
+    await Promise.all([schedule, extras]);
   }, [daycareId, day, role]);
 
   useEffect(() => {
+    setScheduleReady(false);
+    setOps(null);
+    setMonthChildren([]);
     void load();
   }, [load]);
 
@@ -332,7 +340,7 @@ export function DailyCareDesk({
         <p className="mt-1 text-xs text-subtle">{t("careLaterOut")}</p>
       </div>
 
-      {ready && ops ? (
+      {ops ? (
         <CareOpsPanel
           role={role}
           day={day}
@@ -344,7 +352,7 @@ export function DailyCareDesk({
         />
       ) : null}
 
-      {!ready ? (
+      {!scheduleReady ? (
         <div className="space-y-3" aria-busy="true">
           <div className="ke-skel h-28 rounded-xl" />
           <div className="ke-skel h-28 rounded-xl" />
@@ -601,7 +609,7 @@ export function DailyCareDesk({
           </div>
         </div>
       )}
-      {ready && monthChildren.length ? (
+      {monthChildren.length ? (
         <MonthShares
           role={role}
           month={monthLabel}

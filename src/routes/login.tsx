@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { authClient, authEnabled, dropExistingSession, signIn, turnstileFetchOptions } from "@/lib/auth/client";
+import { authClient, authEnabled, clearLocalSignedOut, dropExistingSession, signIn, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
@@ -279,6 +279,7 @@ export function LoginScreen({
 
   async function finish(method: "email" | "session" = "email") {
     const session = await waitForSignedInSession(() => authClient.getSession());
+    if (session?.data?.user) clearLocalSignedOut();
     if (mode === "up" && (role === "parent" || role === "provider")) {
       await withTimeoutFallback(setRole({ data: role }), LOGIN_CONTINUE_MS, undefined);
     }

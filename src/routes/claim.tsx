@@ -172,7 +172,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
       capturePostHogEvent(SIGNUP_FUNNEL_EVENT, signupFunnelPayload("claim_started", { source: "claim" }));
       void navigate({
         to: locale === "fr" ? "/fr/login" : "/login",
-        search: { next: `${localePath("/claim", locale)}?id=${daycareId}`, role: "provider", desk: "director", intent: "up" },
+        search: { next: `${localePath("/claim", locale)}?id=${daycareId}`, intent: "in" },
       });
       return;
     }

@@ -1,4 +1,4 @@
-const TTL_MS = 60_000;
+const TTL_MS = 3 * 60 * 1000;
 const MAX_ENTRIES = 80;
 
 type Entry<T> = { at: number; value: T };
@@ -45,7 +45,7 @@ export async function rememberSearch<T>(key: string, build: () => Promise<T>): P
   const hit = cache.get(key) as Entry<T> | undefined;
   if (hit && Date.now() - hit.at < TTL_MS) return hit.value;
   const value = await build();
-  // An empty timeout fallback must not stick for 60s and report "0 live".
+  // An empty timeout fallback must not stick and report "0 live".
   if (Array.isArray(value) && value.length === 0) {
     cache.delete(key);
     return value;
@@ -58,7 +58,7 @@ export async function rememberSearch<T>(key: string, build: () => Promise<T>): P
   return value;
 }
 
-/** Drop every memoized search so a just-approved live listing is not hidden for 60s. */
+/** Drop every memoized search so a just-approved live listing is not hidden. */
 export function flushSearchMemo() {
   cache.clear();
 }

@@ -47,13 +47,20 @@ test("Find my match stays in the hero, search, and menu", () => {
   assert.equal((drawer.match(/<SmartMatchEntry inline/g) || []).length, 2);
 });
 
-test("parent and daycare menus keep the plan item and a visible group label", () => {
-  assert.equal(visibleDeskNav("parent", { subscriptionsEnabled: false }).some((item) => item.id === "upgrade"), true);
+test("plan links stay hidden until subscriptions are on, and group labels stay visible", () => {
+  assert.equal(visibleDeskNav("parent", { subscriptionsEnabled: false }).some((item) => item.id === "upgrade"), false);
+  assert.equal(visibleDeskNav("parent", { subscriptionsEnabled: true }).some((item) => item.id === "upgrade"), true);
   assert.equal(
     visibleDeskNav("daycare", { centreOwner: false, centreLinked: false }).some((item) => item.id === "subscription"),
+    false,
+  );
+  assert.equal(
+    visibleDeskNav("daycare", { subscriptionsEnabled: true, centreOwner: false, centreLinked: false }).some(
+      (item) => item.id === "subscription",
+    ),
     true,
   );
-  const parent = visibleDeskGroups("parent", visibleDeskNav("parent", { subscriptionsEnabled: false }));
+  const parent = visibleDeskGroups("parent", visibleDeskNav("parent", { subscriptionsEnabled: true }));
   for (const id of ["search-tools", "account", "settings"]) {
     const group = parent.find((row) => row.group.id === id);
     assert.ok(group, id);

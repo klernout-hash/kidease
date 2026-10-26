@@ -30,7 +30,7 @@ export const POSTHOG_US_ASSETS = "https://us-assets.i.posthog.com";
 export const POSTHOG_FIRST_PARTY_ORIGIN = "https://www.kidease.ca";
 const PH_QUEUE_KEY = "kidease-ph-queue";
 const PH_QUEUE_MAX = 24;
-export const DEFAULT_REPLAY_SAMPLE_RATE = 0.2;
+export const DEFAULT_REPLAY_SAMPLE_RATE = 0.05;
 /** Client kill switch in PostHog. Missing flag still records (sampled). Off stops recordings. */
 export const POSTHOG_REPLAY_FLAG = "session-replay-web";
 
@@ -207,12 +207,13 @@ export function posthogInitOptions(input: SessionReplayGateInput = {}): Partial<
     api_host: posthogApiHost(env, input.native),
     ui_host: POSTHOG_UI_HOST,
     defaults: "2026-05-30",
-    autocapture: true,
+    autocapture: false,
     capture_pageview: "history_change",
     capture_pageleave: "if_capture_pageview",
     person_profiles: "identified_only",
     disable_session_recording: !replayOn,
-    advanced_disable_feature_flags: false,
+    // Product flags are read on the server. The browser does not poll /flags.
+    advanced_disable_feature_flags: true,
     mask_all_text: Boolean(input.native),
     session_recording: {
       maskAllInputs: true,

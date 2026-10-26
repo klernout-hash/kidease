@@ -7,9 +7,11 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { spotOfferCopy } from "@/lib/spot-offer-copy";
 import { joinDaycareWaitlist, listMySpotOffers, withdrawDaycareWaitlist } from "@/lib/server/spot-offers";
 import { useCopy } from "@/lib/use-copy";
+import { useRoleChrome } from "@/components/role-chrome";
 
 export function JoinWaitlist({ daycareId, next }: { daycareId: string; next: string }) {
   const { locale } = useCopy();
+  const plansOn = useRoleChrome().subscriptionsEnabled === true;
   const copy = spotOfferCopy(locale);
   const navigate = useNavigate();
   const { user, isPending } = useCurrentUserState();
@@ -86,7 +88,7 @@ export function JoinWaitlist({ daycareId, next }: { daycareId: string; next: str
     <section id="join-waitlist" className="mt-4 rounded-lg bg-surface p-4 ring-1 ring-border" data-ke="join-waitlist">
       <h3 className="font-display text-xl">{copy.joinTitle}</h3>
       <p className="mt-1 text-sm text-muted">{copy.joinLead}</p>
-      <p className="mt-1 text-sm text-muted">{copy.included}</p>
+      {plansOn ? <p className="mt-1 text-sm text-muted">{copy.included}</p> : null}
       {error ? (
         <p className="mt-2 text-sm text-danger" role="alert">
           {error}

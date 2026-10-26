@@ -8,7 +8,7 @@ import { catalogByIdGet } from "@/lib/catalog";
 import { getSql } from "@/lib/db";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { isAgeBand, type AgeBand } from "@/lib/saved-search";
-import { callerIsAdmin } from "@/lib/server/public-listing";
+import { callerMayUseAdminOnlyListing } from "@/lib/server/public-listing";
 import {
   cooldownUntilIso,
   pulseRateLimited,
@@ -20,7 +20,7 @@ import { assertCanMutateListing } from "@/lib/access-control";
 
 async function assertPublicListing(daycareId: string) {
   const listed = await catalogByIdGet(daycareId);
-  if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerIsAdmin())) {
+  if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerMayUseAdminOnlyListing())) {
     throw new Error("Listing not found");
   }
 }

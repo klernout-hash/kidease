@@ -14,11 +14,10 @@ import {
   type CatalogDaycare,
 } from "@/lib/catalog";
 import { filterByDaycareName, readLiveSearchFlag } from "@/lib/explore-search";
-import { hideListingFromPublicPage, isAdminOnlyListing, isPublicListing, publicListings } from "@/lib/listing-visibility";
+import { hideListingFromPublicPage, isAdminOnlyListing, isHiddenTestListing, isPublicListing, publicListings } from "@/lib/listing-visibility";
 import { parseAnchorMode, resolveSearchAnchors } from "@/lib/dual-anchor";
 import { nearbyListings, nearbyListingsAlong, nearbyListingsDual, type NearbyListing } from "./nearby";
-import { callerMayViewHiddenListing } from "./public-listing";
-import { upsertDaycare } from "./seed";
+import { callerIsTestAccount, callerMayViewHiddenListing } from "./public-listing";
 import { applyListingReadiness, compareFreshOpenSpots, hasConfirmedAges } from "@/lib/listing-readiness";
 import { standardGroupsForRange } from "@/lib/standard-age-groups";
 import { listingAgeUnknown } from "@/lib/now-loops";
@@ -465,7 +464,21 @@ async function searchByName(data: SearchInput): Promise<DaycareCard[]> {
   const q = (data.name || "").trim();
   if (q.length < 2) return [];
   const origin = { lat: data.lat, lng: data.lng };
-  const matched = filterByDaycareName(await getPublicCatalog(), q);
+  let matched: CatalogDaycare[] | null = null;
+  try {
+    const { queryNeonListingsByIds, queryNeonPublicNameIndex } = await import("@/lib/server/catalog-neon");
+    const index = await queryNeonPublicNameIndex();
+    if (index) {
+      const hits = filterByDaycareName(
+        index.map((row) => ({ id: row.id, name: row.name, nameFr: row.name_fr || "" })),
+        q,
+      );
+      matched = hits.length === 0 ? [] : await queryNeonListingsByIds(hits.map((row) => row.id));
+    }
+  } catch {
+    matched = null;
+  }
+  if (!matched) matched = filterByDaycareName(await getPublicCatalog(), q);
   const cards = await stampPaidPlacement(matched.map((row) => slimCard(toCard(row, origin, data.fsa))));
   cards.sort((a, b) => a.distanceKm - b.distanceKm || a.name.localeCompare(b.name));
   return cards;
@@ -708,11 +721,61 @@ function normalizeSearchInput(input: SearchInput): SearchInput {
   };
 }
 
+/** Hidden QA fixtures for a flagged test account. Never written into the public search memo. */
+async function loadTestFixtureCards(data: SearchInput): Promise<DaycareCard[]> {
+  try {
+    const sql = await getSql();
+    const rows = await sql<DaycareRow>`
+      select * from daycares d
+      where d.is_test = 1
+         or d.slug ilike 'qa-%'
+         or d.slug ilike 'qa\\_%'
+         or d.name ilike '%qa test%'
+      limit 40
+    `;
+    const origin = { lat: data.lat, lng: data.lng };
+    const nameQ = (data.name || "").trim().toLowerCase();
+    const radius = clampRadiusKm(data.radiusKm);
+    const cards: DaycareCard[] = [];
+    for (const row of rows) {
+      const daycare = mapDaycare(row);
+      if (!isHiddenTestListing(daycare)) continue;
+      const km = cardSortKm(origin, { lat: daycare.lat, lng: daycare.lng });
+      if (nameQ.length >= 2) {
+        const blob = `${daycare.name} ${daycare.slug}`.toLowerCase();
+        if (!blob.includes(nameQ)) continue;
+      } else if (km > radius) {
+        continue;
+      }
+      cards.push({
+        ...daycare,
+        distanceKm: km,
+        spotsTotal: spotsTotal(daycare),
+        fromPrice: fromPrice(daycare),
+      });
+    }
+    return cards;
+  } catch {
+    return [];
+  }
+}
+
+async function appendTestAccountFixtures(data: SearchInput, cards: DaycareCard[]): Promise<DaycareCard[]> {
+  if (!(await callerIsTestAccount())) return cards;
+  const extra = await loadTestFixtureCards(data);
+  if (!extra.length) return cards;
+  return uniqueById([...extra, ...cards]);
+}
+
 export const searchDaycares = createServerFn({ method: "GET" })
   .validator((input: SearchInput) => normalizeSearchInput(input))
-  .handler(async ({ data }) =>
-    rememberSearch(`${searchMemoKey(data)}:${parentFitCacheKey(data.parentFit ?? null)}`, () => searchIncludingLive(data)),
-  );
+  .handler(async ({ data }) => {
+    const found = await rememberSearch(
+      `${searchMemoKey(data)}:${parentFitCacheKey(data.parentFit ?? null)}`,
+      () => searchIncludingLive(data),
+    );
+    return appendTestAccountFixtures(data, found);
+  });
 
 /** Same ranking as searchDaycares, then one page of 96 cards. */
 export const searchDaycarePage = createServerFn({ method: "GET" })
@@ -726,7 +789,8 @@ export const searchDaycarePage = createServerFn({ method: "GET" })
       `${searchMemoKey(query)}:${parentFitCacheKey(query.parentFit ?? null)}`,
       () => searchIncludingLive(query),
     );
-    const all = query.live ? found.filter((card) => isClaimVerified(card) && !card.isTest) : found;
+    const listed = query.live ? found.filter((card) => isClaimVerified(card) && !card.isTest) : found;
+    const all = await appendTestAccountFixtures(query, listed);
     return sliceSearchPage(all, page);
   });
 
@@ -791,38 +855,27 @@ export const getDaycare = createServerFn({ method: "GET" })
   .handler(async ({ data: slug }) => {
     const found = await catalogBySlugGet(slug);
     if (!found) return null;
-    if (hideListingFromPublicPage(found, await callerMayViewHiddenListing(found.id))) return null;
+    const [adminView, testAccount] = await Promise.all([
+      callerMayViewHiddenListing(found.id),
+      callerIsTestAccount(),
+    ]);
+    if (hideListingFromPublicPage(found, { admin: adminView, testAccount })) return null;
     const origin = { lat: found.lat, lng: found.lng };
-    const nearby = uniqueById(
-      (await catalogNear(origin, 15))
-        .filter((d) => d.id !== found.id)
-        .map((d) => toCard(d, origin)),
-    ).slice(0, 4);
+    // The nearest 400 within 40 km include every centre the 15 km query would return.
     const metroPeers = uniqueById(
       (await catalogNear(origin, 40))
         .filter((d) => d.id !== found.id)
         .map((d) => toCard(d, origin)),
     );
+    const nearby = metroPeers.filter((card) => card.distanceKm <= 15).slice(0, 4);
     const catalogDaycare = toDaycare(found);
-    const catalogScored = await overlayQuality([catalogDaycare, ...metroPeers]);
     const stampHidden = <T extends { visibility?: "public" | "admin_only"; isTest?: boolean }>(daycare: T): T => ({
       ...daycare,
       visibility: found.visibility,
       isTest: found.isTest,
     });
-    const catalogDaycareOut = stampHidden(withInboxReady(catalogScored[0] ?? catalogDaycare));
-    const [catalogPinned] = await stampPaidPlacement([catalogDaycareOut]);
-    const catalogNearby = await stampPaidPlacement(withQualityCards(nearby, catalogScored));
-    const catalogPayload = {
-      daycare: catalogPinned ?? catalogDaycareOut,
-      reviews: [] as Review[],
-      availability: catalogAvailability(found),
-      nearby: catalogNearby,
-      jobs: [] as CentreJobPost[],
-    };
     try {
       const sql = await Promise.race([getSql(), rejectAfter(6000, "listing-sql-timeout")]);
-      await upsertDaycare(sql, found);
       const claimedRow = await sql<DaycareRow>`
         select * from daycares d
         where d.id = ${found.id}
@@ -911,7 +964,17 @@ export const getDaycare = createServerFn({ method: "GET" })
         jobs,
       };
     } catch {
-      return catalogPayload;
+      const catalogScored = await overlayQuality([catalogDaycare, ...metroPeers]);
+      const catalogDaycareOut = stampHidden(withInboxReady(catalogScored[0] ?? catalogDaycare));
+      const [catalogPinned] = await stampPaidPlacement([catalogDaycareOut]);
+      const catalogNearby = await stampPaidPlacement(withQualityCards(nearby, catalogScored));
+      return {
+        daycare: catalogPinned ?? catalogDaycareOut,
+        reviews: [] as Review[],
+        availability: catalogAvailability(found),
+        nearby: catalogNearby,
+        jobs: [] as CentreJobPost[],
+      };
     }
   });
 
@@ -935,7 +998,11 @@ export const getListingSeo = createServerFn({ method: "GET" })
   .handler(async ({ data: slug }) => {
     const found = await catalogBySlugGet(slug);
     if (!found) return null;
-    if (hideListingFromPublicPage(found, await callerMayViewHiddenListing(found.id))) return null;
+    const [adminView, testAccount] = await Promise.all([
+      callerMayViewHiddenListing(found.id),
+      callerIsTestAccount(),
+    ]);
+    if (hideListingFromPublicPage(found, { admin: adminView, testAccount })) return null;
     return {
       slug: found.slug,
       name: found.name,

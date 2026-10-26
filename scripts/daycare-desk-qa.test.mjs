@@ -46,10 +46,8 @@ test("header pills follow stored roles; Admin only for kyle", () => {
   assert.equal(showDeskSwitcher(desksFor({ role: "admin" }), "admin", "kyle@kidease.ca"), true);
   assert.equal(showDeskSwitcher(desksFor({ role: "admin" }), "admin", "parent@example.com"), false);
   assert.deepEqual(headerDesks(desksFor({ role: "parent" }), "parent"), ["parent"]);
-  assert.deepEqual(headerDesks(desksFor({ role: "parent", ownsCentre: true }), "parent"), [
-    "provider",
-    "parent",
-  ]);
+  assert.deepEqual(headerDesks(desksFor({ role: "parent", ownsCentre: true }), "parent"), ["provider"]);
+  assert.equal(showDeskSwitcher(desksFor({ role: "parent", ownsCentre: true }), "parent"), false);
   assert.deepEqual(headerDesks(desksFor({ role: "admin" }), "admin", "kyle@kidease.ca"), [
     "parent",
     "provider",
