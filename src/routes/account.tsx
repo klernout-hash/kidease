@@ -198,6 +198,13 @@ function ProfilePane() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState(user?.primaryEmail ?? "");
   const [bio, setBio] = useState("");
+  const nameRef = useRef(user?.displayName ?? "");
+  const phoneRef = useRef("");
+  const bioRef = useRef("");
+  const contactDirty = useRef({ name: false, phone: false, bio: false });
+  const contactEpoch = useRef(0);
+  const contactLoaded = useRef(false);
+  const seenUserId = useRef<string | undefined>(undefined);
   const [consents, setConsents] = useState<CaslPrefs>({
     smsService: false,
     emailService: false,
@@ -214,14 +221,36 @@ function ProfilePane() {
 
   useEffect(() => {
     if (!user) return;
-    setName(user.displayName ?? "");
+    const switched = seenUserId.current !== undefined && seenUserId.current !== user.id;
+    seenUserId.current = user.id;
+    if (switched) contactDirty.current = { name: false, phone: false, bio: false };
+    const epoch = ++contactEpoch.current;
+    contactLoaded.current = false;
+    if (!contactDirty.current.name) {
+      const sessionName = user.displayName ?? "";
+      nameRef.current = sessionName;
+      setName(sessionName);
+    }
     setEmail(user.primaryEmail ?? "");
     void getMyContact()
       .then((row) => {
-        setName(row.name || user.displayName || "");
-        setPhone(row.phone);
+        if (epoch !== contactEpoch.current) return;
+        const dirty = contactDirty.current;
+        if (!dirty.name) {
+          const nextName = row.name || user.displayName || "";
+          nameRef.current = nextName;
+          setName(nextName);
+        }
+        if (!dirty.phone) {
+          phoneRef.current = row.phone;
+          setPhone(row.phone);
+        }
         setEmail(row.email || user.primaryEmail || "");
-        setBio(row.bio);
+        if (!dirty.bio) {
+          bioRef.current = row.bio;
+          setBio(row.bio);
+        }
+        contactLoaded.current = true;
       })
       .catch(() => {
         /* keep session name/email */
@@ -256,9 +285,42 @@ function ProfilePane() {
       toast.error(t("anchorWorkMiss"));
       return;
     }
+    contactEpoch.current += 1;
+    if (!contactLoaded.current) {
+      try {
+        const row = await getMyContact();
+        if (!contactDirty.current.name) {
+          nameRef.current = row.name || user.displayName || "";
+          setName(nameRef.current);
+        }
+        if (!contactDirty.current.phone) {
+          phoneRef.current = row.phone;
+          setPhone(row.phone);
+        }
+        if (!contactDirty.current.bio) {
+          bioRef.current = row.bio;
+          setBio(row.bio);
+        }
+        setEmail(row.email || user.primaryEmail || "");
+        contactLoaded.current = true;
+      } catch {
+        /* save the fields already on screen */
+      }
+    }
+    const nextName = nameRef.current;
+    const nextPhone = phoneRef.current;
+    const nextBio = bioRef.current.trim().slice(0, 400);
     setSaving(true);
     try {
-      const saved = await saveMyContact({ data: { name, phone, bio } });
+      const saved = await saveMyContact({ data: { name: nextName, phone: nextPhone, bio: nextBio } });
+      if (saved.bio !== nextBio) {
+        toast.error(t("trackSaveFailed"));
+        return;
+      }
+      nameRef.current = saved.name;
+      phoneRef.current = saved.phone;
+      bioRef.current = saved.bio;
+      contactDirty.current = { name: false, phone: false, bio: false };
       setName(saved.name);
       setPhone(saved.phone);
       setEmail(saved.email || email);
@@ -266,7 +328,7 @@ function ProfilePane() {
       const nextConsent = await saveMyCaslConsents({
         data: {
           ...consents,
-          phone,
+          phone: saved.phone,
           email: saved.email || email,
           locale,
           method: "profile_checkbox",
@@ -503,11 +565,33 @@ function ProfilePane() {
             <p className="text-[13px] text-muted">{t("accountContactLead")}</p>
             <label className="block text-sm">
               {t("name")}
-              <input className="ke-input mt-1" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" maxLength={80} />
+              <input
+                className="ke-input mt-1"
+                value={name}
+                onChange={(e) => {
+                  contactDirty.current.name = true;
+                  nameRef.current = e.target.value;
+                  setName(e.target.value);
+                }}
+                autoComplete="name"
+                maxLength={80}
+              />
             </label>
             <label className="block text-sm">
               {t("accountPhone")}
-              <input className="ke-input mt-1" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" inputMode="tel" maxLength={32} placeholder="204-555-0100" />
+              <input
+                className="ke-input mt-1"
+                value={phone}
+                onChange={(e) => {
+                  contactDirty.current.phone = true;
+                  phoneRef.current = e.target.value;
+                  setPhone(e.target.value);
+                }}
+                autoComplete="tel"
+                inputMode="tel"
+                maxLength={32}
+                placeholder="204-555-0100"
+              />
             </label>
             <label className="block text-sm">
               {t("email")}
@@ -519,7 +603,11 @@ function ProfilePane() {
               <textarea
                 className="ke-input mt-1 min-h-24 resize-y"
                 value={bio}
-                onChange={(e) => setBio(e.target.value)}
+                onChange={(e) => {
+                  contactDirty.current.bio = true;
+                  bioRef.current = e.target.value;
+                  setBio(e.target.value);
+                }}
                 maxLength={400}
                 placeholder={t("accountBioPh")}
               />
@@ -550,8 +638,9 @@ function ProfilePane() {
                   setWorkOrigin(place);
                   setWorkQuery(place.label);
                   if (anchorMode === "home") setAnchorMode("both");
+                  if (savedHome === undefined) return;
                   void saveMySearchAnchors({
-                    data: { home: origin, work: place, mode: anchorMode === "home" ? "both" : anchorMode },
+                    data: { home: savedHome, work: place, mode: anchorMode === "home" ? "both" : anchorMode },
                   }).catch((err) => {
                     toast.error(err instanceof Error ? err.message : t("anchorWorkMiss"));
                   });
@@ -561,7 +650,7 @@ function ProfilePane() {
                 inputClassName="ke-input mt-2 w-full"
               />
             </div>
-            <Button type="submit" className="w-full" disabled={saving}>
+            <Button type="submit" className="w-full" disabled={saving} data-ke="account-save-details">
               {saving ? t("loading") : t("accountSaveDetails")}
             </Button>
           </form>

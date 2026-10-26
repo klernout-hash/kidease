@@ -531,7 +531,7 @@ export const GROUPS = [
         concealed: true,
         vercel: "both",
         required: false,
-        notes: "Bearer for /api/digest (also one-time verify-email nudge), /api/search-alerts, /api/tour-holds, /api/seed-catalog, /api/docusign/poll.",
+        notes: "Bearer for /api/digest (also one-time verify-email nudge), /api/search-alerts, /api/tour-holds, /api/account-purge, /api/seed-catalog, /api/docusign/poll.",
       },
       {
         name: "SENTRY_DSN",
@@ -546,6 +546,13 @@ export const GROUPS = [
         vercel: "production",
         required: false,
         notes: "Same DSN string for the browser bundle.",
+      },
+      {
+        name: "SENTRY_AUTH_TOKEN",
+        concealed: true,
+        vercel: "production",
+        required: false,
+        notes: "Deletes the Sentry user during the 30-day account hard wipe. Wipe still runs if unset.",
       },
       {
         name: "TITAN_APP_PASSWORD",

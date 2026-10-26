@@ -1,9 +1,11 @@
 /**
  * Cancel open parent work when an account is scheduled to close, and
  * drop or anonymize the rest when the 30-day restore window ends.
- * Billing, invoices, and fraud logs are left alone.
+ * Invoices, payments, and fraud logs stay. The account link on those rows
+ * is replaced or cleared.
  */
 
+import { DELETED_ACCOUNT_TOMBSTONE } from "@/lib/account-purge";
 import { ACCOUNT_CLOSE_NOTE } from "@/lib/account-close";
 import { getSql } from "@/lib/db";
 
@@ -51,4 +53,33 @@ export async function purgeAccountExtras(uid: string) {
   await sql`delete from notification_outbox where user_id = ${uid}`.catch(() => undefined);
   await sql`delete from push_device_tokens where user_id = ${uid}`.catch(() => undefined);
   await sql`delete from web_push_subscriptions where user_id = ${uid}`.catch(() => undefined);
+}
+
+/** Keep the legal rows. Remove the link back to the closed account. */
+export async function anonymizeRetainedRecords(uid: string) {
+  const sql = await getSql();
+  const tomb = DELETED_ACCOUNT_TOMBSTONE;
+  await sql`
+    update invoices
+    set parent_user_id = ${tomb},
+        created_by = case when created_by = ${uid} then ${tomb} else created_by end,
+        child_id = null
+    where parent_user_id = ${uid} or created_by = ${uid}
+  `.catch(() => undefined);
+  await sql`
+    update payments
+    set user_id = ${tomb}
+    where user_id = ${uid}
+  `.catch(() => undefined);
+  await sql`
+    update security_events
+    set actor_user_id = case when actor_user_id = ${uid} then null else actor_user_id end,
+        target_user_id = case when target_user_id = ${uid} then null else target_user_id end
+    where actor_user_id = ${uid} or target_user_id = ${uid}
+  `.catch(() => undefined);
+  await sql`
+    update review_signals
+    set user_id = null
+    where user_id = ${uid}
+  `.catch(() => undefined);
 }

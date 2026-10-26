@@ -94,6 +94,14 @@ async function handleAuth(request: Request) {
     }
     const incoming = requestWithLegacyOAuthCallback(requestWithAliasedAuthCookies(request));
     const path = new URL(incoming.url).pathname.replace(/\/+$/, "");
+    if (request.method === "POST" && isAuthSignOutPath(path)) {
+      try {
+        const { closeViewAsForCurrentUser } = await import("@/lib/server/view-as");
+        await closeViewAsForCurrentUser();
+      } catch {
+        /* Sign-out must still clear the auth cookie. */
+      }
+    }
     // Do not answer GET /get-session with a fake signed-out body. A 200
     // `{ user: null }` makes the browser drop a real session, so account
     // looks signed out and Save details never runs. A slow database just

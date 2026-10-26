@@ -2,6 +2,7 @@ import { isShippedLocale, type ShippedLocale } from "./languages.ts";
 import {
   englishPath,
   frenchPath,
+  isFrPath,
   isPairedPath,
   normalizePathname,
   pathLocale,
@@ -31,7 +32,7 @@ const REGION_ALIASES: Record<string, string> = {
 const CRAWLER =
   /googlebot|adsbot-google|mediapartners-google|google-inspectiontool|storebot-google|googleother|bingbot|slurp|duckduckbot|baiduspider|yandexbot|sogou|exabot|facebot|facebookexternalhit|ia_archiver|applebot|semrushbot|ahrefsbot|mj12bot|dotbot|petalbot|bytespider|gptbot|chatgpt-user|claudebot|perplexitybot|amazonbot|linkedinbot|twitterbot|slackbot|whatsapp|telegrambot|discordbot|embedly|pinterestbot|redditbot/i;
 
-export type LocaleDecisionSource = "profile" | "cookie" | "geo" | "default";
+export type LocaleDecisionSource = "query" | "profile" | "cookie" | "geo" | "default";
 
 export type VisitorLocaleInput = {
   country?: string | null;
@@ -47,6 +48,8 @@ export type VisitorLocaleInput = {
    */
   acceptLanguage?: string | null;
   frenchRegions?: readonly string[];
+  /** `?lang=` on the URL. Wins over a saved cookie or profile. */
+  queryLocale?: string | null;
 };
 
 export type VisitorLocaleDecision = {
@@ -129,8 +132,24 @@ export function isLocaleDocumentRequest(input: {
  * Saved profile, then this browser's cookie, then location.
  * The browser's language list is not a factor.
  */
+export function localeFromSearch(search?: string | null): ShippedLocale | null {
+  const raw = String(search || "");
+  const q = raw.startsWith("?") ? raw.slice(1) : raw;
+  const hashAt = q.indexOf("#");
+  const query = hashAt >= 0 ? q.slice(0, hashAt) : q;
+  try {
+    const lang = new URLSearchParams(query).get("lang");
+    return isShippedLocale(lang) ? lang : null;
+  } catch {
+    return null;
+  }
+}
+
 export function decideVisitorLocale(input: VisitorLocaleInput = {}): VisitorLocaleDecision {
   const regions = input.frenchRegions ?? GEO_FRENCH_REGIONS;
+  if (isShippedLocale(input.queryLocale)) {
+    return { locale: input.queryLocale, explicit: true, source: "query", suppressGeo: false };
+  }
   if (input.profileChosen && isShippedLocale(input.profileLocale)) {
     return { locale: input.profileLocale, explicit: true, source: "profile", suppressGeo: false };
   }
@@ -160,11 +179,24 @@ function attachSearch(path: string, search?: string | null): string {
 export function localeRedirectTarget(input: LocaleRedirectInput): string | null {
   if (!isLocaleDocumentRequest(input)) return null;
   if (isSearchCrawler(input.userAgent)) return null;
-  const decision = decideVisitorLocale(input);
+  const queryLocale = localeFromSearch(input.search) ?? (isShippedLocale(input.queryLocale) ? input.queryLocale : null);
+  const decision = decideVisitorLocale({ ...input, queryLocale });
+  const pathname = normalizePathname(input.pathname);
+  if (queryLocale === "en" && isFrPath(pathname)) {
+    const next = englishPath(pathname);
+    if (normalizePathname(next) === pathname) return null;
+    const target = attachSearch(next, input.search);
+    return target.startsWith("/") && !target.startsWith("//") ? target : null;
+  }
+  if (queryLocale === "fr" && !isFrPath(pathname) && isPairedPath(pathname)) {
+    const next = frenchPath(pathname);
+    if (normalizePathname(next) === pathname) return null;
+    const target = attachSearch(next, input.search);
+    return target.startsWith("/") && !target.startsWith("//") ? target : null;
+  }
   if (decision.suppressGeo) return null;
   if (decision.locale !== "en" && decision.locale !== "fr") return null;
 
-  const pathname = normalizePathname(input.pathname);
   if (!isPairedPath(pathname)) return null;
 
   const current = pathLocale(pathname);

@@ -24,7 +24,7 @@ function cleanBio(value: unknown) {
   return String(value ?? "").trim().slice(0, 400);
 }
 
-export const getMyContact = createServerFn({ method: "GET" })
+export const getMyContact = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }): Promise<ContactProfile> => {
     const sql = await getSql();
@@ -68,13 +68,17 @@ export const saveMyContact = createServerFn({ method: "POST" })
     if (data.name) {
       await sql`update "user" set name = ${data.name} where id = ${context.userId}`;
     }
+    const stored = await sql<{ display_name: string | null; phone: string | null; bio: string | null }>`
+      select display_name, phone, bio from profiles where user_id = ${context.userId} limit 1
+    `;
     const authRows = await sql<{ name: string | null; email: string | null }>`
       select name, email from "user" where id = ${context.userId} limit 1
     `;
+    const row = stored[0];
     return {
-      name: data.name || authRows[0]?.name?.trim() || "",
-      phone: data.phone,
+      name: row?.display_name?.trim() || data.name || authRows[0]?.name?.trim() || "",
+      phone: row?.phone?.trim() || data.phone,
       email: authRows[0]?.email?.trim() || "",
-      bio: data.bio,
+      bio: row?.bio?.trim() || "",
     };
   });

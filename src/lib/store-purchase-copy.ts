@@ -5,7 +5,7 @@ import type { LegalBlock, LegalDoc, LegalSection } from "./legal-copy";
  * Neutral sentences stay. The website is unchanged.
  */
 const PURCHASE =
-  /stripe checkout|apple pay|google pay|interac|\/donate|\bdeposits?\b|d[eé]p[oô]ts?/i;
+  /stripe checkout|apple pay|google pay|interac|\/donate|\bdeposits?\b|d[eé]p[oô]ts?|parent plus|plus parents/i;
 
 export function mentionsStorePurchase(text: string): boolean {
   return PURCHASE.test(String(text || ""));

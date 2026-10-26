@@ -87,6 +87,7 @@ export type LoginSearch = {
   intent?: "in" | "up" | "admin";
   desk?: DeskAlias;
   why?: SignupWhy;
+  lang?: "en" | "fr";
 };
 
 const WHY_LEAD: Record<SignupWhy, CopyKey> = {
@@ -105,6 +106,7 @@ export function loginValidateSearch(s: Record<string, unknown>): LoginSearch {
   if (s.role === "parent" || s.role === "provider" || s.role === "admin") out.role = s.role;
   if (s.intent === "in" || s.intent === "up" || s.intent === "admin") out.intent = s.intent;
   if (isSignupWhy(s.why)) out.why = s.why;
+  if (s.lang === "en" || s.lang === "fr") out.lang = s.lang;
   const desk = parseDeskQuery(typeof s.desk === "string" ? s.desk : "");
   if (desk) out.desk = deskQueryValue(desk);
   return out;

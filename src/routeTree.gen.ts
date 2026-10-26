@@ -73,6 +73,7 @@ import { Route as VacancyIndexRouteImport } from './routes/vacancy-index'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as Verify2faRouteImport } from './routes/verify-2fa'
 import { Route as AdminFeaturesRouteImport } from './routes/admin.features'
+import { Route as ApiAccountPurgeRouteImport } from './routes/api/account-purge'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiE2eSeedRouteImport } from './routes/api/e2e-seed'
 import { Route as ApiFamilyDocumentsRouteImport } from './routes/api/family-documents'
@@ -112,11 +113,13 @@ import { Route as FrGetAppRouteImport } from './routes/fr.get-app'
 import { Route as FrGuidesRouteImport } from './routes/fr.guides'
 import { Route as FrHelpRouteImport } from './routes/fr.help'
 import { Route as FrHowItWorksRouteImport } from './routes/fr.how-it-works'
+import { Route as FrInboxRouteImport } from './routes/fr.inbox'
 import { Route as FrJobsRouteImport } from './routes/fr.jobs'
 import { Route as FrLoginRouteImport } from './routes/fr.login'
 import { Route as FrMeetTheTeamRouteImport } from './routes/fr.meet-the-team'
 import { Route as FrMilieuxFamiliauxRouteImport } from './routes/fr.milieux-familiaux'
 import { Route as FrNeedCareFastRouteImport } from './routes/fr.need-care-fast'
+import { Route as FrParentRouteImport } from './routes/fr.parent'
 import { Route as FrPlansRouteImport } from './routes/fr.plans'
 import { Route as FrPricingRouteImport } from './routes/fr.pricing'
 import { Route as FrPrivacyRouteImport } from './routes/fr.privacy'
@@ -498,6 +501,11 @@ const AdminFeaturesRoute = AdminFeaturesRouteImport.update({
   path: '/features',
   getParentRoute: () => AdminRoute,
 } as any)
+const ApiAccountPurgeRoute = ApiAccountPurgeRouteImport.update({
+  id: '/api/account-purge',
+  path: '/api/account-purge',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiDigestRoute = ApiDigestRouteImport.update({
   id: '/api/digest',
   path: '/api/digest',
@@ -694,6 +702,11 @@ const FrHowItWorksRoute = FrHowItWorksRouteImport.update({
   path: '/how-it-works',
   getParentRoute: () => FrRoute,
 } as any)
+const FrInboxRoute = FrInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrJobsRoute = FrJobsRouteImport.update({
   id: '/jobs',
   path: '/jobs',
@@ -717,6 +730,11 @@ const FrMilieuxFamiliauxRoute = FrMilieuxFamiliauxRouteImport.update({
 const FrNeedCareFastRoute = FrNeedCareFastRouteImport.update({
   id: '/need-care-fast',
   path: '/need-care-fast',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrParentRoute = FrParentRouteImport.update({
+  id: '/parent',
+  path: '/parent',
   getParentRoute: () => FrRoute,
 } as any)
 const FrPlansRoute = FrPlansRouteImport.update({
@@ -1081,6 +1099,7 @@ export interface FileRoutesByFullPath {
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
   '/admin/features': typeof AdminFeaturesRoute
+  '/api/account-purge': typeof ApiAccountPurgeRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/family-documents': typeof ApiFamilyDocumentsRouteWithChildren
@@ -1119,11 +1138,13 @@ export interface FileRoutesByFullPath {
   '/fr/guides': typeof FrGuidesRouteWithChildren
   '/fr/help': typeof FrHelpRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
+  '/fr/inbox': typeof FrInboxRoute
   '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
   '/fr/meet-the-team': typeof FrMeetTheTeamRoute
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
+  '/fr/parent': typeof FrParentRoute
   '/fr/plans': typeof FrPlansRoute
   '/fr/pricing': typeof FrPricingRoute
   '/fr/privacy': typeof FrPrivacyRoute
@@ -1248,6 +1269,7 @@ export interface FileRoutesByTo {
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
   '/admin/features': typeof AdminFeaturesRoute
+  '/api/account-purge': typeof ApiAccountPurgeRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/family-documents': typeof ApiFamilyDocumentsRouteWithChildren
@@ -1286,11 +1308,13 @@ export interface FileRoutesByTo {
   '/fr/guides': typeof FrGuidesRouteWithChildren
   '/fr/help': typeof FrHelpRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
+  '/fr/inbox': typeof FrInboxRoute
   '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
   '/fr/meet-the-team': typeof FrMeetTheTeamRoute
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
+  '/fr/parent': typeof FrParentRoute
   '/fr/plans': typeof FrPlansRoute
   '/fr/pricing': typeof FrPricingRoute
   '/fr/privacy': typeof FrPrivacyRoute
@@ -1418,6 +1442,7 @@ export interface FileRoutesById {
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
   '/admin/features': typeof AdminFeaturesRoute
+  '/api/account-purge': typeof ApiAccountPurgeRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/family-documents': typeof ApiFamilyDocumentsRouteWithChildren
@@ -1456,11 +1481,13 @@ export interface FileRoutesById {
   '/fr/guides': typeof FrGuidesRouteWithChildren
   '/fr/help': typeof FrHelpRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
+  '/fr/inbox': typeof FrInboxRoute
   '/fr/jobs': typeof FrJobsRoute
   '/fr/login': typeof FrLoginRoute
   '/fr/meet-the-team': typeof FrMeetTheTeamRoute
   '/fr/milieux-familiaux': typeof FrMilieuxFamiliauxRoute
   '/fr/need-care-fast': typeof FrNeedCareFastRoute
+  '/fr/parent': typeof FrParentRoute
   '/fr/plans': typeof FrPlansRoute
   '/fr/pricing': typeof FrPricingRoute
   '/fr/privacy': typeof FrPrivacyRoute
@@ -1589,6 +1616,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/verify-2fa'
     | '/admin/features'
+    | '/api/account-purge'
     | '/api/digest'
     | '/api/e2e-seed'
     | '/api/family-documents'
@@ -1627,11 +1655,13 @@ export interface FileRouteTypes {
     | '/fr/guides'
     | '/fr/help'
     | '/fr/how-it-works'
+    | '/fr/inbox'
     | '/fr/jobs'
     | '/fr/login'
     | '/fr/meet-the-team'
     | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
+    | '/fr/parent'
     | '/fr/plans'
     | '/fr/pricing'
     | '/fr/privacy'
@@ -1756,6 +1786,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/verify-2fa'
     | '/admin/features'
+    | '/api/account-purge'
     | '/api/digest'
     | '/api/e2e-seed'
     | '/api/family-documents'
@@ -1794,11 +1825,13 @@ export interface FileRouteTypes {
     | '/fr/guides'
     | '/fr/help'
     | '/fr/how-it-works'
+    | '/fr/inbox'
     | '/fr/jobs'
     | '/fr/login'
     | '/fr/meet-the-team'
     | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
+    | '/fr/parent'
     | '/fr/plans'
     | '/fr/pricing'
     | '/fr/privacy'
@@ -1925,6 +1958,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/verify-2fa'
     | '/admin/features'
+    | '/api/account-purge'
     | '/api/digest'
     | '/api/e2e-seed'
     | '/api/family-documents'
@@ -1963,11 +1997,13 @@ export interface FileRouteTypes {
     | '/fr/guides'
     | '/fr/help'
     | '/fr/how-it-works'
+    | '/fr/inbox'
     | '/fr/jobs'
     | '/fr/login'
     | '/fr/meet-the-team'
     | '/fr/milieux-familiaux'
     | '/fr/need-care-fast'
+    | '/fr/parent'
     | '/fr/plans'
     | '/fr/pricing'
     | '/fr/privacy'
@@ -2094,6 +2130,7 @@ export interface RootRouteChildren {
   VacancyIndexRoute: typeof VacancyIndexRoute
   VerifyRoute: typeof VerifyRoute
   Verify2faRoute: typeof Verify2faRoute
+  ApiAccountPurgeRoute: typeof ApiAccountPurgeRoute
   ApiDigestRoute: typeof ApiDigestRoute
   ApiE2eSeedRoute: typeof ApiE2eSeedRoute
   ApiFamilyDocumentsRoute: typeof ApiFamilyDocumentsRouteWithChildren
@@ -2594,6 +2631,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminFeaturesRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/api/account-purge': {
+      id: '/api/account-purge'
+      path: '/api/account-purge'
+      fullPath: '/api/account-purge'
+      preLoaderRoute: typeof ApiAccountPurgeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/digest': {
       id: '/api/digest'
       path: '/api/digest'
@@ -2867,6 +2911,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrHowItWorksRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/inbox': {
+      id: '/fr/inbox'
+      path: '/inbox'
+      fullPath: '/fr/inbox'
+      preLoaderRoute: typeof FrInboxRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/jobs': {
       id: '/fr/jobs'
       path: '/jobs'
@@ -2900,6 +2951,13 @@ declare module '@tanstack/react-router' {
       path: '/need-care-fast'
       fullPath: '/fr/need-care-fast'
       preLoaderRoute: typeof FrNeedCareFastRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/parent': {
+      id: '/fr/parent'
+      path: '/parent'
+      fullPath: '/fr/parent'
+      preLoaderRoute: typeof FrParentRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/plans': {
@@ -3360,11 +3418,13 @@ interface FrRouteChildren {
   FrGuidesRoute: typeof FrGuidesRouteWithChildren
   FrHelpRoute: typeof FrHelpRoute
   FrHowItWorksRoute: typeof FrHowItWorksRoute
+  FrInboxRoute: typeof FrInboxRoute
   FrJobsRoute: typeof FrJobsRoute
   FrLoginRoute: typeof FrLoginRoute
   FrMeetTheTeamRoute: typeof FrMeetTheTeamRoute
   FrMilieuxFamiliauxRoute: typeof FrMilieuxFamiliauxRoute
   FrNeedCareFastRoute: typeof FrNeedCareFastRoute
+  FrParentRoute: typeof FrParentRoute
   FrPlansRoute: typeof FrPlansRoute
   FrPricingRoute: typeof FrPricingRoute
   FrPrivacyRoute: typeof FrPrivacyRoute
@@ -3406,11 +3466,13 @@ const FrRouteChildren: FrRouteChildren = {
   FrGuidesRoute: FrGuidesRouteWithChildren,
   FrHelpRoute: FrHelpRoute,
   FrHowItWorksRoute: FrHowItWorksRoute,
+  FrInboxRoute: FrInboxRoute,
   FrJobsRoute: FrJobsRoute,
   FrLoginRoute: FrLoginRoute,
   FrMeetTheTeamRoute: FrMeetTheTeamRoute,
   FrMilieuxFamiliauxRoute: FrMilieuxFamiliauxRoute,
   FrNeedCareFastRoute: FrNeedCareFastRoute,
+  FrParentRoute: FrParentRoute,
   FrPlansRoute: FrPlansRoute,
   FrPricingRoute: FrPricingRoute,
   FrPrivacyRoute: FrPrivacyRoute,
@@ -3593,6 +3655,7 @@ const rootRouteChildren: RootRouteChildren = {
   VacancyIndexRoute: VacancyIndexRoute,
   VerifyRoute: VerifyRoute,
   Verify2faRoute: Verify2faRoute,
+  ApiAccountPurgeRoute: ApiAccountPurgeRoute,
   ApiDigestRoute: ApiDigestRoute,
   ApiE2eSeedRoute: ApiE2eSeedRoute,
   ApiFamilyDocumentsRoute: ApiFamilyDocumentsRouteWithChildren,

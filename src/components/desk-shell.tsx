@@ -12,6 +12,8 @@ import {
   bindDeskGroup,
   visibleDeskGroups,
   writeDeskGroupOpen,
+  deskHrefForLocale,
+  deskPathIsCurrent,
   visibleDeskNav,
   type DeskIcon,
   type DeskId,
@@ -126,9 +128,10 @@ function DeskNavLink({
   count?: number;
 }) {
   const plan = item.id === "subscription" || item.id === "upgrade";
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <Link
-      to={item.href!}
+      to={deskHrefForLocale(item.href!, pathname)}
       {...(item.search ? { search: item.search } : {})}
       data-ke="desk-primary-pill"
       data-nav={plan ? "upgrade" : item.id}
@@ -143,8 +146,7 @@ function itemIsOn(item: DeskItem, active: string, pathname: string): boolean {
   if (item.id === "upgrade") return active === "upgrade";
   if (item.href) {
     if (item.search?.tab || item.search?.desk) return active === item.id;
-    const pathOnly = item.href.split("?")[0] || item.href;
-    return pathname === pathOnly || (pathOnly !== "/" && pathname.startsWith(`${pathOnly}/`));
+    return deskPathIsCurrent(item.href, pathname);
   }
   return active === item.id;
 }

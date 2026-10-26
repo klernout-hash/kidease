@@ -26,6 +26,7 @@ export function ListingTourTimes({
   const [timezone, setTimezone] = useState(daycare.timezone || "America/Winnipeg");
 
   useEffect(() => {
+    if (!canBook) return;
     let live = true;
     void listPublicTourSlots({ data: { daycareId: daycare.id } })
       .then((res) => {
@@ -42,7 +43,16 @@ export function ListingTourTimes({
     return () => {
       live = false;
     };
-  }, [daycare.id]);
+  }, [daycare.id, canBook]);
+
+  if (!canBook) {
+    return (
+      <section id="listing-tours" className="scroll-mt-24" data-listing-tour-times data-tour-unclaimed>
+        <h2 className="font-display text-2xl">{t("tourTimesPublicHint")}</h2>
+        <p className="mt-3 max-w-prose text-sm text-muted">{t("tourTimesUnclaimed")}</p>
+      </section>
+    );
+  }
 
   return (
     <section id="listing-tours" className="scroll-mt-24" data-listing-tour-times>

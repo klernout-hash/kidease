@@ -1,4 +1,4 @@
-import { Children, useEffect, useRef, useState, type ReactNode } from "react";
+import { Children, useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { X } from "lucide-react";
@@ -14,7 +14,7 @@ import { CountBadge } from "@/components/count-badge";
 import { useDeskMenu } from "@/components/desk-menu";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
 import { attentionForItem } from "@/lib/attention";
-import { bindDeskGroup, phoneDeskGroupOpen, visibleDeskGroups, writeDeskGroupOpen } from "@/lib/desk-nav";
+import { bindDeskGroup, visibleDeskGroups, writeDeskGroupOpen } from "@/lib/desk-nav";
 import { showDeskSwitcher } from "@/lib/desks";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
@@ -27,25 +27,11 @@ import { SmartMatchEntry } from "@/components/smart-match";
 
 type Item = { to: string; label: string; search?: Record<string, string>; icon: MenuIconId; marker?: string };
 
-function useNarrowDesk() {
-  const [narrow, setNarrow] = useState(() =>
-    typeof window !== "undefined" ? window.matchMedia("(max-width: 767px)").matches : false,
-  );
-  useEffect(() => {
-    const media = window.matchMedia("(max-width: 767px)");
-    const apply = () => setNarrow(media.matches);
-    apply();
-    media.addEventListener("change", apply);
-    return () => media.removeEventListener("change", apply);
-  }, []);
-  return narrow;
-}
-
 const drawerSummaryClass =
-  "flex min-h-11 cursor-pointer list-none items-center rounded-xl px-3 text-xs font-semibold uppercase tracking-[0.12em] text-subtle [&::-webkit-details-marker]:hidden";
+  "flex min-h-11 cursor-pointer list-none items-center rounded-xl px-3 text-xs font-semibold uppercase tracking-normal text-subtle whitespace-normal break-words [&::-webkit-details-marker]:hidden";
 
 const drawerHeadingClass =
-  "flex min-h-11 items-center rounded-xl px-3 text-xs font-semibold uppercase tracking-[0.12em] text-subtle";
+  "flex min-h-11 items-center rounded-xl px-3 text-xs font-semibold uppercase tracking-normal text-subtle whitespace-normal break-words";
 
 /** A heading with no links is not a section. Guest groups stay open so the links are on screen. */
 function DrawerSection({ title, marker, children }: { title: string; marker?: string; children: ReactNode }) {
@@ -160,7 +146,6 @@ export function NavDrawer({
   const roleList = !deskMenu && signedIn && showMenus;
   const switcher = Boolean(session && showDeskSwitcher(session.desks, session.role, session.email));
   const loginTo = (localePath("/login", locale) === "/fr/login" ? "/fr/login" : "/login") as "/login" | "/fr/login";
-  const narrowDesk = useNarrowDesk();
 
   useEffect(() => {
     if (!open) return;
@@ -220,7 +205,7 @@ export function NavDrawer({
             type="button"
             onClick={onClose}
             className="grid size-12 place-items-center rounded-full text-fg hover:bg-surface-2"
-            aria-label="Close"
+            aria-label={t("close")}
           >
             <X className="size-6" strokeWidth={1.75} />
           </button>
@@ -268,23 +253,11 @@ export function NavDrawer({
               {visibleDeskGroups(deskMenu.desk, deskMenu.items).map(({ group, items: rows }) => {
                 const visibleRows = rows.filter((item) => item.id !== "account");
                 if (visibleRows.length === 0 && group.id !== "settings") return null;
-                const holdsPage = phoneDeskGroupOpen(rows, deskMenu.active, deskMenu.pathname);
                 return (
                 <details
                   key={group.id}
-                  data-ke-group={group.id}
-                  open={narrowDesk && holdsPage ? true : undefined}
-                  ref={(node) => {
-                    if (narrowDesk || !node) return;
-                    bindDeskGroup(node, deskMenu.desk, group.id, group.open !== false);
-                  }}
-                  onToggle={(event) => {
-                    if (narrowDesk) {
-                      if (holdsPage && !event.currentTarget.open) event.currentTarget.open = true;
-                      return;
-                    }
-                    writeDeskGroupOpen(deskMenu.desk, group.id, event.currentTarget.open);
-                  }}
+                  ref={(node) => bindDeskGroup(node, deskMenu.desk, group.id, Boolean(group.open))}
+                  onToggle={(event) => writeDeskGroupOpen(deskMenu.desk, group.id, event.currentTarget.open)}
                   className="py-0.5"
                 >
                   <summary className={drawerSummaryClass}>

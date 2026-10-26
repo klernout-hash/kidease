@@ -19,6 +19,9 @@ test("account deletion keeps billing rows and says so", () => {
   const schedule = family.slice(family.indexOf("export const deleteAccount"), family.indexOf("export const restoreMyAccount"));
   assert.match(schedule, /deleted_at/);
   assert.doesNotMatch(schedule, /delete from "user"/);
-  assert.match(copy, /keep billing records the law requires/i);
-  assert.match(copy, /dossiers de facturation exigés par la loi/);
+  assert.match(body, /forgetExternalAccounts/);
+  assert.match(body, /anonymizeRetainedRecords/);
+  assert.doesNotMatch(body, /delete from security_events/);
+  assert.match(copy, /Invoices and payments: kept because tax law requires them/);
+  assert.match(copy, /Factures et paiements : conservés parce que la loi fiscale/);
 });

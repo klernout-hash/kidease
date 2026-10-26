@@ -83,7 +83,7 @@ test("founding period unlocks daycare tools and does not grant a search pin", ()
 test("plans page redirects home while subscriptions are off and keeps checkout code", () => {
   const page = src("src/routes/plans.tsx");
   assert.match(page, /getPlansGate/);
-  assert.match(page, /if \(!gate\.subscriptionsOn\) throw redirect/);
+  assert.match(page, /if \(!gate\.plansOpen\) throw redirect/);
   assert.match(page, /OptionalUpgrades/);
   assert.doesNotMatch(page, /FoundingPlans/);
   assert.doesNotMatch(page, /min-h-64 max-w-6xl py-12" data-ke="plans-page"/);

@@ -129,7 +129,7 @@ test("store builds name only their store and drop purchase copy", () => {
   assert.match(stripped, /Canadian company/);
   assert.match(src("src/lib/legal-copy.ts"), /Apple Pay/);
   assert.match(src("src/routes/get-app.tsx"), /comingSoonStores/);
-  assert.match(src("src/components/site-footer.tsx"), /comingSoonStores/);
+  assert.doesNotMatch(src("src/components/site-footer.tsx"), /comingSoonStores/);
   assert.match(src("src/routes/privacy.tsx"), /legalDocWithoutStorePurchase/);
   assert.match(src("src/routes/terms.tsx"), /legalDocWithoutStorePurchase/);
   assert.match(src("src/routes/fr.privacy.tsx"), /legalDocWithoutStorePurchase/);

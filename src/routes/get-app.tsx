@@ -61,7 +61,8 @@ function storeComingLine(locale: string, badges: Array<"apple" | "play">): strin
 export function GetAppScreen({ dev }: { dev?: "1" }) {
   const { t, locale } = useCopy();
   const hideCommerce = useInNativeShell();
-  const storeBadges = comingSoonStores(useStoreChannel());
+  const storeChannel = useStoreChannel();
+  const storeBadges = hideCommerce ? [] : comingSoonStores(storeChannel);
   const showDev = dev === "1";
   const [canPrompt, setCanPrompt] = useState(false);
   const [installed, setInstalled] = useState(false);

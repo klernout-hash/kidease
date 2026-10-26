@@ -308,6 +308,26 @@ test("real listing document URLs are not 404'd by the guard", () => {
     status: 301,
     location: "/claim",
   });
+  assert.deepEqual(decideRequest({ host: "www.kidease.ca", pathname: "/sign-in", search: "?next=/parent" }), {
+    action: "redirect",
+    status: 301,
+    location: "/login?next=/parent",
+  });
+  assert.deepEqual(decideRequest({ host: "www.kidease.ca", pathname: "/sign-up" }), {
+    action: "redirect",
+    status: 301,
+    location: "/signup",
+  });
+  assert.deepEqual(decideRequest({ host: "www.kidease.ca", pathname: "/fr/sign-in" }), {
+    action: "redirect",
+    status: 301,
+    location: "/fr/login",
+  });
+  assert.deepEqual(decideRequest({ host: "www.kidease.ca", pathname: "/fr/sign-up" }), {
+    action: "redirect",
+    status: 301,
+    location: "/fr/signup",
+  });
 });
 
 test("nitro middleware and vercel.json stay wired to the guard", () => {

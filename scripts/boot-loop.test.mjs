@@ -82,7 +82,9 @@ describe("home / session / splash cannot stay pending forever", () => {
 
   it("service worker does not intercept documents or /assets/", () => {
     const sw = src("public/sw.js");
-    assert.match(sw, /kidease-shell-v6/);
+    assert.match(sw, /kidease-shell-v7/);
+    assert.match(sw, /navigator\.onLine === false/);
+    assert.match(sw, /startsWith\("\/_serverFn"\)/);
     assert.match(sw, /startsWith\("\/assets\/"\)/);
     assert.match(sw, /request\.mode === "navigate"/);
     assert.match(sw, /destination === "document"/);

@@ -101,11 +101,11 @@ test("home search bar is a slim pill with a claim strip and a daycare header pil
   assert.match(copy, /heroTrustFounding: "Période fondatrice gratuite"/);
   assert.doesNotMatch(strip, /free forever/i);
   assert.doesNotMatch(strip, /—/);
-  const link = shell.slice(shell.indexOf('data-ke="list-your-daycare"') - 80, shell.indexOf('data-ke="list-your-daycare"') + 500);
+  const link = shell.slice(shell.indexOf('data-ke="list-your-daycare"') - 80, shell.indexOf('data-ke="list-your-daycare"') + 700);
   assert.match(link, /border-primary/);
   assert.match(link, /Building2/);
   assert.match(link, /navForDaycares/);
-  assert.match(link, /whitespace-nowrap/);
+  assert.match(link, /whitespace-normal/);
   assert.doesNotMatch(link, /hidden md:inline-flex/);
   assert.doesNotMatch(link, /listYourDaycare/);
 });

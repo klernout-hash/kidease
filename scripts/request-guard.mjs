@@ -236,6 +236,16 @@ export function decideRequest(input = {}) {
     return { action: "redirect", status: 301, location: "/claim" };
   }
 
+  const authAlias = {
+    "/sign-in": "/login",
+    "/sign-up": "/signup",
+    "/fr/sign-in": "/fr/login",
+    "/fr/sign-up": "/fr/signup",
+  };
+  if (authAlias[path]) {
+    return { action: "redirect", status: 301, location: `${authAlias[path]}${queryString(input.search)}` };
+  }
+
   if (path === CHANGE_PASSWORD_PATH) {
     return {
       action: "redirect",

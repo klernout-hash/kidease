@@ -68,6 +68,7 @@ test("parseE2eArgs flag and unknown-flag handling", () => {
   assert.equal(parseE2eArgs(["--require"], {}).requireServer, true);
   assert.equal(parseE2eArgs([], { E2E_REQUIRE: "1" }).requireServer, true);
   assert.equal(parseE2eArgs(["--browser-smoke"], {}).browserSmoke, true);
+  assert.equal(parseE2eArgs(["--signed-in"], {}).signedIn, true);
 });
 
 test("skipReason is null when a server is required even without URL", () => {
@@ -238,7 +239,10 @@ test("smoke paths never include pay or 2FA submit", () => {
   const runner = src("scripts/e2e-smoke.mjs");
   assert.equal(e2eScriptMustStayChargeFree(runner).length, 0);
   assert.doesNotMatch(runner, /\/pay\//);
-  assert.doesNotMatch(runner, /fill\(.*password/i);
+  assert.match(runner, /\.fill\(FIXTURE_PASSWORD\)/);
+  const passwordFills = runner.match(/\.fill\([^)\n]*password[^)\n]*\)/gi) || [];
+  assert.deepEqual(passwordFills, [".fill(FIXTURE_PASSWORD)"]);
+  assert.match(runner, /if \(args\.signedIn\)/);
   assert.match(runner, /scripts\/browser-smoke\.mjs/);
   assert.match(runner, /args\.startPreview/);
   assert.match(runner, /skipReason/);

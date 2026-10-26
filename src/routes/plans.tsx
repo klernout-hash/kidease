@@ -22,7 +22,7 @@ export function plansHead(paid: boolean, locale: "en" | "fr" = "en") {
 export const Route = createFileRoute("/plans")({
   loader: async () => {
     const gate = await getPlansGate();
-    if (!gate.subscriptionsOn) throw redirect({ to: "/" });
+    if (!gate.plansOpen) throw redirect({ to: "/" });
     return gate;
   },
   head: ({ loaderData }) => plansHead(Boolean(loaderData?.subscriptionsOn), "en"),
