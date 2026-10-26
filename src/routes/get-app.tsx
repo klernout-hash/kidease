@@ -20,7 +20,7 @@ import { localePath } from "@/lib/locale-path";
 import { comingSoonStores } from "@/lib/native-entitlements";
 import { showStoreComingSoon } from "@/lib/store-placeholders";
 import { useCopy } from "@/lib/use-copy";
-import { useStoreChannel } from "@/lib/use-native-shell";
+import { useInNativeShell, useStoreChannel } from "@/lib/use-native-shell";
 import { HomeScreenGuide } from "@/components/home-screen-guide";
 import { JsonLd } from "@/components/json-ld";
 import { MARKETING_PAGE_SEO, organizationGraphJsonLdScript, pageSeoHead } from "@/lib/page-seo";
@@ -61,9 +61,11 @@ function storeComingLine(locale: string, badges: Array<"apple" | "play">): strin
 
 export function GetAppScreen({ dev }: { dev?: "1" }) {
   const { t, locale } = useCopy();
+  const hideCommerce = useInNativeShell();
   const storeChannel = useStoreChannel();
   const showStores = showStoreComingSoon(storeChannel);
-  const storeBadges = showStores ? comingSoonStores(storeChannel) : [];
+  const fromChannel = hideCommerce ? [] : comingSoonStores(storeChannel);
+  const storeBadges = showStores ? fromChannel : [];
   const showDev = dev === "1";
   const [canPrompt, setCanPrompt] = useState(false);
   const [installed, setInstalled] = useState(false);
