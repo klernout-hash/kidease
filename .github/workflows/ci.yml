@@ -50,7 +50,14 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium webkit
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: Install Playwright browsers
+        timeout-minutes: 20
+        run: npx playwright install --with-deps chromium webkit
       - name: Smoke against BASE_URL or local preview
         env:
           BASE_URL: ${{ github.event.inputs.base_url }}
@@ -81,7 +88,14 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium webkit
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: Install Playwright browsers
+        timeout-minutes: 20
+        run: npx playwright install --with-deps chromium webkit
       - name: Build preview
         run: npm run build
       - name: Signed-in parent and daycare, English and French
