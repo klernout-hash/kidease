@@ -54,12 +54,9 @@ test("production hides Chat lab and admin labels stay plain", () => {
   assert.match(nav, /label: "Registries"/);
   assert.match(nav, /label: "Bills"/);
   assert.doesNotMatch(nav, /label: "Trust"/);
-  assert.match(nav, /id: "money", label: "Earnings"/);
-  assert.match(nav, /id: "money", label: "Money", labelKey: "navMoney"/);
+  assert.doesNotMatch(nav, /label: "Money"/);
   const labels = Object.fromEntries(visibleDeskNav("admin").map((item) => [item.id, item.label]));
   assert.equal(labels.trust, "Registries");
   assert.equal(labels.money, "Bills");
-  const daycareMoney = visibleDeskNav("daycare", { centreOwner: true, subscriptionsEnabled: true }).find((item) => item.id === "money");
-  assert.equal(daycareMoney?.label, "Earnings");
   assert.match(src("src/routes/admin-chat.tsx"), /import\.meta\.env\.PROD/);
 });

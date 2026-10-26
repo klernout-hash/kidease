@@ -237,23 +237,21 @@ export type DeskGroup = {
   itemIds: readonly string[];
 };
 
-/**
- * Same links as before, under new headings.
- * Desktop groups start open. Phones collapse every group except the current page.
- */
+/** Same groups in the desktop sidebar and the phone sheet. */
 export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
   parent: [
-    { id: "find-care", label: "Find care", labelKey: "navFindCare", open: true, itemIds: ["search", "explore", "saved", "alerts"] },
-    { id: "my-requests", label: "My requests", labelKey: "navMyRequests", open: true, itemIds: ["bookings", "waitlists", "messages"] },
+    { id: "family", label: "Family desk", labelKey: "familyDeskTitle", open: true, itemIds: ["explore", "saved", "bookings", "waitlists", "messages"] },
     { id: "my-family", label: "My family", labelKey: "navMyFamily", open: true, itemIds: ["children", "care", "payments"] },
+    { id: "search-tools", label: "Search tools", labelKey: "navSearchTools", open: true, itemIds: ["search", "alerts"] },
     { id: "account", label: "Account", labelKey: "account", open: true, itemIds: ["profile", "appearance", "upgrade", "delete"] },
     { id: "settings", label: "Settings", labelKey: "settings", open: true, itemIds: ["notify-prefs", "security", "email-sms"] },
   ],
   daycare: [
-    { id: "daily", label: "Daily", labelKey: "navDaily", open: true, itemIds: ["today", "requests", "tours", "messages"] },
-    { id: "my-centre", label: "My centre", labelKey: "navMyCentre", open: true, itemIds: ["listings", "add", "claim", "licence", "screening", "contract"] },
-    { id: "team", label: "Team", labelKey: "navTeam", open: true, itemIds: ["employees", "post-job"] },
-    { id: "money", label: "Money", labelKey: "navMoney", open: true, itemIds: ["money", "promote"] },
+    { id: "desk", label: "Daycare desk", labelKey: "daycareDeskTitle", open: true, itemIds: ["today", "requests", "tours", "listings", "messages"] },
+    { id: "business", label: "Business", labelKey: "navBusiness", open: true, itemIds: ["money", "promote"] },
+    { id: "team", label: "Team", labelKey: "navTeam", itemIds: ["employees", "screening"] },
+    { id: "compliance", label: "Compliance", labelKey: "navCompliance", itemIds: ["licence", "contract"] },
+    { id: "grow", label: "Grow", labelKey: "navGrow", itemIds: ["post-job", "add", "claim"] },
     { id: "account", label: "Account", labelKey: "account", open: true, itemIds: ["profile", "appearance", "subscription", "delete"] },
     { id: "settings", label: "Settings", labelKey: "settings", open: true, itemIds: ["notify-prefs", "security", "email-sms"] },
   ],
@@ -310,36 +308,6 @@ export function bindDeskGroup(
   if (!node || node.dataset.keGroup === "1") return;
   node.dataset.keGroup = "1";
   node.open = readDeskGroupOpen(desk, groupId, fallback);
-}
-
-/** True when this sidebar row is the page the visitor is on. */
-export function deskItemIsCurrent(item: DeskItem, active: string, pathname: string): boolean {
-  if (item.id === "upgrade") return active === "upgrade";
-  if (item.href) {
-    if (item.search?.tab || item.search?.desk) return active === item.id;
-    const pathOnly = item.href.split("?")[0] || item.href;
-    return pathname === pathOnly || (pathOnly !== "/" && pathname.startsWith(`${pathOnly}/`));
-  }
-  return active === item.id;
-}
-
-/** Phones keep only the current group open. Other groups start collapsed. */
-export function phoneDeskGroupOpen(items: DeskItem[], active: string, pathname: string): boolean {
-  return items.some((item) => deskItemIsCurrent(item, active, pathname));
-}
-
-/** Stable id for one sidebar destination. Buttons without a URL use their id. */
-export function sidebarDestination(item: DeskItem): string {
-  if (!item.href) return `id:${item.id}`;
-  const query = item.search ? new URLSearchParams(item.search).toString() : "";
-  return query ? `${item.href}?${query}` : item.href;
-}
-
-/** Every sidebar link a desk shows, for the owner and flag options given. */
-export function sidebarDestinations(desk: DeskId, opts?: DeskNavOpts): string[] {
-  return visibleDeskGroups(desk, visibleDeskNav(desk, opts))
-    .flatMap((row) => row.items.map(sidebarDestination))
-    .sort();
 }
 
 export function visibleDeskGroups(
