@@ -297,17 +297,23 @@ export const getFamily = createServerFn({ method: "GET" })
         await overlayParentRank(
           await overlayQuality(
             saved
-              .map((r) => {
-                const d = mapDaycare(r);
-                return {
-                  ...d,
-                  spotsTotal: spotsTotal(d),
-                  fromPrice: fromPrice(d),
-                  distanceKm: 0,
-                  trackStatus: parseTrackStatus(r.track_status),
-                  callNote: String(r.call_note ?? ""),
-                  tourNote: String(r.tour_note ?? ""),
-                };
+              .flatMap((r) => {
+                try {
+                  const d = mapDaycare(r);
+                  return [
+                    {
+                      ...d,
+                      spotsTotal: spotsTotal(d),
+                      fromPrice: fromPrice(d),
+                      distanceKm: 0,
+                      trackStatus: parseTrackStatus(r.track_status),
+                      callNote: String(r.call_note ?? ""),
+                      tourNote: String(r.tour_note ?? ""),
+                    },
+                  ];
+                } catch {
+                  return [];
+                }
               })
               .filter((d) => seeTestListings || !isAdminOnlyListing(d)),
           ),

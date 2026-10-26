@@ -8,6 +8,7 @@
  * Relative imports only — scripts/*.test.mjs load this file with Node.
  */
 import { classifyFacilityType, normalizeFacilityType, type FacilityType } from "./facility-type.ts";
+import { dayKeyInTimeZone, hourInTimeZone, isValidTimeZone, quietHourInZone } from "./family-time.ts";
 import { isPublicListing, listingVisibilityInputFromDb } from "./listing-visibility.ts";
 
 export const ALERT_TZ = "America/Winnipeg";
@@ -68,36 +69,31 @@ function vacancyFresh(updatedAt: string | null | undefined, nowMs: number): bool
   return nowMs - ts <= VACANCY_CONFIRM_MAX_MS;
 }
 
-/** Winnipeg clock hour 0–23. Midnight is 0, never 24. */
-export function winnipegHour(now: Date = new Date()): number {
-  const raw = new Intl.DateTimeFormat("en-CA", {
-    timeZone: ALERT_TZ,
-    hour: "numeric",
-    hour12: false,
-  }).format(now);
-  const hour = Number.parseInt(raw, 10);
-  if (!Number.isFinite(hour)) return 0;
-  if (hour === 24) return 0;
-  return hour;
+/** Clock hour 0–23 in a zone. Midnight is 0, never 24. */
+export function hourInZone(now: Date, timeZone: string): number {
+  return hourInTimeZone(now, timeZone);
 }
 
-export function winnipegDayKey(now: Date = new Date()): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: ALERT_TZ,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(now);
+/** @deprecated Use hourInZone with the family's zone. */
+export function winnipegHour(now: Date = new Date(), timeZone = ALERT_TZ): number {
+  return hourInTimeZone(now, timeZone);
 }
 
-/** Quiet hours 21:00–08:00 America/Winnipeg — hold email, still allow in-app. */
-export function isAlertQuietHours(now: Date = new Date()): boolean {
-  const hour = winnipegHour(now);
-  return hour >= 21 || hour < 8;
+export function winnipegDayKey(now: Date = new Date(), timeZone = ALERT_TZ): string {
+  return dayKeyInTimeZone(now, isValidTimeZone(timeZone) ? timeZone : "UTC");
 }
 
-export function canSendDigestEmail(lastEmailAt: string | Date | null | undefined, now: Date = new Date()): boolean {
-  if (isAlertQuietHours(now)) return false;
+/** Quiet hours 21:00–08:00 in the family's zone. No zone means do not hold. */
+export function isAlertQuietHours(now: Date = new Date(), timeZone?: string | null): boolean {
+  return quietHourInZone(now, timeZone);
+}
+
+export function canSendDigestEmail(
+  lastEmailAt: string | Date | null | undefined,
+  now: Date = new Date(),
+  timeZone?: string | null,
+): boolean {
+  if (isAlertQuietHours(now, timeZone)) return false;
   if (!lastEmailAt) return true;
   const ts = lastEmailAt instanceof Date ? lastEmailAt.getTime() : Date.parse(String(lastEmailAt));
   if (!Number.isFinite(ts)) return true;

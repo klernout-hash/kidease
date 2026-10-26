@@ -315,6 +315,9 @@ export const listAdminCentres = createServerFn({ method: "GET" })
            or d.id = 'ke-test-ghost-001'
            or d.id ilike 'ke-test-%'
            or d.name like 'TEST %'
+           or d.slug ~* '^qa[-_]'
+           or d.name ~* '^qa[ _-]'
+           or d.name ~* 'qa[[:space:]]+test'
            or d.merged_into is not null
            or nullif(btrim(coalesce(d.import_fault, '')), '') is not null
       `;

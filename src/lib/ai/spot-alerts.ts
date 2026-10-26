@@ -239,7 +239,7 @@ export function groundSpotAlert(model: SpotAlertModel | null, facts: SpotAlertFa
   return { body, source: "model" };
 }
 
-/** After 9 PM Winnipeg, including the overnight hold used by other alerts. */
-export function spotAlertQuiet(now: Date = new Date()): boolean {
-  return isAlertQuietHours(now);
+/** After 9 p.m. in the family's time zone, until 8 a.m. */
+export function spotAlertQuiet(now: Date = new Date(), timeZone?: string | null): boolean {
+  return isAlertQuietHours(now, timeZone);
 }

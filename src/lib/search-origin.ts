@@ -27,9 +27,9 @@ function applyTrustedSaved(timeZone: string | null) {
 }
 
 /**
- * Empty /search: street GPS, else saved / SSR IP, else Winnipeg. Typed q stays multi-city.
- * A later call (the city query arriving) invalidates an in-flight GPS boot so the
- * device fix cannot land after Edmonton and pull the camera back to Manitoba.
+ * Empty /search: street GPS when allowed, else a saved city, else Canadian IP,
+ * else a Canada-wide view with no city query. Typed q stays multi-city.
+ * A later call (the city query arriving) invalidates an in-flight GPS boot.
  */
 let bootGeneration = 0;
 
@@ -83,10 +83,10 @@ export async function bootSearchOrigin(incomingQ?: string, ssrOrigin?: SearchOri
     {
       lat: resolved.lat,
       lng: resolved.lng,
-      label,
+      label: resolved.source === "default" ? "" : label,
       explicit: resolved.source === "gps" || resolved.source === "manual",
     },
     resolved.source,
   );
-  setQuery(label);
+  if (resolved.source !== "default" && label.trim()) setQuery(label);
 }

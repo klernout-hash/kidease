@@ -4,6 +4,7 @@ import { getSql } from "@/lib/db";
 import { evaluateCaslSend } from "@/lib/server/casl-consent";
 import { isSuppressed } from "@/lib/server/email-suppressions";
 import { lookupUser } from "@/lib/server/notify";
+import { readFamilyTimeZone } from "@/lib/server/alert-dispatch";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
 import { nid } from "@/lib/utils";
 import {
@@ -156,7 +157,8 @@ export async function notifyWaitlistStatusChange(input: {
     emailFallback: false,
     now,
   }).catch(() => undefined);
-  if (waitlistQuietNow(now)) {
+  const zone = await readFamilyTimeZone(sql, input.userId);
+  if (waitlistQuietNow(now, zone)) {
     await sql`
       insert into waitlist_status_mail (id, user_id, booking_id, status, daycare_name)
       values (${nid("wsm")}, ${input.userId}, ${input.bookingId}, ${status}, ${input.daycareName.slice(0, 120)})
@@ -172,9 +174,8 @@ export async function notifyWaitlistStatusChange(input: {
   return { inApp: true, email: result };
 }
 
-/** Sends mail that was held after 9 PM Winnipeg. Safe to call from the hourly job. */
+/** Sends mail that was held during quiet hours in that family's time zone. */
 export async function flushHeldWaitlistMail(now: Date = new Date()) {
-  if (waitlistQuietNow(now)) return { sent: 0 };
   await ensureWaitlistColumns();
   const sql = await getSql();
   const rows = await sql<{
@@ -191,6 +192,8 @@ export async function flushHeldWaitlistMail(now: Date = new Date()) {
   `.catch(() => []);
   let sent = 0;
   for (const row of rows) {
+    const zone = await readFamilyTimeZone(sql, row.user_id);
+    if (waitlistQuietNow(now, zone)) continue;
     const status = parentWaitlistStatus(row.status);
     if (!status) continue;
     const user = await lookupUser(row.user_id).catch(() => ({ email: null as string | null }));

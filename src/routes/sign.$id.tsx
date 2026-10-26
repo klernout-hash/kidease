@@ -9,7 +9,16 @@ import { ds } from "@/lib/docusign-copy";
 import { useCopy } from "@/lib/use-copy";
 import { getSignContract, signCentreContract } from "@/lib/server/contracts";
 
-export const Route = createFileRoute("/sign/$id")({ component: SignPage });
+export const Route = createFileRoute("/sign/$id")({
+  head: () => ({
+    meta: [
+      { title: "Sign a contract · KidEase" },
+      { name: "description", content: "Sign a KidEase centre contract. This page is private." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
+  component: SignPage,
+});
 
 function SignPage() {
   const { id } = Route.useParams();

@@ -1,4 +1,4 @@
-import { lazy, startTransition, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { Component, lazy, startTransition, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, Navigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { confirmSuccess } from "@/lib/success-confirm";
@@ -37,7 +37,7 @@ import { useAppStore } from "@/lib/store";
 import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
-import { WINNIPEG } from "@/lib/geo";
+import { parentDeskTabOrDefault } from "@/lib/parent-tab";
 import { yieldToMain } from "@/lib/yield-main";
 import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
 import { PARENT_UPGRADE_PLANS } from "@/lib/upgrade-plans";
@@ -82,6 +82,26 @@ function scheduleIdle(work: () => void): () => void {
 }
 
 type ParentTab = "explore" | "saved" | "bookings" | "payments" | "subscription" | "children" | "alerts" | "care" | "waitlists";
+
+class SavedTabBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  render() {
+    if (this.state.failed) return <SavedTabFallback />;
+    return this.props.children;
+  }
+}
+
+function SavedTabFallback() {
+  const { t } = useCopy();
+  return (
+    <div className="mt-6 w-full" data-ke="saved-fallback">
+      <EmptyState title={t("saved")} body={t("canadaSearchLead")} action={t("emptyFindCare")} actionTo="/search" />
+    </div>
+  );
+}
 
 export function ParentDesk({
   initialTab,
@@ -132,7 +152,7 @@ export function ParentDesk({
   const acceptedShare = useRef<string | null>(null);
 
   const selectTab = useCallback((id: string) => {
-    const next = id as ParentTab;
+    const next = parentDeskTabOrDefault(id);
     setTab(next);
     void yieldToMain().then(() => {
       startTransition(() => setContentTab(next));
@@ -142,7 +162,11 @@ export function ParentDesk({
   const loadExplore = useCallback(
     async (startBookings: Booking[], fresh = false) => {
       try {
-        const loc = origin.lat ? origin : WINNIPEG;
+        if (!(origin.label || "").trim()) {
+          startTransition(() => setExplore([]));
+          return;
+        }
+        const loc = origin;
         const data = {
           lat: loc.lat,
           lng: loc.lng,
@@ -325,20 +349,30 @@ export function ParentDesk({
   const deferredSaved = useDeferredValue(saved);
   const rankedSaved = useMemo(() => {
     if (contentTab !== "saved") return [] as Array<Card & { matchScore: number; urgencyScore: number; distanceKm: number }>;
-    return asList(deferredSaved)
-      .map((item) => {
-        const child = asList(children)[0];
-        const ageGroup = child?.birthdate ? ageGroupFromMonths(monthsBetween(child.birthdate)) : "any";
-        const startDate = soonestStartDate(asList(bookings).filter((b) => b.daycareId === item.id));
-        const km = doorDistanceKm(origin, { lat: item.lat, lng: item.lng }) ?? Number.NaN;
-        return {
-          ...item,
-          distanceKm: km,
-          matchScore: parentMatchScore({ ...item, distanceKm: km }, { ageGroup, radiusKm, distanceKnown: located }),
-          urgencyScore: parentUrgencyScore(item, { ageGroup, startDate }),
-        };
-      })
-      .sort((a, b) => b.urgencyScore - a.urgencyScore || b.matchScore - a.matchScore);
+    try {
+      return asList(deferredSaved)
+        .flatMap((item) => {
+          try {
+            const child = asList(children)[0];
+            const ageGroup = child?.birthdate ? ageGroupFromMonths(monthsBetween(child.birthdate)) : "any";
+            const startDate = soonestStartDate(asList(bookings).filter((b) => b.daycareId === item.id));
+            const km = doorDistanceKm(origin, { lat: item.lat, lng: item.lng }) ?? Number.NaN;
+            return [
+              {
+                ...item,
+                distanceKm: km,
+                matchScore: parentMatchScore({ ...item, distanceKm: km }, { ageGroup, radiusKm, distanceKnown: located }),
+                urgencyScore: parentUrgencyScore(item, { ageGroup, startDate }),
+              },
+            ];
+          } catch {
+            return [];
+          }
+        })
+        .sort((a, b) => b.urgencyScore - a.urgencyScore || b.matchScore - a.matchScore);
+    } catch {
+      return [] as Array<Card & { matchScore: number; urgencyScore: number; distanceKm: number }>;
+    }
   }, [bookings, children, contentTab, deferredSaved, located, origin, radiusKm]);
 
   void explore;
@@ -394,6 +428,7 @@ export function ParentDesk({
       ) : null}
 
       {contentTab === "saved" ? (
+        <SavedTabBoundary>
         <ParentShortlist
           items={rankedSaved}
           ready={savedReady}
@@ -416,6 +451,7 @@ export function ParentDesk({
             void loadFamily(true);
           }}
         />
+        </SavedTabBoundary>
       ) : null}
 
       {contentTab === "care" ? (

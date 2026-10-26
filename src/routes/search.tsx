@@ -155,6 +155,7 @@ export async function searchLoader({ location }: { location: { search: unknown }
         items: [] as Card[],
         itemsReady: true,
         unknownCity: true as const,
+        needsPlace: false as const,
         origin: { lat: 0, lng: 0, label: city, source: "manual" as const },
         page: 1,
         hasMore: false,
@@ -166,6 +167,18 @@ export async function searchLoader({ location }: { location: { search: unknown }
     const origin = fromQ
       ? { lat: fromQ.lat, lng: fromQ.lng, label: fromQ.label, source: "manual" as const }
       : await withTimeoutFallback(resolveRequestSearchOrigin(), ORIGIN_BUDGET_MS, productHomeOrigin());
+    if (!place && origin.source === "default") {
+      return {
+        items: [] as Card[],
+        itemsReady: true,
+        unknownCity: false as const,
+        needsPlace: true as const,
+        origin,
+        page: 1,
+        hasMore: false,
+        total: 0,
+      };
+    }
     const page = pageFromSearch(location.search);
     const painted = await withPaintBudget(
       searchDaycarePage({
@@ -176,7 +189,7 @@ export async function searchLoader({ location }: { location: { search: unknown }
           sort: "distance",
           ageGroup: "any",
           label: origin.label,
-          q: place || origin.label,
+          q: place || (origin.source === "default" ? "" : origin.label),
           city: city || undefined,
           facility: listedDaycareTypeFromSearch(location.search),
           page,
@@ -198,6 +211,7 @@ export async function searchLoader({ location }: { location: { search: unknown }
       itemsReady: painted.ready,
       origin,
       unknownCity: false as const,
+      needsPlace: false as const,
       page: painted.value?.page ?? page,
       hasMore: painted.value?.hasMore === true,
       total: painted.value?.total ?? 0,
@@ -307,6 +321,7 @@ export function SearchScreen({
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
   const navigate = useNavigate({ from: locale === "fr" ? "/fr/search" : "/search" });
   const origin = useAppStore((s) => s.origin);
+  const originSource = useAppStore((s) => s.originSource);
   const located = useAppStore((s) => s.located);
   const setOrigin = useAppStore((s) => s.setOrigin);
   const workOrigin = useAppStore((s) => s.workOrigin);
@@ -342,14 +357,16 @@ export function SearchScreen({
   const query = useAppStore((s) => s.query);
   const setQuery = useAppStore((s) => s.setQuery);
   const [items, setItems] = useState<Card[] | null>(
-    boot.items.length > 0 && (Boolean(incoming.name) || originsMatchSearchQuery(boot.origin, incoming.q))
-      ? incoming.name
-        ? boot.items
-        : filterByLocationLock(
-            boot.items,
-            resolveLocationLock({ ...boot.origin, q: incoming.q }),
-          )
-      : null,
+    boot.needsPlace || boot.unknownCity
+      ? boot.items
+      : boot.items.length > 0 && (Boolean(incoming.name) || originsMatchSearchQuery(boot.origin, incoming.q))
+        ? incoming.name
+          ? boot.items
+          : filterByLocationLock(
+              boot.items,
+              resolveLocationLock({ ...boot.origin, q: incoming.q }),
+            )
+        : null,
   );
   const resultPage = incoming.page ?? 1;
   const [hasMore, setHasMore] = useState(boot.hasMore === true);
@@ -382,7 +399,6 @@ export function SearchScreen({
   const [saveBusy, setSaveBusy] = useState(false);
   const [workQuery, setWorkQuery] = useState("");
   const [anchorsHydrated, setAnchorsHydrated] = useState(false);
-  const originSource = useAppStore((s) => s.originSource);
   const locationConsent = useAppStore((s) => s.locationConsent);
   const setLocationConsent = useAppStore((s) => s.setLocationConsent);
   const [askLocation, setAskLocation] = useState(false);
@@ -629,10 +645,11 @@ export function SearchScreen({
   );
 
   useEffect(() => {
-    if (unknownCity && !nameQuery.trim()) {
+    if ((boot.needsPlace && !requestedPlace && !(origin.label || "").trim()) || (unknownCity && !nameQuery.trim())) {
       setItems([]);
       setRefreshing(false);
       setSearchFailed(false);
+      setResultTotal(0);
       return;
     }
     let live = true;
@@ -807,12 +824,13 @@ export function SearchScreen({
 
   useEffect(() => {
     const label = origin.label.trim();
-    if (!label) return;
+    if (!label || originSource === "default") return;
     if ((incoming.q || "").trim()) return;
     writeExploreSearch({ q: label, name: nameQuery, from: needBy, to: needUntil });
-    // Persist the locked city so refresh cannot silently go national.
+    // A real city (typed, GPS, saved, or Canadian IP) stays in the URL.
+    // The Canada-wide view has no label, so it never becomes ?q= a city.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- write only when q is missing
-  }, [origin.label, incoming.q]);
+  }, [origin.label, originSource, incoming.q]);
 
   function writeExploreSearch(next: { q?: string; name?: string; from?: string; to?: string }) {
     const fields = compactExploreSearch(next);
@@ -1332,7 +1350,20 @@ export function SearchScreen({
     items !== null &&
     items.length === 0 &&
     isIqaluitQuery(`${incoming.q || ""} ${incoming.city || ""} ${origin.label || ""}`);
-  const emptyState = iqaluitEmpty
+  const needsCanada =
+    Boolean(boot.needsPlace) && !requestedPlace && !(origin.label || "").trim();
+  const emptyState = needsCanada
+    ? {
+        title: t("canadaSearchTitle"),
+        body: t("canadaSearchLead"),
+        action: t("canadaSearchChoose"),
+        actionTo: "/?change=1" as string | undefined,
+        onAction: undefined as (() => void) | undefined,
+        secondary: undefined as string | undefined,
+        secondaryTo: undefined as string | undefined,
+        onSecondary: undefined as (() => void) | undefined,
+      }
+    : iqaluitEmpty
     ? {
         title: t("searchIqaluitEmpty"),
         body: t("searchIqaluitEmptyLead"),
@@ -1559,7 +1590,7 @@ export function SearchScreen({
             </Link>
             <p className="mt-0.5 min-h-5 text-sm text-muted text-balance" aria-live="polite" data-ke="search-count">
               {items === null ? (
-                <span className="inline-flex items-center gap-2">
+                <span className="inline-flex max-w-full flex-wrap items-center gap-2">
                   <span className="ke-skel inline-block h-3.5 w-28" aria-hidden="true" />
                   <span>{t("searchCountLoading")}</span>
                 </span>
@@ -1940,6 +1971,7 @@ export function SearchScreen({
                       title={emptyState.title}
                       body={emptyState.body}
                       action={emptyState.action}
+                      actionTo={"actionTo" in emptyState ? emptyState.actionTo : undefined}
                       onAction={emptyState.onAction}
                       secondary={emptyState.secondary}
                       onSecondary={emptyState.onSecondary}
@@ -1966,6 +1998,7 @@ export function SearchScreen({
                   title={emptyState.title}
                   body={emptyState.body}
                   action={emptyState.action}
+                  actionTo={"actionTo" in emptyState ? emptyState.actionTo : undefined}
                   onAction={emptyState.onAction}
                   secondary={emptyState.secondary}
                   onSecondary={emptyState.onSecondary}

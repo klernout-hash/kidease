@@ -4,10 +4,11 @@
  *
  * Push delivery still needs FEATURE_PUSH plus FCM or APNs. This module only
  * decides whether a category may leave the building, and in which language.
- * Nothing customer-facing sends from 21:00 to 08:00 America/Winnipeg.
+ * Nothing customer-facing sends from 21:00 to 08:00 in that family's time zone.
  */
 
-import { isAlertQuietHours, winnipegHour, ALERT_TZ } from "./search-alert-policy.ts";
+import { isValidTimeZone } from "./family-time.ts";
+import { isAlertQuietHours, hourInZone } from "./search-alert-policy.ts";
 
 export const PARENT_ALERT_CATEGORIES = [
   "spot_opened",
@@ -114,13 +115,13 @@ export function decideCustomerAlert(input: {
   return { action: "send" };
 }
 
-export function alertQuietNow(now: Date = new Date()): boolean {
-  return isAlertQuietHours(now);
+export function alertQuietNow(now: Date = new Date(), timeZone?: string | null): boolean {
+  return isAlertQuietHours(now, timeZone);
 }
 
-function winnipegParts(now: Date) {
+function zoneParts(now: Date, timeZone: string) {
   const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: ALERT_TZ,
+    timeZone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -137,16 +138,16 @@ function winnipegParts(now: Date) {
   };
 }
 
-/** Next allowed send. During quiet hours that is 8:00 America/Winnipeg. */
-export function nextAlertSendAt(now: Date = new Date()): Date {
-  if (!isAlertQuietHours(now)) return now;
+/** Next allowed send. During quiet hours that is 8:00 in the family's zone. */
+export function nextAlertSendAt(now: Date = new Date(), timeZone?: string | null): Date {
+  if (!isValidTimeZone(timeZone) || !isAlertQuietHours(now, timeZone)) return now;
   const start = now.getTime();
   for (let step = 1; step <= 24 * 4; step += 1) {
     const candidate = new Date(start + step * 15 * 60 * 1000);
-    if (winnipegHour(candidate) !== 8) continue;
-    const parts = winnipegParts(candidate);
+    if (hourInZone(candidate, timeZone) !== 8) continue;
+    const parts = zoneParts(candidate, timeZone);
     const atEight = new Date(candidate.getTime() - (parts.minute * 60 + parts.second) * 1000);
-    if (winnipegHour(atEight) === 8 && !isAlertQuietHours(atEight)) return atEight;
+    if (hourInZone(atEight, timeZone) === 8 && !isAlertQuietHours(atEight, timeZone)) return atEight;
   }
   return new Date(start + 11 * 60 * 60 * 1000);
 }
@@ -375,7 +376,7 @@ export function alertSettingsIntro(locale: AlertLocale, audience: AlertAudience)
           ? "KidEase prévient votre garderie des demandes, des messages et des documents. Choisissez ce que vous voulez recevoir."
           : "KidEase vous prévient des places, des messages et des visites. Choisissez ce que vous voulez recevoir.",
       founding: "KidEase est une entreprise canadienne. Ces alertes font partie de la période fondatrice gratuite.",
-      quiet: "Rien n'est envoyé après 21 h, heure de Winnipeg, jusqu'à 8 h.",
+      quiet: "Rien n'est envoyé après 21 h dans votre fuseau horaire, jusqu'à 8 h.",
       save: "Enregistrer les alertes",
       saved: "Alertes enregistrées",
       apps: "Les applis iPhone et Android arrivent bientôt.",
@@ -391,7 +392,7 @@ export function alertSettingsIntro(locale: AlertLocale, audience: AlertAudience)
         ? "KidEase tells your centre about requests, messages, and documents. Pick what you want."
         : "KidEase tells you about spots, messages, and visits. Pick what you want.",
     founding: "KidEase is a Canadian company. These alerts are part of the free founding period.",
-    quiet: "Nothing is sent after 9 p.m. Winnipeg time, until 8 a.m.",
+    quiet: "Nothing is sent after 9 p.m. in your time zone, until 8 a.m.",
     save: "Save alerts",
     saved: "Alerts saved",
     apps: "The iPhone and Android apps are coming soon.",
@@ -506,8 +507,8 @@ export function alertEmailLetter(input: {
   const subject = input.title.slice(0, 120);
   const footer =
     input.locale === "fr"
-      ? "KidEase est une entreprise canadienne, à Winnipeg, au Manitoba."
-      : "KidEase is a Canadian company in Winnipeg, Manitoba.";
+      ? "KidEase est une entreprise canadienne."
+      : "KidEase is a Canadian company.";
   const open = input.locale === "fr" ? "Ouvrir" : "Open";
   const stop = input.locale === "fr" ? "Se désabonner" : "Unsubscribe";
   const text = [input.body, "", `${open}: ${input.href}`, "", `${stop}: ${input.unsubUrl}`, "", footer].join("\n");

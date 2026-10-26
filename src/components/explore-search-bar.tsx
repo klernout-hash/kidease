@@ -5,6 +5,7 @@ import { ChipButton } from "@/components/chip";
 import { DaycareNameField } from "@/components/daycare-name-field";
 import { PlaceSearch, type ResolvedPlace } from "@/components/place-search";
 import { formatExploreDateRange, localIsoDate, startWindowForDate } from "@/lib/explore-search";
+import { isNeutralCanadaOrigin } from "@/lib/default-origin";
 import { nearestCities } from "@/lib/geo";
 import { DISMISS_POPOVERS } from "@/lib/dismiss-popovers";
 import type { CopyKey } from "@/lib/copy";
@@ -178,7 +179,7 @@ export function ExploreSearchBar({
   onStartChange?: (start: SearchStart | "") => void;
   onSubmit: (where?: string) => void;
   onLocate?: () => void;
-  origin?: { lat: number; lng: number };
+  origin?: { lat: number; lng: number; label?: string | null; source?: string | null };
   className?: string;
   /** Results and home open as one pill; tap expands where → schedule → child. */
   startCollapsed?: boolean;
@@ -214,7 +215,8 @@ export function ExploreSearchBar({
   const fieldValue = prominent
     ? "mt-0 h-4 w-full min-w-0 truncate bg-transparent !text-[12px] font-normal leading-4 text-muted outline-none placeholder:font-normal placeholder:!text-[12px] placeholder:text-muted"
     : "mt-0.5 h-6 w-full min-w-0 bg-transparent text-base leading-5 text-fg outline-none placeholder:text-muted";
-  const destinationCities = origin ? nearestCities(origin, 6) : [];
+  const destinationCities =
+    origin && !isNeutralCanadaOrigin(origin) ? nearestCities(origin, 6) : [];
   const submitControl = (
     <button
       type="submit"

@@ -3048,5 +3048,9 @@
   "facebookEmailResend": "Link erneut senden",
   "facebookEmailSaved": "Der Link ist unterwegs. Prüfen Sie auch den Spam-Ordner.",
   "facebookEmailRequired": "Fügen Sie eine E-Mail hinzu und bestätigen Sie sie, bevor Sie einer Einrichtung schreiben oder einen Besuch buchen.",
-  "facebookHostUnavailable": "Weiter mit Facebook ist unter dieser Adresse nicht verfügbar. Öffnen Sie kidease.ca."
+  "facebookHostUnavailable": "Weiter mit Facebook ist unter dieser Adresse nicht verfügbar. Öffnen Sie kidease.ca.",
+  "canadaSearchTitle": "Kitas in ganz Kanada",
+  "canadaSearchLead": "Wähle eine Stadt oder schalte den Standort ein, um Zentren in deiner Nähe zu sehen.",
+  "canadaSearchChoose": "Stadt wählen",
+  "alertSummary": "{on} von {total} Hinweisen an"
 }

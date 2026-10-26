@@ -16,7 +16,7 @@ import {
   resolveAnonymousOriginFromHeaders,
   resolveDefaultSearchOrigin,
 } from "../src/lib/default-origin.ts";
-import { WINNIPEG } from "../src/lib/geo.ts";
+import { CANADA_CAMERA } from "../src/lib/canada-origin.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -32,15 +32,16 @@ function headers(map) {
   };
 }
 
-describe("anonymous default origin prefers Winnipeg when geo is missing or wrong", () => {
-  it("falls back to Winnipeg with no headers", () => {
+describe("anonymous default origin stays Canada-wide when geo is missing", () => {
+  it("falls back to a neutral Canada view with no headers", () => {
     const origin = resolveAnonymousOriginFromHeaders(null);
-    assert.equal(origin.label, WINNIPEG.label);
+    assert.equal(origin.label, "");
     assert.equal(origin.source, "default");
-    assert.equal(origin.lat, WINNIPEG.lat);
+    assert.equal(origin.lat, CANADA_CAMERA.lat);
+    assert.notEqual(origin.lat, 49.8951);
   });
 
-  it("treats inferred Toronto IP as the untrusted Canada default", () => {
+  it("trusts a Toronto IP because KidEase covers every province", () => {
     const hint = parseIpGeoHeaders(
       headers({
         "x-vercel-ip-country": "CA",
@@ -51,20 +52,21 @@ describe("anonymous default origin prefers Winnipeg when geo is missing or wrong
       }),
     );
     assert.equal(isUntrustedAnonymousToronto(hint), true);
-    assert.equal(isTrustedAnonymousIp(hint), false);
+    assert.equal(isTrustedAnonymousIp(hint), true);
     const origin = originFromIpHint(hint);
-    assert.equal(origin.label, WINNIPEG.label);
-    assert.equal(origin.source, "default");
+    assert.equal(origin.label, "Toronto, ON");
+    assert.equal(origin.source, "ip");
   });
 
-  it("treats Ontario-only IP (no city) as untrusted", () => {
+  it("treats Ontario-only IP (no city) as the neutral Canada view", () => {
     const origin = resolveAnonymousOriginFromHeaders(
       headers({
         "cf-ipcountry": "CA",
         "cf-region-code": "ON",
       }),
     );
-    assert.equal(origin.label, WINNIPEG.label);
+    assert.equal(origin.label, "");
+    assert.equal(origin.source, "default");
   });
 
   it("trusts Manitoba IP and other specific Canadian cities", () => {
@@ -98,7 +100,9 @@ describe("anonymous default origin prefers Winnipeg when geo is missing or wrong
         "x-vercel-ip-city": "Chicago",
       }),
     );
-    assert.equal(origin.label, WINNIPEG.label);
+    assert.equal(origin.label, "");
+    assert.equal(origin.source, "default");
+    assert.equal(origin.lat, CANADA_CAMERA.lat);
   });
 });
 
@@ -113,26 +117,26 @@ describe("GPS and saved origin still allow multi-city search", () => {
     assert.match(resolved.label, /Toronto/);
   });
 
-  it("does not let coarse Toronto GPS replace Winnipeg", () => {
+  it("uses coarse Toronto GPS when permission is granted", () => {
     assert.equal(isCoarseFix({ accuracyM: 40_000 }), true);
     const resolved = resolveDefaultSearchOrigin({
       gpsAllowed: true,
       gps: { lat: 43.6532, lng: -79.3832, accuracyM: 40_000 },
     });
-    assert.equal(resolved.label, WINNIPEG.label);
-    assert.equal(resolved.source, "default");
+    assert.match(resolved.label, /Toronto/);
+    assert.equal(resolved.source, "gps");
   });
 
-  it("rejects Toronto SSR fallback when the parent did not choose it", () => {
+  it("keeps a Canadian SSR city and does not invent Winnipeg", () => {
     const resolved = resolveDefaultSearchOrigin({
       fallback: { lat: 43.6532, lng: -79.3832, label: "Toronto, ON" },
     });
-    assert.equal(isUntrustedTorontoOrigin({ lat: 43.6532, lng: -79.3832, label: "Toronto, ON" }), true);
-    assert.equal(resolved.label, WINNIPEG.label);
-    assert.equal(resolved.source, "default");
+    assert.equal(isUntrustedTorontoOrigin({ lat: 43.6532, lng: -79.3832, label: "Toronto, ON" }), false);
+    assert.equal(resolved.label, "Toronto, ON");
+    assert.notEqual(resolved.label, "Winnipeg, MB");
   });
 
-  it("keeps a saved Toronto origin only when the parent explicitly chose it", () => {
+  it("keeps a saved Toronto origin, including one without an explicit flag", () => {
     const inferred = resolveDefaultSearchOrigin({
       saved: { lat: 43.6532, lng: -79.3832, label: "Toronto, ON" },
       ip: {
@@ -143,8 +147,8 @@ describe("GPS and saved origin still allow multi-city search", () => {
         lng: -79.3832,
       },
     });
-    assert.equal(inferred.label, WINNIPEG.label);
-    assert.equal(inferred.source, "default");
+    assert.equal(inferred.label, "Toronto, ON");
+    assert.equal(inferred.source, "saved");
 
     const resolved = resolveDefaultSearchOrigin({
       saved: { lat: 43.6532, lng: -79.3832, label: "Toronto, ON", explicit: true },
@@ -160,16 +164,18 @@ describe("GPS and saved origin still allow multi-city search", () => {
     assert.equal(resolved.label, "Toronto, ON");
   });
 
-  it("originFromDeviceFix maps coarse Toronto to the product home", () => {
+  it("originFromDeviceFix keeps a coarse Canadian fix", () => {
     const resolved = originFromDeviceFix({ lat: 43.65, lng: -79.38, accuracyM: 80_000 });
-    assert.equal(resolved.label, PRODUCT_HOME.label);
-    assert.equal(resolved.source, "default");
+    assert.match(resolved.label, /Toronto/);
+    assert.equal(resolved.source, "gps");
+    assert.equal(originFromDeviceFix({ lat: 40.7, lng: -74 }).source, "default");
+    assert.equal(originFromDeviceFix({ lat: 40.7, lng: -74 }).label, PRODUCT_HOME.label);
   });
 
-  it("Places bias defaults to Winnipeg and keeps a Canadian origin", () => {
-    assert.equal(placesBiasOrigin().lat, WINNIPEG.lat);
+  it("Places bias defaults to the Canada camera and keeps a Canadian origin", () => {
+    assert.equal(placesBiasOrigin().lat, CANADA_CAMERA.lat);
     assert.equal(placesBiasOrigin({ lat: 51.0447, lng: -114.0719 }).lng, -114.0719);
-    assert.equal(placesBiasOrigin({ lat: 40.7128, lng: -74.006 }).lat, WINNIPEG.lat);
+    assert.equal(placesBiasOrigin({ lat: 40.7128, lng: -74.006 }).lat, CANADA_CAMERA.lat);
   });
 });
 

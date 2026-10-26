@@ -66,7 +66,7 @@ test("an owned QA fixture stays on the director desk, including after approval",
   assert.equal(isAdminOnlyListing(qa), true);
   assert.equal(isPublicListing(qa), false);
   for (const claimStatus of ["pending", "waiting", "verified", "approved"]) {
-    assert.equal(providerDeskListingVisible({ ...qa, claimStatus }, owner), true);
+    assert.equal(providerDeskListingVisible({ ...qa, claimStatus }, owner), false);
     assert.equal(providerDeskListingVisible({ ...qa, claimStatus }, operator), true);
     assert.equal(providerDeskListingVisible({ ...qa, claimStatus }, { viewerEmail: "Kyle@KidEase.ca" }), true);
   }
@@ -86,7 +86,8 @@ test("an owned QA fixture stays on the director desk, including after approval",
   assert.equal(providerDeskListingVisible({ ...qa, claimStatus: "" }, owner), false);
 
   const testNamed = { name: "TEST Extra Claim Lab", claimStatus: "waiting", visibility: "admin_only", isTest: 1 };
-  assert.equal(providerDeskListingVisible(testNamed, owner), true);
+  assert.equal(providerDeskListingVisible(testNamed, owner), false);
+  assert.equal(providerDeskListingVisible(testNamed, operator), true);
   assert.equal(providerDeskListingVisible(testNamed, { ownedByViewer: false, viewerEmail: "other@centre.example" }), false);
 
   assert.equal(publicListings([qa, { slug: "bonnie-bairns", name: "Bonnie Bairns" }]).map((row) => row.slug).join(","), "bonnie-bairns");

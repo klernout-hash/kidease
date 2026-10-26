@@ -3,6 +3,8 @@
  * Kept free of DB / Start so unit tests can import it.
  */
 
+import { formatClockShort, formatInTimeZone } from "./family-time.ts";
+
 export const ADMIN_PEOPLE_DAYS = 30;
 
 export type AccountNotifyRole = "parent" | "provider";
@@ -79,19 +81,11 @@ export function formatPlace(city?: string | null, province?: string | null): str
 }
 
 export function formatWinnipegShortTime(at: Date = new Date()): string {
-  return at.toLocaleString("en-US", {
-    timeZone: "America/Winnipeg",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  return formatClockShort(at);
 }
 
 export function formatWinnipegFull(at: Date = new Date()): string {
-  return at.toLocaleString("en-CA", {
-    timeZone: "America/Winnipeg",
-    dateStyle: "full",
-    timeStyle: "short",
-  });
+  return formatInTimeZone(at, null);
 }
 
 export function isAccountEventKind(kind?: string | null): boolean {
@@ -280,7 +274,7 @@ export function accountNotifyRows(input: AccountNotifyInput, when: string): Arra
     ["Phone", (input.phone || "").trim() || "—"],
     ["City / province", place || "—"],
     ["Signed in with", (input.authMethod || "").trim() || "—"],
-    ["When", `${when} (Winnipeg)`],
+    ["When", when],
   ];
   if ((input.daycareName || "").trim()) rows.splice(5, 0, ["Daycare", input.daycareName!.trim()]);
   return rows;

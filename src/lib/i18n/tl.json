@@ -3048,5 +3048,9 @@
   "facebookEmailResend": "Ipadala ulit ang link",
   "facebookEmailSaved": "Papunta na ang link. Tingnan din ang junk mail.",
   "facebookEmailRequired": "Magdagdag at kumpirmahin ng email bago ka magmensahe sa centre o mag-book ng tour.",
-  "facebookHostUnavailable": "Hindi available ang Magpatuloy sa Facebook sa address na ito. Buksan ang kidease.ca."
+  "facebookHostUnavailable": "Hindi available ang Magpatuloy sa Facebook sa address na ito. Buksan ang kidease.ca.",
+  "canadaSearchTitle": "Mga daycare sa buong Canada",
+  "canadaSearchLead": "Pumili ng lungsod, o buksan ang lokasyon, para makita ang mga centre malapit sa iyo.",
+  "canadaSearchChoose": "Pumili ng lungsod",
+  "alertSummary": "{on} sa {total} na alerto ang naka-on"
 }

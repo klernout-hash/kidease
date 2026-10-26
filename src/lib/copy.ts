@@ -282,6 +282,10 @@ export const copy = {
     noLiveResultsClaim: "Directors: claim your listing",
     searchCountLoading: "Loading centres…",
     searchPlacePending: "Licensed daycares",
+    canadaSearchTitle: "Daycares across Canada",
+    canadaSearchLead: "Choose a city, or turn on location, to see centres near you.",
+    canadaSearchChoose: "Choose a city",
+    alertSummary: "{on} of {total} alerts on",
     searchIqaluitEmpty: "No daycares in Iqaluit yet",
     searchIqaluitEmptyLead:
       "We don't have a licensed daycare in Iqaluit in this search. Widen the area to see the nearest ones, or try another city.",
@@ -3558,6 +3562,10 @@ export const copy = {
     noLiveResultsClaim: "Directeurs : revendiquez votre fiche",
     searchCountLoading: "Chargement des centres…",
     searchPlacePending: "Garderies permises",
+    canadaSearchTitle: "Garderies partout au Canada",
+    canadaSearchLead: "Choisissez une ville, ou activez la localisation, pour voir les centres près de chez vous.",
+    canadaSearchChoose: "Choisir une ville",
+    alertSummary: "{on} alertes sur {total} activées",
     searchIqaluitEmpty: "Pas de garderie à Iqaluit pour l’instant",
     searchIqaluitEmptyLead:
       "Aucune garderie permise à Iqaluit dans cette recherche. Élargissez la zone pour voir les plus près, ou essayez une autre ville.",

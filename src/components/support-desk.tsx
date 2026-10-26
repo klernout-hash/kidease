@@ -5,6 +5,8 @@ import { confirmSuccess } from "@/lib/success-confirm";
 import { DeskShell } from "@/components/desk-shell";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
+import { useSessionDesks } from "@/components/desk-switcher";
+import { canUseOperatorTools } from "@/lib/operator-tools";
 import {
   createSupportCase,
   listSupportCases,
@@ -199,12 +201,14 @@ function NewCaseForm({ onCreated }: { onCreated: () => void }) {
   const [parentId, setParentId] = useState("");
   const [centreQ, setCentreQ] = useState("");
   const [centreId, setCentreId] = useState("");
+  const { session } = useSessionDesks();
+  const operator = canUseOperatorTools(session?.email);
   const [people, setPeople] = useState<Array<{ userId: string; name: string | null; email: string | null }>>([]);
   const [centres, setCentres] = useState<Array<{ id: string; name: string; city: string | null }>>([]);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (parentQ.trim().length < 2) {
+    if (!operator || parentQ.trim().length < 2) {
       setPeople([]);
       return;
     }
@@ -212,7 +216,7 @@ function NewCaseForm({ onCreated }: { onCreated: () => void }) {
       void searchSupportPeople({ data: parentQ }).then(setPeople).catch(() => setPeople([]));
     }, 250);
     return () => window.clearTimeout(t);
-  }, [parentQ]);
+  }, [operator, parentQ]);
 
   useEffect(() => {
     if (centreQ.trim().length < 2) {
@@ -290,7 +294,8 @@ function NewCaseForm({ onCreated }: { onCreated: () => void }) {
           </select>
         </label>
       </div>
-      <label className="block text-sm font-medium">
+      {operator ? (
+      <label className="block text-sm font-medium" data-ke="people-search">
         Parent (optional)
         <input
           className="ke-input mt-1"
@@ -302,6 +307,7 @@ function NewCaseForm({ onCreated }: { onCreated: () => void }) {
           }}
         />
       </label>
+      ) : null}
       {people.length ? (
         <ul className="rounded-md ring-1 ring-border">
           {people.map((p) => (

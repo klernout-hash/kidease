@@ -32,6 +32,19 @@ import { sendPushNotification } from "@/lib/server/push.server";
 
 type Sql = Awaited<ReturnType<typeof getSql>>;
 
+export async function writeFamilyTimeZone(userId: string, timeZone: string): Promise<void> {
+  const sql = await getSql();
+  await sql`update profiles set time_zone = ${timeZone} where user_id = ${userId}`.catch(() => undefined);
+}
+
+export async function readFamilyTimeZone(sql: Sql, userId: string): Promise<string | null> {
+  const rows = await sql<{ time_zone: string | null }>`
+    select time_zone from profiles where user_id = ${userId} limit 1
+  `.catch(() => [] as Array<{ time_zone: string | null }>);
+  const zone = (rows[0]?.time_zone || "").trim();
+  return zone || null;
+}
+
 const ENSURE_SQL = `
 create table if not exists notification_prefs (
   user_id text not null,
@@ -237,12 +250,13 @@ async function markSent(sql: Sql, id: string) {
 
 async function deliverStored(sql: Sql, row: OutboxRow, now: Date): Promise<{ pushed: boolean; emailed: boolean }> {
   const prefs = await readAlertPrefs(row.user_id);
+  const zone = await readFamilyTimeZone(sql, row.user_id);
   const stored = isAlertCategory(row.category) ? prefs[row.category] : false;
   const decision = decideCustomerAlert({
     category: row.category,
     prefEnabled: prefEnabled(stored),
     subscriptionsOn: subscriptionsEnabled(),
-    quiet: alertQuietNow(now),
+    quiet: alertQuietNow(now, zone),
   });
   if (decision.action !== "send") {
     if (decision.action === "skip") await markSent(sql, row.id);
@@ -255,7 +269,6 @@ async function deliverStored(sql: Sql, row: OutboxRow, now: Date): Promise<{ pus
 
 export async function drainAlertOutbox(opts?: { now?: Date }): Promise<{ drained: number }> {
   const now = opts?.now ?? new Date();
-  if (alertQuietNow(now)) return { drained: 0 };
   const sql = await getSql();
   await ensure(sql);
   const rows = await sql<OutboxRow>`
@@ -293,11 +306,12 @@ export async function dispatchCustomerAlert(input: {
     const sql = await getSql();
     await ensure(sql);
     const prefs = await readAlertPrefs(userId);
+    const zone = await readFamilyTimeZone(sql, userId);
     const decision = decideCustomerAlert({
       category: input.category,
       prefEnabled: prefEnabled(prefs[input.category]),
       subscriptionsOn: subscriptionsEnabled(),
-      quiet: alertQuietNow(now),
+      quiet: alertQuietNow(now, zone),
     });
     if (decision.action === "skip") {
       return { status: "skipped", reason: decision.reason, pushed: false, emailed: false };
@@ -307,7 +321,7 @@ export async function dispatchCustomerAlert(input: {
     const href = safeAlertHref(input.href);
     const dedupeKey = String(input.dedupeKey || "").trim().slice(0, 180);
     if (!dedupeKey) return { status: "skipped", reason: "dedupe", pushed: false, emailed: false };
-    const sendAfter = decision.action === "hold" ? nextAlertSendAt(now) : now;
+    const sendAfter = decision.action === "hold" ? nextAlertSendAt(now, zone) : now;
     const id = nid("nao");
     const inserted = await sql<{ id: string }>`
       insert into notification_outbox (

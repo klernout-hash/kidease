@@ -42,8 +42,8 @@ test("status email stays off after 9 PM, without consent, or when unsubscribed",
   assert.equal(waitlistEmailAllowed({ quiet: true, emailConsent: true, suppressed: false }), false);
   assert.equal(waitlistEmailAllowed({ quiet: false, emailConsent: false, suppressed: false }), false);
   assert.equal(waitlistEmailAllowed({ quiet: false, emailConsent: true, suppressed: true }), false);
-  assert.equal(waitlistQuietNow(new Date("2026-10-01T02:30:00Z")), true);
-  assert.equal(waitlistQuietNow(new Date("2026-10-01T16:00:00Z")), false);
+  assert.equal(waitlistQuietNow(new Date("2026-10-01T02:30:00Z"), "America/Winnipeg"), true);
+  assert.equal(waitlistQuietNow(new Date("2026-10-01T16:00:00Z"), "America/Winnipeg"), false);
 });
 
 test("status email names the centre and status only", () => {

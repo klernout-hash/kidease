@@ -5,6 +5,8 @@ import { confirmSuccess } from "@/lib/success-confirm";
 import { DeskShell } from "@/components/desk-shell";
 import { EmptyState } from "@/components/empty-state";
 import { Button } from "@/components/ui/button";
+import { useSessionDesks } from "@/components/desk-switcher";
+import { canUseOperatorTools } from "@/lib/operator-tools";
 import {
   addSupportNote,
   assignSupportCase,
@@ -181,6 +183,8 @@ function ActionsRail({
   staff: SupportStaff[];
   onDone: () => Promise<void>;
 }) {
+  const { session } = useSessionDesks();
+  const operator = canUseOperatorTools(session?.email);
   const [note, setNote] = useState("");
   const [nextStatus, setNextStatus] = useState(status);
   const [assignee, setAssignee] = useState(assigneeUserId ?? "");
@@ -302,17 +306,18 @@ function ActionsRail({
       >
         Assign
       </Button>
-      <div className="border-t border-border pt-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subtle">View-as (banner only)</p>
+      {operator ? (
+      <div className="border-t border-border pt-4" data-ke="guest-view">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-subtle">Guest view</p>
         <p className="mt-2 text-xs text-muted">
-          Opens your own desk with a banner. No write impersonation: TODO if we ever add a
-          read-only session.
+          Opens your own desk with a banner. You stay signed in as yourself.
         </p>
         <div className="mt-2 flex flex-col gap-2">
           <PreviewLink caseId={caseId} desk="parent" />
           <PreviewLink caseId={caseId} desk="provider" />
         </div>
       </div>
+      ) : null}
     </aside>
   );
 }

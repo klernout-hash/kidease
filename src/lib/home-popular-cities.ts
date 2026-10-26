@@ -3,9 +3,8 @@
  * Home is not a national button directory — autocomplete and Explore cover the rest.
  *
  * Order:
- *  1. Trusted nearby hub (explicit Toronto is allowed; inferred Toronto is not)
- *  2. Winnipeg when locale/geo suggests MB, origin is missing, or Toronto is untrusted
- *  3. Default Winnipeg-first set — never Toronto-first as the implied home city
+ *  1. The nearest city hub when the visitor's place is already known, including Toronto
+ *  2. A national list when location is unknown. Winnipeg is one city on that list, not the lead.
  */
 
 import {
@@ -17,21 +16,16 @@ import {
   normalizeCityKey,
   type CityHubDef,
 } from "./city-hubs.ts";
-import {
-  isTorontoLikeOrigin,
-  isUntrustedTorontoOrigin,
-  localeSuggestsManitoba,
-  type OriginResolveSource,
-} from "./default-origin.ts";
+import { type OriginResolveSource } from "./default-origin.ts";
 import { CITIES, haversineKm, type LatLng } from "./geo.ts";
 
 export const POPULAR_HOME_CITY_SLUGS = [
-  "winnipeg",
   "toronto",
+  "montreal",
   "vancouver",
   "calgary",
-  "montreal",
   "edmonton",
+  "winnipeg",
 ] as const;
 
 export const POPULAR_HOME_CITY_LIMIT = 6;
@@ -55,8 +49,6 @@ export type PopularHomeOrigin = Partial<LatLng> & {
   timeZone?: string | null;
 };
 
-const TRUSTED_NEARBY_SOURCES = new Set(["manual", "gps", "saved"]);
-
 export function hubLatLng(hub: CityHubDef): LatLng | null {
   const keys = new Set(cityHubPlaceKeys(hub));
   for (const city of CITIES) {
@@ -67,12 +59,6 @@ export function hubLatLng(hub: CityHubDef): LatLng | null {
     }
   }
   return null;
-}
-
-function isChosenOrigin(origin: PopularHomeOrigin | null | undefined) {
-  if (!origin) return false;
-  if (origin.explicit === true) return true;
-  return TRUSTED_NEARBY_SOURCES.has(String(origin.source || ""));
 }
 
 function originPoint(origin: PopularHomeOrigin | null | undefined): (LatLng & { label: string }) | null {
@@ -93,22 +79,17 @@ function nearestHub(here: LatLng, hubs: readonly CityHubDef[]) {
 }
 
 export function pickPopularHomeLead(origin?: PopularHomeOrigin | null): CityHubDef {
-  const winnipeg = cityHubDefBySlug("winnipeg")!;
+  const label = (origin?.label || "").trim();
+  if (label) {
+    const named = CITY_HUB_DEFS.find((hub) => hubMatchesLabel(hub, label));
+    if (named) return named;
+  }
   const here = originPoint(origin);
-  const mbFirst = localeSuggestsManitoba({ timeZone: origin?.timeZone });
-
-  if (here && isChosenOrigin(origin)) {
+  if (here) {
     const nearby = nearestHub(here, CITY_HUB_DEFS);
     if (nearby) return nearby;
   }
-
-  if (here && !isUntrustedTorontoOrigin(here) && !isTorontoLikeOrigin(here)) {
-    const nearby = nearestHub(here, CITY_HUB_DEFS);
-    if (nearby && nearby.slug !== "toronto") return nearby;
-  }
-
-  if (mbFirst) return winnipeg;
-  return winnipeg;
+  return cityHubDefBySlug(POPULAR_HOME_CITY_SLUGS[0])!;
 }
 
 /** True when a city is already on the search box or from an existing geo header. Never prompts. */
@@ -127,7 +108,7 @@ function hubMatchesLabel(hub: CityHubDef, label: string) {
 
 /**
  * Three or four nearby city hubs when the visitor's city is already known.
- * A product default (Winnipeg with no geo) returns none.
+ * An unknown location returns none. The Canada camera is not a city.
  */
 export function nearbyHomeCities(
   origin?: PopularHomeOrigin | null,

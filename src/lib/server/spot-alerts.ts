@@ -19,6 +19,7 @@ import {
 } from "@/lib/ai/spot-alerts";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
+import { readFamilyTimeZone } from "@/lib/server/alert-dispatch";
 import { distanceKm } from "@/lib/proximity";
 import { assertCentreCanMutateListing } from "@/lib/server/centre-access";
 import { evaluateCaslSend, caslOneClickUrl, caslUnsubscribeUrl } from "@/lib/server/casl-consent";
@@ -272,8 +273,9 @@ export const sendSpotAlert = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     if (!data.daycareId || !data.draftId) return { ok: false as const, error: "missing" as const };
     if (!(await flagOn(context.userId))) return { ok: false as const, error: "off" as const };
-    if (spotAlertQuiet()) return { ok: false as const, error: "quiet" as const };
     const sql = await getSql();
+    const zone = await readFamilyTimeZone(sql, context.userId);
+    if (spotAlertQuiet(new Date(), zone)) return { ok: false as const, error: "quiet" as const };
     await assertCentreCanMutateListing(sql, context.userId, data.daycareId);
     const drafts = await sql<{ id: string; body: string; status: string }>`
       select id, body, status from spot_alert_drafts

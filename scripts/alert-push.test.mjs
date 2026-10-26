@@ -20,9 +20,11 @@ import { isAlertQuietHours, winnipegHour } from "../src/lib/search-alert-policy.
 const NIGHT = new Date("2026-10-06T02:30:00.000Z");
 const MORNING = new Date("2026-10-05T15:00:00.000Z");
 
-test("quiet hours hold customer alerts until 8 a.m. Winnipeg", () => {
-  assert.equal(isAlertQuietHours(NIGHT), true);
-  assert.equal(isAlertQuietHours(MORNING), false);
+test("quiet hours follow each family's time zone", () => {
+  assert.equal(isAlertQuietHours(NIGHT), false);
+  assert.equal(isAlertQuietHours(NIGHT, "America/Toronto"), true);
+  assert.equal(isAlertQuietHours(NIGHT, "America/Vancouver"), false);
+  assert.equal(isAlertQuietHours(MORNING, "America/Winnipeg"), false);
   assert.equal(
     decideCustomerAlert({ category: "message", prefEnabled: true, subscriptionsOn: false, quiet: true }).action,
     "hold",
@@ -31,10 +33,11 @@ test("quiet hours hold customer alerts until 8 a.m. Winnipeg", () => {
     decideCustomerAlert({ category: "message", prefEnabled: true, subscriptionsOn: false, quiet: false }).action,
     "send",
   );
-  const next = nextAlertSendAt(NIGHT);
+  const next = nextAlertSendAt(NIGHT, "America/Winnipeg");
   assert.equal(winnipegHour(next), 8);
-  assert.equal(isAlertQuietHours(next), false);
-  assert.equal(nextAlertSendAt(MORNING).toISOString(), MORNING.toISOString());
+  assert.equal(isAlertQuietHours(next, "America/Winnipeg"), false);
+  assert.equal(nextAlertSendAt(MORNING, "America/Winnipeg").toISOString(), MORNING.toISOString());
+  assert.equal(nextAlertSendAt(NIGHT).toISOString(), NIGHT.toISOString());
 });
 
 test("billing stays off while paid plans are off, and opt-out wins", () => {

@@ -32,6 +32,13 @@ export const Route = createFileRoute("/verify-2fa")({
   validateSearch: (s: Record<string, unknown>) => ({
     next: verify2faSearchNext(s.next),
   }),
+  head: () => ({
+    meta: [
+      { title: "Check your sign-in · KidEase" },
+      { name: "description", content: "Finish signing in to KidEase. This page is private." },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  }),
   component: VerifyTwoFactorPage,
 });
 

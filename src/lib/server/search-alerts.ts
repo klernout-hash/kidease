@@ -60,6 +60,8 @@ import {
   type PlannedAlertEvent,
 } from "@/lib/search-alert-policy";
 import { sendSms } from "@/lib/server/sms";
+import { isValidTimeZone } from "@/lib/family-time";
+import { readFamilyTimeZone } from "@/lib/server/alert-dispatch";
 
 type SavedSearchJobRow = {
   id: string;
@@ -363,15 +365,17 @@ async function countChannelSendsToday(
   savedSearchId: string,
   channel: "push" | "sms",
   now: Date,
+  timeZone?: string | null,
 ) {
-  const day = winnipegDayKey(now);
+  const zone = isValidTimeZone(timeZone) ? timeZone : "UTC";
+  const day = winnipegDayKey(now, zone);
   const rows = await sql<{ n: number }>`
     select count(*)::int as n
     from search_alert_channel_sends
     where user_id = ${userId}
       and saved_search_id = ${savedSearchId}
       and channel = ${channel}
-      and to_char(created_at at time zone ${ALERT_TZ}, 'YYYY-MM-DD') = ${day}
+      and to_char(created_at at time zone ${zone}, 'YYYY-MM-DD') = ${day}
   `.catch(() => [{ n: 0 }]);
   return Number(rows[0]?.n) || 0;
 }
@@ -666,7 +670,8 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
       }
 
       const { dispatchCustomerAlert } = await import("@/lib/server/alert-dispatch");
-      let pushToday = await countChannelSendsToday(sql, search.user_id, search.id, "push", now);
+      const familyZone = await readFamilyTimeZone(sql, search.user_id);
+      let pushToday = await countChannelSendsToday(sql, search.user_id, search.id, "push", now, familyZone);
       for (const ev of events) {
         if (!underPushSmsDailyCap(pushToday)) {
           pushSkipped += 1;
@@ -733,7 +738,7 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
         purpose: "service",
         address: phoneRows[0]?.phone,
       });
-      let smsToday = await countChannelSendsToday(sql, search.user_id, search.id, "sms", now);
+      let smsToday = await countChannelSendsToday(sql, search.user_id, search.id, "sms", now, familyZone);
       for (const ev of eventsForOpenSpotMail(events, spotMail).filter(
         (row) => row.kind !== "vacancy_reconfirmed" || immediateIds.has(row.daycareId),
       )) {
@@ -808,7 +813,8 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
     if (!spotMail && row.kind === "vacancy_reconfirmed") continue;
     if (row.kind === "vacancy_reconfirmed") {
       const prior = await priorSpotAlerts(sql, row.user_id, spotPriorByParent);
-      const today = winnipegDayKey(now);
+      const spotZone = await readFamilyTimeZone(sql, row.user_id);
+      const today = winnipegDayKey(now, isValidTimeZone(spotZone) ? spotZone : "UTC");
       if (!openSpotCapAllows(prior, row.user_id, row.daycare_id, today)) continue;
       rememberSpotPlans(spotPriorByParent, [{ parentId: row.user_id, listingId: row.daycare_id }], today);
     }
@@ -861,7 +867,8 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
       })),
     );
     if (!events.length) continue;
-    if (!canSendDigestEmail(lastEmailByUser.get(userId) ?? null, now)) {
+    const digestZone = await readFamilyTimeZone(sql, userId);
+    if (!canSendDigestEmail(lastEmailByUser.get(userId) ?? null, now, digestZone)) {
       emailHeldQuiet += 1;
       console.info("[kidease-search-alerts] email held — quiet hours or already mailed today", userId);
       continue;
@@ -972,8 +979,8 @@ function searchAlertCopy(
   });
   const subject = `KidEase: updates for “${searchName}”`;
   const unsubLine = unsubUrl
-    ? `\nUnsubscribe: ${unsubUrl}\nKidEase · Winnipeg, Manitoba · support@kidease.ca\n`
-    : `\nUnsubscribe: ${origin}/unsubscribe\nKidEase · Winnipeg, Manitoba · support@kidease.ca\n`;
+    ? `\nUnsubscribe: ${unsubUrl}\nKidEase · Canada · support@kidease.ca\n`
+    : `\nUnsubscribe: ${origin}/unsubscribe\nKidEase · Canada · support@kidease.ca\n`;
   const text = `A saved search on KidEase has an update. Confirm details with the centre: KidEase does not guarantee an opening.\n\n${lines.join("\n")}\n\nOpen your family desk: ${deskUrl}\n${unsubLine}`;
   const items = events
     .slice(0, 8)
@@ -992,7 +999,7 @@ function searchAlertCopy(
       <p style="margin:24px 0 0;">
         <a href="${deskUrl}" style="display:inline-block;background:#1a3790;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;">Open family desk</a>
       </p>
-      <p style="margin:24px 0 0;font-size:12px;color:#5c6578;">KidEase · Winnipeg, Manitoba · <a href="${escMail(unsubUrl || `${origin}/unsubscribe`)}" style="color:#1a3790;">Unsubscribe</a></p>
+      <p style="margin:24px 0 0;font-size:12px;color:#5c6578;">KidEase · Canada · <a href="${escMail(unsubUrl || `${origin}/unsubscribe`)}" style="color:#1a3790;">Unsubscribe</a></p>
     </td></tr>
   </table>
 </body></html>`;

@@ -3048,5 +3048,9 @@
   "facebookEmailResend": "أرسل الرابط مرة أخرى",
   "facebookEmailSaved": "الرابط في الطريق. تحقق من البريد غير المرغوب أيضًا.",
   "facebookEmailRequired": "أضف بريدًا وأكّده قبل أن تراسل مركزًا أو تحجز زيارة.",
-  "facebookHostUnavailable": "المتابعة عبر فيسبوك غير متاحة على هذا العنوان. افتح kidease.ca."
+  "facebookHostUnavailable": "المتابعة عبر فيسبوك غير متاحة على هذا العنوان. افتح kidease.ca.",
+  "canadaSearchTitle": "حضانات في كل كندا",
+  "canadaSearchLead": "اختر مدينة، أو فعّل الموقع، لترى المراكز القريبة منك.",
+  "canadaSearchChoose": "اختر مدينة",
+  "alertSummary": "{on} من {total} تنبيهات مفعّلة"
 }
