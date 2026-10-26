@@ -462,24 +462,6 @@ function ProviderPage() {
 
       {desk === "listings" ? (
         <>
-          {centreOwner ? (
-            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap" data-ke="listings-actions">
-              <Button
-                type="button"
-                onClick={() => {
-                  setShowNewForm(true);
-                  queueMicrotask(() => {
-                    document.getElementById("list-new")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  });
-                }}
-              >
-                {t("deskListingsAdd")}
-              </Button>
-              <Button asChild variant="secondary">
-                <Link to="/claim">{t("deskNavClaim")}</Link>
-              </Button>
-            </div>
-          ) : null}
           <label className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
             <input type="checkbox" checked={showTestListings} onChange={(e) => setShowTestListings(e.target.checked)} />
             Show test listings{testListingCount ? ` · ${testListingCount}` : ""}

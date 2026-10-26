@@ -150,7 +150,7 @@ async function appBarText(page, href) {
 async function openAccountGroup(page, root) {
   const link = page.locator(`${root} [data-nav="upgrade"]`);
   if (await link.first().isVisible().catch(() => false)) return;
-  const summary = page.locator(`${root} summary`).filter({ hasText: /^account$/i });
+  const summary = page.locator(`${root} summary`).filter({ hasText: /^Account$/ });
   if ((await summary.count()) > 0) await summary.first().click().catch(() => {});
 }
 
@@ -372,21 +372,14 @@ async function runRoleFixture(page, base) {
         /\bRequests\b/.test(parentSide) &&
         /\bWaitlists\b/.test(parentSide) &&
         /\bPay\b/.test(parentSide) &&
-        /Find care/i.test(parentSide) &&
-        /My requests/i.test(parentSide) &&
-        !/My shortlist/i.test(parentSide),
+        !/My shortlist/i.test(parentSide) &&
+        !/My requests/i.test(parentSide),
       { note: parentSide.slice(0, 200) },
     );
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs }).catch(() => {});
     await page.locator('[data-ke="menu-badge"]').waitFor({ timeout: timeoutMs }).catch(() => {});
     await openHeaderMenu(page);
-    await openAccountGroup(page, "#ke-nav-drawer");
-    const requestsSummary = page.locator("#ke-nav-drawer summary").filter({ hasText: /my requests/i });
-    if ((await requestsSummary.count()) > 0) {
-      const requestsOpen = await requestsSummary.first().locator("xpath=..").evaluate((el) => el.open).catch(() => true);
-      if (!requestsOpen) await requestsSummary.first().click();
-    }
     const menuBadge = await page.locator('[data-ke="menu-badge"]').count();
     const drawerUpgrade = await page.locator('#ke-nav-drawer [data-nav="upgrade"]:visible').count();
     const drawerBadge = ((await page.locator('#ke-nav-drawer [data-nav="bookings"] [data-ke="count-badge"]').innerText().catch(() => "")) || "").trim();
@@ -486,9 +479,7 @@ async function runRoleFixture(page, base) {
         /\bRequests\b/.test(daycareSide) &&
         /\bListings\b/.test(daycareSide) &&
         /\bEarnings\b/.test(daycareSide) &&
-        /\bdaily\b/i.test(daycareSide) &&
-        /my centre/i.test(daycareSide) &&
-        /\bmoney\b/i.test(daycareSide),
+        !/\bMoney\b/.test(daycareSide),
       { note: daycareSide.slice(0, 200) },
     );
 

@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql, type Sql } from "@/lib/db";
-import { centreHasNotJoined } from "@/lib/centre-joined";
 import { isPublicListing, listingVisibilityInputFromDb } from "@/lib/listing-visibility";
 import { spotOfferMailEnabled } from "@/lib/features";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
@@ -277,23 +276,18 @@ export const joinDaycareWaitlist = createServerFn({ method: "POST" })
       visibility: string | null;
       is_test: number | null;
       claim_status: string | null;
-      claimed_at: string | Date | null;
       province: string | null;
       fact_source: string | null;
       merged_into: string | null;
       import_fault: string | null;
       listing_active: number | null;
     }>`
-      select id, slug, name, license_number, address, visibility, is_test, claim_status, claimed_at,
+      select id, slug, name, license_number, address, visibility, is_test, claim_status,
              province, fact_source, merged_into, import_fault, listing_active
       from daycares where id = ${daycareId} limit 1
     `;
     const row = rows[0];
-    if (!row) throw new Error("This listing is not open for a waitlist.");
-    if (centreHasNotJoined({ claimStatus: row.claim_status, claimedAt: row.claimed_at })) {
-      throw new Error("This centre hasn't joined KidEase yet");
-    }
-    if (!isPublicListing(listingVisibilityInputFromDb(row))) {
+    if (!row || !isPublicListing(listingVisibilityInputFromDb(row))) {
       throw new Error("This listing is not open for a waitlist.");
     }
     const existing = await sql<EntryRow>`

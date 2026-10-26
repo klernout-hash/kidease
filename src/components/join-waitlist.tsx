@@ -9,16 +9,8 @@ import { joinDaycareWaitlist, listMySpotOffers, withdrawDaycareWaitlist } from "
 import { useCopy } from "@/lib/use-copy";
 import { useRoleChrome } from "@/components/role-chrome";
 
-export function JoinWaitlist({
-  daycareId,
-  next,
-  unclaimed = false,
-}: {
-  daycareId: string;
-  next: string;
-  unclaimed?: boolean;
-}) {
-  const { locale, t } = useCopy();
+export function JoinWaitlist({ daycareId, next }: { daycareId: string; next: string }) {
+  const { locale } = useCopy();
   const plansOn = useRoleChrome().subscriptionsEnabled === true;
   const copy = spotOfferCopy(locale);
   const navigate = useNavigate();
@@ -31,7 +23,7 @@ export function JoinWaitlist({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (unclaimed || isPending || !user) {
+    if (isPending || !user) {
       setMineId(null);
       return;
     }
@@ -50,7 +42,7 @@ export function JoinWaitlist({
     return () => {
       live = false;
     };
-  }, [daycareId, user, isPending, unclaimed]);
+  }, [daycareId, user, isPending]);
 
   function focusIn(event: { currentTarget: HTMLElement }) {
     event.currentTarget.scrollIntoView({ block: "center" });
@@ -90,14 +82,6 @@ export function JoinWaitlist({
         setError(message);
       })
       .finally(() => setBusy(false));
-  }
-
-  if (unclaimed) {
-    return (
-      <p className="mt-4 text-sm text-muted" data-ke="centre-not-joined">
-        {t("centreNotJoined")}
-      </p>
-    );
   }
 
   return (
