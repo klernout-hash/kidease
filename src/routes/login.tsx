@@ -56,7 +56,10 @@ import {
   adminAutoContinueDecision,
   LOGIN_CONTINUE_MS,
   LOGIN_POST_MS,
+  LOGIN_BOUNCE_KEY,
   PASSWORD_CONTINUE_MESSAGE,
+  loginBounceBlocks,
+  loginBounceRecord,
   releaseStuckLogin,
 } from "@/lib/auth/login-stall";
 import {
@@ -237,6 +240,29 @@ export function LoginScreen({
     if (sessionPending || !user || busy || continued.current) return;
     if (search.step === "role" && !facebookSignupRole(role)) return;
     if (consumeJustSignedOut()) return;
+    const next = search.next || "";
+    let bounceRaw: string | null = null;
+    try {
+      bounceRaw = sessionStorage.getItem(LOGIN_BOUNCE_KEY);
+    } catch {
+      bounceRaw = null;
+    }
+    // /account save used to look signed out, bounce here, and this effect
+    // assigned /account again. Each full load reset the stall timer, so the
+    // form stayed on “Opening your desk…”.
+    if (loginBounceBlocks(bounceRaw, next)) {
+      continued.current = true;
+      const released = releaseStuckLogin("stall");
+      setBusy(released.busy);
+      setStalled(true);
+      setError(released.error);
+      return;
+    }
+    try {
+      sessionStorage.setItem(LOGIN_BOUNCE_KEY, loginBounceRecord(next));
+    } catch {
+      /* private mode */
+    }
     const id = ++attempt.current;
     continued.current = true;
     setBusy(true);

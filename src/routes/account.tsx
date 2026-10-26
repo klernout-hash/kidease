@@ -187,6 +187,7 @@ function AccountDeskFrame({ desk, children }: { desk: DeskKey | null; children: 
 
 function ProfilePane() {
   const { user, isPending } = useCurrentUserState();
+  const { refetch: refetchSession } = authClient.useSession();
   const nativeShell = useInNativeShell();
   const { t, locale } = useCopy();
   const search = Route.useSearch();
@@ -347,9 +348,16 @@ function ProfilePane() {
       } else {
         setSmsNote("");
       }
-      if (saved.name) {
+      // saveMyContact already writes "user".name. updateUser always rewrites
+      // the session cookie, then the browser refetches get-session. On
+      // www.kidease.ca that race looked signed out and /account left for
+      // /login?intent=in&next=/account before the saved toast. Refresh the
+      // header only when the name changed. That refetch does not mint a
+      // cookie unless the session is already due for its normal refresh.
+      const previousName = (user.displayName ?? "").trim();
+      if (saved.name.trim() && saved.name.trim() !== previousName) {
         try {
-          await authClient.updateUser({ name: saved.name });
+          await refetchSession();
         } catch {
           /* profiles row is the source of truth */
         }

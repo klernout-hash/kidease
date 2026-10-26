@@ -5,6 +5,7 @@ import { resetPostHogIdentity } from "@/lib/posthog";
 import { clearSearchCache } from "@/lib/search-cache";
 import { clearShortlistCache, takePendingSave } from "@/lib/shortlist";
 import { parseRetryAfterSeconds, rateLimitWaitCopy } from "@/lib/auth-rate-limit";
+import { LOGIN_BOUNCE_KEY } from "@/lib/auth/login-stall";
 import { rejectAfter } from "@/lib/timeout";
 import { attachTurnstileToRequest } from "@/lib/turnstile-widget";
 import {
@@ -310,6 +311,11 @@ export function clearClientAuthState(): void {
     /* storage unavailable */
   }
   clearSearchCache();
+  try {
+    sessionStorage.removeItem(LOGIN_BOUNCE_KEY);
+  } catch {
+    /* storage unavailable */
+  }
 }
 
 /**

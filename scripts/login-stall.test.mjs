@@ -6,7 +6,10 @@ import { fileURLToPath } from "node:url";
 import { friendlyAuthError } from "../src/lib/auth/login-errors.ts";
 import {
   ADMIN_SESSION_TIMEOUT_MESSAGE,
+  LOGIN_BOUNCE_MS,
   LOGIN_TAKING_TOO_LONG_MESSAGE,
+  loginBounceBlocks,
+  loginBounceRecord,
   releaseStuckLogin,
   shouldAutoContinue,
 } from "../src/lib/auth/login-stall.ts";
@@ -103,6 +106,20 @@ describe("Opening your desk does not loop", () => {
     assert.equal(stalled.busy, false);
     assert.match(stalled.error, /taking too long/);
     assert.equal(friendlyAuthError("sign-in-timeout"), LOGIN_TAKING_TOO_LONG_MESSAGE);
+  });
+
+  it("a bounce back to the same next does not auto-continue again", () => {
+    const now = 1_000_000;
+    const raw = loginBounceRecord("/account", now);
+    assert.equal(loginBounceBlocks(raw, "/account", now + 1_000), true);
+    assert.equal(loginBounceBlocks(raw, "/parent", now + 1_000), false);
+    assert.equal(loginBounceBlocks(raw, "/account", now + LOGIN_BOUNCE_MS), false);
+    assert.equal(loginBounceBlocks("not-json", "/account", now), false);
+    assert.equal(loginBounceBlocks(null, "/account", now), false);
+    assert.equal(loginBounceBlocks(raw, "  ", now), false);
+    const login = src("src/routes/login.tsx");
+    assert.match(login, /loginBounceBlocks\(bounceRaw, next\)/);
+    assert.match(src("src/lib/auth/client.ts"), /LOGIN_BOUNCE_KEY/);
   });
 
   it("login copy is not stuck on a signed-in user", () => {

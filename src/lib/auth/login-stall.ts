@@ -59,6 +59,29 @@ export function adminAutoContinueDecision(input: {
   return "allow";
 }
 
+/** Remember one auto-continue so a server bounce cannot spin “Opening your desk…”. */
+export const LOGIN_BOUNCE_KEY = "kidease-login-bounce";
+export const LOGIN_BOUNCE_MS = 20_000;
+
+export function loginBounceRecord(next: string, now = Date.now()): string {
+  return JSON.stringify({ next, at: now });
+}
+
+/** True when this login load is the same `next` we just tried to open. */
+export function loginBounceBlocks(raw: string | null, next: string, now = Date.now()): boolean {
+  const dest = String(next || "").trim();
+  if (!raw || !dest) return false;
+  try {
+    const parsed = JSON.parse(raw) as { next?: unknown; at?: unknown };
+    if (parsed.next !== dest) return false;
+    const at = Number(parsed.at);
+    if (!Number.isFinite(at)) return false;
+    return now - at >= 0 && now - at < LOGIN_BOUNCE_MS;
+  } catch {
+    return false;
+  }
+}
+
 /** Auto-continue runs once. A released attempt must not start another. */
 export function shouldAutoContinue(input: {
   continued: boolean;
