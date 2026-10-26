@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { formatInTimeZone } from "../src/lib/family-time.ts";
 import { parentDeskTabOrDefault, parentUrlTab } from "../src/lib/parent-tab.ts";
 import { canUseOperatorTools } from "../src/lib/operator-tools.ts";
+import { guestViewApplies } from "../src/lib/guest-view.ts";
 import { isAdminOnlyListing, isPublicListing, staffQueueRows } from "../src/lib/listing-visibility.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -69,19 +70,63 @@ test("GET /api/e2e-seed is a 404 and private pages are noindex", () => {
 
 test("alert settings stay closed and quiet hours are not labeled Winnipeg time", () => {
   const alerts = src("src/components/alert-push-settings.tsx");
+  const parent = src("src/components/parent-desk.tsx");
   assert.match(alerts, /<details/);
   assert.doesNotMatch(alerts, /<details[^>]*\sopen/);
   assert.match(alerts, /data-ke="alert-settings-summary"/);
   assert.match(alerts, /alertSummary/);
+  assert.match(alerts, /alertPrefs/);
+  assert.match(parent, /AlertPushSettings/);
+  assert.doesNotMatch(parent, /text-2xl">\{t\("alertPrefs"\)\}/);
   const push = src("src/lib/alert-push.ts");
   assert.doesNotMatch(push, /Winnipeg time/i);
   assert.match(push, /your time zone/i);
+  const copy = src("src/lib/copy.ts");
+  assert.doesNotMatch(copy, /in Winnipeg/);
+  assert.doesNotMatch(copy, /21 h à Winnipeg/);
+  assert.match(copy, /in your time zone/);
+  assert.match(copy, /votre fuseau horaire/);
   assert.match(src("src/lib/server/notify.ts"), /formatInTimeZone/);
   assert.doesNotMatch(src("src/lib/server/notify.ts"), /America\/Winnipeg/);
   assert.doesNotMatch(src("src/lib/account-notify.ts"), /America\/Winnipeg/);
   const stamped = formatInTimeZone(new Date("2026-10-06T02:30:00Z"), "America/Toronto");
   assert.match(stamped, /EDT|EST/);
   assert.doesNotThrow(() => formatInTimeZone(new Date(), null));
+});
+
+test("guest view is kyle-only and sits beside the admin desk switch", () => {
+  assert.equal(
+    guestViewApplies({ cookie: "ke_guest_view=1", email: "kyle@kidease.ca", pathname: "/" }),
+    true,
+  );
+  assert.equal(
+    guestViewApplies({ cookie: "ke_guest_view=1", email: "kyle@kidease.ca", pathname: "/search" }),
+    true,
+  );
+  assert.equal(
+    guestViewApplies({ cookie: "ke_guest_view=1", email: "kyle@kidease.ca", pathname: "/admin" }),
+    false,
+  );
+  assert.equal(
+    guestViewApplies({ cookie: "ke_guest_view=1", email: "kyle@kidease.ca", pathname: "/parent" }),
+    false,
+  );
+  assert.equal(
+    guestViewApplies({ cookie: "ke_guest_view=1", email: "kyle@kidease.ca", pathname: "/login" }),
+    false,
+  );
+  assert.equal(
+    guestViewApplies({ cookie: "ke_guest_view=1", email: "director@centre.example", pathname: "/" }),
+    false,
+  );
+  assert.equal(
+    guestViewApplies({ cookie: "other=1", email: "kyle@kidease.ca", pathname: "/" }),
+    false,
+  );
+  const switcher = src("src/components/desk-switcher.tsx");
+  assert.match(switcher, /data-ke="admin-guest-view"/);
+  assert.match(switcher, /canUseOperatorTools\(session\.email\)/);
+  assert.match(src("src/lib/server/role-route.ts"), /guestViewApplies/);
 });
 
 test("search does not write a Winnipeg query when location is unknown", () => {

@@ -103,15 +103,16 @@ export async function resolveContinueDest(input: {
   const hinted = Boolean(next || input.desk || input.role || input.sticky);
   void hinted;
   const stored = await withTimeoutFallback(
-    getMyDesks()
-      .then((row) => row.role)
-      .catch(() => null),
+    getMyDesks().catch(() => null),
     DESK_RESOLVE_MS,
     null,
   );
+  const storedRole = stored?.role ?? null;
+  const staff = storedRole === "admin" || storedRole === "support" || storedRole === "support_lead";
   const dest = destinationAfterSignIn({
-    role: stored ?? input.role,
+    role: storedRole ?? input.role,
     next,
+    ownsCentre: !staff && (stored?.ownsCentre === true || stored?.centreLinked === true),
   });
   const desk = deskFromPathname(dest);
   if (desk) writeStickyDesk(desk);
