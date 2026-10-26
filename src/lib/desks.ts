@@ -1,4 +1,5 @@
 import { isKidEaseOperatorEmail } from "./admin-email.ts";
+import { stripLocalePrefix } from "./locale-path.ts";
 import type { ViewAsPublic } from "./view-as-public.ts";
 
 export type AppRole = "admin" | "support_lead" | "support" | "provider" | "parent";
@@ -189,8 +190,9 @@ export function nextTwoFactorNav(input: {
 }
 
 export function deskFromPathname(pathname: string): DeskKey | null {
+  const path = stripLocalePrefix(pathname);
   for (const [prefix, desk] of PATH_DESK) {
-    if (pathname === prefix || pathname.startsWith(`${prefix}/`)) return desk;
+    if (path === prefix || path.startsWith(`${prefix}/`)) return desk;
   }
   return null;
 }
@@ -235,7 +237,7 @@ function familyLoginDesk(input: {
 }
 
 export function isAuthLoopPath(raw: string): boolean {
-  const path = pathnameOfDest(raw);
+  const path = stripLocalePrefix(pathnameOfDest(raw));
   if (!path) return false;
   return AUTH_LOOP_PATHS.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
 }

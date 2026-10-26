@@ -1,4 +1,5 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { parentDeskPath } from "@/lib/desk-nav";
 import { hasCareDetails } from "@/lib/child-profile";
 import { formatAgeLabel } from "@/lib/templates";
 import { useCopy } from "@/lib/use-copy";
@@ -12,6 +13,7 @@ export function ChildCareCard({
   showCompleteLink?: boolean;
 }) {
   const { t, locale } = useCopy();
+  const parentPath = parentDeskPath(useRouterState({ select: (s) => s.location.pathname }));
   const thin = !hasCareDetails(child);
 
   function row(label: string, value: string | boolean | undefined, hideEmpty = false) {
@@ -84,7 +86,7 @@ export function ChildCareCard({
         {row(t("sunscreenOk"), child.sunscreenOk)}
         {row(t("extraNotes"), child.notes, true)}
         {thin && showCompleteLink ? (
-          <Link to="/parent" search={{ tab: "children" }} className="inline-block pt-1 text-sm text-primary underline">
+          <Link to={parentPath} search={{ tab: "children" }} className="inline-block pt-1 text-sm text-primary underline">
             {t("completeProfile")}
           </Link>
         ) : null}

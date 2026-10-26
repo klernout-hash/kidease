@@ -1,10 +1,11 @@
 /* KidEase PWA worker for Chromium, including the Microsoft Store app (Edge).
- * Pages register /sw.js?v=7 so a cached copy of /sw.js cannot stay behind.
+ * Pages register /sw.js?v=8 so a cached copy of /sw.js cannot stay behind.
  * The iOS and Android shells do not register this file.
  * Documents, /api/, and /_serverFn are never cached.
- * The offline page is used only when the browser reports it is offline.
+ * The offline page is used only for a real network failure or navigator.onLine === false.
+ * A 401 or Unauthorized response is not offline.
  * HTML is never written to the cache (stale /assets hashes break the page). */
-const VERSION = "kidease-shell-v7";
+const VERSION = "kidease-shell-v8";
 const PRECACHE = [
   "/offline.html",
   "/manifest.webmanifest",
@@ -123,6 +124,17 @@ function isDocument(request) {
   return request.mode === "navigate" || request.destination === "document";
 }
 
+function isAuthFailure(error, response) {
+  if (response && (response.status === 401 || response.status === 403)) return true;
+  const message = error && typeof error.message === "string" ? error.message : "";
+  return message === "Unauthorized" || message === "Not authorized" || message === "401";
+}
+
+function isNetworkFailure(error) {
+  if (!error || isAuthFailure(error)) return false;
+  return error instanceof TypeError || error.name === "TypeError";
+}
+
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   if (request.method !== "GET") return;
@@ -131,12 +143,17 @@ self.addEventListener("fetch", (event) => {
   // Do not cache HTML. Offline only when the network itself fails.
   if (isDocument(request)) {
     event.respondWith(
-      fetch(request).catch(() => {
-        if (typeof navigator !== "undefined" && navigator.onLine === false) {
-          return caches.match("/offline.html");
-        }
-        return Promise.reject(new Error("network"));
-      }),
+      fetch(request)
+        .then((response) => {
+          if (isAuthFailure(null, response)) return response;
+          return response;
+        })
+        .catch((error) => {
+          if (isAuthFailure(error)) return Promise.reject(error);
+          const browserOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+          if (browserOffline || isNetworkFailure(error)) return caches.match("/offline.html");
+          return Promise.reject(error);
+        }),
     );
     return;
   }

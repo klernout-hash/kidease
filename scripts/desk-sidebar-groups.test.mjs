@@ -29,14 +29,14 @@ const PARENT_ON = [
   "/inbox?view=family",
   "/parent?tab=alerts",
   "/parent?tab=care",
+  "/parent?tab=children",
+  "/parent?tab=enrolled",
   "/parent?tab=explore",
   "/parent?tab=payments",
+  "/parent?tab=saved",
   "/parent?tab=subscription",
+  "/parent?tab=waitlists",
   "/search",
-  "id:bookings",
-  "id:children",
-  "id:saved",
-  "id:waitlists",
 ];
 
 const PARENT_OFF = PARENT_ON.filter((href) => href !== "/parent?tab=subscription");

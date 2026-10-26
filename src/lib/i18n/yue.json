@@ -906,6 +906,7 @@
   "payTitle": "確保你嘅學位",
   "payLead": "托兒所批准你嘅申請之後先可以付款。卡訂金會喺中心發出嘅帳單度收: 唔係喺呢度打卡號。",
   "bookingPayLeadHonest": "呢一頁唔會收訂金。中心會發帳單；家長用 Stripe Checkout 付款。Parent Plus 係獨立嘅 KidEase 訂閱。",
+  "bookingPayLeadBills": "呢一頁唔會收訂金。中心會發帳單；家長用 Stripe Checkout 付款。",
   "bookingPayDisabled": "信用卡、Apple Pay、Google Pay 同 PayPal 喺呢度維持關閉，咁就唔會未經過 Stripe 就將預約標做已付款。請用中心發出嘅帳單，或者電郵 support@kidease.ca。",
   "payUseBill": "打開帳單",
   "payHubTitle": "支付中心帳單",

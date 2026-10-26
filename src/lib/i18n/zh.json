@@ -906,6 +906,7 @@
   "payTitle": "锁定您的名额",
   "payLead": "只有在托儿所批准您的申请后才能付款。银行卡押金记在中心发送的账单上：而不是在此输入卡号。",
   "bookingPayLeadHonest": "本页面不收取押金。中心发送账单；家长通过 Stripe Checkout 支付。Parent Plus 是独立的 KidEase 订阅。",
+  "bookingPayLeadBills": "本页面不收取押金。中心发送账单；家长通过 Stripe Checkout 支付。",
   "bookingPayDisabled": "银行卡、Apple Pay、Google Pay 和 PayPal 在此保持关闭，以免在没有 Stripe 的情况下将预订标为已付款。请使用中心发送的账单，或发送邮件至 support@kidease.ca。",
   "payUseBill": "打开账单",
   "payHubTitle": "支付中心账单",

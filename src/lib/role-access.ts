@@ -150,7 +150,7 @@ export function guardPrivatePath(input: {
 }
 
 function parentDeskNext(next: string): boolean {
-  const path = (next.split("?")[0] || "/").replace(/\/+$/, "") || "/";
+  const path = barePath(next);
   return path === "/parent" || path.startsWith("/parent/");
 }
 
@@ -195,8 +195,9 @@ export function bottomBarKind(input: {
   pathname: string;
   pending: boolean;
 }): "daycare" | "parent" | "admin" | "guest" {
-  if (input.pathname.startsWith("/provider")) return "daycare";
-  if (input.pathname.startsWith("/parent")) return "parent";
+  const path = barePath(input.pathname);
+  if (path.startsWith("/provider")) return "daycare";
+  if (path.startsWith("/parent")) return "parent";
   if (input.pending || input.role === "guest") return "guest";
   if (input.role === "provider") return "daycare";
   if (input.role === "admin") return "admin";

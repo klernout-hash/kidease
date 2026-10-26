@@ -1,7 +1,8 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { useRoleChrome } from "@/components/role-chrome";
 import { MenuRow } from "@/components/menu-row";
 import { roleNavItems, type ChromeRole } from "@/lib/role-access";
+import { deskHrefForLocale } from "@/lib/desk-nav";
 import type { CopyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -41,6 +42,7 @@ export function RoleNavLinks({
   onNavigate?: () => void;
 }) {
   const { t } = useCopy();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const chrome = useRoleChrome();
   const items = roleNavItems({ role, paid, subscriptionsOn: chrome.subscriptionsEnabled })
     .filter((item) => !(item.id === "signin" && appearance !== "header"))
@@ -59,7 +61,7 @@ export function RoleNavLinks({
         {items.map((item) => (
           <Link
             key={item.id}
-            to={item.to}
+            to={deskHrefForLocale(item.to, pathname)}
             search={item.search}
             data-nav={item.id}
             onClick={onNavigate}
@@ -81,7 +83,7 @@ export function RoleNavLinks({
       {items.map((item) => (
         <MenuRow
           key={item.id}
-          to={item.to}
+          to={deskHrefForLocale(item.to, pathname)}
           search={item.search}
           label={item.label}
           icon={item.icon}

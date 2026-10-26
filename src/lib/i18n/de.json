@@ -906,6 +906,7 @@
   "payTitle": "Sichern Sie Ihren Platz",
   "payLead": "Die Zahlung ist erst möglich, nachdem die Kita Ihre Anfrage genehmigt hat. Kartenanzahlungen werden über die Rechnung berechnet, die Ihre Einrichtung sendet: nicht durch Eingabe einer Kartennummer hier.",
   "bookingPayLeadHonest": "Auf dieser Seite werden keine Anzahlungen berechnet. Einrichtungen senden eine Rechnung; Eltern zahlen sie mit Stripe Checkout. Parent Plus ist ein separates KidEase-Abonnement.",
+  "bookingPayLeadBills": "Auf dieser Seite werden keine Anzahlungen berechnet. Einrichtungen senden eine Rechnung; Eltern zahlen sie mit Stripe Checkout.",
   "bookingPayDisabled": "Karte, Apple Pay, Google Pay und PayPal bleiben hier aus, damit eine Buchung nicht ohne Stripe als bezahlt markiert werden kann. Verwenden Sie die Rechnung, die Ihre Einrichtung sendet, oder schreiben Sie an support@kidease.ca.",
   "payUseBill": "Rechnungen öffnen",
   "payHubTitle": "Eine Einrichtungsrechnung bezahlen",

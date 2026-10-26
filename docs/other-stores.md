@@ -50,7 +50,7 @@ The live site is the app. [PWABuilder](https://www.pwabuilder.com) wraps it as a
 - Site manifest (browsers and “Add to home screen”): `public/manifest.webmanifest`, start URL `/`.
 - Store manifest: `public/manifest.microsoft.webmanifest`, start URL `/?store=microsoft`.
 - Icons already on the site: 192, 512, and a 512 maskable icon.
-- Service worker `public/sw.js` (`kidease-shell-v7`) serves `public/offline.html` only when the browser is offline. It does not cache HTML, `/api/`, or `/_serverFn`. Hashed `/assets/` stay network-only. A standalone window and the Microsoft channel register it on load. The iOS and Android shells do not.
+- Service worker `public/sw.js` (`kidease-shell-v8`) serves `public/offline.html` only for a real network failure or when the browser is offline. A 401 is not offline. It does not cache HTML, `/api/`, or `/_serverFn`. Hashed `/assets/` stay network-only. A standalone window and the Microsoft channel register it on load. The iOS and Android shells do not.
 - The page at `/?store=microsoft` links `manifest.microsoft.webmanifest` (also when the user agent is `KidEaseStoreMicrosoft` or the `ke_store=microsoft` cookie is already set). A normal visit keeps `manifest.webmanifest`.
 - The first launch sets a `ke_store=microsoft` cookie (`Path=/; Max-Age=31536000; SameSite=Lax; Secure` on https) so later pages still know this is the Store package. Prices and Stripe stay hidden on that package. The cookie is set only when the user agent is not `KidEaseNative`. An iOS or Play WebView ignores `?store=microsoft` and clears a leftover `ke_store` cookie.
 

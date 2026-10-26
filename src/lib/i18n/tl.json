@@ -906,6 +906,7 @@
   "payTitle": "I-secure ang puwesto mo",
   "payLead": "Magagamit lang ang bayad pagkatapos aprubahan ng daycare ang request mo. Ang mga deposito sa card ay sisingilin sa bill na ipinapadala ng sentro mo: hindi sa pag-type ng numero ng card dito.",
   "bookingPayLeadHonest": "Hindi sinisingil ang mga deposito sa pahinang ito. Nagpapadala ng bill ang mga sentro; binabayaran ito ng mga magulang sa Stripe Checkout. Hiwalay na subscription ng KidEase ang Parent Plus.",
+  "bookingPayLeadBills": "Hindi sinisingil ang mga deposito sa pahinang ito. Nagpapadala ng bill ang mga sentro; binabayaran ito ng mga magulang sa Stripe Checkout.",
   "bookingPayDisabled": "Naka-off dito ang card, Apple Pay, Google Pay, at PayPal para hindi mamarkahang bayad ang booking nang walang Stripe. Gamitin ang bill na ipinapadala ng sentro mo, o mag-email sa support@kidease.ca.",
   "payUseBill": "Buksan ang mga bill",
   "payHubTitle": "Magbayad ng bill ng sentro",

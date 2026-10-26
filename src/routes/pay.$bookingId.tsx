@@ -8,7 +8,9 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { confirmInterac, createPayment, getFamily } from "@/lib/server/family";
 import { useCopy } from "@/lib/use-copy";
 import { useSessionDesks } from "@/components/desk-switcher";
+import { useRoleChrome } from "@/components/role-chrome";
 import { LedgerHonesty } from "@/components/listing-status-badge";
+import { bookingPayLeadKey } from "@/lib/copy";
 import { money } from "@/lib/utils";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { NativePayNote } from "@/components/native-pay-note";
@@ -19,6 +21,8 @@ export const Route = createFileRoute("/pay/$bookingId")({ component: PayPage });
 
 function PayPage() {
   const nativePay = useInNativeShell();
+  const chrome = useRoleChrome();
+  const showPlans = !nativePay && chrome.subscriptionsEnabled === true;
   const { bookingId } = Route.useParams();
   const { user, isPending } = useCurrentUserState();
   const { t, locale } = useCopy();
@@ -99,8 +103,8 @@ function PayPage() {
           ← {t("account")}
         </Link>
         <h1 className="mt-3 font-display text-3xl">{alreadyPaid ? t("receiptTitle") : t("payTitle")}</h1>
-        <p className="mt-2 text-sm text-muted">{alreadyPaid ? t("receiptLead") : t("bookingPayLeadHonest")}</p>
-        <LedgerHonesty stripeLive={stripeLive} surface="booking" className="mt-3" />
+        <p className="mt-2 text-sm text-muted">{alreadyPaid ? t("receiptLead") : t(bookingPayLeadKey(showPlans))}</p>
+        <LedgerHonesty stripeLive={stripeLive} surface="booking" plansOn={showPlans} className="mt-3" />
         <p className="mt-4 rounded-xl bg-surface p-4 text-sm text-muted ring-1 ring-border">{t("bookingPayDisabled")}</p>
         <p className="mt-3 text-sm text-muted">{t("connectFeeParentPay")}</p>
 

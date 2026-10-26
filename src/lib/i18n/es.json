@@ -906,6 +906,7 @@
   "payTitle": "Asegura tu lugar",
   "payLead": "El pago solo está disponible después de que la guardería apruebe tu solicitud. Los depósitos con tarjeta se cobran en la factura que envía tu centro: no al escribir aquí un número de tarjeta.",
   "bookingPayLeadHonest": "Los depósitos no se cobran en esta página. Los centros envían una factura; los padres la pagan con Stripe Checkout. Parent Plus es una suscripción aparte de KidEase.",
+  "bookingPayLeadBills": "Los depósitos no se cobran en esta página. Los centros envían una factura; los padres la pagan con Stripe Checkout.",
   "bookingPayDisabled": "La tarjeta, Apple Pay, Google Pay y PayPal permanecen desactivados aquí para que una reserva no pueda marcarse como pagada sin Stripe. Usa la factura que envía tu centro o escribe a support@kidease.ca.",
   "payUseBill": "Abrir facturas",
   "payHubTitle": "Pagar una factura del centro",

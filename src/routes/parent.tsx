@@ -15,6 +15,8 @@ import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
 import { parseShareToken } from "@/lib/parent-tracker";
 import { parentUrlTab } from "@/lib/parent-tab";
 import { canUseOperatorTools } from "@/lib/operator-tools";
+import { parentDeskPath } from "@/lib/desk-nav";
+import { stripLocalePrefix } from "@/lib/locale-path";
 import { getFamily } from "@/lib/server/family";
 
 const ParentDesk = lazy(() =>
@@ -22,7 +24,7 @@ const ParentDesk = lazy(() =>
 );
 
 function isParentSignupPath(pathname: string) {
-  const path = pathname.replace(/\/$/, "") || "/";
+  const path = stripLocalePrefix(pathname).replace(/\/$/, "") || "/";
   return path === "/parent/signup";
 }
 
@@ -92,9 +94,11 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
   const locallyOut = useLocallySignedOut();
   const chrome = useRoleChrome();
   const { session, ready } = useSessionDesks();
+  const bare = stripLocalePrefix(pathname);
+  const parentPath = parentDeskPath(pathname);
   if (
-    pathname === "/parent/spot-offers" ||
-    pathname.startsWith("/parent/spot-offers/") ||
+    bare === "/parent/spot-offers" ||
+    bare.startsWith("/parent/spot-offers/") ||
     isParentSignupPath(pathname)
   ) {
     return <Outlet />;
@@ -159,11 +163,11 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
       ownsCentre: session.ownsCentre,
       linkedToCentre: session.centreLinked,
     };
-    if (canBuyParentUpgrade(buyer)) return <Navigate to="/parent" search={{ tab: "explore" }} />;
+    if (canBuyParentUpgrade(buyer)) return <Navigate to={parentPath} search={{ tab: "explore" }} />;
     if (canBuyDaycareUpgrade(buyer)) return <Navigate to="/provider" search={{ desk: "today" }} />;
     if (session.home === "/admin") return <Navigate to="/admin" />;
     if (session.home === "/support") return <Navigate to="/support" />;
-    return <Navigate to="/parent" search={{ tab: "explore" }} />;
+    return <Navigate to={parentPath} search={{ tab: "explore" }} />;
   }
   if (
     upgradeSurface &&
@@ -187,7 +191,7 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
 
   return (
     <TwoFactorGate
-      next="/parent"
+      next={parentPath}
       pending={
         <Shell>
           <DeskSkeleton />

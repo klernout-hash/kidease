@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useParams, useSearch } from "@tanstack/react-router";
 import { inboxSearch, parseInboxSearch, resolveInboxView } from "@/lib/inbox-view";
 import { Phone, Video, X } from "lucide-react";
 import { toast } from "sonner";
@@ -37,7 +37,7 @@ import type { BookingStatus, Child, Message, Schedule, TourRequest } from "@/lib
 
 export const Route = createFileRoute("/inbox/$id")({
   validateSearch: (s: Record<string, unknown>) => parseInboxSearch(s),
-  component: ThreadPage,
+  component: InboxThreadPage,
 });
 
 function showChatBubble(m: Message) {
@@ -60,9 +60,10 @@ type BookingInfo = {
   daycareId?: string;
 };
 
-function ThreadPage() {
-  const { id } = Route.useParams();
-  const search = Route.useSearch();
+export function InboxThreadPage() {
+  const params = useParams({ strict: false });
+  const id = String(params.id || "");
+  const search = useSearch({ strict: false }) as ReturnType<typeof parseInboxSearch>;
   const { user, isPending } = useCurrentUserState();
   const { t, locale } = useCopy();
   const { session: desks, sticky } = useSessionDesks();

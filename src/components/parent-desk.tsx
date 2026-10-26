@@ -1,5 +1,5 @@
 import { Component, lazy, startTransition, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Link, Navigate } from "@tanstack/react-router";
+import { Link, Navigate, useNavigate, useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { confirmSuccess } from "@/lib/success-confirm";
 import type { UpgradeSearch } from "@/components/checkout-return";
@@ -37,7 +37,9 @@ import { useAppStore } from "@/lib/store";
 import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
+import { inboxThreadTo, parentDeskPath, parentNavSearch } from "@/lib/desk-nav";
 import { parentDeskTabOrDefault } from "@/lib/parent-tab";
+import { useInNativeShell } from "@/lib/use-native-shell";
 import { yieldToMain } from "@/lib/yield-main";
 import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
 import { PARENT_UPGRADE_PLANS } from "@/lib/upgrade-plans";
@@ -124,6 +126,9 @@ export function ParentDesk({
   initialShared?: boolean;
 }) {
   const { user } = useCurrentUserState();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
+  const nativeShell = useInNativeShell();
   const chrome = useRoleChrome();
   const plus = useParentPlusAccess();
   const { t, locale } = useCopy();
@@ -157,10 +162,14 @@ export function ParentDesk({
   const selectTab = useCallback((id: string) => {
     const next = parentDeskTabOrDefault(id);
     setTab(next);
+    const search = parentNavSearch(id);
+    if (search.tab) {
+      void navigate({ to: parentDeskPath(pathname), search });
+    }
     void yieldToMain().then(() => {
       startTransition(() => setContentTab(next));
     });
-  }, []);
+  }, [navigate, pathname]);
 
   const loadExplore = useCallback(
     async (startBookings: Booking[], fresh = false) => {
@@ -389,11 +398,11 @@ export function ParentDesk({
   };
   const onPlusSurface = contentTab === "subscription" || plusReturn != null;
   if (onPlusSurface && desksReady && desks && desks.subscriptionsEnabled !== true) {
-    if (canBuyParentUpgrade(upgradeBuyer)) return <Navigate to="/parent" search={{ tab: "explore" }} />;
+    if (canBuyParentUpgrade(upgradeBuyer)) return <Navigate to={parentDeskPath(pathname)} search={{ tab: "explore" }} />;
     if (canBuyDaycareUpgrade(upgradeBuyer)) return <Navigate to="/provider" search={{ desk: "today" }} />;
     if (desks.home === "/admin") return <Navigate to="/admin" />;
     if (desks.home === "/support") return <Navigate to="/support" />;
-    return <Navigate to="/parent" search={{ tab: "explore" }} />;
+    return <Navigate to={parentDeskPath(pathname)} search={{ tab: "explore" }} />;
   }
   if (onPlusSurface && desksReady && desks && !canBuyParentUpgrade(upgradeBuyer)) {
     if (canBuyDaycareUpgrade(upgradeBuyer) && desks.subscriptionsEnabled) return <Navigate to="/provider/subscription" />;
@@ -536,7 +545,7 @@ export function ParentDesk({
                 <div className="flex items-center gap-2">
                   {b.conversationId ? (
                     <Button size="sm" variant="secondary" asChild>
-                      <Link to="/inbox/$id" params={{ id: b.conversationId }}>
+                      <Link to={inboxThreadTo(pathname)} params={{ id: b.conversationId }}>
                         {t("openChat")}
                       </Link>
                     </Button>
@@ -557,7 +566,7 @@ export function ParentDesk({
                         <div className="max-w-[14rem] text-right">
                           <p className="text-xs text-muted">{t("awaitingCentreBill")}</p>
                           <Button size="sm" variant="secondary" className="mt-2" asChild>
-                            <Link to="/parent" search={{ tab: "payments" }}>
+                            <Link to={parentDeskPath(pathname)} search={{ tab: "payments" }}>
                               {t("payUseBill")}
                             </Link>
                           </Button>
@@ -610,7 +619,7 @@ export function ParentDesk({
             <LedgerHonesty
               stripeLive={Boolean(desks?.stripeLive)}
               surface="parent"
-              plansOn={desks?.subscriptionsEnabled === true}
+              plansOn={!nativeShell && desks?.subscriptionsEnabled === true}
               className="mt-2"
               ready={desksReady}
             />
@@ -656,7 +665,7 @@ export function ParentDesk({
               payments.length === 0 &&
               bills.filter((b) => billIsOpen(b.status)).length === 0 ? (
                 <li className="p-2">
-                  <EmptyState title={t("noPayments")} body={t(parentPayEmptyKey(desks?.subscriptionsEnabled === true))} action={t("emptyFindCare")} actionTo="/search" />
+                  <EmptyState title={t("noPayments")} body={t(parentPayEmptyKey(!nativeShell && desks?.subscriptionsEnabled === true))} action={t("emptyFindCare")} actionTo="/search" />
                 </li>
               ) : (
                 <>

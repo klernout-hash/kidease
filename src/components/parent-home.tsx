@@ -1,4 +1,5 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
+import { parentDeskPath } from "@/lib/desk-nav";
 import { isSafeSitemapSlug } from "@/lib/sitemap";
 import { EmptyState } from "@/components/empty-state";
 import { RoleUpgradeCard } from "@/components/role-upgrade-card";
@@ -44,6 +45,7 @@ export function ParentHome({
   onDismiss?: () => void;
 }) {
   const { t } = useCopy();
+  const parentPath = parentDeskPath(useRouterState({ select: (s) => s.location.pathname }));
   const nextTour = [...tours]
     .filter((tour) => tour.status === "pending" || tour.status === "accepted")
     .sort((a, b) => tourWhen(a).localeCompare(tourWhen(b)))[0];
@@ -95,7 +97,7 @@ export function ParentHome({
           <section>
             <div className="flex items-center justify-between gap-3">
               <h2 className="font-display text-xl">{t("parentHomeSaved")}</h2>
-              <Link to="/parent" search={{ tab: "saved" }} className="text-sm font-medium text-primary">
+              <Link to={parentPath} search={{ tab: "saved" }} className="text-sm font-medium text-primary">
                 {t("saved")}
               </Link>
             </div>
@@ -121,7 +123,7 @@ export function ParentHome({
           <section>
             <div className="flex items-center justify-between gap-3">
               <h2 className="font-display text-xl">{t("parentHomeRequests")}</h2>
-              <Link to="/parent" search={{ tab: "requests" }} className="text-sm font-medium text-primary">
+              <Link to={parentPath} search={{ tab: "requests" }} className="text-sm font-medium text-primary">
                 {t("parentHomeSeeAll")}
               </Link>
             </div>

@@ -1183,6 +1183,8 @@ export const copy = {
     payLead: "Payment is only available after the daycare approves your request. Card deposits are charged on the bill your centre sends: not by typing a card number here.",
     bookingPayLeadHonest:
       "Deposits are not charged on this page. Centres send a bill; parents pay it with Stripe Checkout. Parent Plus is a separate KidEase subscription.",
+    bookingPayLeadBills:
+      "Deposits are not charged on this page. Centres send a bill; parents pay it with Stripe Checkout.",
     bookingPayDisabled:
       "Card, Apple Pay, Google Pay, and PayPal stay off here so a booking cannot be marked paid without Stripe. Use the bill your centre sends, or email support@kidease.ca.",
     payUseBill: "Open bills",
@@ -4471,6 +4473,8 @@ export const copy = {
     payLead: "Le paiement n’est disponible qu’après l’approbation de la garderie. Les dépôts par carte se paient sur la facture du centre : pas en tapant un numéro de carte ici.",
     bookingPayLeadHonest:
       "Les dépôts ne sont pas débités sur cette page. Les centres envoient une facture; les parents la paient avec Stripe Checkout. Plus parents est un abonnement KidEase distinct.",
+    bookingPayLeadBills:
+      "Les dépôts ne sont pas débités sur cette page. Les centres envoient une facture; les parents la paient avec Stripe Checkout.",
     bookingPayDisabled:
       "Carte, Apple Pay, Google Pay et PayPal restent fermés ici pour qu’une réservation ne soit pas marquée payée sans Stripe. Utilisez la facture du centre, ou écrivez à support@kidease.ca.",
     payUseBill: "Factures ouvertes",
@@ -6599,6 +6603,11 @@ export function parentPayLeadKey(plansOn: boolean, stripeLive: boolean): CopyKey
 
 export function parentPayEmptyKey(plansOn: boolean): CopyKey {
   return plansOn ? "noPaymentsLead" : "noPaymentsLeadBills";
+}
+
+/** Booking pay page. Plan sentences stay off unless subscriptions are on. */
+export function bookingPayLeadKey(plansOn: boolean): CopyKey {
+  return plansOn ? "bookingPayLeadHonest" : "bookingPayLeadBills";
 }
 
 export function tx(locale: Locale, key: CopyKey): string {

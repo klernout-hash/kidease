@@ -8,8 +8,9 @@
  *
  * Catalogue listing bodies stay English for v1 (user-generated / registry
  * text). Listing and city-hub documents still have a French URL so the
- * language toggle, hreflang, and Quebec city pages resolve. Desks and
- * /admin stay unprefixed. `/login` has a `/fr/login` counterpart so the
+ * language toggle, hreflang, and Quebec city pages resolve. The parent
+ * desk and inbox have French URLs (`/fr/parent`, `/fr/inbox`). Other desks
+ * and /admin stay unprefixed. `/login` has a `/fr/login` counterpart so the
  * URL is not a 404; other auth desks stay English.
  */
 
@@ -141,11 +142,19 @@ export function englishPath(pathname: string): string {
   return stripLocalePrefix(pathname);
 }
 
+/** Parent desk and inbox have French URLs. Other desks stay unprefixed. */
+export function isFrenchDeskPath(pathname: string | null | undefined): boolean {
+  const bare = stripLocalePrefix(pathname);
+  return bare === "/parent" || bare.startsWith("/parent/") || bare === "/inbox" || bare.startsWith("/inbox/");
+}
+
 /** Prefix a paired English path when the UI locale is French. `/search` ↔ `/fr/search`. */
 export function localePath(enPath: string, locale: string): string {
   const bare = enPath.startsWith("/") ? enPath : `/${enPath}`;
   if (bare === "/explore") return locale === "fr" ? frenchPath("/search") : "/search";
-  if (locale === "fr" && (PAIRED.has(bare) || isCatalogueDocumentPath(bare) || isQcHomePath(bare))) return frenchPath(bare);
+  if (locale === "fr" && (PAIRED.has(bare) || isCatalogueDocumentPath(bare) || isQcHomePath(bare) || isFrenchDeskPath(bare))) {
+    return frenchPath(bare);
+  }
   return bare;
 }
 
@@ -194,6 +203,15 @@ function isStickyAppPath(bare: string): boolean {
 export function localeSwitchPath(pathname: string, nextLocale: string): string | null {
   const current = normalizePathname(pathname);
   const bare = stripLocalePrefix(current);
+
+  if (isFrenchDeskPath(bare)) {
+    if (nextLocale === "fr") {
+      const next = frenchPath(bare);
+      return next === current ? null : next;
+    }
+    if (isFrPath(current)) return bare;
+    return null;
+  }
 
   if (isStickyAppPath(bare)) {
     if (isFrPath(current) && (nextLocale === "en" || nextLocale !== "fr")) return bare;
