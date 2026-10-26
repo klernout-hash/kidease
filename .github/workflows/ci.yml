@@ -71,7 +71,8 @@ jobs:
   # Kyle marks this check required in GitHub branch protection. This file does not change that setting.
   signed-in-e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # WebKit system packages can use most of a slow runner. Leave time for the suite.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

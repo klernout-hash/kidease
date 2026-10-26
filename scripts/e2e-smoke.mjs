@@ -83,6 +83,39 @@ async function setFixture(context, base, { role, plan, own, activity, attention 
   if (!res.ok()) {
     throw new Error(`seed ${role || "parent"} ${res.status()} ${(await res.text()).slice(0, 200)}`);
   }
+  return res;
+}
+
+/**
+ * WebKit drops Secure `__Host-` cookies on http://127.0.0.1. Copy the session
+ * token into the loopback preview cookie the server accepts for this fixture.
+ */
+async function pinWebkitE2eSession(context, base, response) {
+  const headers = response.headersArray().filter((header) => header.name.toLowerCase() === "set-cookie");
+  const cookies = [];
+  for (const header of headers) {
+    const pair = header.value.split(";")[0] ?? "";
+    const eq = pair.indexOf("=");
+    if (eq < 1) continue;
+    const name = pair.slice(0, eq).trim();
+    if (!name.includes("session_token")) continue;
+    let value = pair.slice(eq + 1).trim();
+    try {
+      value = decodeURIComponent(value);
+    } catch {
+      /* keep the raw value */
+    }
+    cookies.push({
+      name: "kidease.e2e_session",
+      value,
+      url: base,
+      httpOnly: true,
+      secure: false,
+      sameSite: "Lax",
+    });
+  }
+  if (cookies.length === 0) throw new Error("seed did not set a session cookie");
+  await context.addCookies(cookies);
 }
 
 async function openHeaderMenu(page) {
@@ -1467,9 +1500,16 @@ async function runWebkitSearchGuard(base) {
     record("webkit-search-edmonton", edmonton.ok, { note: edmonton.note });
     const winnipeg = await quiet("/search?q=Winnipeg%2C+MB");
     record("webkit-search-winnipeg", winnipeg.ok, { note: winnipeg.note });
-    await setFixture(context, base, { role: "parent" });
+    try {
+      const seeded = await setFixture(context, base, { role: "parent" });
+      await pinWebkitE2eSession(context, base, seeded);
+    } catch (err) {
+      record("webkit-parent-saved", false, { note: err instanceof Error ? err.message : String(err) });
+      return;
+    }
     const saved = await quiet("/parent?tab=saved");
-    record("webkit-parent-saved", saved.ok && /\/parent/i.test(saved.note), { note: saved.note });
+    const onParent = new URL(page.url()).pathname === "/parent";
+    record("webkit-parent-saved", saved.ok && onParent, { note: saved.note });
   } finally {
     await engine.close();
   }

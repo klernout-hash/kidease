@@ -72,6 +72,7 @@ import { pgliteDialect } from "./pglite-dialect";
 import { brokerOAuthCallbackPath, PREVIEW_ALLOWED_HOSTS } from "./preview";
 import {
   aliasInboundAuthCookies,
+  withE2eSessionCookie,
   isKideasePublicHost,
   readSessionTokenFromHeader,
   SESSION_TOKEN_COOKIE,
@@ -487,7 +488,8 @@ export function readSessionToken(): string | null {
   const request = getRequest();
   const header = request?.headers.get("cookie");
   const host = request?.headers.get("x-forwarded-host") || request?.headers.get("host");
-  const raw = isKideasePublicHost(host) ? aliasInboundAuthCookies(header) : header;
+  const aliased = isKideasePublicHost(host) ? aliasInboundAuthCookies(header) : header;
+  const raw = withE2eSessionCookie(aliased, host);
   return unsignedSessionToken(readSessionTokenFromHeader(raw));
 }
 
