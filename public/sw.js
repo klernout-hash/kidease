@@ -144,17 +144,12 @@ self.addEventListener("fetch", (event) => {
   // Do not cache HTML. Offline only when the network itself fails.
   if (isDocument(request)) {
     event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (isAuthFailure(null, response)) return response;
-          return response;
-        })
-        .catch((error) => {
-          if (isAuthFailure(error)) return Promise.reject(error);
-          const browserOffline = typeof navigator !== "undefined" && navigator.onLine === false;
-          if (browserOffline || isNetworkFailure(error)) return caches.match("/offline.html");
-          return Promise.reject(error);
-        }),
+      fetch(request).catch((error) => {
+        if (isAuthFailure(error)) return Promise.reject(error);
+        const browserOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+        if (browserOffline || isNetworkFailure(error)) return caches.match("/offline.html");
+        return Promise.reject(error);
+      }),
     );
     return;
   }

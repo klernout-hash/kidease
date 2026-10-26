@@ -42,7 +42,13 @@ export function RedirectToSignIn({ to = SIGN_IN_PATH }: { to?: string }) {
     select: (s) => ({ pathname: s.location.pathname, searchStr: s.location.searchStr ?? "" }),
   });
   const signIn = isFrPath(loc.pathname) ? "/fr/login" : SIGN_IN_PATH;
-  if (loc.pathname === signIn || loc.pathname === SIGN_IN_PATH || loc.pathname === "/fr/login") {
+  if (
+    loc.pathname === signIn ||
+    loc.pathname === SIGN_IN_PATH ||
+    loc.pathname === "/fr/login" ||
+    loc.pathname.startsWith(`${SIGN_IN_PATH}/`) ||
+    loc.pathname.startsWith("/fr/login/")
+  ) {
     return null;
   }
   if (to !== SIGN_IN_PATH) return <Navigate to={to} />;
