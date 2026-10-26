@@ -35,6 +35,20 @@ export function isLocalCatalogSource(source?: string | null) {
 }
 
 /**
+ * Neon returns timestamptz as a Date. Optional `.trim()` throws in Safari
+ * when the value is present but not a string, which takes down search and saved.
+ */
+export function licenceVerifiedStamp(value: unknown): string {
+  if (typeof value === "string") return value.trim();
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString();
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "" : date.toISOString();
+  }
+  return "";
+}
+
+/**
  * Parent-facing "Licence verified" only after an operator confirmation.
  * A catalogue snapshot, a blank timestamp, or an expired/suspended licence never qualifies.
  */
@@ -42,11 +56,11 @@ export function showLicenceVerifiedBadge(input: {
   licenseStatus?: string | null;
   registryMatchState?: string | null;
   licenseVerificationSource?: string | null;
-  licenseVerifiedAt?: string | null;
+  licenseVerifiedAt?: unknown;
 }): boolean {
   const status = normalizeLicenseStatus(input.licenseStatus);
   if (status === "expired" || status === "suspended") return false;
   if (!isOperatorLicenseSource(input.licenseVerificationSource)) return false;
-  if (!input.licenseVerifiedAt?.trim()) return false;
+  if (!licenceVerifiedStamp(input.licenseVerifiedAt)) return false;
   return status === "matched" || input.registryMatchState === "matched";
 }

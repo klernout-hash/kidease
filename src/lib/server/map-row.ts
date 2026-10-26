@@ -10,6 +10,7 @@ import { isPlatformLive } from "@/lib/live";
 import { applyListingReadiness } from "@/lib/listing-readiness";
 import { agesKnownFromConfirmedFlag } from "@/lib/standard-age-groups";
 import { isAdminOnlyListing, listingVisibilityOf } from "@/lib/listing-visibility";
+import { asIsoString } from "@/lib/sort-time";
 import { applyLocalRegistryTrust } from "@/lib/server/license-match";
 import { applyMasterCareType } from "@/lib/server/master-care-type";
 import { defaultTrustFields, normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
@@ -82,7 +83,7 @@ export type DaycareRow = {
   first_aid_expiry?: string | Date | null;
   licensed_capacity?: number | null;
   registry_match_state?: string | null;
-  license_verified_at?: string | null;
+  license_verified_at?: string | Date | null;
   license_verification_source?: string | null;
   staff_screening_attested?: number | boolean | null;
   staff_screening_attested_at?: string | null;
@@ -182,7 +183,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
     firstAidExpiry: r.first_aid_expiry ? String(r.first_aid_expiry).slice(0, 10) : null,
     licensedCapacity: r.licensed_capacity ?? null,
     registryMatchState: normalizeMatchState(r.registry_match_state),
-    licenseVerifiedAt: r.license_verified_at ?? null,
+    licenseVerifiedAt: asIsoString(r.license_verified_at),
     licenseVerificationSource: r.license_verification_source ?? null,
     staffScreeningAttested: r.staff_screening_attested === 1 || r.staff_screening_attested === true,
     staffScreeningAttestedAt: r.staff_screening_attested_at ?? null,
