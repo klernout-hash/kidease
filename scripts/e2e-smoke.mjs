@@ -410,6 +410,29 @@ async function runRoleFixture(page, base) {
       note: `account=${deleteOnAccount} confirmOnHome=${deleteConfirmOnHome} link=${deleteLink}`,
     });
 
+    await page.goto(new URL("/account?tab=profile&section=profile&desk=parent", base).href, {
+      waitUntil: "domcontentloaded",
+      timeout: timeoutMs,
+    });
+    const photoSignIn = await page.getByRole("link", { name: /sign in to add a photo/i }).count();
+    const bioBox = page.locator("textarea");
+    await bioBox.waitFor({ timeout: timeoutMs });
+    const bio = `Saved ${Date.now()}`;
+    await bioBox.fill(bio);
+    const saved = page.waitForResponse(
+      (res) => res.request().method() === "POST" && res.url().includes("/_serverFn/") && res.ok(),
+      { timeout: timeoutMs },
+    );
+    await page.getByRole("button", { name: /save details/i }).click();
+    await saved;
+    await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await bioBox.waitFor({ timeout: timeoutMs });
+    const keptBio = await bioBox.inputValue();
+    const accountCrash = /Something went wrong/.test((await page.locator("body").innerText()) || "");
+    record("account-save-details", photoSignIn === 0 && !accountCrash && keptBio.includes(bio), {
+      note: `photoSignIn=${photoSignIn} bio=${keptBio.slice(0, 80)}`,
+    });
+
     await page.setViewportSize({ width: 1280, height: 900 });
     await setFixture(context, base, { role: "parent", plan: "paid" });
     await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
@@ -486,10 +509,16 @@ async function runRoleFixture(page, base) {
         /\bRequests\b/.test(daycareSide) &&
         /\bListings\b/.test(daycareSide) &&
         /\bEarnings\b/.test(daycareSide) &&
+        /\bPromote\b/.test(daycareSide) &&
         /\bdaily\b/i.test(daycareSide) &&
         /my centre/i.test(daycareSide) &&
         /\bmoney\b/i.test(daycareSide),
       { note: daycareSide.slice(0, 200) },
+    );
+    record(
+      "signed-in-desks-no-error",
+      !/Something went wrong/.test(parentSide) && !/Something went wrong/.test(daycareSide),
+      { note: "parent and provider rendered" },
     );
 
     await page.setViewportSize({ width: 1280, height: 900 });

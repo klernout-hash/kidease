@@ -1,6 +1,6 @@
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
-import { isStaleAssetError, safeErrorCopy } from "@/lib/safe-error";
+import { isStaleAssetError, reloadStaleAssetOnce, safeErrorCopy } from "@/lib/safe-error";
 import { reportError } from "@/lib/observe";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
@@ -26,15 +26,8 @@ export function SafeRouteError({
   const showAdmin = path.startsWith("/admin");
 
   useEffect(() => {
-    if (typeof window === "undefined" || !isStaleAssetError(error)) return;
-    const key = "kidease-chunk-reload";
-    try {
-      if (sessionStorage.getItem(key) === "1") return;
-      sessionStorage.setItem(key, "1");
-    } catch {
-      return;
-    }
-    window.location.reload();
+    if (!isStaleAssetError(error)) return;
+    reloadStaleAssetOnce();
   }, [error]);
 
   return (

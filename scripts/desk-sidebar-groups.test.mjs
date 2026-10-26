@@ -94,6 +94,10 @@ test("parent and daycare sidebar hrefs match the set from before the regroup", (
   assert.deepEqual(sidebarDestinations("daycare", owner), DAYCARE_ON);
   assert.deepEqual(sidebarDestinations("daycare", { ...owner, subscriptionsEnabled: false }), DAYCARE_OFF);
   assert.deepEqual(
+    sidebarDestinations("daycare", { ...owner, showPayCtas: false, subscriptionsEnabled: false }),
+    DAYCARE_OFF,
+  );
+  assert.deepEqual(
     sidebarDestinations("daycare", { subscriptionsEnabled: true, centreOwner: false }),
     DAYCARE_STAFF,
   );

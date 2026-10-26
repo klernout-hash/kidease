@@ -169,6 +169,15 @@ describe("apex/www session cookies", () => {
     const aliased = aliasInboundAuthCookies(`${SHARED_SESSION_TOKEN_COOKIE}=abc`);
     assert.match(aliased, new RegExp(`${SESSION_TOKEN_COOKIE}=abc`));
     assert.equal(readSessionTokenFromHeader(`${SHARED_SESSION_TOKEN_COOKIE}=abc`), "abc");
+    const junkHost = aliasInboundAuthCookies(
+      `${SESSION_TOKEN_COOKIE}=x; ${SHARED_SESSION_TOKEN_COOKIE}=shared-token-value-ok`,
+    );
+    assert.match(junkHost, new RegExp(`${SESSION_TOKEN_COOKIE}=shared-token-value-ok`));
+    const hostTok = "a".repeat(32);
+    const kept = aliasInboundAuthCookies(
+      `${SESSION_TOKEN_COOKIE}=${hostTok}; ${SHARED_SESSION_TOKEN_COOKIE}=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb`,
+    );
+    assert.match(kept, new RegExp(`${SESSION_TOKEN_COOKIE}=${hostTok}`));
   });
 
   it("duplicates __Host- Set-Cookie as Domain=kidease.ca on public hosts only", () => {

@@ -26,6 +26,7 @@ import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent
 import type { CaslPrefs } from "@/lib/casl";
 import { PlaceSearch } from "@/components/place-search";
 import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anchors";
+import type { AnchorPoint } from "@/lib/dual-anchor";
 import { useAppStore } from "@/lib/store";
 import { AppearanceControl } from "@/components/appearance-control";
 import { useInNativeShell } from "@/lib/use-native-shell";
@@ -183,7 +184,7 @@ function AccountDeskFrame({ desk, children }: { desk: DeskKey | null; children: 
 }
 
 function ProfilePane() {
-  const { user } = useCurrentUserState();
+  const { user, isPending } = useCurrentUserState();
   const nativeShell = useInNativeShell();
   const { t, locale } = useCopy();
   const search = Route.useSearch();
@@ -209,6 +210,7 @@ function ProfilePane() {
   const anchorMode = useAppStore((s) => s.anchorMode);
   const setAnchorMode = useAppStore((s) => s.setAnchorMode);
   const [workQuery, setWorkQuery] = useState(workOrigin?.label ?? "");
+  const [savedHome, setSavedHome] = useState<AnchorPoint | null | undefined>(undefined);
 
   useEffect(() => {
     if (!user) return;
@@ -235,6 +237,7 @@ function ProfilePane() {
       .catch(() => undefined);
     void getMySearchAnchors()
       .then((saved) => {
+        setSavedHome(saved.home);
         if (saved.work) {
           setWorkOrigin(saved.work);
           setWorkQuery(saved.work.label);
@@ -247,6 +250,12 @@ function ProfilePane() {
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
     if (!user) return;
+    const typedWork = workQuery.trim();
+    const resolvedWork = workOrigin && typedWork === workOrigin.label.trim() ? workOrigin : null;
+    if (typedWork && !resolvedWork) {
+      toast.error(t("anchorWorkMiss"));
+      return;
+    }
     setSaving(true);
     try {
       const saved = await saveMyContact({ data: { name, phone, bio } });
@@ -280,6 +289,12 @@ function ProfilePane() {
         } catch {
           /* profiles row is the source of truth */
         }
+      }
+      if (savedHome !== undefined && (resolvedWork || workOrigin)) {
+        const mode = resolvedWork && anchorMode === "home" ? "both" : anchorMode;
+        await saveMySearchAnchors({
+          data: { home: savedHome, work: resolvedWork, mode },
+        });
       }
       confirmAction(t, "profileSaved");
     } catch (err) {
@@ -465,7 +480,11 @@ function ProfilePane() {
                 .finally(() => setBusy(false));
             }}
           />
-          {user ? (
+          {isPending && !user ? (
+            <div className="mt-6 w-full">
+              <DeskSkeleton />
+            </div>
+          ) : user ? (
             <Button className="mt-6" size="lg" disabled={busy} onClick={() => inputRef.current?.click()}>
               {busy ? t("loading") : t("accountChangePhoto")}
             </Button>
@@ -478,7 +497,7 @@ function ProfilePane() {
           )}
         </div>
 
-        {user ? (
+        {isPending && !user ? null : user ? (
           <form onSubmit={onSave} className="mt-8 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
             <h2 className="font-display text-lg tracking-[-0.02em]">{t("accountContactTitle")}</h2>
             <p className="text-[13px] text-muted">{t("accountContactLead")}</p>
@@ -533,7 +552,9 @@ function ProfilePane() {
                   if (anchorMode === "home") setAnchorMode("both");
                   void saveMySearchAnchors({
                     data: { home: origin, work: place, mode: anchorMode === "home" ? "both" : anchorMode },
-                  }).catch(() => undefined);
+                  }).catch((err) => {
+                    toast.error(err instanceof Error ? err.message : t("anchorWorkMiss"));
+                  });
                 }}
                 placeholder={t("anchorWorkPh")}
                 origin={origin}

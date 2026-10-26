@@ -1,18 +1,9 @@
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { TriangleAlert } from "lucide-react";
 import { useEffect } from "react";
-import { safeErrorCopy } from "@/lib/safe-error";
+import { isStaleAssetError, reloadStaleAssetOnce, safeErrorCopy } from "@/lib/safe-error";
 import { reportError } from "@/lib/observe";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
-
-function isStaleChunk(error: unknown) {
-  const msg = error instanceof Error ? error.message : String(error ?? "");
-  // A blocked analytics file is not a stale app chunk. Reloading does not help.
-  if (/posthog/i.test(msg)) return false;
-  return /importing a module script failed|failed to fetch dynamically imported module|loading chunk|error loading dynamically imported module/i.test(
-    msg,
-  );
-}
 
 export function AppErrorComponent({ error }: ErrorComponentProps) {
   const path = typeof window !== "undefined" ? window.location.pathname : "";
@@ -20,11 +11,8 @@ export function AppErrorComponent({ error }: ErrorComponentProps) {
   const copy = safeErrorCopy(path);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !isStaleChunk(error)) return;
-    const key = "kidease-chunk-reload";
-    if (sessionStorage.getItem(key) === "1") return;
-    sessionStorage.setItem(key, "1");
-    window.location.reload();
+    if (!isStaleAssetError(error)) return;
+    reloadStaleAssetOnce();
   }, [error]);
 
   return (

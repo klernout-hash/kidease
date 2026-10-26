@@ -179,7 +179,11 @@ type DeskNavOpts = {
   centreLinked?: boolean;
 };
 
-/** Hide the daycare Subscription item unless SUBSCRIPTIONS_ENABLED is on. Hide Promote when SHOW_PAY_CTAS is off. */
+/**
+ * Hide Upgrade and daycare Subscription unless SUBSCRIPTIONS_ENABLED is on.
+ * Promote stays in the sidebar. The promote page itself still says plans are
+ * not offered while pay buttons are off.
+ */
 const OWNER_ONLY_NAV = new Set([
   "money",
   "licence",
@@ -196,11 +200,7 @@ export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
   return DESK_NAV[desk].filter((item) => {
     if (item.devOnly && import.meta.env?.PROD === true) return false;
     if (item.id === "upgrade" || item.id === "subscription") return opts?.subscriptionsEnabled === true;
-    if (item.id === "promote") {
-      if (opts?.showPayCtas === false) return false;
-      if (opts?.centreOwner === false) return false;
-      return true;
-    }
+    if (item.id === "promote") return opts?.centreOwner !== false;
     if (OWNER_ONLY_NAV.has(item.id) && opts?.centreOwner === false) return false;
     return true;
   });

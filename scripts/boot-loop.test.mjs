@@ -56,7 +56,7 @@ describe("home / session / splash cannot stay pending forever", () => {
     assert.match(verify, /get-session-timeout/);
     const authApi = src("src/routes/api/auth/$.ts");
     assert.match(authApi, /get-session/);
-    assert.match(authApi, /session: null/);
+    assert.doesNotMatch(authApi, /session: null, user: null/);
   });
 
   it("featured + ranking overlays bound Neon so PR 70 cannot hang the home loader", () => {
