@@ -5,7 +5,7 @@ import { parentRequestSms } from "@/lib/sms-copy";
 import { nid } from "@/lib/utils";
 import { catalogByIdGet } from "@/lib/catalog";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
-import { callerIsAdmin } from "@/lib/server/public-listing";
+import { callerMayUseAdminOnlyListing } from "@/lib/server/public-listing";
 import { upsertDaycare } from "@/lib/server/seed";
 import { centreCanAcceptInquiry } from "@/lib/server/provider-entitlements";
 import { lookupUser, notifyPlatform, notifyThreadParty } from "@/lib/server/notify";
@@ -134,7 +134,7 @@ export const createTourRequest = createServerFn({ method: "POST" })
 
     const sql = await getSql();
     const listed = await catalogByIdGet(data.daycareId);
-    if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerIsAdmin())) {
+    if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerMayUseAdminOnlyListing())) {
       throw new Error("Listing not found");
     }
     if (listed) await upsertDaycare(sql, listed);

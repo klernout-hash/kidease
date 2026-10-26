@@ -8,7 +8,7 @@ import { SupportPreviewBanner } from "@/components/support-preview-banner";
 import { useRoleChrome } from "@/components/role-chrome";
 import { RedirectToSignIn, TwoFactorGate } from "@/lib/auth/gates";
 import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
-import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useCurrentUserState, useLocallySignedOut } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
 import { parseShareToken } from "@/lib/parent-tracker";
@@ -40,7 +40,10 @@ export const Route = createFileRoute("/parent")({
   loader: async () => {
     try {
       const family = await getFamily();
-      return { saved: family.saved, shortlistShared: Boolean(family.shortlistShared) };
+      return {
+        saved: Array.isArray(family?.saved) ? family.saved : [],
+        shortlistShared: Boolean(family?.shortlistShared),
+      };
     } catch {
       return { saved: [], shortlistShared: false };
     }
@@ -74,6 +77,7 @@ export const Route = createFileRoute("/parent")({
 function ParentPage() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, isPending } = useCurrentUserState();
+  const locallyOut = useLocallySignedOut();
   const chrome = useRoleChrome();
   const { session, ready } = useSessionDesks();
   const search = Route.useSearch();
@@ -107,6 +111,13 @@ function ParentPage() {
                     ? "waitlists"
                     : "explore";
 
+  if (locallyOut) {
+    return (
+      <Shell>
+        <DeskSkeleton />
+      </Shell>
+    );
+  }
   if (isPending || chrome.pending || (user && upgradeSurface && !ready)) {
     return (
       <Shell>
@@ -132,6 +143,18 @@ function ParentPage() {
       </Shell>
     );
   }
+  if (upgradeSurface && session && session.subscriptionsEnabled !== true) {
+    const buyer = {
+      role: session.role,
+      ownsCentre: session.ownsCentre,
+      linkedToCentre: session.centreLinked,
+    };
+    if (canBuyParentUpgrade(buyer)) return <Navigate to="/parent" search={{ tab: "explore" }} />;
+    if (canBuyDaycareUpgrade(buyer)) return <Navigate to="/provider" search={{ desk: "today" }} />;
+    if (session.home === "/admin") return <Navigate to="/admin" />;
+    if (session.home === "/support") return <Navigate to="/support" />;
+    return <Navigate to="/parent" search={{ tab: "explore" }} />;
+  }
   if (
     upgradeSurface &&
     session &&
@@ -146,7 +169,8 @@ function ParentPage() {
       ownsCentre: session.ownsCentre,
       linkedToCentre: session.centreLinked,
     });
-    if (daycare) return <Navigate to="/provider/subscription" />;
+    if (daycare && session.subscriptionsEnabled) return <Navigate to="/provider/subscription" />;
+    if (daycare) return <Navigate to="/provider" search={{ desk: "today" }} />;
     if (session.home === "/admin") return <Navigate to="/admin" />;
     if (session.home === "/support") return <Navigate to="/support" />;
   }

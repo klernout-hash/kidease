@@ -80,11 +80,12 @@ test("founding period unlocks daycare tools and does not grant a search pin", ()
   assert.equal(paid.featuredCity, false);
 });
 
-test("plans page renders the founding period on the server and keeps checkout code", () => {
+test("plans page redirects home while subscriptions are off and keeps checkout code", () => {
   const page = src("src/routes/plans.tsx");
   assert.match(page, /getPlansGate/);
-  assert.match(page, /FoundingPlans/);
+  assert.match(page, /if \(!gate\.subscriptionsOn\) throw redirect/);
   assert.match(page, /OptionalUpgrades/);
+  assert.doesNotMatch(page, /FoundingPlans/);
   assert.doesNotMatch(page, /min-h-64 max-w-6xl py-12" data-ke="plans-page"/);
   const gate = src("src/lib/server/provider-subscriptions.ts");
   assert.match(gate, /assertPayCheckoutAllowed/);

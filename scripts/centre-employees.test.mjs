@@ -66,6 +66,7 @@ test("session staff hide Money / licence / claim; owners keep them", () => {
     providerSubscriptions: true,
     showPayCtas: true,
     centreOwner: false,
+    subscriptionsEnabled: true,
   }).map((i) => i.id);
   assert.equal(hidden.includes("employees"), false);
   assert.equal(hidden.includes("money"), false);
@@ -81,6 +82,7 @@ test("session staff hide Money / licence / claim; owners keep them", () => {
     providerSubscriptions: true,
     showPayCtas: true,
     centreOwner: true,
+    subscriptionsEnabled: true,
   }).map((i) => i.id);
   assert.equal(shown.includes("employees"), true);
   assert.equal(shown.includes("money"), true);

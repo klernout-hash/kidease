@@ -56,11 +56,11 @@ test("native commerce is guarded in the page and the component", () => {
   assert.match(videoRoute, /nativeShell \? t\("videoJoinHint"\) : t\("videoTourLead"\)/);
   assert.match(callRoute, /VoiceCallPanel/);
   assert.doesNotMatch(callRoute, /comingSoon/);
-  assert.match(desk, /nativeShell \? null : \(/);
+  assert.match(desk, /nativeShell \|\| !subscriptionsOn \? null : \(/);
   assert.match(desk, /data-ke="daycare-plan"/);
   const drawer = src("src/components/nav-drawer.tsx");
   assert.match(drawer, /useInNativeShell/);
-  assert.match(drawer, /nativeShell \? null : \(/);
+  assert.match(drawer, /showPlans = !nativeShell && chrome\.subscriptionsEnabled === true/);
   assert.match(drawer, /localePath\("\/plans"/);
   assert.match(drawer, /marker="plans"/);
   const login = src("src/routes/login.tsx");

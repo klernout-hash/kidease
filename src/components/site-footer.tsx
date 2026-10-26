@@ -39,9 +39,17 @@ function Item({
   );
 }
 
-function footerLinks(links: FooterLinkDef[], hideCommerce: boolean): FooterLinkDef[] {
-  if (!hideCommerce) return links;
-  return links.filter((link) => !isStorePurchasePath(link.to));
+function isPlansPath(to: string): boolean {
+  const bare = String(to || "").split("?")[0].replace(/\/$/, "") || "/";
+  return bare === "/plans" || bare === "/fr/plans" || bare === "/pricing" || bare === "/fr/pricing";
+}
+
+function footerLinks(links: FooterLinkDef[], hideCommerce: boolean, hidePlans: boolean): FooterLinkDef[] {
+  return links.filter((link) => {
+    if (hideCommerce && isStorePurchasePath(link.to)) return false;
+    if (hidePlans && isPlansPath(link.to)) return false;
+    return true;
+  });
 }
 
 function isSignInLink(link: FooterLinkDef): boolean {
@@ -114,6 +122,7 @@ export function SiteFooter() {
   const { user, isPending } = useCurrentUserState();
   const chrome = useRoleChrome();
   const hideCommerce = useInNativeShell();
+  const hidePlans = chrome.subscriptionsEnabled !== true;
   const storeBadges = comingSoonStores(useStoreChannel());
   const fr = locale === "fr";
   // Operator sign-in is not linked from the public footer. Kyle uses /login.
@@ -128,19 +137,19 @@ export function SiteFooter() {
             <Column
               id="parents"
               title="Parents"
-              links={footerLinks(linksForRole(FOOTER_COLUMNS.parents, chrome.role, "parents", chrome.pending || chrome.role !== "guest"), hideCommerce)}
+              links={footerLinks(linksForRole(FOOTER_COLUMNS.parents, chrome.role, "parents", chrome.pending || chrome.role !== "guest"), hideCommerce, hidePlans)}
               locale={locale}
               t={t}
             />
             <Column
               id="daycares"
               title={fr ? "Garderies" : "Daycares"}
-              links={footerLinks(linksForRole(FOOTER_COLUMNS.daycares, chrome.role, "daycares", chrome.pending || chrome.role !== "guest"), hideCommerce)}
+              links={footerLinks(linksForRole(FOOTER_COLUMNS.daycares, chrome.role, "daycares", chrome.pending || chrome.role !== "guest"), hideCommerce, hidePlans)}
               locale={locale}
               t={t}
             />
-            <Column id="support" title={t("support")} links={footerLinks(linksForRole(FOOTER_COLUMNS.support, chrome.role, "support", chrome.pending || chrome.role !== "guest"), hideCommerce)} locale={locale} t={t} />
-            <Column id="kidease" title={t("app")} links={footerLinks(linksForRole(FOOTER_COLUMNS.kidease, chrome.role, "kidease", chrome.pending || chrome.role !== "guest"), hideCommerce)} locale={locale} t={t} />
+            <Column id="support" title={t("support")} links={footerLinks(linksForRole(FOOTER_COLUMNS.support, chrome.role, "support", chrome.pending || chrome.role !== "guest"), hideCommerce, hidePlans)} locale={locale} t={t} />
+            <Column id="kidease" title={t("app")} links={footerLinks(linksForRole(FOOTER_COLUMNS.kidease, chrome.role, "kidease", chrome.pending || chrome.role !== "guest"), hideCommerce, hidePlans)} locale={locale} t={t} />
           </nav>
           <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
             {FOOTER_LEGAL.map((link) => (

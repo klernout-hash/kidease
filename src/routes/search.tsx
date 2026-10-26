@@ -392,7 +392,13 @@ export function SearchScreen({
   useLivePresence(locationConsent === "granted");
 
   useEffect(() => {
+    void import("@/components/map-view");
+  }, []);
+
+  useEffect(() => {
     if (view === "map") setMapEnabled(true);
+    if (view !== "map") return;
+    void import("@/lib/google-maps").then((mod) => mod.loadGoogleMaps().catch(() => undefined));
   }, [view]);
 
   useEffect(() => {

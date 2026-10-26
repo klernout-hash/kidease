@@ -56,12 +56,14 @@ test("web push endpoints stay on known browser hosts", () => {
   assert.equal(isAllowedWebPushEndpoint("https://user:pass@fcm.googleapis.com/x"), false);
 });
 
-test("permissions policy allows a prompt only for this site", () => {
+test("permissions policy does not send the unrecognized notifications feature", () => {
   const vercel = readFileSync(join(root, "vercel.json"), "utf8");
-  assert.match(vercel, /notifications=\(self\)/);
-  assert.doesNotMatch(vercel, /notifications=\(\)/);
+  assert.doesNotMatch(vercel, /notifications=/);
+  assert.match(vercel, /camera=\(self\)/);
+  assert.match(vercel, /microphone=\(self\)/);
   assert.equal(notificationsPolicyDirective(true), "notifications=(self)");
-  assert.match(sitePermissionsPolicy({ notifications: true }), /notifications=\(self\)/);
+  assert.doesNotMatch(sitePermissionsPolicy({ notifications: true }), /notifications=/);
+  assert.match(sitePermissionsPolicy({ notifications: true, camera: true }), /camera=\(self\)/);
 });
 
 test("production can arm on a VAPID pair without native credentials", () => {

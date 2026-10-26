@@ -249,6 +249,36 @@ function waitForPopupToken(popup: Window): Promise<string | null> {
 
 const SIGN_OUT_WAIT_MS = 4000;
 
+let locallySignedOut = false;
+const localAuthListeners = new Set<() => void>();
+
+function emitLocalAuth(): void {
+  for (const fn of localAuthListeners) fn();
+}
+
+/** Drop the desk immediately. A full navigation clears this with the module. */
+export function markLocalSignedOut(): void {
+  if (locallySignedOut) return;
+  locallySignedOut = true;
+  emitLocalAuth();
+}
+
+/** Call after a new session is confirmed on the same page. */
+export function clearLocalSignedOut(): void {
+  if (!locallySignedOut) return;
+  locallySignedOut = false;
+  emitLocalAuth();
+}
+
+export function isLocallySignedOut(): boolean {
+  return locallySignedOut;
+}
+
+export function subscribeLocalAuth(listener: () => void): () => void {
+  localAuthListeners.add(listener);
+  return () => localAuthListeners.delete(listener);
+}
+
 /** Sign-out must not pin Parent / Daycare / Admin login if Cloudflare holds the POST. */
 async function signOutBestEffort(): Promise<void> {
   try {
@@ -263,6 +293,7 @@ async function signOutBestEffort(): Promise<void> {
 
 /** Drop client session crumbs so the next paint cannot look half-logged-in. */
 export function clearClientAuthState(): void {
+  markLocalSignedOut();
   setBearerToken(null);
   resetPostHogIdentity();
   clearStickyDesk();
@@ -291,12 +322,15 @@ export async function dropExistingSession(): Promise<void> {
 }
 
 export async function signOut(redirectTo = "/"): Promise<void> {
-  clearClientAuthState();
-  await signOutBestEffort();
-  clearClientAuthState();
-  const dest = new URL(redirectTo, window.location.origin);
-  const path = `${dest.pathname}${dest.search}${dest.hash}` || "/";
-  window.location.replace(path.startsWith("/") ? path : "/");
+  try {
+    clearClientAuthState();
+    await signOutBestEffort();
+    clearClientAuthState();
+  } finally {
+    const dest = new URL(redirectTo, window.location.origin);
+    const path = `${dest.pathname}${dest.search}${dest.hash}` || "/";
+    window.location.replace(path.startsWith("/") ? path : "/");
+  }
 }
 
 export function turnstileFetchOptions(token: string) {

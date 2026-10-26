@@ -12,7 +12,7 @@ import { catalogByIdGet } from "@/lib/catalog";
 import { splitPhotoList } from "@/lib/listing-photo";
 import { cultureFieldsToSql } from "@/lib/listing-culture";
 import { isAdminOnlyListing, listingVisibilityForOwners, providerDeskListingVisible } from "@/lib/listing-visibility";
-import { callerIsAdmin } from "@/lib/server/public-listing";
+import { callerIsAdmin, callerIsTestAccount, callerMayUseAdminOnlyListing } from "@/lib/server/public-listing";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { emptyChild, mapChild, type ChildRow } from "@/lib/child-profile";
 import type { AgeGroup, Booking, BookingStatus, Child, Conversation, Locale, Message, PayMethod, Schedule } from "@/lib/types";
@@ -125,16 +125,20 @@ async function pingNewAccount(userId: string, role: "parent" | "provider", extra
  * does not send another admin notice or signup. Never throws into the user flow.
  * Returns true only when this call won the claim and ran the ping.
  *
- * Parent Onboard is skipped when profiles.role is provider. It is also skipped
- * when the account already owns a centre, unless this call is an explicit
- * parent choice (setRole parent). Daycare signup, claim, and enroll stay on
- * Daycare Sign Up.
+ * Parent Onboard runs only for an explicit parent choice (setRole parent).
+ * A new profile defaults to parent, and family, contact, and saved-search
+ * reads used to claim that slot before the person picked daycare. That filed
+ * owner claims on Parent Onboard with type:parent. Those reads no longer call
+ * this, and a parent call without explicitParent is a no-op. Daycare signup,
+ * claim, and enroll stay on Daycare Sign Up.
  */
 export async function ensureCrmIntake(
   userId: string,
   role: "parent" | "provider",
   extra?: CrmIntakeExtra,
 ): Promise<boolean> {
+  // Default profile role is parent before anyone chooses. Do not file that.
+  if (role === "parent" && extra?.explicitParent !== true) return false;
   try {
     const sql = await getSql();
     // Users created before the migration cutoff stay unsent even if their
@@ -192,7 +196,6 @@ export const getFamily = createServerFn({ method: "GET" })
     const sql = await getSql();
     await ensureSeed(sql);
     await ensureProfile(sql, context.userId);
-    await ensureCrmIntake(context.userId, "parent");
     const children = await sql<ChildRow>`
       select id, name, preferred_name, birthdate, allergies, epi_pen, medical_notes, medications,
              doctor_name, doctor_phone, foods_like, foods_avoid, diet, likes, comfort_item, nap_routine,
@@ -283,6 +286,7 @@ export const getFamily = createServerFn({ method: "GET" })
       where c.user_id = ${context.userId} and m.sender = 'parent'
     `;
     const admin = await callerIsAdmin();
+    const seeTestListings = admin || (await callerIsTestAccount());
     return {
       role: (profile[0]?.role === "admin" ? "admin" : profile[0]?.role === "provider" ? "provider" : "parent") as
         | "parent"
@@ -305,7 +309,7 @@ export const getFamily = createServerFn({ method: "GET" })
                   tourNote: String(r.tour_note ?? ""),
                 };
               })
-              .filter((d) => admin || !isAdminOnlyListing(d)),
+              .filter((d) => seeTestListings || !isAdminOnlyListing(d)),
           ),
           { distanceKnown: false, ageGroup: "any" },
         )
@@ -471,7 +475,7 @@ export const toggleSave = createServerFn({ method: "POST" })
   .handler(async ({ context, data: daycareId }) => {
     const sql = await getSql();
     const listed = await catalogByIdGet(daycareId);
-    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerIsAdmin())) {
+    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerMayUseAdminOnlyListing())) {
       throw new Error("Listing not found");
     }
     if (listed) await upsertDaycare(sql, listed);
@@ -518,7 +522,7 @@ export const saveDaycare = createServerFn({ method: "POST" })
   .handler(async ({ context, data: daycareId }) => {
     const sql = await getSql();
     const listed = await catalogByIdGet(daycareId);
-    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerIsAdmin())) {
+    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerMayUseAdminOnlyListing())) {
       throw new Error("Listing not found");
     }
     if (listed) await upsertDaycare(sql, listed);
@@ -555,7 +559,7 @@ export const createBooking = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const listed = await catalogByIdGet(data.daycareId);
-    if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerIsAdmin())) {
+    if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerMayUseAdminOnlyListing())) {
       throw new Error("Listing not found");
     }
     if (listed) await upsertDaycare(sql, listed);
@@ -662,7 +666,7 @@ export const createSpotRequest = createServerFn({ method: "POST" })
     const sql = await getSql();
     await ensureProfile(sql, context.userId);
     const listed = await catalogByIdGet(data.daycareId);
-    if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerIsAdmin())) {
+    if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerMayUseAdminOnlyListing())) {
       throw new Error("Listing not found");
     }
     if (listed) await upsertDaycare(sql, listed);
@@ -1018,7 +1022,7 @@ export const openConversation = createServerFn({ method: "POST" })
   .handler(async ({ context, data: daycareId }) => {
     const sql = await getSql();
     const listed = await catalogByIdGet(daycareId);
-    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerIsAdmin())) {
+    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerMayUseAdminOnlyListing())) {
       throw new Error("Listing not found");
     }
     if (listed) await upsertDaycare(sql, listed);
