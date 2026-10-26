@@ -3019,5 +3019,19 @@
   "ledgerLiveParentBills": "El pago de la factura del centro está activo. Pagas el monto de la factura. La comisión de KidEase sale de la guardería. Esta página no cobra un depósito con tarjeta.",
   "ledgerOffParentBills": "El pago de la factura del centro sigue apagado hasta que las claves de Stripe estén activas. Esta página no cobra un depósito con tarjeta.",
   "childProfileSendLead": "Guarda el perfil del niño y luego envíalo a los centros guardados. Cada centro lo ve en Solicitudes entrantes y puede aprobar, esperar o rechazar.",
-  "tourTimesUnclaimed": "Todavía no puedes reservar una visita desde esta página. Los horarios aparecen cuando el centro reclama su ficha."
+  "tourTimesUnclaimed": "Todavía no puedes reservar una visita desde esta página. Los horarios aparecen cuando el centro reclama su ficha.",
+  "facebookRoleTitle": "¿Para quién es esta cuenta?",
+  "facebookRoleLead": "KidEase es para padres y personal de centros en Canadá. Debes tener 18 años o más. Un niño no puede tener una cuenta.",
+  "facebookRoleAdult": "Confirmaste que tienes 18 años o más.",
+  "facebookRoleParent": "Soy padre o madre",
+  "facebookRoleCentre": "Trabajo en un centro",
+  "facebookEmailTitle": "Añade tu correo",
+  "facebookEmailLead": "Facebook no compartió un correo. Añade uno y confírmalo antes de escribir a un centro o reservar una visita.",
+  "facebookEmailLabel": "Correo",
+  "facebookEmailSend": "Enviar el enlace",
+  "facebookEmailPending": "Abre el enlace en tu bandeja para confirmar este correo. Después podrás escribir a un centro o reservar una visita.",
+  "facebookEmailResend": "Enviar el enlace otra vez",
+  "facebookEmailSaved": "El enlace va en camino. Revisa también el correo no deseado.",
+  "facebookEmailRequired": "Añade y confirma un correo antes de escribir a un centro o reservar una visita.",
+  "facebookHostUnavailable": "Continuar con Facebook no está disponible en esta dirección. Abre kidease.ca."
 }

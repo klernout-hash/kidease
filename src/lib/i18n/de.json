@@ -3019,5 +3019,19 @@
   "ledgerLiveParentBills": "Die Zahlung der Zentrumsrechnung ist aktiv. Du zahlst den Rechnungsbetrag. Die KidEase-Gebühr kommt von der Kita. Auf dieser Seite wird keine Kartenanzahlung berechnet.",
   "ledgerOffParentBills": "Die Zahlung der Zentrumsrechnung bleibt aus, bis die Stripe-Live-Schlüssel an sind. Auf dieser Seite wird keine Kartenanzahlung berechnet.",
   "childProfileSendLead": "Speichere das Kinderprofil und sende es dann an gespeicherte Zentren. Jedes Zentrum sieht es unter Eingehende Anfragen und kann zusagen, warten oder ablehnen.",
-  "tourTimesUnclaimed": "Einen Besuch kannst du auf dieser Seite noch nicht buchen. Zeiten erscheinen, wenn das Zentrum seinen Eintrag übernimmt."
+  "tourTimesUnclaimed": "Einen Besuch kannst du auf dieser Seite noch nicht buchen. Zeiten erscheinen, wenn das Zentrum seinen Eintrag übernimmt.",
+  "facebookRoleTitle": "Für wen ist dieses Konto?",
+  "facebookRoleLead": "KidEase ist für Eltern und Personal von Betreuungseinrichtungen in Kanada. Sie müssen 18 Jahre oder älter sein. Ein Kind kann kein Konto haben.",
+  "facebookRoleAdult": "Sie haben bestätigt, dass Sie 18 Jahre oder älter sind.",
+  "facebookRoleParent": "Ich bin ein Elternteil",
+  "facebookRoleCentre": "Ich arbeite in einer Einrichtung",
+  "facebookEmailTitle": "E-Mail hinzufügen",
+  "facebookEmailLead": "Facebook hat keine E-Mail geteilt. Fügen Sie eine hinzu und bestätigen Sie sie, bevor Sie einer Einrichtung schreiben oder einen Besuch buchen.",
+  "facebookEmailLabel": "E-Mail",
+  "facebookEmailSend": "Link senden",
+  "facebookEmailPending": "Öffnen Sie den Link in Ihrem Posteingang, um diese E-Mail zu bestätigen. Danach können Sie einer Einrichtung schreiben oder einen Besuch buchen.",
+  "facebookEmailResend": "Link erneut senden",
+  "facebookEmailSaved": "Der Link ist unterwegs. Prüfen Sie auch den Spam-Ordner.",
+  "facebookEmailRequired": "Fügen Sie eine E-Mail hinzu und bestätigen Sie sie, bevor Sie einer Einrichtung schreiben oder einen Besuch buchen.",
+  "facebookHostUnavailable": "Weiter mit Facebook ist unter dieser Adresse nicht verfügbar. Öffnen Sie kidease.ca."
 }

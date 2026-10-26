@@ -39,3 +39,14 @@ export const PREVIEW_ALLOWED_HOSTS = [
   "grok.com",
   "*.grok.com",
 ] as const;
+
+/**
+ * Broker clients are registered for `/api/auth/oauth2/callback/:id`.
+ * Facebook is not a broker provider. Meta only allows
+ * `/api/auth/callback/facebook` on three hosts. Never rewrite Facebook onto
+ * the preview callback path — that URI is not registered.
+ */
+export function brokerOAuthCallbackPath(providerId: string): string | null {
+  if (providerId === "facebook") return null;
+  return `/oauth2/callback/${providerId}`;
+}

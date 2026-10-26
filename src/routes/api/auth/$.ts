@@ -12,6 +12,14 @@ import {
   requestWithAliasedAuthCookies,
 } from "@/lib/auth/cookies";
 import { requestWithLegacyOAuthCallback } from "@/lib/auth/legacy-oauth-callback";
+import {
+  FACEBOOK_HOST_UNAVAILABLE,
+  facebookAuthorizeScopesAllowed,
+  facebookOauthHost,
+  facebookRedirectMatches,
+  facebookRedirectUri,
+  stripFacebookSignInScopes,
+} from "@/lib/auth/facebook-idp";
 import { auth } from "@/lib/auth/server";
 import { reportError } from "@/lib/observe";
 import { assertResetMailConfigured } from "@/lib/server/reset-mail-config";
@@ -42,6 +50,60 @@ async function turnstileTokenFromAuthRequest(request: Request): Promise<string> 
   } catch {
     return "";
   }
+}
+
+async function prepareFacebookSignIn(
+  request: Request,
+): Promise<{ request: Request; expectedRedirect: string | null } | Response> {
+  if (request.method !== "POST") return { request, expectedRedirect: null };
+  const path = new URL(request.url).pathname.replace(/\/+$/, "");
+  if (!path.endsWith("/sign-in/social")) return { request, expectedRedirect: null };
+  let json: Record<string, unknown> | null = null;
+  try {
+    json = (await request.clone().json()) as Record<string, unknown>;
+  } catch {
+    return { request, expectedRedirect: null };
+  }
+  if (json?.provider !== "facebook") return { request, expectedRedirect: null };
+  const expectedRedirect = facebookRedirectUri(request.headers.get("host"));
+  const host = facebookOauthHost(request.headers.get("host"));
+  if (!expectedRedirect || !host) {
+    return Response.json({ message: FACEBOOK_HOST_UNAVAILABLE, code: "FACEBOOK_HOST" }, { status: 400 });
+  }
+  const headers = new Headers(request.headers);
+  headers.set("host", host);
+  headers.set("x-forwarded-host", host);
+  headers.set("x-forwarded-proto", "https");
+  headers.set("content-type", "application/json");
+  headers.delete("content-length");
+  const nextUrl = new URL(request.url);
+  nextUrl.protocol = "https:";
+  nextUrl.host = host;
+  const next = new Request(nextUrl, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(stripFacebookSignInScopes(json)),
+  });
+  return { request: next, expectedRedirect };
+}
+
+async function guardFacebookAuthorize(response: Response, expectedRedirect: string | null): Promise<Response> {
+  if (!expectedRedirect) return response;
+  const location = response.headers.get("location");
+  let authorize = location;
+  if (!authorize) {
+    try {
+      const json = (await response.clone().json()) as { url?: string };
+      authorize = json.url || null;
+    } catch {
+      authorize = null;
+    }
+  }
+  if (!authorize) return response;
+  if (!facebookRedirectMatches(authorize, expectedRedirect) || !facebookAuthorizeScopesAllowed(authorize)) {
+    return Response.json({ message: FACEBOOK_HOST_UNAVAILABLE, code: "FACEBOOK_REDIRECT" }, { status: 400 });
+  }
+  return response;
 }
 
 async function handleAuth(request: Request) {
@@ -92,7 +154,9 @@ async function handleAuth(request: Request) {
         }
       }
     }
-    const incoming = requestWithLegacyOAuthCallback(requestWithAliasedAuthCookies(request));
+    const prepared = await prepareFacebookSignIn(request);
+    if (prepared instanceof Response) return prepared;
+    const incoming = requestWithLegacyOAuthCallback(requestWithAliasedAuthCookies(prepared.request));
     const path = new URL(incoming.url).pathname.replace(/\/+$/, "");
     if (request.method === "POST" && isAuthSignOutPath(path)) {
       try {
@@ -107,7 +171,8 @@ async function handleAuth(request: Request) {
     // looks signed out and Save details never runs. A slow database just
     // stays pending; the client already gives up after SESSION_SETTLE_MS.
     const response = await auth.handler(incoming);
-    const honest = await applyHonestRateLimit(response);
+    const facebookSafe = await guardFacebookAuthorize(response, prepared.expectedRedirect);
+    const honest = await applyHonestRateLimit(facebookSafe);
     const shared = applySharedAuthCookies(incoming, honest);
     return isAuthSignOutPath(path) ? applyExpiredAuthCookies(incoming, shared) : shared;
   } catch (err) {

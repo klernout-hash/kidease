@@ -3019,5 +3019,19 @@
   "ledgerLiveParentBills": "中心賬單付款已開通。你支付賬單金額。KidEase 平台費由托兒所支付。這個頁面不收卡按金。",
   "ledgerOffParentBills": "Stripe 正式密鑰開啟之前，中心賬單付款保持關閉。這個頁面不收卡按金。",
   "childProfileSendLead": "先儲存孩子檔案，再發給已儲存的中心。每個中心喺收到的申請見到，可以同意、等候或拒絕。",
-  "tourTimesUnclaimed": "這個頁面暫時不能預約參觀。中心認領名錄之後先會顯示時間。"
+  "tourTimesUnclaimed": "這個頁面暫時不能預約參觀。中心認領名錄之後先會顯示時間。",
+  "facebookRoleTitle": "呢個帳戶係畀邊個？",
+  "facebookRoleLead": "KidEase 係畀加拿大嘅家長同托兒所職員。你必須年滿 18 歲。小朋友唔可以有帳戶。",
+  "facebookRoleAdult": "你已確認年滿 18 歲。",
+  "facebookRoleParent": "我係家長",
+  "facebookRoleCentre": "我喺托兒所工作",
+  "facebookEmailTitle": "加入你嘅電郵",
+  "facebookEmailLead": "Facebook 冇分享電郵。加入並確認一個電郵，先可以傳訊息畀托兒所或預約參觀。",
+  "facebookEmailLabel": "電郵",
+  "facebookEmailSend": "發送連結",
+  "facebookEmailPending": "打開收件箱入面嘅連結確認呢個電郵。之後就可以傳訊息畀托兒所或預約參觀。",
+  "facebookEmailResend": "再發送連結",
+  "facebookEmailSaved": "連結已寄出。都睇下垃圾郵件。",
+  "facebookEmailRequired": "傳訊息畀托兒所或預約參觀之前，請加入並確認電郵。",
+  "facebookHostUnavailable": "呢個地址唔可以用 Facebook 繼續。請打開 kidease.ca。"
 }

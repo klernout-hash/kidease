@@ -11,10 +11,26 @@ import {
   GROK_PROVIDERS,
 } from "../src/lib/auth/providers.ts";
 import {
+  FACEBOOK_CALLBACK_PATH,
+  FACEBOOK_EMAIL_REQUIRED_MESSAGE,
+  FACEBOOK_HOST_UNAVAILABLE,
   FACEBOOK_LOGIN_SCOPES,
+  FACEBOOK_OAUTH_HOSTS,
+  facebookAuthorizeScopesAllowed,
   facebookLoginVisible,
+  facebookOauthHost,
+  facebookPlaceholderEmail,
+  facebookRedirectMatches,
+  facebookContactBlocksAction,
+  facebookRedirectUri,
+  isFacebookPlaceholderEmail,
   mapFacebookProfileToUser,
+  stripFacebookSignInScopes,
 } from "../src/lib/auth/facebook-idp.ts";
+import { brokerOAuthCallbackPath } from "../src/lib/auth/preview.ts";
+import { facebookNewUserCallbackPath, facebookSignupRole } from "../src/lib/auth/social-callback.ts";
+import { FACEBOOK_UNLINK_URL, unlinkFacebookPermissions } from "../src/lib/auth/facebook-unlink.ts";
+import { shouldSendVerifyEmail } from "../src/lib/signup-user-mail.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -236,11 +252,11 @@ describe("native Facebook auth (Better Auth socialProviders.facebook)", () => {
     assert.doesNotMatch(loader, /from ["']@\/lib\/auth\/apple-idp/);
   });
 
-  it("requests only valid Facebook Login permissions (not OpenID or default email)", () => {
-    assert.deepEqual([...FACEBOOK_LOGIN_SCOPES], ["public_profile"]);
-    assert.equal(FACEBOOK_LOGIN_SCOPES.includes("email"), false);
+  it("requests only email and public_profile (not OpenID or extra permissions)", () => {
+    assert.deepEqual([...FACEBOOK_LOGIN_SCOPES], ["email", "public_profile"]);
     assert.equal(FACEBOOK_LOGIN_SCOPES.includes("openid"), false);
     assert.equal(FACEBOOK_LOGIN_SCOPES.includes("profile"), false);
+    assert.equal(FACEBOOK_LOGIN_SCOPES.includes("user_friends"), false);
 
     const server = read("src/lib/auth/server.ts");
     const idp = read("src/lib/auth/facebook-idp.ts");
@@ -265,11 +281,142 @@ describe("native Facebook auth (Better Auth socialProviders.facebook)", () => {
     });
     assert.deepEqual(mapFacebookProfileToUser({ id: "123", email: "  " }), {
       email: "123@facebook.invalid",
+      emailVerified: false,
     });
     assert.deepEqual(mapFacebookProfileToUser({ sub: "oidc-sub" }), {
-      email: "oidc-sub@facebook.invalid",
+      email: "oidcsub@facebook.invalid",
+      emailVerified: false,
     });
     assert.deepEqual(mapFacebookProfileToUser({}), {});
+    assert.equal(isFacebookPlaceholderEmail("123@facebook.invalid"), true);
+    assert.equal(isFacebookPlaceholderEmail("pat@example.com"), false);
+    assert.equal(facebookPlaceholderEmail("12 3"), "123@facebook.invalid");
+    assert.equal(shouldSendVerifyEmail({ email: "123@facebook.invalid", emailVerified: false }), false);
+    assert.equal(shouldSendVerifyEmail({ email: "pat@example.com", emailVerified: false }), true);
+  });
+
+  it("sends a redirect_uri that is exactly one registered host, with no trailing slash", () => {
+    assert.deepEqual([...FACEBOOK_OAUTH_HOSTS], ["kidease.ca", "www.kidease.ca", "kidease-git.vercel.app"]);
+    for (const host of FACEBOOK_OAUTH_HOSTS) {
+      const uri = facebookRedirectUri(host);
+      assert.equal(uri, `https://${host}${FACEBOOK_CALLBACK_PATH}`);
+      assert.equal(uri.endsWith("/"), false);
+      assert.equal(facebookOauthHost(`${host}:443`), host);
+      assert.equal(facebookRedirectUri(`${host}/`), `https://${host}${FACEBOOK_CALLBACK_PATH}`);
+    }
+    assert.equal(facebookRedirectUri("kidease-git-pr-1.vercel.app"), null);
+    assert.equal(facebookRedirectUri("kidease-abc123.vercel.app"), null);
+    assert.equal(facebookRedirectUri("preview.grok-sandbox.com"), null);
+    assert.equal(facebookRedirectUri("localhost"), null);
+    assert.equal(facebookRedirectUri("kidease.vercel.app"), null);
+    assert.equal(facebookRedirectUri("kidease.grok.me"), null);
+
+    const expected = "https://www.kidease.ca/api/auth/callback/facebook";
+    const ok = `https://www.facebook.com/v24.0/dialog/oauth?client_id=app&redirect_uri=${encodeURIComponent(expected)}&scope=email%20public_profile`;
+    assert.equal(facebookRedirectMatches(ok, expected), true);
+    assert.equal(facebookAuthorizeScopesAllowed(ok), true);
+    const slash = `https://www.facebook.com/dialog/oauth?redirect_uri=${encodeURIComponent(`${expected}/`)}&scope=email,public_profile`;
+    assert.equal(facebookRedirectMatches(slash, expected), false);
+    const broker = `https://www.facebook.com/dialog/oauth?redirect_uri=${encodeURIComponent("https://preview.grok-sandbox.com/api/auth/oauth2/callback/facebook")}&scope=email%20public_profile`;
+    assert.equal(facebookRedirectMatches(broker, expected), false);
+    const extra = `https://www.facebook.com/dialog/oauth?redirect_uri=${encodeURIComponent(expected)}&scope=email%20public_profile%20user_friends`;
+    assert.equal(facebookAuthorizeScopesAllowed(extra), false);
+    assert.deepEqual(stripFacebookSignInScopes({ provider: "facebook", scopes: ["user_friends"] }), {
+      provider: "facebook",
+    });
+  });
+
+  it("does not rewrite Facebook onto the preview broker callback", () => {
+    assert.equal(brokerOAuthCallbackPath("facebook"), null);
+    assert.equal(brokerOAuthCallbackPath("grok-google"), "/oauth2/callback/grok-google");
+    const server = read("src/lib/auth/server.ts");
+    const preview = read("src/lib/auth/preview.ts");
+    const providers = read("src/lib/server/sign-in-providers.ts");
+    assert.match(preview, /providerId === "facebook"/);
+    assert.match(server, /brokerOAuthCallbackPath/);
+    assert.match(providers, /facebookOauthHost/);
+    assert.match(read("src/routes/api/auth/$.ts"), /prepareFacebookSignIn/);
+    assert.match(read("src/routes/api/auth/$.ts"), /guardFacebookAuthorize/);
+    assert.equal(FACEBOOK_HOST_UNAVAILABLE.includes("kidease.ca"), true);
+  });
+
+  it("sends new Facebook accounts through parent or centre staff, never a child", () => {
+    assert.equal(facebookSignupRole("parent"), "parent");
+    assert.equal(facebookSignupRole("provider"), "provider");
+    assert.equal(facebookSignupRole("child"), null);
+    assert.equal(facebookSignupRole("admin"), null);
+    assert.equal(facebookNewUserCallbackPath({ role: "child", locale: "fr" }), "/fr/login?intent=up&step=role");
+    assert.equal(
+      facebookNewUserCallbackPath({ role: "parent", desk: "director", next: "/provider" }),
+      "/login?intent=up&role=parent&desk=director&next=%2Fprovider",
+    );
+    const login = read("src/routes/login.tsx");
+    assert.match(login, /facebookNewUserCallbackPath/);
+    assert.match(login, /facebook-role/);
+    assert.match(login, /FACEBOOK_ROLE_PENDING_KEY/);
+    assert.match(login, /markAdultConfirmedForSession/);
+    assert.match(read("src/components/facebook-role-boot.tsx"), /step=role/);
+    assert.doesNotMatch(read("src/lib/server/facebook-contact.ts"), /'parent'/);
+    assert.match(read("src/components/facebook-email-prompt.tsx"), /facebook-address/);
+    assert.doesNotMatch(read("src/components/facebook-email-prompt.tsx"), /facebook-idp/);
+    assert.match(login, /I confirm I am 18 or older\./);
+    assert.match(login, /Je confirme que j’ai 18 ans ou plus\./);
+    assert.doesNotMatch(login, /chooseAccountRole\("child"\)/);
+    const copy = read("src/lib/copy.ts");
+    assert.match(copy, /A child cannot have an account/);
+    assert.match(copy, /Un enfant ne peut pas avoir de compte/);
+  });
+
+  it("does not crash when Facebook omits email, and blocks messaging until one is confirmed", () => {
+    assert.equal(
+      facebookContactBlocksAction({ email: "123@facebook.invalid", emailVerified: false, facebookEmailRequired: true }),
+      true,
+    );
+    assert.equal(
+      facebookContactBlocksAction({ email: "pat@example.com", emailVerified: false, facebookEmailRequired: true }),
+      true,
+    );
+    assert.equal(
+      facebookContactBlocksAction({ email: "pat@example.com", emailVerified: true, facebookEmailRequired: true }),
+      false,
+    );
+    assert.equal(
+      facebookContactBlocksAction({ email: "pat@example.com", emailVerified: false, facebookEmailRequired: false }),
+      false,
+    );
+    assert.equal(FACEBOOK_EMAIL_REQUIRED_MESSAGE.includes("email"), true);
+    const family = read("src/lib/server/family.ts");
+    const inbox = read("src/lib/server/inbox.ts");
+    const tours = read("src/lib/server/tours.ts");
+    const slots = read("src/lib/server/tour-calendar.ts");
+    assert.match(family, /assertFacebookContactEmail/);
+    assert.match(family, /unlinkStoredFacebook/);
+    assert.match(inbox, /assertFacebookContactEmail/);
+    assert.match(tours, /assertFacebookContactEmail/);
+    assert.match(slots, /assertFacebookContactEmail/);
+    assert.match(read("src/lib/server/lead-requests.ts"), /assertFacebookContactEmail/);
+    assert.match(read("src/components/facebook-email-prompt.tsx"), /facebookEmailLead/);
+    assert.match(read("src/lib/copy.ts"), /facebookEmailLead/);
+    assert.match(read("src/lib/auth/email-password.ts"), /isFacebookPlaceholderEmail/);
+  });
+
+  it("unlinks Facebook when the account is deleted", async () => {
+    assert.equal(FACEBOOK_UNLINK_URL, "https://graph.facebook.com/v24.0/me/permissions");
+    const calls = [];
+    const ok = await unlinkFacebookPermissions("user-token", async (url, init) => {
+      calls.push({ url: String(url), method: init?.method, authorization: init?.headers?.authorization });
+      return { ok: true };
+    });
+    assert.equal(ok, true);
+    assert.equal(calls[0].method, "DELETE");
+    assert.equal(calls[0].url, FACEBOOK_UNLINK_URL);
+    assert.equal(String(calls[0].url).includes("user-token"), false);
+    assert.equal(calls[0].authorization, "Bearer user-token");
+    const unlink = read("src/lib/server/facebook-account-unlink.ts");
+    const family = read("src/lib/server/family.ts");
+    assert.match(unlink, /providerId" = 'facebook'/);
+    assert.match(unlink, /unlinkFacebookPermissions/);
+    assert.equal(family.split("unlinkStoredFacebook").length > 2, true);
   });
 
   it("does not commit Facebook, Google, or Better Auth secrets", () => {

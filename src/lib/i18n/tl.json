@@ -3019,5 +3019,19 @@
   "ledgerLiveParentBills": "Buhay na ang bayad sa bill ng centre. Binabayaran mo ang halaga ng bill. Ang bayad ng KidEase ay mula sa daycare. Hindi naniningil ng card deposit ang pahinang ito.",
   "ledgerOffParentBills": "Naka-off ang bayad sa bill ng centre hanggang naka-on ang Stripe live keys. Hindi naniningil ng card deposit ang pahinang ito.",
   "childProfileSendLead": "I-save ang profile ng bata, tapos ipadala sa mga naka-save na centre. Nakikita ito ng bawat centre sa Incoming requests at puwede nilang aprubahan, ipahintay, o tanggihan.",
-  "tourTimesUnclaimed": "Hindi mo pa puwedeng i-book ang bisita mula sa pahinang ito. Lalabas ang oras pagkatapos i-claim ng centre ang listing."
+  "tourTimesUnclaimed": "Hindi mo pa puwedeng i-book ang bisita mula sa pahinang ito. Lalabas ang oras pagkatapos i-claim ng centre ang listing.",
+  "facebookRoleTitle": "Para kanino ang account na ito?",
+  "facebookRoleLead": "Ang KidEase ay para sa mga magulang at staff ng centre sa Canada. Dapat 18 taon o mas matanda ka. Hindi puwedeng magkaroon ng account ang isang bata.",
+  "facebookRoleAdult": "Kinumpirma mong 18 taon ka o mas matanda.",
+  "facebookRoleParent": "Magulang ako",
+  "facebookRoleCentre": "Nagtatrabaho ako sa isang centre",
+  "facebookEmailTitle": "Idagdag ang email mo",
+  "facebookEmailLead": "Hindi nagbahagi ng email ang Facebook. Magdagdag at kumpirmahin ang isa bago ka magmensahe sa centre o mag-book ng tour.",
+  "facebookEmailLabel": "Email",
+  "facebookEmailSend": "Ipadala ang link",
+  "facebookEmailPending": "Buksan ang link sa inbox para kumpirmahin ang email na ito. Pagkatapos, puwede ka nang magmensahe sa centre o mag-book ng tour.",
+  "facebookEmailResend": "Ipadala ulit ang link",
+  "facebookEmailSaved": "Papunta na ang link. Tingnan din ang junk mail.",
+  "facebookEmailRequired": "Magdagdag at kumpirmahin ng email bago ka magmensahe sa centre o mag-book ng tour.",
+  "facebookHostUnavailable": "Hindi available ang Magpatuloy sa Facebook sa address na ito. Buksan ang kidease.ca."
 }

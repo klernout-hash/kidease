@@ -557,6 +557,8 @@ export const createBooking = createServerFn({ method: "POST" })
     }) => input,
   )
   .handler(async ({ context, data }) => {
+    const { assertFacebookContactEmail } = await import("@/lib/server/facebook-contact");
+    await assertFacebookContactEmail(context.userId);
     const sql = await getSql();
     const listed = await catalogByIdGet(data.daycareId);
     if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerMayUseAdminOnlyListing())) {
@@ -1020,6 +1022,8 @@ export const openConversation = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((daycareId: string) => daycareId)
   .handler(async ({ context, data: daycareId }) => {
+    const { assertFacebookContactEmail } = await import("@/lib/server/facebook-contact");
+    await assertFacebookContactEmail(context.userId);
     const sql = await getSql();
     const listed = await catalogByIdGet(daycareId);
     if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerMayUseAdminOnlyListing())) {
@@ -1777,6 +1781,8 @@ export async function purgeAccountData(uid: string): Promise<boolean> {
   if (!identity[0]) return false;
   const { revokeStoredAppleSignIn } = await import("@/lib/server/apple-account-revoke");
   await revokeStoredAppleSignIn(uid);
+  const { unlinkStoredFacebook } = await import("@/lib/server/facebook-account-unlink");
+  await unlinkStoredFacebook(uid);
   const { forgetExternalAccounts } = await import("@/lib/account-external");
   await forgetExternalAccounts({
     userId: uid,
@@ -1841,6 +1847,8 @@ export const deleteAccount = createServerFn({ method: "POST" })
     const uid = context.userId;
     const { revokeStoredAppleSignIn } = await import("@/lib/server/apple-account-revoke");
     await revokeStoredAppleSignIn(uid);
+    const { unlinkStoredFacebook } = await import("@/lib/server/facebook-account-unlink");
+    await unlinkStoredFacebook(uid);
     const { cancelPendingAccountWork } = await import("@/lib/server/account-close");
     await cancelPendingAccountWork(uid);
     await sql`

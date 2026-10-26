@@ -3019,5 +3019,19 @@
   "ledgerLiveParentBills": "Il pagamento della fattura del centro è attivo. Paghi l’importo della fattura. La commissione di KidEase arriva dall’asilo. Questa pagina non addebita un deposito con carta.",
   "ledgerOffParentBills": "Il pagamento della fattura del centro resta spento finché le chiavi Stripe live non sono attive. Questa pagina non addebita un deposito con carta.",
   "childProfileSendLead": "Salva il profilo del bambino e poi invialo ai centri salvati. Ogni centro lo vede in Richieste in arrivo e può approvare, mettere in attesa o rifiutare.",
-  "tourTimesUnclaimed": "Non puoi ancora prenotare una visita da questa pagina. Gli orari compaiono quando il centro rivendica la scheda."
+  "tourTimesUnclaimed": "Non puoi ancora prenotare una visita da questa pagina. Gli orari compaiono quando il centro rivendica la scheda.",
+  "facebookRoleTitle": "Questo account è per chi?",
+  "facebookRoleLead": "KidEase è per genitori e personale dei centri in Canada. Devi avere 18 anni o più. Un bambino non può avere un account.",
+  "facebookRoleAdult": "Hai confermato di avere 18 anni o più.",
+  "facebookRoleParent": "Sono un genitore",
+  "facebookRoleCentre": "Lavoro in un centro",
+  "facebookEmailTitle": "Aggiungi la tua email",
+  "facebookEmailLead": "Facebook non ha condiviso un’email. Aggiungine una e confermala prima di scrivere a un centro o prenotare una visita.",
+  "facebookEmailLabel": "Email",
+  "facebookEmailSend": "Invia il link",
+  "facebookEmailPending": "Apri il link nella posta per confermare questa email. Poi puoi scrivere a un centro o prenotare una visita.",
+  "facebookEmailResend": "Invia di nuovo il link",
+  "facebookEmailSaved": "Il link è in arrivo. Controlla anche la posta indesiderata.",
+  "facebookEmailRequired": "Aggiungi e conferma un’email prima di scrivere a un centro o prenotare una visita.",
+  "facebookHostUnavailable": "Continua con Facebook non è disponibile su questo indirizzo. Apri kidease.ca."
 }
