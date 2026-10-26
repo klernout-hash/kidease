@@ -18,8 +18,9 @@ import { STORE } from "@/lib/store-listing";
 import { appleStoreListingUrl, playStoreListingUrl } from "@/lib/store-review";
 import { localePath } from "@/lib/locale-path";
 import { comingSoonStores } from "@/lib/native-entitlements";
+import { showStoreComingSoon } from "@/lib/store-placeholders";
 import { useCopy } from "@/lib/use-copy";
-import { useInNativeShell, useStoreChannel } from "@/lib/use-native-shell";
+import { useStoreChannel } from "@/lib/use-native-shell";
 import { HomeScreenGuide } from "@/components/home-screen-guide";
 import { JsonLd } from "@/components/json-ld";
 import { MARKETING_PAGE_SEO, organizationGraphJsonLdScript, pageSeoHead } from "@/lib/page-seo";
@@ -60,9 +61,9 @@ function storeComingLine(locale: string, badges: Array<"apple" | "play">): strin
 
 export function GetAppScreen({ dev }: { dev?: "1" }) {
   const { t, locale } = useCopy();
-  const hideCommerce = useInNativeShell();
   const storeChannel = useStoreChannel();
-  const storeBadges = hideCommerce ? [] : comingSoonStores(storeChannel);
+  const showStores = showStoreComingSoon(storeChannel);
+  const storeBadges = showStores ? comingSoonStores(storeChannel) : [];
   const showDev = dev === "1";
   const [canPrompt, setCanPrompt] = useState(false);
   const [installed, setInstalled] = useState(false);
@@ -123,13 +124,13 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
                 </Link>
               </Button>
             </div>
-            {storeBadges.length === 2 ? (
+            {showStores && storeBadges.length === 2 ? (
               <div className="mt-5 flex flex-wrap gap-2" data-ke="store-coming-soon">
                 <StoreBadge store="apple" label={locale === "fr" ? "App Store \u00b7 Bient\u00f4t" : "App Store \u00b7 Coming soon"} />
                 <StoreBadge store="play" label={locale === "fr" ? "Google Play \u00b7 Bient\u00f4t" : "Google Play \u00b7 Coming soon"} />
               </div>
-            ) : storeBadges.length === 1 ? (
-              <div className="mt-5 flex flex-wrap gap-2" data-ke="store-badge">
+            ) : showStores && storeBadges.length === 1 ? (
+              <div className="mt-5 flex flex-wrap gap-2" data-ke="store-coming-soon">
                 <StoreBadge
                   store={storeBadges[0]}
                   label={
@@ -143,8 +144,18 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
                   }
                 />
               </div>
+            ) : !showStores ? (
+              <p className="mt-5 max-w-md text-sm text-muted" data-ke="store-already-in-app">
+                {locale === "fr"
+                  ? "Vous êtes dans l’appli KidEase. Cherchez une garderie permise au Canada."
+                  : "You are in the KidEase app. Search licensed daycares in Canada."}
+              </p>
             ) : null}
-            {coming ? <p className="mt-3 max-w-md text-xs text-subtle" data-ke={storeBadges.length === 2 ? "store-coming-soon" : "store-badge"}>{coming}</p> : null}
+            {coming ? (
+              <p className="mt-3 max-w-md text-xs text-subtle" data-ke="store-coming-soon">
+                {coming}
+              </p>
+            ) : null}
           </div>
           <DeviceFrame device="iphone">
             <ShotSearch />
