@@ -150,7 +150,7 @@ async function appBarText(page, href) {
 async function openAccountGroup(page, root) {
   const link = page.locator(`${root} [data-nav="upgrade"]`);
   if (await link.first().isVisible().catch(() => false)) return;
-  const summary = page.locator(`${root} summary`).filter({ hasText: /^account$/i });
+  const summary = page.locator(`${root} summary`).filter({ hasText: /^Account$/ });
   if ((await summary.count()) > 0) await summary.first().click().catch(() => {});
 }
 
@@ -383,7 +383,6 @@ async function runRoleFixture(page, base) {
     await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs }).catch(() => {});
     await page.locator('[data-ke="menu-badge"]').waitFor({ timeout: timeoutMs }).catch(() => {});
     await openHeaderMenu(page);
-    await openAccountGroup(page, "#ke-nav-drawer");
     const menuBadge = await page.locator('[data-ke="menu-badge"]').count();
     const drawerUpgrade = await page.locator('#ke-nav-drawer [data-nav="upgrade"]:visible').count();
     const drawerBadge = ((await page.locator('#ke-nav-drawer [data-nav="bookings"] [data-ke="count-badge"]').innerText().catch(() => "")) || "").trim();
