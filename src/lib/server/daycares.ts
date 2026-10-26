@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { suppressHiddenAddress } from "@/lib/address-hidden";
 import { getSql } from "@/lib/db";
 import { filterByLocationLock, resolveLocationLock } from "@/lib/location-lock";
 import { cardSortKm, includeCardInRadius } from "@/lib/card-distance";
@@ -256,16 +255,16 @@ function toDaycare(d: CatalogDaycare): Daycare {
     isTest: d.isTest,
     timezone: resolveListingTourTimezone(null, d.province),
   }));
-  return suppressHiddenAddress(applyMasterCareType({
+  return applyMasterCareType({
     ...mapped,
     live: Boolean(mapped.live) && hasLicenceEvidence(mapped) && !isAdminOnlyListing(mapped),
-  }));
+  });
 }
 
 function toCard(d: NearbyListing, origin: { lat: number; lng: number }, originFsa?: string): DaycareCard {
   const daycare = toDaycare(d);
-  const km = cardSortKm(origin, { lat: daycare.lat, lng: daycare.lng });
-  const catchm = catchmentMatch(origin, { lat: daycare.lat, lng: daycare.lng, postalCode: daycare.postalCode }, km, originFsa);
+  const km = cardSortKm(origin, { lat: d.lat, lng: d.lng });
+  const catchm = catchmentMatch(origin, { lat: d.lat, lng: d.lng, postalCode: d.postalCode }, km, originFsa);
   return {
     ...daycare,
     distanceKm: km,
@@ -1004,15 +1003,14 @@ export const getListingSeo = createServerFn({ method: "GET" })
       callerIsTestAccount(),
     ]);
     if (hideListingFromPublicPage(found, { admin: adminView, testAccount })) return null;
-    const safe = suppressHiddenAddress(found);
     return {
-      slug: safe.slug,
-      name: safe.name,
-      nameFr: safe.nameFr,
-      city: safe.city,
-      province: safe.province,
-      address: safe.address,
-      postalCode: safe.postalCode,
+      slug: found.slug,
+      name: found.name,
+      nameFr: found.nameFr,
+      city: found.city,
+      province: found.province,
+      address: found.address,
+      postalCode: found.postalCode,
       phone: found.phone || null,
       agesKnown: hasConfirmedAges({
         agesKnown: found.agesKnown,
@@ -1024,8 +1022,8 @@ export const getListingSeo = createServerFn({ method: "GET" })
       photos: found.photos,
       amenities: found.amenities,
       feeProgram: found.feeProgram || null,
-      description: safe.description || "",
-      descriptionFr: safe.descriptionFr || "",
+      description: found.description || "",
+      descriptionFr: found.descriptionFr || "",
       hours: found.hours || "",
       hoursFr: found.hoursFr || "",
     };

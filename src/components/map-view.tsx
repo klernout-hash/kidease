@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { LocateFixed, Minus, Navigation, Plus, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { isAddressHidden } from "@/lib/address-hidden";
 import { isSafeSitemapSlug } from "@/lib/sitemap";
 import type { CopyKey } from "@/lib/copy";
 import type { DaycareCard, Locale } from "@/lib/types";
@@ -102,7 +101,6 @@ function searchCardsToMapPins(items: DaycareCard[]): MapPin[] {
   const pins: MapPin[] = [];
   for (const item of items) {
     if (!item?.id || !Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
-    if (isAddressHidden(item)) continue;
     pins.push({
       id: item.id,
       slug: item.slug || "",

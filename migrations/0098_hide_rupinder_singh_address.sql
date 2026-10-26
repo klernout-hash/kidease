@@ -1,109 +1,56 @@
--- Privacy: home daycare Rupinder Singh must not keep a street, postal code,
--- or house pin. Catalogue id mx-09f81152743c, slug rupinder-singh-1152743c.
--- City stays Winnipeg, MB. Coordinates move to the Winnipeg city area
--- (49.8951, -97.1384), the same point as WINNIPEG in src/lib/geo.ts.
--- src/lib/address-hidden.ts also strips this address on every public read
--- and on catalogue upsert, so a later registry import cannot put it back.
--- Running the rollback below does not show the street again until that
--- list no longer includes this id.
+-- Remove Rupinder Singh (mx-09f81152743c / rupinder-singh-1152743c)
+-- from the public catalogue. Registry facility id: MB|home-rupinder-singh.
+-- Retired the same way a duplicate is retired: inactive, not public, and
+-- claim_status superseded. merged_into stays null, so the URL is a 404
+-- and does not redirect to a city page or another listing.
+-- The street and postal code are cleared on the retired row.
+-- src/lib/listing-removed.ts blocks this id, slug, and facility id on import.
 --
--- Rollback (street and postal only). The previous house coordinates are not
--- stored in the repo. Restore lat/lng from a database backup if the exact
--- pin is required again. Do not guess them.
+-- Rollback. Restores a public unclaimed row and the street. The previous
+-- house coordinates are not in the repo. Restore lat/lng from a database
+-- backup if the exact pin is required again. Do not guess them.
+-- The import blocklist still refuses to publish this listing until
+-- mx-09f81152743c is removed from src/lib/listing-removed.ts.
 --
 -- update daycares
--- set
---   address = '72 Rutledge Crescent',
---   postal_code = 'R3W 0A4'
--- where id = 'mx-09f81152743c'
---    or slug = 'rupinder-singh-1152743c';
+-- set listing_active = 1,
+--     visibility = 'public',
+--     import_fault = null,
+--     claim_status = 'unclaimed',
+--     address = '72 Rutledge Crescent',
+--     postal_code = 'R3W 0A4'
+-- where (id = 'mx-09f81152743c' or slug = 'rupinder-singh-1152743c')
+--   and import_fault = 'privacy_removed';
 
 update daycares
 set
+  listing_active = 0,
+  visibility = 'admin_only',
+  import_fault = 'privacy_removed',
+  claim_status = 'superseded',
   address = '',
   postal_code = '',
   description = btrim(regexp_replace(
     regexp_replace(
-      regexp_replace(
-        coalesce(description, ''),
-        '72[[:space:]]+Rutledge[[:space:]]+Crescent|Rutledge[[:space:]]+Crescent',
-        '',
-        'gi'
-      ),
-      'R3W[[:space:]-]*0A4',
+      coalesce(description, ''),
+      '72[[:space:]]+Rutledge[[:space:]]+Crescent|Rutledge[[:space:]]+Crescent',
       '',
       'gi'
     ),
-    '[[:space:]]{2,}',
-    ' ',
-    'g'
+    'R3W[[:space:]-]*0A4',
+    '',
+    'gi'
   )),
   description_fr = btrim(regexp_replace(
     regexp_replace(
-      regexp_replace(
-        coalesce(description_fr, ''),
-        '72[[:space:]]+Rutledge[[:space:]]+Crescent|Rutledge[[:space:]]+Crescent',
-        '',
-        'gi'
-      ),
-      'R3W[[:space:]-]*0A4',
+      coalesce(description_fr, ''),
+      '72[[:space:]]+Rutledge[[:space:]]+Crescent|Rutledge[[:space:]]+Crescent',
       '',
       'gi'
     ),
-    '[[:space:]]{2,}',
-    ' ',
-    'g'
-  )),
-  tagline = btrim(regexp_replace(
-    regexp_replace(
-      regexp_replace(
-        coalesce(tagline, ''),
-        '72[[:space:]]+Rutledge[[:space:]]+Crescent|Rutledge[[:space:]]+Crescent',
-        '',
-        'gi'
-      ),
-      'R3W[[:space:]-]*0A4',
-      '',
-      'gi'
-    ),
-    '[[:space:]]{2,}',
-    ' ',
-    'g'
-  )),
-  tagline_fr = btrim(regexp_replace(
-    regexp_replace(
-      regexp_replace(
-        coalesce(tagline_fr, ''),
-        '72[[:space:]]+Rutledge[[:space:]]+Crescent|Rutledge[[:space:]]+Crescent',
-        '',
-        'gi'
-      ),
-      'R3W[[:space:]-]*0A4',
-      '',
-      'gi'
-    ),
-    '[[:space:]]{2,}',
-    ' ',
-    'g'
-  )),
-  lat = 49.8951,
-  lng = -97.1384
+    'R3W[[:space:]-]*0A4',
+    '',
+    'gi'
+  ))
 where id = 'mx-09f81152743c'
    or slug = 'rupinder-singh-1152743c';
-
-do $$
-begin
-  if exists (select 1 from pg_extension where extname = 'postgis')
-     and exists (
-       select 1 from information_schema.columns
-       where table_name = 'daycares' and column_name = 'location'
-     ) then
-    execute $sync$
-      update daycares
-      set location = st_setsrid(st_makepoint(lng, lat), 4326)::geography
-      where (id = 'mx-09f81152743c' or slug = 'rupinder-singh-1152743c')
-        and lat is not null
-        and lng is not null
-    $sync$;
-  end if;
-end $$;

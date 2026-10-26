@@ -31,6 +31,7 @@ import { fsaCentroid } from "./fsa-centroids.ts";
 import { CITIES, PROVINCES } from "./geo.ts";
 import { listingSlugFromName } from "./listing-slug.ts";
 import { REMOVED_FROM_MASTER_FAULT, isAdminOnlyListing } from "./listing-visibility.ts";
+import { isRemovedListing } from "./listing-removed.ts";
 import { isSafeSitemapSlug, publicSitemapSlugs } from "./sitemap.ts";
 
 const CANADA = new Set(PROVINCES.map((p) => p.code));
@@ -459,6 +460,16 @@ export function syncMasterCatalogue<T extends CatalogueMatchRow>(
   let skippedInvalid = parsed.invalid;
 
   for (const master of parsed.rows) {
+    if (
+      isRemovedListing({
+        id: masterListingId(master.facilityId),
+        facilityId: master.facilityId,
+        licenseNumber: master.licence,
+      })
+    ) {
+      skippedInvalid += 1;
+      continue;
+    }
     if (!CANADA.has(master.province)) {
       skippedNonCanada += 1;
       continue;

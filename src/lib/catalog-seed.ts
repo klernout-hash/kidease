@@ -4,6 +4,7 @@
  */
 
 import { DAYCARE_UPSERT_SQL, daycareUpsertParams, type CatalogUpsertInput } from "./catalog-upsert.ts";
+import { isRemovedListing } from "./listing-removed.ts";
 import { loadSourcedAges, stampSourcedAge } from "./sourced-ages.ts";
 import { isAdminOnlyListing, type ListingVisibilityInput } from "./listing-visibility.ts";
 import { localCatalogMatchIds, persistLocalLicenseMatches } from "./server/license-match.ts";
@@ -55,8 +56,9 @@ export function catalogRowsForSeed<T extends ListingVisibilityInput>(
   rows: T[],
   env: Record<string, string | undefined> = process.env,
 ): T[] {
-  if (allowSeedTestListings(env)) return rows;
-  return rows.filter((row) => !isAdminOnlyListing(row));
+  const kept = rows.filter((row) => !isRemovedListing(row));
+  if (allowSeedTestListings(env)) return kept;
+  return kept.filter((row) => !isAdminOnlyListing(row));
 }
 
 export async function seedCatalogChunk(
@@ -69,7 +71,8 @@ export async function seedCatalogChunk(
   const limit = clampSeedLimit(opts.limit ?? 200);
   const concurrency = Math.max(1, Math.min(opts.concurrency ?? 24, 40));
   const ages = await loadSourcedAges();
-  const slice = rows.slice(offset, offset + limit).map((row) => stampSourcedAge(row, ages));
+  const window = rows.slice(offset, offset + limit);
+  const slice = window.filter((row) => !isRemovedListing(row)).map((row) => stampSourcedAge(row, ages));
   let upserted = 0;
   let failed = 0;
   for (let i = 0; i < slice.length; i += concurrency) {
@@ -90,7 +93,7 @@ export async function seedCatalogChunk(
       /* Read-time overlay still badges MB matches. Persist is best-effort. */
     }
   }
-  const nextOffset = offset + slice.length;
+  const nextOffset = offset + window.length;
   return {
     attempted: slice.length,
     upserted,

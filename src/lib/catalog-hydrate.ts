@@ -6,7 +6,6 @@
 
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { suppressHiddenAddress } from "./address-hidden.ts";
 import { listingCultureFrom } from "./listing-culture.ts";
 import { listingPhotosFor } from "./listing-photo.ts";
 import {
@@ -280,7 +279,7 @@ export function hydrateCentre(
     `${nameFr} est un ${kindFr}${address ? ` au ${address}` : ""}${city ? `, ${city}` : ""} ${postal} (${province}). Heures et places selon le registre provincial.`.trim();
   const ages = inferAges(fact?.ageMinMonths ?? raw.ageMinMonths, fact?.ageMaxMonths ?? raw.ageMaxMonths);
   const feeOk = Boolean(fact?.feeConfirmed);
-  return suppressHiddenAddress({
+  return {
     id: raw.id,
     slug,
     name,
@@ -323,7 +322,7 @@ export function hydrateCentre(
     isTest: Boolean(raw.isTest) || isAdminOnlyListing(raw),
     contactEmail: raw.contactEmail || raw.email || "",
     website: raw.website || "",
-  });
+  };
 }
 
 export function mergeRawCentres(main: RawCentre[], extra: RawCentre[]) {

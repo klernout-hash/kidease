@@ -1,5 +1,6 @@
 import { isKidEaseOperatorEmail } from "./admin-email.ts";
 import { hiddenDuplicateSlugSql, isHiddenDuplicateSlug } from "./hidden-duplicates.ts";
+import { isRemovedListing, removedListingSql } from "./listing-removed.ts";
 
 export const LISTING_VISIBILITY = {
   public: "public",
@@ -180,6 +181,7 @@ export function isInactiveListing(
  */
 export function isPublicListing(d: ListingVisibilityInput | null | undefined): boolean {
   if (!d) return false;
+  if (isRemovedListing(d)) return false;
   if (isHiddenDuplicateSlug(d.slug)) return false;
   if (isUsCatalogueRow(d)) return false;
   if (isNonPublicClaimStatus(d.claimStatus)) return false;
@@ -225,6 +227,7 @@ export function hideListingFromPublicPage(
   viewer: PublicListingViewer = false,
 ): boolean {
   if (!d) return true;
+  if (isRemovedListing(d)) return true;
   if (isHiddenDuplicateSlug(d.slug)) return true;
   if (isUsCatalogueRow(d)) return true;
   if (isSupersededCatalogueRow(d)) return true;
@@ -391,6 +394,7 @@ export function listingVisibilityInputFromDb(row: {
 export const PUBLIC_LISTING_SQL = `(
   merged_into is null
   and import_fault is null
+  and ${removedListingSql()}
   and coalesce(listing_active, 1) <> 0
   and coalesce(is_test, 0) = 0
   and coalesce(visibility, 'public') = 'public'
