@@ -1792,7 +1792,9 @@ export async function purgeAccountData(uid: string): Promise<boolean> {
   const { anonymizeRetainedRecords, purgeAccountExtras } = await import("@/lib/server/account-close");
   await anonymizeRetainedRecords(uid);
   await purgeAccountExtras(uid);
-    await sql`delete from messages where conversation_id in (select id from conversations where user_id = ${uid})`;
+  const { purgeReferralRows } = await import("@/lib/server/referrals");
+  await purgeReferralRows(sql, uid);
+  await sql`delete from messages where conversation_id in (select id from conversations where user_id = ${uid})`;
   await sql`delete from conversations where user_id = ${uid}`;
   await sql`delete from bookings where user_id = ${uid}`;
   await sql`delete from children where user_id = ${uid}`;
