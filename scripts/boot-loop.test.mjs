@@ -56,7 +56,7 @@ describe("home / session / splash cannot stay pending forever", () => {
     assert.match(verify, /get-session-timeout/);
     const authApi = src("src/routes/api/auth/$.ts");
     assert.match(authApi, /get-session/);
-    assert.match(authApi, /session: null/);
+    assert.doesNotMatch(authApi, /session: null, user: null/);
   });
 
   it("featured + ranking overlays bound Neon so PR 70 cannot hang the home loader", () => {
@@ -82,7 +82,9 @@ describe("home / session / splash cannot stay pending forever", () => {
 
   it("service worker does not intercept documents or /assets/", () => {
     const sw = src("public/sw.js");
-    assert.match(sw, /kidease-shell-v6/);
+    assert.match(sw, /kidease-shell-v7/);
+    assert.match(sw, /navigator\.onLine === false/);
+    assert.match(sw, /startsWith\("\/_serverFn"\)/);
     assert.match(sw, /startsWith\("\/assets\/"\)/);
     assert.match(sw, /request\.mode === "navigate"/);
     assert.match(sw, /destination === "document"/);

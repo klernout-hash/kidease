@@ -57,7 +57,7 @@ const COPY = {
     helpTitle: "Safety and reporting",
     helpLead:
       "KidEase is for adults. You can report a listing, a centre, or a message, and you can block someone from messaging you.",
-    helpReview: "We review open reports in the admin queue. This is not a child-protection investigation.",
+    helpReview: "KidEase staff review open reports. This is not a child-protection investigation.",
     helpEmail: "Email",
     helpMail: "Mail",
     helpPrivacy: "Privacy",
@@ -87,7 +87,7 @@ const COPY = {
     helpLead:
       "KidEase est pour les adultes. Vous pouvez signaler une fiche, un centre ou un message, et bloquer quelqu’un.",
     helpReview:
-      "Nous revoyons les signalements ouverts dans la file d’administration. Ce n’est pas une enquête de protection de l’enfance.",
+      "Le personnel KidEase revoit les signalements ouverts. Ce n’est pas une enquête de protection de l’enfance.",
     helpEmail: "Courriel",
     helpMail: "Poste",
     helpPrivacy: "Vie privée",

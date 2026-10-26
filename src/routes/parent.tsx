@@ -23,65 +23,72 @@ function isParentSignupPath(pathname: string) {
   return path === "/parent/signup";
 }
 
-export const Route = createFileRoute("/parent")({
-  beforeLoad: ({ context, location }) => {
-    if (isParentSignupPath(location.pathname)) return;
-    return beforeLoadPrivate(privateReturnPath(location), context.roleChrome);
-  },
-  head: ({ matches }) => {
-    if (matches.some((item) => isParentSignupPath(item.pathname))) return { meta: [] };
-    return {
-      meta: [
-        { title: "Parent home · KidEase" },
-        { name: "robots", content: "noindex, nofollow" },
-      ],
-    };
-  },
-  loader: async () => {
-    try {
-      const family = await getFamily();
-      return {
-        saved: Array.isArray(family?.saved) ? family.saved : [],
-        shortlistShared: Boolean(family?.shortlistShared),
-      };
-    } catch {
-      return { saved: [], shortlistShared: false };
-    }
-  },
-  validateSearch: (s: Record<string, unknown>) => {
-    const out: {
-      tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "subscription" | "alerts" | "children" | "care" | "waitlists";
-      preview?: "support";
-      plus?: "success" | "cancel";
-      plan?: "plus" | "alerts";
-      interval?: "month" | "year";
-      session?: string;
-      billing?: "return";
-      share?: string;
-    } = {};
-    const tab = s.tab;
-    if (tab === "explore" || tab === "saved" || tab === "enrolled" || tab === "requests" || tab === "profile" || tab === "payments" || tab === "subscription" || tab === "alerts" || tab === "children" || tab === "care" || tab === "waitlists") out.tab = tab;
-    if (s.preview === "support") out.preview = "support";
-    if (s.plus === "success" || s.plus === "cancel") out.plus = s.plus;
-    if (s.plan === "plus" || s.plan === "alerts") out.plan = s.plan;
-    if (s.interval === "month" || s.interval === "year") out.interval = s.interval;
-    if (typeof s.session === "string" && /^cs_[A-Za-z0-9_]+$/.test(s.session)) out.session = s.session;
-    if (s.billing === "return") out.billing = "return";
-    const share = parseShareToken(s.share);
-    if (share) out.share = share;
-    return out;
-  },
-  component: ParentPage,
-});
+export function parentBeforeLoad({
+  context,
+  location,
+}: {
+  context: { roleChrome?: Parameters<typeof beforeLoadPrivate>[1] };
+  location: { pathname: string; href?: string; searchStr?: string };
+}) {
+  if (isParentSignupPath(location.pathname)) return;
+  return beforeLoadPrivate(privateReturnPath(location), context.roleChrome);
+}
 
-function ParentPage() {
+export function parentHead({ matches }: { matches: Array<{ pathname: string }> }) {
+  if (matches.some((item) => isParentSignupPath(item.pathname))) return { meta: [] };
+  return {
+    meta: [
+      { title: "Parent home · KidEase" },
+      { name: "robots", content: "noindex, nofollow" },
+    ],
+  };
+}
+
+export async function parentLoader() {
+  try {
+    const family = await getFamily();
+    return {
+      saved: Array.isArray(family?.saved) ? family.saved : [],
+      shortlistShared: Boolean(family?.shortlistShared),
+    };
+  } catch {
+    return { saved: [], shortlistShared: false };
+  }
+}
+
+export function parentValidateSearch(s: Record<string, unknown>) {
+  const out: {
+    tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "subscription" | "alerts" | "children" | "care" | "waitlists";
+    preview?: "support";
+    plus?: "success" | "cancel";
+    plan?: "plus" | "alerts";
+    interval?: "month" | "year";
+    session?: string;
+    billing?: "return";
+    share?: string;
+  } = {};
+  const tab = s.tab;
+  if (tab === "explore" || tab === "saved" || tab === "enrolled" || tab === "requests" || tab === "profile" || tab === "payments" || tab === "subscription" || tab === "alerts" || tab === "children" || tab === "care" || tab === "waitlists") out.tab = tab;
+  if (s.preview === "support") out.preview = "support";
+  if (s.plus === "success" || s.plus === "cancel") out.plus = s.plus;
+  if (s.plan === "plus" || s.plan === "alerts") out.plan = s.plan;
+  if (s.interval === "month" || s.interval === "year") out.interval = s.interval;
+  if (typeof s.session === "string" && /^cs_[A-Za-z0-9_]+$/.test(s.session)) out.session = s.session;
+  if (s.billing === "return") out.billing = "return";
+  const share = parseShareToken(s.share);
+  if (share) out.share = share;
+  return out;
+}
+
+export type ParentSearch = ReturnType<typeof parentValidateSearch>;
+export type ParentLoaded = Awaited<ReturnType<typeof parentLoader>>;
+
+export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loaded: ParentLoaded }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, isPending } = useCurrentUserState();
   const locallyOut = useLocallySignedOut();
   const chrome = useRoleChrome();
   const { session, ready } = useSessionDesks();
-  const search = Route.useSearch();
-  const loaded = Route.useLoaderData();
   if (
     pathname === "/parent/spot-offers" ||
     pathname.startsWith("/parent/spot-offers/") ||
@@ -95,21 +102,21 @@ function ParentPage() {
       ? "saved"
       : search.tab === "enrolled" || search.tab === "requests"
         ? "bookings"
-          : search.tab === "subscription" || search.plus === "success" || search.plus === "cancel" || search.billing === "return"
+        : search.tab === "subscription" || search.plus === "success" || search.plus === "cancel" || search.billing === "return"
           ? "subscription"
           : search.tab === "payments"
-          ? "payments"
-          : search.tab === "alerts"
-            ? "alerts"
-            : search.tab === "explore"
-              ? "explore"
-              : search.tab === "children"
-                ? "children"
-                : search.tab === "care"
-                  ? "care"
-                  : search.tab === "waitlists"
-                    ? "waitlists"
-                    : "explore";
+            ? "payments"
+            : search.tab === "alerts"
+              ? "alerts"
+              : search.tab === "explore"
+                ? "explore"
+                : search.tab === "children"
+                  ? "children"
+                  : search.tab === "care"
+                    ? "care"
+                    : search.tab === "waitlists"
+                      ? "waitlists"
+                      : "explore";
 
   if (locallyOut) {
     return (
@@ -204,4 +211,16 @@ function ParentPage() {
       </Suspense>
     </TwoFactorGate>
   );
+}
+
+export const Route = createFileRoute("/parent")({
+  beforeLoad: parentBeforeLoad,
+  head: parentHead,
+  loader: parentLoader,
+  validateSearch: parentValidateSearch,
+  component: ParentPage,
+});
+
+function ParentPage() {
+  return <ParentDeskPage search={Route.useSearch()} loaded={Route.useLoaderData()} />;
 }

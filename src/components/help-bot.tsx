@@ -216,7 +216,7 @@ export function HelpBot() {
             style={{ width: 44, height: 44, maxWidth: 44, maxHeight: 44, objectFit: "contain" }}
           />
         )}
-        <span className="text-[11px] font-semibold leading-none text-primary">{t("helpBot")}</span>
+        <span className="max-w-[4.75rem] whitespace-normal text-center text-[11px] font-semibold leading-tight text-primary">{t("helpBot")}</span>
       </button>
     </div>
   );

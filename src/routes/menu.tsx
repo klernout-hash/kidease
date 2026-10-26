@@ -87,7 +87,9 @@ function MenuPage() {
 
         <Group title="KidEase" defer>
           <MenuRow to={to("/benefits")} label={t("benefitsTab")} icon="benefits" />
-          <MenuRow to={to("/get-app")} label={t("getApp")} icon="getApp" marker="store-coming-soon" />
+          {hideCommerce ? null : (
+            <MenuRow to={to("/get-app")} label={t("getApp")} icon="getApp" marker="store-coming-soon" />
+          )}
           <ShareKidEaseButton appearance="row" />
           <MenuRow to={to("/about")} label={t("about")} icon="about" />
           <MenuRow to={to("/start-a-daycare")} label={t("startADaycare")} icon="startDaycare" />

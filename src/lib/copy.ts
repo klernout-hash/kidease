@@ -76,6 +76,7 @@ export const copy = {
     account: "Account",
     provider: "Provider",
     signIn: "Sign in",
+    menu: "Menu",
     signOut: "Sign out",
     continueGoogle: "Continue with Google",
     continueFacebook: "Continue with Facebook",
@@ -944,6 +945,8 @@ export const copy = {
     bookings: "My requests",
     payments: "Pay",
     children: "Children",
+    childrenLimit: "Up to 4 profiles",
+    showTestListings: "Show test listings",
     noBookings: "No enrolment requests yet.",
     noPayments: "No bills yet.",
     noChildren: "Add a child to speed up requests.",
@@ -1161,6 +1164,8 @@ export const copy = {
     noChildrenLead: "Add a child profile first. Centres only see the details you send.",
     noPaymentsLead:
       "No centre bills yet. When a centre sends one, it shows under Open bills. You pay the centre with Stripe Checkout. An optional KidEase plan is separate: it is not a centre bill.",
+    noPaymentsLeadBills:
+      "No centre bills yet. When a centre sends one, it shows under Open bills. You pay the centre with Stripe Checkout.",
     parentPlusNoBill:
       "Parent Plus is optional. KidEase search and centre bills stay free without it.",
     emptyFindCare: "Find licensed care",
@@ -1235,8 +1240,12 @@ export const copy = {
       "Stripe Checkout is live for sent bills. KidEase keeps a posted platform fee from the centre payout. New bill only drafts an invoice: parents pay after you Send.",
     ledgerLiveParent:
       "Parent Plus Checkout and centre-bill Checkout are live. You pay the centre bill amount. KidEase’s platform fee comes from the daycare. Booking card deposits are not charged on the deposit page.",
+    ledgerLiveParentBills:
+      "Centre-bill Checkout is live. You pay the centre bill amount. KidEase’s platform fee comes from the daycare. Booking card deposits are not charged on the deposit page.",
     ledgerOffParent:
       "Centre-bill Checkout and Parent Plus stay off until Stripe live keys are on. Booking card deposits stay off the deposit page.",
+    ledgerOffParentBills:
+      "Centre-bill Checkout stays off until Stripe live keys are on. Booking card deposits stay off the deposit page.",
     ledgerLiveBooking: "Stripe Checkout is live for centre bills and Parent Plus. This page does not charge a card deposit.",
     ledgerOffBooking: "This page does not charge a card deposit. When Stripe is live, parents pay centre bills with Checkout.",
     ledgerLiveBill: "Stripe Checkout is live for this centre bill in CAD. You pay this amount. KidEase’s platform fee comes from the daycare payout. Card, Apple Pay, and Google Pay appear on the next screen when this device supports them. Parent Plus is a separate KidEase subscription.",
@@ -1282,7 +1291,7 @@ export const copy = {
     videoJoinHint: "Join a private video call. Your mobile number stays hidden. This call is not recorded.",
     mediaPermissionNote: "KidEase will ask for the microphone, and the camera on a video tour. Nothing is recorded.",
     mediaPermissionDenied: "The camera or microphone was blocked. Turn them on for KidEase in Settings, then try again.",
-    nativeVideoNeedsPlus: "Video tours are included with Parent Plus on this account. This app does not sell plans.",
+    nativeVideoNeedsPlus: "This app does not sell video tours. If a tour will not start, email support@kidease.ca.",
     videoLeave: "Leave",
     videoWaitingRoom: "Waiting for the other person to join.",
     videoInCall: "In the call",
@@ -1531,7 +1540,7 @@ export const copy = {
     googlePlay: "Google Play",
     storeReady: "Ready for App Store and Google Play",
     storeReadyBody:
-      "Install KidEase on your iPhone or Android from this page. It opens full screen, with search, sign-in, and account deletion. The App Store and Google Play listings are not public yet.",
+      "Install KidEase on your iPhone or Android from this page. It opens full screen, with search, sign-in, and account deletion. The App Store and Google Play apps are coming soon.",
     featGps: "True GPS radius",
     featGpsBody: "Search licensed centres within the kilometres you set: from the phone’s location or a postal code.",
     featCentres: "Canada-wide directory",
@@ -1581,7 +1590,7 @@ export const copy = {
     supportLead: "Parents and providers: we read every note. Email us or send a message below.",
     supportSent: "Message sent. We’ll reply by email.",
     deleteAccount: "Delete account",
-    deleteAccountLead: "This schedules your account to close. You can restore it for 30 days. After that we remove your children, messages, bookings, and saved centres. We keep billing records the law requires. Fraud and security logs stay too.",
+    deleteAccountLead: "This schedules your account to close. You can restore it for 30 days. After 30 days we fully remove the account, even if you never sign in again. That includes your Stripe customer, your PostHog person, your GoHighLevel contact, and your Sentry user. We keep invoices, payments, and fraud logs the law requires, with your name and account link removed.",
     deleteAccountType: "Type DELETE to confirm",
     deleteAccountRestoreNote: "You can restore this account for 30 days. After that, we close it.",
     deleteAccountPendingNow:
@@ -1591,8 +1600,8 @@ export const copy = {
     accountRestoreBody: "This account is set to close. You can still restore it.",
     accountRestoreAction: "Restore account",
     accountSubscriptionLead: "Manage your KidEase subscription.",
-    deleteAccountKeepBilling: "Billing records: kept because tax law requires them.",
-    deleteAccountKeepLogs: "Fraud and security logs: kept to protect the service. These records are not deleted.",
+    deleteAccountKeepBilling: "Invoices and payments: kept because tax law requires them. Your account link is removed.",
+    deleteAccountKeepLogs: "Fraud and security logs: kept to protect the service. Your account link is removed. These records are not deleted.",
     nativePlansHidden: "Plans are not sold in this app.",
     deleteAccountGuestLead:
       "Sign in to delete your KidEase account. You can also email support@kidease.ca and we’ll delete it for you.",
@@ -1942,6 +1951,8 @@ export const copy = {
     childProfileTitle: "Child care profile",
     childProfileLead:
       "Allergies, food, and how they like to spend the day. The centre only sees this after you request a spot.",
+    childProfileSendLead:
+      "Save the child profile, then send it to saved centres. Each centre sees it in Incoming requests and can approve, wait, or decline.",
     childIdentity: "Who they are",
     preferredName: "Preferred name / nickname",
     homeLanguage: "Language at home",
@@ -2356,6 +2367,8 @@ export const copy = {
     tourTimesListingLead: "Pick a posted time. This is a visit request, not an enrolment.",
     tourTimesEmpty: "This daycare has not posted tour times yet.",
     tourTimesEmptyLead: "Request info to ask about a visit, or check back later. KidEase does not invent tour slots.",
+    tourTimesUnclaimed:
+      "You can’t book a visit from this page yet. Times show after the centre claims its listing.",
     tourTimesNoneOpen: "No tour times are open right now.",
     tourTimesNoneOpenLead: "Every posted visit is full or in the past. Request info to ask about another time.",
     tourTimesTimezone: "Timezone",
@@ -3223,7 +3236,7 @@ export const copy = {
     claimProgressSpots: "Open spots",
     guestShortlistCarried: "Saved centres are on your account.",
     viewAsBanner: "Viewing as {who}",
-    viewAsExit: "Exit",
+    viewAsExit: "Exit view as",
     viewAsReadOnly:
       "Read-only. You can look around. Messages, calls, video, payments, password, email, and delete stay off.",
     viewAsMinutes: "{n} min left",
@@ -3310,6 +3323,7 @@ export const copy = {
     account: "Compte",
     provider: "Fournisseur",
     signIn: "Connexion",
+    menu: "Ouvrir le menu",
     signOut: "Déconnexion",
     continueGoogle: "Continuer avec Google",
     continueFacebook: "Continuer avec Facebook",
@@ -4182,6 +4196,8 @@ export const copy = {
     bookings: "Mes demandes",
     payments: "Payer",
     children: "Enfants",
+    childrenLimit: "Jusqu’à 4 profils",
+    showTestListings: "Afficher les fiches d’essai",
     noBookings: "Aucune demande pour l’instant.",
     noPayments: "Aucune facture pour l’instant.",
     noChildren: "Ajoutez un enfant pour accélérer les demandes.",
@@ -4399,6 +4415,8 @@ export const copy = {
     markAlertsRead: "Tout marquer comme lu",
     noChildrenLead: "Ajoutez d’abord un profil d’enfant. Les centres ne voient que ce que vous envoyez.",
     noPaymentsLead:
+      "Aucune facture de centre pour l’instant. Quand un centre en envoie une, elle s’affiche sous Factures ouvertes. Vous payez le centre avec Stripe Checkout. Un forfait KidEase facultatif est distinct : ce n’est pas une facture de centre.",
+    noPaymentsLeadBills:
       "Aucune facture de centre pour l’instant. Quand un centre en envoie une, elle s’affiche sous Factures ouvertes. Vous payez le centre avec Stripe Checkout.",
     parentPlusNoBill:
       "Plus parents est facultatif. La recherche KidEase et les factures de centre restent gratuites sans lui.",
@@ -4474,8 +4492,12 @@ export const copy = {
       "Stripe Checkout est en direct pour les factures envoyées. KidEase retient les frais de plateforme affichés sur le versement au centre. Nouvelle facture ne fait que brouillonner : les parents paient après Envoyer.",
     ledgerLiveParent:
       "Le checkout Plus parents et le checkout des factures de centre sont en direct. Vous payez le montant de la facture du centre. Les frais de plateforme KidEase viennent du versement à la garderie. Les dépôts par carte de réservation ne sont pas débités sur la page de dépôt.",
+    ledgerLiveParentBills:
+      "Le checkout des factures de centre est en direct. Vous payez le montant de la facture du centre. Les frais de plateforme KidEase viennent du versement à la garderie. Les dépôts par carte de réservation ne sont pas débités sur la page de dépôt.",
     ledgerOffParent:
       "Le checkout des factures et Plus parents restent fermés tant que les clés Stripe live ne sont pas actives. Les dépôts par carte de réservation restent fermés sur la page de dépôt.",
+    ledgerOffParentBills:
+      "Le checkout des factures reste fermé tant que les clés Stripe live ne sont pas actives. Les dépôts par carte de réservation restent fermés sur la page de dépôt.",
     ledgerLiveBooking: "Stripe Checkout est en direct pour les factures de centre et Plus parents. Cette page ne débite pas de dépôt par carte.",
     ledgerOffBooking: "Cette page ne débite pas de dépôt par carte. Lorsque Stripe est en direct, les parents paient les factures avec Checkout.",
     ledgerLiveBill: "Stripe Checkout est en direct pour cette facture de centre en CAD. Vous payez ce montant. Les frais de plateforme KidEase viennent du versement à la garderie. Carte, Apple Pay et Google Pay apparaissent à l’écran suivant lorsque cet appareil les prend en charge. Plus parents est un abonnement KidEase distinct.",
@@ -4521,7 +4543,7 @@ export const copy = {
     videoJoinHint: "Joignez un appel vidéo privé. Votre numéro de mobile reste caché. Cet appel n’est pas enregistré.",
     mediaPermissionNote: "KidEase demandera le micro, et la caméra pour une visite vidéo. Rien n’est enregistré.",
     mediaPermissionDenied: "La caméra ou le micro est bloqué. Activez-les pour KidEase dans Réglages, puis réessayez.",
-    nativeVideoNeedsPlus: "Les visites vidéo sont incluses avec Plus parents sur ce compte. Cette appli ne vend pas de forfaits.",
+    nativeVideoNeedsPlus: "Cette appli ne vend pas de visites vidéo. Si une visite ne démarre pas, écrivez à support@kidease.ca.",
     videoLeave: "Quitter",
     videoWaitingRoom: "En attente de l’autre personne.",
     videoInCall: "Dans l’appel",
@@ -4770,7 +4792,7 @@ export const copy = {
     googlePlay: "Google Play",
     storeReady: "Prêt pour l’App Store et Google Play",
     storeReadyBody:
-      "Installez KidEase sur iPhone ou Android depuis cette page. L’appli s’ouvre en plein écran, avec la recherche, la connexion et la suppression du compte. Les fiches App Store et Google Play ne sont pas encore publiques.",
+      "Installez KidEase sur iPhone ou Android depuis cette page. L’appli s’ouvre en plein écran, avec la recherche, la connexion et la suppression du compte. Les applis App Store et Google Play arrivent bientôt.",
     featGps: "Rayon GPS réel",
     featGpsBody: "Cherchez des centres permis dans les kilomètres que vous fixez : depuis la position du téléphone ou un code postal.",
     featCentres: "Répertoire pancanadien",
@@ -4820,7 +4842,7 @@ export const copy = {
     supportLead: "Parents et fournisseurs : nous lisons chaque note. Écrivez-nous ou envoyez un message ci-dessous.",
     supportSent: "Message envoyé. Nous répondrons par courriel.",
     deleteAccount: "Supprimer le compte",
-    deleteAccountLead: "Ceci planifie la fermeture de votre compte. Vous pouvez le restaurer pendant 30 jours. Ensuite nous effaçons vos enfants, messages, demandes et centres enregistrés. Nous gardons les dossiers de facturation exigés par la loi. Les journaux de fraude et de sécurité restent aussi.",
+    deleteAccountLead: "Ceci planifie la fermeture de votre compte. Vous pouvez le restaurer pendant 30 jours. Après 30 jours, nous effaçons complètement le compte, même si vous ne vous reconnectez pas. Cela comprend votre client Stripe, votre personne PostHog, votre contact GoHighLevel et votre utilisateur Sentry. Nous gardons les factures, les paiements et les journaux de fraude exigés par la loi, sans votre nom ni le lien vers le compte.",
     deleteAccountType: "Tapez DELETE pour confirmer",
     deleteAccountRestoreNote: "Vous pouvez restaurer ce compte pendant 30 jours. Ensuite, nous le fermons.",
     deleteAccountPendingNow:
@@ -4830,8 +4852,8 @@ export const copy = {
     accountRestoreBody: "Ce compte est prévu pour fermer. Vous pouvez encore le restaurer.",
     accountRestoreAction: "Restaurer le compte",
     accountSubscriptionLead: "Gérez votre abonnement KidEase.",
-    deleteAccountKeepBilling: "Dossiers de facturation : conservés parce que la loi fiscale l’exige.",
-    deleteAccountKeepLogs: "Journaux de fraude et de sécurité : conservés pour protéger le service. Ces dossiers ne sont pas effacés.",
+    deleteAccountKeepBilling: "Factures et paiements : conservés parce que la loi fiscale l’exige. Le lien vers votre compte est retiré.",
+    deleteAccountKeepLogs: "Journaux de fraude et de sécurité : conservés pour protéger le service. Le lien vers votre compte est retiré. Ces dossiers ne sont pas effacés.",
     nativePlansHidden: "Les forfaits ne se vendent pas dans cette appli.",
     deleteAccountGuestLead:
       "Connectez-vous pour supprimer votre compte KidEase. Vous pouvez aussi écrire à support@kidease.ca et nous le supprimerons pour vous.",
@@ -5181,6 +5203,8 @@ export const copy = {
     childProfileTitle: "Profil de l’enfant",
     childProfileLead:
       "Allergies, nourriture et habitudes. Le centre ne voit ces détails qu’après une demande de place.",
+    childProfileSendLead:
+      "Enregistrez le profil de l’enfant, puis envoyez-le aux centres enregistrés. Chaque centre le voit dans les demandes reçues et peut accepter, attendre ou refuser.",
     childIdentity: "Identité",
     preferredName: "Prénom usuel / surnom",
     homeLanguage: "Langue à la maison",
@@ -5598,6 +5622,8 @@ export const copy = {
     tourTimesEmpty: "Cette garderie n’a pas encore affiché d’heures de visite.",
     tourTimesEmptyLead:
       "Demandez des infos pour une visite, ou revenez plus tard. KidEase n’invente pas de plages.",
+    tourTimesUnclaimed:
+      "Vous ne pouvez pas réserver une visite depuis cette page pour l’instant. Les heures s’affichent quand le centre revendique sa fiche.",
     tourTimesNoneOpen: "Aucune plage de visite n’est ouverte en ce moment.",
     tourTimesNoneOpenLead: "Chaque visite affichée est complète ou passée. Demandez des infos pour un autre moment.",
     tourTimesTimezone: "Fuseau horaire",
@@ -6470,7 +6496,7 @@ export const copy = {
     claimProgressSpots: "Places libres",
     guestShortlistCarried: "Les garderies enregistrées sont sur votre compte.",
     viewAsBanner: "Vue en tant que {who}",
-    viewAsExit: "Quitter",
+    viewAsExit: "Quitter cette vue",
     viewAsReadOnly:
       "Lecture seule. Vous pouvez regarder. Les messages, les appels, la vidéo, les paiements, le mot de passe, le courriel et la suppression restent fermés.",
     viewAsMinutes: "{n} min restantes",
@@ -6492,6 +6518,16 @@ export const copy = {
 } as const;
 
 export type CopyKey = keyof typeof copy.en;
+
+/** Parent Pay tab. Plan sentences stay off unless subscriptions are on. */
+export function parentPayLeadKey(plansOn: boolean, stripeLive: boolean): CopyKey {
+  if (plansOn) return stripeLive ? "ledgerLiveParent" : "ledgerOffParent";
+  return stripeLive ? "ledgerLiveParentBills" : "ledgerOffParentBills";
+}
+
+export function parentPayEmptyKey(plansOn: boolean): CopyKey {
+  return plansOn ? "noPaymentsLead" : "noPaymentsLeadBills";
+}
 
 export function tx(locale: Locale, key: CopyKey): string {
   const raw =

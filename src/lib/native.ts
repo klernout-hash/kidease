@@ -250,7 +250,7 @@ export function registerOfflineShell(): void {
     // worker that can keep serving it — asset-recover.js will reload once.
     if (!hashedStylesheetsApplied()) return;
     void navigator.serviceWorker
-      .register("/sw.js?v=6", { scope: "/", updateViaCache: "none" })
+      .register("/sw.js?v=7", { scope: "/", updateViaCache: "none" })
       .then((reg) => {
         void reg.update();
       })

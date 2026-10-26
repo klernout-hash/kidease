@@ -1835,6 +1835,7 @@
   "helpBotChallenge": "Masyadong maraming tanong. Tapusin ang security check, tapos magtanong ulit.",
   "helpBotLimited": "Maghintay ng ilang minuto, tapos magtanong ulit.",
   "helpBotTicket": "Nagbukas kami ng support ticket para sa team ng KidEase. Babasahin ito ng isang tao. Hindi kami nangangako kung kailan sasagot.",
+  "menu": "Menu",
   "close": "Isara",
   "enrollCity": "Lungsod / lalawigan",
   "enrollPhone": "Telepono",
@@ -3011,5 +3012,12 @@
   "viewAsDaycare": "Daycare",
   "viewAsStarting": "Nagsisimula…",
   "viewAsUnknown": "ang taong ito",
-  "sponsored": "Sponsored"
+  "sponsored": "Sponsored",
+  "childrenLimit": "Hanggang 4 na profile",
+  "showTestListings": "Ipakita ang mga test listing",
+  "noPaymentsLeadBills": "Wala pang bill mula sa centre. Kapag may ipinadala, lalabas ito sa Open bills. Binabayaran mo ang centre sa Stripe Checkout.",
+  "ledgerLiveParentBills": "Buhay na ang bayad sa bill ng centre. Binabayaran mo ang halaga ng bill. Ang bayad ng KidEase ay mula sa daycare. Hindi naniningil ng card deposit ang pahinang ito.",
+  "ledgerOffParentBills": "Naka-off ang bayad sa bill ng centre hanggang naka-on ang Stripe live keys. Hindi naniningil ng card deposit ang pahinang ito.",
+  "childProfileSendLead": "I-save ang profile ng bata, tapos ipadala sa mga naka-save na centre. Nakikita ito ng bawat centre sa Incoming requests at puwede nilang aprubahan, ipahintay, o tanggihan.",
+  "tourTimesUnclaimed": "Hindi mo pa puwedeng i-book ang bisita mula sa pahinang ito. Lalabas ang oras pagkatapos i-claim ng centre ang listing."
 }

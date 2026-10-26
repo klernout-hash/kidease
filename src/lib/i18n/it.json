@@ -1835,6 +1835,7 @@
   "helpBotChallenge": "Troppe domande. Completa il controllo di sicurezza, poi chiedi di nuovo.",
   "helpBotLimited": "Attendi qualche minuto, poi chiedi di nuovo.",
   "helpBotTicket": "Abbiamo aperto un ticket per il team KidEase. Una persona lo leggerà. Non promettiamo un tempo di risposta.",
+  "menu": "Menu",
   "close": "Chiuda",
   "enrollCity": "Città / provincia",
   "enrollPhone": "Telefono",
@@ -3011,5 +3012,12 @@
   "viewAsDaycare": "Asilo",
   "viewAsStarting": "Avvio…",
   "viewAsUnknown": "questa persona",
-  "sponsored": "Sponsorizzato"
+  "sponsored": "Sponsorizzato",
+  "childrenLimit": "Fino a 4 profili",
+  "showTestListings": "Mostra schede di prova",
+  "noPaymentsLeadBills": "Ancora nessuna fattura del centro. Quando un centro ne invia una, compare in Fatture aperte. Paghi il centro con Stripe Checkout.",
+  "ledgerLiveParentBills": "Il pagamento della fattura del centro è attivo. Paghi l’importo della fattura. La commissione di KidEase arriva dall’asilo. Questa pagina non addebita un deposito con carta.",
+  "ledgerOffParentBills": "Il pagamento della fattura del centro resta spento finché le chiavi Stripe live non sono attive. Questa pagina non addebita un deposito con carta.",
+  "childProfileSendLead": "Salva il profilo del bambino e poi invialo ai centri salvati. Ogni centro lo vede in Richieste in arrivo e può approvare, mettere in attesa o rifiutare.",
+  "tourTimesUnclaimed": "Non puoi ancora prenotare una visita da questa pagina. Gli orari compaiono quando il centro rivendica la scheda."
 }

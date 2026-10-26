@@ -17,7 +17,6 @@ import { reportError } from "@/lib/observe";
 import { assertResetMailConfigured } from "@/lib/server/reset-mail-config";
 import { assertTurnstileToken } from "@/lib/server/turnstile";
 import { readTurnstileToken, readTurnstileTokenFromBody } from "@/lib/server/turnstile-verify";
-import { SQL_SETTLE_MS, resolveAfter } from "@/lib/timeout";
 import { parseRetryAfterSeconds, rateLimitWaitCopy } from "@/lib/auth-rate-limit";
 import { assertPasswordAllowed } from "@/lib/server/password-hygiene";
 import { authMutationAction, VIEW_AS_READ_ONLY_MESSAGE } from "@/lib/view-as";
@@ -95,16 +94,19 @@ async function handleAuth(request: Request) {
     }
     const incoming = requestWithLegacyOAuthCallback(requestWithAliasedAuthCookies(request));
     const path = new URL(incoming.url).pathname.replace(/\/+$/, "");
-    const handled = auth.handler(incoming);
-    // useSession() stays isPending until this returns. A wedged Neon or
-    // Cloudflare HTML challenge must not pin the client on the boot logo.
-    const response =
-      incoming.method === "GET" && path.endsWith("/get-session")
-        ? await Promise.race([
-            handled,
-            resolveAfter(SQL_SETTLE_MS, Response.json({ session: null, user: null })),
-          ])
-        : await handled;
+    if (request.method === "POST" && isAuthSignOutPath(path)) {
+      try {
+        const { closeViewAsForCurrentUser } = await import("@/lib/server/view-as");
+        await closeViewAsForCurrentUser();
+      } catch {
+        /* Sign-out must still clear the auth cookie. */
+      }
+    }
+    // Do not answer GET /get-session with a fake signed-out body. A 200
+    // `{ user: null }` makes the browser drop a real session, so account
+    // looks signed out and Save details never runs. A slow database just
+    // stays pending; the client already gives up after SESSION_SETTLE_MS.
+    const response = await auth.handler(incoming);
     const honest = await applyHonestRateLimit(response);
     const shared = applySharedAuthCookies(incoming, honest);
     return isAuthSignOutPath(path) ? applyExpiredAuthCookies(incoming, shared) : shared;

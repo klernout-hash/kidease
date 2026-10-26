@@ -144,6 +144,9 @@ const LOCAL_DEV_ORIGINS: string[] = [
   "http://localhost:8080",
   "http://127.0.0.1:8080",
   "http://[::1]:8080",
+  "http://localhost:8081",
+  "http://127.0.0.1:8081",
+  "http://[::1]:8081",
 ];
 // Public custom domain + platform aliases. BETTER_AUTH_URL is kidease.grok.me,
 // so without these, kidease.ca POSTs 403 Invalid origin and OAuth state cookies
@@ -209,7 +212,8 @@ const trustedOrigins = (request?: Request) => {
   const origin = requestOrigin(request);
   if (origin) {
     try {
-      if (hostAllowed(new URL(origin).host)) extra.push(origin);
+      // URL.host keeps the port (`127.0.0.1:8081`). hostAllowed compares hostnames.
+      if (hostAllowed(new URL(origin).hostname)) extra.push(origin);
     } catch {
       /* ignore */
     }
