@@ -160,6 +160,30 @@ export function monthlyFeeTaxLine(input: {
   return { amount, currency: "cad", description: "Tax on KidEase fees" };
 }
 
+/** A repeated bill does not add its tax twice. */
+export function appendMonthlyFeeTax(input: {
+  recordedBillIds: string[];
+  billId: string;
+  feeCents: number;
+  taxCents: number;
+  priorFeeCents: number;
+  priorTaxCents: number;
+}): { feeCents: number; taxCents: number; record: boolean } {
+  const fee = Math.max(0, Math.round(Number(input.feeCents)) || 0);
+  const tax = Math.max(0, Math.round(Number(input.taxCents)) || 0);
+  const priorFee = Math.max(0, Math.round(Number(input.priorFeeCents)) || 0);
+  const priorTax = Math.max(0, Math.round(Number(input.priorTaxCents)) || 0);
+  if (!input.billId || input.recordedBillIds.includes(input.billId)) {
+    return { feeCents: priorFee, taxCents: priorTax, record: false };
+  }
+  return { feeCents: priorFee + fee, taxCents: priorTax + tax, record: true };
+}
+
+/** True when `period` is an earlier YYYY-MM than `current`. */
+export function isEarlierPeriod(period: string, current: string): boolean {
+  return /^\d{4}-\d{2}$/.test(period) && /^\d{4}-\d{2}$/.test(current) && period < current;
+}
+
 export function monthlyFeeTaxInvoiceBody(input: {
   customerId: string;
   daycareId: string;

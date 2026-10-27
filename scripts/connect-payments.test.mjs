@@ -13,7 +13,9 @@ import {
   connectedAccountBody,
   CONNECT_FEE_BPS_DEFAULT,
   destinationChargeFields,
+  appendMonthlyFeeTax,
   feeTaxPlan,
+  isEarlierPeriod,
   manualFeeTaxCents,
   monthlyFeeTaxLine,
   parentInvoiceBody,
@@ -47,6 +49,60 @@ test("Connect fee is exactly 2% and tax stays off the application fee", () => {
   assert.equal(flat.on_behalf_of, "acct_day");
   assert.equal(flat["transfer_data[destination]"], "acct_day");
   assert.equal(JSON.stringify(charge).includes("tax"), false);
+});
+
+test("a month collects tax from every paid bill, once each", () => {
+  const first = appendMonthlyFeeTax({
+    recordedBillIds: [],
+    billId: "bl_1",
+    feeCents: 200,
+    taxCents: 10,
+    priorFeeCents: 0,
+    priorTaxCents: 0,
+  });
+  assert.equal(first.record, true);
+  assert.equal(first.feeCents, 200);
+  assert.equal(first.taxCents, 10);
+  const second = appendMonthlyFeeTax({
+    recordedBillIds: ["bl_1"],
+    billId: "bl_2",
+    feeCents: 400,
+    taxCents: 20,
+    priorFeeCents: first.feeCents,
+    priorTaxCents: first.taxCents,
+  });
+  assert.equal(second.feeCents, 600);
+  assert.equal(second.taxCents, 30);
+  const again = appendMonthlyFeeTax({
+    recordedBillIds: ["bl_1", "bl_2"],
+    billId: "bl_1",
+    feeCents: 200,
+    taxCents: 10,
+    priorFeeCents: second.feeCents,
+    priorTaxCents: second.taxCents,
+  });
+  assert.equal(again.record, false);
+  assert.equal(again.taxCents, 30);
+  assert.equal(isEarlierPeriod("2026-09", "2026-10"), true);
+  assert.equal(isEarlierPeriod("2026-10", "2026-10"), false);
+  assert.equal(isEarlierPeriod("2026-9", "2026-10"), false);
+});
+
+test("sample env keeps Connect off and the fee at 2%", () => {
+  const env = read(".env.example");
+  assert.match(env, /^KIDEASE_PLATFORM_FEE_BPS=200$/m);
+  assert.doesNotMatch(env, /KIDEASE_CONNECT_PAYMENTS\s*=\s*1/);
+  for (const name of [
+    "STRIPE_SECRET_KEY",
+    "STRIPE_PUBLISHABLE_KEY",
+    "STRIPE_WEBHOOK_SECRET",
+    "STRIPE_CONNECT_WEBHOOK_SECRET",
+    "KIDEASE_PLATFORM_FEE_BPS",
+    "APPLE_MERCHANT_ID",
+    "GOOGLE_PAY_MERCHANT_ID",
+  ]) {
+    assert.match(env, new RegExp(name), name);
+  }
 });
 
 test("tax invoice is skipped unless a rate is configured", () => {

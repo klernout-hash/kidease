@@ -26,3 +26,16 @@ create table if not exists daycare_fee_invoices (
   created_at timestamptz not null default now(),
   unique (daycare_id, period)
 );
+
+-- One row per paid parent bill, so a month can collect tax from every bill.
+create table if not exists daycare_fee_invoice_lines (
+  bill_id text primary key references invoices(id) on delete cascade,
+  daycare_id text not null references daycares(id) on delete cascade,
+  period text not null,
+  fee_cents int not null,
+  tax_cents int not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists daycare_fee_invoice_lines_period_idx
+  on daycare_fee_invoice_lines (daycare_id, period);

@@ -17,6 +17,8 @@ import {
   connectedAccountBody,
   destinationChargeFields,
   feeTaxPlan,
+  appendMonthlyFeeTax,
+  isEarlierPeriod,
   monthlyFeeTaxInvoiceBody,
   monthlyFeeTaxLine,
   parentInvoiceBody,
@@ -457,7 +459,38 @@ async function feeTaxCentsFor(feeCents: number): Promise<number | null> {
   return monthlyFeeTaxLine({ plan, feeCents, calculatedTaxCents: calc.tax_amount_exclusive })?.amount ?? null;
 }
 
-/** Draft only. Does not finalize, so nothing is charged. */
+/** Send last month's draft once this month has started. The current month stays open. */
+async function finalizePriorFeeInvoices(sql: Sql, daycareId: string, period: string): Promise<void> {
+  const rows = await sql<{ stripe_invoice_id: string | null; period: string; status: string }>`
+    select stripe_invoice_id, period, status
+    from daycare_fee_invoices
+    where daycare_id = ${daycareId} and status = 'draft' and stripe_invoice_id is not null
+  `.catch(() => []);
+  for (const row of rows) {
+    if (!isEarlierPeriod(row.period, period)) continue;
+    const invoiceId = String(row.stripe_invoice_id || "");
+    if (!invoiceId.startsWith("in_")) continue;
+    try {
+      await stripeRequest(`/invoices/${encodeURIComponent(invoiceId)}/finalize`, {}, "POST", {
+        idempotencyKey: `fee-tax-final-${invoiceId}`,
+      });
+      await stripeRequest(`/invoices/${encodeURIComponent(invoiceId)}/send`, {}, "POST", {
+        idempotencyKey: `fee-tax-send-${invoiceId}`,
+      });
+      await sql`
+        update daycare_fee_invoices set status = 'open'
+        where stripe_invoice_id = ${invoiceId} and status = 'draft'
+      `.catch(() => undefined);
+    } catch (err) {
+      console.error("[kidease-connect] monthly fee invoice not sent", err);
+    }
+  }
+}
+
+/**
+ * Add this bill's tax to the daycare's draft for the month.
+ * The draft is sent when a later month starts. Nothing is charged while the flag is off.
+ */
 export async function queueMonthlyFeeTax(billId: string): Promise<{ ok: boolean; reason?: string }> {
   const check = gate();
   if (!check.ok) return { ok: false, reason: check.reason };
@@ -476,12 +509,37 @@ export async function queueMonthlyFeeTax(billId: string): Promise<{ ok: boolean;
   const fee = Number(bill.platform_fee_cents) || 0;
   const tax = await feeTaxCentsFor(fee);
   if (tax == null || tax <= 0) return { ok: false, reason: "missing" };
-  const existing = await sql<{ stripe_invoice_id: string | null }>`
-    select stripe_invoice_id from daycare_fee_invoices
+
+  const recorded = await sql<{ bill_id: string }>`
+    select bill_id from daycare_fee_invoice_lines
+    where daycare_id = ${bill.daycare_id} and period = ${bill.period}
+  `.catch(() => []);
+  const headerRows = await sql<{
+    stripe_invoice_id: string | null;
+    status: string;
+    fee_cents: number | null;
+    tax_cents: number | null;
+  }>`
+    select stripe_invoice_id, status, fee_cents, tax_cents
+    from daycare_fee_invoices
     where daycare_id = ${bill.daycare_id} and period = ${bill.period}
     limit 1
   `.catch(() => []);
-  if (existing[0]?.stripe_invoice_id) return { ok: true };
+  const header = headerRows[0];
+  const next = appendMonthlyFeeTax({
+    recordedBillIds: recorded.map((row) => row.bill_id),
+    billId,
+    feeCents: fee,
+    taxCents: tax,
+    priorFeeCents: Number(header?.fee_cents) || 0,
+    priorTaxCents: Number(header?.tax_cents) || 0,
+  });
+  if (!next.record) {
+    await finalizePriorFeeInvoices(sql, bill.daycare_id, bill.period);
+    return { ok: true };
+  }
+  if (header && header.status !== "draft") return { ok: false, reason: "closed" };
+
   const owner = await sql<{ email: string | null; user_id: string }>`
     select u.email, u.id as user_id
     from provider_daycares p
@@ -496,14 +554,28 @@ export async function queueMonthlyFeeTax(billId: string): Promise<{ ok: boolean;
     email: owner[0].email,
     userId: owner[0].user_id,
   });
-  const invoice = await stripeRequest<{ id?: string }>(
-    "/invoices",
-    monthlyFeeTaxInvoiceBody({ customerId, daycareId: bill.daycare_id, period: bill.period }),
-    "POST",
-    { idempotencyKey: `fee-tax-${bill.daycare_id}-${bill.period}` },
-  );
-  const invoiceId = String(invoice.id || "");
-  if (!invoiceId.startsWith("in_")) return { ok: false, reason: "missing" };
+  let invoiceId = String(header?.stripe_invoice_id || "");
+  if (!invoiceId.startsWith("in_")) {
+    const invoice = await stripeRequest<{ id?: string }>(
+      "/invoices",
+      monthlyFeeTaxInvoiceBody({ customerId, daycareId: bill.daycare_id, period: bill.period }),
+      "POST",
+      { idempotencyKey: `fee-tax-${bill.daycare_id}-${bill.period}` },
+    );
+    invoiceId = String(invoice.id || "");
+    if (!invoiceId.startsWith("in_")) return { ok: false, reason: "missing" };
+    await sql`
+      insert into daycare_fee_invoices (id, daycare_id, period, fee_cents, tax_cents, stripe_invoice_id, status)
+      values (${nid("ftax")}, ${bill.daycare_id}, ${bill.period}, 0, 0, ${invoiceId}, 'draft')
+      on conflict (daycare_id, period) do nothing
+    `.catch(() => undefined);
+    const saved = await sql<{ stripe_invoice_id: string | null }>`
+      select stripe_invoice_id from daycare_fee_invoices
+      where daycare_id = ${bill.daycare_id} and period = ${bill.period}
+      limit 1
+    `.catch(() => []);
+    invoiceId = String(saved[0]?.stripe_invoice_id || invoiceId);
+  }
   await stripeRequest("/invoiceitems", {
     customer: customerId,
     invoice: invoiceId,
@@ -511,11 +583,21 @@ export async function queueMonthlyFeeTax(billId: string): Promise<{ ok: boolean;
     currency: "cad",
     description: "Tax on KidEase fees",
   }, "POST", { idempotencyKey: `fee-tax-item-${billId}` });
-  await sql`
-    insert into daycare_fee_invoices (id, daycare_id, period, fee_cents, tax_cents, stripe_invoice_id, status)
-    values (${nid("ftax")}, ${bill.daycare_id}, ${bill.period}, ${fee}, ${tax}, ${invoiceId}, 'draft')
-    on conflict (daycare_id, period) do nothing
-  `.catch(() => undefined);
+  const inserted = await sql<{ bill_id: string }>`
+    insert into daycare_fee_invoice_lines (bill_id, daycare_id, period, fee_cents, tax_cents)
+    values (${billId}, ${bill.daycare_id}, ${bill.period}, ${fee}, ${tax})
+    on conflict (bill_id) do nothing
+    returning bill_id
+  `.catch(() => []);
+  if (inserted[0]) {
+    await sql`
+      update daycare_fee_invoices set
+        fee_cents = fee_cents + ${fee},
+        tax_cents = coalesce(tax_cents, 0) + ${tax}
+      where daycare_id = ${bill.daycare_id} and period = ${bill.period}
+    `.catch(() => undefined);
+  }
+  await finalizePriorFeeInvoices(sql, bill.daycare_id, bill.period);
   return { ok: true };
 }
 
