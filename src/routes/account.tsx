@@ -200,6 +200,7 @@ function ProfilePane() {
   const { t, locale } = useCopy();
   const search = Route.useSearch();
   const chrome = useRoleChrome();
+  const canEditProfile = Boolean(user) || (chrome.signedIn && !chrome.pending);
   const { sticky } = useSessionDesks();
   const desk = parseDeskQuery(search.desk) ?? sticky;
   const inputRef = useRef<HTMLInputElement>(null);
@@ -583,7 +584,7 @@ function ProfilePane() {
               <ChevronLeft className="size-6" aria-hidden />
             </Link>
           )}
-          {section === "profile" && !editing && user ? (
+          {section === "profile" && !editing && canEditProfile ? (
             <Link
               to="/account"
               search={{ ...homeSearch, edit: "1" as const }}

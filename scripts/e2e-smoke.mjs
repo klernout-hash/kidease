@@ -172,6 +172,10 @@ function mentions(text, phrases) {
   return phrases.filter((phrase) => lower.includes(phrase.toLowerCase()));
 }
 
+async function waitUntilEditClosed(page) {
+  await page.waitForFunction(() => !new URL(location.href).searchParams.has("edit"), { timeout: timeoutMs });
+}
+
 async function appBarText(page, href) {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
@@ -465,6 +469,7 @@ async function runRoleFixture(page, base) {
     );
     await page.getByRole("button", { name: /save details/i }).click();
     await saved;
+    await waitUntilEditClosed(page);
     await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
     await openProfileEdit.click();
     await bioBox.waitFor({ timeout: timeoutMs });
@@ -1438,6 +1443,7 @@ async function runSignedInSessions(page, base) {
       );
       await page.locator('[data-ke="account-save-details"]').click();
       await saved;
+      await waitUntilEditClosed(page);
       await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
       await page.locator('[data-ke="profile-edit"]').click();
       await page.waitForFunction((expected) => {

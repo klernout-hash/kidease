@@ -19,11 +19,14 @@ export function HeaderAccount() {
   const chrome = useRoleChrome();
   const { sticky } = useSessionDesks();
   const headerUser = chrome.guestView ? null : user;
+  // Role chrome is in the first HTML. The client session can still be empty, so
+  // keep the account photo while that request is in flight.
+  const showAvatar = Boolean(headerUser) || chrome.signedIn;
 
   return (
     <div className="flex items-center gap-0.5" data-ke="header-account">
       <NotificationBell />
-      {headerUser ? (
+      {showAvatar ? (
         <Link
           to="/account"
           search={accountSearch(sticky)}
@@ -31,12 +34,18 @@ export function HeaderAccount() {
           aria-label={t("account")}
           className="grid size-12 place-items-center rounded-full touch-manipulation"
         >
-          <ProfileAvatar
-            userId={headerUser.id}
-            fallback={headerUser.profileImageUrl}
-            name={headerUser.displayName}
-            size="sm"
-          />
+          {headerUser ? (
+            <ProfileAvatar
+              userId={headerUser.id}
+              fallback={headerUser.profileImageUrl}
+              name={headerUser.displayName}
+              size="sm"
+            />
+          ) : (
+            <span className="grid size-9 place-items-center rounded-full bg-surface text-primary ring-2 ring-primary/80">
+              <UserRound className="size-4" strokeWidth={1.7} aria-hidden />
+            </span>
+          )}
         </Link>
       ) : (
         <Link
