@@ -80,7 +80,8 @@ export const Route = createFileRoute("/account")({
     }
     const desk = parseDeskQuery(typeof s.desk === "string" ? s.desk : "");
     if (desk) out.desk = deskQueryValue(desk);
-    if (s.edit === "1") out.edit = "1";
+    const editRaw = typeof s.edit === "string" ? s.edit.replace(/^"|"$/g, "") : s.edit;
+    if (editRaw === "1" || editRaw === 1) out.edit = "1";
     if (s.field === "name" || s.field === "phone" || s.field === "email" || s.field === "work" || s.field === "about") {
       out.field = s.field;
     }
