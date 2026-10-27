@@ -11,7 +11,7 @@ function src(rel) {
 }
 
 const copy = src("src/lib/copy.ts");
-const menu = src("src/routes/menu.tsx");
+const menu = src("src/lib/app-menu.ts");
 const verify = src("src/routes/verify.tsx");
 const req = src("src/routes/daycare-requirements.tsx");
 const store = src("src/lib/store-listing.ts");
@@ -53,7 +53,7 @@ test("benefits still carry the Manitoba subsidy section", () => {
 
 test("menu, verify, requirements, store, and onboard mail drop MB-only framing", () => {
   assert.doesNotMatch(menu, /childcaresearch\.gov\.mb\.ca/);
-  assert.match(menu, /to="\/verify"/);
+  assert.match(menu, /"\/verify": "resources"/);
   assert.doesNotMatch(verify, /Manitoba catalogue matches/);
   assert.doesNotMatch(req, /Manitoba Child Abuse Registry documents/);
   assert.doesNotMatch(store, /Manitoba \$10-a-day funded spaces/);

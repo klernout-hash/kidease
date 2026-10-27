@@ -327,6 +327,21 @@
   }
 }
 
+/* Header buttons use rem, so a large text size makes them wider than a 320px
+   phone once the back control is also in the row. Kept outside @layer so it
+   wins over the size utilities. 44px stays a full touch target. */
+@media (max-width: 1023px) {
+  header .size-11,
+  header .size-12 {
+    width: 44px;
+    height: 44px;
+  }
+  header .size-9 {
+    width: 36px;
+    height: 36px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -1004,6 +1019,20 @@
     border-color: var(--color-primary);
     box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 16%, transparent);
   }
+  .ke-input[aria-invalid="true"],
+  input[aria-invalid="true"],
+  textarea[aria-invalid="true"],
+  select[aria-invalid="true"] {
+    border-color: var(--color-danger);
+    background: color-mix(in oklab, var(--color-danger) 10%, var(--color-surface));
+  }
+  .ke-input[aria-invalid="true"]:focus,
+  input[aria-invalid="true"]:focus,
+  textarea[aria-invalid="true"]:focus,
+  select[aria-invalid="true"]:focus {
+    border-color: var(--color-danger);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-danger) 16%, transparent);
+  }
   .ke-textarea {
     width: 100%;
     min-height: 8rem;
@@ -1087,6 +1116,9 @@
     border-right: 2px solid var(--color-muted);
     border-top: 2px solid var(--color-muted);
     transform: rotate(45deg);
+  }
+  .ke-skeleton {
+    background: var(--color-surface-2);
   }
   .ke-kicker {
     margin: 0;
@@ -1536,7 +1568,70 @@ html[data-channel="website"] .ke-web-grid > article {
   }
 }
 
+@keyframes ke-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes ke-bar-grow {
+  from {
+    transform: scaleY(0.08);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes ke-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+@keyframes ke-tab-in {
+  from {
+    opacity: 0.55;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  .ke-screen-enter {
+    animation: ke-rise 0.32s ease-out both;
+  }
+  .ke-bar-grow {
+    transform-origin: bottom center;
+    animation: ke-bar-grow 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .ke-press {
+    transition: transform 0.14s ease;
+  }
+  .ke-press:active {
+    transform: scale(0.98);
+  }
+  .ke-skeleton {
+    background-image: linear-gradient(
+      100deg,
+      var(--color-surface-2) 20%,
+      color-mix(in oklab, var(--color-surface) 65%, white) 42%,
+      var(--color-surface-2) 64%
+    );
+    background-size: 220% 100%;
+    animation: ke-shimmer 1.15s ease-in-out infinite;
+  }
+  [data-ke="app-tab"][aria-current="page"] svg {
+    animation: ke-tab-in 0.22s ease-out both;
+  }
   .ke-check-pop {
     animation: ke-check-pop 0.48s cubic-bezier(0.2, 0.85, 0.25, 1.15) both;
   }

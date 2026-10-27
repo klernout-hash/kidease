@@ -50,23 +50,24 @@ test("menu-leaf paths cover hamburger marketing/info links and skip tab stacks",
 });
 
 test("menu page destinations are classified as leaf, excluded, or redirect", () => {
-  const menu = src("src/routes/menu.tsx");
-  const tos = [...menu.matchAll(/\bto(?:="(\/[^"]+)"|\("(\/[^"]+)"\))/g)].map((m) => m[1] || m[2]);
-  assert.ok(tos.includes("/get-app"));
+  const groups = src("src/lib/app-menu.ts");
+  const screen = src("src/components/app-menu-screen.tsx");
+  assert.match(groups, /"\/get-app": "resources"/);
+  const hrefs = [...groups.matchAll(/"(\/[^"]+)": "(?:resources|guides|help|legal)"/g)].map((m) => m[1]);
+  assert.ok(hrefs.includes("/get-app"));
   const excluded = new Set([
     "/search",
-    "/login",
-    "/parent",
-    "/account",
+    "/cities",
     "/compare",
-    "/provider",
+    "/plans",
+    "/jobs",
   ]);
-  const unknown = [];
-  for (const to of tos) {
-    if (excluded.has(to) || isMenuLeafPath(to)) continue;
-    unknown.push(to);
-  }
+  const unknown = hrefs.filter((to) => !excluded.has(to) && !isMenuLeafPath(to));
   assert.deepEqual(unknown, [], `uncategorized Menu links: ${unknown.join(", ")}`);
+  const direct = [...screen.matchAll(/\bto="(\/[^"]+)"/g)].map((m) => m[1]);
+  const directExcluded = new Set(["/menu", "/provider", "/daycare/$slug", "/provider/subscription"]);
+  const directUnknown = direct.filter((to) => !directExcluded.has(to) && !isMenuLeafPath(to) && to !== "/parent" && to !== "/account" && to !== "/login");
+  assert.deepEqual(directUnknown, [], `uncategorized direct Menu links: ${directUnknown.join(", ")}`);
 });
 
 test("in-app back is true only for SPA history or same-origin referrer", () => {

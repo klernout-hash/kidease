@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { earlierJoinedAt } from "@/lib/profile-hero";
 import { isE164, normalizeE164 } from "@/lib/sms";
 
 export type ContactProfile = {
@@ -8,6 +9,7 @@ export type ContactProfile = {
   phone: string;
   email: string;
   bio: string;
+  joinedAt: string | null;
 };
 
 function cleanName(value: unknown) {
@@ -32,11 +34,16 @@ export const getMyContact = createServerFn({ method: "POST" })
       insert into profiles (user_id, role) values (${context.userId}, 'parent')
       on conflict (user_id) do nothing
     `;
-    const rows = await sql<{ display_name: string | null; phone: string | null; bio: string | null }>`
-      select display_name, phone, bio from profiles where user_id = ${context.userId} limit 1
+    const rows = await sql<{
+      display_name: string | null;
+      phone: string | null;
+      bio: string | null;
+      created_at: string | Date | null;
+    }>`
+      select display_name, phone, bio, created_at from profiles where user_id = ${context.userId} limit 1
     `;
-    const authRows = await sql<{ name: string | null; email: string | null }>`
-      select name, email from "user" where id = ${context.userId} limit 1
+    const authRows = await sql<{ name: string | null; email: string | null; created_at: string | Date | null }>`
+      select name, email, "createdAt" as created_at from "user" where id = ${context.userId} limit 1
     `;
     const row = rows[0];
     const auth = authRows[0];
@@ -45,6 +52,7 @@ export const getMyContact = createServerFn({ method: "POST" })
       phone: row?.phone?.trim() || "",
       email: auth?.email?.trim() || "",
       bio: row?.bio?.trim() || "",
+      joinedAt: earlierJoinedAt(row?.created_at, auth?.created_at),
     };
   });
 
@@ -68,11 +76,16 @@ export const saveMyContact = createServerFn({ method: "POST" })
     if (data.name) {
       await sql`update "user" set name = ${data.name} where id = ${context.userId}`;
     }
-    const stored = await sql<{ display_name: string | null; phone: string | null; bio: string | null }>`
-      select display_name, phone, bio from profiles where user_id = ${context.userId} limit 1
+    const stored = await sql<{
+      display_name: string | null;
+      phone: string | null;
+      bio: string | null;
+      created_at: string | Date | null;
+    }>`
+      select display_name, phone, bio, created_at from profiles where user_id = ${context.userId} limit 1
     `;
-    const authRows = await sql<{ name: string | null; email: string | null }>`
-      select name, email from "user" where id = ${context.userId} limit 1
+    const authRows = await sql<{ name: string | null; email: string | null; created_at: string | Date | null }>`
+      select name, email, "createdAt" as created_at from "user" where id = ${context.userId} limit 1
     `;
     const row = stored[0];
     return {
@@ -80,5 +93,6 @@ export const saveMyContact = createServerFn({ method: "POST" })
       phone: row?.phone?.trim() || data.phone,
       email: authRows[0]?.email?.trim() || "",
       bio: row?.bio?.trim() || "",
+      joinedAt: earlierJoinedAt(row?.created_at, authRows[0]?.created_at),
     };
   });

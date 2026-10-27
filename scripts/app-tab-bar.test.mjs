@@ -29,7 +29,11 @@ test("app tab bar always renders the same five lucide icons, including on Menu",
   assert.match(bar, /t\("navHome"\)/);
   assert.match(bar, /t\("navRequestsShort"\)/);
   assert.match(bar, /t\("navReview"\)/);
-  assert.match(bar, /t\("signIn"\)/);
+  assert.match(bar, /t\("navMenu"\)/);
+  assert.match(bar, /t\("navCalendar"\)/);
+  assert.match(bar, /t\("inbox"\)/);
+  assert.match(bar, /icon=\{Calendar\}/);
+  assert.match(bar, /icon=\{Menu\}/);
   assert.match(bar, /search=\{\{ tab: "queue" \}\}/);
   assert.match(bar, /search=\{\{ tab: "verify" \}\}/);
   assert.match(bar, /search=\{\{ tab: "mail" \}\}/);

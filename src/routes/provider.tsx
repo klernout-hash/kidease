@@ -259,6 +259,13 @@ function ProviderPage() {
     if (desk === "requests") capturePostHogEvent("provider_request_opened");
   }, [desk]);
 
+  useEffect(() => {
+    if (desk !== "listings" || window.location.hash !== "#list-new") return;
+    const node = document.getElementById("list-new");
+    if (node instanceof HTMLDetailsElement) node.open = true;
+    node?.scrollIntoView({ block: "start" });
+  }, [desk, listings.length]);
+
   if (childRoute) return <Outlet />;
 
   if (locallyOut) {

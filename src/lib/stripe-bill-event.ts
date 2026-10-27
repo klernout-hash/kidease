@@ -10,6 +10,7 @@ export type StripeBillObject = {
   latest_charge?: string | { id?: string; receipt_url?: string | null } | null;
   charges?: { data?: Array<{ id?: string; receipt_url?: string | null }> } | null;
   receipt_url?: string | null;
+  status?: string | null;
 };
 
 export type StripeBillRef = {
@@ -51,7 +52,9 @@ export function extractStripeBillRef(obj: StripeBillObject | null | undefined, t
   const paid =
     type === "payment_intent.succeeded" ||
     type === "checkout.session.completed" ||
+    type === "invoice.paid" ||
     data.payment_status === "paid" ||
+    data.status === "paid" ||
     type === "charge.succeeded";
   return {
     billId: pickMeta(data),

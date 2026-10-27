@@ -27,9 +27,9 @@
  * Apple Pay domain association is composed here too (env-only; 404 when unset).
  */
 import { CAP_APP_ID, CAP_APP_LINK_PATHS, CAP_PROD_HOSTNAME } from "./native-permissions.mjs";
-import { applePayDomainAssociationPayload } from "./well-known-apple-pay.mjs";
+import { applePayDomainAssociationPayload, applePayWellKnownResult } from "./well-known-apple-pay.mjs";
 
-export { CAP_APP_ID, CAP_PROD_HOSTNAME };
+export { CAP_APP_ID, CAP_PROD_HOSTNAME, applePayWellKnownResult };
 
 /** Documented 10-char placeholder — not a real Apple Team ID. */
 export const PLACEHOLDER_APPLE_TEAM_ID = "XXXXXXXXXX";

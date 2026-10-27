@@ -86,11 +86,11 @@ test("brand mark ships the SVG, and logos get a long cache hint", () => {
   assert.match(mark, /fetchPriority="high"/);
   assert.doesNotMatch(mark, /\/logo-transparent\.png/);
   assert.match(src("src/routes/__root.tsx"), /logo-transparent\.svg\?v=17/);
-  assert.match(src("src/routes/menu.tsx"), /\[font-family:system-ui,Segoe_UI,sans-serif\]/);
-  assert.match(src("src/routes/menu.tsx"), /ke-menu-main/);
-  assert.match(src("src/routes/menu.tsx"), /MenuRow/);
+  assert.match(src("src/components/app-menu-screen.tsx"), /\[font-family:system-ui,Segoe_UI,sans-serif\]/);
+  assert.match(src("src/components/app-menu-screen.tsx"), /ke-menu-main/);
+  assert.match(src("src/components/app-menu-screen.tsx"), /MenuRow/);
   assert.match(src("src/components/menu-row.tsx"), /ke-menu-chevron/);
-  assert.match(src("src/routes/menu.tsx"), /ke-menu-group/);
+  assert.match(src("src/components/app-menu-screen.tsx"), /ke-menu-group/);
   assert.match(src("src/styles.css"), /\.ke-menu-main h1/);
   assert.match(src("src/components/shell.tsx"), /menuLite/);
   assert.match(src("public/channel-boot.js"), /plus-jakarta/);

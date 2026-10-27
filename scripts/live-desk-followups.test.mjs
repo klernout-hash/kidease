@@ -58,6 +58,6 @@ test("profile bio save ignores a stale load and checks the stored bio", () => {
   const profile = src("src/lib/server/profile-contact.ts");
   assert.match(profile, /export const getMyContact = createServerFn\(\{ method: "POST" \}\)/);
   const save = profile.slice(profile.indexOf("export const saveMyContact"));
-  assert.match(save, /select display_name, phone, bio from profiles where user_id/);
+  assert.match(save, /select display_name, phone, bio(?:, created_at)? from profiles where user_id/);
   assert.match(save, /bio: row\?\.bio\?\.trim\(\) \|\| ""/);
 });

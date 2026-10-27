@@ -59,6 +59,7 @@ jobs:
         timeout-minutes: 40
         run: npx playwright install --with-deps chromium webkit
       - name: Smoke against BASE_URL or local preview
+        timeout-minutes: 45
         env:
           BASE_URL: ${{ github.event.inputs.base_url }}
         run: |
@@ -99,6 +100,7 @@ jobs:
       - name: Build preview
         run: npm run build
       - name: Signed-in parent and daycare, English and French
+        timeout-minutes: 40
         run: node scripts/e2e-smoke.mjs --start-preview --signed-in
       - uses: actions/upload-artifact@v4
         if: failure()

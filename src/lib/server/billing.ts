@@ -234,7 +234,12 @@ export async function applyStripeBillEvent(input: {
     return { ok: true, billId: bill.id, status: "refunded", handled: type };
   }
 
-  if (!ref.paid && type !== "checkout.session.completed" && type !== "payment_intent.succeeded") {
+  if (
+    !ref.paid &&
+    type !== "checkout.session.completed" &&
+    type !== "payment_intent.succeeded" &&
+    type !== "invoice.paid"
+  ) {
     return { ok: true, billId: ref.billId, handled: type };
   }
 
@@ -507,6 +512,12 @@ export const sendBill = createServerFn({ method: "POST" })
     `;
     const fresh = mapBill((await loadInvoice(sql, billId))!);
     await postBillMessage(sql, fresh, "sent");
+    try {
+      const { attachConnectBill } = await import("@/lib/server/connect-payments");
+      await attachConnectBill(fresh.id);
+    } catch (err) {
+      console.error("[kidease-connect] bill attach skipped", err);
+    }
     try {
       await notifyParentBill({
         to: fresh.parentEmail,

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useNavigate, useRouter } from "@tanstack/react-router";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { privateReturnPath } from "@/lib/role-access";
 import { toast } from "sonner";
@@ -9,7 +10,7 @@ import { DeskShell } from "@/components/desk-shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { AdminDeskLink } from "@/components/admin-desk-link";
-import { DESK_PATH, deskQueryValue, openAdminDesk, parseDeskQuery, type DeskKey } from "@/lib/desks";
+import { DESK_PATH, deskQueryValue, highlightDesk, openAdminDesk, parseDeskQuery, type DeskKey } from "@/lib/desks";
 import { parentNavSearch, providerNavSearch } from "@/lib/desk-nav";
 import { useSessionDesks } from "@/components/session-desks";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -33,13 +34,23 @@ import { useInNativeShell } from "@/lib/use-native-shell";
 import { SignedInDevices } from "@/components/signed-in-devices";
 import { AccountSecurity } from "@/components/account-security";
 import { DeleteAccountPanel } from "@/components/delete-account-panel";
-import { NotificationBell } from "@/components/notification-bell";
 import { AlertPushSettings } from "@/components/alert-push-settings";
 import { ReferFriendPanel } from "@/components/refer-friend-panel";
-import { FooterMoreLinks } from "@/components/footer-more-links";
+import { fieldErrorClass, RequiredMark } from "@/components/required-field";
+import { focusFirstInvalid } from "@/lib/profile-form";
+import { ProfileFacts, ProfileHeroCard, type ProfileFact } from "@/components/profile-hero";
+import { ProfileDeskExtras } from "@/components/profile-public";
+import { profileRoleId, showProfileStats, yearsOnKidEase } from "@/lib/profile-hero";
+import { loadMenuProviderCards } from "@/lib/server/menu-summary";
+import { listingHours, sharedNumber, sharedText } from "@/lib/profile-desk";
+import { loadProfileDesk } from "@/lib/server/profile-desk";
+import type { ProfileDesk } from "@/lib/server/profile-desk";
+import { ParentWallet } from "@/components/parent-wallet";
+import { connectPaymentsPublic } from "@/lib/server/connect-payments";
 
 export const Route = createFileRoute("/account")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
+  loader: () => connectPaymentsPublic(),
   head: ({ match }) => ({
     meta: [
       { title: match.search.desk === "admin" ? "Admin account · KidEase" : "Account · KidEase" },
@@ -50,7 +61,9 @@ export const Route = createFileRoute("/account")({
     const out: {
       tab?: "saved" | "enrolled" | "profile" | "payments";
       desk?: "parent" | "director" | "admin" | "support";
-      section?: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents" | "refer";
+      section?: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents" | "refer" | "wallet";
+      edit?: "1";
+      field?: "name" | "phone" | "email" | "work" | "about";
     } = {};
     const tab = s.tab;
     if (tab === "saved" || tab === "enrolled" || tab === "profile" || tab === "payments") out.tab = tab;
@@ -64,12 +77,18 @@ export const Route = createFileRoute("/account")({
       section === "security" ||
       section === "email-sms" ||
       section === "documents" ||
-      section === "refer"
+      section === "refer" ||
+      section === "wallet"
     ) {
       out.section = section;
     }
     const desk = parseDeskQuery(typeof s.desk === "string" ? s.desk : "");
     if (desk) out.desk = deskQueryValue(desk);
+    const editRaw = typeof s.edit === "string" ? s.edit.replace(/^"|"$/g, "") : s.edit;
+    if (editRaw === "1" || editRaw === 1) out.edit = "1";
+    if (s.field === "name" || s.field === "phone" || s.field === "email" || s.field === "work" || s.field === "about") {
+      out.field = s.field;
+    }
     return out;
   },
   component: AccountPage,
@@ -188,11 +207,13 @@ function AccountDeskFrame({ desk, children }: { desk: DeskKey | null; children: 
 
 function ProfilePane() {
   const { user, isPending } = useCurrentUserState();
+  const navigate = useNavigate();
   const { refetch: refetchSession } = authClient.useSession();
   const nativeShell = useInNativeShell();
   const { t, locale } = useCopy();
   const search = Route.useSearch();
   const chrome = useRoleChrome();
+  const canEditProfile = Boolean(user) || (chrome.signedIn && !chrome.pending);
   const { sticky } = useSessionDesks();
   const desk = parseDeskQuery(search.desk) ?? sticky;
   const inputRef = useRef<HTMLInputElement>(null);
@@ -202,10 +223,24 @@ function ProfilePane() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState(user?.primaryEmail ?? "");
   const [bio, setBio] = useState("");
+  const [joinedAt, setJoinedAt] = useState<string | null>(null);
+  const [reviewCount, setReviewCount] = useState<number | null>(null);
+  const [ratingX10, setRatingX10] = useState<number | null>(null);
+  const [profileDesk, setProfileDesk] = useState<ProfileDesk | null>(null);
   const nameRef = useRef(user?.displayName ?? "");
   const phoneRef = useRef("");
   const bioRef = useRef("");
   const contactDirty = useRef({ name: false, phone: false, bio: false });
+  const savedContact = useRef({ name: user?.displayName ?? "", phone: "", bio: "" });
+  const savedConsents = useRef<CaslPrefs>({
+    smsService: false,
+    emailService: false,
+    emailCommercial: false,
+  });
+  const [nameInvalid, setNameInvalid] = useState(false);
+  const [editField, setEditField] = useState<"name" | "phone" | "email" | "work" | "about" | null>(null);
+  const [gapTick, setGapTick] = useState(0);
+  const formRef = useRef<HTMLFormElement>(null);
   const contactEpoch = useRef(0);
   const contactLoaded = useRef(false);
   const seenUserId = useRef<string | undefined>(undefined);
@@ -221,13 +256,17 @@ function ProfilePane() {
   const anchorMode = useAppStore((s) => s.anchorMode);
   const setAnchorMode = useAppStore((s) => s.setAnchorMode);
   const [workQuery, setWorkQuery] = useState(workOrigin?.label ?? "");
+  const savedWorkLabel = useRef(workOrigin?.label ?? "");
   const [savedHome, setSavedHome] = useState<AnchorPoint | null | undefined>(undefined);
 
   useEffect(() => {
     if (!user) return;
     const switched = seenUserId.current !== undefined && seenUserId.current !== user.id;
     seenUserId.current = user.id;
-    if (switched) contactDirty.current = { name: false, phone: false, bio: false };
+    if (switched) {
+      contactDirty.current = { name: false, phone: false, bio: false };
+      setJoinedAt(null);
+    }
     const epoch = ++contactEpoch.current;
     contactLoaded.current = false;
     if (!contactDirty.current.name) {
@@ -240,20 +279,24 @@ function ProfilePane() {
       .then((row) => {
         if (epoch !== contactEpoch.current) return;
         const dirty = contactDirty.current;
+        const nextName = row.name || user.displayName || "";
+        const nextPhone = row.phone;
+        const nextBio = row.bio;
+        savedContact.current = { name: nextName, phone: nextPhone, bio: nextBio };
         if (!dirty.name) {
-          const nextName = row.name || user.displayName || "";
           nameRef.current = nextName;
           setName(nextName);
         }
         if (!dirty.phone) {
-          phoneRef.current = row.phone;
-          setPhone(row.phone);
+          phoneRef.current = nextPhone;
+          setPhone(nextPhone);
         }
         setEmail(row.email || user.primaryEmail || "");
         if (!dirty.bio) {
-          bioRef.current = row.bio;
-          setBio(row.bio);
+          bioRef.current = nextBio;
+          setBio(nextBio);
         }
+        setJoinedAt(row.joinedAt);
         contactLoaded.current = true;
       })
       .catch(() => {
@@ -261,16 +304,19 @@ function ProfilePane() {
       });
     void getMyCaslConsents()
       .then((row) => {
-        setConsents({
+        const next = {
           smsService: row.smsService,
           emailService: row.emailService,
           emailCommercial: row.emailCommercial,
-        });
+        };
+        savedConsents.current = next;
+        setConsents(next);
       })
       .catch(() => undefined);
     void getMySearchAnchors()
       .then((saved) => {
         setSavedHome(saved.home);
+        savedWorkLabel.current = saved.work?.label ?? "";
         if (saved.work) {
           setWorkOrigin(saved.work);
           setWorkQuery(saved.work.label);
@@ -280,9 +326,15 @@ function ProfilePane() {
       .catch(() => undefined);
   }, [user?.id]);
 
-  async function onSave(e: React.FormEvent) {
+  async function onSave(e: React.FormEvent, leaveEdit = false) {
     e.preventDefault();
     if (!user) return;
+    if (leaveEdit && !nameRef.current.trim()) {
+      setEditField("name");
+      setNameInvalid(true);
+      setGapTick((n) => n + 1);
+      return;
+    }
     const typedWork = workQuery.trim();
     const resolvedWork = workOrigin && typedWork === workOrigin.label.trim() ? workOrigin : null;
     if (typedWork && !resolvedWork) {
@@ -329,6 +381,7 @@ function ProfilePane() {
       setPhone(saved.phone);
       setEmail(saved.email || email);
       setBio(saved.bio);
+      setJoinedAt(saved.joinedAt);
       const nextConsent = await saveMyCaslConsents({
         data: {
           ...consents,
@@ -368,8 +421,26 @@ function ProfilePane() {
         await saveMySearchAnchors({
           data: { home: savedHome, work: resolvedWork, mode },
         });
+        savedWorkLabel.current = resolvedWork?.label ?? "";
       }
       confirmAction(t, "profileSaved");
+      savedContact.current = { name: saved.name, phone: saved.phone, bio: saved.bio };
+      savedConsents.current = {
+        smsService: nextConsent.smsService,
+        emailService: nextConsent.emailService,
+        emailCommercial: nextConsent.emailCommercial,
+      };
+      if (leaveEdit) {
+        setNameInvalid(false);
+        void navigate({
+          to: "/account",
+          search: {
+            tab: "profile",
+            ...(search.desk ? { desk: search.desk } : {}),
+          },
+          replace: true,
+        });
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("accountSaveFailed"));
     } finally {
@@ -388,15 +459,18 @@ function ProfilePane() {
             ? t("accountBackParent")
             : null;
 
+  const connect = Route.useLoaderData();
   const hideUpgrade = desk === "admin" || chrome.subscriptionsEnabled !== true;
   const section =
-    nativeShell && search.section === "subscription"
+    search.section === "wallet" && !connect.enabled
       ? "profile"
-      : hideUpgrade && search.section === "subscription"
+      : nativeShell && search.section === "subscription"
         ? "profile"
-        : (search.section ?? "profile");
+        : hideUpgrade && search.section === "subscription"
+          ? "profile"
+          : (search.section ?? "profile");
   const sectionSearch = (
-    next: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents" | "refer",
+    next: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents" | "refer" | "wallet",
   ) => ({
     tab: "profile" as const,
     ...(search.desk ? { desk: search.desk } : {}),
@@ -406,6 +480,7 @@ function ProfilePane() {
     { id: "profile" as const, label: t("profile") },
     { id: "alerts" as const, label: t("accountAlerts") },
     { id: "security" as const, label: t("loginSecurity") },
+    { id: "wallet" as const, label: t("walletTitle") },
     { id: "email-sms" as const, label: t("emailAndSms") },
     { id: "documents" as const, label: t("familyDocs") },
     { id: "appearance" as const, label: t("appearance") },
@@ -413,57 +488,263 @@ function ProfilePane() {
     { id: "subscription" as const, label: t("navUpgrade") },
     { id: "delete" as const, label: t("deleteAccount") },
   ].filter((item) => {
+    if (item.id === "wallet" && (!connect.enabled || !user)) return false;
     if (nativeShell && item.id === "subscription") return false;
     if (item.id === "subscription" && hideUpgrade) return false;
     return true;
   });
+  const router = useRouter();
+  const editing = search.edit === "1" && section === "profile";
+  const french = locale === "fr";
+
+  function profileFactRows(): ProfileFact[] {
+    const rows: ProfileFact[] = [];
+    const listings = profileDesk?.ok ? profileDesk.listings : [];
+    if (daycareStats && listings.length) {
+      const ages = sharedText(listings.map((listing) => listing.ages));
+      const hours = sharedText(listings.map((listing) => listingHours(listing, french)));
+      const languages = sharedText(listings.map((listing) => listing.languages));
+      const spots = sharedNumber(listings.map((listing) => listing.spots));
+      if (ages) rows.push({ id: "ages", label: t("agesAccepted"), value: french ? `${ages} mois` : `${ages} months` });
+      if (hours) rows.push({ id: "hours", label: t("hours"), value: hours });
+      if (languages) rows.push({ id: "languages", label: t("profileLanguages"), value: languages });
+      if (spots != null) rows.push({ id: "spots", label: t("spotsAvailable"), value: String(spots) });
+    }
+    if (!daycareStats) {
+      if (workQuery.trim()) rows.push({ id: "area", label: t("profileArea"), value: workQuery.trim() });
+      const languages = profileDesk?.ok ? profileDesk.languages.join(", ") : "";
+      if (languages) rows.push({ id: "languages", label: t("profileLanguages"), value: languages });
+    }
+    return rows;
+  }
+  const roleId = profileRoleId(chrome.role, highlightDesk("/account", sticky, desk));
+  const daycareStats = showProfileStats(roleId);
+  const homeSearch = {
+    tab: "profile" as const,
+    ...(search.desk ? { desk: search.desk } : {}),
+  };
+  const backTo = desk ? DESK_PATH[desk] : "/menu";
+
+  const userId = user?.id;
+  useEffect(() => {
+    if (!daycareStats || !userId) {
+      setReviewCount(null);
+      setRatingX10(null);
+      return;
+    }
+    setReviewCount(null);
+    setRatingX10(null);
+    let live = true;
+    void loadMenuProviderCards()
+      .then((cards) => {
+        if (!live) return;
+        setReviewCount(cards.reviewCount);
+        setRatingX10(cards.ratingX10);
+      })
+      .catch(() => {
+        if (!live) return;
+        setReviewCount(null);
+        setRatingX10(null);
+      });
+    return () => {
+      live = false;
+    };
+  }, [daycareStats, userId]);
+
+  useEffect(() => {
+    if (!userId) {
+      setProfileDesk(null);
+      return;
+    }
+    let live = true;
+    void loadProfileDesk()
+      .then((desk) => {
+        if (live) setProfileDesk(desk);
+      })
+      .catch(() => {
+        if (live) setProfileDesk(null);
+      });
+    return () => {
+      live = false;
+    };
+  }, [userId]);
+
+  useEffect(() => {
+    if (!gapTick) return;
+    focusFirstInvalid(formRef.current);
+  }, [gapTick]);
+
+  function discardEdits() {
+    const snap = savedContact.current;
+    contactDirty.current = { name: false, phone: false, bio: false };
+    nameRef.current = snap.name;
+    phoneRef.current = snap.phone;
+    bioRef.current = snap.bio;
+    setName(snap.name);
+    setPhone(snap.phone);
+    setBio(snap.bio);
+    setConsents(savedConsents.current);
+    setWorkQuery(savedWorkLabel.current);
+    setNameInvalid(false);
+    setSmsNote("");
+    void getMySearchAnchors()
+      .then((saved) => {
+        setSavedHome(saved.home);
+        setWorkOrigin(saved.work);
+        setWorkQuery(saved.work?.label ?? "");
+        if (saved.mode) setAnchorMode(saved.mode);
+      })
+      .catch(() => undefined);
+    void navigate({ to: "/account", search: homeSearch, replace: true });
+  }
 
   return (
     <AccountDeskFrame desk={desk}>
       <main className={desk ? "max-w-lg pb-6" : "ke-gutter mx-auto max-w-lg pb-10 pt-6"}>
-        {desk ? (
-          desk === "admin" ? (
-            <AdminDeskLink className="mb-3 inline-block text-sm font-medium text-primary">{backCopy}</AdminDeskLink>
-          ) : (
-            <Link to={DESK_PATH[desk]} className="mb-3 inline-block text-sm font-medium text-primary">
-              {backCopy}
+        <div className="flex items-center justify-between gap-3">
+          {editing && editField ? (
+            <button
+              type="button"
+              aria-label={t("back")}
+              data-ke="profile-field-back"
+              onClick={() => setEditField(null)}
+              className="grid size-11 place-items-center rounded-full text-fg touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+            >
+              <ChevronLeft className="size-6" aria-hidden />
+            </button>
+          ) : editing ? (
+            <span className="size-11" aria-hidden />
+          ) : section !== "profile" ? (
+            <Link
+              to="/account"
+              search={homeSearch}
+              aria-label={t("back")}
+              data-ke="profile-back"
+              className="grid size-11 place-items-center rounded-full text-fg touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+            >
+              <ChevronLeft className="size-6" aria-hidden />
             </Link>
+          ) : desk === "admin" ? (
+            <AdminDeskLink
+              className="grid size-11 place-items-center rounded-full text-fg touch-manipulation"
+              aria-label={backCopy ?? t("back")}
+              data-ke="profile-back"
+            >
+              <ChevronLeft className="size-6" aria-hidden />
+            </AdminDeskLink>
+          ) : (
+            <Link
+              to={backTo}
+              aria-label={backCopy ?? t("back")}
+              data-ke="profile-back"
+              onClick={(event) => {
+                if (!router.history.canGoBack()) return;
+                event.preventDefault();
+                router.history.back();
+              }}
+              className="grid size-11 place-items-center rounded-full text-fg touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+            >
+              <ChevronLeft className="size-6" aria-hidden />
+            </Link>
+          )}
+          {section === "profile" && !editing && canEditProfile ? (
+            <Link
+              to="/account"
+              search={{ ...homeSearch, edit: "1" as const }}
+              data-ke="profile-edit"
+              className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-primary touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+            >
+              {t("profileEdit")}
+            </Link>
+          ) : editing ? (
+            <h1 className="min-w-0 flex-1 truncate text-center text-base font-semibold">
+              {editField === "name"
+                ? t("name")
+                : editField === "phone"
+                  ? t("accountPhone")
+                  : editField === "email"
+                    ? t("email")
+                    : editField === "work"
+                      ? t("anchorWorkLabel")
+                      : editField === "about"
+                        ? t("accountBio")
+                        : t("profileEditTitle")}
+            </h1>
+          ) : section !== "profile" ? (
+            <h1 className="min-w-0 truncate text-base font-semibold">
+              {sections.find((item) => item.id === section)?.label}
+            </h1>
+          ) : (
+            <span className="size-11" aria-hidden />
+          )}
+          {editing && !editField ? (
+            <button
+              type="button"
+              aria-label={t("close")}
+              data-ke="profile-cancel"
+              onClick={discardEdits}
+              className="grid size-11 place-items-center rounded-full text-fg touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+            >
+              <X className="size-5" aria-hidden />
+            </button>
+          ) : editing ? (
+            <span className="size-11" aria-hidden />
+          ) : null}
+        </div>
+        {section === "profile" && !editing && user ? (
+          <>
+            <ProfileHeroCard
+              userId={user.id}
+              photo={user.profileImageUrl}
+              name={name || user.displayName || t("profile")}
+              roleId={roleId}
+              emailVerified={user.emailVerified === true}
+              licensed={daycareStats ? Boolean(profileDesk?.listings.some((listing) => listing.licensed)) : false}
+              reviewCount={daycareStats ? reviewCount : null}
+              ratingX10={daycareStats ? ratingX10 : null}
+              years={yearsOnKidEase(joinedAt)}
+              childCount={daycareStats ? null : profileDesk?.ok ? profileDesk.childCount : null}
+            />
+            <ProfileFacts rows={profileFactRows()} bio={bio} />
+            {daycareStats && profileDesk?.ok ? (
+              <ProfileDeskExtras listings={profileDesk.listings} reviews={profileDesk.reviews} />
+            ) : null}
+            <nav data-ke="account-sections" aria-label={t("menuAccountSettings")} className="mt-8 border-t border-border">
+              <h2 className="px-1 pb-1 pt-4 text-sm font-semibold">{t("menuAccountSettings")}</h2>
+              {sections
+                .filter((item) => item.id !== "profile")
+                .map((item) => (
+                  <Link
+                    key={item.id}
+                    to="/account"
+                    search={sectionSearch(item.id)}
+                    data-ke={`account-section-${item.id}`}
+                    className="flex min-h-11 items-center justify-between gap-3 border-b border-border text-[15px] touch-manipulation"
+                  >
+                    {item.label}
+                    <ChevronRight className="size-4 shrink-0 text-muted" aria-hidden />
+                  </Link>
+                ))}
+            </nav>
+          </>
+        ) : null}
+        {section === "profile" && !editing && !user ? (
+          isPending ? (
+            <div className="mt-6">
+              <DeskSkeleton />
+            </div>
+          ) : (
+            <div className="mt-8 text-center">
+              <h1 className="font-display text-[1.75rem]">{t("profile")}</h1>
+              <p className="mt-3 text-sm text-muted">{t("accountSettingsGuest")}</p>
+              <Button className="mt-6" size="lg" asChild>
+                <Link to="/login" search={parentLoginSearch("/account?tab=profile")}>
+                  {t("accountSignInPhoto")}
+                </Link>
+              </Button>
+            </div>
           )
         ) : null}
-        {desk ? (
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">
-            {(desk === "parent"
-              ? t("deskParent")
-              : desk === "provider"
-                ? t("deskDirector")
-                : desk === "admin"
-                  ? t("deskAdmin")
-                  : t("deskSupport"))}{" "}
-            · {t("account")}
-          </p>
-        ) : null}
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="font-display text-[1.75rem] tracking-[-0.03em]">{t("account")}</h1>
-          <NotificationBell className="md:hidden" />
-        </div>
-        <nav data-ke="account-sections" aria-label={t("account")} className="mt-4 flex flex-col gap-1">
-          {sections.map((item) => (
-            <Link
-              key={item.id}
-              to="/account"
-              search={sectionSearch(item.id)}
-              data-ke={`account-section-${item.id}`}
-              aria-current={section === item.id ? "page" : undefined}
-              className={
-                section === item.id
-                  ? "flex min-h-11 items-center rounded-xl bg-primary px-3 text-sm font-medium text-primary-fg"
-                  : "flex min-h-11 items-center rounded-xl px-3 text-sm font-medium text-fg ring-1 ring-border"
-              }
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
         {section === "documents" ? <FamilyVaultPanel signedIn={Boolean(user)} /> : null}
         {section === "alerts" && user ? (
           <AlertPushSettings
@@ -502,6 +783,7 @@ function ProfilePane() {
             <SignedInDevices />
           </div>
         ) : null}
+        {section === "wallet" && user && connect.enabled ? <ParentWallet state={connect} /> : null}
         {section === "email-sms" && user ? (
           <form onSubmit={onSave} className="mt-8 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="account-email-sms">
             <h2 className="font-display text-lg tracking-[-0.02em]">{t("emailAndSms")}</h2>
@@ -526,153 +808,197 @@ function ProfilePane() {
             </p>
           </form>
         ) : null}
-        {section !== "profile" ? null : (
+        {section === "profile" && editing ? (
         <>
-        <div className="mt-8 flex flex-col items-center text-center">
-          <ProfileAvatar userId={user?.id} fallback={user?.profileImageUrl} name={name || user?.displayName} size="lg" />
-          <p className="mt-4 text-lg font-semibold">{name || user?.displayName || t("profile")}</p>
-          {email || user?.primaryEmail ? (
-            <p className="mt-1 text-sm text-muted">{email || user?.primaryEmail}</p>
-          ) : null}
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/*"
-            className="sr-only"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              e.target.value = "";
-              if (!file) return;
-              if (!user) return;
-              setBusy(true);
-              void compressProfileFile(file)
-                .then(async (dataUrl) => {
-                  writeProfilePhoto(user.id, dataUrl);
-                  await authClient.updateUser({ image: dataUrl });
-                  confirmAction(t, "photoUploaded", { title: t("accountPhotoUpdated") });
-                })
-                .catch((err) => toast.error(err instanceof Error ? err.message : t("accountPhotoFailed")))
-                .finally(() => setBusy(false));
-            }}
-          />
-          {isPending && !user ? (
-            <div className="mt-6 w-full">
-              <DeskSkeleton />
-            </div>
-          ) : user ? (
-            <Button className="mt-6" size="lg" disabled={busy} onClick={() => inputRef.current?.click()}>
-              {busy ? t("loading") : t("accountChangePhoto")}
-            </Button>
-          ) : (
-            <Button className="mt-6" size="lg" asChild>
-              <Link to="/login" search={parentLoginSearch("/account?tab=profile")}>
-                {t("accountSignInPhoto")}
-              </Link>
-            </Button>
-          )}
-        </div>
-
-        {isPending && !user ? null : user ? (
-          <form onSubmit={onSave} className="mt-8 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
-            <h2 className="font-display text-lg tracking-[-0.02em]">{t("accountContactTitle")}</h2>
-            <p className="text-[13px] text-muted">{t("accountContactLead")}</p>
-            <label className="block text-sm">
-              {t("name")}
-              <input
-                className="ke-input mt-1"
-                value={name}
-                onChange={(e) => {
-                  contactDirty.current.name = true;
-                  nameRef.current = e.target.value;
-                  setName(e.target.value);
-                }}
-                autoComplete="name"
-                maxLength={80}
-              />
-            </label>
-            <label className="block text-sm">
-              {t("accountPhone")}
-              <input
-                className="ke-input mt-1"
-                value={phone}
-                onChange={(e) => {
-                  contactDirty.current.phone = true;
-                  phoneRef.current = e.target.value;
-                  setPhone(e.target.value);
-                }}
-                autoComplete="tel"
-                inputMode="tel"
-                maxLength={32}
-                placeholder="204-555-0100"
-              />
-            </label>
-            <label className="block text-sm">
-              {t("email")}
-              <input className="ke-input mt-1 bg-bg" value={email} readOnly autoComplete="email" />
-            </label>
-            <p className="text-[12px] text-subtle">{t("accountEmailNote")}</p>
-            <label className="block text-sm">
-              {t("accountBio")}
-              <textarea
-                className="ke-input mt-1 min-h-24 resize-y"
-                value={bio}
-                onChange={(e) => {
-                  contactDirty.current.bio = true;
-                  bioRef.current = e.target.value;
-                  setBio(e.target.value);
-                }}
-                maxLength={400}
-                placeholder={t("accountBioPh")}
-              />
-            </label>
-            <p className="text-right text-[12px] text-subtle">{bio.length}/400</p>
-            <CaslConsentFields value={consents} onChange={setConsents} />
+        {isPending && !user ? (
+          <div className="mt-6">
+            <DeskSkeleton />
+          </div>
+        ) : user ? (
+          <form ref={formRef} onSubmit={(e) => void onSave(e, true)} className="mt-6" data-ke="profile-edit-form">
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (!file || !user) return;
+                setBusy(true);
+                void compressProfileFile(file)
+                  .then(async (dataUrl) => {
+                    writeProfilePhoto(user.id, dataUrl);
+                    await authClient.updateUser({ image: dataUrl });
+                    confirmAction(t, "photoUploaded", { title: t("accountPhotoUpdated") });
+                  })
+                  .catch((err) => toast.error(err instanceof Error ? err.message : t("accountPhotoFailed")))
+                  .finally(() => setBusy(false));
+              }}
+            />
+            {editField == null ? (
+              <>
+                <div className="flex flex-col items-center">
+                  <div className="relative">
+                    <ProfileAvatar userId={user.id} fallback={user.profileImageUrl} name={name || user.displayName} size="hero" />
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => inputRef.current?.click()}
+                      className="absolute -bottom-3 left-1/2 inline-flex min-h-11 -translate-x-1/2 items-center rounded-full border border-fg bg-bg px-3 text-sm font-semibold touch-manipulation"
+                    >
+                      {busy ? t("loading") : t("profileEdit")}
+                    </button>
+                  </div>
+                </div>
+                <h2 className="mt-8 text-sm font-semibold">{t("profileMyProfile")}</h2>
+                <p className="mt-1 text-sm text-muted">{t("profilePublicNote")}</p>
+                <ul className="mt-3 border-t border-border">
+                  {(
+                    [
+                      { id: "name" as const, label: t("name"), value: name },
+                      { id: "phone" as const, label: t("accountPhone"), value: phone },
+                      { id: "email" as const, label: t("email"), value: email },
+                      { id: "work" as const, label: t("anchorWorkLabel"), value: workQuery },
+                    ]
+                  ).map((row) => (
+                    <li key={row.id} className="border-b border-border">
+                      <button
+                        type="button"
+                        data-ke={`profile-field-${row.id}`}
+                        onClick={() => setEditField(row.id)}
+                        className="flex min-h-14 w-full items-center gap-3 text-left touch-manipulation"
+                      >
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-xs text-muted">{row.label}</span>
+                          <span className="block truncate text-[15px]" data-ke={row.id === "name" ? "profile-name-value" : undefined}>
+                            {row.value.trim() || "—"}
+                          </span>
+                        </span>
+                        <ChevronRight className="size-4 shrink-0 text-muted" aria-hidden />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                {bio.trim() ? <p className="mt-6 whitespace-pre-wrap text-[15px] leading-relaxed">{bio}</p> : null}
+                <button
+                  type="button"
+                  data-ke="profile-edit-about"
+                  onClick={() => setEditField("about")}
+                  className="mt-3 inline-flex min-h-11 items-center rounded-full border border-fg px-4 text-sm font-semibold touch-manipulation"
+                >
+                  {t("profileEditAbout")}
+                </button>
+              </>
+            ) : null}
+            {editField === "name" ? (
+              <label className="mt-6 block text-sm" htmlFor="profile-name">
+                {t("name")}
+                <RequiredMark french={locale === "fr"} />
+                <input
+                  id="profile-name"
+                  data-ke="profile-name"
+                  className={`ke-input mt-1 ${fieldErrorClass(nameInvalid)}`}
+                  value={name}
+                  aria-required="true"
+                  aria-invalid={nameInvalid || undefined}
+                  onChange={(e) => {
+                    contactDirty.current.name = true;
+                    nameRef.current = e.target.value;
+                    setName(e.target.value);
+                    if (e.target.value.trim()) setNameInvalid(false);
+                  }}
+                  autoComplete="name"
+                  maxLength={80}
+                />
+              </label>
+            ) : null}
+            {nameInvalid && editField === "name" ? (
+              <p role="alert" data-ke="profile-required-note" className="mt-3 text-sm text-danger">
+                {t("profileRequiredNote")}
+              </p>
+            ) : null}
+            {editField === "phone" ? (
+              <label className="mt-6 block text-sm">
+                {t("accountPhone")}
+                <input
+                  className="ke-input mt-1"
+                  value={phone}
+                  onChange={(e) => {
+                    contactDirty.current.phone = true;
+                    phoneRef.current = e.target.value;
+                    setPhone(e.target.value);
+                  }}
+                  autoComplete="tel"
+                  inputMode="tel"
+                  maxLength={32}
+                  placeholder="204-555-0100"
+                />
+              </label>
+            ) : null}
+            {editField === "email" ? (
+              <label className="mt-6 block text-sm">
+                {t("email")}
+                <input className="ke-input mt-1 bg-bg" value={email} readOnly autoComplete="email" />
+                <span className="mt-2 block text-[12px] text-subtle">{t("accountEmailNote")}</span>
+              </label>
+            ) : null}
+            {editField === "work" ? (
+              <div className="mt-6">
+                <p className="text-sm font-medium">{t("anchorWorkLabel")}</p>
+                <p className="mt-1 text-[13px] text-muted">{t("anchorNeedWork")}</p>
+                <PlaceSearch
+                  value={workQuery}
+                  onChange={setWorkQuery}
+                  onResolved={(place) => {
+                    setWorkOrigin(place);
+                    setWorkQuery(place.label);
+                    if (anchorMode === "home") setAnchorMode("both");
+                  }}
+                  placeholder={t("anchorWorkPh")}
+                  origin={origin}
+                  inputClassName="ke-input mt-2 w-full"
+                />
+              </div>
+            ) : null}
+            {editField === "about" ? (
+              <label className="mt-6 block text-sm">
+                {t("accountBio")}
+                <textarea
+                  className="ke-input mt-1 min-h-24 resize-y"
+                  value={bio}
+                  onChange={(e) => {
+                    contactDirty.current.bio = true;
+                    bioRef.current = e.target.value;
+                    setBio(e.target.value);
+                  }}
+                  maxLength={400}
+                  placeholder={t("accountBioPh")}
+                />
+                <span className="mt-1 block text-right text-[12px] text-subtle">{bio.length}/400</span>
+              </label>
+            ) : null}
             {smsNote ? (
-              <p className="text-sm text-danger" role="alert">
+              <p className="mt-3 text-sm text-danger" role="alert">
                 {smsNote}
               </p>
             ) : null}
-            <p className="text-[12px] text-subtle">
-              <Link
-                to="/unsubscribe"
-                search={{ token: undefined, channel: undefined }}
-                className="underline-offset-4 hover:underline"
+            <div className="sticky bottom-0 z-10 mt-8 bg-bg py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              <button
+                type="submit"
+                data-ke="account-save-details"
+                disabled={saving}
+                className="flex min-h-11 w-full items-center justify-center rounded-full bg-fg px-4 text-sm font-semibold text-bg touch-manipulation"
               >
-                {t("unsubscribe")}
-              </Link>
-            </p>
-            <div className="pt-2">
-              <p className="text-sm font-medium">{t("anchorWorkLabel")}</p>
-              <p className="mt-1 text-[13px] text-muted">{t("anchorNeedWork")}</p>
-              <PlaceSearch
-                value={workQuery}
-                onChange={setWorkQuery}
-                onResolved={(place) => {
-                  setWorkOrigin(place);
-                  setWorkQuery(place.label);
-                  if (anchorMode === "home") setAnchorMode("both");
-                  if (savedHome === undefined) return;
-                  void saveMySearchAnchors({
-                    data: { home: savedHome, work: place, mode: anchorMode === "home" ? "both" : anchorMode },
-                  }).catch((err) => {
-                    toast.error(err instanceof Error ? err.message : t("anchorWorkMiss"));
-                  });
-                }}
-                placeholder={t("anchorWorkPh")}
-                origin={origin}
-                inputClassName="ke-input mt-2 w-full"
-              />
+                {saving ? t("loading") : t("profileDone")}
+              </button>
             </div>
-            <Button type="submit" className="w-full" disabled={saving} data-ke="account-save-details">
-              {saving ? t("loading") : t("accountSaveDetails")}
-            </Button>
           </form>
         ) : (
           <p className="mt-8 text-center text-sm text-muted">{t("accountSettingsGuest")}</p>
         )}
-        <FooterMoreLinks />
         </>
-        )}
+        ) : null}
       </main>
     </AccountDeskFrame>
   );

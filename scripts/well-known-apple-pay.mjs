@@ -41,3 +41,13 @@ export function applePayDomainAssociationPayload(pathname, env = process.env) {
     contentType: APPLE_PAY_ASSOCIATION_CONTENT_TYPE,
   };
 }
+
+/** 404 until Stripe’s file is pasted into the env. Never invent the body. */
+export function applePayWellKnownResult(pathname, env = process.env) {
+  if (!isApplePayDomainAssociationPath(pathname)) return null;
+  const payload = applePayDomainAssociationPayload(pathname, env);
+  if (!payload) {
+    return { status: 404, body: "Not Found\n", contentType: "text/plain; charset=utf-8" };
+  }
+  return { status: 200, body: payload.body, contentType: payload.contentType };
+}

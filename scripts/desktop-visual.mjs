@@ -46,13 +46,15 @@ export function desktopShotName(width, height, name) {
   return `${width}x${height}__${name}.png`;
 }
 
-async function openRoute(page, base, path) {
+export async function openRoute(page, base, path) {
   const url = new URL(path, base).href;
   const res = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 25000 }).catch(async () => {
     return page.goto(url, { waitUntil: "domcontentloaded", timeout: 25000 });
   });
   await page.evaluate(async () => {
-    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    if (document.fonts && document.fonts.ready) {
+      await Promise.race([document.fonts.ready, new Promise((resolve) => setTimeout(resolve, 3000))]);
+    }
   });
   // Home and contact stills are lazy. A wide window sometimes shoots the placeholder.
   if (path === "/" || path === "/fr" || path === "/contact") {
@@ -63,10 +65,64 @@ async function openRoute(page, base, path) {
           return box.width > 40 && box.bottom > 0 && box.top < window.innerHeight;
         });
         return imgs.length > 0 && imgs.every((img) => img.complete && img.naturalWidth > 0);
-      }, { timeout: 8000 })
+      }, null, { timeout: 8000 })
       .catch(() => {});
   }
   await page.waitForTimeout(250);
+  // The explainer stays empty until it is near the viewport. Wait for that
+  // still and its button, then swap. Decode cannot wait forever.
+  if (path === "/" || path === "/fr") {
+    await page
+      .waitForFunction(() => {
+        const root = document.querySelector("[data-ke='home-how-video']");
+        if (!root) return true;
+        const box = root.getBoundingClientRect();
+        if (box.width < 40 || box.bottom <= 0 || box.top >= window.innerHeight) return true;
+        const img = root.querySelector("img");
+        const video = root.querySelector("video");
+        const mediaReady =
+          (img && img.complete && img.naturalWidth > 0) || Boolean(video && video.getAttribute("poster"));
+        return mediaReady && Boolean(root.querySelector("button"));
+      }, null, { timeout: 4000 })
+      .catch(() => {});
+  }
+  await page.evaluate(async () => {
+    const posters = [...document.querySelectorAll("video")]
+      .map((video) => video.getAttribute("poster"))
+      .filter(Boolean);
+    const warm = posters.every((src) => {
+      const probe = new Image();
+      probe.src = src;
+      return probe.complete && probe.naturalWidth > 0;
+    });
+    if (!warm) {
+      await Promise.all(
+        posters.map(async (src) => {
+          const probe = new Image();
+          probe.src = src;
+          if (probe.complete && probe.naturalWidth > 0) return;
+          await Promise.race([
+            probe.decode().catch(() => {}),
+            new Promise((resolve) => setTimeout(resolve, 3000)),
+          ]);
+        }),
+      );
+    }
+    const style = document.createElement("style");
+    style.textContent = "[data-ke=cookie-consent]{display:none!important}";
+    document.documentElement.appendChild(style);
+    document.querySelectorAll("[data-ke='cookie-consent']").forEach((el) => el.remove());
+    document.querySelectorAll("video").forEach((video) => {
+      video.pause();
+      const poster = video.getAttribute("poster");
+      if (!poster) return;
+      const img = document.createElement("img");
+      img.src = poster;
+      img.alt = "";
+      img.className = video.className;
+      video.replaceWith(img);
+    });
+  });
   return res?.status() ?? 0;
 }
 
@@ -80,10 +136,26 @@ export async function captureDesktopShots(browser, base, outDir) {
       reducedMotion: "reduce",
     });
     await context.addInitScript(() => {
+      const deny = () => {
+        try {
+          localStorage.setItem("kidease-analytics-consent", "denied");
+        } catch {
+          /* private mode */
+        }
+      };
+      deny();
+      document.addEventListener("DOMContentLoaded", deny);
+      const warmPoster = new Image();
+      warmPoster.src = "/video/how-kidease.webp";
+      HTMLMediaElement.prototype.play = function play() {
+        this.pause();
+        return Promise.resolve();
+      };
       const style = document.createElement("style");
       style.setAttribute("data-ke-visual", "stable");
-      style.textContent = "*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}";
-      document.documentElement.appendChild(style);
+      style.textContent = "*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}[data-ke=cookie-consent]{display:none!important}";
+      const root = document.documentElement;
+      if (root) root.appendChild(style);
     });
     for (const route of DESKTOP_ROUTES) {
       const file = join(outDir, desktopShotName(size.width, size.height, route.name));

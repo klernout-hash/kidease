@@ -547,7 +547,7 @@ export async function applyStripeSubscriptionEvent(input: {
   const obj = input.object || {};
   const sql = await getSql();
   const metadata = collectStripeMeta(obj);
-  if (type === "checkout.session.completed" && metadata.kidease === "bill") {
+  if (metadata.kidease === "bill" || metadata.kidease === "fee_tax") {
     return { ok: true, userId: null, handled: type, lane: "ignore" };
   }
 

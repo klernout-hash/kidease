@@ -16,6 +16,7 @@ export const MENU_LEAF_PATHS = [
   "/donate",
   "/team",
   "/contact",
+  "/report",
   "/tour-checklist",
   "/claim",
   "/jobs",

@@ -29,8 +29,11 @@ test("hamburger, account, and the app menu render that list", () => {
   assert.match(more, /data-ke="mobile-menu-links"/);
   assert.match(drawer, /<FooterMoreLinks/);
   assert.equal((drawer.match(/<FooterMoreLinks/g) ?? []).length, 1);
-  assert.match(source("src/routes/account.tsx"), /<FooterMoreLinks/);
-  assert.match(source("src/routes/menu.tsx"), /<FooterMoreLinks/);
+  assert.doesNotMatch(source("src/routes/account.tsx"), /FooterMoreLinks/);
+  assert.match(source("src/routes/account.tsx"), /ProfileHeroCard/);
+  assert.match(source("src/components/profile-hero.tsx"), /data-ke="profile-hero"/);
+  assert.match(source("src/lib/app-menu.ts"), /menuGroupLinks/);
+  assert.match(source("src/components/app-menu-screen.tsx"), /menuGroupLinks/);
   assert.match(source("src/styles.css"), /html\[data-channel="app"\] \.ke-site-footer/);
 });
 

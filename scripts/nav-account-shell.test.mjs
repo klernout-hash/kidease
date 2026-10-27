@@ -51,9 +51,10 @@ test("delete confirmation and avatar live in the account shell", () => {
   assert.match(account, /account-section-\$\{item\.id\}/);
   assert.match(panel, /data-ke="delete-confirm"/);
   assert.match(panel, /DELETE_CONFIRM_PHRASE/);
-  assert.match(shell, /data-ke="header-avatar"/);
+  assert.match(src("src/components/header-account.tsx"), /data-ke="header-avatar"/);
+  assert.match(shell, /HeaderAccount/);
   assert.match(shell, /data-ke="menu-badge"|marker="menu-badge"/);
-  assert.match(bar, /data-ke="tab-avatar"/);
+  assert.match(bar, /marker="menu"/);
   assert.doesNotMatch(bar, /CreditCard/);
   assert.doesNotMatch(src("src/components/parent-desk.tsx"), /delete-account/);
 });

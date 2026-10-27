@@ -34,7 +34,8 @@ export type TransactionalMailPurpose =
   | "waitlist_status"
   | "spot_offer"
   | "open_spots_checkin"
-  | "customer_alert";
+  | "customer_alert"
+  | "earnings_statement";
 export type TransactionalMailProvider = "resend" | "sendgrid" | "titan" | "logged";
 export type TransactionalMailReason =
   | "domain_unverified"
