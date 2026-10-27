@@ -10,21 +10,28 @@ import {
   classifyConnectEvent,
   connectChargeGate,
   connectFeeBps,
+  connectInvoicePaymentSettings,
   connectedAccountBody,
   CONNECT_FEE_BPS_DEFAULT,
   destinationChargeFields,
   appendMonthlyFeeTax,
+  FEE_TAX_DESCRIPTION,
   feeTaxPlan,
   isEarlierPeriod,
   manualFeeTaxCents,
+  monthlyFeeTaxInvoiceBody,
   monthlyFeeTaxLine,
   parentInvoiceBody,
+  PROVINCE_FEE_TAX,
+  provinceFeeTax,
   publicConnectState,
   shapeWalletMethod,
+  stripeTaxCalculationBody,
   walletSetupIntentBody,
   webhookSecrets,
   withoutHostedInvoice,
 } from "../src/lib/connect-payments.ts";
+import { isStripePublishableKey } from "../src/lib/stripe-browser.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (rel) => readFileSync(join(root, rel), "utf8");
@@ -115,7 +122,71 @@ test("tax invoice is skipped unless a rate is configured", () => {
   );
   const manual = monthlyFeeTaxLine({ plan: { kind: "manual", rateId: "txr_ca", taxBps: 500 }, feeCents: 200 });
   assert.equal(manual?.amount, 10);
-  assert.equal(manual?.description, "Tax on KidEase fees");
+  assert.equal(manual?.description, FEE_TAX_DESCRIPTION);
+  assert.match(manual?.description, /Tax on KidEase fees/);
+  assert.match(manual?.description, /Taxe sur les frais KidEase/);
+});
+
+test("fee tax follows the daycare province, or Stripe Tax when that flag is on", () => {
+  assert.equal(PROVINCE_FEE_TAX.length, 13);
+  assert.equal(feeTaxPlan({}).kind, "none");
+  assert.deepEqual(
+    feeTaxPlan({ STRIPE_AUTOMATIC_TAX: "1", KIDEASE_FEE_TAX_BPS: "500", KIDEASE_FEE_TAX_MODE: "province" }),
+    { kind: "stripe_tax" },
+  );
+  assert.equal(feeTaxPlan({ KIDEASE_FEE_TAX_BPS: "500" }).kind, "manual");
+  const table = feeTaxPlan({ KIDEASE_FEE_TAX_MODE: "province", KIDEASE_FEE_TAX_BPS: "500", STRIPE_FEE_TAX_RATE_ID: "txr_flat" });
+  assert.equal(table.kind, "province");
+  assert.equal(table.fallbackBps, 500);
+  assert.equal(table.rateId, "txr_flat");
+
+  const on = monthlyFeeTaxLine({ plan: table, feeCents: 10_000, province: "Ontario" });
+  const ab = monthlyFeeTaxLine({ plan: table, feeCents: 10_000, province: "AB" });
+  const mb = monthlyFeeTaxLine({ plan: table, feeCents: 10_000, province: "Manitoba" });
+  const qc = monthlyFeeTaxLine({ plan: table, feeCents: 10_000, province: "Québec" });
+  const ns = monthlyFeeTaxLine({ plan: table, feeCents: 10_000, province: "NS" });
+  const nb = monthlyFeeTaxLine({ plan: table, feeCents: 10_000, province: "Nouveau-Brunswick" });
+  assert.equal(on?.amount, 1300);
+  assert.equal(ab?.amount, 500);
+  assert.equal(mb?.amount, 1200);
+  assert.equal(qc?.amount, 1498);
+  assert.equal(ns?.amount, 1400);
+  assert.equal(nb?.amount, 1500);
+  assert.notEqual(on?.amount, ab?.amount);
+  assert.notEqual(on?.amount, mb?.amount);
+  assert.match(on?.description, /Ontario HST 13%/);
+  assert.match(on?.description, /TVH de l'Ontario 13 %/);
+  assert.match(qc?.description, /QST 14.975%/);
+  assert.match(qc?.description, /TVQ du Québec 14,975 %/);
+  const noFallback = feeTaxPlan({ KIDEASE_FEE_TAX_MODE: "province" });
+  assert.equal(monthlyFeeTaxLine({ plan: noFallback, feeCents: 10_000, province: "California" }), null);
+  assert.equal(monthlyFeeTaxLine({ plan: noFallback, feeCents: 10_000, province: "" }), null);
+  const fallback = monthlyFeeTaxLine({ plan: table, feeCents: 10_000, province: "" });
+  assert.equal(fallback?.amount, 500);
+  assert.equal(fallback?.description, FEE_TAX_DESCRIPTION);
+
+  const onTax = stripeTaxCalculationBody(10_000, { province: "ON", postalCode: "m5v2t6" });
+  const qcTax = stripeTaxCalculationBody(10_000, { province: "Quebec", postalCode: "not-a-postal" });
+  const blank = stripeTaxCalculationBody(10_000, { province: "" });
+  assert.equal(onTax.customer_details.address.country, "CA");
+  assert.equal(onTax.customer_details.address.state, "ON");
+  assert.equal(onTax.customer_details.address.postal_code, "M5V 2T6");
+  assert.equal(qcTax.customer_details.address.state, "QC");
+  assert.equal(qcTax.customer_details.address.postal_code, undefined);
+  assert.equal(blank.customer_details.address.state, undefined);
+  assert.equal(onTax.line_items[0].amount, 10_000);
+  assert.equal(onTax.line_items[0].tax_behavior, "exclusive");
+  assert.notEqual(onTax.customer_details.address.state, qcTax.customer_details.address.state);
+  const invoice = monthlyFeeTaxInvoiceBody({
+    customerId: "cus_day",
+    daycareId: "d1",
+    period: "2026-10",
+    description: on?.description,
+    province: "Ontario",
+  });
+  assert.equal(invoice.metadata.province, "ON");
+  assert.match(invoice.description, /Ontario HST/);
+  assert.equal(provinceFeeTax("YT")?.perMillion, 50_000);
 });
 
 test("Connect charges stay off and refuse live keys", () => {
@@ -161,10 +232,79 @@ test("Connect charges stay off and refuse live keys", () => {
   assert.equal(shown.googlePayMerchantId, "google-example");
 });
 
+test("live Connect keys need payments on and KIDEASE_CONNECT_LIVE=1", () => {
+  const liveKeys = {
+    STRIPE_SECRET_KEY: "sk_live_example",
+    STRIPE_PUBLISHABLE_KEY: "pk_live_example",
+  };
+  assert.deepEqual(connectChargeGate({ ...liveKeys }), { ok: false, reason: "off" });
+  assert.deepEqual(connectChargeGate({ KIDEASE_CONNECT_PAYMENTS: "on", ...liveKeys }), { ok: false, reason: "live" });
+  assert.deepEqual(connectChargeGate({ KIDEASE_CONNECT_LIVE: "1", ...liveKeys }), { ok: false, reason: "off" });
+  assert.deepEqual(
+    connectChargeGate({ KIDEASE_CONNECT_PAYMENTS: "on", KIDEASE_CONNECT_LIVE: "0", ...liveKeys }),
+    { ok: false, reason: "live" },
+  );
+  assert.deepEqual(
+    connectChargeGate({ KIDEASE_CONNECT_PAYMENTS: "on", KIDEASE_CONNECT_LIVE: "on", ...liveKeys }),
+    { ok: false, reason: "live" },
+  );
+  assert.deepEqual(
+    connectChargeGate({ KIDEASE_CONNECT_PAYMENTS: "on", KIDEASE_CONNECT_LIVE: "1", ...liveKeys }),
+    { ok: true },
+  );
+  assert.equal(
+    connectChargeGate({
+      KIDEASE_CONNECT_PAYMENTS: "on",
+      STRIPE_SECRET_KEY: "sk_test_example",
+      STRIPE_PUBLISHABLE_KEY: "pk_test_example",
+    }).ok,
+    true,
+  );
+  assert.deepEqual(
+    connectChargeGate({
+      KIDEASE_CONNECT_PAYMENTS: "on",
+      KIDEASE_CONNECT_LIVE: "1",
+      STRIPE_SECRET_KEY: "sk_live_example",
+      STRIPE_PUBLISHABLE_KEY: "pk_test_example",
+    }),
+    { ok: false, reason: "live" },
+  );
+  assert.deepEqual(
+    connectChargeGate({
+      KIDEASE_CONNECT_PAYMENTS: "on",
+      KIDEASE_CONNECT_LIVE: "1",
+      STRIPE_SECRET_KEY: "sk_test_example",
+      STRIPE_PUBLISHABLE_KEY: "pk_live_example",
+    }),
+    { ok: false, reason: "live" },
+  );
+  const blocked = publicConnectState({ KIDEASE_CONNECT_PAYMENTS: "on", ...liveKeys });
+  assert.equal(blocked.ready, false);
+  assert.equal(blocked.blockedLive, true);
+  assert.equal(blocked.publishableKey, null);
+  const open = publicConnectState({
+    KIDEASE_CONNECT_PAYMENTS: "on",
+    KIDEASE_CONNECT_LIVE: "1",
+    ...liveKeys,
+    APPLE_MERCHANT_ID: "merchant.example",
+    GOOGLE_PAY_MERCHANT_ID: "google-example",
+  });
+  assert.equal(open.ready, true);
+  assert.equal(open.blockedLive, false);
+  assert.equal(open.publishableKey, "pk_live_example");
+  assert.equal(isStripePublishableKey("pk_live_example"), true);
+  assert.equal(isStripePublishableKey("pk_test_example"), true);
+  assert.equal(isStripePublishableKey("sk_live_example"), false);
+});
+
 test("wallet save and invoices do not use a hosted page", () => {
   const setup = walletSetupIntentBody();
   assert.equal(setup.usage, "off_session");
   assert.deepEqual(setup.payment_method_types, ["card", "acss_debit"]);
+  assert.equal(setup.payment_method_options.acss_debit.currency, "cad");
+  assert.equal(setup.payment_method_options.acss_debit.mandate_options.transaction_type, "personal");
+  const settings = connectInvoicePaymentSettings();
+  assert.deepEqual(settings.payment_method_types, ["card", "acss_debit"]);
   const invoice = parentInvoiceBody({
     mode: "manual",
     customerId: "cus_parent",
@@ -187,12 +327,15 @@ test("wallet save and invoices do not use a hosted page", () => {
   });
   assert.equal(automatic.collection_method, "charge_automatically");
   assert.equal(automatic.default_payment_method, "pm_card");
+  assert.deepEqual(automatic.payment_settings.payment_method_types, ["card", "acss_debit"]);
   const stripped = withoutHostedInvoice({ id: "in_1", hosted_invoice_url: "https://invoice.stripe.com/i/secret", invoice_pdf: "https://files.stripe.com/secret" });
   assert.equal("hosted_invoice_url" in stripped, false);
   assert.equal("invoice_pdf" in stripped, false);
   const account = connectedAccountBody();
   assert.equal(account.country, "CA");
   assert.equal(account.controller.fees.payer, "account");
+  assert.equal(account.capabilities.acss_debit_payments.requested, true);
+  assert.equal(account.capabilities.card_payments.requested, true);
   assert.equal(accountSessionBody("acct_day").components.payouts.enabled, true);
   assert.equal(accountSessionBody("acct_day").components.account_onboarding.enabled, true);
 });
