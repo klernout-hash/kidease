@@ -3125,5 +3125,7 @@
   "profileMyProfile": "我的资料",
   "profilePublicNote": "家庭可以看到你的名字、照片和简介。",
   "profileEditAbout": "编辑简介",
-  "profileDone": "完成"
+  "profileDone": "完成",
+  "switchingToParent": "正在切换到家长模式…",
+  "switchingToDaycare": "正在切换到日托模式…"
 }

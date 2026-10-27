@@ -3125,5 +3125,7 @@
   "profileMyProfile": "ملفي",
   "profilePublicNote": "ترى العائلات اسمك وصورتك ونصك.",
   "profileEditAbout": "تعديل النص",
-  "profileDone": "تم"
+  "profileDone": "تم",
+  "switchingToParent": "التبديل إلى وضع العائلة…",
+  "switchingToDaycare": "التبديل إلى وضع الحضانة…"
 }

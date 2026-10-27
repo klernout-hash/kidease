@@ -3125,5 +3125,7 @@
   "profileMyProfile": "ਮੇਰੀ ਪ੍ਰੋਫਾਈਲ",
   "profilePublicNote": "ਪਰਿਵਾਰ ਤੁਹਾਡਾ ਨਾਮ, ਫੋਟੋ ਅਤੇ ਜਾਣ-ਪਛਾਣ ਵੇਖਦੇ ਹਨ।",
   "profileEditAbout": "ਜਾਣ-ਪਛਾਣ ਸੋਧੋ",
-  "profileDone": "ਹੋ ਗਿਆ"
+  "profileDone": "ਹੋ ਗਿਆ",
+  "switchingToParent": "ਮਾਪੇ ਮੋਡ ਵੱਲ ਜਾ ਰਹੇ ਹਾਂ…",
+  "switchingToDaycare": "ਡੇਅਕੇਅਰ ਮੋਡ ਵੱਲ ਜਾ ਰਹੇ ਹਾਂ…"
 }

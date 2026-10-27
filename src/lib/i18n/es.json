@@ -3125,5 +3125,7 @@
   "profileMyProfile": "Mi perfil",
   "profilePublicNote": "Las familias ven tu nombre, tu foto y tu texto.",
   "profileEditAbout": "Editar el texto",
-  "profileDone": "Listo"
+  "profileDone": "Listo",
+  "switchingToParent": "Cambiando al modo padre…",
+  "switchingToDaycare": "Cambiando al modo guardería…"
 }

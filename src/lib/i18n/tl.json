@@ -3125,5 +3125,7 @@
   "profileMyProfile": "Aking profile",
   "profilePublicNote": "Nakikita ng mga pamilya ang pangalan, larawan, at tungkol sa iyo.",
   "profileEditAbout": "I-edit ang tungkol",
-  "profileDone": "Tapos"
+  "profileDone": "Tapos",
+  "switchingToParent": "Lumilipat sa parent mode…",
+  "switchingToDaycare": "Lumilipat sa daycare mode…"
 }

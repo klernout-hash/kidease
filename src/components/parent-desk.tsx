@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { LedgerHonesty } from "@/components/listing-status-badge";
 import { ChildCareCard } from "@/components/child-care-card";
 import { EmptyState } from "@/components/empty-state";
+import { KidNotebook } from "@/components/kid-art";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getFamily } from "@/lib/server/family";
@@ -511,7 +512,7 @@ export function ParentDesk({
           <p className="mt-1 text-sm text-muted">{t("myRequestsLead")}</p>
           <div className="mt-4">
             {leads.length === 0 && bookings.length === 0 ? (
-              <EmptyState title={t("noRequests")} body={t("noRequestsLead")} action={t("emptyFindCare")} actionTo="/search" />
+              <EmptyState title={t("noRequests")} body={t("noRequestsLead")} action={t("emptyFindCare")} actionTo="/search" art={<KidNotebook />} />
             ) : leads.length ? (
             <Suspense fallback={<div className="ke-skel h-24 rounded-xl" aria-hidden="true" />}>
               <ParentRequestsList items={leads} />

@@ -3125,5 +3125,7 @@
   "profileMyProfile": "我的資料",
   "profilePublicNote": "屋企人睇到你嘅名、相同簡介。",
   "profileEditAbout": "編輯簡介",
-  "profileDone": "完成"
+  "profileDone": "完成",
+  "switchingToParent": "切換緊去家長模式…",
+  "switchingToDaycare": "切換緊去托兒模式…"
 }

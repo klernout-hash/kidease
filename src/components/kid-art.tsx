@@ -22,6 +22,31 @@ export function KidBlocks({ className = "h-16 w-28", tone = "ink" }: ArtProps) {
   );
 }
 
+export function KidFamily({ className = "h-24 w-36" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 140 88" className={className} aria-hidden data-ke="kid-art" data-art="family">
+      <circle cx="46" cy="28" r="12" fill="var(--color-primary)" />
+      <circle cx="78" cy="24" r="9" fill="#e8a317" />
+      <path d="M28 70c2-14 12-20 18-20s16 6 18 20" fill="var(--color-primary)" opacity="0.85" />
+      <path d="M66 66c1-10 8-14 12-14s11 4 12 14" fill="#7eb6e0" />
+      <circle cx="108" cy="58" r="10" fill="none" stroke="var(--color-primary)" strokeWidth="3" />
+      <path d="M92 58h16M100 46v12" stroke="var(--color-primary)" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function KidNotebook({ className = "mx-auto h-20 w-32" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 128 80" className={className} aria-hidden data-ke="kid-art" data-art="notebook">
+      <rect x="28" y="14" width="72" height="54" rx="8" fill="var(--color-primary)" opacity="0.12" />
+      <path d="M64 16v50" stroke="var(--color-primary)" strokeWidth="2" opacity="0.45" />
+      <rect x="38" y="28" width="18" height="4" rx="2" fill="var(--color-primary)" opacity="0.55" />
+      <rect x="38" y="38" width="14" height="4" rx="2" fill="var(--color-primary)" opacity="0.35" />
+      <circle cx="92" cy="36" r="8" fill="#e8a317" />
+    </svg>
+  );
+}
+
 export function KidStars({ className = "mx-auto h-20 w-32" }: { className?: string }) {
   return (
     <svg viewBox="0 0 128 80" className={className} aria-hidden data-ke="kid-art" data-art="stars">
