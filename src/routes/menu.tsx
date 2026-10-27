@@ -24,7 +24,7 @@ export const Route = createFileRoute("/menu")({
     return { section, screen };
   },
   loaderDeps: ({ search }) => ({ screen: search.screen }),
-  loader: async ({ deps }): Promise<{ earnings: HostEarnings | null; insights: HostInsights | null }> => {
+  loader: async ({ deps, context }): Promise<{ earnings: HostEarnings | null; insights: HostInsights | null }> => {
     if (deps.screen === "earnings") {
       try {
         return { earnings: await loadHostEarnings(), insights: null };
@@ -52,7 +52,14 @@ export const Route = createFileRoute("/menu")({
         };
       }
     }
-    return { earnings: null, insights: null };
+    const chrome = (context as { roleChrome?: { role?: string | null; ownedSlugs?: string[] } }).roleChrome;
+    const host = chrome?.role === "provider" || (chrome?.ownedSlugs?.length ?? 0) > 0;
+    if (!host) return { earnings: null, insights: null };
+    const [earnings, insights] = await Promise.all([
+      loadHostEarnings().catch(() => null),
+      loadHostInsights().catch(() => null),
+    ]);
+    return { earnings, insights };
   },
   head: () => ({
     meta: [
@@ -88,7 +95,7 @@ function MenuPage() {
           <MenuDeskTools />
         </Suspense>
       ) : null}
-      <AppMenuScreen section={section} />
+      <AppMenuScreen section={section} earnings={earnings} insights={insights} />
     </ShellLite>
   );
 }

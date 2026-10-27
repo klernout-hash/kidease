@@ -1,6 +1,8 @@
 import { Link } from "@tanstack/react-router";
 import { Plus, Star } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
+import { CountUp } from "@/components/count-up";
+import { KidBlocks, KidStars } from "@/components/kid-art";
 import { LanguageSelect } from "@/components/language-select";
 import { MenuGlyph, MenuRow } from "@/components/menu-row";
 import { ShareKidEaseButton } from "@/components/share-button";
@@ -19,6 +21,7 @@ import type { MenuIconId } from "@/lib/menu-icons";
 import { showStoreComingSoon } from "@/lib/store-placeholders";
 import { formatPlanCad } from "@/lib/upgrade-plans";
 import { useInNativeShell, useStoreChannel } from "@/lib/use-native-shell";
+import { useMounted } from "@/lib/use-mounted";
 import { useCopy } from "@/lib/use-copy";
 import { MonthBars } from "@/components/month-bars";
 
@@ -33,7 +36,15 @@ const GROUP_COPY: Record<MenuGroupId, { title: CopyKey; icon: MenuIconId }> = {
   legal: { title: "menuPrivacyLegal", icon: "privacy" },
 };
 
-export function AppMenuScreen({ section }: { section?: MenuGroupId }) {
+export function AppMenuScreen({
+  section,
+  earnings = null,
+  insights = null,
+}: {
+  section?: MenuGroupId;
+  earnings?: HostEarnings | null;
+  insights?: HostInsights | null;
+}) {
   const { t, locale } = useCopy();
   const chrome = useRoleChrome();
   const { user } = useCurrentUserState();
@@ -48,7 +59,7 @@ export function AppMenuScreen({ section }: { section?: MenuGroupId }) {
 
   if (section) {
     return (
-      <main className="ke-menu-main ke-gutter mx-auto max-w-lg pb-8 pt-5" data-ke="app-menu" data-section={section}>
+      <main className="ke-menu-main ke-screen-enter ke-gutter mx-auto max-w-lg pb-10 pt-6" data-ke="app-menu" data-section={section}>
         <Link to="/menu" className="inline-flex min-h-11 items-center text-sm font-medium text-primary">
           {t("back")}
         </Link>
@@ -72,9 +83,9 @@ export function AppMenuScreen({ section }: { section?: MenuGroupId }) {
   }
 
   return (
-    <main className="ke-menu-main ke-gutter mx-auto max-w-lg pb-8 pt-5" data-ke="app-menu" data-role={chrome.role}>
+    <main className="ke-menu-main ke-screen-enter ke-gutter mx-auto max-w-lg pb-10 pt-6" data-ke="app-menu" data-role={chrome.role}>
       <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">{t("navMenu")}</h1>
-      {hostCards ? <HostCards /> : null}
+      {hostCards ? <HostCards initialEarnings={earnings} initialInsights={insights} /> : null}
       {highlight === "create" ? (
         <Link
           to="/provider"
@@ -82,24 +93,26 @@ export function AppMenuScreen({ section }: { section?: MenuGroupId }) {
           hash="list-new"
           data-ke="menu-highlight"
           data-highlight="create"
-          className="mt-5 flex min-h-24 items-center gap-3 rounded-2xl bg-primary px-4 py-4 text-primary-fg touch-manipulation"
+          className="ke-press mt-6 flex min-h-24 items-center gap-3 rounded-[1.25rem] bg-primary px-5 py-5 text-primary-fg touch-manipulation"
         >
           <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary-fg/15">
             <Plus className="size-6" aria-hidden />
           </span>
-          <span className="text-lg font-semibold leading-snug">{t("menuCreateListing")}</span>
+          <span className="min-w-0 flex-1 text-lg font-semibold leading-snug">{t("menuCreateListing")}</span>
+          <KidBlocks tone="onPrimary" className="h-12 w-20 shrink-0 text-primary-fg" />
         </Link>
       ) : (
         <Link
           to={localePath("/search", locale)}
           data-ke="menu-highlight"
           data-highlight="find"
-          className="mt-5 flex min-h-24 items-center gap-3 rounded-2xl bg-primary px-4 py-4 text-primary-fg touch-manipulation"
+          className="ke-press mt-6 flex min-h-24 items-center gap-3 rounded-[1.25rem] bg-primary px-5 py-5 text-primary-fg touch-manipulation"
         >
           <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary-fg/15">
             <Plus className="size-6" aria-hidden />
           </span>
-          <span className="text-lg font-semibold leading-snug">{t("menuFindDaycare")}</span>
+          <span className="min-w-0 flex-1 text-lg font-semibold leading-snug">{t("menuFindDaycare")}</span>
+          <KidBlocks tone="onPrimary" className="h-12 w-20 shrink-0 text-primary-fg" />
         </Link>
       )}
 
@@ -167,40 +180,58 @@ export function AppMenuScreen({ section }: { section?: MenuGroupId }) {
   );
 }
 
-function HostCards() {
+function HostCards({
+  initialEarnings = null,
+  initialInsights = null,
+}: {
+  initialEarnings?: HostEarnings | null;
+  initialInsights?: HostInsights | null;
+}) {
   const { t, locale } = useCopy();
   const french = locale === "fr";
-  const [earnings, setEarnings] = useState<HostEarnings | null>(null);
-  const [insights, setInsights] = useState<HostInsights | null>(null);
+  const mounted = useMounted();
+  const seeded = initialEarnings != null || initialInsights != null;
+  const [settled, setSettled] = useState(seeded);
+  const [earnings, setEarnings] = useState<HostEarnings | null>(initialEarnings);
+  const [insights, setInsights] = useState<HostInsights | null>(initialInsights);
 
   useEffect(() => {
+    if (seeded) return;
     let live = true;
     void Promise.all([loadHostEarnings().catch(() => null), loadHostInsights().catch(() => null)]).then(
       ([nextEarnings, nextInsights]) => {
         if (!live) return;
         setEarnings(nextEarnings);
         setInsights(nextInsights);
+        setSettled(true);
       },
     );
     return () => {
       live = false;
     };
-  }, []);
+  }, [seeded]);
 
   const cad = (cents: number) => formatPlanCad(cents / 100, french ? "fr" : "en");
   const bars = earnings?.ok ? earnings.bars : [];
   const showChart = chartHasEarnings(bars);
   const rating = insights?.ok ? insightsCardRating(insights) : null;
-  const cardClass = "flex min-h-28 flex-col justify-between rounded-2xl bg-surface p-4 ring-1 ring-border touch-manipulation";
+  const cardClass =
+    "ke-press flex min-h-36 flex-col justify-between gap-3 rounded-[1.25rem] bg-surface p-4 ring-1 ring-border touch-manipulation";
+  const waiting = mounted && !settled;
 
   return (
-    <div className="mt-5 grid grid-cols-2 gap-3" data-ke="menu-summary">
+    <div className="mt-6 grid grid-cols-2 gap-4" data-ke="menu-summary">
       <Link to="/menu" search={{ screen: "earnings" }} data-ke="menu-earnings" className={cardClass}>
         <span className="text-sm text-muted">{t("menuEarningsMonth")}</span>
         {earnings?.ok && typeof earnings.thisMonthCents === "number" ? (
-          <span className="font-display text-2xl tabular-nums">{cad(earnings.thisMonthCents)}</span>
+          <CountUp value={earnings.thisMonthCents} format={cad} className="font-display text-2xl tabular-nums" />
         ) : earnings?.ok ? (
-          <span className="text-sm font-medium">{t("menuEarningsEmpty")}</span>
+          <span className="flex items-end justify-between gap-2">
+            <span className="min-w-0 text-sm font-medium leading-snug">{t("menuEarningsEmpty")}</span>
+            <KidBlocks className="h-10 w-14 shrink-0 text-primary" />
+          </span>
+        ) : waiting ? (
+          <span className="ke-skeleton block h-8 w-20 rounded-md" aria-hidden />
         ) : null}
         {showChart ? (
           <MonthBars
@@ -215,11 +246,16 @@ function HostCards() {
         {rating ? (
           <span className="flex items-center gap-1.5 font-display text-2xl tabular-nums">
             <Star className="size-5 fill-current text-primary" aria-hidden />
-            {(rating.ratingX10 / 10).toFixed(1)}
-            <span className="text-sm font-medium text-muted">({rating.reviewCount})</span>
+            <CountUp value={rating.ratingX10} format={(n) => (n / 10).toFixed(1)} />
+            <CountUp value={rating.reviewCount} format={(n) => `(${n})`} className="text-sm font-medium text-muted" />
           </span>
         ) : insights?.ok ? (
-          <span className="text-sm font-medium">{t("menuReviewsEmpty")}</span>
+          <span className="flex items-end justify-between gap-2">
+            <span className="min-w-0 text-sm font-medium leading-snug">{t("menuReviewsEmpty")}</span>
+            <KidStars className="h-10 w-14 shrink-0" />
+          </span>
+        ) : waiting ? (
+          <span className="ke-skeleton block h-8 w-16 rounded-md" aria-hidden />
         ) : null}
       </Link>
     </div>

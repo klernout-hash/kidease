@@ -1,17 +1,21 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft } from "lucide-react";
 import { useEffect, useState } from "react";
+import { CountUp } from "@/components/count-up";
 import { EmptyState } from "@/components/empty-state";
+import { KidBlocks } from "@/components/kid-art";
 import { MonthBars } from "@/components/month-bars";
 import { billLabel, chartHasEarnings, monthTick, type HostBill, type HostEarnings } from "@/lib/host-desk";
 import { loadHostEarnings } from "@/lib/server/host-desk";
 import { periodLabel } from "@/lib/stripe-methods";
 import { formatPlanCad } from "@/lib/upgrade-plans";
+import { useMounted } from "@/lib/use-mounted";
 import { useCopy } from "@/lib/use-copy";
 
 export function HostEarningsScreen({ initial }: { initial?: HostEarnings | null }) {
   const { t, locale } = useCopy();
   const french = locale === "fr";
+  const mounted = useMounted();
   const [data, setData] = useState<HostEarnings | null>(initial ?? null);
 
   useEffect(() => {
@@ -34,19 +38,19 @@ export function HostEarningsScreen({ initial }: { initial?: HostEarnings | null 
   const empty = data?.ok && data.thisMonthCents == null && !showChart && data.paid.length === 0 && data.upcoming.length === 0;
 
   return (
-    <main className="ke-gutter mx-auto w-full max-w-lg pb-8 pt-4" data-ke="host-earnings">
+    <main className="ke-screen-enter ke-gutter mx-auto w-full max-w-lg pb-10 pt-4" data-ke="host-earnings">
       <div className="flex items-center gap-2">
         <Link
           to="/menu"
           aria-label={t("back")}
-          className="grid size-11 shrink-0 place-items-center rounded-full text-fg touch-manipulation hover:bg-surface"
+          className="ke-press grid size-11 shrink-0 place-items-center rounded-full text-fg touch-manipulation hover:bg-surface"
         >
           <ChevronLeft className="size-6" aria-hidden />
         </Link>
         <h1 className="font-display text-2xl">{t("earningsTitle")}</h1>
       </div>
 
-      {data == null ? <div className="mt-6 h-36 rounded-2xl bg-surface ring-1 ring-border" aria-hidden /> : null}
+      {data == null && mounted ? <SoftSkeleton /> : null}
 
       {data && !data.ok ? (
         <div className="mt-6">
@@ -55,19 +59,19 @@ export function HostEarningsScreen({ initial }: { initial?: HostEarnings | null 
       ) : null}
 
       {data?.ok && empty ? (
-        <div className="mt-6 rounded-2xl bg-surface p-2 ring-1 ring-border">
-          <EmptyState title={t("earningsEmptyTitle")} body={t("earningsEmptyBody")} />
+        <div className="mt-6 rounded-[1.25rem] bg-surface p-4 ring-1 ring-border">
+          <EmptyState title={t("earningsEmptyTitle")} body={t("earningsEmptyBody")} art={<KidBlocks className="mx-auto h-20 w-32 text-primary" />} />
         </div>
       ) : null}
 
       {data?.ok && !empty ? (
         <>
-          <section className="mt-6 rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke="earnings-month">
+          <section className="mt-6 rounded-[1.25rem] bg-surface p-5 ring-1 ring-border" data-ke="earnings-month">
             <p className="text-sm text-muted">{t("earningsThisMonth")}</p>
             {data.thisMonthCents == null ? (
               <p className="mt-2 font-display text-2xl">{t("earningsNoneThisMonth")}</p>
             ) : (
-              <p className="mt-2 font-display text-3xl tabular-nums">{cad(data.thisMonthCents)}</p>
+              <CountUp value={data.thisMonthCents} format={cad} className="mt-2 block font-display text-3xl tabular-nums" />
             )}
             {showChart ? (
               <>
@@ -129,7 +133,7 @@ function BillRow({
   const date = when ? formatWhen(when, french) : bill.period ? periodLabel(bill.period, french ? "fr" : "en") : null;
   const title = billLabel(bill);
   return (
-    <li className="rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke="earnings-bill">
+    <li className="rounded-[1.25rem] bg-surface p-5 ring-1 ring-border" data-ke="earnings-bill">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate font-medium">{title || status}</p>
@@ -150,6 +154,15 @@ function formatWhen(iso: string, french: boolean): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso.slice(0, 10);
   return date.toLocaleDateString(french ? "fr-CA" : "en-CA", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function SoftSkeleton() {
+  return (
+    <div className="mt-6 space-y-3" aria-hidden>
+      <div className="ke-skeleton h-36 rounded-[1.25rem]" />
+      <div className="ke-skeleton h-16 rounded-[1.25rem]" />
+    </div>
+  );
 }
 
 function chartLabel(

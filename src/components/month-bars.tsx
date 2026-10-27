@@ -17,13 +17,13 @@ export function MonthBars({
       aria-label={label}
       data-ke="month-bars"
     >
-      {bars.map((bar) => {
+      {bars.map((bar, index) => {
         const height = bar.cents > 0 ? Math.max(12, Math.round((bar.cents / max) * 100)) : 6;
         return (
           <div key={bar.period} className="flex h-full min-w-0 flex-1 items-end">
             <div
-              className={`w-full rounded-t-md ${bar.cents > 0 ? "bg-primary" : "bg-border"}`}
-              style={{ height: `${height}%` }}
+              className={`ke-bar-grow w-full rounded-t-md ${bar.cents > 0 ? "bg-primary" : "bg-border"}`}
+              style={{ height: `${height}%`, animationDelay: `${index * 45}ms` }}
             />
           </div>
         );

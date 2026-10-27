@@ -123,4 +123,10 @@ test("earnings and insights screens stay free of plan and upgrade links", () => 
   assert.match(menu, /data-ke="menu-earnings"/);
   assert.match(menu, /data-ke="menu-insights"/);
   assert.doesNotMatch(menu, /loadMenuProviderCards/);
+  assert.match(earnings, /KidBlocks/);
+  assert.match(insights, /KidStars/);
+  assert.match(earnings, /prefers-reduced-motion|CountUp/);
+  assert.match(read("src/styles.css"), /prefers-reduced-motion: no-preference[\s\S]*\.ke-bar-grow/);
+  assert.match(read("src/styles.css"), /prefers-reduced-motion: reduce/);
+  assert.match(read("src/components/count-up.tsx"), /prefers-reduced-motion: reduce/);
 });

@@ -1,14 +1,18 @@
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft, Star } from "lucide-react";
 import { useEffect, useState } from "react";
+import { CountUp } from "@/components/count-up";
 import { EmptyState } from "@/components/empty-state";
+import { KidStars } from "@/components/kid-art";
 import { insightsCardRating, type HostInsights, type WrittenReview } from "@/lib/host-desk";
 import { loadHostInsights } from "@/lib/server/host-desk";
+import { useMounted } from "@/lib/use-mounted";
 import { useCopy } from "@/lib/use-copy";
 
 export function HostInsightsScreen({ initial }: { initial?: HostInsights | null }) {
   const { t, locale } = useCopy();
   const french = locale === "fr";
+  const mounted = useMounted();
   const [data, setData] = useState<HostInsights | null>(initial ?? null);
 
   useEffect(() => {
@@ -43,19 +47,27 @@ export function HostInsightsScreen({ initial }: { initial?: HostInsights | null 
   const noReviews = data?.ok && !headline && !hasWritten;
 
   return (
-    <main className="ke-gutter mx-auto w-full max-w-lg pb-8 pt-4" data-ke="host-insights">
+    <main className="ke-screen-enter ke-gutter mx-auto w-full max-w-lg pb-10 pt-4" data-ke="host-insights">
       <div className="flex items-center gap-2">
         <Link
           to="/menu"
           aria-label={t("back")}
-          className="grid size-11 shrink-0 place-items-center rounded-full text-fg touch-manipulation hover:bg-surface"
+          className="ke-press grid size-11 shrink-0 place-items-center rounded-full text-fg touch-manipulation hover:bg-surface"
         >
           <ChevronLeft className="size-6" aria-hidden />
         </Link>
         <h1 className="font-display text-2xl">{t("insightsTitle")}</h1>
       </div>
 
-      {data == null ? <div className="mt-6 h-36 rounded-2xl bg-surface ring-1 ring-border" aria-hidden /> : null}
+      {data == null && mounted ? (
+        <div className="mt-6 space-y-3" aria-hidden>
+          <div className="ke-skeleton h-28 rounded-[1.25rem]" />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="ke-skeleton h-20 rounded-[1.25rem]" />
+            <div className="ke-skeleton h-20 rounded-[1.25rem]" />
+          </div>
+        </div>
+      ) : null}
 
       {data && !data.ok ? (
         <div className="mt-6">
@@ -66,8 +78,8 @@ export function HostInsightsScreen({ initial }: { initial?: HostInsights | null 
       {data?.ok ? (
         <>
           {noReviews ? (
-            <div className="mt-6 rounded-2xl bg-surface p-2 ring-1 ring-border">
-              <EmptyState title={t("insightsEmptyTitle")} body={t("insightsEmptyBody")} />
+            <div className="mt-6 rounded-[1.25rem] bg-surface p-4 ring-1 ring-border">
+              <EmptyState title={t("insightsEmptyTitle")} body={t("insightsEmptyBody")} art={<KidStars />} />
             </div>
           ) : null}
 
@@ -129,12 +141,12 @@ function RatingBlock({
   marker: string;
 }) {
   return (
-    <section className="mt-6 rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke={marker}>
+    <section className="mt-6 rounded-[1.25rem] bg-surface p-5 ring-1 ring-border" data-ke={marker}>
       <p className="text-sm text-muted">{label}</p>
       <p className="mt-2 flex items-center gap-1.5 font-display text-3xl tabular-nums">
         <Star className="size-6 fill-current text-primary" aria-hidden />
-        {(ratingX10 / 10).toFixed(1)}
-        <span className="text-base font-medium text-muted">({count})</span>
+        <CountUp value={ratingX10} format={tenths} />
+        <CountUp value={count} format={countLabel} className="text-base font-medium text-muted" />
       </p>
     </section>
   );
@@ -151,12 +163,12 @@ function ActivityCounts({ data }: { data: HostInsights }) {
   ].filter((item) => item != null);
   if (!items.length) return null;
   return (
-    <ul className="mt-4 grid grid-cols-2 gap-3" data-ke="insights-counts">
+    <ul className="mt-5 grid grid-cols-2 gap-4" data-ke="insights-counts">
       {items.map((item) => {
         const body = (
           <>
             <span className="text-sm text-muted">{item.label}</span>
-            <span className="mt-1 block font-display text-2xl tabular-nums">{item.value}</span>
+            <CountUp value={item.value} format={plainCount} className="mt-1 block font-display text-2xl tabular-nums" />
           </>
         );
         return (
@@ -165,13 +177,13 @@ function ActivityCounts({ data }: { data: HostInsights }) {
               <Link
                 to="/provider"
                 search={{ desk: item.to }}
-                className="block min-h-20 rounded-2xl bg-surface p-4 ring-1 ring-border touch-manipulation"
+                className="ke-press block min-h-20 rounded-[1.25rem] bg-surface p-5 ring-1 ring-border touch-manipulation"
                 data-ke={`insights-${item.id}`}
               >
                 {body}
               </Link>
             ) : (
-              <div className="min-h-20 rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke={`insights-${item.id}`}>
+              <div className="min-h-20 rounded-[1.25rem] bg-surface p-5 ring-1 ring-border" data-ke={`insights-${item.id}`}>
                 {body}
               </div>
             )}
@@ -186,7 +198,7 @@ function ReviewCard({ review, french }: { review: WrittenReview; french: boolean
   const text = french && review.bodyFr.trim() ? review.bodyFr.trim() : review.body.trim();
   const when = formatWhen(review.createdAt, french);
   return (
-    <li className="rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke="insights-review">
+    <li className="rounded-[1.25rem] bg-surface p-5 ring-1 ring-border" data-ke="insights-review">
       <div className="flex items-baseline justify-between gap-3">
         <p className="min-w-0 truncate font-medium">{review.author}</p>
         <p className="flex shrink-0 items-center gap-1 text-sm tabular-nums">
@@ -199,6 +211,18 @@ function ReviewCard({ review, french }: { review: WrittenReview; french: boolean
       {when ? <p className="mt-2 text-xs text-muted">{when}</p> : null}
     </li>
   );
+}
+
+function tenths(value: number): string {
+  return (value / 10).toFixed(1);
+}
+
+function countLabel(value: number): string {
+  return `(${value})`;
+}
+
+function plainCount(value: number): string {
+  return String(value);
 }
 
 function formatWhen(iso: string, french: boolean): string | null {

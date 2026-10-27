@@ -220,7 +220,7 @@ function Tab({
       data-nav={marker}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "relative flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 overflow-hidden px-0.5 text-center text-[0.72rem] font-medium leading-[1.05] touch-manipulation",
+        "ke-press relative flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 overflow-hidden px-0.5 text-center text-[0.72rem] font-medium leading-[1.05] touch-manipulation",
         active ? "text-primary" : "text-muted",
       )}
     >
