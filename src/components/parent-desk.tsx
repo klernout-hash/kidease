@@ -360,7 +360,7 @@ export function ParentDesk({
 
   useEffect(() => {
     function refresh() {
-      void loadFamily().catch(() => undefined);
+      void loadFamily(true).catch(() => undefined);
     }
     window.addEventListener("kidease-shortlist", refresh);
     return () => window.removeEventListener("kidease-shortlist", refresh);

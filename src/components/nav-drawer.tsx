@@ -24,6 +24,7 @@ import { nextDrawerLatch, type DrawerLatch } from "@/lib/drawer-latch";
 import { useInNativeShell } from "@/lib/use-native-shell";
 import { useRoleChrome } from "@/components/role-chrome";
 import { SmartMatchEntry } from "@/components/smart-match";
+import { FooterMoreLinks } from "@/components/footer-more-links";
 
 type Item = { to: string; label: string; search?: Record<string, string>; icon: MenuIconId; marker?: string };
 
@@ -337,6 +338,16 @@ export function NavDrawer({
               />
             </span>
           ))}
+          <FooterMoreLinks
+            appearance="drawer"
+            onNavigate={onClose}
+            share={!signedIn}
+            omit={
+              guestMenu
+                ? ["/search", "/cities", "/compare", "/tour-checklist", "/claim", "/plans", "/jobs", "/help", "/faq", "/contact"]
+                : ["/help", "/faq", "/contact"]
+            }
+          />
           {signedIn ? <ShareKidEaseButton appearance="drawer" onDone={onClose} /> : null}
           {signedIn ? (
             <>

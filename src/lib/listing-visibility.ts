@@ -65,10 +65,10 @@ const KNOWN_ADMIN_ONLY_LICENCES = new Set(["test-ghost-0001"]);
 export const PUBLIC_LIVE_KEEP_SLUGS = new Set(["kids-world-daycare-kh2t"]);
 
 /**
- * This QA-looking slug is a real public page. Do not 404 it with the qa- fixture rule.
- * Other qa- slugs, including qa-test-photo-upload, stay admin-only.
+ * Slugs that look like QA fixtures but must stay on the public catalogue.
+ * qa-test-daycare-listing-z5hz is a hidden QA centre, so this set stays empty.
  */
-export const PUBLIC_CATALOGUE_SLUGS = new Set(["qa-test-daycare-listing-z5hz"]);
+export const PUBLIC_CATALOGUE_SLUGS = new Set<string>();
 
 /**
  * Kyle's claimed catalogue fixture. Same admin-only signal as TEST/ghost rows

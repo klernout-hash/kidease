@@ -30,6 +30,7 @@ import {
 import { sendSms } from "@/lib/server/sms";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { transactionalMailFrom } from "@/lib/mail-from";
+import { mailPreheaderHtml } from "@/lib/mail-copy";
 import { dayKeyInTimeZone, formatInTimeZone } from "@/lib/family-time";
 
 /** Owner / admin notify. Support cases route through support@kidease.ca on the desk — not this address. */
@@ -393,6 +394,7 @@ function emailCopy(p: PlatformEvent) {
   const cta = account ? "Open Admin" : "Open KidEase";
   const html = `<!doctype html>
 <html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
+  ${mailPreheaderHtml(title)}
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">
     <tr><td style="padding:28px 28px 8px;">
       <p style="margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#5c6578;">KidEase</p>
@@ -668,6 +670,8 @@ export async function notifyThreadParty(p: {
   name?: string | null;
   subject: string;
   preview: string;
+  previewFr?: string | null;
+  preheader?: string | null;
   threadUrl: string;
   daycareName: string;
 }) {
@@ -677,10 +681,12 @@ export async function notifyThreadParty(p: {
     return { status: "skipped" as const };
   }
   const who = (p.name || "there").split(" ")[0] || "there";
+  const french = (p.previewFr || "").trim();
   const text = [
     `Hi ${who},`,
     "",
     p.preview,
+    ...(french ? ["", french] : []),
     "",
     `Open the thread: ${p.threadUrl}`,
     "",
@@ -689,12 +695,14 @@ export async function notifyThreadParty(p: {
   ].join("\n");
   const html = `<!doctype html>
 <html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
+  ${mailPreheaderHtml(p.preheader || p.preview)}
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">
     <tr><td style="padding:28px;">
       <p style="margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#5c6578;">KidEase</p>
       <h1 style="margin:12px 0 0;font-size:24px;line-height:1.2;">${esc(p.subject)}</h1>
       <p style="margin:16px 0 0;">Hi ${esc(who)},</p>
       <p style="margin:16px 0 0;">${esc(p.preview)}</p>
+      ${french ? `<p style="margin:12px 0 0;">${esc(french)}</p>` : ""}
       <p style="margin:24px 0 0;">
         <a href="${esc(p.threadUrl)}" style="display:inline-block;background:#1a3790;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;">Open thread</a>
       </p>

@@ -15,6 +15,7 @@ import { isAdminOnlyListing, listingVisibilityForOwners, providerDeskListingVisi
 import { callerIsAdmin, callerIsTestAccount, callerMayUseAdminOnlyListing } from "@/lib/server/public-listing";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { emptyChild, mapChild, type ChildRow } from "@/lib/child-profile";
+import { childBirthdateMessage, childBirthdateProblem } from "@/lib/child-birthdate";
 import type { AgeGroup, Booking, BookingStatus, Child, Conversation, Locale, Message, PayMethod, Schedule } from "@/lib/types";
 import {
   centreAckMessage,
@@ -397,6 +398,8 @@ export const addChild = createServerFn({ method: "POST" })
     const id = nid("ch");
     const f = childFields({ ...emptyChild(), ...data });
     if (!f.name || !f.birthdate) throw new Error("Name and birthdate are required");
+    const birthProblem = childBirthdateProblem(f.birthdate);
+    if (birthProblem) throw new Error(childBirthdateMessage(birthProblem));
     await sql`
       insert into children (
         id, user_id, name, preferred_name, birthdate, allergies, epi_pen, medical_notes, medications,
@@ -421,6 +424,8 @@ export const updateChild = createServerFn({ method: "POST" })
     const sql = await getSql();
     const f = childFields(data);
     if (!f.name || !f.birthdate) throw new Error("Name and birthdate are required");
+    const birthProblem = childBirthdateProblem(f.birthdate);
+    if (birthProblem) throw new Error(childBirthdateMessage(birthProblem));
     const rows = await sql<{ id: string }>`
       update children set
         name = ${f.name},

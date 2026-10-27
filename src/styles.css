@@ -673,6 +673,12 @@
     background: var(--color-surface);
     padding-block: 1.35rem 1.15rem;
   }
+  /* Tab-bar shells (native and phone widths) hide the big footer.
+     Those links stay in the menu. pointer-events stays off so a hidden footer cannot eat taps. */
+  html[data-channel="app"] .ke-site-footer {
+    display: none !important;
+    pointer-events: none !important;
+  }
   .ke-footer-inner {
     max-width: 56rem;
     margin-inline: auto;

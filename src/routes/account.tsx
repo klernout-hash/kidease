@@ -36,6 +36,7 @@ import { DeleteAccountPanel } from "@/components/delete-account-panel";
 import { NotificationBell } from "@/components/notification-bell";
 import { AlertPushSettings } from "@/components/alert-push-settings";
 import { ReferFriendPanel } from "@/components/refer-friend-panel";
+import { FooterMoreLinks } from "@/components/footer-more-links";
 
 export const Route = createFileRoute("/account")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
@@ -669,6 +670,7 @@ function ProfilePane() {
         ) : (
           <p className="mt-8 text-center text-sm text-muted">{t("accountSettingsGuest")}</p>
         )}
+        <FooterMoreLinks />
         </>
         )}
       </main>
