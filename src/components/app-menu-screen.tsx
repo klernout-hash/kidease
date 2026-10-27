@@ -201,9 +201,7 @@ function HostCards() {
           <span className="font-display text-2xl tabular-nums">{cad(earnings.thisMonthCents)}</span>
         ) : earnings?.ok ? (
           <span className="text-sm font-medium">{t("menuEarningsEmpty")}</span>
-        ) : (
-          <span className="h-8" aria-hidden />
-        )}
+        ) : null}
         {showChart ? (
           <MonthBars
             bars={bars}
@@ -222,9 +220,7 @@ function HostCards() {
           </span>
         ) : insights?.ok ? (
           <span className="text-sm font-medium">{t("menuReviewsEmpty")}</span>
-        ) : (
-          <span className="h-8" aria-hidden />
-        )}
+        ) : null}
       </Link>
     </div>
   );

@@ -6,6 +6,8 @@ import { HostEarningsScreen } from "@/components/host-earnings-screen";
 import { HostInsightsScreen } from "@/components/host-insights-screen";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import type { MenuGroupId } from "@/lib/app-menu";
+import type { HostEarnings, HostInsights } from "@/lib/host-desk";
+import { loadHostEarnings, loadHostInsights } from "@/lib/server/host-desk";
 
 const MenuDeskTools = lazy(() =>
   import("@/components/menu-desk-tools").then((m) => ({ default: m.MenuDeskTools })),
@@ -21,6 +23,37 @@ export const Route = createFileRoute("/menu")({
     const screen = s.screen === "earnings" || s.screen === "insights" ? s.screen : undefined;
     return { section, screen };
   },
+  loaderDeps: ({ search }) => ({ screen: search.screen }),
+  loader: async ({ deps }): Promise<{ earnings: HostEarnings | null; insights: HostInsights | null }> => {
+    if (deps.screen === "earnings") {
+      try {
+        return { earnings: await loadHostEarnings(), insights: null };
+      } catch {
+        return { earnings: { ok: false, thisMonthCents: null, bars: [], paid: [], upcoming: [] }, insights: null };
+      }
+    }
+    if (deps.screen === "insights") {
+      try {
+        return { earnings: null, insights: await loadHostInsights() };
+      } catch {
+        return {
+          earnings: null,
+          insights: {
+            ok: false,
+            listingRatingX10: null,
+            listingReviewCount: null,
+            parentRatingX10: null,
+            parentReviewCount: null,
+            reviews: [],
+            viewCount: null,
+            requestCount: null,
+            tourCount: null,
+          },
+        };
+      }
+    }
+    return { earnings: null, insights: null };
+  },
   head: () => ({
     meta: [
       { title: "Menu · KidEase" },
@@ -32,18 +65,19 @@ export const Route = createFileRoute("/menu")({
 
 function MenuPage() {
   const { section, screen } = Route.useSearch();
+  const { earnings, insights } = Route.useLoaderData();
   const { user } = useCurrentUserState();
   if (screen === "earnings") {
     return (
       <ShellLite appTabs>
-        <HostEarningsScreen />
+        <HostEarningsScreen initial={earnings} />
       </ShellLite>
     );
   }
   if (screen === "insights") {
     return (
       <ShellLite appTabs>
-        <HostInsightsScreen />
+        <HostInsightsScreen initial={insights} />
       </ShellLite>
     );
   }

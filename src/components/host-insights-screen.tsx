@@ -6,12 +6,13 @@ import { insightsCardRating, type HostInsights, type WrittenReview } from "@/lib
 import { loadHostInsights } from "@/lib/server/host-desk";
 import { useCopy } from "@/lib/use-copy";
 
-export function HostInsightsScreen() {
+export function HostInsightsScreen({ initial }: { initial?: HostInsights | null }) {
   const { t, locale } = useCopy();
   const french = locale === "fr";
-  const [data, setData] = useState<HostInsights | null>(null);
+  const [data, setData] = useState<HostInsights | null>(initial ?? null);
 
   useEffect(() => {
+    if (initial) return;
     let live = true;
     void loadHostInsights()
       .then((next) => {
@@ -35,7 +36,7 @@ export function HostInsightsScreen() {
     return () => {
       live = false;
     };
-  }, []);
+  }, [initial]);
 
   const headline = data?.ok ? insightsCardRating(data) : null;
   const hasWritten = Boolean(data?.ok && data.reviews.length);

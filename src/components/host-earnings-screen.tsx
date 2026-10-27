@@ -9,12 +9,13 @@ import { periodLabel } from "@/lib/stripe-methods";
 import { formatPlanCad } from "@/lib/upgrade-plans";
 import { useCopy } from "@/lib/use-copy";
 
-export function HostEarningsScreen() {
+export function HostEarningsScreen({ initial }: { initial?: HostEarnings | null }) {
   const { t, locale } = useCopy();
   const french = locale === "fr";
-  const [data, setData] = useState<HostEarnings | null>(null);
+  const [data, setData] = useState<HostEarnings | null>(initial ?? null);
 
   useEffect(() => {
+    if (initial) return;
     let live = true;
     void loadHostEarnings()
       .then((next) => {
@@ -26,7 +27,7 @@ export function HostEarningsScreen() {
     return () => {
       live = false;
     };
-  }, []);
+  }, [initial]);
 
   const cad = (cents: number) => formatPlanCad(cents / 100, french ? "fr" : "en");
   const showChart = data?.ok && chartHasEarnings(data.bars);
