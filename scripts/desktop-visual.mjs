@@ -66,6 +66,36 @@ async function openRoute(page, base, path) {
       }, { timeout: 8000 })
       .catch(() => {});
   }
+  // The cookie bar and the explainer video paint late. Hide the bar and pin the poster.
+  await page.evaluate(async () => {
+    document.querySelectorAll("[data-ke='cookie-consent']").forEach((el) => el.remove());
+    const videos = [...document.querySelectorAll("video")];
+    await Promise.all(
+      videos.map(
+        (video) =>
+          new Promise((resolve) => {
+            video.pause();
+            const poster = video.getAttribute("poster");
+            if (!poster) {
+              resolve();
+              return;
+            }
+            const img = document.createElement("img");
+            img.src = poster;
+            img.alt = "";
+            img.width = Number(video.getAttribute("width")) || 960;
+            img.height = Number(video.getAttribute("height")) || 540;
+            img.className = video.className;
+            video.replaceWith(img);
+            if (img.complete && img.naturalWidth > 0) resolve();
+            else {
+              img.addEventListener("load", () => resolve(), { once: true });
+              img.addEventListener("error", () => resolve(), { once: true });
+            }
+          }),
+      ),
+    );
+  });
   await page.waitForTimeout(250);
   return res?.status() ?? 0;
 }
@@ -87,7 +117,7 @@ export async function captureDesktopShots(browser, base, outDir) {
       }
       const style = document.createElement("style");
       style.setAttribute("data-ke-visual", "stable");
-      style.textContent = "*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}";
+      style.textContent = "*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}[data-ke=cookie-consent]{display:none!important}";
       document.documentElement.appendChild(style);
     });
     for (const route of DESKTOP_ROUTES) {
