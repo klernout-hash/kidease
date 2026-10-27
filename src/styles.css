@@ -327,6 +327,21 @@
   }
 }
 
+/* Header buttons use rem, so a large text size makes them wider than a 320px
+   phone once the back control is also in the row. Kept outside @layer so it
+   wins over the size utilities. 44px stays a full touch target. */
+@media (max-width: 1023px) {
+  header .size-11,
+  header .size-12 {
+    width: 44px;
+    height: 44px;
+  }
+  header .size-9 {
+    width: 36px;
+    height: 36px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

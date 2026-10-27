@@ -19,9 +19,10 @@ export function HeaderAccount() {
   const chrome = useRoleChrome();
   const { sticky } = useSessionDesks();
   const headerUser = chrome.guestView ? null : user;
-  // Role chrome is in the first HTML. The client session can still be empty, so
-  // keep the account photo while that request is in flight.
-  const showAvatar = Boolean(headerUser) || chrome.signedIn;
+  // Role chrome is in the first HTML. A known signed-in role keeps the account
+  // photo while the client session is still empty. A guest whose session is
+  // only loading stays on Log in.
+  const showAvatar = Boolean(headerUser) || (chrome.signedIn && !chrome.pending);
 
   return (
     <div className="flex items-center gap-0.5" data-ke="header-account">
