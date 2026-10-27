@@ -970,7 +970,16 @@ async function runBrowserSmoke(url) {
     [join(root, "scripts/browser-smoke.mjs"), url, shot],
     { cwd: root, stdio: "inherit", env: process.env },
   );
-  const code = await new Promise((resolve) => child.on("close", resolve));
+  const code = await new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      child.kill("SIGKILL");
+      resolve(1);
+    }, 60_000);
+    child.on("close", (status) => {
+      clearTimeout(timer);
+      resolve(status);
+    });
+  });
   record("browser-smoke", code === 0 || code === 2, {
     note: code === 2 ? "console noise (exit 2) tolerated" : `exit ${code}`,
     exit: code,
@@ -1554,6 +1563,12 @@ async function runWebkitSearchGuard(base) {
 }
 
 let browser = null;
+// One check must not sit for 50 minutes. The step limit in CI is the backstop.
+const suiteTimer = setTimeout(() => {
+  console.error("[e2e] FAIL  suite — stopped after 40 minutes");
+  process.exit(1);
+}, Number(process.env.E2E_SUITE_MS || 40 * 60 * 1000));
+suiteTimer.unref();
 try {
   if (args.startPreview && !args.explicitUrl) {
     startPreview();
