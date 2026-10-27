@@ -67,9 +67,31 @@ async function openRoute(page, base, path) {
       .catch(() => {});
   }
   await page.waitForTimeout(250);
-  // React paints the cookie bar and the next video frame during a wait.
-  // Freeze both in this turn, with no pause before the screenshot.
-  await page.evaluate(() => {
+  // The explainer poster is the still we keep. A cold cache sometimes shoots
+  // the empty frame. Decode first, then swap, and do not wait again.
+  await page.evaluate(async () => {
+    const posters = [...document.querySelectorAll("video")]
+      .map((video) => video.getAttribute("poster"))
+      .filter(Boolean);
+    const warm = posters.every((src) => {
+      const probe = new Image();
+      probe.src = src;
+      return probe.complete && probe.naturalWidth > 0;
+    });
+    if (!warm) {
+      await Promise.all(
+        posters.map(async (src) => {
+          const probe = new Image();
+          probe.src = src;
+          if (probe.complete && probe.naturalWidth > 0) return;
+          try {
+            await probe.decode();
+          } catch {
+            /* the swap below still uses the poster url */
+          }
+        }),
+      );
+    }
     const style = document.createElement("style");
     style.textContent = "[data-ke=cookie-consent]{display:none!important}";
     document.documentElement.appendChild(style);
