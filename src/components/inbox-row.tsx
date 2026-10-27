@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { chatBodyWithoutSmsFooter } from "@/lib/sms-copy";
 import { maskInboxPreview } from "@/lib/inbox-secrets";
 import {
@@ -11,6 +11,7 @@ import {
   type InboxListRow,
 } from "@/lib/inbox-thread-ui";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
+import { inboxThreadTo } from "@/lib/desk-nav";
 import { inboxSearch, type InboxView } from "@/lib/inbox-view";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,7 @@ export function InboxMessageRow({
   now?: Date;
 }) {
   const { t, locale } = useCopy();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const viewerIsParent = view !== "centre";
   const centre = ("centreName" in row && row.centreName) || (viewerIsParent ? row.daycareName : "");
   const title = rowTitle({
@@ -50,7 +52,7 @@ export function InboxMessageRow({
 
   return (
     <Link
-      to="/inbox/$id"
+      to={inboxThreadTo(pathname)}
       params={{ id: row.id }}
       search={inboxSearch(view)}
       data-ke="inbox-row"

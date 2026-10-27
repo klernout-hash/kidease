@@ -2,6 +2,7 @@ import { isShippedLocale, type ShippedLocale } from "./languages.ts";
 import {
   englishPath,
   frenchPath,
+  isFrenchDeskPath,
   isFrPath,
   isPairedPath,
   normalizePathname,
@@ -182,6 +183,8 @@ export function localeRedirectTarget(input: LocaleRedirectInput): string | null 
   const queryLocale = localeFromSearch(input.search) ?? (isShippedLocale(input.queryLocale) ? input.queryLocale : null);
   const decision = decideVisitorLocale({ ...input, queryLocale });
   const pathname = normalizePathname(input.pathname);
+  // /fr/parent and /fr/inbox stay French. A saved English choice must not strip them.
+  if (isFrPath(pathname) && isFrenchDeskPath(pathname)) return null;
   if (queryLocale === "en" && isFrPath(pathname)) {
     const next = englishPath(pathname);
     if (normalizePathname(next) === pathname) return null;

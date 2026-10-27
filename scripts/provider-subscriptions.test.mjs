@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import { tx } from "../src/lib/copy.ts";
 import { visibleDeskNav } from "../src/lib/desk-nav.ts";
 import {
   parseProviderAddons,
@@ -79,7 +80,8 @@ test("subscription route is live for directors and checkout is live-keyed", () =
   assert.match(provider, /\/provider\/subscription/);
   assert.match(route, /createFileRoute\("\/provider\/subscription"\)/);
   assert.match(route, /session\?\.providerSubscriptions/);
-  assert.match(route, /directors/);
+  assert.match(route, /t\("plansForDirectors"\)/);
+  assert.match(tx("en", "plansForDirectors"), /directors/);
   assert.match(route, /noindex/);
   assert.match(tree, /from '\.\/routes\/provider\.subscription'/);
   assert.match(tree, /id:\s*'\/provider\/subscription'/);

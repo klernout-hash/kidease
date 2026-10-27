@@ -130,7 +130,7 @@ test("the four starter questions each land on a real page", () => {
     ["What can I use?", "en", "/search"],
     ["Comment trouver une garderie ?", "fr", "/fr/search"],
     ["Comment demander une visite ?", "fr", "/fr/help"],
-    ["Où est ma liste d'attente ?", "fr", "/parent"],
+    ["Où est ma liste d'attente ?", "fr", "/fr/parent"],
     ["Quels outils puis-je utiliser ?", "fr", "/fr/search"],
   ];
   for (const [question, locale, path] of starters) {

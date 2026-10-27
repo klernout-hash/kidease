@@ -126,9 +126,10 @@ export const Route = createFileRoute("/provider")({
 });
 
 function ProviderPending() {
+  const { t } = useCopy();
   return (
     <Shell>
-      <div role="status" aria-live="polite" aria-label="Loading">
+      <div role="status" aria-live="polite" aria-label={t("loading")}>
         <DeskSkeleton />
       </div>
     </Shell>
@@ -635,7 +636,7 @@ function ProviderPage() {
                     const message = listingCreateErrorMessage(err);
                     const text = isDaycareAlreadyListedMessage(message)
                       ? duplicateListingUserMessage(locale)
-                      : message || "Error";
+                      : message || t("actionFailed");
                     setPublishMessage({ tone: "err", text });
                     toast.error(text);
                   })
@@ -644,9 +645,9 @@ function ProviderPage() {
             >
               <Field name="name" label={t("centreName")} value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
               <Field name="licenseNumber" label={t("licenceNo")} value={form.licenseNumber} onChange={(v) => setForm({ ...form, licenseNumber: v })} />
-              <Field name="address" label="Address" value={form.address} onChange={(v) => setForm({ ...form, address: v })} />
-              <Field name="city" label="City" value={form.city} onChange={(v) => setForm({ ...form, city: v })} />
-              <Field name="postalCode" label="Postal code" value={form.postalCode} onChange={(v) => setForm({ ...form, postalCode: v })} />
+              <Field name="address" label={t("addressLabel")} value={form.address} onChange={(v) => setForm({ ...form, address: v })} />
+              <Field name="city" label={t("cityLabel")} value={form.city} onChange={(v) => setForm({ ...form, city: v })} />
+              <Field name="postalCode" label={t("postalLabel")} value={form.postalCode} onChange={(v) => setForm({ ...form, postalCode: v })} />
               <Field name="infantMonthly" label={`${t("infantFee")} CAD`} value={form.infantMonthly ? String(form.infantMonthly) : ""} onChange={(v) => setForm({ ...form, infantMonthly: Number(v) || 0 })} />
               <Field name="toddlerMonthly" label={`${t("toddlerFee")} CAD`} value={form.toddlerMonthly ? String(form.toddlerMonthly) : ""} onChange={(v) => setForm({ ...form, toddlerMonthly: Number(v) || 0 })} />
               <Field name="preschoolMonthly" label={`${t("preschoolFee")} CAD`} value={form.preschoolMonthly ? String(form.preschoolMonthly) : ""} onChange={(v) => setForm({ ...form, preschoolMonthly: Number(v) || 0 })} />

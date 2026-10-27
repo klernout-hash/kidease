@@ -1183,6 +1183,8 @@ export const copy = {
     payLead: "Payment is only available after the daycare approves your request. Card deposits are charged on the bill your centre sends: not by typing a card number here.",
     bookingPayLeadHonest:
       "Deposits are not charged on this page. Centres send a bill; parents pay it with Stripe Checkout. Parent Plus is a separate KidEase subscription.",
+    bookingPayLeadBills:
+      "Deposits are not charged on this page. Centres send a bill; parents pay it with Stripe Checkout.",
     bookingPayDisabled:
       "Card, Apple Pay, Google Pay, and PayPal stay off here so a booking cannot be marked paid without Stripe. Use the bill your centre sends, or email support@kidease.ca.",
     payUseBill: "Open bills",
@@ -3290,6 +3292,21 @@ export const copy = {
     facebookEmailSaved: "The link is on its way. Check junk mail too.",
     facebookEmailRequired: "Add and confirm an email before you message a centre or book a tour.",
     facebookHostUnavailable: "Continue with Facebook is not available on this address. Open kidease.ca.",
+    accountUnconfirmedTitle: "Couldn’t confirm this account",
+    accountUnconfirmedBody: "Refresh and try again. Nothing was charged.",
+    accountSaveFailed: "Could not save details",
+    plansAfterClaim: "Centre plans open after you claim a licensed listing. Nothing was charged.",
+    plansForDirectors: "Centre plans are for directors. Paid extras stay off during the free founding period.",
+    contractsLoading: "Loading contracts…",
+    billDraftRehearsal: "You can draft and Send bills so both desks can rehearse. Pay stays off: internal ledger (not charged).",
+    billSaveFailed: "Could not save bill",
+    billNeedApprovedFamily: "Approve a family first, then create a bill.",
+    billDraftSavedTitle: "Draft bill saved",
+    billDraftSavedBody: "Send when the parent should see it.",
+    billIncomingFamilies: "Incoming requests become billable families after they ask this centre for a spot.",
+    billFamilyLabel: "Family",
+    actionFailed: "Something went wrong. Try again.",
+    stripeCheckoutFailed: "Stripe did not open checkout.",
   },
   fr: {
     app: "KidEase",
@@ -4471,6 +4488,8 @@ export const copy = {
     payLead: "Le paiement n’est disponible qu’après l’approbation de la garderie. Les dépôts par carte se paient sur la facture du centre : pas en tapant un numéro de carte ici.",
     bookingPayLeadHonest:
       "Les dépôts ne sont pas débités sur cette page. Les centres envoient une facture; les parents la paient avec Stripe Checkout. Plus parents est un abonnement KidEase distinct.",
+    bookingPayLeadBills:
+      "Les dépôts ne sont pas débités sur cette page. Les centres envoient une facture; les parents la paient avec Stripe Checkout.",
     bookingPayDisabled:
       "Carte, Apple Pay, Google Pay et PayPal restent fermés ici pour qu’une réservation ne soit pas marquée payée sans Stripe. Utilisez la facture du centre, ou écrivez à support@kidease.ca.",
     payUseBill: "Factures ouvertes",
@@ -6586,6 +6605,21 @@ export const copy = {
     facebookEmailSaved: "Le lien est parti. Regardez aussi les courriers indésirables.",
     facebookEmailRequired: "Ajoutez et confirmez un courriel avant d’écrire à un centre ou de réserver une visite.",
     facebookHostUnavailable: "Continuer avec Facebook n’est pas offert sur cette adresse. Ouvrez kidease.ca.",
+    accountUnconfirmedTitle: "Impossible de confirmer ce compte",
+    accountUnconfirmedBody: "Actualisez et réessayez. Rien n’a été débité.",
+    accountSaveFailed: "Impossible d’enregistrer les détails",
+    plansAfterClaim: "Les forfaits du centre s’ouvrent après la revendication d’une fiche autorisée. Rien n’a été débité.",
+    plansForDirectors: "Les forfaits du centre sont pour les directions. Les extras payants restent fermés pendant la période fondatrice gratuite.",
+    contractsLoading: "Chargement des contrats…",
+    billDraftRehearsal: "Vous pouvez préparer et envoyer des factures pour que les deux bureaux répètent. Payer reste fermé : grand livre interne, rien n’est débité.",
+    billSaveFailed: "Impossible d’enregistrer la facture",
+    billNeedApprovedFamily: "Approuvez d’abord une famille, puis créez une facture.",
+    billDraftSavedTitle: "Brouillon de facture enregistré",
+    billDraftSavedBody: "Envoyez-la quand le parent doit la voir.",
+    billIncomingFamilies: "Les demandes reçues deviennent des familles à facturer après une demande de place à ce centre.",
+    billFamilyLabel: "Famille",
+    actionFailed: "Quelque chose s’est mal passé. Réessayez.",
+    stripeCheckoutFailed: "Stripe n’a pas ouvert la caisse.",
   },
 } as const;
 
@@ -6599,6 +6633,11 @@ export function parentPayLeadKey(plansOn: boolean, stripeLive: boolean): CopyKey
 
 export function parentPayEmptyKey(plansOn: boolean): CopyKey {
   return plansOn ? "noPaymentsLead" : "noPaymentsLeadBills";
+}
+
+/** Booking pay page. Plan sentences stay off unless subscriptions are on. */
+export function bookingPayLeadKey(plansOn: boolean): CopyKey {
+  return plansOn ? "bookingPayLeadHonest" : "bookingPayLeadBills";
 }
 
 export function tx(locale: Locale, key: CopyKey): string {

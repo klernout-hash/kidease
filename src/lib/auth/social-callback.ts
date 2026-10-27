@@ -8,6 +8,7 @@ export function socialSignupCallbackPath(input: {
   role?: string | null;
   desk?: string | null;
   next?: string | null;
+  loginPath?: "/login" | "/fr/login";
 }): string | null {
   if (input.intent !== "up") return null;
   if (input.role !== "parent" && input.role !== "provider") return null;
@@ -16,7 +17,8 @@ export function socialSignupCallbackPath(input: {
   params.set("role", input.role);
   if (input.desk) params.set("desk", String(input.desk));
   if (input.next) params.set("next", String(input.next));
-  return `/login?${params.toString()}`;
+  const base = input.loginPath === "/fr/login" ? "/fr/login" : "/login";
+  return `${base}?${params.toString()}`;
 }
 
 export const FACEBOOK_ROLE_PENDING_KEY = "ke-facebook-need-role";

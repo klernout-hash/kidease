@@ -26,9 +26,13 @@ test("parent Pay hides plan sentences while subscriptions are off", () => {
   assert.match(tx("en", "ledgerLiveParentBills"), /KidEase’s platform fee comes from the daycare/);
   assert.match(tx("en", "ledgerLiveParent"), /KidEase’s platform fee comes from the daycare/);
   assert.match(tx("fr", "ledgerLiveParentBills"), /Les frais de plateforme KidEase viennent du versement à la garderie/);
-  assert.match(src("src/components/parent-desk.tsx"), /plansOn=\{desks\?\.subscriptionsEnabled === true\}/);
-  assert.match(src("src/components/parent-desk.tsx"), /parentPayEmptyKey\(desks\?\.subscriptionsEnabled === true\)/);
-  assert.match(src("src/components/listing-status-badge.tsx"), /parentPayLeadKey\(plansOn, stripeLive\)/);
+  const desk = src("src/components/parent-desk.tsx");
+  assert.match(desk, /const plansOn = !storeShell && desks\?\.subscriptionsEnabled === true/);
+  assert.match(desk, /plansOn=\{plansOn\}/);
+  assert.match(desk, /parentPayEmptyKey\(plansOn\)/);
+  const badge = src("src/components/listing-status-badge.tsx");
+  assert.match(badge, /const showPlans = !storeShell && subscriptionsOn/);
+  assert.match(badge, /parentPayLeadKey\(showPlans, stripeLive\)/);
 });
 
 test("unclaimed listings explain tours instead of listing times", () => {

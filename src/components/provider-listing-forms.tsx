@@ -81,9 +81,9 @@ export function PromotePanel({ daycare }: { daycare: Daycare; onSaved: () => voi
         await openStripeCheckout(result.url);
         return;
       }
-      toast.error(loc === "fr" ? "Stripe n’a pas ouvert la caisse." : "Stripe did not open checkout.");
+      toast.error(t("stripeCheckoutFailed"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error");
+      toast.error(err instanceof Error ? err.message : t("actionFailed"));
     } finally {
       setBusy(null);
     }
@@ -99,9 +99,9 @@ export function PromotePanel({ daycare }: { daycare: Daycare; onSaved: () => voi
         await openStripeCheckout(result.url);
         return;
       }
-      toast.error(loc === "fr" ? "Stripe n’a pas ouvert la caisse." : "Stripe did not open checkout.");
+      toast.error(t("stripeCheckoutFailed"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error");
+      toast.error(err instanceof Error ? err.message : t("actionFailed"));
     } finally {
       setBusy(null);
     }
@@ -557,7 +557,7 @@ export function CapacityForm({
               writerApplied.current = false;
             }
           })
-          .catch((err) => toast.error(err instanceof Error ? err.message : "Error"))
+          .catch((err) => toast.error(err instanceof Error ? err.message : t("actionFailed")))
           .finally(() => setSaving(false));
       }}
     >
@@ -831,7 +831,7 @@ export function CapacityForm({
                     confirmAction(t, "openingsUpdated");
                     onSaved();
                   })
-                  .catch((err) => toast.error(err instanceof Error ? err.message : "Error"))
+                  .catch((err) => toast.error(err instanceof Error ? err.message : t("actionFailed")))
                   .finally(() => setRefreshing(false));
               }}
             >

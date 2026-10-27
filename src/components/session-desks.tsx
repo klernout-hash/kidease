@@ -15,6 +15,7 @@ import {
   type SessionDesks,
 } from "@/lib/desks";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { stripLocalePrefix } from "@/lib/locale-path";
 
 type SessionDesksState = {
   session: SessionDesks | null;
@@ -36,7 +37,7 @@ const SessionDesksContext = createContext<SessionDesksState>(EMPTY);
 
 /** Desk routes need the full session. Public pages use the lighter role chrome. */
 export function needsSessionDesks(pathname: string): boolean {
-  const path = pathname.replace(/\/+$/, "") || "/";
+  const path = stripLocalePrefix(pathname).replace(/\/+$/, "") || "/";
   return (
     path === "/parent" ||
     path.startsWith("/parent/") ||

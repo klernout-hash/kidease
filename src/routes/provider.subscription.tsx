@@ -63,21 +63,21 @@ function ProviderSubscriptionPage() {
   if (locallyOut) {
     return (
       <Shell>
-        <p className="p-8 text-muted">Loading…</p>
+        <p className="p-8 text-muted">{t("loading")}</p>
       </Shell>
     );
   }
   if (isPending || chrome.pending || (user && !ready)) {
     return (
       <Shell>
-        <p className="p-8 text-muted">Loading…</p>
+        <p className="p-8 text-muted">{t("loading")}</p>
       </Shell>
     );
   }
   if (!user && (chrome.pending || chrome.signedIn)) {
     return (
       <Shell>
-        <p className="p-8 text-muted">Loading…</p>
+        <p className="p-8 text-muted">{t("loading")}</p>
       </Shell>
     );
   }
@@ -86,8 +86,8 @@ function ProviderSubscriptionPage() {
     return (
       <Shell>
         <main className="mx-auto max-w-lg px-4 py-16 text-center">
-          <h1 className="font-display text-3xl">Couldn’t confirm this account</h1>
-          <p className="mt-3 text-muted">Refresh and try again. Nothing was charged.</p>
+          <h1 className="font-display text-3xl">{t("accountUnconfirmedTitle")}</h1>
+          <p className="mt-3 text-muted">{t("accountUnconfirmedBody")}</p>
         </main>
       </Shell>
     );
@@ -107,7 +107,7 @@ function ProviderSubscriptionPage() {
           <main className="mx-auto max-w-lg px-4 py-16 text-center">
             <h1 className="font-display text-3xl">{t("claimCta")}</h1>
             <p className="mt-3 text-muted">
-              Centre plans open after you claim a licensed listing. Nothing was charged.
+              {t("plansAfterClaim")}
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <Button asChild>
@@ -139,7 +139,7 @@ function ProviderSubscriptionPage() {
             ))}
           </ul>
           <p className="mt-4 text-sm text-muted">
-            Centre plans are for directors. Paid extras stay off during the free founding period.
+            {t("plansForDirectors")}
           </p>
           <div className="mt-6">
             <Button asChild>

@@ -98,10 +98,10 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
   parent: [
     { id: "explore", label: "Home", hint: "Matches near you", labelKey: "exploreForYou", hintKey: "deskNavForYouHint", href: "/parent", search: { tab: "explore" } },
     { id: "care", label: "Daily care", hint: "Presence, journal, meds, rooms", labelKey: "dailyCare", hintKey: "dailyCareHint", href: "/parent", search: { tab: "care" } },
-    { id: "children", label: "Children", hint: "Up to 4 profiles", labelKey: "children", hintKey: "childrenLimit" },
-    { id: "bookings", label: "Requests", hint: "Tours, waitlist, and spots", labelKey: "navRequestsShort", hintKey: "deskNavBookingsHint" },
-    { id: "waitlists", label: "Waitlists", hint: "Your spot requests", labelKey: "navWaitlists", hintKey: "deskNavWaitlistsHint" },
-    { id: "saved", label: "Saved", hint: "5 free · 10 on Plus", labelKey: "saved", hintKey: "deskNavShortlistHint" },
+    { id: "children", label: "Children", hint: "Up to 4 profiles", labelKey: "children", hintKey: "childrenLimit", href: "/parent", search: { tab: "children" } },
+    { id: "bookings", label: "Requests", hint: "Tours, waitlist, and spots", labelKey: "navRequestsShort", hintKey: "deskNavBookingsHint", href: "/parent", search: { tab: "enrolled" } },
+    { id: "waitlists", label: "Waitlists", hint: "Your spot requests", labelKey: "navWaitlists", hintKey: "deskNavWaitlistsHint", href: "/parent", search: { tab: "waitlists" } },
+    { id: "saved", label: "Saved", hint: "5 free · 10 on Plus", labelKey: "saved", hintKey: "deskNavShortlistHint", href: "/parent", search: { tab: "saved" } },
     { id: "alerts", label: "Search alerts", hint: "Saved searches + notify", labelKey: "searchAlerts", hintKey: "deskNavAlertsHint", href: "/parent", search: { tab: "alerts" } },
     { id: "payments", label: "Pay", hint: "Bills from your centre", labelKey: "payments", hintKey: "deskNavPaymentsHint", href: "/parent", search: { tab: "payments" } },
     { id: "messages", label: "Messages", hint: "Centre threads + tours", labelKey: "messages", hintKey: "deskNavParentMessagesHint", href: "/inbox", search: { view: "family" } },
@@ -161,6 +161,21 @@ export function parentNavSearch(
   if (id === "care") return { tab: "care" };
   if (id === "explore") return { tab: "explore" };
   return {};
+}
+
+/** Parent desk stays on /fr when the page is already French. */
+export function parentDeskPath(pathname: string): "/parent" | "/fr/parent" {
+  return isFrPath(pathname) ? "/fr/parent" : "/parent";
+}
+
+/** Inbox list stays on /fr when the page is already French. */
+export function inboxListPath(pathname: string): "/inbox" | "/fr/inbox" {
+  return isFrPath(pathname) ? "/fr/inbox" : "/inbox";
+}
+
+/** Thread links stay on /fr when the page is already French. */
+export function inboxThreadTo(pathname: string): "/inbox/$id" | "/fr/inbox/$id" {
+  return isFrPath(pathname) ? "/fr/inbox/$id" : "/inbox/$id";
 }
 
 export const DESK_META: Record<DeskId, { eyebrow: string; title: string; eyebrowKey?: CopyKey; titleKey?: CopyKey }> = {

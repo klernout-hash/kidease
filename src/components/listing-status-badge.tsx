@@ -1,6 +1,8 @@
+import { useRoleChrome } from "@/components/role-chrome";
 import { parentPayLeadKey } from "@/lib/copy";
 import { listingStatusFromClaim, listingStatusLabel } from "@/lib/listing-status";
 import { useCopy } from "@/lib/use-copy";
+import { useStoreShell } from "@/lib/use-native-shell";
 import { cn } from "@/lib/utils";
 
 export function ListingStatusBadge({
@@ -50,10 +52,12 @@ export function LedgerHonesty({
   className?: string;
   surface?: LedgerSurface;
   ready?: boolean;
-  /** Parent Pay only. Plan sentences stay hidden unless subscriptions are on. */
+  /** Plan sentences stay hidden unless subscriptions are on and this is the website. */
   plansOn?: boolean;
 }) {
   const { t } = useCopy();
+  const storeShell = useStoreShell();
+  const chrome = useRoleChrome();
   if (!ready) {
     return (
       <p className={cn("text-sm text-muted", className)} aria-busy="true">
@@ -61,16 +65,19 @@ export function LedgerHonesty({
       </p>
     );
   }
+  const subscriptionsOn = surface === "parent" ? plansOn : plansOn || chrome.subscriptionsEnabled === true;
+  const showPlans = !storeShell && subscriptionsOn;
+  if (surface === "money" && !showPlans) return null;
   const text =
     surface === "parent"
-      ? t(parentPayLeadKey(plansOn, stripeLive))
+      ? t(parentPayLeadKey(showPlans, stripeLive))
       : surface === "booking"
         ? stripeLive
-          ? t("ledgerLiveBooking")
+          ? t(showPlans ? "ledgerLiveBooking" : "ledgerLiveParentBills")
           : t("ledgerOffBooking")
         : surface === "bill"
           ? stripeLive
-            ? t("ledgerLiveBill")
+            ? t(showPlans ? "ledgerLiveBill" : "ledgerLiveParentBills")
             : t("ledgerOffBill")
           : stripeLive
             ? t("ledgerLiveMoney")

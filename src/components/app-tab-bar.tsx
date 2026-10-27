@@ -7,6 +7,7 @@ import { useRoleChrome } from "@/components/role-chrome";
 import { bottomBarKind } from "@/lib/role-access";
 import { hapticLight, isNative } from "@/lib/native";
 import { nativeStoreTabs, type NativeStoreTabId } from "@/lib/native-store-tabs";
+import { deskHrefForLocale, parentDeskPath, inboxListPath } from "@/lib/desk-nav";
 import { localePath, stripLocalePrefix } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -61,7 +62,7 @@ export function AppTabBar() {
           ? storeTabs.map((item) => (
               <Tab
                 key={item.id}
-                to={item.to}
+                to={deskHrefForLocale(item.to, pathname)}
                 search={item.search}
                 label={storeLabel[item.id]}
                 icon={storeIcon[item.id]}
@@ -104,7 +105,7 @@ export function AppTabBar() {
               label={t("messages")}
               icon={MessageCircle}
               marker="messages"
-              active={pathname.startsWith("/inbox") && view !== "family"}
+              active={bare.startsWith("/inbox") && view !== "family"}
             />
             <AvatarTab userId={user?.id} image={user?.profileImageUrl} name={user?.displayName} active={pathname.startsWith("/account")} />
           </>
@@ -119,28 +120,28 @@ export function AppTabBar() {
               active={bare === "/search" || bare.startsWith("/search/")}
             />
             <Tab
-              to="/parent"
+              to={parentDeskPath(pathname)}
               search={{ tab: "saved" }}
               label={t("saved")}
               icon={Heart}
               marker="saved"
-              active={pathname.startsWith("/parent") && tab === "saved"}
+              active={bare.startsWith("/parent") && tab === "saved"}
             />
             <Tab
-              to="/parent"
+              to={parentDeskPath(pathname)}
               search={{ tab: "requests" }}
               label={t("navRequestsShort")}
               icon={ClipboardCheck}
               marker="bookings"
-              active={pathname.startsWith("/parent") && (tab === "requests" || tab === "enrolled")}
+              active={bare.startsWith("/parent") && (tab === "requests" || tab === "enrolled")}
             />
             <Tab
-              to="/inbox"
+              to={inboxListPath(pathname)}
               search={{ view: "family" }}
               label={t("messages")}
               icon={MessageCircle}
               marker="messages"
-              active={pathname.startsWith("/inbox")}
+              active={bare.startsWith("/inbox")}
             />
             <AvatarTab userId={user?.id} image={user?.profileImageUrl} name={user?.displayName} active={pathname.startsWith("/account")} />
           </>
@@ -179,8 +180,8 @@ function storeTabActive(id: NativeStoreTabId, pathname: string, tab: string | un
   if (id === "search") {
     return bare === "/" || bare.startsWith("/search") || bare.startsWith("/daycare");
   }
-  if (id === "saved") return pathname.startsWith("/parent") && tab === "saved";
-  if (id === "messages") return pathname.startsWith("/inbox");
+  if (id === "saved") return bare.startsWith("/parent") && tab === "saved";
+  if (id === "messages") return bare.startsWith("/inbox");
   return pathname.startsWith("/account");
 }
 

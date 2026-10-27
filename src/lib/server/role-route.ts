@@ -3,6 +3,7 @@ import { notFound, redirect } from "@tanstack/react-router";
 import { sessionBearerMiddleware } from "@/lib/auth/middleware";
 import { subscriptionsEnabled } from "@/lib/features";
 import { e2eChromeFromRequest } from "@/lib/e2e-role-cookie";
+import { isFrPath } from "@/lib/locale-path";
 import { guardPrivatePath, navRoleForSession, type ChromeRole } from "@/lib/role-access";
 import { SQL_SETTLE_MS, withTimeout } from "@/lib/timeout";
 
@@ -249,7 +250,7 @@ export async function beforeLoadPrivate(pathname: string, chrome?: RoleChromePay
   });
   if (decision.kind === "signin") {
     throw redirect({
-      to: "/login",
+      to: isFrPath(pathname) ? "/fr/login" : "/login",
       search: { intent: "in" as const, next: decision.next },
     });
   }

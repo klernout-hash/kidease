@@ -74,7 +74,7 @@ export function ProviderMoneyPanel() {
         )}
         {ready && !stripeLive ? (
           <p className="mt-2 text-sm text-muted">
-            You can draft and Send bills so both desks can rehearse. Pay stays off: internal ledger (not charged).
+            {t("billDraftRehearsal")}
           </p>
         ) : null}
       </div>
@@ -84,7 +84,7 @@ export function ProviderMoneyPanel() {
         onSubmit={(e) => {
           e.preventDefault();
           if (!party) {
-            toast.error("Approve a family first, then create a bill.");
+            toast.error(t("billNeedApprovedFamily"));
             return;
           }
           setBusy("create");
@@ -101,23 +101,23 @@ export function ProviderMoneyPanel() {
             },
           })
             .then(() => {
-              confirmSuccess({ variant: "toast", title: "Draft bill saved", body: "Send when the parent should see it." });
+              confirmSuccess({ variant: "toast", title: t("billDraftSavedTitle"), body: t("billDraftSavedBody") });
               setForm((cur) => ({ ...cur, memo: "" }));
               return load();
             })
-            .catch((err) => toast.error(err instanceof Error ? err.message : "Could not save bill"))
+            .catch((err) => toast.error(err instanceof Error ? err.message : t("billSaveFailed")))
             .finally(() => setBusy(null));
         }}
       >
         <h3 className="font-display text-xl">{t("newBill")}</h3>
         {parties.length === 0 ? (
           <p className="mt-3 text-sm text-muted">
-            Incoming requests become billable families after they ask this centre for a spot.
+            {t("billIncomingFamilies")}
           </p>
         ) : (
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <label className="grid gap-1 text-sm">
-              <span className="text-muted">Family</span>
+              <span className="text-muted">{t("billFamilyLabel")}</span>
               <select
                 className="ke-input"
                 value={form.partyKey}

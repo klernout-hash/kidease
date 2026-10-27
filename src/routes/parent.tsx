@@ -15,14 +15,17 @@ import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
 import { parseShareToken } from "@/lib/parent-tracker";
 import { parentUrlTab } from "@/lib/parent-tab";
 import { canUseOperatorTools } from "@/lib/operator-tools";
+import { parentDeskPath } from "@/lib/desk-nav";
+import { stripLocalePrefix } from "@/lib/locale-path";
 import { getFamily } from "@/lib/server/family";
+import { useCopy } from "@/lib/use-copy";
 
 const ParentDesk = lazy(() =>
   import("@/components/parent-desk").then((m) => ({ default: m.ParentDesk })),
 );
 
 function isParentSignupPath(pathname: string) {
-  const path = pathname.replace(/\/$/, "") || "/";
+  const path = stripLocalePrefix(pathname).replace(/\/$/, "") || "/";
   return path === "/parent/signup";
 }
 
@@ -87,14 +90,17 @@ export type ParentSearch = ReturnType<typeof parentValidateSearch>;
 export type ParentLoaded = Awaited<ReturnType<typeof parentLoader>>;
 
 export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loaded: ParentLoaded }) {
+  const { t } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, isPending } = useCurrentUserState();
   const locallyOut = useLocallySignedOut();
   const chrome = useRoleChrome();
   const { session, ready } = useSessionDesks();
+  const bare = stripLocalePrefix(pathname);
+  const parentPath = parentDeskPath(pathname);
   if (
-    pathname === "/parent/spot-offers" ||
-    pathname.startsWith("/parent/spot-offers/") ||
+    bare === "/parent/spot-offers" ||
+    bare.startsWith("/parent/spot-offers/") ||
     isParentSignupPath(pathname)
   ) {
     return <Outlet />;
@@ -147,8 +153,8 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
     return (
       <Shell>
         <main className="mx-auto max-w-lg px-4 py-16 text-center">
-          <h1 className="font-display text-3xl">Couldn’t confirm this account</h1>
-          <p className="mt-3 text-muted">Refresh and try again. Nothing was charged.</p>
+          <h1 className="font-display text-3xl">{t("accountUnconfirmedTitle")}</h1>
+          <p className="mt-3 text-muted">{t("accountUnconfirmedBody")}</p>
         </main>
       </Shell>
     );
@@ -159,11 +165,11 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
       ownsCentre: session.ownsCentre,
       linkedToCentre: session.centreLinked,
     };
-    if (canBuyParentUpgrade(buyer)) return <Navigate to="/parent" search={{ tab: "explore" }} />;
+    if (canBuyParentUpgrade(buyer)) return <Navigate to={parentPath} search={{ tab: "explore" }} />;
     if (canBuyDaycareUpgrade(buyer)) return <Navigate to="/provider" search={{ desk: "today" }} />;
     if (session.home === "/admin") return <Navigate to="/admin" />;
     if (session.home === "/support") return <Navigate to="/support" />;
-    return <Navigate to="/parent" search={{ tab: "explore" }} />;
+    return <Navigate to={parentPath} search={{ tab: "explore" }} />;
   }
   if (
     upgradeSurface &&
@@ -187,7 +193,7 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
 
   return (
     <TwoFactorGate
-      next="/parent"
+      next={parentPath}
       pending={
         <Shell>
           <DeskSkeleton />

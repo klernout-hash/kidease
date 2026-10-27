@@ -1,4 +1,4 @@
-import { useNavigate, useSearch } from "@tanstack/react-router";
+import { useNavigate, useRouterState, useSearch } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Shell } from "@/components/shell";
 import { DeskShell } from "@/components/desk-shell";
@@ -9,7 +9,7 @@ import { PipelineBadge } from "@/components/pipeline-badge";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/session-desks";
-import { parentNavSearch, providerNavSearch } from "@/lib/desk-nav";
+import { parentDeskPath, parentNavSearch, providerNavSearch } from "@/lib/desk-nav";
 import { resolveInboxView, type InboxView } from "@/lib/inbox-view";
 import { listInbox } from "@/lib/server/inbox";
 import { filterInboxList, MESSAGE_FILTERS, messageFilterCopyKey, parseMessageFilter, type MessageFilter } from "@/lib/inbox-thread-ui";
@@ -21,6 +21,7 @@ export function InboxList({ bare = false }: { bare?: boolean }) {
   const { user, isPending } = useCurrentUserState();
   const { t } = useCopy();
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const search = useSearch({ strict: false }) as { view?: unknown };
   const { sticky } = useSessionDesks();
   const view: InboxView = resolveInboxView({ search: search.view, sticky });
@@ -137,7 +138,7 @@ export function InboxList({ bare = false }: { bare?: boolean }) {
       active="messages"
       onSelect={(id) => {
         if (id === "messages") return;
-        void navigate({ to: "/parent", search: parentNavSearch(id) });
+        void navigate({ to: parentDeskPath(pathname), search: parentNavSearch(id) });
       }}
     >
       {list}

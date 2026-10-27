@@ -37,8 +37,14 @@ import type { BookingStatus, Child, Message, Schedule, TourRequest } from "@/lib
 
 export const Route = createFileRoute("/inbox/$id")({
   validateSearch: (s: Record<string, unknown>) => parseInboxSearch(s),
-  component: ThreadPage,
+  component: InboxThreadRoute,
 });
+
+function InboxThreadRoute() {
+  const { id } = Route.useParams();
+  const search = Route.useSearch();
+  return <InboxThreadPage id={id} search={search} />;
+}
 
 function showChatBubble(m: Message) {
   return m.kind === "status" || (m.kind !== "system" && m.kind !== "notify" && m.sender !== "system");
@@ -60,9 +66,7 @@ type BookingInfo = {
   daycareId?: string;
 };
 
-function ThreadPage() {
-  const { id } = Route.useParams();
-  const search = Route.useSearch();
+export function InboxThreadPage({ id, search }: { id: string; search: ReturnType<typeof parseInboxSearch> }) {
   const { user, isPending } = useCurrentUserState();
   const { t, locale } = useCopy();
   const { session: desks, sticky } = useSessionDesks();
@@ -92,6 +96,10 @@ function ThreadPage() {
   const [stateBusy, setStateBusy] = useState(false);
 
   async function load() {
+    if (!id) {
+      setLoadState("missing");
+      return;
+    }
     const res = await getThread({ data: id });
     if (!res) {
       setLoadState("missing");
@@ -150,7 +158,7 @@ function ThreadPage() {
   }
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !id) return;
     let cancelled = false;
     let timer = 0;
     let failures = 0;
@@ -231,7 +239,7 @@ function ThreadPage() {
       confirmAction(t, "replySent");
       await load();
     } catch (err) {
-      setSendError(err instanceof Error ? err.message : "Could not send");
+      setSendError(err instanceof Error ? err.message : t("sendFailed"));
     }
   }
 

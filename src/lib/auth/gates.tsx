@@ -4,6 +4,7 @@ import { authEnabled, signOut } from "./client";
 import { useCurrentUser, useCurrentUserState } from "./use-current-user";
 import { getTwoFactorStatus } from "@/lib/server/two-factor";
 import { yieldToMain } from "@/lib/yield-main";
+import { isFrPath } from "@/lib/locale-path";
 import { Shell } from "@/components/shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import {
@@ -40,7 +41,14 @@ export function RedirectToSignIn({ to = SIGN_IN_PATH }: { to?: string }) {
   const loc = useRouterState({
     select: (s) => ({ pathname: s.location.pathname, searchStr: s.location.searchStr ?? "" }),
   });
-  if (loc.pathname === SIGN_IN_PATH || loc.pathname.startsWith(`${SIGN_IN_PATH}/`)) {
+  const signIn = isFrPath(loc.pathname) ? "/fr/login" : SIGN_IN_PATH;
+  if (
+    loc.pathname === signIn ||
+    loc.pathname === SIGN_IN_PATH ||
+    loc.pathname === "/fr/login" ||
+    loc.pathname.startsWith(`${SIGN_IN_PATH}/`) ||
+    loc.pathname.startsWith("/fr/login/")
+  ) {
     return null;
   }
   if (to !== SIGN_IN_PATH) return <Navigate to={to} />;
@@ -50,7 +58,7 @@ export function RedirectToSignIn({ to = SIGN_IN_PATH }: { to?: string }) {
   const desk = parseDeskQuery(params.get("desk")) ?? deskFromPathname(loc.pathname);
   return (
     <Navigate
-      to="/login"
+      to={signIn}
       search={{
         intent: "in" as const,
         next:
@@ -111,7 +119,7 @@ export function TwoFactorGate({
   }
   if (!user) return <RedirectToSignIn />;
   if (state === "need") {
-    const safeNext = sanitizePostLoginNext(next) ?? (staffTwoFactorRequired(next) ? "/admin" : "/parent");
+    const safeNext = sanitizePostLoginNext(next) ?? (staffTwoFactorRequired(next) ? "/admin" : isFrPath(next) ? "/fr/parent" : "/parent");
     return <Navigate to="/verify-2fa" search={{ next: safeNext }} />;
   }
   return <>{children}</>;
