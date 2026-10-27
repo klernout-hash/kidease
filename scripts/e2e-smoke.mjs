@@ -76,10 +76,20 @@ async function settleMockCheckout(page) {
 
 async function setFixture(context, base, { role, plan, own, activity, attention } = {}) {
   await context.clearCookies();
-  const res = await context.request.post(new URL("/api/e2e-seed", base).href, {
-    data: { role, paid: plan === "paid", ownSlug: own || "", activity: Boolean(activity), attention: Boolean(attention) },
-    headers: { origin: base, "content-type": "application/json" },
-  });
+  let res;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      res = await context.request.post(new URL("/api/e2e-seed", base).href, {
+        data: { role, paid: plan === "paid", ownSlug: own || "", activity: Boolean(activity), attention: Boolean(attention) },
+        headers: { origin: base, "content-type": "application/json" },
+      });
+      break;
+    } catch (err) {
+      const dropped = /ECONNRESET|ECONNREFUSED|socket hang up/i.test(String(err?.message || err));
+      if (!dropped || attempt === 2) throw err;
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }
   if (!res.ok()) {
     throw new Error(`seed ${role || "parent"} ${res.status()} ${(await res.text()).slice(0, 200)}`);
   }
