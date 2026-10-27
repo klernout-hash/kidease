@@ -5,19 +5,21 @@ import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { needCareFastCopy } from "@/lib/need-care-fast-copy";
-import { loadNeedCareFast, type NeedCareFastPage as NeedCareFastData } from "@/lib/server/need-care-fast";
+import {
+  formatConfirmedDay,
+  normalizeNeedCareFastPage,
+  parseNeedCareFastSearch,
+  type NeedCareFastViewData,
+} from "@/lib/need-care-fast";
+import { loadNeedCareFast } from "@/lib/server/need-care-fast";
 import { pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 import { SITEMAP_ORIGIN } from "@/lib/sitemap";
 
-function parseSearch(search: Record<string, unknown>) {
-  return { q: typeof search.q === "string" ? search.q.trim().slice(0, 80) : "" };
-}
-
 export const Route = createFileRoute("/need-care-fast")({
-  validateSearch: parseSearch,
-  loaderDeps: ({ search }) => ({ q: search.q }),
-  loader: ({ deps }) => loadNeedCareFast(deps.q),
+  validateSearch: parseNeedCareFastSearch,
+  loaderDeps: ({ search }) => ({ q: parseNeedCareFastSearch(search).q }),
+  loader: ({ deps }) => loadNeedCareFast({ data: parseNeedCareFastSearch(deps).q }),
   head: () =>
     pageSeoHead({
       title: "Need care fast · KidEase",
@@ -27,12 +29,14 @@ export const Route = createFileRoute("/need-care-fast")({
   component: NeedCareFastPage,
 });
 
-export function NeedCareFastView({ data }: { data: NeedCareFastData }) {
+export function NeedCareFastView({ data: raw }: { data: NeedCareFastViewData | null | undefined }) {
+  const data = normalizeNeedCareFastPage(raw);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { locale } = useCopy();
   const fr = locale === "fr" || pathname.startsWith("/fr");
   const copy = needCareFastCopy(fr ? "fr" : "en");
   const [q, setQ] = useState(data.q);
+  const near = (data.placeLabel || data.q).split(",")[0]?.trim() || data.q;
   const searchPath = fr ? "/fr/search" : "/search";
   const list = {
     "@context": "https://schema.org",
@@ -81,12 +85,18 @@ export function NeedCareFastView({ data }: { data: NeedCareFastData }) {
         ) : null}
         {data.q && !data.unknownPlace && !data.hits.length ? (
           <div className="mt-6">
-            <EmptyState title={copy.emptyResults} action={copy.searchAgain} actionTo={searchPath} />
+            <EmptyState
+              title={copy.emptyNear(near)}
+              action={copy.searchAgain}
+              actionTo={`${searchPath}?q=${encodeURIComponent(near)}`}
+            />
           </div>
         ) : null}
         {data.hits.length ? (
           <ul className="mt-6 divide-y divide-border">
-            {data.hits.map((hit) => (
+            {data.hits.map((hit) => {
+              const confirmed = formatConfirmedDay(hit.confirmedAt, fr);
+              return (
               <li key={hit.id} className="py-4">
                 <Link
                   to="/daycare/$slug"
@@ -100,11 +110,12 @@ export function NeedCareFastView({ data }: { data: NeedCareFastData }) {
                   {hit.province ? `, ${hit.province}` : ""} · {hit.distanceLabel} {copy.away}
                 </p>
                 <p className="mt-1 text-sm text-muted">
-                  {hit.spots} {copy.spots} · {copy.confirmed}{" "}
-                  {new Date(hit.confirmedAt).toLocaleDateString(fr ? "fr-CA" : "en-CA", { dateStyle: "medium" })}
+                  {hit.spots} {copy.spots}
+                  {confirmed ? ` · ${copy.confirmed} ${confirmed}` : ""}
                 </p>
               </li>
-            ))}
+              );
+            })}
           </ul>
         ) : null}
       </main>

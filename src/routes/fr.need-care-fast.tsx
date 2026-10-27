@@ -1,16 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { NeedCareFastView } from "@/routes/need-care-fast";
+import { parseNeedCareFastSearch } from "@/lib/need-care-fast";
 import { loadNeedCareFast } from "@/lib/server/need-care-fast";
 import { pageSeoHead } from "@/lib/page-seo";
 
-function parseSearch(search: Record<string, unknown>) {
-  return { q: typeof search.q === "string" ? search.q.trim().slice(0, 80) : "" };
-}
-
 export const Route = createFileRoute("/fr/need-care-fast")({
-  validateSearch: parseSearch,
-  loaderDeps: ({ search }) => ({ q: search.q }),
-  loader: ({ deps }) => loadNeedCareFast(deps.q),
+  validateSearch: parseNeedCareFastSearch,
+  loaderDeps: ({ search }) => ({ q: parseNeedCareFastSearch(search).q }),
+  loader: ({ deps }) => loadNeedCareFast({ data: parseNeedCareFastSearch(deps).q }),
   head: () =>
     pageSeoHead({
       title: "Besoin de garde vite · KidEase",

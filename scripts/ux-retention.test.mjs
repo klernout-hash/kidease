@@ -62,7 +62,8 @@ test("Explore empty states distinguish load failure from a true empty radius", (
 
 test("error surfaces and get-app offer a next step instead of a dead end", () => {
   const err = src("src/lib/error-component.tsx");
-  assert.match(err, /Reload Explore/);
+  assert.match(err, /copy\.retry/);
+  assert.doesNotMatch(err, /Reload Explore/);
   assert.match(err, /Back to home/);
   assert.match(err, /Email support/);
   assert.match(err, /SUPPORT_INBOX_EMAIL/);

@@ -1583,7 +1583,7 @@ export function SearchScreen({
             </h1>
             <Link
               to="/need-care-fast"
-              search={{ q: locationKnown ? city : "" }}
+              search={{ q: locationKnown ? String(city || "").trim().slice(0, 80) : "" }}
               className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline"
             >
               {locale === "fr" ? "Besoin de garde vite" : "Need care fast"}
