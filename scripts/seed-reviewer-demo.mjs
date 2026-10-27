@@ -3,19 +3,19 @@
  * App Store / Play reviewer accounts. One parent, one daycare, one demo centre.
  *
  *   DATABASE_URL=… \
- *   REVIEWER_PARENT_PASSWORD=… \
- *   REVIEWER_DAYCARE_PASSWORD=… \
+ *   REVIEWER_ACCOUNT_PASSWORD=… \
  *   npm run ops:reviewer-demo
  *
- * Passwords come only from the environment, or from --password-file when
- * those vars are blank. This file never prints them. The password file
- * stays out of git.
+ * One password, from REVIEWER_ACCOUNT_PASSWORD, is used for both accounts.
+ * --password-file writes that password when the variable is blank. This file
+ * never prints it. The password file stays out of git.
  *
  *   node scripts/seed-reviewer-demo.mjs --password-file /path/demo-accounts.txt
  *
  * The centre is a fictional Winnipeg sample. Public search hides it
  * (visibility admin_only, is_test = 1). It is not a real licensed daycare:
- * no fee, no rating, no photo, no child photo, licence marked QA.
+ * no fee, no rating, no child photo, licence marked QA. Photos are the
+ * standard new-listing samples, not pictures of this centre.
  *
  * Not wired into db:migrate. Re-running updates the same rows.
  *
@@ -51,10 +51,17 @@ export const REVIEWER_PARENT_NAME = "Alex Morgan";
 export const REVIEWER_PROVIDER_NAME = "Jordan Singh";
 
 const CHILD_ID = "qa-reviewer-child";
+const CHILD_TWO_ID = "qa-reviewer-child-2";
 const BOOKING_ID = "qa-reviewer-request";
 const CONVERSATION_ID = "qa-reviewer-thread";
 const MESSAGE_ID = "qa-reviewer-msg";
 const REPLY_ID = "qa-reviewer-reply";
+const TOUR_ID = "qa-reviewer-tour";
+const WAITLIST_ID = "qa-reviewer-waitlist";
+/** Same paths as STOCK_CREATE_PHOTOS. Sample rooms, not this centre. */
+const REVIEWER_PHOTOS = "/photos/community.jpg,/photos/playroom.jpg";
+const REVIEWER_HOURS = "Monday to Friday, 7:30 a.m. to 5:30 p.m.";
+const REVIEWER_HOURS_FR = "Lundi au vendredi, 7 h 30 à 17 h 30.";
 
 function newId() {
   return randomBytes(16).toString("hex");
@@ -70,12 +77,19 @@ function passwordOf(env, key) {
   return String(env[key] || "").trim();
 }
 
-/** Fresh passwords for a reviewer run. Callers must not print the return value. */
+/** One fresh password for both reviewer accounts. Callers must not print it. */
 export function generatedReviewerPasswords() {
+  const password = randomBytes(18).toString("base64url");
   return {
-    parentPassword: randomBytes(18).toString("base64url"),
-    daycarePassword: randomBytes(18).toString("base64url"),
+    password,
+    parentPassword: password,
+    daycarePassword: password,
   };
+}
+
+/** John Doe and Jonny Doey are separate QA accounts. This seed must not write them. */
+export function isProtectedQaIdentity(value) {
+  return /john[\s._-]*doe|jonn?y[\s._-]*doey/i.test(String(value || ""));
 }
 
 /**
@@ -109,8 +123,9 @@ export async function writeReviewerPasswordFile(filePath, plan) {
 export function reviewerCredentialPlan(env = process.env) {
   const parentEmail = emailOf(env, "REVIEWER_PARENT_EMAIL", REVIEWER_PARENT_EMAIL_DEFAULT);
   const daycareEmail = emailOf(env, "REVIEWER_DAYCARE_EMAIL", REVIEWER_DAYCARE_EMAIL_DEFAULT);
-  const parentPassword = passwordOf(env, "REVIEWER_PARENT_PASSWORD");
-  const daycarePassword = passwordOf(env, "REVIEWER_DAYCARE_PASSWORD");
+  const password = passwordOf(env, "REVIEWER_ACCOUNT_PASSWORD");
+  const parentPassword = password;
+  const daycarePassword = password;
   return {
     parentEmail,
     daycareEmail,
@@ -149,6 +164,9 @@ export function assertReviewerPlan(plan) {
   if (plan.parentEmail === "kyle@kidease.ca" || plan.daycareEmail === "kyle@kidease.ca") {
     throw new Error("[reviewer-demo] refusing to reuse the operator mailbox");
   }
+  if (isProtectedQaIdentity(plan.parentEmail) || isProtectedQaIdentity(plan.daycareEmail)) {
+    throw new Error("[reviewer-demo] refusing to change a John Doe or Jonny Doey account");
+  }
   if (plan.listing.slug !== REVIEWER_LISTING.slug || plan.listing.id !== REVIEWER_LISTING.id) {
     throw new Error("[reviewer-demo] listing id drifted");
   }
@@ -156,7 +174,16 @@ export function assertReviewerPlan(plan) {
 }
 
 async function upsertCredential(client, { email, name, password, role }) {
-  const existing = await client.query(`select id from "user" where lower(email) = $1 limit 1`, [email]);
+  if (isProtectedQaIdentity(email) || isProtectedQaIdentity(name)) {
+    throw new Error("[reviewer-demo] refusing to change a John Doe or Jonny Doey account");
+  }
+  const existing = await client.query(
+    `select id, name from "user" where lower(email) = $1 limit 1`,
+    [email],
+  );
+  if (isProtectedQaIdentity(existing.rows[0]?.name)) {
+    throw new Error("[reviewer-demo] refusing to change a John Doe or Jonny Doey account");
+  }
   let userId = existing.rows[0]?.id;
   if (!userId) {
     userId = newId();
@@ -166,6 +193,11 @@ async function upsertCredential(client, { email, name, password, role }) {
       [userId, name, email],
     );
   }
+  await client.query(
+    `update "user" set name = $2, "emailVerified" = true, "twoFactorEnabled" = false, "updatedAt" = now() where id = $1`,
+    [userId, name],
+  );
+  await client.query(`delete from "twoFactor" where "userId" = $1`, [userId]);
   const admin = await client.query(`select role from profiles where user_id = $1`, [userId]);
   const current = String(admin.rows[0]?.role || "");
   if (current === "admin" || current === "support" || current === "support_lead") {
@@ -194,6 +226,17 @@ async function upsertCredential(client, { email, name, password, role }) {
      on conflict (user_id) do update set role = excluded.role, display_name = excluded.display_name, is_test = 1`,
     [userId, role, name],
   );
+  await client.query(
+    `insert into email_suppressions (email, reason)
+     values ($1, 'manual')
+     on conflict (email) do update set
+       reason = case
+         when email_suppressions.reason = 'complaint' then email_suppressions.reason
+         else 'manual'
+       end,
+       updated_at = now()`,
+    [email],
+  );
   return userId;
 }
 
@@ -219,7 +262,7 @@ async function grantComplimentaryParentPlus(client, parentUserId) {
 async function upsertListing(client, daycareUserId) {
   const row = REVIEWER_LISTING;
   const description =
-    "Fictional Winnipeg centre for store review only. Not a real licensed daycare and not a real family. Hidden from public search. No fee, rating, photo, child photo, or open spots are on file.";
+    "Fictional Winnipeg centre for store review only. Not a real licensed daycare and not a real family. Hidden from public search. No fee, rating, child photo, or open spots are on file. The photos are KidEase sample rooms, not this centre.";
   await client.query(
     `insert into daycares (
        id, slug, name, name_fr, tagline, tagline_fr, description, description_fr,
@@ -231,8 +274,8 @@ async function upsertListing(client, daycareUserId) {
        $1, $2, $3, $4, $5, $6, $7, $7,
        $8, $9, $10, $11, $12, $13, null, $14, $15,
        0, 144, null, null, null,
-       0, 0, 0, 0, 0, 0,
-       $16, '', 0, 'admin_only', 1, 'approved', now(), 1
+       0, 0, 0, 1, 0, 0,
+       $16, $17, 0, 'admin_only', 1, 'approved', now(), 1
      )
      on conflict (id) do update set
        slug = excluded.slug,
@@ -241,6 +284,8 @@ async function upsertListing(client, daycareUserId) {
        description = excluded.description,
        description_fr = excluded.description_fr,
        address = excluded.address,
+       hours = excluded.hours,
+       hours_fr = excluded.hours_fr,
        visibility = 'admin_only',
        is_test = 1,
        rating_x10 = 0,
@@ -251,7 +296,8 @@ async function upsertListing(client, daycareUserId) {
        toddler_monthly = null,
        preschool_monthly = null,
        verified = 0,
-       photos = '',
+       photos = excluded.photos,
+       waitlist = 1,
        claim_status = 'approved',
        listing_active = 1,
        license_number = excluded.license_number`,
@@ -269,9 +315,10 @@ async function upsertListing(client, daycareUserId) {
       row.postalCode,
       row.lat,
       row.lng,
-      "Hours are not published for this demo.",
-      "Les heures ne sont pas publiées pour cette démo.",
+      REVIEWER_HOURS,
+      REVIEWER_HOURS_FR,
       row.licenseNumber,
+      REVIEWER_PHOTOS,
     ],
   );
   await client.query(`delete from provider_daycares where daycare_id = $1 and user_id <> $2`, [
@@ -297,6 +344,15 @@ async function upsertParentSamples(client, parentUserId) {
        medications = excluded.medications,
        medical_notes = excluded.medical_notes`,
     [CHILD_ID, parentUserId],
+  );
+  await client.query(
+    `insert into children (id, user_id, name, birthdate, notes, allergies, medications, medical_notes)
+     values ($1, $2, 'Avery Sample', '2021-03-20', 'Second fictional child for store review. Not a real child. No photo is stored.', 'Sample: none', 'Sample: none', 'Fictional note for review only. Not a real child. No photo.')
+     on conflict (id) do update set
+       user_id = excluded.user_id,
+       name = excluded.name,
+       notes = excluded.notes`,
+    [CHILD_TWO_ID, parentUserId],
   );
   await client.query(
     `insert into saved_daycares (user_id, daycare_id) values ($1, $2) on conflict do nothing`,
@@ -349,6 +405,41 @@ async function upsertParentSamples(client, parentUserId) {
     ],
   );
   await client.query(`update conversations set last_at = now() where id = $1`, [conversationId]);
+  await client.query(
+    `insert into tour_requests (
+       id, conversation_id, user_id, daycare_id, child_id, child_name, preferred_times, parent_note, status
+     ) values (
+       $1, $2, $3, $4, $5, 'Rowan Sample', 'Tuesday or Thursday morning',
+       'Fictional tour request for store review. Not a real family.', 'pending'
+     )
+     on conflict (id) do update set
+       conversation_id = excluded.conversation_id,
+       user_id = excluded.user_id,
+       daycare_id = excluded.daycare_id,
+       child_id = excluded.child_id,
+       status = 'pending'`,
+    [TOUR_ID, conversationId, parentUserId, listingId, CHILD_ID],
+  );
+  await client.query(
+    `delete from daycare_waitlist
+     where daycare_id = $1 and user_id = $2 and id <> $3 and status in ('waiting', 'offered')`,
+    [listingId, parentUserId, WAITLIST_ID],
+  );
+  await client.query(
+    `insert into daycare_waitlist (id, daycare_id, user_id, age_group, child_label, note, status)
+     values (
+       $1, $2, $3, 'toddler', 'Rowan Sample',
+       'Fictional waitlist entry for store review. Not a real family.', 'waiting'
+     )
+     on conflict (id) do update set
+       daycare_id = excluded.daycare_id,
+       user_id = excluded.user_id,
+       age_group = excluded.age_group,
+       child_label = excluded.child_label,
+       status = 'waiting',
+       updated_at = now()`,
+    [WAITLIST_ID, listingId, parentUserId],
+  );
 }
 
 /**
@@ -408,12 +499,11 @@ async function main() {
   let env = process.env;
   if (filePath) {
     const current = reviewerCredentialPlan(env);
-    if (!current.parentPassword || !current.daycarePassword) {
+    if (!current.parentPassword) {
       const generated = generatedReviewerPasswords();
       env = {
         ...env,
-        REVIEWER_PARENT_PASSWORD: generated.parentPassword,
-        REVIEWER_DAYCARE_PASSWORD: generated.daycarePassword,
+        REVIEWER_ACCOUNT_PASSWORD: generated.password,
       };
     }
     const plan = reviewerCredentialPlan(env);
@@ -423,16 +513,14 @@ async function main() {
   }
   if (!process.env.DATABASE_URL?.trim()) {
     console.log("[reviewer-demo] DATABASE_URL unset — production accounts were not created");
-    if (!filePath && (env.REVIEWER_PARENT_PASSWORD || env.REVIEWER_DAYCARE_PASSWORD)) {
+    if (!filePath && env.REVIEWER_ACCOUNT_PASSWORD) {
       throw new Error("[reviewer-demo] DATABASE_URL is required when reviewer passwords are set");
     }
     return;
   }
   const result = await applyReviewerDemoFromEnv(process.env.DATABASE_URL, env);
   if (result === "skipped") {
-    console.log(
-      "[reviewer-demo] REVIEWER_PARENT_PASSWORD or REVIEWER_DAYCARE_PASSWORD unset — skip",
-    );
+    console.log("[reviewer-demo] REVIEWER_ACCOUNT_PASSWORD unset — skip");
     return;
   }
   console.log(`[reviewer-demo] ${result}`);

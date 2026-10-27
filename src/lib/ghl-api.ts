@@ -20,6 +20,7 @@ import {
   type GhlIntakeAudience,
   type GhlIntakeTrigger,
 } from "./ghl-intake.ts";
+import { isStoreReviewerEmail } from "./reviewer-accounts.ts";
 import { runtimeProcessEnv, type EnvMap } from "./runtime-env.ts";
 
 export const GHL_API_BASE = "https://services.leadconnectorhq.com";
@@ -51,7 +52,7 @@ export const GHL_DEFAULT_PARENT_SIGNED_UP_STAGE_ID = "b219bee7-1593-4003-8798-d5
  */
 export const GHL_FORBIDDEN_APPROVED_STAGE_ID = "fd5410ec-da7b-48a7-8f34-32f3f58045c7";
 
-export type GhlApiSkipReason = "flag-off" | "no-api-token" | "no-email";
+export type GhlApiSkipReason = "flag-off" | "no-api-token" | "no-email" | "reviewer-account";
 
 export type GhlApiResult =
   | { ok: true; skipped: true; reason: GhlApiSkipReason }
@@ -289,6 +290,9 @@ export async function postGhlCrmSignup(input: {
     if (!email) {
       input.onSkip?.("no-email");
       return { ok: true, skipped: true, reason: "no-email" };
+    }
+    if (isStoreReviewerEmail(email)) {
+      return { ok: true, skipped: true, reason: "reviewer-account" };
     }
     const fetchImpl = input.fetchImpl ?? fetch;
     const trigger = input.trigger;

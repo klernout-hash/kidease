@@ -126,7 +126,11 @@
   /* Long words stay on screen on a phone. The desktop site keeps its own wrapping. */
   @media (max-width: 1023px) {
     body {
-      overflow-wrap: break-word;
+      overflow-wrap: anywhere;
+    }
+    input[type="file"] {
+      max-width: 100%;
+      min-width: 0;
     }
   }
   /* Closed portals / inactive channel chrome must never catch clicks.

@@ -287,8 +287,28 @@ export function flushQueuedPostHogEvents(ph?: PostHog | null): void {
   }
 }
 
+let reviewerQuiet = false;
+
+/** Store-review accounts stay out of product analytics for this tab. */
+export function quietPostHogForStoreReviewer(): void {
+  reviewerQuiet = true;
+  clearQueuedPostHogEvents();
+  pendingIdentify = null;
+  identifiedId = "";
+  client?.stopSessionRecording();
+  client?.opt_out_capturing();
+}
+
+/** A later real sign-in in the same tab can record again. */
+export function resumePostHogAfterReviewer(): void {
+  if (!reviewerQuiet) return;
+  reviewerQuiet = false;
+  if (client?.has_opted_out_capturing()) client.opt_in_capturing();
+}
+
 /** Capture a product event. Queues across hard navigations until the client is live. */
 export function capturePostHogEvent(event: string, properties: Record<string, unknown> = {}): void {
+  if (reviewerQuiet) return;
   const name = event.trim();
   if (!name) return;
   const consent = readAnalyticsConsent();
@@ -318,6 +338,7 @@ export function isPostHogFlagEnabled(flag: string): boolean | undefined {
  * Skip the sandbox `dev-user` so preview traffic is not pooled.
  */
 export function identifyPostHogUser(distinctId: string): void {
+  if (reviewerQuiet) return;
   const id = distinctId.trim();
   if (!id || id === "dev-user") return;
   identifiedId = id;
@@ -345,6 +366,7 @@ export async function hashIdentifier(value: string): Promise<string> {
 
 /** Start PostHog once in the browser when the public key is set. No-op on the server. */
 export function startPostHog(): void {
+  if (reviewerQuiet) return;
   if (started || typeof window === "undefined") return;
   const key = posthogProjectKey();
   if (!key) return;

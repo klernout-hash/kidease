@@ -1,6 +1,13 @@
 import { useEffect } from "react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { identifyPostHogUser, resetPostHogIdentity, startPostHog } from "@/lib/posthog";
+import { isStoreReviewerEmail } from "@/lib/reviewer-accounts";
+import {
+  identifyPostHogUser,
+  quietPostHogForStoreReviewer,
+  resetPostHogIdentity,
+  resumePostHogAfterReviewer,
+  startPostHog,
+} from "@/lib/posthog";
 import { captureRetentionTouch } from "@/lib/retention";
 
 /**
@@ -23,6 +30,11 @@ export function PostHogBoot() {
 
   useEffect(() => {
     if (isPending) return;
+    if (user && isStoreReviewerEmail(user.primaryEmail)) {
+      quietPostHogForStoreReviewer();
+      return;
+    }
+    resumePostHogAfterReviewer();
     if (user && !user.isDevFallback) identifyPostHogUser(user.id);
     else resetPostHogIdentity();
   }, [user, isPending]);

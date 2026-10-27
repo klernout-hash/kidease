@@ -27,11 +27,11 @@ Do not put passwords in this file or in git. Do not print them. Do not commit `D
 
 Kyle runs this once, from a machine that already has the production database URL in the environment:
 
-1. Export `REVIEWER_PARENT_PASSWORD` and `REVIEWER_DAYCARE_PASSWORD`. Optional email overrides: `REVIEWER_PARENT_EMAIL` and `REVIEWER_DAYCARE_EMAIL`. To generate passwords into a file instead of the shell history, run `node scripts/seed-reviewer-demo.mjs --password-file /path/demo-accounts.txt` on a machine that already has `DATABASE_URL`. The script writes the file mode 0600 and does not print the passwords.
-2. Run `npm run ops:reviewer-demo` when the password variables are already exported.
-3. Confirm the fictional centre `qa-reviewer-demo-centre` (North Elm Family Daycare, Winnipeg, Manitoba) stays `admin_only` with `is_test = 1`, and that public search does not list it. It is not a real licensed daycare. No fee, rating, photo, or child photo is stored.
-4. Confirm the parent profile has complimentary Parent Plus (`plus_plan` plus, `plus_status` active) and no Stripe subscription id. The daycare profile does not get Plus.
-5. Sign in on https://www.kidease.ca with each account. Open Search, Saved, Messages, and Account. From Messages, the parent can open a video tour. The app shows the join button. It does not show a price or a subscribe button.
+1. Export `REVIEWER_ACCOUNT_PASSWORD`. The same password is used for both accounts. Optional email overrides: `REVIEWER_PARENT_EMAIL` and `REVIEWER_DAYCARE_EMAIL`. To generate the password into a file instead of the shell history, run `node scripts/seed-reviewer-demo.mjs --password-file /path/demo-accounts.txt` on a machine that already has `DATABASE_URL`. The script writes the file mode 0600 and does not print the password.
+2. Run `npm run ops:reviewer-demo` when `REVIEWER_ACCOUNT_PASSWORD` is already exported.
+3. Confirm the fictional centre `qa-reviewer-demo-centre` (North Elm Family Daycare, Winnipeg, Manitoba) stays `admin_only` with `is_test = 1`, and that public search does not list it. It is not a real licensed daycare. No fee or rating is stored. Hours are Monday to Friday, 7:30 a.m. to 5:30 p.m. Photos are KidEase sample rooms, not pictures of this centre. The parent has two fictional child profiles, a message thread, a tour request, and a waitlist entry. Re-running the seed updates those same rows. It does not change the John Doe or Jonny Doey accounts.
+4. Confirm the parent profile has complimentary Parent Plus (`plus_plan` plus, `plus_status` active) and no Stripe subscription id. The daycare profile does not get Plus. Both accounts have email already verified and two-factor turned off.
+5. Sign in on https://www.kidease.ca/login with each account and that password. No email code is sent. Open Search, Saved, Messages, and Account. The parent sees the message thread. The daycare sees the same thread, the tour request, and the waitlist. From Messages, the parent can open a video tour. The app shows the join button. It does not show a price or a subscribe button.
 
 Defaults if the email vars are unset: `reviewer.parent@kidease.ca` and `reviewer.daycare@kidease.ca`. Both profiles are marked test accounts. The parent account’s Parent Plus is complimentary. Nothing is charged.
 
