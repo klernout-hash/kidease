@@ -7,26 +7,21 @@ import { nativeStoreTabs } from "../src/lib/native-store-tabs.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-test("native store tabs are Search, Saved, Messages, Account", () => {
-  for (const kind of ["guest", "parent"]) {
-    const tabs = nativeStoreTabs(kind);
-    assert.deepEqual(
-      tabs?.map((tab) => tab.id),
-      ["search", "saved", "messages", "account"],
-    );
+test("native uses the same role bars, so the store override stays empty", () => {
+  for (const kind of ["guest", "parent", "daycare", "admin"]) {
+    assert.equal(nativeStoreTabs(kind), null);
   }
-  assert.equal(nativeStoreTabs("daycare"), null);
-  assert.equal(nativeStoreTabs("admin"), null);
-  const messages = nativeStoreTabs("parent")?.find((tab) => tab.id === "messages");
-  assert.equal(messages?.to, "/inbox");
   assert.equal(JSON.stringify(nativeStoreTabs("guest")).toLowerCase().includes("coming soon"), false);
 });
 
-test("the phone website keeps the five-tab bar; native opts into the store set", () => {
+test("the phone tab bar ends in Menu for every role", () => {
   const bar = readFileSync(join(root, "src/components/app-tab-bar.tsx"), "utf8");
   assert.match(bar, /isNative\(\)/);
   assert.match(bar, /nativeStoreTabs/);
   assert.match(bar, /pb-\[var\(--ke-safe-bottom,env\(safe-area-inset-bottom\)\)\]/);
   assert.match(bar, /t\("messages"\)/);
+  assert.match(bar, /t\("navMenu"\)/);
+  assert.match(bar, /t\("navCalendar"\)/);
+  assert.match(bar, /t\("inbox"\)/);
   assert.doesNotMatch(bar, /coming soon/i);
 });

@@ -3071,5 +3071,16 @@
   "canadaSearchTitle": "加拿大各地嘅托兒所",
   "canadaSearchLead": "揀一個城市，或者打開定位，睇吓你附近嘅中心。",
   "canadaSearchChoose": "揀一個城市",
-  "alertSummary": "{total} 項提醒入面開咗 {on} 項"
+  "alertSummary": "{total} 項提醒入面開咗 {on} 項",
+  "navMenu": "菜單",
+  "navCalendar": "日曆",
+  "menuEarningsMonth": "本月收入",
+  "menuReviews": "評價",
+  "menuCreateListing": "開新園所簡介",
+  "menuFindDaycare": "搵托兒所",
+  "menuAccountSettings": "帳戶設定",
+  "menuResources": "資源",
+  "menuGuides": "指南",
+  "menuGetHelp": "攞幫手",
+  "menuPrivacyLegal": "私隱同法律"
 }

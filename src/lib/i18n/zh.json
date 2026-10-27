@@ -3071,5 +3071,16 @@
   "canadaSearchTitle": "加拿大各地的日托",
   "canadaSearchLead": "选择城市，或打开定位，查看您附近的中心。",
   "canadaSearchChoose": "选择城市",
-  "alertSummary": "{total} 项提醒中已开启 {on} 项"
+  "alertSummary": "{total} 项提醒中已开启 {on} 项",
+  "navMenu": "菜单",
+  "navCalendar": "日历",
+  "menuEarningsMonth": "本月收入",
+  "menuReviews": "评价",
+  "menuCreateListing": "新建园所简介",
+  "menuFindDaycare": "找托儿所",
+  "menuAccountSettings": "账户设置",
+  "menuResources": "资源",
+  "menuGuides": "指南",
+  "menuGetHelp": "获取帮助",
+  "menuPrivacyLegal": "隐私和法律"
 }

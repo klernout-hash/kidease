@@ -3071,5 +3071,16 @@
   "canadaSearchTitle": "Mga daycare sa buong Canada",
   "canadaSearchLead": "Pumili ng lungsod, o buksan ang lokasyon, para makita ang mga centre malapit sa iyo.",
   "canadaSearchChoose": "Pumili ng lungsod",
-  "alertSummary": "{on} sa {total} na alerto ang naka-on"
+  "alertSummary": "{on} sa {total} na alerto ang naka-on",
+  "navMenu": "Menu",
+  "navCalendar": "Kalendaryo",
+  "menuEarningsMonth": "Kita ngayong buwan",
+  "menuReviews": "Mga review",
+  "menuCreateListing": "Gumawa ng bagong listahan",
+  "menuFindDaycare": "Maghanap ng daycare",
+  "menuAccountSettings": "Mga setting ng account",
+  "menuResources": "Mga mapagkukunan",
+  "menuGuides": "Mga gabay",
+  "menuGetHelp": "Humingi ng tulong",
+  "menuPrivacyLegal": "Privacy at legal"
 }

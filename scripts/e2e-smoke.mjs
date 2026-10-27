@@ -296,14 +296,18 @@ async function runRoleFixture(page, base) {
       !/requests & tours/i.test(guestNav);
     record("menu-guest", guestOk, { note: guestOk ? "guest" : guestNav.slice(0, 180) });
     const guestBar = await appBarText(page, new URL("/", base).href);
-    const guestOrder = guestBar.indexOf("Search") > guestBar.indexOf("Home") && guestBar.indexOf("Saved") > guestBar.indexOf("Search");
+    const guestOrder =
+      guestBar.indexOf("Search") >= 0 &&
+      guestBar.indexOf("Saved") > guestBar.indexOf("Search") &&
+      guestBar.indexOf("Menu") > guestBar.indexOf("Saved");
     record(
       "bottom-bar-guest",
-      /\bHome\b/.test(guestBar) &&
-        /\bSearch\b/.test(guestBar) &&
+      /\bSearch\b/.test(guestBar) &&
         /\bSaved\b/.test(guestBar) &&
-        /\bSign in\b/.test(guestBar) &&
+        /\bMenu\b/.test(guestBar) &&
         guestOrder &&
+        !/\bHome\b/.test(guestBar) &&
+        !/\bSign in\b/.test(guestBar) &&
         !/I'm a parent/i.test(guestBar),
       { note: guestBar },
     );
@@ -369,10 +373,12 @@ async function runRoleFixture(page, base) {
       parentBar.indexOf("Search") >= 0 &&
         parentBar.indexOf("Saved") > parentBar.indexOf("Search") &&
         parentBar.indexOf("Requests") > parentBar.indexOf("Saved") &&
-        parentBar.indexOf("Messages") > parentBar.indexOf("Requests") &&
+        parentBar.indexOf("Inbox") > parentBar.indexOf("Requests") &&
+        parentBar.indexOf("Menu") > parentBar.indexOf("Inbox") &&
         /\bSaved\b/.test(parentBar) &&
         /\bRequests\b/.test(parentBar) &&
-        /\bMessages\b/.test(parentBar) &&
+        /\bInbox\b/.test(parentBar) &&
+        /\bMenu\b/.test(parentBar) &&
         !/\bUpgrade\b/.test(parentBar) &&
         !/\bMy plan\b/.test(parentBar) &&
         !/\bSubscription\b/.test(parentBar) &&
@@ -381,7 +387,7 @@ async function runRoleFixture(page, base) {
         !/\bEnrolled\b/.test(parentBar),
       { note: parentBar },
     );
-    const parentAvatar = await page.locator('[data-ke="tab-avatar"]').count();
+    const parentAvatar = await page.locator('[data-ke="header-avatar"]').count();
     record("bottom-bar-avatar", parentAvatar > 0, { note: `avatars ${parentAvatar}` });
 
     await page.setViewportSize({ width: 1280, height: 900 });
@@ -414,15 +420,18 @@ async function runRoleFixture(page, base) {
     );
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs }).catch(() => {});
-    await page.locator('[data-ke="menu-badge"]').waitFor({ timeout: timeoutMs }).catch(() => {});
-    await openHeaderMenu(page);
-    const menuBadge = await page.locator('[data-ke="menu-badge"]').count();
-    const drawerUpgrade = await page.locator('#ke-nav-drawer [data-nav="upgrade"]:visible').count();
-    const drawerBadge = ((await page.locator('#ke-nav-drawer [data-nav="bookings"] [data-ke="count-badge"]').innerText().catch(() => "")) || "").trim();
-    const phoneSwitcher = await page.locator('#ke-nav-drawer [data-ke="desk-switcher"]').count();
-    await page.keyboard.press("Escape");
-    record("nav-phone-shell", menuBadge > 0 && drawerUpgrade > 0 && phoneSwitcher === 0 && /^(\d+|99\+)$/.test(drawerBadge), {
-      note: `menu=${menuBadge} upgrade=${drawerUpgrade} switcher=${phoneSwitcher} badge=${drawerBadge}`,
+    const phoneMenuButton = page.locator('header button[aria-label="Menu"]');
+    const phoneMenuHidden = !(await phoneMenuButton.isVisible().catch(() => false));
+    const requestsBadge = page.locator('[data-ke="app-tab-bar"] [data-nav="bookings"] [data-ke="count-badge"]');
+    await requestsBadge.waitFor({ timeout: timeoutMs }).catch(() => {});
+    const drawerBadge = ((await requestsBadge.innerText().catch(() => "")) || "").trim();
+    await page.goto(new URL("/menu", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    const upgradeRow = page.locator('[data-ke="app-menu"] [data-nav="upgrade"]');
+    await upgradeRow.waitFor({ timeout: timeoutMs }).catch(() => {});
+    const drawerUpgrade = await upgradeRow.count();
+    const phoneSwitcher = await page.locator('[data-ke="desk-switcher"]').count();
+    record("nav-phone-shell", phoneMenuHidden && drawerUpgrade > 0 && phoneSwitcher === 0 && /^(\d+|99\+)$/.test(drawerBadge), {
+      note: `menuHidden=${phoneMenuHidden} upgrade=${drawerUpgrade} switcher=${phoneSwitcher} badge=${drawerBadge}`,
     });
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(new URL("/account?tab=profile&section=delete", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
@@ -532,9 +541,10 @@ async function runRoleFixture(page, base) {
     record(
       "bottom-bar-daycare",
       daycareBar.indexOf("Today") >= 0 &&
-        daycareBar.indexOf("Requests") > daycareBar.indexOf("Today") &&
-        daycareBar.indexOf("Listings") > daycareBar.indexOf("Requests") &&
+        daycareBar.indexOf("Calendar") > daycareBar.indexOf("Today") &&
+        daycareBar.indexOf("Listings") > daycareBar.indexOf("Calendar") &&
         daycareBar.indexOf("Messages") > daycareBar.indexOf("Listings") &&
+        daycareBar.indexOf("Menu") > daycareBar.indexOf("Messages") &&
         !daycareBar.includes("Desk") &&
         !daycareBar.includes("Enquiries") &&
         !daycareBar.includes("Upgrade") &&

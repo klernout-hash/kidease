@@ -49,7 +49,8 @@ test("French labels, sponsored mark, native store copy, and wallets", () => {
   assert.match(src("src/routes/search.tsx"), /DaycareCard/);
   assert.match(src("src/components/daycare-card.tsx"), /SponsoredMark show=\{item\.featuredCity\}/);
   assert.match(src("src/routes/get-app.tsx"), /hideCommerce \? \[\] : comingSoonStores/);
-  assert.match(src("src/routes/menu.tsx"), /hideCommerce \? null :/);
+  assert.match(src("src/lib/app-menu.ts"), /menuGroupLinks/);
+  assert.match(src("src/lib/site-footer-nav.ts"), /link.to === "\/donate"/);
   assert.doesNotMatch(src("src/components/site-footer.tsx"), /comingSoonStores/);
   assert.doesNotMatch(src("src/components/site-footer.tsx"), /App Store/);
   const iphone = detectBrowserWallets({

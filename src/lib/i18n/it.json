@@ -3071,5 +3071,16 @@
   "canadaSearchTitle": "Asili in tutto il Canada",
   "canadaSearchLead": "Scegli una città, o attiva la posizione, per vedere i centri vicino a te.",
   "canadaSearchChoose": "Scegli una città",
-  "alertSummary": "{on} di {total} avvisi attivi"
+  "alertSummary": "{on} di {total} avvisi attivi",
+  "navMenu": "Menu",
+  "navCalendar": "Calendario",
+  "menuEarningsMonth": "Guadagni di questo mese",
+  "menuReviews": "Recensioni",
+  "menuCreateListing": "Crea una nuova scheda",
+  "menuFindDaycare": "Trova un asilo",
+  "menuAccountSettings": "Impostazioni account",
+  "menuResources": "Risorse",
+  "menuGuides": "Guide",
+  "menuGetHelp": "Ottieni aiuto",
+  "menuPrivacyLegal": "Privacy e note legali"
 }

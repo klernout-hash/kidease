@@ -3071,5 +3071,16 @@
   "canadaSearchTitle": "Guarderías en todo Canadá",
   "canadaSearchLead": "Elige una ciudad, o activa la ubicación, para ver centros cerca de ti.",
   "canadaSearchChoose": "Elegir una ciudad",
-  "alertSummary": "{on} de {total} alertas activas"
+  "alertSummary": "{on} de {total} alertas activas",
+  "navMenu": "Menú",
+  "navCalendar": "Calendario",
+  "menuEarningsMonth": "Ingresos de este mes",
+  "menuReviews": "Reseñas",
+  "menuCreateListing": "Crear una ficha nueva",
+  "menuFindDaycare": "Buscar guardería",
+  "menuAccountSettings": "Ajustes de la cuenta",
+  "menuResources": "Recursos",
+  "menuGuides": "Guías",
+  "menuGetHelp": "Obtener ayuda",
+  "menuPrivacyLegal": "Privacidad y legal"
 }

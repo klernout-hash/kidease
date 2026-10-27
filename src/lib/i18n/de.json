@@ -3071,5 +3071,16 @@
   "canadaSearchTitle": "Kitas in ganz Kanada",
   "canadaSearchLead": "Wähle eine Stadt oder schalte den Standort ein, um Zentren in deiner Nähe zu sehen.",
   "canadaSearchChoose": "Stadt wählen",
-  "alertSummary": "{on} von {total} Hinweisen an"
+  "alertSummary": "{on} von {total} Hinweisen an",
+  "navMenu": "Menü",
+  "navCalendar": "Kalender",
+  "menuEarningsMonth": "Einnahmen diesen Monat",
+  "menuReviews": "Bewertungen",
+  "menuCreateListing": "Neue Einrichtung anlegen",
+  "menuFindDaycare": "Kita finden",
+  "menuAccountSettings": "Kontoeinstellungen",
+  "menuResources": "Ressourcen",
+  "menuGuides": "Ratgeber",
+  "menuGetHelp": "Hilfe holen",
+  "menuPrivacyLegal": "Datenschutz und Rechtliches"
 }

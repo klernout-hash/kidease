@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { AppTabBar } from "@/components/app-tab-bar";
 import { BrandMark } from "@/components/brand-mark";
+import { HeaderAccount } from "@/components/header-account";
 
 /**
  * Header-only shell for /menu and /verify-2fa so those routes do not pull
@@ -22,9 +23,12 @@ export function ShellLite({
           <Link to="/" className="shrink-0" aria-label="KidEase">
             <BrandMark size="sm" />
           </Link>
+          <div className="ml-auto">
+            <HeaderAccount />
+          </div>
         </div>
       </header>
-      <div className={appTabs ? "[[data-channel=app]_&]:pb-[calc(6rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]" : undefined}>
+      <div className={appTabs ? "[[data-channel=app]_&]:pb-[calc(8.5rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]" : undefined}>
         {children}
       </div>
       {appTabs ? <AppTabBar /> : null}

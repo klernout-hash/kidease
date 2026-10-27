@@ -153,20 +153,22 @@ test("routeTree and page register /notifications", () => {
 
 test("signed-in header and menus show a bell; guests do not get a badge", () => {
   const shell = src("src/components/shell.tsx");
+  const header = src("src/components/header-account.tsx");
   const drawer = src("src/components/nav-drawer.tsx");
-  const menu = src("src/routes/menu.tsx");
-  assert.match(shell, /NotificationBell/);
+  assert.match(shell, /HeaderAccount/);
   assert.match(shell, /const headerUser = viewingGuest \? null : user/);
-  assert.match(shell, /headerUser \? <NotificationBell/);
+  assert.match(header, /<NotificationBell \/>/);
+  assert.match(header, /data-ke="header-login"/);
   assert.match(drawer, /signedIn \? \(/);
   assert.match(src("src/routes/account.tsx"), /NotificationBell/);
   assert.match(src("src/components/notification-bell.tsx"), /to=\{NOTIFICATIONS_PATH\}/);
-  assert.doesNotMatch(shell, /NotificationBell className="[^"]*guest/);
+  assert.match(src("src/components/notification-bell.tsx"), /failClosedUnread/);
+  assert.doesNotMatch(header, /NotificationBell className="[^"]*guest/);
 });
 
 test("hamburger and /menu rows keep an icon for every category", () => {
   const drawer = src("src/components/nav-drawer.tsx");
-  const menu = src("src/routes/menu.tsx");
+  const menu = src("src/components/app-menu-screen.tsx");
   const required = [
     "explore",
     "saved",
@@ -202,11 +204,11 @@ test("hamburger and /menu rows keep an icon for every category", () => {
   assert.match(drawer, /MenuGlyph id="logout"/);
   assert.doesNotMatch(drawer, /MenuGlyph id="admin"/);
   assert.doesNotMatch(menu, /icon="explore"/);
-  assert.match(menu, /icon="saved"/);
-  assert.match(menu, /icon="parent"/);
+  assert.match(menu, /"settings"/);
   assert.match(menu, /icon="daycare"/);
   assert.match(menu, /icon="help"/);
-  assert.match(menu, /icon="login"/);
+  assert.match(menu, /"login"/);
+  assert.match(menu, /MenuGlyph id="language"/);
   assert.match(menu, /MenuGlyph id="logout"/);
   assert.match(src("src/components/share-button.tsx"), /Share2 className="size-5/);
   assert.match(src("src/components/rate-kidease.tsx"), /Star className="size-5/);

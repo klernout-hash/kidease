@@ -3071,5 +3071,16 @@
   "canadaSearchTitle": "حضانات في كل كندا",
   "canadaSearchLead": "اختر مدينة، أو فعّل الموقع، لترى المراكز القريبة منك.",
   "canadaSearchChoose": "اختر مدينة",
-  "alertSummary": "{on} من {total} تنبيهات مفعّلة"
+  "alertSummary": "{on} من {total} تنبيهات مفعّلة",
+  "navMenu": "القائمة",
+  "navCalendar": "التقويم",
+  "menuEarningsMonth": "أرباح هذا الشهر",
+  "menuReviews": "التقييمات",
+  "menuCreateListing": "إنشاء ملف جديد",
+  "menuFindDaycare": "ابحث عن حضانة",
+  "menuAccountSettings": "إعدادات الحساب",
+  "menuResources": "موارد",
+  "menuGuides": "أدلة",
+  "menuGetHelp": "احصل على مساعدة",
+  "menuPrivacyLegal": "الخصوصية والشؤون القانونية"
 }

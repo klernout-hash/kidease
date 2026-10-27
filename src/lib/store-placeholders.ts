@@ -17,7 +17,7 @@ export function showStoreComingSoon(channel: StoreChannel): boolean {
  */
 export const STORE_PLACEHOLDER_REVIEW = [
   { surface: "Footer no longer names the App Store or Google Play", inApp: "hidden", file: "src/components/site-footer.tsx" },
-  { surface: "Menu Get the app row", inApp: "hidden", file: "src/routes/menu.tsx" },
+  { surface: "Menu Get the app row", inApp: "hidden", file: "src/components/app-menu-screen.tsx" },
   { surface: "Get the app store badges", inApp: "hidden", file: "src/routes/get-app.tsx" },
   { surface: "Claim page phone-apps perk", inApp: "hidden", file: "src/routes/claim.tsx" },
   { surface: "Saved-search line that says the phone apps are coming soon", inApp: "hidden", file: "src/components/saved-searches-panel.tsx" },

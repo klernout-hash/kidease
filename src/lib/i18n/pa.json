@@ -3071,5 +3071,16 @@
   "canadaSearchTitle": "ਕੈਨੇਡਾ ਭਰ ਦੇ ਡੇਅਕੇਅਰ",
   "canadaSearchLead": "ਆਪਣੇ ਨੇੜੇ ਦੇ ਕੇਂਦਰ ਵੇਖਣ ਲਈ ਇੱਕ ਸ਼ਹਿਰ ਚੁਣੋ, ਜਾਂ ਟਿਕਾਣਾ ਚਾਲੂ ਕਰੋ।",
   "canadaSearchChoose": "ਸ਼ਹਿਰ ਚੁਣੋ",
-  "alertSummary": "{total} ਵਿੱਚੋਂ {on} ਚੇਤਾਵਨੀਆਂ ਚਾਲੂ ਹਨ"
+  "alertSummary": "{total} ਵਿੱਚੋਂ {on} ਚੇਤਾਵਨੀਆਂ ਚਾਲੂ ਹਨ",
+  "navMenu": "ਮੀਨੂ",
+  "navCalendar": "ਕੈਲੰਡਰ",
+  "menuEarningsMonth": "ਇਸ ਮਹੀਨੇ ਦੀ ਕਮਾਈ",
+  "menuReviews": "ਸਮੀਖਿਆਵਾਂ",
+  "menuCreateListing": "ਨਵੀਂ ਸੂਚੀ ਬਣਾਓ",
+  "menuFindDaycare": "ਡੇਅਕੇਅਰ ਲੱਭੋ",
+  "menuAccountSettings": "ਖਾਤਾ ਸੈਟਿੰਗਾਂ",
+  "menuResources": "ਸਰੋਤ",
+  "menuGuides": "ਗਾਈਡਾਂ",
+  "menuGetHelp": "ਮਦਦ ਲਵੋ",
+  "menuPrivacyLegal": "ਪਰਦੇਦਾਰੀ ਅਤੇ ਕਾਨੂੰਨ"
 }
