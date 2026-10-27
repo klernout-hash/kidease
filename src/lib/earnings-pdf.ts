@@ -36,6 +36,20 @@ function fold(value: string): string {
   return out;
 }
 
+export function downloadPdf(filename: string, lines: readonly string[]) {
+  if (typeof document === "undefined") return;
+  const bytes = statementPdf(lines);
+  const buffer = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(buffer).set(bytes);
+  const blob = new Blob([buffer], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 export function statementPdf(lines: readonly string[]): Uint8Array {
   const body = lines
     .slice(0, 42)

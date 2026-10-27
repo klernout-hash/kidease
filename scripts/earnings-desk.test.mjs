@@ -127,6 +127,8 @@ test("earnings screens do not link to plans", () => {
     "src/components/earnings-details.tsx",
     "src/components/earnings-list.tsx",
     "src/components/earnings-bill-sheet.tsx",
+    "src/components/earnings-statement.tsx",
+    "src/components/parent-payments.tsx",
     "src/lib/server/earnings-desk.ts",
   ];
   for (const file of files) {
@@ -142,4 +144,8 @@ test("earnings screens do not link to plans", () => {
   assert.match(read("src/components/earnings-details.tsx"), /data-ke="earnings-details"/);
   assert.match(read("src/components/earnings-list.tsx"), /data-ke="earnings-export"/);
   assert.match(read("src/components/earnings-bill-sheet.tsx"), /data-ke="earnings-lines"/);
+  assert.match(read("src/components/earnings-statement.tsx"), /data-ke="earnings-get-pdf"/);
+  assert.match(read("src/components/parent-payments.tsx"), /data-ke="parent-payments"/);
+  assert.match(read("src/components/app-menu-screen.tsx"), /screen: "payments"/);
+  assert.doesNotMatch(read("src/components/earnings-statement.tsx"), /taxCents \? /);
 });

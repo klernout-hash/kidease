@@ -117,6 +117,9 @@ export function AppMenuScreen({
       )}
 
       <nav className="ke-menu-group mt-6" aria-label={t("navMenu")}>
+        {user && highlight !== "create" ? (
+          <MenuRow to="/menu" search={{ screen: "payments" }} label={t("earningsPayments")} icon="terms" marker="payments" />
+        ) : null}
         <MenuRow
           to={user ? "/account" : localePath("/login", locale)}
           search={user ? accountSearch(sticky) : { next: "/account?tab=profile" }}

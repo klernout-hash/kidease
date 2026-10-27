@@ -5,13 +5,15 @@ import { AppMenuScreen } from "@/components/app-menu-screen";
 import { EarningsDetailsScreen } from "@/components/earnings-details";
 import { EarningsListScreen } from "@/components/earnings-list";
 import { EarningsPayoutsScreen } from "@/components/earnings-payouts";
+import { EarningsStatementScreen } from "@/components/earnings-statement";
 import { HostEarningsScreen } from "@/components/host-earnings-screen";
+import { ParentPaymentsScreen } from "@/components/parent-payments";
 import { HostInsightsScreen } from "@/components/host-insights-screen";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import type { MenuGroupId } from "@/lib/app-menu";
-import type { EarningsResult } from "@/lib/earnings-desk";
+import type { EarnBill, EarningsResult } from "@/lib/earnings-desk";
 import type { HostEarnings, HostInsights } from "@/lib/host-desk";
-import { loadEarningsDesk } from "@/lib/server/earnings-desk";
+import { loadEarningsDesk, loadParentPayments } from "@/lib/server/earnings-desk";
 import { loadHostEarnings, loadHostInsights } from "@/lib/server/host-desk";
 
 const MenuDeskTools = lazy(() =>
@@ -25,10 +27,13 @@ type EarningsView = "payouts" | "details" | "upcoming" | "paid" | "statement";
 
 const VIEWS: EarningsView[] = ["payouts", "details", "upcoming", "paid", "statement"];
 
+type PaymentsResult = { ok: true; bills: EarnBill[]; maskedEmail: string | null } | { ok: false };
+
 type MenuLoader = {
   earnings: HostEarnings | null;
   insights: HostInsights | null;
   desk: EarningsResult | null;
+  payments: PaymentsResult | null;
 };
 
 export const Route = createFileRoute("/menu")({
@@ -46,14 +51,21 @@ export const Route = createFileRoute("/menu")({
   loader: async ({ deps, context }): Promise<MenuLoader> => {
     if (deps.screen === "earnings") {
       try {
-        return { earnings: null, insights: null, desk: await loadEarningsDesk() };
+        return { earnings: null, insights: null, desk: await loadEarningsDesk(), payments: null };
       } catch {
-        return { earnings: null, insights: null, desk: { ok: false } };
+        return { earnings: null, insights: null, desk: { ok: false }, payments: null };
+      }
+    }
+    if (deps.screen === "payments") {
+      try {
+        return { earnings: null, insights: null, desk: null, payments: await loadParentPayments() };
+      } catch {
+        return { earnings: null, insights: null, desk: null, payments: { ok: false } };
       }
     }
     if (deps.screen === "insights") {
       try {
-        return { earnings: null, insights: await loadHostInsights(), desk: null };
+        return { earnings: null, insights: await loadHostInsights(), desk: null, payments: null };
       } catch {
         return {
           earnings: null,
@@ -69,17 +81,18 @@ export const Route = createFileRoute("/menu")({
             tourCount: null,
           },
           desk: null,
+          payments: null,
         };
       }
     }
     const chrome = (context as { roleChrome?: { role?: string | null; ownedSlugs?: string[] } }).roleChrome;
     const host = chrome?.role === "provider" || (chrome?.ownedSlugs?.length ?? 0) > 0;
-    if (!host) return { earnings: null, insights: null, desk: null };
+    if (!host) return { earnings: null, insights: null, desk: null, payments: null };
     const [earnings, insights] = await Promise.all([
       loadHostEarnings().catch(() => null),
       loadHostInsights().catch(() => null),
     ]);
-    return { earnings, insights, desk: null };
+    return { earnings, insights, desk: null, payments: null };
   },
   head: () => ({
     meta: [
@@ -92,7 +105,7 @@ export const Route = createFileRoute("/menu")({
 
 function MenuPage() {
   const { section, screen, view, bill, period } = Route.useSearch();
-  const { earnings, insights, desk } = Route.useLoaderData();
+  const { earnings, insights, desk, payments } = Route.useLoaderData();
   const { user } = useCurrentUserState();
   if (screen === "earnings" && view === "payouts") {
     return (
@@ -105,6 +118,20 @@ function MenuPage() {
     return (
       <ShellLite appTabs>
         <EarningsDetailsScreen desk={desk} />
+      </ShellLite>
+    );
+  }
+  if (screen === "earnings" && view === "statement") {
+    return (
+      <ShellLite appTabs>
+        <EarningsStatementScreen desk={desk} period={period} />
+      </ShellLite>
+    );
+  }
+  if (screen === "payments") {
+    return (
+      <ShellLite appTabs>
+        <ParentPaymentsScreen data={payments} billId={bill} />
       </ShellLite>
     );
   }
