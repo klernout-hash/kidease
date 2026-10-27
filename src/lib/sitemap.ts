@@ -43,7 +43,6 @@ export const SITEMAP_STATIC_PATHS = [
   "/tour-checklist",
   "/get-app",
   "/claim",
-  "/plans",
   "/compare",
   "/unsubscribe",
   "/delete-account",

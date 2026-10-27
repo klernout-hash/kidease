@@ -64,6 +64,40 @@ export const FOOTER_COLUMNS: Record<FooterColumnId, FooterLinkDef[]> = {
   support: FOOTER_SUPPORT,
 };
 
+/** Every page linked from the big footer, in column order, then legal. */
+export function footerPageLinks(): FooterLinkDef[] {
+  return [...FOOTER_PARENTS, ...FOOTER_DAYCARES, ...FOOTER_SUPPORT, ...FOOTER_KIDEASE, ...FOOTER_LEGAL];
+}
+
+export function footerLinkHrefs(links: readonly FooterLinkDef[] = footerPageLinks()): string[] {
+  return [...new Set(links.map((link) => link.to))];
+}
+
+function isPlansPath(to: string): boolean {
+  const bare = String(to || "").split("?")[0].replace(/\/$/, "") || "/";
+  return bare === "/plans" || bare === "/fr/plans" || bare.endsWith("/plans");
+}
+
+/**
+ * Same pages the footer would show. Plans stay hidden unless subscriptions are on.
+ * A native shell hides donate and plans, matching the footer.
+ */
+export function footerLinksForShell(
+  input: { native: boolean; plansOn: boolean },
+  links: readonly FooterLinkDef[] = footerPageLinks(),
+): FooterLinkDef[] {
+  return links.filter((link) => {
+    if (!input.plansOn && isPlansPath(link.to)) return false;
+    if (input.native && (isPlansPath(link.to) || link.to === "/donate" || link.to === "/fr/donate")) return false;
+    return true;
+  });
+}
+
+/** Hrefs the phone menu is built from before the shell filter. */
+export function mobileMenuHrefs(): string[] {
+  return footerLinkHrefs();
+}
+
 export function footerLinkLabel(
   link: FooterLinkDef,
   t: (key: CopyKey) => string,

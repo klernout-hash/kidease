@@ -2,6 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tan
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { privateReturnPath } from "@/lib/role-access";
 import { useEffect, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { canUseOperatorTools } from "@/lib/operator-tools";
 import { toast } from "sonner";
@@ -150,7 +151,6 @@ function ProviderPage() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const childRoute = pathname === "/provider/subscription" || pathname.startsWith("/provider/subscription/");
   const [desk, setDesk] = useState<DaycareDesk>(search.desk ?? DEFAULT_DESK);
-  const [showNewForm, setShowNewForm] = useState(false);
   const [listings, setListings] = useState<Daycare[]>([]);
   const [showTestListings, setShowTestListings] = useState(false);
   const [stats, setStats] = useState<
@@ -201,6 +201,7 @@ function ProviderPage() {
   const [storefrontProgress, setStorefrontProgress] = useState<number | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [publishMessage, setPublishMessage] = useState<{ tone: "ok" | "err"; text: string } | null>(null);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
 
   async function load() {
     const [res, incoming, tourRows, pipelineRows, leadRows] = await Promise.all([
@@ -212,7 +213,6 @@ function ProviderPage() {
     ]);
     const nextListings = Array.isArray(res?.listings) ? res.listings : [];
     setListings(nextListings);
-    if (nextListings.length === 0) setShowNewForm(true);
     setStats(res.stats);
     setSubscription(res.subscription);
     setUpgradeDismissed(Boolean(res.upgradeCardDismissed));
@@ -328,8 +328,11 @@ function ProviderPage() {
         if (id === "add") {
           if (!centreOwner) return;
           setDesk("listings");
-          setShowNewForm(true);
-          queueMicrotask(() => document.getElementById("list-new")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+          queueMicrotask(() => {
+            const el = document.getElementById("list-new");
+            if (el instanceof HTMLDetailsElement) el.open = true;
+            el?.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
           return;
         }
         if (OWNER_DESKS.has(id as DaycareDesk) && !centreOwner) {
@@ -339,12 +342,15 @@ function ProviderPage() {
         setDesk(id as DaycareDesk);
       }}
     >
-      {listings.length === 0 && centreOwner ? (
+      {deskListings.length === 0 && centreOwner ? (
         <ProviderOnboarding
-          showForm={showNewForm}
           onShowForm={() => {
-            setShowNewForm(true);
             setDesk("listings");
+            queueMicrotask(() => {
+              const el = document.getElementById("list-new");
+              if (el instanceof HTMLDetailsElement) el.open = true;
+              el?.scrollIntoView({ behavior: "smooth", block: "start" });
+            });
           }}
         />
       ) : null}
@@ -354,7 +360,7 @@ function ProviderPage() {
           <p className="mt-2 text-sm text-muted">{t("claimSuccessLead")}</p>
         </section>
       ) : null}
-      {desk === "today" && listings.length > 0 ? (
+      {desk === "today" && deskListings.length > 0 ? (
         <>
         <DaycareDeskHome
           listings={listings}
@@ -474,7 +480,7 @@ function ProviderPage() {
           <ActionRequiredBanner listings={deskListings} />
           <DirectorNudgeQueue listings={deskListings} stats={stats} onConfirmed={() => void load()} skipConfirmSpots />
           <VacancyConfirmLoop listings={deskListings} onConfirmed={() => void load()} />
-          <SpotOfferDesk />
+          <SpotOfferDesk includeTest={operatorTools && showTestListings} />
           {deskListings.length ? (
             <FreePageExplainer
               listings={deskListings.map((d) => ({
@@ -583,19 +589,14 @@ function ProviderPage() {
               </dl>
             </section>
           ) : null}
-          {listings.length === 0 && !showNewForm ? null : centreOwner ? (
-          <section id="list-new" className="rounded-xl bg-surface p-5 ring-1 ring-border">
-            {listings.length === 0 ? (
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                <h2 className="font-display text-2xl">{t("listCentre")}</h2>
-                <Button type="button" variant="secondary" size="sm" onClick={() => setShowNewForm(false)}>
-                  {t("providerListNewHide")}
-                </Button>
-              </div>
-            ) : (
-            <h2 className="font-display text-2xl">{t("listCentre")}</h2>
-            )}
-            <p className="mt-1 text-sm text-muted">{t("publishListingMissing")}</p>
+          {centreOwner ? (
+          <details id="list-new" className="group rounded-xl bg-surface ring-1 ring-border" data-ke="list-missing-centre">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 marker:content-none [&::-webkit-details-marker]:hidden">
+              <span className="font-display text-lg">{t("providerOnboardingListNew")}</span>
+              <ChevronDown className="size-5 shrink-0 text-muted transition-transform group-open:rotate-180" aria-hidden />
+            </summary>
+            <div className="px-5 pb-5">
+            <p className="text-sm text-muted">{t("publishListingMissing")}</p>
             <form
               className="mt-4 grid gap-3 sm:grid-cols-2"
               data-ke="publish-listing-form"
@@ -605,6 +606,7 @@ function ProviderPage() {
                 const next = mergeListingDraft(form, new FormData(e.currentTarget));
                 setForm(next);
                 const missing = listingPublishMissing(next);
+                setMissingFields(missing);
                 if (missing.length) {
                   const message = t("publishListingMissing");
                   setPublishMessage({ tone: "err", text: message });
@@ -643,11 +645,11 @@ function ProviderPage() {
                   .finally(() => setPublishing(false));
               }}
             >
-              <Field name="name" label={t("centreName")} value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
-              <Field name="licenseNumber" label={t("licenceNo")} value={form.licenseNumber} onChange={(v) => setForm({ ...form, licenseNumber: v })} />
-              <Field name="address" label={t("addressLabel")} value={form.address} onChange={(v) => setForm({ ...form, address: v })} />
-              <Field name="city" label={t("cityLabel")} value={form.city} onChange={(v) => setForm({ ...form, city: v })} />
-              <Field name="postalCode" label={t("postalLabel")} value={form.postalCode} onChange={(v) => setForm({ ...form, postalCode: v })} />
+              <Field name="name" required french={locale === "fr"} invalid={missingFields.includes("name")} label={t("centreName")} value={form.name} onChange={(v) => setForm({ ...form, name: v })} />
+              <Field name="licenseNumber" required french={locale === "fr"} invalid={missingFields.includes("licenseNumber")} label={t("licenceNo")} value={form.licenseNumber} onChange={(v) => setForm({ ...form, licenseNumber: v })} />
+              <Field name="address" required french={locale === "fr"} invalid={missingFields.includes("address")} label={t("addressLabel")} value={form.address} onChange={(v) => setForm({ ...form, address: v })} />
+              <Field name="city" required french={locale === "fr"} invalid={missingFields.includes("city")} label={t("cityLabel")} value={form.city} onChange={(v) => setForm({ ...form, city: v })} />
+              <Field name="postalCode" required french={locale === "fr"} invalid={missingFields.includes("postalCode")} label={t("postalLabel")} value={form.postalCode} onChange={(v) => setForm({ ...form, postalCode: v })} />
               <Field name="infantMonthly" label={`${t("infantFee")} CAD`} value={form.infantMonthly ? String(form.infantMonthly) : ""} onChange={(v) => setForm({ ...form, infantMonthly: Number(v) || 0 })} />
               <Field name="toddlerMonthly" label={`${t("toddlerFee")} CAD`} value={form.toddlerMonthly ? String(form.toddlerMonthly) : ""} onChange={(v) => setForm({ ...form, toddlerMonthly: Number(v) || 0 })} />
               <Field name="preschoolMonthly" label={`${t("preschoolFee")} CAD`} value={form.preschoolMonthly ? String(form.preschoolMonthly) : ""} onChange={(v) => setForm({ ...form, preschoolMonthly: Number(v) || 0 })} />
@@ -729,7 +731,8 @@ function ProviderPage() {
                 ) : null}
               </div>
             </form>
-          </section>
+            </div>
+          </details>
           ) : null}
         </>
       ) : null}
@@ -743,12 +746,12 @@ function ProviderPage() {
       ) : null}
 
       {desk === "licence" && centreOwner ? (
-        listings.length === 0 ? (
+        deskListings.length === 0 ? (
           <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">
             {t("providerOnboardingLead")}
           </p>
         ) : (
-          listings.map((d) => (
+          deskListings.map((d) => (
             <section key={d.id} className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border">
               <h2 className="font-display text-2xl">{storedCentreName(d.name, d.nameFr)}</h2>
               <p className="mt-1 text-sm text-muted">{t("trustChecklistTitle")}</p>
@@ -796,10 +799,10 @@ function ProviderPage() {
           <div className="ke-digital-plan" data-ke="digital-plan">
             {!showPay ? (
               <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("plansNotOffered")}</p>
-            ) : listings.length === 0 ? (
+            ) : deskListings.length === 0 ? (
               <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">{t("providerOnboardingLead")}</p>
             ) : (
-              listings.map((d) => {
+              deskListings.map((d) => {
                 const declined = listingStatusFromClaim(d.claimStatus, { live: d.live }) === "declined";
                 return (
                   <section key={d.id} className="mb-6">
@@ -823,7 +826,7 @@ function ProviderPage() {
   );
 }
 
-function ProviderOnboarding({ showForm, onShowForm }: { showForm: boolean; onShowForm: () => void }) {
+function ProviderOnboarding({ onShowForm }: { onShowForm: () => void }) {
   const { t } = useCopy();
   return (
     <section className="mb-6 rounded-xl bg-primary/8 p-5 ring-1 ring-primary/20">
@@ -839,11 +842,9 @@ function ProviderOnboarding({ showForm, onShowForm }: { showForm: boolean; onSho
         <Button asChild>
           <Link to="/claim">{t("providerOnboardingClaim")}</Link>
         </Button>
-        {showForm ? null : (
-          <Button type="button" variant="secondary" onClick={onShowForm}>
-            {t("providerOnboardingListNew")}
-          </Button>
-        )}
+        <Button type="button" variant="secondary" onClick={onShowForm}>
+          {t("providerOnboardingListNew")}
+        </Button>
       </div>
     </section>
   );

@@ -11,6 +11,7 @@ import { RoleNavLinks } from "@/components/role-nav";
 import { useRoleChrome } from "@/components/role-chrome";
 import { showStoreComingSoon } from "@/lib/store-placeholders";
 import { useInNativeShell, useStoreChannel } from "@/lib/use-native-shell";
+import { FooterMoreLinks } from "@/components/footer-more-links";
 
 const MenuDeskTools = lazy(() =>
   import("@/components/menu-desk-tools").then((m) => ({ default: m.MenuDeskTools })),
@@ -132,6 +133,29 @@ function MenuPage() {
           <MenuRow to={to("/terms")} label={t("terms")} icon="terms" />
           <MenuRow to={to("/cookies")} label={t("cookies")} icon="cookies" />
         </Group>
+
+        <FooterMoreLinks
+          share={false}
+          omit={[
+            "/benefits",
+            "/about",
+            "/start-a-daycare",
+            "/team",
+            "/contact",
+            "/help",
+            "/faq",
+            "/how-it-works",
+            "/verify",
+            "/daycare-requirements",
+            "/privacy",
+            "/terms",
+            "/cookies",
+            ...(showStores ? ["/get-app"] : []),
+            ...(!hideCommerce ? ["/donate"] : []),
+            ...(showParents ? ["/tour-checklist", "/compare"] : []),
+            ...(showDaycares ? ["/claim", "/jobs"] : []),
+          ]}
+        />
 
         {user ? (
           <button

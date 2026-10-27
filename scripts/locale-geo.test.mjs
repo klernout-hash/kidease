@@ -162,7 +162,18 @@ test("Quebec document hops to French once, and crawlers stay on the URL", () => 
 
   assert.equal(
     localeRedirectTarget({ ...document, pathname: "/fr/privacy", cookie: "en", country: "CA", region: "QC" }),
-    "/privacy",
+    null,
+  );
+  assert.equal(
+    localeRedirectTarget({
+      ...document,
+      pathname: "/fr/privacy",
+      search: "?lang=en",
+      cookie: "en",
+      country: "CA",
+      region: "QC",
+    }),
+    "/privacy?lang=en",
   );
   assert.equal(
     localeRedirectTarget({

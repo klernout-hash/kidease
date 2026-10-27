@@ -183,8 +183,10 @@ export function localeRedirectTarget(input: LocaleRedirectInput): string | null 
   const queryLocale = localeFromSearch(input.search) ?? (isShippedLocale(input.queryLocale) ? input.queryLocale : null);
   const decision = decideVisitorLocale({ ...input, queryLocale });
   const pathname = normalizePathname(input.pathname);
-  // /fr/parent and /fr/inbox stay French. A saved English choice must not strip them.
+  // An explicit /fr URL wins over a saved English cookie or profile.
+  // French desk paths stay French even when the query asks for English.
   if (isFrPath(pathname) && isFrenchDeskPath(pathname)) return null;
+  if (isFrPath(pathname) && queryLocale !== "en") return null;
   if (queryLocale === "en" && isFrPath(pathname)) {
     const next = englishPath(pathname);
     if (normalizePathname(next) === pathname) return null;

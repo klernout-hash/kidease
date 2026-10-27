@@ -3,6 +3,8 @@ import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { emptyChild } from "@/lib/child-profile";
+import { childBirthdateMessage, childBirthdateProblem } from "@/lib/child-birthdate";
+import { fieldErrorClass } from "@/components/required-field";
 import { addChild, updateChild } from "@/lib/server/family";
 import { DeleteChildControl } from "@/components/delete-child-control";
 import { useCopy } from "@/lib/use-copy";
@@ -19,10 +21,11 @@ export function ChildProfileForm({
   onSaved: () => void;
   onCancel?: () => void;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const [draft, setDraft] = useState<Draft>(initial ?? emptyChild());
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [birthError, setBirthError] = useState("");
 
   function set<K extends keyof Draft>(key: K, value: Draft[K]) {
     setSaved(false);
@@ -32,6 +35,12 @@ export function ChildProfileForm({
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (!draft.name.trim() || !draft.birthdate) return;
+    const birthProblem = childBirthdateProblem(draft.birthdate);
+    if (birthProblem) {
+      setBirthError(childBirthdateMessage(birthProblem));
+      return;
+    }
+    setBirthError("");
     setBusy(true);
     try {
       const added = !draft.id;
@@ -68,12 +77,22 @@ export function ChildProfileForm({
         </Field>
         <Field label={t("birthdate")}>
           <input
-            required
             type="date"
+            required
+            aria-required="true"
+            aria-invalid={birthError ? true : undefined}
             value={draft.birthdate}
-            onChange={(e) => set("birthdate", e.target.value)}
-            className="h-11 w-full rounded-md border border-border bg-bg px-3"
+            onChange={(e) => {
+              setBirthError("");
+              set("birthdate", e.target.value);
+            }}
+            className={`h-11 w-full rounded-md border border-border bg-bg px-3 ${fieldErrorClass(Boolean(birthError))}`}
           />
+          {birthError ? (
+            <span role="alert" className="mt-1 block text-sm text-danger">
+              {birthError ? childBirthdateMessage(childBirthdateProblem(draft.birthdate) || "invalid", locale === "fr") : birthError}
+            </span>
+          ) : null}
         </Field>
         <Field label={t("homeLanguage")}>
           <input

@@ -1032,7 +1032,31 @@ export function SearchScreen({
     setFavoritesOnly(false);
     setCareType("any");
     setSchoolAgeOnly(false);
-    writeCategorySearch(undefined);
+    void navigate({
+      search: {
+        ...withParentSearch({
+          q: incoming.q,
+          name: incoming.name,
+          from: incoming.from,
+          to: incoming.to,
+          sort: incoming.sort,
+          city: incoming.city,
+          rank: incoming.rank,
+          start: incoming.start,
+          age: undefined,
+          cat: undefined,
+          care: undefined,
+          favorites: undefined,
+          openings: undefined,
+          live: undefined,
+        }),
+        fac: undefined,
+        cat: undefined,
+        ages: undefined,
+        open: undefined,
+        sched: undefined,
+      },
+    });
   }
 
   function currentFilters(): SavedSearchFilters {

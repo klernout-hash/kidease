@@ -114,7 +114,9 @@ test("Daycare P2: Account stays on Daycare pill; unclaimed desk is guided onboar
   const provider = src("src/routes/provider.tsx");
   assert.match(provider, /ProviderOnboarding/);
   assert.match(provider, /providerOnboardingClaim/);
-  assert.match(provider, /listings.length === 0 && !showNewForm/);
+  assert.match(provider, /data-ke="list-missing-centre"/);
+  assert.match(provider, /deskListings.length === 0 && centreOwner/);
+  assert.doesNotMatch(provider, /providerListNewHide/);
 });
 
 test("Admin P1: QA fixtures are opt-in on staff queues", () => {
