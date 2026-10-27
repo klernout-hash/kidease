@@ -36,6 +36,8 @@ import { AccountSecurity } from "@/components/account-security";
 import { DeleteAccountPanel } from "@/components/delete-account-panel";
 import { AlertPushSettings } from "@/components/alert-push-settings";
 import { ReferFriendPanel } from "@/components/refer-friend-panel";
+import { fieldErrorClass, RequiredMark } from "@/components/required-field";
+import { focusFirstInvalid } from "@/lib/profile-form";
 import { ProfileFacts, ProfileHeroCard } from "@/components/profile-hero";
 import { profileRoleId, showProfileStats, yearsOnKidEase } from "@/lib/profile-hero";
 import { loadMenuProviderCards } from "@/lib/server/menu-summary";
@@ -192,6 +194,7 @@ function AccountDeskFrame({ desk, children }: { desk: DeskKey | null; children: 
 
 function ProfilePane() {
   const { user, isPending } = useCurrentUserState();
+  const navigate = useNavigate();
   const { refetch: refetchSession } = authClient.useSession();
   const nativeShell = useInNativeShell();
   const { t, locale } = useCopy();
@@ -213,6 +216,15 @@ function ProfilePane() {
   const phoneRef = useRef("");
   const bioRef = useRef("");
   const contactDirty = useRef({ name: false, phone: false, bio: false });
+  const savedContact = useRef({ name: user?.displayName ?? "", phone: "", bio: "" });
+  const savedConsents = useRef<CaslPrefs>({
+    smsService: false,
+    emailService: false,
+    emailCommercial: false,
+  });
+  const [nameInvalid, setNameInvalid] = useState(false);
+  const [gapTick, setGapTick] = useState(0);
+  const formRef = useRef<HTMLFormElement>(null);
   const contactEpoch = useRef(0);
   const contactLoaded = useRef(false);
   const seenUserId = useRef<string | undefined>(undefined);
@@ -228,6 +240,7 @@ function ProfilePane() {
   const anchorMode = useAppStore((s) => s.anchorMode);
   const setAnchorMode = useAppStore((s) => s.setAnchorMode);
   const [workQuery, setWorkQuery] = useState(workOrigin?.label ?? "");
+  const savedWorkLabel = useRef(workOrigin?.label ?? "");
   const [savedHome, setSavedHome] = useState<AnchorPoint | null | undefined>(undefined);
 
   useEffect(() => {
@@ -250,19 +263,22 @@ function ProfilePane() {
       .then((row) => {
         if (epoch !== contactEpoch.current) return;
         const dirty = contactDirty.current;
+        const nextName = row.name || user.displayName || "";
+        const nextPhone = row.phone;
+        const nextBio = row.bio;
+        savedContact.current = { name: nextName, phone: nextPhone, bio: nextBio };
         if (!dirty.name) {
-          const nextName = row.name || user.displayName || "";
           nameRef.current = nextName;
           setName(nextName);
         }
         if (!dirty.phone) {
-          phoneRef.current = row.phone;
-          setPhone(row.phone);
+          phoneRef.current = nextPhone;
+          setPhone(nextPhone);
         }
         setEmail(row.email || user.primaryEmail || "");
         if (!dirty.bio) {
-          bioRef.current = row.bio;
-          setBio(row.bio);
+          bioRef.current = nextBio;
+          setBio(nextBio);
         }
         setJoinedAt(row.joinedAt);
         contactLoaded.current = true;
@@ -272,16 +288,19 @@ function ProfilePane() {
       });
     void getMyCaslConsents()
       .then((row) => {
-        setConsents({
+        const next = {
           smsService: row.smsService,
           emailService: row.emailService,
           emailCommercial: row.emailCommercial,
-        });
+        };
+        savedConsents.current = next;
+        setConsents(next);
       })
       .catch(() => undefined);
     void getMySearchAnchors()
       .then((saved) => {
         setSavedHome(saved.home);
+        savedWorkLabel.current = saved.work?.label ?? "";
         if (saved.work) {
           setWorkOrigin(saved.work);
           setWorkQuery(saved.work.label);
@@ -291,9 +310,14 @@ function ProfilePane() {
       .catch(() => undefined);
   }, [user?.id]);
 
-  async function onSave(e: React.FormEvent) {
+  async function onSave(e: React.FormEvent, leaveEdit = false) {
     e.preventDefault();
     if (!user) return;
+    if (leaveEdit && !nameRef.current.trim()) {
+      setNameInvalid(true);
+      setGapTick((n) => n + 1);
+      return;
+    }
     const typedWork = workQuery.trim();
     const resolvedWork = workOrigin && typedWork === workOrigin.label.trim() ? workOrigin : null;
     if (typedWork && !resolvedWork) {
@@ -380,8 +404,26 @@ function ProfilePane() {
         await saveMySearchAnchors({
           data: { home: savedHome, work: resolvedWork, mode },
         });
+        savedWorkLabel.current = resolvedWork?.label ?? "";
       }
       confirmAction(t, "profileSaved");
+      savedContact.current = { name: saved.name, phone: saved.phone, bio: saved.bio };
+      savedConsents.current = {
+        smsService: nextConsent.smsService,
+        emailService: nextConsent.emailService,
+        emailCommercial: nextConsent.emailCommercial,
+      };
+      if (leaveEdit) {
+        setNameInvalid(false);
+        void navigate({
+          to: "/account",
+          search: {
+            tab: "profile",
+            ...(search.desk ? { desk: search.desk } : {}),
+          },
+          replace: true,
+        });
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("accountSaveFailed"));
     } finally {
@@ -465,11 +507,50 @@ function ProfilePane() {
     };
   }, [daycareStats, userId]);
 
+  useEffect(() => {
+    if (!gapTick) return;
+    focusFirstInvalid(formRef.current);
+  }, [gapTick]);
+
+  function discardEdits() {
+    const snap = savedContact.current;
+    contactDirty.current = { name: false, phone: false, bio: false };
+    nameRef.current = snap.name;
+    phoneRef.current = snap.phone;
+    bioRef.current = snap.bio;
+    setName(snap.name);
+    setPhone(snap.phone);
+    setBio(snap.bio);
+    setConsents(savedConsents.current);
+    setWorkQuery(savedWorkLabel.current);
+    setNameInvalid(false);
+    setSmsNote("");
+    void getMySearchAnchors()
+      .then((saved) => {
+        setSavedHome(saved.home);
+        setWorkOrigin(saved.work);
+        setWorkQuery(saved.work?.label ?? "");
+        if (saved.mode) setAnchorMode(saved.mode);
+      })
+      .catch(() => undefined);
+    void navigate({ to: "/account", search: homeSearch, replace: true });
+  }
+
   return (
     <AccountDeskFrame desk={desk}>
       <main className={desk ? "max-w-lg pb-6" : "ke-gutter mx-auto max-w-lg pb-10 pt-6"}>
         <div className="flex items-center justify-between gap-3">
-          {editing || section !== "profile" ? (
+          {editing ? (
+            <button
+              type="button"
+              aria-label={t("cancel")}
+              data-ke="profile-back"
+              onClick={discardEdits}
+              className="grid size-11 place-items-center rounded-full text-fg touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+            >
+              <ChevronLeft className="size-6" aria-hidden />
+            </button>
+          ) : section !== "profile" ? (
             <Link
               to="/account"
               search={homeSearch}
@@ -512,7 +593,7 @@ function ProfilePane() {
               {t("profileEdit")}
             </Link>
           ) : editing ? (
-            <h1 className="text-base font-semibold">{t("profileEdit")}</h1>
+            <h1 className="min-w-0 flex-1 truncate text-center text-base font-semibold">{t("profileEdit")}</h1>
           ) : section !== "profile" ? (
             <h1 className="min-w-0 truncate text-base font-semibold">
               {sections.find((item) => item.id === section)?.label}
@@ -520,6 +601,7 @@ function ProfilePane() {
           ) : (
             <span className="size-11" aria-hidden />
           )}
+          {editing ? <span className="size-11" aria-hidden /> : null}
         </div>
         {section === "profile" && !editing && user ? (
           <>
@@ -679,18 +761,29 @@ function ProfilePane() {
         </div>
 
         {isPending && !user ? null : user ? (
-          <form onSubmit={onSave} className="mt-8 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
+          <form ref={formRef} onSubmit={(e) => void onSave(e, true)} className="mt-8 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
             <h2 className="font-display text-lg tracking-[-0.02em]">{t("accountContactTitle")}</h2>
             <p className="text-[13px] text-muted">{t("accountContactLead")}</p>
-            <label className="block text-sm">
+            {nameInvalid ? (
+              <p role="alert" data-ke="profile-required-note" className="text-sm text-danger">
+                {t("profileRequiredNote")}
+              </p>
+            ) : null}
+            <label className="block text-sm" htmlFor="profile-name">
               {t("name")}
+              <RequiredMark french={locale === "fr"} />
               <input
-                className="ke-input mt-1"
+                id="profile-name"
+                data-ke="profile-name"
+                className={`ke-input mt-1 ${fieldErrorClass(nameInvalid)}`}
                 value={name}
+                aria-required="true"
+                aria-invalid={nameInvalid || undefined}
                 onChange={(e) => {
                   contactDirty.current.name = true;
                   nameRef.current = e.target.value;
                   setName(e.target.value);
+                  if (e.target.value.trim()) setNameInvalid(false);
                 }}
                 autoComplete="name"
                 maxLength={80}
@@ -757,12 +850,6 @@ function ProfilePane() {
                   setWorkOrigin(place);
                   setWorkQuery(place.label);
                   if (anchorMode === "home") setAnchorMode("both");
-                  if (savedHome === undefined) return;
-                  void saveMySearchAnchors({
-                    data: { home: savedHome, work: place, mode: anchorMode === "home" ? "both" : anchorMode },
-                  }).catch((err) => {
-                    toast.error(err instanceof Error ? err.message : t("anchorWorkMiss"));
-                  });
                 }}
                 placeholder={t("anchorWorkPh")}
                 origin={origin}
@@ -771,6 +858,9 @@ function ProfilePane() {
             </div>
             <Button type="submit" className="w-full" disabled={saving} data-ke="account-save-details">
               {saving ? t("loading") : t("accountSaveDetails")}
+            </Button>
+            <Button type="button" variant="secondary" className="w-full" data-ke="profile-cancel" onClick={discardEdits}>
+              {t("cancel")}
             </Button>
           </form>
         ) : (

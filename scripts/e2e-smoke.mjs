@@ -453,6 +453,8 @@ async function runRoleFixture(page, base) {
       timeout: timeoutMs,
     });
     const photoSignIn = await page.getByRole("link", { name: /sign in to add a photo/i }).count();
+    const openProfileEdit = page.locator('[data-ke="profile-edit"]');
+    await openProfileEdit.click();
     const bioBox = page.locator("textarea");
     await bioBox.waitFor({ timeout: timeoutMs });
     const bio = `Saved ${Date.now()}`;
@@ -464,6 +466,7 @@ async function runRoleFixture(page, base) {
     await page.getByRole("button", { name: /save details/i }).click();
     await saved;
     await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await openProfileEdit.click();
     await bioBox.waitFor({ timeout: timeoutMs });
     const keptBio = await bioBox.inputValue();
     const accountCrash = /Something went wrong/.test((await page.locator("body").innerText()) || "");
@@ -1388,6 +1391,8 @@ async function runSignedInSessions(page, base) {
 
       await page.goto(new URL(item.account, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
       const photo = await page.getByRole("link", { name: /sign in to add a photo|connectez-vous pour ajouter une photo/i }).count();
+      const openProfileEdit = page.locator('[data-ke="profile-edit"]');
+      await openProfileEdit.click();
       const bioBox = page.locator("textarea").first();
       await bioBox.waitFor({ timeout: timeoutMs });
       if (tag === "parent-en") {
@@ -1410,8 +1415,8 @@ async function runSignedInSessions(page, base) {
         }
         const stayed = !/\/login/i.test(afterSave) && !rewroteSession;
         await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
-        const saveAgain = page.locator('[data-ke="account-save-details"]');
-        const stillIn = await saveAgain
+        const editAgain = page.locator('[data-ke="profile-edit"]');
+        const stillIn = await editAgain
           .waitFor({ state: "visible", timeout: timeoutMs })
           .then(() => !/\/login/i.test(page.url()))
           .catch(() => false);
@@ -1419,6 +1424,7 @@ async function runSignedInSessions(page, base) {
           note: `${page.url()} updateUser=${rewroteSession}`,
         });
         if (!stayed || !stillIn) throw new Error(`unchanged save left ${page.url()}`);
+        await editAgain.click();
         await bioBox.waitFor({ timeout: timeoutMs });
       }
       const bio = `Saved ${tag} ${Date.now()}`;
@@ -1433,6 +1439,7 @@ async function runSignedInSessions(page, base) {
       await page.locator('[data-ke="account-save-details"]').click();
       await saved;
       await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
+      await page.locator('[data-ke="profile-edit"]').click();
       await page.waitForFunction((expected) => {
         const box = document.querySelector("textarea");
         return Boolean(box && box.value.includes(expected));

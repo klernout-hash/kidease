@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { parentDeskPath } from "@/lib/desk-nav";
 import { hasCareDetails } from "@/lib/child-profile";
@@ -8,9 +9,11 @@ import type { Child } from "@/lib/types";
 export function ChildCareCard({
   child,
   showCompleteLink,
+  actions,
 }: {
   child: Child;
   showCompleteLink?: boolean;
+  actions?: ReactNode;
 }) {
   const { t, locale } = useCopy();
   const parentPath = parentDeskPath(useRouterState({ select: (s) => s.location.pathname }));
@@ -46,11 +49,14 @@ export function ChildCareCard({
           </p>
           <p className="text-xs text-muted">{formatAgeLabel(child.birthdate, locale)}</p>
         </div>
-        {child.epiPen ? (
-          <span className="rounded-full bg-danger/10 px-2 py-0.5 text-xs text-danger ring-1 ring-danger/20">
-            {t("epiPenBadge")}
-          </span>
-        ) : null}
+        <div className="flex items-center gap-2">
+          {child.epiPen ? (
+            <span className="rounded-full bg-danger/10 px-2 py-0.5 text-xs text-danger ring-1 ring-danger/20">
+              {t("epiPenBadge")}
+            </span>
+          ) : null}
+          {actions}
+        </div>
       </div>
       <div className="space-y-2 px-3 py-3">
         <p className={`rounded-md px-2 py-2 text-sm ${child.allergies ? "bg-danger/10 text-danger" : "bg-surface-2 text-muted"}`}>

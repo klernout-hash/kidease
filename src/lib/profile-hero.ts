@@ -18,6 +18,14 @@ export function showProfileStats(roleId: ProfileRoleId | null): boolean {
   return roleId === "daycare";
 }
 
+/** First required profile field that is still empty, in screen order. */
+export function firstIncompleteField(fields: ReadonlyArray<{ id: string; filled: boolean }>): string | null {
+  for (const field of fields) {
+    if (!field.filled) return field.id;
+  }
+  return null;
+}
+
 function timeOf(value: string | Date | null | undefined): number | null {
   if (value == null || value === "") return null;
   const date = value instanceof Date ? value : new Date(value);

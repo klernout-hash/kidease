@@ -1004,6 +1004,20 @@
     border-color: var(--color-primary);
     box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 16%, transparent);
   }
+  .ke-input[aria-invalid="true"],
+  input[aria-invalid="true"],
+  textarea[aria-invalid="true"],
+  select[aria-invalid="true"] {
+    border-color: var(--color-danger);
+    background: color-mix(in oklab, var(--color-danger) 10%, var(--color-surface));
+  }
+  .ke-input[aria-invalid="true"]:focus,
+  input[aria-invalid="true"]:focus,
+  textarea[aria-invalid="true"]:focus,
+  select[aria-invalid="true"]:focus {
+    border-color: var(--color-danger);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-danger) 16%, transparent);
+  }
   .ke-textarea {
     width: 100%;
     min-height: 8rem;

@@ -12,15 +12,15 @@ import { menuGroupLinks, menuHighlight, type MenuGroupId } from "@/lib/app-menu"
 import { accountSearch, highlightDesk } from "@/lib/desks";
 import { footerLinkLabel } from "@/lib/site-footer-nav";
 import { localePath } from "@/lib/locale-path";
-import type { MenuProviderCards } from "@/lib/server/menu-summary";
-import { loadMenuProviderCards } from "@/lib/server/menu-summary";
+import { chartHasEarnings, insightsCardRating, monthTick, type HostEarnings, type HostInsights } from "@/lib/host-desk";
+import { loadHostEarnings, loadHostInsights } from "@/lib/server/host-desk";
 import type { CopyKey } from "@/lib/copy";
 import type { MenuIconId } from "@/lib/menu-icons";
-import { centsToDollars } from "@/lib/bill";
 import { showStoreComingSoon } from "@/lib/store-placeholders";
+import { formatPlanCad } from "@/lib/upgrade-plans";
 import { useInNativeShell, useStoreChannel } from "@/lib/use-native-shell";
 import { useCopy } from "@/lib/use-copy";
-import { money } from "@/lib/utils";
+import { MonthBars } from "@/components/month-bars";
 
 const AppearanceControl = lazy(() =>
   import("@/components/appearance-control").then((m) => ({ default: m.AppearanceControl })),
@@ -169,79 +169,63 @@ export function AppMenuScreen({ section }: { section?: MenuGroupId }) {
 
 function HostCards() {
   const { t, locale } = useCopy();
-  const [cards, setCards] = useState<MenuProviderCards | null>(null);
+  const french = locale === "fr";
+  const [earnings, setEarnings] = useState<HostEarnings | null>(null);
+  const [insights, setInsights] = useState<HostInsights | null>(null);
 
   useEffect(() => {
     let live = true;
-    void loadMenuProviderCards()
-      .then((next) => {
-        if (live) setCards(next);
-      })
-      .catch(() => {
-        if (live) setCards(null);
-      });
+    void Promise.all([loadHostEarnings().catch(() => null), loadHostInsights().catch(() => null)]).then(
+      ([nextEarnings, nextInsights]) => {
+        if (!live) return;
+        setEarnings(nextEarnings);
+        setInsights(nextInsights);
+      },
+    );
     return () => {
       live = false;
     };
   }, []);
 
-  if (!cards) return null;
-  const earnings = cards.earningsCents;
-  const rating = cards.ratingX10;
-  const count = cards.reviewCount;
-  const showEarnings = typeof earnings === "number";
-  const showReviews = typeof rating === "number" && typeof count === "number" && count > 0;
-  if (!showEarnings && !showReviews) return null;
+  const cad = (cents: number) => formatPlanCad(cents / 100, french ? "fr" : "en");
+  const bars = earnings?.ok ? earnings.bars : [];
+  const showChart = chartHasEarnings(bars);
+  const rating = insights?.ok ? insightsCardRating(insights) : null;
+  const cardClass = "flex min-h-28 flex-col justify-between rounded-2xl bg-surface p-4 ring-1 ring-border touch-manipulation";
 
   return (
-    <div className={`mt-5 grid gap-3 ${showEarnings && showReviews ? "grid-cols-2" : "grid-cols-1"}`} data-ke="menu-summary">
-      {showEarnings ? (
-        <Link
-          to="/provider"
-          search={{ desk: "money" }}
-          data-ke="menu-earnings"
-          className="flex min-h-24 flex-col justify-between rounded-2xl bg-surface p-4 ring-1 ring-border"
-        >
-          <span className="text-sm text-muted">{t("menuEarningsMonth")}</span>
-          <span className="font-display text-2xl tabular-nums">{money(centsToDollars(earnings), locale)}</span>
-        </Link>
-      ) : null}
-      {showReviews ? <ReviewCard ratingX10={rating} reviewCount={count} slug={cards.reviewSlug} /> : null}
-    </div>
-  );
-}
-
-function ReviewCard({
-  ratingX10,
-  reviewCount,
-  slug,
-}: {
-  ratingX10: number;
-  reviewCount: number;
-  slug: string | null;
-}) {
-  const { t } = useCopy();
-  const body = (
-    <>
-      <span className="text-sm text-muted">{t("menuReviews")}</span>
-      <span className="flex items-center gap-1.5 font-display text-2xl tabular-nums">
-        <Star className="size-5 fill-current text-primary" aria-hidden />
-        {(ratingX10 / 10).toFixed(1)}
-        <span className="text-sm font-medium text-muted">({reviewCount})</span>
-      </span>
-    </>
-  );
-  const className = "flex min-h-24 flex-col justify-between rounded-2xl bg-surface p-4 ring-1 ring-border";
-  if (slug) {
-    return (
-      <Link to="/daycare/$slug" params={{ slug }} data-ke="menu-reviews" className={className}>
-        {body}
+    <div className="mt-5 grid grid-cols-2 gap-3" data-ke="menu-summary">
+      <Link to="/menu" search={{ screen: "earnings" }} data-ke="menu-earnings" className={cardClass}>
+        <span className="text-sm text-muted">{t("menuEarningsMonth")}</span>
+        {earnings?.ok && typeof earnings.thisMonthCents === "number" ? (
+          <span className="font-display text-2xl tabular-nums">{cad(earnings.thisMonthCents)}</span>
+        ) : earnings?.ok ? (
+          <span className="text-sm font-medium">{t("menuEarningsEmpty")}</span>
+        ) : (
+          <span className="h-8" aria-hidden />
+        )}
+        {showChart ? (
+          <MonthBars
+            bars={bars}
+            compact
+            label={`${t("earningsByMonth")}. ${bars.map((bar) => `${monthTick(bar.period, french)} ${cad(bar.cents)}`).join(", ")}`}
+          />
+        ) : null}
       </Link>
-    );
-  }
-  return (
-    <Link to="/provider" search={{ desk: "listings" }} data-ke="menu-reviews" className={className}>
-      {body}
-    </Link>
+      <Link to="/menu" search={{ screen: "insights" }} data-ke="menu-insights" className={cardClass}>
+        <span className="text-sm text-muted">{t("menuReviews")}</span>
+        {rating ? (
+          <span className="flex items-center gap-1.5 font-display text-2xl tabular-nums">
+            <Star className="size-5 fill-current text-primary" aria-hidden />
+            {(rating.ratingX10 / 10).toFixed(1)}
+            <span className="text-sm font-medium text-muted">({rating.reviewCount})</span>
+          </span>
+        ) : insights?.ok ? (
+          <span className="text-sm font-medium">{t("menuReviewsEmpty")}</span>
+        ) : (
+          <span className="h-8" aria-hidden />
+        )}
+      </Link>
+    </div>
   );
 }

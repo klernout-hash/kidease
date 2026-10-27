@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { earlierJoinedAt, profileRoleId, showProfileStats, yearsOnKidEase } from "../src/lib/profile-hero.ts";
+import { earlierJoinedAt, firstIncompleteField, profileRoleId, showProfileStats, yearsOnKidEase } from "../src/lib/profile-hero.ts";
 
 const root = new URL("../", import.meta.url);
 const now = new Date(2026, 9, 27, 12);
@@ -45,4 +45,23 @@ test("the profile screen keeps edit and drops the footer stack", () => {
   assert.match(hero, /data-ke="profile-facts"/);
   assert.match(hero, /data-ke="profile-verified"/);
   assert.doesNotMatch(hero, /More/);
+});
+
+test("a profile opens read-only and save checks the first empty required field", () => {
+  assert.equal(firstIncompleteField([{ id: "name", filled: false }, { id: "birthdate", filled: false }]), "name");
+  assert.equal(firstIncompleteField([{ id: "name", filled: true }, { id: "birthdate", filled: false }]), "birthdate");
+  assert.equal(firstIncompleteField([{ id: "name", filled: true }]), null);
+
+  const account = readFileSync(new URL("src/routes/account.tsx", root), "utf8");
+  const child = readFileSync(new URL("src/components/child-profile-form.tsx", root), "utf8");
+  const desk = readFileSync(new URL("src/components/parent-desk.tsx", root), "utf8");
+  for (const source of [account, child]) {
+    assert.match(source, /data-ke="profile-required-note"/);
+    assert.match(source, /data-ke="profile-cancel"/);
+    assert.match(source, /RequiredMark/);
+    assert.match(source, /aria-invalid/);
+    assert.match(source, /focusFirstInvalid/);
+  }
+  assert.match(desk, /data-ke="child-profile-edit"/);
+  assert.match(child, /data-ke="child-saved"/);
 });
