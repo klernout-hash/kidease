@@ -66,8 +66,11 @@ test("Publish listing stays clickable and reports inline status", () => {
   assert.match(provider, /disabled=\{publishing\}/);
   assert.doesNotMatch(provider, /listingFormDirty/);
   assert.doesNotMatch(provider, /disabled=\{!listingFormDirty\}/);
-  assert.doesNotMatch(provider, /listings\.length === 0\) \{\s*setShowNewForm\(false\)/);
-  assert.match(provider, /id === "add"[\s\S]*setShowNewForm\(true\)/);
+  assert.doesNotMatch(provider, /setShowNewForm/);
+  assert.match(
+    provider,
+    /id === "add"[\s\S]*getElementById\("list-new"\)[\s\S]*HTMLDetailsElement[\s\S]*el\.open = true/,
+  );
   assert.match(provider, /name="name"/);
   assert.match(provider, /name="licenseNumber"/);
   assert.match(provider, /name="postalCode"/);
