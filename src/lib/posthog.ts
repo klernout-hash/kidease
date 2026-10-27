@@ -366,7 +366,8 @@ export async function hashIdentifier(value: string): Promise<string> {
 
 /** Start PostHog once in the browser when the public key is set. No-op on the server. */
 export function startPostHog(): void {
-  if (reviewerQuiet || started || typeof window === "undefined") return;
+  if (reviewerQuiet) return;
+  if (started || typeof window === "undefined") return;
   const key = posthogProjectKey();
   if (!key) return;
   if (!shouldStartPostHog()) return;
