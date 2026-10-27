@@ -3120,5 +3120,10 @@
   "profileShowAll": "显示全部",
   "profileShowLess": "收起",
   "profileShowMoreReviews": "查看更多评价",
-  "profileListings": "园所"
+  "profileListings": "园所",
+  "profileEditTitle": "编辑资料",
+  "profileMyProfile": "我的资料",
+  "profilePublicNote": "家庭可以看到你的名字、照片和简介。",
+  "profileEditAbout": "编辑简介",
+  "profileDone": "完成"
 }

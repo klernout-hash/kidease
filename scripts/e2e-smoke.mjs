@@ -469,6 +469,7 @@ async function runRoleFixture(page, base) {
     const photoSignIn = await page.getByRole("link", { name: /sign in to add a photo/i }).count();
     const openProfileEdit = page.locator('[data-ke="profile-edit"]');
     await openProfileEdit.click();
+    await page.locator('[data-ke="profile-edit-about"]').click();
     const bioBox = page.locator("textarea");
     await bioBox.waitFor({ timeout: timeoutMs });
     const bio = `Saved ${Date.now()}`;
@@ -477,11 +478,12 @@ async function runRoleFixture(page, base) {
       (res) => res.request().method() === "POST" && res.url().includes("/_serverFn/") && res.ok(),
       { timeout: timeoutMs },
     );
-    await page.getByRole("button", { name: /save details/i }).click();
+    await page.locator('[data-ke="account-save-details"]').click();
     await saved;
     await waitUntilEditClosed(page);
     await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
     await openProfileEdit.click();
+    await page.locator('[data-ke="profile-edit-about"]').click();
     await bioBox.waitFor({ timeout: timeoutMs });
     const keptBio = await bioBox.inputValue();
     const accountCrash = /Something went wrong/.test((await page.locator("body").innerText()) || "");
@@ -1408,12 +1410,13 @@ async function runSignedInSessions(page, base) {
       const photo = await page.getByRole("link", { name: /sign in to add a photo|connectez-vous pour ajouter une photo/i }).count();
       const openProfileEdit = page.locator('[data-ke="profile-edit"]');
       await openProfileEdit.click();
+      await page.locator('[data-ke="profile-edit-about"]').waitFor({ timeout: timeoutMs });
       const bioBox = page.locator("textarea").first();
-      await bioBox.waitFor({ timeout: timeoutMs });
       if (tag === "parent-en") {
         await page.waitForFunction(() => {
-          const box = document.querySelector('input[autocomplete="name"]');
-          return Boolean(box && box.value.trim().length > 0);
+          const box = document.querySelector('[data-ke="profile-name-value"]');
+          const text = box?.textContent?.trim() || "";
+          return text.length > 0 && text !== "—";
         }, { timeout: timeoutMs });
         let rewroteSession = false;
         const watchUpdate = (req) => {
@@ -1440,8 +1443,9 @@ async function runSignedInSessions(page, base) {
         });
         if (!stayed || !stillIn) throw new Error(`unchanged save left ${page.url()}`);
         await editAgain.click();
-        await bioBox.waitFor({ timeout: timeoutMs });
       }
+      await page.locator('[data-ke="profile-edit-about"]').click();
+      await bioBox.waitFor({ timeout: timeoutMs });
       const bio = `Saved ${tag} ${Date.now()}`;
       await bioBox.fill(bio);
       const saved = page.waitForResponse(
@@ -1456,6 +1460,7 @@ async function runSignedInSessions(page, base) {
       await waitUntilEditClosed(page);
       await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
       await page.locator('[data-ke="profile-edit"]').click();
+      await page.locator('[data-ke="profile-edit-about"]').click();
       await page.waitForFunction((expected) => {
         const box = document.querySelector("textarea");
         return Boolean(box && box.value.includes(expected));

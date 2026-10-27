@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createFileRoute, Link, Navigate, useNavigate, useRouter } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { privateReturnPath } from "@/lib/role-access";
 import { toast } from "sonner";
@@ -60,6 +60,7 @@ export const Route = createFileRoute("/account")({
       desk?: "parent" | "director" | "admin" | "support";
       section?: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents" | "refer";
       edit?: "1";
+      field?: "name" | "phone" | "email" | "work" | "about";
     } = {};
     const tab = s.tab;
     if (tab === "saved" || tab === "enrolled" || tab === "profile" || tab === "payments") out.tab = tab;
@@ -80,6 +81,9 @@ export const Route = createFileRoute("/account")({
     const desk = parseDeskQuery(typeof s.desk === "string" ? s.desk : "");
     if (desk) out.desk = deskQueryValue(desk);
     if (s.edit === "1") out.edit = "1";
+    if (s.field === "name" || s.field === "phone" || s.field === "email" || s.field === "work" || s.field === "about") {
+      out.field = s.field;
+    }
     return out;
   },
   component: AccountPage,
@@ -229,6 +233,7 @@ function ProfilePane() {
     emailCommercial: false,
   });
   const [nameInvalid, setNameInvalid] = useState(false);
+  const [editField, setEditField] = useState<"name" | "phone" | "email" | "work" | "about" | null>(null);
   const [gapTick, setGapTick] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
   const contactEpoch = useRef(0);
@@ -320,6 +325,7 @@ function ProfilePane() {
     e.preventDefault();
     if (!user) return;
     if (leaveEdit && !nameRef.current.trim()) {
+      setEditField("name");
       setNameInvalid(true);
       setGapTick((n) => n + 1);
       return;
@@ -586,16 +592,18 @@ function ProfilePane() {
     <AccountDeskFrame desk={desk}>
       <main className={desk ? "max-w-lg pb-6" : "ke-gutter mx-auto max-w-lg pb-10 pt-6"}>
         <div className="flex items-center justify-between gap-3">
-          {editing ? (
+          {editing && editField ? (
             <button
               type="button"
-              aria-label={t("cancel")}
-              data-ke="profile-back"
-              onClick={discardEdits}
+              aria-label={t("back")}
+              data-ke="profile-field-back"
+              onClick={() => setEditField(null)}
               className="grid size-11 place-items-center rounded-full text-fg touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
             >
               <ChevronLeft className="size-6" aria-hidden />
             </button>
+          ) : editing ? (
+            <span className="size-11" aria-hidden />
           ) : section !== "profile" ? (
             <Link
               to="/account"
@@ -639,7 +647,19 @@ function ProfilePane() {
               {t("profileEdit")}
             </Link>
           ) : editing ? (
-            <h1 className="min-w-0 flex-1 truncate text-center text-base font-semibold">{t("profileEdit")}</h1>
+            <h1 className="min-w-0 flex-1 truncate text-center text-base font-semibold">
+              {editField === "name"
+                ? t("name")
+                : editField === "phone"
+                  ? t("accountPhone")
+                  : editField === "email"
+                    ? t("email")
+                    : editField === "work"
+                      ? t("anchorWorkLabel")
+                      : editField === "about"
+                        ? t("accountBio")
+                        : t("profileEditTitle")}
+            </h1>
           ) : section !== "profile" ? (
             <h1 className="min-w-0 truncate text-base font-semibold">
               {sections.find((item) => item.id === section)?.label}
@@ -647,7 +667,19 @@ function ProfilePane() {
           ) : (
             <span className="size-11" aria-hidden />
           )}
-          {editing ? <span className="size-11" aria-hidden /> : null}
+          {editing && !editField ? (
+            <button
+              type="button"
+              aria-label={t("close")}
+              data-ke="profile-cancel"
+              onClick={discardEdits}
+              className="grid size-11 place-items-center rounded-full text-fg touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+            >
+              <X className="size-5" aria-hidden />
+            </button>
+          ) : editing ? (
+            <span className="size-11" aria-hidden />
+          ) : null}
         </div>
         {section === "profile" && !editing && user ? (
           <>
@@ -767,152 +799,189 @@ function ProfilePane() {
         ) : null}
         {section === "profile" && editing ? (
         <>
-        <div className="mt-8 flex flex-col items-center text-center">
-          <ProfileAvatar userId={user?.id} fallback={user?.profileImageUrl} name={name || user?.displayName} size="lg" />
-          <p className="mt-4 text-lg font-semibold">{name || user?.displayName || t("profile")}</p>
-          {email || user?.primaryEmail ? (
-            <p className="mt-1 text-sm text-muted">{email || user?.primaryEmail}</p>
-          ) : null}
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/*"
-            className="sr-only"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              e.target.value = "";
-              if (!file) return;
-              if (!user) return;
-              setBusy(true);
-              void compressProfileFile(file)
-                .then(async (dataUrl) => {
-                  writeProfilePhoto(user.id, dataUrl);
-                  await authClient.updateUser({ image: dataUrl });
-                  confirmAction(t, "photoUploaded", { title: t("accountPhotoUpdated") });
-                })
-                .catch((err) => toast.error(err instanceof Error ? err.message : t("accountPhotoFailed")))
-                .finally(() => setBusy(false));
-            }}
-          />
-          {isPending && !user ? (
-            <div className="mt-6 w-full">
-              <DeskSkeleton />
-            </div>
-          ) : user ? (
-            <Button className="mt-6" size="lg" disabled={busy} onClick={() => inputRef.current?.click()}>
-              {busy ? t("loading") : t("accountChangePhoto")}
-            </Button>
-          ) : (
-            <Button className="mt-6" size="lg" asChild>
-              <Link to="/login" search={parentLoginSearch("/account?tab=profile")}>
-                {t("accountSignInPhoto")}
-              </Link>
-            </Button>
-          )}
-        </div>
-
-        {isPending && !user ? null : user ? (
-          <form ref={formRef} onSubmit={(e) => void onSave(e, true)} className="mt-8 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
-            <h2 className="font-display text-lg tracking-[-0.02em]">{t("accountContactTitle")}</h2>
-            <p className="text-[13px] text-muted">{t("accountContactLead")}</p>
-            {nameInvalid ? (
-              <p role="alert" data-ke="profile-required-note" className="text-sm text-danger">
+        {isPending && !user ? (
+          <div className="mt-6">
+            <DeskSkeleton />
+          </div>
+        ) : user ? (
+          <form ref={formRef} onSubmit={(e) => void onSave(e, true)} className="mt-6" data-ke="profile-edit-form">
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (!file || !user) return;
+                setBusy(true);
+                void compressProfileFile(file)
+                  .then(async (dataUrl) => {
+                    writeProfilePhoto(user.id, dataUrl);
+                    await authClient.updateUser({ image: dataUrl });
+                    confirmAction(t, "photoUploaded", { title: t("accountPhotoUpdated") });
+                  })
+                  .catch((err) => toast.error(err instanceof Error ? err.message : t("accountPhotoFailed")))
+                  .finally(() => setBusy(false));
+              }}
+            />
+            {editField == null ? (
+              <>
+                <div className="flex flex-col items-center">
+                  <div className="relative">
+                    <ProfileAvatar userId={user.id} fallback={user.profileImageUrl} name={name || user.displayName} size="hero" />
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => inputRef.current?.click()}
+                      className="absolute -bottom-3 left-1/2 inline-flex min-h-11 -translate-x-1/2 items-center rounded-full border border-fg bg-bg px-3 text-sm font-semibold touch-manipulation"
+                    >
+                      {busy ? t("loading") : t("profileEdit")}
+                    </button>
+                  </div>
+                </div>
+                <h2 className="mt-8 text-sm font-semibold">{t("profileMyProfile")}</h2>
+                <p className="mt-1 text-sm text-muted">{t("profilePublicNote")}</p>
+                <ul className="mt-3 border-t border-border">
+                  {(
+                    [
+                      { id: "name" as const, label: t("name"), value: name },
+                      { id: "phone" as const, label: t("accountPhone"), value: phone },
+                      { id: "email" as const, label: t("email"), value: email },
+                      { id: "work" as const, label: t("anchorWorkLabel"), value: workQuery },
+                    ]
+                  ).map((row) => (
+                    <li key={row.id} className="border-b border-border">
+                      <button
+                        type="button"
+                        data-ke={`profile-field-${row.id}`}
+                        onClick={() => setEditField(row.id)}
+                        className="flex min-h-14 w-full items-center gap-3 text-left touch-manipulation"
+                      >
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-xs text-muted">{row.label}</span>
+                          <span className="block truncate text-[15px]" data-ke={row.id === "name" ? "profile-name-value" : undefined}>
+                            {row.value.trim() || "—"}
+                          </span>
+                        </span>
+                        <ChevronRight className="size-4 shrink-0 text-muted" aria-hidden />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                {bio.trim() ? <p className="mt-6 whitespace-pre-wrap text-[15px] leading-relaxed">{bio}</p> : null}
+                <button
+                  type="button"
+                  data-ke="profile-edit-about"
+                  onClick={() => setEditField("about")}
+                  className="mt-3 inline-flex min-h-11 items-center rounded-full border border-fg px-4 text-sm font-semibold touch-manipulation"
+                >
+                  {t("profileEditAbout")}
+                </button>
+              </>
+            ) : null}
+            {editField === "name" ? (
+              <label className="mt-6 block text-sm" htmlFor="profile-name">
+                {t("name")}
+                <RequiredMark french={locale === "fr"} />
+                <input
+                  id="profile-name"
+                  data-ke="profile-name"
+                  className={`ke-input mt-1 ${fieldErrorClass(nameInvalid)}`}
+                  value={name}
+                  aria-required="true"
+                  aria-invalid={nameInvalid || undefined}
+                  onChange={(e) => {
+                    contactDirty.current.name = true;
+                    nameRef.current = e.target.value;
+                    setName(e.target.value);
+                    if (e.target.value.trim()) setNameInvalid(false);
+                  }}
+                  autoComplete="name"
+                  maxLength={80}
+                />
+              </label>
+            ) : null}
+            {nameInvalid && editField === "name" ? (
+              <p role="alert" data-ke="profile-required-note" className="mt-3 text-sm text-danger">
                 {t("profileRequiredNote")}
               </p>
             ) : null}
-            <label className="block text-sm" htmlFor="profile-name">
-              {t("name")}
-              <RequiredMark french={locale === "fr"} />
-              <input
-                id="profile-name"
-                data-ke="profile-name"
-                className={`ke-input mt-1 ${fieldErrorClass(nameInvalid)}`}
-                value={name}
-                aria-required="true"
-                aria-invalid={nameInvalid || undefined}
-                onChange={(e) => {
-                  contactDirty.current.name = true;
-                  nameRef.current = e.target.value;
-                  setName(e.target.value);
-                  if (e.target.value.trim()) setNameInvalid(false);
-                }}
-                autoComplete="name"
-                maxLength={80}
-              />
-            </label>
-            <label className="block text-sm">
-              {t("accountPhone")}
-              <input
-                className="ke-input mt-1"
-                value={phone}
-                onChange={(e) => {
-                  contactDirty.current.phone = true;
-                  phoneRef.current = e.target.value;
-                  setPhone(e.target.value);
-                }}
-                autoComplete="tel"
-                inputMode="tel"
-                maxLength={32}
-                placeholder="204-555-0100"
-              />
-            </label>
-            <label className="block text-sm">
-              {t("email")}
-              <input className="ke-input mt-1 bg-bg" value={email} readOnly autoComplete="email" />
-            </label>
-            <p className="text-[12px] text-subtle">{t("accountEmailNote")}</p>
-            <label className="block text-sm">
-              {t("accountBio")}
-              <textarea
-                className="ke-input mt-1 min-h-24 resize-y"
-                value={bio}
-                onChange={(e) => {
-                  contactDirty.current.bio = true;
-                  bioRef.current = e.target.value;
-                  setBio(e.target.value);
-                }}
-                maxLength={400}
-                placeholder={t("accountBioPh")}
-              />
-            </label>
-            <p className="text-right text-[12px] text-subtle">{bio.length}/400</p>
-            <CaslConsentFields value={consents} onChange={setConsents} />
+            {editField === "phone" ? (
+              <label className="mt-6 block text-sm">
+                {t("accountPhone")}
+                <input
+                  className="ke-input mt-1"
+                  value={phone}
+                  onChange={(e) => {
+                    contactDirty.current.phone = true;
+                    phoneRef.current = e.target.value;
+                    setPhone(e.target.value);
+                  }}
+                  autoComplete="tel"
+                  inputMode="tel"
+                  maxLength={32}
+                  placeholder="204-555-0100"
+                />
+              </label>
+            ) : null}
+            {editField === "email" ? (
+              <label className="mt-6 block text-sm">
+                {t("email")}
+                <input className="ke-input mt-1 bg-bg" value={email} readOnly autoComplete="email" />
+                <span className="mt-2 block text-[12px] text-subtle">{t("accountEmailNote")}</span>
+              </label>
+            ) : null}
+            {editField === "work" ? (
+              <div className="mt-6">
+                <p className="text-sm font-medium">{t("anchorWorkLabel")}</p>
+                <p className="mt-1 text-[13px] text-muted">{t("anchorNeedWork")}</p>
+                <PlaceSearch
+                  value={workQuery}
+                  onChange={setWorkQuery}
+                  onResolved={(place) => {
+                    setWorkOrigin(place);
+                    setWorkQuery(place.label);
+                    if (anchorMode === "home") setAnchorMode("both");
+                  }}
+                  placeholder={t("anchorWorkPh")}
+                  origin={origin}
+                  inputClassName="ke-input mt-2 w-full"
+                />
+              </div>
+            ) : null}
+            {editField === "about" ? (
+              <label className="mt-6 block text-sm">
+                {t("accountBio")}
+                <textarea
+                  className="ke-input mt-1 min-h-24 resize-y"
+                  value={bio}
+                  onChange={(e) => {
+                    contactDirty.current.bio = true;
+                    bioRef.current = e.target.value;
+                    setBio(e.target.value);
+                  }}
+                  maxLength={400}
+                  placeholder={t("accountBioPh")}
+                />
+                <span className="mt-1 block text-right text-[12px] text-subtle">{bio.length}/400</span>
+              </label>
+            ) : null}
             {smsNote ? (
-              <p className="text-sm text-danger" role="alert">
+              <p className="mt-3 text-sm text-danger" role="alert">
                 {smsNote}
               </p>
             ) : null}
-            <p className="text-[12px] text-subtle">
-              <Link
-                to="/unsubscribe"
-                search={{ token: undefined, channel: undefined }}
-                className="underline-offset-4 hover:underline"
+            <div className="sticky bottom-0 z-10 mt-8 bg-bg py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              <button
+                type="submit"
+                data-ke="account-save-details"
+                disabled={saving}
+                className="flex min-h-11 w-full items-center justify-center rounded-full bg-fg px-4 text-sm font-semibold text-bg touch-manipulation"
               >
-                {t("unsubscribe")}
-              </Link>
-            </p>
-            <div className="pt-2">
-              <p className="text-sm font-medium">{t("anchorWorkLabel")}</p>
-              <p className="mt-1 text-[13px] text-muted">{t("anchorNeedWork")}</p>
-              <PlaceSearch
-                value={workQuery}
-                onChange={setWorkQuery}
-                onResolved={(place) => {
-                  setWorkOrigin(place);
-                  setWorkQuery(place.label);
-                  if (anchorMode === "home") setAnchorMode("both");
-                }}
-                placeholder={t("anchorWorkPh")}
-                origin={origin}
-                inputClassName="ke-input mt-2 w-full"
-              />
+                {saving ? t("loading") : t("profileDone")}
+              </button>
             </div>
-            <Button type="submit" className="w-full" disabled={saving} data-ke="account-save-details">
-              {saving ? t("loading") : t("accountSaveDetails")}
-            </Button>
-            <Button type="button" variant="secondary" className="w-full" data-ke="profile-cancel" onClick={discardEdits}>
-              {t("cancel")}
-            </Button>
           </form>
         ) : (
           <p className="mt-8 text-center text-sm text-muted">{t("accountSettingsGuest")}</p>

@@ -3120,5 +3120,10 @@
   "profileShowAll": "عرض الكل",
   "profileShowLess": "عرض أقل",
   "profileShowMoreReviews": "المزيد من التقييمات",
-  "profileListings": "الصفحات"
+  "profileListings": "الصفحات",
+  "profileEditTitle": "تعديل الملف",
+  "profileMyProfile": "ملفي",
+  "profilePublicNote": "ترى العائلات اسمك وصورتك ونصك.",
+  "profileEditAbout": "تعديل النص",
+  "profileDone": "تم"
 }

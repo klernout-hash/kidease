@@ -3120,5 +3120,10 @@
   "profileShowAll": "Alle anzeigen",
   "profileShowLess": "Weniger anzeigen",
   "profileShowMoreReviews": "Mehr Bewertungen",
-  "profileListings": "Einträge"
+  "profileListings": "Einträge",
+  "profileEditTitle": "Profil bearbeiten",
+  "profileMyProfile": "Mein Profil",
+  "profilePublicNote": "Familien sehen deinen Namen, dein Foto und deinen Text.",
+  "profileEditAbout": "Text bearbeiten",
+  "profileDone": "Fertig"
 }

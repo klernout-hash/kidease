@@ -3120,5 +3120,10 @@
   "profileShowAll": "Ipakita lahat",
   "profileShowLess": "Ipakita nang mas kaunti",
   "profileShowMoreReviews": "Higit pang review",
-  "profileListings": "Mga listing"
+  "profileListings": "Mga listing",
+  "profileEditTitle": "I-edit ang profile",
+  "profileMyProfile": "Aking profile",
+  "profilePublicNote": "Nakikita ng mga pamilya ang pangalan, larawan, at tungkol sa iyo.",
+  "profileEditAbout": "I-edit ang tungkol",
+  "profileDone": "Tapos"
 }

@@ -3120,5 +3120,10 @@
   "profileShowAll": "ਸਭ ਵੇਖੋ",
   "profileShowLess": "ਘੱਟ ਵੇਖੋ",
   "profileShowMoreReviews": "ਹੋਰ ਸਮੀਖਿਆਵਾਂ",
-  "profileListings": "ਲਿਸਟਿੰਗਾਂ"
+  "profileListings": "ਲਿਸਟਿੰਗਾਂ",
+  "profileEditTitle": "ਪ੍ਰੋਫਾਈਲ ਸੋਧੋ",
+  "profileMyProfile": "ਮੇਰੀ ਪ੍ਰੋਫਾਈਲ",
+  "profilePublicNote": "ਪਰਿਵਾਰ ਤੁਹਾਡਾ ਨਾਮ, ਫੋਟੋ ਅਤੇ ਜਾਣ-ਪਛਾਣ ਵੇਖਦੇ ਹਨ।",
+  "profileEditAbout": "ਜਾਣ-ਪਛਾਣ ਸੋਧੋ",
+  "profileDone": "ਹੋ ਗਿਆ"
 }
