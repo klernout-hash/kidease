@@ -39,6 +39,8 @@ import { ReferFriendPanel } from "@/components/refer-friend-panel";
 import { fieldErrorClass, RequiredMark } from "@/components/required-field";
 import { focusFirstInvalid } from "@/lib/profile-form";
 import { ProfileFacts, ProfileHeroCard, type ProfileFact } from "@/components/profile-hero";
+import { ProfileChildren } from "@/components/profile-children";
+import { RoleSwitchPill } from "@/components/role-switch-pill";
 import { ProfileDeskExtras } from "@/components/profile-public";
 import { profileRoleId, showProfileStats, yearsOnKidEase } from "@/lib/profile-hero";
 import { loadMenuProviderCards } from "@/lib/server/menu-summary";
@@ -693,6 +695,7 @@ function ProfilePane() {
         </div>
         {section === "profile" && !editing && user ? (
           <>
+            <RoleSwitchPill placement="flow" />
             <ProfileHeroCard
               userId={user.id}
               photo={user.profileImageUrl}
@@ -705,6 +708,9 @@ function ProfilePane() {
               years={yearsOnKidEase(joinedAt)}
               childCount={daycareStats ? null : profileDesk?.ok ? profileDesk.childCount : null}
             />
+            {roleId === "parent" ? (
+              <ProfileChildren children={profileDesk?.ok ? profileDesk.children : []} />
+            ) : null}
             <ProfileFacts rows={profileFactRows()} bio={bio} />
             {daycareStats && profileDesk?.ok ? (
               <ProfileDeskExtras listings={profileDesk.listings} reviews={profileDesk.reviews} />

@@ -7,6 +7,7 @@ import {
   listingActionMode,
   navRoleForSession,
   privateReturnPath,
+  bottomBarKind,
   roleFlipAllowed,
   roleNavItems,
   upgradeNavLabel,
@@ -98,6 +99,17 @@ test("menus stay on one role and the plan label switches when paid", () => {
   assert.equal(roleNavItems({ role: "guest" }).some((item) => item.id === "plans"), false);
   assert.equal(guest.includes("Admin"), false);
   assert.equal(roleNavItems({ role: "admin" }).some((item) => item.label === "Admin"), false);
+});
+
+test("family desk keeps parent tabs for a daycare account", () => {
+  assert.equal(bottomBarKind({ role: "provider", pathname: "/account", pending: false, highlightedDesk: "parent" }), "parent");
+  assert.equal(bottomBarKind({ role: "provider", pathname: "/menu", pending: false, highlightedDesk: "parent" }), "parent");
+  assert.equal(bottomBarKind({ role: "provider", pathname: "/search", pending: false, highlightedDesk: "parent" }), "parent");
+  assert.equal(bottomBarKind({ role: "provider", pathname: "/inbox", pending: false, highlightedDesk: "parent" }), "parent");
+  assert.equal(bottomBarKind({ role: "provider", pathname: "/provider", pending: false, highlightedDesk: "parent" }), "daycare");
+  assert.equal(bottomBarKind({ role: "provider", pathname: "/search", pending: false, highlightedDesk: "provider" }), "daycare");
+  assert.equal(bottomBarKind({ role: "parent", pathname: "/account", pending: false, highlightedDesk: null }), "parent");
+  assert.equal(bottomBarKind({ role: "guest", pathname: "/search", pending: false, highlightedDesk: "parent" }), "parent");
 });
 
 test("listing actions follow the viewer, and a role sticks after sign-up", () => {

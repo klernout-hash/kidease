@@ -38,6 +38,7 @@ import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { inboxThreadTo, parentDeskPath, parentNavSearch } from "@/lib/desk-nav";
+import { MAX_CHILDREN_PER_PARENT } from "@/lib/children-limit";
 import { parentDeskTabOrDefault } from "@/lib/parent-tab";
 import { useStoreShell } from "@/lib/use-native-shell";
 import { yieldToMain } from "@/lib/yield-main";
@@ -116,6 +117,7 @@ export function ParentDesk({
   shareToken = null,
   initialSaved = [],
   initialShared = false,
+  initialChild = null,
 }: {
   initialTab?: ParentTab;
   plusReturn?: "success" | "cancel" | null;
@@ -124,6 +126,7 @@ export function ParentDesk({
   shareToken?: string | null;
   initialSaved?: Card[];
   initialShared?: boolean;
+  initialChild?: string | null;
 }) {
   const { user } = useCurrentUserState();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -160,6 +163,7 @@ export function ParentDesk({
   const [editing, setEditing] = useState<Child | null | "new">(null);
   const [childFocus, setChildFocus] = useState<string | null>(null);
   const [childOpen, setChildOpen] = useState(false);
+  const [childrenReady, setChildrenReady] = useState(false);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [picked, setPicked] = useState<Record<string, string[]>>({});
   const [savedReady, setSavedReady] = useState(false);
@@ -251,6 +255,7 @@ export function ParentDesk({
       setBookings(asList(f?.bookings));
       setPayments(asList(f?.payments));
       setChildren(asList(f?.children));
+      setChildrenReady(true);
       setCentreMessages(f.centreMessages ?? 0);
       setUpgradeDismissed(Boolean(f.upgradeCardDismissed));
       setShortlistShared(Boolean(f.shortlistShared));
@@ -297,6 +302,7 @@ export function ParentDesk({
     setPayments([]);
     setBills([]);
     setChildren([]);
+    setChildrenReady(false);
     setTours([]);
     setLeads([]);
     setCentreMessages(0);
@@ -327,13 +333,34 @@ export function ParentDesk({
         });
       })
       .catch(() => {
-        startTransition(() => setExploreReady(true));
+        startTransition(() => {
+          setExploreReady(true);
+          setChildrenReady(true);
+        });
       });
     return () => {
       cancelled = true;
       cancelIdle?.();
     };
   }, [user?.id, loadFamily, loadExplore, loadDeskExtras]);
+
+  useEffect(() => {
+    if (!initialChild || !childrenReady) return;
+    if (initialChild === "new") {
+      if (children.length >= MAX_CHILDREN_PER_PARENT) {
+        setEditing(null);
+        return;
+      }
+      setEditing("new");
+      setChildOpen(true);
+      return;
+    }
+    const found = children.find((child) => child.id === initialChild);
+    if (!found) return;
+    setChildFocus(found.id);
+    setChildOpen(true);
+    setEditing(null);
+  }, [children, childrenReady, initialChild]);
 
   useEffect(() => {
     if (contentTab !== "saved") {
@@ -760,9 +787,11 @@ export function ParentDesk({
                   </li>
                 ))}
               </ul>
-              <Button className="mt-3" onClick={() => { setEditing("new"); setChildOpen(true); }}>
-                {children.length ? t("newChild") : t("addChild")}
-              </Button>
+              {children.length < MAX_CHILDREN_PER_PARENT ? (
+                <Button className="mt-3" onClick={() => { setEditing("new"); setChildOpen(true); }}>
+                  {children.length ? t("newChild") : t("addChild")}
+                </Button>
+              ) : null}
             </div>
             <div className="ke-split-detail min-w-0" data-ke="children-detail">
               <Button variant="ghost" className="mb-3 md:hidden" onClick={() => { setChildOpen(false); setEditing(null); }}>

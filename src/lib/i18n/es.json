@@ -3213,5 +3213,16 @@
   "connectPayouts": "Pagos",
   "connectNotSetUp": "Los pagos aún no están listos en este sitio.",
   "connectEmbedded": "Agrega aquí los datos de pago de tu centro. Te quedas en KidEase.",
-  "payBillNow": "Pagar ahora"
+  "payBillNow": "Pagar ahora",
+  "profileAddChild": "+ Añadir un niño",
+  "profileChildrenLead": "Abre un perfil para editarlo. Puedes añadir hasta 4 niños.",
+  "profileChildrenEmpty": "Todavía no hay niños en este perfil.",
+  "profileChildOpen": "Abrir el perfil de {name}",
+  "statementsTitle": "Estados de cuenta",
+  "statementsLead": "Las cuotas, los ajustes y el pago de cada mes.",
+  "statementsViewAll": "Ver estados de cuenta",
+  "statementsEmptyTitle": "Todavía no hay estados de cuenta",
+  "statementsEmptyBody": "Un estado de cuenta aparece aquí cuando una familia paga una factura.",
+  "statementsOpen": "Abrir",
+  "statementsMissingTitle": "Ese estado de cuenta no está aquí"
 }

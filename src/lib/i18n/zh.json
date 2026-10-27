@@ -3213,5 +3213,16 @@
   "connectPayouts": "收款",
   "connectNotSetUp": "本站还没有开通收款。",
   "connectEmbedded": "在这里添加中心的收款资料。你会留在 KidEase。",
-  "payBillNow": "立即支付"
+  "payBillNow": "立即支付",
+  "profileAddChild": "+ 添加孩子",
+  "profileChildrenLead": "打开资料即可修改。最多可以添加 4 个孩子。",
+  "profileChildrenEmpty": "这个资料里还没有孩子。",
+  "profileChildOpen": "打开{name}的资料",
+  "statementsTitle": "对账单",
+  "statementsLead": "每个月的费用、调整和付款。",
+  "statementsViewAll": "查看对账单",
+  "statementsEmptyTitle": "还没有对账单",
+  "statementsEmptyBody": "家庭付费后，对账单会显示在这里。",
+  "statementsOpen": "打开",
+  "statementsMissingTitle": "找不到这份对账单"
 }

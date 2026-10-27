@@ -3213,5 +3213,16 @@
   "connectPayouts": "التحويلات",
   "connectNotSetUp": "التحويلات غير جاهزة على هذا الموقع بعد.",
   "connectEmbedded": "أضف بيانات تحويل مركزك هنا. تبقى في KidEase.",
-  "payBillNow": "ادفع الآن"
+  "payBillNow": "ادفع الآن",
+  "profileAddChild": "+ أضف طفلاً",
+  "profileChildrenLead": "افتح الملف لتعديله. يمكنك إضافة حتى 4 أطفال.",
+  "profileChildrenEmpty": "لا يوجد أطفال في هذا الملف بعد.",
+  "profileChildOpen": "افتح ملف {name}",
+  "statementsTitle": "كشوف الحساب",
+  "statementsLead": "رسوم كل شهر والتعديلات والمبلغ المدفوع.",
+  "statementsViewAll": "عرض الكشوف",
+  "statementsEmptyTitle": "لا توجد كشوف بعد",
+  "statementsEmptyBody": "يظهر الكشف هنا بعد أن تدفع أسرة فاتورة.",
+  "statementsOpen": "فتح",
+  "statementsMissingTitle": "هذا الكشف غير موجود هنا"
 }

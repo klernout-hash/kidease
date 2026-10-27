@@ -3213,5 +3213,16 @@
   "connectPayouts": "Mga payout",
   "connectNotSetUp": "Hindi pa naka-set up ang payout sa site na ito.",
   "connectEmbedded": "Ilagay dito ang payout details ng sentro. Mananatili ka sa KidEase.",
-  "payBillNow": "Magbayad ngayon"
+  "payBillNow": "Magbayad ngayon",
+  "profileAddChild": "+ Magdagdag ng anak",
+  "profileChildrenLead": "Buksan ang tala para baguhin ito. Puwede kang magdagdag ng hanggang 4 na anak.",
+  "profileChildrenEmpty": "Wala pang anak sa talang ito.",
+  "profileChildOpen": "Buksan ang tala ni {name}",
+  "statementsTitle": "Mga buod ng buwan",
+  "statementsLead": "Ang bayad, ang mga ayos, at ang perang ipinadala sa bawat buwan.",
+  "statementsViewAll": "Tingnan ang mga buod",
+  "statementsEmptyTitle": "Wala pang buod",
+  "statementsEmptyBody": "Lilitaw ang buod dito kapag nagbayad ang isang pamilya.",
+  "statementsOpen": "Buksan",
+  "statementsMissingTitle": "Wala rito ang buod na iyon"
 }

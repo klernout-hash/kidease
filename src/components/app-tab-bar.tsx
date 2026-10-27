@@ -6,6 +6,7 @@ import { CountBadge } from "@/components/count-badge";
 import { useSessionDesks } from "@/components/session-desks";
 import { useRoleChrome } from "@/components/role-chrome";
 import { attentionForItem } from "@/lib/attention";
+import { highlightDesk, parseDeskQuery } from "@/lib/desks";
 import { bottomBarKind } from "@/lib/role-access";
 import { hapticLight, isNative } from "@/lib/native";
 import { nativeStoreTabs, type NativeStoreTabId } from "@/lib/native-store-tabs";
@@ -29,8 +30,13 @@ export function AppTabBar() {
   const desk = useRouterState({ select: (s) => (s.location.search as { desk?: string }).desk });
   const view = useRouterState({ select: (s) => (s.location.search as { view?: string }).view });
   const chrome = useRoleChrome();
-  const { session } = useSessionDesks();
-  const kind = bottomBarKind({ role: chrome.role, pathname, pending: chrome.pending });
+  const { session, sticky } = useSessionDesks();
+  const kind = bottomBarKind({
+    role: chrome.role,
+    pathname,
+    pending: chrome.pending,
+    highlightedDesk: highlightDesk(pathname, sticky, parseDeskQuery(desk)),
+  });
   const [native, setNative] = useState(false);
   useEffect(() => {
     setNative(isNative());

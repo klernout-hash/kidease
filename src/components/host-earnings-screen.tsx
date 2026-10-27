@@ -8,7 +8,6 @@ import { KidBlocks } from "@/components/kid-art";
 import { formatEarnDate, type EarnBill, type EarningsResult } from "@/lib/earnings-desk";
 import { monthTick } from "@/lib/host-desk";
 import { loadEarningsDesk } from "@/lib/server/earnings-desk";
-import { periodLabel } from "@/lib/stripe-methods";
 import { formatPlanCad } from "@/lib/upgrade-plans";
 import { useMounted } from "@/lib/use-mounted";
 import { useCopy } from "@/lib/use-copy";
@@ -119,34 +118,18 @@ export function HostEarningsScreen({ initial }: { initial?: EarningsResult | nul
             marker="earnings-paid"
           />
 
-          {desk.statements.length > 0 ? (
-            <section className="mt-8" data-ke="earnings-reports">
-              <h2 className="font-display text-xl">{t("earningsReports")}</h2>
-              <ul className="mt-3 flex gap-3 overflow-x-auto pb-1">
-                {desk.statements.map((statement) => (
-                  <li key={statement.period} className="w-44 shrink-0">
-                    <Link
-                      to="/menu"
-                      search={{ screen: "earnings", view: "statement", period: statement.period }}
-                      className="ke-press flex min-h-32 flex-col rounded-[1.25rem] bg-surface p-4 ring-1 ring-border touch-manipulation"
-                    >
-                      {statement.isNew ? (
-                        <span className="w-fit rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-fg">
-                          {t("earningsNew")}
-                        </span>
-                      ) : (
-                        <span className="text-[11px] text-muted">{t("earningsStatement")}</span>
-                      )}
-                      <span className="mt-3 font-medium">{periodLabel(statement.period, french ? "fr" : "en")}</span>
-                      {statement.netCents != null ? (
-                        <span className="mt-1 font-display text-lg tabular-nums">{cad(statement.netCents)}</span>
-                      ) : null}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
+          <section className="mt-8" data-ke="earnings-reports">
+            <h2 className="font-display text-xl">{t("statementsTitle")}</h2>
+            <p className="mt-1 text-sm text-muted">{t("statementsLead")}</p>
+            <Link
+              to="/menu"
+              search={{ screen: "earnings", view: "statement" }}
+              data-ke="earnings-view-statements"
+              className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold underline-offset-2 hover:underline"
+            >
+              {t("statementsViewAll")}
+            </Link>
+          </section>
         </>
       ) : null}
     </main>

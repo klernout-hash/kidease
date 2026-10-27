@@ -11,10 +11,74 @@ import { formatPlanCad } from "@/lib/upgrade-plans";
 import type { CopyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
 
+export function EarningsStatementsScreen({ desk }: { desk: EarningsResult | null }) {
+  const { t, locale } = useCopy();
+  const french = locale === "fr";
+  const cad = (cents: number) => formatPlanCad(cents / 100, french ? "fr" : "en");
+  const statements = desk?.ok ? desk.statements : [];
+
+  return (
+    <main className="ke-screen-enter ke-gutter mx-auto w-full max-w-lg pb-28 pt-4" data-ke="earnings-statements">
+      <EarningsHeader title={t("statementsTitle")} back={{ screen: "earnings" }} />
+      <p className="mt-3 text-sm text-muted">{t("statementsLead")}</p>
+      {!desk?.ok ? (
+        <div className="mt-6">
+          <EmptyState title={t("actionFailed")} action={t("back")} actionTo="/menu" />
+        </div>
+      ) : null}
+      {desk?.ok && statements.length === 0 ? (
+        <div className="mt-6">
+          <EmptyState title={t("statementsEmptyTitle")} body={t("statementsEmptyBody")} />
+        </div>
+      ) : null}
+      {statements.length > 0 ? (
+        <ul className="mt-4 space-y-3">
+          {statements.map((statement) => (
+            <li key={statement.period} className="rounded-[1.25rem] bg-surface p-4 ring-1 ring-border" data-ke="statement-period">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium">{periodLabel(statement.period, french ? "fr" : "en")}</p>
+                  <p className="mt-1 text-sm text-muted">
+                    {statement.grossCents != null ? `${t("earningsGross")} ${cad(statement.grossCents)}` : ""}
+                    {statement.grossCents != null && statement.netCents != null ? " · " : ""}
+                    {statement.netCents != null ? `${t("earningsNet")} ${cad(statement.netCents)}` : ""}
+                  </p>
+                </div>
+                {statement.isNew ? (
+                  <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-fg">
+                    {t("earningsNew")}
+                  </span>
+                ) : null}
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link
+                  to="/menu"
+                  search={{ screen: "earnings", view: "statement", period: statement.period }}
+                  className="inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-fg touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                >
+                  {t("statementsOpen")}
+                </Link>
+                <button
+                  type="button"
+                  data-ke="statement-download"
+                  className="inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold ring-1 ring-border touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                  onClick={() => downloadPdf(`kidease-${statement.period}.pdf`, pdfLines(statement, cad, t))}
+                >
+                  {t("earningsDownloadPdf")}
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </main>
+  );
+}
+
 export function EarningsStatementScreen({ desk, period }: { desk: EarningsResult | null; period?: string }) {
   const { t, locale } = useCopy();
   const french = locale === "fr";
-  const statement = desk?.ok ? desk.statements.find((item) => item.period === period) ?? (period ? null : desk.statements[0] ?? null) : null;
+  const statement = desk?.ok && period ? desk.statements.find((item) => item.period === period) ?? null : null;
   const [open, setOpen] = useState(false);
   const cad = (cents: number) => formatPlanCad(cents / 100, french ? "fr" : "en");
 
@@ -28,7 +92,7 @@ export function EarningsStatementScreen({ desk, period }: { desk: EarningsResult
       ) : null}
       {desk?.ok && !statement ? (
         <div className="mt-6">
-          <EmptyState title={t("earningsEmptyTitle")} body={t("earningsEmptyBody")} />
+          <EmptyState title={t("statementsMissingTitle")} body={t("statementsEmptyBody")} />
         </div>
       ) : null}
       {statement ? (

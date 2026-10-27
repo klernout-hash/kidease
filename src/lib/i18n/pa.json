@@ -3213,5 +3213,16 @@
   "connectPayouts": "ਭੁਗਤਾਨ",
   "connectNotSetUp": "ਇਸ ਸਾਈਟ ਉੱਤੇ ਭੁਗਤਾਨ ਅਜੇ ਤਿਆਰ ਨਹੀਂ।",
   "connectEmbedded": "ਆਪਣੇ ਸੈਂਟਰ ਦੇ ਭੁਗਤਾਨ ਵੇਰਵੇ ਇੱਥੇ ਜੋੜੋ। ਤੁਸੀਂ KidEase ਉੱਤੇ ਹੀ ਰਹੋਗੇ।",
-  "payBillNow": "ਹੁਣੇ ਭਰੋ"
+  "payBillNow": "ਹੁਣੇ ਭਰੋ",
+  "profileAddChild": "+ ਬੱਚਾ ਜੋੜੋ",
+  "profileChildrenLead": "ਪ੍ਰੋਫਾਈਲ ਖੋਲ੍ਹ ਕੇ ਬਦਲੋ। ਤੁਸੀਂ 4 ਬੱਚਿਆਂ ਤੱਕ ਜੋੜ ਸਕਦੇ ਹੋ।",
+  "profileChildrenEmpty": "ਇਸ ਪ੍ਰੋਫਾਈਲ ਵਿੱਚ ਅਜੇ ਕੋਈ ਬੱਚਾ ਨਹੀਂ।",
+  "profileChildOpen": "{name} ਦੀ ਪ੍ਰੋਫਾਈਲ ਖੋਲ੍ਹੋ",
+  "statementsTitle": "ਮਹੀਨਾਵਾਰ ਵੇਰਵੇ",
+  "statementsLead": "ਹਰ ਮਹੀਨੇ ਦੀ ਫੀਸ, ਸੋਧ ਅਤੇ ਭੁਗਤਾਨ।",
+  "statementsViewAll": "ਵੇਰਵੇ ਵੇਖੋ",
+  "statementsEmptyTitle": "ਅਜੇ ਕੋਈ ਵੇਰਵਾ ਨਹੀਂ",
+  "statementsEmptyBody": "ਜਦੋਂ ਕੋਈ ਪਰਿਵਾਰ ਬਿੱਲ ਭਰਦਾ ਹੈ, ਵੇਰਵਾ ਇੱਥੇ ਦਿਖਾਈ ਦਿੰਦਾ ਹੈ।",
+  "statementsOpen": "ਖੋਲ੍ਹੋ",
+  "statementsMissingTitle": "ਇਹ ਵੇਰਵਾ ਇੱਥੇ ਨਹੀਂ ਹੈ"
 }

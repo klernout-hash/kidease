@@ -15,6 +15,7 @@ import {
   PRODUCT_HOME,
   resolveAnonymousOriginFromHeaders,
   resolveDefaultSearchOrigin,
+  searchOriginOrWinnipeg,
 } from "../src/lib/default-origin.ts";
 import { CANADA_CAMERA } from "../src/lib/canada-origin.ts";
 
@@ -106,6 +107,38 @@ describe("anonymous default origin stays Canada-wide when geo is missing", () =>
   });
 });
 
+describe("plain search falls back to Winnipeg after the user's area", () => {
+  it("uses Winnipeg when nothing places the parent", () => {
+    const origin = searchOriginOrWinnipeg(resolveAnonymousOriginFromHeaders(null));
+    assert.equal(origin.label, "Winnipeg, MB");
+    assert.equal(origin.lat, 49.8951);
+    assert.equal(origin.lng, -97.1384);
+    assert.equal(origin.source, "default");
+  });
+
+  it("keeps a trusted Canadian city ahead of Winnipeg", () => {
+    const toronto = resolveAnonymousOriginFromHeaders(
+      headers({
+        "x-vercel-ip-country": "CA",
+        "x-vercel-ip-country-region": "ON",
+        "x-vercel-ip-city": "Toronto",
+        "x-vercel-ip-latitude": "43.6532",
+        "x-vercel-ip-longitude": "-79.3832",
+      }),
+    );
+    assert.equal(searchOriginOrWinnipeg(toronto).label, "Toronto, ON");
+    const edmonton = resolveAnonymousOriginFromHeaders(
+      headers({
+        "x-vercel-ip-country": "CA",
+        "x-vercel-ip-country-region": "AB",
+        "x-vercel-ip-city": "Edmonton",
+      }),
+    );
+    assert.equal(searchOriginOrWinnipeg(edmonton).label, "Edmonton, AB");
+    assert.equal(searchOriginOrWinnipeg(edmonton).source, "ip");
+  });
+});
+
 describe("GPS and saved origin still allow multi-city search", () => {
   it("uses precise GPS in Toronto when permitted", () => {
     const resolved = resolveDefaultSearchOrigin({
@@ -192,6 +225,8 @@ describe("wiring keeps explicit search and documents the fallback", () => {
     assert.match(boot, /incomingQ/);
     assert.match(boot, /resolveLocationQuery/);
     assert.match(boot, /resolveDefaultSearchOrigin/);
+    assert.match(boot, /searchOriginOrWinnipeg/);
+    assert.match(search, /searchOriginOrWinnipeg/);
     assert.match(boot, /isUntrustedTorontoOrigin/);
     assert.match(boot, /shouldRequestExploreGeolocation/);
     assert.match(boot, /trustedSavedOrigin/);

@@ -3213,5 +3213,16 @@
   "connectPayouts": "Versamenti",
   "connectNotSetUp": "I versamenti non sono ancora pronti su questo sito.",
   "connectEmbedded": "Aggiungi qui i dati di versamento del centro. Resti su KidEase.",
-  "payBillNow": "Paga ora"
+  "payBillNow": "Paga ora",
+  "profileAddChild": "+ Aggiungi un bambino",
+  "profileChildrenLead": "Apri un profilo per modificarlo. Puoi aggiungere fino a 4 bambini.",
+  "profileChildrenEmpty": "Nessun bambino in questo profilo.",
+  "profileChildOpen": "Apri il profilo di {name}",
+  "statementsTitle": "Rendiconti",
+  "statementsLead": "Quote, modifiche e versamento di ogni mese.",
+  "statementsViewAll": "Vedi i rendiconti",
+  "statementsEmptyTitle": "Nessun rendiconto per ora",
+  "statementsEmptyBody": "Un rendiconto compare qui quando una famiglia paga una fattura.",
+  "statementsOpen": "Apri",
+  "statementsMissingTitle": "Questo rendiconto non c’è"
 }
