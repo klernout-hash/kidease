@@ -120,11 +120,26 @@ export function AppMenuScreen({
         {user && highlight !== "create" ? (
           <MenuRow to="/menu" search={{ screen: "payments" }} label={t("earningsPayments")} icon="terms" marker="payments" />
         ) : null}
+        {highlight === "find" ? (
+          <MenuRow
+            to="/parent"
+            search={{ tab: "children" }}
+            label={t("children")}
+            icon="parent"
+            marker="children"
+          />
+        ) : null}
         <MenuRow
-          to={user ? "/account" : localePath("/login", locale)}
-          search={user ? accountSearch(sticky) : { next: "/account?tab=profile" }}
+          to={highlight === "create" || user ? "/account" : localePath("/login", locale)}
+          search={
+            highlight === "create"
+              ? { tab: "profile", desk: "director" }
+              : user
+                ? accountSearch(sticky)
+                : { next: "/account?tab=profile" }
+          }
           label={t("menuAccountSettings")}
-          icon={user ? "settings" : "login"}
+          icon={highlight === "create" || user ? "settings" : "login"}
           marker="account"
         />
         <MenuRow to="/menu" search={{ section: "resources" }} label={t("menuResources")} icon="daycare" marker="resources" />

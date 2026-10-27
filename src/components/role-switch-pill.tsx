@@ -4,16 +4,18 @@ import { KidBlocks, KidFamily } from "@/components/kid-art";
 import { useSessionDesks } from "@/components/session-desks";
 import { roleSwitchTarget } from "@/lib/app-menu";
 import { DESK_PATH, headerDesks, highlightDesk, parseDeskQuery, showDeskSwitcher } from "@/lib/desks";
+import { stripLocalePrefix } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 
 /**
  * One pill above the phone tab bar for people who have both Parent and Daycare.
  * It only switches the open desk. It does not change the account role.
  */
-export function RoleSwitchPill() {
+export function RoleSwitchPill({ placement = "fixed" }: { placement?: "fixed" | "flow" }) {
   const { t } = useCopy();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const onAccount = stripLocalePrefix(pathname) === "/account";
   const queryDesk = useRouterState({
     select: (s) => parseDeskQuery((s.location.search as { desk?: unknown }).desk as string | undefined),
   });
@@ -31,6 +33,8 @@ export function RoleSwitchPill() {
     return () => window.clearTimeout(timer);
   }, [navigate, setSticky, switching]);
 
+  if (placement === "fixed" && onAccount) return null;
+  if (placement === "flow" && !onAccount) return null;
   if (!session || !showDeskSwitcher(session.desks, session.role, session.email)) return null;
   const desks = headerDesks(session.desks, session.role, session.email);
   const current = highlightDesk(pathname, sticky, queryDesk);
@@ -47,7 +51,11 @@ export function RoleSwitchPill() {
           onClick={() => setSwitching(target)}
           data-ke="role-switch-pill"
           data-desk={target}
-          className="ke-app-only fixed left-1/2 z-50 hidden -translate-x-1/2 items-center justify-center rounded-full bg-fg px-4 text-sm font-semibold text-bg shadow-lg min-h-11 touch-manipulation bottom-[calc(4.75rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))] [[data-channel=app]_&]:inline-flex"
+          className={
+            placement === "flow"
+              ? "ke-app-only mb-4 hidden w-full max-w-full whitespace-normal rounded-full bg-fg px-4 py-2 text-center text-sm font-semibold leading-snug text-bg min-h-11 touch-manipulation [[data-channel=app]_&]:inline-flex md:!hidden"
+              : "ke-app-only fixed left-1/2 z-40 hidden -translate-x-1/2 items-center justify-center rounded-full bg-fg px-4 text-sm font-semibold text-bg shadow-lg min-h-11 touch-manipulation bottom-[calc(4.75rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))] [[data-channel=app]_&]:inline-flex"
+          }
         >
           {t(target === "parent" ? "switchToParent" : "switchToDaycare")}
         </button>

@@ -40,6 +40,12 @@ declare global {
   }
 }
 
+/** pk_test_ or pk_live_. The server only hands out pk_live_ after the Connect live gate. */
+export function isStripePublishableKey(raw: string): boolean {
+  const key = String(raw || "").trim();
+  return key.startsWith("pk_test_") || key.startsWith("pk_live_");
+}
+
 function loadScript(src: string): Promise<void> {
   const existing = document.querySelector(`script[src="${src}"]`);
   if (existing) {
@@ -67,7 +73,7 @@ function loadScript(src: string): Promise<void> {
 
 export async function loadStripeClient(publishableKey: string): Promise<StripeClient | null> {
   const key = publishableKey.trim();
-  if (!key.startsWith("pk_test_") || typeof window === "undefined") return null;
+  if (!isStripePublishableKey(key) || typeof window === "undefined") return null;
   await loadScript("https://js.stripe.com/v3/");
   if (!window.Stripe) return null;
   return window.Stripe(key);
@@ -75,7 +81,7 @@ export async function loadStripeClient(publishableKey: string): Promise<StripeCl
 
 export async function loadConnectInstance(publishableKey: string, fetchClientSecret: () => Promise<string>): Promise<ConnectInstance | null> {
   const key = publishableKey.trim();
-  if (!key.startsWith("pk_test_") || typeof window === "undefined") return null;
+  if (!isStripePublishableKey(key) || typeof window === "undefined") return null;
   await loadScript("https://connect-js.stripe.com/v1.0/connect.js");
   if (!window.StripeConnect) return null;
   return window.StripeConnect.init({

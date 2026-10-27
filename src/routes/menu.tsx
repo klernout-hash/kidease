@@ -5,7 +5,7 @@ import { AppMenuScreen } from "@/components/app-menu-screen";
 import { EarningsDetailsScreen } from "@/components/earnings-details";
 import { EarningsListScreen } from "@/components/earnings-list";
 import { EarningsPayoutsScreen } from "@/components/earnings-payouts";
-import { EarningsStatementScreen } from "@/components/earnings-statement";
+import { EarningsStatementScreen, EarningsStatementsScreen } from "@/components/earnings-statement";
 import { HostEarningsScreen } from "@/components/host-earnings-screen";
 import { ParentPaymentsScreen } from "@/components/parent-payments";
 import { HostInsightsScreen } from "@/components/host-insights-screen";
@@ -132,6 +132,13 @@ function MenuPage() {
     return (
       <ShellLite appTabs>
         <EarningsDetailsScreen desk={desk} />
+      </ShellLite>
+    );
+  }
+  if (screen === "earnings" && view === "statement" && !period) {
+    return (
+      <ShellLite appTabs>
+        <EarningsStatementsScreen desk={desk} />
       </ShellLite>
     );
   }

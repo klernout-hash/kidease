@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { getSql } from "@/lib/db";
 import {
   reviewFraudReasons,
@@ -79,11 +78,16 @@ export async function queueClaimReview(input: {
   return scored;
 }
 
+async function sha256Prefix(value: string) {
+  const { createHash } = await import("node:crypto");
+  return createHash("sha256").update(value).digest("hex").slice(0, 16);
+}
+
 async function signalContext(userId: string): Promise<{ ipHash: string | null; deviceId: string | null }> {
   try {
     const { getRequest } = await import("@tanstack/react-start/server");
     const ip = clientIpFromHeaders(getRequest().headers);
-    const ipHash = ip ? createHash("sha256").update(ip).digest("hex").slice(0, 16) : null;
+    const ipHash = ip ? await sha256Prefix(ip) : null;
     const { parseCurrentTrustedDevice } = await import("@/lib/server/two-factor.server");
     const device = parseCurrentTrustedDevice(userId);
     return { ipHash, deviceId: device?.deviceId || null };

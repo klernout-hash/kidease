@@ -1,7 +1,8 @@
 /**
  * Connect charges, wallet SetupIntents, and embedded account sessions.
- * No-ops unless the flag is on and the secret is an sk_test_ key.
- * Never returns a hosted invoice URL or a secret key.
+ * No-ops unless the payments flag is on and the keys pass connectChargeGate.
+ * Live keys also need KIDEASE_CONNECT_LIVE=1. Never returns a hosted invoice
+ * URL or a secret key.
  */
 
 import { createServerFn } from "@tanstack/react-start";
@@ -22,6 +23,7 @@ import {
   monthlyFeeTaxInvoiceBody,
   monthlyFeeTaxLine,
   parentInvoiceBody,
+  provinceCodeFromPlace,
   parentInvoiceLine,
   parsePayMode,
   publicConnectState,
@@ -450,13 +452,27 @@ export const startManualPay = createServerFn({ method: "POST" })
     return { ok: true as const, clientSecret, paymentMethodId: data.paymentMethodId };
   });
 
-async function feeTaxCentsFor(feeCents: number): Promise<number | null> {
+async function feeTaxQuote(
+  feeCents: number,
+  place: { province?: string | null; postalCode?: string | null },
+): Promise<{ amount: number; description: string } | null> {
   const plan = feeTaxPlan();
-  const line = monthlyFeeTaxLine({ plan, feeCents });
-  if (line) return line.amount;
-  if (plan.kind !== "stripe_tax" || feeCents <= 0) return null;
-  const calc = await stripeRequest<{ tax_amount_exclusive?: number }>("/tax/calculations", stripeTaxCalculationBody(feeCents));
-  return monthlyFeeTaxLine({ plan, feeCents, calculatedTaxCents: calc.tax_amount_exclusive })?.amount ?? null;
+  if (plan.kind === "stripe_tax") {
+    if (feeCents <= 0) return null;
+    const calc = await stripeRequest<{ tax_amount_exclusive?: number }>(
+      "/tax/calculations",
+      stripeTaxCalculationBody(feeCents, place),
+    );
+    const line = monthlyFeeTaxLine({
+      plan,
+      feeCents,
+      province: place.province,
+      calculatedTaxCents: calc.tax_amount_exclusive,
+    });
+    return line ? { amount: line.amount, description: line.description } : null;
+  }
+  const line = monthlyFeeTaxLine({ plan, feeCents, province: place.province });
+  return line ? { amount: line.amount, description: line.description } : null;
 }
 
 /** Send last month's draft once this month has started. The current month stays open. */
@@ -501,14 +517,23 @@ export async function queueMonthlyFeeTax(billId: string): Promise<{ ok: boolean;
     period: string;
     platform_fee_cents: number | null;
     status: string;
+    province: string | null;
+    postal_code: string | null;
   }>`
-    select daycare_id, period, platform_fee_cents, status from invoices where id = ${billId} limit 1
+    select i.daycare_id, i.period, i.platform_fee_cents, i.status, d.province, d.postal_code
+    from invoices i
+    join daycares d on d.id = i.daycare_id
+    where i.id = ${billId}
+    limit 1
   `.catch(() => []);
   const bill = rows[0];
   if (!bill || bill.status !== "paid") return { ok: false, reason: "missing" };
   const fee = Number(bill.platform_fee_cents) || 0;
-  const tax = await feeTaxCentsFor(fee);
-  if (tax == null || tax <= 0) return { ok: false, reason: "missing" };
+  const place = { province: bill.province, postalCode: bill.postal_code };
+  const quote = await feeTaxQuote(fee, place);
+  if (!quote || quote.amount <= 0) return { ok: false, reason: "missing" };
+  const tax = quote.amount;
+  const province = provinceCodeFromPlace(bill.province);
 
   const recorded = await sql<{ bill_id: string }>`
     select bill_id from daycare_fee_invoice_lines
@@ -558,7 +583,13 @@ export async function queueMonthlyFeeTax(billId: string): Promise<{ ok: boolean;
   if (!invoiceId.startsWith("in_")) {
     const invoice = await stripeRequest<{ id?: string }>(
       "/invoices",
-      monthlyFeeTaxInvoiceBody({ customerId, daycareId: bill.daycare_id, period: bill.period }),
+      monthlyFeeTaxInvoiceBody({
+        customerId,
+        daycareId: bill.daycare_id,
+        period: bill.period,
+        description: quote.description,
+        province,
+      }),
       "POST",
       { idempotencyKey: `fee-tax-${bill.daycare_id}-${bill.period}` },
     );
@@ -581,7 +612,7 @@ export async function queueMonthlyFeeTax(billId: string): Promise<{ ok: boolean;
     invoice: invoiceId,
     amount: tax,
     currency: "cad",
-    description: "Tax on KidEase fees",
+    description: quote.description,
   }, "POST", { idempotencyKey: `fee-tax-item-${billId}` });
   const inserted = await sql<{ bill_id: string }>`
     insert into daycare_fee_invoice_lines (bill_id, daycare_id, period, fee_cents, tax_cents)

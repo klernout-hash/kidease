@@ -194,10 +194,18 @@ export function bottomBarKind(input: {
   role: ChromeRole;
   pathname: string;
   pending: boolean;
+  /**
+   * Desk already resolved from the path, `?desk=`, and the sticky desk.
+   * Family desk (`parent`) keeps parent tabs for a dual-role daycare account.
+   */
+  highlightedDesk?: "parent" | "provider" | "admin" | "support" | null;
 }): "daycare" | "parent" | "admin" | "guest" {
   const path = barePath(input.pathname);
   if (path.startsWith("/provider")) return "daycare";
   if (path.startsWith("/parent")) return "parent";
+  if (input.highlightedDesk === "parent") return "parent";
+  if (input.highlightedDesk === "provider") return "daycare";
+  if (input.highlightedDesk === "admin") return "admin";
   if (input.pending || input.role === "guest") return "guest";
   if (input.role === "provider") return "daycare";
   if (input.role === "admin") return "admin";

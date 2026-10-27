@@ -4,23 +4,36 @@ import { getSql } from "@/lib/db";
 import { shapeProfileListing, uniqueLanguages, type ProfileListingCard } from "@/lib/profile-desk";
 import type { WrittenReview } from "@/lib/host-desk";
 
+export type ProfileChild = {
+  id: string;
+  name: string;
+  birthdate: string;
+};
+
 export type ProfileDesk = {
   ok: boolean;
   childCount: number | null;
+  children: ProfileChild[];
   languages: string[];
   listings: ProfileListingCard[];
   reviews: WrittenReview[];
 };
 
-const EMPTY: ProfileDesk = { ok: false, childCount: null, languages: [], listings: [], reviews: [] };
+const EMPTY: ProfileDesk = { ok: false, childCount: null, children: [], languages: [], listings: [], reviews: [] };
 
 export const loadProfileDesk = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }): Promise<ProfileDesk> => {
     try {
       const sql = await getSql();
-      const [childRows, languageRows, listingRows, reviewRows] = await Promise.all([
+      const [childRows, childList, languageRows, listingRows, reviewRows] = await Promise.all([
         sql<{ n: number }>`select count(*)::int as n from children where user_id = ${context.userId}`.catch(() => []),
+        sql<{ id: string; name: string; birthdate: string | null }>`
+          select id, name, birthdate from children
+          where user_id = ${context.userId}
+          order by created_at asc
+          limit 4
+        `.catch(() => []),
         sql<{ home_language: string | null }>`
           select home_language from children
           where user_id = ${context.userId} and coalesce(home_language, '') <> ''
@@ -108,9 +121,18 @@ export const loadProfileDesk = createServerFn({ method: "GET" })
         createdAt: String(row.created_at || ""),
         centreName: row.centre_name,
       }));
+      const children: ProfileChild[] = childList
+        .filter((row) => row.id && row.name)
+        .slice(0, 4)
+        .map((row) => ({
+          id: row.id,
+          name: row.name,
+          birthdate: row.birthdate || "",
+        }));
       return {
         ok: true,
         childCount,
+        children,
         languages: uniqueLanguages(languageRows.map((row) => row.home_language)),
         listings,
         reviews,

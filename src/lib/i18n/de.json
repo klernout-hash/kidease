@@ -3213,5 +3213,16 @@
   "connectPayouts": "Auszahlungen",
   "connectNotSetUp": "Auszahlungen sind auf dieser Seite noch nicht eingerichtet.",
   "connectEmbedded": "Füge hier die Auszahlungsdaten deiner Kita hinzu. Du bleibst auf KidEase.",
-  "payBillNow": "Jetzt zahlen"
+  "payBillNow": "Jetzt zahlen",
+  "profileAddChild": "+ Kind hinzufügen",
+  "profileChildrenLead": "Öffne ein Profil, um es zu ändern. Du kannst bis zu 4 Kinder hinzufügen.",
+  "profileChildrenEmpty": "In diesem Profil sind noch keine Kinder.",
+  "profileChildOpen": "Profil von {name} öffnen",
+  "statementsTitle": "Abrechnungen",
+  "statementsLead": "Gebühren, Anpassungen und Auszahlung jedes Monats.",
+  "statementsViewAll": "Abrechnungen ansehen",
+  "statementsEmptyTitle": "Noch keine Abrechnungen",
+  "statementsEmptyBody": "Eine Abrechnung erscheint hier, wenn eine Familie eine Rechnung bezahlt.",
+  "statementsOpen": "Öffnen",
+  "statementsMissingTitle": "Diese Abrechnung ist nicht da"
 }

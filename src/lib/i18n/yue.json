@@ -3213,5 +3213,16 @@
   "connectPayouts": "收款",
   "connectNotSetUp": "呢個網站未開收款。",
   "connectEmbedded": "喺呢度加中心嘅收款資料。你會留喺 KidEase。",
-  "payBillNow": "而家付"
+  "payBillNow": "而家付",
+  "profileAddChild": "+ 加小朋友",
+  "profileChildrenLead": "打開資料就可以改。最多可以加 4 個小朋友。",
+  "profileChildrenEmpty": "呢個資料暫時未有小朋友。",
+  "profileChildOpen": "打開{name}嘅資料",
+  "statementsTitle": "月結單",
+  "statementsLead": "每個月嘅費用、調整同付款。",
+  "statementsViewAll": "睇月結單",
+  "statementsEmptyTitle": "暫時未有月結單",
+  "statementsEmptyBody": "家庭付咗費之後，月結單會顯示喺呢度。",
+  "statementsOpen": "打開",
+  "statementsMissingTitle": "搵唔到呢份月結單"
 }

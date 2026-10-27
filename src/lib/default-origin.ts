@@ -1,5 +1,5 @@
 import { CANADA_CAMERA, isInCanada } from "./canada-origin.ts";
-import { CITIES, PROVINCES, haversineKm, type LatLng } from "./geo.ts";
+import { CITIES, PROVINCES, WINNIPEG, haversineKm, type LatLng } from "./geo.ts";
 
 /**
  * Default Explore / search center.
@@ -72,6 +72,17 @@ const TORONTO_EDGE_COLOS = new Set(["YYZ", "YTZ", "YTO"]);
 
 export function productHomeOrigin(): ResolvedOrigin {
   return { ...PRODUCT_HOME, source: "default" };
+}
+
+/**
+ * Plain `/search` when GPS, a saved city, and a trusted Canadian IP are all missing.
+ * The neutral Canada camera stays for places bias. The directory itself opens on Winnipeg.
+ */
+export function searchOriginOrWinnipeg(origin: ResolvedOrigin): ResolvedOrigin {
+  if (origin.source === "default" || isNeutralCanadaOrigin(origin)) {
+    return { lat: WINNIPEG.lat, lng: WINNIPEG.lng, label: WINNIPEG.label, source: "default" };
+  }
+  return origin;
 }
 
 export function isCoarseFix(fix: Pick<DeviceFix, "accuracyM"> | null | undefined) {

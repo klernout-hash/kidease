@@ -129,11 +129,12 @@ test("guest view is kyle-only and sits beside the admin desk switch", () => {
   assert.match(src("src/lib/server/role-route.ts"), /guestViewApplies/);
 });
 
-test("search does not write a Winnipeg query when location is unknown", () => {
+test("plain search uses the parent's area, then Winnipeg", () => {
   const search = src("src/routes/search.tsx");
   assert.match(search, /needsPlace/);
-  assert.match(search, /originSource === "default"/);
+  assert.match(search, /searchOriginOrWinnipeg/);
   assert.doesNotMatch(search, /q=Winnipeg/);
+  assert.match(src("src/lib/search-origin.ts"), /searchOriginOrWinnipeg/);
   assert.match(src("src/lib/copy.ts"), /canadaSearchTitle/);
   assert.match(src("src/lib/copy.ts"), /Daycares across Canada/);
 });
