@@ -41,6 +41,23 @@ test("webhook helper no-ops cleanly without env", async () => {
   assert.equal(fetches, 0);
 });
 
+test("store reviewer emails are not posted to GoHighLevel", async () => {
+  const env = { GHL_WEBHOOK_PARENT_ONBOARD_URL: "https://example.com/parent" };
+  let fetches = 0;
+  const result = await postGhlSignupIntake({
+    trigger: "parent_signup",
+    email: "reviewer.parent@kidease.ca",
+    name: "Alex Morgan",
+    env,
+    fetchImpl: async () => {
+      fetches += 1;
+      return new Response("ok", { status: 200 });
+    },
+  });
+  assert.deepEqual(result, { ok: true, skipped: true, reason: "reviewer-account" });
+  assert.equal(fetches, 0);
+});
+
 test("FEATURE_GHL_INTAKE=0 disables POSTs even when URLs are set", async () => {
   const env = {
     FEATURE_GHL_INTAKE: "0",
