@@ -487,6 +487,17 @@ export function bucketTotal(bucket: MonthBucket | undefined, showUpcoming: boole
   return showUpcoming ? combined(bucket.paidCents, bucket.upcomingCents) : bucket.paidCents;
 }
 
+export function statementLines(bill: EarnBill, cad: (cents: number) => string, title: string): string[] {
+  const lines = [title];
+  if (bill.number) lines.push(bill.number);
+  if (bill.centreName) lines.push(bill.centreName);
+  if (bill.parentName) lines.push(bill.parentName);
+  for (const line of bill.lines) lines.push(`${line.label || line.kind} ${cad(line.cents)}`);
+  const total = bill.grossCents ?? bill.netCents;
+  if (total != null) lines.push(cad(total));
+  return lines;
+}
+
 export function formatEarnDate(iso: string | null | undefined, french: boolean): string | null {
   if (!iso) return null;
   const raw = iso.length <= 10 ? `${iso.slice(0, 10)}T12:00:00` : iso;

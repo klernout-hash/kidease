@@ -124,6 +124,9 @@ test("earnings screens do not link to plans", () => {
     "src/components/host-earnings-screen.tsx",
     "src/components/earnings-payouts.tsx",
     "src/components/earnings-bars.tsx",
+    "src/components/earnings-details.tsx",
+    "src/components/earnings-list.tsx",
+    "src/components/earnings-bill-sheet.tsx",
     "src/lib/server/earnings-desk.ts",
   ];
   for (const file of files) {
@@ -136,4 +139,7 @@ test("earnings screens do not link to plans", () => {
   assert.match(hub, /KidBlocks/);
   assert.match(hub, /CountUp/);
   assert.match(read("src/routes/menu.tsx"), /loadEarningsDesk/);
+  assert.match(read("src/components/earnings-details.tsx"), /data-ke="earnings-details"/);
+  assert.match(read("src/components/earnings-list.tsx"), /data-ke="earnings-export"/);
+  assert.match(read("src/components/earnings-bill-sheet.tsx"), /data-ke="earnings-lines"/);
 });

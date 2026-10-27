@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 import { ShellLite } from "@/components/shell-lite";
 import { AppMenuScreen } from "@/components/app-menu-screen";
+import { EarningsDetailsScreen } from "@/components/earnings-details";
+import { EarningsListScreen } from "@/components/earnings-list";
 import { EarningsPayoutsScreen } from "@/components/earnings-payouts";
 import { HostEarningsScreen } from "@/components/host-earnings-screen";
 import { HostInsightsScreen } from "@/components/host-insights-screen";
@@ -89,13 +91,27 @@ export const Route = createFileRoute("/menu")({
 });
 
 function MenuPage() {
-  const { section, screen, view } = Route.useSearch();
+  const { section, screen, view, bill, period } = Route.useSearch();
   const { earnings, insights, desk } = Route.useLoaderData();
   const { user } = useCurrentUserState();
   if (screen === "earnings" && view === "payouts") {
     return (
       <ShellLite appTabs>
         <EarningsPayoutsScreen desk={desk} />
+      </ShellLite>
+    );
+  }
+  if (screen === "earnings" && view === "details") {
+    return (
+      <ShellLite appTabs>
+        <EarningsDetailsScreen desk={desk} />
+      </ShellLite>
+    );
+  }
+  if (screen === "earnings" && (view === "upcoming" || view === "paid")) {
+    return (
+      <ShellLite appTabs>
+        <EarningsListScreen desk={desk} kind={view} billId={bill} period={period} />
       </ShellLite>
     );
   }
