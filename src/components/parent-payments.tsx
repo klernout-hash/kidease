@@ -1,9 +1,11 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { EarningsBillSheet } from "@/components/earnings-bill-sheet";
 import { EmptyState } from "@/components/empty-state";
 import { KidNotebook } from "@/components/kid-art";
+import { Button } from "@/components/ui/button";
 import {
   filterBills,
   formatEarnDate,
@@ -15,6 +17,9 @@ import {
 import { formatPlanCad } from "@/lib/upgrade-plans";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
+import type { PayMode } from "@/lib/connect-payments";
+import { listParentPayChoices, listWalletMethods, setParentPayMode, startManualPay } from "@/lib/server/connect-payments";
+import { loadStripeClient } from "@/lib/stripe-browser";
 
 type Payments = { ok: true; bills: EarnBill[]; maskedEmail: string | null } | { ok: false };
 
@@ -43,6 +48,7 @@ export function ParentPaymentsScreen({ data, billId }: { data: Payments | null; 
         </Link>
         <h1 className="font-display text-2xl">{t("earningsPayments")}</h1>
       </div>
+      <ParentPayChoices />
       {data && !data.ok ? (
         <div className="mt-6">
           <EmptyState title={t("actionFailed")} action={t("back")} actionTo="/menu" />
@@ -149,4 +155,164 @@ function nextListing(current: string | null, listings: Array<{ id: string; name:
   if (!current) return listings[0]?.id ?? null;
   const index = listings.findIndex((item) => item.id === current);
   return index < 0 || index === listings.length - 1 ? null : (listings[index + 1]?.id ?? null);
+}
+
+function ParentPayChoices() {
+  const { t, locale } = useCopy();
+  const french = locale === "fr";
+  const [enabled, setEnabled] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [publishableKey, setPublishableKey] = useState<string | null>(null);
+  const [modes, setModes] = useState<{ daycareId: string; daycareName: string; mode: PayMode }[]>([]);
+  const [openBills, setOpenBills] = useState<
+    { id: string; daycareId: string; daycareName: string; amountCents: number; number: string }[]
+  >([]);
+  const [methods, setMethods] = useState<{ id: string; label: string }[]>([]);
+  const [methodId, setMethodId] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let cancel = false;
+    void listParentPayChoices()
+      .then((res) => {
+        if (cancel || !res.enabled) return;
+        setEnabled(true);
+        setReady(res.ready);
+        setPublishableKey(res.publishableKey);
+        setModes(res.modes);
+        setOpenBills(res.open);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancel = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    void listWalletMethods()
+      .then((res) => {
+        if (!res.ok) return;
+        setMethods(res.methods.map((method) => ({ id: method.id, label: `${method.brand} ···· ${method.last4}` })));
+        const preferred = res.methods.find((method) => method.isDefault) || res.methods[0];
+        if (preferred) setMethodId(preferred.id);
+      })
+      .catch(() => undefined);
+  }, [ready]);
+
+  if (!enabled || (modes.length === 0 && openBills.length === 0)) return null;
+  const cad = (cents: number) => formatPlanCad(cents / 100, french ? "fr" : "en");
+  return (
+    <section className="mt-6 space-y-4" data-ke="parent-pay-choices">
+      {!ready ? <p className="text-sm text-muted">{t("walletNotSetUp")}</p> : null}
+      {modes.map((row) => (
+        <form
+          key={row.daycareId}
+          className="rounded-[1.25rem] bg-surface p-4 ring-1 ring-border"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const mode = new FormData(event.currentTarget).get("mode") === "automatic" ? "automatic" : "manual";
+            setBusy(true);
+            void setParentPayMode({ data: { daycareId: row.daycareId, mode } })
+              .then((res) => {
+                if (!res.ok) {
+                  toast.error(t("actionFailed"));
+                  return;
+                }
+                setModes((current) => current.map((item) => (item.daycareId === row.daycareId ? { ...item, mode } : item)));
+                toast.success(t("payModeSaved"));
+              })
+              .catch(() => toast.error(t("actionFailed")))
+              .finally(() => setBusy(false));
+          }}
+        >
+          <h2 className="text-base font-semibold">{t("payChoose").replace("{centre}", row.daycareName)}</h2>
+          <label className="mt-3 flex min-h-11 items-start gap-3 text-sm">
+            <input type="radio" name="mode" value="automatic" defaultChecked={row.mode === "automatic"} className="mt-1 size-4" />
+            <span>
+              <span className="block font-medium">{t("payAutomatic")}</span>
+              <span className="text-muted">{t("payAutomaticBody")}</span>
+            </span>
+          </label>
+          <label className="mt-2 flex min-h-11 items-start gap-3 text-sm">
+            <input type="radio" name="mode" value="manual" defaultChecked={row.mode !== "automatic"} className="mt-1 size-4" />
+            <span>
+              <span className="block font-medium">{t("payManual")}</span>
+              <span className="text-muted">{t("payManualBody")}</span>
+            </span>
+          </label>
+          <Button type="submit" className="mt-4 w-full" disabled={busy}>
+            {t("walletSave")}
+          </Button>
+        </form>
+      ))}
+      {openBills.map((bill) => {
+        const mode = modes.find((row) => row.daycareId === bill.daycareId)?.mode || "manual";
+        if (mode !== "manual" || !ready) return null;
+        return (
+          <div key={bill.id} className="rounded-[1.25rem] bg-surface p-4 ring-1 ring-border" data-ke="pay-now">
+            <p className="font-medium">{bill.daycareName}</p>
+            <p className="text-sm text-muted">{bill.number}</p>
+            <p className="mt-1 tabular-nums">{cad(bill.amountCents)}</p>
+            {methods.length > 0 ? (
+              <label className="mt-3 block text-sm font-medium">
+                {t("walletTitle")}
+                <select
+                  className="ke-input mt-1 min-h-11 w-full"
+                  value={methodId}
+                  onChange={(event) => setMethodId(event.target.value)}
+                >
+                  {methods.map((method) => (
+                    <option key={method.id} value={method.id}>
+                      {method.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <p className="mt-3 text-sm text-muted">{t("walletEmpty")}</p>
+            )}
+            <Button
+              type="button"
+              className="mt-4 w-full"
+              disabled={busy || !methodId || !publishableKey}
+              onClick={() => {
+                if (!publishableKey || !methodId) return;
+                setBusy(true);
+                void startManualPay({ data: { billId: bill.id, paymentMethodId: methodId } })
+                  .then(async (res) => {
+                    if (!res.ok || !res.clientSecret) {
+                      toast.error(t("actionFailed"));
+                      return;
+                    }
+                    const stripe = await loadStripeClient(publishableKey);
+                    if (!stripe) {
+                      toast.error(t("walletNotSetUp"));
+                      return;
+                    }
+                    const paid = await stripe.confirmPayment({
+                      clientSecret: res.clientSecret,
+                      redirect: "if_required",
+                      confirmParams: {
+                        return_url: `${window.location.origin}/menu?screen=payments`,
+                        payment_method: methodId,
+                      },
+                    });
+                    if (paid.error) {
+                      toast.error(paid.error.message || t("actionFailed"));
+                      return;
+                    }
+                    toast.success(t("payModeSaved"));
+                  })
+                  .catch(() => toast.error(t("actionFailed")))
+                  .finally(() => setBusy(false));
+              }}
+            >
+              {t("payBillNow")}
+            </Button>
+          </div>
+        );
+      })}
+    </section>
+  );
 }

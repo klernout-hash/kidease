@@ -2,7 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { constructStripeEvent, StripeSignatureError } from "@/lib/server/stripe-signature";
 import { logSecurityEvent, requestIp } from "@/lib/server/security-events";
 import { applyStripeBillEvent } from "@/lib/server/billing";
+import { applyConnectSideEffect, queueMonthlyFeeTax } from "@/lib/server/connect-payments";
 import { applyStripeDisputeEvent, applyStripeSubscriptionEvent } from "@/lib/server/stripe-lifecycle";
+import { webhookSecrets } from "@/lib/connect-payments";
 
 const BILL_TYPES = new Set([
   "payment_intent.succeeded",
@@ -27,20 +29,28 @@ const SUB_TYPES = new Set([
  */
 async function run(request: Request) {
   const raw = await request.text();
-  const secret = (process.env.STRIPE_WEBHOOK_SECRET || "").trim();
+  const secrets = webhookSecrets();
   const sig = request.headers.get("stripe-signature") || "";
   const ip = requestIp(request);
 
-  if (!secret) {
+  if (!secrets.length) {
     await logSecurityEvent({ kind: "webhook_reject", detail: "stripe secret missing", ip });
     return new Response("Unauthorized", { status: 401 });
   }
 
   let event;
-  try {
-    event = constructStripeEvent(raw, sig, secret);
-  } catch (err) {
-    const reason = err instanceof StripeSignatureError ? err.message : "stripe verify failed";
+  let verifyError: unknown;
+  for (const secret of secrets) {
+    try {
+      event = constructStripeEvent(raw, sig, secret);
+      verifyError = undefined;
+      break;
+    } catch (err) {
+      verifyError = err;
+    }
+  }
+  if (!event) {
+    const reason = verifyError instanceof StripeSignatureError ? verifyError.message : "stripe verify failed";
     await logSecurityEvent({ kind: "webhook_reject", detail: reason, ip });
     return new Response("Unauthorized", { status: 401 });
   }
@@ -56,14 +66,44 @@ async function run(request: Request) {
   let bill: { billId: string | null; status?: string } | undefined;
   let userId: string | null = null;
 
-  if (BILL_TYPES.has(type)) {
-    if (type === "payment_intent.succeeded" || type === "checkout.session.completed" || type === "charge.refunded") {
+  const meta = object?.metadata || {};
+  const centreBill = meta.kidease === "bill" || Boolean(meta.bill_id);
+
+  if (BILL_TYPES.has(type) || (type === "invoice.paid" && centreBill)) {
+    if (
+      type === "payment_intent.succeeded" ||
+      type === "checkout.session.completed" ||
+      type === "charge.refunded" ||
+      (type === "invoice.paid" && centreBill)
+    ) {
       try {
         bill = await applyStripeBillEvent({ type, object });
       } catch (err) {
         console.error("[kidease-bill] webhook apply failed", err);
         return Response.json({ ok: false, error: "bill apply failed" }, { status: 500 });
       }
+      if (bill?.status === "paid" && bill.billId) {
+        try {
+          await queueMonthlyFeeTax(bill.billId);
+        } catch (err) {
+          console.error("[kidease-connect] fee tax draft skipped", err);
+        }
+      }
+    }
+    if (type === "account.updated" || type === "payout.paid") {
+      try {
+        await applyConnectSideEffect(type, object as Record<string, unknown>);
+      } catch (err) {
+        console.error("[kidease-connect] webhook side effect skipped", err);
+      }
+    }
+  }
+
+  if (type === "invoice.paid" && meta.kidease === "fee_tax") {
+    try {
+      await applyConnectSideEffect(type, object as Record<string, unknown>);
+    } catch (err) {
+      console.error("[kidease-connect] fee tax status skipped", err);
     }
   }
 

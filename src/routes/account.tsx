@@ -45,9 +45,12 @@ import { loadMenuProviderCards } from "@/lib/server/menu-summary";
 import { listingHours, sharedNumber, sharedText } from "@/lib/profile-desk";
 import { loadProfileDesk } from "@/lib/server/profile-desk";
 import type { ProfileDesk } from "@/lib/server/profile-desk";
+import { ParentWallet } from "@/components/parent-wallet";
+import { connectPaymentsPublic } from "@/lib/server/connect-payments";
 
 export const Route = createFileRoute("/account")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
+  loader: () => connectPaymentsPublic(),
   head: ({ match }) => ({
     meta: [
       { title: match.search.desk === "admin" ? "Admin account · KidEase" : "Account · KidEase" },
@@ -58,7 +61,7 @@ export const Route = createFileRoute("/account")({
     const out: {
       tab?: "saved" | "enrolled" | "profile" | "payments";
       desk?: "parent" | "director" | "admin" | "support";
-      section?: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents" | "refer";
+      section?: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents" | "refer" | "wallet";
       edit?: "1";
       field?: "name" | "phone" | "email" | "work" | "about";
     } = {};
@@ -74,7 +77,8 @@ export const Route = createFileRoute("/account")({
       section === "security" ||
       section === "email-sms" ||
       section === "documents" ||
-      section === "refer"
+      section === "refer" ||
+      section === "wallet"
     ) {
       out.section = section;
     }
@@ -455,15 +459,18 @@ function ProfilePane() {
             ? t("accountBackParent")
             : null;
 
+  const connect = Route.useLoaderData();
   const hideUpgrade = desk === "admin" || chrome.subscriptionsEnabled !== true;
   const section =
-    nativeShell && search.section === "subscription"
+    search.section === "wallet" && !connect.enabled
       ? "profile"
-      : hideUpgrade && search.section === "subscription"
+      : nativeShell && search.section === "subscription"
         ? "profile"
-        : (search.section ?? "profile");
+        : hideUpgrade && search.section === "subscription"
+          ? "profile"
+          : (search.section ?? "profile");
   const sectionSearch = (
-    next: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents" | "refer",
+    next: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents" | "refer" | "wallet",
   ) => ({
     tab: "profile" as const,
     ...(search.desk ? { desk: search.desk } : {}),
@@ -473,6 +480,7 @@ function ProfilePane() {
     { id: "profile" as const, label: t("profile") },
     { id: "alerts" as const, label: t("accountAlerts") },
     { id: "security" as const, label: t("loginSecurity") },
+    { id: "wallet" as const, label: t("walletTitle") },
     { id: "email-sms" as const, label: t("emailAndSms") },
     { id: "documents" as const, label: t("familyDocs") },
     { id: "appearance" as const, label: t("appearance") },
@@ -480,6 +488,7 @@ function ProfilePane() {
     { id: "subscription" as const, label: t("navUpgrade") },
     { id: "delete" as const, label: t("deleteAccount") },
   ].filter((item) => {
+    if (item.id === "wallet" && (!connect.enabled || !user)) return false;
     if (nativeShell && item.id === "subscription") return false;
     if (item.id === "subscription" && hideUpgrade) return false;
     return true;
@@ -774,6 +783,7 @@ function ProfilePane() {
             <SignedInDevices />
           </div>
         ) : null}
+        {section === "wallet" && user && connect.enabled ? <ParentWallet state={connect} /> : null}
         {section === "email-sms" && user ? (
           <form onSubmit={onSave} className="mt-8 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="account-email-sms">
             <h2 className="font-display text-lg tracking-[-0.02em]">{t("emailAndSms")}</h2>

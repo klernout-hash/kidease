@@ -6,6 +6,7 @@
  * paths are not the SPA HTML shell (live probes were 404 / catch-all).
  * Auto-registered because vite.config.ts sets `serverDir: "./server"`.
  */
+import { applePayWellKnownResult } from "../../scripts/well-known-app-links.mjs";
 import {
   wellKnownAppLinksHeaders,
   wellKnownStaticPayload,
@@ -22,6 +23,14 @@ export default async function wellKnownAppLinksMiddleware(
 ): Promise<unknown> {
   const method = (event.req.method ?? "GET").toUpperCase();
   if (method !== "GET" && method !== "HEAD") return next();
+
+  const apple = applePayWellKnownResult(event.url.pathname);
+  if (apple) {
+    return new Response(method === "HEAD" ? null : apple.body, {
+      status: apple.status,
+      headers: wellKnownAppLinksHeaders(apple.contentType),
+    });
+  }
 
   const payload = wellKnownStaticPayload(event.url.pathname);
   if (!payload) return next();

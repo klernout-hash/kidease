@@ -15,6 +15,8 @@ import type { EarnBill, EarningsResult } from "@/lib/earnings-desk";
 import type { HostEarnings, HostInsights } from "@/lib/host-desk";
 import { loadEarningsDesk, loadParentPayments } from "@/lib/server/earnings-desk";
 import { loadHostEarnings, loadHostInsights } from "@/lib/server/host-desk";
+import { connectPaymentsPublic, listCentreIdsForPayouts } from "@/lib/server/connect-payments";
+import type { ConnectPublicState } from "@/lib/connect-payments";
 
 const MenuDeskTools = lazy(() =>
   import("@/components/menu-desk-tools").then((m) => ({ default: m.MenuDeskTools })),
@@ -34,6 +36,8 @@ type MenuLoader = {
   insights: HostInsights | null;
   desk: EarningsResult | null;
   payments: PaymentsResult | null;
+  connect: ConnectPublicState | null;
+  centres: { id: string; name: string }[];
 };
 
 export const Route = createFileRoute("/menu")({
@@ -51,21 +55,30 @@ export const Route = createFileRoute("/menu")({
   loader: async ({ deps, context }): Promise<MenuLoader> => {
     if (deps.screen === "earnings") {
       try {
-        return { earnings: null, insights: null, desk: await loadEarningsDesk(), payments: null };
+        const connect = await connectPaymentsPublic();
+        const centres = connect.ready ? await listCentreIdsForPayouts().catch(() => null) : null;
+        return {
+          earnings: null,
+          insights: null,
+          desk: await loadEarningsDesk(),
+          payments: null,
+          connect,
+          centres: centres && centres.enabled ? centres.centres : [],
+        };
       } catch {
-        return { earnings: null, insights: null, desk: { ok: false }, payments: null };
+        return { earnings: null, insights: null, desk: { ok: false }, payments: null, connect: null, centres: [] };
       }
     }
     if (deps.screen === "payments") {
       try {
-        return { earnings: null, insights: null, desk: null, payments: await loadParentPayments() };
+        return { earnings: null, insights: null, desk: null, payments: await loadParentPayments(), connect: null, centres: [] };
       } catch {
-        return { earnings: null, insights: null, desk: null, payments: { ok: false } };
+        return { earnings: null, insights: null, desk: null, payments: { ok: false }, connect: null, centres: [] };
       }
     }
     if (deps.screen === "insights") {
       try {
-        return { earnings: null, insights: await loadHostInsights(), desk: null, payments: null };
+        return { earnings: null, insights: await loadHostInsights(), desk: null, payments: null, connect: null, centres: [] };
       } catch {
         return {
           earnings: null,
@@ -82,17 +95,18 @@ export const Route = createFileRoute("/menu")({
           },
           desk: null,
           payments: null,
+          connect: null, centres: [],
         };
       }
     }
     const chrome = (context as { roleChrome?: { role?: string | null; ownedSlugs?: string[] } }).roleChrome;
     const host = chrome?.role === "provider" || (chrome?.ownedSlugs?.length ?? 0) > 0;
-    if (!host) return { earnings: null, insights: null, desk: null, payments: null };
+    if (!host) return { earnings: null, insights: null, desk: null, payments: null, connect: null, centres: [] };
     const [earnings, insights] = await Promise.all([
       loadHostEarnings().catch(() => null),
       loadHostInsights().catch(() => null),
     ]);
-    return { earnings, insights, desk: null, payments: null };
+    return { earnings, insights, desk: null, payments: null, connect: null, centres: [] };
   },
   head: () => ({
     meta: [
@@ -105,12 +119,12 @@ export const Route = createFileRoute("/menu")({
 
 function MenuPage() {
   const { section, screen, view, bill, period } = Route.useSearch();
-  const { earnings, insights, desk, payments } = Route.useLoaderData();
+  const { earnings, insights, desk, payments, connect, centres } = Route.useLoaderData();
   const { user } = useCurrentUserState();
   if (screen === "earnings" && view === "payouts") {
     return (
       <ShellLite appTabs>
-        <EarningsPayoutsScreen desk={desk} />
+        <EarningsPayoutsScreen desk={desk} connect={connect} centres={centres} />
       </ShellLite>
     );
   }
