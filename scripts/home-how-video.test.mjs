@@ -57,6 +57,7 @@ test("home explainer is desktop website only, lazy, and below featured centres",
   assert.match(video, /controls=\{false\}/);
   assert.doesNotMatch(video, /controls=\{true\}/);
   assert.match(video, /srcOn \? \(/);
+  assert.match(src("scripts/desktop-visual.mjs"), /data-ke=.home-how-video/);
   assert.match(video, /video\.pause\(\)/);
   assert.match(video, /video\.muted = !wantSound/);
   assert.match(video, /setSoundBlocked\(true\)/);

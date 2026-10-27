@@ -66,6 +66,41 @@ async function openRoute(page, base, path) {
       }, { timeout: 8000 })
       .catch(() => {});
   }
+  // The French home at 1920 shows the explainer. It swaps the poster image for a
+  // video as soon as the block is near, and the poster frame is blank for a moment.
+  if (path === "/" || path === "/fr") {
+    await page
+      .waitForFunction(() => {
+        if (document.querySelector(".ke-home [aria-busy='true']")) return false;
+        const root = document.querySelector("[data-ke='home-how-video']");
+        if (!root) return true;
+        const box = root.getBoundingClientRect();
+        if (box.width < 40 || box.bottom <= 0 || box.top >= window.innerHeight) return true;
+        const video = root.querySelector("video");
+        if (!video) return false;
+        if (video.readyState >= 1 && video.videoWidth > 0) return true;
+        const canvas = document.createElement("canvas");
+        canvas.width = 16;
+        canvas.height = 9;
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        if (!ctx) return false;
+        try {
+          ctx.drawImage(video, 0, 0, 16, 9);
+        } catch {
+          return false;
+        }
+        const data = ctx.getImageData(0, 0, 16, 9).data;
+        let min = 765;
+        let max = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          const lum = data[i] + data[i + 1] + data[i + 2];
+          if (lum < min) min = lum;
+          if (lum > max) max = lum;
+        }
+        return max - min > 48;
+      }, { timeout: 8000 })
+      .catch(() => {});
+  }
   await page.waitForTimeout(250);
   return res?.status() ?? 0;
 }
