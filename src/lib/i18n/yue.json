@@ -3110,5 +3110,15 @@
   "insightsRecent": "最近嘅評價",
   "insightsViews": "瀏覽",
   "insightsRequests": "申請",
-  "insightsTours": "參觀"
+  "insightsTours": "參觀",
+  "profileChildren": "小朋友",
+  "profileVerifiedStat": "已核實",
+  "profileVerifiedYes": "係",
+  "profileLicensed": "有牌",
+  "profileLanguages": "語言",
+  "profileArea": "地區",
+  "profileShowAll": "顯示全部",
+  "profileShowLess": "收起",
+  "profileShowMoreReviews": "睇多啲評價",
+  "profileListings": "園所"
 }

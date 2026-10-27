@@ -3110,5 +3110,15 @@
   "insightsRecent": "Reseñas recientes",
   "insightsViews": "Visitas a la ficha",
   "insightsRequests": "Solicitudes",
-  "insightsTours": "Visitas"
+  "insightsTours": "Visitas",
+  "profileChildren": "Niños",
+  "profileVerifiedStat": "Verificado",
+  "profileVerifiedYes": "Sí",
+  "profileLicensed": "Con licencia",
+  "profileLanguages": "Idiomas",
+  "profileArea": "Zona",
+  "profileShowAll": "Ver todo",
+  "profileShowLess": "Ver menos",
+  "profileShowMoreReviews": "Ver más reseñas",
+  "profileListings": "Fichas"
 }

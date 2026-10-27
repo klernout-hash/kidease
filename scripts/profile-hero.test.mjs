@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { earlierJoinedAt, firstIncompleteField, profileRoleId, showProfileStats, yearsOnKidEase } from "../src/lib/profile-hero.ts";
+import { confirmedAges, confirmedSpots, listingFeatureKeys, shapeProfileListing, sharedText } from "../src/lib/profile-desk.ts";
 
 const root = new URL("../", import.meta.url);
 const now = new Date(2026, 9, 27, 12);
@@ -64,4 +65,38 @@ test("a profile opens read-only and save checks the first empty required field",
   }
   assert.match(desk, /data-ke="child-profile-edit"/);
   assert.match(child, /data-ke="child-saved"/);
+});
+
+test("profile facts stay hidden until the centre confirmed them", () => {
+  assert.equal(confirmedAges({ ageMinMonths: 6, ageMaxMonths: 36, agesConfirmed: false }), null);
+  assert.equal(confirmedAges({ ageMinMonths: 6, ageMaxMonths: 36, agesConfirmed: true }), "6–36");
+  assert.equal(confirmedSpots({ spotsInfant: 1, spotsToddler: 0, spotsPreschool: 2, vacancyUpdatedAt: null }), null);
+  assert.equal(confirmedSpots({ spotsInfant: 1, spotsToddler: 0, spotsPreschool: 2, vacancyUpdatedAt: "2026-10-01" }), 3);
+  assert.deepEqual(listingFeatureKeys("yard, meals, invented, yard"), ["yard", "meals"]);
+  assert.equal(sharedText(["9–5", "8–4"]), null);
+  const card = shapeProfileListing({
+    id: "1",
+    slug: "north-elm",
+    name: "North Elm",
+    city: "Winnipeg",
+    hours: "7–18",
+    hoursFr: null,
+    ageMinMonths: 0,
+    ageMaxMonths: 0,
+    agesConfirmed: false,
+    languages: "",
+    amenities: "meals",
+    photos: "",
+    licenseNumber: "QA-1",
+    licenseStatus: null,
+    spotsInfant: 0,
+    spotsToddler: 0,
+    spotsPreschool: 0,
+    vacancyUpdatedAt: null,
+  });
+  assert.equal(card.licensed, true);
+  assert.equal(card.ages, null);
+  assert.equal(card.spots, null);
+  assert.equal(card.photo, null);
+  assert.deepEqual(card.features, ["meals"]);
 });

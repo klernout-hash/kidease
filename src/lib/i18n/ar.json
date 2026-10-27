@@ -3110,5 +3110,15 @@
   "insightsRecent": "التقييمات الأخيرة",
   "insightsViews": "المشاهدات",
   "insightsRequests": "الطلبات",
-  "insightsTours": "الزيارات"
+  "insightsTours": "الزيارات",
+  "profileChildren": "الأطفال",
+  "profileVerifiedStat": "موثّق",
+  "profileVerifiedYes": "نعم",
+  "profileLicensed": "مرخّص",
+  "profileLanguages": "اللغات",
+  "profileArea": "المنطقة",
+  "profileShowAll": "عرض الكل",
+  "profileShowLess": "عرض أقل",
+  "profileShowMoreReviews": "المزيد من التقييمات",
+  "profileListings": "الصفحات"
 }

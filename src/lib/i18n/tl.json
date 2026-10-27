@@ -3110,5 +3110,15 @@
   "insightsRecent": "Mga kamakailang review",
   "insightsViews": "Mga view",
   "insightsRequests": "Mga kahilingan",
-  "insightsTours": "Mga tour"
+  "insightsTours": "Mga tour",
+  "profileChildren": "Mga anak",
+  "profileVerifiedStat": "Napatunayan",
+  "profileVerifiedYes": "Oo",
+  "profileLicensed": "May lisensya",
+  "profileLanguages": "Mga wika",
+  "profileArea": "Lugar",
+  "profileShowAll": "Ipakita lahat",
+  "profileShowLess": "Ipakita nang mas kaunti",
+  "profileShowMoreReviews": "Higit pang review",
+  "profileListings": "Mga listing"
 }

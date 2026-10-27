@@ -38,9 +38,13 @@ import { AlertPushSettings } from "@/components/alert-push-settings";
 import { ReferFriendPanel } from "@/components/refer-friend-panel";
 import { fieldErrorClass, RequiredMark } from "@/components/required-field";
 import { focusFirstInvalid } from "@/lib/profile-form";
-import { ProfileFacts, ProfileHeroCard } from "@/components/profile-hero";
+import { ProfileFacts, ProfileHeroCard, type ProfileFact } from "@/components/profile-hero";
+import { ProfileDeskExtras } from "@/components/profile-public";
 import { profileRoleId, showProfileStats, yearsOnKidEase } from "@/lib/profile-hero";
 import { loadMenuProviderCards } from "@/lib/server/menu-summary";
+import { listingHours, sharedNumber, sharedText } from "@/lib/profile-desk";
+import { loadProfileDesk } from "@/lib/server/profile-desk";
+import type { ProfileDesk } from "@/lib/server/profile-desk";
 
 export const Route = createFileRoute("/account")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
@@ -213,6 +217,7 @@ function ProfilePane() {
   const [joinedAt, setJoinedAt] = useState<string | null>(null);
   const [reviewCount, setReviewCount] = useState<number | null>(null);
   const [ratingX10, setRatingX10] = useState<number | null>(null);
+  const [profileDesk, setProfileDesk] = useState<ProfileDesk | null>(null);
   const nameRef = useRef(user?.displayName ?? "");
   const phoneRef = useRef("");
   const bioRef = useRef("");
@@ -474,6 +479,28 @@ function ProfilePane() {
   });
   const router = useRouter();
   const editing = search.edit === "1" && section === "profile";
+  const french = locale === "fr";
+
+  function profileFactRows(): ProfileFact[] {
+    const rows: ProfileFact[] = [];
+    const listings = profileDesk?.ok ? profileDesk.listings : [];
+    if (daycareStats && listings.length) {
+      const ages = sharedText(listings.map((listing) => listing.ages));
+      const hours = sharedText(listings.map((listing) => listingHours(listing, french)));
+      const languages = sharedText(listings.map((listing) => listing.languages));
+      const spots = sharedNumber(listings.map((listing) => listing.spots));
+      if (ages) rows.push({ id: "ages", label: t("agesAccepted"), value: french ? `${ages} mois` : `${ages} months` });
+      if (hours) rows.push({ id: "hours", label: t("hours"), value: hours });
+      if (languages) rows.push({ id: "languages", label: t("profileLanguages"), value: languages });
+      if (spots != null) rows.push({ id: "spots", label: t("spotsAvailable"), value: String(spots) });
+    }
+    if (!daycareStats) {
+      if (workQuery.trim()) rows.push({ id: "area", label: t("profileArea"), value: workQuery.trim() });
+      const languages = profileDesk?.ok ? profileDesk.languages.join(", ") : "";
+      if (languages) rows.push({ id: "languages", label: t("profileLanguages"), value: languages });
+    }
+    return rows;
+  }
   const roleId = profileRoleId(chrome.role, highlightDesk("/account", sticky, desk));
   const daycareStats = showProfileStats(roleId);
   const homeSearch = {
@@ -507,6 +534,24 @@ function ProfilePane() {
       live = false;
     };
   }, [daycareStats, userId]);
+
+  useEffect(() => {
+    if (!userId) {
+      setProfileDesk(null);
+      return;
+    }
+    let live = true;
+    void loadProfileDesk()
+      .then((desk) => {
+        if (live) setProfileDesk(desk);
+      })
+      .catch(() => {
+        if (live) setProfileDesk(null);
+      });
+    return () => {
+      live = false;
+    };
+  }, [userId]);
 
   useEffect(() => {
     if (!gapTick) return;
@@ -612,11 +657,16 @@ function ProfilePane() {
               name={name || user.displayName || t("profile")}
               roleId={roleId}
               emailVerified={user.emailVerified === true}
+              licensed={daycareStats ? Boolean(profileDesk?.listings.some((listing) => listing.licensed)) : false}
               reviewCount={daycareStats ? reviewCount : null}
               ratingX10={daycareStats ? ratingX10 : null}
-              years={daycareStats ? yearsOnKidEase(joinedAt) : null}
+              years={yearsOnKidEase(joinedAt)}
+              childCount={daycareStats ? null : profileDesk?.ok ? profileDesk.childCount : null}
             />
-            <ProfileFacts email={email || user.primaryEmail || ""} phone={phone} work={workQuery} bio={bio} />
+            <ProfileFacts rows={profileFactRows()} bio={bio} />
+            {daycareStats && profileDesk?.ok ? (
+              <ProfileDeskExtras listings={profileDesk.listings} reviews={profileDesk.reviews} />
+            ) : null}
             <nav data-ke="account-sections" aria-label={t("menuAccountSettings")} className="mt-8 border-t border-border">
               <h2 className="px-1 pb-1 pt-4 text-sm font-semibold">{t("menuAccountSettings")}</h2>
               {sections

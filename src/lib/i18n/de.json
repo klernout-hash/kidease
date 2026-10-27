@@ -3110,5 +3110,15 @@
   "insightsRecent": "Neueste Bewertungen",
   "insightsViews": "Aufrufe",
   "insightsRequests": "Anfragen",
-  "insightsTours": "Besichtigungen"
+  "insightsTours": "Besichtigungen",
+  "profileChildren": "Kinder",
+  "profileVerifiedStat": "Bestätigt",
+  "profileVerifiedYes": "Ja",
+  "profileLicensed": "Lizenziert",
+  "profileLanguages": "Sprachen",
+  "profileArea": "Gegend",
+  "profileShowAll": "Alle anzeigen",
+  "profileShowLess": "Weniger anzeigen",
+  "profileShowMoreReviews": "Mehr Bewertungen",
+  "profileListings": "Einträge"
 }

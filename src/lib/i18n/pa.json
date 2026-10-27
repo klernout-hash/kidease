@@ -3110,5 +3110,15 @@
   "insightsRecent": "ਤਾਜ਼ਾ ਸਮੀਖਿਆਵਾਂ",
   "insightsViews": "ਵੇਖੇ",
   "insightsRequests": "ਬੇਨਤੀਆਂ",
-  "insightsTours": "ਦੌਰੇ"
+  "insightsTours": "ਦੌਰੇ",
+  "profileChildren": "ਬੱਚੇ",
+  "profileVerifiedStat": "ਪੁਸ਼ਟੀ",
+  "profileVerifiedYes": "ਹਾਂ",
+  "profileLicensed": "ਲਾਇਸੰਸ",
+  "profileLanguages": "ਭਾਸ਼ਾਵਾਂ",
+  "profileArea": "ਇਲਾਕਾ",
+  "profileShowAll": "ਸਭ ਵੇਖੋ",
+  "profileShowLess": "ਘੱਟ ਵੇਖੋ",
+  "profileShowMoreReviews": "ਹੋਰ ਸਮੀਖਿਆਵਾਂ",
+  "profileListings": "ਲਿਸਟਿੰਗਾਂ"
 }

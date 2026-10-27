@@ -3110,5 +3110,15 @@
   "insightsRecent": "最近的评价",
   "insightsViews": "浏览",
   "insightsRequests": "申请",
-  "insightsTours": "参观"
+  "insightsTours": "参观",
+  "profileChildren": "孩子",
+  "profileVerifiedStat": "已验证",
+  "profileVerifiedYes": "是",
+  "profileLicensed": "持证",
+  "profileLanguages": "语言",
+  "profileArea": "地区",
+  "profileShowAll": "显示全部",
+  "profileShowLess": "收起",
+  "profileShowMoreReviews": "查看更多评价",
+  "profileListings": "园所"
 }
