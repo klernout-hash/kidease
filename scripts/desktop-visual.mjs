@@ -66,37 +66,25 @@ async function openRoute(page, base, path) {
       }, { timeout: 8000 })
       .catch(() => {});
   }
-  // The cookie bar and the explainer video paint late. Hide the bar and pin the poster.
-  await page.evaluate(async () => {
-    document.querySelectorAll("[data-ke='cookie-consent']").forEach((el) => el.remove());
-    const videos = [...document.querySelectorAll("video")];
-    await Promise.all(
-      videos.map(
-        (video) =>
-          new Promise((resolve) => {
-            video.pause();
-            const poster = video.getAttribute("poster");
-            if (!poster) {
-              resolve();
-              return;
-            }
-            const img = document.createElement("img");
-            img.src = poster;
-            img.alt = "";
-            img.width = Number(video.getAttribute("width")) || 960;
-            img.height = Number(video.getAttribute("height")) || 540;
-            img.className = video.className;
-            video.replaceWith(img);
-            if (img.complete && img.naturalWidth > 0) resolve();
-            else {
-              img.addEventListener("load", () => resolve(), { once: true });
-              img.addEventListener("error", () => resolve(), { once: true });
-            }
-          }),
-      ),
-    );
-  });
   await page.waitForTimeout(250);
+  // React paints the cookie bar and the next video frame during a wait.
+  // Freeze both in this turn, with no pause before the screenshot.
+  await page.evaluate(() => {
+    const style = document.createElement("style");
+    style.textContent = "[data-ke=cookie-consent]{display:none!important}";
+    document.documentElement.appendChild(style);
+    document.querySelectorAll("[data-ke='cookie-consent']").forEach((el) => el.remove());
+    document.querySelectorAll("video").forEach((video) => {
+      video.pause();
+      const poster = video.getAttribute("poster");
+      if (!poster) return;
+      const img = document.createElement("img");
+      img.src = poster;
+      img.alt = "";
+      img.className = video.className;
+      video.replaceWith(img);
+    });
+  });
   return res?.status() ?? 0;
 }
 
@@ -110,11 +98,19 @@ export async function captureDesktopShots(browser, base, outDir) {
       reducedMotion: "reduce",
     });
     await context.addInitScript(() => {
-      try {
-        localStorage.setItem("kidease-analytics-consent", "denied");
-      } catch {
-        /* private mode */
-      }
+      const deny = () => {
+        try {
+          localStorage.setItem("kidease-analytics-consent", "denied");
+        } catch {
+          /* private mode */
+        }
+      };
+      deny();
+      document.addEventListener("DOMContentLoaded", deny);
+      HTMLMediaElement.prototype.play = function play() {
+        this.pause();
+        return Promise.resolve();
+      };
       const style = document.createElement("style");
       style.setAttribute("data-ke-visual", "stable");
       style.textContent = "*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}[data-ke=cookie-consent]{display:none!important}";
