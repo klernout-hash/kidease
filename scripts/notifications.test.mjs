@@ -160,7 +160,6 @@ test("signed-in header and menus show a bell; guests do not get a badge", () => 
   assert.match(header, /<NotificationBell \/>/);
   assert.match(header, /data-ke="header-login"/);
   assert.match(drawer, /signedIn \? \(/);
-  assert.match(src("src/routes/account.tsx"), /NotificationBell/);
   assert.match(src("src/components/notification-bell.tsx"), /to=\{NOTIFICATIONS_PATH\}/);
   assert.match(src("src/components/notification-bell.tsx"), /failClosedUnread/);
   assert.doesNotMatch(header, /NotificationBell className="[^"]*guest/);

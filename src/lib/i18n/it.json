@@ -3082,5 +3082,9 @@
   "menuResources": "Risorse",
   "menuGuides": "Guide",
   "menuGetHelp": "Ottieni aiuto",
-  "menuPrivacyLegal": "Privacy e note legali"
+  "menuPrivacyLegal": "Privacy e note legali",
+  "profileEdit": "Modifica",
+  "profileYears": "Anni su KidEase",
+  "profileRating": "Valutazione",
+  "profileEmailVerified": "Email verificata"
 }

@@ -3082,5 +3082,9 @@
   "menuResources": "资源",
   "menuGuides": "指南",
   "menuGetHelp": "获取帮助",
-  "menuPrivacyLegal": "隐私和法律"
+  "menuPrivacyLegal": "隐私和法律",
+  "profileEdit": "编辑",
+  "profileYears": "在 KidEase 的年数",
+  "profileRating": "评分",
+  "profileEmailVerified": "邮箱已验证"
 }

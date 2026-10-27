@@ -3318,6 +3318,10 @@ export const copy = {
     menuGuides: "Guides",
     menuGetHelp: "Get help",
     menuPrivacyLegal: "Privacy & legal",
+    profileEdit: "Edit",
+    profileYears: "Years on KidEase",
+    profileRating: "Rating",
+    profileEmailVerified: "Email verified",
   },
   fr: {
     app: "KidEase",
@@ -6642,6 +6646,10 @@ export const copy = {
     menuGuides: "Guides",
     menuGetHelp: "Obtenir de l’aide",
     menuPrivacyLegal: "Confidentialité et mentions légales",
+    profileEdit: "Modifier",
+    profileYears: "Années sur KidEase",
+    profileRating: "Note",
+    profileEmailVerified: "Courriel vérifié",
   },
 } as const;
 

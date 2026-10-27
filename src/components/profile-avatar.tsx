@@ -40,12 +40,12 @@ export function ProfileAvatar({
   userId?: string | null;
   fallback?: string | null;
   name?: string | null;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "hero";
   className?: string;
 }) {
   const src = useLiveProfilePhoto(userId, fallback);
-  const dim = size === "lg" ? "size-28" : size === "sm" ? "size-9" : "size-11";
-  const icon = size === "lg" ? "size-12" : size === "sm" ? "size-4" : "size-5";
+  const dim = size === "hero" || size === "lg" ? "size-28" : size === "sm" ? "size-9" : "size-11";
+  const icon = size === "hero" || size === "lg" ? "size-12" : size === "sm" ? "size-4" : "size-5";
   const letter = initialsFromName(name);
 
   return (
@@ -59,7 +59,7 @@ export function ProfileAvatar({
       {src ? (
         <img src={src} alt="" className="size-full object-cover" />
       ) : letter ? (
-        <span className={cn("font-semibold", size === "lg" ? "text-3xl" : "text-sm")}>{letter}</span>
+        <span className={cn("font-semibold", size === "hero" || size === "lg" ? "text-3xl" : "text-sm")}>{letter}</span>
       ) : (
         <UserRound className={icon} strokeWidth={1.7} />
       )}

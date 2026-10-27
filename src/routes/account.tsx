@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useNavigate, useRouter } from "@tanstack/react-router";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { privateReturnPath } from "@/lib/role-access";
 import { toast } from "sonner";
@@ -9,7 +10,7 @@ import { DeskShell } from "@/components/desk-shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { AdminDeskLink } from "@/components/admin-desk-link";
-import { DESK_PATH, deskQueryValue, openAdminDesk, parseDeskQuery, type DeskKey } from "@/lib/desks";
+import { DESK_PATH, deskQueryValue, highlightDesk, openAdminDesk, parseDeskQuery, type DeskKey } from "@/lib/desks";
 import { parentNavSearch, providerNavSearch } from "@/lib/desk-nav";
 import { useSessionDesks } from "@/components/session-desks";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -33,10 +34,11 @@ import { useInNativeShell } from "@/lib/use-native-shell";
 import { SignedInDevices } from "@/components/signed-in-devices";
 import { AccountSecurity } from "@/components/account-security";
 import { DeleteAccountPanel } from "@/components/delete-account-panel";
-import { NotificationBell } from "@/components/notification-bell";
 import { AlertPushSettings } from "@/components/alert-push-settings";
 import { ReferFriendPanel } from "@/components/refer-friend-panel";
-import { FooterMoreLinks } from "@/components/footer-more-links";
+import { ProfileFacts, ProfileHeroCard } from "@/components/profile-hero";
+import { profileRoleId, showProfileStats, yearsOnKidEase } from "@/lib/profile-hero";
+import { loadMenuProviderCards } from "@/lib/server/menu-summary";
 
 export const Route = createFileRoute("/account")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
@@ -51,6 +53,7 @@ export const Route = createFileRoute("/account")({
       tab?: "saved" | "enrolled" | "profile" | "payments";
       desk?: "parent" | "director" | "admin" | "support";
       section?: "profile" | "alerts" | "appearance" | "subscription" | "delete" | "security" | "email-sms" | "documents" | "refer";
+      edit?: "1";
     } = {};
     const tab = s.tab;
     if (tab === "saved" || tab === "enrolled" || tab === "profile" || tab === "payments") out.tab = tab;
@@ -70,6 +73,7 @@ export const Route = createFileRoute("/account")({
     }
     const desk = parseDeskQuery(typeof s.desk === "string" ? s.desk : "");
     if (desk) out.desk = deskQueryValue(desk);
+    if (s.edit === "1") out.edit = "1";
     return out;
   },
   component: AccountPage,
@@ -202,6 +206,9 @@ function ProfilePane() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState(user?.primaryEmail ?? "");
   const [bio, setBio] = useState("");
+  const [joinedAt, setJoinedAt] = useState<string | null>(null);
+  const [reviewCount, setReviewCount] = useState<number | null>(null);
+  const [ratingX10, setRatingX10] = useState<number | null>(null);
   const nameRef = useRef(user?.displayName ?? "");
   const phoneRef = useRef("");
   const bioRef = useRef("");
@@ -227,7 +234,10 @@ function ProfilePane() {
     if (!user) return;
     const switched = seenUserId.current !== undefined && seenUserId.current !== user.id;
     seenUserId.current = user.id;
-    if (switched) contactDirty.current = { name: false, phone: false, bio: false };
+    if (switched) {
+      contactDirty.current = { name: false, phone: false, bio: false };
+      setJoinedAt(null);
+    }
     const epoch = ++contactEpoch.current;
     contactLoaded.current = false;
     if (!contactDirty.current.name) {
@@ -254,6 +264,7 @@ function ProfilePane() {
           bioRef.current = row.bio;
           setBio(row.bio);
         }
+        setJoinedAt(row.joinedAt);
         contactLoaded.current = true;
       })
       .catch(() => {
@@ -329,6 +340,7 @@ function ProfilePane() {
       setPhone(saved.phone);
       setEmail(saved.email || email);
       setBio(saved.bio);
+      setJoinedAt(saved.joinedAt);
       const nextConsent = await saveMyCaslConsents({
         data: {
           ...consents,
@@ -417,53 +429,147 @@ function ProfilePane() {
     if (item.id === "subscription" && hideUpgrade) return false;
     return true;
   });
+  const router = useRouter();
+  const editing = search.edit === "1" && section === "profile";
+  const roleId = profileRoleId(chrome.role, highlightDesk("/account", sticky, desk));
+  const daycareStats = showProfileStats(roleId);
+  const homeSearch = {
+    tab: "profile" as const,
+    ...(search.desk ? { desk: search.desk } : {}),
+  };
+  const backTo = desk ? DESK_PATH[desk] : "/menu";
+
+  const userId = user?.id;
+  useEffect(() => {
+    if (!daycareStats || !userId) {
+      setReviewCount(null);
+      setRatingX10(null);
+      return;
+    }
+    setReviewCount(null);
+    setRatingX10(null);
+    let live = true;
+    void loadMenuProviderCards()
+      .then((cards) => {
+        if (!live) return;
+        setReviewCount(cards.reviewCount);
+        setRatingX10(cards.ratingX10);
+      })
+      .catch(() => {
+        if (!live) return;
+        setReviewCount(null);
+        setRatingX10(null);
+      });
+    return () => {
+      live = false;
+    };
+  }, [daycareStats, userId]);
 
   return (
     <AccountDeskFrame desk={desk}>
       <main className={desk ? "max-w-lg pb-6" : "ke-gutter mx-auto max-w-lg pb-10 pt-6"}>
-        {desk ? (
-          desk === "admin" ? (
-            <AdminDeskLink className="mb-3 inline-block text-sm font-medium text-primary">{backCopy}</AdminDeskLink>
-          ) : (
-            <Link to={DESK_PATH[desk]} className="mb-3 inline-block text-sm font-medium text-primary">
-              {backCopy}
+        <div className="flex items-center justify-between gap-3">
+          {editing || section !== "profile" ? (
+            <Link
+              to="/account"
+              search={homeSearch}
+              aria-label={t("back")}
+              data-ke="profile-back"
+              className="grid size-11 place-items-center rounded-full text-fg touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+            >
+              <ChevronLeft className="size-6" aria-hidden />
             </Link>
+          ) : desk === "admin" ? (
+            <AdminDeskLink
+              className="grid size-11 place-items-center rounded-full text-fg touch-manipulation"
+              aria-label={backCopy ?? t("back")}
+              data-ke="profile-back"
+            >
+              <ChevronLeft className="size-6" aria-hidden />
+            </AdminDeskLink>
+          ) : (
+            <Link
+              to={backTo}
+              aria-label={backCopy ?? t("back")}
+              data-ke="profile-back"
+              onClick={(event) => {
+                if (!router.history.canGoBack()) return;
+                event.preventDefault();
+                router.history.back();
+              }}
+              className="grid size-11 place-items-center rounded-full text-fg touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+            >
+              <ChevronLeft className="size-6" aria-hidden />
+            </Link>
+          )}
+          {section === "profile" && !editing && user ? (
+            <Link
+              to="/account"
+              search={{ ...homeSearch, edit: "1" as const }}
+              data-ke="profile-edit"
+              className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-primary touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+            >
+              {t("profileEdit")}
+            </Link>
+          ) : editing ? (
+            <h1 className="text-base font-semibold">{t("profileEdit")}</h1>
+          ) : section !== "profile" ? (
+            <h1 className="min-w-0 truncate text-base font-semibold">
+              {sections.find((item) => item.id === section)?.label}
+            </h1>
+          ) : (
+            <span className="size-11" aria-hidden />
+          )}
+        </div>
+        {section === "profile" && !editing && user ? (
+          <>
+            <ProfileHeroCard
+              userId={user.id}
+              photo={user.profileImageUrl}
+              name={name || user.displayName || t("profile")}
+              roleId={roleId}
+              emailVerified={user.emailVerified === true}
+              reviewCount={daycareStats ? reviewCount : null}
+              ratingX10={daycareStats ? ratingX10 : null}
+              years={daycareStats ? yearsOnKidEase(joinedAt) : null}
+            />
+            <ProfileFacts email={email || user.primaryEmail || ""} phone={phone} work={workQuery} bio={bio} />
+            <nav data-ke="account-sections" aria-label={t("menuAccountSettings")} className="mt-8 border-t border-border">
+              <h2 className="px-1 pb-1 pt-4 text-sm font-semibold">{t("menuAccountSettings")}</h2>
+              {sections
+                .filter((item) => item.id !== "profile")
+                .map((item) => (
+                  <Link
+                    key={item.id}
+                    to="/account"
+                    search={sectionSearch(item.id)}
+                    data-ke={`account-section-${item.id}`}
+                    className="flex min-h-11 items-center justify-between gap-3 border-b border-border text-[15px] touch-manipulation"
+                  >
+                    {item.label}
+                    <ChevronRight className="size-4 shrink-0 text-muted" aria-hidden />
+                  </Link>
+                ))}
+            </nav>
+          </>
+        ) : null}
+        {section === "profile" && !editing && !user ? (
+          isPending ? (
+            <div className="mt-6">
+              <DeskSkeleton />
+            </div>
+          ) : (
+            <div className="mt-8 text-center">
+              <h1 className="font-display text-[1.75rem]">{t("profile")}</h1>
+              <p className="mt-3 text-sm text-muted">{t("accountSettingsGuest")}</p>
+              <Button className="mt-6" size="lg" asChild>
+                <Link to="/login" search={parentLoginSearch("/account?tab=profile")}>
+                  {t("accountSignInPhoto")}
+                </Link>
+              </Button>
+            </div>
           )
         ) : null}
-        {desk ? (
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">
-            {(desk === "parent"
-              ? t("deskParent")
-              : desk === "provider"
-                ? t("deskDirector")
-                : desk === "admin"
-                  ? t("deskAdmin")
-                  : t("deskSupport"))}{" "}
-            · {t("account")}
-          </p>
-        ) : null}
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="font-display text-[1.75rem] tracking-[-0.03em]">{t("account")}</h1>
-          <NotificationBell className="md:hidden" />
-        </div>
-        <nav data-ke="account-sections" aria-label={t("account")} className="mt-4 flex flex-col gap-1">
-          {sections.map((item) => (
-            <Link
-              key={item.id}
-              to="/account"
-              search={sectionSearch(item.id)}
-              data-ke={`account-section-${item.id}`}
-              aria-current={section === item.id ? "page" : undefined}
-              className={
-                section === item.id
-                  ? "flex min-h-11 items-center rounded-xl bg-primary px-3 text-sm font-medium text-primary-fg"
-                  : "flex min-h-11 items-center rounded-xl px-3 text-sm font-medium text-fg ring-1 ring-border"
-              }
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
         {section === "documents" ? <FamilyVaultPanel signedIn={Boolean(user)} /> : null}
         {section === "alerts" && user ? (
           <AlertPushSettings
@@ -526,7 +632,7 @@ function ProfilePane() {
             </p>
           </form>
         ) : null}
-        {section !== "profile" ? null : (
+        {section === "profile" && editing ? (
         <>
         <div className="mt-8 flex flex-col items-center text-center">
           <ProfileAvatar userId={user?.id} fallback={user?.profileImageUrl} name={name || user?.displayName} size="lg" />
@@ -670,9 +776,8 @@ function ProfilePane() {
         ) : (
           <p className="mt-8 text-center text-sm text-muted">{t("accountSettingsGuest")}</p>
         )}
-        <FooterMoreLinks />
         </>
-        )}
+        ) : null}
       </main>
     </AccountDeskFrame>
   );
