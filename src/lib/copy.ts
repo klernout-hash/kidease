@@ -1102,7 +1102,7 @@ export const copy = {
     providerOnboardingStep2: "2. Upload your provincial licence photo",
     providerOnboardingStep3: "3. Wait for KidEase review: parents see you as Live after approval",
     providerOnboardingClaim: "Claim a licensed centre",
-    providerOnboardingListNew: "My centre is not in the directory",
+    providerOnboardingListNew: "My centre isn't in the directory",
     providerListNewHide: "Hide new listing form",
     accountBackDaycare: "Back to Daycare desk",
     accountBackAdmin: "Back to Admin desk",

@@ -19,7 +19,21 @@ function when(iso: string, locale: string) {
   return date.toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", { dateStyle: "medium" });
 }
 
-export function SpotOfferDesk() {
+/** Keep the file long enough for iPhone Safari to save it. Revoking at once opens a blank page. */
+function saveWaitlistCsv(csv: string, filename: string) {
+  const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
+}
+
+export function SpotOfferDesk({ includeTest = false }: { includeTest?: boolean }) {
   const { locale } = useCopy();
   const plansOn = useRoleChrome().subscriptionsEnabled === true;
   const copy = spotOfferCopy(locale);
@@ -29,7 +43,7 @@ export function SpotOfferDesk() {
   const [error, setError] = useState<string | null>(null);
 
   function load() {
-    return listCentreWaitlist()
+    return listCentreWaitlist({ data: { includeTest } })
       .then((result) => {
         setCentres(result.centres);
         setEmailEnabled(result.emailEnabled);
@@ -39,7 +53,7 @@ export function SpotOfferDesk() {
 
   useEffect(() => {
     let live = true;
-    void listCentreWaitlist()
+    void listCentreWaitlist({ data: { includeTest } })
       .then((result) => {
         if (!live) return;
         setCentres(result.centres);
@@ -51,7 +65,7 @@ export function SpotOfferDesk() {
     return () => {
       live = false;
     };
-  }, []);
+  }, [includeTest]);
 
   if (!centres) return <p className="mt-4 text-sm text-muted">{copy.deskTitle}</p>;
   if (!centres.length) return null;
@@ -92,6 +106,7 @@ export function SpotOfferDesk() {
                   />
                   {locale === "fr" ? "Frères et sœurs d’abord" : "Siblings first"}
                 </label>
+                {centre.families.length ? (
                 <Button
                   type="button"
                   size="sm"
@@ -99,13 +114,13 @@ export function SpotOfferDesk() {
                   onClick={() => {
                     void exportCentreWaitlistAudit({ data: { daycareId: centre.daycareId } })
                       .then((result) => {
-                        const blob = new Blob([result.csv], { type: "text/csv" });
-                        const url = URL.createObjectURL(blob);
-                        const link = document.createElement("a");
-                        link.href = url;
-                        link.download = "waitlist-order.csv";
-                        link.click();
-                        URL.revokeObjectURL(url);
+                        const csv = String(result.csv || "").trim();
+                        if (!csv || csv.split("\n").length < 2) {
+                          setError(locale === "fr" ? "Aucune famille sur cette liste." : "No families on this waitlist yet.");
+                          return;
+                        }
+                        const slug = centre.slug.replace(/[^a-z0-9-]+/gi, "-").replace(/^-|-$/g, "") || "waitlist";
+                        saveWaitlistCsv(csv, `${slug}-waitlist-order.csv`);
                       })
                       .catch((err: unknown) => {
                         const message = err instanceof Error ? err.message : copy.feeBlocked;
@@ -115,6 +130,7 @@ export function SpotOfferDesk() {
                 >
                   {locale === "fr" ? "Télécharger l’ordre" : "Download the order"}
                 </Button>
+                ) : null}
               </div>
             </div>
             {centre.families.length ? (

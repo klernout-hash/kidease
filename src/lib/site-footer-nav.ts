@@ -75,7 +75,7 @@ export function footerLinkHrefs(links: readonly FooterLinkDef[] = footerPageLink
 
 function isPlansPath(to: string): boolean {
   const bare = String(to || "").split("?")[0].replace(/\/$/, "") || "/";
-  return bare === "/plans" || bare === "/fr/plans" || bare === "/pricing" || bare === "/fr/pricing";
+  return bare === "/plans" || bare === "/fr/plans" || bare.endsWith("/plans");
 }
 
 /**

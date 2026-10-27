@@ -12,6 +12,8 @@ import {
   listingVisibilityWrite,
   looksLikeTestFixture,
   PUBLIC_LISTING_SQL,
+  deskWaitlistVisible,
+  isDocuSignSmokeCentre,
   providerDeskListingVisible,
   publicListings,
   QA_FIXTURE_NAME_RE,
@@ -358,4 +360,40 @@ test("production seed and migration hide leftover TEST fixtures", () => {
   assert.match(titleCase, /Joan Kids World/);
   assert.doesNotMatch(titleCase, /delete from daycares/i);
   assert.doesNotMatch(titleCase, /joan-kids/i);
+});
+
+test("DocuSign smoke centre stays off the openroad desk and the public catalogue", () => {
+  const smoke = {
+    name: "KidEase DocuSign Smoke Test Centre",
+    slug: "kidease-docusign-smoke-test-centre",
+    claimStatus: "approved",
+    visibility: "public",
+    isTest: 0,
+  };
+  assert.equal(isDocuSignSmokeCentre(smoke.name), true);
+  assert.equal(looksLikeTestFixture(smoke), true);
+  assert.equal(isAdminOnlyListing(smoke), true);
+  assert.equal(isPublicListing(smoke), false);
+  assert.match(PUBLIC_LISTING_SQL, /docusign smoke/);
+  const openroad = { ownedByViewer: true, viewerEmail: "kyle@openroadoutlet.ca" };
+  const operator = { ownedByViewer: true, viewerEmail: "kyle@kidease.ca" };
+  assert.equal(providerDeskListingVisible(smoke, openroad), false);
+  assert.equal(deskWaitlistVisible(smoke, openroad, false), false);
+  assert.equal(deskWaitlistVisible(smoke, openroad, true), false);
+  assert.equal(providerDeskListingVisible(smoke, operator), true);
+  assert.equal(deskWaitlistVisible(smoke, operator, false), false);
+  assert.equal(deskWaitlistVisible(smoke, operator, true), true);
+  const migration = readFileSync(new URL("../migrations/0100_hide_docusign_smoke_centre.sql", import.meta.url), "utf8");
+  assert.match(migration, /kyle@openroadoutlet\.ca/);
+  assert.match(migration, /docusign smoke/);
+  assert.match(migration, /visibility = 'admin_only'/);
+  assert.match(migration, /is_test = 1/);
+  assert.match(migration, /delete from provider_daycares/);
+  assert.doesNotMatch(migration, /delete from daycares/i);
+  const waitlist = readFileSync(new URL("../src/lib/server/spot-offers.ts", import.meta.url), "utf8");
+  assert.match(waitlist, /deskWaitlistVisible/);
+  assert.match(waitlist, /listAccessibleDaycareIds/);
+  const desk = readFileSync(new URL("../src/components/spot-offer-desk.tsx", import.meta.url), "utf8");
+  assert.match(desk, /centre\.families\.length/);
+  assert.match(desk, /saveWaitlistCsv/);
 });

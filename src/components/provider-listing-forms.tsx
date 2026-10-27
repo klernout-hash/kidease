@@ -1,5 +1,7 @@
 import { useRef, useState } from "react";
 import { Camera, ChevronLeft, ChevronRight, Megaphone, Trash2 } from "lucide-react";
+import { RequiredMark, fieldErrorClass } from "@/components/required-field";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
@@ -164,18 +166,32 @@ export function Field({
   value,
   onChange,
   name,
+  required = false,
+  invalid = false,
+  french = false,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   name?: string;
+  required?: boolean;
+  invalid?: boolean;
+  french?: boolean;
 }) {
   return (
     <label className="text-sm font-medium text-fg">
-      {label}
+      <span>
+        {label}
+        {required ? <RequiredMark french={french} /> : null}
+      </span>
       <input
         name={name}
-        className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3 text-fg"
+        aria-invalid={invalid || undefined}
+        aria-required={required || undefined}
+        className={cn(
+          "mt-1 h-11 w-full rounded-md border border-border bg-bg px-3 text-fg",
+          fieldErrorClass(invalid),
+        )}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
