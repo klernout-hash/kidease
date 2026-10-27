@@ -80,6 +80,11 @@ export async function captureDesktopShots(browser, base, outDir) {
       reducedMotion: "reduce",
     });
     await context.addInitScript(() => {
+      try {
+        localStorage.setItem("kidease-analytics-consent", "denied");
+      } catch {
+        /* private mode */
+      }
       const style = document.createElement("style");
       style.setAttribute("data-ke-visual", "stable");
       style.textContent = "*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}";
