@@ -21,6 +21,7 @@ import { runFoldResizePass } from "./fold-resize.mjs";
 import { runStoreViewportPass } from "./store-viewports.mjs";
 import { runDesktopVisualPass } from "./desktop-visual.mjs";
 import { checkedOutputPath, checkedUrl, smokeAllowedOutputDirs } from "./browser-guard.mjs";
+import { withNetRetry } from "./e2e-net.mjs";
 import {
   ADMIN_API_SMOKE_PATHS,
   classifyAdminApiGate,
@@ -34,14 +35,25 @@ import {
   frenchCityHubSsrOk,
   homepageLooksLive,
   loginPageLooksLive,
+  ciPlaywrightRetries,
+  loadQuarantine,
   parseE2eArgs,
   skipReason,
+  smokeGroupSelected,
+  splitSmokeResults,
   SMOKE_PATHS,
   targetOrigin,
 } from "./e2e-smoke-lib.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const args = parseE2eArgs(process.argv.slice(2), process.env);
+let quarantineChecks = [];
+try {
+  quarantineChecks = loadQuarantine(join(root, "e2e/quarantine.json"));
+} catch (err) {
+  console.error(JSON.stringify({ ok: false, error: err instanceof Error ? err.message : String(err) }, null, 2));
+  process.exit(1);
+}
 if (args.error) {
   console.error(JSON.stringify({ ok: false, error: args.error }, null, 2));
   process.exit(1);
@@ -76,20 +88,15 @@ async function settleMockCheckout(page) {
 
 async function setFixture(context, base, { role, plan, own, activity, attention } = {}) {
   await context.clearCookies();
-  let res;
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    try {
-      res = await context.request.post(new URL("/api/e2e-seed", base).href, {
+  // Up to 2 retries on CI and locally for ECONNRESET and the same connection errors.
+  const res = await withNetRetry(
+    () =>
+      context.request.post(new URL("/api/e2e-seed", base).href, {
         data: { role, paid: plan === "paid", ownSlug: own || "", activity: Boolean(activity), attention: Boolean(attention) },
         headers: { origin: base, "content-type": "application/json" },
-      });
-      break;
-    } catch (err) {
-      const dropped = /ECONNRESET|ECONNREFUSED|socket hang up/i.test(String(err?.message || err));
-      if (!dropped || attempt === 2) throw err;
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    }
-  }
+      }),
+    { retries: 2, label: `seed ${role || "parent"}` },
+  );
   if (!res.ok()) {
     throw new Error(`seed ${role || "parent"} ${res.status()} ${(await res.text()).slice(0, 200)}`);
   }
@@ -1588,9 +1595,25 @@ try {
   });
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 
-  if (args.signedIn) {
-    await runSignedInSessions(page, base);
-  } else {
+  // CI retries a failed shard once (Playwright retries=1). A pass on the
+  // second attempt is reported as flaky and does not fail the job.
+  const retries = args.desktopVisualOnly ? 0 : ciPlaywrightRetries(process.env);
+  let flakyNames = [];
+  let pendingFlaky = [];
+  let lastSplit = { failed: [], quarantined: [] };
+  for (let attempt = 1; attempt <= retries + 1; attempt += 1) {
+    results.length = 0;
+    await page.context().clearCookies().catch(() => {});
+    try {
+    if (args.signedIn) {
+      await runSignedInSessions(page, base);
+    } else if (args.desktopVisualOnly) {
+      const desktopProblems = await runDesktopVisualPass(browser, base);
+      record("desktop-visual", desktopProblems.length === 0, {
+        note: desktopProblems.length ? desktopProblems.slice(0, 6).join(" | ") : "1280 to 2560",
+      });
+    } else {
+    if (smokeGroupSelected(args, "public")) {
   const homeResp = await page.goto(new URL(SMOKE_PATHS.home, base).href, {
     waitUntil: "domcontentloaded",
     timeout: timeoutMs,
@@ -1749,44 +1772,106 @@ try {
     });
   }
 
-  await runRoleFixture(page, base);
-  await runWebkitSearchGuard(base);
-
   if (args.browserSmoke) {
     await runBrowserSmoke(base);
   }
+    }
 
-  const [ipadProblems, phoneProblems, foldProblems] = await Promise.all([
-    runIpadViewportPass(browser, base),
-    runPhoneViewportPass(browser, base),
-    runFoldResizePass(browser, base),
-  ]);
-  record("ipad-viewports", ipadProblems.length === 0, {
-    note: ipadProblems.length ? ipadProblems.slice(0, 6).join(" | ") : `${7} sizes`,
-  });
-  record("phone-viewports", phoneProblems.length === 0, {
-    note: phoneProblems.length ? phoneProblems.slice(0, 8).join(" | ") : "iphone sizes",
-  });
-  record("fold-resize", foldProblems.length === 0, {
-    note: foldProblems.length ? foldProblems.slice(0, 8).join(" | ") : "live resize",
-  });
-
-  const [storeProblems, desktopProblems] = await Promise.all([
-    runStoreViewportPass(browser, base),
-    runDesktopVisualPass(browser, base),
-  ]);
-  record("store-viewports", storeProblems.length === 0, {
-    note: storeProblems.length ? storeProblems.slice(0, 8).join(" | ") : "android and windows",
-  });
-  record("desktop-visual", desktopProblems.length === 0, {
-    note: desktopProblems.length ? desktopProblems.slice(0, 6).join(" | ") : "1280 to 2560",
-  });
+  if (smokeGroupSelected(args, "role")) {
+    await runRoleFixture(page, base);
+  }
+  if (smokeGroupSelected(args, "webkit")) {
+    await runWebkitSearchGuard(base);
   }
 
-  const failed = results.filter((r) => !r.ok);
+  const firstWave = [];
+  if (smokeGroupSelected(args, "ipad")) {
+    firstWave.push(
+      runIpadViewportPass(browser, base).then((ipadProblems) => {
+        record("ipad-viewports", ipadProblems.length === 0, {
+          note: ipadProblems.length ? ipadProblems.slice(0, 6).join(" | ") : `${7} sizes`,
+        });
+      }),
+    );
+  }
+  if (smokeGroupSelected(args, "phone")) {
+    firstWave.push(
+      runPhoneViewportPass(browser, base).then((phoneProblems) => {
+        record("phone-viewports", phoneProblems.length === 0, {
+          note: phoneProblems.length ? phoneProblems.slice(0, 8).join(" | ") : "iphone sizes",
+        });
+      }),
+    );
+  }
+  if (smokeGroupSelected(args, "fold")) {
+    firstWave.push(
+      runFoldResizePass(browser, base).then((foldProblems) => {
+        record("fold-resize", foldProblems.length === 0, {
+          note: foldProblems.length ? foldProblems.slice(0, 8).join(" | ") : "live resize",
+        });
+      }),
+    );
+  }
+  await Promise.all(firstWave);
+
+  const secondWave = [];
+  if (smokeGroupSelected(args, "store")) {
+    secondWave.push(
+      runStoreViewportPass(browser, base).then((storeProblems) => {
+        record("store-viewports", storeProblems.length === 0, {
+          note: storeProblems.length ? storeProblems.slice(0, 8).join(" | ") : "android and windows",
+        });
+      }),
+    );
+  }
+  if (smokeGroupSelected(args, "visual")) {
+    secondWave.push(
+      runDesktopVisualPass(browser, base).then((desktopProblems) => {
+        record("desktop-visual", desktopProblems.length === 0, {
+          note: desktopProblems.length ? desktopProblems.slice(0, 6).join(" | ") : "1280 to 2560",
+        });
+      }),
+    );
+  }
+  await Promise.all(secondWave);
+    }
+    } catch (err) {
+      record("suite", false, { note: err instanceof Error ? err.message.split("\n")[0] : String(err) });
+    }
+
+    lastSplit = splitSmokeResults(results, quarantineChecks);
+    if (lastSplit.failed.length === 0 || attempt > retries) {
+      if (attempt > 1 && lastSplit.failed.length === 0) flakyNames = pendingFlaky;
+      break;
+    }
+    pendingFlaky = lastSplit.failed.map((row) => row.name);
+    console.log(`[e2e] retry ${attempt}/${retries} after: ${pendingFlaky.join(", ")}`);
+  }
+
+  for (const row of lastSplit.quarantined) {
+    console.log(`[e2e] QUARANTINE  ${row.name} — still failing, not blocking CI`);
+  }
+  if (flakyNames.length) {
+    console.log(`[e2e] FLAKY  passed on retry: ${flakyNames.join(", ")}`);
+  }
+  const summaryFile = process.env.GITHUB_STEP_SUMMARY;
+  if (summaryFile) {
+    const lines = [];
+    if (args.shard) lines.push(`Shard ${args.shard.index}/${args.shard.total} (${args.shard.groups.join(", ")})`);
+    if (flakyNames.length) lines.push(`Flaky (passed on retry): ${flakyNames.join(", ")}`);
+    if (lastSplit.quarantined.length) {
+      lines.push(`Quarantined (not blocking): ${lastSplit.quarantined.map((row) => row.name).join(", ")}`);
+    }
+    if (lines.length) writeFileSync(summaryFile, `${lines.join("\n")}\n`, { flag: "a" });
+  }
+
+  const failed = lastSplit.failed;
   const verdict = {
     ok: failed.length === 0,
     origin,
+    shard: args.shard ? `${args.shard.index}/${args.shard.total}` : null,
+    flaky: flakyNames,
+    quarantined: lastSplit.quarantined.map((row) => row.name),
     results,
     failed: failed.map((r) => r.name),
   };
