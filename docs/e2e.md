@@ -77,7 +77,7 @@ The workflow cancels superseded PR/branch runs (`concurrency`). A cancelled or f
 
 Pushes and pull requests that only touch `docs/**` or `**/*.md` do not start this workflow.
 
-The `build` job runs `npm run build` once and uploads `.vercel/output`. This app is Vite + Nitro, not Next.js. That directory is the preview the smoke jobs boot. A later run with the same source hash restores it from the Actions cache and skips the build.
+The `build` job runs `npm run build` once and uploads `artifacts/ci-build`. This app is Vite + Nitro, not Next.js. The archive includes `.vercel/output` and `node_modules/.nitro/last-build.json`, which `vite preview` needs. Smoke jobs restore that after `npm ci` (`npm ci` would otherwise delete the Nitro pointer). A later run with the same source hash restores the archive from the Actions cache and skips the build.
 
 Smoke is four shards (`--shard 1/4` … `4/4`):
 

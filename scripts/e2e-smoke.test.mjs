@@ -29,6 +29,7 @@ import {
   smokeGroupSelected,
   SMOKE_PATHS,
   splitSmokeResults,
+  visualCheckBlocks,
   targetOrigin,
   vercelAppAdminDecision,
 } from "./e2e-smoke-lib.mjs";
@@ -289,8 +290,12 @@ test("CI builds once, shards smoke, and keeps desktop visual blocking on main", 
   assert.match(ci, /cache-hit != 'true'/);
   assert.match(ci, /signed-in-e2e:[\s\S]*?timeout-minutes: 60/);
   assert.match(ci, /shard: \["1\/4", "2\/4", "3\/4", "4\/4"\]/);
-  assert.match(ci, /continue-on-error: \$\{\{ github\.event_name == 'pull_request' \}\}/);
-  assert.match(ci, /name: vite-build/);
+  assert.match(ci, /E2E_VISUAL_BLOCKING/);
+  assert.match(ci, /name: ci-build/);
+  assert.match(ci, /restore-ci-build\.sh/);
+  assert.match(src("scripts/restore-ci-build.sh"), /last-build\.json/);
+  assert.match(src("scripts/stage-ci-build.sh"), /nitro\.json/);
+  assert.match(ci, /defaults:\n\s+run:\n\s+shell: bash/);
   assert.match(ci, /\.vercel\/output/);
   const runner = src("scripts/e2e-smoke.mjs");
   assert.match(runner, /kidease\.e2e_session/);
@@ -335,6 +340,10 @@ test("shards, quarantine, and CI retries", () => {
   );
   assert.deepEqual(split.failed.map((row) => row.name), ["login"]);
   assert.deepEqual(split.quarantined.map((row) => row.name), ["role-fixture"]);
+  assert.equal(visualCheckBlocks({}, ["desktop-visual"]), true);
+  assert.equal(visualCheckBlocks({ E2E_VISUAL_BLOCKING: "0" }, ["desktop-visual"]), false);
+  assert.equal(visualCheckBlocks({ E2E_VISUAL_BLOCKING: "0" }, ["desktop-visual", "suite"]), true);
+  assert.equal(visualCheckBlocks({ E2E_VISUAL_BLOCKING: "0" }, []), false);
   assert.deepEqual(loadQuarantine(join(root, "e2e/quarantine.json")), []);
   const doc = src("docs/e2e.md");
   assert.match(doc, /quarantine\.json/);

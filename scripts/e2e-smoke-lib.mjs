@@ -121,6 +121,16 @@ export function loadQuarantine(filePath) {
   return parseQuarantine(readFileSync(filePath, "utf8"));
 }
 
+/**
+ * Pull requests set E2E_VISUAL_BLOCKING=0. A desktop-visual pixel miss then
+ * stays in the log and does not fail the process. A preview crash or any
+ * other check still fails. Main leaves the variable unset, so the miss fails.
+ */
+export function visualCheckBlocks(env, failedNames) {
+  if (env.E2E_VISUAL_BLOCKING !== "0") return true;
+  return failedNames.some((name) => name !== "desktop-visual");
+}
+
 /** Failures whose names are listed in the quarantine file do not fail CI. */
 export function splitSmokeResults(results, quarantinedNames = []) {
   const held = new Set(quarantinedNames);

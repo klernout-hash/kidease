@@ -45,7 +45,8 @@ jobs:
         run: npm test
 
   # One production build shared by the smoke shards, desktop visual, and signed-in.
-  # This repo is Vite + Nitro, not Next. The preview reads `.vercel/output`.
+  # This repo is Vite + Nitro, not Next. vite preview reads
+  # node_modules/.nitro/last-build.json plus .vercel/output.
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -55,7 +56,7 @@ jobs:
         id: vite-build
         uses: actions/cache@v4
         with:
-          path: .vercel/output
+          path: artifacts/ci-build
           key: vite-build-${{ runner.os }}-${{ hashFiles('package-lock.json', 'vite.config.ts', 'src/**', 'server/**', 'public/**', 'scripts/migrate.mjs', 'scripts/check-ssr-bundle.mjs', 'scripts/check-locale-chunks.mjs', 'scripts/check-client-db.mjs') }}
       - uses: actions/setup-node@v4
         if: steps.vite-build.outputs.cache-hit != 'true'
@@ -68,11 +69,14 @@ jobs:
       - name: Build
         if: steps.vite-build.outputs.cache-hit != 'true'
         run: npm run build
+      - name: Stage Vite build
+        if: steps.vite-build.outputs.cache-hit != 'true'
+        run: sh scripts/stage-ci-build.sh
       - name: Upload Vite build
         uses: actions/upload-artifact@v4
         with:
-          name: vite-build
-          path: .vercel/output
+          name: ci-build
+          path: artifacts/ci-build
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 1
@@ -85,6 +89,10 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    # The image's default shell is dash, which rejects `set -o pipefail`.
+    defaults:
+      run:
+        shell: bash
     container:
       image: mcr.microsoft.com/playwright:v1.62.1-jammy
       options: --user root
@@ -96,16 +104,18 @@ jobs:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
     steps:
       - uses: actions/checkout@v4
-      - name: Download Vite build
-        uses: actions/download-artifact@v4
-        with:
-          name: vite-build
-          path: .vercel/output
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
       - run: npm ci
+      - name: Download Vite build
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-build
+          path: artifacts/ci-build
+      - name: Restore Vite build
+        run: sh scripts/restore-ci-build.sh
       - name: Playwright version
         id: playwright-version
         uses: ./.github/actions/playwright-version
@@ -137,19 +147,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     outputs:
-      outcome: ${{ steps.visual-result.outputs.outcome }}
+      outcome: ${{ steps.visual.outputs.visual_outcome }}
     steps:
       - uses: actions/checkout@v4
-      - name: Download Vite build
-        uses: actions/download-artifact@v4
-        with:
-          name: vite-build
-          path: .vercel/output
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
       - run: npm ci
+      - name: Download Vite build
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-build
+          path: artifacts/ci-build
+      - name: Restore Vite build
+        run: sh scripts/restore-ci-build.sh
       - name: Playwright version
         id: playwright-version
         uses: ./.github/actions/playwright-version
@@ -213,12 +225,13 @@ jobs:
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}-chromium
       - name: Desktop visual check
         id: visual
-        # Blocking on main and workflow_dispatch. A pull request reports the
-        # mismatch and stays green so a stale screenshot does not fail the run.
-        continue-on-error: ${{ github.event_name == 'pull_request' }}
+        # Pixel mismatches set visual_outcome=failure. On a pull request the
+        # script exits 0 so the job stays green. A preview crash still exits 1.
+        # Main leaves E2E_VISUAL_BLOCKING unset, so a mismatch fails the job.
         timeout-minutes: 30
         env:
           BASE_URL: ${{ github.event.inputs.base_url }}
+          E2E_VISUAL_BLOCKING: ${{ github.event_name == 'pull_request' && '0' || '1' }}
         run: |
           set -euo pipefail
           if [ -n "${BASE_URL}" ]; then
@@ -227,12 +240,8 @@ jobs:
           else
             npm run e2e:preview -- --desktop-visual-only
           fi
-      - name: Record desktop visual outcome
-        id: visual-result
-        if: always()
-        run: echo "outcome=${{ steps.visual.outcome }}" >> "$GITHUB_OUTPUT"
       - name: Desktop visual summary
-        if: always() && steps.visual.outcome == 'failure'
+        if: always() && steps.visual.outputs.visual_outcome == 'failure'
         run: |
           echo "::warning title=Desktop visual::Screenshot compare failed. Pull requests stay green. Push to main still fails the e2e check. See artifacts/e2e/desktop-report.json and desktop-diff."
           if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
@@ -254,6 +263,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
     container:
       image: mcr.microsoft.com/playwright:v1.62.1-jammy
       options: --user root
@@ -261,16 +273,18 @@ jobs:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
     steps:
       - uses: actions/checkout@v4
-      - name: Download Vite build
-        uses: actions/download-artifact@v4
-        with:
-          name: vite-build
-          path: .vercel/output
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
       - run: npm ci
+      - name: Download Vite build
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-build
+          path: artifacts/ci-build
+      - name: Restore Vite build
+        run: sh scripts/restore-ci-build.sh
       - name: Playwright version
         id: playwright-version-signed
         uses: ./.github/actions/playwright-version
@@ -319,8 +333,8 @@ jobs:
             echo "::error::Smoke shards did not pass (${SHARDS})."
             exit 1
           fi
-          if [ "${VISUAL_JOB}" = "failure" ] && [ "${VISUAL_STEP}" != "failure" ]; then
-            echo "::error::Desktop visual job failed before the screenshot check (job ${VISUAL_JOB}, step ${VISUAL_STEP})."
+          if [ "${VISUAL_JOB}" != "success" ]; then
+            echo "::error::Desktop visual job failed (${VISUAL_JOB}, outcome ${VISUAL_STEP}). A preview or install failure fails this check on pull requests too. A pixel mismatch fails it on main."
             exit 1
           fi
           if [ "${VISUAL_STEP}" = "failure" ]; then

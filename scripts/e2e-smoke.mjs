@@ -41,6 +41,7 @@ import {
   skipReason,
   smokeGroupSelected,
   splitSmokeResults,
+  visualCheckBlocks,
   SMOKE_PATHS,
   targetOrigin,
 } from "./e2e-smoke-lib.mjs";
@@ -1866,6 +1867,16 @@ try {
   }
 
   const failed = lastSplit.failed;
+  const failedNames = failed.map((row) => row.name);
+  const blocks = visualCheckBlocks(process.env, failedNames);
+  const outputFile = process.env.GITHUB_OUTPUT;
+  if (outputFile && args.desktopVisualOnly) {
+    const mismatch = failedNames.includes("desktop-visual");
+    writeFileSync(outputFile, `visual_outcome=${mismatch ? "failure" : "success"}\n`, { flag: "a" });
+  }
+  if (!blocks && failedNames.includes("desktop-visual")) {
+    console.log("[e2e] desktop-visual mismatch is reported and does not fail this pull request");
+  }
   const verdict = {
     ok: failed.length === 0,
     origin,
@@ -1873,11 +1884,11 @@ try {
     flaky: flakyNames,
     quarantined: lastSplit.quarantined.map((row) => row.name),
     results,
-    failed: failed.map((r) => r.name),
+    failed: failedNames,
   };
   writeFileSync(verdictPath, JSON.stringify(verdict, null, 2));
   console.log(JSON.stringify(verdict, null, 2));
-  process.exitCode = failed.length === 0 ? 0 : 1;
+  process.exitCode = failed.length === 0 || !blocks ? 0 : 1;
 } catch (err) {
   const failure = { ok: false, origin, error: String(err?.message || err), results };
   try {
