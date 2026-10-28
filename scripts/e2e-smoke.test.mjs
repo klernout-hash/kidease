@@ -268,7 +268,9 @@ test("CI e2e job builds preview locally or accepts workflow_dispatch BASE_URL", 
   const ci = src(".github/workflows/ci.yml");
   assert.match(ci, /workflow_dispatch:/);
   assert.match(ci, /base_url:/);
-  assert.equal((ci.match(/npx playwright install --with-deps chromium webkit/g) || []).length, 2);
+  assert.equal((ci.match(/npx playwright install-deps chromium webkit/g) || []).length, 2);
+  assert.equal((ci.match(/npx playwright install chromium webkit/g) || []).length, 2);
+  assert.match(ci, /cache-hit != 'true'/);
   assert.match(ci, /signed-in-e2e:[\s\S]*?timeout-minutes: 60/);
   const runner = src("scripts/e2e-smoke.mjs");
   assert.match(runner, /kidease\.e2e_session/);

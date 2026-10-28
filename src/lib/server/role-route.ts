@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { notFound, redirect } from "@tanstack/react-router";
 import { sessionBearerMiddleware } from "@/lib/auth/middleware";
 import { subscriptionsEnabled } from "@/lib/features";
+import { requestHasSessionMaterial } from "@/lib/anonymous-request";
 import { e2eChromeFromRequest } from "@/lib/e2e-role-cookie";
 import { isFrPath } from "@/lib/locale-path";
 import { guardPrivatePath, navRoleForSession, type ChromeRole } from "@/lib/role-access";
@@ -158,6 +159,10 @@ async function computeRoleChrome(bearer: string | undefined, req: Request | null
   });
   const plansOn = subscriptionsEnabled();
   if (fixture) return { ...fixture, subscriptionsEnabled: plansOn };
+
+  if (!requestHasSessionMaterial(cookie, bearerFrom(req, bearer) || req?.headers.get("authorization"))) {
+    return { ...EMPTY, subscriptionsEnabled: plansOn };
+  }
 
   const { getSessionUser } = await import("@/lib/auth/verify.server");
   let user: { id: string; email?: string | null } | null = null;

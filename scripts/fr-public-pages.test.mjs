@@ -50,9 +50,10 @@ test("public French routes share the English page and canonicalise to /fr", () =
   assert.match(src("src/routes/fr.signup.tsx"), /parentSignupHead\("fr"\)/);
   assert.match(src("src/routes/fr.search.tsx"), /from "@\/routes\/search"/);
   assert.doesNotMatch(src("src/routes/fr.search.tsx"), /function FrExplore/);
-  for (const path of ["/claim", "/plans", "/compare", "/cities", "/verify", "/daycare-requirements"]) {
+  for (const path of ["/claim", "/compare", "/cities", "/verify", "/daycare-requirements"]) {
     assert.ok(SITEMAP_STATIC_PATHS.includes(path), path);
   }
+  assert.equal(SITEMAP_STATIC_PATHS.includes("/plans"), false);
 });
 
 test("French SEO copy keeps the founding period and names KidEase as Canadian where we introduce it", () => {

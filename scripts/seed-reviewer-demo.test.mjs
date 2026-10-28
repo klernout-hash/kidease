@@ -21,7 +21,7 @@ function read(rel) {
 }
 
 describe("reviewer demo seed", () => {
-  it("stays idle until Kyle sets both passwords, and never echoes them", () => {
+  it("stays idle until Kyle sets the shared password, and never echoes it", () => {
     const empty = reviewerCredentialPlan({});
     assert.equal(assertReviewerPlan(empty), "skipped");
     assert.equal(empty.parentEmail, "reviewer.parent@kidease.ca");
@@ -31,14 +31,18 @@ describe("reviewer demo seed", () => {
     assert.equal(printed.includes("also-not"), false);
 
     const ready = reviewerCredentialPlan({
-      REVIEWER_PARENT_PASSWORD: "parent-demo-pass",
-      REVIEWER_DAYCARE_PASSWORD: "centre-demo-pass",
+      REVIEWER_ACCOUNT_PASSWORD: "shared-demo-pass",
     });
     assert.equal(assertReviewerPlan(ready), "ready");
+    assert.equal(ready.parentPassword, ready.daycarePassword);
     assert.throws(() => assertReviewerPlan({ ...ready, parentPassword: "short" }), /8 characters/);
     assert.throws(
       () => assertReviewerPlan({ ...ready, daycareEmail: "kyle@kidease.ca" }),
       /operator mailbox/,
+    );
+    assert.throws(
+      () => assertReviewerPlan({ ...ready, parentEmail: "john.doe@kidease.ca" }),
+      /John Doe or Jonny Doey/,
     );
   });
 
@@ -55,10 +59,15 @@ describe("reviewer demo seed", () => {
     assert.match(script, /rating_x10 = 0/);
     assert.match(script, /review_count = 0/);
     assert.match(script, /infant_monthly = null/);
-    assert.match(script, /photos = ''/);
+    assert.match(script, /\/photos\/community\.jpg,\/photos\/playroom\.jpg/);
+    assert.match(script, /Monday to Friday, 7:30 a\.m\. to 5:30 p\.m\./);
+    assert.match(script, /qa-reviewer-tour/);
+    assert.match(script, /qa-reviewer-waitlist/);
+    assert.match(script, /Avery Sample/);
+    assert.match(script, /"twoFactorEnabled" = false/);
+    assert.match(script, /email_suppressions/);
     assert.match(script, /Not a real licensed daycare/);
-    assert.doesNotMatch(script, /REVIEWER_PARENT_PASSWORD\s*=\s*["'`][^"'`]+["'`]/);
-    assert.doesNotMatch(script, /REVIEWER_DAYCARE_PASSWORD\s*=\s*["'`][^"'`]+["'`]/);
+    assert.doesNotMatch(script, /REVIEWER_ACCOUNT_PASSWORD\s*=\s*["'`][^"'`]+["'`]/);
     const logs = [...script.matchAll(/console\.(?:log|error|info|warn)\(([\s\S]*?)\);/g)].map((m) => m[1]);
     assert.ok(logs.length >= 1);
     for (const body of logs) {
@@ -74,9 +83,11 @@ describe("reviewer demo seed", () => {
     assert.match(script, /daycare demo reply/);
     assert.doesNotMatch(script, /Reply STOP/);
     assert.match(read("package.json"), /ops:reviewer-demo/);
-    assert.match(read(".env.example"), /# REVIEWER_PARENT_PASSWORD=/);
-    assert.match(read(".env.example"), /# REVIEWER_DAYCARE_PASSWORD=/);
-    assert.doesNotMatch(read(".env.example"), /^REVIEWER_PARENT_PASSWORD=.+/m);
+    assert.match(read(".env.example"), /# REVIEWER_ACCOUNT_PASSWORD=/);
+    assert.doesNotMatch(read(".env.example"), /^REVIEWER_ACCOUNT_PASSWORD=.+/m);
+    assert.match(read("src/lib/reviewer-accounts.ts"), /reviewer\.parent@kidease\.ca/);
+    assert.match(read("src/components/posthog-boot.tsx"), /quietPostHogForStoreReviewer/);
+    assert.match(read("src/lib/ghl-intake.ts"), /reviewer-account/);
   });
 
   it("grants the reviewer parent complimentary Parent Plus with no purchase and no price", () => {
@@ -114,13 +125,12 @@ describe("reviewer demo seed", () => {
 
   it("writes generated passwords to a private file and keeps them out of the script", async () => {
     const generated = generatedReviewerPasswords();
-    assert.ok(generated.parentPassword.length >= 16);
-    assert.notEqual(generated.parentPassword, generated.daycarePassword);
+    assert.ok(generated.password.length >= 16);
+    assert.equal(generated.parentPassword, generated.daycarePassword);
     const dir = await mkdtemp(join(tmpdir(), "ke-reviewer-"));
     const file = join(dir, "demo-accounts.txt");
     const plan = reviewerCredentialPlan({
-      REVIEWER_PARENT_PASSWORD: generated.parentPassword,
-      REVIEWER_DAYCARE_PASSWORD: generated.daycarePassword,
+      REVIEWER_ACCOUNT_PASSWORD: generated.password,
     });
     await writeReviewerPasswordFile(file, plan);
     const info = await stat(file);

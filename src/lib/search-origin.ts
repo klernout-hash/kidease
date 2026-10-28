@@ -4,6 +4,7 @@ import {
   localeSuggestsManitoba,
   readClientTimeZone,
   resolveDefaultSearchOrigin,
+  searchOriginOrWinnipeg,
   shouldRequestExploreGeolocation,
   trustedSavedOrigin,
   type SearchOrigin,
@@ -28,7 +29,7 @@ function applyTrustedSaved(timeZone: string | null) {
 
 /**
  * Empty /search: street GPS when allowed, else a saved city, else Canadian IP,
- * else a Canada-wide view with no city query. Typed q stays multi-city.
+ * else Winnipeg. Typed q stays multi-city.
  * A later call (the city query arriving) invalidates an in-flight GPS boot.
  */
 let bootGeneration = 0;
@@ -70,23 +71,25 @@ export async function bootSearchOrigin(incomingQ?: string, ssrOrigin?: SearchOri
     !(localeSuggestsManitoba({ timeZone }) && isUntrustedTorontoOrigin(ssrOrigin))
       ? ssrOrigin
       : null;
-  const resolved = resolveDefaultSearchOrigin({
-    saved,
-    gps: pos,
-    gpsAllowed,
-    fallback,
-    timeZone,
-  });
+  const resolved = searchOriginOrWinnipeg(
+    resolveDefaultSearchOrigin({
+      saved,
+      gps: pos,
+      gpsAllowed,
+      fallback,
+      timeZone,
+    }),
+  );
   const label =
-    resolved.source === "gps" && pos ? reverseGeocode(pos.lat, pos.lng) : resolved.label;
+    resolved.source === "gps" && pos ? reverseGeocode(pos.lat, pos.lng) || resolved.label : resolved.label;
   setOrigin(
     {
       lat: resolved.lat,
       lng: resolved.lng,
-      label: resolved.source === "default" ? "" : label,
+      label,
       explicit: resolved.source === "gps" || resolved.source === "manual",
     },
     resolved.source,
   );
-  if (resolved.source !== "default" && label.trim()) setQuery(label);
+  if (label.trim()) setQuery(label);
 }

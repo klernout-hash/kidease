@@ -134,7 +134,8 @@ test("store builds name only their store and drop purchase copy", () => {
   assert.match(src("src/routes/terms.tsx"), /legalDocWithoutStorePurchase/);
   assert.match(src("src/routes/fr.privacy.tsx"), /legalDocWithoutStorePurchase/);
   assert.match(src("src/routes/verify.tsx"), /hideCommerce \? \[\]/);
-  assert.match(src("src/routes/menu.tsx"), /hideCommerce \? null : <MenuRow to=\{to\("\/donate"\)\}/);
+  assert.match(src("src/lib/site-footer-nav.ts"), /link.to === "\/donate"/);
+  assert.match(src("src/lib/app-menu.ts"), /"\/donate": "resources"/);
   assert.match(src("src/lib/server/daycares.ts"), /async function loadFeatured[\s\S]*overlayFeaturedCity/);
   assert.match(src("src/components/daycare-card.tsx"), /SponsoredMark show=\{item\.featuredCity\}/);
   assert.match(src("src/components/listing-badges.tsx"), /SponsoredMark show=\{item\.featuredCity\}/);

@@ -3,13 +3,12 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Building2, Menu } from "lucide-react";
 import { AppTabBar } from "@/components/app-tab-bar";
-import { NotificationBell } from "@/components/notification-bell";
+import { HeaderAccount } from "@/components/header-account";
 import { useCurrentUserState, useLocallySignedOut } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
 import { useCopy } from "@/lib/use-copy";
 import { BrandMark } from "@/components/brand-mark";
 import { CountBadge } from "@/components/count-badge";
-import { ProfileAvatar } from "@/components/profile-avatar";
 import { attentionTotal } from "@/lib/attention";
 import { restoreMyAccount } from "@/lib/server/family";
 import { MenuLeafBack } from "@/components/menu-leaf-back";
@@ -128,9 +127,12 @@ export function Shell({ children }: { children: ReactNode }) {
             <Link to={homeTo} className="shrink-0" aria-label="KidEase">
               <BrandMark size="sm" />
             </Link>
+            <div className="ml-auto">
+              <HeaderAccount />
+            </div>
           </div>
         </header>
-        <div className="[[data-channel=app]_&]:pb-[calc(6rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]">
+        <div className="[[data-channel=app]_&]:pb-[calc(8.5rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]">
           <div className="ke-page" data-ke="page">
             {children}
           </div>
@@ -179,35 +181,20 @@ export function Shell({ children }: { children: ReactNode }) {
               </div>
             ) : null}
             <div className="relative z-20 ml-auto flex items-center gap-2 bg-bg pl-1 max-md:min-w-0 max-md:max-w-full max-md:gap-1.5 md:shrink-0 [[data-channel=website]_&]:flex">
-              {headerUser ? <NotificationBell className="hidden md:grid" /> : (
+              {headerUser ? null : (
                 <Link
                   to={localePath("/claim", locale)}
                   data-ke="list-your-daycare"
-                  className="inline-flex min-h-11 max-w-[9.5rem] touch-manipulation items-center gap-1.5 whitespace-normal rounded-full border border-primary px-2.5 text-center text-[13px] font-medium leading-tight text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 sm:max-w-none sm:px-3 sm:text-sm"
+                  className="ke-web-only inline-flex min-h-11 max-w-[9.5rem] touch-manipulation items-center gap-1.5 whitespace-normal rounded-full border border-primary px-2.5 text-center text-[13px] font-medium leading-tight text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 sm:max-w-none sm:px-3 sm:text-sm"
                 >
                   <Building2 className="size-4 shrink-0" aria-hidden />
                   {t("navForDaycares")}
                 </Link>
               )}
-              {headerUser ? (
-                <Link
-                  to="/account"
-                  search={accountSearch(sticky)}
-                  data-ke="header-avatar"
-                  aria-label={t("account")}
-                  className="hidden size-11 place-items-center rounded-full md:grid"
-                >
-                  <ProfileAvatar
-                    userId={headerUser.id}
-                    fallback={headerUser.profileImageUrl}
-                    name={headerUser.displayName}
-                    size="sm"
-                  />
-                </Link>
-              ) : null}
+              <HeaderAccount />
               <button
                 type="button"
-                className="relative grid size-12 shrink-0 place-items-center rounded-full text-fg transition-colors duration-150 ease-out hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation [[data-channel=website]_&]:grid"
+                className="ke-web-only relative grid size-12 shrink-0 place-items-center rounded-full text-fg transition-colors duration-150 ease-out hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation [[data-channel=website]_&]:grid"
                 aria-label={t("menu")}
                 aria-expanded={open}
                 aria-controls="ke-nav-drawer"

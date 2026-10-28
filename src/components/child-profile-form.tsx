@@ -1,8 +1,11 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { emptyChild } from "@/lib/child-profile";
+import { childBirthdateMessage, childBirthdateProblem } from "@/lib/child-birthdate";
+import { fieldErrorClass, RequiredMark } from "@/components/required-field";
+import { focusFirstInvalid } from "@/lib/profile-form";
 import { addChild, updateChild } from "@/lib/server/family";
 import { DeleteChildControl } from "@/components/delete-child-control";
 import { useCopy } from "@/lib/use-copy";
@@ -19,10 +22,20 @@ export function ChildProfileForm({
   onSaved: () => void;
   onCancel?: () => void;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const [draft, setDraft] = useState<Draft>(initial ?? emptyChild());
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [birthError, setBirthError] = useState("");
+  const [nameInvalid, setNameInvalid] = useState(false);
+  const [gapTick, setGapTick] = useState(0);
+  const formRef = useRef<HTMLFormElement>(null);
+  const french = locale === "fr";
+
+  useEffect(() => {
+    if (!gapTick) return;
+    focusFirstInvalid(formRef.current);
+  }, [gapTick]);
 
   function set<K extends keyof Draft>(key: K, value: Draft[K]) {
     setSaved(false);
@@ -31,7 +44,16 @@ export function ChildProfileForm({
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (!draft.name.trim() || !draft.birthdate) return;
+    const nameOk = draft.name.trim().length > 0;
+    const birthProblem = childBirthdateProblem(draft.birthdate);
+    if (!nameOk || birthProblem) {
+      setNameInvalid(!nameOk);
+      setBirthError(birthProblem ? childBirthdateMessage(birthProblem, french) : "");
+      setGapTick((n) => n + 1);
+      return;
+    }
+    setNameInvalid(false);
+    setBirthError("");
     setBusy(true);
     try {
       const added = !draft.id;
@@ -48,14 +70,24 @@ export function ChildProfileForm({
   }
 
   return (
-    <form onSubmit={submit} className="space-y-6 ph-no-capture">
+    <form ref={formRef} onSubmit={submit} className="space-y-6 ph-no-capture">
+      {nameInvalid || birthError ? (
+        <p role="alert" data-ke="profile-required-note" className="text-sm text-danger">
+          {t("profileRequiredNote")}
+        </p>
+      ) : null}
       <Section title={t("childIdentity")}>
-        <Field label={t("childFullName")}>
+        <Field label={t("childFullName")} required french={french}>
           <input
-            required
+            data-ke="child-name"
             value={draft.name}
-            onChange={(e) => set("name", e.target.value)}
-            className="h-11 w-full rounded-md border border-border bg-bg px-3"
+            aria-required="true"
+            aria-invalid={nameInvalid || undefined}
+            onChange={(e) => {
+              if (e.target.value.trim()) setNameInvalid(false);
+              set("name", e.target.value);
+            }}
+            className={`h-11 w-full rounded-md border border-border bg-bg px-3 ${fieldErrorClass(nameInvalid)}`}
             autoComplete="name"
           />
         </Field>
@@ -66,14 +98,24 @@ export function ChildProfileForm({
             className="h-11 w-full rounded-md border border-border bg-bg px-3"
           />
         </Field>
-        <Field label={t("birthdate")}>
+        <Field label={t("birthdate")} required french={french}>
           <input
-            required
             type="date"
+            data-ke="child-birthdate"
+            aria-required="true"
+            aria-invalid={birthError ? true : undefined}
             value={draft.birthdate}
-            onChange={(e) => set("birthdate", e.target.value)}
-            className="h-11 w-full rounded-md border border-border bg-bg px-3"
+            onChange={(e) => {
+              setBirthError("");
+              set("birthdate", e.target.value);
+            }}
+            className={`h-11 w-full rounded-md border border-border bg-bg px-3 ${fieldErrorClass(Boolean(birthError))}`}
           />
+          {birthError ? (
+            <span role="alert" className="mt-1 block text-sm text-danger">
+              {birthError}
+            </span>
+          ) : null}
         </Field>
         <Field label={t("homeLanguage")}>
           <input
@@ -288,7 +330,7 @@ export function ChildProfileForm({
           {t("saveProfile")}
         </Button>
         {onCancel ? (
-          <Button type="button" variant="secondary" onClick={onCancel}>
+          <Button type="button" variant="secondary" data-ke="profile-cancel" onClick={onCancel}>
             {t("cancel")}
           </Button>
         ) : null}
@@ -317,10 +359,23 @@ function Section({ title, children, warn }: { title: string; children: ReactNode
   );
 }
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
+function Field({
+  label,
+  required = false,
+  french = false,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  french?: boolean;
+  children: ReactNode;
+}) {
   return (
     <label className="block text-sm">
-      <span className="text-muted">{label}</span>
+      <span className="text-muted">
+        {label}
+        {required ? <RequiredMark french={french} /> : null}
+      </span>
       <div className="mt-1">{children}</div>
     </label>
   );

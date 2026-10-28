@@ -16,7 +16,7 @@ import { SEARCH_PAGE_SIZE, pageFromSearch } from "@/lib/search-page";
 import { searchDaycarePage } from "@/lib/server/daycares";
 import { matchCentres } from "@/lib/server/ai";
 import { isIqaluitQuery, reverseGeocode } from "@/lib/geo";
-import { originFromDeviceFix, productHomeOrigin, readClientTimeZone } from "@/lib/default-origin";
+import { originFromDeviceFix, productHomeOrigin, readClientTimeZone, searchOriginOrWinnipeg } from "@/lib/default-origin";
 import { BootPending } from "@/components/boot-pending";
 import { CARD_SIZES, CARD_WIDTHS, photoSrcSet, photoUrl } from "@/lib/photo";
 import { ORIGIN_BUDGET_MS, PAINT_BUDGET_MS, withPaintBudget, withTimeoutFallback } from "@/lib/timeout";
@@ -164,10 +164,13 @@ export async function searchLoader({ location }: { location: { search: unknown }
     }
     const place = q || (city ? originFromSearchQuery(city)?.label || city : "");
     const fromQ = originFromSearchQuery(place);
-    const origin = fromQ
+    const resolvedOrigin = fromQ
       ? { lat: fromQ.lat, lng: fromQ.lng, label: fromQ.label, source: "manual" as const }
-      : await withTimeoutFallback(resolveRequestSearchOrigin(), ORIGIN_BUDGET_MS, productHomeOrigin());
-    if (!place && origin.source === "default") {
+      : searchOriginOrWinnipeg(
+          await withTimeoutFallback(resolveRequestSearchOrigin(), ORIGIN_BUDGET_MS, productHomeOrigin()),
+        );
+    const origin = resolvedOrigin;
+    if (!place && !(origin.label || "").trim()) {
       return {
         items: [] as Card[],
         itemsReady: true,
@@ -189,7 +192,7 @@ export async function searchLoader({ location }: { location: { search: unknown }
           sort: "distance",
           ageGroup: "any",
           label: origin.label,
-          q: place || (origin.source === "default" ? "" : origin.label),
+          q: place || origin.label,
           city: city || undefined,
           facility: listedDaycareTypeFromSearch(location.search),
           page,
@@ -320,6 +323,15 @@ export function SearchScreen({
   const [budgetMonthly, setBudgetMonthly] = useState("");
   const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
   const navigate = useNavigate({ from: locale === "fr" ? "/fr/search" : "/search" });
+  const bootHoldUrl = useRef(false);
+  const typedPlace = (incoming.q || "").trim() || (incoming.city || "").trim();
+  const bootLabel = (boot.origin?.label || "").trim();
+  if (!typedPlace && bootLabel && !(useAppStore.getState().origin.label || "").trim()) {
+    const source = boot.origin.source === "ip" ? "ip" : "default";
+    bootHoldUrl.current = true;
+    useAppStore.getState().setOrigin({ lat: boot.origin.lat, lng: boot.origin.lng, label: bootLabel }, source);
+    useAppStore.getState().setQuery(bootLabel);
+  }
   const origin = useAppStore((s) => s.origin);
   const originSource = useAppStore((s) => s.originSource);
   const located = useAppStore((s) => s.located);
@@ -419,7 +431,21 @@ export function SearchScreen({
 
   useEffect(() => {
     const place = (incoming.q || "").trim() || (incoming.city || "").trim();
-    void bootSearchOrigin(place, boot.origin);
+    let cancelled = false;
+    if (!place) bootHoldUrl.current = true;
+    void bootSearchOrigin(place, boot.origin).finally(() => {
+      if (cancelled) return;
+      bootHoldUrl.current = false;
+      const label = useAppStore.getState().origin.label.trim();
+      if (!place && label && !(incoming.q || "").trim()) {
+        writeExploreSearch({ q: label, name: nameQuery, from: needBy, to: needUntil });
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+    // The URL write waits until GPS or the Winnipeg fallback settles.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- rerun only when the place in the URL changes
   }, [incoming.q, incoming.city, boot.origin]);
 
   useEffect(() => {
@@ -675,6 +701,9 @@ export function SearchScreen({
           setSearchFailed(false);
           writeSearchCache(key, locked);
           captureMarketplaceFunnel({ step: "search", source: "search", dest_path: "/search" });
+          if ((result.total ?? locked.length) === 0) {
+            captureMarketplaceFunnel({ step: "zero_result", source: "search", dest_path: "/search" });
+          }
         })
         .catch(() => {
           if (live && !cached) {
@@ -823,12 +852,12 @@ export function SearchScreen({
   }
 
   useEffect(() => {
+    if (bootHoldUrl.current) return;
     const label = origin.label.trim();
-    if (!label || originSource === "default") return;
+    if (!label) return;
     if ((incoming.q || "").trim()) return;
     writeExploreSearch({ q: label, name: nameQuery, from: needBy, to: needUntil });
-    // A real city (typed, GPS, saved, or Canadian IP) stays in the URL.
-    // The Canada-wide view has no label, so it never becomes ?q= a city.
+    // GPS, a saved city, a Canadian IP, or the Winnipeg fallback stays in the URL.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- write only when q is missing
   }, [origin.label, originSource, incoming.q]);
 
@@ -1032,7 +1061,31 @@ export function SearchScreen({
     setFavoritesOnly(false);
     setCareType("any");
     setSchoolAgeOnly(false);
-    writeCategorySearch(undefined);
+    void navigate({
+      search: {
+        ...withParentSearch({
+          q: incoming.q,
+          name: incoming.name,
+          from: incoming.from,
+          to: incoming.to,
+          sort: incoming.sort,
+          city: incoming.city,
+          rank: incoming.rank,
+          start: incoming.start,
+          age: undefined,
+          cat: undefined,
+          care: undefined,
+          favorites: undefined,
+          openings: undefined,
+          live: undefined,
+        }),
+        fac: undefined,
+        cat: undefined,
+        ages: undefined,
+        open: undefined,
+        sched: undefined,
+      },
+    });
   }
 
   function currentFilters(): SavedSearchFilters {
@@ -1446,6 +1499,7 @@ export function SearchScreen({
   const locationKnown =
     askedPlace ||
     located ||
+    Boolean((origin.label || "").trim()) ||
     originSource === "gps" ||
     originSource === "manual" ||
     originSource === "saved" ||

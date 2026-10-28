@@ -65,10 +65,10 @@ const KNOWN_ADMIN_ONLY_LICENCES = new Set(["test-ghost-0001"]);
 export const PUBLIC_LIVE_KEEP_SLUGS = new Set(["kids-world-daycare-kh2t"]);
 
 /**
- * This QA-looking slug is a real public page. Do not 404 it with the qa- fixture rule.
- * Other qa- slugs, including qa-test-photo-upload, stay admin-only.
+ * Slugs that look like QA fixtures but must stay on the public catalogue.
+ * qa-test-daycare-listing-z5hz is a hidden QA centre, so this set stays empty.
  */
-export const PUBLIC_CATALOGUE_SLUGS = new Set(["qa-test-daycare-listing-z5hz"]);
+export const PUBLIC_CATALOGUE_SLUGS = new Set<string>();
 
 /**
  * Kyle's claimed catalogue fixture. Same admin-only signal as TEST/ghost rows
@@ -113,9 +113,15 @@ export function looksLikeTestFixture(d: ListingVisibilityInput | null | undefine
   if (KNOWN_ADMIN_ONLY_LICENCES.has(license) || license.startsWith("test-")) return true;
   if (QA_FIXTURE_NAME_RE.test(name) || QA_FIXTURE_QA_NAME_RE.test(name) || nameLc === "qa") return true;
   if (/\bqa\s+test\b/i.test(name)) return true;
+  if (isDocuSignSmokeCentre(name)) return true;
   if (nameLc.includes("ghost claim") || nameLc.includes("ghost listing") || nameLc === "ghost listing") return true;
   if (address.includes("kidease test")) return true;
   return false;
+}
+
+/** DocuSign webhook smoke row. Not a real centre. Hidden from every non-admin desk. */
+export function isDocuSignSmokeCentre(name: string | null | undefined): boolean {
+  return /docusign\s+smoke/i.test(String(name || ""));
 }
 
 /** Known QA fixture plus any row flagged admin_only / is_test. */
@@ -273,6 +279,20 @@ function viewerOwnsDeskFixture(viewer?: ProviderDeskViewer | null): boolean {
 }
 
 /**
+ * Waitlist card uses the same rule as the empty desk.
+ * A test or smoke centre stays off unless the operator turned Show test listings on.
+ */
+export function deskWaitlistVisible(
+  d: ListingVisibilityInput | null | undefined,
+  viewer?: ProviderDeskViewer | null,
+  includeTest = false,
+): boolean {
+  if (!providerDeskListingVisible(d, viewer)) return false;
+  if (!isAdminOnlyListing(d)) return true;
+  return includeTest && isKidEaseOperatorEmail(viewer?.viewerEmail);
+}
+
+/**
  * Director desk. Public listings always show, including ones still waiting
  * on review, so the owner can add the storefront the admin queue marks Missing.
  * An owned QA-named fixture stays on My listings through pending, waiting,
@@ -408,6 +428,7 @@ export const PUBLIC_LISTING_SQL = `(
   and lower(btrim(coalesce(name, ''))) not in ('test', 'qa')
   and lower(btrim(coalesce(slug, ''))) not in ('test', 'qa')
   and name not ilike '%qa test%'
+  and name not ilike '%docusign smoke%'
   and slug not ilike '%ghost-listing%'
   and name not ilike '%ghost claim%'
   and name not ilike '%ghost listing%'

@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql, type Sql } from "@/lib/db";
-import { isPublicListing, listingVisibilityInputFromDb } from "@/lib/listing-visibility";
+import { isKidEaseOperatorEmail } from "@/lib/admin-email";
+import { deskWaitlistVisible, isPublicListing, listingVisibilityInputFromDb } from "@/lib/listing-visibility";
 import { spotOfferMailEnabled } from "@/lib/features";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
 import {
@@ -25,7 +26,7 @@ import {
 import { signSpotOfferToken, spotOfferTokenSecret, verifySpotOfferToken } from "@/lib/spot-offer-token";
 import { SITEMAP_ORIGIN } from "@/lib/sitemap";
 import { nid } from "@/lib/utils";
-import { canCentreWriteLeadsFor } from "@/lib/server/centre-access";
+import { canCentreWriteLeadsFor, listAccessibleDaycareIds } from "@/lib/server/centre-access";
 
 type EntryRow = {
   id: string;
@@ -378,22 +379,42 @@ export const listMySpotOffers = createServerFn({ method: "GET" })
 
 export const listCentreWaitlist = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .handler(async ({ context }) => {
+  .validator((input: { includeTest?: boolean } | undefined) => input ?? {})
+  .handler(async ({ context, data }) => {
     const sql = await getSql();
-    const owned = await sql<{ id: string; name: string; slug: string }>`
-      select d.id, d.name, d.slug
-      from daycares d
-      join provider_daycares p on p.daycare_id = d.id
-      where p.user_id = ${context.userId}
-    `;
-    const member = await sql<{ id: string; name: string; slug: string }>`
-      select d.id, d.name, d.slug
-      from daycares d
-      join centre_members m on m.daycare_id = d.id
-      where m.user_id = ${context.userId} and m.status = 'active'
-    `.catch(() => [] as Array<{ id: string; name: string; slug: string }>);
+    const { lookupUser } = await import("@/lib/server/notify");
+    const viewer = await lookupUser(context.userId);
+    const includeTest = data?.includeTest === true && isKidEaseOperatorEmail(viewer.email);
+    const accessIds = await listAccessibleDaycareIds(sql, context.userId);
+    const owned = accessIds.length
+      ? await sql.query<{
+          id: string;
+          name: string;
+          slug: string;
+          license_number: string | null;
+          address: string | null;
+          visibility: string | null;
+          is_test: number | boolean | null;
+          claim_status: string | null;
+        }>(
+          `select d.id, d.name, d.slug, d.license_number, d.address, d.visibility, d.is_test, d.claim_status
+           from daycares d
+           where d.id = any($1::text[])`,
+          [accessIds],
+        )
+      : [];
     const centres = new Map<string, { id: string; name: string; slug: string }>();
-    for (const row of [...owned, ...member]) centres.set(row.id, row);
+    for (const row of owned) {
+      if (
+        !deskWaitlistVisible(listingVisibilityInputFromDb(row), {
+          ownedByViewer: true,
+          viewerEmail: viewer.email,
+        }, includeTest)
+      ) {
+        continue;
+      }
+      centres.set(row.id, row);
+    }
     const cards: CentreWaitlistCard[] = [];
     for (const centre of centres.values()) {
       if (!(await canCentreWriteLeadsFor(sql, context.userId, centre.id))) continue;

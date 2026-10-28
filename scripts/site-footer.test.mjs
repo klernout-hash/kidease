@@ -21,7 +21,6 @@ function src(rel) {
 
 const footer = src("src/components/site-footer.tsx");
 const nav = src("src/lib/site-footer-nav.ts");
-const menu = src("src/routes/menu.tsx");
 const css = src("src/styles.css");
 const copySrc = src("src/lib/copy.ts");
 
@@ -83,14 +82,14 @@ test("hamburger is Parents, Daycares, Support; jobs are not a second Caregivers 
       footerKidEase > footerSupport,
   );
 
-  const menuParents = menu.indexOf('title="Parents"');
-  const menuDaycares = menu.indexOf('title={fr ? "Garderies" : "Daycares"}');
-  const menuSupport = menu.indexOf('title={fr ? "Soutien" : "Support"}');
-  assert.ok(menuParents > 0 && menuDaycares > menuParents && menuSupport > menuDaycares);
-  assert.equal(menu.indexOf('t("footerCaregivers")'), -1);
-  assert.match(menu, /findDaycareJobs/);
-  assert.match(menu, /postDaycareJob/);
-  assert.doesNotMatch(menu, /addJobsAtKidEase/);
+  const groups = src("src/lib/app-menu.ts");
+  assert.match(groups, /"\/search": "guides"/);
+  assert.match(groups, /"\/jobs": "resources"/);
+  assert.match(groups, /"\/help": "help"/);
+  assert.equal(groups.indexOf('t("footerCaregivers")'), -1);
+  assert.match(src("src/lib/site-footer-nav.ts"), /findDaycareJobs/);
+  assert.doesNotMatch(groups, /addJobsAtKidEase/);
+  assert.doesNotMatch(groups, /postDaycareJob/);
   assert.match(copySrc, /footerCaregivers: "Caregivers & jobs"/);
   assert.match(copySrc, /footerCaregivers: "Éducatrices et emplois"/);
 });

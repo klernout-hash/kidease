@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { EmptyState } from "@/components/empty-state";
+import { KidNotebook } from "@/components/kid-art";
 import { LeadKindChip, LeadStatusChip } from "@/components/lead-status-chip";
 import { Button } from "@/components/ui/button";
 import type { LeadRequest } from "@/lib/lead-requests";
@@ -9,7 +10,7 @@ export function ParentRequestsList({ items }: { items: LeadRequest[] }) {
   const { t, locale } = useCopy();
   if (!items.length) {
     return (
-      <EmptyState title={t("noRequests")} body={t("noRequestsLead")} action={t("emptyFindCare")} actionTo="/search" />
+      <EmptyState title={t("noRequests")} body={t("noRequestsLead")} action={t("emptyFindCare")} actionTo="/search" art={<KidNotebook />} />
     );
   }
   return (

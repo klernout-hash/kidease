@@ -22,8 +22,8 @@ test("store apps hide the coming-soon store line; the website keeps it", () => {
   assert.doesNotMatch(src("src/components/site-footer.tsx"), /data-ke="store-coming-soon"/);
   assert.doesNotMatch(src("src/components/site-footer.tsx"), /t\("appStore"\)/);
   assert.doesNotMatch(src("src/components/site-footer.tsx"), /showStoreComingSoon/);
-  assert.match(src("src/routes/menu.tsx"), /marker="store-coming-soon"/);
-  assert.match(src("src/routes/menu.tsx"), /showStores \?/);
+  assert.match(src("src/components/app-menu-screen.tsx"), /"store-coming-soon"/);
+  assert.match(src("src/components/app-menu-screen.tsx"), /showStores/);
   assert.match(src("src/routes/claim.tsx"), /perkMobile/);
   assert.match(src("src/components/saved-searches-panel.tsx"), /alertPushOff/);
   assert.match(src("src/components/saved-searches-panel.tsx"), /showStoreAppsLine/);

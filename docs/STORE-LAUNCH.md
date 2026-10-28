@@ -9,7 +9,7 @@ Bundle / application id: `ca.kidease.app`
 App name: KidEase  
 Support: support@kidease.ca
 
-Reviewer sign-in: App Review uses production. Set `REVIEWER_PARENT_PASSWORD` and `REVIEWER_DAYCARE_PASSWORD` in the shell (never in git), point `DATABASE_URL` at production locally, then run `npm run ops:reviewer-demo` once. Do not print the URL or the passwords. Default emails are `reviewer.parent@kidease.ca` and `reviewer.daycare@kidease.ca`. The demo centre `qa-reviewer-demo-centre` stays `admin_only` and `is_test`. Steps are in `docs/store-review-notes.md`. This checklist does not run the command.
+Reviewer sign-in: App Review uses production. Set `REVIEWER_ACCOUNT_PASSWORD` in the shell (never in git), point `DATABASE_URL` at production locally, then run `npm run ops:reviewer-demo` once. The same password signs in both accounts. Do not print the URL or the password. Default emails are `reviewer.parent@kidease.ca` and `reviewer.daycare@kidease.ca`. The demo centre `qa-reviewer-demo-centre` stays `admin_only` and `is_test`. Steps are in `docs/store-review-notes.md`. This checklist does not run the command.
 
 Longer engineering notes: [`mobile-builds.md`](mobile-builds.md). Account + review policy: [`store-readiness.md`](store-readiness.md).
 

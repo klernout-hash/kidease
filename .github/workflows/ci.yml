@@ -50,15 +50,50 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
+      - name: Playwright version
+        id: playwright-version
+        run: |
+          version="$(node -e "const p = require('./package-lock.json').packages || {}; console.log((p['node_modules/playwright'] || p['node_modules/@playwright/test'] || p['node_modules/playwright-core'] || {version:'1'}).version)")"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+      - name: Restore Playwright browsers
+        id: playwright-cache
+        uses: actions/cache/restore@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+      - name: Install Playwright system dependencies
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if npx playwright install-deps chromium webkit; then
+              exit 0
+            fi
+            echo "playwright install-deps failed (attempt ${attempt})"
+            sleep $((attempt * 5))
+          done
+          exit 1
       - name: Install Playwright browsers
-        timeout-minutes: 20
-        run: npx playwright install --with-deps chromium webkit
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if timeout 180 npx playwright install chromium webkit; then
+              exit 0
+            fi
+            echo "playwright browser install failed (attempt ${attempt})"
+            sleep $((attempt * 5))
+          done
+          exit 1
+      - name: Save Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
       - name: Smoke against BASE_URL or local preview
+        timeout-minutes: 45
         env:
           BASE_URL: ${{ github.event.inputs.base_url }}
         run: |
@@ -88,17 +123,52 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
+      - name: Playwright version
+        id: playwright-version-signed
+        run: |
+          version="$(node -e "const p = require('./package-lock.json').packages || {}; console.log((p['node_modules/playwright'] || p['node_modules/@playwright/test'] || p['node_modules/playwright-core'] || {version:'1'}).version)")"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+      - name: Restore Playwright browsers
+        id: playwright-cache-signed
+        uses: actions/cache/restore@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version-signed.outputs.version }}
+      - name: Install Playwright system dependencies
+        timeout-minutes: 8
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if npx playwright install-deps chromium webkit; then
+              exit 0
+            fi
+            echo "playwright install-deps failed (attempt ${attempt})"
+            sleep $((attempt * 5))
+          done
+          exit 1
       - name: Install Playwright browsers
-        timeout-minutes: 20
-        run: npx playwright install --with-deps chromium webkit
+        if: steps.playwright-cache-signed.outputs.cache-hit != 'true'
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            if timeout 180 npx playwright install chromium webkit; then
+              exit 0
+            fi
+            echo "playwright browser install failed (attempt ${attempt})"
+            sleep $((attempt * 5))
+          done
+          exit 1
+      - name: Save Playwright browsers
+        if: steps.playwright-cache-signed.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version-signed.outputs.version }}
       - name: Build preview
         run: npm run build
       - name: Signed-in parent and daycare, English and French
+        timeout-minutes: 40
         run: node scripts/e2e-smoke.mjs --start-preview --signed-in
       - uses: actions/upload-artifact@v4
         if: failure()

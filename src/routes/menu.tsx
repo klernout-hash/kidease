@@ -1,149 +1,204 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLoaderData, useSearch } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 import { ShellLite } from "@/components/shell-lite";
-import { MenuGlyph, MenuRow } from "@/components/menu-row";
-import { localePath } from "@/lib/locale-path";
-import { useCopy } from "@/lib/use-copy";
+import { AppMenuScreen } from "@/components/app-menu-screen";
+import { EarningsDetailsScreen } from "@/components/earnings-details";
+import { EarningsListScreen } from "@/components/earnings-list";
+import { EarningsPayoutsScreen } from "@/components/earnings-payouts";
+import { EarningsStatementScreen, EarningsStatementsScreen } from "@/components/earnings-statement";
+import { HostEarningsScreen } from "@/components/host-earnings-screen";
+import { ParentPaymentsScreen } from "@/components/parent-payments";
+import { HostInsightsScreen } from "@/components/host-insights-screen";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { signOut } from "@/lib/auth/client";
-import { ShareKidEaseButton } from "@/components/share-button";
-import { RoleNavLinks } from "@/components/role-nav";
-import { useRoleChrome } from "@/components/role-chrome";
-import { showStoreComingSoon } from "@/lib/store-placeholders";
-import { useInNativeShell, useStoreChannel } from "@/lib/use-native-shell";
+import type { MenuGroupId } from "@/lib/app-menu";
+import type { EarnBill, EarningsResult } from "@/lib/earnings-desk";
+import type { HostEarnings, HostInsights } from "@/lib/host-desk";
+import { loadEarningsDesk, loadParentPayments } from "@/lib/server/earnings-desk";
+import { loadHostEarnings, loadHostInsights } from "@/lib/server/host-desk";
+import { connectPaymentsPublic, listCentreIdsForPayouts } from "@/lib/server/connect-payments";
+import type { ConnectPublicState } from "@/lib/connect-payments";
 
 const MenuDeskTools = lazy(() =>
   import("@/components/menu-desk-tools").then((m) => ({ default: m.MenuDeskTools })),
 );
 
-const AppearanceControl = lazy(() =>
-  import("@/components/appearance-control").then((m) => ({ default: m.AppearanceControl })),
-);
+const SECTIONS = ["resources", "guides", "help", "legal"] as const;
 
-export const Route = createFileRoute("/menu")({
-  head: () => ({
+type MenuScreen = "earnings" | "insights" | "payments";
+type EarningsView = "payouts" | "details" | "upcoming" | "paid" | "statement";
+
+const VIEWS: EarningsView[] = ["payouts", "details", "upcoming", "paid", "statement"];
+
+type PaymentsResult = { ok: true; bills: EarnBill[]; maskedEmail: string | null } | { ok: false };
+
+type MenuLoader = {
+  earnings: HostEarnings | null;
+  insights: HostInsights | null;
+  desk: EarningsResult | null;
+  payments: PaymentsResult | null;
+  connect: ConnectPublicState | null;
+  centres: { id: string; name: string }[];
+};
+
+export function menuValidateSearch(
+  s: Record<string, unknown>,
+): { section?: MenuGroupId; screen?: MenuScreen; view?: EarningsView; period?: string; bill?: string } {
+    const section = SECTIONS.includes(s.section as MenuGroupId) ? (s.section as MenuGroupId) : undefined;
+    const screen = s.screen === "earnings" || s.screen === "insights" || s.screen === "payments" ? s.screen : undefined;
+    const view = VIEWS.includes(s.view as EarningsView) ? (s.view as EarningsView) : undefined;
+    const period = typeof s.period === "string" && /^\d{4}-\d{2}$/.test(s.period) ? s.period : undefined;
+    const bill = typeof s.bill === "string" && s.bill.trim() && s.bill.length <= 80 ? s.bill.trim() : undefined;
+  return { section, screen, view, period, bill };
+}
+
+export async function menuLoader({
+  deps,
+  context,
+}: {
+  deps: { screen?: MenuScreen };
+  context: { roleChrome?: { role?: string | null; ownedSlugs?: string[] } };
+}): Promise<MenuLoader> {
+    if (deps.screen === "earnings") {
+      try {
+        const connect = await connectPaymentsPublic();
+        const centres = connect.ready ? await listCentreIdsForPayouts().catch(() => null) : null;
+        return {
+          earnings: null,
+          insights: null,
+          desk: await loadEarningsDesk(),
+          payments: null,
+          connect,
+          centres: centres && centres.enabled ? centres.centres : [],
+        };
+      } catch {
+        return { earnings: null, insights: null, desk: { ok: false }, payments: null, connect: null, centres: [] };
+      }
+    }
+    if (deps.screen === "payments") {
+      try {
+        return { earnings: null, insights: null, desk: null, payments: await loadParentPayments(), connect: null, centres: [] };
+      } catch {
+        return { earnings: null, insights: null, desk: null, payments: { ok: false }, connect: null, centres: [] };
+      }
+    }
+    if (deps.screen === "insights") {
+      try {
+        return { earnings: null, insights: await loadHostInsights(), desk: null, payments: null, connect: null, centres: [] };
+      } catch {
+        return {
+          earnings: null,
+          insights: {
+            ok: false,
+            listingRatingX10: null,
+            listingReviewCount: null,
+            parentRatingX10: null,
+            parentReviewCount: null,
+            reviews: [],
+            viewCount: null,
+            requestCount: null,
+            tourCount: null,
+          },
+          desk: null,
+          payments: null,
+          connect: null, centres: [],
+        };
+      }
+    }
+    const chrome = context.roleChrome;
+    const host = chrome?.role === "provider" || (chrome?.ownedSlugs?.length ?? 0) > 0;
+    if (!host) return { earnings: null, insights: null, desk: null, payments: null, connect: null, centres: [] };
+    const [earnings, insights] = await Promise.all([
+      loadHostEarnings().catch(() => null),
+      loadHostInsights().catch(() => null),
+    ]);
+    return { earnings, insights, desk: null, payments: null, connect: null, centres: [] };
+}
+
+export function menuHead() {
+  return {
     meta: [
       { title: "Menu · KidEase" },
-      { name: "description", content: "Settings, desks, and support on KidEase." },
+      { name: "description", content: "Account, help, and the rest of KidEase." },
     ],
-  }),
+  };
+}
+
+export const Route = createFileRoute("/menu")({
+  validateSearch: menuValidateSearch,
+  loaderDeps: ({ search }) => ({ screen: search.screen }),
+  loader: menuLoader,
+  head: menuHead,
   component: MenuPage,
 });
 
-function Group({
-  title,
-  children,
-  defer = false,
-}: {
-  title: string;
-  children: React.ReactNode;
-  defer?: boolean;
-}) {
-  return (
-    <section className={defer ? "ke-menu-group mt-7" : "mt-7"}>
-      <h2 className="px-1 text-[15px] font-bold text-fg">{title}</h2>
-      <div className="mt-2">{children}</div>
-    </section>
-  );
-}
-
-function MenuPage() {
-  const { t, locale } = useCopy();
-  const showStores = showStoreComingSoon(useStoreChannel());
+export function MenuPage() {
+  const { section, screen, view, bill, period } = useSearch({ strict: false }) as ReturnType<typeof menuValidateSearch>;
+  const { earnings, insights, desk, payments, connect, centres } = useLoaderData({ strict: false }) as MenuLoader;
   const { user } = useCurrentUserState();
-  const chrome = useRoleChrome();
-  const hideCommerce = useInNativeShell();
-  const fr = locale === "fr";
-  const to = (path: string) => localePath(path, locale);
-  const showParents = !chrome.pending && (chrome.role === "guest" || chrome.role === "parent" || chrome.role === "admin");
-  const showDaycares = !chrome.pending && (chrome.role === "guest" || chrome.role === "provider" || chrome.role === "admin");
-
+  if (screen === "earnings" && view === "payouts") {
+    return (
+      <ShellLite appTabs>
+        <EarningsPayoutsScreen desk={desk} connect={connect} centres={centres} />
+      </ShellLite>
+    );
+  }
+  if (screen === "earnings" && view === "details") {
+    return (
+      <ShellLite appTabs>
+        <EarningsDetailsScreen desk={desk} />
+      </ShellLite>
+    );
+  }
+  if (screen === "earnings" && view === "statement" && !period) {
+    return (
+      <ShellLite appTabs>
+        <EarningsStatementsScreen desk={desk} />
+      </ShellLite>
+    );
+  }
+  if (screen === "earnings" && view === "statement") {
+    return (
+      <ShellLite appTabs>
+        <EarningsStatementScreen desk={desk} period={period} />
+      </ShellLite>
+    );
+  }
+  if (screen === "payments") {
+    return (
+      <ShellLite appTabs>
+        <ParentPaymentsScreen data={payments} billId={bill} />
+      </ShellLite>
+    );
+  }
+  if (screen === "earnings" && (view === "upcoming" || view === "paid")) {
+    return (
+      <ShellLite appTabs>
+        <EarningsListScreen desk={desk} kind={view} billId={bill} period={period} />
+      </ShellLite>
+    );
+  }
+  if (screen === "earnings") {
+    return (
+      <ShellLite appTabs>
+        <HostEarningsScreen initial={desk} />
+      </ShellLite>
+    );
+  }
+  if (screen === "insights") {
+    return (
+      <ShellLite appTabs>
+        <HostInsightsScreen initial={insights} />
+      </ShellLite>
+    );
+  }
   return (
     <ShellLite appTabs>
-      <main className="ke-menu-main ke-gutter mx-auto max-w-lg pb-8 pt-5">
-        <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">
-          {fr ? "Menu" : "Menu"}
-        </h1>
-
-        {chrome.pending ? null : <RoleNavLinks role={chrome.role} paid={chrome.paid} appearance="menu" />}
-        {!chrome.pending && chrome.role === "guest" ? (
-          <MenuRow to={to("/login")} label={t("signIn")} icon="login" />
-        ) : null}
-
-        {user ? (
-          <Suspense fallback={null}>
-            <MenuDeskTools />
-          </Suspense>
-        ) : null}
-
-        <Group title={t("account")}>
-          <div className="flex items-center gap-3 px-1 py-2">
-            <MenuGlyph id="appearance" />
-            <div className="flex-1">
-              <Suspense fallback={<div className="ke-skel h-11 rounded-full" aria-hidden="true" />}>
-                <AppearanceControl />
-              </Suspense>
-            </div>
-          </div>
-        </Group>
-
-        <Group title="KidEase" defer>
-          <MenuRow to={to("/benefits")} label={t("benefitsTab")} icon="benefits" />
-          {showStores ? (
-            <MenuRow to={to("/get-app")} label={t("getApp")} icon="getApp" marker="store-coming-soon" />
-          ) : null}
-          <ShareKidEaseButton appearance="row" />
-          <MenuRow to={to("/about")} label={t("about")} icon="about" />
-          <MenuRow to={to("/start-a-daycare")} label={t("startADaycare")} icon="startDaycare" />
-          {hideCommerce ? null : <MenuRow to={to("/donate")} label={t("donateToKids")} icon="donate" />}
-          <MenuRow to="/team" label={t("team")} icon="team" />
-          <MenuRow to={to("/contact")} label={t("contact")} icon="contact" />
-        </Group>
-
-        {showParents ? <Group title="Parents" defer>
-          {chrome.role !== "guest" ? (
-            <>
-              <MenuRow to="/parent" label={t("parentDesk")} icon="parent" />
-              <MenuRow to="/account" search={{ tab: "profile", desk: "parent" }} label={t("profile")} icon="profile" />
-              <MenuRow to="/parent" search={{ tab: "saved" }} label={t("saved")} icon="saved" />
-            </>
-          ) : null}
-          <MenuRow to="/tour-checklist" label={t("tourChecklist")} icon="tourChecklist" />
-          <MenuRow to="/compare" label={t("compare")} icon="compare" />
-        </Group> : null}
-
-        {showDaycares ? <Group title={fr ? "Garderies" : "Daycares"} defer>
-          <MenuRow to="/claim" label={t("listYourDaycare")} icon="claim" />
-          {chrome.role !== "guest" ? <MenuRow to="/provider" label={t("daycareDesk")} icon="daycare" /> : null}
-          <MenuRow to="/verify" label={t("mbChildcare")} icon="verify" />
-          <MenuRow to={to("/jobs")} label={t("findDaycareJobs")} icon="jobs" />
-          {chrome.role === "provider" || chrome.role === "admin" ? (
-            <MenuRow to={to("/jobs/post")} label={t("postDaycareJob")} icon="jobs" />
-          ) : null}
-        </Group> : null}
-
-        <Group title={fr ? "Soutien" : "Support"} defer>
-          <MenuRow to={to("/help")} label={fr ? "Centre d’aide" : "Help centre"} icon="help" />
-          <MenuRow to={to("/faq")} label="FAQ" icon="faq" />
-          <MenuRow to={to("/how-it-works")} label={t("howItWorksCta")} icon="howItWorks" />
-          <MenuRow to="/verify" label={t("verifyListings")} icon="verify" />
-          <MenuRow to="/daycare-requirements" label={t("daycareRequirements")} icon="verify" />
-          <MenuRow to={to("/privacy")} label={t("privacy")} icon="privacy" />
-          <MenuRow to={to("/terms")} label={t("terms")} icon="terms" />
-          <MenuRow to={to("/cookies")} label={t("cookies")} icon="cookies" />
-        </Group>
-
-        {user ? (
-          <button
-            type="button"
-            onClick={() => void signOut("/")}
-            className="mt-8 flex w-full items-center justify-center gap-3 rounded-full bg-fg px-4 py-3.5 text-sm font-semibold text-bg"
-          >
-            <MenuGlyph id="logout" className="text-bg" />
-            {t("signOut")}
-          </button>
-        ) : null}
-      </main>
+      {user ? (
+        <Suspense fallback={null}>
+          <MenuDeskTools />
+        </Suspense>
+      ) : null}
+      <AppMenuScreen section={section} earnings={earnings} insights={insights} />
     </ShellLite>
   );
 }

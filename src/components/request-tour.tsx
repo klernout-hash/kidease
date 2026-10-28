@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { RequestSentDialog } from "@/components/request-sent-dialog";
 import { useLiveSubmit } from "@/components/use-live-submit";
 import { getFamily } from "@/lib/server/family";
+import { createTourInterest } from "@/lib/server/lead-requests";
 import { bookTourSlot, listPublicTourSlots } from "@/lib/server/tour-calendar";
 import { buildTourIcs, tourSlotInstants } from "@/lib/tour-ics";
 import { holdSendBeat, requestSentThumb } from "@/lib/request-sent";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { captureRankingEvent } from "@/lib/ranking/events";
 import { rankingContextFor } from "@/lib/ranking/context";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -25,11 +27,58 @@ import type { Child, Daycare } from "@/lib/types";
 type Props = {
   daycare: Daycare;
   open: boolean;
+  /** Centre has not claimed the listing. Parents can still send a tour request. */
+  unclaimed?: boolean;
   onClose: () => void;
   onRequestInfo?: () => void;
 };
 
-export function RequestTourSheet({ daycare, open, onClose, onRequestInfo }: Props) {
+type TourDraft = {
+  preferred: string;
+  message: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  childName: string;
+  childId: string;
+  windowId: string;
+  date: string;
+};
+
+function tourDraftKey(daycareId: string) {
+  return `ke-tour-draft:${daycareId}`;
+}
+
+function readTourDraft(daycareId: string): Partial<TourDraft> | null {
+  if (typeof sessionStorage === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(tourDraftKey(daycareId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<TourDraft>;
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeTourDraft(daycareId: string, draft: TourDraft) {
+  try {
+    sessionStorage.setItem(tourDraftKey(daycareId), JSON.stringify(draft));
+  } catch {
+    /* private mode */
+  }
+}
+
+function clearTourDraft(daycareId: string) {
+  try {
+    sessionStorage.removeItem(tourDraftKey(daycareId));
+  } catch {
+    /* ignore */
+  }
+}
+
+export function RequestTourSheet({ daycare, open, unclaimed = false, onClose, onRequestInfo }: Props) {
   const { t, locale } = useCopy();
   const { user } = useCurrentUserState();
   const titleId = useId();
@@ -42,6 +91,7 @@ export function RequestTourSheet({ daycare, open, onClose, onRequestInfo }: Prop
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [preferred, setPreferred] = useState("");
   const [slots, setSlots] = useState<PublicTourSlot[]>([]);
   const [empty, setEmpty] = useState<TourEmptyReason | null>("none_posted");
   const [timezone, setTimezone] = useState(daycare.timezone || "America/Winnipeg");
@@ -65,16 +115,27 @@ export function RequestTourSheet({ daycare, open, onClose, onRequestInfo }: Prop
     const justOpened = !opened.current;
     opened.current = true;
     if (justOpened) {
-      setDone(null);
-      setWindowId("");
+      captureMarketplaceFunnel({ step: "tour_request", source: "listing", dest_path: "/daycare", contact: "tour" });
     }
-    setDate("");
+    const draft = justOpened ? readTourDraft(daycare.id) : null;
+    if (justOpened) {
+      setDone(null);
+      setWindowId(draft?.windowId || "");
+      setMessage(draft?.message || "");
+      setPreferred(draft?.preferred || "");
+      setChildId(draft?.childId || "");
+      setChildName(draft?.childName || "");
+      setFirstName(draft?.firstName || "");
+      setLastName(draft?.lastName || "");
+      setPhone(draft?.phone || "");
+      setEmail(draft?.email || "");
+    }
     setLoading(true);
-    if (user?.primaryEmail) setEmail(user.primaryEmail);
-    if (user?.displayName) {
+    if (user?.primaryEmail) setEmail((current) => current || user.primaryEmail || "");
+    if (user?.displayName && !draft?.firstName) {
       const [first, ...rest] = user.displayName.trim().split(/\s+/);
-      setFirstName(first || "");
-      if (rest.length) setLastName(rest.join(" "));
+      setFirstName((current) => current || first || "");
+      if (rest.length) setLastName((current) => current || rest.join(" "));
     }
     void getFamily()
       .then((f) => setSavedKids(f.children))
@@ -84,7 +145,7 @@ export function RequestTourSheet({ daycare, open, onClose, onRequestInfo }: Prop
         setSlots(res.slots);
         setEmpty(res.empty);
         setTimezone(res.timezone);
-        const first = res.slots[0]?.date ?? "";
+        const first = draft?.date || res.slots[0]?.date || "";
         setDate(first);
       })
       .catch(() => {
@@ -103,6 +164,30 @@ export function RequestTourSheet({ daycare, open, onClose, onRequestInfo }: Prop
       window.removeEventListener("keydown", onKey);
     };
   }, [open, onClose, daycare.id, user]);
+
+  const skipPersist = useRef(true);
+  useEffect(() => {
+    if (!open) {
+      skipPersist.current = true;
+      return;
+    }
+    if (skipPersist.current) {
+      skipPersist.current = false;
+      return;
+    }
+    writeTourDraft(daycare.id, {
+      preferred,
+      message,
+      firstName,
+      lastName,
+      phone,
+      email,
+      childName,
+      childId,
+      windowId,
+      date,
+    });
+  }, [open, daycare.id, preferred, message, firstName, lastName, phone, email, childName, childId, windowId, date]);
 
   if (!open) return null;
 
@@ -157,12 +242,10 @@ export function RequestTourSheet({ daycare, open, onClose, onRequestInfo }: Prop
     );
   }
 
+  const interestOnly = unclaimed && Boolean(empty);
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!windowId) {
-      toast.error(t("tourTimesNeedSlot"));
-      return;
-    }
     if (
       guest &&
       (!firstName.trim() || !lastName.trim() || phone.trim().length < 7 || !email.trim())
@@ -170,9 +253,52 @@ export function RequestTourSheet({ daycare, open, onClose, onRequestInfo }: Prop
       toast.error(t("tourTimesNeedContact"));
       return;
     }
+    if (interestOnly) {
+      if (!preferred.trim() && !message.trim()) {
+        toast.error(t("preferredTimes"));
+        return;
+      }
+    } else if (!windowId) {
+      toast.error(t("tourTimesNeedSlot"));
+      return;
+    }
     const token = send.start();
     setBusy(true);
     try {
+      if (interestOnly) {
+        const saved = await createTourInterest({
+          data: {
+            daycareId: daycare.id,
+            preferredTimes: preferred.trim() || undefined,
+            message: message.trim() || undefined,
+            userId: user?.id,
+            firstName: firstName.trim() || undefined,
+            lastName: lastName.trim() || undefined,
+            phone: phone.trim() || undefined,
+            email: email.trim() || undefined,
+          },
+        });
+        capturePostHogEvent("listing_request_submitted", { intent: "tour" });
+        captureMarketplaceFunnel({ step: "tour_request", source: "listing", dest_path: "/daycare", contact: "tour" });
+        {
+          const ctx = rankingContextFor(daycare.id);
+          captureRankingEvent("tour_requested", {
+            listing_id: daycare.id,
+            position: ctx.position,
+            sort: ctx.sort,
+            variant: ctx.variant,
+          });
+        }
+        await holdSendBeat();
+        if (!send.live(token)) return;
+        clearTourDraft(daycare.id);
+        setDone({
+          conversationId: saved.id,
+          guest,
+          detail: preferred.trim() || message.trim(),
+        });
+        return;
+      }
       const res = await bookTourSlot({
         data: {
           daycareId: daycare.id,
@@ -189,6 +315,7 @@ export function RequestTourSheet({ daycare, open, onClose, onRequestInfo }: Prop
         },
       });
       capturePostHogEvent("listing_request_submitted", { intent: "tour" });
+      captureMarketplaceFunnel({ step: "tour_request", source: "listing", dest_path: "/daycare", contact: "tour" });
       {
         const ctx = rankingContextFor(daycare.id);
         captureRankingEvent("tour_requested", {
@@ -200,6 +327,7 @@ export function RequestTourSheet({ daycare, open, onClose, onRequestInfo }: Prop
       }
       await holdSendBeat();
       if (!send.live(token)) return;
+      clearTourDraft(daycare.id);
       setDone({
         conversationId: res.conversationId,
         guest: res.guest,
@@ -249,9 +377,21 @@ export function RequestTourSheet({ daycare, open, onClose, onRequestInfo }: Prop
           </div>
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
             <p className="text-sm text-muted">{t("tourTimesListingLead")}</p>
-            <p className="text-sm text-muted">{t("tourHoldSlaLead")}</p>
+            {unclaimed ? <p className="text-sm text-muted">{t("parentRequestNotLive")}</p> : null}
+            {!unclaimed ? <p className="text-sm text-muted">{t("tourHoldSlaLead")}</p> : null}
             {loading ? (
               <p className="text-sm text-muted">{t("loading")}</p>
+            ) : empty && unclaimed ? (
+              <label className="block text-sm">
+                {t("preferredTimes")}
+                <textarea
+                  rows={3}
+                  placeholder={t("tourDefaultNote")}
+                  className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm"
+                  value={preferred}
+                  onChange={(e) => setPreferred(e.target.value)}
+                />
+              </label>
             ) : empty ? (
               <div className="rounded-lg bg-bg p-4 ring-1 ring-border" data-tour-empty={empty}>
                 <p className="font-medium">
@@ -358,7 +498,7 @@ export function RequestTourSheet({ daycare, open, onClose, onRequestInfo }: Prop
                 />
               </label>
             ) : null}
-            {guest && !empty ? (
+            {guest && (!empty || unclaimed) ? (
               <div className="grid gap-3 sm:grid-cols-2">
                 <p className="text-sm text-muted sm:col-span-2">{t("tourTimesGuestLead")}</p>
                 <label className="text-sm">
@@ -405,7 +545,7 @@ export function RequestTourSheet({ daycare, open, onClose, onRequestInfo }: Prop
                 </label>
               </div>
             ) : null}
-            {!empty ? (
+            {!empty || unclaimed ? (
               <label className="block text-sm">
                 {t("optionalMessage")}
                 <textarea
@@ -421,17 +561,17 @@ export function RequestTourSheet({ daycare, open, onClose, onRequestInfo }: Prop
               <p className="text-xs text-subtle">{formatTourSlotRange(selected, loc)}</p>
             ) : null}
           </div>
-          {!empty ? (
+          {(!empty || unclaimed) && !loading ? (
             <div className="border-t border-border px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
               <Button
                 type="submit"
-                className="w-full"
-                disabled={busy || !windowId}
+                className="w-full min-h-11 touch-manipulation"
+                disabled={busy || (!interestOnly && !windowId)}
                 size="lg"
                 aria-busy={busy || undefined}
                 aria-label={busy ? t("requestSentSending") : undefined}
               >
-                {busy ? "…" : t("tourTimesBook")}
+                {busy ? "…" : interestOnly ? t("bookTour") : t("tourTimesBook")}
               </Button>
             </div>
           ) : null}

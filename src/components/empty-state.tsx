@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ export function EmptyState({
   secondaryTo,
   onSecondary,
   icon: Icon = Search,
+  art,
 }: {
   title: string;
   body?: string;
@@ -22,12 +24,15 @@ export function EmptyState({
   secondaryTo?: string;
   onSecondary?: () => void;
   icon?: LucideIcon;
+  art?: ReactNode;
 }) {
   return (
-    <div className="mx-auto max-w-md px-4 py-5 text-center">
-      <span className="mx-auto grid size-9 place-items-center rounded-full bg-primary/10 text-primary">
-        <Icon className="size-4" strokeWidth={1.8} />
-      </span>
+    <div className="mx-auto max-w-md px-4 py-6 text-center">
+      {art ?? (
+        <span className="mx-auto grid size-9 place-items-center rounded-full bg-primary/10 text-primary">
+          <Icon className="size-4" strokeWidth={1.8} />
+        </span>
+      )}
       <p className="mt-2 font-display text-lg tracking-tight">{title}</p>
       {body ? <p className="mt-1 text-sm leading-5 text-muted">{body}</p> : null}
       {action && (actionTo || onAction) ? (

@@ -15,6 +15,7 @@ import { checkoutSessionBody, catalogCheckoutBody, flattenStripeBody } from "../
 import {
   APPLE_PAY_DOMAIN_ASSOCIATION_PATH,
   applePayDomainAssociationPayload,
+  applePayWellKnownResult,
   isApplePayDomainAssociationPath,
   resolveApplePayDomainAssociation,
 } from "./well-known-apple-pay.mjs";
@@ -131,7 +132,19 @@ test("Apple Pay domain association is env-only and never invented in git", () =>
   assert.equal(resolveApplePayDomainAssociation({}), null);
   assert.equal(applePayDomainAssociationPayload(APPLE_PAY_DOMAIN_ASSOCIATION_PATH, {}), null);
   assert.equal(wellKnownStaticPayload(APPLE_PAY_DOMAIN_ASSOCIATION_PATH, {}), null);
+  assert.equal(applePayWellKnownResult(APPLE_PAY_DOMAIN_ASSOCIATION_PATH, {}).status, 404);
 
+  assert.equal(
+    resolveApplePayDomainAssociation({ APPLE_PAY_DOMAIN_ASSOCIATION: "  apple-pay-primary  " }),
+    "apple-pay-primary",
+  );
+  assert.equal(
+    resolveApplePayDomainAssociation({
+      APPLE_PAY_DOMAIN_ASSOCIATION: "primary",
+      STRIPE_APPLE_PAY_DOMAIN_ASSOCIATION: "legacy",
+    }),
+    "primary",
+  );
   const served = applePayDomainAssociationPayload(APPLE_PAY_DOMAIN_ASSOCIATION_PATH, {
     STRIPE_APPLE_PAY_DOMAIN_ASSOCIATION: "  apple-pay-association-token  ",
   });

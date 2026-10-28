@@ -72,6 +72,7 @@ export function parentValidateSearch(s: Record<string, unknown>) {
     session?: string;
     billing?: "return";
     share?: string;
+    child?: string;
   } = {};
   const tab = parentUrlTab(s.tab);
   if (tab) out.tab = tab;
@@ -83,6 +84,7 @@ export function parentValidateSearch(s: Record<string, unknown>) {
   if (s.billing === "return") out.billing = "return";
   const share = parseShareToken(s.share);
   if (share) out.share = share;
+  if (typeof s.child === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(s.child)) out.child = s.child;
   return out;
 }
 
@@ -216,6 +218,7 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
           shareToken={search.share ?? null}
           initialSaved={loaded.saved}
           initialShared={loaded.shortlistShared}
+          initialChild={search.child ?? null}
         />
       </Suspense>
     </TwoFactorGate>

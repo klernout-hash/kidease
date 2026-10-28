@@ -76,10 +76,20 @@ async function settleMockCheckout(page) {
 
 async function setFixture(context, base, { role, plan, own, activity, attention } = {}) {
   await context.clearCookies();
-  const res = await context.request.post(new URL("/api/e2e-seed", base).href, {
-    data: { role, paid: plan === "paid", ownSlug: own || "", activity: Boolean(activity), attention: Boolean(attention) },
-    headers: { origin: base, "content-type": "application/json" },
-  });
+  let res;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      res = await context.request.post(new URL("/api/e2e-seed", base).href, {
+        data: { role, paid: plan === "paid", ownSlug: own || "", activity: Boolean(activity), attention: Boolean(attention) },
+        headers: { origin: base, "content-type": "application/json" },
+      });
+      break;
+    } catch (err) {
+      const dropped = /ECONNRESET|ECONNREFUSED|socket hang up/i.test(String(err?.message || err));
+      if (!dropped || attempt === 2) throw err;
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }
   if (!res.ok()) {
     throw new Error(`seed ${role || "parent"} ${res.status()} ${(await res.text()).slice(0, 200)}`);
   }
@@ -170,6 +180,10 @@ async function roleNavText(page) {
 function mentions(text, phrases) {
   const lower = text.toLowerCase();
   return phrases.filter((phrase) => lower.includes(phrase.toLowerCase()));
+}
+
+async function waitUntilEditClosed(page) {
+  await page.waitForFunction(() => !new URL(location.href).searchParams.has("edit"), { timeout: timeoutMs });
 }
 
 async function appBarText(page, href) {
@@ -296,14 +310,18 @@ async function runRoleFixture(page, base) {
       !/requests & tours/i.test(guestNav);
     record("menu-guest", guestOk, { note: guestOk ? "guest" : guestNav.slice(0, 180) });
     const guestBar = await appBarText(page, new URL("/", base).href);
-    const guestOrder = guestBar.indexOf("Search") > guestBar.indexOf("Home") && guestBar.indexOf("Saved") > guestBar.indexOf("Search");
+    const guestOrder =
+      guestBar.indexOf("Search") >= 0 &&
+      guestBar.indexOf("Saved") > guestBar.indexOf("Search") &&
+      guestBar.indexOf("Menu") > guestBar.indexOf("Saved");
     record(
       "bottom-bar-guest",
-      /\bHome\b/.test(guestBar) &&
-        /\bSearch\b/.test(guestBar) &&
+      /\bSearch\b/.test(guestBar) &&
         /\bSaved\b/.test(guestBar) &&
-        /\bSign in\b/.test(guestBar) &&
+        /\bMenu\b/.test(guestBar) &&
         guestOrder &&
+        !/\bHome\b/.test(guestBar) &&
+        !/\bSign in\b/.test(guestBar) &&
         !/I'm a parent/i.test(guestBar),
       { note: guestBar },
     );
@@ -369,10 +387,12 @@ async function runRoleFixture(page, base) {
       parentBar.indexOf("Search") >= 0 &&
         parentBar.indexOf("Saved") > parentBar.indexOf("Search") &&
         parentBar.indexOf("Requests") > parentBar.indexOf("Saved") &&
-        parentBar.indexOf("Messages") > parentBar.indexOf("Requests") &&
+        parentBar.indexOf("Inbox") > parentBar.indexOf("Requests") &&
+        parentBar.indexOf("Menu") > parentBar.indexOf("Inbox") &&
         /\bSaved\b/.test(parentBar) &&
         /\bRequests\b/.test(parentBar) &&
-        /\bMessages\b/.test(parentBar) &&
+        /\bInbox\b/.test(parentBar) &&
+        /\bMenu\b/.test(parentBar) &&
         !/\bUpgrade\b/.test(parentBar) &&
         !/\bMy plan\b/.test(parentBar) &&
         !/\bSubscription\b/.test(parentBar) &&
@@ -381,7 +401,7 @@ async function runRoleFixture(page, base) {
         !/\bEnrolled\b/.test(parentBar),
       { note: parentBar },
     );
-    const parentAvatar = await page.locator('[data-ke="tab-avatar"]').count();
+    const parentAvatar = await page.locator('[data-ke="header-avatar"]').count();
     record("bottom-bar-avatar", parentAvatar > 0, { note: `avatars ${parentAvatar}` });
 
     await page.setViewportSize({ width: 1280, height: 900 });
@@ -414,15 +434,18 @@ async function runRoleFixture(page, base) {
     );
     await page.setViewportSize({ width: 390, height: 844 });
     await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs }).catch(() => {});
-    await page.locator('[data-ke="menu-badge"]').waitFor({ timeout: timeoutMs }).catch(() => {});
-    await openHeaderMenu(page);
-    const menuBadge = await page.locator('[data-ke="menu-badge"]').count();
-    const drawerUpgrade = await page.locator('#ke-nav-drawer [data-nav="upgrade"]:visible').count();
-    const drawerBadge = ((await page.locator('#ke-nav-drawer [data-nav="bookings"] [data-ke="count-badge"]').innerText().catch(() => "")) || "").trim();
-    const phoneSwitcher = await page.locator('#ke-nav-drawer [data-ke="desk-switcher"]').count();
-    await page.keyboard.press("Escape");
-    record("nav-phone-shell", menuBadge > 0 && drawerUpgrade > 0 && phoneSwitcher === 0 && /^(\d+|99\+)$/.test(drawerBadge), {
-      note: `menu=${menuBadge} upgrade=${drawerUpgrade} switcher=${phoneSwitcher} badge=${drawerBadge}`,
+    const phoneMenuButton = page.locator('header button[aria-label="Menu"]');
+    const phoneMenuHidden = !(await phoneMenuButton.isVisible().catch(() => false));
+    const requestsBadge = page.locator('[data-ke="app-tab-bar"] [data-nav="bookings"] [data-ke="count-badge"]');
+    await requestsBadge.waitFor({ timeout: timeoutMs }).catch(() => {});
+    const drawerBadge = ((await requestsBadge.innerText().catch(() => "")) || "").trim();
+    await page.goto(new URL("/menu", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    const upgradeRow = page.locator('[data-ke="app-menu"] [data-nav="upgrade"]');
+    await upgradeRow.waitFor({ timeout: timeoutMs }).catch(() => {});
+    const drawerUpgrade = await upgradeRow.count();
+    const phoneSwitcher = await page.locator('[data-ke="desk-switcher"]').count();
+    record("nav-phone-shell", phoneMenuHidden && drawerUpgrade > 0 && phoneSwitcher === 0 && /^(\d+|99\+)$/.test(drawerBadge), {
+      note: `menuHidden=${phoneMenuHidden} upgrade=${drawerUpgrade} switcher=${phoneSwitcher} badge=${drawerBadge}`,
     });
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto(new URL("/account?tab=profile&section=delete", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
@@ -444,6 +467,9 @@ async function runRoleFixture(page, base) {
       timeout: timeoutMs,
     });
     const photoSignIn = await page.getByRole("link", { name: /sign in to add a photo/i }).count();
+    const openProfileEdit = page.locator('[data-ke="profile-edit"]');
+    await openProfileEdit.click();
+    await page.locator('[data-ke="profile-edit-about"]').click();
     const bioBox = page.locator("textarea");
     await bioBox.waitFor({ timeout: timeoutMs });
     const bio = `Saved ${Date.now()}`;
@@ -452,9 +478,12 @@ async function runRoleFixture(page, base) {
       (res) => res.request().method() === "POST" && res.url().includes("/_serverFn/") && res.ok(),
       { timeout: timeoutMs },
     );
-    await page.getByRole("button", { name: /save details/i }).click();
+    await page.locator('[data-ke="account-save-details"]').click();
     await saved;
+    await waitUntilEditClosed(page);
     await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await openProfileEdit.click();
+    await page.locator('[data-ke="profile-edit-about"]').click();
     await bioBox.waitFor({ timeout: timeoutMs });
     const keptBio = await bioBox.inputValue();
     const accountCrash = /Something went wrong/.test((await page.locator("body").innerText()) || "");
@@ -532,9 +561,10 @@ async function runRoleFixture(page, base) {
     record(
       "bottom-bar-daycare",
       daycareBar.indexOf("Today") >= 0 &&
-        daycareBar.indexOf("Requests") > daycareBar.indexOf("Today") &&
-        daycareBar.indexOf("Listings") > daycareBar.indexOf("Requests") &&
+        daycareBar.indexOf("Calendar") > daycareBar.indexOf("Today") &&
+        daycareBar.indexOf("Listings") > daycareBar.indexOf("Calendar") &&
         daycareBar.indexOf("Messages") > daycareBar.indexOf("Listings") &&
+        daycareBar.indexOf("Menu") > daycareBar.indexOf("Messages") &&
         !daycareBar.includes("Desk") &&
         !daycareBar.includes("Enquiries") &&
         !daycareBar.includes("Upgrade") &&
@@ -940,7 +970,16 @@ async function runBrowserSmoke(url) {
     [join(root, "scripts/browser-smoke.mjs"), url, shot],
     { cwd: root, stdio: "inherit", env: process.env },
   );
-  const code = await new Promise((resolve) => child.on("close", resolve));
+  const code = await new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      child.kill("SIGKILL");
+      resolve(1);
+    }, 60_000);
+    child.on("close", (status) => {
+      clearTimeout(timer);
+      resolve(status);
+    });
+  });
   record("browser-smoke", code === 0 || code === 2, {
     note: code === 2 ? "console noise (exit 2) tolerated" : `exit ${code}`,
     exit: code,
@@ -1378,12 +1417,15 @@ async function runSignedInSessions(page, base) {
 
       await page.goto(new URL(item.account, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
       const photo = await page.getByRole("link", { name: /sign in to add a photo|connectez-vous pour ajouter une photo/i }).count();
+      const openProfileEdit = page.locator('[data-ke="profile-edit"]');
+      await openProfileEdit.click();
+      await page.locator('[data-ke="profile-edit-about"]').waitFor({ timeout: timeoutMs });
       const bioBox = page.locator("textarea").first();
-      await bioBox.waitFor({ timeout: timeoutMs });
       if (tag === "parent-en") {
         await page.waitForFunction(() => {
-          const box = document.querySelector('input[autocomplete="name"]');
-          return Boolean(box && box.value.trim().length > 0);
+          const box = document.querySelector('[data-ke="profile-name-value"]');
+          const text = box?.textContent?.trim() || "";
+          return text.length > 0 && text !== "—";
         }, { timeout: timeoutMs });
         let rewroteSession = false;
         const watchUpdate = (req) => {
@@ -1400,8 +1442,8 @@ async function runSignedInSessions(page, base) {
         }
         const stayed = !/\/login/i.test(afterSave) && !rewroteSession;
         await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
-        const saveAgain = page.locator('[data-ke="account-save-details"]');
-        const stillIn = await saveAgain
+        const editAgain = page.locator('[data-ke="profile-edit"]');
+        const stillIn = await editAgain
           .waitFor({ state: "visible", timeout: timeoutMs })
           .then(() => !/\/login/i.test(page.url()))
           .catch(() => false);
@@ -1409,8 +1451,10 @@ async function runSignedInSessions(page, base) {
           note: `${page.url()} updateUser=${rewroteSession}`,
         });
         if (!stayed || !stillIn) throw new Error(`unchanged save left ${page.url()}`);
-        await bioBox.waitFor({ timeout: timeoutMs });
+        await editAgain.click();
       }
+      await page.locator('[data-ke="profile-edit-about"]').click();
+      await bioBox.waitFor({ timeout: timeoutMs });
       const bio = `Saved ${tag} ${Date.now()}`;
       await bioBox.fill(bio);
       const saved = page.waitForResponse(
@@ -1422,7 +1466,10 @@ async function runSignedInSessions(page, base) {
       );
       await page.locator('[data-ke="account-save-details"]').click();
       await saved;
+      await waitUntilEditClosed(page);
       await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
+      await page.locator('[data-ke="profile-edit"]').click();
+      await page.locator('[data-ke="profile-edit-about"]').click();
       await page.waitForFunction((expected) => {
         const box = document.querySelector("textarea");
         return Boolean(box && box.value.includes(expected));
@@ -1516,6 +1563,12 @@ async function runWebkitSearchGuard(base) {
 }
 
 let browser = null;
+// One check must not sit for 50 minutes. The step limit in CI is the backstop.
+const suiteTimer = setTimeout(() => {
+  console.error("[e2e] FAIL  suite — stopped after 40 minutes");
+  process.exit(1);
+}, Number(process.env.E2E_SUITE_MS || 40 * 60 * 1000));
+suiteTimer.unref();
 try {
   if (args.startPreview && !args.explicitUrl) {
     startPreview();

@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { copyText, listingMailtoHref, listingShareUrl } from "@/lib/share";
 import { openDirections } from "@/lib/maps";
+import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -81,7 +82,12 @@ export function FreeListingShareActions({
         </Button>
       ) : null}
       <Button asChild variant="secondary">
-        <a href={mailto}>
+        <a
+          href={mailto}
+          onClick={() =>
+            captureMarketplaceFunnel({ step: "contact", source: "listing", dest_path: "/daycare", contact: "email" })
+          }
+        >
           <Mail className="size-4" />
           {t("emailListing")}
         </a>

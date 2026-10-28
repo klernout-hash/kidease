@@ -56,6 +56,6 @@ test("Support verify page holds listing explanations", () => {
   assert.match(daycares, /"\/daycare-requirements"/);
   assert.doesNotMatch(support, /"\/verify"/);
   assert.doesNotMatch(support, /"\/daycare-requirements"/);
-  assert.match(src("src/routes/menu.tsx"), /to="\/verify"/);
-  assert.match(src("src/routes/menu.tsx"), /to="\/daycare-requirements"/);
+  assert.match(src("src/lib/app-menu.ts"), /"\/verify": "resources"/);
+  assert.match(src("src/lib/app-menu.ts"), /"\/daycare-requirements": "resources"/);
 });

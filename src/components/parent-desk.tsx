@@ -8,7 +8,9 @@ import { DeskSkeleton } from "@/components/page-skeleton";
 import { ParentShortlist } from "@/components/parent-shortlist";
 import { StatusBadge } from "@/components/status-badge";
 import { LedgerHonesty } from "@/components/listing-status-badge";
+import { ChildCareCard } from "@/components/child-care-card";
 import { EmptyState } from "@/components/empty-state";
+import { KidNotebook } from "@/components/kid-art";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getFamily } from "@/lib/server/family";
@@ -19,10 +21,8 @@ import { listLeadRequests } from "@/lib/server/lead-requests";
 import type { LeadRequest } from "@/lib/lead-requests";
 import { listParentBills } from "@/lib/server/billing";
 import { shareChildWithCentres } from "@/lib/server/enrol-queue";
-import { hasCareDetails } from "@/lib/child-profile";
 import { parentPayEmptyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
-import { formatAgeLabel } from "@/lib/templates";
 import { ageGroupFromMonths, asList, formatMonth, money, monthsBetween } from "@/lib/utils";
 import { useSessionDesks } from "@/components/desk-switcher";
 import type { Booking, Child, DaycareCard as Card, Payment, TourRequest } from "@/lib/types";
@@ -38,6 +38,7 @@ import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { inboxThreadTo, parentDeskPath, parentNavSearch } from "@/lib/desk-nav";
+import { MAX_CHILDREN_PER_PARENT } from "@/lib/children-limit";
 import { parentDeskTabOrDefault } from "@/lib/parent-tab";
 import { useStoreShell } from "@/lib/use-native-shell";
 import { yieldToMain } from "@/lib/yield-main";
@@ -116,6 +117,7 @@ export function ParentDesk({
   shareToken = null,
   initialSaved = [],
   initialShared = false,
+  initialChild = null,
 }: {
   initialTab?: ParentTab;
   plusReturn?: "success" | "cancel" | null;
@@ -124,6 +126,7 @@ export function ParentDesk({
   shareToken?: string | null;
   initialSaved?: Card[];
   initialShared?: boolean;
+  initialChild?: string | null;
 }) {
   const { user } = useCurrentUserState();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -160,6 +163,7 @@ export function ParentDesk({
   const [editing, setEditing] = useState<Child | null | "new">(null);
   const [childFocus, setChildFocus] = useState<string | null>(null);
   const [childOpen, setChildOpen] = useState(false);
+  const [childrenReady, setChildrenReady] = useState(false);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [picked, setPicked] = useState<Record<string, string[]>>({});
   const [savedReady, setSavedReady] = useState(false);
@@ -251,6 +255,7 @@ export function ParentDesk({
       setBookings(asList(f?.bookings));
       setPayments(asList(f?.payments));
       setChildren(asList(f?.children));
+      setChildrenReady(true);
       setCentreMessages(f.centreMessages ?? 0);
       setUpgradeDismissed(Boolean(f.upgradeCardDismissed));
       setShortlistShared(Boolean(f.shortlistShared));
@@ -297,6 +302,7 @@ export function ParentDesk({
     setPayments([]);
     setBills([]);
     setChildren([]);
+    setChildrenReady(false);
     setTours([]);
     setLeads([]);
     setCentreMessages(0);
@@ -327,13 +333,34 @@ export function ParentDesk({
         });
       })
       .catch(() => {
-        startTransition(() => setExploreReady(true));
+        startTransition(() => {
+          setExploreReady(true);
+          setChildrenReady(true);
+        });
       });
     return () => {
       cancelled = true;
       cancelIdle?.();
     };
   }, [user?.id, loadFamily, loadExplore, loadDeskExtras]);
+
+  useEffect(() => {
+    if (!initialChild || !childrenReady) return;
+    if (initialChild === "new") {
+      if (children.length >= MAX_CHILDREN_PER_PARENT) {
+        setEditing(null);
+        return;
+      }
+      setEditing("new");
+      setChildOpen(true);
+      return;
+    }
+    const found = children.find((child) => child.id === initialChild);
+    if (!found) return;
+    setChildFocus(found.id);
+    setChildOpen(true);
+    setEditing(null);
+  }, [children, childrenReady, initialChild]);
 
   useEffect(() => {
     if (contentTab !== "saved") {
@@ -360,7 +387,7 @@ export function ParentDesk({
 
   useEffect(() => {
     function refresh() {
-      void loadFamily().catch(() => undefined);
+      void loadFamily(true).catch(() => undefined);
     }
     window.addEventListener("kidease-shortlist", refresh);
     return () => window.removeEventListener("kidease-shortlist", refresh);
@@ -512,7 +539,7 @@ export function ParentDesk({
           <p className="mt-1 text-sm text-muted">{t("myRequestsLead")}</p>
           <div className="mt-4">
             {leads.length === 0 && bookings.length === 0 ? (
-              <EmptyState title={t("noRequests")} body={t("noRequestsLead")} action={t("emptyFindCare")} actionTo="/search" />
+              <EmptyState title={t("noRequests")} body={t("noRequestsLead")} action={t("emptyFindCare")} actionTo="/search" art={<KidNotebook />} />
             ) : leads.length ? (
             <Suspense fallback={<div className="ke-skel h-24 rounded-xl" aria-hidden="true" />}>
               <ParentRequestsList items={leads} />
@@ -760,9 +787,11 @@ export function ParentDesk({
                   </li>
                 ))}
               </ul>
-              <Button className="mt-3" onClick={() => { setEditing("new"); setChildOpen(true); }}>
-                {children.length ? t("newChild") : t("addChild")}
-              </Button>
+              {children.length < MAX_CHILDREN_PER_PARENT ? (
+                <Button className="mt-3" onClick={() => { setEditing("new"); setChildOpen(true); }}>
+                  {children.length ? t("newChild") : t("addChild")}
+                </Button>
+              ) : null}
             </div>
             <div className="ke-split-detail min-w-0" data-ke="children-detail">
               <Button variant="ghost" className="mb-3 md:hidden" onClick={() => { setChildOpen(false); setEditing(null); }}>
@@ -770,6 +799,7 @@ export function ParentDesk({
               </Button>
               {editing ? (
             <div className="rounded-xl bg-surface p-4 ring-1 ring-border">
+              <h2 className="mb-4 text-base font-semibold">{editing === "new" ? t("newChild") : t("profileEdit")}</h2>
               <Suspense fallback={<div className="ke-skel h-48 rounded-xl" aria-hidden="true" />}>
                 <ChildProfileForm
                   initial={editing === "new" ? null : editing}
@@ -787,44 +817,28 @@ export function ParentDesk({
                   {children.map((c) => {
                     const selected = picked[c.id] ?? [];
                     return (
-                    <li key={c.id} className={c.id === activeChild?.id ? "ph-no-capture p-4" : "ke-child-rest ph-no-capture p-4"}>
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="font-medium">
-                            {c.name}
-                            {c.preferredName ? <span className="text-muted"> ({c.preferredName})</span> : null}
-                          </p>
-                          <p className="text-sm text-muted">
-                            {formatAgeLabel(c.birthdate, locale)} · {c.birthdate}
-                          </p>
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            {c.epiPen ? (
-                              <span className="rounded-full bg-danger/10 px-2 py-0.5 text-xs text-danger ring-1 ring-danger/20">
-                                {t("epiPenBadge")}
-                              </span>
-                            ) : null}
-                            <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs text-muted">
-                              {c.allergies || t("noAllergies")}
-                            </span>
-                            {hasCareDetails(c) ? (
-                              <span className="rounded-full bg-ok/10 px-2 py-0.5 text-xs text-ok">
-                                {t("sharedWithCentre")}
-                              </span>
-                            ) : null}
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Button size="sm" variant="secondary" onClick={() => setEditing(c)}>
-                            {t("editChild")}
-                          </Button>
-                          <DeleteChildControl
-                            child={{ id: c.id, name: c.name }}
-                            onDeleted={() => {
-                              setEditing(null);
-                              void load();
-                            }}
-                          />
-                        </div>
+                    <li key={c.id} className={c.id === activeChild?.id ? "ph-no-capture" : "ke-child-rest ph-no-capture"}>
+                      <ChildCareCard
+                        child={c}
+                        actions={
+                          <button
+                            type="button"
+                            data-ke="child-profile-edit"
+                            onClick={() => setEditing(c)}
+                            className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-primary touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                          >
+                            {t("profileEdit")}
+                          </button>
+                        }
+                      />
+                      <div className="px-3 pb-3">
+                        <DeleteChildControl
+                          child={{ id: c.id, name: c.name }}
+                          onDeleted={() => {
+                            setEditing(null);
+                            void load();
+                          }}
+                        />
                       </div>
                       <div className="mt-4 rounded-lg bg-bg p-3 ring-1 ring-border">
                         <p className="text-sm font-medium">{t("sendChildProfile")}</p>

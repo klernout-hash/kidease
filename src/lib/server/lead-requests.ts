@@ -28,6 +28,7 @@ import { lookupUser, notifyPlatform, notifyThreadParty } from "@/lib/server/noti
 import { requireAdmin } from "@/lib/server/roles";
 import { listCentreOwnerEmails } from "@/lib/server/thread-access";
 import { upsertDaycare } from "@/lib/server/seed";
+import { infoQuestionMail, leadReplyMail, spotRequestMail, tourRequestMail, waitlistRequestMail } from "@/lib/mail-copy";
 import { parentRequestSms } from "@/lib/sms-copy";
 import { nid } from "@/lib/utils";
 
@@ -73,6 +74,34 @@ function mapLead(row: LeadRow): LeadRequest {
     updatedAt: String(row.updated_at),
     respondedAt: row.responded_at ? String(row.responded_at) : null,
   };
+}
+
+async function ensureInfoThread(
+  sql: Awaited<ReturnType<typeof getSql>>,
+  userId: string,
+  daycareId: string,
+  message: string | null,
+): Promise<string | null> {
+  const users = await sql<{ id: string }>`select id from "user" where id = ${userId} limit 1`.catch(() => []);
+  if (!users[0]) return null;
+  const convoId = nid("cv");
+  await sql`
+    insert into conversations (id, user_id, daycare_id)
+    values (${convoId}, ${userId}, ${daycareId})
+    on conflict (user_id, daycare_id) do nothing
+  `.catch(() => undefined);
+  const convos = await sql<{ id: string }>`
+    select id from conversations where user_id = ${userId} and daycare_id = ${daycareId} limit 1
+  `.catch(() => []);
+  const cid = convos[0]?.id;
+  if (!cid) return null;
+  const body = (message || "").trim() || "I would like more information about your centre.";
+  await sql`
+    insert into messages (id, conversation_id, sender, body, kind)
+    values (${nid("msg")}, ${cid}, ${"parent"}, ${body}, ${"chat"})
+  `.catch(() => undefined);
+  await sql`update conversations set last_at = now() where id = ${cid}`.catch(() => undefined);
+  return cid;
 }
 
 export async function recordLeadRequest(
@@ -136,6 +165,10 @@ export async function recordLeadRequest(
   const lastName = (input.lastName || "").trim() || null;
   const phone = (input.phone || "").trim() || null;
   const email = (input.email || "").trim() || null;
+  let conversationId = (input.conversationId || "").trim() || null;
+  if (!conversationId && kind === "info") {
+    conversationId = await ensureInfoThread(sql, input.userId, input.daycareId, message);
+  }
   await sql`
     insert into lead_requests (
       id, kind, status, user_id, daycare_id, message,
@@ -144,7 +177,7 @@ export async function recordLeadRequest(
       created_at, updated_at
     ) values (
       ${id}, ${kind}, ${"requested"}, ${input.userId}, ${input.daycareId}, ${message},
-      ${sourceKind}, ${sourceId}, ${input.conversationId || null},
+      ${sourceKind}, ${sourceId}, ${conversationId},
       ${firstName}, ${lastName}, ${phone}, ${email},
       now(), now()
     )
@@ -155,7 +188,7 @@ export async function recordLeadRequest(
         source_kind, source_id, conversation_id, created_at, updated_at
       ) values (
         ${id}, ${kind}, ${"requested"}, ${input.userId}, ${input.daycareId}, ${message},
-        ${sourceKind}, ${sourceId}, ${input.conversationId || null}, now(), now()
+        ${sourceKind}, ${sourceId}, ${conversationId}, now(), now()
       )
     `;
   });
@@ -216,18 +249,18 @@ async function notifyNewLead(
   if (!d) return;
   const actor = await lookupUser(input.userId);
   const parentName = (actor.name || "A parent").trim() || "A parent";
-  const kindLabel =
+  const letter =
     input.kind === "waitlist"
-      ? "Waitlist"
+      ? waitlistRequestMail(parentName, d.name)
       : input.kind === "spot_inquiry"
-        ? "Spot inquiry"
+        ? spotRequestMail(parentName, d.name)
         : input.kind === "info"
-          ? "Request info"
-          : "Tour";
+          ? infoQuestionMail(parentName, d.name)
+          : tourRequestMail(parentName, d.name);
   try {
     await notifyPlatform({
       kind: leadNotifyKind(input.kind),
-      title: `${kindLabel} request: ${d.name}`,
+      title: letter.adminSubject,
       daycareName: d.name,
       address: d.address ?? undefined,
       city: d.city ?? undefined,
@@ -235,7 +268,7 @@ async function notifyNewLead(
       slug: d.slug,
       actorName: parentName,
       actorEmail: actor.email,
-      detail: input.message || kindLabel,
+      detail: input.message || letter.preview,
     });
   } catch (err) {
     console.error("[kidease-mail] lead request notify failed", err);
@@ -254,8 +287,10 @@ async function notifyNewLead(
       notifyThreadParty({
         to: r.email,
         name: r.name,
-        subject: `${kindLabel} request for ${d.name}`,
-        preview: `${parentName} sent a ${kindLabel.toLowerCase()} request for ${d.name}.`,
+        subject: letter.daycareSubject,
+        preview: letter.preview,
+        previewFr: letter.previewFr,
+        preheader: letter.preview,
         threadUrl: inboxUrl,
         daycareName: d.name,
       }).catch(() => undefined),
@@ -394,6 +429,62 @@ export const createInfoRequest = createServerFn({ method: "POST" })
     return { id: recorded.id, status: "requested" as const, reused: recorded.reused };
   });
 
+/** Tour interest for a centre that has not posted times yet. Guests and signed-in parents can send it. */
+export const createTourInterest = createServerFn({ method: "POST" })
+  .validator((input: {
+    daycareId: string;
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    email?: string;
+    message?: string;
+    preferredTimes?: string;
+    userId?: string;
+  }) => input)
+  .handler(async ({ data }) => {
+    const signedIn = (data.userId || "").trim();
+    const contact = normalizeInfoContact({
+      firstName: data.firstName || "",
+      lastName: data.lastName || "",
+      phone: data.phone || "",
+      email: data.email || "",
+      message: data.message,
+    });
+    if (!signedIn && !contact.ok) throw new Error("Please enter your name, phone, and email.");
+    const daycareId = (data.daycareId || "").trim();
+    if (!daycareId) throw new Error("Centre not found");
+    const listed = await catalogByIdGet(daycareId);
+    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerMayUseAdminOnlyListing())) {
+      throw new Error("Listing not found");
+    }
+    const sql = await getSql();
+    if (listed) await upsertDaycare(sql, listed);
+    const exists = await sql<{ id: string }>`select id from daycares where id = ${daycareId} limit 1`;
+    if (!exists[0]) throw new Error("Centre not found");
+    const userId = signedIn || guestInfoUserId(contact.email);
+    const note = [
+      (data.preferredTimes || "").trim(),
+      contact.ok ? `${contact.firstName} ${contact.lastName}` : "",
+      contact.ok ? contact.phone : "",
+      contact.ok ? contact.email : "",
+      contact.message || (data.message || "").trim(),
+    ]
+      .filter(Boolean)
+      .join("\n");
+    const recorded = await recordLeadRequest(sql, {
+      userId,
+      daycareId,
+      kind: "tour",
+      message: note,
+      firstName: contact.ok ? contact.firstName : null,
+      lastName: contact.ok ? contact.lastName : null,
+      phone: contact.ok ? contact.phone : null,
+      email: contact.ok ? contact.email : null,
+    });
+    if (!recorded) throw new Error("Could not save request");
+    return { id: recorded.id, status: "requested" as const, reused: recorded.reused };
+  });
+
 export const updateLeadRequest = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { leadId: string; action: LeadAction; note?: string }) => input)
@@ -441,17 +532,16 @@ export const updateLeadRequest = createServerFn({ method: "POST" })
 
     const parent = await lookupUser(lead.user_id);
     const origin = process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://kidease.ca";
-    const preview = leadReplyPreview(next, lead.daycare_name, note);
+    const reply = leadReplyMail(next, lead.daycare_name);
+    const noteLine = (note || "").trim();
+    const preview = noteLine ? `${reply.preview} ${noteLine}` : reply.preview;
     await notifyThreadParty({
       to: parent.email,
       name: parent.name,
-      subject:
-        next === "confirmed"
-          ? `Request confirmed: ${lead.daycare_name}`
-          : next === "declined"
-            ? `Request update: ${lead.daycare_name}`
-            : `Request answered: ${lead.daycare_name}`,
+      subject: reply.subject,
       preview,
+      previewFr: reply.previewFr,
+      preheader: reply.preview,
       threadUrl: `${origin}${PARENT_REQUESTS_HREF}`,
       daycareName: lead.daycare_name,
     }).catch(() => undefined);
@@ -460,12 +550,7 @@ export const updateLeadRequest = createServerFn({ method: "POST" })
       const actor = await lookupUser(context.userId);
       await notifyPlatform({
         kind: "lead_request",
-        title:
-          next === "confirmed"
-            ? `Lead confirmed: ${lead.daycare_name}`
-            : next === "declined"
-              ? `Lead declined: ${lead.daycare_name}`
-              : `Lead answered: ${lead.daycare_name}`,
+        title: leadReplyMail(next, lead.daycare_name).adminSubject,
         daycareName: lead.daycare_name,
         slug: lead.slug,
         actorName: actor.name,

@@ -8,6 +8,8 @@ import { nitro } from "nitro/vite";
 import { grokPwaPlugin } from "./scripts/grok-pwa-plugin.mjs";
 // @ts-expect-error JS plugin alongside the TS vite config
 import { wellKnownAppLinksPlugin } from "./scripts/well-known-app-links.mjs";
+// @ts-expect-error JS plugin alongside the TS vite config
+import { clientNodeBuiltinStub } from "./scripts/client-node-stub.mjs";
 
 /**
  * Finish PGLite bootstrap during dev-server setup (before traffic). Vite awaits
@@ -266,6 +268,7 @@ export default defineConfig(({ command, isPreview }) => ({
   ssr: { external: ["sharp", "posthog-js", "@sentry/node", "inngest"] },
   optimizeDeps: { exclude: ["sharp"] },
   plugins: [
+    clientNodeBuiltinStub(),
     pgliteBootstrapPlugin(),
     // Before tanstackStart so AASA / assetlinks never fall through to the SPA.
     wellKnownAppLinksPlugin(),

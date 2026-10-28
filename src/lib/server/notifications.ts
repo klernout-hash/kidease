@@ -379,16 +379,8 @@ export async function syncAndListNotifications(userId: string): Promise<Notifica
 
 export async function countUnreadNotifications(userId: string): Promise<number> {
   try {
-    const sql = await getSql();
-    await ensureNotificationsTable(sql);
-    const projected = await projectUserNotifications(sql, userId);
-    await persistProjected(sql, userId, projected);
-    const rows = await sql<{ n: number }>`
-      select count(*)::int as n
-      from user_notifications
-      where user_id = ${userId} and read_at is null
-    `.catch(() => [{ n: 0 }]);
-    return failClosedUnread(rows[0]?.n ?? 0);
+    const listed = await syncAndListNotifications(userId);
+    return failClosedUnread(listed.filter((row) => !row.readAt).length);
   } catch {
     return 0;
   }

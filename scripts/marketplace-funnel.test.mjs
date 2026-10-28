@@ -22,7 +22,12 @@ test("marketplace_funnel covers search/explore → listing_view → share/contac
   assert.match(src("src/routes/index.tsx"), /step: "explore"/);
   assert.match(src("src/routes/daycare.$slug.tsx"), /step: "listing_view"/);
   assert.match(src("src/routes/daycare.$slug.tsx"), /step: "contact"/);
+  assert.match(src("src/routes/daycare.$slug.tsx"), /contact: "phone"/);
+  assert.match(src("src/routes/daycare.$slug.tsx"), /contact: "website"/);
+  assert.match(src("src/components/request-tour.tsx"), /step: "tour_request"/);
+  assert.match(src("src/routes/search.tsx"), /step: "zero_result"/);
   assert.match(src("src/components/share-button.tsx"), /step: "share"/);
+  assert.match(src("src/components/free-listing-share.tsx"), /contact: "email"/);
   assert.match(src("src/routes/claim.tsx"), /step: "claim"/);
   assert.match(src("docs/posthog.md"), /marketplace_funnel/);
 });

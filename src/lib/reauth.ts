@@ -1,4 +1,22 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+/** Server-only HMAC. A static `node:crypto` import throws in the browser on /login. */
+function nodeCrypto(): typeof import("node:crypto") {
+  const proc = globalThis.process;
+  if (!proc || typeof proc.getBuiltinModule !== "function") {
+    throw new Error("Reauth signatures run on the server.");
+  }
+  return proc.getBuiltinModule("node:crypto");
+}
+
+function hmacHex(secret: string, body: string) {
+  return nodeCrypto().createHmac("sha256", secret).update(body).digest("hex");
+}
+
+function signaturesMatch(sig: string, expected: string) {
+  const { timingSafeEqual } = nodeCrypto();
+  const a = Buffer.from(sig);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
 
 /**
  * High-stakes step-up window after a password or email-OTP confirm.
@@ -43,7 +61,7 @@ export function isReauthRequiredMessage(message?: string | null): boolean {
 
 export function signReauthCookie(userId: string, exp: number, secret: string): string {
   const body = `${userId}.${exp}`;
-  const sig = createHmac("sha256", secret).update(`reauth:${body}`).digest("hex");
+  const sig = hmacHex(secret, `reauth:${body}`);
   return `${body}.${sig}`;
 }
 
@@ -57,10 +75,8 @@ export function parseReauthCookie(
   const [userId, expRaw, sig] = parts;
   const exp = Number(expRaw);
   if (!userId || !Number.isFinite(exp) || exp < Date.now()) return null;
-  const expected = createHmac("sha256", secret).update(`reauth:${userId}.${exp}`).digest("hex");
-  const a = Buffer.from(sig);
-  const b = Buffer.from(expected);
-  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
+  const expected = hmacHex(secret, `reauth:${userId}.${exp}`);
+  if (!sig || !signaturesMatch(sig, expected)) return null;
   return { userId, exp };
 }
 
@@ -154,17 +170,11 @@ export type ReauthProof =
   | { kind: "stamp"; userId: string; confirmedAt: number }
   | { kind: "legacy"; userId: string; exp: number };
 
-function signaturesMatch(sig: string, expected: string): boolean {
-  const a = Buffer.from(sig);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
 /** Stamp cookie: confirm time, so high-stakes and grace can use different windows. */
 export function signReauthStamp(userId: string, confirmedAt: number, secret: string): string {
   const at = Math.floor(confirmedAt);
   const body = `${REAUTH_STAMP_VERSION}.${userId}.${at}`;
-  const sig = createHmac("sha256", secret).update(`reauth:${body}`).digest("hex");
+  const sig = hmacHex(secret, `reauth:${body}`);
   return `${body}.${sig}`;
 }
 
@@ -175,9 +185,7 @@ export function parseReauthProof(raw: string | null | undefined, secret: string)
     const [, userId, atRaw, sig] = parts;
     const confirmedAt = Number(atRaw);
     if (!userId || !Number.isFinite(confirmedAt) || confirmedAt <= 0) return null;
-    const expected = createHmac("sha256", secret)
-      .update(`reauth:${REAUTH_STAMP_VERSION}.${userId}.${confirmedAt}`)
-      .digest("hex");
+    const expected = hmacHex(secret, `reauth:${REAUTH_STAMP_VERSION}.${userId}.${confirmedAt}`);
     if (!signaturesMatch(sig, expected)) return null;
     return { kind: "stamp", userId, confirmedAt };
   }

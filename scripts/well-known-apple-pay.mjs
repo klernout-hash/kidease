@@ -5,7 +5,8 @@
  *
  * Hosted Stripe Checkout shows Apple Pay on checkout.stripe.com without this
  * file. The path is served only when Kyle pastes Stripe’s downloaded file
- * into STRIPE_APPLE_PAY_DOMAIN_ASSOCIATION (Vercel) — after account
+ * into APPLE_PAY_DOMAIN_ASSOCIATION (or the older
+ * STRIPE_APPLE_PAY_DOMAIN_ASSOCIATION) on Vercel — after account
  * verification, Settings → Payment methods → Apple Pay → Add domain
  * www.kidease.ca. Do not invent the file contents. Unset → 404.
  */
@@ -27,8 +28,10 @@ export function isApplePayDomainAssociationPath(pathname) {
 
 /** Raw association body from env. Empty / missing → null (do not invent Apple’s file). */
 export function resolveApplePayDomainAssociation(env = process.env) {
-  const body = String(env?.STRIPE_APPLE_PAY_DOMAIN_ASSOCIATION ?? "").trim();
-  return body || null;
+  const primary = String(env?.APPLE_PAY_DOMAIN_ASSOCIATION ?? "").trim();
+  if (primary) return primary;
+  const legacy = String(env?.STRIPE_APPLE_PAY_DOMAIN_ASSOCIATION ?? "").trim();
+  return legacy || null;
 }
 
 export function applePayDomainAssociationPayload(pathname, env = process.env) {
@@ -40,4 +43,14 @@ export function applePayDomainAssociationPayload(pathname, env = process.env) {
     body: body.includes("\n") ? body : `${body}\n`,
     contentType: APPLE_PAY_ASSOCIATION_CONTENT_TYPE,
   };
+}
+
+/** 404 until Stripe’s file is pasted into the env. Never invent the body. */
+export function applePayWellKnownResult(pathname, env = process.env) {
+  if (!isApplePayDomainAssociationPath(pathname)) return null;
+  const payload = applePayDomainAssociationPayload(pathname, env);
+  if (!payload) {
+    return { status: 404, body: "Not Found\n", contentType: "text/plain; charset=utf-8" };
+  }
+  return { status: 200, body: payload.body, contentType: payload.contentType };
 }

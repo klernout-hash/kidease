@@ -100,18 +100,20 @@ export function ListingHeroGallery({
       id={photoId}
       className="ke-listing-hero relative overflow-hidden lg:rounded-[14px]"
       data-empty={count ? undefined : "true"}
+      data-claim={claim ? "offer" : undefined}
       data-ke="listing-hero"
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
       {src?.includes("-logo") ? (
-        <img src={src} alt="" className="size-full bg-surface object-contain p-6" />
+        <img src={src} alt={name} className="size-full bg-surface object-contain p-6" />
       ) : src ? (
         <BuildingPhoto
           eager
           priority
-          claim={claim}
+          claim={false}
           src={src}
+          alt={name}
           sizes={DETAIL_SIZES}
           width={768}
           height={576}

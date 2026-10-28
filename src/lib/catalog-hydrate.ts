@@ -4,8 +4,6 @@
  * Photo maps stay listingPhotosFor(real-storefronts / storefronts).
  */
 
-import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
 import { listingCultureFrom } from "./listing-culture.ts";
 import { listingPhotosFor } from "./listing-photo.ts";
 import {
@@ -170,6 +168,8 @@ const EXTRA_BASE = "https://raw.githubusercontent.com/klernout-hash/kidease/main
 
 async function readLocalJson(rel: string): Promise<unknown | null> {
   try {
+    const { readFile } = await import("node:fs/promises");
+    const { fileURLToPath } = await import("node:url");
     const path = fileURLToPath(new URL(rel, import.meta.url));
     return JSON.parse(await readFile(path, "utf8"));
   } catch {

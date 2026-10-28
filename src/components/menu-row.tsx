@@ -4,7 +4,7 @@ import { menuIcon, type MenuIconId } from "@/lib/menu-icons";
 import { cn } from "@/lib/utils";
 
 const rowClass =
-  "flex min-h-14 items-center justify-between gap-3 border-b border-border px-1 text-[15px] text-fg last:border-b-0";
+  "ke-press flex min-h-14 items-center justify-between gap-3 border-b border-border px-1 text-[15px] text-fg last:border-b-0";
 const drawerClass =
   "flex min-h-12 items-center gap-3 rounded-xl px-3 text-[15px] font-medium text-fg hover:bg-surface";
 
