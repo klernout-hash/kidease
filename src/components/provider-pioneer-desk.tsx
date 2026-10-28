@@ -1,12 +1,20 @@
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ChipButton } from "@/components/chip";
 import { RatioBoard } from "@/components/ratio-board";
 import { TaxReceiptStudio } from "@/components/tax-receipt-studio";
 import { Button } from "@/components/ui/button";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { leadsToCrmCsv, type CrmLead } from "@/lib/crm-export";
 import { localePath } from "@/lib/locale-path";
+import { getProvider } from "@/lib/server/family";
 import { useCopy } from "@/lib/use-copy";
+
+const DailyCareDesk = lazy(() => import("@/components/daily-care-desk").then((m) => ({ default: m.DailyCareDesk })));
+
+const WEBHOOK_KEY = "kidease-crm-webhook";
+
+type ClaimedCentre = { id: string; name: string; city: string; spots: number; waitlist: number };
 
 type Tab = "spots" | "classroom" | "staff" | "billing" | "org";
 
@@ -34,23 +42,66 @@ export function ProviderPioneerDesk() {
   const [sites, setSites] = useState("");
   const [spots, setSpots] = useState("");
   const [waitlist, setWaitlist] = useState("");
+  const [orgEdited, setOrgEdited] = useState(false);
+  const [claimed, setClaimed] = useState<ClaimedCentre[]>([]);
+  const [webhook, setWebhook] = useState("");
+  const [webhookSaved, setWebhookSaved] = useState(false);
+  const { user } = useCurrentUserState();
   const firstAidDays = daysUntil(firstAid);
   const vscDays = daysUntil(vsc);
 
-  const sampleCsv = useMemo(() => {
-    const row: CrmLead = {
-      centre: "",
-      parent_name: "",
-      child_name: "",
-      email: "",
-      phone: "",
-      request_type: "tour",
-      start_date: "",
-      age_band: "",
-      created_at: "",
-    };
-    return leadsToCrmCsv([row]);
+  useEffect(() => {
+    try {
+      setWebhook(window.localStorage.getItem(WEBHOOK_KEY) || "");
+    } catch {
+      /* ignore */
+    }
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    let live = true;
+    void getProvider()
+      .then((desk) => {
+        if (!live) return;
+        const rows = (desk.listings || []).map((listing) => ({
+          id: listing.id,
+          name: listing.name,
+          city: listing.city,
+          spots: (listing.spotsInfant || 0) + (listing.spotsToddler || 0) + (listing.spotsPreschool || 0),
+          waitlist: listing.waitlist || 0,
+        }));
+        setClaimed(rows);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (orgEdited || !claimed.length) return;
+    setSites(String(claimed.length));
+    setSpots(String(claimed.reduce((sum, row) => sum + row.spots, 0)));
+    setWaitlist(String(claimed.reduce((sum, row) => sum + row.waitlist, 0)));
+  }, [claimed, orgEdited]);
+
+  const sampleCsv = useMemo(() => {
+    const rows: CrmLead[] = claimed.length
+      ? claimed.map((centre) => ({
+          centre: centre.name,
+          parent_name: "",
+          child_name: "",
+          email: "",
+          phone: "",
+          request_type: "waitlist",
+          start_date: "",
+          age_band: "",
+          created_at: "",
+        }))
+      : [{ centre: "", request_type: "tour" }];
+    return leadsToCrmCsv(rows);
+  }, [claimed]);
 
   function downloadCsv() {
     const blob = new Blob([sampleCsv], { type: "text/csv;charset=utf-8" });
@@ -104,12 +155,50 @@ export function ProviderPioneerDesk() {
             <Button type="button" className="mt-3" variant="secondary" onClick={downloadCsv}>
               {fr ? "Télécharger le CSV" : "Download CSV"}
             </Button>
+            <label className="mt-4 block text-sm">
+              <span className="font-medium">{fr ? "Adresse du webhook" : "Webhook address"}</span>
+              <input
+                className="ke-input mt-1 w-full"
+                inputMode="url"
+                value={webhook}
+                placeholder="https://"
+                onChange={(event) => {
+                  setWebhookSaved(false);
+                  setWebhook(event.target.value);
+                }}
+              />
+            </label>
+            <Button
+              type="button"
+              className="mt-3"
+              variant="secondary"
+              onClick={() => {
+                try {
+                  window.localStorage.setItem(WEBHOOK_KEY, webhook.trim());
+                  setWebhookSaved(true);
+                } catch {
+                  setWebhookSaved(false);
+                }
+              }}
+            >
+              {fr ? "Enregistrer le webhook" : "Save webhook"}
+            </Button>
+            {webhookSaved ? (
+              <p className="mt-2 text-sm text-muted" role="status" data-ke="crm-webhook-saved">
+                {fr ? "Adresse enregistrée sur cet appareil." : "Address saved on this device."}
+              </p>
+            ) : null}
           </div>
         </section>
       ) : null}
       {tab === "classroom" ? (
-        <div className="mt-4">
+        <div className="mt-4 space-y-4">
           <RatioBoard />
+          {user ? (
+            <Suspense fallback={<p className="text-sm text-muted">{fr ? "Chargement du local." : "Loading the classroom."}</p>}>
+              <DailyCareDesk role="provider" />
+            </Suspense>
+          ) : null}
         </div>
       ) : null}
       {tab === "staff" ? (
@@ -164,25 +253,34 @@ export function ProviderPioneerDesk() {
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <label className="block text-sm">
               {fr ? "Sites revendiqués" : "Claimed sites"}
-              <input className="ke-input mt-1 w-full" inputMode="numeric" value={sites} onChange={(event) => setSites(event.target.value.replace(/[^\d]/g, "").slice(0, 3))} />
+              <input className="ke-input mt-1 w-full" inputMode="numeric" value={sites} onChange={(event) => { setOrgEdited(true); setSites(event.target.value.replace(/[^\d]/g, "").slice(0, 3)); }} />
             </label>
             <label className="block text-sm">
               {fr ? "Places ouvertes" : "Open spots"}
-              <input className="ke-input mt-1 w-full" inputMode="numeric" value={spots} onChange={(event) => setSpots(event.target.value.replace(/[^\d]/g, "").slice(0, 4))} />
+              <input className="ke-input mt-1 w-full" inputMode="numeric" value={spots} onChange={(event) => { setOrgEdited(true); setSpots(event.target.value.replace(/[^\d]/g, "").slice(0, 4)); }} />
             </label>
             <label className="block text-sm">
               {fr ? "Liste d'attente" : "Waitlist"}
-              <input className="ke-input mt-1 w-full" inputMode="numeric" value={waitlist} onChange={(event) => setWaitlist(event.target.value.replace(/[^\d]/g, "").slice(0, 5))} />
+              <input className="ke-input mt-1 w-full" inputMode="numeric" value={waitlist} onChange={(event) => { setOrgEdited(true); setWaitlist(event.target.value.replace(/[^\d]/g, "").slice(0, 5)); }} />
             </label>
           </div>
-          {Number.isFinite(siteCount) && siteCount >= 2 ? (
+          {claimed.length ? (
+            <ul className="mt-3 space-y-1 text-sm" data-ke="org-claimed-centres">
+              {claimed.map((centre) => (
+                <li key={centre.id}>
+                  {centre.name} · {centre.city} · {centre.spots} {fr ? "places" : "spots"} · {centre.waitlist} {fr ? "en attente" : "waiting"}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {Number.isFinite(siteCount) && siteCount >= 1 ? (
             <p className="mt-3 text-sm">
               {fr
                 ? `${siteCount} sites · ${Number.isFinite(openSpots) ? openSpots : 0} places · ${Number.isFinite(waiting) ? waiting : 0} en attente.`
                 : `${siteCount} sites · ${Number.isFinite(openSpots) ? openSpots : 0} open spots · ${Number.isFinite(waiting) ? waiting : 0} waiting.`}
             </p>
           ) : (
-            <p className="mt-3 text-sm text-muted">{fr ? "Le sommaire s'affiche à partir de 2 sites." : "The rollup shows from 2 sites."}</p>
+            <p className="mt-3 text-sm text-muted">{fr ? "Ajoutez un site revendiqué pour voir le sommaire." : "Add a claimed site to see the rollup."}</p>
           )}
         </section>
       ) : null}

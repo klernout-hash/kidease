@@ -18,15 +18,44 @@ function clampScore(value: unknown): number | null {
   return n;
 }
 
+/** Untouched categories use the overall star rating. A missing score stays empty. */
+export function scoreForDimension(
+  review: { rating?: number | null; dimensions?: Partial<Record<ReviewDimensionId, number>> | null },
+  id: ReviewDimensionId,
+): number | null {
+  const explicit = clampScore(review.dimensions?.[id]);
+  if (explicit != null) return explicit;
+  return clampScore(review.rating);
+}
+
 export function reviewDimensionBars(
-  reviews: Array<{ dimensions?: Partial<Record<ReviewDimensionId, number>> | null }>,
+  reviews: Array<{ rating?: number | null; dimensions?: Partial<Record<ReviewDimensionId, number>> | null }>,
 ): DimensionScore[] {
   return REVIEW_DIMENSIONS.map((dim) => {
     const scores = reviews
-      .map((review) => clampScore(review.dimensions?.[dim.id]))
+      .map((review) => scoreForDimension(review, dim.id))
       .filter((score): score is number => score != null);
     if (!scores.length) return { id: dim.id, average: null, count: 0 };
     const average = Math.round((scores.reduce((sum, score) => sum + score, 0) / scores.length) * 10) / 10;
     return { id: dim.id, average, count: scores.length };
   });
+}
+
+export function parseStoredDimensions(raw: unknown): Partial<Record<ReviewDimensionId, number>> | null {
+  if (!raw) return null;
+  let value: unknown = raw;
+  if (typeof raw === "string") {
+    try {
+      value = JSON.parse(raw) as unknown;
+    } catch {
+      return null;
+    }
+  }
+  if (!value || typeof value !== "object") return null;
+  const out: Partial<Record<ReviewDimensionId, number>> = {};
+  for (const dim of REVIEW_DIMENSIONS) {
+    const score = clampScore((value as Record<string, unknown>)[dim.id]);
+    if (score != null) out[dim.id] = score;
+  }
+  return Object.keys(out).length ? out : null;
 }

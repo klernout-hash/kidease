@@ -18,6 +18,7 @@ import { qcMilieuPrivacyCentroid } from "../src/lib/qc-home-daycare.ts";
 import { pickCardMicroPills, siblingFitBadge } from "../src/lib/card-micro-pills.ts";
 import { parsePioneerSearch } from "../src/lib/pioneer-filters.ts";
 import { reviewDimensionBars } from "../src/lib/review-dimensions.ts";
+import { knownListingMonthlyFee, realMonthlyFee } from "../src/lib/listing-fee.ts";
 import { leadsToCrmCsv, signCrmBody } from "../src/lib/crm-export.ts";
 
 const home = { lat: 49.895, lng: -97.138 };
@@ -208,6 +209,13 @@ test("search chips and review bars stay tied to real inputs", () => {
   const bars = reviewDimensionBars([{ dimensions: { safety: 4, value: 5 } }, { dimensions: { safety: 2 } }]);
   assert.equal(bars.find((bar) => bar.id === "safety")?.average, 3);
   assert.equal(bars.find((bar) => bar.id === "communication")?.average, null);
+  const fromStars = reviewDimensionBars([{ rating: 4 }, { rating: 2, dimensions: { safety: 5 } }]);
+  assert.equal(fromStars.find((bar) => bar.id === "safety")?.average, 4.5);
+  assert.equal(fromStars.find((bar) => bar.id === "value")?.average, 3);
+  assert.equal(realMonthlyFee(218), null);
+  assert.equal(knownListingMonthlyFee({ preschoolMonthly: 900, infantMonthly: 218 }, "preschool"), 900);
+  assert.equal(knownListingMonthlyFee({ programDaily: 10 }, "toddler"), 217.5);
+  assert.equal(knownListingMonthlyFee({ programDaily: 9.65 }, "infant"), 209.89);
   const pills = pickCardMicroPills({
     home,
     work,

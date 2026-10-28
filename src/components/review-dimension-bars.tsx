@@ -15,11 +15,11 @@ export function ReviewDimensionBars({
   const { locale } = useCopy();
   const fr = locale === "fr";
   const bars = reviewDimensionBars(
-    reviews.map((review) =>
-      review && typeof review === "object" && "dimensions" in review
-        ? { dimensions: (review as { dimensions?: Partial<Record<ReviewDimensionId, number>> | null }).dimensions }
-        : {},
-    ),
+    reviews.map((review) => {
+      if (!review || typeof review !== "object") return {};
+      const row = review as { rating?: number; dimensions?: Partial<Record<ReviewDimensionId, number>> | null };
+      return { rating: row.rating, dimensions: row.dimensions };
+    }),
   );
   const login = localePath("/login", locale);
   const next = localePath(`/daycare/${slug}`, locale);

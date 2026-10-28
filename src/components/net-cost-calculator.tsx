@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { knownListingMonthlyFee, type ListingFeeInput } from "@/lib/listing-fee";
 import {
   PROVINCES,
   estimateNetCost,
@@ -26,11 +27,15 @@ function cad(n: number, fr: boolean): string {
 export function NetCostCalculator({
   province,
   grossMonthly,
+  fees,
+  programDaily,
   participating,
   showPageLink = true,
 }: {
   province?: string;
   grossMonthly?: number | null;
+  fees?: ListingFeeInput;
+  programDaily?: number | null;
   participating?: boolean;
   showPageLink?: boolean;
 }) {
@@ -40,9 +45,21 @@ export function NetCostCalculator({
   const [prov, setProv] = useState<ProvinceCode>(startProvince);
   const [income, setIncome] = useState(70_000);
   const [age, setAge] = useState<CostAgeBand>("preschool");
-  const [grossText, setGrossText] = useState(grossMonthly && grossMonthly > 0 ? String(Math.round(grossMonthly)) : "");
+  const [feeEdited, setFeeEdited] = useState(false);
+  const storedFee = knownListingMonthlyFee(
+    { ...fees, programDaily: programDaily ?? fees?.programDaily },
+    age,
+  );
+  const startingFee = storedFee ?? (grossMonthly && grossMonthly > 0 ? Math.round(grossMonthly) : null);
+  const [grossText, setGrossText] = useState(startingFee ? String(startingFee) : "");
   const [inProgram, setInProgram] = useState(participating === true);
   const [qcReduced, setQcReduced] = useState(false);
+
+  useEffect(() => {
+    if (feeEdited) return;
+    const next = knownListingMonthlyFee({ ...fees, programDaily: programDaily ?? fees?.programDaily }, age);
+    if (next) setGrossText(String(next));
+  }, [age, feeEdited, fees, programDaily]);
   const gross = Number(grossText);
 
   const result = useMemo(() => {
@@ -104,7 +121,10 @@ export function NetCostCalculator({
             inputMode="decimal"
             className="ke-input mt-1 w-full"
             value={grossText}
-            onChange={(event) => setGrossText(event.target.value.replace(/[^\d.]/g, "").slice(0, 7))}
+            onChange={(event) => {
+              setFeeEdited(true);
+              setGrossText(event.target.value.replace(/[^\d.]/g, "").slice(0, 7));
+            }}
             onFocus={(event) => event.currentTarget.scrollIntoView({ block: "center" })}
           />
         </label>

@@ -42,6 +42,7 @@ export const LOCALE_PAIRED_PATHS = [
   "/need-care-fast",
   "/calculator",
   "/dashboard",
+  "/waitlist",
   "/vacancy-index",
   "/claim",
   "/plans",
@@ -85,6 +86,7 @@ export const LOCALE_REDIRECT_PATHS = [
   "/meet-the-team",
   "/childcare-benefits-program",
   "/dashboard",
+  "/waitlist",
 ] as const;
 
 const PAIRED = new Set<string>(LOCALE_PAIRED_PATHS);

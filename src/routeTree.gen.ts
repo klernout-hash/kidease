@@ -75,6 +75,7 @@ import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as VacancyIndexRouteImport } from './routes/vacancy-index'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as Verify2faRouteImport } from './routes/verify-2fa'
+import { Route as WaitlistRouteImport } from './routes/waitlist'
 import { Route as AdminFeaturesRouteImport } from './routes/admin.features'
 import { Route as ApiAccountPurgeRouteImport } from './routes/api/account-purge'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
@@ -144,6 +145,7 @@ import { Route as FrTourChecklistRouteImport } from './routes/fr.tour-checklist'
 import { Route as FrUnsubscribeRouteImport } from './routes/fr.unsubscribe'
 import { Route as FrVacancyIndexRouteImport } from './routes/fr.vacancy-index'
 import { Route as FrVerifyRouteImport } from './routes/fr.verify'
+import { Route as FrWaitlistRouteImport } from './routes/fr.waitlist'
 import { Route as GuidesCodeRouteImport } from './routes/guides.$code'
 import { Route as InboxIdRouteImport } from './routes/inbox.$id'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
@@ -527,6 +529,11 @@ const Verify2faRoute = Verify2faRouteImport.update({
   path: '/verify-2fa',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WaitlistRoute = WaitlistRouteImport.update({
+  id: '/waitlist',
+  path: '/waitlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminFeaturesRoute = AdminFeaturesRouteImport.update({
   id: '/features',
   path: '/features',
@@ -873,6 +880,11 @@ const FrVerifyRoute = FrVerifyRouteImport.update({
   path: '/verify',
   getParentRoute: () => FrRoute,
 } as any)
+const FrWaitlistRoute = FrWaitlistRouteImport.update({
+  id: '/waitlist',
+  path: '/waitlist',
+  getParentRoute: () => FrRoute,
+} as any)
 const GuidesCodeRoute = GuidesCodeRouteImport.update({
   id: '/$code',
   path: '/$code',
@@ -1197,6 +1209,7 @@ export interface FileRoutesByFullPath {
   '/vacancy-index': typeof VacancyIndexRoute
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
+  '/waitlist': typeof WaitlistRoute
   '/admin/features': typeof AdminFeaturesRoute
   '/api/account-purge': typeof ApiAccountPurgeRoute
   '/api/digest': typeof ApiDigestRoute
@@ -1265,6 +1278,7 @@ export interface FileRoutesByFullPath {
   '/fr/unsubscribe': typeof FrUnsubscribeRoute
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/fr/verify': typeof FrVerifyRoute
+  '/fr/waitlist': typeof FrWaitlistRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/inbox/$id': typeof InboxIdRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -1383,6 +1397,7 @@ export interface FileRoutesByTo {
   '/vacancy-index': typeof VacancyIndexRoute
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
+  '/waitlist': typeof WaitlistRoute
   '/admin/features': typeof AdminFeaturesRoute
   '/api/account-purge': typeof ApiAccountPurgeRoute
   '/api/digest': typeof ApiDigestRoute
@@ -1451,6 +1466,7 @@ export interface FileRoutesByTo {
   '/fr/unsubscribe': typeof FrUnsubscribeRoute
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/fr/verify': typeof FrVerifyRoute
+  '/fr/waitlist': typeof FrWaitlistRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/inbox/$id': typeof InboxIdRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -1572,6 +1588,7 @@ export interface FileRoutesById {
   '/vacancy-index': typeof VacancyIndexRoute
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
+  '/waitlist': typeof WaitlistRoute
   '/admin/features': typeof AdminFeaturesRoute
   '/api/account-purge': typeof ApiAccountPurgeRoute
   '/api/digest': typeof ApiDigestRoute
@@ -1640,6 +1657,7 @@ export interface FileRoutesById {
   '/fr/unsubscribe': typeof FrUnsubscribeRoute
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/fr/verify': typeof FrVerifyRoute
+  '/fr/waitlist': typeof FrWaitlistRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/inbox/$id': typeof InboxIdRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -1762,6 +1780,7 @@ export interface FileRouteTypes {
     | '/vacancy-index'
     | '/verify'
     | '/verify-2fa'
+    | '/waitlist'
     | '/admin/features'
     | '/api/account-purge'
     | '/api/digest'
@@ -1830,6 +1849,7 @@ export interface FileRouteTypes {
     | '/fr/unsubscribe'
     | '/fr/vacancy-index'
     | '/fr/verify'
+    | '/fr/waitlist'
     | '/guides/$code'
     | '/inbox/$id'
     | '/invite/$token'
@@ -1948,6 +1968,7 @@ export interface FileRouteTypes {
     | '/vacancy-index'
     | '/verify'
     | '/verify-2fa'
+    | '/waitlist'
     | '/admin/features'
     | '/api/account-purge'
     | '/api/digest'
@@ -2016,6 +2037,7 @@ export interface FileRouteTypes {
     | '/fr/unsubscribe'
     | '/fr/vacancy-index'
     | '/fr/verify'
+    | '/fr/waitlist'
     | '/guides/$code'
     | '/inbox/$id'
     | '/invite/$token'
@@ -2136,6 +2158,7 @@ export interface FileRouteTypes {
     | '/vacancy-index'
     | '/verify'
     | '/verify-2fa'
+    | '/waitlist'
     | '/admin/features'
     | '/api/account-purge'
     | '/api/digest'
@@ -2204,6 +2227,7 @@ export interface FileRouteTypes {
     | '/fr/unsubscribe'
     | '/fr/vacancy-index'
     | '/fr/verify'
+    | '/fr/waitlist'
     | '/guides/$code'
     | '/inbox/$id'
     | '/invite/$token'
@@ -2325,6 +2349,7 @@ export interface RootRouteChildren {
   VacancyIndexRoute: typeof VacancyIndexRoute
   VerifyRoute: typeof VerifyRoute
   Verify2faRoute: typeof Verify2faRoute
+  WaitlistRoute: typeof WaitlistRoute
   ApiAccountPurgeRoute: typeof ApiAccountPurgeRoute
   ApiDigestRoute: typeof ApiDigestRoute
   ApiE2eSeedRoute: typeof ApiE2eSeedRoute
@@ -2842,6 +2867,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Verify2faRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/waitlist': {
+      id: '/waitlist'
+      path: '/waitlist'
+      fullPath: '/waitlist'
+      preLoaderRoute: typeof WaitlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/features': {
       id: '/admin/features'
       path: '/features'
@@ -3325,6 +3357,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrVerifyRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/waitlist': {
+      id: '/fr/waitlist'
+      path: '/waitlist'
+      fullPath: '/fr/waitlist'
+      preLoaderRoute: typeof FrWaitlistRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/guides/$code': {
       id: '/guides/$code'
       path: '/$code'
@@ -3777,6 +3816,7 @@ interface FrRouteChildren {
   FrUnsubscribeRoute: typeof FrUnsubscribeRoute
   FrVacancyIndexRoute: typeof FrVacancyIndexRoute
   FrVerifyRoute: typeof FrVerifyRoute
+  FrWaitlistRoute: typeof FrWaitlistRoute
   FrIndexRoute: typeof FrIndexRoute
   FrDaycareSlugRoute: typeof FrDaycareSlugRoute
   FrJobsPostRoute: typeof FrJobsPostRoute
@@ -3833,6 +3873,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrUnsubscribeRoute: FrUnsubscribeRoute,
   FrVacancyIndexRoute: FrVacancyIndexRoute,
   FrVerifyRoute: FrVerifyRoute,
+  FrWaitlistRoute: FrWaitlistRoute,
   FrIndexRoute: FrIndexRoute,
   FrDaycareSlugRoute: FrDaycareSlugRoute,
   FrJobsPostRoute: FrJobsPostRoute,
@@ -4008,6 +4049,7 @@ const rootRouteChildren: RootRouteChildren = {
   VacancyIndexRoute: VacancyIndexRoute,
   VerifyRoute: VerifyRoute,
   Verify2faRoute: Verify2faRoute,
+  WaitlistRoute: WaitlistRoute,
   ApiAccountPurgeRoute: ApiAccountPurgeRoute,
   ApiDigestRoute: ApiDigestRoute,
   ApiE2eSeedRoute: ApiE2eSeedRoute,

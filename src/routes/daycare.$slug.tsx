@@ -47,6 +47,7 @@ import { amenityLabel } from "@/lib/amenities";
 import { licenseRecordUrl, subsidyEstimatorUrl } from "@/lib/licensing";
 import { reportSearchProvince } from "@/lib/licensing-offices";
 import { listingSubsidy, subsidyNote, subsidyNoteKey } from "@/lib/fee-program";
+import { knownListingMonthlyFee } from "@/lib/listing-fee";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { TrustBadge } from "@/components/trust-badge";
 import { ListingReport } from "@/components/listing-report";
@@ -902,7 +903,28 @@ export function Listing() {
               <div className="mt-4">
                 <NetCostCalculator
                   province={d.province}
-                  grossMonthly={d.feeConfirmed || listingSubsidy(d) ? from : null}
+                  fees={{
+                    infantMonthly: d.infantMonthly,
+                    toddlerMonthly: d.toddlerMonthly,
+                    preschoolMonthly: d.preschoolMonthly,
+                    partTimeMonthly: d.partTimeMonthly,
+                  }}
+                  programDaily={
+                    listingSubsidy(d)?.subsidy_type === "qc_965"
+                      ? 9.65
+                      : listingSubsidy(d)?.subsidy_type === "ten" || listingSubsidy(d)?.subsidy_type === "ten_max"
+                        ? 10
+                        : null
+                  }
+                  grossMonthly={knownListingMonthlyFee(
+                    {
+                      infantMonthly: d.infantMonthly,
+                      toddlerMonthly: d.toddlerMonthly,
+                      preschoolMonthly: d.preschoolMonthly,
+                      partTimeMonthly: d.partTimeMonthly,
+                    },
+                    "preschool",
+                  )}
                   participating={listingSubsidy(d) != null}
                 />
               </div>
