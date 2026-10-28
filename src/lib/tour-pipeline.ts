@@ -8,7 +8,7 @@
  * Missing tour + missing booking → no status (never invented).
  */
 
-import type { BookingStatus, TourStatus } from "@/lib/types";
+import type { BookingStatus, TourStatus } from "./types.ts";
 
 export const TOUR_PIPELINE_STATUSES = [
   "pending",
@@ -80,6 +80,20 @@ export function nextTourPipeline(current: string, next: string): TourStatus | nu
 export function tourStatusFromBooking(status: BookingStatus): TourStatus | null {
   if (status === "accepted" || status === "active") return "enrolled";
   if (status === "declined" || status === "cancelled") return "lost";
+  return null;
+}
+
+/**
+ * Whether a booking decision may stamp this tour row.
+ * Enrolment and loss can skip ahead of the button-by-button tour steps.
+ * Other jumps stay blocked.
+ */
+export function tourStatusStampedByBooking(current: string, booking: BookingStatus): TourStatus | null {
+  const next = tourStatusFromBooking(booking);
+  if (!next) return null;
+  if (nextTourPipeline(current, next) || current === next) return next;
+  if (next === "enrolled" && (current === "accepted" || current === "completed" || current === "pending")) return next;
+  if (next === "lost" && (current === "pending" || current === "accepted" || current === "completed")) return next;
   return null;
 }
 

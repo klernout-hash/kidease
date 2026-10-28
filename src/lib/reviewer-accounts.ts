@@ -2,10 +2,14 @@
 
 export const STORE_REVIEWER_PARENT_EMAIL = "reviewer.parent@kidease.ca";
 export const STORE_REVIEWER_DAYCARE_EMAIL = "reviewer.daycare@kidease.ca";
+export const STORE_REVIEWER_PARENT_EMAIL_HYPHEN = "reviewer-parent@kidease.ca";
+export const STORE_REVIEWER_PROVIDER_EMAIL_HYPHEN = "reviewer-provider@kidease.ca";
 
 const STORE_REVIEWER_EMAILS = new Set([
   STORE_REVIEWER_PARENT_EMAIL,
   STORE_REVIEWER_DAYCARE_EMAIL,
+  STORE_REVIEWER_PARENT_EMAIL_HYPHEN,
+  STORE_REVIEWER_PROVIDER_EMAIL_HYPHEN,
 ]);
 
 export function isStoreReviewerEmail(email: string | null | undefined): boolean {

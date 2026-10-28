@@ -93,6 +93,15 @@ async function main() {
     if (credential !== "skipped") {
       console.log(`[migrate] ${credential} — unset OPERATOR_RESET_PASSWORD after sign-in works`);
     }
+    const { applyReviewerDemoFromEnv, preserveProtectedOperatorAccounts } = await import(
+      "./seed-reviewer-demo.mjs"
+    );
+    const preserved = await preserveProtectedOperatorAccounts(databaseUrl);
+    if (preserved !== "skipped") console.log(`[migrate] ${preserved}`);
+    if (String(process.env.REVIEWER_ACCOUNT_PASSWORD || "").trim()) {
+      const reviewer = await applyReviewerDemoFromEnv(databaseUrl);
+      if (reviewer !== "skipped") console.log(`[migrate] ${reviewer}`);
+    }
   } finally {
     client.release();
     await pool.end();

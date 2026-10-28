@@ -158,6 +158,7 @@ export function ListingRail({
                 presentation={visual ? "visual" : "rail"}
                 compact={!visual}
                 eager={eagerThumbs && i < 2}
+                priority={eagerThumbs && i === 0}
                 labelFar={labelFar}
                 showDistance={showDistance}
               />

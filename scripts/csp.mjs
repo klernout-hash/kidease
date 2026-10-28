@@ -7,11 +7,13 @@
  * static policy without the nonce would block TanStack inline hydration.
  *
  * script-src uses a per-request nonce + 'strict-dynamic' so first-party HTML
- * scripts (channel-boot, TanStack <Scripts />) can load Maps / Stripe /
- * Turnstile / PostHog. Those SDKs append scripts with createElement.
+ * scripts (channel-boot, TanStack <Scripts />) can load Stripe / Turnstile /
+ * PostHog. Those SDKs append scripts with createElement.
+ * Google Maps and Places hosts are not allowed. Sign in with Google is a
+ * top-level OAuth navigation to accounts.google.com, not a Maps script.
  *
  * style-src is nonce-only (no 'unsafe-inline'). SSR <style> tags are stamped
- * after render. Radix / Sonner / Maps inject <style> at runtime — a nonce'd
+ * after render. Radix / Sonner inject <style> at runtime — a nonce'd
  * boot script copies document.currentScript.nonce onto createElement("style").
  *
  * script-src includes 'wasm-unsafe-eval' so the listing-photo HEIC decoder
@@ -24,29 +26,21 @@
  * would break TanStack / Radix without a CSS-variable rewrite of popovers.
  */
 
-/** Maps and Google fonts inject stylesheets. style-src stays nonce-first, with these hosts only. */
+/** Google fonts inject stylesheets. Maps and Places hosts are not included. */
 export const CSP_STYLE_HOSTS = [
-  "https://maps.googleapis.com",
-  "https://maps.gstatic.com",
   "https://fonts.googleapis.com",
   "https://fonts.gstatic.com",
 ];
 
 export const CSP_SCRIPT_HOSTS = [
-  "https://maps.googleapis.com",
   "https://js.stripe.com",
   "https://challenges.cloudflare.com",
   "https://us.i.posthog.com",
   "https://us-assets.i.posthog.com",
 ];
 
-/** Maps JS tiles/session also hit khms*.googleapis.com and tile.googleapis.com. */
+/** Product APIs only. No maps.googleapis.com, places, or tile.googleapis.com. */
 export const CSP_CONNECT_HOSTS = [
-  "https://maps.googleapis.com",
-  "https://maps.gstatic.com",
-  "https://*.googleapis.com",
-  "https://*.gstatic.com",
-  "https://tile.googleapis.com",
   "https://api.stripe.com",
   "https://*.kidease.ca",
   "https://kidease.ca",
@@ -109,7 +103,7 @@ export function buildContentSecurityPolicy(nonce) {
     `frame-src ${CSP_FRAME_HOSTS.join(" ")}`,
     "object-src 'none'",
     "base-uri 'self'",
-    "form-action 'self'",
+    "form-action 'self' https://accounts.google.com",
     "frame-ancestors 'none'",
   ].join("; ");
 }

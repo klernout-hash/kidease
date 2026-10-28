@@ -38,7 +38,7 @@ Do **not**:
 
 | Constant | Today | When to set |
 | --- | --- | --- |
-| `STORE.appleAppStoreId` / `VITE_APPLE_APP_STORE_ID` | **empty** | After App Store Connect assigns the numeric id (`id1234567890`) |
+| `STORE.appleAppStoreId` / `VITE_APPLE_APP_STORE_ID` | **6827660912** | App Store Connect numeric id for `ca.kidease.app` |
 | `STORE.playPackageName` / `VITE_PLAY_PACKAGE_NAME` | `ca.kidease.app` | Already the Capacitor `appId`. Override only if the Play package differs |
 
 Write-review URLs:

@@ -25,9 +25,9 @@ function read(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("uses the Capacitor appId and a documented Team ID placeholder", () => {
+test("uses the Capacitor appId and the KidEase Apple Team ID", () => {
   assert.equal(CAP_APP_ID, "ca.kidease.app");
-  assert.equal(PLACEHOLDER_APPLE_TEAM_ID, "XXXXXXXXXX");
+  assert.equal(PLACEHOLDER_APPLE_TEAM_ID, "GAUC28WJXZ");
   assert.equal(resolveAppleTeamId({}), PLACEHOLDER_APPLE_TEAM_ID);
   assert.equal(resolveAppleTeamId({ APPLE_TEAM_ID: "  AB12CD34EF  " }), "AB12CD34EF");
   assert.equal(resolveAppleTeamId({ APNS_TEAM_ID: "APNSONLY01" }), "APNSONLY01");
@@ -174,19 +174,18 @@ test("Nitro middleware, Vite plugin, and vercel.json keep these paths off the SP
 
 test("env example documents Team ID and fingerprint fill-in without fake hashes", () => {
   const envExample = read(".env.example");
-  assert.match(envExample, /APPLE_TEAM_ID=/);
+  assert.match(envExample, /APPLE_TEAM_ID=GAUC28WJXZ/);
+  assert.match(envExample, /VITE_APPLE_APP_STORE_ID=6827660912/);
   assert.match(envExample, /ANDROID_CERT_SHA256S=/);
   assert.match(envExample, /ANDROID_SHA256_CERT_FINGERPRINTS=/);
-  assert.match(envExample, /XXXXXXXXXX/);
-  assert.doesNotMatch(envExample, /APPLE_TEAM_ID=[A-Z0-9]{10}/);
+  assert.doesNotMatch(envExample, /XXXXXXXXXX/);
   assert.doesNotMatch(envExample, /ANDROID_CERT_SHA256S=[0-9A-F:]{10,}/);
   assert.doesNotMatch(envExample, /ANDROID_SHA256_CERT_FINGERPRINTS=[0-9A-F:]{10,}/);
 
   const wellKnownReadme = read("public/.well-known/README.md");
   assert.match(wellKnownReadme, /APPLE_TEAM_ID/);
   assert.match(wellKnownReadme, /ANDROID_CERT_SHA256S/);
-  assert.match(wellKnownReadme, /XXXXXXXXXX/);
-  assert.match(wellKnownReadme, /TODO/);
+  assert.match(wellKnownReadme, /GAUC28WJXZ/);
   assert.match(wellKnownReadme, /\/daycare\/\*/);
   assert.match(wellKnownReadme, /Do not invent/);
 

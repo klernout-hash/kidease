@@ -33,7 +33,7 @@ Set these on Vercel Production (and any host that serves `/api/auth`). Never com
 | App ID. Optional. Defaults to `ca.kidease.app` | `APPLE_BUNDLE_ID` |
 | Switch. Set to `1` only after the four keys and the Apple settings below exist. Default `0`. | `FEATURE_APPLE_LOGIN` |
 
-The same `APPLE_TEAM_ID` fills the Apple App Site Association (`docs/STORE-LAUNCH.md`). Leave it blank until Membership shows the real Team ID. The placeholder in git stays `XXXXXXXXXX`.
+The same `APPLE_TEAM_ID` fills the Apple App Site Association (`docs/STORE-LAUNCH.md`). The Team ID is `GAUC28WJXZ` (10037493 MANITOBA LTD.).
 
 `VITE_APPLE_APP_STORE_ID` is a different value: the numeric App Store Connect id. Leave it blank until Apple assigns one.
 

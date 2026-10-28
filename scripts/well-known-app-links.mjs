@@ -16,9 +16,8 @@
  * (alias ANDROID_SHA256_CERT_FINGERPRINTS) on Vercel only to replace that
  * list. Colon hex, comma-separated if more than one.
  *
- * TODO (Kyle, after Apple Developer enroll):
- *   Set APPLE_TEAM_ID (or APNS_TEAM_ID) on Vercel — 10-char Team ID.
- *   Until then the AASA JSON uses the documented placeholder XXXXXXXXXX.
+ * Apple Team ID for 10037493 MANITOBA LTD. is GAUC28WJXZ.
+ * APPLE_TEAM_ID (or APNS_TEAM_ID) on Vercel overrides that default.
  *
  * Vite (dev/preview) uses wellKnownAppLinksPlugin(); Nitro production uses
  * server/middleware/well-known-app-links.ts. Both call these builders so the
@@ -31,8 +30,13 @@ import { applePayDomainAssociationPayload, applePayWellKnownResult } from "./wel
 
 export { CAP_APP_ID, CAP_PROD_HOSTNAME, applePayWellKnownResult };
 
-/** Documented 10-char placeholder — not a real Apple Team ID. */
-export const PLACEHOLDER_APPLE_TEAM_ID = "XXXXXXXXXX";
+/**
+ * Apple Team ID for 10037493 MANITOBA LTD. (Membership).
+ * Not a guess. Env APPLE_TEAM_ID / APNS_TEAM_ID still overrides this.
+ */
+export const APPLE_TEAM_ID_DEFAULT = "GAUC28WJXZ";
+/** Same value as APPLE_TEAM_ID_DEFAULT. Name kept for existing imports. */
+export const PLACEHOLDER_APPLE_TEAM_ID = APPLE_TEAM_ID_DEFAULT;
 
 export const AASA_PATH = "/.well-known/apple-app-site-association";
 export const AASA_JSON_PATH = "/.well-known/apple-app-site-association.json";
@@ -57,7 +61,7 @@ export function isWellKnownAppLinksPath(pathname) {
 
 /**
  * Prefer APPLE_TEAM_ID (Sign in with Apple), then APNS_TEAM_ID (push).
- * Empty / missing → placeholder so the file still 200s without a fake Team ID.
+ * Empty / missing → GAUC28WJXZ so the file still 200s with the real Team ID.
  */
 export function resolveAppleTeamId(env = process.env) {
   for (const key of ["APPLE_TEAM_ID", "APNS_TEAM_ID"]) {

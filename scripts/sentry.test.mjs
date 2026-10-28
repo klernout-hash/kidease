@@ -139,7 +139,7 @@ describe("Sentry wiring", () => {
     for (const host of SENTRY_CSP_CONNECT) {
       assert.match(csp, new RegExp(host.replace(/\./g, "\\.").replace(/\*/g, "\\*")));
     }
-    assert.match(csp, /connect-src[^;]*https:\/\/maps\.googleapis\.com/);
+    assert.doesNotMatch(csp, /maps\.googleapis\.com|maps\.gstatic\.com|places\.googleapis\.com|tile\.googleapis\.com/);
     assert.match(csp, /connect-src[^;]*https:\/\/api\.stripe\.com/);
     assert.match(csp, /connect-src[^;]*https:\/\/challenges\.cloudflare\.com/);
     assert.match(csp, /connect-src[^;]*https:\/\/us\.i\.posthog\.com/);

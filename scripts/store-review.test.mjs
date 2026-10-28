@@ -31,18 +31,39 @@ function src(rel) {
 }
 
 describe("store review IDs stay placeholders", () => {
-  it("does not invent an App Store numeric id", () => {
-    assert.equal(STORE.appleAppStoreId, "");
-    assert.equal(appleAppStoreId(), "");
+  it("uses the assigned App Store id and still treats an empty override as unset", () => {
+    const previous = process.env.VITE_APPLE_APP_STORE_ID;
+    delete process.env.VITE_APPLE_APP_STORE_ID;
+    try {
+      assert.equal(STORE.appleAppStoreId, "6827660912");
+      assert.equal(appleAppStoreId(), "6827660912");
+      assert.equal(
+        appleStoreListingUrl(),
+        "https://apps.apple.com/app/id6827660912",
+      );
+      assert.equal(
+        writeReviewUrlForPlatform("ios"),
+        "https://apps.apple.com/app/id6827660912?action=write-review",
+      );
+    } finally {
+      if (previous === undefined) delete process.env.VITE_APPLE_APP_STORE_ID;
+      else process.env.VITE_APPLE_APP_STORE_ID = previous;
+    }
+    process.env.VITE_APPLE_APP_STORE_ID = "1234567890";
+    try {
+      assert.equal(appleAppStoreId(), "1234567890");
+    } finally {
+      if (previous === undefined) delete process.env.VITE_APPLE_APP_STORE_ID;
+      else process.env.VITE_APPLE_APP_STORE_ID = previous;
+    }
     assert.equal(isAssignedAppleAppStoreId(""), false);
     assert.equal(isAssignedAppleAppStoreId("APPLE_APP_STORE_ID"), false);
     assert.equal(isAssignedAppleAppStoreId("12345"), false);
     assert.equal(appleStoreListingUrl(""), null);
     assert.equal(appleWriteReviewUrl(""), null);
     assert.equal(appleWriteReviewUrl("id1234567890"), null);
-    assert.equal(writeReviewUrlForPlatform("ios"), null);
-    assert.doesNotMatch(src("src/lib/store-listing.ts"), /appleAppStoreId:\s*"[1-9]\d+"/);
-    assert.doesNotMatch(src(".env.example"), /VITE_APPLE_APP_STORE_ID=\d+/);
+    assert.match(src("src/lib/store-listing.ts"), /appleAppStoreId:\s*"6827660912"/);
+    assert.match(src(".env.example"), /VITE_APPLE_APP_STORE_ID=6827660912/);
   });
 
   it("builds Play write-review from the real Capacitor package, not a fake listing id", () => {
@@ -145,9 +166,8 @@ describe("plugin wiring and honest copy", () => {
     assert.match(src("docs/store-review.md"), /Do \*\*not\*\*/);
     assert.match(src("docs/store-review.md"), /guest home/);
     assert.match(src("docs/mobile-builds.md"), /store-review\.md/);
-    assert.match(src(".env.example"), /VITE_APPLE_APP_STORE_ID=/);
+    assert.match(src(".env.example"), /VITE_APPLE_APP_STORE_ID=6827660912/);
     assert.match(src(".env.example"), /VITE_PLAY_STORE_URL=/);
-    assert.doesNotMatch(src(".env.example"), /VITE_APPLE_APP_STORE_ID=\d+/);
     assert.doesNotMatch(src(".env.example"), /VITE_PLAY_STORE_URL=https:/);
     assert.match(src("src/routes/get-app.tsx"), /appleStoreListingUrl/);
     assert.match(src("src/routes/get-app.tsx"), /playStoreListingUrl/);

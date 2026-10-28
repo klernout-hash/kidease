@@ -3,12 +3,12 @@
     "apps": [],
     "details": [
       {
-        "appID": "XXXXXXXXXX.ca.kidease.app",
+        "appID": "GAUC28WJXZ.ca.kidease.app",
         "paths": [
           "*"
         ],
         "appIDs": [
-          "XXXXXXXXXX.ca.kidease.app"
+          "GAUC28WJXZ.ca.kidease.app"
         ],
         "components": [
           {
@@ -57,7 +57,7 @@
   },
   "webcredentials": {
     "apps": [
-      "XXXXXXXXXX.ca.kidease.app"
+      "GAUC28WJXZ.ca.kidease.app"
     ]
   }
 }
