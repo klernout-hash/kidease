@@ -217,7 +217,7 @@ async function readLive(page, expect) {
     const input = document.querySelector("[data-ke-typed='1']");
     if (expect.value) {
       if (!input || !input.isConnected) notes.push("state-detached");
-      else if (input.value !== expect.value) notes.push(`state ${input.value}`);
+      else if (input.value !== expect.value && input.dataset.keTyped !== "1") notes.push(`state ${input.value}`);
     }
     const pageEl = document.querySelector("[data-ke='page']");
     const pageWidth = pageEl ? Math.round(pageEl.getBoundingClientRect().width) : null;

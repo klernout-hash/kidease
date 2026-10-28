@@ -23,6 +23,7 @@ import { standardGroupsForRange } from "@/lib/standard-age-groups";
 import { listingAgeUnknown } from "@/lib/now-loops";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { overlayClaimed } from "./claims";
+import { parseStoredDimensions } from "@/lib/review-dimensions";
 import { overlayParentReviews } from "./reviews";
 import { overlayQuality } from "./quality";
 import { overlayParentRank } from "./rank";
@@ -345,6 +346,7 @@ function mapReviews(
       created_at: string;
       owner_reply?: string | null;
       owner_reply_at?: string | null;
+      dimensions?: string | null;
     }
   >,
 ): Review[] {
@@ -359,6 +361,7 @@ function mapReviews(
     status: r.status && r.status !== "approved" ? r.status : "published",
     ownerReply: r.owner_reply ? String(r.owner_reply).trim() : null,
     ownerReplyAt: r.owner_reply_at ? String(r.owner_reply_at) : null,
+    dimensions: parseStoredDimensions(r.dimensions),
   }));
 }
 
@@ -899,9 +902,10 @@ export const getDaycare = createServerFn({ method: "GET" })
         status?: string;
         owner_reply?: string | null;
         owner_reply_at?: string | null;
+        dimensions?: string | null;
       };
       const reviews = await sql<PublicReviewRow>`
-        select id, daycare_id, author, rating, body, body_fr, created_at, status, owner_reply, owner_reply_at
+        select id, daycare_id, author, rating, body, body_fr, created_at, status, owner_reply, owner_reply_at, dimensions
         from reviews
         where daycare_id = ${daycare.id}
           and status in ('published', 'approved')

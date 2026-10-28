@@ -1756,27 +1756,28 @@ try {
     await runBrowserSmoke(base);
   }
 
-  const ipadProblems = await runIpadViewportPass(browser, base);
+  const [ipadProblems, phoneProblems, foldProblems] = await Promise.all([
+    runIpadViewportPass(browser, base),
+    runPhoneViewportPass(browser, base),
+    runFoldResizePass(browser, base),
+  ]);
   record("ipad-viewports", ipadProblems.length === 0, {
     note: ipadProblems.length ? ipadProblems.slice(0, 6).join(" | ") : `${7} sizes`,
   });
-
-  const phoneProblems = await runPhoneViewportPass(browser, base);
   record("phone-viewports", phoneProblems.length === 0, {
     note: phoneProblems.length ? phoneProblems.slice(0, 8).join(" | ") : "iphone sizes",
   });
-
-  const foldProblems = await runFoldResizePass(browser, base);
   record("fold-resize", foldProblems.length === 0, {
     note: foldProblems.length ? foldProblems.slice(0, 8).join(" | ") : "live resize",
   });
 
-  const storeProblems = await runStoreViewportPass(browser, base);
+  const [storeProblems, desktopProblems] = await Promise.all([
+    runStoreViewportPass(browser, base),
+    runDesktopVisualPass(browser, base),
+  ]);
   record("store-viewports", storeProblems.length === 0, {
     note: storeProblems.length ? storeProblems.slice(0, 8).join(" | ") : "android and windows",
   });
-
-  const desktopProblems = await runDesktopVisualPass(browser, base);
   record("desktop-visual", desktopProblems.length === 0, {
     note: desktopProblems.length ? desktopProblems.slice(0, 6).join(" | ") : "1280 to 2560",
   });

@@ -8,6 +8,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getListingReviewAccess, submitListingReview } from "@/lib/server/reviews";
 import { isPublicReviewStatus, normalizeReviewStatus } from "@/lib/review-gate";
 import { localePath } from "@/lib/locale-path";
+import { REVIEW_DIMENSIONS, type ReviewDimensionId } from "@/lib/review-dimensions";
 import { useCopy } from "@/lib/use-copy";
 import type { Review } from "@/lib/types";
 
@@ -23,8 +24,13 @@ export function ListingReviewForm({ daycareId, slug }: { daycareId: string; slug
   const { token, onToken } = useTurnstileToken();
   const [access, setAccess] = useState<Access | null>(null);
   const [rating, setRating] = useState(0);
+  const [touched, setTouched] = useState<Partial<Record<ReviewDimensionId, number>>>({});
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
+  const fr = locale === "fr";
+  const dimensions = Object.fromEntries(
+    REVIEW_DIMENSIONS.map((dim) => [dim.id, touched[dim.id] ?? (rating >= 1 ? rating : 0)]),
+  ) as Record<ReviewDimensionId, number>;
 
   useEffect(() => {
     if (isPending || !user) {
@@ -81,7 +87,7 @@ export function ListingReviewForm({ daycareId, slug }: { daycareId: string; slug
         }
         setBusy(true);
         void submitListingReview({
-          data: { daycareId, rating, body, locale, turnstileToken: token },
+          data: { daycareId, rating, body, locale, turnstileToken: token, dimensions },
         })
           .then(() => {
             confirmAction(t, "reviewSubmitted");
@@ -122,6 +128,38 @@ export function ListingReviewForm({ daycareId, slug }: { daycareId: string; slug
             </button>
           ))}
         </div>
+      </fieldset>
+      <fieldset data-ke="review-dimensions-form">
+        <legend className="text-sm">{fr ? "Cinq points" : "Five scores"}</legend>
+        <p className="mt-1 text-sm text-muted">
+          {fr
+            ? "Chaque point suit la note globale jusqu'à ce que vous le changiez."
+            : "Each score follows the overall stars until you change it."}
+        </p>
+        <ul className="mt-3 space-y-3">
+          {REVIEW_DIMENSIONS.map((dim) => (
+            <li key={dim.id}>
+              <span className="text-sm">{fr ? dim.fr : dim.en}</span>
+              <div className="mt-1 flex flex-wrap gap-2">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    className={
+                      n <= (dimensions[dim.id] || 0)
+                        ? "min-h-11 min-w-11 rounded-full bg-primary text-sm text-primary-fg touch-manipulation"
+                        : "min-h-11 min-w-11 rounded-full bg-bg text-sm ring-1 ring-border touch-manipulation"
+                    }
+                    aria-pressed={dimensions[dim.id] === n}
+                    onClick={() => setTouched((prev) => ({ ...prev, [dim.id]: n }))}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            </li>
+          ))}
+        </ul>
       </fieldset>
       <label className="block text-sm">
         {t("reviewBody")}

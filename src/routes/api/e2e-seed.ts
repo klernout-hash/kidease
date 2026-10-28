@@ -9,7 +9,8 @@ import { e2eLoopbackFixtureRequest } from "@/lib/server/e2e-fixture.server";
  */
 const PASSWORD = "E2e-role-fixture-pass-1";
 
-function emailFor(role: "parent" | "provider", paid: boolean) {
+function emailFor(role: "parent" | "provider" | "admin", paid: boolean) {
+  if (role === "admin") return "kyle@kidease.ca";
   const side = role === "provider" ? "provider" : "parent";
   return paid ? `e2e-${side}-paid@kidease.test` : `e2e-${side}@kidease.test`;
 }
@@ -22,7 +23,7 @@ async function seed(request: Request) {
   } catch {
     body = {};
   }
-  const role = body.role === "provider" ? "provider" : "parent";
+  const role = body.role === "provider" ? "provider" : body.role === "admin" ? "admin" : "parent";
   const paid = Boolean(body.paid);
   const activity = Boolean(body.activity);
   const attention = Boolean(body.attention);
@@ -35,7 +36,7 @@ async function seed(request: Request) {
   const { auth } = await import("@/lib/auth/server");
   const headers = request.headers;
   let response = await auth.api.signUpEmail({
-    body: { email, password: PASSWORD, name: role === "provider" ? "E2E Daycare" : "E2E Parent" },
+    body: { email, password: PASSWORD, name: role === "provider" ? "E2E Daycare" : role === "admin" ? "Kyle" : "E2E Parent" },
     headers,
     asResponse: true,
   });
@@ -55,9 +56,17 @@ async function seed(request: Request) {
     return Response.json({ ok: false, error: "seed-user-missing" }, { status: 500 });
   }
   await sql`
-    insert into profiles (user_id, role) values (${userId}, ${role})
-    on conflict (user_id) do update set role = ${role}
+    insert into profiles (user_id, role) values (${userId}, ${role === "admin" ? "admin" : role})
+    on conflict (user_id) do update set role = ${role === "admin" ? "admin" : role}
   `;
+  if (role === "admin") {
+    await sql`update "user" set "emailVerified" = true where id = ${userId}`.catch(() => undefined);
+    await sql`
+      update view_as_sessions
+      set ended_at = now(), end_reason = 'e2e-clear'
+      where admin_user_id = ${userId} and ended_at is null
+    `.catch(() => undefined);
+  }
   if (role === "parent" && paid) {
     await sql`
       update profiles
@@ -209,7 +218,18 @@ async function seed(request: Request) {
     await seedKidsWorldLive(sql);
     flushSearchMemo();
   }
-  return response;
+  if (role !== "admin") return response;
+  const { signTwoFactorCookie, TWO_FACTOR_SESSION_TTL_MS } = await import("@/lib/two-factor-cookie");
+  const { TWO_FACTOR_COOKIE } = await import("@/lib/auth/cookies");
+  const exp = Date.now() + TWO_FACTOR_SESSION_TTL_MS;
+  const secret = (process.env.BETTER_AUTH_SECRET || process.env.ADMIN_EMAIL || "kidease-preview").trim();
+  const token = signTwoFactorCookie(userId, exp, secret);
+  const cookieHeaders = new Headers(response.headers);
+  cookieHeaders.append(
+    "set-cookie",
+    `${TWO_FACTOR_COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${Math.floor(TWO_FACTOR_SESSION_TTL_MS / 1000)}`,
+  );
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers: cookieHeaders });
 }
 
 /**

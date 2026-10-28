@@ -46,6 +46,7 @@ import { MIN_REVIEW_COUNT } from "@/lib/quality";
 import { listingSubsidy } from "@/lib/fee-program";
 import { SubsidyPill } from "@/components/subsidy-pill";
 import { SponsoredMark } from "@/components/sponsored-mark";
+import { CardMicroPills } from "@/components/card-micro-pills";
 
 function whyMatchLine(
   item: Card,
@@ -374,6 +375,7 @@ export const DaycareCard = memo(function DaycareCard({
               <span className="font-normal text-muted">{priceUnit}</span>
             </p>
           ) : null}
+          <CardMicroPills item={item} />
         </ListingAnchor>
         <div className="mt-1 flex w-full min-w-0 flex-wrap items-center gap-2">
           {parentActions ? (

@@ -8,6 +8,7 @@ import { DeskSkeleton } from "@/components/page-skeleton";
 import { ParentShortlist } from "@/components/parent-shortlist";
 import { StatusBadge } from "@/components/status-badge";
 import { LedgerHonesty } from "@/components/listing-status-badge";
+import { TaxReceiptStudio } from "@/components/tax-receipt-studio";
 import { ChildCareCard } from "@/components/child-care-card";
 import { EmptyState } from "@/components/empty-state";
 import { KidNotebook } from "@/components/kid-art";
@@ -650,6 +651,9 @@ export function ParentDesk({
                   {t("pay")} · {bills.filter((b) => billIsOpen(b.status)).length}
                 </span>
               ) : null}
+            </div>
+            <div className="mt-4">
+              <TaxReceiptStudio />
             </div>
             <LedgerHonesty
               stripeLive={Boolean(desks?.stripeLive)}

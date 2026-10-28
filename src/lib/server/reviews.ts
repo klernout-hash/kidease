@@ -17,6 +17,7 @@ import {
   type ReviewModerationStatus,
   type ReviewWriteAccess,
 } from "@/lib/review-gate";
+import { parseStoredDimensions, REVIEW_DIMENSIONS, type ReviewDimensionId } from "@/lib/review-dimensions";
 import type { Review, ReviewStatus } from "@/lib/types";
 
 const MAX_BODY = 2000;
@@ -36,6 +37,7 @@ type ReviewRow = {
   review_note: string | null;
   reviewed_at: string | null;
   gate_reason?: string | null;
+  dimensions?: string | null;
 };
 
 function mapReview(r: ReviewRow): Review & { status: ReviewModerationStatus; userId: string | null } {
@@ -53,6 +55,7 @@ function mapReview(r: ReviewRow): Review & { status: ReviewModerationStatus; use
     gateReason: (gate === "enrolment" || gate === "attendance" || gate === "grant"
       ? gate
       : null) as ReviewGateReason | null,
+    dimensions: parseStoredDimensions(r.dimensions),
   };
 }
 
@@ -186,6 +189,7 @@ export const submitListingReview = createServerFn({ method: "POST" })
       body: string;
       locale?: string;
       turnstileToken?: string;
+      dimensions?: Partial<Record<ReviewDimensionId, number>> | null;
     }) => input,
   )
   .handler(async ({ context, data }) => {
@@ -196,6 +200,14 @@ export const submitListingReview = createServerFn({ method: "POST" })
     if (body.length < 12) throw new Error("Please write a short review (at least a sentence).");
     if (body.length > MAX_BODY) throw new Error("Review is too long.");
     const rating = clampRating(data.rating);
+    const dimensionScores = Object.fromEntries(
+      REVIEW_DIMENSIONS.map((dim) => {
+        const raw = data.dimensions?.[dim.id];
+        const score = Number(raw);
+        return [dim.id, Number.isFinite(score) && score >= 1 && score <= 5 ? Math.round(score) : rating];
+      }),
+    );
+    const dimensionsJson = JSON.stringify(dimensionScores);
     const locale = data.locale === "fr" ? "fr" : "en";
     const sql = await getSql();
     const centre = await sql<{ id: string; name: string; slug: string }>`
@@ -256,7 +268,7 @@ export const submitListingReview = createServerFn({ method: "POST" })
 
     try {
       await sql`
-        insert into reviews (id, daycare_id, author, rating, body, body_fr, user_id, status, locale, gate_reason)
+        insert into reviews (id, daycare_id, author, rating, body, body_fr, user_id, status, locale, gate_reason, dimensions)
         values (
           ${id},
           ${daycareId},
@@ -267,24 +279,43 @@ export const submitListingReview = createServerFn({ method: "POST" })
           ${context.userId},
           'pending',
           ${locale},
-          ${gateReason}
+          ${gateReason},
+          ${dimensionsJson}
         )
       `;
     } catch {
-      await sql`
-        insert into reviews (id, daycare_id, author, rating, body, body_fr, user_id, status, locale)
-        values (
-          ${id},
-          ${daycareId},
-          ${author},
-          ${rating},
-          ${bodyEn},
-          ${bodyFr},
-          ${context.userId},
-          'pending',
-          ${locale}
-        )
-      `;
+      try {
+        await sql`
+          insert into reviews (id, daycare_id, author, rating, body, body_fr, user_id, status, locale, gate_reason)
+          values (
+            ${id},
+            ${daycareId},
+            ${author},
+            ${rating},
+            ${bodyEn},
+            ${bodyFr},
+            ${context.userId},
+            'pending',
+            ${locale},
+            ${gateReason}
+          )
+        `;
+      } catch {
+        await sql`
+          insert into reviews (id, daycare_id, author, rating, body, body_fr, user_id, status, locale)
+          values (
+            ${id},
+            ${daycareId},
+            ${author},
+            ${rating},
+            ${bodyEn},
+            ${bodyFr},
+            ${context.userId},
+            'pending',
+            ${locale}
+          )
+        `;
+      }
     }
 
     void import("@/lib/server/admin-tools")

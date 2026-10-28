@@ -36,6 +36,8 @@ import { parentDistanceLabel } from "@/lib/distance-label";
 import { TrustSignals } from "@/components/trust-badge";
 import { money } from "@/lib/utils";
 import { licenseRecordUrl } from "@/lib/licensing";
+import { estimateNetCost } from "@/lib/net-cost-engine";
+import { calcDetourMinutes } from "@/lib/commute-isochrone";
 import type { DaycareCard } from "@/lib/types";
 import { MultiApplyPanel } from "@/components/multi-apply-sheet";
 import { localePath } from "@/lib/locale-path";
@@ -60,6 +62,8 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
   const { t, locale } = useCopy();
   const { compareMax } = useParentPlusAccess();
   const origin = useAppStore((s) => s.origin);
+  const workOrigin = useAppStore((s) => s.workOrigin);
+  const commuteMode = useAppStore((s) => s.commuteMode);
   const located = useAppStore((s) => s.located);
   const radiusKm = useAppStore((s) => s.radiusKm);
   const ageGroup = useAppStore((s) => s.ageGroup);
@@ -190,6 +194,31 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
                 <Row
                   label={t("compareCulture")}
                   values={items.map((d) => formatListingCulture(d.amenities, locale === "fr" ? "fr" : "en") || t("noneListed"))}
+                />
+                <Row
+                  label={locale === "fr" ? "Coût net estimé / jour" : "Est. net cost / day"}
+                  values={items.map((d) => {
+                    if (!(d.fromPrice > 0)) return t("cardGapFees");
+                    const estimate = estimateNetCost({
+                      province: d.province,
+                      householdIncome: 70000,
+                      ageBand: "preschool",
+                      grossMonthly: d.fromPrice,
+                      participating: listingSubsidy(d) != null,
+                      qcSubsidized: listingSubsidy(d)?.subsidy_type === "qc_965",
+                    });
+                    return locale === "fr"
+                      ? `${estimate.parentDaily.toLocaleString("fr-CA", { style: "currency", currency: "CAD" })}`
+                      : `$${estimate.parentDaily.toFixed(2)}`;
+                  })}
+                />
+                <Row
+                  label={locale === "fr" ? "Détour" : "Commute detour"}
+                  values={items.map((d) => {
+                    if (!workOrigin || !origin.label) return t("noneListed");
+                    const minutes = calcDetourMinutes(origin, workOrigin, { lat: d.lat, lng: d.lng }, commuteMode);
+                    return locale === "fr" ? `+${minutes} min` : `+${minutes} min`;
+                  })}
                 />
                 <Row
                   label={t("compareFeesCwelcc")}

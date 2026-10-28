@@ -212,6 +212,8 @@ export type Review = {
   status?: ReviewStatus;
   userId?: string | null;
   gateReason?: ReviewGateReason | null;
+  /** Optional 1–5 scores. Missing keys use the overall rating on the listing. */
+  dimensions?: Partial<Record<"safety" | "educators" | "communication" | "cleanliness" | "value", number>> | null;
 };
 
 export type AvailabilityRow = {
