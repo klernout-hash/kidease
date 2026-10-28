@@ -2,7 +2,13 @@
  * At most two short pills on a search card: commute, sibling fit, freshness.
  */
 
-import { detourPill, type CommuteMode, type LatLng, calcDetourMinutes } from "./commute-isochrone.ts";
+import {
+  commuteDetourLabel,
+  haversineKm,
+  type CommuteMode,
+  type LatLng,
+  calcDetourMinutes,
+} from "./commute-isochrone.ts";
 
 export type Pill = { id: "detour" | "sibling" | "fresh"; en: string; fr: string };
 
@@ -61,11 +67,19 @@ export function pickCardMicroPills(input: {
   const pills: Pill[] = [];
   if (input.home && input.work && input.stop) {
     const minutes = calcDetourMinutes(input.home, input.work, input.stop, input.mode || "drive");
-    pills.push({
-      id: "detour",
-      en: detourPill(minutes, "en"),
-      fr: detourPill(minutes, "fr"),
+    const en = commuteDetourLabel({
+      minutes,
+      homeToStopKm: haversineKm(input.home, input.stop),
+      homeToWorkKm: haversineKm(input.home, input.work),
+      locale: "en",
     });
+    const fr = commuteDetourLabel({
+      minutes,
+      homeToStopKm: haversineKm(input.home, input.stop),
+      homeToWorkKm: haversineKm(input.home, input.work),
+      locale: "fr",
+    });
+    if (en && fr) pills.push({ id: "detour", en, fr });
   }
   if (siblingFitBadge(input)) {
     pills.push({ id: "sibling", en: "Sibling fit", fr: "Convient aux frères et sœurs" });

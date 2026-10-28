@@ -1799,7 +1799,7 @@ export function SearchScreen({
           </div>
         ) : null}
         <SmartMatchEntry />
-        <div className="ke-explore-filter-sticky mt-3">
+        <div className="ke-explore-filter-sticky relative z-10 mt-3">
         <ExploreFilterBar
           listingCount={items !== null ? resultCount : undefined}
           liveOn={liveOn}

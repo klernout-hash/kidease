@@ -83,6 +83,11 @@ export type SendSmsResult =
 export type SendSmsOptions = {
   env?: EnvMap;
   fetchImpl?: typeof fetch;
+  /**
+   * Text to the on-call phone only. Skips FEATURE_SMS.
+   * Still needs Twilio credentials. The caller must pass audience "internal".
+   */
+  operatorAlert?: boolean;
 };
 
 const TWILIO_MESSAGES = (accountSid: string) =>
@@ -147,13 +152,13 @@ export async function sendSms(input: SendSmsInput, options: SendSmsOptions = {})
   if (!isE164(to)) {
     return { ok: false, skipped: false, error: "Recipient must be an E.164 number (e.g. +12045550100)." };
   }
-  if (!smsEnabled(env)) {
+  if (!options.operatorAlert && !smsEnabled(env)) {
     return { ok: false, skipped: true, error: SMS_SCAFFOLD_MESSAGE };
   }
   if (!smsCredentialsPresent(env)) {
     return { ok: false, skipped: true, error: SMS_CREDENTIALS_MESSAGE };
   }
-  const audience = input.audience === "internal" ? "internal" : "user";
+  const audience = options.operatorAlert || input.audience === "internal" ? "internal" : "user";
   if (audience !== "internal" && !input.consentGranted) {
     return { ok: false, skipped: true, error: CASL_NO_CONSENT_MESSAGE };
   }

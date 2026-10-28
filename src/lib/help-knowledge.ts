@@ -3,7 +3,7 @@ import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
 const FACTS = `KidEase (kidease.ca) is a Canada-wide finder for provincially licensed daycares only. Founders Kyle Lernout and Kevin Lamont. Email ${SUPPORT_INBOX_EMAIL}.
 Parents: search by GPS or address/city/postal code, map + list, distance in km or miles, ages, $10-a-day / CWELCC badges, storefront photos, Request a spot, Book a tour, 💬 Contact, Save, Compare. Childcare Benefits Program at https://www.kidease.ca/benefits has every official provincial, territorial, and federal back-link. KidEase does not process subsidy, CWELCC, CCB, or tax-credit applications.
-Providers: Enroll Now / Claim listing, free, live spots and fees, storefront photo, priority listing (paid boost), in-app messages. Manual enroll form if not in the 20,000+ catalogue.
+Providers: Enroll Now / Claim listing, free, live spots and fees, storefront photo, priority listing (paid boost), in-app messages. Manual enroll form if not in the 37,000+ catalogue.
 Fees: unclaimed listings say fee not confirmed: never invent a price. Live listings (claimed centres) show provider-entered monthly fees. $10-a-day is a government program at participating centres, not a KidEase discount.
 Privacy: PIPEDA. We do not sell data. Children’s details only for the parent and a centre they contact. Processors include Google Maps/Places, Better Auth / Google sign-in, Resend, Titan (operator mail), Vercel, Neon, Cloudflare when proxied, Stripe when enabled, PostHog when product analytics is allowed (page views and masked session replay: not ads). Location is GPS or typed address for distance search only: not shared with other parents, no background tracking. Cookie policy at /cookies. Website and the iPhone and Android app ask Essential or Allow analytics before PostHog loads. In the app, crash reports wait for the same Allow tap. No advertising trackers.
 App: website + iPhone + Android, same accounts.
@@ -14,7 +14,7 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
   {
     keys: ["enroll", "provider", "claim", "listing", "centre owner", "daycare owner", "partner"],
     lines: [
-      `If you run a licensed centre, tap Enroll Now (or Claim). Search your name in our catalogue: over 20,000 licensed centres across Canada. Not listed? Choose Enter name manually and send the form. It goes to ${SUPPORT_INBOX_EMAIL}. Claiming is free.`,
+      `If you run a licensed centre, tap Enroll Now (or Claim). Search your name in our catalogue: over 37,000 licensed centres across Canada. Not listed? Choose Enter name manually and send the form. It goes to ${SUPPORT_INBOX_EMAIL}. Claiming is free.`,
       "Providers get a free landing page, proximity so nearby parents find you first, and in-app chat. Card payments are processed in the app through Stripe. Start at Enroll Now on the home page or kidease.ca/claim.",
       "To show your centre to parents: claim your listing, add spots and monthly fees, and upload a storefront photo. Priority listing can pin you higher: that’s optional.",
     ],
@@ -131,4 +131,4 @@ export function localHelpReply(userText: string, priorAssistant: string[]) {
 }
 
 export const AGENT_CONFIRM =
-  `I’ve flagged a live agent. Our team gets a text and email at ${SUPPORT_INBOX_EMAIL}: usually the same day, often faster. You can also write us directly. Anything else I should pass along?`;
+  `I’ve flagged a live agent. Our team gets a text and email at ${SUPPORT_INBOX_EMAIL}. A live agent typically replies within 5 minutes. You can also write us directly. Anything else I should pass along?`;

@@ -365,13 +365,27 @@ async function enhanceOriented(
     : contentCrop(frame, workW, workH);
   let pipeline = sharp(working);
   if (crop) pipeline = pipeline.extract(crop);
+  else if (Math.abs(angleDeg) >= MIN_USEFUL_ANGLE) {
+    const inset = wedgeInset(workW, workH);
+    if (inset) pipeline = pipeline.extract(inset);
+  }
   pipeline = pipeline.resize({
     width: MAX_OUTPUT_EDGE,
     height: MAX_OUTPUT_EDGE,
     fit: "inside",
     withoutEnlargement: true,
   });
-  const buffer = await encodeJpeg(pipeline);
+  const sized = await pipeline.toBuffer();
+  const mean = await meanLuminance(sized);
+  const lift = exposureAdjustments(mean);
+  let finish = sharp(sized);
+  if (lift) {
+    finish = finish
+      .gamma(Number(lift.gamma.toFixed(2)))
+      .modulate({ brightness: lift.brightness, saturation: mean < 85 ? 1.06 : 1.02 })
+      .normalize();
+  }
+  const buffer = await encodeJpeg(finish);
   return {
     buffer,
     angleDeg: Math.abs(angleDeg) >= MIN_USEFUL_ANGLE ? round1(angleDeg) : 0,
@@ -445,6 +459,35 @@ function median(values: number[]) {
   if (!values.length) return 255;
   const sorted = values.slice().sort((a, b) => a - b);
   return sorted[Math.floor(sorted.length / 2)] ?? 255;
+}
+
+/** Gamma and brightness for an underexposed storefront. Bright photos stay put. */
+export function exposureAdjustments(mean: number): { gamma: number; brightness: number } | null {
+  if (!Number.isFinite(mean) || mean >= 128) return null;
+  if (mean < 85) {
+    return { gamma: Math.min(2.1, Math.max(1.25, 118 / Math.max(mean, 32))), brightness: 1.14 };
+  }
+  return { gamma: 1.12, brightness: 1.05 };
+}
+
+function wedgeInset(width: number, height: number): Box | null {
+  const mx = Math.round(width * 0.035);
+  const my = Math.round(height * 0.035);
+  if (width - mx * 2 < 32 || height - my * 2 < 32) return null;
+  return { left: mx, top: my, width: width - mx * 2, height: height - my * 2 };
+}
+
+async function meanLuminance(buf: Buffer): Promise<number> {
+  const raster = await rasterize(buf, 48);
+  let sum = 0;
+  let n = 0;
+  for (let y = 0; y < raster.height; y += 2) {
+    for (let x = 0; x < raster.width; x += 2) {
+      sum += luminance(raster, x, y);
+      n += 1;
+    }
+  }
+  return n ? sum / n : 128;
 }
 
 function luminance(raster: Raster, x: number, y: number) {

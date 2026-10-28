@@ -116,6 +116,36 @@ describe("plain search falls back to Winnipeg after the user's area", () => {
     assert.equal(origin.source, "default");
   });
 
+  it("does not treat an Edmonton city header as a Winnipeg pin", () => {
+    const origin = resolveAnonymousOriginFromHeaders(
+      headers({
+        "x-vercel-ip-country": "CA",
+        "x-vercel-ip-country-region": "MB",
+        "x-vercel-ip-city": "Edmonton",
+        "x-vercel-ip-latitude": "49.8951",
+        "x-vercel-ip-longitude": "-97.1384",
+      }),
+    );
+    assert.equal(origin.label, "Winnipeg, MB");
+    assert.equal(origin.lat, 49.8951);
+    assert.equal(origin.lng, -97.1384);
+  });
+
+  it("keeps a matching Edmonton pin when only the clock says Winnipeg", () => {
+    const origin = resolveAnonymousOriginFromHeaders(
+      headers({
+        "x-vercel-ip-country": "CA",
+        "x-vercel-ip-country-region": "AB",
+        "x-vercel-ip-city": "Edmonton",
+        "x-vercel-ip-latitude": "53.5461",
+        "x-vercel-ip-longitude": "-113.4938",
+        "x-vercel-ip-timezone": "America/Winnipeg",
+      }),
+    );
+    assert.equal(origin.label, "Edmonton, AB");
+    assert.equal(origin.source, "ip");
+  });
+
   it("keeps a trusted Canadian city ahead of Winnipeg", () => {
     const toronto = resolveAnonymousOriginFromHeaders(
       headers({

@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useRouterState } from "@tanstack/react-router";
+import { ChevronDown, Globe } from "lucide-react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { activateLocale, isExtraLocale } from "@/lib/extra-copy";
 import { applyDocumentLocale, shippedLanguages } from "@/lib/languages";
@@ -51,9 +52,12 @@ export function LocaleChoiceSync() {
 export function LanguageSelect({
   className = "",
   compact = false,
+  pill = false,
 }: {
   className?: string;
   compact?: boolean;
+  /** Bordered control with a globe and a visible chevron. */
+  pill?: boolean;
 }) {
   const { t, locale } = useCopy();
   const setLocale = useAppStore((s) => s.setLocale);
@@ -63,11 +67,13 @@ export function LanguageSelect({
   return (
     <label
       className={cn(
-        "inline-flex items-center justify-center overflow-visible",
+        "relative inline-flex items-center justify-center overflow-visible",
+        pill && "h-11 gap-1.5 rounded-full border border-border bg-surface px-3 text-fg",
         compact ? "h-8" : "h-11 min-w-[7.25rem]",
         className,
       )}
     >
+      {pill ? <Globe className="size-4 shrink-0 text-fg" aria-hidden /> : null}
       <span className="sr-only">{t("language")}</span>
       <select
         value={locale}
@@ -103,6 +109,7 @@ export function LanguageSelect({
         }}
         className={cn(
           "ke-lang-select w-full cursor-pointer touch-manipulation rounded-full border-0 bg-transparent text-center font-medium text-muted hover:text-fg",
+          pill && "pr-5 text-left text-sm text-fg",
           compact
             ? "ke-header-chrome h-8 min-h-8 px-2.5 text-[11px] leading-none"
             : "h-11 min-h-11 px-3.5 text-[15px]",
@@ -115,6 +122,14 @@ export function LanguageSelect({
           </option>
         ))}
       </select>
+      <ChevronDown
+        className={cn(
+          "pointer-events-none absolute text-fg",
+          compact ? "right-0.5 size-3" : "right-1.5 size-4",
+          pill && "right-2.5",
+        )}
+        aria-hidden
+      />
     </label>
   );
 }

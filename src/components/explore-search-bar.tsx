@@ -274,7 +274,7 @@ export function ExploreSearchBar({
     const meta = [whenFilled ? whenLabel : "", childSummary].filter(Boolean).join(" · ");
     return (
       <form
-        className={cn("w-full", className)}
+        className={cn("relative z-50 w-full overflow-visible", className)}
         aria-label={t("searchBarAria")}
         onSubmit={(e) => {
           e.preventDefault();
@@ -314,7 +314,7 @@ export function ExploreSearchBar({
   return (
     <form
       ref={wrap}
-      className={cn("w-full", className)}
+      className={cn("relative z-50 w-full overflow-visible", className)}
       aria-label={t("searchBarAria")}
       data-search-row="where-when-name"
       onSubmit={(e) => {
@@ -342,7 +342,7 @@ export function ExploreSearchBar({
       ) : null}
       <div
         className={cn(
-          "relative z-20 flex flex-col divide-y divide-border overflow-visible rounded-[1.5rem] bg-surface shadow-card ring-1 ring-border/80 lg:items-stretch lg:divide-y-0 lg:rounded-full",
+          "relative z-50 flex flex-col divide-y divide-border overflow-visible rounded-[1.5rem] bg-surface shadow-card ring-1 ring-border/80 lg:items-stretch lg:divide-y-0 lg:rounded-full",
           prominent
             ? "lg:grid lg:h-[56px] lg:min-h-[56px] lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
             : "min-h-[8.4rem] lg:min-h-[2.75rem] lg:flex-row lg:flex-wrap",
@@ -451,7 +451,7 @@ export function ExploreSearchBar({
               id={whenPanelId}
               role="group"
               aria-labelledby={whenLabelId}
-              className="absolute left-2 right-2 top-full z-[60] mt-1.5 rounded-2xl bg-surface p-3 shadow-lift ring-1 ring-border lg:left-0 lg:right-auto lg:w-[22rem]"
+              className="absolute left-2 right-2 top-full z-50 mt-1.5 rounded-2xl bg-surface p-3 shadow-lift ring-1 ring-border lg:left-0 lg:right-auto lg:w-[22rem]"
             >
               {onStartChange ? (
                 <div className="mb-3 flex flex-wrap gap-2">
@@ -531,7 +531,7 @@ export function ExploreSearchBar({
             {prominent ? null : submitControl}
           </div>
           {childAges?.length && active === "name" && onChildAge && values.name.trim().length < 2 ? (
-            <div className="absolute left-2 right-2 top-full z-[60] mt-1.5 rounded-xl bg-surface p-3 shadow-card ring-1 ring-border lg:left-auto lg:right-0 lg:w-[22rem]">
+            <div className="absolute left-2 right-2 top-full z-50 mt-1.5 rounded-xl bg-surface p-3 shadow-card ring-1 ring-border lg:left-auto lg:right-0 lg:w-[22rem]">
               <p className="text-sm font-semibold text-fg">{t("searchChildAge")}</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {childAges.map((age) => (

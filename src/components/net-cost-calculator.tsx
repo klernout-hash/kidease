@@ -75,7 +75,7 @@ export function NetCostCalculator({
   }, [age, gross, inProgram, income, prov, qcReduced]);
 
   return (
-    <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80" data-ke="net-cost-calculator">
+    <section className="rounded-2xl bg-surface p-4 text-fg shadow-sm ring-1 ring-border" data-ke="net-cost-calculator">
       <h2 className="font-display text-2xl">{fr ? "Coût net estimé" : "Estimated net cost"}</h2>
       <p className="mt-1 text-sm text-muted">
         {fr
@@ -140,7 +140,7 @@ export function NetCostCalculator({
         </label>
       ) : null}
       {result ? (
-        <div className="mt-4 rounded-2xl bg-stone-50 p-4">
+        <div className="mt-4 rounded-2xl bg-surface-2 p-4 text-fg">
           <p className="text-sm text-muted">{fr ? result.programFr : result.programEn}</p>
           <p className="mt-2 font-display text-3xl tabular-nums">{cad(result.netMonthlyAfterT778, fr)}</p>
           <p className="text-sm text-muted">{fr ? "par mois après l'estimation T778" : "a month after the T778 estimate"}</p>

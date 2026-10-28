@@ -20,6 +20,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { compressProfileFile, writeProfilePhoto } from "@/lib/profile-photo";
+import { polishProfilePhoto } from "@/lib/server/profile-photo";
 import { authClient } from "@/lib/auth/client";
 import { getMyContact, saveMyContact } from "@/lib/server/profile-contact";
 import { CaslConsentFields } from "@/components/casl-consent-fields";
@@ -364,6 +365,28 @@ function ProfilePane() {
       .catch(() => undefined);
   }, [user?.id]);
 
+  async function uploadProfilePhoto(file: File) {
+    if (!user) return;
+    setBusy(true);
+    try {
+      const compressed = await compressProfileFile(file);
+      let dataUrl = compressed;
+      try {
+        const polished = await polishProfilePhoto({ data: { dataUrl: compressed } });
+        if (polished.dataUrl) dataUrl = polished.dataUrl;
+      } catch {
+        /* A failed brighten pass still keeps the photo the parent picked. */
+      }
+      writeProfilePhoto(user.id, dataUrl);
+      await authClient.updateUser({ image: dataUrl });
+      confirmAction(t, "photoUploaded", { title: t("accountPhotoUpdated") });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("accountPhotoFailed"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function onSave(e: React.FormEvent, leaveEdit = false) {
     e.preventDefault();
     if (!user) return;
@@ -647,6 +670,19 @@ function ProfilePane() {
   return (
     <AccountDeskFrame desk={desk}>
       <main className={desk ? "max-w-lg pb-6" : "ke-gutter mx-auto max-w-lg pb-10 pt-6"}>
+        {user ? (
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) void uploadProfilePhoto(file);
+            }}
+          />
+        ) : null}
         <div className="flex items-center justify-between gap-3">
           {editing && editField ? (
             <button
@@ -751,6 +787,7 @@ function ProfilePane() {
               ratingX10={daycareStats ? ratingX10 : null}
               years={yearsOnKidEase(joinedAt)}
               childCount={daycareStats ? null : profileDesk?.ok ? profileDesk.childCount : null}
+              onEditPhoto={() => inputRef.current?.click()}
             />
             {roleId === "parent" ? (
               <ProfileChildren children={profileDesk?.ok ? profileDesk.children : []} />
@@ -866,26 +903,6 @@ function ProfilePane() {
           </div>
         ) : user ? (
           <form ref={formRef} onSubmit={(e) => void onSave(e, true)} className="mt-6" data-ke="profile-edit-form">
-            <input
-              ref={inputRef}
-              type="file"
-              accept="image/*"
-              className="sr-only"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                e.target.value = "";
-                if (!file || !user) return;
-                setBusy(true);
-                void compressProfileFile(file)
-                  .then(async (dataUrl) => {
-                    writeProfilePhoto(user.id, dataUrl);
-                    await authClient.updateUser({ image: dataUrl });
-                    confirmAction(t, "photoUploaded", { title: t("accountPhotoUpdated") });
-                  })
-                  .catch((err) => toast.error(err instanceof Error ? err.message : t("accountPhotoFailed")))
-                  .finally(() => setBusy(false));
-              }}
-            />
             {editField == null ? (
               <>
                 <div className="flex flex-col items-center">

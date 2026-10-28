@@ -42,7 +42,7 @@ select
         )
       )
   )::int as fees_confirmed,
-  count(*) filter (where coalesce(ages_confirmed, 0) = 1)::int as ages_confirmed
+  count(*) filter (where ${PUBLIC_LISTING_SQL} and coalesce(ages_confirmed, 0) = 1)::int as ages_confirmed
 from daycares
 `;
 

@@ -19,7 +19,6 @@ import {
   type DeskId,
   type DeskItem,
 } from "@/lib/desk-nav";
-import { LanguageSelect } from "@/components/language-select";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import { cn } from "@/lib/utils";
@@ -210,15 +209,10 @@ export function DeskShell({
                     onToggle={(event) => writeDeskGroupOpen(desk, group.id, event.currentTarget.open)}
                     className="py-0.5"
                   >
-                    <summary className="flex min-h-11 cursor-pointer list-none items-center rounded-lg px-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-subtle [&::-webkit-details-marker]:hidden">
+                    <summary className="mt-3 flex min-h-11 cursor-pointer list-none items-center rounded-lg border-b border-border px-2.5 pb-1 text-sm font-extrabold uppercase tracking-[0.14em] text-slate-950 dark:text-white [&::-webkit-details-marker]:hidden">
                       <span>{group.labelKey ? t(group.labelKey) : group.label}</span>
                     </summary>
                     <div className="flex flex-col gap-0.5">
-                      {group.id === "settings" ? (
-                        <div className="px-2.5 py-1">
-                          <LanguageSelect className="w-full justify-start" />
-                        </div>
-                      ) : null}
                       {items.map((item) => {
                         const on = itemIsOn(item, active, pathname);
                         const count = attentionForItem(session?.attention, item.id);

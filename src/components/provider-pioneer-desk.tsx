@@ -87,7 +87,7 @@ export function ProviderPioneerDesk() {
         ))}
       </div>
       {tab === "spots" ? (
-        <section className="mt-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80">
+        <section className="mt-4 rounded-2xl bg-surface p-4 text-fg shadow-sm ring-1 ring-border">
           <h2 className="font-display text-2xl">{fr ? "Places, visites et liste d'attente" : "Open spots, tours, and waitlist"}</h2>
           <p className="mt-2 text-sm text-muted">
             {fr
@@ -118,7 +118,7 @@ export function ProviderPioneerDesk() {
         </div>
       ) : null}
       {tab === "staff" ? (
-        <section className="mt-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80">
+        <section className="mt-4 rounded-2xl bg-surface p-4 text-fg shadow-sm ring-1 ring-border">
           <h2 className="font-display text-2xl">{fr ? "Personnel" : "Staff"}</h2>
           <label className="mt-3 flex min-h-11 items-center gap-2 text-sm">
             <input type="checkbox" checked={hiring} onChange={(event) => setHiring(event.target.checked)} />
@@ -159,7 +159,7 @@ export function ProviderPioneerDesk() {
         </div>
       ) : null}
       {tab === "org" ? (
-        <section className="mt-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80">
+        <section className="mt-4 rounded-2xl bg-surface p-4 text-fg shadow-sm ring-1 ring-border">
           <h2 className="font-display text-2xl">{fr ? "Plusieurs sites" : "More than one site"}</h2>
           <p className="mt-2 text-sm text-muted">
             {fr

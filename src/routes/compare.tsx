@@ -37,7 +37,7 @@ import { TrustSignals } from "@/components/trust-badge";
 import { money } from "@/lib/utils";
 import { licenseRecordUrl } from "@/lib/licensing";
 import { estimateNetCost } from "@/lib/net-cost-engine";
-import { calcDetourMinutes } from "@/lib/commute-isochrone";
+import { calcDetourMinutes, commuteDetourLabel, haversineKm } from "@/lib/commute-isochrone";
 import type { DaycareCard } from "@/lib/types";
 import { MultiApplyPanel } from "@/components/multi-apply-sheet";
 import { localePath } from "@/lib/locale-path";
@@ -216,8 +216,15 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
                   label={locale === "fr" ? "Détour" : "Commute detour"}
                   values={items.map((d) => {
                     if (!workOrigin || !origin.label) return t("noneListed");
-                    const minutes = calcDetourMinutes(origin, workOrigin, { lat: d.lat, lng: d.lng }, commuteMode);
-                    return locale === "fr" ? `+${minutes} min` : `+${minutes} min`;
+                    const stop = { lat: d.lat, lng: d.lng };
+                    const minutes = calcDetourMinutes(origin, workOrigin, stop, commuteMode);
+                    const label = commuteDetourLabel({
+                      minutes,
+                      homeToStopKm: haversineKm(origin, stop),
+                      homeToWorkKm: haversineKm(origin, workOrigin),
+                      locale: locale === "fr" ? "fr" : "en",
+                    });
+                    return label || t("noneListed");
                   })}
                 />
                 <Row

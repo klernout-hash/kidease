@@ -21,6 +21,7 @@ export function ListingRail({
   persist = false,
   visual = false,
   labelFar = false,
+  showDistance = true,
 }: {
   title: string;
   items: Card[];
@@ -42,6 +43,8 @@ export function ListingRail({
   visual?: boolean;
   /** Name search labels far centres with province and kilometres. */
   labelFar?: boolean;
+  /** Off when a national Live card is outside the parent's city. */
+  showDistance?: boolean;
 }) {
   const { t } = useCopy();
   const scroller = useRef<HTMLDivElement>(null);
@@ -156,6 +159,7 @@ export function ListingRail({
                 compact={!visual}
                 eager={eagerThumbs && i < 2}
                 labelFar={labelFar}
+                showDistance={showDistance}
               />
             </div>
           ))}

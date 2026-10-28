@@ -832,14 +832,13 @@ export const featuredDaycares = createServerFn({ method: "GET" })
   }))
   .handler(async ({ data }) => {
     const radiusKm = data.radiusKm;
-    const aligned = alignSearchOrigin({
-      lat: data.lat,
-      lng: data.lng,
-      radiusKm,
-      q: data.label,
-      label: data.label,
-    });
-    const origin = { lat: aligned.lat, lng: aligned.lng, label: aligned.label || data.label };
+    // Keep the parent's coordinates. A city label must not snap the pin to
+    // that city's downtown and invent "1.1 km away".
+    const origin = {
+      lat: Number(data.lat),
+      lng: Number(data.lng),
+      label: (data.label || "").trim(),
+    };
     const full = await withTimeoutFallback(loadFeatured(origin, radiusKm), LOADER_SETTLE_MS, null);
     if (full && full.length > 0) return full;
     return liveCardsForSearch({
@@ -849,7 +848,6 @@ export const featuredDaycares = createServerFn({ method: "GET" })
       sort: "distance",
       ageGroup: "any",
       label: origin.label,
-      q: origin.label,
     });
   });
 

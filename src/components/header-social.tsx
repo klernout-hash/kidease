@@ -23,10 +23,13 @@ function Mark({ network }: { network: SocialNetwork }) {
   return network === "instagram" ? <InstagramMark /> : <FacebookMark />;
 }
 
-export function HeaderSocial() {
+export function HeaderSocial({ always = false }: { always?: boolean }) {
   const { t } = useCopy();
   return (
-    <nav className="ke-narrow-hide hidden items-center [[data-channel=website]_&]:flex" aria-label="KidEase social">
+    <nav
+      className={always ? "flex items-center" : "ke-narrow-hide hidden items-center [[data-channel=website]_&]:flex"}
+      aria-label="KidEase social"
+    >
       {SOCIAL_PROFILES.map((profile) => (
         <a
           key={profile.network}

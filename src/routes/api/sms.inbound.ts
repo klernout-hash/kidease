@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { applyInboundSms } from "@/lib/server/casl-consent";
 import { logSecurityEvent, requestIp } from "@/lib/server/security-events";
 import { normalizeCaslPhone, parseInboundOptOut } from "@/lib/casl";
-import { inboundKeywordTwiml, inboundSmsChatDecision } from "@/lib/sms-copy";
+import { inboundKeywordTwiml, inboundSmsChatDecision, twimlEmpty } from "@/lib/sms-copy";
+import { liveAgentSmsDecision, liveChatAgentPhone } from "@/lib/support-chat";
 import { upsertSmsDelivery } from "@/lib/server/sms-log";
 import {
   parseTwilioForm,
@@ -49,6 +50,16 @@ async function run(request: Request) {
       opt,
       ip,
       userAgent: request.headers.get("user-agent"),
+    });
+  }
+  const live = liveAgentSmsDecision(params.From || params.from, params.Body || params.body || "", liveChatAgentPhone());
+  if (live.route && opt !== "stop" && opt !== "start" && opt !== "help") {
+    const { routeAgentSms } = await import("@/lib/server/support-chat");
+    await routeAgentSms({ code: live.code, body: params.Body || params.body || "" }).catch(() => undefined);
+    await upsertSmsDelivery(smsDeliveryRecord(params, opt)).catch(() => undefined);
+    return new Response(twimlEmpty(), {
+      status: 200,
+      headers: { "Content-Type": "text/xml" },
     });
   }
   await upsertSmsDelivery(smsDeliveryRecord(params, opt)).catch(() => undefined);

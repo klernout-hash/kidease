@@ -1,4 +1,5 @@
 import { CATALOG_COUNT_SQL, CATALOG_COUNT_TTL_MS, catalogCountsFromRow, type CatalogCounts } from "@/lib/catalog-counts";
+import { PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
 import { dbSource, getSqlWithin } from "@/lib/db";
 import { reportError } from "@/lib/observe";
 import {
@@ -63,9 +64,9 @@ export async function collectHealth(): Promise<HealthPayload> {
         /* A missing column must not hide the ages count below. */
       }
       if (payload.agesConfirmed == null) {
-        const rows = await sql<{ n: number | string }>`
-          select count(*)::int as n from daycares where coalesce(ages_confirmed, 0) = 1
-        `;
+        const rows = await sql.query(
+          `select count(*)::int as n from daycares where ${PUBLIC_LISTING_SQL} and coalesce(ages_confirmed, 0) = 1`,
+        );
         const count = Number(rows[0]?.n);
         if (Number.isFinite(count)) payload.agesConfirmed = count;
       }

@@ -143,27 +143,37 @@ function normalizeRegion(value?: string | null) {
   return byName?.code ?? "";
 }
 
-function cityFromHint(hint: { city?: string; lat?: number; lng?: number } | null | undefined) {
-  const name = (hint?.city || "").trim().toLowerCase();
-  if (name) {
-    const byName = CITIES.find(
+function namedCity(name: string) {
+  return (
+    CITIES.find(
       (c) =>
         c.label.toLowerCase() === name ||
         c.label.toLowerCase().startsWith(`${name},`) ||
         c.aliases.some((a) => a === name),
-    );
-    if (byName) return byName;
-  }
-  if (
+    ) ?? null
+  );
+}
+
+/**
+ * A header city name only wins when it agrees with the coordinates.
+ * "Edmonton" plus a Winnipeg pin must not pretend the parent is downtown Edmonton.
+ */
+function cityFromHint(hint: { city?: string; lat?: number; lng?: number } | null | undefined) {
+  const name = (hint?.city || "").trim().toLowerCase();
+  const named = name ? namedCity(name) : null;
+  const coords =
     typeof hint?.lat === "number" &&
     typeof hint?.lng === "number" &&
     isInCanada(hint.lat, hint.lng)
-  ) {
-    const here = { lat: hint.lat, lng: hint.lng };
+      ? { lat: hint.lat, lng: hint.lng }
+      : null;
+  if (named && coords && haversineKm(coords, named) <= 80) return named;
+  if (named && !coords) return named;
+  if (coords) {
     let best = CITIES[0]!;
     let bestD = Infinity;
     for (const c of CITIES) {
-      const d = haversineKm(here, c);
+      const d = haversineKm(coords, c);
       if (d < bestD) {
         bestD = d;
         best = c;
@@ -172,6 +182,30 @@ function cityFromHint(hint: { city?: string; lat?: number; lng?: number } | null
     if (bestD <= 40) return best;
   }
   return null;
+}
+
+/** Rough Manitoba box. Edmonton is west of this, so a bad Alberta pin does not count. */
+export function originInManitoba(origin: { lat?: number; lng?: number; label?: string | null } | null | undefined) {
+  if (!origin) return false;
+  const label = (origin.label || "").trim().toUpperCase();
+  if (label.endsWith(", MB") || label === "MANITOBA" || label === "WINNIPEG") return true;
+  const lat = Number(origin.lat);
+  const lng = Number(origin.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+  return lat >= 48.9 && lat <= 60.1 && lng >= -102.1 && lng <= -88.8;
+}
+
+/**
+ * Directory origin for home and search.
+ * No geo, or a Manitoba clock with a pin outside Manitoba, opens on Winnipeg.
+ * A GPS fix or a city the parent typed stays put.
+ */
+export function coerceDirectoryOrigin(
+  origin: ResolvedOrigin,
+  _timeZone?: string | null,
+): ResolvedOrigin {
+  // No geo header becomes Winnipeg. A real IP city, GPS fix, or typed place stays.
+  return searchOriginOrWinnipeg(origin);
 }
 
 function decodeHeader(value: string) {
@@ -425,5 +459,12 @@ export function isUntrustedTorontoOrigin(origin: SearchOrigin | null | undefined
 export function resolveAnonymousOriginFromHeaders(
   headers: HeaderReader | null | undefined,
 ): ResolvedOrigin {
-  return originFromIpHint(parseIpGeoHeaders(headers));
+  const hint = parseIpGeoHeaders(headers);
+  const fromIp = originFromIpHint(hint);
+  // A Manitoba region with a pin outside the province is not the parent.
+  // A matching city pin (Toronto, Edmonton) stays, even if the clock says Winnipeg.
+  if (normalizeRegion(hint?.region) === "MB" && !originInManitoba(fromIp)) {
+    return { lat: WINNIPEG.lat, lng: WINNIPEG.lng, label: WINNIPEG.label, source: "ip" };
+  }
+  return fromIp;
 }

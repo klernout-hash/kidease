@@ -81,3 +81,21 @@ export function detourPill(minutes: number, locale: "en" | "fr"): string {
   if (locale === "fr") return `+${n} min sur votre trajet`;
   return `+${n} min on your commute`;
 }
+
+/** A cross-city or all-day detour is not "on your commute". */
+export const MAX_DETOUR_PILL_MIN = 45;
+export const MAX_DETOUR_DISTANCE_KM = 50;
+/** Home and work this close are the same pin, not a commute. */
+export const MIN_COMMUTE_SPAN_KM = 0.2;
+
+export function commuteDetourLabel(input: {
+  minutes: number;
+  homeToStopKm: number;
+  homeToWorkKm: number;
+  locale: "en" | "fr";
+}): string | null {
+  if (!Number.isFinite(input.minutes) || input.minutes > MAX_DETOUR_PILL_MIN) return null;
+  if (!Number.isFinite(input.homeToStopKm) || input.homeToStopKm > MAX_DETOUR_DISTANCE_KM) return null;
+  if (!Number.isFinite(input.homeToWorkKm) || input.homeToWorkKm < MIN_COMMUTE_SPAN_KM) return null;
+  return detourPill(input.minutes, input.locale);
+}
