@@ -32,10 +32,10 @@ export function AppErrorComponent({ error }: ErrorComponentProps) {
             } catch {
               /* ignore */
             }
-            window.location.assign("/search");
+            window.location.reload();
           }}
         >
-          Reload Explore
+          {copy.retry}
         </button>
         <a
           href="/"

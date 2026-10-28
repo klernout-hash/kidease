@@ -9,6 +9,7 @@ export type NeedCareFastCopy = {
   emptyPlace: string;
   unknownPlace: string;
   emptyResults: string;
+  emptyNear: (city: string) => string;
   searchAgain: string;
   spots: string;
   confirmed: string;
@@ -26,6 +27,8 @@ const en: NeedCareFastCopy = {
   emptyPlace: "Add a city so we can sort by distance.",
   unknownPlace: "We could not find that place. Try a city name like Toronto.",
   emptyResults: "No centre near here confirmed an open spot in the last 7 days.",
+  emptyNear: (city) =>
+    `No centres have confirmed open spots this week near ${city}. Try a wider area or request info.`,
   searchAgain: "Search all daycares",
   spots: "open spots",
   confirmed: "Confirmed",
@@ -43,6 +46,8 @@ const fr: NeedCareFastCopy = {
   emptyPlace: "Ajoutez une ville pour trier par distance.",
   unknownPlace: "Nous n'avons pas trouvé cet endroit. Essayez un nom de ville, comme Toronto.",
   emptyResults: "Aucun centre près d'ici n'a confirmé une place libre dans les 7 derniers jours.",
+  emptyNear: (city) =>
+    `Aucun centre n'a confirmé de places libres cette semaine près de ${city}. Essayez une zone plus large, ou demandez des renseignements.`,
   searchAgain: "Chercher toutes les garderies",
   spots: "places libres",
   confirmed: "Confirmé",
