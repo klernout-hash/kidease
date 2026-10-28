@@ -11,6 +11,9 @@ import { DaycareTypeRails, BROWSE_RAIL_COPY, type BrowseDaycareType } from "@/co
 import { ExploreCategoryChips } from "@/components/explore-category-chips";
 import { ExploreFilterBar } from "@/components/explore-filter-bar";
 import { ExploreFilterChips } from "@/components/explore-filter-chips";
+import { PioneerFilterRail } from "@/components/pioneer-filter-rail";
+import { CommuteDetourBar } from "@/components/commute-detour-bar";
+import { SearchCardAgesProvider } from "@/components/search-card-context";
 import { DaycareCard } from "@/components/daycare-card";
 import { SEARCH_PAGE_SIZE, pageFromSearch } from "@/lib/search-page";
 import { searchDaycarePage } from "@/lib/server/daycares";
@@ -47,6 +50,7 @@ import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import { confirmedFeeProgramBadge } from "@/lib/fee-program";
+import { parsePioneerSearch, pioneerFiltersFrom, rowMatchesPioneer, type PioneerSearch } from "@/lib/pioneer-filters";
 import { hasAmenity, opensEarly, staysLate } from "@/lib/licensing";
 import { ChipButton } from "@/components/chip";
 import { EmptyState } from "@/components/empty-state";
@@ -243,6 +247,11 @@ export function searchValidateSearch(s: Record<string, unknown>) {
       rank?: "best" | "nearest";
       page?: number;
       live?: 1;
+      cwelcc?: "1";
+      inclusive?: "1";
+      meals?: "1";
+      subsidy?: "1";
+      lang?: string;
     } = { ...fields };
     const city = typeof s.city === "string" ? s.city.trim().slice(0, 80) : "";
     if (city) out.city = city;
@@ -268,7 +277,7 @@ export function searchValidateSearch(s: Record<string, unknown>) {
     else if (typeof s.facility === "string" && isCareType(s.facility)) out.care = s.facility;
     if (s.favorites === "1" || s.favorites === true) out.favorites = "1";
     const parent = compactParentListingSearch(parseParentListingSearch(s));
-    return { ...out, ...parent };
+    return { ...out, ...parent, ...parsePioneerSearch(s) };
 }
 
 export function searchPageHead(
@@ -762,12 +771,41 @@ export function SearchScreen({
   ]);
 
   const parentFilters = useMemo(() => parseParentListingSearch(incoming), [incoming]);
+  const liveOn = claimVerifiedOnly || readLiveSearchFlag(incoming.live);
 
   function withParentSearch(search: Record<string, unknown>) {
-    return { ...search, ...compactParentListingSearch(parentFilters) };
+    return {
+      ...parsePioneerSearch(incoming as Record<string, unknown>),
+      ...search,
+      ...compactParentListingSearch(parentFilters),
+    };
   }
 
-  const liveOn = claimVerifiedOnly || readLiveSearchFlag(incoming.live);
+  function writePioneer(next: PioneerSearch) {
+    void navigate({
+      search: withParentSearch({
+        q: incoming.q,
+        name: incoming.name,
+        from: incoming.from,
+        to: incoming.to,
+        sort: incoming.sort,
+        age: incoming.age,
+        start: incoming.start,
+        cat: incoming.cat,
+        care: incoming.care,
+        favorites: incoming.favorites,
+        city: incoming.city,
+        rank: incoming.rank,
+        live: liveSearchParam(liveOn),
+        openings: next.openings,
+        cwelcc: next.cwelcc,
+        inclusive: next.inclusive,
+        meals: next.meals,
+        subsidy: next.subsidy,
+        lang: next.lang,
+      }),
+    });
+  }
 
   function listingPageSearch(page: number) {
     return withParentSearch({
@@ -1197,13 +1235,16 @@ export function SearchScreen({
     if (avail === "open") rows = rows.filter((r) => honestVacancy(r).kind === "open");
     if (avail === "waitlist") rows = rows.filter((r) => honestVacancy(r).kind === "waitlist");
     if (avail === "unknown") rows = rows.filter((r) => !r.availabilityKnown);
-    if (ten) rows = rows.filter((r) => confirmedFeeProgramBadge(r) != null);
-    if (meals) rows = rows.filter((r) => hasAmenity(r.amenities, "meals"));
+    const pioneer = pioneerFiltersFrom(parsePioneerSearch(incoming as Record<string, unknown>));
+    if (ten || pioneer.cwelcc) rows = rows.filter((r) => confirmedFeeProgramBadge(r) != null);
+    if (meals || pioneer.meals) rows = rows.filter((r) => rowMatchesPioneer(r, { ...pioneer, cwelcc: false, openings: false, inclusive: false, subsidy: false, langs: [], meals: true }));
+    if (pioneer.subsidy) rows = rows.filter((r) => rowMatchesPioneer(r, { ...pioneer, cwelcc: false, openings: false, inclusive: false, meals: false, langs: [], subsidy: true }));
+    if (pioneer.langs.length) rows = rows.filter((r) => rowMatchesPioneer(r, { ...pioneer, cwelcc: false, openings: false, inclusive: false, meals: false, subsidy: false }));
     if (outdoor)
       rows = rows.filter(
         (r) => hasAmenity(r.amenities, "outdoor") || hasAmenity(r.amenities, "yard"),
       );
-    if (inclusive) rows = rows.filter((r) => hasAmenity(r.amenities, "inclusive"));
+    if (inclusive || pioneer.inclusive) rows = rows.filter((r) => hasAmenity(r.amenities, "inclusive"));
     if (extended) rows = rows.filter((r) => staysLate(r.hours, r.amenities) || opensEarly(r.hours));
     if (infantOnly) rows = rows.filter((r) => matchesRailAge(r, "infant"));
     if (catchmentOnly) rows = rows.filter((r) => r.inCatchment);
@@ -1240,12 +1281,10 @@ export function SearchScreen({
     careType,
     schoolAgeOnly,
     locationLock,
-    incoming.cat,
-    incoming.age,
-    incoming.care,
     nameQuery,
     needBy,
     parentFilters,
+    incoming,
   ]);
   const selectedAges = parseExploreRailAges(incoming);
   const openingsOn = exploreOpeningsSelected(incoming);
@@ -1621,6 +1660,7 @@ export function SearchScreen({
   const activeCat = resolvedExploreCategory(incoming);
 
   return (
+    <SearchCardAgesProvider ages={selectedAges}>
     <Shell>
       <div className="ke-dense ke-gutter mx-auto max-w-7xl pb-6 pt-2">
         <div className="flex items-end justify-between gap-3 max-md:flex-wrap max-md:gap-y-1">
@@ -1805,6 +1845,8 @@ export function SearchScreen({
             setView(view === "map" ? "list" : "map");
           }}
         />
+        <PioneerFilterRail value={parsePioneerSearch(incoming as Record<string, unknown>)} onChange={writePioneer} />
+        <CommuteDetourBar />
         </div>
 
         {askLocation ? (
@@ -2133,5 +2175,6 @@ export function SearchScreen({
         <CompareBar />
       </Suspense>
     </Shell>
+    </SearchCardAgesProvider>
   );
 }

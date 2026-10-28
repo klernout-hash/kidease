@@ -51,6 +51,7 @@ export const SITEMAP_STATIC_PATHS = [
   "/jobs/post",
   "/start-a-daycare",
   "/need-care-fast",
+  "/calculator",
   "/guides",
   "/guides/bc",
   "/guides/ab",

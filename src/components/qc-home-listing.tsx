@@ -5,7 +5,7 @@ import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { revealQcHomeContact, submitQcHomeRequest } from "@/lib/server/qc-home-daycares";
-import { qcHomeCopy, type QcHomeLocale, type QcHomePublicListing } from "@/lib/qc-home-daycare";
+import { qcHomeCopy, qcMilieuPrivacyCentroid, type QcHomeLocale, type QcHomePublicListing } from "@/lib/qc-home-daycare";
 
 function focusIn(event: { currentTarget: HTMLElement }) {
   event.currentTarget.scrollIntoView({ block: "center" });
@@ -201,6 +201,20 @@ export function QcHomeListing({
           <a href="#corriger" className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline">
             {copy.correctLink}
           </a>
+        </p>
+        <p className="mt-3 inline-flex max-w-full items-center rounded-full bg-stone-100 px-3 py-2 text-sm text-stone-800" data-ke="qc-privacy-circle">
+          {(() => {
+            const pin = qcMilieuPrivacyCentroid({
+              province: "QC",
+              centreType: "home",
+              city: listing.municipality || listing.locationLabel,
+              postalCode: listing.postalFsa,
+            });
+            const where = pin?.city || place;
+            return fr
+              ? `${where}. Adresse de rue privée. Cercle d'environ ${pin?.radiusM ?? 300} m.`
+              : `${where}. Street address stays private. About a ${pin?.radiusM ?? 300} m circle.`;
+          })()}
         </p>
         {listing.area ? (
           <div className="mt-4">

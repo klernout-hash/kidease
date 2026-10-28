@@ -238,6 +238,40 @@ export function municipalityArea(name: string | null | undefined): QcHomeArea | 
   return { lat: hit.lat, lng: hit.lng, radiusM: hit.radiusM };
 }
 
+const QC_FALLBACK = { lat: 46.81, lng: -71.21 };
+
+/**
+ * Neighbourhood centroid for an unclaimed Québec home daycare.
+ * The pin is not the door. Street numbers stay off the result.
+ * The badge radius is 300 m around that centroid.
+ */
+export function qcMilieuPrivacyCentroid(input: {
+  province?: string | null;
+  centreType?: string | null;
+  city?: string | null;
+  postalCode?: string | null;
+  streetDisclosed?: boolean;
+}): { lat: number; lng: number; radiusM: 300; hideStreet: true; city: string } | null {
+  const province = (input.province || "").trim().toUpperCase();
+  const kind = (input.centreType || "").trim().toLowerCase();
+  const home = kind === "home" || kind === "family_home" || kind === "milieu_familial" || kind === QC_HOME_PROVIDER_TYPE;
+  if (province !== "QC" || !home || input.streetDisclosed === true) return null;
+  const city = titlePlace(input.city || "");
+  const area = municipalityArea(city) ?? municipalityArea(input.city);
+  const base = area ?? QC_FALLBACK;
+  const fsa = postalFsa(input.postalCode || "").fsa || "";
+  let shift = 0;
+  for (let i = 0; i < fsa.length; i += 1) shift += fsa.charCodeAt(i);
+  const jitter = ((shift % 7) - 3) * 0.0004;
+  return {
+    lat: Math.round((base.lat + jitter) * 1000) / 1000,
+    lng: Math.round((base.lng - jitter) * 1000) / 1000,
+    radiusM: 300,
+    hideStreet: true,
+    city: city || "Québec",
+  };
+}
+
 export function looksLikeStreet(value: string): boolean {
   const v = value.trim();
   if (!v) return false;

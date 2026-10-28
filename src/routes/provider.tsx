@@ -66,6 +66,7 @@ import { publicApprovalEligible } from "@/lib/approve-live";
 import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { officialLicenceNumber } from "@/lib/licensing";
 import { ProviderMoneyPanel } from "@/components/provider-money";
+import { TaxReceiptStudio } from "@/components/tax-receipt-studio";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
 import { VacancyConfirmLoop } from "@/components/vacancy-confirm";
 import { SpotOfferDesk } from "@/components/spot-offer-desk";
@@ -793,7 +794,10 @@ export function ProviderPage() {
 
       {desk === "money" ? (
         centreOwner ? (
-          <ProviderMoneyPanel />
+          <div className="space-y-6">
+            <ProviderMoneyPanel />
+            <TaxReceiptStudio quebec />
+          </div>
         ) : (
           <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>
         )

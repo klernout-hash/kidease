@@ -7,6 +7,7 @@ import type { AgeGroup, Locale } from "./types";
 import { writeDistanceUnit, type DistanceUnit } from "./units";
 import { writeLocationConsent, type LocationConsent } from "./location-consent";
 import { clampRadiusKm } from "./proximity";
+import type { CommuteMode } from "./commute-isochrone";
 import { parseAnchorMode, writeDualAnchorPrefs, type AnchorMode } from "./dual-anchor";
 import { applyTheme, persistThemePreference, writeThemePreference, type ResolvedTheme, type ThemePreference } from "./theme";
 import { writeTextScale, type TextScale } from "./text-scale";
@@ -26,6 +27,8 @@ type SearchState = {
   setWorkOrigin: (origin: Origin | null) => void;
   anchorMode: AnchorMode;
   setAnchorMode: (mode: AnchorMode) => void;
+  commuteMode: CommuteMode;
+  setCommuteMode: (mode: CommuteMode) => void;
   located: boolean;
   setLocated: (v: boolean) => void;
   originSource: OriginSource | null;
@@ -100,6 +103,8 @@ export const useAppStore = create<SearchState>()((set) => ({
       return { anchorMode };
     });
   },
+  commuteMode: "drive",
+  setCommuteMode: (commuteMode) => set({ commuteMode }),
   located: false,
   setLocated: (located) => set({ located }),
   originSource: null,

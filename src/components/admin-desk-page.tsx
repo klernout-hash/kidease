@@ -2,6 +2,7 @@ import { Link, getRouteApi } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Shell } from "@/components/shell";
 import { AdminLicenceReads } from "@/components/admin-licence-reads";
+import { CatalogueHealthStrip } from "@/components/catalogue-health-strip";
 import { DeskShell } from "@/components/desk-shell";
 import { LedgerHonesty } from "@/components/listing-status-badge";
 import { TwoFactorGate } from "@/lib/auth/gates";
@@ -602,7 +603,8 @@ export function AdminPage() {
         </>
       ) : tab === "queue" ? (
         <>
-          <div role="group" aria-label="Filter this list" className="flex gap-1 overflow-x-auto rounded-full bg-surface p-1 ring-1 ring-border" data-ke="admin-queue-filters">
+          <CatalogueHealthStrip rows={centres} />
+          <div role="group" aria-label="Filter this list" className="mt-3 flex gap-1 overflow-x-auto rounded-full bg-surface p-1 ring-1 ring-border" data-ke="admin-queue-filters">
             <Stat compact label="Waiting on you" value={queueStat(counts.waiting)} accent={stat === "waiting"} filterId="waiting" onSelect={() => onSelectStat("waiting")} />
             <Stat compact label="Needs complete" value={queueStat(incompleteQueue.length)} accent={stat === "incomplete"} filterId="incomplete" onSelect={() => onSelectStat("incomplete")} />
             <Stat compact label="Live" value={queueStat(counts.approved)} accent={stat === "live"} filterId="live" onSelect={() => onSelectStat("live")} />

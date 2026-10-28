@@ -4,6 +4,7 @@ import { JsonLd } from "@/components/json-ld";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
+import { UrgentBroadcastPanel } from "@/components/urgent-broadcast-panel";
 import { needCareFastCopy } from "@/lib/need-care-fast-copy";
 import {
   formatConfirmedDay,
@@ -92,6 +93,14 @@ export function NeedCareFastView({ data: raw }: { data: NeedCareFastViewData | n
             />
           </div>
         ) : null}
+        <UrgentBroadcastPanel
+          centres={data.hits.map((hit) => ({
+            id: hit.id,
+            name: hit.name,
+            slug: hit.slug,
+            verified: true,
+          }))}
+        />
         {data.hits.length ? (
           <ul className="mt-6 divide-y divide-border">
             {data.hits.map((hit) => {

@@ -72,6 +72,10 @@ import { CompletenessBanner } from "@/components/listing-completeness";
 import { ListingReviewForm } from "@/components/listing-review-form";
 import { ListingOwnerReply } from "@/components/listing-owner-reply";
 import { ReviewSummary } from "@/components/review-summary";
+import { NetCostCalculator } from "@/components/net-cost-calculator";
+import { InspectionTrustCard } from "@/components/inspection-trust-card";
+import { ReviewDimensionBars } from "@/components/review-dimension-bars";
+import { HiringEceBadge } from "@/components/hiring-ece-badge";
 import { VacancyFreshness } from "@/components/vacancy-freshness";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { CompareBar } from "@/components/compare-bar";
@@ -817,6 +821,15 @@ export function Listing() {
             </div>
           ) : null}
           <ListingBadges item={ranked} compact feeOnly />
+          <HiringEceBadge show={Boolean(data.jobs?.length)} />
+          <InspectionTrustCard
+            province={d.province}
+            name={name}
+            licenseNumber={d.licenseNumber}
+            listingId={d.id}
+            licenseStatus={d.licenseStatus}
+            claimed={Boolean(d.claimed)}
+          />
         </header>
         <ListingJumpNav />
         <div className="mt-6 grid items-start gap-8 md:grid-cols-[minmax(0,1.15fr)_minmax(16rem,20rem)]">
@@ -886,6 +899,13 @@ export function Listing() {
                 <p className="mt-2 max-w-prose text-sm text-muted">{t("feeUnknownLead")}</p>
               ) : null}
               <p className="mt-3 text-sm text-muted">{t("feesAndSubsidies")}: {t("aidOnListing")}</p>
+              <div className="mt-4">
+                <NetCostCalculator
+                  province={d.province}
+                  grossMonthly={d.feeConfirmed || listingSubsidy(d) ? from : null}
+                  participating={listingSubsidy(d) != null}
+                />
+              </div>
             </section>
 
             <section id="listing-location" className="scroll-mt-24">
@@ -923,6 +943,7 @@ export function Listing() {
                   </span>
                 </p>
               ) : null}
+              <ReviewDimensionBars reviews={data.reviews} slug={d.slug} signedIn={Boolean(chrome.signedIn && !chrome.guestView)} />
               <ReviewSummary daycareId={d.id} />
               {data.reviews.length ? (
                 <ul className="mt-3 divide-y divide-border">
