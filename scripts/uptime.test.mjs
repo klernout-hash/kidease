@@ -147,6 +147,9 @@ describe("uptime / Better Stack", () => {
     assert.match(tree, /id:\s*'\/api\/health'/);
     assert.match(probe, /dbSource === "none"/);
     assert.match(probe, /getSqlWithin/);
+    assert.match(probe, /payload\.listingsTotal/);
+    assert.match(probe, /payload\.photosConfirmed/);
+    assert.match(probe, /CATALOG_COUNT_TTL_MS/);
     assert.match(probe, /pingBetterStackHeartbeat/);
     assert.match(probe, /payload\.cfr\.candidate/);
     assert.match(probe, /reportError/);

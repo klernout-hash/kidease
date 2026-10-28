@@ -106,13 +106,14 @@ export function ListingHeroGallery({
       onTouchEnd={onTouchEnd}
     >
       {src?.includes("-logo") ? (
-        <img src={src} alt="" className="size-full bg-surface object-contain p-6" />
+        <img src={src} alt={name} className="size-full bg-surface object-contain p-6" />
       ) : src ? (
         <BuildingPhoto
           eager
           priority
           claim={false}
           src={src}
+          alt={name}
           sizes={DETAIL_SIZES}
           width={768}
           height={576}

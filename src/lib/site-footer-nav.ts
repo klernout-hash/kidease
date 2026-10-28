@@ -55,6 +55,7 @@ export const FOOTER_LEGAL: FooterLinkDef[] = [
   copyLink("/privacy", "privacy", { localePaired: true }),
   copyLink("/terms", "terms", { localePaired: true }),
   copyLink("/cookies", "cookies", { localePaired: true }),
+  copyLink("/status", "statusNav", { localePaired: true }),
 ];
 
 export const FOOTER_COLUMNS: Record<FooterColumnId, FooterLinkDef[]> = {

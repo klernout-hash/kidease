@@ -2,6 +2,7 @@ import type { ErrorComponentProps } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { isStaleAssetError, reloadStaleAssetOnce, safeErrorCopy } from "@/lib/safe-error";
 import { reportError } from "@/lib/observe";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
 const SAFE_ERROR_CSS =
@@ -22,6 +23,10 @@ export function SafeRouteError({
 }: ErrorComponentProps & { links?: ReactNode }) {
   const path = typeof window !== "undefined" ? window.location.pathname : "";
   reportError(error, { route: path || "app" });
+  capturePostHogEvent("$exception", {
+    $exception_type: error instanceof Error ? error.name : "Error",
+    $exception_source: "error_boundary",
+  });
   const copy = safeErrorCopy(path);
   const showAdmin = path.startsWith("/admin");
 

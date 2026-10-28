@@ -58,6 +58,16 @@ export type HealthPayload = {
   cfr: HealthCfr;
   /** Listings whose ages were confirmed. Omitted when the count was not read. */
   agesConfirmed?: number;
+  /** Public catalogue size. Same number as listingsTotal. Omitted when unread. */
+  catalogCount?: number;
+  /** Public Canadian listings. Omitted when the count was not read. */
+  listingsTotal?: number;
+  /** Public listings in Winnipeg, including the common "Winnpeg" typo. */
+  winnipegTotal?: number;
+  /** Public listings with a real centre photo. Placeholders and logos do not count. */
+  photosConfirmed?: number;
+  /** Public listings with a confirmed fee line. The catalogue guess of 218 does not count. */
+  feesConfirmed?: number;
   /** One slice of the approved age fill. Omitted once that fill is recorded. */
   ageFill?: { done: boolean; updated: number; cursor: number; total: number };
   /** The five live checks, until the runtime fill is recorded. */

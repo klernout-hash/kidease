@@ -10,6 +10,7 @@ import { bookTourSlot, listPublicTourSlots } from "@/lib/server/tour-calendar";
 import { buildTourIcs, tourSlotInstants } from "@/lib/tour-ics";
 import { holdSendBeat, requestSentThumb } from "@/lib/request-sent";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { captureRankingEvent } from "@/lib/ranking/events";
 import { rankingContextFor } from "@/lib/ranking/context";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -113,6 +114,9 @@ export function RequestTourSheet({ daycare, open, unclaimed = false, onClose, on
     }
     const justOpened = !opened.current;
     opened.current = true;
+    if (justOpened) {
+      captureMarketplaceFunnel({ step: "tour_request", source: "listing", dest_path: "/daycare", contact: "tour" });
+    }
     const draft = justOpened ? readTourDraft(daycare.id) : null;
     if (justOpened) {
       setDone(null);
@@ -275,6 +279,7 @@ export function RequestTourSheet({ daycare, open, unclaimed = false, onClose, on
           },
         });
         capturePostHogEvent("listing_request_submitted", { intent: "tour" });
+        captureMarketplaceFunnel({ step: "tour_request", source: "listing", dest_path: "/daycare", contact: "tour" });
         {
           const ctx = rankingContextFor(daycare.id);
           captureRankingEvent("tour_requested", {
@@ -310,6 +315,7 @@ export function RequestTourSheet({ daycare, open, unclaimed = false, onClose, on
         },
       });
       capturePostHogEvent("listing_request_submitted", { intent: "tour" });
+      captureMarketplaceFunnel({ step: "tour_request", source: "listing", dest_path: "/daycare", contact: "tour" });
       {
         const ctx = rankingContextFor(daycare.id);
         captureRankingEvent("tour_requested", {

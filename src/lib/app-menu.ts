@@ -29,6 +29,7 @@ const GROUP: Record<string, MenuGroupId> = {
   "/privacy": "legal",
   "/terms": "legal",
   "/cookies": "legal",
+  "/status": "legal",
 };
 
 export function menuGroupForHref(href: string): MenuGroupId | null {

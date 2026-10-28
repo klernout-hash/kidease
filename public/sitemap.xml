@@ -101,6 +101,10 @@
     <lastmod>2026-09-08</lastmod>
   </url>
   <url>
+    <loc>https://www.kidease.ca/status</loc>
+    <lastmod>2026-09-08</lastmod>
+  </url>
+  <url>
     <loc>https://www.kidease.ca/jobs</loc>
     <lastmod>2026-09-08</lastmod>
   </url>
@@ -238,6 +242,7 @@
   <url><loc>https://www.kidease.ca/fr/team</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://www.kidease.ca/fr/unsubscribe</loc><lastmod>2026-09-08</lastmod></url>
   <url><loc>https://www.kidease.ca/fr/delete-account</loc><lastmod>2026-09-08</lastmod></url>
+  <url><loc>https://www.kidease.ca/fr/status</loc><lastmod>2026-09-08</lastmod></url>
   <url>
     <loc>https://www.kidease.ca/daycare/city/toronto</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://www.kidease.ca/daycare/city/toronto"/>
