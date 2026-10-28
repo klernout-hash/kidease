@@ -695,6 +695,11 @@ async function runRoleFixture(page, base) {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.context().clearCookies();
     await page.goto(new URL("/search?q=Winnipeg%2C+MB", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await page
+      .locator('a[href*="/daycare/"]:not([href*="/daycare/city"])')
+      .first()
+      .waitFor({ timeout: timeoutMs })
+      .catch(() => {});
     const listingHref = await page.locator('a[href*="/daycare/"]').evaluateAll((els) => {
       for (const el of els) {
         const href = el.getAttribute("href") || "";
@@ -946,6 +951,23 @@ function startPreview() {
       console.error(`[e2e] preview exited ${code}${signal ? ` / ${signal}` : ""}`);
     }
   });
+}
+
+async function restartPreview() {
+  stopPreview();
+  const probe = origin.endsWith("/") ? origin : `${origin}/`;
+  const deadline = Date.now() + 8000;
+  while (Date.now() < deadline) {
+    try {
+      await fetch(probe, { redirect: "manual" });
+    } catch {
+      break;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+  previewChild = null;
+  startPreview();
+  await waitForOrigin(origin, Number(process.env.E2E_PREVIEW_WAIT_MS || 90000));
 }
 
 function stopPreview() {
@@ -1594,15 +1616,22 @@ try {
     headless: true,
     args: ["--no-sandbox", "--disable-dev-shm-usage"],
   });
-  const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+  let page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 
   // CI retries a failed shard once (Playwright retries=1). A pass on the
   // second attempt is reported as flaky and does not fail the job.
+  // The preview's PGLite database lives in the preview process, so a retry
+  // starts a new preview. Otherwise the second pass sees rows from the first.
   const retries = args.desktopVisualOnly ? 0 : ciPlaywrightRetries(process.env);
   let flakyNames = [];
   let pendingFlaky = [];
   let lastSplit = { failed: [], quarantined: [] };
   for (let attempt = 1; attempt <= retries + 1; attempt += 1) {
+    if (attempt > 1 && args.startPreview && !args.explicitUrl) {
+      await restartPreview();
+      await page.close().catch(() => {});
+      page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    }
     results.length = 0;
     await page.context().clearCookies().catch(() => {});
     try {

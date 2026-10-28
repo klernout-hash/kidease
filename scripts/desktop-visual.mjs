@@ -161,8 +161,19 @@ export async function openRoute(page, base, path) {
     retries: 2,
     label: `open ${path}`,
   }).catch(async () => page.goto(url, { waitUntil: "domcontentloaded", timeout: 25000 }));
-  await page.waitForLoadState("networkidle", { timeout: 8000 }).catch(() => {});
-  await waitForPinnedFonts(page);
+  await page.evaluate(
+    async (sample, pinSample) => {
+      if (!document.fonts) return;
+      const work = [document.fonts.ready];
+      if (pinSample) {
+        work.push(document.fonts.load(`400 16px "Plus Jakarta Sans"`, sample));
+        work.push(document.fonts.load(`700 32px "Plus Jakarta Sans"`, sample));
+      }
+      await Promise.race([Promise.all(work), new Promise((resolve) => setTimeout(resolve, 3000))]);
+    },
+    FONT_SAMPLE,
+    path === "/" || path === "/fr",
+  );
   // Home and contact stills are lazy. A wide window sometimes shoots the placeholder.
   if (path === "/" || path === "/fr" || path === "/contact") {
     await page
@@ -228,13 +239,6 @@ export async function openRoute(page, base, path) {
       }, null, { timeout: 4000 })
       .catch(() => {});
   }
-  if (path === "/search" || path === "/daycares") {
-    await page
-      .waitForSelector("[data-ke='search-count'], [data-ke='search-result-list'], [data-ke='map-fallback']", {
-        timeout: 8000,
-      })
-      .catch(() => {});
-  }
   await page.evaluate(async () => {
     const posters = [...document.querySelectorAll("video")]
       .map((video) => video.getAttribute("poster"))
@@ -272,6 +276,19 @@ export async function openRoute(page, base, path) {
       video.replaceWith(img);
     });
   });
+  // Search and the daycares redirect paint listing counts, photos, and map
+  // tiles after the first paint. Wait those in, then the compare masks them.
+  // Other pages keep the original timing so a late photo does not replace a
+  // baseline that was shot on the placeholder.
+  if (path === "/search" || path === "/daycares") {
+    await page.waitForLoadState("networkidle", { timeout: 8000 }).catch(() => {});
+    await waitForPinnedFonts(page);
+    await page
+      .waitForSelector("[data-ke='search-count'], [data-ke='search-result-list'], [data-ke='map-fallback']", {
+        timeout: 8000,
+      })
+      .catch(() => {});
+  }
   return res?.status() ?? 0;
 }
 

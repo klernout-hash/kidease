@@ -96,7 +96,7 @@ The screenshot job runs on `ubuntu-latest` (the same kind of runner the baseline
 
 Shard 3 still needs WebKit. `runWebkitSearchGuard` in `scripts/e2e-smoke.mjs` launches it. Those jobs use `mcr.microsoft.com/playwright:v1.62.1-jammy`, which already contains Chromium and WebKit, so CI does not `apt-get` WebKit. Bump that image tag when the Playwright version in `package-lock.json` changes.
 
-Before each shot the script waits for the network to go idle and for Plus Jakarta Sans, including French letters (`é`, `à`, `ê`). CI also installs Liberation Sans, Noto, and Noto Color Emoji so a missing web font falls back to the same files every run.
+`/search` and `/daycares` wait for the network to go idle and for Plus Jakarta Sans, including French letters (`é`, `à`, `ê`), then mask the moving parts. Home and French home still wait for that font inside the same three-second window as before. Other pages keep the old timing, so a lazy photo that the baseline shot as a placeholder is not forced to finish. CI also installs Liberation Sans, Noto, and Noto Color Emoji so a missing web font falls back to the same files every run.
 
 `/search` and `/daycares` mask the listing count, the result list (photos and cards), and the map. Those pixels follow the catalogue. Their limit is **1%** (`0.01`). Every other page stays at **0.4%** (`0.004`). Do not raise the 0.4% limit to make a page pass.
 
