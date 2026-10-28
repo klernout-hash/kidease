@@ -91,7 +91,7 @@ const NAV: readonly NavPage[] = [
   {
     path: "/contact",
     phrases: ["contact", "email support", "joindre", "write to support"],
-    en: "Use Contact to write to KidEase. This chat can also ask for a person, which opens a ticket. We do not promise a reply time.",
+    en: "Use Contact to write to KidEase. This chat can also ask for a person, which opens a ticket. A live agent typically replies within 5 minutes.",
     fr: "Utilisez Contact pour écrire à KidEase. Ce clavardage peut aussi demander une personne, ce qui ouvre un billet. Nous ne promettons pas de délai.",
   },
   {

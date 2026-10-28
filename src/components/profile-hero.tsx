@@ -23,6 +23,7 @@ export function ProfileHeroCard({
   ratingX10,
   years,
   childCount,
+  onEditPhoto,
 }: {
   userId?: string | null;
   photo?: string | null;
@@ -34,6 +35,8 @@ export function ProfileHeroCard({
   ratingX10: number | null;
   years: number | null;
   childCount?: number | null;
+  /** Opens the profile photo picker. The avatar and Edit pill both use it. */
+  onEditPhoto?: () => void;
 }) {
   const { t } = useCopy();
   const daycare = roleId === "daycare";
@@ -53,40 +56,58 @@ export function ProfileHeroCard({
 
   return (
     <div className="mt-4 rounded-[1.25rem] bg-surface-2 p-5" data-ke="profile-hero">
-      <div className="flex items-start gap-4">
-        <div className="min-w-0 flex-1">
-          <div className="relative w-fit">
+      <div className="flex flex-col items-center text-center">
+        <div className="relative mx-auto w-fit">
+          {onEditPhoto ? (
+            <button
+              type="button"
+              className="rounded-full touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+              aria-label={t("profileEditTitle")}
+              onClick={onEditPhoto}
+            >
+              <ProfileAvatar userId={userId} fallback={photo} name={name} size="hero" />
+            </button>
+          ) : (
             <ProfileAvatar userId={userId} fallback={photo} name={name} size="hero" />
-            {emailVerified ? (
-              <span
-                className="absolute -bottom-0.5 -right-0.5 grid size-7 place-items-center rounded-full bg-primary text-primary-fg ring-2 ring-surface-2"
-                data-ke="profile-verified"
-                role="img"
-                aria-label={t("profileEmailVerified")}
-              >
-                <BadgeCheck className="size-4" aria-hidden />
-              </span>
-            ) : null}
-          </div>
-          <h1 className="mt-3 text-[1.65rem] font-semibold leading-tight tracking-[-0.03em]">{name}</h1>
-          {roleId ? <p className="mt-1 text-sm text-muted">{t(ROLE_COPY[roleId])}</p> : null}
-          {licensed ? (
-            <p className="mt-2 inline-flex min-h-7 items-center rounded-full bg-bg px-2.5 text-xs font-semibold text-primary" data-ke="profile-licensed">
-              {t("profileLicensed")}
-            </p>
+          )}
+          {emailVerified ? (
+            <span
+              className="absolute bottom-1 right-1 grid size-7 place-items-center rounded-full bg-primary text-primary-fg ring-2 ring-surface-2"
+              data-ke="profile-verified"
+              role="img"
+              aria-label={t("profileEmailVerified")}
+            >
+              <BadgeCheck className="size-4" aria-hidden />
+            </span>
+          ) : null}
+          {onEditPhoto ? (
+            <button
+              type="button"
+              onClick={onEditPhoto}
+              className="absolute -bottom-3 left-1/2 inline-flex min-h-11 -translate-x-1/2 items-center rounded-full border border-fg bg-bg px-3 text-sm font-semibold touch-manipulation"
+            >
+              {t("profileEdit")}
+            </button>
           ) : null}
         </div>
-        {stats.length ? (
-          <dl className="w-[7.5rem] shrink-0 border-l border-border pl-4" data-ke="profile-stats">
-            {stats.map((stat, index) => (
-              <div key={stat.id} className={index ? "mt-3 border-t border-border pt-3" : undefined} data-ke={`profile-stat-${stat.id}`}>
-                <dd className="font-display text-xl tabular-nums leading-none">{stat.value}</dd>
-                <dt className="mt-1 text-xs leading-snug text-muted">{stat.label}</dt>
-              </div>
-            ))}
-          </dl>
+        <h1 className="mt-5 text-[1.65rem] font-semibold leading-tight tracking-[-0.03em]">{name}</h1>
+        {roleId ? <p className="mt-1 text-sm text-muted">{t(ROLE_COPY[roleId])}</p> : null}
+        {licensed ? (
+          <p className="mt-2 inline-flex min-h-7 items-center rounded-full bg-bg px-2.5 text-xs font-semibold text-primary" data-ke="profile-licensed">
+            {t("profileLicensed")}
+          </p>
         ) : null}
       </div>
+      {stats.length ? (
+        <dl className="mx-auto mt-4 grid w-full max-w-xs grid-cols-2 gap-3 border-t border-border pt-4 text-center" data-ke="profile-stats">
+          {stats.map((stat) => (
+            <div key={stat.id} data-ke={`profile-stat-${stat.id}`}>
+              <dd className="font-display text-xl tabular-nums leading-none">{stat.value}</dd>
+              <dt className="mt-1 text-xs leading-snug text-muted">{stat.label}</dt>
+            </div>
+          ))}
+        </dl>
+      ) : null}
     </div>
   );
 }

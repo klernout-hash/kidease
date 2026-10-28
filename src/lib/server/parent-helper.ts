@@ -173,7 +173,7 @@ export const askParentHelper = createServerFn({ method: "POST" })
 export const requestParentHelperAgent = createServerFn({ method: "POST" })
   .middleware([sessionBearerMiddleware])
   .validator(askInput)
-  .handler(async ({ data, context }): Promise<{ ok: true } | ParentHelperBlock> => {
+  .handler(async ({ data, context }): Promise<{ ok: true; code?: string; sessionToken?: string } | ParentHelperBlock> => {
     if (!(await parentHelperOn(data.distinctId))) return { ok: false, error: "off" };
     const bearer = (context as { bearerToken?: string }).bearerToken;
     const guard = await guardGuest({ bearer, turnstileToken: data.turnstileToken });
@@ -197,7 +197,15 @@ export const requestParentHelperAgent = createServerFn({ method: "POST" })
       void import("@/lib/server/admin-tools")
         .then((mod) => mod.maybeDraftSupport({ caseId: id, message: note }))
         .catch(() => undefined);
-      return { ok: true };
+      const chat = await import("@/lib/server/support-chat").then((mod) =>
+        mod.openSupportChat({
+          message: note,
+          name: guard.userId ? "Signed-in parent" : "Guest",
+          userId: guard.userId,
+          page: "/",
+        }),
+      );
+      return { ok: true, code: chat?.code || "", sessionToken: chat?.sessionToken || "" };
     } catch {
       return { ok: false, error: "ticket" };
     }

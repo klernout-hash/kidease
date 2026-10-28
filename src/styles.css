@@ -457,7 +457,7 @@
   .ke-explore-filter-sticky {
     position: sticky;
     top: calc(3.2rem + env(safe-area-inset-top, 0px));
-    z-index: 40;
+    z-index: 10;
     margin-inline: calc(-1 * clamp(12px, 3vw, 40px));
     padding-inline: clamp(12px, 3vw, 40px);
     padding-block: 0.2rem 0.3rem;

@@ -209,7 +209,7 @@ export function DeskShell({
                     onToggle={(event) => writeDeskGroupOpen(desk, group.id, event.currentTarget.open)}
                     className="py-0.5"
                   >
-                    <summary className="flex min-h-11 cursor-pointer list-none items-center rounded-lg px-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-subtle [&::-webkit-details-marker]:hidden">
+                    <summary className="mt-3 flex min-h-11 cursor-pointer list-none items-center rounded-lg border-b border-border px-2.5 pb-1 text-sm font-extrabold uppercase tracking-[0.14em] text-slate-950 dark:text-white [&::-webkit-details-marker]:hidden">
                       <span>{group.labelKey ? t(group.labelKey) : group.label}</span>
                     </summary>
                     <div className="flex flex-col gap-0.5">

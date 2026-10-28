@@ -11,7 +11,9 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
-type ChatMsg = { role: "user" | "assistant"; text: string; path?: string | null };
+type ChatMsg = { id?: string; role: "user" | "assistant"; text: string; path?: string | null };
+
+const CHAT_KEY = "kidease-help-chat";
 type AskError = "off" | "turnstile" | "rate_limited" | "ticket";
 
 export function HelpBot() {
@@ -22,6 +24,7 @@ export function HelpBot() {
   const [draft, setDraft] = useState("");
   const [msgs, setMsgs] = useState<ChatMsg[]>([{ role: "assistant", text: t("helpBotHello") }]);
   const [handedOff, setHandedOff] = useState(false);
+  const [chatToken, setChatToken] = useState("");
   const [needChallenge, setNeedChallenge] = useState(false);
   const { onToken, takeChallenge, resetSignal, reset } = useTurnstileToken();
   const end = useRef<HTMLDivElement>(null);
@@ -31,6 +34,37 @@ export function HelpBot() {
   useEffect(() => {
     end.current?.scrollIntoView({ behavior: "smooth" });
   }, [msgs, open]);
+
+  useEffect(() => {
+    if (!open || !chatToken) return;
+    let stop = false;
+    async function pull() {
+      try {
+        const { readSupportChatMessages } = await import("@/lib/server/support-chat");
+        const rows = await readSupportChatMessages({ data: { sessionToken: chatToken } });
+        if (stop || !Array.isArray(rows)) return;
+        setMsgs((current) => {
+          const seen = new Set(current.map((item) => item.id).filter(Boolean));
+          const extra = rows
+            .filter((row) => row.sender === "agent" && row.id && !seen.has(row.id))
+            .map((row) => ({
+              id: row.id,
+              role: "assistant" as const,
+              text: row.label ? `${row.label}: ${row.body}` : row.body,
+            }));
+          return extra.length ? [...current, ...extra] : current;
+        });
+      } catch {
+        /* The next poll tries again. */
+      }
+    }
+    void pull();
+    const timer = window.setInterval(() => void pull(), 4000);
+    return () => {
+      stop = true;
+      window.clearInterval(timer);
+    };
+  }, [open, chatToken]);
 
   function replyFor(error: AskError) {
     if (error === "turnstile") return t("helpBotChallenge");
@@ -54,6 +88,13 @@ export function HelpBot() {
     setBusy(true);
     const distinctId = helpBubbleDistinctId(user?.id);
     try {
+      if (handedOff && chatToken && !agent) {
+        const { sendSupportChatMessage } = await import("@/lib/server/support-chat");
+        await sendSupportChatMessage({
+          data: { sessionToken: chatToken, message: trimmed, page: window.location.pathname },
+        });
+        return;
+      }
       if (agent) {
         const { requestParentHelperAgent } = await import("@/lib/server/parent-helper");
         const last = [...msgs].reverse().find((m) => m.role === "user")?.text || trimmed;
@@ -68,6 +109,14 @@ export function HelpBot() {
         setNeedChallenge(false);
         reset();
         setHandedOff(true);
+        if (res.sessionToken) {
+          setChatToken(res.sessionToken);
+          try {
+            sessionStorage.setItem(CHAT_KEY, JSON.stringify({ token: res.sessionToken, code: res.code || "" }));
+          } catch {
+            /* private mode */
+          }
+        }
         setMsgs((m) => [...m, { role: "assistant", text: t("helpBotTicket") }]);
         return;
       }

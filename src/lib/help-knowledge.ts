@@ -131,4 +131,4 @@ export function localHelpReply(userText: string, priorAssistant: string[]) {
 }
 
 export const AGENT_CONFIRM =
-  `I’ve flagged a live agent. Our team gets a text and email at ${SUPPORT_INBOX_EMAIL}: usually the same day, often faster. You can also write us directly. Anything else I should pass along?`;
+  `I’ve flagged a live agent. Our team gets a text and email at ${SUPPORT_INBOX_EMAIL}. A live agent typically replies within 5 minutes. You can also write us directly. Anything else I should pass along?`;
