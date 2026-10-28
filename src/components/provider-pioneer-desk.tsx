@@ -1,18 +1,15 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { ChipButton } from "@/components/chip";
 import { RatioBoard } from "@/components/ratio-board";
 import { TaxReceiptStudio } from "@/components/tax-receipt-studio";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { leadsToCrmCsv, type CrmLead } from "@/lib/crm-export";
 import { localePath } from "@/lib/locale-path";
 import { getProvider } from "@/lib/server/family";
 import { useCopy } from "@/lib/use-copy";
 
 const DailyCareDesk = lazy(() => import("@/components/daily-care-desk").then((m) => ({ default: m.DailyCareDesk })));
-
-const WEBHOOK_KEY = "kidease-crm-webhook";
 
 type ClaimedCentre = { id: string; name: string; city: string; spots: number; waitlist: number };
 
@@ -44,19 +41,9 @@ export function ProviderPioneerDesk() {
   const [waitlist, setWaitlist] = useState("");
   const [orgEdited, setOrgEdited] = useState(false);
   const [claimed, setClaimed] = useState<ClaimedCentre[]>([]);
-  const [webhook, setWebhook] = useState("");
-  const [webhookSaved, setWebhookSaved] = useState(false);
   const { user } = useCurrentUserState();
   const firstAidDays = daysUntil(firstAid);
   const vscDays = daysUntil(vsc);
-
-  useEffect(() => {
-    try {
-      setWebhook(window.localStorage.getItem(WEBHOOK_KEY) || "");
-    } catch {
-      /* ignore */
-    }
-  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -85,33 +72,6 @@ export function ProviderPioneerDesk() {
     setSpots(String(claimed.reduce((sum, row) => sum + row.spots, 0)));
     setWaitlist(String(claimed.reduce((sum, row) => sum + row.waitlist, 0)));
   }, [claimed, orgEdited]);
-
-  const sampleCsv = useMemo(() => {
-    const rows: CrmLead[] = claimed.length
-      ? claimed.map((centre) => ({
-          centre: centre.name,
-          parent_name: "",
-          child_name: "",
-          email: "",
-          phone: "",
-          request_type: "waitlist",
-          start_date: "",
-          age_band: "",
-          created_at: "",
-        }))
-      : [{ centre: "", request_type: "tour" }];
-    return leadsToCrmCsv(rows);
-  }, [claimed]);
-
-  function downloadCsv() {
-    const blob = new Blob([sampleCsv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "kidease-leads.csv";
-    link.click();
-    URL.revokeObjectURL(url);
-  }
 
   const siteCount = Number(sites);
   const openSpots = Number(spots);
@@ -144,50 +104,6 @@ export function ProviderPioneerDesk() {
             <Button variant="secondary" asChild>
               <Link to={localePath("/provider", locale)} search={{ desk: "requests" }}>{fr ? "Liste d'attente" : "Waitlist"}</Link>
             </Button>
-          </div>
-          <div className="mt-6">
-            <h3 className="text-sm font-semibold">{fr ? "Export des demandes" : "Lead export"}</h3>
-            <p className="mt-1 text-sm text-muted">
-              {fr
-                ? "Fichier CSV avec les colonnes habituelles. KidEase n'appelle pas une adresse externe depuis cette page."
-                : "A CSV with the usual columns. KidEase does not call an outside address from this page."}
-            </p>
-            <Button type="button" className="mt-3" variant="secondary" onClick={downloadCsv}>
-              {fr ? "Télécharger le CSV" : "Download CSV"}
-            </Button>
-            <label className="mt-4 block text-sm">
-              <span className="font-medium">{fr ? "Adresse du webhook" : "Webhook address"}</span>
-              <input
-                className="ke-input mt-1 w-full"
-                inputMode="url"
-                value={webhook}
-                placeholder="https://"
-                onChange={(event) => {
-                  setWebhookSaved(false);
-                  setWebhook(event.target.value);
-                }}
-              />
-            </label>
-            <Button
-              type="button"
-              className="mt-3"
-              variant="secondary"
-              onClick={() => {
-                try {
-                  window.localStorage.setItem(WEBHOOK_KEY, webhook.trim());
-                  setWebhookSaved(true);
-                } catch {
-                  setWebhookSaved(false);
-                }
-              }}
-            >
-              {fr ? "Enregistrer le webhook" : "Save webhook"}
-            </Button>
-            {webhookSaved ? (
-              <p className="mt-2 text-sm text-muted" role="status" data-ke="crm-webhook-saved">
-                {fr ? "Adresse enregistrée sur cet appareil." : "Address saved on this device."}
-              </p>
-            ) : null}
           </div>
         </section>
       ) : null}

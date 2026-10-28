@@ -19,8 +19,6 @@ import { pickCardMicroPills, siblingFitBadge } from "../src/lib/card-micro-pills
 import { parsePioneerSearch } from "../src/lib/pioneer-filters.ts";
 import { reviewDimensionBars } from "../src/lib/review-dimensions.ts";
 import { knownListingMonthlyFee, realMonthlyFee } from "../src/lib/listing-fee.ts";
-import { leadsToCrmCsv, signCrmBody } from "../src/lib/crm-export.ts";
-
 const home = { lat: 49.895, lng: -97.138 };
 const work = { lat: 49.9, lng: -97.14 };
 const centre = { lat: 49.88, lng: -97.15 };
@@ -229,12 +227,4 @@ test("search chips and review bars stay tied to real inputs", () => {
   });
   assert.ok(pills.length <= 2);
   assert.equal(pills[0]?.id, "detour");
-});
-
-test("CRM csv keeps the standard header row", async () => {
-  const csv = leadsToCrmCsv([{ centre: "A, B", request_type: "tour" }]);
-  assert.match(csv.split("\n")[0], /centre,parent_name,child_name/);
-  assert.match(csv, /"A, B"/);
-  const sig = await signCrmBody("hello", "secret");
-  assert.equal(sig.length, 64);
 });
