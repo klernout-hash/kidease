@@ -280,15 +280,16 @@ export function Listing() {
   }, [data]);
 
   useEffect(() => {
-    if (!data || isPending) return;
+    if (!data) return;
     const ask = search.ask;
+    if (ask === "tour") {
+      setTourOpen(true);
+      return;
+    }
+    if (isPending) return;
     if (!ask) return;
     if (ask === "info") {
       setInfoOpen(true);
-      return;
-    }
-    if (ask === "tour") {
-      setTourOpen(true);
       return;
     }
     if (!user) {
@@ -548,11 +549,6 @@ export function Listing() {
   }
 
   function onTour() {
-    if (!live) return;
-    if (!user) {
-      goLogin("guestSignInReturn", "tour");
-      return;
-    }
     captureMarketplaceFunnel({ step: "contact", source: "listing", dest_path: "/daycare", contact: "tour" });
     capturePostHogEvent("listing_request_started", { intent: "tour" });
     setTourOpen(true);
@@ -592,7 +588,7 @@ export function Listing() {
   function ListingOverflowItems() {
     return (
       <>
-        {parentActions && live ? <ListingMoreItem onClick={onTour}>{t("bookTour")}</ListingMoreItem> : null}
+        {parentActions ? <ListingMoreItem onClick={onTour}>{t("bookTour")}</ListingMoreItem> : null}
         {parentActions && live ? <ListingMoreItem onClick={onRequest}>{t("requestSpotCta")}</ListingMoreItem> : null}
         {parentActions && live ? (
           <ListingMoreItem onClick={onMessage}>
@@ -696,19 +692,19 @@ export function Listing() {
     return (
       <div data-ke={parentActions ? "listing-parent-actions" : ownEdit ? "listing-own-edit" : "listing-actions-none"}>
         <ListingEditLink />
+        {parentActions ? (
+          <Button className="min-h-11 w-full whitespace-normal rounded-[14px] touch-manipulation" data-ke="listing-tour-cta" onClick={onTour}>
+            {t("bookTour")}
+          </Button>
+        ) : null}
         {parentActions && live ? (
-          <Button className="rounded-[14px]" data-ke="listing-primary-cta" onClick={onInfo}>
+          <Button className="min-h-11 rounded-[14px] touch-manipulation" data-ke="listing-primary-cta" onClick={onInfo}>
             {t("requestInfo")}
           </Button>
         ) : null}
         {parentActions && !live ? (
-          <Button className="rounded-[14px]" data-ke="listing-primary-cta" asChild>
+          <Button className="min-h-11 rounded-[14px] touch-manipulation" variant="secondary" data-ke="listing-primary-cta" asChild>
             <Link to={localePath("/search", locale)}>{t("searchNearby")}</Link>
-          </Button>
-        ) : null}
-        {parentActions && live ? (
-          <Button className="rounded-[14px]" variant="secondary" onClick={onTour}>
-            {t("bookTour")}
           </Button>
         ) : null}
         {parentActions && !live ? <p className="text-xs text-muted">{t("parentRequestNotLive")}</p> : null}
@@ -1119,7 +1115,6 @@ export function Listing() {
             </p>
         </div>
         <aside className="ke-panel hidden h-fit px-4 py-4 shadow-card md:sticky md:top-20 md:block">
-          {offerClaim ? <ClaimListingButton id={d.id} name={name} className="mb-3 w-full" /> : null}
           <ListingCtaSnippet live={live} from={from} hours={hours} prominent />
           <p className="mt-1 text-sm text-muted">{live ? t("listingCtaLead") : t("guestListingTrust")}</p>
           {!user && live ? <p className="mt-1 text-xs text-subtle">{t("guestBrowse")}</p> : null}
@@ -1151,30 +1146,28 @@ export function Listing() {
       <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden [[data-channel=app]_&]:bottom-20">
         <div className="mx-auto max-w-lg">
           <ListingCtaSnippet live={live} from={from} hours={hours} />
-          {parentActions && !live && offerClaim ? (
-            <ClaimListingButton
-              id={d.id}
-              name={name}
-              className="mb-2 h-auto min-h-11 w-full whitespace-normal px-3 py-2 text-center text-sm leading-tight"
-            />
-          ) : null}
           <div className="flex items-center gap-2">
           {ownEdit ? <ListingEditLink /> : null}
           <DirectionsButton className="shrink-0" />
           {parentActions && live ? (
             <div className="flex min-w-0 flex-1 gap-2" data-ke="listing-parent-actions">
-              <Button className="h-auto min-h-11 flex-1 rounded-[14px] px-2.5 py-2 text-center text-[13px] leading-tight" data-ke="listing-sticky-cta" onClick={onInfo}>
-                {t("requestInfo")}
-              </Button>
-              <Button className="h-auto min-h-11 flex-1 rounded-[14px] px-2.5 py-2 text-center text-[13px] leading-tight" variant="secondary" data-ke="listing-sticky-tour" onClick={onTour}>
+              <Button className="h-auto min-h-11 flex-1 rounded-[14px] px-2.5 py-2 text-center text-[13px] leading-tight touch-manipulation" data-ke="listing-sticky-tour" onClick={onTour}>
                 {t("bookTour")}
+              </Button>
+              <Button className="h-auto min-h-11 flex-1 rounded-[14px] px-2.5 py-2 text-center text-[13px] leading-tight touch-manipulation" data-ke="listing-sticky-cta" onClick={onInfo}>
+                {t("requestInfo")}
               </Button>
             </div>
           ) : null}
           {parentActions && !live ? (
-            <Button className="h-12 min-h-12 flex-1 rounded-[14px]" data-ke="listing-sticky-cta" asChild>
-              <Link to={localePath("/search", locale)}>{t("searchNearbyShort")}</Link>
-            </Button>
+            <div className="flex min-w-0 flex-1 gap-2" data-ke="listing-parent-actions">
+              <Button className="h-auto min-h-11 flex-1 rounded-[14px] px-2.5 py-2 text-center text-[13px] leading-tight touch-manipulation" data-ke="listing-sticky-tour" onClick={onTour}>
+                {t("bookTour")}
+              </Button>
+              <Button className="h-auto min-h-11 flex-1 rounded-[14px] px-2.5 py-2 text-center text-[13px] leading-tight touch-manipulation" variant="secondary" data-ke="listing-sticky-cta" asChild>
+                <Link to={localePath("/search", locale)}>{t("searchNearbyShort")}</Link>
+              </Button>
+            </div>
           ) : null}
           {parentActions ? <SaveListingButton daycareId={d.id} nextPath={localePath(`/daycare/${slug}`, locale)} appearance="bar" className="shrink-0" /> : null}
           <ListingMoreActions compact>
@@ -1193,6 +1186,7 @@ export function Listing() {
       <RequestTourSheet
         daycare={d}
         open={tourOpen}
+        unclaimed={!live}
         onClose={() => setTourOpen(false)}
         onRequestInfo={() => setInfoOpen(true)}
       />

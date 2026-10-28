@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { KidBlocks, KidFamily } from "@/components/kid-art";
 import { useSessionDesks } from "@/components/session-desks";
 import { roleSwitchTarget } from "@/lib/app-menu";
-import { DESK_PATH, headerDesks, highlightDesk, parseDeskQuery, showDeskSwitcher } from "@/lib/desks";
+import { parentDeskPath, providerDeskPath } from "@/lib/desk-nav";
+import { headerDesks, highlightDesk, parseDeskQuery, showDeskSwitcher } from "@/lib/desks";
 import { stripLocalePrefix } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 
@@ -27,11 +28,13 @@ export function RoleSwitchPill({ placement = "fixed" }: { placement?: "fixed" | 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const timer = window.setTimeout(() => {
       setSticky(switching);
-      void navigate({ to: DESK_PATH[switching] });
+      void navigate({
+        to: switching === "parent" ? parentDeskPath(pathname) : providerDeskPath(pathname),
+      });
       setSwitching(null);
     }, reduce ? 0 : 900);
     return () => window.clearTimeout(timer);
-  }, [navigate, setSticky, switching]);
+  }, [navigate, pathname, setSticky, switching]);
 
   if (placement === "fixed" && onAccount) return null;
   if (placement === "flow" && !onAccount) return null;
@@ -53,7 +56,7 @@ export function RoleSwitchPill({ placement = "fixed" }: { placement?: "fixed" | 
           data-desk={target}
           className={
             placement === "flow"
-              ? "ke-app-only mb-4 hidden w-full max-w-full whitespace-normal rounded-full bg-fg px-4 py-2 text-center text-sm font-semibold leading-snug text-bg min-h-11 touch-manipulation [[data-channel=app]_&]:inline-flex md:!hidden"
+              ? "mb-4 inline-flex w-full max-w-full items-center justify-center whitespace-normal rounded-full bg-fg px-4 py-2 text-center text-sm font-semibold leading-snug text-bg min-h-11 touch-manipulation"
               : "ke-app-only fixed left-1/2 z-40 hidden -translate-x-1/2 items-center justify-center rounded-full bg-fg px-4 text-sm font-semibold text-bg shadow-lg min-h-11 touch-manipulation bottom-[calc(4.75rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))] [[data-channel=app]_&]:inline-flex"
           }
         >

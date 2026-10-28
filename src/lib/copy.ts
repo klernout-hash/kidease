@@ -858,7 +858,7 @@ export const copy = {
     copyLink: "Copy link",
     emailListing: "Email this page",
     parentRequestNotLive:
-      "Parents: this is a public registry page. Live requests start after the centre claims it.",
+      "We'll forward your tour request and invite this centre to KidEase. Signed-in families also find it under Requests.",
     plansNotOffered: "Plans are not offered on this site yet. Listing and claim stay free.",
     freePageTitle: "Your free KidEase page",
     freePageLead:
@@ -3523,7 +3523,7 @@ export const copy = {
     benefitsNote: "KidEase ne traite pas ces demandes. Les sites officiels s’ouvrent dans un nouvel onglet.",
     saved: "Favoris",
     enrolled: "Inscriptions",
-    messages: "Messages",
+    messages: "Messagerie",
     profile: "Profil",
     inbox: "Messages",
     account: "Compte",
@@ -4313,7 +4313,7 @@ export const copy = {
     copyLink: "Copier le lien",
     emailListing: "Envoyer cette page",
     parentRequestNotLive:
-      "Parents : ceci est une page de registre public. Les demandes en direct commencent après la revendication du centre.",
+      "Nous transmettrons votre demande de visite et inviterons ce centre sur KidEase. Les familles connectées la retrouvent aussi sous Demandes.",
     plansNotOffered: "Les forfaits ne sont pas offerts sur ce site pour le moment. La fiche et la revendication restent gratuites.",
     freePageTitle: "Votre page KidEase gratuite",
     freePageLead:

@@ -5,9 +5,9 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { tx } from "../src/lib/copy.ts";
 import { deskFromPathname, loginErrorCallbackUrl, sanitizePostLoginNext, twoFactorPageUrl } from "../src/lib/desks.ts";
-import { inboxListPath, parentDeskPath, sidebarDestinations } from "../src/lib/desk-nav.ts";
+import { accountDeskPath, deskHrefForLocale, inboxListPath, menuDeskPath, parentDeskPath, providerDeskPath, sidebarDestinations, supportDeskPath } from "../src/lib/desk-nav.ts";
 import { localeRedirectTarget } from "../src/lib/locale-geo.ts";
-import { isFrenchDeskPath, localePath, localeSwitchPath, stripLocalePrefix } from "../src/lib/locale-path.ts";
+import { FRENCH_DESK_PREFIXES, isFrenchDeskPath, localePath, localeSwitchPath, stripLocalePrefix } from "../src/lib/locale-path.ts";
 import { destinationAfterSignIn } from "../src/lib/role-access.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -20,8 +20,30 @@ function src(rel) {
 test("French parent and inbox URLs stay French", () => {
   assert.equal(isFrenchDeskPath("/fr/parent"), true);
   assert.equal(isFrenchDeskPath("/fr/inbox/abc"), true);
+  assert.equal(isFrenchDeskPath("/fr/account"), true);
+  assert.equal(isFrenchDeskPath("/account"), true);
+  assert.equal(isFrenchDeskPath("/fr/menu"), true);
+  assert.equal(isFrenchDeskPath("/fr/provider"), true);
+  assert.equal(isFrenchDeskPath("/provider/subscription"), false);
+  assert.deepEqual(
+    [...FRENCH_DESK_PREFIXES],
+    ["/parent", "/inbox", "/account", "/menu", "/provider", "/support"],
+  );
   assert.equal(localePath("/parent", "fr"), "/fr/parent");
   assert.equal(localePath("/inbox", "fr"), "/fr/inbox");
+  assert.equal(localePath("/account", "fr"), "/fr/account");
+  assert.equal(localePath("/menu", "fr"), "/fr/menu");
+  assert.equal(localePath("/provider", "fr"), "/fr/provider");
+  assert.equal(localePath("/support", "fr"), "/fr/support");
+  assert.equal(localePath("/provider/subscription", "fr"), "/provider/subscription");
+  assert.equal(localeSwitchPath("/account", "fr"), "/fr/account");
+  assert.equal(localeSwitchPath("/fr/menu", "en"), "/menu");
+  assert.equal(accountDeskPath("/fr/account"), "/fr/account");
+  assert.equal(menuDeskPath("/fr/menu"), "/fr/menu");
+  assert.equal(providerDeskPath("/fr/provider"), "/fr/provider");
+  assert.equal(supportDeskPath("/fr/support"), "/fr/support");
+  assert.equal(deskHrefForLocale("/account?tab=profile", "/fr/parent"), "/fr/account?tab=profile");
+  assert.equal(deskHrefForLocale("/provider/subscription", "/fr/provider"), "/provider/subscription");
   assert.equal(localeSwitchPath("/parent", "fr"), "/fr/parent");
   assert.equal(localeSwitchPath("/fr/inbox", "en"), "/inbox");
   assert.equal(localeRedirectTarget({ ...document, pathname: "/fr/parent", cookie: "en" }), null);
@@ -44,9 +66,17 @@ test("French parent and inbox URLs stay French", () => {
   assert.equal(destinationAfterSignIn({ role: "parent", next: "/fr/parent?tab=saved" }), "/fr/parent?tab=saved");
   assert.equal(destinationAfterSignIn({ role: "parent", next: "/fr/inbox" }), "/fr/inbox");
   assert.equal(destinationAfterSignIn({ role: "provider", next: "/fr/parent" }), "/provider");
+  assert.match(src("src/routes/fr.account.tsx"), /createFileRoute\("\/fr\/account"\)/);
+  assert.match(src("src/routes/fr.menu.tsx"), /createFileRoute\("\/fr\/menu"\)/);
+  assert.match(src("src/routes/fr.provider.tsx"), /createFileRoute\("\/fr\/provider"\)/);
+  assert.match(src("src/routes/fr.support.tsx"), /createFileRoute\("\/fr\/support"\)/);
   assert.match(src("src/routes/fr.inbox.tsx"), /createFileRoute\("\/fr\/inbox"\)/);
   assert.match(src("src/routes/fr.inbox.$id.tsx"), /createFileRoute\("\/fr\/inbox\/\$id"\)/);
   assert.match(src("src/routeTree.gen.ts"), /fullPath: '\/fr\/inbox\/\$id'/);
+  assert.match(src("src/routeTree.gen.ts"), /fullPath: '\/fr\/account'/);
+  assert.match(src("src/routeTree.gen.ts"), /fullPath: '\/fr\/menu'/);
+  assert.match(src("src/routeTree.gen.ts"), /fullPath: '\/fr\/provider'/);
+  assert.match(src("src/routeTree.gen.ts"), /fullPath: '\/fr\/support'/);
 });
 
 test("French sidebar strings are translated in every shipped locale", () => {
@@ -68,6 +98,36 @@ test("French sidebar strings are translated in every shipped locale", () => {
   assert.match(src("src/routes/provider.tsx"), /t\("showTestListings"\)/);
   assert.match(src("src/components/parent-desk.tsx"), /t\("childProfileSendLead"\)/);
   assert.match(src("src/lib/desk-nav.ts"), /hintKey: "childrenLimit"/);
+  for (const [key, english] of [
+    ["exploreForYou", "Home"],
+    ["deskNavForYouHint", "Matches near you"],
+    ["saved", "Saved"],
+    ["deskNavShortlistOpenHint", "Calls, tours, and compare"],
+    ["navRequestsShort", "Requests"],
+    ["deskNavBookingsHint", "Tours, waitlist, and spots"],
+    ["navWaitlists", "Waitlists"],
+    ["deskNavWaitlistsHint", "Your spot requests"],
+    ["messages", "Messages"],
+    ["deskNavParentMessagesHint", "Centre threads + tours"],
+    ["children", "Children"],
+    ["childrenLimit", "Up to 4 profiles"],
+    ["dailyCare", "Daily care"],
+    ["dailyCareHint", "Presence, journal, meds, and rooms"],
+    ["payments", "Pay"],
+    ["deskNavPaymentsHint", "Bills from your centre"],
+    ["search", "Search"],
+    ["searchAlerts", "Search alerts"],
+    ["deskNavAlertsHint", "Saved searches + notify"],
+    ["profile", "Profile"],
+    ["appearance", "Appearance"],
+    ["deleteAccount", "Delete account"],
+    ["notificationPrefs", "Notification preferences"],
+    ["loginSecurity", "Login and security"],
+    ["emailAndSms", "Email and SMS"],
+  ]) {
+    assert.notEqual(tx("fr", key), english, key);
+    assert.notEqual(tx("fr", key), tx("en", key), key);
+  }
 });
 
 test("parent sidebar items are URLs and plan copy stays off when plans are hidden", () => {

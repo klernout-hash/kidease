@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate, useRouterState, useSearch } from "@tanstack/react-router";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { privateReturnPath } from "@/lib/role-access";
 import { useEffect, useState } from "react";
@@ -104,16 +104,26 @@ const COACH_FOCUS = new Set<ListingCoachFocus>([
   "vacancy",
 ]);
 
-export const Route = createFileRoute("/provider")({
-  beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
-  head: () => ({
+export function providerBeforeLoad({
+  context,
+  location,
+}: {
+  context: { roleChrome?: Parameters<typeof beforeLoadPrivate>[1] };
+  location: Parameters<typeof privateReturnPath>[0];
+}) {
+  return beforeLoadPrivate(privateReturnPath(location), context.roleChrome);
+}
+
+export function providerHead() {
+  return {
     meta: [
       { title: "Daycare desk · KidEase" },
       { name: "robots", content: "noindex, nofollow" },
     ],
-  }),
-  pendingComponent: ProviderPending,
-  validateSearch: (s: Record<string, unknown>) => {
+  };
+}
+
+export function providerValidateSearch(s: Record<string, unknown>) {
     const out: { desk?: DaycareDesk; preview?: "support"; claimed?: boolean; focus?: ListingCoachFocus } = {};
     const desk = typeof s.desk === "string" ? s.desk : "";
     if (DESKS.includes(desk as DaycareDesk)) out.desk = desk as DaycareDesk;
@@ -121,8 +131,14 @@ export const Route = createFileRoute("/provider")({
     if (s.claimed === true || s.claimed === "1" || s.claimed === "true") out.claimed = true;
     const focus = typeof s.focus === "string" ? s.focus : "";
     if (COACH_FOCUS.has(focus as ListingCoachFocus)) out.focus = focus as ListingCoachFocus;
-    return out;
-  },
+  return out;
+}
+
+export const Route = createFileRoute("/provider")({
+  beforeLoad: providerBeforeLoad,
+  head: providerHead,
+  pendingComponent: ProviderPending,
+  validateSearch: providerValidateSearch,
   component: ProviderPage,
 });
 
@@ -137,7 +153,7 @@ function ProviderPending() {
   );
 }
 
-function ProviderPage() {
+export function ProviderPage() {
   const { user, isPending } = useSettledUser();
   const locallyOut = useLocallySignedOut();
   const chrome = useRoleChrome();
@@ -146,7 +162,7 @@ function ProviderPage() {
   const showPay = useShowPayCtas();
   const { session } = useSessionDesks();
   const centreOwner = session?.centreOwner !== false;
-  const search = Route.useSearch();
+  const search = useSearch({ strict: false }) as ReturnType<typeof providerValidateSearch>;
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const childRoute = pathname === "/provider/subscription" || pathname.startsWith("/provider/subscription/");

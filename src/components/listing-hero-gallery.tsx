@@ -100,6 +100,7 @@ export function ListingHeroGallery({
       id={photoId}
       className="ke-listing-hero relative overflow-hidden lg:rounded-[14px]"
       data-empty={count ? undefined : "true"}
+      data-claim={claim ? "offer" : undefined}
       data-ke="listing-hero"
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
@@ -110,7 +111,7 @@ export function ListingHeroGallery({
         <BuildingPhoto
           eager
           priority
-          claim={claim}
+          claim={false}
           src={src}
           sizes={DETAIL_SIZES}
           width={768}

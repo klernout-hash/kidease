@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { Plus, Star } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { CountUp } from "@/components/count-up";
@@ -12,8 +12,9 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
 import { menuGroupLinks, menuHighlight, type MenuGroupId } from "@/lib/app-menu";
 import { accountSearch, highlightDesk } from "@/lib/desks";
+import { accountDeskPath, menuDeskPath, parentDeskPath, providerDeskPath } from "@/lib/desk-nav";
 import { footerLinkLabel } from "@/lib/site-footer-nav";
-import { localePath } from "@/lib/locale-path";
+import { isFrPath, localePath } from "@/lib/locale-path";
 import { chartHasEarnings, insightsCardRating, monthTick, type HostEarnings, type HostInsights } from "@/lib/host-desk";
 import { loadHostEarnings, loadHostInsights } from "@/lib/server/host-desk";
 import type { CopyKey } from "@/lib/copy";
@@ -46,6 +47,7 @@ export function AppMenuScreen({
   insights?: HostInsights | null;
 }) {
   const { t, locale } = useCopy();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const chrome = useRoleChrome();
   const { user } = useCurrentUserState();
   const { session, sticky } = useSessionDesks();
@@ -60,7 +62,7 @@ export function AppMenuScreen({
   if (section) {
     return (
       <main className="ke-menu-main ke-screen-enter ke-gutter mx-auto max-w-lg pb-10 pt-6" data-ke="app-menu" data-section={section}>
-        <Link to="/menu" className="inline-flex min-h-11 items-center text-sm font-medium text-primary">
+        <Link to={menuDeskPath(pathname)} className="inline-flex min-h-11 items-center text-sm font-medium text-primary">
           {t("back")}
         </Link>
         <h1 className="mt-2 text-[1.75rem] font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">{t(GROUP_COPY[section].title)}</h1>
@@ -88,7 +90,7 @@ export function AppMenuScreen({
       {hostCards ? <HostCards initialEarnings={earnings} initialInsights={insights} /> : null}
       {highlight === "create" ? (
         <Link
-          to="/provider"
+          to={providerDeskPath(pathname)}
           search={{ desk: "listings" }}
           hash="list-new"
           data-ke="menu-highlight"
@@ -118,11 +120,11 @@ export function AppMenuScreen({
 
       <nav className="ke-menu-group mt-6" aria-label={t("navMenu")}>
         {user && highlight !== "create" ? (
-          <MenuRow to="/menu" search={{ screen: "payments" }} label={t("earningsPayments")} icon="terms" marker="payments" />
+          <MenuRow to={menuDeskPath(pathname)} search={{ screen: "payments" }} label={t("earningsPayments")} icon="terms" marker="payments" />
         ) : null}
         {highlight === "find" ? (
           <MenuRow
-            to="/parent"
+            to={parentDeskPath(pathname)}
             search={{ tab: "children" }}
             label={t("children")}
             icon="parent"
@@ -130,22 +132,22 @@ export function AppMenuScreen({
           />
         ) : null}
         <MenuRow
-          to={highlight === "create" || user ? "/account" : localePath("/login", locale)}
+          to={highlight === "create" || user ? accountDeskPath(pathname) : localePath("/login", locale)}
           search={
             highlight === "create"
               ? { tab: "profile", desk: "director" }
               : user
                 ? accountSearch(sticky)
-                : { next: "/account?tab=profile" }
+                : { next: isFrPath(pathname) ? "/fr/account?tab=profile" : "/account?tab=profile" }
           }
           label={t("menuAccountSettings")}
           icon={highlight === "create" || user ? "settings" : "login"}
           marker="account"
         />
-        <MenuRow to="/menu" search={{ section: "resources" }} label={t("menuResources")} icon="daycare" marker="resources" />
-        <MenuRow to="/menu" search={{ section: "guides" }} label={t("menuGuides")} icon="howItWorks" marker="guides" />
-        <MenuRow to="/menu" search={{ section: "help" }} label={t("menuGetHelp")} icon="help" marker="help" />
-        <MenuRow to="/menu" search={{ section: "legal" }} label={t("menuPrivacyLegal")} icon="privacy" marker="legal" />
+        <MenuRow to={menuDeskPath(pathname)} search={{ section: "resources" }} label={t("menuResources")} icon="daycare" marker="resources" />
+        <MenuRow to={menuDeskPath(pathname)} search={{ section: "guides" }} label={t("menuGuides")} icon="howItWorks" marker="guides" />
+        <MenuRow to={menuDeskPath(pathname)} search={{ section: "help" }} label={t("menuGetHelp")} icon="help" marker="help" />
+        <MenuRow to={menuDeskPath(pathname)} search={{ section: "legal" }} label={t("menuPrivacyLegal")} icon="privacy" marker="legal" />
         {plansOn && chrome.role === "provider" ? (
           <MenuRow to="/provider/subscription" label={t(chrome.paid ? "navMyPlan" : "navUpgrade")} icon="benefits" marker="upgrade" />
         ) : null}

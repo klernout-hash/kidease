@@ -1,6 +1,6 @@
 import { Children, useEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import { RoleNavLinks } from "@/components/role-nav";
@@ -14,7 +14,7 @@ import { CountBadge } from "@/components/count-badge";
 import { useDeskMenu } from "@/components/desk-menu";
 import { DeskSwitcher, useSessionDesks } from "@/components/desk-switcher";
 import { attentionForItem } from "@/lib/attention";
-import { bindDeskGroup, visibleDeskGroups, writeDeskGroupOpen } from "@/lib/desk-nav";
+import { bindDeskGroup, deskHrefForLocale, visibleDeskGroups, writeDeskGroupOpen } from "@/lib/desk-nav";
 import { showDeskSwitcher } from "@/lib/desks";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
@@ -127,6 +127,7 @@ export function NavDrawer({
   headerExtra?: ReactNode;
   navExtra?: ReactNode;
 }) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const closeRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLElement>(null);
   const latchRef = useRef<DrawerLatch | null>(null);
@@ -289,7 +290,7 @@ export function NavDrawer({
                           return (
                             <Link
                               key={item.id}
-                              to={item.href}
+                              to={deskHrefForLocale(item.href, pathname)}
                               {...(item.search ? { search: item.search } : {})}
                               onClick={onClose}
                               data-nav={plan ? "upgrade" : item.id}
@@ -353,7 +354,7 @@ export function NavDrawer({
             <>
               <div className="my-3 h-px bg-border" />
               <Link
-                to={accountHref}
+                to={deskHrefForLocale(accountHref, pathname)}
                 search={accountSearch}
                 onClick={onClose}
                 className="flex min-h-12 items-center gap-3 rounded-xl bg-primary px-3 text-base font-medium text-primary-fg"

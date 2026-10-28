@@ -111,7 +111,7 @@ test("signed-in drawer Account goes to /account, not a stranded /parent default"
   const drawer = src("src/components/nav-drawer.tsx");
   assert.match(drawer, /accountHref = "\/account"/);
   assert.match(drawer, /accountSearch/);
-  assert.match(drawer, /to=\{accountHref\}[\s\S]*\{accountLabel\}/);
+  assert.match(drawer, /to=\{deskHrefForLocale\(accountHref, pathname\)\}[\s\S]*\{accountLabel\}/);
   assert.match(drawer, /onSignOut\(\)[\s\S]*signOut/);
   assert.doesNotMatch(drawer, /to="\/parent"[\s\S]*\{accountLabel\}/);
 });
