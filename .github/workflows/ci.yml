@@ -53,7 +53,7 @@ jobs:
       - name: Playwright version
         id: playwright-version
         run: |
-          version="$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")"
+          version="$(node -e "const p = require('./package-lock.json').packages || {}; console.log((p['node_modules/playwright'] || p['node_modules/@playwright/test'] || p['node_modules/playwright-core'] || {version:'1'}).version)")"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
       - name: Restore Playwright browsers
         id: playwright-cache
@@ -126,7 +126,7 @@ jobs:
       - name: Playwright version
         id: playwright-version-signed
         run: |
-          version="$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")"
+          version="$(node -e "const p = require('./package-lock.json').packages || {}; console.log((p['node_modules/playwright'] || p['node_modules/@playwright/test'] || p['node_modules/playwright-core'] || {version:'1'}).version)")"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
       - name: Restore Playwright browsers
         id: playwright-cache-signed

@@ -24,7 +24,9 @@ test("Playwright browsers install only on a versioned cache miss", () => {
   assert.match(ci, /actions\/cache\/restore@v4/);
   assert.match(ci, /actions\/cache\/save@v4/);
   assert.match(ci, /playwright-\$\{\{ runner\.os \}\}-\$\{\{ steps\.playwright-version\.outputs\.version \}\}/);
-  assert.match(ci, /packages\['node_modules\/@playwright\/test'\]\.version/);
+  assert.match(ci, /p\['node_modules\/playwright'\]/);
+  assert.match(ci, /p\['node_modules\/@playwright\/test'\]/);
+  assert.match(ci, /p\['node_modules\/playwright-core'\]/);
   assert.match(ci, /if: steps\.playwright-cache\.outputs\.cache-hit != 'true'/);
   assert.match(ci, /npx playwright install-deps chromium webkit/);
   assert.match(ci, /timeout 180 npx playwright install chromium webkit/);
