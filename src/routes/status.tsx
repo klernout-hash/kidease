@@ -10,19 +10,10 @@ import {
   type StatusService,
   type StatusServiceState,
 } from "@/lib/status-public";
+import { loadPublicStatus } from "@/lib/server/status-page";
 import type { HealthPayload } from "@/lib/uptime";
 import { useCopy } from "@/lib/use-copy";
 import { formatCount } from "@/lib/utils";
-
-export async function statusLoader(): Promise<{ health: HealthPayload | null; checkedAt: string }> {
-  const checkedAt = new Date().toISOString();
-  try {
-    const { collectHealth } = await import("@/lib/server/uptime");
-    return { health: await collectHealth(), checkedAt };
-  } catch {
-    return { health: null, checkedAt };
-  }
-}
 
 export function statusHead(locale: "en" | "fr") {
   return pageSeoHead({
@@ -53,7 +44,7 @@ const STATE_LABEL: Record<StatusServiceState, CopyKey> = {
 };
 
 export const Route = createFileRoute("/status")({
-  loader: () => statusLoader(),
+  loader: () => loadPublicStatus(),
   head: () => statusHead("en"),
   component: EnglishStatusPage,
 });

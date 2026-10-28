@@ -111,7 +111,12 @@ test("health counts stay read-only and the status page is bilingual", () => {
   const when = formatStatusCheckedAt("2026-01-15T18:30:00.000Z", "en");
   assert.match(when, /2026/);
   assert.match(src("src/routes/status.tsx"), /statusTitle/);
+  assert.match(src("src/routes/status.tsx"), /loadPublicStatus/);
+  assert.doesNotMatch(src("src/routes/status.tsx"), /server\/uptime|@\/lib\/db|catalog-hydrate|pglite/);
   assert.match(src("src/routes/fr.status.tsx"), /\/fr\/status/);
+  assert.match(src("src/routes/fr.status.tsx"), /loadPublicStatus/);
+  assert.match(src("src/lib/server/status-page.ts"), /await import\("\.\/uptime"\)/);
+  assert.doesNotMatch(src("src/lib/server/status-page.ts"), /^import .*from ["']\.\/uptime["']/m);
   assert.match(src("src/lib/copy.ts"), /statusTitle: "Is KidEase working\?"/);
   assert.match(src("src/lib/copy.ts"), /statusTitle: "KidEase fonctionne-t-il\?"/);
   assert.match(src("src/lib/site-footer-nav.ts"), /\/status/);

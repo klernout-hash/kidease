@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { StatusPage, statusHead, statusLoader } from "@/routes/status";
+import { loadPublicStatus } from "@/lib/server/status-page";
+import { StatusPage, statusHead } from "@/routes/status";
 
 export const Route = createFileRoute("/fr/status")({
-  loader: () => statusLoader(),
+  loader: () => loadPublicStatus(),
   head: () => statusHead("fr"),
   component: FrenchStatusPage,
 });
