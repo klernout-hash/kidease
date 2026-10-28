@@ -33,7 +33,14 @@ import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import { BootPending } from "@/components/boot-pending";
 import { HOME_PAINT_BUDGET_MS, ORIGIN_BUDGET_MS, withPaintBudget, withTimeoutFallback } from "@/lib/timeout";
 import { geocode, readSavedOrigin, reverseGeocode } from "@/lib/geo";
-import { originFromDeviceFix, productHomeOrigin, readClientTimeZone, trustedSavedOrigin } from "@/lib/default-origin";
+import {
+  coerceDirectoryOrigin,
+  originFromDeviceFix,
+  productHomeOrigin,
+  readClientTimeZone,
+  searchOriginOrWinnipeg,
+  trustedSavedOrigin,
+} from "@/lib/default-origin";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
 import { resolveRequestSearchOrigin } from "@/lib/server/request-origin";
 import { useAppStore } from "@/lib/store";
@@ -53,6 +60,7 @@ import { LocationConsentCard } from "@/components/location-consent";
 import { ResumeVisitCard } from "@/components/resume-visit";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { featuredHomeAgreement, homeLiveStrip } from "@/lib/home-live-strip";
+import { listingMatchesLocationLock, resolveLocationLock } from "@/lib/location-lock";
 import type { DaycareCard as Card } from "@/lib/types";
 import {
   honestVacancy,
@@ -79,10 +87,8 @@ export function homeValidateSearch(s: Record<string, unknown>) {
 }
 
 export async function loadProductHome() {
-  const origin = await withTimeoutFallback(resolveRequestSearchOrigin(), ORIGIN_BUDGET_MS, productHomeOrigin());
-  if (origin.source === "default") {
-    return { featured: [], featuredReady: true, origin };
-  }
+  const raw = await withTimeoutFallback(resolveRequestSearchOrigin(), ORIGIN_BUDGET_MS, productHomeOrigin());
+  const origin = searchOriginOrWinnipeg(raw);
   try {
     const painted = await withPaintBudget(
       featuredDaycares({ data: { lat: origin.lat, lng: origin.lng, label: origin.label, radiusKm: 25 } }),
@@ -165,15 +171,17 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
   }, [user?.id]);
 
   useEffect(() => {
-    if (trustedSavedOrigin(readSavedOrigin(), { timeZone: readClientTimeZone() })) return;
+    const timeZone = readClientTimeZone();
+    if (trustedSavedOrigin(readSavedOrigin(), { timeZone })) return;
     const source = useAppStore.getState().originSource;
     if (source === "gps" || source === "manual") return;
-    setOrigin(
-      { lat: boot.origin.lat, lng: boot.origin.lng, label: boot.origin.label },
-      boot.origin.source,
+    const next = coerceDirectoryOrigin(
+      { lat: boot.origin.lat, lng: boot.origin.lng, label: boot.origin.label, source: boot.origin.source },
+      timeZone,
     );
-    setPlace(boot.origin.source === "manual" ? boot.origin.label : boot.origin.source === "default" ? "" : t("nearMe"));
-  }, [boot.origin.lat, boot.origin.lng, boot.origin.label, boot.origin.source, setOrigin]);
+    setOrigin({ lat: next.lat, lng: next.lng, label: next.label }, next.source);
+    setPlace(next.source === "manual" ? next.label : next.source === "default" ? next.label : t("nearMe"));
+  }, [boot.origin.lat, boot.origin.lng, boot.origin.label, boot.origin.source, setOrigin, t]);
 
   useEffect(() => {
     const loc = originSource ? origin : boot.origin;
@@ -183,17 +191,16 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
       const nearby = t("whereNearby");
       const untouched = !current.trim() || current === near || current === nearby || current === loc.label;
       if (!untouched && source !== "manual") return current;
-      if (source === "default" || !(loc.label || "").trim()) return "";
+      if (!(loc.label || "").trim()) return "";
       return source === "manual" ? loc.label : near;
     });
   }, [origin.label, originSource, boot.origin.label, boot.origin.source, locale]);
 
   useEffect(() => {
     const loc = originSource ? origin : boot.origin;
-    const source = originSource || boot.origin.source;
     let cancelled = false;
     const loadFeatured = () => {
-      if (source === "default" || !(loc.label || "").trim()) {
+      if (!(loc.label || "").trim()) {
         setFeatured([]);
         setFeaturedReady(true);
         return;
@@ -305,6 +312,13 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
     () => publicFeatured.filter((row) => isClaimVerified(row)),
     [publicFeatured],
   );
+  const liveRail = useMemo(() => {
+    const label = origin.label || boot.origin.label;
+    const lock = resolveLocationLock({ lat: origin.lat, lng: origin.lng, label });
+    const local = claimedLive.filter((row) => listingMatchesLocationLock(row, lock));
+    if (local.length) return { items: local, showDistance: true };
+    return { items: claimedLive, showDistance: false };
+  }, [boot.origin.label, claimedLive, origin.label, origin.lat, origin.lng]);
   const liveCount = useMemo(() => publicFeatured.filter((r) => r.live).length, [publicFeatured]);
   const strip = homeLiveStrip(liveCount, publicFeatured.length);
   const featuredAgreement = featuredHomeAgreement(publicFeatured.length);
@@ -469,12 +483,13 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
           <TrustBar />
         </div>
 
-        {claimedLive.length ? (
+        {liveRail.items.length ? (
           <section className="ke-gutter mx-auto w-full pt-6" data-ke="home-live-on-kidease">
             <ListingRail
               title={t("liveOnKidEase")}
-              items={claimedLive.slice(0, 12)}
+              items={liveRail.items.slice(0, 12)}
               visual
+              showDistance={liveRail.showDistance}
               seeAllHref={`${localePath("/search", locale)}?live=1`}
             />
           </section>
@@ -606,12 +621,13 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
         </section>
         <section className="ke-gutter mx-auto w-full pb-6 pt-6">
           <TrustBar />
-          {claimedLive.length ? (
+          {liveRail.items.length ? (
             <div className="mt-4" data-ke="home-live-on-kidease">
               <ListingRail
                 title={t("liveOnKidEase")}
-                items={claimedLive.slice(0, 12)}
+                items={liveRail.items.slice(0, 12)}
                 visual
+                showDistance={liveRail.showDistance}
                 seeAllHref={`${localePath("/search", locale)}?live=1`}
               />
             </div>

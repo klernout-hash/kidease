@@ -19,7 +19,7 @@ import { useAppStore } from "@/lib/store";
 import type { CopyKey } from "@/lib/copy";
 import { parentDistanceLabel } from "@/lib/distance-label";
 import { originIsParentLocation } from "@/lib/presence";
-import { plausibleListingKm } from "@/lib/plausible-distance";
+import { honestCardDistance } from "@/lib/plausible-distance";
 import { listingAgeChips, parentAgeLabel } from "@/lib/parent-listing";
 import { standardAgeLabelsForListing } from "@/lib/standard-age-groups";
 import { classifyFacilityType, facilityTypeSeoKind } from "@/lib/facility-type";
@@ -252,10 +252,15 @@ export const DaycareCard = memo(function DaycareCard({
     km: distanceKm,
     away: t("kmAway"),
     show:
-      farAway ||
-      (labelFar && typeof distanceKm === "number" && distanceKm > 0) ||
-      (originIsParentLocation(originSource) &&
-        plausibleListingKm(distanceKm, item.city, origin.label)),
+      showDistance &&
+      honestCardDistance({
+        km: distanceKm,
+        listingCity: item.city,
+        originLabel: origin.label,
+        originSource: originIsParentLocation(originSource) ? originSource : originSource,
+        showDistance,
+        labelFar: farAway || labelFar,
+      }),
   });
   const photos = (Array.isArray(item.photos) ? item.photos : []).filter((p) => p && !p.includes("-logo"));
   const hollowPhoto = !photos.some((p) => isRealListingPhoto(p));
@@ -297,7 +302,7 @@ export const DaycareCard = memo(function DaycareCard({
   if (presentation === "visual") {
     const placeLine = [item.city, farAway ? item.province : "", away].filter(Boolean).join(" · ");
     return (
-      <article data-slug={item.slug} data-ke="visual-card" className="ke-visual-card group w-full min-w-0">
+      <article data-slug={item.slug} data-ke="visual-card" className="ke-visual-card group flex h-full w-full min-w-0 flex-col">
         <div className="relative">
           <ListingAnchor slug={item.slug} label={name} className="block text-inherit no-underline">
             <PhotoCarousel
@@ -318,9 +323,9 @@ export const DaycareCard = memo(function DaycareCard({
           </ListingAnchor>
           {parentActions ? <SaveListingButton daycareId={item.id} /> : null}
         </div>
-        <ListingAnchor slug={item.slug} className="mt-2 block text-inherit no-underline">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="line-clamp-2 min-w-0 whitespace-normal text-[15px] font-semibold leading-5 tracking-[-0.02em] text-fg">
+        <ListingAnchor slug={item.slug} className="mt-2 flex min-h-0 flex-1 flex-col text-inherit no-underline">
+          <div className="flex min-h-10 items-start justify-between gap-2">
+            <h3 className="line-clamp-2 min-w-0 whitespace-normal text-[15px] min-h-10 font-semibold leading-5 tracking-[-0.02em] text-fg">
               {name}
             </h3>
             {showParentAverage ? (
@@ -332,11 +337,9 @@ export const DaycareCard = memo(function DaycareCard({
             ) : null}
           </div>
           <FoundingMemberBadge show={item.foundingMember} className="mt-1" />
-          {placeLine ? (
-            <p className="mt-0.5 truncate text-[13px] leading-5 text-muted" data-far={farAway ? "1" : undefined}>
-              {placeLine}
-            </p>
-          ) : null}
+          <p className="mt-0.5 min-h-5 truncate text-[13px] leading-5 text-muted" data-far={farAway ? "1" : undefined}>
+            {placeLine || "\u00a0"}
+          </p>
           {sort === "best" && whyMatchLine(item, t) ? (
             <p className="mt-0.5 line-clamp-2 text-[13px] leading-5 text-muted" data-ke="why-match">
               <span className="font-medium text-fg">{t("whyMatch")}. </span>
@@ -369,13 +372,17 @@ export const DaycareCard = memo(function DaycareCard({
               {t("kideaseApprovedMarker")}
             </p>
           ) : null}
-          {!priceOnPhoto && priceAmount ? (
-            <p className="mt-1 text-[14px] leading-5 tabular-nums">
-              <span className="font-semibold">{priceAmount}</span>
-              <span className="font-normal text-muted">{priceUnit}</span>
-            </p>
-          ) : null}
-          <CardMicroPills item={item} />
+          <div className="mt-auto pt-3">
+            {!priceOnPhoto && priceAmount ? (
+              <p className="min-h-5 text-[14px] leading-5 tabular-nums">
+                <span className="font-semibold">{priceAmount}</span>
+                <span className="font-normal text-muted">{priceUnit}</span>
+              </p>
+            ) : (
+              <p className="min-h-5 text-[14px] leading-5 text-muted">{priceOnPhoto ? "\u00a0" : t("cardGapFees")}</p>
+            )}
+            <CardMicroPills item={item} />
+          </div>
         </ListingAnchor>
         <div className="mt-1 flex w-full min-w-0 flex-wrap items-center gap-2">
           {parentActions ? (
@@ -409,7 +416,7 @@ export const DaycareCard = memo(function DaycareCard({
   }
 
   return (
-    <article data-slug={item.slug} className="ke-tile group min-w-0 w-full">
+    <article data-slug={item.slug} className="ke-tile group flex h-full min-w-0 w-full flex-col">
       <div className="relative">
         <ListingAnchor slug={item.slug} label={name} className="block text-inherit no-underline">
           <PhotoCarousel
@@ -447,8 +454,8 @@ export const DaycareCard = memo(function DaycareCard({
         {parentActions ? <SaveListingButton daycareId={item.id} /> : null}
       </div>
 
-      <ListingAnchor slug={item.slug} className="block text-inherit no-underline">
-        <div className="mt-1 space-y-px text-fg">
+      <ListingAnchor slug={item.slug} className="flex min-h-0 flex-1 flex-col text-inherit no-underline">
+        <div className="mt-1 flex flex-1 flex-col space-y-px text-fg">
           <div className="flex items-start justify-between gap-2">
             <h3 className="min-w-0 truncate text-[12px] font-semibold leading-[1.25] tracking-[-0.2px] text-fg dark:text-white">
               {name}
@@ -508,23 +515,25 @@ export const DaycareCard = memo(function DaycareCard({
             </p>
           ) : null}
           <ProvincialOpeningLine item={item} />
-          {ageChips.length ? (
-            <div className="flex flex-wrap gap-1 pt-1">
-              {ageChips.map((band) => (
-                <span key={band} className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-medium">
-                  {parentAgeLabel(band, loc)}
-                </span>
-              ))}
-            </div>
-          ) : null}
-          {!priceOnPhoto && priceAmount ? (
-            <p className="pt-0.5 text-[12px] leading-4 tabular-nums">
-              <span className="font-semibold">{priceAmount}</span>
-              <span className="font-normal text-muted">{priceUnit}</span>
-            </p>
-          ) : !priceOnPhoto ? (
-            <p className="pt-0.5 text-[12px] leading-4 text-muted">{t("cardGapFees")}</p>
-          ) : null}
+          <div className="flex min-h-12 flex-wrap content-start gap-1 pt-1">
+            {ageChips.map((band) => (
+              <span key={band} className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-medium">
+                {parentAgeLabel(band, loc)}
+              </span>
+            ))}
+          </div>
+          <div className="mt-auto pt-3">
+            {!priceOnPhoto && priceAmount ? (
+              <p className="min-h-4 text-[12px] leading-4 tabular-nums">
+                <span className="font-semibold">{priceAmount}</span>
+                <span className="font-normal text-muted">{priceUnit}</span>
+              </p>
+            ) : !priceOnPhoto ? (
+              <p className="min-h-4 text-[12px] leading-4 text-muted">{t("cardGapFees")}</p>
+            ) : (
+              <p className="min-h-4 text-[12px] leading-4">&nbsp;</p>
+            )}
+          </div>
         </div>
       </ListingAnchor>
       <div className="mt-1.5 flex w-full min-w-0 flex-wrap items-center gap-2">

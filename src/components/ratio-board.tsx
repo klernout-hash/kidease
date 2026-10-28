@@ -25,7 +25,7 @@ export function RatioBoard({ province = "MB" }: { province?: string }) {
   const [tags, setTags] = useState<string[]>([]);
 
   return (
-    <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80" data-ke="ratio-board">
+    <section className="rounded-2xl bg-surface p-4 text-fg shadow-sm ring-1 ring-border" data-ke="ratio-board">
       <h2 className="font-display text-2xl">{fr ? "Ratios du local" : "Room ratios"}</h2>
       <p className="mt-1 text-sm text-muted">
         {fr
@@ -47,7 +47,7 @@ export function RatioBoard({ province = "MB" }: { province?: string }) {
           const tone = status === "out" ? "text-rose-800" : status === "near" ? "text-amber-800" : "text-emerald-800";
           const word = status === "out" ? (fr ? "Hors ratio" : "Out of ratio") : status === "near" ? (fr ? "Proche de la limite" : "Near the limit") : fr ? "Dans le ratio" : "Within ratio";
           return (
-            <li key={band} className="rounded-2xl bg-stone-50 p-3">
+            <li key={band} className="rounded-2xl bg-surface-2 p-3 text-fg">
               <p className="text-sm font-semibold">{fr ? BAND_LABEL[band].fr : BAND_LABEL[band].en}</p>
               <p className="text-xs text-muted">1:{rule.staffToChildren} · {fr ? "groupe max" : "max group"} {rule.maxGroup}</p>
               <div className="mt-2 flex flex-wrap gap-2">

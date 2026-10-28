@@ -37,7 +37,7 @@ export function CompareChip({
       type="button"
       className={cn(
         "inline-flex min-h-8 items-center rounded-full px-2.5 text-[11px] font-semibold ring-1",
-        on ? "bg-fg text-bg ring-fg" : "bg-white/92 text-fg ring-black/10",
+        on ? "bg-fg text-bg ring-fg" : "bg-surface text-fg ring-border",
         className,
       )}
       aria-pressed={on}

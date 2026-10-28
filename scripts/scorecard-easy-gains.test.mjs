@@ -96,6 +96,7 @@ test("health counts stay read-only and the status page is bilingual", () => {
   assert.match(CATALOG_COUNT_SQL, /photos_confirmed/);
   assert.match(CATALOG_COUNT_SQL, /fees_confirmed/);
   assert.match(CATALOG_COUNT_SQL, /ages_confirmed/);
+  assert.match(CATALOG_COUNT_SQL, /PUBLIC_LISTING_SQL|listing_active/);
   assert.equal(catalogCountsFromRow({
     listings_total: 10,
     winnipeg_total: 2,

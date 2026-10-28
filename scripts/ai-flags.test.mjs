@@ -76,15 +76,10 @@ test("the flag request evaluates PostHog and does not return the key", async () 
   assert.equal(calls[0].body.api_key, "phc_test_not_real");
   assert.equal(calls[0].body.flag_keys.includes("smart-match"), true);
   assert.equal(calls[0].body.flag_keys.includes("ranking-best-match"), true);
-  assert.equal(calls[1].url, "https://us.i.posthog.com/batch/");
-  assert.equal(calls[1].body.batch[0].event, "$feature_flag_called");
-  assert.equal(calls[1].body.batch[0].properties.$feature_flag, "smart-match");
-  assert.equal(calls[1].body.batch[0].properties.$feature_flag_response, false);
-  const rankingCall = calls[1].body.batch.find((row) => row.properties.$feature_flag === "ranking-best-match");
-  assert.equal(rankingCall.event, "$feature_flag_called");
-  assert.equal(rankingCall.properties.$feature_flag_response, false);
+  assert.equal(calls[0].body.send_feature_flag_events, false);
+  assert.equal(calls.length, 1);
   assert.equal(rankingFlagOn(snapshot), false);
-  assert.equal(JSON.stringify(calls[1].body).includes("parent@example.com"), false);
+  assert.equal(JSON.stringify(calls[0].body).includes("parent@example.com"), false);
 
   const cached = await fetchAiFeatureFlags({
     distinctId: "kidease-server",
@@ -138,9 +133,8 @@ test("ranking-best-match is on only when PostHog says on", async () => {
   assert.equal(on.reached, true);
   assert.equal(rankingFlagOn(on), true);
   assert.equal(calls[0].body.flag_keys.includes("ranking-best-match"), true);
-  const called = calls[1].body.batch.find((row) => row.properties.$feature_flag === "ranking-best-match");
-  assert.equal(called.event, "$feature_flag_called");
-  assert.equal(called.properties.$feature_flag_response, true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].body.send_feature_flag_events, false);
 
   resetAiFlagFetchForTests();
   const off = await fetchAiFeatureFlags({
@@ -191,7 +185,8 @@ test("search reads ranking-best-match on the server, not the browser SDK", () =>
   assert.doesNotMatch(hook, /isPostHogFlagEnabled/);
   assert.match(gate, /RANKING_BEST_MATCH_FLAG/);
   assert.match(fetchSrc, /SERVER_FLAG_KEYS/);
-  assert.match(fetchSrc, /\$feature_flag_called/);
+  assert.match(fetchSrc, /send_feature_flag_events: false/);
+  assert.doesNotMatch(fetchSrc, /\$feature_flag_called/);
 });
 
 test("the quiz and the writer stay hidden until the real flag is read", () => {

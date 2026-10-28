@@ -66,7 +66,7 @@ export function TaxReceiptStudio({ quebec = false }: { quebec?: boolean }) {
   }
 
   return (
-    <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80" data-ke="tax-receipt-studio">
+    <section className="rounded-2xl bg-surface p-4 text-fg shadow-sm ring-1 ring-border" data-ke="tax-receipt-studio">
       <h2 className="font-display text-2xl">{fr ? "Reçus d'impôt" : "Tax receipts"}</h2>
       <p className="mt-1 text-sm text-muted">
         {fr

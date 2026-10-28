@@ -1,5 +1,6 @@
 import { resolveLocationQuery } from "@/components/place-search";
 import {
+  coerceDirectoryOrigin,
   isUntrustedTorontoOrigin,
   localeSuggestsManitoba,
   readClientTimeZone,
@@ -71,14 +72,17 @@ export async function bootSearchOrigin(incomingQ?: string, ssrOrigin?: SearchOri
     !(localeSuggestsManitoba({ timeZone }) && isUntrustedTorontoOrigin(ssrOrigin))
       ? ssrOrigin
       : null;
-  const resolved = searchOriginOrWinnipeg(
-    resolveDefaultSearchOrigin({
-      saved,
-      gps: pos,
-      gpsAllowed,
-      fallback,
-      timeZone,
-    }),
+  const resolved = coerceDirectoryOrigin(
+    searchOriginOrWinnipeg(
+      resolveDefaultSearchOrigin({
+        saved,
+        gps: pos,
+        gpsAllowed,
+        fallback,
+        timeZone,
+      }),
+    ),
+    timeZone,
   );
   const label =
     resolved.source === "gps" && pos ? reverseGeocode(pos.lat, pos.lng) || resolved.label : resolved.label;

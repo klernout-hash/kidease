@@ -704,13 +704,21 @@
   }
   .ke-footer-cols {
     display: grid;
+    width: 100%;
+    max-width: 56rem;
+    margin-inline: auto;
     grid-template-columns: 1fr 1fr;
+    justify-items: center;
     gap: 1.1rem 1.25rem;
   }
   @media (min-width: 640px) {
     .ke-footer-cols {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      justify-items: center;
       gap: 1.15rem 1.5rem;
+    }
+    .ke-footer-cols:has(> :nth-child(4)) {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
   .ke-footer-title {
@@ -841,6 +849,7 @@
   }
   .ke-rail {
     display: flex;
+    align-items: stretch;
     gap: 0.5rem;
     overflow-x: auto;
     overflow-y: clip;
@@ -863,6 +872,7 @@
     display: none;
   }
   .ke-rail-card {
+    display: flex;
     flex: 0 0 var(--ke-card-w, 11.25rem);
     width: var(--ke-card-w, 11.25rem);
     max-width: var(--ke-card-w, 11.25rem);
@@ -954,9 +964,16 @@
   }
   .ke-result-stack {
     display: grid;
+    align-items: stretch;
     grid-template-columns: minmax(0, 1fr);
     gap: 1.5rem;
     margin-top: 0.75rem;
+  }
+  .ke-result-stack > * {
+    height: 100%;
+  }
+  .ke-rail-card > article {
+    height: 100%;
   }
   @media (min-width: 768px) {
     .ke-result-stack {
@@ -2201,4 +2218,39 @@ html {
 /* Cookie bar must not eat Request info clicks outside the consent card. */
 html[data-cookie-banner="open"] body {
   padding-bottom: 7.5rem;
+}
+
+/*
+  Light cards that ignore the theme token. In dark mode their text follows
+  --color-fg (near white) and disappears on the white fill. These rules sit
+  outside @layer so they beat the utility background.
+*/
+html[data-theme="dark"] .rounded-2xl.bg-white,
+html[data-theme="dark"] .rounded-xl.bg-white,
+html[data-resolved-theme="dark"] .rounded-2xl.bg-white,
+html[data-resolved-theme="dark"] .rounded-xl.bg-white,
+html[data-theme="dark"] .bg-stone-50,
+html[data-theme="dark"] .bg-stone-100,
+html[data-resolved-theme="dark"] .bg-stone-50,
+html[data-resolved-theme="dark"] .bg-stone-100 {
+  background-color: var(--color-surface);
+  color: var(--color-fg);
+}
+html[data-theme="dark"] .bg-stone-50,
+html[data-theme="dark"] .bg-stone-100,
+html[data-resolved-theme="dark"] .bg-stone-50,
+html[data-resolved-theme="dark"] .bg-stone-100 {
+  background-color: var(--color-surface-2);
+}
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]):not([data-resolved-theme="light"]) .rounded-2xl.bg-white,
+  html:not([data-theme="light"]):not([data-resolved-theme="light"]) .rounded-xl.bg-white {
+    background-color: var(--color-surface);
+    color: var(--color-fg);
+  }
+  html:not([data-theme="light"]):not([data-resolved-theme="light"]) .bg-stone-50,
+  html:not([data-theme="light"]):not([data-resolved-theme="light"]) .bg-stone-100 {
+    background-color: var(--color-surface-2);
+    color: var(--color-fg);
+  }
 }

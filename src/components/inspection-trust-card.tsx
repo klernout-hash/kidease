@@ -27,7 +27,7 @@ export function InspectionTrustCard({
   if (!licence && !portal) return null;
 
   return (
-    <section className="mt-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80" data-ke="inspection-trust">
+    <section className="mt-4 rounded-2xl bg-surface p-4 text-fg shadow-sm ring-1 ring-border" data-ke="inspection-trust">
       <h2 className="font-display text-2xl">{fr ? "Permis et inspection" : "Licence and inspection"}</h2>
       {licence ? (
         <p className="mt-2 text-sm">

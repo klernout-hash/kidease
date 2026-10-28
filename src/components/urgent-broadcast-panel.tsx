@@ -74,7 +74,7 @@ export function UrgentBroadcastPanel({ centres }: { centres: Array<BroadcastCent
               : `${plan.centres.length} centres at most (cap of ${plan.cap}).`;
 
   return (
-    <section className="mt-8 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80" data-ke="urgent-broadcast">
+    <section className="mt-8 rounded-2xl bg-surface p-4 text-fg shadow-sm ring-1 ring-border" data-ke="urgent-broadcast">
       <h2 className="font-display text-2xl">{fr ? "Besoin de garde vite" : "Need care fast"}</h2>
       <p className="mt-2 text-sm text-muted">
         {fr

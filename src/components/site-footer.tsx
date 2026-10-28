@@ -106,11 +106,6 @@ function Column({
             {link.label}
           </Item>
         ))}
-        {id === "kidease" ? (
-          <li>
-            <ShareKidEaseButton appearance="row" />
-          </li>
-        ) : null}
       </ul>
     </section>
   );
@@ -149,17 +144,19 @@ export function SiteFooter() {
             <Column id="support" title={t("support")} links={footerLinks(linksForRole(FOOTER_COLUMNS.support, chrome.role, "support", chrome.pending || chrome.role !== "guest"), hideCommerce, hidePlans)} locale={locale} t={t} />
             <Column id="kidease" title={t("app")} links={footerLinks(linksForRole(FOOTER_COLUMNS.kidease, chrome.role, "kidease", chrome.pending || chrome.role !== "guest"), hideCommerce, hidePlans)} locale={locale} t={t} />
           </nav>
-          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
-            {FOOTER_LEGAL.map((link) => (
-              <Link
-                key={link.to}
-                to={localePath(link.to, locale)}
-                className="ke-footer-link inline-flex min-h-11 items-center"
-              >
-                {footerLinkLabel(link, t, locale)}
-              </Link>
-            ))}
-            <LanguageSelect />
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-sm">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              {FOOTER_LEGAL.map((link) => (
+                <Link
+                  key={link.to}
+                  to={localePath(link.to, locale)}
+                  className="ke-footer-link inline-flex min-h-11 items-center"
+                >
+                  {footerLinkLabel(link, t, locale)}
+                </Link>
+              ))}
+            </div>
+            <LanguageSelect pill />
           </div>
 
           <div className="ke-footer-legal">
@@ -176,8 +173,9 @@ export function SiteFooter() {
                 {companyOperatorLine(fr ? "fr" : "en")}
               </p>
             </div>
-            <div className="ke-footer-legal-meta">
-              <HeaderSocial />
+            <div className="ke-footer-legal-meta flex flex-row flex-wrap items-center justify-end gap-1">
+              <ShareKidEaseButton appearance="labeled" className="rounded-full border border-border px-3" />
+              <HeaderSocial always />
             </div>
           </div>
         </div>

@@ -19,7 +19,6 @@ import {
   type DeskId,
   type DeskItem,
 } from "@/lib/desk-nav";
-import { LanguageSelect } from "@/components/language-select";
 import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import { cn } from "@/lib/utils";
@@ -214,11 +213,6 @@ export function DeskShell({
                       <span>{group.labelKey ? t(group.labelKey) : group.label}</span>
                     </summary>
                     <div className="flex flex-col gap-0.5">
-                      {group.id === "settings" ? (
-                        <div className="px-2.5 py-1">
-                          <LanguageSelect className="w-full justify-start" />
-                        </div>
-                      ) : null}
                       {items.map((item) => {
                         const on = itemIsOn(item, active, pathname);
                         const count = attentionForItem(session?.attention, item.id);

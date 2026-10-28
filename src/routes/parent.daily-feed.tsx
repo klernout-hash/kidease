@@ -45,7 +45,7 @@ export function DailyFeedPage() {
             </Suspense>
           </div>
         ) : (
-          <div className="mt-6 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80">
+          <div className="mt-6 rounded-2xl bg-surface p-4 text-fg shadow-sm ring-1 ring-border">
             <p className="text-sm text-muted">
               {fr ? "Connectez-vous avec le compte parent lié à l'inscription." : "Sign in with the parent account tied to enrolment."}
             </p>
