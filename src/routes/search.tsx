@@ -701,6 +701,9 @@ export function SearchScreen({
           setSearchFailed(false);
           writeSearchCache(key, locked);
           captureMarketplaceFunnel({ step: "search", source: "search", dest_path: "/search" });
+          if ((result.total ?? locked.length) === 0) {
+            captureMarketplaceFunnel({ step: "zero_result", source: "search", dest_path: "/search" });
+          }
         })
         .catch(() => {
           if (live && !cached) {

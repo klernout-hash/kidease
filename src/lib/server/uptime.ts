@@ -1,3 +1,4 @@
+import { CATALOG_COUNT_SQL, CATALOG_COUNT_TTL_MS, catalogCountsFromRow, type CatalogCounts } from "@/lib/catalog-counts";
 import { dbSource, getSqlWithin } from "@/lib/db";
 import { reportError } from "@/lib/observe";
 import {
@@ -10,8 +11,19 @@ import {
 export { pingBetterStackHeartbeat } from "@/lib/uptime";
 
 let lastCfrFinger = "";
+let catalogCountCache: { at: number; value: CatalogCounts } | null = null;
 
 const DATABASE_PROBE_MS = 2500;
+
+async function readCatalogCounts(sql: { query: (text: string) => Promise<Array<Record<string, unknown>>> }): Promise<CatalogCounts | null> {
+  const now = Date.now();
+  if (catalogCountCache && now - catalogCountCache.at < CATALOG_COUNT_TTL_MS) return catalogCountCache.value;
+  const rows = await sql.query(CATALOG_COUNT_SQL);
+  const value = catalogCountsFromRow(rows[0]);
+  if (!value) return null;
+  catalogCountCache = { at: now, value };
+  return value;
+}
 
 /**
  * Shallow DB ping. Preview/Vercel without a database URL reports `skipped`
@@ -37,11 +49,26 @@ export async function collectHealth(): Promise<HealthPayload> {
   if (database === "ok") {
     try {
       const sql = await getSqlWithin(DATABASE_PROBE_MS);
-      const rows = await sql<{ n: number | string }>`
-        select count(*)::int as n from daycares where coalesce(ages_confirmed, 0) = 1
-      `;
-      const count = Number(rows[0]?.n);
-      if (Number.isFinite(count)) payload.agesConfirmed = count;
+      try {
+        const counts = await readCatalogCounts(sql);
+        if (counts) {
+          payload.agesConfirmed = counts.agesConfirmed;
+          payload.catalogCount = counts.catalogCount;
+          payload.listingsTotal = counts.listingsTotal;
+          payload.winnipegTotal = counts.winnipegTotal;
+          payload.photosConfirmed = counts.photosConfirmed;
+          payload.feesConfirmed = counts.feesConfirmed;
+        }
+      } catch {
+        /* A missing column must not hide the ages count below. */
+      }
+      if (payload.agesConfirmed == null) {
+        const rows = await sql<{ n: number | string }>`
+          select count(*)::int as n from daycares where coalesce(ages_confirmed, 0) = 1
+        `;
+        const count = Number(rows[0]?.n);
+        if (Number.isFinite(count)) payload.agesConfirmed = count;
+      }
       const { advanceRuntimeSourcedAges, probeRuntimeAgeListings } = await import(
         "@/lib/server/sourced-ages-runtime"
       );

@@ -26,6 +26,7 @@ export const MENU_LEAF_PATHS = [
   "/privacy",
   "/terms",
   "/cookies",
+  "/status",
   "/verify",
   "/daycare-requirements",
   "/notifications",

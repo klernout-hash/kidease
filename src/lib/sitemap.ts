@@ -46,6 +46,7 @@ export const SITEMAP_STATIC_PATHS = [
   "/compare",
   "/unsubscribe",
   "/delete-account",
+  "/status",
   "/jobs",
   "/jobs/post",
   "/start-a-daycare",

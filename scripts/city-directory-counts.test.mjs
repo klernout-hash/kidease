@@ -42,7 +42,8 @@ test("city and province pages read the live directory, not only the baked snapsh
   const cities = readFileSync(join(root, "src/routes/cities.tsx"), "utf8");
   assert.match(hub, /loadCityHub/);
   assert.match(loader, /liveHubCount\(hub\.slug\)/);
-  assert.match(loader, /if \(live != null\) count = live/);
+  assert.match(loader, /const count = live != null \? live : hub\.count/);
+  assert.match(loader, /Promise\.all\(\[/);
   assert.match(cities, /loadDirectoryCounts/);
   assert.match(cities, /counts\.provinces\[group\.code\]/);
   assert.match(cities, /counts\.hubs\[city\.slug\]/);

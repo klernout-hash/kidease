@@ -13,6 +13,7 @@ import {
   generateNonce,
   isHtmlResponse,
 } from "../../scripts/csp.mjs";
+import { applyPublicStaticCache } from "../../scripts/public-static-cache.mjs";
 
 interface CspEvent {
   url: URL;
@@ -20,7 +21,7 @@ interface CspEvent {
 }
 
 export default async function cspMiddleware(
-  _event: CspEvent,
+  event: CspEvent,
   next: () => unknown | Promise<unknown>,
 ): Promise<unknown> {
   const nonce = generateNonce();
@@ -32,6 +33,13 @@ export default async function cspMiddleware(
 
   if (isHtmlResponse(headers.get("content-type"))) {
     applyHtmlDocumentCacheHeaders(headers);
+    applyPublicStaticCache(headers, {
+      pathname: event.url.pathname,
+      method: event.req.method,
+      cookie: event.req.headers.get("cookie"),
+      status: result.status,
+      setCookie: headers.get("set-cookie"),
+    });
   }
 
   if (!isHtmlResponse(headers.get("content-type")) || !result.body) {

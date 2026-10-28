@@ -15,15 +15,12 @@ export async function loadCityHub(city: string): Promise<CityHubSnapshot> {
   // same in scripts/request-guard.mjs so the SPA shell cannot return 200.
   const hub = cityHubBySlug(city);
   if (!hub) throw notFound();
-  let count = hub.count;
+  const [live, liveListings] = await Promise.all([
+    liveHubCount(hub.slug).catch(() => null),
+    listingsForCityHub(hub.slug).catch(() => []),
+  ]);
+  const count = live != null ? live : hub.count;
   try {
-    const live = await liveHubCount(hub.slug);
-    if (live != null) count = live;
-  } catch {
-    /* Snapshot count stays if the live catalogue is unreachable. */
-  }
-  try {
-    const liveListings = await listingsForCityHub(hub.slug);
     if (liveListings.length > 0) {
       return {
         ...hub,

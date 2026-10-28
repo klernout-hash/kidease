@@ -226,6 +226,13 @@ export function posthogInitOptions(input: SessionReplayGateInput = {}): Partial<
       maskCapturedNetworkRequestFn: maskCapturedNetworkRequest,
     },
     sanitize_properties: sanitizePostHogProperties,
+    ...({
+      capture_exceptions: {
+        capture_unhandled_errors: true,
+        capture_unhandled_rejections: true,
+        capture_console_errors: false,
+      },
+    } as Partial<PostHogConfig>),
     loaded: (ph) => {
       client = ph as PostHog;
       flushQueuedPostHogEvents(ph as PostHog);
@@ -235,6 +242,7 @@ export function posthogInitOptions(input: SessionReplayGateInput = {}): Partial<
       }
       ph.onFeatureFlags(() => applyPostHogRecordingGate(ph as PostHog));
       applyPostHogRecordingGate(ph as PostHog);
+      if (internalQa) syncInternalQa(true);
     },
   };
 }
@@ -288,6 +296,23 @@ export function flushQueuedPostHogEvents(ph?: PostHog | null): void {
 }
 
 let reviewerQuiet = false;
+let internalQa = false;
+
+/** Person and event flag for operator, QA, and headless traffic. No email is stored. */
+export function syncInternalQa(on: boolean): void {
+  internalQa = on;
+  if (!on || !client) return;
+  try {
+    client.register({ internal_qa: true, $is_internal: true });
+    client.setPersonProperties({ internal_qa: true, $is_internal: true });
+  } catch {
+    /* client not ready */
+  }
+}
+
+export function internalQaActive(): boolean {
+  return internalQa;
+}
 
 /** Store-review accounts stay out of product analytics for this tab. */
 export function quietPostHogForStoreReviewer(): void {
@@ -316,6 +341,10 @@ export function capturePostHogEvent(event: string, properties: Record<string, un
   // Native: do not queue or send until Allow. The website may still queue until Allow.
   if (consent !== "granted" && isNative()) return;
   const props = sanitizePostHogProperties(properties, name);
+  if (internalQa) {
+    props.internal_qa = true;
+    props.$is_internal = true;
+  }
   if (client) {
     client.capture(name, props);
     return;
@@ -381,6 +410,7 @@ export function startPostHog(): void {
         posthog.identify(pendingIdentify);
         pendingIdentify = null;
       }
+      if (internalQa) syncInternalQa(true);
     })
     .catch(() => {
       client = null;

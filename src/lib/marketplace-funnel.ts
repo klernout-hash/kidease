@@ -12,13 +12,15 @@ export type MarketplaceFunnelStep =
   | "listing_view"
   | "share"
   | "contact"
+  | "tour_request"
+  | "zero_result"
   | "claim";
 
 export type MarketplaceFunnelProps = {
   step: MarketplaceFunnelStep;
   source?: "home" | "search" | "listing" | "claim";
   dest_path?: "/search" | "/daycare" | "/claim" | "/other";
-  contact?: "message" | "tour" | "spot" | "phone" | "info";
+  contact?: "message" | "tour" | "spot" | "phone" | "email" | "website" | "info";
 };
 
 export function captureMarketplaceFunnel(props: MarketplaceFunnelProps): void {

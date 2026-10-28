@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { isInternalQaTraffic } from "@/lib/internal-qa";
 import { isStoreReviewerEmail } from "@/lib/reviewer-accounts";
 import {
   identifyPostHogUser,
@@ -7,6 +8,7 @@ import {
   resetPostHogIdentity,
   resumePostHogAfterReviewer,
   startPostHog,
+  syncInternalQa,
 } from "@/lib/posthog";
 import { captureRetentionTouch } from "@/lib/retention";
 
@@ -27,6 +29,18 @@ export function PostHogBoot() {
     startPostHog();
     captureRetentionTouch();
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    syncInternalQa(
+      isInternalQaTraffic({
+        email: user?.primaryEmail,
+        search: window.location.search,
+        cookie: document.cookie,
+        webdriver: navigator.webdriver === true,
+      }),
+    );
+  }, [user]);
 
   useEffect(() => {
     if (isPending) return;

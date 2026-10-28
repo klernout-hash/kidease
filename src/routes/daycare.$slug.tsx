@@ -382,6 +382,7 @@ export function Listing() {
                   eager
                   priority
                   src={earlyReal}
+                  alt={earlyName || undefined}
                   sizes={DETAIL_SIZES}
                   width={768}
                   height={576}
@@ -629,6 +630,7 @@ export function Listing() {
             className="flex min-h-11 items-center px-3 text-sm font-medium text-primary hover:bg-surface-2"
             onClick={() => {
               const ctx = rankingContextFor(d.id);
+              captureMarketplaceFunnel({ step: "contact", source: "listing", dest_path: "/daycare", contact: "phone" });
               captureRankingEvent("phone_clicked", {
                 listing_id: d.id,
                 position: ctx.position,
@@ -649,6 +651,7 @@ export function Listing() {
             className="flex min-h-11 items-center px-3 text-sm font-medium text-primary hover:bg-surface-2"
             onClick={() => {
               const ctx = rankingContextFor(d.id);
+              captureMarketplaceFunnel({ step: "contact", source: "listing", dest_path: "/daycare", contact: "website" });
               captureRankingEvent("website_clicked", {
                 listing_id: d.id,
                 position: ctx.position,
