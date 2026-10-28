@@ -429,6 +429,62 @@ export const createInfoRequest = createServerFn({ method: "POST" })
     return { id: recorded.id, status: "requested" as const, reused: recorded.reused };
   });
 
+/** Tour interest for a centre that has not posted times yet. Guests and signed-in parents can send it. */
+export const createTourInterest = createServerFn({ method: "POST" })
+  .validator((input: {
+    daycareId: string;
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    email?: string;
+    message?: string;
+    preferredTimes?: string;
+    userId?: string;
+  }) => input)
+  .handler(async ({ data }) => {
+    const signedIn = (data.userId || "").trim();
+    const contact = normalizeInfoContact({
+      firstName: data.firstName || "",
+      lastName: data.lastName || "",
+      phone: data.phone || "",
+      email: data.email || "",
+      message: data.message,
+    });
+    if (!signedIn && !contact.ok) throw new Error("Please enter your name, phone, and email.");
+    const daycareId = (data.daycareId || "").trim();
+    if (!daycareId) throw new Error("Centre not found");
+    const listed = await catalogByIdGet(daycareId);
+    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerMayUseAdminOnlyListing())) {
+      throw new Error("Listing not found");
+    }
+    const sql = await getSql();
+    if (listed) await upsertDaycare(sql, listed);
+    const exists = await sql<{ id: string }>`select id from daycares where id = ${daycareId} limit 1`;
+    if (!exists[0]) throw new Error("Centre not found");
+    const userId = signedIn || guestInfoUserId(contact.email);
+    const note = [
+      (data.preferredTimes || "").trim(),
+      contact.ok ? `${contact.firstName} ${contact.lastName}` : "",
+      contact.ok ? contact.phone : "",
+      contact.ok ? contact.email : "",
+      contact.message || (data.message || "").trim(),
+    ]
+      .filter(Boolean)
+      .join("\n");
+    const recorded = await recordLeadRequest(sql, {
+      userId,
+      daycareId,
+      kind: "tour",
+      message: note,
+      firstName: contact.ok ? contact.firstName : null,
+      lastName: contact.ok ? contact.lastName : null,
+      phone: contact.ok ? contact.phone : null,
+      email: contact.ok ? contact.email : null,
+    });
+    if (!recorded) throw new Error("Could not save request");
+    return { id: recorded.id, status: "requested" as const, reused: recorded.reused };
+  });
+
 export const updateLeadRequest = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { leadId: string; action: LeadAction; note?: string }) => input)

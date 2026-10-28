@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { UserRound } from "lucide-react";
 import { NotificationBell } from "@/components/notification-bell";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -6,6 +6,7 @@ import { useRoleChrome } from "@/components/role-chrome";
 import { useSessionDesks } from "@/components/session-desks";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { accountSearch } from "@/lib/desks";
+import { accountDeskPath } from "@/lib/desk-nav";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 
@@ -18,6 +19,7 @@ export function HeaderAccount() {
   const { user } = useCurrentUserState();
   const chrome = useRoleChrome();
   const { sticky } = useSessionDesks();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const headerUser = chrome.guestView ? null : user;
   // Role chrome is in the first HTML. A known signed-in role keeps the account
   // photo while the client session is still empty. A guest whose session is
@@ -29,12 +31,13 @@ export function HeaderAccount() {
       <NotificationBell />
       {showAvatar ? (
         <Link
-          to="/account"
+          to={accountDeskPath(pathname)}
           search={accountSearch(sticky)}
           data-ke="header-avatar"
-          aria-label={t("account")}
+          aria-label={t("menuAccountSettings")}
           className="grid size-12 place-items-center rounded-full touch-manipulation"
         >
+          <span className="sr-only">{t("menuAccountSettings")}</span>
           {headerUser ? (
             <ProfileAvatar
               userId={headerUser.id}

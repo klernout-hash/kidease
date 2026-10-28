@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLoaderData, useSearch } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 import { ShellLite } from "@/components/shell-lite";
 import { AppMenuScreen } from "@/components/app-menu-screen";
@@ -40,19 +40,24 @@ type MenuLoader = {
   centres: { id: string; name: string }[];
 };
 
-export const Route = createFileRoute("/menu")({
-  validateSearch: (
-    s: Record<string, unknown>,
-  ): { section?: MenuGroupId; screen?: MenuScreen; view?: EarningsView; period?: string; bill?: string } => {
+export function menuValidateSearch(
+  s: Record<string, unknown>,
+): { section?: MenuGroupId; screen?: MenuScreen; view?: EarningsView; period?: string; bill?: string } {
     const section = SECTIONS.includes(s.section as MenuGroupId) ? (s.section as MenuGroupId) : undefined;
     const screen = s.screen === "earnings" || s.screen === "insights" || s.screen === "payments" ? s.screen : undefined;
     const view = VIEWS.includes(s.view as EarningsView) ? (s.view as EarningsView) : undefined;
     const period = typeof s.period === "string" && /^\d{4}-\d{2}$/.test(s.period) ? s.period : undefined;
     const bill = typeof s.bill === "string" && s.bill.trim() && s.bill.length <= 80 ? s.bill.trim() : undefined;
-    return { section, screen, view, period, bill };
-  },
-  loaderDeps: ({ search }) => ({ screen: search.screen }),
-  loader: async ({ deps, context }): Promise<MenuLoader> => {
+  return { section, screen, view, period, bill };
+}
+
+export async function menuLoader({
+  deps,
+  context,
+}: {
+  deps: { screen?: MenuScreen };
+  context: { roleChrome?: { role?: string | null; ownedSlugs?: string[] } };
+}): Promise<MenuLoader> {
     if (deps.screen === "earnings") {
       try {
         const connect = await connectPaymentsPublic();
@@ -99,7 +104,7 @@ export const Route = createFileRoute("/menu")({
         };
       }
     }
-    const chrome = (context as { roleChrome?: { role?: string | null; ownedSlugs?: string[] } }).roleChrome;
+    const chrome = context.roleChrome;
     const host = chrome?.role === "provider" || (chrome?.ownedSlugs?.length ?? 0) > 0;
     if (!host) return { earnings: null, insights: null, desk: null, payments: null, connect: null, centres: [] };
     const [earnings, insights] = await Promise.all([
@@ -107,19 +112,28 @@ export const Route = createFileRoute("/menu")({
       loadHostInsights().catch(() => null),
     ]);
     return { earnings, insights, desk: null, payments: null, connect: null, centres: [] };
-  },
-  head: () => ({
+}
+
+export function menuHead() {
+  return {
     meta: [
       { title: "Menu · KidEase" },
       { name: "description", content: "Account, help, and the rest of KidEase." },
     ],
-  }),
+  };
+}
+
+export const Route = createFileRoute("/menu")({
+  validateSearch: menuValidateSearch,
+  loaderDeps: ({ search }) => ({ screen: search.screen }),
+  loader: menuLoader,
+  head: menuHead,
   component: MenuPage,
 });
 
-function MenuPage() {
-  const { section, screen, view, bill, period } = Route.useSearch();
-  const { earnings, insights, desk, payments, connect, centres } = Route.useLoaderData();
+export function MenuPage() {
+  const { section, screen, view, bill, period } = useSearch({ strict: false }) as ReturnType<typeof menuValidateSearch>;
+  const { earnings, insights, desk, payments, connect, centres } = useLoaderData({ strict: false }) as MenuLoader;
   const { user } = useCurrentUserState();
   if (screen === "earnings" && view === "payouts") {
     return (

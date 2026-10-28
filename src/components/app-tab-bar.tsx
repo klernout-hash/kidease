@@ -10,7 +10,7 @@ import { highlightDesk, parseDeskQuery } from "@/lib/desks";
 import { bottomBarKind } from "@/lib/role-access";
 import { hapticLight, isNative } from "@/lib/native";
 import { nativeStoreTabs, type NativeStoreTabId } from "@/lib/native-store-tabs";
-import { deskHrefForLocale, parentDeskPath, inboxListPath } from "@/lib/desk-nav";
+import { deskHrefForLocale, inboxListPath, menuDeskPath, parentDeskPath, providerDeskPath, supportDeskPath } from "@/lib/desk-nav";
 import { localePath, stripLocalePrefix } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -77,31 +77,31 @@ export function AppTabBar() {
           {!storeTabs && kind === "daycare" ? (
             <>
               <Tab
-                to="/provider"
+                to={providerDeskPath(pathname)}
                 search={{ desk: "today" }}
                 label={t("todayHome")}
                 icon={Building2}
                 marker="today"
-                active={(pathname === "/provider" || pathname === "/provider/") && (!desk || desk === "today")}
+                active={(bare === "/provider" || bare === "/provider/") && (!desk || desk === "today")}
               />
               <Tab
-                to="/provider"
+                to={providerDeskPath(pathname)}
                 search={{ desk: "tours" }}
                 label={t("navCalendar")}
                 icon={Calendar}
                 marker="calendar"
-                active={pathname.startsWith("/provider") && desk === "tours"}
+                active={bare.startsWith("/provider") && desk === "tours"}
               />
               <Tab
-                to="/provider"
+                to={providerDeskPath(pathname)}
                 search={{ desk: "listings" }}
                 label={t("deskNavListings")}
                 icon={ClipboardList}
                 marker="listings"
-                active={pathname.startsWith("/provider") && desk === "listings"}
+                active={bare.startsWith("/provider") && desk === "listings"}
               />
               <Tab
-                to="/inbox"
+                to={inboxListPath(pathname)}
                 search={{ view: "centre" }}
                 label={t("messages")}
                 icon={MessageCircle}
@@ -153,7 +153,7 @@ export function AppTabBar() {
               <Tab to="/admin" search={{ tab: "queue" }} label={t("navHome")} icon={Home} marker="queue" active={pathname.startsWith("/admin") && (!tab || tab === "queue")} />
               <Tab to="/admin" search={{ tab: "verify" }} label={t("navReview")} icon={ClipboardCheck} marker="verify" active={pathname.startsWith("/admin") && tab === "verify"} />
               <Tab to="/admin" search={{ tab: "mail" }} label={t("messages")} icon={MessageCircle} marker="mail" active={pathname.startsWith("/admin") && tab === "mail"} />
-              <Tab to="/support" label={t("support")} icon={LifeBuoy} marker="support" active={pathname.startsWith("/support")} />
+              <Tab to={supportDeskPath(pathname)} label={t("support")} icon={LifeBuoy} marker="support" active={bare.startsWith("/support")} />
               <MenuTab active={menuActive} />
             </>
           ) : null}
@@ -195,7 +195,8 @@ function storeTabActive(id: NativeStoreTabId, pathname: string, tab: string | un
 
 function MenuTab({ active }: { active: boolean }) {
   const { t } = useCopy();
-  return <Tab to="/menu" label={t("navMenu")} icon={Menu} marker="menu" active={active} />;
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  return <Tab to={menuDeskPath(pathname)} label={t("navMenu")} icon={Menu} marker="menu" active={active} />;
 }
 
 function Tab({

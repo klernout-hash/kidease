@@ -8,10 +8,11 @@
  *
  * Catalogue listing bodies stay English for v1 (user-generated / registry
  * text). Listing and city-hub documents still have a French URL so the
- * language toggle, hreflang, and Quebec city pages resolve. The parent
- * desk and inbox have French URLs (`/fr/parent`, `/fr/inbox`). Other desks
- * and /admin stay unprefixed. `/login` has a `/fr/login` counterpart so the
- * URL is not a 404; other auth desks stay English.
+ * language toggle, hreflang, and Quebec city pages resolve. Signed-in desks
+ * with a French URL are `/fr/parent`, `/fr/inbox`, `/fr/account`, `/fr/menu`,
+ * `/fr/provider`, and `/fr/support`. Nested French URLs exist for parent and
+ * inbox only. `/admin` stays unprefixed. `/login` has a `/fr/login`
+ * counterpart so the URL is not a 404; other auth desks stay English.
  */
 
 export const DEFAULT_LOCALE = "en" as const;
@@ -146,10 +147,19 @@ export function englishPath(pathname: string): string {
   return stripLocalePrefix(pathname);
 }
 
-/** Parent desk and inbox have French URLs. Other desks stay unprefixed. */
+/** Signed-in desks that have a real `/fr` URL. Nested paths exist for parent and inbox only. */
+export const FRENCH_DESK_PREFIXES = ["/parent", "/inbox", "/account", "/menu", "/provider", "/support"] as const;
+
+const FRENCH_DESK_NESTED = new Set<string>(["/parent", "/inbox"]);
+
+/** Parent, inbox, account, menu, provider, and support have French URLs. */
 export function isFrenchDeskPath(pathname: string | null | undefined): boolean {
   const bare = stripLocalePrefix(pathname);
-  return bare === "/parent" || bare.startsWith("/parent/") || bare === "/inbox" || bare.startsWith("/inbox/");
+  if ((FRENCH_DESK_PREFIXES as readonly string[]).includes(bare)) return true;
+  for (const prefix of FRENCH_DESK_NESTED) {
+    if (bare.startsWith(`${prefix}/`)) return true;
+  }
+  return false;
 }
 
 /** Prefix a paired English path when the UI locale is French. `/search` ↔ `/fr/search`. */

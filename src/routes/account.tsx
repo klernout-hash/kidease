@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { createFileRoute, Link, Navigate, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useLoaderData, useNavigate, useRouter, useRouterState, useSearch } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { privateReturnPath } from "@/lib/role-access";
@@ -11,12 +11,13 @@ import { DeskSkeleton } from "@/components/page-skeleton";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { AdminDeskLink } from "@/components/admin-desk-link";
 import { DESK_PATH, deskQueryValue, highlightDesk, openAdminDesk, parseDeskQuery, type DeskKey } from "@/lib/desks";
-import { parentNavSearch, providerNavSearch } from "@/lib/desk-nav";
+import { accountDeskPath, menuDeskPath, parentDeskPath, parentNavSearch, providerDeskPath, providerNavSearch, supportDeskPath } from "@/lib/desk-nav";
 import { useSessionDesks } from "@/components/session-desks";
 import { useRoleChrome } from "@/components/role-chrome";
 import { Button } from "@/components/ui/button";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { compressProfileFile, writeProfilePhoto } from "@/lib/profile-photo";
 import { authClient } from "@/lib/auth/client";
@@ -50,16 +51,30 @@ import type { ProfileDesk } from "@/lib/server/profile-desk";
 import { ParentWallet } from "@/components/parent-wallet";
 import { connectPaymentsPublic } from "@/lib/server/connect-payments";
 
-export const Route = createFileRoute("/account")({
-  beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
-  loader: () => connectPaymentsPublic(),
-  head: ({ match }) => ({
+export function accountBeforeLoad({
+  context,
+  location,
+}: {
+  context: { roleChrome?: Parameters<typeof beforeLoadPrivate>[1] };
+  location: Parameters<typeof privateReturnPath>[0];
+}) {
+  return beforeLoadPrivate(privateReturnPath(location), context.roleChrome);
+}
+
+export function accountLoader() {
+  return connectPaymentsPublic();
+}
+
+export function accountHead({ match }: { match: { search: { desk?: string } } }) {
+  return {
     meta: [
       { title: match.search.desk === "admin" ? "Admin account · KidEase" : "Account · KidEase" },
       { name: "robots", content: "noindex, nofollow" },
     ],
-  }),
-  validateSearch: (s: Record<string, unknown>) => {
+  };
+}
+
+export function accountValidateSearch(s: Record<string, unknown>) {
     const out: {
       tab?: "saved" | "enrolled" | "profile" | "payments";
       desk?: "parent" | "director" | "admin" | "support";
@@ -92,15 +107,27 @@ export const Route = createFileRoute("/account")({
       out.field = s.field;
     }
     return out;
-  },
+}
+
+type AccountSearch = ReturnType<typeof accountValidateSearch>;
+
+export const Route = createFileRoute("/account")({
+  beforeLoad: accountBeforeLoad,
+  loader: accountLoader,
+  head: accountHead,
+  validateSearch: accountValidateSearch,
   component: AccountPage,
 });
 
-function AccountPage() {
+function useAccountSearch() {
+  return useSearch({ strict: false }) as AccountSearch;
+}
+
+export function AccountPage() {
   const { user, isPending } = useCurrentUserState();
   const chrome = useRoleChrome();
-  const { t } = useCopy();
-  const search = Route.useSearch();
+  const { t, locale } = useCopy();
+  const search = useAccountSearch();
   // Role chrome is already in the server payload. Paint the account when that
   // role is known, so Face ID settings are in the first HTML instead of a
   // skeleton that waits on the client session.
@@ -116,7 +143,7 @@ function AccountPage() {
 
   if (search.tab === "saved" || search.tab === "enrolled" || search.tab === "payments") {
     if (user) {
-      return <Navigate to="/parent" search={{ tab: search.tab }} />;
+      return <Navigate to={locale === "fr" ? "/fr/parent" : "/parent"} search={{ tab: search.tab }} />;
     }
     return (
       <Shell>
@@ -126,16 +153,22 @@ function AccountPage() {
           <div className="mt-8 flex flex-col gap-3">
             <Button size="lg" className="h-14 min-h-14 w-full px-7 text-base" asChild>
               <Link
-                to="/login"
+                to={locale === "fr" ? "/fr/login" : "/login"}
                 search={parentLoginSearch(
-                  search.tab === "enrolled" ? "/parent?tab=enrolled" : "/parent?tab=saved",
+                  locale === "fr"
+                    ? search.tab === "enrolled"
+                      ? "/fr/parent?tab=enrolled"
+                      : "/fr/parent?tab=saved"
+                    : search.tab === "enrolled"
+                      ? "/parent?tab=enrolled"
+                      : "/parent?tab=saved",
                 )}
               >
                 {t("parentSignIn")}
               </Link>
             </Button>
             <Button size="lg" variant="secondary" className="h-14 min-h-14 w-full px-7 text-base" asChild>
-              <Link to="/search">{t("heroCta")}</Link>
+              <Link to={localePath("/search", locale)}>{t("heroCta")}</Link>
             </Button>
           </div>
         </main>
@@ -148,6 +181,7 @@ function AccountPage() {
 
 function AccountDeskFrame({ desk, children }: { desk: DeskKey | null; children: ReactNode }) {
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
   if (desk === "provider") {
     return (
       <DeskShell
@@ -155,7 +189,7 @@ function AccountDeskFrame({ desk, children }: { desk: DeskKey | null; children: 
         active="account"
         onSelect={(id) => {
           if (id === "account") return;
-          void navigate({ to: "/provider", search: providerNavSearch(id) });
+          void navigate({ to: providerDeskPath(pathname), search: providerNavSearch(id) });
         }}
       >
         {children}
@@ -169,7 +203,7 @@ function AccountDeskFrame({ desk, children }: { desk: DeskKey | null; children: 
         active="account"
         onSelect={(id) => {
           if (id === "account") return;
-          void navigate({ to: "/parent", search: parentNavSearch(id) });
+          void navigate({ to: parentDeskPath(pathname), search: parentNavSearch(id) });
         }}
       >
         {children}
@@ -197,7 +231,7 @@ function AccountDeskFrame({ desk, children }: { desk: DeskKey | null; children: 
         active="account"
         onSelect={(id) => {
           if (id === "account") return;
-          void navigate({ to: "/support" });
+          void navigate({ to: supportDeskPath(pathname) });
         }}
       >
         {children}
@@ -213,7 +247,9 @@ function ProfilePane() {
   const { refetch: refetchSession } = authClient.useSession();
   const nativeShell = useInNativeShell();
   const { t, locale } = useCopy();
-  const search = Route.useSearch();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const accountTo = accountDeskPath(pathname);
+  const search = useAccountSearch();
   const chrome = useRoleChrome();
   const canEditProfile = Boolean(user) || (chrome.signedIn && !chrome.pending);
   const { sticky } = useSessionDesks();
@@ -435,7 +471,7 @@ function ProfilePane() {
       if (leaveEdit) {
         setNameInvalid(false);
         void navigate({
-          to: "/account",
+          to: accountTo,
           search: {
             tab: "profile",
             ...(search.desk ? { desk: search.desk } : {}),
@@ -461,7 +497,7 @@ function ProfilePane() {
             ? t("accountBackParent")
             : null;
 
-  const connect = Route.useLoaderData();
+  const connect = useLoaderData({ strict: false }) as Awaited<ReturnType<typeof accountLoader>>;
   const hideUpgrade = desk === "admin" || chrome.subscriptionsEnabled !== true;
   const section =
     search.section === "wallet" && !connect.enabled
@@ -525,7 +561,15 @@ function ProfilePane() {
     tab: "profile" as const,
     ...(search.desk ? { desk: search.desk } : {}),
   };
-  const backTo = desk ? DESK_PATH[desk] : "/menu";
+  const backTo = desk === "parent"
+    ? parentDeskPath(pathname)
+    : desk === "provider"
+      ? providerDeskPath(pathname)
+      : desk === "support"
+        ? supportDeskPath(pathname)
+        : desk
+          ? DESK_PATH[desk]
+          : menuDeskPath(pathname);
 
   const userId = user?.id;
   useEffect(() => {
@@ -597,7 +641,7 @@ function ProfilePane() {
         if (saved.mode) setAnchorMode(saved.mode);
       })
       .catch(() => undefined);
-    void navigate({ to: "/account", search: homeSearch, replace: true });
+    void navigate({ to: accountTo, search: homeSearch, replace: true });
   }
 
   return (
@@ -618,7 +662,7 @@ function ProfilePane() {
             <span className="size-11" aria-hidden />
           ) : section !== "profile" ? (
             <Link
-              to="/account"
+              to={accountTo}
               search={homeSearch}
               aria-label={t("back")}
               data-ke="profile-back"
@@ -651,7 +695,7 @@ function ProfilePane() {
           )}
           {section === "profile" && !editing && canEditProfile ? (
             <Link
-              to="/account"
+              to={accountTo}
               search={{ ...homeSearch, edit: "1" as const }}
               data-ke="profile-edit"
               className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-primary touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
@@ -722,7 +766,7 @@ function ProfilePane() {
                 .map((item) => (
                   <Link
                     key={item.id}
-                    to="/account"
+                    to={accountTo}
                     search={sectionSearch(item.id)}
                     data-ke={`account-section-${item.id}`}
                     className="flex min-h-11 items-center justify-between gap-3 border-b border-border text-[15px] touch-manipulation"

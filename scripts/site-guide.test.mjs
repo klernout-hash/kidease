@@ -82,7 +82,7 @@ test("profile questions point at the account page and never claim a save", () =>
   assert.equal(guest.direct?.path, "/login");
   assert.doesNotMatch(guest.direct?.answer || "", /saved|updated your/i);
   const parent = prepareGuideTurn({ question: "change my profile photo", audience: "parent", locale: "fr" });
-  assert.equal(parent.direct?.path, "/account");
+  assert.equal(parent.direct?.path, "/fr/account");
   assert.match(parent.direct?.answer || "", /clavardage/);
   assert.doesNotMatch(parent.direct?.answer || "", /\b(Profile|Search|listing|Save)\b/);
   assert.equal(guideAudienceFromRole("provider"), "provider");

@@ -1,5 +1,5 @@
 import type { CopyKey } from "./copy.ts";
-import { frenchPath, isFrPath, stripLocalePrefix } from "./locale-path.ts";
+import { frenchPath, isFrenchDeskPath, isFrPath, stripLocalePrefix } from "./locale-path.ts";
 
 export type DeskId = "admin" | "support" | "daycare" | "parent";
 
@@ -173,6 +173,26 @@ export function inboxListPath(pathname: string): "/inbox" | "/fr/inbox" {
   return isFrPath(pathname) ? "/fr/inbox" : "/inbox";
 }
 
+/** Account stays on /fr when the page is already French. */
+export function accountDeskPath(pathname: string): "/account" | "/fr/account" {
+  return isFrPath(pathname) ? "/fr/account" : "/account";
+}
+
+/** Menu stays on /fr when the page is already French. */
+export function menuDeskPath(pathname: string): "/menu" | "/fr/menu" {
+  return isFrPath(pathname) ? "/fr/menu" : "/menu";
+}
+
+/** Daycare desk stays on /fr when the page is already French. Child routes stay English. */
+export function providerDeskPath(pathname: string): "/provider" | "/fr/provider" {
+  return isFrPath(pathname) ? "/fr/provider" : "/provider";
+}
+
+/** Support desk stays on /fr when the page is already French. */
+export function supportDeskPath(pathname: string): "/support" | "/fr/support" {
+  return isFrPath(pathname) ? "/fr/support" : "/support";
+}
+
 /** Thread links stay on /fr when the page is already French. */
 export function inboxThreadTo(pathname: string): "/inbox/$id" | "/fr/inbox/$id" {
   return isFrPath(pathname) ? "/fr/inbox/$id" : "/inbox/$id";
@@ -340,21 +360,14 @@ export function sidebarDestinations(desk: DeskId, opts?: DeskNavOpts): string[] 
     .sort();
 }
 
-/** Parent and inbox links stay on /fr when the page is already French. */
+/** Desk links stay on /fr when the page is already French. */
 export function deskHrefForLocale(href: string, pathname: string): string {
   if (!isFrPath(pathname)) return href;
   const q = href.indexOf("?");
   const pathOnly = q >= 0 ? href.slice(0, q) : href;
   const search = q >= 0 ? href.slice(q) : "";
-  if (
-    pathOnly === "/parent" ||
-    pathOnly === "/inbox" ||
-    pathOnly.startsWith("/parent/") ||
-    pathOnly.startsWith("/inbox/")
-  ) {
-    return `${frenchPath(pathOnly)}${search}`;
-  }
-  return href;
+  if (!isFrenchDeskPath(pathOnly)) return href;
+  return `${frenchPath(pathOnly)}${search}`;
 }
 
 export function deskPathIsCurrent(href: string, pathname: string): boolean {

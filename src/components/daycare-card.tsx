@@ -161,7 +161,7 @@ function ListingAnchor({
 }: {
   slug: string;
   className?: string;
-  search?: { ask: "info" };
+  search?: { ask: "info" | "tour" };
   onClick?: (event: MouseEvent) => void;
   children: ReactNode;
   "data-ke"?: string;
@@ -375,13 +375,24 @@ export const DaycareCard = memo(function DaycareCard({
             </p>
           ) : null}
         </ListingAnchor>
-        <div className="mt-1 flex w-full min-w-0 flex-col items-start gap-1.5">
+        <div className="mt-1 flex w-full min-w-0 flex-wrap items-center gap-2">
+          {parentActions ? (
+            <ListingAnchor
+              slug={item.slug}
+              search={{ ask: "tour" }}
+              data-ke="card-book-tour"
+              className="relative z-10 inline-flex min-h-11 items-center justify-center whitespace-normal rounded-[14px] bg-primary px-3 text-center text-[13px] font-semibold leading-tight text-primary-fg no-underline touch-manipulation"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {t("bookTour")}
+            </ListingAnchor>
+          ) : null}
           {parentActions ? (
             <ListingAnchor
               slug={item.slug}
               search={{ ask: "info" }}
               data-ke="card-request-info"
-              className="relative z-10 inline-flex min-h-11 items-center text-[13px] font-semibold text-primary no-underline"
+              className="relative z-10 inline-flex min-h-11 items-center text-[13px] font-semibold text-primary no-underline touch-manipulation"
               onClick={(e) => e.stopPropagation()}
             >
               {t("cardRequestInfo")}
@@ -514,13 +525,24 @@ export const DaycareCard = memo(function DaycareCard({
           ) : null}
         </div>
       </ListingAnchor>
-      <div className="mt-1.5 flex w-full min-w-0 flex-col items-start gap-1.5">
+      <div className="mt-1.5 flex w-full min-w-0 flex-wrap items-center gap-2">
+        {parentActions ? (
+          <ListingAnchor
+            slug={item.slug}
+            search={{ ask: "tour" }}
+            data-ke="card-book-tour"
+            className="relative z-10 inline-flex min-h-11 appearance-none items-center justify-center whitespace-normal rounded-[14px] border-0 bg-primary px-3 text-center text-[13px] font-semibold leading-tight text-primary-fg no-underline shadow-none touch-manipulation [-moz-appearance:none]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {t("bookTour")}
+          </ListingAnchor>
+        ) : null}
         {parentActions ? (
           <ListingAnchor
             slug={item.slug}
             search={{ ask: "info" }}
             data-ke="card-request-info"
-            className="relative z-10 inline-flex h-9 min-h-9 appearance-none items-center rounded-[14px] border-0 bg-primary px-2.5 text-[11px] font-semibold text-primary-fg no-underline shadow-none [-moz-appearance:none]"
+            className="relative z-10 inline-flex min-h-11 items-center text-[13px] font-semibold text-primary no-underline touch-manipulation"
             onClick={(e) => e.stopPropagation()}
           >
             {t("cardRequestInfo")}
