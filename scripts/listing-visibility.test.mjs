@@ -90,7 +90,7 @@ test("an owned QA fixture stays on the director desk, including after approval",
   assert.equal(isAdminOnlyListing(qa), true);
   assert.equal(isPublicListing(qa), false);
   for (const claimStatus of ["pending", "waiting", "verified", "approved"]) {
-    assert.equal(providerDeskListingVisible({ ...qa, claimStatus }, owner), false);
+    assert.equal(providerDeskListingVisible({ ...qa, claimStatus }, owner), true);
     assert.equal(providerDeskListingVisible({ ...qa, claimStatus }, operator), true);
     assert.equal(providerDeskListingVisible({ ...qa, claimStatus }, { viewerEmail: "Kyle@KidEase.ca" }), true);
   }
@@ -110,7 +110,7 @@ test("an owned QA fixture stays on the director desk, including after approval",
   assert.equal(providerDeskListingVisible({ ...qa, claimStatus: "" }, owner), false);
 
   const testNamed = { name: "TEST Extra Claim Lab", claimStatus: "waiting", visibility: "admin_only", isTest: 1 };
-  assert.equal(providerDeskListingVisible(testNamed, owner), false);
+  assert.equal(providerDeskListingVisible(testNamed, owner), true);
   assert.equal(providerDeskListingVisible(testNamed, operator), true);
   assert.equal(providerDeskListingVisible(testNamed, { ownedByViewer: false, viewerEmail: "other@centre.example" }), false);
 
@@ -147,6 +147,31 @@ test("ghost and Claim Lab fixtures stay off the director desk even for the owner
     providerDeskListingVisible({ licenseNumber: "TEST-GHOST-0001", name: "Sunny Room", claimStatus: "pending" }, owner),
     false,
   );
+});
+
+test("the store-review demo stays on the owner's desk and off public search", () => {
+  const demo = {
+    id: "qa-reviewer-demo",
+    slug: "qa-reviewer-demo-centre",
+    name: "QA Reviewer Demo Centre",
+    visibility: "admin_only",
+    isTest: 1,
+    isDemo: 1,
+    claimStatus: "approved",
+  };
+  const reviewer = { ownedByViewer: true, viewerEmail: "reviewer-provider@kidease.ca" };
+  const stranger = { ownedByViewer: false, viewerEmail: "reviewer-provider@kidease.ca" };
+  assert.equal(isAdminOnlyListing(demo), true);
+  assert.equal(isPublicListing(demo), false);
+  assert.equal(publicListings([demo, { slug: "bonnie-bairns", name: "Bonnie Bairns" }]).length, 1);
+  assert.equal(providerDeskListingVisible(demo, reviewer), true);
+  assert.equal(providerDeskListingVisible(demo, stranger), false);
+  assert.equal(deskWaitlistVisible(demo, reviewer, false), true);
+  assert.equal(deskWaitlistVisible(demo, stranger, false), false);
+  const provider = readFileSync(new URL("../src/routes/provider.tsx", import.meta.url), "utf8");
+  assert.match(provider, /const deskListings = listings/);
+  assert.doesNotMatch(provider, /listings\.filter\(\(d\) => !isAdminOnlyListing\(d\)\)/);
+  assert.match(provider, /Today, listings, tours/);
 });
 
 test("photo save uses the same director-desk gate", () => {

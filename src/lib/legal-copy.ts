@@ -983,7 +983,7 @@ export const COOKIES_EN: LegalDoc = {
             "Analytics on the website: tap Essential or Allow analytics on the banner. To choose again, clear this site’s data for kidease.ca.",
             "Browser settings: block or delete cookies and site data for kidease.ca.",
             "Location: OS or browser permission, or “Not now” in the app. Details are in Privacy → Location.",
-            "Account: Delete account removes your profile and family data. Billing records stay for tax law. Fraud and security logs stay. It does not clear cookies already on this phone until you sign out or clear site data.",
+            "Account: Delete account removes your profile and family data. Billing records stay for tax law. Fraud and security logs stay. It does not clear cookies already on this device until you sign out or clear site data.",
             "Map: KidEase uses OpenStreetMap through OpenFreeMap. The map does not set a Google cookie.",
           ],
         },

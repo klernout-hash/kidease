@@ -339,7 +339,10 @@ export function ProviderPage() {
   const later = requests.filter((r) => r.status !== "requested" && r.status !== "under_review");
   const operatorTools = canUseOperatorTools(session?.email);
   const testListingCount = listings.filter((d) => isAdminOnlyListing(d)).length;
-  const deskListings = operatorTools && showTestListings ? listings : listings.filter((d) => !isAdminOnlyListing(d));
+  // getProvider already returns only centres this account owns or belongs to.
+  // Their own demo stays on Today, listings, tours (calendar), and fees.
+  // Public search and the sitemap still use isPublicListing.
+  const deskListings = listings;
 
   return (
     <TwoFactorGate next={search.desk ? `/provider?desk=${search.desk}` : "/provider"}>
