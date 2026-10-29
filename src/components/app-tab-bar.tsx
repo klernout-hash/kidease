@@ -78,7 +78,7 @@ export function AppTabBar() {
         ref={barRef}
         data-ke="app-tab-bar"
         data-bar={storeTabs ? "store" : kind}
-        className="ke-app-only fixed inset-x-0 bottom-0 z-50 hidden border-t border-slate-200/80 bg-surface/95 pb-[env(safe-area-inset-bottom)] pb-[var(--ke-safe-bottom,env(safe-area-inset-bottom))] pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] backdrop-blur-md dark:border-white/15 [[data-channel=app]_&]:block"
+        className="ke-app-only fixed inset-x-0 bottom-0 z-50 hidden border-t border-slate-200/80 bg-surface pb-[var(--ke-safe-bottom,env(safe-area-inset-bottom))] pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] dark:border-white/15 [[data-channel=app]_&]:block"
       >
         <div
           className={cn(

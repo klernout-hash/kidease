@@ -7,10 +7,16 @@ const EMAIL = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
 const PHONE = /(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{3}\)?[\s.-]?)\d{3}[\s.-]?\d{4}\b/g;
 const ISO_DATE = /\b(?:19|20)\d{2}-\d{2}-\d{2}\b/g;
 const SLASH_DATE = /\b\d{1,2}[/-]\d{1,2}[/-](?:19|20)?\d{2}\b/g;
+const MONTH =
+  "jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?|janvier|f[eé]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[eé]cembre";
+const MONTH_DATE = new RegExp(
+  `\\b(?:${MONTH})\\s+\\d{1,2}(?:st|nd|rd|th)?,?\\s+(?:19|20)\\d{2}\\b|\\b\\d{1,2}(?:st|nd|rd|th)?\\s+(?:of\\s+)?(?:${MONTH})\\s+(?:19|20)\\d{2}\\b`,
+  "gi",
+);
 const LABELLED =
   /\b(?:child(?:'s)? name|nom de l'enfant|parent name|email|e-mail|phone|téléphone|telephone|birthdate|birth date|date de naissance|dob|health|santé|special needs|besoins particuliers)\s*[: -]\s*[^\n,;]{1,80}/gi;
 const HEALTH =
-  /\b(?:asthma|allergy|allergies|autism|adhd|epilepsy|diabetes|eczema|anaphylaxis|special needs|besoins particuliers|médicament|medications?|diagnosis|diagnosed)\b/gi;
+  /\b(?:asthma|allergy|allergies|autism|adhd|epilepsy|diabetes|eczema|anaphylaxis|special needs|besoins particuliers|médicament|medications?|diagnosis|diagnosed|epi-?pen)\b(?:\s*[: -]\s*[^\n,;.]{1,80})?/gi;
 
 const DROP_KEYS = new Set([
   "childname",
@@ -35,6 +41,7 @@ export function scrubText(value: string): string {
     .replace(PHONE, "[redacted]")
     .replace(ISO_DATE, "[redacted]")
     .replace(SLASH_DATE, "[redacted]")
+    .replace(MONTH_DATE, "[redacted]")
     .replace(LABELLED, "[redacted]")
     .replace(HEALTH, "[redacted]");
 }

@@ -716,9 +716,21 @@
     padding-block: 32px 24px;
   }
   /* Tab-bar shells (native and phone widths) hide the big footer.
-     Those links stay in the menu. pointer-events stays off so a hidden footer cannot eat taps. */
-  html[data-channel="app"] .ke-site-footer {
+     Those links stay in the menu. A hidden footer must not paint a second bar
+     over the tab icons, including when WebKit still hit-tests display:none. */
+  html[data-channel="app"] .ke-site-footer,
+  html[data-runtime="ios"] .ke-site-footer,
+  html[data-runtime="android"] .ke-site-footer,
+  html[data-runtime="native"] .ke-site-footer,
+  html[data-native="1"] .ke-site-footer {
     display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
     pointer-events: none !important;
   }
   .ke-footer-inner {
@@ -1299,13 +1311,17 @@
   }
   .ke-help-bot {
     position: fixed;
-    right: 1rem;
-    bottom: calc(5.75rem + env(safe-area-inset-bottom));
-    z-index: 40;
+    right: max(1.25rem, env(safe-area-inset-right));
+    bottom: calc(1.25rem + var(--ke-safe-bottom, env(safe-area-inset-bottom)) + var(--ke-keyboard, 0px));
+    z-index: 45;
     display: flex;
     flex-direction: column;
     align-items: flex-end;
+    width: max-content;
     max-width: min(22rem, calc(100vw - 1.5rem));
+    pointer-events: none;
+  }
+  .ke-help-bot > * {
     pointer-events: auto;
   }
   .ke-help-bot img {
@@ -1315,13 +1331,22 @@
     max-height: 44px;
     object-fit: contain;
   }
-  html[data-channel="app"] .ke-help-bot {
-    bottom: calc(5.5rem + env(safe-area-inset-bottom));
-    right: 0.75rem;
+  /* Sit above the native tab bar (z-index 50) without covering its icons. */
+  html[data-channel="app"] .ke-help-bot,
+  html[data-runtime="native"] .ke-help-bot {
+    right: max(0.75rem, var(--ke-safe-right, env(safe-area-inset-right)));
+    bottom: calc(5.75rem + var(--ke-safe-bottom, env(safe-area-inset-bottom)) + var(--ke-keyboard, 0px));
   }
-  html[data-channel="website"] .ke-help-bot {
-    bottom: 1.5rem;
-    right: 1.5rem;
+  html[data-channel="app"]:has([data-ke="role-switch-pill"]) .ke-help-bot,
+  html[data-runtime="native"]:has([data-ke="role-switch-pill"]) .ke-help-bot {
+    bottom: calc(8rem + var(--ke-safe-bottom, env(safe-area-inset-bottom)) + var(--ke-keyboard, 0px));
+  }
+  html[data-cookie-banner="open"]:not([data-channel="app"]):not([data-runtime="native"]) .ke-help-bot {
+    bottom: calc(6.75rem + var(--ke-safe-bottom, env(safe-area-inset-bottom)) + var(--ke-keyboard, 0px));
+  }
+  html[data-cookie-banner="open"][data-channel="app"] .ke-help-bot,
+  html[data-cookie-banner="open"][data-runtime="native"] .ke-help-bot {
+    bottom: calc(10.5rem + var(--ke-safe-bottom, env(safe-area-inset-bottom)) + var(--ke-keyboard, 0px));
   }
   /* The chat bubble is fixed at the bottom-right. Clear it only while that bubble is on the page. */
   @media (max-width: 767px) {
@@ -1344,13 +1369,6 @@
       white-space: nowrap;
       border: 0;
     }
-    html[data-channel="app"] .ke-help-bot {
-      bottom: calc(5.75rem + env(safe-area-inset-bottom));
-      right: 0.75rem;
-    }
-  }
-  html[data-channel="app"]:has(.ke-app-search) .ke-help-bot {
-    display: none;
   }
   .ke-sheet {
     position: absolute;
@@ -2293,10 +2311,24 @@ body {
   inset-inline: 0;
   bottom: 0;
   z-index: 50;
-  padding-bottom: var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px));
+  /* Safe-area pad lives once on the bar (pb --ke-safe-bottom). Do not add another here. */
+  background: var(--color-surface);
   border-top: 1px solid color-mix(in srgb, #e2e8f0 80%, transparent);
-  -webkit-backdrop-filter: saturate(140%) blur(16px);
-  backdrop-filter: saturate(140%) blur(16px);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  pointer-events: auto;
+}
+[data-ke="app-tab-bar"] > * {
+  position: relative;
+  z-index: 1;
+}
+html[data-channel="app"] [data-ke="cookie-consent"],
+html[data-runtime="ios"] [data-ke="cookie-consent"],
+html[data-runtime="android"] [data-ke="cookie-consent"],
+html[data-runtime="native"] [data-ke="cookie-consent"],
+html[data-native="1"] [data-ke="cookie-consent"] {
+  bottom: calc(5.25rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
+  z-index: 40;
 }
 html[data-theme="dark"] [data-ke="app-tab-bar"],
 html[data-resolved-theme="dark"] [data-ke="app-tab-bar"] {

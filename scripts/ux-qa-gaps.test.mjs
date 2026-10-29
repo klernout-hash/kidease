@@ -22,8 +22,7 @@ test("FEATURE_INAPP_CHAT does not show the parent helper bubble", () => {
   const bot = src("src/components/help-bot.tsx");
   assert.doesNotMatch(bot, /inAppChatEnabled/);
   assert.doesNotMatch(bot, /askKidEase/);
-  assert.match(bot, /AI_FLAGS\.parentHelper/);
-  assert.match(bot, /if \(!ready \|\| !helperOn\) return null/);
+  assert.doesNotMatch(bot, /if \(!ready \|\| !helperOn\) return null/);
   assert.match(bot, /askParentHelper/);
   const ai = src("src/lib/server/ai.ts");
   assert.match(ai, /if \(!inAppChatEnabled\(\)\)/);

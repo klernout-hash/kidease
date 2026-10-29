@@ -1853,6 +1853,7 @@
   "helpBot": "مساعدة KidEase",
   "liveChat": "محادثة مباشرة",
   "helpBotLead": "اسأل عن الرعاية المرخّصة أو المزايا أو إدراجك.",
+  "helpBotPrivacy": "لا ترسل اسم الطفل أو تاريخ ميلاده أو تفاصيل صحته.",
   "helpBotHello": "مرحباً: أنا مساعد KidEase. اسأل عن العثور على مركز، أو $10-a-day، أو المطالبة بإدراج.",
   "helpBotQ1": "How do I find a daycare?",
   "helpBotQ2": "How do I request a tour?",

@@ -14,7 +14,6 @@ import { restoreMyAccount } from "@/lib/server/family";
 import { MenuLeafBack } from "@/components/menu-leaf-back";
 import { isMenuLeafPath } from "@/lib/menu-leaf";
 import { NavDrawer } from "@/components/nav-drawer";
-import { LiveChatSlot } from "@/components/help-bot";
 import { applyDocumentLocale } from "@/lib/languages";
 import { localePath, stripLocalePrefix } from "@/lib/locale-path";
 import { useSessionDesks } from "@/components/desk-switcher";
@@ -322,7 +321,6 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
       </div>
       {hideTabs ? null : <AppTabBar />}
-      {hideTabs || pathname.startsWith("/search") || pathname.startsWith("/parent") || pathname.startsWith("/menu") ? null : <LiveChatSlot />}
     </div>
   );
 }
