@@ -4,6 +4,8 @@ import {
   createKidEaseMap,
   createListingOverlay,
   listingMapGiveUp,
+  mapHostHasSize,
+  mapHostStyle,
   waitForMapHost,
   webglMapAvailable,
 } from "@/lib/osm-map";
@@ -109,6 +111,30 @@ function OsmListingMap({ lat, lng, title, address }: Props) {
           return;
         }
         map = created.map;
+        if (!mapHostHasSize(el)) {
+          created.map.resize();
+          const grew = await waitForMapHost(el, remaining());
+          if (cancelled) {
+            created.map.destroy();
+            return;
+          }
+          if (
+            !grew ||
+            listingMapGiveUp({
+              validCoords: true,
+              webgl: true,
+              hostSized: mapHostHasSize(el),
+              sawTile: true,
+              elapsedMs: Date.now() - started,
+              errored: false,
+            })
+          ) {
+            created.map.destroy();
+            giveUp();
+            return;
+          }
+          created.map.resize();
+        }
         const content = document.createElement("div");
         content.className = "ke-logo-pin";
         content.innerHTML = PIN_SVG;
@@ -138,7 +164,7 @@ function OsmListingMap({ lat, lng, title, address }: Props) {
 
   return (
     <div className="relative h-40 w-full overflow-hidden bg-map md:h-48" role="img" aria-label={title}>
-      <div ref={host} className="ke-map-host absolute inset-0" />
+      <div ref={host} className="ke-map-host !absolute inset-0 !h-full !w-full" style={mapHostStyle} />
       {basemapReady ? null : (
         <div className="ke-map-skel pointer-events-none absolute inset-0 grid place-items-center px-6 text-center" role="status">
           <p className="text-sm font-medium text-muted">{t("mapLoading")}</p>

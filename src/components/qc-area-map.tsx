@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { createKidEaseMap, osmMaps, type OsmCircle, type OsmMap } from "@/lib/osm-map";
+import { createKidEaseMap, mapHostStyle, osmMaps, type OsmCircle, type OsmMap } from "@/lib/osm-map";
 import { useStoreChannel } from "@/lib/use-native-shell";
 
 type Props = {
@@ -75,7 +75,11 @@ export function QcAreaMap({ lat, lng, radiusM, label, caption }: Props) {
           <div className="size-[min(68%,16rem)] rounded-full border-2 border-primary/80 bg-primary/10" />
           <p className="absolute max-w-[90%] px-4 text-center text-sm font-medium text-fg">{caption}</p>
         </div>
-        <div ref={host} className={`ke-map-host absolute inset-0 ${live ? "" : "invisible"}`} />
+        <div
+          ref={host}
+          className={`ke-map-host !absolute inset-0 !h-full !w-full ${live ? "" : "invisible"}`}
+          style={mapHostStyle}
+        />
       </div>
     </figure>
   );
