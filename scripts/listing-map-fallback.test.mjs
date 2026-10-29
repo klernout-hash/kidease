@@ -86,6 +86,28 @@ test("listing map gives up within 5s when tiles, WebGL, or a sized host never ar
     }),
     false,
   );
+  assert.equal(
+    listingMapGiveUp({
+      validCoords: true,
+      webgl: true,
+      hostSized: false,
+      sawTile: true,
+      elapsedMs: LISTING_MAP_TILE_WAIT_MS,
+      errored: false,
+    }),
+    true,
+  );
+  assert.equal(
+    listingMapGiveUp({
+      validCoords: true,
+      webgl: true,
+      hostSized: false,
+      sawTile: true,
+      elapsedMs: LISTING_MAP_TILE_WAIT_MS - 1,
+      errored: false,
+    }),
+    false,
+  );
 });
 
 test("listing map waits for real tiles and uses a WKWebView-safe WebGL context", () => {
@@ -103,6 +125,13 @@ test("listing map waits for real tiles and uses a WKWebView-safe WebGL context",
   assert.match(listing, /waitForMapHost/);
   assert.doesNotMatch(listing, /<iframe/);
   assert.match(css, /translateZ\(0\)/);
+  assert.match(css, /\.ke-map-host\.maplibregl-map/);
+  assert.match(css, /position:\s*absolute\s*!important/);
+  assert.match(css, /height:\s*100%\s*!important/);
+  assert.match(listing, /mapHostStyle/);
+  assert.match(read("src/components/map-view.tsx"), /mapHostStyle/);
+  assert.match(read("src/components/qc-area-map.tsx"), /mapHostStyle/);
+  assert.match(map, /if \(!mapHostHasSize\(el\)\)/);
   assert.match(read("src/components/map-unavailable.tsx"), /Open in Maps/);
   assert.match(read("src/components/map-unavailable.tsx"), /Map unavailable/);
 });

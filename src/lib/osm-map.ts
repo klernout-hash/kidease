@@ -632,6 +632,19 @@ export const osmMaps = {
   OverlayView: OsmOverlay,
 };
 
+/**
+ * Inline on every map host. MapLibre adds `.maplibregl-map { position: relative }`
+ * from an unlayered stylesheet, which beats Tailwind's layered `absolute`.
+ * A relative box with an absolute canvas is 0px tall, so the parent `bg-map`
+ * shows as a blank beige rectangle. Inline position and size win.
+ */
+export const mapHostStyle = {
+  position: "absolute" as const,
+  inset: 0,
+  width: "100%",
+  height: "100%",
+};
+
 /** WKWebView reports a zero box until layout. A 0×0 WebGL canvas stays grey. */
 export function mapHostHasSize(el: HTMLElement) {
   return el.clientWidth >= 32 && el.clientHeight >= 32;
@@ -690,7 +703,9 @@ export function listingMapGiveUp(input: {
   errored: boolean;
 }): boolean {
   if (!input.validCoords || !input.webgl || input.errored) return true;
-  if (input.sawTile && input.hostSized) return false;
+  // A 0px host is the collapsed MapLibre box. Tiles in a zero canvas still count as a miss.
+  if (!input.hostSized) return input.elapsedMs >= LISTING_MAP_TILE_WAIT_MS;
+  if (input.sawTile) return false;
   return input.elapsedMs >= LISTING_MAP_TILE_WAIT_MS;
 }
 
@@ -774,5 +789,9 @@ export async function createKidEaseMap(
     throw new Error(MAP_LOAD_TIMEOUT);
   }
   map.resize();
+  if (!mapHostHasSize(el)) {
+    map.destroy();
+    throw new Error(MAP_LOAD_TIMEOUT);
+  }
   return { map, maps: osmMaps, tilesReady };
 }

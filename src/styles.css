@@ -1718,11 +1718,17 @@ html[data-channel="website"] .ke-web-grid > article {
 
 /* Dark color-scheme can leave map tiles unpainted. Keep the canvas in light.
    translateZ gives WKWebView a compositing layer so WebGL is not stuck on the
-   style background inside overflow:hidden + border-radius. */
+   style background inside overflow:hidden + border-radius.
+   `.maplibregl-map { position: relative }` is unlayered and beats Tailwind
+   `absolute`, which collapses this host to 0px and shows the beige parent. */
 .ke-map-host,
-.ke-map-host .maplibregl-map {
+.ke-map-host.maplibregl-map {
   color-scheme: only light;
   transform: translateZ(0);
+  position: absolute !important;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .maplibregl-map img,

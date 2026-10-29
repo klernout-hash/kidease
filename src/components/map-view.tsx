@@ -77,6 +77,7 @@ import {
   createKidEaseMap,
   createListingOverlay,
   createYouAreHereDot,
+  mapHostStyle,
   osmMapTypeId,
   MAP_VIEW_WAIT_MS,
   MAP_LOAD_TIMEOUT,
@@ -950,7 +951,11 @@ function OsmMapView({
 
   return (
     <div className="relative size-full min-h-[280px] overflow-hidden rounded-lg bg-map">
-      <div ref={host} className={loadError ? "hidden" : "ke-map-host absolute inset-0"} />
+      <div
+        ref={host}
+        className={loadError ? "hidden" : "ke-map-host !absolute inset-0 !h-full !w-full"}
+        style={loadError ? undefined : mapHostStyle}
+      />
 
       {loadError ? (
         <div className="absolute inset-0 z-[500] flex flex-col bg-map">
