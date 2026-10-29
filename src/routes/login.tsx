@@ -5,6 +5,7 @@ import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-erro
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { reviewerSignInSkipsTurnstile } from "@/lib/reviewer-accounts";
+import { nativeSocialPlatform, providersForNativeShell } from "@/lib/auth/native-oauth";
 import { providersForStore, type GrokProvider } from "@/lib/auth/providers";
 import { getSignInProviders } from "@/lib/server/sign-in-providers";
 import { useStoreChannel } from "@/lib/use-native-shell";
@@ -261,12 +262,15 @@ export function LoginScreen({
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const loginPath = isFrPath(pathname) ? "/fr/login" : "/login";
   const storeChannel = useStoreChannel();
-  const shownProviders = providersForStore(providers, storeChannel);
+  const hideAdmin = useNativeHidesAdmin();
+  const shownProviders = providersForNativeShell(providersForStore(providers, storeChannel), {
+    native: hideAdmin,
+    platform: nativeSocialPlatform({ native: hideAdmin, channel: storeChannel }),
+  });
   const deskHint = parseDeskQuery(search.desk);
   const role = search.role ?? (deskHint ? loginRoleFromDesk(deskHint) : undefined);
   // URL role=admin / next=/admin must not paint an operator page. Kyle types his email.
   // The native app has no Admin desk, so that URL is a normal sign-in.
-  const hideAdmin = useNativeHidesAdmin();
   const urlOperator =
     !hideAdmin &&
     isAdminLoginIntent({

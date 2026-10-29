@@ -30,6 +30,6 @@ test("runtime.ts documents the same lg / Capacitor split", () => {
   assert.match(boot, /w < 1024/);
   assert.doesNotMatch(boot, /w < 1280/);
   assert.doesNotMatch(src, /STOREFRONT_MIN_PX = 1280/);
-  assert.match(rootHtml, /src="\/channel-boot\.js\?v=9"/);
+  assert.match(rootHtml, /src="\/channel-boot\.js\?v=10"/);
   assert.doesNotMatch(rootHtml, /dangerouslySetInnerHTML=\{\{ __html: CHANNEL_BOOT_SCRIPT \}\}/);
 });

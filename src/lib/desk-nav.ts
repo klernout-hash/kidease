@@ -1,3 +1,4 @@
+import { parentNavCollectsChildData } from "./child-collection.ts";
 import type { CopyKey } from "./copy.ts";
 import { frenchPath, isFrenchDeskPath, isFrPath, stripLocalePrefix } from "./locale-path.ts";
 
@@ -238,6 +239,7 @@ export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
     if (item.id === "upgrade" || item.id === "subscription") return opts?.subscriptionsEnabled === true;
     if (item.id === "promote") return opts?.centreOwner !== false;
     if (OWNER_ONLY_NAV.has(item.id) && opts?.centreOwner === false) return false;
+    if (desk === "parent" && !parentNavCollectsChildData(item.id)) return false;
     return true;
   });
 }

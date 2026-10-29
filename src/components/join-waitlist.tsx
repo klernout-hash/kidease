@@ -16,7 +16,6 @@ export function JoinWaitlist({ daycareId, next }: { daycareId: string; next: str
   const navigate = useNavigate();
   const { user, isPending } = useCurrentUserState();
   const [ageGroup, setAgeGroup] = useState("infant");
-  const [childLabel, setChildLabel] = useState("");
   const [note, setNote] = useState("");
   const [mineId, setMineId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -55,7 +54,7 @@ export function JoinWaitlist({ daycareId, next }: { daycareId: string; next: str
     }
     setBusy(true);
     setError(null);
-    void joinDaycareWaitlist({ data: { daycareId, ageGroup, childLabel, note } })
+    void joinDaycareWaitlist({ data: { daycareId, ageGroup, note } })
       .then((row) => {
         setMineId(row.id);
         toast.success(copy.joined);
@@ -125,18 +124,6 @@ export function JoinWaitlist({ daycareId, next }: { daycareId: string; next: str
               <option value="preschool">{copy.preschool}</option>
               <option value="any">{copy.any}</option>
             </select>
-          </label>
-          <label className="block text-sm" htmlFor={`waitlist-child-${daycareId}`}>
-            {copy.childLabel}
-            <input
-              id={`waitlist-child-${daycareId}`}
-              className="ke-input mt-1 w-full"
-              value={childLabel}
-              maxLength={40}
-              autoComplete="given-name"
-              onChange={(event) => setChildLabel(event.target.value)}
-              onFocus={focusIn}
-            />
           </label>
           <label className="block text-sm" htmlFor={`waitlist-note-${daycareId}`}>
             {copy.noteLabel}

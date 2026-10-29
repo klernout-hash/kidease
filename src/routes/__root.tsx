@@ -252,7 +252,7 @@ function RootDocument() {
         <link rel="preconnect" href="https://media.kidease.ca" />
         {/* Route preloads (home hero) start before the blocking boot scripts. */}
         <HeadContent />
-        <script src="/channel-boot.js?v=9" />
+        <script src="/channel-boot.js?v=10" />
         <script src="/theme-boot.js" />
         <script src="/asset-recover.js" />
       </head>

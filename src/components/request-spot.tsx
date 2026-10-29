@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { RequestSentDialog } from "@/components/request-sent-dialog";
 import { useLiveSubmit } from "@/components/use-live-submit";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
-import { createSpotRequest, getFamily } from "@/lib/server/family";
+import { createSpotRequest } from "@/lib/server/family";
+import { spotAgePublicLabel, type SpotAge } from "@/lib/spot-offers";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import { noteHappyMoment } from "@/lib/store-review";
-import type { Child, Daycare, Schedule } from "@/lib/types";
+import type { Daycare, Schedule } from "@/lib/types";
 import { holdSendBeat, requestSentThumb } from "@/lib/request-sent";
 import { captureLeadSubmitted } from "@/lib/marketplace-funnel";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -38,10 +39,7 @@ export function RequestSpotSheet({ daycare, open, onClose, intent = "spot" }: Pr
   const { user } = useCurrentUserState();
   const navigate = useNavigate();
   const titleId = useId();
-  const [childId, setChildId] = useState("");
-  const [savedKids, setSavedKids] = useState<Child[]>([]);
-  const [childName, setChildName] = useState("");
-  const [birthdate, setBirthdate] = useState("");
+  const [ageGroup, setAgeGroup] = useState<SpotAge>("toddler");
   const [startDate, setStartDate] = useState(defaultStart);
   const [schedule, setSchedule] = useState<Schedule>("full");
   const [days, setDays] = useState<string[]>([]);
@@ -59,9 +57,6 @@ export function RequestSpotSheet({ daycare, open, onClose, intent = "spot" }: Pr
     const justOpened = !opened.current;
     opened.current = true;
     if (justOpened) setDone(null);
-    void getFamily()
-      .then((f) => setSavedKids(f.children))
-      .catch(() => undefined);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     function onKey(e: KeyboardEvent) {
@@ -101,8 +96,7 @@ export function RequestSpotSheet({ daycare, open, onClose, intent = "spot" }: Pr
       void navigate({ to: "/login", search: parentLoginSearch(`/daycare/${daycare.slug}`) });
       return;
     }
-    if (!childName.trim() || !startDate) return;
-    if (intent === "spot" && !birthdate) return;
+    if (!startDate) return;
     if (schedule === "custom" && days.length === 0) return;
     const token = send.start();
     setBusy(true);
@@ -110,9 +104,8 @@ export function RequestSpotSheet({ daycare, open, onClose, intent = "spot" }: Pr
       const res = await createSpotRequest({
         data: {
           daycareId: daycare.id,
-          childId: childId || undefined,
-          childName: childName.trim(),
-          birthdate: birthdate || startDate,
+          ageGroup,
+          childName: spotAgePublicLabel(ageGroup, locale === "fr" ? "fr" : "en"),
           startDate,
           schedule,
           days,
@@ -190,51 +183,17 @@ export function RequestSpotSheet({ daycare, open, onClose, intent = "spot" }: Pr
             <p className="text-sm text-muted">
               {t(intent === "tour" ? "tourLead" : "requestSpotLead")}
             </p>
-            {savedKids.length ? (
-              <Field label={t("pickChild")}>
-                <select
-                  className="h-11 w-full rounded-md border border-border bg-bg px-3"
-                  value={childId}
-                  onChange={(e) => {
-                    const id = e.target.value;
-                    setChildId(id);
-                    const kid = savedKids.find((c) => c.id === id);
-                    if (kid) {
-                      setChildName(kid.name);
-                      setBirthdate(kid.birthdate);
-                    } else {
-                      setChildName("");
-                      setBirthdate("");
-                    }
-                  }}
-                >
-                  <option value="">{t("newChildOption")}</option>
-                  {savedKids.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            ) : null}
-            <Field label={t("childFullName")}>
-              <input
-                required
-                autoComplete="off"
+            <Field label={locale === "fr" ? "Tranche d’âge" : "Age range"}>
+              <select
                 className="h-11 w-full rounded-md border border-border bg-bg px-3"
-                value={childName}
-                onChange={(e) => setChildName(e.target.value)}
-              />
-            </Field>
-            <Field label={t("birthdate")}>
-              <input
-                required={intent === "spot"}
-                type="date"
-                className="h-11 w-full rounded-md border border-border bg-bg px-3"
-                value={birthdate}
-                max={todayIso()}
-                onChange={(e) => setBirthdate(e.target.value)}
-              />
+                value={ageGroup}
+                onChange={(e) => setAgeGroup(e.target.value as SpotAge)}
+              >
+                <option value="infant">{spotAgePublicLabel("infant", locale === "fr" ? "fr" : "en")}</option>
+                <option value="toddler">{spotAgePublicLabel("toddler", locale === "fr" ? "fr" : "en")}</option>
+                <option value="preschool">{spotAgePublicLabel("preschool", locale === "fr" ? "fr" : "en")}</option>
+                <option value="any">{spotAgePublicLabel("any", locale === "fr" ? "fr" : "en")}</option>
+              </select>
             </Field>
             <Field label={intent === "tour" ? t("bookTour") : t("desiredStart")}>
               <input

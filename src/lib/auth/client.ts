@@ -173,13 +173,26 @@ export async function signIn(
       }
       return;
     }
+    const { isNative } = await import("@/lib/native");
+    const shell = isNative() && (providerId === "google" || providerId === "facebook");
+    const { nativeOAuthReturnPath } = await import("./native-oauth");
+    const socialCallback = shell ? nativeOAuthReturnPath(callbackURL) : callbackURL;
+    const socialError = shell ? nativeOAuthReturnPath(errorCallbackURL) : errorCallbackURL;
+    const socialNewUser = shell && newUserCallbackURL ? nativeOAuthReturnPath(newUserCallbackURL) : newUserCallbackURL;
     const { data, error } = await authClient.signIn.social({
       provider: providerId as "apple" | "google" | "facebook",
-      callbackURL,
-      errorCallbackURL,
-      ...(newUserCallbackURL ? { newUserCallbackURL } : {}),
+      callbackURL: socialCallback,
+      errorCallbackURL: socialError,
+      ...(socialNewUser ? { newUserCallbackURL: socialNewUser } : {}),
+      ...(shell ? { disableRedirect: true } : {}),
     });
-    window.location.href = resolveSocialSignInRedirect({ data, error }, providerId);
+    const providerUrl = resolveSocialSignInRedirect({ data, error }, providerId);
+    if (shell) {
+      const { openNativeOAuthSheet } = await import("./native-oauth-client");
+      await openNativeOAuthSheet(providerUrl);
+      return;
+    }
+    window.location.href = providerUrl;
     return;
   }
 

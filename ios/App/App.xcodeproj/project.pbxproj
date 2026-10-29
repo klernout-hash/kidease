@@ -20,6 +20,7 @@
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9582B6822FE993A50072D4E8 /* SceneDelegate.swift */; };
 		A11EAA022F85000100000012 /* AppleSignInPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11EAA012F85000100000011 /* AppleSignInPlugin.swift */; };
+		A11EAA062F85000100000016 /* AuthSessionPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11EAA052F85000100000015 /* AuthSessionPlugin.swift */; };
 		A11EAA042F85000100000014 /* KidEaseBridgeViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11EAA032F85000100000013 /* KidEaseBridgeViewController.swift */; };
 /* End PBXBuildFile section */
 
@@ -35,6 +36,7 @@
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		9582B6822FE993A50072D4E8 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		A11EAA012F85000100000011 /* AppleSignInPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleSignInPlugin.swift; sourceTree = "<group>"; };
+		A11EAA052F85000100000015 /* AuthSessionPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthSessionPlugin.swift; sourceTree = "<group>"; };
 		A11EAA032F85000100000013 /* KidEaseBridgeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KidEaseBridgeViewController.swift; sourceTree = "<group>"; };
 		958DCC722DB07C7200EA8C5F /* debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = debug.xcconfig; path = ../debug.xcconfig; sourceTree = SOURCE_ROOT; };
 		A11E00002F85000100000001 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -78,6 +80,7 @@
 			children = (
 				9582B6822FE993A50072D4E8 /* SceneDelegate.swift */,
 				A11EAA012F85000100000011 /* AppleSignInPlugin.swift */,
+				A11EAA052F85000100000015 /* AuthSessionPlugin.swift */,
 				A11EAA032F85000100000013 /* KidEaseBridgeViewController.swift */,
 				50379B222058CBB4000EE86E /* capacitor.config.json */,
 				504EC3071FED79650016851F /* AppDelegate.swift */,
@@ -183,6 +186,7 @@
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,
 				A11EAA022F85000100000012 /* AppleSignInPlugin.swift in Sources */,
+				A11EAA062F85000100000016 /* AuthSessionPlugin.swift in Sources */,
 				A11EAA042F85000100000014 /* KidEaseBridgeViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

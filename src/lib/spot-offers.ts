@@ -66,6 +66,22 @@ export function waitlistIncludedOnEveryPlan(): true {
   return true;
 }
 
+export function spotAgePublicLabel(age: SpotAge, locale: "en" | "fr" = "en"): string {
+  const en: Record<SpotAge, string> = {
+    infant: "Infant",
+    toddler: "Toddler",
+    preschool: "Preschool",
+    any: "Any age",
+  };
+  const fr: Record<SpotAge, string> = {
+    infant: "Nourrisson",
+    toddler: "Tout-petit",
+    preschool: "Préscolaire",
+    any: "Tout âge",
+  };
+  return (locale === "fr" ? fr : en)[age];
+}
+
 export function parseSpotAge(raw: unknown): SpotAge | null {
   const value = String(raw ?? "")
     .trim()

@@ -12,7 +12,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
 import { menuGroupLinks, menuHighlight, type MenuGroupId } from "@/lib/app-menu";
 import { accountSearch, highlightDesk } from "@/lib/desks";
-import { accountDeskPath, menuDeskPath, parentDeskPath, providerDeskPath } from "@/lib/desk-nav";
+import { accountDeskPath, menuDeskPath, providerDeskPath } from "@/lib/desk-nav";
 import { footerLinkLabel } from "@/lib/site-footer-nav";
 import { isFrPath, localePath } from "@/lib/locale-path";
 import { chartHasEarnings, insightsCardRating, monthTick, type HostEarnings, type HostInsights } from "@/lib/host-desk";
@@ -122,15 +122,6 @@ export function AppMenuScreen({
         {user && highlight !== "create" ? (
           <MenuRow to={menuDeskPath(pathname)} search={{ screen: "payments" }} label={t("earningsPayments")} icon="terms" marker="payments" />
         ) : null}
-        {highlight === "find" ? (
-          <MenuRow
-            to={parentDeskPath(pathname)}
-            search={{ tab: "children" }}
-            label={t("children")}
-            icon="parent"
-            marker="children"
-          />
-        ) : null}
         <MenuRow
           to={highlight === "create" || user ? accountDeskPath(pathname) : localePath("/login", locale)}
           search={
@@ -187,7 +178,7 @@ export function AppMenuScreen({
       </nav>
 
       {user ? (
-        <div className="mt-auto flex flex-col gap-3 pt-8" data-ke="menu-account-actions">
+        <div className="relative z-[45] mt-auto flex flex-col gap-3 pt-8 pb-[max(3.25rem,env(safe-area-inset-bottom))]" data-ke="menu-account-actions">
           <Link
             to={localePath("/delete-account", locale)}
             data-ke="menu-delete-account"

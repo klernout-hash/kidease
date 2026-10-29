@@ -4,10 +4,12 @@ import android.net.Uri;
 
 /**
  * Keep in step with isAccessProtectedPath in src/lib/native-admin.ts.
- * Admin and Cloudflare Access stay inside the app, on /use-the-website.
+ * Admin and Cloudflare Access stay inside the app, on /app-admin-unavailable.
+ * /use-the-website stays open for binaries that already point there.
  */
 public final class AdminWebOnly {
-    public static final String NOTE_PATH = "/use-the-website";
+    public static final String NOTE_PATH = "/app-admin-unavailable";
+    public static final String LEGACY_NOTE_PATH = "/use-the-website";
 
     private AdminWebOnly() {}
 
@@ -22,7 +24,7 @@ public final class AdminWebOnly {
         if ("/fr".equals(path)) path = "/";
         if (path.startsWith("/fr/")) path = path.substring(3);
         if (path.isEmpty()) path = "/";
-        if (NOTE_PATH.equals(path)) return false;
+        if (NOTE_PATH.equals(path) || LEGACY_NOTE_PATH.equals(path)) return false;
         return "/admin".equals(path)
             || path.startsWith("/admin/")
             || path.startsWith("/admin-")

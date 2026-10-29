@@ -46,7 +46,8 @@ test("iPad layout caps the page and splits list plus detail", () => {
 
 test("messages, children, care, calls, and Apple use the wide layout", () => {
   assert.match(src("src/routes/inbox.tsx"), /data-ke="inbox-split"/);
-  assert.match(src("src/components/parent-desk.tsx"), /data-ke="children-split"/);
+  assert.match(src("src/components/child-data-retired.tsx"), /data-ke="child-data-retired"/);
+  assert.doesNotMatch(src("src/components/parent-desk.tsx"), /data-ke="children-split"/);
   assert.match(src("src/components/daily-care-desk.tsx"), /data-ke="care-split"/);
   assert.match(src("src/routes/call.$conversationId.tsx"), /data-ke="call-stage"/);
   assert.match(src("src/components/video-room-panel.tsx"), /data-ke="video-room"/);

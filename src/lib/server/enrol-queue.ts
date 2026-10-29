@@ -3,7 +3,7 @@ import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { mapChild, type ChildRow } from "@/lib/child-profile";
 import type { AgeGroup, BookingStatus, Child, Schedule, SpotRequest } from "@/lib/types";
-import { createSpotRequest, updateRequestStatus } from "@/lib/server/family";
+import { updateRequestStatus } from "@/lib/server/family";
 
 const OPEN: BookingStatus[] = ["requested", "under_review", "waitlist"];
 
@@ -141,76 +141,12 @@ export const decideParentRequest = createServerFn({ method: "POST" })
 export const shareChildWithCentres = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { childId: string; daycareIds: string[]; startDate?: string; message?: string }) => input)
-  .handler(async ({ context, data }) => {
-    const sql = await getSql();
-    const kids = await sql<ChildRow>`
-      select id, name, preferred_name, birthdate, allergies, epi_pen, medical_notes, medications,
-             doctor_name, doctor_phone, foods_like, foods_avoid, diet, likes, comfort_item, nap_routine,
-             toilet, home_language, soothes, fears, emergency_name, emergency_phone, pickup_people,
-             photo_ok, sunscreen_ok, notes
-      from children where id = ${data.childId} and user_id = ${context.userId} limit 1
-    `;
-    const kid = kids[0];
-    if (!kid) throw new Error("Child not found");
-    const child = mapChild(kid);
-    const parent = await sql<{ name: string | null }>`select name from "user" where id = ${context.userId} limit 1`;
-    const start =
-      data.startDate && /^\d{4}-\d{2}-\d{2}$/.test(data.startDate) ? data.startDate : defaultStart();
-    const noteBits = [
-      data.message?.trim(),
-      child.allergies ? `Allergies: ${child.allergies}` : "",
-      child.epiPen ? "Carries an EpiPen" : "",
-      child.medicalNotes ? `Medical: ${child.medicalNotes}` : "",
-      child.emergencyName ? `Emergency: ${child.emergencyName} ${child.emergencyPhone}` : "",
-    ].filter(Boolean);
-    const sent: Array<{ daycareId: string; bookingId: string; conversationId: string; reused: boolean }> = [];
-
-    for (const daycareId of [...new Set(data.daycareIds.map((id) => id.trim()).filter(Boolean))]) {
-      const existing = await sql<{ id: string; conversation_id: string | null; status: BookingStatus }>`
-        select id, conversation_id, status from bookings
-        where user_id = ${context.userId} and daycare_id = ${daycareId} and child_id = ${child.id}
-          and status in ('requested','under_review','waitlist','accepted')
-        order by created_at desc limit 1
-      `;
-      if (existing[0]) {
-        sent.push({
-          daycareId,
-          bookingId: existing[0].id,
-          conversationId: existing[0].conversation_id ?? "",
-          reused: true,
-        });
-        continue;
-      }
-      const res = await createSpotRequest({
-        data: {
-          daycareId,
-          childId: child.id,
-          childName: child.name,
-          birthdate: child.birthdate,
-          startDate: start,
-          schedule: "full",
-          days: [],
-          message: noteBits.join(" · ") || undefined,
-          parentName: parent[0]?.name ?? undefined,
-        },
-      });
-      sent.push({
-        daycareId,
-        bookingId: res.id,
-        conversationId: res.conversationId,
-        reused: false,
-      });
-    }
-    return { ok: true as const, sent, childName: child.name };
+  .handler(async () => {
+    const { CHILD_PROFILE_CLOSED } = await import("@/lib/child-collection");
+    throw new Error(CHILD_PROFILE_CLOSED);
   });
+
 
 export function isWaitingOnDaycare(status: BookingStatus) {
   return OPEN.includes(status);
-}
-
-function defaultStart() {
-  const d = new Date();
-  d.setMonth(d.getMonth() + 1);
-  d.setDate(1);
-  return d.toISOString().slice(0, 10);
 }

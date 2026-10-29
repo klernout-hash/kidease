@@ -28,8 +28,6 @@ const PARENT_ON = [
   "/account?tab=profile&section=security&desk=parent",
   "/inbox?view=family",
   "/parent?tab=alerts",
-  "/parent?tab=care",
-  "/parent?tab=children",
   "/parent?tab=enrolled",
   "/parent?tab=explore",
   "/parent?tab=payments",
@@ -135,8 +133,7 @@ test("messages, daily care, pay, and search alerts update the URL", () => {
   const byId = Object.fromEntries(parent.map((item) => [item.id, item]));
   assert.equal(byId.messages?.href, "/inbox");
   assert.equal(byId.messages?.search?.view, "family");
-  assert.equal(byId.care?.href, "/parent");
-  assert.equal(byId.care?.search?.tab, "care");
+  assert.equal(byId.care, undefined);
   assert.equal(byId.payments?.href, "/parent");
   assert.equal(byId.payments?.search?.tab, "payments");
   assert.equal(byId.alerts?.href, "/parent");

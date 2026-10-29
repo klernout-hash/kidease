@@ -23,6 +23,7 @@ import { Route as AdminSpamRouteImport } from './routes/admin-spam'
 import { Route as AdminTriageRouteImport } from './routes/admin-triage'
 import { Route as AdminTruthRouteImport } from './routes/admin-truth'
 import { Route as AdminVacanciesRouteImport } from './routes/admin-vacancies'
+import { Route as AppAdminUnavailableRouteImport } from './routes/app-admin-unavailable'
 import { Route as AppIconRouteImport } from './routes/app-icon'
 import { Route as BenefitsRouteImport } from './routes/benefits'
 import { Route as CalculatorRouteImport } from './routes/calculator'
@@ -267,6 +268,11 @@ const AdminTruthRoute = AdminTruthRouteImport.update({
 const AdminVacanciesRoute = AdminVacanciesRouteImport.update({
   id: '/admin-vacancies',
   path: '/admin-vacancies',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppAdminUnavailableRoute = AppAdminUnavailableRouteImport.update({
+  id: '/app-admin-unavailable',
+  path: '/app-admin-unavailable',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppIconRoute = AppIconRouteImport.update({
@@ -1163,6 +1169,7 @@ export interface FileRoutesByFullPath {
   '/admin-triage': typeof AdminTriageRoute
   '/admin-truth': typeof AdminTruthRoute
   '/admin-vacancies': typeof AdminVacanciesRoute
+  '/app-admin-unavailable': typeof AppAdminUnavailableRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/calculator': typeof CalculatorRoute
@@ -1354,6 +1361,7 @@ export interface FileRoutesByTo {
   '/admin-triage': typeof AdminTriageRoute
   '/admin-truth': typeof AdminTruthRoute
   '/admin-vacancies': typeof AdminVacanciesRoute
+  '/app-admin-unavailable': typeof AppAdminUnavailableRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/calculator': typeof CalculatorRoute
@@ -1544,6 +1552,7 @@ export interface FileRoutesById {
   '/admin-triage': typeof AdminTriageRoute
   '/admin-truth': typeof AdminTruthRoute
   '/admin-vacancies': typeof AdminVacanciesRoute
+  '/app-admin-unavailable': typeof AppAdminUnavailableRoute
   '/app-icon': typeof AppIconRoute
   '/benefits': typeof BenefitsRoute
   '/calculator': typeof CalculatorRoute
@@ -1737,6 +1746,7 @@ export interface FileRouteTypes {
     | '/admin-triage'
     | '/admin-truth'
     | '/admin-vacancies'
+    | '/app-admin-unavailable'
     | '/app-icon'
     | '/benefits'
     | '/calculator'
@@ -1928,6 +1938,7 @@ export interface FileRouteTypes {
     | '/admin-triage'
     | '/admin-truth'
     | '/admin-vacancies'
+    | '/app-admin-unavailable'
     | '/app-icon'
     | '/benefits'
     | '/calculator'
@@ -2117,6 +2128,7 @@ export interface FileRouteTypes {
     | '/admin-triage'
     | '/admin-truth'
     | '/admin-vacancies'
+    | '/app-admin-unavailable'
     | '/app-icon'
     | '/benefits'
     | '/calculator'
@@ -2309,6 +2321,7 @@ export interface RootRouteChildren {
   AdminTriageRoute: typeof AdminTriageRoute
   AdminTruthRoute: typeof AdminTruthRoute
   AdminVacanciesRoute: typeof AdminVacanciesRoute
+  AppAdminUnavailableRoute: typeof AppAdminUnavailableRoute
   AppIconRoute: typeof AppIconRoute
   BenefitsRoute: typeof BenefitsRoute
   CalculatorRoute: typeof CalculatorRoute
@@ -2514,6 +2527,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-vacancies'
       fullPath: '/admin-vacancies'
       preLoaderRoute: typeof AdminVacanciesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app-admin-unavailable': {
+      id: '/app-admin-unavailable'
+      path: '/app-admin-unavailable'
+      fullPath: '/app-admin-unavailable'
+      preLoaderRoute: typeof AppAdminUnavailableRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app-icon': {
@@ -4017,6 +4037,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminTriageRoute: AdminTriageRoute,
   AdminTruthRoute: AdminTruthRoute,
   AdminVacanciesRoute: AdminVacanciesRoute,
+  AppAdminUnavailableRoute: AppAdminUnavailableRoute,
   AppIconRoute: AppIconRoute,
   BenefitsRoute: BenefitsRoute,
   CalculatorRoute: CalculatorRoute,

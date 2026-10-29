@@ -7,6 +7,8 @@ import { homeLandPath, openAdminDesk } from "../src/lib/desks.ts";
 import {
   NATIVE_ADMIN_NOTE_PATH,
   accessPathname,
+  isNativeAdminNotePath,
+  nativeAdminRedirectTarget,
   bottomBarKindInShell,
   chromeRoleInNativeShell,
   cookieMarksNativeShell,
@@ -91,12 +93,14 @@ test("native admin accounts keep a normal desk; the website still opens Admin", 
 test("the note page says Admin is on the website and does not open Safari", () => {
   const en = nativeAdminNoteCopy("en");
   const fr = nativeAdminNoteCopy("fr");
-  assert.equal(en.lead, "Admin is available on kidease.ca in your web browser.");
+  assert.equal(en.lead, "Admin is available on kidease.ca in a browser");
   assert.match(fr.lead, /kidease\.ca/);
   assert.doesNotMatch(en.lead, /https?:\/\//);
-  const page = src("src/routes/use-the-website.tsx");
+  const page = src("src/components/admin-on-web-note.tsx");
   assert.match(page, /nativeAdminNoteCopy/);
-  assert.match(page, /noindex/);
+  assert.match(src("src/routes/app-admin-unavailable.tsx"), /AdminOnWebNote/);
+  assert.match(src("src/routes/use-the-website.tsx"), /AdminOnWebNote/);
+  assert.match(src("src/routes/app-admin-unavailable.tsx"), /noindex/);
   assert.doesNotMatch(page, /window\.open|Browser\.open|target="_blank"/);
   assert.equal(typeof openAdminDesk, "function");
   const desks = src("src/lib/desks.ts");
@@ -111,11 +115,17 @@ test("server HTML, the boot script, and both shells block Access before Safari",
   assert.match(rootHtml, /hideAdmin/);
   assert.match(rootHtml, /data-native/);
   assert.match(rootHtml, /NATIVE_ADMIN_NOTE_PATH/);
-  assert.match(rootHtml, /channel-boot\.js\?v=9/);
+  assert.match(rootHtml, /channel-boot\.js\?v=10/);
+  assert.equal(nativeAdminRedirectTarget({ pathname: "/admin", userAgent: IOS }), NATIVE_ADMIN_NOTE_PATH);
+  assert.equal(nativeAdminRedirectTarget({ pathname: "/admin", cookie: "ke_shell=native" }), NATIVE_ADMIN_NOTE_PATH);
+  assert.equal(nativeAdminRedirectTarget({ pathname: "/admin", userAgent: WEB }), null);
+  assert.equal(nativeAdminRedirectTarget({ pathname: "/parent", userAgent: IOS }), null);
+  assert.equal(isNativeAdminNotePath("/use-the-website"), true);
+  assert.equal(isAccessProtectedPath("/app-admin-unavailable"), false);
   const boot = src("public/channel-boot.js");
   assert.match(boot, /ke_shell=native/);
   assert.match(boot, /dataset\.native = "1"/);
-  assert.match(boot, /\/use-the-website/);
+  assert.match(boot, /\/app-admin-unavailable/);
   assert.match(boot, /isNativePlatform/);
   assert.doesNotMatch(boot, /ke_shell=native[\s\S]{0,80}store === "microsoft"/);
   const swift = src("ios/App/App/KidEaseBridgeViewController.swift");
@@ -123,11 +133,14 @@ test("server HTML, the boot script, and both shells block Access before Safari",
   assert.match(swift, /KidEaseNative/);
   assert.match(swift, /shouldOverrideLoad/);
   assert.match(swift, /cloudflareaccess\.com/);
+  assert.match(swift, /\/app-admin-unavailable/);
   assert.match(swift, /\/use-the-website/);
+  assert.match(swift, /AuthSessionPlugin/);
   assert.doesNotMatch(swift, /appendUserAgent/);
   assert.match(src("ios/App/App/capacitor.config.json"), /"appendUserAgent": "KidEaseNative"/);
   const java = src("android/app/src/main/java/ca/kidease/app/AdminWebOnly.java");
   assert.match(java, /cloudflareaccess\.com/);
+  assert.match(java, /\/app-admin-unavailable/);
   assert.match(java, /\/use-the-website/);
   assert.match(src("android/app/src/main/java/ca/kidease/app/MainActivity.java"), /installAdminWebOnlyClient/);
   assert.match(src("src/components/desk-switcher.tsx"), /desksVisibleInShell/);

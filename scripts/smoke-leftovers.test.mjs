@@ -14,14 +14,15 @@ test("daycare account settings stays on the daycare profile", () => {
   const menu = src("src/components/app-menu-screen.tsx");
   assert.match(menu, /desk: "director"/);
   assert.match(menu, /highlight === "create"/);
-  assert.match(menu, /label=\{t\("children"\)\}/);
-  assert.match(menu, /search=\{\{ tab: "children" \}\}/);
+  assert.doesNotMatch(menu, /search=\{\{ tab: "children" \}\}/);
+  assert.doesNotMatch(menu, /label=\{t\("children"\)\}/);
 });
 
 test("parent profile lists children and the phone switch sits in the page", () => {
   const account = src("src/routes/account.tsx");
   const pill = src("src/components/role-switch-pill.tsx");
-  assert.match(account, /<ProfileChildren /);
+  assert.match(account, /ChildDataRetired/);
+  assert.doesNotMatch(account, /<ProfileChildren /);
   assert.match(account, /<RoleSwitchPill placement="flow" \/>/);
   assert.match(pill, /placement === "fixed" && onAccount/);
   assert.match(src("src/components/profile-children.tsx"), /profileAddChild/);

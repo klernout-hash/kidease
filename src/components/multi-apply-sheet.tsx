@@ -12,16 +12,13 @@ import {
 } from "@/lib/multi-apply";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { createMultiSpotRequest } from "@/lib/server/multi-apply";
+import { spotAgePublicLabel, type SpotAge } from "@/lib/spot-offers";
 import { useCopy } from "@/lib/use-copy";
 import type { DaycareCard } from "@/lib/types";
 
 type Centre = Pick<DaycareCard, "id" | "name" | "nameFr" | "slug" | "live" | "phone"> & {
   website?: string | null;
 };
-
-function todayIso() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 export function MultiApplyPanel({ centres, returnTo = "/compare" }: { centres: Centre[]; returnTo?: string }) {
   const { t, locale } = useCopy();
@@ -134,8 +131,7 @@ function MultiApplySheet({
 }) {
   const { t, locale } = useCopy();
   const titleId = useId();
-  const [childName, setChildName] = useState("");
-  const [birthdate, setBirthdate] = useState("");
+  const [ageGroup, setAgeGroup] = useState<SpotAge>("toddler");
   const [startDate, setStartDate] = useState("");
   const [schedule, setSchedule] = useState<"full" | "part">("full");
   const [subsidy, setSubsidy] = useState<"yes" | "no" | "">("");
@@ -163,14 +159,13 @@ function MultiApplySheet({
       toast.error(t("multiApplyConsentNeed"));
       return;
     }
-    if (!childName.trim() || !birthdate || !startDate || !subsidy) return;
+    if (!startDate || !subsidy) return;
     setBusy(true);
     try {
       const res = await createMultiSpotRequest({
         data: {
           daycareIds: centres.map((centre) => centre.id),
-          childName: childName.trim(),
-          birthdate,
+          ageGroup,
           startDate,
           schedule,
           subsidyInterest: subsidy === "yes",
@@ -237,27 +232,17 @@ function MultiApplySheet({
                 ))}
               </ul>
               <label className="block text-sm">
-                {t("multiApplyChild")}
-                <input
-                  required
-                  autoComplete="given-name"
+                {locale === "fr" ? "Tranche d’âge" : "Age range"}
+                <select
                   className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
-                  value={childName}
-                  onChange={(e) => setChildName(e.target.value)}
-                  onFocus={(e) => e.currentTarget.scrollIntoView({ block: "center" })}
-                />
-              </label>
-              <label className="block text-sm">
-                {t("birthdate")}
-                <input
-                  required
-                  type="date"
-                  max={todayIso()}
-                  className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
-                  value={birthdate}
-                  onChange={(e) => setBirthdate(e.target.value)}
-                  onFocus={(e) => e.currentTarget.scrollIntoView({ block: "center" })}
-                />
+                  value={ageGroup}
+                  onChange={(e) => setAgeGroup(e.target.value as SpotAge)}
+                >
+                  <option value="infant">{spotAgePublicLabel("infant", locale === "fr" ? "fr" : "en")}</option>
+                  <option value="toddler">{spotAgePublicLabel("toddler", locale === "fr" ? "fr" : "en")}</option>
+                  <option value="preschool">{spotAgePublicLabel("preschool", locale === "fr" ? "fr" : "en")}</option>
+                  <option value="any">{spotAgePublicLabel("any", locale === "fr" ? "fr" : "en")}</option>
+                </select>
               </label>
               <label className="block text-sm">
                 {t("desiredStart")}

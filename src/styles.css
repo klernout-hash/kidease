@@ -2330,6 +2330,25 @@ html[data-native="1"] [data-ke="cookie-consent"] {
   bottom: calc(5.25rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
   z-index: 40;
 }
+html[data-native="1"] [data-ke="cookie-consent"][data-compact="native"] .ke-cookie-consent-panel,
+html[data-channel="app"] [data-ke="cookie-consent"][data-compact="native"] .ke-cookie-consent-panel {
+  max-width: 28rem;
+}
+/* Sign out sits above the cookie sheet and the role pill, under the tab bar. */
+html[data-native="1"] [data-ke="menu-account-actions"],
+html[data-channel="app"] [data-ke="menu-account-actions"],
+html[data-runtime="native"] [data-ke="menu-account-actions"] {
+  position: relative;
+  z-index: 45;
+  padding-bottom: 3.25rem;
+}
+html[data-native-prompt="open"] [data-ke="menu-account-actions"] {
+  padding-bottom: 9rem;
+}
+html[data-native="1"] [data-ke="push-explain"],
+html[data-runtime="native"] [data-ke="push-explain"] {
+  z-index: 30;
+}
 html[data-theme="dark"] [data-ke="app-tab-bar"],
 html[data-resolved-theme="dark"] [data-ke="app-tab-bar"] {
   border-top-color: rgb(255 255 255 / 0.14);

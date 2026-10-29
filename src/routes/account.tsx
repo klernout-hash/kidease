@@ -24,7 +24,6 @@ import { polishProfilePhoto } from "@/lib/server/profile-photo";
 import { authClient, signOut } from "@/lib/auth/client";
 import { getMyContact, saveMyContact } from "@/lib/server/profile-contact";
 import { CaslConsentFields } from "@/components/casl-consent-fields";
-import { FamilyVaultPanel } from "@/components/family-vault";
 import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent-api";
 import type { CaslPrefs } from "@/lib/casl";
 import { PlaceSearch } from "@/components/place-search";
@@ -41,7 +40,7 @@ import { ReferFriendPanel } from "@/components/refer-friend-panel";
 import { fieldErrorClass, RequiredMark } from "@/components/required-field";
 import { focusFirstInvalid } from "@/lib/profile-form";
 import { ProfileFacts, ProfileHeroCard, type ProfileFact } from "@/components/profile-hero";
-import { ProfileChildren } from "@/components/profile-children";
+import { ChildDataRetired } from "@/components/child-data-retired";
 import { RoleSwitchPill } from "@/components/role-switch-pill";
 import { ProfileDeskExtras } from "@/components/profile-public";
 import { profileRoleId, showProfileStats, yearsOnKidEase } from "@/lib/profile-hero";
@@ -551,6 +550,7 @@ function ProfilePane() {
     { id: "subscription" as const, label: t("navUpgrade") },
     { id: "delete" as const, label: t("deleteAccount") },
   ].filter((item) => {
+    if (item.id === "documents") return false;
     if (item.id === "wallet" && (!connect.enabled || !user)) return false;
     if (nativeShell && item.id === "subscription") return false;
     if (item.id === "subscription" && hideUpgrade) return false;
@@ -788,12 +788,9 @@ function ProfilePane() {
               reviewCount={daycareStats ? reviewCount : null}
               ratingX10={daycareStats ? ratingX10 : null}
               years={yearsOnKidEase(joinedAt)}
-              childCount={daycareStats ? null : profileDesk?.ok ? profileDesk.childCount : null}
+              childCount={null}
               onEditPhoto={() => inputRef.current?.click()}
             />
-            {roleId === "parent" ? (
-              <ProfileChildren children={profileDesk?.ok ? profileDesk.children : []} />
-            ) : null}
             <ProfileFacts rows={profileFactRows()} bio={bio} />
             {daycareStats && profileDesk?.ok ? (
               <ProfileDeskExtras listings={profileDesk.listings} reviews={profileDesk.reviews} />
@@ -844,7 +841,7 @@ function ProfilePane() {
             </div>
           )
         ) : null}
-        {section === "documents" ? <FamilyVaultPanel signedIn={Boolean(user)} /> : null}
+        {section === "documents" ? <ChildDataRetired /> : null}
         {section === "alerts" && user ? (
           <AlertPushSettings
             audience={desk === "provider" ? "daycare" : "parent"}

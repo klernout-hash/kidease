@@ -14,8 +14,7 @@ import { cultureFieldsToSql } from "@/lib/listing-culture";
 import { isAdminOnlyListing, isHiddenTestListing, listingVisibilityForOwners, providerDeskListingVisible } from "@/lib/listing-visibility";
 import { callerMayUseAdminOnlyListing } from "@/lib/server/public-listing";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
-import { emptyChild, mapChild, type ChildRow } from "@/lib/child-profile";
-import { childBirthdateMessage, childBirthdateProblem } from "@/lib/child-birthdate";
+import { mapChild, type ChildRow } from "@/lib/child-profile";
 import type { AgeGroup, Booking, BookingStatus, Child, Conversation, Locale, Message, PayMethod, Schedule } from "@/lib/types";
 import {
   centreAckMessage,
@@ -360,104 +359,20 @@ export const getFamily = createServerFn({ method: "GET" })
 
 type ChildWrite = Omit<Child, "id">;
 
-function childFields(data: ChildWrite) {
-  return {
-    name: data.name.trim(),
-    preferredName: data.preferredName?.trim() || null,
-    birthdate: data.birthdate,
-    allergies: data.allergies?.trim() || null,
-    epiPen: Boolean(data.epiPen),
-    medicalNotes: data.medicalNotes?.trim() || null,
-    medications: data.medications?.trim() || null,
-    doctorName: data.doctorName?.trim() || null,
-    doctorPhone: data.doctorPhone?.trim() || null,
-    foodsLike: data.foodsLike?.trim() || null,
-    foodsAvoid: data.foodsAvoid?.trim() || null,
-    diet: data.diet?.trim() || null,
-    likes: data.likes?.trim() || null,
-    comfortItem: data.comfortItem?.trim() || null,
-    napRoutine: data.napRoutine?.trim() || null,
-    toilet: data.toilet || null,
-    homeLanguage: data.homeLanguage?.trim() || null,
-    soothes: data.soothes?.trim() || null,
-    fears: data.fears?.trim() || null,
-    emergencyName: data.emergencyName?.trim() || null,
-    emergencyPhone: data.emergencyPhone?.trim() || null,
-    pickupPeople: data.pickupPeople?.trim() || null,
-    photoOk: Boolean(data.photoOk),
-    sunscreenOk: data.sunscreenOk !== false,
-    notes: data.notes?.trim() || null,
-  };
-}
-
 export const addChild = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: ChildWrite) => input)
-  .handler(async ({ context, data }) => {
-    const sql = await getSql();
-    const id = nid("ch");
-    const f = childFields({ ...emptyChild(), ...data });
-    if (!f.name || !f.birthdate) throw new Error("Name and birthdate are required");
-    const birthProblem = childBirthdateProblem(f.birthdate);
-    if (birthProblem) throw new Error(childBirthdateMessage(birthProblem));
-    await sql`
-      insert into children (
-        id, user_id, name, preferred_name, birthdate, allergies, epi_pen, medical_notes, medications,
-        doctor_name, doctor_phone, foods_like, foods_avoid, diet, likes, comfort_item, nap_routine,
-        toilet, home_language, soothes, fears, emergency_name, emergency_phone, pickup_people,
-        photo_ok, sunscreen_ok, notes
-      ) values (
-        ${id}, ${context.userId}, ${f.name}, ${f.preferredName}, ${f.birthdate}, ${f.allergies},
-        ${f.epiPen}, ${f.medicalNotes}, ${f.medications}, ${f.doctorName}, ${f.doctorPhone},
-        ${f.foodsLike}, ${f.foodsAvoid}, ${f.diet}, ${f.likes}, ${f.comfortItem}, ${f.napRoutine},
-        ${f.toilet}, ${f.homeLanguage}, ${f.soothes}, ${f.fears}, ${f.emergencyName}, ${f.emergencyPhone},
-        ${f.pickupPeople}, ${f.photoOk}, ${f.sunscreenOk}, ${f.notes}
-      )
-    `;
-    return { id };
+  .handler(async () => {
+    const { CHILD_PROFILE_CLOSED } = await import("@/lib/child-collection");
+    throw new Error(CHILD_PROFILE_CLOSED);
   });
 
 export const updateChild = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: Child) => input)
-  .handler(async ({ context, data }) => {
-    const sql = await getSql();
-    const f = childFields(data);
-    if (!f.name || !f.birthdate) throw new Error("Name and birthdate are required");
-    const birthProblem = childBirthdateProblem(f.birthdate);
-    if (birthProblem) throw new Error(childBirthdateMessage(birthProblem));
-    const rows = await sql<{ id: string }>`
-      update children set
-        name = ${f.name},
-        preferred_name = ${f.preferredName},
-        birthdate = ${f.birthdate},
-        allergies = ${f.allergies},
-        epi_pen = ${f.epiPen},
-        medical_notes = ${f.medicalNotes},
-        medications = ${f.medications},
-        doctor_name = ${f.doctorName},
-        doctor_phone = ${f.doctorPhone},
-        foods_like = ${f.foodsLike},
-        foods_avoid = ${f.foodsAvoid},
-        diet = ${f.diet},
-        likes = ${f.likes},
-        comfort_item = ${f.comfortItem},
-        nap_routine = ${f.napRoutine},
-        toilet = ${f.toilet},
-        home_language = ${f.homeLanguage},
-        soothes = ${f.soothes},
-        fears = ${f.fears},
-        emergency_name = ${f.emergencyName},
-        emergency_phone = ${f.emergencyPhone},
-        pickup_people = ${f.pickupPeople},
-        photo_ok = ${f.photoOk},
-        sunscreen_ok = ${f.sunscreenOk},
-        notes = ${f.notes}
-      where id = ${data.id} and user_id = ${context.userId}
-      returning id
-    `;
-    if (!rows[0]) throw new Error("Child not found");
-    return { id: rows[0].id };
+  .handler(async () => {
+    const { CHILD_PROFILE_CLOSED } = await import("@/lib/child-collection");
+    throw new Error(CHILD_PROFILE_CLOSED);
   });
 
 export const deleteChild = createServerFn({ method: "POST" })
@@ -665,8 +580,9 @@ export const createSpotRequest = createServerFn({ method: "POST" })
     (input: {
       daycareId: string;
       childId?: string;
-      childName: string;
-      birthdate: string;
+      childName?: string;
+      birthdate?: string;
+      ageGroup?: string;
       startDate: string;
       schedule: Schedule;
       days?: string[];
@@ -688,48 +604,33 @@ export const createSpotRequest = createServerFn({ method: "POST" })
     if (!row) throw new Error("Centre not found");
     const d = mapDaycare(row);
 
-    const childName = data.childName.trim();
-    if (!childName || !data.birthdate || !data.startDate) throw new Error("Missing details");
+    const { parseSpotAge, spotAgePublicLabel } = await import("@/lib/spot-offers");
+    const birth = String(data.birthdate || "").trim();
+    const ageGroup =
+      parseSpotAge(data.ageGroup) ??
+      (/^\d{4}-\d{2}-\d{2}$/.test(birth) ? ageGroupFromMonths(monthsBetween(birth)) : null);
+    if (!ageGroup || !data.startDate) throw new Error("Missing details");
     const days = (data.days ?? []).filter(Boolean).join(",");
-    const ageGroup = ageGroupFromMonths(monthsBetween(data.birthdate));
     const priceMap = {
       infant: d.infantMonthly,
       toddler: d.toddlerMonthly,
       preschool: d.preschoolMonthly,
     };
-    let amount = priceMap[ageGroup] ?? fromPrice(d);
+    let amount = (ageGroup === "any" ? null : priceMap[ageGroup]) ?? fromPrice(d);
     if (data.schedule === "part") amount = d.partTimeMonthly ?? Math.round(amount * 0.6);
-
-    let childId = data.childId?.trim() || "";
-    if (childId) {
-      const owned = await sql<{ id: string }>`
-        select id from children where id = ${childId} and user_id = ${context.userId} limit 1
-      `;
-      if (!owned[0]) childId = "";
-    }
-    if (!childId) {
-      childId = nid("ch");
-      await sql`
-        insert into children (id, user_id, name, birthdate, notes)
-        values (${childId}, ${context.userId}, ${childName}, ${data.birthdate}, ${data.message?.trim() || null})
-      `;
-    } else {
-      await sql`
-        update children set name = ${childName}, birthdate = ${data.birthdate}
-        where id = ${childId} and user_id = ${context.userId}
-      `;
-    }
+    const childId: string | null = null;
 
     const users = await sql<{ name: string }>`
       select name from "user" where id = ${context.userId} limit 1
     `;
     const parentName = (data.parentName ?? users[0]?.name ?? "A parent").trim() || "A parent";
     const locale = data.locale === "fr" ? "fr" : "en";
+    const ageLabel = spotAgePublicLabel(ageGroup, locale);
     const copy = {
       parentName,
-      childName,
-      age: formatAgeLabel(data.birthdate, locale),
-      dob: data.birthdate,
+      childName: ageLabel,
+      age: ageLabel,
+      dob: "",
       daycareName: d.name,
       start: formatStart(data.startDate, locale),
       schedule: scheduleLabel(data.schedule, days || null, locale),
@@ -811,7 +712,7 @@ export const createSpotRequest = createServerFn({ method: "POST" })
         actorName: parentName || actor.name,
         actorEmail: actor.email,
         detail: [
-          `Child: ${childName}`,
+          `Age group: ${ageLabel}`,
           `Start: ${data.startDate}`,
           `Schedule: ${data.schedule}`,
           data.message?.trim() ? `Message: ${data.message.trim()}` : "",

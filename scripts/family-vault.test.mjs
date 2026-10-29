@@ -42,7 +42,9 @@ test("vault is private, bilingual, and not a sixth phone tab", () => {
   assert.match(copy, /familyDocsImmunization: "Carnet de vaccination"/);
   assert.doesNotMatch(copy, /familyDocs[\s\S]{0,400}United States|familyDocs[\s\S]{0,80}state /);
   assert.match(account, /section === "documents"/);
-  assert.match(account, /FamilyVaultPanel/);
+  assert.match(account, /ChildDataRetired/);
+  assert.doesNotMatch(account, /FamilyVaultPanel/);
+  assert.match(src("src/lib/server/family-vault.ts"), /kind === "immunization"/);
   assert.equal(PARENT_PRIMARY_NAV_IDS.includes("documents"), false);
   assert.equal(PARENT_PRIMARY_NAV_IDS.length, 5);
   assert.match(api, /requireUserId/);
