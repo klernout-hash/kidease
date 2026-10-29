@@ -56,10 +56,10 @@ function manifestHref(channel: StoreChannel | undefined): string {
   return `${file}?v=${ICON_VER}`;
 }
 
-/** Google Maps and Places hosts are not warmed on any channel. */
+/** Warm the map tile host. Huawei keeps the static fallback and skips this. */
 function mapDnsPrefetch(channel: StoreChannel | undefined): { rel: "dns-prefetch"; href: string }[] {
   if (channel === "huawei") return [];
-  return [];
+  return [{ rel: "dns-prefetch", href: "https://tiles.openfreemap.org" }];
 }
 
 const GUEST_LOCALE = {

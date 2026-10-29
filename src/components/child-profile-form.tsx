@@ -71,6 +71,11 @@ export function ChildProfileForm({
 
   return (
     <form ref={formRef} onSubmit={submit} className="space-y-6 ph-no-capture">
+      <p className="text-sm text-muted" data-ke="child-share-note">
+        {french
+          ? "Un centre voit ces détails seulement après une inscription ou un partage que vous confirmez. Vous pouvez effacer ce profil."
+          : "A centre sees these details only after you enrol or confirm a share. You can delete this profile."}
+      </p>
       {nameInvalid || birthError ? (
         <p role="alert" data-ke="profile-required-note" className="text-sm text-danger">
           {t("profileRequiredNote")}

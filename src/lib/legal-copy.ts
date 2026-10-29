@@ -55,7 +55,7 @@ export const PRIVACY_EN: LegalDoc = {
   updated: UPDATED_EN,
   intro: [
     "KidEase is a Canadian directory and enrolment tool for provincially or territorially licensed child care across Canada. Parents search nearby centres. Directors claim listings. We are not the care provider. Your care agreement is with the centre. We do not invent licences.",
-    "We follow PIPEDA’s consent, limiting-collection, and safeguarding principles. We do not sell or rent personal information. Parents give an account email, consent choices, and search needs (area, child age range, start date, and budget). We do not ask for a child’s name, birthdate, or health information. KidEase is a parent-and-director tool: not a children’s app.",
+    "We follow PIPEDA’s consent, limiting-collection, and safeguarding principles. We do not sell or rent personal information. Parents give an account email, consent choices, search needs, and, if they choose, a child profile. A centre sees that profile only after the parent enrols there or confirms a share. KidEase is a parent-and-director tool: not a children’s app.",
   ],
   sections: [
     {
@@ -66,7 +66,8 @@ export const PRIVACY_EN: LegalDoc = {
           type: "ul",
           items: [
             "Account: email, password or sign-in provider, optional phone and profile photo, and role (parent or centre director). Sign in with Apple, Google, or Facebook sends the name and email that provider shares. Apple may use a private relay email. We do not require a name.",
-            "Search needs: the area you choose, a child age range, a start date, and a budget. We do not collect a child’s name, birthdate, allergies, medicines, doctor details, or emergency contacts.",
+            "Search needs: the area you choose, a child age range, a start date, and a budget.",
+            "Child profile, only if you add one: the child’s name and birthdate, plus allergies, an epi-pen flag, medical notes, medications, a doctor’s name and phone, and emergency contacts. Immunization records are optional uploads. You can leave health fields blank. Health text is encrypted at rest when the server has a health key. PostHog, Sentry, and Help chat do not receive those fields. Guests never see them.",
             "Search location you choose: a GPS fix while you search, or a typed address, city, or postal code. We ask before using precise location.",
             "Requests and messages: inquire, book-a-tour, and request-a-spot fields, plus in-app chat with that centre.",
             "Calls: live audio on a KidEase voice call, and live audio and video on a video tour. Twilio carries the call. KidEase does not record it. Your phone number stays hidden.",
@@ -259,10 +260,10 @@ export const PRIVACY_EN: LegalDoc = {
           type: "ul",
           items: [
             `Inquire (💬 Contact): your name, email, and message, plus the listing name and link. That form goes to KidEase (${SUPPORT_INBOX_EMAIL}) so we can help; we may pass it to the centre.`,
-            "Book a tour: parent name, preferred date, and an optional note. This opens an in-app conversation with that centre. We do not ask for a child’s name or birthdate.",
-            "Request a spot: parent name, child age range, start date, schedule, days, and an optional message.",
-            "We do not send a centre a child’s name, birthdate, allergies, medicines, doctor details, or emergency contacts. Those details stay with the family and the centre, outside KidEase.",
-            "Reviews are from verified parents. We do not publish a child’s name on a review.",
+            "Book a tour: parent name, the child’s name if you add one, a preferred date, and an optional note. This opens an in-app conversation with that centre.",
+            "Request a spot: parent name, the child’s name and birthdate, start date, schedule, days, and an optional message. Sending the request is your consent for that centre to see the profile you attach.",
+            "Explicit share: you pick the centres and check a box before we send allergies, epi-pen, medical notes, medications, doctor details, or emergency contacts. We do not send that profile to any other centre, to other parents, or to guests.",
+            "Reviews are from verified parents. We do not publish a child’s name on a public review.",
             "Once a centre has the details, its staff are responsible for how they store and use them (their own privacy duties). Use KidEase messages for placement and care: not for marketing lists.",
           ],
         },
@@ -312,8 +313,8 @@ export const PRIVACY_EN: LegalDoc = {
         {
           type: "ul",
           items: [
-            "We do not collect a child’s name, birthdate, allergies, epi-pen details, medical notes, medications, doctor name or phone, or emergency contacts.",
-            "Purpose limit: search and placement messages: not advertising, not sale, not training public or advertising machine-learning models. Analytics loads only after you choose Allow analytics.",
+            "A child profile is collected only when a parent types it. The purpose is care and enrolment with a centre the parent chooses: not advertising, not sale, and not training public models. Analytics loads only after you choose Allow analytics, and it does not receive child health fields.",
+            "Parental consent: you add the profile. A centre sees health details only after you enrol with that centre or check the share box. You can delete the profile. Delete account removes the profiles we hold.",
             "Only add a child you have the legal right to enrol (parent or guardian).",
             "Accounts are for adults 18 or older: parents, guardians, and centre directors. KidEase is not a children’s app and is not directed at children.",
             "We do not livestream children. Video or voice check-in, if offered, is started by the parent.",
@@ -333,7 +334,7 @@ export const PRIVACY_EN: LegalDoc = {
           rows: [
             ["Account", "Name, email, sign-in, role", "Create a session; parent or director desk"],
             ["Location", "GPS or typed place", "Distance search only"],
-            ["Search needs", "Area, age range, start date, budget", "Find centres. No child’s name or health details"],
+            ["Child profile", "Name, birthdate, allergies, medicines, doctor, emergency contacts", "You, and a centre you enrol with or explicitly share with"],
             ["Requests & chat", "Tour, spot request, messages", "Connect that family and that centre"],
             ["Calls", "Live audio, and video on a tour", "Voice or video call with that centre. Not recorded."],
             ["Claim docs", "Licence photo, claim code", "Verify the director runs that centre"],
@@ -399,8 +400,8 @@ export const PRIVACY_EN: LegalDoc = {
           type: "ul",
           items: [
             `Person in charge of the protection of personal information: ${privacyOfficerLine("en")}.`,
-            `Access or correction: email ${PRIVACY_CONTACT_EMAIL}. Say what you want to see or change. You can close the account on the Delete account page. We may ask you to confirm you hold the account before we change it. Deleting the account signs you out and revokes Sign in with Apple when that sign-in was used.`,
-            "Consent: an account needs an email. Search needs are an area, a child age range, a start date, and a budget. We do not ask for a child’s name, birthdate, or health details. We ask before using precise location. Marketing email and text stay off unless you check the box. Analytics loads only after you choose Allow analytics.",
+            `Access or correction: email ${PRIVACY_CONTACT_EMAIL}. Say what you want to see or change. You can edit or delete a child profile in your account, or close the account on the Delete account page. Deleting the account signs you out, removes child profiles we hold, and revokes Sign in with Apple when that sign-in was used.`,
+            "Consent: an account needs an email. A child profile is optional and parent-controlled. Health details are shared only with a centre you enrol with or explicitly share with. We ask before using precise location. Marketing email and text stay off unless you check the box. Analytics loads only after you choose Allow analytics.",
             "Retention: we keep account, request, message, and payment records while the account is open. Delete account waits 30 days, then removes children, messages, bookings, saved centres, director links, the profile, and sign-in rows. We keep billing records because tax law requires them. We keep fraud and security logs. A centre that already received a message keeps its own copy.",
             "Where data is stored: accounts, listings, messages, child profiles, and payment records are in Neon Postgres. The website and server functions run on Vercel. When Cloudflare R2 is configured, listing photos, licence uploads, screening files, and signed contracts are stored in the kidease-media bucket. Our setup notes place that bucket in Western North America. Email we send goes through Resend. Card payments are processed by Stripe. KidEase does not store the full card number. Search maps can use Google. PostHog analytics and Sentry error reports run only when those tools are on. Analytics waits for Allow analytics. Centre paperwork can use DocuSign when that service is connected. Support mail is hosted in Titan Email at support@kidease.ca.",
             "Confidentiality incidents: if an incident creates a risk of serious injury, we will tell the people affected. We will tell the Commission d'accès à l'information du Québec when Quebec law requires it, and the Office of the Privacy Commissioner of Canada when PIPEDA requires it.",
@@ -458,7 +459,7 @@ export const PRIVACY_EN: LegalDoc = {
   storeItems: [
     "Location: to search nearby centres. Not shared with other parents.",
     "Contact info: email and name from sign-in.",
-    "User content: messages and enrolment notes (age range, start date, budget). We do not collect a child’s name, birthdate, or health details.",
+    "User content: messages, enrolment notes, and a child profile you add (name, birthdate, and health details you type). Linked to your account. Not used for tracking. A centre sees health details only after you enrol or share.",
     "Identifiers: account id for sign-in.",
     "Payment records: deposit amount and method. Card numbers are never stored here.",
   ],
@@ -477,7 +478,7 @@ export const PRIVACY_FR: LegalDoc = {
   updated: UPDATED_FR,
   intro: [
     "KidEase est un répertoire et un outil d’inscription pour des centres de garde permis au Canada (permis provincial ou territorial). Les parents cherchent près d’eux. Les directions réclament leur fiche. Nous ne sommes pas le fournisseur de garde. Le contrat de service est entre vous et le centre. Nous n’inventons pas de permis.",
-    "Nous suivons le consentement, la limitation de la collecte et les mesures de protection de la LPRPDE. Nous ne vendons ni ne louons les renseignements personnels. Les parents donnent un courriel de compte, leurs choix de consentement et leurs besoins de recherche (secteur, tranche d’âge, date de début et budget). Nous ne demandons pas le nom, la date de naissance ni des renseignements de santé d’un enfant. KidEase est un outil pour parents et directions: pas une appli pour enfants.",
+    "Nous suivons le consentement, la limitation de la collecte et les mesures de protection de la LPRPDE. Nous ne vendons ni ne louons les renseignements personnels. Les parents donnent un courriel de compte, leurs choix de consentement, leurs besoins de recherche et, s’ils le veulent, un profil d’enfant. Un centre voit ce profil seulement après une inscription ou un partage confirmé. KidEase est un outil pour parents et directions: pas une appli pour enfants.",
   ],
   sections: [
     {
@@ -488,7 +489,8 @@ export const PRIVACY_FR: LegalDoc = {
           type: "ul",
           items: [
             "Compte : courriel, mot de passe ou fournisseur de connexion, téléphone et photo facultatifs, et rôle (parent ou direction). Connexion avec Apple, Google ou Facebook envoie le nom et le courriel que ce service partage. Apple peut utiliser un courriel privé. Un nom n’est pas exigé.",
-            "Besoins de recherche : le secteur choisi, une tranche d’âge, une date de début et un budget. Nous ne recueillons pas le nom, la date de naissance, les allergies, les médicaments, le médecin ni les contacts d’urgence d’un enfant.",
+            "Besoins de recherche : le secteur choisi, une tranche d’âge, une date de début et un budget.",
+            "Profil d’enfant, seulement si vous l’ajoutez : nom et date de naissance, plus allergies, épinéphrine, notes médicales, médicaments, nom et téléphone du médecin, et contacts d’urgence. Le carnet de vaccination est un téléversement facultatif. Vous pouvez laisser les champs de santé vides. Le texte de santé est chiffré au repos quand le serveur a une clé. PostHog, Sentry et le clavardage d’aide ne reçoivent pas ces champs. Les visiteurs ne les voient pas.",
             "Lieu de recherche : position GPS pendant la recherche, ou une adresse, une ville ou un code postal saisi.",
             "Demandes et messages : inquiry, visite et demande de place, plus le clavardage avec ce centre.",
             "Appels : audio en direct pour un appel KidEase, et audio et vidéo en direct pour une visite vidéo. Twilio transporte l’appel. KidEase ne l’enregistre pas. Votre numéro de téléphone reste caché.",
@@ -681,10 +683,10 @@ export const PRIVACY_FR: LegalDoc = {
           type: "ul",
           items: [
             `Renseignement (💬) : nom, courriel, message, nom et lien de la fiche. Le formulaire va à KidEase (${SUPPORT_INBOX_EMAIL}); nous pouvons le transmettre au centre.`,
-            "Visite : nom du parent, date souhaitée et note facultative. Nous ne demandons pas le nom ni la date de naissance d’un enfant.",
-            "Demande de place : nom du parent, tranche d’âge, date de début, horaire, jours et message facultatif.",
-            "Nous n’envoyons pas au centre le nom, la date de naissance, les allergies, les médicaments, le médecin ou les contacts d’urgence d’un enfant. Ces détails restent dans la famille et au centre, hors de KidEase.",
-            "Les avis viennent de parents vérifiés. Nous ne publions pas le nom d’un enfant dans un avis.",
+            "Visite : nom du parent, le nom de l’enfant si vous l’ajoutez, date souhaitée et note facultative.",
+            "Demande de place : nom du parent, nom et date de naissance de l’enfant, date de début, horaire, jours et message facultatif. Envoyer la demande est votre consentement pour que ce centre voie le profil joint.",
+            "Partage explicite : vous cochez les centres et une case avant que nous envoyions allergies, épinéphrine, notes médicales, médicaments, médecin ou contacts d’urgence. Nous n’envoyons pas ce profil à un autre centre, à d’autres parents ou aux visiteurs.",
+            "Les avis viennent de parents vérifiés. Nous ne publions pas le nom d’un enfant dans un avis public.",
             "Réutilisation : les profils restent sur votre compte. Nous les envoyons seulement aux centres que vous contactez. Pas pour la publicité.",
             "Une fois les détails reçus, le personnel du centre en est responsable. Servez-vous des messages KidEase pour le placement et la garde: pas pour des listes marketing.",
           ],
@@ -735,7 +737,8 @@ export const PRIVACY_FR: LegalDoc = {
         {
           type: "ul",
           items: [
-            "Nous ne recueillons pas le nom, la date de naissance, les allergies, l’épinéphrine, les notes médicales, les médicaments, le nom ou le téléphone du médecin, ni les contacts d’urgence d’un enfant.",
+            "Un profil d’enfant est recueilli seulement si un parent l’écrit. Le but est la garde et l’inscription auprès d’un centre choisi : pas de publicité, pas de vente, pas d’entraînement de modèles publics. L’analytique se charge seulement après Autoriser l’analytique et ne reçoit pas les champs de santé.",
+            "Consentement parental : vous ajoutez le profil. Un centre voit les détails de santé seulement après une inscription ou la case de partage. Vous pouvez effacer le profil. Supprimer le compte retire les profils que nous gardons.",
             "Limitation : placement et garde: pas de publicité, pas de vente, pas d’entraînement de modèles publicitaires ou publics.",
             "N’ajoutez qu’un enfant dont vous avez la charge.",
             "Les comptes sont pour les personnes de 18 ans et plus. KidEase n’est pas une appli pour enfants.",
@@ -756,7 +759,7 @@ export const PRIVACY_FR: LegalDoc = {
           rows: [
             ["Compte", "Nom, courriel, connexion, rôle", "Session; espace parent ou direction"],
             ["Position", "GPS ou lieu saisi", "Recherche par distance seulement"],
-            ["Besoins de recherche", "Secteur, tranche d’âge, date de début, budget", "Trouver des centres. Pas de nom ni de santé d’un enfant"],
+            ["Profil d’enfant", "Nom, naissance, allergies, médicaments, médecin, urgence", "Vous, et un centre où vous inscrivez ou partagez"],
             ["Demandes et messages", "Visite, place, clavardage", "Relier cette famille et ce centre"],
             ["Appels", "Audio en direct, et vidéo pour une visite", "Appel vocal ou vidéo avec ce centre. Pas d’enregistrement."],
             ["Pièces de revendication", "Photo du permis, code", "Vérifier que la direction exploite le centre"],
@@ -822,8 +825,8 @@ export const PRIVACY_FR: LegalDoc = {
           type: "ul",
           items: [
             `Personne chargée de la protection des renseignements personnels : ${privacyOfficerLine("fr")}.`,
-            `Accès ou correction : écrivez à ${PRIVACY_CONTACT_EMAIL}. Dites ce que vous voulez voir ou changer. Vous pouvez fermer le compte sur la page Supprimer le compte. Nous pouvons vous demander de confirmer que le compte est le vôtre avant de le modifier. Supprimer le compte vous déconnecte et révoque Connexion avec Apple lorsque cette connexion a été utilisée.`,
-            "Consentement : un compte exige un courriel. Les besoins de recherche sont un secteur, une tranche d’âge, une date de début et un budget. Nous ne demandons pas le nom, la date de naissance ni des renseignements de santé d’un enfant. Nous demandons avant d’utiliser la position précise. Les courriels et textos marketing restent désactivés tant que vous ne cochez pas la case. L’analytique se charge seulement après Autoriser l’analytique.",
+            `Accès ou correction : écrivez à ${PRIVACY_CONTACT_EMAIL}. Dites ce que vous voulez voir ou changer. Vous pouvez modifier ou effacer un profil d’enfant dans votre compte, ou fermer le compte sur la page Supprimer le compte. Supprimer le compte vous déconnecte, retire les profils d’enfant que nous gardons et révoque Connexion avec Apple lorsque cette connexion a été utilisée.`,
+            "Consentement : un compte exige un courriel. Un profil d’enfant est facultatif et contrôlé par le parent. Les détails de santé sont partagés seulement avec un centre où vous inscrivez ou que vous partagez explicitement. Nous demandons avant d’utiliser la position précise. Les courriels et textos marketing restent désactivés tant que vous ne cochez pas la case. L’analytique se charge seulement après Autoriser l’analytique.",
             "Conservation : nous gardons le compte, les demandes, les messages et les paiements tant que le compte est ouvert. Supprimer le compte attend 30 jours, puis retire les enfants, les messages, les demandes, les centres enregistrés, les liens de direction, le profil et les sessions. Nous gardons les dossiers de facturation exigés par la loi fiscale. Nous gardons les journaux de fraude et de sécurité. Un centre qui a déjà reçu un message garde sa propre copie.",
             "Lieu de stockage : les comptes, les fiches, les messages, les profils d’enfants et les dossiers de paiement sont dans Neon Postgres. Le site et les fonctions serveur tournent sur Vercel. Quand Cloudflare R2 est configuré, les photos de fiche, les permis téléversés, les dossiers de filtrage et les contrats signés sont dans le seau kidease-media. Nos notes de configuration placent ce seau dans l’ouest de l’Amérique du Nord. Les courriels que nous envoyons passent par Resend. Les paiements par carte sont traités par Stripe. KidEase ne conserve pas le numéro complet de la carte. Les cartes de recherche peuvent utiliser Google. L’analytique PostHog et les rapports d’erreur Sentry fonctionnent seulement quand ces outils sont activés. L’analytique attend Autoriser l’analytique. Les documents du centre peuvent utiliser DocuSign quand ce service est branché. Le courrier de soutien est hébergé dans Titan Email à support@kidease.ca.",
             "Incidents de confidentialité : si un incident crée un risque de préjudice sérieux, nous aviserons les personnes concernées. Nous aviserons la Commission d’accès à l’information du Québec quand la loi québécoise l’exige, et le Commissariat à la protection de la vie privée du Canada quand la LPRPDE l’exige.",
@@ -881,7 +884,7 @@ export const PRIVACY_FR: LegalDoc = {
   storeItems: [
     "Position: pour chercher des centres près de vous. Non partagée avec d’autres parents.",
     "Coordonnées: courriel et nom à la connexion.",
-    "Contenu: messages et notes d’inscription (tranche d’âge, date de début, budget). Nous ne recueillons pas le nom, la date de naissance ni la santé d’un enfant.",
+    "Contenu: messages, notes d’inscription et un profil d’enfant que vous ajoutez (nom, date de naissance et détails de santé). Lié à votre compte. Pas utilisé pour le suivi. Un centre voit la santé seulement après une inscription ou un partage.",
     "Identifiants: identifiant de compte.",
     "Paiements: montant et mode du dépôt. Aucun numéro de carte ici.",
   ],
@@ -981,7 +984,7 @@ export const COOKIES_EN: LegalDoc = {
             "Browser settings: block or delete cookies and site data for kidease.ca.",
             "Location: OS or browser permission, or “Not now” in the app. Details are in Privacy → Location.",
             "Account: Delete account removes your profile and family data. Billing records stay for tax law. Fraud and security logs stay. It does not clear cookies already on this phone until you sign out or clear site data.",
-            "Google Maps: use the browser’s site settings for maps.googleapis.com if you want to limit Google’s cookies. The map may not load.",
+            "Map: KidEase uses OpenStreetMap through OpenFreeMap. The map does not set a Google cookie.",
           ],
         },
       ],
@@ -1078,7 +1081,7 @@ export const COOKIES_FR: LegalDoc = {
             "Réglages du navigateur : bloquer ou supprimer les témoins de kidease.ca.",
             "Position : permission du système ou « Pas maintenant ». Détails dans Confidentialité → Position.",
             "Compte : supprimer le compte efface le profil et les données familiales. Les dossiers de facturation restent pour la loi fiscale. Les journaux de fraude et de sécurité restent. Les témoins sur cet appareil restent jusqu’à la déconnexion ou l’effacement du site.",
-            "Google Maps : réglages du site pour maps.googleapis.com. La carte peut ne plus s’afficher.",
+            "Carte : KidEase utilise OpenStreetMap via OpenFreeMap. La carte ne dépose pas de témoin Google.",
           ],
         },
       ],
@@ -1120,7 +1123,7 @@ export const TERMS_EN: LegalDoc = {
           items: [
             "You must be 18 or older to create an account (parent, guardian, or centre director).",
             "Keep your email and password to yourself. You are responsible for activity on your account.",
-            "Tell a centre the age range and start date you need. KidEase does not collect a child’s name, birthdate, or health details.",
+            "Only add a child you have the legal right to enrol. You can delete that profile. A centre sees health details only after you enrol or confirm a share.",
           ],
         },
       ],
@@ -1265,7 +1268,7 @@ export const TERMS_FR: LegalDoc = {
           items: [
             "Vous devez avoir 18 ans ou plus pour créer un compte (parent, tuteur ou direction).",
             "Gardez votre courriel et votre mot de passe pour vous. Vous êtes responsable de l’activité sur le compte.",
-            "Indiquez au centre la tranche d’âge et la date de début. KidEase ne recueille pas le nom, la date de naissance ni la santé d’un enfant.",
+            "N’ajoutez qu’un enfant dont vous avez la charge. Vous pouvez effacer ce profil. Un centre voit les détails de santé seulement après une inscription ou un partage confirmé.",
           ],
         },
       ],

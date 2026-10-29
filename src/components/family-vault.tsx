@@ -42,7 +42,7 @@ export function FamilyVaultPanel({ signedIn }: { signedIn: boolean }) {
   const { t } = useCopy();
   const [documents, setDocuments] = useState<Doc[]>([]);
   const [centres, setCentres] = useState<Centre[]>([]);
-  const [kind, setKind] = useState<FamilyDocKind>("subsidy");
+  const [kind, setKind] = useState<FamilyDocKind>("immunization");
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState(!signedIn);
 
@@ -133,8 +133,9 @@ export function FamilyVaultPanel({ signedIn }: { signedIn: boolean }) {
               id="family-doc-kind"
               className="min-h-11 w-full rounded-xl bg-surface px-3 ring-1 ring-border"
               value={kind}
-              onChange={() => setKind("subsidy")}
+              onChange={(e) => setKind(e.target.value === "subsidy" ? "subsidy" : "immunization")}
             >
+              <option value="immunization">{t("familyDocsImmunization")}</option>
               <option value="subsidy">{t("familyDocsSubsidy")}</option>
             </select>
             <label className="block text-sm font-medium" htmlFor="family-doc-file">

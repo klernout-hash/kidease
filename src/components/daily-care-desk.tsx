@@ -383,7 +383,7 @@ export function DailyCareDesk({
                       }}
                     >
                       <span className="min-w-0">
-                        <span className="block truncate font-medium">{t("parentLabel")}</span>
+                        <span className="block truncate font-medium">{row.childName}</span>
                         <span className="block truncate text-xs text-muted">{row.daycareName}</span>
                       </span>
                     </button>
@@ -410,7 +410,7 @@ export function DailyCareDesk({
               <li key={key} className={`rounded-xl bg-surface p-4 shadow-card ring-1 ring-border${rest ? " ke-child-rest" : ""}`}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-medium">{t("parentLabel")}</p>
+                    <p className="font-medium">{row.childName}</p>
                     <p className="text-sm text-muted">{row.daycareName}</p>
                     <p className="mt-1 text-sm">
                       <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
@@ -594,7 +594,7 @@ export function DailyCareDesk({
                         <ul className="mt-2 flex flex-wrap gap-2">
                           {journal.photos.map((photo, i) => (
                             <li key={`${journal.id}-${i}`}>
-                              <img src={photo.src} alt={photo.name || row.daycareName} className="h-24 w-24 rounded-md object-cover ring-1 ring-border" />
+                              <img src={photo.src} alt={photo.name || journal.childName} className="h-24 w-24 rounded-md object-cover ring-1 ring-border" />
                             </li>
                           ))}
                         </ul>
@@ -768,7 +768,7 @@ function MonthShares({
           const dollars = parentShareDollars(ledger.parentCents);
           return (
             <li key={child.bookingId} className="rounded-lg bg-bg p-3 ring-1 ring-border">
-              <p className="font-medium">{t("parentLabel")}</p>
+              <p className="font-medium">{child.childName}</p>
               <p className="text-sm text-muted">{child.daycareName}{child.split?.programLabel ? ` · ${child.split.programLabel}` : ""}</p>
               <p className="mt-1 text-sm">
                 {t("carePresentDays").replace("{n}", String(ledger.present))}

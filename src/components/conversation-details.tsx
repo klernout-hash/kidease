@@ -53,6 +53,7 @@ export function ConversationDetailsBody({
           )}
           <div className="min-w-0">
             <p className="truncate font-medium">{details.daycareName}</p>
+            {details.childName ? <p className="truncate text-sm text-muted">{details.childName}</p> : null}
             {status ? (
               <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
                 <span className={cn("size-2 rounded-full", status.dot === "ok" ? "bg-ok" : "bg-warn")} aria-hidden />

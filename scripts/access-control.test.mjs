@@ -290,9 +290,7 @@ test("family pay and child writes stay scoped to the session user id", () => {
   assert.match(family, /canCentreWriteLeadsFor\(sql, context\.userId, b\.daycare_id\)/);
   assert.match(family, /where id = \$\{data\.bookingId\} and user_id = \$\{context\.userId\}/);
   assert.match(family, /where id = \$\{paymentId\} and user_id = \$\{context\.userId\}/);
-  assert.match(family, /CHILD_PROFILE_CLOSED/);
-  assert.match(family, /where id = \$\{id\} and user_id = \$\{context\.userId\}/);
-  assert.doesNotMatch(family, /insert into children/);
+  assert.match(family, /where id = \$\{data\.id\} and user_id = \$\{context\.userId\}/);
   assert.match(family, /from children where user_id = \$\{context\.userId\}/);
   assert.match(family, /from payments p join daycares d on d\.id = p\.daycare_id/);
   assert.match(family, /where p\.user_id = \$\{context\.userId\}/);

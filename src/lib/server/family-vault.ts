@@ -102,7 +102,7 @@ export async function listParentVault(userId: string): Promise<{ documents: Vaul
   return {
     centres: centres.map((centre) => ({ id: centre.id, name: centre.name })),
     documents: docs.flatMap((doc) => {
-      if (!isFamilyDocKind(doc.kind) || doc.kind === "immunization") return [];
+      if (!isFamilyDocKind(doc.kind)) return [];
       return [
         {
           id: doc.id,
@@ -130,9 +130,7 @@ export async function saveFamilyDocument(input: {
   mime: string;
   body: Buffer;
 }): Promise<{ id: string }> {
-  if (!isFamilyDocKind(input.kind) || input.kind === "immunization") {
-    throw Object.assign(new Error("bad_kind"), { status: 400 });
-  }
+  if (!isFamilyDocKind(input.kind)) throw Object.assign(new Error("bad_kind"), { status: 400 });
   const sql = await getSql();
   const count = await sql<{ n: number }>`
     select count(*)::int as n from family_documents where user_id = ${input.userId}
@@ -254,7 +252,7 @@ export async function listCentreFamilyDocs(userId: string): Promise<CentreShared
     )
     .catch(() => []);
   return rows.flatMap((row) => {
-    if (!isFamilyDocKind(row.kind) || row.kind === "immunization") return [];
+    if (!isFamilyDocKind(row.kind)) return [];
     return [
       {
         shareId: row.share_id,

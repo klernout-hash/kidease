@@ -35,7 +35,7 @@ export const DEFAULT_REPLAY_SAMPLE_RATE = 0.05;
 export const POSTHOG_REPLAY_FLAG = "session-replay-web";
 
 const SENSITIVE_PROP =
-  /password|passwd|secret|authorization|api[_-]?key|otp|one[_-]?time|email|e-mail|phone|child[_-]?name|first[_-]?name|last[_-]?name|full[_-]?name|preferred[_-]?name|allerg|medical|medication|birthdate|date[_-]?of[_-]?birth|ssn|health|emergency/i;
+  /password|passwd|secret|authorization|api[_-]?key|otp|one[_-]?time|email|e-mail|phone|child[_-]?name|first[_-]?name|last[_-]?name|full[_-]?name|preferred[_-]?name|allerg|medical|medication|birthdate|date[_-]?of[_-]?birth|ssn|health|emergency|doctor|epi-?pen|immuniz/i;
 
 let client: PostHog | null = null;
 let started = false;

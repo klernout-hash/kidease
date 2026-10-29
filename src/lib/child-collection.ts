@@ -1,9 +1,9 @@
 /**
- * PIPEDA and Quebec Law 25: collect less. Parent and guest screens do not
- * ask for a child's name, birthdate, health, allergies, immunization,
- * medicines, or a journal. Tables stay. New writes stop.
+ * Parents can keep a child profile (name, birthdate, and care details).
+ * A centre sees it only after the parent enrols or confirms a share.
+ * Guests, analytics, and Help chat do not receive it.
  */
-export const CHILD_PROFILES_COLLECTED = false;
+export const CHILD_PROFILES_COLLECTED = true;
 
 export const CHILD_PROFILE_CLOSED = "KidEase does not collect child profiles.";
 

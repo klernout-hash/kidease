@@ -40,32 +40,28 @@ type RequestCopy = {
   note?: string | null;
 };
 
-function ageBit(age: string): string {
-  const label = age.trim();
-  return label ? ` (${label})` : "";
-}
-
 export function pushNewRequest(p: RequestCopy, locale: Locale) {
   if (locale === "fr") {
     return {
       title: "Nouvelle demande de place",
-      body: `${p.parentName} a demandé une place${ageBit(p.age)}. Touchez pour voir et répondre.`,
+      body: `${p.parentName} a demandé une place pour ${p.childName} (${p.age}). Touchez pour voir et répondre.`,
     };
   }
   return {
     title: "New Spot Request",
-    body: `${p.parentName} requested a spot${ageBit(p.age)}. Tap to view and respond.`,
+    body: `${p.parentName} requested a spot for ${p.childName} (${p.age}). Tap to view and respond.`,
   };
 }
 
 export function emailSubjectNewRequest(p: RequestCopy, locale: Locale) {
   if (locale === "fr") {
-    return `Nouvelle demande de place${ageBit(p.age)} de ${p.parentName}`;
+    return `Nouvelle demande de place – ${p.childName} (${p.age}) de ${p.parentName}`;
   }
-  return `New Spot Request${ageBit(p.age)} from ${p.parentName}`;
+  return `New Spot Request – ${p.childName} (${p.age}) from ${p.parentName}`;
 }
 
 export function emailBodyNewRequest(p: RequestCopy, locale: Locale) {
+  const ageDob = p.dob ? `${p.age} (${p.dob})` : p.age;
   if (locale === "fr") {
     return [
       `Bonjour ${p.daycareName},`,
@@ -73,7 +69,8 @@ export function emailBodyNewRequest(p: RequestCopy, locale: Locale) {
       "Vous avez reçu une nouvelle demande de place :",
       "",
       `Parent : ${p.parentName}`,
-      `Tranche d’âge : ${p.age || "—"}`,
+      `Enfant : ${p.childName}`,
+      `Âge / date de naissance : ${ageDob}`,
       `Date de début souhaitée : ${p.start}`,
       `Horaire : ${p.schedule}`,
       "",
@@ -91,7 +88,8 @@ export function emailBodyNewRequest(p: RequestCopy, locale: Locale) {
     "You have received a new spot request:",
     "",
     `Parent: ${p.parentName}`,
-    `Age range: ${p.age || "—"}`,
+    `Child: ${p.childName}`,
+    `Age / DOB: ${ageDob}`,
     `Desired Start Date: ${p.start}`,
     `Schedule: ${p.schedule}`,
     "",
@@ -107,21 +105,21 @@ export function emailBodyNewRequest(p: RequestCopy, locale: Locale) {
 export function systemRequestMessage(p: RequestCopy, locale: Locale) {
   if (locale === "fr") {
     return [
-      `${p.parentName} a demandé une place${ageBit(p.age)}.`,
+      `${p.parentName} a demandé une place pour ${p.childName} (${p.age}).`,
       `Date de début : ${p.start} | Horaire : ${p.schedule}`,
     ].join("\n");
   }
   return [
-    `${p.parentName} requested a spot${ageBit(p.age)}.`,
+    `${p.parentName} requested a spot for ${p.childName} (${p.age}).`,
     `Start date: ${p.start} | Schedule: ${p.schedule}`,
   ].join("\n");
 }
 
 export function centreAckMessage(p: RequestCopy, locale: Locale) {
   if (locale === "fr") {
-    return `Bonjour ${p.parentName}: ici ${p.daycareName}. Nous avons bien reçu la demande de votre famille et la passerons en revue. Vous pouvez écrire, appeler ou lancer une visio ici.`;
+    return `Bonjour ${p.parentName}: ici ${p.daycareName}. Nous avons bien reçu la demande pour ${p.childName} et la passerons en revue. Vous pouvez écrire, appeler ou lancer une visio ici.`;
   }
-  return `Hi ${p.parentName}: this is ${p.daycareName}. We received your family’s request and will review it shortly. You can message, call, or start a video visit right here.`;
+  return `Hi ${p.parentName}: this is ${p.daycareName}. We received your request for ${p.childName} and will review it shortly. You can message, call, or start a video visit right here.`;
 }
 
 export function statusUpdateMessage(
@@ -134,7 +132,7 @@ export function statusUpdateMessage(
       return [
         "Mise à jour – En revue",
         `Bonjour ${p.parentName},`,
-        `${p.daycareName} a commencé à examiner la demande de votre famille.`,
+        `${p.daycareName} a commencé à examiner votre demande pour ${p.childName}.`,
         "Ils vous répondront bientôt.",
       ].join("\n");
     }
@@ -142,7 +140,7 @@ export function statusUpdateMessage(
       return [
         "Bonne nouvelle ! Place offerte",
         `Bonjour ${p.parentName},`,
-        `${p.daycareName} a offert une place à votre famille à partir du ${p.start}.`,
+        `${p.daycareName} a offert une place pour ${p.childName} à partir du ${p.start}.`,
         "Payez maintenant dans l’application pour confirmer la place. Un reçu sera envoyé aux deux parties.",
       ].join("\n");
     }
@@ -150,14 +148,14 @@ export function statusUpdateMessage(
       return [
         "Mise à jour – Liste d’attente",
         `Bonjour ${p.parentName},`,
-        `${p.daycareName} a placé votre famille sur la liste d’attente.`,
+        `${p.daycareName} a placé ${p.childName} sur la liste d’attente.`,
         "Ils vous contacteront si une place se libère.",
       ].join("\n");
     }
     return [
       "Mise à jour – Place non disponible",
       `Bonjour ${p.parentName},`,
-      `Malheureusement, ${p.daycareName} n’est pas en mesure d’offrir une place à votre famille pour le moment.`,
+      `Malheureusement, ${p.daycareName} n’est pas en mesure d’offrir une place pour ${p.childName} pour le moment.`,
       "Vous pouvez continuer à chercher d’autres garderies dans l’application.",
     ].join("\n");
   }
@@ -165,7 +163,7 @@ export function statusUpdateMessage(
     return [
       "Status Update – Under Review",
       `Hi ${p.parentName},`,
-      `${p.daycareName} has started reviewing your family’s request.`,
+      `${p.daycareName} has started reviewing your request for ${p.childName}.`,
       "They will get back to you soon.",
     ].join("\n");
   }
@@ -173,7 +171,7 @@ export function statusUpdateMessage(
     return [
       "Good news! Spot offered",
       `Hi ${p.parentName},`,
-      `${p.daycareName} offered your family a spot starting ${p.start}.`,
+      `${p.daycareName} offered a spot for ${p.childName} starting ${p.start}.`,
       "Pay now in the app to confirm the spot. You’ll both receive a receipt.",
     ].join("\n");
   }
@@ -181,14 +179,14 @@ export function statusUpdateMessage(
     return [
       "Status Update – Waitlisted",
       `Hi ${p.parentName},`,
-      `${p.daycareName} placed your family on the waitlist.`,
+      `${p.daycareName} placed ${p.childName} on the waitlist.`,
       "They will contact you if a spot opens up.",
     ].join("\n");
   }
   return [
     "Status Update – Spot not available",
     `Hi ${p.parentName},`,
-    `Unfortunately, ${p.daycareName} isn’t able to offer your family a spot at this time.`,
+    `Unfortunately, ${p.daycareName} isn’t able to offer a spot for ${p.childName} at this time.`,
     "You can keep looking for other daycares in the app.",
   ].join("\n");
 }
@@ -198,14 +196,14 @@ export function spotConfirmedMessage(p: RequestCopy, locale: Locale) {
     return [
       "Place confirmée !",
       `Bonjour ${p.parentName},`,
-      `La place de votre famille chez ${p.daycareName} est maintenant confirmée à partir du ${p.start}.`,
+      `La place de ${p.childName} chez ${p.daycareName} est maintenant confirmée à partir du ${p.start}.`,
       "Paiement reçu. Conservez ce message comme reçu.",
     ].join("\n");
   }
   return [
     "Spot confirmed!",
     `Hi ${p.parentName},`,
-    `Your family’s spot at ${p.daycareName} is now confirmed starting ${p.start}.`,
+    `${p.childName}'s spot at ${p.daycareName} is now confirmed starting ${p.start}.`,
     "Payment received. Keep this message as your receipt.",
   ].join("\n");
 }

@@ -300,10 +300,11 @@ export const joinDaycareWaitlist = createServerFn({ method: "POST" })
     `;
     if (existing[0]) return { ok: true as const, id: existing[0].id, already: true };
     const id = nid("wl");
+    const child = clip(data.childLabel, 40);
     const note = clip(data.note, 280);
     await sql`
       insert into daycare_waitlist (id, daycare_id, user_id, age_group, child_label, note, status)
-      values (${id}, ${daycareId}, ${context.userId}, ${age}, ${null}, ${note || null}, 'waiting')
+      values (${id}, ${daycareId}, ${context.userId}, ${age}, ${child || null}, ${note || null}, 'waiting')
     `;
     return { ok: true as const, id, already: false };
   });
@@ -437,7 +438,7 @@ export const listCentreWaitlist = createServerFn({ method: "GET" })
           id: row.id,
           userId: row.user_id,
           parentName: String(row.parent_name || "Parent").trim() || "Parent",
-          childLabel: "",
+          childLabel: String(row.child_label || "").trim(),
           ageGroup: parseSpotAge(row.age_group) ?? "any",
           note: String(row.note || "").trim(),
           status: asStatus(row.status),

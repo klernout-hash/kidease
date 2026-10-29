@@ -486,8 +486,7 @@ describe("PostHog client wiring", () => {
     assert.match(read("src/routes/verify-2fa.tsx"), /ph-no-capture/);
     assert.match(read("src/components/child-profile-form.tsx"), /ph-no-capture/);
     assert.match(read("src/components/child-care-card.tsx"), /ph-no-capture/);
-    assert.match(read("src/components/child-data-retired.tsx"), /ph-no-capture/);
-    assert.doesNotMatch(read("src/components/parent-desk.tsx"), /ChildProfileForm/);
+    assert.match(read("src/components/parent-desk.tsx"), /ph-no-capture/);
     assert.match(read("src/routes/inbox.$id.tsx"), /ph-no-capture/);
     assert.match(read("src/routes/provider.tsx"), /ph-no-capture/);
   });

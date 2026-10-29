@@ -389,9 +389,7 @@ test("handlers stay wired to the decision helpers (no silent IDOR regression)", 
 
   const family = src("src/lib/server/family.ts");
   assert.match(family, /assertCanMutateListing/);
-  assert.match(family, /CHILD_PROFILE_CLOSED/);
-  assert.match(family, /where id = \$\{id\} and user_id = \$\{context\.userId\}/);
-  assert.doesNotMatch(family, /insert into children/);
+  assert.match(family, /where id = \$\{data\.id\} and user_id = \$\{context\.userId\}/);
   assert.match(family, /from children where user_id = \$\{context\.userId\}/);
 
   const profile = src("src/lib/server/profile-contact.ts");

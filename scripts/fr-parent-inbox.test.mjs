@@ -96,8 +96,7 @@ test("French sidebar strings are translated in every shipped locale", () => {
   assert.notEqual(tx("fr", "contractsLoading"), tx("en", "contractsLoading"));
   assert.match(src("src/routes/provider.tsx"), /t\("addressLabel"\)/);
   assert.match(src("src/routes/provider.tsx"), /t\("showTestListings"\)/);
-  assert.match(src("src/components/parent-desk.tsx"), /ChildDataRetired/);
-  assert.doesNotMatch(src("src/components/parent-desk.tsx"), /t\("childProfileSendLead"\)/);
+  assert.match(src("src/components/parent-desk.tsx"), /t\("childProfileSendLead"\)/);
   assert.match(src("src/lib/desk-nav.ts"), /hintKey: "childrenLimit"/);
   for (const [key, english] of [
     ["exploreForYou", "Home"],
@@ -133,8 +132,7 @@ test("French sidebar strings are translated in every shipped locale", () => {
 
 test("parent sidebar items are URLs and plan copy stays off when plans are hidden", () => {
   const dest = sidebarDestinations("parent", { subscriptionsEnabled: false });
-  assert.equal(dest.includes("/parent?tab=children"), false);
-  assert.equal(dest.includes("/parent?tab=care"), false);
+  assert.ok(dest.includes("/parent?tab=children"));
   assert.ok(dest.includes("/parent?tab=enrolled"));
   assert.ok(dest.includes("/parent?tab=saved"));
   assert.ok(dest.includes("/parent?tab=waitlists"));

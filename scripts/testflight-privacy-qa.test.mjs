@@ -28,11 +28,22 @@ test("tax receipt prints family, centre, amount, period, and number only", () =>
   assert.match(text, /Period: 2026-01-01 to 2026-12-31/);
   assert.match(text, /Receipt number:/);
   assert.doesNotMatch(text, /Child:/);
+  const withChild = buildT778Receipt({
+    taxYear: 2026,
+    receiptFor: "Nguyen family",
+    childName: "Amina",
+    providerName: "Harbour Centre",
+    amountPaid: 1200,
+    periodStart: "2026-01-01",
+    periodEnd: "2026-12-31",
+  }).text;
+  assert.match(withChild, /Receipt for: Nguyen family/);
+  assert.match(withChild, /Child: Amina/);
   const studio = src("src/components/tax-receipt-studio.tsx");
   assert.match(studio, /Receipt for/);
   assert.match(studio, /Reçu pour/);
-  assert.doesNotMatch(studio, />Child</);
-  assert.doesNotMatch(studio, />Enfant</);
+  assert.match(studio, /"Child"/);
+  assert.match(studio, /"Enfant"/);
 });
 
 test("map fallback stays provider-agnostic and opens the device maps app", () => {
@@ -67,9 +78,10 @@ test("privacy, terms, and cookies match data minimization and name Kyle", () => 
   assert.match(legal, /Quebec Law 25/);
   assert.match(legal, /Loi 25/);
   assert.match(legal, /privacyOfficerLine/);
-  assert.doesNotMatch(legal, /optional health and care details/);
-  assert.doesNotMatch(legal, /epi-pen flag/);
-  assert.doesNotMatch(legal, /Allergies, epi-pen, medical notes, medications, doctor name and phone, and emergency contacts are optional/);
+  assert.match(legal, /Child profile, only if you add one/);
+  assert.match(legal, /Profil d’enfant, seulement si vous l’ajoutez/);
+  assert.match(legal, /explicitly share/);
+  assert.doesNotMatch(legal, /We do not ask for a child’s name, birthdate, or health information/);
   const privacy = legal.slice(0, legal.indexOf("export const TERMS_EN"));
   assert.match(privacy, /Kyle Lernout|privacyOfficerLine/);
   assert.match(privacy, /privacy@kidease\.ca|PRIVACY_CONTACT_EMAIL/);

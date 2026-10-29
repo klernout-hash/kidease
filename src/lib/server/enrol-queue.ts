@@ -2,8 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { mapChild, type ChildRow } from "@/lib/child-profile";
+import { openHealth, revealChildHealth } from "@/lib/child-health-crypto";
+import { logChildProfileAccess } from "@/lib/server/child-access-log";
 import type { AgeGroup, BookingStatus, Child, Schedule, SpotRequest } from "@/lib/types";
-import { updateRequestStatus } from "@/lib/server/family";
+import { createSpotRequest, updateRequestStatus } from "@/lib/server/family";
 
 const OPEN: BookingStatus[] = ["requested", "under_review", "waitlist"];
 
@@ -52,7 +54,7 @@ function mapRequest(b: IncomingRow, child: Child | null): SpotRequest {
     createdAt: String(b.created_at),
     paymentStatus: b.payment_status,
     birthdate: b.birthdate,
-    allergies: b.allergies ?? child?.allergies ?? "",
+    allergies: child?.allergies || openHealth(b.allergies) || "",
     epiPen: Boolean(
       b.epi_pen === true || b.epi_pen === 1 || b.epi_pen === "t" || b.epi_pen === "true" || child?.epiPen,
     ),
@@ -107,7 +109,10 @@ export const listDaycareIncoming = createServerFn({ method: "GET" })
           [childIds],
         )
       : [];
-    const byId = new Map(kids.map((k) => [k.id, mapChild(k)]));
+    const byId = new Map(kids.map((k) => [k.id, mapChild(revealChildHealth(k))]));
+    for (const id of childIds) {
+      void logChildProfileAccess(sql, { childId: id, actorId: context.userId, action: "read" });
+    }
     return rows.map((r) => mapRequest(r, r.child_id ? byId.get(r.child_id) ?? null : null));
   });
 
@@ -140,13 +145,81 @@ export const decideParentRequest = createServerFn({ method: "POST" })
 
 export const shareChildWithCentres = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { childId: string; daycareIds: string[]; startDate?: string; message?: string }) => input)
-  .handler(async () => {
-    const { CHILD_PROFILE_CLOSED } = await import("@/lib/child-collection");
-    throw new Error(CHILD_PROFILE_CLOSED);
-  });
+  .validator((input: { childId: string; daycareIds: string[]; startDate?: string; message?: string; consent?: boolean }) => input)
+  .handler(async ({ context, data }) => {
+    if (data.consent !== true) {
+      throw new Error("Confirm you want this centre to see this child's care details.");
+    }
+    const sql = await getSql();
+    const kids = await sql<ChildRow>`
+      select id, name, preferred_name, birthdate, allergies, epi_pen, medical_notes, medications,
+             doctor_name, doctor_phone, foods_like, foods_avoid, diet, likes, comfort_item, nap_routine,
+             toilet, home_language, soothes, fears, emergency_name, emergency_phone, pickup_people,
+             photo_ok, sunscreen_ok, notes
+      from children where id = ${data.childId} and user_id = ${context.userId} limit 1
+    `;
+    const kid = kids[0];
+    if (!kid) throw new Error("Child not found");
+    const child = mapChild(revealChildHealth(kid));
+    await logChildProfileAccess(sql, { childId: child.id, actorId: context.userId, action: "share" });
+    const parent = await sql<{ name: string | null }>`select name from "user" where id = ${context.userId} limit 1`;
+    const start =
+      data.startDate && /^\d{4}-\d{2}-\d{2}$/.test(data.startDate) ? data.startDate : defaultStart();
+    const noteBits = [
+      data.message?.trim(),
+      child.allergies ? `Allergies: ${child.allergies}` : "",
+      child.epiPen ? "Carries an EpiPen" : "",
+      child.medicalNotes ? `Medical: ${child.medicalNotes}` : "",
+      child.emergencyName ? `Emergency: ${child.emergencyName} ${child.emergencyPhone}` : "",
+    ].filter(Boolean);
+    const sent: Array<{ daycareId: string; bookingId: string; conversationId: string; reused: boolean }> = [];
 
+    for (const daycareId of [...new Set(data.daycareIds.map((id) => id.trim()).filter(Boolean))]) {
+      const existing = await sql<{ id: string; conversation_id: string | null; status: BookingStatus }>`
+        select id, conversation_id, status from bookings
+        where user_id = ${context.userId} and daycare_id = ${daycareId} and child_id = ${child.id}
+          and status in ('requested','under_review','waitlist','accepted')
+        order by created_at desc limit 1
+      `;
+      if (existing[0]) {
+        sent.push({
+          daycareId,
+          bookingId: existing[0].id,
+          conversationId: existing[0].conversation_id ?? "",
+          reused: true,
+        });
+        continue;
+      }
+      const res = await createSpotRequest({
+        data: {
+          daycareId,
+          childId: child.id,
+          childName: child.name,
+          birthdate: child.birthdate,
+          startDate: start,
+          schedule: "full",
+          days: [],
+          message: noteBits.join(" · ") || undefined,
+          parentName: parent[0]?.name ?? undefined,
+        },
+      });
+      sent.push({
+        daycareId,
+        bookingId: res.id,
+        conversationId: res.conversationId,
+        reused: false,
+      });
+    }
+    return { ok: true as const, sent, childName: child.name };
+  });
 
 export function isWaitingOnDaycare(status: BookingStatus) {
   return OPEN.includes(status);
+}
+
+function defaultStart() {
+  const d = new Date();
+  d.setMonth(d.getMonth() + 1);
+  d.setDate(1);
+  return d.toISOString().slice(0, 10);
 }

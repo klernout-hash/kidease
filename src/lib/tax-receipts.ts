@@ -1,14 +1,16 @@
 /**
  * Parent-ready CRA T778 summary and a Québec RL-24 box summary.
- * The provider types the family or account-holder name, the centre, the amount,
- * the period, and a receipt number. This file does not collect or print a child's name.
+ * The provider types the family or account-holder name, an optional child name,
+ * the centre, the amount, the period, and a receipt number.
  * It does not invent a government barcode or a certification mark.
  */
 
 export type T778Input = {
   taxYear: number;
-  /** Family or account-holder name. Never a child's name. */
+  /** Family or account-holder name. */
   receiptFor: string;
+  /** Optional child name printed under the family. */
+  childName?: string;
   providerName: string;
   providerAddress?: string;
   province?: string;
@@ -28,6 +30,7 @@ export type T778Receipt = {
 export type Rl24Input = {
   taxYear: number;
   receiptFor: string;
+  childName?: string;
   payerName?: string;
   providerName: string;
   /** Ministère permit or NEQ, typed by the Québec provider. Used only as the receipt number when no slip is set. */
@@ -68,8 +71,10 @@ function receiptNumberFor(kind: "t778" | "rl24", year: number, given?: string): 
 export function buildT778Receipt(input: T778Input): T778Receipt {
   const year = Number.isFinite(input.taxYear) ? Math.floor(input.taxYear) : new Date().getFullYear();
   const number = receiptNumberFor("t778", year, input.receiptNumber);
+  const child = clean(input.childName || "");
   const lines = [
     `Receipt for: ${clean(input.receiptFor)}`,
+    ...(child ? [`Child: ${child}`] : []),
     `Centre: ${clean(input.providerName)}`,
     `Amount: ${dollars(input.amountPaid)}`,
     `Period: ${clean(input.periodStart, 20)} to ${clean(input.periodEnd, 20)}`,
@@ -85,8 +90,10 @@ export function buildRl24Summary(input: Rl24Input): Rl24Result {
   const year = Number.isFinite(input.taxYear) ? Math.floor(input.taxYear) : new Date().getFullYear();
   const start = clean(input.periodStart || `${year}-01-01`, 20);
   const end = clean(input.periodEnd || `${year}-12-31`, 20);
+  const child = clean(input.childName || "");
   const lines = [
     `Receipt for: ${clean(input.receiptFor)}`,
+    ...(child ? [`Child: ${child}`] : []),
     `Centre: ${clean(input.providerName)}`,
     `Amount: ${dollars(input.boxA)}`,
     `Period: ${start} to ${end}`,

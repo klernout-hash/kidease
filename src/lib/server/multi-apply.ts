@@ -17,6 +17,7 @@ import { fromPrice, mapDaycare, type DaycareRow } from "@/lib/server/map-row";
 import { lookupUser, notifyPlatform } from "@/lib/server/notify";
 import {
   centreAckMessage,
+  formatAgeLabel,
   formatStart,
   pushNewRequest,
   scheduleLabel,
@@ -40,9 +41,8 @@ export const createMultiSpotRequest = createServerFn({ method: "POST" })
   .validator(
     (input: {
       daycareIds: string[];
-      childName?: string;
-      birthdate?: string;
-      ageGroup?: string;
+      childName: string;
+      birthdate: string;
       startDate: string;
       schedule: Schedule;
       subsidyInterest: boolean;
@@ -62,9 +62,8 @@ export const createMultiSpotRequest = createServerFn({ method: "POST" })
       select count(*)::int as n from bookings
       where user_id = ${context.userId} and created_at >= ${since}
     `;
-    const childName = String(data.childName || "").trim();
-    const birthdate = String(data.birthdate || "").trim();
-    const ageGroup = String(data.ageGroup || "").trim();
+    const childName = data.childName.trim();
+    const birthdate = data.birthdate.trim();
     const dupSince = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     const dups = await sql<{ daycare_id: string; name: string; birthdate: string; created_at: string }>`
       select b.daycare_id, c.name, c.birthdate::text as birthdate, b.created_at
@@ -93,7 +92,6 @@ export const createMultiSpotRequest = createServerFn({ method: "POST" })
       shareConsent: data.shareConsent === true,
       childName,
       birthdate,
-      ageGroup,
       startDate: data.startDate,
       recentRequestCount: recent[0]?.n ?? 0,
       recentChildCentres: dups.map((row) => ({
@@ -120,13 +118,26 @@ export const createMultiSpotRequest = createServerFn({ method: "POST" })
           : "Subsidy or $10-a-day interest: no.";
     const parentNote = [note, subsidyLine].filter(Boolean).join("\n");
     const batchId = nid("batch");
+    const key = childKey(childName, birthdate);
     const sent: SentRow[] = [];
     const skipped: SkipRow[] = [...planned.skipped];
-    const childId: string | null = null;
-    const { parseSpotAge, spotAgePublicLabel } = await import("@/lib/spot-offers");
-    const parsedAge =
-      parseSpotAge(ageGroup) ??
-      (/^\d{4}-\d{2}-\d{2}$/.test(birthdate) ? ageGroupFromMonths(monthsBetween(birthdate)) : null);
+
+    let childId = "";
+    const owned = await sql<{ id: string }>`
+      select id from children
+      where user_id = ${context.userId}
+        and lower(name) = ${key.split("|")[0]}
+        and birthdate::text = ${birthdate}
+      limit 1
+    `;
+    childId = owned[0]?.id || "";
+    if (!childId && planned.sendIds.length) {
+      childId = nid("ch");
+      await sql`
+        insert into children (id, user_id, name, birthdate, notes)
+        values (${childId}, ${context.userId}, ${childName}, ${birthdate}, ${note || null})
+      `;
+    }
 
     for (const daycareId of planned.sendIds) {
       const row = loaded.find((item) => item.id === daycareId)?.row;
@@ -140,16 +151,15 @@ export const createMultiSpotRequest = createServerFn({ method: "POST" })
         continue;
       }
       const d = mapDaycare(row);
-      const priced = parsedAge && parsedAge !== "any" ? parsedAge : null;
+      const ageGroup = ageGroupFromMonths(monthsBetween(birthdate));
       const priceMap = { infant: d.infantMonthly, toddler: d.toddlerMonthly, preschool: d.preschoolMonthly };
-      let amount = (priced ? priceMap[priced] : null) ?? fromPrice(d);
+      let amount = priceMap[ageGroup] ?? fromPrice(d);
       if (schedule === "part") amount = d.partTimeMonthly ?? Math.round(amount * 0.6);
-      const ageLabel = parsedAge ? spotAgePublicLabel(parsedAge, locale) : locale === "fr" ? "Tout âge" : "Any age";
       const copy = {
         parentName,
-        childName: ageLabel,
-        age: ageLabel,
-        dob: "",
+        childName,
+        age: formatAgeLabel(birthdate, locale),
+        dob: birthdate,
         daycareName: d.name,
         start: formatStart(data.startDate, locale),
         schedule: scheduleLabel(schedule, null, locale),
@@ -172,7 +182,7 @@ export const createMultiSpotRequest = createServerFn({ method: "POST" })
           parent_note, conversation_id, start_date, parent_name, subsidy_interest, share_consent_at, batch_id
         ) values (
           ${bookingId}, ${context.userId}, ${daycareId}, ${childId},
-          ${data.startDate.slice(0, 7)}, ${schedule}, ${parsedAge ?? "any"}, ${"requested"}, ${amount},
+          ${data.startDate.slice(0, 7)}, ${schedule}, ${ageGroup}, ${"requested"}, ${amount},
           ${parentNote}, ${cid}, ${data.startDate}, ${parentName},
           ${Boolean(data.subsidyInterest)}, ${new Date().toISOString()}, ${batchId}
         )
@@ -215,7 +225,7 @@ export const createMultiSpotRequest = createServerFn({ method: "POST" })
           slug: d.slug,
           actorName: parentName || actor.name,
           actorEmail: actor.email,
-          detail: [`Age group: ${parsedAge ? spotAgePublicLabel(parsedAge, locale) : ""}`, `Start: ${data.startDate}`, `Schedule: ${schedule}`, parentNote]
+          detail: [`Child: ${childName}`, `Start: ${data.startDate}`, `Schedule: ${schedule}`, parentNote]
             .filter(Boolean)
             .join("\n"),
         });

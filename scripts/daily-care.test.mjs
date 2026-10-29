@@ -104,9 +104,8 @@ test("journal accepts text + photos and refuses video", () => {
 
 test("Daily care is wired on parent desk and daycare Today without touching marketplace helpers", () => {
   assert.equal(parentNavSearch("care").tab, "care");
-  assert.equal(visibleDeskNav("parent").some((item) => item.id === "care"), false);
-  assert.match(src("src/components/parent-desk.tsx"), /ChildDataRetired/);
-  assert.doesNotMatch(src("src/components/parent-desk.tsx"), /DailyCareDesk/);
+  assert.equal(visibleDeskNav("parent").some((item) => item.id === "care"), true);
+  assert.match(src("src/components/parent-desk.tsx"), /DailyCareDesk/);
   assert.match(src("src/components/parent-desk.tsx"), /contentTab === "care"/);
   assert.match(src("src/routes/parent.tsx"), /tab === "care"/);
   assert.match(src("src/components/today-urgency-home.tsx"), /DailyCareDesk role="provider"/);

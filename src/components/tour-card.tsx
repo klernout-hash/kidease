@@ -123,6 +123,7 @@ export function TourCard({
           </p>
           <p className="mt-1 font-medium">
             {tour.parentName ? `${tour.parentName}` : t("parentLabel")}
+            {tour.childName ? ` · ${tour.childName}` : ""}
           </p>
           <p className="mt-1 text-sm text-muted">
             {tour.daycareName} · {formatPreferredTimes(tour.preferredTimes, locale)}

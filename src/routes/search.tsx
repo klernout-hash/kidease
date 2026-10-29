@@ -431,7 +431,7 @@ export function SearchScreen({
   useEffect(() => {
     if (view === "map") setMapEnabled(true);
     if (view !== "map") return;
-    void import("@/lib/google-maps").then((mod) => mod.loadGoogleMaps().catch(() => undefined));
+    void import("@/lib/osm-map").then((mod) => mod.preloadOsmMap().catch(() => undefined));
   }, [view]);
 
   useEffect(() => {

@@ -63,8 +63,7 @@ test("a profile opens read-only and save checks the first empty required field",
     assert.match(source, /aria-invalid/);
     assert.match(source, /focusFirstInvalid/);
   }
-  assert.match(desk, /ChildDataRetired/);
-  assert.doesNotMatch(desk, /data-ke="child-profile-edit"/);
+  assert.match(desk, /data-ke="child-profile-edit"/);
   assert.match(child, /data-ke="child-saved"/);
 });
 

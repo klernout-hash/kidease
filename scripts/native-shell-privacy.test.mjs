@@ -27,17 +27,19 @@ test("native admin requests stay off the Access path", () => {
   assert.equal(nativeAdminRedirectTarget({ pathname: "/search", cookie: "ke_shell=native" }), null);
 });
 
-test("parent and guest menus do not collect child profiles", () => {
-  assert.equal(CHILD_PROFILES_COLLECTED, false);
-  assert.equal(parentNavCollectsChildData("children"), false);
-  assert.equal(parentNavCollectsChildData("care"), false);
-  assert.equal(parentNavCollectsChildData("documents"), false);
-  assert.equal(parentNavCollectsChildData("search"), true);
-  const menu = src("src/components/app-menu-screen.tsx");
-  assert.doesNotMatch(menu, /tab: "children"/);
-  const waitlist = src("src/components/join-waitlist.tsx");
-  assert.doesNotMatch(waitlist, /Child's first name/);
-  assert.doesNotMatch(waitlist, /childLabel/);
+test("child profiles stay parent-owned and the admin note is not an Access path", () => {
+  assert.equal(CHILD_PROFILES_COLLECTED, true);
+  assert.equal(parentNavCollectsChildData("children"), true);
+  assert.equal(
+    nativeAdminRedirectTarget({ pathname: "/app-admin-unavailable", userAgent: "iPhone KidEaseNative" }),
+    null,
+  );
+  assert.match(src("src/lib/desk-nav.ts"), /id: "children"/);
+  assert.match(src("src/lib/server/enrol-queue.ts"), /data\.consent !== true/);
+  assert.match(src("src/lib/child-health-crypto.ts"), /aes-256-gcm/);
+  assert.match(src("src/lib/server/family.ts"), /sealHealth/);
+  assert.match(src("src/lib/server/family.ts"), /delete from children where user_id/);
+  assert.match(src("migrations/0106_child_profile_access.sql"), /child_profile_access/);
   assert.match(src("migrations/0105_stop_child_pii_collection.sql"), /does not DROP/);
 });
 

@@ -74,19 +74,21 @@ describe("nearby uses PostGIS ST_DWithin with a catalogue fallback", () => {
 });
 
 describe("Places autocomplete stays on the server key", () => {
-  it("uses GOOGLE_PLACES_API_KEY / GOOGLE_MAPS_API_KEY only on the server", () => {
+  it("uses Photon on the server, not a Google Maps key", () => {
     const src = read("src/lib/server/google-places.ts");
-    assert.match(src, /process\.env\.GOOGLE_PLACES_API_KEY/);
-    assert.match(src, /process\.env\.GOOGLE_MAPS_API_KEY/);
-    assert.match(src, /place\/autocomplete\/json/);
-    assert.match(src, /place\/details\/json/);
-    assert.match(src, /geocode\/json/);
-    assert.match(src, /country:ca/);
+    assert.match(read("src/lib/photon.ts"), /photon\.komoot\.io/);
+    assert.match(src, /photonSearchUrl/);
+    assert.match(src, /placesBiasOrigin/);
+    assert.match(read("src/lib/photon.ts"), /countrycode/);
+    assert.match(read("src/lib/photon.ts"), /CANADA_BBOX/);
+    assert.doesNotMatch(src, /maps\.googleapis\.com/);
+    assert.doesNotMatch(src, /process\.env\.GOOGLE_PLACES_API_KEY/);
+    assert.doesNotMatch(src, /process\.env\.GOOGLE_MAPS_API_KEY/);
     assert.doesNotMatch(src, /AIza[0-9A-Za-z_-]{20,}/);
     assert.doesNotMatch(read("src/components/place-search.tsx"), /process\.env\.GOOGLE_/);
-    assert.doesNotMatch(read("src/lib/google-maps.ts"), /process\.env\.GOOGLE_PLACES_API_KEY/);
     assert.match(read("src/components/place-search.tsx"), /suggestPlacesBrowser/);
-    assert.match(read("src/lib/place-suggest.ts"), /importLibrary/);
+    assert.match(read("src/components/place-search.tsx"), /geocodeWithBrowser/);
+    assert.doesNotMatch(read("src/lib/place-suggest.ts"), /loadGoogleMaps/);
   });
 
   it("search and home use PlaceSearch", () => {
@@ -122,7 +124,7 @@ describe("dual chrome and map clustering stay in place", () => {
     assert.match(map, /ke-logo-cluster/);
     assert.match(map, /ke-cluster-bubble/);
     assert.match(map, /createKidEaseMap/);
-    assert.match(map, /loadAdvancedMarkerElement/);
+    assert.match(map, /createListingOverlay/);
     assert.doesNotMatch(map, /mapId:\s*["'`]/);
   });
 });

@@ -39,7 +39,9 @@ export function EarningsBillSheet({
         </div>
       </div>
       <dl className="mt-5 space-y-3 text-sm">
-        {bill.parentName ? <Row label={t("earningsDetails")} value={bill.parentName} /> : null}
+        {bill.parentName || bill.childName ? (
+          <Row label={t("earningsDetails")} value={[bill.parentName, bill.childName].filter(Boolean).join(" · ")} />
+        ) : null}
         {bill.programStart ? <Row label={t("earningsProgram")} value={formatEarnDate(bill.programStart, french) || bill.programStart} /> : null}
         {bill.centreName ? <Row label={t("earningsByListing")} value={bill.centreName} /> : null}
       </dl>

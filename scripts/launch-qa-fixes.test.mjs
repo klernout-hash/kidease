@@ -56,8 +56,7 @@ test("parent can delete an owned child profile after confirm", () => {
   assert.match(control, /data-ke="delete-child-dialog"/);
   assert.match(control, /data-ke="delete-child-confirm"/);
   assert.match(control, /role="dialog"/);
-  assert.match(desk, /ChildDataRetired/);
-  assert.doesNotMatch(desk, /DeleteChildControl/);
+  assert.match(desk, /DeleteChildControl/);
   assert.match(form, /DeleteChildControl/);
   assert.match(copy, /deleteChildTitle: "Delete this child profile\?"/);
   assert.match(copy, /Supprimer ce profil d’enfant\?/);

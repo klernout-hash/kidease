@@ -53,7 +53,6 @@ export function planMultiApply(input: {
   shareConsent: boolean;
   childName: string;
   birthdate: string;
-  ageGroup?: string | null;
   startDate: string;
   recentRequestCount: number;
   recentChildCentres: readonly { daycareId: string; childKey: string; sentAt: string | Date }[];
@@ -63,10 +62,7 @@ export function planMultiApply(input: {
   const name = input.childName.trim();
   const birth = input.birthdate.trim();
   const start = input.startDate.trim();
-  const ageOnly = input.ageGroup === "infant" || input.ageGroup === "toddler" || input.ageGroup === "preschool" || input.ageGroup === "any";
-  if (ageOnly) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) return { sendIds: [], skipped: [], error: "details" };
-  } else if (!name || !/^\d{4}-\d{2}-\d{2}$/.test(birth) || !/^\d{4}-\d{2}-\d{2}$/.test(start)) {
+  if (!name || !/^\d{4}-\d{2}-\d{2}$/.test(birth) || !/^\d{4}-\d{2}-\d{2}$/.test(start)) {
     return { sendIds: [], skipped: [], error: "details" };
   }
   const ids = [...new Set(input.daycareIds.map((id) => id.trim()).filter(Boolean))];
@@ -76,7 +72,7 @@ export function planMultiApply(input: {
     return { sendIds: [], skipped: [], error: "rate" };
   }
   const byId = new Map(input.centres.map((centre) => [centre.id, centre]));
-  const key = ageOnly ? `age|${input.ageGroup}` : childKey(name, birth);
+  const key = childKey(name, birth);
   const now = input.now ?? new Date();
   const sendIds: string[] = [];
   const skipped: MultiApplyPlan["skipped"] = [];

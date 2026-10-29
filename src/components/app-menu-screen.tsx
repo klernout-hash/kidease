@@ -12,7 +12,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
 import { menuGroupLinks, menuHighlight, type MenuGroupId } from "@/lib/app-menu";
 import { accountSearch, highlightDesk } from "@/lib/desks";
-import { accountDeskPath, menuDeskPath, providerDeskPath } from "@/lib/desk-nav";
+import { accountDeskPath, menuDeskPath, parentDeskPath, providerDeskPath } from "@/lib/desk-nav";
 import { footerLinkLabel } from "@/lib/site-footer-nav";
 import { isFrPath, localePath } from "@/lib/locale-path";
 import { chartHasEarnings, insightsCardRating, monthTick, type HostEarnings, type HostInsights } from "@/lib/host-desk";
@@ -121,6 +121,15 @@ export function AppMenuScreen({
       <nav className="ke-menu-group mt-6" aria-label={t("navMenu")}>
         {user && highlight !== "create" ? (
           <MenuRow to={menuDeskPath(pathname)} search={{ screen: "payments" }} label={t("earningsPayments")} icon="terms" marker="payments" />
+        ) : null}
+        {highlight === "find" ? (
+          <MenuRow
+            to={parentDeskPath(pathname)}
+            search={{ tab: "children" }}
+            label={t("children")}
+            icon="parent"
+            marker="children"
+          />
         ) : null}
         <MenuRow
           to={highlight === "create" || user ? accountDeskPath(pathname) : localePath("/login", locale)}

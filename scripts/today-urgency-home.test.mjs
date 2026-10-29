@@ -76,8 +76,8 @@ test("parent phone tabs are Search, Saved, Requests, Messages, Account", () => {
   assert.deepEqual(parent, ["search", "saved", "bookings", "messages", "account"]);
   const secondary = visibleSecondaryDeskNav("parent", { subscriptionsEnabled: true }).map((i) => i.id);
   assert.equal(secondary.includes("explore"), true);
-  assert.equal(secondary.includes("care"), false);
-  assert.equal(secondary.includes("children"), false);
+  assert.equal(secondary.includes("care"), true);
+  assert.equal(secondary.includes("children"), true);
   assert.equal(secondary.includes("waitlists"), true);
   assert.equal(secondary.includes("payments"), true);
   assert.equal(secondary.includes("upgrade"), true);

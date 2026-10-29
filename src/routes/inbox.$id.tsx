@@ -11,6 +11,7 @@ import { BlockMessagesButton, SafetyReportButton } from "@/components/safety-act
 import { safetyText } from "@/lib/safety";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { ChildCareCard } from "@/components/child-care-card";
 import { getFamily, getThread, updateRequestStatus } from "@/lib/server/family";
 import { listParentBills } from "@/lib/server/billing";
 import { billDollars, billIsOpen, type Bill } from "@/lib/bill";
@@ -25,14 +26,14 @@ import { replyDraftEventProps, replyDraftQuiet } from "@/lib/ai/reply-drafts";
 import { useAiFeatureFlag } from "@/lib/ai/use-ai-flag";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { parentWaitlistStatus, waitlistEventProps } from "@/lib/waitlist-tracker";
-import { formatStart, pushNewRequest, scheduleLabel } from "@/lib/templates";
+import { formatAgeLabel, formatStart, pushNewRequest, scheduleLabel } from "@/lib/templates";
 import { useCopy } from "@/lib/use-copy";
 import { confirmAction } from "@/lib/success-confirm";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { TourCard } from "@/components/tour-card";
 import { money } from "@/lib/utils";
 import { MIN_POLL_MS, pollBackoffMs } from "@/lib/fn-query";
-import type { BookingStatus, Message, Schedule, TourRequest } from "@/lib/types";
+import type { BookingStatus, Child, Message, Schedule, TourRequest } from "@/lib/types";
 
 export const Route = createFileRoute("/inbox/$id")({
   validateSearch: (s: Record<string, unknown>) => parseInboxSearch(s),
@@ -76,6 +77,7 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
   const [viewerRole, setViewerRole] = useState<"parent" | "centre" | "admin" | "none">("none");
   const [loadState, setLoadState] = useState<"loading" | "ready" | "missing" | "error">("loading");
   const [booking, setBooking] = useState<BookingInfo | null>(null);
+  const [child, setChild] = useState<Child | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [tours, setTours] = useState<TourRequest[]>([]);
   const [canWrite, setCanWrite] = useState(true);
@@ -108,17 +110,20 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
     setSlug(res.daycareSlug);
     setIsParent(res.isParent);
     setViewerRole(res.viewerRole === "centre" || res.viewerRole === "admin" || res.viewerRole === "parent" ? res.viewerRole : "none");
-    let next = res.booking ? { ...res.booking, birthdate: null } : null;
+    let next = res.booking ? { ...res.booking, birthdate: res.booking.birthdate ?? null } : null;
+    let kid = res.child ?? null;
     if (!next) {
       try {
         const family = await getFamily();
         const match = family.bookings.find((b) => b.conversationId === id || b.daycareSlug === res.daycareSlug);
         if (match) {
+          const found = family.children.find((c) => c.id === match.childId);
+          if (found) kid = found;
           next = {
             id: match.id,
             status: match.status,
-            childName: null,
-            birthdate: null,
+            childName: match.childName,
+            birthdate: found?.birthdate ?? null,
             startDate: match.startDate,
             startMonth: match.startMonth,
             schedule: match.schedule,
@@ -135,6 +140,7 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
       }
     }
     setBooking(next);
+    setChild(kid);
     setMessages(res.messages);
     setTours(res.tours ?? []);
     const meta = await getConversationDetails({ data: { conversationId: id } }).catch(() => null);
@@ -267,9 +273,9 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
     ? pushNewRequest(
         {
           parentName: booking.parentName ?? user?.displayName ?? "A parent",
-          childName: "",
-          age: "",
-          dob: "",
+          childName: booking.childName ?? "child",
+          age: booking.birthdate ? formatAgeLabel(booking.birthdate, locale) : "",
+          dob: booking.birthdate,
           daycareName: name,
           start: formatStart(booking.startDate ?? booking.startMonth, locale),
           schedule: scheduleLabel(booking.schedule, booking.days, locale),
@@ -472,6 +478,7 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
                     <p className="mt-0.5 text-primary-fg/90">{notice.body}</p>
                   </div>
                 ) : null}
+                {child ? <ChildCareCard child={child} showCompleteLink={isParent} /> : null}
                 {isParent && desks?.stripeLive && booking?.status === "accepted" && booking.paymentStatus !== "paid" ? (
                   <div className="rounded-xl bg-primary p-4 text-primary-fg">
                     <p className="font-medium">{openBill ? t("payBillTitle") : t("awaitingCentreBill")}</p>

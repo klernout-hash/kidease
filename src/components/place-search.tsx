@@ -44,7 +44,7 @@ export async function resolveLocationQuery(query: string): Promise<ResolvedPlace
     const remote = await geocodePlace({ data: q });
     if (remote) return remote;
   } catch {
-    /* server Places / Geocode can be empty or denied */
+    /* address lookup can be empty or denied */
   }
   return geocodeWithBrowser(q);
 }

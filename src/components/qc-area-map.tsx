@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { createKidEaseMap, hasGoogleMapsBrowserKey, loadGoogleMaps } from "@/lib/google-maps";
+import { createKidEaseMap, osmMaps, type OsmCircle, type OsmMap } from "@/lib/osm-map";
 import { useStoreChannel } from "@/lib/use-native-shell";
 
 type Props = {
@@ -19,21 +19,24 @@ export function QcAreaMap({ lat, lng, radiusM, label, caption }: Props) {
 
   useEffect(() => {
     const el = host.current;
-    if (channel === "huawei" || !el || !valid || !hasGoogleMapsBrowserKey()) return;
+    if (channel === "huawei" || !el || !valid) return;
     let cancelled = false;
-    let circle: google.maps.Circle | null = null;
+    let circle: OsmCircle | null = null;
+    let map: OsmMap | null = null;
     void (async () => {
       try {
-        const maps = await loadGoogleMaps();
-        if (cancelled || !el) return;
-        const created = await createKidEaseMap(maps, el, {
+        const created = await createKidEaseMap(el, {
           center: { lat, lng },
           zoom: 12,
           mapTypeId: "roadmap",
+          cooperative: true,
         });
-        if (cancelled) return;
-        created.map.setOptions({ gestureHandling: "cooperative" });
-        circle = new maps.Circle({
+        if (cancelled) {
+          created.map.destroy();
+          return;
+        }
+        map = created.map;
+        circle = new osmMaps.Circle({
           map: created.map,
           center: { lat, lng },
           radius: radiusM,
@@ -45,7 +48,7 @@ export function QcAreaMap({ lat, lng, radiusM, label, caption }: Props) {
           clickable: false,
         });
         const bounds = circle.getBounds();
-        if (bounds) created.map.fitBounds(bounds);
+        if (!bounds.isEmpty()) created.map.fitBounds(bounds, 24);
         setLive(true);
       } catch {
         if (!cancelled) setLive(false);
@@ -54,6 +57,7 @@ export function QcAreaMap({ lat, lng, radiusM, label, caption }: Props) {
     return () => {
       cancelled = true;
       circle?.setMap(null);
+      map?.destroy();
     };
   }, [channel, lat, lng, radiusM, valid]);
 

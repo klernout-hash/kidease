@@ -18,6 +18,7 @@ export function TaxReceiptStudio({ quebec = false }: { quebec?: boolean }) {
   const fr = locale === "fr";
   const year = new Date().getFullYear();
   const [receiptFor, setReceiptFor] = useState("");
+  const [childName, setChildName] = useState("");
   const [provider, setProvider] = useState("");
   const [amount, setAmount] = useState("");
   const [province, setProvince] = useState(quebec ? "QC" : "MB");
@@ -34,6 +35,7 @@ export function TaxReceiptStudio({ quebec = false }: { quebec?: boolean }) {
     const receipt = buildT778Receipt({
       taxYear: year,
       receiptFor,
+      childName,
       providerName: provider,
       amountPaid: paid,
       periodStart: `${year}-01-01`,
@@ -48,6 +50,7 @@ export function TaxReceiptStudio({ quebec = false }: { quebec?: boolean }) {
     const summary = buildRl24Summary({
       taxYear: year,
       receiptFor,
+      childName,
       providerName: provider,
       permitOrNeq: permit,
       slipNumber: slip,
@@ -68,8 +71,8 @@ export function TaxReceiptStudio({ quebec = false }: { quebec?: boolean }) {
       <h2 className="font-display text-2xl">{fr ? "Reçus d'impôt" : "Tax receipts"}</h2>
       <p className="mt-1 text-sm text-muted">
         {fr
-          ? "Le reçu montre la famille, le centre, le montant, la période et le numéro de reçu."
-          : "The receipt shows the family, the centre, the amount, the period, and the receipt number."}
+          ? "Le reçu montre la famille, l'enfant s'il y a lieu, le centre, le montant, la période et le numéro de reçu."
+          : "The receipt shows the family, the child when you add one, the centre, the amount, the period, and the receipt number."}
       </p>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <label className="block text-sm">
@@ -81,6 +84,10 @@ export function TaxReceiptStudio({ quebec = false }: { quebec?: boolean }) {
             onChange={(event) => setReceiptFor(event.target.value)}
             onFocus={(event) => event.currentTarget.scrollIntoView({ block: "center" })}
           />
+        </label>
+        <label className="block text-sm">
+          <span className="font-medium">{fr ? "Enfant" : "Child"}</span>
+          <input className="ke-input mt-1 w-full" value={childName} autoComplete="off" onChange={(event) => setChildName(event.target.value)} />
         </label>
         <label className="block text-sm">
           <span className="font-medium">{fr ? "Centre" : "Centre"}</span>

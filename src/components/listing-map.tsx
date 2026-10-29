@@ -1,11 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  createKidEaseMap,
-  createListingOverlayFactory,
-  hasGoogleMapsBrowserKey,
-  loadAdvancedMarkerElement,
-  loadGoogleMaps,
-} from "@/lib/google-maps";
+import { createKidEaseMap, createListingOverlay } from "@/lib/osm-map";
 import { useCopy } from "@/lib/use-copy";
 import { useStoreChannel } from "@/lib/use-native-shell";
 import { MapUnavailable } from "@/components/map-unavailable";
@@ -28,48 +22,49 @@ type Props = {
   address?: string;
 };
 
-/** Listing preview: same Maps JavaScript API and browser key as search. */
+/** Listing preview. OpenStreetMap tiles, loaded when the page opens. */
 export function ListingMap(props: Props) {
   const channel = useStoreChannel();
   if (channel === "huawei") return <StoreMapFallback compact />;
-  return <GoogleListingMap {...props} />;
+  return <OsmListingMap {...props} />;
 }
 
-function GoogleListingMap({ lat, lng, title, address }: Props) {
+function OsmListingMap({ lat, lng, title, address }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const valid = Number.isFinite(lat) && Number.isFinite(lng);
   const { t } = useCopy();
-  const [failed, setFailed] = useState(!hasGoogleMapsBrowserKey() || !valid);
+  const [failed, setFailed] = useState(!valid);
   const [basemapReady, setBasemapReady] = useState(false);
 
   useEffect(() => {
     const el = host.current;
-    if (!el || !hasGoogleMapsBrowserKey() || !valid) {
+    if (!el || !valid) {
       setFailed(true);
       return;
     }
     let cancelled = false;
-    let pin: { setMap(map: google.maps.Map | null): void } | null = null;
+    let pin: { setMap(map: null): void } | null = null;
+    let map: { destroy(): void } | null = null;
 
     void (async () => {
       try {
-        const maps = await loadGoogleMaps();
-        if (cancelled || !el) return;
-        el.innerHTML = "";
+        el.replaceChildren();
         const center = { lat, lng };
-        const created = await createKidEaseMap(maps, el, {
+        const created = await createKidEaseMap(el, {
           center,
           zoom: 16,
           mapTypeId: "roadmap",
+          cooperative: true,
         });
-        if (cancelled) return;
-        created.map.setOptions({ gestureHandling: "cooperative" });
-        const AdvancedMarker = await loadAdvancedMarkerElement(maps, created.usedMapId);
-        const factory = createListingOverlayFactory(maps, AdvancedMarker);
+        if (cancelled) {
+          created.map.destroy();
+          return;
+        }
+        map = created.map;
         const content = document.createElement("div");
         content.className = "ke-logo-pin";
         content.innerHTML = PIN_SVG;
-        pin = factory({ map: created.map, position: center, content });
+        pin = createListingOverlay({ map: created.map, position: center, content });
         setBasemapReady(true);
       } catch {
         if (!cancelled) setFailed(true);
@@ -80,6 +75,7 @@ function GoogleListingMap({ lat, lng, title, address }: Props) {
       cancelled = true;
       setBasemapReady(false);
       pin?.setMap(null);
+      map?.destroy();
     };
   }, [lat, lng, valid]);
 

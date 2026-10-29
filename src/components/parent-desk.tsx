@@ -1,6 +1,7 @@
 import { Component, lazy, startTransition, Suspense, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, Navigate, useNavigate, useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { confirmSuccess } from "@/lib/success-confirm";
 import type { UpgradeSearch } from "@/components/checkout-return";
 import { DeskShell } from "@/components/desk-shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
@@ -8,7 +9,7 @@ import { ParentShortlist } from "@/components/parent-shortlist";
 import { StatusBadge } from "@/components/status-badge";
 import { LedgerHonesty } from "@/components/listing-status-badge";
 import { TaxReceiptStudio } from "@/components/tax-receipt-studio";
-import { ChildDataRetired } from "@/components/child-data-retired";
+import { ChildCareCard } from "@/components/child-care-card";
 import { EmptyState } from "@/components/empty-state";
 import { KidNotebook } from "@/components/kid-art";
 import { Button } from "@/components/ui/button";
@@ -20,9 +21,10 @@ import { listTourRequests } from "@/lib/server/tours";
 import { listLeadRequests } from "@/lib/server/lead-requests";
 import type { LeadRequest } from "@/lib/lead-requests";
 import { listParentBills } from "@/lib/server/billing";
+import { shareChildWithCentres } from "@/lib/server/enrol-queue";
 import { parentPayEmptyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
-import { asList, formatMonth, money } from "@/lib/utils";
+import { ageGroupFromMonths, asList, formatMonth, money, monthsBetween } from "@/lib/utils";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import type { Booking, Child, DaycareCard as Card, Payment, TourRequest } from "@/lib/types";
@@ -38,6 +40,7 @@ import { featuredDaycares, searchDaycares } from "@/lib/server/daycares";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import { LOADER_SETTLE_MS, withTimeoutFallback } from "@/lib/timeout";
 import { inboxThreadTo, parentDeskPath, parentNavSearch } from "@/lib/desk-nav";
+import { MAX_CHILDREN_PER_PARENT } from "@/lib/children-limit";
 import { parentDeskTabOrDefault } from "@/lib/parent-tab";
 import { useStoreShell } from "@/lib/use-native-shell";
 import { yieldToMain } from "@/lib/yield-main";
@@ -46,6 +49,7 @@ import { PARENT_UPGRADE_PLANS } from "@/lib/upgrade-plans";
 import { ParentHome } from "@/components/parent-home";
 import { useRoleChrome } from "@/components/role-chrome";
 import { useParentPlusAccess } from "@/lib/use-parent-plus";
+import { DeleteChildControl } from "@/components/delete-child-control";
 
 const ParentPlusPanel = lazy(() =>
   import("@/components/parent-plus").then((m) => ({ default: m.ParentPlusPanel })),
@@ -56,6 +60,9 @@ const SavedSearchesPanel = lazy(() =>
 const AlertPushSettings = lazy(() =>
   import("@/components/alert-push-settings").then((m) => ({ default: m.AlertPushSettings })),
 );
+const ChildProfileForm = lazy(() =>
+  import("@/components/child-profile-form").then((m) => ({ default: m.ChildProfileForm })),
+);
 const ParentDeskRails = lazy(() =>
   import("@/components/parent-desk-rails").then((m) => ({ default: m.ParentDeskRails })),
 );
@@ -64,6 +71,9 @@ const TourCard = lazy(() =>
 );
 const ParentRequestsList = lazy(() =>
   import("@/components/parent-requests").then((m) => ({ default: m.ParentRequestsList })),
+);
+const DailyCareDesk = lazy(() =>
+  import("@/components/daily-care-desk").then((m) => ({ default: m.DailyCareDesk })),
 );
 const MyWaitlists = lazy(() =>
   import("@/components/my-waitlists").then((m) => ({ default: m.MyWaitlists })),
@@ -109,6 +119,7 @@ export function ParentDesk({
   shareToken = null,
   initialSaved = [],
   initialShared = false,
+  initialChild = null,
 }: {
   initialTab?: ParentTab;
   plusReturn?: "success" | "cancel" | null;
@@ -153,7 +164,11 @@ export function ParentDesk({
   const [upgradeDismissed, setUpgradeDismissed] = useState(false);
   const [homeSettled, setHomeSettled] = useState(false);
   const [editing, setEditing] = useState<Child | null | "new">(null);
+  const [childFocus, setChildFocus] = useState<string | null>(null);
+  const [childOpen, setChildOpen] = useState(false);
   const [childrenReady, setChildrenReady] = useState(false);
+  const [sendingId, setSendingId] = useState<string | null>(null);
+  const [shareConsent, setShareConsent] = useState(false);
   const [picked, setPicked] = useState<Record<string, string[]>>({});
   const [savedReady, setSavedReady] = useState(false);
   const [shortlistShared, setShortlistShared] = useState(initialShared);
@@ -281,6 +296,11 @@ export function ParentDesk({
     });
   }, [user?.id]);
 
+  async function load() {
+    const f = await loadFamily(true);
+    await Promise.all([loadExplore(f.bookings, true), loadDeskExtras(true)]);
+  }
+
   useEffect(() => {
     setBookings([]);
     setPayments([]);
@@ -329,6 +349,24 @@ export function ParentDesk({
   }, [user?.id, loadFamily, loadExplore, loadDeskExtras]);
 
   useEffect(() => {
+    if (!initialChild || !childrenReady) return;
+    if (initialChild === "new") {
+      if (children.length >= MAX_CHILDREN_PER_PARENT) {
+        setEditing(null);
+        return;
+      }
+      setEditing("new");
+      setChildOpen(true);
+      return;
+    }
+    const found = children.find((child) => child.id === initialChild);
+    if (!found) return;
+    setChildFocus(found.id);
+    setChildOpen(true);
+    setEditing(null);
+  }, [children, childrenReady, initialChild]);
+
+  useEffect(() => {
     if (contentTab !== "saved") {
       setSavedReady(false);
       return;
@@ -366,7 +404,8 @@ export function ParentDesk({
       return asList(deferredSaved)
         .flatMap((item) => {
           try {
-            const ageGroup = "any";
+            const child = asList(children)[0];
+            const ageGroup = child?.birthdate ? ageGroupFromMonths(monthsBetween(child.birthdate)) : "any";
             const startDate = soonestStartDate(asList(bookings).filter((b) => b.daycareId === item.id));
             const km = doorDistanceKm(origin, { lat: item.lat, lng: item.lng }) ?? Number.NaN;
             return [
@@ -385,7 +424,7 @@ export function ParentDesk({
     } catch {
       return [] as Array<Card & { matchScore: number; urgencyScore: number; distanceKm: number }>;
     }
-  }, [bookings, contentTab, deferredSaved, located, origin, radiusKm]);
+  }, [bookings, children, contentTab, deferredSaved, located, origin, radiusKm]);
 
   void explore;
   void exploreReady;
@@ -411,10 +450,7 @@ export function ParentDesk({
     if (desks.home === "/support") return <Navigate to="/support" />;
   }
   const showParentPlus = Boolean(desksReady && desks?.subscriptionsEnabled === true && canBuyParentUpgrade(upgradeBuyer));
-  void children;
-  void editing;
-  void childrenReady;
-  void picked;
+  const activeChild = children.find((c) => c.id === childFocus) ?? children[0] ?? null;
 
   return (
     <DeskShell desk="parent" active={tab === "subscription" ? "upgrade" : tab} onSelect={selectTab}>
@@ -469,7 +505,13 @@ export function ParentDesk({
         </SavedTabBoundary>
       ) : null}
 
-      {contentTab === "care" || contentTab === "children" ? <ChildDataRetired /> : null}
+      {contentTab === "care" ? (
+        <div className="mt-6">
+          <Suspense fallback={<div className="ke-skel mt-6 h-40 rounded-xl" aria-hidden="true" />}>
+            <DailyCareDesk role="parent" />
+          </Suspense>
+        </div>
+      ) : null}
 
       {contentTab === "alerts" ? (
         <Suspense fallback={<div className="ke-skel mt-6 h-24 rounded-xl" aria-hidden="true" />}>
@@ -535,6 +577,7 @@ export function ParentDesk({
                     <StatusBadge status={b.status} />
                   </div>
                   <p className="text-sm text-muted">
+                    {b.childName ? `${b.childName} · ` : ""}
                     {b.startDate ?? formatMonth(b.startMonth, locale)} · {t(b.ageGroup)}
                   </p>
                 </div>
@@ -637,6 +680,7 @@ export function ParentDesk({
                           <BillStatusBadge status={b.status} />
                         </div>
                         <p className="text-sm text-muted">
+                          {b.childName ? `${b.childName} · ` : ""}
                           {periodLabel(b.period, locale)}
                           {b.dueAt ? ` · ${t("billDue")} ${b.dueAt}` : ""}
                         </p>
@@ -718,6 +762,182 @@ export function ParentDesk({
         </div>
       ) : null}
 
+      {contentTab === "children" ? (
+        <div className="mt-6 space-y-4">
+          <div>
+            <h2 className="font-display text-2xl">{t("childProfileTitle")}</h2>
+            <p className="mt-1 text-sm text-muted">
+              <span className="ke-site-compact">{t("childProfileLead")}</span>
+              <span className="ke-site-desktop">{t("childProfileSendLead")}</span>
+            </p>
+          </div>
+          {children.length === 0 && !editing ? (
+            <EmptyState title={t("noChildren")} body={t("noChildrenLead")} action={t("emptyAddChild")} onAction={() => { setEditing("new"); setChildOpen(true); }} />
+          ) : (
+          <div className="ke-split" data-ke="children-split" data-selected={childOpen || editing ? "true" : "false"}>
+            <div className="ke-split-list min-w-0">
+              <ul className="divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
+                {children.map((c) => (
+                  <li key={c.id}>
+                    <button
+                      type="button"
+                      aria-pressed={activeChild?.id === c.id}
+                      className="flex min-h-11 w-full items-center px-4 text-left font-medium touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                      onClick={() => {
+                        setChildFocus(c.id);
+                        setChildOpen(true);
+                        setEditing(null);
+                      }}
+                    >
+                      {c.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              {children.length < MAX_CHILDREN_PER_PARENT ? (
+                <Button className="mt-3" onClick={() => { setEditing("new"); setChildOpen(true); }}>
+                  {children.length ? t("newChild") : t("addChild")}
+                </Button>
+              ) : null}
+            </div>
+            <div className="ke-split-detail min-w-0" data-ke="children-detail">
+              <Button variant="ghost" className="mb-3 md:hidden" onClick={() => { setChildOpen(false); setEditing(null); }}>
+                {t("back")}
+              </Button>
+              {editing ? (
+            <div className="rounded-xl bg-surface p-4 ring-1 ring-border">
+              <h2 className="mb-4 text-base font-semibold">{editing === "new" ? t("newChild") : t("profileEdit")}</h2>
+              <Suspense fallback={<div className="ke-skel h-48 rounded-xl" aria-hidden="true" />}>
+                <ChildProfileForm
+                  initial={editing === "new" ? null : editing}
+                  onSaved={() => {
+                    setEditing(null);
+                    void load();
+                  }}
+                  onCancel={() => setEditing(null)}
+                />
+              </Suspense>
+            </div>
+              ) : (
+            <>
+              <ul className="divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
+                  {children.map((c) => {
+                    const selected = picked[c.id] ?? [];
+                    return (
+                    <li key={c.id} className={c.id === activeChild?.id ? "ph-no-capture" : "ke-child-rest ph-no-capture"}>
+                      <ChildCareCard
+                        child={c}
+                        actions={
+                          <button
+                            type="button"
+                            data-ke="child-profile-edit"
+                            onClick={() => setEditing(c)}
+                            className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-primary touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                          >
+                            {t("profileEdit")}
+                          </button>
+                        }
+                      />
+                      <div className="px-3 pb-3">
+                        <DeleteChildControl
+                          child={{ id: c.id, name: c.name }}
+                          onDeleted={() => {
+                            setEditing(null);
+                            void load();
+                          }}
+                        />
+                      </div>
+                      <div className="mt-4 rounded-lg bg-bg p-3 ring-1 ring-border">
+                        <p className="text-sm font-medium">{t("sendChildProfile")}</p>
+                        {saved.length === 0 ? (
+                          <p className="mt-2 text-sm text-muted">
+                            {t("sendChildNeedSaved")}
+                            <Link to="/search" className="ml-1 underline">
+                              {t("wayfindFindCare")}
+                            </Link>
+                          </p>
+                        ) : (
+                          <>
+                            <ul className="mt-2 space-y-1.5">
+                              {saved.map((d) => {
+                                const on = selected.includes(d.id);
+                                return (
+                                  <li key={d.id}>
+                                    <label className="flex min-h-10 cursor-pointer items-center gap-2 text-sm">
+                                      <input
+                                        type="checkbox"
+                                        className="size-4 accent-primary"
+                                        checked={on}
+                                        onChange={() => {
+                                          void yieldToMain().then(() => {
+                                            startTransition(() => {
+                                              setPicked((cur) => {
+                                                const next = new Set(cur[c.id] ?? []);
+                                                if (on) next.delete(d.id);
+                                                else next.add(d.id);
+                                                return { ...cur, [c.id]: [...next] };
+                                              });
+                                            });
+                                          });
+                                        }}
+                                      />
+                                      <span>{d.name}</span>
+                                      <span className="text-subtle">{d.city}</span>
+                                    </label>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                            <label className="mt-3 flex min-h-11 items-start gap-3 text-sm">
+                              <input
+                                type="checkbox"
+                                className="mt-1 size-5"
+                                checked={shareConsent}
+                                onChange={(event) => setShareConsent(event.target.checked)}
+                              />
+                              <span>
+                                {locale === "fr"
+                                  ? "Je consens à partager ce profil seulement avec les centres que je coche."
+                                  : "I agree to share this profile only with the centres I pick."}
+                              </span>
+                            </label>
+                            <Button
+                              className="mt-3"
+                              size="sm"
+                              disabled={!selected.length || !shareConsent || sendingId === c.id}
+                              onClick={() => {
+                                setSendingId(c.id);
+                                void shareChildWithCentres({ data: { childId: c.id, daycareIds: selected, consent: true } })
+                                  .then((res) => {
+                                    confirmSuccess({
+                                      variant: "toast",
+                                      title: t("sentChildTo")
+                                        .replace("{name}", res.childName)
+                                        .replace("{n}", String(res.sent.length)),
+                                    });
+                                    selectTab("bookings");
+                                    return load();
+                                  })
+                                  .catch((err) => toast.error(err instanceof Error ? err.message : t("sendFailed")))
+                                  .finally(() => setSendingId(null));
+                              }}
+                            >
+                              {sendingId === c.id ? t("sendChildSending") : t("sendChildCta")}
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </li>
+                    );
+                  })}
+              </ul>
+            </>
+              )}
+            </div>
+          </div>
+          )}
+        </div>
+      ) : null}
     </DeskShell>
   );
 }

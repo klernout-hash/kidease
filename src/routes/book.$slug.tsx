@@ -9,7 +9,6 @@ import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getDaycare } from "@/lib/server/daycares";
 import { createSpotRequest } from "@/lib/server/family";
-import { spotAgePublicLabel, type SpotAge } from "@/lib/spot-offers";
 import { holdSendBeat, requestSentThumb } from "@/lib/request-sent";
 import { useCopy } from "@/lib/use-copy";
 import { noteHappyMoment } from "@/lib/store-review";
@@ -31,7 +30,8 @@ function BookPage() {
   const { t, locale } = useCopy();
   const navigate = useNavigate();
   const [daycare, setDaycare] = useState<Daycare | null>(null);
-  const [ageGroup, setAgeGroup] = useState<"infant" | "toddler" | "preschool" | "any">("toddler");
+  const [childName, setChildName] = useState("");
+  const [birth, setBirth] = useState("");
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
     d.setMonth(d.getMonth() + 1);
@@ -73,15 +73,15 @@ function BookPage() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!startDate) return;
+    if (!childName.trim() || !birth) return;
     const token = send.start();
     setBusy(true);
     try {
       const res = await createSpotRequest({
         data: {
           daycareId: centre.id,
-          ageGroup,
-          childName: spotAgePublicLabel(ageGroup, locale === "fr" ? "fr" : "en"),
+          childName: childName.trim(),
+          birthdate: birth,
           startDate,
           schedule,
           days,
@@ -119,17 +119,23 @@ function BookPage() {
           className="mt-6 space-y-5 rounded-xl bg-surface p-5 ring-1 ring-border"
         >
           <label className="block text-sm">
-            {locale === "fr" ? "Tranche d’âge" : "Age range"}
-            <select
+            {t("childFullName")}
+            <input
+              required
               className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
-              value={ageGroup}
-              onChange={(e) => setAgeGroup(e.target.value as SpotAge)}
-            >
-              <option value="infant">{spotAgePublicLabel("infant", locale === "fr" ? "fr" : "en")}</option>
-              <option value="toddler">{spotAgePublicLabel("toddler", locale === "fr" ? "fr" : "en")}</option>
-              <option value="preschool">{spotAgePublicLabel("preschool", locale === "fr" ? "fr" : "en")}</option>
-              <option value="any">{spotAgePublicLabel("any", locale === "fr" ? "fr" : "en")}</option>
-            </select>
+              value={childName}
+              onChange={(e) => setChildName(e.target.value)}
+            />
+          </label>
+          <label className="block text-sm">
+            {t("birthdate")}
+            <input
+              required
+              type="date"
+              className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
+              value={birth}
+              onChange={(e) => setBirth(e.target.value)}
+            />
           </label>
           <label className="block text-sm">
             {t("desiredStart")}

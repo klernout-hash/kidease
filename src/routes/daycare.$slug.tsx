@@ -939,7 +939,7 @@ export function Listing() {
                 <DirectionsButton className="shrink-0" />
               </div>
               <div className="mt-3 overflow-hidden rounded-lg ring-1 ring-border">
-                <ListingMap lat={d.lat} lng={d.lng} title={name} address={`${address}, ${d.city}, ${d.province} ${d.postalCode}`} />
+                <ListingMap lat={d.lat} lng={d.lng} title={`${name} on the map`} address={`${address}, ${d.city}, ${d.province} ${d.postalCode}`} />
               </div>
               <p className="mt-3 text-sm text-muted">
                 {address}, {d.city}, {d.province} {d.postalCode}

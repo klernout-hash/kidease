@@ -1716,35 +1716,59 @@ html[data-channel="website"] .ke-web-grid > article {
   }
 }
 
-/* Safari + document color-scheme:dark can leave Maps tiles unpainted (gray canvas). */
+/* Dark color-scheme can leave map tiles unpainted. Keep the canvas in light. */
 .ke-map-host,
-.ke-map-host .gm-style,
-.gm-style {
+.ke-map-host .maplibregl-map {
   color-scheme: only light;
 }
 
-.gm-style img,
-.gm-style map img,
+.maplibregl-map img,
 .ke-map-host img {
   max-width: none !important;
   max-height: none !important;
   height: unset !important;
 }
 
-.gm-style canvas,
+.maplibregl-map canvas,
 .ke-map-host canvas {
   max-width: none !important;
+}
+
+.ke-map-host .maplibregl-ctrl-bottom-left {
+  max-width: min(100% - 3.25rem, 18rem);
+  margin: 0 0 max(0.25rem, env(safe-area-inset-bottom)) 0.25rem;
+  z-index: 3;
+}
+
+.ke-map-host .maplibregl-ctrl-attrib {
+  font-size: 10px;
+  line-height: 1.35;
+  max-width: 100%;
+  background: rgb(255 255 255 / 0.92);
+}
+
+.ke-map-host .maplibregl-ctrl-attrib-inner {
+  white-space: normal;
+}
+
+.ke-map-host .maplibregl-ctrl-attrib a {
+  color: #1a3790;
+}
+
+.ke-osm-overlay {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 2;
 }
 
 .ke-map-skel {
   background: color-mix(in oklab, var(--color-map) 82%, var(--color-surface-2));
   animation: ke-skel 1.4s ease-in-out infinite;
-}
-
-.gm-bundled-control,
-.gm-bundled-control-on-bottom,
-.gmnoprint.gm-bundled-control {
-  display: none !important;
 }
 
 .ke-device-lens {
@@ -1772,8 +1796,8 @@ html[data-channel="website"] .ke-web-grid > article {
   top: 0;
   display: block;
   background: transparent;
-  pointer-events: auto;
-  touch-action: none;
+  pointer-events: none;
+  touch-action: manipulation;
 }
 .ke-map-pin-canvas:focus-visible {
   outline: 2px solid #1a3790;
