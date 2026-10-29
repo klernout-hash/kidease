@@ -32,7 +32,7 @@ import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anc
 import type { AnchorPoint } from "@/lib/dual-anchor";
 import { useAppStore } from "@/lib/store";
 import { AppearanceControl } from "@/components/appearance-control";
-import { useInNativeShell } from "@/lib/use-native-shell";
+import { useInNativeShell, useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { SignedInDevices } from "@/components/signed-in-devices";
 import { AccountSecurity } from "@/components/account-security";
 import { DeleteAccountPanel } from "@/components/delete-account-panel";
@@ -254,7 +254,9 @@ function ProfilePane() {
   const chrome = useRoleChrome();
   const canEditProfile = Boolean(user) || (chrome.signedIn && !chrome.pending);
   const { sticky } = useSessionDesks();
-  const desk = parseDeskQuery(search.desk) ?? sticky;
+  const hideAdmin = useNativeHidesAdmin();
+  const rawDesk = parseDeskQuery(search.desk) ?? sticky;
+  const desk = hideAdmin && rawDesk === "admin" ? "parent" : rawDesk;
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);

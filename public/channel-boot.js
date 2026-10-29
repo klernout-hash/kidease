@@ -1,12 +1,61 @@
+function keAccessPath(href) {
+  if (!href || href.indexOf("mailto:") === 0 || href.indexOf("tel:") === 0) return false;
+  var path = href;
+  var hash = path.indexOf("#");
+  if (hash >= 0) path = path.slice(0, hash);
+  var q = path.indexOf("?");
+  if (q >= 0) path = path.slice(0, q);
+  if (path.indexOf("http://") === 0 || path.indexOf("https://") === 0) {
+    try {
+      path = new URL(path).pathname;
+    } catch (e) {
+      return false;
+    }
+  }
+  if (!path || path.charAt(0) !== "/") return false;
+  if (path.length > 1 && path.charAt(path.length - 1) === "/") path = path.slice(0, -1);
+  if (path.indexOf("/fr/") === 0) path = path.slice(3) || "/";
+  else if (path === "/fr") path = "/";
+  return (
+    path === "/admin" ||
+    path.indexOf("/admin/") === 0 ||
+    path.indexOf("/admin-") === 0 ||
+    path === "/api/admin" ||
+    path.indexOf("/api/admin/") === 0
+  );
+}
+
 (function () {
   try {
     var c = window.Capacitor;
     var n = !!(c && c.isNativePlatform && c.isNativePlatform());
     var ua = navigator.userAgent || "";
     var uaNative = ua.indexOf("KidEaseNative") !== -1;
+    var r = document.documentElement;
+    if (n || uaNative) {
+      r.dataset.native = "1";
+      if (!/(?:^|;\s*)ke_shell=native(?:;|$)/.test(document.cookie || "")) {
+        var nativeSecure = location.protocol === "https:" ? "; Secure" : "";
+        document.cookie = "ke_shell=native; Path=/; Max-Age=31536000; SameSite=Lax" + nativeSecure;
+      }
+      document.addEventListener(
+        "click",
+        function (ev) {
+          if (ev.defaultPrevented || ev.button || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+          var target = ev.target;
+          if (!target || !target.closest) return;
+          var link = target.closest("a");
+          if (!link) return;
+          var href = link.getAttribute("href") || "";
+          if (!keAccessPath(href)) return;
+          ev.preventDefault();
+          location.assign("/use-the-website");
+        },
+        true,
+      );
+    }
     var q = new URLSearchParams(location.search);
     var force = q.get("app") === "1" || q.get("channel") === "app";
-    var r = document.documentElement;
     var store = "web";
     var ios = /iPhone|iPad|iPod/i.test(ua);
     var samsungBuild = !ios && ua.indexOf("KidEaseStoreSamsung") !== -1;

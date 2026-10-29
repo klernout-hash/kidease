@@ -22,11 +22,19 @@ public class MainActivity extends BridgeActivity {
         // Register before the bridge is created. Capacitor copies initial plugins in super.load().
         registerPlugin(PasskeyPlugin.class);
         super.load();
+        installAdminWebOnlyClient();
         String flavor = BuildConfig.FLAVOR == null ? "" : BuildConfig.FLAVOR;
         applyStoreUserAgent(flavor);
         if (!"samsung".equals(flavor)) {
             dropSamsungStoreLink();
         }
+    }
+
+    /** Admin and Cloudflare Access never leave the WebView for the system browser. */
+    private void installAdminWebOnlyClient() {
+        WebView webView = webViewOrNull();
+        if (webView == null || getBridge() == null) return;
+        webView.setWebViewClient(new AdminWebOnlyClient(getBridge()));
     }
 
     private void applyStoreUserAgent(String flavor) {

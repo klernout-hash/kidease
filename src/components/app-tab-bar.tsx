@@ -7,8 +7,10 @@ import { useSessionDesks } from "@/components/session-desks";
 import { useRoleChrome } from "@/components/role-chrome";
 import { attentionForItem } from "@/lib/attention";
 import { highlightDesk, parseDeskQuery } from "@/lib/desks";
+import { bottomBarKindInShell } from "@/lib/native-admin";
 import { bottomBarKind } from "@/lib/role-access";
 import { hapticLight, isNative } from "@/lib/native";
+import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { nativeStoreTabs, type NativeStoreTabId } from "@/lib/native-store-tabs";
 import { deskHrefForLocale, inboxListPath, menuDeskPath, parentDeskPath, providerDeskPath, supportDeskPath } from "@/lib/desk-nav";
 import { localePath, stripLocalePrefix } from "@/lib/locale-path";
@@ -31,12 +33,16 @@ export function AppTabBar() {
   const view = useRouterState({ select: (s) => (s.location.search as { view?: string }).view });
   const chrome = useRoleChrome();
   const { session, sticky } = useSessionDesks();
-  const kind = bottomBarKind({
-    role: chrome.role,
-    pathname,
-    pending: chrome.pending,
-    highlightedDesk: highlightDesk(pathname, sticky, parseDeskQuery(desk)),
-  });
+  const hideAdmin = useNativeHidesAdmin();
+  const kind = bottomBarKindInShell(
+    bottomBarKind({
+      role: chrome.role,
+      pathname,
+      pending: chrome.pending,
+      highlightedDesk: highlightDesk(pathname, sticky, parseDeskQuery(desk)),
+    }),
+    hideAdmin,
+  );
   const [native, setNative] = useState(false);
   const barRef = useRef<HTMLElement>(null);
   useEffect(() => {

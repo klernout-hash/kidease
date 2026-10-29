@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { nativeShellHidesAdmin } from "@/lib/native-admin";
 import {
   microsoftStoreCookieHeader,
   storeChannelFromSignals,
@@ -9,6 +10,8 @@ export type ServerStoreRead = {
   channel: StoreChannel;
   /** Set-Cookie value for `?store=microsoft`, or null when this request must not set it. */
   setCookie: string | null;
+  /** Capacitor shell: hide Admin so the first HTML has no Access links. */
+  hideAdmin: boolean;
 };
 
 function requestIsHttps(url: string | undefined, forwardedProto: string | null): boolean {
@@ -54,8 +57,13 @@ export const readServerStoreChannel = createServerFn({ method: "GET" })
         setCookie: microsoftStoreCookieHeader(signals, {
           secure: requestIsHttps(req?.url, req?.headers.get("x-forwarded-proto") ?? null),
         }),
+        hideAdmin: nativeShellHidesAdmin(signals),
       };
     } catch {
-      return { channel: storeChannelFromSignals({ search: data.search }), setCookie: null };
+      return {
+        channel: storeChannelFromSignals({ search: data.search }),
+        setCookie: null,
+        hideAdmin: nativeShellHidesAdmin({}),
+      };
     }
   });

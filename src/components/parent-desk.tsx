@@ -26,6 +26,7 @@ import { parentPayEmptyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
 import { ageGroupFromMonths, asList, formatMonth, money, monthsBetween } from "@/lib/utils";
 import { useSessionDesks } from "@/components/desk-switcher";
+import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import type { Booking, Child, DaycareCard as Card, Payment, TourRequest } from "@/lib/types";
 import type { Bill } from "@/lib/bill";
 import { billDollars, billIsOpen } from "@/lib/bill";
@@ -143,6 +144,7 @@ export function ParentDesk({
   const plus = useParentPlusAccess();
   const { t, locale } = useCopy();
   const { session: desks, ready: desksReady } = useSessionDesks();
+  const hideAdmin = useNativeHidesAdmin();
   const plansOn = !storeShell && desks?.subscriptionsEnabled === true;
   const origin = useAppStore((s) => s.origin);
   const located = useAppStore((s) => s.located);
@@ -436,14 +438,14 @@ export function ParentDesk({
   if (onPlusSurface && desksReady && desks && desks.subscriptionsEnabled !== true) {
     if (canBuyParentUpgrade(upgradeBuyer)) return <Navigate to={parentDeskPath(pathname)} search={{ tab: "explore" }} />;
     if (canBuyDaycareUpgrade(upgradeBuyer)) return <Navigate to="/provider" search={{ desk: "today" }} />;
-    if (desks.home === "/admin") return <Navigate to="/admin" />;
+    if (desks.home === "/admin") return hideAdmin ? <Navigate to={parentDeskPath(pathname)} search={{ tab: "explore" }} /> : <Navigate to="/admin" />;
     if (desks.home === "/support") return <Navigate to="/support" />;
     return <Navigate to={parentDeskPath(pathname)} search={{ tab: "explore" }} />;
   }
   if (onPlusSurface && desksReady && desks && !canBuyParentUpgrade(upgradeBuyer)) {
     if (canBuyDaycareUpgrade(upgradeBuyer) && desks.subscriptionsEnabled) return <Navigate to="/provider/subscription" />;
     if (canBuyDaycareUpgrade(upgradeBuyer)) return <Navigate to="/provider" search={{ desk: "today" }} />;
-    if (desks.home === "/admin") return <Navigate to="/admin" />;
+    if (desks.home === "/admin") return hideAdmin ? <Navigate to={parentDeskPath(pathname)} search={{ tab: "explore" }} /> : <Navigate to="/admin" />;
     if (desks.home === "/support") return <Navigate to="/support" />;
   }
   const showParentPlus = Boolean(desksReady && desks?.subscriptionsEnabled === true && canBuyParentUpgrade(upgradeBuyer));

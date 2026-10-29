@@ -5,7 +5,9 @@ import { EmptyState } from "@/components/empty-state";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { notificationHrefForShell } from "@/lib/native-admin";
 import { fillNotificationCopy, isCriticalNotification, notificationCopyKey, type NotificationItem } from "@/lib/notifications";
+import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { listMyNotifications, markNotificationRead } from "@/lib/server/notifications";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
@@ -25,6 +27,7 @@ function timeLabel(iso: string, locale: string) {
 export function NotificationsInbox() {
   const { user, isPending } = useCurrentUserState();
   const { t, locale } = useCopy();
+  const hideAdmin = useNativeHidesAdmin();
   const [items, setItems] = useState<NotificationItem[] | null>(null);
 
   useEffect(() => {
@@ -90,7 +93,7 @@ export function NotificationsInbox() {
               return (
                 <li key={item.id}>
                   <a
-                    href={item.href}
+                    href={notificationHrefForShell(item.href, hideAdmin)}
                     data-ke="notification-row"
                     className="flex min-h-14 w-full items-start gap-3 px-4 py-3 text-left hover:bg-surface-2"
                     onClick={() => {
