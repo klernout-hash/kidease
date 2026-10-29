@@ -362,8 +362,17 @@ export function NavDrawer({
                 <MenuGlyph id="account" className="text-primary-fg" />
                 {accountLabel}
               </Link>
+              <Link
+                to={localePath("/delete-account", locale)}
+                data-ke="drawer-delete-account"
+                onClick={onClose}
+                className="mt-2 flex min-h-12 items-center gap-3 rounded-xl px-3 text-base text-fg ring-1 ring-border"
+              >
+                {t("deleteAccount")}
+              </Link>
               <button
                 type="button"
+                data-ke="drawer-sign-out"
                 onClick={() => {
                   onClose();
                   onSignOut();

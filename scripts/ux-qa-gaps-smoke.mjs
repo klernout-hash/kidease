@@ -34,11 +34,8 @@ async function check(path, fn) {
 
 await check("/", async (page, status) => {
   assert.equal(status, 200, `home HTTP ${status}`);
-  await page.waitForTimeout(2800);
-  const live = await page.locator(".ke-help-bot").count();
-  const ask = await page.getByPlaceholder(/ask a question/i).count();
-  assert.equal(live, 0, "Help bubble stays hidden when the parent-helper flag is off");
-  assert.equal(ask, 0, "Ask box stays hidden when the parent-helper flag is off");
+  const live = await page.locator("[data-ke=help-launcher]").count();
+  assert.equal(live, 1, "Help launcher is on the home page");
 });
 
 await check("/pay", async (page, status) => {

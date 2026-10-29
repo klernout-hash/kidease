@@ -8,6 +8,7 @@ import {
   randomSessionToken,
   randomTicketCode,
 } from "@/lib/support-chat";
+import { scrubHelpChatText } from "@/lib/ai/help-bubble";
 import { sendSms } from "@/lib/server/sms";
 
 type Sql = {
@@ -31,11 +32,18 @@ function rowString(row: Record<string, unknown>, key: string) {
   return String(row[key] ?? "");
 }
 
+function storedVisitorBody(raw: string, fallback: string): string {
+  const clean = scrubHelpChatText(raw).slice(0, 2000);
+  return clean || fallback;
+}
+
 async function insertMessage(sql: Sql, threadId: string, sender: "visitor" | "agent" | "system", body: string) {
   const id = nid("scm");
+  const kept = sender === "visitor" ? storedVisitorBody(body, "") : body.slice(0, 2000);
+  if (!kept) return "";
   await sql.query(
     `insert into support_chat_messages (id, thread_id, sender, body) values ($1, $2, $3, $4)`,
-    [id, threadId, sender, body.slice(0, 2000)],
+    [id, threadId, sender, kept],
   );
   await sql.query(`update support_chat_threads set updated_at = now() where id = $1`, [threadId]);
   return id;
@@ -78,7 +86,7 @@ export async function openSupportChat(input: {
         code = randomTicketCode();
       }
     }
-    const body = input.message.trim().slice(0, 2000) || "Visitor asked for a person.";
+    const body = storedVisitorBody(input.message, "Visitor asked for a person.");
     await insertMessage(sql, id, "visitor", body);
     await textAgent({ code, name: input.name || "Guest", page: input.page || "/", message: body });
     return { code, sessionToken };
@@ -93,7 +101,7 @@ export async function postSupportChatMessage(input: {
   page?: string | null;
 }): Promise<{ ok: true; code: string } | { ok: false }> {
   const token = input.sessionToken.trim();
-  const message = input.message.trim().slice(0, 2000);
+  const message = storedVisitorBody(input.message, "");
   if (!token || !message) return { ok: false };
   try {
     const sql = await sqlClient();

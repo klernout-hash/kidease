@@ -77,7 +77,7 @@ test("verify-2fa keeps OTP state under Shell and never silently ignores a Verify
   assert.match(route, /pageStalled/);
   assert.match(src("src/components/shell.tsx"), /verifyLite/);
   assert.match(src("src/components/shell.tsx"), /menuLite/);
-  assert.match(src("src/components/shell.tsx"), /pathname.startsWith\("\/parent"\)/);
+  assert.doesNotMatch(src("src/components/shell.tsx"), /LiveChatSlot/);
   assert.match(src("src/lib/auth/gates.tsx"), /pending\?:/);
   assert.match(src("src/routes/parent.tsx"), /pending=\{/);
 });

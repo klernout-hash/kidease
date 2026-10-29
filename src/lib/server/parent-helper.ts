@@ -132,7 +132,7 @@ export const askParentHelper = createServerFn({ method: "POST" })
   .validator(askInput)
   .handler(async ({ data, context }): Promise<ParentAnswer | ParentHelperBlock> => {
     const snapshot = await fetchAiFeatureFlags({ distinctId: data.distinctId });
-    if (!(snapshot.reached === true && snapshot.flags[AI_FLAGS.parentHelper] === true)) return { ok: false, error: "off" };
+    const helperOn = snapshot.reached === true && snapshot.flags[AI_FLAGS.parentHelper] === true;
     const bearer = (context as { bearerToken?: string }).bearerToken;
     const guard = await guardGuest({ bearer, turnstileToken: data.turnstileToken });
     if (!guard.ok) return guard;
@@ -150,7 +150,7 @@ export const askParentHelper = createServerFn({ method: "POST" })
       cityCount,
       canadaTotal,
     });
-    if (turn.direct) return turn.direct;
+    if (turn.direct || !helperOn) return finishGuideAnswer(null, turn, data.locale);
     const { logAiCall, readAiCache, writeAiCache } = await import("@/lib/server/ai-usage");
     const result = await callAi({
       feature: "parent-helper",
@@ -174,7 +174,6 @@ export const requestParentHelperAgent = createServerFn({ method: "POST" })
   .middleware([sessionBearerMiddleware])
   .validator(askInput)
   .handler(async ({ data, context }): Promise<{ ok: true; code?: string; sessionToken?: string } | ParentHelperBlock> => {
-    if (!(await parentHelperOn(data.distinctId))) return { ok: false, error: "off" };
     const bearer = (context as { bearerToken?: string }).bearerToken;
     const guard = await guardGuest({ bearer, turnstileToken: data.turnstileToken });
     if (!guard.ok) return guard;

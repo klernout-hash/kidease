@@ -21,7 +21,7 @@ import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { compressProfileFile, writeProfilePhoto } from "@/lib/profile-photo";
 import { polishProfilePhoto } from "@/lib/server/profile-photo";
-import { authClient } from "@/lib/auth/client";
+import { authClient, signOut } from "@/lib/auth/client";
 import { getMyContact, saveMyContact } from "@/lib/server/profile-contact";
 import { CaslConsentFields } from "@/components/casl-consent-fields";
 import { FamilyVaultPanel } from "@/components/family-vault";
@@ -815,6 +815,16 @@ function ProfilePane() {
                   </Link>
                 ))}
             </nav>
+            <div className="mt-6" data-ke="account-session-actions">
+              <button
+                type="button"
+                data-ke="account-sign-out"
+                onClick={() => void signOut("/")}
+                className="flex min-h-11 w-full items-center justify-center rounded-full bg-fg px-4 text-sm font-semibold text-bg touch-manipulation"
+              >
+                {t("signOut")}
+              </button>
+            </div>
           </>
         ) : null}
         {section === "profile" && !editing && !user ? (

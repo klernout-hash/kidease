@@ -34,7 +34,7 @@ This PR does **not** turn `FEATURE_PUSH` or `FEATURE_VIDEO` on.
 
 `askKidEase` stays gated on `FEATURE_INAPP_CHAT` and is not used by the help bubble.
 
-The floating helper (`HelpBot`) follows the PostHog flag `parent-helper`. It stays hidden when that flag is off or PostHog cannot be reached. Questions go through `askParentHelper` only. Signed-out visitors can ask until a short limit, then they complete a Turnstile check. A live-agent button opens a support ticket and does not promise a reply time. `FEATURE_INAPP_CHAT` does not show or hide this bubble. Parent ↔ centre threads stay on `/inbox`.
+The floating helper (`HelpBot`) is mounted once in the root layout for guests, parents, providers, and admin on the website and in the app. Route, role, and the PostHog flag `parent-helper` do not hide it. That flag still decides whether a question is sent to the model. Page answers work either way. The chat does not ask for or store a child's name, birthdate, or health details. Questions go through `askParentHelper` only. Signed-out visitors can ask until a short limit, then they complete a Turnstile check. A live-agent button opens a support ticket. `FEATURE_INAPP_CHAT` does not show or hide this bubble. Parent ↔ centre threads stay on `/inbox`. Live video and phone screens do not show the launcher.
 
 ## Composer
 

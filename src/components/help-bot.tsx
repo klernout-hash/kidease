@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import { useRouterState } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { AI_FLAGS } from "@/lib/ai/flags";
-import { helpBubbleDistinctId } from "@/lib/ai/help-bubble";
+import { helpBubbleDistinctId, helpChatQuestion } from "@/lib/ai/help-bubble";
+import { helpLauncherVisible } from "@/lib/help-launcher";
 import { parentHelperEventProps } from "@/lib/ai/parent-helper";
-import { useAiFeatureFlag } from "@/lib/ai/use-ai-flag";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -77,27 +77,34 @@ export function HelpBot() {
     const trimmed = text.trim();
     if (busy) return;
     if (!agent && !trimmed) return;
+    const safe = agent ? trimmed : helpChatQuestion(trimmed);
+    if (!agent && !safe) {
+      setDraft("");
+      setMsgs((m) => [...m, { role: "assistant", text: t("helpBotPrivacy") }]);
+      return;
+    }
     const token = takeChallenge();
     if (needChallenge && !token) {
       setMsgs((m) => [...m, { role: "assistant", text: t("helpBotChallenge") }]);
       return;
     }
-    const next: ChatMsg[] = agent ? msgs : [...msgs, { role: "user", text: trimmed }];
+    const next: ChatMsg[] = agent ? msgs : [...msgs, { role: "user", text: safe || "" }];
     if (!agent) setMsgs(next);
     setDraft("");
     setBusy(true);
     const distinctId = helpBubbleDistinctId(user?.id);
+    const question = safe || "";
     try {
       if (handedOff && chatToken && !agent) {
         const { sendSupportChatMessage } = await import("@/lib/server/support-chat");
         await sendSupportChatMessage({
-          data: { sessionToken: chatToken, message: trimmed, page: window.location.pathname },
+          data: { sessionToken: chatToken, message: question, page: window.location.pathname },
         });
         return;
       }
       if (agent) {
         const { requestParentHelperAgent } = await import("@/lib/server/parent-helper");
-        const last = [...msgs].reverse().find((m) => m.role === "user")?.text || trimmed;
+        const last = [...msgs].reverse().find((m) => m.role === "user")?.text || question;
         const res = await requestParentHelperAgent({
           data: { question: last, distinctId, turnstileToken: token, locale },
         });
@@ -121,7 +128,7 @@ export function HelpBot() {
         return;
       }
       const { askParentHelper } = await import("@/lib/server/parent-helper");
-      const res = await askParentHelper({ data: { question: trimmed, distinctId, turnstileToken: token, locale } });
+      const res = await askParentHelper({ data: { question, distinctId, turnstileToken: token, locale } });
       if ("error" in res) {
         if (res.error === "turnstile") setNeedChallenge(true);
         setMsgs((m) => [...m, { role: "assistant", text: replyFor(res.error) }]);
@@ -139,7 +146,7 @@ export function HelpBot() {
   }
 
   return (
-    <div className="ke-help-bot">
+    <div className="ke-help-bot" data-ke="help-launcher">
       {open ? (
         <div className="mb-3 flex h-[min(28rem,70dvh)] w-[min(22rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl bg-surface shadow-lift ring-1 ring-border">
           <div className="flex items-center justify-between gap-2 bg-primary px-4 py-3 text-primary-fg">
@@ -209,6 +216,7 @@ export function HelpBot() {
               <TurnstileField onToken={onToken} resetSignal={resetSignal} />
             </div>
           ) : null}
+          <p className="border-t border-border px-3 py-2 text-xs leading-4 text-muted">{t("helpBotPrivacy")}</p>
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -249,7 +257,7 @@ export function HelpBot() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex min-h-11 min-w-11 select-none flex-col items-center gap-1 rounded-2xl bg-surface px-2.5 py-2 shadow-lift ring-1 ring-border"
+        className="flex min-h-11 min-w-11 touch-manipulation select-none flex-col items-center gap-1 rounded-2xl bg-surface px-2.5 py-2 shadow-lift ring-1 ring-border"
         aria-label={t("helpBot")}
         aria-expanded={open}
       >
@@ -271,14 +279,9 @@ export function HelpBot() {
   );
 }
 
-/** Mount after hydration. Hidden unless the parent-helper flag is on for this visitor. */
+/** One launcher for the whole app. Video and phone screens opt out. */
 export function LiveChatSlot() {
-  const helperOn = useAiFeatureFlag(AI_FLAGS.parentHelper);
-  const [ready, setReady] = useState(false);
-  useEffect(() => {
-    const idle = window.setTimeout(() => setReady(true), 2500);
-    return () => window.clearTimeout(idle);
-  }, []);
-  if (!ready || !helperOn) return null;
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  if (!helpLauncherVisible(pathname)) return null;
   return <HelpBot />;
 }

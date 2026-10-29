@@ -1853,6 +1853,7 @@
   "helpBot": "KidEase 帮助",
   "liveChat": "在线聊天",
   "helpBotLead": "可咨询持牌托育、福利或您的列表。",
+  "helpBotPrivacy": "请不要发送孩子的姓名、出生日期或健康信息。",
   "helpBotHello": "您好：我是 KidEase 助手。可以询问如何查找中心、$10-a-day，或如何认领列表。",
   "helpBotQ1": "How do I find a daycare?",
   "helpBotQ2": "How do I request a tour?",

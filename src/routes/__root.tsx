@@ -26,6 +26,7 @@ import { RouteProgress } from "@/components/route-progress";
 import { PostHogBoot } from "@/components/posthog-boot";
 import { AdultConfirmBoot } from "@/components/adult-confirm-boot";
 import { RoleBoot } from "@/components/role-boot";
+import { LiveChatSlot } from "@/components/help-bot";
 import { KidEaseToaster } from "@/components/kidease-toaster";
 import { SuccessConfirmHost } from "@/components/success-confirm";
 import { SafeRouteError } from "@/components/safe-error-boundary";
@@ -270,6 +271,7 @@ function RootDocument() {
           <AdultConfirmBoot />
           <RouteProgress />
           <Outlet />
+          <LiveChatSlot />
           </ViewAsProvider>
           <CookieConsentBanner />
           <KidEaseToaster />
