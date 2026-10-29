@@ -70,6 +70,10 @@
 	<string>KidEase uses your location only while you search so we can show licensed daycares near you. Location is not used in the background.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>KidEase uses the camera during a video call with a daycare. The camera is not used in the background.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>KidEase uses your photo library when you choose a photo for your profile or a daycare listing. Photos are not read in the background.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>KidEase saves a photo to your library only when you choose to save one.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>KidEase uses the microphone during a voice or video call. The microphone is not used in the background.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>

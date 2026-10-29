@@ -23,6 +23,26 @@ export type MarketplaceFunnelProps = {
   contact?: "message" | "tour" | "spot" | "phone" | "email" | "website" | "info";
 };
 
+export const LEAD_SUBMITTED_EVENT = "lead_submitted";
+
+export type LeadRequestType = "tour" | "availability" | "waitlist";
+export type LeadRole = "guest" | "parent";
+
+/** Tour, availability, and waitlist submits. Sent with marketplace_funnel. */
+export function captureLeadSubmitted(input: {
+  daycareSlug: string;
+  requestType: LeadRequestType;
+  role: LeadRole;
+}): void {
+  const daycareSlug = String(input.daycareSlug || "").trim();
+  if (!daycareSlug) return;
+  capturePostHogEvent(LEAD_SUBMITTED_EVENT, {
+    daycareSlug,
+    requestType: input.requestType,
+    role: input.role,
+  });
+}
+
 export function captureMarketplaceFunnel(props: MarketplaceFunnelProps): void {
   const payload: Record<string, unknown> = { step: props.step };
   if (props.source) payload.source = props.source;

@@ -5,6 +5,7 @@ import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
 import { getWaitlistInterest, setWaitlistInterest } from "@/lib/server/waitlist-api";
 import { parentSignupSearch } from "@/lib/auth/parent-login";
+import { captureLeadSubmitted } from "@/lib/marketplace-funnel";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { SIGNUP_FUNNEL_EVENT, signupFunnelPayload, signupPromptStep } from "@/lib/signup-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -14,10 +15,12 @@ import { PARENT_REQUESTS_SEARCH } from "@/lib/lead-requests";
 
 export function WaitlistOptIn({
   daycareId,
+  daycareSlug,
   next,
   province,
 }: {
   daycareId: string;
+  daycareSlug?: string;
   next?: string;
   province?: string;
 }) {
@@ -56,6 +59,9 @@ export function WaitlistOptIn({
     void setWaitlistInterest({ data: { daycareId, optedIn: !optedIn } })
       .then((row) => {
         setOptedIn(Boolean(row));
+        if (row) {
+          captureLeadSubmitted({ daycareSlug: daycareSlug || daycareId, requestType: "waitlist", role: "parent" });
+        }
         confirmAction(t, row ? "waitlistJoined" : "waitlistLeft");
       })
       .catch((err) => {

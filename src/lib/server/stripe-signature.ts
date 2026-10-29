@@ -73,3 +73,46 @@ export function constructStripeEvent(
     throw new StripeSignatureError("invalid json");
   }
 }
+
+const seenStripeEvents = new Set<string>();
+
+/** First delivery of this event id wins. A retry in the same process is a no-op. */
+export function claimStripeEventOnce(id: string | null | undefined): boolean {
+  const key = String(id || "").trim();
+  if (!key) return true;
+  if (seenStripeEvents.has(key)) return false;
+  seenStripeEvents.add(key);
+  return true;
+}
+
+export function releaseStripeEventClaim(id: string | null | undefined): void {
+  const key = String(id || "").trim();
+  if (key) seenStripeEvents.delete(key);
+}
+
+export function resetStripeEventClaimsForTests(): void {
+  seenStripeEvents.clear();
+}
+
+/**
+ * Missing webhook secret stays 401. A missing or bad stripe-signature is 400.
+ * Password-style secrets are never logged.
+ */
+export function gateStripeWebhook(
+  raw: string,
+  signature: string,
+  secrets: readonly string[],
+): { ok: true; event: StripeEvent } | { ok: false; status: 400 | 401; body: string } {
+  const keys = secrets.map((secret) => secret.trim()).filter(Boolean);
+  if (keys.length === 0) return { ok: false, status: 401, body: "Unauthorized" };
+  let sawSignatureError = false;
+  for (const secret of keys) {
+    try {
+      return { ok: true, event: constructStripeEvent(raw, signature, secret) };
+    } catch (err) {
+      if (err instanceof StripeSignatureError) sawSignatureError = true;
+    }
+  }
+  if (sawSignatureError || !signature.trim()) return { ok: false, status: 400, body: "Bad Request" };
+  return { ok: false, status: 400, body: "Bad Request" };
+}

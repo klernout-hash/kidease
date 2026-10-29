@@ -1,3 +1,5 @@
 "NSLocationWhenInUseUsageDescription" = "KidEase uses your location only while you search so we can show licensed daycares near you. Location is not used in the background.";
 "NSCameraUsageDescription" = "KidEase uses the camera during a video call with a daycare. The camera is not used in the background.";
+"NSPhotoLibraryUsageDescription" = "KidEase uses your photo library when you choose a photo for your profile or a daycare listing. Photos are not read in the background.";
+"NSPhotoLibraryAddUsageDescription" = "KidEase saves a photo to your library only when you choose to save one.";
 "NSMicrophoneUsageDescription" = "KidEase uses the microphone during a voice or video call. The microphone is not used in the background.";
