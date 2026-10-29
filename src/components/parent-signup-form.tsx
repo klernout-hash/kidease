@@ -22,6 +22,7 @@ import { PasswordRules } from "@/components/password-rules";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { ParentSmsFields } from "@/components/parent-sms-fields";
 import { SocialSignInButtons } from "@/components/social-sign-in-buttons";
+import { ContinueAgeNotice } from "@/components/continue-age-notice";
 import { markAdultConfirmedForSession } from "@/lib/adult-confirm";
 import { nativeSocialPlatform, providersForNativeShell } from "@/lib/auth/native-oauth";
 import { providersForStore, type GrokProvider } from "@/lib/auth/providers";
@@ -64,11 +65,17 @@ export function ParentSignupForm() {
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [smsConsent, setSmsConsent] = useState(false);
-  const [adult, setAdult] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } =
-    useTurnstileToken();
+  const {
+    token,
+    onToken,
+    reset: resetTurnstile,
+    takeChallenge,
+    resetSignal,
+    required: turnstileRequired,
+    onRequired,
+  } = useTurnstileToken();
 
   const title = locale === "fr" ? "Créer un compte parent" : "Create a parent account";
   const lead =
@@ -80,10 +87,6 @@ export function ParentSignupForm() {
     event.preventDefault();
     if (busy) return;
     setError(null);
-    if (!adult) {
-      setError(locale === "fr" ? "Confirmez que vous avez 18 ans ou plus." : "Confirm you are 18 or older.");
-      return;
-    }
     setBusy(true);
     try {
       const phoneIssue = parentMobileIssue(phone);
@@ -175,22 +178,13 @@ export function ParentSignupForm() {
             autoComplete="new-password"
           />
           <PasswordRules password={password} />
-          <ParentSmsFields phone={phone} onPhone={setPhone} consent={smsConsent} onConsent={setSmsConsent} />
-          <label className="flex min-h-11 items-start gap-3 text-sm" htmlFor="parent-signup-adult">
-            <input
-              id="parent-signup-adult"
-              type="checkbox"
-              className="mt-1 size-5"
-              checked={adult}
-              onChange={(event) => setAdult(event.target.checked)}
-              required
-            />
-            <span>
-              {locale === "fr"
-                ? "Je confirme que j’ai 18 ans ou plus."
-                : "I confirm I am 18 or older."}
-            </span>
-          </label>
+          <ParentSmsFields
+            phone={phone}
+            onPhone={setPhone}
+            consent={smsConsent}
+            onConsent={setSmsConsent}
+          />
+          <ContinueAgeNotice />
           <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
           {error ? (
             <p className="text-sm text-danger" role="alert" data-ke="auth-error">
@@ -218,20 +212,22 @@ export function ParentSignupForm() {
               providers={shownProviders}
               disabled={busy}
               onSocial={(providerId) => {
-                if (!adult) {
-                  setError(locale === "fr" ? "Confirmez que vous avez 18 ans ou plus." : "Confirm you are 18 or older.");
-                  return;
-                }
                 setBusy(true);
                 setError(null);
                 markAdultConfirmedForSession();
                 rememberRole("parent");
-                void signIn(providerId, { callbackURL: "/parent", errorCallbackURL: "/signup" }).catch((err) => {
+                void signIn(providerId, {
+                  callbackURL: "/parent",
+                  errorCallbackURL: "/signup",
+                }).catch((err) => {
                   setError(friendlyAuthError(authClientErrorMessage(err)) || "Sign-in failed");
                   setBusy(false);
                 });
               }}
             />
+            <div className="mt-3">
+              <ContinueAgeNotice />
+            </div>
           </div>
         ) : null}
         <p className="mt-4 text-sm text-muted">

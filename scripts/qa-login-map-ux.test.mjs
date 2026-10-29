@@ -99,8 +99,10 @@ describe("login strength: email Connexion primary, logout, honest errors", () =>
     assert.match(login, /t\("signIn"\)/);
     assert.match(buttons, /continueGoogle/);
     assert.match(buttons, /data-ke="social-secondary"/);
-    assert.match(src("src/lib/copy.ts"), /orSocial: "or continue with Google"/);
-    assert.match(src("src/lib/copy.ts"), /orSocial: "ou continuer avec Google"/);
+    assert.match(src("src/lib/copy.ts"), /orSocial: "or continue with"/);
+    assert.match(src("src/lib/copy.ts"), /orSocial: "ou continuer avec"/);
+    assert.doesNotMatch(src("src/lib/copy.ts"), /orSocial: "or continue with Google"/);
+    assert.doesNotMatch(src("src/lib/copy.ts"), /orSocial: "ou continuer avec Google"/);
     assert.match(src(".env.example"), /^FEATURE_FACEBOOK_LOGIN=0$/m);
   });
 

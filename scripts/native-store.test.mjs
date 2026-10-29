@@ -123,7 +123,8 @@ test("store listing is 18+ and does not promise in-app checkout", () => {
   assert.match(src("docs/app-store-privacy.md"), /screening/);
   assert.match(src("android/app/build.gradle"), /useLegacyPackaging = false/);
   assert.match(src("android/app/build.gradle"), /firebase-analytics/);
-  assert.match(src("src/components/parent-signup-form.tsx"), /18 or older/);
+  assert.match(src("src/components/parent-signup-form.tsx"), /ContinueAgeNotice/);
+  assert.match(src("src/components/continue-age-notice.tsx"), /18 or older/);
 });
 
 test("a call opened from messages can use the camera and microphone", () => {

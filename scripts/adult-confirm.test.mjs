@@ -13,12 +13,22 @@ function src(rel) {
 test("signup stores an 18+ confirmation and the terms say 18+", () => {
   const login = src("src/routes/login.tsx");
   const parent = src("src/components/parent-signup-form.tsx");
-  assert.match(login, /I confirm I am 18 or older\./);
-  assert.match(login, /Je confirme que j’ai 18 ans ou plus\./);
+  const notice = src("src/components/continue-age-notice.tsx");
+  assert.match(notice, /By continuing, you confirm you're 18 or older and agree to the /);
+  assert.match(notice, /En continuant, vous confirmez avoir 18 ans ou plus/);
+  assert.match(notice, /Privacy Policy/);
+  assert.match(notice, /Politique de confidentialité/);
+  assert.match(notice, /localePath\("\/terms"/);
+  assert.match(notice, /localePath\("\/privacy"/);
+  assert.doesNotMatch(notice, /type="checkbox"/);
+  assert.match(login, /ContinueAgeNotice/);
   assert.match(login, /confirmAdultAge/);
   assert.match(login, /markAdultConfirmedForSession/);
-  assert.match(parent, /I confirm I am 18 or older\./);
+  assert.doesNotMatch(login, /signup-adult|signin-adult|I confirm I am 18 or older/);
+  assert.match(parent, /ContinueAgeNotice/);
   assert.match(parent, /confirmAdultAge/);
+  assert.match(parent, /markAdultConfirmedForSession/);
+  assert.doesNotMatch(parent, /parent-signup-adult|I confirm I am 18 or older/);
   assert.match(src("src/routes/__root.tsx"), /AdultConfirmBoot/);
   assert.match(src("src/lib/server/adult-confirm.ts"), /adult_confirmed_at/);
   assert.match(src("migrations/0095_adult_confirmed.sql"), /adult_confirmed_at/);
