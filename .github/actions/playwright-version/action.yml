@@ -1,0 +1,24 @@
+name: Playwright version
+description: Print the installed Playwright version, or fail with the command output.
+outputs:
+  version:
+    description: Playwright package version (for example 1.62.1)
+    value: ${{ steps.version.outputs.version }}
+runs:
+  using: composite
+  steps:
+    - id: version
+      shell: bash
+      run: |
+        set -euo pipefail
+        if ! output="$(npx playwright --version 2>&1)"; then
+          echo "::error::Could not run \`npx playwright --version\`. Run npm ci first so Playwright is installed. Output: ${output}"
+          exit 1
+        fi
+        version="$(printf '%s\n' "$output" | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1 || true)"
+        if [ -z "${version}" ]; then
+          echo "::error::\`npx playwright --version\` did not print a version. Output: ${output}"
+          exit 1
+        fi
+        echo "version=${version}" >> "$GITHUB_OUTPUT"
+        echo "Playwright ${version}"

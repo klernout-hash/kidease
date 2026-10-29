@@ -21,17 +21,21 @@ function src(rel) {
 
 test("Playwright browsers install only on a versioned cache miss", () => {
   const ci = src(".github/workflows/ci.yml");
+  const versionStep = src(".github/actions/playwright-version/action.yml");
+  assert.match(versionStep, /npx playwright --version/);
+  assert.match(versionStep, /::error::/);
+  assert.match(ci, /actions\/playwright-version/);
   assert.match(ci, /actions\/cache\/restore@v4/);
   assert.match(ci, /actions\/cache\/save@v4/);
-  assert.match(ci, /playwright-\$\{\{ runner\.os \}\}-\$\{\{ steps\.playwright-version\.outputs\.version \}\}/);
-  assert.match(ci, /p\['node_modules\/playwright'\]/);
-  assert.match(ci, /p\['node_modules\/@playwright\/test'\]/);
-  assert.match(ci, /p\['node_modules\/playwright-core'\]/);
+  assert.match(ci, /playwright-\$\{\{ runner\.os \}\}-\$\{\{ steps\.playwright-version\.outputs\.version \}\}-chromium/);
   assert.match(ci, /if: steps\.playwright-cache\.outputs\.cache-hit != 'true'/);
-  assert.match(ci, /npx playwright install-deps chromium webkit/);
-  assert.match(ci, /timeout 180 npx playwright install chromium webkit/);
+  assert.match(ci, /npx playwright install-deps chromium/);
+  assert.match(ci, /timeout 180 npx playwright install chromium/);
   assert.match(ci, /timeout-minutes: 10/);
+  assert.match(ci, /fonts-liberation/);
+  assert.doesNotMatch(ci, /playwright install-deps chromium webkit/);
   assert.doesNotMatch(ci, /playwright install --with-deps/);
+  assert.doesNotMatch(versionStep, /package-lock\.json/);
 });
 
 test("internal QA traffic is tagged without storing the email", () => {

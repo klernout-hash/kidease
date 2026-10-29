@@ -75,9 +75,49 @@ BASE_URL=https://your-preview.example BROWSER_ALLOW_EXTERNAL_HOST=1 npm run e2e
 
 The workflow cancels superseded PR/branch runs (`concurrency`). A cancelled or first-push red `check` job is **pipeline noise**, not production CFR — see `docs/uptime.md`.
 
-The `e2e` job in `.github/workflows/ci.yml` installs Chromium, then either:
+Pushes and pull requests that only touch `docs/**` or `**/*.md` do not start this workflow.
 
-- `npm run build && npm run e2e:preview` (push / pull_request / dispatch without `base_url`), or
-- `BASE_URL=… npm run e2e` when `workflow_dispatch` provides a long-lived URL.
+The `build` job runs `npm run build` once and uploads `artifacts/ci-build`. This app is Vite + Nitro, not Next.js. The archive includes `.vercel/output` and `node_modules/.nitro/last-build.json`, which `vite preview` needs. Smoke jobs restore that after `npm ci` (`npm ci` would otherwise delete the Nitro pointer). A later run with the same source hash restores the archive from the Actions cache and skips the build.
+
+Smoke is four shards (`--shard 1/4` … `4/4`):
+
+| Shard | What it runs |
+| --- | --- |
+| 1/4 | Public pages, health, login, search, guest gates |
+| 2/4 | Role fixture (parent and daycare seed) |
+| 3/4 | WebKit search guard, iPad sizes, phone sizes |
+| 4/4 | Fold resize, store sizes |
+
+`e2e` is the check branch protection already requires. It passes when every shard passes. Desktop screenshots are a separate job so a picture mismatch can be reported without hiding a real smoke failure.
+
+### Desktop visual
+
+The screenshot job runs on `ubuntu-latest` (the same kind of runner the baselines were made on). It installs Chromium only. WebKit is not installed there.
+
+Shard 3 still needs WebKit. `runWebkitSearchGuard` in `scripts/e2e-smoke.mjs` launches it. Those jobs use `mcr.microsoft.com/playwright:v1.62.1-jammy`, which already contains Chromium and WebKit, so CI does not `apt-get` WebKit. Bump that image tag when the Playwright version in `package-lock.json` changes.
+
+`/search` and `/daycares` wait for the network to go idle and for Plus Jakarta Sans, including French letters (`é`, `à`, `ê`), then mask the moving parts. Home and French home still wait for that font inside the same three-second window as before. Other pages keep the old timing, so a lazy photo that the baseline shot as a placeholder is not forced to finish. CI also installs Liberation Sans, Noto, and Noto Color Emoji so a missing web font falls back to the same files every run.
+
+`/search` and `/daycares` mask the listing count, the result list (photos and cards), and the map. Those pixels follow the catalogue. Their limit is **1%** (`0.01`). Every other page stays at **0.4%** (`0.004`). Do not raise the 0.4% limit to make a page pass.
+
+On a pull request, a desktop visual miss is a warning. The `e2e` check stays green. On a push to `main`, the same miss fails `e2e`.
+
+The job uploads `desktop-report.json`, red diff images, and the French home shots. Replace a baseline only when that report shows a real, stable difference, and only for the files you looked at. Do not replace the whole folder.
+
+### Retries and quarantine
+
+Seed requests (`POST /api/e2e-seed`) retry up to **2** times when the error is a dropped connection (`ECONNRESET`, `ECONNREFUSED`, `socket hang up`, and the same class). A 4xx or a wrong page is not retried.
+
+On CI, a shard that fails runs **once more** (Playwright `retries: 1`; this suite uses the Playwright library, not `@playwright/test`). If the second run passes, the log says `FLAKY` and the job is green. The names are in the step summary and in `verdict.json`.
+
+`e2e/quarantine.json` lists check names that still run but do not fail the job:
+
+```json
+{ "checks": [] }
+```
+
+Add a name only for a known break, and delete it once two CI runs are green. Do not put `desktop-visual` in that list. An empty `checks` array is the normal state.
+
+`npm run e2e:preview -- --shard 2/4` runs one bucket against a local preview. `--desktop-visual-only` runs the screenshot pass. Without either flag, a local run still does the full suite, including screenshots.
 
 Unit tests (`npm test`) stay in the `check` job and do not launch a browser.

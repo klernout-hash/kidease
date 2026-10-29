@@ -3,11 +3,18 @@
  * Baselines are the site before the phone, tablet, and foldable layout.
  * A website window at 1280 and wider must match those pictures.
  * Mobile, tablet, and foldable layout stays on the app channel.
+ *
+ * Search and daycares mask listing counts, photos, and the map before the
+ * diff. Those pixels change with the catalogue. The default ratio stays
+ * 0.004. Search and daycares use 0.01 after the mask. Do not raise the
+ * default to hide a real layout change.
  */
 
-import { readFileSync, mkdirSync, existsSync } from "node:fs";
+import { readFileSync, mkdirSync, existsSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import sharp from "sharp";
+import { withNetRetry } from "./e2e-net.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -40,22 +47,133 @@ export const DESKTOP_ROUTES = [
   { path: "/admin", name: "admin" },
 ];
 
+/** Default budget. Static pages stay here. */
+export const DEFAULT_MAX_DIFF_PIXEL_RATIO = 0.004;
+
+/**
+ * After masking counts, photos, and the map. Tight enough to catch a layout
+ * change, loose enough for a leftover antialiased edge.
+ */
+export const DYNAMIC_MAX_DIFF_PIXEL_RATIO = 0.01;
+
+const DYNAMIC_ROUTES = new Set(["search", "daycares"]);
+
+/** Regions that move with catalogue data. Applied on /search and /daycares only. */
+export const DYNAMIC_MASK_SELECTORS = [
+  "[data-ke='search-count']",
+  "[data-ke='search-result-list']",
+  "[data-ke='photo-fallback']",
+  "[data-ke='map-fallback']",
+  "[data-ke='map-selected-card']",
+  ".maplibregl-map",
+  ".maplibregl-canvas",
+  ".leaflet-container",
+];
+
+const FONT_SAMPLE = "Find licensed daycare near you. Trouver une garderie près de chez vous — été, français.";
+
 export const DESKTOP_BASELINE_DIR = join(root, "e2e/desktop-baselines");
 
 export function desktopShotName(width, height, name) {
   return `${width}x${height}__${name}.png`;
 }
 
+export function maxDiffPixelRatio(routeName) {
+  if (DYNAMIC_ROUTES.has(routeName)) return DYNAMIC_MAX_DIFF_PIXEL_RATIO;
+  return DEFAULT_MAX_DIFF_PIXEL_RATIO;
+}
+
+/**
+ * Same sample as the previous in-browser compare: every 4th pixel, and a
+ * miss counts as 4 pixels. Masked bytes are painted equal before this runs.
+ */
+export function sampledPixelRatio(left, right) {
+  if (!left || !right || left.length !== right.length || left.length % 4 !== 0 || left.length === 0) {
+    return { ratio: 1, reason: "size" };
+  }
+  let diff = 0;
+  const pixels = left.length / 4;
+  for (let i = 0; i < left.length; i += 16) {
+    const delta = Math.abs(left[i] - right[i]) + Math.abs(left[i + 1] - right[i + 1]) + Math.abs(left[i + 2] - right[i + 2]);
+    if (delta > 36) diff += 4;
+  }
+  return { ratio: diff / pixels };
+}
+
+export function paintMaskRects(data, width, height, rects) {
+  if (!rects?.length) return;
+  for (const rect of rects) {
+    const x0 = Math.max(0, rect.x | 0);
+    const y0 = Math.max(0, rect.y | 0);
+    const x1 = Math.min(width, x0 + Math.max(0, rect.w | 0));
+    const y1 = Math.min(height, y0 + Math.max(0, rect.h | 0));
+    for (let y = y0; y < y1; y += 1) {
+      let offset = (y * width + x0) * 4;
+      for (let x = x0; x < x1; x += 1) {
+        data[offset] = 235;
+        data[offset + 1] = 230;
+        data[offset + 2] = 220;
+        data[offset + 3] = 255;
+        offset += 4;
+      }
+    }
+  }
+}
+
+async function waitForPinnedFonts(page) {
+  await page.evaluate(async (sample) => {
+    if (!document.fonts) return;
+    const loads = [];
+    for (const weight of [400, 500, 600, 700]) {
+      loads.push(document.fonts.load(`${weight} 16px "Plus Jakarta Sans"`, sample));
+      loads.push(document.fonts.load(`${weight} 32px "Plus Jakarta Sans"`, sample));
+    }
+    await Promise.race([
+      Promise.all(loads).then(() => document.fonts.ready),
+      new Promise((resolve) => setTimeout(resolve, 8000)),
+    ]);
+  }, FONT_SAMPLE);
+}
+
+async function dynamicMaskRects(page) {
+  return page.evaluate((selectors) => {
+    const rects = [];
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    for (const selector of selectors) {
+      for (const el of document.querySelectorAll(selector)) {
+        const box = el.getBoundingClientRect();
+        const x = Math.max(0, Math.floor(box.x));
+        const y = Math.max(0, Math.floor(box.y));
+        const right = Math.min(width, Math.ceil(box.x + box.width));
+        const bottom = Math.min(height, Math.ceil(box.y + box.height));
+        if (right - x < 2 || bottom - y < 2) continue;
+        rects.push({ x, y, w: right - x, h: bottom - y });
+      }
+    }
+    return rects;
+  }, DYNAMIC_MASK_SELECTORS);
+}
+
 export async function openRoute(page, base, path) {
   const url = new URL(path, base).href;
-  const res = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 25000 }).catch(async () => {
-    return page.goto(url, { waitUntil: "domcontentloaded", timeout: 25000 });
-  });
-  await page.evaluate(async () => {
-    if (document.fonts && document.fonts.ready) {
-      await Promise.race([document.fonts.ready, new Promise((resolve) => setTimeout(resolve, 3000))]);
-    }
-  });
+  const res = await withNetRetry(() => page.goto(url, { waitUntil: "domcontentloaded", timeout: 25000 }), {
+    retries: 2,
+    label: `open ${path}`,
+  }).catch(async () => page.goto(url, { waitUntil: "domcontentloaded", timeout: 25000 }));
+  await page.evaluate(
+    async (sample, pinSample) => {
+      if (!document.fonts) return;
+      const work = [document.fonts.ready];
+      if (pinSample) {
+        work.push(document.fonts.load(`400 16px "Plus Jakarta Sans"`, sample));
+        work.push(document.fonts.load(`700 32px "Plus Jakarta Sans"`, sample));
+      }
+      await Promise.race([Promise.all(work), new Promise((resolve) => setTimeout(resolve, 3000))]);
+    },
+    FONT_SAMPLE,
+    path === "/" || path === "/fr",
+  );
   // Home and contact stills are lazy. A wide window sometimes shoots the placeholder.
   if (path === "/" || path === "/fr" || path === "/contact") {
     await page
@@ -158,6 +276,19 @@ export async function openRoute(page, base, path) {
       video.replaceWith(img);
     });
   });
+  // Search and the daycares redirect paint listing counts, photos, and map
+  // tiles after the first paint. Wait those in, then the compare masks them.
+  // Other pages keep the original timing so a late photo does not replace a
+  // baseline that was shot on the placeholder.
+  if (path === "/search" || path === "/daycares") {
+    await page.waitForLoadState("networkidle", { timeout: 8000 }).catch(() => {});
+    await waitForPinnedFonts(page);
+    await page
+      .waitForSelector("[data-ke='search-count'], [data-ke='search-result-list'], [data-ke='map-fallback']", {
+        timeout: 8000,
+      })
+      .catch(() => {});
+  }
   return res?.status() ?? 0;
 }
 
@@ -188,9 +319,10 @@ export async function captureDesktopShots(browser, base, outDir) {
       };
       const style = document.createElement("style");
       style.setAttribute("data-ke-visual", "stable");
-      style.textContent = "*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}[data-ke=cookie-consent]{display:none!important}";
-      const root = document.documentElement;
-      if (root) root.appendChild(style);
+      style.textContent =
+        "*,*::before,*::after{animation:none!important;transition:none!important;caret-color:transparent!important}[data-ke=cookie-consent]{display:none!important}";
+      const rootNode = document.documentElement;
+      if (rootNode) rootNode.appendChild(style);
     });
     for (const route of DESKTOP_ROUTES) {
       const file = join(outDir, desktopShotName(size.width, size.height, route.name));
@@ -198,7 +330,13 @@ export async function captureDesktopShots(browser, base, outDir) {
       try {
         const status = await openRoute(page, base, route.path);
         if (status >= 500) notes.push(`${route.name} ${size.width} status ${status}`);
-        else await page.screenshot({ path: file, fullPage: false, animations: "disabled" });
+        else {
+          if (DYNAMIC_ROUTES.has(route.name)) {
+            const rects = await dynamicMaskRects(page);
+            writeFileSync(`${file}.masks.json`, JSON.stringify(rects));
+          }
+          await page.screenshot({ path: file, fullPage: false, animations: "disabled" });
+        }
       } catch (err) {
         notes.push(`${route.name} ${size.width} ${err instanceof Error ? err.message.split("\n")[0] : String(err)}`);
       }
@@ -209,9 +347,31 @@ export async function captureDesktopShots(browser, base, outDir) {
   return notes;
 }
 
-export async function compareDesktopShots(browser, actualDir, baselineDir) {
+function readMaskRects(actualFile) {
+  const sidecar = `${actualFile}.masks.json`;
+  if (!existsSync(sidecar)) return [];
+  try {
+    const parsed = JSON.parse(readFileSync(sidecar, "utf8"));
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+async function loadRgba(file) {
+  const { data, info } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  return { data: new Uint8Array(data), width: info.width, height: info.height };
+}
+
+async function writeDiffPng(file, data, width, height) {
+  mkdirSync(dirname(file), { recursive: true });
+  await sharp(Buffer.from(data), { raw: { width, height, channels: 4 } }).png().toFile(file);
+}
+
+export async function compareDesktopShots(actualDir, baselineDir) {
   const problems = [];
-  const page = await browser.newPage({ viewport: { width: 800, height: 600 } });
+  const report = [];
+  const diffDir = join(dirname(actualDir), "desktop-diff");
   for (const size of DESKTOP_WIDTHS) {
     for (const route of DESKTOP_ROUTES) {
       const name = desktopShotName(size.width, size.height, route.name);
@@ -219,50 +379,50 @@ export async function compareDesktopShots(browser, actualDir, baselineDir) {
       const actualFile = join(actualDir, name);
       if (!existsSync(baseFile) || !existsSync(actualFile)) {
         problems.push(`${name} missing`);
+        report.push({ name, route: route.name, missing: true });
         continue;
       }
-      const found = await page.evaluate(
-        async ({ a, b, routeName }) => {
-          const load = (src) =>
-            new Promise((resolve, reject) => {
-              const img = new Image();
-              img.onload = () => resolve(img);
-              img.onerror = () => reject(new Error("png"));
-              img.src = src;
-            });
-          const [ia, ib] = await Promise.all([load(a), load(b)]);
-          if (ia.width !== ib.width || ia.height !== ib.height) {
-            return { ratio: 1, mismatch: true, reason: `size ${ia.width}x${ia.height}!=${ib.width}x${ib.height}` };
+      const [baseImage, actualImage] = await Promise.all([loadRgba(baseFile), loadRgba(actualFile)]);
+      if (baseImage.width !== actualImage.width || baseImage.height !== actualImage.height) {
+        const reason = `size ${actualImage.width}x${actualImage.height}!=${baseImage.width}x${baseImage.height}`;
+        problems.push(`${name} 100.00% ${reason}`);
+        report.push({ name, route: route.name, ratio: 1, mismatch: true, reason });
+        continue;
+      }
+      const rects = DYNAMIC_ROUTES.has(route.name) ? readMaskRects(actualFile) : [];
+      const left = new Uint8Array(baseImage.data);
+      const right = new Uint8Array(actualImage.data);
+      paintMaskRects(left, baseImage.width, baseImage.height, rects);
+      paintMaskRects(right, actualImage.width, actualImage.height, rects);
+      const found = sampledPixelRatio(left, right);
+      const maxRatio = maxDiffPixelRatio(route.name);
+      const mismatch = found.ratio > maxRatio;
+      report.push({
+        name,
+        route: route.name,
+        ratio: found.ratio,
+        maxRatio,
+        masked: rects.length,
+        mismatch,
+      });
+      if (mismatch) {
+        const diff = new Uint8Array(right);
+        for (let i = 0; i < left.length; i += 16) {
+          const delta = Math.abs(left[i] - right[i]) + Math.abs(left[i + 1] - right[i + 1]) + Math.abs(left[i + 2] - right[i + 2]);
+          if (delta > 36) {
+            diff[i] = 220;
+            diff[i + 1] = 40;
+            diff[i + 2] = 40;
           }
-          const canvas = document.createElement("canvas");
-          canvas.width = ia.width;
-          canvas.height = ia.height;
-          const ctx = canvas.getContext("2d", { willReadFrequently: true });
-          ctx.drawImage(ia, 0, 0);
-          const da = ctx.getImageData(0, 0, ia.width, ia.height).data;
-          ctx.clearRect(0, 0, ia.width, ia.height);
-          ctx.drawImage(ib, 0, 0);
-          const db = ctx.getImageData(0, 0, ia.width, ia.height).data;
-          let diff = 0;
-          const pixels = ia.width * ia.height;
-          for (let i = 0; i < da.length; i += 16) {
-            const delta = Math.abs(da[i] - db[i]) + Math.abs(da[i + 1] - db[i + 1]) + Math.abs(da[i + 2] - db[i + 2]);
-            if (delta > 36) diff += 4;
-          }
-          const ratio = diff / pixels;
-          const maxRatio = routeName === "search" || routeName === "daycares" ? 0.25 : 0.004;
-          return { ratio, mismatch: ratio > maxRatio };
-        },
-        {
-          a: `data:image/png;base64,${readFileSync(baseFile).toString("base64")}`,
-          b: `data:image/png;base64,${readFileSync(actualFile).toString("base64")}`,
-          routeName: route.name,
-        },
-      );
-      if (found.mismatch) problems.push(`${name} ${(found.ratio * 100).toFixed(2)}% ${found.reason || ""}`.trim());
+        }
+        await writeDiffPng(join(diffDir, name), diff, actualImage.width, actualImage.height);
+        problems.push(`${name} ${(found.ratio * 100).toFixed(2)}% limit ${(maxRatio * 100).toFixed(2)}%`);
+      }
     }
   }
-  await page.close();
+  const reportPath = join(dirname(actualDir), "desktop-report.json");
+  mkdirSync(dirname(reportPath), { recursive: true });
+  writeFileSync(reportPath, JSON.stringify({ shots: report }, null, 2));
   return problems;
 }
 
@@ -274,6 +434,6 @@ export async function runDesktopVisualPass(browser, base, baselineDir = DESKTOP_
     problems.push("baselines missing");
     return problems;
   }
-  const diffs = await compareDesktopShots(browser, actualDir, baselineDir);
+  const diffs = await compareDesktopShots(actualDir, baselineDir);
   return problems.concat(diffs);
 }

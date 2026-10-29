@@ -5,6 +5,7 @@
  * (see vite.config.ts). A long-lived preview can be passed as BASE_URL.
  * Stripe charges and real OTPs are out of scope.
  */
+import { readFileSync } from "node:fs";
 import { CANONICAL_ORIGIN, decideRequest } from "./request-guard.mjs";
 
 export const DEFAULT_PREVIEW_ORIGIN = "http://127.0.0.1:8081";
@@ -44,6 +45,105 @@ export function classifyPublicHealth({ status = 0, bodyText = "" } = {}) {
   return { ok: false, kind: "invalid", reason: "health JSON missing ok/service" };
 }
 
+/** Guest smoke is split into this many CI shards. Desktop visual is a separate job. */
+export const SMOKE_SHARD_COUNT = 4;
+
+/**
+ * Shard 1 public pages, 2 role fixture, 3 WebKit + phone/tablet,
+ * 4 fold + store. Keep the buckets in this order.
+ */
+export const SMOKE_SHARD_GROUPS = Object.freeze([
+  Object.freeze(["public"]),
+  Object.freeze(["role"]),
+  Object.freeze(["webkit", "ipad", "phone"]),
+  Object.freeze(["fold", "store"]),
+]);
+
+export function parseShardToken(token) {
+  if (!token) return null;
+  const match = /^(\d+)\/(\d+)$/.exec(String(token));
+  if (!match) return { error: "--shard expects i/n such as 1/4" };
+  const index = Number(match[1]);
+  const total = Number(match[2]);
+  if (total !== SMOKE_SHARD_COUNT || index < 1 || index > total) {
+    return {
+      error: `--shard must be 1/${SMOKE_SHARD_COUNT} through ${SMOKE_SHARD_COUNT}/${SMOKE_SHARD_COUNT}`,
+    };
+  }
+  return { index, total, groups: SMOKE_SHARD_GROUPS[index - 1] };
+}
+
+/**
+ * Playwright's config `retries` does not apply: this suite uses the Playwright
+ * library, not @playwright/test. CI retries a failed shard once and reports
+ * the names that passed on the second attempt as flaky.
+ */
+export function ciPlaywrightRetries(env = {}) {
+  const ci = env.CI === "true" || env.CI === "1";
+  if (!ci) return 0;
+  if (env.E2E_RETRIES == null || env.E2E_RETRIES === "") return 1;
+  const raw = Number(env.E2E_RETRIES);
+  if (!Number.isInteger(raw) || raw < 0) return 1;
+  return Math.min(raw, 2);
+}
+
+export function smokeGroupSelected(args, group) {
+  if (args.desktopVisualOnly) return group === "visual";
+  if (group === "visual") {
+    if (args.skipDesktopVisual || args.shard) return false;
+    return true;
+  }
+  if (!args.shard) return true;
+  return args.shard.groups.includes(group);
+}
+
+export function parseQuarantine(raw) {
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    throw new Error("e2e/quarantine.json is not valid JSON");
+  }
+  if (!data || typeof data !== "object" || Array.isArray(data) || !Array.isArray(data.checks)) {
+    throw new Error("e2e/quarantine.json needs a checks array of smoke names");
+  }
+  const checks = [];
+  for (const name of data.checks) {
+    if (typeof name !== "string" || !name.trim()) {
+      throw new Error("e2e/quarantine.json checks must be non-empty strings");
+    }
+    checks.push(name.trim());
+  }
+  return checks;
+}
+
+export function loadQuarantine(filePath) {
+  return parseQuarantine(readFileSync(filePath, "utf8"));
+}
+
+/**
+ * Pull requests set E2E_VISUAL_BLOCKING=0. A desktop-visual pixel miss then
+ * stays in the log and does not fail the process. A preview crash or any
+ * other check still fails. Main leaves the variable unset, so the miss fails.
+ */
+export function visualCheckBlocks(env, failedNames) {
+  if (env.E2E_VISUAL_BLOCKING !== "0") return true;
+  return failedNames.some((name) => name !== "desktop-visual");
+}
+
+/** Failures whose names are listed in the quarantine file do not fail CI. */
+export function splitSmokeResults(results, quarantinedNames = []) {
+  const held = new Set(quarantinedNames);
+  const failed = [];
+  const quarantined = [];
+  for (const row of results) {
+    if (row.ok) continue;
+    if (held.has(row.name)) quarantined.push(row);
+    else failed.push(row);
+  }
+  return { failed, quarantined };
+}
+
 export function parseE2eArgs(argv = [], env = {}) {
   const positional = [];
   let url = "";
@@ -52,6 +152,9 @@ export function parseE2eArgs(argv = [], env = {}) {
   let browserSmoke = false;
   let signedIn = false;
   let outDir = "";
+  let shardToken = "";
+  let skipDesktopVisual = false;
+  let desktopVisualOnly = false;
 
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
@@ -71,6 +174,18 @@ export function parseE2eArgs(argv = [], env = {}) {
       browserSmoke = true;
     } else if (arg === "--signed-in") {
       signedIn = true;
+    } else if (arg === "--shard") {
+      const value = argv[++i];
+      if (!value) return { error: "--shard expects i/n such as 1/4" };
+      shardToken = value;
+    } else if (arg.startsWith("--shard=")) {
+      const value = arg.slice("--shard=".length);
+      if (!value) return { error: "--shard expects i/n such as 1/4" };
+      shardToken = value;
+    } else if (arg === "--skip-desktop-visual") {
+      skipDesktopVisual = true;
+    } else if (arg === "--desktop-visual-only") {
+      desktopVisualOnly = true;
     } else if (arg === "--out-dir") {
       const value = argv[++i];
       if (!value) return { error: "--out-dir requires a path" };
@@ -90,6 +205,11 @@ export function parseE2eArgs(argv = [], env = {}) {
     return { error: "only one positional URL is allowed" };
   }
 
+  const shard = parseShardToken(shardToken || env.E2E_SHARD || "");
+  if (shard && shard.error) return { error: shard.error };
+  if (desktopVisualOnly && shard) return { error: "--desktop-visual-only cannot be combined with --shard" };
+  if (desktopVisualOnly && signedIn) return { error: "--desktop-visual-only cannot be combined with --signed-in" };
+
   const fromEnv = String(env.BASE_URL || env.E2E_BASE_URL || "").trim();
   const explicitUrl = url || positional[0] || fromEnv;
   const requireFromEnv = env.E2E_REQUIRE === "1" || env.E2E_REQUIRE === "true";
@@ -100,6 +220,9 @@ export function parseE2eArgs(argv = [], env = {}) {
     requireServer: requireServer || requireFromEnv,
     browserSmoke,
     signedIn,
+    shard,
+    skipDesktopVisual,
+    desktopVisualOnly,
     outDir: outDir || env.E2E_OUT_DIR || "artifacts/e2e",
     allowExternal: env.BROWSER_ALLOW_EXTERNAL_HOST === "1",
     explicitUrl: Boolean(explicitUrl),

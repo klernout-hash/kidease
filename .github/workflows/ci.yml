@@ -5,8 +5,14 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
   pull_request:
     branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
   workflow_dispatch:
     inputs:
       base_url:
@@ -38,11 +44,64 @@ jobs:
       - name: Unit tests
         run: npm test
 
-  e2e:
+  # One production build shared by the smoke shards, desktop visual, and signed-in.
+  # This repo is Vite + Nitro, not Next. vite preview reads
+  # node_modules/.nitro/last-build.json plus .vercel/output.
+  build:
     runs-on: ubuntu-latest
-    # Phone, tablet, fold, store, and desktop shots run after the smoke suite.
-    # WebKit system packages can take most of a slow runner before those shots start.
-    timeout-minutes: 70
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore Vite build output
+        id: vite-build
+        uses: actions/cache@v4
+        with:
+          path: artifacts/ci-build
+          key: vite-build-${{ runner.os }}-${{ hashFiles('package-lock.json', 'vite.config.ts', 'src/**', 'server/**', 'public/**', 'scripts/migrate.mjs', 'scripts/check-ssr-bundle.mjs', 'scripts/check-locale-chunks.mjs', 'scripts/check-client-db.mjs') }}
+      - uses: actions/setup-node@v4
+        if: steps.vite-build.outputs.cache-hit != 'true'
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Install dependencies
+        if: steps.vite-build.outputs.cache-hit != 'true'
+        run: npm ci
+      - name: Build
+        if: steps.vite-build.outputs.cache-hit != 'true'
+        run: npm run build
+      - name: Stage Vite build
+        if: steps.vite-build.outputs.cache-hit != 'true'
+        run: sh scripts/stage-ci-build.sh
+      - name: Upload Vite build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-build
+          path: artifacts/ci-build
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 1
+
+  # WebKit stays available: scripts/e2e-smoke.mjs runWebkitSearchGuard launches it.
+  # The official image already contains Chromium and WebKit, so these jobs do not
+  # apt-install browsers (that apt step was a flake).
+  e2e-shard:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    # The image's default shell is dash, which rejects `set -o pipefail`.
+    defaults:
+      run:
+        shell: bash
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-jammy
+      options: --user root
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ["1/4", "2/4", "3/4", "4/4"]
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -50,28 +109,99 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
+      - name: Download Vite build
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-build
+          path: artifacts/ci-build
+      - name: Restore Vite build
+        run: sh scripts/restore-ci-build.sh
       - name: Playwright version
         id: playwright-version
+        uses: ./.github/actions/playwright-version
+      - name: Smoke against BASE_URL or local preview
+        timeout-minutes: 30
+        env:
+          BASE_URL: ${{ github.event.inputs.base_url }}
         run: |
-          version="$(node -e "const p = require('./package-lock.json').packages || {}; console.log((p['node_modules/playwright'] || p['node_modules/@playwright/test'] || p['node_modules/playwright-core'] || {version:'1'}).version)")"
-          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          shard="${{ matrix.shard }}"
+          if [ -n "${BASE_URL}" ]; then
+            export BROWSER_ALLOW_EXTERNAL_HOST=1
+            npm run e2e -- --shard "$shard"
+          else
+            npm run e2e:preview -- --shard "$shard"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-artifacts-${{ strategy.job-index }}
+          path: artifacts/e2e/
+          if-no-files-found: ignore
+
+  # Desktop baselines were captured on GitHub ubuntu-latest. Keep this job on
+  # that runner so a container font change does not force every baseline to
+  # be replaced. Chromium only: this job does not launch WebKit.
+  desktop-visual:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    outputs:
+      outcome: ${{ steps.visual.outputs.visual_outcome }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Download Vite build
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-build
+          path: artifacts/ci-build
+      - name: Restore Vite build
+        run: sh scripts/restore-ci-build.sh
+      - name: Playwright version
+        id: playwright-version
+        uses: ./.github/actions/playwright-version
+      - name: Cache apt archives for Playwright Chromium
+        uses: actions/cache@v4
+        with:
+          path: /tmp/playwright-apt
+          key: playwright-apt-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}-chromium
       - name: Restore Playwright browsers
         id: playwright-cache
         uses: actions/cache/restore@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
-      - name: Install Playwright system dependencies
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}-chromium
+      - name: Pin fonts and install Playwright system dependencies
         timeout-minutes: 8
         run: |
           set -euo pipefail
+          mkdir -p /tmp/playwright-apt
+          shopt -s nullglob
+          debs=(/tmp/playwright-apt/*.deb)
+          if [ "${#debs[@]}" -gt 0 ]; then
+            sudo dpkg -i "${debs[@]}" || sudo apt-get install -y -f
+          fi
           for attempt in 1 2 3; do
-            if npx playwright install-deps chromium webkit; then
-              exit 0
+            if npx playwright install-deps chromium \
+              && sudo apt-get install -y --no-install-recommends fonts-liberation fonts-noto-core fonts-noto-color-emoji fontconfig \
+              && sudo fc-cache -f; then
+              if fc-list : family | grep -qi 'liberation sans'; then
+                mkdir -p /tmp/playwright-apt
+                sudo bash -c 'cp -n /var/cache/apt/archives/*.deb /tmp/playwright-apt/ 2>/dev/null || true'
+                sudo chmod -R a+rX /tmp/playwright-apt || true
+                exit 0
+              fi
+              echo "Liberation Sans was not installed"
             fi
-            echo "playwright install-deps failed (attempt ${attempt})"
+            echo "::warning::Playwright Chromium dependencies failed (attempt ${attempt})."
             sleep $((attempt * 5))
           done
+          echo "::error::Playwright system dependencies did not install after 3 attempts."
           exit 1
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
@@ -79,43 +209,68 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in 1 2 3; do
-            if timeout 180 npx playwright install chromium webkit; then
+            if timeout 180 npx playwright install chromium; then
               exit 0
             fi
-            echo "playwright browser install failed (attempt ${attempt})"
+            echo "::warning::Playwright Chromium install failed (attempt ${attempt})."
             sleep $((attempt * 5))
           done
+          echo "::error::Playwright Chromium did not install after 3 attempts."
           exit 1
       - name: Save Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
-      - name: Smoke against BASE_URL or local preview
-        timeout-minutes: 45
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}-chromium
+      - name: Desktop visual check
+        id: visual
+        # Pixel mismatches set visual_outcome=failure. On a pull request the
+        # script exits 0 so the job stays green. A preview crash still exits 1.
+        # Main leaves E2E_VISUAL_BLOCKING unset, so a mismatch fails the job.
+        timeout-minutes: 30
         env:
           BASE_URL: ${{ github.event.inputs.base_url }}
+          E2E_VISUAL_BLOCKING: ${{ github.event_name == 'pull_request' && '0' || '1' }}
         run: |
+          set -euo pipefail
           if [ -n "${BASE_URL}" ]; then
             export BROWSER_ALLOW_EXTERNAL_HOST=1
-            npm run e2e
+            npm run e2e -- --desktop-visual-only
           else
-            npm run build
-            npm run e2e:preview
+            npm run e2e:preview -- --desktop-visual-only
+          fi
+      - name: Desktop visual summary
+        if: always() && steps.visual.outputs.visual_outcome == 'failure'
+        run: |
+          echo "::warning title=Desktop visual::Screenshot compare failed. Pull requests stay green. Push to main still fails the e2e check. See artifacts/e2e/desktop-report.json and desktop-diff."
+          if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+            echo "Desktop visual failed. Non-blocking on pull requests. Blocking on main." >> "$GITHUB_STEP_SUMMARY"
           fi
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: always()
         with:
-          name: e2e-artifacts
-          path: artifacts/e2e/
+          name: desktop-visual-report
+          path: |
+            artifacts/e2e/desktop-report.json
+            artifacts/e2e/desktop-diff/
+            artifacts/e2e/desktop-actual/*__fr.png
           if-no-files-found: ignore
+          retention-days: 7
 
   # Kyle marks this check required in GitHub branch protection. This file does not change that setting.
   signed-in-e2e:
+    needs: build
     runs-on: ubuntu-latest
-    # WebKit system packages can use most of a slow runner. Leave time for the suite.
     timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-jammy
+      options: --user root
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -123,50 +278,16 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
+      - name: Download Vite build
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-build
+          path: artifacts/ci-build
+      - name: Restore Vite build
+        run: sh scripts/restore-ci-build.sh
       - name: Playwright version
         id: playwright-version-signed
-        run: |
-          version="$(node -e "const p = require('./package-lock.json').packages || {}; console.log((p['node_modules/playwright'] || p['node_modules/@playwright/test'] || p['node_modules/playwright-core'] || {version:'1'}).version)")"
-          echo "version=${version}" >> "$GITHUB_OUTPUT"
-      - name: Restore Playwright browsers
-        id: playwright-cache-signed
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.playwright-version-signed.outputs.version }}
-      - name: Install Playwright system dependencies
-        timeout-minutes: 8
-        run: |
-          set -euo pipefail
-          for attempt in 1 2 3; do
-            if npx playwright install-deps chromium webkit; then
-              exit 0
-            fi
-            echo "playwright install-deps failed (attempt ${attempt})"
-            sleep $((attempt * 5))
-          done
-          exit 1
-      - name: Install Playwright browsers
-        if: steps.playwright-cache-signed.outputs.cache-hit != 'true'
-        timeout-minutes: 10
-        run: |
-          set -euo pipefail
-          for attempt in 1 2 3; do
-            if timeout 180 npx playwright install chromium webkit; then
-              exit 0
-            fi
-            echo "playwright browser install failed (attempt ${attempt})"
-            sleep $((attempt * 5))
-          done
-          exit 1
-      - name: Save Playwright browsers
-        if: steps.playwright-cache-signed.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ steps.playwright-version-signed.outputs.version }}
-      - name: Build preview
-        run: npm run build
+        uses: ./.github/actions/playwright-version
       - name: Signed-in parent and daycare, English and French
         timeout-minutes: 40
         run: node scripts/e2e-smoke.mjs --start-preview --signed-in
@@ -176,3 +297,52 @@ jobs:
           name: signed-in-e2e-artifacts
           path: artifacts/e2e/
           if-no-files-found: ignore
+
+  # Same check name as before (`e2e`) so branch protection still matches.
+  # Smoke shards must pass. Desktop visual must pass on main. On a pull
+  # request a visual miss is a warning and this check stays green.
+  e2e:
+    name: e2e
+    needs: [build, e2e-shard, desktop-visual]
+    if: >-
+      always() &&
+      needs.build.result != 'cancelled' &&
+      needs.e2e-shard.result != 'cancelled' &&
+      needs.desktop-visual.result != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require smoke shards and desktop visual on main
+        env:
+          BUILD: ${{ needs.build.result }}
+          SHARDS: ${{ needs.e2e-shard.result }}
+          VISUAL_JOB: ${{ needs.desktop-visual.result }}
+          VISUAL_STEP: ${{ needs.desktop-visual.outputs.outcome }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          echo "build: ${BUILD}"
+          echo "smoke shards: ${SHARDS}"
+          echo "desktop visual job: ${VISUAL_JOB}"
+          echo "desktop visual step: ${VISUAL_STEP}"
+          if [ "${BUILD}" != "success" ]; then
+            echo "::error::Vite build did not pass (${BUILD})."
+            exit 1
+          fi
+          if [ "${SHARDS}" != "success" ]; then
+            echo "::error::Smoke shards did not pass (${SHARDS})."
+            exit 1
+          fi
+          if [ "${VISUAL_JOB}" != "success" ]; then
+            echo "::error::Desktop visual job failed (${VISUAL_JOB}, outcome ${VISUAL_STEP}). A preview or install failure fails this check on pull requests too. A pixel mismatch fails it on main."
+            exit 1
+          fi
+          if [ "${VISUAL_STEP}" = "failure" ]; then
+            if [ "${EVENT}" = "pull_request" ]; then
+              echo "::warning title=Desktop visual::Desktop visual failed. It does not fail this pull request. It still fails the e2e check on main. Open the desktop-visual job for the diff images."
+              exit 0
+            fi
+            echo "::error::Desktop visual failed. This check stays blocking on main."
+            exit 1
+          fi
+          echo "Smoke shards passed. Desktop visual passed."

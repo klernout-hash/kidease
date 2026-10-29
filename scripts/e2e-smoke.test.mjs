@@ -12,6 +12,7 @@ import {
   classifyAdminGate,
   classifyParentGuestGate,
   classifyProviderGuestGate,
+  ciPlaywrightRetries,
   classifyPublicHealth,
   HEALTH_SMOKE_PATH,
   DEFAULT_PREVIEW_ORIGIN,
@@ -20,10 +21,15 @@ import {
   FR_CITY_HUB_SLUGS,
   frenchCityHubSsrOk,
   homepageLooksLive,
+  loadQuarantine,
   loginPageLooksLive,
   parseE2eArgs,
+  parseQuarantine,
   skipReason,
+  smokeGroupSelected,
   SMOKE_PATHS,
+  splitSmokeResults,
+  visualCheckBlocks,
   targetOrigin,
   vercelAppAdminDecision,
 } from "./e2e-smoke-lib.mjs";
@@ -69,6 +75,12 @@ test("parseE2eArgs flag and unknown-flag handling", () => {
   assert.equal(parseE2eArgs([], { E2E_REQUIRE: "1" }).requireServer, true);
   assert.equal(parseE2eArgs(["--browser-smoke"], {}).browserSmoke, true);
   assert.equal(parseE2eArgs(["--signed-in"], {}).signedIn, true);
+  assert.equal(parseE2eArgs(["--shard", "2/4"], {}).shard.index, 2);
+  assert.deepEqual(parseE2eArgs(["--shard=1/4"], {}).shard.groups, ["public"]);
+  assert.equal(parseE2eArgs(["--skip-desktop-visual"], {}).skipDesktopVisual, true);
+  assert.equal(parseE2eArgs(["--desktop-visual-only"], {}).desktopVisualOnly, true);
+  assert.match(parseE2eArgs(["--shard", "1/3"], {}).error, /1\/4/);
+  assert.match(parseE2eArgs(["--desktop-visual-only", "--shard", "1/4"], {}).error, /cannot be combined/);
 });
 
 test("skipReason is null when a server is required even without URL", () => {
@@ -264,22 +276,80 @@ test("package.json wires e2e scripts to the smoke runner and browser-smoke", () 
   assert.match(pkg.scripts.preview, /vite preview/);
 });
 
-test("CI e2e job builds preview locally or accepts workflow_dispatch BASE_URL", () => {
+test("CI builds once, shards smoke, and keeps desktop visual blocking on main", () => {
   const ci = src(".github/workflows/ci.yml");
   assert.match(ci, /workflow_dispatch:/);
   assert.match(ci, /base_url:/);
-  assert.equal((ci.match(/npx playwright install-deps chromium webkit/g) || []).length, 2);
-  assert.equal((ci.match(/npx playwright install chromium webkit/g) || []).length, 2);
+  assert.match(ci, /paths-ignore:[\s\S]*?docs\/\*\*/);
+  assert.match(ci, /\*\*\/\*\.md/);
+  assert.match(ci, /mcr\.microsoft\.com\/playwright:v1\.62\.1-jammy/);
+  assert.equal((ci.match(/mcr\.microsoft\.com\/playwright:v1\.62\.1-jammy/g) || []).length, 2);
+  assert.match(ci, /playwright install-deps chromium/);
+  assert.doesNotMatch(ci, /playwright install-deps chromium webkit/);
+  assert.doesNotMatch(ci, /playwright install chromium webkit/);
   assert.match(ci, /cache-hit != 'true'/);
   assert.match(ci, /signed-in-e2e:[\s\S]*?timeout-minutes: 60/);
+  assert.match(ci, /shard: \["1\/4", "2\/4", "3\/4", "4\/4"\]/);
+  assert.match(ci, /E2E_VISUAL_BLOCKING/);
+  assert.match(ci, /name: ci-build/);
+  assert.match(ci, /restore-ci-build\.sh/);
+  assert.match(src("scripts/restore-ci-build.sh"), /last-build\.json/);
+  assert.match(src("scripts/stage-ci-build.sh"), /nitro\.json/);
+  assert.match(ci, /defaults:\n\s+run:\n\s+shell: bash/);
+  assert.match(ci, /\.vercel\/output/);
   const runner = src("scripts/e2e-smoke.mjs");
   assert.match(runner, /kidease\.e2e_session/);
   assert.match(runner, /pathname === "\/parent"/);
+  assert.match(runner, /withNetRetry/);
+  assert.match(runner, /ciPlaywrightRetries/);
+  assert.match(runner, /e2e\/quarantine\.json/);
   assert.match(ci, /npm run build/);
   assert.match(ci, /npm run e2e:preview/);
   assert.match(ci, /BROWSER_ALLOW_EXTERNAL_HOST/);
   assert.match(ci, /npm run e2e/);
   assert.doesNotMatch(ci, /STRIPE_SECRET|TWILIO_|RESEND_API_KEY|OPERATOR_RESET_PASSWORD/);
+  const lock = JSON.parse(src("package-lock.json"));
+  assert.equal(lock.packages["node_modules/playwright"].version, "1.62.1");
+});
+
+test("shards, quarantine, and CI retries", () => {
+  assert.equal(ciPlaywrightRetries({}), 0);
+  assert.equal(ciPlaywrightRetries({ CI: "true" }), 1);
+  assert.equal(ciPlaywrightRetries({ CI: "true", E2E_RETRIES: "2" }), 2);
+  assert.equal(ciPlaywrightRetries({ CI: "true", E2E_RETRIES: "9" }), 2);
+  const shard = parseE2eArgs(["--shard", "3/4"], {});
+  assert.equal(smokeGroupSelected(shard, "webkit"), true);
+  assert.equal(smokeGroupSelected(shard, "public"), false);
+  assert.equal(smokeGroupSelected(shard, "visual"), false);
+  const local = parseE2eArgs([], { BASE_URL: "http://127.0.0.1:8081/" });
+  assert.equal(smokeGroupSelected(local, "visual"), true);
+  assert.equal(smokeGroupSelected(local, "role"), true);
+  const shots = parseE2eArgs(["--desktop-visual-only"], {});
+  assert.equal(smokeGroupSelected(shots, "visual"), true);
+  assert.equal(smokeGroupSelected(shots, "public"), false);
+  assert.deepEqual(parseQuarantine('{"checks":[]}'), []);
+  assert.deepEqual(parseQuarantine('{"checks":["role-fixture"]}'), ["role-fixture"]);
+  assert.throws(() => parseQuarantine("{}"), /checks array/);
+  const split = splitSmokeResults(
+    [
+      { name: "homepage", ok: true },
+      { name: "role-fixture", ok: false },
+      { name: "login", ok: false },
+    ],
+    ["role-fixture"],
+  );
+  assert.deepEqual(split.failed.map((row) => row.name), ["login"]);
+  assert.deepEqual(split.quarantined.map((row) => row.name), ["role-fixture"]);
+  assert.equal(visualCheckBlocks({}, ["desktop-visual"]), true);
+  assert.equal(visualCheckBlocks({ E2E_VISUAL_BLOCKING: "0" }, ["desktop-visual"]), false);
+  assert.equal(visualCheckBlocks({ E2E_VISUAL_BLOCKING: "0" }, ["desktop-visual", "suite"]), true);
+  assert.equal(visualCheckBlocks({ E2E_VISUAL_BLOCKING: "0" }, []), false);
+  assert.deepEqual(loadQuarantine(join(root, "e2e/quarantine.json")), []);
+  const doc = src("docs/e2e.md");
+  assert.match(doc, /quarantine\.json/);
+  assert.match(doc, /retries: 1/);
+  assert.match(doc, /0\.004/);
+  assert.match(doc, /Blocking on main|still fails the e2e check on main|On a push to `main`/);
 });
 
 test("docs/e2e.md explains local preview and optional long-lived BASE_URL", () => {
