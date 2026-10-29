@@ -39,10 +39,10 @@ test("winnipeg names decode amp entities", () => {
   assert.equal(decodeBasicEntities("A &amp;amp; B"), "A & B");
 });
 
-test("font stylesheets are allowed and Google Maps hosts are not", () => {
+test("maps stylesheets are allowed without unsafe-inline on style-src", () => {
   const csp = buildContentSecurityPolicy("abc+123/XYZ=");
-  assert.match(csp, /style-src 'self' 'nonce-abc\+123\/XYZ=' https:\/\/fonts\.googleapis\.com https:\/\/fonts\.gstatic\.com/);
-  assert.doesNotMatch(csp, /maps\.googleapis\.com|maps\.gstatic\.com|places\.googleapis\.com|tile\.googleapis\.com/);
+  assert.match(csp, /style-src 'self' 'nonce-abc\+123\/XYZ=' https:\/\/maps\.googleapis\.com https:\/\/maps\.gstatic\.com/);
+  assert.match(csp, /form-action 'self' https:\/\/accounts\.google\.com/);
   assert.doesNotMatch(csp, /(?:^|; )style-src [^;]*'unsafe-inline'/);
 });
 
