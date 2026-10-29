@@ -1897,7 +1897,8 @@ try {
 
   const failed = lastSplit.failed;
   const failedNames = failed.map((row) => row.name);
-  const blocks = visualCheckBlocks(process.env, failedNames);
+  const visualRow = results.find((row) => row.name === "desktop-visual");
+  const blocks = visualCheckBlocks(process.env, failedNames, visualRow?.note || "");
   const outputFile = process.env.GITHUB_OUTPUT;
   if (outputFile && args.desktopVisualOnly) {
     const mismatch = failedNames.includes("desktop-visual");

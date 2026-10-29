@@ -341,7 +341,14 @@ test("shards, quarantine, and CI retries", () => {
   assert.deepEqual(split.failed.map((row) => row.name), ["login"]);
   assert.deepEqual(split.quarantined.map((row) => row.name), ["role-fixture"]);
   assert.equal(visualCheckBlocks({}, ["desktop-visual"]), true);
-  assert.equal(visualCheckBlocks({ E2E_VISUAL_BLOCKING: "0" }, ["desktop-visual"]), false);
+  assert.equal(
+    visualCheckBlocks({ E2E_VISUAL_BLOCKING: "0" }, ["desktop-visual"], "1280x800__fr.png 3.04% limit 0.40%"),
+    false,
+  );
+  assert.equal(
+    visualCheckBlocks({ E2E_VISUAL_BLOCKING: "0" }, ["desktop-visual"], "home 1280 Too many arguments"),
+    true,
+  );
   assert.equal(visualCheckBlocks({ E2E_VISUAL_BLOCKING: "0" }, ["desktop-visual", "suite"]), true);
   assert.equal(visualCheckBlocks({ E2E_VISUAL_BLOCKING: "0" }, []), false);
   assert.deepEqual(loadQuarantine(join(root, "e2e/quarantine.json")), []);

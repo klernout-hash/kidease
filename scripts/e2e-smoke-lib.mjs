@@ -126,9 +126,13 @@ export function loadQuarantine(filePath) {
  * stays in the log and does not fail the process. A preview crash or any
  * other check still fails. Main leaves the variable unset, so the miss fails.
  */
-export function visualCheckBlocks(env, failedNames) {
+export function visualCheckBlocks(env, failedNames, note = "") {
   if (env.E2E_VISUAL_BLOCKING !== "0") return true;
-  return failedNames.some((name) => name !== "desktop-visual");
+  if (failedNames.some((name) => name !== "desktop-visual")) return true;
+  if (!failedNames.includes("desktop-visual")) return false;
+  // A real screenshot miss includes a percent. A capture exception does not,
+  // and that still fails the pull request.
+  return !/\d+\.\d+%/.test(String(note));
 }
 
 /** Failures whose names are listed in the quarantine file do not fail CI. */
