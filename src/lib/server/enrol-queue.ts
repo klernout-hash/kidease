@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { mapChild, type ChildRow } from "@/lib/child-profile";
+import { openHealth, revealChildHealth } from "@/lib/child-health-crypto";
+import { logChildProfileAccess } from "@/lib/server/child-access-log";
 import type { AgeGroup, BookingStatus, Child, Schedule, SpotRequest } from "@/lib/types";
 import { createSpotRequest, updateRequestStatus } from "@/lib/server/family";
 
@@ -52,7 +54,7 @@ function mapRequest(b: IncomingRow, child: Child | null): SpotRequest {
     createdAt: String(b.created_at),
     paymentStatus: b.payment_status,
     birthdate: b.birthdate,
-    allergies: b.allergies ?? child?.allergies ?? "",
+    allergies: child?.allergies || openHealth(b.allergies) || "",
     epiPen: Boolean(
       b.epi_pen === true || b.epi_pen === 1 || b.epi_pen === "t" || b.epi_pen === "true" || child?.epiPen,
     ),
@@ -107,7 +109,10 @@ export const listDaycareIncoming = createServerFn({ method: "GET" })
           [childIds],
         )
       : [];
-    const byId = new Map(kids.map((k) => [k.id, mapChild(k)]));
+    const byId = new Map(kids.map((k) => [k.id, mapChild(revealChildHealth(k))]));
+    for (const id of childIds) {
+      void logChildProfileAccess(sql, { childId: id, actorId: context.userId, action: "read" });
+    }
     return rows.map((r) => mapRequest(r, r.child_id ? byId.get(r.child_id) ?? null : null));
   });
 
@@ -140,8 +145,11 @@ export const decideParentRequest = createServerFn({ method: "POST" })
 
 export const shareChildWithCentres = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { childId: string; daycareIds: string[]; startDate?: string; message?: string }) => input)
+  .validator((input: { childId: string; daycareIds: string[]; startDate?: string; message?: string; consent?: boolean }) => input)
   .handler(async ({ context, data }) => {
+    if (data.consent !== true) {
+      throw new Error("Confirm you want this centre to see this child's care details.");
+    }
     const sql = await getSql();
     const kids = await sql<ChildRow>`
       select id, name, preferred_name, birthdate, allergies, epi_pen, medical_notes, medications,
@@ -152,7 +160,8 @@ export const shareChildWithCentres = createServerFn({ method: "POST" })
     `;
     const kid = kids[0];
     if (!kid) throw new Error("Child not found");
-    const child = mapChild(kid);
+    const child = mapChild(revealChildHealth(kid));
+    await logChildProfileAccess(sql, { childId: child.id, actorId: context.userId, action: "share" });
     const parent = await sql<{ name: string | null }>`select name from "user" where id = ${context.userId} limit 1`;
     const start =
       data.startDate && /^\d{4}-\d{2}-\d{2}$/.test(data.startDate) ? data.startDate : defaultStart();

@@ -57,5 +57,6 @@ test("header wires website-only Facebook and Instagram buttons with a11y labels"
   assert.match(copy, /socialInstagram: "KidEase sur Instagram"/);
   assert.match(copy, /socialFacebook: "KidEase sur Facebook"/);
   assert.doesNotMatch(header, /signIn\.social|continueFacebook|FACEBOOK_APP_ID/);
-  assert.match(login, /continueFacebook/);
+  assert.match(login, /SocialSignInButtons/);
+  assert.match(src("src/components/social-sign-in-buttons.tsx"), /continueFacebook/);
 });

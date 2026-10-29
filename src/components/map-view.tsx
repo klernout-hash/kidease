@@ -10,6 +10,7 @@ import { useCopy } from "@/lib/use-copy";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
 import { useStoreChannel } from "@/lib/use-native-shell";
 import { StoreMapFallback } from "@/components/store-map-fallback";
+import { MapUnavailable } from "@/components/map-unavailable";
 import {
   MAP_RADIUS_FIT_PAD,
   mapZoomForRadius,
@@ -74,18 +75,19 @@ import {
 import { mapPinDetail, mapPinTiles, mapPinsInView } from "@/lib/server/map-pins";
 import {
   createKidEaseMap,
-  createListingOverlayFactory,
+  createListingOverlay,
   createYouAreHereDot,
-  googleMapTypeId,
-  GOOGLE_MAPS_BROWSER_ENV,
-  hasGoogleMapsBrowserKey,
-  loadAdvancedMarkerElement,
-  loadGoogleMaps,
+  mapHostStyle,
+  osmMapTypeId,
   MAP_VIEW_WAIT_MS,
-  type AdvancedMarkerCtor,
+  MAP_LOAD_TIMEOUT,
+  osmMaps,
   type ListingOverlay,
   type MovableDot,
-} from "@/lib/google-maps";
+  type OsmCircle,
+  type OsmMap,
+  type OsmOverlay,
+} from "@/lib/osm-map";
 import { BuildingPhoto } from "@/components/building-photo";
 import { mapPinThumb } from "@/lib/listing-photo";
 import { standardAgeLabelsForListing } from "@/lib/standard-age-groups";
@@ -128,6 +130,8 @@ type Props = {
   onRelocate?: (pos: { lat: number; lng: number }) => void;
   onLocate?: () => void;
   onFallback?: () => void;
+  /** Place name shown if the embedded map does not load. */
+  placeLabel?: string | null;
 };
 
 /** Brand map pin: same smiling teardrop as the KidEase logo. */
@@ -144,13 +148,14 @@ const PIN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" a
 const LOGO_PIN_URL = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(PIN_SVG)}`;
 
 type AnyPin = {
-  setMap(map: google.maps.Map | null): void;
+  setMap(map: OsmMap | null): void;
+  hitTest?(event: { clientX: number; clientY: number }): DotItem | null;
 };
 
 type DotItem = DaycareCard | MapPin;
 
 type SlugPin = AnyPin & {
-  setActive(on: boolean, maps: typeof google.maps): void;
+  setActive(on: boolean): void;
 };
 
 const MAP_CLUSTER_PAD = { top: 72, right: 64, bottom: 28, left: 16 };
@@ -158,10 +163,10 @@ const MAP_CLUSTER_PAD = { top: 72, right: 64, bottom: 28, left: 16 };
 export function MapView(props: Props) {
   const channel = useStoreChannel();
   if (channel === "huawei") return <StoreMapFallback />;
-  return <GoogleMapView {...props} />;
+  return <OsmMapView {...props} />;
 }
 
-function GoogleMapView({
+function OsmMapView({
   items,
   origin,
   secondOrigin,
@@ -170,17 +175,18 @@ function GoogleMapView({
   onRelocate,
   onLocate,
   onFallback,
+  placeLabel,
 }: Props) {
   const host = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<google.maps.Map | null>(null);
-  const mapsApiRef = useRef<typeof google.maps | null>(null);
-  const overlayFactoryRef = useRef<ReturnType<typeof createListingOverlayFactory> | null>(null);
-  const advancedMarkerRef = useRef<AdvancedMarkerCtor | null>(null);
+  const mapRef = useRef<OsmMap | null>(null);
+  const mapsApiRef = useRef<typeof osmMaps | null>(null);
+  const overlayFactoryRef = useRef<typeof createListingOverlay | null>(null);
   const pinsRef = useRef<AnyPin[]>([]);
+  const pinHitRef = useRef<(event: { clientX: number; clientY: number }) => DotItem | null>(() => null);
   const youRef = useRef<MovableDot | null>(null);
   const workYouRef = useRef<MovableDot | null>(null);
-  const circleRef = useRef<google.maps.Circle | null>(null);
-  const circle2Ref = useRef<google.maps.Circle | null>(null);
+  const circleRef = useRef<OsmCircle | null>(null);
+  const circle2Ref = useRef<OsmCircle | null>(null);
   const markersBySlug = useRef(new Map<string, SlugPin>());
   const popupRef = useRef<HTMLDivElement>(null);
   const popupBoxRef = useRef<PinPopupBox | null>(null);
@@ -202,9 +208,7 @@ function GoogleMapView({
   const { t } = useCopy();
   const [ready, setReady] = useState(false);
   const [basemapReady, setBasemapReady] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(() =>
-    hasGoogleMapsBrowserKey() ? null : `${GOOGLE_MAPS_BROWSER_ENV} is not set`,
-  );
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [zoom, setZoom] = useState(12);
   const [base, setBase] = useState<MapBase>("roadmap");
   const [picked, setPicked] = useState<string | null>(null);
@@ -288,74 +292,49 @@ function GoogleMapView({
 
   useEffect(() => {
     const el = host.current;
-    if (!el || !hasGoogleMapsBrowserKey()) return;
+    if (!el) return;
     let cancelled = false;
-    let map: google.maps.Map | null = null;
+    let map: OsmMap | null = null;
     const markers = markersBySlug.current;
 
     void (async () => {
       const watchdog = window.setTimeout(() => {
         if (cancelled) return;
-        setLoadError("Google Maps timed out");
+        setLoadError(MAP_LOAD_TIMEOUT);
         setBasemapReady(false);
         setReady(false);
       }, MAP_VIEW_WAIT_MS);
       try {
-        const maps = await loadGoogleMaps();
-        if (cancelled || !el) return;
         el.innerHTML = "";
         const framed = originRef.current;
-        const created = await createKidEaseMap(
-          maps,
-          el,
-          {
-            center: { lat: framed.lat, lng: framed.lng },
-            zoom: mapZoomForRadius(radiusRef.current),
-            mapTypeId: googleMapTypeId(readMapBase()),
-          },
-          undefined,
-          {
-            onPaint: (painted, usedMapId) => {
-              if (cancelled) return;
-              map = painted;
-              mapRef.current = painted;
-              mapsApiRef.current = maps;
-              setBasemapReady(true);
-              void loadAdvancedMarkerElement(maps, usedMapId).then((AdvancedMarker) => {
-                if (cancelled || mapRef.current !== painted) return;
-                advancedMarkerRef.current = AdvancedMarker;
-                overlayFactoryRef.current = createListingOverlayFactory(maps, AdvancedMarker);
-                setReady(true);
-                setMapEpoch((n) => n + 1);
-              });
-            },
-          },
-        );
-        if (cancelled) return;
+        const created = await createKidEaseMap(el, {
+          center: { lat: framed.lat, lng: framed.lng },
+          zoom: mapZoomForRadius(radiusRef.current),
+          mapTypeId: osmMapTypeId(readMapBase()),
+        });
+        if (cancelled) {
+          created.map.destroy();
+          return;
+        }
         map = created.map;
-        // Google Maps can ignore a later fitBounds if it runs before the
-        // projection exists. The load above may also have closed over a device
-        // pin that the city query has since replaced. Pin the latest camera now.
         const latest = originRef.current;
         map.setCenter({ lat: latest.lat, lng: latest.lng });
         map.addListener("zoom_changed", () => {
           const next = map?.getZoom();
-          if (typeof next === "number") setZoom(next);
+          if (typeof next === "number") setZoom(Math.round(next));
         });
         const startZoom = map.getZoom();
-        if (typeof startZoom === "number") setZoom(startZoom);
-        const AdvancedMarker = await loadAdvancedMarkerElement(maps, created.usedMapId);
-        if (cancelled) return;
+        if (typeof startZoom === "number") setZoom(Math.round(startZoom));
         mapRef.current = map;
-        mapsApiRef.current = maps;
-        advancedMarkerRef.current = AdvancedMarker;
-        overlayFactoryRef.current = createListingOverlayFactory(maps, AdvancedMarker);
+        mapsApiRef.current = created.maps;
+        overlayFactoryRef.current = createListingOverlay;
         setLoadError(null);
         setBasemapReady(true);
         setReady(true);
+        setMapEpoch((n) => n + 1);
       } catch (err) {
         if (!cancelled) {
-          setLoadError(err instanceof Error ? err.message : "Google Maps failed to load");
+          setLoadError(err instanceof Error ? err.message : MAP_LOAD_TIMEOUT);
           setBasemapReady(false);
           setReady(false);
         }
@@ -368,11 +347,10 @@ function GoogleMapView({
       cancelled = true;
       setReady(false);
       setBasemapReady(false);
-      if (map) {
-        window.google?.maps?.event.clearInstanceListeners(map);
-      }
+      if (map) mapsApiRef.current?.event.clearInstanceListeners(map);
       for (const pin of pinsRef.current) pin.setMap(null);
       pinsRef.current = [];
+      pinHitRef.current = () => null;
       youRef.current?.setMap(null);
       youRef.current = null;
       workYouRef.current?.setMap(null);
@@ -382,14 +360,11 @@ function GoogleMapView({
       circle2Ref.current?.setMap(null);
       circle2Ref.current = null;
       markers.clear();
+      map?.destroy();
       mapRef.current = null;
       mapsApiRef.current = null;
       overlayFactoryRef.current = null;
-      advancedMarkerRef.current = null;
-      el.innerHTML = "";
     };
-    // Recreated on retry (loadGen). Origin/radius apply in later effects.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadGen]);
 
   useEffect(() => {
@@ -397,17 +372,17 @@ function GoogleMapView({
     const el = host.current;
     if (!map || !el || !ready) return;
     const ro = new ResizeObserver(() => {
-      window.google?.maps?.event.trigger(map, "resize");
+      mapsApiRef.current?.event.trigger(map, "resize");
     });
     ro.observe(el);
-    window.google?.maps?.event.trigger(map, "resize");
+    mapsApiRef.current?.event.trigger(map, "resize");
     return () => ro.disconnect();
   }, [ready]);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    map.setMapTypeId(googleMapTypeId(base));
+    map.setMapTypeId(osmMapTypeId(base));
     writeMapBase(base);
   }, [base, ready]);
 
@@ -458,10 +433,8 @@ function GoogleMapView({
           workYouRef.current.setMap(map);
         } else {
           workYouRef.current = createYouAreHereDot({
-            maps,
             map,
             position: { lat: other.lat, lng: other.lng },
-            AdvancedMarker: advancedMarkerRef.current,
           });
         }
       } else {
@@ -523,10 +496,8 @@ function GoogleMapView({
       youRef.current.setPosition({ lat: point.lat, lng: point.lng });
     } else {
       youRef.current = createYouAreHereDot({
-        maps,
         map,
         position: { lat: point.lat, lng: point.lng },
-        AdvancedMarker: advancedMarkerRef.current,
       });
     }
     return () => {
@@ -789,6 +760,7 @@ function GoogleMapView({
         locale: locale === "fr" ? "fr" : "en",
         onPick: (item) => openPinRef.current(item),
       });
+      pinHitRef.current = (event) => field.hitTest?.(event) ?? null;
       nextPins.push(field);
       if (selectedItem && Number.isFinite(selectedItem.lat) && Number.isFinite(selectedItem.lng)) {
         const content = logoPinEl("ke-logo-pin is-active");
@@ -820,6 +792,7 @@ function GoogleMapView({
     return () => {
       window.clearTimeout(timer);
       maps.event.removeListener(idle);
+      pinHitRef.current = () => null;
     };
   }, [items, locale, picked, ready, zoom, viewData, mapEpoch]);
 
@@ -827,7 +800,7 @@ function GoogleMapView({
     const maps = mapsApiRef.current;
     if (!maps) return;
     for (const [id, pin] of markersBySlug.current) {
-      pin.setActive(id === picked, maps);
+      pin.setActive(id === picked);
     }
   }, [picked, zoom, items]);
 
@@ -861,9 +834,16 @@ function GoogleMapView({
         lng: center?.lng?.() ?? Number.NaN,
         zoom: map.getZoom?.() ?? Number.NaN,
       });
-      if (mapPointerIsTap({ movedPx, cameraMoved })) return;
+      if (!mapPointerIsTap({ movedPx, cameraMoved })) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      const hit = pinHitRef.current(event);
+      if (!hit) return;
       event.preventDefault();
       event.stopPropagation();
+      openPinRef.current(hit);
     };
     const listener = maps.event.addListener(map, "click", () => {
       if (Date.now() - pinClickAt.current < 400) return;
@@ -897,7 +877,7 @@ function GoogleMapView({
     const lng = selected?.lng;
     if (!map || !maps || !slug || !Number.isFinite(lat) || !Number.isFinite(lng) || !ready) return;
 
-    let overlay: google.maps.OverlayView | null = null;
+    let overlay: OsmOverlay | null = null;
     const place = () => {
       const el = popupRef.current;
       const hostEl = host.current;
@@ -971,35 +951,37 @@ function GoogleMapView({
 
   return (
     <div className="relative size-full min-h-[280px] overflow-hidden rounded-lg bg-map">
-      <div ref={host} className="ke-map-host absolute inset-0" />
+      <div
+        ref={host}
+        className={loadError ? "hidden" : "ke-map-host !absolute inset-0 !h-full !w-full"}
+        style={loadError ? undefined : mapHostStyle}
+      />
 
       {loadError ? (
-        <div className="absolute inset-0 z-[1] grid place-items-center bg-map px-6 text-center">
-          <div className="max-w-sm">
-            <p className="text-sm text-muted">{t("mapUnavailable")}</p>
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+        <div className="absolute inset-0 z-[500] flex flex-col bg-map">
+          <MapUnavailable address={placeLabel} lat={origin.lat} lng={origin.lng} />
+          <div className="flex flex-wrap items-center justify-center gap-2 px-4 pb-4">
+            <button
+              type="button"
+              className="inline-flex min-h-11 items-center rounded-full bg-surface px-4 text-sm font-semibold text-fg ring-1 ring-border touch-manipulation"
+              onClick={() => {
+                setLoadError(null);
+                setBasemapReady(false);
+                setReady(false);
+                setLoadGen((n) => n + 1);
+              }}
+            >
+              {t("mapRetry")}
+            </button>
+            {onFallback ? (
               <button
                 type="button"
-                className="inline-flex h-11 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-fg"
-                onClick={() => {
-                  setLoadError(null);
-                  setBasemapReady(false);
-                  setReady(false);
-                  setLoadGen((n) => n + 1);
-                }}
+                className="inline-flex min-h-11 items-center rounded-full bg-surface px-4 text-sm font-semibold text-fg ring-1 ring-border touch-manipulation"
+                onClick={onFallback}
               >
-                {t("mapRetry")}
+                {t("mapShowList")}
               </button>
-              {onFallback ? (
-                <button
-                  type="button"
-                  className="inline-flex h-11 items-center rounded-full bg-surface px-4 text-sm font-semibold text-fg ring-1 ring-border"
-                  onClick={onFallback}
-                >
-                  {t("mapShowList")}
-                </button>
-              ) : null}
-            </div>
+            ) : null}
           </div>
         </div>
       ) : !basemapReady ? (
@@ -1266,8 +1248,8 @@ function pinLabel(item: { name: string; nameFr?: string }, locale: "en" | "fr") 
 }
 
 function mountPinCanvas(input: {
-  maps: typeof google.maps;
-  map: google.maps.Map;
+  maps: typeof osmMaps;
+  map: OsmMap;
   zoom: number;
   pins: DotItem[];
   locale: "en" | "fr";
@@ -1326,6 +1308,7 @@ function mountPinCanvas(input: {
   field.onAdd = () => {
     const layer = document.createElement("canvas");
     layer.className = "ke-map-pin-canvas";
+    layer.style.pointerEvents = "none";
     layer.dataset.keMapLabel = `${pins.length} daycares`;
     layer.tabIndex = 0;
     layer.setAttribute("role", "application");
@@ -1428,7 +1411,12 @@ function mountPinCanvas(input: {
   };
   field.setMap(map);
   if (!sprite.complete) sprite.addEventListener("load", () => field.draw(), { once: true });
-  return field;
+  return {
+    setMap(next: OsmMap | null) {
+      field.setMap(next);
+    },
+    hitTest,
+  };
 }
 
 let logoPinSprite: HTMLImageElement | null = null;

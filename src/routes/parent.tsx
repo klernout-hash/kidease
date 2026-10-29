@@ -19,6 +19,7 @@ import { parentDeskPath } from "@/lib/desk-nav";
 import { stripLocalePrefix } from "@/lib/locale-path";
 import { getFamily } from "@/lib/server/family";
 import { useCopy } from "@/lib/use-copy";
+import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 
 const ParentDesk = lazy(() =>
   import("@/components/parent-desk").then((m) => ({ default: m.ParentDesk })),
@@ -98,6 +99,7 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
   const locallyOut = useLocallySignedOut();
   const chrome = useRoleChrome();
   const { session, ready } = useSessionDesks();
+  const hideAdmin = useNativeHidesAdmin();
   const bare = stripLocalePrefix(pathname);
   const parentPath = parentDeskPath(pathname);
   if (
@@ -169,7 +171,7 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
     };
     if (canBuyParentUpgrade(buyer)) return <Navigate to={parentPath} search={{ tab: "explore" }} />;
     if (canBuyDaycareUpgrade(buyer)) return <Navigate to="/provider" search={{ desk: "today" }} />;
-    if (session.home === "/admin") return <Navigate to="/admin" />;
+    if (session.home === "/admin") return hideAdmin ? <Navigate to={parentPath} search={{ tab: "explore" }} /> : <Navigate to="/admin" />;
     if (session.home === "/support") return <Navigate to="/support" />;
     return <Navigate to={parentPath} search={{ tab: "explore" }} />;
   }
@@ -189,7 +191,7 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
     });
     if (daycare && session.subscriptionsEnabled) return <Navigate to="/provider/subscription" />;
     if (daycare) return <Navigate to="/provider" search={{ desk: "today" }} />;
-    if (session.home === "/admin") return <Navigate to="/admin" />;
+    if (session.home === "/admin") return hideAdmin ? <Navigate to={parentPath} search={{ tab: "explore" }} /> : <Navigate to="/admin" />;
     if (session.home === "/support") return <Navigate to="/support" />;
   }
 

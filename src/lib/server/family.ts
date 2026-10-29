@@ -15,6 +15,8 @@ import { isAdminOnlyListing, isHiddenTestListing, listingVisibilityForOwners, pr
 import { callerMayUseAdminOnlyListing } from "@/lib/server/public-listing";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { emptyChild, mapChild, type ChildRow } from "@/lib/child-profile";
+import { openHealth, revealChildHealth, sealHealth } from "@/lib/child-health-crypto";
+import { logChildProfileAccess } from "@/lib/server/child-access-log";
 import { childBirthdateMessage, childBirthdateProblem } from "@/lib/child-birthdate";
 import type { AgeGroup, Booking, BookingStatus, Child, Conversation, Locale, Message, PayMethod, Schedule } from "@/lib/types";
 import {
@@ -205,6 +207,9 @@ export const getFamily = createServerFn({ method: "GET" })
              photo_ok, sunscreen_ok, notes
       from children where user_id = ${context.userId} order by created_at
     `;
+    for (const row of children) {
+      void logChildProfileAccess(sql, { childId: row.id, actorId: context.userId, action: "read" });
+    }
     const shortlistOwner = await shortlistUserId(context.userId);
     const saved = await sql<DaycareRow & { track_status: string | null; call_note: string | null; tour_note: string | null }>`
       select d.*, s.track_status, s.call_note, s.tour_note
@@ -293,7 +298,7 @@ export const getFamily = createServerFn({ method: "GET" })
         | "parent"
         | "provider"
         | "admin",
-      children: children.map(mapChild),
+      children: children.map((row) => mapChild(revealChildHealth(row))),
       saved: (
         await overlayParentRank(
           await overlayQuality(
@@ -365,12 +370,12 @@ function childFields(data: ChildWrite) {
     name: data.name.trim(),
     preferredName: data.preferredName?.trim() || null,
     birthdate: data.birthdate,
-    allergies: data.allergies?.trim() || null,
+    allergies: sealHealth(data.allergies?.trim() || null),
     epiPen: Boolean(data.epiPen),
-    medicalNotes: data.medicalNotes?.trim() || null,
-    medications: data.medications?.trim() || null,
-    doctorName: data.doctorName?.trim() || null,
-    doctorPhone: data.doctorPhone?.trim() || null,
+    medicalNotes: sealHealth(data.medicalNotes?.trim() || null),
+    medications: sealHealth(data.medications?.trim() || null),
+    doctorName: sealHealth(data.doctorName?.trim() || null),
+    doctorPhone: sealHealth(data.doctorPhone?.trim() || null),
     foodsLike: data.foodsLike?.trim() || null,
     foodsAvoid: data.foodsAvoid?.trim() || null,
     diet: data.diet?.trim() || null,
@@ -381,12 +386,12 @@ function childFields(data: ChildWrite) {
     homeLanguage: data.homeLanguage?.trim() || null,
     soothes: data.soothes?.trim() || null,
     fears: data.fears?.trim() || null,
-    emergencyName: data.emergencyName?.trim() || null,
-    emergencyPhone: data.emergencyPhone?.trim() || null,
+    emergencyName: sealHealth(data.emergencyName?.trim() || null),
+    emergencyPhone: sealHealth(data.emergencyPhone?.trim() || null),
     pickupPeople: data.pickupPeople?.trim() || null,
     photoOk: Boolean(data.photoOk),
     sunscreenOk: data.sunscreenOk !== false,
-    notes: data.notes?.trim() || null,
+    notes: sealHealth(data.notes?.trim() || null),
   };
 }
 
@@ -411,9 +416,10 @@ export const addChild = createServerFn({ method: "POST" })
         ${f.epiPen}, ${f.medicalNotes}, ${f.medications}, ${f.doctorName}, ${f.doctorPhone},
         ${f.foodsLike}, ${f.foodsAvoid}, ${f.diet}, ${f.likes}, ${f.comfortItem}, ${f.napRoutine},
         ${f.toilet}, ${f.homeLanguage}, ${f.soothes}, ${f.fears}, ${f.emergencyName}, ${f.emergencyPhone},
-        ${f.pickupPeople}, ${f.photoOk}, ${f.sunscreenOk}, ${f.notes}
+        ${f.pickupPeople},         ${f.photoOk}, ${f.sunscreenOk}, ${f.notes}
       )
     `;
+    await logChildProfileAccess(sql, { childId: id, actorId: context.userId, action: "write" });
     return { id };
   });
 
@@ -457,6 +463,7 @@ export const updateChild = createServerFn({ method: "POST" })
       returning id
     `;
     if (!rows[0]) throw new Error("Child not found");
+    await logChildProfileAccess(sql, { childId: rows[0].id, actorId: context.userId, action: "write" });
     return { id: rows[0].id };
   });
 
@@ -477,6 +484,7 @@ export const deleteChild = createServerFn({ method: "POST" })
       returning id
     `;
     if (!rows[0]) throw new Error("Child not found");
+    await logChildProfileAccess(sql, { childId: rows[0].id, actorId: context.userId, action: "delete" });
     return { id: rows[0].id };
   });
 
@@ -759,11 +767,11 @@ export const createSpotRequest = createServerFn({ method: "POST" })
     await sql`
       insert into bookings (
         id, user_id, daycare_id, child_id, start_month, schedule, age_group, status, monthly_amount,
-        parent_note, days, conversation_id, start_date, parent_name
+        parent_note, days, conversation_id, start_date, parent_name, share_consent_at
       ) values (
         ${bookingId}, ${context.userId}, ${data.daycareId}, ${childId},
         ${startMonth}, ${data.schedule}, ${ageGroup}, ${"requested"}, ${amount},
-        ${copy.note}, ${days || null}, ${cid}, ${data.startDate}, ${parentName}
+        ${copy.note}, ${days || null}, ${cid}, ${data.startDate}, ${parentName}, now()
       )
     `;
     try {
@@ -954,7 +962,7 @@ export const getThread = createServerFn({ method: "GET" })
                photo_ok, sunscreen_ok, notes
         from children where id = ${b.child_id} limit 1
       `;
-      if (kids[0]) child = mapChild(kids[0]);
+      if (kids[0]) child = mapChild(revealChildHealth(kids[0]));
     }
     const mapped: Message[] = messages.map((m) => ({
       id: m.id,
@@ -1468,7 +1476,7 @@ export const getProvider = createServerFn({ method: "GET" })
         createdAt: String(b.created_at),
         paymentStatus: b.payment_status,
         birthdate: b.birthdate,
-        allergies: b.allergies ?? "",
+        allergies: openHealth(b.allergies ?? ""),
         epiPen: Boolean(b.epi_pen === true || b.epi_pen === 1 || b.epi_pen === "t" || b.epi_pen === "true"),
       })),
     };

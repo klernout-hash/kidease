@@ -55,7 +55,7 @@
   "continueFacebook": "使用 Facebook 登录",
   "continueApple": "通过 Apple 登录",
   "orEmail": "或使用电子邮箱",
-  "orSocial": "或使用 Google 继续",
+  "orSocial": "或继续使用",
   "email": "电子邮箱",
   "password": "密码",
   "name": "姓名",
@@ -1606,7 +1606,7 @@
   "openChat": "打开聊天",
   "requestNote": "家长留言",
   "onMap": "在地图上",
-  "openGoogleMaps": "在 Google 地图中打开",
+  "openGoogleMaps": "在 OpenStreetMap 中打开",
   "requestSummary": "名额申请",
   "noRequests": "还没有名额申请。",
   "parentLabel": "家长",
@@ -1853,6 +1853,7 @@
   "helpBot": "KidEase 帮助",
   "liveChat": "在线聊天",
   "helpBotLead": "可咨询持牌托育、福利或您的列表。",
+  "helpBotPrivacy": "请不要发送孩子的姓名、出生日期或健康信息。",
   "helpBotHello": "您好：我是 KidEase 助手。可以询问如何查找中心、$10-a-day，或如何认领列表。",
   "helpBotQ1": "How do I find a daycare?",
   "helpBotQ2": "How do I request a tour?",
@@ -3248,5 +3249,6 @@
   "statusPhotos": "{count} 个有中心照片",
   "statusFees": "{count} 个已确认费用",
   "statusAges": "{count} 个已确认年龄",
-  "statusUnavailable": "刚才无法检查。请试试搜索，或稍后再来。"
+  "statusUnavailable": "刚才无法检查。请试试搜索，或稍后再来。",
+  "deleteAccountWarn": "这将关闭您的 KidEase 账户。我们会在此设备上退出登录。如果您用过通过 Apple 登录，我们会撤销该登录。输入 DELETE 以确认。"
 }

@@ -7,8 +7,10 @@ import { useSessionDesks } from "@/components/session-desks";
 import { useRoleChrome } from "@/components/role-chrome";
 import { attentionForItem } from "@/lib/attention";
 import { highlightDesk, parseDeskQuery } from "@/lib/desks";
+import { bottomBarKindInShell } from "@/lib/native-admin";
 import { bottomBarKind } from "@/lib/role-access";
 import { hapticLight, isNative } from "@/lib/native";
+import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { nativeStoreTabs, type NativeStoreTabId } from "@/lib/native-store-tabs";
 import { deskHrefForLocale, inboxListPath, menuDeskPath, parentDeskPath, providerDeskPath, supportDeskPath } from "@/lib/desk-nav";
 import { localePath, stripLocalePrefix } from "@/lib/locale-path";
@@ -31,12 +33,16 @@ export function AppTabBar() {
   const view = useRouterState({ select: (s) => (s.location.search as { view?: string }).view });
   const chrome = useRoleChrome();
   const { session, sticky } = useSessionDesks();
-  const kind = bottomBarKind({
-    role: chrome.role,
-    pathname,
-    pending: chrome.pending,
-    highlightedDesk: highlightDesk(pathname, sticky, parseDeskQuery(desk)),
-  });
+  const hideAdmin = useNativeHidesAdmin();
+  const kind = bottomBarKindInShell(
+    bottomBarKind({
+      role: chrome.role,
+      pathname,
+      pending: chrome.pending,
+      highlightedDesk: highlightDesk(pathname, sticky, parseDeskQuery(desk)),
+    }),
+    hideAdmin,
+  );
   const [native, setNative] = useState(false);
   const barRef = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -72,7 +78,7 @@ export function AppTabBar() {
         ref={barRef}
         data-ke="app-tab-bar"
         data-bar={storeTabs ? "store" : kind}
-        className="ke-app-only fixed inset-x-0 bottom-0 z-50 hidden border-t border-slate-200/80 bg-surface/95 pb-[env(safe-area-inset-bottom)] pb-[var(--ke-safe-bottom,env(safe-area-inset-bottom))] pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] backdrop-blur-md dark:border-white/15 [[data-channel=app]_&]:block"
+        className="ke-app-only fixed inset-x-0 bottom-0 z-50 hidden border-t border-slate-200/80 bg-surface pb-[var(--ke-safe-bottom,env(safe-area-inset-bottom))] pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] dark:border-white/15 [[data-channel=app]_&]:block"
       >
         <div
           className={cn(

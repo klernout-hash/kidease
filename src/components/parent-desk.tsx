@@ -26,6 +26,7 @@ import { parentPayEmptyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
 import { ageGroupFromMonths, asList, formatMonth, money, monthsBetween } from "@/lib/utils";
 import { useSessionDesks } from "@/components/desk-switcher";
+import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import type { Booking, Child, DaycareCard as Card, Payment, TourRequest } from "@/lib/types";
 import type { Bill } from "@/lib/bill";
 import { billDollars, billIsOpen } from "@/lib/bill";
@@ -143,6 +144,7 @@ export function ParentDesk({
   const plus = useParentPlusAccess();
   const { t, locale } = useCopy();
   const { session: desks, ready: desksReady } = useSessionDesks();
+  const hideAdmin = useNativeHidesAdmin();
   const plansOn = !storeShell && desks?.subscriptionsEnabled === true;
   const origin = useAppStore((s) => s.origin);
   const located = useAppStore((s) => s.located);
@@ -166,6 +168,7 @@ export function ParentDesk({
   const [childOpen, setChildOpen] = useState(false);
   const [childrenReady, setChildrenReady] = useState(false);
   const [sendingId, setSendingId] = useState<string | null>(null);
+  const [shareConsent, setShareConsent] = useState(false);
   const [picked, setPicked] = useState<Record<string, string[]>>({});
   const [savedReady, setSavedReady] = useState(false);
   const [shortlistShared, setShortlistShared] = useState(initialShared);
@@ -436,14 +439,14 @@ export function ParentDesk({
   if (onPlusSurface && desksReady && desks && desks.subscriptionsEnabled !== true) {
     if (canBuyParentUpgrade(upgradeBuyer)) return <Navigate to={parentDeskPath(pathname)} search={{ tab: "explore" }} />;
     if (canBuyDaycareUpgrade(upgradeBuyer)) return <Navigate to="/provider" search={{ desk: "today" }} />;
-    if (desks.home === "/admin") return <Navigate to="/admin" />;
+    if (desks.home === "/admin") return hideAdmin ? <Navigate to={parentDeskPath(pathname)} search={{ tab: "explore" }} /> : <Navigate to="/admin" />;
     if (desks.home === "/support") return <Navigate to="/support" />;
     return <Navigate to={parentDeskPath(pathname)} search={{ tab: "explore" }} />;
   }
   if (onPlusSurface && desksReady && desks && !canBuyParentUpgrade(upgradeBuyer)) {
     if (canBuyDaycareUpgrade(upgradeBuyer) && desks.subscriptionsEnabled) return <Navigate to="/provider/subscription" />;
     if (canBuyDaycareUpgrade(upgradeBuyer)) return <Navigate to="/provider" search={{ desk: "today" }} />;
-    if (desks.home === "/admin") return <Navigate to="/admin" />;
+    if (desks.home === "/admin") return hideAdmin ? <Navigate to={parentDeskPath(pathname)} search={{ tab: "explore" }} /> : <Navigate to="/admin" />;
     if (desks.home === "/support") return <Navigate to="/support" />;
   }
   const showParentPlus = Boolean(desksReady && desks?.subscriptionsEnabled === true && canBuyParentUpgrade(upgradeBuyer));
@@ -885,13 +888,26 @@ export function ParentDesk({
                                 );
                               })}
                             </ul>
+                            <label className="mt-3 flex min-h-11 items-start gap-3 text-sm">
+                              <input
+                                type="checkbox"
+                                className="mt-1 size-5"
+                                checked={shareConsent}
+                                onChange={(event) => setShareConsent(event.target.checked)}
+                              />
+                              <span>
+                                {locale === "fr"
+                                  ? "Je consens à partager ce profil seulement avec les centres que je coche."
+                                  : "I agree to share this profile only with the centres I pick."}
+                              </span>
+                            </label>
                             <Button
                               className="mt-3"
                               size="sm"
-                              disabled={!selected.length || sendingId === c.id}
+                              disabled={!selected.length || !shareConsent || sendingId === c.id}
                               onClick={() => {
                                 setSendingId(c.id);
-                                void shareChildWithCentres({ data: { childId: c.id, daycareIds: selected } })
+                                void shareChildWithCentres({ data: { childId: c.id, daycareIds: selected, consent: true } })
                                   .then((res) => {
                                     confirmSuccess({
                                       variant: "toast",

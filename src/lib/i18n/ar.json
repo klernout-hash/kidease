@@ -55,7 +55,7 @@
   "continueFacebook": "المتابعة مع Facebook",
   "continueApple": "تسجيل الدخول باستخدام Apple",
   "orEmail": "أو استخدم البريد",
-  "orSocial": "أو المتابعة باستخدام Google",
+  "orSocial": "أو المتابعة باستخدام",
   "email": "البريد الإلكتروني",
   "password": "كلمة المرور",
   "name": "الاسم",
@@ -1606,7 +1606,7 @@
   "openChat": "فتح المحادثة",
   "requestNote": "رسالة ولي الأمر",
   "onMap": "على الخريطة",
-  "openGoogleMaps": "فتح في Google Maps",
+  "openGoogleMaps": "فتح في OpenStreetMap",
   "requestSummary": "طلب مكان",
   "noRequests": "لا توجد طلبات أماكن بعد.",
   "parentLabel": "ولي الأمر",
@@ -1853,6 +1853,7 @@
   "helpBot": "مساعدة KidEase",
   "liveChat": "محادثة مباشرة",
   "helpBotLead": "اسأل عن الرعاية المرخّصة أو المزايا أو إدراجك.",
+  "helpBotPrivacy": "لا ترسل اسم الطفل أو تاريخ ميلاده أو تفاصيل صحته.",
   "helpBotHello": "مرحباً: أنا مساعد KidEase. اسأل عن العثور على مركز، أو $10-a-day، أو المطالبة بإدراج.",
   "helpBotQ1": "How do I find a daycare?",
   "helpBotQ2": "How do I request a tour?",
@@ -3248,5 +3249,6 @@
   "statusPhotos": "{count} مع صورة للمركز",
   "statusFees": "{count} برسوم مؤكدة",
   "statusAges": "{count} بأعمار مؤكدة",
-  "statusUnavailable": "تعذر الفحص الآن. جرّب البحث، أو عُد بعد دقيقة."
+  "statusUnavailable": "تعذر الفحص الآن. جرّب البحث، أو عُد بعد دقيقة.",
+  "deleteAccountWarn": "هذا يغلق حساب KidEase. نسجّل خروجك على هذا الجهاز. إذا استخدمت تسجيل الدخول باستخدام Apple، نلغي ذلك الدخول. اكتب DELETE للتأكيد."
 }

@@ -9,6 +9,7 @@ import {
 } from "@/lib/analytics-consent";
 import { applyPostHogRecordingGate, startPostHog } from "@/lib/posthog";
 import { localePath } from "@/lib/locale-path";
+import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { useCopy } from "@/lib/use-copy";
 
 /**
@@ -18,6 +19,7 @@ import { useCopy } from "@/lib/use-copy";
  */
 export function CookieConsentBanner() {
   const { t, locale } = useCopy();
+  const native = useNativeHidesAdmin();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -28,10 +30,14 @@ export function CookieConsentBanner() {
   useEffect(() => {
     if (!open) return;
     document.documentElement.dataset.cookieBanner = "open";
+    if (native) document.documentElement.dataset.nativePrompt = "open";
     return () => {
       delete document.documentElement.dataset.cookieBanner;
+      if (document.documentElement.dataset.nativePrompt === "open") {
+        delete document.documentElement.dataset.nativePrompt;
+      }
     };
-  }, [open]);
+  }, [native, open]);
 
   function choose(value: "granted" | "denied") {
     writeAnalyticsConsent(value);
@@ -53,6 +59,7 @@ export function CookieConsentBanner() {
       role="region"
       aria-labelledby="ke-cookie-consent-title"
       aria-describedby="ke-cookie-consent-body"
+      data-compact={native ? "native" : undefined}
       className="ke-cookie-consent pointer-events-none fixed inset-x-0 bottom-0 z-50 px-[clamp(1rem,4vw,2rem)] py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] [[data-channel=app]_&]:bottom-[calc(5.25rem+env(safe-area-inset-bottom))]"
     >
       <div className="ke-cookie-consent-panel pointer-events-auto mx-auto max-w-3xl rounded-xl bg-surface/95 px-3 py-2.5 shadow-lift ring-1 ring-border backdrop-blur-md">

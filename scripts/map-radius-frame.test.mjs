@@ -94,6 +94,7 @@ test("the outline is faint and the camera refits only when the search frame chan
   assert.match(view, /RADIUS_CIRCLE_STYLE/);
   assert.match(view, /mapZoomForRadius/);
   assert.match(view, /originRef/);
-  assert.match(view, /loadGoogleMaps\(/);
+  assert.match(view, /createKidEaseMap\(/);
+  assert.doesNotMatch(view, /loadGoogleMaps\(/);
   assert.doesNotMatch(view, /setZoom\(minZoom\)/);
 });

@@ -1,5 +1,6 @@
 import { isKidEaseOperatorEmail } from "./admin-email.ts";
 import { stripLocalePrefix } from "./locale-path.ts";
+import { NATIVE_ADMIN_NOTE_PATH, nativeShellHidesAdminNow } from "./native-admin.ts";
 import type { ViewAsPublic } from "./view-as-public.ts";
 
 export type AppRole = "admin" | "support_lead" | "support" | "provider" | "parent";
@@ -87,6 +88,8 @@ export function homeLandPath(input: {
   desks?: DeskKey[] | null;
   sticky?: DeskKey | null;
   remembered?: "parent" | "provider" | null;
+  /** Native shell: do not send an admin account to /admin on launch. */
+  hideStaffWebOnly?: boolean;
 }): "/admin" | "/support" | "/provider" | null {
   if (input.remembered === "parent") return null;
   if (input.remembered === "provider") {
@@ -95,13 +98,13 @@ export function homeLandPath(input: {
   const desks = input.desks?.length ? input.desks : input.role ? desksFor({ role: input.role }) : null;
   const sticky = input.sticky;
   if (sticky && (!desks || desks.includes(sticky))) {
-    if (sticky === "admin") return "/admin";
+    if (sticky === "admin") return input.hideStaffWebOnly ? null : "/admin";
     if (sticky === "support") return "/support";
     if (sticky === "provider") return "/provider";
     return null;
   }
   if (!input.role) return null;
-  if (input.role === "admin") return "/admin";
+  if (input.role === "admin") return input.hideStaffWebOnly ? null : "/admin";
   if (input.role === "provider") return "/provider";
   if (input.role === "support" || input.role === "support_lead") return "/support";
   return null;
@@ -412,6 +415,10 @@ export function writeStickyDesk(desk: DeskKey): void {
  * Access on `/admin` and can bounce via beforeLoad without painting the desk.
  */
 export function openAdminDesk(): void {
+  if (typeof window !== "undefined" && nativeShellHidesAdminNow()) {
+    window.location.assign(NATIVE_ADMIN_NOTE_PATH);
+    return;
+  }
   writeStickyDesk("admin");
   if (typeof window === "undefined") return;
   window.location.assign(DESK_PATH.admin);

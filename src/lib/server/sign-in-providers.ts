@@ -2,7 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { appleLoginVisible } from "@/lib/auth/apple-login-flag";
 import { facebookLoginVisible, facebookOauthHost } from "@/lib/auth/facebook-idp";
-import { visibleSignInProviders, type GrokProvider } from "@/lib/auth/providers";
+import { nativeShellHidesAdmin } from "@/lib/native-admin";
+import { storeChannelFromSignals } from "@/lib/native-entitlements";
+import { nativeSocialPlatform, providersForNativeShell } from "@/lib/auth/native-oauth";
+import { providersForStore, visibleSignInProviders, type GrokProvider } from "@/lib/auth/providers";
 
 /**
  * Sign-in buttons the login page should render.
@@ -31,11 +34,28 @@ export const getSignInProviders = createServerFn({ method: "GET" }).handler((): 
   );
   const broker = explicitBroker || !process.env.VERCEL;
   const preferNative = Boolean(process.env.VERCEL);
-  return visibleSignInProviders({
+  const list = visibleSignInProviders({
     nativeGoogle,
     nativeFacebook,
     nativeApple,
     broker,
     preferNativeGoogle: preferNative,
+  });
+  let ua = "";
+  let cookie = "";
+  try {
+    const req = getRequest();
+    ua = req?.headers.get("user-agent") || "";
+    cookie = req?.headers.get("cookie") || "";
+  } catch {
+    ua = "";
+    cookie = "";
+  }
+  const signals = { userAgent: ua, cookie, search: "" };
+  const native = nativeShellHidesAdmin(signals);
+  const channel = storeChannelFromSignals(signals);
+  return providersForNativeShell(providersForStore(list, channel), {
+    native,
+    platform: nativeSocialPlatform({ native, channel, userAgent: ua }),
   });
 });

@@ -14,7 +14,6 @@ import { restoreMyAccount } from "@/lib/server/family";
 import { MenuLeafBack } from "@/components/menu-leaf-back";
 import { isMenuLeafPath } from "@/lib/menu-leaf";
 import { NavDrawer } from "@/components/nav-drawer";
-import { LiveChatSlot } from "@/components/help-bot";
 import { applyDocumentLocale } from "@/lib/languages";
 import { localePath, stripLocalePrefix } from "@/lib/locale-path";
 import { useSessionDesks } from "@/components/desk-switcher";
@@ -28,6 +27,8 @@ import {
 import { useRoleChrome } from "@/components/role-chrome";
 import { clearGuestViewCookie } from "@/lib/guest-view";
 import { accountSearch, canSeeAdminDesk } from "@/lib/desks";
+import { NATIVE_ADMIN_NOTE_PATH } from "@/lib/native-admin";
+import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { SiteFooter } from "@/components/site-footer";
 import { readLiveSearchFlag } from "@/lib/explore-search";
 import { rememberResumePath } from "@/lib/retention";
@@ -66,6 +67,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const { session, sticky } = useSessionDesks();
   const chrome = useRoleChrome();
   const viewingGuest = chrome.guestView === true;
+  const hideAdmin = useNativeHidesAdmin();
   const headerUser = viewingGuest ? null : user;
   const [open, setOpen] = useState(false);
   const [hiddenCare, setHiddenCare] = useState<BrowseDaycareType[]>([]);
@@ -262,7 +264,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <div data-ke="admin-guest-view-banner" className="border-b border-border bg-surface px-4 py-3">
           <p className="text-sm text-fg">{t("guestViewBanner")}</p>
           <a
-            href="/admin"
+            href={hideAdmin ? NATIVE_ADMIN_NOTE_PATH : "/admin"}
             className="mt-2 inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-fg"
             onClick={() => clearGuestViewCookie()}
           >
@@ -319,7 +321,6 @@ export function Shell({ children }: { children: ReactNode }) {
         </div>
       </div>
       {hideTabs ? null : <AppTabBar />}
-      {hideTabs || pathname.startsWith("/search") || pathname.startsWith("/parent") || pathname.startsWith("/menu") ? null : <LiveChatSlot />}
     </div>
   );
 }

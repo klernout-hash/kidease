@@ -3,12 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-  createKidEaseMap,
-  listingMapRendererExtras,
-  mapHostHasRasterTiles,
-  ROAD_STYLES,
-} from "../src/lib/google-maps.ts";
+import { OSM_ROAD_STYLE, OSM_TILE_HOST, SATELLITE_TILE_HOST } from "../src/lib/osm-map.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -16,242 +11,83 @@ function read(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-describe("listing map uses browser Google Maps key, not Carto/Leaflet", () => {
-  it("loads Maps JS from VITE_GOOGLE_MAPS_API_KEY only", () => {
-    const src = read("src/lib/google-maps.ts");
-    assert.match(src, /VITE_GOOGLE_MAPS_API_KEY/);
-    assert.match(src, /maps\.googleapis\.com\/maps\/api\/js/);
+describe("maps use OpenFreeMap, not a Google Maps key", () => {
+  it("loads MapLibre from the bundle and OpenFreeMap tiles with no key", () => {
+    const src = read("src/lib/osm-map.ts");
+    assert.match(src, /tiles\.openfreemap\.org\/styles\/liberty/);
+    assert.equal(OSM_ROAD_STYLE, "https://tiles.openfreemap.org/styles/liberty");
+    assert.equal(OSM_TILE_HOST, "https://tiles.openfreemap.org");
+    assert.equal(SATELLITE_TILE_HOST, "https://tiles.maps.eox.at");
+    assert.match(src, /OpenStreetMap/);
+    assert.match(src, /AttributionControl/);
+    assert.doesNotMatch(src, /maps\.googleapis\.com/);
+    assert.doesNotMatch(src, /VITE_GOOGLE_MAPS_API_KEY/);
     assert.doesNotMatch(src, /process\.env\.GOOGLE_MAPS_API_KEY/);
     assert.doesNotMatch(src, /process\.env\.GOOGLE_PLACES_API_KEY/);
-  });
-
-  it("reads an optional public Map ID from VITE_GOOGLE_MAPS_MAP_ID and never hardcodes one", () => {
-    const loader = read("src/lib/google-maps.ts");
-    const view = read("src/components/map-view.tsx");
-    assert.match(loader, /GOOGLE_MAPS_MAP_ID_ENV = "VITE_GOOGLE_MAPS_MAP_ID"/);
-    assert.match(loader, /import\.meta\.env\.VITE_GOOGLE_MAPS_MAP_ID/);
-    assert.match(loader, /googleMapsMapId\(\)/);
-    assert.match(view, /createKidEaseMap/);
-    assert.doesNotMatch(loader, /mapId:\s*["'`]/);
-    assert.doesNotMatch(view, /mapId:\s*["'`]/);
-    assert.doesNotMatch(loader, /AIza[0-9A-Za-z_-]{20,}/);
-    assert.doesNotMatch(view, /AIza[0-9A-Za-z_-]{20,}/);
-  });
-
-  it("stays on the quarterly channel (weekly without a Map ID was a gray canvas)", async () => {
-    const loader = read("src/lib/google-maps.ts");
-    assert.match(loader, /GOOGLE_MAPS_SCRIPT_VERSION = "quarterly"/);
-    assert.match(loader, /v=\$\{GOOGLE_MAPS_SCRIPT_VERSION\}/);
-    assert.doesNotMatch(loader, /GOOGLE_MAPS_SCRIPT_VERSION = "weekly"/);
-    assert.doesNotMatch(loader, /[?&]v=weekly/);
-    const { googleMapsScriptSrc } = await import("../src/lib/google-maps.ts");
-    const vector = googleMapsScriptSrc("test-key", "KidEaseMap");
-    const raster = googleMapsScriptSrc("test-key", "");
-    assert.match(vector, /v=quarterly/);
-    assert.match(vector, /loading=async/);
-    assert.match(vector, /libraries=marker/);
-    assert.match(raster, /v=quarterly/);
-    assert.match(raster, /loading=async/);
-    assert.doesNotMatch(raster, /libraries=marker/);
-    assert.doesNotMatch(raster, /v=weekly/);
-  });
-
-  it("always forces RASTER; Map ID is optional for Advanced Markers only", () => {
-    assert.deepEqual(listingMapRendererExtras("KidEaseNavy"), {
-      mapId: "KidEaseNavy",
-      renderingType: "RASTER",
-    });
-    assert.deepEqual(listingMapRendererExtras("  "), {
-      styles: ROAD_STYLES,
-      renderingType: "RASTER",
-    });
-    assert.deepEqual(listingMapRendererExtras(""), {
-      styles: ROAD_STYLES,
-      renderingType: "RASTER",
-    });
-    const extras = listingMapRendererExtras("");
-    assert.ok("styles" in extras);
-    assert.ok(
-      extras.styles.some((rule) => rule.featureType === "poi.business"),
-      "raster path still hides business POIs",
-    );
-  });
-
-  it("map constructor always applies RASTER, even when a Map ID is set", () => {
-    const loader = read("src/lib/google-maps.ts");
-    const view = read("src/components/map-view.tsx");
-    assert.match(loader, /listingMapRendererExtras/);
-    assert.match(loader, /listingMapConstructorOptions/);
-    assert.match(loader, /createKidEaseMap/);
-    assert.match(loader, /RenderingType[\s\S]*RASTER/);
-    assert.match(view, /createKidEaseMap\(/);
-    assert.doesNotMatch(view, /renderingType:\s*googleMapsRasterRenderingType\(maps\)/);
-    assert.match(loader, /if \("mapId" in extras\)/);
-    assert.match(loader, /const renderingType = googleMapsRasterRenderingType\(input\.maps\)/);
-    assert.match(loader, /return \{ \.\.\.shared, mapId: extras\.mapId, renderingType \}/);
-  });
-
-  it("uses Advanced Markers when the marker library is available, else HTML overlays", () => {
-    const loader = read("src/lib/google-maps.ts");
-    const view = read("src/components/map-view.tsx");
-    assert.match(loader, /loadAdvancedMarkerElement/);
-    assert.match(loader, /importLibrary\("marker"\)/);
-    assert.match(loader, /AdvancedMarkerElement/);
-    assert.match(loader, /createListingOverlayFactory/);
-    assert.match(loader, /defineHtmlOverlay/);
-    assert.match(view, /loadAdvancedMarkerElement/);
-    assert.match(view, /createListingOverlayFactory/);
-    assert.match(loader, /libraries=marker/);
-  });
-
-  it("createListingOverlayFactory prefers Advanced Markers and falls back to OverlayView", async () => {
-    const { createListingOverlayFactory, loadAdvancedMarkerElement } = await import(
-      "../src/lib/google-maps.ts"
-    );
-    assert.equal(await loadAdvancedMarkerElement({}, ""), null);
-    assert.equal(await loadAdvancedMarkerElement({ importLibrary: async () => ({}) }, "abc"), null);
-
-    const constructed = [];
-    class FakeAdvanced {
-      map;
-      position;
-      content;
-      constructor(opts) {
-        constructed.push(opts);
-        this.map = opts.map;
-        this.position = opts.position;
-        this.content = opts.content;
-      }
-      addListener() {}
-    }
-    const map = { __map: true };
-    const content = { style: {}, classList: { add() {} }, addEventListener() {} };
-    const factory = createListingOverlayFactory({}, FakeAdvanced);
-    const overlay = factory({
-      map,
-      position: { lat: 49.9, lng: -97.1 },
-      content,
-      onClick() {},
-    });
-    assert.equal(constructed.length, 1);
-    assert.equal(constructed[0].map, map);
-    assert.equal(constructed[0].gmpClickable, true);
-    overlay.setMap(null);
-    assert.equal(constructed[0].map == null || overlay.getElement() === content, true);
-    assert.equal(overlay.getElement(), content);
-  });
-
-  it("map view no longer requests Leaflet or Carto tiles", () => {
-    const src = read("src/components/map-view.tsx");
-    assert.match(src, /loadGoogleMaps/);
-    assert.doesNotMatch(src, /leaflet/i);
-    assert.doesNotMatch(src, /cartocdn|basemaps\.carto|carto\.com/i);
-    assert.doesNotMatch(src, /tile\.openstreetmap|arcgisonline/i);
-  });
-
-  it("listing detail preview shares the same Maps JS loader", () => {
-    const src = read("src/components/listing-map.tsx");
-    assert.match(src, /loadGoogleMaps/);
-    assert.match(src, /createKidEaseMap/);
-    assert.match(src, /ke-map-host/);
-    assert.match(src, /VITE_GOOGLE_MAPS_API_KEY|hasGoogleMapsBrowserKey/);
-    assert.doesNotMatch(src, /<iframe/);
-    assert.doesNotMatch(src, /leaflet/i);
     assert.doesNotMatch(src, /AIza[0-9A-Za-z_-]{20,}/);
   });
 
-  it("keeps KidEase logo pins from main on both vector and raster paths", () => {
-    const src = read("src/components/map-view.tsx");
-    assert.match(src, /ke-logo-pin/);
-    assert.match(src, /PIN_SVG/);
-    assert.match(src, /createKidEaseMap/);
-    assert.match(src, /loadAdvancedMarkerElement/);
-    assert.match(src, /AdvancedMarker/);
-    assert.doesNotMatch(src, /mapId:\s*["'`]/);
+  it("does not ship the Google loader or a hardcoded key", () => {
+    assert.throws(() => read("src/lib/google-maps.ts"));
+    const view = read("src/components/map-view.tsx");
+    const listing = read("src/components/listing-map.tsx");
+    assert.match(view, /createKidEaseMap/);
+    assert.match(view, /preloadOsmMap|createKidEaseMap/);
+    assert.match(listing, /createKidEaseMap/);
+    assert.doesNotMatch(view, /loadGoogleMaps/);
+    assert.doesNotMatch(listing, /loadGoogleMaps/);
+    assert.doesNotMatch(view, /AIza[0-9A-Za-z_-]{20,}/);
+    assert.doesNotMatch(listing, /AIza[0-9A-Za-z_-]{20,}/);
+    assert.doesNotMatch(view, /mapId:\s*["'`]/);
   });
 
-  it("fits the map to the search radius, not a city-wide pad", () => {
-    const maps = read("src/lib/maps.ts");
+  it("keeps logo pins, clusters, radius fit, and a retry", () => {
     const view = read("src/components/map-view.tsx");
-    assert.match(maps, /if \(radiusKm <= 18\) return 11;/);
-    assert.match(maps, /if \(radiusKm <= 32\) return 10;/);
-    assert.match(maps, /MAP_RADIUS_FIT_PAD = \{ top: 72, right: 64, bottom: 28, left: 16 \}/);
+    assert.match(view, /ke-logo-pin/);
+    assert.match(view, /PIN_SVG/);
+    assert.match(view, /ke-cluster-bubble/);
     assert.match(view, /bboxFromRadius/);
     assert.match(view, /MAP_RADIUS_FIT_PAD/);
-    assert.match(view, /mapSearchRadius/);
     assert.match(view, /mapLoading/);
     assert.match(view, /mapRetry/);
     assert.match(view, /ke-map-host/);
-    assert.match(view, /ke-map-skel/);
-    assert.doesNotMatch(view, /bottom:\s*240/);
+    assert.match(view, /fitBounds/);
+    assert.match(view, /createYouAreHereDot/);
+    assert.doesNotMatch(view, /leaflet/i);
+    assert.doesNotMatch(view, /cartocdn|basemaps\.carto|carto\.com/i);
+    assert.doesNotMatch(view, /tile\.openstreetmap\.org/i);
   });
 
-  it("does not constrain Google Maps raster tile images", () => {
+  it("listing preview shares the same map helper and is not an iframe", () => {
+    const src = read("src/components/listing-map.tsx");
+    assert.match(src, /createKidEaseMap/);
+    assert.match(src, /ke-map-host/);
+    assert.match(src, /ke-logo-pin/);
+    assert.doesNotMatch(src, /<iframe/);
+    assert.doesNotMatch(src, /maps\.google\.com/);
+    assert.doesNotMatch(src, /AIza[0-9A-Za-z_-]{20,}/);
+  });
+
+  it("does not squash map tiles, and shows OpenStreetMap attribution", () => {
     const css = read("src/styles.css");
-    assert.match(css, /\.gm-style img[\s\S]*max-width:\s*none\s*!important/);
-    assert.match(css, /\.gm-style img[\s\S]*height:\s*unset\s*!important/);
+    assert.match(css, /\.maplibregl-map img[\s\S]*max-width:\s*none\s*!important/);
+    assert.match(css, /\.maplibregl-map img[\s\S]*height:\s*unset\s*!important/);
     assert.match(css, /color-scheme:\s*only light/);
     assert.match(css, /\.ke-map-skel/);
+    assert.match(css, /\.maplibregl-ctrl-attrib/);
   });
 
-  it("detects Google raster tile <img> hosts", () => {
-    assert.equal(
-      mapHostHasRasterTiles({
-        querySelectorAll: () => [{ src: "https://maps.googleapis.com/maps/vt?pb=1" }],
-      }),
-      true,
-    );
-    assert.equal(
-      mapHostHasRasterTiles({
-        querySelectorAll: () => [{ src: "/logo-transparent.svg" }],
-      }),
-      false,
-    );
-    assert.equal(mapHostHasRasterTiles({ querySelectorAll: () => [] }), false);
-  });
-
-  it("createKidEaseMap keeps a Map ID when tilesloaded fires, else drops it", async () => {
-    const constructed = [];
-    class FakeMap {
-      constructor(_el, opts) {
-        constructed.push(opts);
-        this.opts = opts;
-      }
-      addListener(name, handler) {
-        if (name === "tilesloaded" && this.opts.mapId === "KidEaseNavy" && constructed.length === 1) {
-          /* first attempt stays blank — no tilesloaded */
-        } else if (name === "tilesloaded") {
-          queueMicrotask(handler);
-        }
-        return { name };
-      }
-    }
-    const maps = {
-      Map: FakeMap,
-      event: { removeListener() {} },
-      RenderingType: { RASTER: "RASTER" },
-    };
-    const el = { innerHTML: "keep", querySelectorAll: () => [] };
-    const created = await createKidEaseMap(
-      maps,
-      el,
-      { center: { lat: 49.9, lng: -97.1 }, zoom: 12, mapTypeId: "roadmap", mapId: "KidEaseNavy" },
-      20,
-    );
-    assert.equal(constructed.length, 2);
-    assert.equal(constructed[0].mapId, "KidEaseNavy");
-    assert.equal(constructed[0].renderingType, "RASTER");
-    assert.equal(constructed[1].mapId, undefined);
-    assert.equal(constructed[1].renderingType, "RASTER");
-    assert.ok("styles" in constructed[1]);
-    assert.equal(created.usedMapId, "");
-    assert.equal(created.tilesReady, true);
-    assert.equal(el.innerHTML, "");
-  });
-
-  it("server Places ratings still use the server-only keys", () => {
+  it("address lookup uses Photon, not the Google Geocoding API", () => {
     const src = read("src/lib/server/google-places.ts");
-    assert.match(src, /process\.env\.GOOGLE_PLACES_API_KEY/);
-    assert.match(src, /process\.env\.GOOGLE_MAPS_API_KEY/);
+    const photon = read("src/lib/photon.ts");
+    assert.match(photon, /photon\.komoot\.io/);
+    assert.match(src, /photonSearchUrl/);
+    assert.match(photon, /PHOTON_MIN_INTERVAL_MS = 1100/);
+    assert.match(photon, /CANADA_BBOX/);
+    assert.doesNotMatch(src, /maps\.googleapis\.com/);
+    assert.doesNotMatch(src, /process\.env\.GOOGLE_MAPS_API_KEY/);
+    assert.doesNotMatch(src, /process\.env\.GOOGLE_PLACES_API_KEY/);
+    assert.doesNotMatch(src, /AIza[0-9A-Za-z_-]{20,}/);
+    assert.doesNotMatch(read("src/lib/place-suggest.ts"), /loadGoogleMaps/);
   });
 });

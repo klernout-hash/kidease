@@ -10,6 +10,7 @@ import { canBuyDaycareUpgrade } from "@/lib/upgrade-role";
 import { useRoleChrome } from "@/components/role-chrome";
 import { useCopy } from "@/lib/use-copy";
 import { parseAppRole } from "@/lib/desks";
+import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { providerNavSearch } from "@/lib/desk-nav";
 import { FOUNDING_FREE_FEATURES, FOUNDING_PAGE, foundingLocale } from "@/lib/founding-period";
 
@@ -50,6 +51,7 @@ function ProviderSubscriptionPage() {
   const locallyOut = useLocallySignedOut();
   const chrome = useRoleChrome();
   const { session, ready } = useSessionDesks();
+  const hideAdmin = useNativeHidesAdmin();
   const daycareBuyer = Boolean(
     session &&
       canBuyDaycareUpgrade({
@@ -96,7 +98,7 @@ function ProviderSubscriptionPage() {
     if (daycareBuyer || parseAppRole(session.role) === "provider") {
       return <Navigate to="/provider" search={{ desk: "today" }} />;
     }
-    if (session.home === "/admin") return <Navigate to="/admin" />;
+    if (session.home === "/admin") return hideAdmin ? <Navigate to="/parent" /> : <Navigate to="/admin" />;
     if (session.home === "/support") return <Navigate to="/support" />;
     return <Navigate to="/parent" />;
   }

@@ -1,6 +1,42 @@
 import { createMiddleware, createStart } from "@tanstack/react-start";
 import { reportError } from "@/lib/observe";
+import { nativeAdminRedirectTarget } from "@/lib/native-admin";
 import { clientIpFromHeaders, consumeServerFnBudget } from "@/lib/server-fn-throttle";
+
+/**
+ * Native shells must not document-GET /admin*. Cloudflare Access answers that
+ * path before this app when it is on the DNS edge, so this hop only runs when
+ * the request reaches Vercel. The destination is not under /admin.
+ */
+const nativeShellMiddleware = createMiddleware({ type: "request" }).server(async ({ next, request }) => {
+  let url: URL;
+  try {
+    url = new URL(request.url);
+  } catch {
+    return next();
+  }
+  if (url.pathname === "/auth/app-return" || url.pathname === "/auth/native-handoff") {
+    const { handleNativeAuthAppReturn, handleNativeAuthHandoff } = await import(
+      "@/lib/auth/native-oauth-return.server"
+    );
+    if (url.pathname === "/auth/app-return") return handleNativeAuthAppReturn(request);
+    return handleNativeAuthHandoff(request);
+  }
+  const target = nativeAdminRedirectTarget({
+    pathname: url.pathname,
+    userAgent: request.headers.get("user-agent"),
+    cookie: request.headers.get("cookie"),
+  });
+  if (!target) return next();
+  const dest = new URL(target, url.origin);
+  return new Response(null, {
+    status: 302,
+    headers: {
+      location: `${dest.pathname}${dest.search}`,
+      "cache-control": "no-store",
+    },
+  });
+});
 
 const sentryRequestMiddleware = createMiddleware({ type: "request" }).server(async ({ next, request }) => {
   try {
@@ -98,6 +134,6 @@ const localeRequestMiddleware = createMiddleware({ type: "request" }).server(asy
 });
 
 export const startInstance = createStart(() => ({
-  requestMiddleware: [sentryRequestMiddleware, localeRequestMiddleware, serverFnThrottleMiddleware],
+  requestMiddleware: [nativeShellMiddleware, sentryRequestMiddleware, localeRequestMiddleware, serverFnThrottleMiddleware],
   functionMiddleware: [sentryFunctionMiddleware],
 }));

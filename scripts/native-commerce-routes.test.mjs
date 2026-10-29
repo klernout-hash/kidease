@@ -64,9 +64,11 @@ test("native commerce is guarded in the page and the component", () => {
   assert.match(drawer, /localePath\("\/plans"/);
   assert.match(drawer, /marker="plans"/);
   const login = src("src/routes/login.tsx");
-  assert.match(login, /signup-adult/);
-  assert.match(login, /signin-adult/);
-  assert.match(login, /if \(!operator && !adult\)/);
+  assert.match(login, /ContinueAgeNotice/);
+  assert.match(login, /confirmAdultAge/);
+  assert.doesNotMatch(login, /signup-adult/);
+  assert.doesNotMatch(login, /signin-adult/);
+  assert.doesNotMatch(login, /if \(!operator && !adult\)/);
   assert.match(src("package.json"), /"node": ">=22"/);
   assert.equal(src(".nvmrc").trim(), "22");
   assert.match(src("ios/App/App.xcodeproj/project.pbxproj"), /SdkPrivacy/);

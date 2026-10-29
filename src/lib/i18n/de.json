@@ -55,7 +55,7 @@
   "continueFacebook": "Weiter mit Facebook",
   "continueApple": "Mit Apple anmelden",
   "orEmail": "oder E-Mail nutzen",
-  "orSocial": "oder mit Google fortfahren",
+  "orSocial": "oder weiter mit",
   "email": "E-Mail",
   "password": "Passwort",
   "name": "Name",
@@ -1606,7 +1606,7 @@
   "openChat": "Chat öffnen",
   "requestNote": "Nachricht der Eltern",
   "onMap": "Auf der Karte",
-  "openGoogleMaps": "In Google Maps öffnen",
+  "openGoogleMaps": "In OpenStreetMap öffnen",
   "requestSummary": "Platzanfrage",
   "noRequests": "Noch keine Platzanfragen.",
   "parentLabel": "Elternteil",
@@ -1853,6 +1853,7 @@
   "helpBot": "KidEase-Hilfe",
   "liveChat": "Live-Chat",
   "helpBotLead": "Fragen Sie zu lizenzierter Betreuung, Leistungen oder Ihrem Eintrag.",
+  "helpBotPrivacy": "Senden Sie nicht den Namen, das Geburtsdatum oder Gesundheitsdaten eines Kindes.",
   "helpBotHello": "Guten Tag: ich bin der KidEase-Helfer. Fragen Sie zum Finden einer Einrichtung, zu $10-a-day oder zum Beanspruchen eines Eintrags.",
   "helpBotQ1": "How do I find a daycare?",
   "helpBotQ2": "How do I request a tour?",
@@ -3248,5 +3249,6 @@
   "statusPhotos": "{count} mit einem Foto der Kita",
   "statusFees": "{count} mit bestätigter Gebühr",
   "statusAges": "{count} mit bestätigtem Alter",
-  "statusUnavailable": "Wir konnten gerade nicht prüfen. Versuche die Suche, oder komm in einer Minute wieder."
+  "statusUnavailable": "Wir konnten gerade nicht prüfen. Versuche die Suche, oder komm in einer Minute wieder.",
+  "deleteAccountWarn": "Das schließt dein KidEase-Konto. Wir melden dich auf diesem Gerät ab. Wenn du Mit Apple anmelden genutzt hast, widerrufen wir diese Anmeldung. Tippe DELETE zur Bestätigung."
 }

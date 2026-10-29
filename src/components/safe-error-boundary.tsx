@@ -3,6 +3,7 @@ import { useEffect, type ReactNode } from "react";
 import { isStaleAssetError, reloadStaleAssetOnce, safeErrorCopy } from "@/lib/safe-error";
 import { reportError } from "@/lib/observe";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { nativeShellHidesAdminNow } from "@/lib/native-admin";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
 const SAFE_ERROR_CSS =
@@ -59,7 +60,7 @@ export function SafeRouteError({
           </button>
           {links ?? (
             <>
-              {showAdmin ? <a href="/admin">{copy.admin}</a> : null}
+              {showAdmin && !nativeShellHidesAdminNow() ? <a href="/admin">{copy.admin}</a> : null}
               <a href="/search">{copy.explore}</a>
               <a href="/">{copy.home}</a>
               <a href={`mailto:${SUPPORT_INBOX_EMAIL}`}>{copy.support}</a>

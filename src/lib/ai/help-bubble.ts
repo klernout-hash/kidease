@@ -1,7 +1,9 @@
 /**
- * Parent helper bubble. Visibility follows the parent-helper flag.
+ * Help chat text and ask limits.
+ * The floating launcher does not follow the parent-helper flag.
  * FEATURE_INAPP_CHAT does not show or hide this bubble.
  * A signed-out visitor can ask until a short limit, then must pass Turnstile.
+ * Questions must not carry a child's name, birthdate, or health details.
  */
 
 import { AI_FLAGS, aiBucket } from "./flags.ts";
@@ -42,12 +44,30 @@ export function helpBubbleDistinctId(userId?: string | null): string {
   }
 }
 
+const CHILD_INTRO =
+  /\b(?:my child(?:'s)?(?: name)? is|child(?:'s)? name is|nom de l'enfant est|mon enfant s'appelle|my son is|my daughter is|mon fils s'appelle|ma fille s'appelle)\s+\p{Lu}[\p{L}'’-]{1,40}/giu;
+
+/** Drop child names, birthdates, and health details before a question is kept or sent. */
+export function scrubHelpChatText(raw: string): string {
+  return scrubText(String(raw || "").replace(CHILD_INTRO, "[redacted]"))
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Text the model may see. Personal details are removed first.
+ * Null when nothing useful is left, so a name or birthdate is not stored.
+ */
+export function helpChatQuestion(raw: string): string | null {
+  const safe = scrubHelpChatText(raw).slice(0, 400);
+  const letters = safe.replace(/\[redacted\]/g, "").replace(/[^\p{L}]/gu, "");
+  if (letters.length < 3) return null;
+  return safe;
+}
+
 /** Text the model may see. Personal details are removed first. */
 export function bubbleQuestionForModel(raw: string): string {
-  return scrubText(String(raw || ""))
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 400);
+  return scrubHelpChatText(raw).slice(0, 400);
 }
 
 export function bubbleBucket(distinctId: string): number {

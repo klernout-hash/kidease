@@ -266,11 +266,14 @@ describe("wiring keeps explicit search and documents the fallback", () => {
 
   it("Places stays Canada-biased without hard-bounding other cities", () => {
     const places = read("src/lib/server/google-places.ts");
-    assert.match(places, /country:ca/);
+    const photon = read("src/lib/photon.ts");
+    assert.match(photon, /CANADA_BBOX/);
+    assert.match(photon, /countrycode/);
     assert.match(places, /placesBiasOrigin/);
-    assert.match(places, /region: "ca"/);
+    assert.match(places, /photonSearchUrl/);
     assert.doesNotMatch(places, /strictbounds/);
     assert.doesNotMatch(places, /country:us/);
+    assert.doesNotMatch(places, /maps\.googleapis\.com/);
   });
 
   it("default origin is not written as a saved choice", () => {

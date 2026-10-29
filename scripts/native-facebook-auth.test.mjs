@@ -138,7 +138,8 @@ describe("native Facebook auth (Better Auth socialProviders.facebook)", () => {
     assert.match(popup, /signInSocial/);
     assert.match(popup, /"apple" \| "google" \| "facebook"/);
     assert.match(login, /getSignInProviders/);
-    assert.match(login, /continueFacebook/);
+    assert.match(login, /SocialSignInButtons/);
+    assert.match(read("src/components/social-sign-in-buttons.tsx"), /continueFacebook/);
   });
 
   it("hides Facebook when env is missing; shows it only when native Facebook is on", () => {
@@ -359,8 +360,10 @@ describe("native Facebook auth (Better Auth socialProviders.facebook)", () => {
     assert.doesNotMatch(read("src/lib/server/facebook-contact.ts"), /'parent'/);
     assert.match(read("src/components/facebook-email-prompt.tsx"), /facebook-address/);
     assert.doesNotMatch(read("src/components/facebook-email-prompt.tsx"), /facebook-idp/);
-    assert.match(login, /I confirm I am 18 or older\./);
-    assert.match(login, /Je confirme que j’ai 18 ans ou plus\./);
+    assert.match(login, /ContinueAgeNotice/);
+    assert.match(read("src/components/continue-age-notice.tsx"), /By continuing, you confirm you're 18 or older/);
+    assert.match(read("src/components/continue-age-notice.tsx"), /18 ans ou plus/);
+    assert.doesNotMatch(login, /I confirm I am 18 or older\./);
     assert.doesNotMatch(login, /chooseAccountRole\("child"\)/);
     const copy = read("src/lib/copy.ts");
     assert.match(copy, /A child cannot have an account/);

@@ -50,8 +50,9 @@ test("messages, children, care, calls, and Apple use the wide layout", () => {
   assert.match(src("src/components/daily-care-desk.tsx"), /data-ke="care-split"/);
   assert.match(src("src/routes/call.$conversationId.tsx"), /data-ke="call-stage"/);
   assert.match(src("src/components/video-room-panel.tsx"), /data-ke="video-room"/);
-  assert.match(src("src/routes/login.tsx"), /ke-apple-button/);
-  assert.match(src("src/routes/login.tsx"), /data-ke="social-secondary"/);
+  assert.match(src("src/components/social-sign-in-buttons.tsx"), /ke-apple-button/);
+  assert.match(src("src/components/social-sign-in-buttons.tsx"), /data-ke="social-secondary"/);
+  assert.match(src("src/routes/login.tsx"), /SocialSignInButtons/);
   assert.match(src("src/routes/video.$roomId.tsx"), /primeCallMedia\("video"\)/);
   assert.match(src("src/components/voice-call-panel.tsx"), /primeCallMedia\("audio"\)/);
   assert.equal(copy.en.mediaPermissionNote.length > 0, true);

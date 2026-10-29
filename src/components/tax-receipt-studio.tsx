@@ -17,32 +17,31 @@ export function TaxReceiptStudio({ quebec = false }: { quebec?: boolean }) {
   const { locale } = useCopy();
   const fr = locale === "fr";
   const year = new Date().getFullYear();
-  const [child, setChild] = useState("");
+  const [receiptFor, setReceiptFor] = useState("");
+  const [childName, setChildName] = useState("");
   const [provider, setProvider] = useState("");
-  const [address, setAddress] = useState("");
-  const [province, setProvince] = useState(quebec ? "QC" : "MB");
   const [amount, setAmount] = useState("");
+  const [province, setProvince] = useState(quebec ? "QC" : "MB");
   const [permit, setPermit] = useState("");
   const [slip, setSlip] = useState("");
   const [note, setNote] = useState("");
 
   function saveT778() {
     const paid = Number(amount);
-    if (!child.trim() || !provider.trim() || !Number.isFinite(paid)) {
-      setNote(fr ? "Ajoutez l'enfant, le centre et le montant payé." : "Add the child, the centre, and the amount paid.");
+    if (!receiptFor.trim() || !provider.trim() || !Number.isFinite(paid)) {
+      setNote(fr ? "Ajoutez la famille, le centre et le montant payé." : "Add the family, the centre, and the amount paid.");
       return;
     }
     const receipt = buildT778Receipt({
       taxYear: year,
-      childName: child,
+      receiptFor,
+      childName,
       providerName: provider,
-      providerAddress: address,
-      province,
       amountPaid: paid,
       periodStart: `${year}-01-01`,
       periodEnd: `${year}-12-31`,
     });
-    download(receiptFileName("t778", year, child), receipt.text);
+    download(receiptFileName("t778", year, receiptFor), receipt.text);
     setNote(fr ? "Reçu T778 téléchargé." : "T778 receipt downloaded.");
   }
 
@@ -50,18 +49,20 @@ export function TaxReceiptStudio({ quebec = false }: { quebec?: boolean }) {
     const paid = Number(amount);
     const summary = buildRl24Summary({
       taxYear: year,
-      childName: child,
-      payerName: "",
+      receiptFor,
+      childName,
       providerName: provider,
       permitOrNeq: permit,
       slipNumber: slip,
       boxA: Number.isFinite(paid) ? paid : 0,
+      periodStart: `${year}-01-01`,
+      periodEnd: `${year}-12-31`,
     });
     if (!summary.ok) {
       setNote(fr ? "Le centre doit entrer son permis ou NEQ et le numéro de feuillet RL-24." : "The centre must enter its permit or NEQ and the RL-24 slip number.");
       return;
     }
-    download(receiptFileName("rl24", year, child || "child"), summary.text);
+    download(receiptFileName("rl24", year, receiptFor || "family"), summary.text);
     setNote(fr ? "Sommaire RL-24 téléchargé. Aucun code-barres inventé." : "RL-24 summary downloaded. No invented barcode.");
   }
 
@@ -70,21 +71,27 @@ export function TaxReceiptStudio({ quebec = false }: { quebec?: boolean }) {
       <h2 className="font-display text-2xl">{fr ? "Reçus d'impôt" : "Tax receipts"}</h2>
       <p className="mt-1 text-sm text-muted">
         {fr
-          ? "T778 pour toutes les provinces. Au Québec, le RL-24 utilise le permis et le numéro de feuillet que vous entrez."
-          : "T778 for every province. In Québec, RL-24 uses the permit and slip number you type."}
+          ? "Le reçu montre la famille, l'enfant s'il y a lieu, le centre, le montant, la période et le numéro de reçu."
+          : "The receipt shows the family, the child when you add one, the centre, the amount, the period, and the receipt number."}
       </p>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <label className="block text-sm">
+          <span className="font-medium">{fr ? "Reçu pour" : "Receipt for"}</span>
+          <input
+            className="ke-input mt-1 w-full"
+            value={receiptFor}
+            autoComplete="name"
+            onChange={(event) => setReceiptFor(event.target.value)}
+            onFocus={(event) => event.currentTarget.scrollIntoView({ block: "center" })}
+          />
+        </label>
+        <label className="block text-sm">
           <span className="font-medium">{fr ? "Enfant" : "Child"}</span>
-          <input className="ke-input mt-1 w-full" value={child} onChange={(event) => setChild(event.target.value)} onFocus={(event) => event.currentTarget.scrollIntoView({ block: "center" })} />
+          <input className="ke-input mt-1 w-full" value={childName} autoComplete="off" onChange={(event) => setChildName(event.target.value)} />
         </label>
         <label className="block text-sm">
           <span className="font-medium">{fr ? "Centre" : "Centre"}</span>
           <input className="ke-input mt-1 w-full" value={provider} onChange={(event) => setProvider(event.target.value)} />
-        </label>
-        <label className="block text-sm sm:col-span-2">
-          <span className="font-medium">{fr ? "Adresse du centre" : "Centre address"}</span>
-          <input className="ke-input mt-1 w-full" value={address} onChange={(event) => setAddress(event.target.value)} />
         </label>
         <label className="block text-sm">
           <span className="font-medium">{fr ? "Province" : "Province"}</span>

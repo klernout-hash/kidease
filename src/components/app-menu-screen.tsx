@@ -187,9 +187,17 @@ export function AppMenuScreen({
       </nav>
 
       {user ? (
-        <div className="mt-auto pt-8">
+        <div className="relative z-[45] mt-auto flex flex-col gap-3 pt-8 pb-[max(3.25rem,env(safe-area-inset-bottom))]" data-ke="menu-account-actions">
+          <Link
+            to={localePath("/delete-account", locale)}
+            data-ke="menu-delete-account"
+            className="flex min-h-11 w-full items-center justify-center rounded-full px-4 text-sm font-semibold text-fg ring-1 ring-border touch-manipulation"
+          >
+            {t("deleteAccount")}
+          </Link>
           <button
             type="button"
+            data-ke="menu-sign-out"
             onClick={() => void signOut("/")}
             className="flex min-h-11 w-full items-center justify-center gap-3 rounded-full bg-fg px-4 py-3.5 text-sm font-semibold text-bg touch-manipulation active:scale-[0.99]"
           >

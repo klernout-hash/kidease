@@ -28,6 +28,7 @@ import {
   readStickyDesk,
   type AppRole,
 } from "@/lib/desks";
+import { nativeShellHidesAdminNow } from "@/lib/native-admin";
 import { featuredDaycares } from "@/lib/server/daycares";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import { BootPending } from "@/components/boot-pending";
@@ -352,7 +353,12 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
     }
     if (consumeJustSignedOut()) return;
     if (!user) return;
-    const dest = homeLandPath({ role, sticky: readStickyDesk(), remembered: readRememberedRole() });
+    const dest = homeLandPath({
+      role,
+      sticky: readStickyDesk(),
+      remembered: readRememberedRole(),
+      hideStaffWebOnly: nativeShellHidesAdminNow(),
+    });
     if (!dest) return;
     try {
       sessionStorage.setItem(DESK_LANDED_KEY, "1");

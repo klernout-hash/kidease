@@ -5,12 +5,15 @@ import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-erro
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { reviewerSignInSkipsTurnstile } from "@/lib/reviewer-accounts";
+import { nativeSocialPlatform, providersForNativeShell } from "@/lib/auth/native-oauth";
 import { providersForStore, type GrokProvider } from "@/lib/auth/providers";
 import { getSignInProviders } from "@/lib/server/sign-in-providers";
 import { useStoreChannel } from "@/lib/use-native-shell";
 import { isFrPath } from "@/lib/locale-path";
 import { LOADER_SETTLE_MS, withTimeout, withTimeoutFallback } from "@/lib/timeout";
 import { Button } from "@/components/ui/button";
+import { SocialSignInButtons } from "@/components/social-sign-in-buttons";
+import { ContinueAgeNotice } from "@/components/continue-age-notice";
 import { BrandMark } from "@/components/brand-mark";
 import { PasswordField } from "@/components/password-field";
 import { PasswordRules } from "@/components/password-rules";
@@ -33,6 +36,7 @@ import {
   loginRoleFromDesk,
   parseDeskQuery,
   postLoginDestKind,
+  readRememberedRole,
   readStickyDesk,
   resolvePostLoginPath,
   sanitizePostLoginNext,
@@ -51,6 +55,8 @@ import {
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { canContinueAdminSession } from "@/lib/server/reauth";
 import { isNative } from "@/lib/native";
+import { nativeAccountDest } from "@/lib/native-admin";
+import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { useCopy } from "@/lib/use-copy";
 import { confirmAction } from "@/lib/success-confirm";
 import {
@@ -258,21 +264,34 @@ export function LoginScreen({
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const loginPath = isFrPath(pathname) ? "/fr/login" : "/login";
   const storeChannel = useStoreChannel();
-  const shownProviders = providersForStore(providers, storeChannel);
+  const hideAdmin = useNativeHidesAdmin();
+  const shownProviders = providersForNativeShell(providersForStore(providers, storeChannel), {
+    native: hideAdmin,
+    platform: nativeSocialPlatform({ native: hideAdmin, channel: storeChannel }),
+  });
   const deskHint = parseDeskQuery(search.desk);
   const role = search.role ?? (deskHint ? loginRoleFromDesk(deskHint) : undefined);
   // URL role=admin / next=/admin must not paint an operator page. Kyle types his email.
-  const urlOperator = isAdminLoginIntent({
-    role: role ?? search.role,
-    desk: search.desk,
-    intent: search.intent,
-    next: search.next,
-  });
-  const dest = resolvePostLoginPath({
-    next: search.next,
-    desk: deskHint,
+  // The native app has no Admin desk, so that URL is a normal sign-in.
+  const urlOperator =
+    !hideAdmin &&
+    isAdminLoginIntent({
+      role: role ?? search.role,
+      desk: search.desk,
+      intent: search.intent,
+      next: search.next,
+    });
+  const dest = nativeAccountDest({
+    hideAdmin,
+    dest: resolvePostLoginPath({
+      next: search.next,
+      desk: deskHint,
+      role: role ?? null,
+      sticky: readStickyDesk(),
+    }),
     role: role ?? null,
-    sticky: readStickyDesk(),
+    desk: search.desk,
+    remembered: readRememberedRole(),
   });
   const { user, isPending: sessionPending } = useCurrentUserState();
   const [mode, setMode] = useState<"in" | "up">(search.intent === "up" ? "up" : "in");
@@ -285,7 +304,6 @@ export function LoginScreen({
   const parentSignup = mode === "up" && !operator && role !== "provider";
   const [phone, setPhone] = useState("");
   const [smsConsent, setSmsConsent] = useState(false);
-  const [adult, setAdult] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
@@ -578,9 +596,6 @@ export function LoginScreen({
         await dropExistingSession();
       }
       if (mode === "up") {
-        if (!signingOperator && !adult) {
-          throw new Error(locale === "fr" ? "Confirmez que vous avez 18 ans ou plus." : "Confirm you are 18 or older.");
-        }
         const hygiene = localPasswordIssue(password, email);
         if (hygiene) throw new Error(hygiene);
         if (parentSignup) {
@@ -638,10 +653,6 @@ export function LoginScreen({
   }
 
   async function onSocial(providerId: string) {
-    if (!operator && !adult) {
-      setError(locale === "fr" ? "Confirmez que vous avez 18 ans ou plus." : "Confirm you are 18 or older.");
-      return;
-    }
     setBusy(true);
     setStalled(false);
     setError(null);
@@ -857,23 +868,7 @@ export function LoginScreen({
               label={t("password")}
               passwordRef={passwordRef}
             />
-            {mode === "up" && !operator ? (
-              <label className="flex min-h-11 items-start gap-3 text-sm" htmlFor="signup-adult">
-                <input
-                  id="signup-adult"
-                  type="checkbox"
-                  className="mt-1 size-5"
-                  checked={adult}
-                  onChange={(event) => setAdult(event.target.checked)}
-                  required
-                />
-                <span>
-                  {locale === "fr"
-                    ? "Je confirme que j’ai 18 ans ou plus."
-                    : "I confirm I am 18 or older."}
-                </span>
-              </label>
-            ) : null}
+            {mode === "up" && !operator ? <ContinueAgeNotice /> : null}
             {parentSignup ? (
               <ParentSmsFields phone={phone} onPhone={setPhone} consent={smsConsent} onConsent={setSmsConsent} />
             ) : null}
@@ -966,53 +961,15 @@ export function LoginScreen({
               {t("orSocial")}
               <span className="h-px flex-1 bg-border" />
             </div>
-            <div className="space-y-2" data-ke="social-sign-in">
-              {mode === "in" ? (
-                <label className="flex min-h-11 items-start gap-3 text-sm" htmlFor="signin-adult">
-                  <input
-                    id="signin-adult"
-                    type="checkbox"
-                    className="mt-1 size-5"
-                    checked={adult}
-                    onChange={(event) => setAdult(event.target.checked)}
-                  />
-                  <span>
-                    {locale === "fr"
-                      ? "Je confirme que j’ai 18 ans ou plus."
-                      : "I confirm I am 18 or older."}
-                  </span>
-                </label>
-              ) : null}
+            <div data-ke="social-sign-in">
               {authEnabled ? (
-                shownProviders.map((p: GrokProvider) => (
-                  <Button
-                    key={p.providerId}
-                    type="button"
-                    variant="secondary"
-                    size="md"
-                    className={
-                      p.idp === "apple"
-                        ? "ke-social-button ke-apple-button w-full font-normal"
-                        : "ke-social-button w-full font-normal"
-                    }
-                    data-ke="social-secondary"
-                    data-provider={p.idp}
-                    disabled={busy}
-                    onClick={() => void onSocial(p.providerId)}
-                  >
-                    {p.idp === "apple" ? <AppleMark /> : p.idp === "facebook" ? <FacebookMark /> : null}
-                    {p.idp === "apple"
-                      ? t("continueApple")
-                      : p.idp === "google"
-                        ? t("continueGoogle")
-                        : p.idp === "facebook"
-                          ? t("continueFacebook")
-                          : p.label}
-                  </Button>
-                ))
+                <SocialSignInButtons providers={shownProviders} disabled={busy} onSocial={(id) => void onSocial(id)} />
               ) : (
                 <p className="text-sm text-muted">{t("loginDisabled")}</p>
               )}
+              <div className="mt-3">
+                <ContinueAgeNotice />
+              </div>
             </div>
           </div>
           ) : null}
@@ -1066,18 +1023,3 @@ function rememberToken(data: { token?: string | null } | null | undefined) {
   }
 }
 
-function AppleMark() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-5" fill="currentColor" aria-hidden="true">
-      <path d="M16.365 12.74c-.024 2.607 2.258 3.476 2.284 3.488-.019.06-.357 1.23-1.177 2.437-.71 1.044-1.447 2.083-2.607 2.106-1.14.024-1.505-.681-2.81-.681-1.303 0-1.712.657-2.79.705-1.12.048-1.973-1.13-2.69-2.17-1.463-2.124-2.582-6.004-1.08-8.625.746-1.305 2.078-2.132 3.524-2.156 1.1-.024 2.138.747 2.81.747.67 0 1.926-.923 3.247-.787.553.023 2.107.224 3.106 1.686-.08.05-1.855 1.09-1.817 3.25m-1.686-5.01c.595-.722 1.002-1.725.891-2.73-.862.035-1.905.576-2.52 1.298-.553.64-1.037 1.663-.906 2.64.958.074 1.94-.487 2.535-1.208" />
-    </svg>
-  );
-}
-
-function FacebookMark() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-5" fill="currentColor" aria-hidden="true">
-      <path d="M13.5 21v-7.2h2.42l.36-2.8H13.5V9.22c0-.81.22-1.36 1.39-1.36H16.4V5.36A18.7 18.7 0 0 0 13.96 5C11.54 5 9.9 6.48 9.9 9v2h-2.3v2.8H9.9V21h3.6Z" />
-    </svg>
-  );
-}

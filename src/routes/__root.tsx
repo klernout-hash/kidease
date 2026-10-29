@@ -26,6 +26,7 @@ import { RouteProgress } from "@/components/route-progress";
 import { PostHogBoot } from "@/components/posthog-boot";
 import { AdultConfirmBoot } from "@/components/adult-confirm-boot";
 import { RoleBoot } from "@/components/role-boot";
+import { LiveChatSlot } from "@/components/help-bot";
 import { KidEaseToaster } from "@/components/kidease-toaster";
 import { SuccessConfirmHost } from "@/components/success-confirm";
 import { SafeRouteError } from "@/components/safe-error-boundary";
@@ -33,6 +34,11 @@ import { installStaleChunkReload, safeErrorCopy } from "@/lib/safe-error";
 import { getRoleChrome } from "@/lib/server/role-route";
 import { STYLE_NONCE_BOOT } from "@/lib/style-nonce-boot";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
+import {
+  isAccessProtectedPath,
+  NATIVE_ADMIN_NOTE_PATH,
+  nativeShellHidesAdminNow,
+} from "@/lib/native-admin";
 import {
   microsoftStoreCookieHeader,
   shellBlocksCommerce,
@@ -50,10 +56,10 @@ function manifestHref(channel: StoreChannel | undefined): string {
   return `${file}?v=${ICON_VER}`;
 }
 
-/** Google Maps and Places hosts are not warmed on any channel. */
+/** Warm the map tile host. Huawei keeps the static fallback and skips this. */
 function mapDnsPrefetch(channel: StoreChannel | undefined): { rel: "dns-prefetch"; href: string }[] {
   if (channel === "huawei") return [];
-  return [];
+  return [{ rel: "dns-prefetch", href: "https://tiles.openfreemap.org" }];
 }
 
 const GUEST_LOCALE = {
@@ -97,7 +103,18 @@ export const Route = createRootRoute({
     const storeRead = await readRequestStoreChannel(location.searchStr || "");
     const storeChannel = storeRead.channel;
     const nativeShell = shellBlocksCommerce(storeChannel);
-    return { roleChrome, visitorLocale, nativeShell, storeChannel, microsoftSetCookie: storeRead.setCookie };
+    const hideAdmin = storeRead.hideAdmin;
+    if (hideAdmin && isAccessProtectedPath(location.pathname)) {
+      throw redirect({ href: NATIVE_ADMIN_NOTE_PATH, statusCode: 302 });
+    }
+    return {
+      roleChrome,
+      visitorLocale,
+      nativeShell,
+      storeChannel,
+      hideAdmin,
+      microsoftSetCookie: storeRead.setCookie,
+    };
   },
   errorComponent: (props) => {
     const path = typeof window !== "undefined" ? window.location.pathname : "";
@@ -107,7 +124,7 @@ export const Route = createRootRoute({
         {...props}
         links={
           <>
-            {path.startsWith("/admin") ? <a href="/admin">{copy.admin}</a> : null}
+            {path.startsWith("/admin") && !nativeShellHidesAdminNow() ? <a href="/admin">{copy.admin}</a> : null}
             <a href="/search">{copy.explore}</a>
             <a href="/">{copy.home}</a>
             <a href={`mailto:${SUPPORT_INBOX_EMAIL}`}>{copy.support}</a>
@@ -180,11 +197,13 @@ async function readRequestStoreChannel(search: string): Promise<ServerStoreRead>
     return {
       channel: storeChannelFromSignals(signals),
       setCookie: microsoftStoreCookieHeader(signals, { secure: window.location.protocol === "https:" }),
+      hideAdmin: nativeShellHidesAdminNow(),
     };
   }
   return readServerStoreChannel({ data: { search } }).catch(() => ({
     channel: storeChannelFromSignals({ search }),
     setCookie: null,
+    hideAdmin: false,
   }));
 }
 
@@ -192,6 +211,7 @@ function RootDocument() {
   useEffect(() => installStaleChunkReload(), []);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const nativeShell = Route.useRouteContext({ select: (s) => Boolean(s.nativeShell) });
+  const hideAdmin = Route.useRouteContext({ select: (s) => Boolean(s.hideAdmin) });
   const storeChannel = Route.useRouteContext({ select: (s) => s.storeChannel ?? "web" });
   const { locale } = useCopy();
   const lang =
@@ -201,6 +221,7 @@ function RootDocument() {
       lang={lang}
       className="antialiased"
       data-channel="website"
+      data-native={hideAdmin ? "1" : undefined}
       data-runtime={nativeShell ? "native" : "web"}
       data-store={storeChannel}
       data-theme="system"
@@ -223,14 +244,15 @@ function RootDocument() {
               "[data-ke-mark] img{display:block;object-fit:contain;max-width:80px;max-height:80px}" +
               "[data-ke-mark=sm] img{width:36px;height:36px}" +
               "[data-ke-mark=md] img{width:64px;height:64px}" +
-              "[data-ke-mark=lg] img{width:80px;height:80px}",
+              "[data-ke-mark=lg] img{width:80px;height:80px}" +
+              'html[data-native="1"] a[href="/admin"],html[data-native="1"] a[href^="/admin?"],html[data-native="1"] a[href^="/admin/"],html[data-native="1"] a[href^="/admin-"],html[data-native="1"] [data-desk="admin"],html[data-native="1"] [data-ke="admin-desk"],html[data-native="1"] [data-ke="admin-guest-view"]{display:none!important}',
           }}
         />
         <link rel="preload" href={appCss} as="style" />
         <link rel="preconnect" href="https://media.kidease.ca" />
         {/* Route preloads (home hero) start before the blocking boot scripts. */}
         <HeadContent />
-        <script src="/channel-boot.js?v=8" />
+        <script src="/channel-boot.js?v=10" />
         <script src="/theme-boot.js" />
         <script src="/asset-recover.js" />
       </head>
@@ -249,6 +271,7 @@ function RootDocument() {
           <AdultConfirmBoot />
           <RouteProgress />
           <Outlet />
+          <LiveChatSlot />
           </ViewAsProvider>
           <CookieConsentBanner />
           <KidEaseToaster />

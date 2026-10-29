@@ -7,12 +7,13 @@
  * static policy without the nonce would block TanStack inline hydration.
  *
  * script-src uses a per-request nonce + 'strict-dynamic' so first-party HTML
- * scripts (channel-boot, TanStack <Scripts />) can load Maps / Stripe /
+ * scripts (channel-boot, TanStack <Scripts />) can load Stripe /
  * Turnstile / PostHog. Those SDKs append scripts with createElement.
+ * The map is MapLibre in the bundle. Tiles are fetched, not a third-party script.
  * Sign in with Google stays on form-action for accounts.google.com.
  *
  * style-src is nonce-only (no 'unsafe-inline'). SSR <style> tags are stamped
- * after render. Radix / Sonner / Maps inject <style> at runtime — a nonce'd
+ * after render. Radix / Sonner inject <style> at runtime — a nonce'd
  * boot script copies document.currentScript.nonce onto createElement("style").
  *
  * script-src includes 'wasm-unsafe-eval' so the listing-photo HEIC decoder
@@ -25,29 +26,20 @@
  * would break TanStack / Radix without a CSS-variable rewrite of popovers.
  */
 
-/** Maps and Google fonts inject stylesheets. style-src stays nonce-first, with these hosts only. */
-export const CSP_STYLE_HOSTS = [
-  "https://maps.googleapis.com",
-  "https://maps.gstatic.com",
-  "https://fonts.googleapis.com",
-  "https://fonts.gstatic.com",
-];
+/** Site fonts inject stylesheets. The map CSS is bundled. style-src stays nonce-first. */
+export const CSP_STYLE_HOSTS = ["https://fonts.googleapis.com", "https://fonts.gstatic.com"];
 
 export const CSP_SCRIPT_HOSTS = [
-  "https://maps.googleapis.com",
   "https://js.stripe.com",
   "https://challenges.cloudflare.com",
   "https://us.i.posthog.com",
   "https://us-assets.i.posthog.com",
 ];
 
-/** Maps JS tiles and sessions also hit khms*.googleapis.com and tile.googleapis.com. */
+/** OpenFreeMap vector tiles and EOX satellite imagery. No Google map hosts. */
 export const CSP_CONNECT_HOSTS = [
-  "https://maps.googleapis.com",
-  "https://maps.gstatic.com",
-  "https://*.googleapis.com",
-  "https://*.gstatic.com",
-  "https://tile.googleapis.com",
+  "https://tiles.openfreemap.org",
+  "https://tiles.maps.eox.at",
   "https://api.stripe.com",
   "https://*.kidease.ca",
   "https://kidease.ca",
@@ -77,7 +69,7 @@ export const CSP_IMG_HOSTS = [
 /**
  * Classic script: copies its own nonce onto runtime <style> tags.
  * createElement covers Sonner. innerHTML / insertAdjacentHTML cover SDKs
- * that inject a style tag as HTML (Turnstile, maps). script-src stays strict.
+ * that inject a style tag as HTML (Turnstile). script-src stays strict.
  */
 export const STYLE_NONCE_BOOT =
   '(function(){var n=document.currentScript&&document.currentScript.nonce;if(!n)return;var c=Document.prototype.createElement;var open="<"+"style";Document.prototype.createElement=function(t,o){var e=c.call(this,t,o);if(String(t).toLowerCase()==="style"){try{e.nonce=n}catch(err){}e.setAttribute("nonce",n)}return e;};function stamp(html){var s=String(html==null?"":html);if(s.toLowerCase().indexOf(open)<0)return s;return s.replace(new RegExp(open+"\\\\b([^>]*)>","gi"),function(full,attrs){if(/(?:^|\\s)nonce\\s*=/i.test(attrs))return full;return open+" nonce=\\""+n+"\\""+attrs+">";});}function patch(proto,key){var d;try{d=Object.getOwnPropertyDescriptor(proto,key);}catch(err){return;}if(!d||typeof d.set!="function"||typeof d.get!="function")return;Object.defineProperty(proto,key,{configurable:!0,enumerable:d.enumerable,get:d.get,set:function(v){d.set.call(this,stamp(v));}});}patch(Element.prototype,"innerHTML");patch(Element.prototype,"outerHTML");var ins=Element.prototype.insertAdjacentHTML;Element.prototype.insertAdjacentHTML=function(p,h){return ins.call(this,p,stamp(h));};})();';

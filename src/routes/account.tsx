@@ -21,7 +21,7 @@ import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { compressProfileFile, writeProfilePhoto } from "@/lib/profile-photo";
 import { polishProfilePhoto } from "@/lib/server/profile-photo";
-import { authClient } from "@/lib/auth/client";
+import { authClient, signOut } from "@/lib/auth/client";
 import { getMyContact, saveMyContact } from "@/lib/server/profile-contact";
 import { CaslConsentFields } from "@/components/casl-consent-fields";
 import { FamilyVaultPanel } from "@/components/family-vault";
@@ -32,7 +32,7 @@ import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anc
 import type { AnchorPoint } from "@/lib/dual-anchor";
 import { useAppStore } from "@/lib/store";
 import { AppearanceControl } from "@/components/appearance-control";
-import { useInNativeShell } from "@/lib/use-native-shell";
+import { useInNativeShell, useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { SignedInDevices } from "@/components/signed-in-devices";
 import { AccountSecurity } from "@/components/account-security";
 import { DeleteAccountPanel } from "@/components/delete-account-panel";
@@ -254,7 +254,9 @@ function ProfilePane() {
   const chrome = useRoleChrome();
   const canEditProfile = Boolean(user) || (chrome.signedIn && !chrome.pending);
   const { sticky } = useSessionDesks();
-  const desk = parseDeskQuery(search.desk) ?? sticky;
+  const hideAdmin = useNativeHidesAdmin();
+  const rawDesk = parseDeskQuery(search.desk) ?? sticky;
+  const desk = hideAdmin && rawDesk === "admin" ? "parent" : rawDesk;
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -813,6 +815,16 @@ function ProfilePane() {
                   </Link>
                 ))}
             </nav>
+            <div className="mt-6" data-ke="account-session-actions">
+              <button
+                type="button"
+                data-ke="account-sign-out"
+                onClick={() => void signOut("/")}
+                className="flex min-h-11 w-full items-center justify-center rounded-full bg-fg px-4 text-sm font-semibold text-bg touch-manipulation"
+              >
+                {t("signOut")}
+              </button>
+            </div>
           </>
         ) : null}
         {section === "profile" && !editing && !user ? (

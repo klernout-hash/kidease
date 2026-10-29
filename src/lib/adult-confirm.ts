@@ -1,4 +1,4 @@
-/** Set before a social redirect. The boot call stores it on the profile. */
+/** Set before a social redirect. The boot call stores 18+ and terms acceptance. */
 export const ADULT_CONFIRM_KEY = "ke-adult-confirmed";
 
 export function markAdultConfirmedForSession(): void {

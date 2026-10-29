@@ -6,7 +6,7 @@ import { localePath } from "@/lib/locale-path";
 import { normalizeReferralCode, writeReferralCode } from "@/lib/referrals";
 import { useCopy } from "@/lib/use-copy";
 
-/** Public page for a friend's link. Stores the code on this phone. No reward. */
+/** Public page for a friend's link. Stores the code on this device. No reward. */
 export function ReferLanding({ code }: { code: string }) {
   const { t, locale } = useCopy();
   const valid = normalizeReferralCode(code);

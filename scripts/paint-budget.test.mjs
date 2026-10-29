@@ -51,7 +51,7 @@ describe("shell does not wait on catalogue", () => {
     const cssAt = rootHtml.indexOf("html,body{margin:0;background:#f6f3ee");
     const preloadAt = rootHtml.indexOf('rel="preload" href={appCss}');
     const mediaAt = rootHtml.indexOf('rel="preconnect" href="https://media.kidease.ca"');
-    const bootAt = rootHtml.indexOf('src="/channel-boot.js?v=8"');
+    const bootAt = rootHtml.indexOf('src="/channel-boot.js?v=10"');
     assert.ok(cssAt > 0 && cssAt < bootAt);
     assert.ok(preloadAt > 0 && preloadAt < bootAt);
     assert.ok(mediaAt > 0 && mediaAt < bootAt);

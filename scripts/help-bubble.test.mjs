@@ -18,17 +18,22 @@ import { tx } from "../src/lib/copy.ts";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (path) => readFileSync(join(root, path), "utf8");
 
-test("the bubble stays hidden when the parent-helper flag is off", () => {
+test("the parent-helper flag does not hide the launcher", () => {
   assert.equal(bubbleVisible({ reached: false, flags: {} }, 0), false);
   assert.equal(bubbleVisible({ reached: true, flags: { [AI_FLAGS.parentHelper]: false } }, 0), false);
   assert.equal(bubbleVisible({ reached: true, flags: {} }, 1), false);
   const bot = read("src/components/help-bot.tsx");
-  assert.match(bot, /useAiFeatureFlag\(AI_FLAGS\.parentHelper\)/);
-  assert.match(bot, /if \(!ready \|\| !helperOn\) return null/);
+  const rootDoc = read("src/routes/__root.tsx");
+  assert.doesNotMatch(bot, /useAiFeatureFlag/);
+  assert.doesNotMatch(bot, /if \(!ready \|\| !helperOn\) return null/);
   assert.doesNotMatch(bot, /inAppChatEnabled/);
+  assert.match(bot, /helpLauncherVisible/);
+  assert.match(rootDoc, /<LiveChatSlot \/>/);
+  assert.equal((rootDoc.match(/<LiveChatSlot/g) ?? []).length, 1);
+  assert.doesNotMatch(read("src/components/shell.tsx"), /LiveChatSlot/);
 });
 
-test("the bubble shows when the parent-helper flag is on", () => {
+test("the launcher still mounts HelpBot", () => {
   assert.equal(bubbleVisible({ reached: true, flags: { [AI_FLAGS.parentHelper]: true } }, 99), true);
   const bot = read("src/components/help-bot.tsx");
   assert.match(bot, /return <HelpBot \/>/);

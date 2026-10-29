@@ -124,6 +124,14 @@ export function NativeBoot() {
     registerOfflineShell();
     void paintStatusBar();
     void hideNativeSplash();
+    if (!isNative()) return;
+    let stop = () => {};
+    void import("@/lib/auth/native-oauth-client").then((mod) => {
+      void mod.bindNativeOAuthReturn().then((unbind) => {
+        stop = unbind;
+      });
+    });
+    return () => stop();
   }, []);
 
   useEffect(() => {

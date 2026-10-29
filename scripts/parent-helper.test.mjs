@@ -56,6 +56,7 @@ test("an answer that invents a fee or cites an unknown page is refused", () => {
   assert.equal(kept.path, "/benefits");
   assert.equal(parentHelperSchema.safeParse({ answer: kept.answer, path: kept.path, fee: 1 }).success, false);
   assert.match(PARENT_HELPER_SYSTEM, /Do not invent a daycare/);
+  assert.match(PARENT_HELPER_SYSTEM, /Never ask for a child's name, birthdate, or health information/);
 });
 
 test("a subsidy estimate uses only published figures", () => {
