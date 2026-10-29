@@ -70,9 +70,8 @@ class KidEaseBridgeViewController: CAPBridgeViewController {
     }
 
     private func installTextScaleScript(on controller: WKUserContentController) {
-        if let old = textScaleScript {
-            controller.removeUserScript(old)
-        }
+        // WKUserContentController has no single-script removal. Later scripts run after
+        // earlier ones, so the newest scale wins without touching Capacitor's own scripts.
         let scale = Self.textScale(for: UIApplication.shared.preferredContentSizeCategory)
         let source = "document.documentElement.style.setProperty('--ke-text-scale','\(scale)');"
         let script = WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: true)
