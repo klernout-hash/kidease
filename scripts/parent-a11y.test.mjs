@@ -49,7 +49,7 @@ test("listing photos and text size use bilingual labels", () => {
   assert.match(copy, /photoPrev: "Previous photo"/);
   assert.match(copy, /photoPrev: "Photo précédente"/);
   assert.match(copy, /photoNext: "Photo suivante"/);
-  assert.match(copy, /textSizeHint: "Larger text stays on this phone. Pinch zoom still works."/);
+  assert.match(copy, /textSizeHint: "Larger text stays on this device. Pinch zoom still works."/);
   assert.match(copy, /Le zoom par pincement fonctionne encore/);
   assert.match(appearance, /aria-labelledby="text-size-label"/);
   assert.match(appearance, /setTextScale/);

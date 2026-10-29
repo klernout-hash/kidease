@@ -298,12 +298,15 @@ function isDeskGhostFixture(d: ListingVisibilityInput): boolean {
 }
 
 function viewerOwnsDeskFixture(viewer?: ProviderDeskViewer | null): boolean {
+  // getProvider only returns centres this person owns or belongs to.
+  if (viewer?.ownedByViewer) return true;
   return isKidEaseOperatorEmail(viewer?.viewerEmail);
 }
 
 /**
  * Waitlist card uses the same rule as the empty desk.
- * A test or smoke centre stays off unless the operator turned Show test listings on.
+ * A centre this person owns stays, including their store-review demo.
+ * DocuSign smoke stays off unless the operator turned Show test listings on.
  */
 export function deskWaitlistVisible(
   d: ListingVisibilityInput | null | undefined,
@@ -312,14 +315,17 @@ export function deskWaitlistVisible(
 ): boolean {
   if (!providerDeskListingVisible(d, viewer)) return false;
   if (!isAdminOnlyListing(d)) return true;
+  if (isDocuSignSmokeCentre(d?.name)) return includeTest && isKidEaseOperatorEmail(viewer?.viewerEmail);
+  if (viewer?.ownedByViewer) return true;
   return includeTest && isKidEaseOperatorEmail(viewer?.viewerEmail);
 }
 
 /**
  * Director desk. Public listings always show, including ones still waiting
  * on review, so the owner can add the storefront the admin queue marks Missing.
- * An owned QA-named fixture stays on My listings through pending, waiting,
- * verified, and approved. Ghost and Claim Lab fixtures stay hidden.
+ * An owned QA-named fixture, including the store-review demo, stays on My
+ * listings through pending, waiting, verified, and approved. Ghost and Claim
+ * Lab fixtures stay hidden. DocuSign smoke stays off the openroad desk.
  * An operator-flagged row that is not a named fixture stays editable while review is open.
  * Public search still uses isAdminOnlyListing.
  */
@@ -331,6 +337,7 @@ export function providerDeskListingVisible(
   if (!isAdminOnlyListing(d)) return true;
   if (isDeskGhostFixture(d)) return false;
   const status = (d.claimStatus || "").trim().toLowerCase();
+  if (isDocuSignSmokeCentre(d.name) && !isKidEaseOperatorEmail(viewer?.viewerEmail)) return false;
   if (looksLikeTestFixture(d)) {
     if (!viewerOwnsDeskFixture(viewer)) return false;
     return PROVIDER_DESK_QA_STATUSES.has(status);

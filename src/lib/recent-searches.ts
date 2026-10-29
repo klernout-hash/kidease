@@ -1,4 +1,4 @@
-/** Recent place searches stay on this phone. Nothing is sent to KidEase. */
+/** Recent place searches stay on this device. Nothing is sent to KidEase. */
 
 export type RecentSearch = { label: string; at: string };
 

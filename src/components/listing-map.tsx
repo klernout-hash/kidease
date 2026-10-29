@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { createKidEaseMap, createListingOverlay } from "@/lib/osm-map";
+import {
+  LISTING_MAP_TILE_WAIT_MS,
+  createKidEaseMap,
+  createListingOverlay,
+  listingMapGiveUp,
+  waitForMapHost,
+  webglMapAvailable,
+} from "@/lib/osm-map";
 import { useCopy } from "@/lib/use-copy";
 import { useStoreChannel } from "@/lib/use-native-shell";
 import { MapUnavailable } from "@/components/map-unavailable";
@@ -38,16 +45,55 @@ function OsmListingMap({ lat, lng, title, address }: Props) {
 
   useEffect(() => {
     const el = host.current;
-    if (!el || !valid) {
+    const webgl = webglMapAvailable();
+    if (
+      !el ||
+      listingMapGiveUp({
+        validCoords: valid,
+        webgl,
+        hostSized: true,
+        sawTile: false,
+        elapsedMs: 0,
+        errored: false,
+      })
+    ) {
       setFailed(true);
       return;
     }
     let cancelled = false;
     let pin: { setMap(map: null): void } | null = null;
-    let map: { destroy(): void } | null = null;
+    let map: { destroy(): void; resize(): void } | null = null;
+    let resizeObserver: ResizeObserver | null = null;
+    const started = Date.now();
+    const giveUp = () => {
+      if (cancelled) return;
+      cancelled = true;
+      pin?.setMap(null);
+      map?.destroy();
+      map = null;
+      setBasemapReady(false);
+      setFailed(true);
+    };
+    const watchdog = window.setTimeout(giveUp, LISTING_MAP_TILE_WAIT_MS);
 
     void (async () => {
       try {
+        const remaining = () => Math.max(0, LISTING_MAP_TILE_WAIT_MS - (Date.now() - started));
+        const sized = await waitForMapHost(el, remaining());
+        if (cancelled) return;
+        if (
+          listingMapGiveUp({
+            validCoords: true,
+            webgl: true,
+            hostSized: sized,
+            sawTile: false,
+            elapsedMs: Date.now() - started,
+            errored: false,
+          })
+        ) {
+          giveUp();
+          return;
+        }
         el.replaceChildren();
         const center = { lat, lng };
         const created = await createKidEaseMap(el, {
@@ -55,6 +101,8 @@ function OsmListingMap({ lat, lng, title, address }: Props) {
           zoom: 16,
           mapTypeId: "roadmap",
           cooperative: true,
+          tileWaitMs: Math.max(250, remaining()),
+          requireTiles: true,
         });
         if (cancelled) {
           created.map.destroy();
@@ -65,15 +113,20 @@ function OsmListingMap({ lat, lng, title, address }: Props) {
         content.className = "ke-logo-pin";
         content.innerHTML = PIN_SVG;
         pin = createListingOverlay({ map: created.map, position: center, content });
+        resizeObserver = new ResizeObserver(() => map?.resize());
+        resizeObserver.observe(el);
+        window.clearTimeout(watchdog);
         setBasemapReady(true);
       } catch {
-        if (!cancelled) setFailed(true);
+        giveUp();
       }
     })();
 
     return () => {
       cancelled = true;
+      window.clearTimeout(watchdog);
       setBasemapReady(false);
+      resizeObserver?.disconnect();
       pin?.setMap(null);
       map?.destroy();
     };

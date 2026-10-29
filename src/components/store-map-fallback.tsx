@@ -18,7 +18,7 @@ export function StoreMapFallback({ compact = false }: { compact?: boolean }) {
     >
       <div className="max-w-sm">
         <p className="font-medium text-fg">
-          {fr ? "La carte Google n’est pas offerte sur ce téléphone." : "Google Maps is not available on this phone."}
+          {fr ? "La carte Google n’est pas offerte sur cet appareil." : "Google Maps is not available on this device."}
         </p>
         <p className="mt-2 text-sm text-muted">
           {fr

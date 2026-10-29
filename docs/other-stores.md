@@ -134,7 +134,7 @@ Huawei phones do not ship Google Play Services. This flavour degrades on purpose
 | Google sign-in | Hidden. The button is not rendered. |
 | FCM / Capacitor push | Not started. `registerPushDevice` returns disabled. `FirebaseInitProvider` is removed so launch does not crash. |
 | HMS Push | Not in this build. Later, after Kyle adds AppGallery Connect and `agconnect-services.json`. |
-| Google Maps and Places | Not loaded. Search by city still uses the local city list. The map panel says Google Maps is not on this phone. |
+| Google Maps and Places | Not loaded. Search by city still uses the local city list. The map panel says Google Maps is not on this device. |
 | “Near me” | Uses the phone location through the WebView, not the Google location plugin. If the phone denies location, search by city still works. |
 | Stripe | Blocked |
 

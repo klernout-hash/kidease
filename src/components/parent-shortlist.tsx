@@ -83,8 +83,8 @@ export function ParentShortlist({
   if (!items.length && offline.length) {
     const note =
       locale === "fr"
-        ? "Enregistré sur ce téléphone. Reconnectez-vous pour actualiser."
-        : "Saved on this phone. Connect again to refresh.";
+        ? "Enregistré sur cet appareil. Reconnectez-vous pour actualiser."
+        : "Saved on this device. Connect again to refresh.";
     return (
       <div className="mt-6 w-full">
         <h2 className="font-display text-2xl">{t("saved")}</h2>

@@ -16,6 +16,11 @@ export const SATELLITE_TILES =
 /** How long to wait for the first idle frame before the Retry button. */
 export const MAP_STYLE_WAIT_MS = 12_000;
 /**
+ * Listing preview. If tiles have not painted by then, show Map unavailable
+ * instead of the empty style background.
+ */
+export const LISTING_MAP_TILE_WAIT_MS = 5_000;
+/**
  * Search-map skeleton stays up through the style wait so a slow first
  * paint is not replaced by "Map is taking too long" too early.
  */
@@ -627,6 +632,70 @@ export const osmMaps = {
   OverlayView: OsmOverlay,
 };
 
+/** WKWebView reports a zero box until layout. A 0×0 WebGL canvas stays grey. */
+export function mapHostHasSize(el: HTMLElement) {
+  return el.clientWidth >= 32 && el.clientHeight >= 32;
+}
+
+/**
+ * WebGL2, or WebGL1 if that is all the webview offers.
+ * `powerPreference: high-performance` is what leaves the canvas blank in WKWebView,
+ * so the probe uses the same attributes as the map.
+ */
+export function webglMapAvailable(): boolean {
+  if (typeof document === "undefined") return false;
+  try {
+    const canvas = document.createElement("canvas");
+    const attrs: WebGLContextAttributes = {
+      failIfMajorPerformanceCaveat: false,
+      preserveDrawingBuffer: true,
+      powerPreference: "default",
+    };
+    const gl = canvas.getContext("webgl2", attrs) || canvas.getContext("webgl", attrs);
+    if (!gl) return false;
+    gl.getExtension("WEBGL_lose_context")?.loseContext();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function waitForMapHost(el: HTMLElement, ms: number): Promise<boolean> {
+  if (mapHostHasSize(el)) return Promise.resolve(true);
+  if (ms <= 0) return Promise.resolve(mapHostHasSize(el));
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = (ok: boolean) => {
+      if (done) return;
+      done = true;
+      window.clearTimeout(timer);
+      ro.disconnect();
+      resolve(ok);
+    };
+    const timer = window.setTimeout(() => finish(mapHostHasSize(el)), ms);
+    const ro = new ResizeObserver(() => {
+      if (mapHostHasSize(el)) finish(true);
+    });
+    ro.observe(el);
+  });
+}
+
+/** True when the listing box should be replaced by Map unavailable. */
+export function listingMapGiveUp(input: {
+  validCoords: boolean;
+  webgl: boolean;
+  hostSized: boolean;
+  sawTile: boolean;
+  elapsedMs: number;
+  errored: boolean;
+}): boolean {
+  if (!input.validCoords || !input.webgl || input.errored) return true;
+  if (input.sawTile && input.hostSized) return false;
+  return input.elapsedMs >= LISTING_MAP_TILE_WAIT_MS;
+}
+
+type SourceDataEvent = { sourceDataType?: string; tile?: unknown; error?: Error };
+
 export async function createKidEaseMap(
   el: HTMLElement,
   input: {
@@ -634,6 +703,10 @@ export async function createKidEaseMap(
     zoom: number;
     mapTypeId: "roadmap" | "hybrid" | "satellite";
     cooperative?: boolean;
+    /** Defaults to MAP_STYLE_WAIT_MS. Listing previews pass LISTING_MAP_TILE_WAIT_MS. */
+    tileWaitMs?: number;
+    /** Idle with only the style background is not a painted map. */
+    requireTiles?: boolean;
   },
 ): Promise<{ map: OsmMap; maps: typeof osmMaps; tilesReady: boolean }> {
   const lib = await preloadOsmMap();
@@ -652,23 +725,54 @@ export async function createKidEaseMap(
     fadeDuration: 0,
     maxZoom: 18,
     minZoom: 3,
+    // iOS WKWebView (KidEaseNative) paints a blank grey canvas when the context
+    // asks for the high-performance GPU, or when the drawing buffer is discarded
+    // inside overflow:hidden. Default power keeps the frame on screen.
+    canvasContextAttributes: {
+      antialias: false,
+      powerPreference: "default",
+      preserveDrawingBuffer: true,
+      failIfMajorPerformanceCaveat: false,
+    },
   });
   ml.addControl(new lib.AttributionControl({ compact: false }), "bottom-left");
   const map = new OsmMap(ml, lib, el, basemap);
+  const waitMs = input.tileWaitMs ?? MAP_STYLE_WAIT_MS;
+  const requireTiles = input.requireTiles === true;
   const tilesReady = await new Promise<boolean>((resolve) => {
     let settled = false;
+    let sawTile = false;
     const finish = (ok: boolean) => {
       if (settled) return;
       settled = true;
       window.clearTimeout(timer);
+      ml.off("sourcedata", onSource);
+      ml.off("error", onError);
+      ml.off("idle", onIdle);
       resolve(ok);
     };
-    const timer = window.setTimeout(() => finish(false), MAP_STYLE_WAIT_MS);
-    ml.once("idle", () => finish(true));
+    const onSource = (event: SourceDataEvent) => {
+      // A loaded vector tile is `{dataType:'source', tile}` with no sourceDataType.
+      // Style "content" events fire when the TileJSON arrives, before any paint.
+      if (event.tile) sawTile = true;
+    };
+    const onError = (event: SourceDataEvent) => {
+      const message = event.error instanceof Error ? event.error.message : "";
+      if (/failed to initialize webgl/i.test(message)) finish(false);
+    };
+    const onIdle = () => {
+      if (requireTiles && !sawTile) return;
+      finish(true);
+    };
+    const timer = window.setTimeout(() => finish(false), waitMs);
+    ml.on("sourcedata", onSource);
+    ml.on("error", onError);
+    ml.on("idle", onIdle);
   });
   if (!tilesReady) {
     map.destroy();
     throw new Error(MAP_LOAD_TIMEOUT);
   }
+  map.resize();
   return { map, maps: osmMaps, tilesReady };
 }
