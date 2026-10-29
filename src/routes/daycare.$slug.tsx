@@ -142,6 +142,10 @@ export const Route = createFileRoute("/daycare/$slug")({
   },
   notFoundComponent: ListingNotFoundPage,
   errorComponent: ListingRetryPage,
+  headers: ({ loaderData }) => {
+    if (loaderData?.noindex) return { "X-Robots-Tag": "noindex, nofollow" };
+    return undefined;
+  },
   head: ({ loaderData }) => {
     if (!loaderData) return listingNotFoundHead();
     const canonical = listingCanonicalUrl(loaderData.slug);

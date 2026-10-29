@@ -123,7 +123,7 @@ export function SiteFooter() {
   void isKidEaseOperatorEmail(user?.primaryEmail);
 
   return (
-    <footer className="ke-site-footer">
+    <footer className="ke-site-footer mt-auto">
       <div className="ke-gutter">
         <div className="ke-footer-inner">
           <nav className="ke-footer-cols" aria-label="KidEase">

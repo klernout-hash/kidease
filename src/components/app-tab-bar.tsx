@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Building2, Calendar, ClipboardCheck, ClipboardList, Heart, Home, LifeBuoy, Menu, MessageCircle, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { RoleSwitchPill } from "@/components/role-switch-pill";
 import { CountBadge } from "@/components/count-badge";
 import { useSessionDesks } from "@/components/session-desks";
@@ -38,8 +38,28 @@ export function AppTabBar() {
     highlightedDesk: highlightDesk(pathname, sticky, parseDeskQuery(desk)),
   });
   const [native, setNative] = useState(false);
+  const barRef = useRef<HTMLElement>(null);
   useEffect(() => {
     setNative(isNative());
+  }, []);
+  useEffect(() => {
+    const el = barRef.current;
+    const vv = window.visualViewport;
+    if (!vv || !el) return;
+    const pin = () => {
+      const lift = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
+      el.style.bottom = lift > 0 ? `${lift}px` : "";
+    };
+    pin();
+    vv.addEventListener("resize", pin);
+    vv.addEventListener("scroll", pin);
+    window.addEventListener("orientationchange", pin);
+    return () => {
+      vv.removeEventListener("resize", pin);
+      vv.removeEventListener("scroll", pin);
+      window.removeEventListener("orientationchange", pin);
+      el.style.bottom = "";
+    };
   }, []);
   const storeTabs = native ? nativeStoreTabs(kind) : null;
   const requestBadge = attentionForItem(session?.attention, "bookings");
@@ -49,13 +69,14 @@ export function AppTabBar() {
     <>
       <RoleSwitchPill />
       <nav
+        ref={barRef}
         data-ke="app-tab-bar"
         data-bar={storeTabs ? "store" : kind}
-        className="ke-app-only fixed inset-x-0 bottom-0 z-50 hidden border-t border-border bg-surface pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] [[data-channel=app]_&]:block"
+        className="ke-app-only fixed inset-x-0 bottom-0 z-50 hidden border-t border-slate-200/80 bg-surface/95 pb-[env(safe-area-inset-bottom)] pb-[var(--ke-safe-bottom,env(safe-area-inset-bottom))] pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] backdrop-blur-md dark:border-white/15 [[data-channel=app]_&]:block"
       >
         <div
           className={cn(
-            "mx-auto grid max-w-lg px-0.5 pb-[var(--ke-safe-bottom,env(safe-area-inset-bottom))] pt-1 md:max-w-3xl",
+            "mx-auto grid max-w-lg px-1 pt-1 md:max-w-3xl",
             storeTabs ? "grid-cols-4" : kind === "guest" ? "grid-cols-3" : "grid-cols-5",
           )}
         >
@@ -227,10 +248,17 @@ function Tab({
       data-nav={marker}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "ke-press relative flex min-h-11 min-w-0 flex-col items-center justify-center gap-0.5 overflow-hidden px-0.5 text-center text-[0.72rem] font-medium leading-[1.05] touch-manipulation",
+        "ke-press relative flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 overflow-hidden px-0.5 text-center text-[0.72rem] font-medium leading-[1.15] tracking-[-0.01em] touch-manipulation",
         active ? "text-primary" : "text-muted",
       )}
     >
+      <span
+        className={cn(
+          "absolute left-1/2 top-0 h-0.5 w-6 -translate-x-1/2 rounded-full",
+          active ? "bg-primary" : "bg-transparent",
+        )}
+        aria-hidden
+      />
       <span className="relative">
         <Icon
           className="size-5 shrink-0"

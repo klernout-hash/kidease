@@ -88,8 +88,12 @@ export async function runPhoneViewportPass(browser, base) {
             const bar = document.querySelector("[data-ke='app-tab-bar']");
             if (bar && getComputedStyle(bar).display !== "none") {
               const inner = bar.firstElementChild;
-              const pad = inner ? parseFloat(getComputedStyle(inner).paddingBottom) || 0 : 0;
+              const barPad = parseFloat(getComputedStyle(bar).paddingBottom) || 0;
+              const innerPad = inner ? parseFloat(getComputedStyle(inner).paddingBottom) || 0 : 0;
+              const pad = Math.max(barPad, innerPad);
               if (pad + 1 < safe.bottom) notes.push(`tab-bottom ${Math.round(pad)}<${safe.bottom}`);
+              const box = bar.getBoundingClientRect();
+              if (box.height > 0 && box.bottom < window.innerHeight - 2) notes.push(`tab-float ${Math.round(box.bottom)}<${window.innerHeight}`);
             }
             const h1 = document.querySelector("h1");
             if (h1 && (h1.textContent || "").trim()) {

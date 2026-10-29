@@ -54,6 +54,8 @@ export type ListingSeoSource = {
   descriptionFr?: string | null;
   hours?: string | null;
   hoursFr?: string | null;
+  /** Store-review demo. Direct slug only. */
+  noindex?: boolean | null;
 };
 
 export type ListingSeoMeta = {
@@ -201,6 +203,7 @@ export function listingSeoHeadTags(src: ListingSeoSource, locale: ListingSeoLoca
     { name: "twitter:title", content: meta.ogTitle },
     { name: "twitter:description", content: meta.ogDescription },
     { name: "twitter:image", content: meta.ogImage },
+    ...(src.noindex ? [{ name: "robots", content: "noindex, nofollow" }] : []),
   ];
 }
 
