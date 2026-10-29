@@ -36,6 +36,8 @@ export type ListingVisibilityInput = {
   address?: string | null;
   visibility?: string | null;
   isTest?: boolean | number | null;
+  /** Store-review sample. Hidden from public counts even if other flags slip. */
+  isDemo?: boolean | number | null;
   /** Set when this row was retired into another daycare. Public surfaces hide it. */
   mergedInto?: string | null;
   /** Set when an import could not recover a real centre name. */
@@ -127,6 +129,7 @@ export function isDocuSignSmokeCentre(name: string | null | undefined): boolean 
 /** Known QA fixture plus any row flagged admin_only / is_test. */
 export function isAdminOnlyListing(d: ListingVisibilityInput | null | undefined): boolean {
   if (!d) return false;
+  if (d.isDemo === true || d.isDemo === 1) return true;
   if (PUBLIC_CATALOGUE_SLUGS.has(norm(d.slug))) return false;
   if (d.visibility === LISTING_VISIBILITY.adminOnly) return true;
   if (d.isTest === true || d.isTest === 1) return true;
@@ -417,6 +420,7 @@ export const PUBLIC_LISTING_SQL = `(
   and ${removedListingSql()}
   and coalesce(listing_active, 1) <> 0
   and coalesce(is_test, 0) = 0
+  and coalesce(is_demo, 0) = 0
   and coalesce(visibility, 'public') = 'public'
   and id not ilike 'ke-test-%'
   and slug not ilike 'test-ghost%'
@@ -459,6 +463,7 @@ export const SUPPRESSED_CATALOG_SQL = `(
   or import_fault is not null
   or coalesce(listing_active, 1) = 0
   or coalesce(is_test, 0) <> 0
+  or coalesce(is_demo, 0) <> 0
   or coalesce(visibility, 'public') <> 'public'
   or lower(btrim(coalesce(claim_status, ''))) in ('declined', 'rejected', 'denied', 'superseded')
   or upper(btrim(coalesce(province, ''))) in (

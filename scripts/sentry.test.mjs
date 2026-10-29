@@ -140,6 +140,8 @@ describe("Sentry wiring", () => {
       assert.match(csp, new RegExp(host.replace(/\./g, "\\.").replace(/\*/g, "\\*")));
     }
     assert.match(csp, /connect-src[^;]*https:\/\/maps\.googleapis\.com/);
+    assert.match(csp, /connect-src[^;]*https:\/\/tile\.googleapis\.com/);
+    assert.match(csp, /form-action 'self' https:\/\/accounts\.google\.com/);
     assert.match(csp, /connect-src[^;]*https:\/\/api\.stripe\.com/);
     assert.match(csp, /connect-src[^;]*https:\/\/challenges\.cloudflare\.com/);
     assert.match(csp, /connect-src[^;]*https:\/\/us\.i\.posthog\.com/);

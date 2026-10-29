@@ -50,13 +50,10 @@ function manifestHref(channel: StoreChannel | undefined): string {
   return `${file}?v=${ICON_VER}`;
 }
 
-/** Huawei phones do not use Google Maps. Other channels can still warm the map hosts. */
+/** Google Maps and Places hosts are not warmed on any channel. */
 function mapDnsPrefetch(channel: StoreChannel | undefined): { rel: "dns-prefetch"; href: string }[] {
   if (channel === "huawei") return [];
-  return [
-    { rel: "dns-prefetch", href: "https://maps.googleapis.com" },
-    { rel: "dns-prefetch", href: "https://maps.gstatic.com" },
-  ];
+  return [];
 }
 
 const GUEST_LOCALE = {
@@ -69,6 +66,16 @@ const GUEST_LOCALE = {
 
 export const Route = createRootRoute({
   beforeLoad: async ({ location }) => {
+    const barePath =
+      location.pathname.length > 1 && location.pathname.endsWith("/")
+        ? location.pathname.slice(0, -1)
+        : location.pathname;
+    if (barePath === "/account/delete") {
+      throw redirect({ href: "/delete-account", statusCode: 301 });
+    }
+    if (barePath === "/fr/account/delete") {
+      throw redirect({ href: "/fr/delete-account", statusCode: 301 });
+    }
     const search = `${location.searchStr || ""}${location.hash || ""}`;
     const [roleChrome, visitorLocale] = await Promise.all([
       getRoleChrome().catch(() => ({

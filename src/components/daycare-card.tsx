@@ -213,6 +213,7 @@ export const DaycareCard = memo(function DaycareCard({
   showDistance = true,
   compact = false,
   eager = false,
+  priority = false,
   presentation = "rail",
   labelFar = false,
 }: {
@@ -221,6 +222,8 @@ export const DaycareCard = memo(function DaycareCard({
   cta?: "book" | "details";
   compact?: boolean;
   eager?: boolean;
+  /** First search card only. Paints in the first HTML for LCP. */
+  priority?: boolean;
   /** Rail keeps the dense tile. Visual is the photo-led search and home card. */
   presentation?: "rail" | "visual";
   /** Name search: show kilometres, and the province once a centre is far away. */
@@ -308,6 +311,7 @@ export const DaycareCard = memo(function DaycareCard({
             <PhotoCarousel
               photos={photos}
               eager={eager}
+              priority={priority}
               claim={offerClaim}
               rounded="rounded-[14px]"
               className="aspect-[4/3]"
@@ -422,6 +426,7 @@ export const DaycareCard = memo(function DaycareCard({
           <PhotoCarousel
             photos={photos}
             eager={eager}
+            priority={priority}
             claim={offerClaim}
             rounded="rounded-[14px]"
             className="aspect-[3/2]"

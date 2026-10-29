@@ -27,7 +27,7 @@ import {
   type PreferredTime,
 } from "@/lib/threads";
 import { canProposeTourTime, declineReasonValid, holdExpiresAtIso } from "@/lib/tour-hold";
-import { nextTourPipeline, tourStatusFromBooking } from "@/lib/tour-pipeline";
+import { nextTourPipeline, tourStatusStampedByBooking } from "@/lib/tour-pipeline";
 import { isTourWindowBookable, remainingTourSeats, toPublicTourSlot } from "@/lib/tour-calendar";
 import type { BookingStatus, TourRequest, TourStatus } from "@/lib/types";
 
@@ -601,23 +601,14 @@ export async function syncToursFromBooking(
   bookingStatus: BookingStatus,
 ) {
   if (!conversationId) return;
-  const next = tourStatusFromBooking(bookingStatus);
-  if (!next) return;
   const rows = await sql<{ id: string; status: string }>`
     select id, status from tour_requests
     where conversation_id = ${conversationId}
     order by created_at desc
   `.catch(() => []);
   for (const row of rows) {
-    if (!nextTourPipeline(row.status, next) && row.status !== next) {
-      if (next === "enrolled" && (row.status === "accepted" || row.status === "completed" || row.status === "pending")) {
-        /* fall through */
-      } else if (next === "lost" && (row.status === "pending" || row.status === "accepted" || row.status === "completed")) {
-        /* fall through */
-      } else {
-        continue;
-      }
-    }
+    const next = tourStatusStampedByBooking(row.status, bookingStatus);
+    if (!next) continue;
     await sql`
       update tour_requests
       set status = ${next}, responded_at = coalesce(responded_at, now())

@@ -17,7 +17,9 @@
  * no fee, no rating, no child photo, licence marked QA. Photos are the
  * standard new-listing samples, not pictures of this centre.
  *
- * Not wired into db:migrate. Re-running updates the same rows.
+ * db:migrate calls this when REVIEWER_ACCOUNT_PASSWORD is set, and always
+ * preserves Kyle's four operator mailboxes (no password is stored here).
+ * Re-running updates the same reviewer rows. Deleted QA daycares are not restored.
  *
  * The parent account gets complimentary Parent Plus (video tours). There is
  * no Stripe customer, subscription, or price. The daycare account is not granted Plus.
@@ -29,8 +31,27 @@ import { fileURLToPath } from "node:url";
 import pg from "pg";
 import { hashPassword } from "better-auth/crypto";
 
-export const REVIEWER_PARENT_EMAIL_DEFAULT = "reviewer.parent@kidease.ca";
-export const REVIEWER_DAYCARE_EMAIL_DEFAULT = "reviewer.daycare@kidease.ca";
+export const REVIEWER_PARENT_EMAIL_DEFAULT = "reviewer-parent@kidease.ca";
+export const REVIEWER_DAYCARE_EMAIL_DEFAULT = "reviewer-provider@kidease.ca";
+
+/** Kyle's four accounts. The seed must not change their passwords or roles. */
+export const PROTECTED_OPERATOR_EMAILS = [
+  "kyle@openroadoutlet.ca",
+  "kyle@kidease.ca",
+  "klernout@hotmail.com",
+  "klernout45@gmail.com",
+];
+
+/**
+ * Identity for klernout45@gmail.com from the 2026-10-28 removal backup.
+ * User row only. No password, no session, no daycare, no Stripe id.
+ */
+export const KLERNOUT45_USER = {
+  id: "nB1E8D4BAB0asOCWZPwPMnZ4JAfGA8q3",
+  name: "Jonny Doey",
+  email: "klernout45@gmail.com",
+  role: "parent",
+};
 
 /** Stable ids. Public catalogue filters hide this row. */
 export const REVIEWER_LISTING = {
@@ -164,6 +185,11 @@ export function assertReviewerPlan(plan) {
   if (plan.parentEmail === "kyle@kidease.ca" || plan.daycareEmail === "kyle@kidease.ca") {
     throw new Error("[reviewer-demo] refusing to reuse the operator mailbox");
   }
+  for (const email of PROTECTED_OPERATOR_EMAILS) {
+    if (plan.parentEmail === email || plan.daycareEmail === email) {
+      throw new Error("[reviewer-demo] refusing to change a protected operator account");
+    }
+  }
   if (isProtectedQaIdentity(plan.parentEmail) || isProtectedQaIdentity(plan.daycareEmail)) {
     throw new Error("[reviewer-demo] refusing to change a John Doe or Jonny Doey account");
   }
@@ -269,13 +295,13 @@ async function upsertListing(client, daycareUserId) {
        address, city, province, postal_code, lat, lng, phone, hours, hours_fr,
        age_min_months, age_max_months, infant_monthly, toddler_monthly, preschool_monthly,
        spots_infant, spots_toddler, spots_preschool, waitlist, rating_x10, review_count,
-       license_number, photos, verified, visibility, is_test, claim_status, claimed_at, listing_active
+       license_number, photos, verified, visibility, is_test, is_demo, claim_status, claimed_at, listing_active
      ) values (
        $1, $2, $3, $4, $5, $6, $7, $7,
        $8, $9, $10, $11, $12, $13, null, $14, $15,
        0, 144, null, null, null,
        0, 0, 0, 1, 0, 0,
-       $16, $17, 0, 'admin_only', 1, 'approved', now(), 1
+       $16, $17, 0, 'admin_only', 1, 1, 'approved', now(), 1
      )
      on conflict (id) do update set
        slug = excluded.slug,
@@ -288,6 +314,7 @@ async function upsertListing(client, daycareUserId) {
        hours_fr = excluded.hours_fr,
        visibility = 'admin_only',
        is_test = 1,
+       is_demo = 1,
        rating_x10 = 0,
        review_count = 0,
        google_rating_x10 = null,
@@ -474,7 +501,50 @@ export async function applyReviewerDemoFromEnv(databaseUrl, env = process.env) {
     await upsertListing(client, daycareId);
     await upsertParentSamples(client, parentId);
     await client.query("COMMIT");
-    return `ready parent=${plan.parentEmail} daycare=${plan.daycareEmail} listing=${plan.listing.slug} hidden=admin_only parentPlus=complimentary`;
+    return `ready parent=${plan.parentEmail} daycare=${plan.daycareEmail} listing=${plan.listing.slug} hidden=admin_only is_demo=1 parentPlus=complimentary`;
+  } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch {
+      /* keep the original error */
+    }
+    throw err;
+  } finally {
+    client.release();
+    await pool.end();
+  }
+}
+
+/**
+ * Put klernout45@gmail.com back if it is missing. Does not change an existing
+ * password, role, or session. Does not insert daycares from the removal backup.
+ */
+export async function preserveProtectedOperatorAccounts(databaseUrl) {
+  if (!databaseUrl?.trim()) return "skipped";
+  const pool = new pg.Pool({ connectionString: databaseUrl, max: 1 });
+  const client = await pool.connect();
+  const row = KLERNOUT45_USER;
+  try {
+    await client.query("BEGIN");
+    const existing = await client.query(
+      `select id from "user" where lower(email) = $1 or id = $2 limit 1`,
+      [row.email, row.id],
+    );
+    if (!existing.rows[0]) {
+      await client.query(
+        `insert into "user" (id, name, email, "emailVerified", "twoFactorEnabled", "createdAt", "updatedAt")
+         values ($1, $2, $3, true, false, now(), now())`,
+        [row.id, row.name, row.email],
+      );
+      await client.query(
+        `insert into profiles (user_id, role, display_name, locale, is_test)
+         values ($1, $2, $3, 'en', 1)
+         on conflict (user_id) do nothing`,
+        [row.id, row.role, row.name],
+      );
+    }
+    await client.query("COMMIT");
+    return `preserved ${row.email}`;
   } catch (err) {
     try {
       await client.query("ROLLBACK");
@@ -518,6 +588,8 @@ async function main() {
     }
     return;
   }
+  const preserved = await preserveProtectedOperatorAccounts(process.env.DATABASE_URL);
+  if (preserved !== "skipped") console.log(`[reviewer-demo] ${preserved}`);
   const result = await applyReviewerDemoFromEnv(process.env.DATABASE_URL, env);
   if (result === "skipped") {
     console.log("[reviewer-demo] REVIEWER_ACCOUNT_PASSWORD unset — skip");

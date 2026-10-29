@@ -360,7 +360,7 @@ export function DaycareTypeRails({
                     }${city?.trim() ? `&q=${encodeURIComponent(city.trim())}` : ""}`
                   : undefined
               }
-              eagerThumbs={eagerThumbs}
+              eagerThumbs={Boolean(eagerThumbs) && kind === kinds[0]}
               visual={visual}
               labelFar={labelFar}
               persist={forced}

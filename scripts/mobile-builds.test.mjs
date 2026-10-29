@@ -177,7 +177,9 @@ describe("mobile build docs stay honest", () => {
     const launch = read("docs/STORE-LAUNCH.md");
     assert.match(launch, /1 Nov 2026|1 November 2026/);
     assert.match(launch, /ca\.kidease\.app/);
-    assert.match(launch, /XXXXXXXXXX/);
+    assert.match(launch, /GAUC28WJXZ/);
+    assert.match(launch, /6827660912/);
+    assert.doesNotMatch(launch, /XXXXXXXXXX/);
     assert.match(launch, /APPLE_TEAM_ID/);
     assert.match(launch, /ANDROID_CERT_SHA256S/);
     assert.match(launch, /TestFlight/);

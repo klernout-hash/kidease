@@ -538,8 +538,22 @@ export const GROUPS = [
   {
     id: "ops-also",
     title: "Also on Vercel (store here too)",
-    docs: ["SECURITY.md", "docs/search-alerts.md"],
+    docs: ["SECURITY.md", "docs/search-alerts.md", "docs/store-readiness.md"],
     vars: [
+      {
+        name: "APPLE_TEAM_ID",
+        concealed: false,
+        vercel: "both",
+        required: true,
+        notes: "Apple Team ID GAUC28WJXZ for 10037493 MANITOBA LTD. Fills AASA and Sign in with Apple. Not a secret. See docs/store-readiness.md.",
+      },
+      {
+        name: "VITE_APPLE_APP_STORE_ID",
+        concealed: false,
+        vercel: "both",
+        required: true,
+        notes: "App Store Connect numeric id 6827660912 for ca.kidease.app. Public. See docs/store-readiness.md.",
+      },
       {
         name: "CRON_SECRET",
         concealed: true,

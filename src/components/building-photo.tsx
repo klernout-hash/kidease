@@ -228,7 +228,7 @@ export function BuildingPhoto({
         data-ke-photo={loaded ? "ok" : "pending"}
         className={cn(
           "ke-photo size-full bg-surface-2 object-cover text-transparent",
-          loaded ? "relative" : "invisible absolute inset-0",
+          loaded || priority ? "relative" : "invisible absolute inset-0",
         )}
         loading={priority || eager ? "eager" : "lazy"}
         decoding={priority ? "auto" : "async"}

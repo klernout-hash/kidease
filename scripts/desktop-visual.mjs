@@ -162,7 +162,7 @@ export async function openRoute(page, base, path) {
     label: `open ${path}`,
   }).catch(async () => page.goto(url, { waitUntil: "domcontentloaded", timeout: 25000 }));
   await page.evaluate(
-    async (sample, pinSample) => {
+    async ({ sample, pinSample }) => {
       if (!document.fonts) return;
       const work = [document.fonts.ready];
       if (pinSample) {
@@ -171,8 +171,7 @@ export async function openRoute(page, base, path) {
       }
       await Promise.race([Promise.all(work), new Promise((resolve) => setTimeout(resolve, 3000))]);
     },
-    FONT_SAMPLE,
-    path === "/" || path === "/fr",
+    { sample: FONT_SAMPLE, pinSample: path === "/" || path === "/fr" },
   );
   // Home and contact stills are lazy. A wide window sometimes shoots the placeholder.
   if (path === "/" || path === "/fr" || path === "/contact") {

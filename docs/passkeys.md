@@ -25,7 +25,7 @@ Many WebViews on minSdk 24 still have no `PublicKeyCredential`. `PasskeyPlugin` 
 
 ## iOS app (not done yet)
 
-`apple-app-site-association` already lists `webcredentials.apps` as `XXXXXXXXXX.ca.kidease.app`. The iOS project already has Associated Domains for `webcredentials:www.kidease.ca` and `webcredentials:kidease.ca`.
+`apple-app-site-association` already lists `webcredentials.apps` as `GAUC28WJXZ.ca.kidease.app`. The iOS project already has Associated Domains for `webcredentials:www.kidease.ca` and `webcredentials:kidease.ca`.
 
 Passkeys inside the iOS app need the real 10-character Apple Team ID in that file (`APPLE_TEAM_ID` or `APNS_TEAM_ID` on Vercel). Do not invent one. Until then, Face ID works on the website in Safari, and the iOS app keeps email and password.
 

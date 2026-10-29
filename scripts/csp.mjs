@@ -9,6 +9,7 @@
  * script-src uses a per-request nonce + 'strict-dynamic' so first-party HTML
  * scripts (channel-boot, TanStack <Scripts />) can load Maps / Stripe /
  * Turnstile / PostHog. Those SDKs append scripts with createElement.
+ * Sign in with Google stays on form-action for accounts.google.com.
  *
  * style-src is nonce-only (no 'unsafe-inline'). SSR <style> tags are stamped
  * after render. Radix / Sonner / Maps inject <style> at runtime — a nonce'd
@@ -40,7 +41,7 @@ export const CSP_SCRIPT_HOSTS = [
   "https://us-assets.i.posthog.com",
 ];
 
-/** Maps JS tiles/session also hit khms*.googleapis.com and tile.googleapis.com. */
+/** Maps JS tiles and sessions also hit khms*.googleapis.com and tile.googleapis.com. */
 export const CSP_CONNECT_HOSTS = [
   "https://maps.googleapis.com",
   "https://maps.gstatic.com",
@@ -109,7 +110,7 @@ export function buildContentSecurityPolicy(nonce) {
     `frame-src ${CSP_FRAME_HOSTS.join(" ")}`,
     "object-src 'none'",
     "base-uri 'self'",
-    "form-action 'self'",
+    "form-action 'self' https://accounts.google.com",
     "frame-ancestors 'none'",
   ].join("; ");
 }

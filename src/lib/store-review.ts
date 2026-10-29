@@ -36,7 +36,7 @@ function readPublicEnv(name: string): string {
   return "";
 }
 
-/** Numeric App Store ID. Empty placeholder until App Store Connect assigns one. */
+/** Numeric App Store ID. Defaults to the assigned ca.kidease.app id. Env overrides it. */
 export function appleAppStoreId(): string {
   return readPublicEnv("VITE_APPLE_APP_STORE_ID") || STORE.appleAppStoreId.trim();
 }

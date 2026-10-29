@@ -24,8 +24,8 @@ describe("reviewer demo seed", () => {
   it("stays idle until Kyle sets the shared password, and never echoes it", () => {
     const empty = reviewerCredentialPlan({});
     assert.equal(assertReviewerPlan(empty), "skipped");
-    assert.equal(empty.parentEmail, "reviewer.parent@kidease.ca");
-    assert.equal(empty.daycareEmail, "reviewer.daycare@kidease.ca");
+    assert.equal(empty.parentEmail, "reviewer-parent@kidease.ca");
+    assert.equal(empty.daycareEmail, "reviewer-provider@kidease.ca");
     const printed = JSON.stringify(publicReviewerPlan({ ...empty, parentPassword: "not-for-logs", daycarePassword: "also-not" }));
     assert.equal(printed.includes("not-for-logs"), false);
     assert.equal(printed.includes("also-not"), false);
@@ -39,6 +39,10 @@ describe("reviewer demo seed", () => {
     assert.throws(
       () => assertReviewerPlan({ ...ready, daycareEmail: "kyle@kidease.ca" }),
       /operator mailbox/,
+    );
+    assert.throws(
+      () => assertReviewerPlan({ ...ready, parentEmail: "klernout45@gmail.com" }),
+      /protected operator account/,
     );
     assert.throws(
       () => assertReviewerPlan({ ...ready, parentEmail: "john.doe@kidease.ca" }),
@@ -56,6 +60,7 @@ describe("reviewer demo seed", () => {
     const script = read("scripts/seed-reviewer-demo.mjs");
     assert.match(script, /visibility = 'admin_only'/);
     assert.match(script, /is_test = 1/);
+    assert.match(script, /is_demo = 1/);
     assert.match(script, /rating_x10 = 0/);
     assert.match(script, /review_count = 0/);
     assert.match(script, /infant_monthly = null/);
@@ -73,7 +78,9 @@ describe("reviewer demo seed", () => {
     for (const body of logs) {
       assert.doesNotMatch(body, /parentPassword|daycarePassword/);
     }
-    assert.doesNotMatch(read("scripts/migrate.mjs"), /applyReviewerDemoFromEnv/);
+    assert.match(read("scripts/migrate.mjs"), /preserveProtectedOperatorAccounts/);
+    assert.match(read("scripts/migrate.mjs"), /REVIEWER_ACCOUNT_PASSWORD/);
+    assert.match(read("scripts/migrate.mjs"), /applyReviewerDemoFromEnv/);
     assert.match(script, /writeReviewerPasswordFile/);
     assert.match(script, /--password-file/);
     assert.match(script, /Rowan Sample/);
@@ -86,6 +93,9 @@ describe("reviewer demo seed", () => {
     assert.match(read(".env.example"), /# REVIEWER_ACCOUNT_PASSWORD=/);
     assert.doesNotMatch(read(".env.example"), /^REVIEWER_ACCOUNT_PASSWORD=.+/m);
     assert.match(read("src/lib/reviewer-accounts.ts"), /reviewer\.parent@kidease\.ca/);
+    assert.match(read("src/lib/reviewer-accounts.ts"), /reviewer-parent@kidease\.ca/);
+    assert.match(read("src/lib/reviewer-accounts.ts"), /reviewer-provider@kidease\.ca/);
+    assert.doesNotMatch(script, /test-ghost-claim-lab|kidease-docusign-smoke-test|qa-test-photo-upload/);
     assert.match(read("src/components/posthog-boot.tsx"), /quietPostHogForStoreReviewer/);
     assert.match(read("src/lib/ghl-intake.ts"), /reviewer-account/);
   });
@@ -136,8 +146,8 @@ describe("reviewer demo seed", () => {
     const info = await stat(file);
     assert.equal(info.mode & 0o777, 0o600);
     const body = await readFile(file, "utf8");
-    assert.match(body, /parent_email=reviewer\.parent@kidease\.ca/);
-    assert.match(body, /provider_email=reviewer\.daycare@kidease\.ca/);
+    assert.match(body, /parent_email=reviewer-parent@kidease\.ca/);
+    assert.match(body, /provider_email=reviewer-provider@kidease\.ca/);
     assert.match(body, /North Elm Family Daycare/);
     assert.equal(body.includes(generated.parentPassword), true);
     assert.equal(body.includes(generated.daycarePassword), true);

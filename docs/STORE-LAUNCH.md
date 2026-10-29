@@ -39,10 +39,10 @@ Do **not** invent these values. Leave env vars blank until the consoles show rea
 | Need | Where it comes from | What to do in the repo / Vercel |
 | --- | --- | --- |
 | Apple Developer Program (~$99/yr) | developer.apple.com | Enroll as the KidEase entity |
-| Apple Team ID (10 chars) | Membership details | Set `APPLE_TEAM_ID` on Vercel Production. Until then AASA keeps `XXXXXXXXXX.ca.kidease.app` |
+| Apple Team ID (10 chars) | Membership details for 10037493 MANITOBA LTD. | `GAUC28WJXZ`. Set `APPLE_TEAM_ID` on Vercel Production to the same value. AASA app id is `GAUC28WJXZ.ca.kidease.app` |
 | App Store Connect app + bundle `ca.kidease.app` | App Store Connect | Xcode Automatic signing after Team is selected |
 | Distribution cert + provisioning | Xcode / portal | **Product → Archive → TestFlight**. Not possible from this VM |
-| Numeric App Store id | App Store Connect URL (`idNNNN`) | Set `VITE_APPLE_APP_STORE_ID` — never guess |
+| Numeric App Store id | App Store Connect URL for `ca.kidease.app` | `6827660912`. Default for `VITE_APPLE_APP_STORE_ID` |
 | Play Console (~$25) | play.google.com/console | Create app package `ca.kidease.app` |
 | Upload keystore | Local `keytool` (gitignored) | `android/key.properties` from `android/key.properties.example` |
 | Play App Signing SHA-256 | Play → App integrity → App signing | `assetlinks.json` lists the Play App Signing cert and the upload key. `ANDROID_CERT_SHA256S` on Vercel replaces that list when set |

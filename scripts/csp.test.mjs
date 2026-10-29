@@ -36,9 +36,14 @@ test("nonce CSP drops script-src unsafe-inline and keeps product hosts", () => {
   assert.match(csp, /connect-src 'self' data:/);
   assert.match(csp, /connect-src[^;]*blob:/);
   assert.match(csp, /connect-src[^;]*https:\/\/maps\.googleapis\.com/);
+  assert.match(csp, /connect-src[^;]*https:\/\/maps\.gstatic\.com/);
   assert.match(csp, /connect-src[^;]*https:\/\/\*\.googleapis\.com/);
+  assert.match(csp, /connect-src[^;]*https:\/\/\*\.gstatic\.com/);
   assert.match(csp, /connect-src[^;]*https:\/\/tile\.googleapis\.com/);
   assert.match(csp, /connect-src[^;]*https:\/\/api\.stripe\.com/);
+  assert.match(csp, /form-action 'self' https:\/\/accounts\.google\.com/);
+  assert.match(csp, /style-src[^;]*https:\/\/maps\.googleapis\.com/);
+  assert.match(csp, /style-src[^;]*https:\/\/maps\.gstatic\.com/);
   assert.match(csp, /connect-src[^;]*https:\/\/challenges\.cloudflare\.com/);
   assert.match(csp, /connect-src[^;]*https:\/\/us\.i\.posthog\.com/);
   assert.match(csp, /connect-src[^;]*https:\/\/\*\.twilio\.com/);

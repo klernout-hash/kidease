@@ -47,6 +47,7 @@ import {
   overlayFeaturedCity,
 } from "@/lib/server/provider-entitlements";
 import { accessDeniedMessage, assertCanMutateListing, canUpdateBookingStatus } from "@/lib/access-control";
+import { providerMaySetBookingStatus } from "@/lib/marketplace-loop";
 import { resolveAdminAccess } from "@/lib/server/roles";
 import {
   canCentreWriteLeadsFor,
@@ -1055,8 +1056,7 @@ export const updateRequestStatus = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { bookingId: string; status: BookingStatus }) => input)
   .handler(async ({ context, data }) => {
-    const allowed: BookingStatus[] = ["under_review", "accepted", "waitlist", "declined"];
-    if (!allowed.includes(data.status)) throw new Error("Invalid status");
+    if (!providerMaySetBookingStatus(data.status)) throw new Error("Invalid status");
     const sql = await getSql();
     const rows = await sql<{
       id: string;
@@ -1127,7 +1127,7 @@ export const updateRequestStatus = createServerFn({ method: "POST" })
       const { syncToursFromBooking } = await import("@/lib/server/tours");
       await syncToursFromBooking(sql, cid, data.status).catch(() => undefined);
     }
-    if (cid && data.status !== "requested") {
+    if (cid) {
       const locale = "en" as const;
       const copy = {
         parentName: b.parent_name ?? "Parent",

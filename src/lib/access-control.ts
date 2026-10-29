@@ -161,6 +161,43 @@ export function parseActorRole(role: AppRole | string | null | undefined): AppRo
 export const LISTING_NOT_YOURS = "Not your listing";
 export const LISTING_NOT_FOUND = "Listing not found";
 export const CLAIM_ALREADY_TAKEN = "This listing is already claimed";
+
+/** Store-review sample. Public search and claims must not treat it as a real centre. */
+export const REVIEWER_DEMO_SLUG = "qa-reviewer-demo-centre";
+
+/**
+ * Kyle's mailboxes. Reviewer seed and claim must not overwrite them.
+ * These addresses are not secrets.
+ */
+export const PROTECTED_OPERATOR_EMAILS = [
+  "kyle@openroadoutlet.ca",
+  "kyle@kidease.ca",
+  "klernout@hotmail.com",
+  "klernout45@gmail.com",
+] as const;
+
+const TAKEN_CLAIM_STATUSES = new Set(["approved", "verified", "claimed"]);
+
+export function isProtectedOperatorEmail(email: string | null | undefined): boolean {
+  const value = (email || "").trim().toLowerCase();
+  return (PROTECTED_OPERATOR_EMAILS as readonly string[]).includes(value);
+}
+
+/** Verified, already claimed, the reviewer demo, or a protected owner. */
+export function claimTargetLocked(input: {
+  slug?: string | null;
+  claimStatus?: string | null;
+  verified?: boolean | number | null;
+  ownerEmail?: string | null;
+}): boolean {
+  const slug = (input.slug || "").trim().toLowerCase();
+  if (slug === REVIEWER_DEMO_SLUG) return true;
+  const status = (input.claimStatus || "").trim().toLowerCase();
+  if (TAKEN_CLAIM_STATUSES.has(status)) return true;
+  if (input.verified === true || input.verified === 1) return true;
+  if (isProtectedOperatorEmail(input.ownerEmail)) return true;
+  return false;
+}
 export const BILL_LEDGER_ONLY =
   "Card Pay stays off until Stripe live keys are on. This bill is on the internal ledger (not charged).";
 export const BILL_NOT_OPEN = "This bill is not open to Pay";
@@ -269,12 +306,31 @@ export function decideStartClaim(input: {
   listingFound: boolean;
   adminOnly?: boolean;
   isAdmin?: boolean;
+  slug?: string | null;
+  claimStatus?: string | null;
+  verified?: boolean | number | null;
+  ownerEmail?: string | null;
 }): ClaimDecision {
   if (!input.listingFound) return { ok: false, error: LISTING_NOT_FOUND };
   if (input.adminOnly && !input.isAdmin) return { ok: false, error: LISTING_NOT_FOUND };
   const owner = (input.existingOwnerUserId || "").trim();
-  if (owner && !sameUser(input.actorUserId, owner)) return { ok: false, error: CLAIM_ALREADY_TAKEN };
-  return { ok: true, alreadyOwned: Boolean(owner) && sameUser(input.actorUserId, owner) };
+  const owns = Boolean(owner) && sameUser(input.actorUserId, owner);
+  if ((input.slug || "").trim().toLowerCase() === REVIEWER_DEMO_SLUG && !owns) {
+    return { ok: false, error: CLAIM_ALREADY_TAKEN };
+  }
+  if (owner && !owns) return { ok: false, error: CLAIM_ALREADY_TAKEN };
+  if (
+    !owns &&
+    claimTargetLocked({
+      slug: input.slug,
+      claimStatus: input.claimStatus,
+      verified: input.verified,
+      ownerEmail: input.ownerEmail,
+    })
+  ) {
+    return { ok: false, error: CLAIM_ALREADY_TAKEN };
+  }
+  return { ok: true, alreadyOwned: owns };
 }
 
 export type BillCheckoutDecision =

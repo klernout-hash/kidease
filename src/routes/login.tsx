@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useRouterState } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent, type MutableRefObject } from "react";
 import { authClient, authEnabled, clearLocalSignedOut, dropExistingSession, signIn, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
@@ -109,6 +109,94 @@ const WHY_LEAD: Record<SignupWhy, CopyKey> = {
 
 const OPERATOR_EMAIL = KIDEASE_OPERATOR_EMAIL;
 
+/**
+ * Email and password live here so a keystroke does not re-render the rest of
+ * the sign-in page (social buttons, shell, session). That keeps typing fast.
+ */
+function LoginEmailControl({
+  mode,
+  emailRef,
+  onOperator,
+  onBlurEmail,
+}: {
+  mode: "in" | "up";
+  emailRef: MutableRefObject<string>;
+  onOperator: (operator: boolean) => void;
+  onBlurEmail: (email: string) => void;
+}) {
+  const [email, setEmail] = useState("");
+  const operator = useRef(false);
+  return (
+    <input
+      type="email"
+      required
+      className="ke-input mt-1"
+      value={email}
+      onChange={(e) => {
+        const email = e.target.value;
+        emailRef.current = email;
+        setEmail(email);
+        const next = email.trim().toLowerCase() === OPERATOR_EMAIL;
+        if (next !== operator.current) {
+          operator.current = next;
+          onOperator(next);
+        }
+      }}
+      onBlur={() => onBlurEmail(emailRef.current.trim())}
+      autoComplete={mode === "in" ? "username webauthn" : "email"}
+      autoCapitalize="none"
+      autoCorrect="off"
+      inputMode="email"
+      enterKeyHint="next"
+    />
+  );
+}
+
+function LoginPasswordControl({
+  mode,
+  showRules,
+  label,
+  passwordRef,
+}: {
+  mode: "in" | "up";
+  showRules: boolean;
+  label: string;
+  passwordRef: MutableRefObject<string>;
+}) {
+  const [password, setPassword] = useState("");
+  return (
+    <>
+      <PasswordField
+        label={label}
+        required
+        minLength={8}
+        value={password}
+        onChange={(e) => {
+          passwordRef.current = e.target.value;
+          setPassword(e.target.value);
+        }}
+        autoComplete={mode === "up" ? "new-password" : "current-password"}
+      />
+      {showRules ? <PasswordRules password={password} /> : null}
+    </>
+  );
+}
+
+function LoginNameControl({ nameRef }: { nameRef: MutableRefObject<string> }) {
+  const [name, setName] = useState("");
+  return (
+    <input
+      className="ke-input mt-1"
+      value={name}
+      onChange={(e) => {
+        nameRef.current = e.target.value;
+        setName(e.target.value);
+      }}
+      autoComplete="name"
+    />
+  );
+}
+
 export function loginValidateSearch(s: Record<string, unknown>): LoginSearch {
   const out: LoginSearch = {};
   const next = typeof s.next === "string" ? sanitizePostLoginNext(s.next) : null;
@@ -179,11 +267,12 @@ export function LoginScreen({
   });
   const { user, isPending: sessionPending } = useCurrentUserState();
   const [mode, setMode] = useState<"in" | "up">(search.intent === "up" ? "up" : "in");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const operator = email.trim().toLowerCase() === OPERATOR_EMAIL;
+  const nameRef = useRef("");
+  const emailRef = useRef("");
+  const passwordRef = useRef("");
+  const [operator, setOperator] = useState(false);
+  const [emailLink, setEmailLink] = useState("");
   const parentSignup = mode === "up" && !operator && role !== "provider";
-  const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [smsConsent, setSmsConsent] = useState(false);
   const [adult, setAdult] = useState(false);
@@ -447,7 +536,7 @@ export function LoginScreen({
     };
   }, [mode, passkeyOffer]);
 
-  async function onEmail(e: React.FormEvent) {
+  async function onEmail(e: FormEvent) {
     e.preventDefault();
     void cancelPasskeyCeremony();
     if (submitLock.current) return;
@@ -456,8 +545,12 @@ export function LoginScreen({
     setBusy(true);
     setStalled(false);
     setError(null);
+    const email = emailRef.current.trim();
+    const password = passwordRef.current;
+    const name = nameRef.current.trim();
+    const signingOperator = email.toLowerCase() === OPERATOR_EMAIL;
     try {
-      if (operator && email.trim().toLowerCase() !== OPERATOR_EMAIL) {
+      if (operator && !signingOperator) {
         throw new Error("Operator sign-in is only for the KidEase owner account.");
       }
       const challenge = takeChallenge();
@@ -474,7 +567,7 @@ export function LoginScreen({
         await dropExistingSession();
       }
       if (mode === "up") {
-        if (!operator && !adult) {
+        if (!signingOperator && !adult) {
           throw new Error(locale === "fr" ? "Confirmez que vous avez 18 ans ou plus." : "Confirm you are 18 or older.");
         }
         const hygiene = localPasswordIssue(password, email);
@@ -487,7 +580,7 @@ export function LoginScreen({
           authClient.signUp.email({
             email,
             password,
-            name: name || email.split("@")[0],
+            name: name || email.split("@")[0] || email,
             fetchOptions: turnstileFetchOptions(challenge),
           }),
           LOGIN_POST_MS,
@@ -503,7 +596,7 @@ export function LoginScreen({
           );
           if (smsOptInWasBlocked(savedSms)) toast.message(t("smsUnreachable"));
         }
-        if (!operator) {
+        if (!signingOperator) {
           await withTimeoutFallback(confirmAdultAge(), LOGIN_CONTINUE_MS, undefined);
         }
         confirmAction(t, "accountCreated");
@@ -734,38 +827,24 @@ export function LoginScreen({
             {mode === "up" && !operator ? (
               <label className="block text-sm">
                 {t("name")}
-                <input
-                  className="ke-input mt-1"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  autoComplete="name"
-                />
+                <LoginNameControl nameRef={nameRef} />
               </label>
             ) : null}
             <label className="block text-sm">
               {t("email")}
-                <input
-                  type="email"
-                  required
-                  className="ke-input mt-1"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete={mode === "in" ? "username webauthn" : "email"}
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  inputMode="email"
-                  enterKeyHint="next"
-                />
+              <LoginEmailControl
+                mode={mode}
+                emailRef={emailRef}
+                onOperator={setOperator}
+                onBlurEmail={setEmailLink}
+              />
             </label>
-            <PasswordField
+            <LoginPasswordControl
+              mode={mode}
+              showRules={mode === "up" && !operator}
               label={t("password")}
-              required
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete={mode === "up" ? "new-password" : "current-password"}
+              passwordRef={passwordRef}
             />
-            {mode === "up" && !operator ? <PasswordRules password={password} /> : null}
             {mode === "up" && !operator ? (
               <label className="flex min-h-11 items-start gap-3 text-sm" htmlFor="signup-adult">
                 <input
@@ -849,7 +928,7 @@ export function LoginScreen({
             <div className="mt-3">
               <Link
                 to="/forgot-password"
-                search={{ email: (operator ? OPERATOR_EMAIL : email).trim() }}
+                search={{ email: (operator ? OPERATOR_EMAIL : emailLink).trim() }}
                 className="text-[13px] font-medium text-muted underline-offset-4 hover:text-fg hover:underline"
               >
                 {t("forgotPassword")}

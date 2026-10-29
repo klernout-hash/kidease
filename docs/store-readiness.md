@@ -121,9 +121,9 @@ Expected AASA shape (bundle id is already `ca.kidease.app`):
     "apps": [],
     "details": [
       {
-        "appID": "XXXXXXXXXX.ca.kidease.app",
+        "appID": "GAUC28WJXZ.ca.kidease.app",
         "paths": ["*"],
-        "appIDs": ["XXXXXXXXXX.ca.kidease.app"],
+        "appIDs": ["GAUC28WJXZ.ca.kidease.app"],
         "components": [
           { "/": "/daycare/*" },
           { "/": "/search" },
@@ -139,11 +139,13 @@ Expected AASA shape (bundle id is already `ca.kidease.app`):
       }
     ]
   },
-  "webcredentials": { "apps": ["XXXXXXXXXX.ca.kidease.app"] }
+  "webcredentials": { "apps": ["GAUC28WJXZ.ca.kidease.app"] }
 }
 ```
 
-`XXXXXXXXXX` is a **placeholder Team ID**, not a real Apple team. After Apple Developer enroll, set `APPLE_TEAM_ID` (or `APNS_TEAM_ID`) on Vercel — same 10-character id as Sign in with Apple / APNs. Then confirm `appID` / `appIDs` become `TEAMID.ca.kidease.app`. Do not invent a Team ID.
+`GAUC28WJXZ` is the Apple Team ID for **10037493 MANITOBA LTD.** Set `APPLE_TEAM_ID` (or `APNS_TEAM_ID`) on Vercel to that same 10-character id (Sign in with Apple / APNs). The committed AASA already uses `GAUC28WJXZ.ca.kidease.app`. Do not invent a different Team ID.
+
+`VITE_APPLE_APP_STORE_ID` is the App Store Connect numeric id for `ca.kidease.app`: **6827660912** (`https://apps.apple.com/app/id6827660912`). The app default is that number. Set the env var on Vercel to the same value. The phone apps stay labelled “coming soon” until the store listing is public.
 
 Expected `assetlinks.json` shape:
 
@@ -173,12 +175,13 @@ Leave both vars **blank** until Apple / Play assign real values. Then paste exac
 
 | Name | Where to copy from | Paste format |
 | --- | --- | --- |
-| `APPLE_TEAM_ID` | Apple Developer → Membership details → **Team ID** (same 10 characters as Sign in with Apple / APNs) | 10 alphanumeric characters, no spaces. Never invent one. |
+| `APPLE_TEAM_ID` | Apple Developer → Membership details → **Team ID** `GAUC28WJXZ` (10037493 MANITOBA LTD.) | 10 alphanumeric characters, no spaces. Same value as Sign in with Apple / APNs. |
+| `VITE_APPLE_APP_STORE_ID` | App Store Connect → app `ca.kidease.app` → Apple ID `6827660912` | Digits only. Default in the app if this env var is unset. |
 | `ANDROID_CERT_SHA256S` | Play Console → KidEase (`ca.kidease.app`) → Test and release → App integrity → App signing → **App signing key certificate** SHA-256. If Play also shows an **Upload key certificate**, paste both. | Colon hex, comma-separated if two: `AA:BB:…:FF, 11:22:…:99` |
 
 Optional alias (do not set both unless they match): `ANDROID_SHA256_CERT_FINGERPRINTS`. `APNS_TEAM_ID` is used only when `APPLE_TEAM_ID` is empty.
 
-After the redeploy, `appID` must read `<TeamID>.ca.kidease.app` (not `XXXXXXXXXX.…`) and `sha256_cert_fingerprints` must be a non-empty array of the pasted hashes.
+After the redeploy, `appID` must read `GAUC28WJXZ.ca.kidease.app` and `sha256_cert_fingerprints` must be a non-empty array of the pasted hashes.
 
 Verify after deploy (must be 200, not 3xx):
 
@@ -189,7 +192,7 @@ curl -sI https://www.kidease.ca/.well-known/assetlinks.json
 curl -sI https://www.kidease.ca/.well-known/apple-developer-merchantid-domain-association
 ```
 
-- [ ] `APPLE_TEAM_ID` set on Vercel after Apple enroll
+- [ ] `APPLE_TEAM_ID=GAUC28WJXZ` and `VITE_APPLE_APP_STORE_ID=6827660912` set on Vercel Production
 - [x] Play App Signing and upload SHA-256 are in `assetlinks.json` (`ANDROID_CERT_SHA256S` replaces them when set)
 - [x] Associated Domains + Android App Links intent-filter committed (unsigned until Team / Play signing exist)
 - [ ] Associated Domains + App Links **verify** on a signed TestFlight / Play binary

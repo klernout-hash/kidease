@@ -18,11 +18,11 @@ export const STORE = {
   termsPath: "/terms",
   cookiesPath: "/cookies",
   /**
-   * Numeric App Store ID from App Store Connect (the digits in
-   * `https://apps.apple.com/app/idNNNNNNNNNN`). Empty until Apple assigns one.
-   * Do not invent a number. Override with `VITE_APPLE_APP_STORE_ID`.
+   * Numeric App Store ID from App Store Connect for ca.kidease.app
+   * (`https://apps.apple.com/app/id6827660912`).
+   * Override with `VITE_APPLE_APP_STORE_ID`. An empty override keeps this id.
    */
-  appleAppStoreId: "",
+  appleAppStoreId: "6827660912",
   /**
    * Google Play application id. Same as the Capacitor `appId`: not a made-up
    * Play listing number. Override with `VITE_PLAY_PACKAGE_NAME` only if the
