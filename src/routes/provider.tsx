@@ -44,7 +44,7 @@ import { useInNativeShell } from "@/lib/use-native-shell";
 import type { CopyKey } from "@/lib/copy";
 import { storedCentreName } from "@/lib/utils";
 import { FOUNDING_PAGE, foundingLocale } from "@/lib/founding-period";
-import { formatAgeLabel, formatStart, scheduleLabel } from "@/lib/templates";
+import { formatStart, scheduleLabel } from "@/lib/templates";
 import type { Child, Daycare, SpotRequest, TourRequest } from "@/lib/types";
 import { ProviderContractsPanel } from "@/components/provider-contracts";
 import { ListingCultureFields } from "@/components/listing-culture-fields";
@@ -899,13 +899,11 @@ function RequestList({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="font-medium">
-                  {r.parentName ?? t("parentLabel")} · {r.childName ?? t("child")}
-                </p>
+                <p className="font-medium">{r.parentName ?? t("parentLabel")}</p>
                 <StatusBadge status={r.status} />
               </div>
               <p className="mt-1 text-sm text-muted">
-                {r.daycareName} · {r.birthdate ? formatAgeLabel(r.birthdate, locale as "en") : t(r.ageGroup)} ·{" "}
+                {r.daycareName} · {t(r.ageGroup)} ·{" "}
                 {formatStart(r.startDate ?? r.startMonth, locale as "en")} · {scheduleLabel(r.schedule, r.days, locale as "en")}
               </p>
             </div>
@@ -969,9 +967,6 @@ function requestStatusLabel(status: string, t: (key: CopyKey) => string) {
 }
 
 function ChildPacket({
-  child,
-  allergies,
-  epiPen,
   note,
 }: {
   child?: Child | null;
@@ -980,22 +975,9 @@ function ChildPacket({
   note?: string | null;
 }) {
   const { t } = useCopy();
-  const bits = [
-    (allergies || child?.allergies) && `${t("allergies")}: ${allergies || child?.allergies}`,
-    (epiPen || child?.epiPen) && t("epiPenBadge"),
-    child?.medicalNotes && `${t("packetMedical")}: ${child.medicalNotes}`,
-    child?.medications && `${t("packetMeds")}: ${child.medications}`,
-    child?.diet && `${t("diet")}: ${child.diet}`,
-    child?.foodsAvoid && `${t("packetAvoid")}: ${child.foodsAvoid}`,
-    child?.napRoutine && `${t("packetNaps")}: ${child.napRoutine}`,
-    child?.toilet && `${t("toilet")}: ${child.toilet}`,
-    child?.homeLanguage && `${t("homeLanguage")}: ${child.homeLanguage}`,
-    child?.emergencyName && `${t("packetEmergency")}: ${child.emergencyName} ${child.emergencyPhone || ""}`.trim(),
-    child?.pickupPeople && `${t("packetPickup")}: ${child.pickupPeople}`,
-    note && `${t("packetNote")}: ${note}`,
-  ].filter(Boolean) as string[];
+  const bits = [note && `${t("packetNote")}: ${note}`].filter(Boolean) as string[];
   if (!bits.length) {
-    return <p className="mt-3 text-sm text-subtle">{t("packetLimited")}</p>;
+    return null;
   }
   return (
     <ul className="ph-no-capture mt-3 flex flex-wrap gap-1.5">

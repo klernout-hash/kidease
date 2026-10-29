@@ -52,7 +52,6 @@ function PipelineRow({ card }: { card: PipelineCard }) {
           <p className="truncate text-sm font-medium">{title}</p>
           <p className="truncate text-xs text-muted">
             {card.daycareName}
-            {card.childName ? ` · ${card.childName}` : ""}
           </p>
         </Link>
       ) : (
@@ -60,7 +59,6 @@ function PipelineRow({ card }: { card: PipelineCard }) {
           <p className="truncate text-sm font-medium">{title}</p>
           <p className="truncate text-xs text-muted">
             {card.daycareName}
-            {card.childName ? ` · ${card.childName}` : ""}
           </p>
         </div>
       )}

@@ -8,6 +8,7 @@ import {
 } from "@/lib/google-maps";
 import { useCopy } from "@/lib/use-copy";
 import { useStoreChannel } from "@/lib/use-native-shell";
+import { MapUnavailable } from "@/components/map-unavailable";
 import { StoreMapFallback } from "@/components/store-map-fallback";
 
 /** Same smiling teardrop as search MapView. */
@@ -24,6 +25,7 @@ type Props = {
   lat: number;
   lng: number;
   title: string;
+  address?: string;
 };
 
 /** Listing preview: same Maps JavaScript API and browser key as search. */
@@ -33,7 +35,7 @@ export function ListingMap(props: Props) {
   return <GoogleListingMap {...props} />;
 }
 
-function GoogleListingMap({ lat, lng, title }: Props) {
+function GoogleListingMap({ lat, lng, title, address }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const valid = Number.isFinite(lat) && Number.isFinite(lng);
   const { t } = useCopy();
@@ -82,7 +84,7 @@ function GoogleListingMap({ lat, lng, title }: Props) {
   }, [lat, lng, valid]);
 
   if (failed) {
-    return <div className="h-40 bg-map md:h-48" role="img" aria-label={title} />;
+    return <MapUnavailable compact address={address || title} lat={lat} lng={lng} />;
   }
 
   return (

@@ -100,6 +100,7 @@ import type { ListingSeoSource } from "@/lib/listing-seo";
 import { formatMonth, money, displayCentreName, displayListingText } from "@/lib/utils";
 import { openDirections } from "@/lib/maps";
 import { ListingMap } from "@/components/listing-map";
+import { OpenInMapsLink } from "@/components/map-unavailable";
 import type { AvailabilityRow, Daycare, DaycareCard as Card, Review } from "@/lib/types";
 import { parseListingAsk, type ListingAsk } from "@/lib/lead-requests";
 
@@ -512,8 +513,6 @@ export function Listing() {
     province: d.province,
     postalCode: d.postalCode,
   };
-  const mapsQuery = encodeURIComponent(`${address}, ${d.city}, ${d.province} ${d.postalCode}`);
-  const mapsPlace = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
   const parentRated = (d.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (d.parentRatingX10 ?? 0) > 0;
   const googleRated = d.reviewCount > 0 && d.ratingX10 > 0;
 
@@ -940,19 +939,18 @@ export function Listing() {
                 <DirectionsButton className="shrink-0" />
               </div>
               <div className="mt-3 overflow-hidden rounded-lg ring-1 ring-border">
-                <ListingMap lat={d.lat} lng={d.lng} title={`${name}: Google Maps`} />
+                <ListingMap lat={d.lat} lng={d.lng} title={name} address={`${address}, ${d.city}, ${d.province} ${d.postalCode}`} />
               </div>
               <p className="mt-3 text-sm text-muted">
                 {address}, {d.city}, {d.province} {d.postalCode}
               </p>
-              <a
-                href={mapsPlace}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-1 inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
-              >
-                {t("openGoogleMaps")}
-              </a>
+              <p className="mt-2">
+                <OpenInMapsLink
+                  address={`${address}, ${d.city}, ${d.province} ${d.postalCode}`}
+                  lat={d.lat}
+                  lng={d.lng}
+                />
+              </p>
             </section>
 
             <section id="listing-reviews" className="scroll-mt-24">

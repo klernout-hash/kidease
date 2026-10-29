@@ -16,7 +16,6 @@ import {
 import { RAIL_AGES, type RailAge } from "@/lib/care-type";
 import type { CopyKey } from "@/lib/copy";
 import type { Booking, Child, DaycareCard as Card } from "@/lib/types";
-import { ageGroupFromMonths, monthsBetween } from "@/lib/utils";
 import { soonestStartDate } from "@/lib/parent-urgency";
 import { ChipButton } from "@/components/chip";
 import { liveLookingOnly } from "@/lib/now-loops";
@@ -56,24 +55,22 @@ export function ParentDeskRails({
   const { t } = useCopy();
   const located = useAppStore((s) => s.located);
   const radiusKm = useAppStore((s) => s.radiusKm);
-  const child = children[0];
-  const childMonths = child?.birthdate ? monthsBetween(child.birthdate) : null;
-  const defaultAge: RailAge =
-    childMonths == null ? "preschool" : childMonths >= 60 ? "school-age" : ageGroupFromMonths(childMonths);
+  void children;
+  const defaultAge: RailAge = "preschool";
   const [age, setAge] = useState<RailAge>(defaultAge);
   const deferredAge = useDeferredValue(age);
   const [extraReady, setExtraReady] = useState(false);
 
   const matchPrefs = useMemo(() => {
     const startDate = soonestStartDate(bookings);
-    const ageGroup: ParentRailPrefs["ageGroup"] = defaultAge === "school-age" ? "any" : defaultAge;
+    const ageGroup: ParentRailPrefs["ageGroup"] = "preschool";
     return {
       ageGroup,
       radiusKm,
       distanceKnown: located,
       startDate,
     };
-  }, [defaultAge, bookings, located, radiusKm]);
+  }, [bookings, located, radiusKm]);
 
   const looking = useMemo(() => liveLookingOnly(items), [items]);
   const pool = useMemo(() => scoreParentRailItems(looking, matchPrefs), [looking, matchPrefs]);

@@ -55,10 +55,22 @@ export function isNativeSocialProvider(providerId: string): boolean {
   return providerId === "apple" || providerId === "google" || providerId === "facebook";
 }
 
+/** Apple, then Google, then Facebook. Same order on web, iOS, and Android. */
+export const SOCIAL_SIGN_IN_ORDER = ["apple", "google", "facebook"] as const;
+
+export function socialSignInRank(idp: string): number {
+  const index = SOCIAL_SIGN_IN_ORDER.indexOf(idp as (typeof SOCIAL_SIGN_IN_ORDER)[number]);
+  return index === -1 ? SOCIAL_SIGN_IN_ORDER.length : index;
+}
+
+export function orderSocialSignIn<T extends { idp: string }>(providers: readonly T[]): T[] {
+  return [...providers].sort((a, b) => socialSignInRank(a.idp) - socialSignInRank(b.idp));
+}
+
 /** Huawei has no Google Play Services, so the Google button stays off that build. */
 export function providersForStore<T extends { idp: string }>(providers: readonly T[], channel: string): T[] {
-  if (channel !== "huawei") return [...providers];
-  return providers.filter((provider) => provider.idp !== "google");
+  const next = channel === "huawei" ? providers.filter((provider) => provider.idp !== "google") : [...providers];
+  return orderSocialSignIn(next);
 }
 
 export function visibleSignInProviders(opts: {
@@ -77,7 +89,7 @@ export function visibleSignInProviders(opts: {
   const google = pickGoogle(opts, brokerGoogle);
   if (google) out.push(google);
   if (opts.nativeFacebook) out.push(NATIVE_FACEBOOK);
-  return out;
+  return orderSocialSignIn(out);
 }
 
 function pickGoogle(

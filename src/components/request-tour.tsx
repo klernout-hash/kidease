@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { RequestSentDialog } from "@/components/request-sent-dialog";
 import { useLiveSubmit } from "@/components/use-live-submit";
-import { getFamily } from "@/lib/server/family";
 import { createTourInterest } from "@/lib/server/lead-requests";
 import { bookTourSlot, listPublicTourSlots } from "@/lib/server/tour-calendar";
 import { buildTourIcs, tourSlotInstants } from "@/lib/tour-ics";
@@ -22,7 +21,7 @@ import {
   type PublicTourSlot,
   type TourEmptyReason,
 } from "@/lib/tour-calendar";
-import type { Child, Daycare } from "@/lib/types";
+import type { Daycare } from "@/lib/types";
 
 type Props = {
   daycare: Daycare;
@@ -40,8 +39,6 @@ type TourDraft = {
   lastName: string;
   phone: string;
   email: string;
-  childName: string;
-  childId: string;
   windowId: string;
   date: string;
 };
@@ -83,9 +80,6 @@ export function RequestTourSheet({ daycare, open, unclaimed = false, onClose, on
   const { user } = useCurrentUserState();
   const titleId = useId();
   const loc = locale === "fr" ? "fr" : "en";
-  const [childId, setChildId] = useState("");
-  const [savedKids, setSavedKids] = useState<Child[]>([]);
-  const [childName, setChildName] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
@@ -123,8 +117,6 @@ export function RequestTourSheet({ daycare, open, unclaimed = false, onClose, on
       setWindowId(draft?.windowId || "");
       setMessage(draft?.message || "");
       setPreferred(draft?.preferred || "");
-      setChildId(draft?.childId || "");
-      setChildName(draft?.childName || "");
       setFirstName(draft?.firstName || "");
       setLastName(draft?.lastName || "");
       setPhone(draft?.phone || "");
@@ -137,9 +129,6 @@ export function RequestTourSheet({ daycare, open, unclaimed = false, onClose, on
       setFirstName((current) => current || first || "");
       if (rest.length) setLastName((current) => current || rest.join(" "));
     }
-    void getFamily()
-      .then((f) => setSavedKids(f.children))
-      .catch(() => undefined);
     void listPublicTourSlots({ data: { daycareId: daycare.id } })
       .then((res) => {
         setSlots(res.slots);
@@ -182,12 +171,10 @@ export function RequestTourSheet({ daycare, open, unclaimed = false, onClose, on
       lastName,
       phone,
       email,
-      childName,
-      childId,
       windowId,
       date,
     });
-  }, [open, daycare.id, preferred, message, firstName, lastName, phone, email, childName, childId, windowId, date]);
+  }, [open, daycare.id, preferred, message, firstName, lastName, phone, email, windowId, date]);
 
   if (!open) return null;
 
@@ -304,8 +291,6 @@ export function RequestTourSheet({ daycare, open, unclaimed = false, onClose, on
         data: {
           daycareId: daycare.id,
           windowId,
-          childId: childId || undefined,
-          childName: childName.trim() || undefined,
           note: message.trim() || undefined,
           locale: locale === "fr" ? "fr" : "en",
           userId: user?.id,
@@ -466,40 +451,6 @@ export function RequestTourSheet({ daycare, open, unclaimed = false, onClose, on
                 </fieldset>
               </>
             )}
-            {user && savedKids.length ? (
-              <label className="block text-sm">
-                {t("pickChild")}
-                <select
-                  className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
-                  value={childId}
-                  onChange={(e) => {
-                    const id = e.target.value;
-                    setChildId(id);
-                    const kid = savedKids.find((c) => c.id === id);
-                    setChildName(kid?.name ?? "");
-                  }}
-                >
-                  <option value="">{t("newChildOption")}</option>
-                  {savedKids.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
-            {user ? (
-              <label className="block text-sm">
-                {t("childFullName")}
-                <input
-                  autoComplete="off"
-                  className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
-                  value={childName}
-                  onChange={(e) => setChildName(e.target.value)}
-                  placeholder={t("optional")}
-                />
-              </label>
-            ) : null}
             {guest && (!empty || unclaimed) ? (
               <div className="grid gap-3 sm:grid-cols-2">
                 <p className="text-sm text-muted sm:col-span-2">{t("tourTimesGuestLead")}</p>

@@ -154,7 +154,7 @@ test("Huawei hides Google sign-in and the other stores do not", () => {
   ];
   assert.deepEqual(
     providersForStore(providers, "huawei").map((row) => row.idp),
-    ["facebook", "apple"],
+    ["apple", "facebook"],
   );
   assert.equal(providersForStore(providers, "samsung").length, 3);
   assert.match(src("src/routes/login.tsx"), /providersForStore/);

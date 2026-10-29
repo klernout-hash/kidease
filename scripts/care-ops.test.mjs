@@ -111,8 +111,9 @@ test("NEXT ops surfaces, migrations, and transactional notices; LATER stays out 
   assert.match(src("src/lib/server/care-ops.ts"), /centreCanWriteCare/);
   assert.match(src("src/components/care-ops-panel.tsx"), /data-ke="care-ops-rooms"/);
   assert.match(src("src/components/care-child-ops.tsx"), /data-ke="care-child-ops"/);
-  assert.match(src("src/components/care-child-ops.tsx"), /logCareMedicationDose/);
-  assert.match(src("src/components/care-child-ops.tsx"), /submitCareIncident/);
+  assert.match(src("src/components/care-child-ops.tsx"), /does not ask for a child’s name/);
+  assert.doesNotMatch(src("src/components/care-child-ops.tsx"), /logCareMedicationDose/);
+  assert.doesNotMatch(src("src/components/care-child-ops.tsx"), /submitCareIncident/);
   assert.match(src("src/lib/copy.ts"), /careLaterOut:/);
   assert.equal(FLAG_DEFAULTS.FEATURE_INAPP_CHAT, false);
   assert.equal(FLAG_DEFAULTS.FEATURE_SMS, false);

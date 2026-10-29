@@ -3249,5 +3249,6 @@
   "statusPhotos": "{count} may larawan ng sentro",
   "statusFees": "{count} may kumpirmadong bayad",
   "statusAges": "{count} may kumpirmadong edad",
-  "statusUnavailable": "Hindi namin masuri ngayon. Subukan ang paghahanap, o bumalik pagkalipas ng isang minuto."
+  "statusUnavailable": "Hindi namin masuri ngayon. Subukan ang paghahanap, o bumalik pagkalipas ng isang minuto.",
+  "deleteAccountWarn": "Isinasara nito ang account mo sa KidEase. Isa-sign out ka namin sa device na ito. Kung gumamit ka ng Sign in with Apple, babawiin namin ang sign-in na iyon. I-type ang DELETE para kumpirmahin."
 }

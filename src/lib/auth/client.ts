@@ -174,7 +174,10 @@ export async function signIn(
       return;
     }
     const { isNative } = await import("@/lib/native");
-    const shell = isNative() && (providerId === "google" || providerId === "facebook");
+    // iOS Apple already returned through the system sheet. Android Apple,
+    // Google, and Facebook stay in the in-app auth sheet.
+    const shell =
+      isNative() && (providerId === "google" || providerId === "facebook" || providerId === "apple");
     const { nativeOAuthReturnPath } = await import("./native-oauth");
     const socialCallback = shell ? nativeOAuthReturnPath(callbackURL) : callbackURL;
     const socialError = shell ? nativeOAuthReturnPath(errorCallbackURL) : errorCallbackURL;

@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
-import { authClient, turnstileFetchOptions } from "@/lib/auth/client";
+import { useEffect, useState, type FormEvent } from "react";
+import { authClient, signIn, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { continueAfterSignIn } from "@/lib/auth/login-funnel";
@@ -21,6 +21,12 @@ import { PasswordField } from "@/components/password-field";
 import { PasswordRules } from "@/components/password-rules";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { ParentSmsFields } from "@/components/parent-sms-fields";
+import { SocialSignInButtons } from "@/components/social-sign-in-buttons";
+import { markAdultConfirmedForSession } from "@/lib/adult-confirm";
+import { nativeSocialPlatform, providersForNativeShell } from "@/lib/auth/native-oauth";
+import { providersForStore, type GrokProvider } from "@/lib/auth/providers";
+import { getSignInProviders } from "@/lib/server/sign-in-providers";
+import { useNativeHidesAdmin, useStoreChannel } from "@/lib/use-native-shell";
 
 function rememberToken(data: { token?: string | null } | null | undefined) {
   const token = data?.token;
@@ -34,6 +40,25 @@ function rememberToken(data: { token?: string | null } | null | undefined) {
 
 export function ParentSignupForm() {
   const { t, locale } = useCopy();
+  const storeChannel = useStoreChannel();
+  const hideAdmin = useNativeHidesAdmin();
+  const [providers, setProviders] = useState<GrokProvider[]>([]);
+  const shownProviders = providersForNativeShell(providersForStore(providers, storeChannel), {
+    native: hideAdmin,
+    platform: nativeSocialPlatform({ native: hideAdmin, channel: storeChannel }),
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    void getSignInProviders()
+      .then((rows) => {
+        if (!cancelled) setProviders(rows);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -182,6 +207,33 @@ export function ParentSignupForm() {
             {busy ? t("openingDesk") : t("createAccount")}
           </Button>
         </form>
+        {shownProviders.length ? (
+          <div className="mt-6">
+            <div className="mb-4 flex items-center gap-3 text-xs uppercase tracking-wider text-subtle">
+              <span className="h-px flex-1 bg-border" />
+              {t("orSocial")}
+              <span className="h-px flex-1 bg-border" />
+            </div>
+            <SocialSignInButtons
+              providers={shownProviders}
+              disabled={busy}
+              onSocial={(providerId) => {
+                if (!adult) {
+                  setError(locale === "fr" ? "Confirmez que vous avez 18 ans ou plus." : "Confirm you are 18 or older.");
+                  return;
+                }
+                setBusy(true);
+                setError(null);
+                markAdultConfirmedForSession();
+                rememberRole("parent");
+                void signIn(providerId, { callbackURL: "/parent", errorCallbackURL: "/signup" }).catch((err) => {
+                  setError(friendlyAuthError(authClientErrorMessage(err)) || "Sign-in failed");
+                  setBusy(false);
+                });
+              }}
+            />
+          </div>
+        ) : null}
         <p className="mt-4 text-sm text-muted">
           <Link
             to="/login"

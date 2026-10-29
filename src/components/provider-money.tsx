@@ -290,7 +290,6 @@ function BillList({
                 </div>
                 <p className="mt-1 text-sm text-muted">
                   {b.daycareName}
-                  {b.childName ? ` · ${b.childName}` : ""}
                   {` · ${periodLabel(b.period, locale)}`}
                   {b.dueAt ? ` · ${t("billDue")} ${b.dueAt}` : ""}
                 </p>

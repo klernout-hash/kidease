@@ -215,7 +215,7 @@ test("share copy is present in English and French", () => {
 });
 
 test("share v1 does not touch OAuth buttons or invent store IDs", () => {
-  const login = src("src/routes/login.tsx");
+  const login = src("src/components/social-sign-in-buttons.tsx");
   const share = src("src/lib/share.ts");
   assert.match(login, /continueGoogle/);
   assert.doesNotMatch(share, /apps\.apple\.com|play\.google\.com|itunes\.apple\.com/);

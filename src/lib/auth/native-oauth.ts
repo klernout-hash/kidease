@@ -64,6 +64,8 @@ export function nativeHandoffPath(input: NativeAuthFinish): string {
   return `${NATIVE_AUTH_HANDOFF_PATH}?${params.toString()}`;
 }
 
+import { orderSocialSignIn } from "./providers.ts";
+
 export type NativeSocialPlatform = "ios" | "android" | "web";
 
 /**
@@ -75,9 +77,9 @@ export function providersForNativeShell<T extends { idp: string }>(
   providers: readonly T[],
   input: { native: boolean; platform: NativeSocialPlatform },
 ): T[] {
-  if (!input.native || input.platform !== "ios") return [...providers];
-  if (providers.some((provider) => provider.idp === "apple")) return [...providers];
-  return providers.filter((provider) => provider.idp !== "google" && provider.idp !== "facebook");
+  if (!input.native || input.platform !== "ios") return orderSocialSignIn(providers);
+  if (providers.some((provider) => provider.idp === "apple")) return orderSocialSignIn(providers);
+  return orderSocialSignIn(providers.filter((provider) => provider.idp !== "google" && provider.idp !== "facebook"));
 }
 
 export function nativeSocialPlatform(input: {

@@ -162,7 +162,6 @@ function PayBillPage() {
             </div>
             <p className="mt-1 font-display text-2xl">{bill.daycareName}</p>
             <p className="mt-1 text-sm text-muted">
-              {bill.childName ? `${bill.childName} · ` : ""}
               {periodLabel(bill.period, locale)}
               {bill.dueAt ? ` · ${t("billDue")} ${bill.dueAt}` : ""}
             </p>

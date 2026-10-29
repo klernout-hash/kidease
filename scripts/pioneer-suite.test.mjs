@@ -110,25 +110,24 @@ test("inspection portals are official https links and checklists stay off unclai
   assert.equal(inspectionChecklistBadge([{ id: "a", ok: true }], true).show, true);
 });
 
-test("T778 and RL-24 receipts never invent a barcode or a permit", () => {
+test("T778 and RL-24 receipts name the family, not a child, and never invent a permit", () => {
   const t778 = buildT778Receipt({
     taxYear: 2026,
-    childName: "Amina",
+    receiptFor: "Nguyen family",
     providerName: "Centre",
-    providerAddress: "1 Main, Winnipeg",
-    province: "MB",
     amountPaid: 2400,
     periodStart: "2026-01-01",
     periodEnd: "2026-12-31",
   });
-  assert.match(t778.text, /Amina/);
-  assert.match(t778.text, /T778/);
-  assert.match(t778.text, /No barcode is printed/);
-  assert.doesNotMatch(t778.text, /SSN|IRS/);
+  assert.match(t778.text, /Receipt for: Nguyen family/);
+  assert.match(t778.text, /Centre: Centre/);
+  assert.match(t778.text, /Amount:/);
+  assert.match(t778.text, /Period: 2026-01-01 to 2026-12-31/);
+  assert.match(t778.text, /Receipt number: T778-2026/);
+  assert.doesNotMatch(t778.text, /Child:|Amina|birthdate|allerg/i);
   const missing = buildRl24Summary({
     taxYear: 2026,
-    childName: "Leo",
-    payerName: "Parent",
+    receiptFor: "Parent",
     providerName: "CPE",
     permitOrNeq: "",
     slipNumber: "",
@@ -137,21 +136,17 @@ test("T778 and RL-24 receipts never invent a barcode or a permit", () => {
   assert.equal(missing.ok, false);
   const rl = buildRl24Summary({
     taxYear: 2026,
-    childName: "Leo",
-    payerName: "Parent",
+    receiptFor: "Parent",
     providerName: "CPE",
     permitOrNeq: "NEQ-123",
     slipNumber: "RL-9",
     boxA: 900,
-    boxH: 0,
   });
   assert.equal(rl.ok, true);
   if (rl.ok) {
-    assert.match(rl.text, /Box A/);
-    assert.match(rl.text, /Box H/);
-    assert.match(rl.text, /NEQ-123/);
-    assert.match(rl.text, /RL-9/);
-    assert.match(rl.text, /no barcode/i);
+    assert.match(rl.text, /Receipt for: Parent/);
+    assert.match(rl.text, /Receipt number: RL-9/);
+    assert.doesNotMatch(rl.text, /Child:|Leo|Box A|NEQ-123/);
   }
 });
 

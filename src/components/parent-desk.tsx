@@ -535,7 +535,6 @@ export function ParentDesk({
                     <StatusBadge status={b.status} />
                   </div>
                   <p className="text-sm text-muted">
-                    {b.childName ? `${b.childName} · ` : ""}
                     {b.startDate ?? formatMonth(b.startMonth, locale)} · {t(b.ageGroup)}
                   </p>
                 </div>
@@ -638,7 +637,6 @@ export function ParentDesk({
                           <BillStatusBadge status={b.status} />
                         </div>
                         <p className="text-sm text-muted">
-                          {b.childName ? `${b.childName} · ` : ""}
                           {periodLabel(b.period, locale)}
                           {b.dueAt ? ` · ${t("billDue")} ${b.dueAt}` : ""}
                         </p>

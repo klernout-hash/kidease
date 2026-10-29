@@ -1639,6 +1639,7 @@ export const copy = {
     supportSent: "Message sent. We’ll reply by email.",
     deleteAccount: "Delete account",
     deleteAccountLead: "This schedules your account to close. You can restore it for 30 days. After 30 days we fully remove the account, even if you never sign in again. That includes your Stripe customer, your PostHog person, your GoHighLevel contact, and your Sentry user. We keep invoices, payments, and fraud logs the law requires, with your name and account link removed.",
+    deleteAccountWarn: "This closes your KidEase account. We sign you out on this device. If you used Sign in with Apple, we revoke that sign-in. Type DELETE to confirm.",
     deleteAccountType: "Type DELETE to confirm",
     deleteAccountRestoreNote: "You can restore this account for 30 days. After that, we close it.",
     deleteAccountPendingNow:
@@ -5122,6 +5123,7 @@ export const copy = {
     supportSent: "Message envoyé. Nous répondrons par courriel.",
     deleteAccount: "Supprimer le compte",
     deleteAccountLead: "Ceci planifie la fermeture de votre compte. Vous pouvez le restaurer pendant 30 jours. Après 30 jours, nous effaçons complètement le compte, même si vous ne vous reconnectez pas. Cela comprend votre client Stripe, votre personne PostHog, votre contact GoHighLevel et votre utilisateur Sentry. Nous gardons les factures, les paiements et les journaux de fraude exigés par la loi, sans votre nom ni le lien vers le compte.",
+    deleteAccountWarn: "Ceci ferme votre compte KidEase. Nous vous déconnectons sur cet appareil. Si vous avez utilisé Connexion avec Apple, nous révoquons cette connexion. Tapez DELETE pour confirmer.",
     deleteAccountType: "Tapez DELETE pour confirmer",
     deleteAccountRestoreNote: "Vous pouvez restaurer ce compte pendant 30 jours. Ensuite, nous le fermons.",
     deleteAccountPendingNow:

@@ -196,7 +196,6 @@ function BillStrip({
                   <Face name={bill.parentName} image={bill.parentImage} />
                   <div className="min-w-0 flex-1">
                     {bill.parentName ? <p className="truncate text-sm font-medium">{bill.parentName}</p> : null}
-                    {bill.childName ? <p className="truncate text-sm text-muted">{bill.childName}</p> : null}
                   </div>
                   <Thumb name={bill.centreName} image={bill.centrePhoto} />
                 </div>

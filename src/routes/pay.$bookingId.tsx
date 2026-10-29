@@ -113,7 +113,6 @@ function PayPage() {
             <p className="text-xs font-medium uppercase tracking-wide text-subtle">{t("payWhat")}</p>
             <p className="mt-1 font-display text-2xl">{booking.daycareName}</p>
             <p className="mt-1 text-sm text-muted">
-              {booking.childName ? `${booking.childName} · ` : ""}
               {t(booking.ageGroup)} · {t("desiredStart")} {booking.startDate ?? booking.startMonth}
             </p>
             <div className="mt-4 flex items-center justify-between border-t border-border pt-4">

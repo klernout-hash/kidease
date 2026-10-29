@@ -1,18 +1,21 @@
 /**
  * Parent-ready CRA T778 summary and a Québec RL-24 box summary.
- * The provider types their own permit, NEQ, and slip number.
- * This file does not invent a government barcode or a certification mark.
+ * The provider types the family or account-holder name, the centre, the amount,
+ * the period, and a receipt number. This file does not collect or print a child's name.
+ * It does not invent a government barcode or a certification mark.
  */
 
 export type T778Input = {
   taxYear: number;
-  childName: string;
+  /** Family or account-holder name. Never a child's name. */
+  receiptFor: string;
   providerName: string;
-  providerAddress: string;
-  province: string;
+  providerAddress?: string;
+  province?: string;
   amountPaid: number;
   periodStart: string;
   periodEnd: string;
+  receiptNumber?: string;
 };
 
 export type T778Receipt = {
@@ -24,12 +27,12 @@ export type T778Receipt = {
 
 export type Rl24Input = {
   taxYear: number;
-  childName: string;
-  payerName: string;
+  receiptFor: string;
+  payerName?: string;
   providerName: string;
-  /** Ministère permit or NEQ, typed by the Québec provider. */
+  /** Ministère permit or NEQ, typed by the Québec provider. Used only as the receipt number when no slip is set. */
   permitOrNeq: string;
-  /** RL-24 slip number, typed by the provider. */
+  /** RL-24 slip number, typed by the provider. Printed as the receipt number. */
   slipNumber: string;
   boxA: number;
   boxB?: number;
@@ -39,6 +42,8 @@ export type Rl24Input = {
   boxF?: number;
   boxG?: number;
   boxH?: number;
+  periodStart?: string;
+  periodEnd?: string;
 };
 
 export type Rl24Result =
@@ -54,21 +59,23 @@ function dollars(n: number): string {
   return v.toLocaleString("en-CA", { style: "currency", currency: "CAD" });
 }
 
+function receiptNumberFor(kind: "t778" | "rl24", year: number, given?: string): string {
+  const typed = clean(given || "", 40);
+  if (typed) return typed;
+  return `${kind.toUpperCase()}-${year}`;
+}
+
 export function buildT778Receipt(input: T778Input): T778Receipt {
   const year = Number.isFinite(input.taxYear) ? Math.floor(input.taxYear) : new Date().getFullYear();
+  const number = receiptNumberFor("t778", year, input.receiptNumber);
   const lines = [
-    `CRA Form T778 child care expense receipt (${year})`,
-    "Ready to use with your T778. This is not a government-issued slip.",
-    `Child: ${clean(input.childName)}`,
-    `Provider: ${clean(input.providerName)}`,
-    `Provider address: ${clean(input.providerAddress, 180)}`,
-    `Province or territory: ${clean(input.province, 40)}`,
-    `Amount paid: ${dollars(input.amountPaid)}`,
+    `Receipt for: ${clean(input.receiptFor)}`,
+    `Centre: ${clean(input.providerName)}`,
+    `Amount: ${dollars(input.amountPaid)}`,
     `Period: ${clean(input.periodStart, 20)} to ${clean(input.periodEnd, 20)}`,
-    "Leave the social insurance number blank until you file. KidEase does not store it here.",
-    "No barcode is printed. Attach this summary to your own T778 records.",
+    `Receipt number: ${number}`,
   ];
-  return { kind: "t778", title: `T778 child care receipt ${year}`, lines, text: lines.join("\n") };
+  return { kind: "t778", title: `Child care receipt ${year}`, lines, text: lines.join("\n") };
 }
 
 export function buildRl24Summary(input: Rl24Input): Rl24Result {
@@ -76,31 +83,19 @@ export function buildRl24Summary(input: Rl24Input): Rl24Result {
   const slip = clean(input.slipNumber, 40);
   if (!permit || !slip) return { ok: false, reason: "missing-provider-ids" };
   const year = Number.isFinite(input.taxYear) ? Math.floor(input.taxYear) : new Date().getFullYear();
-  const boxes: Array<[string, number | undefined]> = [
-    ["A", input.boxA],
-    ["B", input.boxB],
-    ["C", input.boxC],
-    ["D", input.boxD],
-    ["E", input.boxE],
-    ["F", input.boxF],
-    ["G", input.boxG],
-    ["H", input.boxH],
-  ];
+  const start = clean(input.periodStart || `${year}-01-01`, 20);
+  const end = clean(input.periodEnd || `${year}-12-31`, 20);
   const lines = [
-    `Relevé 24 (RL-24) box A to H summary and receipt (${year})`,
-    "The provider entered the Ministère permit or NEQ and the slip number. KidEase did not assign them.",
-    "This summary is not a Revenu Québec certification and has no barcode.",
-    `Child: ${clean(input.childName)}`,
-    `Payer: ${clean(input.payerName)}`,
-    `Provider: ${clean(input.providerName)}`,
-    `Ministère permit or NEQ: ${permit}`,
-    `RL-24 slip number: ${slip}`,
-    ...boxes.map(([box, amount]) => `Box ${box}: ${dollars(amount ?? 0)}`),
+    `Receipt for: ${clean(input.receiptFor)}`,
+    `Centre: ${clean(input.providerName)}`,
+    `Amount: ${dollars(input.boxA)}`,
+    `Period: ${start} to ${end}`,
+    `Receipt number: ${slip}`,
   ];
-  return { ok: true, kind: "rl24", title: `RL-24 summary ${year}`, lines, text: lines.join("\n") };
+  return { ok: true, kind: "rl24", title: `Child care receipt ${year}`, lines, text: lines.join("\n") };
 }
 
-export function receiptFileName(kind: "t778" | "rl24", year: number, childName: string): string {
-  const slug = clean(childName, 40).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "child";
+export function receiptFileName(kind: "t778" | "rl24", year: number, receiptFor: string): string {
+  const slug = clean(receiptFor, 40).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "family";
   return `${kind}-${year}-${slug}.txt`;
 }

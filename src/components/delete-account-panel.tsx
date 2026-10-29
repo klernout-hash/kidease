@@ -37,6 +37,9 @@ export function DeleteAccountPanel({ signedIn }: { signedIn: boolean }) {
     <ViewAsWriteLock>
     <div className="mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="account-delete">
       <h2 className="font-display text-xl">{t("deleteAccount")}</h2>
+      <p className="mt-2 text-sm font-medium text-fg" role="alert" data-ke="delete-account-warning">
+        {t("deleteAccountWarn")}
+      </p>
       <p className="mt-2 text-sm text-muted">{t("deleteAccountLead")}</p>
       <p className="mt-2 text-sm text-muted">{t("deleteAccountRestoreNote")}</p>
       <p className="mt-2 text-sm text-muted">{t("deleteAccountPendingNow")}</p>
