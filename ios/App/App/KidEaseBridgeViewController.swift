@@ -20,6 +20,7 @@ class KidEaseBridgeViewController: CAPBridgeViewController {
     override open func capacitorDidLoad() {
         super.capacitorDidLoad()
         bridge?.registerPluginInstance(AppleSignInPlugin())
+        bridge?.registerPluginInstance(AuthSessionPlugin())
         bridge?.registerPluginInstance(AdminWebOnlyPlugin())
         if let controller = webView?.configuration.userContentController {
             installTextScaleScript(on: controller)
@@ -143,7 +144,7 @@ public class AdminWebOnlyPlugin: CAPPlugin, CAPBridgedPlugin {
         if path == "/fr" { path = "/" }
         if path.hasPrefix("/fr/") { path = String(path.dropFirst(3)) }
         if path.isEmpty { path = "/" }
-        if path == "/use-the-website" { return false }
+        if path == "/use-the-website" || path == "/app-admin-unavailable" { return false }
         if path == "/admin" || path.hasPrefix("/admin/") || path.hasPrefix("/admin-") { return true }
         if path == "/api/admin" || path.hasPrefix("/api/admin/") { return true }
         return false
@@ -158,7 +159,7 @@ public class AdminWebOnlyPlugin: CAPPlugin, CAPBridgedPlugin {
         } else {
             parts.host = "www.kidease.ca"
         }
-        parts.path = "/use-the-website"
+        parts.path = "/app-admin-unavailable"
         return parts.url
     }
 }

@@ -30,7 +30,7 @@ export const IPHONE_VIEWPORTS = [
   { name: "promax-landscape", width: 956, height: 440, safe: { top: 0, right: 0, bottom: 21, left: 59 } },
 ];
 
-const PHONE_ROUTES = ["/", "/search", "/login", "/fr", "/fr/login", "/help", "/for-daycares", "/inbox", "/parent", "/call/demo", "/video/demo"];
+const PHONE_ROUTES = ["/", "/search", "/login", "/fr", "/fr/login", "/help", "/for-daycares", "/inbox", "/parent", "/call/demo", "/video/demo", "/admin", "/app-admin-unavailable"];
 
 const CAPPED = new Set(["/", "/search", "/login", "/fr", "/fr/login", "/help", "/for-daycares"]);
 

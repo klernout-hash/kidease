@@ -2047,6 +2047,7 @@ export function SearchScreen({
                     <MapView
                       items={shownList}
                       origin={mapOrigin}
+                      placeLabel={whereLabel || origin.label}
                       secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}
                       radiusKm={radiusKm}
                       activeSlug={active}

@@ -187,7 +187,7 @@ export function AppMenuScreen({
       </nav>
 
       {user ? (
-        <div className="mt-auto flex flex-col gap-3 pt-8" data-ke="menu-account-actions">
+        <div className="relative z-[45] mt-auto flex flex-col gap-3 pt-8 pb-[max(3.25rem,env(safe-area-inset-bottom))]" data-ke="menu-account-actions">
           <Link
             to={localePath("/delete-account", locale)}
             data-ke="menu-delete-account"

@@ -10,6 +10,7 @@ import { useCopy } from "@/lib/use-copy";
 import { getDeviceLocation, hapticLight } from "@/lib/native";
 import { useStoreChannel } from "@/lib/use-native-shell";
 import { StoreMapFallback } from "@/components/store-map-fallback";
+import { MapUnavailable } from "@/components/map-unavailable";
 import {
   MAP_RADIUS_FIT_PAD,
   mapZoomForRadius,
@@ -128,6 +129,8 @@ type Props = {
   onRelocate?: (pos: { lat: number; lng: number }) => void;
   onLocate?: () => void;
   onFallback?: () => void;
+  /** Place name shown if the embedded map does not load. */
+  placeLabel?: string | null;
 };
 
 /** Brand map pin: same smiling teardrop as the KidEase logo. */
@@ -171,6 +174,7 @@ function OsmMapView({
   onRelocate,
   onLocate,
   onFallback,
+  placeLabel,
 }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const mapRef = useRef<OsmMap | null>(null);
@@ -946,35 +950,33 @@ function OsmMapView({
 
   return (
     <div className="relative size-full min-h-[280px] overflow-hidden rounded-lg bg-map">
-      <div ref={host} className="ke-map-host absolute inset-0" />
+      <div ref={host} className={loadError ? "hidden" : "ke-map-host absolute inset-0"} />
 
       {loadError ? (
-        <div className="absolute inset-0 z-[1] grid place-items-center bg-map px-6 text-center">
-          <div className="max-w-sm">
-            <p className="text-sm text-muted">{t("mapUnavailable")}</p>
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+        <div className="absolute inset-0 z-[500] flex flex-col bg-map">
+          <MapUnavailable address={placeLabel} lat={origin.lat} lng={origin.lng} />
+          <div className="flex flex-wrap items-center justify-center gap-2 px-4 pb-4">
+            <button
+              type="button"
+              className="inline-flex min-h-11 items-center rounded-full bg-surface px-4 text-sm font-semibold text-fg ring-1 ring-border touch-manipulation"
+              onClick={() => {
+                setLoadError(null);
+                setBasemapReady(false);
+                setReady(false);
+                setLoadGen((n) => n + 1);
+              }}
+            >
+              {t("mapRetry")}
+            </button>
+            {onFallback ? (
               <button
                 type="button"
-                className="inline-flex h-11 items-center rounded-full bg-primary px-4 text-sm font-semibold text-primary-fg"
-                onClick={() => {
-                  setLoadError(null);
-                  setBasemapReady(false);
-                  setReady(false);
-                  setLoadGen((n) => n + 1);
-                }}
+                className="inline-flex min-h-11 items-center rounded-full bg-surface px-4 text-sm font-semibold text-fg ring-1 ring-border touch-manipulation"
+                onClick={onFallback}
               >
-                {t("mapRetry")}
+                {t("mapShowList")}
               </button>
-              {onFallback ? (
-                <button
-                  type="button"
-                  className="inline-flex h-11 items-center rounded-full bg-surface px-4 text-sm font-semibold text-fg ring-1 ring-border"
-                  onClick={onFallback}
-                >
-                  {t("mapShowList")}
-                </button>
-              ) : null}
-            </div>
+            ) : null}
           </div>
         </div>
       ) : !basemapReady ? (

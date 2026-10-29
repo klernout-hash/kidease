@@ -154,7 +154,7 @@ test("Huawei hides Google sign-in and the other stores do not", () => {
   ];
   assert.deepEqual(
     providersForStore(providers, "huawei").map((row) => row.idp),
-    ["facebook", "apple"],
+    ["apple", "facebook"],
   );
   assert.equal(providersForStore(providers, "samsung").length, 3);
   assert.match(src("src/routes/login.tsx"), /providersForStore/);
@@ -196,7 +196,7 @@ test("PWA manifest for Partner Center stays installable and does not retag the w
   assert.match(src("public/channel-boot.js"), /Max-Age=0/);
   assert.match(src("public/channel-boot.js"), /display-mode: standalone/);
   assert.match(src("public/channel-boot.js"), /serviceWorker\.register\("\/sw\.js\?v=8"/);
-  assert.match(src("src/routes/__root.tsx"), /channel-boot\.js\?v=9/);
+  assert.match(src("src/routes/__root.tsx"), /channel-boot\.js\?v=10/);
   assert.match(src("src/lib/native.ts"), /register\("\/sw\.js\?v=8"/);
   assert.match(src("public/channel-boot.js"), /!n && !uaNative && \(store === "microsoft" \|\| standalone\)/);
   const rootHead = src("src/routes/__root.tsx");

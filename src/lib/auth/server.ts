@@ -48,6 +48,7 @@ import { emailAndPasswordConfig, emailAndPasswordEnabled, emailVerificationConfi
 import { GROK_PROVIDERS, BROKER_PROVIDERS } from "./providers";
 import { appleLoginVisible } from "./apple-login-flag";
 import { APPLE_CLIENT_ID, appleClientSecret, appleIdpConfigured } from "./apple-idp";
+import { mapAppleProfileToUser } from "./apple-profile";
 import {
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
@@ -322,6 +323,9 @@ const socialProviders = {
           clientId: APPLE_CLIENT_ID,
           clientSecret: appleClientSecret() as string,
           appBundleIdentifier: env("APPLE_BUNDLE_ID") ?? "ca.kidease.app",
+          // Better Auth already asks Apple for response_mode=form_post.
+          // Name is only present the first time. A relay email is kept.
+          mapProfileToUser: mapAppleProfileToUser,
         },
       }
     : {}),

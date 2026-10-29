@@ -49,7 +49,7 @@ function keAccessPath(href) {
           var href = link.getAttribute("href") || "";
           if (!keAccessPath(href)) return;
           ev.preventDefault();
-          location.assign("/use-the-website");
+          location.assign("/app-admin-unavailable");
         },
         true,
       );

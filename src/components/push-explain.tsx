@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { shouldShowAnalyticsConsentBanner } from "@/lib/analytics-consent";
 import { isNative } from "@/lib/native";
+import { nativeShellPrompt } from "@/lib/native-prompt";
 import { pushPromptStep } from "@/lib/push-prompt";
 import { registerPushDevice } from "@/lib/push-client";
 import { useCopy } from "@/lib/use-copy";
@@ -37,7 +39,12 @@ export function PushExplain() {
         choice: choice.value,
       });
       if (cancelled) return;
-      if (step === "explain") setOpen(true);
+      const showPush = nativeShellPrompt({
+        native: true,
+        consentUnset: shouldShowAnalyticsConsentBanner(),
+        pushExplain: step === "explain",
+      });
+      if (showPush === "push") setOpen(true);
       if (step === "register") await registerPushDevice({ enabled: true });
     })().catch(() => undefined);
     return () => {
@@ -52,11 +59,24 @@ export function PushExplain() {
     if (value === "yes") await registerPushDevice({ enabled: true });
   }
 
+  useEffect(() => {
+    if (!open) return;
+    document.documentElement.dataset.nativePrompt = "open";
+    return () => {
+      if (document.documentElement.dataset.nativePrompt === "open") {
+        delete document.documentElement.dataset.nativePrompt;
+      }
+    };
+  }, [open]);
+
   if (!open) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 px-4">
-      <div className="mx-auto max-w-lg rounded-2xl bg-surface p-4 shadow-card ring-1 ring-border">
+    <div
+      data-ke="push-explain"
+      className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-30 px-4"
+    >
+      <div className="mx-auto max-w-lg rounded-2xl bg-surface p-3 shadow-card ring-1 ring-border">
         <p className="text-base font-semibold text-fg">{t("pushExplainTitle")}</p>
         <p className="mt-1 text-sm text-muted">{t("pushExplainBody")}</p>
         <div className="mt-3 flex flex-col gap-2">

@@ -138,7 +138,8 @@ describe("native Facebook auth (Better Auth socialProviders.facebook)", () => {
     assert.match(popup, /signInSocial/);
     assert.match(popup, /"apple" \| "google" \| "facebook"/);
     assert.match(login, /getSignInProviders/);
-    assert.match(login, /continueFacebook/);
+    assert.match(login, /SocialSignInButtons/);
+    assert.match(read("src/components/social-sign-in-buttons.tsx"), /continueFacebook/);
   });
 
   it("hides Facebook when env is missing; shows it only when native Facebook is on", () => {

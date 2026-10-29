@@ -32,10 +32,13 @@ test("Apple stays hidden until the keys and FEATURE_APPLE_LOGIN are on", () => {
   const example = src(".env.example");
   assert.match(example, /^FEATURE_APPLE_LOGIN=0$/m);
   assert.doesNotMatch(example, /^FEATURE_APPLE_LOGIN=1$/m);
-  const login = src("src/routes/login.tsx");
-  assert.match(login, /ke-social-button ke-apple-button/);
-  assert.match(login, /ke-social-button w-full/);
-  assert.doesNotMatch(login, /variant=\{p\.idp === "apple" \? "apple"/);
+  const buttons = src("src/components/social-sign-in-buttons.tsx");
+  assert.match(buttons, /ke-social-button ke-apple-button/);
+  assert.match(buttons, /ke-social-button w-full/);
+  assert.doesNotMatch(buttons, /variant=\{p\.idp === "apple" \? "apple"/);
+  assert.match(src("src/routes/login.tsx"), /SocialSignInButtons/);
+  assert.match(src("src/components/parent-signup-form.tsx"), /SocialSignInButtons/);
+  assert.match(src("src/lib/auth/providers.ts"), /SOCIAL_SIGN_IN_ORDER = \["apple", "google", "facebook"\]/);
   const server = src("src/lib/auth/server.ts");
   assert.match(server, /appleLoginVisible/);
   assert.match(src("src/lib/server/family.ts"), /revokeStoredAppleSignIn/);

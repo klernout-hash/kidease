@@ -3249,5 +3249,6 @@
   "statusPhotos": "{count} con foto del centro",
   "statusFees": "{count} con tarifa confirmada",
   "statusAges": "{count} con edades confirmadas",
-  "statusUnavailable": "No pudimos revisar ahora. Prueba la búsqueda o vuelve en un minuto."
+  "statusUnavailable": "No pudimos revisar ahora. Prueba la búsqueda o vuelve en un minuto.",
+  "deleteAccountWarn": "Esto cierra tu cuenta de KidEase. Te cerramos la sesión en este dispositivo. Si usaste Iniciar sesión con Apple, revocamos ese acceso. Escribe DELETE para confirmar."
 }

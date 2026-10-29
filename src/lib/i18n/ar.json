@@ -3249,5 +3249,6 @@
   "statusPhotos": "{count} مع صورة للمركز",
   "statusFees": "{count} برسوم مؤكدة",
   "statusAges": "{count} بأعمار مؤكدة",
-  "statusUnavailable": "تعذر الفحص الآن. جرّب البحث، أو عُد بعد دقيقة."
+  "statusUnavailable": "تعذر الفحص الآن. جرّب البحث، أو عُد بعد دقيقة.",
+  "deleteAccountWarn": "هذا يغلق حساب KidEase. نسجّل خروجك على هذا الجهاز. إذا استخدمت تسجيل الدخول باستخدام Apple، نلغي ذلك الدخول. اكتب DELETE للتأكيد."
 }

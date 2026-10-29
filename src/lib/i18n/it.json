@@ -3249,5 +3249,6 @@
   "statusPhotos": "{count} con una foto del centro",
   "statusFees": "{count} con una tariffa confermata",
   "statusAges": "{count} con età confermate",
-  "statusUnavailable": "Non siamo riusciti a controllare ora. Prova la ricerca, oppure torna tra un minuto."
+  "statusUnavailable": "Non siamo riusciti a controllare ora. Prova la ricerca, oppure torna tra un minuto.",
+  "deleteAccountWarn": "Questo chiude il tuo account KidEase. Ti disconnettiamo su questo dispositivo. Se hai usato Accedi con Apple, revochiamo quell’accesso. Scrivi DELETE per confermare."
 }

@@ -19,18 +19,21 @@ import { isNativeUserAgent } from "./native-entitlements.ts";
 
 export const NATIVE_SHELL_COOKIE = "ke_shell";
 export const NATIVE_SHELL_COOKIE_VALUE = "native";
-export const NATIVE_ADMIN_NOTE_PATH = "/use-the-website";
+/** Outside /admin so Cloudflare Access cannot intercept it. */
+export const NATIVE_ADMIN_NOTE_PATH = "/app-admin-unavailable";
+/** Older iOS/Android binaries still open this path. Keep it. */
+export const NATIVE_ADMIN_NOTE_LEGACY_PATH = "/use-the-website";
 
 const NOTE_COPY = {
   en: {
     title: "Admin is on the website",
-    lead: "Admin is available on kidease.ca in your web browser.",
+    lead: "Admin is available on kidease.ca in a browser",
     body: "This app is for finding daycare and for daycare owners. The admin desk stays on the website, so the app does not open a second login.",
     home: "Go home",
   },
   fr: {
     title: "L’admin est sur le site web",
-    lead: "L’admin est offert sur kidease.ca dans votre navigateur web.",
+    lead: "L’admin est offert sur kidease.ca dans un navigateur.",
     body: "Cette appli sert à trouver une garderie et aux propriétaires de garderie. Le bureau admin reste sur le site web, pour que l’appli n’ouvre pas une deuxième connexion.",
     home: "Aller à l’accueil",
   },
@@ -119,6 +122,30 @@ export function isCloudflareAccessHost(host: string | null | undefined): boolean
 
 /** Where an explicit Admin tap goes inside the shell. Same host, not Safari. */
 export function nativeAdminNoteHref(): string {
+  return NATIVE_ADMIN_NOTE_PATH;
+}
+
+/** True for the current note page and the path older app binaries still open. */
+export function isNativeAdminNotePath(raw: string | null | undefined): boolean {
+  const path = accessPathname(raw);
+  return path === NATIVE_ADMIN_NOTE_PATH || path === NATIVE_ADMIN_NOTE_LEGACY_PATH;
+}
+
+/**
+ * Where a native document request for an Access path should go.
+ * Null on the website, and null when the path is already the note page.
+ * Middleware and Vercel can only do this when the request reaches the app.
+ * If Cloudflare Access sits on the DNS edge, it answers first.
+ */
+export function nativeAdminRedirectTarget(input: {
+  pathname?: string | null;
+  userAgent?: string | null;
+  cookie?: string | null;
+  nativePlatform?: boolean;
+}): string | null {
+  if (!isAccessProtectedPath(input.pathname)) return null;
+  if (isNativeAdminNotePath(input.pathname)) return null;
+  if (!nativeShellHidesAdmin(input)) return null;
   return NATIVE_ADMIN_NOTE_PATH;
 }
 

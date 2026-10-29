@@ -112,6 +112,16 @@ Mid-session re-entry to `/admin` showing the Cloudflare Access login wall is alm
 
 App-side: `scripts/request-guard.mjs` `isSensitiveDeskPath` is the allow-list that may 302 preview → www. `/parent`, `/provider`, `/login`, `/`, and `/api/auth/*` never go through that hop.
 
+### Native shells and Access
+
+The iOS and Android apps load `https://www.kidease.ca` in a WebView. A document request for `/admin*` is answered by Access **before** Vercel or app middleware, when Access is on the DNS edge. The app therefore:
+
+- never links to `/admin` inside the shell
+- 302s `/admin*` to `/app-admin-unavailable` only when the request reaches the app (User-Agent `KidEaseNative` or cookie `ke_shell=native`)
+- keeps that page off the Access path list
+
+**A Cloudflare Access bypass is still required** for a typed or bookmarked `/admin` URL in the WebView. Middleware cannot see that request. In Zero Trust, add a Bypass policy on the staff application for requests whose User-Agent contains `KidEaseNative` (and, if you can match it, cookie `ke_shell=native`), sending them to the origin. Do not bypass Access for normal browsers. Do not add `/app-admin-unavailable` or `/use-the-website` to the Access path list.
+
 Parent / Daycare login also refuse leftover `/admin` or `/support` destinations (`resolvePostLoginPath` + `assignPostAuthDest`). A parent `?role=` / `?desk=` must not paint the operator email-first form (`isAdminLoginIntent`) or full-document-assign into Access. Admin still uses a real document GET to `/admin` so Access can run once. Do not disable Access on `/admin*`.
 
 ## robots.txt Content-Signal (Lighthouse SEO)

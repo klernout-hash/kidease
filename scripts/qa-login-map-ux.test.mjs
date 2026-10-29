@@ -62,9 +62,11 @@ describe("QA 2026-09-10: Facebook CTA stays hidden until Live", () => {
       true,
     );
     const login = src("src/routes/login.tsx");
+    const buttons = src("src/components/social-sign-in-buttons.tsx");
     const loader = src("src/lib/server/sign-in-providers.ts");
-    assert.match(login, /continueGoogle/);
-    assert.match(login, /continueFacebook/);
+    assert.match(login, /SocialSignInButtons/);
+    assert.match(buttons, /continueGoogle/);
+    assert.match(buttons, /continueFacebook/);
     assert.match(loader, /facebookLoginVisible/);
     assert.match(src(".env.example"), /^FEATURE_FACEBOOK_LOGIN=0$/m);
     assert.doesNotMatch(src("src/lib/flags.ts"), /FEATURE_FACEBOOK_LOGIN/);
@@ -87,15 +89,16 @@ describe("QA 2026-09-10: login split does not overflow under 768", () => {
 describe("login strength: email Connexion primary, logout, honest errors", () => {
   it("puts email Connexion above Google so social cannot steal submit", () => {
     const login = src("src/routes/login.tsx");
+    const buttons = src("src/components/social-sign-in-buttons.tsx");
     const emailIdx = login.indexOf('data-ke={operator ? "admin-email-first" : "email-sign-in"}');
     const socialIdx = login.indexOf('data-ke="social-sign-in"');
     const primaryIdx = login.indexOf('data-ke="email-primary"');
-    const googleIdx = login.indexOf('data-ke="social-secondary"');
     assert.ok(emailIdx > 0 && socialIdx > emailIdx, "email form must render before social");
-    assert.ok(primaryIdx > 0 && googleIdx > primaryIdx, "Connexion submit must render before Google");
+    assert.ok(primaryIdx > 0 && socialIdx > primaryIdx, "Connexion submit must render before Google");
     assert.match(login, /t\("orSocial"\)/);
     assert.match(login, /t\("signIn"\)/);
-    assert.match(login, /continueGoogle/);
+    assert.match(buttons, /continueGoogle/);
+    assert.match(buttons, /data-ke="social-secondary"/);
     assert.match(src("src/lib/copy.ts"), /orSocial: "or continue with Google"/);
     assert.match(src("src/lib/copy.ts"), /orSocial: "ou continuer avec Google"/);
     assert.match(src(".env.example"), /^FEATURE_FACEBOOK_LOGIN=0$/m);
