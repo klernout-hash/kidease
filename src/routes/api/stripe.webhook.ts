@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { constructStripeEvent, StripeSignatureError } from "@/lib/server/stripe-signature";
+import { claimStripeEventOnce, gateStripeWebhook, releaseStripeEventClaim } from "@/lib/server/stripe-signature";
 import { logSecurityEvent, requestIp } from "@/lib/server/security-events";
 import { applyStripeBillEvent } from "@/lib/server/billing";
 import { applyConnectSideEffect, queueMonthlyFeeTax } from "@/lib/server/connect-payments";
@@ -24,7 +24,7 @@ const SUB_TYPES = new Set([
 ]);
 
 /**
- * Stripe webhook sink. Fail closed: missing secret or bad signature → 401.
+ * Stripe webhook sink. Missing secret → 401. Missing or bad stripe-signature → 400.
  * Uses the same HMAC scheme as stripe.webhooks.constructEvent.
  */
 async function run(request: Request) {
@@ -33,26 +33,18 @@ async function run(request: Request) {
   const sig = request.headers.get("stripe-signature") || "";
   const ip = requestIp(request);
 
-  if (!secrets.length) {
-    await logSecurityEvent({ kind: "webhook_reject", detail: "stripe secret missing", ip });
-    return new Response("Unauthorized", { status: 401 });
+  const gated = gateStripeWebhook(raw, sig, secrets);
+  if (!gated.ok) {
+    await logSecurityEvent({
+      kind: "webhook_reject",
+      detail: gated.status === 401 ? "stripe secret missing" : "stripe-signature rejected",
+      ip,
+    });
+    return new Response(gated.status === 401 ? "Unauthorized" : "Bad Request", { status: gated.status });
   }
-
-  let event;
-  let verifyError: unknown;
-  for (const secret of secrets) {
-    try {
-      event = constructStripeEvent(raw, sig, secret);
-      verifyError = undefined;
-      break;
-    } catch (err) {
-      verifyError = err;
-    }
-  }
-  if (!event) {
-    const reason = verifyError instanceof StripeSignatureError ? verifyError.message : "stripe verify failed";
-    await logSecurityEvent({ kind: "webhook_reject", detail: reason, ip });
-    return new Response("Unauthorized", { status: 401 });
+  const event = gated.event;
+  if (!claimStripeEventOnce(event.id)) {
+    return Response.json({ ok: true, duplicate: true, id: event.id ?? null });
   }
 
   const type = event.type ?? "";
@@ -80,6 +72,7 @@ async function run(request: Request) {
         bill = await applyStripeBillEvent({ type, object });
       } catch (err) {
         console.error("[kidease-bill] webhook apply failed", err);
+        releaseStripeEventClaim(event.id);
         return Response.json({ ok: false, error: "bill apply failed" }, { status: 500 });
       }
       if (bill?.status === "paid" && bill.billId) {
@@ -112,6 +105,7 @@ async function run(request: Request) {
       bill = await applyStripeDisputeEvent({ type, object });
     } catch (err) {
       console.error("[kidease-bill] dispute apply failed", err);
+      releaseStripeEventClaim(event.id);
       return Response.json({ ok: false, error: "dispute apply failed" }, { status: 500 });
     }
   }
@@ -122,6 +116,7 @@ async function run(request: Request) {
       userId = sub.userId;
     } catch (err) {
       console.error("[kidease-sub] webhook apply failed", err);
+      releaseStripeEventClaim(event.id);
       return Response.json({ ok: false, error: "subscription apply failed" }, { status: 500 });
     }
   }

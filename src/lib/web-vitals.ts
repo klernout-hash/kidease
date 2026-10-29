@@ -1,8 +1,10 @@
 import { shouldStartTelemetry, type AnalyticsConsent } from "@/lib/analytics-consent";
 import { isNative } from "@/lib/native";
+import { webdriverBlocksAnalytics } from "@/lib/posthog";
 import { ingestTelemetry } from "@/lib/server/telemetry";
 
 export function shouldStartWebVitals(input?: { native?: boolean; consent?: AnalyticsConsent }): boolean {
+  if (webdriverBlocksAnalytics()) return false;
   if (input) return shouldStartTelemetry("web-vitals", input);
   if (typeof window === "undefined") return false;
   return shouldStartTelemetry("web-vitals", { native: isNative() });

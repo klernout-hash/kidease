@@ -61,7 +61,7 @@ export function AppMenuScreen({
 
   if (section) {
     return (
-      <main className="ke-menu-main ke-screen-enter ke-gutter mx-auto max-w-lg pb-10 pt-6" data-ke="app-menu" data-section={section}>
+      <main className="ke-menu-main ke-screen-enter ke-gutter mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col pb-6 pt-6" data-ke="app-menu" data-section={section}>
         <Link to={menuDeskPath(pathname)} className="inline-flex min-h-11 items-center text-sm font-medium text-primary">
           {t("back")}
         </Link>
@@ -85,7 +85,7 @@ export function AppMenuScreen({
   }
 
   return (
-    <main className="ke-menu-main ke-screen-enter ke-gutter mx-auto max-w-lg pb-10 pt-6" data-ke="app-menu" data-role={chrome.role}>
+    <main className="ke-menu-main ke-screen-enter ke-gutter mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col pb-6 pt-6" data-ke="app-menu" data-role={chrome.role}>
       <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">{t("navMenu")}</h1>
       {hostCards ? <HostCards initialEarnings={earnings} initialInsights={insights} /> : null}
       {highlight === "create" ? (
@@ -187,14 +187,16 @@ export function AppMenuScreen({
       </nav>
 
       {user ? (
-        <button
-          type="button"
-          onClick={() => void signOut("/")}
-          className="mt-8 flex min-h-11 w-full items-center justify-center gap-3 rounded-full bg-fg px-4 py-3.5 text-sm font-semibold text-bg touch-manipulation"
-        >
-          <MenuGlyph id="logout" className="text-bg" />
-          {t("signOut")}
-        </button>
+        <div className="mt-auto pt-8">
+          <button
+            type="button"
+            onClick={() => void signOut("/")}
+            className="flex min-h-11 w-full items-center justify-center gap-3 rounded-full bg-fg px-4 py-3.5 text-sm font-semibold text-bg touch-manipulation active:scale-[0.99]"
+          >
+            <MenuGlyph id="logout" className="text-bg" />
+            {t("signOut")}
+          </button>
+        </div>
       ) : null}
     </main>
   );

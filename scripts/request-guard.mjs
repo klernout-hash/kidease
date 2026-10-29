@@ -85,6 +85,12 @@ function queryString(search) {
  */
 export const HIDDEN_LISTING_SLUGS = ["test-ghost-claim-lab", "ke-test-ghost-001"];
 
+/**
+ * Store-review sample. A direct /daycare/:slug (and /fr/daycare/:slug) is a
+ * real page. Other QA prefixes stay 404 for guests. Search still excludes it.
+ */
+export const DIRECT_DEMO_LISTING_SLUGS = ["qa-reviewer-demo-centre"];
+
 /** Public document prefixes that take a centre slug. */
 const LISTING_DOCUMENT_PREFIXES = ["/daycare/", "/book/"];
 
@@ -144,7 +150,16 @@ export function isOffScopeCityHubPath(pathname) {
   return !PUBLISHED_CITY_HUB_SLUG_SET.has(slug);
 }
 
+export function isDirectDemoListingPath(pathname) {
+  const path = normalizePath(pathname).toLowerCase();
+  const bare = path.startsWith("/fr/") ? path.slice(3) : path;
+  if (!bare.startsWith("/daycare/")) return false;
+  const slug = bare.slice("/daycare/".length).replace(/\/+$/, "");
+  return DIRECT_DEMO_LISTING_SLUGS.includes(slug);
+}
+
 export function isHiddenListingPath(pathname) {
+  if (isDirectDemoListingPath(pathname)) return false;
   const path = normalizePath(pathname).toLowerCase();
   const bare = path.startsWith("/fr/") ? path.slice(3) : path;
   for (const prefix of LISTING_DOCUMENT_PREFIXES) {

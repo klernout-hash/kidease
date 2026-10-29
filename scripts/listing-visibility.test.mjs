@@ -6,6 +6,7 @@ import { centresInLiveSearch } from "../src/lib/approve-live.ts";
 import {
   hideListingFromPublicPage,
   isAdminOnlyListing,
+  isExactSlugDemoListing,
   isPublicListing,
   listingVisibilityForOwners,
   listingVisibilityOf,
@@ -22,6 +23,27 @@ import {
 } from "../src/lib/listing-visibility.ts";
 import { allowSeedTestListings, catalogRowsForSeed } from "../src/lib/catalog-seed.ts";
 import { turnstileMode } from "../src/lib/turnstile-mode.ts";
+
+test("a direct demo slug renders, and stays out of the public catalogue", () => {
+  const reviewer = {
+    slug: "qa-reviewer-demo-centre",
+    name: "QA Reviewer Demo Centre",
+    isDemo: 1,
+    visibility: "admin_only",
+    isTest: 1,
+  };
+  const otherDemo = { slug: "harbour-view-child-care", name: "Harbour View Child Care", isDemo: 1 };
+  assert.equal(isExactSlugDemoListing(reviewer), true);
+  assert.equal(isExactSlugDemoListing(otherDemo), true);
+  assert.equal(hideListingFromPublicPage(reviewer, false), false);
+  assert.equal(hideListingFromPublicPage(otherDemo, false), false);
+  assert.equal(isPublicListing(reviewer), false);
+  assert.equal(isPublicListing(otherDemo), false);
+  assert.equal(publicListings([reviewer, otherDemo, { slug: "bonnie-bairns", name: "Bonnie Bairns" }]).length, 1);
+  assert.match(PUBLIC_LISTING_SQL, /coalesce\(is_demo, 0\) = 0/);
+  assert.equal(hideListingFromPublicPage({ ...reviewer, mergedInto: "keeper-id" }, false), true);
+  assert.equal(isExactSlugDemoListing({ slug: "sunny-side", name: "Sunny Side", isDemo: 0 }), false);
+});
 
 test("ghost claim lab is admin-only by slug, licence, id, and title", () => {
   assert.equal(isAdminOnlyListing(GHOST_LISTING), true);

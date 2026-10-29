@@ -4,6 +4,7 @@ import { authClient, authEnabled, clearLocalSignedOut, dropExistingSession, sign
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
+import { reviewerSignInSkipsTurnstile } from "@/lib/reviewer-accounts";
 import { providersForStore, type GrokProvider } from "@/lib/auth/providers";
 import { getSignInProviders } from "@/lib/server/sign-in-providers";
 import { useStoreChannel } from "@/lib/use-native-shell";
@@ -118,14 +119,17 @@ function LoginEmailControl({
   emailRef,
   onOperator,
   onBlurEmail,
+  onReviewer,
 }: {
   mode: "in" | "up";
   emailRef: MutableRefObject<string>;
   onOperator: (operator: boolean) => void;
   onBlurEmail: (email: string) => void;
+  onReviewer: (reviewer: boolean) => void;
 }) {
   const [email, setEmail] = useState("");
   const operator = useRef(false);
+  const reviewer = useRef(false);
   return (
     <input
       type="email"
@@ -140,6 +144,11 @@ function LoginEmailControl({
         if (next !== operator.current) {
           operator.current = next;
           onOperator(next);
+        }
+        const nextReviewer = reviewerSignInSkipsTurnstile(email);
+        if (nextReviewer !== reviewer.current) {
+          reviewer.current = nextReviewer;
+          onReviewer(nextReviewer);
         }
       }}
       onBlur={() => onBlurEmail(emailRef.current.trim())}
@@ -271,6 +280,7 @@ export function LoginScreen({
   const emailRef = useRef("");
   const passwordRef = useRef("");
   const [operator, setOperator] = useState(false);
+  const [reviewerSignIn, setReviewerSignIn] = useState(false);
   const [emailLink, setEmailLink] = useState("");
   const parentSignup = mode === "up" && !operator && role !== "provider";
   const [phone, setPhone] = useState("");
@@ -554,7 +564,8 @@ export function LoginScreen({
         throw new Error("Operator sign-in is only for the KidEase owner account.");
       }
       const challenge = takeChallenge();
-      if (turnstileRequired && !challenge) {
+      const reviewerBypass = mode === "in" && reviewerSignInSkipsTurnstile(email);
+      if (turnstileRequired && !challenge && !reviewerBypass) {
         throw new Error("Please complete the security check, then try again.");
       }
       captureLoginFunnel({ step: "submitted", method: "email", native: isNative() });
@@ -836,6 +847,7 @@ export function LoginScreen({
                 mode={mode}
                 emailRef={emailRef}
                 onOperator={setOperator}
+                onReviewer={setReviewerSignIn}
                 onBlurEmail={setEmailLink}
               />
             </label>
@@ -906,7 +918,7 @@ export function LoginScreen({
               size="lg"
               className="w-full min-h-12"
               data-ke="email-primary"
-              disabled={busy || (turnstileRequired && !token.trim())}
+              disabled={busy || (turnstileRequired && !token.trim() && !(mode === "in" && reviewerSignIn))}
             >
               {busy ? t("openingDesk") : mode === "up" && !operator ? t("createAccount") : t("signIn")}
             </Button>

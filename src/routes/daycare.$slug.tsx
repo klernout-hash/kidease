@@ -142,6 +142,10 @@ export const Route = createFileRoute("/daycare/$slug")({
   },
   notFoundComponent: ListingNotFoundPage,
   errorComponent: ListingRetryPage,
+  headers: ({ loaderData }) => {
+    if (loaderData?.noindex) return { "X-Robots-Tag": "noindex, nofollow" };
+    return undefined;
+  },
   head: ({ loaderData }) => {
     if (!loaderData) return listingNotFoundHead();
     const canonical = listingCanonicalUrl(loaderData.slug);
@@ -1048,7 +1052,7 @@ export function Listing() {
               <VacancyFreshness item={d} className="mt-2 text-xs text-subtle" lead />
               {parentActions && live ? (
                 <div className="mt-4">
-                  <WaitlistOptIn daycareId={d.id} province={d.province} next={`/daycare/${d.slug}`} />
+                  <WaitlistOptIn daycareId={d.id} daycareSlug={d.slug} province={d.province} next={`/daycare/${d.slug}`} />
                 </div>
               ) : null}
               {parentActions ? <JoinWaitlist daycareId={d.id} next={`/daycare/${d.slug}`} /> : null}
@@ -1167,7 +1171,7 @@ export function Listing() {
           <div className="mt-3 grid gap-1.5">
             <ListingActions />
             {parentActions && live && waitlisted ? (
-              <WaitlistOptIn daycareId={d.id} province={d.province} next={`/daycare/${d.slug}?ask=waitlist`} />
+              <WaitlistOptIn daycareId={d.id} daycareSlug={d.slug} province={d.province} next={`/daycare/${d.slug}?ask=waitlist`} />
             ) : null}
             <ListingMoreActions>
               <ListingOverflowItems />

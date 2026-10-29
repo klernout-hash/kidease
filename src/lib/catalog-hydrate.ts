@@ -80,6 +80,8 @@ export type CatalogDaycare = {
   listingActive?: boolean;
   visibility: ListingVisibility;
   isTest: boolean;
+  /** Store-review sample. Detail URL only. Omitted on public catalogue rows. */
+  isDemo?: boolean;
   contactEmail?: string;
   website?: string;
   /** Keeper id when this row was retired. Empty on a live listing. */

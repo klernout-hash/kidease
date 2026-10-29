@@ -8,7 +8,8 @@ export function KidEaseToaster() {
       theme={theme}
       position="top-center"
       richColors={false}
-      style={{ pointerEvents: "none" }}
+      className="z-[100]"
+      style={{ pointerEvents: "none", zIndex: 100 }}
       toastOptions={{ style: { pointerEvents: "auto" } }}
     />
   );

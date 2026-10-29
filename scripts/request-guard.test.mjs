@@ -12,6 +12,7 @@ import {
   decideRequest,
   HIDDEN_LISTING_SLUGS,
   isApexKideaseHost,
+  isDirectDemoListingPath,
   isHiddenListingPath,
   isOffScopeCityHubPath,
   isAdminNoindexPath,
@@ -355,8 +356,19 @@ test("nitro middleware and vercel.json stay wired to the guard", () => {
   assert.doesNotMatch(middleware, /new Response\("Not Found"/);
 });
 
+test("a direct store-review demo slug is a page, still noindex", () => {
+  for (const path of ["/daycare/qa-reviewer-demo-centre", "/fr/daycare/qa-reviewer-demo-centre"]) {
+    assert.equal(isDirectDemoListingPath(path), true);
+    assert.equal(isHiddenListingPath(path), false);
+    assert.deepEqual(decideRequest({ host: "www.kidease.ca", pathname: path }), { action: "next" });
+  }
+  assert.equal(isDirectDemoListingPath("/book/qa-reviewer-demo-centre"), false);
+  assert.equal(isHiddenListingPath("/book/qa-reviewer-demo-centre"), true);
+  assert.equal(isHiddenListingPath("/daycare/qa-test-photo-upload"), true);
+});
+
 test("a signed-in request can open a hidden listing document; guests get a styled 404", () => {
-  const path = "/daycare/qa-reviewer-demo-centre";
+  const path = "/daycare/qa-test-photo-upload";
   assert.equal(isHiddenListingPath(path), true);
   assert.deepEqual(decideRequest({ host: "www.kidease.ca", pathname: path }), {
     action: "not_found",

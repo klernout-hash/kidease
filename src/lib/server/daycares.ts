@@ -14,7 +14,7 @@ import {
   type CatalogDaycare,
 } from "@/lib/catalog";
 import { filterByDaycareName, readLiveSearchFlag } from "@/lib/explore-search";
-import { hideListingFromPublicPage, isAdminOnlyListing, isHiddenTestListing, isPublicListing, publicListings } from "@/lib/listing-visibility";
+import { hideListingFromPublicPage, isAdminOnlyListing, isExactSlugDemoListing, isHiddenTestListing, isPublicListing, publicListings } from "@/lib/listing-visibility";
 import { parseAnchorMode, resolveSearchAnchors } from "@/lib/dual-anchor";
 import { nearbyListings, nearbyListingsAlong, nearbyListingsDual, type NearbyListing } from "./nearby";
 import { callerIsTestAccount, callerMayViewHiddenListing } from "./public-listing";
@@ -1006,6 +1006,7 @@ export const getListingSeo = createServerFn({ method: "GET" })
     ]);
     if (hideListingFromPublicPage(found, { admin: adminView, testAccount })) return null;
     return {
+      noindex: isExactSlugDemoListing(found),
       slug: found.slug,
       name: found.name,
       nameFr: found.nameFr,

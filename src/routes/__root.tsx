@@ -234,7 +234,7 @@ function RootDocument() {
         <script src="/theme-boot.js" />
         <script src="/asset-recover.js" />
       </head>
-      <body>
+      <body className="flex min-h-[100dvh] w-full min-w-0 flex-col overflow-x-clip">
         <PreviewHostBridge />
         <AuthProvider>
           <ViewAsProvider>

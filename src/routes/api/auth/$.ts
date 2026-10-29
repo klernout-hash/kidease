@@ -23,6 +23,7 @@ import {
 import { auth } from "@/lib/auth/server";
 import { reportError } from "@/lib/observe";
 import { assertResetMailConfigured } from "@/lib/server/reset-mail-config";
+import { reviewerSignInSkipsTurnstile } from "@/lib/reviewer-accounts";
 import { assertTurnstileToken } from "@/lib/server/turnstile";
 import { readTurnstileToken, readTurnstileTokenFromBody } from "@/lib/server/turnstile-verify";
 import { parseRetryAfterSeconds, rateLimitWaitCopy } from "@/lib/auth-rate-limit";
@@ -40,6 +41,17 @@ const TURNSTILE_AUTH_PATHS = [
 function authPathNeedsTurnstile(pathname: string) {
   const path = pathname.replace(/\/+$/, "");
   return TURNSTILE_AUTH_PATHS.some((suffix) => path.endsWith(suffix));
+}
+
+async function signInEmailSkipsTurnstile(request: Request): Promise<boolean> {
+  const path = new URL(request.url).pathname.replace(/\/+$/, "");
+  if (!path.endsWith("/sign-in/email")) return false;
+  try {
+    const body = (await request.clone().json()) as { email?: unknown };
+    return reviewerSignInSkipsTurnstile(typeof body.email === "string" ? body.email : "");
+  } catch {
+    return false;
+  }
 }
 
 async function turnstileTokenFromAuthRequest(request: Request): Promise<string> {
@@ -143,7 +155,7 @@ async function handleAuth(request: Request) {
           return Response.json({ message, code: "PASSWORD_REJECTED" }, { status: 400 });
         }
       }
-      if (authPathNeedsTurnstile(url.pathname)) {
+      if (authPathNeedsTurnstile(url.pathname) && !(await signInEmailSkipsTurnstile(request))) {
         try {
           await assertTurnstileToken(await turnstileTokenFromAuthRequest(request), {
             headers: request.headers,

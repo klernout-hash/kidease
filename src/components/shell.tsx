@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Building2, Menu } from "lucide-react";
+import { Building2, Calendar, Menu } from "lucide-react";
 import { AppTabBar } from "@/components/app-tab-bar";
 import { HeaderAccount } from "@/components/header-account";
 import { useCurrentUserState, useLocallySignedOut } from "@/lib/auth/use-current-user";
@@ -36,6 +36,14 @@ import { ApplyReferral } from "@/components/apply-referral";
 import { KeyboardInset } from "@/components/keyboard-inset";
 import { FacebookEmailPrompt } from "@/components/facebook-email-prompt";
 import { FacebookRoleBoot } from "@/components/facebook-role-boot";
+
+const SHELL_FRAME =
+  "flex min-h-dvh min-h-[100dvh] w-full min-w-0 flex-col bg-bg pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] text-fg";
+const APP_TAB_PAD = "[[data-channel=app]_&]:pb-[calc(4.75rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]";
+const HEADER_BAR =
+  "sticky top-[var(--ke-view-as-h,0px)] z-40 border-b border-slate-200/80 bg-bg/95 pt-[var(--ke-safe-top,env(safe-area-inset-top))] backdrop-blur-md dark:border-white/15";
+const HEADER_CTA =
+  "ke-web-only inline-flex min-h-11 max-w-[9.5rem] touch-manipulation items-center justify-center gap-1.5 whitespace-normal rounded-full border border-primary px-2.5 text-center text-[13px] font-medium leading-tight text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 active:scale-[0.99] sm:max-w-none sm:px-3 sm:text-sm";
 
 export function Shell({ children }: { children: ReactNode }) {
   const { t, locale } = useCopy();
@@ -102,16 +110,16 @@ export function Shell({ children }: { children: ReactNode }) {
 
   if (verifyLite) {
     return (
-      <div className="min-h-dvh bg-bg pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] text-fg">
+      <div className={SHELL_FRAME}>
         <KeyboardInset />
-        <header className="sticky top-[var(--ke-view-as-h,0px)] z-50 border-b border-border bg-bg pt-[var(--ke-safe-top,env(safe-area-inset-top))]">
+        <header className={HEADER_BAR}>
           <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
             <Link to={homeTo} className="shrink-0" aria-label="KidEase">
               <BrandMark size="sm" />
             </Link>
           </div>
         </header>
-        <div className="ke-page" data-ke="page">
+        <div className="ke-page min-h-0 min-w-0 flex-1" data-ke="page">
           {children}
         </div>
       </div>
@@ -120,9 +128,9 @@ export function Shell({ children }: { children: ReactNode }) {
 
   if (menuLite) {
     return (
-      <div className="min-h-dvh bg-bg pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] text-fg">
+      <div className={SHELL_FRAME}>
         <KeyboardInset />
-        <header className="sticky top-[var(--ke-view-as-h,0px)] z-50 border-b border-border bg-bg pt-[var(--ke-safe-top,env(safe-area-inset-top))]">
+        <header className={HEADER_BAR}>
           <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
             <Link to={homeTo} className="shrink-0" aria-label="KidEase">
               <BrandMark size="sm" />
@@ -132,8 +140,8 @@ export function Shell({ children }: { children: ReactNode }) {
             </div>
           </div>
         </header>
-        <div className="[[data-channel=app]_&]:pb-[calc(8.5rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]">
-          <div className="ke-page" data-ke="page">
+        <div className={`flex min-h-0 min-w-0 flex-1 flex-col ${APP_TAB_PAD}`}>
+          <div className="ke-page min-h-0 min-w-0 flex-1" data-ke="page">
             {children}
           </div>
         </div>
@@ -143,9 +151,9 @@ export function Shell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-dvh bg-bg pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] text-fg">
+    <div className={SHELL_FRAME}>
       <KeyboardInset />
-      <header className="sticky top-[var(--ke-view-as-h,0px)] z-50 border-b border-border bg-bg pt-[var(--ke-safe-top,env(safe-area-inset-top))]">
+      <header className={HEADER_BAR}>
         <div className="ke-gutter relative mx-auto min-w-0 max-w-6xl">
           <div className="flex h-14 w-full min-w-0 items-center gap-3 max-md:h-auto max-md:min-h-14 max-md:gap-2 md:h-16">
             {menuLeaf ? <MenuLeafBack /> : null}
@@ -181,16 +189,26 @@ export function Shell({ children }: { children: ReactNode }) {
               </div>
             ) : null}
             <div className="relative z-20 ml-auto flex items-center gap-2 bg-bg pl-1 max-md:min-w-0 max-md:max-w-full max-md:gap-1.5 md:shrink-0 [[data-channel=website]_&]:flex">
-              {headerUser ? null : (
+              {!headerUser || (!viewingGuest && chrome.role === "parent") ? (
+                <Link
+                  to={localePath("/search", locale)}
+                  data-ke="book-a-tour"
+                  className={HEADER_CTA}
+                >
+                  <Calendar className="size-4 shrink-0" aria-hidden />
+                  {t("bookTour")}
+                </Link>
+              ) : null}
+              {!headerUser || (!viewingGuest && chrome.role === "provider") ? (
                 <Link
                   to={localePath("/claim", locale)}
                   data-ke="list-your-daycare"
-                  className="ke-web-only inline-flex min-h-11 max-w-[9.5rem] touch-manipulation items-center gap-1.5 whitespace-normal rounded-full border border-primary px-2.5 text-center text-[13px] font-medium leading-tight text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 sm:max-w-none sm:px-3 sm:text-sm"
+                  className="ke-web-only inline-flex min-h-11 max-w-[9.5rem] touch-manipulation items-center justify-center gap-1.5 whitespace-normal rounded-full border border-primary px-2.5 text-center text-[13px] font-medium leading-tight text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 active:scale-[0.99] sm:max-w-none sm:px-3 sm:text-sm"
                 >
                   <Building2 className="size-4 shrink-0" aria-hidden />
                   {t("navForDaycares")}
                 </Link>
-              )}
+              ) : null}
               <HeaderAccount />
               <button
                 type="button"
@@ -292,10 +310,10 @@ export function Shell({ children }: { children: ReactNode }) {
         headerExtra={null}
         navExtra={hiddenCare.length ? <HeaderCareOverflow types={hiddenCare} city={headerCity} onNavigate={close} /> : null}
       />
-      <div className={hideTabs ? "" : "[[data-channel=app]_&]:pb-[calc(8.5rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]"}>
+      <div className={`flex min-h-0 min-w-0 flex-1 flex-col ${hideTabs ? "" : APP_TAB_PAD}`}>
         <ApplyPendingShortlist />
         <ApplyReferral />
-        <div className="ke-page" data-ke="page">
+        <div className="ke-page min-h-0 min-w-0 flex-1" data-ke="page">
           {children}
           {hideFooter ? null : <SiteFooter />}
         </div>

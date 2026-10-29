@@ -37,7 +37,7 @@ export type ListingVisibilityInput = {
   visibility?: string | null;
   isTest?: boolean | number | null;
   /** Store-review sample. Hidden from public counts even if other flags slip. */
-  isDemo?: boolean | number | null;
+  isDemo?: boolean | number | string | null;
   /** Set when this row was retired into another daycare. Public surfaces hide it. */
   mergedInto?: string | null;
   /** Set when an import could not recover a real centre name. */
@@ -126,10 +126,27 @@ export function isDocuSignSmokeCentre(name: string | null | undefined): boolean 
   return /docusign\s+smoke/i.test(String(name || ""));
 }
 
+/** Store-review sample opened by its exact slug. Search still excludes it. */
+export const DIRECT_SLUG_DEMO = "qa-reviewer-demo-centre";
+
+function demoFlagOn(value: boolean | number | string | null | undefined): boolean {
+  return value === true || value === 1 || value === "1";
+}
+
+/**
+ * A direct `/daycare/:slug` request for a store-review row.
+ * `is_demo = 1` or the known reviewer slug. Not a search or sitemap hit.
+ */
+export function isExactSlugDemoListing(d: ListingVisibilityInput | null | undefined): boolean {
+  if (!d) return false;
+  if (demoFlagOn(d.isDemo)) return true;
+  return norm(d.slug) === DIRECT_SLUG_DEMO;
+}
+
 /** Known QA fixture plus any row flagged admin_only / is_test. */
 export function isAdminOnlyListing(d: ListingVisibilityInput | null | undefined): boolean {
   if (!d) return false;
-  if (d.isDemo === true || d.isDemo === 1) return true;
+  if (demoFlagOn(d.isDemo)) return true;
   if (PUBLIC_CATALOGUE_SLUGS.has(norm(d.slug))) return false;
   if (d.visibility === LISTING_VISIBILITY.adminOnly) return true;
   if (d.isTest === true || d.isTest === 1) return true;
@@ -240,6 +257,9 @@ export function hideListingFromPublicPage(
   if (isHiddenDuplicateSlug(d.slug)) return true;
   if (isUsCatalogueRow(d)) return true;
   if (isSupersededCatalogueRow(d)) return true;
+  // Exact slug (and /fr/daycare/:slug) may render a store-review demo.
+  // Public search, city hubs, counts, and the sitemap stay on isPublicListing.
+  if (isExactSlugDemoListing(d)) return false;
   const flags = viewerFlags(viewer);
   if (flags.admin) return false;
   if (flags.testAccount && isHiddenTestListing(d)) return false;
@@ -385,6 +405,7 @@ export function listingVisibilityInputFromDb(row: {
   address?: string | null;
   visibility?: string | null;
   is_test?: boolean | number | null;
+  is_demo?: boolean | number | string | null;
   claim_status?: string | null;
   province?: string | null;
   fact_source?: string | null;
@@ -400,6 +421,7 @@ export function listingVisibilityInputFromDb(row: {
     address: row.address,
     visibility: row.visibility === LISTING_VISIBILITY.adminOnly ? LISTING_VISIBILITY.adminOnly : row.visibility,
     isTest: row.is_test,
+    isDemo: row.is_demo,
     claimStatus: row.claim_status,
     province: row.province,
     factSource: row.fact_source,

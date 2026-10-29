@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { noteHappyMoment } from "@/lib/store-review";
 import type { Child, Daycare, Schedule } from "@/lib/types";
 import { holdSendBeat, requestSentThumb } from "@/lib/request-sent";
+import { captureLeadSubmitted } from "@/lib/marketplace-funnel";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { captureRankingEvent } from "@/lib/ranking/events";
 import { rankingContextFor } from "@/lib/ranking/context";
@@ -124,6 +125,11 @@ export function RequestSpotSheet({ daycare, open, onClose, intent = "spot" }: Pr
         },
       });
       capturePostHogEvent("listing_request_submitted", { intent });
+      captureLeadSubmitted({
+        daycareSlug: daycare.slug,
+        requestType: intent === "tour" ? "tour" : "availability",
+        role: "parent",
+      });
       if (intent === "spot") {
         const ctx = rankingContextFor(daycare.id);
         captureRankingEvent("spot_requested", {

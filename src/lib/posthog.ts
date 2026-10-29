@@ -99,6 +99,20 @@ export function posthogEnabled(env: EnvMap = viteEnv()): boolean {
   return Boolean(posthogProjectKey(env));
 }
 
+/** E2E sets `?ke_analytics=1` so a WebDriver session can still assert capture. */
+export const POSTHOG_WEBDRIVER_ALLOW_PARAM = "ke_analytics";
+
+export function webdriverBlocksAnalytics(input?: { webdriver?: boolean | null; search?: string | null }): boolean {
+  const webdriver =
+    input?.webdriver ??
+    (typeof navigator !== "undefined" && navigator.webdriver === true);
+  if (!webdriver) return false;
+  const search =
+    input?.search ??
+    (typeof window !== "undefined" ? window.location.search : "");
+  return !new RegExp(`(?:^|[?&])${POSTHOG_WEBDRIVER_ALLOW_PARAM}=1(?:&|$)`).test(String(search || ""));
+}
+
 export function parseReplaySampleRate(raw?: string | null): number {
   const s = String(raw ?? "").trim();
   if (!s) return DEFAULT_REPLAY_SAMPLE_RATE;
@@ -333,6 +347,7 @@ export function resumePostHogAfterReviewer(): void {
 
 /** Capture a product event. Queues across hard navigations until the client is live. */
 export function capturePostHogEvent(event: string, properties: Record<string, unknown> = {}): void {
+  if (webdriverBlocksAnalytics()) return;
   if (reviewerQuiet) return;
   const name = event.trim();
   if (!name) return;
@@ -395,6 +410,7 @@ export async function hashIdentifier(value: string): Promise<string> {
 
 /** Start PostHog once in the browser when the public key is set. No-op on the server. */
 export function startPostHog(): void {
+  if (webdriverBlocksAnalytics()) return;
   if (reviewerQuiet) return;
   if (started || typeof window === "undefined") return;
   const key = posthogProjectKey();

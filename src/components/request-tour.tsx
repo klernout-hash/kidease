@@ -10,7 +10,7 @@ import { bookTourSlot, listPublicTourSlots } from "@/lib/server/tour-calendar";
 import { buildTourIcs, tourSlotInstants } from "@/lib/tour-ics";
 import { holdSendBeat, requestSentThumb } from "@/lib/request-sent";
 import { capturePostHogEvent } from "@/lib/posthog";
-import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
+import { captureLeadSubmitted, captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { captureRankingEvent } from "@/lib/ranking/events";
 import { rankingContextFor } from "@/lib/ranking/context";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -279,6 +279,7 @@ export function RequestTourSheet({ daycare, open, unclaimed = false, onClose, on
           },
         });
         capturePostHogEvent("listing_request_submitted", { intent: "tour" });
+        captureLeadSubmitted({ daycareSlug: daycare.slug, requestType: "tour", role: guest ? "guest" : "parent" });
         captureMarketplaceFunnel({ step: "tour_request", source: "listing", dest_path: "/daycare", contact: "tour" });
         {
           const ctx = rankingContextFor(daycare.id);
@@ -315,6 +316,7 @@ export function RequestTourSheet({ daycare, open, unclaimed = false, onClose, on
         },
       });
       capturePostHogEvent("listing_request_submitted", { intent: "tour" });
+      captureLeadSubmitted({ daycareSlug: daycare.slug, requestType: "tour", role: guest ? "guest" : "parent" });
       captureMarketplaceFunnel({ step: "tour_request", source: "listing", dest_path: "/daycare", contact: "tour" });
       {
         const ctx = rankingContextFor(daycare.id);

@@ -77,6 +77,7 @@ export type CatalogDbRow = {
   listing_active?: number | boolean | null;
   visibility: string | null;
   is_test: number | boolean | null;
+  is_demo?: number | boolean | string | null;
   google_place_id?: string | null;
   contact_email?: string | null;
   website?: string | null;
@@ -93,7 +94,7 @@ preschool_monthly, part_time_monthly, fee_program, fact_source, spots_infant, sp
 spots_preschool, waitlist, rating_x10, review_count, license_number,
 license_status, registry_match_state, license_verification_source,
 languages, staff_languages, cultural_programs, cultural_team_note,
-amenities, photos, claimed_at, founding_member, claim_status, listing_active, staff_screening_attested, screening_on_file, visibility, is_test,
+amenities, photos, claimed_at, founding_member, claim_status, listing_active, staff_screening_attested, screening_on_file, visibility, is_test, is_demo,
 google_place_id, contact_email, website, merged_into, import_fault
 `;
 
@@ -110,7 +111,7 @@ preschool_monthly, part_time_monthly, fee_program, fact_source, spots_infant, sp
 spots_preschool, waitlist, rating_x10, review_count, license_number,
 license_status, registry_match_state, license_verification_source,
 languages, staff_languages, cultural_programs,
-amenities, photos, claimed_at, founding_member, claim_status, listing_active, staff_screening_attested, screening_on_file, visibility, is_test,
+amenities, photos, claimed_at, founding_member, claim_status, listing_active, staff_screening_attested, screening_on_file, visibility, is_test, is_demo,
 google_place_id, merged_into, import_fault
 `;
 
@@ -317,6 +318,7 @@ export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
   const rawSlug = String(row.slug || "").trim();
   const slug = normalizeListingSlug(rawSlug) || rawSlug || id;
   const name = correctCentreNameTypos(String(row.name || "").trim()) || slug || id || "Licensed centre";
+  const isDemo = row.is_demo === true || row.is_demo === 1 || row.is_demo === "1";
   const visibility = listingVisibilityOf({
     id,
     slug,
@@ -325,6 +327,7 @@ export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
     address: row.address,
     visibility: row.visibility,
     isTest: row.is_test,
+    isDemo,
   });
   return {
     id,
@@ -388,6 +391,7 @@ export function catalogRowToListing(row: CatalogDbRow): CatalogDaycare {
         : true,
     visibility,
     isTest: row.is_test === 1 || row.is_test === true || visibility === "admin_only",
+    isDemo,
     contactEmail: row.contact_email || "",
     website: row.website || "",
     mergedInto: row.merged_into || null,

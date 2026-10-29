@@ -120,11 +120,19 @@ export function twimlMessage(body: string): string {
  * Reply in TwiML only when Twilio did not already set OptOutType.
  * Advanced Opt-Out sends its own STOP / START / HELP text. A second Message would double-send.
  */
+function frenchKeywordBody(params: Record<string, string>): boolean {
+  const body = String(params.Body || params.body || "")
+    .trim()
+    .toLowerCase();
+  return body === "arret" || body === "arrêt" || body === "aide";
+}
+
 export function inboundKeywordTwiml(params: Record<string, string>, opt: InboundOpt): string {
   const typed = String(params.OptOutType || params.optOutType || "").trim();
   if (!opt || typed) return twimlEmpty();
-  if (opt === "help") return twimlMessage(SMS_HELP_REPLY);
-  if (opt === "stop") return twimlMessage(SMS_STOP_REPLY);
+  const fr = frenchKeywordBody(params);
+  if (opt === "help") return twimlMessage(fr ? SMS_HELP_REPLY_FR : SMS_HELP_REPLY);
+  if (opt === "stop") return twimlMessage(fr ? SMS_STOP_REPLY_FR : SMS_STOP_REPLY);
   if (opt === "start") return twimlMessage(SMS_START_REPLY);
   return twimlEmpty();
 }

@@ -155,6 +155,10 @@
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     },
     {
+      "source": "/fr/daycare/qa-reviewer-demo-centre",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
       "source": "/book/qa-reviewer-demo-centre",
       "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     },
