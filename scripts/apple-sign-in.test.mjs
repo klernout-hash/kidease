@@ -35,6 +35,13 @@ test("Apple stays hidden until the keys and FEATURE_APPLE_LOGIN are on", () => {
   const buttons = src("src/components/social-sign-in-buttons.tsx");
   assert.match(buttons, /ke-social-button ke-apple-button/);
   assert.match(buttons, /ke-social-button w-full/);
+  assert.match(buttons, /function GoogleMark/);
+  assert.match(buttons, /#4285F4/);
+  assert.match(buttons, /#34A853/);
+  assert.match(buttons, /#FBBC05/);
+  assert.match(buttons, /#EA4335/);
+  assert.equal(buttons.match(/className="size-5 shrink-0"/g)?.length, 3);
+  assert.match(buttons, /<GoogleMark \/>/);
   assert.doesNotMatch(buttons, /variant=\{p\.idp === "apple" \? "apple"/);
   assert.match(src("src/routes/login.tsx"), /SocialSignInButtons/);
   assert.match(src("src/components/parent-signup-form.tsx"), /SocialSignInButtons/);

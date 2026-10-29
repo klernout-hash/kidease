@@ -13,6 +13,7 @@ import { isFrPath } from "@/lib/locale-path";
 import { LOADER_SETTLE_MS, withTimeout, withTimeoutFallback } from "@/lib/timeout";
 import { Button } from "@/components/ui/button";
 import { SocialSignInButtons } from "@/components/social-sign-in-buttons";
+import { ContinueAgeNotice } from "@/components/continue-age-notice";
 import { BrandMark } from "@/components/brand-mark";
 import { PasswordField } from "@/components/password-field";
 import { PasswordRules } from "@/components/password-rules";
@@ -303,7 +304,6 @@ export function LoginScreen({
   const parentSignup = mode === "up" && !operator && role !== "provider";
   const [phone, setPhone] = useState("");
   const [smsConsent, setSmsConsent] = useState(false);
-  const [adult, setAdult] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
@@ -596,9 +596,6 @@ export function LoginScreen({
         await dropExistingSession();
       }
       if (mode === "up") {
-        if (!signingOperator && !adult) {
-          throw new Error(locale === "fr" ? "Confirmez que vous avez 18 ans ou plus." : "Confirm you are 18 or older.");
-        }
         const hygiene = localPasswordIssue(password, email);
         if (hygiene) throw new Error(hygiene);
         if (parentSignup) {
@@ -656,10 +653,6 @@ export function LoginScreen({
   }
 
   async function onSocial(providerId: string) {
-    if (!operator && !adult) {
-      setError(locale === "fr" ? "Confirmez que vous avez 18 ans ou plus." : "Confirm you are 18 or older.");
-      return;
-    }
     setBusy(true);
     setStalled(false);
     setError(null);
@@ -875,23 +868,7 @@ export function LoginScreen({
               label={t("password")}
               passwordRef={passwordRef}
             />
-            {mode === "up" && !operator ? (
-              <label className="flex min-h-11 items-start gap-3 text-sm" htmlFor="signup-adult">
-                <input
-                  id="signup-adult"
-                  type="checkbox"
-                  className="mt-1 size-5"
-                  checked={adult}
-                  onChange={(event) => setAdult(event.target.checked)}
-                  required
-                />
-                <span>
-                  {locale === "fr"
-                    ? "Je confirme que j’ai 18 ans ou plus."
-                    : "I confirm I am 18 or older."}
-                </span>
-              </label>
-            ) : null}
+            {mode === "up" && !operator ? <ContinueAgeNotice /> : null}
             {parentSignup ? (
               <ParentSmsFields phone={phone} onPhone={setPhone} consent={smsConsent} onConsent={setSmsConsent} />
             ) : null}
@@ -985,27 +962,14 @@ export function LoginScreen({
               <span className="h-px flex-1 bg-border" />
             </div>
             <div data-ke="social-sign-in">
-              {mode === "in" ? (
-                <label className="mb-2 flex min-h-11 items-start gap-3 text-sm" htmlFor="signin-adult">
-                  <input
-                    id="signin-adult"
-                    type="checkbox"
-                    className="mt-1 size-5"
-                    checked={adult}
-                    onChange={(event) => setAdult(event.target.checked)}
-                  />
-                  <span>
-                    {locale === "fr"
-                      ? "Je confirme que j’ai 18 ans ou plus."
-                      : "I confirm I am 18 or older."}
-                  </span>
-                </label>
-              ) : null}
               {authEnabled ? (
                 <SocialSignInButtons providers={shownProviders} disabled={busy} onSocial={(id) => void onSocial(id)} />
               ) : (
                 <p className="text-sm text-muted">{t("loginDisabled")}</p>
               )}
+              <div className="mt-3">
+                <ContinueAgeNotice />
+              </div>
             </div>
           </div>
           ) : null}
