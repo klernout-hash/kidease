@@ -1,5 +1,6 @@
 import { useLayoutEffect, useState } from "react";
 import { useRouteContext } from "@tanstack/react-router";
+import { nativeShellHidesAdminNow } from "@/lib/native-admin";
 import {
   readClientStoreChannel,
   shellBlocksCommerce,
@@ -20,6 +21,23 @@ export function useInNativeShell(): boolean {
     setBlocked(shellBlocksCommerce(readClientStoreChannel()));
   }, []);
   return blocked;
+}
+
+/**
+ * True inside the Capacitor app. The root beforeLoad reads the user agent
+ * and ke_shell cookie so the first HTML matches. Capacitor.isNativePlatform()
+ * fills in before paint when the user-agent token is missing.
+ */
+export function useNativeHidesAdmin(): boolean {
+  const initial = useRouteContext({
+    from: "__root__",
+    select: (ctx) => Boolean(ctx.hideAdmin),
+  });
+  const [hide, setHide] = useState(initial);
+  useLayoutEffect(() => {
+    setHide(nativeShellHidesAdminNow());
+  }, []);
+  return hide;
 }
 
 export function useStoreChannel(): StoreChannel {

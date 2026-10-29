@@ -14,7 +14,9 @@ import { useCopy } from "@/lib/use-copy";
 import type { CopyKey } from "@/lib/copy";
 import { cn } from "@/lib/utils";
 import { canUseOperatorTools } from "@/lib/operator-tools";
+import { desksVisibleInShell } from "@/lib/native-admin";
 import { startGuestViewCookie } from "@/lib/guest-view";
+import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 
 export { useSessionDesks } from "@/components/session-desks";
 
@@ -109,9 +111,10 @@ export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
   const { session, sticky, setSticky } = useSessionDesks();
   // Same Better Auth session. Pills only navigate: they do not call setRole
   // or rewrite the session cookie. /provider still promotes via its own mount.
+  const hideAdmin = useNativeHidesAdmin();
   if (!session || !showDeskSwitcher(session.desks, session.role, session.email)) return null;
 
-  const desks = headerDesks(session.desks, session.role, session.email);
+  const desks = desksVisibleInShell(headerDesks(session.desks, session.role, session.email), hideAdmin);
   const highlighted = highlightDesk(pathname, sticky, queryDesk);
   const current = highlighted && desks.includes(highlighted) ? highlighted : null;
 
@@ -126,7 +129,7 @@ export function DeskSwitcher({ compact = false }: { compact?: boolean }) {
       className={compact ? "flex w-full min-w-0 flex-col gap-0.5" : "flex w-full min-w-0 flex-col gap-0.5"}
     >
       <SwitchRows desks={desks} current={current} onPick={setSticky} t={t} adminViewer={adminViewer} />
-      {adminViewer && canUseOperatorTools(session.email) ? (
+      {adminViewer && !hideAdmin && canUseOperatorTools(session.email) ? (
         <a
           href="/?guest=1"
           data-ke="admin-guest-view"

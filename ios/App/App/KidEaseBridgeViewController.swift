@@ -9,7 +9,7 @@ class KidEaseBridgeViewController: CAPBridgeViewController {
     private var textScaleScript: WKUserScript?
     override open func instanceDescriptor() -> InstanceDescriptor {
         let descriptor = super.instanceDescriptor()
-        descriptor.appendedUserAgentString = Self.withoutForeignStoreToken(descriptor.appendedUserAgentString)
+        descriptor.appendedUserAgentString = Self.ensureNativeToken(Self.withoutForeignStoreToken(descriptor.appendedUserAgentString))
         descriptor.overridenUserAgentString = Self.withoutForeignStoreToken(descriptor.overridenUserAgentString)
         if let server = descriptor.serverURL {
             descriptor.serverURL = Self.withoutSamsungStoreQuery(server)
@@ -20,6 +20,7 @@ class KidEaseBridgeViewController: CAPBridgeViewController {
     override open func capacitorDidLoad() {
         super.capacitorDidLoad()
         bridge?.registerPluginInstance(AppleSignInPlugin())
+        bridge?.registerPluginInstance(AdminWebOnlyPlugin())
         if let controller = webView?.configuration.userContentController {
             installTextScaleScript(on: controller)
         }
@@ -83,6 +84,15 @@ class KidEaseBridgeViewController: CAPBridgeViewController {
         webView?.evaluateJavaScript("document.documentElement.style.setProperty('--ke-text-scale','\(scale)')")
     }
 
+    /// Every iOS shell sends KidEaseNative so the website can hide Admin before paint.
+    static func ensureNativeToken(_ agent: String?) -> String {
+        let token = "KidEaseNative"
+        let base = (agent ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        if base.contains(token) { return base }
+        if base.isEmpty { return token }
+        return base + " " + token
+    }
+
     /// KidEaseStoreSamsung belongs to the Galaxy Store flavour only.
     static func withoutForeignStoreToken(_ agent: String?) -> String? {
         guard let agent else { return nil }
@@ -100,5 +110,55 @@ class KidEaseBridgeViewController: CAPBridgeViewController {
         if next.count == items.count { return raw }
         parts.queryItems = next.isEmpty ? nil : next
         return parts.string ?? raw
+    }
+}
+
+/// Cancels /admin and Cloudflare Access navigations so the shell never opens Safari.
+/// Keep the path list in step with isAccessProtectedPath in native-admin.ts.
+@objc(AdminWebOnlyPlugin)
+public class AdminWebOnlyPlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "AdminWebOnlyPlugin"
+    public let jsName = "AdminWebOnly"
+    public let pluginMethods: [CAPPluginMethod] = []
+
+    public override func shouldOverrideLoad(_ navigationAction: WKNavigationAction) -> NSNumber? {
+        guard let url = navigationAction.request.url else { return nil }
+        let main = navigationAction.targetFrame == nil || navigationAction.targetFrame?.isMainFrame == true
+        if !main || !Self.shouldStayInApp(url) { return nil }
+        if let webView = self.webView, let next = Self.noteURL(from: url) {
+            DispatchQueue.main.async {
+                webView.load(URLRequest(url: next))
+            }
+        }
+        return NSNumber(value: true)
+    }
+
+    static func shouldStayInApp(_ url: URL) -> Bool {
+        let host = (url.host ?? "").lowercased()
+        if host == "cloudflareaccess.com" || host.hasSuffix(".cloudflareaccess.com") { return true }
+        let ours = host.isEmpty || host == "kidease.ca" || host == "www.kidease.ca" || host.hasSuffix(".kidease.ca")
+        if !ours { return false }
+        var path = url.path
+        if path.count > 1 && path.hasSuffix("/") { path.removeLast() }
+        if path == "/fr" { path = "/" }
+        if path.hasPrefix("/fr/") { path = String(path.dropFirst(3)) }
+        if path.isEmpty { path = "/" }
+        if path == "/use-the-website" { return false }
+        if path == "/admin" || path.hasPrefix("/admin/") || path.hasPrefix("/admin-") { return true }
+        if path == "/api/admin" || path.hasPrefix("/api/admin/") { return true }
+        return false
+    }
+
+    static func noteURL(from url: URL) -> URL? {
+        var parts = URLComponents()
+        parts.scheme = url.scheme == "http" ? "http" : "https"
+        let host = (url.host ?? "").lowercased()
+        if host == "kidease.ca" || host == "www.kidease.ca" || host.hasSuffix(".kidease.ca") {
+            parts.host = url.host
+        } else {
+            parts.host = "www.kidease.ca"
+        }
+        parts.path = "/use-the-website"
+        return parts.url
     }
 }

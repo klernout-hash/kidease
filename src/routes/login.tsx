@@ -33,6 +33,7 @@ import {
   loginRoleFromDesk,
   parseDeskQuery,
   postLoginDestKind,
+  readRememberedRole,
   readStickyDesk,
   resolvePostLoginPath,
   sanitizePostLoginNext,
@@ -51,6 +52,8 @@ import {
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { canContinueAdminSession } from "@/lib/server/reauth";
 import { isNative } from "@/lib/native";
+import { nativeAccountDest } from "@/lib/native-admin";
+import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { useCopy } from "@/lib/use-copy";
 import { confirmAction } from "@/lib/success-confirm";
 import {
@@ -262,17 +265,27 @@ export function LoginScreen({
   const deskHint = parseDeskQuery(search.desk);
   const role = search.role ?? (deskHint ? loginRoleFromDesk(deskHint) : undefined);
   // URL role=admin / next=/admin must not paint an operator page. Kyle types his email.
-  const urlOperator = isAdminLoginIntent({
-    role: role ?? search.role,
-    desk: search.desk,
-    intent: search.intent,
-    next: search.next,
-  });
-  const dest = resolvePostLoginPath({
-    next: search.next,
-    desk: deskHint,
+  // The native app has no Admin desk, so that URL is a normal sign-in.
+  const hideAdmin = useNativeHidesAdmin();
+  const urlOperator =
+    !hideAdmin &&
+    isAdminLoginIntent({
+      role: role ?? search.role,
+      desk: search.desk,
+      intent: search.intent,
+      next: search.next,
+    });
+  const dest = nativeAccountDest({
+    hideAdmin,
+    dest: resolvePostLoginPath({
+      next: search.next,
+      desk: deskHint,
+      role: role ?? null,
+      sticky: readStickyDesk(),
+    }),
     role: role ?? null,
-    sticky: readStickyDesk(),
+    desk: search.desk,
+    remembered: readRememberedRole(),
   });
   const { user, isPending: sessionPending } = useCurrentUserState();
   const [mode, setMode] = useState<"in" | "up">(search.intent === "up" ? "up" : "in");

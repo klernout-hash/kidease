@@ -24,6 +24,7 @@ import {
   twoFactorPageUrl,
   writeStickyDesk,
 } from "@/lib/desks";
+import { isAccessProtectedPath, nativeShellHidesAdminNow } from "@/lib/native-admin";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { destinationAfterSignIn } from "@/lib/role-access";
 import { getMyDesks } from "@/lib/server/roles";
@@ -163,7 +164,16 @@ export async function shouldOpenTwoFactorPage(
 export function assignPostAuthDest(dest: string): void {
   if (typeof window === "undefined") return;
   let url = sanitizePostLoginNext(dest) ?? resolvePostLoginPath({ next: dest });
-  if (isCloudflareAccessPath(url)) {
+  if (nativeShellHidesAdminNow() && isAccessProtectedPath(url)) {
+    const params = new URLSearchParams(window.location.search);
+    const role = params.get("role");
+    const desk = parseDeskQuery(params.get("desk"));
+    const remembered = readRememberedRole();
+    url =
+      role === "provider" || desk === "provider" || remembered === "provider"
+        ? DESK_PATH.provider
+        : DESK_PATH.parent;
+  } else if (isCloudflareAccessPath(url)) {
     const params = new URLSearchParams(window.location.search);
     const role = params.get("role");
     const desk = parseDeskQuery(params.get("desk"));

@@ -72,6 +72,7 @@ import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TourChecklistRouteImport } from './routes/tour-checklist'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
+import { Route as UseTheWebsiteRouteImport } from './routes/use-the-website'
 import { Route as VacancyIndexRouteImport } from './routes/vacancy-index'
 import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as Verify2faRouteImport } from './routes/verify-2fa'
@@ -512,6 +513,11 @@ const TourChecklistRoute = TourChecklistRouteImport.update({
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
   path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UseTheWebsiteRoute = UseTheWebsiteRouteImport.update({
+  id: '/use-the-website',
+  path: '/use-the-website',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VacancyIndexRoute = VacancyIndexRouteImport.update({
@@ -1206,6 +1212,7 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/use-the-website': typeof UseTheWebsiteRoute
   '/vacancy-index': typeof VacancyIndexRoute
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
@@ -1394,6 +1401,7 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/use-the-website': typeof UseTheWebsiteRoute
   '/vacancy-index': typeof VacancyIndexRoute
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
@@ -1585,6 +1593,7 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/use-the-website': typeof UseTheWebsiteRoute
   '/vacancy-index': typeof VacancyIndexRoute
   '/verify': typeof VerifyRoute
   '/verify-2fa': typeof Verify2faRoute
@@ -1777,6 +1786,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/tour-checklist'
     | '/unsubscribe'
+    | '/use-the-website'
     | '/vacancy-index'
     | '/verify'
     | '/verify-2fa'
@@ -1965,6 +1975,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/tour-checklist'
     | '/unsubscribe'
+    | '/use-the-website'
     | '/vacancy-index'
     | '/verify'
     | '/verify-2fa'
@@ -2155,6 +2166,7 @@ export interface FileRouteTypes {
     | '/terms'
     | '/tour-checklist'
     | '/unsubscribe'
+    | '/use-the-website'
     | '/vacancy-index'
     | '/verify'
     | '/verify-2fa'
@@ -2346,6 +2358,7 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   TourChecklistRoute: typeof TourChecklistRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
+  UseTheWebsiteRoute: typeof UseTheWebsiteRoute
   VacancyIndexRoute: typeof VacancyIndexRoute
   VerifyRoute: typeof VerifyRoute
   Verify2faRoute: typeof Verify2faRoute
@@ -2844,6 +2857,13 @@ declare module '@tanstack/react-router' {
       path: '/unsubscribe'
       fullPath: '/unsubscribe'
       preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/use-the-website': {
+      id: '/use-the-website'
+      path: '/use-the-website'
+      fullPath: '/use-the-website'
+      preLoaderRoute: typeof UseTheWebsiteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/vacancy-index': {
@@ -4046,6 +4066,7 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   TourChecklistRoute: TourChecklistRoute,
   UnsubscribeRoute: UnsubscribeRoute,
+  UseTheWebsiteRoute: UseTheWebsiteRoute,
   VacancyIndexRoute: VacancyIndexRoute,
   VerifyRoute: VerifyRoute,
   Verify2faRoute: Verify2faRoute,
