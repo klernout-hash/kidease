@@ -249,9 +249,10 @@ test("store redirects, CSP, and search/login paint hooks", () => {
 
   const csp = buildContentSecurityPolicy("noncevalue");
   assert.match(csp, /form-action 'self' https:\/\/accounts\.google\.com/);
-  assert.match(csp, /script-src[^;]*https:\/\/maps\.googleapis\.com/);
-  assert.match(csp, /style-src[^;]*https:\/\/maps\.gstatic\.com/);
-  assert.match(csp, /connect-src[^;]*https:\/\/tile\.googleapis\.com/);
+  assert.match(csp, /connect-src[^;]*https:\/\/tiles\.openfreemap\.org/);
+  assert.match(csp, /connect-src[^;]*https:\/\/tiles\.maps\.eox\.at/);
+  assert.doesNotMatch(csp, /maps\.googleapis\.com/);
+  assert.doesNotMatch(csp, /tile\.googleapis\.com/);
   assert.doesNotMatch(src("src/routes/__root.tsx"), /href: "https:\/\/maps\.googleapis\.com"/);
 
   assert.match(src("public/apple-app-site-association"), /GAUC28WJXZ\.ca\.kidease\.app/);

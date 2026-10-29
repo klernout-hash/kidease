@@ -867,12 +867,12 @@ test("logo pins are smaller at the radius-fit zoom and full size from zoom 12", 
   assert.match(css, /\.ke-cluster-bubble/);
 });
 
-test("the map still waits on the Google Maps loader", () => {
+test("the map still waits on the OpenFreeMap loader", () => {
   const view = read("src/components/map-view.tsx");
-  const loader = read("src/lib/google-maps.ts");
-  assert.match(view, /loadGoogleMaps\(/);
-  assert.match(view, /loadAdvancedMarkerElement\(/);
+  const loader = read("src/lib/osm-map.ts");
   assert.match(view, /createKidEaseMap\(/);
+  assert.match(view, /preloadOsmMap|createKidEaseMap/);
+  assert.doesNotMatch(view, /loadGoogleMaps\(/);
   assert.match(view, /mapPinsInView/);
   assert.match(view, /MAP_FETCH_DEBOUNCE_MS/);
   assert.match(view, /ke-cluster-bubble/);
@@ -889,6 +889,6 @@ test("the map still waits on the Google Maps loader", () => {
   assert.match(view, /ke-logo-pin is-active/);
   assert.doesNotMatch(view, /className = "ke-map-dot"/);
   assert.match(view, /ke-logo-pin/);
-  assert.match(loader, /importLibrary\("marker"\)/);
+  assert.match(loader, /tiles\.openfreemap\.org/);
   assert.match(loader, /MAP_VIEW_WAIT_MS/);
 });

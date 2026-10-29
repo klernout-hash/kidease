@@ -4,14 +4,7 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { featuredHomeAgreement } from "../src/lib/home-live-strip.ts";
-import {
-  MAP_SCRIPT_WAIT_MS,
-  MAP_VIEW_WAIT_MS,
-  MAPS_LOAD_BUDGET_MS,
-  claimMapsScriptSlot,
-  mapsNamespaceReady,
-  nextMapsRetryDelayMs,
-} from "../src/lib/google-maps.ts";
+import { MAP_LOAD_TIMEOUT, MAP_STYLE_WAIT_MS, MAP_VIEW_WAIT_MS } from "../src/lib/osm-map.ts";
 import { isFailedPhotoUrl, rememberFailedPhoto } from "../src/lib/listing-photo.ts";
 import { PROVIDER_ADDONS, PROVIDER_PLANS, planPriceHint } from "../src/lib/provider-plans.ts";
 import { formatPlanCad } from "../src/lib/upgrade-plans.ts";
@@ -22,26 +15,19 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("Maps loader waits for Map, retries once, and does not inject a second script", () => {
-  assert.equal(MAP_SCRIPT_WAIT_MS, 12_000);
-  assert.equal(MAPS_LOAD_BUDGET_MS, 24_000);
-  assert.ok(MAP_VIEW_WAIT_MS > MAPS_LOAD_BUDGET_MS);
-  assert.equal(nextMapsRetryDelayMs(0), 500);
-  assert.equal(nextMapsRetryDelayMs(1), 1_500);
-  assert.equal(nextMapsRetryDelayMs(2), null);
-  assert.equal(mapsNamespaceReady(null), false);
-  assert.equal(mapsNamespaceReady({}), false);
-  assert.equal(mapsNamespaceReady({ Map: function Map() {} }), true);
-  assert.equal(claimMapsScriptSlot({ getElementById: () => null }), "inject");
-  assert.equal(claimMapsScriptSlot({ getElementById: () => ({ id: "kidease-google-maps-js" }) }), "pending");
-
-  const maps = src("src/lib/google-maps.ts");
-  assert.match(maps, /importLibrary\("maps"\)/);
-  assert.match(maps, /callback=/);
-  assert.match(maps, /claimMapsScriptSlot/);
-  assert.match(maps, /loading=async/);
-  assert.doesNotMatch(maps, /Google Maps script loaded without google\.maps/);
-  assert.equal((maps.match(/document\.head\.appendChild\(script\)/g) ?? []).length, 1);
+test("the map waits for OpenFreeMap tiles and does not load Google Maps", () => {
+  assert.equal(MAP_STYLE_WAIT_MS, 12_000);
+  assert.ok(MAP_VIEW_WAIT_MS > MAP_STYLE_WAIT_MS);
+  assert.equal(MAP_LOAD_TIMEOUT, "Map timed out");
+  const maps = src("src/lib/osm-map.ts");
+  assert.match(maps, /tiles\.openfreemap\.org/);
+  assert.match(maps, /preloadOsmMap/);
+  assert.doesNotMatch(maps, /maps\.googleapis\.com/);
+  assert.doesNotMatch(maps, /document\.head\.appendChild\(script\)/);
+  const view = src("src/components/map-view.tsx");
+  assert.match(view, /createKidEaseMap/);
+  assert.match(view, /setLoadGen/);
+  assert.doesNotMatch(view, /loadGoogleMaps/);
 });
 
 test("featured chip and section share one count and hide together at zero", () => {
