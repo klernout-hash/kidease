@@ -512,8 +512,10 @@ export function Listing() {
     province: d.province,
     postalCode: d.postalCode,
   };
-  const mapsQuery = encodeURIComponent(`${address}, ${d.city}, ${d.province} ${d.postalCode}`);
-  const mapsPlace = `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`;
+  const osmPlace =
+    Number.isFinite(d.lat) && Number.isFinite(d.lng)
+      ? `https://www.openstreetmap.org/?mlat=${d.lat}&mlon=${d.lng}#map=16/${d.lat}/${d.lng}`
+      : "https://www.openstreetmap.org/";
   const parentRated = (d.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (d.parentRatingX10 ?? 0) > 0;
   const googleRated = d.reviewCount > 0 && d.ratingX10 > 0;
 
@@ -940,13 +942,13 @@ export function Listing() {
                 <DirectionsButton className="shrink-0" />
               </div>
               <div className="mt-3 overflow-hidden rounded-lg ring-1 ring-border">
-                <ListingMap lat={d.lat} lng={d.lng} title={`${name}: Google Maps`} />
+                <ListingMap lat={d.lat} lng={d.lng} title={`${name} on the map`} />
               </div>
               <p className="mt-3 text-sm text-muted">
                 {address}, {d.city}, {d.province} {d.postalCode}
               </p>
               <a
-                href={mapsPlace}
+                href={osmPlace}
                 target="_blank"
                 rel="noreferrer"
                 className="mt-1 inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"

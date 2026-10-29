@@ -122,12 +122,12 @@ describe("login strength: email Connexion primary, logout, honest errors", () =>
 
 describe("QA 2026-09-10: map hang + licensed-not-live honesty", () => {
   it("times out Maps JS and offers retry plus list fallback", () => {
-    const maps = src("src/lib/google-maps.ts");
+    const maps = src("src/lib/osm-map.ts");
     const view = src("src/components/map-view.tsx");
     const search = src("src/routes/search.tsx");
-    assert.match(maps, /MAP_SCRIPT_WAIT_MS = 12_000/);
+    assert.match(maps, /MAP_STYLE_WAIT_MS = 12_000/);
     assert.match(maps, /MAP_VIEW_WAIT_MS/);
-    assert.match(maps, /Google Maps timed out/);
+    assert.match(maps, /Map timed out/);
     assert.match(view, /mapRetry/);
     assert.match(view, /mapShowList/);
     assert.match(view, /onFallback/);

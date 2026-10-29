@@ -1,96 +1,40 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getSql } from "@/lib/db";
 import { catalogByIdGet } from "@/lib/catalog";
 import { placesBiasOrigin } from "@/lib/default-origin";
-
-const KEY = process.env.GOOGLE_PLACES_API_KEY || process.env.GOOGLE_MAPS_API_KEY || "";
-
-type PlaceHit = { placeId: string; ratingX10: number; reviewCount: number };
+import {
+  PHOTON_MAX_WAIT_MS,
+  PHOTON_MIN_INTERVAL_MS,
+  PHOTON_USER_AGENT,
+  decodePhotonPlaceId,
+  photonSearchUrl,
+  photonSuggestions,
+  photonToPlace,
+  type PhotonFeature,
+  type PhotonPlace,
+} from "@/lib/photon";
 
 export type PlaceSuggestion = { placeId: string; label: string; secondary: string };
 export type ResolvedPlace = { lat: number; lng: number; label: string };
 
-/** Canadian product. Bias is not a hard bound — typed Toronto / Vancouver still resolve. */
-const CA_COMPONENTS = "country:ca";
-
-function placesKey() {
-  return KEY;
-}
-
-export const suggestPlaces = createServerFn({ method: "POST" })
-  .validator((input: { q: string; session?: string; lat?: number; lng?: number }) => ({
-    q: String(input?.q ?? "").trim().slice(0, 120),
-    session: String(input?.session ?? "").slice(0, 64),
-    lat: typeof input?.lat === "number" && Number.isFinite(input.lat) ? input.lat : undefined,
-    lng: typeof input?.lng === "number" && Number.isFinite(input.lng) ? input.lng : undefined,
-  }))
-  .handler(async ({ data }): Promise<PlaceSuggestion[]> => {
-    if (!placesKey() || data.q.length < 2) return [];
-    const bias = placesBiasOrigin({ lat: data.lat, lng: data.lng });
-    const params = new URLSearchParams({
-      input: data.q,
-      key: placesKey(),
-      types: "(cities)",
-      components: CA_COMPONENTS,
-      language: "en",
-      location: `${bias.lat},${bias.lng}`,
-      radius: "50000",
-    });
-    if (data.session) params.set("sessiontoken", data.session);
-    const res = await fetch(`https://maps.googleapis.com/maps/api/place/autocomplete/json?${params}`);
-    if (!res.ok) return [];
-    const json = (await res.json()) as {
-      predictions?: Array<{
-        place_id?: string;
-        description?: string;
-        structured_formatting?: { main_text?: string; secondary_text?: string };
-      }>;
-    };
-    return (json.predictions ?? [])
-      .filter((p) => p.place_id && p.description)
-      .slice(0, 6)
-      .map((p) => ({
-        placeId: p.place_id!,
-        label: p.structured_formatting?.main_text || p.description!,
-        secondary: p.structured_formatting?.secondary_text || p.description || "",
-      }));
-  });
-
-export const resolvePlaceId = createServerFn({ method: "POST" })
-  .validator((input: { placeId: string; session?: string }) => ({
-    placeId: String(input?.placeId ?? "").slice(0, 256),
-    session: String(input?.session ?? "").slice(0, 64),
-  }))
-  .handler(async ({ data }): Promise<ResolvedPlace | null> => {
-    if (!placesKey() || !data.placeId) return null;
-    const params = new URLSearchParams({
-      place_id: data.placeId,
-      key: placesKey(),
-      fields: "geometry,formatted_address,name",
-    });
-    if (data.session) params.set("sessiontoken", data.session);
-    const res = await fetch(`https://maps.googleapis.com/maps/api/place/details/json?${params}`);
-    if (!res.ok) return null;
-    const json = (await res.json()) as {
-      result?: {
-        name?: string;
-        formatted_address?: string;
-        geometry?: { location?: { lat?: number; lng?: number } };
-      };
-    };
-    const loc = json.result?.geometry?.location;
-    if (typeof loc?.lat !== "number" || typeof loc?.lng !== "number") return null;
-    return {
-      lat: loc.lat,
-      lng: loc.lng,
-      label: json.result?.formatted_address || json.result?.name || data.placeId,
-    };
-  });
-
 const GEO_TTL_MS = 24 * 60 * 60 * 1000;
 const GEO_MISS_TTL_MS = 10 * 60 * 1000;
 const GEO_MAX = 200;
+
 const geoCache = new Map<string, { at: number; value: ResolvedPlace | null }>();
+const suggestCache = new Map<string, { at: number; value: PlaceSuggestion[] }>();
+let photonReadyAt = 0;
+
+function delay(ms: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function trimCache(map: Map<string, unknown>) {
+  if (map.size <= GEO_MAX) return;
+  const oldest = map.keys().next().value;
+  if (typeof oldest === "string") map.delete(oldest);
+}
 
 function readGeo(key: string): ResolvedPlace | null | undefined {
   const hit = geoCache.get(key);
@@ -103,95 +47,101 @@ function readGeo(key: string): ResolvedPlace | null | undefined {
   return hit.value;
 }
 
-function trimCache(map: Map<string, unknown>) {
-  if (map.size <= GEO_MAX) return;
-  const oldest = map.keys().next().value;
-  if (typeof oldest === "string") map.delete(oldest);
-}
-
 function storeGeo(key: string, value: ResolvedPlace | null) {
   geoCache.set(key, { at: Date.now(), value });
   trimCache(geoCache);
 }
 
+/**
+ * One in-flight Photon call per server process.
+ * A long queue returns nothing so the city list can answer instead.
+ */
+async function photonFetch(url: string): Promise<PhotonFeature[] | "busy"> {
+  const now = Date.now();
+  const wait = Math.max(0, photonReadyAt - now);
+  if (wait > PHOTON_MAX_WAIT_MS) return "busy";
+  photonReadyAt = now + wait + PHOTON_MIN_INTERVAL_MS;
+  if (wait > 0) await delay(wait);
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 4000);
+  try {
+    const res = await fetch(url, {
+      headers: { Accept: "application/json", "User-Agent": PHOTON_USER_AGENT },
+      signal: ctrl.signal,
+    });
+    if (!res.ok) return [];
+    const json = (await res.json()) as { features?: PhotonFeature[] };
+    return Array.isArray(json.features) ? json.features : [];
+  } catch {
+    return [];
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+export const suggestPlaces = createServerFn({ method: "POST" })
+  .validator((input: { q: string; session?: string; lat?: number; lng?: number }) => ({
+    q: String(input?.q ?? "").trim().slice(0, 120),
+    session: String(input?.session ?? "").slice(0, 64),
+    lat: typeof input?.lat === "number" && Number.isFinite(input.lat) ? input.lat : undefined,
+    lng: typeof input?.lng === "number" && Number.isFinite(input.lng) ? input.lng : undefined,
+  }))
+  .handler(async ({ data }): Promise<PlaceSuggestion[]> => {
+    if (data.q.length < 2) return [];
+    const bias = placesBiasOrigin({ lat: data.lat, lng: data.lng });
+    const cacheKey = `${data.q.toLowerCase()}|${bias.lat.toFixed(2)},${bias.lng.toFixed(2)}`;
+    const saved = suggestCache.get(cacheKey);
+    if (saved && Date.now() - saved.at < GEO_TTL_MS) return saved.value;
+    const features = await photonFetch(photonSearchUrl(data.q, bias, 8));
+    if (features === "busy") return [];
+    const rows = photonSuggestions(features, 6);
+    if (rows.length) {
+      suggestCache.set(cacheKey, { at: Date.now(), value: rows });
+      trimCache(suggestCache);
+    }
+    return rows;
+  });
+
+export const resolvePlaceId = createServerFn({ method: "POST" })
+  .validator((input: { placeId: string; session?: string }) => ({
+    placeId: String(input?.placeId ?? "").slice(0, 512),
+    session: String(input?.session ?? "").slice(0, 64),
+  }))
+  .handler(async ({ data }): Promise<ResolvedPlace | null> => {
+    return decodePhotonPlaceId(data.placeId);
+  });
+
 export const geocodePlace = createServerFn({ method: "POST" })
   .validator((q: string) => String(q ?? "").trim().slice(0, 160))
   .handler(async ({ data }): Promise<ResolvedPlace | null> => {
-    if (!placesKey() || !data) return null;
+    if (!data) return null;
     const cacheKey = data.toLowerCase();
     const cached = readGeo(cacheKey);
     if (cached !== undefined) return cached;
     const bias = placesBiasOrigin();
-    const params = new URLSearchParams({
-      address: data,
-      key: placesKey(),
-      components: CA_COMPONENTS,
-      region: "ca",
-      bounds: `${bias.lat - 0.4},${bias.lng - 0.6}|${bias.lat + 0.4},${bias.lng + 0.6}`,
-    });
-    const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?${params}`);
-    if (!res.ok) return null;
-    const json = (await res.json()) as {
-      results?: Array<{
-        formatted_address?: string;
-        geometry?: { location?: { lat?: number; lng?: number } };
-      }>;
-    };
-    const hit = json.results?.[0];
-    const loc = hit?.geometry?.location;
-    if (typeof loc?.lat !== "number" || typeof loc?.lng !== "number") {
-      storeGeo(cacheKey, null);
-      return null;
+    const features = await photonFetch(photonSearchUrl(data, bias, 5));
+    if (features === "busy") return null;
+    let place: PhotonPlace | null = null;
+    for (const feature of features) {
+      place = photonToPlace(feature, data);
+      if (place) break;
     }
-    const place = { lat: loc.lat, lng: loc.lng, label: hit?.formatted_address || data };
     storeGeo(cacheKey, place);
     return place;
   });
 
-const placeCache = new Map<string, { at: number; value: PlaceHit | null }>();
-
-async function lookupPlace(name: string, address: string): Promise<PlaceHit | null> {
-  if (!KEY) return null;
-  const cacheKey = `${name}|${address}`.toLowerCase();
-  const saved = placeCache.get(cacheKey);
-  if (saved && Date.now() - saved.at < (saved.value ? GEO_TTL_MS : GEO_MISS_TTL_MS)) return saved.value;
-  const q = encodeURIComponent(`${name} ${address}`);
-  const url = `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${q}&inputtype=textquery&fields=place_id,rating,user_ratings_total&key=${KEY}`;
-  const res = await fetch(url);
-  if (!res.ok) return null;
-  const json = (await res.json()) as {
-    candidates?: Array<{ place_id?: string; rating?: number; user_ratings_total?: number }>;
-  };
-  const hit = json.candidates?.[0];
-  if (!hit?.place_id) {
-    placeCache.set(cacheKey, { at: Date.now(), value: null });
-    trimCache(placeCache);
-    return null;
-  }
-  const place = {
-    placeId: hit.place_id,
-    ratingX10: Math.round((hit.rating ?? 0) * 10),
-    reviewCount: hit.user_ratings_total ?? 0,
-  };
-  placeCache.set(cacheKey, { at: Date.now(), value: place });
-  trimCache(placeCache);
-  return place;
-}
-
+/**
+ * Stored ratings only. The Google Places refresh is off while that account
+ * is not in use. Nothing here invents a score.
+ */
 export const refreshGoogleRating = createServerFn({ method: "POST" })
   .validator((id: string) => id)
   .handler(async ({ data: id }) => {
     const listed = await catalogByIdGet(id);
     if (!listed) return null;
-    const hit = await lookupPlace(listed.name, `${listed.address}, ${listed.city} ${listed.province}`);
-    if (!hit) return { ratingX10: listed.ratingX10, reviewCount: listed.reviewCount, googlePlaceId: listed.googlePlaceId };
-    const sql = await getSql();
-    await sql.query(
-      `update daycares set google_place_id = $2, google_rating_x10 = $3, google_review_count = $4, google_synced_at = now(),
-        rating_x10 = case when $3 > 0 then $3 else rating_x10 end,
-        review_count = case when $4 > 0 then $4 else review_count end
-       where id = $1`,
-      [id, hit.placeId, hit.ratingX10, hit.reviewCount],
-    ).catch(() => undefined);
-    return { ...hit, googlePlaceId: hit.placeId };
+    return {
+      ratingX10: listed.ratingX10,
+      reviewCount: listed.reviewCount,
+      googlePlaceId: listed.googlePlaceId,
+    };
   });
