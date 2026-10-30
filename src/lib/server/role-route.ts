@@ -257,6 +257,8 @@ export async function beforeLoadPrivate(pathname: string, chrome?: RoleChromePay
     throw redirect({
       to: isFrPath(pathname) ? "/fr/login" : "/login",
       search: { intent: "in" as const, next: decision.next },
+      // Replace the protected entry so Back / swipe-back never re-enters the gate (KE-04).
+      replace: true,
     });
   }
   if (decision.kind === "home") {

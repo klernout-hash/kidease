@@ -29,6 +29,7 @@ import { useAppStore } from "@/lib/store";
 import { readDistanceUnit } from "@/lib/units";
 import { readLocationConsent } from "@/lib/location-consent";
 import { bindAndroidBack } from "@/lib/android-back";
+import { currentAuthBackFallback, isAuthPagePath } from "@/lib/auth/auth-back";
 import { usePushRegistration } from "@/lib/use-push";
 import { applyTheme, readThemePreference } from "@/lib/theme";
 
@@ -138,7 +139,15 @@ export function NativeBoot() {
     let remove = () => {};
     let cancelled = false;
     void bindAndroidBack(
-      () => window.history.back(),
+      (canGoBack) => {
+        // Sign-in/sign-up opened cold (no history): go to a public page, never the protected `next`.
+        if (!canGoBack && isAuthPagePath(window.location.pathname)) {
+          const next = new URLSearchParams(window.location.search).get("next");
+          window.location.replace(currentAuthBackFallback(next, window.location.pathname.startsWith("/fr/") ? "fr" : "en"));
+          return;
+        }
+        window.history.back();
+      },
       () => {
         void import("@capacitor/app").then(({ App }) => App.exitApp());
       },
