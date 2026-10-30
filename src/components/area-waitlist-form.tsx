@@ -112,7 +112,7 @@ export function AreaWaitlistForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="mt-4 grid w-full min-w-0 max-w-full gap-3 rounded-xl bg-surface p-4 ring-1 ring-border" data-ke="area-waitlist-form">
+    <form onSubmit={onSubmit} className="mt-4 grid w-full min-w-0 max-w-full gap-3 overflow-x-hidden rounded-xl bg-surface p-4 ring-1 ring-border contain-inline-size" data-ke="area-waitlist-form">
       <div>
         <h2 className="font-display text-xl">{copy.areaTitle}</h2>
         <p className="mt-1 text-sm text-muted">{copy.areaLead}</p>
@@ -161,9 +161,9 @@ export function AreaWaitlistForm({
           onChange={(event) => setAgeGroup(event.target.value)}
           onFocus={focusIn}
         >
-          <option value="infant">{copy.infant}</option>
-          <option value="toddler">{copy.toddler}</option>
-          <option value="preschool">{copy.preschool}</option>
+          <option value="infant">{copy.infantShort}</option>
+          <option value="toddler">{copy.toddlerShort}</option>
+          <option value="preschool">{copy.preschoolShort}</option>
           <option value="any">{copy.any}</option>
         </select>
       </label>

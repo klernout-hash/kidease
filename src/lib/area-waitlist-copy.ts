@@ -20,6 +20,9 @@ export type AreaWaitlistCopy = {
   toddler: string;
   preschool: string;
   any: string;
+  infantShort: string;
+  toddlerShort: string;
+  preschoolShort: string;
   startLabel: string;
   startHint: string;
   join: string;
@@ -61,6 +64,9 @@ const en: AreaWaitlistCopy = {
   toddler: "Toddler (18 to 36 months)",
   preschool: "Preschool (3 to 5 years)",
   any: "Any age",
+  infantShort: "Infant",
+  toddlerShort: "Toddler",
+  preschoolShort: "Preschool",
   startLabel: "Desired start date",
   startHint: "Optional. We look for a spot that can start within about 3 months.",
   join: "Join an area waitlist",
@@ -102,6 +108,9 @@ const fr: AreaWaitlistCopy = {
   toddler: "Tout-petit (18 à 36 mois)",
   preschool: "Préscolaire (3 à 5 ans)",
   any: "Tout âge",
+  infantShort: "Poupon",
+  toddlerShort: "Tout-petit",
+  preschoolShort: "Préscolaire",
   startLabel: "Date de début souhaitée",
   startHint: "Facultatif. Nous cherchons une place qui peut commencer dans environ 3 mois.",
   join: "Joindre une liste de secteur",
