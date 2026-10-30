@@ -429,7 +429,10 @@ async function windowsInputs(browser, base, problems) {
   await touch.close();
 }
 
-export async function runStoreViewportPass(browser, base) {
+export const STORE_GROUP_NAMES = Object.freeze(["google", "samsung", "huawei", "microsoft"]);
+
+/** `stores` limits the pass to some store groups so CI can shard them. */
+export async function runStoreViewportPass(browser, base, stores = STORE_GROUP_NAMES) {
   const problems = [];
   const groups = [
     { store: "google", viewports: [...ANDROID_PHONES, ...ANDROID_TABLETS.filter((vp) => vp.store === "google")] },
@@ -437,9 +440,7 @@ export async function runStoreViewportPass(browser, base) {
     { store: "huawei", viewports: [...FOLDABLES.filter((vp) => vp.store === "huawei"), ...ANDROID_TABLETS.filter((vp) => vp.store === "huawei")] },
     { store: "microsoft", viewports: WINDOWS_SIZES },
   ];
-  // Each store group gets its own browser context, so the groups run in
-  // parallel. Run one after another they took about 13 minutes in CI.
-  await Promise.all(groups.map(async (group) => {
+  for (const group of groups.filter((g) => stores.includes(g.store))) {
     const context = await browser.newContext({
       viewport: { width: 360, height: 800 },
       userAgent: STORE_UAS[group.store],
@@ -478,7 +479,7 @@ export async function runStoreViewportPass(browser, base) {
     }
     if (group.store === "microsoft") await liveWindow(page, base, problems);
     await context.close();
-  }));
-  await windowsInputs(browser, base, problems);
+  }
+  if (stores.includes("microsoft")) await windowsInputs(browser, base, problems);
   return problems;
 }
