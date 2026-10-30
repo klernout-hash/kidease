@@ -507,7 +507,7 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
   }
   const nowMs = now.getTime();
   const sql = await getSql();
-  const { ensureAreaWaitlistSchema, runAreaWaitlistAlerts } = await import("@/lib/server/area-waitlist");
+  const { ensureAreaWaitlistSchema, runAreaWaitlistAlerts } = await import("@/lib/server/area-waitlist-job");
   await ensureAreaWaitlistSchema(sql).catch(() => undefined);
   const searches = await sql<SavedSearchJobRow>`
     select id, user_id, name, center_lat, center_lng, center_label, radius_km,

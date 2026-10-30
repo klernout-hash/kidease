@@ -122,8 +122,6 @@ function validateSaveInput(input: SaveSearchInput) {
 }
 
 async function readSavedSearches(sql: Awaited<ReturnType<typeof getSql>>, userId: string): Promise<SavedSearch[]> {
-  const { ensureAreaWaitlistSchema } = await import("@/lib/server/area-waitlist");
-  await ensureAreaWaitlistSchema(sql).catch(() => undefined);
   const rows = await sql<SavedSearchRow>`
     select id, name, center_lat, center_lng, center_label, radius_km, age_band,
            filters, alerts_enabled, last_checked_at, created_at, updated_at
