@@ -213,6 +213,11 @@ async function computeRoleChrome(bearer: string | undefined, req: Request | null
       planLabel = row?.selected_plan === "network" ? "Network" : "Pro";
       renewsOn = iso(row?.stripe_current_period_end);
     }
+    // Free founding period: keep entitlements (paid) but never surface a paid plan name or renewal.
+    if (!plansOn) {
+      planLabel = null;
+      renewsOn = null;
+    }
     const ownedSlugs = role === "provider" || role === "admin" ? slugList(row?.slugs) : [];
     return {
       signedIn: true,

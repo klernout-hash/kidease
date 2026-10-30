@@ -3251,5 +3251,6 @@
   "statusFees": "{count} mit bestätigter Gebühr",
   "statusAges": "{count} mit bestätigtem Alter",
   "statusUnavailable": "Wir konnten gerade nicht prüfen. Versuche die Suche, oder komm in einer Minute wieder.",
-  "deleteAccountWarn": "Das schließt dein KidEase-Konto. Wir melden dich auf diesem Gerät ab. Wenn du Mit Apple anmelden genutzt hast, widerrufen wir diese Anmeldung. Tippe DELETE zur Bestätigung."
+  "deleteAccountWarn": "Das schließt dein KidEase-Konto. Wir melden dich auf diesem Gerät ab. Wenn du Mit Apple anmelden genutzt hast, widerrufen wir diese Anmeldung. Tippe DELETE zur Bestätigung.",
+  "packetHealthAfterAccept": "Allergien, Medikamente, Arzt und Notfallkontakte werden sichtbar, wenn Sie diese Anfrage annehmen."
 }

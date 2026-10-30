@@ -3251,5 +3251,6 @@
   "statusFees": "{count} con tarifa confirmada",
   "statusAges": "{count} con edades confirmadas",
   "statusUnavailable": "No pudimos revisar ahora. Prueba la búsqueda o vuelve en un minuto.",
-  "deleteAccountWarn": "Esto cierra tu cuenta de KidEase. Te cerramos la sesión en este dispositivo. Si usaste Iniciar sesión con Apple, revocamos ese acceso. Escribe DELETE para confirmar."
+  "deleteAccountWarn": "Esto cierra tu cuenta de KidEase. Te cerramos la sesión en este dispositivo. Si usaste Iniciar sesión con Apple, revocamos ese acceso. Escribe DELETE para confirmar.",
+  "packetHealthAfterAccept": "Las alergias, los medicamentos, el médico y los contactos de emergencia se muestran cuando acepta esta solicitud."
 }

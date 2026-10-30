@@ -5,6 +5,7 @@
  */
 
 import { listingCompleteness } from "@/lib/listing-readiness";
+import { centreMissingInfo } from "@/lib/centre-missing-info";
 import { listingStatusFromClaim } from "@/lib/listing-status";
 import { listingVerifiedCoach } from "@/lib/listing-verified";
 import { isClaimVerified, normalizeLicenseStatus, type TrustListing } from "@/lib/trust";
@@ -83,7 +84,8 @@ export function listingNeedsLicence(
 
 export function listingNeedsCompleteness(item: Daycare): boolean {
   const coach = listingVerifiedCoach(item);
-  return coach.missingBlockers.some((id) => id !== "screening" && id !== "license");
+  if (coach.missingBlockers.some((id) => id !== "screening" && id !== "license")) return true;
+  return centreMissingInfo(item).some((m) => m.field !== "license");
 }
 
 export function centreNeedsScreening(centre: ScreeningGapCentre): boolean {

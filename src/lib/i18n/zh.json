@@ -3251,5 +3251,6 @@
   "statusFees": "{count} 个已确认费用",
   "statusAges": "{count} 个已确认年龄",
   "statusUnavailable": "刚才无法检查。请试试搜索，或稍后再来。",
-  "deleteAccountWarn": "这将关闭您的 KidEase 账户。我们会在此设备上退出登录。如果您用过通过 Apple 登录，我们会撤销该登录。输入 DELETE 以确认。"
+  "deleteAccountWarn": "这将关闭您的 KidEase 账户。我们会在此设备上退出登录。如果您用过通过 Apple 登录，我们会撤销该登录。输入 DELETE 以确认。",
+  "packetHealthAfterAccept": "接受此申请后，才会显示过敏、药物、医生和紧急联系人信息。"
 }

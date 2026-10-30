@@ -91,3 +91,11 @@ describe("maps use OpenFreeMap, not a Google Maps key", () => {
     assert.doesNotMatch(read("src/lib/place-suggest.ts"), /loadGoogleMaps/);
   });
 });
+
+describe("retired Google Maps vars never reach the client bundle", () => {
+  it("vite.config drops VITE_GOOGLE_MAPS_API_KEY and VITE_GOOGLE_MAPS_MAP_ID before env load", () => {
+    const vite = read("vite.config.ts");
+    assert.match(vite, /RETIRED_CLIENT_ENV = \["VITE_GOOGLE_MAPS_API_KEY", "VITE_GOOGLE_MAPS_MAP_ID"\]/);
+    assert.match(vite, /delete process\.env\[name\]/);
+  });
+});

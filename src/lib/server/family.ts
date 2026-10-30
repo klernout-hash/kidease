@@ -15,6 +15,7 @@ import { isAdminOnlyListing, isHiddenTestListing, listingVisibilityForOwners, pr
 import { callerMayUseAdminOnlyListing } from "@/lib/server/public-listing";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { emptyChild, mapChild, type ChildRow } from "@/lib/child-profile";
+import { childForCentre } from "@/lib/child-health-gate";
 import { openHealth, revealChildHealth, sealHealth } from "@/lib/child-health-crypto";
 import { logChildProfileAccess } from "@/lib/server/child-access-log";
 import { childBirthdateMessage, childBirthdateProblem } from "@/lib/child-birthdate";
@@ -962,7 +963,11 @@ export const getThread = createServerFn({ method: "GET" })
                photo_ok, sunscreen_ok, notes
         from children where id = ${b.child_id} limit 1
       `;
-      if (kids[0]) child = mapChild(revealChildHealth(kids[0]));
+      if (kids[0]) {
+        const full = mapChild(revealChildHealth(kids[0]));
+        // Parent sees their own child. Centre sees health only after accepting the request.
+        child = conv[0].user_id === context.userId ? full : childForCentre(full, b.status);
+      }
     }
     const mapped: Message[] = messages.map((m) => ({
       id: m.id,

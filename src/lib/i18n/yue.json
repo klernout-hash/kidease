@@ -3251,5 +3251,6 @@
   "statusFees": "{count} 個已確認收費",
   "statusAges": "{count} 個已確認年齡",
   "statusUnavailable": "而家檢查唔到。試下搜尋，或者遲啲再嚟。",
-  "deleteAccountWarn": "呢個會關閉你嘅 KidEase 帳戶。我哋會喺呢部裝置登出。如果你用過透過 Apple 登入，我哋會撤銷嗰個登入。輸入 DELETE 確認。"
+  "deleteAccountWarn": "呢個會關閉你嘅 KidEase 帳戶。我哋會喺呢部裝置登出。如果你用過透過 Apple 登入，我哋會撤銷嗰個登入。輸入 DELETE 確認。",
+  "packetHealthAfterAccept": "接受呢個申請之後，先會顯示敏感、藥物、醫生同緊急聯絡人。"
 }

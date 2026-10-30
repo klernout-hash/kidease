@@ -12,6 +12,14 @@ import { wellKnownAppLinksPlugin } from "./scripts/well-known-app-links.mjs";
 import { clientNodeBuiltinStub } from "./scripts/client-node-stub.mjs";
 
 /**
+ * Maps are OpenFreeMap (no key). Several helpers read `import.meta.env` as an object,
+ * which makes Vite inline every VITE_* var into client chunks. Drop the retired Google
+ * Maps vars before Vite loads env so a leftover key never ships in the bundle.
+ */
+export const RETIRED_CLIENT_ENV = ["VITE_GOOGLE_MAPS_API_KEY", "VITE_GOOGLE_MAPS_MAP_ID"] as const;
+for (const name of RETIRED_CLIENT_ENV) delete process.env[name];
+
+/**
  * Finish PGLite bootstrap during dev-server setup (before traffic). Vite awaits
  * async `configureServer` hooks. Production: `src/lib/db` kicks `ensureDbReady`
  * on import.

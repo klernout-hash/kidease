@@ -345,4 +345,6 @@ export type SpotRequest = Booking & {
   allergies?: string;
   epiPen?: boolean;
   child?: Child | null;
+  /** True until the centre accepts: health record withheld. */
+  healthLocked?: boolean;
 };

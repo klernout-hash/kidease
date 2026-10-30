@@ -466,6 +466,7 @@ export function ParentDesk({
           leads={leads}
           paid={chrome.paid}
           planLabel={chrome.planLabel}
+          subscriptionsOn={chrome.subscriptionsEnabled === true}
           renewsOn={chrome.renewsOn}
           messages={centreMessages}
           dismissed={upgradeDismissed}

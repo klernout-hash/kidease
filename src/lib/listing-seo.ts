@@ -134,6 +134,8 @@ function listingOgImage(src: ListingSeoSource) {
   const photo = (src.photos ?? []).find((p) => isSeoPhoto(p));
   if (!photo) return DEFAULT_OG_IMAGE;
   if (photo.startsWith("https://")) return photo;
+  /* Originals live on the media host; www has no /photos/ files (404 for crawlers). */
+  if (photo.startsWith("/photos/")) return `https://media.kidease.ca${photo}`;
   if (photo.startsWith("/")) return `${SITEMAP_ORIGIN}${photo}`;
   return DEFAULT_OG_IMAGE;
 }

@@ -777,7 +777,9 @@ export function CapacityForm({
               <Field label={t("provinceLabel")} value={state.province} onChange={(v) => setState({ ...state, province: v })} />
             </div>
             <Field label={t("postalLabel")} value={state.postalCode} onChange={(v) => setState({ ...state, postalCode: v })} />
-            <Field label={t("phoneLabel")} value={state.phone} onChange={(v) => setState({ ...state, phone: v })} />
+            <div id="listing-health-contact">
+              <Field label={t("phoneLabel")} value={state.phone} onChange={(v) => setState({ ...state, phone: v })} />
+            </div>
             <Field label={t("contactEmail")} value={state.email} onChange={(v) => setState({ ...state, email: v })} />
             <div id="listing-health-hours">
               <Field label={t("hours")} value={state.hours} onChange={(v) => setState({ ...state, hours: v })} />

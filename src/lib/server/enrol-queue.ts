@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { mapChild, type ChildRow } from "@/lib/child-profile";
+import { centreMaySeeChildHealth, childForCentre } from "@/lib/child-health-gate";
 import { openHealth, revealChildHealth } from "@/lib/child-health-crypto";
 import { logChildProfileAccess } from "@/lib/server/child-access-log";
 import type { AgeGroup, BookingStatus, Child, Schedule, SpotRequest } from "@/lib/types";
@@ -33,8 +34,12 @@ type IncomingRow = {
   epi_pen: boolean | number | string | null;
 };
 
-function mapRequest(b: IncomingRow, child: Child | null): SpotRequest {
+function mapRequest(b: IncomingRow, fullChild: Child | null): SpotRequest {
+  // Health record only after the centre accepts the request. Basic info before.
+  const healthOpen = centreMaySeeChildHealth(b.status);
+  const child = childForCentre(fullChild, b.status);
   return {
+    healthLocked: !healthOpen,
     id: b.id,
     daycareId: b.daycare_id,
     daycareName: b.daycare_name,
@@ -54,10 +59,10 @@ function mapRequest(b: IncomingRow, child: Child | null): SpotRequest {
     createdAt: String(b.created_at),
     paymentStatus: b.payment_status,
     birthdate: b.birthdate,
-    allergies: child?.allergies || openHealth(b.allergies) || "",
-    epiPen: Boolean(
-      b.epi_pen === true || b.epi_pen === 1 || b.epi_pen === "t" || b.epi_pen === "true" || child?.epiPen,
-    ),
+    allergies: healthOpen ? child?.allergies || openHealth(b.allergies) || "" : "",
+    epiPen:
+      healthOpen &&
+      Boolean(b.epi_pen === true || b.epi_pen === 1 || b.epi_pen === "t" || b.epi_pen === "true" || child?.epiPen),
     child,
   };
 }
@@ -166,11 +171,8 @@ export const shareChildWithCentres = createServerFn({ method: "POST" })
     const start =
       data.startDate && /^\d{4}-\d{2}-\d{2}$/.test(data.startDate) ? data.startDate : defaultStart();
     const noteBits = [
+      // Health details stay in the child profile and unlock for the centre on acceptance.
       data.message?.trim(),
-      child.allergies ? `Allergies: ${child.allergies}` : "",
-      child.epiPen ? "Carries an EpiPen" : "",
-      child.medicalNotes ? `Medical: ${child.medicalNotes}` : "",
-      child.emergencyName ? `Emergency: ${child.emergencyName} ${child.emergencyPhone}` : "",
     ].filter(Boolean);
     const sent: Array<{ daycareId: string; bookingId: string; conversationId: string; reused: boolean }> = [];
 

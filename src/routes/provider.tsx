@@ -103,6 +103,7 @@ const COACH_FOCUS = new Set<ListingCoachFocus>([
   "subsidy",
   "policies",
   "vacancy",
+  "contact",
 ]);
 
 export function providerBeforeLoad({
@@ -920,7 +921,7 @@ function RequestList({
               </Button>
             ) : null}
           </div>
-          <ChildPacket child={r.child} allergies={r.allergies} epiPen={r.epiPen} note={r.parentNote} />
+          <ChildPacket child={r.child} allergies={r.allergies} epiPen={r.epiPen} note={r.parentNote} healthLocked={r.healthLocked} />
           <div className="mt-3 flex flex-wrap gap-2">
             {["accepted", "declined", "active", "cancelled"].includes(r.status) ? (
               <p className="text-xs text-muted">{t("requestAlready").replace("{status}", requestStatusLabel(r.status, t))}</p>
@@ -976,13 +977,18 @@ function ChildPacket({
   allergies,
   epiPen,
   note,
+  healthLocked,
 }: {
   child?: Child | null;
   allergies?: string;
   epiPen?: boolean;
   note?: string | null;
+  healthLocked?: boolean;
 }) {
   const { t } = useCopy();
+  const lockedLine = healthLocked ? (
+    <p className="mt-2 text-xs text-subtle" data-ke="health-locked">{t("packetHealthAfterAccept")}</p>
+  ) : null;
   const bits = [
     (allergies || child?.allergies) && `${t("allergies")}: ${allergies || child?.allergies}`,
     (epiPen || child?.epiPen) && t("epiPenBadge"),
@@ -998,15 +1004,23 @@ function ChildPacket({
     note && `${t("packetNote")}: ${note}`,
   ].filter(Boolean) as string[];
   if (!bits.length) {
-    return <p className="mt-3 text-sm text-subtle">{t("packetLimited")}</p>;
+    return (
+      <>
+        <p className="mt-3 text-sm text-subtle">{t("packetLimited")}</p>
+        {lockedLine}
+      </>
+    );
   }
   return (
-    <ul className="ph-no-capture mt-3 flex flex-wrap gap-1.5">
-      {bits.map((b) => (
-        <li key={b} className="rounded-full bg-bg px-2.5 py-1 text-xs text-muted ring-1 ring-border">
-          {b}
-        </li>
-      ))}
-    </ul>
+    <>
+      <ul className="ph-no-capture mt-3 flex flex-wrap gap-1.5">
+        {bits.map((b) => (
+          <li key={b} className="rounded-full bg-bg px-2.5 py-1 text-xs text-muted ring-1 ring-border">
+            {b}
+          </li>
+        ))}
+      </ul>
+      {lockedLine}
+    </>
   );
 }

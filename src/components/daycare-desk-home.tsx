@@ -2,21 +2,13 @@ import { Link } from "@tanstack/react-router";
 import { FoundingMemberBadge } from "@/components/founding-member-badge";
 import { RoleUpgradeCard } from "@/components/role-upgrade-card";
 import { useSessionDesks } from "@/components/session-desks";
-import { listingCompleteness, vacancyUpdatedThisWeek, type CompletenessField } from "@/lib/listing-readiness";
+import { listingCompleteness, vacancyUpdatedThisWeek } from "@/lib/listing-readiness";
 import { isOpenLeadStatus, type LeadRequest } from "@/lib/lead-requests";
 import { daycareCapPrompt, daycareHomeCardEligible, showHomeUpgradeCard } from "@/lib/upgrade-prompt";
 import { useCopy } from "@/lib/use-copy";
+import { centreMissingInfo, missingInfoMessage, missingInfoTitle } from "@/lib/centre-missing-info";
 import { useInNativeShell } from "@/lib/use-native-shell";
-import type { CopyKey } from "@/lib/copy";
 import type { Daycare, TourRequest } from "@/lib/types";
-
-const MISSING_KEY: Record<CompletenessField, CopyKey> = {
-  fees: "deskMissFees",
-  ages: "ages",
-  hours: "hours",
-  license: "license",
-  photo: "deskMissPhotos",
-};
 
 /** Daycare landing: replies waiting, listing gaps, and the current plan. */
 export function DaycareDeskHome({
@@ -44,7 +36,7 @@ export function DaycareDeskHome({
   settled?: boolean;
   onDismiss?: () => void;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const nativeShell = useInNativeShell();
   const { session } = useSessionDesks();
   const subscriptionsOn = session?.subscriptionsEnabled === true;
@@ -52,13 +44,12 @@ export function DaycareDeskHome({
   const waitingTours = tours.filter((tour) => tour.status === "pending");
   const waiting = waitingLeads.length + waitingTours.length;
   const primary = listings[0];
-  const completeness = primary ? listingCompleteness(primary) : null;
-  const missing = completeness?.missing ?? [];
+  const missing = primary ? centreMissingInfo(primary) : [];
   const card = showHomeUpgradeCard({
     paid,
     eligible: daycareHomeCardEligible({
       claimed: Boolean(primary?.claimed || primary?.claimedAt),
-      listingReady: Boolean(completeness?.ready),
+      listingReady: Boolean(primary && listingCompleteness(primary).ready),
     }),
     dismissed,
   });
@@ -120,8 +111,15 @@ export function DaycareDeskHome({
           <>
             <p className="mt-1 text-sm text-muted">{t("deskHomeMissing").replace("{name}", primary.name)}</p>
             <ul className="mt-1 list-disc pl-5 text-sm text-fg">
-              {missing.map((field) => (
-                <li key={field}>{t(MISSING_KEY[field])}</li>
+              {missing.map((item) => (
+                <li key={item.field} data-ke={`missing-${item.field}`}>
+                  <span className="font-semibold">{missingInfoTitle(item.field, locale)}</span>
+                  {" — "}
+                  {missingInfoMessage(item, locale)}{" "}
+                  <Link to="/provider" search={item.href} className="inline-flex min-h-11 items-center font-medium text-primary">
+                    {locale === "fr" ? "Compléter" : "Complete this"}
+                  </Link>
+                </li>
               ))}
             </ul>
           </>

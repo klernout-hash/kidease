@@ -46,7 +46,8 @@ export type ListingCoachFocus =
   | "screening"
   | "subsidy"
   | "policies"
-  | "vacancy";
+  | "vacancy"
+  | "contact";
 
 export type ListingCoachDesk = "listings" | "licence" | "screening";
 
@@ -71,6 +72,7 @@ export const COACH_FOCUS_ANCHOR: Record<ListingCoachFocus, string> = {
   subsidy: "listing-health-subsidy",
   policies: "listing-health-policies",
   vacancy: "listing-health-vacancy",
+  contact: "listing-health-contact",
 };
 
 export const COACH_ITEM_HREF: Record<VerifiedBlocker | VerifiedNice, ListingCoachHref> = {
