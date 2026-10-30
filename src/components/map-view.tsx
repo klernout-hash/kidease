@@ -1,3 +1,4 @@
+import { FEATURE_SPONSORED_LISTINGS } from "@/lib/sponsored-flag";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { LocateFixed, Minus, Navigation, Plus, X } from "lucide-react";
 import { Link } from "@tanstack/react-router";
@@ -1161,11 +1162,11 @@ function MapPinPopup({
           params={{ slug: item.slug }}
           className="flex items-start gap-2 px-2 pb-1.5 pt-2 text-inherit no-underline"
         >
-          <PinPopupSummary thumb={thumb} name={name} place={place} facts={facts} approved={approved} approvedLabel={t("kideaseApprovedMarker")} sponsored={item.featuredCity ? t("sponsored") : ""} />
+          <PinPopupSummary thumb={thumb} name={name} place={place} facts={facts} approved={approved} approvedLabel={t("kideaseApprovedMarker")} sponsored={FEATURE_SPONSORED_LISTINGS && item.featuredCity ? t("sponsored") : ""} />
         </Link>
       ) : (
         <div className="flex items-start gap-2 px-2 pb-1.5 pt-2">
-          <PinPopupSummary thumb={thumb} name={name} place={place} facts={facts} approved={approved} approvedLabel={t("kideaseApprovedMarker")} sponsored={item.featuredCity ? t("sponsored") : ""} />
+          <PinPopupSummary thumb={thumb} name={name} place={place} facts={facts} approved={approved} approvedLabel={t("kideaseApprovedMarker")} sponsored={FEATURE_SPONSORED_LISTINGS && item.featuredCity ? t("sponsored") : ""} />
         </div>
       )}
       <div className="px-2 pb-2">

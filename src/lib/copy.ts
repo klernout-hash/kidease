@@ -2067,6 +2067,8 @@ export const copy = {
     yes: "Yes",
     no: "No",
     howStressFree: "Here’s how KidEase works",
+    featuredBodyPlain:
+      "Licensed centres within your search radius. A photo is shown only when the centre has one on file.",
     featuredBody:
       "Licensed centres within your search radius. A paid Featured placement is marked Sponsored. A photo is shown only when the centre has one on file.",
     viewDetails: "View Details",
@@ -5551,6 +5553,8 @@ export const copy = {
     yes: "Oui",
     no: "Non",
     howStressFree: "Trouver une place ne devrait pas être stressant. Voici comment KidEase fonctionne :",
+    featuredBodyPlain:
+      "Centres permis dans votre rayon de recherche. Une photo s’affiche seulement lorsque le centre en a une au dossier.",
     featuredBody:
       "Centres permis dans votre rayon de recherche. Une mise en vedette payée porte la mention Commandité. Une photo s’affiche seulement lorsque le centre en a une au dossier.",
     viewDetails: "Voir les détails",
