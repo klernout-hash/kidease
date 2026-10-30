@@ -15,11 +15,16 @@ const nativeShellMiddleware = createMiddleware({ type: "request" }).server(async
   } catch {
     return next();
   }
-  if (url.pathname === "/auth/app-return" || url.pathname === "/auth/native-handoff") {
-    const { handleNativeAuthAppReturn, handleNativeAuthHandoff } = await import(
+  if (
+    url.pathname === "/auth/app-return" ||
+    url.pathname === "/auth/native-handoff" ||
+    url.pathname === "/auth/native-start"
+  ) {
+    const { handleNativeAuthAppReturn, handleNativeAuthHandoff, handleNativeAuthStart } = await import(
       "@/lib/auth/native-oauth-return.server"
     );
     if (url.pathname === "/auth/app-return") return handleNativeAuthAppReturn(request);
+    if (url.pathname === "/auth/native-start") return handleNativeAuthStart(request);
     return handleNativeAuthHandoff(request);
   }
   const target = nativeAdminRedirectTarget({

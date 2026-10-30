@@ -1,3 +1,5 @@
+import { coerceSearchText } from "./search-query.ts";
+
 export type ExploreSearchValues = {
   q?: string;
   name?: string;
@@ -21,8 +23,10 @@ export function isIsoDate(value: string): boolean {
 
 export function parseExploreSearchFields(s: Record<string, unknown>): ExploreSearchValues {
   const out: ExploreSearchValues = {};
-  if (typeof s.q === "string" && s.q.trim()) out.q = s.q.trim();
-  if (typeof s.name === "string" && s.name.trim()) out.name = s.name.trim().slice(0, 80);
+  const q = coerceSearchText(s.q).slice(0, 160);
+  if (q) out.q = q;
+  const name = coerceSearchText(s.name).slice(0, 80);
+  if (name) out.name = name;
   if (typeof s.from === "string" && isIsoDate(s.from)) out.from = s.from.trim();
   if (typeof s.to === "string" && isIsoDate(s.to)) out.to = s.to.trim();
   if (out.from && out.to && out.to < out.from) {

@@ -29,6 +29,7 @@ import {
   cityParamFromUnknown,
   originFromSearchQuery,
   originsMatchSearchQuery,
+  coerceSearchText,
   searchQueryFromUnknown,
 } from "@/lib/search-query";
 import { resolveSearchDirectory } from "@/lib/city-directory";
@@ -321,11 +322,17 @@ const PRESETS_KM = [1, 5, 10, 15, 25, 40, 50];
 
 export function SearchScreen({
   boot,
-  incoming,
+  incoming: incomingRaw,
 }: {
   boot: Awaited<ReturnType<typeof searchLoader>>;
   incoming: ReturnType<typeof searchValidateSearch>;
 }) {
+  const incoming = useMemo(() => {
+    const q = coerceSearchText(incomingRaw.q).slice(0, 160) || undefined;
+    const city = coerceSearchText(incomingRaw.city).slice(0, 80) || undefined;
+    if (q === incomingRaw.q && (city || undefined) === (incomingRaw.city || undefined)) return incomingRaw;
+    return { ...incomingRaw, q, city };
+  }, [incomingRaw]);
   const { t, locale } = useCopy();
   const { user } = useCurrentUserState();
   const fitFacts = useParentFitFacts();

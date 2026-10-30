@@ -3,8 +3,13 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   listSavedPasskeys,
+  nativeIosSkipsPasskey,
+  passkeyRegistrationError,
+  passkeyRegistrationReady,
   passkeyWasCancelled,
+  prefetchPasskeyRegistration,
   registerPasskey,
+  shouldUseAndroidCredentialManager,
   removeSavedPasskey,
   type SavedPasskey,
   PasskeyRequestError,
@@ -29,6 +34,8 @@ export function PasskeySettings() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (nativeIosSkipsPasskey()) return;
+    prefetchPasskeyRegistration();
     let live = true;
     void listSavedPasskeys()
       .then((next) => {
@@ -54,11 +61,17 @@ export function PasskeySettings() {
     setBusy("add");
     setError(null);
     try {
+      if (!passkeyRegistrationReady() && !shouldUseAndroidCredentialManager()) {
+        prefetchPasskeyRegistration();
+        setError(t("passkeyNotReady"));
+        return;
+      }
       await registerPasskey();
       setRows(await listSavedPasskeys());
       toast.success(t("passkeyAdded"));
     } catch (err) {
-      if (!passkeyWasCancelled(err)) setError(messageFor(err));
+      prefetchPasskeyRegistration();
+      setError(passkeyRegistrationError(err) || messageFor(err));
     } finally {
       setBusy(null);
     }
@@ -78,6 +91,8 @@ export function PasskeySettings() {
       setBusy(null);
     }
   }
+
+  if (nativeIosSkipsPasskey()) return null;
 
   return (
     <section className="mt-8 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="passkey-settings">

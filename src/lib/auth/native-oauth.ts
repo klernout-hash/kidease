@@ -8,6 +8,8 @@
 export const NATIVE_AUTH_SCHEME = "ca.kidease.app";
 export const NATIVE_AUTH_RETURN_PATH = "/auth/app-return";
 export const NATIVE_AUTH_HANDOFF_PATH = "/auth/native-handoff";
+/** Starts OAuth inside the system auth sheet so the state cookie is set there. */
+export const NATIVE_AUTH_START_PATH = "/auth/native-start";
 
 const FINISH_HOSTS = new Set(["auth"]);
 
@@ -24,15 +26,64 @@ export function nativeOAuthReturnPath(next: string | null | undefined): string {
   return `${NATIVE_AUTH_RETURN_PATH}?next=${encodeURIComponent(safeInAppPath(next))}`;
 }
 
-export function nativeAuthFinishUrl(input: { code?: string | null; next?: string | null }): string {
+export function nativeOAuthProvider(raw: string | null | undefined): "google" | "facebook" | "apple" | null {
+  const provider = String(raw || "").trim().toLowerCase();
+  if (provider === "google" || provider === "facebook" || provider === "apple") return provider;
+  return null;
+}
+
+/**
+ * Page the system auth sheet should open. The WebView must not call
+ * sign-in/social itself: that stores the OAuth state cookie in the WebView,
+ * and the callback lands in the sheet.
+ */
+export function nativeOAuthStartPath(input: {
+  provider: string;
+  next?: string | null;
+  errorNext?: string | null;
+  newUserNext?: string | null;
+}): string {
+  const provider = nativeOAuthProvider(input.provider) ?? "google";
+  const params = new URLSearchParams();
+  params.set("provider", provider);
+  params.set("next", safeInAppPath(input.next));
+  params.set("errorNext", safeInAppPath(input.errorNext || input.next));
+  if (input.newUserNext) params.set("newUser", safeInAppPath(input.newUserNext));
+  return `${NATIVE_AUTH_START_PATH}?${params.toString()}`;
+}
+
+/** OAuth `error` codes only. Drops sentences, markup, and unexpected characters. */
+export function sanitizeNativeOAuthError(raw: string | null | undefined): string | null {
+  const value = String(raw || "").trim().toLowerCase();
+  if (!/^[a-z0-9_]{1,64}$/.test(value)) return null;
+  return value;
+}
+
+export function nativeAuthErrorPath(next: string | null | undefined, error: string): string {
+  const path = safeInAppPath(next);
+  const split = path.indexOf("?");
+  const pathname = split === -1 ? path : path.slice(0, split);
+  const params = new URLSearchParams(split === -1 ? "" : path.slice(split + 1));
+  params.set("error", error);
+  const qs = params.toString();
+  return qs ? `${pathname}?${qs}` : pathname;
+}
+
+export function nativeAuthFinishUrl(input: {
+  code?: string | null;
+  next?: string | null;
+  error?: string | null;
+}): string {
   const params = new URLSearchParams();
   const code = String(input.code || "").trim();
   if (code) params.set("code", code);
+  const error = sanitizeNativeOAuthError(input.error);
+  if (error) params.set("error", error);
   params.set("next", safeInAppPath(input.next));
   return `${NATIVE_AUTH_SCHEME}://auth/finish?${params.toString()}`;
 }
 
-export type NativeAuthFinish = { code: string | null; next: string };
+export type NativeAuthFinish = { code: string | null; next: string; error: string | null };
 
 /** ca.kidease.app://auth/finish and KidEase://auth/finish. */
 export function parseNativeAuthFinish(raw: string | null | undefined): NativeAuthFinish | null {
@@ -53,10 +104,15 @@ export function parseNativeAuthFinish(raw: string | null | undefined): NativeAut
   if (host === "auth" && path !== "/finish" && path !== "/") return null;
   if (host !== "auth" && path !== "/auth/finish") return null;
   const code = url.searchParams.get("code")?.trim() || null;
-  return { code, next: safeInAppPath(url.searchParams.get("next")) };
+  return {
+    code,
+    next: safeInAppPath(url.searchParams.get("next")),
+    error: sanitizeNativeOAuthError(url.searchParams.get("error")),
+  };
 }
 
 export function nativeHandoffPath(input: NativeAuthFinish): string {
+  if (input.error) return nativeAuthErrorPath(input.next, input.error);
   if (!input.code) return input.next;
   const params = new URLSearchParams();
   params.set("code", input.code);

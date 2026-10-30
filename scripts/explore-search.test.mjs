@@ -33,6 +33,9 @@ test("explore search helpers parse dates, names, and compact query params", () =
     to: "2026-09-15",
   });
   assert.equal(parsed.q, "Winnipeg, MB");
+  assert.equal(parseExploreSearchFields({ q: [" Winnipeg ", "Brandon"] }).q, "Winnipeg");
+  assert.equal(parseExploreSearchFields({ q: 1 }).q, "1");
+  assert.equal(parseExploreSearchFields({ q: { trim() { throw new Error("nope"); } } }).q, undefined);
   assert.equal(parsed.name, "Bright");
   assert.equal(parsed.from, "2026-09-15");
   assert.equal(parsed.to, "2026-10-01");
@@ -66,6 +69,7 @@ test("Explore search bar is an Airbnb-style pill wired to /search params", () =>
 
   assert.match(search, /ExploreSearchBar/);
   assert.match(search, /parseExploreSearchFields/);
+  assert.match(search, /coerceSearchText\(incomingRaw\.q\)/);
   assert.match(search, /matchesDaycareName/);
   assert.match(search, /name: fields.name/);
   assert.match(search, /from: fields.from/);
