@@ -1,10 +1,11 @@
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
+import { FEATURE_SPONSORED_LISTINGS } from "@/lib/sponsored-flag";
 
 /** Paid Featured placement. Shown only when the listing data says the centre paid for it. */
 export function SponsoredMark({ show, className }: { show?: boolean; className?: string }) {
   const { t } = useCopy();
-  if (!show) return null;
+  if (!FEATURE_SPONSORED_LISTINGS || !show) return null;
   return (
     <span
       data-ke="sponsored"
