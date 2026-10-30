@@ -18,7 +18,7 @@ import { chromium, webkit } from "playwright";
 import { runIpadViewportPass } from "./ipad-viewports.mjs";
 import { runPhoneViewportPass } from "./phone-viewports.mjs";
 import { runFoldResizePass } from "./fold-resize.mjs";
-import { runStoreViewportPass } from "./store-viewports.mjs";
+import { STORE_GROUP_NAMES, runStoreViewportPass } from "./store-viewports.mjs";
 import { runDesktopVisualPass } from "./desktop-visual.mjs";
 import { checkedOutputPath, checkedUrl, smokeAllowedOutputDirs } from "./browser-guard.mjs";
 import { withNetRetry } from "./e2e-net.mjs";
@@ -39,6 +39,7 @@ import {
   loadQuarantine,
   parseE2eArgs,
   skipReason,
+  selectedStores,
   smokeGroupSelected,
   splitSmokeResults,
   visualCheckBlocks,
@@ -1845,9 +1846,10 @@ try {
   await Promise.all(firstWave);
 
   const secondWave = [];
-  if (smokeGroupSelected(args, "store")) {
+  const stores = selectedStores(args, STORE_GROUP_NAMES);
+  if (stores.length > 0) {
     secondWave.push(
-      runStoreViewportPass(browser, base).then((storeProblems) => {
+      runStoreViewportPass(browser, base, stores).then((storeProblems) => {
         record("store-viewports", storeProblems.length === 0, {
           note: storeProblems.length ? storeProblems.slice(0, 8).join(" | ") : "android and windows",
         });

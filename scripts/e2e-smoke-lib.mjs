@@ -46,23 +46,29 @@ export function classifyPublicHealth({ status = 0, bodyText = "" } = {}) {
 }
 
 /** Guest smoke is split into this many CI shards. Desktop visual is a separate job. */
-export const SMOKE_SHARD_COUNT = 4;
+export const SMOKE_SHARD_COUNT = 8;
 
 /**
- * Shard 1 public pages, 2 role fixture, 3 WebKit + phone/tablet,
- * 4 fold + store. Keep the buckets in this order.
+ * Shard 1 public pages, 2 role fixture, 3 WebKit + iPad, 4 phone,
+ * 5 fold + Huawei store sizes, 6 Google, 7 Samsung, 8 Microsoft store sizes.
+ * The preview server (PGlite) is the bottleneck, so the store sweep is split
+ * across jobs rather than run in parallel in one job.
  */
 export const SMOKE_SHARD_GROUPS = Object.freeze([
   Object.freeze(["public"]),
   Object.freeze(["role"]),
-  Object.freeze(["webkit", "ipad", "phone"]),
-  Object.freeze(["fold", "store"]),
+  Object.freeze(["webkit", "ipad"]),
+  Object.freeze(["phone"]),
+  Object.freeze(["fold", "store:huawei"]),
+  Object.freeze(["store:google"]),
+  Object.freeze(["store:samsung"]),
+  Object.freeze(["store:microsoft"]),
 ]);
 
 export function parseShardToken(token) {
   if (!token) return null;
   const match = /^(\d+)\/(\d+)$/.exec(String(token));
-  if (!match) return { error: "--shard expects i/n such as 1/4" };
+  if (!match) return { error: "--shard expects i/n such as 1/8" };
   const index = Number(match[1]);
   const total = Number(match[2]);
   if (total !== SMOKE_SHARD_COUNT || index < 1 || index > total) {
@@ -95,6 +101,13 @@ export function smokeGroupSelected(args, group) {
   }
   if (!args.shard) return true;
   return args.shard.groups.includes(group);
+}
+
+/** Store groups ("google", ...) this run covers; every store without a shard. */
+export function selectedStores(args, all) {
+  if (args.desktopVisualOnly) return [];
+  if (!args.shard) return [...all];
+  return all.filter((store) => args.shard.groups.includes(`store:${store}`));
 }
 
 export function parseQuarantine(raw) {
@@ -180,11 +193,11 @@ export function parseE2eArgs(argv = [], env = {}) {
       signedIn = true;
     } else if (arg === "--shard") {
       const value = argv[++i];
-      if (!value) return { error: "--shard expects i/n such as 1/4" };
+      if (!value) return { error: "--shard expects i/n such as 1/8" };
       shardToken = value;
     } else if (arg.startsWith("--shard=")) {
       const value = arg.slice("--shard=".length);
-      if (!value) return { error: "--shard expects i/n such as 1/4" };
+      if (!value) return { error: "--shard expects i/n such as 1/8" };
       shardToken = value;
     } else if (arg === "--skip-desktop-visual") {
       skipDesktopVisual = true;
