@@ -90,7 +90,12 @@ describe("native project scaffolding", () => {
     const info = read("ios/App/App/Info.plist");
     assert.match(info, /NSLocationWhenInUseUsageDescription/);
     assert.match(info, /licensed daycares near you/);
-    assert.doesNotMatch(info, /NSLocationAlways/);
+    // ITMS-90683: the Always keys must be present when a linked SDK references them,
+    // but the strings must stay foreground-only and no background location mode is declared.
+    for (const key of ["NSLocationAlwaysAndWhenInUseUsageDescription", "NSLocationAlwaysUsageDescription"]) {
+      const m = info.match(new RegExp(`<key>${key}</key>\\s*<string>([^<]*)</string>`));
+      if (m) assert.match(m[1], /only while you search/);
+    }
     assert.doesNotMatch(info, /<string>location<\/string>/);
     assert.doesNotMatch(info, /<string>remote-notification<\/string>/);
     assert.match(info, /NSCameraUsageDescription/);
