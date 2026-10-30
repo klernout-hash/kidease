@@ -79,16 +79,18 @@ Pushes and pull requests that only touch `docs/**` or `**/*.md` do not start thi
 
 The `build` job runs `npm run build` once and uploads `artifacts/ci-build`. This app is Vite + Nitro, not Next.js. The archive includes `.vercel/output` and `node_modules/.nitro/last-build.json`, which `vite preview` needs. Smoke jobs restore that after `npm ci` (`npm ci` would otherwise delete the Nitro pointer). A later run with the same source hash restores the archive from the Actions cache and skips the build.
 
-Smoke is four shards (`--shard 1/4` … `4/4`):
+Smoke is six shards (`--shard 1/6` … `6/6`):
 
 | Shard | What it runs |
 | --- | --- |
-| 1/4 | Public pages, health, login, search, guest gates |
-| 2/4 | Role fixture (parent and daycare seed) |
-| 3/4 | WebKit search guard, iPad sizes, phone sizes |
-| 4/4 | Fold resize, store sizes |
+| 1/6 | Public pages, health, login, search, guest gates |
+| 2/6 | Role fixture (parent and daycare seed) |
+| 3/6 | WebKit search guard, iPad sizes |
+| 4/6 | Phone sizes |
+| 5/6 | Fold resize |
+| 6/6 | Store sizes (Google, Samsung, Huawei, Microsoft run in parallel contexts) |
 
-`e2e` is the check branch protection already requires. It passes when every shard passes. Desktop screenshots are a separate job so a picture mismatch can be reported without hiding a real smoke failure.
+`e2e` is the check branch protection already requires. It passes when every shard passes. Desktop screenshots are a separate job so a picture mismatch can be reported without hiding a real smoke failure. A pixel mismatch is a warning on pull requests and main alike; refresh `e2e/desktop-baselines/` from the `desktop-visual-report` artifact (`desktop-actual/`) when a UI change is intended.
 
 ### Desktop visual
 

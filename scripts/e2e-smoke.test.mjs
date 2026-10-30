@@ -75,12 +75,12 @@ test("parseE2eArgs flag and unknown-flag handling", () => {
   assert.equal(parseE2eArgs([], { E2E_REQUIRE: "1" }).requireServer, true);
   assert.equal(parseE2eArgs(["--browser-smoke"], {}).browserSmoke, true);
   assert.equal(parseE2eArgs(["--signed-in"], {}).signedIn, true);
-  assert.equal(parseE2eArgs(["--shard", "2/4"], {}).shard.index, 2);
-  assert.deepEqual(parseE2eArgs(["--shard=1/4"], {}).shard.groups, ["public"]);
+  assert.equal(parseE2eArgs(["--shard", "2/6"], {}).shard.index, 2);
+  assert.deepEqual(parseE2eArgs(["--shard=1/6"], {}).shard.groups, ["public"]);
   assert.equal(parseE2eArgs(["--skip-desktop-visual"], {}).skipDesktopVisual, true);
   assert.equal(parseE2eArgs(["--desktop-visual-only"], {}).desktopVisualOnly, true);
-  assert.match(parseE2eArgs(["--shard", "1/3"], {}).error, /1\/4/);
-  assert.match(parseE2eArgs(["--desktop-visual-only", "--shard", "1/4"], {}).error, /cannot be combined/);
+  assert.match(parseE2eArgs(["--shard", "1/3"], {}).error, /1\/6/);
+  assert.match(parseE2eArgs(["--desktop-visual-only", "--shard", "1/6"], {}).error, /cannot be combined/);
 });
 
 test("skipReason is null when a server is required even without URL", () => {
@@ -289,7 +289,7 @@ test("CI builds once, shards smoke, and keeps desktop visual blocking on main", 
   assert.doesNotMatch(ci, /playwright install chromium webkit/);
   assert.match(ci, /cache-hit != 'true'/);
   assert.match(ci, /signed-in-e2e:[\s\S]*?timeout-minutes: 60/);
-  assert.match(ci, /shard: \["1\/4", "2\/4", "3\/4", "4\/4"\]/);
+  assert.match(ci, /shard: \["1\/6", "2\/6", "3\/6", "4\/6", "5\/6", "6\/6"\]/);
   assert.match(ci, /E2E_VISUAL_BLOCKING/);
   assert.match(ci, /name: ci-build/);
   assert.match(ci, /restore-ci-build\.sh/);
@@ -317,7 +317,7 @@ test("shards, quarantine, and CI retries", () => {
   assert.equal(ciPlaywrightRetries({ CI: "true" }), 1);
   assert.equal(ciPlaywrightRetries({ CI: "true", E2E_RETRIES: "2" }), 2);
   assert.equal(ciPlaywrightRetries({ CI: "true", E2E_RETRIES: "9" }), 2);
-  const shard = parseE2eArgs(["--shard", "3/4"], {});
+  const shard = parseE2eArgs(["--shard", "3/6"], {});
   assert.equal(smokeGroupSelected(shard, "webkit"), true);
   assert.equal(smokeGroupSelected(shard, "public"), false);
   assert.equal(smokeGroupSelected(shard, "visual"), false);

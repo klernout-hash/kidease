@@ -437,7 +437,9 @@ export async function runStoreViewportPass(browser, base) {
     { store: "huawei", viewports: [...FOLDABLES.filter((vp) => vp.store === "huawei"), ...ANDROID_TABLETS.filter((vp) => vp.store === "huawei")] },
     { store: "microsoft", viewports: WINDOWS_SIZES },
   ];
-  for (const group of groups) {
+  // Each store group gets its own browser context, so the groups run in
+  // parallel. Run one after another they took about 13 minutes in CI.
+  await Promise.all(groups.map(async (group) => {
     const context = await browser.newContext({
       viewport: { width: 360, height: 800 },
       userAgent: STORE_UAS[group.store],
@@ -476,7 +478,7 @@ export async function runStoreViewportPass(browser, base) {
     }
     if (group.store === "microsoft") await liveWindow(page, base, problems);
     await context.close();
-  }
+  }));
   await windowsInputs(browser, base, problems);
   return problems;
 }
