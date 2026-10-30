@@ -875,6 +875,7 @@
   "alertVacancy": "قد يتوفر مكان: أكّد مع المركز",
   "alertRequestReply": "ردّ مركز",
   "alertWaitlistPulse": "توفّر مكان في قائمة انتظار تتابعها",
+  "alertAreaWaitlist": "قد يتوفر مكان في منطقتك",
   "alertOpenNotice": "فتح",
   "waitlistOptIn": "أبلغني إذا توفّر مكان",
   "waitlistOptInLead": "سنرسل إشعاراً داخل التطبيق، ورسالة نصية إذا كنت قد منحت موافقة CASL على SMS مسبقاً. اختياري.",

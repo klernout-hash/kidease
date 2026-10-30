@@ -80,7 +80,9 @@ function mapNotice(row: NoticeRow): SearchAlertNotice {
           ? "waitlist_pulse"
           : row.kind === "request_reply"
             ? "request_reply"
-            : "new_centre",
+            : row.kind === "area_waitlist"
+              ? "area_waitlist"
+              : "new_centre",
     title: row.title,
     body: row.body || "",
     linkPath: row.link_path || null,
@@ -120,11 +122,14 @@ function validateSaveInput(input: SaveSearchInput) {
 }
 
 async function readSavedSearches(sql: Awaited<ReturnType<typeof getSql>>, userId: string): Promise<SavedSearch[]> {
+  const { ensureAreaWaitlistSchema } = await import("@/lib/server/area-waitlist");
+  await ensureAreaWaitlistSchema(sql).catch(() => undefined);
   const rows = await sql<SavedSearchRow>`
     select id, name, center_lat, center_lng, center_label, radius_km, age_band,
            filters, alerts_enabled, last_checked_at, created_at, updated_at
     from saved_searches
     where user_id = ${userId}
+      and coalesce(kind, 'search') = 'search'
     order by updated_at desc
   `.catch(() => [] as SavedSearchRow[]);
   return rows.map(mapSearch);
@@ -198,7 +203,8 @@ export const saveSearch = createServerFn({ method: "POST" })
   .handler(async ({ context, data }): Promise<SavedSearch> => {
     const sql = await getSql();
     const existing = await sql<{ n: number }>`
-      select count(*)::int as n from saved_searches where user_id = ${context.userId}
+      select count(*)::int as n from saved_searches
+      where user_id = ${context.userId} and coalesce(kind, 'search') = 'search'
     `.catch(() => [{ n: 0 }]);
     if ((existing[0]?.n ?? 0) >= MAX_SAVED_SEARCHES) {
       throw new Error(`You can save up to ${MAX_SAVED_SEARCHES} searches. Delete one to add another.`);

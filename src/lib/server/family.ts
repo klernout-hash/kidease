@@ -1748,6 +1748,9 @@ export const updateCapacity = createServerFn({ method: "POST" })
       void import("@/lib/server/alert-fanout")
         .then((mod) => mod.notifySavedSpotOpened({ daycareId: data.daycareId }))
         .catch(() => undefined);
+      void import("@/lib/server/area-waitlist")
+        .then((mod) => mod.queueAreaWaitlistMatch(data.daycareId, true))
+        .catch(() => undefined);
       try {
         const { pulseRateLimited } = await import("@/lib/waitlist-pulse");
         const last = await sql<{ created_at: string | Date }>`

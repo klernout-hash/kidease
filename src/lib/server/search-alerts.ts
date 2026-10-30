@@ -507,11 +507,14 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
   }
   const nowMs = now.getTime();
   const sql = await getSql();
+  const { ensureAreaWaitlistSchema, runAreaWaitlistAlerts } = await import("@/lib/server/area-waitlist");
+  await ensureAreaWaitlistSchema(sql).catch(() => undefined);
   const searches = await sql<SavedSearchJobRow>`
     select id, user_id, name, center_lat, center_lng, center_label, radius_km,
            age_band, filters, alerts_enabled, last_checked_at
     from saved_searches
     where alerts_enabled = 1
+      and coalesce(kind, 'search') = 'search'
     order by last_checked_at nulls first, updated_at
     limit 80
   `.catch(() => [] as SavedSearchJobRow[]);
@@ -531,6 +534,7 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
     vacancy_reconfirmed: 0,
     waitlist_pulse: 0,
     request_reply: 0,
+    area_waitlist: 0,
   };
   const digestByUser = new Map<string, DigestBucket[]>();
   const lastEmailByUser = new Map<string, string | Date | null>();
@@ -930,6 +934,7 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
     const { flushHeldWaitlistMail } = await import("@/lib/server/waitlist-tracker");
     await flushHeldWaitlistMail(now).catch(() => undefined);
   }
+  const area = await runAreaWaitlistAlerts({ dryRun, now }).catch(() => ({ matched: 0, sent: 0 }));
   const result = {
     ok: true as const,
     dryRun,
@@ -950,6 +955,7 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
     push: "wired-noop" as const,
     sms: "wired-noop" as const,
     tz: ALERT_TZ,
+    areaWaitlist: area,
   };
   console.info("[kidease-search-alerts] job", result);
   return result;

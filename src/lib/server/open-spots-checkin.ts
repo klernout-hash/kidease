@@ -139,6 +139,9 @@ export async function applyOpenSpotsLink(
       where id = ${row.id}
     `;
   }
+  void import("@/lib/server/area-waitlist")
+    .then((mod) => mod.queueAreaWaitlistMatch(row.id))
+    .catch(() => undefined);
   const id = `osc_${randomBytes(8).toString("hex")}`;
   await sql`
     insert into open_spots_checkins (id, daycare_id, band, views_week, split_known)

@@ -875,6 +875,7 @@
   "alertVacancy": "可能有空位：请与中心确认",
   "alertRequestReply": "中心已回复",
   "alertWaitlistPulse": "您关注的候补名单出现了空位",
+  "alertAreaWaitlist": "您所在区域可能有空位",
   "alertOpenNotice": "打开",
   "waitlistOptIn": "有空位时通知我",
   "waitlistOptInLead": "我们会发送应用内通知；如果您已授予 CASL 短信同意，也会发送短信。可选。",

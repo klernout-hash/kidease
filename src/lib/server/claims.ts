@@ -760,6 +760,11 @@ export const updateListing = createServerFn({ method: "POST" })
       before: beforeWatch,
       after: written,
     }).catch(() => undefined);
+    if (data.touchVacancy) {
+      void import("@/lib/server/area-waitlist")
+        .then((mod) => mod.queueAreaWaitlistMatch(data.daycareId))
+        .catch(() => undefined);
+    }
     return { ok: true as const };
   });
 
@@ -796,6 +801,9 @@ export const refreshVacancy = createServerFn({ method: "POST" })
       returning id
     `;
     if (!wrote[0]) throw new Error(LISTING_NOT_FOUND);
+    void import("@/lib/server/area-waitlist")
+      .then((mod) => mod.queueAreaWaitlistMatch(data.daycareId))
+      .catch(() => undefined);
     return { ok: true as const, lastVacancyUpdatedAt: new Date().toISOString() };
   });
 

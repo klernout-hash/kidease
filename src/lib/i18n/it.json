@@ -875,6 +875,7 @@
   "alertVacancy": "Un posto potrebbe essere libero: lo confermi con il centro",
   "alertRequestReply": "Un centro ha risposto",
   "alertWaitlistPulse": "Si è liberato un posto in una lista d'attesa che segue",
+  "alertAreaWaitlist": "Potrebbe esserci un posto libero nella tua zona",
   "alertOpenNotice": "Apra",
   "waitlistOptIn": "Mi avvisi se si libera un posto",
   "waitlistOptInLead": "Invieremo un avviso nell'app e un SMS se ha già dato il consenso CASL per gli SMS. Facoltativo.",

@@ -30,6 +30,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_OPEN_SPOTS_CHECKIN_MAIL",
   "FEATURE_OPEN_SPOTS_CHECKIN_SMS",
   "FEATURE_QC_HOME_DAYCARES",
+  "FEATURE_AREA_WAITLIST_ALERTS",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -79,6 +80,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_OPEN_SPOTS_CHECKIN_SMS: false,
   /** Quebec recognized home daycares. Off until Kyle publishes them. */
   FEATURE_QC_HOME_DAYCARES: false,
+  /** Area waitlist email. Off until Kyle approves the wording. */
+  FEATURE_AREA_WAITLIST_ALERTS: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -172,6 +175,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Quebec recognized home daycares. Default off. Area only, no street pin, no email or text to those providers.",
+  },
+  {
+    key: "FEATURE_AREA_WAITLIST_ALERTS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Email when an area waitlist matches a posted spot. Default off until Kyle approves the wording. In-app notices still save.",
   },
 ];
 

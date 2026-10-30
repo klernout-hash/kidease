@@ -15,6 +15,7 @@ import { PioneerFilterRail } from "@/components/pioneer-filter-rail";
 import { CommuteDetourBar } from "@/components/commute-detour-bar";
 import { SearchCardAgesProvider } from "@/components/search-card-context";
 import { DaycareCard } from "@/components/daycare-card";
+import { AreaWaitlistForm } from "@/components/area-waitlist-form";
 import { SEARCH_PAGE_SIZE, pageFromSearch } from "@/lib/search-page";
 import { searchDaycarePage } from "@/lib/server/daycares";
 import { matchCentres } from "@/lib/server/ai";
@@ -1750,6 +1751,8 @@ export function SearchScreen({
             </div>
           </div>
         ) : null}
+
+        <AreaWaitlistForm returnTo={localePath("/search", locale)} />
 
         <ExploreSearchBar
           className="mt-2"
