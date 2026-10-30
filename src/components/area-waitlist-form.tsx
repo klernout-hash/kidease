@@ -112,7 +112,7 @@ export function AreaWaitlistForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="mt-4 grid gap-3 rounded-xl bg-surface p-4 ring-1 ring-border" data-ke="area-waitlist-form">
+    <form onSubmit={onSubmit} className="mt-4 grid w-full min-w-0 max-w-full gap-3 rounded-xl bg-surface p-4 ring-1 ring-border" data-ke="area-waitlist-form">
       <div>
         <h2 className="font-display text-xl">{copy.areaTitle}</h2>
         <p className="mt-1 text-sm text-muted">{copy.areaLead}</p>
@@ -126,7 +126,7 @@ export function AreaWaitlistForm({
         {copy.placeLabel}
         <input
           id="area-waitlist-place"
-          className="ke-input mt-1 w-full"
+          className="ke-input mt-1 w-full min-w-0 max-w-full"
           value={place}
           maxLength={80}
           autoComplete="postal-code"
@@ -140,7 +140,7 @@ export function AreaWaitlistForm({
         {copy.radiusLabel}
         <select
           id="area-waitlist-radius"
-          className="ke-input mt-1 w-full"
+          className="ke-input mt-1 w-full min-w-0 max-w-full"
           value={radiusKm}
           onChange={(event) => setRadiusKm(Number(event.target.value))}
           onFocus={focusIn}
@@ -156,7 +156,7 @@ export function AreaWaitlistForm({
         {copy.ageLabel}
         <select
           id="area-waitlist-age"
-          className="ke-input mt-1 w-full"
+          className="ke-input mt-1 w-full min-w-0 max-w-full"
           value={ageGroup}
           onChange={(event) => setAgeGroup(event.target.value)}
           onFocus={focusIn}
@@ -171,7 +171,7 @@ export function AreaWaitlistForm({
         {copy.startLabel}
         <input
           id="area-waitlist-start"
-          className="ke-input mt-1 w-full"
+          className="ke-input mt-1 w-full min-w-0 max-w-full"
           type="date"
           value={startDate}
           onChange={(event) => setStartDate(event.target.value)}
@@ -179,7 +179,7 @@ export function AreaWaitlistForm({
         />
         <span className="mt-1 block text-xs text-subtle">{copy.startHint}</span>
       </label>
-      <Button type="submit" variant={primary ? "primary" : "secondary"} disabled={busy}>
+      <Button type="submit" variant={primary ? "primary" : "secondary"} disabled={busy} className="w-full max-w-full whitespace-normal text-center">
         {copy.join}
       </Button>
     </form>
