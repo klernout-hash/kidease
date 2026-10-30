@@ -110,11 +110,11 @@ export const PRIVACY_EN: LegalDoc = {
           type: "processors",
           items: [
             {
-              name: "Google Maps, Places, and Geocoding",
+              name: "OpenStreetMap (OpenStreetMap Foundation)",
               purpose:
-                "Map tiles, place suggestions, and turning an address or postal code into a search point. If you allow precise location, we may send a nearby coordinate so suggestions are local. Google does not get your child profiles.",
-              href: "https://policies.google.com/privacy",
-              hrefLabel: "Google Privacy Policy",
+                "We use OpenStreetMap map tiles and data to show daycares on a map and to turn an address or postal code into a search point. Your browser loads map tiles directly, so the tile server sees your IP address. OpenStreetMap does not get your account or child profiles.",
+              href: "https://osmfoundation.org/wiki/Privacy_Policy",
+              hrefLabel: "OpenStreetMap Foundation Privacy Policy",
             },
             {
               name: "Google sign-in (OAuth), when you use it",
@@ -228,8 +228,8 @@ export const PRIVACY_EN: LegalDoc = {
           items: [
             "GPS (precise location): we ask once. The prompt says we use precise location only while you search, and we never request background location. “Use precise location” allows a when-in-use fix. “Not now” leaves you on a typed city, address, or postal code.",
             "While Explore or Search is open and you have allowed when-in-use location, the map can update as you move. We do not request always-on or background location, and we do not track you after you leave the app.",
-            "Typed address, city, or postal code: we send that text to Google Places / Geocoding to get a map point. If you also allowed GPS, we may send a nearby coordinate so suggestions are local.",
-            "The map itself loads Google Maps in your browser (tiles and the map script).",
+            "Typed address, city, or postal code: we look it up against OpenStreetMap data to get a map point. If you also allowed GPS, we may send a nearby coordinate so suggestions are local.",
+            "The map itself loads OpenStreetMap tiles in your browser (OpenStreetMap Foundation data). It does not load Google Maps.",
             "What we keep: your last search point and a yes/no location choice in this browser (local storage). First-party telemetry may store a coarse geohash (about neighbourhood scale) to improve search: not a street address and not a continuous trail.",
             "Raw GPS used to draw the map stays in that browsing session.",
             "Turn it off in your phone or browser location settings, tap “Not now” / change location in the app, or clear this site’s data. That stops new GPS use. It does not delete a request you already sent to a centre.",
@@ -334,7 +334,7 @@ export const PRIVACY_EN: LegalDoc = {
           rows: [
             ["Account", "Name, email, sign-in, role", "Create a session; parent or director desk"],
             ["Location", "GPS or typed place", "Distance search only"],
-            ["Child profile", "Name, birthdate, allergies, medicines, doctor, emergency contacts", "You, and a centre you enrol with or explicitly share with"],
+            ["Child profile", "Name, birthdate, allergies and health info, immunizations, medications, doctor, emergency contacts", "You, and a centre you enrol with or explicitly share with"],
             ["Requests & chat", "Tour, spot request, messages", "Connect that family and that centre"],
             ["Calls", "Live audio, and video on a tour", "Voice or video call with that centre. Not recorded."],
             ["Claim docs", "Licence photo, claim code", "Verify the director runs that centre"],
@@ -403,7 +403,7 @@ export const PRIVACY_EN: LegalDoc = {
             `Access or correction: email ${PRIVACY_CONTACT_EMAIL}. Say what you want to see or change. You can edit or delete a child profile in your account, or close the account on the Delete account page. Deleting the account signs you out, removes child profiles we hold, and revokes Sign in with Apple when that sign-in was used.`,
             "Consent: an account needs an email. A child profile is optional and parent-controlled. Health details are shared only with a centre you enrol with or explicitly share with. We ask before using precise location. Marketing email and text stay off unless you check the box. Analytics loads only after you choose Allow analytics.",
             "Retention: we keep account, request, message, and payment records while the account is open. Delete account waits 30 days, then removes children, messages, bookings, saved centres, director links, the profile, and sign-in rows. We keep billing records because tax law requires them. We keep fraud and security logs. A centre that already received a message keeps its own copy.",
-            "Where data is stored: accounts, listings, messages, child profiles, and payment records are in Neon Postgres. The website and server functions run on Vercel. When Cloudflare R2 is configured, listing photos, licence uploads, screening files, and signed contracts are stored in the kidease-media bucket. Our setup notes place that bucket in Western North America. Email we send goes through Resend. Card payments are processed by Stripe. KidEase does not store the full card number. Search maps can use Google. PostHog analytics and Sentry error reports run only when those tools are on. Analytics waits for Allow analytics. Centre paperwork can use DocuSign when that service is connected. Support mail is hosted in Titan Email at support@kidease.ca.",
+            "Where data is stored: accounts, listings, messages, child profiles, and payment records are in Neon Postgres. The website and server functions run on Vercel. When Cloudflare R2 is configured, listing photos, licence uploads, screening files, and signed contracts are stored in the kidease-media bucket. Our setup notes place that bucket in Western North America. Email we send goes through Resend. Card payments are processed by Stripe. KidEase does not store the full card number. Search maps use OpenStreetMap tiles and data. PostHog analytics and Sentry error reports run only when those tools are on. Analytics waits for Allow analytics. Centre paperwork can use DocuSign when that service is connected. Support mail is hosted in Titan Email at support@kidease.ca.",
             "Confidentiality incidents: if an incident creates a risk of serious injury, we will tell the people affected. We will tell the Commission d'accès à l'information du Québec when Quebec law requires it, and the Office of the Privacy Commissioner of Canada when PIPEDA requires it.",
             `Transfers outside Quebec: Quebec law requires a privacy impact assessment before personal information is communicated outside Quebec. Some processors named on this page may store or see information outside Quebec, including in the United States. We send only what that job needs and rely on their contracts. We do not publish a separate assessment file for each processor on this site. Questions about a transfer go to ${PRIVACY_CONTACT_EMAIL}.`,
           ],
@@ -533,11 +533,11 @@ export const PRIVACY_FR: LegalDoc = {
           type: "processors",
           items: [
             {
-              name: "Google Maps, Places et géocodage",
+              name: "OpenStreetMap (Fondation OpenStreetMap)",
               purpose:
-                "Tuiles de carte, suggestions de lieux et conversion d’une adresse ou d’un code postal en point de recherche. Si vous autorisez la position précise, nous pouvons envoyer une coordonnée proche. Google ne reçoit pas les profils d’enfants.",
-              href: "https://policies.google.com/privacy",
-              hrefLabel: "Politique de confidentialité Google",
+                "Nous utilisons les tuiles et les données cartographiques d’OpenStreetMap pour afficher les garderies sur une carte et convertir une adresse ou un code postal en point de recherche. Votre navigateur charge les tuiles directement; le serveur de tuiles voit donc votre adresse IP. OpenStreetMap ne reçoit ni votre compte ni les profils d’enfants.",
+              href: "https://osmfoundation.org/wiki/Privacy_Policy",
+              hrefLabel: "Politique de confidentialité de la Fondation OpenStreetMap",
             },
             {
               name: "Connexion Google (OAuth), si vous l’utilisez",
@@ -651,8 +651,8 @@ export const PRIVACY_FR: LegalDoc = {
           items: [
             "GPS (position précise) : nous demandons une fois. Le texte indique une utilisation seulement pendant la recherche, jamais en arrière-plan. « Utiliser la position précise » autorise une position pendant l’usage. « Pas maintenant » vous laisse sur une ville, une adresse ou un code postal saisi.",
             "Tant que Explorer ou Recherche est ouvert et que vous avez autorisé la position, la carte peut se mettre à jour. Nous ne demandons pas une position permanente en arrière-plan et nous ne vous suivons pas après la fermeture de l’appli.",
-            "Adresse, ville ou code postal saisi : nous l’envoyons à Google Places / géocodage. Si le GPS est aussi autorisé, nous pouvons envoyer une coordonnée proche pour des suggestions locales.",
-            "La carte charge Google Maps dans le navigateur.",
+            "Adresse, ville ou code postal saisi : nous le comparons aux données OpenStreetMap pour obtenir un point sur la carte. Si le GPS est aussi autorisé, nous pouvons envoyer une coordonnée proche pour des suggestions locales.",
+            "La carte charge les tuiles OpenStreetMap dans le navigateur (données de la Fondation OpenStreetMap). Elle ne charge pas Google Maps.",
             "Conservation : dernier point de recherche et choix oui/non dans ce navigateur. La télémétrie peut garder un géohachage grossier: pas une adresse municipale.",
             "Le GPS brut servant à dessiner la carte reste dans la session.",
             "Désactivez la position dans le système ou le navigateur, choisissez « Pas maintenant », ou effacez les données du site.",
@@ -759,7 +759,7 @@ export const PRIVACY_FR: LegalDoc = {
           rows: [
             ["Compte", "Nom, courriel, connexion, rôle", "Session; espace parent ou direction"],
             ["Position", "GPS ou lieu saisi", "Recherche par distance seulement"],
-            ["Profil d’enfant", "Nom, naissance, allergies, médicaments, médecin, urgence", "Vous, et un centre où vous inscrivez ou partagez"],
+            ["Profil d’enfant", "Nom, naissance, allergies et santé, vaccination, médicaments, médecin, contacts d’urgence", "Vous, et un centre où vous inscrivez ou partagez"],
             ["Demandes et messages", "Visite, place, clavardage", "Relier cette famille et ce centre"],
             ["Appels", "Audio en direct, et vidéo pour une visite", "Appel vocal ou vidéo avec ce centre. Pas d’enregistrement."],
             ["Pièces de revendication", "Photo du permis, code", "Vérifier que la direction exploite le centre"],
@@ -828,7 +828,7 @@ export const PRIVACY_FR: LegalDoc = {
             `Accès ou correction : écrivez à ${PRIVACY_CONTACT_EMAIL}. Dites ce que vous voulez voir ou changer. Vous pouvez modifier ou effacer un profil d’enfant dans votre compte, ou fermer le compte sur la page Supprimer le compte. Supprimer le compte vous déconnecte, retire les profils d’enfant que nous gardons et révoque Connexion avec Apple lorsque cette connexion a été utilisée.`,
             "Consentement : un compte exige un courriel. Un profil d’enfant est facultatif et contrôlé par le parent. Les détails de santé sont partagés seulement avec un centre où vous inscrivez ou que vous partagez explicitement. Nous demandons avant d’utiliser la position précise. Les courriels et textos marketing restent désactivés tant que vous ne cochez pas la case. L’analytique se charge seulement après Autoriser l’analytique.",
             "Conservation : nous gardons le compte, les demandes, les messages et les paiements tant que le compte est ouvert. Supprimer le compte attend 30 jours, puis retire les enfants, les messages, les demandes, les centres enregistrés, les liens de direction, le profil et les sessions. Nous gardons les dossiers de facturation exigés par la loi fiscale. Nous gardons les journaux de fraude et de sécurité. Un centre qui a déjà reçu un message garde sa propre copie.",
-            "Lieu de stockage : les comptes, les fiches, les messages, les profils d’enfants et les dossiers de paiement sont dans Neon Postgres. Le site et les fonctions serveur tournent sur Vercel. Quand Cloudflare R2 est configuré, les photos de fiche, les permis téléversés, les dossiers de filtrage et les contrats signés sont dans le seau kidease-media. Nos notes de configuration placent ce seau dans l’ouest de l’Amérique du Nord. Les courriels que nous envoyons passent par Resend. Les paiements par carte sont traités par Stripe. KidEase ne conserve pas le numéro complet de la carte. Les cartes de recherche peuvent utiliser Google. L’analytique PostHog et les rapports d’erreur Sentry fonctionnent seulement quand ces outils sont activés. L’analytique attend Autoriser l’analytique. Les documents du centre peuvent utiliser DocuSign quand ce service est branché. Le courrier de soutien est hébergé dans Titan Email à support@kidease.ca.",
+            "Lieu de stockage : les comptes, les fiches, les messages, les profils d’enfants et les dossiers de paiement sont dans Neon Postgres. Le site et les fonctions serveur tournent sur Vercel. Quand Cloudflare R2 est configuré, les photos de fiche, les permis téléversés, les dossiers de filtrage et les contrats signés sont dans le seau kidease-media. Nos notes de configuration placent ce seau dans l’ouest de l’Amérique du Nord. Les courriels que nous envoyons passent par Resend. Les paiements par carte sont traités par Stripe. KidEase ne conserve pas le numéro complet de la carte. Les cartes de recherche utilisent les tuiles et les données OpenStreetMap. L’analytique PostHog et les rapports d’erreur Sentry fonctionnent seulement quand ces outils sont activés. L’analytique attend Autoriser l’analytique. Les documents du centre peuvent utiliser DocuSign quand ce service est branché. Le courrier de soutien est hébergé dans Titan Email à support@kidease.ca.",
             "Incidents de confidentialité : si un incident crée un risque de préjudice sérieux, nous aviserons les personnes concernées. Nous aviserons la Commission d’accès à l’information du Québec quand la loi québécoise l’exige, et le Commissariat à la protection de la vie privée du Canada quand la LPRPDE l’exige.",
             `Communications hors du Québec : la loi québécoise exige une évaluation des facteurs relatifs à la vie privée avant de communiquer des renseignements personnels hors du Québec. Certains sous-traitants nommés sur cette page peuvent stocker ou voir des renseignements hors du Québec, y compris aux États-Unis. Nous n’envoyons que ce que la tâche exige et nous nous fions à leurs contrats. Nous ne publions pas un dossier d’évaluation distinct pour chaque sous-traitant sur ce site. Les questions sur un transfert vont à ${PRIVACY_CONTACT_EMAIL}.`,
           ],
@@ -945,11 +945,11 @@ export const COOKIES_EN: LegalDoc = {
     },
     {
       id: "google",
-      title: "Google Maps (functional, not an ad tracker we set)",
+      title: "Map (OpenStreetMap, functional)",
       blocks: [
         {
           type: "p",
-          text: "When a map is shown, Google’s Maps script may set its own cookies in your browser. We load the map so you can see centres on a street map. We do not use Google Ads tags or remarketing pixels. See Google’s privacy policy for cookies Google sets.",
+          text: "When a map is shown, your browser loads OpenStreetMap tiles (OpenStreetMap Foundation data) so you can see centres on a street map. The map does not set Google cookies. We do not use Google Ads tags or remarketing pixels.",
         },
       ],
     },
@@ -1042,11 +1042,11 @@ export const COOKIES_FR: LegalDoc = {
     },
     {
       id: "google",
-      title: "Google Maps (fonctionnel)",
+      title: "Carte (OpenStreetMap, fonctionnelle)",
       blocks: [
         {
           type: "p",
-          text: "Quand une carte s’affiche, le script Google Maps peut déposer ses propres témoins. Nous chargeons la carte pour montrer les centres. Nous n’utilisons pas les balises Google Ads. Voir la politique de Google pour les témoins qu’il dépose.",
+          text: "Quand une carte s’affiche, votre navigateur charge les tuiles OpenStreetMap (données de la Fondation OpenStreetMap) pour montrer les centres. La carte ne dépose pas de témoin Google. Nous n’utilisons pas les balises Google Ads.",
         },
       ],
     },
