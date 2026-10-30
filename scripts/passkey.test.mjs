@@ -64,6 +64,14 @@ test("login, settings, and Android fallback are wired", () => {
   assert.match(login, /data-ke="email-primary"/);
   assert.match(login, /username webauthn/);
   assert.match(login, /PasskeyOffer/);
+  assert.match(login, /nativeIosSkipsPasskey/);
+  assert.match(login, /prefetchPasskeyRegistration/);
+  assert.match(login, /passkeyRegistrationError/);
+  const passkey = read("src/lib/passkey-client.ts");
+  assert.match(passkey, /if \(nativeIosSkipsPasskey\(\)\) return false/);
+  assert.match(passkey, /return native && platform === "ios"/);
+  assert.match(passkey, /export function prefetchPasskeyRegistration/);
+  assert.doesNotMatch(login, /if \(!passkeyWasCancelled\(err\)\) setError\(passkeyMessage/);
   assert.match(read("src/components/account-security.tsx"), /PasskeySettings/);
   const account = read("src/routes/account.tsx");
   assert.match(account, /chrome\.signedIn && !chrome\.pending/);

@@ -16,18 +16,26 @@ public class AppleSignInPlugin: CAPPlugin, CAPBridgedPlugin, ASAuthorizationCont
     private var pendingCall: CAPPluginCall?
 
     @objc func authorize(_ call: CAPPluginCall) {
-        pendingCall?.reject("cancelled")
-        pendingCall = call
-        let request = ASAuthorizationAppleIDProvider().createRequest()
-        request.requestedScopes = [.fullName, .email]
-        if let nonce = call.getString("nonce"), !nonce.isEmpty {
-            request.nonce = nonce
+        // ASAuthorizationController must be created and performed on the main thread.
+        // A bridge call from the WebView can arrive off-main and Apple then fails the sheet.
+        DispatchQueue.main.async { [weak self] in
+            guard let self else {
+                call.reject("Sign in with Apple failed")
+                return
+            }
+            self.pendingCall?.reject("cancelled")
+            self.pendingCall = call
+            let request = ASAuthorizationAppleIDProvider().createRequest()
+            request.requestedScopes = [.fullName, .email]
+            if let nonce = call.getString("nonce"), !nonce.isEmpty {
+                request.nonce = nonce
+            }
+            let controller = ASAuthorizationController(authorizationRequests: [request])
+            controller.delegate = self
+            controller.presentationContextProvider = self
+            self.authController = controller
+            controller.performRequests()
         }
-        let controller = ASAuthorizationController(authorizationRequests: [request])
-        controller.delegate = self
-        controller.presentationContextProvider = self
-        authController = controller
-        controller.performRequests()
     }
 
     public func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
@@ -62,7 +70,7 @@ public class AppleSignInPlugin: CAPPlugin, CAPBridgedPlugin, ASAuthorizationCont
         if nsError.domain == ASAuthorizationError.errorDomain && nsError.code == ASAuthorizationError.canceled.rawValue {
             pendingCall?.reject("cancelled")
         } else {
-            pendingCall?.reject("Sign in with Apple failed")
+            pendingCall?.reject("Sign in with Apple failed (\(nsError.domain) \(nsError.code))")
         }
         finish()
     }

@@ -1,12 +1,12 @@
 import { createFileRoute, Link, useRouter, useRouterState } from "@tanstack/react-router";
 import { authBackFallback, currentAuthBackFallback } from "@/lib/auth/auth-back";
-import { useEffect, useRef, useState, type FormEvent, type MutableRefObject } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent, type MutableRefObject } from "react";
 import { authClient, authEnabled, clearLocalSignedOut, dropExistingSession, signIn, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { reviewerSignInSkipsTurnstile } from "@/lib/reviewer-accounts";
-import { nativeSocialPlatform, providersForNativeShell } from "@/lib/auth/native-oauth";
+import { nativeSocialPlatform, providersForNativeShell, sanitizeNativeOAuthError } from "@/lib/auth/native-oauth";
 import { providersForStore, type GrokProvider } from "@/lib/auth/providers";
 import { getSignInProviders } from "@/lib/server/sign-in-providers";
 import { useStoreChannel } from "@/lib/use-native-shell";
@@ -88,9 +88,14 @@ import {
   PasskeyRequestError,
   cancelPasskeyCeremony,
   markPasskeyOfferSeen,
+  nativeIosSkipsPasskey,
+  passkeyRegistrationError,
+  passkeyRegistrationReady,
   passkeyWasCancelled,
+  prefetchPasskeyRegistration,
   registerPasskey,
   shouldOfferPasskey,
+  shouldUseAndroidCredentialManager,
   signInWithPasskey,
 } from "@/lib/passkey-client";
 import type { CopyKey } from "@/lib/copy";
@@ -106,6 +111,7 @@ export type LoginSearch = {
   desk?: DeskAlias;
   why?: SignupWhy;
   lang?: "en" | "fr";
+  error?: string;
 };
 
 const WHY_LEAD: Record<SignupWhy, CopyKey> = {
@@ -222,6 +228,8 @@ export function loginValidateSearch(s: Record<string, unknown>): LoginSearch {
   if (s.step === "role") out.step = "role";
   if (isSignupWhy(s.why)) out.why = s.why;
   if (s.lang === "en" || s.lang === "fr") out.lang = s.lang;
+  const oauthError = sanitizeNativeOAuthError(typeof s.error === "string" ? s.error : "");
+  if (oauthError) out.error = oauthError;
   const desk = parseDeskQuery(typeof s.desk === "string" ? s.desk : "");
   if (desk) out.desk = deskQueryValue(desk);
   return out;
@@ -262,6 +270,12 @@ export function LoginScreen({
   search: LoginSearch;
 }) {
   const { t, locale } = useCopy();
+  const oauthErrorText = useCallback((code: string | null | undefined): string | null => {
+    const clean = sanitizeNativeOAuthError(code);
+    if (!clean) return null;
+    if (clean === "access_denied") return t("oauthSignInCancelled");
+    return t("oauthSignInFailed").replace("{reason}", clean);
+  }, [t]);
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const loginPath = isFrPath(pathname) ? "/fr/login" : "/login";
@@ -306,7 +320,7 @@ export function LoginScreen({
   const parentSignup = mode === "up" && !operator && role !== "provider";
   const [phone, setPhone] = useState("");
   const [smsConsent, setSmsConsent] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() => oauthErrorText(search.error));
   const [busy, setBusy] = useState(false);
   const { token, onToken, reset: resetTurnstile, takeChallenge, resetSignal, required: turnstileRequired, onRequired } = useTurnstileToken();
   const submitLock = useRef(false);
@@ -333,10 +347,10 @@ export function LoginScreen({
       submitLock.current = false;
       setBusy(released.busy);
       setStalled(true);
-      setError(released.error);
+      setError(oauthErrorText(search.error) || released.error);
     }, LOGIN_STALL_MS);
     return () => window.clearTimeout(id);
-  }, [busy]);
+  }, [busy, oauthErrorText, search.error]);
 
   async function holdForAdminPassword(id: number): Promise<boolean> {
     const decision = adminAutoContinueDecision({
@@ -362,6 +376,7 @@ export function LoginScreen({
 
   useEffect(() => {
     if (sessionPending || !user || busy || continued.current) return;
+    if (sanitizeNativeOAuthError(search.error)) return;
     if (search.step === "role" && !facebookSignupRole(role)) return;
     if (consumeJustSignedOut()) return;
     const next = search.next || "";
@@ -427,7 +442,7 @@ export function LoginScreen({
       setError(released.error);
       setBusy(released.busy);
     });
-  }, [sessionPending, user, dest, busy, search.next, search.intent, search.step, deskHint, role, urlOperator, mode]);
+  }, [sessionPending, user, dest, busy, search.next, search.intent, search.step, search.error, deskHint, role, urlOperator, mode]);
 
   function passkeyMessage(err: unknown): string {
     if (err instanceof PasskeyRequestError && (err.code === "PASSKEY_RATE_LIMIT" || err.status === 429)) {
@@ -453,6 +468,7 @@ export function LoginScreen({
     if (method === "email") {
       const offer = await shouldOfferPasskey();
       if (attempt.current && offer) {
+        prefetchPasskeyRegistration();
         setPasskeyOffer(true);
         setBusy(false);
         return;
@@ -494,11 +510,17 @@ export function LoginScreen({
     setBusy(true);
     setError(null);
     try {
+      if (!passkeyRegistrationReady() && !shouldUseAndroidCredentialManager()) {
+        prefetchPasskeyRegistration();
+        setError(t("passkeyNotReady"));
+        return;
+      }
       await registerPasskey();
       markPasskeyOfferSeen();
       await finish("session");
     } catch (err) {
-      if (!passkeyWasCancelled(err)) setError(passkeyMessage(err));
+      prefetchPasskeyRegistration();
+      setError(passkeyRegistrationError(err) || t("passkeyFailed"));
     } finally {
       setBusy(false);
     }
@@ -548,7 +570,7 @@ export function LoginScreen({
   finishRef.current = finish;
 
   useEffect(() => {
-    if (mode !== "in" || passkeyOffer) return;
+    if (mode !== "in" || passkeyOffer || nativeIosSkipsPasskey()) return;
     let stopped = false;
     void (async () => {
       try {
@@ -919,7 +941,7 @@ export function LoginScreen({
             >
               {busy ? t("openingDesk") : mode === "up" && !operator ? t("createAccount") : t("signIn")}
             </Button>
-            {mode === "in" ? (
+            {mode === "in" && !nativeIosSkipsPasskey() ? (
               <Button
                 type="button"
                 variant="secondary"

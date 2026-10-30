@@ -175,26 +175,31 @@ export async function signIn(
     }
     const { isNative } = await import("@/lib/native");
     // iOS Apple already returned through the system sheet. Android Apple,
-    // Google, and Facebook stay in the in-app auth sheet.
+    // Google, and Facebook open inside the system auth sheet. The OAuth state
+    // cookie has to be set in that sheet, not in this WebView.
     const shell =
       isNative() && (providerId === "google" || providerId === "facebook" || providerId === "apple");
-    const { nativeOAuthReturnPath } = await import("./native-oauth");
-    const socialCallback = shell ? nativeOAuthReturnPath(callbackURL) : callbackURL;
-    const socialError = shell ? nativeOAuthReturnPath(errorCallbackURL) : errorCallbackURL;
-    const socialNewUser = shell && newUserCallbackURL ? nativeOAuthReturnPath(newUserCallbackURL) : newUserCallbackURL;
-    const { data, error } = await authClient.signIn.social({
-      provider: providerId as "apple" | "google" | "facebook",
-      callbackURL: socialCallback,
-      errorCallbackURL: socialError,
-      ...(socialNewUser ? { newUserCallbackURL: socialNewUser } : {}),
-      ...(shell ? { disableRedirect: true } : {}),
-    });
-    const providerUrl = resolveSocialSignInRedirect({ data, error }, providerId);
     if (shell) {
+      const provider = providerId as "apple" | "google" | "facebook";
+      const { nativeOAuthStartPath } = await import("./native-oauth");
+      const startPath = nativeOAuthStartPath({
+        provider,
+        next: callbackURL,
+        errorNext: errorCallbackURL,
+        newUserNext: newUserCallbackURL,
+      });
+      const startUrl = new URL(startPath, window.location.origin).toString();
       const { openNativeOAuthSheet } = await import("./native-oauth-client");
-      await openNativeOAuthSheet(providerUrl);
+      await openNativeOAuthSheet(startUrl);
       return;
     }
+    const { data, error } = await authClient.signIn.social({
+      provider: providerId as "apple" | "google" | "facebook",
+      callbackURL,
+      errorCallbackURL,
+      ...(newUserCallbackURL ? { newUserCallbackURL } : {}),
+    });
+    const providerUrl = resolveSocialSignInRedirect({ data, error }, providerId);
     window.location.href = providerUrl;
     return;
   }

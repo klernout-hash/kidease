@@ -34,6 +34,29 @@ export function passkeyWasCancelled(err: unknown): boolean {
   return code === "ERROR_CEREMONY_ABORTED";
 }
 
+/**
+ * Registration must show NotAllowedError. On iOS that error is what you get
+ * when the tap's user gesture was lost, and hiding it makes "Turn it on" look dead.
+ */
+export function passkeyRegistrationError(err: unknown): string {
+  if (err instanceof PasskeyRequestError && err.message.trim()) return err.message.trim();
+  if (err instanceof Error) {
+    const name = err.name && err.name !== "Error" ? err.name : "";
+    const message = err.message.trim();
+    if (name && message && !message.includes(name)) return `${message} (${name})`;
+    if (message) return message;
+    if (name) return name;
+  }
+  return "Could not turn on Face ID / fingerprint. Try again.";
+}
+
+/** iOS 1.0 hides passkeys. The WebView loses the tap before the system sheet. */
+export function nativeIosSkipsPasskey(input?: { native?: boolean; platform?: "ios" | "android" | "web" }): boolean {
+  const native = input?.native ?? isNative();
+  const platform = input?.platform ?? nativePlatform();
+  return native && platform === "ios";
+}
+
 export function webViewHasWebAuthn(): boolean {
   return typeof globalThis.PublicKeyCredential === "function";
 }
@@ -134,22 +157,78 @@ export async function signInWithPasskey(opts?: { autofill?: boolean }): Promise<
   });
 }
 
-export async function registerPasskey(deviceName = deviceLabel()): Promise<void> {
-  const start = await authJson<{ options: PublicKeyCredentialCreationOptionsJSON; challengeId: string }>(
-    "/api/auth/passkey/register/options",
-  );
-  let response: RegistrationResponseJSON;
-  if (shouldUseAndroidCredentialManager()) {
-    response = await nativeCreate(JSON.stringify(start.options));
-  } else {
-    const browser = await import("@simplewebauthn/browser");
-    if (!browser.browserSupportsWebAuthn()) {
-      throw new PasskeyRequestError("unsupported", "PASSKEY_UNSUPPORTED", 0);
+type RegisterChallenge = {
+  options: PublicKeyCredentialCreationOptionsJSON;
+  challengeId: string;
+};
+
+type PasskeyBrowser = typeof import("@simplewebauthn/browser");
+
+let registerChallenge: RegisterChallenge | null = null;
+let registerBrowser: PasskeyBrowser | null = null;
+let registerPrefetch: Promise<void> | null = null;
+
+/** Load the WebAuthn library and creation options before the tap. */
+export function prefetchPasskeyRegistration(): void {
+  if (nativeIosSkipsPasskey() || registerPrefetch) return;
+  registerPrefetch = (async () => {
+    try {
+      if (!shouldUseAndroidCredentialManager()) {
+        registerBrowser = await import("@simplewebauthn/browser");
+      }
+      registerChallenge = await authJson<RegisterChallenge>("/api/auth/passkey/register/options");
+    } catch {
+      registerChallenge = null;
+      registerPrefetch = null;
     }
-    response = await browser.startRegistration({ optionsJSON: start.options });
+  })();
+}
+
+/** True when startRegistration can run in this tap, with no await before it. */
+export function passkeyRegistrationReady(): boolean {
+  if (!registerChallenge) return false;
+  if (shouldUseAndroidCredentialManager()) return true;
+  return Boolean(registerBrowser);
+}
+
+function takeRegisterChallenge(): RegisterChallenge | null {
+  const start = registerChallenge;
+  registerChallenge = null;
+  registerPrefetch = null;
+  return start;
+}
+
+export async function registerPasskey(deviceName = deviceLabel()): Promise<void> {
+  const ready = takeRegisterChallenge();
+  let response: RegistrationResponseJSON;
+  let challengeId: string;
+  if (ready && (shouldUseAndroidCredentialManager() || registerBrowser)) {
+    challengeId = ready.challengeId;
+    if (shouldUseAndroidCredentialManager()) {
+      response = await nativeCreate(JSON.stringify(ready.options));
+    } else {
+      const browser = registerBrowser;
+      if (!browser || !browser.browserSupportsWebAuthn()) {
+        throw new PasskeyRequestError("unsupported", "PASSKEY_UNSUPPORTED", 0);
+      }
+      response = await browser.startRegistration({ optionsJSON: ready.options });
+    }
+  } else {
+    const start = await authJson<RegisterChallenge>("/api/auth/passkey/register/options");
+    challengeId = start.challengeId;
+    if (shouldUseAndroidCredentialManager()) {
+      response = await nativeCreate(JSON.stringify(start.options));
+    } else {
+      const browser = registerBrowser ?? (await import("@simplewebauthn/browser"));
+      registerBrowser = browser;
+      if (!browser.browserSupportsWebAuthn()) {
+        throw new PasskeyRequestError("unsupported", "PASSKEY_UNSUPPORTED", 0);
+      }
+      response = await browser.startRegistration({ optionsJSON: start.options });
+    }
   }
   await authJson("/api/auth/passkey/register/verify", {
-    challengeId: start.challengeId,
+    challengeId,
     deviceName,
     response,
   });
@@ -165,6 +244,7 @@ export async function removeSavedPasskey(id: string): Promise<void> {
 }
 
 export async function shouldOfferPasskey(): Promise<boolean> {
+  if (nativeIosSkipsPasskey()) return false;
   if (passkeyOfferSeen()) return false;
   if (!webViewHasWebAuthn() && !shouldUseAndroidCredentialManager()) return false;
   try {
