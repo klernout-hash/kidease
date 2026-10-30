@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter, useRouterState } from "@tanstack/react-router";
+import { authBackFallback, currentAuthBackFallback } from "@/lib/auth/auth-back";
 import { useEffect, useRef, useState, type FormEvent, type MutableRefObject } from "react";
 import { authClient, authEnabled, clearLocalSignedOut, dropExistingSession, signIn, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
@@ -261,6 +262,7 @@ export function LoginScreen({
   search: LoginSearch;
 }) {
   const { t, locale } = useCopy();
+  const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const loginPath = isFrPath(pathname) ? "/fr/login" : "/login";
   const storeChannel = useStoreChannel();
@@ -977,7 +979,16 @@ export function LoginScreen({
           )}
           <p className="mt-6 text-center text-xs text-subtle">
             <a
-              href={search.next && search.next.startsWith("/") ? search.next : "/"}
+              href={authBackFallback({ next: search.next, locale: locale === "fr" ? "fr" : "en" })}
+              data-ke-auth-back=""
+              onClick={(e) => {
+                e.preventDefault();
+                if (router.history.canGoBack()) {
+                  router.history.back();
+                  return;
+                }
+                window.location.replace(currentAuthBackFallback(search.next, locale === "fr" ? "fr" : "en"));
+              }}
               className="underline-offset-4 hover:underline"
             >
               {t("back")}

@@ -16,7 +16,7 @@ export function androidBackDecision(input: {
 }
 
 /** Hardware back on Android only. iOS has no system back button. */
-export async function bindAndroidBack(onBack: () => void, onExit: () => void): Promise<() => void> {
+export async function bindAndroidBack(onBack: (canGoBack: boolean) => void, onExit: () => void): Promise<() => void> {
   if (!isNative() || nativePlatform() !== "android") return () => {};
   const { App } = await import("@capacitor/app");
   const handle = await App.addListener("backButton", ({ canGoBack }) => {
@@ -26,7 +26,7 @@ export async function bindAndroidBack(onBack: () => void, onExit: () => void): P
       canGoBack: Boolean(canGoBack),
     });
     if (decision === "exit") onExit();
-    else if (decision === "back") onBack();
+    else if (decision === "back") onBack(Boolean(canGoBack));
   });
   return () => {
     void handle.remove();

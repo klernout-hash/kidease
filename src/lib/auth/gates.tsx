@@ -59,6 +59,7 @@ export function RedirectToSignIn({ to = SIGN_IN_PATH }: { to?: string }) {
   return (
     <Navigate
       to={signIn}
+      replace
       search={{
         intent: "in" as const,
         next:

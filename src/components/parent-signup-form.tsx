@@ -1,4 +1,5 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
+import { authBackFallback, currentAuthBackFallback } from "@/lib/auth/auth-back";
 import { useEffect, useState, type FormEvent } from "react";
 import { authClient, signIn, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
@@ -41,6 +42,7 @@ function rememberToken(data: { token?: string | null } | null | undefined) {
 
 export function ParentSignupForm() {
   const { t, locale } = useCopy();
+  const router = useRouter();
   const storeChannel = useStoreChannel();
   const hideAdmin = useNativeHidesAdmin();
   const [providers, setProviders] = useState<GrokProvider[]>([]);
@@ -230,6 +232,23 @@ export function ParentSignupForm() {
             </div>
           </div>
         ) : null}
+        <p className="mt-4 text-center text-xs text-subtle">
+          <a
+            href={authBackFallback({ locale: locale === "fr" ? "fr" : "en" })}
+            data-ke-auth-back=""
+            onClick={(e) => {
+              e.preventDefault();
+              if (router.history.canGoBack()) {
+                router.history.back();
+                return;
+              }
+              window.location.replace(currentAuthBackFallback(null, locale === "fr" ? "fr" : "en"));
+            }}
+            className="inline-flex min-h-11 items-center underline-offset-4 hover:underline"
+          >
+            {t("back")}
+          </a>
+        </p>
         <p className="mt-4 text-sm text-muted">
           <Link
             to="/login"
