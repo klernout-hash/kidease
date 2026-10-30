@@ -22,9 +22,21 @@ test("paid Featured placements are marked Sponsored on home ranking and listing 
   const listing = src("src/routes/daycare.$slug.tsx");
   assert.match(listing, /SponsoredMark show=\{d\.featuredCity\}/);
   const home = src("src/routes/index.tsx");
-  assert.match(home, /t\("featuredBody"\)/);
+  assert.match(home, /"featuredBody"/);
   assert.match(src("src/lib/server/daycares.ts"), /stampPaidPlacement/);
   assert.match(src("src/lib/legal-copy.ts"), /marked Sponsored/);
   assert.match(src("src/lib/legal-copy.ts"), /mention Commandité/);
   assert.doesNotMatch(src("src/components/sponsored-mark.tsx"), /featuredCity \?\? true/);
+});
+
+test("FEATURE_SPONSORED_LISTINGS defaults off and gates every Sponsored label", async () => {
+  const { sponsoredListingsEnabled } = await import("../src/lib/sponsored-flag.ts");
+  assert.equal(sponsoredListingsEnabled(undefined), false);
+  assert.equal(sponsoredListingsEnabled(""), false);
+  assert.equal(sponsoredListingsEnabled("true"), true);
+  assert.match(src("src/components/sponsored-mark.tsx"), /!FEATURE_SPONSORED_LISTINGS \|\| !show/);
+  assert.match(src("src/components/map-view.tsx"), /FEATURE_SPONSORED_LISTINGS && item\.featuredCity/);
+  assert.match(src("src/routes/index.tsx"), /FEATURE_SPONSORED_LISTINGS \? "featuredBody" : "featuredBodyPlain"/);
+  assert.doesNotMatch(copy.en.featuredBodyPlain, /Sponsored/);
+  assert.doesNotMatch(copy.fr.featuredBodyPlain, /Commandité/);
 });
