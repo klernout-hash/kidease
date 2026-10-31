@@ -100,14 +100,36 @@ export async function applyParentStripeInvoice(input: {
   if (eventId) {
     const claimed = await claimEvent(sql, eventId, type, input.livemode === true);
     if (!claimed) {
-      const relinked = await relinkStoredInvoice(sql, invoiceId, links.parentUserId, customerEmail);
-      return {
-        ok: true,
-        duplicate: true,
-        invoiceId: invoiceId || null,
-        parentUserId: relinked.parentUserId,
-        unlinked: relinked.unlinked,
-      };
+      const existing = invoiceId ? await loadRow(sql, invoiceId) : null;
+      if (existing) {
+        const relinked = await relinkStoredInvoice(sql, invoiceId, links.parentUserId, customerEmail);
+        if (relinked.newlyLinked) {
+          const parent = await parentParty(sql, links.parentUserId, customerEmail);
+          const daycare = await daycareParty(sql, links.daycareId);
+          const plan = planParentInvoice({
+            eventId: eventId || "peek",
+            type,
+            object: input.object,
+            links,
+            previousStatus: null,
+            now: new Date(),
+            featureSms: evaluateFeatureFlag("FEATURE_SMS"),
+            appOrigin: appOrigin(),
+            parent,
+            daycare,
+          });
+          if (plan.outcome === "apply") {
+            await deliverNotices(sql, eventId, plan, daycareOwners(sql, links.daycareId));
+          }
+        }
+        return {
+          ok: true,
+          duplicate: true,
+          invoiceId: invoiceId || null,
+          parentUserId: relinked.parentUserId,
+          unlinked: relinked.unlinked,
+        };
+      }
     }
   }
 
@@ -583,15 +605,15 @@ async function relinkStoredInvoice(
   invoiceId: string,
   parentUserId: string | null,
   customerEmail: string | null,
-): Promise<{ parentUserId: string | null; unlinked: string | null }> {
+): Promise<{ parentUserId: string | null; unlinked: string | null; newlyLinked: boolean }> {
   if (!invoiceId) {
     const unlinked = unlinkedInvoiceReason({ parentUserId, customerEmail });
     if (unlinked) logUnlinked(invoiceId, unlinked);
-    return { parentUserId, unlinked };
+    return { parentUserId, unlinked, newlyLinked: false };
   }
   const existing = await loadRow(sql, invoiceId);
   const already = existing?.parent_user_id || null;
-  if (already) return { parentUserId: already, unlinked: null };
+  if (already) return { parentUserId: already, unlinked: null, newlyLinked: false };
   if (parentUserId) {
     await sql`
       update stripe_parent_invoices
@@ -600,9 +622,9 @@ async function relinkStoredInvoice(
           updated_at = now()
       where stripe_invoice_id = ${invoiceId} and parent_user_id is null
     `.catch(() => undefined);
-    return { parentUserId, unlinked: null };
+    return { parentUserId, unlinked: null, newlyLinked: true };
   }
   const unlinked = unlinkedInvoiceReason({ parentUserId: null, customerEmail: existing?.customer_email || customerEmail });
   if (unlinked) logUnlinked(invoiceId, unlinked);
-  return { parentUserId: null, unlinked };
+  return { parentUserId: null, unlinked, newlyLinked: false };
 }
