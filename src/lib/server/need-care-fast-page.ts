@@ -1,7 +1,14 @@
 import { getSql } from "@/lib/db";
+import { needCareFastEnabled } from "@/lib/features";
 import { geocode, haversineKm } from "@/lib/geo";
 import { PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
-import { formatFastKm, needCareFastQuery, qualifiesNeedCareFast, rankNeedCareFast } from "@/lib/need-care-fast";
+import {
+  formatFastKm,
+  needCareFastQuery,
+  qualifiesNeedCareFast,
+  rankNeedCareFast,
+  rankNeedCareFastByAvailability,
+} from "@/lib/need-care-fast";
 
 export type NeedCareFastHit = {
   id: string;
@@ -20,6 +27,7 @@ export type NeedCareFastPage = {
   placeLabel: string | null;
   unknownPlace: boolean;
   hits: NeedCareFastHit[];
+  sort: "spots" | "distance";
 };
 
 type Row = {
@@ -44,7 +52,7 @@ function iso(value: string | Date | null): string | null {
 }
 
 export function emptyNeedCareFastPage(q = ""): NeedCareFastPage {
-  return { q, placeLabel: null, unknownPlace: false, hits: [] };
+  return { q, placeLabel: null, unknownPlace: false, hits: [], sort: "distance" };
 }
 
 /**
@@ -56,7 +64,7 @@ export async function loadNeedCareFastPage(rawQuery: string, now = Date.now()): 
   if (!q) return emptyNeedCareFastPage();
   try {
     const origin = geocode(q);
-    if (!origin) return { q, placeLabel: null, unknownPlace: true, hits: [] };
+    if (!origin) return { q, placeLabel: null, unknownPlace: true, hits: [], sort: "distance" };
     const since = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
     const sql = await getSql();
     const rows = await sql.query<Row>(
@@ -70,7 +78,9 @@ export async function loadNeedCareFastPage(rawQuery: string, now = Date.now()): 
       [since],
     ).catch(() => [] as Row[]);
     const list = Array.isArray(rows) ? rows : [];
-    const hits = rankNeedCareFast(
+    const sort = needCareFastEnabled() ? "spots" : "distance";
+    const rank = sort === "spots" ? rankNeedCareFastByAvailability : rankNeedCareFast;
+    const hits = rank(
       list.flatMap((row) => {
         const spots = (Number(row.spots_infant) || 0) + (Number(row.spots_toddler) || 0) + (Number(row.spots_preschool) || 0);
         const confirmedAt = iso(row.last_vacancy_updated_at);
@@ -93,7 +103,7 @@ export async function loadNeedCareFastPage(rawQuery: string, now = Date.now()): 
         }];
       }),
     );
-    return { q, placeLabel: origin.label, unknownPlace: false, hits };
+    return { q, placeLabel: origin.label, unknownPlace: false, hits, sort };
   } catch {
     return emptyNeedCareFastPage(q);
   }

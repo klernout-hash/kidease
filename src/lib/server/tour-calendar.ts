@@ -526,6 +526,7 @@ export const bookTourSlot = createServerFn({ method: "POST" })
           centre: d.name,
           locale,
           uid: tourId,
+          tourId,
           startAt: slot.startAt,
           startTime: slot.startTime,
           endTime: slot.endTime,

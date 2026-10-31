@@ -22,6 +22,7 @@ export function ListingRail({
   visual = false,
   labelFar = false,
   showDistance = true,
+  ratingFloor,
 }: {
   title: string;
   items: Card[];
@@ -45,6 +46,7 @@ export function ListingRail({
   labelFar?: boolean;
   /** Off when a national Live card is outside the parent's city. */
   showDistance?: boolean;
+  ratingFloor?: number;
 }) {
   const { t } = useCopy();
   const scroller = useRef<HTMLDivElement>(null);
@@ -161,6 +163,7 @@ export function ListingRail({
                 priority={eagerThumbs && i === 0}
                 labelFar={labelFar}
                 showDistance={showDistance}
+                ratingFloor={ratingFloor}
               />
             </div>
           ))}

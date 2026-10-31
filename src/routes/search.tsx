@@ -82,6 +82,8 @@ import {
 } from "@/lib/parent-listing";
 import { getMySearchAnchors, saveMySearchAnchors } from "@/lib/server/search-anchors";
 import { vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
+import { MIN_REVIEW_COUNT } from "@/lib/quality";
+import { ratingFloor } from "@/lib/review-reports";
 import { isClaimVerified } from "@/lib/trust";
 import type { DaycareCard as Card } from "@/lib/types";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -154,6 +156,8 @@ const CompareBar = lazy(() =>
 );
 
 export async function searchLoader({ location }: { location: { search: unknown } }) {
+    const { reviewReportsEnabled } = await import("@/lib/features");
+    const reviewRatingFloor = ratingFloor(reviewReportsEnabled(), MIN_REVIEW_COUNT);
     const q = searchQueryFromUnknown(location.search);
     const city = cityParamFromUnknown(location.search);
     const decision = resolveSearchDirectory({ q, city });
@@ -167,6 +171,7 @@ export async function searchLoader({ location }: { location: { search: unknown }
         page: 1,
         hasMore: false,
         total: 0,
+        reviewRatingFloor,
       };
     }
     const place = q || (city ? originFromSearchQuery(city)?.label || city : "");
@@ -187,6 +192,7 @@ export async function searchLoader({ location }: { location: { search: unknown }
         page: 1,
         hasMore: false,
         total: 0,
+        reviewRatingFloor,
       };
     }
     const page = pageFromSearch(location.search);
@@ -231,6 +237,7 @@ export async function searchLoader({ location }: { location: { search: unknown }
       page: painted.value?.page ?? page,
       hasMore: painted.value?.hasMore === true,
       total: painted.value?.total ?? 0,
+      reviewRatingFloor,
     };
 }
 
@@ -2137,6 +2144,7 @@ export function SearchScreen({
                 eagerThumbs
                 labelFar={nameSearch}
                 skipLiveLooking
+                ratingFloor={boot.reviewRatingFloor}
                 seeAll={false}
                 selected={
                   parentFilters.fac.length === 1
@@ -2182,7 +2190,7 @@ export function SearchScreen({
               {ageUnknownOpen ? (
                 <div className="ke-result-stack mt-4">
                   {split.ageUnknown.map((item) => (
-                    <DaycareCard key={item.id} item={item} presentation="visual" />
+                    <DaycareCard key={item.id} item={item} presentation="visual" ratingFloor={boot.reviewRatingFloor} />
                   ))}
                 </div>
               ) : null}

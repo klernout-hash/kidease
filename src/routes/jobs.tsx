@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { JobsInterestForm } from "@/components/jobs-interest-form";
+import { EceJobBoard } from "@/components/ece-job-board";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
@@ -25,6 +26,7 @@ export function Jobs() {
             : "A centre that posts an ECE or CCA role shows a badge on its listing."}
         </p>
         <JobsInterestForm variant="caregiver" />
+        <EceJobBoard />
         <p className="mt-8 text-sm">
           <Link to={localePath("/jobs/post", locale)} className="font-medium text-primary hover:underline">
             {t("jobsCentresCta")}

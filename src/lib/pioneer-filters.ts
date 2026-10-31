@@ -2,6 +2,7 @@
  * URL chips for search: cwelcc, openings, inclusive, meals, subsidy, lang.
  */
 
+import { languageChipMatches } from "./inclusive-filters.ts";
 import { hasAmenity } from "./licensing.ts";
 import { confirmedFeeProgramBadge, listingSubsidy } from "./fee-program.ts";
 
@@ -108,7 +109,13 @@ function languageBlob(row: Filterable): string {
 
 export function rowMatchesPioneer<T extends Filterable>(row: T, filters: PioneerFilters): boolean {
   if (filters.cwelcc && confirmedFeeProgramBadge(row as never) == null) return false;
-  if (filters.inclusive && !hasAmenity(row.amenities, "inclusive")) return false;
+  if (
+    filters.inclusive &&
+    !hasAmenity(row.amenities, "inclusive") &&
+    !hasAmenity(row.amenities, "special-needs")
+  ) {
+    return false;
+  }
   if (filters.meals) {
     const diet = DIET_KEYS.some((key) => hasAmenity(row.amenities, key)) || row.financial?.meals === true;
     if (!diet) return false;
@@ -118,7 +125,9 @@ export function rowMatchesPioneer<T extends Filterable>(row: T, filters: Pioneer
   }
   if (filters.langs.length) {
     const blob = languageBlob(row);
-    const hit = filters.langs.some((code) => blob.includes(code) || blob.includes(PIONEER_LANG_LABELS[code].en.toLowerCase()));
+    const hit = filters.langs.some(
+      (code) => languageChipMatches(blob, code) || blob.includes(PIONEER_LANG_LABELS[code].en.toLowerCase()),
+    );
     if (!hit) return false;
   }
   return true;

@@ -148,7 +148,7 @@ export function tourSystemBody(input: {
 }
 
 export function tourStatusBody(input: {
-  status: "accepted" | "declined" | "completed" | "enrolled" | "lost" | "expired";
+  status: "accepted" | "declined" | "completed" | "enrolled" | "lost" | "expired" | "no_show";
   daycareName: string;
   note?: string | null;
   locale?: "en" | "fr" | string;
@@ -172,6 +172,11 @@ export function tourStatusBody(input: {
     }
     if (input.status === "lost") {
       return fr ? `La visite à ${input.daycareName} n’a pas abouti.` : `The tour at ${input.daycareName} did not lead to enrolment.`;
+    }
+    if (input.status === "no_show") {
+      return fr
+        ? `La famille n'est pas venue à la visite à ${input.daycareName}.`
+        : `The family did not arrive for the tour at ${input.daycareName}.`;
     }
     return fr ? `${input.daycareName} a décliné la visite.` : `${input.daycareName} declined the tour request.`;
   })();

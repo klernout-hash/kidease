@@ -293,7 +293,7 @@ export type Conversation = {
   unread?: boolean;
 };
 
-export type TourStatus = "pending" | "accepted" | "completed" | "enrolled" | "declined" | "lost" | "expired";
+export type TourStatus = "pending" | "accepted" | "completed" | "enrolled" | "declined" | "lost" | "expired" | "no_show";
 
 export type PreferredTime = {
   date: string;

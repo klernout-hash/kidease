@@ -4,6 +4,8 @@ export type NeedCareFastCopy = {
   what: string;
   why: string;
   lead: string;
+  leadSpots: string;
+  help: string;
   placeLabel: string;
   submit: string;
   emptyPlace: string;
@@ -22,6 +24,9 @@ const en: NeedCareFastCopy = {
   what: "KidEase lists licensed daycare in Canada.",
   why: "This page shows only centres that confirmed an open spot in the last 7 days.",
   lead: "Enter your city. We sort the closest centres first.",
+  leadSpots:
+    "Enter your city. Centres with more open spots come first, then the closer ones. Distance uses the centre pin on OpenStreetMap. KidEase does not use Google Maps.",
+  help: "Help",
   placeLabel: "City",
   submit: "Show open spots",
   emptyPlace: "Add a city so we can sort by distance.",
@@ -41,6 +46,9 @@ const fr: NeedCareFastCopy = {
   what: "KidEase répertorie les garderies permises au Canada.",
   why: "Cette page montre seulement les centres qui ont confirmé une place libre dans les 7 derniers jours.",
   lead: "Entrez votre ville. Nous trions les centres les plus proches d'abord.",
+  leadSpots:
+    "Entrez votre ville. Les centres avec plus de places libres viennent d'abord, puis les plus proches. La distance utilise l'épingle du centre sur OpenStreetMap. KidEase n'utilise pas Google Maps.",
+  help: "Aide",
   placeLabel: "Ville",
   submit: "Voir les places libres",
   emptyPlace: "Ajoutez une ville pour trier par distance.",
