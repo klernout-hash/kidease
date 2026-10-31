@@ -80,8 +80,8 @@ export function ReferFriendPanel() {
           {thankYous != null ? (
             <p className="mt-3 text-sm">
               {locale === "fr"
-                ? `${thankYous} note${thankYous === 1 ? "" : "s"} de remerciement. Pas d’argent et pas de crédit.`
-                : `${thankYous} thank-you note${thankYous === 1 ? "" : "s"}. No cash and no credit.`}
+                ? `${thankYous} note${thankYous === 1 ? "" : "s"} de remerciement. Ce n’est pas un paiement.`
+                : `${thankYous} thank-you note${thankYous === 1 ? "" : "s"}. This is not a payment.`}
             </p>
           ) : null}
         </div>

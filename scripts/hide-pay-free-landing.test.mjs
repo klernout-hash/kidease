@@ -153,7 +153,7 @@ test("JSON-LD and OG stay LocalBusiness/ChildCare without KidEase plan prices", 
   assert.ok(meta);
   assert.equal(meta.ogTitle.includes("KidEase"), true);
   assert.doesNotMatch(meta.ogDescription, /\$49/);
-  assert.match(meta.ogImage, /https:\/\/www\.kidease\.ca\//);
+  assert.match(meta.ogImage, /https:\/\/media\.kidease\.ca\/photos\//);
   assert.equal(listingShareUrl("sunny-side-child-care"), "https://www.kidease.ca/daycare/sunny-side-child-care");
   const mail = listingMailtoHref({
     name: "Sunny Side Child Care",
