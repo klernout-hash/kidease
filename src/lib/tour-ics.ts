@@ -59,13 +59,16 @@ export function buildTourIcs(input: {
   end: Date;
   location: string;
   description: string;
+  method?: "PUBLISH" | "REQUEST" | "CANCEL";
+  sequence?: number;
 }): string {
+  const method = input.method || "PUBLISH";
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//KidEase//Tour//EN",
     "CALSCALE:GREGORIAN",
-    "METHOD:PUBLISH",
+    `METHOD:${method}`,
     "BEGIN:VEVENT",
     `UID:${icsEscape(input.uid)}@kidease.ca`,
     `DTSTAMP:${icsStamp(new Date())}`,
@@ -74,11 +77,81 @@ export function buildTourIcs(input: {
     `SUMMARY:${icsEscape(input.title)}`,
     `LOCATION:${icsEscape(input.location)}`,
     `DESCRIPTION:${icsEscape(input.description)}`,
+    `SEQUENCE:${Math.max(0, Math.floor(input.sequence || 0))}`,
+    method === "CANCEL" ? "STATUS:CANCELLED" : "STATUS:CONFIRMED",
     "END:VEVENT",
     "END:VCALENDAR",
     "",
   ];
   return lines.join("\r\n");
+}
+
+export function tourCalendarLinks(input: {
+  uid: string;
+  title: string;
+  start: Date;
+  end: Date;
+  location: string;
+  description: string;
+  method?: "PUBLISH" | "REQUEST" | "CANCEL";
+  sequence?: number;
+}): { google: string; outlook: string; ics: string } {
+  const dates = `${icsStamp(input.start)}/${icsStamp(input.end)}`;
+  const google = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(input.title)}&dates=${dates}&details=${encodeURIComponent(input.description)}&location=${encodeURIComponent(input.location)}`;
+  const outlook = `https://outlook.office.com/calendar/0/deeplink/compose?path=/calendar/action/compose&rru=addevent&subject=${encodeURIComponent(input.title)}&startdt=${encodeURIComponent(input.start.toISOString())}&enddt=${encodeURIComponent(input.end.toISOString())}&body=${encodeURIComponent(input.description)}&location=${encodeURIComponent(input.location)}`;
+  return { google, outlook, ics: buildTourIcs({ ...input, method: input.method || "REQUEST" }) };
+}
+
+export function tourUpdateCalendarText(input: {
+  uid: string;
+  centre: string;
+  startAt: string;
+  startTime: string;
+  endTime: string;
+  location?: string;
+  sequence?: number;
+  cancelled?: boolean;
+  locale?: "en" | "fr";
+}): string {
+  const locale = input.locale === "fr" ? "fr" : "en";
+  const range = tourSlotInstants({
+    startAt: input.startAt,
+    startTime: input.startTime,
+    endTime: input.endTime,
+  });
+  if (!range) {
+    return locale === "fr"
+      ? "Cette visite est annulée. Retirez-la de votre calendrier si vous l'aviez ajoutée."
+      : "This visit is cancelled. Remove it from your calendar if you added it.";
+  }
+  const links = tourCalendarLinks({
+    uid: input.uid,
+    title: locale === "fr" ? `Visite : ${input.centre}` : `Tour: ${input.centre}`,
+    start: range.start,
+    end: range.end,
+    location: input.location || "",
+    description: input.cancelled ? "Cancelled" : "Updated tour time",
+    method: input.cancelled ? "CANCEL" : "REQUEST",
+    sequence: input.sequence,
+  });
+  return tourCalendarMailText(links, locale, Boolean(input.cancelled));
+}
+
+export function tourCalendarMailText(
+  links: { google: string; outlook: string; ics: string },
+  locale: "en" | "fr",
+  cancelled = false,
+): string {
+  if (cancelled) {
+    const lead = locale === "fr"
+      ? "Cette visite est annulée. Retirez-la de votre calendrier si vous l'aviez ajoutée."
+      : "This visit is cancelled. Remove it from your calendar if you added it.";
+    return `${lead}\n\n${links.ics}`;
+  }
+  const lead = locale === "fr"
+    ? `Ajouter à Google Agenda: ${links.google}\nAjouter à Outlook: ${links.outlook}`
+    : `Add to Google Calendar: ${links.google}\nAdd to Outlook: ${links.outlook}`;
+  return `${lead}\n\n${links.ics}`;
 }
 
 export function tourInviteCopy(locale: "en" | "fr", centre: string): { subject: string; text: string; reminder: string; sms: string } {

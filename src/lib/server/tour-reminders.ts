@@ -4,7 +4,7 @@
  */
 
 import { getSql } from "@/lib/db";
-import { tourInviteCopy, tourReminderAt } from "@/lib/tour-ics";
+import { tourCalendarLinks, tourCalendarMailText, tourInviteCopy, tourReminderAt, tourSlotInstants } from "@/lib/tour-ics";
 import { nid } from "@/lib/utils";
 
 export async function scheduleTourReminder(input: {
@@ -31,15 +31,43 @@ export async function scheduleTourReminder(input: {
   return { scheduled: true as const };
 }
 
-export async function sendTourBookedMail(input: { email: string; centre: string; locale: "en" | "fr" }) {
+export async function sendTourBookedMail(input: {
+  email: string;
+  centre: string;
+  locale: "en" | "fr";
+  uid?: string;
+  startAt?: string;
+  startTime?: string;
+  endTime?: string;
+  location?: string;
+  cancelled?: boolean;
+  sequence?: number;
+}) {
   const letter = tourInviteCopy(input.locale, input.centre);
+  const range = input.startAt && input.startTime && input.endTime
+    ? tourSlotInstants({ startAt: input.startAt, startTime: input.startTime, endTime: input.endTime })
+    : null;
+  const links = range
+    ? tourCalendarLinks({
+        uid: input.uid || "tour",
+        title: input.locale === "fr" ? `Visite : ${input.centre}` : `Tour: ${input.centre}`,
+        start: range.start,
+        end: range.end,
+        location: input.location || "",
+        description: letter.text,
+        method: input.cancelled ? "CANCEL" : "REQUEST",
+        sequence: input.sequence,
+      })
+    : null;
+  const extra = links ? `\n\n${tourCalendarMailText(links, input.locale, Boolean(input.cancelled))}` : "";
+  const text = `${letter.text}${extra}`;
   const { sendTransactionalMail } = await import("@/lib/transactional-mail");
   await sendTransactionalMail({
     purpose: "customer_alert",
     to: input.email,
     subject: letter.subject,
-    text: letter.text,
-    html: `<p>${letter.text}</p>`,
+    text,
+    html: `<p>${letter.text}</p>${links ? `<p><a href="${links.google}">Google</a> · <a href="${links.outlook}">Outlook</a></p>` : ""}`,
   }).catch(() => undefined);
 }
 

@@ -520,7 +520,18 @@ export const bookTourSlot = createServerFn({ method: "POST" })
         email: email || null,
         locale,
       });
-      if (email) await sendTourBookedMail({ email, centre: d.name, locale });
+      if (email) {
+        await sendTourBookedMail({
+          email,
+          centre: d.name,
+          locale,
+          uid: tourId,
+          startAt: slot.startAt,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          location: [d.address, d.city, d.province].filter(Boolean).join(", "),
+        });
+      }
     } catch (err) {
       console.error("[kidease-tour] reminder skipped", err);
     }

@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { buildTourIcs, tourInviteCopy, tourReminderAt, tourSlotInstants } from "../src/lib/tour-ics.ts";
+import { buildTourIcs, tourCalendarLinks, tourInviteCopy, tourReminderAt, tourSlotInstants, tourUpdateCalendarText } from "../src/lib/tour-ics.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -52,4 +52,48 @@ test("invite copy is bilingual and the job is wired", () => {
   assert.match(job, /sendDueTourReminders/);
   assert.match(book, /scheduleTourReminder/);
   assert.match(book, /sendTourBookedMail/);
+  assert.match(book, /startAt: slot.startAt/);
+});
+
+test("confirmation mail can add Google, Outlook, and a cancel update", () => {
+  const range = tourSlotInstants({
+    startAt: "2026-11-02T15:00:00.000Z",
+    startTime: "10:00",
+    endTime: "10:30",
+  });
+  assert.ok(range);
+  const links = tourCalendarLinks({
+    uid: "tr_test",
+    title: "Tour: Maple Care",
+    start: range.start,
+    end: range.end,
+    location: "12 Main St",
+    description: "The centre confirms the time.",
+  });
+  assert.match(links.google, /calendar\.google\.com\/calendar\/render/);
+  assert.match(links.outlook, /outlook\.office\.com\/calendar/);
+  assert.match(links.ics, /METHOD:REQUEST/);
+  const updated = tourUpdateCalendarText({
+    uid: "tr_test",
+    centre: "Maple Care",
+    startAt: "2026-11-02T15:00:00.000Z",
+    startTime: "10:00",
+    endTime: "10:30",
+    sequence: 2,
+  });
+  assert.match(updated, /Add to Google Calendar/);
+  assert.match(updated, /Add to Outlook/);
+  const cancelled = buildTourIcs({
+    uid: "tr_test",
+    title: "Tour: Maple Care",
+    start: range.start,
+    end: range.end,
+    location: "",
+    description: "Cancelled",
+    method: "CANCEL",
+    sequence: 3,
+  });
+  assert.match(cancelled, /METHOD:CANCEL/);
+  assert.match(cancelled, /STATUS:CANCELLED/);
+  assert.match(readFileSync(join(root, "src/lib/server/tours.ts"), "utf8"), /Tour cancelled/);
 });
