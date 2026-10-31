@@ -130,6 +130,8 @@ async function run(request: Request) {
   }
 
   let invoiceId: string | null = null;
+  let parentUserId: string | null = null;
+  let unlinked: string | null = null;
   if (PARENT_INVOICE_TYPES.has(type)) {
     try {
       const livemode = (event as { livemode?: boolean }).livemode === true;
@@ -140,6 +142,9 @@ async function run(request: Request) {
         livemode,
       });
       invoiceId = invoice.invoiceId;
+      parentUserId = invoice.parentUserId;
+      unlinked = invoice.unlinked;
+      if (!userId && parentUserId) userId = parentUserId;
     } catch (err) {
       console.error("[kidease-invoice] webhook apply failed", err);
       releaseStripeEventClaim(event.id);
@@ -160,6 +165,8 @@ async function run(request: Request) {
       billId: bill?.billId ?? null,
       billStatus: bill?.status ?? null,
       invoiceId,
+      parentUserId,
+      unlinked,
       userId,
     });
   }

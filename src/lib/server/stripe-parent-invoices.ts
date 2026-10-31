@@ -4,7 +4,7 @@
  */
 
 import { createServerFn } from "@tanstack/react-start";
-import { getSql, type Sql } from "@/lib/db";
+import { dbSource, getSql, type Sql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { evaluateFeatureFlag } from "@/lib/flags";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
@@ -15,9 +15,11 @@ import { listCentreOwnerEmails } from "@/lib/server/thread-access";
 import { nextAlertSendAt } from "@/lib/alert-push";
 import { quietHourInZone } from "@/lib/family-time";
 import {
+  invoiceCustomerEmail,
   invoiceNoticeKey,
   invoiceSmsDecision,
   planParentInvoice,
+  unlinkedInvoiceReason,
   type InvoiceLocale,
   type InvoiceParty,
   type ParentInvoiceDraft,
@@ -59,7 +61,14 @@ export async function applyParentStripeInvoice(input: {
   type: string;
   object: unknown;
   livemode?: boolean;
-}): Promise<{ ok: true; duplicate?: boolean; ignored?: string; invoiceId: string | null }> {
+}): Promise<{
+  ok: true;
+  duplicate?: boolean;
+  ignored?: string;
+  invoiceId: string | null;
+  parentUserId: string | null;
+  unlinked: string | null;
+}> {
   const eventId = String(input.eventId || "").trim();
   const type = input.type || "";
   const sql = await getSql();
@@ -73,18 +82,38 @@ export async function applyParentStripeInvoice(input: {
     featureSms: false,
   });
   if (peek.outcome === "ignore") {
-    return { ok: true, ignored: peek.reason || type, invoiceId: null };
+    return { ok: true, ignored: peek.reason || type, invoiceId: null, parentUserId: null, unlinked: null };
+  }
+  const invoiceId = peek.invoice?.stripeInvoiceId || "";
+  const customerEmail = peek.invoice?.customerEmail || invoiceCustomerEmail(input.object);
+  if (dbSource === "none") {
+    logUnlinked(invoiceId, "database_unavailable");
+    return {
+      ok: true,
+      ignored: "database_unavailable",
+      invoiceId: invoiceId || null,
+      parentUserId: null,
+      unlinked: "database_unavailable",
+    };
   }
 
   if (eventId) {
     const claimed = await claimEvent(sql, eventId, type, input.livemode === true);
-    if (!claimed) return { ok: true, duplicate: true, invoiceId: peek.invoice?.stripeInvoiceId ?? null };
+    if (!claimed) {
+      const relinked = await relinkStoredInvoice(sql, invoiceId, links.parentUserId, customerEmail);
+      return {
+        ok: true,
+        duplicate: true,
+        invoiceId: invoiceId || null,
+        parentUserId: relinked.parentUserId,
+        unlinked: relinked.unlinked,
+      };
+    }
   }
 
   try {
-    const invoiceId = peek.invoice?.stripeInvoiceId || "";
     const previous = invoiceId ? await previousStatus(sql, invoiceId) : null;
-    const parent = await parentParty(sql, links.parentUserId, peek.invoice?.customerEmail ?? null);
+    const parent = await parentParty(sql, links.parentUserId, customerEmail);
     const daycare = await daycareParty(sql, links.daycareId);
     const plan = planParentInvoice({
       eventId: eventId || "peek",
@@ -99,11 +128,21 @@ export async function applyParentStripeInvoice(input: {
       daycare,
     });
     if (plan.outcome === "ignore" || !plan.invoice) {
-      return { ok: true, ignored: plan.reason || type, invoiceId: invoiceId || null };
+      return { ok: true, ignored: plan.reason || type, invoiceId: invoiceId || null, parentUserId: null, unlinked: null };
     }
     await upsertInvoice(sql, plan.invoice, input.livemode === true);
+    const unlinked = unlinkedInvoiceReason({
+      parentUserId: plan.invoice.parentUserId,
+      customerEmail: plan.invoice.customerEmail,
+    });
+    if (unlinked) logUnlinked(plan.invoice.stripeInvoiceId, unlinked);
     await deliverNotices(sql, eventId, plan, daycareOwners(sql, links.daycareId));
-    return { ok: true, invoiceId: plan.invoice.stripeInvoiceId };
+    return {
+      ok: true,
+      invoiceId: plan.invoice.stripeInvoiceId,
+      parentUserId: plan.invoice.parentUserId,
+      unlinked,
+    };
   } catch (err) {
     if (eventId) await releaseEvent(sql, eventId);
     throw err;
@@ -456,10 +495,10 @@ async function resolveLinks(
     parentUserId = parentUserId || bills[0]?.parent_user_id || "";
     daycareId = daycareId || bills[0]?.daycare_id || "";
   }
-  const email = clean(row?.customer_email).toLowerCase();
-  if (!parentUserId && email.includes("@")) {
+  const email = invoiceCustomerEmail(object);
+  if (!parentUserId && email) {
     const users = await sql<{ id: string }>`
-      select id from "user" where lower(email) = ${email} limit 1
+      select id from "user" where lower(btrim(email)) = ${email} limit 1
     `.catch(() => [] as { id: string }[]);
     parentUserId = users[0]?.id || "";
   }
@@ -532,4 +571,38 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 
 function clean(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function logUnlinked(invoiceId: string, reason: string): void {
+  console.info(`[kidease-invoice] unlinked invoice ${invoiceId || "unknown"}: ${reason}`);
+}
+
+/** A repeat of the same event can attach a parent once the email matches. Notices stay idempotent. */
+async function relinkStoredInvoice(
+  sql: Sql,
+  invoiceId: string,
+  parentUserId: string | null,
+  customerEmail: string | null,
+): Promise<{ parentUserId: string | null; unlinked: string | null }> {
+  if (!invoiceId) {
+    const unlinked = unlinkedInvoiceReason({ parentUserId, customerEmail });
+    if (unlinked) logUnlinked(invoiceId, unlinked);
+    return { parentUserId, unlinked };
+  }
+  const existing = await loadRow(sql, invoiceId);
+  const already = existing?.parent_user_id || null;
+  if (already) return { parentUserId: already, unlinked: null };
+  if (parentUserId) {
+    await sql`
+      update stripe_parent_invoices
+      set parent_user_id = ${parentUserId},
+          customer_email = coalesce(${customerEmail}, customer_email),
+          updated_at = now()
+      where stripe_invoice_id = ${invoiceId} and parent_user_id is null
+    `.catch(() => undefined);
+    return { parentUserId, unlinked: null };
+  }
+  const unlinked = unlinkedInvoiceReason({ parentUserId: null, customerEmail: existing?.customer_email || customerEmail });
+  if (unlinked) logUnlinked(invoiceId, unlinked);
+  return { parentUserId: null, unlinked };
 }

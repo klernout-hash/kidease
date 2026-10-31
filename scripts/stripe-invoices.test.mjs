@@ -9,10 +9,12 @@ import { brandedInvoicePdf } from "../src/lib/invoice-pdf.ts";
 import { invoiceListHtml } from "../src/lib/invoice-list-html.ts";
 import { gateStripeWebhook, resetStripeEventClaimsForTests } from "../src/lib/server/stripe-signature.ts";
 import {
+  invoiceCustomerEmail,
   invoiceNoticeKey,
   invoiceSmsDecision,
   planParentInvoice,
   rememberStripeEventId,
+  unlinkedInvoiceReason,
 } from "../src/lib/stripe-parent-invoice.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -198,6 +200,65 @@ test("quiet hours hold SMS and a repeated event id does not notify again", () =>
   assert.equal(again.notices.length, 0);
   assert.equal(invoiceNoticeKey("evt_1", "parent", "email", "Parent@Example.com"), "evt_1:parent:email:parent@example.com");
   assert.equal(plan("invoice.paid", { previousStatus: "paid" }).notices.length, 0);
+});
+
+test("customer.email is used when customer_email is missing, and the address is lowercased before lookup", () => {
+  assert.equal(
+    invoiceCustomerEmail({
+      customer_email: "  Parent@Example.com ",
+      customer: { email: "other@example.com" },
+    }),
+    "parent@example.com",
+  );
+  assert.equal(
+    invoiceCustomerEmail({
+      customer: { id: "cus_test", email: "Parent@Example.com" },
+      metadata: { kidease: "parent_invoice" },
+    }),
+    "parent@example.com",
+  );
+  assert.equal(invoiceCustomerEmail({ customer_details: { email: "A@B.com" } }), "a@b.com");
+  assert.equal(unlinkedInvoiceReason({ parentUserId: null, customerEmail: null }), "no_customer_email");
+  assert.equal(
+    unlinkedInvoiceReason({ parentUserId: null, customerEmail: "parent@example.com" }),
+    "email_not_in_database",
+  );
+  assert.equal(unlinkedInvoiceReason({ parentUserId: "user_parent", customerEmail: "parent@example.com" }), null);
+  assert.equal(
+    unlinkedInvoiceReason({ parentUserId: null, customerEmail: "parent@example.com", database: "none" }),
+    "database_unavailable",
+  );
+
+  const fromCustomer = planParentInvoice({
+    eventId: "evt_customer_object_email",
+    type: "invoice.paid",
+    object: {
+      id: "in_test_customer_email",
+      currency: "cad",
+      amount_paid: 1000,
+      customer: { id: "cus_test", email: "Parent@Example.com" },
+      metadata: { kidease: "parent_invoice" },
+    },
+    links: { parentUserId: "user_parent" },
+    now: day,
+    featureSms: false,
+  });
+  assert.equal(fromCustomer.outcome, "apply");
+  assert.equal(fromCustomer.invoice.customerEmail, "parent@example.com");
+  assert.equal(fromCustomer.invoice.parentUserId, "user_parent");
+  assert.equal(
+    unlinkedInvoiceReason({
+      parentUserId: fromCustomer.invoice.parentUserId,
+      customerEmail: fromCustomer.invoice.customerEmail,
+    }),
+    null,
+  );
+
+  const server = src("src/lib/server/stripe-parent-invoices.ts");
+  assert.match(server, /unlinked invoice/);
+  assert.match(server, /invoiceCustomerEmail/);
+  assert.match(server, /lower\(btrim\(email\)\)/);
+  assert.match(src("src/routes/api/stripe.webhook.ts"), /unlinked/);
 });
 
 test("fee tax and subscription invoices stay off the parent invoice list", () => {

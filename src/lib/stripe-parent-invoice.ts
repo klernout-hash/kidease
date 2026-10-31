@@ -326,9 +326,48 @@ function parseInvoiceObject(
     invoicePdf: httpsUrl(row.invoice_pdf),
     parentUserId: parentUserId || null,
     daycareId: daycareId || null,
-    customerEmail: cleanEmail(cleanText(row.customer_email)),
+    customerEmail: invoiceCustomerEmail(row),
     skip: null,
   };
+}
+
+/**
+ * Stripe puts the address on customer_email once the invoice is finalized.
+ * A dashboard customer often only has customer.email (or customer_details.email)
+ * on the same payload. Compare later with this lowercase form.
+ */
+export function invoiceCustomerEmail(object: unknown): string | null {
+  const row = asRecord(object);
+  if (!row) return null;
+  const customer = asRecord(row.customer);
+  const details = asRecord(row.customer_details);
+  const candidates = [row.customer_email, customer?.email, details?.email, row.receipt_email];
+  for (const candidate of candidates) {
+    const email = normalizeInvoiceEmail(candidate);
+    if (email) return email;
+  }
+  return null;
+}
+
+export function normalizeInvoiceEmail(value: unknown): string | null {
+  const email = String(value ?? "")
+    .replace(/\s+/g, "")
+    .trim()
+    .toLowerCase();
+  if (!email || !email.includes("@") || email.length > 200 || email.startsWith("@")) return null;
+  return email;
+}
+
+/** Null when the invoice is tied to a parent user. Otherwise a stable reason code. */
+export function unlinkedInvoiceReason(input: {
+  parentUserId: string | null;
+  customerEmail: string | null;
+  database?: "neon" | "pglite" | "none";
+}): "database_unavailable" | "no_customer_email" | "email_not_in_database" | null {
+  if (input.database === "none") return "database_unavailable";
+  if (input.parentUserId) return null;
+  if (!input.customerEmail) return "no_customer_email";
+  return "email_not_in_database";
 }
 
 function emptyParsed(id: string, skip: "fee_tax" | "subscription"): Parsed {
