@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { ChipButton } from "@/components/chip";
 import { ListingWriter } from "@/components/listing-writer";
 import { ListingTranslate } from "@/components/listing-translate";
@@ -24,6 +26,9 @@ import {
 } from "@/lib/parent-listing";
 import { FACILITY_TYPES, normalizeFacilityType, type FacilityType } from "@/lib/facility-type";
 import { amenityLabel } from "@/lib/amenities";
+import { CARE_DETAIL_KEYS, careDetailLabel, isCareDetailKey } from "@/lib/inclusive-filters";
+import { localePath } from "@/lib/locale-path";
+import { inclusiveFiltersFlag } from "@/lib/server/inclusive-filters";
 import { useCopy } from "@/lib/use-copy";
 import { standardAgeGroup } from "@/lib/standard-age-groups";
 import type { Daycare } from "@/lib/types";
@@ -63,7 +68,7 @@ export function parentDeskFromDaycare(daycare: Daycare): ParentDeskState {
     amenityKeys: (daycare.amenities || "")
       .split(",")
       .map((part) => part.trim())
-      .filter((key) => DESK_AMENITIES.includes(key as (typeof DESK_AMENITIES)[number])),
+      .filter((key) => DESK_AMENITIES.includes(key as (typeof DESK_AMENITIES)[number]) || isCareDetailKey(key)),
   };
 }
 
@@ -97,6 +102,12 @@ export function ProviderParentFields({
 }) {
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
+  const [careDetails, setCareDetails] = useState(false);
+  useEffect(() => {
+    void inclusiveFiltersFlag()
+      .then((on) => setCareDetails(Boolean(on)))
+      .catch(() => setCareDetails(false));
+  }, []);
 
   return (
     <div className="space-y-6" data-parent-desk-fields>
@@ -340,6 +351,34 @@ export function ProviderParentFields({
           ))}
         </div>
       </fieldset>
+
+      {careDetails ? (
+        <fieldset data-ke="care-details">
+          <legend className="font-display text-xl">{loc === "fr" ? "Repas et soutien" : "Meals and support"}</legend>
+          <p className="mt-1 text-sm text-muted">
+            {loc === "fr"
+              ? "Cochez seulement ce que le centre offre vraiment. Les parents peuvent filtrer avec ces mots."
+              : "Tick only what this centre really offers. Parents can filter with these words."}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {CARE_DETAIL_KEYS.map((id) => (
+              <ChipButton
+                key={id}
+                on={value.amenityKeys.includes(id)}
+                onClick={() => onChange({ ...value, amenityKeys: toggle(value.amenityKeys, id) })}
+              >
+                {careDetailLabel(id, loc)}
+              </ChipButton>
+            ))}
+          </div>
+          <Link
+            to={localePath("/help", locale)}
+            className="mt-2 inline-flex min-h-11 min-w-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            {loc === "fr" ? "Aide" : "Help"}
+          </Link>
+        </fieldset>
+      ) : null}
 
       <fieldset className="grid gap-3">
         <legend className="font-display text-xl">{t("deskPromo")}</legend>
