@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
+import { eceJobsEnabled } from "@/lib/features";
 import { filterByLocationLock, resolveLocationLock } from "@/lib/location-lock";
 import { cardSortKm, includeCardInRadius } from "@/lib/card-distance";
 import { catchmentMatch, clampRadiusKm, compareProximity, recommendedRank } from "@/lib/proximity";
@@ -964,6 +965,7 @@ export const getDaycare = createServerFn({ method: "GET" })
         availability,
         nearby: nearbyPinned,
         jobs,
+        eceJobs: eceJobsEnabled(),
       };
     } catch {
       const catalogScored = await overlayQuality([catalogDaycare, ...metroPeers]);
@@ -976,6 +978,7 @@ export const getDaycare = createServerFn({ method: "GET" })
         availability: catalogAvailability(found),
         nearby: catalogNearby,
         jobs: [] as CentreJobPost[],
+        eceJobs: eceJobsEnabled(),
       };
     }
   });

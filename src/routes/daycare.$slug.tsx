@@ -77,6 +77,7 @@ import { NetCostCalculator } from "@/components/net-cost-calculator";
 import { InspectionTrustCard } from "@/components/inspection-trust-card";
 import { ReviewDimensionBars } from "@/components/review-dimension-bars";
 import { HiringEceBadge } from "@/components/hiring-ece-badge";
+import { EceJobApply } from "@/components/ece-job-board";
 import { VacancyFreshness } from "@/components/vacancy-freshness";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { CompareBar } from "@/components/compare-bar";
@@ -222,6 +223,7 @@ export function Listing() {
     availability: AvailabilityRow[];
     nearby: Card[];
     jobs?: CentreJobPost[];
+    eceJobs?: boolean;
   } | null>(null);
   const [photo, setPhoto] = useState(0);
   const [requestOpen, setRequestOpen] = useState(false);
@@ -1024,6 +1026,7 @@ export function Listing() {
                     <li key={job.id} className="py-3">
                       <p className="font-medium">{job.role}</p>
                       {job.note ? <p className="mt-1 text-sm text-muted">{job.note}</p> : null}
+                      {data.eceJobs ? <EceJobApply jobId={job.id} /> : null}
                     </li>
                   ))}
                 </ul>
