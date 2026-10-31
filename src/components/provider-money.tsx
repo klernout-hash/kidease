@@ -11,6 +11,7 @@ import type { Locale } from "@/lib/types";
 import { currentPeriod, periodLabel, platformFeePercentLabel, splitFee } from "@/lib/stripe-methods";
 import { type Bill, type BillParty, billDollars, centsToDollars, receiveCents } from "@/lib/bill";
 import { createBill, listBillParties, listProviderBills, sendBill, voidBill } from "@/lib/server/billing";
+import { StripeInvoiceList } from "@/components/stripe-invoice-list";
 import { Field } from "@/components/provider-listing-forms";
 
 export function ProviderMoneyPanel() {
@@ -242,6 +243,8 @@ export function ProviderMoneyPanel() {
         locale={locale}
         busy={busy}
       />
+
+      <StripeInvoiceList audience="daycare" />
     </section>
   );
 }

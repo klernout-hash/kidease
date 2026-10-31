@@ -650,3 +650,27 @@ export function webhookSecrets(env: ConnectEnv = process.env): string[] {
   const values = [clean(env.STRIPE_WEBHOOK_SECRET), clean(env.STRIPE_CONNECT_WEBHOOK_SECRET)].filter(Boolean);
   return [...new Set(values)];
 }
+
+/**
+ * Untrusted peek. Signature verification still has to succeed with the
+ * secret this picks. livemode false uses STRIPE_WEBHOOK_SECRET_TEST when
+ * that Preview secret is set, and the live webhook secret otherwise.
+ */
+export function peekStripeLivemode(rawBody: string): boolean | null {
+  try {
+    const parsed = JSON.parse(rawBody) as { livemode?: unknown };
+    if (!parsed || typeof parsed !== "object") return null;
+    if (parsed.livemode === false) return false;
+    if (parsed.livemode === true) return true;
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+export function selectStripeWebhookSecrets(rawBody: string, env: ConnectEnv = process.env): string[] {
+  const live = webhookSecrets(env);
+  if (peekStripeLivemode(rawBody) !== false) return live;
+  const test = clean(env.STRIPE_WEBHOOK_SECRET_TEST);
+  return test ? [test] : live;
+}
