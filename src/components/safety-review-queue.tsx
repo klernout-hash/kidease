@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { moderationActionLabel, moderationActions, moderationLabel } from "@/lib/safety";
 import { listSafetyQueue, reviewSafetyReport, type SafetyQueueRow } from "@/lib/server/safety";
+import { useCopy } from "@/lib/use-copy";
 
 export function SafetyReviewQueue({ initial }: { initial?: SafetyQueueRow[] }) {
+  const { locale } = useCopy();
+  const lang = locale === "fr" ? "fr" : "en";
   const [rows, setRows] = useState<SafetyQueueRow[]>(initial ?? []);
   const [ready, setReady] = useState(Boolean(initial));
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -26,7 +30,7 @@ export function SafetyReviewQueue({ initial }: { initial?: SafetyQueueRow[] }) {
     };
   }, [initial]);
 
-  async function review(id: string, status: "reviewed" | "dismissed") {
+  async function review(id: string, status: string) {
     setBusyId(id);
     try {
       await reviewSafetyReport({ data: { id, status } });
@@ -42,7 +46,7 @@ export function SafetyReviewQueue({ initial }: { initial?: SafetyQueueRow[] }) {
     <section className="mt-10" data-ke="safety-queue">
       <h2 className="font-display text-2xl">Safety reports</h2>
       <p className="mt-1 text-sm text-muted">
-        Open reports about a listing, a centre, or a message. Mark each one reviewed or dismissed. This queue does not
+        Open reports about a listing, a centre, a message, or a review. A review uses review actions. This queue does not
         invent a safety score.
       </p>
       <ul className="mt-5 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
@@ -53,7 +57,7 @@ export function SafetyReviewQueue({ initial }: { initial?: SafetyQueueRow[] }) {
         {rows.map((row) => (
           <li key={row.id} className="px-5 py-4">
             <p className="font-medium">
-              {row.target} · {row.reason}
+              {moderationLabel(row.target, lang)} · {row.reason}
             </p>
             <p className="text-sm text-muted">
               {[row.daycareName, row.city, row.province].filter(Boolean).join(", ") || "No listing name on file"}
@@ -61,23 +65,18 @@ export function SafetyReviewQueue({ initial }: { initial?: SafetyQueueRow[] }) {
             {row.detail ? <p className="mt-1 text-sm">{row.detail}</p> : null}
             <p className="mt-1 text-xs text-subtle">{row.reporterEmail || "No email on the account"}</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <Button
-                type="button"
-                size="sm"
-                disabled={busyId === row.id}
-                onClick={() => void review(row.id, "reviewed")}
-              >
-                Mark reviewed
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                disabled={busyId === row.id}
-                onClick={() => void review(row.id, "dismissed")}
-              >
-                Dismiss
-              </Button>
+              {moderationActions(row.target).map((action, index) => (
+                <Button
+                  key={action}
+                  type="button"
+                  size="sm"
+                  variant={index === 0 ? "default" : "secondary"}
+                  disabled={busyId === row.id}
+                  onClick={() => void review(row.id, action)}
+                >
+                  {moderationActionLabel(action, lang)}
+                </Button>
+              ))}
             </div>
           </li>
         ))}

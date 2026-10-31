@@ -3,13 +3,15 @@
  * No database here. The server module writes the rows.
  */
 
-export const SAFETY_TARGETS = ["listing", "centre", "thread"] as const;
+export const SAFETY_TARGETS = ["listing", "centre", "thread", "review"] as const;
 export type SafetyTarget = (typeof SAFETY_TARGETS)[number];
 
 export const SAFETY_REASONS = ["harassment", "spam", "unsafe", "misleading", "other"] as const;
 export type SafetyReason = (typeof SAFETY_REASONS)[number];
 
 export const SAFETY_STATUSES = ["open", "reviewed", "dismissed"] as const;
+export const REVIEW_MODERATION_ACTIONS = ["keep_review", "hide_review", "remove_review"] as const;
+export type ReviewModerationAction = (typeof REVIEW_MODERATION_ACTIONS)[number];
 export type SafetyStatus = (typeof SAFETY_STATUSES)[number];
 
 export type SafetyBlock = {
@@ -30,6 +32,34 @@ export function isSafetyStatus(value: string): value is SafetyStatus {
   return (SAFETY_STATUSES as readonly string[]).includes(value);
 }
 
+export function isReviewModerationAction(value: string): value is ReviewModerationAction {
+  return (REVIEW_MODERATION_ACTIONS as readonly string[]).includes(value);
+}
+
+/** Reported reviews are labeled Review. Other reports keep their own name. */
+export function moderationLabel(target: string, locale: "en" | "fr" = "en"): string {
+  const fr = locale === "fr";
+  if (target === "review") return fr ? "Avis" : "Review";
+  if (target === "listing") return fr ? "Fiche" : "Listing";
+  if (target === "centre") return "Centre";
+  if (target === "thread") return "Message";
+  return fr ? "Signalement" : "Report";
+}
+
+export function moderationActions(target: string): readonly ["keep_review", "hide_review", "remove_review"] | readonly ["reviewed", "dismissed"] {
+  return target === "review" ? REVIEW_MODERATION_ACTIONS : (["reviewed", "dismissed"] as const);
+}
+
+export function moderationActionLabel(action: string, locale: "en" | "fr" = "en"): string {
+  const fr = locale === "fr";
+  if (action === "keep_review") return fr ? "Garder l’avis" : "Keep review";
+  if (action === "hide_review") return fr ? "Masquer l’avis" : "Hide review";
+  if (action === "remove_review") return fr ? "Retirer l’avis" : "Remove review";
+  if (action === "reviewed") return fr ? "Marquer comme vu" : "Mark reviewed";
+  if (action === "dismissed") return fr ? "Écarter" : "Dismiss";
+  return action;
+}
+
 type Locale = "en" | "fr";
 
 const COPY = {
@@ -37,6 +67,7 @@ const COPY = {
     reportListing: "Report this listing",
     reportCentre: "Report this centre",
     reportThread: "Report this conversation",
+    reportReview: "Report this review",
     block: "Block messages",
     unblock: "Unblock messages",
     reason: "Reason",
@@ -66,6 +97,7 @@ const COPY = {
     reportListing: "Signaler cette fiche",
     reportCentre: "Signaler ce centre",
     reportThread: "Signaler cette conversation",
+    reportReview: "Signaler cet avis",
     block: "Bloquer les messages",
     unblock: "Débloquer les messages",
     reason: "Raison",

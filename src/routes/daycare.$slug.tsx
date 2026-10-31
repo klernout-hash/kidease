@@ -982,6 +982,7 @@ export function Listing() {
                       </div>
                       <p className="mt-1 text-sm text-muted">{locale === "fr" ? r.bodyFr : r.body}</p>
                       <ListingOwnerReply reviewId={r.id} ownsListing={ownsListing} reply={r.ownerReply || null} />
+                      <SafetyReportButton target="review" daycareId={d.id} reviewId={r.id} />
                     </li>
                   ))}
                 </ul>
