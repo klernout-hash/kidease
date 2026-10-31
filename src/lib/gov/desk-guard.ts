@@ -1,5 +1,5 @@
 import { redirect } from "@tanstack/react-router";
-import { getGovSession } from "@/lib/server/gov-portal.server";
+import { getGovSession } from "@/lib/server/gov-portal";
 import { govPath } from "@/lib/gov/copy";
 import type { GovLocale } from "@/lib/gov/aggregate";
 

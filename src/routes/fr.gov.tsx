@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { GovDashboardView } from "@/components/gov/gov-dashboard";
 import { GovNativeNote } from "@/components/gov/gov-login";
 import { guardGovDesk, govRobotsHead, govRobotsHeaders } from "@/lib/gov/desk-guard";
-import { getGovDashboard } from "@/lib/server/gov-portal.server";
+import { getGovDashboard } from "@/lib/server/gov-portal";
 
 export const Route = createFileRoute("/fr/gov")({
   validateSearch: (search: Record<string, unknown>) => ({

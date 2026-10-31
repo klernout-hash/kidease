@@ -2,8 +2,15 @@ import { createServerFn } from "@tanstack/react-start";
 import { sessionBearerMiddleware } from "@/lib/auth/middleware";
 import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
 import { buildGovDashboard, parseGovScope, type GovLocale } from "@/lib/gov/aggregate";
-import { bundleForProvince, loadGovBundle } from "@/lib/server/gov-data.server";
-import { assertGovBudget, auditGov, loadGovActor, type GovActor } from "@/lib/server/gov-actor.server";
+
+type GovActor = {
+  userId: string;
+  orgId: string;
+  orgName: string;
+  province: string;
+  demo: boolean;
+  readOnly: boolean;
+};
 
 function localeOf(value: string | null | undefined): GovLocale {
   return value === "fr" ? "fr" : "en";
@@ -13,6 +20,8 @@ export async function dashboardForActor(
   actor: GovActor,
   input: { province?: string | null; region?: string | null; city?: string | null; locale?: string | null },
 ) {
+  const { assertGovBudget, auditGov } = await import("@/lib/server/gov-actor.server");
+  const { bundleForProvince, loadGovBundle } = await import("@/lib/server/gov-data.server");
   assertGovBudget(actor, "read");
   const scope = parseGovScope({
     province: input.province || actor.province,
@@ -33,6 +42,7 @@ export const getGovSession = createServerFn({ method: "GET" })
   .middleware([sessionBearerMiddleware])
   .handler(async ({ context }) => {
     const { getSessionUser } = await import("@/lib/auth/verify.server");
+    const { loadGovActor } = await import("@/lib/server/gov-actor.server");
     const user = await getSessionUser(context.bearerToken);
     if (!user) return { ok: false as const };
     const actor = await loadGovActor(user.id);

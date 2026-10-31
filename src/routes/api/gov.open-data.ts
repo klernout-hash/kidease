@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { actorFromApiKey, auditGov } from "@/lib/server/gov-actor.server";
-import { dashboardForActor } from "@/lib/server/gov-portal.server";
+import { dashboardForActor } from "@/lib/server/gov-portal";
 
 const robots = {
   "cache-control": "private, no-store",

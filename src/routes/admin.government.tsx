@@ -3,7 +3,7 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { beforeLoadAdminDesk } from "@/lib/server/admin-route";
-import { inviteGovUser, listGovMembers, revokeGovInvite, revokeGovUser } from "@/lib/server/gov-admin.server";
+import { inviteGovUser, listGovMembers, revokeGovInvite, revokeGovUser } from "@/lib/server/gov-admin";
 
 export const Route = createFileRoute("/admin/government")({
   beforeLoad: beforeLoadAdminDesk,

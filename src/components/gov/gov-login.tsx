@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { govCopy, govPath } from "@/lib/gov/copy";
 import type { GovLocale } from "@/lib/gov/aggregate";
 import { GovHelp } from "@/components/gov/gov-help";
-import { getGovSession } from "@/lib/server/gov-portal.server";
-import { acceptGovInviteFn } from "@/lib/server/gov-admin.server";
+import { getGovSession } from "@/lib/server/gov-portal";
+import { acceptGovInviteFn } from "@/lib/server/gov-admin";
 
 export function GovNativeNote({ locale }: { locale: GovLocale }) {
   const copy = govCopy(locale);

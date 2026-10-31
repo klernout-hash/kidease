@@ -6,7 +6,9 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { requireAdmin } from "@/lib/server/roles";
 import { isProtectedOperatorEmail } from "@/lib/access-control";
 import { isProvinceCode, PROVINCES } from "@/lib/gov/places";
-import { auditGov, hashGovSecret, newGovToken } from "@/lib/server/gov-actor.server";
+async function govActorTools() {
+  return import("@/lib/server/gov-actor.server");
+}
 
 const STAFF = new Set(["admin", "support", "support_lead", "provider"]);
 
@@ -84,6 +86,7 @@ export const inviteGovUser = createServerFn({ method: "POST" })
     province: String(input?.province || "").trim().toUpperCase(),
   }))
   .handler(async ({ data, context }) => {
+    const { auditGov, hashGovSecret, newGovToken } = await govActorTools();
     await requireAdmin(context.userId);
     if (!data.email.includes("@") || !data.orgName || !isProvinceCode(data.province)) {
       return { ok: false as const, error: "Enter a work email, an organization, and a province." };
@@ -166,6 +169,7 @@ export const revokeGovUser = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { userId?: string }) => ({ userId: String(input?.userId || "").trim().slice(0, 80) }))
   .handler(async ({ data, context }) => {
+    const { auditGov } = await govActorTools();
     await requireAdmin(context.userId);
     if (!data.userId) return { ok: false as const, error: "Missing account." };
     const sql = await getSql();
@@ -199,6 +203,7 @@ export const revokeGovInvite = createServerFn({ method: "POST" })
 export async function acceptGovInvite(input: { token: string; password: string; name: string }): Promise<
   { ok: true; email: string } | { ok: false; error: string }
 > {
+  const { auditGov, hashGovSecret } = await govActorTools();
   const token = input.token.trim();
   const password = input.password;
   const name = input.name.trim().slice(0, 80);

@@ -3,7 +3,7 @@ import { dashboardCsv } from "@/lib/gov/csv";
 import { dashboardPdfLines, renderTextPdf } from "@/lib/gov/pdf";
 import { govCopy } from "@/lib/gov/copy";
 import { auditGov, loadGovActor } from "@/lib/server/gov-actor.server";
-import { dashboardForActor } from "@/lib/server/gov-portal.server";
+import { dashboardForActor } from "@/lib/server/gov-portal";
 
 const robots = {
   "cache-control": "private, no-store",
