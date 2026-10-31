@@ -38,6 +38,7 @@ import { Route as DaycareRequirementsRouteImport } from './routes/daycare-requir
 import { Route as DaycaresRouteImport } from './routes/daycares'
 import { Route as DeleteAccountRouteImport } from './routes/delete-account'
 import { Route as DonateRouteImport } from './routes/donate'
+import { Route as ExperimentsRouteImport } from './routes/experiments'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as ForDaycaresRouteImport } from './routes/for-daycares'
@@ -344,6 +345,11 @@ const DeleteAccountRoute = DeleteAccountRouteImport.update({
 const DonateRoute = DonateRouteImport.update({
   id: '/donate',
   path: '/donate',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExperimentsRoute = ExperimentsRouteImport.update({
+  id: '/experiments',
+  path: '/experiments',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExploreRoute = ExploreRouteImport.update({
@@ -1184,6 +1190,7 @@ export interface FileRoutesByFullPath {
   '/daycares': typeof DaycaresRoute
   '/delete-account': typeof DeleteAccountRoute
   '/donate': typeof DonateRoute
+  '/experiments': typeof ExperimentsRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/for-daycares': typeof ForDaycaresRoute
@@ -1376,6 +1383,7 @@ export interface FileRoutesByTo {
   '/daycares': typeof DaycaresRoute
   '/delete-account': typeof DeleteAccountRoute
   '/donate': typeof DonateRoute
+  '/experiments': typeof ExperimentsRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/for-daycares': typeof ForDaycaresRoute
@@ -1567,6 +1575,7 @@ export interface FileRoutesById {
   '/daycares': typeof DaycaresRoute
   '/delete-account': typeof DeleteAccountRoute
   '/donate': typeof DonateRoute
+  '/experiments': typeof ExperimentsRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/for-daycares': typeof ForDaycaresRoute
@@ -1761,6 +1770,7 @@ export interface FileRouteTypes {
     | '/daycares'
     | '/delete-account'
     | '/donate'
+    | '/experiments'
     | '/explore'
     | '/faq'
     | '/for-daycares'
@@ -1953,6 +1963,7 @@ export interface FileRouteTypes {
     | '/daycares'
     | '/delete-account'
     | '/donate'
+    | '/experiments'
     | '/explore'
     | '/faq'
     | '/for-daycares'
@@ -2143,6 +2154,7 @@ export interface FileRouteTypes {
     | '/daycares'
     | '/delete-account'
     | '/donate'
+    | '/experiments'
     | '/explore'
     | '/faq'
     | '/for-daycares'
@@ -2336,6 +2348,7 @@ export interface RootRouteChildren {
   DaycaresRoute: typeof DaycaresRoute
   DeleteAccountRoute: typeof DeleteAccountRoute
   DonateRoute: typeof DonateRoute
+  ExperimentsRoute: typeof ExperimentsRoute
   ExploreRoute: typeof ExploreRoute
   FaqRoute: typeof FaqRoute
   ForDaycaresRoute: typeof ForDaycaresRoute
@@ -2632,6 +2645,13 @@ declare module '@tanstack/react-router' {
       path: '/donate'
       fullPath: '/donate'
       preLoaderRoute: typeof DonateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/experiments': {
+      id: '/experiments'
+      path: '/experiments'
+      fullPath: '/experiments'
+      preLoaderRoute: typeof ExperimentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/explore': {
@@ -4052,6 +4072,7 @@ const rootRouteChildren: RootRouteChildren = {
   DaycaresRoute: DaycaresRoute,
   DeleteAccountRoute: DeleteAccountRoute,
   DonateRoute: DonateRoute,
+  ExperimentsRoute: ExperimentsRoute,
   ExploreRoute: ExploreRoute,
   FaqRoute: FaqRoute,
   ForDaycaresRoute: ForDaycaresRoute,
