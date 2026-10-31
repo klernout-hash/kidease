@@ -58,6 +58,7 @@ import { Route as NeedCareFastRouteImport } from './routes/need-care-fast'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as ParentRouteImport } from './routes/parent'
 import { Route as PayRouteImport } from './routes/pay'
+import { Route as PayPlanRouteImport } from './routes/pay-plan'
 import { Route as PlansRouteImport } from './routes/plans'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -444,6 +445,11 @@ const ParentRoute = ParentRouteImport.update({
 const PayRoute = PayRouteImport.update({
   id: '/pay',
   path: '/pay',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PayPlanRoute = PayPlanRouteImport.update({
+  id: '/pay-plan',
+  path: '/pay-plan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlansRoute = PlansRouteImport.update({
@@ -1204,6 +1210,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRouteWithChildren
   '/pay': typeof PayRouteWithChildren
+  '/pay-plan': typeof PayPlanRoute
   '/plans': typeof PlansRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -1394,6 +1401,7 @@ export interface FileRoutesByTo {
   '/need-care-fast': typeof NeedCareFastRoute
   '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRouteWithChildren
+  '/pay-plan': typeof PayPlanRoute
   '/plans': typeof PlansRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -1587,6 +1595,7 @@ export interface FileRoutesById {
   '/notifications': typeof NotificationsRoute
   '/parent': typeof ParentRouteWithChildren
   '/pay': typeof PayRouteWithChildren
+  '/pay-plan': typeof PayPlanRoute
   '/plans': typeof PlansRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -1781,6 +1790,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/parent'
     | '/pay'
+    | '/pay-plan'
     | '/plans'
     | '/pricing'
     | '/privacy'
@@ -1971,6 +1981,7 @@ export interface FileRouteTypes {
     | '/need-care-fast'
     | '/notifications'
     | '/parent'
+    | '/pay-plan'
     | '/plans'
     | '/pricing'
     | '/privacy'
@@ -2163,6 +2174,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/parent'
     | '/pay'
+    | '/pay-plan'
     | '/plans'
     | '/pricing'
     | '/privacy'
@@ -2356,6 +2368,7 @@ export interface RootRouteChildren {
   NotificationsRoute: typeof NotificationsRoute
   ParentRoute: typeof ParentRouteWithChildren
   PayRoute: typeof PayRouteWithChildren
+  PayPlanRoute: typeof PayPlanRoute
   PlansRoute: typeof PlansRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -2772,6 +2785,13 @@ declare module '@tanstack/react-router' {
       path: '/pay'
       fullPath: '/pay'
       preLoaderRoute: typeof PayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pay-plan': {
+      id: '/pay-plan'
+      path: '/pay-plan'
+      fullPath: '/pay-plan'
+      preLoaderRoute: typeof PayPlanRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/plans': {
@@ -4072,6 +4092,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotificationsRoute: NotificationsRoute,
   ParentRoute: ParentRouteWithChildren,
   PayRoute: PayRouteWithChildren,
+  PayPlanRoute: PayPlanRoute,
   PlansRoute: PlansRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,

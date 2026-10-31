@@ -8,6 +8,7 @@ import {
   type CostAgeBand,
   type ProvinceCode,
 } from "@/lib/net-cost-engine";
+import { FeeEstimateNote } from "@/components/fee-estimate-note";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 
@@ -154,6 +155,15 @@ export function NetCostCalculator({
       ) : (
         <p className="mt-4 text-sm text-muted">{fr ? "Ajoutez le tarif affiché pour voir l'estimation." : "Add the posted fee to see the estimate."}</p>
       )}
+      {result ? (
+        <FeeEstimateNote
+          province={prov}
+          householdIncome={income}
+          ageBand={age}
+          grossMonthly={gross}
+          participating={inProgram}
+        />
+      ) : null}
       {showPageLink ? (
         <p className="mt-3 text-sm">
           <Link to={localePath("/calculator", locale)} className="font-medium text-primary underline-offset-4 hover:underline">
