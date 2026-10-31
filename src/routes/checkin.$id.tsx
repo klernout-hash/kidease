@@ -3,12 +3,122 @@ import { Mic, MicOff, Video, VideoOff } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
+import { doorCopy, doorStatus, todayYmd } from "@/lib/attendance-door";
+import { localePath } from "@/lib/locale-path";
+import { digitalAttendanceFlag } from "@/lib/server/attendance-flag";
 import { getDaycare } from "@/lib/server/daycares";
+import { saveAttendance } from "@/lib/server/ops";
 import { useCopy } from "@/lib/use-copy";
 
-export const Route = createFileRoute("/checkin/$id")({ component: CheckIn });
+export const Route = createFileRoute("/checkin/$id")({ component: CheckInGate });
 
-function CheckIn() {
+function CheckInGate() {
+  const [door, setDoor] = useState<boolean | null>(null);
+  useEffect(() => {
+    void digitalAttendanceFlag()
+      .then((on) => setDoor(Boolean(on)))
+      .catch(() => setDoor(false));
+  }, []);
+  if (door === null) {
+    return (
+      <Shell>
+        <main className="ke-gutter mx-auto w-full max-w-lg py-8">
+          <p className="text-sm font-semibold text-primary">KidEase</p>
+          <p className="mt-3 text-muted">Opening check-in.</p>
+          <Link to="/" className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-primary">
+            Home
+          </Link>
+        </main>
+      </Shell>
+    );
+  }
+  if (door) return <DoorCheckIn />;
+  return <CameraCheckIn />;
+}
+
+function DoorCheckIn() {
+  const { id } = Route.useParams();
+  const { locale } = useCopy();
+  const copy = doorCopy(locale === "fr" ? "fr" : "en");
+  const [daycareId, setDaycareId] = useState("");
+  const [centre, setCentre] = useState("");
+  const [child, setChild] = useState("");
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    void getDaycare({ data: id }).then((res) => {
+      if (!res) return;
+      setDaycareId(res.daycare.id);
+      setCentre(locale === "fr" ? res.daycare.nameFr : res.daycare.name);
+    });
+  }, [id, locale]);
+
+  async function mark(action: "check_in" | "check_out") {
+    const name = child.trim();
+    if (!name || !daycareId) {
+      setMessage(copy.needName);
+      return;
+    }
+    try {
+      await saveAttendance({
+        data: {
+          daycareId,
+          childName: name,
+          day: todayYmd(),
+          dropOff: "07:30",
+          pickUp: "17:00",
+          status: doorStatus(action),
+        },
+      });
+      setMessage(copy.saved);
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : copy.needName);
+    }
+  }
+
+  return (
+    <Shell>
+      <main className="ke-gutter mx-auto w-full max-w-lg py-8" data-ke="door-checkin">
+        <p className="text-sm font-semibold text-primary">KidEase</p>
+        <h1 className="mt-2 font-display text-3xl">{copy.title}</h1>
+        <p className="mt-3 text-muted">{centre}</p>
+        <p className="mt-2 text-muted">{copy.lead}</p>
+        <label className="mt-6 block text-sm">
+          {copy.child}
+          <input
+            className="mt-1 block w-full min-h-11 rounded-lg bg-surface px-3 ring-1 ring-border"
+            value={child}
+            maxLength={80}
+            autoComplete="given-name"
+            onChange={(event) => setChild(event.target.value)}
+            onFocus={(event) => event.currentTarget.scrollIntoView({ block: "center" })}
+          />
+        </label>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Button type="button" onClick={() => void mark("check_in")}>
+            {copy.in}
+          </Button>
+          <Button type="button" variant="secondary" onClick={() => void mark("check_out")}>
+            {copy.out}
+          </Button>
+        </div>
+        {message ? (
+          <p className="mt-3 text-sm" role="status">
+            {message}
+          </p>
+        ) : null}
+        <Link
+          to={localePath("/help", locale)}
+          className="mt-4 inline-flex min-h-11 min-w-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+        >
+          {copy.help}
+        </Link>
+      </main>
+    </Shell>
+  );
+}
+
+function CameraCheckIn() {
   const { id } = Route.useParams();
   const { t, locale } = useCopy();
   const videoRef = useRef<HTMLVideoElement>(null);

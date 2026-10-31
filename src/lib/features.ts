@@ -112,6 +112,11 @@ export function areaWaitlistAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_AREA_WAITLIST_ALERTS", env);
 }
 
+/** Door check-in without a camera. Default OFF. The camera preview stays until this is on. */
+export function digitalAttendanceEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_DIGITAL_ATTENDANCE", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;
