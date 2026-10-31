@@ -84,7 +84,9 @@ test("store builds name only their store and drop purchase copy", () => {
     microsoft: false,
     samsung: false,
     huawei: false,
+    amazon: false,
   });
+  assert.deepEqual(comingSoonStores("amazon"), []);
   assert.deepEqual(comingSoonStores("web"), ["apple", "play"]);
   assert.deepEqual(comingSoonStores("apple"), ["apple"]);
   assert.deepEqual(comingSoonStores("google"), ["play"]);

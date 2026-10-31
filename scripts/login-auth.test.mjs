@@ -146,7 +146,7 @@ describe("password sign-in errors", () => {
     assert.match(loader, /APPLE_PRIVATE_KEY/);
     assert.match(loader, /nativeApple/);
     assert.doesNotMatch(login, /GROK_PROVIDERS/);
-    assert.match(login, /withTimeoutFallback\(getSignInProviders\(\)/);
+    assert.match(login, /withTimeoutFallback\(\s*getSignInProviders\(\)/);
     assert.match(client, /resolveSocialSignInRedirect/);
   });
 

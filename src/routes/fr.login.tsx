@@ -10,7 +10,7 @@ export const Route = createFileRoute("/fr/login")({
 });
 
 function FrLogin() {
-  const { providers } = Route.useLoaderData();
+  const { providers, providersReady } = Route.useLoaderData();
   const search = Route.useSearch();
-  return <LoginScreen providers={providers} search={search} />;
+  return <LoginScreen providers={providers} providersReady={providersReady} search={search} />;
 }

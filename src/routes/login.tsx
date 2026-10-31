@@ -6,9 +6,10 @@ import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-erro
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { reviewerSignInSkipsTurnstile } from "@/lib/reviewer-accounts";
-import { nativeSocialPlatform, providersForNativeShell, sanitizeNativeOAuthError } from "@/lib/auth/native-oauth";
-import { providersForStore, type GrokProvider } from "@/lib/auth/providers";
+import { nativeSocialPlatform, sanitizeNativeOAuthError, signInProvidersForDevice } from "@/lib/auth/native-oauth";
+import { type GrokProvider } from "@/lib/auth/providers";
 import { getSignInProviders } from "@/lib/server/sign-in-providers";
+import { readClientPlayServices } from "@/lib/native-entitlements";
 import { useStoreChannel } from "@/lib/use-native-shell";
 import { isFrPath } from "@/lib/locale-path";
 import { LOADER_SETTLE_MS, withTimeout, withTimeoutFallback } from "@/lib/timeout";
@@ -78,6 +79,7 @@ import {
   socialSignupCallbackPath,
 } from "@/lib/auth/social-callback";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { trackProductEvent } from "@/lib/track-product-event";
 import { isSignupWhy, SIGNUP_FUNNEL_EVENT, signupFunnelPayload, type SignupWhy } from "@/lib/signup-funnel";
 import { parentMobileIssue, smsOptInWasBlocked, stashParentSmsOptIn, takeParentSmsOptIn } from "@/lib/parent-sms-consent";
 import { toast } from "sonner";
@@ -236,8 +238,12 @@ export function loginValidateSearch(s: Record<string, unknown>): LoginSearch {
 }
 
 export async function loginLoader() {
-  const providers = await withTimeoutFallback(getSignInProviders(), LOADER_SETTLE_MS, []);
-  return { providers };
+  const loaded = await withTimeoutFallback(
+    getSignInProviders().then((providers) => ({ providers, providersReady: true })),
+    LOADER_SETTLE_MS,
+    { providers: [] as GrokProvider[], providersReady: false },
+  );
+  return loaded;
 }
 
 export const Route = createFileRoute("/login")({
@@ -257,16 +263,18 @@ function twoFactorUrl(dest: string) {
 }
 
 export function Login() {
-  const { providers } = Route.useLoaderData();
+  const { providers, providersReady } = Route.useLoaderData();
   const search = Route.useSearch();
-  return <LoginScreen providers={providers} search={search} />;
+  return <LoginScreen providers={providers} providersReady={providersReady} search={search} />;
 }
 
 export function LoginScreen({
   providers,
+  providersReady = true,
   search,
 }: {
   providers: GrokProvider[];
+  providersReady?: boolean;
   search: LoginSearch;
 }) {
   const { t, locale } = useCopy();
@@ -281,7 +289,9 @@ export function LoginScreen({
   const loginPath = isFrPath(pathname) ? "/fr/login" : "/login";
   const storeChannel = useStoreChannel();
   const hideAdmin = useNativeHidesAdmin();
-  const shownProviders = providersForNativeShell(providersForStore(providers, storeChannel), {
+  const shownProviders = signInProvidersForDevice(providers, {
+    channel: storeChannel,
+    playServices: readClientPlayServices(),
     native: hideAdmin,
     platform: nativeSocialPlatform({ native: hideAdmin, channel: storeChannel }),
   });
@@ -620,6 +630,7 @@ export function LoginScreen({
         await dropExistingSession();
       }
       if (mode === "up") {
+        trackProductEvent("signup_started", { method: "email", source: "login", role });
         const hygiene = localPasswordIssue(password, email);
         if (hygiene) throw new Error(hygiene);
         if (parentSignup) {
@@ -649,6 +660,7 @@ export function LoginScreen({
         if (!signingOperator) {
           await withTimeoutFallback(confirmAdultAge(), LOGIN_CONTINUE_MS, undefined);
         }
+        trackProductEvent("signup_completed", { method: "email", source: "login", role });
         confirmAction(t, "accountCreated");
       } else {
         const res = await withTimeout(
@@ -869,6 +881,27 @@ export function LoginScreen({
             />
           ) : (
           <>
+          {!operator && !pickingRole && (shownProviders.length > 0 || !authEnabled) ? (
+          <div className="mt-6">
+            <div data-ke="social-sign-in">
+              {authEnabled ? (
+                <SocialSignInButtons providers={shownProviders} disabled={busy} onSocial={(id) => void onSocial(id)} />
+              ) : (
+                <p className="text-sm text-muted">{t("loginDisabled")}</p>
+              )}
+              <div className="mt-3">
+                <ContinueAgeNotice />
+              </div>
+            </div>
+            {authEnabled && shownProviders.length > 0 ? (
+              <div className="mt-4 flex items-center gap-3 text-xs uppercase tracking-wider text-subtle">
+                <span className="h-px flex-1 bg-border" />
+                {t("orEmail")}
+                <span className="h-px flex-1 bg-border" />
+              </div>
+            ) : null}
+          </div>
+          ) : null}
           <form onSubmit={onEmail} className={`mt-6 space-y-3 ph-no-capture ${pickingRole ? "hidden" : ""}`} data-ke={operator ? "admin-email-first" : "email-sign-in"}>
             {mode === "up" && !operator ? (
               <label className="block text-sm">
@@ -927,7 +960,7 @@ export function LoginScreen({
                 </a>
               </div>
             ) : null}
-            {authEnabled && shownProviders.length === 0 && !operator ? (
+            {authEnabled && providersReady === false && shownProviders.length === 0 && !operator ? (
               <p className="text-xs text-muted">
                 {t("loginMethodsFailed")}
               </p>
@@ -977,25 +1010,6 @@ export function LoginScreen({
           >
             {mode === "up" ? t("haveAccount") : t("needAccount")}
           </button>
-          ) : null}
-          {!operator && !pickingRole && (shownProviders.length > 0 || !authEnabled) ? (
-          <div className="mt-6">
-            <div className="mb-4 flex items-center gap-3 text-xs uppercase tracking-wider text-subtle">
-              <span className="h-px flex-1 bg-border" />
-              {t("orSocial")}
-              <span className="h-px flex-1 bg-border" />
-            </div>
-            <div data-ke="social-sign-in">
-              {authEnabled ? (
-                <SocialSignInButtons providers={shownProviders} disabled={busy} onSocial={(id) => void onSocial(id)} />
-              ) : (
-                <p className="text-sm text-muted">{t("loginDisabled")}</p>
-              )}
-              <div className="mt-3">
-                <ContinueAgeNotice />
-              </div>
-            </div>
-          </div>
           ) : null}
           </>
           )}

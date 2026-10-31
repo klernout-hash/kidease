@@ -89,6 +89,10 @@ async function run(request: Request) {
         } catch (err) {
           console.error("[kidease-connect] fee tax draft skipped", err);
         }
+        if (type === "invoice.paid") {
+          const { captureServerProductEvent } = await import("@/lib/server/product-events");
+          void captureServerProductEvent("invoice_paid", { result: "paid", source: "centre_bill" });
+        }
       }
     }
     if (type === "account.updated" || type === "payout.paid") {

@@ -128,6 +128,7 @@ describe("plugin wiring and honest copy", () => {
     assert.equal(playListingAllowed("apple"), true);
     assert.equal(playListingAllowed("samsung"), false);
     assert.equal(playListingAllowed("huawei"), false);
+    assert.equal(playListingAllowed("amazon"), false);
     assert.doesNotMatch(src("src/lib/store-review.ts"), /type=["']range["']|star-picker|fakeStars/);
   });
 

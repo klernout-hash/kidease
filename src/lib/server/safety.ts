@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql, type Sql } from "@/lib/db";
 import {
+  isReviewModerationAction,
   isSafetyReason,
   isSafetyStatus,
   isSafetyTarget,
@@ -55,7 +56,7 @@ async function reporterIdentity(sql: Sql, userId: string) {
 
 export const reportSafety = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { target: string; reason: string; detail?: string; daycareId?: string; conversationId?: string }) => input)
+  .validator((input: { target: string; reason: string; detail?: string; daycareId?: string; conversationId?: string; reviewId?: string }) => input)
   .handler(async ({ context, data }) => {
     const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
     blockViewAsSideEffect("write");
@@ -65,8 +66,17 @@ export const reportSafety = createServerFn({ method: "POST" })
     let daycareId: string | null = null;
     let conversationId: string | null = null;
     let reportedUserId: string | null = null;
+    let reviewId: string | null = null;
 
-    if (target === "thread") {
+    if (target === "review") {
+      reviewId = (data.reviewId || "").trim();
+      daycareId = (data.daycareId || "").trim();
+      if (!reviewId || !daycareId) throw new Error("Review not found");
+      const review = await sql<{ id: string }>`
+        select id from reviews where id = ${reviewId} and daycare_id = ${daycareId} limit 1
+      `;
+      if (!review[0]) throw new Error("Review not found");
+    } else if (target === "thread") {
       const id = (data.conversationId || "").trim();
       if (!id) throw new Error("Conversation not found");
       const access = await requireConversationRead(sql, id, context.userId);
@@ -87,7 +97,7 @@ export const reportSafety = createServerFn({ method: "POST" })
     const detail = (data.detail || "").trim().slice(0, 2000) || null;
     await sql`
       insert into safety_reports (
-        id, target_kind, daycare_id, conversation_id, reported_user_id,
+        id, target_kind, daycare_id, conversation_id, reported_user_id, review_id,
         reporter_user_id, reporter_name, reporter_email, reason, detail
       ) values (
         ${nid("sr")},
@@ -95,6 +105,7 @@ export const reportSafety = createServerFn({ method: "POST" })
         ${daycareId},
         ${conversationId},
         ${reportedUserId},
+        ${reviewId},
         ${context.userId},
         ${who.name},
         ${who.email},
@@ -223,6 +234,7 @@ export type SafetyQueueRow = {
   city: string | null;
   province: string | null;
   reporterEmail: string | null;
+  reviewId: string | null;
   createdAt: string;
 };
 
@@ -241,10 +253,11 @@ export const listSafetyQueue = createServerFn({ method: "GET" })
       city: string | null;
       province: string | null;
       reporter_email: string | null;
+      review_id: string | null;
       created_at: string;
     }>`
       select r.id, r.target_kind, r.reason, r.detail, r.status,
-             d.name, d.city, d.province, r.reporter_email, r.created_at
+             d.name, d.city, d.province, r.reporter_email, r.review_id, r.created_at
       from safety_reports r
       left join daycares d on d.id = r.daycare_id
       where r.status = 'open'
@@ -262,6 +275,7 @@ export const listSafetyQueue = createServerFn({ method: "GET" })
         city: row.city,
         province: row.province,
         reporterEmail: row.reporter_email,
+        reviewId: row.review_id,
         createdAt: row.created_at,
       }),
     );
@@ -274,16 +288,39 @@ export const reviewSafetyReport = createServerFn({ method: "POST" })
     const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
     blockViewAsSideEffect("write");
     await requireAdmin(context.userId);
-    if (!isSafetyStatus(data.status) || data.status === "open") throw new Error("Choose a result");
+    const reviewAction = isReviewModerationAction(data.status);
+    const reportAction = isSafetyStatus(data.status) && data.status !== "open";
+    if (!reviewAction && !reportAction) throw new Error("Choose a result");
     const sql = await getSql();
+    const open = await sql<{ id: string; target_kind: string; review_id: string | null }>`
+      select id, target_kind, review_id
+      from safety_reports
+      where id = ${data.id} and status = 'open'
+      limit 1
+    `;
+    const row = open[0];
+    if (!row) throw new Error("Report not found");
+    if (reviewAction && row.target_kind !== "review") throw new Error("That action is for a review");
+    if (!reviewAction && row.target_kind === "review") throw new Error("Choose a review action");
+    if (reviewAction && row.review_id && data.status !== "keep_review") {
+      const note = data.status === "remove_review" ? "Removed after a report" : "Hidden after a report";
+      await sql`
+        update reviews
+        set status = 'hidden', review_note = ${note}, reviewed_at = now()
+        where id = ${row.review_id}
+      `;
+    }
     const wrote = await sql<{ id: string }>`
       update safety_reports
-      set status = ${data.status},
+      set status = 'reviewed',
           reviewed_at = now(),
           reviewed_by = ${context.userId}
       where id = ${data.id} and status = 'open'
       returning id
     `;
     if (!wrote[0]) throw new Error("Report not found");
+    if (!reviewAction && data.status === "dismissed") {
+      await sql`update safety_reports set status = 'dismissed' where id = ${data.id}`;
+    }
     return { ok: true as const };
   });

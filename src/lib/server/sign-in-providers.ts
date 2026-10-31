@@ -2,10 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { appleLoginVisible } from "@/lib/auth/apple-login-flag";
 import { facebookLoginVisible, facebookOauthHost } from "@/lib/auth/facebook-idp";
+import { amazonSignInVisible, huaweiSignInVisible } from "@/lib/auth/store-signin-flags";
 import { nativeShellHidesAdmin } from "@/lib/native-admin";
-import { storeChannelFromSignals } from "@/lib/native-entitlements";
-import { nativeSocialPlatform, providersForNativeShell } from "@/lib/auth/native-oauth";
-import { providersForStore, visibleSignInProviders, type GrokProvider } from "@/lib/auth/providers";
+import { googlePlayServicesAvailable, storeChannelFromSignals } from "@/lib/native-entitlements";
+import { nativeSocialPlatform, signInProvidersForDevice } from "@/lib/auth/native-oauth";
+import { visibleSignInProviders, type GrokProvider } from "@/lib/auth/providers";
 
 /**
  * Sign-in buttons the login page should render.
@@ -38,6 +39,8 @@ export const getSignInProviders = createServerFn({ method: "GET" }).handler((): 
     nativeGoogle,
     nativeFacebook,
     nativeApple,
+    nativeHuawei: huaweiSignInVisible(process.env),
+    nativeAmazon: amazonSignInVisible(process.env),
     broker,
     preferNativeGoogle: preferNative,
   });
@@ -54,7 +57,9 @@ export const getSignInProviders = createServerFn({ method: "GET" }).handler((): 
   const signals = { userAgent: ua, cookie, search: "" };
   const native = nativeShellHidesAdmin(signals);
   const channel = storeChannelFromSignals(signals);
-  return providersForNativeShell(providersForStore(list, channel), {
+  return signInProvidersForDevice(list, {
+    channel,
+    playServices: googlePlayServicesAvailable(ua),
     native,
     platform: nativeSocialPlatform({ native, channel, userAgent: ua }),
   });

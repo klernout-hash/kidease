@@ -10,6 +10,7 @@ import {
   formatConfirmedDay,
   normalizeNeedCareFastPage,
   parseNeedCareFastSearch,
+  streetRadiusNote,
   type NeedCareFastViewData,
 } from "@/lib/need-care-fast";
 import { loadNeedCareFast } from "@/lib/server/need-care-fast";
@@ -61,6 +62,9 @@ export function NeedCareFastView({ data: raw }: { data: NeedCareFastViewData | n
         <p className="mt-4 text-lg text-muted">{copy.what}</p>
         <p className="mt-2 text-muted">{copy.why}</p>
         <p className="mt-2 text-muted">{data.sort === "spots" ? copy.leadSpots : copy.lead}</p>
+        {data.street && data.radiusKm ? (
+          <p className="mt-2 text-sm text-muted">{streetRadiusNote(fr, data.radiusKm)}</p>
+        ) : null}
         <Link
           to={localePath("/help", locale)}
           className="mt-3 inline-flex min-h-11 min-w-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"

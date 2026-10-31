@@ -254,7 +254,7 @@ test("smoke paths never include pay or 2FA submit", () => {
   assert.doesNotMatch(runner, /\/pay\//);
   assert.match(runner, /\.fill\(FIXTURE_PASSWORD\)/);
   const passwordFills = runner.match(/\.fill\([^)\n]*password[^)\n]*\)/gi) || [];
-  assert.deepEqual(passwordFills, [".fill(FIXTURE_PASSWORD)"]);
+  assert.deepEqual(passwordFills, [".fill(FIXTURE_PASSWORD)", ".fill(FIXTURE_PASSWORD)"]);
   assert.match(runner, /if \(args\.signedIn\)/);
   assert.match(runner, /scripts\/browser-smoke\.mjs/);
   assert.match(runner, /args\.startPreview/);

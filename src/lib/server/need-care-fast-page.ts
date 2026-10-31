@@ -1,5 +1,5 @@
 import { getSql } from "@/lib/db";
-import { needCareFastEnabled } from "@/lib/features";
+import { needCareFastEnabled, ncfStreetEnabled } from "@/lib/features";
 import { geocode, haversineKm } from "@/lib/geo";
 import { PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
 import {
@@ -9,6 +9,13 @@ import {
   rankNeedCareFast,
   rankNeedCareFastByAvailability,
 } from "@/lib/need-care-fast";
+import {
+  geocodeStreetAddress,
+  looksLikeStreetAddress,
+  withinStreetRadius,
+  NCF_STREET_RADIUS_KM,
+  type StreetPin,
+} from "@/lib/ncf-street";
 
 export type NeedCareFastHit = {
   id: string;
@@ -28,6 +35,8 @@ export type NeedCareFastPage = {
   unknownPlace: boolean;
   hits: NeedCareFastHit[];
   sort: "spots" | "distance";
+  street: boolean;
+  radiusKm: number | null;
 };
 
 type Row = {
@@ -52,7 +61,7 @@ function iso(value: string | Date | null): string | null {
 }
 
 export function emptyNeedCareFastPage(q = ""): NeedCareFastPage {
-  return { q, placeLabel: null, unknownPlace: false, hits: [], sort: "distance" };
+  return { q, placeLabel: null, unknownPlace: false, hits: [], sort: "distance", street: false, radiusKm: null };
 }
 
 /**
@@ -63,10 +72,18 @@ export async function loadNeedCareFastPage(rawQuery: string, now = Date.now()): 
   const q = needCareFastQuery(rawQuery);
   if (!q) return emptyNeedCareFastPage();
   try {
-    const origin = geocode(q);
-    if (!origin) return { q, placeLabel: null, unknownPlace: true, hits: [], sort: "distance" };
-    const since = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
     const sql = await getSql();
+    let street = false;
+    let origin = geocode(q);
+    if (ncfStreetEnabled() && looksLikeStreetAddress(q)) {
+      const pin = await geocodeStreetAddress(q, { cache: nominatimCache(sql) });
+      if (pin) {
+        origin = pin;
+        street = true;
+      }
+    }
+    if (!origin) return { q, placeLabel: null, unknownPlace: true, hits: [], sort: "distance", street: false, radiusKm: null };
+    const since = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
     const rows = await sql.query<Row>(
       `select id, slug, name, city, province, lat, lng,
               spots_infant, spots_toddler, spots_preschool, last_vacancy_updated_at
@@ -90,6 +107,7 @@ export async function loadNeedCareFastPage(rawQuery: string, now = Date.now()): 
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) return [];
         if (!row.slug || !row.name) return [];
         const distanceKm = haversineKm(origin, { lat, lng });
+        if (street && !withinStreetRadius(distanceKm)) return [];
         return [{
           id: String(row.id),
           slug: String(row.slug),
@@ -103,8 +121,37 @@ export async function loadNeedCareFastPage(rawQuery: string, now = Date.now()): 
         }];
       }),
     );
-    return { q, placeLabel: origin.label, unknownPlace: false, hits, sort };
+    return {
+      q,
+      placeLabel: origin.label,
+      unknownPlace: false,
+      hits,
+      sort,
+      street,
+      radiusKm: street ? NCF_STREET_RADIUS_KM : null,
+    };
   } catch {
     return emptyNeedCareFastPage(q);
   }
+}
+
+function nominatimCache(sql: Awaited<ReturnType<typeof getSql>>) {
+  return {
+    async get(hash: string): Promise<StreetPin | null> {
+      const rows = await sql<{ lat: number; lng: number; label: string }>`
+        select lat, lng, label from geocode_cache where query_hash = ${hash} limit 1
+      `.catch(() => [] as { lat: number; lng: number; label: string }[]);
+      const row = rows[0];
+      if (!row || !Number.isFinite(Number(row.lat)) || !Number.isFinite(Number(row.lng))) return null;
+      return { lat: Number(row.lat), lng: Number(row.lng), label: row.label };
+    },
+    async set(hash: string, pin: StreetPin) {
+      if (!/^[a-f0-9]{64}$/.test(hash)) return;
+      await sql`
+        insert into geocode_cache (query_hash, lat, lng, label, source)
+        values (${hash}, ${pin.lat}, ${pin.lng}, ${pin.label}, ${"nominatim"})
+        on conflict (query_hash) do update set lat = excluded.lat, lng = excluded.lng, label = excluded.label
+      `.catch(() => undefined);
+    },
+  };
 }

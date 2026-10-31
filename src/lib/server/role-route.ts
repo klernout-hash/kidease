@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { notFound, redirect } from "@tanstack/react-router";
 import { sessionBearerMiddleware } from "@/lib/auth/middleware";
-import { subscriptionsEnabled } from "@/lib/features";
+import { govPortalFooterEnabled, subscriptionsEnabled } from "@/lib/features";
 import { requestHasSessionMaterial } from "@/lib/anonymous-request";
 import { e2eChromeFromRequest } from "@/lib/e2e-role-cookie";
 import { isFrPath } from "@/lib/locale-path";
@@ -26,7 +26,9 @@ import { SQL_SETTLE_MS, withTimeout } from "@/lib/timeout";
 
 export type RoleChromePayload = {
   signedIn: boolean;
-  role: "parent" | "provider" | "admin" | "support" | null;
+  role: "parent" | "provider" | "admin" | "support" | "government" | null;
+  /** FEATURE_GOV_PORTAL. Default false. Footer link only. */
+  govPortalLink: boolean;
   paid: boolean;
   planLabel: string | null;
   renewsOn: string | null;
@@ -54,6 +56,7 @@ const EMPTY: RoleChromePayload = {
   e2e: false,
   degraded: false,
   subscriptionsEnabled: false,
+  govPortalLink: false,
 };
 
 const DEGRADED: RoleChromePayload = {
@@ -66,6 +69,7 @@ const DEGRADED: RoleChromePayload = {
   e2e: false,
   degraded: true,
   subscriptionsEnabled: false,
+  govPortalLink: false,
 };
 
 const chromeByRequest = new WeakMap<Request, Promise<RoleChromePayload>>();
@@ -158,10 +162,11 @@ async function computeRoleChrome(bearer: string | undefined, req: Request | null
     productionBuild: import.meta.env.PROD,
   });
   const plansOn = subscriptionsEnabled();
-  if (fixture) return { ...fixture, subscriptionsEnabled: plansOn };
+  const govPortalLink = govPortalFooterEnabled();
+  if (fixture) return { ...fixture, subscriptionsEnabled: plansOn, govPortalLink };
 
   if (!requestHasSessionMaterial(cookie, bearerFrom(req, bearer) || req?.headers.get("authorization"))) {
-    return { ...EMPTY, subscriptionsEnabled: plansOn };
+    return { ...EMPTY, subscriptionsEnabled: plansOn, govPortalLink };
   }
 
   const { getSessionUser } = await import("@/lib/auth/verify.server");
@@ -169,9 +174,9 @@ async function computeRoleChrome(bearer: string | undefined, req: Request | null
   try {
     user = await withTimeout(getSessionUser(bearerFrom(req, bearer)), SQL_SETTLE_MS, "role-chrome-auth");
   } catch {
-    return { ...DEGRADED, subscriptionsEnabled: plansOn };
+    return { ...DEGRADED, subscriptionsEnabled: plansOn, govPortalLink };
   }
-  if (!user) return { ...EMPTY, subscriptionsEnabled: plansOn };
+  if (!user) return { ...EMPTY, subscriptionsEnabled: plansOn, govPortalLink };
 
   const { guestViewApplies, requestPathname } = await import("@/lib/guest-view");
   if (
@@ -181,7 +186,7 @@ async function computeRoleChrome(bearer: string | undefined, req: Request | null
       pathname: requestPathname(req?.url),
     })
   ) {
-    return { ...EMPTY, subscriptionsEnabled: plansOn, guestView: true };
+    return { ...EMPTY, subscriptionsEnabled: plansOn, govPortalLink, guestView: true };
   }
 
   try {
@@ -191,7 +196,9 @@ async function computeRoleChrome(bearer: string | undefined, req: Request | null
     const activeMember = flag(row?.active_member);
     const nav = storedNavRole(row?.role ?? "parent", ownsCentre, activeMember);
     const role =
-      nav === "admin" || nav === "support" || nav === "provider" || nav === "parent" ? nav : "parent";
+      nav === "admin" || nav === "support" || nav === "provider" || nav === "parent" || nav === "government"
+        ? nav
+        : "parent";
     const iso = (value: string | Date | null | undefined) => {
       if (!value) return null;
       const date = value instanceof Date ? value : new Date(value);
@@ -224,9 +231,10 @@ async function computeRoleChrome(bearer: string | undefined, req: Request | null
       e2e: false,
       degraded: false,
       subscriptionsEnabled: plansOn,
+      govPortalLink,
     };
   } catch {
-    return { ...DEGRADED, subscriptionsEnabled: plansOn };
+    return { ...DEGRADED, subscriptionsEnabled: plansOn, govPortalLink };
   }
 }
 

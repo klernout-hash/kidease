@@ -7,6 +7,8 @@ import { getWaitlistInterest, setWaitlistInterest } from "@/lib/server/waitlist-
 import { parentSignupSearch } from "@/lib/auth/parent-login";
 import { captureLeadSubmitted } from "@/lib/marketplace-funnel";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { provinceCode } from "@/lib/product-events";
+import { trackProductEvent } from "@/lib/track-product-event";
 import { SIGNUP_FUNNEL_EVENT, signupFunnelPayload, signupPromptStep } from "@/lib/signup-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
@@ -60,6 +62,7 @@ export function WaitlistOptIn({
       .then((row) => {
         setOptedIn(Boolean(row));
         if (row) {
+          trackProductEvent("waitlist_joined", { source: "listing", role: "parent", province: provinceCode(province) });
           captureLeadSubmitted({ daycareSlug: daycareSlug || daycareId, requestType: "waitlist", role: "parent" });
         }
         confirmAction(t, row ? "waitlistJoined" : "waitlistLeft");

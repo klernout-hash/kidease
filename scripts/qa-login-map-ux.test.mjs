@@ -87,15 +87,17 @@ describe("QA 2026-09-10: login split does not overflow under 768", () => {
 });
 
 describe("login strength: email Connexion primary, logout, honest errors", () => {
-  it("puts email Connexion above Google so social cannot steal submit", () => {
+  it("lists store sign-in before email, and email stays the only submit", () => {
     const login = src("src/routes/login.tsx");
     const buttons = src("src/components/social-sign-in-buttons.tsx");
     const emailIdx = login.indexOf('data-ke={operator ? "admin-email-first" : "email-sign-in"}');
     const socialIdx = login.indexOf('data-ke="social-sign-in"');
     const primaryIdx = login.indexOf('data-ke="email-primary"');
-    assert.ok(emailIdx > 0 && socialIdx > emailIdx, "email form must render before social");
-    assert.ok(primaryIdx > 0 && socialIdx > primaryIdx, "Connexion submit must render before Google");
-    assert.match(login, /t\("orSocial"\)/);
+    assert.ok(socialIdx > 0 && emailIdx > socialIdx, "social buttons render before the email form");
+    assert.ok(primaryIdx > socialIdx, "email submit stays after the store buttons");
+    assert.match(login, /type="submit"/);
+    assert.match(buttons, /type="button"/);
+    assert.match(login, /t\("orEmail"\)/);
     assert.match(login, /t\("signIn"\)/);
     assert.match(buttons, /continueGoogle/);
     assert.match(buttons, /data-ke="social-secondary"/);

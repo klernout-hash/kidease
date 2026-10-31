@@ -9,6 +9,7 @@ import { AREA_WAITLIST_RADII } from "@/lib/area-waitlist";
 import { areaWaitlistCopy } from "@/lib/area-waitlist-copy";
 import { showsParentBrowseActions } from "@/lib/role-access";
 import { joinAreaWaitlist } from "@/lib/server/area-waitlist";
+import { trackProductEvent } from "@/lib/track-product-event";
 import { useCopy } from "@/lib/use-copy";
 
 const DRAFT_KEY = "kidease-area-waitlist-draft";
@@ -102,6 +103,7 @@ export function AreaWaitlistForm({
           return;
         }
         window.sessionStorage.removeItem(DRAFT_KEY);
+        trackProductEvent("waitlist_joined", { source: "area", role: "parent" });
         toast.success(copy.joined);
         setPlace("");
         setStartDate("");

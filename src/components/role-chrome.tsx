@@ -13,6 +13,8 @@ export type RoleChromeState = {
   ownedSlugs: string[];
   e2e: boolean;
   subscriptionsEnabled: boolean;
+  /** FEATURE_GOV_PORTAL. Default false. */
+  govPortalLink: boolean;
   /** Operator is looking at the public site as a signed-out visitor. */
   guestView?: boolean;
 };
@@ -27,6 +29,7 @@ const GUEST: RoleChromeState = {
   ownedSlugs: [],
   e2e: false,
   subscriptionsEnabled: false,
+  govPortalLink: false,
 };
 
 /**
@@ -45,6 +48,7 @@ export function useRoleChrome(): RoleChromeState {
       ...GUEST,
       guestView: true,
       subscriptionsEnabled: remote.subscriptionsEnabled === true,
+      govPortalLink: remote.govPortalLink === true,
     };
   }
 
@@ -59,6 +63,7 @@ export function useRoleChrome(): RoleChromeState {
       ownedSlugs: remote.ownedSlugs,
       e2e: remote.e2e,
       subscriptionsEnabled: remote.subscriptionsEnabled === true,
+      govPortalLink: remote.govPortalLink === true,
     };
   }
 
@@ -72,5 +77,6 @@ export function useRoleChrome(): RoleChromeState {
     ...GUEST,
     e2e: remote.e2e,
     subscriptionsEnabled: remote.subscriptionsEnabled === true,
+    govPortalLink: remote.govPortalLink === true,
   };
 }

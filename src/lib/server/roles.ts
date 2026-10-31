@@ -255,6 +255,31 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
 
   const access = await resolveAdminAccess(userId);
   const stored = access.ok ? "admin" : access.role;
+  if (stored === "government") {
+    const actor = await lookupUser(userId);
+    const stripeLive = stripeChargesLive();
+    return {
+      role: "government",
+      desks: [],
+      email: actor.email ?? null,
+      home: "/gov",
+      unread: 0,
+      unreadFamily: 0,
+      unreadCentre: 0,
+      notificationUnread: 0,
+      stripeLive,
+      ledgerLabel: paymentSourceLabel(stripeLive),
+      providerSubscriptions: false,
+      showPayCtas: showPayCtas(),
+      subscriptionsEnabled: subscriptionsEnabled(),
+      centreOwner: false,
+      ownsCentre: false,
+      centreLinked: false,
+      attention: { ...EMPTY_ATTENTION },
+      restoreUntil: null,
+      viewAs: viewing,
+    };
+  }
   const owned = await ownsCentre(sql, userId);
   // Do not claim Parent Onboard here. A new profile defaults to parent, and
   // this loader runs for every signed-in page — including a daycare signup

@@ -47,6 +47,8 @@ export const PREVIEW_ALLOWED_HOSTS = [
  * the preview callback path — that URI is not registered.
  */
 export function brokerOAuthCallbackPath(providerId: string): string | null {
-  if (providerId === "facebook") return null;
+  // Facebook, Huawei ID, and Login with Amazon are registered on their own
+  // consoles at /api/auth/callback/:id. Never rewrite those onto the broker path.
+  if (providerId === "facebook" || providerId === "huawei" || providerId === "amazon") return null;
   return `/oauth2/callback/${providerId}`;
 }
