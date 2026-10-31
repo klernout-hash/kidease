@@ -11,6 +11,7 @@ export const PARENT_URL_TABS = [
   "children",
   "care",
   "waitlists",
+  "stories",
 ] as const;
 
 export type ParentUrlTab = (typeof PARENT_URL_TABS)[number];
