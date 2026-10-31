@@ -113,6 +113,8 @@ export type Daycare = {
   availabilityKnown?: boolean;
   spotsUpdatedAt?: string | null;
   lastVacancyUpdatedAt?: string | null;
+  /** Set when open spots were hidden after 30 days without an update. */
+  openSpotsHiddenAt?: string | null;
   lastPhotoUpdatedAt?: string | null;
   detailsReady?: boolean;
   completenessMissing?: Array<"fees" | "ages" | "hours" | "license" | "photo">;

@@ -77,6 +77,7 @@ export type DaycareRow = {
   visibility?: string | null;
   is_test?: number | boolean | null;
   last_vacancy_updated_at?: string | null;
+  open_spots_hidden_at?: string | Date | null;
   last_photo_updated_at?: string | null;
   license_status?: string | null;
   license_expiry?: string | Date | null;
@@ -176,6 +177,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
     availabilityKnown: Boolean(vacancyAt),
     spotsUpdatedAt: vacancyAt,
     lastVacancyUpdatedAt: vacancyAt,
+    openSpotsHiddenAt: asIsoString(r.open_spots_hidden_at),
     lastPhotoUpdatedAt: photoAt,
     ...defaultTrustFields(),
     licenseStatus: normalizeLicenseStatus(r.license_status),

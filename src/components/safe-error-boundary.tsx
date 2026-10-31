@@ -28,6 +28,10 @@ export function SafeRouteError({
     $exception_type: error instanceof Error ? error.name : "Error",
     $exception_source: "error_boundary",
   });
+  useEffect(() => {
+    if (typeof navigator !== "undefined" && navigator.webdriver) return;
+    void fetch("/api/automations?job=client-error", { method: "POST" }).catch(() => undefined);
+  }, [error]);
   const copy = safeErrorCopy(path);
   const showAdmin = path.startsWith("/admin");
 

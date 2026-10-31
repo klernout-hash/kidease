@@ -14,6 +14,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminAiRouteImport } from './routes/admin-ai'
+import { Route as AdminAutomationsRouteImport } from './routes/admin-automations'
 import { Route as AdminChatRouteImport } from './routes/admin-chat'
 import { Route as AdminContractsRouteImport } from './routes/admin-contracts'
 import { Route as AdminEmailHealthRouteImport } from './routes/admin-email-health'
@@ -80,6 +81,7 @@ import { Route as Verify2faRouteImport } from './routes/verify-2fa'
 import { Route as WaitlistRouteImport } from './routes/waitlist'
 import { Route as AdminFeaturesRouteImport } from './routes/admin.features'
 import { Route as ApiAccountPurgeRouteImport } from './routes/api/account-purge'
+import { Route as ApiAutomationsRouteImport } from './routes/api/automations'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiE2eSeedRouteImport } from './routes/api/e2e-seed'
 import { Route as ApiFamilyDocumentsRouteImport } from './routes/api/family-documents'
@@ -223,6 +225,11 @@ const AdminRoute = AdminRouteImport.update({
 const AdminAiRoute = AdminAiRouteImport.update({
   id: '/admin-ai',
   path: '/admin-ai',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAutomationsRoute = AdminAutomationsRouteImport.update({
+  id: '/admin-automations',
+  path: '/admin-automations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminChatRoute = AdminChatRouteImport.update({
@@ -554,6 +561,11 @@ const AdminFeaturesRoute = AdminFeaturesRouteImport.update({
 const ApiAccountPurgeRoute = ApiAccountPurgeRouteImport.update({
   id: '/api/account-purge',
   path: '/api/account-purge',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAutomationsRoute = ApiAutomationsRouteImport.update({
+  id: '/api/automations',
+  path: '/api/automations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiDigestRoute = ApiDigestRouteImport.update({
@@ -1160,6 +1172,7 @@ export interface FileRoutesByFullPath {
   '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
   '/admin-ai': typeof AdminAiRoute
+  '/admin-automations': typeof AdminAutomationsRoute
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
@@ -1226,6 +1239,7 @@ export interface FileRoutesByFullPath {
   '/waitlist': typeof WaitlistRoute
   '/admin/features': typeof AdminFeaturesRoute
   '/api/account-purge': typeof ApiAccountPurgeRoute
+  '/api/automations': typeof ApiAutomationsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/family-documents': typeof ApiFamilyDocumentsRouteWithChildren
@@ -1352,6 +1366,7 @@ export interface FileRoutesByTo {
   '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
   '/admin-ai': typeof AdminAiRoute
+  '/admin-automations': typeof AdminAutomationsRoute
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
@@ -1416,6 +1431,7 @@ export interface FileRoutesByTo {
   '/waitlist': typeof WaitlistRoute
   '/admin/features': typeof AdminFeaturesRoute
   '/api/account-purge': typeof ApiAccountPurgeRoute
+  '/api/automations': typeof ApiAutomationsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/family-documents': typeof ApiFamilyDocumentsRouteWithChildren
@@ -1543,6 +1559,7 @@ export interface FileRoutesById {
   '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
   '/admin-ai': typeof AdminAiRoute
+  '/admin-automations': typeof AdminAutomationsRoute
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
@@ -1609,6 +1626,7 @@ export interface FileRoutesById {
   '/waitlist': typeof WaitlistRoute
   '/admin/features': typeof AdminFeaturesRoute
   '/api/account-purge': typeof ApiAccountPurgeRoute
+  '/api/automations': typeof ApiAutomationsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
   '/api/family-documents': typeof ApiFamilyDocumentsRouteWithChildren
@@ -1737,6 +1755,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/admin'
     | '/admin-ai'
+    | '/admin-automations'
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
@@ -1803,6 +1822,7 @@ export interface FileRouteTypes {
     | '/waitlist'
     | '/admin/features'
     | '/api/account-purge'
+    | '/api/automations'
     | '/api/digest'
     | '/api/e2e-seed'
     | '/api/family-documents'
@@ -1929,6 +1949,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/admin'
     | '/admin-ai'
+    | '/admin-automations'
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
@@ -1993,6 +2014,7 @@ export interface FileRouteTypes {
     | '/waitlist'
     | '/admin/features'
     | '/api/account-purge'
+    | '/api/automations'
     | '/api/digest'
     | '/api/e2e-seed'
     | '/api/family-documents'
@@ -2119,6 +2141,7 @@ export interface FileRouteTypes {
     | '/account'
     | '/admin'
     | '/admin-ai'
+    | '/admin-automations'
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
@@ -2185,6 +2208,7 @@ export interface FileRouteTypes {
     | '/waitlist'
     | '/admin/features'
     | '/api/account-purge'
+    | '/api/automations'
     | '/api/digest'
     | '/api/e2e-seed'
     | '/api/family-documents'
@@ -2312,6 +2336,7 @@ export interface RootRouteChildren {
   AccountRoute: typeof AccountRoute
   AdminRoute: typeof AdminRouteWithChildren
   AdminAiRoute: typeof AdminAiRoute
+  AdminAutomationsRoute: typeof AdminAutomationsRoute
   AdminChatRoute: typeof AdminChatRoute
   AdminContractsRoute: typeof AdminContractsRoute
   AdminEmailHealthRoute: typeof AdminEmailHealthRoute
@@ -2377,6 +2402,7 @@ export interface RootRouteChildren {
   Verify2faRoute: typeof Verify2faRoute
   WaitlistRoute: typeof WaitlistRoute
   ApiAccountPurgeRoute: typeof ApiAccountPurgeRoute
+  ApiAutomationsRoute: typeof ApiAutomationsRoute
   ApiDigestRoute: typeof ApiDigestRoute
   ApiE2eSeedRoute: typeof ApiE2eSeedRoute
   ApiFamilyDocumentsRoute: typeof ApiFamilyDocumentsRouteWithChildren
@@ -2464,6 +2490,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-ai'
       fullPath: '/admin-ai'
       preLoaderRoute: typeof AdminAiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-automations': {
+      id: '/admin-automations'
+      path: '/admin-automations'
+      fullPath: '/admin-automations'
+      preLoaderRoute: typeof AdminAutomationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin-chat': {
@@ -2926,6 +2959,13 @@ declare module '@tanstack/react-router' {
       path: '/api/account-purge'
       fullPath: '/api/account-purge'
       preLoaderRoute: typeof ApiAccountPurgeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/automations': {
+      id: '/api/automations'
+      path: '/api/automations'
+      fullPath: '/api/automations'
+      preLoaderRoute: typeof ApiAutomationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/digest': {
@@ -4028,6 +4068,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountRoute: AccountRoute,
   AdminRoute: AdminRouteWithChildren,
   AdminAiRoute: AdminAiRoute,
+  AdminAutomationsRoute: AdminAutomationsRoute,
   AdminChatRoute: AdminChatRoute,
   AdminContractsRoute: AdminContractsRoute,
   AdminEmailHealthRoute: AdminEmailHealthRoute,
@@ -4093,6 +4134,7 @@ const rootRouteChildren: RootRouteChildren = {
   Verify2faRoute: Verify2faRoute,
   WaitlistRoute: WaitlistRoute,
   ApiAccountPurgeRoute: ApiAccountPurgeRoute,
+  ApiAutomationsRoute: ApiAutomationsRoute,
   ApiDigestRoute: ApiDigestRoute,
   ApiE2eSeedRoute: ApiE2eSeedRoute,
   ApiFamilyDocumentsRoute: ApiFamilyDocumentsRouteWithChildren,

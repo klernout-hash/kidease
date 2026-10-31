@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { cronAuthorized } from "@/lib/cron-auth";
+import { pingCronHeartbeat } from "@/lib/server/cron-heartbeat";
 import { sendDailyDigest } from "@/lib/server/notify";
 import { logSecurityEvent, requestIp } from "@/lib/server/security-events";
 
@@ -24,6 +25,7 @@ async function run(request: Request) {
     console.error("[kidease-mail] verify-email nudge job failed", err);
   }
   await logSecurityEvent({ kind: "digest_run", ip, detail: "ok" });
+  await pingCronHeartbeat("digest");
   return Response.json({ ...result, verifyEmailNudge });
 }
 

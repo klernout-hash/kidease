@@ -1719,7 +1719,8 @@ export const updateCapacity = createServerFn({ method: "POST" })
         last_vacancy_updated_at = case
           when ${spotsOpened} then now()
           else last_vacancy_updated_at
-        end
+        end,
+        open_spots_hidden_at = null
       where id = ${data.daycareId}
     `;
     void import("@/lib/server/alert-fanout")

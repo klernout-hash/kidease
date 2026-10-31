@@ -31,6 +31,18 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_OPEN_SPOTS_CHECKIN_SMS",
   "FEATURE_QC_HOME_DAYCARES",
   "FEATURE_AREA_WAITLIST_ALERTS",
+  "FEATURE_POSTHOG_ERRORS",
+  "FEATURE_OPS_ALERTS",
+  "FEATURE_CRON_HEARTBEATS",
+  "FEATURE_INVOICE_REMINDERS",
+  "FEATURE_PAYMENT_DUNNING",
+  "FEATURE_MISSING_INFO_REMINDERS",
+  "FEATURE_DAYCARE_ONBOARDING",
+  "FEATURE_CLAIM_LISTING_REMINDERS",
+  "FEATURE_STALE_OPEN_SPOTS",
+  "FEATURE_POST_TOUR_FOLLOWUP",
+  "FEATURE_ENROLMENT_REVIEW",
+  "FEATURE_NEON_BACKUP",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -82,6 +94,30 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_QC_HOME_DAYCARES: false,
   /** Area waitlist email. Off until Kyle approves the wording. */
   FEATURE_AREA_WAITLIST_ALERTS: false,
+  /** Browser and server exception capture in PostHog. Off. Bots and WebDriver are filtered. */
+  FEATURE_POSTHOG_ERRORS: false,
+  /** Email kyle@kidease.ca on error spikes and failed crons. Off. Dry-run until _LIVE. */
+  FEATURE_OPS_ALERTS: false,
+  /** Better Stack heartbeat after each successful cron. Off. */
+  FEATURE_CRON_HEARTBEATS: false,
+  /** Bill reminders: 3 days before, due date, 3 and 7 days late. Off. */
+  FEATURE_INVOICE_REMINDERS: false,
+  /** Follow-ups after a failed payment. Off. Stops when the bill is paid. */
+  FEATURE_PAYMENT_DUNNING: false,
+  /** Weekly mail for missing listing facts and a missing child profile. Off. */
+  FEATURE_MISSING_INFO_REMINDERS: false,
+  /** Daycare emails on day 0, 2, and 7 after claim. Off. */
+  FEATURE_DAYCARE_ONBOARDING: false,
+  /** Claim reminders to unclaimed centres with a public business email. Off. Dry-run until _LIVE. */
+  FEATURE_CLAIM_LISTING_REMINDERS: false,
+  /** Hide open spots not updated in 30 days, with a reminder at day 21. Off. */
+  FEATURE_STALE_OPEN_SPOTS: false,
+  /** Email 24 hours after a tour. Off. */
+  FEATURE_POST_TOUR_FOLLOWUP: false,
+  /** Optional review invite about 30 days after enrolment. Off. No review gating. */
+  FEATURE_ENROLMENT_REVIEW: false,
+  /** Weekly Neon backup to R2 plus a restore-list check. Off. */
+  FEATURE_NEON_BACKUP: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -182,6 +218,78 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Email when an area waitlist matches a posted spot. Default off. Kyle approved the wording. In-app notices still save.",
+  },
+  {
+    key: "FEATURE_POSTHOG_ERRORS",
+    defaultOn: false,
+    docs: "docs/automations.md",
+    summary: "PostHog exception capture on the website and server. Default off. Bots and WebDriver are dropped. Needs _LIVE to send.",
+  },
+  {
+    key: "FEATURE_OPS_ALERTS",
+    defaultOn: false,
+    docs: "docs/automations.md",
+    summary: "Email kyle@kidease.ca for a daily digest and an immediate note when a cron fails or errors spike. Default off.",
+  },
+  {
+    key: "FEATURE_CRON_HEARTBEATS",
+    defaultOn: false,
+    docs: "docs/automations.md",
+    summary: "Ping a Better Stack heartbeat after each successful cron. Default off. Unset URL is a no-op.",
+  },
+  {
+    key: "FEATURE_INVOICE_REMINDERS",
+    defaultOn: false,
+    docs: "docs/automations.md",
+    summary: "Email a parent 3 days before a bill is due, on the due date, and 3 and 7 days later. Stops when paid. Default off.",
+  },
+  {
+    key: "FEATURE_PAYMENT_DUNNING",
+    defaultOn: false,
+    docs: "docs/automations.md",
+    summary: "Email after a failed payment, then 3 and 7 days later. Stops when paid. Does not replace the Stripe webhook. Default off.",
+  },
+  {
+    key: "FEATURE_MISSING_INFO_REMINDERS",
+    defaultOn: false,
+    docs: "docs/automations.md",
+    summary: "Weekly email listing exactly which licence, photo, fee, hours, contact, or ages are missing. Also a parent missing a child profile. Default off.",
+  },
+  {
+    key: "FEATURE_DAYCARE_ONBOARDING",
+    defaultOn: false,
+    docs: "docs/automations.md",
+    summary: "Three emails after a centre is claimed: the same day, day 2, and day 7. Default off.",
+  },
+  {
+    key: "FEATURE_CLAIM_LISTING_REMINDERS",
+    defaultOn: false,
+    docs: "docs/automations.md",
+    summary: "Email unclaimed centres at their published business address. CASL implied consent, unsubscribe, daily cap. Default off and dry-run until _LIVE.",
+  },
+  {
+    key: "FEATURE_STALE_OPEN_SPOTS",
+    defaultOn: false,
+    docs: "docs/automations.md",
+    summary: "Remind at day 21 and hide open spots that were not updated for 30 days. Default off.",
+  },
+  {
+    key: "FEATURE_POST_TOUR_FOLLOWUP",
+    defaultOn: false,
+    docs: "docs/automations.md",
+    summary: "One email about 24 hours after a tour. Default off.",
+  },
+  {
+    key: "FEATURE_ENROLMENT_REVIEW",
+    defaultOn: false,
+    docs: "docs/automations.md",
+    summary: "One optional review invite about 30 days after enrolment. Every enrolled parent gets it. No star gate. Default off.",
+  },
+  {
+    key: "FEATURE_NEON_BACKUP",
+    defaultOn: false,
+    docs: "docs/automations.md",
+    summary: "Weekly pg_dump to R2 and a pg_restore list check. Alerts on failure. Default off.",
   },
 ];
 

@@ -115,6 +115,7 @@ Day-7 code slice: homepage **Pick up where you left off** (`ResumeVisitCard`) wh
 - `src/lib/auth/login-funnel.ts` — login → dest steps (`continued` / `desk_landed`).
 - `src/lib/marketplace-funnel.ts` — `marketplace_funnel` steps `search` / `explore` → `listing_view` → `share` | `contact` | `tour_request` | `zero_result` | `claim`. Coarse `dest_path` only (no slugs). Internal QA sessions set `internal_qa` and `$is_internal`. `$exception` is captured for unhandled errors and the route error screen.
 - NOW-loop events (after analytics consent): `search_filters_applied` `{ age_band, start, has_place }`, `search_results_shown` `{ n, n_age_known }`, `listing_request_started`, `listing_request_submitted`, `provider_request_opened`. Preview-only until this ships to Production.
+- Exception capture (`$exception`) is **off** until `FEATURE_POSTHOG_ERRORS=1` and `FEATURE_POSTHOG_ERRORS_LIVE=1`. Bots and WebDriver are dropped even then. See `docs/automations.md`.
 - `src/lib/retention.ts` — `retention_touch` + sanitized resume path.
 - `src/components/posthog-boot.tsx` — once in the root shell.
 - CSP allowlist: `'self'` (proxy) plus `us.i.posthog.com` + `us-assets.i.posthog.com` as fallback (no `*.posthog.com`).

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { cronAuthorized } from "@/lib/cron-auth";
+import { pingCronHeartbeat } from "@/lib/server/cron-heartbeat";
 import { shouldDeferSearchAlertsToInngest } from "@/lib/inngest";
 import { runSearchAlertJob } from "@/lib/server/search-alerts";
 import { logSecurityEvent, requestIp } from "@/lib/server/security-events";
@@ -27,6 +28,7 @@ async function run(request: Request) {
   }
   const result = await runSearchAlertJob({ dryRun });
   await logSecurityEvent({ kind: "search_alerts_run", ip, detail: dryRun ? "dry-run" : "ok" });
+  await pingCronHeartbeat("search-alerts");
   return Response.json(result);
 }
 

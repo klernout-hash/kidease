@@ -128,14 +128,16 @@ export async function applyOpenSpotsLink(
         spots_toddler = ${next.spots.toddler},
         spots_preschool = ${next.spots.preschool},
         confirmed_open_spots = ${next.confirmedOpenSpots},
-        last_vacancy_updated_at = now()
+        last_vacancy_updated_at = now(),
+        open_spots_hidden_at = null
       where id = ${row.id}
     `;
   } else {
     await sql`
       update daycares set
         confirmed_open_spots = ${next.confirmedOpenSpots},
-        last_vacancy_updated_at = now()
+        last_vacancy_updated_at = now(),
+        open_spots_hidden_at = null
       where id = ${row.id}
     `;
   }
