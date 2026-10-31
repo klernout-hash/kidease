@@ -18,11 +18,12 @@ export const TOUR_PIPELINE_STATUSES = [
   "declined",
   "lost",
   "expired",
+  "no_show",
 ] as const;
 
 export type TourPipelineStatus = (typeof TOUR_PIPELINE_STATUSES)[number];
 
-export const PIPELINE_STAGES = ["requested", "confirmed", "completed", "enrolled", "lost"] as const;
+export const PIPELINE_STAGES = ["requested", "confirmed", "completed", "enrolled", "lost", "no_show"] as const;
 export type PipelineStage = (typeof PIPELINE_STAGES)[number];
 
 export function isTourPipelineStatus(value: string): value is TourPipelineStatus {
@@ -35,6 +36,7 @@ export function tourToPipelineStage(status: string | null | undefined): Pipeline
   if (status === "accepted") return "confirmed";
   if (status === "completed") return "completed";
   if (status === "enrolled") return "enrolled";
+  if (status === "no_show") return "no_show";
   if (status === "declined" || status === "lost" || status === "expired") return "lost";
   return null;
 }
@@ -67,7 +69,7 @@ export function threadPipelineStage(input: {
 export function canAdvanceTour(current: string, next: string): next is TourStatus {
   if (!isTourPipelineStatus(next)) return false;
   if (current === "pending") return next === "accepted" || next === "declined" || next === "lost" || next === "expired";
-  if (current === "accepted") return next === "completed" || next === "lost" || next === "enrolled";
+  if (current === "accepted") return next === "completed" || next === "lost" || next === "enrolled" || next === "no_show";
   if (current === "completed") return next === "enrolled" || next === "lost";
   return false;
 }

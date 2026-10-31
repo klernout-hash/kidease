@@ -399,6 +399,12 @@ export const respondTourRequest = createServerFn({ method: "POST" })
       /* admin mail is best-effort */
     }
 
+    if (next === "accepted") {
+      await import("@/lib/server/tour-reminders")
+        .then((mod) => mod.moveTourReminder(tour.id))
+        .catch(() => undefined);
+    }
+
     return { ok: true as const, status: next, conversationId: tour.conversation_id };
   });
 
@@ -514,6 +520,10 @@ export const proposeTourTime = createServerFn({ method: "POST" })
       preview: body,
     }).catch(() => undefined);
 
+    await import("@/lib/server/tour-reminders")
+      .then((mod) => mod.moveTourReminder(tour.id))
+      .catch(() => undefined);
+
     return { ok: true as const, conversationId: tour.conversation_id, windowId: slot.id, times };
   });
 
@@ -617,9 +627,14 @@ export async function syncToursFromBooking(
   }
 }
 
+export const tourPipelineFlag = createServerFn({ method: "GET" }).handler(async () => {
+  const { tourPipelineEnabled } = await import("@/lib/features");
+  return tourPipelineEnabled();
+});
+
 export const advanceTourRequest = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { tourId: string; status: "completed" | "enrolled" | "lost"; note?: string }) => input)
+  .validator((input: { tourId: string; status: "completed" | "enrolled" | "lost" | "no_show"; note?: string }) => input)
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const rows = await sql<{
@@ -645,6 +660,10 @@ export const advanceTourRequest = createServerFn({ method: "POST" })
     const isParent = tour.user_id === context.userId;
     if (!owned && !(isParent && data.status === "completed")) throw new Error("Not authorized");
 
+    if (data.status === "no_show") {
+      const { tourPipelineEnabled } = await import("@/lib/features");
+      if (!tourPipelineEnabled()) throw new Error("No-show is not open yet");
+    }
     const next = nextTourPipeline(tour.status, data.status);
     if (!next || next === "pending") throw new Error("This tour cannot move to that status");
 

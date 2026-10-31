@@ -18,6 +18,7 @@ function tone(stage: PipelineStage) {
     case "enrolled":
       return "bg-ok/10 text-ok ring-ok/20";
     case "lost":
+    case "no_show":
       return "bg-danger/10 text-danger ring-danger/20";
     default:
       return "bg-surface-2 text-muted ring-border";
@@ -33,9 +34,10 @@ export function PipelineBadge({
   bookingStatus?: BookingStatus | null;
   className?: string;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const stage = threadPipelineStage({ tourStatus, bookingStatus });
   if (!stage) return null;
+  const label = stage === "no_show" ? (locale === "fr" ? "Absent à la visite" : "No-show") : t(PIPELINE_COPY_KEY[stage]);
   return (
     <span
       className={cn(
@@ -44,7 +46,7 @@ export function PipelineBadge({
         className,
       )}
     >
-      {t(PIPELINE_COPY_KEY[stage])}
+      {label}
     </span>
   );
 }

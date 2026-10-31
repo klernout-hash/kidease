@@ -4,7 +4,8 @@
  */
 
 import { getSql } from "@/lib/db";
-import { tourInviteCopy, tourReminderAt } from "@/lib/tour-ics";
+import { tourPipelineEnabled } from "@/lib/features";
+import { tourCalendarFile, tourInviteCopy, tourReminderAt, tourReminderLetter } from "@/lib/tour-ics";
 import { nid } from "@/lib/utils";
 
 export async function scheduleTourReminder(input: {
@@ -31,16 +32,57 @@ export async function scheduleTourReminder(input: {
   return { scheduled: true as const };
 }
 
-export async function sendTourBookedMail(input: { email: string; centre: string; locale: "en" | "fr" }) {
+export async function sendTourBookedMail(input: {
+  email: string;
+  centre: string;
+  locale: "en" | "fr";
+  tourId?: string;
+  startAt?: string;
+  location?: string;
+}) {
   const letter = tourInviteCopy(input.locale, input.centre);
+  const ics =
+    tourPipelineEnabled() && input.tourId && input.startAt
+      ? tourCalendarFile({ uid: input.tourId, centre: input.centre, startAt: input.startAt, location: input.location })
+      : null;
+  const text = ics ? `${letter.text}\n\n${ics}` : letter.text;
   const { sendTransactionalMail } = await import("@/lib/transactional-mail");
   await sendTransactionalMail({
     purpose: "customer_alert",
     to: input.email,
     subject: letter.subject,
-    text: letter.text,
+    text,
     html: `<p>${letter.text}</p>`,
   }).catch(() => undefined);
+}
+
+/** Move an unsent or already-sent reminder when the visit time changes. Flag off: no-op. */
+export async function moveTourReminder(tourId: string, now = new Date()): Promise<{ moved: boolean }> {
+  if (!tourPipelineEnabled()) return { moved: false };
+  try {
+    const sql = await getSql();
+    const rows = await sql<{ start_at: string | Date }>`
+      select w.start_at
+      from tour_requests t
+      join tour_windows w on w.id = t.window_id
+      where t.id = ${tourId}
+      limit 1
+    `;
+    const start = rows[0]?.start_at;
+    if (!start) return { moved: false };
+    const iso = start instanceof Date ? start.toISOString() : String(start);
+    const when = tourReminderAt(iso, now);
+    if (!when) return { moved: false };
+    const wrote = await sql<{ id: string }>`
+      update tour_reminders
+      set remind_at = ${when.toISOString()}, sent_at = null
+      where tour_id = ${tourId}
+      returning id
+    `;
+    return { moved: Boolean(wrote[0]) };
+  } catch {
+    return { moved: false };
+  }
 }
 
 export async function sendDueTourReminders(input?: { dryRun?: boolean; now?: Date }) {
@@ -68,7 +110,9 @@ export async function sendDueTourReminders(input?: { dryRun?: boolean; now?: Dat
     const open = row.status === "pending" || row.status === "accepted";
     if (open) {
       const locale = row.locale === "fr" ? "fr" : "en";
-      const letter = tourInviteCopy(locale, row.daycare_name);
+      const letter = tourPipelineEnabled()
+        ? tourReminderLetter(locale, row.daycare_name, row.status === "accepted" ? "accepted" : "pending")
+        : tourInviteCopy(locale, row.daycare_name);
       if (row.email) {
         const { sendTransactionalMail } = await import("@/lib/transactional-mail");
         await sendTransactionalMail({

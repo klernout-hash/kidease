@@ -112,6 +112,11 @@ export function areaWaitlistAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_AREA_WAITLIST_ALERTS", env);
 }
 
+/** No-show, reminder moves, and calendar text in the tour email. Default OFF. */
+export function tourPipelineEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_TOUR_PIPELINE", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;

@@ -81,6 +81,45 @@ export function buildTourIcs(input: {
   return lines.join("\r\n");
 }
 
+/** Reminder wording after the centre has confirmed, or while it is still pending. */
+export function tourReminderLetter(
+  locale: "en" | "fr",
+  centre: string,
+  status: "pending" | "accepted",
+): { subject: string; text: string; reminder: string; sms: string } {
+  const base = tourInviteCopy(locale, centre);
+  if (status !== "accepted") return base;
+  if (locale === "fr") {
+    return {
+      ...base,
+      subject: `Visite confirmée : ${centre}`,
+      reminder: `Rappel : votre visite à ${centre} est confirmée. KidEase ne donne pas la place.`,
+      sms: `KidEase : rappel, votre visite à ${centre} est confirmée.`,
+    };
+  }
+  return {
+    ...base,
+    subject: `Tour confirmed: ${centre}`,
+    reminder: `Reminder: your visit at ${centre} is confirmed. KidEase does not give out the spot.`,
+    sms: `KidEase: reminder, your visit at ${centre} is confirmed.`,
+  };
+}
+
+/** Calendar file for the booking email. Does not name a child. */
+export function tourCalendarFile(input: { uid: string; centre: string; startAt: string; location?: string }): string | null {
+  const start = new Date(input.startAt);
+  if (Number.isNaN(start.getTime())) return null;
+  const end = new Date(start.getTime() + 30 * 60 * 1000);
+  return buildTourIcs({
+    uid: input.uid,
+    title: `Tour at ${input.centre}`,
+    start,
+    end,
+    location: input.location || input.centre,
+    description: "KidEase tour. The centre confirms the visit. This does not hold a spot.",
+  });
+}
+
 export function tourInviteCopy(locale: "en" | "fr", centre: string): { subject: string; text: string; reminder: string; sms: string } {
   if (locale === "fr") {
     return {
