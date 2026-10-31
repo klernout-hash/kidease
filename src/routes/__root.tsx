@@ -94,6 +94,7 @@ export const Route = createRootRoute({
         e2e: false,
         degraded: true,
         subscriptionsEnabled: false,
+        govPortalLink: false,
       })),
       getVisitorLocale({ data: { pathname: location.pathname, search } }).catch(() => GUEST_LOCALE),
     ]);

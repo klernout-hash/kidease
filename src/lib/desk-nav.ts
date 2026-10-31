@@ -45,6 +45,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "contracts", label: "Contracts", hint: "Provider agreement + enrolment packs" },
     { id: "money", label: "Bills", hint: "Parent bills and fees" },
     { id: "people", label: "People", hint: "Parents and daycare accounts" },
+    { id: "government", label: "Government users", hint: "Invite or revoke", href: "/admin/government" },
     { id: "activity", label: "Activity", hint: "Platform log" },
     { id: "reviews", label: "Reviews", hint: "Publish or hide gated parent reviews" },
     { id: "chat", label: "Chat lab", hint: "Scaffold only", href: "/admin-chat", devOnly: true },

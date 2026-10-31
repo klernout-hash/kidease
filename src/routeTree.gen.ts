@@ -44,6 +44,7 @@ import { Route as ForDaycaresRouteImport } from './routes/for-daycares'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FrRouteImport } from './routes/fr'
 import { Route as GetAppRouteImport } from './routes/get-app'
+import { Route as GovRouteImport } from './routes/gov'
 import { Route as GuidesRouteImport } from './routes/guides'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
@@ -79,6 +80,7 @@ import { Route as VerifyRouteImport } from './routes/verify'
 import { Route as Verify2faRouteImport } from './routes/verify-2fa'
 import { Route as WaitlistRouteImport } from './routes/waitlist'
 import { Route as AdminFeaturesRouteImport } from './routes/admin.features'
+import { Route as AdminGovernmentRouteImport } from './routes/admin.government'
 import { Route as ApiAccountPurgeRouteImport } from './routes/api/account-purge'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiE2eSeedRouteImport } from './routes/api/e2e-seed'
@@ -120,6 +122,7 @@ import { Route as FrExploreRouteImport } from './routes/fr.explore'
 import { Route as FrFaqRouteImport } from './routes/fr.faq'
 import { Route as FrForDaycaresRouteImport } from './routes/fr.for-daycares'
 import { Route as FrGetAppRouteImport } from './routes/fr.get-app'
+import { Route as FrGovRouteImport } from './routes/fr.gov'
 import { Route as FrGuidesRouteImport } from './routes/fr.guides'
 import { Route as FrHelpRouteImport } from './routes/fr.help'
 import { Route as FrHowItWorksRouteImport } from './routes/fr.how-it-works'
@@ -148,6 +151,7 @@ import { Route as FrUnsubscribeRouteImport } from './routes/fr.unsubscribe'
 import { Route as FrVacancyIndexRouteImport } from './routes/fr.vacancy-index'
 import { Route as FrVerifyRouteImport } from './routes/fr.verify'
 import { Route as FrWaitlistRouteImport } from './routes/fr.waitlist'
+import { Route as GovLoginRouteImport } from './routes/gov_.login'
 import { Route as GuidesCodeRouteImport } from './routes/guides.$code'
 import { Route as InboxIdRouteImport } from './routes/inbox.$id'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
@@ -176,6 +180,8 @@ import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiDocusignPollRouteImport } from './routes/api/docusign.poll'
 import { Route as ApiDocusignWebhookRouteImport } from './routes/api/docusign.webhook'
 import { Route as ApiFamilyDocumentsIdRouteImport } from './routes/api/family-documents.$id'
+import { Route as ApiGovExportRouteImport } from './routes/api/gov.export'
+import { Route as ApiGovOpenDataRouteImport } from './routes/api/gov.open-data'
 import { Route as ApiLicenseDocsDaycareIdRouteImport } from './routes/api/license-docs.$daycareId'
 import { Route as ApiPushRegisterRouteImport } from './routes/api/push.register'
 import { Route as ApiScreeningDocumentsIdRouteImport } from './routes/api/screening-documents.$id'
@@ -189,6 +195,7 @@ import { Route as ApiWebhooksResendRouteImport } from './routes/api/webhooks.res
 import { Route as DaycareCityAgeRouteImport } from './routes/daycare.$city.$age'
 import { Route as DaycareCityCityRouteImport } from './routes/daycare.city.$city'
 import { Route as FrDaycareSlugRouteImport } from './routes/fr.daycare.$slug'
+import { Route as FrGovLoginRouteImport } from './routes/fr.gov_.login'
 import { Route as FrGuidesCodeRouteImport } from './routes/fr.guides.$code'
 import { Route as FrInboxIdRouteImport } from './routes/fr.inbox.$id'
 import { Route as FrJobsPostRouteImport } from './routes/fr.jobs_.post'
@@ -376,6 +383,11 @@ const GetAppRoute = GetAppRouteImport.update({
   path: '/get-app',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GovRoute = GovRouteImport.update({
+  id: '/gov',
+  path: '/gov',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GuidesRoute = GuidesRouteImport.update({
   id: '/guides',
   path: '/guides',
@@ -549,6 +561,11 @@ const WaitlistRoute = WaitlistRouteImport.update({
 const AdminFeaturesRoute = AdminFeaturesRouteImport.update({
   id: '/features',
   path: '/features',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminGovernmentRoute = AdminGovernmentRouteImport.update({
+  id: '/government',
+  path: '/government',
   getParentRoute: () => AdminRoute,
 } as any)
 const ApiAccountPurgeRoute = ApiAccountPurgeRouteImport.update({
@@ -757,6 +774,11 @@ const FrGetAppRoute = FrGetAppRouteImport.update({
   path: '/get-app',
   getParentRoute: () => FrRoute,
 } as any)
+const FrGovRoute = FrGovRouteImport.update({
+  id: '/gov',
+  path: '/gov',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrGuidesRoute = FrGuidesRouteImport.update({
   id: '/guides',
   path: '/guides',
@@ -896,6 +918,11 @@ const FrWaitlistRoute = FrWaitlistRouteImport.update({
   id: '/waitlist',
   path: '/waitlist',
   getParentRoute: () => FrRoute,
+} as any)
+const GovLoginRoute = GovLoginRouteImport.update({
+  id: '/gov_/login',
+  path: '/gov/login',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const GuidesCodeRoute = GuidesCodeRouteImport.update({
   id: '/$code',
@@ -1038,6 +1065,16 @@ const ApiFamilyDocumentsIdRoute = ApiFamilyDocumentsIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => ApiFamilyDocumentsRoute,
 } as any)
+const ApiGovExportRoute = ApiGovExportRouteImport.update({
+  id: '/api/gov/export',
+  path: '/api/gov/export',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGovOpenDataRoute = ApiGovOpenDataRouteImport.update({
+  id: '/api/gov/open-data',
+  path: '/api/gov/open-data',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiLicenseDocsDaycareIdRoute = ApiLicenseDocsDaycareIdRouteImport.update({
   id: '/api/license-docs/$daycareId',
   path: '/api/license-docs/$daycareId',
@@ -1101,6 +1138,11 @@ const DaycareCityCityRoute = DaycareCityCityRouteImport.update({
 const FrDaycareSlugRoute = FrDaycareSlugRouteImport.update({
   id: '/daycare/$slug',
   path: '/daycare/$slug',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovLoginRoute = FrGovLoginRouteImport.update({
+  id: '/gov_/login',
+  path: '/gov/login',
   getParentRoute: () => FrRoute,
 } as any)
 const FrGuidesCodeRoute = FrGuidesCodeRouteImport.update({
@@ -1190,6 +1232,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/fr': typeof FrRouteWithChildren
   '/get-app': typeof GetAppRoute
+  '/gov': typeof GovRoute
   '/guides': typeof GuidesRouteWithChildren
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
@@ -1225,6 +1268,7 @@ export interface FileRoutesByFullPath {
   '/verify-2fa': typeof Verify2faRoute
   '/waitlist': typeof WaitlistRoute
   '/admin/features': typeof AdminFeaturesRoute
+  '/admin/government': typeof AdminGovernmentRoute
   '/api/account-purge': typeof ApiAccountPurgeRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -1265,6 +1309,7 @@ export interface FileRoutesByFullPath {
   '/fr/faq': typeof FrFaqRoute
   '/fr/for-daycares': typeof FrForDaycaresRoute
   '/fr/get-app': typeof FrGetAppRoute
+  '/fr/gov': typeof FrGovRoute
   '/fr/guides': typeof FrGuidesRouteWithChildren
   '/fr/help': typeof FrHelpRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
@@ -1293,6 +1338,7 @@ export interface FileRoutesByFullPath {
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
+  '/gov/login': typeof GovLoginRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/inbox/$id': typeof InboxIdRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -1322,6 +1368,8 @@ export interface FileRoutesByFullPath {
   '/api/docusign/poll': typeof ApiDocusignPollRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
   '/api/family-documents/$id': typeof ApiFamilyDocumentsIdRoute
+  '/api/gov/export': typeof ApiGovExportRoute
+  '/api/gov/open-data': typeof ApiGovOpenDataRoute
   '/api/license-docs/$daycareId': typeof ApiLicenseDocsDaycareIdRoute
   '/api/push/register': typeof ApiPushRegisterRoute
   '/api/screening-documents/$id': typeof ApiScreeningDocumentsIdRoute
@@ -1335,6 +1383,7 @@ export interface FileRoutesByFullPath {
   '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
+  '/fr/gov/login': typeof FrGovLoginRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/inbox/$id': typeof FrInboxIdRoute
   '/fr/jobs/post': typeof FrJobsPostRoute
@@ -1381,6 +1430,7 @@ export interface FileRoutesByTo {
   '/for-daycares': typeof ForDaycaresRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/get-app': typeof GetAppRoute
+  '/gov': typeof GovRoute
   '/guides': typeof GuidesRouteWithChildren
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
@@ -1415,6 +1465,7 @@ export interface FileRoutesByTo {
   '/verify-2fa': typeof Verify2faRoute
   '/waitlist': typeof WaitlistRoute
   '/admin/features': typeof AdminFeaturesRoute
+  '/admin/government': typeof AdminGovernmentRoute
   '/api/account-purge': typeof ApiAccountPurgeRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -1455,6 +1506,7 @@ export interface FileRoutesByTo {
   '/fr/faq': typeof FrFaqRoute
   '/fr/for-daycares': typeof FrForDaycaresRoute
   '/fr/get-app': typeof FrGetAppRoute
+  '/fr/gov': typeof FrGovRoute
   '/fr/guides': typeof FrGuidesRouteWithChildren
   '/fr/help': typeof FrHelpRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
@@ -1483,6 +1535,7 @@ export interface FileRoutesByTo {
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
+  '/gov/login': typeof GovLoginRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/inbox/$id': typeof InboxIdRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -1512,6 +1565,8 @@ export interface FileRoutesByTo {
   '/api/docusign/poll': typeof ApiDocusignPollRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
   '/api/family-documents/$id': typeof ApiFamilyDocumentsIdRoute
+  '/api/gov/export': typeof ApiGovExportRoute
+  '/api/gov/open-data': typeof ApiGovOpenDataRoute
   '/api/license-docs/$daycareId': typeof ApiLicenseDocsDaycareIdRoute
   '/api/push/register': typeof ApiPushRegisterRoute
   '/api/screening-documents/$id': typeof ApiScreeningDocumentsIdRoute
@@ -1525,6 +1580,7 @@ export interface FileRoutesByTo {
   '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
+  '/fr/gov/login': typeof FrGovLoginRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/inbox/$id': typeof FrInboxIdRoute
   '/fr/jobs/post': typeof FrJobsPostRoute
@@ -1573,6 +1629,7 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/fr': typeof FrRouteWithChildren
   '/get-app': typeof GetAppRoute
+  '/gov': typeof GovRoute
   '/guides': typeof GuidesRouteWithChildren
   '/help': typeof HelpRoute
   '/how-it-works': typeof HowItWorksRoute
@@ -1608,6 +1665,7 @@ export interface FileRoutesById {
   '/verify-2fa': typeof Verify2faRoute
   '/waitlist': typeof WaitlistRoute
   '/admin/features': typeof AdminFeaturesRoute
+  '/admin/government': typeof AdminGovernmentRoute
   '/api/account-purge': typeof ApiAccountPurgeRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -1648,6 +1706,7 @@ export interface FileRoutesById {
   '/fr/faq': typeof FrFaqRoute
   '/fr/for-daycares': typeof FrForDaycaresRoute
   '/fr/get-app': typeof FrGetAppRoute
+  '/fr/gov': typeof FrGovRoute
   '/fr/guides': typeof FrGuidesRouteWithChildren
   '/fr/help': typeof FrHelpRoute
   '/fr/how-it-works': typeof FrHowItWorksRoute
@@ -1676,6 +1735,7 @@ export interface FileRoutesById {
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
+  '/gov_/login': typeof GovLoginRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/inbox/$id': typeof InboxIdRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -1705,6 +1765,8 @@ export interface FileRoutesById {
   '/api/docusign/poll': typeof ApiDocusignPollRoute
   '/api/docusign/webhook': typeof ApiDocusignWebhookRoute
   '/api/family-documents/$id': typeof ApiFamilyDocumentsIdRoute
+  '/api/gov/export': typeof ApiGovExportRoute
+  '/api/gov/open-data': typeof ApiGovOpenDataRoute
   '/api/license-docs/$daycareId': typeof ApiLicenseDocsDaycareIdRoute
   '/api/push/register': typeof ApiPushRegisterRoute
   '/api/screening-documents/$id': typeof ApiScreeningDocumentsIdRoute
@@ -1718,6 +1780,7 @@ export interface FileRoutesById {
   '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
+  '/fr/gov_/login': typeof FrGovLoginRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/inbox/$id': typeof FrInboxIdRoute
   '/fr/jobs_/post': typeof FrJobsPostRoute
@@ -1767,6 +1830,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/fr'
     | '/get-app'
+    | '/gov'
     | '/guides'
     | '/help'
     | '/how-it-works'
@@ -1802,6 +1866,7 @@ export interface FileRouteTypes {
     | '/verify-2fa'
     | '/waitlist'
     | '/admin/features'
+    | '/admin/government'
     | '/api/account-purge'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -1842,6 +1907,7 @@ export interface FileRouteTypes {
     | '/fr/faq'
     | '/fr/for-daycares'
     | '/fr/get-app'
+    | '/fr/gov'
     | '/fr/guides'
     | '/fr/help'
     | '/fr/how-it-works'
@@ -1870,6 +1936,7 @@ export interface FileRouteTypes {
     | '/fr/vacancy-index'
     | '/fr/verify'
     | '/fr/waitlist'
+    | '/gov/login'
     | '/guides/$code'
     | '/inbox/$id'
     | '/invite/$token'
@@ -1899,6 +1966,8 @@ export interface FileRouteTypes {
     | '/api/docusign/poll'
     | '/api/docusign/webhook'
     | '/api/family-documents/$id'
+    | '/api/gov/export'
+    | '/api/gov/open-data'
     | '/api/license-docs/$daycareId'
     | '/api/push/register'
     | '/api/screening-documents/$id'
@@ -1912,6 +1981,7 @@ export interface FileRouteTypes {
     | '/daycare/$city/$age'
     | '/daycare/city/$city'
     | '/fr/daycare/$slug'
+    | '/fr/gov/login'
     | '/fr/guides/$code'
     | '/fr/inbox/$id'
     | '/fr/jobs/post'
@@ -1958,6 +2028,7 @@ export interface FileRouteTypes {
     | '/for-daycares'
     | '/forgot-password'
     | '/get-app'
+    | '/gov'
     | '/guides'
     | '/help'
     | '/how-it-works'
@@ -1992,6 +2063,7 @@ export interface FileRouteTypes {
     | '/verify-2fa'
     | '/waitlist'
     | '/admin/features'
+    | '/admin/government'
     | '/api/account-purge'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -2032,6 +2104,7 @@ export interface FileRouteTypes {
     | '/fr/faq'
     | '/fr/for-daycares'
     | '/fr/get-app'
+    | '/fr/gov'
     | '/fr/guides'
     | '/fr/help'
     | '/fr/how-it-works'
@@ -2060,6 +2133,7 @@ export interface FileRouteTypes {
     | '/fr/vacancy-index'
     | '/fr/verify'
     | '/fr/waitlist'
+    | '/gov/login'
     | '/guides/$code'
     | '/inbox/$id'
     | '/invite/$token'
@@ -2089,6 +2163,8 @@ export interface FileRouteTypes {
     | '/api/docusign/poll'
     | '/api/docusign/webhook'
     | '/api/family-documents/$id'
+    | '/api/gov/export'
+    | '/api/gov/open-data'
     | '/api/license-docs/$daycareId'
     | '/api/push/register'
     | '/api/screening-documents/$id'
@@ -2102,6 +2178,7 @@ export interface FileRouteTypes {
     | '/daycare/$city/$age'
     | '/daycare/city/$city'
     | '/fr/daycare/$slug'
+    | '/fr/gov/login'
     | '/fr/guides/$code'
     | '/fr/inbox/$id'
     | '/fr/jobs/post'
@@ -2149,6 +2226,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/fr'
     | '/get-app'
+    | '/gov'
     | '/guides'
     | '/help'
     | '/how-it-works'
@@ -2184,6 +2262,7 @@ export interface FileRouteTypes {
     | '/verify-2fa'
     | '/waitlist'
     | '/admin/features'
+    | '/admin/government'
     | '/api/account-purge'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -2224,6 +2303,7 @@ export interface FileRouteTypes {
     | '/fr/faq'
     | '/fr/for-daycares'
     | '/fr/get-app'
+    | '/fr/gov'
     | '/fr/guides'
     | '/fr/help'
     | '/fr/how-it-works'
@@ -2252,6 +2332,7 @@ export interface FileRouteTypes {
     | '/fr/vacancy-index'
     | '/fr/verify'
     | '/fr/waitlist'
+    | '/gov_/login'
     | '/guides/$code'
     | '/inbox/$id'
     | '/invite/$token'
@@ -2281,6 +2362,8 @@ export interface FileRouteTypes {
     | '/api/docusign/poll'
     | '/api/docusign/webhook'
     | '/api/family-documents/$id'
+    | '/api/gov/export'
+    | '/api/gov/open-data'
     | '/api/license-docs/$daycareId'
     | '/api/push/register'
     | '/api/screening-documents/$id'
@@ -2294,6 +2377,7 @@ export interface FileRouteTypes {
     | '/daycare/$city/$age'
     | '/daycare/city/$city'
     | '/fr/daycare/$slug'
+    | '/fr/gov_/login'
     | '/fr/guides/$code'
     | '/fr/inbox/$id'
     | '/fr/jobs_/post'
@@ -2342,6 +2426,7 @@ export interface RootRouteChildren {
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   FrRoute: typeof FrRouteWithChildren
   GetAppRoute: typeof GetAppRoute
+  GovRoute: typeof GovRoute
   GuidesRoute: typeof GuidesRouteWithChildren
   HelpRoute: typeof HelpRoute
   HowItWorksRoute: typeof HowItWorksRoute
@@ -2397,6 +2482,7 @@ export interface RootRouteChildren {
   CheckinIdRoute: typeof CheckinIdRoute
   DaycareSlugRoute: typeof DaycareSlugRoute
   DaycaresCityRoute: typeof DaycaresCityRoute
+  GovLoginRoute: typeof GovLoginRoute
   InviteTokenRoute: typeof InviteTokenRoute
   JobsPostRoute: typeof JobsPostRoute
   ListingSlugRoute: typeof ListingSlugRoute
@@ -2415,6 +2501,8 @@ export interface RootRouteChildren {
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiDocusignPollRoute: typeof ApiDocusignPollRoute
   ApiDocusignWebhookRoute: typeof ApiDocusignWebhookRoute
+  ApiGovExportRoute: typeof ApiGovExportRoute
+  ApiGovOpenDataRoute: typeof ApiGovOpenDataRoute
   ApiLicenseDocsDaycareIdRoute: typeof ApiLicenseDocsDaycareIdRoute
   ApiPushRegisterRoute: typeof ApiPushRegisterRoute
   ApiSmsInboundRoute: typeof ApiSmsInboundRoute
@@ -2676,6 +2764,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GetAppRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gov': {
+      id: '/gov'
+      path: '/gov'
+      fullPath: '/gov'
+      preLoaderRoute: typeof GovRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/guides': {
       id: '/guides'
       path: '/guides'
@@ -2919,6 +3014,13 @@ declare module '@tanstack/react-router' {
       path: '/features'
       fullPath: '/admin/features'
       preLoaderRoute: typeof AdminFeaturesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/government': {
+      id: '/admin/government'
+      path: '/government'
+      fullPath: '/admin/government'
+      preLoaderRoute: typeof AdminGovernmentRouteImport
       parentRoute: typeof AdminRoute
     }
     '/api/account-purge': {
@@ -3208,6 +3310,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrGetAppRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/gov': {
+      id: '/fr/gov'
+      path: '/gov'
+      fullPath: '/fr/gov'
+      preLoaderRoute: typeof FrGovRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/guides': {
       id: '/fr/guides'
       path: '/guides'
@@ -3403,6 +3512,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/fr/waitlist'
       preLoaderRoute: typeof FrWaitlistRouteImport
       parentRoute: typeof FrRoute
+    }
+    '/gov_/login': {
+      id: '/gov_/login'
+      path: '/gov/login'
+      fullPath: '/gov/login'
+      preLoaderRoute: typeof GovLoginRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/guides/$code': {
       id: '/guides/$code'
@@ -3600,6 +3716,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiFamilyDocumentsIdRouteImport
       parentRoute: typeof ApiFamilyDocumentsRoute
     }
+    '/api/gov/export': {
+      id: '/api/gov/export'
+      path: '/api/gov/export'
+      fullPath: '/api/gov/export'
+      preLoaderRoute: typeof ApiGovExportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/gov/open-data': {
+      id: '/api/gov/open-data'
+      path: '/api/gov/open-data'
+      fullPath: '/api/gov/open-data'
+      preLoaderRoute: typeof ApiGovOpenDataRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/license-docs/$daycareId': {
       id: '/api/license-docs/$daycareId'
       path: '/api/license-docs/$daycareId'
@@ -3691,6 +3821,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrDaycareSlugRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/gov_/login': {
+      id: '/fr/gov_/login'
+      path: '/gov/login'
+      fullPath: '/fr/gov/login'
+      preLoaderRoute: typeof FrGovLoginRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/guides/$code': {
       id: '/fr/guides/$code'
       path: '/$code'
@@ -3766,10 +3903,12 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminFeaturesRoute: typeof AdminFeaturesRoute
+  AdminGovernmentRoute: typeof AdminGovernmentRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminFeaturesRoute: AdminFeaturesRoute,
+  AdminGovernmentRoute: AdminGovernmentRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
@@ -3829,6 +3968,7 @@ interface FrRouteChildren {
   FrFaqRoute: typeof FrFaqRoute
   FrForDaycaresRoute: typeof FrForDaycaresRoute
   FrGetAppRoute: typeof FrGetAppRoute
+  FrGovRoute: typeof FrGovRoute
   FrGuidesRoute: typeof FrGuidesRouteWithChildren
   FrHelpRoute: typeof FrHelpRoute
   FrHowItWorksRoute: typeof FrHowItWorksRoute
@@ -3859,6 +3999,7 @@ interface FrRouteChildren {
   FrWaitlistRoute: typeof FrWaitlistRoute
   FrIndexRoute: typeof FrIndexRoute
   FrDaycareSlugRoute: typeof FrDaycareSlugRoute
+  FrGovLoginRoute: typeof FrGovLoginRoute
   FrJobsPostRoute: typeof FrJobsPostRoute
   FrMilieuxFamiliauxIdRoute: typeof FrMilieuxFamiliauxIdRoute
   FrRCodeRoute: typeof FrRCodeRoute
@@ -3886,6 +4027,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrFaqRoute: FrFaqRoute,
   FrForDaycaresRoute: FrForDaycaresRoute,
   FrGetAppRoute: FrGetAppRoute,
+  FrGovRoute: FrGovRoute,
   FrGuidesRoute: FrGuidesRouteWithChildren,
   FrHelpRoute: FrHelpRoute,
   FrHowItWorksRoute: FrHowItWorksRoute,
@@ -3916,6 +4058,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrWaitlistRoute: FrWaitlistRoute,
   FrIndexRoute: FrIndexRoute,
   FrDaycareSlugRoute: FrDaycareSlugRoute,
+  FrGovLoginRoute: FrGovLoginRoute,
   FrJobsPostRoute: FrJobsPostRoute,
   FrMilieuxFamiliauxIdRoute: FrMilieuxFamiliauxIdRoute,
   FrRCodeRoute: FrRCodeRoute,
@@ -4058,6 +4201,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   FrRoute: FrRouteWithChildren,
   GetAppRoute: GetAppRoute,
+  GovRoute: GovRoute,
   GuidesRoute: GuidesRouteWithChildren,
   HelpRoute: HelpRoute,
   HowItWorksRoute: HowItWorksRoute,
@@ -4113,6 +4257,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckinIdRoute: CheckinIdRoute,
   DaycareSlugRoute: DaycareSlugRoute,
   DaycaresCityRoute: DaycaresCityRoute,
+  GovLoginRoute: GovLoginRoute,
   InviteTokenRoute: InviteTokenRoute,
   JobsPostRoute: JobsPostRoute,
   ListingSlugRoute: ListingSlugRoute,
@@ -4131,6 +4276,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiDocusignPollRoute: ApiDocusignPollRoute,
   ApiDocusignWebhookRoute: ApiDocusignWebhookRoute,
+  ApiGovExportRoute: ApiGovExportRoute,
+  ApiGovOpenDataRoute: ApiGovOpenDataRoute,
   ApiLicenseDocsDaycareIdRoute: ApiLicenseDocsDaycareIdRoute,
   ApiPushRegisterRoute: ApiPushRegisterRoute,
   ApiSmsInboundRoute: ApiSmsInboundRoute,

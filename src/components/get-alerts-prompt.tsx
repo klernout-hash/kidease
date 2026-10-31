@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
@@ -8,6 +8,7 @@ import { canRegisterWebPush, getAlertsPromptCopy, webAlertPromptStep, webPushPer
 import { isNative } from "@/lib/native";
 import { useInNativeShell } from "@/lib/use-native-shell";
 import { getWebAlertStatus, registerWebPush } from "@/lib/server/alert-push-api";
+import { isGovPortalPath } from "@/lib/gov/access";
 import { useCopy } from "@/lib/use-copy";
 
 const CHOICE_KEY = "ke-web-alert-choice";
@@ -34,6 +35,8 @@ function urlBase64ToUint8Array(value: string): Uint8Array {
  */
 export function GetAlertsPrompt() {
   const nativeShell = useInNativeShell();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const onGovDesk = isGovPortalPath(pathname);
   const { locale } = useCopy();
   const { user, isPending } = useCurrentUserState();
   const navigate = useNavigate();
@@ -42,7 +45,7 @@ export function GetAlertsPrompt() {
   const copy = getAlertsPromptCopy(locale === "fr" ? "fr" : "en");
 
   useEffect(() => {
-    if (typeof window === "undefined" || nativeShell || isNative() || isPending) return;
+    if (typeof window === "undefined" || nativeShell || isNative() || isPending || onGovDesk) return;
     if (!user?.id) return;
     const choice = window.localStorage.getItem(CHOICE_KEY);
     const seen = window.sessionStorage.getItem(SEEN_KEY);
@@ -63,7 +66,7 @@ export function GetAlertsPrompt() {
         ),
       )
       .catch(() => undefined);
-  }, [user?.id, isPending, nativeShell]);
+  }, [user?.id, isPending, nativeShell, onGovDesk]);
 
   async function turnOn() {
     if (!user?.id) {
@@ -127,7 +130,7 @@ export function GetAlertsPrompt() {
     setOpen(false);
   }
 
-  if (nativeShell || !open) return null;
+  if (nativeShell || onGovDesk || !open) return null;
 
   return (
     <div className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 px-4">

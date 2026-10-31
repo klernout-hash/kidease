@@ -1542,6 +1542,31 @@ async function runSignedInSessions(page, base) {
       record(`signed-in-${tag}`, false, { note: err instanceof Error ? err.message : String(err) });
     }
   }
+  try {
+    await setFixture(page.context(), base, { role: "government" });
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto(new URL("/gov", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await page.locator('[data-ke="gov-dashboard"]').waitFor({ timeout: timeoutMs });
+    const dashText = (await page.locator("body").innerText()) || "";
+    record("gov-dashboard", /licensed centres/i.test(dashText) && !/something went wrong/i.test(dashText), {
+      note: page.url(),
+    });
+    await page.screenshot({ path: join(dirname(outDir), "gov-dashboard-1280.png"), fullPage: false }).catch(() => {});
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: join(dirname(outDir), "gov-dashboard-390.png"), fullPage: false }).catch(() => {});
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.getByRole("button", { name: /sign out/i }).click();
+    await page.locator('[data-ke="gov-login"]').waitFor({ timeout: timeoutMs });
+    await page.locator('input[type="email"]').fill("e2e-government@kidease.test");
+    await page.locator('input[type="password"]').fill(FIXTURE_PASSWORD);
+    await page.getByRole("button", { name: /^sign in$/i }).click();
+    await page.locator('[data-ke="gov-dashboard"]').waitFor({ timeout: timeoutMs });
+    record("gov-login", /\/gov/.test(new URL(page.url()).pathname), { note: page.url() });
+    await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    record("gov-blocked-from-parent", !new URL(page.url()).pathname.startsWith("/parent"), { note: page.url() });
+  } catch (err) {
+    record("gov-dashboard", false, { note: err instanceof Error ? err.message : String(err) });
+  }
 }
 
 /** Safari on macOS crashed search and saved when a licence timestamp was a Date. */
@@ -1693,7 +1718,7 @@ try {
   record("login", login.ok, { note: login.reason, status: loginResp?.status() ?? 0 });
   const robots = await page.locator('meta[name="robots"]').getAttribute("content").catch(() => "");
   record("login-noindex", /noindex/i.test(robots || ""), { note: robots || "" });
-  for (const privatePath of ["/signup", "/forgot-password", "/reset-password", "/offer/e2e-token", "/sign/e2e-id"]) {
+  for (const privatePath of ["/signup", "/forgot-password", "/reset-password", "/offer/e2e-token", "/sign/e2e-id", "/gov/login", "/fr/gov/login"]) {
     const resp = await page.request.get(new URL(privatePath, base).href).catch(() => null);
     const html = (await resp?.text().catch(() => "")) || "";
     record(`noindex:${privatePath}`, (resp?.status() ?? 500) < 500 && /noindex/i.test(html), {

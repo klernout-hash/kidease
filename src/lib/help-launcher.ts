@@ -1,3 +1,4 @@
+import { isGovPortalPath } from "./gov/access.ts";
 import { stripLocalePrefix } from "./locale-path.ts";
 
 export type HelpLauncherRole = "guest" | "parent" | "provider" | "admin";
@@ -12,6 +13,7 @@ export function helpLauncherVisible(pathname: string | null | undefined): boolea
   const bare = stripLocalePrefix(pathname);
   if (bare === "/video" || bare.startsWith("/video/")) return false;
   if (bare === "/call" || bare.startsWith("/call/")) return false;
+  if (isGovPortalPath(bare)) return false;
   return true;
 }
 

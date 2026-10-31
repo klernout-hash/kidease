@@ -37,6 +37,7 @@ Parent inbox **Video** stays hidden until `VIDEO_SDK_WIRED` is true (Twilio Vide
 | `FEATURE_OPEN_SPOTS_CHECKIN_SMS` | off | Weekly SMS. Also needs `FEATURE_SMS`, consent, and Twilio. The toll-free sender is approved. | Same signed link. | No SMS goes out while this flag is off. |
 | `FEATURE_QC_HOME_DAYCARES` | off | None. No email or SMS to these providers. | `/milieux-familiaux` when on. Area circle, not a street pin. | Page says the list is not published yet. |
 | `FEATURE_AREA_WAITLIST_ALERTS` | off | Area-waitlist email in `runAreaWaitlistAlerts`. Kyle approved the wording. No send while this is off. | Parents can join an area waitlist. The in-app bell still records a match. | Email stays off. Area texts need `FEATURE_SMS` and CASL, not `plus_plan=alerts`. Saved-search SMS still needs that plan. Push stays on `FEATURE_PUSH`. |
+| `FEATURE_GOV_PORTAL` | off | Footer link “For governments”. `/gov` sign-in stays available either way. | A small footer link when this is on. Not in the phone app. | No footer link. The government desk is not linked from public nav. |
 
 ## Why PostHog
 

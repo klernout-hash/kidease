@@ -24,6 +24,7 @@
     "ops:export-suppressions": "node --experimental-strip-types scripts/export-suppressions.mjs",
     "ops:operator-password": "node --experimental-strip-types scripts/set-operator-password.mjs",
     "ops:reviewer-demo": "node scripts/seed-reviewer-demo.mjs",
+    "ops:gov-demo": "node scripts/seed-gov-demo.mjs",
     "ops:seed-catalog": "node --experimental-strip-types scripts/seed-catalog-to-neon.mjs",
     "ops:import-qc-home-daycares": "node --experimental-strip-types scripts/import-qc-home-daycares.mjs",
     "ops:merge-duplicates": "node --experimental-strip-types scripts/merge-duplicate-listings.mjs",

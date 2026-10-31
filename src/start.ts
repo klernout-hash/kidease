@@ -138,7 +138,26 @@ const localeRequestMiddleware = createMiddleware({ type: "request" }).server(asy
   return result;
 });
 
+const govHttpIsolation = createMiddleware({ type: "request" }).server(async ({ next, request }) => {
+  try {
+    const path = new URL(request.url).pathname;
+    if (!path.startsWith("/api/")) return next();
+    const { blockGovernmentOnPrivateHttp } = await import("@/lib/server/gov-guard.server");
+    const blocked = await blockGovernmentOnPrivateHttp(request);
+    if (blocked) return blocked;
+  } catch {
+    return next();
+  }
+  return next();
+});
+
 export const startInstance = createStart(() => ({
-  requestMiddleware: [nativeShellMiddleware, sentryRequestMiddleware, localeRequestMiddleware, serverFnThrottleMiddleware],
+  requestMiddleware: [
+    nativeShellMiddleware,
+    sentryRequestMiddleware,
+    localeRequestMiddleware,
+    serverFnThrottleMiddleware,
+    govHttpIsolation,
+  ],
   functionMiddleware: [sentryFunctionMiddleware],
 }));
