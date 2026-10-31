@@ -1,7 +1,7 @@
 import { readSessionTokenFromHeader, unsignedSessionToken } from "@/lib/auth/cookies";
 import { withTimeout } from "@/lib/timeout";
+import { applyFrCaDecision, frCaRedirectExtras, frCaRedirectInput } from "@/lib/fr-ca";
 import {
-  decideVisitorLocale,
   emptyVisitorLocale,
   isLocaleDocumentRequest,
   localeChoiceSetCookie,
@@ -100,17 +100,23 @@ async function computeHint(request: Request, url: URL, asDocument: boolean): Pro
     profileUnreadable: profile.profileUnreadable,
     queryLocale: localeFromSearch(search),
   };
-  const decision = decideVisitorLocale(shared);
+  const extras = frCaRedirectExtras(request.headers);
+  const decision = applyFrCaDecision(shared, extras);
   // Route loads ask about the page. The server-fn request itself is not a document.
-  const redirectTo = localeRedirectTarget({
-    ...shared,
-    method: asDocument ? "GET" : request.method,
-    pathname: url.pathname,
-    search,
-    accept: asDocument ? "text/html" : request.headers.get("accept"),
-    secFetchDest: asDocument ? "document" : request.headers.get("sec-fetch-dest"),
-    userAgent: request.headers.get("user-agent"),
-  });
+  const redirectTo = localeRedirectTarget(
+    frCaRedirectInput(
+      {
+        ...shared,
+        method: asDocument ? "GET" : request.method,
+        pathname: url.pathname,
+        search,
+        accept: asDocument ? "text/html" : request.headers.get("accept"),
+        secFetchDest: asDocument ? "document" : request.headers.get("sec-fetch-dest"),
+        userAgent: request.headers.get("user-agent"),
+      },
+      extras,
+    ),
+  );
   return { ...decision, redirectTo };
 }
 

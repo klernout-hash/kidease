@@ -1,6 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { emptyVisitorLocale, type VisitorLocaleHint } from "@/lib/locale-geo";
 
+/** Server-read so the browser bundle does not guess the flag from a missing env. */
+export const readFrCaEnabled = createServerFn({ method: "GET" }).handler(async () => {
+  const { frCaEnabled } = await import("@/lib/features");
+  return frCaEnabled();
+});
+
 export type { VisitorLocaleHint };
 
 /** Page language for this request. Location is read on the server from Vercel headers. */

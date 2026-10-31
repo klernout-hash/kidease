@@ -1,6 +1,6 @@
 # Feature flags (env + optional PostHog)
 
-KidEase product gates (`FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, `FEATURE_AREA_WAITLIST_ALERTS`, `FEATURE_INSPECTION_HISTORY`, `FEATURE_PROVINCIAL_VACANCY_INDEX`, `FEATURE_REVIEW_REPORTS`, `FEATURE_TOUR_PIPELINE`, `FEATURE_NEED_CARE_FAST`, `FEATURE_INCLUSIVE_FILTERS`, `FEATURE_ECE_JOBS`, `FEATURE_DIGITAL_ATTENDANCE`, `FEATURE_STAFF_SCHEDULING`, `FEATURE_LEARNING_PORTFOLIOS`, `FEATURE_ORG_DASHBOARD`, `FEATURE_PRIVATE_PHOTO_FEED`, `FEATURE_PRODUCT_EVENTS`, `FEATURE_NCF_STREET`) go through `src/lib/flags.ts`.
+KidEase product gates (`FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, `FEATURE_AREA_WAITLIST_ALERTS`, `FEATURE_INSPECTION_HISTORY`, `FEATURE_PROVINCIAL_VACANCY_INDEX`, `FEATURE_REVIEW_REPORTS`, `FEATURE_TOUR_PIPELINE`, `FEATURE_NEED_CARE_FAST`, `FEATURE_INCLUSIVE_FILTERS`, `FEATURE_ECE_JOBS`, `FEATURE_DIGITAL_ATTENDANCE`, `FEATURE_STAFF_SCHEDULING`, `FEATURE_LEARNING_PORTFOLIOS`, `FEATURE_ORG_DASHBOARD`, `FEATURE_PRIVATE_PHOTO_FEED`, `FEATURE_PRODUCT_EVENTS`, `FEATURE_NCF_STREET`, `FEATURE_PRIVATE_MEDIA`, `FEATURE_QR_KIOSK`, `FEATURE_PROVINCE_REPORTS`, `FEATURE_GOV_SCOPES`, `FEATURE_FR_CA`) go through `src/lib/flags.ts`.
 
 **Env is the safe fallback.** If remote is unset, down, or the flag does not exist in PostHog, behavior is exactly today’s `FEATURE_*=` env read.
 
@@ -54,6 +54,11 @@ Automation-pack flags (`FEATURE_POSTHOG_ERRORS`, `FEATURE_OPS_ALERTS`, `FEATURE_
 | `FEATURE_GOV_PORTAL` | off | Footer link “For governments”. `/gov` sign-in stays available either way. | A small footer link when this is on. Not in the phone app. | No footer link. The government desk is not linked from public nav. |
 | `FEATURE_PRODUCT_EVENTS` | off | Server capture for enrolment, invoice paid, and area waitlist. | Browser events for signup, search, listing view, waitlist, enrolment, and claim. | No new event names are sent. |
 | `FEATURE_NCF_STREET` | off | Geocode a street address with OpenStreetMap Nominatim and keep centres inside 15 km. Results are cached by a hash of the address. | Need care fast accepts a street address when this is on. | City search only. No call to Nominatim. |
+| `FEATURE_PRIVATE_MEDIA` | off | Daily-log and learning-story photos are returned as a short-lived R2 link. Public URLs are dropped. | The feed shows the signed photo or nothing. | Saved photo values stay as they are today. |
+| `FEATURE_QR_KIOSK` | off | Mint and redeem a rotating check-in code. Writes attendance only after a valid scan for an enrolled child. | Daycare daily desk shows the code. Parent daily feed can scan it. | The screen stays hidden. |
+| `FEATURE_PROVINCE_REPORTS` | off | Build a CSV or PDF from saved listings. Manitoba and Ontario columns differ. | Admin registries page offers a download when this is on. | The download stays hidden. |
+| `FEATURE_GOV_SCOPES` | off | Totals for the province stored on the government account. Other provinces are not queried. | Account page shows the totals. The phone app points to the website and does not sign the person out. | The card says totals are not on yet. The person stays signed in. |
+| `FEATURE_FR_CA` | off | French subjects on parent request email and SMS when the saved locale is French. Quebec and New Brunswick location, plus the browser or device language, choose French when nobody saved a choice. | Language toggle shows Français (Canada). Admin, government, parent, and daycare gap strings use fr-CA. | Today's rules: Quebec only, browser language ignored, email and SMS subjects stay English. |
 
 ## Why PostHog
 
@@ -120,6 +125,12 @@ Env still works as a fallback when PostHog is down (last successful overlay is k
 | `FEATURE_PRIVATE_PHOTO_FEED` | no | Default **off**. Set `1` so classroom photos need enrolment and consent, and stay off public pages. |
 | `FEATURE_PRODUCT_EVENTS` | no | Default **off**. Server events. Also set `VITE_FEATURE_PRODUCT_EVENTS=1` for browser events. Uses the existing public PostHog key. No personal details in properties. |
 | `FEATURE_NCF_STREET` | no | Default **off**. Set `1` to geocode street addresses with OpenStreetMap Nominatim. No Google key. |
+| `FEATURE_PRIVATE_MEDIA` | no | Default **off**. Set `1` to require private R2 keys for daily-log and learning-story photos. Needs the existing R2 keys. No public bucket URL is returned. |
+| `FEATURE_QR_KIOSK` | no | Default **off**. Set `1` to show the rotating check-in code. Also set `KIOSK_TOKEN_SECRET` (a random string, not a vendor key). |
+| `KIOSK_TOKEN_SECRET` | no | Server-only signing key for check-in codes. Leave blank to keep minting off. Never commit a real value. |
+| `FEATURE_PROVINCE_REPORTS` | no | Default **off**. Set `1` to let admin download a provincial licensing CSV or PDF. |
+| `FEATURE_GOV_SCOPES` | no | Default **off**. Set `1` after a profile has role `government` and `gov_province`. Does not sign anyone out. |
+| `FEATURE_FR_CA` | no | Default **off**. Set `1` for fr-CA auto-detect (browser, device, Quebec, New Brunswick) and French email and SMS. A saved language choice still wins. |
 | `POSTHOG_FLAGS_KEY` | no | Server-only. Same `phc_…` project key as analytics. Leave blank to disable remote. Never commit a real value. |
 | `POSTHOG_FLAGS_HOST` | no | Defaults to `POSTHOG_HOST` or `https://us.i.posthog.com`. |
 

@@ -11,11 +11,15 @@ import {
   type ReviewDecision,
 } from "@/lib/server/reviews";
 import { normalizeReviewStatus } from "@/lib/review-gate";
+import { useFrCaPack } from "@/components/fr-ca-boot";
+import { frCaScreen } from "@/lib/fr-ca";
 import { useCopy } from "@/lib/use-copy";
 import { useReauthPrompt, withReauth } from "@/components/reauth-dialog";
 
 export function AdminReviewsPanel() {
   const { t, locale } = useCopy();
+  const frCa = useFrCaPack();
+  const pack = (key: string) => frCaScreen("admin", key, locale, frCa);
   const [rows, setRows] = useState<AdminReviewRow[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState("");
@@ -105,15 +109,17 @@ export function AdminReviewsPanel() {
       </form>
       <div className="overflow-hidden rounded-2xl bg-[#1a3790] text-primary-fg shadow-card">
         <div className="px-5 py-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-fg/70">Waiting</p>
-          <h3 className="mt-1 font-display text-2xl">{pending.length} to review</h3>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary-fg/70">{pack("waiting")}</p>
+          <h3 className="mt-1 font-display text-2xl">
+            {pending.length} {pack("toReview")}
+          </h3>
         </div>
         {pending.length === 0 ? (
           <p className="border-t border-white/10 px-5 py-8 text-sm text-primary-fg/70">{t("noPendingReviews")}</p>
         ) : (
           <ul className="divide-y divide-white/10 border-t border-white/10">
             {pending.map((r) => (
-              <ReviewRow key={r.id} r={r} locale={locale} invert busy={busy} onDecide={decide} />
+              <ReviewRow key={r.id} r={r} locale={locale} frCa={frCa} invert busy={busy} onDecide={decide} />
             ))}
           </ul>
         )}
@@ -121,7 +127,7 @@ export function AdminReviewsPanel() {
       {decided.length ? (
         <ul className="divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
           {decided.map((r) => (
-            <ReviewRow key={r.id} r={r} locale={locale} busy={busy} onDecide={decide} />
+            <ReviewRow key={r.id} r={r} locale={locale} frCa={frCa} busy={busy} onDecide={decide} />
           ))}
         </ul>
       ) : null}
@@ -133,17 +139,20 @@ export function AdminReviewsPanel() {
 function ReviewRow({
   r,
   locale,
+  frCa,
   invert,
   busy,
   onDecide,
 }: {
   r: AdminReviewRow;
   locale: string;
+  frCa: boolean;
   invert?: boolean;
   busy: string | null;
   onDecide: (id: string, decision: ReviewDecision) => Promise<void>;
 }) {
   const { t } = useCopy();
+  const viewListing = frCaScreen("admin", "viewListing", locale, frCa);
   const muted = invert ? "text-primary-fg/75" : "text-muted";
   const status = normalizeReviewStatus(r.status);
   return (
@@ -161,7 +170,7 @@ function ReviewRow({
             {r.reviewNote ? ` · ${r.reviewNote}` : ""}
           </p>
           <Link to="/daycare/$slug" params={{ slug: r.slug }} className={`mt-2 inline-block text-sm underline-offset-4 hover:underline ${invert ? "text-primary-fg" : "text-primary"}`}>
-            View listing
+            {viewListing}
           </Link>
         </div>
         <div className="flex flex-wrap gap-2">
