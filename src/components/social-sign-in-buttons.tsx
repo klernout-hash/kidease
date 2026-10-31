@@ -42,6 +42,33 @@ function FacebookMark() {
   );
 }
 
+function HuaweiMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5 shrink-0" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" fill="#CF0A2C" />
+      <path fill="#fff" d="M8 7h2.2v4.1h3.6V7H16v10h-2.2v-4.1H10.2V17H8V7z" />
+    </svg>
+  );
+}
+
+function AmazonMark() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-5 shrink-0" aria-hidden="true">
+      <path fill="#111" d="M4.5 16.8c3.2 2.1 7.1 2.6 10.6 1.4 1.3-.4 2.5-1 3.5-1.7l.9 1.5c-1.2.9-2.7 1.6-4.3 2-4.1 1.1-8.6.3-12.2-2.2l1.5-1z" />
+      <path fill="#FF9900" d="M14.2 7.4c.2-1.3 1.3-2.1 2.6-2.1h.3V4c-1.4 0-2.7.5-3.6 1.4-.9.9-1.4 2.2-1.4 3.5 0 2.6 2 3.9 3.8 3.9 1.6 0 2.6-.7 3.3-1.7l-1.4-1c-.4.5-1 .9-1.8.9-1 0-1.7-.7-1.8-1.5h3.3V8.2h-3.3z" />
+    </svg>
+  );
+}
+
+function socialLabel(idp: string, label: string, t: (key: "continueApple" | "continueGoogle" | "continueFacebook" | "continueHuawei" | "continueAmazon") => string): string {
+  if (idp === "apple") return t("continueApple");
+  if (idp === "google") return t("continueGoogle");
+  if (idp === "facebook") return t("continueFacebook");
+  if (idp === "huawei") return t("continueHuawei");
+  if (idp === "amazon") return t("continueAmazon");
+  return label;
+}
+
 /** Apple, then Google, then Facebook. Same size on every sign-in and sign-up screen. */
 export function SocialSignInButtons({
   providers,
@@ -78,14 +105,12 @@ export function SocialSignInButtons({
             <GoogleMark />
           ) : p.idp === "facebook" ? (
             <FacebookMark />
+          ) : p.idp === "huawei" ? (
+            <HuaweiMark />
+          ) : p.idp === "amazon" ? (
+            <AmazonMark />
           ) : null}
-          {p.idp === "apple"
-            ? t("continueApple")
-            : p.idp === "google"
-              ? t("continueGoogle")
-              : p.idp === "facebook"
-                ? t("continueFacebook")
-                : p.label}
+          {socialLabel(p.idp, p.label, t)}
         </Button>
       ))}
     </div>

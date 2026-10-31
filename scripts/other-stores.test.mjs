@@ -23,7 +23,7 @@ function src(rel) {
 }
 
 test("v1 payments are off in every store and on for a normal browser", () => {
-  const stores = ["apple", "google", "microsoft", "samsung", "huawei"];
+  const stores = ["apple", "google", "microsoft", "samsung", "huawei", "amazon"];
   for (const channel of stores) {
     assert.equal(STORE_PAYMENTS_ENABLED[channel], false, channel);
     assert.equal(storePaymentsEnabled(channel), false, channel);
@@ -49,7 +49,7 @@ test("v1 payments are off in every store and on for a normal browser", () => {
   assert.equal(web.daycarePurchasesUnlock, true);
   assert.equal(web.parentPlusIap, null);
   const boot = src("public/channel-boot.js");
-  assert.match(boot, /STORE_PAYMENTS_ENABLED = \{ apple: false, google: false, microsoft: false, samsung: false, huawei: false \}/);
+  assert.match(boot, /STORE_PAYMENTS_ENABLED = \{ apple: false, google: false, microsoft: false, samsung: false, huawei: false, amazon: false \}/);
   assert.match(boot, /STORE_PAYMENTS_ENABLED\[store\] === false/);
   assert.match(src("src/lib/runtime.ts"), /root\.dataset\.runtime = "native"/);
   assert.doesNotMatch(src("src/lib/native-entitlements.ts"), /channel === "apple" \|\| channel === "google" \|\| channel === "huawei"/);
@@ -154,10 +154,14 @@ test("Huawei hides Google sign-in and the other stores do not", () => {
   ];
   assert.deepEqual(
     providersForStore(providers, "huawei").map((row) => row.idp),
-    ["apple", "facebook"],
+    ["facebook"],
   );
-  assert.equal(providersForStore(providers, "samsung").length, 3);
-  assert.match(src("src/routes/login.tsx"), /providersForStore/);
+  assert.deepEqual(
+    providersForStore(providers, "samsung").map((row) => row.idp),
+    ["google", "facebook"],
+  );
+  assert.match(src("src/routes/login.tsx"), /signInProvidersForDevice/);
+  assert.match(src("src/lib/auth/native-oauth.ts"), /providersForStore/);
   assert.match(src("src/components/map-view.tsx"), /StoreMapFallback/);
   assert.match(src("src/routes/search.tsx"), /storeChannel === "huawei"/);
   assert.match(src("src/routes/__root.tsx"), /mapDnsPrefetch/);

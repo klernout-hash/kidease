@@ -17,6 +17,8 @@ interface ImportMetaEnv {
   readonly VITE_R2_PUBLIC_BASE_URL?: string;
   /** Opt-in Cloudflare Image Transformations on media.kidease.ca. Default off. */
   readonly VITE_CF_IMAGE_RESIZE?: string;
+  /** Store-specific web build. Blank on www.kidease.ca. Not a secret. */
+  readonly VITE_STORE_CHANNEL?: string;
 }
 
 interface ImportMeta {

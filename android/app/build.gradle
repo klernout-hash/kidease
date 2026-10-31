@@ -27,6 +27,10 @@ android {
             dimension "store"
             buildConfigField "String", "STORE_UA_TOKEN", "\"KidEaseStoreHuawei\""
         }
+        amazon {
+            dimension "store"
+            buildConfigField "String", "STORE_UA_TOKEN", "\"KidEaseStoreAmazon\""
+        }
     }
     defaultConfig {
         applicationId "ca.kidease.app"
@@ -72,9 +76,12 @@ configurations.configureEach {
     exclude group: "com.google.firebase", module: "firebase-analytics-ktx"
 }
 
-// AppGallery phones have no Play Services. Keep GMS, Play, and Firebase out of that flavour.
-// Play and Samsung keep these libraries. Only the huawei* classpaths drop them.
-configurations.matching { it.name.toLowerCase().contains("huawei") }.configureEach {
+// AppGallery and Amazon Fire have no Play Services. Keep GMS, Play, and Firebase out of those flavours.
+// Play and Samsung keep these libraries. Only the huawei* and amazon* classpaths drop them.
+configurations.matching { cfg ->
+    def name = cfg.name.toLowerCase()
+    name.contains("huawei") || name.contains("amazon")
+}.configureEach {
     exclude group: "com.google.android.gms", module: "play-services-location"
     exclude group: "com.google.android.play", module: "review"
     exclude group: "com.google.firebase", module: "firebase-messaging"
@@ -139,7 +146,7 @@ try {
 gradle.taskGraph.whenReady { graph ->
     graph.allTasks.each { task ->
         def name = task.name.toLowerCase()
-        if (name.contains("huawei") && name.contains("googleservices")) {
+        if ((name.contains("huawei") || name.contains("amazon")) && name.contains("googleservices")) {
             task.enabled = false
         }
     }

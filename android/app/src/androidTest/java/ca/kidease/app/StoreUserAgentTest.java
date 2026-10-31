@@ -38,9 +38,17 @@ public class StoreUserAgentTest {
             } else if ("huawei".equals(flavor)) {
                 assertTrue(ua.contains("KidEaseStoreHuawei"));
                 assertFalse(ua.contains("KidEaseStoreSamsung"));
+                assertFalse(ua.contains("KidEaseStoreAmazon"));
+                assertTrue(ua.contains("KidEaseNoGms"));
+            } else if ("amazon".equals(flavor)) {
+                assertTrue(ua.contains("KidEaseStoreAmazon"));
+                assertFalse(ua.contains("KidEaseStoreSamsung"));
+                assertFalse(ua.contains("KidEaseStoreHuawei"));
+                assertTrue(ua.contains("KidEaseNoGms"));
             } else {
                 assertFalse(ua.contains("KidEaseStoreSamsung"));
                 assertFalse(ua.contains("KidEaseStoreHuawei"));
+                assertFalse(ua.contains("KidEaseStoreAmazon"));
             }
             if (!token.isEmpty()) {
                 assertTrue(ua.contains(token));

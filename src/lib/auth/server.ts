@@ -69,6 +69,9 @@ import {
   grokClientSecret,
   grokIssuer,
 } from "./broker-env";
+import { amazonOAuthConfig } from "./amazon-idp";
+import { huaweiOAuthConfig } from "./huawei-idp";
+import { amazonSignInVisible, huaweiSignInVisible } from "./store-signin-flags";
 import { pgliteDialect } from "./pglite-dialect";
 import { brokerOAuthCallbackPath, PREVIEW_ALLOWED_HOSTS } from "./preview";
 import {
@@ -122,6 +125,8 @@ export const authConfigured =
     googleIdpConfigured ||
     facebookIdpConfigured ||
     appleIdpConfigured ||
+    huaweiSignInVisible(process.env) ||
+    amazonSignInVisible(process.env) ||
     emailAndPasswordEnabled);
 
 // This app's own Better Auth origin. When deployed the deployer injects the
@@ -305,6 +310,11 @@ const grokOAuthPlugin =
     })
     : null;
 
+const huaweiOAuth = huaweiOAuthConfig(process.env);
+const amazonOAuth = amazonOAuthConfig(process.env);
+const storeOAuthConfigs = [huaweiOAuth, amazonOAuth].filter((row) => row != null);
+const storeOAuthPlugin = storeOAuthConfigs.length > 0 ? genericOAuth({ config: storeOAuthConfigs }) : null;
+
 const betterAuthSecret = env("BETTER_AUTH_SECRET");
 if (process.env.VERCEL && !betterAuthSecret) {
   console.error(
@@ -389,7 +399,14 @@ export const auth = betterAuth({
     encryptOAuthTokens: true,
     accountLinking: {
       enabled: true,
-      trustedProviders: [...GROK_PROVIDERS.map((p) => p.providerId), "apple", "google", "facebook"],
+      trustedProviders: [
+        ...GROK_PROVIDERS.map((p) => p.providerId),
+        "apple",
+        "google",
+        "facebook",
+        "huawei",
+        "amazon",
+      ],
       requireLocalEmailVerified: false,
     },
   },
@@ -476,6 +493,7 @@ export const auth = betterAuth({
     // One genericOAuth provider per upstream (when auth is on), all federating
     // to the broker with the SAME client and differing only by the `idp` hint.
     ...(grokOAuthPlugin ? [grokOAuthPlugin] : []),
+    ...(storeOAuthPlugin ? [storeOAuthPlugin] : []),
 
     // WebAuthn passkeys. Before bearer() so a new session still sets
     // set-auth-token for the Capacitor shell. tanstackStartCookies stays last.

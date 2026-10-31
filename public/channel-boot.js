@@ -61,9 +61,12 @@ function keAccessPath(href) {
     var samsungBuild = !ios && ua.indexOf("KidEaseStoreSamsung") !== -1;
     if (ios && uaNative) store = "apple";
     else if (!ios && ua.indexOf("KidEaseStoreHuawei") !== -1) store = "huawei";
+    else if (!ios && ua.indexOf("KidEaseStoreAmazon") !== -1) store = "amazon";
     else if (samsungBuild) store = "samsung";
     else if (uaNative) store = "google";
     else if (ua.indexOf("KidEaseStoreMicrosoft") !== -1 || q.get("store") === "microsoft" || /(?:^|;\s*)ke_store=microsoft(?:;|$)/.test(document.cookie || "")) store = "microsoft";
+    var preset = r.getAttribute("data-store") || "";
+    if (store === "web" && /^(apple|google|samsung|huawei|amazon|microsoft)$/.test(preset)) store = preset;
     var cookie = document.cookie || "";
     var dropMicrosoft = uaNative && /(?:^|;\s*)ke_store=microsoft(?:;|$)/.test(cookie);
     var dropSamsung = /(?:^|;\s*)ke_store=samsung(?:;|$)/.test(cookie) && !samsungBuild;
@@ -74,7 +77,7 @@ function keAccessPath(href) {
       document.cookie = "ke_store=microsoft; Path=/; Max-Age=31536000; SameSite=Lax" + secure;
     }
     /* Keep in step with STORE_PAYMENTS_ENABLED in native-entitlements.ts. v2 flips one store to true. */
-    var STORE_PAYMENTS_ENABLED = { apple: false, google: false, microsoft: false, samsung: false, huawei: false };
+    var STORE_PAYMENTS_ENABLED = { apple: false, google: false, microsoft: false, samsung: false, huawei: false, amazon: false };
     var standalone = window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
     if (!n && !uaNative && (store === "microsoft" || standalone)) {
       window.addEventListener("load", function () {
