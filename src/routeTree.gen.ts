@@ -85,6 +85,7 @@ import { Route as ApiE2eSeedRouteImport } from './routes/api/e2e-seed'
 import { Route as ApiFamilyDocumentsRouteImport } from './routes/api/family-documents'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiInngestRouteImport } from './routes/api/inngest'
+import { Route as ApiOnCallRouteImport } from './routes/api/on-call'
 import { Route as ApiOpenSpotsCheckinRouteImport } from './routes/api/open-spots-checkin'
 import { Route as ApiProvincialVacancyRouteImport } from './routes/api/provincial-vacancy'
 import { Route as ApiRankingMarketRouteImport } from './routes/api/ranking-market'
@@ -579,6 +580,11 @@ const ApiHealthRoute = ApiHealthRouteImport.update({
 const ApiInngestRoute = ApiInngestRouteImport.update({
   id: '/api/inngest',
   path: '/api/inngest',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOnCallRoute = ApiOnCallRouteImport.update({
+  id: '/api/on-call',
+  path: '/api/on-call',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiOpenSpotsCheckinRoute = ApiOpenSpotsCheckinRouteImport.update({
@@ -1231,6 +1237,7 @@ export interface FileRoutesByFullPath {
   '/api/family-documents': typeof ApiFamilyDocumentsRouteWithChildren
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
+  '/api/on-call': typeof ApiOnCallRoute
   '/api/open-spots-checkin': typeof ApiOpenSpotsCheckinRoute
   '/api/provincial-vacancy': typeof ApiProvincialVacancyRoute
   '/api/ranking-market': typeof ApiRankingMarketRoute
@@ -1421,6 +1428,7 @@ export interface FileRoutesByTo {
   '/api/family-documents': typeof ApiFamilyDocumentsRouteWithChildren
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
+  '/api/on-call': typeof ApiOnCallRoute
   '/api/open-spots-checkin': typeof ApiOpenSpotsCheckinRoute
   '/api/provincial-vacancy': typeof ApiProvincialVacancyRoute
   '/api/ranking-market': typeof ApiRankingMarketRoute
@@ -1614,6 +1622,7 @@ export interface FileRoutesById {
   '/api/family-documents': typeof ApiFamilyDocumentsRouteWithChildren
   '/api/health': typeof ApiHealthRoute
   '/api/inngest': typeof ApiInngestRoute
+  '/api/on-call': typeof ApiOnCallRoute
   '/api/open-spots-checkin': typeof ApiOpenSpotsCheckinRoute
   '/api/provincial-vacancy': typeof ApiProvincialVacancyRoute
   '/api/ranking-market': typeof ApiRankingMarketRoute
@@ -1808,6 +1817,7 @@ export interface FileRouteTypes {
     | '/api/family-documents'
     | '/api/health'
     | '/api/inngest'
+    | '/api/on-call'
     | '/api/open-spots-checkin'
     | '/api/provincial-vacancy'
     | '/api/ranking-market'
@@ -1998,6 +2008,7 @@ export interface FileRouteTypes {
     | '/api/family-documents'
     | '/api/health'
     | '/api/inngest'
+    | '/api/on-call'
     | '/api/open-spots-checkin'
     | '/api/provincial-vacancy'
     | '/api/ranking-market'
@@ -2190,6 +2201,7 @@ export interface FileRouteTypes {
     | '/api/family-documents'
     | '/api/health'
     | '/api/inngest'
+    | '/api/on-call'
     | '/api/open-spots-checkin'
     | '/api/provincial-vacancy'
     | '/api/ranking-market'
@@ -2382,6 +2394,7 @@ export interface RootRouteChildren {
   ApiFamilyDocumentsRoute: typeof ApiFamilyDocumentsRouteWithChildren
   ApiHealthRoute: typeof ApiHealthRoute
   ApiInngestRoute: typeof ApiInngestRoute
+  ApiOnCallRoute: typeof ApiOnCallRoute
   ApiOpenSpotsCheckinRoute: typeof ApiOpenSpotsCheckinRoute
   ApiProvincialVacancyRoute: typeof ApiProvincialVacancyRoute
   ApiRankingMarketRoute: typeof ApiRankingMarketRoute
@@ -2961,6 +2974,13 @@ declare module '@tanstack/react-router' {
       path: '/api/inngest'
       fullPath: '/api/inngest'
       preLoaderRoute: typeof ApiInngestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/on-call': {
+      id: '/api/on-call'
+      path: '/api/on-call'
+      fullPath: '/api/on-call'
+      preLoaderRoute: typeof ApiOnCallRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/open-spots-checkin': {
@@ -4098,6 +4118,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiFamilyDocumentsRoute: ApiFamilyDocumentsRouteWithChildren,
   ApiHealthRoute: ApiHealthRoute,
   ApiInngestRoute: ApiInngestRoute,
+  ApiOnCallRoute: ApiOnCallRoute,
   ApiOpenSpotsCheckinRoute: ApiOpenSpotsCheckinRoute,
   ApiProvincialVacancyRoute: ApiProvincialVacancyRoute,
   ApiRankingMarketRoute: ApiRankingMarketRoute,
