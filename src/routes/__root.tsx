@@ -45,6 +45,8 @@ import {
   storeChannelFromSignals,
   type StoreChannel,
 } from "@/lib/native-entitlements";
+import { a11yPassEnabled } from "@/lib/a11y-pass";
+import { SkipLink } from "@/components/skip-link";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "KidEase";
@@ -114,6 +116,7 @@ export const Route = createRootRoute({
       storeChannel,
       hideAdmin,
       microsoftSetCookie: storeRead.setCookie,
+      a11yPass: a11yPassEnabled(),
     };
   },
   errorComponent: (props) => {
@@ -213,6 +216,7 @@ function RootDocument() {
   const nativeShell = Route.useRouteContext({ select: (s) => Boolean(s.nativeShell) });
   const hideAdmin = Route.useRouteContext({ select: (s) => Boolean(s.hideAdmin) });
   const storeChannel = Route.useRouteContext({ select: (s) => s.storeChannel ?? "web" });
+  const a11yPass = Route.useRouteContext({ select: (s) => Boolean(s.a11yPass) });
   const { locale } = useCopy();
   const lang =
     pathLocale(pathname) === "fr" || locale === "fr" ? "fr-CA" : locale === "en" ? "en" : localeTag(locale);
@@ -257,6 +261,7 @@ function RootDocument() {
         <script src="/asset-recover.js" />
       </head>
       <body className="flex min-h-[100dvh] w-full min-w-0 flex-col overflow-x-clip">
+        <SkipLink enabled={a11yPass} />
         <PreviewHostBridge />
         <AuthProvider>
           <ViewAsProvider>
@@ -270,7 +275,9 @@ function RootDocument() {
           <RoleBoot />
           <AdultConfirmBoot />
           <RouteProgress />
-          <Outlet />
+          <div id="main-content" tabIndex={-1} className="flex w-full min-w-0 flex-1 flex-col outline-none">
+            <Outlet />
+          </div>
           <LiveChatSlot />
           </ViewAsProvider>
           <CookieConsentBanner />

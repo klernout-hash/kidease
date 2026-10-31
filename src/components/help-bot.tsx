@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useRouterState } from "@tanstack/react-router";
+import { useRouteContext, useRouterState } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ type AskError = "off" | "turnstile" | "rate_limited" | "ticket";
 
 export function HelpBot() {
   const { t, locale } = useCopy();
+  const a11yPass = useRouteContext({ from: "__root__", select: (s) => Boolean(s.a11yPass) });
   const { user } = useCurrentUserState();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -148,7 +149,12 @@ export function HelpBot() {
   return (
     <div className="ke-help-bot" data-ke="help-launcher">
       {open ? (
-        <div className="mb-3 flex h-[min(28rem,70dvh)] w-[min(22rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl bg-surface shadow-lift ring-1 ring-border">
+        <div
+          className="mb-3 flex h-[min(28rem,70dvh)] w-[min(22rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl bg-surface shadow-lift ring-1 ring-border"
+          role={a11yPass ? "dialog" : undefined}
+          aria-modal={a11yPass ? true : undefined}
+          aria-labelledby={a11yPass ? "help-bot-title" : undefined}
+        >
           <div className="flex items-center justify-between gap-2 bg-primary px-4 py-3 text-primary-fg">
             <div className="flex min-w-0 items-center gap-2">
               <img
@@ -159,7 +165,7 @@ export function HelpBot() {
                 className="size-8 shrink-0 rounded-full bg-surface object-contain p-0.5"
               />
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">{t("helpBot")}</p>
+                <p id="help-bot-title" className="truncate text-sm font-semibold">{t("helpBot")}</p>
                 <p className="text-[11px] leading-4 text-primary-fg/80">{t("helpBotLead")}</p>
               </div>
             </div>
@@ -169,7 +175,7 @@ export function HelpBot() {
               onClick={() => setOpen(false)}
               aria-label={t("close")}
             >
-              <X className="size-4" />
+              <X className="size-4" aria-hidden="true" />
             </button>
           </div>
           <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-3" aria-live="polite">
