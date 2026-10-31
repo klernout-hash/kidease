@@ -41,6 +41,7 @@ import { Route as DonateRouteImport } from './routes/donate'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as ForDaycaresRouteImport } from './routes/for-daycares'
+import { Route as ForYouRouteImport } from './routes/for-you'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FrRouteImport } from './routes/fr'
 import { Route as GetAppRouteImport } from './routes/get-app'
@@ -119,6 +120,7 @@ import { Route as FrDonateRouteImport } from './routes/fr.donate'
 import { Route as FrExploreRouteImport } from './routes/fr.explore'
 import { Route as FrFaqRouteImport } from './routes/fr.faq'
 import { Route as FrForDaycaresRouteImport } from './routes/fr.for-daycares'
+import { Route as FrForYouRouteImport } from './routes/fr.for-you'
 import { Route as FrGetAppRouteImport } from './routes/fr.get-app'
 import { Route as FrGuidesRouteImport } from './routes/fr.guides'
 import { Route as FrHelpRouteImport } from './routes/fr.help'
@@ -359,6 +361,11 @@ const FaqRoute = FaqRouteImport.update({
 const ForDaycaresRoute = ForDaycaresRouteImport.update({
   id: '/for-daycares',
   path: '/for-daycares',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForYouRoute = ForYouRouteImport.update({
+  id: '/for-you',
+  path: '/for-you',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -750,6 +757,11 @@ const FrFaqRoute = FrFaqRouteImport.update({
 const FrForDaycaresRoute = FrForDaycaresRouteImport.update({
   id: '/for-daycares',
   path: '/for-daycares',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrForYouRoute = FrForYouRouteImport.update({
+  id: '/for-you',
+  path: '/for-you',
   getParentRoute: () => FrRoute,
 } as any)
 const FrGetAppRoute = FrGetAppRouteImport.update({
@@ -1187,6 +1199,7 @@ export interface FileRoutesByFullPath {
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/for-daycares': typeof ForDaycaresRoute
+  '/for-you': typeof ForYouRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/fr': typeof FrRouteWithChildren
   '/get-app': typeof GetAppRoute
@@ -1264,6 +1277,7 @@ export interface FileRoutesByFullPath {
   '/fr/explore': typeof FrExploreRoute
   '/fr/faq': typeof FrFaqRoute
   '/fr/for-daycares': typeof FrForDaycaresRoute
+  '/fr/for-you': typeof FrForYouRoute
   '/fr/get-app': typeof FrGetAppRoute
   '/fr/guides': typeof FrGuidesRouteWithChildren
   '/fr/help': typeof FrHelpRoute
@@ -1379,6 +1393,7 @@ export interface FileRoutesByTo {
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/for-daycares': typeof ForDaycaresRoute
+  '/for-you': typeof ForYouRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/get-app': typeof GetAppRoute
   '/guides': typeof GuidesRouteWithChildren
@@ -1454,6 +1469,7 @@ export interface FileRoutesByTo {
   '/fr/explore': typeof FrExploreRoute
   '/fr/faq': typeof FrFaqRoute
   '/fr/for-daycares': typeof FrForDaycaresRoute
+  '/fr/for-you': typeof FrForYouRoute
   '/fr/get-app': typeof FrGetAppRoute
   '/fr/guides': typeof FrGuidesRouteWithChildren
   '/fr/help': typeof FrHelpRoute
@@ -1570,6 +1586,7 @@ export interface FileRoutesById {
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/for-daycares': typeof ForDaycaresRoute
+  '/for-you': typeof ForYouRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/fr': typeof FrRouteWithChildren
   '/get-app': typeof GetAppRoute
@@ -1647,6 +1664,7 @@ export interface FileRoutesById {
   '/fr/explore': typeof FrExploreRoute
   '/fr/faq': typeof FrFaqRoute
   '/fr/for-daycares': typeof FrForDaycaresRoute
+  '/fr/for-you': typeof FrForYouRoute
   '/fr/get-app': typeof FrGetAppRoute
   '/fr/guides': typeof FrGuidesRouteWithChildren
   '/fr/help': typeof FrHelpRoute
@@ -1764,6 +1782,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/faq'
     | '/for-daycares'
+    | '/for-you'
     | '/forgot-password'
     | '/fr'
     | '/get-app'
@@ -1841,6 +1860,7 @@ export interface FileRouteTypes {
     | '/fr/explore'
     | '/fr/faq'
     | '/fr/for-daycares'
+    | '/fr/for-you'
     | '/fr/get-app'
     | '/fr/guides'
     | '/fr/help'
@@ -1956,6 +1976,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/faq'
     | '/for-daycares'
+    | '/for-you'
     | '/forgot-password'
     | '/get-app'
     | '/guides'
@@ -2031,6 +2052,7 @@ export interface FileRouteTypes {
     | '/fr/explore'
     | '/fr/faq'
     | '/fr/for-daycares'
+    | '/fr/for-you'
     | '/fr/get-app'
     | '/fr/guides'
     | '/fr/help'
@@ -2146,6 +2168,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/faq'
     | '/for-daycares'
+    | '/for-you'
     | '/forgot-password'
     | '/fr'
     | '/get-app'
@@ -2223,6 +2246,7 @@ export interface FileRouteTypes {
     | '/fr/explore'
     | '/fr/faq'
     | '/fr/for-daycares'
+    | '/fr/for-you'
     | '/fr/get-app'
     | '/fr/guides'
     | '/fr/help'
@@ -2339,6 +2363,7 @@ export interface RootRouteChildren {
   ExploreRoute: typeof ExploreRoute
   FaqRoute: typeof FaqRoute
   ForDaycaresRoute: typeof ForDaycaresRoute
+  ForYouRoute: typeof ForYouRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   FrRoute: typeof FrRouteWithChildren
   GetAppRoute: typeof GetAppRoute
@@ -2653,6 +2678,13 @@ declare module '@tanstack/react-router' {
       path: '/for-daycares'
       fullPath: '/for-daycares'
       preLoaderRoute: typeof ForDaycaresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/for-you': {
+      id: '/for-you'
+      path: '/for-you'
+      fullPath: '/for-you'
+      preLoaderRoute: typeof ForYouRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -3199,6 +3231,13 @@ declare module '@tanstack/react-router' {
       path: '/for-daycares'
       fullPath: '/fr/for-daycares'
       preLoaderRoute: typeof FrForDaycaresRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/for-you': {
+      id: '/fr/for-you'
+      path: '/for-you'
+      fullPath: '/fr/for-you'
+      preLoaderRoute: typeof FrForYouRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/get-app': {
@@ -3828,6 +3867,7 @@ interface FrRouteChildren {
   FrExploreRoute: typeof FrExploreRoute
   FrFaqRoute: typeof FrFaqRoute
   FrForDaycaresRoute: typeof FrForDaycaresRoute
+  FrForYouRoute: typeof FrForYouRoute
   FrGetAppRoute: typeof FrGetAppRoute
   FrGuidesRoute: typeof FrGuidesRouteWithChildren
   FrHelpRoute: typeof FrHelpRoute
@@ -3885,6 +3925,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrExploreRoute: FrExploreRoute,
   FrFaqRoute: FrFaqRoute,
   FrForDaycaresRoute: FrForDaycaresRoute,
+  FrForYouRoute: FrForYouRoute,
   FrGetAppRoute: FrGetAppRoute,
   FrGuidesRoute: FrGuidesRouteWithChildren,
   FrHelpRoute: FrHelpRoute,
@@ -4055,6 +4096,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExploreRoute: ExploreRoute,
   FaqRoute: FaqRoute,
   ForDaycaresRoute: ForDaycaresRoute,
+  ForYouRoute: ForYouRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   FrRoute: FrRouteWithChildren,
   GetAppRoute: GetAppRoute,
