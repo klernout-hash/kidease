@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
+import { stashKioskHash } from "@/components/qr-kiosk-panel";
 import { Shell } from "@/components/shell";
 import { useRoleChrome } from "@/components/role-chrome";
 import { localePath } from "@/lib/locale-path";
@@ -26,6 +27,9 @@ export function DailyFeedPage() {
   const { locale } = useCopy();
   const fr = locale === "fr";
   const chrome = useRoleChrome();
+  useEffect(() => {
+    stashKioskHash();
+  }, []);
   const parent = chrome.signedIn && chrome.role === "parent" && !chrome.guestView;
 
   return (

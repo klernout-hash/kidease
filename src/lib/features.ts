@@ -112,6 +112,11 @@ export function areaWaitlistAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_AREA_WAITLIST_ALERTS", env);
 }
 
+/** Rotating daycare check-in code. Default off. Still needs KIOSK_TOKEN_SECRET to mint. */
+export function qrKioskEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_QR_KIOSK", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;
