@@ -57,6 +57,9 @@ import { rememberSearch, searchMemoKey } from "./search-memo";
 import { mergeApprovedCityListings } from "./approved-search";
 import { alignSearchOrigin } from "@/lib/search-query";
 import { transactionalMailConfigured } from "@/lib/transactional-mail";
+import { inspectionHistoryEnabled } from "@/lib/features";
+import { readCachedInspections } from "@/lib/server/inspection-history";
+import type { PublicInspection } from "@/lib/inspection-history";
 import { listingInfoSlaReady } from "@/lib/parent-listing";
 import { listedDaycareTypeFromSearch, matchesListedDaycareType } from "@/lib/care-type";
 import { CITY_TYPE_LIST_CAP, queryNeonCityHubListings } from "@/lib/server/catalog-neon";
@@ -953,6 +956,9 @@ export const getDaycare = createServerFn({ method: "GET" })
         note: row.note,
         createdAt: String(row.created_at),
       }));
+      const inspections: PublicInspection[] = inspectionHistoryEnabled()
+        ? await readCachedInspections(sql, daycare.province, daycare.licenseNumber)
+        : [];
       const mainStamped = await withProvincial([overlayed[0] ?? daycare]);
       const nearbyStamped = await withProvincial(withQualityCards(nearby, overlayed));
       const mainReady = stampHidden(withInboxReady(mainStamped[0] ?? daycare));
@@ -964,6 +970,7 @@ export const getDaycare = createServerFn({ method: "GET" })
         availability,
         nearby: nearbyPinned,
         jobs,
+        inspections,
       };
     } catch {
       const catalogScored = await overlayQuality([catalogDaycare, ...metroPeers]);
@@ -976,6 +983,7 @@ export const getDaycare = createServerFn({ method: "GET" })
         availability: catalogAvailability(found),
         nearby: catalogNearby,
         jobs: [] as CentreJobPost[],
+        inspections: [] as PublicInspection[],
       };
     }
   });

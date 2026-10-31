@@ -1,3 +1,4 @@
+import type { PublicInspection } from "@/lib/inspection-history";
 import { inspectionChecklistBadge, inspectionPortal, licenceStanding, publicLicenceLine, type ChecklistItem } from "@/lib/provincial-inspections";
 import { useCopy } from "@/lib/use-copy";
 
@@ -9,6 +10,7 @@ export function InspectionTrustCard({
   licenseStatus,
   claimed,
   checklist,
+  inspections,
 }: {
   province: string;
   name: string;
@@ -17,6 +19,7 @@ export function InspectionTrustCard({
   licenseStatus?: string | null;
   claimed?: boolean;
   checklist?: ChecklistItem[] | null;
+  inspections?: PublicInspection[];
 }) {
   const { locale } = useCopy();
   const fr = locale === "fr";
@@ -48,6 +51,26 @@ export function InspectionTrustCard({
             ? `Liste de contrôle du centre : ${badge.passed} sur ${badge.total}.`
             : `Centre checklist: ${badge.passed} of ${badge.total}.`}
         </p>
+      ) : null}
+      {inspections?.length ? (
+        <ul className="mt-3 space-y-3" data-ke="inspection-history">
+          {inspections.map((row) => (
+            <li key={`${row.inspectedOn}-${row.sourceUrl}`} className="text-sm">
+              <p className="font-medium">
+                {row.inspectedOn} · {row.outcome}
+              </p>
+              {row.summary ? <p className="mt-1 text-muted">{row.summary}</p> : null}
+              <a
+                href={row.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-1 inline-flex min-h-11 items-center text-primary underline-offset-4 hover:underline"
+              >
+                {fr ? "Dossier public" : "Public record"}
+              </a>
+            </li>
+          ))}
+        </ul>
       ) : null}
       {portal ? (
         <a
