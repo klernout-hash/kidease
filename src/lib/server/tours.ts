@@ -10,6 +10,7 @@ import { upsertDaycare } from "@/lib/server/seed";
 import { centreCanAcceptInquiry } from "@/lib/server/provider-entitlements";
 import { lookupUser, notifyPlatform, notifyThreadParty } from "@/lib/server/notify";
 import { notifyTourParties, syncLeadFromTour } from "@/lib/server/tour-hold-notify";
+import { tourUpdateCalendarText } from "@/lib/tour-ics";
 import {
   listCentreOwnerEmails,
   markConversationRead,
@@ -511,7 +512,15 @@ export const proposeTourTime = createServerFn({ method: "POST" })
       parentEmail: tour.contact_email,
       parentName: guestName || null,
       subject: `Tour time updated: ${tour.daycare_name}`,
-      preview: body,
+      preview: `${body}\n\n${tourUpdateCalendarText({
+        uid: tour.id,
+        centre: tour.daycare_name,
+        startAt: String(slot.startAt),
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        location: "",
+        sequence: 1,
+      })}`,
     }).catch(() => undefined);
 
     return { ok: true as const, conversationId: tour.conversation_id, windowId: slot.id, times };
@@ -580,7 +589,7 @@ export const cancelTourRequest = createServerFn({ method: "POST" })
       parentEmail: tour.contact_email,
       parentName: guestName || null,
       subject: `Tour cancelled: ${tour.daycare_name}`,
-      preview: body,
+      preview: `${body}\n\nThis visit is cancelled. Remove it from your calendar if you added it.`,
     }).catch(() => undefined);
 
     return { ok: true as const, status: next, conversationId: tour.conversation_id };
