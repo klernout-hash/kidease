@@ -9,6 +9,7 @@ import { notificationHrefForShell } from "@/lib/native-admin";
 import { fillNotificationCopy, isCriticalNotification, notificationCopyKey, type NotificationItem } from "@/lib/notifications";
 import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { listMyNotifications, markNotificationRead } from "@/lib/server/notifications";
+import { LifecyclePrefs } from "@/components/lifecycle-prefs";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
 import { confirmAction } from "@/lib/success-confirm";
@@ -68,6 +69,7 @@ export function NotificationsInbox() {
             </Button>
           ) : null}
         </div>
+        <LifecyclePrefs />
         <ul className="mt-6 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
           {items === null ? (
             <li className="space-y-3 p-4" aria-hidden="true">
