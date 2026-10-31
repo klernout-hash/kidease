@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useFrCaPack } from "@/components/fr-ca-boot";
 import { Button } from "@/components/ui/button";
+import { frCaScreen } from "@/lib/fr-ca";
 import { listSafetyQueue, reviewSafetyReport, type SafetyQueueRow } from "@/lib/server/safety";
+import { useCopy } from "@/lib/use-copy";
 
 export function SafetyReviewQueue({ initial }: { initial?: SafetyQueueRow[] }) {
+  const { locale } = useCopy();
+  const frCa = useFrCaPack();
+  const text = (key: string) => frCaScreen("admin", key, locale, frCa);
   const [rows, setRows] = useState<SafetyQueueRow[]>(initial ?? []);
   const [ready, setReady] = useState(Boolean(initial));
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -40,15 +46,12 @@ export function SafetyReviewQueue({ initial }: { initial?: SafetyQueueRow[] }) {
 
   return (
     <section className="mt-10" data-ke="safety-queue">
-      <h2 className="font-display text-2xl">Safety reports</h2>
-      <p className="mt-1 text-sm text-muted">
-        Open reports about a listing, a centre, or a message. Mark each one reviewed or dismissed. This queue does not
-        invent a safety score.
-      </p>
+      <h2 className="font-display text-2xl">{text("safetyTitle")}</h2>
+      <p className="mt-1 text-sm text-muted">{text("safetyLead")}</p>
       <ul className="mt-5 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
-        {!ready ? <li className="px-5 py-8 text-center text-muted">Loading reports…</li> : null}
+        {!ready ? <li className="px-5 py-8 text-center text-muted">{text("safetyLoading")}</li> : null}
         {ready && rows.length === 0 ? (
-          <li className="px-5 py-8 text-center text-muted">No open safety reports. New reports show up here.</li>
+          <li className="px-5 py-8 text-center text-muted">{text("safetyEmpty")}</li>
         ) : null}
         {rows.map((row) => (
           <li key={row.id} className="px-5 py-4">
@@ -56,10 +59,10 @@ export function SafetyReviewQueue({ initial }: { initial?: SafetyQueueRow[] }) {
               {row.target} · {row.reason}
             </p>
             <p className="text-sm text-muted">
-              {[row.daycareName, row.city, row.province].filter(Boolean).join(", ") || "No listing name on file"}
+              {[row.daycareName, row.city, row.province].filter(Boolean).join(", ") || text("noListing")}
             </p>
             {row.detail ? <p className="mt-1 text-sm">{row.detail}</p> : null}
-            <p className="mt-1 text-xs text-subtle">{row.reporterEmail || "No email on the account"}</p>
+            <p className="mt-1 text-xs text-subtle">{row.reporterEmail || text("noEmail")}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Button
                 type="button"
@@ -67,7 +70,7 @@ export function SafetyReviewQueue({ initial }: { initial?: SafetyQueueRow[] }) {
                 disabled={busyId === row.id}
                 onClick={() => void review(row.id, "reviewed")}
               >
-                Mark reviewed
+                {text("markReviewed")}
               </Button>
               <Button
                 type="button"
@@ -76,7 +79,7 @@ export function SafetyReviewQueue({ initial }: { initial?: SafetyQueueRow[] }) {
                 disabled={busyId === row.id}
                 onClick={() => void review(row.id, "dismissed")}
               >
-                Dismiss
+                {text("dismiss")}
               </Button>
             </div>
           </li>

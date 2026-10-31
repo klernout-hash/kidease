@@ -4,6 +4,8 @@
  */
 
 import { CASL_ADDRESS_BLOCKED_MESSAGE, CASL_NO_CONSENT_MESSAGE, type InboundOpt } from "./casl.ts";
+import { fillFrCa, frCaScreen } from "./fr-ca.ts";
+import { frCaEnabled } from "./features.ts";
 import { xmlEscape } from "./xml.ts";
 
 /**
@@ -71,17 +73,31 @@ function clipName(value: string): string {
   return value.replace(/\s+/g, " ").trim().slice(0, 80) || "your daycare";
 }
 
+function smsLine(key: "request" | "message" | "reply", centreName: string, locale?: string | null): string | null {
+  if (locale !== "fr" || !frCaEnabled()) return null;
+  return fillFrCa(frCaScreen("sms", key, "fr", true), { place: clipName(centreName) });
+}
+
 /** Every parent-request text names KidEase and offers STOP. */
-export function parentRequestSms(centreName: string): string {
-  return `KidEase: New parent request for ${clipName(centreName)}. Open messages at https://www.kidease.ca/inbox Reply STOP to opt out.`;
+export function parentRequestSms(centreName: string, locale?: string | null): string {
+  return (
+    smsLine("request", centreName, locale) ||
+    `KidEase: New parent request for ${clipName(centreName)}. Open messages at https://www.kidease.ca/inbox Reply STOP to opt out.`
+  );
 }
 
-export function parentMessageSms(centreName: string): string {
-  return `KidEase: New parent message about ${clipName(centreName)}. https://www.kidease.ca/inbox Reply STOP to opt out.`;
+export function parentMessageSms(centreName: string, locale?: string | null): string {
+  return (
+    smsLine("message", centreName, locale) ||
+    `KidEase: New parent message about ${clipName(centreName)}. https://www.kidease.ca/inbox Reply STOP to opt out.`
+  );
 }
 
-export function daycareReplySms(centreName: string): string {
-  return `KidEase: ${clipName(centreName)} replied. Read it at https://www.kidease.ca/inbox Reply STOP to opt out.`;
+export function daycareReplySms(centreName: string, locale?: string | null): string {
+  return (
+    smsLine("reply", centreName, locale) ||
+    `KidEase: ${clipName(centreName)} replied. Read it at https://www.kidease.ca/inbox Reply STOP to opt out.`
+  );
 }
 
 /**
@@ -133,6 +149,6 @@ export function inboundKeywordTwiml(params: Record<string, string>, opt: Inbound
   const fr = frenchKeywordBody(params);
   if (opt === "help") return twimlMessage(fr ? SMS_HELP_REPLY_FR : SMS_HELP_REPLY);
   if (opt === "stop") return twimlMessage(fr ? SMS_STOP_REPLY_FR : SMS_STOP_REPLY);
-  if (opt === "start") return twimlMessage(SMS_START_REPLY);
+  if (opt === "start") return twimlMessage(fr && frCaEnabled() ? SMS_START_REPLY_FR : SMS_START_REPLY);
   return twimlEmpty();
 }

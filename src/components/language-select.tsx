@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRouteContext, useRouterState } from "@tanstack/react-router";
 import { ChevronDown, Globe } from "lucide-react";
+import { useFrCaPack } from "@/components/fr-ca-boot";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { activateLocale, isExtraLocale } from "@/lib/extra-copy";
 import { applyDocumentLocale, languageMeta, shippedLanguages } from "@/lib/languages";
@@ -60,8 +61,12 @@ export function LanguageSelect({
   pill?: boolean;
 }) {
   const { t, locale } = useCopy();
+<<<<<<< HEAD
   const a11yPass = useRouteContext({ from: "__root__", select: (s) => Boolean(s.a11yPass) });
   const [announced, setAnnounced] = useState<string | null>(null);
+=======
+  const frCa = useFrCaPack();
+>>>>>>> c8199c26 (Add the French (fr-CA) pack behind FEATURE_FR_CA.)
   const setLocale = useAppStore((s) => s.setLocale);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, isPending } = useCurrentUserState();
@@ -126,7 +131,7 @@ export function LanguageSelect({
       >
         {shippedLanguages().map((lang) => (
           <option key={lang.code} value={lang.code}>
-            {lang.native}
+            {frCa && lang.code === "fr" ? "Français (Canada)" : lang.native}
           </option>
         ))}
       </select>

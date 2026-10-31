@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { frCaEnabled } from "@/lib/features";
+import { tourRequestMail } from "@/lib/mail-copy";
 import { parentRequestSms } from "@/lib/sms-copy";
 import { nid } from "@/lib/utils";
 import { catalogByIdGet } from "@/lib/catalog";
@@ -252,20 +254,22 @@ export const createTourRequest = createServerFn({ method: "POST" })
     }
     const origin = process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://kidease.ca";
     const threadUrl = `${origin}/inbox/${cid}`;
+    const frenchMail = locale === "fr" && frCaEnabled();
+    const letter = frenchMail ? tourRequestMail(parentName, d.name, locale) : null;
     await Promise.all(
       recipients.map((r) =>
         notifyThreadParty({
           to: r.email,
           name: r.name,
-          subject: `Tour request for ${d.name}`,
-          preview: `${parentName} asked to tour ${d.name}. ${slots}`,
+          subject: letter?.daycareSubject ?? `Tour request for ${d.name}`,
+          preview: letter ? `${letter.preview} ${slots}`.trim() : `${parentName} asked to tour ${d.name}. ${slots}`,
           threadUrl,
           daycareName: d.name,
         }).catch(() => undefined),
       ),
     );
     void import("@/lib/server/sms-notify")
-      .then((mod) => mod.notifyCentreSms({ daycareId: data.daycareId, body: parentRequestSms(d.name) }))
+      .then((mod) => mod.notifyCentreSms({ daycareId: data.daycareId, body: parentRequestSms(d.name, locale) }))
       .catch(() => undefined);
 
     return { id: tourId, conversationId: cid, status: "pending" as const };

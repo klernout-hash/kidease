@@ -33,7 +33,7 @@ const REGION_ALIASES: Record<string, string> = {
 const CRAWLER =
   /googlebot|adsbot-google|mediapartners-google|google-inspectiontool|storebot-google|googleother|bingbot|slurp|duckduckbot|baiduspider|yandexbot|sogou|exabot|facebot|facebookexternalhit|ia_archiver|applebot|semrushbot|ahrefsbot|mj12bot|dotbot|petalbot|bytespider|gptbot|chatgpt-user|claudebot|perplexitybot|amazonbot|linkedinbot|twitterbot|slackbot|whatsapp|telegrambot|discordbot|embedly|pinterestbot|redditbot/i;
 
-export type LocaleDecisionSource = "query" | "profile" | "cookie" | "geo" | "default";
+export type LocaleDecisionSource = "query" | "profile" | "cookie" | "geo" | "browser" | "default";
 
 export type VisitorLocaleInput = {
   country?: string | null;
@@ -74,6 +74,11 @@ export type LocaleRedirectInput = VisitorLocaleInput & {
   accept?: string | null;
   secFetchDest?: string | null;
   userAgent?: string | null;
+  /**
+   * Set by the French pack when the browser or device prefers French
+   * and nobody has saved a choice. Ignored when unset.
+   */
+  preferredLocale?: "en" | "fr" | null;
 };
 
 export function normalizeGeoRegion(region?: string | null): string {
@@ -205,7 +210,8 @@ export function localeRedirectTarget(input: LocaleRedirectInput): string | null 
   if (!isPairedPath(pathname)) return null;
 
   const current = pathLocale(pathname);
-  const desired = decision.locale;
+  let desired = decision.locale;
+  if (!decision.explicit && input.preferredLocale === "fr") desired = "fr";
   if (!decision.explicit) {
     if (current === "fr") return null;
     if (desired !== "fr") return null;

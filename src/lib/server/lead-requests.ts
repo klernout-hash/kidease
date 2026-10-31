@@ -249,14 +249,19 @@ async function notifyNewLead(
   if (!d) return;
   const actor = await lookupUser(input.userId);
   const parentName = (actor.name || "A parent").trim() || "A parent";
+  const localeRows = await sql<{ locale: string | null; locale_chosen: boolean | string | number | null }>`
+    select locale, locale_chosen from profiles where user_id = ${input.userId} limit 1
+  `.catch(() => [] as { locale: string | null; locale_chosen: boolean | string | number | null }[]);
+  const { savedFrLocale } = await import("@/lib/fr-ca");
+  const mailLocale = savedFrLocale(localeRows[0]);
   const letter =
     input.kind === "waitlist"
-      ? waitlistRequestMail(parentName, d.name)
+      ? waitlistRequestMail(parentName, d.name, mailLocale)
       : input.kind === "spot_inquiry"
-        ? spotRequestMail(parentName, d.name)
+        ? spotRequestMail(parentName, d.name, null, mailLocale)
         : input.kind === "info"
-          ? infoQuestionMail(parentName, d.name)
-          : tourRequestMail(parentName, d.name);
+          ? infoQuestionMail(parentName, d.name, mailLocale)
+          : tourRequestMail(parentName, d.name, mailLocale);
   try {
     await notifyPlatform({
       kind: leadNotifyKind(input.kind),
@@ -298,7 +303,7 @@ async function notifyNewLead(
   );
   const { dispatchCustomerAlert } = await import("@/lib/server/alert-dispatch");
   void import("@/lib/server/sms-notify")
-    .then((mod) => mod.notifyCentreSms({ daycareId: input.daycareId, body: parentRequestSms(d.name) }))
+    .then((mod) => mod.notifyCentreSms({ daycareId: input.daycareId, body: parentRequestSms(d.name, mailLocale) }))
     .catch(() => undefined);
   await Promise.all(
     recipients.map((r) => {

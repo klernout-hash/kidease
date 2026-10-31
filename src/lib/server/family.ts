@@ -832,7 +832,7 @@ export const createSpotRequest = createServerFn({ method: "POST" })
     }
 
     void import("@/lib/server/sms-notify")
-      .then((mod) => mod.notifyCentreSms({ daycareId: data.daycareId, body: parentRequestSms(d.name) }))
+      .then((mod) => mod.notifyCentreSms({ daycareId: data.daycareId, body: parentRequestSms(d.name, locale) }))
       .catch(() => undefined);
 
     return {

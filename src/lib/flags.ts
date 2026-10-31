@@ -31,6 +31,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_OPEN_SPOTS_CHECKIN_SMS",
   "FEATURE_QC_HOME_DAYCARES",
   "FEATURE_AREA_WAITLIST_ALERTS",
+  "FEATURE_FR_CA",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -82,6 +83,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_QC_HOME_DAYCARES: false,
   /** Area waitlist email. Off until Kyle approves the wording. */
   FEATURE_AREA_WAITLIST_ALERTS: false,
+  /** French (fr-CA) auto-detect and the admin, government, email, and SMS pack. Off until Kyle turns it on. */
+  FEATURE_FR_CA: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -182,6 +185,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Email when an area waitlist matches a posted spot. Default off. Kyle approved the wording. In-app notices still save.",
+  },
+  {
+    key: "FEATURE_FR_CA",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "French (fr-CA) for parent, daycare, admin, and government screens, plus email and SMS. Auto-detect from the browser or device, and from Quebec or New Brunswick. Default off. A saved language choice still wins. The language toggle stays.",
   },
 ];
 
