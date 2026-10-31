@@ -195,8 +195,7 @@ export function areaAgeLabel(ageBand: string, locale: "en" | "fr"): string {
 }
 
 /**
- * Draft letter. Kyle must approve this wording before FEATURE_AREA_WAITLIST_ALERTS is turned on.
- * The send path does not call this while that flag is off.
+ * Kyle approved this wording. The send path still waits for FEATURE_AREA_WAITLIST_ALERTS, which defaults off.
  */
 export function areaWaitlistLetter(input: {
   locale: "en" | "fr";
@@ -246,4 +245,12 @@ export function areaWaitlistSms(input: { centre: string; city: string }): string
   const city = input.city.replace(/\s+/g, " ").trim().slice(0, 40);
   const where = city ? `${centre} in ${city}` : centre;
   return `KidEase: a spot may be open at ${where}. Open the listing in your account. Reply STOP to opt out.`;
+}
+
+/**
+ * Area-waitlist texts are free. They still need FEATURE_SMS and stored CASL
+ * SMS consent. Saved-search SMS stays on plus_plan=alerts.
+ */
+export function areaWaitlistSmsAllowed(input: { smsOn: boolean; caslConsent: boolean }): boolean {
+  return input.smsOn === true && input.caslConsent === true;
 }

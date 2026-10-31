@@ -5,11 +5,9 @@
  * Channels:
  *   - in-app bell now (search_alert_notices)
  *   - email only when FEATURE_AREA_WAITLIST_ALERTS is on (default off)
- *   - SMS only when FEATURE_SMS is on, CASL SMS consent is stored, and the
- *     parent has plus_plan=alerts (parentAlertsEntitled). Kyle still needs to
- *     decide if area texts should stay on that paid gate. This file does not
- *     change parentAlertsEntitled.
- *   - push only when FEATURE_PUSH is on. No send while it is off.
+ *   - SMS only when FEATURE_SMS is on and CASL SMS consent is stored.
+ *     Area texts do not require the paid alerts plan. Saved-search SMS still does.
+ *   - push stays behind FEATURE_PUSH and is not sent from this module.
  *
  * Geocoding uses the local Canadian city and postal-prefix table, then
  * Photon (OpenStreetMap). No Google.
@@ -19,7 +17,6 @@ import { geocode, haversineKm } from "@/lib/geo";
 import { PHOTON_USER_AGENT, photonSearchUrl, photonToPlace, type PhotonFeature } from "@/lib/photon";
 import { areaWaitlistAlertsEnabled } from "@/lib/features";
 import { isPublicListing, listingVisibilityInputFromDb } from "@/lib/listing-visibility";
-import { parentAlertsEntitled } from "@/lib/parent-plus";
 import { showsParentBrowseActions, navRoleForSession } from "@/lib/role-access";
 import { isAlertQuietHours, winnipegDayKey } from "@/lib/search-alert-policy";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
@@ -31,6 +28,7 @@ import {
   areaSpotKey,
   areaWaitlistLetter,
   areaWaitlistSms,
+  areaWaitlistSmsAllowed,
   normalizeCanadianPostal,
   planAreaWaitlistHits,
   type AreaWaitlistHit,
@@ -466,20 +464,19 @@ async function sendAreaEmail(
 
 async function sendAreaSms(sql: Sql, hit: AreaWaitlistHit & { sendId: string; quiet: boolean }) {
   const { smsEnabled } = await import("@/lib/features");
-  const rows = await sql<{ phone: string | null; plus_plan: string | null; plus_status: string | null }>`
-    select phone, plus_plan, plus_status from profiles where user_id = ${hit.userId} limit 1
-  `.catch(() => [] as Array<{ phone: string | null; plus_plan: string | null; plus_status: string | null }>);
-  // Same paid gate as saved-search SMS. Left unchanged for Kyle to decide.
-  const entitled = parentAlertsEntitled(rows[0]?.plus_plan, rows[0]?.plus_status);
-  if (!smsEnabled() || !entitled) {
+  const smsOn = smsEnabled();
+  if (!smsOn) {
     await sql`update area_waitlist_sends set sms_sent = 1 where id = ${hit.sendId}`.catch(() => undefined);
     return;
   }
   if (hit.quiet) return;
-  const { evaluateCaslSend } = await import("@/lib/server/casl-consent");
+  const rows = await sql<{ phone: string | null }>`
+    select phone from profiles where user_id = ${hit.userId} limit 1
+  `.catch(() => [] as Array<{ phone: string | null }>);
   const phone = rows[0]?.phone || "";
+  const { evaluateCaslSend } = await import("@/lib/server/casl-consent");
   const casl = await evaluateCaslSend({ userId: hit.userId, channel: "sms", purpose: "service", address: phone });
-  if (!casl.ok) {
+  if (!areaWaitlistSmsAllowed({ smsOn, caslConsent: casl.ok })) {
     await sql`update area_waitlist_sends set sms_sent = 1 where id = ${hit.sendId}`.catch(() => undefined);
     return;
   }

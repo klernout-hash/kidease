@@ -13,6 +13,7 @@ import {
   areaSpotKey,
   areaWaitlistLetter,
   areaWaitlistSms,
+  areaWaitlistSmsAllowed,
   normalizeCanadianPostal,
   planAreaWaitlistHits,
   vacancyIsNewer,
@@ -129,6 +130,19 @@ test("area email stays off and the draft is English and French", () => {
   assert.match(sms, /Sunny Side/);
 });
 
+test("area waitlist texts are free and still need the SMS flag and CASL consent", () => {
+  assert.equal(areaWaitlistSmsAllowed({ smsOn: true, caslConsent: true }), true);
+  assert.equal(areaWaitlistSmsAllowed({ smsOn: false, caslConsent: true }), false);
+  assert.equal(areaWaitlistSmsAllowed({ smsOn: true, caslConsent: false }), false);
+  assert.equal(areaWaitlistSmsAllowed({ smsOn: false, caslConsent: false }), false);
+  const job = src("src/lib/server/area-waitlist-job.ts");
+  assert.match(job, /areaWaitlistSmsAllowed/);
+  assert.doesNotMatch(job, /parentAlertsEntitled|plus_plan/);
+  const saved = src("src/lib/server/search-alerts.ts");
+  assert.match(saved, /parentAlertsEntitled/);
+  assert.match(saved, /plus_plan=alerts/);
+});
+
 test("guest waitlist copy tells parents how to join, in English and French", () => {
   const en = areaWaitlistCopy("en");
   const fr = areaWaitlistCopy("fr");
@@ -164,7 +178,7 @@ test("join buttons, role hide, and the alert job stay on the existing rails", ()
   assert.match(page, /parentSignupSearch/);
   assert.match(server, /photon\.komoot\.io|photonSearchUrl/);
   assert.doesNotMatch(server, /maps\.googleapis|google\.com\/maps|nominatim/i);
-  assert.match(server, /parentAlertsEntitled/);
+  assert.doesNotMatch(server, /parentAlertsEntitled/);
   assert.match(server, /FEATURE_AREA_WAITLIST_ALERTS|areaWaitlistAlertsEnabled/);
   assert.match(server, /FEATURE_PUSH/);
   assert.doesNotMatch(server, /push\.server|alert-dispatch/);

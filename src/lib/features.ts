@@ -106,7 +106,7 @@ export function qcHomeDaycaresEnabled(env?: EnvMap): boolean {
 
 /**
  * Email when an area waitlist matches a posted spot. Default OFF.
- * Kyle must approve the wording before this is turned on. In-app notices still save.
+ * Kyle approved the wording. Set this to send it. In-app notices still save.
  */
 export function areaWaitlistAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_AREA_WAITLIST_ALERTS", env);

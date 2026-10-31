@@ -181,7 +181,7 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary:
-      "Email when an area waitlist matches a posted spot. Default off until Kyle approves the wording. In-app notices still save.",
+      "Email when an area waitlist matches a posted spot. Default off. Kyle approved the wording. In-app notices still save.",
   },
 ];
 
