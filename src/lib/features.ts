@@ -112,6 +112,76 @@ export function areaWaitlistAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_AREA_WAITLIST_ALERTS", env);
 }
 
+/** PostHog exception capture. Default off. Live send still needs FEATURE_POSTHOG_ERRORS_LIVE. */
+export function posthogErrorsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_POSTHOG_ERRORS", env);
+}
+
+/** Ops mail to kyle@kidease.ca. Default off. */
+export function opsAlertsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_OPS_ALERTS", env);
+}
+
+/** Better Stack heartbeat after a successful cron. Default off. */
+export function cronHeartbeatsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_CRON_HEARTBEATS", env);
+}
+
+/** Bill due reminders. Default off. */
+export function invoiceRemindersEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_INVOICE_REMINDERS", env);
+}
+
+/** Failed-payment follow-ups. Default off. */
+export function paymentDunningEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PAYMENT_DUNNING", env);
+}
+
+/** Weekly missing-info mail. Default off. */
+export function missingInfoRemindersEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_MISSING_INFO_REMINDERS", env);
+}
+
+/** Daycare claim onboarding series. Default off. */
+export function daycareOnboardingEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_DAYCARE_ONBOARDING", env);
+}
+
+/** Unclaimed-listing claim reminders. Default off. */
+export function claimListingRemindersEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_CLAIM_LISTING_REMINDERS", env);
+}
+
+/** Hide stale open spots. Default off. */
+export function staleOpenSpotsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_STALE_OPEN_SPOTS", env);
+}
+
+/** Post-tour email. Default off. */
+export function postTourFollowupEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_POST_TOUR_FOLLOWUP", env);
+}
+
+/** Enrolment review invite. Default off. */
+export function enrolmentReviewEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_ENROLMENT_REVIEW", env);
+}
+
+/** Weekly database backup. Default off. */
+export function neonBackupEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_NEON_BACKUP", env);
+}
+
+/** Cached ON, BC, and AB inspection rows on a listing. Default off. */
+export function inspectionHistoryEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_INSPECTION_HISTORY", env);
+}
+
+/** Per-province vacancy pages and confirm history. Default OFF. The national index stays. */
+export function provincialVacancyIndexEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PROVINCIAL_VACANCY_INDEX", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;

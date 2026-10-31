@@ -21,6 +21,7 @@ import { listTourRequests } from "@/lib/server/tours";
 import { listLeadRequests } from "@/lib/server/lead-requests";
 import type { LeadRequest } from "@/lib/lead-requests";
 import { listParentBills } from "@/lib/server/billing";
+import { StripeInvoiceList } from "@/components/stripe-invoice-list";
 import { shareChildWithCentres } from "@/lib/server/enrol-queue";
 import { parentPayEmptyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
@@ -665,6 +666,9 @@ export function ParentDesk({
               className="mt-2"
               ready={desksReady}
             />
+            <div className="mt-6">
+              <StripeInvoiceList audience="parent" />
+            </div>
           </div>
           <div>
             <h3 className="font-display text-xl">{t("openBills")}</h3>

@@ -14,6 +14,10 @@ export type OpenSpotsCopy = {
   desk: string;
   mailOff: string;
   smsSoon: string;
+  feesLead: string;
+  feeInfant: string;
+  feeToddler: string;
+  feePreschool: string;
 };
 
 const en: OpenSpotsCopy = {
@@ -36,6 +40,10 @@ const en: OpenSpotsCopy = {
   desk: "Open your daycare desk",
   mailOff: "The weekly email is off until KidEase turns it on.",
   smsSoon: "Text check-in is coming soon. The toll-free number is not approved yet.",
+  feesLead: "Monthly fees are optional. Enter what parents pay. A blank box keeps the current amount.",
+  feeInfant: "Infant fee, CAD per month",
+  feeToddler: "Toddler fee, CAD per month",
+  feePreschool: "Preschool fee, CAD per month",
 };
 
 const fr: OpenSpotsCopy = {
@@ -58,6 +66,10 @@ const fr: OpenSpotsCopy = {
   desk: "Ouvrir votre bureau",
   mailOff: "Le courriel hebdomadaire est éteint jusqu'à ce que KidEase l'active.",
   smsSoon: "Le texto arrive bientôt. Le numéro sans frais n'est pas encore approuvé.",
+  feesLead: "Les tarifs mensuels sont facultatifs. Inscrivez ce que les parents paient. Une case vide garde le montant actuel.",
+  feeInfant: "Tarif nourrisson, CAD par mois",
+  feeToddler: "Tarif trottineur, CAD par mois",
+  feePreschool: "Tarif préscolaire, CAD par mois",
 };
 
 export function openSpotsCopy(locale: string | null | undefined): OpenSpotsCopy {

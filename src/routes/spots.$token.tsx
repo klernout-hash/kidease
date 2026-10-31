@@ -38,6 +38,7 @@ function OpenSpotsPage() {
   const copy = openSpotsCopy(locale);
   const [busy, setBusy] = useState<OpenSpotsBand | null>(null);
   const [saved, setSaved] = useState<null | { band: OpenSpotsBand; splitKnown: boolean; age: string | null }>(null);
+  const [fees, setFees] = useState({ infantMonthly: "", toddlerMonthly: "", preschoolMonthly: "" });
 
   if (!preview.ok) {
     return (
@@ -51,7 +52,7 @@ function OpenSpotsPage() {
 
   function onSave(next: OpenSpotsBand) {
     setBusy(next);
-    void saveOpenSpotsCheckin({ data: { token, band: next } })
+    void saveOpenSpotsCheckin({ data: { token, band: next, ...fees } })
       .then((result) => {
         if (!result.ok) {
           toast.error(copy.invalid);
@@ -75,6 +76,27 @@ function OpenSpotsPage() {
         <p className="mt-4 font-medium">{preview.name}</p>
         <p className="mt-2 text-muted">{copy.views(preview.views)}</p>
         <p className="mt-2 text-muted">{copy.lead}</p>
+        <fieldset className="mt-6 space-y-3">
+          <legend className="text-sm font-medium">{copy.feesLead}</legend>
+          {(
+            [
+              ["infantMonthly", copy.feeInfant],
+              ["toddlerMonthly", copy.feeToddler],
+              ["preschoolMonthly", copy.feePreschool],
+            ] as const
+          ).map(([key, label]) => (
+            <label key={key} className="block text-sm">
+              {label}
+              <input
+                inputMode="decimal"
+                value={fees[key]}
+                onChange={(e) => setFees((s) => ({ ...s, [key]: e.target.value }))}
+                className="ke-input mt-1 min-h-11 w-full"
+                autoComplete="off"
+              />
+            </label>
+          ))}
+        </fieldset>
         <div className="mt-6 flex flex-wrap gap-2">
           {BANDS.map((value) => {
             const label = bandLabel(value);

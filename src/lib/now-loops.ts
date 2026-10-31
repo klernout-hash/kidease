@@ -55,6 +55,8 @@ export type VacancyHonestyInput = Pick<
   | "availabilityKnown"
 > & {
   spotsTotal?: number;
+  /** Set when open spots were hidden after 30 days without an update. */
+  openSpotsHiddenAt?: string | null;
 };
 
 export type HonestVacancy =
@@ -165,6 +167,9 @@ function spotsOf(d: VacancyHonestyInput): number {
 export function honestVacancy(d: VacancyHonestyInput, now = Date.now()): HonestVacancy {
   if (!isLiveOrClaimed(d)) {
     return { kind: "unknown", labelKey: "availabilityUnknown" };
+  }
+  if (d.openSpotsHiddenAt) {
+    return { kind: "confirm", labelKey: "confirmWithCentre" };
   }
   const freshness = vacancyFreshness(vacancyTimestamp(d), now);
   if (freshness.kind !== "fresh") {

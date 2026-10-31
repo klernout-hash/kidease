@@ -19,16 +19,17 @@ import { captureRetentionTouch } from "@/lib/retention";
  * account id when a real session is present.
  * Missing VITE_PUBLIC_POSTHOG_KEY is a no-op: the app still boots.
  */
-export function PostHogBoot() {
+export function PostHogBoot({ captureExceptions = false }: { captureExceptions?: boolean }) {
   const { user, isPending } = useCurrentUserState();
 
   useEffect(() => {
     // Granted visitors must init on mount. Deferring until the browser is
     // idle dropped the landing pageview when they left first.
     // startPostHog still no-ops until Allow.
-    startPostHog();
+    // Exception capture stays off unless FEATURE_POSTHOG_ERRORS_LIVE is on.
+    startPostHog({ captureExceptions });
     captureRetentionTouch();
-  }, []);
+  }, [captureExceptions]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

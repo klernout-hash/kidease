@@ -69,6 +69,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<{ daycareId: string; name: string; code: string } | null>(null);
   const [code, setCode] = useState("");
+  const [claimFees, setClaimFees] = useState({ infantMonthly: "", toddlerMonthly: "", preschoolMonthly: "" });
   const [license, setLicense] = useState("");
   const [enroll, setEnroll] = useState({ name: "", email: "", centre: "", city: "", phone: "", body: "", daycareId: "" });
   const [enrollLicense, setEnrollLicense] = useState("");
@@ -209,7 +210,17 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
     }
     setBusy(true);
     try {
-      await verifyClaim({ data: { daycareId: pending.daycareId, code, licensePhoto: license, turnstileToken: claimChallenge.token } });
+      await verifyClaim({
+        data: {
+          daycareId: pending.daycareId,
+          code,
+          licensePhoto: license,
+          turnstileToken: claimChallenge.token,
+          infantMonthly: claimFees.infantMonthly,
+          toddlerMonthly: claimFees.toddlerMonthly,
+          preschoolMonthly: claimFees.preschoolMonthly,
+        },
+      });
       confirmAction(t, "claimSubmitted", {
         primaryLabel: t("successOpenDesk"),
         onClose: () => {
@@ -350,6 +361,27 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
             ) : license ? (
               <p className="text-sm text-muted">{t("claimPdfSelected")}</p>
             ) : null}
+            <fieldset className="space-y-3">
+              <legend className="text-sm font-medium">{t("claimFeeLead")}</legend>
+              {(
+                [
+                  ["infantMonthly", "infantFee"],
+                  ["toddlerMonthly", "toddlerFee"],
+                  ["preschoolMonthly", "preschoolFee"],
+                ] as const
+              ).map(([key, label]) => (
+                <label key={key} className="block text-sm">
+                  {t(label)}
+                  <input
+                    inputMode="decimal"
+                    value={claimFees[key]}
+                    onChange={(e) => setClaimFees((s) => ({ ...s, [key]: e.target.value }))}
+                    className="ke-input mt-1 min-h-11"
+                    autoComplete="off"
+                  />
+                </label>
+              ))}
+            </fieldset>
             <TurnstileField onToken={claimChallenge.onToken} />
             <div className="flex flex-wrap gap-2">
               <Button type="submit" disabled={busy}>

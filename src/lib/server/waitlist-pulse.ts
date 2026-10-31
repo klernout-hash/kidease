@@ -488,7 +488,8 @@ export async function insertWaitlistPulse(input: {
   `;
   await sql`
     update daycares
-    set last_vacancy_updated_at = now()
+    set last_vacancy_updated_at = now(),
+        open_spots_hidden_at = null
     where id = ${input.daycareId}
   `.catch(() => undefined);
   return { pulseId };

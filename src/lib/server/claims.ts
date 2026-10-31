@@ -9,6 +9,7 @@ import {
   providerDeskListingVisible,
 } from "@/lib/listing-visibility";
 import { nid } from "@/lib/utils";
+import { recordVacancyEvent } from "./vacancy-history";
 import { upsertDaycare } from "./seed";
 import { callerIsAdmin } from "./public-listing";
 import { mapDaycare, type DaycareRow } from "./map-row";
@@ -259,7 +260,15 @@ export const startClaim = createServerFn({ method: "POST" })
 
 export const verifyClaim = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { daycareId: string; code: string; licensePhoto?: string; turnstileToken?: string }) => input)
+  .validator((input: {
+    daycareId: string;
+    code: string;
+    licensePhoto?: string;
+    turnstileToken?: string;
+    infantMonthly?: unknown;
+    toddlerMonthly?: unknown;
+    preschoolMonthly?: unknown;
+  }) => input)
   .handler(async ({ context, data }) => {
     const { assertTurnstileToken } = await import("@/lib/server/turnstile");
     await assertTurnstileToken(data.turnstileToken);
@@ -282,6 +291,8 @@ export const verifyClaim = createServerFn({ method: "POST" })
       where id = ${claim.id}
     `;
     await storeLicensePhoto(sql, data.daycareId, photo);
+    const { saveCentreMonthlyFees } = await import("@/lib/server/fee-confidence");
+    await saveCentreMonthlyFees(data.daycareId, data).catch(() => undefined);
     await sql`
       insert into provider_daycares (user_id, daycare_id)
       values (${context.userId}, ${data.daycareId})
@@ -603,6 +614,9 @@ export const updateListing = createServerFn({ method: "POST" })
     const infantMonthly = nonNegativeInt(data.infantMonthly);
     const toddlerMonthly = nonNegativeInt(data.toddlerMonthly);
     const preschoolMonthly = nonNegativeInt(data.preschoolMonthly);
+    const centreFees = infantMonthly > 0 || toddlerMonthly > 0 || preschoolMonthly > 0;
+    const { ensureFeeConfidenceColumn } = await import("@/lib/server/fee-confidence");
+    if (centreFees) await ensureFeeConfidenceColumn();
     const license = await persistLicenseInput(data.licensePhoto, data.daycareId);
     const hours = (data.hours ?? "").trim();
     const licenseNumber = (data.licenseNumber ?? "").trim().slice(0, 80);
@@ -628,6 +642,7 @@ export const updateListing = createServerFn({ method: "POST" })
         infant_monthly = ${infantMonthly},
         toddler_monthly = ${toddlerMonthly},
         preschool_monthly = ${preschoolMonthly},
+        fee_confidence = case when ${centreFees} then 'centre' else fee_confidence end,
         age_min_months = ${minAge},
         age_max_months = ${maxAge},
         ages_confirmed = 1,
@@ -639,6 +654,10 @@ export const updateListing = createServerFn({ method: "POST" })
         last_vacancy_updated_at = case
           when ${Boolean(data.touchVacancy)} then now()
           else last_vacancy_updated_at
+        end,
+        open_spots_hidden_at = case
+          when ${Boolean(data.touchVacancy)} then null
+          else open_spots_hidden_at
         end,
         last_photo_updated_at = case
           when ${photosChanged} then now()
@@ -789,9 +808,14 @@ export const refreshVacancy = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     await assertCentreCanMutateVacancies(sql, context.userId, data.daycareId);
+    const logged = await recordVacancyEvent({ daycareId: data.daycareId, source: "confirm" });
+    if (logged.recorded) {
+      return { ok: true as const, lastVacancyUpdatedAt: new Date().toISOString() };
+    }
     const wrote = await sql<{ id: string }>`
       update daycares
-      set last_vacancy_updated_at = now()
+      set last_vacancy_updated_at = now(),
+          open_spots_hidden_at = null
       where id = ${data.daycareId}
       returning id
     `;

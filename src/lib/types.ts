@@ -110,9 +110,13 @@ export type Daycare = {
   feeProgram?: string | null;
   /** Operator citation for a sourced age, fee, or photo. Not shown raw. */
   factSource?: string | null;
+  /** centre = the centre typed the fee. estimate = a public provincial backfill. */
+  feeConfidence?: "centre" | "estimate" | null;
   availabilityKnown?: boolean;
   spotsUpdatedAt?: string | null;
   lastVacancyUpdatedAt?: string | null;
+  /** Set when open spots were hidden after 30 days without an update. */
+  openSpotsHiddenAt?: string | null;
   lastPhotoUpdatedAt?: string | null;
   detailsReady?: boolean;
   completenessMissing?: Array<"fees" | "ages" | "hours" | "license" | "photo">;

@@ -507,6 +507,8 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
     await drainAlertOutbox({ now }).catch(() => undefined);
     const { runCustomerAlertMaintenance } = await import("@/lib/server/alert-fanout");
     await runCustomerAlertMaintenance(now).catch(() => undefined);
+    const { flushHeldInvoiceSms } = await import("@/lib/server/stripe-parent-invoices");
+    await flushHeldInvoiceSms({ now }).catch(() => undefined);
   }
   const nowMs = now.getTime();
   const sql = await getSql();

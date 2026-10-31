@@ -101,6 +101,7 @@ import { formatMonth, money, displayCentreName, displayListingText } from "@/lib
 import { openDirections } from "@/lib/maps";
 import { ListingMap } from "@/components/listing-map";
 import { OpenInMapsLink } from "@/components/map-unavailable";
+import type { PublicInspection } from "@/lib/inspection-history";
 import type { AvailabilityRow, Daycare, DaycareCard as Card, Review } from "@/lib/types";
 import { parseListingAsk, type ListingAsk } from "@/lib/lead-requests";
 
@@ -222,6 +223,7 @@ export function Listing() {
     availability: AvailabilityRow[];
     nearby: Card[];
     jobs?: CentreJobPost[];
+    inspections?: PublicInspection[];
   } | null>(null);
   const [photo, setPhoto] = useState(0);
   const [requestOpen, setRequestOpen] = useState(false);
@@ -833,6 +835,7 @@ export function Listing() {
             listingId={d.id}
             licenseStatus={d.licenseStatus}
             claimed={Boolean(d.claimed)}
+            inspections={data.inspections}
           />
         </header>
         <ListingJumpNav />
@@ -898,6 +901,20 @@ export function Listing() {
               ) : null}
               {feeNotes.source === "public" ? (
                 <p className="mt-2 text-xs text-muted">{t("feeSourcePublic")}</p>
+              ) : null}
+              {feeNotes.confidence === "estimate" ? (
+                <p className="mt-2 max-w-prose text-sm text-muted" data-ke="fee-confidence">
+                  <span className="font-medium text-fg">{t("feeProvincialEstimate")}</span>
+                  {" "}
+                  {t("feeProvincialEstimateLead")}
+                </p>
+              ) : null}
+              {feeNotes.confidence === "centre" ? (
+                <p className="mt-2 max-w-prose text-sm text-muted" data-ke="fee-confidence">
+                  <span className="font-medium text-fg">{t("feeConfirmedByCentre")}</span>
+                  {" "}
+                  {t("feeConfirmedByCentreLead")}
+                </p>
               ) : null}
               {feeNotes.unconfirmed ? (
                 <p className="mt-2 max-w-prose text-sm text-muted">{t("feeUnknownLead")}</p>

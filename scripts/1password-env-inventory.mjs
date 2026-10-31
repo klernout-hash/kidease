@@ -146,7 +146,14 @@ export const GROUPS = [
         concealed: true,
         vercel: "both",
         required: false,
-        notes: "whsec_… Checkout / Connect webhook HMAC.",
+        notes: "whsec_… Checkout / Connect webhook HMAC. Live events.",
+      },
+      {
+        name: "STRIPE_WEBHOOK_SECRET_TEST",
+        concealed: true,
+        vercel: "preview",
+        required: false,
+        notes: "Preview only. Test-mode webhook signing secret for livemode false. Falls back to STRIPE_WEBHOOK_SECRET when unset.",
       },
       {
         name: "STRIPE_CONNECT_CLIENT_ID",

@@ -188,6 +188,8 @@ export const applyWinnipegGaps = createServerFn({ method: "POST" })
     assertRecentReauth(context.userId);
     if (!data.patches.length) throw new Error("Nothing to apply");
     const sql = await getSql();
+    const { ensureFeeConfidenceColumn } = await import("@/lib/server/fee-confidence");
+    await ensureFeeConfidenceColumn();
     const applied: string[] = [];
     const skipped: string[] = [];
     const rejected: Array<{ id: string; reason: string }> = [];
@@ -236,7 +238,16 @@ export const applyWinnipegGaps = createServerFn({ method: "POST" })
              infant_monthly = case when $2::int is null or coalesce(infant_monthly, 0) > 0 then infant_monthly else $2 end,
              toddler_monthly = case when $3::int is null or coalesce(toddler_monthly, 0) > 0 then toddler_monthly else $3 end,
              preschool_monthly = case when $4::int is null or coalesce(preschool_monthly, 0) > 0 then preschool_monthly else $4 end,
-             part_time_monthly = case when $5::int is null or coalesce(part_time_monthly, 0) > 0 then part_time_monthly else $5 end
+             part_time_monthly = case when $5::int is null or coalesce(part_time_monthly, 0) > 0 then part_time_monthly else $5 end,
+             fee_confidence = case
+               when fee_confidence = 'centre' then fee_confidence
+               when ($2::int is not null and coalesce(infant_monthly, 0) = 0)
+                 or ($3::int is not null and coalesce(toddler_monthly, 0) = 0)
+                 or ($4::int is not null and coalesce(preschool_monthly, 0) = 0)
+                 or ($5::int is not null and coalesce(part_time_monthly, 0) = 0)
+               then 'estimate'
+               else fee_confidence
+             end
            where id = $1`,
           [
             plan.id,

@@ -60,8 +60,9 @@ See `docs/catalog-source.md`.
 
 | Name | Conceal | Vercel | Notes |
 | --- | --- | --- | --- |
-| `STRIPE_SECRET_KEY` | yes | both | Only `sk_live_` turns charges on. |
-| `STRIPE_WEBHOOK_SECRET` | yes | both | `whsec_…` |
+| `STRIPE_SECRET_KEY` | yes | both | Only `sk_live_` turns charges on. Preview uses the test secret key. |
+| `STRIPE_WEBHOOK_SECRET` | yes | both | Live webhook signing secret. |
+| `STRIPE_WEBHOOK_SECRET_TEST` | yes | preview | Test-mode webhook signing secret. Used when `livemode` is false. |
 | `STRIPE_PUBLISHABLE_KEY` | no | both | `pk_…` |
 | `STRIPE_CONNECT_CLIENT_ID` | no | both | `ca_…` |
 | `STRIPE_PRICE_*` | no | both | `price_…` ids — not secret keys. |

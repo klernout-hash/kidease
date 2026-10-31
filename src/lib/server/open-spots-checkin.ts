@@ -109,6 +109,7 @@ export async function applyOpenSpotsLink(
   token: string,
   band: OpenSpotsBand,
   now = Date.now(),
+  fees?: { infantMonthly?: unknown; toddlerMonthly?: unknown; preschoolMonthly?: unknown },
 ): Promise<
   | { ok: false }
   | { ok: true; name: string; views: number; band: OpenSpotsBand; splitKnown: boolean; age: string | null }
@@ -128,14 +129,16 @@ export async function applyOpenSpotsLink(
         spots_toddler = ${next.spots.toddler},
         spots_preschool = ${next.spots.preschool},
         confirmed_open_spots = ${next.confirmedOpenSpots},
-        last_vacancy_updated_at = now()
+        last_vacancy_updated_at = now(),
+        open_spots_hidden_at = null
       where id = ${row.id}
     `;
   } else {
     await sql`
       update daycares set
         confirmed_open_spots = ${next.confirmedOpenSpots},
-        last_vacancy_updated_at = now()
+        last_vacancy_updated_at = now(),
+        open_spots_hidden_at = null
       where id = ${row.id}
     `;
   }
@@ -144,6 +147,10 @@ export async function applyOpenSpotsLink(
     insert into open_spots_checkins (id, daycare_id, band, views_week, split_known)
     values (${id}, ${row.id}, ${band}, ${views}, ${next.splitKnown})
   `.catch(() => undefined);
+  if (fees) {
+    const { saveCentreMonthlyFees } = await import("@/lib/server/fee-confidence");
+    await saveCentreMonthlyFees(row.id, fees).catch(() => undefined);
+  }
   return {
     ok: true,
     name: row.name,
@@ -296,10 +303,22 @@ export const previewOpenSpotsCheckin = createServerFn({ method: "GET" })
   .handler(async ({ data }) => previewOpenSpotsLink(data));
 
 export const saveOpenSpotsCheckin = createServerFn({ method: "POST" })
-  .validator((input: { token?: string; band?: number }) => {
+  .validator((input: {
+    token?: string;
+    band?: number;
+    infantMonthly?: unknown;
+    toddlerMonthly?: unknown;
+    preschoolMonthly?: unknown;
+  }) => {
     const band = Number(input?.band);
     const token = String(input?.token || "").trim();
     if (!token || !isOpenSpotsBand(band)) throw new Error("This link is not valid.");
-    return { token, band };
+    return {
+      token,
+      band,
+      infantMonthly: input?.infantMonthly,
+      toddlerMonthly: input?.toddlerMonthly,
+      preschoolMonthly: input?.preschoolMonthly,
+    };
   })
-  .handler(async ({ data }) => applyOpenSpotsLink(data.token, data.band));
+  .handler(async ({ data }) => applyOpenSpotsLink(data.token, data.band, Date.now(), data));

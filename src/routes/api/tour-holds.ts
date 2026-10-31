@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { cronAuthorized } from "@/lib/cron-auth";
+import { pingCronHeartbeat } from "@/lib/server/cron-heartbeat";
 import { shouldDeferTourHoldsToInngest } from "@/lib/inngest";
 import { runExpireTourHoldsJob } from "@/lib/server/tour-holds";
 import { logSecurityEvent, requestIp } from "@/lib/server/security-events";
@@ -23,6 +24,7 @@ async function run(request: Request) {
   }
   const result = await runExpireTourHoldsJob({ dryRun });
   await logSecurityEvent({ kind: "tour_holds_run", ip, detail: dryRun ? "dry-run" : "ok" });
+  await pingCronHeartbeat("tour-holds");
   return Response.json(result);
 }
 

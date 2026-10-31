@@ -393,7 +393,7 @@ describe("PostHog client wiring", () => {
     const boot = read("src/components/posthog-boot.tsx");
     assert.match(auth, /resetPostHogIdentity\(\)/);
     assert.match(rootRoute, /PostHogBoot/);
-    assert.match(boot, /startPostHog\(\)/);
+    assert.match(boot, /startPostHog\(/);
     assert.match(read("src/lib/posthog.ts"), /if \(started \|\| typeof window === "undefined"\) return/);
     assert.match(read("src/lib/posthog.ts"), /started = false/);
     assert.doesNotMatch(read("src/components/posthog-boot.tsx"), /requestIdleCallback/);

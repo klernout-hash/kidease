@@ -101,6 +101,35 @@ export async function putR2ObjectBytes(input: {
   }
 }
 
+/** Database backups are not images. Cap is 200 MB so a serverless run can hold the file. */
+export async function putR2BackupBytes(input: { key: string; body: Buffer }): Promise<R2PutResult> {
+  const config = requireConfig();
+  const key = sanitizeObjectKey(input.key);
+  if (!key.startsWith("backups/neon/")) throw new Error("Backup key is not allowed.");
+  const body = input.body;
+  if (!body.byteLength) throw new Error("Object body is required.");
+  if (body.byteLength > 200 * 1024 * 1024) throw new Error("Backup is too large.");
+  const contentType = "application/octet-stream";
+  const url = objectUrl(config, key);
+  const signed = signS3Request({
+    method: "PUT",
+    url,
+    headers: {
+      "content-type": contentType,
+      "content-length": String(body.byteLength),
+    },
+    body,
+    accessKeyId: config.accessKeyId,
+    secretAccessKey: config.secretAccessKey,
+  });
+  try {
+    const res = await r2Fetch(signed, "PUT", body);
+    return { key, bytes: body.byteLength, contentType, etag: res.headers.get("etag") };
+  } catch (err) {
+    throw new Error(humanR2Error(err, config.secretAccessKey));
+  }
+}
+
 export async function putR2Object(input: {
   key: string;
   contentType: string;

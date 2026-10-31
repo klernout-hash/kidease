@@ -4,7 +4,8 @@ import { logSecurityEvent, requestIp } from "@/lib/server/security-events";
 import { applyStripeBillEvent } from "@/lib/server/billing";
 import { applyConnectSideEffect, queueMonthlyFeeTax } from "@/lib/server/connect-payments";
 import { applyStripeDisputeEvent, applyStripeSubscriptionEvent } from "@/lib/server/stripe-lifecycle";
-import { webhookSecrets } from "@/lib/connect-payments";
+import { selectStripeWebhookSecrets } from "@/lib/connect-payments";
+import { applyParentStripeInvoice } from "@/lib/server/stripe-parent-invoices";
 
 const BILL_TYPES = new Set([
   "payment_intent.succeeded",
@@ -23,13 +24,20 @@ const SUB_TYPES = new Set([
   "invoice.payment_failed",
 ]);
 
+const PARENT_INVOICE_TYPES = new Set(["invoice.finalized", "invoice.paid", "invoice.payment_failed"]);
+
 /**
  * Stripe webhook sink. Missing secret → 401. Missing or bad stripe-signature → 400.
  * Uses the same HMAC scheme as stripe.webhooks.constructEvent.
+ * livemode false verifies with STRIPE_WEBHOOK_SECRET_TEST when that Preview
+ * secret is set, and falls back to STRIPE_WEBHOOK_SECRET otherwise.
+ * Same event id is a no-op.
+ * Does not turn SUBSCRIPTIONS_ENABLED on, and does not enable Apple or Google
+ * in-app purchases. Existing subscription events stay on their current path.
  */
 async function run(request: Request) {
   const raw = await request.text();
-  const secrets = webhookSecrets();
+  const secrets = selectStripeWebhookSecrets(raw);
   const sig = request.headers.get("stripe-signature") || "";
   const ip = requestIp(request);
 
@@ -121,9 +129,33 @@ async function run(request: Request) {
     }
   }
 
+  let invoiceId: string | null = null;
+  let parentUserId: string | null = null;
+  let unlinked: string | null = null;
+  if (PARENT_INVOICE_TYPES.has(type)) {
+    try {
+      const livemode = (event as { livemode?: boolean }).livemode === true;
+      const invoice = await applyParentStripeInvoice({
+        eventId: event.id,
+        type,
+        object,
+        livemode,
+      });
+      invoiceId = invoice.invoiceId;
+      parentUserId = invoice.parentUserId;
+      unlinked = invoice.unlinked;
+      if (!userId && parentUserId) userId = parentUserId;
+    } catch (err) {
+      console.error("[kidease-invoice] webhook apply failed", err);
+      releaseStripeEventClaim(event.id);
+      return Response.json({ ok: false, error: "invoice apply failed" }, { status: 500 });
+    }
+  }
+
   if (
     BILL_TYPES.has(type) ||
     SUB_TYPES.has(type) ||
+    PARENT_INVOICE_TYPES.has(type) ||
     type === "charge.dispute.created"
   ) {
     return Response.json({
@@ -132,6 +164,9 @@ async function run(request: Request) {
       id: event.data?.object?.id ?? event.id ?? null,
       billId: bill?.billId ?? null,
       billStatus: bill?.status ?? null,
+      invoiceId,
+      parentUserId,
+      unlinked,
       userId,
     });
   }

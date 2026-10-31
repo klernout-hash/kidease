@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
+import { licenceVerifiedExtra } from "@/lib/license-status";
 import {
   formatAttestedOn,
   trustBadgesFor,
@@ -85,8 +86,10 @@ export function TrustSignals({
   compact?: boolean;
   className?: string;
 }) {
-  const { locale } = useCopy();
+  const { locale, t } = useCopy();
   const badges = trustBadgesFor(item, surface, stripeLive);
+  const licenceDate = formatAttestedOn(item.licenseVerifiedAt, locale === "fr" ? "fr-CA" : "en-CA");
+  const licenceExtra = licenceVerifiedExtra(licenceDate, t("verifiedOn"));
   if (!badges.length) return null;
   return (
     <div className={cn("flex flex-wrap items-center gap-1.5", className)}>
@@ -97,7 +100,9 @@ export function TrustSignals({
           invert={invert}
           compact={compact}
           extra={
-            badge.id === "screening_on_file"
+            badge.id === "license_verified"
+              ? licenceExtra || undefined
+              : badge.id === "screening_on_file"
               ? formatAttestedOn(item.screeningOnFileAt, locale === "fr" ? "fr-CA" : "en-CA")
               : badge.id === "staff_attested"
                 ? formatAttestedOn(item.staffScreeningAttestedAt, locale === "fr" ? "fr-CA" : "en-CA")

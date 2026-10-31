@@ -20,6 +20,8 @@ export type VacancySourceRow = {
   spotsToddler?: number | null;
   spotsPreschool?: number | null;
   vacancyConfirmed?: boolean | null;
+  /** ISO time of the last centre confirm. Missing stays unknown. */
+  lastVacancyUpdatedAt?: string | null;
 };
 
 export type VacancyBandCount = {
