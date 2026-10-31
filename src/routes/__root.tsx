@@ -118,11 +118,8 @@ export const Route = createRootRoute({
       storeChannel,
       hideAdmin,
       microsoftSetCookie: storeRead.setCookie,
-<<<<<<< HEAD
       a11yPass: a11yPassEnabled(),
-=======
       frCa: frCa === true,
->>>>>>> c8199c26 (Add the French (fr-CA) pack behind FEATURE_FR_CA.)
     };
   },
   errorComponent: (props) => {

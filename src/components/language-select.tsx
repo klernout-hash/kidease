@@ -61,12 +61,9 @@ export function LanguageSelect({
   pill?: boolean;
 }) {
   const { t, locale } = useCopy();
-<<<<<<< HEAD
   const a11yPass = useRouteContext({ from: "__root__", select: (s) => Boolean(s.a11yPass) });
   const [announced, setAnnounced] = useState<string | null>(null);
-=======
   const frCa = useFrCaPack();
->>>>>>> c8199c26 (Add the French (fr-CA) pack behind FEATURE_FR_CA.)
   const setLocale = useAppStore((s) => s.setLocale);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, isPending } = useCurrentUserState();
