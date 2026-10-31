@@ -29,7 +29,9 @@ No new geography column. Matching reads `daycares.location` from `0011_listing_g
 
 `filters` JSONB mirrors `/search` chips, including PR #59 when present:
 
-`avail`, `liveOnly`, `ten`, `meals`, `outdoor`, `inclusive`, `extended`, `infantOnly`, `catchmentOnly`, `confirmedOnly`, `readyOnly`, `claimVerifiedOnly`.
+`avail`, `liveOnly`, `ten`, `meals`, `outdoor`, `inclusive`, `extended`, `infantOnly`, `catchmentOnly`, `confirmedOnly`, `readyOnly`, `claimVerifiedOnly`, `startDate`.
+
+`startDate` is the parent's need-by date from search. A date more than 90 days away holds new-centre and vacancy alerts, and open-spot mail, until that window. No date means the parent did not set one.
 
 ## Job
 

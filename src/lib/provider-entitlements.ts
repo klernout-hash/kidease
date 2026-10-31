@@ -168,12 +168,18 @@ export function inquiryAtCap(used: number, cap: number | null): boolean {
   return Math.max(0, Math.floor(used)) >= cap;
 }
 
-/** Priority (Claim boost), then Featured city, then the caller's sort. Not a quality score. */
+/**
+ * Priority (Claim boost), then Featured city, then the caller's sort. Not a quality score.
+ * `enabled: false` leaves the caller's sort alone. Search passes that while
+ * FEATURE_SPONSORED_LISTINGS is off so unpaid centres are not pushed down.
+ */
 export function compareWithPaidPins<T extends { priority?: boolean; featuredCity?: boolean }>(
   a: T,
   b: T,
   next: (a: T, b: T) => number,
+  opts?: { enabled?: boolean },
 ): number {
+  if (opts?.enabled === false) return next(a, b);
   if (Boolean(a.priority) !== Boolean(b.priority)) return a.priority ? -1 : 1;
   if (Boolean(a.featuredCity) !== Boolean(b.featuredCity)) return a.featuredCity ? -1 : 1;
   return next(a, b);

@@ -90,6 +90,7 @@ import { publishRankingContext } from "@/lib/ranking/context";
 import { rankingCity } from "@/lib/ranking/market";
 import { useRankingBestMatchFlag } from "@/lib/ranking/use-ranking-flag";
 import { assignRankingVariant, parseRankingOverride } from "@/lib/ranking/variant";
+import { DEFAULT_SEARCH_SORT, parseSearchSort } from "@/lib/search-sort";
 import type { RankAge } from "@/lib/ranking/score";
 import {
   honestVacancy,
@@ -189,13 +190,19 @@ export async function searchLoader({ location }: { location: { search: unknown }
       };
     }
     const page = pageFromSearch(location.search);
+    const searchRecord =
+      location.search && typeof location.search === "object" ? (location.search as Record<string, unknown>) : {};
+    const explicitSort =
+      typeof searchRecord.sort === "string" && searchRecord.sort ? parseSearchSort(searchRecord.sort) : null;
+    const bootRank = parseRankingOverride(searchRecord.rank);
+    const sort = explicitSort ?? (bootRank === "nearest" ? "distance" : DEFAULT_SEARCH_SORT);
     const painted = await withPaintBudget(
       searchDaycarePage({
         data: {
           lat: origin.lat,
           lng: origin.lng,
           radiusKm: 25,
-          sort: "distance",
+          sort,
           ageGroup: "any",
           label: origin.label,
           q: place || origin.label,
@@ -368,11 +375,14 @@ export function SearchScreen({
   const showBestMatch = rankingVariant === "best_match" || sort === "best";
   useEffect(() => {
     if (rankingDefaulted.current) return;
-    if (!rankOverride && rankingFlag === undefined) return;
+    if (incoming.sort) {
+      rankingDefaulted.current = true;
+      return;
+    }
     rankingDefaulted.current = true;
-    if (rankingVariant === "best_match" && !incoming.sort) setSort("best");
-    if (rankingVariant === "nearest" && sort === "best" && rankOverride !== "best") setSort("distance");
-  }, [rankingFlag, rankingVariant, rankOverride, incoming.sort, setSort, sort]);
+    if (rankOverride === "nearest") setSort("distance");
+    else setSort(DEFAULT_SEARCH_SORT);
+  }, [rankOverride, incoming.sort, setSort]);
   function pickSort(next: SortKey) {
     rankingDefaulted.current = true;
     setSort(next);
@@ -1144,6 +1154,7 @@ export function SearchScreen({
       confirmedOnly,
       readyOnly,
       claimVerifiedOnly,
+      startDate: needBy || null,
     };
   }
 

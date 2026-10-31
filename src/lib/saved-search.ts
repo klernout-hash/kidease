@@ -37,6 +37,8 @@ export type SavedSearchFilters = {
   confirmedOnly: boolean;
   readyOnly: boolean;
   claimVerifiedOnly: boolean;
+  /** Parent need-by date (YYYY-MM-DD). Alerts wait while this is more than 90 days out. */
+  startDate: string | null;
 };
 
 export const EMPTY_SEARCH_FILTERS: SavedSearchFilters = {
@@ -52,6 +54,7 @@ export const EMPTY_SEARCH_FILTERS: SavedSearchFilters = {
   confirmedOnly: false,
   readyOnly: false,
   claimVerifiedOnly: false,
+  startDate: null,
 };
 
 export type SavedSearch = {
@@ -125,6 +128,13 @@ function flag(value: unknown) {
   return value === true || value === 1 || value === "1";
 }
 
+export function parseStartDate(value: unknown): string | null {
+  const raw = value instanceof Date ? value.toISOString().slice(0, 10) : String(value ?? "").trim().slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+  const ts = Date.parse(`${raw}T12:00:00Z`);
+  return Number.isFinite(ts) ? raw : null;
+}
+
 export function parseSavedSearchFilters(raw: unknown): SavedSearchFilters {
   const src = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
   return {
@@ -140,6 +150,7 @@ export function parseSavedSearchFilters(raw: unknown): SavedSearchFilters {
     confirmedOnly: flag(src.confirmedOnly),
     readyOnly: flag(src.readyOnly),
     claimVerifiedOnly: flag(src.claimVerifiedOnly),
+    startDate: parseStartDate(src.startDate),
   };
 }
 
@@ -243,6 +254,7 @@ export function activeFilterCount(filters: SavedSearchFilters, ageBand: AgeBand)
   if (filters.confirmedOnly) n += 1;
   if (filters.readyOnly) n += 1;
   if (filters.claimVerifiedOnly) n += 1;
+  if (filters.startDate) n += 1;
   return n;
 }
 
