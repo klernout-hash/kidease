@@ -3,6 +3,7 @@ import { lazy, Suspense } from "react";
 import { Shell } from "@/components/shell";
 import { useRoleChrome } from "@/components/role-chrome";
 import { localePath } from "@/lib/locale-path";
+import { PhotoConsentCard } from "@/components/photo-consent-card";
 import { pageSeoHead, withNoindex } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 
@@ -35,9 +36,18 @@ export function DailyFeedPage() {
         <h1 className="mt-2 font-display text-3xl">{fr ? "La journée de votre enfant" : "Your child's day"}</h1>
         <p className="mt-3 text-muted">
           {fr
-            ? "Repas, siestes et notes du local. Visible seulement pour un parent connecté."
-            : "Meals, naps, and room notes. Only a signed-in parent can see this."}
+            ? "Repas, siestes et notes du local. Visible seulement pour un parent inscrit. Les photos ne sont pas publiques."
+            : "Meals, naps, and room notes. Only an enrolled parent can see this. Photos are not public."}
         </p>
+        <Link
+          to={localePath("/help", locale)}
+          className="mt-3 inline-flex min-h-11 min-w-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+        >
+          {fr ? "Aide" : "Help"}
+        </Link>
+        {parent ? (
+          <PhotoConsentCard />
+        ) : null}
         {parent ? (
           <div className="mt-6">
             <Suspense fallback={<p className="text-sm text-muted">{fr ? "Chargement du journal." : "Loading the feed."}</p>}>

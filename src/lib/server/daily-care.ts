@@ -12,6 +12,8 @@ import {
   todayYmd,
   type JournalPhoto,
 } from "@/lib/daily-care";
+import { privatePhotoFeedEnabled } from "@/lib/features";
+import { classroomPhotoAllowed } from "@/lib/private-photo-feed";
 import { nid } from "@/lib/utils";
 import { loadCentreRole } from "./centre-access";
 import { lookupUser, notifyThreadParty } from "./notify";
@@ -105,6 +107,15 @@ export const listDailyJournals = createServerFn({ method: "POST" })
       params.push(data.bookingId);
       extra += ` and j.booking_id = $${params.length}`;
     }
+    const parentClause = privatePhotoFeedEnabled()
+      ? `j.parent_user_id = $2
+             and exists (
+               select 1 from bookings b
+               where b.user_id = $2
+                 and b.daycare_id = j.daycare_id
+                 and b.status in ('accepted', 'active')
+             )`
+      : `j.parent_user_id = $2`;
     const rows = await sql
       .query<{
         id: string;
@@ -128,7 +139,7 @@ export const listDailyJournals = createServerFn({ method: "POST" })
          join daycares d on d.id = j.daycare_id
          where j.day = $1
            and (
-             j.parent_user_id = $2
+             ${parentClause}
              or j.author_user_id = $2
              or j.daycare_id in (select daycare_id from provider_daycares where user_id = $2)
              or j.daycare_id in (
@@ -198,6 +209,27 @@ export const postDailyJournal = createServerFn({ method: "POST" })
 
     const photos = parseJournalPhotos(data.photos ?? []);
     const body = normalizeJournalBody(data.body);
+    if (privatePhotoFeedEnabled() && photos.length) {
+      const bookingIdForPhoto = String(data.bookingId || "").trim();
+      const consent = bookingIdForPhoto
+        ? await sql<{ status: string; photo_consent_at: string | Date | null }>`
+            select status, photo_consent_at from bookings
+            where id = ${bookingIdForPhoto} and daycare_id = ${daycareId}
+            limit 1
+          `.catch(() => [])
+        : [];
+      const row = consent[0];
+      const consentAt = row?.photo_consent_at instanceof Date ? row.photo_consent_at.toISOString() : row?.photo_consent_at || null;
+      const allowed = classroomPhotoAllowed({
+        enabled: true,
+        enrolled: Boolean(row && isEnrolledBookingStatus(row.status)),
+        consentAt,
+        photoCount: photos.length,
+      });
+      if (!allowed.ok) {
+        throw new Error(allowed.reason === "consent" ? "Photo consent is needed first" : "Photos are for enrolled children");
+      }
+    }
     if (!journalPostReady({ body, photos })) throw new Error("Add a note or a photo");
 
     const day = data.day && /^\d{4}-\d{2}-\d{2}$/.test(data.day) ? data.day : todayYmd();
@@ -230,4 +262,36 @@ export const postDailyJournal = createServerFn({ method: "POST" })
     });
 
     return { ok: true as const, id };
+  });
+
+export const photoFeedGate = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    if (!privatePhotoFeedEnabled()) return { enabled: false as const, bookingId: null };
+    const sql = await getSql();
+    const rows = await sql<{ id: string }>`
+      select id from bookings
+      where user_id = ${context.userId} and status in ('accepted', 'active')
+      order by created_at desc
+      limit 1
+    `.catch(() => [] as { id: string }[]);
+    return { enabled: true as const, bookingId: rows[0]?.id ?? null };
+  });
+
+export const grantPhotoConsent = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { bookingId: string }) => input)
+  .handler(async ({ context, data }) => {
+    if (!privatePhotoFeedEnabled()) return { ok: false as const };
+    const sql = await getSql();
+    const wrote = await sql<{ id: string }>`
+      update bookings
+      set photo_consent_at = now()
+      where id = ${data.bookingId}
+        and user_id = ${context.userId}
+        and status in ('accepted', 'active')
+      returning id
+    `.catch(() => [] as { id: string }[]);
+    if (!wrote[0]) throw new Error("Enrolment not found");
+    return { ok: true as const };
   });

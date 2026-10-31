@@ -31,6 +31,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_OPEN_SPOTS_CHECKIN_SMS",
   "FEATURE_QC_HOME_DAYCARES",
   "FEATURE_AREA_WAITLIST_ALERTS",
+  "FEATURE_PRIVATE_PHOTO_FEED",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -82,6 +83,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_QC_HOME_DAYCARES: false,
   /** Area waitlist email. Off until Kyle approves the wording. */
   FEATURE_AREA_WAITLIST_ALERTS: false,
+  /** Private per-child photos for enrolled parents who consented. */
+  FEATURE_PRIVATE_PHOTO_FEED: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -182,6 +185,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Email when an area waitlist matches a posted spot. Default off. Kyle approved the wording. In-app notices still save.",
+  },
+  {
+    key: "FEATURE_PRIVATE_PHOTO_FEED",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Classroom photos only for an enrolled parent who consented. Default off. Photos are not public and are not used in marketing.",
   },
 ];
 

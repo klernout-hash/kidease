@@ -112,6 +112,11 @@ export function areaWaitlistAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_AREA_WAITLIST_ALERTS", env);
 }
 
+/** Private classroom photos. Default OFF. Public listings do not show them. */
+export function privatePhotoFeedEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PRIVATE_PHOTO_FEED", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;
