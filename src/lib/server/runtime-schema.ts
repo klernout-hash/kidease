@@ -64,7 +64,12 @@ function rememberSchema(key: string, run: () => Promise<unknown>): Promise<void>
 }
 
 export function ensureDailyJournals(sql: Sql) {
-  return rememberSchema("daily-journals", () => sql.query(ENSURE_JOURNALS));
+  return rememberSchema("daily-journals", async () => {
+    await sql.query(ENSURE_JOURNALS);
+    await sql.query(
+      `alter table daily_journals add column if not exists media_private boolean not null default false`,
+    );
+  });
 }
 
 const ENSURE_CARE_OPS = `
