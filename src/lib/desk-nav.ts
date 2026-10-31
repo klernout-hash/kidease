@@ -51,6 +51,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "ranking", label: "Demand and supply", hint: "Searches vs openings", href: "/admin-ranking" },
     { id: "truth", label: "Listing changes", hint: "Approve each change", labelKey: "adminTruthTitle", hintKey: "adminNavTruthHint", href: "/admin-truth" },
     { id: "spam", label: "Spam and fraud", hint: "High scores only", labelKey: "adminSpamTitle", hintKey: "adminNavSpamHint", href: "/admin-spam" },
+    { id: "trust-queue", label: "Trust queue", hint: "Reports and identity", href: "/admin-trust" },
     { id: "triage", label: "Support drafts", hint: "Drafts are not sent", labelKey: "adminTriageTitle", hintKey: "adminNavTriageHint", href: "/admin-triage" },
     { id: "vacancies", label: "Provincial openings", hint: "Manitoba and New Brunswick", href: "/admin-vacancies" },
     { id: "qc-home", label: "Quebec home daycares", hint: "Correction and removal requests", href: "/admin-qc-home" },
@@ -130,7 +131,8 @@ export type DaycareDesk =
   | "employees"
   | "screening"
   | "staff"
-  | "stories";
+  | "stories"
+  | "sites";
 
 export function providerNavSearch(id: string): { desk: DaycareDesk } {
   if (

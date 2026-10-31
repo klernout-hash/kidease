@@ -52,7 +52,7 @@ test("Open Graph skips building paths that 404 on the media host", () => {
   const stub = listingSeoMeta({ ...centre, photos: ["/photos/buildings/mb-1014.jpg"] });
   assert.equal(stub.ogImage, "https://www.kidease.ca/og.jpg");
   const real = listingSeoMeta({ ...centre, photos: ["/photos/buildings/mb-1052.jpg"] });
-  assert.equal(real.ogImage, "https://www.kidease.ca/photos/buildings/mb-1052.jpg");
+  assert.equal(real.ogImage, "https://media.kidease.ca/photos/buildings/mb-1052.jpg");
   const json = listingJsonLd({ ...centre, photos: ["/photos/buildings/mb-1001.jpg"] });
   assert.equal("image" in json, false);
 });

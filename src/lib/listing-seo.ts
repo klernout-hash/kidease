@@ -31,6 +31,8 @@ function isSeoPhoto(src?: string | null) {
 }
 
 export const LISTING_SEO_ORIGIN = SITEMAP_ORIGIN;
+/** Catalogue photos are served here. www.kidease.ca/photos 404s. */
+export const LISTING_MEDIA_ORIGIN = "https://media.kidease.ca";
 const DEFAULT_OG_IMAGE = `${SITEMAP_ORIGIN}/og.jpg`;
 
 export type ListingSeoLocale = "en" | "fr";
@@ -130,12 +132,30 @@ export function listingAreaLine(src: ListingSeoSource) {
   return city || province;
 }
 
-function listingOgImage(src: ListingSeoSource) {
+/** Absolute og:image. Catalogue paths use media.kidease.ca. Missing photos stay on the branded card. */
+export function listingOpenGraphImage(src: ListingSeoSource) {
   const photo = (src.photos ?? []).find((p) => isSeoPhoto(p));
   if (!photo) return DEFAULT_OG_IMAGE;
-  if (photo.startsWith("https://")) return photo;
+  if (photo.startsWith("/photos/")) return `${LISTING_MEDIA_ORIGIN}${photo}`;
+  if (photo.startsWith("https://")) {
+    try {
+      const url = new URL(photo);
+      const host = url.hostname.toLowerCase();
+      if (host.endsWith(".r2.dev") && url.pathname.startsWith("/photos/")) {
+        return `${LISTING_MEDIA_ORIGIN}${url.pathname}`;
+      }
+      if (host === "media.kidease.ca" || host === "www.kidease.ca") return url.origin + url.pathname;
+    } catch {
+      return DEFAULT_OG_IMAGE;
+    }
+    return photo;
+  }
   if (photo.startsWith("/")) return `${SITEMAP_ORIGIN}${photo}`;
   return DEFAULT_OG_IMAGE;
+}
+
+function listingOgImage(src: ListingSeoSource) {
+  return listingOpenGraphImage(src);
 }
 
 /**

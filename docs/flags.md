@@ -1,6 +1,6 @@
 # Feature flags (env + optional PostHog)
 
-KidEase product gates (`FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, `FEATURE_AREA_WAITLIST_ALERTS`, `FEATURE_INSPECTION_HISTORY`, `FEATURE_PROVINCIAL_VACANCY_INDEX`, `FEATURE_REVIEW_REPORTS`, `FEATURE_TOUR_PIPELINE`, `FEATURE_NEED_CARE_FAST`, `FEATURE_INCLUSIVE_FILTERS`, `FEATURE_ECE_JOBS`, `FEATURE_DIGITAL_ATTENDANCE`, `FEATURE_STAFF_SCHEDULING`, `FEATURE_LEARNING_PORTFOLIOS`) go through `src/lib/flags.ts`.
+KidEase product gates (`FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, `FEATURE_AREA_WAITLIST_ALERTS`, `FEATURE_INSPECTION_HISTORY`, `FEATURE_PROVINCIAL_VACANCY_INDEX`, `FEATURE_REVIEW_REPORTS`, `FEATURE_TOUR_PIPELINE`, `FEATURE_NEED_CARE_FAST`, `FEATURE_INCLUSIVE_FILTERS`, `FEATURE_ECE_JOBS`, `FEATURE_DIGITAL_ATTENDANCE`, `FEATURE_STAFF_SCHEDULING`, `FEATURE_LEARNING_PORTFOLIOS`, `FEATURE_ORG_DASHBOARD`, `FEATURE_PRIVATE_PHOTO_FEED`) go through `src/lib/flags.ts`.
 
 **Env is the safe fallback.** If remote is unset, down, or the flag does not exist in PostHog, behavior is exactly today’s `FEATURE_*=` env read.
 
@@ -49,6 +49,8 @@ Automation-pack flags (`FEATURE_POSTHOG_ERRORS`, `FEATURE_OPS_ALERTS`, `FEATURE_
 | `FEATURE_DIGITAL_ATTENDANCE` | off | `saveAttendance` from the check-in page. | Arrival and pickup form. No camera. | The camera preview stays. Daily care on the parent desk stays. No SMS. |
 | `FEATURE_STAFF_SCHEDULING` | off | Save shifts and ECE certificates. Email the centre when a certificate is inside 60 days of expiry. | Daycare desk → Employees → Staff shifts. | The page says the tool is off. |
 | `FEATURE_LEARNING_PORTFOLIOS` | off | Save a private learning story for an enrolled child. | Daycare desk and the parent's Stories link. | The page says the tool is off. Nothing is public. |
+| `FEATURE_ORG_DASHBOARD` | off | Read capacity, enrolled bookings, and confirmed open spots for centres you run. | Daycare desk → Your centres. | The page says the tool is off. |
+| `FEATURE_PRIVATE_PHOTO_FEED` | off | Classroom photo posts require an enrolled booking and photo consent. Parent feed requires an active enrolment. | Consent card on the daily feed. | The feed page stays. Photos are not public. No SMS. The thread email does not attach the photo. |
 
 ## Why PostHog
 
@@ -73,6 +75,8 @@ Do **not** use these flags for auth or Turnstile. Those stay their own env-gated
    - Key must match the env name exactly: `FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, or `FEATURE_AREA_WAITLIST_ALERTS`, or `FEATURE_DIGITAL_ATTENDANCE`.
    - Key must match the env name exactly: `FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, `FEATURE_AREA_WAITLIST_ALERTS`, or `FEATURE_STAFF_SCHEDULING`.
    - Key must match the env name exactly: `FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, `FEATURE_AREA_WAITLIST_ALERTS`, or `FEATURE_LEARNING_PORTFOLIOS`.
+   - Key must match the env name exactly: `FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, `FEATURE_AREA_WAITLIST_ALERTS`, or `FEATURE_ORG_DASHBOARD`.
+   - Key must match the env name exactly: `FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, or `FEATURE_AREA_WAITLIST_ALERTS`, or `FEATURE_PRIVATE_PHOTO_FEED`.
    - Create the flag **disabled**. Boolean release toggle (not a % experiment). The server evaluates as distinct id `kidease-server`.
 4. Enable or disable the flag in PostHog. Within ~30s the app picks it up (in-memory TTL). No Vercel redeploy.
 5. Confirm Admin → Chat lab (`/admin-chat`): source reads **PostHog**, value on/off. Secret values are never shown.
@@ -109,6 +113,8 @@ Env still works as a fallback when PostHog is down (last successful overlay is k
 | `FEATURE_DIGITAL_ATTENDANCE` | no | Default **off**. Set `1` to replace the check-in camera with arrival and pickup. No photo of a child. |
 | `FEATURE_STAFF_SCHEDULING` | no | Default **off**. Set `1` to open staff shifts. Does not turn on subscriptions or SMS. |
 | `FEATURE_LEARNING_PORTFOLIOS` | no | Default **off**. Set `1` to open private learning stories. No photos. |
+| `FEATURE_ORG_DASHBOARD` | no | Default **off**. Set `1` to open the centres dashboard. Does not turn on subscriptions. |
+| `FEATURE_PRIVATE_PHOTO_FEED` | no | Default **off**. Set `1` so classroom photos need enrolment and consent, and stay off public pages. |
 | `POSTHOG_FLAGS_KEY` | no | Server-only. Same `phc_…` project key as analytics. Leave blank to disable remote. Never commit a real value. |
 | `POSTHOG_FLAGS_HOST` | no | Defaults to `POSTHOG_HOST` or `https://us.i.posthog.com`. |
 
@@ -116,7 +122,7 @@ The app **boots with no remote keys**. Do not invent a personal API key or a sec
 
 ## What is wired
 
-- `evaluateFeatureFlag` / `smsEnabled` / `pushEnabled` / `videoEnabled` / `inAppChatEnabled` / `providerSubscriptionsEnabled` / `showPayCtas` / `subscriptionsEnabled` / `foundingBadgeEnabled` / `openSpotAlertsEnabled` / `areaWaitlistAlertsEnabled` / `provincialVacancyIndexEnabled` / `reviewReportsEnabled` / `tourPipelineEnabled` / `needCareFastEnabled` / `inclusiveFiltersEnabled` / `eceJobsEnabled` / `digitalAttendanceEnabled`.
+- `evaluateFeatureFlag` / `smsEnabled` / `pushEnabled` / `videoEnabled` / `inAppChatEnabled` / `providerSubscriptionsEnabled` / `showPayCtas` / `subscriptionsEnabled` / `foundingBadgeEnabled` / `openSpotAlertsEnabled` / `areaWaitlistAlertsEnabled` / `provincialVacancyIndexEnabled` / `reviewReportsEnabled` / `tourPipelineEnabled` / `needCareFastEnabled` / `inclusiveFiltersEnabled` / `eceJobsEnabled` / `digitalAttendanceEnabled` / `privatePhotoFeedEnabled`.
 - Safe enablement: `describeChannelReadiness` / `smsArmed` / `pushArmed` / `videoSurfaceEnabled` in `src/lib/channel-readiness.ts`.
 - Send / register / mint paths in `src/lib/server/sms.ts`, `push-send.ts`, `push-tokens.ts`, `video.ts`.
 - Admin → Chat lab (`/admin-chat`) shows on/off, source (env / PostHog / default), Production-blocked / Preview-override / SDK-not-attached, plus a disabled composer and the flag-name catalog. See `docs/chat.md`.

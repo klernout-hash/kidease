@@ -1,3 +1,4 @@
+import { CITY_SEARCH_KEY_EXPR, cityDirectoryMatchSql, citySearchKeyEnabled } from "@/lib/city-search-key";
 import { dbSource, getSql, type Sql } from "@/lib/db";
 import type { CatalogDaycare } from "@/lib/catalog";
 import {
@@ -122,7 +123,7 @@ where ${PUBLIC_LISTING_SQL}
 `;
 
 /** Same folding as normalizeCityKey for hub city names (Montréal → montreal). */
-export const DIRECTORY_CITY_KEY_SQL = `trim(regexp_replace(lower(translate(btrim(coalesce(city, '')), 'ÁÀÂÄÃÅáàâäãåÉÈÊËéèêëÍÌÎÏíìîïÓÒÔÖÕóòôöõÚÙÛÜúùûüÝŸýÿÇçÑñ', 'AAAAAAaaaaaaEEEEeeeeIIIIiiiiOOOOOoooooUUUUuuuuYYyyCcNn')), '[^a-z0-9]+', ' ', 'g'))`;
+export const DIRECTORY_CITY_KEY_SQL = CITY_SEARCH_KEY_EXPR;
 
 const DIRECTORY_PUBLIC_SQL = `
 ${PUBLIC_LISTING_SQL}
@@ -167,7 +168,7 @@ export async function queryNeonCityHubListings(
        from daycares
        where ${DIRECTORY_PUBLIC_SQL}
          and upper(btrim(coalesce(province, ''))) = $1
-         and ${DIRECTORY_CITY_KEY_SQL} = any($2::text[])
+         and ${cityDirectoryMatchSql(citySearchKeyEnabled())} = any($2::text[])
        order by name
        limit ${CITY_TYPE_LIST_CAP}`,
       [province.toUpperCase(), keys],

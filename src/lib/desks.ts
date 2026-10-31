@@ -46,6 +46,7 @@ export const PROVIDER_TAB_KEYS = [
   "screening",
   "staff",
   "stories",
+  "sites",
 ] as const;
 
 export const STICKY_DESK_KEY = "kidease-desk";

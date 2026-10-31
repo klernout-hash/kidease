@@ -53,6 +53,8 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_DIGITAL_ATTENDANCE",
   "FEATURE_STAFF_SCHEDULING",
   "FEATURE_LEARNING_PORTFOLIOS",
+  "FEATURE_ORG_DASHBOARD",
+  "FEATURE_PRIVATE_PHOTO_FEED",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -148,6 +150,10 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_STAFF_SCHEDULING: false,
   /** Private learning stories for enrolled families. Off until Kyle turns it on. */
   FEATURE_LEARNING_PORTFOLIOS: false,
+  /** Multi-site occupancy from real capacity and enrolments. Off until Kyle turns it on. */
+  FEATURE_ORG_DASHBOARD: false,
+  /** Private per-child photos for enrolled parents who consented. */
+  FEATURE_PRIVATE_PHOTO_FEED: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -390,6 +396,20 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Private learning stories for enrolled parents. Default off. No photos. Not shown on the public listing.",
+  },
+  {
+    key: "FEATURE_ORG_DASHBOARD",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Occupancy across the centres you run. Default off. Uses licensed capacity and enrolled bookings only. Does not invent a number.",
+  },
+  {
+    key: "FEATURE_PRIVATE_PHOTO_FEED",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Classroom photos only for an enrolled parent who consented. Default off. Photos are not public and are not used in marketing.",
   },
 ];
 

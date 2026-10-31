@@ -222,6 +222,16 @@ export function learningPortfoliosEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_LEARNING_PORTFOLIOS", env);
 }
 
+/** Multi-site occupancy. Default off. Does not invent a count. */
+export function orgDashboardEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_ORG_DASHBOARD", env);
+}
+
+/** Private classroom photos. Default OFF. Public listings do not show them. */
+export function privatePhotoFeedEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PRIVATE_PHOTO_FEED", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;

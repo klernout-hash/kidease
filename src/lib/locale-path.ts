@@ -56,6 +56,8 @@ export const LOCALE_PAIRED_PATHS = [
   "/unsubscribe",
   "/delete-account",
   "/status",
+  "/trust-safety",
+  "/for-you",
   "/signup",
   "/for-daycares",
   "/daycares",
@@ -132,8 +134,19 @@ export function isQcHomePath(pathname: string | null | undefined): boolean {
   return bare === "/milieux-familiaux" || /^\/milieux-familiaux\/[^/]+$/.test(bare);
 }
 
+/** `/welcome/:code` family invite links. The code is the referral alphabet. */
+export function isFamilyWelcomePath(pathname: string | null | undefined): boolean {
+  const bare = stripLocalePrefix(pathname);
+  return /^\/welcome\/[a-hjkmnp-z2-9]{8}$/.test(bare);
+}
+
 export function isPairedPath(pathname: string | null | undefined): boolean {
-  return PAIRED.has(stripLocalePrefix(pathname)) || isCatalogueDocumentPath(pathname) || isQcHomePath(pathname);
+  return (
+    PAIRED.has(stripLocalePrefix(pathname)) ||
+    isCatalogueDocumentPath(pathname) ||
+    isQcHomePath(pathname) ||
+    isFamilyWelcomePath(pathname)
+  );
 }
 
 /** `/daycare/:slug`, `/daycare/city/:slug`, and `/daycare/:city/:age`. */
@@ -173,7 +186,10 @@ export function isFrenchDeskPath(pathname: string | null | undefined): boolean {
 export function localePath(enPath: string, locale: string): string {
   const bare = enPath.startsWith("/") ? enPath : `/${enPath}`;
   if (bare === "/explore") return locale === "fr" ? frenchPath("/search") : "/search";
-  if (locale === "fr" && (PAIRED.has(bare) || isCatalogueDocumentPath(bare) || isQcHomePath(bare) || isFrenchDeskPath(bare))) {
+  if (
+    locale === "fr" &&
+    (PAIRED.has(bare) || isCatalogueDocumentPath(bare) || isQcHomePath(bare) || isFrenchDeskPath(bare) || isFamilyWelcomePath(bare))
+  ) {
     return frenchPath(bare);
   }
   return bare;
