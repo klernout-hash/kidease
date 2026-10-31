@@ -1,6 +1,14 @@
 import { getPublicCatalog } from "@/lib/catalog";
 import { dbSource, getSql } from "@/lib/db";
+import { provincialVacancyIndexEnabled } from "@/lib/features";
 import { PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
+import { loadOfficialOpenings, loadProvinceHistory, type VacancyHistoryView } from "@/lib/server/vacancy-history";
+import {
+  freshnessByProvince,
+  parseVacancyProvince,
+  type FreshnessCounts,
+  type OfficialOpeningTotal,
+} from "@/lib/vacancy-history";
 import {
   buildVacancyIndex,
   vacancyConfirmed,
@@ -8,7 +16,15 @@ import {
   type VacancySourceRow,
 } from "@/lib/vacancy-index";
 
-export type VacancyIndexPage = VacancyIndex & { source: "database" | "directory" };
+export type VacancyIndexPage = VacancyIndex & {
+  source: "database" | "directory";
+  /** Per-province pages, history, and freshness. Off until the flag is on. */
+  provincePages: boolean;
+  focus: string | null;
+  freshnessByCode: Record<string, FreshnessCounts> | null;
+  history: VacancyHistoryView[];
+  official: OfficialOpeningTotal | null;
+};
 
 const SQL = `
 select province, age_min_months, age_max_months, coalesce(ages_confirmed, 0) as ages_confirmed,
@@ -57,6 +73,7 @@ function fromDb(row: {
       lastVacancyUpdatedAt: stamp(row.last_vacancy_updated_at),
       spotsUpdatedAt: stamp(row.spots_updated_at),
     }),
+    lastVacancyUpdatedAt: stamp(row.last_vacancy_updated_at),
   };
 }
 
@@ -77,10 +94,34 @@ async function rowsFromDatabase(): Promise<VacancySourceRow[] | null> {
   }
 }
 
-export async function loadVacancyIndex(): Promise<VacancyIndexPage> {
+function withProvinceExtras(
+  page: VacancyIndex & { source: "database" | "directory" },
+  rows: readonly { province?: string | null; lastVacancyUpdatedAt?: string | null }[],
+  provinceRaw: string | null | undefined,
+  history: VacancyHistoryView[],
+  official: OfficialOpeningTotal | null,
+): VacancyIndexPage {
+  const enabled = provincialVacancyIndexEnabled();
+  const focus = enabled ? parseVacancyProvince(provinceRaw) : "";
+  return {
+    ...page,
+    provincePages: enabled,
+    focus: focus || null,
+    freshnessByCode: enabled ? freshnessByProvince(rows, Date.now()) : null,
+    history: enabled && focus ? history : [],
+    official: enabled && focus ? official : null,
+  };
+}
+
+export async function loadVacancyIndex(provinceRaw?: string | null): Promise<VacancyIndexPage> {
   const countedOn = countedOnToday();
+  const focus = provincialVacancyIndexEnabled() ? parseVacancyProvince(provinceRaw) : "";
+  const history = focus ? await loadProvinceHistory(focus) : [];
+  const official = focus ? await loadOfficialOpenings(focus) : null;
   const live = await rowsFromDatabase();
-  if (live) return { ...buildVacancyIndex(live, countedOn), source: "database" };
+  if (live) {
+    return withProvinceExtras({ ...buildVacancyIndex(live, countedOn), source: "database" }, live, provinceRaw, history, official);
+  }
   const catalog = await getPublicCatalog();
   const rows: VacancySourceRow[] = catalog.map((row) => ({
     province: row.province,
@@ -91,5 +132,5 @@ export async function loadVacancyIndex(): Promise<VacancyIndexPage> {
     spotsPreschool: row.spotsPreschool,
     vacancyConfirmed: false,
   }));
-  return { ...buildVacancyIndex(rows, countedOn), source: "directory" };
+  return withProvinceExtras({ ...buildVacancyIndex(rows, countedOn), source: "directory" }, rows, provinceRaw, history, official);
 }

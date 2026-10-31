@@ -1,10 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { pageSeoHead } from "@/lib/page-seo";
+import { parseVacancyProvince } from "@/lib/vacancy-history";
 import { loadVacancyIndex } from "@/lib/server/vacancy-index";
 import { VacancyIndexView } from "@/routes/vacancy-index";
 
 export const Route = createFileRoute("/fr/vacancy-index")({
-  loader: () => loadVacancyIndex(),
+  validateSearch: (search: Record<string, unknown>) => ({
+    province: parseVacancyProvince(search.province),
+  }),
+  loaderDeps: ({ search }) => ({ province: search.province }),
+  loader: ({ deps }) => loadVacancyIndex(deps.province),
   head: () =>
     pageSeoHead({
       title: "Places ouvertes par province · KidEase",

@@ -1696,8 +1696,10 @@ export const updateCapacity = createServerFn({ method: "POST" })
       infant_monthly: number | null;
       toddler_monthly: number | null;
       preschool_monthly: number | null;
+      last_vacancy_updated_at: string | Date | null;
     }>`
-      select spots_infant, spots_toddler, spots_preschool, infant_monthly, toddler_monthly, preschool_monthly
+      select spots_infant, spots_toddler, spots_preschool, infant_monthly, toddler_monthly, preschool_monthly,
+        last_vacancy_updated_at
       from daycares
       where id = ${data.daycareId}
       limit 1
@@ -1722,6 +1724,21 @@ export const updateCapacity = createServerFn({ method: "POST" })
         end
       where id = ${data.daycareId}
     `;
+    const previousAt = before[0]?.last_vacancy_updated_at;
+    void import("@/lib/server/vacancy-history")
+      .then((mod) =>
+        mod.recordVacancyEvent({
+          daycareId: data.daycareId,
+          source: "edit",
+          before: {
+            infant: before[0]?.spots_infant ?? null,
+            toddler: before[0]?.spots_toddler ?? null,
+            preschool: before[0]?.spots_preschool ?? null,
+          },
+          previousUpdatedAt: previousAt instanceof Date ? previousAt.toISOString() : previousAt ?? null,
+        }),
+      )
+      .catch(() => undefined);
     void import("@/lib/server/alert-fanout")
       .then((mod) =>
         mod.notifySavedListingChange({

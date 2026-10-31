@@ -112,6 +112,11 @@ export function areaWaitlistAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_AREA_WAITLIST_ALERTS", env);
 }
 
+/** Per-province vacancy pages and confirm history. Default OFF. The national index stays. */
+export function provincialVacancyIndexEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PROVINCIAL_VACANCY_INDEX", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;
