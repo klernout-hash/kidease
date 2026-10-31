@@ -153,7 +153,13 @@ export async function localeDocumentDecision(request: Request): Promise<LocaleDo
     return none;
   }
   const bare = url.pathname.length > 1 && url.pathname.endsWith("/") ? url.pathname.slice(0, -1) : url.pathname;
-  if (bare === "/app-admin-unavailable" || bare === "/use-the-website" || bare === "/auth/app-return" || bare === "/auth/native-handoff") {
+  if (
+    bare === "/app-admin-unavailable" ||
+    bare === "/use-the-website" ||
+    bare === "/auth/app-return" ||
+    bare === "/auth/native-handoff" ||
+    bare === "/auth/native-start"
+  ) {
     return none;
   }
   if (

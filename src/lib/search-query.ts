@@ -11,14 +11,30 @@ export function cityParamFromUnknown(search: unknown): string {
   return searchParamFromUnknown(search, "city");
 }
 
+/**
+ * TanStack may hand `q` back as a string, a number, or an array (`?q=a&q=b`).
+ * Only a string has `.trim`. Anything else becomes a string or "".
+ */
+export function coerceSearchText(value: unknown): string {
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  if (typeof value === "boolean") return value ? "true" : "";
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const text = coerceSearchText(item);
+      if (text) return text;
+    }
+  }
+  return "";
+}
+
 function searchParamFromUnknown(search: unknown, key: "q" | "city"): string {
   if (typeof search === "string") {
     const raw = search.startsWith("?") ? search.slice(1) : search;
     return new URLSearchParams(raw).get(key)?.trim() || "";
   }
   if (search && typeof search === "object" && key in search) {
-    const value = (search as Record<string, unknown>)[key];
-    return typeof value === "string" ? value.trim() : "";
+    return coerceSearchText((search as Record<string, unknown>)[key]);
   }
   return "";
 }

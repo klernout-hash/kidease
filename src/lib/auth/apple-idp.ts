@@ -51,6 +51,26 @@ export const APPLE_CLIENT_ID = loaded?.clientId;
 export const appleIdpConfigured = Boolean(loaded);
 
 /**
+ * Audiences Better Auth must accept on an Apple identity token.
+ *
+ * Better Auth 1.7 uses `audience` when it is set. If only `appBundleIdentifier`
+ * is set, that bundle id replaces the Services ID, and web Sign in with Apple
+ * fails the `aud` check. Native tokens use `ca.kidease.app`. Web tokens use
+ * the Services ID (`APPLE_CLIENT_ID`). Both have to be in the list.
+ */
+export function appleIdTokenAudiences(clientId: string, bundleId = "ca.kidease.app"): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const value of [clientId, bundleId]) {
+    const id = value.trim();
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+  }
+  return out;
+}
+
+/**
  * ES256 client-secret JWT Apple requires at the token endpoint. Valid 180 days.
  * `subject` is the client_id that issued the token: the Services ID on the web,
  * or the bundle id `ca.kidease.app` for the native sheet.

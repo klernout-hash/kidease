@@ -5,7 +5,7 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { appleLoginVisible } from "../src/lib/auth/apple-login-flag.ts";
-import { appleClientSecretFrom, readAppleIdpConfig } from "../src/lib/auth/apple-idp.ts";
+import { appleClientSecretFrom, appleIdTokenAudiences, readAppleIdpConfig } from "../src/lib/auth/apple-idp.ts";
 import { NATIVE_APPLE_SCOPE, persistNativeAppleTokens } from "../src/lib/auth/apple-native-store.ts";
 import { appleNativeIdToken, appleNoncePair, appleSignInRoute, sha256Hex } from "../src/lib/auth/apple-native.ts";
 import { APPLE_REVOKE_URL, appleRevokeForm, revokeAppleSignInTokens } from "../src/lib/auth/apple-revoke.ts";
@@ -269,6 +269,17 @@ test("native refresh token is stored and revoke failures do not log the token", 
   }
 });
 
+test("Apple identity tokens accept the Services ID and the native bundle id", () => {
+  assert.deepEqual(appleIdTokenAudiences("ca.kidease.web", "ca.kidease.app"), [
+    "ca.kidease.web",
+    "ca.kidease.app",
+  ]);
+  assert.deepEqual(appleIdTokenAudiences(" ca.kidease.app ", "ca.kidease.app"), ["ca.kidease.app"]);
+  const server = src("src/lib/auth/server.ts");
+  assert.match(server, /appBundleIdentifier: env\("APPLE_BUNDLE_ID"\) \?\? "ca\.kidease\.app"/);
+  assert.match(server, /audience: appleIdTokenAudiences\(APPLE_CLIENT_ID/);
+});
+
 test("native plugin, entitlement, and delete-account revoke are wired", () => {
   assert.match(src("ios/App/App/App.entitlements"), /com\.apple\.developer\.applesignin/);
   assert.doesNotMatch(src("ios/App/App/App.entitlements"), /aps-environment/);
@@ -276,6 +287,12 @@ test("native plugin, entitlement, and delete-account revoke are wired", () => {
   assert.match(src("src/lib/server/apple-account-revoke.ts"), /bundleId/);
   assert.match(src("src/lib/auth/apple-native-store.ts"), /NATIVE_APPLE_SCOPE/);
   assert.match(src("ios/App/App/AppleSignInPlugin.swift"), /request\.nonce/);
+  assert.match(src("ios/App/App/AppleSignInPlugin.swift"), /DispatchQueue\.main\.async/);
+  assert.match(src("ios/App/App/AppleSignInPlugin.swift"), /nsError\.domain/);
+  assert.match(src("ios/App/App/AppleSignInPlugin.swift"), /nsError\.code/);
+  assert.match(src("ios/App/App.xcodeproj/project.pbxproj"), /CURRENT_PROJECT_VERSION = 5;/);
+  assert.match(src("ios/App/App.xcodeproj/project.pbxproj"), /MARKETING_VERSION = 1\.0\.0;/);
+  assert.doesNotMatch(src("ios/App/App.xcodeproj/project.pbxproj"), /CURRENT_PROJECT_VERSION = 1;/);
   assert.match(src("ios/App/App/KidEaseBridgeViewController.swift"), /registerPluginInstance/);
   assert.match(src("src/lib/auth/client.ts"), /authorizeNativeApple/);
   assert.match(src("src/lib/server/family.ts"), /revokeStoredAppleSignIn/);

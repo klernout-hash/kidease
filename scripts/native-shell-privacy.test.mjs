@@ -5,11 +5,14 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { CHILD_PROFILES_COLLECTED, parentNavCollectsChildData } from "../src/lib/child-collection.ts";
 import {
+  nativeAuthErrorPath,
   nativeAuthFinishUrl,
   nativeHandoffPath,
   nativeOAuthReturnPath,
+  nativeOAuthStartPath,
   nativeSocialPlatform,
   parseNativeAuthFinish,
+  sanitizeNativeOAuthError,
   providersForNativeShell,
   safeInAppPath,
 } from "../src/lib/auth/native-oauth.ts";
@@ -72,7 +75,22 @@ test("iOS social login stays in an auth sheet and offers Apple or email only", (
   const finish = nativeAuthFinishUrl({ code: "abc", next: "/parent" });
   assert.equal(parseNativeAuthFinish(finish)?.code, "abc");
   assert.equal(parseNativeAuthFinish(finish)?.next, "/parent");
-  assert.equal(nativeHandoffPath({ code: "abc", next: "/parent" }), "/auth/native-handoff?code=abc&next=%2Fparent");
+  assert.equal(nativeHandoffPath({ code: "abc", next: "/parent", error: null }), "/auth/native-handoff?code=abc&next=%2Fparent");
+  assert.equal(
+    nativeOAuthStartPath({ provider: "facebook", next: "/parent", errorNext: "/login?intent=in" }),
+    "/auth/native-start?provider=facebook&next=%2Fparent&errorNext=%2Flogin%3Fintent%3Din",
+  );
+  assert.equal(sanitizeNativeOAuthError("state_mismatch"), "state_mismatch");
+  assert.equal(sanitizeNativeOAuthError("State mismatch: State not persisted correctly"), null);
+  assert.equal(nativeAuthErrorPath("/login?intent=in", "state_mismatch"), "/login?intent=in&error=state_mismatch");
+  const failed = nativeAuthFinishUrl({ next: "/login?intent=in", error: "state_mismatch" });
+  assert.equal(parseNativeAuthFinish(failed)?.error, "state_mismatch");
+  assert.equal(nativeHandoffPath(parseNativeAuthFinish(failed)), "/login?intent=in&error=state_mismatch");
+  assert.match(src("src/lib/auth/client.ts"), /nativeOAuthStartPath/);
+  assert.match(src("src/lib/auth/server.ts"), /storeStateStrategy: "database"/);
+  assert.match(src("src/start.ts"), /native-start/);
+  assert.match(src("src/routes/login.tsx"), /oauthErrorText/);
+  assert.doesNotMatch(src("src/routes/login.tsx"), /passkeyWasCancelled\(err\)\) setError\(passkeyMessage/);
   assert.match(src("src/lib/auth/client.ts"), /openNativeOAuthSheet/);
   assert.doesNotMatch(src("src/lib/auth/native-oauth-client.ts"), /window\.location\.href = providerUrl/);
   assert.match(src("ios/App/App/AuthSessionPlugin.swift"), /ASWebAuthenticationSession/);

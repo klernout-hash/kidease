@@ -47,7 +47,7 @@ import { ensureDbReady, getPglite } from "../db";
 import { emailAndPasswordConfig, emailAndPasswordEnabled, emailVerificationConfig } from "./email-password";
 import { GROK_PROVIDERS, BROKER_PROVIDERS } from "./providers";
 import { appleLoginVisible } from "./apple-login-flag";
-import { APPLE_CLIENT_ID, appleClientSecret, appleIdpConfigured } from "./apple-idp";
+import { APPLE_CLIENT_ID, appleClientSecret, appleIdpConfigured, appleIdTokenAudiences } from "./apple-idp";
 import { mapAppleProfileToUser } from "./apple-profile";
 import {
   GOOGLE_CLIENT_ID,
@@ -322,7 +322,11 @@ const socialProviders = {
         apple: {
           clientId: APPLE_CLIENT_ID,
           clientSecret: appleClientSecret() as string,
+          // Native identity tokens use the bundle id. Keep this set.
           appBundleIdentifier: env("APPLE_BUNDLE_ID") ?? "ca.kidease.app",
+          // Web tokens use the Services ID. Better Auth 1.7 ignores clientId
+          // for `aud` once appBundleIdentifier is set, unless audience lists both.
+          audience: appleIdTokenAudiences(APPLE_CLIENT_ID, env("APPLE_BUNDLE_ID") ?? "ca.kidease.app"),
           // Better Auth already asks Apple for response_mode=form_post.
           // Name is only present the first time. A relay email is kept.
           mapProfileToUser: mapAppleProfileToUser,
@@ -375,6 +379,13 @@ export const auth = betterAuth({
   // identity to an existing user). Google and Facebook carry DISTINCT emails, so
   // this never merges them into one user — they stay separate identities.
   account: {
+    // OAuth state lives in the verification table. Better Auth 1.7 still also
+    // sets a signed state cookie and rejects the callback when that cookie is
+    // missing ("State mismatch: State not persisted correctly"). The native
+    // sheet is a different cookie jar from the WebView, so /auth/native-start
+    // begins Google and Facebook inside the sheet. Do not skip the cookie
+    // check for the website.
+    storeStateStrategy: "database",
     encryptOAuthTokens: true,
     accountLinking: {
       enabled: true,
