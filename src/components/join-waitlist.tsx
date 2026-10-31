@@ -23,6 +23,14 @@ export function JoinWaitlist({ daycareId, next }: { daycareId: string; next: str
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (typeof window === "undefined" || window.location.hash !== "#join-waitlist") return;
+    const node = document.getElementById("join-waitlist");
+    node?.scrollIntoView({ block: "start" });
+    const field = document.getElementById(`waitlist-age-${daycareId}`);
+    if (field instanceof HTMLElement) field.focus();
+  }, [daycareId, mineId]);
+
+  useEffect(() => {
     if (isPending || !user) {
       setMineId(null);
       return;
@@ -85,7 +93,7 @@ export function JoinWaitlist({ daycareId, next }: { daycareId: string; next: str
   }
 
   return (
-    <section id="join-waitlist" className="mt-4 rounded-lg bg-surface p-4 ring-1 ring-border" data-ke="join-waitlist">
+    <section id="join-waitlist" tabIndex={-1} className="mt-4 scroll-mt-24 rounded-lg bg-surface p-4 ring-1 ring-border" data-ke="join-waitlist">
       <h3 className="font-display text-xl">{copy.joinTitle}</h3>
       <p className="mt-1 text-sm text-muted">{copy.joinLead}</p>
       {plansOn ? <p className="mt-1 text-sm text-muted">{copy.included}</p> : null}

@@ -875,6 +875,7 @@
   "alertVacancy": "可能有學位空出: 請同中心確認",
   "alertRequestReply": "有中心回覆咗",
   "alertWaitlistPulse": "你跟開嘅輪候名單有學位空出",
+  "alertAreaWaitlist": "你所在區域可能有空位",
   "alertOpenNotice": "打開",
   "waitlistOptIn": "有學位空出就通知我",
   "waitlistOptInLead": "我哋會發應用程式內通知；如果你已經同意 CASL 短訊，亦會發短訊。可選。",

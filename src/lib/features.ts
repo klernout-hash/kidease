@@ -104,6 +104,14 @@ export function qcHomeDaycaresEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_QC_HOME_DAYCARES", env);
 }
 
+/**
+ * Email when an area waitlist matches a posted spot. Default OFF.
+ * Kyle approved the wording. Set this to send it. In-app notices still save.
+ */
+export function areaWaitlistAlertsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_AREA_WAITLIST_ALERTS", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;

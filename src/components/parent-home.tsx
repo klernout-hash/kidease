@@ -1,10 +1,14 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { parentDeskPath } from "@/lib/desk-nav";
 import { isSafeSitemapSlug } from "@/lib/sitemap";
+import { AreaWaitlistForm } from "@/components/area-waitlist-form";
+import { useRoleChrome } from "@/components/role-chrome";
 import { EmptyState } from "@/components/empty-state";
 import { RoleUpgradeCard } from "@/components/role-upgrade-card";
 import { StatusBadge } from "@/components/status-badge";
 import { parentHomeCardEligible, showHomeUpgradeCard } from "@/lib/upgrade-prompt";
+import { showsParentBrowseActions } from "@/lib/role-access";
+import { spotOfferCopy } from "@/lib/spot-offer-copy";
 import { useCopy } from "@/lib/use-copy";
 import type { Booking, DaycareCard, TourRequest } from "@/lib/types";
 
@@ -44,7 +48,9 @@ export function ParentHome({
   settled?: boolean;
   onDismiss?: () => void;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
+  const parentActions = showsParentBrowseActions(useRoleChrome().role);
+  const joinLabel = spotOfferCopy(locale).join;
   const parentPath = parentDeskPath(useRouterState({ select: (s) => s.location.pathname }));
   const nextTour = [...tours]
     .filter((tour) => tour.status === "pending" || tour.status === "accepted")
@@ -84,6 +90,7 @@ export function ParentHome({
           {t("search")}
         </button>
       </form>
+      <AreaWaitlistForm returnTo="/parent" />
 
       {empty ? (
         <EmptyState
@@ -106,14 +113,25 @@ export function ParentHome({
             ) : (
               <ul className="mt-2 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
                 {saved.slice(0, 4).map((item) => (
-                  <li key={item.id}>
+                  <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
                     {isSafeSitemapSlug(item.slug) ? (
-                      <Link to="/daycare/$slug" params={{ slug: item.slug }} className="flex min-h-12 items-center px-3 text-sm font-medium">
+                      <Link to="/daycare/$slug" params={{ slug: item.slug }} className="flex min-h-12 min-w-0 flex-1 items-center text-sm font-medium">
                         {item.name}
                       </Link>
                     ) : (
-                      <span className="flex min-h-12 items-center px-3 text-sm font-medium">{item.name}</span>
+                      <span className="flex min-h-12 min-w-0 flex-1 items-center text-sm font-medium">{item.name}</span>
                     )}
+                    {parentActions && isSafeSitemapSlug(item.slug) ? (
+                      <Link
+                        to="/daycare/$slug"
+                        params={{ slug: item.slug }}
+                        hash="join-waitlist"
+                        data-ke="card-join-waitlist"
+                        className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-primary"
+                      >
+                        {joinLabel}
+                      </Link>
+                    ) : null}
                   </li>
                 ))}
               </ul>

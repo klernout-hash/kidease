@@ -12,6 +12,7 @@ import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { useRoleChrome } from "@/components/role-chrome";
 import { showsParentBrowseActions } from "@/lib/role-access";
+import { spotOfferCopy } from "@/lib/spot-offer-copy";
 import { cn, displayCentreName, displayListingText, money } from "@/lib/utils";
 import { isDoorPin } from "@/lib/card-distance";
 import { distanceKm as kmBetween } from "@/lib/proximity";
@@ -155,6 +156,7 @@ function ListingAnchor({
   slug,
   className,
   search,
+  hash,
   onClick,
   children,
   "data-ke": dataKe,
@@ -163,6 +165,7 @@ function ListingAnchor({
   slug: string;
   className?: string;
   search?: { ask: "info" | "tour" };
+  hash?: string;
   onClick?: (event: MouseEvent) => void;
   children: ReactNode;
   "data-ke"?: string;
@@ -180,6 +183,7 @@ function ListingAnchor({
     <Link
       to={localePath(`/daycare/${slug}`, locale)}
       search={search}
+      hash={hash}
       className={className}
       data-ke={dataKe}
       aria-label={label}
@@ -231,6 +235,7 @@ export const DaycareCard = memo(function DaycareCard({
 }) {
   const { t, locale } = useCopy();
   const parentActions = showsParentBrowseActions(useRoleChrome().role);
+  const joinLabel = spotOfferCopy(locale).join;
   const name = displayCentreName(locale === "fr" ? item.nameFr : item.name);
   const live = Boolean(item.live);
   const origin = useAppStore((s) => s.origin);
@@ -411,6 +416,17 @@ export const DaycareCard = memo(function DaycareCard({
               {t("cardRequestInfo")}
             </ListingAnchor>
           ) : null}
+          {parentActions ? (
+            <ListingAnchor
+              slug={item.slug}
+              hash="join-waitlist"
+              data-ke="card-join-waitlist"
+              className="relative z-10 inline-flex min-h-11 items-center justify-center rounded-full bg-surface px-3 text-center text-[13px] font-semibold leading-tight text-fg no-underline ring-1 ring-border touch-manipulation"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {joinLabel}
+            </ListingAnchor>
+          ) : null}
           {offerClaim ? (
             <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10" />
           ) : null}
@@ -562,6 +578,17 @@ export const DaycareCard = memo(function DaycareCard({
             onClick={(e) => e.stopPropagation()}
           >
             {t("cardRequestInfo")}
+          </ListingAnchor>
+        ) : null}
+        {parentActions ? (
+          <ListingAnchor
+            slug={item.slug}
+            hash="join-waitlist"
+            data-ke="card-join-waitlist"
+            className="relative z-10 inline-flex min-h-11 items-center justify-center rounded-full bg-surface px-3 text-center text-[13px] font-semibold leading-tight text-fg no-underline ring-1 ring-border touch-manipulation"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {joinLabel}
           </ListingAnchor>
         ) : null}
         {offerClaim ? (

@@ -32,6 +32,7 @@ function noticeKindKey(kind: SearchAlertNotice["kind"]): CopyKey {
   if (kind === "vacancy_reconfirmed") return "alertVacancy";
   if (kind === "waitlist_pulse") return "alertWaitlistPulse";
   if (kind === "request_reply") return "alertRequestReply";
+  if (kind === "area_waitlist") return "alertAreaWaitlist";
   return "alertNewCentre";
 }
 import { caslStatement } from "@/lib/casl";

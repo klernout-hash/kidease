@@ -875,6 +875,7 @@
   "alertVacancy": "Ein Platz ist möglicherweise frei: bestätigen Sie das bei der Einrichtung",
   "alertRequestReply": "Eine Einrichtung hat geantwortet",
   "alertWaitlistPulse": "Platz frei auf einer Warteliste, der Sie folgen",
+  "alertAreaWaitlist": "In Ihrer Gegend könnte ein Platz frei sein",
   "alertOpenNotice": "Öffnen",
   "waitlistOptIn": "Benachrichtigen Sie mich, wenn ein Platz frei wird",
   "waitlistOptInLead": "Wir senden einen In-App-Hinweis und eine SMS, wenn Sie bereits die CASL-Einwilligung für SMS erteilt haben. Optional.",

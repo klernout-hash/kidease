@@ -875,6 +875,7 @@
   "alertVacancy": "Maaaring may bukas na puwesto: kumpirmahin sa sentro",
   "alertRequestReply": "Sumagot ang isang sentro",
   "alertWaitlistPulse": "May puwestong nabukas sa waitlist na sinusubaybayan mo",
+  "alertAreaWaitlist": "Maaaring may bakanteng spot sa iyong lugar",
   "alertOpenNotice": "Buksan",
   "waitlistOptIn": "Abisuhan ako kung may magbukas na puwesto",
   "waitlistOptInLead": "Magpapadala kami ng abiso sa loob ng app, at ng text kung nagbigay ka na ng pahintulot sa CASL SMS. Opsyonal.",

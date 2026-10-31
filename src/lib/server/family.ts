@@ -1702,6 +1702,12 @@ export const updateCapacity = createServerFn({ method: "POST" })
       where id = ${data.daycareId}
       limit 1
     `;
+    const prevTotal =
+      (Number(before[0]?.spots_infant) || 0) +
+      (Number(before[0]?.spots_toddler) || 0) +
+      (Number(before[0]?.spots_preschool) || 0);
+    const nextTotal = data.spotsInfant + data.spotsToddler + data.spotsPreschool;
+    const spotsOpened = nextTotal > prevTotal;
     await sql`
       update daycares set
         spots_infant = ${data.spotsInfant},
@@ -1709,14 +1715,13 @@ export const updateCapacity = createServerFn({ method: "POST" })
         spots_preschool = ${data.spotsPreschool},
         infant_monthly = ${data.infantMonthly},
         toddler_monthly = ${data.toddlerMonthly},
-        preschool_monthly = ${data.preschoolMonthly}
+        preschool_monthly = ${data.preschoolMonthly},
+        last_vacancy_updated_at = case
+          when ${spotsOpened} then now()
+          else last_vacancy_updated_at
+        end
       where id = ${data.daycareId}
     `;
-    const prevTotal =
-      (Number(before[0]?.spots_infant) || 0) +
-      (Number(before[0]?.spots_toddler) || 0) +
-      (Number(before[0]?.spots_preschool) || 0);
-    const nextTotal = data.spotsInfant + data.spotsToddler + data.spotsPreschool;
     void import("@/lib/server/alert-fanout")
       .then((mod) =>
         mod.notifySavedListingChange({

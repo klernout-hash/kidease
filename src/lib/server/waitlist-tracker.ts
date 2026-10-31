@@ -27,6 +27,35 @@ export type WaitlistRow = {
   batchId: string | null;
 };
 
+/** A row from daycare_waitlist, the same list as /parent/spot-offers. */
+export type CentreWaitlistRow = {
+  id: string;
+  daycareName: string;
+  daycareSlug: string;
+  ageGroup: string;
+  status: string;
+  joinedAt: string;
+  offerId: string | null;
+  offerStatus: string | null;
+  offerExpiresAt: string | null;
+};
+
+export type AreaWaitlistRow = {
+  id: string;
+  label: string;
+  postalCode: string;
+  radiusKm: number;
+  ageGroup: string;
+  startDate: string | null;
+  createdAt: string;
+};
+
+export type MyWaitlistsResult = {
+  requests: WaitlistRow[];
+  centres: CentreWaitlistRow[];
+  areas: AreaWaitlistRow[];
+};
+
 async function ensureWaitlistColumns() {
   if (!import.meta.env.SSR) return;
   const { ensureWaitlistMailTable } = await import("./runtime-schema");
@@ -41,7 +70,7 @@ function iso(value: unknown): string {
 
 export const listMyWaitlists = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .handler(async ({ context }): Promise<WaitlistRow[]> => {
+  .handler(async ({ context }): Promise<MyWaitlistsResult> => {
     await ensureWaitlistColumns();
     const sql = await getSql();
     const rows = await sql<{
@@ -62,7 +91,7 @@ export const listMyWaitlists = createServerFn({ method: "GET" })
       order by b.created_at desc
       limit 100
     `.catch(() => []);
-    return rows.flatMap((row) => {
+    const requests = rows.flatMap((row) => {
       const status = parentWaitlistStatus(row.status);
       if (!status) return [];
       return [
@@ -78,7 +107,86 @@ export const listMyWaitlists = createServerFn({ method: "GET" })
         },
       ];
     });
+    const centres = await listCentreWaitlistRows(sql, context.userId);
+    const areas = await listAreaWaitlistRows(sql, context.userId);
+    return { requests, centres, areas };
   });
+
+async function listCentreWaitlistRows(sql: Awaited<ReturnType<typeof getSql>>, userId: string): Promise<CentreWaitlistRow[]> {
+  const entries = await sql<{
+    id: string;
+    age_group: string;
+    status: string;
+    joined_at: string | Date;
+    name: string;
+    slug: string;
+  }>`
+    select w.id, w.age_group, w.status, w.joined_at, d.name, d.slug
+    from daycare_waitlist w
+    join daycares d on d.id = w.daycare_id
+    where w.user_id = ${userId}
+    order by w.joined_at desc
+    limit 100
+  `.catch(() => []);
+  const offers = await sql<{
+    id: string;
+    waitlist_id: string;
+    status: string;
+    expires_at: string | Date | null;
+    offered_at: string | Date;
+  }>`
+    select id, waitlist_id, status, expires_at, offered_at
+    from spot_offers
+    where user_id = ${userId}
+    order by offered_at desc
+    limit 200
+  `.catch(() => []);
+  const byWaitlist = new Map<string, (typeof offers)[number]>();
+  for (const offer of offers) {
+    if (!byWaitlist.has(offer.waitlist_id)) byWaitlist.set(offer.waitlist_id, offer);
+  }
+  return entries.map((row) => {
+    const offer = byWaitlist.get(row.id);
+    return {
+      id: row.id,
+      daycareName: row.name,
+      daycareSlug: row.slug,
+      ageGroup: row.age_group,
+      status: row.status,
+      joinedAt: iso(row.joined_at),
+      offerId: offer?.id ?? null,
+      offerStatus: offer?.status ?? null,
+      offerExpiresAt: offer?.expires_at ? iso(offer.expires_at) : null,
+    };
+  });
+}
+
+async function listAreaWaitlistRows(sql: Awaited<ReturnType<typeof getSql>>, userId: string): Promise<AreaWaitlistRow[]> {
+  const rows = await sql<{
+    id: string;
+    center_label: string;
+    postal_code: string | null;
+    radius_km: number;
+    age_band: string;
+    start_date: string | Date | null;
+    created_at: string | Date;
+  }>`
+    select id, center_label, postal_code, radius_km, age_band, start_date, created_at
+    from saved_searches
+    where user_id = ${userId} and kind = 'waitlist_area' and alerts_enabled = 1
+    order by created_at desc
+    limit 20
+  `.catch(() => []);
+  return rows.map((row) => ({
+    id: row.id,
+    label: row.center_label,
+    postalCode: row.postal_code || "",
+    radiusKm: Number(row.radius_km) || 0,
+    ageGroup: row.age_band,
+    startDate: row.start_date ? iso(row.start_date).slice(0, 10) : null,
+    createdAt: iso(row.created_at),
+  }));
+}
 
 export const withdrawMyWaitlist = createServerFn({ method: "POST" })
   .middleware([authMiddleware])

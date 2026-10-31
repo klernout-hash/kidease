@@ -875,6 +875,7 @@
   "alertVacancy": "Puede haber un lugar disponible: confírmalo con el centro",
   "alertRequestReply": "Un centro respondió",
   "alertWaitlistPulse": "Se abrió un lugar en una lista de espera que sigues",
+  "alertAreaWaitlist": "Puede haber un lugar libre en tu zona",
   "alertOpenNotice": "Abrir",
   "waitlistOptIn": "Avísame si se abre un lugar",
   "waitlistOptInLead": "Enviaremos un aviso dentro de la app y un mensaje de texto si ya diste el consentimiento CASL SMS. Opcional.",
