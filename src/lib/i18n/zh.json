@@ -2205,6 +2205,7 @@
   "reviewDecisionNote": "下次决定的可选备注",
   "trustLicensedMatched": "已核对注册处",
   "trustLicenceVerified": "执照已核实",
+  "verifiedOn": "核实于",
   "trustLicenceVerifiedTip": "KidEase 操作员已确认此执照。检查记录仍在官方省级注册处。",
   "trustLicensedMatchedTip": "KidEase 运营人员已对照官方注册处确认此执照。这并非政府网站的实时抓取：请在官方记录上确认检查情况。",
   "trustLicensedMatchedMbTip": "KidEase 已将此曼尼托巴执照号码与内置注册处快照匹配。官方检查记录仍在 childcaresearch.gov.mb.ca。",

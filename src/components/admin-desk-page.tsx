@@ -49,7 +49,7 @@ import {
 import { ADMIN_LOGIN_SEARCH } from "@/lib/admin-desk-gate";
 import { decideCentre, listAdminCentres, listIncompleteAdminCentres, mergeHiddenReview, restoreHiddenReview, unmergeCentre, type AdminCentreRow, type Decision } from "@/lib/server/admin-centres";
 import { reprocessListingPhotos } from "@/lib/server/reprocess-listing-photos";
-import { listJurisdictions, listListingReports, reviewLicense, type AdminReportRow, type LicenseReviewAction } from "@/lib/server/trust";
+import { listJurisdictions, listLicenceCoverage, listListingReports, reviewLicense, type AdminReportRow, type LicenceCoverageRow, type LicenseReviewAction } from "@/lib/server/trust";
 import { listAdminScreeningQueue, type AdminScreeningQueueRow } from "@/lib/server/provider-screening";
 import { AdminTrustPanel } from "@/components/admin-trust";
 import { AdminCentreStatList, AdminReviewCard, AdminReviewLoading, AdminReviewNotice, ApprovalHealthNotice } from "@/components/admin-review-card";
@@ -151,6 +151,7 @@ export function AdminPage() {
   const [openProv, setOpenProv] = useState<Record<string, boolean>>({});
   const [jurisdictions, setJurisdictions] = useState<Awaited<ReturnType<typeof listJurisdictions>>>([]);
   const [reports, setReports] = useState<AdminReportRow[]>([]);
+  const [coverage, setCoverage] = useState<LicenceCoverageRow[]>([]);
   const [screeningQueue, setScreeningQueue] = useState<AdminScreeningQueueRow[]>([]);
   const [catalogHealth, setCatalogHealth] = useState<CatalogRuntime | null>(null);
   const [leadCounts, setLeadCounts] = useState<LeadCounts>(emptyLeadCounts());
@@ -211,9 +212,10 @@ export function AdminPage() {
       })),
     ]);
     await applyCentres;
-    const [regs, flags, health, leads, screening] = await Promise.all([
+    const [regs, flags, licenceCoverage, health, leads, screening] = await Promise.all([
       listJurisdictions().catch(() => []),
       listListingReports().catch(() => []),
+      listLicenceCoverage().catch(() => []),
       getCatalogHealth().catch(() => null),
       listAdminLeadCounts().catch(() => emptyLeadCounts()),
       listAdminScreeningQueue().catch(() => []),
@@ -230,6 +232,7 @@ export function AdminPage() {
     setContractLoadFailed(Boolean(envelopes.docusignLoadFailed));
     setJurisdictions(regs);
     setReports(flags);
+    setCoverage(licenceCoverage);
     setCatalogHealth(health);
     setLeadCounts(leads);
     setScreeningQueue(screening);
@@ -784,7 +787,7 @@ export function AdminPage() {
           )}
         </>
       ) : tab === "trust" ? (
-        <AdminTrustPanel jurisdictions={jurisdictions} reports={reports} />
+        <AdminTrustPanel jurisdictions={jurisdictions} reports={reports} coverage={coverage} />
       ) : tab === "screening" ? (
         <AdminScreeningQueue rows={screeningQueue} onChanged={() => void refresh()} />
       ) : tab === "mail" ? (

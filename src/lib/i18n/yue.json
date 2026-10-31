@@ -2205,6 +2205,7 @@
   "reviewDecisionNote": "下次決定嘅備註（可選）",
   "trustLicensedMatched": "已核對登記冊",
   "trustLicenceVerified": "牌照已核實",
+  "verifiedOn": "核實於",
   "trustLicenceVerifiedTip": "KidEase 操作員已確認呢個牌照。檢查紀錄仍然喺官方省級註冊處。",
   "trustLicensedMatchedTip": "KidEase 職員已對照官方登記冊確認呢個牌照。呢個唔係政府即時擷取: 請喺官方紀錄確認巡查。",
   "trustLicensedMatchedMbTip": "KidEase 已將呢個 Manitoba 牌照號碼配對到內置登記冊快照。官方巡查仍然喺 childcaresearch.gov.mb.ca。",

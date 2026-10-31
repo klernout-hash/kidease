@@ -1,7 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { TrustSignals } from "@/components/trust-badge";
 import type { TrustListing } from "@/lib/trust";
+import { licenceCoveragePercent } from "@/lib/license-status";
 import { adapterStatusHint, adapterStatusLabel, adapterStatusTone, JURISDICTIONS, type AdapterStatus } from "@/lib/province-registry";
+import type { LicenceCoverageRow } from "@/lib/server/trust";
 import type { AdminReportRow } from "@/lib/server/trust";
 import { SafetyReviewQueue } from "@/components/safety-review-queue";
 
@@ -19,9 +21,11 @@ type JurisdictionRow = {
 export function AdminTrustPanel({
   jurisdictions,
   reports,
+  coverage = [],
 }: {
   jurisdictions: JurisdictionRow[];
   reports: AdminReportRow[];
+  coverage?: LicenceCoverageRow[];
 }) {
   const rows = jurisdictions.length ? jurisdictions : JURISDICTIONS;
   return (
@@ -68,6 +72,45 @@ export function AdminTrustPanel({
             </li>
           ))}
         </ul>
+      </section>
+      <section>
+        <h2 className="font-display text-2xl">Licence verified coverage</h2>
+        <p className="mt-1 text-sm text-muted">
+          Public listings whose licence was checked by KidEase staff or the centre, with a date on file. A catalogue match is not counted. This does not remove any listing.
+        </p>
+        <div className="mt-5 overflow-x-auto rounded-xl bg-surface ring-1 ring-border">
+          <table className="w-full min-w-[20rem] text-sm">
+            <thead className="bg-surface-2 text-left text-xs text-muted">
+              <tr>
+                <th className="px-4 py-2 font-medium">Province</th>
+                <th className="px-4 py-2 font-medium">Listings</th>
+                <th className="px-4 py-2 font-medium">Verified</th>
+                <th className="px-4 py-2 font-medium">Share</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {coverage.length === 0 ? (
+                <tr>
+                  <td className="px-4 py-6 text-muted" colSpan={4}>
+                    No coverage rows yet.
+                  </td>
+                </tr>
+              ) : (
+                coverage.map((row) => {
+                  const share = licenceCoveragePercent(row);
+                  return (
+                    <tr key={row.province}>
+                      <td className="px-4 py-2 font-medium">{row.province}</td>
+                      <td className="px-4 py-2 tabular-nums">{row.listings}</td>
+                      <td className="px-4 py-2 tabular-nums">{row.verified}</td>
+                      <td className="px-4 py-2 tabular-nums">{share == null ? "n/a" : `${share}%`}</td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
       <section>
         <h2 className="font-display text-2xl">Listing reports</h2>

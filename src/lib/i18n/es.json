@@ -2205,6 +2205,7 @@
   "reviewDecisionNote": "Nota opcional para la próxima decisión",
   "trustLicensedMatched": "Verificado en el registro",
   "trustLicenceVerified": "Licencia verificada",
+  "verifiedOn": "verificada el",
   "trustLicenceVerifiedTip": "Un operador de KidEase confirmó esta licencia. Las inspecciones siguen en el registro provincial oficial.",
   "trustLicensedMatchedTip": "Un operador de KidEase confirmó esta licencia con el registro oficial. Esto no es una extracción en vivo de datos del gobierno; confirma las inspecciones en el registro oficial.",
   "trustLicensedMatchedMbTip": "KidEase hizo coincidir este número de licencia de Manitoba con la instantánea del registro incluida. Las inspecciones oficiales permanecen en childcaresearch.gov.mb.ca.",

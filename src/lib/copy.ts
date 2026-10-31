@@ -2702,6 +2702,7 @@ export const copy = {
     reviewDecisionNote: "Optional note on next decision",
     trustLicensedMatched: "Registry-checked",
     trustLicenceVerified: "Licence verified",
+    verifiedOn: "verified on",
     trustLicenceVerifiedTip:
       "A KidEase operator confirmed this licence. Inspections stay on the official provincial registry.",
     trustLicensedMatchedTip:
@@ -6201,6 +6202,7 @@ export const copy = {
     reviewDecisionNote: "Note facultative pour la prochaine décision",
     trustLicensedMatched: "Vérifié au registre",
     trustLicenceVerified: "Permis vérifié",
+    verifiedOn: "vérifié le",
     trustLicenceVerifiedTip:
       "Un opérateur KidEase a confirmé ce permis. Les inspections restent sur le registre provincial officiel.",
     trustLicensedMatchedTip:
