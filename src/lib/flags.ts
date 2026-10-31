@@ -44,6 +44,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_ENROLMENT_REVIEW",
   "FEATURE_NEON_BACKUP",
   "FEATURE_INSPECTION_HISTORY",
+  "FEATURE_PROVINCIAL_VACANCY_INDEX",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -121,6 +122,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_NEON_BACKUP: false,
   /** Cached public inspection rows on a listing. Off until Kyle turns it on. */
   FEATURE_INSPECTION_HISTORY: false,
+  /** Per-province vacancy index, confirm history, and freshness bands. */
+  FEATURE_PROVINCIAL_VACANCY_INDEX: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -300,6 +303,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Show cached Ontario, British Columbia, and Alberta inspection rows on a listing. Default off. Rows must cite a public government page. KidEase does not invent a violation.",
+  },
+  {
+    key: "FEATURE_PROVINCIAL_VACANCY_INDEX",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Per-province open-spot pages, confirm history, and freshness bands. Default off. The national vacancy index stays either way.",
   },
 ];
 

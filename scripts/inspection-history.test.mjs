@@ -39,6 +39,6 @@ test("inspection history stays off and only keeps a public government row", () =
   assert.match(src(".env.example"), /^FEATURE_INSPECTION_HISTORY=0$/m);
   assert.match(src("src/lib/server/daycares.ts"), /readCachedInspections/);
   assert.match(src("src/components/inspection-trust-card.tsx"), /inspection-history/);
-  assert.match(src("migrations/0109_inspection_history.sql"), /listing_inspections/);
+  assert.match(src("migrations/0111_inspection_history.sql"), /listing_inspections/);
   assert.doesNotMatch(src("src/lib/server/inspection-history.ts"), /delete from daycares/i);
 });

@@ -10,6 +10,8 @@ import type { PublicAgeBand } from "@/lib/public-programs";
 import type { CopyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
 import { formatCount } from "@/lib/utils";
+import { parseVacancyProvince, type FreshnessCounts } from "@/lib/vacancy-history";
+import { vacancyProvinceCopy } from "@/lib/vacancy-province-copy";
 
 const BAND_LABEL: Record<PublicAgeBand, CopyKey> = {
   infant: "infant",
@@ -19,7 +21,11 @@ const BAND_LABEL: Record<PublicAgeBand, CopyKey> = {
 };
 
 export const Route = createFileRoute("/vacancy-index")({
-  loader: () => loadVacancyIndex(),
+  validateSearch: (search: Record<string, unknown>) => ({
+    province: parseVacancyProvince(search.province),
+  }),
+  loaderDeps: ({ search }) => ({ province: search.province }),
+  loader: ({ deps }) => loadVacancyIndex(deps.province),
   head: () =>
     pageSeoHead({
       title: "Open spots by province · KidEase",
@@ -52,22 +58,82 @@ function centreLine(n: number, locale: string, template: string): string {
   return template.replace("{n}", formatted);
 }
 
+function spotText(value: number | null): string {
+  return value == null ? "-" : String(value);
+}
+
+function ProvinceFreshness({ counts, locale }: { counts: FreshnessCounts; locale: "en" | "fr" }) {
+  const copy = vacancyProvinceCopy(locale);
+  const rows = [
+    [copy.fresh, counts.fresh],
+    [copy.aging, counts.aging],
+    [copy.stale, counts.stale],
+    [copy.unknown, counts.unknown],
+  ] as const;
+  return (
+    <ul className="mt-3 space-y-1 text-sm text-muted" data-ke="vacancy-freshness">
+      {rows.map(([label, n]) => (
+        <li key={label}>
+          {label}: {formatCount(n, locale)}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function VacancyIndexView({ data }: { data: VacancyIndexData }) {
   const { t, locale } = useCopy();
+  const lang = locale === "fr" ? "fr" : "en";
+  const extra = vacancyProvinceCopy(lang);
+  const focus = data.focus ? jurisdiction(data.focus) : null;
+  const focusName = focus ? (lang === "fr" ? focus.nameFr : focus.nameEn) : "";
   const counted = t("vacancyIndexCounted").replace("{date}", formatCounted(data.countedOn, locale));
+  const provinces = focus ? data.provinces.filter((row) => row.code === focus.code) : data.provinces;
 
   return (
     <Shell>
       <main className="ke-gutter mx-auto w-full max-w-3xl py-10 md:py-14" data-ke="vacancy-index">
         <p className="text-sm font-semibold tracking-wide text-primary">KidEase</p>
-        <h1 className="mt-2 text-[clamp(1.75rem,4vw,2.5rem)]">{t("vacancyIndexTitle")}</h1>
-        <p className="mt-3 max-w-xl text-base text-muted">{t("vacancyIndexLead")}</p>
+        <h1 className="mt-2 text-[clamp(1.75rem,4vw,2.5rem)]">
+          {focus ? extra.pageTitle(focusName) : t("vacancyIndexTitle")}
+        </h1>
+        <p className="mt-3 max-w-xl text-base text-muted">{focus ? extra.lead : t("vacancyIndexLead")}</p>
         <p className="mt-2 text-sm text-muted">{counted}</p>
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap items-center gap-3">
           <Button asChild size="lg">
-            <Link to={localePath("/search", locale)}>{t("vacancyIndexCta")}</Link>
+            <Link to={localePath("/search", locale)} search={focus ? { q: focusName } : undefined}>
+              {focus ? extra.backSearch : t("vacancyIndexCta")}
+            </Link>
           </Button>
+          <Link
+            to={localePath("/help", locale)}
+            className="inline-flex min-h-11 min-w-11 items-center font-medium text-primary underline-offset-4 hover:underline"
+          >
+            {extra.help}
+          </Link>
+          {focus ? (
+            <Link
+              to={localePath("/vacancy-index", locale)}
+              className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+            >
+              {extra.allProvinces}
+            </Link>
+          ) : null}
         </div>
+        {focus && data.freshnessByCode?.[focus.code] ? (
+          <ProvinceFreshness counts={data.freshnessByCode[focus.code]} locale={lang} />
+        ) : null}
+        {focus ? (
+          <p className="mt-3 max-w-xl text-sm text-muted" data-ke="vacancy-official">
+            {data.official
+              ? extra.official(
+                  formatCount(data.official.openings, locale),
+                  formatCount(data.official.centres, locale),
+                  formatCounted(data.official.fetchedAt.slice(0, 10), locale),
+                )
+              : extra.officialMissing}
+          </p>
+        ) : null}
 
         {data.totalCentres === 0 ? (
           <div className="mt-10 rounded-xl bg-surface p-5 ring-1 ring-border">
@@ -83,7 +149,7 @@ export function VacancyIndexView({ data }: { data: VacancyIndexData }) {
           </div>
         ) : (
           <div className="mt-10 space-y-8">
-            {data.provinces.map((province) => {
+            {provinces.map((province) => {
               const place = jurisdiction(province.code);
               const name = place ? (locale === "fr" ? place.nameFr : place.nameEn) : province.code;
               return (
@@ -118,13 +184,27 @@ export function VacancyIndexView({ data }: { data: VacancyIndexData }) {
                       );
                     })}
                   </ul>
-                  <Link
-                    to={localePath("/search", locale)}
-                    search={{ q: name }}
-                    className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
-                  >
-                    {t("vacancyIndexSearchProvince").replace("{name}", locale === "fr" ? provinceLocativeFr(province.code) : name)}
-                  </Link>
+                  <p className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
+                    <Link
+                      to={localePath("/search", locale)}
+                      search={{ q: name }}
+                      className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+                    >
+                      {t("vacancyIndexSearchProvince").replace("{name}", locale === "fr" ? provinceLocativeFr(province.code) : name)}
+                    </Link>
+                    {data.provincePages && !focus ? (
+                      <Link
+                        to={localePath("/vacancy-index", locale)}
+                        search={{ province: province.code.toLowerCase() }}
+                        className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+                      >
+                        {extra.provinceLink}
+                      </Link>
+                    ) : null}
+                  </p>
+                  {!focus && data.freshnessByCode?.[province.code] ? (
+                    <ProvinceFreshness counts={data.freshnessByCode[province.code]} locale={lang} />
+                  ) : null}
                 </section>
               );
             })}
@@ -133,6 +213,37 @@ export function VacancyIndexView({ data }: { data: VacancyIndexData }) {
             ) : null}
           </div>
         )}
+
+        {focus ? (
+          <section className="mt-10" aria-labelledby="vacancy-history" data-ke="vacancy-history">
+            <h2 id="vacancy-history" className="text-xl">
+              {extra.historyTitle}
+            </h2>
+            {data.history.length ? (
+              <ul className="mt-3 divide-y divide-border">
+                {data.history.map((row) => {
+                  const label =
+                    row.source === "edit" ? extra.historyEdit : row.source === "import" ? extra.historyImport : extra.historyConfirm;
+                  return (
+                    <li key={row.id} className="py-3">
+                      <p className="font-medium">{row.name}</p>
+                      <p className="mt-1 text-sm text-muted">
+                        {label}
+                        {" · "}
+                        {formatCounted(row.at.slice(0, 10), locale)}
+                      </p>
+                      <p className="mt-1 text-sm tabular-nums text-muted">
+                        {extra.spots(spotText(row.infant), spotText(row.toddler), spotText(row.preschool))}
+                      </p>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="mt-3 text-sm text-muted">{extra.historyEmpty}</p>
+            )}
+          </section>
+        ) : null}
 
         <section className="mt-12" aria-labelledby="vacancy-method">
           <h2 id="vacancy-method" className="text-xl">

@@ -9,6 +9,7 @@ import {
   providerDeskListingVisible,
 } from "@/lib/listing-visibility";
 import { nid } from "@/lib/utils";
+import { recordVacancyEvent } from "./vacancy-history";
 import { upsertDaycare } from "./seed";
 import { callerIsAdmin } from "./public-listing";
 import { mapDaycare, type DaycareRow } from "./map-row";
@@ -807,6 +808,10 @@ export const refreshVacancy = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     await assertCentreCanMutateVacancies(sql, context.userId, data.daycareId);
+    const logged = await recordVacancyEvent({ daycareId: data.daycareId, source: "confirm" });
+    if (logged.recorded) {
+      return { ok: true as const, lastVacancyUpdatedAt: new Date().toISOString() };
+    }
     const wrote = await sql<{ id: string }>`
       update daycares
       set last_vacancy_updated_at = now(),
