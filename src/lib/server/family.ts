@@ -664,6 +664,13 @@ export const createBooking = createServerFn({ method: "POST" })
     } catch (err) {
       console.error("[kidease-mail] enrol notify failed", err);
     }
+    const { captureServerProductEvent } = await import("@/lib/server/product-events");
+    const { provinceCode } = await import("@/lib/product-events");
+    void captureServerProductEvent(
+      "enrolment_requested",
+      { province: provinceCode(d.province), result: status === "accepted" ? "accepted" : "waitlist", source: "booking" },
+      context.userId,
+    );
     return { id, status, amount, conversationId: cid };
   });
 

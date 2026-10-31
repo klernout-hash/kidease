@@ -17,7 +17,10 @@ export const joinAreaWaitlist = createServerFn({ method: "POST" })
   }))
   .handler(async ({ context, data }) => {
     const { joinAreaWaitlistForUser } = await import("./area-waitlist-job");
-    return joinAreaWaitlistForUser(context.userId, data);
+    const result = await joinAreaWaitlistForUser(context.userId, data);
+    const { captureServerProductEvent } = await import("@/lib/server/product-events");
+    void captureServerProductEvent("waitlist_joined", { source: "area", role: "parent" }, context.userId);
+    return result;
   });
 
 export const removeAreaWaitlist = createServerFn({ method: "POST" })

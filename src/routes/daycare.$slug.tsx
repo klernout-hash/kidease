@@ -57,6 +57,8 @@ import { hasCompare, toggleCompareItem } from "@/lib/compare";
 import { useParentPlusAccess } from "@/lib/use-parent-plus";
 import { ListingMoreActions, ListingMoreItem } from "@/components/listing-more-actions";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { provinceCode } from "@/lib/product-events";
+import { trackProductEvent } from "@/lib/track-product-event";
 import { SIGNUP_FUNNEL_EVENT, signupFunnelPayload, signupPromptStep } from "@/lib/signup-funnel";
 import { formatMonthlyFee, listingFeeNotes } from "@/lib/public-programs";
 import { liveLookingOnly } from "@/lib/now-loops";
@@ -281,6 +283,10 @@ export function Listing() {
   useEffect(() => {
     if (!data) return;
     const ctx = rankingContextFor(data.daycare.id);
+    trackProductEvent("listing_viewed", {
+      province: provinceCode(data.daycare.province),
+      surface: "listing",
+    });
     captureRankingEvent("listing_viewed", {
       listing_id: data.daycare.id,
       position: ctx.position,
@@ -553,6 +559,7 @@ export function Listing() {
       return;
     }
     captureMarketplaceFunnel({ step: "contact", source: "listing", dest_path: "/daycare", contact: "spot" });
+    trackProductEvent("enrolment_requested", { source: "listing", surface: "spot" });
     capturePostHogEvent("listing_request_started", { intent: "spot" });
     setRequestOpen(true);
   }

@@ -78,6 +78,7 @@ import {
   socialSignupCallbackPath,
 } from "@/lib/auth/social-callback";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { trackProductEvent } from "@/lib/track-product-event";
 import { isSignupWhy, SIGNUP_FUNNEL_EVENT, signupFunnelPayload, type SignupWhy } from "@/lib/signup-funnel";
 import { parentMobileIssue, smsOptInWasBlocked, stashParentSmsOptIn, takeParentSmsOptIn } from "@/lib/parent-sms-consent";
 import { toast } from "sonner";
@@ -620,6 +621,7 @@ export function LoginScreen({
         await dropExistingSession();
       }
       if (mode === "up") {
+        trackProductEvent("signup_started", { method: "email", source: "login", role });
         const hygiene = localPasswordIssue(password, email);
         if (hygiene) throw new Error(hygiene);
         if (parentSignup) {
@@ -649,6 +651,7 @@ export function LoginScreen({
         if (!signingOperator) {
           await withTimeoutFallback(confirmAdultAge(), LOGIN_CONTINUE_MS, undefined);
         }
+        trackProductEvent("signup_completed", { method: "email", source: "login", role });
         confirmAction(t, "accountCreated");
       } else {
         const res = await withTimeout(

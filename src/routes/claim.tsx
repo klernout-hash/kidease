@@ -19,6 +19,7 @@ import { localePath } from "@/lib/locale-path";
 import { MARKETING_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { trackProductEvent } from "@/lib/track-product-event";
 import { SIGNUP_FUNNEL_EVENT, signupFunnelPayload } from "@/lib/signup-funnel";
 import { UploadLimitHint } from "@/components/upload-limit-hint";
 import { isListingPhotoTooBig } from "@/lib/upload-limits";
@@ -169,6 +170,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
     if (name) setQ(name);
     setOpen(false);
     if (!user) {
+      trackProductEvent("claim_started", { source: "claim", surface: "login" });
       capturePostHogEvent(SIGNUP_FUNNEL_EVENT, signupFunnelPayload("claim_started", { source: "claim" }));
       void navigate({
         to: locale === "fr" ? "/fr/login" : "/login",
@@ -180,6 +182,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
     try {
       const res = await startClaim({ data: daycareId });
       captureMarketplaceFunnel({ step: "claim", source: "claim", dest_path: "/claim" });
+      trackProductEvent("claim_started", { source: "claim", surface: "desk" });
       capturePostHogEvent(SIGNUP_FUNNEL_EVENT, signupFunnelPayload("claim_started", { source: "claim" }));
       if (res.alreadyOwned) {
         confirmSuccess({ variant: "toast", title: t("claimOwned") });

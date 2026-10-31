@@ -31,6 +31,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_OPEN_SPOTS_CHECKIN_SMS",
   "FEATURE_QC_HOME_DAYCARES",
   "FEATURE_AREA_WAITLIST_ALERTS",
+  "FEATURE_PRODUCT_EVENTS",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -82,6 +83,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_QC_HOME_DAYCARES: false,
   /** Area waitlist email. Off until Kyle approves the wording. */
   FEATURE_AREA_WAITLIST_ALERTS: false,
+  /** Named product events for PostHog. Off until Kyle turns it on. No personal details in the payload. */
+  FEATURE_PRODUCT_EVENTS: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -182,6 +185,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Email when an area waitlist matches a posted spot. Default off. Kyle approved the wording. In-app notices still save.",
+  },
+  {
+    key: "FEATURE_PRODUCT_EVENTS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "PostHog events for signup, search, listing view, waitlist, enrolment, paid invoice, and claim. Default off. Properties stay coarse: no name, email, phone, child, or address.",
   },
 ];
 
