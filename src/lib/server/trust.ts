@@ -192,6 +192,38 @@ export const reportListing = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+export type LicenceCoverageRow = {
+  province: string;
+  listings: number;
+  verified: number;
+};
+
+export const listLicenceCoverage = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }): Promise<LicenceCoverageRow[]> => {
+    await requireAdmin(context.userId);
+    const sql = await getSql();
+    const rows = await sql<{ province: string; listings: number; verified: number }>`
+      select upper(coalesce(nullif(trim(province), ''), '??')) as province,
+        count(*)::int as listings,
+        count(*) filter (
+          where lower(coalesce(license_verification_source, '')) in ('admin', 'provider')
+            and license_verified_at is not null
+            and lower(coalesce(license_status, '')) in ('matched', 'active')
+        )::int as verified
+      from daycares
+      where coalesce(is_test, 0) = 0
+        and coalesce(visibility, 'public') <> 'admin_only'
+      group by 1
+      order by 1
+    `.catch(() => []);
+    return rows.map((row) => ({
+      province: row.province,
+      listings: Number(row.listings) || 0,
+      verified: Number(row.verified) || 0,
+    }));
+  });
+
 export const listJurisdictions = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {

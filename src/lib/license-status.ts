@@ -52,6 +52,24 @@ export function licenceVerifiedStamp(value: unknown): string {
  * Parent-facing "Licence verified" only after an operator confirmation.
  * A catalogue snapshot, a blank timestamp, or an expired/suspended licence never qualifies.
  */
+export type LicenceCoverageCounts = { listings: number; verified: number };
+
+/** Share of public listings with an operator licence check. Null when the province has no rows. */
+export function licenceCoveragePercent(row: LicenceCoverageCounts): number | null {
+  const listings = Math.max(0, Math.floor(row.listings) || 0);
+  const verified = Math.max(0, Math.floor(row.verified) || 0);
+  if (!listings) return null;
+  return Math.round((Math.min(verified, listings) / listings) * 1000) / 10;
+}
+
+/** Visible suffix for the licence badge, such as "verified on Oct 31, 2026". */
+export function licenceVerifiedExtra(formattedDate: string, phrase: string): string {
+  const date = formattedDate.trim();
+  const lead = phrase.trim();
+  if (!date || !lead) return "";
+  return `${lead} ${date}`;
+}
+
 export function showLicenceVerifiedBadge(input: {
   licenseStatus?: string | null;
   registryMatchState?: string | null;

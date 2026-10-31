@@ -2200,6 +2200,7 @@
   "reviewDecisionNote": "Opsyonal na tala sa susunod na desisyon",
   "trustLicensedMatched": "Na-check sa registry",
   "trustLicenceVerified": "Na-verify ang lisensya",
+  "verifiedOn": "na-verify noong",
   "trustLicenceVerifiedTip": "Kinumpirma ng isang operator ng KidEase ang lisensyang ito. Ang mga inspeksyon ay nananatili sa opisyal na rehistro ng lalawigan.",
   "trustLicensedMatchedTip": "Kinumpirma ng isang operator ng KidEase ang lisensyang ito sa opisyal na registry. Hindi ito live na government scrape: kumpirmahin ang mga inspeksyon sa opisyal na rekord.",
   "trustLicensedMatchedMbTip": "Itinugma ng KidEase ang Manitoba licence number na ito sa bundled registry snapshot. Nananatili ang mga opisyal na inspeksyon sa childcaresearch.gov.mb.ca.",
