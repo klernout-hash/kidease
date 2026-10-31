@@ -112,6 +112,11 @@ export function areaWaitlistAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_AREA_WAITLIST_ALERTS", env);
 }
 
+/** Availability-then-distance on Need care fast. Default OFF. No Google Maps. */
+export function needCareFastEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_NEED_CARE_FAST", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;
