@@ -303,6 +303,7 @@ export function DaycareTypeRails({
   selected,
   onSelect,
   city,
+  ratingFloor,
 }: {
   items?: Card[];
   rows?: Partial<Record<BrowseDaycareType, Card[]>>;
@@ -318,6 +319,7 @@ export function DaycareTypeRails({
   selected?: BrowseDaycareType;
   onSelect?: (type?: BrowseDaycareType) => void;
   city?: string;
+  ratingFloor?: number;
 }) {
   const { t } = useCopy();
   const [localType, setLocalType] = useState<BrowseDaycareType | undefined>();
@@ -363,6 +365,7 @@ export function DaycareTypeRails({
               eagerThumbs={Boolean(eagerThumbs) && kind === kinds[0]}
               visual={visual}
               labelFar={labelFar}
+              ratingFloor={ratingFloor}
               persist={forced}
               empty={
                 forced && !row.length

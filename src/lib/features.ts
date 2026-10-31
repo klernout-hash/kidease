@@ -112,6 +112,11 @@ export function areaWaitlistAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_AREA_WAITLIST_ALERTS", env);
 }
 
+/** Review reports and one-review rating summaries. Default OFF. Three-review gate stays. */
+export function reviewReportsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_REVIEW_REPORTS", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;

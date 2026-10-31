@@ -61,6 +61,8 @@ import { SIGNUP_FUNNEL_EVENT, signupFunnelPayload, signupPromptStep } from "@/li
 import { formatMonthlyFee, listingFeeNotes } from "@/lib/public-programs";
 import { liveLookingOnly } from "@/lib/now-loops";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
+import { parentRatingShown, ratingFloor } from "@/lib/review-reports";
+import { ReviewReportButton } from "@/components/review-report-button";
 import { rememberViewed } from "@/lib/recent";
 import { trackLocation } from "@/lib/telemetry";
 import { useAppStore } from "@/lib/store";
@@ -222,6 +224,7 @@ export function Listing() {
     availability: AvailabilityRow[];
     nearby: Card[];
     jobs?: CentreJobPost[];
+    reviewReports?: boolean;
   } | null>(null);
   const [photo, setPhoto] = useState(0);
   const [requestOpen, setRequestOpen] = useState(false);
@@ -513,7 +516,8 @@ export function Listing() {
     province: d.province,
     postalCode: d.postalCode,
   };
-  const parentRated = (d.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (d.parentRatingX10 ?? 0) > 0;
+  const reviewFloor = ratingFloor(Boolean(data?.reviewReports), MIN_REVIEW_COUNT);
+  const parentRated = parentRatingShown(d.parentReviewCount, d.parentRatingX10, reviewFloor);
   const googleRated = d.reviewCount > 0 && d.ratingX10 > 0;
 
   function goLogin(
@@ -958,7 +962,7 @@ export function Listing() {
               <p className="mt-2 max-w-prose text-sm text-muted" data-ke="verified-review-note">
                 {t("verifiedReviewNote")}
               </p>
-              {(d.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (d.parentRatingX10 ?? 0) > 0 ? (
+              {parentRated ? (
                 <p className="mt-2 inline-flex items-center gap-2 text-sm">
                   <Star className="size-3.5 fill-fg" />
                   <span className="font-medium tabular-nums">{((d.parentRatingX10 ?? 0) / 10).toFixed(1)}</span>
@@ -982,6 +986,7 @@ export function Listing() {
                       </div>
                       <p className="mt-1 text-sm text-muted">{locale === "fr" ? r.bodyFr : r.body}</p>
                       <ListingOwnerReply reviewId={r.id} ownsListing={ownsListing} reply={r.ownerReply || null} />
+                      {data.reviewReports ? <ReviewReportButton reviewId={r.id} /> : null}
                     </li>
                   ))}
                 </ul>

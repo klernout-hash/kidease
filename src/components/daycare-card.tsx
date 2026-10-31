@@ -44,6 +44,7 @@ import {
 } from "@/lib/now-loops";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
+import { parentRatingShown } from "@/lib/review-reports";
 import { listingSubsidy } from "@/lib/fee-program";
 import { SubsidyPill } from "@/components/subsidy-pill";
 import { SponsoredMark } from "@/components/sponsored-mark";
@@ -220,6 +221,7 @@ export const DaycareCard = memo(function DaycareCard({
   priority = false,
   presentation = "rail",
   labelFar = false,
+  ratingFloor = MIN_REVIEW_COUNT,
 }: {
   item: Card;
   showDistance?: boolean;
@@ -232,6 +234,8 @@ export const DaycareCard = memo(function DaycareCard({
   presentation?: "rail" | "visual";
   /** Name search: show kilometres, and the province once a centre is far away. */
   labelFar?: boolean;
+  /** Public floor is 3. The review-report flag can lower it to 1. */
+  ratingFloor?: number;
 }) {
   const { t, locale } = useCopy();
   const parentActions = showsParentBrowseActions(useRoleChrome().role);
@@ -305,7 +309,7 @@ export const DaycareCard = memo(function DaycareCard({
         : "";
   const priceUnit = subsidy?.subsidy_type === "ten_max" ? " / day max" : daily ? " / day" : feeOk ? t("month") : "";
   const priceOnPhoto = daily;
-  const showParentAverage = (item.parentReviewCount ?? 0) >= MIN_REVIEW_COUNT && (item.parentRatingX10 ?? 0) > 0;
+  const showParentAverage = parentRatingShown(item.parentReviewCount, item.parentRatingX10, ratingFloor);
 
   if (presentation === "visual") {
     const placeLine = [item.city, farAway ? item.province : "", away].filter(Boolean).join(" · ");
