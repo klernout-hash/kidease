@@ -26,9 +26,19 @@ export function nativeOAuthReturnPath(next: string | null | undefined): string {
   return `${NATIVE_AUTH_RETURN_PATH}?next=${encodeURIComponent(safeInAppPath(next))}`;
 }
 
-export function nativeOAuthProvider(raw: string | null | undefined): "google" | "facebook" | "apple" | null {
+export function nativeOAuthProvider(
+  raw: string | null | undefined,
+): "google" | "facebook" | "apple" | "huawei" | "amazon" | null {
   const provider = String(raw || "").trim().toLowerCase();
-  if (provider === "google" || provider === "facebook" || provider === "apple") return provider;
+  if (
+    provider === "google" ||
+    provider === "facebook" ||
+    provider === "apple" ||
+    provider === "huawei" ||
+    provider === "amazon"
+  ) {
+    return provider;
+  }
   return null;
 }
 
@@ -120,7 +130,7 @@ export function nativeHandoffPath(input: NativeAuthFinish): string {
   return `${NATIVE_AUTH_HANDOFF_PATH}?${params.toString()}`;
 }
 
-import { orderSocialSignIn } from "./providers.ts";
+import { orderSocialSignIn, providersForStore } from "./providers.ts";
 
 export type NativeSocialPlatform = "ios" | "android" | "web";
 
@@ -138,6 +148,22 @@ export function providersForNativeShell<T extends { idp: string }>(
   return orderSocialSignIn(providers.filter((provider) => provider.idp !== "google" && provider.idp !== "facebook"));
 }
 
+/** Store matrix, then the iOS rule that keeps email only until Apple is configured. */
+export function signInProvidersForDevice<T extends { idp: string }>(
+  providers: readonly T[],
+  input: {
+    channel: string;
+    playServices?: boolean;
+    native: boolean;
+    platform: NativeSocialPlatform;
+  },
+): T[] {
+  return providersForNativeShell(providersForStore(providers, input.channel, { playServices: input.playServices }), {
+    native: input.native,
+    platform: input.platform,
+  });
+}
+
 export function nativeSocialPlatform(input: {
   native: boolean;
   channel?: string | null;
@@ -146,7 +172,7 @@ export function nativeSocialPlatform(input: {
   if (!input.native) return "web";
   const channel = String(input.channel || "");
   if (channel === "apple") return "ios";
-  if (channel === "google" || channel === "samsung" || channel === "huawei") return "android";
+  if (channel === "google" || channel === "samsung" || channel === "huawei" || channel === "amazon") return "android";
   const ua = String(input.userAgent || "");
   if (/iPhone|iPad|iPod/i.test(ua)) return "ios";
   if (/Android/i.test(ua)) return "android";

@@ -232,6 +232,21 @@ export function privatePhotoFeedEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_PRIVATE_PHOTO_FEED", env);
 }
 
+/** Small footer link. Default off. Does not gate /gov sign-in. */
+export function govPortalFooterEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_GOV_PORTAL", env);
+}
+
+/** Named PostHog product events. Default off. Does not add personal details. */
+export function productEventsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PRODUCT_EVENTS", env);
+}
+
+/** Street-level Need care fast via OpenStreetMap. Default off. No Google. */
+export function ncfStreetEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_NCF_STREET", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;

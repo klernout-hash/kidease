@@ -55,6 +55,9 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_LEARNING_PORTFOLIOS",
   "FEATURE_ORG_DASHBOARD",
   "FEATURE_PRIVATE_PHOTO_FEED",
+  "FEATURE_GOV_PORTAL",
+  "FEATURE_PRODUCT_EVENTS",
+  "FEATURE_NCF_STREET",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -154,6 +157,12 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_ORG_DASHBOARD: false,
   /** Private per-child photos for enrolled parents who consented. */
   FEATURE_PRIVATE_PHOTO_FEED: false,
+  /** Footer link to the government desk. The /gov sign-in stays available either way. */
+  FEATURE_GOV_PORTAL: false,
+  /** Named product events for PostHog. Off until Kyle turns it on. No personal details in the payload. */
+  FEATURE_PRODUCT_EVENTS: false,
+  /** Street address matching on Need care fast via OpenStreetMap. Off until Kyle turns it on. */
+  FEATURE_NCF_STREET: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -410,6 +419,26 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Classroom photos only for an enrolled parent who consented. Default off. Photos are not public and are not used in marketing.",
+  },
+  {
+    key: "FEATURE_GOV_PORTAL",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Footer link to the government desk. Default off. /gov sign-in still works for a demo.",
+  },
+  {
+    key: "FEATURE_PRODUCT_EVENTS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "PostHog events for signup, search, listing view, waitlist, enrolment, paid invoice, and claim. Default off. Properties stay coarse: no name, email, phone, child, or address.",
+  },
+  {
+    key: "FEATURE_NCF_STREET",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Need care fast can geocode a street address with OpenStreetMap Nominatim and keep centres inside 15 km. Default off. No Google. City search stays the same.",
   },
 ];
 

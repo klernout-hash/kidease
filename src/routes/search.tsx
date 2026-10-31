@@ -87,6 +87,8 @@ import { ratingFloor } from "@/lib/review-reports";
 import { isClaimVerified } from "@/lib/trust";
 import type { DaycareCard as Card } from "@/lib/types";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { countBucket } from "@/lib/product-events";
+import { trackProductEvent } from "@/lib/track-product-event";
 import { captureRankingEvent } from "@/lib/ranking/events";
 import { publishRankingContext } from "@/lib/ranking/context";
 import { rankingCity } from "@/lib/ranking/market";
@@ -1368,12 +1370,17 @@ export function SearchScreen({
   }, [gated, shownList.length, split.ageUnknown.length]);
   useEffect(() => {
     if (!gated || !searchAge || !searchStart) return;
+    trackProductEvent("search_performed", {
+      surface: "search",
+      source: "filters",
+      count_bucket: countBucket(shownList.length),
+    });
     capturePostHogEvent("search_filters_applied", {
       age_band: searchAge,
       start: searchStart,
       has_place: Boolean((incoming.q || query || origin.label || "").trim()),
     });
-  }, [gated, searchAge, searchStart, incoming.q, query, origin.label]);
+  }, [gated, searchAge, searchStart, incoming.q, query, origin.label, shownList.length]);
   useEffect(() => {
     if (items === null) return;
     capturePostHogEvent("search_results_shown", {

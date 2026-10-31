@@ -25,6 +25,8 @@ test("the help launcher is on the main routes for every role and channel", () =>
   assert.equal(helpLauncherFor({ pathname: "/video/room-1", role: "parent", channel: "native" }), false);
   assert.equal(helpLauncherFor({ pathname: "/call/abc", role: "provider", channel: "web" }), false);
   assert.equal(helpLauncherFor({ pathname: "/fr/video/room-1", role: "guest", channel: "native" }), false);
+  assert.equal(helpLauncherFor({ pathname: "/gov", role: "parent", channel: "web" }), false);
+  assert.equal(helpLauncherFor({ pathname: "/fr/gov/login", role: "guest", channel: "web" }), false);
 });
 
 test("the launcher is mounted once, above the tab bar, and not under a search hide", () => {

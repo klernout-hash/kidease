@@ -16,10 +16,12 @@ export function SafetyReportButton({
   target,
   daycareId,
   conversationId,
+  reviewId,
 }: {
   target: SafetyTarget;
   daycareId?: string;
   conversationId?: string;
+  reviewId?: string;
 }) {
   const { locale } = useCopy();
   const { user } = useCurrentUserState();
@@ -29,7 +31,13 @@ export function SafetyReportButton({
   const [detail, setDetail] = useState("");
   const [busy, setBusy] = useState(false);
   const label =
-    target === "listing" ? text.reportListing : target === "centre" ? text.reportCentre : text.reportThread;
+    target === "review"
+      ? text.reportReview
+      : target === "listing"
+        ? text.reportListing
+        : target === "centre"
+          ? text.reportCentre
+          : text.reportThread;
 
   if (!user) {
     return (
@@ -62,7 +70,7 @@ export function SafetyReportButton({
       onSubmit={(event) => {
         event.preventDefault();
         setBusy(true);
-        void reportSafety({ data: { target, reason, detail, daycareId, conversationId } })
+        void reportSafety({ data: { target, reason, detail, daycareId, conversationId, reviewId } })
           .then(() => {
             toast.success(text.sent);
             setOpen(false);

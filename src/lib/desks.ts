@@ -3,7 +3,7 @@ import { stripLocalePrefix } from "./locale-path.ts";
 import { NATIVE_ADMIN_NOTE_PATH, nativeShellHidesAdminNow } from "./native-admin.ts";
 import type { ViewAsPublic } from "./view-as-public.ts";
 
-export type AppRole = "admin" | "support_lead" | "support" | "provider" | "parent";
+export type AppRole = "admin" | "support_lead" | "support" | "provider" | "parent" | "government";
 export type DeskKey = "admin" | "support" | "provider" | "parent";
 
 export const DESK_PATH: Record<DeskKey, "/admin" | "/support" | "/provider" | "/parent"> = {
@@ -235,7 +235,7 @@ export function isCloudflareAccessPath(raw: string): boolean {
 
 function familyLoginDesk(input: {
   desk?: DeskKey | null;
-  role?: "parent" | "provider" | "admin" | null;
+  role?: "parent" | "provider" | "admin" | "government" | null;
 }): "parent" | "provider" | null {
   if (input.role === "parent" || input.desk === "parent") return "parent";
   if (input.role === "provider" || input.desk === "provider") return "provider";
@@ -313,10 +313,17 @@ export function funnelDestPath(raw: string): string {
 export function resolvePostLoginPath(input: {
   next?: string | null;
   desk?: DeskKey | null;
-  role?: "parent" | "provider" | "admin" | null;
+  role?: "parent" | "provider" | "admin" | "government" | null;
   desks?: DeskKey[] | null;
   sticky?: DeskKey | null;
 }): string {
+  if (input.role === "government") {
+    const next = sanitizePostLoginNext(input.next);
+    if (next && (next === "/gov" || next.startsWith("/gov/") || next === "/fr/gov" || next.startsWith("/fr/gov/"))) {
+      return next;
+    }
+    return "/gov";
+  }
   const familyDesk = familyLoginDesk(input);
   const next = sanitizePostLoginNext(input.next);
   if (next) {
@@ -500,6 +507,7 @@ export function readRememberedRole(): "parent" | "provider" | null {
 }
 
 export const ROLE_RANK: Record<AppRole, number> = {
+  government: -1,
   parent: 0,
   provider: 1,
   support: 2,
@@ -510,6 +518,7 @@ export const ROLE_RANK: Record<AppRole, number> = {
 export function parseAppRole(raw: string | null | undefined): AppRole {
   const v = (raw || "").trim().toLowerCase();
   if (v === "admin") return "admin";
+  if (v === "government") return "government";
   if (v === "support_lead") return "support_lead";
   if (v === "support") return "support";
   if (v === "provider") return "provider";
@@ -543,6 +552,7 @@ export function desksFor(input: {
   role: AppRole;
   ownsCentre?: boolean;
 }): DeskKey[] {
+  if (input.role === "government") return [];
   const desks = new Set<DeskKey>(["parent"]);
   if (input.role === "admin") {
     desks.add("admin");
@@ -651,7 +661,7 @@ export type SessionDesks = {
   desks: DeskKey[];
   /** Session mailbox — required to show Admin chrome (kyle@kidease.ca only). */
   email?: string | null;
-  home: "/admin" | "/support" | "/provider" | "/parent";
+  home: "/admin" | "/support" | "/provider" | "/parent" | "/gov";
   unread: number;
   /** Parent / family inbox unread (conversation.user_id = session). */
   unreadFamily?: number;
@@ -692,6 +702,7 @@ export type SessionDesks = {
 export function nextStoredRole(current: AppRole | string | null | undefined, requested: AppRole): AppRole {
   const cur = parseAppRole(current);
   if (cur === "admin") return "admin";
+  if (cur === "government") return "government";
   if (cur === "support_lead") return "support_lead";
   if (cur === "support") return "support";
   if (requested === "admin" || requested === "support" || requested === "support_lead") return cur;

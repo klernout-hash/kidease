@@ -19,6 +19,7 @@ import {
   type FooterColumnId,
   type FooterLinkDef,
 } from "@/lib/site-footer-nav";
+import { showGovFooterLink } from "@/lib/gov/access";
 
 function Item({
   to,
@@ -158,6 +159,16 @@ export function SiteFooter() {
             </div>
             <LanguageSelect pill />
           </div>
+          {showGovFooterLink({ enabled: chrome.govPortalLink, native: hideCommerce }) ? (
+            <p className="mt-2">
+              <Link
+                to={fr ? "/fr/gov/login" : "/gov/login"}
+                className="ke-footer-link inline-flex min-h-11 items-center text-sm"
+              >
+                {fr ? "Pour les gouvernements" : "For governments"}
+              </Link>
+            </p>
+          ) : null}
 
           <div className="ke-footer-legal">
             <div className="ke-footer-legal-copy">

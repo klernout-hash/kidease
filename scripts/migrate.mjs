@@ -102,6 +102,11 @@ async function main() {
       const reviewer = await applyReviewerDemoFromEnv(databaseUrl);
       if (reviewer !== "skipped") console.log(`[migrate] ${reviewer}`);
     }
+    if (String(process.env.GOV_DEMO_EMAIL || "").trim() && String(process.env.GOV_DEMO_PASSWORD || "").trim()) {
+      const { applyGovDemoFromEnv } = await import("./seed-gov-demo.mjs");
+      const govDemo = await applyGovDemoFromEnv(databaseUrl);
+      if (govDemo !== "skipped") console.log(`[migrate] ${govDemo}`);
+    }
   } finally {
     client.release();
     await pool.end();

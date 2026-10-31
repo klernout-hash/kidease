@@ -99,6 +99,8 @@ class KidEaseBridgeViewController: CAPBridgeViewController {
         let cleaned = agent
             .replacingOccurrences(of: "KidEaseStoreSamsung", with: "")
             .replacingOccurrences(of: "KidEaseStoreHuawei", with: "")
+            .replacingOccurrences(of: "KidEaseStoreAmazon", with: "")
+            .replacingOccurrences(of: "KidEaseNoGms", with: "")
             .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
             .trimmingCharacters(in: .whitespacesAndNewlines)
         return cleaned.isEmpty ? nil : cleaned

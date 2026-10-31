@@ -54,6 +54,8 @@
   "continueGoogle": "使用 Google 登录",
   "continueFacebook": "使用 Facebook 登录",
   "continueApple": "通过 Apple 登录",
+  "continueHuawei": "通过华为账号登录",
+  "continueAmazon": "通过 Amazon 登录",
   "orEmail": "或使用电子邮箱",
   "orSocial": "或继续使用",
   "email": "电子邮箱",

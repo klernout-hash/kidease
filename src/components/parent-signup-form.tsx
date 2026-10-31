@@ -25,9 +25,10 @@ import { ParentSmsFields } from "@/components/parent-sms-fields";
 import { SocialSignInButtons } from "@/components/social-sign-in-buttons";
 import { ContinueAgeNotice } from "@/components/continue-age-notice";
 import { markAdultConfirmedForSession } from "@/lib/adult-confirm";
-import { nativeSocialPlatform, providersForNativeShell } from "@/lib/auth/native-oauth";
-import { providersForStore, type GrokProvider } from "@/lib/auth/providers";
+import { nativeSocialPlatform, signInProvidersForDevice } from "@/lib/auth/native-oauth";
+import { type GrokProvider } from "@/lib/auth/providers";
 import { getSignInProviders } from "@/lib/server/sign-in-providers";
+import { readClientPlayServices } from "@/lib/native-entitlements";
 import { useNativeHidesAdmin, useStoreChannel } from "@/lib/use-native-shell";
 
 function rememberToken(data: { token?: string | null } | null | undefined) {
@@ -46,7 +47,9 @@ export function ParentSignupForm() {
   const storeChannel = useStoreChannel();
   const hideAdmin = useNativeHidesAdmin();
   const [providers, setProviders] = useState<GrokProvider[]>([]);
-  const shownProviders = providersForNativeShell(providersForStore(providers, storeChannel), {
+  const shownProviders = signInProvidersForDevice(providers, {
+    channel: storeChannel,
+    playServices: readClientPlayServices(),
     native: hideAdmin,
     platform: nativeSocialPlatform({ native: hideAdmin, channel: storeChannel }),
   });
@@ -143,6 +146,32 @@ export function ParentSignupForm() {
           </div>
           <h1 className="font-display text-2xl sm:text-3xl">{title}</h1>
           <p className="text-sm text-muted">{lead}</p>
+          {shownProviders.length ? (
+            <div>
+              <SocialSignInButtons
+                providers={shownProviders}
+                disabled={busy}
+                onSocial={(providerId) => {
+                  setBusy(true);
+                  setError(null);
+                  markAdultConfirmedForSession();
+                  rememberRole("parent");
+                  void signIn(providerId, {
+                    callbackURL: "/parent",
+                    errorCallbackURL: "/signup",
+                  }).catch((err) => {
+                    setError(friendlyAuthError(authClientErrorMessage(err)) || "Sign-in failed");
+                    setBusy(false);
+                  });
+                }}
+              />
+              <div className="mt-4 flex items-center gap-3 text-xs uppercase tracking-wider text-subtle">
+                <span className="h-px flex-1 bg-border" />
+                {t("orEmail")}
+                <span className="h-px flex-1 bg-border" />
+              </div>
+            </div>
+          ) : null}
           <label className="block text-sm" htmlFor="parent-signup-name">
             {t("name")}
             <input
@@ -203,35 +232,6 @@ export function ParentSignupForm() {
             {busy ? t("openingDesk") : t("createAccount")}
           </Button>
         </form>
-        {shownProviders.length ? (
-          <div className="mt-6">
-            <div className="mb-4 flex items-center gap-3 text-xs uppercase tracking-wider text-subtle">
-              <span className="h-px flex-1 bg-border" />
-              {t("orSocial")}
-              <span className="h-px flex-1 bg-border" />
-            </div>
-            <SocialSignInButtons
-              providers={shownProviders}
-              disabled={busy}
-              onSocial={(providerId) => {
-                setBusy(true);
-                setError(null);
-                markAdultConfirmedForSession();
-                rememberRole("parent");
-                void signIn(providerId, {
-                  callbackURL: "/parent",
-                  errorCallbackURL: "/signup",
-                }).catch((err) => {
-                  setError(friendlyAuthError(authClientErrorMessage(err)) || "Sign-in failed");
-                  setBusy(false);
-                });
-              }}
-            />
-            <div className="mt-3">
-              <ContinueAgeNotice />
-            </div>
-          </div>
-        ) : null}
         <p className="mt-4 text-center text-xs text-subtle">
           <a
             href={authBackFallback({ locale: locale === "fr" ? "fr" : "en" })}

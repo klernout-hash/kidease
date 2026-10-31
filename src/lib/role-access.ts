@@ -6,7 +6,7 @@
 
 import type { MenuIconId } from "@/lib/menu-icons";
 
-export type ChromeRole = "guest" | "parent" | "provider" | "admin" | "support";
+export type ChromeRole = "guest" | "parent" | "provider" | "admin" | "support" | "government";
 
 export type PrivateArea = "public" | "parent" | "provider" | "admin" | "shared";
 
@@ -32,6 +32,7 @@ export function chromeRole(role: string | null | undefined): ChromeRole {
     .trim()
     .toLowerCase();
   if (value === "admin") return "admin";
+  if (value === "government") return "government";
   if (value === "support" || value === "support_lead") return "support";
   if (value === "provider" || value === "daycare" || value === "director") return "provider";
   if (value === "parent") return "parent";
@@ -50,6 +51,8 @@ export function homeForRole(role: string | null | undefined): string {
   switch (chromeRole(role)) {
     case "admin":
       return "/admin";
+    case "government":
+      return "/gov";
     case "support":
       return "/support";
     case "provider":
@@ -89,6 +92,7 @@ export function privateArea(pathname: string): PrivateArea {
 function allowsArea(area: PrivateArea, role: ChromeRole): boolean {
   if (area === "public") return true;
   if (role === "guest") return false;
+  if (role === "government") return false;
   if (area === "shared") return true;
   if (area === "admin") return role === "admin";
   if (area === "parent") return role === "parent" || role === "provider" || role === "admin";
@@ -118,6 +122,7 @@ export function navRoleForSession(input: {
   activeMember?: boolean;
 }): ChromeRole {
   const role = chromeRole(input.role);
+  if (role === "government") return "government";
   if (role === "parent" && (input.ownsCentre || input.activeMember)) return "provider";
   if (role === "guest") return "parent";
   return role;
@@ -167,6 +172,11 @@ export function destinationAfterSignIn(input: {
   /** Centre owner or active centre staff. Ignored for admin and support. */
   ownsCentre?: boolean;
 }): string {
+  if (chromeRole(input.role) === "government") {
+    const next = String(input.next || "").trim();
+    if (next.startsWith("/gov") || next.startsWith("/fr/gov")) return next.split("?")[0] || "/gov";
+    return "/gov";
+  }
   const role = chromeRole(input.role);
   const daycare =
     role === "provider" ||
@@ -201,6 +211,7 @@ export function bottomBarKind(input: {
   highlightedDesk?: "parent" | "provider" | "admin" | "support" | null;
 }): "daycare" | "parent" | "admin" | "guest" {
   const path = barePath(input.pathname);
+  if (input.role === "government") return "guest";
   if (path.startsWith("/provider")) return "daycare";
   if (path.startsWith("/parent")) return "parent";
   if (input.highlightedDesk === "parent") return "parent";
@@ -258,6 +269,12 @@ export function roleNavItems(input: { role: ChromeRole; paid?: boolean; subscrip
       { id: "account", label: "Account", to: "/account", search: { tab: "profile" }, icon: "account" },
     ];
   }
+  if (input.role === "government") {
+    return [
+      { id: "gov", label: "Government desk", to: "/gov", icon: "verify" },
+      { id: "help", label: "Help", to: "/gov", icon: "help" },
+    ];
+  }
   const guest: RoleNavItem[] = [
     { id: "signin", label: "Sign in", to: "/login", icon: "login" },
     { id: "create", label: "Create an account", to: "/login", search: { intent: "up" }, icon: "parent" },
@@ -278,6 +295,7 @@ export type ListingActionMode = "parent" | "edit" | "none" | "all";
 /** Parents and guests get parent actions. A daycare account never does. Edit stays on the owner's own listing. */
 export function listingActionMode(input: { role: ChromeRole; ownsListing: boolean }): ListingActionMode {
   if (input.role === "admin") return "all";
+  if (input.role === "government") return "none";
   if (input.role === "provider" && input.ownsListing) return "edit";
   if (input.role === "provider") return "none";
   if (input.role === "parent" || input.role === "guest") return "parent";
@@ -286,6 +304,7 @@ export function listingActionMode(input: { role: ChromeRole; ownsListing: boolea
 
 /** Search cards and other centres. A daycare account does not get waitlist, info, or save. */
 export function showsParentBrowseActions(role: ChromeRole | null | undefined): boolean {
+  if (role === "government") return false;
   const chrome = role === "admin" || role === "provider" || role === "parent" || role === "support" || role === "guest" ? role : "guest";
   return showsParentListingActions(listingActionMode({ role: chrome, ownsListing: false }));
 }
@@ -310,7 +329,7 @@ export function roleFlipAllowed(
 ): boolean {
   if (!current) return true;
   const cur = chromeRole(current);
-  if (cur === "admin" || cur === "support") return false;
+  if (cur === "admin" || cur === "support" || cur === "government") return false;
   if (cur === "guest") return true;
   const stored = cur === "provider" ? "provider" : "parent";
   if (stored === requested) return true;

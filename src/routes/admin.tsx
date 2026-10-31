@@ -45,7 +45,7 @@ export const Route = createFileRoute("/admin")({
 
 function AdminRoute() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  if (pathname === "/admin/features") return <Outlet />;
+  if (pathname === "/admin/features" || pathname === "/admin/government") return <Outlet />;
   return (
     <Suspense
       fallback={

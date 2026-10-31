@@ -1,6 +1,6 @@
 # Feature flags (env + optional PostHog)
 
-KidEase product gates (`FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, `FEATURE_AREA_WAITLIST_ALERTS`, `FEATURE_INSPECTION_HISTORY`, `FEATURE_PROVINCIAL_VACANCY_INDEX`, `FEATURE_REVIEW_REPORTS`, `FEATURE_TOUR_PIPELINE`, `FEATURE_NEED_CARE_FAST`, `FEATURE_INCLUSIVE_FILTERS`, `FEATURE_ECE_JOBS`, `FEATURE_DIGITAL_ATTENDANCE`, `FEATURE_STAFF_SCHEDULING`, `FEATURE_LEARNING_PORTFOLIOS`, `FEATURE_ORG_DASHBOARD`, `FEATURE_PRIVATE_PHOTO_FEED`) go through `src/lib/flags.ts`.
+KidEase product gates (`FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, `FEATURE_AREA_WAITLIST_ALERTS`, `FEATURE_INSPECTION_HISTORY`, `FEATURE_PROVINCIAL_VACANCY_INDEX`, `FEATURE_REVIEW_REPORTS`, `FEATURE_TOUR_PIPELINE`, `FEATURE_NEED_CARE_FAST`, `FEATURE_INCLUSIVE_FILTERS`, `FEATURE_ECE_JOBS`, `FEATURE_DIGITAL_ATTENDANCE`, `FEATURE_STAFF_SCHEDULING`, `FEATURE_LEARNING_PORTFOLIOS`, `FEATURE_ORG_DASHBOARD`, `FEATURE_PRIVATE_PHOTO_FEED`, `FEATURE_PRODUCT_EVENTS`, `FEATURE_NCF_STREET`) go through `src/lib/flags.ts`.
 
 **Env is the safe fallback.** If remote is unset, down, or the flag does not exist in PostHog, behavior is exactly today’s `FEATURE_*=` env read.
 
@@ -51,6 +51,9 @@ Automation-pack flags (`FEATURE_POSTHOG_ERRORS`, `FEATURE_OPS_ALERTS`, `FEATURE_
 | `FEATURE_LEARNING_PORTFOLIOS` | off | Save a private learning story for an enrolled child. | Daycare desk and the parent's Stories link. | The page says the tool is off. Nothing is public. |
 | `FEATURE_ORG_DASHBOARD` | off | Read capacity, enrolled bookings, and confirmed open spots for centres you run. | Daycare desk → Your centres. | The page says the tool is off. |
 | `FEATURE_PRIVATE_PHOTO_FEED` | off | Classroom photo posts require an enrolled booking and photo consent. Parent feed requires an active enrolment. | Consent card on the daily feed. | The feed page stays. Photos are not public. No SMS. The thread email does not attach the photo. |
+| `FEATURE_GOV_PORTAL` | off | Footer link “For governments”. `/gov` sign-in stays available either way. | A small footer link when this is on. Not in the phone app. | No footer link. The government desk is not linked from public nav. |
+| `FEATURE_PRODUCT_EVENTS` | off | Server capture for enrolment, invoice paid, and area waitlist. | Browser events for signup, search, listing view, waitlist, enrolment, and claim. | No new event names are sent. |
+| `FEATURE_NCF_STREET` | off | Geocode a street address with OpenStreetMap Nominatim and keep centres inside 15 km. Results are cached by a hash of the address. | Need care fast accepts a street address when this is on. | City search only. No call to Nominatim. |
 
 ## Why PostHog
 
@@ -115,6 +118,8 @@ Env still works as a fallback when PostHog is down (last successful overlay is k
 | `FEATURE_LEARNING_PORTFOLIOS` | no | Default **off**. Set `1` to open private learning stories. No photos. |
 | `FEATURE_ORG_DASHBOARD` | no | Default **off**. Set `1` to open the centres dashboard. Does not turn on subscriptions. |
 | `FEATURE_PRIVATE_PHOTO_FEED` | no | Default **off**. Set `1` so classroom photos need enrolment and consent, and stay off public pages. |
+| `FEATURE_PRODUCT_EVENTS` | no | Default **off**. Server events. Also set `VITE_FEATURE_PRODUCT_EVENTS=1` for browser events. Uses the existing public PostHog key. No personal details in properties. |
+| `FEATURE_NCF_STREET` | no | Default **off**. Set `1` to geocode street addresses with OpenStreetMap Nominatim. No Google key. |
 | `POSTHOG_FLAGS_KEY` | no | Server-only. Same `phc_…` project key as analytics. Leave blank to disable remote. Never commit a real value. |
 | `POSTHOG_FLAGS_HOST` | no | Defaults to `POSTHOG_HOST` or `https://us.i.posthog.com`. |
 

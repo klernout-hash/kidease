@@ -9,8 +9,9 @@ import { e2eLoopbackFixtureRequest } from "@/lib/server/e2e-fixture.server";
  */
 const PASSWORD = "E2e-role-fixture-pass-1";
 
-function emailFor(role: "parent" | "provider" | "admin", paid: boolean) {
+function emailFor(role: "parent" | "provider" | "admin" | "government", paid: boolean) {
   if (role === "admin") return "kyle@kidease.ca";
+  if (role === "government") return "e2e-government@kidease.test";
   const side = role === "provider" ? "provider" : "parent";
   return paid ? `e2e-${side}-paid@kidease.test` : `e2e-${side}@kidease.test`;
 }
@@ -23,7 +24,8 @@ async function seed(request: Request) {
   } catch {
     body = {};
   }
-  const role = body.role === "provider" ? "provider" : body.role === "admin" ? "admin" : "parent";
+  const role =
+    body.role === "provider" ? "provider" : body.role === "admin" ? "admin" : body.role === "government" ? "government" : "parent";
   const paid = Boolean(body.paid);
   const activity = Boolean(body.activity);
   const attention = Boolean(body.attention);
@@ -36,7 +38,11 @@ async function seed(request: Request) {
   const { auth } = await import("@/lib/auth/server");
   const headers = request.headers;
   let response = await auth.api.signUpEmail({
-    body: { email, password: PASSWORD, name: role === "provider" ? "E2E Daycare" : role === "admin" ? "Kyle" : "E2E Parent" },
+    body: {
+      email,
+      password: PASSWORD,
+      name: role === "provider" ? "E2E Daycare" : role === "admin" ? "Kyle" : role === "government" ? "E2E Government" : "E2E Parent",
+    },
     headers,
     asResponse: true,
   });
@@ -59,6 +65,18 @@ async function seed(request: Request) {
     insert into profiles (user_id, role) values (${userId}, ${role === "admin" ? "admin" : role})
     on conflict (user_id) do update set role = ${role === "admin" ? "admin" : role}
   `;
+  if (role === "government") {
+    await sql`
+      insert into government_orgs (id, name, province, demo)
+      values ('e2e-gov-mb', 'E2E Province', 'MB', 0)
+      on conflict (id) do nothing
+    `;
+    await sql`
+      insert into government_members (user_id, org_id, status, read_only)
+      values (${userId}, 'e2e-gov-mb', 'active', 1)
+      on conflict (user_id) do update set status = 'active', org_id = 'e2e-gov-mb', revoked_at = null
+    `;
+  }
   if (role === "admin") {
     await sql`update "user" set "emailVerified" = true where id = ${userId}`.catch(() => undefined);
     await sql`

@@ -18,9 +18,12 @@ export const NATIVE_UA_TOKEN = "KidEaseNative";
 /** Android flavour tokens. iOS ignores them. Microsoft is a website package, not a native token. */
 export const STORE_UA_SAMSUNG = "KidEaseStoreSamsung";
 export const STORE_UA_HUAWEI = "KidEaseStoreHuawei";
+export const STORE_UA_AMAZON = "KidEaseStoreAmazon";
 export const STORE_UA_MICROSOFT = "KidEaseStoreMicrosoft";
+/** Play or Galaxy Store build on a phone with no Google Play services. */
+export const NO_GMS_UA_TOKEN = "KidEaseNoGms";
 
-export type StoreChannel = "web" | "apple" | "google" | "samsung" | "huawei" | "microsoft";
+export type StoreChannel = "web" | "apple" | "google" | "samsung" | "huawei" | "amazon" | "microsoft";
 
 export type ParentPlusIapStore = "apple" | "google";
 
@@ -82,7 +85,7 @@ export function nativeBlocksCheckout(native: boolean): boolean {
   return !nativeCommercePolicy(native).showCheckout;
 }
 
-const STORE_CHANNELS: readonly StoreChannel[] = ["web", "apple", "google", "samsung", "huawei", "microsoft"];
+const STORE_CHANNELS: readonly StoreChannel[] = ["web", "apple", "google", "samsung", "huawei", "amazon", "microsoft"];
 
 export function isStoreChannel(value: string | null | undefined): value is StoreChannel {
   return STORE_CHANNELS.includes(value as StoreChannel);
@@ -116,7 +119,8 @@ export function microsoftStoreCookieHeader(
  * User-agent string a store binary may send.
  * Only the Samsung flavour may include KidEaseStoreSamsung.
  * Only the Huawei flavour may include KidEaseStoreHuawei.
- * iOS and Play drop both, even if a shared config still has them.
+ * Only the Amazon flavour may include KidEaseStoreAmazon.
+ * iOS and Play drop the others, even if a shared config still has them.
  */
 export function userAgentForStoreBuild(
   flavor: string | null | undefined,
@@ -126,17 +130,35 @@ export function userAgentForStoreBuild(
   let next = String(base || "");
   if (flavor !== "samsung") next = next.replaceAll(STORE_UA_SAMSUNG, "");
   if (flavor !== "huawei") next = next.replaceAll(STORE_UA_HUAWEI, "");
+  if (flavor !== "amazon") next = next.replaceAll(STORE_UA_AMAZON, "");
   next = next.replace(/\s+/g, " ").trim();
   const token =
     flavor === "samsung" && configured === STORE_UA_SAMSUNG
       ? STORE_UA_SAMSUNG
       : flavor === "huawei" && configured === STORE_UA_HUAWEI
         ? STORE_UA_HUAWEI
-        : "";
+        : flavor === "amazon" && configured === STORE_UA_AMAZON
+          ? STORE_UA_AMAZON
+          : "";
   if (!token) return next;
   if (!next) return token;
   if (next.includes(token)) return next;
   return `${next} ${token}`;
+}
+
+/** Hide Google sign-in when this WebView already learned Play services are missing. */
+export function userAgentWithPlayServices(agent: string | null | undefined, available: boolean): string {
+  const next = String(agent || "")
+    .replaceAll(NO_GMS_UA_TOKEN, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (available) return next;
+  if (!next) return NO_GMS_UA_TOKEN;
+  return `${next} ${NO_GMS_UA_TOKEN}`;
+}
+
+export function googlePlayServicesAvailable(userAgent: string | null | undefined): boolean {
+  return !String(userAgent || "").includes(NO_GMS_UA_TOKEN);
 }
 
 /** Drop a Samsung store link. iOS and Play must not open with ?store=samsung. */
@@ -158,20 +180,47 @@ export function withoutSamsungStoreQuery(url: string | null | undefined): string
  *
  * v1 payments are off in every store. See STORE_PAYMENTS_ENABLED.
  */
+function viteStoreChannel(): string | null {
+  try {
+    const value = import.meta.env?.VITE_STORE_CHANNEL;
+    const trimmed = typeof value === "string" ? value.trim() : "";
+    return trimmed || null;
+  } catch {
+    return null;
+  }
+}
+
+/** `play` and `ios` are build names. The site still stores `google` and `apple`. */
+export function storeChannelFromBuild(raw: string | null | undefined): StoreChannel | null {
+  const value = String(raw || "").trim().toLowerCase();
+  if (!value) return null;
+  if (value === "play") return "google";
+  if (value === "ios") return "apple";
+  if (isStoreChannel(value)) return value;
+  return null;
+}
+
 export function storeChannelFromSignals(input: {
   userAgent?: string | null;
   search?: string | null;
   cookie?: string | null;
+  /** VITE_STORE_CHANNEL. Used only when the user agent did not already name a store. */
+  buildChannel?: string | null;
 }): StoreChannel {
   const ua = String(input.userAgent || "");
   const ios = /iPhone|iPad|iPod/i.test(ua);
   if (ios && ua.includes(NATIVE_UA_TOKEN)) return "apple";
   if (!ios && ua.includes(STORE_UA_HUAWEI)) return "huawei";
+  if (!ios && ua.includes(STORE_UA_AMAZON)) return "amazon";
   if (!ios && ua.includes(STORE_UA_SAMSUNG)) return "samsung";
   if (ua.includes(NATIVE_UA_TOKEN)) return "google";
   if (ua.includes(STORE_UA_MICROSOFT)) return "microsoft";
   const store = searchParams(input.search).get("store");
   if (store === "microsoft" || cookieHasMicrosoft(input.cookie)) return "microsoft";
+  const built = storeChannelFromBuild(
+    input.buildChannel !== undefined ? input.buildChannel : viteStoreChannel(),
+  );
+  if (built && built !== "web") return built;
   return "web";
 }
 
@@ -185,6 +234,7 @@ export const STORE_PAYMENTS_ENABLED: Record<Exclude<StoreChannel, "web">, boolea
   microsoft: false,
   samsung: false,
   huawei: false,
+  amazon: false,
 };
 
 export function storePaymentsEnabled(channel: StoreChannel): boolean {
@@ -212,13 +262,13 @@ export function commercePolicyForChannel(channel: StoreChannel): NativeCommerceP
   return shellBlocksCommerce(channel) ? NATIVE_V1 : WEBSITE;
 }
 
-/** Huawei phones have no Google Play Services. Play and Samsung builds keep Google. */
+/** AppGallery and Amazon Fire builds have no Google Play services. */
 export function googleServicesHidden(channel: StoreChannel): boolean {
-  return channel === "huawei";
+  return channel === "huawei" || channel === "amazon";
 }
 
 export function readClientStoreChannel(): StoreChannel {
-  if (typeof navigator === "undefined") return "web";
+  if (typeof navigator === "undefined") return storeChannelFromSignals({});
   const search = typeof location !== "undefined" ? location.search : "";
   const cookie = typeof document !== "undefined" ? document.cookie : "";
   return storeChannelFromSignals({
@@ -226,6 +276,12 @@ export function readClientStoreChannel(): StoreChannel {
     search,
     cookie,
   });
+}
+
+/** True unless this WebView's user agent says Play services are missing. */
+export function readClientPlayServices(): boolean {
+  if (typeof navigator === "undefined") return true;
+  return googlePlayServicesAvailable(navigator.userAgent);
 }
 
 /**

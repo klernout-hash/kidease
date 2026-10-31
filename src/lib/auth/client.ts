@@ -178,9 +178,14 @@ export async function signIn(
     // Google, and Facebook open inside the system auth sheet. The OAuth state
     // cookie has to be set in that sheet, not in this WebView.
     const shell =
-      isNative() && (providerId === "google" || providerId === "facebook" || providerId === "apple");
+      isNative() &&
+      (providerId === "google" ||
+        providerId === "facebook" ||
+        providerId === "apple" ||
+        providerId === "huawei" ||
+        providerId === "amazon");
     if (shell) {
-      const provider = providerId as "apple" | "google" | "facebook";
+      const provider = providerId as "apple" | "google" | "facebook" | "huawei" | "amazon";
       const { nativeOAuthStartPath } = await import("./native-oauth");
       const startPath = nativeOAuthStartPath({
         provider,
@@ -194,7 +199,7 @@ export async function signIn(
       return;
     }
     const { data, error } = await authClient.signIn.social({
-      provider: providerId as "apple" | "google" | "facebook",
+      provider: providerId as "apple" | "google" | "facebook" | "huawei" | "amazon",
       callbackURL,
       errorCallbackURL,
       ...(newUserCallbackURL ? { newUserCallbackURL } : {}),

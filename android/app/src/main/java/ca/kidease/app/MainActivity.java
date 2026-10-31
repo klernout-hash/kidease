@@ -8,7 +8,9 @@ import com.getcapacitor.BridgeActivity;
 
 /**
  * Play sends KidEaseNative only. Samsung also sends KidEaseStoreSamsung.
- * Huawei also sends KidEaseStoreHuawei. The token is written on the WebView
+ * Huawei also sends KidEaseStoreHuawei. Amazon also sends KidEaseStoreAmazon.
+ * A phone with no Google Play services also sends KidEaseNoGms so the site
+ * hides Continue with Google. The token is written on the WebView
  * after the bridge starts, then the page reloads if the first request missed it.
  * A Huawei debug build crashes when its token is missing. Release builds log that error.
  * Keep userAgentForStoreBuild in step with native-entitlements.ts.
@@ -45,7 +47,10 @@ public class MainActivity extends BridgeActivity {
         }
         String configured = BuildConfig.STORE_UA_TOKEN == null ? "" : BuildConfig.STORE_UA_TOKEN;
         String current = webView.getSettings().getUserAgentString();
-        String next = ensureNativeToken(userAgentForStoreBuild(flavor, current, configured));
+        String next = userAgentWithPlayServices(
+            ensureNativeToken(userAgentForStoreBuild(flavor, current, configured)),
+            PlayServicesStatus.available(this)
+        );
         boolean changed = current == null || !current.equals(next);
         if (changed) {
             webView.getSettings().setUserAgentString(next);
@@ -65,7 +70,7 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
-    /** Play, Samsung, and Huawei must send KidEaseNative so the site can tell a shell from the website. */
+    /** Play, Samsung, Huawei, and Amazon must send KidEaseNative so the site can tell a shell from the website. */
     static String ensureNativeToken(String agent) {
         String next = agent == null ? "" : agent.trim();
         if (next.contains(NATIVE_TOKEN)) return next;
@@ -117,7 +122,7 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
-    /** Play returns the shared KidEaseNative token only. Samsung and Huawei add their own. */
+    /** Play returns the shared KidEaseNative token only. Samsung, Huawei, and Amazon add their own. */
     static String userAgentForStoreBuild(String flavor, String base, String configured) {
         String next = base == null ? "" : base;
         if (!"samsung".equals(flavor)) {
@@ -126,14 +131,26 @@ public class MainActivity extends BridgeActivity {
         if (!"huawei".equals(flavor)) {
             next = next.replace("KidEaseStoreHuawei", "");
         }
+        if (!"amazon".equals(flavor)) {
+            next = next.replace("KidEaseStoreAmazon", "");
+        }
         next = next.replaceAll("\\s+", " ").trim();
         String token = "";
         if ("samsung".equals(flavor) && "KidEaseStoreSamsung".equals(configured)) token = configured;
         else if ("huawei".equals(flavor) && "KidEaseStoreHuawei".equals(configured)) token = configured;
+        else if ("amazon".equals(flavor) && "KidEaseStoreAmazon".equals(configured)) token = configured;
         if (token.isEmpty()) return next;
         if (next.isEmpty()) return token;
         if (next.contains(token)) return next;
         return next + " " + token;
+    }
+
+    /** Drop KidEaseNoGms when Play services work. Add it when they do not. */
+    static String userAgentWithPlayServices(String agent, boolean available) {
+        String next = agent == null ? "" : agent.replace("KidEaseNoGms", "").replaceAll("\\s+", " ").trim();
+        if (available) return next;
+        if (next.isEmpty()) return "KidEaseNoGms";
+        return next + " KidEaseNoGms";
     }
 
     static String withoutSamsungStoreQuery(String url) {

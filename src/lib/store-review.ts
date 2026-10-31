@@ -73,7 +73,7 @@ export function inAppReviewAllowed(channel: StoreChannel): boolean {
 
 /** A Play listing URL on a Galaxy Store or AppGallery install sends the parent to the wrong store. */
 export function playListingAllowed(channel: StoreChannel): boolean {
-  return channel !== "samsung" && channel !== "huawei";
+  return channel !== "samsung" && channel !== "huawei" && channel !== "amazon";
 }
 
 function clientBlocksPlayListing(): boolean {
