@@ -39,7 +39,7 @@ test("native commerce is guarded in the page and the component", () => {
   assert.doesNotMatch(account, /search\.section === "alerts"/);
   assert.match(account, /section === "alerts" && user/);
   assert.match(account, /nativeShell && item\.id === "subscription"/);
-  assert.match(alerts, /if \(nativeShell \|\| !open\) return null/);
+  assert.match(alerts, /if \(nativeShell \|\| onGovDesk \|\| !open\) return null/);
   assert.match(rootDoc, /nativeShell \? null : <GetAlertsPrompt \/>/);
   const video = src("src/components/video-room-panel.tsx");
   const voice = src("src/components/voice-call-panel.tsx");
