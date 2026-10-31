@@ -30,6 +30,7 @@ import {
   isValidSearchOrigin,
   listingMatchesSavedSearch,
   parseSavedSearchFilters,
+  parseStartDate,
   type SavedSearchFilters,
   type SearchAlertCandidate,
   type SearchAlertKind,
@@ -41,6 +42,7 @@ import {
   openSpotCapAllows,
   openSpotMailListingIds,
   planOpenSpotAlerts,
+  spotStartFits,
   type PostedSpot,
   type PriorSpotAlert,
   type SpotSearchWatch,
@@ -75,6 +77,7 @@ type SavedSearchJobRow = {
   filters: unknown;
   alerts_enabled: number | boolean;
   last_checked_at: string | Date | null;
+  start_date?: string | Date | null;
 };
 
 type MatchRow = {
@@ -403,7 +406,7 @@ async function recordChannelSend(
 function spotWatchFromSearch(search: SavedSearchJobRow): SpotSearchWatch {
   const raw = search.filters && typeof search.filters === "object" ? (search.filters as Record<string, unknown>) : {};
   const child = raw.childAgeMonths;
-  const start = typeof raw.startDate === "string" ? raw.startDate : null;
+  const start = parseSavedSearchFilters(raw).startDate || parseStartDate(search.start_date);
   const label = String(search.center_label || "");
   return {
     id: search.id,
@@ -511,7 +514,7 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
   await ensureAreaWaitlistSchema(sql).catch(() => undefined);
   const searches = await sql<SavedSearchJobRow>`
     select id, user_id, name, center_lat, center_lng, center_label, radius_km,
-           age_band, filters, alerts_enabled, last_checked_at
+           age_band, filters, alerts_enabled, last_checked_at, start_date
     from saved_searches
     where alerts_enabled = 1
       and coalesce(kind, 'search') = 'search'
@@ -606,7 +609,7 @@ export async function runSearchAlertJob(opts?: { dryRun?: boolean; now?: Date })
         isTest: "isTest" in hit ? (hit as { isTest?: boolean | number | null }).isTest : null,
       })),
       seen: { seenNew, seenVacancy, lastNotifiedAt },
-    });
+    }).filter(() => spotStartFits(filters.startDate || parseStartDate(search.start_date), now));
 
     for (const ev of events) {
       logged += 1;

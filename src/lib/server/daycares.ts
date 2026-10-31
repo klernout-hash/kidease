@@ -30,6 +30,9 @@ import { overlayParentRank } from "./rank";
 import { overlayPriority } from "./promos";
 import { featuredCentreIdsInLock, overlayFeaturedCity } from "@/lib/server/provider-entitlements";
 import { compareWithPaidPins, sortFeaturedCityAfterPriority } from "@/lib/provider-entitlements";
+import { sponsoredPinsFirst } from "@/lib/sponsored-flag";
+import { collapseAdjacentDuplicates, withJunkLast } from "@/lib/search-result-quality";
+import { parseSearchSort } from "@/lib/search-sort";
 import { compareSmartMatchOrNearest, whyForListing, type RankAge, type SmartMatchQuery } from "@/lib/ranking/score";
 import { listingSubsidy } from "@/lib/fee-program";
 import {
@@ -107,18 +110,7 @@ type SearchInput = {
 };
 
 function parseSort(raw: unknown): SearchSort {
-  if (
-    raw === "price" ||
-    raw === "rating" ||
-    raw === "availability" ||
-    raw === "recommended" ||
-    raw === "match" ||
-    raw === "urgency" ||
-    raw === "best"
-  ) {
-    return raw;
-  }
-  return "distance";
+  return parseSearchSort(raw);
 }
 
 function parseRankAge(raw: unknown): RankAge {
@@ -625,53 +617,59 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
   if (fit) {
     cards = cards.map((card) => ({ ...card, parentFitChips: parentFitScore(fitListing(card), fit).chips }));
   }
+  cards = collapseAdjacentDuplicates(cards);
+  const pinsOn = sponsoredPinsFirst();
   const useBest = data.sort === "best";
   const matchQuery = smartQuery(data);
   if (fit && usesParentFitSort(data.sort)) {
-    cards.sort((a, b) => {
-      const delta = compareParentFit(fitListing(a), fitListing(b), fit);
-      if (delta !== 0) return delta;
-      const fresh = compareFreshOpenSpots(a, b);
-      if (fresh !== 0) return fresh;
-      return a.distanceKm - b.distanceKm;
-    });
-  } else if (useBest) {
-    cards.sort((a, b) => compareSmartMatchOrNearest(a, b, matchQuery));
-  } else {
-    cards.sort((a, b) =>
-      compareWithPaidPins(a, b, (left, right) => {
-        if (data.sort === "match") return compareParentMatch(left, right, rankPrefs);
-        if (data.sort === "urgency") return compareParentUrgency(left, right, rankPrefs);
-        if (data.sort === "recommended") {
-          const delta = recommendedRank(right) - recommendedRank(left);
-          if (Math.abs(delta) > 1e-6) return delta;
-          const fresh = compareFreshOpenSpots(left, right);
-          if (fresh !== 0) return fresh;
-          return left.distanceKm - right.distanceKm;
-        }
-        if (data.sort === "price") {
-          const price = (left.fromPrice || 9e6) - (right.fromPrice || 9e6);
-          if (price !== 0) return price;
-          const fresh = compareFreshOpenSpots(left, right);
-          if (fresh !== 0) return fresh;
-          return left.distanceKm - right.distanceKm;
-        }
-        if (data.sort === "rating") {
-          const rating = right.ratingX10 - left.ratingX10;
-          if (rating !== 0) return rating;
-          const fresh = compareFreshOpenSpots(left, right);
-          if (fresh !== 0) return fresh;
-          return left.distanceKm - right.distanceKm;
-        }
-        if (data.sort === "availability") {
-          const spots = right.spotsTotal - left.spotsTotal;
-          if (spots !== 0) return spots;
-          const fresh = compareFreshOpenSpots(left, right);
-          if (fresh !== 0) return fresh;
-          return left.distanceKm - right.distanceKm;
-        }
-        return compareProximity(left, right);
+    cards.sort(
+      withJunkLast((a, b) => {
+        const delta = compareParentFit(fitListing(a), fitListing(b), fit);
+        if (delta !== 0) return delta;
+        const fresh = compareFreshOpenSpots(a, b);
+        if (fresh !== 0) return fresh;
+        return a.distanceKm - b.distanceKm;
       }),
+    );
+  } else if (useBest) {
+    cards.sort(withJunkLast((a, b) => compareSmartMatchOrNearest(a, b, matchQuery)));
+  } else {
+    cards.sort(
+      withJunkLast((a, b) =>
+        compareWithPaidPins(a, b, (left, right) => {
+          if (data.sort === "match") return compareParentMatch(left, right, rankPrefs);
+          if (data.sort === "urgency") return compareParentUrgency(left, right, rankPrefs);
+          if (data.sort === "recommended") {
+            const delta = recommendedRank(right) - recommendedRank(left);
+            if (Math.abs(delta) > 1e-6) return delta;
+            const fresh = compareFreshOpenSpots(left, right);
+            if (fresh !== 0) return fresh;
+            return left.distanceKm - right.distanceKm;
+          }
+          if (data.sort === "price") {
+            const price = (left.fromPrice || 9e6) - (right.fromPrice || 9e6);
+            if (price !== 0) return price;
+            const fresh = compareFreshOpenSpots(left, right);
+            if (fresh !== 0) return fresh;
+            return left.distanceKm - right.distanceKm;
+          }
+          if (data.sort === "rating") {
+            const rating = right.ratingX10 - left.ratingX10;
+            if (rating !== 0) return rating;
+            const fresh = compareFreshOpenSpots(left, right);
+            if (fresh !== 0) return fresh;
+            return left.distanceKm - right.distanceKm;
+          }
+          if (data.sort === "availability") {
+            const spots = right.spotsTotal - left.spotsTotal;
+            if (spots !== 0) return spots;
+            const fresh = compareFreshOpenSpots(left, right);
+            if (fresh !== 0) return fresh;
+            return left.distanceKm - right.distanceKm;
+          }
+          return compareProximity(left, right, Date.now(), { paidPinBoost: pinsOn });
+        }, { enabled: pinsOn }),
+      ),
     );
   }
   const facility = data.facility;
@@ -819,9 +817,10 @@ async function loadFeatured(
   pinned.sort(compareProximity);
   const merged = await overlayQuality(await overlayParentReviews(await overlayClaimed(pinned, mergeClaimedCard)));
   const scored = await overlayParentRank(merged, { distanceKnown: true, radiusKm: radius, ageGroup: "any" });
-  const ranked = sortFeaturedCityAfterPriority(
-    await overlayFeaturedCity(await overlayPriority(scored)),
-  ).filter((card) => includeCardInRadius(card, origin, radius));
+  const withPins = await overlayFeaturedCity(await overlayPriority(scored));
+  const ranked = (sponsoredPinsFirst() ? sortFeaturedCityAfterPriority(withPins) : withPins).filter((card) =>
+    includeCardInRadius(card, origin, radius),
+  );
   return withProvincial(publicListings(uniqueById(filterByLocationLock(ranked, lock))).slice(0, HOME_TYPE_POOL)).then((rows) => rows.map(slimCard));
 }
 
@@ -845,7 +844,7 @@ export const featuredDaycares = createServerFn({ method: "GET" })
       lat: origin.lat,
       lng: origin.lng,
       radiusKm,
-      sort: "distance",
+      sort: "best",
       ageGroup: "any",
       label: origin.label,
     });

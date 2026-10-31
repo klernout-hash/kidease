@@ -212,10 +212,11 @@ export const saveSearch = createServerFn({ method: "POST" })
     await sql`
       insert into saved_searches (
         id, user_id, name, center_lat, center_lng, center_label,
-        radius_km, age_band, filters, alerts_enabled
+        radius_km, age_band, filters, alerts_enabled, start_date
       ) values (
         ${id}, ${context.userId}, ${data.name}, ${data.centerLat}, ${data.centerLng},
-        ${data.centerLabel}, ${data.radiusKm}, ${data.ageBand}, ${filters}::jsonb, 1
+        ${data.centerLabel}, ${data.radiusKm}, ${data.ageBand}, ${filters}::jsonb, 1,
+        ${data.filters.startDate}
       )
     `;
     return {
@@ -270,6 +271,7 @@ export const updateSavedSearch = createServerFn({ method: "POST" })
         age_band = ${next.ageBand},
         filters = ${filters}::jsonb,
         alerts_enabled = ${next.alertsEnabled ? 1 : 0},
+        start_date = ${next.filters.startDate},
         updated_at = now()
       where id = ${data.id} and user_id = ${context.userId}
     `;

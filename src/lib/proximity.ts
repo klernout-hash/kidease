@@ -104,19 +104,24 @@ export function distanceDecay(km: number, halfLifeKm = 8) {
   return Math.exp((-Math.LN2 * Math.max(0, km)) / half);
 }
 
-export function proximityScore(card: DaycareCard) {
+export function proximityScore(card: DaycareCard, opts?: { paidPinBoost?: boolean }) {
   let score = distanceDecay(card.distanceKm, card.catchmentKm ?? 8);
   if (card.inCatchment) score += 0.16;
   if (card.live) score += 0.12;
   if (card.spotsTotal > 0) score += Math.min(0.1, card.spotsTotal * 0.02);
-  if (card.priority) score += 0.22;
+  if (card.priority && opts?.paidPinBoost !== false) score += 0.22;
   if (card.ratingX10 > 0) score += (card.ratingX10 / 50) * 0.08;
   score += listingQualityBoost(card);
   return score;
 }
 
-export function compareProximity(a: DaycareCard, b: DaycareCard, now = Date.now()) {
-  const delta = proximityScore(b) - proximityScore(a);
+export function compareProximity(
+  a: DaycareCard,
+  b: DaycareCard,
+  now = Date.now(),
+  opts?: { paidPinBoost?: boolean },
+) {
+  const delta = proximityScore(b, opts) - proximityScore(a, opts);
   if (Math.abs(delta) > 0.008) return delta;
   const decay = compareVacancyDecay(a, b, now);
   if (decay !== 0) return decay;

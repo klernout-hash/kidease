@@ -56,7 +56,7 @@ test("a fresh confirm outranks a stale one, and the weight stays above zero", ()
 test("search keeps unconfirmed listings and the admin desk flags 30 days", () => {
   const proximity = src("src/lib/proximity.ts");
   const compare = proximity.slice(proximity.indexOf("export function compareProximity"));
-  const scoreAt = compare.indexOf("proximityScore(b) - proximityScore(a)");
+  const scoreAt = compare.indexOf("proximityScore(b, opts) - proximityScore(a, opts)");
   const freshAt = compare.indexOf("compareFreshOpenSpots");
   const distanceAt = compare.indexOf("a.distanceKm - b.distanceKm");
   const decayAt = compare.indexOf("compareVacancyDecay");
@@ -66,7 +66,7 @@ test("search keeps unconfirmed listings and the admin desk flags 30 days", () =>
 
   const search = src("src/lib/server/daycares.ts");
   assert.doesNotMatch(search, /vacancyUnconfirmed|VACANCY_STALE_DAYS/);
-  assert.match(search, /compareProximity\(left, right\)/);
+  assert.match(search, /compareProximity\(left, right, Date\.now\(\), \{ paidPinBoost: pinsOn \}\)/);
 
   const admin = src("src/routes/admin-vacancies.tsx");
   assert.match(admin, /data-ke="vacancy-unconfirmed"/);
