@@ -24,6 +24,12 @@ export function rankNeedCareFast<T extends { distanceKm: number; confirmedAt: st
     .slice(0, NEED_CARE_FAST_CAP);
 }
 
+export function streetRadiusNote(fr: boolean, radiusKm = 15): string {
+  return fr
+    ? `Centres autorisés à moins de ${radiusKm} km de cette adresse.`
+    : `Licensed centres within ${radiusKm} km of this address.`;
+}
+
 export function formatFastKm(km: number): string {
   if (!Number.isFinite(km) || km < 0) return "";
   if (km < 10) return `${km.toFixed(1)} km`;
@@ -63,6 +69,8 @@ export type NeedCareFastViewData = {
   placeLabel: string | null;
   unknownPlace: boolean;
   hits: NeedCareFastHitView[];
+  street?: boolean;
+  radiusKm?: number | null;
 };
 
 /** A missing or odd loader payload becomes an empty page, not a crash. */
@@ -88,11 +96,14 @@ export function normalizeNeedCareFastPage(data: unknown): NeedCareFastViewData {
       distanceLabel: typeof hit.distanceLabel === "string" ? hit.distanceLabel : "",
     }];
   });
+  const radiusKm = Number(bag.radiusKm);
   return {
     q,
     placeLabel: typeof bag.placeLabel === "string" ? bag.placeLabel : null,
     unknownPlace: bag.unknownPlace === true,
     hits,
+    street: bag.street === true,
+    radiusKm: Number.isFinite(radiusKm) ? radiusKm : null,
   };
 }
 

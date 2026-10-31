@@ -112,6 +112,11 @@ export function areaWaitlistAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_AREA_WAITLIST_ALERTS", env);
 }
 
+/** Street-level Need care fast via OpenStreetMap. Default off. No Google. */
+export function ncfStreetEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_NCF_STREET", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;
