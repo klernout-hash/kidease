@@ -31,6 +31,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_OPEN_SPOTS_CHECKIN_SMS",
   "FEATURE_QC_HOME_DAYCARES",
   "FEATURE_AREA_WAITLIST_ALERTS",
+  "FEATURE_GOV_SCOPES",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -82,6 +83,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_QC_HOME_DAYCARES: false,
   /** Area waitlist email. Off until Kyle approves the wording. */
   FEATURE_AREA_WAITLIST_ALERTS: false,
+  /** Province-only totals for government accounts. Off until Kyle turns it on. */
+  FEATURE_GOV_SCOPES: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -182,6 +185,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Email when an area waitlist matches a posted spot. Default off. Kyle approved the wording. In-app notices still save.",
+  },
+  {
+    key: "FEATURE_GOV_SCOPES",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "A government account sees totals for its province only. Default off. No names, streets, or child details. The account stays signed in.",
   },
 ];
 

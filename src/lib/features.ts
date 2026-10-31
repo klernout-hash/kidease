@@ -112,6 +112,11 @@ export function areaWaitlistAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_AREA_WAITLIST_ALERTS", env);
 }
 
+/** Province-only government totals. Default off. Does not sign anyone out. */
+export function govScopesEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_GOV_SCOPES", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;
