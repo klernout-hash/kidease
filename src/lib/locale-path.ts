@@ -55,6 +55,7 @@ export const LOCALE_PAIRED_PATHS = [
   "/unsubscribe",
   "/delete-account",
   "/status",
+  "/trust-safety",
   "/signup",
   "/for-daycares",
   "/daycares",

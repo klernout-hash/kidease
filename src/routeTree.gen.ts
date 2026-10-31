@@ -21,6 +21,7 @@ import { Route as AdminQcHomeRouteImport } from './routes/admin-qc-home'
 import { Route as AdminRankingRouteImport } from './routes/admin-ranking'
 import { Route as AdminSpamRouteImport } from './routes/admin-spam'
 import { Route as AdminTriageRouteImport } from './routes/admin-triage'
+import { Route as AdminTrustRouteImport } from './routes/admin-trust'
 import { Route as AdminTruthRouteImport } from './routes/admin-truth'
 import { Route as AdminVacanciesRouteImport } from './routes/admin-vacancies'
 import { Route as AppAdminUnavailableRouteImport } from './routes/app-admin-unavailable'
@@ -72,6 +73,7 @@ import { Route as SupportRouteImport } from './routes/support'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TourChecklistRouteImport } from './routes/tour-checklist'
+import { Route as TrustSafetyRouteImport } from './routes/trust-safety'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as UseTheWebsiteRouteImport } from './routes/use-the-website'
 import { Route as VacancyIndexRouteImport } from './routes/vacancy-index'
@@ -144,6 +146,7 @@ import { Route as FrSupportRouteImport } from './routes/fr.support'
 import { Route as FrTeamRouteImport } from './routes/fr.team'
 import { Route as FrTermsRouteImport } from './routes/fr.terms'
 import { Route as FrTourChecklistRouteImport } from './routes/fr.tour-checklist'
+import { Route as FrTrustSafetyRouteImport } from './routes/fr.trust-safety'
 import { Route as FrUnsubscribeRouteImport } from './routes/fr.unsubscribe'
 import { Route as FrVacancyIndexRouteImport } from './routes/fr.vacancy-index'
 import { Route as FrVerifyRouteImport } from './routes/fr.verify'
@@ -258,6 +261,11 @@ const AdminSpamRoute = AdminSpamRouteImport.update({
 const AdminTriageRoute = AdminTriageRouteImport.update({
   id: '/admin-triage',
   path: '/admin-triage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminTrustRoute = AdminTrustRouteImport.update({
+  id: '/admin-trust',
+  path: '/admin-trust',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminTruthRoute = AdminTruthRouteImport.update({
@@ -514,6 +522,11 @@ const TermsRoute = TermsRouteImport.update({
 const TourChecklistRoute = TourChecklistRouteImport.update({
   id: '/tour-checklist',
   path: '/tour-checklist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrustSafetyRoute = TrustSafetyRouteImport.update({
+  id: '/trust-safety',
+  path: '/trust-safety',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
@@ -877,6 +890,11 @@ const FrTourChecklistRoute = FrTourChecklistRouteImport.update({
   path: '/tour-checklist',
   getParentRoute: () => FrRoute,
 } as any)
+const FrTrustSafetyRoute = FrTrustSafetyRouteImport.update({
+  id: '/trust-safety',
+  path: '/trust-safety',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrUnsubscribeRoute = FrUnsubscribeRouteImport.update({
   id: '/unsubscribe',
   path: '/unsubscribe',
@@ -1167,6 +1185,7 @@ export interface FileRoutesByFullPath {
   '/admin-ranking': typeof AdminRankingRoute
   '/admin-spam': typeof AdminSpamRoute
   '/admin-triage': typeof AdminTriageRoute
+  '/admin-trust': typeof AdminTrustRoute
   '/admin-truth': typeof AdminTruthRoute
   '/admin-vacancies': typeof AdminVacanciesRoute
   '/app-admin-unavailable': typeof AppAdminUnavailableRoute
@@ -1218,6 +1237,7 @@ export interface FileRoutesByFullPath {
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
+  '/trust-safety': typeof TrustSafetyRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/use-the-website': typeof UseTheWebsiteRoute
   '/vacancy-index': typeof VacancyIndexRoute
@@ -1289,6 +1309,7 @@ export interface FileRoutesByFullPath {
   '/fr/team': typeof FrTeamRoute
   '/fr/terms': typeof FrTermsRoute
   '/fr/tour-checklist': typeof FrTourChecklistRoute
+  '/fr/trust-safety': typeof FrTrustSafetyRoute
   '/fr/unsubscribe': typeof FrUnsubscribeRoute
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/fr/verify': typeof FrVerifyRoute
@@ -1359,6 +1380,7 @@ export interface FileRoutesByTo {
   '/admin-ranking': typeof AdminRankingRoute
   '/admin-spam': typeof AdminSpamRoute
   '/admin-triage': typeof AdminTriageRoute
+  '/admin-trust': typeof AdminTrustRoute
   '/admin-truth': typeof AdminTruthRoute
   '/admin-vacancies': typeof AdminVacanciesRoute
   '/app-admin-unavailable': typeof AppAdminUnavailableRoute
@@ -1408,6 +1430,7 @@ export interface FileRoutesByTo {
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
+  '/trust-safety': typeof TrustSafetyRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/use-the-website': typeof UseTheWebsiteRoute
   '/vacancy-index': typeof VacancyIndexRoute
@@ -1479,6 +1502,7 @@ export interface FileRoutesByTo {
   '/fr/team': typeof FrTeamRoute
   '/fr/terms': typeof FrTermsRoute
   '/fr/tour-checklist': typeof FrTourChecklistRoute
+  '/fr/trust-safety': typeof FrTrustSafetyRoute
   '/fr/unsubscribe': typeof FrUnsubscribeRoute
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/fr/verify': typeof FrVerifyRoute
@@ -1550,6 +1574,7 @@ export interface FileRoutesById {
   '/admin-ranking': typeof AdminRankingRoute
   '/admin-spam': typeof AdminSpamRoute
   '/admin-triage': typeof AdminTriageRoute
+  '/admin-trust': typeof AdminTrustRoute
   '/admin-truth': typeof AdminTruthRoute
   '/admin-vacancies': typeof AdminVacanciesRoute
   '/app-admin-unavailable': typeof AppAdminUnavailableRoute
@@ -1601,6 +1626,7 @@ export interface FileRoutesById {
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
+  '/trust-safety': typeof TrustSafetyRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/use-the-website': typeof UseTheWebsiteRoute
   '/vacancy-index': typeof VacancyIndexRoute
@@ -1672,6 +1698,7 @@ export interface FileRoutesById {
   '/fr/team': typeof FrTeamRoute
   '/fr/terms': typeof FrTermsRoute
   '/fr/tour-checklist': typeof FrTourChecklistRoute
+  '/fr/trust-safety': typeof FrTrustSafetyRoute
   '/fr/unsubscribe': typeof FrUnsubscribeRoute
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/fr/verify': typeof FrVerifyRoute
@@ -1744,6 +1771,7 @@ export interface FileRouteTypes {
     | '/admin-ranking'
     | '/admin-spam'
     | '/admin-triage'
+    | '/admin-trust'
     | '/admin-truth'
     | '/admin-vacancies'
     | '/app-admin-unavailable'
@@ -1795,6 +1823,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/tour-checklist'
+    | '/trust-safety'
     | '/unsubscribe'
     | '/use-the-website'
     | '/vacancy-index'
@@ -1866,6 +1895,7 @@ export interface FileRouteTypes {
     | '/fr/team'
     | '/fr/terms'
     | '/fr/tour-checklist'
+    | '/fr/trust-safety'
     | '/fr/unsubscribe'
     | '/fr/vacancy-index'
     | '/fr/verify'
@@ -1936,6 +1966,7 @@ export interface FileRouteTypes {
     | '/admin-ranking'
     | '/admin-spam'
     | '/admin-triage'
+    | '/admin-trust'
     | '/admin-truth'
     | '/admin-vacancies'
     | '/app-admin-unavailable'
@@ -1985,6 +2016,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/tour-checklist'
+    | '/trust-safety'
     | '/unsubscribe'
     | '/use-the-website'
     | '/vacancy-index'
@@ -2056,6 +2088,7 @@ export interface FileRouteTypes {
     | '/fr/team'
     | '/fr/terms'
     | '/fr/tour-checklist'
+    | '/fr/trust-safety'
     | '/fr/unsubscribe'
     | '/fr/vacancy-index'
     | '/fr/verify'
@@ -2126,6 +2159,7 @@ export interface FileRouteTypes {
     | '/admin-ranking'
     | '/admin-spam'
     | '/admin-triage'
+    | '/admin-trust'
     | '/admin-truth'
     | '/admin-vacancies'
     | '/app-admin-unavailable'
@@ -2177,6 +2211,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/tour-checklist'
+    | '/trust-safety'
     | '/unsubscribe'
     | '/use-the-website'
     | '/vacancy-index'
@@ -2248,6 +2283,7 @@ export interface FileRouteTypes {
     | '/fr/team'
     | '/fr/terms'
     | '/fr/tour-checklist'
+    | '/fr/trust-safety'
     | '/fr/unsubscribe'
     | '/fr/vacancy-index'
     | '/fr/verify'
@@ -2319,6 +2355,7 @@ export interface RootRouteChildren {
   AdminRankingRoute: typeof AdminRankingRoute
   AdminSpamRoute: typeof AdminSpamRoute
   AdminTriageRoute: typeof AdminTriageRoute
+  AdminTrustRoute: typeof AdminTrustRoute
   AdminTruthRoute: typeof AdminTruthRoute
   AdminVacanciesRoute: typeof AdminVacanciesRoute
   AppAdminUnavailableRoute: typeof AppAdminUnavailableRoute
@@ -2370,6 +2407,7 @@ export interface RootRouteChildren {
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
   TourChecklistRoute: typeof TourChecklistRoute
+  TrustSafetyRoute: typeof TrustSafetyRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   UseTheWebsiteRoute: typeof UseTheWebsiteRoute
   VacancyIndexRoute: typeof VacancyIndexRoute
@@ -2513,6 +2551,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-triage'
       fullPath: '/admin-triage'
       preLoaderRoute: typeof AdminTriageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-trust': {
+      id: '/admin-trust'
+      path: '/admin-trust'
+      fullPath: '/admin-trust'
+      preLoaderRoute: typeof AdminTrustRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin-truth': {
@@ -2870,6 +2915,13 @@ declare module '@tanstack/react-router' {
       path: '/tour-checklist'
       fullPath: '/tour-checklist'
       preLoaderRoute: typeof TourChecklistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trust-safety': {
+      id: '/trust-safety'
+      path: '/trust-safety'
+      fullPath: '/trust-safety'
+      preLoaderRoute: typeof TrustSafetyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/unsubscribe': {
@@ -3376,6 +3428,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrTourChecklistRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/trust-safety': {
+      id: '/fr/trust-safety'
+      path: '/trust-safety'
+      fullPath: '/fr/trust-safety'
+      preLoaderRoute: typeof FrTrustSafetyRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/unsubscribe': {
       id: '/fr/unsubscribe'
       path: '/unsubscribe'
@@ -3853,6 +3912,7 @@ interface FrRouteChildren {
   FrTeamRoute: typeof FrTeamRoute
   FrTermsRoute: typeof FrTermsRoute
   FrTourChecklistRoute: typeof FrTourChecklistRoute
+  FrTrustSafetyRoute: typeof FrTrustSafetyRoute
   FrUnsubscribeRoute: typeof FrUnsubscribeRoute
   FrVacancyIndexRoute: typeof FrVacancyIndexRoute
   FrVerifyRoute: typeof FrVerifyRoute
@@ -3910,6 +3970,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrTeamRoute: FrTeamRoute,
   FrTermsRoute: FrTermsRoute,
   FrTourChecklistRoute: FrTourChecklistRoute,
+  FrTrustSafetyRoute: FrTrustSafetyRoute,
   FrUnsubscribeRoute: FrUnsubscribeRoute,
   FrVacancyIndexRoute: FrVacancyIndexRoute,
   FrVerifyRoute: FrVerifyRoute,
@@ -4035,6 +4096,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRankingRoute: AdminRankingRoute,
   AdminSpamRoute: AdminSpamRoute,
   AdminTriageRoute: AdminTriageRoute,
+  AdminTrustRoute: AdminTrustRoute,
   AdminTruthRoute: AdminTruthRoute,
   AdminVacanciesRoute: AdminVacanciesRoute,
   AppAdminUnavailableRoute: AppAdminUnavailableRoute,
@@ -4086,6 +4148,7 @@ const rootRouteChildren: RootRouteChildren = {
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
   TourChecklistRoute: TourChecklistRoute,
+  TrustSafetyRoute: TrustSafetyRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   UseTheWebsiteRoute: UseTheWebsiteRoute,
   VacancyIndexRoute: VacancyIndexRoute,
