@@ -18,6 +18,10 @@ This composes with the centre quality score (PR #65 / `docs/quality-score.md`). 
 
 Sort **Best match** ignores priority and featured-city pins.
 
+Search opens on **Best match**. Parents can still pick Nearest. `?rank=nearest` forces nearest for a preview.
+
+Paid pins sort first only when `VITE_FEATURE_SPONSORED_LISTINGS=true`, the same switch that shows the Sponsored label. That flag stays off. This is not a subscription switch. Best match still ignores paid pins.
+
 ## Parent Urgency (0–100)
 
 `src/lib/parent-urgency.ts`. How soon the centre can meet a need.

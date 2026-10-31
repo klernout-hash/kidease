@@ -79,7 +79,7 @@ test("confirmed open spots from the last 30 days sort ahead only after relevance
 
   const proximity = src("src/lib/proximity.ts");
   const compare = proximity.slice(proximity.indexOf("export function compareProximity"));
-  const scoreAt = compare.indexOf("proximityScore(b) - proximityScore(a)");
+  const scoreAt = compare.indexOf("proximityScore(b, opts) - proximityScore(a, opts)");
   const freshAt = compare.indexOf("compareFreshOpenSpots");
   const distanceAt = compare.indexOf("a.distanceKm - b.distanceKm");
   assert.ok(scoreAt >= 0 && freshAt > scoreAt && distanceAt > freshAt);

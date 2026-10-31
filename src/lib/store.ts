@@ -11,6 +11,7 @@ import type { CommuteMode } from "./commute-isochrone";
 import { parseAnchorMode, writeDualAnchorPrefs, type AnchorMode } from "./dual-anchor";
 import { applyTheme, persistThemePreference, writeThemePreference, type ResolvedTheme, type ThemePreference } from "./theme";
 import { writeTextScale, type TextScale } from "./text-scale";
+import { DEFAULT_SEARCH_SORT } from "./search-sort";
 
 export type SortKey = "distance" | "price" | "rating" | "availability" | "recommended" | "match" | "urgency" | "best";
 
@@ -120,7 +121,7 @@ export const useAppStore = create<SearchState>()((set) => ({
   touchGps: () => set({ located: true, originSource: "gps", originAt: Date.now() }),
   radiusKm: 25,
   setRadiusKm: (n) => set({ radiusKm: clampRadiusKm(n) }),
-  sort: "distance",
+  sort: DEFAULT_SEARCH_SORT,
   setSort: (sort) => set({ sort }),
   ageGroup: "any",
   setAgeGroup: (ageGroup) => set({ ageGroup }),
