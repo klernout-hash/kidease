@@ -48,6 +48,7 @@ export type DaycareRow = {
   part_time_monthly: number | string | null;
   fee_program?: string | null;
   fact_source?: string | null;
+  fee_confidence?: string | null;
   spots_infant: number;
   spots_toddler: number;
   spots_preschool: number;
@@ -139,6 +140,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
     partTimeMonthly: cadAmount(r.part_time_monthly),
     feeProgram: r.fee_program || null,
     factSource: r.fact_source || null,
+    feeConfidence: r.fee_confidence === "centre" || r.fee_confidence === "estimate" ? r.fee_confidence : null,
     spotsInfant: r.spots_infant,
     spotsToddler: r.spots_toddler,
     spotsPreschool: r.spots_preschool,

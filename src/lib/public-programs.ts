@@ -4,6 +4,7 @@
  * clipped span has a positive width. Relative imports so Node tests can load this file.
  */
 
+import { resolveFeeConfidence, type FeeConfidence } from "./fee-confidence.ts";
 import { confirmedStoredFeeProgram, hasListedMonthlyFees } from "./fee-program.ts";
 import { localeTag } from "./languages.ts";
 import { STANDARD_YOUNGER_MAX, standardAgeGroup } from "./standard-age-groups.ts";
@@ -137,6 +138,7 @@ export type ListingFeeNotes = {
   mb10: boolean;
   source: FeeSourceKind | null;
   unconfirmed: boolean;
+  confidence: FeeConfidence | null;
 };
 
 /**
@@ -152,17 +154,19 @@ export function listingFeeNotes(d: {
   feeProgram?: string | null;
   province?: string | null;
   factSource?: string | null;
+  feeConfidence?: string | null;
 }): ListingFeeNotes {
   const mb10 = confirmedStoredFeeProgram(d) === "mb-10-day";
   const listed = hasListedMonthlyFees(d);
+  const confidence = resolveFeeConfidence(d);
   if (mb10) {
-    return { priceList: false, mb10: true, source: null, unconfirmed: false };
+    return { priceList: false, mb10: true, source: null, unconfirmed: false, confidence };
   }
   if (d.live && listed) {
-    return { priceList: true, mb10: false, source: null, unconfirmed: false };
+    return { priceList: true, mb10: false, source: null, unconfirmed: false, confidence };
   }
   if (listed) {
-    return { priceList: false, mb10: false, source: feeSourceKind(d.factSource), unconfirmed: false };
+    return { priceList: false, mb10: false, source: feeSourceKind(d.factSource), unconfirmed: false, confidence };
   }
-  return { priceList: false, mb10: false, source: null, unconfirmed: true };
+  return { priceList: false, mb10: false, source: null, unconfirmed: true, confidence: null };
 }

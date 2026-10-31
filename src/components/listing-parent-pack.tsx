@@ -9,7 +9,7 @@ import {
   parentScheduleLabel,
   safetyLabel,
 } from "@/lib/parent-listing";
-import { formatMonthlyFee, monthlyFeeVisible, partTimeMonthlyFee } from "@/lib/public-programs";
+import { formatMonthlyFee, listingFeeNotes, monthlyFeeVisible, partTimeMonthlyFee } from "@/lib/public-programs";
 import { standardAgeLabel } from "@/lib/standard-age-groups";
 import { listingSubsidy, subsidyLabel } from "@/lib/fee-program";
 import { honestVacancy } from "@/lib/now-loops";
@@ -119,6 +119,7 @@ export function ListingProgramsTable({ item }: { item: Daycare }) {
   const rows = listingPrograms(item);
   const partTime = partTimeMonthlyFee(item.partTimeMonthly);
   const showPart = partTime != null;
+  const confidence = listingFeeNotes(item).confidence;
   return (
     <section id="listing-programs" className="scroll-mt-24">
       <h2 className="font-display text-2xl">{t("programsTitle")}</h2>
@@ -167,6 +168,12 @@ export function ListingProgramsTable({ item }: { item: Daycare }) {
       ) : (
         <p className="ke-empty mt-2 text-left">{t("programsAsk")}</p>
       )}
+      {confidence === "estimate" ? (
+        <p className="mt-2 text-sm text-muted" data-ke="fee-confidence">{t("feeProvincialEstimate")}. {t("feeProvincialEstimateLead")}</p>
+      ) : null}
+      {confidence === "centre" ? (
+        <p className="mt-2 text-sm text-muted" data-ke="fee-confidence">{t("feeConfirmedByCentre")}. {t("feeConfirmedByCentreLead")}</p>
+      ) : null}
     </section>
   );
 }

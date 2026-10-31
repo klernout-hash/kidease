@@ -899,6 +899,20 @@ export function Listing() {
               {feeNotes.source === "public" ? (
                 <p className="mt-2 text-xs text-muted">{t("feeSourcePublic")}</p>
               ) : null}
+              {feeNotes.confidence === "estimate" ? (
+                <p className="mt-2 max-w-prose text-sm text-muted" data-ke="fee-confidence">
+                  <span className="font-medium text-fg">{t("feeProvincialEstimate")}</span>
+                  {" "}
+                  {t("feeProvincialEstimateLead")}
+                </p>
+              ) : null}
+              {feeNotes.confidence === "centre" ? (
+                <p className="mt-2 max-w-prose text-sm text-muted" data-ke="fee-confidence">
+                  <span className="font-medium text-fg">{t("feeConfirmedByCentre")}</span>
+                  {" "}
+                  {t("feeConfirmedByCentreLead")}
+                </p>
+              ) : null}
               {feeNotes.unconfirmed ? (
                 <p className="mt-2 max-w-prose text-sm text-muted">{t("feeUnknownLead")}</p>
               ) : null}
