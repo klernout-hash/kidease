@@ -149,6 +149,7 @@ import { Route as FrVacancyIndexRouteImport } from './routes/fr.vacancy-index'
 import { Route as FrVerifyRouteImport } from './routes/fr.verify'
 import { Route as FrWaitlistRouteImport } from './routes/fr.waitlist'
 import { Route as GuidesCodeRouteImport } from './routes/guides.$code'
+import { Route as HelpArticlesRouteImport } from './routes/help.articles'
 import { Route as InboxIdRouteImport } from './routes/inbox.$id'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as JobsPostRouteImport } from './routes/jobs_.post'
@@ -190,6 +191,7 @@ import { Route as DaycareCityAgeRouteImport } from './routes/daycare.$city.$age'
 import { Route as DaycareCityCityRouteImport } from './routes/daycare.city.$city'
 import { Route as FrDaycareSlugRouteImport } from './routes/fr.daycare.$slug'
 import { Route as FrGuidesCodeRouteImport } from './routes/fr.guides.$code'
+import { Route as FrHelpArticlesRouteImport } from './routes/fr.help.articles'
 import { Route as FrInboxIdRouteImport } from './routes/fr.inbox.$id'
 import { Route as FrJobsPostRouteImport } from './routes/fr.jobs_.post'
 import { Route as FrMilieuxFamiliauxIdRouteImport } from './routes/fr.milieux-familiaux_.$id'
@@ -902,6 +904,11 @@ const GuidesCodeRoute = GuidesCodeRouteImport.update({
   path: '/$code',
   getParentRoute: () => GuidesRoute,
 } as any)
+const HelpArticlesRoute = HelpArticlesRouteImport.update({
+  id: '/articles',
+  path: '/articles',
+  getParentRoute: () => HelpRoute,
+} as any)
 const InboxIdRoute = InboxIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -1108,6 +1115,11 @@ const FrGuidesCodeRoute = FrGuidesCodeRouteImport.update({
   path: '/$code',
   getParentRoute: () => FrGuidesRoute,
 } as any)
+const FrHelpArticlesRoute = FrHelpArticlesRouteImport.update({
+  id: '/articles',
+  path: '/articles',
+  getParentRoute: () => FrHelpRoute,
+} as any)
 const FrInboxIdRoute = FrInboxIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -1191,7 +1203,7 @@ export interface FileRoutesByFullPath {
   '/fr': typeof FrRouteWithChildren
   '/get-app': typeof GetAppRoute
   '/guides': typeof GuidesRouteWithChildren
-  '/help': typeof HelpRoute
+  '/help': typeof HelpRouteWithChildren
   '/how-it-works': typeof HowItWorksRoute
   '/img': typeof ImgRoute
   '/inbox': typeof InboxRouteWithChildren
@@ -1266,7 +1278,7 @@ export interface FileRoutesByFullPath {
   '/fr/for-daycares': typeof FrForDaycaresRoute
   '/fr/get-app': typeof FrGetAppRoute
   '/fr/guides': typeof FrGuidesRouteWithChildren
-  '/fr/help': typeof FrHelpRoute
+  '/fr/help': typeof FrHelpRouteWithChildren
   '/fr/how-it-works': typeof FrHowItWorksRoute
   '/fr/inbox': typeof FrInboxRouteWithChildren
   '/fr/jobs': typeof FrJobsRoute
@@ -1294,6 +1306,7 @@ export interface FileRoutesByFullPath {
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
   '/guides/$code': typeof GuidesCodeRoute
+  '/help/articles': typeof HelpArticlesRoute
   '/inbox/$id': typeof InboxIdRoute
   '/invite/$token': typeof InviteTokenRoute
   '/jobs/post': typeof JobsPostRoute
@@ -1336,6 +1349,7 @@ export interface FileRoutesByFullPath {
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
+  '/fr/help/articles': typeof FrHelpArticlesRoute
   '/fr/inbox/$id': typeof FrInboxIdRoute
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/fr/milieux-familiaux/$id': typeof FrMilieuxFamiliauxIdRoute
@@ -1382,7 +1396,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/get-app': typeof GetAppRoute
   '/guides': typeof GuidesRouteWithChildren
-  '/help': typeof HelpRoute
+  '/help': typeof HelpRouteWithChildren
   '/how-it-works': typeof HowItWorksRoute
   '/img': typeof ImgRoute
   '/inbox': typeof InboxRouteWithChildren
@@ -1456,7 +1470,7 @@ export interface FileRoutesByTo {
   '/fr/for-daycares': typeof FrForDaycaresRoute
   '/fr/get-app': typeof FrGetAppRoute
   '/fr/guides': typeof FrGuidesRouteWithChildren
-  '/fr/help': typeof FrHelpRoute
+  '/fr/help': typeof FrHelpRouteWithChildren
   '/fr/how-it-works': typeof FrHowItWorksRoute
   '/fr/inbox': typeof FrInboxRouteWithChildren
   '/fr/jobs': typeof FrJobsRoute
@@ -1484,6 +1498,7 @@ export interface FileRoutesByTo {
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
   '/guides/$code': typeof GuidesCodeRoute
+  '/help/articles': typeof HelpArticlesRoute
   '/inbox/$id': typeof InboxIdRoute
   '/invite/$token': typeof InviteTokenRoute
   '/jobs/post': typeof JobsPostRoute
@@ -1526,6 +1541,7 @@ export interface FileRoutesByTo {
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
+  '/fr/help/articles': typeof FrHelpArticlesRoute
   '/fr/inbox/$id': typeof FrInboxIdRoute
   '/fr/jobs/post': typeof FrJobsPostRoute
   '/fr/milieux-familiaux/$id': typeof FrMilieuxFamiliauxIdRoute
@@ -1574,7 +1590,7 @@ export interface FileRoutesById {
   '/fr': typeof FrRouteWithChildren
   '/get-app': typeof GetAppRoute
   '/guides': typeof GuidesRouteWithChildren
-  '/help': typeof HelpRoute
+  '/help': typeof HelpRouteWithChildren
   '/how-it-works': typeof HowItWorksRoute
   '/img': typeof ImgRoute
   '/inbox': typeof InboxRouteWithChildren
@@ -1649,7 +1665,7 @@ export interface FileRoutesById {
   '/fr/for-daycares': typeof FrForDaycaresRoute
   '/fr/get-app': typeof FrGetAppRoute
   '/fr/guides': typeof FrGuidesRouteWithChildren
-  '/fr/help': typeof FrHelpRoute
+  '/fr/help': typeof FrHelpRouteWithChildren
   '/fr/how-it-works': typeof FrHowItWorksRoute
   '/fr/inbox': typeof FrInboxRouteWithChildren
   '/fr/jobs': typeof FrJobsRoute
@@ -1677,6 +1693,7 @@ export interface FileRoutesById {
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
   '/guides/$code': typeof GuidesCodeRoute
+  '/help/articles': typeof HelpArticlesRoute
   '/inbox/$id': typeof InboxIdRoute
   '/invite/$token': typeof InviteTokenRoute
   '/jobs_/post': typeof JobsPostRoute
@@ -1719,6 +1736,7 @@ export interface FileRoutesById {
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
+  '/fr/help/articles': typeof FrHelpArticlesRoute
   '/fr/inbox/$id': typeof FrInboxIdRoute
   '/fr/jobs_/post': typeof FrJobsPostRoute
   '/fr/milieux-familiaux_/$id': typeof FrMilieuxFamiliauxIdRoute
@@ -1871,6 +1889,7 @@ export interface FileRouteTypes {
     | '/fr/verify'
     | '/fr/waitlist'
     | '/guides/$code'
+    | '/help/articles'
     | '/inbox/$id'
     | '/invite/$token'
     | '/jobs/post'
@@ -1913,6 +1932,7 @@ export interface FileRouteTypes {
     | '/daycare/city/$city'
     | '/fr/daycare/$slug'
     | '/fr/guides/$code'
+    | '/fr/help/articles'
     | '/fr/inbox/$id'
     | '/fr/jobs/post'
     | '/fr/milieux-familiaux/$id'
@@ -2061,6 +2081,7 @@ export interface FileRouteTypes {
     | '/fr/verify'
     | '/fr/waitlist'
     | '/guides/$code'
+    | '/help/articles'
     | '/inbox/$id'
     | '/invite/$token'
     | '/jobs/post'
@@ -2103,6 +2124,7 @@ export interface FileRouteTypes {
     | '/daycare/city/$city'
     | '/fr/daycare/$slug'
     | '/fr/guides/$code'
+    | '/fr/help/articles'
     | '/fr/inbox/$id'
     | '/fr/jobs/post'
     | '/fr/milieux-familiaux/$id'
@@ -2253,6 +2275,7 @@ export interface FileRouteTypes {
     | '/fr/verify'
     | '/fr/waitlist'
     | '/guides/$code'
+    | '/help/articles'
     | '/inbox/$id'
     | '/invite/$token'
     | '/jobs_/post'
@@ -2295,6 +2318,7 @@ export interface FileRouteTypes {
     | '/daycare/city/$city'
     | '/fr/daycare/$slug'
     | '/fr/guides/$code'
+    | '/fr/help/articles'
     | '/fr/inbox/$id'
     | '/fr/jobs_/post'
     | '/fr/milieux-familiaux_/$id'
@@ -2343,7 +2367,7 @@ export interface RootRouteChildren {
   FrRoute: typeof FrRouteWithChildren
   GetAppRoute: typeof GetAppRoute
   GuidesRoute: typeof GuidesRouteWithChildren
-  HelpRoute: typeof HelpRoute
+  HelpRoute: typeof HelpRouteWithChildren
   HowItWorksRoute: typeof HowItWorksRoute
   ImgRoute: typeof ImgRoute
   InboxRoute: typeof InboxRouteWithChildren
@@ -3411,6 +3435,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesCodeRouteImport
       parentRoute: typeof GuidesRoute
     }
+    '/help/articles': {
+      id: '/help/articles'
+      path: '/articles'
+      fullPath: '/help/articles'
+      preLoaderRoute: typeof HelpArticlesRouteImport
+      parentRoute: typeof HelpRoute
+    }
     '/inbox/$id': {
       id: '/inbox/$id'
       path: '/$id'
@@ -3698,6 +3729,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrGuidesCodeRouteImport
       parentRoute: typeof FrGuidesRoute
     }
+    '/fr/help/articles': {
+      id: '/fr/help/articles'
+      path: '/articles'
+      fullPath: '/fr/help/articles'
+      preLoaderRoute: typeof FrHelpArticlesRouteImport
+      parentRoute: typeof FrHelpRoute
+    }
     '/fr/inbox/$id': {
       id: '/fr/inbox/$id'
       path: '/$id'
@@ -3786,6 +3824,17 @@ const FrGuidesRouteWithChildren = FrGuidesRoute._addFileChildren(
   FrGuidesRouteChildren,
 )
 
+interface FrHelpRouteChildren {
+  FrHelpArticlesRoute: typeof FrHelpArticlesRoute
+}
+
+const FrHelpRouteChildren: FrHelpRouteChildren = {
+  FrHelpArticlesRoute: FrHelpArticlesRoute,
+}
+
+const FrHelpRouteWithChildren =
+  FrHelpRoute._addFileChildren(FrHelpRouteChildren)
+
 interface FrInboxRouteChildren {
   FrInboxIdRoute: typeof FrInboxIdRoute
 }
@@ -3830,7 +3879,7 @@ interface FrRouteChildren {
   FrForDaycaresRoute: typeof FrForDaycaresRoute
   FrGetAppRoute: typeof FrGetAppRoute
   FrGuidesRoute: typeof FrGuidesRouteWithChildren
-  FrHelpRoute: typeof FrHelpRoute
+  FrHelpRoute: typeof FrHelpRouteWithChildren
   FrHowItWorksRoute: typeof FrHowItWorksRoute
   FrInboxRoute: typeof FrInboxRouteWithChildren
   FrJobsRoute: typeof FrJobsRoute
@@ -3887,7 +3936,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrForDaycaresRoute: FrForDaycaresRoute,
   FrGetAppRoute: FrGetAppRoute,
   FrGuidesRoute: FrGuidesRouteWithChildren,
-  FrHelpRoute: FrHelpRoute,
+  FrHelpRoute: FrHelpRouteWithChildren,
   FrHowItWorksRoute: FrHowItWorksRoute,
   FrInboxRoute: FrInboxRouteWithChildren,
   FrJobsRoute: FrJobsRoute,
@@ -3935,6 +3984,16 @@ const GuidesRouteChildren: GuidesRouteChildren = {
 
 const GuidesRouteWithChildren =
   GuidesRoute._addFileChildren(GuidesRouteChildren)
+
+interface HelpRouteChildren {
+  HelpArticlesRoute: typeof HelpArticlesRoute
+}
+
+const HelpRouteChildren: HelpRouteChildren = {
+  HelpArticlesRoute: HelpArticlesRoute,
+}
+
+const HelpRouteWithChildren = HelpRoute._addFileChildren(HelpRouteChildren)
 
 interface InboxRouteChildren {
   InboxIdRoute: typeof InboxIdRoute
@@ -4059,7 +4118,7 @@ const rootRouteChildren: RootRouteChildren = {
   FrRoute: FrRouteWithChildren,
   GetAppRoute: GetAppRoute,
   GuidesRoute: GuidesRouteWithChildren,
-  HelpRoute: HelpRoute,
+  HelpRoute: HelpRouteWithChildren,
   HowItWorksRoute: HowItWorksRoute,
   ImgRoute: ImgRoute,
   InboxRoute: InboxRouteWithChildren,

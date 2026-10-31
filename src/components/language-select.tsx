@@ -1,9 +1,9 @@
-import { useEffect } from "react";
-import { useRouterState } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { useRouteContext, useRouterState } from "@tanstack/react-router";
 import { ChevronDown, Globe } from "lucide-react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { activateLocale, isExtraLocale } from "@/lib/extra-copy";
-import { applyDocumentLocale, shippedLanguages } from "@/lib/languages";
+import { applyDocumentLocale, languageMeta, shippedLanguages } from "@/lib/languages";
 import { LOCALE_SYNC_KEY, readLocaleCookie, writeLocaleChoiceCookie } from "@/lib/locale-geo";
 import { localeSwitchPath } from "@/lib/locale-path";
 import { saveMyLocale } from "@/lib/server/account-prefs";
@@ -60,6 +60,8 @@ export function LanguageSelect({
   pill?: boolean;
 }) {
   const { t, locale } = useCopy();
+  const a11yPass = useRouteContext({ from: "__root__", select: (s) => Boolean(s.a11yPass) });
+  const [announced, setAnnounced] = useState<string | null>(null);
   const setLocale = useAppStore((s) => s.setLocale);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, isPending } = useCurrentUserState();
@@ -75,10 +77,16 @@ export function LanguageSelect({
     >
       {pill ? <Globe className="size-4 shrink-0 text-fg" aria-hidden /> : null}
       <span className="sr-only">{t("language")}</span>
+      {a11yPass ? (
+        <span className="sr-only" aria-live="polite">
+          {announced}
+        </span>
+      ) : null}
       <select
         value={locale}
         onChange={(e) => {
           const next = e.target.value as Locale;
+          if (a11yPass) setAnnounced(languageMeta(next).native);
           const apply = () => {
             const dest = localeSwitchPath(pathname, next);
             writeLocaleChoiceCookie(next);
