@@ -101,6 +101,7 @@ import { formatMonth, money, displayCentreName, displayListingText } from "@/lib
 import { openDirections } from "@/lib/maps";
 import { ListingMap } from "@/components/listing-map";
 import { OpenInMapsLink } from "@/components/map-unavailable";
+import type { PublicInspection } from "@/lib/inspection-history";
 import type { AvailabilityRow, Daycare, DaycareCard as Card, Review } from "@/lib/types";
 import { parseListingAsk, type ListingAsk } from "@/lib/lead-requests";
 
@@ -222,6 +223,7 @@ export function Listing() {
     availability: AvailabilityRow[];
     nearby: Card[];
     jobs?: CentreJobPost[];
+    inspections?: PublicInspection[];
   } | null>(null);
   const [photo, setPhoto] = useState(0);
   const [requestOpen, setRequestOpen] = useState(false);
@@ -833,6 +835,7 @@ export function Listing() {
             listingId={d.id}
             licenseStatus={d.licenseStatus}
             claimed={Boolean(d.claimed)}
+            inspections={data.inspections}
           />
         </header>
         <ListingJumpNav />

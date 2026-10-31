@@ -172,6 +172,11 @@ export function neonBackupEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_NEON_BACKUP", env);
 }
 
+/** Cached ON, BC, and AB inspection rows on a listing. Default off. */
+export function inspectionHistoryEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_INSPECTION_HISTORY", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;

@@ -43,6 +43,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_POST_TOUR_FOLLOWUP",
   "FEATURE_ENROLMENT_REVIEW",
   "FEATURE_NEON_BACKUP",
+  "FEATURE_INSPECTION_HISTORY",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -118,6 +119,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_ENROLMENT_REVIEW: false,
   /** Weekly Neon backup to R2 plus a restore-list check. Off. */
   FEATURE_NEON_BACKUP: false,
+  /** Cached public inspection rows on a listing. Off until Kyle turns it on. */
+  FEATURE_INSPECTION_HISTORY: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -290,6 +293,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/automations.md",
     summary: "Weekly pg_dump to R2 and a pg_restore list check. Alerts on failure. Default off.",
+  },
+  {
+    key: "FEATURE_INSPECTION_HISTORY",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Show cached Ontario, British Columbia, and Alberta inspection rows on a listing. Default off. Rows must cite a public government page. KidEase does not invent a violation.",
   },
 ];
 
