@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { cronAuthorized } from "@/lib/cron-auth";
+import { pingCronHeartbeat } from "@/lib/server/cron-heartbeat";
 import { pollOpenEnvelopes } from "@/lib/server/docusign";
 import { logSecurityEvent, requestIp } from "@/lib/server/security-events";
 
@@ -15,6 +16,7 @@ async function run(request: Request) {
   }
   const result = await pollOpenEnvelopes();
   await logSecurityEvent({ kind: "webhook_accept", detail: "docusign poll", ip });
+  await pingCronHeartbeat("docusign-poll");
   return Response.json(result);
 }
 

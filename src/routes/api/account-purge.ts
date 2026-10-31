@@ -1,11 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { cronAuthorized } from "@/lib/cron-auth";
+import { pingCronHeartbeat } from "@/lib/server/cron-heartbeat";
 import { runAccountPurgeJob } from "@/lib/server/account-purge-job";
 
 async function run(request: Request) {
   if (!cronAuthorized(request)) return new Response("Unauthorized", { status: 401 });
   const result = await runAccountPurgeJob();
   console.info(result.log);
+  await pingCronHeartbeat("account-purge");
   return Response.json({ ok: true, purged: result.purged });
 }
 

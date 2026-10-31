@@ -164,6 +164,12 @@ export function AdminMailPanel() {
           >
             Email health
           </a>
+          <a
+            href="/admin-automations"
+            className="inline-flex h-11 items-center rounded-full bg-surface px-4 text-sm font-medium ring-1 ring-border"
+          >
+            Automatic emails
+          </a>
         </div>
       </div>
 

@@ -654,6 +654,10 @@ export const updateListing = createServerFn({ method: "POST" })
           when ${Boolean(data.touchVacancy)} then now()
           else last_vacancy_updated_at
         end,
+        open_spots_hidden_at = case
+          when ${Boolean(data.touchVacancy)} then null
+          else open_spots_hidden_at
+        end,
         last_photo_updated_at = case
           when ${photosChanged} then now()
           else last_photo_updated_at
@@ -805,7 +809,8 @@ export const refreshVacancy = createServerFn({ method: "POST" })
     await assertCentreCanMutateVacancies(sql, context.userId, data.daycareId);
     const wrote = await sql<{ id: string }>`
       update daycares
-      set last_vacancy_updated_at = now()
+      set last_vacancy_updated_at = now(),
+          open_spots_hidden_at = null
       where id = ${data.daycareId}
       returning id
     `;

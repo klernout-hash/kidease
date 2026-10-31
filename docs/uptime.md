@@ -77,7 +77,7 @@ How to read deploy health / CFR:
 2. After a Production deploy, compare `revision` (short SHA) to the Vercel deployment SHA. A 503 (`cfr.candidate: true`, usually `database: error`) is a real change-failure candidate. A red Actions `check` job on a draft PR is not.
 3. Better Stack keyword on the health body: `cfr_candidate` (or `"production_change_failure"` plus `"candidate":true`) — pages only when the probe itself failed. Do not invent a second dashboard.
 4. Crash rate for the same window: Sentry issues on that `revision` (`SENTRY_DSN` / `VITE_PUBLIC_SENTRY_DSN` already on Production). Health reports `cfr.sentry: "configured"` when a DSN is present; it never echoes the DSN.
-5. Optional heartbeat (`BETTERSTACK_HEARTBEAT_URL`) is a cron liveness ping, not CFR.
+5. Optional heartbeat (`BETTERSTACK_HEARTBEAT_URL`) is a cron liveness ping, not CFR. Each cron can also ping `BETTERSTACK_HEARTBEAT_<JOB>` when `FEATURE_CRON_HEARTBEATS` and `FEATURE_CRON_HEARTBEATS_LIVE` are on. Unset URL is a no-op. See `docs/automations.md`.
 
 ## Later (not this PR)
 

@@ -38,6 +38,8 @@ Parent inbox **Video** stays hidden until `VIDEO_SDK_WIRED` is true (Twilio Vide
 | `FEATURE_QC_HOME_DAYCARES` | off | None. No email or SMS to these providers. | `/milieux-familiaux` when on. Area circle, not a street pin. | Page says the list is not published yet. |
 | `FEATURE_AREA_WAITLIST_ALERTS` | off | Area-waitlist email in `runAreaWaitlistAlerts`. Kyle approved the wording. No send while this is off. | Parents can join an area waitlist. The in-app bell still records a match. | Email stays off. Area texts need `FEATURE_SMS` and CASL, not `plus_plan=alerts`. Saved-search SMS still needs that plan. Push stays on `FEATURE_PUSH`. |
 
+Automation-pack flags (`FEATURE_POSTHOG_ERRORS`, `FEATURE_OPS_ALERTS`, `FEATURE_CRON_HEARTBEATS`, `FEATURE_INVOICE_REMINDERS`, `FEATURE_PAYMENT_DUNNING`, `FEATURE_MISSING_INFO_REMINDERS`, `FEATURE_DAYCARE_ONBOARDING`, `FEATURE_CLAIM_LISTING_REMINDERS`, `FEATURE_STALE_OPEN_SPOTS`, `FEATURE_POST_TOUR_FOLLOWUP`, `FEATURE_ENROLMENT_REVIEW`, `FEATURE_NEON_BACKUP`) default **off**. Turning one on is dry-run until `FEATURE_*_LIVE=1`. See `docs/automations.md`. Do not turn on `SUBSCRIPTIONS_ENABLED`, `SHOW_PAY_CTAS`, or in-app purchases.
+
 ## Why PostHog
 
 PostHog is already wired (`posthog-js`, `VITE_PUBLIC_POSTHOG_KEY` / `POSTHOG_HOST` on Vercel **kidease-git**, legal copy, `isPostHogFlagEnabled` on the client). A thin `POST /flags?v=2` call on the server needs **no extra SDK** and **no personal API key**.

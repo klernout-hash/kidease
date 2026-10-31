@@ -32,6 +32,8 @@ import { SuccessConfirmHost } from "@/components/success-confirm";
 import { SafeRouteError } from "@/components/safe-error-boundary";
 import { installStaleChunkReload, safeErrorCopy } from "@/lib/safe-error";
 import { getRoleChrome } from "@/lib/server/role-route";
+import { automationLiveEnv, automationMode } from "@/lib/automations";
+import { posthogErrorsEnabled } from "@/lib/features";
 import { STYLE_NONCE_BOOT } from "@/lib/style-nonce-boot";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import {
@@ -117,6 +119,9 @@ export const Route = createRootRoute({
       hideAdmin,
       microsoftSetCookie: storeRead.setCookie,
       a11yPass: a11yPassEnabled(),
+      posthogErrors:
+        automationMode(posthogErrorsEnabled(), process.env[automationLiveEnv("FEATURE_POSTHOG_ERRORS")]) ===
+        "live",
     };
   },
   errorComponent: (props) => {
@@ -217,6 +222,7 @@ function RootDocument() {
   const hideAdmin = Route.useRouteContext({ select: (s) => Boolean(s.hideAdmin) });
   const storeChannel = Route.useRouteContext({ select: (s) => s.storeChannel ?? "web" });
   const a11yPass = Route.useRouteContext({ select: (s) => Boolean(s.a11yPass) });
+  const posthogErrors = Route.useRouteContext({ select: (s) => Boolean(s.posthogErrors) });
   const { locale } = useCopy();
   const lang =
     pathLocale(pathname) === "fr" || locale === "fr" ? "fr-CA" : locale === "en" ? "en" : localeTag(locale);
@@ -271,7 +277,7 @@ function RootDocument() {
           <NativeCommerceStrip />
           <PushExplain />
           {nativeShell ? null : <GetAlertsPrompt />}
-          <PostHogBoot />
+          <PostHogBoot captureExceptions={posthogErrors} />
           <RoleBoot />
           <AdultConfirmBoot />
           <RouteProgress />

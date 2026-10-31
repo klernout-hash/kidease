@@ -6,6 +6,7 @@ import {
   type AnalyticsConsent,
 } from "./analytics-consent.ts";
 import { envFlagOn, envFlagSet } from "./flags.ts";
+import { shouldCaptureException } from "./posthog-errors.ts";
 import { isNative } from "./native.ts";
 import { POSTHOG_PROXY_PATH, POSTHOG_UI_HOST } from "./posthog-proxy.ts";
 
@@ -130,6 +131,8 @@ export type SessionReplayGateInput = {
   native?: boolean;
   consent?: AnalyticsConsent;
   env?: EnvMap;
+  /** Live only when FEATURE_POSTHOG_ERRORS_LIVE is on. Default off. */
+  captureExceptions?: boolean;
 };
 
 /**
@@ -241,11 +244,17 @@ export function posthogInitOptions(input: SessionReplayGateInput = {}): Partial<
     },
     sanitize_properties: sanitizePostHogProperties,
     ...({
-      capture_exceptions: {
-        capture_unhandled_errors: true,
-        capture_unhandled_rejections: true,
-        capture_console_errors: false,
-      },
+      capture_exceptions: input.captureExceptions
+        ? {
+            capture_unhandled_errors: true,
+            capture_unhandled_rejections: true,
+            capture_console_errors: false,
+          }
+        : {
+            capture_unhandled_errors: false,
+            capture_unhandled_rejections: false,
+            capture_console_errors: false,
+          },
     } as Partial<PostHogConfig>),
     loaded: (ph) => {
       client = ph as PostHog;
@@ -409,17 +418,22 @@ export async function hashIdentifier(value: string): Promise<string> {
 }
 
 /** Start PostHog once in the browser when the public key is set. No-op on the server. */
-export function startPostHog(): void {
+export function startPostHog(options?: { captureExceptions?: boolean }): void {
   if (webdriverBlocksAnalytics()) return;
   if (reviewerQuiet) return;
   if (started || typeof window === "undefined") return;
   const key = posthogProjectKey();
   if (!key) return;
   if (!shouldStartPostHog()) return;
+  const captureExceptions = shouldCaptureException({
+    mode: options?.captureExceptions ? "live" : "off",
+    webdriver: navigator.webdriver === true,
+    userAgent: navigator.userAgent,
+  });
   started = true;
   void import("posthog-js")
     .then(({ default: posthog }) => {
-      posthog.init(key, posthogInitOptions({ native: isNative() }));
+      posthog.init(key, posthogInitOptions({ native: isNative(), captureExceptions }));
       client = posthog;
       flushQueuedPostHogEvents(posthog);
       if (pendingIdentify) {

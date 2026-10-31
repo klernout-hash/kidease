@@ -36,6 +36,30 @@
     {
       "path": "/api/account-purge",
       "schedule": "25 9 * * *"
+    },
+    {
+      "path": "/api/automations?job=ops-alerts",
+      "schedule": "5 * * * *"
+    },
+    {
+      "path": "/api/automations?job=invoice-reminders",
+      "schedule": "30 13 * * *"
+    },
+    {
+      "path": "/api/automations?job=listing-reminders",
+      "schedule": "45 14 * * *"
+    },
+    {
+      "path": "/api/automations?job=stale-open-spots",
+      "schedule": "15 15 * * *"
+    },
+    {
+      "path": "/api/automations?job=tour-followups",
+      "schedule": "25 * * * *"
+    },
+    {
+      "path": "/api/automations?job=neon-backup",
+      "schedule": "30 8 * * 0"
     }
   ],
   "rewrites": [

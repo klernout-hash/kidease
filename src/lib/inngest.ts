@@ -50,6 +50,30 @@ export const OPEN_SPOTS_CHECKIN_CRON = "TZ=America/Winnipeg 15 9 * * 1";
 
 export const OPEN_SPOTS_CHECKIN_EVENT = "kidease/open-spots-checkin.run";
 
+/** Hourly :05 America/Winnipeg. Ops digest is sent at 08:00 inside the job. */
+export const OPS_ALERTS_CRON = "TZ=America/Winnipeg 5 * * * *";
+export const OPS_ALERTS_EVENT = "kidease/ops-alerts.run";
+
+/** Daily 08:30 America/Winnipeg. Bill reminders and failed-payment follow-ups. */
+export const INVOICE_REMINDERS_CRON = "TZ=America/Winnipeg 30 8 * * *";
+export const INVOICE_REMINDERS_EVENT = "kidease/invoice-reminders.run";
+
+/** Daily 09:45 America/Winnipeg. Missing info is Monday-only inside the job. */
+export const LISTING_REMINDERS_CRON = "TZ=America/Winnipeg 45 9 * * *";
+export const LISTING_REMINDERS_EVENT = "kidease/listing-reminders.run";
+
+/** Daily 10:15 America/Winnipeg. Day-21 reminder and day-30 hide. */
+export const STALE_OPEN_SPOTS_CRON = "TZ=America/Winnipeg 15 10 * * *";
+export const STALE_OPEN_SPOTS_EVENT = "kidease/stale-open-spots.run";
+
+/** Hourly :25 America/Winnipeg. Tour follow-up and enrolment review. */
+export const TOUR_FOLLOWUPS_CRON = "TZ=America/Winnipeg 25 * * * *";
+export const TOUR_FOLLOWUPS_EVENT = "kidease/tour-followups.run";
+
+/** Sunday 02:30 America/Winnipeg. Neon backup to R2. */
+export const NEON_BACKUP_CRON = "TZ=America/Winnipeg 30 2 * * 0";
+export const NEON_BACKUP_EVENT = "kidease/neon-backup.run";
+
 export function inngestEventKey(env: EnvMap = process.env): string {
   return String(env.INNGEST_EVENT_KEY || "").trim();
 }
@@ -110,7 +134,7 @@ export function shouldDeferSpotOffersToInngest(
   return shouldDeferCronToInngest(request, env);
 }
 
-function shouldDeferCronToInngest(request: Request, env: EnvMap): boolean {
+export function shouldDeferCronToInngest(request: Request, env: EnvMap = process.env): boolean {
   if (!inngestConfigured(env)) return false;
   const url = new URL(request.url);
   if (url.searchParams.get("dryRun") === "1") return false;

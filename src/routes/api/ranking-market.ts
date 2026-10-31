@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { cronAuthorized } from "@/lib/cron-auth";
+import { pingCronHeartbeat } from "@/lib/server/cron-heartbeat";
 import { shouldDeferRankingMarketToInngest } from "@/lib/inngest";
 import { runRankingMarketJob } from "@/lib/server/ranking-market";
 import { logSecurityEvent, requestIp } from "@/lib/server/security-events";
@@ -18,6 +19,7 @@ async function run(request: Request) {
   }
   const result = await runRankingMarketJob({ dryRun });
   await logSecurityEvent({ kind: "ranking_market_run", ip, detail: dryRun ? "dry-run" : "ok" });
+  await pingCronHeartbeat("ranking-market");
   return Response.json(result);
 }
 

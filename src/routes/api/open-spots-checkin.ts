@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { cronAuthorized } from "@/lib/cron-auth";
+import { pingCronHeartbeat } from "@/lib/server/cron-heartbeat";
 import { shouldDeferOpenSpotsCheckinToInngest } from "@/lib/inngest";
 import { runOpenSpotsCheckinJob } from "@/lib/server/open-spots-checkin";
 import { logSecurityEvent, requestIp } from "@/lib/server/security-events";
@@ -22,6 +23,7 @@ async function run(request: Request) {
     ip,
     detail: result.skipped ? String(result.reason || "skipped") : dryRun ? "dry-run" : "ok",
   });
+  if (!result.skipped) await pingCronHeartbeat("open-spots-checkin");
   return Response.json(result);
 }
 

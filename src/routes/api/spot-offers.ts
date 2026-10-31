@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { cronAuthorized } from "@/lib/cron-auth";
+import { pingCronHeartbeat } from "@/lib/server/cron-heartbeat";
 import { shouldDeferSpotOffersToInngest } from "@/lib/inngest";
 import { runSpotOfferExpiryJob } from "@/lib/server/spot-offers";
 import { logSecurityEvent, requestIp } from "@/lib/server/security-events";
@@ -21,6 +22,7 @@ async function run(request: Request) {
     ip,
     detail: url.searchParams.get("dryRun") === "1" ? "dry-run" : "ok",
   });
+  await pingCronHeartbeat("spot-offers");
   return Response.json(result);
 }
 

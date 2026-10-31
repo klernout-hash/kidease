@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { cronAuthorized } from "@/lib/cron-auth";
+import { pingCronHeartbeat } from "@/lib/server/cron-heartbeat";
 import { shouldDeferProvincialVacancyToInngest } from "@/lib/inngest";
 import { runProvincialVacancyJob } from "@/lib/server/provincial-vacancy";
 import { logSecurityEvent, requestIp } from "@/lib/server/security-events";
@@ -18,6 +19,7 @@ async function run(request: Request) {
   }
   const result = await runProvincialVacancyJob({ dryRun });
   await logSecurityEvent({ kind: "provincial_vacancy_run", ip, detail: dryRun ? "dry-run" : "ok" });
+  await pingCronHeartbeat("provincial-vacancy");
   return Response.json(result);
 }
 
