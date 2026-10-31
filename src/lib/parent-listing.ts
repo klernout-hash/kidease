@@ -6,6 +6,7 @@
  */
 
 import { amenityLabel } from "@/lib/amenities";
+import { CARE_DETAIL_KEYS } from "@/lib/inclusive-filters";
 import {
   classifyFacilityType,
   normalizeFacilityType,
@@ -124,7 +125,8 @@ const WINDOW_IDS = new Set<string>(OPENING_WINDOWS);
 const FIN_IDS = new Set<string>(FINANCIAL_FLAGS);
 const CURR_IDS = new Set<string>(CURRICULUM_TAGS);
 const SAFE_IDS = new Set<string>(SAFETY_FEATURES);
-const AMENITY_IDS = new Set<string>(DESK_AMENITIES);
+
+const AMENITY_IDS = new Set<string>([...DESK_AMENITIES, ...CARE_DETAIL_KEYS]);
 
 function bandSpan(band: ParentAgeBand): { min: number; max: number } {
   const group = standardAgeGroup(band);
@@ -409,6 +411,11 @@ export function mergeListingAmenities(
   }
   for (const key of next.amenityKeys ?? []) {
     if (AMENITY_IDS.has(key)) keys.add(key);
+  }
+  if (next.amenityKeys) {
+    for (const key of CARE_DETAIL_KEYS) {
+      if (!next.amenityKeys.includes(key)) keys.delete(key);
+    }
   }
   if (next.amenityKeys) {
     for (const key of DESK_AMENITIES) {

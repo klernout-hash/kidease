@@ -35,6 +35,9 @@ import {
 import { parentDistanceLabel } from "@/lib/distance-label";
 import { TrustSignals } from "@/components/trust-badge";
 import { money } from "@/lib/utils";
+import { MIN_REVIEW_COUNT } from "@/lib/quality";
+import { formatParentRating, parentRatingShown, ratingFloor, reviewReportCopy } from "@/lib/review-reports";
+import { reviewReportFlag } from "@/lib/server/review-reports";
 import { licenseRecordUrl } from "@/lib/licensing";
 import { estimateNetCost } from "@/lib/net-cost-engine";
 import { calcDetourMinutes, commuteDetourLabel, haversineKm } from "@/lib/commute-isochrone";
@@ -69,6 +72,13 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
   const ageGroup = useAppStore((s) => s.ageGroup);
   const incoming = { slugs };
   const [items, setItems] = useState<DaycareCard[]>([]);
+  const [reportReviews, setReportReviews] = useState(false);
+
+  useEffect(() => {
+    void reviewReportFlag()
+      .then((on) => setReportReviews(Boolean(on)))
+      .catch(() => setReportReviews(false));
+  }, []);
 
   useEffect(() => {
     const keys = compareKeysFromSearch(incoming.slugs, readCompare(compareMax));
@@ -164,6 +174,16 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
                     </td>
                   ))}
                 </tr>
+                {reportReviews ? (
+                  <Row
+                    label={reviewReportCopy(locale === "fr" ? "fr" : "en").compare}
+                    values={items.map((d) =>
+                      parentRatingShown(d.parentReviewCount, d.parentRatingX10, ratingFloor(true, MIN_REVIEW_COUNT))
+                        ? `${formatParentRating(d.parentRatingX10 ?? 0)} (${d.parentReviewCount ?? 0})`
+                        : reviewReportCopy(locale === "fr" ? "fr" : "en").few,
+                    )}
+                  />
+                ) : null}
                 <tr className="border-t border-border">
                   <th className="p-2 font-medium text-fg">{t("compareVerified")}</th>
                   {items.map((d) => (

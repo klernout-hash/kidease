@@ -13,6 +13,7 @@ import {
   type NeedCareFastViewData,
 } from "@/lib/need-care-fast";
 import { loadNeedCareFast } from "@/lib/server/need-care-fast";
+import { localePath } from "@/lib/locale-path";
 import { pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 import { SITEMAP_ORIGIN } from "@/lib/sitemap";
@@ -59,7 +60,13 @@ export function NeedCareFastView({ data: raw }: { data: NeedCareFastViewData | n
         <h1 className="mt-2 font-display text-3xl md:text-5xl">{copy.title}</h1>
         <p className="mt-4 text-lg text-muted">{copy.what}</p>
         <p className="mt-2 text-muted">{copy.why}</p>
-        <p className="mt-2 text-muted">{copy.lead}</p>
+        <p className="mt-2 text-muted">{data.sort === "spots" ? copy.leadSpots : copy.lead}</p>
+        <Link
+          to={localePath("/help", locale)}
+          className="mt-3 inline-flex min-h-11 min-w-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+        >
+          {copy.help}
+        </Link>
         <form className="mt-6" method="get" action={fr ? "/fr/need-care-fast" : "/need-care-fast"}>
           <label className="block text-sm" htmlFor="need-care-fast-q">
             {copy.placeLabel}

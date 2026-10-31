@@ -182,6 +182,46 @@ export function provincialVacancyIndexEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_PROVINCIAL_VACANCY_INDEX", env);
 }
 
+/** Review reports and one-review rating summaries. Default OFF. Three-review gate stays. */
+export function reviewReportsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_REVIEW_REPORTS", env);
+}
+
+/** No-show, reminder moves, and calendar text in the tour email. Default OFF. */
+export function tourPipelineEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_TOUR_PIPELINE", env);
+}
+
+/** Availability-then-distance on Need care fast. Default OFF. No Google Maps. */
+export function needCareFastEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_NEED_CARE_FAST", env);
+}
+
+/** Diet and extra-support profile fields. Default OFF. Search chips stay. */
+export function inclusiveFiltersEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_INCLUSIVE_FILTERS", env);
+}
+
+/** ECE post, apply, and applicants. Default OFF. No charge. */
+export function eceJobsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_ECE_JOBS", env);
+}
+
+/** Door check-in without a camera. Default OFF. The camera preview stays until this is on. */
+export function digitalAttendanceEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_DIGITAL_ATTENDANCE", env);
+}
+
+/** Shifts, ECE expiry mail, and room ratios. Default off. Not payroll. */
+export function staffSchedulingEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_STAFF_SCHEDULING", env);
+}
+
+/** Private learning stories. Default off. No public photos. */
+export function learningPortfoliosEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_LEARNING_PORTFOLIOS", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;

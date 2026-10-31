@@ -11,6 +11,7 @@ import {
 } from "@/lib/server/centre-members";
 import { useCopy } from "@/lib/use-copy";
 import { centrePickerLabel } from "@/lib/centre-label";
+import { StaffDeskLink } from "@/components/staff-scheduling-desk";
 import type { CopyKey } from "@/lib/copy";
 
 const ROLE_COPY: Record<string, CopyKey> = {
@@ -113,6 +114,7 @@ export function CentreEmployeesPanel({ canInvite }: { canInvite: boolean }) {
       <div>
         <h2 className="font-display text-2xl">{t("employeesTitle")}</h2>
         <p className="mt-1 text-sm text-muted">{t("employeesLead")}</p>
+        <StaffDeskLink />
       </div>
 
       {canInvite ? (

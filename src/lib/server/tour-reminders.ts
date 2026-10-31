@@ -4,7 +4,16 @@
  */
 
 import { getSql } from "@/lib/db";
-import { tourCalendarLinks, tourCalendarMailText, tourInviteCopy, tourReminderAt, tourSlotInstants } from "@/lib/tour-ics";
+import { tourPipelineEnabled } from "@/lib/features";
+import {
+  tourCalendarFile,
+  tourCalendarLinks,
+  tourCalendarMailText,
+  tourInviteCopy,
+  tourReminderAt,
+  tourReminderLetter,
+  tourSlotInstants,
+} from "@/lib/tour-ics";
 import { nid } from "@/lib/utils";
 
 export async function scheduleTourReminder(input: {
@@ -36,6 +45,7 @@ export async function sendTourBookedMail(input: {
   centre: string;
   locale: "en" | "fr";
   uid?: string;
+  tourId?: string;
   startAt?: string;
   startTime?: string;
   endTime?: string;
@@ -44,12 +54,13 @@ export async function sendTourBookedMail(input: {
   sequence?: number;
 }) {
   const letter = tourInviteCopy(input.locale, input.centre);
-  const range = input.startAt && input.startTime && input.endTime
-    ? tourSlotInstants({ startAt: input.startAt, startTime: input.startTime, endTime: input.endTime })
-    : null;
+  const range =
+    input.startAt && input.startTime && input.endTime
+      ? tourSlotInstants({ startAt: input.startAt, startTime: input.startTime, endTime: input.endTime })
+      : null;
   const links = range
     ? tourCalendarLinks({
-        uid: input.uid || "tour",
+        uid: input.uid || input.tourId || "tour",
         title: input.locale === "fr" ? `Visite : ${input.centre}` : `Tour: ${input.centre}`,
         start: range.start,
         end: range.end,
@@ -59,7 +70,20 @@ export async function sendTourBookedMail(input: {
         sequence: input.sequence,
       })
     : null;
-  const extra = links ? `\n\n${tourCalendarMailText(links, input.locale, Boolean(input.cancelled))}` : "";
+  const pipelineFile =
+    !links && tourPipelineEnabled() && (input.tourId || input.uid) && input.startAt
+      ? tourCalendarFile({
+          uid: input.tourId || input.uid || "tour",
+          centre: input.centre,
+          startAt: input.startAt,
+          location: input.location,
+        })
+      : null;
+  const extra = links
+    ? `\n\n${tourCalendarMailText(links, input.locale, Boolean(input.cancelled))}`
+    : pipelineFile
+      ? `\n\n${pipelineFile}`
+      : "";
   const text = `${letter.text}${extra}`;
   const { sendTransactionalMail } = await import("@/lib/transactional-mail");
   await sendTransactionalMail({
@@ -69,6 +93,35 @@ export async function sendTourBookedMail(input: {
     text,
     html: `<p>${letter.text}</p>${links ? `<p><a href="${links.google}">Google</a> · <a href="${links.outlook}">Outlook</a></p>` : ""}`,
   }).catch(() => undefined);
+}
+
+/** Move an unsent or already-sent reminder when the visit time changes. Flag off: no-op. */
+export async function moveTourReminder(tourId: string, now = new Date()): Promise<{ moved: boolean }> {
+  if (!tourPipelineEnabled()) return { moved: false };
+  try {
+    const sql = await getSql();
+    const rows = await sql<{ start_at: string | Date }>`
+      select w.start_at
+      from tour_requests t
+      join tour_windows w on w.id = t.window_id
+      where t.id = ${tourId}
+      limit 1
+    `;
+    const start = rows[0]?.start_at;
+    if (!start) return { moved: false };
+    const iso = start instanceof Date ? start.toISOString() : String(start);
+    const when = tourReminderAt(iso, now);
+    if (!when) return { moved: false };
+    const wrote = await sql<{ id: string }>`
+      update tour_reminders
+      set remind_at = ${when.toISOString()}, sent_at = null
+      where tour_id = ${tourId}
+      returning id
+    `;
+    return { moved: Boolean(wrote[0]) };
+  } catch {
+    return { moved: false };
+  }
 }
 
 export async function sendDueTourReminders(input?: { dryRun?: boolean; now?: Date }) {
@@ -96,7 +149,9 @@ export async function sendDueTourReminders(input?: { dryRun?: boolean; now?: Dat
     const open = row.status === "pending" || row.status === "accepted";
     if (open) {
       const locale = row.locale === "fr" ? "fr" : "en";
-      const letter = tourInviteCopy(locale, row.daycare_name);
+      const letter = tourPipelineEnabled()
+        ? tourReminderLetter(locale, row.daycare_name, row.status === "accepted" ? "accepted" : "pending")
+        : tourInviteCopy(locale, row.daycare_name);
       if (row.email) {
         const { sendTransactionalMail } = await import("@/lib/transactional-mail");
         await sendTransactionalMail({

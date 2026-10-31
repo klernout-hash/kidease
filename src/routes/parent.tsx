@@ -4,6 +4,7 @@ import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { privateReturnPath } from "@/lib/role-access";
 import { lazy, Suspense } from "react";
 import { Shell } from "@/components/shell";
+import { ParentStoriesDesk, StoriesDeskLink } from "@/components/learning-stories-desk";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -65,7 +66,7 @@ export async function parentLoader() {
 
 export function parentValidateSearch(s: Record<string, unknown>) {
   const out: {
-    tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "subscription" | "alerts" | "children" | "care" | "waitlists";
+    tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "subscription" | "alerts" | "children" | "care" | "waitlists" | "stories";
     preview?: "support";
     plus?: "success" | "cancel";
     plan?: "plus" | "alerts";
@@ -153,6 +154,15 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
     );
   }
   if (!user) return <RedirectToSignIn />;
+  if (search.tab === "stories") {
+    return (
+      <Shell>
+        <main className="mx-auto w-full max-w-3xl px-4 py-8">
+          <ParentStoriesDesk />
+        </main>
+      </Shell>
+    );
+  }
   if (upgradeSurface && ready && !session) {
     return (
       <Shell>
@@ -207,6 +217,7 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
       <LoginFunnelDeskLand desk="parent" />
       {search.preview === "support" && canUseOperatorTools(session?.email) ? <SupportPreviewBanner /> : null}
       <Suspense fallback={<DeskSkeleton />}>
+        <StoriesDeskLink forParent />
         <ParentDesk
           initialTab={initialTab}
           plusReturn={search.plus ?? null}

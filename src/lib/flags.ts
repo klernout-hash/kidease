@@ -45,6 +45,14 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_NEON_BACKUP",
   "FEATURE_INSPECTION_HISTORY",
   "FEATURE_PROVINCIAL_VACANCY_INDEX",
+  "FEATURE_REVIEW_REPORTS",
+  "FEATURE_TOUR_PIPELINE",
+  "FEATURE_NEED_CARE_FAST",
+  "FEATURE_INCLUSIVE_FILTERS",
+  "FEATURE_ECE_JOBS",
+  "FEATURE_DIGITAL_ATTENDANCE",
+  "FEATURE_STAFF_SCHEDULING",
+  "FEATURE_LEARNING_PORTFOLIOS",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -124,6 +132,22 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_INSPECTION_HISTORY: false,
   /** Per-province vacancy index, confirm history, and freshness bands. */
   FEATURE_PROVINCIAL_VACANCY_INDEX: false,
+  /** Report a published parent review, and show a rating from the first review. */
+  FEATURE_REVIEW_REPORTS: false,
+  /** No-show stage, reminder moves, and a calendar file in the tour email. */
+  FEATURE_TOUR_PIPELINE: false,
+  /** Need care fast sorts by open spots, then distance. OpenStreetMap pins only. */
+  FEATURE_NEED_CARE_FAST: false,
+  /** Diet and extra-support fields on the centre profile. */
+  FEATURE_INCLUSIVE_FILTERS: false,
+  /** Post, apply, and review ECE applicants. No charge. */
+  FEATURE_ECE_JOBS: false,
+  /** Door check-in and check-out without a camera. */
+  FEATURE_DIGITAL_ATTENDANCE: false,
+  /** Staff shifts, ECE certificates, and room ratios. Off until Kyle turns it on. */
+  FEATURE_STAFF_SCHEDULING: false,
+  /** Private learning stories for enrolled families. Off until Kyle turns it on. */
+  FEATURE_LEARNING_PORTFOLIOS: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -310,6 +334,62 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Per-province open-spot pages, confirm history, and freshness bands. Default off. The national vacancy index stays either way.",
+  },
+  {
+    key: "FEATURE_REVIEW_REPORTS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Report a published parent review, and show a parent rating from the first review. Default off. Three-review summaries stay.",
+  },
+  {
+    key: "FEATURE_TOUR_PIPELINE",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Tour no-show, moved reminders, and a calendar file in the booking email. Default off. Booking a tour still works.",
+  },
+  {
+    key: "FEATURE_NEED_CARE_FAST",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Need care fast lists more open spots first, then closer centres. Default off. Closest-first stays. No Google Maps.",
+  },
+  {
+    key: "FEATURE_INCLUSIVE_FILTERS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Halal, kosher, nut-free, vegetarian, and extra support on the centre profile. Default off. Search chips stay.",
+  },
+  {
+    key: "FEATURE_ECE_JOBS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Post an ECE role, apply, and see applicants. Default off. Does not charge and does not turn subscriptions on.",
+  },
+  {
+    key: "FEATURE_DIGITAL_ATTENDANCE",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Check-in page records arrival and pickup for an enrolled child. Default off. The old camera preview stays. No photo of a child.",
+  },
+  {
+    key: "FEATURE_STAFF_SCHEDULING",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Staff shifts, ECE certificate expiry reminders, and room ratios on the daycare desk. Default off. Not payroll. Email only, no SMS.",
+  },
+  {
+    key: "FEATURE_LEARNING_PORTFOLIOS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Private learning stories for enrolled parents. Default off. No photos. Not shown on the public listing.",
   },
 ];
 

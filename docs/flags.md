@@ -1,6 +1,6 @@
 # Feature flags (env + optional PostHog)
 
-KidEase product gates (`FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, `FEATURE_AREA_WAITLIST_ALERTS`, `FEATURE_INSPECTION_HISTORY`, `FEATURE_PROVINCIAL_VACANCY_INDEX`) go through `src/lib/flags.ts`.
+KidEase product gates (`FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, `FEATURE_AREA_WAITLIST_ALERTS`, `FEATURE_INSPECTION_HISTORY`, `FEATURE_PROVINCIAL_VACANCY_INDEX`, `FEATURE_REVIEW_REPORTS`, `FEATURE_TOUR_PIPELINE`, `FEATURE_NEED_CARE_FAST`, `FEATURE_INCLUSIVE_FILTERS`, `FEATURE_ECE_JOBS`, `FEATURE_DIGITAL_ATTENDANCE`, `FEATURE_STAFF_SCHEDULING`, `FEATURE_LEARNING_PORTFOLIOS`) go through `src/lib/flags.ts`.
 
 **Env is the safe fallback.** If remote is unset, down, or the flag does not exist in PostHog, behavior is exactly today’s `FEATURE_*=` env read.
 
@@ -41,6 +41,14 @@ Parent inbox **Video** stays hidden until `VIDEO_SDK_WIRED` is true (Twilio Vide
 | `FEATURE_PROVINCIAL_VACANCY_INDEX` | off | Confirm history rows and `spots_updated_at` on a real confirm or spot-count change. | Per-province pages on `/vacancy-index?province=mb` (and `/fr`). Freshness bands and the province file total. | National `/vacancy-index` stays. No email or SMS. |
 
 Automation-pack flags (`FEATURE_POSTHOG_ERRORS`, `FEATURE_OPS_ALERTS`, `FEATURE_CRON_HEARTBEATS`, `FEATURE_INVOICE_REMINDERS`, `FEATURE_PAYMENT_DUNNING`, `FEATURE_MISSING_INFO_REMINDERS`, `FEATURE_DAYCARE_ONBOARDING`, `FEATURE_CLAIM_LISTING_REMINDERS`, `FEATURE_STALE_OPEN_SPOTS`, `FEATURE_POST_TOUR_FOLLOWUP`, `FEATURE_ENROLMENT_REVIEW`, `FEATURE_NEON_BACKUP`) default **off**. Turning one on is dry-run until `FEATURE_*_LIVE=1`. See `docs/automations.md`. Do not turn on `SUBSCRIPTIONS_ENABLED`, `SHOW_PAY_CTAS`, or in-app purchases.
+| `FEATURE_REVIEW_REPORTS` | off | `reportListingReview` writes a safety-queue row for one published review. | Report button on the listing. Search cards, the profile, and compare can show a rating from the first review. | Three-review summaries stay. No email or SMS. |
+| `FEATURE_TOUR_PIPELINE` | off | Moves the tour reminder when the time changes. Adds a calendar file to the booking email. Allows a no-show mark. | No-show button on the tour card. | Booking, confirm, decline, and the browser .ics download stay. Texts still need `FEATURE_SMS` and CASL. |
+| `FEATURE_NEED_CARE_FAST` | off | Sort the urgent list by open spots, then distance. | The page says spots come first and that maps are not Google. | Closest-first stays. Fresh 7-day spots stay. No SMS. |
+| `FEATURE_INCLUSIVE_FILTERS` | off | None. | Halal, kosher, nut-free, vegetarian, and extra support on the centre form, in English and French. | Search chips stay. Centres cannot add those words until this is on. |
+| `FEATURE_ECE_JOBS` | off | Insert a role and an application. No Stripe call. | Job list on /jobs, apply on the listing, applicant list for the centre. | The interest form stays. No charge. Subscriptions stay off. |
+| `FEATURE_DIGITAL_ATTENDANCE` | off | `saveAttendance` from the check-in page. | Arrival and pickup form. No camera. | The camera preview stays. Daily care on the parent desk stays. No SMS. |
+| `FEATURE_STAFF_SCHEDULING` | off | Save shifts and ECE certificates. Email the centre when a certificate is inside 60 days of expiry. | Daycare desk → Employees → Staff shifts. | The page says the tool is off. |
+| `FEATURE_LEARNING_PORTFOLIOS` | off | Save a private learning story for an enrolled child. | Daycare desk and the parent's Stories link. | The page says the tool is off. Nothing is public. |
 
 ## Why PostHog
 
@@ -57,7 +65,14 @@ Do **not** use these flags for auth or Turnstile. Those stay their own env-gated
 1. Confirm credentials for that channel exist (Twilio / FCM / APNs). Flags do not invent keys. SMS also needs CASL consent + STOP — see `docs/sms.md`.
 2. On Vercel **kidease-git** (Production + Preview), set `POSTHOG_FLAGS_KEY` to the **same public project key** already used as `VITE_PUBLIC_POSTHOG_KEY` (`phc_…`). Optional: `POSTHOG_FLAGS_HOST` if ingest is not `https://us.i.posthog.com`. Redeploy **once** so the server can call PostHog. Leave the key unset to stay env-only.
 3. In [PostHog](https://us.posthog.com) → KidEase → **Feature flags** → **New feature flag**.
-   - Key must match the env name exactly: `FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, `FEATURE_AREA_WAITLIST_ALERTS`, `FEATURE_INSPECTION_HISTORY`, or `FEATURE_PROVINCIAL_VACANCY_INDEX`.
+   - Key must match the env name exactly: `FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, `FEATURE_AREA_WAITLIST_ALERTS`, `FEATURE_INSPECTION_HISTORY`, `FEATURE_PROVINCIAL_VACANCY_INDEX`, or `FEATURE_REVIEW_REPORTS`.
+   - Key must match the env name exactly: `FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, or `FEATURE_AREA_WAITLIST_ALERTS`, or `FEATURE_TOUR_PIPELINE`.
+   - Key must match the env name exactly: `FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, or `FEATURE_AREA_WAITLIST_ALERTS`, or `FEATURE_NEED_CARE_FAST`.
+   - Key must match the env name exactly: `FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, or `FEATURE_AREA_WAITLIST_ALERTS`, or `FEATURE_INCLUSIVE_FILTERS`.
+   - Key must match the env name exactly: `FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, or `FEATURE_AREA_WAITLIST_ALERTS`, or `FEATURE_ECE_JOBS`.
+   - Key must match the env name exactly: `FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, or `FEATURE_AREA_WAITLIST_ALERTS`, or `FEATURE_DIGITAL_ATTENDANCE`.
+   - Key must match the env name exactly: `FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, `FEATURE_AREA_WAITLIST_ALERTS`, or `FEATURE_STAFF_SCHEDULING`.
+   - Key must match the env name exactly: `FEATURE_SMS`, `FEATURE_PUSH`, `FEATURE_VIDEO`, `FEATURE_INAPP_CHAT`, `FEATURE_PROVIDER_SUBSCRIPTIONS`, `SHOW_PAY_CTAS`, `SUBSCRIPTIONS_ENABLED`, `FOUNDING_BADGE_ENABLED`, `FEATURE_OPEN_SPOT_ALERTS`, `FEATURE_SPOT_OFFER_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_MAIL`, `FEATURE_OPEN_SPOTS_CHECKIN_SMS`, `FEATURE_QC_HOME_DAYCARES`, `FEATURE_AREA_WAITLIST_ALERTS`, or `FEATURE_LEARNING_PORTFOLIOS`.
    - Create the flag **disabled**. Boolean release toggle (not a % experiment). The server evaluates as distinct id `kidease-server`.
 4. Enable or disable the flag in PostHog. Within ~30s the app picks it up (in-memory TTL). No Vercel redeploy.
 5. Confirm Admin → Chat lab (`/admin-chat`): source reads **PostHog**, value on/off. Secret values are never shown.
@@ -86,6 +101,14 @@ Env still works as a fallback when PostHog is down (last successful overlay is k
 | `FEATURE_AREA_WAITLIST_ALERTS` | no | Default **off**. Kyle approved the wording. Set `1` to send the area email. Joining a waitlist and the in-app bell still work. |
 | `FEATURE_INSPECTION_HISTORY` | no | Default **off**. Set `1` to show cached public inspection rows. Does not turn on subscriptions. |
 | `FEATURE_PROVINCIAL_VACANCY_INDEX` | no | Default **off**. Set `1` to show a page per province, confirm history, and freshness bands. The national index stays either way. |
+| `FEATURE_REVIEW_REPORTS` | no | Default **off**. Set `1` to let a signed-in person report a published review and to show a rating from the first review. |
+| `FEATURE_TOUR_PIPELINE` | no | Default **off**. Set `1` for no-show, moved reminders, and a calendar file in the tour email. |
+| `FEATURE_NEED_CARE_FAST` | no | Default **off**. Set `1` to sort Need care fast by open spots, then distance. |
+| `FEATURE_INCLUSIVE_FILTERS` | no | Default **off**. Set `1` to let a centre publish diet and extra-support details. |
+| `FEATURE_ECE_JOBS` | no | Default **off**. Set `1` to let a centre post a role and read applicants. No charge. |
+| `FEATURE_DIGITAL_ATTENDANCE` | no | Default **off**. Set `1` to replace the check-in camera with arrival and pickup. No photo of a child. |
+| `FEATURE_STAFF_SCHEDULING` | no | Default **off**. Set `1` to open staff shifts. Does not turn on subscriptions or SMS. |
+| `FEATURE_LEARNING_PORTFOLIOS` | no | Default **off**. Set `1` to open private learning stories. No photos. |
 | `POSTHOG_FLAGS_KEY` | no | Server-only. Same `phc_…` project key as analytics. Leave blank to disable remote. Never commit a real value. |
 | `POSTHOG_FLAGS_HOST` | no | Defaults to `POSTHOG_HOST` or `https://us.i.posthog.com`. |
 
@@ -93,7 +116,7 @@ The app **boots with no remote keys**. Do not invent a personal API key or a sec
 
 ## What is wired
 
-- `evaluateFeatureFlag` / `smsEnabled` / `pushEnabled` / `videoEnabled` / `inAppChatEnabled` / `providerSubscriptionsEnabled` / `showPayCtas` / `subscriptionsEnabled` / `foundingBadgeEnabled` / `openSpotAlertsEnabled` / `areaWaitlistAlertsEnabled` / `provincialVacancyIndexEnabled`.
+- `evaluateFeatureFlag` / `smsEnabled` / `pushEnabled` / `videoEnabled` / `inAppChatEnabled` / `providerSubscriptionsEnabled` / `showPayCtas` / `subscriptionsEnabled` / `foundingBadgeEnabled` / `openSpotAlertsEnabled` / `areaWaitlistAlertsEnabled` / `provincialVacancyIndexEnabled` / `reviewReportsEnabled` / `tourPipelineEnabled` / `needCareFastEnabled` / `inclusiveFiltersEnabled` / `eceJobsEnabled` / `digitalAttendanceEnabled`.
 - Safe enablement: `describeChannelReadiness` / `smsArmed` / `pushArmed` / `videoSurfaceEnabled` in `src/lib/channel-readiness.ts`.
 - Send / register / mint paths in `src/lib/server/sms.ts`, `push-send.ts`, `push-tokens.ts`, `video.ts`.
 - Admin → Chat lab (`/admin-chat`) shows on/off, source (env / PostHog / default), Production-blocked / Preview-override / SDK-not-attached, plus a disabled composer and the flag-name catalog. See `docs/chat.md`.

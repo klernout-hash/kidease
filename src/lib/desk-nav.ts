@@ -128,7 +128,9 @@ export type DaycareDesk =
   | "contract"
   | "promote"
   | "employees"
-  | "screening";
+  | "screening"
+  | "staff"
+  | "stories";
 
 export function providerNavSearch(id: string): { desk: DaycareDesk } {
   if (

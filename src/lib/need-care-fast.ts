@@ -24,6 +24,22 @@ export function rankNeedCareFast<T extends { distanceKm: number; confirmedAt: st
     .slice(0, NEED_CARE_FAST_CAP);
 }
 
+/** More open spots first, then closer, then the newer confirm. No Google rank. */
+export function rankNeedCareFastByAvailability<
+  T extends { distanceKm: number; confirmedAt: string; spots?: number },
+>(rows: readonly T[]): T[] {
+  return rows
+    .slice()
+    .sort((a, b) => {
+      const spots = (b.spots ?? 0) - (a.spots ?? 0);
+      if (spots) return spots;
+      const distance = a.distanceKm - b.distanceKm;
+      if (distance) return distance;
+      return b.confirmedAt.localeCompare(a.confirmedAt);
+    })
+    .slice(0, NEED_CARE_FAST_CAP);
+}
+
 export function formatFastKm(km: number): string {
   if (!Number.isFinite(km) || km < 0) return "";
   if (km < 10) return `${km.toFixed(1)} km`;
@@ -63,6 +79,8 @@ export type NeedCareFastViewData = {
   placeLabel: string | null;
   unknownPlace: boolean;
   hits: NeedCareFastHitView[];
+  /** spots = availability then distance. distance = closest first. */
+  sort?: "spots" | "distance";
 };
 
 /** A missing or odd loader payload becomes an empty page, not a crash. */
@@ -93,6 +111,7 @@ export function normalizeNeedCareFastPage(data: unknown): NeedCareFastViewData {
     placeLabel: typeof bag.placeLabel === "string" ? bag.placeLabel : null,
     unknownPlace: bag.unknownPlace === true,
     hits,
+    sort: bag.sort === "spots" ? "spots" : "distance",
   };
 }
 

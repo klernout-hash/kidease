@@ -3,7 +3,8 @@ import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { confirmAction, confirmSuccess } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
-import { cancelTourRequest, proposeTourTime, respondTourRequest, advanceTourRequest } from "@/lib/server/tours";
+import { cancelTourRequest, proposeTourTime, respondTourRequest, advanceTourRequest, tourPipelineFlag } from "@/lib/server/tours";
+import { localePath } from "@/lib/locale-path";
 import { listCentreTourWindows } from "@/lib/server/tour-calendar";
 import { formatPreferredTimes } from "@/lib/threads";
 import { PipelineBadge } from "@/components/pipeline-badge";
@@ -32,6 +33,13 @@ export function TourCard({
   const [slots, setSlots] = useState<PublicTourSlot[]>([]);
   const [windowId, setWindowId] = useState("");
   const [proposeOpen, setProposeOpen] = useState(false);
+  const [noShowOn, setNoShowOn] = useState(false);
+
+  useEffect(() => {
+    void tourPipelineFlag()
+      .then((on) => setNoShowOn(Boolean(on)))
+      .catch(() => setNoShowOn(false));
+  }, []);
 
   const showPropose = Boolean(canRespond && canProposeTourTime(tour.status));
 
@@ -66,13 +74,22 @@ export function TourCard({
     }
   }
 
-  async function advance(status: "completed" | "enrolled" | "lost") {
+  async function advance(status: "completed" | "enrolled" | "lost" | "no_show") {
     setBusy(status);
     try {
       await advanceTourRequest({ data: { tourId: tour.id, status, note: note.trim() || undefined } });
       confirmSuccess({
         variant: "toast",
-        title: status === "completed" ? t("pipelineCompleted") : status === "enrolled" ? t("pipelineEnrolled") : t("pipelineLost"),
+        title:
+          status === "completed"
+            ? t("pipelineCompleted")
+            : status === "enrolled"
+              ? t("pipelineEnrolled")
+              : status === "no_show"
+                ? loc === "fr"
+                  ? "Absent à la visite"
+                  : "No-show"
+                : t("pipelineLost"),
       });
       onChanged?.();
     } catch (err) {
@@ -205,6 +222,17 @@ export function TourCard({
                 <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => void advance("lost")}>
                   {busy === "lost" ? t("loading") : t("markTourLost")}
                 </Button>
+                {noShowOn ? (
+                  <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => void advance("no_show")}>
+                    {busy === "no_show" ? t("loading") : loc === "fr" ? "Absent" : "No-show"}
+                  </Button>
+                ) : null}
+                <Link
+                  to={localePath("/help", locale)}
+                  className="inline-flex min-h-11 min-w-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+                >
+                  {loc === "fr" ? "Aide" : "Help"}
+                </Link>
               </>
             ) : null}
             {tour.status === "completed" ? (
