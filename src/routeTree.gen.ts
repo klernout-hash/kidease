@@ -160,12 +160,14 @@ import { Route as ParentSignupRouteImport } from './routes/parent.signup'
 import { Route as ParentSpotOffersRouteImport } from './routes/parent.spot-offers'
 import { Route as PayIndexRouteImport } from './routes/pay.index'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
+import { Route as ProviderFamiliesRouteImport } from './routes/provider.families'
 import { Route as ProviderSubscriptionRouteImport } from './routes/provider.subscription'
 import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as SignIdRouteImport } from './routes/sign.$id'
 import { Route as SpotsTokenRouteImport } from './routes/spots.$token'
 import { Route as SupportCaseIdRouteImport } from './routes/support.$caseId'
 import { Route as VideoRoomIdRouteImport } from './routes/video.$roomId'
+import { Route as WelcomeCodeRouteImport } from './routes/welcome.$code'
 import { Route as ApiAdminContractsRouteImport } from './routes/api/admin.contracts'
 import { Route as ApiAdminEmailSuppressionsRouteImport } from './routes/api/admin.email-suppressions'
 import { Route as ApiAdminMediaRouteImport } from './routes/api/admin.media'
@@ -195,6 +197,7 @@ import { Route as FrJobsPostRouteImport } from './routes/fr.jobs_.post'
 import { Route as FrMilieuxFamiliauxIdRouteImport } from './routes/fr.milieux-familiaux_.$id'
 import { Route as FrParentDailyFeedRouteImport } from './routes/fr.parent.daily-feed'
 import { Route as FrRCodeRouteImport } from './routes/fr.r.$code'
+import { Route as FrWelcomeCodeRouteImport } from './routes/fr.welcome.$code'
 import { Route as PayBillBillIdRouteImport } from './routes/pay.bill.$billId'
 import { Route as ApiContractsIdPdfRouteImport } from './routes/api/contracts.$id.pdf'
 import { Route as FrDaycareCityAgeRouteImport } from './routes/fr.daycare.$city.$age'
@@ -957,6 +960,11 @@ const PayBookingIdRoute = PayBookingIdRouteImport.update({
   path: '/$bookingId',
   getParentRoute: () => PayRoute,
 } as any)
+const ProviderFamiliesRoute = ProviderFamiliesRouteImport.update({
+  id: '/families',
+  path: '/families',
+  getParentRoute: () => ProviderRoute,
+} as any)
 const ProviderSubscriptionRoute = ProviderSubscriptionRouteImport.update({
   id: '/subscription',
   path: '/subscription',
@@ -985,6 +993,11 @@ const SupportCaseIdRoute = SupportCaseIdRouteImport.update({
 const VideoRoomIdRoute = VideoRoomIdRouteImport.update({
   id: '/video/$roomId',
   path: '/video/$roomId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WelcomeCodeRoute = WelcomeCodeRouteImport.update({
+  id: '/welcome/$code',
+  path: '/welcome/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAdminContractsRoute = ApiAdminContractsRouteImport.update({
@@ -1131,6 +1144,11 @@ const FrParentDailyFeedRoute = FrParentDailyFeedRouteImport.update({
 const FrRCodeRoute = FrRCodeRouteImport.update({
   id: '/r/$code',
   path: '/r/$code',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrWelcomeCodeRoute = FrWelcomeCodeRouteImport.update({
+  id: '/welcome/$code',
+  path: '/welcome/$code',
   getParentRoute: () => FrRoute,
 } as any)
 const PayBillBillIdRoute = PayBillBillIdRouteImport.update({
@@ -1304,12 +1322,14 @@ export interface FileRoutesByFullPath {
   '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
+  '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
   '/support/$caseId': typeof SupportCaseIdRoute
   '/video/$roomId': typeof VideoRoomIdRoute
+  '/welcome/$code': typeof WelcomeCodeRoute
   '/fr/': typeof FrIndexRoute
   '/pay/': typeof PayIndexRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
@@ -1341,6 +1361,7 @@ export interface FileRoutesByFullPath {
   '/fr/milieux-familiaux/$id': typeof FrMilieuxFamiliauxIdRoute
   '/fr/parent/daily-feed': typeof FrParentDailyFeedRoute
   '/fr/r/$code': typeof FrRCodeRoute
+  '/fr/welcome/$code': typeof FrWelcomeCodeRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
   '/fr/daycare/$city/$age': typeof FrDaycareCityAgeRoute
@@ -1494,12 +1515,14 @@ export interface FileRoutesByTo {
   '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
+  '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
   '/support/$caseId': typeof SupportCaseIdRoute
   '/video/$roomId': typeof VideoRoomIdRoute
+  '/welcome/$code': typeof WelcomeCodeRoute
   '/fr': typeof FrIndexRoute
   '/pay': typeof PayIndexRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
@@ -1531,6 +1554,7 @@ export interface FileRoutesByTo {
   '/fr/milieux-familiaux/$id': typeof FrMilieuxFamiliauxIdRoute
   '/fr/parent/daily-feed': typeof FrParentDailyFeedRoute
   '/fr/r/$code': typeof FrRCodeRoute
+  '/fr/welcome/$code': typeof FrWelcomeCodeRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
   '/fr/daycare/$city/$age': typeof FrDaycareCityAgeRoute
@@ -1687,12 +1711,14 @@ export interface FileRoutesById {
   '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
+  '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
   '/support/$caseId': typeof SupportCaseIdRoute
   '/video/$roomId': typeof VideoRoomIdRoute
+  '/welcome/$code': typeof WelcomeCodeRoute
   '/fr/': typeof FrIndexRoute
   '/pay/': typeof PayIndexRoute
   '/api/admin/contracts': typeof ApiAdminContractsRoute
@@ -1724,6 +1750,7 @@ export interface FileRoutesById {
   '/fr/milieux-familiaux_/$id': typeof FrMilieuxFamiliauxIdRoute
   '/fr/parent/daily-feed': typeof FrParentDailyFeedRoute
   '/fr/r/$code': typeof FrRCodeRoute
+  '/fr/welcome/$code': typeof FrWelcomeCodeRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
   '/fr/daycare/$city/$age': typeof FrDaycareCityAgeRoute
@@ -1881,12 +1908,14 @@ export interface FileRouteTypes {
     | '/parent/signup'
     | '/parent/spot-offers'
     | '/pay/$bookingId'
+    | '/provider/families'
     | '/provider/subscription'
     | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
     | '/support/$caseId'
     | '/video/$roomId'
+    | '/welcome/$code'
     | '/fr/'
     | '/pay/'
     | '/api/admin/contracts'
@@ -1918,6 +1947,7 @@ export interface FileRouteTypes {
     | '/fr/milieux-familiaux/$id'
     | '/fr/parent/daily-feed'
     | '/fr/r/$code'
+    | '/fr/welcome/$code'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
     | '/fr/daycare/$city/$age'
@@ -2071,12 +2101,14 @@ export interface FileRouteTypes {
     | '/parent/signup'
     | '/parent/spot-offers'
     | '/pay/$bookingId'
+    | '/provider/families'
     | '/provider/subscription'
     | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
     | '/support/$caseId'
     | '/video/$roomId'
+    | '/welcome/$code'
     | '/fr'
     | '/pay'
     | '/api/admin/contracts'
@@ -2108,6 +2140,7 @@ export interface FileRouteTypes {
     | '/fr/milieux-familiaux/$id'
     | '/fr/parent/daily-feed'
     | '/fr/r/$code'
+    | '/fr/welcome/$code'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
     | '/fr/daycare/$city/$age'
@@ -2263,12 +2296,14 @@ export interface FileRouteTypes {
     | '/parent/signup'
     | '/parent/spot-offers'
     | '/pay/$bookingId'
+    | '/provider/families'
     | '/provider/subscription'
     | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
     | '/support/$caseId'
     | '/video/$roomId'
+    | '/welcome/$code'
     | '/fr/'
     | '/pay/'
     | '/api/admin/contracts'
@@ -2300,6 +2335,7 @@ export interface FileRouteTypes {
     | '/fr/milieux-familiaux_/$id'
     | '/fr/parent/daily-feed'
     | '/fr/r/$code'
+    | '/fr/welcome/$code'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
     | '/fr/daycare/$city/$age'
@@ -2406,6 +2442,7 @@ export interface RootRouteChildren {
   SignIdRoute: typeof SignIdRoute
   SpotsTokenRoute: typeof SpotsTokenRoute
   VideoRoomIdRoute: typeof VideoRoomIdRoute
+  WelcomeCodeRoute: typeof WelcomeCodeRoute
   ApiAdminContractsRoute: typeof ApiAdminContractsRoute
   ApiAdminEmailSuppressionsRoute: typeof ApiAdminEmailSuppressionsRoute
   ApiAdminMediaRoute: typeof ApiAdminMediaRoute
@@ -3488,6 +3525,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PayBookingIdRouteImport
       parentRoute: typeof PayRoute
     }
+    '/provider/families': {
+      id: '/provider/families'
+      path: '/families'
+      fullPath: '/provider/families'
+      preLoaderRoute: typeof ProviderFamiliesRouteImport
+      parentRoute: typeof ProviderRoute
+    }
     '/provider/subscription': {
       id: '/provider/subscription'
       path: '/subscription'
@@ -3528,6 +3572,13 @@ declare module '@tanstack/react-router' {
       path: '/video/$roomId'
       fullPath: '/video/$roomId'
       preLoaderRoute: typeof VideoRoomIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/welcome/$code': {
+      id: '/welcome/$code'
+      path: '/welcome/$code'
+      fullPath: '/welcome/$code'
+      preLoaderRoute: typeof WelcomeCodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/admin/contracts': {
@@ -3733,6 +3784,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrRCodeRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/welcome/$code': {
+      id: '/fr/welcome/$code'
+      path: '/welcome/$code'
+      fullPath: '/fr/welcome/$code'
+      preLoaderRoute: typeof FrWelcomeCodeRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/pay/bill/$billId': {
       id: '/pay/bill/$billId'
       path: '/bill/$billId'
@@ -3862,6 +3920,7 @@ interface FrRouteChildren {
   FrJobsPostRoute: typeof FrJobsPostRoute
   FrMilieuxFamiliauxIdRoute: typeof FrMilieuxFamiliauxIdRoute
   FrRCodeRoute: typeof FrRCodeRoute
+  FrWelcomeCodeRoute: typeof FrWelcomeCodeRoute
   FrDaycareCityAgeRoute: typeof FrDaycareCityAgeRoute
   FrDaycareCityCityRoute: typeof FrDaycareCityCityRoute
 }
@@ -3919,6 +3978,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrJobsPostRoute: FrJobsPostRoute,
   FrMilieuxFamiliauxIdRoute: FrMilieuxFamiliauxIdRoute,
   FrRCodeRoute: FrRCodeRoute,
+  FrWelcomeCodeRoute: FrWelcomeCodeRoute,
   FrDaycareCityAgeRoute: FrDaycareCityAgeRoute,
   FrDaycareCityCityRoute: FrDaycareCityCityRoute,
 }
@@ -3976,10 +4036,12 @@ const PayRouteChildren: PayRouteChildren = {
 const PayRouteWithChildren = PayRoute._addFileChildren(PayRouteChildren)
 
 interface ProviderRouteChildren {
+  ProviderFamiliesRoute: typeof ProviderFamiliesRoute
   ProviderSubscriptionRoute: typeof ProviderSubscriptionRoute
 }
 
 const ProviderRouteChildren: ProviderRouteChildren = {
+  ProviderFamiliesRoute: ProviderFamiliesRoute,
   ProviderSubscriptionRoute: ProviderSubscriptionRoute,
 }
 
@@ -4122,6 +4184,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignIdRoute: SignIdRoute,
   SpotsTokenRoute: SpotsTokenRoute,
   VideoRoomIdRoute: VideoRoomIdRoute,
+  WelcomeCodeRoute: WelcomeCodeRoute,
   ApiAdminContractsRoute: ApiAdminContractsRoute,
   ApiAdminEmailSuppressionsRoute: ApiAdminEmailSuppressionsRoute,
   ApiAdminMediaRoute: ApiAdminMediaRoute,

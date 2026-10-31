@@ -68,10 +68,14 @@ export async function claimReferral(userId: string, raw: string): Promise<{ ok: 
   } catch {
     return { ok: true, joined: false };
   }
+  const { noteThankYou } = await import("@/lib/server/growth-loops");
+  await noteThankYou(owners[0].user_id, userId).catch(() => undefined);
   return { ok: true, joined: true };
 }
 
 export async function purgeReferralRows(sql: Sql, userId: string) {
+  await sql`delete from referral_rewards where referrer_user_id = ${userId} or referred_user_id = ${userId}`.catch(() => undefined);
+  await sql`delete from family_invites where user_id = ${userId}`.catch(() => undefined);
   await sql`delete from referral_joins where referred_user_id = ${userId} or referrer_user_id = ${userId}`.catch(() => undefined);
   await sql`delete from referral_codes where user_id = ${userId}`.catch(() => undefined);
 }

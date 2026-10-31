@@ -11,6 +11,8 @@ import {
 } from "@/lib/share";
 import { noteHappyMoment } from "@/lib/store-review";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
+import { growthAttribution, growthLoopsEnabled } from "@/lib/growth-loops";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -67,6 +69,13 @@ function ShareControl({
     });
     if ((outcome === "shared" || outcome === "copied") && payload.url?.includes("/daycare/")) {
       captureMarketplaceFunnel({ step: "share", source: "listing", dest_path: "/daycare" });
+      const slug = payload.url.split("/daycare/")[1]?.split(/[?#]/)[0] ?? "";
+      const hit = growthAttribution({
+        enabled: growthLoopsEnabled(),
+        event: "listing_shared",
+        slug: decodeURIComponent(slug),
+      });
+      if (hit) capturePostHogEvent(hit.event, hit.properties);
     }
     const key = shareFeedbackKey(outcome);
     if (key) {
