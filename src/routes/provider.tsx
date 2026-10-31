@@ -82,13 +82,14 @@ import { DemandCues } from "@/components/rank-cues";
 import type { DemandSnapshot } from "@/lib/demand-heat";
 import type { ProviderEntitlements } from "@/lib/provider-entitlements";
 import { CentreEmployeesPanel } from "@/components/centre-employees";
+import { StaffSchedulingDesk } from "@/components/staff-scheduling-desk";
 import { ProviderScreeningPanel } from "@/components/provider-screening";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { useRoleChrome } from "@/components/role-chrome";
 import { DaycareDeskHome } from "@/components/daycare-desk-home";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 
-const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "tours", "licence", "contract", "promote", "employees", "screening"];
+const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "tours", "licence", "contract", "promote", "employees", "screening", "staff"];
 const OWNER_DESKS = new Set<DaycareDesk>(["money", "licence", "contract", "promote"]);
 const DEFAULT_DESK: DaycareDesk = "today";
 const COACH_FOCUS = new Set<ListingCoachFocus>([
@@ -765,6 +766,7 @@ export function ProviderPage() {
       ) : null}
 
       {desk === "employees" ? <CentreEmployeesPanel canInvite={centreOwner} /> : null}
+      {desk === "staff" ? <StaffSchedulingDesk /> : null}
 
       {desk === "screening" ? <ProviderScreeningPanel /> : null}
 
