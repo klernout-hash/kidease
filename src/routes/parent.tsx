@@ -5,6 +5,7 @@ import { privateReturnPath } from "@/lib/role-access";
 import { lazy, Suspense } from "react";
 import { Shell } from "@/components/shell";
 import { ParentStoriesDesk, StoriesDeskLink } from "@/components/learning-stories-desk";
+import { CurriculumParentDesk } from "@/components/curriculum-pack";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -66,7 +67,7 @@ export async function parentLoader() {
 
 export function parentValidateSearch(s: Record<string, unknown>) {
   const out: {
-    tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "subscription" | "alerts" | "children" | "care" | "waitlists" | "stories";
+    tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "subscription" | "alerts" | "children" | "care" | "waitlists" | "stories" | "learning";
     preview?: "support";
     plus?: "success" | "cancel";
     plan?: "plus" | "alerts";
@@ -159,6 +160,15 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
       <Shell>
         <main className="mx-auto w-full max-w-3xl px-4 py-8">
           <ParentStoriesDesk />
+        </main>
+      </Shell>
+    );
+  }
+  if (search.tab === "learning") {
+    return (
+      <Shell>
+        <main className="mx-auto w-full max-w-3xl px-4 py-8">
+          <CurriculumParentDesk />
         </main>
       </Shell>
     );

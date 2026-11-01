@@ -2400,6 +2400,8 @@
   "compareLicence": "Licencia",
   "compareVacancy": "Vacante",
   "employeesTitle": "Empleados",
+  "learningNav": "Aprendizaje",
+  "learningNavHint": "Metas, historias y planes",
   "employeesLead": "Dale al personal su propio acceso a KidEase. El propietario invita y revoca. El personal no puede abrir Dinero, contratos, facturación ni la reclamación de la licencia.",
   "employeeAddTitle": "Agregar un empleado",
   "employeeAddLead": "Invita por correo electrónico laboral. Recibe su propia contraseña: no compartas el acceso del propietario.",

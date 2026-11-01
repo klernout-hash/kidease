@@ -2400,6 +2400,8 @@
   "compareLicence": "执照",
   "compareVacancy": "空缺",
   "employeesTitle": "员工",
+  "learningNav": "学习",
+  "learningNavHint": "目标、故事和计划",
   "employeesLead": "为员工提供各自的 KidEase 登录账号。由所有者邀请和撤销。员工无法打开 Money、合同、账单或执照认领。",
   "employeeAddTitle": "添加员工",
   "employeeAddLead": "通过工作电子邮件邀请。他们会获得自己的密码：请勿共享所有者的登录账号。",

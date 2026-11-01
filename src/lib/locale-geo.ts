@@ -11,7 +11,8 @@ import {
 
 /**
  * Provinces whose first visit defaults to French.
- * New Brunswick is bilingual. Add "NB" to turn that default on. It stays off.
+ * Quebec is French. New Brunswick is a choice between English and French
+ * from the browser, in `officialLocaleFromPlace`. It is not in this list.
  */
 export const GEO_FRENCH_REGIONS = ["QC"] as const;
 
@@ -44,8 +45,8 @@ export type VisitorLocaleInput = {
   /** When the signed-in preference could not be read, do not guess from location. */
   profileUnreadable?: boolean;
   /**
-   * Accepted so callers can prove the browser language is ignored.
-   * The decision never reads this value.
+   * Browser Accept-Language. Only English and French can affect the
+   * first-visit default, and only in New Brunswick. A saved choice ignores it.
    */
   acceptLanguage?: string | null;
   frenchRegions?: readonly string[];
@@ -86,6 +87,55 @@ export function normalizeGeoRegion(region?: string | null): string {
   if (!raw) return "";
   if (raw.includes("-")) raw = raw.split("-").pop() || raw;
   return REGION_ALIASES[raw] || raw;
+}
+
+/**
+ * The higher-ranked English or French tag in Accept-Language.
+ * Mandarin and the other opt-in languages are ignored.
+ */
+export function preferredOfficialLanguage(header?: string | null): "en" | "fr" | null {
+  const raw = String(header || "").trim();
+  if (!raw) return null;
+  let best: { lang: "en" | "fr"; q: number } | null = null;
+  for (const part of raw.split(",")) {
+    const [tagRaw, ...params] = part.trim().split(";");
+    const tag = (tagRaw || "").trim().toLowerCase();
+    if (!tag || tag === "*") continue;
+    const primary = tag.split("-")[0];
+    if (primary !== "en" && primary !== "fr") continue;
+    let q = 1;
+    for (const param of params) {
+      const [key, value] = param.trim().split("=");
+      if (key?.trim().toLowerCase() === "q") {
+        const parsed = Number(value);
+        if (Number.isFinite(parsed)) q = parsed;
+      }
+    }
+    if (q <= 0) continue;
+    if (!best || q > best.q) best = { lang: primary, q };
+  }
+  return best?.lang ?? null;
+}
+
+/**
+ * First-visit English or French. A saved choice is applied earlier.
+ * Quebec is French. New Brunswick follows the browser's English or French.
+ * Everywhere else is English. Opt-in languages are never chosen here.
+ */
+export function officialLocaleFromPlace(input: {
+  country?: string | null;
+  region?: string | null;
+  acceptLanguage?: string | null;
+  frenchRegions?: readonly string[];
+}): "en" | "fr" {
+  const regions = input.frenchRegions ?? GEO_FRENCH_REGIONS;
+  if (localeFromGeo(input.country, input.region, regions) === "fr") return "fr";
+  const country = (input.country || "").trim().toUpperCase();
+  const province = normalizeGeoRegion(input.region);
+  if (country === "CA" && province === "NB") {
+    return preferredOfficialLanguage(input.acceptLanguage) === "fr" ? "fr" : "en";
+  }
+  return "en";
 }
 
 /** Quebec (and any region listed in `regions`) defaults to French. Everyone else gets English. */
@@ -135,8 +185,8 @@ export function isLocaleDocumentRequest(input: {
 }
 
 /**
- * Saved profile, then this browser's cookie, then location.
- * The browser's language list is not a factor.
+ * Saved profile, then this browser's cookie, then place.
+ * A manual pick is never replaced. The other eight languages stay opt-in.
  */
 export function localeFromSearch(search?: string | null): ShippedLocale | null {
   const raw = String(search || "");
@@ -165,8 +215,13 @@ export function decideVisitorLocale(input: VisitorLocaleInput = {}): VisitorLoca
   if (input.profileUnreadable) {
     return { locale: "en", explicit: false, source: "default", suppressGeo: true };
   }
-  const geo = localeFromGeo(input.country, input.region, regions);
-  if (geo === "fr") return { locale: "fr", explicit: false, source: "geo", suppressGeo: false };
+  const official = officialLocaleFromPlace({
+    country: input.country,
+    region: input.region,
+    acceptLanguage: input.acceptLanguage,
+    frenchRegions: regions,
+  });
+  if (official === "fr") return { locale: "fr", explicit: false, source: "geo", suppressGeo: false };
   return { locale: "en", explicit: false, source: "default", suppressGeo: false };
 }
 
@@ -229,7 +284,7 @@ export function localeRedirectHeaders(target: string): Record<string, string> {
   return {
     Location: target,
     "Cache-Control": "private, no-store",
-    Vary: "Cookie, x-vercel-ip-country, x-vercel-ip-country-region",
+    Vary: "Cookie, Accept-Language, x-vercel-ip-country, x-vercel-ip-country-region",
   };
 }
 

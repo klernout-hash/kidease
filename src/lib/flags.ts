@@ -63,6 +63,9 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_PROVINCE_REPORTS",
   "FEATURE_GOV_SCOPES",
   "FEATURE_FR_CA",
+  "FEATURE_CURRICULUM_PACK",
+  "FEATURE_CURRICULUM_PACK_LIVE",
+  "FEATURE_STORY_CORNER",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -178,6 +181,12 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_GOV_SCOPES: false,
   /** French (fr-CA) auto-detect and the admin, government, email, and SMS pack. Off until Kyle turns it on. */
   FEATURE_FR_CA: false,
+  /** Province learning goals, stories, plans, and coverage. Off until Kyle turns it on. */
+  FEATURE_CURRICULUM_PACK: false,
+  /** Parents see published stories. Off. Without this, publish is log-only. */
+  FEATURE_CURRICULUM_PACK_LIVE: false,
+  /** Local open picture books. Off. Does not hotlink book files. */
+  FEATURE_STORY_CORNER: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -489,6 +498,27 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "French (fr-CA) for parent, daycare, admin, and government screens, plus email and SMS. Auto-detect from the browser or device, and from Quebec or New Brunswick. Default off. A saved language choice still wins. The language toggle stays.",
+  },
+  {
+    key: "FEATURE_CURRICULUM_PACK",
+    defaultOn: false,
+    docs: "docs/curriculum.md",
+    summary:
+      "Province goals, learning stories, plans, and coverage for a daycare. Default off. Goal lines are KidEase wording plus a link. No ASQ.",
+  },
+  {
+    key: "FEATURE_CURRICULUM_PACK_LIVE",
+    defaultOn: false,
+    docs: "docs/curriculum.md",
+    summary:
+      "Parents can read a published story and reply. Default off. While off, publish is only written to the log.",
+  },
+  {
+    key: "FEATURE_STORY_CORNER",
+    defaultOn: false,
+    docs: "docs/curriculum.md",
+    summary:
+      "Picture books stored on this server from the Global Digital Library. Default off. Skips NC and ND. StoryWeaver stays off until a token exists. Unite for Literacy is a link out.",
   },
 ];
 

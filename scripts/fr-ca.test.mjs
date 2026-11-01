@@ -151,14 +151,15 @@ test("French email and SMS stay English until the flag is on", () => {
   }
 });
 
-test("locale files still ignore the browser list unless the French pack reads it", () => {
+test("the browser list stays off except the French pack and the New Brunswick English or French choice", () => {
   const geo = readFileSync(join(root, "src/lib/locale-geo.ts"), "utf8");
   const choice = readFileSync(join(root, "src/lib/locale-choice.ts"), "utf8");
   const server = readFileSync(join(root, "src/lib/locale-choice.server.ts"), "utf8");
-  assert.doesNotMatch(geo, /accept-language/i);
   assert.doesNotMatch(choice, /accept-language/i);
-  assert.doesNotMatch(server, /accept-language/i);
+  assert.match(server, /headers\.get\(["']accept-language["']\)/i);
   assert.match(server, /localeRedirectTarget/);
+  assert.match(geo, /Only English and French can affect/);
+  assert.match(geo, /New Brunswick follows the browser's English or French/);
   assert.match(readFileSync(join(root, "src/lib/fr-ca.ts"), "utf8"), /accept-language/i);
   assert.match(readFileSync(join(root, "src/components/language-select.tsx"), "utf8"), /Français \(Canada\)/);
 });

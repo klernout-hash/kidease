@@ -3,6 +3,7 @@ import type { GovDashboard } from "@/lib/gov/aggregate";
 import { govCopy, govPath } from "@/lib/gov/copy";
 import { regionLabel } from "@/lib/gov/places";
 import { GovHelp } from "@/components/gov/gov-help";
+import { CurriculumGovStrip } from "@/components/curriculum-pack";
 import { GovMap } from "@/components/gov/gov-map";
 import { signOut } from "@/lib/auth/client";
 
@@ -303,6 +304,7 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
             {data.locale === "fr" ? "Demande de places" : "Space demand"}
           </a>
         </nav>
+        <CurriculumGovStrip province={data.province} />
       </main>
     </div>
   );

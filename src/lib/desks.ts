@@ -683,6 +683,8 @@ export type SessionDesks = {
   ownsCentre?: boolean;
   /** Owns a centre or is an active centre member. */
   centreLinked?: boolean;
+  /** Province learning pack nav. Off unless FEATURE_CURRICULUM_PACK is on. */
+  curriculumPack?: boolean;
   /** Shared menu badges. One payload so every desk shows the same numbers. */
   attention?: import("@/lib/attention").AttentionCounts;
   /** ISO time the 30-day restore window ends. Null when the account is active. */
