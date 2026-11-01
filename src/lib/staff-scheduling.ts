@@ -102,9 +102,12 @@ export function rosterRatio(input: {
   const kids = Math.max(0, Math.floor(input.childrenPresent));
   const staff = Math.max(0, Math.floor(input.staffOnShift));
   const rule = ratioRule(input.province, input.band);
+  if (!rule || !rule.verified) {
+    return { staffToChildren: 0, maxGroup: 0, status: "unknown" };
+  }
   return {
     staffToChildren: rule.staffToChildren,
-    maxGroup: rule.maxGroup,
+    maxGroup: rule.showMax ? rule.maxGroup : 0,
     status: ratioStatus(kids, staff, rule),
   };
 }

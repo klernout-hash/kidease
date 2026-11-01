@@ -44,13 +44,18 @@ test("incident flag is off and practice mode does not send", () => {
   assert.equal(mail.delivery, "log");
 });
 
-test("Ontario deadline is cited and other provinces stay placeholders", () => {
+test("Ontario and Nova Scotia deadlines are cited and Manitoba stays a placeholder", () => {
   const ontario = deadlineFor("ON");
   assert.equal(ontario?.hours, 24);
   assert.equal(ontario?.verified, true);
   assert.match(ontario?.source || "", /150137/);
+  const nova = deadlineFor("NS");
+  assert.equal(nova?.hours, 24);
+  assert.equal(nova?.verified, true);
+  assert.match(nova?.source || "", /30B/);
   assert.equal(deadlineFor("MB")?.verified, false);
   assert.match(deadlineFor("MB")?.source || "", /PLACEHOLDER/);
+  assert.equal(deadlineFor("AB")?.verified, false);
 });
 
 test("government users see only their province and aggregates have no child name", () => {

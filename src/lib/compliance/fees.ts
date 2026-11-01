@@ -16,6 +16,11 @@ export type FeeCap = {
   maxDailyCents: number | null;
   noCeiling: boolean;
   verified: boolean;
+  /**
+   * False when the cited amount applies only to funded, designated, or subsidized
+   * programs. The desk does not warn every centre in that case.
+   */
+  provinceWide: boolean;
   source: string;
 };
 
@@ -28,27 +33,54 @@ const ON =
 const BC =
   "British Columbia fee reductions do not set one ceiling for every centre. Out-of-pocket fees are not reduced below $200 a month for full-time care. https://www2.gov.bc.ca/gov/content/family-social-supports/caring-for-young-children/childcarebc-programs/child-care-fee-reduction-initiative-provider-opt-in-status/information-for-families";
 
+const AB =
+  "Alberta flat parent fee for a licensed daycare or family day home that receives affordability funding, kindergarten age or younger, registered for 100 or more hours a month: $326.25 a month. The province also describes this as a flat $15 a day as of 1 April 2025. Part-time (50 to 99 hours) is $230 a month. Not every program is funded, and optional services can be extra. Read 1 November 2026. https://www.alberta.ca/childcare-fees";
+
+const SK =
+  "The Child Care Regulations, 2015, C-7.31 Reg 1, s. 18(5): for an eligible child, $217.50 a month for full-time care (10 or more days) or $10 a day up to $90 a month for daily care (9 days or fewer). Eligible child is under 6, with the kindergarten extension in the definition. Read 1 November 2026. https://publications.saskatchewan.ca/api/v1/products/73483/formats/82271/download";
+
+const QC =
+  "Quebec reduced contribution for a subsidized child care service in 2026: $9.65 a day, indexed each 1 January. This is not the fee at an unsubsidized garderie. Read 1 November 2026. https://www.quebec.ca/famille-et-soutien-aux-personnes/enfance/garderies-et-services-de-garde/tarifs";
+
+const NB =
+  "New Brunswick Parent Fee Grid for a designated facility, one provincial rate from 1 May 2026. Full day: infant (0–24 months) $19, preschool (2–5 years, not in school) $16. Part day: infant $12, preschool $7. Not every licence is designated. Read 1 November 2026. https://www2.gnb.ca/content/gnb/en/corporate/promo/investing-in-early-learning-and-child-care/information-for-families.html";
+
+const PE =
+  "Prince Edward Island: $10 a day at Early Years Centres and licensed family home centres for children from birth to school entry, from 1 January 2024. This is not a cap on every licence. Read 1 November 2026. https://www.princeedwardisland.ca/en/news/10-a-day-child-care-starting-january-1";
+
 export const FEE_CAPS: readonly FeeCap[] = [
-  { province: "MB", ageKey: "infant", maxDailyCents: 1000, noCeiling: false, verified: true, source: MB },
-  { province: "MB", ageKey: "preschool", maxDailyCents: 1000, noCeiling: false, verified: true, source: MB },
-  { province: "MB", ageKey: "school", maxDailyCents: 1000, noCeiling: false, verified: true, source: `${MB} School-age, three periods: $10.` },
-  { province: "ON", ageKey: "infant", maxDailyCents: 2200, noCeiling: false, verified: true, source: ON },
-  { province: "ON", ageKey: "toddler", maxDailyCents: 2200, noCeiling: false, verified: true, source: ON },
-  { province: "ON", ageKey: "preschool", maxDailyCents: 2200, noCeiling: false, verified: true, source: ON },
-  { province: "BC", ageKey: "infant", maxDailyCents: null, noCeiling: true, verified: true, source: BC },
-  { province: "BC", ageKey: "toddler", maxDailyCents: null, noCeiling: true, verified: true, source: BC },
-  { province: "BC", ageKey: "preschool", maxDailyCents: null, noCeiling: true, verified: true, source: BC },
-  { province: "BC", ageKey: "school", maxDailyCents: null, noCeiling: true, verified: true, source: BC },
-  placeholder("AB", "infant", 1500, "PLACEHOLDER. A 2026 research summary reports a $15 parent fee in Alberta cities. Confirm on alberta.ca before enforcement."),
-  placeholder("NL", "preschool", 1000, "PLACEHOLDER. A 2026 research summary groups Newfoundland and Labrador with $10-a-day fees. Confirm the official schedule."),
-  placeholder("PE", "preschool", 1000, "PLACEHOLDER. A 2026 research summary groups Prince Edward Island with $10-a-day fees. Confirm the official schedule."),
-  placeholder("SK", "preschool", 1000, "PLACEHOLDER. A 2026 research summary groups Saskatchewan with $10-a-day fees. Confirm the official schedule."),
-  placeholder("NU", "preschool", 1000, "PLACEHOLDER. A 2026 research summary groups Nunavut with $10-a-day fees. Confirm the official schedule."),
-  placeholder("QC", "preschool", 965, "PLACEHOLDER. A 2026 research summary reports Quebec's reduced contribution at $9.65 a day. Confirm on quebec.ca."),
+  { province: "MB", ageKey: "infant", maxDailyCents: 1000, noCeiling: false, verified: true, provinceWide: true, source: MB },
+  { province: "MB", ageKey: "preschool", maxDailyCents: 1000, noCeiling: false, verified: true, provinceWide: true, source: MB },
+  { province: "MB", ageKey: "school", maxDailyCents: 1000, noCeiling: false, verified: true, provinceWide: true, source: `${MB} School-age, three periods: $10.` },
+  { province: "ON", ageKey: "infant", maxDailyCents: 2200, noCeiling: false, verified: true, provinceWide: true, source: ON },
+  { province: "ON", ageKey: "toddler", maxDailyCents: 2200, noCeiling: false, verified: true, provinceWide: true, source: ON },
+  { province: "ON", ageKey: "preschool", maxDailyCents: 2200, noCeiling: false, verified: true, provinceWide: true, source: ON },
+  { province: "BC", ageKey: "infant", maxDailyCents: null, noCeiling: true, verified: true, provinceWide: true, source: BC },
+  { province: "BC", ageKey: "toddler", maxDailyCents: null, noCeiling: true, verified: true, provinceWide: true, source: BC },
+  { province: "BC", ageKey: "preschool", maxDailyCents: null, noCeiling: true, verified: true, provinceWide: true, source: BC },
+  { province: "BC", ageKey: "school", maxDailyCents: null, noCeiling: true, verified: true, provinceWide: true, source: BC },
+  scoped("AB", "infant", 1500, AB),
+  scoped("AB", "preschool", 1500, AB),
+  scoped("SK", "infant", 1000, SK),
+  scoped("SK", "toddler", 1000, SK),
+  scoped("SK", "preschool", 1000, SK),
+  scoped("QC", "preschool", 965, QC),
+  scoped("NB", "infant", 1900, NB),
+  scoped("NB", "preschool", 1600, NB),
+  scoped("PE", "preschool", 1000, PE),
+  placeholder("NL", "preschool", 1000, "PLACEHOLDER. The Newfoundland and Labrador fee schedule was not opened on 1 November 2026."),
+  placeholder("NU", "preschool", 1000, "PLACEHOLDER. The Nunavut fee schedule was not opened on 1 November 2026."),
+  placeholder("NS", "preschool", 0, "PLACEHOLDER. Nova Scotia's parent-fee page was not opened on 1 November 2026. No daily cap is stored."),
+  placeholder("NT", "preschool", 0, "PLACEHOLDER. A single daily cap was not opened on 1 November 2026. Northwest Territories describes an average, not one ceiling."),
+  placeholder("YT", "preschool", 0, "PLACEHOLDER. A single daily cap was not opened on 1 November 2026. Yukon describes an average, not one ceiling."),
 ];
 
+function scoped(province: string, ageKey: string, cents: number, source: string): FeeCap {
+  return { province, ageKey, maxDailyCents: cents, noCeiling: false, verified: true, provinceWide: false, source };
+}
+
 function placeholder(province: string, ageKey: string, cents: number, source: string): FeeCap {
-  return { province, ageKey, maxDailyCents: cents, noCeiling: false, verified: false, source };
+  return { province, ageKey, maxDailyCents: cents > 0 ? cents : null, noCeiling: false, verified: false, provinceWide: false, source };
 }
 
 export function feeMode(env: EnvMap): PackMode {
@@ -83,11 +115,11 @@ export function feeDecision(input: {
   }
   const cap = feeCapFor(input.province, input.ageKey);
   if (!cap) return { status: "unknown", capCents: null, verified: false, delivery: "skip" };
+  if (!cap.verified || !cap.provinceWide) {
+    return { status: "unknown", capCents: cap.maxDailyCents, verified: cap.verified, delivery: "skip" };
+  }
   if (cap.noCeiling || cap.maxDailyCents == null) {
     return { status: "no_cap", capCents: null, verified: cap.verified, delivery: "skip" };
-  }
-  if (!cap.verified) {
-    return { status: "unknown", capCents: cap.maxDailyCents, verified: false, delivery: "skip" };
   }
   if (input.dailyCents > cap.maxDailyCents) {
     return {

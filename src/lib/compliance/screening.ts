@@ -57,6 +57,54 @@ export const CREDENTIAL_RULES: readonly CredentialRule[] = [
     source:
       "Ontario Child Care Centre Licensing Manual, Part 3, first aid: a person counted in ratio needs first aid, including infant and child CPR. Newly hired staff have up to three months to get it. The certificate shows the expiry date. https://www.ontario.ca/document/child-care-centre-licensing-manual/part-3-ratios-and-group-size",
   },
+  {
+    province: "NS",
+    kind: "vulnerable_sector",
+    validYears: 5,
+    verified: true,
+    source:
+      "Early Learning and Child Care Regulations (N.S.), record checks: a new vulnerable sector check is due no later than 5 years after the most recent check. A check used at hire must be less than 2 years old. Read 1 November 2026. https://novascotia.ca/just/regulations/regs/elcc.htm",
+  },
+  {
+    province: "NS",
+    kind: "child_abuse_registry",
+    validYears: 3,
+    verified: true,
+    source:
+      "Early Learning and Child Care Regulations (N.S.): a new child abuse register check is due no later than 3 years after the most recent check. Read 1 November 2026. https://novascotia.ca/just/regulations/regs/elcc.htm",
+  },
+  {
+    province: "NS",
+    kind: "first_aid",
+    validYears: null,
+    verified: true,
+    source:
+      "Early Learning and Child Care Regulations (N.S.), s. 28(1): each person who works directly with children needs a valid first aid certificate that includes infant CPR. The certificate shows its own expiry. Read 1 November 2026. https://novascotia.ca/just/regulations/regs/elcc.htm",
+  },
+  {
+    province: "PE",
+    kind: "criminal_record",
+    validYears: 3,
+    verified: true,
+    source:
+      "Early Learning and Child Care Act Regulations (P.E.I.), s. 20(1)(b): a criminal record check and a vulnerable sector search, dated not earlier than 6 months before it is given, within eight weeks of starting, and at least every 3 years after that. Read 1 November 2026. https://www.princeedwardisland.ca/sites/default/files/legislation/e.01g-early_learning_and_child_care_act_regulations.pdf",
+  },
+  {
+    province: "PE",
+    kind: "vulnerable_sector",
+    validYears: 3,
+    verified: true,
+    source:
+      "Same P.E.I. regulation, s. 20(1)(b): the criminal record check includes a vulnerable sector search and is renewed at least every 3 years. Read 1 November 2026. https://www.princeedwardisland.ca/sites/default/files/legislation/e.01g-early_learning_and_child_care_act_regulations.pdf",
+  },
+  {
+    province: "PE",
+    kind: "first_aid",
+    validYears: null,
+    verified: true,
+    source:
+      "Early Learning and Child Care Act Regulations (P.E.I.), s. 20(1)(c) and s. 20(3): emergency first aid and infant and child CPR, or enrolment within two weeks and the certificate within eight weeks. At least one certified person is present. The certificate shows its own expiry. Read 1 November 2026. https://www.princeedwardisland.ca/sites/default/files/legislation/e.01g-early_learning_and_child_care_act_regulations.pdf",
+  },
 ];
 
 export function screeningMode(env: EnvMap): PackMode {

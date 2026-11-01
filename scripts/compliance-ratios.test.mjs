@@ -19,8 +19,14 @@ test("ratio monitor stays off and practice mode does not text", () => {
   const ab = ratioCheck({ province: "AB", ageKey: "infant_under_12", children: 3, staffOnShift: 1 });
   assert.equal(ab.ok, true);
   assert.equal(ab.verified, true);
-  const bc = ratioCheck({ province: "BC", ageKey: "infant", children: 4, staffOnShift: 1 });
-  assert.equal(bc.verified, false);
+  const bc = ratioCheck({ province: "BC", ageKey: "under_36", children: 9, staffOnShift: 3 });
+  assert.equal(bc.ok, true);
+  assert.equal(bc.verified, true);
+  assert.equal(bc.staffNeeded, 3);
+  const bcShort = ratioCheck({ province: "BC", ageKey: "under_36", children: 9, staffOnShift: 2 });
+  assert.equal(bcShort.ok, false);
+  const qc = ratioCheck({ province: "QC", ageKey: "infant", children: 5, staffOnShift: 1 });
+  assert.equal(qc.verified, false);
   const alert = directorAlertPlan("dry_run", true, true);
   assert.equal(alert.inApp, "log");
   assert.equal(alert.sms, "log");

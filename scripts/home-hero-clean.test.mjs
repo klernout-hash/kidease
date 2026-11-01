@@ -95,8 +95,9 @@ test("home search bar is a slim pill with a claim strip and a daycare header pil
   assert.match(copy, /heroClaimListing: "Revendiquer la fiche"/);
   assert.match(copy, /heroTrustLicensed: "Licensed centres only"/);
   assert.match(copy, /heroTrustLicensed: "Centres permis seulement"/);
-  assert.match(copy, /heroTrustCount: "37,000\+ centres listed"/);
-  assert.match(copy, /heroTrustCount: "Plus de 37 000 centres inscrits"/);
+  assert.match(copy, /heroTrustCount: "Listed from public registries"/);
+  assert.match(copy, /heroTrustCount: "Inscrits à partir des registres publics"/);
+  assert.doesNotMatch(copy, /37,000/);
   assert.match(copy, /heroTrustFounding: "Free founding period"/);
   assert.match(copy, /heroTrustFounding: "Période fondatrice gratuite"/);
   assert.doesNotMatch(strip, /free forever/i);

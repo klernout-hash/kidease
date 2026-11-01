@@ -179,6 +179,10 @@ export function SiteFooter() {
                 </span>
                 {t("footerCopy")}
               </p>
+              <p className="ke-footer-legal-note mt-2 max-w-prose" data-ke="data-sources">
+                <span className="font-medium text-fg">{t("dataSourcesTitle")}. </span>
+                {t("dataSourcesBody")}
+              </p>
               <p className="ke-footer-legal-note">{t("neverSell")}</p>
               <p className="ke-footer-legal-note" data-ke="company-operator">
                 {companyOperatorLine(fr ? "fr" : "en")}
