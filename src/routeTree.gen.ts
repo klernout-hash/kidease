@@ -15,6 +15,9 @@ import { Route as AccountRouteImport } from './routes/account'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminAiRouteImport } from './routes/admin-ai'
 import { Route as AdminAutomationsRouteImport } from './routes/admin-automations'
+import { Route as ApiComplianceScreeningRouteImport } from './routes/api/compliance.screening'
+import { Route as AdminGovScreeningRouteImport } from './routes/admin-gov-screening'
+import { Route as CentreScreeningRouteImport } from './routes/centre-screening'
 import { Route as AdminChatRouteImport } from './routes/admin-chat'
 import { Route as AdminContractsRouteImport } from './routes/admin-contracts'
 import { Route as AdminEmailHealthRouteImport } from './routes/admin-email-health'
@@ -164,6 +167,7 @@ import { Route as FrVacancyIndexRouteImport } from './routes/fr.vacancy-index'
 import { Route as FrVerifyRouteImport } from './routes/fr.verify'
 import { Route as FrWaitlistRouteImport } from './routes/fr.waitlist'
 import { Route as GovLoginRouteImport } from './routes/gov_.login'
+import { Route as GovScreeningRouteImport } from './routes/gov_.screening'
 import { Route as GuidesCodeRouteImport } from './routes/guides.$code'
 import { Route as HelpArticlesRouteImport } from './routes/help.articles'
 import { Route as InboxIdRouteImport } from './routes/inbox.$id'
@@ -212,6 +216,7 @@ import { Route as DaycareCityAgeRouteImport } from './routes/daycare.$city.$age'
 import { Route as DaycareCityCityRouteImport } from './routes/daycare.city.$city'
 import { Route as FrDaycareSlugRouteImport } from './routes/fr.daycare.$slug'
 import { Route as FrGovLoginRouteImport } from './routes/fr.gov_.login'
+import { Route as FrGovScreeningRouteImport } from './routes/fr.gov_.screening'
 import { Route as FrGuidesCodeRouteImport } from './routes/fr.guides.$code'
 import { Route as FrHelpArticlesRouteImport } from './routes/fr.help.articles'
 import { Route as FrInboxIdRouteImport } from './routes/fr.inbox.$id'
@@ -255,6 +260,21 @@ const AdminAiRoute = AdminAiRouteImport.update({
 const AdminAutomationsRoute = AdminAutomationsRouteImport.update({
   id: '/admin-automations',
   path: '/admin-automations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiComplianceScreeningRoute = ApiComplianceScreeningRouteImport.update({
+  id: '/api/compliance/screening',
+  path: '/api/compliance/screening',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminGovScreeningRoute = AdminGovScreeningRouteImport.update({
+  id: '/admin-gov-screening',
+  path: '/admin-gov-screening',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CentreScreeningRoute = CentreScreeningRouteImport.update({
+  id: '/centre-screening',
+  path: '/centre-screening',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminChatRoute = AdminChatRouteImport.update({
@@ -1004,6 +1024,11 @@ const GovLoginRoute = GovLoginRouteImport.update({
   path: '/gov/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GovScreeningRoute = GovScreeningRouteImport.update({
+  id: '/gov_/screening',
+  path: '/gov/screening',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GuidesCodeRoute = GuidesCodeRouteImport.update({
   id: '/$code',
   path: '/$code',
@@ -1245,6 +1270,11 @@ const FrGovLoginRoute = FrGovLoginRouteImport.update({
   path: '/gov/login',
   getParentRoute: () => FrRoute,
 } as any)
+const FrGovScreeningRoute = FrGovScreeningRouteImport.update({
+  id: '/gov_/screening',
+  path: '/gov/screening',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrGuidesCodeRoute = FrGuidesCodeRouteImport.update({
   id: '/$code',
   path: '/$code',
@@ -1323,6 +1353,9 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/admin-ai': typeof AdminAiRoute
   '/admin-automations': typeof AdminAutomationsRoute
+  '/api/compliance/screening': typeof ApiComplianceScreeningRoute
+  '/admin-gov-screening': typeof AdminGovScreeningRoute
+  '/centre-screening': typeof CentreScreeningRoute
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
@@ -1471,6 +1504,7 @@ export interface FileRoutesByFullPath {
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
   '/gov/login': typeof GovLoginRoute
+  '/gov/screening': typeof GovScreeningRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/help/articles': typeof HelpArticlesRoute
   '/inbox/$id': typeof InboxIdRoute
@@ -1520,6 +1554,7 @@ export interface FileRoutesByFullPath {
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/gov/login': typeof FrGovLoginRoute
+  '/fr/gov/screening': typeof FrGovScreeningRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/help/articles': typeof FrHelpArticlesRoute
   '/fr/inbox/$id': typeof FrInboxIdRoute
@@ -1542,6 +1577,9 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteWithChildren
   '/admin-ai': typeof AdminAiRoute
   '/admin-automations': typeof AdminAutomationsRoute
+  '/api/compliance/screening': typeof ApiComplianceScreeningRoute
+  '/admin-gov-screening': typeof AdminGovScreeningRoute
+  '/centre-screening': typeof CentreScreeningRoute
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
@@ -1688,6 +1726,7 @@ export interface FileRoutesByTo {
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
   '/gov/login': typeof GovLoginRoute
+  '/gov/screening': typeof GovScreeningRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/help/articles': typeof HelpArticlesRoute
   '/inbox/$id': typeof InboxIdRoute
@@ -1737,6 +1776,7 @@ export interface FileRoutesByTo {
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/gov/login': typeof FrGovLoginRoute
+  '/fr/gov/screening': typeof FrGovScreeningRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/help/articles': typeof FrHelpArticlesRoute
   '/fr/inbox/$id': typeof FrInboxIdRoute
@@ -1760,6 +1800,9 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/admin-ai': typeof AdminAiRoute
   '/admin-automations': typeof AdminAutomationsRoute
+  '/api/compliance/screening': typeof ApiComplianceScreeningRoute
+  '/admin-gov-screening': typeof AdminGovScreeningRoute
+  '/centre-screening': typeof CentreScreeningRoute
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
@@ -1908,6 +1951,7 @@ export interface FileRoutesById {
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
   '/gov_/login': typeof GovLoginRoute
+  '/gov_/screening': typeof GovScreeningRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/help/articles': typeof HelpArticlesRoute
   '/inbox/$id': typeof InboxIdRoute
@@ -1957,6 +2001,7 @@ export interface FileRoutesById {
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/gov_/login': typeof FrGovLoginRoute
+  '/fr/gov_/screening': typeof FrGovScreeningRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/help/articles': typeof FrHelpArticlesRoute
   '/fr/inbox/$id': typeof FrInboxIdRoute
@@ -1981,6 +2026,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-ai'
     | '/admin-automations'
+    | '/api/compliance/screening'
+    | '/admin-gov-screening'
+    | '/centre-screening'
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
@@ -2129,6 +2177,7 @@ export interface FileRouteTypes {
     | '/fr/verify'
     | '/fr/waitlist'
     | '/gov/login'
+    | '/gov/screening'
     | '/guides/$code'
     | '/help/articles'
     | '/inbox/$id'
@@ -2178,6 +2227,7 @@ export interface FileRouteTypes {
     | '/daycare/city/$city'
     | '/fr/daycare/$slug'
     | '/fr/gov/login'
+    | '/fr/gov/screening'
     | '/fr/guides/$code'
     | '/fr/help/articles'
     | '/fr/inbox/$id'
@@ -2200,6 +2250,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-ai'
     | '/admin-automations'
+    | '/api/compliance/screening'
+    | '/admin-gov-screening'
+    | '/centre-screening'
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
@@ -2346,6 +2399,7 @@ export interface FileRouteTypes {
     | '/fr/verify'
     | '/fr/waitlist'
     | '/gov/login'
+    | '/gov/screening'
     | '/guides/$code'
     | '/help/articles'
     | '/inbox/$id'
@@ -2395,6 +2449,7 @@ export interface FileRouteTypes {
     | '/daycare/city/$city'
     | '/fr/daycare/$slug'
     | '/fr/gov/login'
+    | '/fr/gov/screening'
     | '/fr/guides/$code'
     | '/fr/help/articles'
     | '/fr/inbox/$id'
@@ -2417,6 +2472,9 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-ai'
     | '/admin-automations'
+    | '/api/compliance/screening'
+    | '/admin-gov-screening'
+    | '/centre-screening'
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
@@ -2565,6 +2623,7 @@ export interface FileRouteTypes {
     | '/fr/verify'
     | '/fr/waitlist'
     | '/gov_/login'
+    | '/gov_/screening'
     | '/guides/$code'
     | '/help/articles'
     | '/inbox/$id'
@@ -2614,6 +2673,7 @@ export interface FileRouteTypes {
     | '/daycare/city/$city'
     | '/fr/daycare/$slug'
     | '/fr/gov_/login'
+    | '/fr/gov_/screening'
     | '/fr/guides/$code'
     | '/fr/help/articles'
     | '/fr/inbox/$id'
@@ -2637,6 +2697,9 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AdminAiRoute: typeof AdminAiRoute
   AdminAutomationsRoute: typeof AdminAutomationsRoute
+  ApiComplianceScreeningRoute: typeof ApiComplianceScreeningRoute
+  AdminGovScreeningRoute: typeof AdminGovScreeningRoute
+  CentreScreeningRoute: typeof CentreScreeningRoute
   AdminChatRoute: typeof AdminChatRoute
   AdminContractsRoute: typeof AdminContractsRoute
   AdminEmailHealthRoute: typeof AdminEmailHealthRoute
@@ -2732,6 +2795,7 @@ export interface RootRouteChildren {
   DaycareSlugRoute: typeof DaycareSlugRoute
   DaycaresCityRoute: typeof DaycaresCityRoute
   GovLoginRoute: typeof GovLoginRoute
+  GovScreeningRoute: typeof GovScreeningRoute
   InviteTokenRoute: typeof InviteTokenRoute
   JobsPostRoute: typeof JobsPostRoute
   ListingSlugRoute: typeof ListingSlugRoute
@@ -2810,6 +2874,27 @@ declare module '@tanstack/react-router' {
       path: '/admin-automations'
       fullPath: '/admin-automations'
       preLoaderRoute: typeof AdminAutomationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/compliance/screening': {
+      id: '/api/compliance/screening'
+      path: '/api/compliance/screening'
+      fullPath: '/api/compliance/screening'
+      preLoaderRoute: typeof ApiComplianceScreeningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-gov-screening': {
+      id: '/admin-gov-screening'
+      path: '/admin-gov-screening'
+      fullPath: '/admin-gov-screening'
+      preLoaderRoute: typeof AdminGovScreeningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/centre-screening': {
+      id: '/centre-screening'
+      path: '/centre-screening'
+      fullPath: '/centre-screening'
+      preLoaderRoute: typeof CentreScreeningRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin-chat': {
@@ -3855,6 +3940,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GovLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gov_/screening': {
+      id: '/gov_/screening'
+      path: '/gov/screening'
+      fullPath: '/gov/screening'
+      preLoaderRoute: typeof GovScreeningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/guides/$code': {
       id: '/guides/$code'
       path: '/$code'
@@ -4191,6 +4283,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrGovLoginRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/gov_/screening': {
+      id: '/fr/gov_/screening'
+      path: '/gov/screening'
+      fullPath: '/fr/gov/screening'
+      preLoaderRoute: typeof FrGovScreeningRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/guides/$code': {
       id: '/fr/guides/$code'
       path: '/$code'
@@ -4417,6 +4516,7 @@ interface FrRouteChildren {
   FrIndexRoute: typeof FrIndexRoute
   FrDaycareSlugRoute: typeof FrDaycareSlugRoute
   FrGovLoginRoute: typeof FrGovLoginRoute
+  FrGovScreeningRoute: typeof FrGovScreeningRoute
   FrJobsPostRoute: typeof FrJobsPostRoute
   FrMilieuxFamiliauxIdRoute: typeof FrMilieuxFamiliauxIdRoute
   FrRCodeRoute: typeof FrRCodeRoute
@@ -4480,6 +4580,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrIndexRoute: FrIndexRoute,
   FrDaycareSlugRoute: FrDaycareSlugRoute,
   FrGovLoginRoute: FrGovLoginRoute,
+  FrGovScreeningRoute: FrGovScreeningRoute,
   FrJobsPostRoute: FrJobsPostRoute,
   FrMilieuxFamiliauxIdRoute: FrMilieuxFamiliauxIdRoute,
   FrRCodeRoute: FrRCodeRoute,
@@ -4618,6 +4719,9 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AdminAiRoute: AdminAiRoute,
   AdminAutomationsRoute: AdminAutomationsRoute,
+  ApiComplianceScreeningRoute: ApiComplianceScreeningRoute,
+  AdminGovScreeningRoute: AdminGovScreeningRoute,
+  CentreScreeningRoute: CentreScreeningRoute,
   AdminChatRoute: AdminChatRoute,
   AdminContractsRoute: AdminContractsRoute,
   AdminEmailHealthRoute: AdminEmailHealthRoute,
@@ -4713,6 +4817,7 @@ const rootRouteChildren: RootRouteChildren = {
   DaycareSlugRoute: DaycareSlugRoute,
   DaycaresCityRoute: DaycaresCityRoute,
   GovLoginRoute: GovLoginRoute,
+  GovScreeningRoute: GovScreeningRoute,
   InviteTokenRoute: InviteTokenRoute,
   JobsPostRoute: JobsPostRoute,
   ListingSlugRoute: ListingSlugRoute,
