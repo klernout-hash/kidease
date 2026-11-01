@@ -163,6 +163,7 @@ import { Route as FrUnsubscribeRouteImport } from './routes/fr.unsubscribe'
 import { Route as FrVacancyIndexRouteImport } from './routes/fr.vacancy-index'
 import { Route as FrVerifyRouteImport } from './routes/fr.verify'
 import { Route as FrWaitlistRouteImport } from './routes/fr.waitlist'
+import { Route as GovChangeRequestsRouteImport } from './routes/gov_.change-requests'
 import { Route as GovLoginRouteImport } from './routes/gov_.login'
 import { Route as GuidesCodeRouteImport } from './routes/guides.$code'
 import { Route as HelpArticlesRouteImport } from './routes/help.articles'
@@ -180,6 +181,7 @@ import { Route as PayIndexRouteImport } from './routes/pay.index'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
 import { Route as ProviderFamiliesRouteImport } from './routes/provider.families'
 import { Route as ProviderSubscriptionRouteImport } from './routes/provider.subscription'
+import { Route as ProviderChangeRequestsRouteImport } from './routes/provider_.change-requests'
 import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as SignIdRouteImport } from './routes/sign.$id'
 import { Route as SpotsTokenRouteImport } from './routes/spots.$token'
@@ -999,6 +1001,11 @@ const FrWaitlistRoute = FrWaitlistRouteImport.update({
   path: '/waitlist',
   getParentRoute: () => FrRoute,
 } as any)
+const GovChangeRequestsRoute = GovChangeRequestsRouteImport.update({
+  id: '/gov_/change-requests',
+  path: '/gov/change-requests',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GovLoginRoute = GovLoginRouteImport.update({
   id: '/gov_/login',
   path: '/gov/login',
@@ -1083,6 +1090,11 @@ const ProviderSubscriptionRoute = ProviderSubscriptionRouteImport.update({
   id: '/subscription',
   path: '/subscription',
   getParentRoute: () => ProviderRoute,
+} as any)
+const ProviderChangeRequestsRoute = ProviderChangeRequestsRouteImport.update({
+  id: '/provider_/change-requests',
+  path: '/provider/change-requests',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const RCodeRoute = RCodeRouteImport.update({
   id: '/r/$code',
@@ -1470,6 +1482,7 @@ export interface FileRoutesByFullPath {
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
+  '/gov/change-requests': typeof GovChangeRequestsRoute
   '/gov/login': typeof GovLoginRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/help/articles': typeof HelpArticlesRoute
@@ -1486,6 +1499,7 @@ export interface FileRoutesByFullPath {
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider/change-requests': typeof ProviderChangeRequestsRoute
   '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
@@ -1687,6 +1701,7 @@ export interface FileRoutesByTo {
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
+  '/gov/change-requests': typeof GovChangeRequestsRoute
   '/gov/login': typeof GovLoginRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/help/articles': typeof HelpArticlesRoute
@@ -1703,6 +1718,7 @@ export interface FileRoutesByTo {
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider/change-requests': typeof ProviderChangeRequestsRoute
   '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
@@ -1907,6 +1923,7 @@ export interface FileRoutesById {
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
+  '/gov_/change-requests': typeof GovChangeRequestsRoute
   '/gov_/login': typeof GovLoginRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/help/articles': typeof HelpArticlesRoute
@@ -1923,6 +1940,7 @@ export interface FileRoutesById {
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider_/change-requests': typeof ProviderChangeRequestsRoute
   '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
@@ -2128,6 +2146,7 @@ export interface FileRouteTypes {
     | '/fr/vacancy-index'
     | '/fr/verify'
     | '/fr/waitlist'
+    | '/gov/change-requests'
     | '/gov/login'
     | '/guides/$code'
     | '/help/articles'
@@ -2144,6 +2163,7 @@ export interface FileRouteTypes {
     | '/pay/$bookingId'
     | '/provider/families'
     | '/provider/subscription'
+    | '/provider/change-requests'
     | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
@@ -2345,6 +2365,7 @@ export interface FileRouteTypes {
     | '/fr/vacancy-index'
     | '/fr/verify'
     | '/fr/waitlist'
+    | '/gov/change-requests'
     | '/gov/login'
     | '/guides/$code'
     | '/help/articles'
@@ -2361,6 +2382,7 @@ export interface FileRouteTypes {
     | '/pay/$bookingId'
     | '/provider/families'
     | '/provider/subscription'
+    | '/provider/change-requests'
     | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
@@ -2564,6 +2586,7 @@ export interface FileRouteTypes {
     | '/fr/vacancy-index'
     | '/fr/verify'
     | '/fr/waitlist'
+    | '/gov_/change-requests'
     | '/gov_/login'
     | '/guides/$code'
     | '/help/articles'
@@ -2580,6 +2603,7 @@ export interface FileRouteTypes {
     | '/pay/$bookingId'
     | '/provider/families'
     | '/provider/subscription'
+    | '/provider_/change-requests'
     | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
@@ -2731,12 +2755,14 @@ export interface RootRouteChildren {
   CheckinIdRoute: typeof CheckinIdRoute
   DaycareSlugRoute: typeof DaycareSlugRoute
   DaycaresCityRoute: typeof DaycaresCityRoute
+  GovChangeRequestsRoute: typeof GovChangeRequestsRoute
   GovLoginRoute: typeof GovLoginRoute
   InviteTokenRoute: typeof InviteTokenRoute
   JobsPostRoute: typeof JobsPostRoute
   ListingSlugRoute: typeof ListingSlugRoute
   MilieuxFamiliauxIdRoute: typeof MilieuxFamiliauxIdRoute
   OfferTokenRoute: typeof OfferTokenRoute
+  ProviderChangeRequestsRoute: typeof ProviderChangeRequestsRoute
   RCodeRoute: typeof RCodeRoute
   SignIdRoute: typeof SignIdRoute
   SpotsTokenRoute: typeof SpotsTokenRoute
@@ -3848,6 +3874,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrWaitlistRouteImport
       parentRoute: typeof FrRoute
     }
+    '/gov_/change-requests': {
+      id: '/gov_/change-requests'
+      path: '/gov/change-requests'
+      fullPath: '/gov/change-requests'
+      preLoaderRoute: typeof GovChangeRequestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/gov_/login': {
       id: '/gov_/login'
       path: '/gov/login'
@@ -3966,6 +3999,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/provider/subscription'
       preLoaderRoute: typeof ProviderSubscriptionRouteImport
       parentRoute: typeof ProviderRoute
+    }
+    '/provider_/change-requests': {
+      id: '/provider_/change-requests'
+      path: '/provider/change-requests'
+      fullPath: '/provider/change-requests'
+      preLoaderRoute: typeof ProviderChangeRequestsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/r/$code': {
       id: '/r/$code'
@@ -4712,12 +4752,14 @@ const rootRouteChildren: RootRouteChildren = {
   CheckinIdRoute: CheckinIdRoute,
   DaycareSlugRoute: DaycareSlugRoute,
   DaycaresCityRoute: DaycaresCityRoute,
+  GovChangeRequestsRoute: GovChangeRequestsRoute,
   GovLoginRoute: GovLoginRoute,
   InviteTokenRoute: InviteTokenRoute,
   JobsPostRoute: JobsPostRoute,
   ListingSlugRoute: ListingSlugRoute,
   MilieuxFamiliauxIdRoute: MilieuxFamiliauxIdRoute,
   OfferTokenRoute: OfferTokenRoute,
+  ProviderChangeRequestsRoute: ProviderChangeRequestsRoute,
   RCodeRoute: RCodeRoute,
   SignIdRoute: SignIdRoute,
   SpotsTokenRoute: SpotsTokenRoute,
