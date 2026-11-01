@@ -247,6 +247,35 @@ export function ncfStreetEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_NCF_STREET", env);
 }
 
+/** Private R2 links for daily logs and learning stories. Default off. */
+export function privateMediaEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PRIVATE_MEDIA", env);
+}
+
+/** Rotating daycare check-in code. Default off. Still needs KIOSK_TOKEN_SECRET to mint. */
+export function qrKioskEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_QR_KIOSK", env);
+}
+
+/** Provincial licensing CSV and PDF. Default off. */
+export function provinceReportsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PROVINCE_REPORTS", env);
+}
+
+/** Province-only government totals. Default off. Does not sign anyone out. */
+export function govScopesEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_GOV_SCOPES", env);
+}
+
+/**
+ * French (Canada) pack. Default off.
+ * Off: today's locale rules (Quebec only, browser language ignored).
+ * On: Quebec and New Brunswick, plus the browser or device language, and French email and SMS.
+ */
+export function frCaEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_FR_CA", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;

@@ -58,6 +58,11 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_GOV_PORTAL",
   "FEATURE_PRODUCT_EVENTS",
   "FEATURE_NCF_STREET",
+  "FEATURE_PRIVATE_MEDIA",
+  "FEATURE_QR_KIOSK",
+  "FEATURE_PROVINCE_REPORTS",
+  "FEATURE_GOV_SCOPES",
+  "FEATURE_FR_CA",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -163,6 +168,16 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_PRODUCT_EVENTS: false,
   /** Street address matching on Need care fast via OpenStreetMap. Off until Kyle turns it on. */
   FEATURE_NCF_STREET: false,
+  /** Short-lived private URLs for daily logs and learning stories. Off until Kyle turns it on. */
+  FEATURE_PRIVATE_MEDIA: false,
+  /** Daycare tablet QR and parent scan check-in. Off until Kyle turns it on. */
+  FEATURE_QR_KIOSK: false,
+  /** Provincial licensing CSV and PDF exports. Off until Kyle turns it on. */
+  FEATURE_PROVINCE_REPORTS: false,
+  /** Province-only totals for government accounts. Off until Kyle turns it on. */
+  FEATURE_GOV_SCOPES: false,
+  /** French (fr-CA) auto-detect and the admin, government, email, and SMS pack. Off until Kyle turns it on. */
+  FEATURE_FR_CA: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -439,6 +454,41 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Need care fast can geocode a street address with OpenStreetMap Nominatim and keep centres inside 15 km. Default off. No Google. City search stays the same.",
+  },
+  {
+    key: "FEATURE_PRIVATE_MEDIA",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Daily-log and learning-story photos use a short-lived R2 link. Default off. No public photo URL is returned while this is on.",
+  },
+  {
+    key: "FEATURE_QR_KIOSK",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Daycare tablet shows a rotating check-in code. A parent scans it to check a child in or out. Default off. Needs KIOSK_TOKEN_SECRET. The code is not a public photo link.",
+  },
+  {
+    key: "FEATURE_PROVINCE_REPORTS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "CSV and PDF licensing exports. Manitoba and Ontario use their own columns. Other provinces use a generic file. Default off. Numbers come from saved listings only.",
+  },
+  {
+    key: "FEATURE_GOV_SCOPES",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "A government account sees totals for its province only. Default off. No names, streets, or child details. The account stays signed in.",
+  },
+  {
+    key: "FEATURE_FR_CA",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "French (fr-CA) for parent, daycare, admin, and government screens, plus email and SMS. Auto-detect from the browser or device, and from Quebec or New Brunswick. Default off. A saved language choice still wins. The language toggle stays.",
   },
 ];
 

@@ -27,6 +27,7 @@ import { getWeekSchedule, saveAttendance, type AttendanceRow } from "@/lib/serve
 import { createBill, sendBill } from "@/lib/server/billing";
 import { buildMonthLedger, canWriteDayNote, dollarsToDailyCents, parentShareDollars } from "@/lib/licensed-day";
 import { CareChildOps } from "@/components/care-child-ops";
+import { KioskParentScan, KioskTablet } from "@/components/qr-kiosk-panel";
 import { CareChildRoomSelect, CareOpsPanel } from "@/components/care-ops-panel";
 import { useCopy } from "@/lib/use-copy";
 import { useViewAs } from "@/components/view-as-banner";
@@ -339,6 +340,7 @@ export function DailyCareDesk({
         <p className="mt-2 text-xs text-subtle">{t("careOpsLite")}</p>
         <p className="mt-1 text-xs text-subtle">{t("careLaterOut")}</p>
       </div>
+      {role === "provider" ? <KioskTablet daycareId={daycareId} /> : <KioskParentScan />}
 
       {ops ? (
         <CareOpsPanel

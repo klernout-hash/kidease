@@ -5,7 +5,11 @@ import { licenceCoveragePercent } from "@/lib/license-status";
 import { adapterStatusHint, adapterStatusLabel, adapterStatusTone, JURISDICTIONS, type AdapterStatus } from "@/lib/province-registry";
 import type { LicenceCoverageRow } from "@/lib/server/trust";
 import type { AdminReportRow } from "@/lib/server/trust";
+import { ProvinceReportPanel } from "@/components/province-report-panel";
+import { useFrCaPack } from "@/components/fr-ca-boot";
 import { SafetyReviewQueue } from "@/components/safety-review-queue";
+import { frCaScreen } from "@/lib/fr-ca";
+import { useCopy } from "@/lib/use-copy";
 
 type JurisdictionRow = {
   code: string;
@@ -28,12 +32,18 @@ export function AdminTrustPanel({
   coverage?: LicenceCoverageRow[];
 }) {
   const rows = jurisdictions.length ? jurisdictions : JURISDICTIONS;
+  const { locale } = useCopy();
+  const frCa = useFrCaPack();
+  const registries = frCaScreen("government", "registries", locale, frCa);
+  const reportsLead = frCaScreen("government", "reports", locale, frCa);
   return (
     <div className="space-y-10">
       <section>
         <h2 className="font-display text-2xl">Jurisdictions</h2>
         <p className="mt-1 text-sm text-muted">
-          All Canadian provinces and territories. Manitoba can match a licence against the bundled KidEase catalogue. Ontario, Alberta, British Columbia, Saskatchewan, and Québec have documented adapter stubs that fail closed to operator manual review: not live registry matches. Other jurisdictions stay adapter stubs. This list does not pretend a scrape ran.
+          {frCa && locale === "fr"
+            ? registries
+            : "All Canadian provinces and territories. Manitoba can match a licence against the bundled KidEase catalogue. Ontario, Alberta, British Columbia, Saskatchewan, and Québec have documented adapter stubs that fail closed to operator manual review: not live registry matches. Other jurisdictions stay adapter stubs. This list does not pretend a scrape ran."}
         </p>
         <ul className="mt-5 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
           {rows.map((j) => (
@@ -114,7 +124,11 @@ export function AdminTrustPanel({
       </section>
       <section>
         <h2 className="font-display text-2xl">Listing reports</h2>
-        <p className="mt-1 text-sm text-muted">Parents and guests can flag a listing. KidEase reviews the licence and claim: this is not an inspection score.</p>
+        <p className="mt-1 text-sm text-muted">
+          {frCa && locale === "fr"
+            ? reportsLead
+            : "Parents and guests can flag a listing. KidEase reviews the licence and claim: this is not an inspection score."}
+        </p>
         <ul className="mt-5 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
           {reports.length === 0 ? (
             <li className="px-5 py-8 text-center text-muted">No listing reports yet.</li>
@@ -144,6 +158,7 @@ export function AdminTrustPanel({
           )}
         </ul>
       </section>
+      <ProvinceReportPanel />
       <SafetyReviewQueue />
     </div>
   );

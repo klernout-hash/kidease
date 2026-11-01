@@ -12,8 +12,9 @@ import {
   todayYmd,
   type JournalPhoto,
 } from "@/lib/daily-care";
-import { privatePhotoFeedEnabled } from "@/lib/features";
+import { privateMediaEnabled, privatePhotoFeedEnabled } from "@/lib/features";
 import { classroomPhotoAllowed } from "@/lib/private-photo-feed";
+import { carePhotosForViewer, clampPrivateTtl, isPrivateMediaKey, privatePhotoAccepted } from "@/lib/private-media";
 import { nid } from "@/lib/utils";
 import { loadCentreRole } from "./centre-access";
 import { lookupUser, notifyThreadParty } from "./notify";
@@ -152,7 +153,7 @@ export const listDailyJournals = createServerFn({ method: "POST" })
       )
       .catch(() => []);
 
-    const items: DailyJournalRow[] = rows.map((r) => ({
+    const items: DailyJournalRow[] = await Promise.all(rows.map(async (r) => ({
       id: r.id,
       daycareId: r.daycare_id,
       daycareName: r.daycare_name,
@@ -164,9 +165,9 @@ export const listDailyJournals = createServerFn({ method: "POST" })
       authorUserId: r.author_user_id,
       day: r.day,
       body: r.body || "",
-      photos: parseJournalPhotos(r.photos),
+      photos: await presentJournalPhotos(parseJournalPhotos(r.photos)),
       createdAt: r.created_at,
-    }));
+    })));
     return { day, items };
   });
 
@@ -230,7 +231,14 @@ export const postDailyJournal = createServerFn({ method: "POST" })
         throw new Error(allowed.reason === "consent" ? "Photo consent is needed first" : "Photos are for enrolled children");
       }
     }
-    if (!journalPostReady({ body, photos })) throw new Error("Add a note or a photo");
+    const privateOn = privateMediaEnabled();
+    if (privateOn && photos.some((photo) => !privatePhotoAccepted(photo.src, true))) {
+      throw new Error("Add a private photo");
+    }
+    if (privateOn) {
+      if (!body && photos.length === 0) throw new Error("Add a note or a photo");
+      if (photos.some((photo) => !isPrivateMediaKey(photo.src))) throw new Error("Add a private photo");
+    } else if (!journalPostReady({ body, photos })) throw new Error("Add a note or a photo");
 
     const day = data.day && /^\d{4}-\d{2}-\d{2}$/.test(data.day) ? data.day : todayYmd();
     const id = nid("dj");
@@ -241,11 +249,12 @@ export const postDailyJournal = createServerFn({ method: "POST" })
     await sql`
       insert into daily_journals (
         id, daycare_id, booking_id, conversation_id, child_id, child_name,
-        parent_user_id, author_user_id, day, body, photos
+        parent_user_id, author_user_id, day, body, photos, media_private
       )
       values (
         ${id}, ${daycareId}, ${bookingId}, ${conversationId}, ${childId}, ${childName},
-        ${parentUserId}, ${context.userId}, ${day}, ${body}, ${serializeJournalPhotos(photos)}::jsonb
+        ${parentUserId}, ${context.userId}, ${day}, ${body}, ${serializeJournalPhotos(photos)}::jsonb,
+        ${privateOn}
       )
     `;
 
@@ -295,3 +304,19 @@ export const grantPhotoConsent = createServerFn({ method: "POST" })
     if (!wrote[0]) throw new Error("Enrolment not found");
     return { ok: true as const };
   });
+async function presentJournalPhotos(photos: JournalPhoto[]): Promise<JournalPhoto[]> {
+  if (!privateMediaEnabled()) return photos;
+  const { presignR2Get } = await import("./r2.server");
+  const expiresIn = clampPrivateTtl();
+  return carePhotosForViewer(photos, {
+    enabled: true,
+    expiresIn,
+    sign: (key, ttl) => {
+      try {
+        return presignR2Get(key, ttl).url;
+      } catch {
+        return null;
+      }
+    },
+  }).map((photo) => ({ src: photo.src, ...(photo.name ? { name: photo.name } : {}) }));
+}
