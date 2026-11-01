@@ -99,6 +99,7 @@ async function computeHint(request: Request, url: URL, asDocument: boolean): Pro
     profileChosen: profile.profileChosen,
     profileUnreadable: profile.profileUnreadable,
     queryLocale: localeFromSearch(search),
+    acceptLanguage: request.headers.get("accept-language"),
   };
   const extras = frCaRedirectExtras(request.headers);
   const decision = applyFrCaDecision(shared, extras);

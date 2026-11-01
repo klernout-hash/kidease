@@ -175,6 +175,7 @@ export function DeskShell({
     subscriptionsEnabled: chrome.subscriptionsEnabled,
     centreOwner: session?.centreOwner,
     centreLinked: session?.centreLinked,
+    curriculumPack: session?.curriculumPack,
   };
   const labelPlan = (item: DeskItem) => {
     const planned = planNavItem(item, chrome.paid);

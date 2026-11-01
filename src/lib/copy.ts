@@ -2908,6 +2908,8 @@ export const copy = {
     compareLicence: "Licence",
     compareVacancy: "Vacancy",
     employeesTitle: "Employees",
+    learningNav: "Learning",
+    learningNavHint: "Goals, stories, and plans",
     employeesLead:
       "Give staff their own KidEase login. The owner invites and revokes. Staff cannot open Money, contracts, billing, or licence claim.",
     employeeAddTitle: "Add an Employee",
@@ -6432,6 +6434,8 @@ export const copy = {
     compareLicence: "Permis",
     compareVacancy: "Places",
     employeesTitle: "Employés",
+    learningNav: "Apprentissage",
+    learningNavHint: "Objectifs, histoires et plans",
     employeesLead:
       "Donnez à chaque éducatrice sa propre connexion KidEase. Le propriétaire invite et révoque. Le personnel n’ouvre pas Argent, contrats, facturation ni revendication de permis.",
     employeeAddTitle: "Ajouter un employé",

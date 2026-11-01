@@ -19,6 +19,7 @@ tmp
 .grok
 AGENTS.project.md
 attachments
+data/story-corner/files/
 
 # Native build outputs (projects themselves are committed)
 android/.gradle

@@ -81,6 +81,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "requests", label: "Requests", hint: "Tours, waitlist, and spots", labelKey: "navRequestsShort", hintKey: "deskNavRequestsHint", href: "/provider", search: { desk: "requests" } },
     { id: "employees", label: "Employees", hint: "Add an employee", labelKey: "employeesTitle", hintKey: "deskNavEmployeesHint", href: "/provider", search: { desk: "employees" } },
     { id: "screening", label: "Screening", hint: "Required documents", labelKey: "listingCoachOpenScreening", hintKey: "deskNavScreeningHint", href: "/provider", search: { desk: "screening" } },
+    { id: "learning", label: "Learning", hint: "Goals, stories, and plans", labelKey: "learningNav", hintKey: "learningNavHint", href: "/provider", search: { desk: "learning" } },
     { id: "money", label: "Earnings", hint: "Payouts, invoices, and payment history", labelKey: "deskNavMoney", hintKey: "deskNavMoneyHint", href: "/provider", search: { desk: "money" } },
     { id: "licence", label: "Licence", hint: "Trust checklist + photo", labelKey: "listingCoachOpenLicence", hintKey: "deskNavLicenceHint", href: "/provider", search: { desk: "licence" } },
     { id: "contract", label: "Contract", hint: "Agreement + enrolment packs", labelKey: "deskNavContract", hintKey: "deskNavContractHint", href: "/provider", search: { desk: "contract" } },
@@ -133,7 +134,8 @@ export type DaycareDesk =
   | "screening"
   | "staff"
   | "stories"
-  | "sites";
+  | "sites"
+  | "learning";
 
 export function providerNavSearch(id: string): { desk: DaycareDesk } {
   if (
@@ -145,7 +147,8 @@ export function providerNavSearch(id: string): { desk: DaycareDesk } {
     id === "contract" ||
     id === "promote" ||
     id === "employees" ||
-    id === "screening"
+    id === "screening" ||
+    id === "learning"
   ) {
     return { desk: id };
   }
@@ -218,6 +221,8 @@ type DeskNavOpts = {
   centreOwner?: boolean;
   /** Active centre member. Owner-only items stay hidden for staff unless this is true. */
   centreLinked?: boolean;
+  /** Province learning pack. Hidden until FEATURE_CURRICULUM_PACK is on. */
+  curriculumPack?: boolean;
 };
 
 /**
@@ -240,6 +245,7 @@ const OWNER_ONLY_NAV = new Set([
 export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
   return DESK_NAV[desk].filter((item) => {
     if (item.devOnly && import.meta.env?.PROD === true) return false;
+    if (item.id === "learning") return opts?.curriculumPack === true;
     if (item.id === "upgrade" || item.id === "subscription") return opts?.subscriptionsEnabled === true;
     if (item.id === "promote") return opts?.centreOwner !== false;
     if (OWNER_ONLY_NAV.has(item.id) && opts?.centreOwner === false) return false;
@@ -290,7 +296,7 @@ export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
   daycare: [
     { id: "desk", label: "Daycare desk", labelKey: "daycareDeskTitle", open: true, itemIds: ["today", "requests", "tours", "listings", "messages"] },
     { id: "business", label: "Business", labelKey: "navBusiness", open: true, itemIds: ["money", "promote"] },
-    { id: "team", label: "Team", labelKey: "navTeam", itemIds: ["employees", "screening"] },
+    { id: "team", label: "Team", labelKey: "navTeam", itemIds: ["employees", "screening", "learning"] },
     { id: "compliance", label: "Compliance", labelKey: "navCompliance", itemIds: ["licence", "contract"] },
     { id: "grow", label: "Grow", labelKey: "navGrow", itemIds: ["post-job", "add", "claim"] },
     { id: "account", label: "Account", labelKey: "account", open: true, itemIds: ["profile", "appearance", "subscription", "delete"] },
