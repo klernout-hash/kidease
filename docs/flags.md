@@ -120,6 +120,7 @@ Env still works as a fallback when PostHog is down (last successful overlay is k
 | `FEATURE_PRIVATE_PHOTO_FEED` | no | Default **off**. Set `1` so classroom photos need enrolment and consent, and stay off public pages. |
 | `FEATURE_PRODUCT_EVENTS` | no | Default **off**. Server events. Also set `VITE_FEATURE_PRODUCT_EVENTS=1` for browser events. Uses the existing public PostHog key. No personal details in properties. |
 | `FEATURE_NCF_STREET` | no | Default **off**. Set `1` to geocode street addresses with OpenStreetMap Nominatim. No Google key. |
+| `FEATURE_INSPECTION_SYNC` | no | Default **off**. Public inspection summary with the source and date. KidEase does not invent an outcome. |
 | `POSTHOG_FLAGS_KEY` | no | Server-only. Same `phc_…` project key as analytics. Leave blank to disable remote. Never commit a real value. |
 | `POSTHOG_FLAGS_HOST` | no | Defaults to `POSTHOG_HOST` or `https://us.i.posthog.com`. |
 

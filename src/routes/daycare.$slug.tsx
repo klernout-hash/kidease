@@ -229,6 +229,7 @@ export function Listing() {
     nearby: Card[];
     jobs?: CentreJobPost[];
     inspections?: PublicInspection[];
+    inspectionSync?: { inspectedOn: string; outcome: string; summary: string; sourceUrl: string; source: string } | null;
     reviewReports?: boolean;
     eceJobs?: boolean;
   } | null>(null);
@@ -850,6 +851,19 @@ export function Listing() {
             claimed={Boolean(d.claimed)}
             inspections={data.inspections}
           />
+          {data.inspectionSync ? (
+            <section className="mt-4 rounded-2xl bg-surface p-4 text-sm leading-6" data-ke="inspection-sync">
+              <h2 className="font-display text-2xl">{locale === "fr" ? "Dernière inspection" : "Latest inspection"}</h2>
+              <p className="mt-2">
+                {data.inspectionSync.inspectedOn} · {data.inspectionSync.outcome}
+              </p>
+              <p>
+                <a className="underline" href={data.inspectionSync.sourceUrl}>
+                  {data.inspectionSync.source}
+                </a>
+              </p>
+            </section>
+          ) : null}
         </header>
         <ListingJumpNav />
         <div className="mt-6 grid items-start gap-8 md:grid-cols-[minmax(0,1.15fr)_minmax(16rem,20rem)]">
