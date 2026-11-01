@@ -7,13 +7,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import {
   GDL_API,
-  BOOK_DASH_SOURCE,
-  bookDashLanguage,
   localBookPath,
-  parseBookDashCreators,
-  parseBookDashFiles,
-  parseBookDashIndex,
-  planBookDashFile,
   planGdlBook,
   sha256Hex,
   shaMatches,
@@ -46,9 +40,8 @@ async function saveBook(plan, bytes, fileName) {
   const readBack = new Uint8Array(await readFile(absolute));
   const sha256 = sha256Hex(bytes);
   if (!shaMatches(readBack, sha256)) throw new Error("Saved file did not match its hash");
-  const { remoteFile, remotePath, ...stored } = plan;
+  const { remoteFile, ...stored } = plan;
   void remoteFile;
-  void remotePath;
   return { ...stored, sha256, localPath };
 }
 
@@ -74,41 +67,14 @@ async function importGdl() {
   return stored;
 }
 
-async function importBookDash() {
-  const stored = [];
-  const indexHtml = await (await fetch(BOOK_DASH_SOURCE, { headers: { "user-agent": "Mozilla/5.0" } })).text();
-  const books = parseBookDashIndex(indexHtml).slice(0, 8);
-  for (const book of books) {
-    if (stored.length >= limit) break;
-    const page = await (await fetch(`https://bookdash.org/books/${book.slug}/`, { headers: { "user-agent": "Mozilla/5.0" } })).text();
-    const creators = parseBookDashCreators(page.replace(/<[^>]+>/g, " "));
-    for (const lang of langs) {
-      const folder = lang === "fr" ? `/ebook/fr_french` : `/ebook/en_english`;
-      const folderUrl = `${BOOK_DASH_SOURCE}?book=${encodeURIComponent(book.slug)}&folder=${encodeURIComponent(folder)}`;
-      const folderHtml = await (await fetch(folderUrl, { headers: { "user-agent": "Mozilla/5.0" } })).text();
-      const file = parseBookDashFiles(folderHtml).find((row) => row.name.toLowerCase().endsWith(".pdf") && bookDashLanguage(row.path) === lang);
-      if (!file) continue;
-      const planned = planBookDashFile({ slug: book.slug, title: book.title, path: file.path, creators });
-      if (!planned.keep) continue;
-      const download = `${BOOK_DASH_SOURCE}?download=${encodeURIComponent(file.path)}`;
-      const bytes = await fetchBytes(download, {
-        "user-agent": "Mozilla/5.0",
-        referer: folderUrl,
-      });
-      if (!bytes.slice(0, 4).every((byte, index) => byte === "%PDF".charCodeAt(index))) continue;
-      if (bytes.byteLength > 8_000_000) continue;
-      stored.push(await saveBook(planned.plan, bytes, file.name));
-      break;
-    }
-  }
-  return stored;
-}
-
 const gdl = await importGdl().catch(() => []);
-const dash = await importBookDash().catch(() => []);
 const previous = JSON.parse(await readFile(manifestPath, "utf8").catch(() => "{\"books\":[]}"));
-const byId = new Map((previous.books || []).map((book) => [book.id, book]));
-for (const book of [...gdl, ...dash]) byId.set(book.id, book);
+const byId = new Map(
+  (previous.books || [])
+    .filter((book) => book.source === "gdl" || book.source === "storyweaver")
+    .map((book) => [book.id, book]),
+);
+for (const book of gdl) byId.set(book.id, book);
 const books = [...byId.values()];
 await writeFile(manifestPath, `${JSON.stringify({ books }, null, 2)}\n`);
 process.stdout.write(`Stored ${books.length} local book${books.length === 1 ? "" : "s"}.\n`);

@@ -29,17 +29,16 @@ import {
 import { flattenCurriculumLocale, curriculumActivity, curriculumLocaleList, contentLocales } from "../src/lib/curriculum/text.ts";
 import { GOAL_THEMES } from "../src/lib/curriculum/pack.ts";
 import {
-  bookDashCredit,
   pickStoryBooks,
   classifyLicence,
   creditVisible,
   emptyCreators,
-  parseBookDashCreators,
-  parseBookDashIndex,
+  gdlCredit,
   planGdlBook,
   readerFileAllowed,
   sha256Hex,
   shaMatches,
+  storyweaverCredit,
   storyweaverItemAllowed,
   storyweaverStatus,
   uniteForLiteracy,
@@ -197,6 +196,7 @@ test("every curriculum string exists in all 10 menu languages", () => {
       if (locale !== "en" && english[key].length > 24) {
         assert.notEqual(pack[key], english[key], `${locale} ${key} still English`);
       }
+      assert.equal(/book[\s-]?dash/i.test(pack[key]), false, `${locale} ${key}`);
     }
   }
   for (const province of ["MB", "ON", "QC", "NB"]) {
@@ -230,7 +230,7 @@ test("every curriculum string exists in all 10 menu languages", () => {
   assert.equal(matched.fallback, "none");
 });
 
-test("story corner keeps CC BY, skips NC and ND, and credits Book Dash", () => {
+test("story corner keeps CC BY, skips NC and ND, and credits Global Digital Library and StoryWeaver", () => {
   assert.equal(classifyLicence("CC-BY-4.0"), "by");
   assert.equal(classifyLicence("cc-by-sa-4-0"), "by-sa");
   assert.equal(classifyLicence("CC BY-NC 4.0"), "skip");
@@ -246,22 +246,23 @@ test("story corner keeps CC BY, skips NC and ND, and credits Book Dash", () => {
   const creators = emptyCreators();
   creators.author = "Ada Writer";
   creators.illustrator = "Bea Draw";
-  creators.designer = "Cam Page";
-  creators.editor = "Dee Edit";
-  const credit = bookDashCredit({ ...creators, changeNote: "" });
+  creators.translator = "Cam Page";
+  creators.publisher = "StoryWeaver";
+  const credit = storyweaverCredit({ ...creators, title: "A small boat" });
+  assert.match(credit, /A small boat/);
   assert.match(credit, /Ada Writer/);
   assert.match(credit, /Bea Draw/);
   assert.match(credit, /Cam Page/);
-  assert.match(credit, /Dee Edit/);
-  assert.match(credit, /www\.bookdash\.org/);
-  assert.match(credit, /CC BY 4\.0/);
-  const changed = bookDashCredit({ ...creators, changeNote: "Translated into French by KidEase." });
-  assert.match(changed, /Translated into French/);
+  assert.match(credit, /StoryWeaver/);
+  assert.match(credit, /creativecommons\.org\/licenses\/by\/4\.0/);
+  const libraryCredit = gdlCredit({ title: "Rain walk", publisher: "StoryWeaver", licence: "CC BY 4.0" });
+  assert.match(libraryCredit, /Global Digital Library/);
+  assert.match(libraryCredit, /creativecommons\.org\/licenses\/by\/4\.0/);
   const bytes = new Uint8Array([1, 2, 3, 4]);
   const hash = sha256Hex(bytes);
   assert.equal(shaMatches(bytes, hash), true);
   assert.equal(shaMatches(bytes, "ab"), false);
-  assert.equal(readerFileAllowed("https://bookdash.org/file.pdf"), false);
+  assert.equal(readerFileAllowed("https://content.digitallibrary.io/file.h5p"), false);
   assert.equal(readerFileAllowed("data/story-corner/files/book/page.pdf"), true);
   const skipped = planGdlBook({ title: "NC book", license: [{ slug: "cc-by-nc-4-0" }], h5pUrl: "https://content.digitallibrary.io/x.h5p", language: [{ slug: "en" }] });
   assert.equal(skipped.keep, false);
@@ -275,29 +276,34 @@ test("story corner keeps CC BY, skips NC and ND, and credits Book Dash", () => {
   });
   assert.equal(kept.keep, true);
   if (kept.keep) {
+    assert.equal(kept.plan.source, "gdl");
     assert.equal(kept.plan.language, "fr");
     assert.equal(kept.plan.unmodified, true);
     assert.equal(kept.plan.licenceClass, "by");
     assert.equal(Object.hasOwn(kept.plan, "localPath"), false);
+    assert.equal(creditVisible(kept.plan), true);
   }
-  const index = parseBookDashIndex(
-    '<a href="?book=a-beautiful-day"><span class="display-ib display-mid">A Beautiful Day</span></a>',
+  assert.equal(
+    creditVisible({ credit, licenceUrl: "https://creativecommons.org/licenses/by/4.0/", source: "storyweaver" }),
+    true,
   );
-  assert.equal(index[0].slug, "a-beautiful-day");
-  const parsed = parseBookDashCreators("Created by Raeesah Vawda (Designer) Lindy Pelzl (Illustrator) Elana Bregin (Writer) Sign up");
-  assert.equal(parsed.author, "Elana Bregin");
-  assert.equal(parsed.illustrator, "Lindy Pelzl");
-  assert.equal(parsed.designer, "Raeesah Vawda");
-  assert.match(parsed.editor, /Not named/);
-  const card = {
-    credit,
-    licenceUrl: "https://creativecommons.org/licenses/by/4.0/",
-    source: "bookdash",
-    logoPath: "/story-corner/book-dash-logo.jpg",
-    creators,
-  };
-  assert.equal(creditVisible(card), true);
-  assert.match(src("src/components/curriculum-pack.tsx"), /target="_blank"/);
-  assert.doesNotMatch(src("src/components/curriculum-pack.tsx"), /<iframe/);
-  assert.match(src("public/story-corner/book-dash-logo.jpg").length > 100 ? "logo" : "", /logo/);
+  assert.equal(
+    creditVisible({ credit, licenceUrl: "https://creativecommons.org/licenses/by/4.0/", source: "other" }),
+    false,
+  );
+  const shelf = src("src/components/curriculum-pack.tsx");
+  assert.match(shelf, /target="_blank"/);
+  assert.doesNotMatch(shelf, /<iframe/);
+  for (const file of [
+    "src/lib/story-corner/open-books.ts",
+    "src/components/curriculum-pack.tsx",
+    "src/lib/flags.ts",
+    "src/lib/server/curriculum-pack.ts",
+    "scripts/import-story-corner.mjs",
+    "docs/curriculum.md",
+    "docs/curriculum/RESEARCH.md",
+    "docs/flags.md",
+  ]) {
+    assert.equal(/book[\s-]?dash/i.test(src(file)), false, file);
+  }
 });

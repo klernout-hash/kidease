@@ -657,7 +657,6 @@ export const listStoryCorner = createServerFn({ method: "GET" })
         age: book.age,
         credit: book.credit,
         licenceUrl: book.licenceUrl,
-        logoPath: book.logoPath,
         attributionUrl: book.attributionUrl,
         changeNote: book.changeNote,
         source: book.source,

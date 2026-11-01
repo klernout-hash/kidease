@@ -41,7 +41,7 @@ Parent inbox **Video** stays hidden until `VIDEO_SDK_WIRED` is true (Twilio Vide
 | `FEATURE_PROVINCIAL_VACANCY_INDEX` | off | Confirm history rows and `spots_updated_at` on a real confirm or spot-count change. | Per-province pages on `/vacancy-index?province=mb` (and `/fr`). Freshness bands and the province file total. | National `/vacancy-index` stays. No email or SMS. |
 | `FEATURE_CURRICULUM_PACK` | off | Province goals, story notes, plans, and coverage. | Learning desk on `/provider?desk=learning`. | Hidden. Listing is unchanged. |
 | `FEATURE_CURRICULUM_PACK_LIVE` | off | Show a published story to the enrolled parent. | Parent timeline and replies. | Publish is written to the log only. |
-| `FEATURE_STORY_CORNER` | off | Read CC BY books stored on disk. | Story corner inside the learning desk. | Shelf hidden. No remote book file is loaded. |
+| `FEATURE_STORY_CORNER` | off | Read Global Digital Library CC BY books stored on disk. StoryWeaver stays off. Unite for Literacy is a link out. | Story corner inside the learning desk. | Shelf hidden. No remote book file is loaded. |
 
 Automation-pack flags (`FEATURE_POSTHOG_ERRORS`, `FEATURE_OPS_ALERTS`, `FEATURE_CRON_HEARTBEATS`, `FEATURE_INVOICE_REMINDERS`, `FEATURE_PAYMENT_DUNNING`, `FEATURE_MISSING_INFO_REMINDERS`, `FEATURE_DAYCARE_ONBOARDING`, `FEATURE_CLAIM_LISTING_REMINDERS`, `FEATURE_STALE_OPEN_SPOTS`, `FEATURE_POST_TOUR_FOLLOWUP`, `FEATURE_ENROLMENT_REVIEW`, `FEATURE_NEON_BACKUP`) default **off**. Turning one on is dry-run until `FEATURE_*_LIVE=1`. See `docs/automations.md`. Do not turn on `SUBSCRIPTIONS_ENABLED`, `SHOW_PAY_CTAS`, or in-app purchases.
 | `FEATURE_REVIEW_REPORTS` | off | `reportListingReview` writes a safety-queue row for one published review. | Report button on the listing. Search cards, the profile, and compare can show a rating from the first review. | Three-review summaries stay. No email or SMS. |
@@ -113,7 +113,7 @@ Env still works as a fallback when PostHog is down (last successful overlay is k
 | `FEATURE_PROVINCIAL_VACANCY_INDEX` | no | Default **off**. Set `1` to show a page per province, confirm history, and freshness bands. The national index stays either way. |
 | `FEATURE_CURRICULUM_PACK` | no | Default **off**. Province learning pack. Does not turn on subscriptions, SMS, or push. |
 | `FEATURE_CURRICULUM_PACK_LIVE` | no | Default **off**. Parents see published stories only when this is also on. |
-| `FEATURE_STORY_CORNER` | no | Default **off**. Local CC BY books. StoryWeaver stays off until a token exists, and this build does not call it. |
+| `FEATURE_STORY_CORNER` | no | Default **off**. Local Global Digital Library books. StoryWeaver stays off until a token exists, and this build does not call it. Unite for Literacy is a link out. |
 | `FEATURE_REVIEW_REPORTS` | no | Default **off**. Set `1` to let a signed-in person report a published review and to show a rating from the first review. |
 | `FEATURE_TOUR_PIPELINE` | no | Default **off**. Set `1` for no-show, moved reminders, and a calendar file in the tour email. |
 | `FEATURE_NEED_CARE_FAST` | no | Default **off**. Set `1` to sort Need care fast by open spots, then distance. |

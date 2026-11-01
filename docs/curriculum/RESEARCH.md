@@ -123,7 +123,6 @@ A rule is **CONFIRMED** when the sentence below was read on the cited page. **PL
 ## Story Corner sources
 
 - Global Digital Library open API, no account: https://content.digitallibrary.io/wp-json/content-api/v1/books/{lang}
-- Book Dash source files, CC BY 4.0: https://bookdash.org/book-source-files/
-- Book Dash credit rules: https://bookdash.org/re-using-the-book-dash-content/
+- StoryWeaver, CC BY 4.0, not called in this build: https://storyweaver.org.in/
 - Unite for Literacy, link only: https://www.uniteforliteracy.com/
 - StoryWeaver is not called. Read Along videos are NC-ND and are skipped.

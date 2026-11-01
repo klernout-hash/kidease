@@ -7,11 +7,6 @@
 import { createHash } from "node:crypto";
 import { GOAL_THEMES, PROVINCE_CODES, type AgeBand, type GoalTheme, type ProvinceCode } from "../curriculum/pack.ts";
 
-export const BOOK_DASH_SITE = "https://www.bookdash.org/";
-export const BOOK_DASH_SOURCE = "https://bookdash.org/book-source-files/";
-export const BOOK_DASH_LICENCE = "https://creativecommons.org/licenses/by/4.0/";
-export const BOOK_DASH_CREDIT_GUIDE = "https://bookdash.org/re-using-the-book-dash-content/";
-export const BOOK_DASH_LOGO = "/story-corner/book-dash-logo.jpg";
 export const GDL_API = "https://content.digitallibrary.io/wp-json/content-api/v1/books/";
 export const UNITE_FOR_LITERACY_URL = "https://www.uniteforliteracy.com/";
 
@@ -28,7 +23,7 @@ export type BookCreators = {
 
 export type StoredBook = {
   id: string;
-  source: "gdl" | "bookdash" | "storyweaver";
+  source: "gdl" | "storyweaver";
   sourceKey: string;
   title: string;
   language: "en" | "fr" | "other";
@@ -43,7 +38,6 @@ export type StoredBook = {
   unmodified: true;
   changeNote: string;
   creators: BookCreators;
-  logoPath: string;
   attributionUrl: string;
 };
 
@@ -74,13 +68,6 @@ export function shaMatches(bytes: Uint8Array, expected: string): boolean {
 
 export function emptyCreators(): BookCreators {
   return { author: NOT_NAMED, illustrator: NOT_NAMED, designer: NOT_NAMED, editor: NOT_NAMED, translator: NOT_NAMED, publisher: NOT_NAMED };
-}
-
-export function bookDashCredit(input: BookCreators & { changeNote?: string }): string {
-  const createdBy = [input.author, input.illustrator, input.designer, input.editor].join(", ");
-  const base = `Originally published by Book Dash under a Creative Commons CC BY 4.0 license. This book can be read for free on www.bookdash.org and was created by ${createdBy}.`;
-  const change = String(input.changeNote || "").trim();
-  return change ? `${change} ${base}` : base;
 }
 
 export function gdlCredit(input: { title: string; publisher: string; licence: string }): string {
@@ -208,96 +195,8 @@ export function planGdlBook(book: GdlBook): { keep: false; reason: string } | { 
       unmodified: true,
       changeNote: "",
       creators,
-      logoPath: "",
       attributionUrl: "https://digitallibrary.io/",
       remoteFile,
-    },
-  };
-}
-
-export function parseBookDashIndex(html: string): { slug: string; title: string }[] {
-  const rows: { slug: string; title: string }[] = [];
-  const re = /href="\?book=([^"&]+)"[\s\S]*?<span class="display-ib display-mid">([^<]+)<\/span>/g;
-  let match: RegExpExecArray | null;
-  while ((match = re.exec(html))) {
-    const slug = decodeURIComponent(match[1] || "").trim();
-    const title = (match[2] || "").trim();
-    if (!slug || slug.startsWith("_") || title.startsWith("_")) continue;
-    if (rows.some((row) => row.slug === slug)) continue;
-    rows.push({ slug, title });
-  }
-  return rows;
-}
-
-export function parseBookDashFiles(html: string): { path: string; name: string }[] {
-  const rows: { path: string; name: string }[] = [];
-  const re = /data-path="([^"]+)"/g;
-  let match: RegExpExecArray | null;
-  while ((match = re.exec(html))) {
-    const path = (match[1] || "").trim();
-    if (!/\.(pdf|png|jpe?g|webp)$/i.test(path)) continue;
-    if (/_old-files|_no-text|print-ready|working/i.test(path)) continue;
-    const name = path.split("/").pop() || path;
-    rows.push({ path, name });
-  }
-  return rows;
-}
-
-export function parseBookDashCreators(text: string): BookCreators {
-  const creators = emptyCreators();
-  const chunk = text.replace(/\s+/g, " ");
-  const start = chunk.toLowerCase().indexOf("created by");
-  const slice = start >= 0 ? chunk.slice(start, start + 500) : chunk;
-  const roleRe = /([A-Z][^()]{1,80}?)\s*\((Designer|Illustrator|Writer|Author|Editor|Translator)\)/g;
-  let match: RegExpExecArray | null;
-  while ((match = roleRe.exec(slice))) {
-    const name = (match[1] || "").replace(/^Created by\s+/i, "").trim();
-    const role = (match[2] || "").toLowerCase();
-    if (!name) continue;
-    if (role === "writer" || role === "author") creators.author = name;
-    if (role === "illustrator") creators.illustrator = name;
-    if (role === "designer") creators.designer = name;
-    if (role === "editor") creators.editor = name;
-    if (role === "translator") creators.translator = name;
-  }
-  creators.publisher = "Book Dash";
-  return creators;
-}
-
-export function bookDashLanguage(path: string): "en" | "fr" | "other" {
-  const value = path.toLowerCase();
-  if (value.includes("/en_") || value.includes("_en.")) return "en";
-  if (value.includes("/fr_") || value.includes("_fr.")) return "fr";
-  return "other";
-}
-
-export function planBookDashFile(input: { slug: string; title: string; path: string; creators: BookCreators; province?: ProvinceCode | null }):
-  | { keep: false; reason: string }
-  | { keep: true; plan: Omit<StoredBook, "sha256" | "localPath"> & { remotePath: string } } {
-  const language = bookDashLanguage(input.path);
-  if (language === "other") return { keep: false, reason: "language is not English or French" };
-  const theme = themeFromText(input.title);
-  const creators = input.creators;
-  return {
-    keep: true,
-    plan: {
-      id: `bookdash-${language}-${input.slug}`,
-      source: "bookdash",
-      sourceKey: input.path,
-      title: input.title,
-      language,
-      age: "preschool",
-      licence: "CC-BY-4.0",
-      licenceUrl: BOOK_DASH_LICENCE,
-      licenceClass: "by",
-      credit: bookDashCredit(creators),
-      goalIds: goalIdsForTheme(theme, input.province),
-      unmodified: true,
-      changeNote: "",
-      creators,
-      logoPath: BOOK_DASH_LOGO,
-      attributionUrl: BOOK_DASH_SITE,
-      remotePath: input.path,
     },
   };
 }
@@ -343,14 +242,9 @@ export function shelfBooks(books: readonly StoredBook[], input: { language?: "en
   });
 }
 
-export function creditVisible(book: Pick<StoredBook, "credit" | "licenceUrl" | "source" | "logoPath" | "creators">): boolean {
+export function creditVisible(book: { credit: string; licenceUrl: string; source: string }): boolean {
+  if (book.source !== "gdl" && book.source !== "storyweaver") return false;
   if (!book.credit.trim() || !book.licenceUrl.startsWith("https://creativecommons.org/")) return false;
-  if (book.source === "bookdash") {
-    const roles = [book.creators.author, book.creators.illustrator, book.creators.designer, book.creators.editor];
-    if (roles.some((role) => !role.trim())) return false;
-    if (!book.logoPath.startsWith("/story-corner/")) return false;
-    if (!book.credit.includes("www.bookdash.org")) return false;
-  }
   return true;
 }
 

@@ -8,11 +8,9 @@ While the live switch is off, a publish is only written to `curriculum_reminder_
 
 Child photos need a parent opt-in on the enrolment. The file is a private key. The page asks for a signed link. Sample activities have no photos of children.
 
-Story Corner reads books from `data/story-corner/`. The importer downloads CC BY files, checks the SHA-256, and does not keep a hotlink. CC BY-NC and ND items are skipped. CC BY-SA items are stored unchanged.
+Story Corner reads books from `data/story-corner/`. The importer downloads Global Digital Library CC BY files, checks the SHA-256, and does not keep a hotlink. CC BY-NC and ND items are skipped. CC BY-SA items are stored unchanged. Each book shows its credit line and a Creative Commons licence link.
 
-Book Dash books show the four creators, a link to bookdash.org, the local Book Dash logo, the CC BY 4.0 link, and a change note when the file was changed. This pack does not change the files.
-
-StoryWeaver stays off until `STORYWEAVER_API_TOKEN` is set. This build still does not call StoryWeaver. Read Along videos are NC-ND and are always skipped.
+StoryWeaver stays off until `STORYWEAVER_API_TOKEN` is set. This build still does not call StoryWeaver. When a book is stored, the credit names the title, author, illustrator, translator, publisher, and StoryWeaver, plus the CC BY 4.0 link. Read Along videos are NC-ND and are always skipped.
 
 Unite for Literacy is a link out. It is not embedded.
 

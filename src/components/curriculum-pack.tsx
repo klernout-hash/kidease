@@ -120,7 +120,7 @@ function BookShelf({
   fallbackOfficial,
   read,
 }: {
-  books: { id: string; title: string; language: "en" | "fr" | "other"; credit: string; licenceUrl: string; logoPath: string; changeNote: string }[];
+  books: { id: string; title: string; language: "en" | "fr" | "other"; credit: string; licenceUrl: string; changeNote: string }[];
   locale: string;
   empty: string;
   fallbackOther: string;
@@ -137,7 +137,6 @@ function BookShelf({
         {shelf.books.map((book) => (
           <li key={book.id} className="rounded-xl bg-surface p-4 ring-1 ring-border">
             <h3 className="font-medium">{book.title}</h3>
-            {book.logoPath ? <img src={book.logoPath} alt="Book Dash" width={150} height={67} className="mt-2 h-auto max-w-full" /> : null}
             <p className="mt-2 text-sm">{book.credit}</p>
             {book.changeNote ? <p className="mt-1 text-sm">{book.changeNote}</p> : null}
             <a className="mt-2 inline-flex min-h-11 items-center text-sm font-medium underline-offset-4 hover:underline" href={book.licenceUrl}>

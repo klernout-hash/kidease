@@ -12,6 +12,7 @@ import {
   localeFromPreference,
   shippedLanguages,
 } from "../src/lib/languages.ts";
+import { preferredOfficialLanguage } from "../src/lib/locale-geo.ts";
 import { defaultDistanceUnit } from "../src/lib/units.ts";
 import { storedCentreName } from "../src/lib/utils.ts";
 
@@ -49,7 +50,9 @@ test("English is the default and an explicit language choice sticks", () => {
   assert.match(useCopy, /isShippedLocale/);
   assert.doesNotMatch(boot, /navigator\.language|geoip|province\s*===\s*["']QC/i);
   assert.doesNotMatch(src("src/lib/languages.ts"), /navigator\.language/);
-  assert.doesNotMatch(src("src/lib/locale-geo.ts"), /accept-language/i);
+  assert.equal(preferredOfficialLanguage("zh-CN,zh;q=0.9,en;q=0.2"), "en");
+  assert.equal(preferredOfficialLanguage("fr-CA,fr;q=0.9"), "fr");
+  assert.equal(preferredOfficialLanguage("zh-CN,zh;q=0.9"), null);
 });
 
 test("French and English copy keys match", async () => {

@@ -468,7 +468,7 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/curriculum.md",
     summary:
-      "Picture books stored on this server from CC BY sources. Default off. Skips NC and ND. Book Dash credit and logo stay on every Book Dash book.",
+      "Picture books stored on this server from the Global Digital Library. Default off. Skips NC and ND. StoryWeaver stays off until a token exists. Unite for Literacy is a link out.",
   },
 ];
 
