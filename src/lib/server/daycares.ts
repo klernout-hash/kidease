@@ -959,6 +959,10 @@ export const getDaycare = createServerFn({ method: "GET" })
       const inspections: PublicInspection[] = inspectionHistoryEnabled()
         ? await readCachedInspections(sql, daycare.province, daycare.licenseNumber)
         : [];
+      const { inspectionSummaryForLicence } = await import("@/lib/server/wiring/inspection-sync");
+      const inspectionSync = daycare.licenseNumber
+        ? await inspectionSummaryForLicence(daycare.province, daycare.licenseNumber)
+        : null;
       const mainStamped = await withProvincial([overlayed[0] ?? daycare]);
       const nearbyStamped = await withProvincial(withQualityCards(nearby, overlayed));
       const mainReady = stampHidden(withInboxReady(mainStamped[0] ?? daycare));
@@ -971,6 +975,7 @@ export const getDaycare = createServerFn({ method: "GET" })
         nearby: nearbyPinned,
         jobs,
         inspections,
+        inspectionSync,
         reviewReports: reviewReportsEnabled(),
         eceJobs: eceJobsEnabled(),
       };
@@ -986,6 +991,7 @@ export const getDaycare = createServerFn({ method: "GET" })
         nearby: catalogNearby,
         jobs: [] as CentreJobPost[],
         inspections: [] as PublicInspection[],
+        inspectionSync: null,
         reviewReports: reviewReportsEnabled(),
         eceJobs: eceJobsEnabled(),
       };
