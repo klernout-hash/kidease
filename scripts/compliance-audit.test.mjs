@@ -1,0 +1,30 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { test } from "node:test";
+import { fileURLToPath } from "node:url";
+import { auditMode, purgePlan, retentionFor } from "../src/lib/compliance/audit.ts";
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const src = (rel) => readFileSync(join(root, rel), "utf8");
+test("audit purge is a dry run until the live flag is on", () => {
+  assert.equal(auditMode({}), "off");
+  assert.equal(auditMode({ FEATURE_AUDIT_RETENTION: "1" }), "dry_run");
+  assert.equal(retentionFor("ON")?.years, 3);
+  assert.equal(retentionFor("ON")?.verified, true);
+  assert.equal(retentionFor("BC")?.verified, false);
+  const old = [{ id: "a", province: "ON", at: "2020-01-01T00:00:00Z" }];
+  const now = new Date("2026-06-01T00:00:00Z");
+  assert.equal(purgePlan(old, now, "off").length, 0);
+  assert.equal(purgePlan(old, now, "dry_run")[0].action, "would_delete");
+  assert.equal(purgePlan(old, now, "live")[0].action, "delete");
+  const fresh = [{ id: "b", province: "ON", at: "2026-05-01T00:00:00Z" }];
+  assert.equal(purgePlan(fresh, now, "live").length, 0);
+});
+test("audit log is append-only in the migration", () => {
+  assert.match(src(".env.example"), /^FEATURE_AUDIT_RETENTION=0$/m);
+  assert.match(src(".env.example"), /^FEATURE_AUDIT_RETENTION_LIVE=0$/m);
+  assert.match(src("migrations/0155_gov_audit_retention.sql"), /append-only/);
+  assert.match(src("migrations/0155_gov_audit_retention.sql"), /before update/);
+  assert.match(src("src/routes/gov_.audit.tsx"), /guardGovDesk/);
+  assert.match(src("src/components/compliance/frame.tsx"), /href="\/help"/);
+});

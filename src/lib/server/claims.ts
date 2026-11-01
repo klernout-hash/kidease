@@ -779,6 +779,16 @@ export const updateListing = createServerFn({ method: "POST" })
       before: beforeWatch,
       after: written,
     }).catch(() => undefined);
+    const { noteMonthlyUnchecked } = await import("@/lib/server/compliance-fees");
+    const provinceRows = await sql<{ province: string }>`select province from daycares where id = ${data.daycareId} limit 1`.catch(() => []);
+    const monthly = Math.round((Number(data.infantMonthly) || 0) * 100);
+    await noteMonthlyUnchecked({
+      daycareId: data.daycareId,
+      province: provinceRows[0]?.province || "",
+      monthlyCents: monthly,
+      userId: context.userId,
+      source: "listing",
+    }).catch(() => undefined);
     return { ok: true as const };
   });
 

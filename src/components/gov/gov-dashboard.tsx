@@ -271,6 +271,38 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
             ))}
           </ul>
         </section>
+        <nav className="mt-8 flex flex-col gap-2" aria-label={data.locale === "fr" ? "Outils de conformité" : "Compliance tools"}>
+          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/compliance" : "/gov/compliance"}>
+            {data.locale === "fr" ? "Dates de conformité" : "Compliance dates"}
+          </a>
+          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/ratios" : "/gov/ratios"}>
+            {data.locale === "fr" ? "Ratios" : "Room ratios"}
+          </a>
+          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/funding" : "/gov/funding"}>
+            {data.locale === "fr" ? "Rapports de financement" : "Funding reports"}
+          </a>
+          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/incidents" : "/gov/incidents"}>
+            {data.locale === "fr" ? "Événements graves" : "Serious occurrences"}
+          </a>
+          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/complaints" : "/gov/complaints"}>
+            {data.locale === "fr" ? "Plaintes" : "Complaints"}
+          </a>
+          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/broadcasts" : "/gov/broadcasts"}>
+            {data.locale === "fr" ? "Avis d’urgence" : "Emergency notice"}
+          </a>
+          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/screening" : "/gov/screening"}>
+            {data.locale === "fr" ? "Vérifications du personnel" : "Staff screening"}
+          </a>
+          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/fee-caps" : "/gov/fee-caps"}>
+            {data.locale === "fr" ? "Plafonds de tarifs" : "Fee caps"}
+          </a>
+          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/audit" : "/gov/audit"}>
+            {data.locale === "fr" ? "Journal" : "Audit log"}
+          </a>
+          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/demand" : "/gov/demand"}>
+            {data.locale === "fr" ? "Demande de places" : "Space demand"}
+          </a>
+        </nav>
       </main>
     </div>
   );

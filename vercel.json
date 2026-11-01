@@ -60,6 +60,42 @@
     {
       "path": "/api/automations?job=neon-backup",
       "schedule": "30 8 * * 0"
+    },
+    {
+      "path": "/api/compliance/calendar",
+      "schedule": "20 13 * * *"
+    },
+    {
+      "path": "/api/compliance/ratios",
+      "schedule": "35 13 * * *"
+    },
+    {
+      "path": "/api/compliance/funding",
+      "schedule": "40 13 1 * *"
+    },
+    {
+      "path": "/api/compliance/incidents",
+      "schedule": "12 * * * *"
+    },
+    {
+      "path": "/api/compliance/complaints",
+      "schedule": "15 14 * * *"
+    },
+    {
+      "path": "/api/compliance/screening",
+      "schedule": "25 13 * * *"
+    },
+    {
+      "path": "/api/compliance/fee-caps",
+      "schedule": "45 13 * * *"
+    },
+    {
+      "path": "/api/compliance/audit",
+      "schedule": "10 14 * * *"
+    },
+    {
+      "path": "/api/compliance/demand",
+      "schedule": "50 13 1 * *"
     }
   ],
   "rewrites": [
@@ -77,329 +113,867 @@
     }
   ],
   "redirects": [
-    { "source": "/admin", "has": [{ "type": "header", "key": "user-agent", "value": "KidEaseNative" }], "destination": "/app-admin-unavailable", "permanent": false },
-    { "source": "/admin/:path*", "has": [{ "type": "header", "key": "user-agent", "value": "KidEaseNative" }], "destination": "/app-admin-unavailable", "permanent": false },
-    { "source": "/admin-:slug", "has": [{ "type": "header", "key": "user-agent", "value": "KidEaseNative" }], "destination": "/app-admin-unavailable", "permanent": false },
-    { "source": "/admin-:slug/:path*", "has": [{ "type": "header", "key": "user-agent", "value": "KidEaseNative" }], "destination": "/app-admin-unavailable", "permanent": false },
-    { "source": "/fr/admin", "has": [{ "type": "header", "key": "user-agent", "value": "KidEaseNative" }], "destination": "/app-admin-unavailable", "permanent": false },
-    { "source": "/fr/admin/:path*", "has": [{ "type": "header", "key": "user-agent", "value": "KidEaseNative" }], "destination": "/app-admin-unavailable", "permanent": false },
-    { "source": "/api/admin/:path*", "has": [{ "type": "header", "key": "user-agent", "value": "KidEaseNative" }], "destination": "/app-admin-unavailable", "permanent": false },
-    { "source": "/admin", "has": [{ "type": "cookie", "key": "ke_shell", "value": "native" }], "destination": "/app-admin-unavailable", "permanent": false },
-    { "source": "/admin/:path*", "has": [{ "type": "cookie", "key": "ke_shell", "value": "native" }], "destination": "/app-admin-unavailable", "permanent": false },
-    { "source": "/admin-:slug", "has": [{ "type": "cookie", "key": "ke_shell", "value": "native" }], "destination": "/app-admin-unavailable", "permanent": false },
-    { "source": "/admin-:slug/:path*", "has": [{ "type": "cookie", "key": "ke_shell", "value": "native" }], "destination": "/app-admin-unavailable", "permanent": false },
-    { "source": "/fr/admin", "has": [{ "type": "cookie", "key": "ke_shell", "value": "native" }], "destination": "/app-admin-unavailable", "permanent": false },
-    { "source": "/fr/admin/:path*", "has": [{ "type": "cookie", "key": "ke_shell", "value": "native" }], "destination": "/app-admin-unavailable", "permanent": false },
-    { "source": "/api/admin/:path*", "has": [{ "type": "cookie", "key": "ke_shell", "value": "native" }], "destination": "/app-admin-unavailable", "permanent": false },
-    { "source": "/account/delete", "destination": "/delete-account", "statusCode": 301 },
-    { "source": "/fr/account/delete", "destination": "/fr/delete-account", "statusCode": 301 },
-    { "source": "/signin", "destination": "/login", "statusCode": 301 },
-    { "source": "/sign-in", "destination": "/login", "statusCode": 301 },
-    { "source": "/sign-up", "destination": "/signup", "statusCode": 301 },
-    { "source": "/fr/signin", "destination": "/fr/login", "statusCode": 301 },
-    { "source": "/fr/sign-in", "destination": "/fr/login", "statusCode": 301 },
-    { "source": "/fr/sign-up", "destination": "/fr/signup", "statusCode": 301 },
-    { "source": "/for-daycares", "destination": "/claim", "statusCode": 301 },
-    { "source": "/.well-known/change-password", "destination": "/forgot-password", "permanent": false },
     {
       "source": "/admin",
-      "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "KidEaseNative"
+        }
+      ],
+      "destination": "/app-admin-unavailable",
+      "permanent": false
+    },
+    {
+      "source": "/admin/:path*",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "KidEaseNative"
+        }
+      ],
+      "destination": "/app-admin-unavailable",
+      "permanent": false
+    },
+    {
+      "source": "/admin-:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "KidEaseNative"
+        }
+      ],
+      "destination": "/app-admin-unavailable",
+      "permanent": false
+    },
+    {
+      "source": "/admin-:slug/:path*",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "KidEaseNative"
+        }
+      ],
+      "destination": "/app-admin-unavailable",
+      "permanent": false
+    },
+    {
+      "source": "/fr/admin",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "KidEaseNative"
+        }
+      ],
+      "destination": "/app-admin-unavailable",
+      "permanent": false
+    },
+    {
+      "source": "/fr/admin/:path*",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "KidEaseNative"
+        }
+      ],
+      "destination": "/app-admin-unavailable",
+      "permanent": false
+    },
+    {
+      "source": "/api/admin/:path*",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "KidEaseNative"
+        }
+      ],
+      "destination": "/app-admin-unavailable",
+      "permanent": false
+    },
+    {
+      "source": "/admin",
+      "has": [
+        {
+          "type": "cookie",
+          "key": "ke_shell",
+          "value": "native"
+        }
+      ],
+      "destination": "/app-admin-unavailable",
+      "permanent": false
+    },
+    {
+      "source": "/admin/:path*",
+      "has": [
+        {
+          "type": "cookie",
+          "key": "ke_shell",
+          "value": "native"
+        }
+      ],
+      "destination": "/app-admin-unavailable",
+      "permanent": false
+    },
+    {
+      "source": "/admin-:slug",
+      "has": [
+        {
+          "type": "cookie",
+          "key": "ke_shell",
+          "value": "native"
+        }
+      ],
+      "destination": "/app-admin-unavailable",
+      "permanent": false
+    },
+    {
+      "source": "/admin-:slug/:path*",
+      "has": [
+        {
+          "type": "cookie",
+          "key": "ke_shell",
+          "value": "native"
+        }
+      ],
+      "destination": "/app-admin-unavailable",
+      "permanent": false
+    },
+    {
+      "source": "/fr/admin",
+      "has": [
+        {
+          "type": "cookie",
+          "key": "ke_shell",
+          "value": "native"
+        }
+      ],
+      "destination": "/app-admin-unavailable",
+      "permanent": false
+    },
+    {
+      "source": "/fr/admin/:path*",
+      "has": [
+        {
+          "type": "cookie",
+          "key": "ke_shell",
+          "value": "native"
+        }
+      ],
+      "destination": "/app-admin-unavailable",
+      "permanent": false
+    },
+    {
+      "source": "/api/admin/:path*",
+      "has": [
+        {
+          "type": "cookie",
+          "key": "ke_shell",
+          "value": "native"
+        }
+      ],
+      "destination": "/app-admin-unavailable",
+      "permanent": false
+    },
+    {
+      "source": "/account/delete",
+      "destination": "/delete-account",
+      "statusCode": 301
+    },
+    {
+      "source": "/fr/account/delete",
+      "destination": "/fr/delete-account",
+      "statusCode": 301
+    },
+    {
+      "source": "/signin",
+      "destination": "/login",
+      "statusCode": 301
+    },
+    {
+      "source": "/sign-in",
+      "destination": "/login",
+      "statusCode": 301
+    },
+    {
+      "source": "/sign-up",
+      "destination": "/signup",
+      "statusCode": 301
+    },
+    {
+      "source": "/fr/signin",
+      "destination": "/fr/login",
+      "statusCode": 301
+    },
+    {
+      "source": "/fr/sign-in",
+      "destination": "/fr/login",
+      "statusCode": 301
+    },
+    {
+      "source": "/fr/sign-up",
+      "destination": "/fr/signup",
+      "statusCode": 301
+    },
+    {
+      "source": "/for-daycares",
+      "destination": "/claim",
+      "statusCode": 301
+    },
+    {
+      "source": "/.well-known/change-password",
+      "destination": "/forgot-password",
+      "permanent": false
+    },
+    {
+      "source": "/admin",
+      "has": [
+        {
+          "type": "host",
+          "value": "(.+)\\.vercel\\.app"
+        }
+      ],
       "destination": "https://www.kidease.ca/admin",
       "permanent": false
     },
     {
       "source": "/admin/:path*",
-      "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "(.+)\\.vercel\\.app"
+        }
+      ],
       "destination": "https://www.kidease.ca/admin/:path*",
       "permanent": false
     },
     {
       "source": "/admin-contracts",
-      "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "(.+)\\.vercel\\.app"
+        }
+      ],
       "destination": "https://www.kidease.ca/admin-contracts",
       "permanent": false
     },
     {
       "source": "/admin-contracts/:path*",
-      "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "(.+)\\.vercel\\.app"
+        }
+      ],
       "destination": "https://www.kidease.ca/admin-contracts/:path*",
       "permanent": false
     },
     {
       "source": "/admin-chat",
-      "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "(.+)\\.vercel\\.app"
+        }
+      ],
       "destination": "https://www.kidease.ca/admin-chat",
       "permanent": false
     },
     {
       "source": "/admin-chat/:path*",
-      "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "(.+)\\.vercel\\.app"
+        }
+      ],
       "destination": "https://www.kidease.ca/admin-chat/:path*",
       "permanent": false
     },
     {
       "source": "/admin-ranking",
-      "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "(.+)\\.vercel\\.app"
+        }
+      ],
       "destination": "https://www.kidease.ca/admin-ranking",
       "permanent": false
     },
     {
       "source": "/api/admin/:path*",
-      "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "(.+)\\.vercel\\.app"
+        }
+      ],
       "destination": "https://www.kidease.ca/api/admin/:path*",
       "permanent": false
     },
     {
       "source": "/support",
-      "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "(.+)\\.vercel\\.app"
+        }
+      ],
       "destination": "https://www.kidease.ca/support",
       "permanent": false
     },
     {
       "source": "/support/:path*",
-      "has": [{ "type": "host", "value": "(.+)\\.vercel\\.app" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "(.+)\\.vercel\\.app"
+        }
+      ],
       "destination": "https://www.kidease.ca/support/:path*",
       "permanent": false
     },
-    { "source": "/explore", "destination": "/search", "permanent": true },
-    { "source": "/listing", "destination": "/search", "permanent": false },
-    { "source": "/listing/:slug", "destination": "/daycare/:slug", "permanent": false },
-    { "source": "/daycares", "destination": "/search", "permanent": false },
-    { "source": "/daycares/:city", "destination": "/search?q=:city", "permanent": false },
+    {
+      "source": "/explore",
+      "destination": "/search",
+      "permanent": true
+    },
+    {
+      "source": "/listing",
+      "destination": "/search",
+      "permanent": false
+    },
+    {
+      "source": "/listing/:slug",
+      "destination": "/daycare/:slug",
+      "permanent": false
+    },
+    {
+      "source": "/daycares",
+      "destination": "/search",
+      "permanent": false
+    },
+    {
+      "source": "/daycares/:city",
+      "destination": "/search?q=:city",
+      "permanent": false
+    },
     {
       "source": "/daycare/little-fox-child-care-cetnre-103205",
       "destination": "/daycare/little-fox-child-care-centre-103205",
       "permanent": true
     },
-    { "source": "/childcare-benefits-program", "destination": "/benefits", "permanent": true },
-    { "source": "/meet-the-team", "destination": "/team", "permanent": true },
-    { "source": "/pricing", "destination": "/plans", "permanent": true },
-    { "source": "/fr/pricing", "destination": "/fr/plans", "permanent": true }
+    {
+      "source": "/childcare-benefits-program",
+      "destination": "/benefits",
+      "permanent": true
+    },
+    {
+      "source": "/meet-the-team",
+      "destination": "/team",
+      "permanent": true
+    },
+    {
+      "source": "/pricing",
+      "destination": "/plans",
+      "permanent": true
+    },
+    {
+      "source": "/fr/pricing",
+      "destination": "/fr/plans",
+      "permanent": true
+    }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(self), geolocation=(self), payment=(self)" },
-        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin-allow-popups" }
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), microphone=(self), geolocation=(self), payment=(self)"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin-allow-popups"
+        }
       ]
     },
     {
       "source": "/daycare/qa-reviewer-demo-centre",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
     },
     {
       "source": "/fr/daycare/qa-reviewer-demo-centre",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
     },
     {
       "source": "/book/qa-reviewer-demo-centre",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
     },
     {
       "source": "/admin",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
     },
     {
       "source": "/admin-contracts",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
     },
     {
       "source": "/admin-chat",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
     },
     {
       "source": "/admin-ranking",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
     },
     {
       "source": "/admin-chat/(.*)",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
     },
     {
       "source": "/call",
       "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
-        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(self), geolocation=(self), payment=(self)" }
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), microphone=(self), geolocation=(self), payment=(self)"
+        }
       ]
     },
     {
       "source": "/call/(.*)",
       "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
-        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(self), geolocation=(self), payment=(self)" }
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), microphone=(self), geolocation=(self), payment=(self)"
+        }
       ]
     },
     {
       "source": "/video",
       "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
-        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(self), geolocation=(self), payment=(self)" }
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), microphone=(self), geolocation=(self), payment=(self)"
+        }
       ]
     },
     {
       "source": "/video/(.*)",
       "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
-        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(self), geolocation=(self), payment=(self)" }
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), microphone=(self), geolocation=(self), payment=(self)"
+        }
       ]
     },
     {
       "source": "/admin/(.*)",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
     },
     {
       "source": "/support",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
     },
     {
       "source": "/support/(.*)",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
     },
     {
       "source": "/daycare/test-ghost",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
     },
     {
       "source": "/book/test-ghost",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
     },
     {
       "source": "/daycare/test-ghost-claim-lab",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
     },
     {
       "source": "/book/test-ghost-claim-lab",
-      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
     },
     {
       "source": "/sitemap.xml",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600, s-maxage=86400" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, s-maxage=86400"
+        }
+      ]
     },
     {
       "source": "/robots.txt",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600, s-maxage=86400" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, s-maxage=86400"
+        }
+      ]
     },
     {
       "source": "/photos/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     },
     {
       "source": "/video/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     },
     {
       "source": "/logo.png",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     },
     {
       "source": "/logo.svg",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     },
     {
       "source": "/logo-transparent.png",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     },
     {
       "source": "/logo-transparent.svg",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     },
     {
       "source": "/fonts/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     },
     {
       "source": "/img",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     },
     {
       "source": "/icon-512.png",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     },
     {
       "source": "/app-icon",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300, must-revalidate"
+        }
+      ]
     },
     {
       "source": "/apple-touch-icon(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300, must-revalidate"
+        }
+      ]
     },
     {
       "source": "/icons/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=300, must-revalidate"
+        }
+      ]
     },
     {
       "source": "/assets/(.*)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     },
     {
       "source": "/api/health",
       "headers": [
-        { "key": "Cache-Control", "value": "no-store" },
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
       ]
     },
     {
       "source": "/",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
     },
     {
       "source": "/login",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
     },
     {
       "source": "/channel-boot.js",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
     },
     {
       "source": "/asset-recover.js",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
     },
     {
       "source": "/sw.js",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
     },
     {
       "source": "/offline.html",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
     },
     {
       "source": "/.well-known/apple-app-site-association",
       "headers": [
-        { "key": "Content-Type", "value": "application/json" },
-        { "key": "Cache-Control", "value": "public, max-age=3600" }
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
       ]
     },
     {
       "source": "/apple-app-site-association",
       "headers": [
-        { "key": "Content-Type", "value": "application/json" },
-        { "key": "Cache-Control", "value": "public, max-age=3600" }
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
       ]
     },
     {
       "source": "/.well-known/apple-app-site-association.json",
       "headers": [
-        { "key": "Content-Type", "value": "application/json" },
-        { "key": "Cache-Control", "value": "public, max-age=3600" }
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
       ]
     },
     {
       "source": "/.well-known/assetlinks.json",
       "headers": [
-        { "key": "Content-Type", "value": "application/json" },
-        { "key": "Cache-Control", "value": "public, max-age=3600" }
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
       ]
     },
     {
       "source": "/.well-known/apple-developer-merchantid-domain-association",
       "headers": [
-        { "key": "Content-Type", "value": "text/plain" },
-        { "key": "Cache-Control", "value": "public, max-age=3600" }
+        {
+          "key": "Content-Type",
+          "value": "text/plain"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
       ]
     }
   ]
