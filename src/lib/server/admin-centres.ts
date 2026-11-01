@@ -477,6 +477,19 @@ export const decideCentre = createServerFn({ method: "POST" })
     }
 
     try {
+      const { notifyClaimDecision } = await import("@/lib/server/wiring/claim-notices");
+      await notifyClaimDecision({
+        decision,
+        daycareId: centre.id,
+        daycareUserId: latest[0]?.user_id || null,
+        province: centre.province,
+        centreName: centre.name,
+      });
+    } catch {
+      console.error("[kidease-claim-notice] skipped");
+    }
+
+    try {
       const phoneRows = latest[0]?.user_id
         ? await sql<{ phone: string | null }>`
             select phone from profiles where user_id = ${latest[0].user_id} limit 1

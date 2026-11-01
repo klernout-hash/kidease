@@ -131,6 +131,18 @@ Env still works as a fallback when PostHog is down (last successful overlay is k
 | `FEATURE_PROVINCE_REPORTS` | no | Default **off**. Set `1` to let admin download a provincial licensing CSV or PDF. |
 | `FEATURE_GOV_SCOPES` | no | Default **off**. Set `1` after a profile has role `government` and `gov_province`. Does not sign anyone out. |
 | `FEATURE_FR_CA` | no | Default **off**. Set `1` for fr-CA auto-detect (browser, device, Quebec, New Brunswick) and French email and SMS. A saved language choice still wins. |
+| `FEATURE_WITHDRAWAL` | no | Default **off**. Uses the centre's notice period and stored fee. A freed space queues the area waitlist. |
+| `FEATURE_ENROLMENT_HANDOFF` | no | Default **off**. Accepted spot, enrolment packet, e-sign, then the first bill. Needs _LIVE to call DocuSign or save the bill. |
+| `FEATURE_CHILD_PROFILE` | no | Default **off**. Parents edit allergies, medical notes, pickups, and emergency contacts. The daycare sees them after enrolment. |
+| `FEATURE_NOTIFICATION_CENTRE` | no | Default **off**. In-app inbox with read receipts. Texts go only to CASL opted-in people. Push stays behind FEATURE_PUSH. |
+| `FEATURE_CLAIM_NOTICES` | no | Default **off**. Claim approve or decline notices go to the daycare and that province. Texts still need CASL. |
+| `FEATURE_COMPLAINT_UPDATES` | no | Default **off**. Province updates go to the parent. Uses gov complaints when that table exists, otherwise safety reports. |
+| `FEATURE_SUBSIDY_STATUS` | no | Default **off**. Tracks submitted, in review, approved, or declined. KidEase does not decide the subsidy. |
+| `FEATURE_INSPECTION_SYNC` | no | Default **off**. Public inspection summary with the source and date. KidEase does not invent an outcome. |
+| `FEATURE_ESCALATIONS` | no | Default **off**. Unresolved items go to admin after a saved number of hours. Involved roles can see the status. |
+| `FEATURE_CHANGE_REQUESTS` | no | Default **off**. Capacity, hours, address, and director wait for the province. The public listing updates after approval. |
+| `FEATURE_ABSENCE_REPORTS` | no | Default **off**. A parent absence updates attendance and the room ratio in the same request and notifies the daycare. |
+| `FEATURE_DSR_PROPAGATION` | no | Default **off**. Export or deletion requests reach every affected role. A retention hold blocks deletion. Sign-in stays open. |
 | `POSTHOG_FLAGS_KEY` | no | Server-only. Same `phc_…` project key as analytics. Leave blank to disable remote. Never commit a real value. |
 | `POSTHOG_FLAGS_HOST` | no | Defaults to `POSTHOG_HOST` or `https://us.i.posthog.com`. |
 

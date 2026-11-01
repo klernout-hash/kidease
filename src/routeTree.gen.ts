@@ -88,6 +88,8 @@ import { Route as Verify2faRouteImport } from './routes/verify-2fa'
 import { Route as WaitlistRouteImport } from './routes/waitlist'
 import { Route as AdminFeaturesRouteImport } from './routes/admin.features'
 import { Route as AdminGovernmentRouteImport } from './routes/admin.government'
+import { Route as AdminEscalationsRouteImport } from './routes/admin_.escalations'
+import { Route as AdminDataRequestsRouteImport } from './routes/admin_.data-requests'
 import { Route as ApiAccountPurgeRouteImport } from './routes/api/account-purge'
 import { Route as ApiAutomationsRouteImport } from './routes/api/automations'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
@@ -163,7 +165,15 @@ import { Route as FrUnsubscribeRouteImport } from './routes/fr.unsubscribe'
 import { Route as FrVacancyIndexRouteImport } from './routes/fr.vacancy-index'
 import { Route as FrVerifyRouteImport } from './routes/fr.verify'
 import { Route as FrWaitlistRouteImport } from './routes/fr.waitlist'
+import { Route as GovClaimNoticesRouteImport } from './routes/gov_.claim-notices'
+import { Route as GovComplaintUpdatesRouteImport } from './routes/gov_.complaint-updates'
+import { Route as GovInspectionSyncRouteImport } from './routes/gov_.inspection-sync'
+import { Route as GovEscalationsRouteImport } from './routes/gov_.escalations'
+import { Route as GovChangeRequestsRouteImport } from './routes/gov_.change-requests'
+import { Route as GovDataRequestsRouteImport } from './routes/gov_.data-requests'
 import { Route as GovLoginRouteImport } from './routes/gov_.login'
+import { Route as GovNotificationsRouteImport } from './routes/gov_.notifications'
+import { Route as GovSubsidyRouteImport } from './routes/gov_.subsidy'
 import { Route as GuidesCodeRouteImport } from './routes/guides.$code'
 import { Route as HelpArticlesRouteImport } from './routes/help.articles'
 import { Route as InboxIdRouteImport } from './routes/inbox.$id'
@@ -176,10 +186,27 @@ import { Route as OfferTokenRouteImport } from './routes/offer.$token'
 import { Route as ParentDailyFeedRouteImport } from './routes/parent.daily-feed'
 import { Route as ParentSignupRouteImport } from './routes/parent.signup'
 import { Route as ParentSpotOffersRouteImport } from './routes/parent.spot-offers'
+import { Route as ParentWithdrawalRouteImport } from './routes/parent_.withdrawal'
+import { Route as ParentEnrolmentHandoffRouteImport } from './routes/parent_.enrolment-handoff'
+import { Route as ParentChildProfileRouteImport } from './routes/parent_.child-profile'
+import { Route as ParentNotificationsRouteImport } from './routes/parent_.notifications'
+import { Route as ParentComplaintUpdatesRouteImport } from './routes/parent_.complaint-updates'
+import { Route as ParentSubsidyRouteImport } from './routes/parent_.subsidy'
+import { Route as ParentEscalationsRouteImport } from './routes/parent_.escalations'
+import { Route as ParentAbsenceRouteImport } from './routes/parent_.absence'
+import { Route as ParentDataRequestRouteImport } from './routes/parent_.data-request'
 import { Route as PayIndexRouteImport } from './routes/pay.index'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
 import { Route as ProviderFamiliesRouteImport } from './routes/provider.families'
 import { Route as ProviderSubscriptionRouteImport } from './routes/provider.subscription'
+import { Route as ProviderWithdrawalRouteImport } from './routes/provider_.withdrawal'
+import { Route as ProviderChildProfileRouteImport } from './routes/provider_.child-profile'
+import { Route as ProviderClaimNoticesRouteImport } from './routes/provider_.claim-notices'
+import { Route as ProviderSubsidyRouteImport } from './routes/provider_.subsidy'
+import { Route as ProviderInspectionSyncRouteImport } from './routes/provider_.inspection-sync'
+import { Route as ProviderChangeRequestsRouteImport } from './routes/provider_.change-requests'
+import { Route as ProviderAbsenceRouteImport } from './routes/provider_.absence'
+import { Route as ProviderDataRequestsRouteImport } from './routes/provider_.data-requests'
 import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as SignIdRouteImport } from './routes/sign.$id'
 import { Route as SpotsTokenRouteImport } from './routes/spots.$token'
@@ -623,6 +650,16 @@ const AdminGovernmentRoute = AdminGovernmentRouteImport.update({
   path: '/government',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminEscalationsRoute = AdminEscalationsRouteImport.update({
+  id: '/admin_/escalations',
+  path: '/admin/escalations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminDataRequestsRoute = AdminDataRequestsRouteImport.update({
+  id: '/admin_/data-requests',
+  path: '/admin/data-requests',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAccountPurgeRoute = ApiAccountPurgeRouteImport.update({
   id: '/api/account-purge',
   path: '/api/account-purge',
@@ -999,9 +1036,49 @@ const FrWaitlistRoute = FrWaitlistRouteImport.update({
   path: '/waitlist',
   getParentRoute: () => FrRoute,
 } as any)
+const GovClaimNoticesRoute = GovClaimNoticesRouteImport.update({
+  id: '/gov_/claim-notices',
+  path: '/gov/claim-notices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovComplaintUpdatesRoute = GovComplaintUpdatesRouteImport.update({
+  id: '/gov_/complaint-updates',
+  path: '/gov/complaint-updates',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovInspectionSyncRoute = GovInspectionSyncRouteImport.update({
+  id: '/gov_/inspection-sync',
+  path: '/gov/inspection-sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovEscalationsRoute = GovEscalationsRouteImport.update({
+  id: '/gov_/escalations',
+  path: '/gov/escalations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovChangeRequestsRoute = GovChangeRequestsRouteImport.update({
+  id: '/gov_/change-requests',
+  path: '/gov/change-requests',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovDataRequestsRoute = GovDataRequestsRouteImport.update({
+  id: '/gov_/data-requests',
+  path: '/gov/data-requests',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GovLoginRoute = GovLoginRouteImport.update({
   id: '/gov_/login',
   path: '/gov/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovNotificationsRoute = GovNotificationsRouteImport.update({
+  id: '/gov_/notifications',
+  path: '/gov/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovSubsidyRoute = GovSubsidyRouteImport.update({
+  id: '/gov_/subsidy',
+  path: '/gov/subsidy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GuidesCodeRoute = GuidesCodeRouteImport.update({
@@ -1064,6 +1141,51 @@ const ParentSpotOffersRoute = ParentSpotOffersRouteImport.update({
   path: '/spot-offers',
   getParentRoute: () => ParentRoute,
 } as any)
+const ParentWithdrawalRoute = ParentWithdrawalRouteImport.update({
+  id: '/parent_/withdrawal',
+  path: '/parent/withdrawal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParentEnrolmentHandoffRoute = ParentEnrolmentHandoffRouteImport.update({
+  id: '/parent_/enrolment-handoff',
+  path: '/parent/enrolment-handoff',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParentChildProfileRoute = ParentChildProfileRouteImport.update({
+  id: '/parent_/child-profile',
+  path: '/parent/child-profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParentNotificationsRoute = ParentNotificationsRouteImport.update({
+  id: '/parent_/notifications',
+  path: '/parent/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParentComplaintUpdatesRoute = ParentComplaintUpdatesRouteImport.update({
+  id: '/parent_/complaint-updates',
+  path: '/parent/complaint-updates',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParentSubsidyRoute = ParentSubsidyRouteImport.update({
+  id: '/parent_/subsidy',
+  path: '/parent/subsidy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParentEscalationsRoute = ParentEscalationsRouteImport.update({
+  id: '/parent_/escalations',
+  path: '/parent/escalations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParentAbsenceRoute = ParentAbsenceRouteImport.update({
+  id: '/parent_/absence',
+  path: '/parent/absence',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ParentDataRequestRoute = ParentDataRequestRouteImport.update({
+  id: '/parent_/data-request',
+  path: '/parent/data-request',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PayIndexRoute = PayIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -1083,6 +1205,46 @@ const ProviderSubscriptionRoute = ProviderSubscriptionRouteImport.update({
   id: '/subscription',
   path: '/subscription',
   getParentRoute: () => ProviderRoute,
+} as any)
+const ProviderWithdrawalRoute = ProviderWithdrawalRouteImport.update({
+  id: '/provider_/withdrawal',
+  path: '/provider/withdrawal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProviderChildProfileRoute = ProviderChildProfileRouteImport.update({
+  id: '/provider_/child-profile',
+  path: '/provider/child-profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProviderClaimNoticesRoute = ProviderClaimNoticesRouteImport.update({
+  id: '/provider_/claim-notices',
+  path: '/provider/claim-notices',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProviderSubsidyRoute = ProviderSubsidyRouteImport.update({
+  id: '/provider_/subsidy',
+  path: '/provider/subsidy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProviderInspectionSyncRoute = ProviderInspectionSyncRouteImport.update({
+  id: '/provider_/inspection-sync',
+  path: '/provider/inspection-sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProviderChangeRequestsRoute = ProviderChangeRequestsRouteImport.update({
+  id: '/provider_/change-requests',
+  path: '/provider/change-requests',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProviderAbsenceRoute = ProviderAbsenceRouteImport.update({
+  id: '/provider_/absence',
+  path: '/provider/absence',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProviderDataRequestsRoute = ProviderDataRequestsRouteImport.update({
+  id: '/provider_/data-requests',
+  path: '/provider/data-requests',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const RCodeRoute = RCodeRouteImport.update({
   id: '/r/$code',
@@ -1396,6 +1558,8 @@ export interface FileRoutesByFullPath {
   '/waitlist': typeof WaitlistRoute
   '/admin/features': typeof AdminFeaturesRoute
   '/admin/government': typeof AdminGovernmentRoute
+  '/admin/escalations': typeof AdminEscalationsRoute
+  '/admin/data-requests': typeof AdminDataRequestsRoute
   '/api/account-purge': typeof ApiAccountPurgeRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/digest': typeof ApiDigestRoute
@@ -1470,7 +1634,15 @@ export interface FileRoutesByFullPath {
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
+  '/gov/claim-notices': typeof GovClaimNoticesRoute
+  '/gov/complaint-updates': typeof GovComplaintUpdatesRoute
+  '/gov/inspection-sync': typeof GovInspectionSyncRoute
+  '/gov/escalations': typeof GovEscalationsRoute
+  '/gov/change-requests': typeof GovChangeRequestsRoute
+  '/gov/data-requests': typeof GovDataRequestsRoute
   '/gov/login': typeof GovLoginRoute
+  '/gov/notifications': typeof GovNotificationsRoute
+  '/gov/subsidy': typeof GovSubsidyRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/help/articles': typeof HelpArticlesRoute
   '/inbox/$id': typeof InboxIdRoute
@@ -1483,9 +1655,38 @@ export interface FileRoutesByFullPath {
   '/parent/daily-feed': typeof ParentDailyFeedRoute
   '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
+  '/parent/withdrawal': typeof ParentWithdrawalRoute
+  '/parent/enrolment-handoff': typeof ParentEnrolmentHandoffRoute
+  '/parent/notifications': typeof ParentNotificationsRoute
+  '/parent/complaint-updates': typeof ParentComplaintUpdatesRoute
+  '/parent/escalations': typeof ParentEscalationsRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider/withdrawal': typeof ProviderWithdrawalRoute
+  '/parent/child-profile': typeof ParentChildProfileRoute
+  '/pay/$bookingId': typeof PayBookingIdRoute
+  '/provider/families': typeof ProviderFamiliesRoute
+  '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider/child-profile': typeof ProviderChildProfileRoute
+  '/provider/claim-notices': typeof ProviderClaimNoticesRoute
+  '/parent/subsidy': typeof ParentSubsidyRoute
+  '/pay/$bookingId': typeof PayBookingIdRoute
+  '/provider/families': typeof ProviderFamiliesRoute
+  '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider/subsidy': typeof ProviderSubsidyRoute
+  '/provider/inspection-sync': typeof ProviderInspectionSyncRoute
+  '/provider/change-requests': typeof ProviderChangeRequestsRoute
+  '/parent/absence': typeof ParentAbsenceRoute
+  '/pay/$bookingId': typeof PayBookingIdRoute
+  '/provider/families': typeof ProviderFamiliesRoute
+  '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider/absence': typeof ProviderAbsenceRoute
+  '/parent/data-request': typeof ParentDataRequestRoute
+  '/pay/$bookingId': typeof PayBookingIdRoute
+  '/provider/families': typeof ProviderFamiliesRoute
+  '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider/data-requests': typeof ProviderDataRequestsRoute
   '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
@@ -1613,6 +1814,8 @@ export interface FileRoutesByTo {
   '/waitlist': typeof WaitlistRoute
   '/admin/features': typeof AdminFeaturesRoute
   '/admin/government': typeof AdminGovernmentRoute
+  '/admin/escalations': typeof AdminEscalationsRoute
+  '/admin/data-requests': typeof AdminDataRequestsRoute
   '/api/account-purge': typeof ApiAccountPurgeRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/digest': typeof ApiDigestRoute
@@ -1687,7 +1890,15 @@ export interface FileRoutesByTo {
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
+  '/gov/claim-notices': typeof GovClaimNoticesRoute
+  '/gov/complaint-updates': typeof GovComplaintUpdatesRoute
+  '/gov/inspection-sync': typeof GovInspectionSyncRoute
+  '/gov/escalations': typeof GovEscalationsRoute
+  '/gov/change-requests': typeof GovChangeRequestsRoute
+  '/gov/data-requests': typeof GovDataRequestsRoute
   '/gov/login': typeof GovLoginRoute
+  '/gov/notifications': typeof GovNotificationsRoute
+  '/gov/subsidy': typeof GovSubsidyRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/help/articles': typeof HelpArticlesRoute
   '/inbox/$id': typeof InboxIdRoute
@@ -1700,9 +1911,38 @@ export interface FileRoutesByTo {
   '/parent/daily-feed': typeof ParentDailyFeedRoute
   '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
+  '/parent/withdrawal': typeof ParentWithdrawalRoute
+  '/parent/enrolment-handoff': typeof ParentEnrolmentHandoffRoute
+  '/parent/notifications': typeof ParentNotificationsRoute
+  '/parent/complaint-updates': typeof ParentComplaintUpdatesRoute
+  '/parent/escalations': typeof ParentEscalationsRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider/withdrawal': typeof ProviderWithdrawalRoute
+  '/parent/child-profile': typeof ParentChildProfileRoute
+  '/pay/$bookingId': typeof PayBookingIdRoute
+  '/provider/families': typeof ProviderFamiliesRoute
+  '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider/child-profile': typeof ProviderChildProfileRoute
+  '/provider/claim-notices': typeof ProviderClaimNoticesRoute
+  '/parent/subsidy': typeof ParentSubsidyRoute
+  '/pay/$bookingId': typeof PayBookingIdRoute
+  '/provider/families': typeof ProviderFamiliesRoute
+  '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider/subsidy': typeof ProviderSubsidyRoute
+  '/provider/inspection-sync': typeof ProviderInspectionSyncRoute
+  '/provider/change-requests': typeof ProviderChangeRequestsRoute
+  '/parent/absence': typeof ParentAbsenceRoute
+  '/pay/$bookingId': typeof PayBookingIdRoute
+  '/provider/families': typeof ProviderFamiliesRoute
+  '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider/absence': typeof ProviderAbsenceRoute
+  '/parent/data-request': typeof ParentDataRequestRoute
+  '/pay/$bookingId': typeof PayBookingIdRoute
+  '/provider/families': typeof ProviderFamiliesRoute
+  '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider/data-requests': typeof ProviderDataRequestsRoute
   '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
@@ -1833,6 +2073,8 @@ export interface FileRoutesById {
   '/waitlist': typeof WaitlistRoute
   '/admin/features': typeof AdminFeaturesRoute
   '/admin/government': typeof AdminGovernmentRoute
+  '/admin_/escalations': typeof AdminEscalationsRoute
+  '/admin_/data-requests': typeof AdminDataRequestsRoute
   '/api/account-purge': typeof ApiAccountPurgeRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/digest': typeof ApiDigestRoute
@@ -1907,7 +2149,15 @@ export interface FileRoutesById {
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
+  '/gov_/claim-notices': typeof GovClaimNoticesRoute
+  '/gov_/complaint-updates': typeof GovComplaintUpdatesRoute
+  '/gov_/inspection-sync': typeof GovInspectionSyncRoute
+  '/gov_/escalations': typeof GovEscalationsRoute
+  '/gov_/change-requests': typeof GovChangeRequestsRoute
+  '/gov_/data-requests': typeof GovDataRequestsRoute
   '/gov_/login': typeof GovLoginRoute
+  '/gov_/notifications': typeof GovNotificationsRoute
+  '/gov_/subsidy': typeof GovSubsidyRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/help/articles': typeof HelpArticlesRoute
   '/inbox/$id': typeof InboxIdRoute
@@ -1920,9 +2170,38 @@ export interface FileRoutesById {
   '/parent/daily-feed': typeof ParentDailyFeedRoute
   '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
+  '/parent_/withdrawal': typeof ParentWithdrawalRoute
+  '/parent_/enrolment-handoff': typeof ParentEnrolmentHandoffRoute
+  '/parent_/notifications': typeof ParentNotificationsRoute
+  '/parent_/complaint-updates': typeof ParentComplaintUpdatesRoute
+  '/parent_/escalations': typeof ParentEscalationsRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider_/withdrawal': typeof ProviderWithdrawalRoute
+  '/parent_/child-profile': typeof ParentChildProfileRoute
+  '/pay/$bookingId': typeof PayBookingIdRoute
+  '/provider/families': typeof ProviderFamiliesRoute
+  '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider_/child-profile': typeof ProviderChildProfileRoute
+  '/provider_/claim-notices': typeof ProviderClaimNoticesRoute
+  '/parent_/subsidy': typeof ParentSubsidyRoute
+  '/pay/$bookingId': typeof PayBookingIdRoute
+  '/provider/families': typeof ProviderFamiliesRoute
+  '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider_/subsidy': typeof ProviderSubsidyRoute
+  '/provider_/inspection-sync': typeof ProviderInspectionSyncRoute
+  '/provider_/change-requests': typeof ProviderChangeRequestsRoute
+  '/parent_/absence': typeof ParentAbsenceRoute
+  '/pay/$bookingId': typeof PayBookingIdRoute
+  '/provider/families': typeof ProviderFamiliesRoute
+  '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider_/absence': typeof ProviderAbsenceRoute
+  '/parent_/data-request': typeof ParentDataRequestRoute
+  '/pay/$bookingId': typeof PayBookingIdRoute
+  '/provider/families': typeof ProviderFamiliesRoute
+  '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider_/data-requests': typeof ProviderDataRequestsRoute
   '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
@@ -2054,6 +2333,8 @@ export interface FileRouteTypes {
     | '/waitlist'
     | '/admin/features'
     | '/admin/government'
+    | '/admin/escalations'
+    | '/admin/data-requests'
     | '/api/account-purge'
     | '/api/automations'
     | '/api/digest'
@@ -2128,7 +2409,15 @@ export interface FileRouteTypes {
     | '/fr/vacancy-index'
     | '/fr/verify'
     | '/fr/waitlist'
+    | '/gov/claim-notices'
+    | '/gov/complaint-updates'
+    | '/gov/inspection-sync'
+    | '/gov/escalations'
+    | '/gov/change-requests'
+    | '/gov/data-requests'
     | '/gov/login'
+    | '/gov/notifications'
+    | '/gov/subsidy'
     | '/guides/$code'
     | '/help/articles'
     | '/inbox/$id'
@@ -2141,9 +2430,38 @@ export interface FileRouteTypes {
     | '/parent/daily-feed'
     | '/parent/signup'
     | '/parent/spot-offers'
+    | '/parent/withdrawal'
+    | '/parent/enrolment-handoff'
+    | '/parent/notifications'
+    | '/parent/complaint-updates'
+    | '/parent/escalations'
     | '/pay/$bookingId'
     | '/provider/families'
     | '/provider/subscription'
+    | '/provider/withdrawal'
+    | '/parent/child-profile'
+    | '/pay/$bookingId'
+    | '/provider/families'
+    | '/provider/subscription'
+    | '/provider/child-profile'
+    | '/provider/claim-notices'
+    | '/parent/subsidy'
+    | '/pay/$bookingId'
+    | '/provider/families'
+    | '/provider/subscription'
+    | '/provider/subsidy'
+    | '/provider/inspection-sync'
+    | '/provider/change-requests'
+    | '/parent/absence'
+    | '/pay/$bookingId'
+    | '/provider/families'
+    | '/provider/subscription'
+    | '/provider/absence'
+    | '/parent/data-request'
+    | '/pay/$bookingId'
+    | '/provider/families'
+    | '/provider/subscription'
+    | '/provider/data-requests'
     | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
@@ -2271,6 +2589,8 @@ export interface FileRouteTypes {
     | '/waitlist'
     | '/admin/features'
     | '/admin/government'
+    | '/admin/escalations'
+    | '/admin/data-requests'
     | '/api/account-purge'
     | '/api/automations'
     | '/api/digest'
@@ -2345,7 +2665,15 @@ export interface FileRouteTypes {
     | '/fr/vacancy-index'
     | '/fr/verify'
     | '/fr/waitlist'
+    | '/gov/claim-notices'
+    | '/gov/complaint-updates'
+    | '/gov/inspection-sync'
+    | '/gov/escalations'
+    | '/gov/change-requests'
+    | '/gov/data-requests'
     | '/gov/login'
+    | '/gov/notifications'
+    | '/gov/subsidy'
     | '/guides/$code'
     | '/help/articles'
     | '/inbox/$id'
@@ -2358,9 +2686,38 @@ export interface FileRouteTypes {
     | '/parent/daily-feed'
     | '/parent/signup'
     | '/parent/spot-offers'
+    | '/parent/withdrawal'
+    | '/parent/enrolment-handoff'
+    | '/parent/notifications'
+    | '/parent/complaint-updates'
+    | '/parent/escalations'
     | '/pay/$bookingId'
     | '/provider/families'
     | '/provider/subscription'
+    | '/provider/withdrawal'
+    | '/parent/child-profile'
+    | '/pay/$bookingId'
+    | '/provider/families'
+    | '/provider/subscription'
+    | '/provider/child-profile'
+    | '/provider/claim-notices'
+    | '/parent/subsidy'
+    | '/pay/$bookingId'
+    | '/provider/families'
+    | '/provider/subscription'
+    | '/provider/subsidy'
+    | '/provider/inspection-sync'
+    | '/provider/change-requests'
+    | '/parent/absence'
+    | '/pay/$bookingId'
+    | '/provider/families'
+    | '/provider/subscription'
+    | '/provider/absence'
+    | '/parent/data-request'
+    | '/pay/$bookingId'
+    | '/provider/families'
+    | '/provider/subscription'
+    | '/provider/data-requests'
     | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
@@ -2490,6 +2847,8 @@ export interface FileRouteTypes {
     | '/waitlist'
     | '/admin/features'
     | '/admin/government'
+    | '/admin_/escalations'
+    | '/admin_/data-requests'
     | '/api/account-purge'
     | '/api/automations'
     | '/api/digest'
@@ -2564,7 +2923,15 @@ export interface FileRouteTypes {
     | '/fr/vacancy-index'
     | '/fr/verify'
     | '/fr/waitlist'
+    | '/gov_/claim-notices'
+    | '/gov_/complaint-updates'
+    | '/gov_/inspection-sync'
+    | '/gov_/escalations'
+    | '/gov_/change-requests'
+    | '/gov_/data-requests'
     | '/gov_/login'
+    | '/gov_/notifications'
+    | '/gov_/subsidy'
     | '/guides/$code'
     | '/help/articles'
     | '/inbox/$id'
@@ -2577,9 +2944,38 @@ export interface FileRouteTypes {
     | '/parent/daily-feed'
     | '/parent/signup'
     | '/parent/spot-offers'
+    | '/parent_/withdrawal'
+    | '/parent_/enrolment-handoff'
+    | '/parent_/notifications'
+    | '/parent_/complaint-updates'
+    | '/parent_/escalations'
     | '/pay/$bookingId'
     | '/provider/families'
     | '/provider/subscription'
+    | '/provider_/withdrawal'
+    | '/parent_/child-profile'
+    | '/pay/$bookingId'
+    | '/provider/families'
+    | '/provider/subscription'
+    | '/provider_/child-profile'
+    | '/provider_/claim-notices'
+    | '/parent_/subsidy'
+    | '/pay/$bookingId'
+    | '/provider/families'
+    | '/provider/subscription'
+    | '/provider_/subsidy'
+    | '/provider_/inspection-sync'
+    | '/provider_/change-requests'
+    | '/parent_/absence'
+    | '/pay/$bookingId'
+    | '/provider/families'
+    | '/provider/subscription'
+    | '/provider_/absence'
+    | '/parent_/data-request'
+    | '/pay/$bookingId'
+    | '/provider/families'
+    | '/provider/subscription'
+    | '/provider_/data-requests'
     | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
@@ -2708,6 +3104,8 @@ export interface RootRouteChildren {
   VerifyRoute: typeof VerifyRoute
   Verify2faRoute: typeof Verify2faRoute
   WaitlistRoute: typeof WaitlistRoute
+  AdminEscalationsRoute: typeof AdminEscalationsRoute
+  AdminDataRequestsRoute: typeof AdminDataRequestsRoute
   ApiAccountPurgeRoute: typeof ApiAccountPurgeRoute
   ApiAutomationsRoute: typeof ApiAutomationsRoute
   ApiDigestRoute: typeof ApiDigestRoute
@@ -2731,12 +3129,37 @@ export interface RootRouteChildren {
   CheckinIdRoute: typeof CheckinIdRoute
   DaycareSlugRoute: typeof DaycareSlugRoute
   DaycaresCityRoute: typeof DaycaresCityRoute
+  GovClaimNoticesRoute: typeof GovClaimNoticesRoute
+  GovComplaintUpdatesRoute: typeof GovComplaintUpdatesRoute
+  GovInspectionSyncRoute: typeof GovInspectionSyncRoute
+  GovEscalationsRoute: typeof GovEscalationsRoute
+  GovChangeRequestsRoute: typeof GovChangeRequestsRoute
+  GovDataRequestsRoute: typeof GovDataRequestsRoute
   GovLoginRoute: typeof GovLoginRoute
+  GovNotificationsRoute: typeof GovNotificationsRoute
+  GovSubsidyRoute: typeof GovSubsidyRoute
   InviteTokenRoute: typeof InviteTokenRoute
   JobsPostRoute: typeof JobsPostRoute
   ListingSlugRoute: typeof ListingSlugRoute
   MilieuxFamiliauxIdRoute: typeof MilieuxFamiliauxIdRoute
   OfferTokenRoute: typeof OfferTokenRoute
+  ParentWithdrawalRoute: typeof ParentWithdrawalRoute
+  ProviderWithdrawalRoute: typeof ProviderWithdrawalRoute
+  ParentEnrolmentHandoffRoute: typeof ParentEnrolmentHandoffRoute
+  ParentChildProfileRoute: typeof ParentChildProfileRoute
+  ProviderChildProfileRoute: typeof ProviderChildProfileRoute
+  ParentNotificationsRoute: typeof ParentNotificationsRoute
+  ProviderClaimNoticesRoute: typeof ProviderClaimNoticesRoute
+  ParentComplaintUpdatesRoute: typeof ParentComplaintUpdatesRoute
+  ParentSubsidyRoute: typeof ParentSubsidyRoute
+  ProviderSubsidyRoute: typeof ProviderSubsidyRoute
+  ProviderInspectionSyncRoute: typeof ProviderInspectionSyncRoute
+  ParentEscalationsRoute: typeof ParentEscalationsRoute
+  ProviderChangeRequestsRoute: typeof ProviderChangeRequestsRoute
+  ParentAbsenceRoute: typeof ParentAbsenceRoute
+  ProviderAbsenceRoute: typeof ProviderAbsenceRoute
+  ParentDataRequestRoute: typeof ParentDataRequestRoute
+  ProviderDataRequestsRoute: typeof ProviderDataRequestsRoute
   RCodeRoute: typeof RCodeRoute
   SignIdRoute: typeof SignIdRoute
   SpotsTokenRoute: typeof SpotsTokenRoute
@@ -3323,6 +3746,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminGovernmentRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin_/escalations': {
+      id: '/admin_/escalations'
+      path: '/admin/escalations'
+      fullPath: '/admin/escalations'
+      preLoaderRoute: typeof AdminEscalationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin_/data-requests': {
+      id: '/admin_/data-requests'
+      path: '/admin/data-requests'
+      fullPath: '/admin/data-requests'
+      preLoaderRoute: typeof AdminDataRequestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/account-purge': {
       id: '/api/account-purge'
       path: '/api/account-purge'
@@ -3848,11 +4285,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrWaitlistRouteImport
       parentRoute: typeof FrRoute
     }
+    '/gov_/claim-notices': {
+      id: '/gov_/claim-notices'
+      path: '/gov/claim-notices'
+      fullPath: '/gov/claim-notices'
+      preLoaderRoute: typeof GovClaimNoticesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gov_/complaint-updates': {
+      id: '/gov_/complaint-updates'
+      path: '/gov/complaint-updates'
+      fullPath: '/gov/complaint-updates'
+      preLoaderRoute: typeof GovComplaintUpdatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gov_/inspection-sync': {
+      id: '/gov_/inspection-sync'
+      path: '/gov/inspection-sync'
+      fullPath: '/gov/inspection-sync'
+      preLoaderRoute: typeof GovInspectionSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gov_/escalations': {
+      id: '/gov_/escalations'
+      path: '/gov/escalations'
+      fullPath: '/gov/escalations'
+      preLoaderRoute: typeof GovEscalationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gov_/change-requests': {
+      id: '/gov_/change-requests'
+      path: '/gov/change-requests'
+      fullPath: '/gov/change-requests'
+      preLoaderRoute: typeof GovChangeRequestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gov_/data-requests': {
+      id: '/gov_/data-requests'
+      path: '/gov/data-requests'
+      fullPath: '/gov/data-requests'
+      preLoaderRoute: typeof GovDataRequestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/gov_/login': {
       id: '/gov_/login'
       path: '/gov/login'
       fullPath: '/gov/login'
       preLoaderRoute: typeof GovLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gov_/notifications': {
+      id: '/gov_/notifications'
+      path: '/gov/notifications'
+      fullPath: '/gov/notifications'
+      preLoaderRoute: typeof GovNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gov_/subsidy': {
+      id: '/gov_/subsidy'
+      path: '/gov/subsidy'
+      fullPath: '/gov/subsidy'
+      preLoaderRoute: typeof GovSubsidyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/guides/$code': {
@@ -3939,6 +4432,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ParentSpotOffersRouteImport
       parentRoute: typeof ParentRoute
     }
+    '/parent_/withdrawal': {
+      id: '/parent_/withdrawal'
+      path: '/parent/withdrawal'
+      fullPath: '/parent/withdrawal'
+      preLoaderRoute: typeof ParentWithdrawalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parent_/enrolment-handoff': {
+      id: '/parent_/enrolment-handoff'
+      path: '/parent/enrolment-handoff'
+      fullPath: '/parent/enrolment-handoff'
+      preLoaderRoute: typeof ParentEnrolmentHandoffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parent_/child-profile': {
+      id: '/parent_/child-profile'
+      path: '/parent/child-profile'
+      fullPath: '/parent/child-profile'
+      preLoaderRoute: typeof ParentChildProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parent_/notifications': {
+      id: '/parent_/notifications'
+      path: '/parent/notifications'
+      fullPath: '/parent/notifications'
+      preLoaderRoute: typeof ParentNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parent_/complaint-updates': {
+      id: '/parent_/complaint-updates'
+      path: '/parent/complaint-updates'
+      fullPath: '/parent/complaint-updates'
+      preLoaderRoute: typeof ParentComplaintUpdatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parent_/subsidy': {
+      id: '/parent_/subsidy'
+      path: '/parent/subsidy'
+      fullPath: '/parent/subsidy'
+      preLoaderRoute: typeof ParentSubsidyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parent_/escalations': {
+      id: '/parent_/escalations'
+      path: '/parent/escalations'
+      fullPath: '/parent/escalations'
+      preLoaderRoute: typeof ParentEscalationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parent_/absence': {
+      id: '/parent_/absence'
+      path: '/parent/absence'
+      fullPath: '/parent/absence'
+      preLoaderRoute: typeof ParentAbsenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/parent_/data-request': {
+      id: '/parent_/data-request'
+      path: '/parent/data-request'
+      fullPath: '/parent/data-request'
+      preLoaderRoute: typeof ParentDataRequestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pay/': {
       id: '/pay/'
       path: '/'
@@ -3966,6 +4522,62 @@ declare module '@tanstack/react-router' {
       fullPath: '/provider/subscription'
       preLoaderRoute: typeof ProviderSubscriptionRouteImport
       parentRoute: typeof ProviderRoute
+    }
+    '/provider_/withdrawal': {
+      id: '/provider_/withdrawal'
+      path: '/provider/withdrawal'
+      fullPath: '/provider/withdrawal'
+      preLoaderRoute: typeof ProviderWithdrawalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/provider_/child-profile': {
+      id: '/provider_/child-profile'
+      path: '/provider/child-profile'
+      fullPath: '/provider/child-profile'
+      preLoaderRoute: typeof ProviderChildProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/provider_/claim-notices': {
+      id: '/provider_/claim-notices'
+      path: '/provider/claim-notices'
+      fullPath: '/provider/claim-notices'
+      preLoaderRoute: typeof ProviderClaimNoticesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/provider_/subsidy': {
+      id: '/provider_/subsidy'
+      path: '/provider/subsidy'
+      fullPath: '/provider/subsidy'
+      preLoaderRoute: typeof ProviderSubsidyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/provider_/inspection-sync': {
+      id: '/provider_/inspection-sync'
+      path: '/provider/inspection-sync'
+      fullPath: '/provider/inspection-sync'
+      preLoaderRoute: typeof ProviderInspectionSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/provider_/change-requests': {
+      id: '/provider_/change-requests'
+      path: '/provider/change-requests'
+      fullPath: '/provider/change-requests'
+      preLoaderRoute: typeof ProviderChangeRequestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/provider_/absence': {
+      id: '/provider_/absence'
+      path: '/provider/absence'
+      fullPath: '/provider/absence'
+      preLoaderRoute: typeof ProviderAbsenceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/provider_/data-requests': {
+      id: '/provider_/data-requests'
+      path: '/provider/data-requests'
+      fullPath: '/provider/data-requests'
+      preLoaderRoute: typeof ProviderDataRequestsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/r/$code': {
       id: '/r/$code'
@@ -4689,6 +5301,8 @@ const rootRouteChildren: RootRouteChildren = {
   VerifyRoute: VerifyRoute,
   Verify2faRoute: Verify2faRoute,
   WaitlistRoute: WaitlistRoute,
+  AdminEscalationsRoute: AdminEscalationsRoute,
+  AdminDataRequestsRoute: AdminDataRequestsRoute,
   ApiAccountPurgeRoute: ApiAccountPurgeRoute,
   ApiAutomationsRoute: ApiAutomationsRoute,
   ApiDigestRoute: ApiDigestRoute,
@@ -4712,12 +5326,37 @@ const rootRouteChildren: RootRouteChildren = {
   CheckinIdRoute: CheckinIdRoute,
   DaycareSlugRoute: DaycareSlugRoute,
   DaycaresCityRoute: DaycaresCityRoute,
+  GovClaimNoticesRoute: GovClaimNoticesRoute,
+  GovComplaintUpdatesRoute: GovComplaintUpdatesRoute,
+  GovInspectionSyncRoute: GovInspectionSyncRoute,
+  GovEscalationsRoute: GovEscalationsRoute,
+  GovChangeRequestsRoute: GovChangeRequestsRoute,
+  GovDataRequestsRoute: GovDataRequestsRoute,
   GovLoginRoute: GovLoginRoute,
+  GovNotificationsRoute: GovNotificationsRoute,
+  GovSubsidyRoute: GovSubsidyRoute,
   InviteTokenRoute: InviteTokenRoute,
   JobsPostRoute: JobsPostRoute,
   ListingSlugRoute: ListingSlugRoute,
   MilieuxFamiliauxIdRoute: MilieuxFamiliauxIdRoute,
   OfferTokenRoute: OfferTokenRoute,
+  ParentWithdrawalRoute: ParentWithdrawalRoute,
+  ProviderWithdrawalRoute: ProviderWithdrawalRoute,
+  ParentEnrolmentHandoffRoute: ParentEnrolmentHandoffRoute,
+  ParentChildProfileRoute: ParentChildProfileRoute,
+  ProviderChildProfileRoute: ProviderChildProfileRoute,
+  ParentNotificationsRoute: ParentNotificationsRoute,
+  ProviderClaimNoticesRoute: ProviderClaimNoticesRoute,
+  ParentComplaintUpdatesRoute: ParentComplaintUpdatesRoute,
+  ParentSubsidyRoute: ParentSubsidyRoute,
+  ProviderSubsidyRoute: ProviderSubsidyRoute,
+  ProviderInspectionSyncRoute: ProviderInspectionSyncRoute,
+  ParentEscalationsRoute: ParentEscalationsRoute,
+  ProviderChangeRequestsRoute: ProviderChangeRequestsRoute,
+  ParentAbsenceRoute: ParentAbsenceRoute,
+  ProviderAbsenceRoute: ProviderAbsenceRoute,
+  ParentDataRequestRoute: ParentDataRequestRoute,
+  ProviderDataRequestsRoute: ProviderDataRequestsRoute,
   RCodeRoute: RCodeRoute,
   SignIdRoute: SignIdRoute,
   SpotsTokenRoute: SpotsTokenRoute,
