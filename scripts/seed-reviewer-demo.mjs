@@ -399,16 +399,30 @@ async function upsertParentSamples(client, parentUserId) {
        status = 'pending'`,
     [BOOKING_ID, parentUserId, listingId, CHILD_ID],
   );
+  // The stable id can already belong to another parent/centre pair. Ignore that
+  // primary-key clash and any existing pair. Do not update or delete the row.
   await client.query(
     `insert into conversations (id, user_id, daycare_id)
      values ($1, $2, $3)
-     on conflict (user_id, daycare_id) do nothing`,
+     on conflict do nothing`,
     [CONVERSATION_ID, parentUserId, listingId],
   );
-  const convo = await client.query(
+  let convo = await client.query(
     `select id from conversations where user_id = $1 and daycare_id = $2 limit 1`,
     [parentUserId, listingId],
   );
+  if (!convo.rows[0]) {
+    await client.query(
+      `insert into conversations (id, user_id, daycare_id)
+       values ($1, $2, $3)
+       on conflict do nothing`,
+      [`${CONVERSATION_ID}:${parentUserId}`, parentUserId, listingId],
+    );
+    convo = await client.query(
+      `select id from conversations where user_id = $1 and daycare_id = $2 limit 1`,
+      [parentUserId, listingId],
+    );
+  }
   const conversationId = convo.rows[0]?.id;
   if (!conversationId) return;
   await client.query(

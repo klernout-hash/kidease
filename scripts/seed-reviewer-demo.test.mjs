@@ -87,6 +87,9 @@ describe("reviewer demo seed", () => {
     assert.match(script, /No photo/);
     assert.doesNotMatch(script, /photos = 'https|photoUrl|unsplash|child\.jpg/i);
     assert.match(script, /qa-reviewer-reply/);
+    assert.match(script, /insert into conversations \(id, user_id, daycare_id\)/);
+    assert.match(script, /on conflict do nothing/);
+    assert.doesNotMatch(script, /on conflict \(user_id, daycare_id\) do nothing/);
     assert.match(script, /daycare demo reply/);
     assert.doesNotMatch(script, /Reply STOP/);
     assert.match(read("package.json"), /ops:reviewer-demo/);
