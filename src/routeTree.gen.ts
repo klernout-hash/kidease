@@ -176,10 +176,12 @@ import { Route as OfferTokenRouteImport } from './routes/offer.$token'
 import { Route as ParentDailyFeedRouteImport } from './routes/parent.daily-feed'
 import { Route as ParentSignupRouteImport } from './routes/parent.signup'
 import { Route as ParentSpotOffersRouteImport } from './routes/parent.spot-offers'
+import { Route as ParentWithdrawalRouteImport } from './routes/parent_.withdrawal'
 import { Route as PayIndexRouteImport } from './routes/pay.index'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
 import { Route as ProviderFamiliesRouteImport } from './routes/provider.families'
 import { Route as ProviderSubscriptionRouteImport } from './routes/provider.subscription'
+import { Route as ProviderWithdrawalRouteImport } from './routes/provider_.withdrawal'
 import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as SignIdRouteImport } from './routes/sign.$id'
 import { Route as SpotsTokenRouteImport } from './routes/spots.$token'
@@ -1064,6 +1066,11 @@ const ParentSpotOffersRoute = ParentSpotOffersRouteImport.update({
   path: '/spot-offers',
   getParentRoute: () => ParentRoute,
 } as any)
+const ParentWithdrawalRoute = ParentWithdrawalRouteImport.update({
+  id: '/parent_/withdrawal',
+  path: '/parent/withdrawal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PayIndexRoute = PayIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -1083,6 +1090,11 @@ const ProviderSubscriptionRoute = ProviderSubscriptionRouteImport.update({
   id: '/subscription',
   path: '/subscription',
   getParentRoute: () => ProviderRoute,
+} as any)
+const ProviderWithdrawalRoute = ProviderWithdrawalRouteImport.update({
+  id: '/provider_/withdrawal',
+  path: '/provider/withdrawal',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const RCodeRoute = RCodeRouteImport.update({
   id: '/r/$code',
@@ -1483,9 +1495,11 @@ export interface FileRoutesByFullPath {
   '/parent/daily-feed': typeof ParentDailyFeedRoute
   '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
+  '/parent/withdrawal': typeof ParentWithdrawalRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider/withdrawal': typeof ProviderWithdrawalRoute
   '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
@@ -1700,9 +1714,11 @@ export interface FileRoutesByTo {
   '/parent/daily-feed': typeof ParentDailyFeedRoute
   '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
+  '/parent/withdrawal': typeof ParentWithdrawalRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider/withdrawal': typeof ProviderWithdrawalRoute
   '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
@@ -1920,9 +1936,11 @@ export interface FileRoutesById {
   '/parent/daily-feed': typeof ParentDailyFeedRoute
   '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
+  '/parent_/withdrawal': typeof ParentWithdrawalRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider_/withdrawal': typeof ProviderWithdrawalRoute
   '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
@@ -2141,9 +2159,11 @@ export interface FileRouteTypes {
     | '/parent/daily-feed'
     | '/parent/signup'
     | '/parent/spot-offers'
+    | '/parent/withdrawal'
     | '/pay/$bookingId'
     | '/provider/families'
     | '/provider/subscription'
+    | '/provider/withdrawal'
     | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
@@ -2358,9 +2378,11 @@ export interface FileRouteTypes {
     | '/parent/daily-feed'
     | '/parent/signup'
     | '/parent/spot-offers'
+    | '/parent/withdrawal'
     | '/pay/$bookingId'
     | '/provider/families'
     | '/provider/subscription'
+    | '/provider/withdrawal'
     | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
@@ -2577,9 +2599,11 @@ export interface FileRouteTypes {
     | '/parent/daily-feed'
     | '/parent/signup'
     | '/parent/spot-offers'
+    | '/parent_/withdrawal'
     | '/pay/$bookingId'
     | '/provider/families'
     | '/provider/subscription'
+    | '/provider_/withdrawal'
     | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
@@ -2737,6 +2761,8 @@ export interface RootRouteChildren {
   ListingSlugRoute: typeof ListingSlugRoute
   MilieuxFamiliauxIdRoute: typeof MilieuxFamiliauxIdRoute
   OfferTokenRoute: typeof OfferTokenRoute
+  ParentWithdrawalRoute: typeof ParentWithdrawalRoute
+  ProviderWithdrawalRoute: typeof ProviderWithdrawalRoute
   RCodeRoute: typeof RCodeRoute
   SignIdRoute: typeof SignIdRoute
   SpotsTokenRoute: typeof SpotsTokenRoute
@@ -3939,6 +3965,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ParentSpotOffersRouteImport
       parentRoute: typeof ParentRoute
     }
+    '/parent_/withdrawal': {
+      id: '/parent_/withdrawal'
+      path: '/parent/withdrawal'
+      fullPath: '/parent/withdrawal'
+      preLoaderRoute: typeof ParentWithdrawalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pay/': {
       id: '/pay/'
       path: '/'
@@ -3966,6 +3999,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/provider/subscription'
       preLoaderRoute: typeof ProviderSubscriptionRouteImport
       parentRoute: typeof ProviderRoute
+    }
+    '/provider_/withdrawal': {
+      id: '/provider_/withdrawal'
+      path: '/provider/withdrawal'
+      fullPath: '/provider/withdrawal'
+      preLoaderRoute: typeof ProviderWithdrawalRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/r/$code': {
       id: '/r/$code'
@@ -4718,6 +4758,8 @@ const rootRouteChildren: RootRouteChildren = {
   ListingSlugRoute: ListingSlugRoute,
   MilieuxFamiliauxIdRoute: MilieuxFamiliauxIdRoute,
   OfferTokenRoute: OfferTokenRoute,
+  ParentWithdrawalRoute: ParentWithdrawalRoute,
+  ProviderWithdrawalRoute: ProviderWithdrawalRoute,
   RCodeRoute: RCodeRoute,
   SignIdRoute: SignIdRoute,
   SpotsTokenRoute: SpotsTokenRoute,
