@@ -164,6 +164,7 @@ import { Route as FrVacancyIndexRouteImport } from './routes/fr.vacancy-index'
 import { Route as FrVerifyRouteImport } from './routes/fr.verify'
 import { Route as FrWaitlistRouteImport } from './routes/fr.waitlist'
 import { Route as GovLoginRouteImport } from './routes/gov_.login'
+import { Route as GovNotificationsRouteImport } from './routes/gov_.notifications'
 import { Route as GuidesCodeRouteImport } from './routes/guides.$code'
 import { Route as HelpArticlesRouteImport } from './routes/help.articles'
 import { Route as InboxIdRouteImport } from './routes/inbox.$id'
@@ -176,6 +177,7 @@ import { Route as OfferTokenRouteImport } from './routes/offer.$token'
 import { Route as ParentDailyFeedRouteImport } from './routes/parent.daily-feed'
 import { Route as ParentSignupRouteImport } from './routes/parent.signup'
 import { Route as ParentSpotOffersRouteImport } from './routes/parent.spot-offers'
+import { Route as ParentNotificationsRouteImport } from './routes/parent_.notifications'
 import { Route as PayIndexRouteImport } from './routes/pay.index'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
 import { Route as ProviderFamiliesRouteImport } from './routes/provider.families'
@@ -1004,6 +1006,11 @@ const GovLoginRoute = GovLoginRouteImport.update({
   path: '/gov/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GovNotificationsRoute = GovNotificationsRouteImport.update({
+  id: '/gov_/notifications',
+  path: '/gov/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GuidesCodeRoute = GuidesCodeRouteImport.update({
   id: '/$code',
   path: '/$code',
@@ -1063,6 +1070,11 @@ const ParentSpotOffersRoute = ParentSpotOffersRouteImport.update({
   id: '/spot-offers',
   path: '/spot-offers',
   getParentRoute: () => ParentRoute,
+} as any)
+const ParentNotificationsRoute = ParentNotificationsRouteImport.update({
+  id: '/parent_/notifications',
+  path: '/parent/notifications',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const PayIndexRoute = PayIndexRouteImport.update({
   id: '/',
@@ -1471,6 +1483,7 @@ export interface FileRoutesByFullPath {
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
   '/gov/login': typeof GovLoginRoute
+  '/gov/notifications': typeof GovNotificationsRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/help/articles': typeof HelpArticlesRoute
   '/inbox/$id': typeof InboxIdRoute
@@ -1483,6 +1496,7 @@ export interface FileRoutesByFullPath {
   '/parent/daily-feed': typeof ParentDailyFeedRoute
   '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
+  '/parent/notifications': typeof ParentNotificationsRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
@@ -1688,6 +1702,7 @@ export interface FileRoutesByTo {
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
   '/gov/login': typeof GovLoginRoute
+  '/gov/notifications': typeof GovNotificationsRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/help/articles': typeof HelpArticlesRoute
   '/inbox/$id': typeof InboxIdRoute
@@ -1700,6 +1715,7 @@ export interface FileRoutesByTo {
   '/parent/daily-feed': typeof ParentDailyFeedRoute
   '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
+  '/parent/notifications': typeof ParentNotificationsRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
@@ -1908,6 +1924,7 @@ export interface FileRoutesById {
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
   '/gov_/login': typeof GovLoginRoute
+  '/gov_/notifications': typeof GovNotificationsRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/help/articles': typeof HelpArticlesRoute
   '/inbox/$id': typeof InboxIdRoute
@@ -1920,6 +1937,7 @@ export interface FileRoutesById {
   '/parent/daily-feed': typeof ParentDailyFeedRoute
   '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
+  '/parent_/notifications': typeof ParentNotificationsRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
@@ -2129,6 +2147,7 @@ export interface FileRouteTypes {
     | '/fr/verify'
     | '/fr/waitlist'
     | '/gov/login'
+    | '/gov/notifications'
     | '/guides/$code'
     | '/help/articles'
     | '/inbox/$id'
@@ -2141,6 +2160,7 @@ export interface FileRouteTypes {
     | '/parent/daily-feed'
     | '/parent/signup'
     | '/parent/spot-offers'
+    | '/parent/notifications'
     | '/pay/$bookingId'
     | '/provider/families'
     | '/provider/subscription'
@@ -2346,6 +2366,7 @@ export interface FileRouteTypes {
     | '/fr/verify'
     | '/fr/waitlist'
     | '/gov/login'
+    | '/gov/notifications'
     | '/guides/$code'
     | '/help/articles'
     | '/inbox/$id'
@@ -2358,6 +2379,7 @@ export interface FileRouteTypes {
     | '/parent/daily-feed'
     | '/parent/signup'
     | '/parent/spot-offers'
+    | '/parent/notifications'
     | '/pay/$bookingId'
     | '/provider/families'
     | '/provider/subscription'
@@ -2565,6 +2587,7 @@ export interface FileRouteTypes {
     | '/fr/verify'
     | '/fr/waitlist'
     | '/gov_/login'
+    | '/gov_/notifications'
     | '/guides/$code'
     | '/help/articles'
     | '/inbox/$id'
@@ -2577,6 +2600,7 @@ export interface FileRouteTypes {
     | '/parent/daily-feed'
     | '/parent/signup'
     | '/parent/spot-offers'
+    | '/parent_/notifications'
     | '/pay/$bookingId'
     | '/provider/families'
     | '/provider/subscription'
@@ -2732,11 +2756,13 @@ export interface RootRouteChildren {
   DaycareSlugRoute: typeof DaycareSlugRoute
   DaycaresCityRoute: typeof DaycaresCityRoute
   GovLoginRoute: typeof GovLoginRoute
+  GovNotificationsRoute: typeof GovNotificationsRoute
   InviteTokenRoute: typeof InviteTokenRoute
   JobsPostRoute: typeof JobsPostRoute
   ListingSlugRoute: typeof ListingSlugRoute
   MilieuxFamiliauxIdRoute: typeof MilieuxFamiliauxIdRoute
   OfferTokenRoute: typeof OfferTokenRoute
+  ParentNotificationsRoute: typeof ParentNotificationsRoute
   RCodeRoute: typeof RCodeRoute
   SignIdRoute: typeof SignIdRoute
   SpotsTokenRoute: typeof SpotsTokenRoute
@@ -3855,6 +3881,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GovLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gov_/notifications': {
+      id: '/gov_/notifications'
+      path: '/gov/notifications'
+      fullPath: '/gov/notifications'
+      preLoaderRoute: typeof GovNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/guides/$code': {
       id: '/guides/$code'
       path: '/$code'
@@ -3938,6 +3971,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/parent/spot-offers'
       preLoaderRoute: typeof ParentSpotOffersRouteImport
       parentRoute: typeof ParentRoute
+    }
+    '/parent_/notifications': {
+      id: '/parent_/notifications'
+      path: '/parent/notifications'
+      fullPath: '/parent/notifications'
+      preLoaderRoute: typeof ParentNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/pay/': {
       id: '/pay/'
@@ -4713,11 +4753,13 @@ const rootRouteChildren: RootRouteChildren = {
   DaycareSlugRoute: DaycareSlugRoute,
   DaycaresCityRoute: DaycaresCityRoute,
   GovLoginRoute: GovLoginRoute,
+  GovNotificationsRoute: GovNotificationsRoute,
   InviteTokenRoute: InviteTokenRoute,
   JobsPostRoute: JobsPostRoute,
   ListingSlugRoute: ListingSlugRoute,
   MilieuxFamiliauxIdRoute: MilieuxFamiliauxIdRoute,
   OfferTokenRoute: OfferTokenRoute,
+  ParentNotificationsRoute: ParentNotificationsRoute,
   RCodeRoute: RCodeRoute,
   SignIdRoute: SignIdRoute,
   SpotsTokenRoute: SpotsTokenRoute,
