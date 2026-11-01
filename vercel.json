@@ -60,6 +60,10 @@
     {
       "path": "/api/automations?job=neon-backup",
       "schedule": "30 8 * * 0"
+    },
+    {
+      "path": "/api/compliance/funding",
+      "schedule": "40 13 1 * *"
     }
   ],
   "rewrites": [
