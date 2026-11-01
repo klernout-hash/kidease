@@ -38,14 +38,15 @@ export function ListingHeaderPills({
   else if (vacancy.kind === "open") parts.push(`${vacancy.spots} ${t("spots")}`);
   else if (vacancy.kind === "waitlist" || vacancy.kind === "confirm") parts.push(t(vacancy.labelKey));
   const provincial = item.provincialOpening;
-  if (provincial) {
-    const date = new Date(provincial.asOf);
-    const label = Number.isNaN(date.getTime())
-      ? ""
-      : date.toLocaleDateString(loc === "fr" ? "fr-CA" : "en-CA", { dateStyle: "medium" });
+  const provincialDate = provincial?.asOf ? new Date(provincial.asOf) : null;
+  const provincialLabel =
+    provincialDate && !Number.isNaN(provincialDate.getTime())
+      ? provincialDate.toLocaleDateString(loc === "fr" ? "fr-CA" : "en-CA", { dateStyle: "medium" })
+      : "";
+  if (provincial && provincialLabel && provincial.sourceUrl) {
     const ages = provincial.ageLabel === "All ages" ? t("provincialOpeningsAllAges") : "";
     parts.push(
-      [t("provincialOpenings"), String(provincial.total), ages, label ? t("provincialOpeningsAsOf").replace("{date}", label) : ""]
+      [t("provincialOpenings"), String(provincial.total), ages, t("provincialOpeningsAsOf").replace("{date}", provincialLabel)]
         .filter(Boolean)
         .join(" · "),
     );
@@ -56,10 +57,18 @@ export function ListingHeaderPills({
   const subsidy = listingSubsidy(item);
   if (feeFrom > 0) parts.push(`${t("monthlyFrom")} ${money(feeFrom, locale)}${t("month")}`);
   else if (subsidy) parts.push(subsidyLabel(subsidy, loc));
-  if (!parts.length) return null;
+  if (!parts.length && !provincial?.sourceUrl) return null;
   return (
     <p className="mt-2 text-sm leading-5 text-fg" data-listing-header-pills>
       {parts.join(" · ")}
+      {provincial?.sourceUrl ? (
+        <>
+          {parts.length ? " · " : null}
+          <a href={provincial.sourceUrl} className="underline" rel="noreferrer" target="_blank">
+            {t("dataPointSource")}
+          </a>
+        </>
+      ) : null}
     </p>
   );
 }
@@ -145,7 +154,7 @@ export function ListingProgramsTable({ item }: { item: Daycare }) {
                       : t("programsAsk")}
                   </td>
                   <td className="px-3 py-2 tabular-nums">
-                    {monthlyFeeVisible(row.monthlyFee, item) && row.monthlyFee
+                    {confidence !== "estimate" && monthlyFeeVisible(row.monthlyFee, item) && row.monthlyFee
                       ? formatMonthlyFee(row.monthlyFee, locale)
                       : t("programsAsk")}
                   </td>
@@ -158,7 +167,7 @@ export function ListingProgramsTable({ item }: { item: Daycare }) {
                   </td>
                   <td className="px-3 py-2 text-muted">—</td>
                   <td className="px-3 py-2 tabular-nums">
-                    {monthlyFeeVisible(partTime, item) ? formatMonthlyFee(partTime, locale) : t("programsAsk")}
+                    {confidence !== "estimate" && monthlyFeeVisible(partTime, item) ? formatMonthlyFee(partTime, locale) : t("programsAsk")}
                   </td>
                 </tr>
               ) : null}
@@ -172,7 +181,7 @@ export function ListingProgramsTable({ item }: { item: Daycare }) {
         <p className="mt-2 text-sm text-muted" data-ke="fee-confidence">{t("feeProvincialEstimate")}. {t("feeProvincialEstimateLead")}</p>
       ) : null}
       {confidence === "centre" ? (
-        <p className="mt-2 text-sm text-muted" data-ke="fee-confidence">{t("feeConfirmedByCentre")}. {t("feeConfirmedByCentreLead")}</p>
+        <p className="mt-2 text-sm text-muted" data-ke="fee-confidence">{t("feeConfirmedByCentre")}. {t("feeConfirmedByCentreLead")} {t("feeNoCheckDate")}</p>
       ) : null}
     </section>
   );

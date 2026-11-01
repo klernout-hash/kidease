@@ -12,7 +12,7 @@ const BAND_LABEL: Record<RoomBand, { en: string; fr: string }> = {
 };
 
 export function RatioBoard({ province = "MB" }: { province?: string }) {
-  const { locale } = useCopy();
+  const { locale, t } = useCopy();
   const fr = locale === "fr";
   const start = (RATIO_PROVINCES as readonly string[]).includes(province) ? (province as RatioProvince) : "MB";
   const [prov, setProv] = useState<RatioProvince>(start);
@@ -43,14 +43,23 @@ export function RatioBoard({ province = "MB" }: { province?: string }) {
       <ul className="mt-4 space-y-3">
         {BANDS.map((band) => {
           const rule = ratioRule(prov, band);
-          const status = ratioStatus(Number(counts[band].children), Number(counts[band].staff), rule);
-          const tone = status === "out" ? "text-rose-800" : status === "near" ? "text-amber-800" : "text-emerald-800";
-          const word = status === "out" ? (fr ? "Hors ratio" : "Out of ratio") : status === "near" ? (fr ? "Proche de la limite" : "Near the limit") : fr ? "Dans le ratio" : "Within ratio";
+          const status = rule ? ratioStatus(Number(counts[band].children), Number(counts[band].staff), rule) : "unknown";
+          const tone = status === "out" ? "text-rose-800" : status === "near" ? "text-amber-800" : status === "unknown" ? "text-muted" : "text-emerald-800";
+          const word = status === "out" ? (fr ? "Hors ratio" : "Out of ratio") : status === "near" ? (fr ? "Proche de la limite" : "Near the limit") : status === "unknown" ? t("ratioNotConfirmed") : fr ? "Dans le ratio" : "Within ratio";
           return (
             <li key={band} className="rounded-2xl bg-surface-2 p-3 text-fg">
               <p className="text-sm font-semibold">{fr ? BAND_LABEL[band].fr : BAND_LABEL[band].en}</p>
-              <p className="text-xs text-muted">1:{rule.staffToChildren} · {fr ? "groupe max" : "max group"} {rule.maxGroup}</p>
-              <div className="mt-2 flex flex-wrap gap-2">
+              {rule?.verified ? (
+                <p className="text-xs text-muted">
+                  1:{rule.staffToChildren}
+                  {rule.showMax ? ` · ${fr ? "groupe max" : "max group"} ${rule.maxGroup}` : ""}
+                  {" · "}
+                  {rule.source}
+                </p>
+              ) : (
+                <p className="text-xs text-muted">{t("ratioNotConfirmed")}</p>
+              )}
+              {rule?.verified ? <div className="mt-2 flex flex-wrap gap-2">
                 <label className="text-sm">
                   {fr ? "Enfants" : "Children"}
                   <input
@@ -69,8 +78,8 @@ export function RatioBoard({ province = "MB" }: { province?: string }) {
                     onChange={(event) => setCounts((prev) => ({ ...prev, [band]: { ...prev[band], staff: event.target.value.replace(/[^\d]/g, "").slice(0, 2) } }))}
                   />
                 </label>
-              </div>
-              <p className={`mt-2 text-sm font-medium ${tone}`}>{word}</p>
+              </div> : null}
+              {rule?.verified ? <p className={`mt-2 text-sm font-medium ${tone}`}>{word}</p> : null}
             </li>
           );
         })}

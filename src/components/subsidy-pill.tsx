@@ -45,21 +45,24 @@ export function SubsidyPill({
       >
         {subsidyLabel(subsidy, loc)}
       </button>
+      <span data-ke="card-fee-source" className="mt-0.5 inline-flex max-w-[16rem] rounded bg-black/75 px-1.5 py-0.5 text-left text-[11px] font-normal leading-4 text-white">
+        <a
+          href={subsidy.subsidy_source}
+          target="_blank"
+          rel="noreferrer"
+          className="underline"
+          onClick={(event) => event.stopPropagation()}
+        >
+          {loc === "fr" ? "Source" : "Source"}
+        </a>
+        {subsidy.verified_at ? ` · ${subsidy.verified_at}` : ""}
+      </span>
       {open ? (
         <span
           data-ke="card-fee-note"
           className="mt-1 max-w-[240px] rounded-lg bg-black/80 px-2 py-1 text-left text-[11px] font-normal leading-4 text-white"
         >
-          {note}{" "}
-          <a
-            href={subsidy.subsidy_source}
-            target="_blank"
-            rel="noreferrer"
-            className="underline"
-            onClick={(event) => event.stopPropagation()}
-          >
-            {loc === "fr" ? "Source" : "Source"}
-          </a>
+          {note}
         </span>
       ) : null}
     </span>

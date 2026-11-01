@@ -76,10 +76,11 @@ export type ListingSubsidy = {
   subsidy_note: string;
   subsidy_note_fr: string;
   subsidy_source: string;
-  verified_at: typeof SUBSIDY_VERIFIED_AT;
+  verified_at: string;
 };
 
-const QC_SOURCE = "https://www.mfa.gouv.qc.ca/fr/services-de-garde/parents/tarification/Pages/index.aspx";
+const QC_SOURCE =
+  "https://www.quebec.ca/famille-et-soutien-aux-personnes/enfance/garderies-et-services-de-garde/tarifs";
 
 function subsidyFact(
   subsidy_type: SubsidyType,
@@ -88,6 +89,7 @@ function subsidyFact(
   subsidy_note: string,
   subsidy_note_fr: string,
   subsidy_source: string,
+  verified_at: string = SUBSIDY_VERIFIED_AT,
 ): ListingSubsidy {
   return {
     subsidy_type,
@@ -96,7 +98,7 @@ function subsidyFact(
     subsidy_note,
     subsidy_note_fr,
     subsidy_source,
-    verified_at: SUBSIDY_VERIFIED_AT,
+    verified_at,
   };
 }
 
@@ -117,8 +119,9 @@ function tenDay(
   note: string,
   noteFr: string,
   source: string,
+  verifiedAt: string = SUBSIDY_VERIFIED_AT,
 ): ListingSubsidy {
-  return subsidyFact("ten", "$10/day", "10 $/jour", note, noteFr, source);
+  return subsidyFact("ten", "$10/day", "10 $/jour", note, noteFr, source, verifiedAt);
 }
 
 /** Harvested catalogue conversion of a Manitoba $10 day into a fake monthly fee. */
@@ -228,9 +231,10 @@ export function listingSubsidy(d: SubsidyInput): ListingSubsidy | null {
   if (province === "SK") {
     return skCoversUnderSix(d)
       ? tenDay(
-          "Saskatchewan licensed child care for children under 6. The parent fee is $10 a day.",
-          "Garde permise en Saskatchewan pour les enfants de moins de 6 ans. Le tarif parental est de 10 $ par jour.",
-          "https://www.saskatchewan.ca/residents/family-and-social-support/child-care",
+          "Saskatchewan eligible child in regulated care. Full-time is $217.50 a month (10 or more days). Fewer than 10 days is $10 a day, up to $90 a month. The Child Care Regulations, 2015, s. 18(5).",
+          "Enfant admissible en garde réglementée en Saskatchewan. Le plein temps est 217,50 $ par mois (10 jours ou plus). Moins de 10 jours : 10 $ par jour, jusqu’à 90 $ par mois. Règlement de 2015, art. 18(5).",
+          "https://publications.saskatchewan.ca/api/v1/products/73483/formats/82271/download",
+          "2026-11-01",
         )
       : null;
   }
@@ -251,8 +255,8 @@ export function listingSubsidy(d: SubsidyInput): ListingSubsidy | null {
 
 function bcTen() {
   return tenDay(
-    "On the official British Columbia $10 a Day list. CCFRI is a separate fee reduction, not $10 a day.",
-    "Sur la liste officielle 10 $ par jour de la Colombie-Britannique. Le CCFRI est une réduction distincte, pas un tarif de 10 $ par jour.",
+    "On the British Columbia $10 a Day list published by the province. CCFRI is a separate fee reduction, not $10 a day.",
+    "Sur la liste 10 $ par jour publiée par la Colombie-Britannique. Le CCFRI est une réduction distincte, pas un tarif de 10 $ par jour.",
     subsidyYes.bcSource,
   );
 }
@@ -262,9 +266,10 @@ function qcSubsidized() {
     "qc_965",
     "$9.65/day subsidized",
     "9,65 $/jour subventionné",
-    "Quebec subsidized place (CPE or subsidized garderie). The 2026 reduced contribution is $9.65 a day.",
-    "Place subventionnée au Québec (CPE ou garderie subventionnée). La contribution réduite de 2026 est de 9,65 $ par jour.",
+    "Quebec subsidized place (CPE or subsidized garderie). The 2026 reduced contribution is $9.65 a day. Checked 1 November 2026.",
+    "Place subventionnée au Québec (CPE ou garderie subventionnée). La contribution réduite de 2026 est de 9,65 $ par jour. Vérifié le 1er novembre 2026.",
     QC_SOURCE,
+    "2026-11-01",
   );
 }
 
