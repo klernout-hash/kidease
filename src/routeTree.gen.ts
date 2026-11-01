@@ -176,6 +176,7 @@ import { Route as OfferTokenRouteImport } from './routes/offer.$token'
 import { Route as ParentDailyFeedRouteImport } from './routes/parent.daily-feed'
 import { Route as ParentSignupRouteImport } from './routes/parent.signup'
 import { Route as ParentSpotOffersRouteImport } from './routes/parent.spot-offers'
+import { Route as ParentEnrolmentHandoffRouteImport } from './routes/parent_.enrolment-handoff'
 import { Route as PayIndexRouteImport } from './routes/pay.index'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
 import { Route as ProviderFamiliesRouteImport } from './routes/provider.families'
@@ -1064,6 +1065,11 @@ const ParentSpotOffersRoute = ParentSpotOffersRouteImport.update({
   path: '/spot-offers',
   getParentRoute: () => ParentRoute,
 } as any)
+const ParentEnrolmentHandoffRoute = ParentEnrolmentHandoffRouteImport.update({
+  id: '/parent_/enrolment-handoff',
+  path: '/parent/enrolment-handoff',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PayIndexRoute = PayIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -1483,6 +1489,7 @@ export interface FileRoutesByFullPath {
   '/parent/daily-feed': typeof ParentDailyFeedRoute
   '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
+  '/parent/enrolment-handoff': typeof ParentEnrolmentHandoffRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
@@ -1700,6 +1707,7 @@ export interface FileRoutesByTo {
   '/parent/daily-feed': typeof ParentDailyFeedRoute
   '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
+  '/parent/enrolment-handoff': typeof ParentEnrolmentHandoffRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
@@ -1920,6 +1928,7 @@ export interface FileRoutesById {
   '/parent/daily-feed': typeof ParentDailyFeedRoute
   '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
+  '/parent_/enrolment-handoff': typeof ParentEnrolmentHandoffRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
@@ -2141,6 +2150,7 @@ export interface FileRouteTypes {
     | '/parent/daily-feed'
     | '/parent/signup'
     | '/parent/spot-offers'
+    | '/parent/enrolment-handoff'
     | '/pay/$bookingId'
     | '/provider/families'
     | '/provider/subscription'
@@ -2358,6 +2368,7 @@ export interface FileRouteTypes {
     | '/parent/daily-feed'
     | '/parent/signup'
     | '/parent/spot-offers'
+    | '/parent/enrolment-handoff'
     | '/pay/$bookingId'
     | '/provider/families'
     | '/provider/subscription'
@@ -2577,6 +2588,7 @@ export interface FileRouteTypes {
     | '/parent/daily-feed'
     | '/parent/signup'
     | '/parent/spot-offers'
+    | '/parent_/enrolment-handoff'
     | '/pay/$bookingId'
     | '/provider/families'
     | '/provider/subscription'
@@ -2737,6 +2749,7 @@ export interface RootRouteChildren {
   ListingSlugRoute: typeof ListingSlugRoute
   MilieuxFamiliauxIdRoute: typeof MilieuxFamiliauxIdRoute
   OfferTokenRoute: typeof OfferTokenRoute
+  ParentEnrolmentHandoffRoute: typeof ParentEnrolmentHandoffRoute
   RCodeRoute: typeof RCodeRoute
   SignIdRoute: typeof SignIdRoute
   SpotsTokenRoute: typeof SpotsTokenRoute
@@ -3939,6 +3952,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ParentSpotOffersRouteImport
       parentRoute: typeof ParentRoute
     }
+    '/parent_/enrolment-handoff': {
+      id: '/parent_/enrolment-handoff'
+      path: '/parent/enrolment-handoff'
+      fullPath: '/parent/enrolment-handoff'
+      preLoaderRoute: typeof ParentEnrolmentHandoffRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pay/': {
       id: '/pay/'
       path: '/'
@@ -4718,6 +4738,7 @@ const rootRouteChildren: RootRouteChildren = {
   ListingSlugRoute: ListingSlugRoute,
   MilieuxFamiliauxIdRoute: MilieuxFamiliauxIdRoute,
   OfferTokenRoute: OfferTokenRoute,
+  ParentEnrolmentHandoffRoute: ParentEnrolmentHandoffRoute,
   RCodeRoute: RCodeRoute,
   SignIdRoute: SignIdRoute,
   SpotsTokenRoute: SpotsTokenRoute,
