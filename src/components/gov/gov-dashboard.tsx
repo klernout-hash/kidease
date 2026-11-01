@@ -271,6 +271,11 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
             ))}
           </ul>
         </section>
+        <p className="mt-8">
+          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/compliance" : "/gov/compliance"}>
+            {data.locale === "fr" ? "Dates de conformité" : "Compliance dates"}
+          </a>
+        </p>
       </main>
     </div>
   );
