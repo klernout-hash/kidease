@@ -88,6 +88,7 @@ import { Route as Verify2faRouteImport } from './routes/verify-2fa'
 import { Route as WaitlistRouteImport } from './routes/waitlist'
 import { Route as AdminFeaturesRouteImport } from './routes/admin.features'
 import { Route as AdminGovernmentRouteImport } from './routes/admin.government'
+import { Route as AdminDataRequestsRouteImport } from './routes/admin_.data-requests'
 import { Route as ApiAccountPurgeRouteImport } from './routes/api/account-purge'
 import { Route as ApiAutomationsRouteImport } from './routes/api/automations'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
@@ -163,6 +164,7 @@ import { Route as FrUnsubscribeRouteImport } from './routes/fr.unsubscribe'
 import { Route as FrVacancyIndexRouteImport } from './routes/fr.vacancy-index'
 import { Route as FrVerifyRouteImport } from './routes/fr.verify'
 import { Route as FrWaitlistRouteImport } from './routes/fr.waitlist'
+import { Route as GovDataRequestsRouteImport } from './routes/gov_.data-requests'
 import { Route as GovLoginRouteImport } from './routes/gov_.login'
 import { Route as GuidesCodeRouteImport } from './routes/guides.$code'
 import { Route as HelpArticlesRouteImport } from './routes/help.articles'
@@ -176,10 +178,12 @@ import { Route as OfferTokenRouteImport } from './routes/offer.$token'
 import { Route as ParentDailyFeedRouteImport } from './routes/parent.daily-feed'
 import { Route as ParentSignupRouteImport } from './routes/parent.signup'
 import { Route as ParentSpotOffersRouteImport } from './routes/parent.spot-offers'
+import { Route as ParentDataRequestRouteImport } from './routes/parent_.data-request'
 import { Route as PayIndexRouteImport } from './routes/pay.index'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
 import { Route as ProviderFamiliesRouteImport } from './routes/provider.families'
 import { Route as ProviderSubscriptionRouteImport } from './routes/provider.subscription'
+import { Route as ProviderDataRequestsRouteImport } from './routes/provider_.data-requests'
 import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as SignIdRouteImport } from './routes/sign.$id'
 import { Route as SpotsTokenRouteImport } from './routes/spots.$token'
@@ -623,6 +627,11 @@ const AdminGovernmentRoute = AdminGovernmentRouteImport.update({
   path: '/government',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminDataRequestsRoute = AdminDataRequestsRouteImport.update({
+  id: '/admin_/data-requests',
+  path: '/admin/data-requests',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAccountPurgeRoute = ApiAccountPurgeRouteImport.update({
   id: '/api/account-purge',
   path: '/api/account-purge',
@@ -999,6 +1008,11 @@ const FrWaitlistRoute = FrWaitlistRouteImport.update({
   path: '/waitlist',
   getParentRoute: () => FrRoute,
 } as any)
+const GovDataRequestsRoute = GovDataRequestsRouteImport.update({
+  id: '/gov_/data-requests',
+  path: '/gov/data-requests',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GovLoginRoute = GovLoginRouteImport.update({
   id: '/gov_/login',
   path: '/gov/login',
@@ -1064,6 +1078,11 @@ const ParentSpotOffersRoute = ParentSpotOffersRouteImport.update({
   path: '/spot-offers',
   getParentRoute: () => ParentRoute,
 } as any)
+const ParentDataRequestRoute = ParentDataRequestRouteImport.update({
+  id: '/parent_/data-request',
+  path: '/parent/data-request',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PayIndexRoute = PayIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -1083,6 +1102,11 @@ const ProviderSubscriptionRoute = ProviderSubscriptionRouteImport.update({
   id: '/subscription',
   path: '/subscription',
   getParentRoute: () => ProviderRoute,
+} as any)
+const ProviderDataRequestsRoute = ProviderDataRequestsRouteImport.update({
+  id: '/provider_/data-requests',
+  path: '/provider/data-requests',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const RCodeRoute = RCodeRouteImport.update({
   id: '/r/$code',
@@ -1396,6 +1420,7 @@ export interface FileRoutesByFullPath {
   '/waitlist': typeof WaitlistRoute
   '/admin/features': typeof AdminFeaturesRoute
   '/admin/government': typeof AdminGovernmentRoute
+  '/admin/data-requests': typeof AdminDataRequestsRoute
   '/api/account-purge': typeof ApiAccountPurgeRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/digest': typeof ApiDigestRoute
@@ -1470,6 +1495,7 @@ export interface FileRoutesByFullPath {
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
+  '/gov/data-requests': typeof GovDataRequestsRoute
   '/gov/login': typeof GovLoginRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/help/articles': typeof HelpArticlesRoute
@@ -1483,9 +1509,11 @@ export interface FileRoutesByFullPath {
   '/parent/daily-feed': typeof ParentDailyFeedRoute
   '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
+  '/parent/data-request': typeof ParentDataRequestRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider/data-requests': typeof ProviderDataRequestsRoute
   '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
@@ -1613,6 +1641,7 @@ export interface FileRoutesByTo {
   '/waitlist': typeof WaitlistRoute
   '/admin/features': typeof AdminFeaturesRoute
   '/admin/government': typeof AdminGovernmentRoute
+  '/admin/data-requests': typeof AdminDataRequestsRoute
   '/api/account-purge': typeof ApiAccountPurgeRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/digest': typeof ApiDigestRoute
@@ -1687,6 +1716,7 @@ export interface FileRoutesByTo {
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
+  '/gov/data-requests': typeof GovDataRequestsRoute
   '/gov/login': typeof GovLoginRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/help/articles': typeof HelpArticlesRoute
@@ -1700,9 +1730,11 @@ export interface FileRoutesByTo {
   '/parent/daily-feed': typeof ParentDailyFeedRoute
   '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
+  '/parent/data-request': typeof ParentDataRequestRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider/data-requests': typeof ProviderDataRequestsRoute
   '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
@@ -1833,6 +1865,7 @@ export interface FileRoutesById {
   '/waitlist': typeof WaitlistRoute
   '/admin/features': typeof AdminFeaturesRoute
   '/admin/government': typeof AdminGovernmentRoute
+  '/admin_/data-requests': typeof AdminDataRequestsRoute
   '/api/account-purge': typeof ApiAccountPurgeRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/digest': typeof ApiDigestRoute
@@ -1907,6 +1940,7 @@ export interface FileRoutesById {
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
+  '/gov_/data-requests': typeof GovDataRequestsRoute
   '/gov_/login': typeof GovLoginRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/help/articles': typeof HelpArticlesRoute
@@ -1920,9 +1954,11 @@ export interface FileRoutesById {
   '/parent/daily-feed': typeof ParentDailyFeedRoute
   '/parent/signup': typeof ParentSignupRoute
   '/parent/spot-offers': typeof ParentSpotOffersRoute
+  '/parent_/data-request': typeof ParentDataRequestRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
+  '/provider_/data-requests': typeof ProviderDataRequestsRoute
   '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
@@ -2054,6 +2090,7 @@ export interface FileRouteTypes {
     | '/waitlist'
     | '/admin/features'
     | '/admin/government'
+    | '/admin/data-requests'
     | '/api/account-purge'
     | '/api/automations'
     | '/api/digest'
@@ -2128,6 +2165,7 @@ export interface FileRouteTypes {
     | '/fr/vacancy-index'
     | '/fr/verify'
     | '/fr/waitlist'
+    | '/gov/data-requests'
     | '/gov/login'
     | '/guides/$code'
     | '/help/articles'
@@ -2141,9 +2179,11 @@ export interface FileRouteTypes {
     | '/parent/daily-feed'
     | '/parent/signup'
     | '/parent/spot-offers'
+    | '/parent/data-request'
     | '/pay/$bookingId'
     | '/provider/families'
     | '/provider/subscription'
+    | '/provider/data-requests'
     | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
@@ -2271,6 +2311,7 @@ export interface FileRouteTypes {
     | '/waitlist'
     | '/admin/features'
     | '/admin/government'
+    | '/admin/data-requests'
     | '/api/account-purge'
     | '/api/automations'
     | '/api/digest'
@@ -2345,6 +2386,7 @@ export interface FileRouteTypes {
     | '/fr/vacancy-index'
     | '/fr/verify'
     | '/fr/waitlist'
+    | '/gov/data-requests'
     | '/gov/login'
     | '/guides/$code'
     | '/help/articles'
@@ -2358,9 +2400,11 @@ export interface FileRouteTypes {
     | '/parent/daily-feed'
     | '/parent/signup'
     | '/parent/spot-offers'
+    | '/parent/data-request'
     | '/pay/$bookingId'
     | '/provider/families'
     | '/provider/subscription'
+    | '/provider/data-requests'
     | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
@@ -2490,6 +2534,7 @@ export interface FileRouteTypes {
     | '/waitlist'
     | '/admin/features'
     | '/admin/government'
+    | '/admin_/data-requests'
     | '/api/account-purge'
     | '/api/automations'
     | '/api/digest'
@@ -2564,6 +2609,7 @@ export interface FileRouteTypes {
     | '/fr/vacancy-index'
     | '/fr/verify'
     | '/fr/waitlist'
+    | '/gov_/data-requests'
     | '/gov_/login'
     | '/guides/$code'
     | '/help/articles'
@@ -2577,9 +2623,11 @@ export interface FileRouteTypes {
     | '/parent/daily-feed'
     | '/parent/signup'
     | '/parent/spot-offers'
+    | '/parent_/data-request'
     | '/pay/$bookingId'
     | '/provider/families'
     | '/provider/subscription'
+    | '/provider_/data-requests'
     | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
@@ -2708,6 +2756,7 @@ export interface RootRouteChildren {
   VerifyRoute: typeof VerifyRoute
   Verify2faRoute: typeof Verify2faRoute
   WaitlistRoute: typeof WaitlistRoute
+  AdminDataRequestsRoute: typeof AdminDataRequestsRoute
   ApiAccountPurgeRoute: typeof ApiAccountPurgeRoute
   ApiAutomationsRoute: typeof ApiAutomationsRoute
   ApiDigestRoute: typeof ApiDigestRoute
@@ -2731,12 +2780,15 @@ export interface RootRouteChildren {
   CheckinIdRoute: typeof CheckinIdRoute
   DaycareSlugRoute: typeof DaycareSlugRoute
   DaycaresCityRoute: typeof DaycaresCityRoute
+  GovDataRequestsRoute: typeof GovDataRequestsRoute
   GovLoginRoute: typeof GovLoginRoute
   InviteTokenRoute: typeof InviteTokenRoute
   JobsPostRoute: typeof JobsPostRoute
   ListingSlugRoute: typeof ListingSlugRoute
   MilieuxFamiliauxIdRoute: typeof MilieuxFamiliauxIdRoute
   OfferTokenRoute: typeof OfferTokenRoute
+  ParentDataRequestRoute: typeof ParentDataRequestRoute
+  ProviderDataRequestsRoute: typeof ProviderDataRequestsRoute
   RCodeRoute: typeof RCodeRoute
   SignIdRoute: typeof SignIdRoute
   SpotsTokenRoute: typeof SpotsTokenRoute
@@ -3323,6 +3375,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminGovernmentRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin_/data-requests': {
+      id: '/admin_/data-requests'
+      path: '/admin/data-requests'
+      fullPath: '/admin/data-requests'
+      preLoaderRoute: typeof AdminDataRequestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/account-purge': {
       id: '/api/account-purge'
       path: '/api/account-purge'
@@ -3848,6 +3907,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrWaitlistRouteImport
       parentRoute: typeof FrRoute
     }
+    '/gov_/data-requests': {
+      id: '/gov_/data-requests'
+      path: '/gov/data-requests'
+      fullPath: '/gov/data-requests'
+      preLoaderRoute: typeof GovDataRequestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/gov_/login': {
       id: '/gov_/login'
       path: '/gov/login'
@@ -3939,6 +4005,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ParentSpotOffersRouteImport
       parentRoute: typeof ParentRoute
     }
+    '/parent_/data-request': {
+      id: '/parent_/data-request'
+      path: '/parent/data-request'
+      fullPath: '/parent/data-request'
+      preLoaderRoute: typeof ParentDataRequestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pay/': {
       id: '/pay/'
       path: '/'
@@ -3966,6 +4039,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/provider/subscription'
       preLoaderRoute: typeof ProviderSubscriptionRouteImport
       parentRoute: typeof ProviderRoute
+    }
+    '/provider_/data-requests': {
+      id: '/provider_/data-requests'
+      path: '/provider/data-requests'
+      fullPath: '/provider/data-requests'
+      preLoaderRoute: typeof ProviderDataRequestsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/r/$code': {
       id: '/r/$code'
@@ -4689,6 +4769,7 @@ const rootRouteChildren: RootRouteChildren = {
   VerifyRoute: VerifyRoute,
   Verify2faRoute: Verify2faRoute,
   WaitlistRoute: WaitlistRoute,
+  AdminDataRequestsRoute: AdminDataRequestsRoute,
   ApiAccountPurgeRoute: ApiAccountPurgeRoute,
   ApiAutomationsRoute: ApiAutomationsRoute,
   ApiDigestRoute: ApiDigestRoute,
@@ -4712,12 +4793,15 @@ const rootRouteChildren: RootRouteChildren = {
   CheckinIdRoute: CheckinIdRoute,
   DaycareSlugRoute: DaycareSlugRoute,
   DaycaresCityRoute: DaycaresCityRoute,
+  GovDataRequestsRoute: GovDataRequestsRoute,
   GovLoginRoute: GovLoginRoute,
   InviteTokenRoute: InviteTokenRoute,
   JobsPostRoute: JobsPostRoute,
   ListingSlugRoute: ListingSlugRoute,
   MilieuxFamiliauxIdRoute: MilieuxFamiliauxIdRoute,
   OfferTokenRoute: OfferTokenRoute,
+  ParentDataRequestRoute: ParentDataRequestRoute,
+  ProviderDataRequestsRoute: ProviderDataRequestsRoute,
   RCodeRoute: RCodeRoute,
   SignIdRoute: SignIdRoute,
   SpotsTokenRoute: SpotsTokenRoute,
