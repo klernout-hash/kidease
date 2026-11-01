@@ -49,6 +49,8 @@ import { listingSubsidy } from "@/lib/fee-program";
 import { SubsidyPill } from "@/components/subsidy-pill";
 import { SponsoredMark } from "@/components/sponsored-mark";
 import { CardMicroPills } from "@/components/card-micro-pills";
+import { VerifiedCheck } from "@/components/verified-check";
+import { showVerifiedCheck } from "@/lib/listing-verified";
 
 function whyMatchLine(
   item: Card,
@@ -97,6 +99,7 @@ function CardPhotoBadges({
   live,
   showLivePill,
   licenseWarning,
+  verifiedCheck = false,
   clearShare = false,
 }: {
   item: Card;
@@ -105,6 +108,8 @@ function CardPhotoBadges({
   live: boolean;
   showLivePill: boolean;
   licenseWarning: TrustBadgeModel | null;
+  /** Search cards only. Sits beside the Live pill. */
+  verifiedCheck?: boolean;
   /** Rail cards also place a share control beside the heart. */
   clearShare?: boolean;
 }) {
@@ -119,13 +124,14 @@ function CardPhotoBadges({
       )}
     >
       <SponsoredMark show={item.featuredCity} />
-      {showLivePill || listingSubsidy(item) ? (
+      {showLivePill || verifiedCheck || listingSubsidy(item) ? (
         <div className="flex flex-wrap items-center gap-1" data-ke="card-photo-pills">
           {showLivePill ? (
             <span data-ke="card-live-pill" className={cn(LIVE_PILL, pill)}>
               {t("live")}
             </span>
           ) : null}
+          {verifiedCheck ? <VerifiedCheck /> : null}
           <SubsidyPill item={item} className={cn(FEE_PILL, pill)} />
         </div>
       ) : null}
@@ -332,6 +338,7 @@ export const DaycareCard = memo(function DaycareCard({
               live={live}
               showLivePill={showLivePill}
               licenseWarning={licenseWarning}
+              verifiedCheck={showVerifiedCheck(item)}
             />
           </ListingAnchor>
           {parentActions ? <SaveListingButton daycareId={item.id} /> : null}

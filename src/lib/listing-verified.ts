@@ -4,6 +4,8 @@
  * KidEase is not the regulator and does not issue licences or VSCs.
  */
 
+import { listingStatusFromClaim } from "./listing-status.ts";
+
 const CA_PROVINCE_CODES = [
   "BC",
   "AB",
@@ -263,6 +265,25 @@ export function listingVerifiedCoach(input: ListingVerifiedInput): ListingVerifi
 
 export function isListingVerified(input: ListingVerifiedInput): boolean {
   return listingVerifiedCoach(input).verified;
+}
+
+/** Approved claim tokens only. A staff statement or a live flag is not a claim. */
+export function claimIsApproved(claimStatus?: string | null): boolean {
+  const raw = (claimStatus || "").trim();
+  if (!raw) return false;
+  return listingStatusFromClaim(raw) === "live";
+}
+
+/**
+ * Public blue check. The eight blockers stay in listingVerifiedCoach.
+ * Screening is screeningOnFile (a cleared VSC document). A staff statement does not count.
+ * The claim token must already be approved.
+ */
+export function showVerifiedCheck(
+  input: ListingVerifiedInput & { claimStatus?: string | null },
+): boolean {
+  if (!claimIsApproved(input.claimStatus)) return false;
+  return isListingVerified(input);
 }
 
 export function listingCoachDesks(coach: ListingVerifiedCoach): ListingCoachHref[] {

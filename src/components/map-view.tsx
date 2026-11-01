@@ -99,6 +99,8 @@ import { displayDistance } from "@/lib/units";
 import { plausibleListingKm } from "@/lib/plausible-distance";
 import { honestVacancy } from "@/lib/now-loops";
 import { publicApprovalEligible } from "@/lib/approve-live";
+import { showVerifiedCheck } from "@/lib/listing-verified";
+import { VerifiedCheck } from "@/components/verified-check";
 
 function searchCardsToMapPins(items: DaycareCard[]): MapPin[] {
   const pins: MapPin[] = [];
@@ -1132,6 +1134,7 @@ function MapPinPopup({
     .filter(Boolean)
     .join(" · ");
   const approved = publicApprovalEligible(item);
+  const verifiedCheck = showVerifiedCheck(item);
   const thumb = mapPinThumb(item.photos);
 
   return (
@@ -1162,11 +1165,11 @@ function MapPinPopup({
           params={{ slug: item.slug }}
           className="flex items-start gap-2 px-2 pb-1.5 pt-2 text-inherit no-underline"
         >
-          <PinPopupSummary thumb={thumb} name={name} place={place} facts={facts} approved={approved} approvedLabel={t("kideaseApprovedMarker")} sponsored={FEATURE_SPONSORED_LISTINGS && item.featuredCity ? t("sponsored") : ""} />
+          <PinPopupSummary thumb={thumb} name={name} place={place} facts={facts} approved={approved} approvedLabel={t("kideaseApprovedMarker")} verifiedCheck={verifiedCheck} sponsored={FEATURE_SPONSORED_LISTINGS && item.featuredCity ? t("sponsored") : ""} />
         </Link>
       ) : (
         <div className="flex items-start gap-2 px-2 pb-1.5 pt-2">
-          <PinPopupSummary thumb={thumb} name={name} place={place} facts={facts} approved={approved} approvedLabel={t("kideaseApprovedMarker")} sponsored={FEATURE_SPONSORED_LISTINGS && item.featuredCity ? t("sponsored") : ""} />
+          <PinPopupSummary thumb={thumb} name={name} place={place} facts={facts} approved={approved} approvedLabel={t("kideaseApprovedMarker")} verifiedCheck={verifiedCheck} sponsored={FEATURE_SPONSORED_LISTINGS && item.featuredCity ? t("sponsored") : ""} />
         </div>
       )}
       <div className="px-2 pb-2">
@@ -1200,6 +1203,7 @@ function PinPopupSummary({
   facts,
   approved,
   approvedLabel,
+  verifiedCheck,
   sponsored,
 }: {
   thumb: string | null;
@@ -1208,6 +1212,7 @@ function PinPopupSummary({
   facts: string;
   approved: boolean;
   approvedLabel: string;
+  verifiedCheck: boolean;
   sponsored?: string;
 }) {
   return (
@@ -1234,9 +1239,10 @@ function PinPopupSummary({
         ) : null}
         {place ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{place}</p> : null}
         {facts ? <p className="mt-0.5 truncate text-[13px] leading-5 text-muted">{facts}</p> : null}
-        {approved ? (
-          <p className="mt-0.5 text-[12px] font-medium leading-4 text-primary" data-ke="kidease-approved-marker">
-            {approvedLabel}
+        {approved || verifiedCheck ? (
+          <p className="mt-0.5 flex flex-wrap items-center gap-1 text-[12px] font-medium leading-4 text-primary" data-ke={approved ? "kidease-approved-marker" : undefined}>
+            {approved ? approvedLabel : null}
+            {verifiedCheck ? <VerifiedCheck /> : null}
           </p>
         ) : null}
       </span>

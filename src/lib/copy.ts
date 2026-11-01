@@ -2616,6 +2616,7 @@ export const copy = {
     completenessLead:
       "Parents see a quiet “A few details to confirm” note until you add the missing facts. Incomplete listings stay visible. KidEase does not hide them or invent the missing facts.",
     listingVerified: "Listing Verified",
+    verifiedCheckLabel: "Verified by KidEase: licence and background check checked",
     listingVerifiedLead:
       "Required Canada facts are filled. KidEase is not the provincial regulator and does not issue licences or Vulnerable Sector Checks.",
     listingVerifiedPending: "Listing Verified is waiting",
@@ -6155,6 +6156,7 @@ export const copy = {
     completenessLead:
       "Les parents voient une mention discrète « Quelques détails à confirmer » jusqu’à ce que vous ajoutiez les faits manquants. Les fiches incomplètes restent visibles. KidEase ne les cache pas et n’invente pas les faits manquants.",
     listingVerified: "Fiche vérifiée",
+    verifiedCheckLabel: "Vérifié par KidEase : permis et vérification des antécédents vérifiés",
     listingVerifiedLead:
       "Les faits canadiens obligatoires sont remplis. KidEase n’est pas l’organisme de réglementation et n’émet ni permis ni vérifications du secteur vulnérable.",
     listingVerifiedPending: "Fiche vérifiée en attente",

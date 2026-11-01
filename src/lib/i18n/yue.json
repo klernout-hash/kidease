@@ -2122,6 +2122,7 @@
   "completenessTitle": "公開刊登清單",
   "completenessLead": "喺你補齊缺少嘅資料之前，家長會見到一句低調嘅「仲有幾項資料要確認」。未填齊嘅刊登都仲會顯示。KidEase 唔會隱藏佢哋，亦唔會憑空作缺少嘅資料。",
   "listingVerified": "刊登已核實",
+  "verifiedCheckLabel": "經 KidEase 核實：已核對牌照同背景審查",
   "listingVerifiedLead": "加拿大必填資料已經填齊。KidEase 唔係省級監管機構，亦唔會發出牌照或者易受傷害人士背景審查。",
   "listingVerifiedPending": "刊登已核實仲等緊",
   "listingVerifiedPendingLead": "必填項目會擋住刊登已核實。刊登健康度 100% 唔係刊登已核實。有就更好嘅項目可以幫家長比較。KidEase 唔係監管機構：佢唔會發出牌照或者易受傷害人士背景審查。",
