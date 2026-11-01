@@ -1,0 +1,31 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { test } from "node:test";
+import { fileURLToPath } from "node:url";
+import { complaintsMode, reminderPlan, routeComplaint, slaStatus, trackingCode } from "../src/lib/compliance/complaints.ts";
+import { canSeeProvince } from "../src/lib/compliance/mode.ts";
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const src = (rel) => readFileSync(join(root, rel), "utf8");
+test("complaints route to the listing province and stay off by default", () => {
+  assert.equal(complaintsMode({}), "off");
+  assert.equal(complaintsMode({ FEATURE_GOV_COMPLAINTS: "1" }), "dry_run");
+  assert.equal(routeComplaint({ listingProvince: "on", chosenProvince: "MB" }), "ON");
+  assert.equal(routeComplaint({ listingProvince: null, chosenProvince: "qc" }), "QC");
+  assert.equal(trackingCode("abcd1234ef"), "KE-abcd1234");
+  const opened = new Date("2026-10-01T00:00:00Z");
+  const later = new Date("2026-10-20T00:00:00Z");
+  assert.equal(slaStatus(opened, later), "overdue");
+  const plan = reminderPlan({ mode: "dry_run", opened, now: later, closed: false, alreadyReminded: false });
+  assert.equal(plan.delivery, "log");
+  assert.equal(reminderPlan({ mode: "live", opened, now: later, closed: false, alreadyReminded: false }).delivery, "send");
+  assert.equal(canSeeProvince({ role: "government", govProvince: "ON", rowProvince: "QC" }), false);
+});
+test("complaint pages do not require a child name", () => {
+  assert.match(src(".env.example"), /^FEATURE_GOV_COMPLAINTS=0$/m);
+  assert.match(src(".env.example"), /^FEATURE_GOV_COMPLAINTS_LIVE=0$/m);
+  assert.match(src("src/lib/compliance/complaints.ts"), /PLACEHOLDER/);
+  assert.doesNotMatch(src("src/components/compliance/complaints-page.tsx"), /child name/i);
+  assert.match(src("src/routes/gov_.complaints.tsx"), /guardGovDesk/);
+  assert.match(src("src/components/compliance/frame.tsx"), /href="\/help"/);
+});

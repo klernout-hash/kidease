@@ -15,6 +15,33 @@ import { Route as AccountRouteImport } from './routes/account'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminAiRouteImport } from './routes/admin-ai'
 import { Route as AdminAutomationsRouteImport } from './routes/admin-automations'
+import { Route as ApiComplianceCalendarRouteImport } from './routes/api/compliance.calendar'
+import { Route as AdminGovComplianceRouteImport } from './routes/admin-gov-compliance'
+import { Route as CentreComplianceRouteImport } from './routes/centre-compliance'
+import { Route as ApiComplianceRatiosRouteImport } from './routes/api/compliance.ratios'
+import { Route as AdminGovRatiosRouteImport } from './routes/admin-gov-ratios'
+import { Route as CentreRatiosRouteImport } from './routes/centre-ratios'
+import { Route as ApiComplianceFundingRouteImport } from './routes/api/compliance.funding'
+import { Route as AdminGovFundingRouteImport } from './routes/admin-gov-funding'
+import { Route as CentreFundingRouteImport } from './routes/centre-funding'
+import { Route as ApiComplianceIncidentsRouteImport } from './routes/api/compliance.incidents'
+import { Route as AdminGovIncidentsRouteImport } from './routes/admin-gov-incidents'
+import { Route as FamilyIncidentsRouteImport } from './routes/family-incidents'
+import { Route as CentreIncidentsRouteImport } from './routes/centre-incidents'
+import { Route as ApiComplianceComplaintsRouteImport } from './routes/api/compliance.complaints'
+import { Route as AdminGovComplaintsRouteImport } from './routes/admin-gov-complaints'
+import { Route as FamilyComplaintsRouteImport } from './routes/family-complaints'
+import { Route as AdminGovBroadcastsRouteImport } from './routes/admin-gov-broadcasts'
+import { Route as ApiComplianceScreeningRouteImport } from './routes/api/compliance.screening'
+import { Route as AdminGovScreeningRouteImport } from './routes/admin-gov-screening'
+import { Route as CentreScreeningRouteImport } from './routes/centre-screening'
+import { Route as ApiComplianceFeeCapsRouteImport } from './routes/api/compliance.fee-caps'
+import { Route as AdminGovFeeCapsRouteImport } from './routes/admin-gov-fee-caps'
+import { Route as CentreFeeCapsRouteImport } from './routes/centre-fee-caps'
+import { Route as ApiComplianceAuditRouteImport } from './routes/api/compliance.audit'
+import { Route as AdminGovAuditRouteImport } from './routes/admin-gov-audit'
+import { Route as ApiComplianceDemandRouteImport } from './routes/api/compliance.demand'
+import { Route as AdminGovDemandRouteImport } from './routes/admin-gov-demand'
 import { Route as AdminChatRouteImport } from './routes/admin-chat'
 import { Route as AdminContractsRouteImport } from './routes/admin-contracts'
 import { Route as AdminEmailHealthRouteImport } from './routes/admin-email-health'
@@ -174,6 +201,16 @@ import { Route as GovDataRequestsRouteImport } from './routes/gov_.data-requests
 import { Route as GovLoginRouteImport } from './routes/gov_.login'
 import { Route as GovNotificationsRouteImport } from './routes/gov_.notifications'
 import { Route as GovSubsidyRouteImport } from './routes/gov_.subsidy'
+import { Route as GovComplianceRouteImport } from './routes/gov_.compliance'
+import { Route as GovRatiosRouteImport } from './routes/gov_.ratios'
+import { Route as GovFundingRouteImport } from './routes/gov_.funding'
+import { Route as GovIncidentsRouteImport } from './routes/gov_.incidents'
+import { Route as GovComplaintsRouteImport } from './routes/gov_.complaints'
+import { Route as GovBroadcastsRouteImport } from './routes/gov_.broadcasts'
+import { Route as GovScreeningRouteImport } from './routes/gov_.screening'
+import { Route as GovFeeCapsRouteImport } from './routes/gov_.fee-caps'
+import { Route as GovAuditRouteImport } from './routes/gov_.audit'
+import { Route as GovDemandRouteImport } from './routes/gov_.demand'
 import { Route as GuidesCodeRouteImport } from './routes/guides.$code'
 import { Route as HelpArticlesRouteImport } from './routes/help.articles'
 import { Route as InboxIdRouteImport } from './routes/inbox.$id'
@@ -239,6 +276,16 @@ import { Route as DaycareCityAgeRouteImport } from './routes/daycare.$city.$age'
 import { Route as DaycareCityCityRouteImport } from './routes/daycare.city.$city'
 import { Route as FrDaycareSlugRouteImport } from './routes/fr.daycare.$slug'
 import { Route as FrGovLoginRouteImport } from './routes/fr.gov_.login'
+import { Route as FrGovComplianceRouteImport } from './routes/fr.gov_.compliance'
+import { Route as FrGovRatiosRouteImport } from './routes/fr.gov_.ratios'
+import { Route as FrGovFundingRouteImport } from './routes/fr.gov_.funding'
+import { Route as FrGovIncidentsRouteImport } from './routes/fr.gov_.incidents'
+import { Route as FrGovComplaintsRouteImport } from './routes/fr.gov_.complaints'
+import { Route as FrGovBroadcastsRouteImport } from './routes/fr.gov_.broadcasts'
+import { Route as FrGovScreeningRouteImport } from './routes/fr.gov_.screening'
+import { Route as FrGovFeeCapsRouteImport } from './routes/fr.gov_.fee-caps'
+import { Route as FrGovAuditRouteImport } from './routes/fr.gov_.audit'
+import { Route as FrGovDemandRouteImport } from './routes/fr.gov_.demand'
 import { Route as FrGuidesCodeRouteImport } from './routes/fr.guides.$code'
 import { Route as FrHelpArticlesRouteImport } from './routes/fr.help.articles'
 import { Route as FrInboxIdRouteImport } from './routes/fr.inbox.$id'
@@ -282,6 +329,141 @@ const AdminAiRoute = AdminAiRouteImport.update({
 const AdminAutomationsRoute = AdminAutomationsRouteImport.update({
   id: '/admin-automations',
   path: '/admin-automations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiComplianceCalendarRoute = ApiComplianceCalendarRouteImport.update({
+  id: '/api/compliance/calendar',
+  path: '/api/compliance/calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminGovComplianceRoute = AdminGovComplianceRouteImport.update({
+  id: '/admin-gov-compliance',
+  path: '/admin-gov-compliance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CentreComplianceRoute = CentreComplianceRouteImport.update({
+  id: '/centre-compliance',
+  path: '/centre-compliance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiComplianceRatiosRoute = ApiComplianceRatiosRouteImport.update({
+  id: '/api/compliance/ratios',
+  path: '/api/compliance/ratios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminGovRatiosRoute = AdminGovRatiosRouteImport.update({
+  id: '/admin-gov-ratios',
+  path: '/admin-gov-ratios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CentreRatiosRoute = CentreRatiosRouteImport.update({
+  id: '/centre-ratios',
+  path: '/centre-ratios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiComplianceFundingRoute = ApiComplianceFundingRouteImport.update({
+  id: '/api/compliance/funding',
+  path: '/api/compliance/funding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminGovFundingRoute = AdminGovFundingRouteImport.update({
+  id: '/admin-gov-funding',
+  path: '/admin-gov-funding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CentreFundingRoute = CentreFundingRouteImport.update({
+  id: '/centre-funding',
+  path: '/centre-funding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiComplianceIncidentsRoute = ApiComplianceIncidentsRouteImport.update({
+  id: '/api/compliance/incidents',
+  path: '/api/compliance/incidents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminGovIncidentsRoute = AdminGovIncidentsRouteImport.update({
+  id: '/admin-gov-incidents',
+  path: '/admin-gov-incidents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FamilyIncidentsRoute = FamilyIncidentsRouteImport.update({
+  id: '/family-incidents',
+  path: '/family-incidents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CentreIncidentsRoute = CentreIncidentsRouteImport.update({
+  id: '/centre-incidents',
+  path: '/centre-incidents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiComplianceComplaintsRoute = ApiComplianceComplaintsRouteImport.update({
+  id: '/api/compliance/complaints',
+  path: '/api/compliance/complaints',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminGovComplaintsRoute = AdminGovComplaintsRouteImport.update({
+  id: '/admin-gov-complaints',
+  path: '/admin-gov-complaints',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FamilyComplaintsRoute = FamilyComplaintsRouteImport.update({
+  id: '/family-complaints',
+  path: '/family-complaints',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminGovBroadcastsRoute = AdminGovBroadcastsRouteImport.update({
+  id: '/admin-gov-broadcasts',
+  path: '/admin-gov-broadcasts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiComplianceScreeningRoute = ApiComplianceScreeningRouteImport.update({
+  id: '/api/compliance/screening',
+  path: '/api/compliance/screening',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminGovScreeningRoute = AdminGovScreeningRouteImport.update({
+  id: '/admin-gov-screening',
+  path: '/admin-gov-screening',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CentreScreeningRoute = CentreScreeningRouteImport.update({
+  id: '/centre-screening',
+  path: '/centre-screening',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiComplianceFeeCapsRoute = ApiComplianceFeeCapsRouteImport.update({
+  id: '/api/compliance/fee-caps',
+  path: '/api/compliance/fee-caps',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminGovFeeCapsRoute = AdminGovFeeCapsRouteImport.update({
+  id: '/admin-gov-fee-caps',
+  path: '/admin-gov-fee-caps',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CentreFeeCapsRoute = CentreFeeCapsRouteImport.update({
+  id: '/centre-fee-caps',
+  path: '/centre-fee-caps',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiComplianceAuditRoute = ApiComplianceAuditRouteImport.update({
+  id: '/api/compliance/audit',
+  path: '/api/compliance/audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminGovAuditRoute = AdminGovAuditRouteImport.update({
+  id: '/admin-gov-audit',
+  path: '/admin-gov-audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiComplianceDemandRoute = ApiComplianceDemandRouteImport.update({
+  id: '/api/compliance/demand',
+  path: '/api/compliance/demand',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminGovDemandRoute = AdminGovDemandRouteImport.update({
+  id: '/admin-gov-demand',
+  path: '/admin-gov-demand',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminChatRoute = AdminChatRouteImport.update({
@@ -1081,6 +1263,56 @@ const GovSubsidyRoute = GovSubsidyRouteImport.update({
   path: '/gov/subsidy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GovComplianceRoute = GovComplianceRouteImport.update({
+  id: '/gov_/compliance',
+  path: '/gov/compliance',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovRatiosRoute = GovRatiosRouteImport.update({
+  id: '/gov_/ratios',
+  path: '/gov/ratios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovFundingRoute = GovFundingRouteImport.update({
+  id: '/gov_/funding',
+  path: '/gov/funding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovIncidentsRoute = GovIncidentsRouteImport.update({
+  id: '/gov_/incidents',
+  path: '/gov/incidents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovComplaintsRoute = GovComplaintsRouteImport.update({
+  id: '/gov_/complaints',
+  path: '/gov/complaints',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovBroadcastsRoute = GovBroadcastsRouteImport.update({
+  id: '/gov_/broadcasts',
+  path: '/gov/broadcasts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovScreeningRoute = GovScreeningRouteImport.update({
+  id: '/gov_/screening',
+  path: '/gov/screening',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovFeeCapsRoute = GovFeeCapsRouteImport.update({
+  id: '/gov_/fee-caps',
+  path: '/gov/fee-caps',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovAuditRoute = GovAuditRouteImport.update({
+  id: '/gov_/audit',
+  path: '/gov/audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovDemandRoute = GovDemandRouteImport.update({
+  id: '/gov_/demand',
+  path: '/gov/demand',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GuidesCodeRoute = GuidesCodeRouteImport.update({
   id: '/$code',
   path: '/$code',
@@ -1407,6 +1639,56 @@ const FrGovLoginRoute = FrGovLoginRouteImport.update({
   path: '/gov/login',
   getParentRoute: () => FrRoute,
 } as any)
+const FrGovComplianceRoute = FrGovComplianceRouteImport.update({
+  id: '/gov_/compliance',
+  path: '/gov/compliance',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovRatiosRoute = FrGovRatiosRouteImport.update({
+  id: '/gov_/ratios',
+  path: '/gov/ratios',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovFundingRoute = FrGovFundingRouteImport.update({
+  id: '/gov_/funding',
+  path: '/gov/funding',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovIncidentsRoute = FrGovIncidentsRouteImport.update({
+  id: '/gov_/incidents',
+  path: '/gov/incidents',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovComplaintsRoute = FrGovComplaintsRouteImport.update({
+  id: '/gov_/complaints',
+  path: '/gov/complaints',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovBroadcastsRoute = FrGovBroadcastsRouteImport.update({
+  id: '/gov_/broadcasts',
+  path: '/gov/broadcasts',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovScreeningRoute = FrGovScreeningRouteImport.update({
+  id: '/gov_/screening',
+  path: '/gov/screening',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovFeeCapsRoute = FrGovFeeCapsRouteImport.update({
+  id: '/gov_/fee-caps',
+  path: '/gov/fee-caps',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovAuditRoute = FrGovAuditRouteImport.update({
+  id: '/gov_/audit',
+  path: '/gov/audit',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovDemandRoute = FrGovDemandRouteImport.update({
+  id: '/gov_/demand',
+  path: '/gov/demand',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrGuidesCodeRoute = FrGuidesCodeRouteImport.update({
   id: '/$code',
   path: '/$code',
@@ -1485,6 +1767,33 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/admin-ai': typeof AdminAiRoute
   '/admin-automations': typeof AdminAutomationsRoute
+  '/api/compliance/calendar': typeof ApiComplianceCalendarRoute
+  '/admin-gov-compliance': typeof AdminGovComplianceRoute
+  '/centre-compliance': typeof CentreComplianceRoute
+  '/api/compliance/ratios': typeof ApiComplianceRatiosRoute
+  '/admin-gov-ratios': typeof AdminGovRatiosRoute
+  '/centre-ratios': typeof CentreRatiosRoute
+  '/api/compliance/funding': typeof ApiComplianceFundingRoute
+  '/admin-gov-funding': typeof AdminGovFundingRoute
+  '/centre-funding': typeof CentreFundingRoute
+  '/api/compliance/incidents': typeof ApiComplianceIncidentsRoute
+  '/admin-gov-incidents': typeof AdminGovIncidentsRoute
+  '/family-incidents': typeof FamilyIncidentsRoute
+  '/centre-incidents': typeof CentreIncidentsRoute
+  '/api/compliance/complaints': typeof ApiComplianceComplaintsRoute
+  '/admin-gov-complaints': typeof AdminGovComplaintsRoute
+  '/family-complaints': typeof FamilyComplaintsRoute
+  '/admin-gov-broadcasts': typeof AdminGovBroadcastsRoute
+  '/api/compliance/screening': typeof ApiComplianceScreeningRoute
+  '/admin-gov-screening': typeof AdminGovScreeningRoute
+  '/centre-screening': typeof CentreScreeningRoute
+  '/api/compliance/fee-caps': typeof ApiComplianceFeeCapsRoute
+  '/admin-gov-fee-caps': typeof AdminGovFeeCapsRoute
+  '/centre-fee-caps': typeof CentreFeeCapsRoute
+  '/api/compliance/audit': typeof ApiComplianceAuditRoute
+  '/admin-gov-audit': typeof AdminGovAuditRoute
+  '/api/compliance/demand': typeof ApiComplianceDemandRoute
+  '/admin-gov-demand': typeof AdminGovDemandRoute
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
@@ -1643,6 +1952,16 @@ export interface FileRoutesByFullPath {
   '/gov/login': typeof GovLoginRoute
   '/gov/notifications': typeof GovNotificationsRoute
   '/gov/subsidy': typeof GovSubsidyRoute
+  '/gov/compliance': typeof GovComplianceRoute
+  '/gov/ratios': typeof GovRatiosRoute
+  '/gov/funding': typeof GovFundingRoute
+  '/gov/incidents': typeof GovIncidentsRoute
+  '/gov/complaints': typeof GovComplaintsRoute
+  '/gov/broadcasts': typeof GovBroadcastsRoute
+  '/gov/screening': typeof GovScreeningRoute
+  '/gov/fee-caps': typeof GovFeeCapsRoute
+  '/gov/audit': typeof GovAuditRoute
+  '/gov/demand': typeof GovDemandRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/help/articles': typeof HelpArticlesRoute
   '/inbox/$id': typeof InboxIdRoute
@@ -1721,6 +2040,16 @@ export interface FileRoutesByFullPath {
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/gov/login': typeof FrGovLoginRoute
+  '/fr/gov/compliance': typeof FrGovComplianceRoute
+  '/fr/gov/ratios': typeof FrGovRatiosRoute
+  '/fr/gov/funding': typeof FrGovFundingRoute
+  '/fr/gov/incidents': typeof FrGovIncidentsRoute
+  '/fr/gov/complaints': typeof FrGovComplaintsRoute
+  '/fr/gov/broadcasts': typeof FrGovBroadcastsRoute
+  '/fr/gov/screening': typeof FrGovScreeningRoute
+  '/fr/gov/fee-caps': typeof FrGovFeeCapsRoute
+  '/fr/gov/audit': typeof FrGovAuditRoute
+  '/fr/gov/demand': typeof FrGovDemandRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/help/articles': typeof FrHelpArticlesRoute
   '/fr/inbox/$id': typeof FrInboxIdRoute
@@ -1743,6 +2072,33 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteWithChildren
   '/admin-ai': typeof AdminAiRoute
   '/admin-automations': typeof AdminAutomationsRoute
+  '/api/compliance/calendar': typeof ApiComplianceCalendarRoute
+  '/admin-gov-compliance': typeof AdminGovComplianceRoute
+  '/centre-compliance': typeof CentreComplianceRoute
+  '/api/compliance/ratios': typeof ApiComplianceRatiosRoute
+  '/admin-gov-ratios': typeof AdminGovRatiosRoute
+  '/centre-ratios': typeof CentreRatiosRoute
+  '/api/compliance/funding': typeof ApiComplianceFundingRoute
+  '/admin-gov-funding': typeof AdminGovFundingRoute
+  '/centre-funding': typeof CentreFundingRoute
+  '/api/compliance/incidents': typeof ApiComplianceIncidentsRoute
+  '/admin-gov-incidents': typeof AdminGovIncidentsRoute
+  '/family-incidents': typeof FamilyIncidentsRoute
+  '/centre-incidents': typeof CentreIncidentsRoute
+  '/api/compliance/complaints': typeof ApiComplianceComplaintsRoute
+  '/admin-gov-complaints': typeof AdminGovComplaintsRoute
+  '/family-complaints': typeof FamilyComplaintsRoute
+  '/admin-gov-broadcasts': typeof AdminGovBroadcastsRoute
+  '/api/compliance/screening': typeof ApiComplianceScreeningRoute
+  '/admin-gov-screening': typeof AdminGovScreeningRoute
+  '/centre-screening': typeof CentreScreeningRoute
+  '/api/compliance/fee-caps': typeof ApiComplianceFeeCapsRoute
+  '/admin-gov-fee-caps': typeof AdminGovFeeCapsRoute
+  '/centre-fee-caps': typeof CentreFeeCapsRoute
+  '/api/compliance/audit': typeof ApiComplianceAuditRoute
+  '/admin-gov-audit': typeof AdminGovAuditRoute
+  '/api/compliance/demand': typeof ApiComplianceDemandRoute
+  '/admin-gov-demand': typeof AdminGovDemandRoute
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
@@ -1899,6 +2255,16 @@ export interface FileRoutesByTo {
   '/gov/login': typeof GovLoginRoute
   '/gov/notifications': typeof GovNotificationsRoute
   '/gov/subsidy': typeof GovSubsidyRoute
+  '/gov/compliance': typeof GovComplianceRoute
+  '/gov/ratios': typeof GovRatiosRoute
+  '/gov/funding': typeof GovFundingRoute
+  '/gov/incidents': typeof GovIncidentsRoute
+  '/gov/complaints': typeof GovComplaintsRoute
+  '/gov/broadcasts': typeof GovBroadcastsRoute
+  '/gov/screening': typeof GovScreeningRoute
+  '/gov/fee-caps': typeof GovFeeCapsRoute
+  '/gov/audit': typeof GovAuditRoute
+  '/gov/demand': typeof GovDemandRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/help/articles': typeof HelpArticlesRoute
   '/inbox/$id': typeof InboxIdRoute
@@ -1977,6 +2343,16 @@ export interface FileRoutesByTo {
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/gov/login': typeof FrGovLoginRoute
+  '/fr/gov/compliance': typeof FrGovComplianceRoute
+  '/fr/gov/ratios': typeof FrGovRatiosRoute
+  '/fr/gov/funding': typeof FrGovFundingRoute
+  '/fr/gov/incidents': typeof FrGovIncidentsRoute
+  '/fr/gov/complaints': typeof FrGovComplaintsRoute
+  '/fr/gov/broadcasts': typeof FrGovBroadcastsRoute
+  '/fr/gov/screening': typeof FrGovScreeningRoute
+  '/fr/gov/fee-caps': typeof FrGovFeeCapsRoute
+  '/fr/gov/audit': typeof FrGovAuditRoute
+  '/fr/gov/demand': typeof FrGovDemandRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/help/articles': typeof FrHelpArticlesRoute
   '/fr/inbox/$id': typeof FrInboxIdRoute
@@ -2000,6 +2376,33 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/admin-ai': typeof AdminAiRoute
   '/admin-automations': typeof AdminAutomationsRoute
+  '/api/compliance/calendar': typeof ApiComplianceCalendarRoute
+  '/admin-gov-compliance': typeof AdminGovComplianceRoute
+  '/centre-compliance': typeof CentreComplianceRoute
+  '/api/compliance/ratios': typeof ApiComplianceRatiosRoute
+  '/admin-gov-ratios': typeof AdminGovRatiosRoute
+  '/centre-ratios': typeof CentreRatiosRoute
+  '/api/compliance/funding': typeof ApiComplianceFundingRoute
+  '/admin-gov-funding': typeof AdminGovFundingRoute
+  '/centre-funding': typeof CentreFundingRoute
+  '/api/compliance/incidents': typeof ApiComplianceIncidentsRoute
+  '/admin-gov-incidents': typeof AdminGovIncidentsRoute
+  '/family-incidents': typeof FamilyIncidentsRoute
+  '/centre-incidents': typeof CentreIncidentsRoute
+  '/api/compliance/complaints': typeof ApiComplianceComplaintsRoute
+  '/admin-gov-complaints': typeof AdminGovComplaintsRoute
+  '/family-complaints': typeof FamilyComplaintsRoute
+  '/admin-gov-broadcasts': typeof AdminGovBroadcastsRoute
+  '/api/compliance/screening': typeof ApiComplianceScreeningRoute
+  '/admin-gov-screening': typeof AdminGovScreeningRoute
+  '/centre-screening': typeof CentreScreeningRoute
+  '/api/compliance/fee-caps': typeof ApiComplianceFeeCapsRoute
+  '/admin-gov-fee-caps': typeof AdminGovFeeCapsRoute
+  '/centre-fee-caps': typeof CentreFeeCapsRoute
+  '/api/compliance/audit': typeof ApiComplianceAuditRoute
+  '/admin-gov-audit': typeof AdminGovAuditRoute
+  '/api/compliance/demand': typeof ApiComplianceDemandRoute
+  '/admin-gov-demand': typeof AdminGovDemandRoute
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
@@ -2158,6 +2561,16 @@ export interface FileRoutesById {
   '/gov_/login': typeof GovLoginRoute
   '/gov_/notifications': typeof GovNotificationsRoute
   '/gov_/subsidy': typeof GovSubsidyRoute
+  '/gov_/compliance': typeof GovComplianceRoute
+  '/gov_/ratios': typeof GovRatiosRoute
+  '/gov_/funding': typeof GovFundingRoute
+  '/gov_/incidents': typeof GovIncidentsRoute
+  '/gov_/complaints': typeof GovComplaintsRoute
+  '/gov_/broadcasts': typeof GovBroadcastsRoute
+  '/gov_/screening': typeof GovScreeningRoute
+  '/gov_/fee-caps': typeof GovFeeCapsRoute
+  '/gov_/audit': typeof GovAuditRoute
+  '/gov_/demand': typeof GovDemandRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/help/articles': typeof HelpArticlesRoute
   '/inbox/$id': typeof InboxIdRoute
@@ -2236,6 +2649,16 @@ export interface FileRoutesById {
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/gov_/login': typeof FrGovLoginRoute
+  '/fr/gov_/compliance': typeof FrGovComplianceRoute
+  '/fr/gov_/ratios': typeof FrGovRatiosRoute
+  '/fr/gov_/funding': typeof FrGovFundingRoute
+  '/fr/gov_/incidents': typeof FrGovIncidentsRoute
+  '/fr/gov_/complaints': typeof FrGovComplaintsRoute
+  '/fr/gov_/broadcasts': typeof FrGovBroadcastsRoute
+  '/fr/gov_/screening': typeof FrGovScreeningRoute
+  '/fr/gov_/fee-caps': typeof FrGovFeeCapsRoute
+  '/fr/gov_/audit': typeof FrGovAuditRoute
+  '/fr/gov_/demand': typeof FrGovDemandRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/help/articles': typeof FrHelpArticlesRoute
   '/fr/inbox/$id': typeof FrInboxIdRoute
@@ -2260,6 +2683,33 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-ai'
     | '/admin-automations'
+    | '/api/compliance/calendar'
+    | '/admin-gov-compliance'
+    | '/centre-compliance'
+    | '/api/compliance/ratios'
+    | '/admin-gov-ratios'
+    | '/centre-ratios'
+    | '/api/compliance/funding'
+    | '/admin-gov-funding'
+    | '/centre-funding'
+    | '/api/compliance/incidents'
+    | '/admin-gov-incidents'
+    | '/family-incidents'
+    | '/centre-incidents'
+    | '/api/compliance/complaints'
+    | '/admin-gov-complaints'
+    | '/family-complaints'
+    | '/admin-gov-broadcasts'
+    | '/api/compliance/screening'
+    | '/admin-gov-screening'
+    | '/centre-screening'
+    | '/api/compliance/fee-caps'
+    | '/admin-gov-fee-caps'
+    | '/centre-fee-caps'
+    | '/api/compliance/audit'
+    | '/admin-gov-audit'
+    | '/api/compliance/demand'
+    | '/admin-gov-demand'
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
@@ -2418,6 +2868,16 @@ export interface FileRouteTypes {
     | '/gov/login'
     | '/gov/notifications'
     | '/gov/subsidy'
+    | '/gov/compliance'
+    | '/gov/ratios'
+    | '/gov/funding'
+    | '/gov/incidents'
+    | '/gov/complaints'
+    | '/gov/broadcasts'
+    | '/gov/screening'
+    | '/gov/fee-caps'
+    | '/gov/audit'
+    | '/gov/demand'
     | '/guides/$code'
     | '/help/articles'
     | '/inbox/$id'
@@ -2496,6 +2956,16 @@ export interface FileRouteTypes {
     | '/daycare/city/$city'
     | '/fr/daycare/$slug'
     | '/fr/gov/login'
+    | '/fr/gov/compliance'
+    | '/fr/gov/ratios'
+    | '/fr/gov/funding'
+    | '/fr/gov/incidents'
+    | '/fr/gov/complaints'
+    | '/fr/gov/broadcasts'
+    | '/fr/gov/screening'
+    | '/fr/gov/fee-caps'
+    | '/fr/gov/audit'
+    | '/fr/gov/demand'
     | '/fr/guides/$code'
     | '/fr/help/articles'
     | '/fr/inbox/$id'
@@ -2518,6 +2988,33 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-ai'
     | '/admin-automations'
+    | '/api/compliance/calendar'
+    | '/admin-gov-compliance'
+    | '/centre-compliance'
+    | '/api/compliance/ratios'
+    | '/admin-gov-ratios'
+    | '/centre-ratios'
+    | '/api/compliance/funding'
+    | '/admin-gov-funding'
+    | '/centre-funding'
+    | '/api/compliance/incidents'
+    | '/admin-gov-incidents'
+    | '/family-incidents'
+    | '/centre-incidents'
+    | '/api/compliance/complaints'
+    | '/admin-gov-complaints'
+    | '/family-complaints'
+    | '/admin-gov-broadcasts'
+    | '/api/compliance/screening'
+    | '/admin-gov-screening'
+    | '/centre-screening'
+    | '/api/compliance/fee-caps'
+    | '/admin-gov-fee-caps'
+    | '/centre-fee-caps'
+    | '/api/compliance/audit'
+    | '/admin-gov-audit'
+    | '/api/compliance/demand'
+    | '/admin-gov-demand'
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
@@ -2674,6 +3171,16 @@ export interface FileRouteTypes {
     | '/gov/login'
     | '/gov/notifications'
     | '/gov/subsidy'
+    | '/gov/compliance'
+    | '/gov/ratios'
+    | '/gov/funding'
+    | '/gov/incidents'
+    | '/gov/complaints'
+    | '/gov/broadcasts'
+    | '/gov/screening'
+    | '/gov/fee-caps'
+    | '/gov/audit'
+    | '/gov/demand'
     | '/guides/$code'
     | '/help/articles'
     | '/inbox/$id'
@@ -2752,6 +3259,16 @@ export interface FileRouteTypes {
     | '/daycare/city/$city'
     | '/fr/daycare/$slug'
     | '/fr/gov/login'
+    | '/fr/gov/compliance'
+    | '/fr/gov/ratios'
+    | '/fr/gov/funding'
+    | '/fr/gov/incidents'
+    | '/fr/gov/complaints'
+    | '/fr/gov/broadcasts'
+    | '/fr/gov/screening'
+    | '/fr/gov/fee-caps'
+    | '/fr/gov/audit'
+    | '/fr/gov/demand'
     | '/fr/guides/$code'
     | '/fr/help/articles'
     | '/fr/inbox/$id'
@@ -2774,6 +3291,33 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-ai'
     | '/admin-automations'
+    | '/api/compliance/calendar'
+    | '/admin-gov-compliance'
+    | '/centre-compliance'
+    | '/api/compliance/ratios'
+    | '/admin-gov-ratios'
+    | '/centre-ratios'
+    | '/api/compliance/funding'
+    | '/admin-gov-funding'
+    | '/centre-funding'
+    | '/api/compliance/incidents'
+    | '/admin-gov-incidents'
+    | '/family-incidents'
+    | '/centre-incidents'
+    | '/api/compliance/complaints'
+    | '/admin-gov-complaints'
+    | '/family-complaints'
+    | '/admin-gov-broadcasts'
+    | '/api/compliance/screening'
+    | '/admin-gov-screening'
+    | '/centre-screening'
+    | '/api/compliance/fee-caps'
+    | '/admin-gov-fee-caps'
+    | '/centre-fee-caps'
+    | '/api/compliance/audit'
+    | '/admin-gov-audit'
+    | '/api/compliance/demand'
+    | '/admin-gov-demand'
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
@@ -2932,6 +3476,16 @@ export interface FileRouteTypes {
     | '/gov_/login'
     | '/gov_/notifications'
     | '/gov_/subsidy'
+    | '/gov_/compliance'
+    | '/gov_/ratios'
+    | '/gov_/funding'
+    | '/gov_/incidents'
+    | '/gov_/complaints'
+    | '/gov_/broadcasts'
+    | '/gov_/screening'
+    | '/gov_/fee-caps'
+    | '/gov_/audit'
+    | '/gov_/demand'
     | '/guides/$code'
     | '/help/articles'
     | '/inbox/$id'
@@ -3010,6 +3564,16 @@ export interface FileRouteTypes {
     | '/daycare/city/$city'
     | '/fr/daycare/$slug'
     | '/fr/gov_/login'
+    | '/fr/gov_/compliance'
+    | '/fr/gov_/ratios'
+    | '/fr/gov_/funding'
+    | '/fr/gov_/incidents'
+    | '/fr/gov_/complaints'
+    | '/fr/gov_/broadcasts'
+    | '/fr/gov_/screening'
+    | '/fr/gov_/fee-caps'
+    | '/fr/gov_/audit'
+    | '/fr/gov_/demand'
     | '/fr/guides/$code'
     | '/fr/help/articles'
     | '/fr/inbox/$id'
@@ -3033,6 +3597,33 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AdminAiRoute: typeof AdminAiRoute
   AdminAutomationsRoute: typeof AdminAutomationsRoute
+  ApiComplianceCalendarRoute: typeof ApiComplianceCalendarRoute
+  AdminGovComplianceRoute: typeof AdminGovComplianceRoute
+  CentreComplianceRoute: typeof CentreComplianceRoute
+  ApiComplianceRatiosRoute: typeof ApiComplianceRatiosRoute
+  AdminGovRatiosRoute: typeof AdminGovRatiosRoute
+  CentreRatiosRoute: typeof CentreRatiosRoute
+  ApiComplianceFundingRoute: typeof ApiComplianceFundingRoute
+  AdminGovFundingRoute: typeof AdminGovFundingRoute
+  CentreFundingRoute: typeof CentreFundingRoute
+  ApiComplianceIncidentsRoute: typeof ApiComplianceIncidentsRoute
+  AdminGovIncidentsRoute: typeof AdminGovIncidentsRoute
+  FamilyIncidentsRoute: typeof FamilyIncidentsRoute
+  CentreIncidentsRoute: typeof CentreIncidentsRoute
+  ApiComplianceComplaintsRoute: typeof ApiComplianceComplaintsRoute
+  AdminGovComplaintsRoute: typeof AdminGovComplaintsRoute
+  FamilyComplaintsRoute: typeof FamilyComplaintsRoute
+  AdminGovBroadcastsRoute: typeof AdminGovBroadcastsRoute
+  ApiComplianceScreeningRoute: typeof ApiComplianceScreeningRoute
+  AdminGovScreeningRoute: typeof AdminGovScreeningRoute
+  CentreScreeningRoute: typeof CentreScreeningRoute
+  ApiComplianceFeeCapsRoute: typeof ApiComplianceFeeCapsRoute
+  AdminGovFeeCapsRoute: typeof AdminGovFeeCapsRoute
+  CentreFeeCapsRoute: typeof CentreFeeCapsRoute
+  ApiComplianceAuditRoute: typeof ApiComplianceAuditRoute
+  AdminGovAuditRoute: typeof AdminGovAuditRoute
+  ApiComplianceDemandRoute: typeof ApiComplianceDemandRoute
+  AdminGovDemandRoute: typeof AdminGovDemandRoute
   AdminChatRoute: typeof AdminChatRoute
   AdminContractsRoute: typeof AdminContractsRoute
   AdminEmailHealthRoute: typeof AdminEmailHealthRoute
@@ -3138,6 +3729,16 @@ export interface RootRouteChildren {
   GovLoginRoute: typeof GovLoginRoute
   GovNotificationsRoute: typeof GovNotificationsRoute
   GovSubsidyRoute: typeof GovSubsidyRoute
+  GovComplianceRoute: typeof GovComplianceRoute
+  GovRatiosRoute: typeof GovRatiosRoute
+  GovFundingRoute: typeof GovFundingRoute
+  GovIncidentsRoute: typeof GovIncidentsRoute
+  GovComplaintsRoute: typeof GovComplaintsRoute
+  GovBroadcastsRoute: typeof GovBroadcastsRoute
+  GovScreeningRoute: typeof GovScreeningRoute
+  GovFeeCapsRoute: typeof GovFeeCapsRoute
+  GovAuditRoute: typeof GovAuditRoute
+  GovDemandRoute: typeof GovDemandRoute
   InviteTokenRoute: typeof InviteTokenRoute
   JobsPostRoute: typeof JobsPostRoute
   ListingSlugRoute: typeof ListingSlugRoute
@@ -3233,6 +3834,195 @@ declare module '@tanstack/react-router' {
       path: '/admin-automations'
       fullPath: '/admin-automations'
       preLoaderRoute: typeof AdminAutomationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/compliance/calendar': {
+      id: '/api/compliance/calendar'
+      path: '/api/compliance/calendar'
+      fullPath: '/api/compliance/calendar'
+      preLoaderRoute: typeof ApiComplianceCalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-gov-compliance': {
+      id: '/admin-gov-compliance'
+      path: '/admin-gov-compliance'
+      fullPath: '/admin-gov-compliance'
+      preLoaderRoute: typeof AdminGovComplianceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/centre-compliance': {
+      id: '/centre-compliance'
+      path: '/centre-compliance'
+      fullPath: '/centre-compliance'
+      preLoaderRoute: typeof CentreComplianceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/compliance/ratios': {
+      id: '/api/compliance/ratios'
+      path: '/api/compliance/ratios'
+      fullPath: '/api/compliance/ratios'
+      preLoaderRoute: typeof ApiComplianceRatiosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-gov-ratios': {
+      id: '/admin-gov-ratios'
+      path: '/admin-gov-ratios'
+      fullPath: '/admin-gov-ratios'
+      preLoaderRoute: typeof AdminGovRatiosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/centre-ratios': {
+      id: '/centre-ratios'
+      path: '/centre-ratios'
+      fullPath: '/centre-ratios'
+      preLoaderRoute: typeof CentreRatiosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/compliance/funding': {
+      id: '/api/compliance/funding'
+      path: '/api/compliance/funding'
+      fullPath: '/api/compliance/funding'
+      preLoaderRoute: typeof ApiComplianceFundingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-gov-funding': {
+      id: '/admin-gov-funding'
+      path: '/admin-gov-funding'
+      fullPath: '/admin-gov-funding'
+      preLoaderRoute: typeof AdminGovFundingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/centre-funding': {
+      id: '/centre-funding'
+      path: '/centre-funding'
+      fullPath: '/centre-funding'
+      preLoaderRoute: typeof CentreFundingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/compliance/incidents': {
+      id: '/api/compliance/incidents'
+      path: '/api/compliance/incidents'
+      fullPath: '/api/compliance/incidents'
+      preLoaderRoute: typeof ApiComplianceIncidentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-gov-incidents': {
+      id: '/admin-gov-incidents'
+      path: '/admin-gov-incidents'
+      fullPath: '/admin-gov-incidents'
+      preLoaderRoute: typeof AdminGovIncidentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/family-incidents': {
+      id: '/family-incidents'
+      path: '/family-incidents'
+      fullPath: '/family-incidents'
+      preLoaderRoute: typeof FamilyIncidentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/centre-incidents': {
+      id: '/centre-incidents'
+      path: '/centre-incidents'
+      fullPath: '/centre-incidents'
+      preLoaderRoute: typeof CentreIncidentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/compliance/complaints': {
+      id: '/api/compliance/complaints'
+      path: '/api/compliance/complaints'
+      fullPath: '/api/compliance/complaints'
+      preLoaderRoute: typeof ApiComplianceComplaintsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-gov-complaints': {
+      id: '/admin-gov-complaints'
+      path: '/admin-gov-complaints'
+      fullPath: '/admin-gov-complaints'
+      preLoaderRoute: typeof AdminGovComplaintsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/family-complaints': {
+      id: '/family-complaints'
+      path: '/family-complaints'
+      fullPath: '/family-complaints'
+      preLoaderRoute: typeof FamilyComplaintsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-gov-broadcasts': {
+      id: '/admin-gov-broadcasts'
+      path: '/admin-gov-broadcasts'
+      fullPath: '/admin-gov-broadcasts'
+      preLoaderRoute: typeof AdminGovBroadcastsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/compliance/screening': {
+      id: '/api/compliance/screening'
+      path: '/api/compliance/screening'
+      fullPath: '/api/compliance/screening'
+      preLoaderRoute: typeof ApiComplianceScreeningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-gov-screening': {
+      id: '/admin-gov-screening'
+      path: '/admin-gov-screening'
+      fullPath: '/admin-gov-screening'
+      preLoaderRoute: typeof AdminGovScreeningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/centre-screening': {
+      id: '/centre-screening'
+      path: '/centre-screening'
+      fullPath: '/centre-screening'
+      preLoaderRoute: typeof CentreScreeningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/compliance/fee-caps': {
+      id: '/api/compliance/fee-caps'
+      path: '/api/compliance/fee-caps'
+      fullPath: '/api/compliance/fee-caps'
+      preLoaderRoute: typeof ApiComplianceFeeCapsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-gov-fee-caps': {
+      id: '/admin-gov-fee-caps'
+      path: '/admin-gov-fee-caps'
+      fullPath: '/admin-gov-fee-caps'
+      preLoaderRoute: typeof AdminGovFeeCapsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/centre-fee-caps': {
+      id: '/centre-fee-caps'
+      path: '/centre-fee-caps'
+      fullPath: '/centre-fee-caps'
+      preLoaderRoute: typeof CentreFeeCapsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/compliance/audit': {
+      id: '/api/compliance/audit'
+      path: '/api/compliance/audit'
+      fullPath: '/api/compliance/audit'
+      preLoaderRoute: typeof ApiComplianceAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-gov-audit': {
+      id: '/admin-gov-audit'
+      path: '/admin-gov-audit'
+      fullPath: '/admin-gov-audit'
+      preLoaderRoute: typeof AdminGovAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/compliance/demand': {
+      id: '/api/compliance/demand'
+      path: '/api/compliance/demand'
+      fullPath: '/api/compliance/demand'
+      preLoaderRoute: typeof ApiComplianceDemandRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-gov-demand': {
+      id: '/admin-gov-demand'
+      path: '/admin-gov-demand'
+      fullPath: '/admin-gov-demand'
+      preLoaderRoute: typeof AdminGovDemandRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin-chat': {
@@ -4348,6 +5138,76 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GovSubsidyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gov_/compliance': {
+      id: '/gov_/compliance'
+      path: '/gov/compliance'
+      fullPath: '/gov/compliance'
+      preLoaderRoute: typeof GovComplianceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gov_/ratios': {
+      id: '/gov_/ratios'
+      path: '/gov/ratios'
+      fullPath: '/gov/ratios'
+      preLoaderRoute: typeof GovRatiosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gov_/funding': {
+      id: '/gov_/funding'
+      path: '/gov/funding'
+      fullPath: '/gov/funding'
+      preLoaderRoute: typeof GovFundingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gov_/incidents': {
+      id: '/gov_/incidents'
+      path: '/gov/incidents'
+      fullPath: '/gov/incidents'
+      preLoaderRoute: typeof GovIncidentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gov_/complaints': {
+      id: '/gov_/complaints'
+      path: '/gov/complaints'
+      fullPath: '/gov/complaints'
+      preLoaderRoute: typeof GovComplaintsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gov_/broadcasts': {
+      id: '/gov_/broadcasts'
+      path: '/gov/broadcasts'
+      fullPath: '/gov/broadcasts'
+      preLoaderRoute: typeof GovBroadcastsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gov_/screening': {
+      id: '/gov_/screening'
+      path: '/gov/screening'
+      fullPath: '/gov/screening'
+      preLoaderRoute: typeof GovScreeningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gov_/fee-caps': {
+      id: '/gov_/fee-caps'
+      path: '/gov/fee-caps'
+      fullPath: '/gov/fee-caps'
+      preLoaderRoute: typeof GovFeeCapsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gov_/audit': {
+      id: '/gov_/audit'
+      path: '/gov/audit'
+      fullPath: '/gov/audit'
+      preLoaderRoute: typeof GovAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gov_/demand': {
+      id: '/gov_/demand'
+      path: '/gov/demand'
+      fullPath: '/gov/demand'
+      preLoaderRoute: typeof GovDemandRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/guides/$code': {
       id: '/guides/$code'
       path: '/$code'
@@ -4803,6 +5663,76 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrGovLoginRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/gov_/compliance': {
+      id: '/fr/gov_/compliance'
+      path: '/gov/compliance'
+      fullPath: '/fr/gov/compliance'
+      preLoaderRoute: typeof FrGovComplianceRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/gov_/ratios': {
+      id: '/fr/gov_/ratios'
+      path: '/gov/ratios'
+      fullPath: '/fr/gov/ratios'
+      preLoaderRoute: typeof FrGovRatiosRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/gov_/funding': {
+      id: '/fr/gov_/funding'
+      path: '/gov/funding'
+      fullPath: '/fr/gov/funding'
+      preLoaderRoute: typeof FrGovFundingRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/gov_/incidents': {
+      id: '/fr/gov_/incidents'
+      path: '/gov/incidents'
+      fullPath: '/fr/gov/incidents'
+      preLoaderRoute: typeof FrGovIncidentsRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/gov_/complaints': {
+      id: '/fr/gov_/complaints'
+      path: '/gov/complaints'
+      fullPath: '/fr/gov/complaints'
+      preLoaderRoute: typeof FrGovComplaintsRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/gov_/broadcasts': {
+      id: '/fr/gov_/broadcasts'
+      path: '/gov/broadcasts'
+      fullPath: '/fr/gov/broadcasts'
+      preLoaderRoute: typeof FrGovBroadcastsRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/gov_/screening': {
+      id: '/fr/gov_/screening'
+      path: '/gov/screening'
+      fullPath: '/fr/gov/screening'
+      preLoaderRoute: typeof FrGovScreeningRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/gov_/fee-caps': {
+      id: '/fr/gov_/fee-caps'
+      path: '/gov/fee-caps'
+      fullPath: '/fr/gov/fee-caps'
+      preLoaderRoute: typeof FrGovFeeCapsRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/gov_/audit': {
+      id: '/fr/gov_/audit'
+      path: '/gov/audit'
+      fullPath: '/fr/gov/audit'
+      preLoaderRoute: typeof FrGovAuditRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/gov_/demand': {
+      id: '/fr/gov_/demand'
+      path: '/gov/demand'
+      fullPath: '/fr/gov/demand'
+      preLoaderRoute: typeof FrGovDemandRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/guides/$code': {
       id: '/fr/guides/$code'
       path: '/$code'
@@ -5029,6 +5959,16 @@ interface FrRouteChildren {
   FrIndexRoute: typeof FrIndexRoute
   FrDaycareSlugRoute: typeof FrDaycareSlugRoute
   FrGovLoginRoute: typeof FrGovLoginRoute
+  FrGovComplianceRoute: typeof FrGovComplianceRoute
+  FrGovRatiosRoute: typeof FrGovRatiosRoute
+  FrGovFundingRoute: typeof FrGovFundingRoute
+  FrGovIncidentsRoute: typeof FrGovIncidentsRoute
+  FrGovComplaintsRoute: typeof FrGovComplaintsRoute
+  FrGovBroadcastsRoute: typeof FrGovBroadcastsRoute
+  FrGovScreeningRoute: typeof FrGovScreeningRoute
+  FrGovFeeCapsRoute: typeof FrGovFeeCapsRoute
+  FrGovAuditRoute: typeof FrGovAuditRoute
+  FrGovDemandRoute: typeof FrGovDemandRoute
   FrJobsPostRoute: typeof FrJobsPostRoute
   FrMilieuxFamiliauxIdRoute: typeof FrMilieuxFamiliauxIdRoute
   FrRCodeRoute: typeof FrRCodeRoute
@@ -5092,6 +6032,16 @@ const FrRouteChildren: FrRouteChildren = {
   FrIndexRoute: FrIndexRoute,
   FrDaycareSlugRoute: FrDaycareSlugRoute,
   FrGovLoginRoute: FrGovLoginRoute,
+  FrGovComplianceRoute: FrGovComplianceRoute,
+  FrGovRatiosRoute: FrGovRatiosRoute,
+  FrGovFundingRoute: FrGovFundingRoute,
+  FrGovIncidentsRoute: FrGovIncidentsRoute,
+  FrGovComplaintsRoute: FrGovComplaintsRoute,
+  FrGovBroadcastsRoute: FrGovBroadcastsRoute,
+  FrGovScreeningRoute: FrGovScreeningRoute,
+  FrGovFeeCapsRoute: FrGovFeeCapsRoute,
+  FrGovAuditRoute: FrGovAuditRoute,
+  FrGovDemandRoute: FrGovDemandRoute,
   FrJobsPostRoute: FrJobsPostRoute,
   FrMilieuxFamiliauxIdRoute: FrMilieuxFamiliauxIdRoute,
   FrRCodeRoute: FrRCodeRoute,
@@ -5230,6 +6180,33 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AdminAiRoute: AdminAiRoute,
   AdminAutomationsRoute: AdminAutomationsRoute,
+  ApiComplianceCalendarRoute: ApiComplianceCalendarRoute,
+  AdminGovComplianceRoute: AdminGovComplianceRoute,
+  CentreComplianceRoute: CentreComplianceRoute,
+  ApiComplianceRatiosRoute: ApiComplianceRatiosRoute,
+  AdminGovRatiosRoute: AdminGovRatiosRoute,
+  CentreRatiosRoute: CentreRatiosRoute,
+  ApiComplianceFundingRoute: ApiComplianceFundingRoute,
+  AdminGovFundingRoute: AdminGovFundingRoute,
+  CentreFundingRoute: CentreFundingRoute,
+  ApiComplianceIncidentsRoute: ApiComplianceIncidentsRoute,
+  AdminGovIncidentsRoute: AdminGovIncidentsRoute,
+  FamilyIncidentsRoute: FamilyIncidentsRoute,
+  CentreIncidentsRoute: CentreIncidentsRoute,
+  ApiComplianceComplaintsRoute: ApiComplianceComplaintsRoute,
+  AdminGovComplaintsRoute: AdminGovComplaintsRoute,
+  FamilyComplaintsRoute: FamilyComplaintsRoute,
+  AdminGovBroadcastsRoute: AdminGovBroadcastsRoute,
+  ApiComplianceScreeningRoute: ApiComplianceScreeningRoute,
+  AdminGovScreeningRoute: AdminGovScreeningRoute,
+  CentreScreeningRoute: CentreScreeningRoute,
+  ApiComplianceFeeCapsRoute: ApiComplianceFeeCapsRoute,
+  AdminGovFeeCapsRoute: AdminGovFeeCapsRoute,
+  CentreFeeCapsRoute: CentreFeeCapsRoute,
+  ApiComplianceAuditRoute: ApiComplianceAuditRoute,
+  AdminGovAuditRoute: AdminGovAuditRoute,
+  ApiComplianceDemandRoute: ApiComplianceDemandRoute,
+  AdminGovDemandRoute: AdminGovDemandRoute,
   AdminChatRoute: AdminChatRoute,
   AdminContractsRoute: AdminContractsRoute,
   AdminEmailHealthRoute: AdminEmailHealthRoute,
@@ -5335,6 +6312,16 @@ const rootRouteChildren: RootRouteChildren = {
   GovLoginRoute: GovLoginRoute,
   GovNotificationsRoute: GovNotificationsRoute,
   GovSubsidyRoute: GovSubsidyRoute,
+  GovComplianceRoute: GovComplianceRoute,
+  GovRatiosRoute: GovRatiosRoute,
+  GovFundingRoute: GovFundingRoute,
+  GovIncidentsRoute: GovIncidentsRoute,
+  GovComplaintsRoute: GovComplaintsRoute,
+  GovBroadcastsRoute: GovBroadcastsRoute,
+  GovScreeningRoute: GovScreeningRoute,
+  GovFeeCapsRoute: GovFeeCapsRoute,
+  GovAuditRoute: GovAuditRoute,
+  GovDemandRoute: GovDemandRoute,
   InviteTokenRoute: InviteTokenRoute,
   JobsPostRoute: JobsPostRoute,
   ListingSlugRoute: ListingSlugRoute,

@@ -490,6 +490,15 @@ export const createBill = createServerFn({ method: "POST" })
     `;
     const row = await loadInvoice(sql, id);
     if (!row) throw new Error("Could not save bill");
+    const { noteMonthlyUnchecked } = await import("@/lib/server/compliance-fees");
+    const provinceRows = await sql<{ province: string }>`select province from daycares where id = ${data.daycareId} limit 1`.catch(() => []);
+    await noteMonthlyUnchecked({
+      daycareId: data.daycareId,
+      province: provinceRows[0]?.province || "",
+      monthlyCents: amountCents,
+      userId: context.userId,
+      source: "invoice",
+    }).catch(() => undefined);
     return mapBill(row);
   });
 

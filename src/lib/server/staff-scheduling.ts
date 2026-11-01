@@ -126,6 +126,9 @@ export const saveStaffShift = createServerFn({ method: "POST" })
     await assertCentre(context.userId, daycareId);
     const parsed = parseShift(data);
     if (!parsed.ok) throw new Error("Check the name and the times.");
+    const { screeningGate } = await import("@/lib/server/compliance-screening");
+    const gate = await screeningGate(daycareId, parsed.shift.staffName);
+    if (gate.block) throw new Error("This staff record is expired. Update it before adding the shift.");
     await ensureStaffTables();
     const sql = await getSql();
     const id = nid("shf");

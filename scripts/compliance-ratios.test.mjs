@@ -1,0 +1,37 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { test } from "node:test";
+import { fileURLToPath } from "node:url";
+import { directorAlertPlan, ratioCheck, ratioMode } from "../src/lib/compliance/ratios.ts";
+import { canSeeProvince } from "../src/lib/compliance/mode.ts";
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const src = (rel) => readFileSync(join(root, rel), "utf8");
+test("ratio monitor stays off and practice mode does not text", () => {
+  assert.equal(ratioMode({}), "off");
+  assert.equal(ratioMode({ FEATURE_RATIO_MONITOR: "1" }), "dry_run");
+  const on = ratioCheck({ province: "ON", ageKey: "infant", children: 10, staffOnShift: 3 });
+  assert.equal(on.ok, true);
+  assert.equal(on.verified, true);
+  assert.equal(on.staffNeeded, 3);
+  const short = ratioCheck({ province: "ON", ageKey: "infant", children: 10, staffOnShift: 2 });
+  assert.equal(short.ok, false);
+  const ab = ratioCheck({ province: "AB", ageKey: "infant_under_12", children: 3, staffOnShift: 1 });
+  assert.equal(ab.ok, true);
+  assert.equal(ab.verified, true);
+  const bc = ratioCheck({ province: "BC", ageKey: "infant", children: 4, staffOnShift: 1 });
+  assert.equal(bc.verified, false);
+  const alert = directorAlertPlan("dry_run", true, true);
+  assert.equal(alert.inApp, "log");
+  assert.equal(alert.sms, "log");
+  assert.equal(directorAlertPlan("live", true, false).sms, "skip");
+  assert.equal(canSeeProvince({ role: "government", govProvince: "ON", rowProvince: "AB" }), false);
+});
+test("ratio pages hide child names and default off", () => {
+  assert.match(src(".env.example"), /^FEATURE_RATIO_MONITOR=0$/m);
+  assert.match(src(".env.example"), /^FEATURE_RATIO_MONITOR_LIVE=0$/m);
+  assert.match(src("src/routes/gov_.ratios.tsx"), /guardGovDesk/);
+  assert.match(src("migrations/0148_gov_ratio_monitor.sql"), /gov_province/);
+  assert.doesNotMatch(src("src/lib/server/compliance-ratios.ts"), /child_name/);
+  assert.match(src("src/components/compliance/frame.tsx"), /href="\/help"/);
+});
