@@ -10,8 +10,8 @@ export const LANGUAGES: readonly {
 }[] = [
   { code: "en", native: "English", nameEn: "English", bcp47: "en-CA" },
   { code: "fr", native: "Français", nameEn: "French", bcp47: "fr-CA" },
-  { code: "zh", native: "中文（普通话）", nameEn: "Mandarin", bcp47: "zh-Hans-CA" },
-  { code: "yue", native: "廣東話", nameEn: "Cantonese", bcp47: "zh-HK" },
+  { code: "zh", native: "普通话/中文(简体)", nameEn: "Mandarin", bcp47: "zh-Hans-CA" },
+  { code: "yue", native: "粵語/中文(繁體)", nameEn: "Cantonese", bcp47: "zh-HK" },
   { code: "pa", native: "ਪੰਜਾਬੀ", nameEn: "Punjabi", bcp47: "pa-Guru-CA" },
   { code: "es", native: "Español", nameEn: "Spanish", bcp47: "es-CA" },
   { code: "ar", native: "العربية", nameEn: "Arabic", bcp47: "ar", rtl: true },

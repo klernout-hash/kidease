@@ -99,6 +99,7 @@ async function computeHint(request: Request, url: URL, asDocument: boolean): Pro
     profileChosen: profile.profileChosen,
     profileUnreadable: profile.profileUnreadable,
     queryLocale: localeFromSearch(search),
+    acceptLanguage: request.headers.get("accept-language"),
   };
   const decision = decideVisitorLocale(shared);
   // Route loads ask about the page. The server-fn request itself is not a document.

@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
+import { isRtl, LANGUAGES } from "../src/lib/languages.ts";
 import { hreflangLinks } from "../src/lib/locale-path.ts";
 import {
   GEO_FRENCH_REGIONS,
@@ -40,7 +41,7 @@ test("Quebec defaults to French and a non-QC province stays English", () => {
   assert.equal(decideVisitorLocale({ country: "CA" }).locale, "en");
 });
 
-test("Accept-Language does not choose the default", () => {
+test("only English or French can be the automatic default", () => {
   assert.equal(
     decideVisitorLocale({ country: "CA", region: "ON", acceptLanguage: "fr-CA,fr;q=0.9,en;q=0.8" }).locale,
     "en",
@@ -50,10 +51,24 @@ test("Accept-Language does not choose the default", () => {
     "fr",
   );
   assert.equal(decideVisitorLocale({ country: "US", region: "WA", acceptLanguage: "fr" }).locale, "en");
-  assert.doesNotMatch(src("src/lib/locale-geo.ts"), /accept-language/i);
-  assert.doesNotMatch(src("src/lib/locale-choice.ts"), /accept-language/i);
-  assert.doesNotMatch(src("src/lib/locale-choice.server.ts"), /accept-language/i);
-  assert.doesNotMatch(src("src/lib/locale-choice.server.ts"), /headers\.get\(["']accept-language["']\)/i);
+  assert.equal(
+    decideVisitorLocale({ country: "CA", region: "ON", acceptLanguage: "zh-CN,zh;q=0.9,en;q=0.2" }).locale,
+    "en",
+  );
+  assert.equal(
+    decideVisitorLocale({ country: "CA", region: "NB", acceptLanguage: "fr-CA,fr;q=0.9,en;q=0.4" }).locale,
+    "fr",
+  );
+  assert.equal(
+    decideVisitorLocale({ country: "CA", region: "NB", acceptLanguage: "en-CA,en;q=0.9,fr;q=0.3" }).locale,
+    "en",
+  );
+  assert.equal(
+    decideVisitorLocale({ country: "CA", region: "NB", acceptLanguage: "zh-CN,zh;q=0.9" }).locale,
+    "en",
+  );
+  assert.equal(decideVisitorLocale({ country: "CA", region: "NB" }).locale, "en");
+  assert.match(src("src/lib/locale-choice.server.ts"), /headers\.get\(["']accept-language["']\)/i);
 });
 
 test("a saved preference overrides location", () => {
@@ -220,11 +235,36 @@ test("an explicit lang param beats the saved locale and /fr/parent stays put", (
   assert.match(src("src/routes/login.tsx"), /lang/);
 });
 
-test("New Brunswick stays English unless the region list includes it", () => {
+test("New Brunswick is an English or French choice, not a forced French default", () => {
   assert.deepEqual([...GEO_FRENCH_REGIONS], ["QC"]);
   assert.equal(decideVisitorLocale({ country: "CA", region: "NB" }).locale, "en");
   assert.equal(decideVisitorLocale({ country: "CA", region: "NB", frenchRegions: ["QC", "NB"] }).locale, "fr");
-  assert.match(src("src/lib/locale-geo.ts"), /Add "NB"/);
+  assert.equal(
+    decideVisitorLocale({ cookie: "en", country: "CA", region: "NB", acceptLanguage: "fr-CA,fr;q=0.9" }).locale,
+    "en",
+  );
+  assert.equal(
+    decideVisitorLocale({ cookie: "zh", country: "CA", region: "QC", acceptLanguage: "en" }).locale,
+    "zh",
+  );
+});
+
+test("the language menu is labelled in each language's own name", () => {
+  const native = Object.fromEntries(LANGUAGES.map((lang) => [lang.code, lang.native]));
+  assert.equal(native.en, "English");
+  assert.equal(native.fr, "Français");
+  assert.equal(native.zh, "普通话/中文(简体)");
+  assert.equal(native.yue, "粵語/中文(繁體)");
+  assert.equal(native.pa, "ਪੰਜਾਬੀ");
+  assert.equal(native.es, "Español");
+  assert.equal(native.ar, "العربية");
+  assert.equal(native.tl, "Tagalog");
+  assert.equal(native.it, "Italiano");
+  assert.equal(native.de, "Deutsch");
+  assert.equal(isRtl("ar"), true);
+  assert.equal(isRtl("en"), false);
+  assert.match(src("src/components/language-select.tsx"), /lang\.native/);
+  assert.match(src("src/components/language-select.tsx"), /lock: true/);
 });
 
 test("hreflang stays en, fr, and x-default, and the switcher stays on the page", () => {

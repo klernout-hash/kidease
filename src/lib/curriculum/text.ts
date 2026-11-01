@@ -68,7 +68,12 @@ export function fillGoal(template: string, goal: string, n?: number): string {
   return template.replaceAll("{goal}", goal).replaceAll("{n}", String(n ?? ""));
 }
 
-/** Quebec keeps French. New Brunswick keeps English and French. The menu language is always included. */
+/**
+ * Quebec keeps French. New Brunswick keeps English and French.
+ * The menu language is included. That menu follows the same first-visit
+ * rule as the rest of KidEase: Quebec is French, New Brunswick is the
+ * browser's English or French, and the other eight languages are opt-in.
+ */
 export function contentLocales(province: ProvinceCode | null, locale: string | null | undefined): ShippedLocale[] {
   const selected = asCurriculumLocale(locale);
   if (province === "NB") {

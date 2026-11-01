@@ -211,7 +211,9 @@ test("every curriculum string exists in all 10 menu languages", () => {
   }
   assert.deepEqual(contentLocales("QC", "zh"), ["fr", "zh"]);
   assert.deepEqual(contentLocales("NB", "en"), ["en", "fr"]);
+  assert.deepEqual(contentLocales("NB", "fr"), ["en", "fr"]);
   assert.deepEqual(contentLocales("ON", "de"), ["de"]);
+  assert.deepEqual(contentLocales("ON", "en"), ["en"]);
   const shelf = pickStoryBooks(
     [
       { language: "en", title: "Rain" },
