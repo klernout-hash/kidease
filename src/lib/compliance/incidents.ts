@@ -60,13 +60,27 @@ export const INCIDENT_DEADLINES: readonly DeadlineRow[] = [
     source:
       "O. Reg. 137/15, s. 38(1)(b): report to an inspector or program adviser within 24 hours of the licensee or supervisor becoming aware. https://www.ontario.ca/laws/regulation/150137",
   },
-  ...(["AB", "BC", "MB", "NB", "NL", "NS", "NT", "NU", "PE", "QC", "SK", "YT"] as const).map(
+  {
+    province: "NS",
+    hours: 24,
+    verified: true,
+    source:
+      "Early Learning and Child Care Regulations (N.S.), s. 30B(2)(d): the Department must be advised of a serious incident no later than 24 hours after it occurs. A family-home agency reports within 24 hours of becoming aware, s. 30B(4). Read 1 November 2026. https://novascotia.ca/just/regulations/regs/elcc.htm",
+  },
+  {
+    province: "MB",
+    hours: 24,
+    verified: false,
+    source:
+      "PLACEHOLDER. Manitoba licensing (M.R. 17/99, s. 34) requires a report in the form the director sets and does not state an hour. The 24-hour clock is a KidEase practice timer only. Read 1 November 2026.",
+  },
+  ...(["AB", "BC", "NB", "NL", "NT", "NU", "PE", "QC", "SK", "YT"] as const).map(
     (province): DeadlineRow => ({
       province,
       hours: 24,
       verified: false,
       source:
-        "PLACEHOLDER. 24 hours is a KidEase practice clock only. Confirm the filing deadline with the province before relying on it. Manitoba licensing (M.R. 17/99, s. 34) requires a report in the form the director sets and does not state an hour.",
+        "PLACEHOLDER. 24 hours is a KidEase practice clock only. This province's filing deadline was not opened on 1 November 2026.",
     }),
   ),
 ];

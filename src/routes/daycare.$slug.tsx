@@ -520,6 +520,7 @@ export function Listing() {
   const agesLabel = standardAgeLabelsForListing(d, loc).join(" · ");
   const provinceAge = provinceAgeSourceText(d.agesSource);
   const feeNotes = listingFeeNotes(d);
+  const showCentreFees = feeNotes.confidence === "centre" && feeNotes.priceList;
   const subsidy = listingSubsidy(d);
   const directionsPlace = {
     address,
@@ -827,7 +828,7 @@ export function Listing() {
               <GoogleRating item={d} ratingX10={d.ratingX10} reviewCount={d.reviewCount} compact />
             </div>
           ) : null}
-          <ListingHeaderPills item={d} agesLabel={agesLabel} hours={hours} feeFrom={from} />
+          <ListingHeaderPills item={d} agesLabel={agesLabel} hours={hours} feeFrom={showCentreFees ? from : 0} />
           {provinceAge ? (
             <p className="mt-1 text-xs leading-5 text-muted" data-ke="province-age-label">
               {t("provinceAgeCaption")}
@@ -904,7 +905,7 @@ export function Listing() {
 
             <section id="listing-fees" className="scroll-mt-24">
               <h2 className="font-display text-2xl">{t("pricing")}</h2>
-              {feeNotes.priceList ? (
+              {feeNotes.priceList && feeNotes.confidence === "centre" ? (
                 <ul className="mt-3 divide-y divide-border">
                   {d.infantMonthly != null ? (
                     <PriceRow label={t("infantFee")} value={formatMonthlyFee(d.infantMonthly, locale)} extra={`${d.spotsInfant} ${t("spots")}`} />
@@ -923,11 +924,11 @@ export function Listing() {
               {feeNotes.mb10 ? (
                 <p className="mt-2 max-w-prose text-sm text-muted">{t("feeProgramMb10Day")}</p>
               ) : null}
-              {feeNotes.source === "website" ? (
-                <p className="mt-2 text-xs text-muted">{t("feeSourceWebsite")}</p>
+              {feeNotes.confidence === "centre" && feeNotes.source === "website" ? (
+                <p className="mt-2 text-xs text-muted">{t("feeSourceWebsite")} {t("feeNoCheckDate")}</p>
               ) : null}
-              {feeNotes.source === "public" ? (
-                <p className="mt-2 text-xs text-muted">{t("feeSourcePublic")}</p>
+              {feeNotes.confidence === "centre" && feeNotes.source === "public" ? (
+                <p className="mt-2 text-xs text-muted">{t("feeSourcePublic")} {t("feeNoCheckDate")}</p>
               ) : null}
               {feeNotes.confidence === "estimate" ? (
                 <p className="mt-2 max-w-prose text-sm text-muted" data-ke="fee-confidence">

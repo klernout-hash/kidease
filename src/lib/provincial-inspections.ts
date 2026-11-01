@@ -22,8 +22,8 @@ export function inspectionPortal(province: string, name?: string, locale?: "en" 
   return {
     code: row.code,
     url,
-    labelEn: `View official ${row.nameEn} inspection record`,
-    labelFr: `Voir le dossier officiel d'inspection (${row.nameFr})`,
+    labelEn: `Open the ${row.nameEn} child care registry`,
+    labelFr: `Ouvrir le registre de garde (${row.nameFr})`,
   };
 }
 

@@ -24,11 +24,18 @@ export const RETENTION_RULES: readonly RetentionRule[] = [
     source:
       "O. Reg. 137/15, s. 82(1): keep a required record for at least three years from the date it is made. https://www.ontario.ca/laws/regulation/150137",
   },
-  ...(["AB", "BC", "MB", "NB", "NL", "NS", "NT", "NU", "PE", "QC", "SK", "YT"] as const).map((province) => ({
+  {
+    province: "NS",
+    years: 3,
+    verified: false,
+    source:
+      "PLACEHOLDER for this audit log. Early Learning and Child Care Regulations (N.S.), s. 31(4), keep a child's file at least 2 years after withdrawal. That section is the child's file, not this log, so KidEase does not purge on it. Read 1 November 2026. https://novascotia.ca/just/regulations/regs/elcc.htm",
+  },
+  ...(["AB", "BC", "MB", "NB", "NL", "NT", "NU", "PE", "QC", "SK", "YT"] as const).map((province) => ({
     province,
     years: 3,
     verified: false,
-    source: "PLACEHOLDER. Three years matches Ontario's published minimum. Confirm this province's schedule before a live purge.",
+    source: "PLACEHOLDER. Three years matches Ontario's published minimum. This province's schedule was not opened on 1 November 2026. Do not purge on it.",
   })),
 ];
 
