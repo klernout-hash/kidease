@@ -2122,6 +2122,7 @@
   "completenessTitle": "Lista di controllo dell'annuncio pubblico",
   "completenessLead": "I genitori vedono una nota discreta «Alcuni dettagli da confermare» finché Lei non aggiunge i dati mancanti. Gli annunci incompleti restano visibili. KidEase non li nasconde e non inventa i dati mancanti.",
   "listingVerified": "Annuncio verificato",
+  "verifiedCheckLabel": "Verificato da KidEase: licenza e controllo dei precedenti controllati",
   "listingVerifiedLead": "I dati obbligatori per il Canada sono compilati. KidEase non è l'ente regolatore provinciale e non rilascia licenze né controlli del settore vulnerabile (Vulnerable Sector Check).",
   "listingVerifiedPending": "Annuncio verificato in attesa",
   "listingVerifiedPendingLead": "Gli elementi obbligatori bloccano lo stato Annuncio verificato. Un punteggio del 100% sulla salute dell'annuncio non è Annuncio verificato. Gli elementi utili ma non obbligatori aiutano i genitori a confrontare. KidEase non è l'ente regolatore: non rilascia licenze né controlli del settore vulnerabile (Vulnerable Sector Check).",

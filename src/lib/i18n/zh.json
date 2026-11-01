@@ -2122,6 +2122,7 @@
   "completenessTitle": "公开名录核对清单",
   "completenessLead": "在您补上缺失信息之前，家长会看到一条低调的“还有几项信息待确认”提示。不完整的名录仍然可见。KidEase 不会隐藏它们，也不会编造缺失的信息。",
   "listingVerified": "名录已核实",
+  "verifiedCheckLabel": "经 KidEase 核实：已核对执照和背景调查",
   "listingVerifiedLead": "加拿大所要求的信息已填写齐全。KidEase 不是省级监管机构，也不颁发执照或弱势群体背景核查。",
   "listingVerifiedPending": "名录已核实待完成",
   "listingVerifiedPendingLead": "必填项会阻止获得名录已核实。100% 的名录健康度分数并不等于名录已核实。加分项有助于家长比较。KidEase 不是监管机构：它不颁发执照或弱势群体背景核查。",

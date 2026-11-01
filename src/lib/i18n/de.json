@@ -2122,6 +2122,7 @@
   "completenessTitle": "Checkliste für den öffentlichen Eintrag",
   "completenessLead": "Eltern sehen einen dezenten Hinweis „Einige Angaben noch zu bestätigen“, bis Sie die fehlenden Angaben ergänzen. Unvollständige Einträge bleiben sichtbar. KidEase blendet sie nicht aus und erfindet die fehlenden Angaben nicht.",
   "listingVerified": "Eintrag verifiziert",
+  "verifiedCheckLabel": "Von KidEase geprüft: Lizenz und Hintergrundprüfung wurden geprüft",
   "listingVerifiedLead": "Die erforderlichen Angaben für Kanada sind ausgefüllt. KidEase ist nicht die provinzielle Aufsichtsbehörde und stellt keine Lizenzen oder Vulnerable Sector Checks aus.",
   "listingVerifiedPending": "Eintrag verifiziert steht aus",
   "listingVerifiedPendingLead": "Erforderliche Punkte blockieren Eintrag verifiziert. Ein Wert von 100 % bei der Eintragsgesundheit ist nicht Eintrag verifiziert. Optionale Punkte helfen Eltern beim Vergleich. KidEase ist nicht die Aufsichtsbehörde: sie stellt keine Lizenzen oder Vulnerable Sector Checks aus.",

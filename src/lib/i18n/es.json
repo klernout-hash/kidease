@@ -2122,6 +2122,7 @@
   "completenessTitle": "Lista de verificación de la ficha pública",
   "completenessLead": "Los padres ven una nota discreta de “Algunos datos por confirmar” hasta que agregues los datos que faltan. Las fichas incompletas siguen visibles. KidEase no las oculta ni inventa los datos que faltan.",
   "listingVerified": "Ficha verificada",
+  "verifiedCheckLabel": "Verificado por KidEase: licencia y verificación de antecedentes revisadas",
   "listingVerifiedLead": "Los datos requeridos de Canadá están completos. KidEase no es el organismo regulador provincial y no emite licencias ni verificaciones de sector vulnerable.",
   "listingVerifiedPending": "Ficha verificada en espera",
   "listingVerifiedPendingLead": "Los elementos obligatorios impiden Ficha verificada. Un puntaje del 100% de salud de la ficha no es Ficha verificada. Los elementos deseables ayudan a los padres a comparar. KidEase no es el organismo regulador: no emite licencias ni verificaciones de sector vulnerable.",

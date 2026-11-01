@@ -50,6 +50,8 @@ import { listingSubsidy, subsidyNote, subsidyNoteKey } from "@/lib/fee-program";
 import { knownListingMonthlyFee } from "@/lib/listing-fee";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { TrustBadge } from "@/components/trust-badge";
+import { VerifiedCheck } from "@/components/verified-check";
+import { showVerifiedCheck } from "@/lib/listing-verified";
 import { ListingReport } from "@/components/listing-report";
 import { SafetyReportButton } from "@/components/safety-actions";
 import type { CopyKey } from "@/lib/copy";
@@ -509,6 +511,7 @@ export function Listing() {
   const known = Boolean(d.availabilityKnown);
   const licensed = publicLicenseBadge(d);
   const approved = publicApprovalEligible(d);
+  const verifiedCheck = showVerifiedCheck(d);
   const facilityLabel = t(facilityTypeLabelKey(classifyFacilityType(d).type));
   const updatedAt = d.lastVacancyUpdatedAt || d.lastPhotoUpdatedAt;
   const updatedLabel = updatedAt
@@ -805,13 +808,14 @@ export function Listing() {
           <SponsoredMark show={d.featuredCity} className="mt-2" />
           <FoundingMemberBadge show={d.foundingMember} className="mt-2" />
           {tagline.trim() ? <p className="mt-0.5 text-sm text-muted">{tagline}</p> : null}
-          {approved || licensed ? (
+          {approved || licensed || verifiedCheck ? (
             <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm" data-ke="listing-trust-line">
               {approved ? (
                 <KidEaseApprovalStrip eligible={publicApprovalEligible(d)} variant="inline" />
-              ) : (
-                <TrustBadge badge={licensed!} compact />
-              )}
+              ) : licensed ? (
+                <TrustBadge badge={licensed} compact />
+              ) : null}
+              {verifiedCheck ? <VerifiedCheck /> : null}
             </p>
           ) : null}
           {parentRated ? (
