@@ -639,14 +639,14 @@ export const listStoryCorner = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .validator((input: { province?: string; language?: string } | undefined) => ({
     province: String(input?.province || "").trim(),
-    language: input?.language === "fr" ? "fr" : "en",
+    language: input?.language === "fr" ? "fr" : input?.language === "all" ? "all" : "en",
   }))
   .handler(async ({ data }) => {
     if (!storyCornerEnabled()) {
       return { enabled: false as const, books: [], unite: uniteForLiteracy() };
     }
     const province = normalizeProvince(data.province);
-    const language = data.language === "fr" ? "fr" : "en";
+    const language = data.language === "all" ? undefined : data.language === "fr" ? "fr" : "en";
     const books = shelfBooks(await readManifest(), { language, province }).filter(creditVisible);
     return {
       enabled: true as const,

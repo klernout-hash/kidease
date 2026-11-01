@@ -26,8 +26,11 @@ import {
   reviewReminder,
   weekPlan,
 } from "../src/lib/curriculum/pack.ts";
+import { flattenCurriculumLocale, curriculumActivity, curriculumLocaleList, contentLocales } from "../src/lib/curriculum/text.ts";
+import { GOAL_THEMES } from "../src/lib/curriculum/pack.ts";
 import {
   bookDashCredit,
+  pickStoryBooks,
   classifyLicence,
   creditVisible,
   emptyCreators,
@@ -174,6 +177,55 @@ test("a child photo needs consent and a signed private link", () => {
   assert.match(migration, /create unique index if not exists curriculum_plans_once/);
   assert.doesNotMatch(src("migrations/0120_learning_stories.sql"), /\bphoto\b/);
   assert.match(src("src/lib/server/learning-stories.ts"), /do not take photos/);
+});
+
+test("every curriculum string exists in all 10 menu languages", () => {
+  const locales = curriculumLocaleList();
+  assert.deepEqual([...locales], ["en", "fr", "zh", "yue", "pa", "es", "ar", "tl", "it", "de"]);
+  const english = flattenCurriculumLocale("en");
+  const keys = Object.keys(english);
+  assert.ok(keys.length > 200);
+  for (const locale of locales) {
+    const pack = flattenCurriculumLocale(locale);
+    for (const key of keys) {
+      assert.equal(typeof pack[key], "string", `${locale} ${key}`);
+      assert.ok(String(pack[key]).trim(), `${locale} ${key} empty`);
+      assert.equal(pack[key].includes("{place}"), english[key].includes("{place}"), `${locale} ${key} place`);
+      assert.equal(pack[key].includes("{prop}"), english[key].includes("{prop}"), `${locale} ${key} prop`);
+      assert.equal(pack[key].includes("{goal}"), english[key].includes("{goal}"), `${locale} ${key} goal`);
+      assert.equal(pack[key].includes("{n}"), english[key].includes("{n}"), `${locale} ${key} n`);
+      if (locale !== "en" && english[key].length > 24) {
+        assert.notEqual(pack[key], english[key], `${locale} ${key} still English`);
+      }
+    }
+  }
+  for (const province of ["MB", "ON", "QC", "NB"]) {
+    for (const theme of GOAL_THEMES) {
+      for (const locale of locales) {
+        const view = curriculumActivity(locale, province, theme);
+        assert.ok(view.title.trim());
+        assert.equal(view.steps.length, 3);
+        if (locale !== "en") assert.notEqual(view.title, curriculumActivity("en", province, theme).title);
+      }
+    }
+  }
+  assert.deepEqual(contentLocales("QC", "zh"), ["fr", "zh"]);
+  assert.deepEqual(contentLocales("NB", "en"), ["en", "fr"]);
+  assert.deepEqual(contentLocales("ON", "de"), ["de"]);
+  const shelf = pickStoryBooks(
+    [
+      { language: "en", title: "Rain" },
+      { language: "fr", title: "Pluie" },
+    ],
+    "zh",
+  );
+  assert.equal(shelf.fallback, "official-languages");
+  assert.equal(shelf.books.length, 2);
+  const french = pickStoryBooks([{ language: "en", title: "Rain" }], "fr");
+  assert.equal(french.fallback, "other-language");
+  assert.equal(french.books[0].title, "Rain");
+  const matched = pickStoryBooks([{ language: "fr", title: "Pluie" }], "fr");
+  assert.equal(matched.fallback, "none");
 });
 
 test("story corner keeps CC BY, skips NC and ND, and credits Book Dash", () => {

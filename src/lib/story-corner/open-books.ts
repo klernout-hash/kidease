@@ -315,6 +315,25 @@ export function readerFileAllowed(localPath: string): boolean {
   return true;
 }
 
+export type StoryShelfFallback = "none" | "other-language" | "official-languages";
+
+/** Prefer the menu language. English and French fall back to each other. Other languages fall back to the stored official-language books. */
+export function pickStoryBooks<T extends { language: "en" | "fr" | "other" }>(
+  books: readonly T[],
+  locale: string,
+): { books: T[]; fallback: StoryShelfFallback } {
+  if (locale === "en" || locale === "fr") {
+    const match = books.filter((book) => book.language === locale);
+    if (match.length) return { books: match, fallback: "none" };
+    const other = locale === "en" ? "fr" : "en";
+    return { books: books.filter((book) => book.language === other), fallback: "other-language" };
+  }
+  return {
+    books: books.filter((book) => book.language === "en" || book.language === "fr"),
+    fallback: "official-languages",
+  };
+}
+
 export function shelfBooks(books: readonly StoredBook[], input: { language?: "en" | "fr"; province?: ProvinceCode | null; goalId?: string }): StoredBook[] {
   return books.filter((book) => {
     if (input.language && book.language !== input.language) return false;

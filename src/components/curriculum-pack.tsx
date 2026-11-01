@@ -3,7 +3,19 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
-import { planLanguage, type AgeBand } from "@/lib/curriculum/pack";
+import type { AgeBand, GoalTheme, ProvinceCode } from "@/lib/curriculum/pack";
+import {
+  contentLocales,
+  curriculumActivity,
+  curriculumAge,
+  curriculumDay,
+  curriculumDoc,
+  curriculumGoal,
+  curriculumRequirement,
+  curriculumUi,
+  fillGoal,
+} from "@/lib/curriculum/text";
+import { pickStoryBooks } from "@/lib/story-corner/open-books";
 import {
   attachCurriculumPhoto,
   curriculumCoverage,
@@ -22,102 +34,142 @@ import { useCopy } from "@/lib/use-copy";
 
 type Section = "goals" | "story" | "plans" | "activities" | "coverage" | "books";
 
-const COPY = {
-  en: {
-    help: "Help",
-    offTitle: "Learning pack is off",
-    offBody: "Goals, stories, and plans stay hidden until this tool is turned on. Your listing is unchanged.",
-    home: "Back to today",
-    title: "Learning",
-    lead: "KidEase is a place to plan play and share a story with families.",
-    why: "The goals follow your centre's province. The words are ours. The official framework stays on the government site.",
-    next: "Pick one goal, then write what you noticed.",
-    provinceMissing: "Add your province on the listing. Then the right goals show up here.",
-    listings: "Edit listing",
-    goals: "Goals",
-    story: "Story",
-    plans: "Plans",
-    activities: "Activities",
-    coverage: "Coverage",
-    books: "Story corner",
-    saveStory: "Save story",
-    savePlan: "Save plan",
-    child: "Child",
-    note: "What you noticed",
-    nextStep: "What to try next",
-    date: "Date",
-    age: "Age group",
-    goal: "Goal",
-    noChild: "No enrolled child is on file yet.",
-    saved: "Saved.",
-    draftNote: "Families will see this when the live switch is on. Until then it stays a draft.",
-    photo: "Add a photo",
-    photoHint: "A parent must opt in first. The photo is private. It is not on the public listing.",
-    consent: "I agree to private classroom photos",
-    activitiesLead: "These ideas were written by KidEase. They are not copied from a framework or a bought program.",
-    coverageLead: "Published stories only. Names stay on this desk.",
-    booksOff: "Story corner is off.",
-    booksEmpty: "No books are stored on this server yet. Nothing is loaded from another site.",
-    read: "Read the saved copy",
-    unite: "Open Unite for Literacy",
-    uniteNote: "This leaves KidEase. We do not embed their books.",
-    reply: "Send a reply",
-    parentTitle: "Stories from the centre",
-    parentLead: "A note about your child, plus an idea to try at home.",
-    parentOff: "Stories show here when your centre publishes them.",
-    govTitle: "Learning totals",
-    govBody: "Counts only. No child names, no photos, no room names.",
-    hidden: "Hidden",
-    preview: "Preview only. This is not sent anywhere.",
-  },
-  fr: {
-    help: "Aide",
-    offTitle: "Le volet apprentissage est éteint",
-    offBody: "Les objectifs, les histoires et les plans restent cachés tant que l'outil est éteint. Votre fiche ne change pas.",
-    home: "Retour à aujourd'hui",
-    title: "Apprentissage",
-    lead: "KidEase sert à planifier le jeu et à partager une histoire avec les familles.",
-    why: "Les objectifs suivent la province de votre centre. Les mots sont les nôtres. Le cadre officiel reste sur le site du gouvernement.",
-    next: "Choisissez un objectif, puis écrivez ce que vous avez vu.",
-    provinceMissing: "Ajoutez votre province sur la fiche. Les bons objectifs s'afficheront ici.",
-    listings: "Modifier la fiche",
-    goals: "Objectifs",
-    story: "Histoire",
-    plans: "Plans",
-    activities: "Activités",
-    coverage: "Couverture",
-    books: "Coin des histoires",
-    saveStory: "Enregistrer",
-    savePlan: "Enregistrer le plan",
-    child: "Enfant",
-    note: "Ce que vous avez vu",
-    nextStep: "Quoi essayer ensuite",
-    date: "Date",
-    age: "Groupe d'âge",
-    goal: "Objectif",
-    noChild: "Aucun enfant inscrit n'est au dossier.",
-    saved: "Enregistré.",
-    draftNote: "Les familles verront ceci quand l'interrupteur en direct sera ouvert. D'ici là, cela reste un brouillon.",
-    photo: "Ajouter une photo",
-    photoHint: "Un parent doit d'abord dire oui. La photo reste privée. Elle n'est pas sur la fiche publique.",
-    consent: "J'accepte les photos privées de la classe",
-    activitiesLead: "Ces idées sont écrites par KidEase. Elles ne sont pas copiées d'un cadre ni d'un programme acheté.",
-    coverageLead: "Histoires publiées seulement. Les noms restent sur ce bureau.",
-    booksOff: "Le coin des histoires est éteint.",
-    booksEmpty: "Aucun livre n'est enregistré sur ce serveur. Rien n'est chargé d'un autre site.",
-    read: "Lire la copie enregistrée",
-    unite: "Ouvrir Unite for Literacy",
-    uniteNote: "Cela quitte KidEase. Nous n'intégrons pas leurs livres.",
-    reply: "Envoyer une réponse",
-    parentTitle: "Histoires du centre",
-    parentLead: "Une note sur votre enfant, plus une idée à essayer à la maison.",
-    parentOff: "Les histoires s'affichent ici quand votre centre les publie.",
-    govTitle: "Totaux d'apprentissage",
-    govBody: "Des comptes seulement. Aucun nom d'enfant, aucune photo, aucun nom de salle.",
-    hidden: "Masqué",
-    preview: "Aperçu seulement. Rien n'est envoyé.",
-  },
-} as const;
+const UI_FIELDS = [
+  "help",
+  "offTitle",
+  "offBody",
+  "home",
+  "title",
+  "lead",
+  "why",
+  "next",
+  "provinceMissing",
+  "listings",
+  "saveStory",
+  "savePlan",
+  "child",
+  "note",
+  "nextStep",
+  "date",
+  "age",
+  "goal",
+  "noChild",
+  "saved",
+  "draftNote",
+  "photo",
+  "photoHint",
+  "consent",
+  "activitiesLead",
+  "coverageLead",
+  "booksOff",
+  "booksEmpty",
+  "booksFallbackOther",
+  "booksFallbackOfficial",
+  "read",
+  "unite",
+  "uniteNote",
+  "reply",
+  "parentTitle",
+  "parentLead",
+  "parentOff",
+  "govTitle",
+  "govBody",
+  "hidden",
+  "preview",
+  "unassigned",
+  "statusConfirmed",
+  "statusPlaceholder",
+  "centreLabel",
+] as const;
+
+function usePackCopy() {
+  const { locale } = useCopy();
+  const copy = {
+    goals: curriculumUi(locale, "tabGoals"),
+    story: curriculumUi(locale, "tabStory"),
+    plans: curriculumUi(locale, "tabPlans"),
+    activities: curriculumUi(locale, "tabActivities"),
+    coverage: curriculumUi(locale, "tabCoverage"),
+    books: curriculumUi(locale, "tabBooks"),
+  } as Record<(typeof UI_FIELDS)[number] | Section, string>;
+  for (const key of UI_FIELDS) copy[key] = curriculumUi(locale, key);
+  return { locale, copy };
+}
+
+const ACTIVITY_THEMES = ["belong", "well", "play", "talk", "care"] as const;
+
+function activityFromId(id: string): { province: ProvinceCode; theme: GoalTheme } | null {
+  const match = /^act-([a-z]{2})-([1-5])$/.exec(id);
+  if (!match) return null;
+  const theme = ACTIVITY_THEMES[Number(match[2]) - 1];
+  if (!theme) return null;
+  return { province: match[1].toUpperCase() as ProvinceCode, theme };
+}
+
+function goalFromId(id: string): { province: ProvinceCode; theme: GoalTheme } | null {
+  const match = /^([A-Z]{2})-(belong|well|play|talk|care)$/.exec(id);
+  if (!match) return null;
+  return { province: match[1] as ProvinceCode, theme: match[2] as GoalTheme };
+}
+
+function BookShelf({
+  books,
+  locale,
+  empty,
+  fallbackOther,
+  fallbackOfficial,
+  read,
+}: {
+  books: { id: string; title: string; language: "en" | "fr" | "other"; credit: string; licenceUrl: string; logoPath: string; changeNote: string }[];
+  locale: string;
+  empty: string;
+  fallbackOther: string;
+  fallbackOfficial: string;
+  read: string;
+}) {
+  const shelf = pickStoryBooks(books, locale);
+  return (
+    <div className="space-y-3">
+      {shelf.fallback === "other-language" ? <p className="text-sm text-muted">{fallbackOther}</p> : null}
+      {shelf.fallback === "official-languages" ? <p className="text-sm text-muted">{fallbackOfficial}</p> : null}
+      {shelf.books.length === 0 ? <p className="text-sm text-muted">{empty}</p> : null}
+      <ul className="space-y-4">
+        {shelf.books.map((book) => (
+          <li key={book.id} className="rounded-xl bg-surface p-4 ring-1 ring-border">
+            <h3 className="font-medium">{book.title}</h3>
+            {book.logoPath ? <img src={book.logoPath} alt="Book Dash" width={150} height={67} className="mt-2 h-auto max-w-full" /> : null}
+            <p className="mt-2 text-sm">{book.credit}</p>
+            {book.changeNote ? <p className="mt-1 text-sm">{book.changeNote}</p> : null}
+            <a className="mt-2 inline-flex min-h-11 items-center text-sm font-medium underline-offset-4 hover:underline" href={book.licenceUrl}>
+              {book.licenceUrl}
+            </a>
+            <div>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => {
+                  void openStoryCornerFile({ data: { id: book.id } }).then((file) => {
+                    if (!file.ok) {
+                      toast.error(empty);
+                      return;
+                    }
+                    const binary = atob(file.bodyBase64);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+                    const blob = new Blob([bytes], { type: file.mime });
+                    window.open(URL.createObjectURL(blob), "_blank", "noopener");
+                  });
+                }}
+              >
+                {read}
+              </Button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 function HelpLink({ label, topic }: { label: string; topic: string }) {
   return (
@@ -132,13 +184,8 @@ function HelpLink({ label, topic }: { label: string; topic: string }) {
   );
 }
 
-function text(locale: string) {
-  return locale === "fr" ? COPY.fr : COPY.en;
-}
-
 export function CurriculumDeskLink() {
-  const { locale } = useCopy();
-  const copy = text(locale);
+  const { copy } = usePackCopy();
   const [on, setOn] = useState(false);
   useEffect(() => {
     void curriculumStatus()
@@ -156,8 +203,7 @@ export function CurriculumDeskLink() {
 }
 
 export function CurriculumPackDesk() {
-  const { locale } = useCopy();
-  const copy = text(locale);
+  const { locale, copy } = usePackCopy();
   const [section, setSection] = useState<Section>("goals");
   const [desk, setDesk] = useState<Awaited<ReturnType<typeof loadCurriculumDesk>> | null>(null);
   const [daycareId, setDaycareId] = useState("");
@@ -192,9 +238,7 @@ export function CurriculumPackDesk() {
   }
 
   const province = desk.province;
-  const lang = province ? planLanguage(province, locale) : locale === "fr" ? "fr" : "en";
-  const showFr = lang === "fr" || lang === "both";
-  const showEn = lang === "en" || lang === "both";
+  const shown = contentLocales(province, locale);
   const sections: Section[] = ["goals", "story", "plans", "activities", "coverage", "books"];
 
   return (
@@ -238,9 +282,12 @@ export function CurriculumPackDesk() {
             </a>
             <span className="text-muted"> · {desk.framework.credit}</span>
           </p>
-          <p className="text-sm text-muted">
-            {desk.framework.requirementStatus === "confirmed" ? desk.framework.requirement : `${desk.framework.requirement} (${desk.framework.requirementStatus})`}
-          </p>
+          {shown.map((lang) => (
+            <p key={lang} className="text-sm text-muted">
+              {curriculumRequirement(lang, province)} (
+              {curriculumUi(lang, desk.framework?.requirementStatus === "confirmed" ? "statusConfirmed" : "statusPlaceholder")})
+            </p>
+          ))}
           <div className="flex flex-wrap gap-2" role="tablist">
             {sections.map((id) => (
               <button
@@ -252,7 +299,7 @@ export function CurriculumPackDesk() {
                 onClick={() => {
                   setSection(id);
                   if (id === "coverage") void curriculumCoverage({ data: { daycareId: daycareId || desk.daycareId } }).then(setCoverage);
-                  if (id === "books") void listStoryCorner({ data: { province, language: locale === "fr" ? "fr" : "en" } }).then(setBooks);
+                  if (id === "books") void listStoryCorner({ data: { province, language: "all" } }).then(setBooks);
                 }}
               >
                 {copy[id]}
@@ -263,8 +310,9 @@ export function CurriculumPackDesk() {
             <ul className="space-y-3" data-section="goals">
               {desk.goals.map((goal) => (
                 <li key={goal.id} className="rounded-xl bg-surface p-4 ring-1 ring-border">
-                  {showEn ? <p>{goal.en}</p> : null}
-                  {showFr ? <p>{goal.fr}</p> : null}
+                  {shown.map((lang) => (
+                    <p key={lang}>{curriculumGoal(lang, province, goal.theme)}</p>
+                  ))}
                   <p className="mt-1 text-sm text-muted">{goal.credit}</p>
                 </li>
               ))}
@@ -306,7 +354,7 @@ export function CurriculumPackDesk() {
                   <option value="">{copy.goal}</option>
                   {desk.goals.map((goal) => (
                     <option key={goal.id} value={goal.id}>
-                      {showFr && !showEn ? goal.fr : goal.en}
+                      {curriculumGoal(locale, province, goal.theme)}
                     </option>
                   ))}
                 </select>
@@ -316,7 +364,7 @@ export function CurriculumPackDesk() {
                 <select className="ke-input mt-1 min-h-11 w-full" value={form.ageBand} onChange={(event) => setForm({ ...form, ageBand: event.target.value as AgeBand })}>
                   {(["infant", "toddler", "preschool", "school"] as const).map((age) => (
                     <option key={age} value={age}>
-                      {age}
+                      {curriculumAge(locale, age)}
                     </option>
                   ))}
                 </select>
@@ -388,14 +436,20 @@ export function CurriculumPackDesk() {
                   .finally(() => setBusy(false));
               }}
             >
-              {desk.docs.map((doc) => (
+              {desk.docs.map((doc) => {
+                const primary = curriculumDoc(locale, province);
+                return (
                 <div key={doc.id} className="space-y-3">
-                  <h3 className="font-medium">{showFr && !showEn ? doc.titleFr : doc.titleEn}</h3>
+                  {shown.map((lang) => (
+                    <h3 key={lang} className="font-medium">{curriculumDoc(lang, province).title}</h3>
+                  ))}
                   <p className="text-sm text-muted">{doc.citation}</p>
-                  {(showFr && !showEn ? doc.promptsFr : doc.promptsEn).map((prompt, index) => (
+                  {primary.prompts.map((prompt, index) => (
                     <label key={prompt} className="block text-sm">
                       {prompt}
-                      {lang === "both" ? <span className="mt-1 block text-muted">{doc.promptsFr[index]}</span> : null}
+                      {shown.filter((lang) => lang !== locale).map((lang) => (
+                        <span key={lang} className="mt-1 block text-muted">{curriculumDoc(lang, province).prompts[index]}</span>
+                      ))}
                       <textarea
                         className="ke-textarea mt-1 min-h-20 w-full"
                         value={answers[index] || ""}
@@ -407,8 +461,22 @@ export function CurriculumPackDesk() {
                       />
                     </label>
                   ))}
+                  <div className="space-y-1 text-sm">
+                    {shown.map((lang) => (
+                      <div key={lang}>
+                        {[0, 1, 2, 3, 4].map((day) => {
+                          const theme = (["belong", "well", "play", "talk", "care"] as const)[day];
+                          return (
+                            <p key={day}>
+                              {curriculumDay(lang, day)}: {fillGoal(curriculumUi(lang, "watchFor"), curriculumGoal(lang, province, theme))}
+                            </p>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
+              );})}
               <Button type="submit" disabled={busy}>
                 {copy.savePlan}
               </Button>
@@ -427,14 +495,21 @@ export function CurriculumPackDesk() {
               <li className="text-sm text-muted">{copy.activitiesLead}</li>
               {desk.activities.map((activity) => (
                 <li key={activity.id} className="rounded-xl bg-surface p-4 ring-1 ring-border">
-                  {showEn ? <p className="font-medium">{activity.titleEn}</p> : null}
-                  {showFr ? <p className="font-medium">{activity.titleFr}</p> : null}
-                  <p className="mt-1 text-sm text-muted">{activity.age}</p>
-                  <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm">
-                    {(showFr && !showEn ? activity.stepsFr : activity.stepsEn).map((step) => (
-                      <li key={step}>{step}</li>
-                    ))}
-                  </ol>
+                  {shown.map((lang) => {
+                    const view = curriculumActivity(lang, province, activity.theme);
+                    return (
+                      <div key={lang} className="mt-2">
+                        <p className="font-medium">{view.title}</p>
+                        <p className="text-sm text-muted">{view.materials}</p>
+                        <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm">
+                          {view.steps.map((step) => (
+                            <li key={step}>{step}</li>
+                          ))}
+                        </ol>
+                      </div>
+                    );
+                  })}
+                  <p className="mt-1 text-sm text-muted">{curriculumAge(locale, activity.age)}</p>
                 </li>
               ))}
             </ul>
@@ -446,7 +521,7 @@ export function CurriculumPackDesk() {
                 ? coverage.report.perChild.map((child) => (
                     <article key={child.childId} className="rounded-xl bg-surface p-4 ring-1 ring-border">
                       <h3 className="font-medium">
-                        {child.childName} · {child.room}
+                        {child.childName} · {child.room === "Unassigned" ? copy.unassigned : child.room}
                       </h3>
                       <p className="text-sm text-muted">
                         {child.covered.length} / {child.covered.length + child.missing.length}
@@ -461,44 +536,9 @@ export function CurriculumPackDesk() {
               <HelpLink label={copy.help} topic="story-corner" />
               {!books?.enabled ? <p className="text-sm">{copy.booksOff}</p> : null}
               {books?.enabled && books.books.length === 0 ? <p className="text-sm text-muted">{copy.booksEmpty}</p> : null}
-              <ul className="space-y-4">
-                {books?.enabled
-                  ? books.books.map((book) => (
-                      <li key={book.id} className="rounded-xl bg-surface p-4 ring-1 ring-border">
-                        <h3 className="font-medium">{book.title}</h3>
-                        {book.logoPath ? (
-                          <img src={book.logoPath} alt="Book Dash" width={150} height={67} className="mt-2 h-auto max-w-full" />
-                        ) : null}
-                        <p className="mt-2 text-sm">{book.credit}</p>
-                        {book.changeNote ? <p className="mt-1 text-sm">{book.changeNote}</p> : null}
-                        <a className="mt-2 inline-flex min-h-11 items-center text-sm font-medium underline-offset-4 hover:underline" href={book.licenceUrl}>
-                          {book.licenceUrl}
-                        </a>
-                        <div>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={() => {
-                              void openStoryCornerFile({ data: { id: book.id } }).then((file) => {
-                                if (!file.ok) {
-                                  toast.error(copy.booksEmpty);
-                                  return;
-                                }
-                                const binary = atob(file.bodyBase64);
-                                const bytes = new Uint8Array(binary.length);
-                                for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
-                                const blob = new Blob([bytes], { type: file.mime });
-                                window.open(URL.createObjectURL(blob), "_blank", "noopener");
-                              });
-                            }}
-                          >
-                            {copy.read}
-                          </Button>
-                        </div>
-                      </li>
-                    ))
-                  : null}
-              </ul>
+              {books?.enabled ? (
+                <BookShelf books={books.books} locale={locale} empty={copy.booksEmpty} fallbackOther={copy.booksFallbackOther} fallbackOfficial={copy.booksFallbackOfficial} read={copy.read} />
+              ) : null}
               {books ? (
                 <p className="text-sm">
                   {copy.uniteNote}{" "}
@@ -516,8 +556,7 @@ export function CurriculumPackDesk() {
 }
 
 export function CurriculumParentDesk() {
-  const { locale } = useCopy();
-  const copy = text(locale);
+  const { locale, copy } = usePackCopy();
   const [rows, setRows] = useState<Awaited<ReturnType<typeof listCurriculumTimeline>> | null>(null);
   const [reply, setReply] = useState("");
   useEffect(() => {
@@ -570,9 +609,19 @@ export function CurriculumParentDesk() {
             <p className="mt-2 text-sm">{story.body}</p>
             {story.whatNext ? <p className="mt-2 text-sm">{story.whatNext}</p> : null}
             <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
-              {story.ideas.map((idea) => (
-                <li key={idea.id}>{locale === "fr" ? idea.titleFr : idea.titleEn}</li>
-              ))}
+              {story.ideas.map((idea) => {
+                const parts = activityFromId(idea.id);
+                const langs = contentLocales(parts?.province || null, locale);
+                return (
+                  <li key={idea.id}>
+                    {parts
+                      ? langs.map((lang) => curriculumActivity(lang, parts.province, parts.theme).title).join(" · ")
+                      : locale === "fr"
+                        ? idea.titleFr
+                        : idea.titleEn}
+                  </li>
+                );
+              })}
             </ul>
             <form
               className="mt-3 space-y-2"
@@ -600,8 +649,7 @@ export function CurriculumParentDesk() {
 }
 
 export function CurriculumGovStrip({ province }: { province: string }) {
-  const { locale } = useCopy();
-  const copy = text(locale);
+  const { locale, copy } = usePackCopy();
   const [row, setRow] = useState<Awaited<ReturnType<typeof governmentCurriculumTotals>> | null>(null);
   useEffect(() => {
     void governmentCurriculumTotals({ data: { province } })
@@ -625,11 +673,15 @@ export function CurriculumGovStrip({ province }: { province: string }) {
         {row.childCount == null ? copy.hidden : row.childCount}
       </p>
       <ul className="mt-2 space-y-1 text-sm">
-        {row.goals.map((goal) => (
-          <li key={goal.goalId}>
-            {goal.label || goal.goalId}: {goal.children == null ? copy.hidden : goal.children}
-          </li>
-        ))}
+        {row.goals.map((goal) => {
+          const parts = goalFromId(goal.goalId);
+          const label = parts ? curriculumGoal(locale, parts.province, parts.theme) : goal.goalId;
+          return (
+            <li key={goal.goalId}>
+              {label}: {goal.children == null ? copy.hidden : goal.children}
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
