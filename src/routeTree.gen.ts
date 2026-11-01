@@ -15,6 +15,10 @@ import { Route as AccountRouteImport } from './routes/account'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminAiRouteImport } from './routes/admin-ai'
 import { Route as AdminAutomationsRouteImport } from './routes/admin-automations'
+import { Route as ApiComplianceIncidentsRouteImport } from './routes/api/compliance.incidents'
+import { Route as AdminGovIncidentsRouteImport } from './routes/admin-gov-incidents'
+import { Route as FamilyIncidentsRouteImport } from './routes/family-incidents'
+import { Route as CentreIncidentsRouteImport } from './routes/centre-incidents'
 import { Route as AdminChatRouteImport } from './routes/admin-chat'
 import { Route as AdminContractsRouteImport } from './routes/admin-contracts'
 import { Route as AdminEmailHealthRouteImport } from './routes/admin-email-health'
@@ -164,6 +168,7 @@ import { Route as FrVacancyIndexRouteImport } from './routes/fr.vacancy-index'
 import { Route as FrVerifyRouteImport } from './routes/fr.verify'
 import { Route as FrWaitlistRouteImport } from './routes/fr.waitlist'
 import { Route as GovLoginRouteImport } from './routes/gov_.login'
+import { Route as GovIncidentsRouteImport } from './routes/gov_.incidents'
 import { Route as GuidesCodeRouteImport } from './routes/guides.$code'
 import { Route as HelpArticlesRouteImport } from './routes/help.articles'
 import { Route as InboxIdRouteImport } from './routes/inbox.$id'
@@ -212,6 +217,7 @@ import { Route as DaycareCityAgeRouteImport } from './routes/daycare.$city.$age'
 import { Route as DaycareCityCityRouteImport } from './routes/daycare.city.$city'
 import { Route as FrDaycareSlugRouteImport } from './routes/fr.daycare.$slug'
 import { Route as FrGovLoginRouteImport } from './routes/fr.gov_.login'
+import { Route as FrGovIncidentsRouteImport } from './routes/fr.gov_.incidents'
 import { Route as FrGuidesCodeRouteImport } from './routes/fr.guides.$code'
 import { Route as FrHelpArticlesRouteImport } from './routes/fr.help.articles'
 import { Route as FrInboxIdRouteImport } from './routes/fr.inbox.$id'
@@ -255,6 +261,26 @@ const AdminAiRoute = AdminAiRouteImport.update({
 const AdminAutomationsRoute = AdminAutomationsRouteImport.update({
   id: '/admin-automations',
   path: '/admin-automations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiComplianceIncidentsRoute = ApiComplianceIncidentsRouteImport.update({
+  id: '/api/compliance/incidents',
+  path: '/api/compliance/incidents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminGovIncidentsRoute = AdminGovIncidentsRouteImport.update({
+  id: '/admin-gov-incidents',
+  path: '/admin-gov-incidents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FamilyIncidentsRoute = FamilyIncidentsRouteImport.update({
+  id: '/family-incidents',
+  path: '/family-incidents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CentreIncidentsRoute = CentreIncidentsRouteImport.update({
+  id: '/centre-incidents',
+  path: '/centre-incidents',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminChatRoute = AdminChatRouteImport.update({
@@ -1004,6 +1030,11 @@ const GovLoginRoute = GovLoginRouteImport.update({
   path: '/gov/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GovIncidentsRoute = GovIncidentsRouteImport.update({
+  id: '/gov_/incidents',
+  path: '/gov/incidents',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GuidesCodeRoute = GuidesCodeRouteImport.update({
   id: '/$code',
   path: '/$code',
@@ -1245,6 +1276,11 @@ const FrGovLoginRoute = FrGovLoginRouteImport.update({
   path: '/gov/login',
   getParentRoute: () => FrRoute,
 } as any)
+const FrGovIncidentsRoute = FrGovIncidentsRouteImport.update({
+  id: '/gov_/incidents',
+  path: '/gov/incidents',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrGuidesCodeRoute = FrGuidesCodeRouteImport.update({
   id: '/$code',
   path: '/$code',
@@ -1323,6 +1359,10 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/admin-ai': typeof AdminAiRoute
   '/admin-automations': typeof AdminAutomationsRoute
+  '/api/compliance/incidents': typeof ApiComplianceIncidentsRoute
+  '/admin-gov-incidents': typeof AdminGovIncidentsRoute
+  '/family-incidents': typeof FamilyIncidentsRoute
+  '/centre-incidents': typeof CentreIncidentsRoute
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
@@ -1471,6 +1511,7 @@ export interface FileRoutesByFullPath {
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
   '/gov/login': typeof GovLoginRoute
+  '/gov/incidents': typeof GovIncidentsRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/help/articles': typeof HelpArticlesRoute
   '/inbox/$id': typeof InboxIdRoute
@@ -1520,6 +1561,7 @@ export interface FileRoutesByFullPath {
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/gov/login': typeof FrGovLoginRoute
+  '/fr/gov/incidents': typeof FrGovIncidentsRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/help/articles': typeof FrHelpArticlesRoute
   '/fr/inbox/$id': typeof FrInboxIdRoute
@@ -1542,6 +1584,10 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteWithChildren
   '/admin-ai': typeof AdminAiRoute
   '/admin-automations': typeof AdminAutomationsRoute
+  '/api/compliance/incidents': typeof ApiComplianceIncidentsRoute
+  '/admin-gov-incidents': typeof AdminGovIncidentsRoute
+  '/family-incidents': typeof FamilyIncidentsRoute
+  '/centre-incidents': typeof CentreIncidentsRoute
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
@@ -1688,6 +1734,7 @@ export interface FileRoutesByTo {
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
   '/gov/login': typeof GovLoginRoute
+  '/gov/incidents': typeof GovIncidentsRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/help/articles': typeof HelpArticlesRoute
   '/inbox/$id': typeof InboxIdRoute
@@ -1737,6 +1784,7 @@ export interface FileRoutesByTo {
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/gov/login': typeof FrGovLoginRoute
+  '/fr/gov/incidents': typeof FrGovIncidentsRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/help/articles': typeof FrHelpArticlesRoute
   '/fr/inbox/$id': typeof FrInboxIdRoute
@@ -1760,6 +1808,10 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/admin-ai': typeof AdminAiRoute
   '/admin-automations': typeof AdminAutomationsRoute
+  '/api/compliance/incidents': typeof ApiComplianceIncidentsRoute
+  '/admin-gov-incidents': typeof AdminGovIncidentsRoute
+  '/family-incidents': typeof FamilyIncidentsRoute
+  '/centre-incidents': typeof CentreIncidentsRoute
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
@@ -1908,6 +1960,7 @@ export interface FileRoutesById {
   '/fr/verify': typeof FrVerifyRoute
   '/fr/waitlist': typeof FrWaitlistRoute
   '/gov_/login': typeof GovLoginRoute
+  '/gov_/incidents': typeof GovIncidentsRoute
   '/guides/$code': typeof GuidesCodeRoute
   '/help/articles': typeof HelpArticlesRoute
   '/inbox/$id': typeof InboxIdRoute
@@ -1957,6 +2010,7 @@ export interface FileRoutesById {
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
   '/fr/gov_/login': typeof FrGovLoginRoute
+  '/fr/gov_/incidents': typeof FrGovIncidentsRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/help/articles': typeof FrHelpArticlesRoute
   '/fr/inbox/$id': typeof FrInboxIdRoute
@@ -1981,6 +2035,10 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-ai'
     | '/admin-automations'
+    | '/api/compliance/incidents'
+    | '/admin-gov-incidents'
+    | '/family-incidents'
+    | '/centre-incidents'
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
@@ -2129,6 +2187,7 @@ export interface FileRouteTypes {
     | '/fr/verify'
     | '/fr/waitlist'
     | '/gov/login'
+    | '/gov/incidents'
     | '/guides/$code'
     | '/help/articles'
     | '/inbox/$id'
@@ -2178,6 +2237,7 @@ export interface FileRouteTypes {
     | '/daycare/city/$city'
     | '/fr/daycare/$slug'
     | '/fr/gov/login'
+    | '/fr/gov/incidents'
     | '/fr/guides/$code'
     | '/fr/help/articles'
     | '/fr/inbox/$id'
@@ -2200,6 +2260,10 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-ai'
     | '/admin-automations'
+    | '/api/compliance/incidents'
+    | '/admin-gov-incidents'
+    | '/family-incidents'
+    | '/centre-incidents'
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
@@ -2346,6 +2410,7 @@ export interface FileRouteTypes {
     | '/fr/verify'
     | '/fr/waitlist'
     | '/gov/login'
+    | '/gov/incidents'
     | '/guides/$code'
     | '/help/articles'
     | '/inbox/$id'
@@ -2395,6 +2460,7 @@ export interface FileRouteTypes {
     | '/daycare/city/$city'
     | '/fr/daycare/$slug'
     | '/fr/gov/login'
+    | '/fr/gov/incidents'
     | '/fr/guides/$code'
     | '/fr/help/articles'
     | '/fr/inbox/$id'
@@ -2417,6 +2483,10 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-ai'
     | '/admin-automations'
+    | '/api/compliance/incidents'
+    | '/admin-gov-incidents'
+    | '/family-incidents'
+    | '/centre-incidents'
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
@@ -2565,6 +2635,7 @@ export interface FileRouteTypes {
     | '/fr/verify'
     | '/fr/waitlist'
     | '/gov_/login'
+    | '/gov_/incidents'
     | '/guides/$code'
     | '/help/articles'
     | '/inbox/$id'
@@ -2614,6 +2685,7 @@ export interface FileRouteTypes {
     | '/daycare/city/$city'
     | '/fr/daycare/$slug'
     | '/fr/gov_/login'
+    | '/fr/gov_/incidents'
     | '/fr/guides/$code'
     | '/fr/help/articles'
     | '/fr/inbox/$id'
@@ -2637,6 +2709,10 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AdminAiRoute: typeof AdminAiRoute
   AdminAutomationsRoute: typeof AdminAutomationsRoute
+  ApiComplianceIncidentsRoute: typeof ApiComplianceIncidentsRoute
+  AdminGovIncidentsRoute: typeof AdminGovIncidentsRoute
+  FamilyIncidentsRoute: typeof FamilyIncidentsRoute
+  CentreIncidentsRoute: typeof CentreIncidentsRoute
   AdminChatRoute: typeof AdminChatRoute
   AdminContractsRoute: typeof AdminContractsRoute
   AdminEmailHealthRoute: typeof AdminEmailHealthRoute
@@ -2732,6 +2808,7 @@ export interface RootRouteChildren {
   DaycareSlugRoute: typeof DaycareSlugRoute
   DaycaresCityRoute: typeof DaycaresCityRoute
   GovLoginRoute: typeof GovLoginRoute
+  GovIncidentsRoute: typeof GovIncidentsRoute
   InviteTokenRoute: typeof InviteTokenRoute
   JobsPostRoute: typeof JobsPostRoute
   ListingSlugRoute: typeof ListingSlugRoute
@@ -2810,6 +2887,34 @@ declare module '@tanstack/react-router' {
       path: '/admin-automations'
       fullPath: '/admin-automations'
       preLoaderRoute: typeof AdminAutomationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/compliance/incidents': {
+      id: '/api/compliance/incidents'
+      path: '/api/compliance/incidents'
+      fullPath: '/api/compliance/incidents'
+      preLoaderRoute: typeof ApiComplianceIncidentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-gov-incidents': {
+      id: '/admin-gov-incidents'
+      path: '/admin-gov-incidents'
+      fullPath: '/admin-gov-incidents'
+      preLoaderRoute: typeof AdminGovIncidentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/family-incidents': {
+      id: '/family-incidents'
+      path: '/family-incidents'
+      fullPath: '/family-incidents'
+      preLoaderRoute: typeof FamilyIncidentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/centre-incidents': {
+      id: '/centre-incidents'
+      path: '/centre-incidents'
+      fullPath: '/centre-incidents'
+      preLoaderRoute: typeof CentreIncidentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin-chat': {
@@ -3855,6 +3960,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GovLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gov_/incidents': {
+      id: '/gov_/incidents'
+      path: '/gov/incidents'
+      fullPath: '/gov/incidents'
+      preLoaderRoute: typeof GovIncidentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/guides/$code': {
       id: '/guides/$code'
       path: '/$code'
@@ -4191,6 +4303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrGovLoginRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/gov_/incidents': {
+      id: '/fr/gov_/incidents'
+      path: '/gov/incidents'
+      fullPath: '/fr/gov/incidents'
+      preLoaderRoute: typeof FrGovIncidentsRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/guides/$code': {
       id: '/fr/guides/$code'
       path: '/$code'
@@ -4417,6 +4536,7 @@ interface FrRouteChildren {
   FrIndexRoute: typeof FrIndexRoute
   FrDaycareSlugRoute: typeof FrDaycareSlugRoute
   FrGovLoginRoute: typeof FrGovLoginRoute
+  FrGovIncidentsRoute: typeof FrGovIncidentsRoute
   FrJobsPostRoute: typeof FrJobsPostRoute
   FrMilieuxFamiliauxIdRoute: typeof FrMilieuxFamiliauxIdRoute
   FrRCodeRoute: typeof FrRCodeRoute
@@ -4480,6 +4600,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrIndexRoute: FrIndexRoute,
   FrDaycareSlugRoute: FrDaycareSlugRoute,
   FrGovLoginRoute: FrGovLoginRoute,
+  FrGovIncidentsRoute: FrGovIncidentsRoute,
   FrJobsPostRoute: FrJobsPostRoute,
   FrMilieuxFamiliauxIdRoute: FrMilieuxFamiliauxIdRoute,
   FrRCodeRoute: FrRCodeRoute,
@@ -4618,6 +4739,10 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AdminAiRoute: AdminAiRoute,
   AdminAutomationsRoute: AdminAutomationsRoute,
+  ApiComplianceIncidentsRoute: ApiComplianceIncidentsRoute,
+  AdminGovIncidentsRoute: AdminGovIncidentsRoute,
+  FamilyIncidentsRoute: FamilyIncidentsRoute,
+  CentreIncidentsRoute: CentreIncidentsRoute,
   AdminChatRoute: AdminChatRoute,
   AdminContractsRoute: AdminContractsRoute,
   AdminEmailHealthRoute: AdminEmailHealthRoute,
@@ -4713,6 +4838,7 @@ const rootRouteChildren: RootRouteChildren = {
   DaycareSlugRoute: DaycareSlugRoute,
   DaycaresCityRoute: DaycaresCityRoute,
   GovLoginRoute: GovLoginRoute,
+  GovIncidentsRoute: GovIncidentsRoute,
   InviteTokenRoute: InviteTokenRoute,
   JobsPostRoute: JobsPostRoute,
   ListingSlugRoute: ListingSlugRoute,
