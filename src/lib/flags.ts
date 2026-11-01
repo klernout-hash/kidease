@@ -58,6 +58,9 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_GOV_PORTAL",
   "FEATURE_PRODUCT_EVENTS",
   "FEATURE_NCF_STREET",
+  "FEATURE_CURRICULUM_PACK",
+  "FEATURE_CURRICULUM_PACK_LIVE",
+  "FEATURE_STORY_CORNER",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -163,6 +166,12 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_PRODUCT_EVENTS: false,
   /** Street address matching on Need care fast via OpenStreetMap. Off until Kyle turns it on. */
   FEATURE_NCF_STREET: false,
+  /** Province learning goals, stories, plans, and coverage. Off until Kyle turns it on. */
+  FEATURE_CURRICULUM_PACK: false,
+  /** Parents see published stories. Off. Without this, publish is log-only. */
+  FEATURE_CURRICULUM_PACK_LIVE: false,
+  /** Local open picture books. Off. Does not hotlink book files. */
+  FEATURE_STORY_CORNER: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -439,6 +448,27 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Need care fast can geocode a street address with OpenStreetMap Nominatim and keep centres inside 15 km. Default off. No Google. City search stays the same.",
+  },
+  {
+    key: "FEATURE_CURRICULUM_PACK",
+    defaultOn: false,
+    docs: "docs/curriculum.md",
+    summary:
+      "Province goals, learning stories, plans, and coverage for a daycare. Default off. Goal lines are KidEase wording plus a link. No ASQ.",
+  },
+  {
+    key: "FEATURE_CURRICULUM_PACK_LIVE",
+    defaultOn: false,
+    docs: "docs/curriculum.md",
+    summary:
+      "Parents can read a published story and reply. Default off. While off, publish is only written to the log.",
+  },
+  {
+    key: "FEATURE_STORY_CORNER",
+    defaultOn: false,
+    docs: "docs/curriculum.md",
+    summary:
+      "Picture books stored on this server from CC BY sources. Default off. Skips NC and ND. Book Dash credit and logo stay on every Book Dash book.",
   },
 ];
 

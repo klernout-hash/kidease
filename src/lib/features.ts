@@ -247,6 +247,21 @@ export function ncfStreetEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_NCF_STREET", env);
 }
 
+/** Province curriculum pack. Default off. */
+export function curriculumPackEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_CURRICULUM_PACK", env);
+}
+
+/** Parents see published curriculum stories. Default off. */
+export function curriculumPackLive(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_CURRICULUM_PACK_LIVE", env);
+}
+
+/** Local CC BY picture books. Default off. */
+export function storyCornerEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_STORY_CORNER", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;
