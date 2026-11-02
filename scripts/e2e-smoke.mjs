@@ -562,7 +562,9 @@ async function runRoleFixture(page, base) {
         daycareCross.length === 0 &&
         /today/i.test(daycareNav) &&
         !daycareSignIn &&
-        daycarePlaces.drawer === "Upgrade",
+        daycarePlaces.header === "" &&
+        daycarePlaces.panel === "" &&
+        daycarePlaces.drawer === "",
       { note: daycareSignIn ? "sign-in leak" : daycareCross.join(",") || JSON.stringify(daycarePlaces) },
     );
     // Pure daycare fixture (role=provider), not an admin who also owns centres.
@@ -593,8 +595,9 @@ async function runRoleFixture(page, base) {
         /\bRequests\b/.test(daycareSide) &&
         /\bListings\b/.test(daycareSide) &&
         /\bEarnings\b/.test(daycareSide) &&
-        /\bPromote\b/.test(daycareSide) &&
         /Daycare desk/i.test(daycareSide) &&
+        !/\bPromote\b/.test(daycareSide) &&
+        !/\bUpgrade\b/.test(daycareSide) &&
         !/\bMoney\b/.test(daycareSide) &&
         !/my centre/i.test(daycareSide),
       { note: daycareSide.slice(0, 200) },
@@ -611,7 +614,7 @@ async function runRoleFixture(page, base) {
     const daycarePaidPlaces = await upgradePlaces(page);
     record(
       "upgrade-my-plan-daycare",
-      daycarePaidPlaces.panel === "My plan" && daycarePaidPlaces.drawer === "My plan",
+      daycarePaidPlaces.header === "" && daycarePaidPlaces.panel === "" && daycarePaidPlaces.drawer === "",
       { note: JSON.stringify(daycarePaidPlaces) },
     );
 
@@ -619,28 +622,13 @@ async function runRoleFixture(page, base) {
     await setFixture(context, base, { role: "provider" });
     await page.goto(new URL("/provider", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await page.locator('[data-ke="daycare-desk"]').waitFor({ timeout: timeoutMs });
-    await openAccountGroup(page, '[data-ke="desk-desktop-nav"]');
-    const headerUpgrade = ((await page.locator('[data-ke="desk-desktop-nav"] [data-nav="upgrade"]:visible').first().innerText().catch(() => "")) || "").trim();
-    await page.locator('[data-ke="desk-desktop-nav"] [data-nav="upgrade"]').click();
-    await page.waitForURL(/\/provider\/subscription/i, { timeout: timeoutMs }).catch(() => {});
-    const deskCheckout = page.locator('[data-ke="plan-checkout"]:visible').first();
-    await deskCheckout.waitFor({ timeout: timeoutMs }).catch(() => {});
-    const deskHit = page.waitForRequest((req) => req.url().includes("cs_test_e2e_mock"), { timeout: timeoutMs }).catch(() => null);
-    if ((await deskCheckout.count()) > 0) await deskCheckout.click();
-    const deskReached = Boolean(await deskHit);
-    await settleMockCheckout(page);
-    await page.goto(new URL("/provider", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-    await openHeaderMenu(page);
-    await clickDrawerUpgrade(page);
-    await page.waitForURL(/\/provider\/subscription/i, { timeout: timeoutMs }).catch(() => {});
-    const homeCheckout = page.locator('[data-ke="plan-checkout"]:visible').first();
-    await homeCheckout.waitFor({ timeout: timeoutMs }).catch(() => {});
-    const homeHit = page.waitForRequest((req) => req.url().includes("cs_test_e2e_mock"), { timeout: timeoutMs }).catch(() => null);
-    if ((await homeCheckout.count()) > 0) await homeCheckout.click();
-    const homeReached = Boolean(await homeHit);
-    await settleMockCheckout(page);
-    record("daycare-checkout-two-clicks", headerUpgrade === "Upgrade" && deskReached && homeReached, {
-      note: `${headerUpgrade} desk=${deskReached} home=${homeReached}`,
+    const daycareUpgrade = await page.locator('[data-nav="upgrade"]').count();
+    await page.goto(new URL("/provider/subscription", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await page.waitForURL(/\/provider/i, { timeout: timeoutMs }).catch(() => {});
+    const daycareCheckout = await page.locator('[data-ke="plan-checkout"]').count();
+    const leftSubscription = !/\/provider\/subscription/i.test(page.url());
+    record("daycare-checkout-two-clicks", daycareUpgrade === 0 && daycareCheckout === 0 && leftSubscription, {
+      note: `upgrade=${daycareUpgrade} checkout=${daycareCheckout} url=${page.url()}`,
     });
 
     await page.setViewportSize({ width: 1280, height: 900 });
@@ -685,10 +673,6 @@ async function runRoleFixture(page, base) {
 
     await setFixture(context, base, { role: "provider", activity: true });
     await page.goto(new URL("/provider", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-    await page.locator('[data-ke="upgrade-card"]').waitFor({ timeout: timeoutMs });
-    await page.locator('[data-ke="upgrade-card-dismiss"]').click();
-    await page.locator('[data-ke="upgrade-card"]').waitFor({ state: "hidden", timeout: timeoutMs }).catch(() => {});
-    await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
     await page.locator('[data-ke="daycare-desk"]').waitFor({ timeout: timeoutMs });
     const daycareCardAfter = await page.locator('[data-ke="upgrade-card"]').count();
     record("daycare-card-dismissed", daycareCardAfter === 0, { note: `cards ${daycareCardAfter}` });

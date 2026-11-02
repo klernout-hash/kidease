@@ -54,8 +54,8 @@ test("daycare phone tabs are Today, Requests, Listings, Messages, Account", () =
   assert.equal(secondary.includes("money"), true);
   assert.equal(secondary.includes("licence"), true);
   assert.equal(secondary.includes("contract"), true);
-  assert.equal(secondary.includes("promote"), true);
-  assert.equal(secondary.includes("subscription"), true);
+  assert.equal(secondary.includes("promote"), false);
+  assert.equal(secondary.includes("subscription"), false);
   assert.equal(secondary.includes("post-job"), true);
   assert.equal(secondary.includes("claim"), true);
   assert.equal(secondary.includes("add"), true);

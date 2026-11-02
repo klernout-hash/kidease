@@ -52,7 +52,8 @@ test("provider subscription is its own page, not Promote leftover", () => {
   const panel = src("src/components/provider-subscription.tsx");
   assert.match(provider, /<Outlet \/>/);
   assert.match(provider, /childRoute/);
-  assert.match(route, /ProviderSubscriptionPanel/);
+  assert.match(route, /Navigate to="\/provider"/);
+  assert.doesNotMatch(route, /ProviderSubscriptionPanel/);
   assert.match(panel, /Centre plans for listing/);
   assert.doesNotMatch(route, /PromotePanel/);
 });

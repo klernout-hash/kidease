@@ -449,7 +449,6 @@ export function ParentDesk({
     return <Navigate to={parentDeskPath(pathname)} search={{ tab: "explore" }} />;
   }
   if (onPlusSurface && desksReady && desks && !canBuyParentUpgrade(upgradeBuyer)) {
-    if (canBuyDaycareUpgrade(upgradeBuyer) && desks.subscriptionsEnabled) return <Navigate to="/provider/subscription" />;
     if (canBuyDaycareUpgrade(upgradeBuyer)) return <Navigate to="/provider" search={{ desk: "today" }} />;
     if (desks.home === "/admin") return hideAdmin ? <Navigate to={parentDeskPath(pathname)} search={{ tab: "explore" }} /> : <Navigate to="/admin" />;
     if (desks.home === "/support") return <Navigate to="/support" />;

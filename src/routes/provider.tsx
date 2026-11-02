@@ -31,7 +31,6 @@ import { DaycareLeadInbox } from "@/components/daycare-lead-inbox";
 import { CentreFamilyDocs } from "@/components/family-vault";
 import { EmptyState } from "@/components/empty-state";
 import { TodayUrgencyHome } from "@/components/today-urgency-home";
-import { DirectorProStrip } from "@/components/director-pro-strip";
 import { type DaycareDesk } from "@/lib/desk-nav";
 import { capturePostHogEvent } from "@/lib/posthog";
 import type { LeadRequest } from "@/lib/lead-requests";
@@ -40,7 +39,6 @@ import { CentrePipeline } from "@/components/centre-pipeline";
 import type { PipelineCard } from "@/lib/crm-pipeline";
 import { TourCard } from "@/components/tour-card";
 import { useCopy } from "@/lib/use-copy";
-import { useInNativeShell } from "@/lib/use-native-shell";
 import type { CopyKey } from "@/lib/copy";
 import { storedCentreName } from "@/lib/utils";
 import { FOUNDING_PAGE, foundingLocale } from "@/lib/founding-period";
@@ -48,7 +46,7 @@ import { formatAgeLabel, formatStart, scheduleLabel } from "@/lib/templates";
 import type { Child, Daycare, SpotRequest, TourRequest } from "@/lib/types";
 import { ProviderContractsPanel } from "@/components/provider-contracts";
 import { ListingCultureFields } from "@/components/listing-culture-fields";
-import { CapacityForm, Field, PromotePanel } from "@/components/provider-listing-forms";
+import { CapacityForm, Field } from "@/components/provider-listing-forms";
 import { UploadLimitHint } from "@/components/upload-limit-hint";
 import {
   downgradeListingPhotoFile,
@@ -71,8 +69,6 @@ import { SupportPreviewBanner } from "@/components/support-preview-banner";
 import { VacancyConfirmLoop } from "@/components/vacancy-confirm";
 import { SpotOfferDesk } from "@/components/spot-offer-desk";
 import { DirectorNudgeQueue } from "@/components/director-nudges";
-import { ProviderPlanBanner } from "@/components/provider-plan-banner";
-import { PayCtas, useShowPayCtas } from "@/components/pay-chrome";
 import { FreePageExplainer } from "@/components/free-listing-share";
 import { CompletenessChecklist } from "@/components/listing-completeness";
 import { ClaimProgressMeter } from "@/components/claim-progress-meter";
@@ -163,8 +159,6 @@ export function ProviderPage() {
   const locallyOut = useLocallySignedOut();
   const chrome = useRoleChrome();
   const { t, locale } = useCopy();
-  const nativeShell = useInNativeShell();
-  const showPay = useShowPayCtas();
   const { session } = useSessionDesks();
   const centreOwner = session?.centreOwner !== false;
   const search = useSearch({ strict: false }) as ReturnType<typeof providerValidateSearch>;
@@ -438,12 +432,6 @@ export function ProviderPage() {
           <EmptyState title={t("enquiriesEmptyTitle")} body={t("enquiriesEmptyLead")} />
         ) : (
         <section className="space-y-8">
-          <PayCtas>
-          <DirectorProStrip
-            views={stats.reduce((sum, s) => sum + (s.weekViews ?? 0), 0)}
-            requests={stats.reduce((sum, s) => sum + (s.weekRequests ?? 0), 0)}
-          />
-          </PayCtas>
           <DaycareLeadInbox items={leads} onChanged={() => void load()} />
           {pipeline.length ? <CentrePipeline cards={pipeline} /> : null}
           {tours.length ? (
@@ -533,7 +521,6 @@ export function ProviderPage() {
               }))}
             />
           ) : null}
-          <PayCtas>{subscription ? <ProviderPlanBanner subscription={subscription} /> : null}</PayCtas>
           {deskListings.map((d) => {
             const st = stats.find((s) => s.daycareId === d.id);
             const declined = listingStatusFromClaim(d.claimStatus, { live: d.live }) === "declined";
@@ -554,13 +541,6 @@ export function ProviderPage() {
                     <KidEaseApprovalStrip eligible={publicApprovalEligible(d)} audience="daycare" />
                   </div>
                   {d.priority ? <PriorityPill /> : null}
-                  <PayCtas>
-                  {d.featuredCity ? (
-                    <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
-                      {t("planPro")} · featured
-                    </span>
-                  ) : null}
-                  </PayCtas>
                 </div>
                 <p className="mt-3 text-xs text-subtle">
                   {subscription?.analyticsDays === 90 ? t("analytics90") : t("analytics")}
@@ -591,16 +571,6 @@ export function ProviderPage() {
               </section>
             );
           })}
-          <PayCtas>
-          {subscription && subscription.siteCount >= 3 && !subscription.orgDashboard ? (
-            <p className="mb-6 rounded-xl bg-primary/10 px-5 py-4 text-sm text-primary ring-1 ring-primary/20">
-              {t("planOrgLocked")}{" "}
-              <Link to="/provider/subscription" className="font-medium underline">
-                {t("planUpgrade")}
-              </Link>
-            </p>
-          ) : null}
-          </PayCtas>
           {subscription?.orgDashboard && subscription.siteCount >= 3 ? (
             <section className="mb-6 rounded-xl bg-surface p-5 ring-1 ring-border">
               <h2 className="font-display text-2xl">{t("planOrgLive")}</h2>
@@ -828,42 +798,8 @@ export function ProviderPage() {
         )
       ) : null}
 
-      {desk === "promote" && !centreOwner ? (
-        <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>
-      ) : null}
-
-      {desk === "promote" && centreOwner && nativeShell ? (
-        <p className="mb-4 text-sm text-muted" data-ke="native-plan-note">
-          {t("nativePlansHidden")}
-        </p>
-      ) : null}
-
-      {desk === "promote" && centreOwner && !nativeShell ? (
-        <>
-          <div className="ke-digital-plan" data-ke="digital-plan">
-            {!showPay ? (
-              <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("plansNotOffered")}</p>
-            ) : !deskSettled ? null : deskListings.length === 0 ? (
-              <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">{t("providerOnboardingLead")}</p>
-            ) : (
-              deskListings.map((d) => {
-                const declined = listingStatusFromClaim(d.claimStatus, { live: d.live }) === "declined";
-                return (
-                  <section key={d.id} className="mb-6">
-                    <h2 className="font-display text-2xl">{storedCentreName(d.name, d.nameFr)}</h2>
-                    {declined ? (
-                      <p className="mt-3 rounded-xl bg-surface px-5 py-6 text-sm text-muted ring-1 ring-border">
-                        {t("promoteDeclined")}
-                      </p>
-                    ) : (
-                      <PromotePanel daycare={d} onSaved={() => void load()} />
-                    )}
-                  </section>
-                );
-              })
-            )}
-          </div>
-        </>
+      {desk === "promote" ? (
+        <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("plansNotOffered")}</p>
       ) : null}
     </DeskShell>
     </TwoFactorGate>

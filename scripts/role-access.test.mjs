@@ -81,8 +81,9 @@ test("menus stay on one role and the plan label switches when paid", () => {
   assert.equal(parentPaid.includes("Upgrade"), false);
   assert.equal(parent.includes("My listing"), false);
   assert.ok(daycare.includes("Today"));
-  assert.ok(daycare.includes("My plan"));
-  assert.ok(daycareFree.includes("Upgrade"));
+  assert.equal(daycare.includes("My plan"), false);
+  assert.equal(daycare.includes("Upgrade"), false);
+  assert.equal(daycareFree.includes("Upgrade"), false);
   assert.equal(daycareHidden.includes("Upgrade"), false);
   assert.equal(daycareHidden.includes("My plan"), false);
   assert.equal(daycare.includes("Saved"), false);

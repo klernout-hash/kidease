@@ -679,10 +679,11 @@ test("parents and daycares cannot buy or receive each other's upgrades", () => {
   const lifecycle = src("src/lib/server/stripe-lifecycle.ts");
   assert.match(lifecycle, /profileMayReceiveUpgrade/);
   assert.match(lifecycle, /refused cross-role upgrade/);
-  assert.match(src("src/routes/provider.subscription.tsx"), /canBuyDaycareUpgrade/);
-  assert.match(src("src/routes/provider.subscription.tsx"), /Navigate to="\/parent"/);
+  assert.match(src("src/routes/provider.subscription.tsx"), /Navigate to="\/provider"/);
+  assert.match(src("src/routes/provider.subscription.tsx"), /desk: "today"/);
+  assert.doesNotMatch(src("src/routes/provider.subscription.tsx"), /plan-checkout|startProviderCheckout/);
   assert.match(src("src/routes/parent.tsx"), /canBuyParentUpgrade/);
-  assert.match(src("src/routes/parent.tsx"), /Navigate to="\/provider\/subscription"/);
+  assert.doesNotMatch(src("src/routes/parent.tsx"), /Navigate to="\/provider\/subscription"/);
   const upgrades = src("src/components/optional-upgrades.tsx");
   assert.match(upgrades, /For families/);
   assert.match(upgrades, /For daycares/);
@@ -705,8 +706,8 @@ test("parents and daycares cannot buy or receive each other's upgrades", () => {
     visibleDeskNav("daycare", { providerSubscriptions: true, centreOwner: true }).some((item) => item.id === "subscription"),
     false,
   );
-  assert.equal(staffHidden, true);
-  assert.equal(staffLinked, true);
+  assert.equal(staffHidden, false);
+  assert.equal(staffLinked, false);
   assert.equal(
     visibleDeskNav("parent", { providerSubscriptions: true, centreLinked: true }).some((item) => item.id === "subscription"),
     false,

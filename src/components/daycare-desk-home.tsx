@@ -1,12 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { FoundingMemberBadge } from "@/components/founding-member-badge";
-import { RoleUpgradeCard } from "@/components/role-upgrade-card";
-import { useSessionDesks } from "@/components/session-desks";
 import { listingCompleteness, vacancyUpdatedThisWeek, type CompletenessField } from "@/lib/listing-readiness";
 import { isOpenLeadStatus, type LeadRequest } from "@/lib/lead-requests";
-import { daycareCapPrompt, daycareHomeCardEligible, showHomeUpgradeCard } from "@/lib/upgrade-prompt";
+import { daycareCapPrompt } from "@/lib/upgrade-prompt";
 import { useCopy } from "@/lib/use-copy";
-import { useInNativeShell } from "@/lib/use-native-shell";
 import type { CopyKey } from "@/lib/copy";
 import type { Daycare, TourRequest } from "@/lib/types";
 
@@ -45,23 +42,17 @@ export function DaycareDeskHome({
   onDismiss?: () => void;
 }) {
   const { t } = useCopy();
-  const nativeShell = useInNativeShell();
-  const { session } = useSessionDesks();
-  const subscriptionsOn = session?.subscriptionsEnabled === true;
+  void planName;
+  void paid;
+  void renewsOn;
+  void dismissed;
+  void onDismiss;
   const waitingLeads = leads.filter((lead) => isOpenLeadStatus(lead.status));
   const waitingTours = tours.filter((tour) => tour.status === "pending");
   const waiting = waitingLeads.length + waitingTours.length;
   const primary = listings[0];
   const completeness = primary ? listingCompleteness(primary) : null;
   const missing = completeness?.missing ?? [];
-  const card = showHomeUpgradeCard({
-    paid,
-    eligible: daycareHomeCardEligible({
-      claimed: Boolean(primary?.claimed || primary?.claimedAt),
-      listingReady: Boolean(completeness?.ready),
-    }),
-    dismissed,
-  });
   const cap = daycareCapPrompt(inquiryUsed, inquiryCap);
   const capCopy =
     cap === "at"
@@ -72,23 +63,9 @@ export function DaycareDeskHome({
 
   return (
     <div className="mb-6 space-y-3" data-ke="daycare-desk" data-settled={settled ? "1" : "0"}>
-      {card && subscriptionsOn ? (
-        <RoleUpgradeCard
-          role="provider"
-          paid={card === "plan"}
-          planLabel={card === "plan" ? planName : null}
-          renewsOn={renewsOn}
-          onDismiss={card === "upgrade" ? onDismiss : undefined}
-        />
-      ) : null}
       {capCopy ? (
-        <p className="ke-digital-plan rounded-xl bg-surface px-4 py-3 text-sm text-fg ring-1 ring-border" data-ke="daycare-cap-prompt">
-          {capCopy}{" "}
-          {subscriptionsOn ? (
-            <Link to="/provider/subscription" className="font-semibold text-primary">
-              {t("planViewPlans")}
-            </Link>
-          ) : null}
+        <p className="rounded-xl bg-surface px-4 py-3 text-sm text-fg ring-1 ring-border" data-ke="daycare-cap-prompt">
+          {capCopy}
         </p>
       ) : null}
 
@@ -130,18 +107,6 @@ export function DaycareDeskHome({
           {primary ? t("deskHomeEdit") : t("deskHomeMyListing")}
         </Link>
       </section>
-
-      {nativeShell || !subscriptionsOn ? null : (
-      <section className="rounded-xl bg-surface px-4 py-3 ring-1 ring-border" data-ke="daycare-plan">
-        <h2 className="font-display text-xl">{t("deskHomeCurrentPlan")}</h2>
-        <p className="mt-1 text-sm text-fg">{paid ? planName : t("deskHomeFree")}</p>
-        <p className="text-sm text-muted">{t("deskHomeFreeNote")}</p>
-        <Link to="/plans" className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-primary">
-          {t("navPlans")}
-        </Link>
-      </section>
-      )}
-
     </div>
   );
 }
