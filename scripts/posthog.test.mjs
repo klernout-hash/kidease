@@ -474,7 +474,7 @@ describe("PostHog client wiring", () => {
     assert.match(csp, /'wasm-unsafe-eval'/);
     assert.doesNotMatch(csp, /\*\.posthog\.com/);
     const vite = read("vite.config.ts");
-    assert.match(vite, /envPrefix: \["VITE_", "POSTHOG_HOST"\]/);
+    assert.match(vite, /envPrefix: \["VITE_", "POSTHOG_HOST", "NEXT_PUBLIC_AMAZON_APPSTORE_URL"\]/);
     assert.match(vite, /ssr: \{ external: \["sharp", "posthog-js", "@sentry\/node", "inngest"\] \}/);
     assert.match(read("package.json"), /"posthog-js"/);
   });
