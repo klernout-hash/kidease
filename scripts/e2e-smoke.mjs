@@ -1547,8 +1547,20 @@ async function runSignedInSessions(page, base) {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.screenshot({ path: join(dirname(outDir), "gov-dashboard-390.png"), fullPage: false }).catch(() => {});
     await page.setViewportSize({ width: 1280, height: 800 });
-    await page.getByRole("button", { name: /sign out/i }).click();
+    // The dashboard HTML is ready before React attaches Sign out. A click
+    // in that gap does nothing, and the page stays on the desk.
+    const govSignOut = page.getByRole("button", { name: /sign out/i });
+    await govSignOut.waitFor({ timeout: timeoutMs });
+    await page.waitForFunction(() => {
+      const button = [...document.querySelectorAll("button")].find((el) => /sign out/i.test(el.textContent || ""));
+      return Boolean(button && Object.keys(button).some((key) => key.startsWith("__react")));
+    }, { timeout: timeoutMs });
+    await govSignOut.click();
     await page.locator('[data-ke="gov-login"]').waitFor({ timeout: timeoutMs });
+    await page.waitForFunction(() => {
+      const form = document.querySelector('[data-ke="gov-login"] form');
+      return Boolean(form && Object.keys(form).some((key) => key.startsWith("__react")));
+    }, { timeout: timeoutMs });
     await page.locator('input[type="email"]').fill("e2e-government@kidease.test");
     await page.locator('input[type="password"]').fill(FIXTURE_PASSWORD);
     await page.getByRole("button", { name: /^sign in$/i }).click();
