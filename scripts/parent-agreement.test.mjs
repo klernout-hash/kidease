@@ -254,5 +254,5 @@ test("the fee stays out of public listing code and send does not add another mes
   assert.doesNotMatch(panel, /subscription|sponsored|free forever/i);
   assert.doesNotMatch(listing, /centre_agreement_terms|parent_enrolment_agreement/);
   assert.match(src("src/routes/api/contracts.$id.pdf.ts"), /parentAgreementReadable/);
-  assert.match(src("migrations/0158_parent_enrolment_agreement.sql"), /parent_enrolment_agreements/);
+  assert.match(src("migrations/0160_parent_enrolment_agreement.sql"), /parent_enrolment_agreements/);
 });
