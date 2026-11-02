@@ -274,7 +274,7 @@ export function ExploreSearchBar({
     const meta = [whenFilled ? whenLabel : "", childSummary].filter(Boolean).join(" · ");
     return (
       <form
-        className={cn("relative z-50 w-full overflow-visible", className)}
+        className={cn("relative z-[35] w-full overflow-visible", className)}
         aria-label={t("searchBarAria")}
         onSubmit={(e) => {
           e.preventDefault();
@@ -314,7 +314,7 @@ export function ExploreSearchBar({
   return (
     <form
       ref={wrap}
-      className={cn("relative z-50 w-full overflow-visible", className)}
+      className={cn("relative z-[35] w-full overflow-visible", className)}
       aria-label={t("searchBarAria")}
       data-search-row="where-when-name"
       onSubmit={(e) => {
@@ -451,7 +451,7 @@ export function ExploreSearchBar({
               id={whenPanelId}
               role="group"
               aria-labelledby={whenLabelId}
-              className="absolute left-2 right-2 top-full z-50 mt-1.5 rounded-2xl bg-surface p-3 shadow-lift ring-1 ring-border lg:left-0 lg:right-auto lg:w-[22rem]"
+              className="absolute left-2 right-2 top-full z-30 mt-1.5 rounded-2xl bg-surface p-3 shadow-lift ring-1 ring-border max-md:static max-md:inset-auto max-md:z-auto max-md:mt-2 max-md:w-full lg:left-0 lg:right-auto lg:w-[22rem]"
             >
               {onStartChange ? (
                 <div className="mb-3 flex flex-wrap gap-2">
@@ -531,7 +531,7 @@ export function ExploreSearchBar({
             {prominent ? null : submitControl}
           </div>
           {childAges?.length && active === "name" && onChildAge && values.name.trim().length < 2 ? (
-            <div className="absolute left-2 right-2 top-full z-50 mt-1.5 rounded-xl bg-surface p-3 shadow-card ring-1 ring-border lg:left-auto lg:right-0 lg:w-[22rem]">
+            <div className="absolute left-2 right-2 top-full z-30 mt-1.5 rounded-xl bg-surface p-3 shadow-card ring-1 ring-border max-md:static max-md:inset-auto max-md:z-auto max-md:mt-2 max-md:w-full lg:left-auto lg:right-0 lg:w-[22rem]">
               <p className="text-sm font-semibold text-fg">{t("searchChildAge")}</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {childAges.map((age) => (

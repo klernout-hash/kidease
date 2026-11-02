@@ -54,6 +54,7 @@ import {
   GOOGLE_CLIENT_SECRET,
   googleIdpConfigured,
 } from "./google-idp";
+import { googleSignInEnabled } from "./google-login-flag";
 import {
   FACEBOOK_CLIENT_ID,
   FACEBOOK_CLIENT_SECRET,
@@ -288,7 +289,7 @@ function genericOAuthWithBrokerCallback(
 }
 
 const grokOAuthPlugin =
-  grokBrokerConfigured && grokClientId && grokClientSecret
+  googleSignInEnabled(process.env) && grokBrokerConfigured && grokClientId && grokClientSecret
     ? genericOAuthWithBrokerCallback({
       config: BROKER_PROVIDERS.map(({ providerId, idp }) => ({
         providerId,
@@ -343,7 +344,7 @@ const socialProviders = {
         },
       }
     : {}),
-  ...(googleIdpConfigured && GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET
+  ...(googleSignInEnabled(process.env) && googleIdpConfigured && GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET
     ? {
         google: {
           clientId: GOOGLE_CLIENT_ID,
@@ -477,6 +478,15 @@ export const auth = betterAuth({
     before: createAuthMiddleware(async (ctx) => {
       if (ctx.path !== "/sign-in/social") return;
       const body = ctx.body as { provider?: string; scopes?: unknown } | undefined;
+      if (
+        (body?.provider === "google" || body?.provider === "grok-google") &&
+        !googleSignInEnabled(process.env)
+      ) {
+        throw APIError.from("BAD_REQUEST", {
+          message: "That sign-in method is not configured on this host. Use email.",
+          code: "GOOGLE_SIGNIN_OFF",
+        });
+      }
       if (body?.provider !== "facebook") return;
       if (body && "scopes" in body) delete body.scopes;
       const host = ctx.request?.headers.get("host");

@@ -246,7 +246,7 @@ export function PlaceSearch({
   }
 
   return (
-    <div ref={wrap} className={cn("relative z-40 min-w-0 flex-1 overflow-visible", className)}>
+    <div ref={wrap} className={cn("relative z-30 min-w-0 flex-1 overflow-visible", className)}>
       <input
         ref={input}
         id={id}
@@ -322,7 +322,7 @@ export function PlaceSearch({
       {showDestinations && emptyMenu ? (
         <div
           data-ke="where-destinations"
-          className="absolute left-0 top-[calc(100%+0.5rem)] z-[80] w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-2xl bg-surface py-3 shadow-lift ring-1 ring-border"
+          className="absolute left-0 top-[calc(100%+0.5rem)] z-30 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-2xl bg-surface py-3 shadow-lift ring-1 ring-border max-md:static max-md:inset-auto max-md:z-auto max-md:mt-2 max-md:w-full"
         >
           <p className="px-4 pb-1 pt-1 text-xs font-semibold text-muted">{emptyMenu.title}</p>
           <ul>
@@ -373,7 +373,7 @@ export function PlaceSearch({
           id={listId}
           role="listbox"
           data-place-suggestions=""
-          className="absolute left-0 right-0 top-[calc(100%+0.375rem)] z-[80] max-h-64 overflow-auto rounded-xl bg-surface py-1 shadow-lift ring-1 ring-border"
+          className="absolute left-0 right-0 top-[calc(100%+0.375rem)] z-30 max-h-64 overflow-auto rounded-xl bg-surface py-1 shadow-lift ring-1 ring-border max-md:static max-md:inset-auto max-md:z-auto max-md:mt-2 max-md:w-full"
         >
           {hits.map((hit, i) => (
             <li key={hit.placeId} role="option" aria-selected={i === active}>

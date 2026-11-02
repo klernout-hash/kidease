@@ -32,9 +32,50 @@ export function HelpBot() {
   const starters = ["helpBotQ1", "helpBotQ2", "helpBotQ3", "helpBotQ4"] as const;
   const showStarters = msgs.every((m) => m.role !== "user");
 
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
   useEffect(() => {
     end.current?.scrollIntoView({ behavior: "smooth" });
   }, [msgs, open]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const chrome = "[data-ke=listing-sticky-bar], [data-ke=compare-bar], [data-ke=app-tab-bar], [data-ke=cookie-consent]";
+    const apply = () => {
+      let top = window.innerHeight;
+      for (const node of document.querySelectorAll(chrome)) {
+        const rect = node.getBoundingClientRect();
+        if (rect.height < 8 || rect.bottom < 0 || rect.top > window.innerHeight) continue;
+        top = Math.min(top, rect.top);
+      }
+      const clear = Math.max(92, Math.ceil(window.innerHeight - top + 12));
+      root.style.setProperty("--ke-help-clear", `${clear}px`);
+    };
+    let frame = 0;
+    const resize = new ResizeObserver(apply);
+    const watch = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        resize.disconnect();
+        for (const node of document.querySelectorAll(chrome)) resize.observe(node);
+        apply();
+      });
+    };
+    watch();
+    const mutations = new MutationObserver(watch);
+    mutations.observe(document.body, { childList: true, subtree: true });
+    mutations.observe(root, { attributes: true, attributeFilter: ["data-cookie-banner"] });
+    window.addEventListener("resize", apply);
+    window.addEventListener("kidease-compare", apply);
+    return () => {
+      cancelAnimationFrame(frame);
+      resize.disconnect();
+      mutations.disconnect();
+      window.removeEventListener("resize", apply);
+      window.removeEventListener("kidease-compare", apply);
+      root.style.removeProperty("--ke-help-clear");
+    };
+  }, [pathname]);
 
   useEffect(() => {
     if (!open || !chatToken) return;

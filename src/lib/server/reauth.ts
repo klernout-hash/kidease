@@ -105,7 +105,7 @@ export async function setUserPasswordHash(userId: string, password: string) {
     limit 1
   `.catch(() => []);
   if (!existing[0]) {
-    throw new Error("This account signs in with Apple, Google, or Facebook. Set a password from Forgot password first.");
+    throw new Error("This account has no password yet. Set one from Forgot password first.");
   }
   await sql`
     update "account"

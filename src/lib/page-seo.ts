@@ -187,8 +187,8 @@ export function organizationJsonLd(locale: "en" | "fr" = "en") {
 }
 
 /**
- * SoftwareApplication for the web / PWA. App Store and Play are coming soon.
- * no download counts, ratings, or store IDs.
+ * SoftwareApplication for the web / PWA.
+ * Amazon Appstore is the only approved store. No download counts, ratings, or store IDs.
  */
 export function softwareApplicationJsonLd() {
   return {
@@ -204,7 +204,7 @@ export function softwareApplicationJsonLd() {
       priceCurrency: "CAD",
     },
     description:
-      "Free search for licensed Canadian child care listings. Monthly fees, open spots, and enrolment. App Store and Google Play coming soon.",
+      "Free search for licensed Canadian child care listings. Monthly fees, open spots, and enrolment. Amazon Appstore is approved. App Store and Google Play are not approved yet.",
     publisher: {
       "@type": "Organization",
       name: "KidEase",
@@ -268,7 +268,7 @@ export const MARKETING_PAGE_SEO = {
   getApp: {
     title: "Get the KidEase app · iPhone, Android, Mac",
     description:
-      "Put licensed Canadian child care search on your home screen. GPS and listings. The phone apps are coming soon.",
+      "KidEase on your phone. The Amazon Appstore app is approved. App Store, Google Play, Galaxy Store, Microsoft Store, and AppGallery are not approved yet.",
     path: "/get-app",
   },
   contact: {
@@ -403,7 +403,7 @@ export const MARKETING_PAGE_SEO_FR = {
   getApp: {
     title: "Télécharger l’appli KidEase · iPhone, Android, Mac",
     description:
-      "Mettez la recherche de garde permise au Canada sur votre écran d’accueil. GPS, fiches et inscription. App Store et Google Play bientôt.",
+      "KidEase sur votre téléphone. L’appli Amazon Appstore est approuvée. L’App Store, Google Play, le Galaxy Store, le Microsoft Store et AppGallery ne sont pas approuvés.",
     path: "/fr/get-app",
   },
   benefits: {

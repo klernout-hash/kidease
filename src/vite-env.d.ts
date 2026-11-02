@@ -19,6 +19,8 @@ interface ImportMetaEnv {
   readonly VITE_CF_IMAGE_RESIZE?: string;
   /** Store-specific web build. Blank on www.kidease.ca. Not a secret. */
   readonly VITE_STORE_CHANNEL?: string;
+  /** Public Amazon Appstore listing. Empty hides the Get it button. Not a secret. */
+  readonly NEXT_PUBLIC_AMAZON_APPSTORE_URL?: string;
 }
 
 interface ImportMeta {

@@ -54,6 +54,7 @@ See `docs/catalog-source.md`.
 | `BETTER_AUTH_SECRET` | yes | both | `openssl rand -hex 32`. Not `AUTH_SECRET`. Rotating drops sessions. |
 | `BETTER_AUTH_URL` | no | both | Optional origin override. |
 | `GOOGLE_CLIENT_SECRET` | yes | both | Pair with public `GOOGLE_CLIENT_ID`. |
+| `GOOGLE_SIGNIN_ENABLED` | no | both | `0` hides Continue with Google. `1` shows it again. Leave the client id and secret in place. |
 | `FACEBOOK_CLIENT_SECRET` | yes | both | Pair with public `FACEBOOK_CLIENT_ID`. |
 
 ### Stripe

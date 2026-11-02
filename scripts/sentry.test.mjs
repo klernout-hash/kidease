@@ -49,7 +49,7 @@ describe("Sentry wiring", () => {
     assert.match(client, /SENTRY_PUBLIC_DSN_ENV/);
     assert.doesNotMatch(client, /process\.env\.SENTRY_DSN/);
     assert.doesNotMatch(instrument, /process\.env\.SENTRY_DSN/);
-    assert.match(vite, /envPrefix: \["VITE_", "POSTHOG_HOST"\]/);
+    assert.match(vite, /envPrefix: \["VITE_", "POSTHOG_HOST", "NEXT_PUBLIC_AMAZON_APPSTORE_URL"\]/);
     assert.doesNotMatch(vite, /envPrefix:[^\n]*SENTRY/);
     assert.match(vite, /@sentry\/node/);
     assert.match(read("src/lib/sentry.server.ts"), /SENTRY_DSN/);

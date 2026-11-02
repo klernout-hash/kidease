@@ -247,7 +247,7 @@ export default defineConfig(({ command, isPreview, mode }) => {
   // POSTHOG_HOST is a public ingest URL (already on Vercel). Narrow prefix so
   // a future POSTHOG_* / SENTRY_DSN secret is not inlined into the client bundle.
   // Browser Sentry reads VITE_PUBLIC_SENTRY_DSN only.
-  envPrefix: ["VITE_", "POSTHOG_HOST"],
+  envPrefix: ["VITE_", "POSTHOG_HOST", "NEXT_PUBLIC_AMAZON_APPSTORE_URL"],
   // Only the enabled build receives the key. An empty define would still
   // leave the name in every chunk that reads import.meta.env.
   ...(mapsBrowserKey
