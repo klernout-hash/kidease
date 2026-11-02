@@ -36,19 +36,20 @@ afterEach(() => {
   resetRemoteFlagsForTests();
 });
 
-test("FEATURE_PUSH and FEATURE_SMS default off; subscriptions default on", () => {
+test("FEATURE_PUSH, FEATURE_SMS, and provider subscriptions default off", () => {
   assert.equal(FLAG_DEFAULTS.FEATURE_PUSH, false);
   assert.equal(FLAG_DEFAULTS.FEATURE_SMS, false);
   assert.equal(FLAG_DEFAULTS.FEATURE_VIDEO, false);
   assert.equal(FLAG_DEFAULTS.FEATURE_INAPP_CHAT, false);
-  assert.equal(FLAG_DEFAULTS.FEATURE_PROVIDER_SUBSCRIPTIONS, true);
+  assert.equal(FLAG_DEFAULTS.FEATURE_PROVIDER_SUBSCRIPTIONS, false);
   assert.equal(FLAG_DEFAULTS.SHOW_PAY_CTAS, false);
   assert.equal(envFlagOn(undefined), false);
   assert.equal(smsEnabled({}), false);
   assert.equal(pushEnabled({}), false);
   assert.equal(videoEnabled({}), false);
   assert.equal(inAppChatEnabled({}), false);
-  assert.equal(providerSubscriptionsEnabled({}), true);
+  assert.equal(providerSubscriptionsEnabled({}), false);
+  assert.equal(providerSubscriptionsEnabled({ FEATURE_PROVIDER_SUBSCRIPTIONS: "1" }), true);
   assert.equal(showPayCtas({}), false);
   assert.equal(showPayCtas({ SHOW_PAY_CTAS: "0" }), false);
   assert.equal(showPayCtas({ SHOW_PAY_CTAS: "1" }), false);

@@ -20,7 +20,7 @@ Parent ↔ centre messages stay on `/inbox` (text; poll/reload) for claimed cent
 | `FEATURE_PUSH` | **off** | `docs/push.md` |
 | `FEATURE_SMS` | **off** | `docs/sms.md` |
 | `FEATURE_VIDEO` | **off** | `docs/video.md` |
-| `FEATURE_PROVIDER_SUBSCRIPTIONS` | **on** | `docs/flags.md` |
+| `FEATURE_PROVIDER_SUBSCRIPTIONS` | **off** | `docs/flags.md` |
 | `SHOW_PAY_CTAS` | **off** | `docs/flags.md` |
 | `SUBSCRIPTIONS_ENABLED` | **off** | `docs/flags.md` |
 | `FOUNDING_BADGE_ENABLED` | **on** | `docs/flags.md` |

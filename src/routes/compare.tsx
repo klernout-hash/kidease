@@ -15,7 +15,9 @@ import {
   parseCompareSlugs,
 } from "@/lib/now-loops";
 import { hasRealPhoto } from "@/lib/listing-readiness";
+import { parentListingFeesVisible } from "@/lib/public-fees";
 import { useCopy } from "@/lib/use-copy";
+import { useRoleChrome } from "@/components/role-chrome";
 import { vacancyLine } from "@/components/vacancy-freshness";
 import { parentIncompleteLabel } from "@/components/listing-completeness";
 import { GuestFavoriteBadge } from "@/components/guest-favorite";
@@ -39,7 +41,6 @@ import { MIN_REVIEW_COUNT } from "@/lib/quality";
 import { formatParentRating, parentRatingShown, ratingFloor, reviewReportCopy } from "@/lib/review-reports";
 import { reviewReportFlag } from "@/lib/server/review-reports";
 import { licenseRecordUrl } from "@/lib/licensing";
-import { estimateNetCost } from "@/lib/net-cost-engine";
 import { calcDetourMinutes, commuteDetourLabel, haversineKm } from "@/lib/commute-isochrone";
 import type { DaycareCard } from "@/lib/types";
 import { MultiApplyPanel } from "@/components/multi-apply-sheet";
@@ -63,6 +64,7 @@ function CompareRoute() {
 
 export function ComparePage({ slugs }: { slugs: string[] }) {
   const { t, locale } = useCopy();
+  const feesOn = parentListingFeesVisible(useRoleChrome().subscriptionsEnabled);
   const { compareMax } = useParentPlusAccess();
   const origin = useAppStore((s) => s.origin);
   const workOrigin = useAppStore((s) => s.workOrigin);
@@ -215,23 +217,16 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
                   label={t("compareCulture")}
                   values={items.map((d) => formatListingCulture(d.amenities, locale === "fr" ? "fr" : "en") || t("noneListed"))}
                 />
+                {feesOn ? (
                 <Row
-                  label={locale === "fr" ? "Coût net estimé / jour" : "Est. net cost / day"}
+                  label={t("compareFeesCwelcc")}
                   values={items.map((d) => {
-                    if (!(d.fromPrice > 0)) return t("cardGapFees");
-                    const estimate = estimateNetCost({
-                      province: d.province,
-                      householdIncome: 70000,
-                      ageBand: "preschool",
-                      grossMonthly: d.fromPrice,
-                      participating: listingSubsidy(d) != null,
-                      qcSubsidized: listingSubsidy(d)?.subsidy_type === "qc_965",
-                    });
-                    return locale === "fr"
-                      ? `${estimate.parentDaily.toLocaleString("fr-CA", { style: "currency", currency: "CAD" })}`
-                      : `$${estimate.parentDaily.toFixed(2)}`;
+                    const subsidy = listingSubsidy(d);
+                    if (subsidy) return subsidyLabel(subsidy, locale);
+                    return d.fromPrice > 0 ? money(d.fromPrice, locale) : t("cardGapFees");
                   })}
                 />
+                ) : null}
                 <Row
                   label={locale === "fr" ? "Détour" : "Commute detour"}
                   values={items.map((d) => {
@@ -245,14 +240,6 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
                       locale: locale === "fr" ? "fr" : "en",
                     });
                     return label || t("noneListed");
-                  })}
-                />
-                <Row
-                  label={t("compareFeesCwelcc")}
-                  values={items.map((d) => {
-                    const subsidy = listingSubsidy(d);
-                    if (subsidy) return subsidyLabel(subsidy, locale);
-                    return d.fromPrice > 0 ? money(d.fromPrice, locale) : t("cardGapFees");
                   })}
                 />
                 <Row
