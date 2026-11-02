@@ -49,7 +49,7 @@ export const listOrgOccupancy = createServerFn({ method: "GET" })
       if (parts.every((value) => value == null)) {
         return row.confirmed_open_spots == null ? null : Number(row.confirmed_open_spots);
       }
-      return parts.reduce((sum, value) => sum + (value == null ? 0 : Number(value)), 0);
+      return parts.reduce<number>((sum, value) => sum + (value == null ? 0 : Number(value)), 0);
     };
     const facts: SiteFacts[] = rows.map((row) => ({
       id: row.id,
