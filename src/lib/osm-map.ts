@@ -126,7 +126,7 @@ export function preloadOsmMap(): Promise<MlModule> {
     libPromise = (async () => {
       const [ml, worker] = await Promise.all([
         import("maplibre-gl"),
-        import("maplibre-gl/dist/maplibre-gl-csp-worker.js?url"),
+        import("maplibre-gl/dist/maplibre-gl-worker.mjs?url"),
         import("maplibre-gl/dist/maplibre-gl.css"),
       ]);
       ml.setWorkerUrl(worker.default);
@@ -761,8 +761,8 @@ export async function createKidEaseMap(
       if (settled) return;
       settled = true;
       window.clearTimeout(timer);
-      ml.off("sourcedata", onSource);
-      ml.off("error", onError);
+      ml.off("sourcedata", onSource as (event: { tile?: unknown }) => void);
+      ml.off("error", onError as (event: { error?: unknown }) => void);
       ml.off("idle", onIdle);
       resolve(ok);
     };
@@ -780,8 +780,8 @@ export async function createKidEaseMap(
       finish(true);
     };
     const timer = window.setTimeout(() => finish(false), waitMs);
-    ml.on("sourcedata", onSource);
-    ml.on("error", onError);
+    ml.on("sourcedata", onSource as (event: { tile?: unknown }) => void);
+    ml.on("error", onError as (event: { error?: unknown }) => void);
     ml.on("idle", onIdle);
   });
   if (!tilesReady) {
