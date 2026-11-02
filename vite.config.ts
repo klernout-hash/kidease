@@ -1,5 +1,7 @@
 import type { Plugin } from "vite";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
+// @ts-expect-error JS helper alongside the TS vite config
+import { googleMapsBrowserKey } from "./scripts/google-maps-client-key.mjs";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -192,10 +194,34 @@ function authPopupPlugin(): Plugin {
   };
 }
 
+/**
+ * Vite copies every VITE_* value into client chunks that read import.meta.env.
+ * Blank the Maps key in that snapshot unless this build turned Google Maps on.
+ */
+function gateGoogleMapsClientKey(browserKey: string): Plugin {
+  return {
+    name: "kidease:gate-google-maps-key",
+    configResolved(config) {
+      const apply = (env: Record<string, string> | undefined) => {
+        if (!env) return;
+        if (!browserKey) delete env.VITE_GOOGLE_MAPS_API_KEY;
+        else env.VITE_GOOGLE_MAPS_API_KEY = browserKey;
+      };
+      apply(config.env);
+      const environments = (config as { environments?: Record<string, { config?: { env?: Record<string, string> } }> }).environments;
+      if (!environments) return;
+      for (const environment of Object.values(environments)) apply(environment.config?.env);
+    },
+  };
+}
+
 // `0.0.0.0:8080` is the live-preview contract — don't change host/port.
 // The Grok preview proxy forwards with Host like `<sandbox>-8080-fuocs`.
 // Vite 6+ blocks unknown hosts by default (403 → "Preview not available").
-export default defineConfig(({ command, isPreview }) => ({
+export default defineConfig(({ command, isPreview, mode }) => {
+  const fileEnv = loadEnv(mode, process.cwd(), "");
+  const mapsBrowserKey = googleMapsBrowserKey({ ...fileEnv, ...process.env });
+  return {
   server: {
     host: "0.0.0.0",
     port: 8080,
@@ -222,6 +248,11 @@ export default defineConfig(({ command, isPreview }) => ({
   // a future POSTHOG_* / SENTRY_DSN secret is not inlined into the client bundle.
   // Browser Sentry reads VITE_PUBLIC_SENTRY_DSN only.
   envPrefix: ["VITE_", "POSTHOG_HOST"],
+  // Only the enabled build receives the key. An empty define would still
+  // leave the name in every chunk that reads import.meta.env.
+  ...(mapsBrowserKey
+    ? { define: { "import.meta.env.VITE_GOOGLE_MAPS_API_KEY": JSON.stringify(mapsBrowserKey) } }
+    : {}),
   build: {
     rolldownOptions: {
       output: {
@@ -268,6 +299,7 @@ export default defineConfig(({ command, isPreview }) => ({
   ssr: { external: ["sharp", "posthog-js", "@sentry/node", "inngest"] },
   optimizeDeps: { exclude: ["sharp"] },
   plugins: [
+    gateGoogleMapsClientKey(mapsBrowserKey),
     clientNodeBuiltinStub(),
     pgliteBootstrapPlugin(),
     // Before tanstackStart so AASA / assetlinks never fall through to the SPA.
@@ -304,4 +336,5 @@ export default defineConfig(({ command, isPreview }) => ({
       : []),
     viteReact(),
   ],
-}));
+};
+});
