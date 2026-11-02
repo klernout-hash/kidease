@@ -88,6 +88,7 @@ export function CookieConsentBanner() {
             <div className="mt-3 flex flex-col gap-2">
               <Button
                 type="button"
+                role="button"
                 variant="primary"
                 data-ke="cookie-allow"
                 className="h-auto min-h-14 w-full whitespace-normal px-4 py-2.5 text-center text-base leading-snug [overflow-wrap:normal]"
@@ -97,6 +98,7 @@ export function CookieConsentBanner() {
               </Button>
               <Button
                 type="button"
+                role="button"
                 variant="secondary"
                 data-ke="cookie-essential"
                 className="h-auto min-h-11 w-full whitespace-normal px-4 py-2 text-center leading-snug [overflow-wrap:normal]"
