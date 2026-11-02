@@ -204,6 +204,15 @@ test("footer link stays off and /gov is not in the sitemap", () => {
   for (const path of GOV_SITEMAP_PATHS) assert.equal(paths.includes(path), false);
   assert.equal(isGovPortalPath("/fr/gov/login"), true);
   assert.equal(isGovPortalPath("/parent"), false);
+  const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+  const read = (rel) => readFileSync(join(root, rel), "utf8");
+  const guard = read("src/lib/gov/desk-guard.ts");
+  assert.match(guard, /govPortalFooterEnabled/);
+  assert.match(guard, /govClosedHome/);
+  assert.match(read("src/components/site-footer.tsx"), /showGovFooterLink/);
+  assert.match(read("src/lib/desk-nav.ts"), /id: "payments"/);
+  assert.match(read("src/routes/provider.subscription.tsx"), /desk: "today"/);
+  assert.match(read("src/routes/dashboard.tsx"), /role === "parent"/);
 });
 
 test("demo government reads are rate limited", () => {

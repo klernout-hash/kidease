@@ -1558,36 +1558,16 @@ async function runSignedInSessions(page, base) {
     await setFixture(page.context(), base, { role: "government" });
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto(new URL("/gov", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-    await page.locator('[data-ke="gov-dashboard"]').waitFor({ timeout: timeoutMs });
-    const dashText = (await page.locator("body").innerText()) || "";
-    record("gov-dashboard", /licensed centres/i.test(dashText) && !/something went wrong/i.test(dashText), {
-      note: page.url(),
-    });
-    await page.screenshot({ path: join(dirname(outDir), "gov-dashboard-1280.png"), fullPage: false }).catch(() => {});
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.screenshot({ path: join(dirname(outDir), "gov-dashboard-390.png"), fullPage: false }).catch(() => {});
-    await page.setViewportSize({ width: 1280, height: 800 });
-    // The dashboard HTML is ready before React attaches Sign out. A click
-    // in that gap does nothing, and the page stays on the desk.
-    const govSignOut = page.getByRole("button", { name: /sign out/i });
-    await govSignOut.waitFor({ timeout: timeoutMs });
-    await page.waitForFunction(() => {
-      const button = [...document.querySelectorAll("button")].find((el) => /sign out/i.test(el.textContent || ""));
-      return Boolean(button && Object.keys(button).some((key) => key.startsWith("__react")));
-    }, { timeout: timeoutMs });
-    await govSignOut.click();
-    await page.locator('[data-ke="gov-login"]').waitFor({ timeout: timeoutMs });
-    await page.waitForFunction(() => {
-      const form = document.querySelector('[data-ke="gov-login"] form');
-      return Boolean(form && Object.keys(form).some((key) => key.startsWith("__react")));
-    }, { timeout: timeoutMs });
-    await page.locator('input[type="email"]').fill("e2e-government@kidease.test");
-    await page.locator('input[type="password"]').fill(FIXTURE_PASSWORD);
-    await page.getByRole("button", { name: /^sign in$/i }).click();
-    await page.locator('[data-ke="gov-dashboard"]').waitFor({ timeout: timeoutMs });
-    record("gov-login", /\/gov/.test(new URL(page.url()).pathname), { note: page.url() });
-    await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-    record("gov-blocked-from-parent", !new URL(page.url()).pathname.startsWith("/parent"), { note: page.url() });
+    await page.waitForURL((url) => !url.pathname.startsWith("/gov"), { timeout: timeoutMs }).catch(() => {});
+    const govPath = new URL(page.url()).pathname;
+    const govHidden = !govPath.startsWith("/gov") && !govPath.startsWith("/fr/gov");
+    record("gov-dashboard", govHidden, { note: page.url() });
+    await page.goto(new URL("/gov/login", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await page.waitForURL((url) => !url.pathname.includes("/gov"), { timeout: timeoutMs }).catch(() => {});
+    record("gov-login", !new URL(page.url()).pathname.includes("/gov"), { note: page.url() });
+    await page.goto(new URL("/vacancy-index", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await page.waitForURL((url) => !url.pathname.includes("vacancy-index"), { timeout: timeoutMs }).catch(() => {});
+    record("vacancy-index-hidden", !page.url().includes("vacancy-index"), { note: page.url() });
   } catch (err) {
     record("gov-dashboard", false, { note: err instanceof Error ? err.message : String(err) });
   }
@@ -1761,13 +1741,20 @@ try {
     note: jobsCheck.ok ? "390 and 1280" : jobsCheck.reason,
     status: jobsResp?.status() ?? 0,
   });
-  for (const privatePath of ["/signup", "/forgot-password", "/reset-password", "/offer/e2e-token", "/sign/e2e-id", "/gov/login", "/fr/gov/login"]) {
+  for (const privatePath of ["/signup", "/forgot-password", "/reset-password", "/offer/e2e-token", "/sign/e2e-id"]) {
     const resp = await page.request.get(new URL(privatePath, base).href).catch(() => null);
     const html = (await resp?.text().catch(() => "")) || "";
     record(`noindex:${privatePath}`, (resp?.status() ?? 500) < 500 && /noindex/i.test(html), {
       note: String(resp?.status() ?? 0),
       status: resp?.status() ?? 0,
     });
+  }
+  for (const closedPath of ["/gov", "/gov/login", "/fr/gov/login", "/vacancy-index", "/fr/vacancy-index"]) {
+    const resp = await page.request.get(new URL(closedPath, base).href, { maxRedirects: 0 }).catch(() => null);
+    const status = resp?.status() ?? 0;
+    const location = resp?.headers()?.location || "";
+    const sentHome = status >= 300 && status < 400 && !/\/gov|vacancy-index/i.test(location);
+    record(`closed:${closedPath}`, sentHome, { note: `${status} ${location}`, status });
   }
   const seedResp = await page.request.get(new URL("/api/e2e-seed", base).href).catch(() => null);
   const seedBody = (await seedResp?.text().catch(() => "")) || "";

@@ -180,7 +180,7 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_ORG_DASHBOARD: false,
   /** Private per-child photos for enrolled parents who consented. */
   FEATURE_PRIVATE_PHOTO_FEED: false,
-  /** Footer link to the government desk. The /gov sign-in stays available either way. */
+  /** Government desk. Off hides /gov, /gov/login, and the footer link. */
   FEATURE_GOV_PORTAL: false,
   /** Named product events for PostHog. Off until Kyle turns it on. No personal details in the payload. */
   FEATURE_PRODUCT_EVENTS: false,
@@ -493,7 +493,7 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     key: "FEATURE_GOV_PORTAL",
     defaultOn: false,
     docs: "docs/flags.md",
-    summary: "Footer link to the government desk. Default off. /gov sign-in still works for a demo.",
+    summary: "Government desk. Default off. /gov, /gov/login, and the footer link stay hidden.",
   },
   {
     key: "FEATURE_PRODUCT_EVENTS",

@@ -92,7 +92,11 @@ test("hreflang includes en, fr, and x-default on paired pages", () => {
 });
 
 test("sitemap lists shipped FR URLs and omits redirect-only pairs", () => {
-  assert.deepEqual(SITEMAP_FR_PATHS, sitemapFrenchPaths());
+  assert.deepEqual(
+    SITEMAP_FR_PATHS,
+    sitemapFrenchPaths().filter((path) => path !== "/fr/vacancy-index"),
+  );
+  assert.equal(SITEMAP_FR_PATHS.includes("/fr/vacancy-index"), false);
   assert.ok(SITEMAP_FR_PATHS.includes("/fr"));
   assert.ok(SITEMAP_FR_PATHS.includes("/fr/privacy"));
   assert.ok(SITEMAP_FR_PATHS.includes("/fr/search"));
@@ -120,7 +124,6 @@ test("sitemap lists shipped FR URLs and omits redirect-only pairs", () => {
     "/fr/jobs",
     "/fr/jobs/post",
     "/fr/start-a-daycare",
-    "/fr/vacancy-index",
   ]) {
     assert.match(sitemap, new RegExp(`<loc>https://www.kidease.ca${path}</loc>`));
   }

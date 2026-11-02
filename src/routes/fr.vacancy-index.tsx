@@ -1,10 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { provincialVacancyIndexEnabled } from "@/lib/features";
 import { pageSeoHead } from "@/lib/page-seo";
 import { parseVacancyProvince } from "@/lib/vacancy-history";
 import { loadVacancyIndex } from "@/lib/server/vacancy-index";
 import { VacancyIndexView } from "@/routes/vacancy-index";
 
 export const Route = createFileRoute("/fr/vacancy-index")({
+  beforeLoad: () => {
+    if (!provincialVacancyIndexEnabled()) throw redirect({ to: "/fr/search" });
+  },
   validateSearch: (search: Record<string, unknown>) => ({
     province: parseVacancyProvince(search.province),
   }),
