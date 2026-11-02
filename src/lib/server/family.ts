@@ -19,6 +19,16 @@ import { openHealth, revealChildHealth, sealHealth } from "@/lib/child-health-cr
 import { logChildProfileAccess } from "@/lib/server/child-access-log";
 import { childBirthdateMessage, childBirthdateProblem } from "@/lib/child-birthdate";
 import type { AgeGroup, Booking, BookingStatus, Child, Conversation, Locale, Message, PayMethod, Schedule } from "@/lib/types";
+
+async function familyHome(userId: string) {
+  const { familyScopeFor } = await import("@/lib/server/coparent");
+  return familyScopeFor(userId);
+}
+
+async function familyWrite(userId: string) {
+  const { assertFamilyWrite } = await import("@/lib/server/coparent");
+  return assertFamilyWrite(userId);
+}
 import {
   centreAckMessage,
   emailBodyNewRequest,
@@ -200,12 +210,14 @@ export const getFamily = createServerFn({ method: "GET" })
     const sql = await getSql();
     await ensureSeed(sql);
     await ensureProfile(sql, context.userId);
+    const home = await familyHome(context.userId);
+    const homeId = home.dataUserId;
     const children = await sql<ChildRow>`
       select id, name, preferred_name, birthdate, allergies, epi_pen, medical_notes, medications,
              doctor_name, doctor_phone, foods_like, foods_avoid, diet, likes, comfort_item, nap_routine,
              toilet, home_language, soothes, fears, emergency_name, emergency_phone, pickup_people,
              photo_ok, sunscreen_ok, notes
-      from children where user_id = ${context.userId} order by created_at
+      from children where user_id = ${homeId} order by created_at
     `;
     for (const row of children) {
       void logChildProfileAccess(sql, { childId: row.id, actorId: context.userId, action: "read" });
@@ -245,7 +257,7 @@ export const getFamily = createServerFn({ method: "GET" })
       from bookings b
       join daycares d on d.id = b.daycare_id
       left join children ch on ch.id = b.child_id
-      where b.user_id = ${context.userId}
+      where b.user_id = ${homeId}
       order by b.created_at desc
     `;
     const payments = await sql<{
@@ -261,7 +273,7 @@ export const getFamily = createServerFn({ method: "GET" })
     }>`
       select p.id, p.daycare_id, d.name, p.amount, p.method, p.status, p.reference, p.created_at, p.invoice_id
       from payments p join daycares d on d.id = p.daycare_id
-      where p.user_id = ${context.userId}
+      where p.user_id = ${homeId}
       order by p.created_at desc
     `.catch(async () =>
       sql<{
@@ -278,7 +290,7 @@ export const getFamily = createServerFn({ method: "GET" })
         select p.id, p.daycare_id, d.name, p.amount, p.method, p.status, p.reference, p.created_at,
                null as invoice_id
         from payments p join daycares d on d.id = p.daycare_id
-        where p.user_id = ${context.userId}
+        where p.user_id = ${homeId}
         order by p.created_at desc
       `,
     );
@@ -290,7 +302,7 @@ export const getFamily = createServerFn({ method: "GET" })
       select count(*)::int as n
       from messages m
       join conversations c on c.id = m.conversation_id
-      where c.user_id = ${context.userId} and m.sender = 'parent'
+      where c.user_id = ${homeId} and m.sender = 'parent'
     `;
     return {
       role: (profile[0]?.role === "admin" ? "admin" : profile[0]?.role === "provider" ? "provider" : "parent") as
@@ -358,6 +370,8 @@ export const getFamily = createServerFn({ method: "GET" })
       centreMessages: sent[0]?.n ?? 0,
       upgradeCardDismissed: Boolean(profile[0]?.dismissed),
       shortlistShared: shortlistOwner !== context.userId,
+      familyAccess: home.access,
+      familyCanWrite: home.canWrite,
     };
   });
 
@@ -397,6 +411,7 @@ export const addChild = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: ChildWrite) => input)
   .handler(async ({ context, data }) => {
+    const home = await familyWrite(context.userId);
     const sql = await getSql();
     const id = nid("ch");
     const f = childFields({ ...emptyChild(), ...data });
@@ -410,7 +425,7 @@ export const addChild = createServerFn({ method: "POST" })
         toilet, home_language, soothes, fears, emergency_name, emergency_phone, pickup_people,
         photo_ok, sunscreen_ok, notes
       ) values (
-        ${id}, ${context.userId}, ${f.name}, ${f.preferredName}, ${f.birthdate}, ${f.allergies},
+        ${id}, ${home.dataUserId}, ${f.name}, ${f.preferredName}, ${f.birthdate}, ${f.allergies},
         ${f.epiPen}, ${f.medicalNotes}, ${f.medications}, ${f.doctorName}, ${f.doctorPhone},
         ${f.foodsLike}, ${f.foodsAvoid}, ${f.diet}, ${f.likes}, ${f.comfortItem}, ${f.napRoutine},
         ${f.toilet}, ${f.homeLanguage}, ${f.soothes}, ${f.fears}, ${f.emergencyName}, ${f.emergencyPhone},
@@ -425,6 +440,7 @@ export const updateChild = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: Child) => input)
   .handler(async ({ context, data }) => {
+    const home = await familyWrite(context.userId);
     const sql = await getSql();
     const f = childFields(data);
     if (!f.name || !f.birthdate) throw new Error("Name and birthdate are required");
@@ -457,7 +473,7 @@ export const updateChild = createServerFn({ method: "POST" })
         photo_ok = ${f.photoOk},
         sunscreen_ok = ${f.sunscreenOk},
         notes = ${f.notes}
-      where id = ${data.id} and user_id = ${context.userId}
+      where id = ${data.id} and user_id = ${home.dataUserId}
       returning id
     `;
     if (!rows[0]) throw new Error("Child not found");
@@ -471,14 +487,15 @@ export const deleteChild = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const id = String(data.id || "").trim();
     if (!id) throw new Error("Child not found");
+    const home = await familyWrite(context.userId);
     const sql = await getSql();
     await sql`
       update bookings set child_id = null
-      where child_id = ${id} and user_id = ${context.userId}
+      where child_id = ${id} and user_id = ${home.dataUserId}
     `;
     const rows = await sql<{ id: string }>`
       delete from children
-      where id = ${id} and user_id = ${context.userId}
+      where id = ${id} and user_id = ${home.dataUserId}
       returning id
     `;
     if (!rows[0]) throw new Error("Child not found");
@@ -576,6 +593,8 @@ export const createBooking = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { assertFacebookContactEmail } = await import("@/lib/server/facebook-contact");
     await assertFacebookContactEmail(context.userId);
+    const home = await familyWrite(context.userId);
+    const homeId = home.dataUserId;
     const sql = await getSql();
     const listed = await catalogByIdGet(data.daycareId);
     if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerMayUseAdminOnlyListing())) {
@@ -601,7 +620,7 @@ export const createBooking = createServerFn({ method: "POST" })
           : d.spotsPreschool;
     const status = spots > 0 ? "accepted" : "waitlist";
     const existingConvo = await sql<{ id: string }>`
-      select id from conversations where user_id = ${context.userId} and daycare_id = ${data.daycareId}
+      select id from conversations where user_id = ${homeId} and daycare_id = ${data.daycareId}
     `;
     if (!existingConvo[0]) {
       const gate = await centreCanAcceptInquiry(sql, data.daycareId);
@@ -612,7 +631,7 @@ export const createBooking = createServerFn({ method: "POST" })
       insert into bookings (
         id, user_id, daycare_id, child_id, start_month, schedule, age_group, status, monthly_amount
       ) values (
-        ${id}, ${context.userId}, ${data.daycareId}, ${data.childId},
+        ${id}, ${homeId}, ${data.daycareId}, ${data.childId},
         ${data.startMonth}, ${data.schedule}, ${data.ageGroup}, ${status}, ${amount}
       )
     `;
@@ -630,11 +649,11 @@ export const createBooking = createServerFn({ method: "POST" })
     const convoId = nid("cv");
     await sql`
       insert into conversations (id, user_id, daycare_id)
-      values (${convoId}, ${context.userId}, ${data.daycareId})
+      values (${convoId}, ${homeId}, ${data.daycareId})
       on conflict (user_id, daycare_id) do nothing
     `;
     const convos = await sql<{ id: string }>`
-      select id from conversations where user_id = ${context.userId} and daycare_id = ${data.daycareId}
+      select id from conversations where user_id = ${homeId} and daycare_id = ${data.daycareId}
     `;
     const cid = convos[0]?.id ?? convoId;
     const body =
@@ -689,6 +708,8 @@ export const createSpotRequest = createServerFn({ method: "POST" })
     }) => input,
   )
   .handler(async ({ context, data }) => {
+    const home = await familyWrite(context.userId);
+    const homeId = home.dataUserId;
     const sql = await getSql();
     await ensureProfile(sql, context.userId);
     const listed = await catalogByIdGet(data.daycareId);
@@ -716,7 +737,7 @@ export const createSpotRequest = createServerFn({ method: "POST" })
     let childId = data.childId?.trim() || "";
     if (childId) {
       const owned = await sql<{ id: string }>`
-        select id from children where id = ${childId} and user_id = ${context.userId} limit 1
+        select id from children where id = ${childId} and user_id = ${homeId} limit 1
       `;
       if (!owned[0]) childId = "";
     }
@@ -724,12 +745,12 @@ export const createSpotRequest = createServerFn({ method: "POST" })
       childId = nid("ch");
       await sql`
         insert into children (id, user_id, name, birthdate, notes)
-        values (${childId}, ${context.userId}, ${childName}, ${data.birthdate}, ${data.message?.trim() || null})
+        values (${childId}, ${homeId}, ${childName}, ${data.birthdate}, ${data.message?.trim() || null})
       `;
     } else {
       await sql`
         update children set name = ${childName}, birthdate = ${data.birthdate}
-        where id = ${childId} and user_id = ${context.userId}
+        where id = ${childId} and user_id = ${homeId}
       `;
     }
 
@@ -750,7 +771,7 @@ export const createSpotRequest = createServerFn({ method: "POST" })
     };
 
     const existingConvo = await sql<{ id: string }>`
-      select id from conversations where user_id = ${context.userId} and daycare_id = ${data.daycareId}
+      select id from conversations where user_id = ${homeId} and daycare_id = ${data.daycareId}
     `;
     if (!existingConvo[0]) {
       const gate = await centreCanAcceptInquiry(sql, data.daycareId);
@@ -759,11 +780,11 @@ export const createSpotRequest = createServerFn({ method: "POST" })
     const convoId = nid("cv");
     await sql`
       insert into conversations (id, user_id, daycare_id)
-      values (${convoId}, ${context.userId}, ${data.daycareId})
+      values (${convoId}, ${homeId}, ${data.daycareId})
       on conflict (user_id, daycare_id) do nothing
     `;
     const convos = await sql<{ id: string }>`
-      select id from conversations where user_id = ${context.userId} and daycare_id = ${data.daycareId}
+      select id from conversations where user_id = ${homeId} and daycare_id = ${data.daycareId}
     `;
     const cid = convos[0]?.id ?? convoId;
 
@@ -774,7 +795,7 @@ export const createSpotRequest = createServerFn({ method: "POST" })
         id, user_id, daycare_id, child_id, start_month, schedule, age_group, status, monthly_amount,
         parent_note, days, conversation_id, start_date, parent_name, share_consent_at
       ) values (
-        ${bookingId}, ${context.userId}, ${data.daycareId}, ${childId},
+        ${bookingId}, ${homeId}, ${data.daycareId}, ${childId},
         ${startMonth}, ${data.schedule}, ${ageGroup}, ${"requested"}, ${amount},
         ${copy.note}, ${days || null}, ${cid}, ${data.startDate}, ${parentName}, now()
       )
@@ -782,7 +803,7 @@ export const createSpotRequest = createServerFn({ method: "POST" })
     try {
       const { recordLeadRequest } = await import("@/lib/server/lead-requests");
       await recordLeadRequest(sql, {
-        userId: context.userId,
+        userId: homeId,
         daycareId: data.daycareId,
         kind: "spot_inquiry",
         message: copy.note,
@@ -854,6 +875,7 @@ export const createSpotRequest = createServerFn({ method: "POST" })
 export const listInbox = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
+    const home = await familyHome(context.userId);
     const sql = await getSql();
     const rows = await sql<{
       id: string;
@@ -872,7 +894,7 @@ export const listInbox = createServerFn({ method: "GET" })
                order by b.created_at desc limit 1
              ) as status
       from conversations c join daycares d on d.id = c.daycare_id
-      where c.user_id = ${context.userId}
+      where c.user_id = ${home.dataUserId}
       order by c.last_at desc
     `;
     const out: Conversation[] = [];
@@ -1048,6 +1070,7 @@ export const openConversation = createServerFn({ method: "POST" })
   .handler(async ({ context, data: daycareId }) => {
     const { assertFacebookContactEmail } = await import("@/lib/server/facebook-contact");
     await assertFacebookContactEmail(context.userId);
+    const home = await familyWrite(context.userId);
     const sql = await getSql();
     const listed = await catalogByIdGet(daycareId);
     if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerMayUseAdminOnlyListing())) {
@@ -1055,13 +1078,13 @@ export const openConversation = createServerFn({ method: "POST" })
     }
     if (listed) await upsertDaycare(sql, listed);
     const existing = await sql<{ id: string }>`
-      select id from conversations where user_id = ${context.userId} and daycare_id = ${daycareId}
+      select id from conversations where user_id = ${home.dataUserId} and daycare_id = ${daycareId}
     `;
     if (existing[0]) return { id: existing[0].id };
     const gate = await centreCanAcceptInquiry(sql, daycareId);
     if (!gate.ok) throw new Error(gate.error);
     const id = nid("cv");
-    await sql`insert into conversations (id, user_id, daycare_id) values (${id}, ${context.userId}, ${daycareId})`;
+    await sql`insert into conversations (id, user_id, daycare_id) values (${id}, ${home.dataUserId}, ${daycareId})`;
     return { id };
   });
 

@@ -176,6 +176,8 @@ export function DeskShell({
     centreOwner: session?.centreOwner,
     centreLinked: session?.centreLinked,
     curriculumPack: session?.curriculumPack,
+    coparentLink: session?.coparentLink,
+    staffTimesheets: session?.staffTimesheets,
   };
   const labelPlan = (item: DeskItem) => {
     const planned = planNavItem(item, chrome.paid);

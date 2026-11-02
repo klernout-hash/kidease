@@ -291,6 +291,16 @@ export function storyCornerEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_STORY_CORNER", env);
 }
 
+/** Second parent, own login, shared family records. Default off. No email or SMS. */
+export function coparentLinkEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_COPARENT_LINK", env);
+}
+
+/** Staff clock in and clock out on the daycare desk. Default off. Not payroll. */
+export function staffTimesheetsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_STAFF_TIMESHEETS", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;

@@ -389,8 +389,9 @@ test("handlers stay wired to the decision helpers (no silent IDOR regression)", 
 
   const family = src("src/lib/server/family.ts");
   assert.match(family, /assertCanMutateListing/);
-  assert.match(family, /where id = \$\{data\.id\} and user_id = \$\{context\.userId\}/);
-  assert.match(family, /from children where user_id = \$\{context\.userId\}/);
+  assert.match(family, /familyWrite\(context\.userId\)/);
+  assert.match(family, /where id = \$\{data\.id\} and user_id = \$\{home\.dataUserId\}/);
+  assert.match(family, /from children where user_id = \$\{homeId\}/);
 
   const profile = src("src/lib/server/profile-contact.ts");
   assert.match(profile, /where user_id = \$\{context\.userId\}/);

@@ -384,7 +384,7 @@ async function runRoleFixture(page, base) {
       await shot(page, "multi-apply-390", 390, "[data-ke='multi-apply']");
     }
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await gotoSettled(page, new URL("/parent", base).href);
     await page.locator('[data-ke="parent-home"][data-settled="1"]').waitFor({ timeout: timeoutMs });
     await shot(page, "parent-desktop", 1280, '[data-ke="parent-home"]');
     await openHeaderMenu(page);
@@ -1720,8 +1720,12 @@ try {
   });
   await page.screenshot({ path: join(dirname(outDir), "login.png"), fullPage: false }).catch(() => {});
   record("login", login.ok, { note: login.reason, status: loginResp?.status() ?? 0 });
-  const robots = await page.locator('meta[name="robots"]').getAttribute("content").catch(() => "");
-  record("login-noindex", /noindex/i.test(robots || ""), { note: robots || "" });
+  const robotsMeta = await page.locator('meta[name="robots"]').evaluateAll((nodes) =>
+    nodes.map((node) => node.getAttribute("content") || "").join(" "),
+  ).catch(() => "");
+  const loginHtml = /noindex/i.test(robotsMeta) ? "" : await page.content().catch(() => "");
+  const robots = `${robotsMeta}\n${loginHtml}`;
+  record("login-noindex", /noindex/i.test(robots), { note: robotsMeta || "html" });
   for (const privatePath of ["/signup", "/forgot-password", "/reset-password", "/offer/e2e-token", "/sign/e2e-id", "/gov/login", "/fr/gov/login"]) {
     const resp = await page.request.get(new URL(privatePath, base).href).catch(() => null);
     const html = (await resp?.text().catch(() => "")) || "";

@@ -82,6 +82,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "employees", label: "Employees", hint: "Add an employee", labelKey: "employeesTitle", hintKey: "deskNavEmployeesHint", href: "/provider", search: { desk: "employees" } },
     { id: "screening", label: "Screening", hint: "Required documents", labelKey: "listingCoachOpenScreening", hintKey: "deskNavScreeningHint", href: "/provider", search: { desk: "screening" } },
     { id: "learning", label: "Learning", hint: "Goals, stories, and plans", labelKey: "learningNav", hintKey: "learningNavHint", href: "/provider", search: { desk: "learning" } },
+    { id: "hours", label: "Hours", hint: "Clock in and clock out", labelKey: "staffHoursNav", hintKey: "staffHoursNavHint", href: "/provider", search: { desk: "hours" } },
     { id: "money", label: "Earnings", hint: "Payouts, invoices, and payment history", labelKey: "deskNavMoney", hintKey: "deskNavMoneyHint", href: "/provider", search: { desk: "money" } },
     { id: "licence", label: "Licence", hint: "Trust checklist + photo", labelKey: "listingCoachOpenLicence", hintKey: "deskNavLicenceHint", href: "/provider", search: { desk: "licence" } },
     { id: "contract", label: "Contract", hint: "Agreement + enrolment packs", labelKey: "deskNavContract", hintKey: "deskNavContractHint", href: "/provider", search: { desk: "contract" } },
@@ -102,6 +103,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "explore", label: "Home", hint: "Matches near you", labelKey: "exploreForYou", hintKey: "deskNavForYouHint", href: "/parent", search: { tab: "explore" } },
     { id: "care", label: "Daily care", hint: "Presence, journal, meds, rooms", labelKey: "dailyCare", hintKey: "dailyCareHint", href: "/parent", search: { tab: "care" } },
     { id: "children", label: "Children", hint: "Up to 4 profiles", labelKey: "children", hintKey: "childrenLimit", href: "/parent", search: { tab: "children" } },
+    { id: "family", label: "Share family", hint: "Another parent, their own login", labelKey: "shareFamilyNav", hintKey: "shareFamilyNavHint", href: "/parent", search: { tab: "family" } },
     { id: "bookings", label: "Requests", hint: "Tours, waitlist, and spots", labelKey: "navRequestsShort", hintKey: "deskNavBookingsHint", href: "/parent", search: { tab: "enrolled" } },
     { id: "waitlists", label: "Waitlists", hint: "Your spot requests", labelKey: "navWaitlists", hintKey: "deskNavWaitlistsHint", href: "/parent", search: { tab: "waitlists" } },
     { id: "saved", label: "Saved", hint: "5 free · 10 on Plus", labelKey: "saved", hintKey: "deskNavShortlistHint", href: "/parent", search: { tab: "saved" } },
@@ -135,7 +137,8 @@ export type DaycareDesk =
   | "staff"
   | "stories"
   | "sites"
-  | "learning";
+  | "learning"
+  | "hours";
 
 export function providerNavSearch(id: string): { desk: DaycareDesk } {
   if (
@@ -148,7 +151,8 @@ export function providerNavSearch(id: string): { desk: DaycareDesk } {
     id === "promote" ||
     id === "employees" ||
     id === "screening" ||
-    id === "learning"
+    id === "learning" ||
+    id === "hours"
   ) {
     return { desk: id };
   }
@@ -159,13 +163,14 @@ export function providerNavSearch(id: string): { desk: DaycareDesk } {
 
 export function parentNavSearch(
   id: string,
-): { tab?: "explore" | "saved" | "enrolled" | "requests" | "payments" | "alerts" | "children" | "care" | "waitlists" } {
+): { tab?: "explore" | "saved" | "enrolled" | "requests" | "payments" | "alerts" | "children" | "care" | "waitlists" | "family" } {
   if (id === "saved") return { tab: "saved" };
   if (id === "bookings") return { tab: "enrolled" };
   if (id === "waitlists") return { tab: "waitlists" };
   if (id === "payments") return { tab: "payments" };
   if (id === "alerts") return { tab: "alerts" };
   if (id === "children") return { tab: "children" };
+  if (id === "family") return { tab: "family" };
   if (id === "care") return { tab: "care" };
   if (id === "explore") return { tab: "explore" };
   return {};
@@ -223,6 +228,10 @@ type DeskNavOpts = {
   centreLinked?: boolean;
   /** Province learning pack. Hidden until FEATURE_CURRICULUM_PACK is on. */
   curriculumPack?: boolean;
+  /** Second parent invite. Hidden until FEATURE_COPARENT_LINK is on. */
+  coparentLink?: boolean;
+  /** Staff hours. Hidden until FEATURE_STAFF_TIMESHEETS is on. */
+  staffTimesheets?: boolean;
 };
 
 /**
@@ -245,6 +254,8 @@ export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
   return DESK_NAV[desk].filter((item) => {
     if (item.devOnly && import.meta.env?.PROD === true) return false;
     if (item.id === "learning") return opts?.curriculumPack === true;
+    if (item.id === "family") return opts?.coparentLink === true;
+    if (item.id === "hours") return opts?.staffTimesheets === true;
     if (item.id === "promote" || item.id === "subscription") return false;
     if (item.id === "upgrade") return opts?.subscriptionsEnabled === true;
     if (OWNER_ONLY_NAV.has(item.id) && opts?.centreOwner === false) return false;
@@ -287,7 +298,7 @@ export type DeskGroup = {
 export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
   parent: [
     { id: "family", label: "Family desk", labelKey: "familyDeskTitle", open: true, itemIds: ["explore", "saved", "bookings", "waitlists", "messages"] },
-    { id: "my-family", label: "My family", labelKey: "navMyFamily", open: true, itemIds: ["children", "care", "payments"] },
+    { id: "my-family", label: "My family", labelKey: "navMyFamily", open: true, itemIds: ["children", "family", "care", "payments"] },
     { id: "search-tools", label: "Search tools", labelKey: "navSearchTools", open: true, itemIds: ["search", "alerts"] },
     { id: "account", label: "Account", labelKey: "account", open: true, itemIds: ["profile", "appearance", "upgrade", "delete"] },
     { id: "settings", label: "Settings", labelKey: "settings", open: true, itemIds: ["notify-prefs", "security", "email-sms"] },
@@ -295,7 +306,7 @@ export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
   daycare: [
     { id: "desk", label: "Daycare desk", labelKey: "daycareDeskTitle", open: true, itemIds: ["today", "requests", "tours", "listings", "messages"] },
     { id: "business", label: "Business", labelKey: "navBusiness", open: true, itemIds: ["money", "promote"] },
-    { id: "team", label: "Team", labelKey: "navTeam", itemIds: ["employees", "screening", "learning"] },
+    { id: "team", label: "Team", labelKey: "navTeam", itemIds: ["employees", "hours", "screening", "learning"] },
     { id: "compliance", label: "Compliance", labelKey: "navCompliance", itemIds: ["licence", "contract"] },
     { id: "grow", label: "Grow", labelKey: "navGrow", itemIds: ["post-job", "add", "claim"] },
     { id: "account", label: "Account", labelKey: "account", open: true, itemIds: ["profile", "appearance", "subscription", "delete"] },

@@ -45,11 +45,12 @@ export async function resolveConversationAccess(
 ): Promise<ConversationAccess | null> {
   const conversation = await loadConversation(sql, conversationId);
   if (!conversation) return null;
-  const [role, admin] = await Promise.all([
+  const [role, admin, scope] = await Promise.all([
     loadCentreRole(sql, userId, conversation.daycare_id),
     resolveAdminAccess(userId)
       .then((a) => a.ok)
       .catch(() => false),
+    import("@/lib/server/coparent").then((mod) => mod.familyScopeFor(userId)),
   ]);
   const write = centreCanWriteInbox(role);
   const access = resolveThreadAccess({
@@ -58,6 +59,8 @@ export async function resolveConversationAccess(
     isCentreOwner: write,
     isCentreReader: Boolean(role) && !write,
     isAdmin: admin,
+    householdParent: scope.access !== "owner" && scope.dataUserId === conversation.user_id && scope.dataUserId !== userId,
+    householdCanWrite: scope.canWrite,
   });
   return { ...access, conversation };
 }

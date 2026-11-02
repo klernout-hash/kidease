@@ -10,6 +10,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { LedgerHonesty } from "@/components/listing-status-badge";
 import { TaxReceiptStudio } from "@/components/tax-receipt-studio";
 import { ChildCareCard } from "@/components/child-care-card";
+import { CoparentDesk } from "@/components/coparent-desk";
 import { EmptyState } from "@/components/empty-state";
 import { KidNotebook } from "@/components/kid-art";
 import { Button } from "@/components/ui/button";
@@ -90,7 +91,7 @@ function scheduleIdle(work: () => void): () => void {
   return () => window.clearTimeout(id);
 }
 
-type ParentTab = "explore" | "saved" | "bookings" | "payments" | "subscription" | "children" | "alerts" | "care" | "waitlists";
+type ParentTab = "explore" | "saved" | "bookings" | "payments" | "subscription" | "children" | "alerts" | "care" | "waitlists" | "family";
 
 class SavedTabBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -121,6 +122,7 @@ export function ParentDesk({
   initialSaved = [],
   initialShared = false,
   initialChild = null,
+  familyInvite = null,
 }: {
   initialTab?: ParentTab;
   plusReturn?: "success" | "cancel" | null;
@@ -130,6 +132,7 @@ export function ParentDesk({
   initialSaved?: Card[];
   initialShared?: boolean;
   initialChild?: string | null;
+  familyInvite?: string | null;
 }) {
   const { user } = useCurrentUserState();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -168,6 +171,7 @@ export function ParentDesk({
   const [childFocus, setChildFocus] = useState<string | null>(null);
   const [childOpen, setChildOpen] = useState(false);
   const [childrenReady, setChildrenReady] = useState(false);
+  const [familyCanWrite, setFamilyCanWrite] = useState(true);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [shareConsent, setShareConsent] = useState(false);
   const [picked, setPicked] = useState<Record<string, string[]>>({});
@@ -265,6 +269,7 @@ export function ParentDesk({
       setPayments(asList(f?.payments));
       setChildren(asList(f?.children));
       setChildrenReady(true);
+      setFamilyCanWrite(f?.familyCanWrite !== false);
       setCentreMessages(f.centreMessages ?? 0);
       setUpgradeDismissed(Boolean(f.upgradeCardDismissed));
       setShortlistShared(Boolean(f.shortlistShared));
@@ -525,6 +530,8 @@ export function ParentDesk({
         </Suspense>
       ) : null}
 
+      {contentTab === "family" ? <CoparentDesk inviteToken={familyInvite} /> : null}
+
       {contentTab === "waitlists" ? (
         <div className="mt-6">
           <h2 className="font-display text-2xl">{t("myWaitlists")}</h2>
@@ -778,8 +785,20 @@ export function ParentDesk({
               <span className="ke-site-desktop">{t("childProfileSendLead")}</span>
             </p>
           </div>
+          {familyCanWrite ? null : (
+            <p className="rounded-xl bg-surface p-4 text-sm ring-1 ring-border" role="status">
+              {locale === "fr"
+                ? "Vous pouvez regarder. Vous ne pouvez pas modifier cette famille."
+                : "You can look. You cannot change this family."}
+            </p>
+          )}
           {children.length === 0 && !editing ? (
-            <EmptyState title={t("noChildren")} body={t("noChildrenLead")} action={t("emptyAddChild")} onAction={() => { setEditing("new"); setChildOpen(true); }} />
+            <EmptyState
+              title={t("noChildren")}
+              body={familyCanWrite ? t("noChildrenLead") : locale === "fr" ? "Le parent principal n’a pas encore ajouté d’enfant." : "The main parent has not added a child yet."}
+              action={familyCanWrite ? t("emptyAddChild") : undefined}
+              onAction={familyCanWrite ? () => { setEditing("new"); setChildOpen(true); } : undefined}
+            />
           ) : (
           <div className="ke-split" data-ke="children-split" data-selected={childOpen || editing ? "true" : "false"}>
             <div className="ke-split-list min-w-0">
@@ -801,7 +820,7 @@ export function ParentDesk({
                   </li>
                 ))}
               </ul>
-              {children.length < MAX_CHILDREN_PER_PARENT ? (
+              {familyCanWrite && children.length < MAX_CHILDREN_PER_PARENT ? (
                 <Button className="mt-3" onClick={() => { setEditing("new"); setChildOpen(true); }}>
                   {children.length ? t("newChild") : t("addChild")}
                 </Button>
@@ -834,7 +853,7 @@ export function ParentDesk({
                     <li key={c.id} className={c.id === activeChild?.id ? "ph-no-capture" : "ke-child-rest ph-no-capture"}>
                       <ChildCareCard
                         child={c}
-                        actions={
+                        actions={familyCanWrite ? (
                           <button
                             type="button"
                             data-ke="child-profile-edit"
@@ -843,8 +862,10 @@ export function ParentDesk({
                           >
                             {t("profileEdit")}
                           </button>
-                        }
+                        ) : undefined}
                       />
+                      {familyCanWrite ? (
+                      <>
                       <div className="px-3 pb-3">
                         <DeleteChildControl
                           child={{ id: c.id, name: c.name }}
@@ -934,6 +955,8 @@ export function ParentDesk({
                           </>
                         )}
                       </div>
+                      </>
+                      ) : null}
                     </li>
                     );
                   })}

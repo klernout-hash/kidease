@@ -73,6 +73,8 @@ export const listMyWaitlists = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<MyWaitlistsResult> => {
     await ensureWaitlistColumns();
     const sql = await getSql();
+    const { familyScopeFor } = await import("@/lib/server/coparent");
+    const homeId = (await familyScopeFor(context.userId)).dataUserId;
     const rows = await sql<{
       id: string;
       status: string;
@@ -87,7 +89,7 @@ export const listMyWaitlists = createServerFn({ method: "GET" })
              d.name, d.slug, d.city
       from bookings b
       join daycares d on d.id = b.daycare_id
-      where b.user_id = ${context.userId}
+      where b.user_id = ${homeId}
       order by b.created_at desc
       limit 100
     `.catch(() => []);
@@ -107,8 +109,8 @@ export const listMyWaitlists = createServerFn({ method: "GET" })
         },
       ];
     });
-    const centres = await listCentreWaitlistRows(sql, context.userId);
-    const areas = await listAreaWaitlistRows(sql, context.userId);
+    const centres = await listCentreWaitlistRows(sql, homeId);
+    const areas = await listAreaWaitlistRows(sql, homeId);
     return { requests, centres, areas };
   });
 
@@ -196,10 +198,12 @@ export const withdrawMyWaitlist = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     if (!data.bookingId) return { ok: false as const, error: "missing" as const };
     await ensureWaitlistColumns();
+    const { assertFamilyWrite } = await import("@/lib/server/coparent");
+    const homeId = (await assertFamilyWrite(context.userId)).dataUserId;
     const sql = await getSql();
     const rows = await sql<{ id: string; status: string; daycare_id: string }>`
       select id, status, daycare_id from bookings
-      where id = ${data.bookingId} and user_id = ${context.userId}
+      where id = ${data.bookingId} and user_id = ${homeId}
       limit 1
     `;
     const row = rows[0];
@@ -208,7 +212,7 @@ export const withdrawMyWaitlist = createServerFn({ method: "POST" })
     await sql`
       update bookings
       set status = 'cancelled', status_updated_at = now()
-      where id = ${row.id} and user_id = ${context.userId}
+      where id = ${row.id} and user_id = ${homeId}
     `;
     return { ok: true as const, daycareId: row.daycare_id };
   });

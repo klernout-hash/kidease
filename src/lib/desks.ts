@@ -710,6 +710,10 @@ export type SessionDesks = {
   centreLinked?: boolean;
   /** Province learning pack nav. Off unless FEATURE_CURRICULUM_PACK is on. */
   curriculumPack?: boolean;
+  /** Co-parent invite. Off unless FEATURE_COPARENT_LINK is on. */
+  coparentLink?: boolean;
+  /** Staff hours. Off unless FEATURE_STAFF_TIMESHEETS is on. */
+  staffTimesheets?: boolean;
   /** Shared menu badges. One payload so every desk shows the same numbers. */
   attention?: import("@/lib/attention").AttentionCounts;
   /** ISO time the 30-day restore window ends. Null when the account is active. */

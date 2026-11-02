@@ -33,6 +33,8 @@ export const listInbox = createServerFn({ method: "GET" })
   }))
   .handler(async ({ context, data }) => {
     const sql = await getSql();
+    const { familyScopeFor } = await import("@/lib/server/coparent");
+    const parentId = (await familyScopeFor(context.userId)).dataUserId;
     await sql.query(`alter table conversations add column if not exists staff_note text`).catch(() => undefined);
     await ensureConversationUserState(sql);
     const rows = await sql<{
@@ -192,7 +194,7 @@ export const listInbox = createServerFn({ method: "GET" })
       left join "user" u on u.id = c.user_id
       left join conversation_user_state s
         on s.conversation_id = c.id and s.user_id = ${context.userId}
-      where c.user_id = ${context.userId}
+      where c.user_id = ${parentId}
          or exists (
            select 1 from provider_daycares p
            where p.user_id = ${context.userId} and p.daycare_id = c.daycare_id
@@ -214,7 +216,7 @@ export const listInbox = createServerFn({ method: "GET" })
         order by created_at desc
         limit 1
       `;
-      const isParent = r.parent_user_id === context.userId;
+      const isParent = r.parent_user_id === parentId;
       if (data.view === "centre" && isParent) continue;
       if (data.view === "family" && !isParent) continue;
       const lastBody = last[0]?.body ?? "";

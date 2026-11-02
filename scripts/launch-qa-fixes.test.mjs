@@ -49,7 +49,8 @@ test("parent can delete an owned child profile after confirm", () => {
   const copy = src("src/lib/copy.ts");
   const deleteFn = family.slice(family.indexOf("export const deleteChild"), family.indexOf("export const toggleSave"));
   assert.match(deleteFn, /authMiddleware/);
-  assert.match(deleteFn, /user_id = \$\{context\.userId\}/);
+  assert.match(deleteFn, /familyWrite\(context\.userId\)/);
+  assert.match(deleteFn, /user_id = \$\{home\.dataUserId\}/);
   assert.match(deleteFn, /delete from children/);
   assert.doesNotMatch(deleteFn, /callerIsAdmin/);
   assert.match(control, /data-ke="delete-child"/);
