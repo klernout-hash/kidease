@@ -7,7 +7,7 @@
  * FEATURE_PUSH and FEATURE_SMS stay off unless env or PostHog explicitly enables them.
  */
 
-import { envFlagOn, envMap, evaluateFeatureFlag, type EnvMap } from "./flags.ts";
+import { evaluateFeatureFlag, type EnvMap } from "./flags.ts";
 
 export { envFlagOn, evaluateFeatureFlag, describeFeatureFlag } from "./flags.ts";
 export type { EnvMap, FeatureFlagKey, FlagDecision, FlagSource } from "./flags.ts";
@@ -352,11 +352,6 @@ export function pickupContactsEnabled(env?: EnvMap): boolean {
  */
 export function parentAgreementEnabled(env?: EnvMap): boolean {
   return enrolmentEsignEnabled(env) && evaluateFeatureFlag("FEATURE_PARENT_AGREEMENT", env);
-}
-
-/** Linked co-parent reads. Off unless that flag is set. This pack does not create the link. */
-export function coparentLinkEnabled(env?: EnvMap): boolean {
-  return envFlagOn(envMap(env).FEATURE_COPARENT_LINK);
 }
 
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
