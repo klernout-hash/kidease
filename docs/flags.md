@@ -158,6 +158,22 @@ Env still works as a fallback when PostHog is down (last successful overlay is k
 
 The app **boots with no remote keys**. Do not invent a personal API key or a second PostHog project.
 
+## Desk features (default off)
+
+Each one stays off until its own flag is `1`. None of them send email, SMS, push, or a phone call.
+
+| Flag | What turns on |
+| --- | --- |
+| `FEATURE_REVIEW_REPLIES` | A centre reply under a public parent review, plus an in-app notice. |
+| `FEATURE_ENROLMENT_ESIGN` | `/sign/$id`, the signed contract PDF, and DocuSign send or sync. |
+| `FEATURE_TAX_RECEIPTS` | T778 and Quebec RL-24 text. The centre types the amount. Provinces only. |
+| `FEATURE_DAILY_LOGS` | Daily journal, meals, and naps for an enrolled child. |
+| `FEATURE_TOUR_CALENDAR` | Tour calendar at `/parent?tab=tours` and an in-app reminder. |
+| `FEATURE_FAMILY_VAULT` | Parent documents at `/parent?tab=documents`. |
+| `FEATURE_UNIFIED_INBOX` | Daycare messages also list requests that have no thread yet. |
+| `FEATURE_VOICE` | The call button on a thread. Off means no dial. |
+| `FEATURE_PICKUP_CONTACTS` | Pickup name, phone, and relationship. Allergies stay either way. |
+
 ## What is wired
 
 - `evaluateFeatureFlag` / `smsEnabled` / `pushEnabled` / `videoEnabled` / `inAppChatEnabled` / `providerSubscriptionsEnabled` / `showPayCtas` / `subscriptionsEnabled` / `foundingBadgeEnabled` / `openSpotAlertsEnabled` / `areaWaitlistAlertsEnabled` / `provincialVacancyIndexEnabled` / `reviewReportsEnabled` / `tourPipelineEnabled` / `needCareFastEnabled` / `inclusiveFiltersEnabled` / `eceJobsEnabled` / `digitalAttendanceEnabled` / `privatePhotoFeedEnabled`.

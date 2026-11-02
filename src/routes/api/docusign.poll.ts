@@ -14,6 +14,8 @@ async function run(request: Request) {
     await logSecurityEvent({ kind: "webhook_reject", detail: "docusign poll cron", ip });
     return new Response("Unauthorized", { status: 401 });
   }
+  const { enrolmentEsignEnabled } = await import("@/lib/features");
+  if (!enrolmentEsignEnabled()) return Response.json({ ok: true, skipped: "off" });
   const result = await pollOpenEnvelopes();
   await logSecurityEvent({ kind: "webhook_accept", detail: "docusign poll", ip });
   await pingCronHeartbeat("docusign-poll");

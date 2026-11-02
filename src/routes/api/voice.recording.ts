@@ -11,6 +11,8 @@ async function run(request: Request) {
     await logSecurityEvent({ kind: "webhook_reject", detail: "twilio voice recording", ip });
     return auth.response;
   }
+  const { voiceCallsEnabled } = await import("@/lib/features");
+  if (!voiceCallsEnabled()) return new Response(null, { status: 204 });
   try {
     await recordVoiceRecording({
       recordingSid: auth.params.RecordingSid || "",

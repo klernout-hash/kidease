@@ -6,6 +6,7 @@ import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signedPdfPath } from "@/lib/docusign-packs";
 import { ds } from "@/lib/docusign-copy";
+import { enrolmentEsignEnabled } from "@/lib/features";
 import { useCopy } from "@/lib/use-copy";
 import { getSignContract, signCentreContract } from "@/lib/server/contracts";
 
@@ -17,11 +18,13 @@ export const Route = createFileRoute("/sign/$id")({
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
+  loader: () => ({ enabled: enrolmentEsignEnabled() }),
   component: SignPage,
 });
 
 function SignPage() {
   const { id } = Route.useParams();
+  const { enabled } = Route.useLoaderData();
   const { locale } = useCopy();
   const { user, isPending } = useCurrentUserState();
   const [doc, setDoc] = useState<Awaited<ReturnType<typeof getSignContract>> | null>(null);
@@ -29,11 +32,11 @@ function SignPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!enabled || !user) return;
     void getSignContract({ data: { contractId: id } })
       .then(setDoc)
       .catch((err) => setError(err instanceof Error ? err.message : "Could not load contract"));
-  }, [user, id]);
+  }, [enabled, user, id]);
 
   if (isPending) {
     return (
@@ -43,6 +46,28 @@ function SignPage() {
     );
   }
   if (!user) return <RedirectToSignIn />;
+  if (!enabled) {
+    const fr = locale === "fr";
+    return (
+      <Shell>
+        <main className="mx-auto w-full max-w-2xl px-4 py-10">
+          <p className="text-sm font-semibold text-primary">KidEase</p>
+          <h1 className="mt-2 font-display text-3xl">{fr ? "Signer un contrat" : "Sign a contract"}</h1>
+          <p className="mt-3 text-base">
+            {fr
+              ? "KidEase garde le contrat d’inscription au même endroit que la garderie."
+              : "KidEase keeps the enrolment contract with the daycare."}
+          </p>
+          <p className="mt-2 text-sm text-muted">{fr ? "Cette étape est éteinte." : "This step is off."}</p>
+          <div className="mt-6">
+            <Button asChild>
+              <Link to="/">{fr ? "Accueil" : "Go home"}</Link>
+            </Button>
+          </div>
+        </main>
+      </Shell>
+    );
+  }
 
   return (
     <Shell>

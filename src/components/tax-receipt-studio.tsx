@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { buildRl24Summary, buildT778Receipt, receiptFileName } from "@/lib/tax-receipts";
+import { CANADA_PROVINCE_CODES } from "@/lib/desk-features";
+import { loadDeskFeatureFlags } from "@/lib/server/desk-features";
 import { useCopy } from "@/lib/use-copy";
 import { Button } from "@/components/ui/button";
 
@@ -16,6 +18,7 @@ function download(name: string, text: string) {
 export function TaxReceiptStudio({ quebec = false }: { quebec?: boolean }) {
   const { locale } = useCopy();
   const fr = locale === "fr";
+  const [enabled, setEnabled] = useState(false);
   const year = new Date().getFullYear();
   const [receiptFor, setReceiptFor] = useState("");
   const [childName, setChildName] = useState("");
@@ -25,6 +28,14 @@ export function TaxReceiptStudio({ quebec = false }: { quebec?: boolean }) {
   const [permit, setPermit] = useState("");
   const [slip, setSlip] = useState("");
   const [note, setNote] = useState("");
+
+  useEffect(() => {
+    void loadDeskFeatureFlags()
+      .then((flags) => setEnabled(flags.taxReceipts))
+      .catch(() => setEnabled(false));
+  }, []);
+
+  if (!enabled) return null;
 
   function saveT778() {
     const paid = Number(amount);
@@ -95,7 +106,11 @@ export function TaxReceiptStudio({ quebec = false }: { quebec?: boolean }) {
         </label>
         <label className="block text-sm">
           <span className="font-medium">{fr ? "Province" : "Province"}</span>
-          <input className="ke-input mt-1 w-full" value={province} maxLength={8} onChange={(event) => setProvince(event.target.value.toUpperCase())} />
+          <select className="ke-input mt-1 min-h-11 w-full" value={province} onChange={(event) => setProvince(event.target.value)}>
+            {CANADA_PROVINCE_CODES.map((code) => (
+              <option key={code} value={code}>{code}</option>
+            ))}
+          </select>
         </label>
         <label className="block text-sm">
           <span className="font-medium">{fr ? "Montant payé ($)" : "Amount paid ($)"}</span>

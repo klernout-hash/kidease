@@ -12,6 +12,7 @@ import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { providerNavSearch } from "@/lib/desk-nav";
 import { inboxSearch } from "@/lib/inbox-view";
+import { isOrphanInboxId, mergeUnifiedInbox } from "@/lib/desk-features";
 import type { CentreInboxThread } from "@/lib/inbox-stages";
 import { fillQuickReply, opsQuickReplies } from "@/lib/inbox-quick-replies";
 import {
@@ -24,12 +25,14 @@ import {
   type ConversationDetails,
   type MessageFilter,
 } from "@/lib/inbox-thread-ui";
+import { loadDeskFeatureFlags } from "@/lib/server/desk-features";
 import { listInbox, sendConnectedMessage } from "@/lib/server/inbox";
 import { useViewAs } from "@/components/view-as-banner";
 import { chatBodyWithoutSmsFooter } from "@/lib/sms-copy";
 import { getConversationDetails, setConversationUserState } from "@/lib/server/conversation-state";
 import { getThread } from "@/lib/server/family";
 import { listLeadRequests } from "@/lib/server/lead-requests";
+import { listTourRequests } from "@/lib/server/tours";
 import { safetyText } from "@/lib/safety";
 import { useCopy } from "@/lib/use-copy";
 import { confirmAction } from "@/lib/success-confirm";
@@ -74,7 +77,16 @@ export function CentreInboxDesk({
 
   async function loadList() {
     const rows = (await listInbox({ data: { view: "centre" } })) as CentreInboxThread[];
-    setItems(rows);
+    const flags = await loadDeskFeatureFlags().catch(() => null);
+    if (!flags?.unifiedInbox) {
+      setItems(rows);
+      return;
+    }
+    const [leadRows, tourRows] = await Promise.all([
+      listLeadRequests({ data: { desk: "centre" } }).catch(() => []),
+      listTourRequests({ data: { desk: "centre" } }).catch(() => []),
+    ]);
+    setItems(mergeUnifiedInbox(rows, leadRows, tourRows));
   }
 
   async function loadThread(id: string) {
@@ -104,11 +116,12 @@ export function CentreInboxDesk({
   }, [user?.id]);
 
   useEffect(() => {
-    if (!user?.id || !selectedId) {
+    if (!user?.id || !selectedId || isOrphanInboxId(selectedId)) {
       setMessages([]);
       setTours([]);
       setDetails(null);
-      setThreadReady(false);
+      setCanWrite(false);
+      setThreadReady(Boolean(selectedId && isOrphanInboxId(selectedId)));
       return;
     }
     void loadThread(selectedId);
@@ -337,6 +350,19 @@ export function CentreInboxDesk({
             <p className="border-t border-border px-3 py-3 text-sm text-muted" role="status" data-ke="view-as-lock">
               {t("viewAsReadOnly")}
             </p>
+          ) : isOrphanInboxId(selected.id) ? (
+            <div className="border-t border-border px-3 py-4">
+              <p className="text-sm text-muted">
+                {locale === "fr"
+                  ? "Cette demande n’a pas encore de fil. Ouvrez les demandes."
+                  : "This request does not have a thread yet. Open requests."}
+              </p>
+              <Button className="mt-3" asChild>
+                <Link to="/provider" search={{ desk: "requests" }}>
+                  {locale === "fr" ? "Voir les demandes" : "See requests"}
+                </Link>
+              </Button>
+            </div>
           ) : canWrite ? (
             <ThreadComposer
               inputId="centre-thread-reply"

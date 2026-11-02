@@ -178,6 +178,8 @@ export function DeskShell({
     curriculumPack: session?.curriculumPack,
     coparentLink: session?.coparentLink,
     staffTimesheets: session?.staffTimesheets,
+    familyVault: session?.familyVault,
+    tourCalendar: session?.tourCalendar,
   };
   const labelPlan = (item: DeskItem) => {
     const planned = planNavItem(item, chrome.paid);

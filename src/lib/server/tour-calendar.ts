@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { tourCalendarEnabled } from "@/lib/features";
 import { nid } from "@/lib/utils";
 import { catalogByIdGet } from "@/lib/catalog";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
@@ -270,6 +271,33 @@ async function ensureConversation(
   await sql`insert into conversations (id, user_id, daycare_id) values (${id}, ${userId}, ${daycareId})`;
   return id;
 }
+
+/** Saves a notice in the account. Does not email, text, or call. */
+export const saveTourVisitReminder = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { tourId?: string; centre?: string; startAt?: string }) => ({
+    tourId: String(input?.tourId || "").trim().slice(0, 80),
+    centre: String(input?.centre || "").trim().slice(0, 120),
+    startAt: String(input?.startAt || "").trim(),
+  }))
+  .handler(async ({ context, data }) => {
+    if (!tourCalendarEnabled()) return { ok: false as const, reason: "off" as const };
+    const { tourReminderPlan } = await import("@/lib/desk-features");
+    const plan = tourReminderPlan(data.startAt);
+    if (!plan.ok) return { ok: false as const, reason: plan.reason };
+    if (!data.tourId) return { ok: false as const, reason: "bad_time" as const };
+    const sql = await getSql();
+    await saveParentInAppNotice(sql, {
+      userId: context.userId,
+      kind: "tour",
+      titleKey: "notifTourUpdated",
+      href: "/parent?tab=tours",
+      sourceKey: `tour-cal:${data.tourId}`,
+      daycareName: data.centre || null,
+      status: "reminder",
+    });
+    return { ok: true as const, remindAt: plan.remindAt, sendsMail: false as const, sendsSms: false as const };
+  });
 
 export const bookTourSlot = createServerFn({ method: "POST" })
   .validator(

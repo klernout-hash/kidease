@@ -19,9 +19,11 @@ import {
   canSeeProviderSubscriptions,
   coparentLinkEnabled,
   curriculumPackEnabled,
+  familyVaultEnabled,
   showPayCtas,
   staffTimesheetsEnabled,
   subscriptionsEnabled,
+  tourCalendarEnabled,
 } from "@/lib/features";
 import {
   bootstrapAdminEmail,
@@ -336,6 +338,8 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
     curriculumPack: curriculumPackEnabled(),
     coparentLink: coparentLinkEnabled(),
     staffTimesheets: staffTimesheetsEnabled(),
+    familyVault: familyVaultEnabled(),
+    tourCalendar: tourCalendarEnabled(),
     attention,
     restoreUntil,
     viewAs: viewing,

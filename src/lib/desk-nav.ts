@@ -118,7 +118,8 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "notify-prefs", label: "Notification preferences", labelKey: "notificationPrefs", href: "/account", search: { tab: "profile", section: "alerts", desk: "parent" } },
     { id: "security", label: "Login and security", labelKey: "loginSecurity", href: "/account", search: { tab: "profile", section: "security", desk: "parent" } },
     { id: "email-sms", label: "Email and SMS", labelKey: "emailAndSms", href: "/account", search: { tab: "profile", section: "email-sms", desk: "parent" } },
-    { id: "documents", label: "Documents", hint: "Immunization records and subsidy forms", labelKey: "familyDocs", hintKey: "familyDocsHint", href: "/account", search: { tab: "profile", section: "documents", desk: "parent" } },
+    { id: "documents", label: "Documents", hint: "Immunization records and subsidy forms", labelKey: "familyDocs", hintKey: "familyDocsHint", href: "/parent", search: { tab: "documents" } },
+    { id: "tour-calendar", label: "Tour calendar", hint: "Visit times and a notice reminder", labelKey: "inboxTourCalendar", hintKey: "deskNavToursHint", href: "/parent", search: { tab: "tours" } },
     { id: "account", label: "Account", hint: "Family profile and alerts", labelKey: "account", hintKey: "deskNavParentAccountHint", href: "/account", search: { tab: "profile", desk: "parent" } },
   ],
 };
@@ -232,6 +233,10 @@ type DeskNavOpts = {
   coparentLink?: boolean;
   /** Staff hours. Hidden until FEATURE_STAFF_TIMESHEETS is on. */
   staffTimesheets?: boolean;
+  /** Parent document vault. Hidden until FEATURE_FAMILY_VAULT is on. */
+  familyVault?: boolean;
+  /** Tour calendar page. Hidden until FEATURE_TOUR_CALENDAR is on. */
+  tourCalendar?: boolean;
 };
 
 /**
@@ -256,6 +261,8 @@ export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
     if (item.id === "learning") return opts?.curriculumPack === true;
     if (item.id === "family") return opts?.coparentLink === true;
     if (item.id === "hours") return opts?.staffTimesheets === true;
+    if (item.id === "documents") return opts?.familyVault === true;
+    if (item.id === "tour-calendar") return opts?.tourCalendar === true;
     if (item.id === "promote" || item.id === "subscription") return false;
     if (item.id === "upgrade") return opts?.subscriptionsEnabled === true;
     if (OWNER_ONLY_NAV.has(item.id) && opts?.centreOwner === false) return false;
@@ -298,7 +305,7 @@ export type DeskGroup = {
 export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
   parent: [
     { id: "family", label: "Family desk", labelKey: "familyDeskTitle", open: true, itemIds: ["explore", "saved", "bookings", "waitlists", "messages"] },
-    { id: "my-family", label: "My family", labelKey: "navMyFamily", open: true, itemIds: ["children", "family", "care", "payments"] },
+    { id: "my-family", label: "My family", labelKey: "navMyFamily", open: true, itemIds: ["children", "family", "care", "payments", "documents", "tour-calendar"] },
     { id: "search-tools", label: "Search tools", labelKey: "navSearchTools", open: true, itemIds: ["search", "alerts"] },
     { id: "account", label: "Account", labelKey: "account", open: true, itemIds: ["profile", "appearance", "upgrade", "delete"] },
     { id: "settings", label: "Settings", labelKey: "settings", open: true, itemIds: ["notify-prefs", "security", "email-sms"] },

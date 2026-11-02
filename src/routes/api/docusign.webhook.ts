@@ -23,6 +23,8 @@ async function run(request: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
   if (plan.kind === "empty") return ignored("empty");
+  const { enrolmentEsignEnabled } = await import("@/lib/features");
+  if (!enrolmentEsignEnabled()) return Response.json({ ok: true, ignored: "off" });
   try {
     const result = await applyEnvelopeEvent(plan.parsed);
     await logSecurityEvent({ kind: "webhook_accept", detail: "docusign envelope", ip });

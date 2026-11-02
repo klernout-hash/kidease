@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { loadDeskFeatureFlags } from "@/lib/server/desk-features";
 import { replyToListingReview } from "@/lib/server/reviews";
 import { useCopy } from "@/lib/use-copy";
 
@@ -15,9 +16,18 @@ export function ListingOwnerReply({
   reply: string | null;
 }) {
   const { t } = useCopy();
+  const [enabled, setEnabled] = useState(false);
   const [text, setText] = useState(reply || "");
   const [shown, setShown] = useState(reply || "");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    void loadDeskFeatureFlags()
+      .then((flags) => setEnabled(flags.reviewReplies))
+      .catch(() => setEnabled(false));
+  }, []);
+
+  if (!enabled) return null;
 
   return (
     <div className="mt-2">

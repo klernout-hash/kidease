@@ -20,6 +20,8 @@ export const Route = createFileRoute("/api/family-documents")({
     handlers: {
       GET: async ({ request }) => {
         try {
+          const { familyVaultEnabled } = await import("@/lib/features");
+          if (!familyVaultEnabled()) return Response.json({ ok: false, error: "off" }, { status: 404 });
           const { requireUserId } = await import("@/lib/auth/verify.server");
           const userId = await requireUserId();
           const view = new URL(request.url).searchParams.get("desk");
@@ -37,6 +39,8 @@ export const Route = createFileRoute("/api/family-documents")({
       },
       POST: async ({ request }) => {
         try {
+          const { familyVaultEnabled } = await import("@/lib/features");
+          if (!familyVaultEnabled()) return Response.json({ ok: false, error: "off" }, { status: 404 });
           const { requireUserId } = await import("@/lib/auth/verify.server");
           const userId = await requireUserId();
           const type = request.headers.get("content-type") || "";

@@ -714,6 +714,10 @@ export type SessionDesks = {
   coparentLink?: boolean;
   /** Staff hours. Off unless FEATURE_STAFF_TIMESHEETS is on. */
   staffTimesheets?: boolean;
+  /** Document vault nav. Off unless FEATURE_FAMILY_VAULT is on. */
+  familyVault?: boolean;
+  /** Tour calendar nav. Off unless FEATURE_TOUR_CALENDAR is on. */
+  tourCalendar?: boolean;
   /** Shared menu badges. One payload so every desk shows the same numbers. */
   attention?: import("@/lib/attention").AttentionCounts;
   /** ISO time the 30-day restore window ends. Null when the account is active. */
