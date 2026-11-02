@@ -103,6 +103,14 @@ test("Explore filter chrome is one Airbnb/Maps bar, not three pill rows", () => 
 
   assert.match(css, /\.ke-explore-filter-bar/);
   assert.match(css, /\.ke-explore-filter-sticky/);
+  assert.match(css, /--ke-header-h/);
+  assert.doesNotMatch(search, /ke-explore-filter-sticky relative z-10/);
+  const stickyStart = search.indexOf('className="ke-explore-filter-sticky');
+  const stickyBlock = search.slice(stickyStart, search.indexOf("PioneerFilterRail", stickyStart));
+  assert.match(stickyBlock, /ExploreFilterBar/);
+  assert.doesNotMatch(stickyBlock, /CommuteDetourBar/);
+  assert.match(search, /<CommuteDetourBar/);
+  assert.match(css, /--ke-help-clear/);
   assert.match(css, /\.ke-reply-toggle/);
   assert.match(css, /\.ke-explore-scope-tab/);
   assert.match(css, /\.ke-explore-icon-btn/);
