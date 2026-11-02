@@ -105,6 +105,20 @@ async function setFixture(context, base, { role, plan, own, activity, attention 
   return res;
 }
 
+/** A desk redirect can abort goto. Try again once the page has settled. */
+async function gotoSettled(page, url) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return await page.goto(url, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (!/interrupted|ERR_ABORTED/i.test(message) || attempt === 2) throw err;
+      await page.waitForLoadState("domcontentloaded").catch(() => {});
+    }
+  }
+  return null;
+}
+
 /**
  * WebKit drops Secure `__Host-` cookies on http://127.0.0.1. Copy the session
  * token into the loopback preview cookie the server accepts for this fixture.
@@ -517,20 +531,14 @@ async function runRoleFixture(page, base) {
 
     await page.setViewportSize({ width: 1280, height: 900 });
     await setFixture(context, base, { role: "provider" });
-    const daycareParent = await page.goto(new URL("/parent", base).href, {
-      waitUntil: "domcontentloaded",
-      timeout: timeoutMs,
-    });
+    const daycareParent = await gotoSettled(page, new URL("/parent", base).href);
     await page.waitForURL(/\/parent/i, { timeout: timeoutMs }).catch(() => {});
     const stayedParent = /\/parent/i.test(page.url());
     record("provider-can-open-parent", stayedParent, {
       note: page.url(),
       status: daycareParent?.status() ?? 0,
     });
-    const daycareWrong = await page.goto(new URL("/provider", base).href, {
-      waitUntil: "domcontentloaded",
-      timeout: timeoutMs,
-    });
+    const daycareWrong = await gotoSettled(page, new URL("/provider", base).href);
     await page.waitForURL(/\/provider/i, { timeout: timeoutMs }).catch(() => {});
     const daycareHome = /\/provider/i.test(page.url());
     record("redirect-daycare-from-parent", daycareHome, {
