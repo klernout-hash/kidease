@@ -306,10 +306,10 @@ export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
   ],
   admin: [
     { id: "ops", label: "Operations", labelKey: "navOperations", open: true, itemIds: ["queue", "mail"] },
-    { id: "review", label: "Review", labelKey: "navReview", open: true, itemIds: ["verify", "truth", "reviews", "screening", "spam", "trust"] },
-    { id: "listings-data", label: "Listings data", labelKey: "navListingsData", itemIds: ["daycares", "incomplete", "winnipeg", "vacancies", "ranking"] },
+    { id: "review", label: "Review", labelKey: "navReview", open: true, itemIds: ["verify", "truth", "reviews", "screening", "spam", "trust", "trust-queue"] },
+    { id: "listings-data", label: "Listings data", labelKey: "navListingsData", itemIds: ["daycares", "incomplete", "winnipeg", "vacancies", "ranking", "qc-home"] },
     { id: "support", label: "Support", labelKey: "support", itemIds: ["support", "triage"] },
-    { id: "people", label: "People and money", labelKey: "navPeopleMoney", itemIds: ["people", "money", "contracts"] },
+    { id: "people", label: "People and money", labelKey: "navPeopleMoney", itemIds: ["people", "money", "contracts", "government"] },
     { id: "system", label: "System", labelKey: "navSystem", itemIds: ["activity", "ai", "features", "email-health", "chat"] },
     { id: "account", label: "Account", labelKey: "account", itemIds: ["profile", "appearance", "delete"] },
     { id: "settings", label: "Settings", labelKey: "settings", itemIds: ["notify-prefs", "security", "email-sms"] },

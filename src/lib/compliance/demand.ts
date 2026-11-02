@@ -43,18 +43,33 @@ export function normalizeFsa(postal: string): string | null {
   return /^[A-Z][0-9][A-Z]$/.test(fsa) ? fsa : null;
 }
 
+function suppressDemand(rows: Array<{ area: string; ageKey: string; n: number }>) {
+  return suppressRows(rows, K_ANONYMITY).map((row) =>
+    row.suppressed ? { area: "hidden", ageKey: "hidden", n: null, suppressed: true } : row,
+  );
+}
+
 export function demandReport(rows: readonly DemandCell[], province: string) {
+  const code = province.trim().toUpperCase();
   const scoped = rows
-    .filter((row) => row.province.trim().toUpperCase() === province.trim().toUpperCase())
+    .filter((row) => row.province.trim().toUpperCase() === code)
     .map((row) => ({
       area: row.area,
       ageKey: row.ageKey,
       n: Math.max(0, Math.floor(row.n)),
     }));
-  const hidden = suppressRows(scoped, K_ANONYMITY).map((row) =>
-    row.suppressed ? { area: "hidden", ageKey: "hidden", n: null, suppressed: true } : row,
-  );
-  return { province: province.trim().toUpperCase(), k: K_ANONYMITY, rows: hidden };
+  let hidden = suppressDemand(scoped);
+  const visible = hidden.some((row) => !row.suppressed && (row.n ?? 0) >= K_ANONYMITY);
+  if (!visible && scoped.length) {
+    const byAge = new Map<string, { area: string; ageKey: string; n: number }>();
+    for (const row of scoped) {
+      const found = byAge.get(row.ageKey) ?? { area: code, ageKey: row.ageKey, n: 0 };
+      found.n += row.n;
+      byAge.set(row.ageKey, found);
+    }
+    hidden = suppressDemand([...byAge.values()]);
+  }
+  return { province: code, k: K_ANONYMITY, rows: hidden };
 }
 
 export function demandDelivery(mode: PackMode, due: boolean): "skip" | "log" | "send" {

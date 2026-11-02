@@ -10,7 +10,6 @@ import { ShortlistCompareTable } from "@/components/shortlist-compare";
 import { TrustSignals } from "@/components/trust-badge";
 import { Button } from "@/components/ui/button";
 import { MultiApplyPanel } from "@/components/multi-apply-sheet";
-import { isHiddenTestListing } from "@/lib/listing-visibility";
 import { mirrorOfflineSaved, readOfflineSaved, type OfflineSaved } from "@/lib/offline-shortlist";
 import { parseTrackStatus, type TrackStatus } from "@/lib/parent-tracker";
 import { inviteShortlistShare, leaveShortlistShare } from "@/lib/server/parent-tracker";
@@ -50,13 +49,7 @@ export function ParentShortlist({
   onTrack?: (id: string, next: { trackStatus: TrackStatus; callNote: string; tourNote: string }) => void;
   onLeave?: () => void;
 }) {
-  const items = useMemo(() => {
-    const rows = Array.isArray(rawItems) ? rawItems : [];
-    const fixtures =
-      typeof window !== "undefined" && new URLSearchParams(window.location.search).get("fixtures") === "1";
-    if (fixtures) return rows;
-    return rows.filter((item) => !isHiddenTestListing(item));
-  }, [rawItems]);
+  const items = useMemo(() => (Array.isArray(rawItems) ? rawItems : []), [rawItems]);
   const { t, locale } = useCopy();
   const feesOn = parentListingFeesVisible(useRoleChrome().subscriptionsEnabled);
   const storeChannel = useStoreChannel();

@@ -1976,6 +1976,7 @@
   "tourAddCalendar": "Añadir al calendario",
   "tourTimesLead": "Los padres reservan estos horarios en tu ficha pública. Si no agregas ninguno, Reservar una visita muestra con honestidad que no hay horarios: Solicitar información sigue funcionando.",
   "tourTimesListingLead": "Elige un horario publicado. Esto es una solicitud de visita, no una inscripción.",
+  "tourAskTimes": "Dile al centro cuándo puedes visitar. Esto es una solicitud de visita, no una inscripción.",
   "tourTimesEmpty": "Esta guardería aún no ha publicado horarios de visita.",
   "tourTimesEmptyLead": "Solicita información para preguntar por una visita, o vuelve más tarde. KidEase no inventa horarios de visita.",
   "tourTimesNoneOpen": "No hay horarios de visita disponibles en este momento.",

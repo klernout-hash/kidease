@@ -1,22 +1,22 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
-import { demandDelivery, demandMode, demandReport, normalizeFsa, quarterKey, quarterReportDue } from "@/lib/compliance/demand";
+import { demandDelivery, demandMode, demandReport, quarterKey, quarterReportDue } from "@/lib/compliance/demand";
 import { logPractice, readScope, sqlClient } from "@/lib/server/compliance-common";
 import { requireAdmin } from "@/lib/server/roles";
 
 async function cells(province: string) {
   const sql = await sqlClient();
-  const rows = await sql<{ province: string; postal_code: string; city: string; age_group: string; n: number }>`
-    select d.province, d.postal_code, d.city, w.age_group, count(*)::int as n
+  const rows = await sql<{ province: string; city: string; age_group: string; n: number }>`
+    select d.province, d.city, w.age_group, count(*)::int as n
     from daycare_waitlist w
     join daycares d on d.id = w.daycare_id
-    where w.status = 'waiting' and d.province = ${province}
-    group by d.province, d.postal_code, d.city, w.age_group
+    where w.status = 'waiting' and upper(btrim(d.province)) = ${province.trim().toUpperCase()}
+    group by d.province, d.city, w.age_group
   `.catch(() => []);
   return rows.map((row) => ({
     province: row.province,
-    area: normalizeFsa(row.postal_code || "") || row.city || "area",
+    area: (row.city || "").trim() || "area",
     ageKey: row.age_group,
     n: Number(row.n) || 0,
   }));

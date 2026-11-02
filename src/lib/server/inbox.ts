@@ -230,7 +230,7 @@ export const listInbox = createServerFn({ method: "GET" })
       const row: CentreInboxThread = {
         id: r.id,
         daycareId: r.daycare_id,
-        daycareName: isParent ? r.name : r.parent_name || r.parent_email || "Parent",
+        daycareName: isParent ? r.name : (r.parent_name || "").trim() || "Parent",
         daycareSlug: r.slug,
         photo: splitPhotoList(r.photos)[0] || "/photos/cottage.jpg",
         lastAt: String(r.last_at),
@@ -240,7 +240,7 @@ export const listInbox = createServerFn({ method: "GET" })
         tourStatus,
         phone: r.phone,
         unread: Number(r.unread) > 0,
-        parentName: r.parent_name || r.parent_email || "Parent",
+        parentName: (r.parent_name || "").trim() || "Parent",
         childAgeLabel: childAge,
         programLabel: r.schedule || schedules[0] || null,
         tourDatetime: times.length ? formatPreferredTimes(times, "en") : null,

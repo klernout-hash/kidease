@@ -596,6 +596,31 @@ export function canVisitDesk(
   return desks.includes(desk);
 }
 
+/**
+ * Account page desk. A parent account does not keep an Admin sidebar from a
+ * stale desk, and an Admin label is not shown unless this session can open Admin.
+ */
+export function accountDeskFor(input: {
+  asked: DeskKey | null;
+  sticky: DeskKey | null;
+  session: { desks: DeskKey[]; role?: AppRole | null; email?: string | null } | null;
+  ready: boolean;
+}): DeskKey | null {
+  const session = input.session;
+  const can = (desk: DeskKey) =>
+    Boolean(session && canVisitDesk(session.desks, desk, session.role, session.email));
+  if (input.asked) {
+    if (can(input.asked)) return input.asked;
+    if (!input.ready) return input.asked === "parent" || input.asked === "provider" ? input.asked : null;
+  }
+  if (!session || !input.ready) return null;
+  const sticky = sanitizeStickyDesk(input.sticky, session.desks, session.role, session.email);
+  if (sticky) return sticky;
+  if (session.role === "parent" && can("parent")) return "parent";
+  if (session.desks.length === 1 && can(session.desks[0]!)) return session.desks[0]!;
+  return null;
+}
+
 /** Drop a persisted desk the current session is not allowed to open. */
 export function sanitizeStickyDesk(
   sticky: DeskKey | null | undefined,

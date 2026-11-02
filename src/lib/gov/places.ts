@@ -179,6 +179,36 @@ const CITY_REGION: Readonly<Record<string, string>> = {
   iqaluit: "Iqaluit",
 };
 
+const CITY_CANON: Partial<Record<ProvinceCode, Readonly<Record<string, string>>>> = {
+  MB: {
+    wpg: "Winnipeg",
+    winnipeg: "Winnipeg",
+    winnpeg: "Winnipeg",
+    portage: "Portage la Prairie",
+    "portage la prairie": "Portage la Prairie",
+    "la prairie": "Portage la Prairie",
+  },
+};
+
+function foldGovCity(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/[.'’]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** One city name for government counts. "Wpg" and "Winnipeg" are the same city. "Winnipeg Beach" is not. */
+export function canonicalGovCity(province: string, city: string): string {
+  const raw = city.trim().replace(/\s+/g, " ");
+  const code = province.trim().toUpperCase();
+  const key = foldGovCity(raw);
+  const named = isProvinceCode(code) ? CITY_CANON[code]?.[key] : undefined;
+  return named || raw;
+}
+
 export function regionForCity(city: string | null | undefined): string {
   const key = String(city || "")
     .trim()

@@ -12,6 +12,7 @@ import {
   provinceName,
   regionForCity,
   regionLabel,
+  canonicalGovCity,
   PROVINCES,
   type ProvinceCode,
 } from "./places.ts";
@@ -80,6 +81,7 @@ export type GovDashboard = {
     jobPosts: GovNumber;
     feesConfirmedCentres: GovNumber;
     feesUncitedCentres: GovNumber;
+    feesNoneCentres: GovNumber;
   };
   cities: Array<{ label: string; centres: GovNumber; capacity: GovNumber; openSpots: GovNumber; suppressed: boolean }>;
   regions: Array<{ label: string; centres: GovNumber; suppressed: boolean }>;
@@ -105,6 +107,37 @@ export type GovRaw = {
   jobs: number;
   generatedAt?: string;
 };
+
+function mergeCityFacts(rows: CityFact[]): CityFact[] {
+  const map = new Map<string, CityFact>();
+  for (const row of rows) {
+    const province = row.province.trim().toUpperCase();
+    const city = canonicalGovCity(province, row.city);
+    const key = `${province}|${city.toLowerCase()}`;
+    const found = map.get(key);
+    if (!found) {
+      map.set(key, { ...row, province, city });
+      continue;
+    }
+    const centres = found.centres + row.centres;
+    found.lat = centres > 0 ? (found.lat * found.centres + row.lat * row.centres) / centres : found.lat;
+    found.lng = centres > 0 ? (found.lng * found.centres + row.lng * row.centres) / centres : found.lng;
+    found.centres = centres;
+    found.licensed += row.licensed;
+    found.capacity += row.capacity;
+    found.capacityKnown += row.capacityKnown;
+    found.vacancyReporters += row.vacancyReporters;
+    found.vacancyFresh30 += row.vacancyFresh30;
+    found.openSpots += row.openSpots;
+    found.cwelccKnown += row.cwelccKnown;
+    found.feesConfirmed += row.feesConfirmed;
+    found.feesUncited += row.feesUncited;
+    found.french += row.french;
+    found.english += row.english;
+    found.inclusion += row.inclusion;
+  }
+  return [...map.values()];
+}
 
 function sum(rows: CityFact[], pick: (row: CityFact) => number): number {
   return rows.reduce((total, row) => total + (Number.isFinite(pick(row)) ? pick(row) : 0), 0);
@@ -158,8 +191,8 @@ function coverage(locale: GovLocale, scope: GovScope, rows: CityFact[]): string[
       ? "Les places ouvertes comptent seulement quand le centre a mis à jour ses disponibilités. Un zéro par défaut n’est pas une mise à jour."
       : "Open spots count only when the centre has updated vacancies. A default zero is not an update.",
     fr
-      ? "Les frais confirmés ont une source citée. Un montant sans source est non cité. KidEase n’invente pas un tarif provincial. Le programme de frais est un oui ou non, pas un montant."
-      : "Confirmed fees have a cited source. A dollar amount with no source is uncited. KidEase does not invent a provincial fee. A fee program is a yes or no, not a dollar amount.",
+      ? "Les frais confirmés ont une source citée. Un montant sans source est non cité. Les centres sans tarif au dossier sont comptés à part. Ces trois chiffres donnent le total des fiches publiques. KidEase n’invente pas un tarif provincial. Le programme de frais est un oui ou non, pas un montant."
+      : "Confirmed fees have a cited source. A dollar amount with no source is uncited. Centres with no fee on file are counted separately. Those three numbers add up to the public listings. KidEase does not invent a provincial fee. A fee program is a yes or no, not a dollar amount.",
     fr
       ? `Le signal de désert utilise la population du ${CENSUS_SOURCE}. C’est la population totale par place permise, pas le nombre d’enfants de 0 à 5 ans. Une ville sans chiffre de recensement n’a pas de score.`
       : `The desert signal uses ${CENSUS_SOURCE} population. It is total population per licensed space, not a count of children aged 0 to 5. A city with no census figure has no score.`,
@@ -212,8 +245,9 @@ export function buildGovDashboard(
   actor: { orgName: string; demo: boolean; readOnly: boolean },
 ): GovDashboard {
   const scope = parseGovScope(scopeInput);
-  const inProvince = raw.cities.filter((row) => scope.province === "ALL" || row.province.trim().toUpperCase() === scope.province);
-  const rows = scopeRows(raw.cities, scope);
+  const cities = mergeCityFacts(raw.cities);
+  const inProvince = cities.filter((row) => scope.province === "ALL" || row.province.trim().toUpperCase() === scope.province);
+  const rows = scopeRows(cities, scope);
   const directory = sum(rows, (row) => row.centres);
   const licensed = sum(rows, (row) => row.licensed);
   const capacity = sum(rows, (row) => row.capacity);
@@ -305,6 +339,7 @@ export function buildGovDashboard(
       jobPosts: suppressCount(raw.jobs),
       feesConfirmedCentres: suppressCount(feesConfirmed),
       feesUncitedCentres: suppressCount(feesUncited),
+      feesNoneCentres: suppressCount(Math.max(0, directory - feesConfirmed - feesUncited)),
     },
     cities: cityRows.map((row) => ({
       label: row.suppressed ? "" : row.label,

@@ -234,7 +234,9 @@ export function ParentDesk({
     [origin, radiusKm],
   );
 
+  const familySeq = useRef(0);
   const loadFamily = useCallback(async (fresh = false) => {
+    const seq = ++familySeq.current;
     if (shareToken && acceptedShare.current !== shareToken) {
       const result = await acceptShortlistShare({ data: { token: shareToken } }).catch(() => null);
       acceptedShare.current = shareToken;
@@ -254,7 +256,9 @@ export function ParentDesk({
     const f = await dedupedQuery(`parent-family:${user?.id ?? ""}`, QUERY_STALE_MS, () => getFamily(), {
       fresh: fresh || Boolean(shareToken),
     });
+    if (seq !== familySeq.current) return f;
     await yieldToMain();
+    if (seq !== familySeq.current) return f;
     startTransition(() => {
       setSaved(asList(f?.saved));
       setBookings(asList(f?.bookings));

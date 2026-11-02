@@ -11,7 +11,7 @@ import { resolveSessionDesks, writeProfileRole } from "./roles";
 import { catalogByIdGet } from "@/lib/catalog";
 import { splitPhotoList } from "@/lib/listing-photo";
 import { cultureFieldsToSql } from "@/lib/listing-culture";
-import { isAdminOnlyListing, isHiddenTestListing, listingVisibilityForOwners, providerDeskListingVisible } from "@/lib/listing-visibility";
+import { isAdminOnlyListing, listingVisibilityForOwners, providerDeskListingVisible } from "@/lib/listing-visibility";
 import { callerMayUseAdminOnlyListing } from "@/lib/server/public-listing";
 import { fromPrice, mapDaycare, spotsTotal, type DaycareRow } from "./map-row";
 import { emptyChild, mapChild, type ChildRow } from "@/lib/child-profile";
@@ -292,7 +292,6 @@ export const getFamily = createServerFn({ method: "GET" })
       join conversations c on c.id = m.conversation_id
       where c.user_id = ${context.userId} and m.sender = 'parent'
     `;
-    const showSavedFixtures = process.env.E2E_ROLE_FIXTURE === "1";
     return {
       role: (profile[0]?.role === "admin" ? "admin" : profile[0]?.role === "provider" ? "provider" : "parent") as
         | "parent"
@@ -320,8 +319,7 @@ export const getFamily = createServerFn({ method: "GET" })
                 } catch {
                   return [];
                 }
-              })
-              .filter((d) => showSavedFixtures || !isHiddenTestListing(d)),
+              }),
           ),
           { distanceKnown: false, ageGroup: "any" },
         )

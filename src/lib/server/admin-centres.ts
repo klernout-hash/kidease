@@ -293,9 +293,10 @@ export const listAdminCentres = createServerFn({ method: "GET" })
           where daycare_id = d.id
           order by
             case
-              when status = 'approved' then 0
-              when status = 'superseded' then 2
-              else 1
+              when status in ('waiting', 'pending', 'verified') then 0
+              when status = 'approved' then 1
+              when status = 'superseded' then 3
+              else 2
             end,
             created_at desc nulls last
           limit 1
@@ -443,7 +444,11 @@ export const decideCentre = createServerFn({ method: "POST" })
       select id, user_id from listing_claims
       where daycare_id = ${data.daycareId}
         and status <> 'superseded'
-      order by case when status = 'approved' then 0 else 1 end, created_at desc
+      order by case
+        when status in ('waiting', 'pending', 'verified') then 0
+        when status = 'approved' then 1
+        else 2
+      end, created_at desc
       limit 1
     `;
     if (latest[0] && decision !== "approve") {

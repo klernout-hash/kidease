@@ -288,7 +288,7 @@ function BillList({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-medium">{b.parentName || b.parentEmail || "Parent"}</p>
+                  <p className="font-medium">{b.parentName || "Parent"}</p>
                   <BillStatusBadge status={b.status} />
                 </div>
                 <p className="mt-1 text-sm text-muted">
