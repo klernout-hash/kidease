@@ -16,6 +16,7 @@ import {
 } from "@/lib/now-loops";
 import { hasRealPhoto } from "@/lib/listing-readiness";
 import { parentListingFeesVisible } from "@/lib/public-fees";
+import { compareEmptyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
 import { useRoleChrome } from "@/components/role-chrome";
 import { vacancyLine } from "@/components/vacancy-freshness";
@@ -64,7 +65,8 @@ function CompareRoute() {
 
 export function ComparePage({ slugs }: { slugs: string[] }) {
   const { t, locale } = useCopy();
-  const feesOn = parentListingFeesVisible(useRoleChrome().subscriptionsEnabled);
+  const plansOn = useRoleChrome().subscriptionsEnabled === true;
+  const feesOn = parentListingFeesVisible(plansOn);
   const { compareMax } = useParentPlusAccess();
   const origin = useAppStore((s) => s.origin);
   const workOrigin = useAppStore((s) => s.workOrigin);
@@ -109,7 +111,7 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="text-4xl">{t("compareTitle")}</h1>
-            {items.length ? <p className="mt-2 text-muted">{t("compareEmpty")}</p> : null}
+            {items.length ? <p className="mt-2 text-muted">{t(compareEmptyKey(plansOn))}</p> : null}
           </div>
           {items.length ? (
             <Button variant="secondary" onClick={() => { clearCompare(); setItems([]); }}>
@@ -312,7 +314,7 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
           </div>
         ) : (
           <div className="mt-10 rounded-xl bg-surface ring-1 ring-border">
-            <EmptyState title={t("noCompare")} body={t("compareEmpty")} action={t("emptyFindCare")} actionTo={localePath("/search", locale)} />
+            <EmptyState title={t("noCompare")} body={t(compareEmptyKey(plansOn))} action={t("emptyFindCare")} actionTo={localePath("/search", locale)} />
           </div>
         )}
       </main>

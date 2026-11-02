@@ -1,5 +1,6 @@
 /**
- * URL chips for search: cwelcc, openings, inclusive, meals, subsidy, lang.
+ * URL chips for search: cwelcc, openings, inclusive, meals, subsidy, spoken.
+ * Program language uses `spoken`. `lang` is the site language and must stay alone.
  */
 
 import { languageChipMatches } from "./inclusive-filters.ts";
@@ -30,7 +31,8 @@ export type PioneerSearch = {
   inclusive?: "1";
   meals?: "1";
   subsidy?: "1";
-  lang?: string;
+  /** Comma-separated program languages. Not the site UI language. */
+  spoken?: string;
 };
 
 export type PioneerFilters = {
@@ -65,13 +67,13 @@ export function parsePioneerSearch(search: Record<string, unknown>): PioneerSear
   const inclusive = flag(search.inclusive);
   const meals = flag(search.meals);
   const subsidy = flag(search.subsidy);
-  const langs = parsePioneerLangs(search.lang);
+  const langs = parsePioneerLangs(search.spoken);
   if (cwelcc) out.cwelcc = cwelcc;
   if (openings) out.openings = openings;
   if (inclusive) out.inclusive = inclusive;
   if (meals) out.meals = meals;
   if (subsidy) out.subsidy = subsidy;
-  if (langs.length) out.lang = langs.join(",");
+  if (langs.length) out.spoken = langs.join(",");
   return out;
 }
 
@@ -82,7 +84,7 @@ export function pioneerFiltersFrom(search: PioneerSearch): PioneerFilters {
     inclusive: search.inclusive === "1",
     meals: search.meals === "1",
     subsidy: search.subsidy === "1",
-    langs: parsePioneerLangs(search.lang),
+    langs: parsePioneerLangs(search.spoken),
   };
 }
 

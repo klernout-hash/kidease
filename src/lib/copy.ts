@@ -879,6 +879,8 @@ export const copy = {
     cityLabel: "City",
     provinceLabel: "Province",
     provinceAgeCaption: "Province label",
+    agesFromProvince: "Ages come from the provincial licence record.",
+    agesFromProvinceLink: "Provincial record",
     postalLabel: "Postal code",
     addressLabel: "Street address",
     privacyNote: "Built for Canadian families. We do not sell children’s data.",
@@ -1625,6 +1627,8 @@ export const copy = {
     appStore: "App Store",
     googlePlay: "Google Play",
     storeReady: "Ready for App Store and Google Play",
+    storeComingSoonTitle: "App Store and Google Play are coming soon",
+    storeComingSoonLead: "The phone apps are not in the stores yet. You can add KidEase to your home screen from this page.",
     storeReadyBody:
       "Install KidEase on your iPhone or Android from this page. It opens full screen, with search, sign-in, and account deletion. The App Store and Google Play apps are coming soon.",
     featGps: "True GPS radius",
@@ -1632,7 +1636,10 @@ export const copy = {
     featCentres: "Canada-wide directory",
     featCentresBody: "Licensed centres in every province and territory. Each listing uses a storefront photo of the building when one can be verified.",
     featPay: "Bills in-app",
-    featPayBody: "Centres send bills. Parents pay with Stripe Checkout. Interac is staff-reviewed. Parent Plus is a separate KidEase subscription: not centre tuition.",
+    featPayBody:
+      "Centres send bills. Parents pay with Stripe Checkout. A parent can note an Interac e-Transfer on the pay page. That note stays waiting. The pay page cannot mark it paid. Parent Plus is a separate KidEase subscription: not centre tuition.",
+    featPayBodyBills:
+      "Centres send bills. Parents pay with Stripe Checkout. A parent can note an Interac e-Transfer on the pay page. That note stays waiting. The pay page cannot mark it paid.",
     featSafe: "Built for PIPEDA",
     featSafeBody: "Child profiles stay with you and the centre you contact. Delete your account any time.",
     onYourPhone: "On the phone",
@@ -2291,7 +2298,7 @@ export const copy = {
       "Submit the official application, floor plans, policies, and screening packages to the licensing office. Wait for inspection and a written licence before you advertise as licensed. KidEase cannot speed this up.",
     startDaycareStep7T: "List or claim on KidEase",
     startDaycareStep7:
-      "Once you are licensed, find your centre in our Canada-wide catalogue and claim it: or enroll if we do not have you yet. Claiming the listing is free.",
+      "Once you are licensed, find your centre in our Canada-wide catalogue and claim it: or enrol if we do not have you yet. Claiming the listing is free.",
     startDaycareKidEaseT: "What KidEase helps with after you are licensed",
     startDaycareKidEase1: "Claim your listing so parents see a Live daycare with your name on it.",
     startDaycareKidEase2: "Message families who are looking nearby: in the app, not a generic inbox dump.",
@@ -2311,7 +2318,7 @@ export const copy = {
       "Programs change. Confirm amounts, deadlines, and eligibility on the government site. Figures are typical ceilings, not a KidEase promise.",
     startDaycareCompetitive: "Eligibility is competitive or limited by budget where the government says so.",
     startDaycareReviewed: "Reviewed September 2026",
-    enrollToday: "Enroll today!",
+    enrollToday: "Enrol today!",
     createKideaseListing: "Create your KidEase listing",
     donateToKids: "Donate to kids",
     donateTitle: "Donate to kids",
@@ -2448,6 +2455,8 @@ export const copy = {
     subsidyNoteQcNo: "Quebec's reduced contribution is $9.65 a day in 2026, and only at subsidized services. This listing is not on that list.",
     subsidyNoteReduced: "This program is listed for a territorial fee reduction. $10 a day is an average here, not a cap. Confirm the parent fee with the centre.",
     bookTour: "Book a tour",
+    stickyInfo: "Info",
+    stickyMessage: "Message",
     tourLead: "Pick a posted visit time. This is not an enrolment request.",
     tourDefaultNote: "I’d like to tour the centre.",
     requestSentTitleTour: "Tour requested",
@@ -2539,6 +2548,7 @@ export const copy = {
     clearCompare: "Clear",
     compareTitle: "Compare centres",
     compareEmpty: "Compare ages, hours, distance, language, culture, and open spots. Free is 5 centres. Parent Plus is 10.",
+    compareEmptyFree: "Compare ages, hours, distance, language, culture, and open spots.",
     noCompare: "Nothing to compare yet.",
     filterOpen: "Open now",
     filterWaitlist: "Waitlist",
@@ -2578,7 +2588,7 @@ export const copy = {
     parentContactIntro:
       `Tell us what you’re looking for: city, ages, and when you need a spot. We’ll reply from ${SUPPORT_INBOX_EMAIL} within 1–2 business days.`,
     subjectCare: "Finding care",
-    enrollBothLead: "Parents and licensed centres can enroll here.",
+    enrollBothLead: "Parents and licensed centres can enrol here.",
     vacancyUpdated: "Spots confirmed",
     vacancyStale: "Ask about current spots",
     vacancyLastConfirmed: "Last confirmed",
@@ -4413,6 +4423,8 @@ export const copy = {
     cityLabel: "Ville",
     provinceLabel: "Province",
     provinceAgeCaption: "Libellé de la province",
+    agesFromProvince: "Les âges viennent du dossier de permis de la province.",
+    agesFromProvinceLink: "Dossier provincial",
     postalLabel: "Code postal",
     addressLabel: "Adresse",
     privacyNote: "Conçu pour les familles canadiennes. Nous ne vendons pas les données des enfants.",
@@ -5162,6 +5174,8 @@ export const copy = {
     appStore: "App Store",
     googlePlay: "Google Play",
     storeReady: "Prêt pour l’App Store et Google Play",
+    storeComingSoonTitle: "L’App Store et Google Play arrivent bientôt",
+    storeComingSoonLead: "Les applis ne sont pas encore dans les boutiques. Vous pouvez ajouter KidEase à l’écran d’accueil depuis cette page.",
     storeReadyBody:
       "Installez KidEase sur iPhone ou Android depuis cette page. L’appli s’ouvre en plein écran, avec la recherche, la connexion et la suppression du compte. Les applis App Store et Google Play arrivent bientôt.",
     featGps: "Rayon GPS réel",
@@ -5169,7 +5183,10 @@ export const copy = {
     featCentres: "Répertoire pancanadien",
     featCentresBody: "Centres permis dans chaque province et territoire. Chaque fiche utilise une photo de la devanture lorsqu’elle peut être vérifiée.",
     featPay: "Factures dans l’appli",
-    featPayBody: "Les centres envoient des factures. Les parents paient avec Stripe Checkout. Interac est revu par le personnel. Plus parents est un abonnement KidEase distinct : pas les frais de garde.",
+    featPayBody:
+      "Les centres envoient des factures. Les parents paient avec Stripe Checkout. Un parent peut noter un virement Interac sur la page de paiement. Cette note reste en attente. La page ne peut pas la marquer payée. Plus parents est un abonnement KidEase distinct : pas les frais de garde.",
+    featPayBodyBills:
+      "Les centres envoient des factures. Les parents paient avec Stripe Checkout. Un parent peut noter un virement Interac sur la page de paiement. Cette note reste en attente. La page ne peut pas la marquer payée.",
     featSafe: "Conçu pour la LPRPDE",
     featSafeBody: "Les profils d’enfants restent entre vous et le centre contacté. Supprimez votre compte en tout temps.",
     onYourPhone: "Sur votre téléphone",
@@ -5987,6 +6004,8 @@ export const copy = {
     subsidyNoteQcNo: "La contribution réduite du Québec est de 9,65 $ par jour en 2026, et seulement dans les services subventionnés. Cette fiche n’est pas sur cette liste.",
     subsidyNoteReduced: "Ce programme figure pour une réduction territoriale des frais. 10 $ par jour est une moyenne ici, pas un plafond. Confirmez le tarif parental avec le centre.",
     bookTour: "Réserver une visite",
+    stickyInfo: "Infos",
+    stickyMessage: "Message",
     tourLead: "Choisissez un moment affiché. Ce n’est pas une demande d’inscription.",
     tourDefaultNote: "Je souhaite visiter le centre.",
     requestSentTitleTour: "Visite demandée",
@@ -6079,6 +6098,7 @@ export const copy = {
     clearCompare: "Effacer",
     compareTitle: "Comparer les centres",
     compareEmpty: "Comparez âges, heures, distance, langue, culture et places. Gratuit : 5 centres. Parent Plus : 10.",
+    compareEmptyFree: "Comparez âges, heures, distance, langue, culture et places.",
     noCompare: "Rien à comparer pour l’instant.",
     filterOpen: "Places ouvertes",
     filterWaitlist: "Liste d’attente",
@@ -7102,6 +7122,16 @@ export function parentPayEmptyKey(plansOn: boolean): CopyKey {
 /** Booking pay page. Plan sentences stay off unless subscriptions are on. */
 export function bookingPayLeadKey(plansOn: boolean): CopyKey {
   return plansOn ? "bookingPayLeadHonest" : "bookingPayLeadBills";
+}
+
+/** Compare page. Plan sentences stay off unless subscriptions are on. */
+export function compareEmptyKey(plansOn: boolean): CopyKey {
+  return plansOn ? "compareEmpty" : "compareEmptyFree";
+}
+
+/** Get the app payments card. Plan sentences stay off unless subscriptions are on. */
+export function featPayBodyKey(plansOn: boolean): CopyKey {
+  return plansOn ? "featPayBody" : "featPayBodyBills";
 }
 
 export function tx(locale: Locale, key: CopyKey): string {

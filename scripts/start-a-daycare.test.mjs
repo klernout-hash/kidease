@@ -51,7 +51,8 @@ test("Start a Daycare is one page with honesty first and live claim CTAs", () =>
   const copy = src("src/lib/copy.ts");
   assert.match(copy, /startADaycare: "Start a daycare"/);
   assert.match(copy, /startADaycare: "Ouvrir une garderie"/);
-  assert.match(copy, /enrollToday: "Enroll today!"/);
+  assert.match(copy, /enrollToday: "Enrol today!"/);
+  assert.doesNotMatch(copy, /or enroll if/);
   assert.match(copy, /createKideaseListing: "Create your KidEase listing"/);
   assert.match(copy, /Create your KidEase listing means claim or create/);
   assert.match(copy, /does not issue licences/);

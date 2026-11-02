@@ -1305,7 +1305,7 @@
   "featCentres": "Elenco di tutto il Canada",
   "featCentresBody": "Centri autorizzati in ogni provincia e territorio. Ogni scheda usa una foto della facciata dell'edificio, quando è possibile verificarne una.",
   "featPay": "Fatture nell'app",
-  "featPayBody": "I centri inviano le fatture. I genitori pagano con Stripe Checkout. Interac è verificato dal personale. Parent Plus è un abbonamento KidEase separato: non la retta del centro.",
+  "featPayBody": "I centri inviano le fatture. I genitori pagano con Stripe Checkout. Un genitore può annotare un trasferimento Interac nella pagina di pagamento. La nota resta in attesa. La pagina non può segnarla come pagata. Parent Plus è un abbonamento KidEase separato: non la retta del centro.",
   "featSafe": "Progettato per il PIPEDA",
   "featSafeBody": "I profili dei bambini restano con Lei e con il centro che contatta. Elimini il Suo account in qualsiasi momento.",
   "onYourPhone": "Sul telefono",
@@ -3301,5 +3301,13 @@
   "openPublicRegistry": "Apri il registro pubblico",
   "dataPointSource": "Fonte",
   "feeNoCheckDate": "Non è salvata una data di controllo separata.",
-  "ratioNotConfirmed": "Non confermato. KidEase non indovina questo rapporto."
+  "ratioNotConfirmed": "Non confermato. KidEase non indovina questo rapporto.",
+  "stickyInfo": "Info",
+  "stickyMessage": "Messaggio",
+  "agesFromProvince": "Le età arrivano dal registro della licenza provinciale.",
+  "agesFromProvinceLink": "Registro provinciale",
+  "storeComingSoonTitle": "App Store e Google Play arriveranno presto",
+  "storeComingSoonLead": "Le app non sono ancora negli store. Può aggiungere KidEase alla schermata Home da questa pagina.",
+  "featPayBodyBills": "I centri inviano le fatture. I genitori pagano con Stripe Checkout. Un genitore può annotare un trasferimento Interac nella pagina di pagamento. La nota resta in attesa. La pagina non può segnarla come pagata.",
+  "compareEmptyFree": "Confronti età, orari, distanza, lingua, cultura e posti liberi."
 }

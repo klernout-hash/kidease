@@ -3,7 +3,7 @@ import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
 const FACTS = `KidEase (kidease.ca) is a Canada-wide finder for provincially licensed daycares only. Founders Kyle Lernout and Kevin Lamont. Email ${SUPPORT_INBOX_EMAIL}.
 Parents: search by GPS or address/city/postal code, map + list, distance in km or miles, ages, $10-a-day / CWELCC badges, storefront photos, Request a spot, Book a tour, 💬 Contact, Save, Compare. Childcare Benefits Program at https://www.kidease.ca/benefits has every official provincial, territorial, and federal back-link. KidEase does not process subsidy, CWELCC, CCB, or tax-credit applications.
-Providers: Enroll Now / Claim listing, free, live spots and fees, storefront photo, priority listing (paid boost), in-app messages. Manual enroll form if the centre is not already in the catalogue.
+Providers: Enrol now / Claim listing, free, live spots and fees, storefront photo, priority listing (paid boost), in-app messages. Manual enrol form if the centre is not already in the catalogue.
 Fees: unclaimed listings say fee not confirmed: never invent a price. Live listings (claimed centres) show provider-entered monthly fees. $10-a-day is a government program at participating centres, not a KidEase discount.
 Privacy: PIPEDA. We do not sell data. Children’s details only for the parent and a centre they contact. Processors include Google Maps/Places, Better Auth / Google sign-in, Resend, Titan (operator mail), Vercel, Neon, Cloudflare when proxied, Stripe when enabled, PostHog when product analytics is allowed (page views and masked session replay: not ads). Location is GPS or typed address for distance search only: not shared with other parents, no background tracking. Cookie policy at /cookies. Website and the iPhone and Android app ask Essential or Allow analytics before PostHog loads. In the app, crash reports wait for the same Allow tap. No advertising trackers.
 App: website + iPhone + Android, same accounts.
@@ -14,8 +14,8 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
   {
     keys: ["enroll", "provider", "claim", "listing", "centre owner", "daycare owner", "partner"],
     lines: [
-      `If you run a licensed centre, tap Enroll Now (or Claim). Search your name in the catalogue of licensed centres. Not listed? Choose Enter name manually and send the form. It goes to ${SUPPORT_INBOX_EMAIL}. Claiming is free.`,
-      "Providers get a free landing page, proximity so nearby parents find you first, and in-app chat. Card payments are processed in the app through Stripe. Start at Enroll Now on the home page or kidease.ca/claim.",
+      `If you run a licensed centre, tap Enrol now (or Claim). Search your name in the catalogue of licensed centres. Not listed? Choose Enter name manually and send the form. It goes to ${SUPPORT_INBOX_EMAIL}. Claiming is free.`,
+      "Providers get a free landing page, proximity so nearby parents find you first, and in-app chat. Card payments are processed in the app through Stripe. Start at Enrol now on the home page or kidease.ca/claim.",
       "To show your centre to parents: claim your listing, add spots and monthly fees, and upload a storefront photo. Priority listing can pin you higher: that’s optional.",
     ],
   },
@@ -23,7 +23,7 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
     keys: ["start a daycare", "open a daycare", "ouvrir une garderie", "start daycare", "open daycare", "how to start"],
     lines: [
       "KidEase does not issue licences. Open a licensed daycare through your province or territory first: rules differ across Canada. The Start a Daycare page at kidease.ca/start-a-daycare walks through the high-level steps.",
-      "After you are licensed, claim or enroll at kidease.ca/claim so parents can find your fees and spots. Official registries are linked from How we verify listings and Daycare requirements.",
+      "After you are licensed, claim or enrol at kidease.ca/claim so parents can find your fees and spots. Official registries are linked from How we verify listings and Daycare requirements.",
     ],
   },
   {
@@ -77,7 +77,7 @@ const REPLIES: Array<{ keys: string[]; lines: string[] }> = [
   {
     keys: ["hello", "hi ", "hey", "bonjour", "thanks", "thank"],
     lines: [
-      "Hi: I can help you find licensed care near you, explain $10-a-day and provincial benefits, or help a centre enroll. What do you need?",
+      "Hi: I can help you find licensed care near you, explain $10-a-day and provincial benefits, or help a centre enrol. What do you need?",
       "Welcome to KidEase. Search nearby licensed daycares, or ask me about benefits, claiming a listing, or how spots work.",
     ],
   },
@@ -119,8 +119,8 @@ export function localHelpReply(userText: string, priorAssistant: string[]) {
   const q = userText.toLowerCase();
   const hit = REPLIES.find((r) => r.keys.some((k) => q.includes(k)));
   const pool = benefit ? [benefit.reply] : hit?.lines ?? [
-    "I can help you search licensed daycares near you, explain $10-a-day and provincial benefits, or enroll a centre. Tell me if you’re a parent or a provider, and your city.",
-    "Try Explore for centres by kilometre, or Childcare Benefits Program (kidease.ca/benefits) for every official subsidy link. If you run a daycare, use Enroll Now. What would you like to do?",
+    "I can help you search licensed daycares near you, explain $10-a-day and provincial benefits, or enrol a centre. Tell me if you’re a parent or a provider, and your city.",
+    "Try Explore for centres by kilometre, or Childcare Benefits Program (kidease.ca/benefits) for every official subsidy link. If you run a daycare, use Enrol now. What would you like to do?",
     "KidEase only lists provincially licensed care. Share your city or postal code and your child’s age and I’ll point you to the next step.",
   ];
   const unused = pool.filter((line) => !priorAssistant.some((p) => p.includes(line.slice(0, 40))));

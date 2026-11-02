@@ -1305,7 +1305,7 @@
   "featCentres": "加拿大全國目錄",
   "featCentresBody": "每個省同地區都有持牌中心。核實到嘅話，每份名單會用建築物嘅舖面相。",
   "featPay": "App 內賬單",
-  "featPayBody": "中心會出單。家長用 Stripe Checkout 付款。Interac 由職員審核。Parent Plus 係獨立嘅 KidEase 訂閱：唔係中心學費。",
+  "featPayBody": "中心發送賬單。家長用 Stripe Checkout 付款。家長可以喺付款頁記下 Interac 電子轉賬。呢條記錄會保持等待。付款頁唔可以標做已付。Parent Plus 係獨立嘅 KidEase 訂閱，唔係中心學費。",
   "featSafe": "為 PIPEDA 而設",
   "featSafeBody": "小朋友檔案只留喺你同你聯絡嘅中心。隨時可以刪除你嘅帳戶。",
   "onYourPhone": "喺手機上",
@@ -3301,5 +3301,13 @@
   "openPublicRegistry": "打開公開登記冊",
   "dataPointSource": "來源",
   "feeNoCheckDate": "冇另外保存核對日期。",
-  "ratioNotConfirmed": "未確認。KidEase 唔會估呢個比例。"
+  "ratioNotConfirmed": "未確認。KidEase 唔會估呢個比例。",
+  "stickyInfo": "查詢",
+  "stickyMessage": "訊息",
+  "agesFromProvince": "年齡來自省級牌照紀錄。",
+  "agesFromProvinceLink": "省級紀錄",
+  "storeComingSoonTitle": "App Store 同 Google Play 即將推出",
+  "storeComingSoonLead": "手機應用尚未上架。你可以喺呢頁把 KidEase 加到主畫面。",
+  "featPayBodyBills": "中心發送賬單。家長用 Stripe Checkout 付款。家長可以喺付款頁記下 Interac 電子轉賬。呢條記錄會保持等待。付款頁唔可以標做已付。",
+  "compareEmptyFree": "比較年齡、時間、距離、語言、文化和空位。"
 }

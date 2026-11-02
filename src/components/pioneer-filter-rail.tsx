@@ -19,10 +19,10 @@ export function PioneerFilterRail({
 }) {
   const { locale } = useCopy();
   const fr = locale === "fr";
-  const selected = new Set((value.lang || "").split(",").filter(Boolean));
+  const selected = new Set((value.spoken || "").split(",").filter(Boolean));
 
   function toggleFlag(key: keyof PioneerSearch) {
-    if (key === "lang") return;
+    if (key === "spoken") return;
     const on = value[key] === "1";
     onChange({ ...value, [key]: on ? undefined : "1" });
   }
@@ -32,7 +32,7 @@ export function PioneerFilterRail({
     if (next.has(code)) next.delete(code);
     else next.add(code);
     const lang = PIONEER_LANGS.filter((item) => next.has(item)).join(",");
-    onChange({ ...value, lang: lang || undefined });
+    onChange({ ...value, spoken: lang || undefined });
   }
 
   return (

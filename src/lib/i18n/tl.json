@@ -1305,7 +1305,7 @@
   "featCentres": "Directory sa buong Canada",
   "featCentresBody": "Mga licensed na centre sa bawat probinsya at teritoryo. Gumagamit ang bawat listing ng larawan ng storefront ng gusali kapag may ma-verify.",
   "featPay": "Bayarin sa app",
-  "featPayBody": "Nagpapadala ng bayarin ang mga centre. Nagbabayad ang mga magulang gamit ang Stripe Checkout. Sinusuri ng staff ang Interac. Ang Parent Plus ay hiwalay na subscription ng KidEase: hindi ito tuition ng centre.",
+  "featPayBody": "Nagpapadala ng bill ang mga sentro. Nagbabayad ang mga magulang gamit ang Stripe Checkout. Maaaring itala ng magulang ang Interac e-Transfer sa pahina ng bayad. Nanatiling naghihintay ang tala. Hindi ito mamarkahan ng pahina bilang bayad. Ang Parent Plus ay hiwalay na subscription ng KidEase: hindi ito tuition ng sentro.",
   "featSafe": "Ginawa para sa PIPEDA",
   "featSafeBody": "Ang mga profile ng bata ay nananatili sa iyo at sa centre na kinokontak mo. Burahin ang iyong account anumang oras.",
   "onYourPhone": "Sa telepono",
@@ -3301,5 +3301,13 @@
   "openPublicRegistry": "Buksan ang pampublikong rehistro",
   "dataPointSource": "Pinagmulan",
   "feeNoCheckDate": "Walang hiwalay na petsa ng pagsusuri na naka-save.",
-  "ratioNotConfirmed": "Hindi kumpirmado. Hindi hulaan ng KidEase ang ratio na ito."
+  "ratioNotConfirmed": "Hindi kumpirmado. Hindi hulaan ng KidEase ang ratio na ito.",
+  "stickyInfo": "Info",
+  "stickyMessage": "Mensahe",
+  "agesFromProvince": "Galing sa talaan ng lisensya ng lalawigan ang mga edad.",
+  "agesFromProvinceLink": "Talaan ng lalawigan",
+  "storeComingSoonTitle": "Malapit na ang App Store at Google Play",
+  "storeComingSoonLead": "Wala pa sa mga store ang mga app. Maaari ninyong idagdag ang KidEase sa home screen mula sa pahinang ito.",
+  "featPayBodyBills": "Nagpapadala ng bill ang mga sentro. Nagbabayad ang mga magulang gamit ang Stripe Checkout. Maaaring itala ng magulang ang Interac e-Transfer sa pahina ng bayad. Nanatiling naghihintay ang tala. Hindi ito mamarkahan ng pahina bilang bayad.",
+  "compareEmptyFree": "Ihambing ang edad, oras, distansya, wika, kultura, at mga bakanteng puwesto."
 }

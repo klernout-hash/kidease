@@ -9,6 +9,7 @@ import {
   parentScheduleLabel,
   safetyLabel,
 } from "@/lib/parent-listing";
+import { publicMonthlyFee } from "@/lib/listing-fee";
 import { formatMonthlyFee, listingFeeNotes, monthlyFeeVisible, partTimeMonthlyFee } from "@/lib/public-programs";
 import { standardAgeLabel } from "@/lib/standard-age-groups";
 import { listingSubsidy, subsidyLabel } from "@/lib/fee-program";
@@ -154,8 +155,8 @@ export function ListingProgramsTable({ item }: { item: Daycare }) {
                       : t("programsAsk")}
                   </td>
                   <td className="px-3 py-2 tabular-nums">
-                    {confidence !== "estimate" && monthlyFeeVisible(row.monthlyFee, item) && row.monthlyFee
-                      ? formatMonthlyFee(row.monthlyFee, locale)
+                    {confidence !== "estimate" && monthlyFeeVisible(publicMonthlyFee(row.monthlyFee, item), item) && publicMonthlyFee(row.monthlyFee, item)
+                      ? formatMonthlyFee(publicMonthlyFee(row.monthlyFee, item) as number, locale)
                       : t("programsAsk")}
                   </td>
                 </tr>
@@ -167,7 +168,9 @@ export function ListingProgramsTable({ item }: { item: Daycare }) {
                   </td>
                   <td className="px-3 py-2 text-muted">—</td>
                   <td className="px-3 py-2 tabular-nums">
-                    {confidence !== "estimate" && monthlyFeeVisible(partTime, item) ? formatMonthlyFee(partTime, locale) : t("programsAsk")}
+                    {confidence !== "estimate" && monthlyFeeVisible(publicMonthlyFee(partTime, item), item) && publicMonthlyFee(partTime, item)
+                      ? formatMonthlyFee(publicMonthlyFee(partTime, item) as number, locale)
+                      : t("programsAsk")}
                   </td>
                 </tr>
               ) : null}
