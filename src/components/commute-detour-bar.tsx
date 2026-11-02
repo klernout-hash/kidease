@@ -37,7 +37,7 @@ export function CommuteDetourBar() {
   }
 
   return (
-    <section className="mt-3 rounded-2xl bg-surface p-3 text-fg shadow-sm ring-1 ring-border" data-ke="commute-detour-bar">
+    <section className="relative z-0 mt-3 rounded-2xl bg-surface p-3 text-fg shadow-sm ring-1 ring-border" data-ke="commute-detour-bar">
       <p className="text-sm font-semibold text-fg">{fr ? "Détour sur votre trajet" : "Commute detour"}</p>
       <p className="mt-1 text-sm text-muted">
         {fr

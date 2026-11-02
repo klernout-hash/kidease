@@ -69,7 +69,7 @@ function socialLabel(idp: string, label: string, t: (key: "continueApple" | "con
   return label;
 }
 
-/** Apple, then Google, then Facebook. Same size on every sign-in and sign-up screen. */
+/** Apple, then Google when the flag is on, then Facebook. Same size on every sign-in and sign-up screen. */
 export function SocialSignInButtons({
   providers,
   disabled,

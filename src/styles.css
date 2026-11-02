@@ -479,14 +479,20 @@
   }
   .ke-explore-filter-sticky {
     position: sticky;
-    top: calc(3.2rem + env(safe-area-inset-top, 0px));
-    z-index: 10;
+    /* Phone search header is two rows (logo + care types). 3.2rem covered those tabs. */
+    top: var(--ke-header-h, calc(7.25rem + var(--ke-safe-top, env(safe-area-inset-top, 0px))));
+    z-index: 30;
     margin-inline: calc(-1 * clamp(12px, 3vw, 40px));
     padding-inline: clamp(12px, 3vw, 40px);
     padding-block: 0.2rem 0.3rem;
     background: color-mix(in oklab, var(--color-bg) 92%, transparent);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+  }
+  @media (min-width: 768px) {
+    .ke-explore-filter-sticky {
+      top: var(--ke-header-h, calc(4.25rem + var(--ke-safe-top, env(safe-area-inset-top, 0px))));
+    }
   }
   .ke-explore-filter-bar {
     display: flex;
@@ -2456,4 +2462,43 @@ html[data-resolved-theme="dark"] .ke-site-footer {
 }
 [data-sonner-toaster] {
   z-index: 100 !important;
+}
+
+/*
+  Phone search: the care-type row lives in the sticky header. The filter
+  strip sticks under that header, never over it. `relative` utilities must
+  not turn this back into an overlay.
+*/
+.ke-explore-filter-sticky {
+  position: sticky;
+  z-index: 30;
+  top: var(--ke-header-h, calc(7.25rem + var(--ke-safe-top, env(safe-area-inset-top, 0px))));
+}
+@media (min-width: 768px) {
+  .ke-explore-filter-sticky {
+    top: var(--ke-header-h, calc(4.25rem + var(--ke-safe-top, env(safe-area-inset-top, 0px))));
+  }
+}
+
+@media (max-width: 767px) {
+  /* Scroll rows end before the help button. The rest of the page stays full width. */
+  html:has(.ke-help-bot) .ke-explore-filter-bar,
+  html:has(.ke-help-bot) .ke-rail,
+  html:has(.ke-help-bot) .ke-listing-jump,
+  html:has(.ke-help-bot) [data-ke="daycare-type-menu"],
+  html:has(.ke-help-bot) [data-ke="pioneer-filter-rail"],
+  html:has(.ke-help-bot) [data-ke="text-size"] {
+    width: calc(100% - 6.25rem);
+    max-width: calc(100% - 6.25rem);
+  }
+  html:has(.ke-help-bot):has([data-ke="listing-sticky-bar"]) .ke-page > article {
+    padding-inline-end: 6.25rem;
+  }
+  html:has(.ke-help-bot) .ke-help-bot {
+    bottom: calc(var(--ke-help-clear, 5.75rem) + var(--ke-keyboard, 0px));
+  }
+  /* An open More menu stays above the help button and the sticky actions. */
+  html:has([data-ke="listing-more"] [role="menu"]) .ke-help-bot {
+    z-index: 15;
+  }
 }

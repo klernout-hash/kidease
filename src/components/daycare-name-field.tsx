@@ -84,7 +84,7 @@ export function DaycareNameField({
         <div
           id={listId}
           data-ke="daycare-name-hits"
-          className="absolute left-0 top-[calc(100%+0.75rem)] z-[80] max-h-80 w-[min(24rem,calc(100vw-2rem))] overflow-auto rounded-2xl bg-surface py-2 shadow-lift ring-1 ring-border"
+          className="absolute left-0 top-[calc(100%+0.75rem)] z-30 max-h-80 w-[min(24rem,calc(100vw-2rem))] overflow-auto rounded-2xl bg-surface py-2 shadow-lift ring-1 ring-border max-md:static max-md:inset-auto max-md:z-auto max-md:mt-2 max-md:w-full"
         >
           {hits.length ? (
             <ul>

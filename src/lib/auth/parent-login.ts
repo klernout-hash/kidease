@@ -16,7 +16,7 @@ export function parentLoginSearch(next: string) {
 }
 
 /**
- * One-screen create-account (email or Google) for a high-intent moment.
+ * One-screen create-account for a high-intent moment.
  * Sign-in stays one tap away on the same page.
  */
 export function parentSignupSearch(next: string, why: SignupWhy) {

@@ -120,7 +120,7 @@ export function AppearanceControl({
         {t("textSize")}
       </p>
       <p className="mt-1 text-[13px] text-muted">{t("textSizeHint")}</p>
-      <div role="radiogroup" aria-labelledby="text-size-label" className="mt-3 flex h-11 overflow-hidden rounded-full bg-bg ring-1 ring-border">
+      <div role="radiogroup" aria-labelledby="text-size-label" data-ke="text-size" className="mt-3 flex h-11 overflow-hidden rounded-full bg-bg ring-1 ring-border">
         {TEXT_SCALES.map((scale) => {
           const on = textScale === scale;
           return (

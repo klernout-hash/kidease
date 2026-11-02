@@ -74,7 +74,7 @@ export function DualAnchorBar({
       </div>
       {showWork ? (
         <form
-          className="relative z-40 flex min-h-12 min-w-0 items-center gap-1.5 overflow-visible rounded-full bg-surface pl-3 pr-1.5 shadow-card ring-1 ring-border"
+          className="relative z-30 flex min-h-12 min-w-0 items-center gap-1.5 overflow-visible rounded-full bg-surface pl-3 pr-1.5 shadow-card ring-1 ring-border"
           onSubmit={(e) => {
             e.preventDefault();
             void resolveWork(workQuery);
