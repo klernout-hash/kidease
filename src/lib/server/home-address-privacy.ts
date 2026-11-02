@@ -6,7 +6,6 @@
  */
 
 import { createServerFn } from "@tanstack/react-start";
-import { getSessionUser } from "@/lib/auth/verify.server";
 import { getSql, type Sql } from "@/lib/db";
 import {
   addressLineForViewer,
@@ -42,6 +41,7 @@ export {
 
 export async function loadHomeViewer(): Promise<HomeViewer> {
   try {
+    const { getSessionUser } = await import("@/lib/auth/verify.server");
     const user = await getSessionUser();
     if (!user?.id) return GUEST_HOME_VIEWER;
     const sql = await getSql();
