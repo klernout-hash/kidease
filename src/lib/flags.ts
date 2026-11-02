@@ -78,6 +78,9 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_VOICE",
   "FEATURE_PICKUP_CONTACTS",
   "FEATURE_PARENT_AGREEMENT",
+  "FEATURE_WAITLIST_TOOLS",
+  "FEATURE_AGE_OPEN_SPOTS",
+  "FEATURE_CHILD_CHECKIN",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -223,6 +226,12 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_PICKUP_CONTACTS: false,
   /** Parent and centre enrolment agreement. Off. Also needs FEATURE_ENROLMENT_ESIGN. */
   FEATURE_PARENT_AGREEMENT: false,
+  /** Rank a waitlist, then offer a spot. Off. No fee. */
+  FEATURE_WAITLIST_TOOLS: false,
+  /** Post open spots by age group and tell matching families. Off. */
+  FEATURE_AGE_OPEN_SPOTS: false,
+  /** Timestamped child check-in and check-out. Off. No photo. */
+  FEATURE_CHILD_CHECKIN: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -630,6 +639,27 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Parent and centre enrolment agreement. Default off. Also needs FEATURE_ENROLMENT_ESIGN. DocuSign sends only when the director clicks. The fee stays inside the agreement.",
+  },
+  {
+    key: "FEATURE_WAITLIST_TOOLS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Daycare ranks a waitlist and the parent sees that place. Default off. Offer, accept, and decline stay. No waitlist fee.",
+  },
+  {
+    key: "FEATURE_AGE_OPEN_SPOTS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Daycare posts open spots by age group. Matching saved and waitlisted parents are told through the existing mail and push path. Default off. No checkout.",
+  },
+  {
+    key: "FEATURE_CHILD_CHECKIN",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Daycare desk records child arrival and pickup with a time. Uses pickup people when the parent already listed them. Parent sees the history. Default off. No photo.",
   },
 ];
 

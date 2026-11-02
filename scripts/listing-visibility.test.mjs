@@ -169,7 +169,10 @@ test("the store-review demo stays on the owner's desk and off public search", ()
   assert.equal(deskWaitlistVisible(demo, reviewer, false), true);
   assert.equal(deskWaitlistVisible(demo, stranger, false), false);
   const provider = readFileSync(new URL("../src/routes/provider.tsx", import.meta.url), "utf8");
-  assert.match(provider, /const deskListings = listings/);
+  assert.match(
+    provider,
+    /const deskListings = focusedId \? listings\.filter\(\(row\) => row\.id === focusedId\) : listings/,
+  );
   assert.doesNotMatch(provider, /listings\.filter\(\(d\) => !isAdminOnlyListing\(d\)\)/);
   assert.match(provider, /Today, listings, tours/);
 });

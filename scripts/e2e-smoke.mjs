@@ -33,6 +33,7 @@ import {
   DEFAULT_PREVIEW_ORIGIN,
   FR_CITY_HUB_SLUGS,
   frenchCityHubSsrOk,
+  gapJobsPageOk,
   homepageLooksLive,
   loginPageLooksLive,
   ciPlaywrightRetries,
@@ -1739,6 +1740,21 @@ try {
   const loginHtml = /noindex/i.test(robotsMeta) ? "" : await page.content().catch(() => "");
   const robots = `${robotsMeta}\n${loginHtml}`;
   record("login-noindex", /noindex/i.test(robots), { note: robotsMeta || "html" });
+  const jobsResp = await page.goto(new URL("/jobs", base).href, {
+    waitUntil: "domcontentloaded",
+    timeout: timeoutMs,
+  });
+  const jobsText = await page.locator("body").innerText().catch(() => "");
+  const jobsCheck = gapJobsPageOk({ status: jobsResp?.status() ?? 0, bodyText: jobsText });
+  const overflow = async () => page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
+  const wideOverflow = await overflow();
+  await page.setViewportSize({ width: 390, height: 844 });
+  const narrowOverflow = await overflow();
+  await page.setViewportSize({ width: 1280, height: 800 });
+  record("gap-jobs", jobsCheck.ok && !wideOverflow && !narrowOverflow, {
+    note: jobsCheck.ok ? "390 and 1280" : jobsCheck.reason,
+    status: jobsResp?.status() ?? 0,
+  });
   for (const privatePath of ["/signup", "/forgot-password", "/reset-password", "/offer/e2e-token", "/sign/e2e-id", "/gov/login", "/fr/gov/login"]) {
     const resp = await page.request.get(new URL(privatePath, base).href).catch(() => null);
     const html = (await resp?.text().catch(() => "")) || "";

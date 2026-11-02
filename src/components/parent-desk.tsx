@@ -9,6 +9,8 @@ import { ParentShortlist } from "@/components/parent-shortlist";
 import { StatusBadge } from "@/components/status-badge";
 import { LedgerHonesty } from "@/components/listing-status-badge";
 import { TaxReceiptStudio } from "@/components/tax-receipt-studio";
+import { EceJobDesk } from "@/components/ece-job-desk";
+import { ChildCheckHistory } from "@/components/child-checkin-desk";
 import { ChildCareCard } from "@/components/child-care-card";
 import { CoparentDesk } from "@/components/coparent-desk";
 import { ChildAgreementFile } from "@/components/parent-agreement-panel";
@@ -469,6 +471,7 @@ export function ParentDesk({
       </p>
 
       {contentTab === "explore" ? (
+        <>
         <ParentHome
           saved={saved}
           bookings={bookings}
@@ -486,6 +489,8 @@ export function ParentDesk({
               .catch(() => setUpgradeDismissed(false));
           }}
         />
+        <EceJobDesk mode="parent" />
+        </>
       ) : null}
 
       {contentTab === "saved" ? (
@@ -519,6 +524,7 @@ export function ParentDesk({
         <div className="mt-6">
           <Suspense fallback={<div className="ke-skel mt-6 h-40 rounded-xl" aria-hidden="true" />}>
             <DailyCareDesk role="parent" />
+            <ChildCheckHistory />
           </Suspense>
         </div>
       ) : null}

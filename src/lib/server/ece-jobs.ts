@@ -5,9 +5,11 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
 import { getSql } from "@/lib/db";
 import { cleanEceNote, cleanEceRole, ecePostReady } from "@/lib/ece-jobs";
 import { eceJobsEnabled } from "@/lib/features";
+import { canadaProvinceCode, jobAppStatus, jobPostStatus, provinceBucket, staffingShortage } from "@/lib/gap-features";
 import { nid } from "@/lib/utils";
 import { listAccessibleDaycareIds } from "./centre-access";
 
@@ -31,9 +33,29 @@ export const listPublicEceJobs = createServerFn({ method: "GET" }).handler(async
     where coalesce(d.visibility, 'public') = 'public'
       and coalesce(d.is_test, 0) = 0
       and coalesce(d.is_demo, 0) = 0
+      and coalesce(j.status, 'open') = 'open'
     order by j.created_at desc
     limit 40
-  `.catch(() => []);
+  `.catch(() =>
+    sql<{
+      id: string;
+      role: string;
+      note: string;
+      daycare_id: string;
+      name: string;
+      slug: string;
+      city: string | null;
+    }>`
+      select j.id, j.role, j.note, j.daycare_id, d.name, d.slug, d.city
+      from centre_job_posts j
+      join daycares d on d.id = j.daycare_id
+      where coalesce(d.visibility, 'public') = 'public'
+        and coalesce(d.is_test, 0) = 0
+        and coalesce(d.is_demo, 0) = 0
+      order by j.created_at desc
+      limit 40
+    `.catch(() => []),
+  );
   return rows.map((row) => ({
     id: row.id,
     role: row.role,
@@ -142,4 +164,148 @@ export const listMyCentresForJobs = createServerFn({ method: "GET" })
       )
       .catch(() => []);
     return rows;
+  });
+
+export const listManagedEceJobs = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    if (!eceJobsEnabled()) return { enabled: false as const, posts: [], applicants: [] };
+    const sql = await getSql();
+    const centres = await listAccessibleDaycareIds(sql, context.userId);
+    if (!centres.length) return { enabled: true as const, posts: [], applicants: [] };
+    const posts = await sql
+      .query<{
+        id: string;
+        role: string;
+        note: string;
+        status: string | null;
+        daycare_id: string;
+        name: string;
+        city: string | null;
+      }>(
+        `select j.id, j.role, j.note, j.status, j.daycare_id, d.name, d.city
+         from centre_job_posts j
+         join daycares d on d.id = j.daycare_id
+         where j.daycare_id = any($1::text[])
+         order by j.created_at desc
+         limit 40`,
+        [centres],
+      )
+      .catch(() => []);
+    const applicants = await sql
+      .query<{
+        id: string;
+        job_id: string;
+        role: string;
+        name: string;
+        email: string;
+        note: string;
+        status: string | null;
+        centre: string;
+      }>(
+        `select a.id, a.job_id, j.role, a.name, a.email, a.note, a.status, d.name as centre
+         from job_applications a
+         join centre_job_posts j on j.id = a.job_id
+         join daycares d on d.id = a.daycare_id
+         where a.daycare_id = any($1::text[])
+         order by a.created_at desc
+         limit 80`,
+        [centres],
+      )
+      .catch(() => []);
+    return {
+      enabled: true as const,
+      posts: posts.map((row) => ({
+        id: row.id,
+        role: row.role,
+        note: row.note,
+        status: jobPostStatus(row.status),
+        daycareId: row.daycare_id,
+        name: row.name,
+        city: row.city || "",
+      })),
+      applicants: applicants.map((row) => ({
+        id: row.id,
+        jobId: row.job_id,
+        role: row.role,
+        name: row.name,
+        email: row.email,
+        note: row.note,
+        status: jobAppStatus(row.status),
+        centre: row.centre,
+      })),
+    };
+  });
+
+export const setEceJobStatus = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { jobId?: string; status?: string }) => ({
+    jobId: String(input?.jobId || "").trim(),
+    status: input?.status === "closed" ? "closed" : "open",
+  }))
+  .handler(async ({ context, data }) => {
+    if (!eceJobsEnabled()) return { ok: false as const, reason: "off" as const };
+    if (!data.jobId) throw new Error("That role is not posted");
+    const sql = await getSql();
+    const centres = await listAccessibleDaycareIds(sql, context.userId);
+    const rows = await sql<{ daycare_id: string }>`
+      select daycare_id from centre_job_posts where id = ${data.jobId} limit 1
+    `;
+    if (!rows[0] || !centres.includes(rows[0].daycare_id)) throw new Error("That centre is not on this account");
+    await sql`update centre_job_posts set status = ${data.status} where id = ${data.jobId}`;
+    return { ok: true as const };
+  });
+
+export const setEceApplicationStatus = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { applicationId?: string; status?: string }) => ({
+    applicationId: String(input?.applicationId || "").trim(),
+    status: jobAppStatus(input?.status),
+  }))
+  .handler(async ({ context, data }) => {
+    if (!eceJobsEnabled()) return { ok: false as const, reason: "off" as const };
+    if (!data.applicationId) throw new Error("That application is not here");
+    const sql = await getSql();
+    const centres = await listAccessibleDaycareIds(sql, context.userId);
+    const rows = await sql<{ daycare_id: string }>`
+      select daycare_id from job_applications where id = ${data.applicationId} limit 1
+    `;
+    if (!rows[0] || !centres.includes(rows[0].daycare_id)) throw new Error("That centre is not on this account");
+    await sql`update job_applications set status = ${data.status} where id = ${data.applicationId}`;
+    return { ok: true as const };
+  });
+
+/** Province counts only. Names and emails stay off this response. */
+export const listJobShortage = createServerFn({ method: "GET" })
+  .middleware([govAuthMiddleware])
+  .validator((input: { province?: string } | undefined) => ({
+    province: canadaProvinceCode(input?.province) ?? "",
+  }))
+  .handler(async ({ data }) => {
+    if (!eceJobsEnabled()) {
+      return { enabled: false as const, province: data.province, openJobs: 0, centres: 0 };
+    }
+    const sql = await getSql();
+    const rows = await sql<{ province: string | null; open_jobs: number; centres: number }>`
+      select upper(coalesce(d.province, '')) as province,
+             count(*)::int as open_jobs,
+             count(distinct j.daycare_id)::int as centres
+      from centre_job_posts j
+      join daycares d on d.id = j.daycare_id
+      where coalesce(j.status, 'open') = 'open'
+        and coalesce(d.is_test, 0) = 0
+        and coalesce(d.is_demo, 0) = 0
+      group by 1
+    `.catch(() => []);
+    const buckets = new Map<string, { province: string; openJobs: number; centres: number }>();
+    for (const row of rows) {
+      const province = provinceBucket(row.province);
+      if (!province) continue;
+      const current = buckets.get(province) ?? { province, openJobs: 0, centres: 0 };
+      current.openJobs += Number(row.open_jobs) || 0;
+      current.centres += Number(row.centres) || 0;
+      buckets.set(province, current);
+    }
+    const tally = staffingShortage([...buckets.values()], data.province);
+    return { enabled: true as const, ...tally };
   });

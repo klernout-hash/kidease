@@ -354,6 +354,21 @@ export function parentAgreementEnabled(env?: EnvMap): boolean {
   return enrolmentEsignEnabled(env) && evaluateFeatureFlag("FEATURE_PARENT_AGREEMENT", env);
 }
 
+/** Daycare waitlist rank and the place a parent sees. Default off. No fee. */
+export function waitlistToolsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_WAITLIST_TOOLS", env);
+}
+
+/** Post open spots by age group. Mail and push still use their own flags. Default off. */
+export function ageOpenSpotsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_AGE_OPEN_SPOTS", env);
+}
+
+/** Timestamped arrival and pickup on the daycare desk. Default off. No photo. */
+export function childCheckinEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_CHILD_CHECKIN", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;
