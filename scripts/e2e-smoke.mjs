@@ -105,15 +105,28 @@ async function setFixture(context, base, { role, plan, own, activity, attention 
   return res;
 }
 
-/** A desk redirect can abort goto. Try again once the page has settled. */
+/** A desk redirect can abort goto. Stop the old load and try again. */
 async function gotoSettled(page, url) {
-  for (let attempt = 0; attempt < 3; attempt += 1) {
+  let targetPath = "";
+  try {
+    targetPath = new URL(url).pathname;
+  } catch {
+    targetPath = "";
+  }
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    await page.evaluate(() => window.stop()).catch(() => {});
     try {
       return await page.goto(url, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      if (!/interrupted|ERR_ABORTED/i.test(message) || attempt === 2) throw err;
-      await page.waitForLoadState("domcontentloaded").catch(() => {});
+      let landed = false;
+      try {
+        landed = Boolean(targetPath) && new URL(page.url()).pathname === targetPath;
+      } catch {
+        landed = false;
+      }
+      if (landed) return null;
+      if (!/interrupted|ERR_ABORTED|ECONNRESET/i.test(message) || attempt === 3) throw err;
     }
   }
   return null;
@@ -641,7 +654,7 @@ async function runRoleFixture(page, base) {
 
     await page.setViewportSize({ width: 1280, height: 900 });
     await setFixture(context, base, { role: "parent" });
-    await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await gotoSettled(page, new URL("/parent", base).href);
     await page.locator('[data-ke="parent-home"]').waitFor({ timeout: timeoutMs });
     await openAccountGroup(page, '[data-ke="desk-desktop-nav"]');
     const parentHeaderUpgrade = ((await page.locator('[data-ke="desk-desktop-nav"] [data-nav="upgrade"]:visible').first().innerText().catch(() => "")) || "").trim();
@@ -653,7 +666,7 @@ async function runRoleFixture(page, base) {
     if ((await deskPlus.count()) > 0) await deskPlus.click();
     const parentDeskReached = Boolean(await parentDeskHit);
     await settleMockCheckout(page);
-    await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await gotoSettled(page, new URL("/parent", base).href);
     await openHeaderMenu(page);
     await clickDrawerUpgrade(page);
     await page.waitForURL(/tab=subscription/i, { timeout: timeoutMs }).catch(() => {});
