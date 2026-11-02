@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { googleSignInEnabled, googleSignInOffered } from "../src/lib/auth/google-login-flag.ts";
 import { visibleSignInProviders, NATIVE_GOOGLE, GROK_PROVIDERS } from "../src/lib/auth/providers.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -116,6 +117,78 @@ describe("native Google auth (Better Auth socialProviders.google)", () => {
       bothPreferBroker.filter((p) => p.idp === "google"),
       [brokerGoogle],
     );
+  });
+
+  it("hides Continue with Google until GOOGLE_SIGNIN_ENABLED is on", () => {
+    assert.equal(googleSignInEnabled({}), false);
+    assert.equal(googleSignInEnabled({ GOOGLE_SIGNIN_ENABLED: "0" }), false);
+    assert.equal(googleSignInEnabled({ GOOGLE_SIGNIN_ENABLED: "off" }), false);
+    assert.equal(
+      googleSignInEnabled({ GOOGLE_CLIENT_ID: "id", GOOGLE_CLIENT_SECRET: "secret" }),
+      false,
+    );
+    assert.equal(googleSignInEnabled({ GOOGLE_SIGNIN_ENABLED: "1" }), true);
+    assert.equal(googleSignInEnabled({ GOOGLE_SIGNIN_ENABLED: "true" }), true);
+
+    const creds = {
+      GOOGLE_CLIENT_ID: "id",
+      GOOGLE_CLIENT_SECRET: "secret",
+      GROK_AUTH_CLIENT_ID: "grok",
+      GROK_AUTH_CLIENT_SECRET: "grok-secret",
+      VERCEL: "1",
+    };
+    assert.deepEqual(googleSignInOffered(creds), { native: false, broker: false });
+    assert.deepEqual(googleSignInOffered({ ...creds, GOOGLE_SIGNIN_ENABLED: "1" }), {
+      native: true,
+      broker: true,
+    });
+    assert.deepEqual(googleSignInOffered({ GOOGLE_SIGNIN_ENABLED: "1" }), {
+      native: false,
+      broker: true,
+    });
+    assert.deepEqual(googleSignInOffered({ GOOGLE_SIGNIN_ENABLED: "1", VERCEL: "1" }), {
+      native: false,
+      broker: false,
+    });
+
+    const hidden = googleSignInOffered(creds);
+    assert.deepEqual(
+      visibleSignInProviders({
+        nativeGoogle: hidden.native,
+        broker: hidden.broker,
+        nativeApple: true,
+        nativeFacebook: true,
+      }).map((provider) => provider.idp),
+      ["apple", "facebook"],
+    );
+
+    const shown = googleSignInOffered({ ...creds, GOOGLE_SIGNIN_ENABLED: "1" });
+    assert.deepEqual(
+      visibleSignInProviders({
+        nativeGoogle: shown.native,
+        broker: shown.broker,
+        preferNativeGoogle: true,
+        nativeApple: true,
+        nativeFacebook: true,
+      }).map((provider) => provider.idp),
+      ["apple", "google", "facebook"],
+    );
+
+    const example = read(".env.example");
+    const loader = read("src/lib/server/sign-in-providers.ts");
+    const server = read("src/lib/auth/server.ts");
+    assert.match(example, /^GOOGLE_SIGNIN_ENABLED=0$/m);
+    assert.doesNotMatch(example, /^GOOGLE_SIGNIN_ENABLED=1$/m);
+    assert.match(example, /^GOOGLE_CLIENT_ID=$/m);
+    assert.match(example, /^GOOGLE_CLIENT_SECRET=$/m);
+    assert.match(example, /^FEATURE_GOOGLE_MAPS=0$/m);
+    assert.match(example, /^# VITE_GOOGLE_MAPS_API_KEY=$/m);
+    assert.doesNotMatch(read("src/lib/flags.ts"), /GOOGLE_SIGNIN_ENABLED/);
+    assert.match(loader, /googleSignInOffered/);
+    assert.match(server, /googleSignInEnabled/);
+    assert.match(read("src/lib/auth/native-oauth-return.server.ts"), /googleSignInEnabled/);
+    assert.match(read("src/components/help-bot.tsx"), /data-ke="help-launcher"/);
+    assert.match(read("src/lib/auth/providers.ts"), /SOCIAL_SIGN_IN_ORDER = \["apple", "google", "facebook"\]/);
   });
 
   it("does not commit Google or Better Auth secrets", () => {

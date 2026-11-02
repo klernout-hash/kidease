@@ -7,6 +7,7 @@ import {
   SHARED_SESSION_TOKEN_COOKIE,
   unsignedSessionToken,
 } from "./cookies";
+import { googleSignInEnabled } from "./google-login-flag";
 import {
   nativeAuthFinishUrl,
   nativeOAuthProvider,
@@ -53,7 +54,9 @@ export async function handleNativeAuthStart(request: Request): Promise<Response>
   const next = safeInAppPath(url.searchParams.get("next"));
   const errorNext = safeInAppPath(url.searchParams.get("errorNext") || next);
   const newUser = url.searchParams.get("newUser");
-  if (!provider) return redirect(nativeAuthFinishUrl({ next: errorNext, error: "oauth_provider_not_found" }));
+  if (!provider || (provider === "google" && !googleSignInEnabled(process.env))) {
+    return redirect(nativeAuthFinishUrl({ next: errorNext, error: "oauth_provider_not_found" }));
+  }
   try {
     const { auth } = await import("./server");
     const apiRes = await auth.api.signInSocial({

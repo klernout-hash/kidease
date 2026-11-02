@@ -84,7 +84,7 @@ export function socialProviderLabels(providers: string[]): string[] {
 export function oauthOnlyMessage(providers: string[] = []): string {
   const labels = socialProviderLabels(providers);
   const via = labels.length ? ` (${labels.join(", ")})` : "";
-  return `This email is registered with Apple, Google, or Facebook${via}: use that button, or set a password from Forgot password.`;
+  return `This email is registered with Apple, Facebook, or Google${via}. Set a password from Forgot password, or use a button on this page.`;
 }
 
 export function classifyEmailAccounts(
@@ -101,7 +101,7 @@ export function classifyEmailAccounts(
 
 export function messageForEmailAccount(explanation: EmailSignInExplanation): string {
   if (explanation.kind === "missing") {
-    return "No KidEase account uses that email. Create one, or try Apple / Google / Facebook.";
+    return "No KidEase account uses that email. Create one with email, or try Apple or Facebook.";
   }
   if (explanation.kind === "oauth_only") {
     return oauthOnlyMessage(explanation.providers);
@@ -207,7 +207,7 @@ export function friendlyAuthError(
     return "An account with that email already exists. Sign in instead.";
   }
   if (raw.includes("email_not_found") || raw.includes("email is missing") || raw.includes("email_is_missing")) {
-    return "That sign-in method did not share an email. Try Google or email instead.";
+    return "That sign-in method did not share an email. Use the email form on this page.";
   }
   if (raw.includes("popup")) {
     return "Pop-up blocked: allow pop-ups for KidEase, then try again.";
@@ -219,7 +219,7 @@ export function friendlyAuthError(
     (raw.includes("client_id") || (raw.includes("apple") && raw.includes("secret"))) ||
     (raw.includes("provider") && raw.includes("not found"))
   ) {
-    return "That sign-in method is not configured on this host. Use email or Google.";
+    return "That sign-in method is not configured on this host. Use email.";
   }
   if (
     raw.includes("not configured") ||
