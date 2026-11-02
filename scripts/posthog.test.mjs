@@ -290,9 +290,14 @@ describe("PostHog client wiring", () => {
     assert.doesNotMatch(banner, /\[\[data-channel=app\]_&\]:hidden/);
     assert.match(start, /shouldStartPostHog\(\)/);
     assert.match(copy, /cookieConsentEssential: "Essential"/);
-    assert.match(copy, /cookieConsentAllow: "Allow analytics"/);
+    assert.match(copy, /cookieConsentAllow: "Allow analytics so we can improve KidEase"/);
     assert.match(copy, /cookieConsentEssential: "Essentiel"/);
-    assert.match(copy, /cookieConsentAllow: "Autoriser l’analytique"/);
+    assert.match(copy, /cookieConsentAllow: "Autoriser l’analytique pour améliorer KidEase"/);
+    assert.ok(banner.indexOf('data-ke="cookie-allow"') < banner.indexOf('data-ke="cookie-essential"'));
+    assert.match(banner, /variant="primary"/);
+    assert.match(banner, /min-h-14/);
+    assert.match(banner, /min-h-11/);
+    assert.doesNotMatch(banner, /type="checkbox"/);
     assert.match(legal, /Allow analytics/);
     assert.match(legal, /Autoriser l’analytique/);
     assert.doesNotMatch(legal, /does not show a cookie banner/);

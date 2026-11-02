@@ -20,7 +20,7 @@ import {
   type GhlIntakeAudience,
   type GhlIntakeTrigger,
 } from "./ghl-intake.ts";
-import { isStoreReviewerEmail } from "./reviewer-accounts.ts";
+import { isStoreReviewerEmail, logStoreReviewerSignupSkip } from "./reviewer-accounts.ts";
 import { runtimeProcessEnv, type EnvMap } from "./runtime-env.ts";
 
 export const GHL_API_BASE = "https://services.leadconnectorhq.com";
@@ -292,6 +292,7 @@ export async function postGhlCrmSignup(input: {
       return { ok: true, skipped: true, reason: "no-email" };
     }
     if (isStoreReviewerEmail(email)) {
+      logStoreReviewerSignupSkip(ghlAudienceForTrigger(input.trigger), email);
       return { ok: true, skipped: true, reason: "reviewer-account" };
     }
     const fetchImpl = input.fetchImpl ?? fetch;

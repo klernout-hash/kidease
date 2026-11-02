@@ -58,6 +58,37 @@ test("store reviewer emails are not posted to GoHighLevel", async () => {
   assert.equal(fetches, 0);
 });
 
+test("a skipped store reviewer signup logs the role and domain, not the address", async () => {
+  const logs = [];
+  const original = console.info;
+  console.info = (line) => logs.push(String(line));
+  try {
+    const parent = await postGhlSignupIntake({
+      trigger: "parent_signup",
+      email: "reviewer.parent@kidease.ca",
+      env: { GHL_WEBHOOK_PARENT_ONBOARD_URL: "https://example.com/parent" },
+      fetchImpl: async () => new Response("ok", { status: 200 }),
+    });
+    const daycare = await postGhlSignupIntake({
+      trigger: "provider_signup",
+      email: "reviewer.daycare@kidease.ca",
+      env: { GHL_WEBHOOK_DAYCARE_SIGNUP_URL: "https://example.com/daycare" },
+      fetchImpl: async () => new Response("ok", { status: 200 }),
+    });
+    assert.equal(parent.reason, "reviewer-account");
+    assert.equal(daycare.reason, "reviewer-account");
+  } finally {
+    console.info = original;
+  }
+  const parsed = logs.map((line) => JSON.parse(line));
+  assert.equal(parsed[0].reason, "store_reviewer_skip");
+  assert.equal(parsed[0].role, "parent");
+  assert.equal(parsed[0].email_domain, "kidease.ca");
+  assert.equal(parsed[1].role, "daycare");
+  assert.equal(logs.join("\n").includes("reviewer.parent"), false);
+  assert.equal(logs.join("\n").includes("reviewer.daycare@"), false);
+});
+
 test("FEATURE_GHL_INTAKE=0 disables POSTs even when URLs are set", async () => {
   const env = {
     FEATURE_GHL_INTAKE: "0",

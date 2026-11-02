@@ -275,6 +275,33 @@ test("test listings still sync and are tagged qa:test", async () => {
   assert.equal(opportunity.body.pipelineStageId, GHL_DEFAULT_DAYCARE_SIGNED_UP_STAGE_ID);
 });
 
+test("API skips a store reviewer and logs the domain, not the address", async () => {
+  const logs = [];
+  const original = console.info;
+  console.info = (line) => logs.push(String(line));
+  let fetches = 0;
+  try {
+    const result = await postGhlCrmSignup({
+      trigger: "parent_signup",
+      email: "reviewer-parent@kidease.ca",
+      env: { GHL_API_TOKEN: "pit-test" },
+      fetchImpl: async () => {
+        fetches += 1;
+        return jsonResponse({});
+      },
+    });
+    assert.deepEqual(result, { ok: true, skipped: true, reason: "reviewer-account" });
+  } finally {
+    console.info = original;
+  }
+  assert.equal(fetches, 0);
+  const line = JSON.parse(logs[0]);
+  assert.equal(line.reason, "store_reviewer_skip");
+  assert.equal(line.role, "parent");
+  assert.equal(line.email_domain, "kidease.ca");
+  assert.equal(logs[0].includes("reviewer-parent"), false);
+});
+
 test("docs keep Signed up as the only automatic stage", () => {
   const example = src(".env.example");
   const api = src("src/lib/ghl-api.ts");
