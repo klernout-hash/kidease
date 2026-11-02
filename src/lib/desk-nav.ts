@@ -226,9 +226,8 @@ type DeskNavOpts = {
 };
 
 /**
- * Hide Upgrade and daycare Subscription unless SUBSCRIPTIONS_ENABLED is on.
- * Promote stays in the sidebar. The promote page itself still says plans are
- * not offered while pay buttons are off.
+ * Hide Upgrade, Subscription, and Promote unless paid plans are on.
+ * Promote also needs FEATURE_PROVIDER_SUBSCRIPTIONS. Both default off.
  */
 const OWNER_ONLY_NAV = new Set([
   "money",
@@ -247,7 +246,10 @@ export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
     if (item.devOnly && import.meta.env?.PROD === true) return false;
     if (item.id === "learning") return opts?.curriculumPack === true;
     if (item.id === "upgrade" || item.id === "subscription") return opts?.subscriptionsEnabled === true;
-    if (item.id === "promote") return opts?.centreOwner !== false;
+    if (item.id === "promote") {
+      if (opts?.centreOwner === false) return false;
+      return opts?.subscriptionsEnabled === true && opts?.providerSubscriptions === true;
+    }
     if (OWNER_ONLY_NAV.has(item.id) && opts?.centreOwner === false) return false;
     return true;
   });

@@ -28,6 +28,7 @@ export function RequestInfoSheet({ daycare, open, onClose }: Props) {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  const [threadId, setThreadId] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const sla = listingInfoSlaReady(daycare);
   const opened = useRef(false);
@@ -42,6 +43,7 @@ export function RequestInfoSheet({ daycare, open, onClose }: Props) {
     opened.current = true;
     if (justOpened) {
       setDone(false);
+      setThreadId("");
       setFormError(null);
     }
     if (user?.primaryEmail) setEmail((cur) => cur || user.primaryEmail || "");
@@ -72,7 +74,8 @@ export function RequestInfoSheet({ daycare, open, onClose }: Props) {
         listingName={name}
         city={daycare.city}
         photo={requestSentThumb(daycare.photos)}
-        canOpenMessages={Boolean(user)}
+        conversationId={threadId || null}
+        canOpenMessages={Boolean(user && threadId)}
         onClose={() => {
           setDone(false);
           onClose();
@@ -94,7 +97,7 @@ export function RequestInfoSheet({ daycare, open, onClose }: Props) {
     setBusy(true);
     setFormError(null);
     try {
-      await createInfoRequest({
+      const saved = await createInfoRequest({
         data: {
           daycareId: daycare.id,
           firstName: contact.firstName,
@@ -108,6 +111,7 @@ export function RequestInfoSheet({ daycare, open, onClose }: Props) {
       capturePostHogEvent("listing_request_submitted", { intent: "info" });
       await holdSendBeat();
       if (!send.live(token)) return;
+      setThreadId(saved.conversationId || "");
       setDone(true);
     } catch (err) {
       if (!send.live(token)) return;

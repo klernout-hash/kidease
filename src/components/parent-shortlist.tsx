@@ -17,7 +17,9 @@ import { inviteShortlistShare, leaveShortlistShare } from "@/lib/server/parent-t
 import { MAX_SHORTLIST_COMPARE, toggleCompareSelection } from "@/lib/shortlist";
 import { useAppStore } from "@/lib/store";
 import type { Booking, DaycareCard as Card, TourRequest } from "@/lib/types";
+import { parentListingFeesVisible } from "@/lib/public-fees";
 import { useCopy } from "@/lib/use-copy";
+import { useRoleChrome } from "@/components/role-chrome";
 import { useStoreChannel } from "@/lib/use-native-shell";
 import { StoreMapFallback } from "@/components/store-map-fallback";
 import { useParentPlusAccess } from "@/lib/use-parent-plus";
@@ -56,6 +58,7 @@ export function ParentShortlist({
     return rows.filter((item) => !isHiddenTestListing(item));
   }, [rawItems]);
   const { t, locale } = useCopy();
+  const feesOn = parentListingFeesVisible(useRoleChrome().subscriptionsEnabled);
   const storeChannel = useStoreChannel();
   const { plusOpen } = useParentPlusAccess();
   const leadKey = plusOpen ? "shortlistLeadOpen" : "shortlistLead";
@@ -246,7 +249,7 @@ export function ParentShortlist({
           ) : (
           <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
             <MapView
-              items={visible}
+              items={feesOn ? visible : visible.map((item) => ({ ...item, fromPrice: 0 }))}
               origin={
                 located && Number.isFinite(origin.lat)
                   ? { lat: origin.lat, lng: origin.lng }
@@ -286,7 +289,7 @@ export function ParentShortlist({
                 />
                 <TrustSignals item={item} surface="parent" compact />
               </div>
-              <DaycareCard item={item} showDistance={located} presentation="visual" />
+              <DaycareCard item={item} showDistance={located} presentation="visual" showFees={feesOn} />
               <SavedTrack
                 daycareId={item.id}
                 status={parseTrackStatus(item.trackStatus)}

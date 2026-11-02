@@ -44,7 +44,7 @@ test("SHOW_PAY_CTAS defaults off and SHOW_PAY_CTAS=1 restores", () => {
 test("env example keeps Stripe and turns pay chrome off", () => {
   const envExample = src(".env.example");
   assert.match(envExample, /^SHOW_PAY_CTAS=0$/m);
-  assert.match(envExample, /^FEATURE_PROVIDER_SUBSCRIPTIONS=1$/m);
+  assert.match(envExample, /^FEATURE_PROVIDER_SUBSCRIPTIONS=0$/m);
   assert.match(envExample, /^FEATURE_SMS=0$/m);
   assert.match(envExample, /^FEATURE_PUSH=0$/m);
   assert.match(envExample, /^FEATURE_VIDEO=0$/m);
@@ -97,8 +97,17 @@ test("public and desk chrome hide Upgrade / Subscribe unless flagged", () => {
   }).map((i) => i.id);
   assert.equal(nav.includes("promote"), true);
   assert.equal(nav.includes("subscription"), true);
+  const plansOff = visibleDeskNav("daycare", {
+    providerSubscriptions: false,
+    showPayCtas: false,
+    subscriptionsEnabled: false,
+    centreOwner: true,
+  }).map((i) => i.id);
+  assert.equal(plansOff.includes("promote"), false);
+  assert.equal(plansOff.includes("subscription"), false);
   const hidden = visibleDeskNav("daycare", { providerSubscriptions: true, showPayCtas: false }).map((i) => i.id);
   assert.equal(hidden.includes("subscription"), false);
+  assert.equal(hidden.includes("promote"), false);
   const on = visibleDeskNav("daycare", {
     providerSubscriptions: true,
     showPayCtas: true,

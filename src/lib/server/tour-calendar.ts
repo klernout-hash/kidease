@@ -7,6 +7,8 @@ import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { guestInfoUserId, normalizeInfoContact } from "@/lib/parent-listing";
 import { callerMayUseAdminOnlyListing } from "@/lib/server/public-listing";
 import { upsertDaycare } from "@/lib/server/seed";
+import { resolveActorUserId } from "@/lib/server/actor-user";
+import { saveParentInAppNotice } from "@/lib/server/parent-notice";
 import { centreCanAcceptInquiry } from "@/lib/server/provider-entitlements";
 import { lookupUser, notifyPlatform, notifyThreadParty } from "@/lib/server/notify";
 import { isCentreOwner, listCentreOwnerEmails } from "@/lib/server/thread-access";
@@ -338,8 +340,8 @@ export const bookTourSlot = createServerFn({ method: "POST" })
     const gate = await centreCanAcceptInquiry(sql, data.daycareId);
     if (!gate.ok) throw new Error(gate.error);
 
-    const signedIn = (data.userId || "").trim();
-    if (signedIn && !signedIn.startsWith("guest:")) {
+    const signedIn = await resolveActorUserId(data.userId);
+    if (signedIn) {
       const { assertFacebookContactEmail } = await import("@/lib/server/facebook-contact");
       await assertFacebookContactEmail(signedIn);
     }
@@ -347,10 +349,10 @@ export const bookTourSlot = createServerFn({ method: "POST" })
     let lastName = (data.lastName || "").trim();
     let phone = (data.phone || "").trim();
     let email = (data.email || "").trim();
-    let userId = signedIn;
+    let userId = signedIn || "";
     let parentName = "";
 
-    if (signedIn && !signedIn.startsWith("guest:")) {
+    if (signedIn) {
       const actor = await lookupUser(signedIn);
       parentName = (actor.name || "A parent").trim() || "A parent";
       email = email || actor.email || "";
@@ -445,6 +447,15 @@ export const bookTourSlot = createServerFn({ method: "POST" })
       });
     } catch (err) {
       console.error("[kidease-lead] tour slot lead skipped", err);
+      await saveParentInAppNotice(sql, {
+        userId,
+        kind: "tour",
+        titleKey: "notifTourNew",
+        href: `/inbox/${cid}`,
+        sourceKey: `tour:${tourId}:parent:requested`,
+        daycareName: d.name,
+        status: "requested",
+      });
     }
 
     const systemBody = tourSystemBody({
