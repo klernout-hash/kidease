@@ -30,7 +30,8 @@ test("provider plans and public daycare prices stay off until the flag is on", (
     providerSubscriptions: true,
     subscriptionsEnabled: true,
   }).map((item) => item.id);
-  assert.equal(on.includes("promote"), true);
+  assert.equal(on.includes("promote"), false);
+  assert.equal(on.includes("subscription"), false);
 });
 
 test("tour interest opens a real inbox thread and does not reuse the lead id", () => {

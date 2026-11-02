@@ -58,7 +58,7 @@ test("plan links stay hidden until subscriptions are on, and group labels stay v
     visibleDeskNav("daycare", { subscriptionsEnabled: true, centreOwner: false, centreLinked: false }).some(
       (item) => item.id === "subscription",
     ),
-    true,
+    false,
   );
   const parent = visibleDeskGroups("parent", visibleDeskNav("parent", { subscriptionsEnabled: true }));
   for (const id of ["search-tools", "account", "settings"]) {

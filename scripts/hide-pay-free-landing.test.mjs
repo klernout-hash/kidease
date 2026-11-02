@@ -78,7 +78,8 @@ test("Stripe plan files stay; UI gates hide checkout", () => {
 
 test("public and desk chrome hide Upgrade / Subscribe unless flagged", () => {
   const provider = src("src/routes/provider.tsx");
-  assert.match(provider, /PayCtas/);
+  assert.doesNotMatch(provider, /PayCtas/);
+  assert.doesNotMatch(provider, /PromotePanel/);
   assert.match(provider, /FreePageExplainer/);
   assert.match(provider, /plansNotOffered/);
   const parent = src("src/components/parent-desk.tsx");
@@ -95,8 +96,8 @@ test("public and desk chrome hide Upgrade / Subscribe unless flagged", () => {
     subscriptionsEnabled: true,
     centreOwner: true,
   }).map((i) => i.id);
-  assert.equal(nav.includes("promote"), true);
-  assert.equal(nav.includes("subscription"), true);
+  assert.equal(nav.includes("promote"), false);
+  assert.equal(nav.includes("subscription"), false);
   const plansOff = visibleDeskNav("daycare", {
     providerSubscriptions: false,
     showPayCtas: false,
@@ -113,7 +114,8 @@ test("public and desk chrome hide Upgrade / Subscribe unless flagged", () => {
     showPayCtas: true,
     subscriptionsEnabled: true,
   }).map((i) => i.id);
-  assert.equal(on.includes("promote"), true);
+  assert.equal(on.includes("promote"), false);
+  assert.equal(on.includes("subscription"), false);
 });
 
 test("free landing page keeps claim free and never invents $10-a-day fees", () => {

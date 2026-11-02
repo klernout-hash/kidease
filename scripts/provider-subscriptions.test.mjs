@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { tx } from "../src/lib/copy.ts";
 import { visibleDeskNav } from "../src/lib/desk-nav.ts";
 import {
   parseProviderAddons,
@@ -49,18 +48,14 @@ test("addon parse keeps only known ids and a stable order", () => {
   assert.equal(serializeProviderAddons(["job_post", "featured_city", "x"]), "featured_city,job_post");
 });
 
-test("Upgrade stays on the parent desk and returns to the daycare desk when plans are on", () => {
-  const hidden = visibleDeskNav("daycare", { providerSubscriptions: false, centreOwner: true });
-  assert.equal(hidden.some((i) => i.id === "subscription"), false);
+test("Upgrade stays on the parent desk and stays off the daycare desk", () => {
   const daycare = visibleDeskNav("daycare", {
-    providerSubscriptions: false,
+    providerSubscriptions: true,
     centreOwner: true,
     subscriptionsEnabled: true,
   });
-  const centre = daycare.find((i) => i.id === "subscription");
-  assert.equal(centre?.label, "Upgrade");
-  assert.equal(centre?.icon, "credit-card");
-  assert.equal(centre?.href, "/provider/subscription");
+  assert.equal(daycare.some((i) => i.id === "subscription"), false);
+  assert.equal(daycare.some((i) => i.id === "promote"), false);
   const parent = visibleDeskNav("parent", { providerSubscriptions: false, subscriptionsEnabled: true }).find((i) => i.id === "upgrade");
   assert.equal(visibleDeskNav("parent", { subscriptionsEnabled: false }).some((i) => i.id === "upgrade"), false);
   assert.equal(parent?.label, "Upgrade");
@@ -69,7 +64,7 @@ test("Upgrade stays on the parent desk and returns to the daycare desk when plan
   assert.equal(daycare.some((i) => i.id === "upgrade"), false);
 });
 
-test("subscription route is live for directors and checkout is live-keyed", () => {
+test("daycare subscription route sends directors back to Today", () => {
   const route = src("src/routes/provider.subscription.tsx");
   const panel = src("src/components/provider-subscription.tsx");
   const server = src("src/lib/server/provider-subscriptions.ts");
@@ -77,11 +72,11 @@ test("subscription route is live for directors and checkout is live-keyed", () =
   const shell = src("src/components/desk-shell.tsx");
   const provider = src("src/routes/provider.tsx");
   assert.match(provider, /<Outlet \/>/);
-  assert.match(provider, /\/provider\/subscription/);
+  assert.doesNotMatch(provider, /PromotePanel|plan-checkout|startProviderCheckout/);
   assert.match(route, /createFileRoute\("\/provider\/subscription"\)/);
-  assert.match(route, /session\?\.providerSubscriptions/);
-  assert.match(route, /t\("plansForDirectors"\)/);
-  assert.match(tx("en", "plansForDirectors"), /directors/);
+  assert.match(route, /Navigate to="\/provider"/);
+  assert.match(route, /desk: "today"/);
+  assert.doesNotMatch(route, /ProviderSubscriptionPanel|startProviderCheckout/);
   assert.match(route, /noindex/);
   assert.match(tree, /from '\.\/routes\/provider\.subscription'/);
   assert.match(tree, /id:\s*'\/provider\/subscription'/);

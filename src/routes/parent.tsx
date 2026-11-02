@@ -209,7 +209,6 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
       ownsCentre: session.ownsCentre,
       linkedToCentre: session.centreLinked,
     });
-    if (daycare && session.subscriptionsEnabled) return <Navigate to="/provider/subscription" />;
     if (daycare) return <Navigate to="/provider" search={{ desk: "today" }} />;
     if (session.home === "/admin") return hideAdmin ? <Navigate to={parentPath} search={{ tab: "explore" }} /> : <Navigate to="/admin" />;
     if (session.home === "/support") return <Navigate to="/support" />;

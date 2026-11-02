@@ -148,9 +148,6 @@ export function AppMenuScreen({
         <MenuRow to={menuDeskPath(pathname)} search={{ section: "guides" }} label={t("menuGuides")} icon="howItWorks" marker="guides" />
         <MenuRow to={menuDeskPath(pathname)} search={{ section: "help" }} label={t("menuGetHelp")} icon="help" marker="help" />
         <MenuRow to={menuDeskPath(pathname)} search={{ section: "legal" }} label={t("menuPrivacyLegal")} icon="privacy" marker="legal" />
-        {plansOn && chrome.role === "provider" ? (
-          <MenuRow to="/provider/subscription" label={t(chrome.paid ? "navMyPlan" : "navUpgrade")} icon="benefits" marker="upgrade" />
-        ) : null}
         {plansOn && chrome.role === "parent" ? (
           <MenuRow
             to="/parent"

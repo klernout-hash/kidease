@@ -147,7 +147,7 @@ test("centre desk shows live Free/Pro/Network and gates inquiries", () => {
   const banner = src("src/components/provider-plan-banner.tsx");
   const family = src("src/lib/server/family.ts");
   const tours = src("src/lib/server/tours.ts");
-  assert.match(desk, /ProviderPlanBanner/);
+  assert.doesNotMatch(desk, /ProviderPlanBanner|PromotePanel/);
   assert.match(banner, /planCurrent/);
   assert.match(banner, /provider\/subscription/);
   assert.match(family, /centreCanAcceptInquiry/);
