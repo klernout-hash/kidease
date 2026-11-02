@@ -1,6 +1,7 @@
 import { createPrivateKey, createSign } from "node:crypto";
 import { getSql } from "@/lib/db";
-import { centreEnvelopeCreateBody } from "@/lib/docusign-envelope";
+import { centreEnvelopeCreateBody, type EnvelopeSignerInput } from "@/lib/docusign-envelope";
+import { PARENT_AGREEMENT_PACK, parentAgreementStatusFromConnect } from "@/lib/parent-agreement";
 import {
   contractPdfKey,
   defaultTemplateId,
@@ -57,6 +58,7 @@ export function defaultTemplateIds() {
   return {
     provider_agreement: defaultTemplateId("provider_agreement", env),
     enrolment_pack: defaultTemplateId("enrolment_pack", env),
+    parent_enrolment_agreement: defaultTemplateId("parent_enrolment_agreement", env),
   };
 }
 
@@ -188,9 +190,16 @@ export async function createCentreEnvelope(input: {
   signerEmail: string;
   templateId?: string | null;
   centreName?: string;
+  signers?: EnvelopeSignerInput[];
+  fileExtension?: string;
+  emailSubject?: string;
+  emailBlurb?: string;
 }): Promise<EnvelopeResult> {
   const cfg = docusignConfig();
   if (!cfg) {
+    if (input.packKind === PARENT_AGREEMENT_PACK) {
+      throw new Error("agreement:docusign_off");
+    }
     return {
       mode: "demo",
       envelopeId: `demo_${input.contractId}`,
@@ -240,6 +249,34 @@ export async function voidCentreEnvelope(envelopeId: string, reason = "Supersede
     return true;
   });
   if (!ok) console.error("[docusign] void envelope failed", envelopeId);
+}
+
+export async function getEnvelopeProgress(envelopeId: string): Promise<{
+  envelopeId: string;
+  status: string;
+  event: string;
+  signers: { recipientId: string; routingOrder: string; status: string }[];
+} | null> {
+  const cfg = docusignConfig();
+  if (!cfg || envelopeId.startsWith("demo_")) return null;
+  return readDocusignOrNull(async () => {
+    const token = await accessToken(cfg);
+    const json = await ds<{
+      status?: string;
+      envelopeId?: string;
+      recipients?: { signers?: { recipientId?: string; routingOrder?: string; status?: string }[] };
+    }>(cfg, token, `/envelopes/${encodeURIComponent(envelopeId)}?include=recipients`);
+    return {
+      envelopeId: json.envelopeId || envelopeId,
+      status: json.status || "",
+      event: json.status || "poll",
+      signers: (json.recipients?.signers || []).map((signer) => ({
+        recipientId: String(signer.recipientId || ""),
+        routingOrder: String(signer.routingOrder || ""),
+        status: String(signer.status || ""),
+      })),
+    };
+  });
 }
 
 export async function getEnvelopeStatus(envelopeId: string) {
@@ -297,7 +334,12 @@ export async function persistSignedPdf(input: {
 
 export { authorizedWebhook, mapEnvelopeStatus, parseConnectPayload };
 
-export async function applyEnvelopeEvent(input: { envelopeId: string; status: string; event: string }) {
+export async function applyEnvelopeEvent(input: {
+  envelopeId: string;
+  status: string;
+  event: string;
+  signers?: { recipientId?: string; routingOrder?: string; status?: string }[];
+}) {
   const sql = await getSql();
   const status = mapEnvelopeStatus(input.status || input.event);
   const viewed = status === "viewed" || status === "signed";
@@ -314,23 +356,45 @@ export async function applyEnvelopeEvent(input: { envelopeId: string; status: st
      where envelope_id = $1`,
     [input.envelopeId, status, input.event.slice(0, 80), viewed, signed, declined],
   );
-  if (signed) {
-    const rows = await sql
-      .query<{ id: string; daycare_id: string; signed_pdf_key: string | null }>(
-        `select id, daycare_id, signed_pdf_key from daycare_contracts where envelope_id = $1 limit 1`,
-        [input.envelopeId],
-      )
-      .catch(() => []);
-    const row = rows[0];
-    if (row && !row.signed_pdf_key) {
-      await persistSignedPdf({
-        contractId: row.id,
-        daycareId: row.daycare_id,
-        envelopeId: input.envelopeId,
-      }).catch((err) => console.error("[docusign] persist after event failed", err));
-    }
+  const rows = await sql
+    .query<{ id: string; daycare_id: string; pack_kind: string | null; signed_pdf_key: string | null }>(
+      `select id, daycare_id, pack_kind, signed_pdf_key from daycare_contracts where envelope_id = $1 limit 1`,
+      [input.envelopeId],
+    )
+    .catch(() => []);
+  const row = rows[0];
+  if (signed && row && !row.signed_pdf_key) {
+    await persistSignedPdf({
+      contractId: row.id,
+      daycareId: row.daycare_id,
+      envelopeId: input.envelopeId,
+    }).catch((err) => console.error("[docusign] persist after event failed", err));
   }
-  return { ok: true as const, envelopeId: input.envelopeId, status };
+  let agreementStatus: string | null = null;
+  if (row?.pack_kind === PARENT_AGREEMENT_PACK) {
+    let signers = input.signers;
+    if (!signers?.length && !input.envelopeId.startsWith("demo_")) {
+      const progress = await getEnvelopeProgress(input.envelopeId).catch(() => null);
+      if (progress?.signers?.length) signers = progress.signers;
+    }
+    agreementStatus = parentAgreementStatusFromConnect({
+      envelopeStatus: input.status || input.event,
+      signers,
+    });
+    await sql
+      .query(
+        `update daycare_contracts set status = $2, updated_at = now() where id = $1`,
+        [row.id, agreementStatus],
+      )
+      .catch((err) => console.error("[docusign] parent agreement status failed", err));
+    await sql
+      .query(
+        `update parent_enrolment_agreements set status = $2, updated_at = now() where contract_id = $1`,
+        [row.id, agreementStatus],
+      )
+      .catch((err) => console.error("[docusign] parent agreement row failed", err));
+  }
+  return { ok: true as const, envelopeId: input.envelopeId, status: agreementStatus || status };
 }
 
 function classifiedDocusignError(err: unknown) {
@@ -344,14 +408,21 @@ export async function pollOpenEnvelopes(limit = 25) {
   if (!cfg || docusignIsRateLimited()) return { ok: true as const, checked: 0, updated: 0, stored: 0 };
   const sql = await getSql();
   const rows = await sql
-    .query<{ id: string; daycare_id: string; envelope_id: string; status: string; signed_pdf_key: string | null }>(
-      `select id, daycare_id, envelope_id, status, signed_pdf_key
+    .query<{
+      id: string;
+      daycare_id: string;
+      envelope_id: string;
+      status: string;
+      signed_pdf_key: string | null;
+      pack_kind: string | null;
+    }>(
+      `select id, daycare_id, envelope_id, status, signed_pdf_key, pack_kind
          from daycare_contracts
         where envelope_id is not null
           and envelope_id not like 'demo_%'
           and (
-            status in ('sent', 'viewed')
-            or (status = 'signed' and signed_pdf_key is null)
+            status in ('sent', 'viewed', 'parent_signed')
+            or (status in ('signed', 'completed') and signed_pdf_key is null)
           )
         order by updated_at asc
         limit $1`,
@@ -363,18 +434,25 @@ export async function pollOpenEnvelopes(limit = 25) {
   let stored = 0;
   for (const row of rows) {
     try {
-      const remote = await getEnvelopeStatus(row.envelope_id);
-      if (remote && remote.status !== row.status) {
-        await applyEnvelopeEvent(remote);
+      const progress = row.pack_kind === PARENT_AGREEMENT_PACK ? await getEnvelopeProgress(row.envelope_id) : null;
+      const remote = progress ?? (await getEnvelopeStatus(row.envelope_id));
+      const nextStatus = progress
+        ? parentAgreementStatusFromConnect({
+            envelopeStatus: progress.status,
+            signers: progress.signers,
+          })
+        : remote?.status;
+      if (remote && nextStatus && nextStatus !== row.status) {
+        await applyEnvelopeEvent(progress ?? remote);
         updated += 1;
-      } else if (row.status === "signed" && !row.signed_pdf_key) {
+      } else if ((row.status === "signed" || row.status === "completed" || nextStatus === "completed") && !row.signed_pdf_key) {
         const saved = await persistSignedPdf({
           contractId: row.id,
           daycareId: row.daycare_id,
           envelopeId: row.envelope_id,
         });
         if (saved) stored += 1;
-      } else if (remote?.status === "signed" && !row.signed_pdf_key) {
+      } else if ((remote?.status === "signed" || remote?.status === "completed") && !row.signed_pdf_key) {
         const saved = await persistSignedPdf({
           contractId: row.id,
           daycareId: row.daycare_id,

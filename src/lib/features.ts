@@ -346,6 +346,14 @@ export function pickupContactsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_PICKUP_CONTACTS", env);
 }
 
+/**
+ * Parent and centre enrolment agreement.
+ * Both flags must be on. DocuSign is the only send, and only after a click.
+ */
+export function parentAgreementEnabled(env?: EnvMap): boolean {
+  return enrolmentEsignEnabled(env) && evaluateFeatureFlag("FEATURE_PARENT_AGREEMENT", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;

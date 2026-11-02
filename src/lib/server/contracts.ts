@@ -314,6 +314,9 @@ export const sendCentreContract = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     if (!enrolmentEsignEnabled()) throw new Error("Signing is not open yet.");
+    if (data.packKind === "parent_enrolment_agreement") {
+      throw new Error("Parent agreements are sent from the daycare desk.");
+    }
     const actor = await requireOperator(context.userId);
     const { assertRecentReauth } = await import("@/lib/server/reauth.server");
     assertRecentReauth(context.userId);
@@ -551,6 +554,7 @@ export const listProviderContracts = createServerFn({ method: "GET" })
       join daycares d on d.id = dc.daycare_id
       join provider_daycares pd on pd.daycare_id = dc.daycare_id and pd.user_id = ${context.userId}
       where dc.status <> 'voided'
+        and coalesce(dc.pack_kind, 'provider_agreement') <> 'parent_enrolment_agreement'
       order by dc.created_at desc
     `.catch(() => []);
 
