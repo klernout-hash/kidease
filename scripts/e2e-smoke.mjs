@@ -106,7 +106,11 @@ async function setFixture(context, base, { role, plan, own, activity, attention 
   return res;
 }
 
-/** A desk redirect can abort goto. Stop the old load and try again. */
+/**
+ * A desk redirect can abort the next document, and a busy preview can leave
+ * that document waiting. Still require DOMContentLoaded. Retry only after
+ * an abort or a timeout, and only stop the old load once it has already failed.
+ */
 async function gotoSettled(page, url) {
   let targetPath = "";
   try {
@@ -114,20 +118,22 @@ async function gotoSettled(page, url) {
   } catch {
     targetPath = "";
   }
-  for (let attempt = 0; attempt < 4; attempt += 1) {
-    await page.evaluate(() => window.stop()).catch(() => {});
+  const landed = () => {
+    try {
+      return Boolean(targetPath) && new URL(page.url()).pathname === targetPath;
+    } catch {
+      return false;
+    }
+  };
+  for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
       return await page.goto(url, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     } catch (err) {
+      if (landed()) return null;
       const message = err instanceof Error ? err.message : String(err);
-      let landed = false;
-      try {
-        landed = Boolean(targetPath) && new URL(page.url()).pathname === targetPath;
-      } catch {
-        landed = false;
-      }
-      if (landed) return null;
-      if (!/interrupted|ERR_ABORTED|ECONNRESET/i.test(message) || attempt === 3) throw err;
+      const retryable = /interrupted|ERR_ABORTED|ECONNRESET|Timeout/i.test(message);
+      if (!retryable || attempt === 2) throw err;
+      await page.evaluate(() => window.stop()).catch(() => {});
     }
   }
   return null;
