@@ -65,7 +65,9 @@ const DAYCARE_ON = [
   "id:add",
 ];
 
-const DAYCARE_OFF = DAYCARE_ON.filter((href) => href !== "/provider/subscription");
+const DAYCARE_OFF = DAYCARE_ON.filter(
+  (href) => href !== "/provider/subscription" && href !== "/provider?desk=promote",
+);
 
 const DAYCARE_STAFF = [
   "/account?tab=profile&section=alerts&desk=director",

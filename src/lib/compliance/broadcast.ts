@@ -58,7 +58,7 @@ export function broadcastCopy(locale: "en" | "fr") {
   if (locale === "fr") {
     return {
       what: "KidEase pour votre province",
-      why: "Envoyez un avis de fermeture aux garderies et aux parents touchés.",
+      why: "Rédigez un avis de fermeture pour les garderies et les parents touchés.",
       next: "Préparer l’avis",
       help: "Aide",
       home: "Accueil",
@@ -69,7 +69,7 @@ export function broadcastCopy(locale: "en" | "fr") {
   }
   return {
     what: "KidEase for your province",
-    why: "Send a closure notice to the daycares and parents it affects.",
+    why: "Write a closure notice for the daycares and parents it affects.",
     next: "Prepare the notice",
     help: "Help",
     home: "Home",

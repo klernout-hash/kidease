@@ -226,9 +226,8 @@ type DeskNavOpts = {
 };
 
 /**
- * Hide Upgrade and daycare Subscription unless SUBSCRIPTIONS_ENABLED is on.
- * Promote stays in the sidebar. The promote page itself still says plans are
- * not offered while pay buttons are off.
+ * Hide Upgrade, Subscription, and Promote unless paid plans are on.
+ * Promote also needs FEATURE_PROVIDER_SUBSCRIPTIONS. Both default off.
  */
 const OWNER_ONLY_NAV = new Set([
   "money",
@@ -247,7 +246,10 @@ export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
     if (item.devOnly && import.meta.env?.PROD === true) return false;
     if (item.id === "learning") return opts?.curriculumPack === true;
     if (item.id === "upgrade" || item.id === "subscription") return opts?.subscriptionsEnabled === true;
-    if (item.id === "promote") return opts?.centreOwner !== false;
+    if (item.id === "promote") {
+      if (opts?.centreOwner === false) return false;
+      return opts?.subscriptionsEnabled === true && opts?.providerSubscriptions === true;
+    }
     if (OWNER_ONLY_NAV.has(item.id) && opts?.centreOwner === false) return false;
     return true;
   });
@@ -304,10 +306,10 @@ export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
   ],
   admin: [
     { id: "ops", label: "Operations", labelKey: "navOperations", open: true, itemIds: ["queue", "mail"] },
-    { id: "review", label: "Review", labelKey: "navReview", open: true, itemIds: ["verify", "truth", "reviews", "screening", "spam", "trust"] },
-    { id: "listings-data", label: "Listings data", labelKey: "navListingsData", itemIds: ["daycares", "incomplete", "winnipeg", "vacancies", "ranking"] },
+    { id: "review", label: "Review", labelKey: "navReview", open: true, itemIds: ["verify", "truth", "reviews", "screening", "spam", "trust", "trust-queue"] },
+    { id: "listings-data", label: "Listings data", labelKey: "navListingsData", itemIds: ["daycares", "incomplete", "winnipeg", "vacancies", "ranking", "qc-home"] },
     { id: "support", label: "Support", labelKey: "support", itemIds: ["support", "triage"] },
-    { id: "people", label: "People and money", labelKey: "navPeopleMoney", itemIds: ["people", "money", "contracts"] },
+    { id: "people", label: "People and money", labelKey: "navPeopleMoney", itemIds: ["people", "money", "contracts", "government"] },
     { id: "system", label: "System", labelKey: "navSystem", itemIds: ["activity", "ai", "features", "email-health", "chat"] },
     { id: "account", label: "Account", labelKey: "account", itemIds: ["profile", "appearance", "delete"] },
     { id: "settings", label: "Settings", labelKey: "settings", itemIds: ["notify-prefs", "security", "email-sms"] },

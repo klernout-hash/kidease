@@ -30,6 +30,9 @@ import { listCentreOwnerEmails } from "@/lib/server/thread-access";
 import { upsertDaycare } from "@/lib/server/seed";
 import { infoQuestionMail, leadReplyMail, spotRequestMail, tourRequestMail, waitlistRequestMail } from "@/lib/mail-copy";
 import { parentRequestSms } from "@/lib/sms-copy";
+import { leadNotificationHref, leadTitleKey, notificationSourceKey } from "@/lib/notifications";
+import { resolveActorUserId } from "@/lib/server/actor-user";
+import { saveParentInAppNotice } from "@/lib/server/parent-notice";
 import { nid } from "@/lib/utils";
 
 type LeadRow = {
@@ -82,8 +85,7 @@ async function ensureInfoThread(
   daycareId: string,
   message: string | null,
 ): Promise<string | null> {
-  const users = await sql<{ id: string }>`select id from "user" where id = ${userId} limit 1`.catch(() => []);
-  if (!users[0]) return null;
+  if (!userId || userId.startsWith("guest:")) return null;
   const convoId = nid("cv");
   await sql`
     insert into conversations (id, user_id, daycare_id)
@@ -120,7 +122,7 @@ export async function recordLeadRequest(
     conversationId?: string | null;
     notify?: boolean;
   },
-): Promise<{ id: string; reused: boolean } | null> {
+): Promise<{ id: string; reused: boolean; conversationId: string | null } | null> {
   const kind = input.kind;
   const message = (input.message || "").trim() || null;
   const sourceKind = input.sourceKind ?? null;
@@ -147,7 +149,7 @@ export async function recordLeadRequest(
           where id = ${open[0].id}
         `.catch(() => undefined);
       }
-      return { id: open[0].id, reused: true };
+      return { id: open[0].id, reused: true, conversationId: null };
     }
   }
 
@@ -157,7 +159,13 @@ export async function recordLeadRequest(
       where source_kind = ${sourceKind} and source_id = ${sourceId}
       limit 1
     `.catch(() => []);
-    if (existing[0]) return { id: existing[0].id, reused: true };
+    if (existing[0]) {
+      return {
+        id: existing[0].id,
+        reused: true,
+        conversationId: (input.conversationId || "").trim() || null,
+      };
+    }
   }
 
   const id = nid("lr");
@@ -166,7 +174,7 @@ export async function recordLeadRequest(
   const phone = (input.phone || "").trim() || null;
   const email = (input.email || "").trim() || null;
   let conversationId = (input.conversationId || "").trim() || null;
-  if (!conversationId && kind === "info") {
+  if (!conversationId && (kind === "info" || kind === "tour" || kind === "waitlist")) {
     conversationId = await ensureInfoThread(sql, input.userId, input.daycareId, message);
   }
   await sql`
@@ -193,6 +201,22 @@ export async function recordLeadRequest(
     `;
   });
 
+  if (!input.userId.startsWith("guest:")) {
+    const names = await sql<{ name: string }>`
+      select name from daycares where id = ${input.daycareId} limit 1
+    `.catch(() => [] as { name: string }[]);
+    const noticeKind = kind === "tour" ? "tour" : "lead";
+    await saveParentInAppNotice(sql, {
+      userId: input.userId,
+      kind: noticeKind,
+      titleKey: leadTitleKey({ audience: "parent", kind, status: "requested" }),
+      href: leadNotificationHref({ audience: "parent", conversationId }),
+      sourceKey: notificationSourceKey(noticeKind, id, "parent:requested"),
+      daycareName: names[0]?.name,
+      status: "requested",
+    });
+  }
+
   if (input.notify !== false) {
     await notifyNewLead(sql, {
       leadId: id,
@@ -203,7 +227,7 @@ export async function recordLeadRequest(
     }).catch((err) => console.error("[kidease-lead] notify failed", err));
   }
 
-  return { id, reused: false };
+  return { id, reused: false, conversationId };
 }
 
 export async function closeWaitlistLead(
@@ -358,7 +382,11 @@ export const listLeadRequests = createServerFn({ method: "GET" })
         case when l.status in ('requested', 'received') then 0 else 1 end,
         l.created_at desc
     `.catch(() => []);
-    return rows.map(mapLead);
+    return rows.map((row) => {
+      const lead = mapLead(row);
+      if (data.desk === "centre") return { ...lead, parentEmail: null };
+      return lead;
+    });
   });
 
 export const createLeadRequest = createServerFn({ method: "POST" })
@@ -411,7 +439,7 @@ export const createInfoRequest = createServerFn({ method: "POST" })
     if (listed) await upsertDaycare(sql, listed);
     const exists = await sql<{ id: string }>`select id from daycares where id = ${daycareId} limit 1`;
     if (!exists[0]) throw new Error("Centre not found");
-    const userId = (data.userId || "").trim() || guestInfoUserId(contact.email);
+    const userId = (await resolveActorUserId(data.userId)) || guestInfoUserId(contact.email);
     const note = [
       `${contact.firstName} ${contact.lastName}`,
       contact.phone,
@@ -431,7 +459,12 @@ export const createInfoRequest = createServerFn({ method: "POST" })
       email: contact.email,
     });
     if (!recorded) throw new Error("Could not save request");
-    return { id: recorded.id, status: "requested" as const, reused: recorded.reused };
+    return {
+      id: recorded.id,
+      status: "requested" as const,
+      reused: recorded.reused,
+      conversationId: recorded.conversationId,
+    };
   });
 
 /** Tour interest for a centre that has not posted times yet. Guests and signed-in parents can send it. */
@@ -447,7 +480,7 @@ export const createTourInterest = createServerFn({ method: "POST" })
     userId?: string;
   }) => input)
   .handler(async ({ data }) => {
-    const signedIn = (data.userId || "").trim();
+    const actorId = await resolveActorUserId(data.userId);
     const contact = normalizeInfoContact({
       firstName: data.firstName || "",
       lastName: data.lastName || "",
@@ -455,7 +488,7 @@ export const createTourInterest = createServerFn({ method: "POST" })
       email: data.email || "",
       message: data.message,
     });
-    if (!signedIn && !contact.ok) throw new Error("Please enter your name, phone, and email.");
+    if (!actorId && !contact.ok) throw new Error("Please enter your name, phone, and email.");
     const daycareId = (data.daycareId || "").trim();
     if (!daycareId) throw new Error("Centre not found");
     const listed = await catalogByIdGet(daycareId);
@@ -466,7 +499,7 @@ export const createTourInterest = createServerFn({ method: "POST" })
     if (listed) await upsertDaycare(sql, listed);
     const exists = await sql<{ id: string }>`select id from daycares where id = ${daycareId} limit 1`;
     if (!exists[0]) throw new Error("Centre not found");
-    const userId = signedIn || guestInfoUserId(contact.email);
+    const userId = actorId || guestInfoUserId(contact.email);
     const note = [
       (data.preferredTimes || "").trim(),
       contact.ok ? `${contact.firstName} ${contact.lastName}` : "",
@@ -487,7 +520,12 @@ export const createTourInterest = createServerFn({ method: "POST" })
       email: contact.ok ? contact.email : null,
     });
     if (!recorded) throw new Error("Could not save request");
-    return { id: recorded.id, status: "requested" as const, reused: recorded.reused };
+    return {
+      id: recorded.id,
+      status: "requested" as const,
+      reused: recorded.reused,
+      conversationId: recorded.conversationId,
+    };
   });
 
 export const updateLeadRequest = createServerFn({ method: "POST" })

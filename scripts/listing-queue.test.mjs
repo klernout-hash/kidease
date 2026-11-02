@@ -238,6 +238,22 @@ test("QA fixtures stay opt-in and unclaimed QA is not a production waiting claim
     staffQueueRows([liveWaiting, qaUnclaimed, qaWaiting], false).map((r) => r.slug),
     ["kids-world-daycare"],
   );
+  const operatorClaim = {
+    id: "mb-real",
+    slug: "sunshine-child-care",
+    name: "Sunshine Child Care",
+    isTest: 1,
+    visibility: "admin_only",
+    claimStatus: "waiting",
+  };
+  assert.deepEqual(
+    staffQueueRows([operatorClaim], false).map((row) => row.slug),
+    ["sunshine-child-care"],
+  );
+  assert.equal(
+    normalizeAdminClaimStatus({ claimStatus: "approved", claimedAt: "2026-01-01", claimRowStatus: "waiting" }),
+    "waiting",
+  );
   const withQa = staffQueueRows([liveWaiting, qaUnclaimed, qaWaiting], true);
   assert.equal(withQa.length, 3);
   const waiting = withQa.filter((r) => isWaitingOnAdminQueue(r.claimStatus));

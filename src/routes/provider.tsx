@@ -225,23 +225,26 @@ export function ProviderPage() {
   const [missingFields, setMissingFields] = useState<string[]>([]);
 
   async function load() {
-    const [res, incoming, tourRows, pipelineRows, leadRows] = await Promise.all([
-      getProvider(),
-      listDaycareIncoming(),
-      listTourRequests({ data: { desk: "centre" } }).catch(() => [] as TourRequest[]),
-      listCentrePipeline().catch(() => [] as PipelineCard[]),
-      listLeadRequests({ data: { desk: "centre" } }).catch(() => [] as LeadRequest[]),
-    ]);
-    const nextListings = Array.isArray(res?.listings) ? res.listings : [];
-    setListings(nextListings);
-    setStats(res.stats);
-    setSubscription(res.subscription);
-    setUpgradeDismissed(Boolean(res.upgradeCardDismissed));
-    setDeskSettled(true);
-    setRequests(Array.isArray(incoming) ? incoming : []);
-    setTours(Array.isArray(tourRows) ? tourRows : []);
-    setPipeline(Array.isArray(pipelineRows) ? pipelineRows : []);
-    setLeads(Array.isArray(leadRows) ? leadRows : []);
+    try {
+      const [res, incoming, tourRows, pipelineRows, leadRows] = await Promise.all([
+        getProvider(),
+        listDaycareIncoming(),
+        listTourRequests({ data: { desk: "centre" } }).catch(() => [] as TourRequest[]),
+        listCentrePipeline().catch(() => [] as PipelineCard[]),
+        listLeadRequests({ data: { desk: "centre" } }).catch(() => [] as LeadRequest[]),
+      ]);
+      const nextListings = Array.isArray(res?.listings) ? res.listings : [];
+      setListings(nextListings);
+      setStats(res.stats);
+      setSubscription(res.subscription);
+      setUpgradeDismissed(Boolean(res.upgradeCardDismissed));
+      setRequests(Array.isArray(incoming) ? incoming : []);
+      setTours(Array.isArray(tourRows) ? tourRows : []);
+      setPipeline(Array.isArray(pipelineRows) ? pipelineRows : []);
+      setLeads(Array.isArray(leadRows) ? leadRows : []);
+    } finally {
+      setDeskSettled(true);
+    }
   }
 
   useEffect(() => {
@@ -373,7 +376,7 @@ export function ProviderPage() {
         setDesk(id as DaycareDesk);
       }}
     >
-      {deskListings.length === 0 && centreOwner ? (
+      {deskSettled && deskListings.length === 0 && centreOwner ? (
         <ProviderOnboarding
           onShowForm={() => {
             setDesk("listings");
@@ -784,7 +787,7 @@ export function ProviderPage() {
       ) : null}
 
       {desk === "licence" && centreOwner ? (
-        deskListings.length === 0 ? (
+        !deskSettled ? null : deskListings.length === 0 ? (
           <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">
             {t("providerOnboardingLead")}
           </p>
@@ -840,7 +843,7 @@ export function ProviderPage() {
           <div className="ke-digital-plan" data-ke="digital-plan">
             {!showPay ? (
               <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("plansNotOffered")}</p>
-            ) : deskListings.length === 0 ? (
+            ) : !deskSettled ? null : deskListings.length === 0 ? (
               <p className="rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">{t("providerOnboardingLead")}</p>
             ) : (
               deskListings.map((d) => {

@@ -51,6 +51,7 @@ const PE =
 export const FEE_CAPS: readonly FeeCap[] = [
   { province: "MB", ageKey: "infant", maxDailyCents: 1000, noCeiling: false, verified: true, provinceWide: true, source: MB },
   { province: "MB", ageKey: "preschool", maxDailyCents: 1000, noCeiling: false, verified: true, provinceWide: true, source: MB },
+  { province: "MB", ageKey: "toddler", maxDailyCents: 1000, noCeiling: false, verified: true, provinceWide: true, source: `${MB} Toddler care uses the preschool maximum of $10 for 4 to 10 hours.` },
   { province: "MB", ageKey: "school", maxDailyCents: 1000, noCeiling: false, verified: true, provinceWide: true, source: `${MB} School-age, three periods: $10.` },
   { province: "ON", ageKey: "infant", maxDailyCents: 2200, noCeiling: false, verified: true, provinceWide: true, source: ON },
   { province: "ON", ageKey: "toddler", maxDailyCents: 2200, noCeiling: false, verified: true, provinceWide: true, source: ON },
@@ -90,6 +91,14 @@ export function feeMode(env: EnvMap): PackMode {
 export function feeCapFor(province: string, ageKey: string): FeeCap | null {
   const code = province.trim().toUpperCase();
   return FEE_CAPS.find((row) => row.province === code && row.ageKey === ageKey) ?? null;
+}
+
+/** A province-wide verified daily cap, such as Manitoba's $10. */
+export function publishedCapsFor(province: string): FeeCap[] {
+  const code = province.trim().toUpperCase();
+  return FEE_CAPS.filter(
+    (row) => row.province === code && row.verified && row.provinceWide && !row.noCeiling && row.maxDailyCents != null,
+  );
 }
 
 export type FeeDecision = {
@@ -148,6 +157,8 @@ export function feeCopy(locale: "en" | "fr") {
       off: "Cet outil est éteint. Les tarifs ne sont pas bloqués.",
       practice: "Mode pratique : l’avertissement est écrit. La publication n’est pas bloquée.",
       empty: "Aucun plafond vérifié pour cette province.",
+      clear: "Aucun centre n’est au-dessus du plafond publié.",
+      capLine: "Plafond publié",
       govWhat: "KidEase pour votre province",
       govWhy: "Voyez les centres au-dessus du plafond. Aucun nom d’enfant.",
     };
@@ -161,6 +172,8 @@ export function feeCopy(locale: "en" | "fr") {
     off: "This tool is off. Fees are not blocked.",
     practice: "Practice mode: the warning is written down. Publishing is not blocked.",
     empty: "No verified cap for this province.",
+    clear: "No centre is above the published cap.",
+    capLine: "Published cap",
     govWhat: "KidEase for your province",
     govWhy: "See centres above the cap. No child names.",
   };

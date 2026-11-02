@@ -10,14 +10,15 @@ import { ShortlistCompareTable } from "@/components/shortlist-compare";
 import { TrustSignals } from "@/components/trust-badge";
 import { Button } from "@/components/ui/button";
 import { MultiApplyPanel } from "@/components/multi-apply-sheet";
-import { isHiddenTestListing } from "@/lib/listing-visibility";
 import { mirrorOfflineSaved, readOfflineSaved, type OfflineSaved } from "@/lib/offline-shortlist";
 import { parseTrackStatus, type TrackStatus } from "@/lib/parent-tracker";
 import { inviteShortlistShare, leaveShortlistShare } from "@/lib/server/parent-tracker";
 import { MAX_SHORTLIST_COMPARE, toggleCompareSelection } from "@/lib/shortlist";
 import { useAppStore } from "@/lib/store";
 import type { Booking, DaycareCard as Card, TourRequest } from "@/lib/types";
+import { parentListingFeesVisible } from "@/lib/public-fees";
 import { useCopy } from "@/lib/use-copy";
+import { useRoleChrome } from "@/components/role-chrome";
 import { useStoreChannel } from "@/lib/use-native-shell";
 import { StoreMapFallback } from "@/components/store-map-fallback";
 import { useParentPlusAccess } from "@/lib/use-parent-plus";
@@ -48,14 +49,9 @@ export function ParentShortlist({
   onTrack?: (id: string, next: { trackStatus: TrackStatus; callNote: string; tourNote: string }) => void;
   onLeave?: () => void;
 }) {
-  const items = useMemo(() => {
-    const rows = Array.isArray(rawItems) ? rawItems : [];
-    const fixtures =
-      typeof window !== "undefined" && new URLSearchParams(window.location.search).get("fixtures") === "1";
-    if (fixtures) return rows;
-    return rows.filter((item) => !isHiddenTestListing(item));
-  }, [rawItems]);
+  const items = useMemo(() => (Array.isArray(rawItems) ? rawItems : []), [rawItems]);
   const { t, locale } = useCopy();
+  const feesOn = parentListingFeesVisible(useRoleChrome().subscriptionsEnabled);
   const storeChannel = useStoreChannel();
   const { plusOpen } = useParentPlusAccess();
   const leadKey = plusOpen ? "shortlistLeadOpen" : "shortlistLead";
@@ -246,7 +242,7 @@ export function ParentShortlist({
           ) : (
           <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
             <MapView
-              items={visible}
+              items={feesOn ? visible : visible.map((item) => ({ ...item, fromPrice: 0 }))}
               origin={
                 located && Number.isFinite(origin.lat)
                   ? { lat: origin.lat, lng: origin.lng }
@@ -286,7 +282,7 @@ export function ParentShortlist({
                 />
                 <TrustSignals item={item} surface="parent" compact />
               </div>
-              <DaycareCard item={item} showDistance={located} presentation="visual" />
+              <DaycareCard item={item} showDistance={located} presentation="visual" showFees={feesOn} />
               <SavedTrack
                 daycareId={item.id}
                 status={parseTrackStatus(item.trackStatus)}

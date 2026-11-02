@@ -555,7 +555,6 @@ export function Listing() {
   }
 
   function onInfo() {
-    if (!live) return;
     if (!user) {
       goLogin("guestSignInReturn", "info");
       return;
@@ -619,11 +618,12 @@ export function Listing() {
       <>
         {parentActions ? <ListingMoreItem onClick={onTour}>{t("bookTour")}</ListingMoreItem> : null}
         {parentActions && live ? <ListingMoreItem onClick={onRequest}>{t("requestSpotCta")}</ListingMoreItem> : null}
-        {parentActions && live ? (
+        {parentActions ? (
           <ListingMoreItem onClick={onMessage}>
             <MessageCircle className="size-4" /> {t("message")}
           </ListingMoreItem>
         ) : null}
+        {parentActions ? <ListingMoreItem onClick={onInfo}>{t("requestInfo")}</ListingMoreItem> : null}
         <ListingMoreItem onClick={() => toggleCompareItem({ id: d.id, slug: d.slug }, compareMax)}>
           {comparing ? t("comparing") : t("compareAdd")}
         </ListingMoreItem>
@@ -728,14 +728,19 @@ export function Listing() {
             {t("bookTour")}
           </Button>
         ) : null}
-        {parentActions && live ? (
-          <Button className="min-h-11 rounded-[14px] touch-manipulation" data-ke="listing-primary-cta" onClick={onInfo}>
+        {parentActions ? (
+          <Button className="min-h-11 rounded-[14px] touch-manipulation" variant="secondary" data-ke="listing-primary-cta" onClick={onInfo}>
             {t("requestInfo")}
           </Button>
         ) : null}
+        {parentActions ? (
+          <Button className="min-h-11 rounded-[14px] touch-manipulation" variant="secondary" data-ke="listing-message-cta" onClick={onMessage}>
+            {t("message")}
+          </Button>
+        ) : null}
         {parentActions && !live ? (
-          <Button className="min-h-11 rounded-[14px] touch-manipulation" variant="secondary" data-ke="listing-primary-cta" asChild>
-            <Link to={localePath("/search", locale)}>{t("searchNearby")}</Link>
+          <Button className="min-h-11 rounded-[14px] touch-manipulation" variant="secondary" asChild>
+            <Link to={localePath("/search", locale)}>{t("searchNearbyShort")}</Link>
           </Button>
         ) : null}
         {parentActions && !live ? <p className="text-xs text-muted">{t("parentRequestNotLive")}</p> : null}
@@ -1249,23 +1254,16 @@ export function Listing() {
           <div className="flex items-center gap-2">
           {ownEdit ? <ListingEditLink /> : null}
           <DirectionsButton className="shrink-0" />
-          {parentActions && live ? (
+          {parentActions ? (
             <div className="flex min-w-0 flex-1 gap-2" data-ke="listing-parent-actions">
               <Button className="h-auto min-h-11 flex-1 rounded-[14px] px-2.5 py-2 text-center text-[13px] leading-tight touch-manipulation" data-ke="listing-sticky-tour" onClick={onTour}>
                 {t("bookTour")}
               </Button>
-              <Button className="h-auto min-h-11 flex-1 rounded-[14px] px-2.5 py-2 text-center text-[13px] leading-tight touch-manipulation" data-ke="listing-sticky-cta" onClick={onInfo}>
+              <Button className="h-auto min-h-11 flex-1 rounded-[14px] px-2.5 py-2 text-center text-[13px] leading-tight touch-manipulation" variant="secondary" data-ke="listing-sticky-cta" onClick={onInfo}>
                 {t("requestInfo")}
               </Button>
-            </div>
-          ) : null}
-          {parentActions && !live ? (
-            <div className="flex min-w-0 flex-1 gap-2" data-ke="listing-parent-actions">
-              <Button className="h-auto min-h-11 flex-1 rounded-[14px] px-2.5 py-2 text-center text-[13px] leading-tight touch-manipulation" data-ke="listing-sticky-tour" onClick={onTour}>
-                {t("bookTour")}
-              </Button>
-              <Button className="h-auto min-h-11 flex-1 rounded-[14px] px-2.5 py-2 text-center text-[13px] leading-tight touch-manipulation" variant="secondary" data-ke="listing-sticky-cta" asChild>
-                <Link to={localePath("/search", locale)}>{t("searchNearbyShort")}</Link>
+              <Button className="h-auto min-h-11 flex-1 rounded-[14px] px-2.5 py-2 text-center text-[13px] leading-tight touch-manipulation" variant="secondary" data-ke="listing-sticky-message" onClick={onMessage}>
+                {t("message")}
               </Button>
             </div>
           ) : null}

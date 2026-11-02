@@ -115,7 +115,7 @@ export const setWaitlistInterest = createServerFn({ method: "POST" })
         userId: context.userId,
         daycareId: data.daycareId,
         kind: "waitlist",
-        message: "Waitlist pulse opt-in",
+        message: "I asked to join the waitlist.",
         sourceKind: "waitlist_interest",
         sourceId: saved[0]?.id || id,
       });
