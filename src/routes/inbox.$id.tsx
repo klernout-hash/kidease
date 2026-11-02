@@ -32,6 +32,7 @@ import { confirmAction } from "@/lib/success-confirm";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { TourCard } from "@/components/tour-card";
 import { money } from "@/lib/utils";
+import { openDirections } from "@/lib/maps";
 import { MIN_POLL_MS, pollBackoffMs } from "@/lib/fn-query";
 import type { BookingStatus, Child, Message, Schedule, TourRequest } from "@/lib/types";
 
@@ -94,6 +95,13 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
   const [detailOpen, setDetailOpen] = useState(false);
   const [plusOpen, setPlusOpen] = useState(false);
   const [stateBusy, setStateBusy] = useState(false);
+  const [homePlace, setHomePlace] = useState<{
+    protected: boolean;
+    line: string;
+    lat: number;
+    lng: number;
+    radiusM: number | null;
+  } | null>(null);
 
   async function load() {
     if (!id) {
@@ -108,6 +116,7 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
     setLoadState("ready");
     setName(res.daycareName);
     setSlug(res.daycareSlug);
+    setHomePlace(res.homePlace);
     setIsParent(res.isParent);
     setViewerRole(res.viewerRole === "centre" || res.viewerRole === "admin" || res.viewerRole === "parent" ? res.viewerRole : "none");
     let next = res.booking ? { ...res.booking, birthdate: res.booking.birthdate ?? null } : null;
@@ -361,6 +370,22 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
             </Link>
           </div>
         )}
+        {loadState === "ready" && homePlace?.line ? (
+          <p className="border-b border-border px-4 py-3 text-sm" data-ke="inbox-home-address">
+            <span className="font-medium">{homePlace.line}</span>
+            {homePlace.protected ? (
+              <span className="mt-1 block text-muted">{t("homeAddressNote")}</span>
+            ) : (
+              <button
+                type="button"
+                className="mt-1 inline-flex min-h-11 items-center font-medium text-primary touch-manipulation"
+                onClick={() => void openDirections(homePlace.lat, homePlace.lng, name, { address: homePlace.line })}
+              >
+                {t("directions")}
+              </button>
+            )}
+          </p>
+        ) : null}
         {loadState === "ready" ? (
           <div className="flex flex-wrap gap-x-4 px-4 pt-1">
             <SafetyReportButton target="thread" conversationId={id} />

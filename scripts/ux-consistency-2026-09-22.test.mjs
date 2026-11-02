@@ -87,7 +87,7 @@ describe("Canada distances stay in kilometres", () => {
     const units = src("src/lib/units.ts");
     const label = src("src/lib/distance-label.ts");
     assert.match(card, /parentDistanceLabel\(/);
-    assert.match(label, /displayDistance\(km, "km"\)/);
+    assert.match(label, /displayDistance\([^;]*km[^;]*, "km"\)/);
     assert.doesNotMatch(card, /t\("miAway"\)/);
     assert.doesNotMatch(label, /"mi"/);
     assert.match(src("src/components/explore-search-bar.tsx"), /\{km\} km/);

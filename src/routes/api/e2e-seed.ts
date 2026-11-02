@@ -18,7 +18,7 @@ function emailFor(role: "parent" | "provider" | "admin" | "government", paid: bo
 
 async function seed(request: Request) {
   if (!e2eLoopbackFixtureRequest(request)) return new Response("Not found", { status: 404 });
-  let body: { role?: string; paid?: boolean; ownSlug?: string; activity?: boolean; attention?: boolean } = {};
+  let body: { role?: string; paid?: boolean; ownSlug?: string; activity?: boolean; attention?: boolean; unlockHome?: boolean } = {};
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -29,6 +29,7 @@ async function seed(request: Request) {
   const paid = Boolean(body.paid);
   const activity = Boolean(body.activity);
   const attention = Boolean(body.attention);
+  const unlockHome = Boolean(body.unlockHome);
   const ownSlug = String(body.ownSlug || "")
     .trim()
     .toLowerCase()
@@ -166,6 +167,48 @@ async function seed(request: Request) {
         `;
         flushSearchMemo();
       }
+    }
+  }
+  if (role === "parent" && unlockHome) {
+    const homeId = "bc-423";
+    const homeSlug = "buddies-on-7th-423";
+    await sql`
+      insert into daycares (
+        id, slug, name, name_fr, tagline, tagline_fr, description, description_fr,
+        address, city, province, postal_code, lat, lng, hours, hours_fr,
+        age_min_months, age_max_months, photos, amenities, facility_type
+      ) values (
+        ${homeId}, ${homeSlug}, ${"Buddies On 7Th"}, ${"Buddies On 7Th"},
+        ${"Licensed family child care"}, ${"Milieu familial permis"},
+        ${"Family child care in Kimberley."}, ${"Milieu familial à Kimberley."},
+        ${"469 7Th Ave"}, ${"Kimberley"}, ${"BC"}, ${"V1A 2W9"},
+        ${49.694222}, ${-115.986222},
+        ${"7:30 a.m. to 5:30 p.m."}, ${"7 h 30 a 17 h 30"},
+        ${0}, ${60}, ${""}, ${"licensed,home"}, ${"family_home"}
+      )
+      on conflict (id) do nothing
+    `.catch(() => undefined);
+    await sql`
+      insert into conversations (id, user_id, daycare_id, last_at)
+      values (${"e2e-home-convo"}, ${userId}, ${homeId}, now())
+      on conflict (user_id, daycare_id) do nothing
+    `.catch(() => undefined);
+    const convos = await sql<{ id: string }>`
+      select id from conversations where user_id = ${userId} and daycare_id = ${homeId} limit 1
+    `.catch(() => [] as { id: string }[]);
+    const convoId = convos[0]?.id;
+    if (convoId) {
+      await sql`
+        insert into tour_requests (id, conversation_id, user_id, daycare_id, preferred_times, status, window_id)
+        values (${"e2e-home-tour"}, ${convoId}, ${userId}, ${homeId}, ${"Tue 10:00"}, ${"accepted"}, ${"e2e-home-slot"})
+        on conflict (id) do update set status = 'accepted', user_id = excluded.user_id
+      `.catch(async () => {
+        await sql`
+          insert into tour_requests (id, conversation_id, user_id, daycare_id, preferred_times, status)
+          values (${"e2e-home-tour"}, ${convoId}, ${userId}, ${homeId}, ${"Tue 10:00"}, ${"accepted"})
+          on conflict (id) do update set status = 'accepted', user_id = excluded.user_id
+        `.catch(() => undefined);
+      });
     }
   }
   if (role === "parent" && activity) {

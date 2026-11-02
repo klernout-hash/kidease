@@ -1027,6 +1027,8 @@ export const getThread = createServerFn({ method: "GET" })
         },
       );
     }
+    const { homeThreadPlace } = await import("@/lib/server/home-address-privacy");
+    const homePlace = await homeThreadPlace(sql, conv[0].daycare_id, context.userId, access.role);
     const { videoSurfaceEnabled } = await import("@/lib/channel-readiness");
     const { voiceCredentialsPresent } = await import("@/lib/voice");
     const { voiceCallsEnabled } = await import("@/lib/features");
@@ -1040,6 +1042,7 @@ export const getThread = createServerFn({ method: "GET" })
       daycareSlug: conv[0].slug,
       photo: splitPhotoList(conv[0].photos)[0] ?? "/photos/cottage.jpg",
       phone: conv[0].phone,
+      homePlace,
       isParent: conv[0].user_id === context.userId,
       booking: b
         ? {

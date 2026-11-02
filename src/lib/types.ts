@@ -182,6 +182,16 @@ export type Daycare = {
   inboxMailReady?: boolean;
   /** Official provincial opening. Omitted when stale, missing, or the centre set its own. */
   provincialOpening?: { total: number; asOf: string; sourceUrl: string; ageLabel: string } | null;
+  /** Verified owner chose to show this home's street. Centres ignore it. */
+  showPublicAddress?: boolean;
+  /** Public payload hid the street and the exact pin. */
+  addressProtected?: boolean;
+  /** Area circle radius in metres when the street is hidden. */
+  mapRadiusM?: number | null;
+  /** City, neighbourhood, and postal FSA. No street. */
+  addressPlace?: string | null;
+  /** Distance is rounded. The label says "about". */
+  distanceApproximate?: boolean;
   /** Private shortlist tracker. Only set on a parent's saved rows. */
   trackStatus?: "interested" | "called" | "toured" | "waitlisted" | "enrolled";
   callNote?: string;

@@ -20,6 +20,6 @@ test("listing first paint includes overview text and one ChildCare JSON-LD", () 
   assert.doesNotMatch(route, /dangerouslySetInnerHTML/);
   const jsonLdScripts = route.match(/application\/ld\+json/g) || [];
   assert.equal(jsonLdScripts.length, 2);
-  assert.match(seo, /description: found\.description/);
-  assert.match(seo, /hours: found\.hours/);
+  assert.match(seo, /description: (found|sealed)\.description/);
+  assert.match(seo, /hours: (found|sealed)\.hours/);
 });

@@ -1,3 +1,4 @@
+import { isHomeDaycare } from "./home-address-privacy.ts";
 import { isPublicListing } from "./listing-visibility.ts";
 
 /**
@@ -110,11 +111,14 @@ export function mapCameraMoved(
   return Math.abs(before.lat - after.lat) > 1e-5 || Math.abs(before.lng - after.lng) > 1e-5;
 }
 
-/** id, latitude, longitude, name. Address and the public URL load when the pin is tapped. */
-export type MapPinWire = [string, number, number, string];
+/** id, latitude, longitude, name. A protected home adds the area radius in metres. */
+export type MapPinWire = [string, number, number, string] | [string, number, number, string, number];
 
-export function encodeMapPinWire(pin: Pick<MapPin, "id" | "lat" | "lng" | "name">): MapPinWire {
-  return [pin.id, Math.round(pin.lat * 1e5) / 1e5, Math.round(pin.lng * 1e5) / 1e5, pin.name];
+export function encodeMapPinWire(pin: Pick<MapPin, "id" | "lat" | "lng" | "name" | "radiusM">): MapPinWire {
+  const lat = Math.round(pin.lat * 1e5) / 1e5;
+  const lng = Math.round(pin.lng * 1e5) / 1e5;
+  if (pin.radiusM && pin.radiusM >= 500) return [pin.id, lat, lng, pin.name, Math.round(pin.radiusM)];
+  return [pin.id, lat, lng, pin.name];
 }
 
 export function decodeMapPinWire(row: MapPinWire): MapPin | null {
@@ -124,6 +128,7 @@ export function decodeMapPinWire(row: MapPinWire): MapPin | null {
   const lat = Number(row[1]);
   const lng = Number(row[2]);
   if (!id || !name || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  const radius = Number(row[4]);
   return {
     id,
     slug: "",
@@ -135,6 +140,7 @@ export function decodeMapPinWire(row: MapPinWire): MapPin | null {
     city: "",
     province: "",
     postalCode: "",
+    radiusM: Number.isFinite(radius) && radius >= 500 ? radius : undefined,
   };
 }
 
@@ -431,6 +437,13 @@ export type MapPin = {
   city: string;
   province: string;
   postalCode: string;
+  /** Home daycare that still hides its door. Omitted on the public wire. */
+  protectedHome?: boolean;
+  showPublicAddress?: boolean;
+  /** Area circle radius in metres. Set only for a protected home. */
+  radiusM?: number;
+  facilityType?: string | null;
+  amenities?: string | null;
 };
 
 export type MapCluster = {
@@ -565,6 +578,15 @@ export function pointInBbox(point: { lat: number; lng: number }, box: MapBbox): 
   );
 }
 
+function isMapHome(row: {
+  amenities?: string | null;
+  facilityType?: string | null;
+  kideaseCategory?: string | null;
+  providerType?: string | null;
+}): boolean {
+  return isHomeDaycare(row);
+}
+
 export function collectPublicMapPins(
   rows: Array<{
     id?: string | null;
@@ -580,6 +602,11 @@ export function collectPublicMapPins(
     licenseNumber?: string | null;
     visibility?: string | null;
     isTest?: boolean | number | null;
+    amenities?: string | null;
+    facilityType?: string | null;
+    showPublicAddress?: boolean | null;
+    kideaseCategory?: string | null;
+    providerType?: string | null;
   }>,
   box: MapBbox,
 ): MapPin[] {
@@ -603,6 +630,7 @@ export function collectPublicMapPins(
     ) {
       continue;
     }
+    const home = isMapHome(row);
     out.push({
       id,
       slug,
@@ -614,6 +642,10 @@ export function collectPublicMapPins(
       city: row.city || "",
       province: row.province || "",
       postalCode: row.postalCode || "",
+      facilityType: row.facilityType || null,
+      amenities: row.amenities || null,
+      showPublicAddress: row.showPublicAddress === true,
+      protectedHome: home && row.showPublicAddress !== true,
     });
   }
   return out;

@@ -24,6 +24,8 @@ import {
 } from "@/lib/listing-photo-downgrade";
 import { listingCompleteness, vacancyFreshness, vacancyTimestamp } from "@/lib/listing-readiness";
 import { refreshVacancy, updateListing } from "@/lib/server/claims";
+import { setHomePublicAddress } from "@/lib/server/home-address-privacy";
+import { isHomeDaycare, verifiedOwnerClaim } from "@/lib/home-address-privacy";
 import { ListingCultureFields } from "@/components/listing-culture-fields";
 import { listingWriterEventProps } from "@/lib/ai/listing-writer";
 import { AI_FLAGS } from "@/lib/ai/flags";
@@ -272,6 +274,54 @@ function photoWarningKey(warning: PhotoWarning): CopyKey {
   if (warning === "blurry") return "photoCheckBlurry";
   if (warning === "dark") return "photoCheckDark";
   return "photoCheckDuplicate";
+}
+
+function HomeAddressSetting({ daycare }: { daycare: Daycare }) {
+  const { t } = useCopy();
+  const home = isHomeDaycare(daycare);
+  const verified = verifiedOwnerClaim(daycare.claimStatus, daycare.claimedAt);
+  const [show, setShow] = useState(daycare.showPublicAddress === true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (!home) return null;
+  return (
+    <div className="sm:col-span-2 rounded-xl bg-surface px-3 py-3 ring-1 ring-border" data-ke="home-address-setting">
+      <label className="flex min-h-11 items-start gap-3 text-sm">
+        <input
+          type="checkbox"
+          className="mt-1 size-5"
+          checked={show}
+          disabled={!verified || busy}
+          onChange={(event) => {
+            const next = event.target.checked;
+            setShow(next);
+            setBusy(true);
+            setError(null);
+            void setHomePublicAddress({ data: { daycareId: daycare.id, show: next } })
+              .then(() => {
+                toast.success(t("homeAddressSettingSaved"));
+              })
+              .catch((err: unknown) => {
+                setShow(!next);
+                setError(err instanceof Error ? err.message : t("homeAddressSettingLocked"));
+              })
+              .finally(() => setBusy(false));
+          }}
+        />
+        <span>
+          <span className="font-medium">{t("homeAddressSetting")}</span>
+          <span className="mt-1 block text-muted">
+            {verified ? t("homeAddressSettingHelp") : t("homeAddressSettingLocked")}
+          </span>
+        </span>
+      </label>
+      {error ? (
+        <p className="mt-2 text-sm" role="alert">
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
 export function CapacityForm({
@@ -772,6 +822,7 @@ export function CapacityForm({
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label={t("centreName")} value={state.name} onChange={(v) => setState({ ...state, name: v })} />
             <Field label={t("addressLabel")} value={state.address} onChange={(v) => setState({ ...state, address: v })} />
+            {mode === "listing" ? <HomeAddressSetting daycare={daycare} /> : null}
             <Field label={t("cityLabel")} value={state.city} onChange={(v) => setState({ ...state, city: v })} />
             <div id="listing-health-province">
               <Field label={t("provinceLabel")} value={state.province} onChange={(v) => setState({ ...state, province: v })} />

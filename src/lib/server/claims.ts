@@ -17,6 +17,8 @@ import { lookupUser, notifyPlatform, notifyProviderJoined } from "./notify";
 import { writeProfileRole } from "./roles";
 import { applyInteriorPhotos, applyManagedListingPhotos, applyStorefrontPhoto, listingPhotosChanged, MAX_LISTING_PHOTOS } from "@/lib/listing-photo";
 import { claimCityScore } from "@/lib/claim-search";
+import { isHomeDaycare, postalFsa } from "@/lib/home-address-privacy";
+import { applyMasterCareType } from "@/lib/server/master-care-type";
 import { officialLicenceNumber } from "@/lib/licensing";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { cultureFieldsToSql } from "@/lib/listing-culture";
@@ -164,14 +166,22 @@ export const searchClaimable = createServerFn({ method: "POST" })
       else if (lic.includes(q)) score = 30;
       else if (postal.includes(q)) score = 20;
       else continue;
+      const typed = applyMasterCareType({
+        name: d.name,
+        province: d.province,
+        postalCode: d.postalCode,
+        amenities: d.amenities,
+        facilityType: null,
+      });
+      const hideStreet = !admin && isHomeDaycare(typed);
       scored.push({
         id: d.id,
         slug: d.slug,
         name: d.name,
-        address: d.address,
+        address: hideStreet ? "" : d.address,
         city: d.city,
         province: d.province,
-        postalCode: d.postalCode,
+        postalCode: hideStreet ? postalFsa(d.postalCode) : d.postalCode,
         phone: d.phone,
         photo: isRealListingPhoto(d.photos?.[0]) ? d.photos[0]! : "",
         claimed: taken.has(d.id),

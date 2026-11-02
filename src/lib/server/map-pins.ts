@@ -11,7 +11,9 @@
  */
 
 import { createServerFn } from "@tanstack/react-start";
+import { loadHomeViewer, presentMapView, presentPin } from "@/lib/server/home-address-privacy";
 import { listRawMapPinsInBbox } from "@/lib/catalog";
+import { isHomeDaycare } from "@/lib/home-address-privacy";
 import { dbSource, getSql, type Sql } from "@/lib/db";
 import { correctCentreNameTypos } from "@/lib/listing-slug";
 import { PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
@@ -56,7 +58,10 @@ export const MAP_BBOX_WHERE_SQL = `
  * URL load from MAP_PIN_DETAIL_SQL when a pin is tapped. No LIMIT.
  */
 export const MAP_PINS_SQL = `
-select id, lat, lng, name
+select id, lat, lng, name,
+  coalesce(facility_type, '') as facility_type,
+  coalesce(amenities, '') as amenities,
+  coalesce(show_public_address, false) as show_public_address
 from daycares
 where ${MAP_BBOX_WHERE_SQL}
 `;
@@ -68,7 +73,10 @@ select id, slug, name, coalesce(name_fr, '') as name_fr,
   coalesce(address, '') as address,
   coalesce(city, '') as city,
   coalesce(province, '') as province,
-  coalesce(postal_code, '') as postal_code
+  coalesce(postal_code, '') as postal_code,
+  coalesce(facility_type, '') as facility_type,
+  coalesce(amenities, '') as amenities,
+  coalesce(show_public_address, false) as show_public_address
 from daycares
 where id = $1
   and ${PUBLIC_LISTING_SQL}
@@ -97,7 +105,10 @@ select
   case when count(*) = 1 then min(coalesce(address, '')) else null end as address,
   case when count(*) = 1 then min(coalesce(city, '')) else null end as city,
   case when count(*) = 1 then min(coalesce(province, '')) else null end as province,
-  case when count(*) = 1 then min(coalesce(postal_code, '')) else null end as postal_code
+  case when count(*) = 1 then min(coalesce(postal_code, '')) else null end as postal_code,
+  case when count(*) = 1 then min(coalesce(facility_type, '')) else null end as facility_type,
+  case when count(*) = 1 then min(coalesce(amenities, '')) else null end as amenities,
+  case when count(*) = 1 then bool_or(coalesce(show_public_address, false)) else false end as show_public_address
 from daycares
 where ${MAP_BBOX_WHERE_SQL}
 group by 1, 2
@@ -114,6 +125,9 @@ type PinRow = {
   city?: string | null;
   province?: string | null;
   postal_code?: string | null;
+  facility_type?: string | null;
+  amenities?: string | null;
+  show_public_address?: boolean | null;
   n?: number | string | null;
   min_lat?: number | string | null;
   max_lat?: number | string | null;
@@ -151,7 +165,19 @@ export function mapRowToPin(row: PinRow): MapPin | null {
     city: String(row.city || ""),
     province: String(row.province || ""),
     postalCode: String(row.postal_code || ""),
+    facilityType: row.facility_type || null,
+    amenities: row.amenities || null,
+    showPublicAddress: row.show_public_address === true,
+    protectedHome: homePin(row) && row.show_public_address !== true,
   };
+}
+
+function homePin(row: PinRow): boolean {
+  return isHomeDaycare({
+    facility_type: row.facility_type,
+    amenities: row.amenities,
+    show_public_address: row.show_public_address,
+  });
 }
 
 function remember(key: string, value: MapViewData): MapViewData {
@@ -254,6 +280,9 @@ async function queryMap(box: MapBbox, zoom: number): Promise<MapViewData> {
         city: pin.city,
         province: pin.province,
         postal_code: pin.postalCode,
+        facility_type: pin.facilityType,
+        amenities: pin.amenities,
+        show_public_address: pin.showPublicAddress,
       }),
     )
     .filter((pin): pin is MapPin => Boolean(pin));
@@ -320,7 +349,10 @@ export const mapPinsInView = createServerFn({ method: "GET" })
       exact: Boolean(input.exact),
     }),
   )
-  .handler(async ({ data }) => toMapViewResponse(await loadMapPinsInView(data)));
+  .handler(async ({ data }) => {
+    const view = await loadMapPinsInView(data);
+    return toMapViewResponse(presentMapView(view, await loadHomeViewer()));
+  });
 
 export type MapPinTileBatch = {
   tiles: Array<{ key: string; pins: MapPinWire[] }>;
@@ -340,7 +372,7 @@ function tileCacheKey(box: MapBbox, zoom: number): string {
 export async function loadMapPinTileBatch(input: {
   zoom: number;
   tiles: MapBbox[];
-}): Promise<MapPinTileBatch> {
+}): Promise<{ tiles: Array<{ key: string; pins: MapPin[] }> }> {
   const zoom = clampMapZoom(input.zoom);
   const tiles: MapBbox[] = [];
   for (const raw of input.tiles) {
@@ -379,7 +411,7 @@ export async function loadMapPinTileBatch(input: {
   return {
     tiles: tiles.map((tile) => {
       const key = mapTileKey(tile, zoom);
-      return { key, pins: (ready.get(key) ?? []).map(encodeMapPinWire) };
+      return { key, pins: ready.get(key) ?? [] };
     }),
   };
 }
@@ -397,7 +429,15 @@ export const mapPinTiles = createServerFn({ method: "POST" })
       .filter((tile) => [tile.minLat, tile.maxLat, tile.minLng, tile.maxLng].every((value) => Number.isFinite(value)));
     return { zoom: Number(input?.zoom), tiles };
   })
-  .handler(async ({ data }) => loadMapPinTileBatch(data));
+  .handler(async ({ data }) => {
+    const batch = await loadMapPinTileBatch(data);
+    const viewer = await loadHomeViewer();
+    const tiles = batch.tiles.map((tile) => ({
+      key: tile.key,
+      pins: tile.pins.map((pin) => encodeMapPinWire(presentPin(pin, viewer))),
+    }));
+    return { tiles } satisfies MapPinTileBatch;
+  });
 
 export async function loadMapPinDetail(id: string): Promise<MapPin | null> {
   const wanted = String(id || "").trim();
@@ -420,4 +460,8 @@ export async function loadMapPinDetail(id: string): Promise<MapPin | null> {
 
 export const mapPinDetail = createServerFn({ method: "GET" })
   .validator((input: { id: string }) => ({ id: String(input?.id || "").trim() }))
-  .handler(async ({ data }) => loadMapPinDetail(data.id));
+  .handler(async ({ data }) => {
+    const pin = await loadMapPinDetail(data.id);
+    if (!pin) return null;
+    return presentPin(pin, await loadHomeViewer());
+  });

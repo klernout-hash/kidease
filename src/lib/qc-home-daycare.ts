@@ -775,6 +775,8 @@ export const QC_HOME_COPY = {
     emptyLicensed: "Search licensed daycares",
     home: "Go home",
     areaNote: "The circle is the area, not the home.",
+    privacyNote:
+      "Home daycare: exact address is shared after you book a tour to protect the family's privacy.",
     areaMap: "Area map for {place}. This is not a street address.",
     showPhone: "Show phone number",
     showEmail: "Show email",
@@ -822,6 +824,8 @@ export const QC_HOME_COPY = {
     emptyLicensed: "Chercher des garderies permises",
     home: "Accueil",
     areaNote: "Le cercle montre le secteur, pas le domicile.",
+    privacyNote:
+      "Garderie en milieu familial : l’adresse exacte est partagée après la réservation d’une visite, pour protéger la vie privée de la famille.",
     areaMap: "Carte du secteur de {place}. Ce n'est pas une adresse de rue.",
     showPhone: "Afficher le téléphone",
     showEmail: "Afficher le courriel",

@@ -58,6 +58,9 @@ export type ListingSeoSource = {
   hoursFr?: string | null;
   /** Store-review demo. Direct slug only. */
   noindex?: boolean | null;
+  /** Home daycare whose street stays off this page. */
+  addressProtected?: boolean | null;
+  facilityType?: string | null;
 };
 
 export type ListingSeoMeta = {
@@ -178,7 +181,11 @@ export function listingMetaDescription(src: ListingSeoSource, locale: ListingSeo
   if (!name) return "";
   const area = listingAreaLine(src);
   const ages = agePhrase(src, locale);
-  const type = classifyFacilityType({ amenities: src.amenities, name: src.name }).type;
+  const type = classifyFacilityType({
+    amenities: src.amenities,
+    name: src.name,
+    facilityType: src.facilityType,
+  }).type;
   const kind = facilityTypeSeoKind(type, locale);
   const program = feeProgramPhrase(src, locale);
   if (locale === "fr") {
@@ -252,12 +259,17 @@ export function listingJsonLd(src: ListingSeoSource, locale: ListingSeoLocale = 
     "@type": "PostalAddress",
     addressCountry: "CA",
   };
-  if (street) address.streetAddress = street;
+  const hideStreet = src.addressProtected === true;
+  if (street && !hideStreet) address.streetAddress = street;
   if (city) address.addressLocality = city;
   if (province) address.addressRegion = province;
-  if (postal) address.postalCode = postal;
+  if (postal) address.postalCode = hideStreet ? postal.replace(/\s+/g, "").slice(0, 3) : postal;
 
-  const type = classifyFacilityType({ amenities: src.amenities, name: src.name }).type;
+  const type = classifyFacilityType({
+    amenities: src.amenities,
+    name: src.name,
+    facilityType: src.facilityType,
+  }).type;
   const node: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": ["ChildCare", "LocalBusiness"],
