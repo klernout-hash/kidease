@@ -1,8 +1,10 @@
 /**
  * Native Sign in with Google (Google's own IDP — not the Grok auth broker).
  *
- * When `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` are set, Better Auth's
- * `socialProviders.google` talks to Google directly. Callback path is
+ * When `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` are set AND
+ * `GOOGLE_SIGNIN_ENABLED` is on, Better Auth's
+ * `socialProviders.google` talks to Google directly. The flag defaults off.
+ * Callback path is
  * `/api/auth/callback/google` (already registered on the GCP KidEase web client
  * for kidease.ca, www.kidease.ca, and kidease-git.vercel.app).
  *

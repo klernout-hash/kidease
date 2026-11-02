@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { appleLoginVisible } from "@/lib/auth/apple-login-flag";
 import { facebookLoginVisible, facebookOauthHost } from "@/lib/auth/facebook-idp";
+import { googleSignInOffered } from "@/lib/auth/google-login-flag";
 import { amazonSignInVisible, huaweiSignInVisible } from "@/lib/auth/store-signin-flags";
 import { nativeShellHidesAdmin } from "@/lib/native-admin";
 import { googlePlayServicesAvailable, storeChannelFromSignals } from "@/lib/native-entitlements";
@@ -10,7 +11,8 @@ import { visibleSignInProviders, type GrokProvider } from "@/lib/auth/providers"
 
 /**
  * Sign-in buttons the login page should render.
- * Google when native Google or the Grok broker is configured.
+ * Google only when GOOGLE_SIGNIN_ENABLED is on and native Google or the Grok
+ * broker is configured. Default off, so the button stays hidden with no env change.
  * Facebook only when FACEBOOK_CLIENT_* are set AND FEATURE_FACEBOOK_LOGIN is on
  * (Meta App must be Live — hide a parked "App not active" button).
  * Apple only when APPLE_CLIENT_ID + APPLE_TEAM_ID + APPLE_KEY_ID +
@@ -18,9 +20,8 @@ import { visibleSignInProviders, type GrokProvider } from "@/lib/auth/providers"
  * apple-idp.ts (node:crypto) into this module.
  */
 export const getSignInProviders = createServerFn({ method: "GET" }).handler((): GrokProvider[] => {
-  const nativeGoogle = Boolean(
-    process.env.GOOGLE_CLIENT_ID?.trim() && process.env.GOOGLE_CLIENT_SECRET?.trim(),
-  );
+  const google = googleSignInOffered(process.env);
+  const nativeGoogle = google.native;
   let host: string | null = null;
   try {
     host = getRequest()?.headers.get("host") ?? null;
@@ -30,10 +31,7 @@ export const getSignInProviders = createServerFn({ method: "GET" }).handler((): 
   // Random *.vercel.app previews and the broker host are not registered with Meta.
   const nativeFacebook = facebookLoginVisible(process.env) && Boolean(facebookOauthHost(host));
   const nativeApple = appleLoginVisible(process.env);
-  const explicitBroker = Boolean(
-    process.env.GROK_AUTH_CLIENT_ID?.trim() && process.env.GROK_AUTH_CLIENT_SECRET?.trim(),
-  );
-  const broker = explicitBroker || !process.env.VERCEL;
+  const broker = google.broker;
   const preferNative = Boolean(process.env.VERCEL);
   const list = visibleSignInProviders({
     nativeGoogle,

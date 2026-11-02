@@ -12,7 +12,9 @@ Each KidEase build shows only the sign-in buttons that work on that device.
 
 Email is the form under the buttons. The Help button stays on these screens.
 
-Huawei ID and Login with Amazon stay hidden until the flags below are `1` and the keys are set. Apple, Google, and Facebook keep their current flags and keys.
+Continue with Google stays hidden until `GOOGLE_SIGNIN_ENABLED=1`. The Google Cloud project is suspended (Error 401 disabled_client). `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` stay set. While the flag is off, the order on each row above drops Google and keeps the rest: Apple, then Facebook, then email, with no empty slot. When the flag is on, Google returns between Apple and Facebook.
+
+Huawei ID and Login with Amazon stay hidden until the flags below are `1` and the keys are set. Apple and Facebook keep their current flags and keys.
 
 A Play or Galaxy Store build hides Google when the phone has no Google Play services. The app adds `KidEaseNoGms` to the user agent in that case.
 
