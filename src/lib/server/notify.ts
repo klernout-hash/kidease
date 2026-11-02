@@ -190,7 +190,7 @@ function defaultTitle(kind: PlatformKind) {
     case "support":
       return "New support message";
     case "enroll":
-      return "Daycare enroll request";
+      return "Daycare enrol request";
     case "chat":
       return "Live Chat message";
     case "review":
@@ -216,7 +216,7 @@ const KIND_LABEL: Record<string, string> = {
   promo: "Priority listings",
   contact: "Contact messages",
   support: "Support messages",
-  enroll: "Daycare enrollments",
+  enroll: "Daycare enrolments",
   chat: "Live Chat",
   review: "Parent reviews",
   tour_request: "Tour requests",
@@ -804,7 +804,7 @@ export const submitPublicMessage = createServerFn({ method: "POST" })
     await assertTurnstileToken(data.turnstileToken);
     const title =
       data.kind === "enroll"
-        ? `Enroll Now: ${data.centre || data.name}`
+        ? `Enrol now: ${data.centre || data.name}`
         : data.kind === "contact"
           ? `Contact: ${data.subject || "Message"}`
           : "New support message";

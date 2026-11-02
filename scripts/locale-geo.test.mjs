@@ -226,6 +226,14 @@ test("an explicit lang param beats the saved locale and /fr/parent stays put", (
     localeRedirectTarget({ ...document, pathname: "/fr/inbox", search: "?lang=en", cookie: "en" }),
     null,
   );
+  assert.equal(
+    localeRedirectTarget({ ...document, pathname: "/search", search: "?spoken=fr", country: "CA", region: "ON" }),
+    null,
+  );
+  assert.equal(
+    localeRedirectTarget({ ...document, pathname: "/search", search: "?lang=fr", country: "CA", region: "ON" }),
+    "/fr/search?lang=fr",
+  );
   assert.equal(decideVisitorLocale({ cookie: "fr", queryLocale: "en" }).locale, "en");
   assert.equal(decideVisitorLocale({ cookie: "fr", queryLocale: "en" }).source, "query");
   assert.match(src("src/lib/locale-choice.server.ts"), /localeRedirectTarget/);

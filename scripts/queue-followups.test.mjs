@@ -28,7 +28,8 @@ test("fonts, sign-in aliases, Interac, and public admin words match the queue", 
   assert.match(src("vercel.json"), /"source": "\/sign-in"/);
   assert.match(src("vercel.json"), /"destination": "\/signup"/);
   const terms = src("src/lib/legal-copy.ts");
-  assert.match(terms, /Interac e-Transfer is reviewed by KidEase staff/);
+  assert.match(terms, /A parent can note an Interac e-Transfer on the pay page/);
+  assert.doesNotMatch(terms, /Interac e-Transfer is reviewed by KidEase staff/);
   assert.match(terms, /support@kidease\.ca/);
   assert.doesNotMatch(terms, /may be added later/);
   assert.doesNotMatch(terms, /pourront s’ajouter plus tard/);

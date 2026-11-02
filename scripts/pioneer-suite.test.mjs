@@ -195,9 +195,10 @@ test("Québec home privacy centroid hides the street", () => {
 });
 
 test("search chips and review bars stay tied to real inputs", () => {
-  const parsed = parsePioneerSearch({ cwelcc: "1", meals: "1", lang: "fr,zh,nope", openings: 1 });
+  const parsed = parsePioneerSearch({ cwelcc: "1", meals: "1", spoken: "fr,zh,nope", lang: "fr", openings: 1 });
   assert.equal(parsed.cwelcc, "1");
-  assert.equal(parsed.lang, "fr,zh");
+  assert.equal(parsed.spoken, "fr,zh");
+  assert.equal(parsed.lang, undefined);
   assert.equal(parsed.openings, "1");
   const bars = reviewDimensionBars([{ dimensions: { safety: 4, value: 5 } }, { dimensions: { safety: 2 } }]);
   assert.equal(bars.find((bar) => bar.id === "safety")?.average, 3);
@@ -207,8 +208,8 @@ test("search chips and review bars stay tied to real inputs", () => {
   assert.equal(fromStars.find((bar) => bar.id === "value")?.average, 3);
   assert.equal(realMonthlyFee(218), null);
   assert.equal(knownListingMonthlyFee({ preschoolMonthly: 900, infantMonthly: 218 }, "preschool"), 900);
-  assert.equal(knownListingMonthlyFee({ programDaily: 10 }, "toddler"), 217.5);
-  assert.equal(knownListingMonthlyFee({ programDaily: 9.65 }, "infant"), 209.89);
+  assert.equal(knownListingMonthlyFee({ programDaily: 10 }, "toddler"), null);
+  assert.equal(knownListingMonthlyFee({ programDaily: 9.65 }, "infant"), null);
   const pills = pickCardMicroPills({
     home,
     work,

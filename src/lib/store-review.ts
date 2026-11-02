@@ -54,6 +54,16 @@ export function isPlayPackageName(id: string): boolean {
   return /^[a-zA-Z][a-zA-Z0-9_]*(\.[a-zA-Z][a-zA-Z0-9_]*)+$/.test(id.trim());
 }
 
+/**
+ * Public store buttons on /get-app.
+ * Off until the App Store and Play listings exist. Set VITE_STORE_LISTINGS_LIVE=1
+ * only after both pages are live. This is not a product flag.
+ */
+export function storeListingsLive(): boolean {
+  const raw = readPublicEnv("VITE_STORE_LISTINGS_LIVE").trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes";
+}
+
 /** Public App Store listing URL — empty until Apple assigns a numeric ID. Never invent one. */
 export function appleStoreListingUrl(id = appleAppStoreId()): string | null {
   const trimmed = id.trim();

@@ -1305,7 +1305,7 @@
   "featCentres": "دليل على مستوى كندا",
   "featCentresBody": "مراكز مرخّصة في كل مقاطعة وإقليم. تستخدم كل قائمة صورة واجهة المبنى عندما يمكن التحقق منها.",
   "featPay": "فواتير داخل التطبيق",
-  "featPayBody": "ترسل المراكز الفواتير. يدفع أولياء الأمور عبر Stripe Checkout. تخضع Interac لمراجعة الموظفين. Parent Plus اشتراك منفصل في KidEase: وليس رسوم المركز.",
+  "featPayBody": "ترسل المراكز الفواتير. يدفع أولياء الأمور عبر Stripe Checkout. يمكن لولي الأمر تسجيل تحويل Interac في صفحة الدفع. يبقى هذا التسجيل بانتظار. لا يمكن للصفحة تعليمه مدفوعاً. Parent Plus اشتراك منفصل في KidEase وليس رسوم المركز.",
   "featSafe": "مصمّم وفق PIPEDA",
   "featSafeBody": "تبقى ملفات الأطفال معك ومع المركز الذي تتواصل معه. احذف حسابك في أي وقت.",
   "onYourPhone": "على الهاتف",
@@ -3305,5 +3305,13 @@
   "openPublicRegistry": "افتح السجل العام",
   "dataPointSource": "المصدر",
   "feeNoCheckDate": "لا يوجد تاريخ مراجعة منفصل محفوظ.",
-  "ratioNotConfirmed": "غير مؤكد. لن يخمّن KidEase هذه النسبة."
+  "ratioNotConfirmed": "غير مؤكد. لن يخمّن KidEase هذه النسبة.",
+  "stickyInfo": "معلومات",
+  "stickyMessage": "رسالة",
+  "agesFromProvince": "الأعمار من سجل الترخيص في المقاطعة.",
+  "agesFromProvinceLink": "السجل الإقليمي",
+  "storeComingSoonTitle": "App Store وGoogle Play قريباً",
+  "storeComingSoonLead": "تطبيقات الهاتف ليست في المتاجر بعد. يمكنكم إضافة KidEase إلى الشاشة الرئيسية من هذه الصفحة.",
+  "featPayBodyBills": "ترسل المراكز الفواتير. يدفع أولياء الأمور عبر Stripe Checkout. يمكن لولي الأمر تسجيل تحويل Interac في صفحة الدفع. يبقى هذا التسجيل بانتظار. لا يمكن للصفحة تعليمه مدفوعاً.",
+  "compareEmptyFree": "قارنوا الأعمار والساعات والمسافة واللغة والثقافة والأماكن المتاحة."
 }

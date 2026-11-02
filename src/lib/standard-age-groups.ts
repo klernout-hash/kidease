@@ -285,6 +285,19 @@ export function standardAgeLabelsForListing(
   return listingStandardGroups(listing).map((id) => standardAgeLabel(id, locale));
 }
 
+/** First public http(s) URL in a source field. Machine notes are not a parent sentence. */
+export function publicAgeSourceUrl(raw: string | null | undefined): string | null {
+  const match = String(raw ?? "").match(/https?:\/\/[^\s;"']+/i);
+  if (!match) return null;
+  try {
+    const url = new URL(match[0].replace(/[),]+$/, ""));
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
 /** Human payload after the machine prefix. The rest of the source string stays as written. */
 export function provinceAgeSourceText(raw: string | null | undefined): string {
   let text = String(raw ?? "").trim();

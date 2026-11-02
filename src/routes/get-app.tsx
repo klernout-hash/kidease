@@ -15,7 +15,9 @@ import {
   promptInstall,
 } from "@/lib/native";
 import { STORE } from "@/lib/store-listing";
-import { appleStoreListingUrl, playStoreListingUrl } from "@/lib/store-review";
+import { appleStoreListingUrl, playStoreListingUrl, storeListingsLive } from "@/lib/store-review";
+import { featPayBodyKey } from "@/lib/copy";
+import { useRoleChrome } from "@/components/role-chrome";
 import { localePath } from "@/lib/locale-path";
 import { comingSoonStores } from "@/lib/native-entitlements";
 import { showStoreComingSoon } from "@/lib/store-placeholders";
@@ -62,10 +64,12 @@ function storeComingLine(locale: string, badges: Array<"apple" | "play">): strin
 export function GetAppScreen({ dev }: { dev?: "1" }) {
   const { t, locale } = useCopy();
   const hideCommerce = useInNativeShell();
+  const plansOn = useRoleChrome().subscriptionsEnabled === true;
   const storeChannel = useStoreChannel();
   const showStores = showStoreComingSoon(storeChannel);
+  const listingsLive = storeListingsLive();
   const fromChannel = hideCommerce ? [] : comingSoonStores(storeChannel);
-  const storeBadges = showStores ? fromChannel : [];
+  const storeBadges = listingsLive && showStores ? fromChannel : [];
   const showDev = dev === "1";
   const [canPrompt, setCanPrompt] = useState(false);
   const [installed, setInstalled] = useState(false);
@@ -126,25 +130,14 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
                 </Link>
               </Button>
             </div>
-            {showStores && storeBadges.length === 2 ? (
-              <div className="mt-5 flex flex-wrap gap-2" data-ke="store-coming-soon">
-                <StoreBadge store="apple" label={locale === "fr" ? "App Store \u00b7 Bient\u00f4t" : "App Store \u00b7 Coming soon"} />
-                <StoreBadge store="play" label={locale === "fr" ? "Google Play \u00b7 Bient\u00f4t" : "Google Play \u00b7 Coming soon"} />
+            {listingsLive && showStores && storeBadges.length === 2 ? (
+              <div className="mt-5 flex flex-wrap gap-2" data-ke="store-listings">
+                <StoreBadge store="apple" label={t("appStore")} />
+                <StoreBadge store="play" label={t("googlePlay")} />
               </div>
-            ) : showStores && storeBadges.length === 1 ? (
-              <div className="mt-5 flex flex-wrap gap-2" data-ke="store-coming-soon">
-                <StoreBadge
-                  store={storeBadges[0]}
-                  label={
-                    storeBadges[0] === "apple"
-                      ? locale === "fr"
-                        ? "App Store \u00b7 Bient\u00f4t"
-                        : "App Store \u00b7 Coming soon"
-                      : locale === "fr"
-                        ? "Google Play \u00b7 Bient\u00f4t"
-                        : "Google Play \u00b7 Coming soon"
-                  }
-                />
+            ) : listingsLive && showStores && storeBadges.length === 1 ? (
+              <div className="mt-5 flex flex-wrap gap-2" data-ke="store-listings">
+                <StoreBadge store={storeBadges[0]} label={storeBadges[0] === "apple" ? t("appStore") : t("googlePlay")} />
               </div>
             ) : !showStores ? (
               <p className="mt-5 max-w-md text-sm text-muted" data-ke="store-already-in-app">
@@ -152,8 +145,12 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
                   ? "Vous êtes dans l’appli KidEase. Cherchez une garderie permise au Canada."
                   : "You are in the KidEase app. Search licensed daycares in Canada."}
               </p>
-            ) : null}
-            {coming ? (
+            ) : (
+              <p className="mt-5 max-w-md text-sm text-muted" data-ke="store-coming-soon">
+                {t("storeComingSoonLead")}
+              </p>
+            )}
+            {listingsLive && coming ? (
               <p className="mt-3 max-w-md text-xs text-subtle" data-ke="store-coming-soon">
                 {coming}
               </p>
@@ -203,7 +200,7 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
         <section className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Feat icon={MapPinned} title={t("featGps")} body={t("featGpsBody")} />
           <Feat icon={Check} title={t("featCentres")} body={t("featCentresBody")} />
-          {hideCommerce ? null : <Feat icon={Wallet} title={t("featPay")} body={t("featPayBody")} />}
+          {hideCommerce ? null : <Feat icon={Wallet} title={t("featPay")} body={t(featPayBodyKey(plansOn))} />}
           <Feat icon={ShieldCheck} title={t("featSafe")} body={t("featSafeBody")} />
         </section>
 
@@ -230,14 +227,17 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
         </section>
 
         <section id="store-ready" className="mt-14 rounded-xl bg-surface p-6 ring-1 ring-border md:p-8">
-          {storeBadges.length === 2 ? (
+          {listingsLive && storeBadges.length === 2 ? (
             <>
               <h2 className="font-display text-2xl">{t("storeReady")}</h2>
               <p className="mt-3 max-w-2xl text-sm text-muted">{coming}</p>
               <p className="mt-3 max-w-2xl text-sm text-muted">{t("storeReadyBody")}</p>
             </>
           ) : (
-            <h2 className="font-display text-2xl">{t("getApp")}</h2>
+            <>
+              <h2 className="font-display text-2xl">{t("storeComingSoonTitle")}</h2>
+              <p className="mt-3 max-w-2xl text-sm text-muted" data-ke="store-coming-soon">{t("storeComingSoonLead")}</p>
+            </>
           )}
           {showDev ? (
             <>

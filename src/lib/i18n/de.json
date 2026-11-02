@@ -1305,7 +1305,7 @@
   "featCentres": "Kanadaweites Verzeichnis",
   "featCentresBody": "Lizenzierte Einrichtungen in jeder Provinz und jedem Territorium. Jeder Eintrag verwendet ein Foto der Gebäudefront, sofern eines überprüft werden kann.",
   "featPay": "Rechnungen in der App",
-  "featPayBody": "Einrichtungen senden Rechnungen. Eltern zahlen mit Stripe Checkout. Interac wird vom Personal geprüft. Parent Plus ist ein separates KidEase-Abonnement: keine Gebühr der Einrichtung.",
+  "featPayBody": "Einrichtungen senden Rechnungen. Eltern zahlen mit Stripe Checkout. Ein Elternteil kann auf der Bezahlseite eine Interac-Überweisung notieren. Die Notiz bleibt offen. Die Seite kann sie nicht als bezahlt markieren. Parent Plus ist ein separates KidEase-Abonnement: keine Gebühr der Einrichtung.",
   "featSafe": "Entwickelt für PIPEDA",
   "featSafeBody": "Kinderprofile bleiben bei Ihnen und bei der Einrichtung, die Sie kontaktieren. Löschen Sie Ihr Konto jederzeit.",
   "onYourPhone": "Auf dem Telefon",
@@ -3305,5 +3305,13 @@
   "openPublicRegistry": "Öffentliches Register öffnen",
   "dataPointSource": "Quelle",
   "feeNoCheckDate": "Es ist kein separates Prüfdatum gespeichert.",
-  "ratioNotConfirmed": "Nicht bestätigt. KidEase schätzt dieses Verhältnis nicht."
+  "ratioNotConfirmed": "Nicht bestätigt. KidEase schätzt dieses Verhältnis nicht.",
+  "stickyInfo": "Info",
+  "stickyMessage": "Nachricht",
+  "agesFromProvince": "Die Altersgruppen stammen aus dem Genehmigungsregister der Provinz.",
+  "agesFromProvinceLink": "Provinzregister",
+  "storeComingSoonTitle": "App Store und Google Play kommen bald",
+  "storeComingSoonLead": "Die Apps sind noch nicht in den Stores. Sie können KidEase von dieser Seite zum Home-Bildschirm hinzufügen.",
+  "featPayBodyBills": "Einrichtungen senden Rechnungen. Eltern zahlen mit Stripe Checkout. Ein Elternteil kann auf der Bezahlseite eine Interac-Überweisung notieren. Die Notiz bleibt offen. Die Seite kann sie nicht als bezahlt markieren.",
+  "compareEmptyFree": "Vergleichen Sie Alter, Öffnungszeiten, Entfernung, Sprache, Kultur und freie Plätze."
 }

@@ -300,7 +300,7 @@ export const PRIVACY_EN: LegalDoc = {
           items: [
             "Roles: a parent may pay a first-month deposit after the centre offers a spot. KidEase records the payment. The care contract stays between the parent and the centre. Child care is a real-world service, not a digital in-app purchase.",
             "Stripe processes the card, Apple Pay, or Google Pay. KidEase never stores the full card number. We may send Stripe the amount, CAD, payment method type, and identifiers for the booking, parent, and centre.",
-            "Interac e-Transfer is reviewed by KidEase staff. The pay screen cannot mark that transfer paid.",
+            "A parent can note an Interac e-Transfer on the pay page. KidEase stores that note as waiting. The pay page cannot mark the transfer paid.",
             `Refunds follow the centre’s policy. Email ${SUPPORT_INBOX_EMAIL} if a deposit looks wrong. To ask for a refund or to dispute a charge, name the centre and the date. Card refunds go through Stripe after KidEase staff review the request.`,
           ],
         },
@@ -724,7 +724,7 @@ export const PRIVACY_FR: LegalDoc = {
           items: [
             "Rôles : un parent peut verser un dépôt du premier mois après une offre de place. Le contrat de garde reste entre le parent et le centre. Ce n’est pas un achat numérique.",
             "Stripe traite la carte, Apple Pay ou Google Pay. KidEase ne conserve pas le numéro complet. Nous pouvons envoyer le montant, le CAD et des identifiants de réservation.",
-            "Le virement Interac est revu par le personnel KidEase. L’écran de paiement ne peut pas le marquer payé.",
+            "Un parent peut noter un virement Interac sur la page de paiement. KidEase garde cette note en attente. La page de paiement ne peut pas marquer le virement payé.",
             `Les remboursements suivent la politique du centre. Pour un remboursement ou une contestation, écrivez à ${SUPPORT_INBOX_EMAIL}. Nommez le centre et la date. Les rétrofacturations passent par Stripe après examen par le personnel KidEase.`,
           ],
         },
@@ -1179,7 +1179,7 @@ export const TERMS_EN: LegalDoc = {
           items: [
             "In-app deposits, when offered, hold a spot after the centre accepts a request. Refunds follow that centre’s policy.",
             "Cards, Apple Pay, and Google Pay are processed by Stripe. KidEase does not store full card numbers.",
-            "Interac e-Transfer is reviewed by KidEase staff. This page cannot mark that transfer paid.",
+            "A parent can note an Interac e-Transfer on the pay page. KidEase stores that note as waiting. The pay page cannot mark the transfer paid.",
             "To ask for a refund or to dispute a charge, email support@kidease.ca. Name the centre and the date. Card refunds go through Stripe after KidEase staff review the request.",
           ],
         },
@@ -1324,7 +1324,7 @@ export const TERMS_FR: LegalDoc = {
           items: [
             "Les dépôts dans l’appli, le cas échéant, retiennent une place après acceptation. Les remboursements suivent la politique du centre.",
             "Les paiements par carte, Apple Pay et Google Pay sont traités par Stripe. KidEase ne conserve pas les numéros complets.",
-            "Le virement Interac est revu par le personnel KidEase. Cette page ne peut pas le marquer payé.",
+            "Un parent peut noter un virement Interac sur la page de paiement. KidEase garde cette note en attente. La page de paiement ne peut pas marquer le virement payé.",
             "Pour un remboursement ou une contestation, écrivez à support@kidease.ca. Nommez le centre et la date. Les remboursements par carte passent par Stripe après examen par le personnel KidEase.",
           ],
         },

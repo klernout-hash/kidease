@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound, redirect, useNavigate, useParams, useSearch, useLoaderData, type ErrorComponentProps } from "@tanstack/react-router";
-import { MapPinned, MessageCircle, Star } from "lucide-react";
+import { Calendar, Info, MapPinned, MessageCircle, Star } from "lucide-react";
 import { parentLoginSearch, parentSignupSearch } from "@/lib/auth/parent-login";
 import { FoundingMemberBadge } from "@/components/founding-member-badge";
 import { ShareListingButton } from "@/components/share-button";
@@ -47,7 +47,7 @@ import { amenityLabel } from "@/lib/amenities";
 import { licenseRecordUrl, subsidyEstimatorUrl } from "@/lib/licensing";
 import { reportSearchProvince } from "@/lib/licensing-offices";
 import { listingSubsidy, subsidyNote, subsidyNoteKey } from "@/lib/fee-program";
-import { knownListingMonthlyFee } from "@/lib/listing-fee";
+import { knownListingMonthlyFee, publicMonthlyFee } from "@/lib/listing-fee";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { TrustBadge } from "@/components/trust-badge";
 import { VerifiedCheck } from "@/components/verified-check";
@@ -102,7 +102,7 @@ import { decideListingLoader, listingNotFoundHead, shouldNotFoundListing } from 
 import { ListingNotFoundPage } from "@/components/page-not-found";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { classifyFacilityType, type FacilityType } from "@/lib/facility-type";
-import { provinceAgeSourceText, standardAgeLabelsForListing } from "@/lib/standard-age-groups";
+import { publicAgeSourceUrl, standardAgeLabelsForListing } from "@/lib/standard-age-groups";
 import type { ListingSeoSource } from "@/lib/listing-seo";
 import { formatMonth, money, displayCentreName, displayListingText } from "@/lib/utils";
 import { openDirections } from "@/lib/maps";
@@ -505,7 +505,9 @@ export function Listing() {
   })();
   const gallery = photos.filter((src) => isRealListingPhoto(src) && !isMissingCatalogueBuilding(src));
   const roomPhotos = interiors.filter((src) => isRealListingPhoto(src) && !isMissingCatalogueBuilding(src));
-  const prices = [d.infantMonthly, d.toddlerMonthly, d.preschoolMonthly].filter((n): n is number => n != null && n > 0);
+  const prices = [d.infantMonthly, d.toddlerMonthly, d.preschoolMonthly]
+    .map((amount) => publicMonthlyFee(amount, d))
+    .filter((n): n is number => n != null && n > 0);
   const from = prices.length ? Math.min(...prices) : 0;
   const live = Boolean(d.live);
   const known = Boolean(d.availabilityKnown);
@@ -521,7 +523,7 @@ export function Listing() {
       })
     : "";
   const agesLabel = standardAgeLabelsForListing(d, loc).join(" · ");
-  const provinceAge = provinceAgeSourceText(d.agesSource);
+  const ageSourceUrl = publicAgeSourceUrl(d.agesSourceUrl);
   const feeNotes = listingFeeNotes(d);
   const showCentreFees = feeNotes.confidence === "centre" && feeNotes.priceList;
   const subsidy = listingSubsidy(d);
@@ -751,7 +753,7 @@ export function Listing() {
 
   return (
     <Shell>
-      <article className="ke-dense mx-auto max-w-5xl overflow-x-hidden pb-[calc(11rem+env(safe-area-inset-bottom))] md:pb-10">
+      <article className="ke-dense mx-auto max-w-5xl overflow-x-hidden pb-[calc(15rem+env(safe-area-inset-bottom))] md:pb-10">
         <div className="lg:ke-gutter lg:pt-4">
           <ListingHeroGallery
             photos={gallery}
@@ -838,11 +840,12 @@ export function Listing() {
             </div>
           ) : null}
           <ListingHeaderPills item={d} agesLabel={agesLabel} hours={hours} feeFrom={showCentreFees ? from : 0} />
-          {provinceAge ? (
+          {ageSourceUrl ? (
             <p className="mt-1 text-xs leading-5 text-muted" data-ke="province-age-label">
-              {t("provinceAgeCaption")}
-              {locale === "fr" ? " : " : ": "}
-              {provinceAge}
+              {t("agesFromProvince")}{" "}
+              <a className="font-medium text-primary underline-offset-4 hover:underline" href={ageSourceUrl} rel="noreferrer" target="_blank">
+                {t("agesFromProvinceLink")}
+              </a>
             </p>
           ) : null}
           {offerClaim ? (
@@ -966,19 +969,19 @@ export function Listing() {
                     preschoolMonthly: d.preschoolMonthly,
                     partTimeMonthly: d.partTimeMonthly,
                   }}
-                  programDaily={
-                    listingSubsidy(d)?.subsidy_type === "qc_965"
-                      ? 9.65
-                      : listingSubsidy(d)?.subsidy_type === "ten" || listingSubsidy(d)?.subsidy_type === "ten_max"
-                        ? 10
-                        : null
-                  }
                   grossMonthly={knownListingMonthlyFee(
                     {
-                      infantMonthly: d.infantMonthly,
-                      toddlerMonthly: d.toddlerMonthly,
-                      preschoolMonthly: d.preschoolMonthly,
-                      partTimeMonthly: d.partTimeMonthly,
+                      infantMonthly: publicMonthlyFee(d.infantMonthly, d),
+                      toddlerMonthly: publicMonthlyFee(d.toddlerMonthly, d),
+                      preschoolMonthly: publicMonthlyFee(d.preschoolMonthly, d),
+                      partTimeMonthly: publicMonthlyFee(d.partTimeMonthly, d),
+                      feeProgram: d.feeProgram,
+                      province: d.province,
+                      city: d.city,
+                      name,
+                      amenities: d.amenities,
+                      feeConfirmed: d.feeConfirmed,
+                      feeConfidence: d.feeConfidence,
                     },
                     "preschool",
                   )}
@@ -1248,22 +1251,37 @@ export function Listing() {
       </article>
 
       {!requestOpen ? (
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden [[data-channel=app]_&]:bottom-20">
-        <div className="mx-auto max-w-lg">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden [[data-channel=app]_&]:bottom-20" data-ke="listing-sticky-bar">
+        <div className="mx-auto flex max-w-lg flex-col gap-2">
           <ListingCtaSnippet live={live} from={from} hours={hours} />
-          <div className="flex items-center gap-2">
-          {ownEdit ? <ListingEditLink /> : null}
-          <DirectionsButton className="shrink-0" />
           {parentActions ? (
-            <div className="flex min-w-0 flex-1 gap-2" data-ke="listing-parent-actions">
-              <Button className="h-auto min-h-11 flex-1 rounded-[14px] px-2.5 py-2 text-center text-[13px] leading-tight touch-manipulation" data-ke="listing-sticky-tour" onClick={onTour}>
-                {t("bookTour")}
+            <Button className="ke-sticky-action h-auto min-h-11 w-full rounded-[14px] px-3 py-2 touch-manipulation" data-ke="listing-sticky-tour" onClick={onTour}>
+              <Calendar className="size-4 shrink-0" aria-hidden="true" />
+              <span className="ke-sticky-label">{t("bookTour")}</span>
+            </Button>
+          ) : null}
+          <div className="ke-listing-sticky-row">
+          {ownEdit ? <ListingEditLink /> : null}
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon"
+            className="shrink-0 rounded-[14px]"
+            data-ke="get-directions"
+            aria-label={t("getDirections")}
+            onClick={() => void openDirections(d.lat, d.lng, name, directionsPlace)}
+          >
+            <MapPinned className="size-4" aria-hidden="true" />
+          </Button>
+          {parentActions ? (
+            <div className="flex min-w-0 flex-1 flex-wrap gap-1.5" data-ke="listing-parent-actions">
+              <Button className="ke-sticky-action h-auto min-h-11 rounded-[14px] px-2 py-2 touch-manipulation" variant="secondary" data-ke="listing-sticky-cta" aria-label={t("requestInfo")} onClick={onInfo}>
+                <Info className="size-4 shrink-0" aria-hidden="true" />
+                <span className="ke-sticky-label">{t("stickyInfo")}</span>
               </Button>
-              <Button className="h-auto min-h-11 flex-1 rounded-[14px] px-2.5 py-2 text-center text-[13px] leading-tight touch-manipulation" variant="secondary" data-ke="listing-sticky-cta" onClick={onInfo}>
-                {t("requestInfo")}
-              </Button>
-              <Button className="h-auto min-h-11 flex-1 rounded-[14px] px-2.5 py-2 text-center text-[13px] leading-tight touch-manipulation" variant="secondary" data-ke="listing-sticky-message" onClick={onMessage}>
-                {t("message")}
+              <Button className="ke-sticky-action h-auto min-h-11 rounded-[14px] px-2 py-2 touch-manipulation" variant="secondary" data-ke="listing-sticky-message" aria-label={t("message")} onClick={onMessage}>
+                <MessageCircle className="size-4 shrink-0" aria-hidden="true" />
+                <span className="ke-sticky-label">{t("stickyMessage")}</span>
               </Button>
             </div>
           ) : null}

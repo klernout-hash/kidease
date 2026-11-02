@@ -825,7 +825,7 @@ export function SearchScreen({
         inclusive: next.inclusive,
         meals: next.meals,
         subsidy: next.subsidy,
-        lang: next.lang,
+        spoken: next.spoken,
       }),
     });
   }

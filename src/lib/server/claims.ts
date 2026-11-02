@@ -445,7 +445,7 @@ export const submitEnrollLicense = createServerFn({ method: "POST" })
     try {
       const result = await notifyPlatform({
         kind: "enroll",
-        title: `Enroll Now: ${centre}`,
+        title: `Enrol now: ${centre}`,
         actorName: name,
         actorEmail: email,
         daycareName: centre,
