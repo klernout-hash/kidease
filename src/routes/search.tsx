@@ -1830,7 +1830,7 @@ export function SearchScreen({
           </div>
         ) : null}
         <SmartMatchEntry />
-        <div className="ke-explore-filter-sticky relative z-10 mt-3">
+        <div className="ke-explore-filter-sticky mt-3">
         <ExploreFilterBar
           listingCount={items !== null ? resultCount : undefined}
           liveOn={liveOn}
@@ -1876,9 +1876,9 @@ export function SearchScreen({
             setView(view === "map" ? "list" : "map");
           }}
         />
+        </div>
         <PioneerFilterRail value={parsePioneerSearch(incoming as Record<string, unknown>)} onChange={writePioneer} />
         <CommuteDetourBar />
-        </div>
 
         {askLocation ? (
           <div className="mt-3">
@@ -2065,7 +2065,7 @@ export function SearchScreen({
 
         <div
           className={cn(
-            "ke-search-results mt-2 contain-layout",
+            "ke-search-results relative z-0 mt-2 contain-layout",
             view !== "map" && "min-h-[10rem]",
             refreshing && "opacity-70",
           )}

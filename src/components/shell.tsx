@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+
+const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Building2, Calendar, Menu } from "lucide-react";
 import { AppTabBar } from "@/components/app-tab-bar";
@@ -81,6 +83,23 @@ export function Shell({ children }: { children: ReactNode }) {
   useEffect(() => {
     applyDocumentLocale(locale);
   }, [locale]);
+
+  useIsoLayoutEffect(() => {
+    const header = document.querySelector("header");
+    if (!header) return;
+    const root = document.documentElement;
+    const apply = () => {
+      const height = Math.ceil(header.getBoundingClientRect().height);
+      if (height > 0) root.style.setProperty("--ke-header-h", `${height}px`);
+    };
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--ke-header-h");
+    };
+  }, [pathname, locale]);
 
   useEffect(() => {
     setOpen(false);
