@@ -1,13 +1,19 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Navigate, redirect } from "@tanstack/react-router";
 import { privateReturnPath } from "@/lib/role-access";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 
 /**
- * Old daycare plan links land on Today.
+ * Old daycare plan links land on Today while subscriptions are off.
  * The daycare desk does not sell upgrades or open checkout.
  */
 export const Route = createFileRoute("/provider/subscription")({
-  beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
+  beforeLoad: ({ context, location }) => {
+    const chrome = (context as { roleChrome?: { subscriptionsEnabled?: boolean } }).roleChrome;
+    beforeLoadPrivate(privateReturnPath(location), context.roleChrome);
+    if (chrome?.subscriptionsEnabled !== true) {
+      throw redirect({ to: "/provider", search: { desk: "today" } });
+    }
+  },
   head: () => ({
     meta: [
       { title: "Daycare desk · KidEase" },

@@ -211,6 +211,7 @@ test("footer link stays off and /gov is not in the sitemap", () => {
   assert.match(guard, /govClosedHome/);
   assert.match(read("src/components/site-footer.tsx"), /showGovFooterLink/);
   assert.match(read("src/lib/desk-nav.ts"), /id: "payments"/);
+  assert.match(read("src/routes/provider.subscription.tsx"), /subscriptionsEnabled !== true/);
   assert.match(read("src/routes/provider.subscription.tsx"), /desk: "today"/);
   assert.match(read("src/routes/dashboard.tsx"), /role === "parent"/);
 });
