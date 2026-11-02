@@ -13,10 +13,11 @@ function src(rel) {
 
 test("store apps hide the coming-soon store line; the website keeps it", () => {
   assert.equal(showStoreComingSoon("web"), true);
-  for (const channel of ["apple", "google", "microsoft", "samsung", "huawei"]) {
+  for (const channel of ["apple", "google", "microsoft", "samsung", "huawei", "amazon"]) {
     assert.equal(showStoreComingSoon(channel), false);
   }
-  assert.match(src("src/routes/get-app.tsx"), /Coming soon on the App Store/);
+  assert.match(src("src/lib/copy.ts"), /storeComingSoon: "Coming soon"/);
+  assert.match(src("src/components/store-badges.tsx"), /storeComingSoon/);
   assert.match(src("src/routes/get-app.tsx"), /data-ke="store-coming-soon"/);
   assert.match(src("src/routes/get-app.tsx"), /data-ke="store-already-in-app"/);
   assert.doesNotMatch(src("src/components/site-footer.tsx"), /data-ke="store-coming-soon"/);
