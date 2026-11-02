@@ -248,9 +248,6 @@ export function roleNavItems(input: { role: ChromeRole; paid?: boolean; subscrip
       { id: "messages", label: "Messages", to: "/inbox", search: { view: "centre" }, icon: "messages" },
       { id: "account", label: "Account", to: "/account", search: { tab: "profile" }, icon: "account" },
     ];
-    if (input.subscriptionsOn === true) {
-      items.splice(4, 0, { id: "upgrade", label: planLabel, to: "/provider/subscription", icon: "benefits" });
-    }
     return items;
   }
   if (input.role === "admin") {

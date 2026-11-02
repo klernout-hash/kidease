@@ -51,13 +51,11 @@ const DAYCARE_ON = [
   "/claim",
   "/inbox?view=centre",
   "/jobs/post",
-  "/provider/subscription",
   "/provider?desk=contract",
   "/provider?desk=employees",
   "/provider?desk=licence",
   "/provider?desk=listings",
   "/provider?desk=money",
-  "/provider?desk=promote",
   "/provider?desk=requests",
   "/provider?desk=screening",
   "/provider?desk=today",
@@ -65,7 +63,7 @@ const DAYCARE_ON = [
   "id:add",
 ];
 
-const DAYCARE_OFF = DAYCARE_ON.filter((href) => href !== "/provider/subscription");
+const DAYCARE_OFF = [...DAYCARE_ON];
 
 const DAYCARE_STAFF = [
   "/account?tab=profile&section=alerts&desk=director",
@@ -75,7 +73,6 @@ const DAYCARE_STAFF = [
   "/account?tab=profile&section=profile&desk=director",
   "/account?tab=profile&section=security&desk=director",
   "/inbox?view=centre",
-  "/provider/subscription",
   "/provider?desk=listings",
   "/provider?desk=requests",
   "/provider?desk=screening",

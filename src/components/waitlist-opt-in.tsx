@@ -68,8 +68,11 @@ export function WaitlistOptIn({
         confirmAction(t, row ? "waitlistJoined" : "waitlistLeft");
       })
       .catch((err) => {
-        toast.error(err instanceof Error ? err.message : t("needSignIn"));
-        void navigate({ to: "/login", search: parentSignupSearch(next ?? "/search", "waitlist") });
+        const message = err instanceof Error ? err.message : t("needSignIn");
+        toast.error(message);
+        if (message === "Unauthorized") {
+          void navigate({ to: "/login", search: parentSignupSearch(next ?? "/search", "waitlist") });
+        }
       })
       .finally(() => setBusy(false));
   }

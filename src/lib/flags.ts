@@ -103,7 +103,7 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_PUSH: false,
   FEATURE_SMS: false,
   FEATURE_VIDEO: false,
-  FEATURE_PROVIDER_SUBSCRIPTIONS: true,
+  FEATURE_PROVIDER_SUBSCRIPTIONS: false,
   SHOW_PAY_CTAS: false,
   /** Paid daycare and parent plans. Off during the free founding period. */
   SUBSCRIPTIONS_ENABLED: false,
@@ -224,9 +224,9 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
   },
   {
     key: "FEATURE_PROVIDER_SUBSCRIPTIONS",
-    defaultOn: true,
+    defaultOn: false,
     docs: "docs/flags.md",
-    summary: "Director Subscription tab. Live by default. Checkout still needs Stripe live keys.",
+    summary: "Director Subscription and Promote. Off when unset. Checkout still needs Stripe live keys and SUBSCRIPTIONS_ENABLED.",
   },
   {
     key: "SHOW_PAY_CTAS",

@@ -294,8 +294,8 @@ export function RequestTourSheet({ daycare, open, unclaimed = false, onClose, on
         if (!send.live(token)) return;
         clearTourDraft(daycare.id);
         setDone({
-          conversationId: saved.id,
-          guest,
+          conversationId: saved.conversationId || "",
+          guest: guest || !saved.conversationId,
           detail: preferred.trim() || message.trim(),
         });
         return;

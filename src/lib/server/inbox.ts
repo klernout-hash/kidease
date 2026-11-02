@@ -14,6 +14,8 @@ import { isClaimVerified } from "@/lib/trust";
 import { tourSlaRemainingMs } from "@/lib/today-sla";
 import { formatPreferredTimes, parsePreferredTimes } from "@/lib/threads";
 import { chatBodyWithoutSmsFooter, daycareReplySms, parentMessageSms } from "@/lib/sms-copy";
+import { notificationSourceKey } from "@/lib/notifications";
+import { saveParentInAppNotice } from "@/lib/server/parent-notice";
 import { nid } from "@/lib/utils";
 import { ensureConversationUserState } from "./conversation-state";
 import { lookupUser, notifyPlatform, notifyThreadParty } from "./notify";
@@ -357,6 +359,15 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
     const threadUrl = `${origin}/inbox/${row.id}`;
     const { dispatchCustomerAlert } = await import("@/lib/server/alert-dispatch");
     if (sender === "parent") {
+      await saveParentInAppNotice(sql, {
+        userId: context.userId,
+        kind: "lead",
+        titleKey: "notifLeadNew",
+        href: `/inbox/${row.id}`,
+        sourceKey: notificationSourceKey("lead", messageId, "parent:sent"),
+        daycareName: row.name,
+        status: "requested",
+      });
       const owners = await listCentreOwnerEmails(sql, row.daycare_id);
       const extras = (row.contact_email || "").trim();
       const recipients = [...owners];
@@ -384,6 +395,15 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
         }
       }
     } else {
+      await saveParentInAppNotice(sql, {
+        userId: row.user_id,
+        kind: "inbox",
+        titleKey: "notifInbox",
+        href: `/inbox/${row.id}`,
+        sourceKey: notificationSourceKey("inbox", messageId, "reply"),
+        daycareName: row.name,
+        status: "unread",
+      });
       const parent = await lookupUser(row.user_id);
       void notifyThreadParty({
         to: parent.email,

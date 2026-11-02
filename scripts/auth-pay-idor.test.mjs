@@ -412,6 +412,6 @@ test("handlers stay wired to the decision helpers (no silent IDOR regression)", 
   assert.match(parent, /RedirectToSignIn/);
   const provider = src("src/routes/provider.tsx");
   assert.match(provider, /providerGuestSignIn/);
-  assert.match(src("src/routes/provider.subscription.tsx"), /RedirectToSignIn/);
+  assert.match(src("src/routes/provider.subscription.tsx"), /beforeLoadPrivate/);
   assert.match(src("src/routes/pay.bill.$billId.tsx"), /RedirectToSignIn/);
 });

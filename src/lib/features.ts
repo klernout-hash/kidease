@@ -1,5 +1,5 @@
 /**
- * Server-side product flags. Default OFF (except provider subscriptions).
+ * Server-side product flags. Default OFF, including provider subscriptions.
  * Env is the safe fallback. Optional PostHog overlay: see src/lib/flags.ts
  * and docs/flags.md. Do not use these for auth, payments, or Turnstile —
  * those stay env-gated helpers (stripeChargesLive, turnstileMode, authConfigured).
@@ -40,9 +40,9 @@ export function videoEnabled(env?: EnvMap): boolean {
 }
 
 /**
- * Daycare SaaS packages on the provider desk. LIVE by default.
- * Set FEATURE_PROVIDER_SUBSCRIPTIONS=0 only to hide the tab from directors
- * (admin can still preview — ghost).
+ * Daycare SaaS packages on the provider desk. Off when unset.
+ * Set FEATURE_PROVIDER_SUBSCRIPTIONS=1 to show Subscription and Promote.
+ * Admin can still preview when the flag is off.
  */
 export function providerSubscriptionsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_PROVIDER_SUBSCRIPTIONS", env);

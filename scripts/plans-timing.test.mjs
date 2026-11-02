@@ -37,7 +37,7 @@ test("guests reach plans from the main menu only while subscriptions are on", ()
   assert.equal(roleNavItems({ role: "parent", subscriptionsOn: true }).some((item) => item.id === "upgrade"), true);
   assert.equal(roleNavItems({ role: "parent" }).some((item) => item.id === "upgrade"), false);
   assert.equal(roleNavItems({ role: "provider" }).some((item) => item.id === "upgrade"), false);
-  assert.equal(roleNavItems({ role: "provider", subscriptionsOn: true }).some((item) => item.id === "upgrade"), true);
+  assert.equal(roleNavItems({ role: "provider", subscriptionsOn: true }).some((item) => item.id === "upgrade"), false);
   assert.ok(FOOTER_DAYCARES.some((link) => link.to === "/plans" && link.labelKey === "navPlans"));
   assert.match(src("src/components/role-nav.tsx"), /plans: "navPlans"/);
   assert.match(src("src/components/role-chrome.tsx"), /subscriptionsEnabled: remote\.subscriptionsEnabled === true/);
@@ -60,7 +60,7 @@ test("home upgrade card waits for a real action and stays hidden after dismissal
   assert.equal(showHomeUpgradeCard({ paid: true, eligible: false, dismissed: true }), "plan");
 
   assert.match(src("src/components/parent-home.tsx"), /showHomeUpgradeCard/);
-  assert.match(src("src/components/daycare-desk-home.tsx"), /showHomeUpgradeCard/);
+  assert.doesNotMatch(src("src/components/daycare-desk-home.tsx"), /showHomeUpgradeCard|RoleUpgradeCard|\/provider\/subscription/);
   assert.match(src("src/components/role-upgrade-card.tsx"), /data-ke="upgrade-card-dismiss"/);
   assert.match(src("migrations/0067_upgrade_card_dismiss.sql"), /upgrade_card_dismissed_at/);
   assert.match(src("src/lib/server/upgrade-card.ts"), /upgrade_card_dismissed_at = now\(\)/);

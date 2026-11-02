@@ -29,8 +29,8 @@ test("native commerce is guarded in the page and the component", () => {
   const rootDoc = src("src/routes/__root.tsx");
   assert.match(promote, /if \(nativeShell\) return null/);
   assert.match(promote, /data-ke="digital-plan"/);
-  assert.match(provider, /centreOwner && nativeShell/);
-  assert.match(provider, /centreOwner && !nativeShell/);
+  assert.doesNotMatch(provider, /PromotePanel/);
+  assert.match(provider, /plansNotOffered/);
   assert.match(addons, /if \(nativeShell \|\| !visible\.length\) return null/);
   assert.match(jobs, /data-commerce=\{nativeShell \? "hidden" : "web"\}/);
   assert.match(claim, /data-commerce=\{nativeShell \? "hidden" : "web"\}/);
@@ -56,8 +56,7 @@ test("native commerce is guarded in the page and the component", () => {
   assert.match(videoRoute, /nativeShell \? t\("videoJoinHint"\) : t\("videoTourLead"\)/);
   assert.match(callRoute, /VoiceCallPanel/);
   assert.doesNotMatch(callRoute, /comingSoon/);
-  assert.match(desk, /nativeShell \|\| !subscriptionsOn \? null : \(/);
-  assert.match(desk, /data-ke="daycare-plan"/);
+  assert.doesNotMatch(desk, /data-ke="daycare-plan"|\/provider\/subscription|navPlans/);
   const drawer = src("src/components/nav-drawer.tsx");
   assert.match(drawer, /useInNativeShell/);
   assert.match(drawer, /showPlans = !nativeShell && chrome\.subscriptionsEnabled === true/);

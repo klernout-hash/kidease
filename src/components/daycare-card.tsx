@@ -228,6 +228,7 @@ export const DaycareCard = memo(function DaycareCard({
   presentation = "rail",
   labelFar = false,
   ratingFloor = MIN_REVIEW_COUNT,
+  showFees = true,
 }: {
   item: Card;
   showDistance?: boolean;
@@ -242,6 +243,8 @@ export const DaycareCard = memo(function DaycareCard({
   labelFar?: boolean;
   /** Public floor is 3. The review-report flag can lower it to 1. */
   ratingFloor?: number;
+  /** Saved and compare hide dollar amounts unless paid plans are on. */
+  showFees?: boolean;
 }) {
   const { t, locale } = useCopy();
   const parentActions = showsParentBrowseActions(useRoleChrome().role);
@@ -305,8 +308,10 @@ export const DaycareCard = memo(function DaycareCard({
         ? t("waitlist")
         : t(vacancy.labelKey);
   const openSpotsLine = vacancy.kind === "open" || vacancy.kind === "waitlist" ? spotsKnown : "";
-  const daily = subsidy?.subsidy_type === "ten" || subsidy?.subsidy_type === "ten_max" || subsidy?.subsidy_type === "qc_965";
-  const priceAmount = subsidy?.subsidy_type === "qc_965"
+  const daily = showFees && (subsidy?.subsidy_type === "ten" || subsidy?.subsidy_type === "ten_max" || subsidy?.subsidy_type === "qc_965");
+  const priceAmount = !showFees
+    ? ""
+    : subsidy?.subsidy_type === "qc_965"
     ? "$9.65"
     : subsidy?.subsidy_type === "ten" || subsidy?.subsidy_type === "ten_max"
       ? "$10"
@@ -393,7 +398,9 @@ export const DaycareCard = memo(function DaycareCard({
             </p>
           ) : null}
           <div className="mt-auto pt-3">
-            {!priceOnPhoto && priceAmount ? (
+            {!showFees ? (
+              <p className="min-h-5" />
+            ) : !priceOnPhoto && priceAmount ? (
               <p className="min-h-5 text-[14px] leading-5 tabular-nums">
                 <span className="font-semibold">{priceAmount}</span>
                 <span className="font-normal text-muted">{priceUnit}</span>
@@ -555,7 +562,9 @@ export const DaycareCard = memo(function DaycareCard({
             ))}
           </div>
           <div className="mt-auto pt-3">
-            {!priceOnPhoto && priceAmount ? (
+            {!showFees ? (
+              <p className="min-h-4" />
+            ) : !priceOnPhoto && priceAmount ? (
               <p className="min-h-4 text-[12px] leading-4 tabular-nums">
                 <span className="font-semibold">{priceAmount}</span>
                 <span className="font-normal text-muted">{priceUnit}</span>

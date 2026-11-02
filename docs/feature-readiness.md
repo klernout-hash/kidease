@@ -40,7 +40,7 @@ Seed with `POST /api/e2e-seed` on a loopback preview. Do not use these on produc
 | `FEATURE_SMS` | off | Leave off. Texts go only to people who consented. |
 | `FEATURE_PUSH` | off | Leave off. Push stays for version 1.1. Do not add APNs or FCM setup in this pass. |
 
-`FEATURE_PROVIDER_SUBSCRIPTIONS` is already on in code and only shows the director Subscription tab. Checkout still needs `SUBSCRIPTIONS_ENABLED`, which stays off.
+`FEATURE_PROVIDER_SUBSCRIPTIONS` defaults off. Set it with `SUBSCRIPTIONS_ENABLED` to show the director Subscription tab and Promote. Checkout still needs `SUBSCRIPTIONS_ENABLED`.
 
 ## Later, only if Kyle asks
 

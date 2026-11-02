@@ -44,7 +44,7 @@ test("SHOW_PAY_CTAS defaults off and SHOW_PAY_CTAS=1 restores", () => {
 test("env example keeps Stripe and turns pay chrome off", () => {
   const envExample = src(".env.example");
   assert.match(envExample, /^SHOW_PAY_CTAS=0$/m);
-  assert.match(envExample, /^FEATURE_PROVIDER_SUBSCRIPTIONS=1$/m);
+  assert.match(envExample, /^FEATURE_PROVIDER_SUBSCRIPTIONS=0$/m);
   assert.match(envExample, /^FEATURE_SMS=0$/m);
   assert.match(envExample, /^FEATURE_PUSH=0$/m);
   assert.match(envExample, /^FEATURE_VIDEO=0$/m);
@@ -78,7 +78,8 @@ test("Stripe plan files stay; UI gates hide checkout", () => {
 
 test("public and desk chrome hide Upgrade / Subscribe unless flagged", () => {
   const provider = src("src/routes/provider.tsx");
-  assert.match(provider, /PayCtas/);
+  assert.doesNotMatch(provider, /PayCtas/);
+  assert.doesNotMatch(provider, /PromotePanel/);
   assert.match(provider, /FreePageExplainer/);
   assert.match(provider, /plansNotOffered/);
   const parent = src("src/components/parent-desk.tsx");
@@ -95,16 +96,26 @@ test("public and desk chrome hide Upgrade / Subscribe unless flagged", () => {
     subscriptionsEnabled: true,
     centreOwner: true,
   }).map((i) => i.id);
-  assert.equal(nav.includes("promote"), true);
-  assert.equal(nav.includes("subscription"), true);
+  assert.equal(nav.includes("promote"), false);
+  assert.equal(nav.includes("subscription"), false);
+  const plansOff = visibleDeskNav("daycare", {
+    providerSubscriptions: false,
+    showPayCtas: false,
+    subscriptionsEnabled: false,
+    centreOwner: true,
+  }).map((i) => i.id);
+  assert.equal(plansOff.includes("promote"), false);
+  assert.equal(plansOff.includes("subscription"), false);
   const hidden = visibleDeskNav("daycare", { providerSubscriptions: true, showPayCtas: false }).map((i) => i.id);
   assert.equal(hidden.includes("subscription"), false);
+  assert.equal(hidden.includes("promote"), false);
   const on = visibleDeskNav("daycare", {
     providerSubscriptions: true,
     showPayCtas: true,
     subscriptionsEnabled: true,
   }).map((i) => i.id);
-  assert.equal(on.includes("promote"), true);
+  assert.equal(on.includes("promote"), false);
+  assert.equal(on.includes("subscription"), false);
 });
 
 test("free landing page keeps claim free and never invents $10-a-day fees", () => {

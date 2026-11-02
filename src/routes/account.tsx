@@ -524,7 +524,7 @@ function ProfilePane() {
             : null;
 
   const connect = useLoaderData({ strict: false }) as Awaited<ReturnType<typeof accountLoader>>;
-  const hideUpgrade = desk === "admin" || chrome.subscriptionsEnabled !== true;
+  const hideUpgrade = desk === "admin" || desk === "provider" || chrome.subscriptionsEnabled !== true;
   const section =
     search.section === "wallet" && !connect.enabled
       ? "profile"

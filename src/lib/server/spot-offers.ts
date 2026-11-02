@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { catalogByIdGet } from "@/lib/catalog";
 import { getSql, type Sql } from "@/lib/db";
 import { isKidEaseOperatorEmail } from "@/lib/admin-email";
 import { deskWaitlistVisible, isPublicListing, listingVisibilityInputFromDb } from "@/lib/listing-visibility";
@@ -27,6 +28,7 @@ import { signSpotOfferToken, spotOfferTokenSecret, verifySpotOfferToken } from "
 import { SITEMAP_ORIGIN } from "@/lib/sitemap";
 import { nid } from "@/lib/utils";
 import { canCentreWriteLeadsFor, listAccessibleDaycareIds } from "@/lib/server/centre-access";
+import { upsertDaycare } from "@/lib/server/seed";
 
 type EntryRow = {
   id: string;
@@ -268,6 +270,8 @@ export const joinDaycareWaitlist = createServerFn({ method: "POST" })
     const age = parseSpotAge(data.ageGroup);
     if (!daycareId || !age) throw new Error("Choose an age group.");
     const sql = await getSql();
+    const listed = await catalogByIdGet(daycareId);
+    if (listed) await upsertDaycare(sql, listed);
     const rows = await sql<{
       id: string;
       slug: string;
@@ -306,6 +310,20 @@ export const joinDaycareWaitlist = createServerFn({ method: "POST" })
       insert into daycare_waitlist (id, daycare_id, user_id, age_group, child_label, note, status)
       values (${id}, ${daycareId}, ${context.userId}, ${age}, ${child || null}, ${note || null}, 'waiting')
     `;
+    try {
+      const { recordLeadRequest } = await import("@/lib/server/lead-requests");
+      await recordLeadRequest(sql, {
+        userId: context.userId,
+        daycareId,
+        kind: "waitlist",
+        message: note || "I asked to join the waitlist.",
+        sourceKind: "waitlist_interest",
+        sourceId: id,
+        notify: false,
+      });
+    } catch (err) {
+      console.error("[kidease-lead] waitlist lead skipped", err);
+    }
     return { ok: true as const, id, already: false };
   });
 
