@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { ComplianceFrame } from "@/components/compliance/frame";
 import { Button } from "@/components/ui/button";
-import { feeCopy } from "@/lib/compliance/fees";
+import { feeCopy, publishedCapsFor } from "@/lib/compliance/fees";
 import type { PackMode } from "@/lib/compliance/mode";
 import { checkDailyFee } from "@/lib/server/compliance-fees";
 type CentreData = { enabled: boolean; mode: PackMode; centres: { id: string; name: string; province: string }[]; rows: { age_key: string; daily_cents: number; cap_cents: number | null }[] };
@@ -49,10 +49,22 @@ export function CentreFeesPage({ data, locale }: { data: CentreData; locale: "en
 }
 export function GovFeesPage({ data, locale }: { data: GovData; locale: "en" | "fr" }) {
   const copy = feeCopy(locale);
+  const caps = publishedCapsFor(data.province);
   return (
     <ComplianceFrame locale={locale} title={locale === "fr" ? "Tarifs au-dessus du plafond" : "Fees above the cap"} copy={{ ...copy, what: copy.govWhat, why: copy.govWhy }} mode={data.mode} gov>
       <p>{data.province}</p>
-      {data.rows.length === 0 ? <p className="mt-3 text-sm">{copy.empty}</p> : null}
+      {caps.length ? (
+        <ul className="mt-3 space-y-2 text-sm">
+          {caps.map((cap) => (
+            <li key={cap.ageKey}>
+              {copy.capLine}: {cap.ageKey} — ${((cap.maxDailyCents ?? 0) / 100).toFixed(2)} / {locale === "fr" ? "jour" : "day"}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-3 text-sm">{copy.empty}</p>
+      )}
+      {data.rows.length === 0 && caps.length ? <p className="mt-3 text-sm">{copy.clear}</p> : null}
       <ul className="mt-3 space-y-2">{data.rows.map((row, i) => <li key={i}>{row.name} — {row.age_key}</li>)}</ul>
       <Button asChild className="mt-4"><a href={locale === "fr" ? "/fr/gov" : "/gov"}>{locale === "fr" ? "Bureau du gouvernement" : "Government desk"}</a></Button>
     </ComplianceFrame>

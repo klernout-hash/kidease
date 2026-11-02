@@ -1,6 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import type { GovDashboard } from "@/lib/gov/aggregate";
-import { govCopy, govPath } from "@/lib/gov/copy";
+import { feeBucketLabel, govCopy, govPath } from "@/lib/gov/copy";
 import { regionLabel } from "@/lib/gov/places";
 import { GovHelp } from "@/components/gov/gov-help";
 import { CurriculumGovStrip } from "@/components/curriculum-pack";
@@ -149,6 +149,7 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
           <Kpi label={copy.fill} value={kpis.avgFillDays == null ? copy.fillMissing : show(kpis.avgFillDays, data.locale, hidden)} />
           <Kpi label={copy.feesConfirmed} value={show(kpis.feesConfirmedCentres, data.locale, hidden)} />
           <Kpi label={copy.feesUncited} value={show(kpis.feesUncitedCentres, data.locale, hidden)} />
+          <Kpi label={copy.feesNone} value={show(kpis.feesNoneCentres, data.locale, hidden)} />
           <Kpi label={copy.program} value={show(kpis.cwelccKnown, data.locale, hidden)} />
           <Kpi label={copy.programUnknown} value={show(kpis.cwelccUnknown, data.locale, hidden)} />
           <Kpi label={copy.french} value={show(kpis.frenchCentres, data.locale, hidden)} />
@@ -213,7 +214,7 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
               .filter((row) => !row.suppressed)
               .map((row) => (
                 <li key={`${row.kind}-${row.bucket}`}>
-                  {row.kind === "confirmed" ? copy.feesConfirmed : copy.feesUncited}: {row.bucket} — {show(row.centres, data.locale, hidden)}
+                  {row.kind === "confirmed" ? copy.feesConfirmed : copy.feesUncited}: {feeBucketLabel(row.bucket, data.locale)} — {show(row.centres, data.locale, hidden)}
                 </li>
               ))}
           </ul>
@@ -223,15 +224,19 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
           <h2 id="gov-wait-title" className="font-display text-xl">
             {copy.waitlist}
           </h2>
-          <ul className="mt-3 space-y-2 text-sm">
-            {data.waitlist
-              .filter((row) => !row.suppressed)
-              .map((row) => (
-                <li key={`${row.age}-${row.start}`}>
-                  {copy.age}: {row.age}. {copy.start}: {row.start || "—"}. {copy.count}: {show(row.n, data.locale, hidden)}
-                </li>
-              ))}
-          </ul>
+          {data.waitlist.some((row) => !row.suppressed) ? (
+            <ul className="mt-3 space-y-2 text-sm">
+              {data.waitlist
+                .filter((row) => !row.suppressed)
+                .map((row) => (
+                  <li key={`${row.age}-${row.start}`}>
+                    {copy.age}: {row.age}. {copy.start}: {row.start || "—"}. {copy.count}: {show(row.n, data.locale, hidden)}
+                  </li>
+                ))}
+            </ul>
+          ) : (
+            <p className="mt-3 text-sm text-muted">{copy.waitlistEmpty}</p>
+          )}
         </section>
 
         <section className="mt-8" aria-labelledby="gov-trend-title">
@@ -302,6 +307,9 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
           </a>
           <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/demand" : "/gov/demand"}>
             {data.locale === "fr" ? "Demande de places" : "Space demand"}
+          </a>
+          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/exports" : "/gov/exports"}>
+            {data.locale === "fr" ? "Exportations" : "Exports"}
           </a>
         </nav>
         <CurriculumGovStrip province={data.province} />

@@ -1976,6 +1976,7 @@
   "tourAddCalendar": "Zum Kalender hinzufügen",
   "tourTimesLead": "Eltern buchen diese Zeiten über Ihren öffentlichen Eintrag. Wenn Sie keine hinzufügen, zeigt „Besichtigung buchen“ ehrlich einen leeren Zustand: „Informationen anfragen“ funktioniert weiterhin.",
   "tourTimesListingLead": "Wählen Sie eine veröffentlichte Zeit. Dies ist eine Besuchsanfrage, keine Anmeldung.",
+  "tourAskTimes": "Sagen Sie dem Zentrum, wann Sie kommen können. Das ist eine Besuchsanfrage, keine Anmeldung.",
   "tourTimesEmpty": "Diese Kita hat noch keine Besichtigungszeiten veröffentlicht.",
   "tourTimesEmptyLead": "Fragen Sie über „Informationen anfragen“ nach einem Besuch oder schauen Sie später erneut vorbei. KidEase erfindet keine Besichtigungstermine.",
   "tourTimesNoneOpen": "Derzeit sind keine Besichtigungszeiten frei.",

@@ -1,6 +1,7 @@
 import { isKidEaseOperatorEmail } from "./admin-email.ts";
 import { hiddenDuplicateSlugSql, isHiddenDuplicateSlug } from "./hidden-duplicates.ts";
 import { isRemovedListing, removedListingSql } from "./listing-removed.ts";
+import { isQueueableClaimStatus } from "./listing-status.ts";
 
 export const LISTING_VISIBILITY = {
   public: "public",
@@ -350,7 +351,12 @@ export function publicListings<T extends ListingVisibilityInput>(rows: readonly 
   return rows.filter((row) => isPublicListing(row));
 }
 
-/** Staff queues default to production claims. QA / ghost / Claim Lab stay opt-in. */
+/**
+ * Staff queues default to production claims. Known QA names and the ghost
+ * Claim Lab stay behind Show QA. A real centre an operator claimed is marked
+ * is_test so it stays out of public search, but a waiting or pending claim
+ * still has to appear on the admin queue.
+ */
 export function staffQueueRows<T extends ListingVisibilityInput>(rows: T[], includeQa: boolean): T[] {
   if (includeQa) return rows;
   // `daycareId` counts as `id` inside isAdminOnlyListing, so a mapped Admin row
@@ -360,7 +366,8 @@ export function staffQueueRows<T extends ListingVisibilityInput>(rows: T[], incl
   // queue so Admin can restore or merge them. They are not QA fixtures.
   return rows.filter((row) => {
     if ((row.mergedInto || "").trim() || (row.importFault || "").trim()) return true;
-    return !isAdminOnlyListing(row);
+    if (!isAdminOnlyListing(row)) return true;
+    return isQueueableClaimStatus(row.claimStatus) && !looksLikeTestFixture(row);
   });
 }
 

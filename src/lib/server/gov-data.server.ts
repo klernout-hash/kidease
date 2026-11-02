@@ -1,7 +1,7 @@
 import { getSql } from "@/lib/db";
 import { PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
 import type { FeeBucketFact, FillFact, TrendFact, WaitlistFact, CityFact } from "@/lib/gov/aggregate";
-import { PROVINCE_BOXES, type ProvinceCode } from "@/lib/gov/places";
+import { isProvinceCode, PROVINCE_BOXES, type ProvinceCode } from "@/lib/gov/places";
 
 const TTL_MS = 10 * 60 * 1000;
 
@@ -11,6 +11,7 @@ export type GovBundle = {
   waitlist: Array<WaitlistFact & { province: string }>;
   trends: Array<TrendFact & { province: string }>;
   fill: Array<FillFact & { province: string }>;
+  jobCounts: Array<{ province: string; n: number }>;
   generatedAt: string;
 };
 
@@ -51,13 +52,28 @@ async function loadUncached(): Promise<GovBundle> {
         count(*) filter (where licensed_capacity is not null)::int as "capacityKnown",
         count(*) filter (where last_vacancy_updated_at is not null or spots_updated_at is not null or confirmed_open_spots is not null)::int as "vacancyReporters",
         count(*) filter (where last_vacancy_updated_at >= now() - interval '30 days')::int as "vacancyFresh30",
-        coalesce(sum(case when last_vacancy_updated_at is not null then coalesce(spots_infant, 0) + coalesce(spots_toddler, 0) + coalesce(spots_preschool, 0) else 0 end), 0)::int as "openSpots",
+        coalesce(sum(case
+          when last_vacancy_updated_at is not null or spots_updated_at is not null
+            then coalesce(spots_infant, 0) + coalesce(spots_toddler, 0) + coalesce(spots_preschool, 0)
+          when confirmed_open_spots is not null then confirmed_open_spots
+          else 0
+        end), 0)::int as "openSpots",
         count(*) filter (where btrim(coalesce(fee_program, '')) <> '')::int as "cwelccKnown",
         count(*) filter (where btrim(coalesce(fact_source, '')) <> '' and (infant_monthly is not null or toddler_monthly is not null or preschool_monthly is not null))::int as "feesConfirmed",
         count(*) filter (where btrim(coalesce(fact_source, '')) = '' and (infant_monthly is not null or toddler_monthly is not null or preschool_monthly is not null))::int as "feesUncited",
-        count(*) filter (where coalesce(languages, '') ilike '%fr%' or coalesce(staff_languages::text, '') ilike '%fr%')::int as french,
-        count(*) filter (where coalesce(languages, '') ilike '%en%')::int as english,
-        count(*) filter (where coalesce(amenities, '') ~* 'inclus|special need|besoins particuliers' or coalesce(programs::text, '') ~* 'inclus')::int as inclusion,
+        count(*) filter (where
+          coalesce(languages, '') ilike '%fr%'
+          or coalesce(staff_languages::text, '') ilike '%fr%'
+          or coalesce(amenities, '') ~* '(^|,)[[:space:]]*(french|bilingual)[[:space:]]*(,|$)'
+        )::int as french,
+        count(*) filter (where
+          coalesce(languages, '') ilike '%en%'
+          or coalesce(staff_languages::text, '') ilike '%en%'
+        )::int as english,
+        count(*) filter (where
+          coalesce(amenities, '') ~* 'inclus|special[- ]need|besoins particuliers'
+          or coalesce(programs::text, '') ~* 'inclus|special[- ]need'
+        )::int as inclusion,
         avg(lat)::float8 as lat,
         avg(lng)::float8 as lng
       from daycares
@@ -103,16 +119,17 @@ async function loadUncached(): Promise<GovBundle> {
     .catch(() => []);
 
   const waitRows = await sql
-    .query<{ province: string; age: string; start: string; n: number }>(
+    .query<{ province: string; age: string; start: string; n: number; label: string | null }>(
       `
       select
         ${provinceCaseSql()} as province,
         age_band as age,
-        coalesce(to_char(date_trunc('month', start_date), 'YYYY-MM'), '') as start,
-        count(*)::int as n
+        '' as start,
+        count(*)::int as n,
+        max(center_label) as label
       from saved_searches
       where kind = 'waitlist_area'
-      group by 1, 2, 3
+      group by 1, 2
       `,
     )
     .catch(() => []);
@@ -158,6 +175,18 @@ async function loadUncached(): Promise<GovBundle> {
       where true
         and centre_job_posts.created_at >= now() - interval '18 months'
       group by 1, 2
+      `,
+    )
+    .catch(() => []);
+
+  const jobCounts = await sql
+    .query<{ province: string; n: number }>(
+      `
+      select upper(btrim(daycares.province)) as province, count(*)::int as n
+      from centre_job_posts
+      join (select id, province from daycares where ${PUBLIC_LISTING_SQL}) daycares
+        on daycares.id = centre_job_posts.daycare_id
+      group by 1
       `,
     )
     .catch(() => []);
@@ -219,19 +248,25 @@ async function loadUncached(): Promise<GovBundle> {
       n: num(row.n),
     })),
     waitlist: waitRows
-      .filter((row) => row.province)
-      .map((row) => ({
-        province: String(row.province),
-        age: String(row.age || "any"),
-        start: String(row.start || ""),
-        n: num(row.n),
-      })),
+      .map((row) => {
+        const fromBox = String(row.province || "").trim().toUpperCase();
+        const fromLabel = String(row.label || "").match(/,\s*([A-Za-z]{2})\s*$/)?.[1]?.toUpperCase() || "";
+        const province = isProvinceCode(fromBox) ? fromBox : isProvinceCode(fromLabel) ? fromLabel : "";
+        return {
+          province,
+          age: String(row.age || "any"),
+          start: String(row.start || ""),
+          n: num(row.n),
+        };
+      })
+      .filter((row) => row.province),
     trends: [...trendKey.values()],
     fill: fillRows.map((row) => ({
       province: String(row.province || ""),
       n: num(row.n),
       avgDays: row.avg_days == null ? null : num(row.avg_days),
     })),
+    jobCounts: jobCounts.map((row) => ({ province: String(row.province || ""), n: num(row.n) })),
     generatedAt: new Date().toISOString(),
   };
 }
@@ -275,10 +310,10 @@ export function bundleForProvince(bundle: GovBundle, province: string): {
     waitMap.set(key, found);
   }
   const trendMap = new Map<string, TrendFact>();
-  let jobs = 0;
+  let trendJobs = 0;
   for (const row of bundle.trends) {
     if (!all && row.province !== province) continue;
-    jobs += row.jobs;
+    trendJobs += row.jobs;
     const found = trendMap.get(row.month) ?? { month: row.month, listings: 0, vacancyUpdates: 0, jobs: 0 };
     found.listings += row.listings;
     found.vacancyUpdates += row.vacancyUpdates;
@@ -292,13 +327,16 @@ export function bundleForProvince(bundle: GovBundle, province: string): {
     fillN += row.n;
     if (row.avgDays != null) weighted += row.avgDays * row.n;
   }
+  const countedJobs = (bundle.jobCounts || [])
+    .filter((row) => all || row.province === province)
+    .reduce((total, row) => total + row.n, 0);
   return {
     cities,
     fees: [...feeMap.values()],
     waitlist: [...waitMap.values()],
     trends: [...trendMap.values()].sort((a, b) => a.month.localeCompare(b.month)),
     fill: { n: fillN, avgDays: fillN > 0 ? weighted / fillN : null },
-    jobs,
+    jobs: countedJobs || trendJobs,
     generatedAt: bundle.generatedAt,
   };
 }

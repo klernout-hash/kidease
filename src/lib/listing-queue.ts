@@ -50,6 +50,12 @@ export function normalizeAdminClaimStatus(input: {
   const claimStatus = (input.claimStatus || "").trim().toLowerCase() || null;
   const claimedAt = input.claimedAt;
   const claimRow = (input.claimRowStatus || "").trim().toLowerCase() || null;
+  // A centre that is already claimed can receive a new licence review.
+  // That open claim has to show on the queue. An approved token with no
+  // claimed date stays approved.
+  if (claimedAt && (claimRow === "pending" || claimRow === "waiting" || claimRow === "verified")) {
+    return claimRow === "pending" ? "pending" : "waiting";
+  }
   if (claimStatus === "superseded") return "superseded";
   if (
     claimStatus === "approved" ||

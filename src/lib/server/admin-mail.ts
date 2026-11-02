@@ -55,7 +55,12 @@ export const listAdminMailbox = createServerFn({ method: "GET" })
     }
     try {
       const { listTitanInbox } = await import("@/lib/server/titan-mail.server");
-      const messages = await listTitanInbox(data.limit);
+      const messages = await Promise.race([
+        listTitanInbox(data.limit),
+        new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error("Titan connection timed out")), 15_000);
+        }),
+      ]);
       return { ok: true, messages, error: null };
     } catch (err) {
       reportError(err, { route: "listAdminMailbox" });

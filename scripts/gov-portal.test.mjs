@@ -14,7 +14,7 @@ import {
 import { buildGovDashboard } from "../src/lib/gov/aggregate.ts";
 import { dashboardCsv } from "../src/lib/gov/csv.ts";
 import { renderTextPdf } from "../src/lib/gov/pdf.ts";
-import { CANADA_POPULATION_2021, PROVINCES, provinceForPoint } from "../src/lib/gov/places.ts";
+import { CANADA_POPULATION_2021, PROVINCES, canonicalGovCity, provinceForPoint } from "../src/lib/gov/places.ts";
 import { GOV_DEMO_LIMIT, resetGovBudget, takeGovBudget } from "../src/lib/gov/rate-limit.ts";
 import { FLAG_DEFAULTS } from "../src/lib/flags.ts";
 import { govPortalFooterEnabled } from "../src/lib/features.ts";
@@ -156,6 +156,31 @@ test("dashboard hides a city under 5 and does not invent a desert score", () => 
   assert.equal(data.kpis.jobPosts, null);
   assert.equal(data.waitlist.every((row) => row.suppressed || (row.n ?? 0) >= 5), true);
   assert.equal(data.cities.some((row) => row.label === "Tiny"), false);
+  assert.equal(canonicalGovCity("MB", "Wpg"), "Winnipeg");
+  assert.equal(canonicalGovCity("MB", "La Prairie"), "Portage la Prairie");
+  assert.equal(canonicalGovCity("QC", "La Prairie"), "La Prairie");
+  const merged = buildGovDashboard(
+    {
+      cities: [
+        { province: "MB", city: "Wpg", centres: 12, licensed: 12, capacity: 20, capacityKnown: 12, vacancyReporters: 0, vacancyFresh30: 0, openSpots: 0, cwelccKnown: 0, feesConfirmed: 6, feesUncited: 3, french: 0, english: 12, inclusion: 0, lat: 49.8, lng: -97.1 },
+        { province: "MB", city: "Winnipeg", centres: 12, licensed: 12, capacity: 20, capacityKnown: 12, vacancyReporters: 0, vacancyFresh30: 0, openSpots: 0, cwelccKnown: 0, feesConfirmed: 6, feesUncited: 3, french: 0, english: 12, inclusion: 0, lat: 49.9, lng: -97.2 },
+      ],
+      fees: [],
+      waitlist: [],
+      trends: [],
+      fill: { n: 0, avgDays: null },
+      jobs: 0,
+      generatedAt: "2026-11-01T00:00:00.000Z",
+    },
+    { province: "MB", region: "ALL", city: "ALL" },
+    "en",
+    { orgName: "Manitoba", demo: false, readOnly: true },
+  );
+  assert.equal(merged.cities.filter((row) => row.label === "Winnipeg").length, 1);
+  assert.equal(merged.kpis.directoryCentres, 24);
+  assert.equal(merged.kpis.feesConfirmedCentres, 12);
+  assert.equal(merged.kpis.feesUncitedCentres, 6);
+  assert.equal(merged.kpis.feesNoneCentres, 6);
   assert.equal(data.map.every((point) => point.centres >= 5), true);
   assert.match(data.coverage.join(" "), /No names, emails, phones/);
   const csv = dashboardCsv(data);

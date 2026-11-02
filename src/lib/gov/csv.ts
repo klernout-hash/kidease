@@ -34,6 +34,7 @@ export function dashboardCsv(data: GovDashboard): string {
     ["job_posts", kpis.jobPosts],
     ["fees_confirmed", kpis.feesConfirmedCentres],
     ["fees_uncited", kpis.feesUncitedCentres],
+    ["fees_none", kpis.feesNoneCentres],
   ];
   for (const [label, value] of pairs) rows.push(line(["kpi", label, value, ""]));
   if (data.desert.perSpace != null) {

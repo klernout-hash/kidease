@@ -330,7 +330,7 @@ export const listProviderBills = createServerFn({ method: "GET" })
     return {
       stripeLive: stripeChargesLive(),
       platformFeeBps: platformFeeBps(),
-      bills: rows.map(mapBill),
+      bills: rows.map((row) => ({ ...mapBill(row), parentEmail: null })),
     };
   });
 

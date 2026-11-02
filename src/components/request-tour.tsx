@@ -378,7 +378,8 @@ export function RequestTourSheet({ daycare, open, unclaimed = false, onClose, on
             </button>
           </div>
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
-            <p className="text-sm text-muted">{t("tourTimesListingLead")}</p>
+            {!loading && !empty ? <p className="text-sm text-muted">{t("tourTimesListingLead")}</p> : null}
+            {!loading && empty && unclaimed ? <p className="text-sm text-muted">{t("tourAskTimes")}</p> : null}
             {unclaimed ? <p className="text-sm text-muted">{t("parentRequestNotLive")}</p> : null}
             {!unclaimed ? <p className="text-sm text-muted">{t("tourHoldSlaLead")}</p> : null}
             {loading ? (

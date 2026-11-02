@@ -382,7 +382,11 @@ export const listLeadRequests = createServerFn({ method: "GET" })
         case when l.status in ('requested', 'received') then 0 else 1 end,
         l.created_at desc
     `.catch(() => []);
-    return rows.map(mapLead);
+    return rows.map((row) => {
+      const lead = mapLead(row);
+      if (data.desk === "centre") return { ...lead, parentEmail: null };
+      return lead;
+    });
   });
 
 export const createLeadRequest = createServerFn({ method: "POST" })

@@ -25,6 +25,9 @@ const EN = {
   ],
   downloadPdf: "Download PDF report",
   downloadCsv: "Download CSV",
+  exportsTitle: "Download the counts",
+  exportsWhy: "Save a PDF or a spreadsheet of the public listing counts for this area. No names, emails, phones, or child details.",
+  exportsBack: "Back to the dashboard",
   province: "Province or territory",
   region: "Region",
   city: "City",
@@ -50,6 +53,12 @@ const EN = {
   jobs: "Daycare job posts",
   feesConfirmed: "Centres with a cited fee",
   feesUncited: "Centres with an uncited fee",
+  feesNone: "Centres with no fee on file",
+  feeUnder400: "Under $400 a month",
+  fee400: "$400 to $799 a month",
+  fee800: "$800 to $1,199 a month",
+  fee1200: "$1,200 or more a month",
+  waitlistEmpty: "Groups under 5 are hidden. There is not enough demand in one age group to show a number.",
   hidden: "areas hidden because the group is under 5",
   trends: "Trends",
   month: "Month",
@@ -97,6 +106,9 @@ const FR = {
   ],
   downloadPdf: "Télécharger le rapport PDF",
   downloadCsv: "Télécharger le CSV",
+  exportsTitle: "Télécharger les totaux",
+  exportsWhy: "Enregistrez un PDF ou un tableur des fiches publiques pour cette région. Aucun nom, courriel, téléphone ou renseignement sur un enfant.",
+  exportsBack: "Retour au tableau",
   province: "Province ou territoire",
   region: "Région",
   city: "Ville",
@@ -122,6 +134,12 @@ const FR = {
   jobs: "Annonces d’emploi en garderie",
   feesConfirmed: "Centres avec des frais cités",
   feesUncited: "Centres avec des frais sans source",
+  feesNone: "Centres sans tarif au dossier",
+  feeUnder400: "Moins de 400 $ par mois",
+  fee400: "400 $ à 799 $ par mois",
+  fee800: "800 $ à 1 199 $ par mois",
+  fee1200: "1 200 $ ou plus par mois",
+  waitlistEmpty: "Les groupes de moins de 5 sont cachés. Il n’y a pas assez de demande dans un groupe d’âge pour montrer un chiffre.",
   hidden: "zones cachées parce que le groupe est sous 5",
   trends: "Tendances",
   month: "Mois",
@@ -148,6 +166,15 @@ export type GovCopyKey = keyof typeof EN;
 
 export function govCopy(locale: GovLocale) {
   return locale === "fr" ? FR : EN;
+}
+
+export function feeBucketLabel(bucket: string, locale: GovLocale): string {
+  const copy = govCopy(locale);
+  if (bucket === "under_400") return copy.feeUnder400;
+  if (bucket === "400_799") return copy.fee400;
+  if (bucket === "800_1199") return copy.fee800;
+  if (bucket === "1200_plus") return copy.fee1200;
+  return bucket;
 }
 
 export function govPath(locale: GovLocale, leaf: "" | "login" = ""): string {

@@ -10,7 +10,7 @@ import { DeskShell } from "@/components/desk-shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { AdminDeskLink } from "@/components/admin-desk-link";
-import { DESK_PATH, deskQueryValue, highlightDesk, openAdminDesk, parseDeskQuery, type DeskKey } from "@/lib/desks";
+import { DESK_PATH, accountDeskFor, deskQueryValue, openAdminDesk, parseDeskQuery, type DeskKey } from "@/lib/desks";
 import { accountDeskPath, menuDeskPath, parentDeskPath, parentNavSearch, providerDeskPath, providerNavSearch, supportDeskPath } from "@/lib/desk-nav";
 import { useSessionDesks } from "@/components/session-desks";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -254,9 +254,10 @@ function ProfilePane() {
   const search = useAccountSearch();
   const chrome = useRoleChrome();
   const canEditProfile = Boolean(user) || (chrome.signedIn && !chrome.pending);
-  const { sticky } = useSessionDesks();
+  const { sticky, session, ready: desksReady } = useSessionDesks();
   const hideAdmin = useNativeHidesAdmin();
-  const rawDesk = parseDeskQuery(search.desk) ?? sticky;
+  const asked = parseDeskQuery(search.desk);
+  const rawDesk = accountDeskFor({ asked, sticky, session, ready: desksReady });
   const desk = hideAdmin && rawDesk === "admin" ? "parent" : rawDesk;
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -581,7 +582,7 @@ function ProfilePane() {
     }
     return rows;
   }
-  const roleId = profileRoleId(chrome.role, highlightDesk("/account", sticky, desk));
+  const roleId = profileRoleId(chrome.role, desk);
   const daycareStats = showProfileStats(roleId);
   const homeSearch = {
     tab: "profile" as const,

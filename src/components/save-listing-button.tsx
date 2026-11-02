@@ -124,7 +124,7 @@ export function SaveListingButton({
       confirmAction(t, nowSaved ? "listingSaved" : "listingRemoved");
     } catch {
       setSaved(!next);
-      markShortlistCache(daycareId, !next);
+      markShortlistCache(daycareId, !next, user.id);
       if (!user) goLogin();
       else toast.error(t("needSignInSave"));
     } finally {

@@ -966,7 +966,7 @@ export const copy = {
     startMonth: "Start month",
     schedule: "Schedule",
     child: "Child",
-    addChild: "Add a child",
+    addChild: "Add your child",
     childName: "Child’s first name",
     birthdate: "Birthdate",
     notes: "Notes for educators",
@@ -1004,7 +1004,7 @@ export const copy = {
     showTestListings: "Show test listings",
     noBookings: "No enrolment requests yet.",
     noPayments: "No bills yet.",
-    noChildren: "Add a child to speed up requests.",
+    noChildren: "No child profile yet",
     noSaved: "Your shortlist is empty.",
     myShortlist: "My shortlist",
     shortlistLead: "Save centres from search or a listing. Track calls and tours here. Free compares 5 centres. Parent Plus compares 10.",
@@ -1217,7 +1217,7 @@ export const copy = {
     savedSearchDeleted: "Search deleted",
     alertPrefsSaved: "Alert preferences saved",
     markAlertsRead: "Mark all read",
-    noChildrenLead: "Add a child profile first. Centres only see the details you send.",
+    noChildrenLead: "Add your child's name and birthdate. Centres only see the details you send.",
     noPaymentsLead:
       "No centre bills yet. When a centre sends one, it shows under Open bills. You pay the centre with Stripe Checkout. An optional KidEase plan is separate: it is not a centre bill.",
     noPaymentsLeadBills:
@@ -1225,7 +1225,7 @@ export const copy = {
     parentPlusNoBill:
       "Parent Plus is optional. KidEase search and centre bills stay free without it.",
     emptyFindCare: "Find licensed care",
-    emptyAddChild: "Add a child",
+    emptyAddChild: "Add your child",
     pendingHonesty: "Pending totals are not settled.",
     pay: "Pay now",
     payTitle: "Secure your spot",
@@ -2460,6 +2460,7 @@ export const copy = {
     tourTimesLead:
       "Parents book these times on your public listing. If you add none, Book a tour shows an honest empty state: Request info still works.",
     tourTimesListingLead: "Pick a posted time. This is a visit request, not an enrolment.",
+    tourAskTimes: "Tell the centre when you can visit. This is a visit request, not an enrolment.",
     tourTimesEmpty: "This daycare has not posted tour times yet.",
     tourTimesEmptyLead: "Request info to ask about a visit, or check back later. KidEase does not invent tour slots.",
     tourTimesUnclaimed:
@@ -4501,7 +4502,7 @@ export const copy = {
     startMonth: "Mois de début",
     schedule: "Horaire",
     child: "Enfant",
-    addChild: "Ajouter un enfant",
+    addChild: "Ajouter votre enfant",
     childName: "Prénom de l’enfant",
     birthdate: "Date de naissance",
     notes: "Notes pour le personnel",
@@ -4539,7 +4540,7 @@ export const copy = {
     showTestListings: "Afficher les fiches d’essai",
     noBookings: "Aucune demande pour l’instant.",
     noPayments: "Aucune facture pour l’instant.",
-    noChildren: "Ajoutez un enfant pour accélérer les demandes.",
+    noChildren: "Aucun profil d’enfant",
     noSaved: "Votre liste est vide.",
     myShortlist: "Ma liste",
     shortlistLead: "Enregistrez des centres depuis la recherche ou une fiche. Notez vos appels et vos visites ici. Gratuit : 5 centres. Parent Plus : 10.",
@@ -4753,7 +4754,7 @@ export const copy = {
     savedSearchDeleted: "Recherche supprimée",
     alertPrefsSaved: "Préférences d’alerte enregistrées",
     markAlertsRead: "Tout marquer comme lu",
-    noChildrenLead: "Ajoutez d’abord un profil d’enfant. Les centres ne voient que ce que vous envoyez.",
+    noChildrenLead: "Ajoutez le prénom et la date de naissance de votre enfant. Les centres ne voient que ce que vous envoyez.",
     noPaymentsLead:
       "Aucune facture de centre pour l’instant. Quand un centre en envoie une, elle s’affiche sous Factures ouvertes. Vous payez le centre avec Stripe Checkout. Un forfait KidEase facultatif est distinct : ce n’est pas une facture de centre.",
     noPaymentsLeadBills:
@@ -4761,7 +4762,7 @@ export const copy = {
     parentPlusNoBill:
       "Plus parents est facultatif. La recherche KidEase et les factures de centre restent gratuites sans lui.",
     emptyFindCare: "Trouver une place",
-    emptyAddChild: "Ajouter un enfant",
+    emptyAddChild: "Ajouter votre enfant",
     pendingHonesty: "Les totaux en attente ne sont pas réglés.",
     pay: "Payer maintenant",
     payTitle: "Sécurisez la place",
@@ -5998,6 +5999,7 @@ export const copy = {
     tourTimesLead:
       "Les parents réservent ces moments sur votre fiche. Sans plage, Réserver une visite affiche un état vide honnête : Demander des infos reste disponible.",
     tourTimesListingLead: "Choisissez un moment affiché. C’est une demande de visite, pas une inscription.",
+    tourAskTimes: "Dites au centre quand vous pouvez visiter. C’est une demande de visite, pas une inscription.",
     tourTimesEmpty: "Cette garderie n’a pas encore affiché d’heures de visite.",
     tourTimesEmptyLead:
       "Demandez des infos pour une visite, ou revenez plus tard. KidEase n’invente pas de plages.",
