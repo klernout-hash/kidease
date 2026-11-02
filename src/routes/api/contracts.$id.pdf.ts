@@ -27,8 +27,9 @@ async function run(_request: Request, contractId: string) {
     provider_user_id: string | null;
     document_name: string | null;
     status: string;
+    pack_kind: string | null;
   }>`
-    select id, daycare_id, envelope_id, signed_pdf_key, provider_user_id, document_name, status
+    select id, daycare_id, envelope_id, signed_pdf_key, provider_user_id, document_name, status, pack_kind
     from daycare_contracts
     where id = ${contractId}
     limit 1
@@ -36,14 +37,22 @@ async function run(_request: Request, contractId: string) {
   const row = rows[0];
   if (!row) return fail(404, "Contract not found");
 
-  const admin = await resolveAdminAccess(userId);
-  const owned = await sql<{ ok: number }>`
-    select 1 as ok from provider_daycares
-    where daycare_id = ${row.daycare_id} and user_id = ${userId}
-    limit 1
-  `.catch(() => []);
-  if (!admin.ok && !owned[0] && row.provider_user_id !== userId) {
-    return fail(401, "Not authorized");
+  if (row.pack_kind === "parent_enrolment_agreement") {
+    const { parentAgreementEnabled } = await import("@/lib/features");
+    if (!parentAgreementEnabled()) return fail(404, "Signing is not open yet.");
+    const { parentAgreementReadable } = await import("@/lib/server/parent-agreement");
+    const allowed = await parentAgreementReadable(sql, userId, row.id);
+    if (!allowed) return fail(401, "Not authorized");
+  } else {
+    const admin = await resolveAdminAccess(userId);
+    const owned = await sql<{ ok: number }>`
+      select 1 as ok from provider_daycares
+      where daycare_id = ${row.daycare_id} and user_id = ${userId}
+      limit 1
+    `.catch(() => []);
+    if (!admin.ok && !owned[0] && row.provider_user_id !== userId) {
+      return fail(401, "Not authorized");
+    }
   }
 
   const pdf = await loadSignedPdfBytes({
@@ -53,7 +62,8 @@ async function run(_request: Request, contractId: string) {
     signedPdfKey: row.signed_pdf_key,
   });
   if (!pdf) {
-    return fail(404, row.status === "signed" ? "Signed PDF is not stored yet" : "No signed PDF yet");
+    const finished = row.status === "signed" || row.status === "completed";
+    return fail(404, finished ? "Signed PDF is not stored yet" : "No signed PDF yet");
   }
 
   const filename = `${(row.document_name || "kidease-signed").replace(/[^\w.-]+/g, "-")}.pdf`;

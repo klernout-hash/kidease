@@ -151,7 +151,9 @@ export function AdminContractsPanel({
                     pack={pack}
                     mode={mode}
                     templates={templates}
-                    defaultTemplateId={defaultTemplateIds[pack.packKind]}
+                    defaultTemplateId={
+                      pack.packKind === "parent_enrolment_agreement" ? null : defaultTemplateIds[pack.packKind]
+                    }
                     busy={busy}
                     setBusy={setBusy}
                     onRefresh={onRefresh}

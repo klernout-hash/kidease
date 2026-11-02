@@ -77,6 +77,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_UNIFIED_INBOX",
   "FEATURE_VOICE",
   "FEATURE_PICKUP_CONTACTS",
+  "FEATURE_PARENT_AGREEMENT",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -220,6 +221,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_VOICE: false,
   /** Named pickup people on a child profile. Off. Allergies stay either way. */
   FEATURE_PICKUP_CONTACTS: false,
+  /** Parent and centre enrolment agreement. Off. Also needs FEATURE_ENROLMENT_ESIGN. */
+  FEATURE_PARENT_AGREEMENT: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -620,6 +623,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary: "Name, phone, and relationship for people who can pick a child up. Default off. Allergies stay on the profile.",
+  },
+  {
+    key: "FEATURE_PARENT_AGREEMENT",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Parent and centre enrolment agreement. Default off. Also needs FEATURE_ENROLMENT_ESIGN. DocuSign sends only when the director clicks. The fee stays inside the agreement.",
   },
 ];
 

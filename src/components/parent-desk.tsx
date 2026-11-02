@@ -11,6 +11,7 @@ import { LedgerHonesty } from "@/components/listing-status-badge";
 import { TaxReceiptStudio } from "@/components/tax-receipt-studio";
 import { ChildCareCard } from "@/components/child-care-card";
 import { CoparentDesk } from "@/components/coparent-desk";
+import { ChildAgreementFile } from "@/components/parent-agreement-panel";
 import { EmptyState } from "@/components/empty-state";
 import { KidNotebook } from "@/components/kid-art";
 import { Button } from "@/components/ui/button";
@@ -864,6 +865,7 @@ export function ParentDesk({
                           </button>
                         ) : undefined}
                       />
+                      {c.id === activeChild?.id ? <ChildAgreementFile childId={c.id} /> : null}
                       {familyCanWrite ? (
                       <>
                       <div className="px-3 pb-3">

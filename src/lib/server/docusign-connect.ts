@@ -133,7 +133,25 @@ export function parseConnectAccountId(raw: string): string | null {
   return xml?.trim() || null;
 }
 
-export type ConnectPayload = { envelopeId: string; status: string; event: string };
+export type ConnectSigner = { recipientId: string; routingOrder: string; status: string };
+
+export type ConnectPayload = { envelopeId: string; status: string; event: string; signers?: ConnectSigner[] };
+
+function readSignerList(value: unknown): ConnectSigner[] {
+  if (!value || typeof value !== "object") return [];
+  const signers = (value as { signers?: unknown }).signers;
+  if (!Array.isArray(signers)) return [];
+  return signers
+    .map((row) => {
+      const signer = row as { recipientId?: string | number; routingOrder?: string | number; status?: string };
+      return {
+        recipientId: String(signer.recipientId ?? "").trim(),
+        routingOrder: String(signer.routingOrder ?? "").trim(),
+        status: String(signer.status ?? "").trim(),
+      };
+    })
+    .filter((signer) => signer.recipientId || signer.routingOrder || signer.status);
+}
 
 export type ConnectWebhookPlan =
   | { kind: "query_secret" }
@@ -184,11 +202,16 @@ export function parseConnectPayload(raw: string): ConnectPayload | null {
     };
     const envelopeId = json.data?.envelopeId || json.data?.envelopeSummary?.envelopeId || json.envelopeId;
     const status = json.data?.envelopeSummary?.status || json.status || "";
+    const summary = json.data?.envelopeSummary as { recipients?: unknown } | undefined;
+    const dataRecipients = (json.data as { recipients?: unknown } | undefined)?.recipients;
+    const rootRecipients = (json as { recipients?: unknown }).recipients;
+    const signers = readSignerList(summary?.recipients || dataRecipients || rootRecipients);
     if (envelopeId) {
       return {
         envelopeId,
         status: mapEnvelopeStatus(status || json.event || ""),
         event: json.event || status || "",
+        ...(signers.length ? { signers } : {}),
       };
     }
   } catch {

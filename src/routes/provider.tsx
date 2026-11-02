@@ -45,6 +45,8 @@ import { FOUNDING_PAGE, foundingLocale } from "@/lib/founding-period";
 import { formatAgeLabel, formatStart, scheduleLabel } from "@/lib/templates";
 import type { Child, Daycare, SpotRequest, TourRequest } from "@/lib/types";
 import { ProviderContractsPanel } from "@/components/provider-contracts";
+import { AgreementRequestAction, CentreAgreementEditor } from "@/components/parent-agreement-panel";
+import { useCentreAgreementChips } from "@/components/use-centre-agreement-chips";
 import { ListingCultureFields } from "@/components/listing-culture-fields";
 import { CapacityForm, Field } from "@/components/provider-listing-forms";
 import { UploadLimitHint } from "@/components/upload-limit-hint";
@@ -800,7 +802,10 @@ export function ProviderPage() {
 
       {desk === "contract" ? (
         centreOwner ? (
-          <ProviderContractsPanel />
+          <>
+            <ProviderContractsPanel />
+            <CentreAgreementEditor />
+          </>
         ) : (
           <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>
         )
@@ -850,6 +855,7 @@ function RequestList({
   locale: "en" | "fr" | string;
 }) {
   const { t } = useCopy();
+  const agreements = useCentreAgreementChips();
   if (!items.length) {
     return <p className="mt-4 rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">{empty}</p>;
   }
@@ -908,6 +914,13 @@ function RequestList({
               </>
             )}
           </div>
+          <AgreementRequestAction
+            bookingId={r.id}
+            bookingStatus={r.status}
+            chip={agreements.chipFor(r.id)}
+            enabled={agreements.enabled}
+            onSent={agreements.refresh}
+          />
         </li>
       ))}
     </ul>

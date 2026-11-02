@@ -45,6 +45,15 @@ function webhookNotification() {
   };
 }
 
+export type EnvelopeSignerInput = {
+  email: string;
+  name: string;
+  recipientId: string;
+  routingOrder: string;
+  anchorString: string;
+  roleName?: string;
+};
+
 export type CentreEnvelopeInput = {
   packKind?: PackKind;
   documentName: string;
@@ -53,6 +62,11 @@ export type CentreEnvelopeInput = {
   signerEmail: string;
   templateId?: string | null;
   centreName?: string;
+  /** When set, these people sign instead of the single centre signer. */
+  signers?: EnvelopeSignerInput[];
+  fileExtension?: string;
+  emailSubject?: string;
+  emailBlurb?: string;
 };
 
 export function centreEnvelopeCreateBody(
@@ -60,52 +74,63 @@ export function centreEnvelopeCreateBody(
   source: Record<string, string | undefined> = process.env,
 ) {
   const packKind = parsePackKind(input.packKind);
-  const subject = packEmailSubject(packKind, input.centreName || input.documentName);
+  const subject = (input.emailSubject || packEmailSubject(packKind, input.centreName || input.documentName)).slice(0, 100);
+  const blurb = input.emailBlurb || packEmailBlurb(packKind);
   const templateId = (input.templateId || "").trim();
+  const signers = input.signers?.length
+    ? input.signers
+    : [
+        {
+          email: input.signerEmail,
+          name: input.signerName,
+          recipientId: "1",
+          routingOrder: "1",
+          anchorString: "By signing in DocuSign",
+          roleName: templateRoleName(source),
+        },
+      ];
   const definition = templateId
     ? {
         emailSubject: subject,
-        emailBlurb: packEmailBlurb(packKind),
+        emailBlurb: blurb,
         templateId,
-        templateRoles: [
-          {
-            email: input.signerEmail,
-            name: input.signerName,
-            roleName: templateRoleName(source),
-          },
-        ],
+        templateRoles: signers.map((signer) => ({
+          email: signer.email,
+          name: signer.name,
+          roleName: signer.roleName || templateRoleName(source),
+          routingOrder: signer.routingOrder,
+        })),
         eventNotification: webhookNotification(),
         status: "sent",
       }
     : {
         emailSubject: subject,
-        emailBlurb: packEmailBlurb(packKind),
+        emailBlurb: blurb,
         documents: [
           {
             documentBase64: Buffer.from(input.body, "utf8").toString("base64"),
             name: input.documentName,
-            fileExtension: "txt",
+            fileExtension: input.fileExtension || "txt",
             documentId: "1",
           },
         ],
         recipients: {
-          signers: [
-            {
-              email: input.signerEmail,
-              name: input.signerName,
-              recipientId: "1",
-              tabs: {
-                signHereTabs: [
-                  {
-                    anchorString: "By signing in DocuSign",
-                    anchorUnits: "pixels",
-                    anchorXOffset: "0",
-                    anchorYOffset: "20",
-                  },
-                ],
-              },
+          signers: signers.map((signer) => ({
+            email: signer.email,
+            name: signer.name,
+            recipientId: signer.recipientId,
+            routingOrder: signer.routingOrder,
+            tabs: {
+              signHereTabs: [
+                {
+                  anchorString: signer.anchorString,
+                  anchorUnits: "pixels",
+                  anchorXOffset: "0",
+                  anchorYOffset: "20",
+                },
+              ],
             },
-          ],
+          })),
         },
         eventNotification: webhookNotification(),
         status: "sent",

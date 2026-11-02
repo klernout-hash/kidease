@@ -3,6 +3,7 @@ import {
   dailyLogsEnabled,
   enrolmentEsignEnabled,
   familyVaultEnabled,
+  parentAgreementEnabled,
   pickupContactsEnabled,
   reviewRepliesEnabled,
   taxReceiptsEnabled,
@@ -22,4 +23,5 @@ export const loadDeskFeatureFlags = createServerFn({ method: "GET" }).handler(as
   unifiedInbox: unifiedInboxEnabled(),
   voice: voiceCallsEnabled(),
   pickupContacts: pickupContactsEnabled(),
+  parentAgreement: parentAgreementEnabled(),
 }));

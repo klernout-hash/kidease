@@ -3,7 +3,7 @@ export type DocusignTemplateOption = {
   name: string;
 };
 
-export const PACK_KINDS = ["provider_agreement", "enrolment_pack"] as const;
+export const PACK_KINDS = ["provider_agreement", "enrolment_pack", "parent_enrolment_agreement"] as const;
 
 export type PackKind = (typeof PACK_KINDS)[number];
 
@@ -16,10 +16,14 @@ export const PACK_TITLES: Record<PackKind, { en: string; fr: string }> = {
     en: "KidEase Enrolment Paperwork Pack",
     fr: "Trousse de documents d’inscription KidEase",
   },
+  parent_enrolment_agreement: {
+    en: "Enrolment agreement",
+    fr: "Entente d’inscription",
+  },
 };
 
 export function isPackKind(value: unknown): value is PackKind {
-  return value === "provider_agreement" || value === "enrolment_pack";
+  return typeof value === "string" && (PACK_KINDS as readonly string[]).includes(value);
 }
 
 export function parsePackKind(value: unknown, fallback: PackKind = "provider_agreement"): PackKind {
@@ -31,9 +35,9 @@ export function packTitle(kind: PackKind, locale: "en" | "fr" = "en") {
 }
 
 export function defaultTemplateEnvName(kind: PackKind) {
-  return kind === "enrolment_pack"
-    ? "DOCUSIGN_TEMPLATE_ENROLMENT_PACK"
-    : "DOCUSIGN_TEMPLATE_PROVIDER_AGREEMENT";
+  if (kind === "enrolment_pack") return "DOCUSIGN_TEMPLATE_ENROLMENT_PACK";
+  if (kind === "parent_enrolment_agreement") return "DOCUSIGN_TEMPLATE_PARENT_AGREEMENT";
+  return "DOCUSIGN_TEMPLATE_PROVIDER_AGREEMENT";
 }
 
 export function defaultTemplateId(
@@ -157,15 +161,24 @@ KidEase operator / Exploitant: Kyle Lernout · kyle@kidease.ca
 }
 
 export function packDocumentBody(kind: PackKind, input: CentreFields) {
+  if (kind === "parent_enrolment_agreement") {
+    return "Enrolment agreement between the parent and the centre. The terms stay on the child’s file.";
+  }
   return kind === "enrolment_pack" ? enrolmentPackBody(input) : centreAgreementBody(input);
 }
 
 export function packEmailSubject(kind: PackKind, centreName: string) {
+  if (kind === "parent_enrolment_agreement") {
+    return `Please sign: Enrolment agreement: ${centreName}`;
+  }
   const title = packTitle(kind, "en");
   return `Please sign: ${title}: ${centreName}`;
 }
 
 export function packEmailBlurb(kind: PackKind) {
+  if (kind === "parent_enrolment_agreement") {
+    return "Please sign the enrolment agreement between your family and the centre. / Veuillez signer l’entente d’inscription entre votre famille et le centre.";
+  }
   return kind === "enrolment_pack"
     ? "KidEase needs the enrolment paperwork pack signed so parent requests and child profiles can stay on this centre’s desk. / KidEase a besoin de la trousse d’inscription signée."
     : "KidEase needs the licensed centre agreement signed before the listing stays live for parent requests. / KidEase a besoin de l’entente du centre permis signée.";
