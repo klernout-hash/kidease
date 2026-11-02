@@ -15,7 +15,16 @@ import { canAccessSupport } from "@/lib/support";
 import { stripeChargesLive } from "@/lib/stripe-live";
 import { paymentSourceLabel } from "@/lib/payment-source";
 import { reportError } from "@/lib/observe";
-import { canSeeProviderSubscriptions, curriculumPackEnabled, showPayCtas, subscriptionsEnabled } from "@/lib/features";
+import {
+  canSeeProviderSubscriptions,
+  coparentLinkEnabled,
+  curriculumPackEnabled,
+  familyVaultEnabled,
+  showPayCtas,
+  staffTimesheetsEnabled,
+  subscriptionsEnabled,
+  tourCalendarEnabled,
+} from "@/lib/features";
 import {
   bootstrapAdminEmail,
   canBootstrapAdmin,
@@ -327,6 +336,10 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
     ownsCentre: owned,
     centreLinked: owned || member,
     curriculumPack: curriculumPackEnabled(),
+    coparentLink: coparentLinkEnabled(),
+    staffTimesheets: staffTimesheetsEnabled(),
+    familyVault: familyVaultEnabled(),
+    tourCalendar: tourCalendarEnabled(),
     attention,
     restoreUntil,
     viewAs: viewing,

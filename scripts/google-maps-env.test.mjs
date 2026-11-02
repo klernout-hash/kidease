@@ -4,6 +4,7 @@ import { describe, it } from "node:test";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { OSM_ROAD_STYLE, OSM_TILE_HOST, SATELLITE_TILE_HOST } from "../src/lib/osm-map.ts";
+import { googleMapsBrowserEnabled, googleMapsBrowserKey } from "./google-maps-client-key.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -75,6 +76,24 @@ describe("maps use OpenFreeMap, not a Google Maps key", () => {
     assert.match(css, /color-scheme:\s*only light/);
     assert.match(css, /\.ke-map-skel/);
     assert.match(css, /\.maplibregl-ctrl-attrib/);
+  });
+
+  it("keeps the browser key out of client JS unless the build flag is on", () => {
+    const fake = `AIza${"UnitTestKeyValueNotReal000000"}`;
+    const held = { VITE_GOOGLE_MAPS_API_KEY: fake, GOOGLE_MAPS_API_KEY: fake };
+    assert.equal(googleMapsBrowserEnabled(held), false);
+    assert.equal(googleMapsBrowserKey(held), "");
+    assert.equal(googleMapsBrowserKey({ ...held, FEATURE_GOOGLE_MAPS: "0" }), "");
+    assert.equal(googleMapsBrowserKey({ ...held, FEATURE_GOOGLE_MAPS: "1" }), fake);
+    assert.equal(googleMapsBrowserKey({ ...held, VITE_GOOGLE_MAPS: "yes" }), fake);
+    const vite = read("vite.config.ts");
+    const helper = read("scripts/google-maps-client-key.mjs");
+    assert.match(vite, /googleMapsBrowserKey/);
+    assert.match(vite, /import\.meta\.env\.VITE_GOOGLE_MAPS_API_KEY/);
+    assert.match(helper, /FEATURE_GOOGLE_MAPS/);
+    assert.doesNotMatch(vite, /AIza[0-9A-Za-z_-]{20,}/);
+    assert.doesNotMatch(helper, /AIza[0-9A-Za-z_-]{20,}/);
+    assert.match(read(".env.example"), /^FEATURE_GOOGLE_MAPS=0$/m);
   });
 
   it("address lookup uses Photon, not the Google Geocoding API", () => {

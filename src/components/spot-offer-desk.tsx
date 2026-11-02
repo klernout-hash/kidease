@@ -3,9 +3,11 @@ import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { spotOfferCopy } from "@/lib/spot-offer-copy";
+import { gapCopy } from "@/lib/gap-features";
 import {
   exportCentreWaitlistAudit,
   listCentreWaitlist,
+  rankWaitlistEntry,
   sendCentreSpotOffer,
   setWaitlistSiblingPriority,
   type CentreWaitlistCard,
@@ -39,6 +41,8 @@ export function SpotOfferDesk({ includeTest = false }: { includeTest?: boolean }
   const copy = spotOfferCopy(locale);
   const [centres, setCentres] = useState<CentreWaitlistCard[] | null>(null);
   const [emailEnabled, setEmailEnabled] = useState(false);
+  const [tools, setTools] = useState(false);
+  const rankCopy = gapCopy(locale === "fr" ? "fr" : "en");
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,6 +51,7 @@ export function SpotOfferDesk({ includeTest = false }: { includeTest?: boolean }
       .then((result) => {
         setCentres(result.centres);
         setEmailEnabled(result.emailEnabled);
+        setTools(result.toolsEnabled);
       })
       .catch(() => setCentres([]));
   }
@@ -58,6 +63,7 @@ export function SpotOfferDesk({ includeTest = false }: { includeTest?: boolean }
         if (!live) return;
         setCentres(result.centres);
         setEmailEnabled(result.emailEnabled);
+        setTools(result.toolsEnabled);
       })
       .catch(() => {
         if (live) setCentres([]);
@@ -151,6 +157,38 @@ export function SpotOfferDesk({ includeTest = false }: { includeTest?: boolean }
                         </p>
                         {family.note ? <p className="mt-1 text-sm text-muted">{family.note}</p> : null}
                       </div>
+                      {tools && (waiting || offered) ? (
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            disabled={busy === family.id}
+                            onClick={() => {
+                              setBusy(family.id);
+                              void rankWaitlistEntry({ data: { id: family.id, direction: "up" } })
+                                .then(() => load())
+                                .finally(() => setBusy(null));
+                            }}
+                          >
+                            {rankCopy.rankUp}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            disabled={busy === family.id}
+                            onClick={() => {
+                              setBusy(family.id);
+                              void rankWaitlistEntry({ data: { id: family.id, direction: "down" } })
+                                .then(() => load())
+                                .finally(() => setBusy(null));
+                            }}
+                          >
+                            {rankCopy.rankDown}
+                          </Button>
+                        </div>
+                      ) : null}
                       {waiting && !centre.openOfferId ? (
                         <Button
                           type="button"

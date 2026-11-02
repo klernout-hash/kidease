@@ -5,14 +5,20 @@ import { centreCanWriteCare } from "@/lib/centre-roles";
 import {
   careStatusBody,
   isEnrolledBookingStatus,
+  isMealSlot,
+  isNapState,
   journalPostReady,
+  mealLogLine,
+  mealLogReady,
+  napLogLine,
+  napLogReady,
   normalizeJournalBody,
   parseJournalPhotos,
   serializeJournalPhotos,
   todayYmd,
   type JournalPhoto,
 } from "@/lib/daily-care";
-import { privateMediaEnabled, privatePhotoFeedEnabled } from "@/lib/features";
+import { dailyLogsEnabled, privateMediaEnabled, privatePhotoFeedEnabled } from "@/lib/features";
 import { classroomPhotoAllowed } from "@/lib/private-photo-feed";
 import { carePhotosForViewer, clampPrivateTtl, isPrivateMediaKey, privatePhotoAccepted } from "@/lib/private-media";
 import { nid } from "@/lib/utils";
@@ -50,6 +56,8 @@ async function postCareThreadNotice(input: {
   parentUserId: string | null;
   body: string;
   actorUserId: string;
+  /** Daily logs stay in the thread. They do not send email. */
+  email?: boolean;
 }) {
   const conversationId = (input.conversationId || "").trim();
   if (!conversationId) return;
@@ -63,7 +71,7 @@ async function postCareThreadNotice(input: {
   const origin = process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://kidease.ca";
   const threadUrl = `${origin}/inbox/${conversationId}`;
   const parent = input.parentUserId ? await lookupUser(input.parentUserId).catch(() => ({ email: null, name: null })) : null;
-  if (parent?.email) {
+  if (input.email !== false && parent?.email) {
     void notifyThreadParty({
       to: parent.email,
       name: parent.name,
@@ -95,6 +103,7 @@ export const listDailyJournals = createServerFn({ method: "POST" })
     bookingId: String(input?.bookingId || "").trim() || undefined,
   }))
   .handler(async ({ context, data }) => {
+    if (!dailyLogsEnabled()) return { day: data.day && /^\d{4}-\d{2}-\d{2}$/.test(data.day) ? data.day : todayYmd(), items: [] as DailyJournalRow[] };
     const sql = await getSql();
     await ensureJournalTable(sql);
     const day = data.day && /^\d{4}-\d{2}-\d{2}$/.test(data.day) ? data.day : todayYmd();
@@ -187,6 +196,7 @@ export const postDailyJournal = createServerFn({ method: "POST" })
     }) => input,
   )
   .handler(async ({ context, data }) => {
+    if (!dailyLogsEnabled()) throw new Error("Daily logs are not open yet.");
     const sql = await getSql();
     await ensureJournalTable(sql);
     const daycareId = String(data.daycareId || "").trim();
@@ -268,8 +278,87 @@ export const postDailyJournal = createServerFn({ method: "POST" })
       parentUserId,
       body: careStatusBody({ kind: "journal", childName, daycareName }),
       actorUserId: context.userId,
+      email: false,
     });
 
+    return { ok: true as const, id };
+  });
+
+export const logDailyCare = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator(
+    (input: {
+      daycareId: string;
+      bookingId?: string | null;
+      conversationId?: string | null;
+      childName: string;
+      parentUserId?: string | null;
+      day?: string;
+      kind: "meal" | "nap";
+      slot?: string;
+      note?: string;
+      state?: string;
+      minutes?: number;
+      locale?: string;
+    }) => input,
+  )
+  .handler(async ({ context, data }) => {
+    if (!dailyLogsEnabled()) throw new Error("Daily logs are not open yet.");
+    const sql = await getSql();
+    await ensureJournalTable(sql);
+    const daycareId = String(data.daycareId || "").trim();
+    const childName = String(data.childName || "").trim();
+    if (!daycareId || !childName) throw new Error("Pick a child");
+    const role = await loadCentreRole(sql, context.userId, daycareId);
+    if (!centreCanWriteCare(role)) throw new Error("Staff only");
+    const locale = data.locale === "fr" ? "fr" : "en";
+    let body = "";
+    let kind: "meal" | "nap" = "meal";
+    if (data.kind === "nap") {
+      const state = String(data.state || "");
+      const minutes = Number(data.minutes);
+      if (!napLogReady({ state, minutes }) || !isNapState(state)) throw new Error("Add the nap");
+      body = napLogLine({ state, minutes, locale });
+      kind = "nap";
+    } else {
+      const slot = String(data.slot || "");
+      const note = String(data.note || "");
+      if (!mealLogReady({ slot, note }) || !isMealSlot(slot)) throw new Error("Add the meal");
+      body = mealLogLine({ slot, note, locale });
+    }
+    const bookingId = String(data.bookingId || "").trim() || null;
+    if (bookingId) {
+      const booking = await sql<{ status: string }>`
+        select status from bookings where id = ${bookingId} and daycare_id = ${daycareId} limit 1
+      `;
+      if (!booking[0] || !isEnrolledBookingStatus(booking[0].status)) throw new Error("Logs are for enrolled children");
+    }
+    const day = data.day && /^\d{4}-\d{2}-\d{2}$/.test(data.day) ? data.day : todayYmd();
+    const id = nid("dj");
+    const parentUserId = String(data.parentUserId || "").trim() || null;
+    const conversationId = String(data.conversationId || "").trim() || null;
+    await sql`
+      insert into daily_journals (
+        id, daycare_id, booking_id, conversation_id, child_id, child_name,
+        parent_user_id, author_user_id, day, body, photos, media_private
+      )
+      values (
+        ${id}, ${daycareId}, ${bookingId}, ${conversationId}, ${null}, ${childName},
+        ${parentUserId}, ${context.userId}, ${day}, ${body}, ${"[]"}::jsonb, ${false}
+      )
+    `;
+    const centre = await sql<{ name: string }>`select name from daycares where id = ${daycareId} limit 1`;
+    const daycareName = centre[0]?.name || "the centre";
+    await postCareThreadNotice({
+      sql,
+      conversationId,
+      daycareId,
+      daycareName,
+      parentUserId,
+      body: careStatusBody({ kind, childName, daycareName, locale }),
+      actorUserId: context.userId,
+      email: false,
+    });
     return { ok: true as const, id };
   });
 

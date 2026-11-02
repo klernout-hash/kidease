@@ -10,6 +10,7 @@ import {
   parsePackKind,
   type PackKind,
 } from "@/lib/contracts";
+import { enrolmentEsignEnabled } from "@/lib/features";
 import { nid } from "@/lib/utils";
 import {
   applyEnvelopeEvent,
@@ -312,6 +313,10 @@ export const sendCentreContract = createServerFn({ method: "POST" })
     }) => input,
   )
   .handler(async ({ context, data }) => {
+    if (!enrolmentEsignEnabled()) throw new Error("Signing is not open yet.");
+    if (data.packKind === "parent_enrolment_agreement") {
+      throw new Error("Parent agreements are sent from the daycare desk.");
+    }
     const actor = await requireOperator(context.userId);
     const { assertRecentReauth } = await import("@/lib/server/reauth.server");
     assertRecentReauth(context.userId);
@@ -461,6 +466,7 @@ export const voidCentreContract = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { contractId: string }) => input)
   .handler(async ({ context, data }) => {
+    if (!enrolmentEsignEnabled()) throw new Error("Signing is not open yet.");
     await requireOperator(context.userId);
     const { assertRecentReauth } = await import("@/lib/server/reauth.server");
     assertRecentReauth(context.userId);
@@ -485,6 +491,7 @@ export const syncCentreContract = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { contractId: string }) => input)
   .handler(async ({ context, data }) => {
+    if (!enrolmentEsignEnabled()) throw new Error("Signing is not open yet.");
     await requireOperator(context.userId);
     const sql = await getSql();
     const rows = await sql<{
@@ -547,6 +554,7 @@ export const listProviderContracts = createServerFn({ method: "GET" })
       join daycares d on d.id = dc.daycare_id
       join provider_daycares pd on pd.daycare_id = dc.daycare_id and pd.user_id = ${context.userId}
       where dc.status <> 'voided'
+        and coalesce(dc.pack_kind, 'provider_agreement') <> 'parent_enrolment_agreement'
       order by dc.created_at desc
     `.catch(() => []);
 
@@ -583,6 +591,7 @@ export const getSignContract = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .validator((input: { contractId: string }) => input)
   .handler(async ({ context, data }) => {
+    if (!enrolmentEsignEnabled()) throw new Error("Signing is not open yet.");
     const admin = await isOperator(context.userId);
     const sql = await getSql();
     const rows = await sql<{
@@ -650,6 +659,7 @@ export const signCentreContract = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { contractId: string }) => input)
   .handler(async ({ context, data }) => {
+    if (!enrolmentEsignEnabled()) throw new Error("Signing is not open yet.");
     const actor = await lookupUser(context.userId);
     const admin = await isOperator(context.userId);
     const sql = await getSql();

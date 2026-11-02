@@ -66,6 +66,21 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_CURRICULUM_PACK",
   "FEATURE_CURRICULUM_PACK_LIVE",
   "FEATURE_STORY_CORNER",
+  "FEATURE_COPARENT_LINK",
+  "FEATURE_STAFF_TIMESHEETS",
+  "FEATURE_REVIEW_REPLIES",
+  "FEATURE_ENROLMENT_ESIGN",
+  "FEATURE_TAX_RECEIPTS",
+  "FEATURE_DAILY_LOGS",
+  "FEATURE_TOUR_CALENDAR",
+  "FEATURE_FAMILY_VAULT",
+  "FEATURE_UNIFIED_INBOX",
+  "FEATURE_VOICE",
+  "FEATURE_PICKUP_CONTACTS",
+  "FEATURE_PARENT_AGREEMENT",
+  "FEATURE_WAITLIST_TOOLS",
+  "FEATURE_AGE_OPEN_SPOTS",
+  "FEATURE_CHILD_CHECKIN",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -165,7 +180,7 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_ORG_DASHBOARD: false,
   /** Private per-child photos for enrolled parents who consented. */
   FEATURE_PRIVATE_PHOTO_FEED: false,
-  /** Footer link to the government desk. The /gov sign-in stays available either way. */
+  /** Government desk. Off hides /gov, /gov/login, and the footer link. */
   FEATURE_GOV_PORTAL: false,
   /** Named product events for PostHog. Off until Kyle turns it on. No personal details in the payload. */
   FEATURE_PRODUCT_EVENTS: false,
@@ -187,6 +202,36 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_CURRICULUM_PACK_LIVE: false,
   /** Local open picture books. Off. Does not hotlink book files. */
   FEATURE_STORY_CORNER: false,
+  /** Second parent with their own login. Off. In-app invite link only. No email or SMS. */
+  FEATURE_COPARENT_LINK: false,
+  /** Daycare clock in, clock out, edits, weekly hours, and CSV. Off. Not payroll. */
+  FEATURE_STAFF_TIMESHEETS: false,
+  /** A centre can reply under a public parent review. Off. No email. */
+  FEATURE_REVIEW_REPLIES: false,
+  /** Enrolment contract, the sign page, and the signed PDF. Off. No DocuSign call. */
+  FEATURE_ENROLMENT_ESIGN: false,
+  /** T778 and Quebec RL-24 summaries a centre types. Off. */
+  FEATURE_TAX_RECEIPTS: false,
+  /** Daily journal plus meal and nap logs. Off. No email. */
+  FEATURE_DAILY_LOGS: false,
+  /** Tour calendar page and an in-app visit reminder. Off. No email or text. */
+  FEATURE_TOUR_CALENDAR: false,
+  /** Parent document vault. Off. */
+  FEATURE_FAMILY_VAULT: false,
+  /** Daycare inbox lists message threads and requests that have no thread yet. Off. */
+  FEATURE_UNIFIED_INBOX: false,
+  /** In-app voice between a parent and a centre. Off. No call is placed. */
+  FEATURE_VOICE: false,
+  /** Named pickup people on a child profile. Off. Allergies stay either way. */
+  FEATURE_PICKUP_CONTACTS: false,
+  /** Parent and centre enrolment agreement. Off. Also needs FEATURE_ENROLMENT_ESIGN. */
+  FEATURE_PARENT_AGREEMENT: false,
+  /** Rank a waitlist, then offer a spot. Off. No fee. */
+  FEATURE_WAITLIST_TOOLS: false,
+  /** Post open spots by age group and tell matching families. Off. */
+  FEATURE_AGE_OPEN_SPOTS: false,
+  /** Timestamped child check-in and check-out. Off. No photo. */
+  FEATURE_CHILD_CHECKIN: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -448,7 +493,7 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     key: "FEATURE_GOV_PORTAL",
     defaultOn: false,
     docs: "docs/flags.md",
-    summary: "Footer link to the government desk. Default off. /gov sign-in still works for a demo.",
+    summary: "Government desk. Default off. /gov, /gov/login, and the footer link stay hidden.",
   },
   {
     key: "FEATURE_PRODUCT_EVENTS",
@@ -519,6 +564,102 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/curriculum.md",
     summary:
       "Picture books stored on this server from the Global Digital Library. Default off. Skips NC and ND. StoryWeaver stays off until a token exists. Unite for Literacy is a link out.",
+  },
+  {
+    key: "FEATURE_COPARENT_LINK",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "A main parent invites one other parent with an in-app link. They share children, tours, waitlists, messages, and bills. Default off. No email or SMS. Access is full or view only, and the main parent can remove them.",
+  },
+  {
+    key: "FEATURE_STAFF_TIMESHEETS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Daycare desk clock in, clock out, edits with a note, weekly hours, and a CSV download. Default off. The week starts Monday. KidEase does not pay wages. No email or SMS.",
+  },
+  {
+    key: "FEATURE_REVIEW_REPLIES",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "A centre writes a public reply under a parent review. Default off. The parent gets an in-app notice. No email.",
+  },
+  {
+    key: "FEATURE_ENROLMENT_ESIGN",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Enrolment e-sign, /sign/$id, and the signed PDF. Default off. DocuSign is not called.",
+  },
+  {
+    key: "FEATURE_TAX_RECEIPTS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "T778 and Quebec RL-24 text a centre types from amounts it already has. Default off. No invented fee.",
+  },
+  {
+    key: "FEATURE_DAILY_LOGS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Daily journal, meals, and naps for an enrolled child. Default off. The note stays in the account. No email.",
+  },
+  {
+    key: "FEATURE_TOUR_CALENDAR",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Tour calendar and an in-app reminder. Default off. No email, text, or push.",
+  },
+  {
+    key: "FEATURE_FAMILY_VAULT",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Parent page for immunization records and subsidy forms. Default off. A centre sees a file only after the parent shares it.",
+  },
+  {
+    key: "FEATURE_UNIFIED_INBOX",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Daycare messages include requests and visits that do not have a thread yet. Default off. The current inbox stays.",
+  },
+  {
+    key: "FEATURE_VOICE",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "In-app call on a message thread. Default off. No call is dialled. Phone numbers stay hidden.",
+  },
+  {
+    key: "FEATURE_PICKUP_CONTACTS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Name, phone, and relationship for people who can pick a child up. Default off. Allergies stay on the profile.",
+  },
+  {
+    key: "FEATURE_PARENT_AGREEMENT",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Parent and centre enrolment agreement. Default off. Also needs FEATURE_ENROLMENT_ESIGN. DocuSign sends only when the director clicks. The fee stays inside the agreement.",
+  },
+  {
+    key: "FEATURE_WAITLIST_TOOLS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Daycare ranks a waitlist and the parent sees that place. Default off. Offer, accept, and decline stay. No waitlist fee.",
+  },
+  {
+    key: "FEATURE_AGE_OPEN_SPOTS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Daycare posts open spots by age group. Matching saved and waitlisted parents are told through the existing mail and push path. Default off. No checkout.",
+  },
+  {
+    key: "FEATURE_CHILD_CHECKIN",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Daycare desk records child arrival and pickup with a time. Uses pickup people when the parent already listed them. Parent sees the history. Default off. No photo.",
   },
 ];
 

@@ -27,7 +27,7 @@ import { SQL_SETTLE_MS, withTimeout } from "@/lib/timeout";
 export type RoleChromePayload = {
   signedIn: boolean;
   role: "parent" | "provider" | "admin" | "support" | "government" | null;
-  /** FEATURE_GOV_PORTAL. Default false. Footer link only. */
+  /** FEATURE_GOV_PORTAL. Default false. Hides the desk and the footer link. */
   govPortalLink: boolean;
   paid: boolean;
   planLabel: string | null;

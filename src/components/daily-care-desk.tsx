@@ -10,8 +10,12 @@ import {
   attendanceFromAction,
   CARE_OPS_LATER_OUT_OF_SCOPE,
   DAILY_CARE_HONESTY,
+  isMealSlot,
+  isNapState,
   journalPhotoDecision,
   JOURNAL_MAX_PHOTOS,
+  MEAL_SLOTS,
+  NAP_STATES,
   parentCanMessageCentre,
   presenceFromAttendance,
   todayYmd,
@@ -21,7 +25,8 @@ import {
 } from "@/lib/daily-care";
 import { safetyText } from "@/lib/safety";
 import { sendConnectedMessage } from "@/lib/server/inbox";
-import { listDailyJournals, postDailyJournal, type DailyJournalRow } from "@/lib/server/daily-care";
+import { listDailyJournals, logDailyCare, postDailyJournal, type DailyJournalRow } from "@/lib/server/daily-care";
+import { loadDeskFeatureFlags } from "@/lib/server/desk-features";
 import { listCareOps, getLicensedMonth, saveDayNote, saveEnrolmentSplit, type CareOpsPayload, type LicensedMonthChild } from "@/lib/server/care-ops";
 import { getWeekSchedule, saveAttendance, type AttendanceRow } from "@/lib/server/ops";
 import { createBill, sendBill } from "@/lib/server/billing";
@@ -69,6 +74,7 @@ export function DailyCareDesk({
   const [splitDrafts, setSplitDrafts] = useState<Record<string, { parent: string; program: string; kind: string; label: string }>>({});
   const [careFocus, setCareFocus] = useState<string | null>(null);
   const [careOpen, setCareOpen] = useState(false);
+  const [logsOn, setLogsOn] = useState(false);
 
   const load = useCallback(async () => {
     const schedule = Promise.all([
@@ -96,6 +102,12 @@ export function DailyCareDesk({
     });
     await Promise.all([schedule, extras]);
   }, [daycareId, day, role]);
+
+  useEffect(() => {
+    void loadDeskFeatureFlags()
+      .then((flags) => setLogsOn(flags.dailyLogs))
+      .catch(() => setLogsOn(false));
+  }, []);
 
   useEffect(() => {
     setScheduleReady(false);
@@ -494,6 +506,7 @@ export function DailyCareDesk({
                   onSplit={(next) => setSplitDrafts((prev) => ({ ...prev, [key]: next }))}
                   onSaveDay={() => void saveDay(row)}
                   onSaveSplit={() => void saveSplit(row)}
+                  logsOn={logsOn}
                   onPhoto={(file) => {
                     if (!file) return;
                     const decision = journalPhotoDecision({ type: file.type, size: file.size });
@@ -530,7 +543,17 @@ export function DailyCareDesk({
                   </div>
                 ) : null}
 
-                {role === "provider" ? (
+                {logsOn && role === "provider" ? (
+                  <MealNapLog
+                    row={row}
+                    locale={locale}
+                    busy={busy}
+                    onBusy={setBusy}
+                    onLogged={() => void load()}
+                  />
+                ) : null}
+
+                {logsOn && role === "provider" ? (
                   <div className="mt-4 border-t border-border pt-4">
                     <p className="font-medium">{t("careJournal")}</p>
                     <p className="mt-1 text-sm text-muted">{t("careJournalLead")}</p>
@@ -640,6 +663,7 @@ function DayRecord({
   onSaveDay,
   onSaveSplit,
   onPhoto,
+  logsOn,
 }: {
   role: CareDeskRole;
   row: AttendanceRow;
@@ -653,6 +677,7 @@ function DayRecord({
   onSaveDay: () => void;
   onSaveSplit: () => void;
   onPhoto: (file: File | undefined) => void;
+  logsOn: boolean;
 }) {
   const { t } = useCopy();
   const marked = canWriteDayNote(row.status);
@@ -668,22 +693,26 @@ function DayRecord({
       {marked ? null : <p className="mt-1 text-sm text-muted">{t("careDayNoteLocked")}</p>}
       {note && (note.food || note.nap || note.incident || note.photo) ? (
         <div className="mt-2 space-y-1 text-sm">
-          {note.food ? <p>{t("careFood")}: {note.food}</p> : null}
-          {note.nap ? <p>{t("careNap")}: {note.nap}</p> : null}
+          {logsOn && note.food ? <p>{t("careFood")}: {note.food}</p> : null}
+          {logsOn && note.nap ? <p>{t("careNap")}: {note.nap}</p> : null}
           {note.incident ? <p>{t("careIncidentNote")}: {note.incident}</p> : null}
           {note.photo ? <img src={note.photo} alt="" className="mt-2 h-24 w-24 rounded-md object-cover ring-1 ring-border" /> : null}
         </div>
       ) : null}
       {role === "provider" && marked ? (
         <div className="mt-2 space-y-2">
-          <label className="block text-sm">
-            {t("careFood")}
-            <input className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm" value={draft.food} onChange={(e) => onDraft({ ...draft, food: e.target.value })} />
-          </label>
-          <label className="block text-sm">
-            {t("careNap")}
-            <input className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm" value={draft.nap} onChange={(e) => onDraft({ ...draft, nap: e.target.value })} />
-          </label>
+          {logsOn ? (
+            <>
+              <label className="block text-sm">
+                {t("careFood")}
+                <input className="mt-1 min-h-11 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm" value={draft.food} onChange={(e) => onDraft({ ...draft, food: e.target.value })} />
+              </label>
+              <label className="block text-sm">
+                {t("careNap")}
+                <input className="mt-1 min-h-11 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm" value={draft.nap} onChange={(e) => onDraft({ ...draft, nap: e.target.value })} />
+              </label>
+            </>
+          ) : null}
           <label className="block text-sm">
             {t("careIncidentNote")}
             <textarea rows={2} className="mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm" value={draft.incident} onChange={(e) => onDraft({ ...draft, incident: e.target.value })} />
@@ -797,5 +826,118 @@ function MonthShares({
         })}
       </ul>
     </section>
+  );
+}
+
+function MealNapLog({
+  row,
+  locale,
+  busy,
+  onBusy,
+  onLogged,
+}: {
+  row: AttendanceRow;
+  locale: string;
+  busy: string | null;
+  onBusy: (value: string | null) => void;
+  onLogged: () => void;
+}) {
+  const { t } = useCopy();
+  const fr = locale === "fr";
+  const [slot, setSlot] = useState<(typeof MEAL_SLOTS)[number]>("lunch");
+  const [note, setNote] = useState("");
+  const [nap, setNap] = useState<(typeof NAP_STATES)[number]>("asleep");
+  const [minutes, setMinutes] = useState("45");
+
+  async function saveMeal() {
+    if (!isMealSlot(slot)) return;
+    onBusy(`${childKey(row)}:meal`);
+    try {
+      await logDailyCare({
+        data: {
+          daycareId: row.daycareId,
+          bookingId: row.bookingId,
+          conversationId: row.conversationId,
+          childName: row.childName,
+          parentUserId: row.parentUserId,
+          day: row.day,
+          kind: "meal",
+          slot,
+          note,
+          locale: fr ? "fr" : "en",
+        },
+      });
+      setNote("");
+      toast.success(fr ? "Repas enregistré." : "Meal saved.");
+      onLogged();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));
+    } finally {
+      onBusy(null);
+    }
+  }
+
+  async function saveNap() {
+    if (!isNapState(nap)) return;
+    onBusy(`${childKey(row)}:nap`);
+    try {
+      await logDailyCare({
+        data: {
+          daycareId: row.daycareId,
+          bookingId: row.bookingId,
+          conversationId: row.conversationId,
+          childName: row.childName,
+          parentUserId: row.parentUserId,
+          day: row.day,
+          kind: "nap",
+          state: nap,
+          minutes: Number(minutes),
+          locale: fr ? "fr" : "en",
+        },
+      });
+      toast.success(fr ? "Sieste enregistrée." : "Nap saved.");
+      onLogged();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("tourRespondFailed"));
+    } finally {
+      onBusy(null);
+    }
+  }
+
+  return (
+    <div className="mt-4 space-y-3 border-t border-border pt-4" data-ke="meal-nap-log">
+      <p className="font-medium">{fr ? "Repas et sieste" : "Meals and naps"}</p>
+      <p className="text-sm text-muted">{fr ? "Le parent le voit dans le journal. Aucun courriel." : "The parent sees it in the journal. No email."}</p>
+      <label className="block text-sm">
+        {fr ? "Repas" : "Meal"}
+        <select className="mt-1 min-h-11 w-full rounded-md border border-border bg-bg px-3" value={slot} onChange={(event) => { if (isMealSlot(event.target.value)) setSlot(event.target.value); }}>
+          {MEAL_SLOTS.map((item) => (
+            <option key={item} value={item}>{item}</option>
+          ))}
+        </select>
+      </label>
+      <label className="block text-sm">
+        {fr ? "Note" : "Note"}
+        <input className="mt-1 min-h-11 w-full rounded-md border border-border bg-bg px-3" value={note} maxLength={200} onChange={(event) => setNote(event.target.value)} onFocus={(event) => event.currentTarget.scrollIntoView({ block: "center" })} />
+      </label>
+      <Button type="button" size="sm" disabled={busy !== null || note.trim().length < 1} onClick={() => void saveMeal()}>
+        {fr ? "Enregistrer le repas" : "Save the meal"}
+      </Button>
+      <label className="block text-sm">
+        {fr ? "Sieste" : "Nap"}
+        <select className="mt-1 min-h-11 w-full rounded-md border border-border bg-bg px-3" value={nap} onChange={(event) => { if (isNapState(event.target.value)) setNap(event.target.value); }}>
+          {NAP_STATES.map((item) => (
+            <option key={item} value={item}>{item}</option>
+          ))}
+        </select>
+      </label>
+      <label className="block text-sm">
+        {fr ? "Minutes" : "Minutes"}
+        <input className="mt-1 min-h-11 w-full rounded-md border border-border bg-bg px-3" inputMode="numeric" value={minutes} onChange={(event) => setMinutes(event.target.value.replace(/[^\d]/g, "").slice(0, 3))} />
+      </label>
+      <Button type="button" variant="secondary" size="sm" disabled={busy !== null} onClick={() => void saveNap()}>
+        {fr ? "Enregistrer la sieste" : "Save the nap"}
+      </Button>
+    </div>
   );
 }

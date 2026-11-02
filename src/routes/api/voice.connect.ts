@@ -15,6 +15,10 @@ async function run(request: Request) {
     await logSecurityEvent({ kind: "webhook_reject", detail: "twilio voice connect", ip });
     return auth.response;
   }
+  const { voiceCallsEnabled } = await import("@/lib/features");
+  if (!voiceCallsEnabled()) {
+    return new Response(clientDialTwiml([]), { status: 200, headers: { "Content-Type": "text/xml" } });
+  }
   const identities = await identitiesForClientCall({
     fromIdentity: auth.params.From || auth.params.Caller || "",
     conversationId: auth.params.conversationId || auth.params.ConversationId || "",

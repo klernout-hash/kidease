@@ -45,6 +45,8 @@ import { FOUNDING_PAGE, foundingLocale } from "@/lib/founding-period";
 import { formatAgeLabel, formatStart, scheduleLabel } from "@/lib/templates";
 import type { Child, Daycare, SpotRequest, TourRequest } from "@/lib/types";
 import { ProviderContractsPanel } from "@/components/provider-contracts";
+import { AgreementRequestAction, CentreAgreementEditor } from "@/components/parent-agreement-panel";
+import { useCentreAgreementChips } from "@/components/use-centre-agreement-chips";
 import { ListingCultureFields } from "@/components/listing-culture-fields";
 import { CapacityForm, Field } from "@/components/provider-listing-forms";
 import { UploadLimitHint } from "@/components/upload-limit-hint";
@@ -65,6 +67,7 @@ import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { officialLicenceNumber } from "@/lib/licensing";
 import { ProviderMoneyPanel } from "@/components/provider-money";
 import { TaxReceiptStudio } from "@/components/tax-receipt-studio";
+import { TourCalendarPage } from "@/components/tour-calendar-page";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
 import { VacancyConfirmLoop } from "@/components/vacancy-confirm";
 import { SpotOfferDesk } from "@/components/spot-offer-desk";
@@ -79,16 +82,22 @@ import type { DemandSnapshot } from "@/lib/demand-heat";
 import type { ProviderEntitlements } from "@/lib/provider-entitlements";
 import { CentreEmployeesPanel } from "@/components/centre-employees";
 import { StaffSchedulingDesk } from "@/components/staff-scheduling-desk";
+import { StaffTimesheetDesk } from "@/components/staff-timesheet-desk";
 import { LearningStoriesDesk, StoriesDeskLink } from "@/components/learning-stories-desk";
 import { CurriculumDeskLink, CurriculumPackDesk } from "@/components/curriculum-pack";
 import { OrgDeskLink, OrgOccupancyDesk } from "@/components/org-occupancy-desk";
+import { EceJobDesk } from "@/components/ece-job-desk";
+import { AgeOpenSpotsDesk } from "@/components/age-open-spots-desk";
+import { ChildCheckinDesk } from "@/components/child-checkin-desk";
+import { orgDeskStatus } from "@/lib/server/org-occupancy";
+import { gapCopy, pickCentre } from "@/lib/gap-features";
 import { ProviderScreeningPanel } from "@/components/provider-screening";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { useRoleChrome } from "@/components/role-chrome";
 import { DaycareDeskHome } from "@/components/daycare-desk-home";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 
-const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "tours", "licence", "contract", "promote", "employees", "screening", "staff", "stories", "sites", "learning"];
+const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "tours", "licence", "contract", "promote", "employees", "screening", "staff", "stories", "sites", "learning", "hours"];
 const OWNER_DESKS = new Set<DaycareDesk>(["money", "licence", "contract", "promote"]);
 const DEFAULT_DESK: DaycareDesk = "today";
 const COACH_FOCUS = new Set<ListingCoachFocus>([
@@ -125,13 +134,14 @@ export function providerHead() {
 }
 
 export function providerValidateSearch(s: Record<string, unknown>) {
-    const out: { desk?: DaycareDesk; preview?: "support"; claimed?: boolean; focus?: ListingCoachFocus } = {};
+    const out: { desk?: DaycareDesk; preview?: "support"; claimed?: boolean; focus?: ListingCoachFocus; centre?: string } = {};
     const desk = typeof s.desk === "string" ? s.desk : "";
     if (DESKS.includes(desk as DaycareDesk)) out.desk = desk as DaycareDesk;
     if (s.preview === "support") out.preview = "support";
     if (s.claimed === true || s.claimed === "1" || s.claimed === "true") out.claimed = true;
     const focus = typeof s.focus === "string" ? s.focus : "";
     if (COACH_FOCUS.has(focus as ListingCoachFocus)) out.focus = focus as ListingCoachFocus;
+    if (typeof s.centre === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(s.centre)) out.centre = s.centre;
   return out;
 }
 
@@ -185,6 +195,7 @@ export function ProviderPage() {
   const [pipeline, setPipeline] = useState<PipelineCard[]>([]);
   const [upgradeDismissed, setUpgradeDismissed] = useState(false);
   const [deskSettled, setDeskSettled] = useState(false);
+  const [orgOn, setOrgOn] = useState(false);
   const [subscription, setSubscription] = useState<{
     selectedPlan: ProviderEntitlements["selectedPlan"];
     entitledPlan: ProviderEntitlements["entitledPlan"];
@@ -240,6 +251,11 @@ export function ProviderPage() {
       setDeskSettled(true);
     }
   }
+
+  useEffect(() => {
+    if (!user?.id) return;
+    void orgDeskStatus().then((row) => setOrgOn(row.enabled)).catch(() => setOrgOn(false));
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user?.id || childRoute) return;
@@ -343,7 +359,9 @@ export function ProviderPage() {
   // getProvider already returns only centres this account owns or belongs to.
   // Their own demo stays on Today, listings, tours (calendar), and fees.
   // Public search and the sitemap still use isPublicListing.
-  const deskListings = listings;
+  const focusedId = orgOn ? pickCentre(listings.map((row) => row.id), search.centre) : null;
+  const deskListings = focusedId ? listings.filter((row) => row.id === focusedId) : listings;
+  const gap = gapCopy(locale === "fr" ? "fr" : "en");
 
   return (
     <TwoFactorGate next={search.desk ? `/provider?desk=${search.desk}` : "/provider"}>
@@ -391,10 +409,20 @@ export function ProviderPage() {
       {desk === "today" ? <StoriesDeskLink /> : null}
       {desk === "today" ? <CurriculumDeskLink /> : null}
       {desk === "today" ? <OrgDeskLink /> : null}
+      {focusedId ? (
+        <p className="mb-4 text-sm">
+          {gap.orgShowing} {deskListings[0]?.name}.{" "}
+          <Link to="/provider" search={{ desk }} className="inline-flex min-h-11 items-center font-medium text-primary">
+            {gap.orgAll}
+          </Link>
+        </p>
+      ) : null}
+      {desk === "today" ? <ChildCheckinDesk /> : null}
+      {desk === "today" ? <EceJobDesk mode={centreOwner ? "daycare" : "staff"} /> : null}
       {desk === "today" && deskListings.length > 0 ? (
         <>
         <DaycareDeskHome
-          listings={listings}
+          listings={deskListings}
           leads={leads}
           tours={tours}
           planName={
@@ -492,8 +520,14 @@ export function ProviderPage() {
         </div>
       ) : null}
 
-      {desk === "tours" ? <TourAvailabilityDesk listings={listings} onSaved={() => void load()} /> : null}
+      {desk === "tours" ? (
+        <div className="space-y-8">
+          <TourCalendarPage audience="provider" />
+          <TourAvailabilityDesk listings={listings} onSaved={() => void load()} />
+        </div>
+      ) : null}
 
+      {desk === "listings" ? <AgeOpenSpotsDesk listings={deskListings.map((row) => ({ id: row.id, name: row.name }))} /> : null}
       {desk === "listings" ? (
         <>
           {operatorTools ? (
@@ -745,7 +779,10 @@ export function ProviderPage() {
       ) : null}
 
       {desk === "employees" ? <CentreEmployeesPanel canInvite={centreOwner} /> : null}
+      {desk === "employees" ? <EceJobDesk mode="staff" /> : null}
       {desk === "staff" ? <StaffSchedulingDesk /> : null}
+      {desk === "hours" ? <StaffTimesheetDesk /> : null}
+      {desk === "staff" ? <EceJobDesk mode="staff" /> : null}
       {desk === "stories" ? <LearningStoriesDesk /> : null}
       {desk === "learning" ? <CurriculumPackDesk /> : null}
       {desk === "sites" ? <OrgOccupancyDesk /> : null}
@@ -792,7 +829,10 @@ export function ProviderPage() {
 
       {desk === "contract" ? (
         centreOwner ? (
-          <ProviderContractsPanel />
+          <>
+            <ProviderContractsPanel />
+            <CentreAgreementEditor />
+          </>
         ) : (
           <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>
         )
@@ -842,6 +882,7 @@ function RequestList({
   locale: "en" | "fr" | string;
 }) {
   const { t } = useCopy();
+  const agreements = useCentreAgreementChips();
   if (!items.length) {
     return <p className="mt-4 rounded-xl bg-surface px-5 py-8 text-center text-muted ring-1 ring-border">{empty}</p>;
   }
@@ -900,6 +941,13 @@ function RequestList({
               </>
             )}
           </div>
+          <AgreementRequestAction
+            bookingId={r.id}
+            bookingStatus={r.status}
+            chip={agreements.chipFor(r.id)}
+            enabled={agreements.enabled}
+            onSent={agreements.refresh}
+          />
         </li>
       ))}
     </ul>

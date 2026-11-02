@@ -232,7 +232,7 @@ export function privatePhotoFeedEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_PRIVATE_PHOTO_FEED", env);
 }
 
-/** Small footer link. Default off. Does not gate /gov sign-in. */
+/** Government desk and footer link. Default off. /gov and /gov/login redirect home. */
 export function govPortalFooterEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_GOV_PORTAL", env);
 }
@@ -289,6 +289,84 @@ export function curriculumPackLive(env?: EnvMap): boolean {
 /** Local CC BY picture books. Default off. */
 export function storyCornerEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_STORY_CORNER", env);
+}
+
+/** Second parent, own login, shared family records. Default off. No email or SMS. */
+export function coparentLinkEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_COPARENT_LINK", env);
+}
+
+/** Staff clock in and clock out on the daycare desk. Default off. Not payroll. */
+export function staffTimesheetsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_STAFF_TIMESHEETS", env);
+}
+
+/** Centre reply under a public parent review. Default off. No email. */
+export function reviewRepliesEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_REVIEW_REPLIES", env);
+}
+
+/** Enrolment e-sign, sign page, and signed PDF. Default off. */
+export function enrolmentEsignEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_ENROLMENT_ESIGN", env);
+}
+
+/** Tax receipt text a centre types. Default off. */
+export function taxReceiptsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_TAX_RECEIPTS", env);
+}
+
+/** Daily journal, meals, and naps. Default off. */
+export function dailyLogsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_DAILY_LOGS", env);
+}
+
+/** Tour calendar and in-app reminders. Default off. */
+export function tourCalendarEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_TOUR_CALENDAR", env);
+}
+
+/** Parent document vault. Default off. */
+export function familyVaultEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_FAMILY_VAULT", env);
+}
+
+/** Daycare inbox also lists requests with no thread. Default off. */
+export function unifiedInboxEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_UNIFIED_INBOX", env);
+}
+
+/** In-app voice on a thread. Default off. Does not place a call. */
+export function voiceCallsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_VOICE", env);
+}
+
+/** Pickup people on a child profile. Default off. */
+export function pickupContactsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PICKUP_CONTACTS", env);
+}
+
+/**
+ * Parent and centre enrolment agreement.
+ * Both flags must be on. DocuSign is the only send, and only after a click.
+ */
+export function parentAgreementEnabled(env?: EnvMap): boolean {
+  return enrolmentEsignEnabled(env) && evaluateFeatureFlag("FEATURE_PARENT_AGREEMENT", env);
+}
+
+/** Daycare waitlist rank and the place a parent sees. Default off. No fee. */
+export function waitlistToolsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_WAITLIST_TOOLS", env);
+}
+
+/** Post open spots by age group. Mail and push still use their own flags. Default off. */
+export function ageOpenSpotsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_AGE_OPEN_SPOTS", env);
+}
+
+/** Timestamped arrival and pickup on the daycare desk. Default off. No photo. */
+export function childCheckinEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_CHILD_CHECKIN", env);
 }
 
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */

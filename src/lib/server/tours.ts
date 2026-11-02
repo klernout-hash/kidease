@@ -134,6 +134,8 @@ export const createTourRequest = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const { assertFacebookContactEmail } = await import("@/lib/server/facebook-contact");
     await assertFacebookContactEmail(context.userId);
+    const { assertFamilyWrite } = await import("@/lib/server/coparent");
+    const homeId = (await assertFamilyWrite(context.userId)).dataUserId;
     const times = parsePreferredTimes(data.preferredTimes);
     if (!preferredTimesValid(times)) throw new Error("Pick at least one preferred time");
 
@@ -163,7 +165,7 @@ export const createTourRequest = createServerFn({ method: "POST" })
     let childName = (data.childName || "").trim();
     if (childId) {
       const owned = await sql<{ id: string; name: string }>`
-        select id, name from children where id = ${childId} and user_id = ${context.userId} limit 1
+        select id, name from children where id = ${childId} and user_id = ${homeId} limit 1
       `;
       if (!owned[0]) {
         childId = "";
@@ -174,7 +176,7 @@ export const createTourRequest = createServerFn({ method: "POST" })
 
     const gate = await centreCanAcceptInquiry(sql, data.daycareId);
     if (!gate.ok) throw new Error(gate.error);
-    const cid = await ensureConversation(sql, context.userId, data.daycareId);
+    const cid = await ensureConversation(sql, homeId, data.daycareId);
     const tourId = nid("tr");
     const note = (data.note || "").trim() || null;
     const locale = data.locale === "fr" ? "fr" : "en";
@@ -186,7 +188,7 @@ export const createTourRequest = createServerFn({ method: "POST" })
         id, conversation_id, user_id, daycare_id, child_id, child_name,
         preferred_times, parent_note, status, hold_expires_at
       ) values (
-        ${tourId}, ${cid}, ${context.userId}, ${data.daycareId},
+        ${tourId}, ${cid}, ${homeId}, ${data.daycareId},
         ${childId || null}, ${childName || null},
         ${serializePreferredTimes(times)}, ${note}, ${"pending"}, ${holdExpiresAtIso()}
       )
@@ -194,7 +196,7 @@ export const createTourRequest = createServerFn({ method: "POST" })
     try {
       const { recordLeadRequest } = await import("@/lib/server/lead-requests");
       await recordLeadRequest(sql, {
-        userId: context.userId,
+        userId: homeId,
         daycareId: data.daycareId,
         kind: "tour",
         message: note,
@@ -286,6 +288,8 @@ export const listTourRequests = createServerFn({ method: "GET" })
     const sql = await getSql();
     const asParent = data.desk !== "centre";
     const asCentre = data.desk !== "parent";
+    const { familyScopeFor } = await import("@/lib/server/coparent");
+    const homeId = (await familyScopeFor(context.userId)).dataUserId;
     const rows = await sql<TourRow>`
       select t.id, t.conversation_id, t.daycare_id, d.name as daycare_name, d.slug,
              t.child_id, t.child_name, u.name as parent_name, t.preferred_times,
@@ -295,7 +299,7 @@ export const listTourRequests = createServerFn({ method: "GET" })
       join daycares d on d.id = t.daycare_id
       left join "user" u on u.id = t.user_id
       where (
-          t.user_id = ${context.userId}
+          t.user_id = ${homeId}
           and ${asParent}
         )
          or (

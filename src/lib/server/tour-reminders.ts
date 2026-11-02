@@ -1,17 +1,16 @@
 /**
- * Schedule and send a tour reminder. Email always when we have an address.
- * SMS only through the existing consent check. Push uses the tour preference.
+ * Tour reminders. FEATURE_TOUR_CALENDAR defaults off.
+ * The due job writes an in-app notice only. It does not email, text, or push.
  */
 
 import { getSql } from "@/lib/db";
-import { tourPipelineEnabled } from "@/lib/features";
+import { tourCalendarEnabled, tourPipelineEnabled } from "@/lib/features";
 import {
   tourCalendarFile,
   tourCalendarLinks,
   tourCalendarMailText,
   tourInviteCopy,
   tourReminderAt,
-  tourReminderLetter,
   tourSlotInstants,
 } from "@/lib/tour-ics";
 import { nid } from "@/lib/utils";
@@ -125,6 +124,7 @@ export async function moveTourReminder(tourId: string, now = new Date()): Promis
 }
 
 export async function sendDueTourReminders(input?: { dryRun?: boolean; now?: Date }) {
+  if (!tourCalendarEnabled()) return { due: 0, sent: 0 };
   const now = input?.now ?? new Date();
   const sql = await getSql();
   const rows = await sql<{
@@ -147,35 +147,17 @@ export async function sendDueTourReminders(input?: { dryRun?: boolean; now?: Dat
   let sent = 0;
   for (const row of rows) {
     const open = row.status === "pending" || row.status === "accepted";
-    if (open) {
-      const locale = row.locale === "fr" ? "fr" : "en";
-      const letter = tourPipelineEnabled()
-        ? tourReminderLetter(locale, row.daycare_name, row.status === "accepted" ? "accepted" : "pending")
-        : tourInviteCopy(locale, row.daycare_name);
-      if (row.email) {
-        const { sendTransactionalMail } = await import("@/lib/transactional-mail");
-        await sendTransactionalMail({
-          purpose: "customer_alert",
-          to: row.email,
-          subject: letter.subject,
-          text: letter.reminder,
-          html: `<p>${letter.reminder}</p>`,
-        }).catch(() => undefined);
-      }
-      if (row.user_id && !row.user_id.startsWith("guest:")) {
-        const { notifyConsentedUserSms } = await import("@/lib/server/sms-notify");
-        await notifyConsentedUserSms({ userId: row.user_id, body: letter.sms }).catch(() => undefined);
-        const { dispatchCustomerAlert } = await import("@/lib/server/alert-dispatch");
-        await dispatchCustomerAlert({
-          userId: row.user_id,
-          category: "tour",
-          vars: { name: row.daycare_name },
-          href: "/parent",
-          dedupeKey: `tour-reminder:${row.tour_id}`,
-          emailFallback: false,
-          now,
-        }).catch(() => undefined);
-      }
+    if (open && row.user_id && !row.user_id.startsWith("guest:")) {
+      const { saveParentInAppNotice } = await import("@/lib/server/parent-notice");
+      await saveParentInAppNotice(sql, {
+        userId: row.user_id,
+        kind: "tour",
+        titleKey: "notifTourUpdated",
+        href: "/parent?tab=tours",
+        sourceKey: `tour-reminder:${row.tour_id}`,
+        daycareName: row.daycare_name,
+        status: "reminder",
+      }).catch(() => undefined);
       sent += 1;
     }
     await sql`update tour_reminders set sent_at = now() where id = ${row.id}`.catch(() => undefined);

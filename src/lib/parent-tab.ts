@@ -13,6 +13,9 @@ export const PARENT_URL_TABS = [
   "waitlists",
   "stories",
   "learning",
+  "family",
+  "tours",
+  "documents",
 ] as const;
 
 export type ParentUrlTab = (typeof PARENT_URL_TABS)[number];
@@ -27,6 +30,7 @@ export const PARENT_DESK_TABS = [
   "alerts",
   "care",
   "waitlists",
+  "family",
 ] as const;
 
 export type ParentDeskTab = (typeof PARENT_DESK_TABS)[number];

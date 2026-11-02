@@ -225,8 +225,10 @@ export const listMyStripeInvoices = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }): Promise<{ invoices: StripeInvoiceView[] }> => {
     const sql = await getSql();
+    const { familyScopeFor } = await import("@/lib/server/coparent");
+    const homeId = (await familyScopeFor(context.userId)).dataUserId;
     const daycareIds = await listAccessibleDaycareIds(sql, context.userId);
-    const params: unknown[] = [context.userId];
+    const params: unknown[] = [homeId];
     let daycareClause = "false";
     if (daycareIds.length) {
       const marks = daycareIds.map((id, index) => {
@@ -560,6 +562,9 @@ async function loadRow(sql: Sql, invoiceId: string): Promise<InvoiceRow | null> 
 
 async function canRead(sql: Sql, userId: string, row: InvoiceRow): Promise<boolean> {
   if (row.parent_user_id && row.parent_user_id === userId) return true;
+  const { familyScopeFor } = await import("@/lib/server/coparent");
+  const home = await familyScopeFor(userId);
+  if (row.parent_user_id && row.parent_user_id === home.dataUserId) return true;
   if (!row.daycare_id) return false;
   const ids = await listAccessibleDaycareIds(sql, userId);
   return ids.includes(row.daycare_id);

@@ -5,6 +5,8 @@ Admin (`kyle@kidease.ca`, `profiles.role = admin`) sends two packs from **Admin 
 1. **Provider agreement** — licensed centre agreement (bilingual FR-CA fallback document, or your DocuSign template).
 2. **Enrolment paperwork pack** — centre acknowledgement for KidEase enrolment tools.
 
+A third pack, **parent enrolment agreement**, is separate. It is an agreement between the parent and the centre, sent from an accepted spot on the daycare desk. It needs `FEATURE_ENROLMENT_ESIGN` and `FEATURE_PARENT_AGREEMENT`. DocuSign is the only message, and only after the director clicks Send agreement. The fee in that agreement is not a public listing price. The signed PDF stays on the child’s file for that parent and that centre. A linked co-parent can open it only when `FEATURE_COPARENT_LINK` is on.
+
 DocuSign emails the provider. When the envelope completes, KidEase stores the combined signed PDF on that daycare’s profile:
 
 - Admin: Contracts tab and Daycares / queue chips (`PDF`)

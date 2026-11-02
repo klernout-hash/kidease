@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { loadDeskFeatureFlags } from "@/lib/server/desk-features";
 import type { FamilyDocKind } from "@/lib/family-vault";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import type { CopyKey } from "@/lib/copy";
@@ -39,12 +40,20 @@ function vaultError(code: string, t: (key: CopyKey) => string) {
 }
 
 export function FamilyVaultPanel({ signedIn }: { signedIn: boolean }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
+  const fr = locale === "fr";
   const [documents, setDocuments] = useState<Doc[]>([]);
   const [centres, setCentres] = useState<Centre[]>([]);
   const [kind, setKind] = useState<FamilyDocKind>("immunization");
   const [busy, setBusy] = useState(false);
   const [loaded, setLoaded] = useState(!signedIn);
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    void loadDeskFeatureFlags()
+      .then((flags) => setEnabled(flags.familyVault))
+      .catch(() => setEnabled(false));
+  }, []);
 
   const load = useCallback(async () => {
     if (!signedIn) return;
@@ -61,8 +70,8 @@ export function FamilyVaultPanel({ signedIn }: { signedIn: boolean }) {
   }, [signedIn, t]);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    if (enabled) void load();
+  }, [enabled, load]);
 
   async function onUpload(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -110,6 +119,22 @@ export function FamilyVaultPanel({ signedIn }: { signedIn: boolean }) {
     } finally {
       setBusy(false);
     }
+  }
+
+  if (enabled === null) {
+    return <p className="mt-4 text-sm text-muted">{t("familyDocsLoading")}</p>;
+  }
+  if (!enabled) {
+    return (
+      <section className="mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="family-vault-off">
+        <h2 className="font-display text-xl">{t("familyDocsTitle")}</h2>
+        <p className="mt-2 text-sm text-muted">{t("familyDocsLead")}</p>
+        <p className="mt-2 text-sm text-muted">{fr ? "Cette étape est éteinte." : "This step is off."}</p>
+        <Button className="mt-4" asChild>
+          <Link to="/">{t("navHome")}</Link>
+        </Button>
+      </section>
+    );
   }
 
   return (
@@ -220,6 +245,7 @@ export function FamilyVaultPanel({ signedIn }: { signedIn: boolean }) {
 
 export function CentreFamilyDocs() {
   const { t } = useCopy();
+  const [open, setOpen] = useState(false);
   const [documents, setDocuments] = useState<
     Array<{
       documentId: string;
@@ -233,6 +259,20 @@ export function CentreFamilyDocs() {
 
   useEffect(() => {
     let cancel = false;
+    void loadDeskFeatureFlags()
+      .then((flags) => {
+        if (cancel || !flags.familyVault) return;
+        setOpen(true);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancel = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancel = false;
     void fetch("/api/family-documents?desk=centre", { credentials: "same-origin" })
       .then(async (res) => {
         const body = (await res.json().catch(() => null)) as { documents?: typeof documents } | null;
@@ -244,7 +284,9 @@ export function CentreFamilyDocs() {
     return () => {
       cancel = true;
     };
-  }, []);
+  }, [open]);
+
+  if (!open) return null;
 
   return (
     <section className="min-w-0 max-w-full overflow-hidden rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="centre-family-docs">

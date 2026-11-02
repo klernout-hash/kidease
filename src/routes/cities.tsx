@@ -4,17 +4,20 @@ import { citiesIndexGroups } from "@/lib/cities-index";
 import { localePath } from "@/lib/locale-path";
 import { pageSeoHead } from "@/lib/page-seo";
 import { loadDirectoryCounts } from "@/lib/server/city-directory";
+import { provincialVacancyIndexEnabled } from "@/lib/features";
 import { useCopy } from "@/lib/use-copy";
 
 export async function citiesLoader() {
+  const vacancyIndex = provincialVacancyIndexEnabled();
   try {
     const counts = await loadDirectoryCounts();
-    return { provinces: counts.provinces, hubs: counts.hubs, source: counts.source };
+    return { provinces: counts.provinces, hubs: counts.hubs, source: counts.source, vacancyIndex };
   } catch {
     return {
       provinces: {} as Record<string, number>,
       hubs: {} as Record<string, number>,
       source: "json" as const,
+      vacancyIndex,
     };
   }
 }
@@ -42,6 +45,7 @@ export function CitiesPage({ counts }: { counts: Awaited<ReturnType<typeof citie
       <main className="ke-gutter mx-auto max-w-3xl py-10 md:py-14" data-ke="cities-index">
         <h1 className="text-[clamp(1.75rem,4vw,2.5rem)]">{t("browseCities")}</h1>
         <p className="mt-3 max-w-xl text-base text-muted">{t("citiesLead")}</p>
+        {counts.vacancyIndex ? (
         <p className="mt-2">
           <Link
             to={localePath("/vacancy-index", locale)}
@@ -50,6 +54,7 @@ export function CitiesPage({ counts }: { counts: Awaited<ReturnType<typeof citie
             {t("vacancyIndexLink")}
           </Link>
         </p>
+        ) : null}
         <div className="mt-10 space-y-8">
           {groups.map((group) => {
             const provinceCount = counts.provinces[group.code] || 0;

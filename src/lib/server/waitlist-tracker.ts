@@ -6,6 +6,8 @@ import { isSuppressed } from "@/lib/server/email-suppressions";
 import { lookupUser } from "@/lib/server/notify";
 import { readFamilyTimeZone } from "@/lib/server/alert-dispatch";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
+import { waitlistToolsEnabled } from "@/lib/features";
+import { placeFromRank, type RankRow } from "@/lib/gap-features";
 import { nid } from "@/lib/utils";
 import {
   canWithdrawWaitlist,
@@ -38,6 +40,7 @@ export type CentreWaitlistRow = {
   offerId: string | null;
   offerStatus: string | null;
   offerExpiresAt: string | null;
+  place: number | null;
 };
 
 export type AreaWaitlistRow = {
@@ -73,6 +76,8 @@ export const listMyWaitlists = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<MyWaitlistsResult> => {
     await ensureWaitlistColumns();
     const sql = await getSql();
+    const { familyScopeFor } = await import("@/lib/server/coparent");
+    const homeId = (await familyScopeFor(context.userId)).dataUserId;
     const rows = await sql<{
       id: string;
       status: string;
@@ -87,7 +92,7 @@ export const listMyWaitlists = createServerFn({ method: "GET" })
              d.name, d.slug, d.city
       from bookings b
       join daycares d on d.id = b.daycare_id
-      where b.user_id = ${context.userId}
+      where b.user_id = ${homeId}
       order by b.created_at desc
       limit 100
     `.catch(() => []);
@@ -107,21 +112,22 @@ export const listMyWaitlists = createServerFn({ method: "GET" })
         },
       ];
     });
-    const centres = await listCentreWaitlistRows(sql, context.userId);
-    const areas = await listAreaWaitlistRows(sql, context.userId);
+    const centres = await listCentreWaitlistRows(sql, homeId);
+    const areas = await listAreaWaitlistRows(sql, homeId);
     return { requests, centres, areas };
   });
 
 async function listCentreWaitlistRows(sql: Awaited<ReturnType<typeof getSql>>, userId: string): Promise<CentreWaitlistRow[]> {
   const entries = await sql<{
     id: string;
+    daycare_id: string;
     age_group: string;
     status: string;
     joined_at: string | Date;
     name: string;
     slug: string;
   }>`
-    select w.id, w.age_group, w.status, w.joined_at, d.name, d.slug
+    select w.id, w.daycare_id, w.age_group, w.status, w.joined_at, d.name, d.slug
     from daycare_waitlist w
     join daycares d on d.id = w.daycare_id
     where w.user_id = ${userId}
@@ -145,8 +151,27 @@ async function listCentreWaitlistRows(sql: Awaited<ReturnType<typeof getSql>>, u
   for (const offer of offers) {
     if (!byWaitlist.has(offer.waitlist_id)) byWaitlist.set(offer.waitlist_id, offer);
   }
+  const ranks = new Map<string, RankRow[]>();
+  if (waitlistToolsEnabled()) {
+    const ids = [...new Set(entries.map((row) => row.daycare_id))];
+    for (const daycareId of ids) {
+      const rows = await sql<{ id: string; status: string; joined_at: string | Date; rank_order: number | null }>`
+        select id, status, joined_at, rank_order from daycare_waitlist where daycare_id = ${daycareId}
+      `.catch(() => [] as { id: string; status: string; joined_at: string | Date; rank_order: number | null }[]);
+      ranks.set(
+        daycareId,
+        rows.map((row) => ({
+          id: row.id,
+          status: row.status,
+          joinedAt: iso(row.joined_at),
+          rank: row.rank_order == null ? null : Number(row.rank_order),
+        })),
+      );
+    }
+  }
   return entries.map((row) => {
     const offer = byWaitlist.get(row.id);
+    const line = ranks.get(row.daycare_id);
     return {
       id: row.id,
       daycareName: row.name,
@@ -157,6 +182,7 @@ async function listCentreWaitlistRows(sql: Awaited<ReturnType<typeof getSql>>, u
       offerId: offer?.id ?? null,
       offerStatus: offer?.status ?? null,
       offerExpiresAt: offer?.expires_at ? iso(offer.expires_at) : null,
+      place: line ? placeFromRank(line, row.id) : null,
     };
   });
 }
@@ -196,10 +222,12 @@ export const withdrawMyWaitlist = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     if (!data.bookingId) return { ok: false as const, error: "missing" as const };
     await ensureWaitlistColumns();
+    const { assertFamilyWrite } = await import("@/lib/server/coparent");
+    const homeId = (await assertFamilyWrite(context.userId)).dataUserId;
     const sql = await getSql();
     const rows = await sql<{ id: string; status: string; daycare_id: string }>`
       select id, status, daycare_id from bookings
-      where id = ${data.bookingId} and user_id = ${context.userId}
+      where id = ${data.bookingId} and user_id = ${homeId}
       limit 1
     `;
     const row = rows[0];
@@ -208,7 +236,7 @@ export const withdrawMyWaitlist = createServerFn({ method: "POST" })
     await sql`
       update bookings
       set status = 'cancelled', status_updated_at = now()
-      where id = ${row.id} and user_id = ${context.userId}
+      where id = ${row.id} and user_id = ${homeId}
     `;
     return { ok: true as const, daycareId: row.daycare_id };
   });

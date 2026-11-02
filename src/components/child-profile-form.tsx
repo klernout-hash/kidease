@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { formatPickupContacts, parsePickupContacts, type PickupContact } from "@/lib/desk-features";
+import { loadDeskFeatureFlags } from "@/lib/server/desk-features";
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
 import { Button } from "@/components/ui/button";
@@ -31,6 +33,15 @@ export function ChildProfileForm({
   const [gapTick, setGapTick] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
   const french = locale === "fr";
+  const [pickupOn, setPickupOn] = useState(false);
+  const [contacts, setContacts] = useState<PickupContact[]>(() => parsePickupContacts(initial?.pickupPeople || ""));
+
+  useEffect(() => {
+    void loadDeskFeatureFlags().then(
+      (flags) => setPickupOn(flags.pickupContacts),
+      () => setPickupOn(false),
+    );
+  }, []);
 
   useEffect(() => {
     if (!gapTick) return;
@@ -57,8 +68,9 @@ export function ChildProfileForm({
     setBusy(true);
     try {
       const added = !draft.id;
-      if (draft.id) await updateChild({ data: { ...(draft as Child), id: draft.id } });
-      else await addChild({ data: draft });
+      const payload = pickupOn ? { ...draft, pickupPeople: formatPickupContacts(contacts) } : draft;
+      if (draft.id) await updateChild({ data: { ...(payload as Child), id: draft.id } });
+      else await addChild({ data: payload });
       confirmAction(t, added ? "childAdded" : "childSaved");
       setSaved(true);
       onSaved();
@@ -290,15 +302,36 @@ export function ChildProfileForm({
             />
           </Field>
         </div>
-        <Field label={t("pickupPeople")}>
-          <textarea
-            value={draft.pickupPeople}
-            onChange={(e) => set("pickupPeople", e.target.value)}
-            placeholder={t("pickupPeoplePh")}
-            rows={2}
-            className="w-full rounded-md border border-border bg-bg px-3 py-2"
-          />
-        </Field>
+        {pickupOn ? (
+          <div className="space-y-3" data-ke="pickup-contacts">
+            <p className="text-sm text-muted">
+              {french
+                ? "Nom, téléphone et lien. Le centre demande une pièce d’identité."
+                : "Name, phone, and how they know the child. The centre asks for ID."}
+            </p>
+            {contacts.map((person, index) => (
+              <div key={index} className="grid gap-2 sm:grid-cols-3">
+                <label className="block text-sm">
+                  {french ? "Nom" : "Name"}
+                  <input className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3" value={person.name} autoComplete="name" onChange={(event) => setContacts((rows) => rows.map((row, i) => i === index ? { ...row, name: event.target.value } : row))} />
+                </label>
+                <label className="block text-sm">
+                  {french ? "Téléphone" : "Phone"}
+                  <input type="tel" className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3" value={person.phone} autoComplete="tel" onChange={(event) => setContacts((rows) => rows.map((row, i) => i === index ? { ...row, phone: event.target.value } : row))} onFocus={(event) => event.currentTarget.scrollIntoView({ block: "center" })} />
+                </label>
+                <label className="block text-sm">
+                  {french ? "Lien" : "Relationship"}
+                  <input className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3" value={person.relationship} onChange={(event) => setContacts((rows) => rows.map((row, i) => i === index ? { ...row, relationship: event.target.value } : row))} />
+                </label>
+              </div>
+            ))}
+            {contacts.length < 4 ? (
+              <Button type="button" variant="secondary" onClick={() => setContacts((rows) => [...rows, { name: "", phone: "", relationship: "" }])}>
+                {french ? "Ajouter une personne" : "Add a person"}
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
       </Section>
 
       <Section title={t("childPerms")}>

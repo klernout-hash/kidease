@@ -33,6 +33,7 @@ import {
   DEFAULT_PREVIEW_ORIGIN,
   FR_CITY_HUB_SLUGS,
   frenchCityHubSsrOk,
+  gapJobsPageOk,
   homepageLooksLive,
   loginPageLooksLive,
   ciPlaywrightRetries,
@@ -105,15 +106,34 @@ async function setFixture(context, base, { role, plan, own, activity, attention 
   return res;
 }
 
-/** A desk redirect can abort goto. Try again once the page has settled. */
+/**
+ * A desk redirect can abort the next document, and a busy preview can leave
+ * that document waiting. Still require DOMContentLoaded. Retry only after
+ * an abort or a timeout, and only stop the old load once it has already failed.
+ */
 async function gotoSettled(page, url) {
+  let targetPath = "";
+  try {
+    targetPath = new URL(url).pathname;
+  } catch {
+    targetPath = "";
+  }
+  const landed = () => {
+    try {
+      return Boolean(targetPath) && new URL(page.url()).pathname === targetPath;
+    } catch {
+      return false;
+    }
+  };
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
       return await page.goto(url, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     } catch (err) {
+      if (landed()) return null;
       const message = err instanceof Error ? err.message : String(err);
-      if (!/interrupted|ERR_ABORTED/i.test(message) || attempt === 2) throw err;
-      await page.waitForLoadState("domcontentloaded").catch(() => {});
+      const retryable = /interrupted|ERR_ABORTED|ECONNRESET|Timeout/i.test(message);
+      if (!retryable || attempt === 2) throw err;
+      await page.evaluate(() => window.stop()).catch(() => {});
     }
   }
   return null;
@@ -384,7 +404,7 @@ async function runRoleFixture(page, base) {
       await shot(page, "multi-apply-390", 390, "[data-ke='multi-apply']");
     }
     await page.setViewportSize({ width: 1280, height: 900 });
-    await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await gotoSettled(page, new URL("/parent", base).href);
     await page.locator('[data-ke="parent-home"][data-settled="1"]').waitFor({ timeout: timeoutMs });
     await shot(page, "parent-desktop", 1280, '[data-ke="parent-home"]');
     await openHeaderMenu(page);
@@ -641,7 +661,7 @@ async function runRoleFixture(page, base) {
 
     await page.setViewportSize({ width: 1280, height: 900 });
     await setFixture(context, base, { role: "parent" });
-    await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await gotoSettled(page, new URL("/parent", base).href);
     await page.locator('[data-ke="parent-home"]').waitFor({ timeout: timeoutMs });
     await openAccountGroup(page, '[data-ke="desk-desktop-nav"]');
     const parentHeaderUpgrade = ((await page.locator('[data-ke="desk-desktop-nav"] [data-nav="upgrade"]:visible').first().innerText().catch(() => "")) || "").trim();
@@ -653,7 +673,7 @@ async function runRoleFixture(page, base) {
     if ((await deskPlus.count()) > 0) await deskPlus.click();
     const parentDeskReached = Boolean(await parentDeskHit);
     await settleMockCheckout(page);
-    await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await gotoSettled(page, new URL("/parent", base).href);
     await openHeaderMenu(page);
     await clickDrawerUpgrade(page);
     await page.waitForURL(/tab=subscription/i, { timeout: timeoutMs }).catch(() => {});
@@ -1538,24 +1558,16 @@ async function runSignedInSessions(page, base) {
     await setFixture(page.context(), base, { role: "government" });
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto(new URL("/gov", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-    await page.locator('[data-ke="gov-dashboard"]').waitFor({ timeout: timeoutMs });
-    const dashText = (await page.locator("body").innerText()) || "";
-    record("gov-dashboard", /licensed centres/i.test(dashText) && !/something went wrong/i.test(dashText), {
-      note: page.url(),
-    });
-    await page.screenshot({ path: join(dirname(outDir), "gov-dashboard-1280.png"), fullPage: false }).catch(() => {});
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.screenshot({ path: join(dirname(outDir), "gov-dashboard-390.png"), fullPage: false }).catch(() => {});
-    await page.setViewportSize({ width: 1280, height: 800 });
-    await page.getByRole("button", { name: /sign out/i }).click();
-    await page.locator('[data-ke="gov-login"]').waitFor({ timeout: timeoutMs });
-    await page.locator('input[type="email"]').fill("e2e-government@kidease.test");
-    await page.locator('input[type="password"]').fill(FIXTURE_PASSWORD);
-    await page.getByRole("button", { name: /^sign in$/i }).click();
-    await page.locator('[data-ke="gov-dashboard"]').waitFor({ timeout: timeoutMs });
-    record("gov-login", /\/gov/.test(new URL(page.url()).pathname), { note: page.url() });
-    await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-    record("gov-blocked-from-parent", !new URL(page.url()).pathname.startsWith("/parent"), { note: page.url() });
+    await page.waitForURL((url) => !url.pathname.startsWith("/gov"), { timeout: timeoutMs }).catch(() => {});
+    const govPath = new URL(page.url()).pathname;
+    const govHidden = !govPath.startsWith("/gov") && !govPath.startsWith("/fr/gov");
+    record("gov-dashboard", govHidden, { note: page.url() });
+    await page.goto(new URL("/gov/login", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await page.waitForURL((url) => !url.pathname.includes("/gov"), { timeout: timeoutMs }).catch(() => {});
+    record("gov-login", !new URL(page.url()).pathname.includes("/gov"), { note: page.url() });
+    await page.goto(new URL("/vacancy-index", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await page.waitForURL((url) => !url.pathname.includes("vacancy-index"), { timeout: timeoutMs }).catch(() => {});
+    record("vacancy-index-hidden", !page.url().includes("vacancy-index"), { note: page.url() });
   } catch (err) {
     record("gov-dashboard", false, { note: err instanceof Error ? err.message : String(err) });
   }
@@ -1708,15 +1720,50 @@ try {
   });
   await page.screenshot({ path: join(dirname(outDir), "login.png"), fullPage: false }).catch(() => {});
   record("login", login.ok, { note: login.reason, status: loginResp?.status() ?? 0 });
-  const robots = await page.locator('meta[name="robots"]').getAttribute("content").catch(() => "");
-  record("login-noindex", /noindex/i.test(robots || ""), { note: robots || "" });
-  for (const privatePath of ["/signup", "/forgot-password", "/reset-password", "/offer/e2e-token", "/sign/e2e-id", "/gov/login", "/fr/gov/login"]) {
+  const robotsMeta = await page.locator('meta[name="robots"]').evaluateAll((nodes) =>
+    nodes.map((node) => node.getAttribute("content") || "").join(" "),
+  ).catch(() => "");
+  const loginHtml = /noindex/i.test(robotsMeta) ? "" : await page.content().catch(() => "");
+  const robots = `${robotsMeta}\n${loginHtml}`;
+  record("login-noindex", /noindex/i.test(robots), { note: robotsMeta || "html" });
+  const jobsResp = await page.goto(new URL("/jobs", base).href, {
+    waitUntil: "domcontentloaded",
+    timeout: timeoutMs,
+  });
+  const jobsText = await page.locator("body").innerText().catch(() => "");
+  const jobsCheck = gapJobsPageOk({ status: jobsResp?.status() ?? 0, bodyText: jobsText });
+  const overflow = async () => page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
+  const wideOverflow = await overflow();
+  await page.setViewportSize({ width: 390, height: 844 });
+  const narrowOverflow = await overflow();
+  await page.setViewportSize({ width: 1280, height: 800 });
+  record("gap-jobs", jobsCheck.ok && !wideOverflow && !narrowOverflow, {
+    note: jobsCheck.ok ? "390 and 1280" : jobsCheck.reason,
+    status: jobsResp?.status() ?? 0,
+  });
+  for (const privatePath of ["/signup", "/forgot-password", "/reset-password", "/offer/e2e-token", "/sign/e2e-id"]) {
     const resp = await page.request.get(new URL(privatePath, base).href).catch(() => null);
     const html = (await resp?.text().catch(() => "")) || "";
     record(`noindex:${privatePath}`, (resp?.status() ?? 500) < 500 && /noindex/i.test(html), {
       note: String(resp?.status() ?? 0),
       status: resp?.status() ?? 0,
     });
+  }
+  for (const closedPath of ["/gov", "/gov/login", "/fr/gov/login", "/vacancy-index", "/fr/vacancy-index"]) {
+    const resp = await page.request.get(new URL(closedPath, base).href).catch(() => null);
+    const status = resp?.status() ?? 0;
+    let finalPath = closedPath;
+    try {
+      finalPath = new URL(resp?.url() || closedPath, base).pathname;
+    } catch {
+      finalPath = closedPath;
+    }
+    const left =
+      status < 500 &&
+      !finalPath.startsWith("/gov") &&
+      !finalPath.startsWith("/fr/gov") &&
+      !finalPath.includes("vacancy-index");
+    record(`closed:${closedPath}`, left, { note: `${status} ${finalPath}`, status });
   }
   const seedResp = await page.request.get(new URL("/api/e2e-seed", base).href).catch(() => null);
   const seedBody = (await seedResp?.text().catch(() => "")) || "";

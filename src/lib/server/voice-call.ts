@@ -7,6 +7,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { voiceCallsEnabled } from "@/lib/features";
 import { VOICE_CREDENTIALS_MESSAGE, voiceCredentialsPresent, voiceIdentityForUser } from "@/lib/voice";
 
 export type VoiceDesk = "parent" | "provider" | "admin";
@@ -31,7 +32,19 @@ export type VoiceTokenResult =
     }
   | { ok: false; error: string };
 
+export const VOICE_OFF = "Calling is not open yet.";
+
 async function loadThread(userId: string, conversationId: string): Promise<VoiceCallStatus> {
+  if (!voiceCallsEnabled()) {
+    return {
+      conversationId,
+      allowed: false,
+      desk: null,
+      peerLabel: "",
+      credentialsPresent: false,
+      error: VOICE_OFF,
+    };
+  }
   const sql = await getSql();
   const rows = await sql<{
     user_id: string;
@@ -100,6 +113,7 @@ export const mintThreadVoiceToken = createServerFn({ method: "POST" })
     conversationId: String(input?.conversationId || "").trim(),
   }))
   .handler(async ({ context, data }): Promise<VoiceTokenResult> => {
+    if (!voiceCallsEnabled()) return { ok: false, error: VOICE_OFF };
     const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
     blockViewAsSideEffect("call");
     const status = await loadThread(context.userId, data.conversationId);

@@ -16,8 +16,10 @@ export const joinAreaWaitlist = createServerFn({ method: "POST" })
     startDate: input?.startDate,
   }))
   .handler(async ({ context, data }) => {
+    const { assertFamilyWrite } = await import("@/lib/server/coparent");
+    const homeId = (await assertFamilyWrite(context.userId)).dataUserId;
     const { joinAreaWaitlistForUser } = await import("./area-waitlist-job");
-    const result = await joinAreaWaitlistForUser(context.userId, data);
+    const result = await joinAreaWaitlistForUser(homeId, data);
     const { captureServerProductEvent } = await import("@/lib/server/product-events");
     void captureServerProductEvent("waitlist_joined", { source: "area", role: "parent" }, context.userId);
     return result;
@@ -29,6 +31,8 @@ export const removeAreaWaitlist = createServerFn({ method: "POST" })
     id: String(input?.id || "").trim().slice(0, 80),
   }))
   .handler(async ({ context, data }) => {
+    const { assertFamilyWrite } = await import("@/lib/server/coparent");
+    const homeId = (await assertFamilyWrite(context.userId)).dataUserId;
     const { removeAreaWaitlistForUser } = await import("./area-waitlist-job");
-    return removeAreaWaitlistForUser(context.userId, data.id);
+    return removeAreaWaitlistForUser(homeId, data.id);
   });

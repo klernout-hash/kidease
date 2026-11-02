@@ -5,7 +5,7 @@ import { VoiceCallPanel } from "@/components/voice-call-panel";
 import { Button } from "@/components/ui/button";
 import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { getVoiceCallStatus, type VoiceCallStatus } from "@/lib/server/voice-call";
+import { getVoiceCallStatus, VOICE_OFF, type VoiceCallStatus } from "@/lib/server/voice-call";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/call/$conversationId")({
@@ -87,9 +87,9 @@ function CallPage() {
 
         {status && !status.allowed ? (
           <div className="mt-6 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border">
-            <p className="text-sm text-muted">{t("voiceUnavailable")}</p>
-            <Button variant="secondary" asChild className="mt-4">
-              <Link to="/inbox">{t("voiceBackInbox")}</Link>
+            <p className="text-sm text-muted">{status.error === VOICE_OFF ? status.error : t("voiceUnavailable")}</p>
+            <Button asChild className="mt-4">
+              <Link to="/">{t("navHome")}</Link>
             </Button>
           </div>
         ) : null}

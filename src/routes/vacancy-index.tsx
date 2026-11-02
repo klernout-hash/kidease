@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { localePath } from "@/lib/locale-path";
@@ -12,6 +12,7 @@ import { useCopy } from "@/lib/use-copy";
 import { formatCount } from "@/lib/utils";
 import { parseVacancyProvince, type FreshnessCounts } from "@/lib/vacancy-history";
 import { vacancyProvinceCopy } from "@/lib/vacancy-province-copy";
+import { provincialVacancyIndexEnabled } from "@/lib/features";
 
 const BAND_LABEL: Record<PublicAgeBand, CopyKey> = {
   infant: "infant",
@@ -21,6 +22,9 @@ const BAND_LABEL: Record<PublicAgeBand, CopyKey> = {
 };
 
 export const Route = createFileRoute("/vacancy-index")({
+  beforeLoad: () => {
+    if (!provincialVacancyIndexEnabled()) throw redirect({ to: "/search" });
+  },
   validateSearch: (search: Record<string, unknown>) => ({
     province: parseVacancyProvince(search.province),
   }),
