@@ -35,7 +35,45 @@ export const JOURNAL_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "
 export type CarePresence = "here" | "picked_up" | "expected" | "absent" | "sick" | "vacation";
 export type CareAttendanceAction = "check_in" | "check_out" | "absent" | "sick" | "vacation";
 export type CareDeskRole = "parent" | "provider";
-export type CareStatusKind = CareAttendanceAction | "journal" | "medication" | "incident";
+export type CareStatusKind = CareAttendanceAction | "journal" | "medication" | "incident" | "meal" | "nap";
+
+export const MEAL_SLOTS = ["breakfast", "lunch", "snack"] as const;
+export type MealSlot = (typeof MEAL_SLOTS)[number];
+
+export const NAP_STATES = ["asleep", "rested", "skipped"] as const;
+export type NapState = (typeof NAP_STATES)[number];
+
+export function isMealSlot(value: string | null | undefined): value is MealSlot {
+  return (MEAL_SLOTS as readonly string[]).includes((value || "").trim());
+}
+
+export function isNapState(value: string | null | undefined): value is NapState {
+  return (NAP_STATES as readonly string[]).includes((value || "").trim());
+}
+
+/** A meal log needs a known slot and a short note the centre typed. */
+export function mealLogReady(input: { slot: string; note: string }): boolean {
+  const note = input.note.replace(/\s+/g, " ").trim();
+  return isMealSlot(input.slot) && note.length > 0 && note.length <= 200;
+}
+
+/** A nap log needs a known state and minutes from 0 to 240. */
+export function napLogReady(input: { state: string; minutes: number }): boolean {
+  return isNapState(input.state) && Number.isInteger(input.minutes) && input.minutes >= 0 && input.minutes <= 240;
+}
+
+export function mealLogLine(input: { slot: MealSlot; note: string; locale?: string }): string {
+  const fr = input.locale === "fr";
+  const label =
+    input.slot === "breakfast" ? (fr ? "Déjeuner" : "Breakfast") : input.slot === "lunch" ? (fr ? "Dîner" : "Lunch") : fr ? "Collation" : "Snack";
+  return `${label}: ${input.note.replace(/\s+/g, " ").trim().slice(0, 200)}`;
+}
+
+export function napLogLine(input: { state: NapState; minutes: number; locale?: string }): string {
+  const fr = input.locale === "fr";
+  const label = input.state === "asleep" ? (fr ? "Endormi" : "Asleep") : input.state === "rested" ? (fr ? "Reposé" : "Rested") : fr ? "Pas de sieste" : "No nap";
+  return fr ? `${label} · ${input.minutes} min` : `${label} · ${input.minutes} min`;
+}
 
 export const MED_LOG_STATUSES = ["given", "missed", "refused", "held"] as const;
 export type MedLogStatus = (typeof MED_LOG_STATUSES)[number];
@@ -219,6 +257,12 @@ export function careStatusBody(input: {
       return `Rapport d’incident (${kind}) pour ${child} à ${input.daycareName}. Ouvrez Soins du jour pour le détail.`;
     }
     return `Incident report (${kind}) for ${child} at ${input.daycareName}. Open Daily care for the full report.`;
+  }
+  if (input.kind === "meal") {
+    return fr ? `Repas noté pour ${child} à ${input.daycareName}.` : `Meal logged for ${child} at ${input.daycareName}.`;
+  }
+  if (input.kind === "nap") {
+    return fr ? `Sieste notée pour ${child} à ${input.daycareName}.` : `Nap logged for ${child} at ${input.daycareName}.`;
   }
   return fr
     ? `Nouveau journal du jour pour ${child} à ${input.daycareName}. Ouvrez Daily care pour le texte et les photos.`

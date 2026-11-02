@@ -65,6 +65,7 @@ import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { officialLicenceNumber } from "@/lib/licensing";
 import { ProviderMoneyPanel } from "@/components/provider-money";
 import { TaxReceiptStudio } from "@/components/tax-receipt-studio";
+import { TourCalendarPage } from "@/components/tour-calendar-page";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
 import { VacancyConfirmLoop } from "@/components/vacancy-confirm";
 import { SpotOfferDesk } from "@/components/spot-offer-desk";
@@ -493,7 +494,12 @@ export function ProviderPage() {
         </div>
       ) : null}
 
-      {desk === "tours" ? <TourAvailabilityDesk listings={listings} onSaved={() => void load()} /> : null}
+      {desk === "tours" ? (
+        <div className="space-y-8">
+          <TourCalendarPage audience="provider" />
+          <TourAvailabilityDesk listings={listings} onSaved={() => void load()} />
+        </div>
+      ) : null}
 
       {desk === "listings" ? (
         <>

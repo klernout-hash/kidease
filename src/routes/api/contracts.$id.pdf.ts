@@ -8,6 +8,8 @@ async function fail(status: number, message: string) {
 }
 
 async function run(_request: Request, contractId: string) {
+  const { enrolmentEsignEnabled } = await import("@/lib/features");
+  if (!enrolmentEsignEnabled()) return fail(404, "Signing is not open yet.");
   const { requireUserId } = await import("@/lib/auth/verify.server");
   let userId: string;
   try {

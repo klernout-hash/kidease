@@ -1029,10 +1029,11 @@ export const getThread = createServerFn({ method: "GET" })
     }
     const { videoSurfaceEnabled } = await import("@/lib/channel-readiness");
     const { voiceCredentialsPresent } = await import("@/lib/voice");
+    const { voiceCallsEnabled } = await import("@/lib/features");
     return {
       id: conv[0].id,
       videoSurfaceEnabled: videoSurfaceEnabled(),
-      voiceReady: voiceCredentialsPresent(),
+      voiceReady: voiceCallsEnabled() && voiceCredentialsPresent(),
       viewerRole: access.role,
       daycareId: conv[0].daycare_id,
       daycareName: conv[0].name,

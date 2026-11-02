@@ -4,7 +4,9 @@ import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { privateReturnPath } from "@/lib/role-access";
 import { lazy, Suspense } from "react";
 import { Shell } from "@/components/shell";
+import { FamilyVaultPanel } from "@/components/family-vault";
 import { ParentStoriesDesk, StoriesDeskLink } from "@/components/learning-stories-desk";
+import { TourCalendarPage } from "@/components/tour-calendar-page";
 import { CurriculumParentDesk } from "@/components/curriculum-pack";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
@@ -67,7 +69,7 @@ export async function parentLoader() {
 
 export function parentValidateSearch(s: Record<string, unknown>) {
   const out: {
-    tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "subscription" | "alerts" | "children" | "care" | "waitlists" | "stories" | "learning" | "family";
+    tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "subscription" | "alerts" | "children" | "care" | "waitlists" | "stories" | "learning" | "family" | "tours" | "documents";
     invite?: string;
     preview?: "support";
     plus?: "success" | "cancel";
@@ -162,6 +164,27 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
     );
   }
   if (!user) return <RedirectToSignIn />;
+  if (search.tab === "tours") {
+    return (
+      <Shell>
+        <main className="mx-auto w-full max-w-3xl px-4 py-8 pb-[env(safe-area-inset-bottom)]">
+          <TourCalendarPage audience="parent" />
+        </main>
+      </Shell>
+    );
+  }
+  if (search.tab === "documents") {
+    return (
+      <Shell>
+        <main className="mx-auto w-full max-w-3xl px-4 py-8 pb-[env(safe-area-inset-bottom)]">
+          <p className="text-sm font-semibold text-primary">KidEase</p>
+          <h1 className="mt-2 font-display text-3xl">{t("familyDocsTitle")}</h1>
+          <p className="mt-3 text-base">{t("familyDocsLead")}</p>
+          <FamilyVaultPanel signedIn />
+        </main>
+      </Shell>
+    );
+  }
   if (search.tab === "stories") {
     return (
       <Shell>

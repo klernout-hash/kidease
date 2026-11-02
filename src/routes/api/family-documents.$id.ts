@@ -17,6 +17,8 @@ export const Route = createFileRoute("/api/family-documents/$id")({
     handlers: {
       GET: async ({ params }) => {
         try {
+          const { familyVaultEnabled } = await import("@/lib/features");
+          if (!familyVaultEnabled()) return Response.json({ ok: false, error: "off" }, { status: 404 });
           const { requireUserId } = await import("@/lib/auth/verify.server");
           const userId = await requireUserId();
           const { loadFamilyDocumentFor } = await import("@/lib/server/family-vault");

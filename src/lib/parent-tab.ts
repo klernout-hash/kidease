@@ -14,6 +14,8 @@ export const PARENT_URL_TABS = [
   "stories",
   "learning",
   "family",
+  "tours",
+  "documents",
 ] as const;
 
 export type ParentUrlTab = (typeof PARENT_URL_TABS)[number];

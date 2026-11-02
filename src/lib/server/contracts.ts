@@ -10,6 +10,7 @@ import {
   parsePackKind,
   type PackKind,
 } from "@/lib/contracts";
+import { enrolmentEsignEnabled } from "@/lib/features";
 import { nid } from "@/lib/utils";
 import {
   applyEnvelopeEvent,
@@ -312,6 +313,7 @@ export const sendCentreContract = createServerFn({ method: "POST" })
     }) => input,
   )
   .handler(async ({ context, data }) => {
+    if (!enrolmentEsignEnabled()) throw new Error("Signing is not open yet.");
     const actor = await requireOperator(context.userId);
     const { assertRecentReauth } = await import("@/lib/server/reauth.server");
     assertRecentReauth(context.userId);
@@ -461,6 +463,7 @@ export const voidCentreContract = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { contractId: string }) => input)
   .handler(async ({ context, data }) => {
+    if (!enrolmentEsignEnabled()) throw new Error("Signing is not open yet.");
     await requireOperator(context.userId);
     const { assertRecentReauth } = await import("@/lib/server/reauth.server");
     assertRecentReauth(context.userId);
@@ -485,6 +488,7 @@ export const syncCentreContract = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { contractId: string }) => input)
   .handler(async ({ context, data }) => {
+    if (!enrolmentEsignEnabled()) throw new Error("Signing is not open yet.");
     await requireOperator(context.userId);
     const sql = await getSql();
     const rows = await sql<{
@@ -583,6 +587,7 @@ export const getSignContract = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .validator((input: { contractId: string }) => input)
   .handler(async ({ context, data }) => {
+    if (!enrolmentEsignEnabled()) throw new Error("Signing is not open yet.");
     const admin = await isOperator(context.userId);
     const sql = await getSql();
     const rows = await sql<{
@@ -650,6 +655,7 @@ export const signCentreContract = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { contractId: string }) => input)
   .handler(async ({ context, data }) => {
+    if (!enrolmentEsignEnabled()) throw new Error("Signing is not open yet.");
     const actor = await lookupUser(context.userId);
     const admin = await isOperator(context.userId);
     const sql = await getSql();

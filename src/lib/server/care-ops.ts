@@ -17,6 +17,7 @@ import {
   type IncidentKind,
   type MedLogStatus,
 } from "@/lib/daily-care";
+import { dailyLogsEnabled } from "@/lib/features";
 import { nid } from "@/lib/utils";
 import { listAccessibleDaycareIds, loadCentreRole } from "./centre-access";
 import { insertCareStatusMessage } from "./daily-care";
@@ -732,8 +733,9 @@ export const saveDayNote = createServerFn({ method: "POST" })
     const childName = String(data.childName || "").trim();
     const day = String(data.day || "").trim();
     if (!daycareId || !childName || !/^\d{4}-\d{2}-\d{2}$/.test(day)) throw new Error("Pick the day");
-    const food = String(data.food || "").trim().slice(0, 500);
-    const nap = String(data.nap || "").trim().slice(0, 500);
+    const logsOn = dailyLogsEnabled();
+    const food = logsOn ? String(data.food || "").trim().slice(0, 500) : "";
+    const nap = logsOn ? String(data.nap || "").trim().slice(0, 500) : "";
     const incident = String(data.incident || "").trim().slice(0, 2000);
     const photo = String(data.photo || "").trim();
     if (photo && (photo.length > 2_500_000 || !photo.startsWith("data:image/") && !/^https?:\/\//i.test(photo) && !photo.startsWith("/img?"))) {

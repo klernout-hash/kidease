@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { incomingVoiceTwiml, voiceRecordingCallbackUrl } from "@/lib/voice";
+import { clientDialTwiml, incomingVoiceTwiml, voiceRecordingCallbackUrl } from "@/lib/voice";
 import { logSecurityEvent, requestIp } from "@/lib/server/security-events";
 import { authorizeTwilioPost } from "@/lib/server/sms-status";
 import { identitiesForIncomingCaller } from "@/lib/server/voice-routing";
@@ -14,6 +14,10 @@ async function run(request: Request) {
   if (!auth.ok) {
     await logSecurityEvent({ kind: "webhook_reject", detail: "twilio voice incoming", ip });
     return auth.response;
+  }
+  const { voiceCallsEnabled } = await import("@/lib/features");
+  if (!voiceCallsEnabled()) {
+    return new Response(clientDialTwiml([]), { status: 200, headers: { "Content-Type": "text/xml" } });
   }
   const identities = await identitiesForIncomingCaller(auth.params.From || auth.params.from || "").catch(
     () => [] as string[],

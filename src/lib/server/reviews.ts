@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql, getSqlWithin, type Sql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { reviewRepliesEnabled } from "@/lib/features";
 import { nid } from "@/lib/utils";
 import { assertTurnstileToken } from "@/lib/server/turnstile";
 import { lookupUser, notifyPlatform } from "@/lib/server/notify";
@@ -354,6 +355,7 @@ export const replyToListingReview = createServerFn({ method: "POST" })
     body: String(input?.body || "").trim(),
   }))
   .handler(async ({ context, data }) => {
+    if (!reviewRepliesEnabled()) throw new Error("Centre replies are not open yet.");
     if (!data.reviewId) throw new Error("Missing review.");
     if (data.body.length < 2) throw new Error("Write a short reply.");
     if (data.body.length > 800) throw new Error("Reply is too long.");
@@ -391,19 +393,16 @@ export const replyToListingReview = createServerFn({ method: "POST" })
       select name, slug from daycares where id = ${review.daycare_id} limit 1
     `;
     if (review.user_id && centre[0]) {
-      const authorId = review.user_id;
-      const name = centre[0].name;
-      const slug = centre[0].slug;
-      void import("@/lib/server/alert-fanout")
-        .then((mod) =>
-          mod.notifyReviewReply({
-            userId: authorId,
-            daycareName: name,
-            slug,
-            reviewId: review.id,
-          }),
-        )
-        .catch(() => undefined);
+      const { saveParentInAppNotice } = await import("@/lib/server/parent-notice");
+      await saveParentInAppNotice(sql, {
+        userId: review.user_id,
+        kind: "inbox",
+        titleKey: "notifInbox",
+        href: centre[0].slug ? `/daycare/${centre[0].slug}` : "/notifications",
+        sourceKey: `review-reply:${review.id}`,
+        daycareName: centre[0].name,
+        status: "reply",
+      }).catch(() => undefined);
     }
     return { ok: true as const };
   });

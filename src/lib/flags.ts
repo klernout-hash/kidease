@@ -68,6 +68,15 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_STORY_CORNER",
   "FEATURE_COPARENT_LINK",
   "FEATURE_STAFF_TIMESHEETS",
+  "FEATURE_REVIEW_REPLIES",
+  "FEATURE_ENROLMENT_ESIGN",
+  "FEATURE_TAX_RECEIPTS",
+  "FEATURE_DAILY_LOGS",
+  "FEATURE_TOUR_CALENDAR",
+  "FEATURE_FAMILY_VAULT",
+  "FEATURE_UNIFIED_INBOX",
+  "FEATURE_VOICE",
+  "FEATURE_PICKUP_CONTACTS",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -193,6 +202,24 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_COPARENT_LINK: false,
   /** Daycare clock in, clock out, edits, weekly hours, and CSV. Off. Not payroll. */
   FEATURE_STAFF_TIMESHEETS: false,
+  /** A centre can reply under a public parent review. Off. No email. */
+  FEATURE_REVIEW_REPLIES: false,
+  /** Enrolment contract, the sign page, and the signed PDF. Off. No DocuSign call. */
+  FEATURE_ENROLMENT_ESIGN: false,
+  /** T778 and Quebec RL-24 summaries a centre types. Off. */
+  FEATURE_TAX_RECEIPTS: false,
+  /** Daily journal plus meal and nap logs. Off. No email. */
+  FEATURE_DAILY_LOGS: false,
+  /** Tour calendar page and an in-app visit reminder. Off. No email or text. */
+  FEATURE_TOUR_CALENDAR: false,
+  /** Parent document vault. Off. */
+  FEATURE_FAMILY_VAULT: false,
+  /** Daycare inbox lists message threads and requests that have no thread yet. Off. */
+  FEATURE_UNIFIED_INBOX: false,
+  /** In-app voice between a parent and a centre. Off. No call is placed. */
+  FEATURE_VOICE: false,
+  /** Named pickup people on a child profile. Off. Allergies stay either way. */
+  FEATURE_PICKUP_CONTACTS: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -539,6 +566,60 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Daycare desk clock in, clock out, edits with a note, weekly hours, and a CSV download. Default off. The week starts Monday. KidEase does not pay wages. No email or SMS.",
+  },
+  {
+    key: "FEATURE_REVIEW_REPLIES",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "A centre writes a public reply under a parent review. Default off. The parent gets an in-app notice. No email.",
+  },
+  {
+    key: "FEATURE_ENROLMENT_ESIGN",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Enrolment e-sign, /sign/$id, and the signed PDF. Default off. DocuSign is not called.",
+  },
+  {
+    key: "FEATURE_TAX_RECEIPTS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "T778 and Quebec RL-24 text a centre types from amounts it already has. Default off. No invented fee.",
+  },
+  {
+    key: "FEATURE_DAILY_LOGS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Daily journal, meals, and naps for an enrolled child. Default off. The note stays in the account. No email.",
+  },
+  {
+    key: "FEATURE_TOUR_CALENDAR",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Tour calendar and an in-app reminder. Default off. No email, text, or push.",
+  },
+  {
+    key: "FEATURE_FAMILY_VAULT",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Parent page for immunization records and subsidy forms. Default off. A centre sees a file only after the parent shares it.",
+  },
+  {
+    key: "FEATURE_UNIFIED_INBOX",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Daycare messages include requests and visits that do not have a thread yet. Default off. The current inbox stays.",
+  },
+  {
+    key: "FEATURE_VOICE",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "In-app call on a message thread. Default off. No call is dialled. Phone numbers stay hidden.",
+  },
+  {
+    key: "FEATURE_PICKUP_CONTACTS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Name, phone, and relationship for people who can pick a child up. Default off. Allergies stay on the profile.",
   },
 ];
 

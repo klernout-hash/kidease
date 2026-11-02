@@ -301,6 +301,51 @@ export function staffTimesheetsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_STAFF_TIMESHEETS", env);
 }
 
+/** Centre reply under a public parent review. Default off. No email. */
+export function reviewRepliesEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_REVIEW_REPLIES", env);
+}
+
+/** Enrolment e-sign, sign page, and signed PDF. Default off. */
+export function enrolmentEsignEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_ENROLMENT_ESIGN", env);
+}
+
+/** Tax receipt text a centre types. Default off. */
+export function taxReceiptsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_TAX_RECEIPTS", env);
+}
+
+/** Daily journal, meals, and naps. Default off. */
+export function dailyLogsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_DAILY_LOGS", env);
+}
+
+/** Tour calendar and in-app reminders. Default off. */
+export function tourCalendarEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_TOUR_CALENDAR", env);
+}
+
+/** Parent document vault. Default off. */
+export function familyVaultEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_FAMILY_VAULT", env);
+}
+
+/** Daycare inbox also lists requests with no thread. Default off. */
+export function unifiedInboxEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_UNIFIED_INBOX", env);
+}
+
+/** In-app voice on a thread. Default off. Does not place a call. */
+export function voiceCallsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_VOICE", env);
+}
+
+/** Pickup people on a child profile. Default off. */
+export function pickupContactsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PICKUP_CONTACTS", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;
