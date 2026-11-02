@@ -438,6 +438,9 @@ export function Listing() {
                 <section>
                   <h2 className="font-display text-2xl">{t("onMap")}</h2>
                   <p className="mt-2 text-sm text-muted">{earlyAddress}</p>
+                  {seo?.addressProtected ? (
+                    <p className="mt-2 max-w-prose text-sm" data-ke="home-address-note">{t("homeAddressNote")}</p>
+                  ) : null}
                 </section>
               ) : null}
               <section id="listing-reviews">
@@ -528,10 +531,10 @@ export function Listing() {
   const showCentreFees = feeNotes.confidence === "centre" && feeNotes.priceList;
   const subsidy = listingSubsidy(d);
   const directionsPlace = {
-    address,
+    address: d.addressProtected ? "" : address,
     city: d.city,
     province: d.province,
-    postalCode: d.postalCode,
+    postalCode: d.addressProtected ? "" : d.postalCode,
   };
   const reviewFloor = ratingFloor(Boolean(data?.reviewReports), MIN_REVIEW_COUNT);
   const parentRated = parentRatingShown(d.parentReviewCount, d.parentRatingX10, reviewFloor);
@@ -811,8 +814,11 @@ export function Listing() {
             )}
           </div>
           <p className="mt-1 text-sm text-muted">
-            {d.city}, {d.province}
+            {d.addressProtected ? d.addressPlace || `${d.city}, ${d.province}` : `${d.city}, ${d.province}`}
           </p>
+          {d.addressProtected ? (
+            <p className="mt-2 max-w-prose text-sm" data-ke="home-address-note">{t("homeAddressNote")}</p>
+          ) : null}
           <SponsoredMark show={d.featuredCity} className="mt-2" />
           <FoundingMemberBadge show={d.foundingMember} className="mt-2" />
           {tagline.trim() ? <p className="mt-0.5 text-sm text-muted">{tagline}</p> : null}
@@ -996,14 +1002,20 @@ export function Listing() {
                 <DirectionsButton className="shrink-0" />
               </div>
               <div className="mt-3 overflow-hidden rounded-lg ring-1 ring-border">
-                <ListingMap lat={d.lat} lng={d.lng} title={`${name} on the map`} address={`${address}, ${d.city}, ${d.province} ${d.postalCode}`} />
+                <ListingMap
+                  lat={d.lat}
+                  lng={d.lng}
+                  radiusM={d.addressProtected ? d.mapRadiusM : null}
+                  title={d.addressProtected ? `${name} area` : `${name} on the map`}
+                  address={d.addressProtected ? d.addressPlace || d.city : `${address}, ${d.city}, ${d.province} ${d.postalCode}`}
+                />
               </div>
-              <p className="mt-3 text-sm text-muted">
-                {address}, {d.city}, {d.province} {d.postalCode}
+              <p className="mt-3 text-sm text-muted" data-ke="listing-address">
+                {d.addressProtected ? d.addressPlace || `${d.city}, ${d.province}` : `${address}, ${d.city}, ${d.province} ${d.postalCode}`}
               </p>
               <p className="mt-2">
                 <OpenInMapsLink
-                  address={`${address}, ${d.city}, ${d.province} ${d.postalCode}`}
+                  address={d.addressProtected ? d.addressPlace || d.city : `${address}, ${d.city}, ${d.province} ${d.postalCode}`}
                   lat={d.lat}
                   lng={d.lng}
                 />

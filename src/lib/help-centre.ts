@@ -77,6 +77,18 @@ export const HELP_ARTICLES: readonly HelpArticle[] = [
       body: "Les parents utilisent KidEase pendant la période fondatrice gratuite. Nous ne disons pas gratuit pour toujours.",
     },
   },
+  {
+    id: "home-address",
+    keywords: ["home", "address", "privacy", "rue", "adresse", "familial", "milieu"],
+    en: {
+      title: "Home daycare addresses",
+      body: "A home daycare shows the city and the first three letters of the postal code. The map is an area, not the front door. The exact address is shared after you book a tour, enrol, or the daycare replies. The owner can choose to show the street on the public listing.",
+    },
+    fr: {
+      title: "Adresses des garderies en milieu familial",
+      body: "Une garderie en milieu familial montre la ville et les trois premières lettres du code postal. La carte est un secteur, pas la porte. L’adresse exacte est partagée après une visite réservée, une inscription, ou une réponse de la garderie. Le propriétaire peut choisir d’afficher la rue sur la fiche publique.",
+    },
+  },
 ];
 
 export const CANNED_REPLIES: readonly { id: string; en: string; fr: string }[] = [

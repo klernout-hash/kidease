@@ -272,6 +272,8 @@ export const DaycareCard = memo(function DaycareCard({
   const away = parentDistanceLabel({
     km: distanceKm,
     away: t("kmAway"),
+    approximate: Boolean(item.addressProtected),
+    about: t("homeAddressAbout"),
     show:
       showDistance &&
       honestCardDistance({

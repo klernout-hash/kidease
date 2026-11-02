@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   LISTING_MAP_TILE_WAIT_MS,
+  OsmCircle,
   createKidEaseMap,
   createListingOverlay,
   listingMapGiveUp,
@@ -29,6 +30,8 @@ type Props = {
   lng: number;
   title: string;
   address?: string;
+  /** When set, draw an area circle instead of a door pin. */
+  radiusM?: number | null;
 };
 
 /** Listing preview. OpenStreetMap tiles, loaded when the page opens. */
@@ -38,7 +41,7 @@ export function ListingMap(props: Props) {
   return <OsmListingMap {...props} />;
 }
 
-function OsmListingMap({ lat, lng, title, address }: Props) {
+function OsmListingMap({ lat, lng, title, address, radiusM }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const valid = Number.isFinite(lat) && Number.isFinite(lng);
   const { t } = useCopy();
@@ -64,6 +67,9 @@ function OsmListingMap({ lat, lng, title, address }: Props) {
     }
     let cancelled = false;
     let pin: { setMap(map: null): void } | null = null;
+    let area: OsmCircle | null = null;
+    const areaRadius = Number(radiusM);
+    const showArea = Number.isFinite(areaRadius) && areaRadius >= 500;
     let map: { destroy(): void; resize(): void } | null = null;
     let resizeObserver: ResizeObserver | null = null;
     const started = Date.now();
@@ -71,6 +77,7 @@ function OsmListingMap({ lat, lng, title, address }: Props) {
       if (cancelled) return;
       cancelled = true;
       pin?.setMap(null);
+      area?.setMap(null);
       map?.destroy();
       map = null;
       setBasemapReady(false);
@@ -100,7 +107,7 @@ function OsmListingMap({ lat, lng, title, address }: Props) {
         const center = { lat, lng };
         const created = await createKidEaseMap(el, {
           center,
-          zoom: 16,
+          zoom: showArea ? 14 : 16,
           mapTypeId: "roadmap",
           cooperative: true,
           tileWaitMs: Math.max(250, remaining()),
@@ -135,10 +142,23 @@ function OsmListingMap({ lat, lng, title, address }: Props) {
           }
           created.map.resize();
         }
-        const content = document.createElement("div");
-        content.className = "ke-logo-pin";
-        content.innerHTML = PIN_SVG;
-        pin = createListingOverlay({ map: created.map, position: center, content });
+        if (showArea) {
+          area = new OsmCircle({
+            map: created.map,
+            center,
+            radius: areaRadius,
+            strokeColor: "#1A3790",
+            strokeOpacity: 0.9,
+            strokeWeight: 2,
+            fillColor: "#1A3790",
+            fillOpacity: 0.18,
+          });
+        } else {
+          const content = document.createElement("div");
+          content.className = "ke-logo-pin";
+          content.innerHTML = PIN_SVG;
+          pin = createListingOverlay({ map: created.map, position: center, content });
+        }
         resizeObserver = new ResizeObserver(() => map?.resize());
         resizeObserver.observe(el);
         window.clearTimeout(watchdog);
@@ -154,9 +174,10 @@ function OsmListingMap({ lat, lng, title, address }: Props) {
       setBasemapReady(false);
       resizeObserver?.disconnect();
       pin?.setMap(null);
+      area?.setMap(null);
       map?.destroy();
     };
-  }, [lat, lng, valid]);
+  }, [lat, lng, radiusM, valid]);
 
   if (failed) {
     return <MapUnavailable compact address={address || title} lat={lat} lng={lng} />;

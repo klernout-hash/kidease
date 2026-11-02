@@ -170,6 +170,9 @@ export type RawMapPin = {
   city: string;
   province: string;
   postalCode: string;
+  amenities?: string | null;
+  facilityType?: string | null;
+  showPublicAddress?: boolean;
 };
 
 /**
