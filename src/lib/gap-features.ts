@@ -14,6 +14,12 @@ export type JobDeskPowers = {
   shortage: boolean;
 };
 
+/** Today on the daycare login is the posting desk for an owner, and browse-and-apply for staff. */
+export function jobDeskForViewer(input: { centreOwner: boolean; surface: "today" | "staff" | "employees" }): JobDesk {
+  if (input.surface === "staff" || input.surface === "employees") return "staff";
+  return input.centreOwner ? "daycare" : "staff";
+}
+
 /** Who can do what. Government is counts only. No applicant names. */
 export function jobDeskPowers(desk: JobDesk): JobDeskPowers {
   if (desk === "daycare" || desk === "org") {

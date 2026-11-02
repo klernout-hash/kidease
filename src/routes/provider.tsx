@@ -418,7 +418,7 @@ export function ProviderPage() {
         </p>
       ) : null}
       {desk === "today" ? <ChildCheckinDesk /> : null}
-      {desk === "today" ? <EceJobDesk mode="daycare" /> : null}
+      {desk === "today" ? <EceJobDesk mode={centreOwner ? "daycare" : "staff"} /> : null}
       {desk === "today" && deskListings.length > 0 ? (
         <>
         <DaycareDeskHome
@@ -779,6 +779,7 @@ export function ProviderPage() {
       ) : null}
 
       {desk === "employees" ? <CentreEmployeesPanel canInvite={centreOwner} /> : null}
+      {desk === "employees" ? <EceJobDesk mode="staff" /> : null}
       {desk === "staff" ? <StaffSchedulingDesk /> : null}
       {desk === "hours" ? <StaffTimesheetDesk /> : null}
       {desk === "staff" ? <EceJobDesk mode="staff" /> : null}

@@ -9,6 +9,7 @@ import {
   ageFitsSpot,
   checkoutAllowed,
   gapCopy,
+  jobDeskForViewer,
   jobDeskPowers,
   knownSum,
   matchOpenSpotParent,
@@ -58,11 +59,18 @@ test("job board powers differ on each desk and stay on one flag", () => {
   assert.deepEqual(jobDeskPowers("parent"), { browse: true, apply: true, post: false, manage: false, shortage: false });
   assert.deepEqual(jobDeskPowers("staff"), { browse: true, apply: true, post: false, manage: false, shortage: false });
   assert.deepEqual(jobDeskPowers("gov"), { browse: false, apply: false, post: false, manage: false, shortage: true });
+  assert.equal(jobDeskForViewer({ centreOwner: true, surface: "today" }), "daycare");
+  assert.equal(jobDeskForViewer({ centreOwner: false, surface: "today" }), "staff");
+  assert.equal(jobDeskForViewer({ centreOwner: true, surface: "employees" }), "staff");
+  assert.equal(jobDeskForViewer({ centreOwner: false, surface: "staff" }), "staff");
+  const provider = src("src/routes/provider.tsx");
+  assert.match(provider, /EceJobDesk mode=\{centreOwner \? "daycare" : "staff"\}/);
+  assert.match(provider, /desk === "employees" \? <EceJobDesk mode="staff"/);
+  assert.match(provider, /desk === "staff" \? <EceJobDesk mode="staff"/);
   const desk = src("src/components/ece-job-desk.tsx");
   assert.match(desk, /data-ke=\{`ece-jobs-\$\{mode\}`\}/);
   assert.match(desk, /data-ke="ece-jobs-gov"/);
-  assert.match(src("src/routes/provider.tsx"), /EceJobDesk mode="daycare"/);
-  assert.match(src("src/routes/provider.tsx"), /EceJobDesk mode="staff"/);
+  assert.match(provider, /ChildCheckinDesk/);
   assert.match(src("src/components/org-occupancy-desk.tsx"), /EceJobDesk mode="org"/);
   assert.match(src("src/components/parent-desk.tsx"), /EceJobDesk mode="parent"/);
   assert.match(src("src/components/gov/gov-dashboard.tsx"), /GovJobShortage/);
