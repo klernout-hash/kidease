@@ -1750,11 +1750,20 @@ try {
     });
   }
   for (const closedPath of ["/gov", "/gov/login", "/fr/gov/login", "/vacancy-index", "/fr/vacancy-index"]) {
-    const resp = await page.request.get(new URL(closedPath, base).href, { maxRedirects: 0 }).catch(() => null);
+    const resp = await page.request.get(new URL(closedPath, base).href).catch(() => null);
     const status = resp?.status() ?? 0;
-    const location = resp?.headers()?.location || "";
-    const sentHome = status >= 300 && status < 400 && !/\/gov|vacancy-index/i.test(location);
-    record(`closed:${closedPath}`, sentHome, { note: `${status} ${location}`, status });
+    let finalPath = closedPath;
+    try {
+      finalPath = new URL(resp?.url() || closedPath, base).pathname;
+    } catch {
+      finalPath = closedPath;
+    }
+    const left =
+      status < 500 &&
+      !finalPath.startsWith("/gov") &&
+      !finalPath.startsWith("/fr/gov") &&
+      !finalPath.includes("vacancy-index");
+    record(`closed:${closedPath}`, left, { note: `${status} ${finalPath}`, status });
   }
   const seedResp = await page.request.get(new URL("/api/e2e-seed", base).href).catch(() => null);
   const seedBody = (await seedResp?.text().catch(() => "")) || "";
