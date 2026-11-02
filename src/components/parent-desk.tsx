@@ -471,6 +471,7 @@ export function ParentDesk({
       </p>
 
       {contentTab === "explore" ? (
+        <>
         <ParentHome
           saved={saved}
           bookings={bookings}
@@ -489,6 +490,7 @@ export function ParentDesk({
           }}
         />
         <EceJobDesk mode="parent" />
+        </>
       ) : null}
 
       {contentTab === "saved" ? (
