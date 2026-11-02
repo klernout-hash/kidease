@@ -182,7 +182,10 @@ export function MyWaitlists() {
                       {centreWaitlistStatus(row.status, locale)}
                     </span>
                   </div>
-                  <p className="mt-1 text-sm text-muted">{row.ageGroup}</p>
+                  <p className="mt-1 text-sm text-muted">
+                    {row.ageGroup}
+                    {row.place ? ` · ${locale === "fr" ? "Place" : "Place"} ${row.place}` : ""}
+                  </p>
                   <p className="mt-1 text-xs text-subtle">{copy.joinedOn.replace("{date}", when(row.joinedAt, locale))}</p>
                   {row.offerStatus === "open" && row.offerExpiresAt ? (
                     <p className="mt-1 text-sm text-muted">

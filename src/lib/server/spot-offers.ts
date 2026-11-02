@@ -4,7 +4,8 @@ import { catalogByIdGet } from "@/lib/catalog";
 import { getSql, type Sql } from "@/lib/db";
 import { isKidEaseOperatorEmail } from "@/lib/admin-email";
 import { deskWaitlistVisible, isPublicListing, listingVisibilityInputFromDb } from "@/lib/listing-visibility";
-import { spotOfferMailEnabled } from "@/lib/features";
+import { spotOfferMailEnabled, waitlistToolsEnabled } from "@/lib/features";
+import { moveInLine, placeFromRank, type RankRow } from "@/lib/gap-features";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
 import {
   auditRowsForOffer,
@@ -377,9 +378,24 @@ export const listMySpotOffers = createServerFn({ method: "GET" })
     }
     const daycareIds = [...new Set(entries.map((row) => row.daycare_id))];
     const lines = new Map<string, WaitlistEntry[]>();
+    const ranks = new Map<string, RankRow[]>();
+    const tools = waitlistToolsEnabled();
     for (const daycareId of daycareIds) {
       const state = await loadState(sql, daycareId);
       lines.set(daycareId, state.entries);
+      if (!tools) continue;
+      const rows = await sql<{ id: string; status: string; joined_at: string | Date; rank_order: number | null }>`
+        select id, status, joined_at, rank_order from daycare_waitlist where daycare_id = ${daycareId}
+      `.catch(() => [] as { id: string; status: string; joined_at: string | Date; rank_order: number | null }[]);
+      ranks.set(
+        daycareId,
+        rows.map((row) => ({
+          id: row.id,
+          status: row.status,
+          joinedAt: iso(row.joined_at),
+          rank: row.rank_order == null ? null : Number(row.rank_order),
+        })),
+      );
     }
     const mine: MySpotOfferRow[] = entries.map((row) => {
       const offer = byWaitlist.get(row.id);
@@ -392,7 +408,9 @@ export const listMySpotOffers = createServerFn({ method: "GET" })
         ageGroup: age,
         status: asStatus(row.status),
         joinedAt: iso(row.joined_at),
-        place: placeInLine(lines.get(row.daycare_id) ?? [], row.id),
+        place: tools && ranks.has(row.daycare_id)
+          ? placeFromRank(ranks.get(row.daycare_id) ?? [], row.id)
+          : placeInLine(lines.get(row.daycare_id) ?? [], row.id),
         offerId: offer?.id ?? null,
         offerStatus: offer ? asOfferStatus(offer.status) : null,
         expiresAt: offer ? iso(offer.expires_at) : null,
@@ -439,6 +457,7 @@ export const listCentreWaitlist = createServerFn({ method: "GET" })
       }
       centres.set(row.id, row);
     }
+    const tools = waitlistToolsEnabled();
     const cards: CentreWaitlistCard[] = [];
     for (const centre of centres.values()) {
       if (!(await canCentreWriteLeadsFor(sql, context.userId, centre.id))) continue;
@@ -452,6 +471,21 @@ export const listCentreWaitlist = createServerFn({ method: "GET" })
         order by w.joined_at asc
       `;
       const open = state.offers.find((row) => row.status === "open");
+      const ranked: RankRow[] = tools
+        ? people.map((row) => ({
+            id: row.id,
+            rank: null,
+            joinedAt: iso(row.joined_at),
+            status: row.status,
+          }))
+        : [];
+      if (tools) {
+        const ranks = await sql<{ id: string; rank_order: number | null }>`
+          select id, rank_order from daycare_waitlist where daycare_id = ${centre.id}
+        `.catch(() => [] as { id: string; rank_order: number | null }[]);
+        const byId = new Map(ranks.map((row) => [row.id, row.rank_order]));
+        for (const row of ranked) row.rank = byId.get(row.id) ?? null;
+      }
       cards.push({
         daycareId: centre.id,
         daycareName: centre.name,
@@ -467,11 +501,11 @@ export const listCentreWaitlist = createServerFn({ method: "GET" })
           note: String(row.note || "").trim(),
           status: asStatus(row.status),
           joinedAt: iso(row.joined_at),
-          place: placeInLine(state.entries, row.id),
+          place: tools ? placeFromRank(ranked, row.id) : placeInLine(state.entries, row.id),
         })),
       });
     }
-    return { centres: cards, emailEnabled: spotOfferMailEnabled() };
+    return { centres: cards, emailEnabled: spotOfferMailEnabled(), toolsEnabled: tools };
   });
 
 export const sendCentreSpotOffer = createServerFn({ method: "POST" })
@@ -671,4 +705,41 @@ export const exportCentreWaitlistAudit = createServerFn({ method: "POST" })
       console.error("[kidease-waitlist] audit skipped", err instanceof Error ? err.message : "failed");
     }
     return { ok: true as const, csv };
+  });
+
+export const rankWaitlistEntry = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { id?: string; direction?: string }) => ({
+    id: String(input?.id || "").trim(),
+    direction: input?.direction === "down" ? ("down" as const) : ("up" as const),
+  }))
+  .handler(async ({ context, data }) => {
+    if (!waitlistToolsEnabled()) return { ok: false as const, reason: "off" as const };
+    if (!data.id) throw new Error("That family is not waiting.");
+    const sql = await getSql();
+    const rows = await sql<{ daycare_id: string }>`
+      select daycare_id from daycare_waitlist where id = ${data.id} limit 1
+    `;
+    const daycareId = rows[0]?.daycare_id;
+    if (!daycareId || !(await canCentreWriteLeadsFor(sql, context.userId, daycareId))) {
+      throw new Error("This listing is not on your desk.");
+    }
+    const line = await sql<{ id: string; status: string; joined_at: string | Date; rank_order: number | null }>`
+      select id, status, joined_at, rank_order from daycare_waitlist where daycare_id = ${daycareId}
+    `;
+    const next = moveInLine(
+      line.map((row) => ({
+        id: row.id,
+        status: row.status,
+        joinedAt: iso(row.joined_at),
+        rank: row.rank_order == null ? null : Number(row.rank_order),
+      })),
+      data.id,
+      data.direction,
+    );
+    if (!next) return { ok: false as const, reason: "edge" as const };
+    for (const row of next) {
+      await sql`update daycare_waitlist set rank_order = ${row.rank}, updated_at = now() where id = ${row.id}`;
+    }
+    return { ok: true as const };
   });

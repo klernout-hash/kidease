@@ -497,6 +497,16 @@ export function frenchCityHubSsrOk(html) {
   return { ok: true, h1: text };
 }
 
+/** Guest /jobs page. Canadian heading, no US postal wording. */
+export function gapJobsPageOk({ status = 0, bodyText = "" } = {}) {
+  if (status !== 200) return { ok: false, reason: `jobs HTTP ${status}` };
+  if (/\bzip code\b|\bunited states\b/i.test(bodyText)) return { ok: false, reason: "us wording" };
+  if (!/daycare jobs in canada|emplois en garderie/i.test(bodyText)) {
+    return { ok: false, reason: "jobs heading missing" };
+  }
+  return { ok: true };
+}
+
 export function e2eScriptMustStayChargeFree(src) {
   const forbidden = [
     /stripe\.com\/checkout/i,

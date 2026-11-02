@@ -4,6 +4,7 @@ import { feeBucketLabel, govCopy, govPath } from "@/lib/gov/copy";
 import { regionLabel } from "@/lib/gov/places";
 import { GovHelp } from "@/components/gov/gov-help";
 import { CurriculumGovStrip } from "@/components/curriculum-pack";
+import { GovJobShortage } from "@/components/ece-job-desk";
 import { GovMap } from "@/components/gov/gov-map";
 import { signOut } from "@/lib/auth/client";
 
@@ -267,6 +268,7 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
           </div>
         </section>
 
+        <GovJobShortage province={data.province} locale={data.locale} />
         <section className="mt-8" aria-labelledby="gov-coverage-title">
           <h2 id="gov-coverage-title" className="font-display text-xl">
             {copy.coverage}
