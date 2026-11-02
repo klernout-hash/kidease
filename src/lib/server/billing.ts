@@ -338,6 +338,8 @@ export const listParentBills = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const sql = await getSql();
+    const { familyScopeFor } = await import("@/lib/server/coparent");
+    const homeId = (await familyScopeFor(context.userId)).dataUserId;
     const rows = await sql.query<InvoiceRow>(
       `select ${INVOICE_SELECT}
        from invoices i
@@ -348,7 +350,7 @@ export const listParentBills = createServerFn({ method: "GET" })
          and i.status <> 'draft'
        order by i.created_at desc
        limit 200`,
-      [context.userId],
+      [homeId],
     ).catch(() => []);
     return {
       stripeLive: stripeChargesLive(),

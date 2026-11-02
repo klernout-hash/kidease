@@ -42,6 +42,7 @@ Parent inbox **Video** stays hidden until `VIDEO_SDK_WIRED` is true (Twilio Vide
 | `FEATURE_CURRICULUM_PACK` | off | Province goals, story notes, plans, and coverage. | Learning desk on `/provider?desk=learning`. | Hidden. Listing is unchanged. |
 | `FEATURE_CURRICULUM_PACK_LIVE` | off | Show a published story to the enrolled parent. | Parent timeline and replies. | Publish is written to the log only. |
 | `FEATURE_STORY_CORNER` | off | Read Global Digital Library CC BY books stored on disk. StoryWeaver stays off. Unite for Literacy is a link out. | Story corner inside the learning desk. | Shelf hidden. No remote book file is loaded. |
+| `FEATURE_COPARENT_LINK` | off | In-app invite link for one other parent. They share the main parent's children, tours, waitlists, messages, and bills. Access is full or view only. The main parent can remove them. | Parent desk → Share family. | Hidden. No email. No SMS. |
 
 Automation-pack flags (`FEATURE_POSTHOG_ERRORS`, `FEATURE_OPS_ALERTS`, `FEATURE_CRON_HEARTBEATS`, `FEATURE_INVOICE_REMINDERS`, `FEATURE_PAYMENT_DUNNING`, `FEATURE_MISSING_INFO_REMINDERS`, `FEATURE_DAYCARE_ONBOARDING`, `FEATURE_CLAIM_LISTING_REMINDERS`, `FEATURE_STALE_OPEN_SPOTS`, `FEATURE_POST_TOUR_FOLLOWUP`, `FEATURE_ENROLMENT_REVIEW`, `FEATURE_NEON_BACKUP`) default **off**. Turning one on is dry-run until `FEATURE_*_LIVE=1`. See `docs/automations.md`. Do not turn on `SUBSCRIPTIONS_ENABLED`, `SHOW_PAY_CTAS`, or in-app purchases.
 | `FEATURE_REVIEW_REPORTS` | off | `reportListingReview` writes a safety-queue row for one published review. | Report button on the listing. Search cards, the profile, and compare can show a rating from the first review. | Three-review summaries stay. No email or SMS. |
@@ -51,6 +52,7 @@ Automation-pack flags (`FEATURE_POSTHOG_ERRORS`, `FEATURE_OPS_ALERTS`, `FEATURE_
 | `FEATURE_ECE_JOBS` | off | Insert a role and an application. No Stripe call. | Job list on /jobs, apply on the listing, applicant list for the centre. | The interest form stays. No charge. Subscriptions stay off. |
 | `FEATURE_DIGITAL_ATTENDANCE` | off | `saveAttendance` from the check-in page. | Arrival and pickup form. No camera. | The camera preview stays. Daily care on the parent desk stays. No SMS. |
 | `FEATURE_STAFF_SCHEDULING` | off | Save shifts and ECE certificates. Email the centre when a certificate is inside 60 days of expiry. | Daycare desk → Employees → Staff shifts. | The page says the tool is off. |
+| `FEATURE_STAFF_TIMESHEETS` | off | Clock in, clock out, an edit note, weekly hours, and a CSV file. The week starts Monday. | Daycare desk → Hours. | The page says the tool is off. KidEase does not pay wages. No email. No SMS. |
 | `FEATURE_LEARNING_PORTFOLIOS` | off | Save a private learning story for an enrolled child. | Daycare desk and the parent's Stories link. | The page says the tool is off. Nothing is public. |
 | `FEATURE_ORG_DASHBOARD` | off | Read capacity, enrolled bookings, and confirmed open spots for centres you run. | Daycare desk → Your centres. | The page says the tool is off. |
 | `FEATURE_PRIVATE_PHOTO_FEED` | off | Classroom photo posts require an enrolled booking and photo consent. Parent feed requires an active enrolment. | Consent card on the daily feed. | The feed page stays. Photos are not public. No SMS. The thread email does not attach the photo. |
@@ -119,6 +121,8 @@ Env still works as a fallback when PostHog is down (last successful overlay is k
 | `FEATURE_CURRICULUM_PACK` | no | Default **off**. Province learning pack. Does not turn on subscriptions, SMS, or push. |
 | `FEATURE_CURRICULUM_PACK_LIVE` | no | Default **off**. Parents see published stories only when this is also on. |
 | `FEATURE_STORY_CORNER` | no | Default **off**. Local Global Digital Library books. StoryWeaver stays off until a token exists, and this build does not call it. Unite for Literacy is a link out. |
+| `FEATURE_COPARENT_LINK` | no | Default **off**. Set `1` to let a main parent share children, tours, waitlists, messages, and bills with one other login. The invite is a link in the app. No email or SMS. |
+| `FEATURE_STAFF_TIMESHEETS` | no | Default **off**. Set `1` to open staff hours on the daycare desk. Not payroll. No email or SMS. Does not turn on subscriptions. |
 | `FEATURE_REVIEW_REPORTS` | no | Default **off**. Set `1` to let a signed-in person report a published review and to show a rating from the first review. |
 | `FEATURE_TOUR_PIPELINE` | no | Default **off**. Set `1` for no-show, moved reminders, and a calendar file in the tour email. |
 | `FEATURE_NEED_CARE_FAST` | no | Default **off**. Set `1` to sort Need care fast by open spots, then distance. |

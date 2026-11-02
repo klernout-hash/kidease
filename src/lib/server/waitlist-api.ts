@@ -41,6 +41,8 @@ export const getWaitlistInterest = createServerFn({ method: "GET" })
     if (!daycareId) return null;
     await assertPublicListing(daycareId);
     const sql = await getSql();
+    const { familyScopeFor } = await import("@/lib/server/coparent");
+    const homeId = (await familyScopeFor(context.userId)).dataUserId;
     const rows = await sql<{
       daycare_id: string;
       age_band: string;
@@ -50,7 +52,7 @@ export const getWaitlistInterest = createServerFn({ method: "GET" })
     }>`
       select daycare_id, age_band, notify_in_app, notify_sms, updated_at
       from waitlist_interests
-      where user_id = ${context.userId} and daycare_id = ${daycareId}
+      where user_id = ${homeId} and daycare_id = ${daycareId}
       limit 1
     `.catch(() => []);
     const row = rows[0];
@@ -77,17 +79,19 @@ export const setWaitlistInterest = createServerFn({ method: "POST" })
   .handler(async ({ context, data }): Promise<WaitlistInterest | null> => {
     if (!data.daycareId) throw new Error("Missing listing");
     await assertPublicListing(data.daycareId);
+    const { assertFamilyWrite } = await import("@/lib/server/coparent");
+    const homeId = (await assertFamilyWrite(context.userId)).dataUserId;
     const sql = await getSql();
     if (!data.optedIn) {
       try {
         const { closeWaitlistLead } = await import("@/lib/server/lead-requests");
-        await closeWaitlistLead(sql, context.userId, data.daycareId);
+        await closeWaitlistLead(sql, homeId, data.daycareId);
       } catch (err) {
         console.error("[kidease-lead] waitlist close skipped", err);
       }
       await sql`
         delete from waitlist_interests
-        where user_id = ${context.userId} and daycare_id = ${data.daycareId}
+        where user_id = ${homeId} and daycare_id = ${data.daycareId}
       `.catch(() => undefined);
       return null;
     }
@@ -96,7 +100,7 @@ export const setWaitlistInterest = createServerFn({ method: "POST" })
       insert into waitlist_interests (
         id, user_id, daycare_id, age_band, notify_in_app, notify_sms, created_at, updated_at
       ) values (
-        ${id}, ${context.userId}, ${data.daycareId}, ${data.ageBand}, 1, ${data.notifySms ? 1 : 0}, now(), now()
+        ${id}, ${homeId}, ${data.daycareId}, ${data.ageBand}, 1, ${data.notifySms ? 1 : 0}, now(), now()
       )
       on conflict (user_id, daycare_id) do update set
         age_band = excluded.age_band,
@@ -106,13 +110,13 @@ export const setWaitlistInterest = createServerFn({ method: "POST" })
     `;
     const saved = await sql<{ id: string }>`
       select id from waitlist_interests
-      where user_id = ${context.userId} and daycare_id = ${data.daycareId}
+      where user_id = ${homeId} and daycare_id = ${data.daycareId}
       limit 1
     `.catch(() => []);
     try {
       const { recordLeadRequest } = await import("@/lib/server/lead-requests");
       await recordLeadRequest(sql, {
-        userId: context.userId,
+        userId: homeId,
         daycareId: data.daycareId,
         kind: "waitlist",
         message: "I asked to join the waitlist.",

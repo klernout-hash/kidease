@@ -67,7 +67,8 @@ export async function parentLoader() {
 
 export function parentValidateSearch(s: Record<string, unknown>) {
   const out: {
-    tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "subscription" | "alerts" | "children" | "care" | "waitlists" | "stories" | "learning";
+    tab?: "explore" | "saved" | "enrolled" | "requests" | "profile" | "payments" | "subscription" | "alerts" | "children" | "care" | "waitlists" | "stories" | "learning" | "family";
+    invite?: string;
     preview?: "support";
     plus?: "success" | "cancel";
     plan?: "plus" | "alerts";
@@ -88,6 +89,10 @@ export function parentValidateSearch(s: Record<string, unknown>) {
   const share = parseShareToken(s.share);
   if (share) out.share = share;
   if (typeof s.child === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(s.child)) out.child = s.child;
+  if (typeof s.invite === "string" && /^[A-Za-z0-9_-]{20,80}$/.test(s.invite)) {
+    out.invite = s.invite;
+    out.tab = "family";
+  }
   return out;
 }
 
@@ -131,7 +136,9 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
                     ? "care"
                     : search.tab === "waitlists"
                       ? "waitlists"
-                      : "explore";
+                      : search.tab === "family"
+                        ? "family"
+                        : "explore";
 
   if (locallyOut) {
     return (
@@ -241,6 +248,7 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
           initialSaved={loaded.saved}
           initialShared={loaded.shortlistShared}
           initialChild={search.child ?? null}
+          familyInvite={search.invite ?? null}
         />
       </Suspense>
     </TwoFactorGate>

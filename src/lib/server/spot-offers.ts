@@ -269,6 +269,8 @@ export const joinDaycareWaitlist = createServerFn({ method: "POST" })
     const daycareId = String(data.daycareId || "").trim();
     const age = parseSpotAge(data.ageGroup);
     if (!daycareId || !age) throw new Error("Choose an age group.");
+    const { assertFamilyWrite } = await import("@/lib/server/coparent");
+    const homeId = (await assertFamilyWrite(context.userId)).dataUserId;
     const sql = await getSql();
     const listed = await catalogByIdGet(daycareId);
     if (listed) await upsertDaycare(sql, listed);
@@ -298,7 +300,7 @@ export const joinDaycareWaitlist = createServerFn({ method: "POST" })
     const existing = await sql<EntryRow>`
       select id, daycare_id, user_id, age_group, child_label, note, status, joined_at
       from daycare_waitlist
-      where daycare_id = ${daycareId} and user_id = ${context.userId}
+      where daycare_id = ${daycareId} and user_id = ${homeId}
         and status in ('waiting', 'offered')
       limit 1
     `;
@@ -308,12 +310,12 @@ export const joinDaycareWaitlist = createServerFn({ method: "POST" })
     const note = clip(data.note, 280);
     await sql`
       insert into daycare_waitlist (id, daycare_id, user_id, age_group, child_label, note, status)
-      values (${id}, ${daycareId}, ${context.userId}, ${age}, ${child || null}, ${note || null}, 'waiting')
+      values (${id}, ${daycareId}, ${homeId}, ${age}, ${child || null}, ${note || null}, 'waiting')
     `;
     try {
       const { recordLeadRequest } = await import("@/lib/server/lead-requests");
       await recordLeadRequest(sql, {
-        userId: context.userId,
+        userId: homeId,
         daycareId,
         kind: "waitlist",
         message: note || "I asked to join the waitlist.",
@@ -333,12 +335,14 @@ export const withdrawDaycareWaitlist = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const id = String(data.id || "").trim();
     if (!id) throw new Error("You are not on this waitlist.");
+    const { assertFamilyWrite } = await import("@/lib/server/coparent");
+    const homeId = (await assertFamilyWrite(context.userId)).dataUserId;
     const sql = await getSql();
     const rows = await sql<{ daycare_id: string; user_id: string }>`
       select daycare_id, user_id from daycare_waitlist where id = ${id} limit 1
     `;
     const row = rows[0];
-    if (!row || row.user_id !== context.userId) throw new Error("You are not on this waitlist.");
+    if (!row || row.user_id !== homeId) throw new Error("You are not on this waitlist.");
     const before = await loadState(sql, row.daycare_id);
     const step = withdrawFromWaitlist(before, id, Date.now(), () => nid("so"));
     if (!step.ok) throw new Error(step.error || "You are not on this waitlist.");
@@ -351,18 +355,20 @@ export const listMySpotOffers = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
     const sql = await getSql();
+    const { familyScopeFor } = await import("@/lib/server/coparent");
+    const homeId = (await familyScopeFor(context.userId)).dataUserId;
     const entries = await sql<EntryRow & { daycare_name: string; slug: string }>`
       select w.id, w.daycare_id, w.user_id, w.age_group, w.child_label, w.note, w.status, w.joined_at,
              d.name as daycare_name, d.slug
       from daycare_waitlist w
       join daycares d on d.id = w.daycare_id
-      where w.user_id = ${context.userId}
+      where w.user_id = ${homeId}
       order by w.joined_at desc
     `;
     const offers = await sql<OfferRow>`
       select id, waitlist_id, daycare_id, user_id, age_group, status, offered_at, expires_at
       from spot_offers
-      where user_id = ${context.userId}
+      where user_id = ${homeId}
       order by offered_at desc
     `;
     const byWaitlist = new Map<string, OfferRow>();
@@ -518,7 +524,9 @@ export const respondMySpotOffer = createServerFn({ method: "POST" })
     const offerId = String(data.offerId || "").trim();
     const decision = data.decision === "accept" || data.decision === "decline" ? data.decision : null;
     if (!offerId || !decision) throw new Error("This offer has ended.");
-    return respondAsUser({ offerId, userId: context.userId, decision });
+    const { assertFamilyWrite } = await import("@/lib/server/coparent");
+    const homeId = (await assertFamilyWrite(context.userId)).dataUserId;
+    return respondAsUser({ offerId, userId: homeId, decision });
   });
 
 export const previewSpotOfferLink = createServerFn({ method: "GET" })

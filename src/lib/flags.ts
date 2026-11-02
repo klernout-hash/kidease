@@ -66,6 +66,8 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_CURRICULUM_PACK",
   "FEATURE_CURRICULUM_PACK_LIVE",
   "FEATURE_STORY_CORNER",
+  "FEATURE_COPARENT_LINK",
+  "FEATURE_STAFF_TIMESHEETS",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -187,6 +189,10 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_CURRICULUM_PACK_LIVE: false,
   /** Local open picture books. Off. Does not hotlink book files. */
   FEATURE_STORY_CORNER: false,
+  /** Second parent with their own login. Off. In-app invite link only. No email or SMS. */
+  FEATURE_COPARENT_LINK: false,
+  /** Daycare clock in, clock out, edits, weekly hours, and CSV. Off. Not payroll. */
+  FEATURE_STAFF_TIMESHEETS: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -519,6 +525,20 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/curriculum.md",
     summary:
       "Picture books stored on this server from the Global Digital Library. Default off. Skips NC and ND. StoryWeaver stays off until a token exists. Unite for Literacy is a link out.",
+  },
+  {
+    key: "FEATURE_COPARENT_LINK",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "A main parent invites one other parent with an in-app link. They share children, tours, waitlists, messages, and bills. Default off. No email or SMS. Access is full or view only, and the main parent can remove them.",
+  },
+  {
+    key: "FEATURE_STAFF_TIMESHEETS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Daycare desk clock in, clock out, edits with a note, weekly hours, and a CSV download. Default off. The week starts Monday. KidEase does not pay wages. No email or SMS.",
   },
 ];
 

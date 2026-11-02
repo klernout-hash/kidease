@@ -106,7 +106,10 @@ test("NEXT ops surfaces, migrations, and transactional notices; LATER stays out 
   assert.doesNotMatch(migration, /create table if not exists care_timesheets/);
   assert.doesNotMatch(migration, /create table if not exists (staff_timesheets|payroll|tuition|subsid)/);
   const migrationNames = readdirSync(join(root, "migrations")).join(" ");
-  assert.doesNotMatch(migrationNames, /timesheet|payroll/);
+  assert.doesNotMatch(migrationNames, /payroll/);
+  assert.match(migrationNames, /0159_staff_timesheets/);
+  assert.match(src("migrations/0159_staff_timesheets.sql"), /FEATURE_STAFF_TIMESHEETS/);
+  assert.equal(FLAG_DEFAULTS.FEATURE_STAFF_TIMESHEETS, false);
   assert.match(src("src/lib/server/care-ops.ts"), /insertCareStatusMessage/);
   assert.match(src("src/lib/server/care-ops.ts"), /centreCanWriteCare/);
   assert.match(src("src/components/care-ops-panel.tsx"), /data-ke="care-ops-rooms"/);

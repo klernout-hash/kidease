@@ -106,7 +106,7 @@ test("parent and daycare groups stay on the live headings", () => {
     DESK_GROUPS.parent.map((group) => [...group.itemIds]),
     [
       ["explore", "saved", "bookings", "waitlists", "messages"],
-      ["children", "care", "payments"],
+      ["children", "family", "care", "payments"],
       ["search", "alerts"],
       ["profile", "appearance", "upgrade", "delete"],
       ["notify-prefs", "security", "email-sms"],
