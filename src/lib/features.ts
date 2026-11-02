@@ -232,7 +232,7 @@ export function privatePhotoFeedEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_PRIVATE_PHOTO_FEED", env);
 }
 
-/** Small footer link. Default off. Does not gate /gov sign-in. */
+/** Government desk and footer link. Default off. /gov and /gov/login redirect home. */
 export function govPortalFooterEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_GOV_PORTAL", env);
 }

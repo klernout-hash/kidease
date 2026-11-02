@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { ProviderPioneerDesk } from "@/components/provider-pioneer-desk";
 import { localePath } from "@/lib/locale-path";
@@ -45,7 +45,15 @@ export function DashboardPage() {
   );
 }
 
+/** A parent who opens the old centre URL goes to their own desk. */
+export function redirectParentDashboard(role: string | null | undefined, locale: "en" | "fr" = "en") {
+  if (role === "parent") throw redirect({ href: locale === "fr" ? "/fr/parent" : "/parent" });
+}
+
 export const Route = createFileRoute("/dashboard")({
+  beforeLoad: ({ context }) => {
+    redirectParentDashboard((context as { roleChrome?: { role?: string | null } }).roleChrome?.role, "en");
+  },
   head: () => dashboardHead("en"),
   component: DashboardPage,
 });
