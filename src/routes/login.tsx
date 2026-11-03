@@ -929,7 +929,10 @@ export function LoginScreen({
             {parentSignup ? (
               <ParentSmsFields phone={phone} onPhone={setPhone} consent={smsConsent} onConsent={setSmsConsent} />
             ) : null}
-            <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
+            {/* Store reviewers skip the widget; the server bypass (reviewerSignInSkipsTurnstile) still applies only to sign-in. */}
+            {mode === "in" && reviewerSignIn ? null : (
+              <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
+            )}
             {error ? <p className="text-sm text-danger" role="alert" data-ke="auth-error">{presentAuthCopy(locale, error)}</p> : null}
             {stalled || error ? (
               <div className="flex flex-wrap gap-3 text-sm" data-ke="login-recovery">

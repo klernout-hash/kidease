@@ -24,7 +24,7 @@ function read(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("passkey origins use kidease.ca and both Android certs", () => {
+test("passkey origins use kidease.ca and every Android cert", () => {
   assert.equal(PASSKEY_RP_ID, "kidease.ca");
   assert.equal(PASSKEY_ANDROID_PACKAGE, "ca.kidease.app");
   const origins = passkeyExpectedOrigins({
@@ -32,7 +32,7 @@ test("passkey origins use kidease.ca and both Android certs", () => {
     fingerprints: PLAY_SHA256_CERT_FINGERPRINTS,
   });
   assert.deepEqual(origins.slice(0, 2), [...PASSKEY_WEB_ORIGINS]);
-  assert.equal(origins.length, 4);
+  assert.equal(origins.length, 2 + PLAY_SHA256_CERT_FINGERPRINTS.length);
   for (const fingerprint of PLAY_SHA256_CERT_FINGERPRINTS) {
     const hash = sha256FingerprintToApkKeyHash(fingerprint);
     assert.equal(hash.length, 43);

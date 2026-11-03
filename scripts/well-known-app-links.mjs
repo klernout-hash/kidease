@@ -78,6 +78,8 @@ export function resolveAppleTeamId(env = process.env) {
 export const PLAY_SHA256_CERT_FINGERPRINTS = [
   "33:89:F7:45:7E:33:5B:02:97:6F:27:BF:2A:49:DD:73:15:52:6A:9F:48:25:23:02:31:C1:1E:0A:51:27:BD:91",
   "E3:02:0E:FD:A0:52:21:22:FD:9D:F9:FE:C7:D8:D7:8D:F9:D0:8E:C3:53:D0:6F:A5:55:21:82:76:AD:64:16:E5",
+  // CI upload keystore (GitHub Actions ANDROID_KEYSTORE_BASE64) that signed 1.0.1 / versionCode 4.
+  "75:CE:38:4E:E8:42:03:0B:D4:6C:AB:46:C6:96:C9:D0:1E:CF:03:F3:82:6B:12:63:FA:8A:6B:29:0C:EB:68:83",
 ];
 
 /**
