@@ -153,7 +153,7 @@ export const Route = createRootRoute({
   head: ({ match }) => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, minimum-scale=1, viewport-fit=cover, shrink-to-fit=no" },
       { name: "theme-color", content: "#1A3790" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "mobile-web-app-capable", content: "yes" },

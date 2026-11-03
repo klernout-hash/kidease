@@ -133,3 +133,58 @@ export async function runPhoneViewportPass(browser, base) {
   await context.close();
   return problems;
 }
+
+/**
+ * Regression for Kyle's 2 Nov iPhone report at 390×844 (native shell):
+ * no element wider than the screen (rails scroll inside themselves), exactly one bottom tab bar,
+ * the tab bar steps aside while the keyboard is open, and at most one bottom prompt at a time.
+ */
+export const MOBILE_LAYOUT_ROUTES = ["/", "/search", "/inbox", "/parent", "/provider"];
+
+export async function runMobileLayoutRegression(browser, base) {
+  const problems = [];
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, userAgent: NATIVE_UA, deviceScaleFactor: 1 });
+  const page = await context.newPage();
+  for (const path of MOBILE_LAYOUT_ROUTES) {
+    try {
+      const res = await page.goto(new URL(path, base).href, { waitUntil: "domcontentloaded", timeout: 25000 });
+      if ((res?.status() ?? 0) >= 500) {
+        problems.push(`${path} status ${res?.status()}`);
+        continue;
+      }
+      await page.waitForTimeout(600);
+      const notes = await page.evaluate(() => {
+        const out = [];
+        const w = window.innerWidth;
+        for (const el of document.querySelectorAll("[data-ke='page'] *")) {
+          if (el.closest(".ke-rail, .ke-chip-carousel, [data-ke='map'], .maplibregl-map, [aria-hidden='true']")) continue;
+          const r = el.getBoundingClientRect();
+          if (r.width > 0 && r.height > 0 && (r.right > w + 2 || r.left < -2)) {
+            out.push(`overflow ${el.tagName.toLowerCase()}${el.getAttribute("data-ke") ? `[${el.getAttribute("data-ke")}]` : ""} ${Math.round(r.left)}..${Math.round(r.right)}`);
+            break;
+          }
+        }
+        for (const card of document.querySelectorAll(".ke-rail--visual .ke-rail-card")) {
+          const r = card.getBoundingClientRect();
+          if (r.width > w * 0.9) out.push(`rail-card ${Math.round(r.width)}>${Math.round(w * 0.9)}`);
+          break;
+        }
+        const visible = (el) => getComputedStyle(el).display !== "none" && el.getBoundingClientRect().height > 0;
+        const bars = [...document.querySelectorAll("[data-ke='app-tab-bar']")].filter(visible);
+        if (bars.length > 1) out.push(`tab-bars ${bars.length}`);
+        document.documentElement.dataset.keyboard = "open";
+        const barsOpen = [...document.querySelectorAll("[data-ke='app-tab-bar']")].filter(visible);
+        if (barsOpen.length) out.push("tab-bar-visible-with-keyboard");
+        delete document.documentElement.dataset.keyboard;
+        const prompts = [...document.querySelectorAll("[data-ke='cookie-consent'], [data-ke='push-explainer']")].filter(visible);
+        if (prompts.length > 1) out.push(`prompts ${prompts.length}`);
+        return out;
+      });
+      for (const n of notes) problems.push(`390x844 ${path} ${n}`);
+    } catch (err) {
+      problems.push(`390x844 ${path} ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+  await context.close();
+  return problems;
+}

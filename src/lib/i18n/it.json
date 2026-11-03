@@ -3353,5 +3353,7 @@
   "centreToolsNav": "Strumenti del centro",
   "centreToolsNavHint": "Menù, liste e fatturazione",
   "parentCentreToolsNav": "Dal tuo asilo",
-  "parentCentreToolsNavHint": "Menù, note e fatture"
+  "parentCentreToolsNavHint": "Menù, note e fatture",
+  "cookieConsentAllowShort": "Consenti",
+  "cookieSettings": "Impostazioni cookie"
 }
