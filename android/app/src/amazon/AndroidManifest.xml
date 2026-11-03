@@ -1,7 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:amazon="http://schemas.amazon.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+    <!-- Amazon Device Messaging. Amazon flavour only. Not required, so non-Fire installs still work. -->
+    <permission
+        android:name="${applicationId}.permission.RECEIVE_ADM_MESSAGE"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="${applicationId}.permission.RECEIVE_ADM_MESSAGE" />
+    <uses-permission android:name="com.amazon.device.messaging.permission.RECEIVE" />
     <application>
+        <amazon:enable-feature
+            android:name="com.amazon.device.messaging"
+            android:required="false" />
         <!-- Fire tablets have no Google Play services. A missing google_app_id crashes launch. -->
         <provider
             android:name="com.google.firebase.provider.FirebaseInitProvider"

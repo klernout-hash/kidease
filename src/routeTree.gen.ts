@@ -76,6 +76,7 @@ import { Route as ImgRouteImport } from './routes/img'
 import { Route as InboxRouteImport } from './routes/inbox'
 import { Route as InvoicesRouteImport } from './routes/invoices'
 import { Route as JobsRouteImport } from './routes/jobs'
+import { Route as KioskRouteImport } from './routes/kiosk'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MeetTheTeamRouteImport } from './routes/meet-the-team'
 import { Route as MenuRouteImport } from './routes/menu'
@@ -112,6 +113,7 @@ import { Route as AdminGovernmentRouteImport } from './routes/admin.government'
 import { Route as AdminDataRequestsRouteImport } from './routes/admin_.data-requests'
 import { Route as AdminEscalationsRouteImport } from './routes/admin_.escalations'
 import { Route as ApiAccountPurgeRouteImport } from './routes/api/account-purge'
+import { Route as ApiAlexaRouteImport } from './routes/api/alexa'
 import { Route as ApiAutomationsRouteImport } from './routes/api/automations'
 import { Route as ApiDigestRouteImport } from './routes/api/digest'
 import { Route as ApiE2eSeedRouteImport } from './routes/api/e2e-seed'
@@ -642,6 +644,11 @@ const JobsRoute = JobsRouteImport.update({
   path: '/jobs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const KioskRoute = KioskRouteImport.update({
+  id: '/kiosk',
+  path: '/kiosk',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -820,6 +827,11 @@ const AdminEscalationsRoute = AdminEscalationsRouteImport.update({
 const ApiAccountPurgeRoute = ApiAccountPurgeRouteImport.update({
   id: '/api/account-purge',
   path: '/api/account-purge',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAlexaRoute = ApiAlexaRouteImport.update({
+  id: '/api/alexa',
+  path: '/api/alexa',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAutomationsRoute = ApiAutomationsRouteImport.update({
@@ -1858,6 +1870,7 @@ export interface FileRoutesByFullPath {
   '/inbox': typeof InboxRouteWithChildren
   '/invoices': typeof InvoicesRouteWithChildren
   '/jobs': typeof JobsRoute
+  '/kiosk': typeof KioskRoute
   '/login': typeof LoginRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
@@ -1894,6 +1907,7 @@ export interface FileRoutesByFullPath {
   '/admin/data-requests': typeof AdminDataRequestsRoute
   '/admin/escalations': typeof AdminEscalationsRoute
   '/api/account-purge': typeof ApiAccountPurgeRoute
+  '/api/alexa': typeof ApiAlexaRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -2155,6 +2169,7 @@ export interface FileRoutesByTo {
   '/inbox': typeof InboxRouteWithChildren
   '/invoices': typeof InvoicesRouteWithChildren
   '/jobs': typeof JobsRoute
+  '/kiosk': typeof KioskRoute
   '/login': typeof LoginRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
@@ -2190,6 +2205,7 @@ export interface FileRoutesByTo {
   '/admin/data-requests': typeof AdminDataRequestsRoute
   '/admin/escalations': typeof AdminEscalationsRoute
   '/api/account-purge': typeof ApiAccountPurgeRoute
+  '/api/alexa': typeof ApiAlexaRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -2453,6 +2469,7 @@ export interface FileRoutesById {
   '/inbox': typeof InboxRouteWithChildren
   '/invoices': typeof InvoicesRouteWithChildren
   '/jobs': typeof JobsRoute
+  '/kiosk': typeof KioskRoute
   '/login': typeof LoginRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/menu': typeof MenuRoute
@@ -2489,6 +2506,7 @@ export interface FileRoutesById {
   '/admin_/data-requests': typeof AdminDataRequestsRoute
   '/admin_/escalations': typeof AdminEscalationsRoute
   '/api/account-purge': typeof ApiAccountPurgeRoute
+  '/api/alexa': typeof ApiAlexaRoute
   '/api/automations': typeof ApiAutomationsRoute
   '/api/digest': typeof ApiDigestRoute
   '/api/e2e-seed': typeof ApiE2eSeedRoute
@@ -2753,6 +2771,7 @@ export interface FileRouteTypes {
     | '/inbox'
     | '/invoices'
     | '/jobs'
+    | '/kiosk'
     | '/login'
     | '/meet-the-team'
     | '/menu'
@@ -2789,6 +2808,7 @@ export interface FileRouteTypes {
     | '/admin/data-requests'
     | '/admin/escalations'
     | '/api/account-purge'
+    | '/api/alexa'
     | '/api/automations'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -3050,6 +3070,7 @@ export interface FileRouteTypes {
     | '/inbox'
     | '/invoices'
     | '/jobs'
+    | '/kiosk'
     | '/login'
     | '/meet-the-team'
     | '/menu'
@@ -3085,6 +3106,7 @@ export interface FileRouteTypes {
     | '/admin/data-requests'
     | '/admin/escalations'
     | '/api/account-purge'
+    | '/api/alexa'
     | '/api/automations'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -3347,6 +3369,7 @@ export interface FileRouteTypes {
     | '/inbox'
     | '/invoices'
     | '/jobs'
+    | '/kiosk'
     | '/login'
     | '/meet-the-team'
     | '/menu'
@@ -3383,6 +3406,7 @@ export interface FileRouteTypes {
     | '/admin_/data-requests'
     | '/admin_/escalations'
     | '/api/account-purge'
+    | '/api/alexa'
     | '/api/automations'
     | '/api/digest'
     | '/api/e2e-seed'
@@ -3646,6 +3670,7 @@ export interface RootRouteChildren {
   InboxRoute: typeof InboxRouteWithChildren
   InvoicesRoute: typeof InvoicesRouteWithChildren
   JobsRoute: typeof JobsRoute
+  KioskRoute: typeof KioskRoute
   LoginRoute: typeof LoginRoute
   MeetTheTeamRoute: typeof MeetTheTeamRoute
   MenuRoute: typeof MenuRoute
@@ -3680,6 +3705,7 @@ export interface RootRouteChildren {
   AdminDataRequestsRoute: typeof AdminDataRequestsRoute
   AdminEscalationsRoute: typeof AdminEscalationsRoute
   ApiAccountPurgeRoute: typeof ApiAccountPurgeRoute
+  ApiAlexaRoute: typeof ApiAlexaRoute
   ApiAutomationsRoute: typeof ApiAutomationsRoute
   ApiDigestRoute: typeof ApiDigestRoute
   ApiE2eSeedRoute: typeof ApiE2eSeedRoute
@@ -4255,6 +4281,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JobsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/kiosk': {
+      id: '/kiosk'
+      path: '/kiosk'
+      fullPath: '/kiosk'
+      preLoaderRoute: typeof KioskRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -4505,6 +4538,13 @@ declare module '@tanstack/react-router' {
       path: '/api/account-purge'
       fullPath: '/api/account-purge'
       preLoaderRoute: typeof ApiAccountPurgeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/alexa': {
+      id: '/api/alexa'
+      path: '/api/alexa'
+      fullPath: '/api/alexa'
+      preLoaderRoute: typeof ApiAlexaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/automations': {
@@ -6270,6 +6310,7 @@ const rootRouteChildren: RootRouteChildren = {
   InboxRoute: InboxRouteWithChildren,
   InvoicesRoute: InvoicesRouteWithChildren,
   JobsRoute: JobsRoute,
+  KioskRoute: KioskRoute,
   LoginRoute: LoginRoute,
   MeetTheTeamRoute: MeetTheTeamRoute,
   MenuRoute: MenuRoute,
@@ -6304,6 +6345,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminDataRequestsRoute: AdminDataRequestsRoute,
   AdminEscalationsRoute: AdminEscalationsRoute,
   ApiAccountPurgeRoute: ApiAccountPurgeRoute,
+  ApiAlexaRoute: ApiAlexaRoute,
   ApiAutomationsRoute: ApiAutomationsRoute,
   ApiDigestRoute: ApiDigestRoute,
   ApiE2eSeedRoute: ApiE2eSeedRoute,

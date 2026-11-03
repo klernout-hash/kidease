@@ -12,6 +12,7 @@ export const AMAZON_SIGNIN_FLAG = "FEATURE_SIGNIN_AMAZON";
 type StoreSignInEnv = {
   FEATURE_SIGNIN_HUAWEI?: string;
   FEATURE_SIGNIN_AMAZON?: string;
+  FEATURE_LOGIN_AMAZON?: string;
   HUAWEI_APP_ID?: string;
   HUAWEI_APP_SECRET?: string;
   HUAWEI_CLIENT_ID?: string;
@@ -67,5 +68,8 @@ export function huaweiSignInVisible(env: StoreSignInEnv = process.env): boolean 
 
 /** Button and Better Auth provider. Default off. The API key is not required to start. */
 export function amazonSignInVisible(env: StoreSignInEnv = process.env): boolean {
-  return Boolean(amazonClientId(env) && amazonClientSecret(env) && flagOn(env.FEATURE_SIGNIN_AMAZON));
+  return Boolean(amazonClientId(env) && amazonClientSecret(env) && (flagOn(env.FEATURE_SIGNIN_AMAZON) || flagOn(env.FEATURE_LOGIN_AMAZON)));
 }
+
+/** FEATURE_LOGIN_AMAZON is the button flag. The button also needs the Amazon build on an Amazon device (lib/amazon/gate.ts). */
+export const LOGIN_AMAZON_FLAG = "FEATURE_LOGIN_AMAZON";

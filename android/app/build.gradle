@@ -7,6 +7,9 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
     namespace = "ca.kidease.app"
     compileSdk = rootProject.ext.compileSdkVersion
     buildFeatures {
@@ -16,19 +19,23 @@ android {
     productFlavors {
         play {
             dimension "store"
+            buildConfigField "String", "STORE", "\"play\""
             isDefault = true
             buildConfigField "String", "STORE_UA_TOKEN", "\"\""
         }
         samsung {
             dimension "store"
+            buildConfigField "String", "STORE", "\"samsung\""
             buildConfigField "String", "STORE_UA_TOKEN", "\"KidEaseStoreSamsung\""
         }
         huawei {
             dimension "store"
+            buildConfigField "String", "STORE", "\"huawei\""
             buildConfigField "String", "STORE_UA_TOKEN", "\"KidEaseStoreHuawei\""
         }
         amazon {
             dimension "store"
+            buildConfigField "String", "STORE", "\"amazon\""
             buildConfigField "String", "STORE_UA_TOKEN", "\"KidEaseStoreAmazon\""
         }
     }

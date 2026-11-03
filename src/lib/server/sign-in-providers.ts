@@ -7,7 +7,8 @@ import { amazonSignInVisible, huaweiSignInVisible } from "@/lib/auth/store-signi
 import { nativeShellHidesAdmin } from "@/lib/native-admin";
 import { googlePlayServicesAvailable, storeChannelFromSignals } from "@/lib/native-entitlements";
 import { nativeSocialPlatform, signInProvidersForDevice } from "@/lib/auth/native-oauth";
-import { visibleSignInProviders, type GrokProvider } from "@/lib/auth/providers";
+import { loginWithAmazonAllowed } from "@/lib/amazon/gate";
+import { NATIVE_AMAZON, visibleSignInProviders, type GrokProvider } from "@/lib/auth/providers";
 
 /**
  * Sign-in buttons the login page should render.
@@ -38,7 +39,7 @@ export const getSignInProviders = createServerFn({ method: "GET" }).handler((): 
     nativeFacebook,
     nativeApple,
     nativeHuawei: huaweiSignInVisible(process.env),
-    nativeAmazon: amazonSignInVisible(process.env),
+    nativeAmazon: false,
     broker,
     preferNativeGoogle: preferNative,
   });
@@ -55,6 +56,10 @@ export const getSignInProviders = createServerFn({ method: "GET" }).handler((): 
   const signals = { userAgent: ua, cookie, search: "" };
   const native = nativeShellHidesAdmin(signals);
   const channel = storeChannelFromSignals(signals);
+  // Login with Amazon: Amazon Appstore build on an Amazon device only (see lib/amazon/gate.ts).
+  if (amazonSignInVisible(process.env) && loginWithAmazonAllowed(process.env, signals)) {
+    list.push(NATIVE_AMAZON);
+  }
   return signInProvidersForDevice(list, {
     channel,
     playServices: googlePlayServicesAvailable(ua),
