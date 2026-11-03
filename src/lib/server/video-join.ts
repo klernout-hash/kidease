@@ -31,6 +31,7 @@ export type VideoJoinStatus = {
   roomName: string;
   kind: VideoSourceKind;
   featureOn: boolean;
+  subscriptionsOn: boolean;
   credentialsPresent: boolean;
   stripeLive: boolean;
   desk: "parent" | "provider" | "admin" | null;
@@ -177,13 +178,14 @@ async function buildStatus(userId: string, roomId: string): Promise<VideoJoinSta
   const profile = await loadProfile(userId);
   const { allowed, desk } = await resolveDesk(userId, parsed.kind, parsed.sourceId, profile.role || "parent", rawThreadId(roomId));
   const stripeLive = stripeChargesLive();
+  const subsOn = subscriptionsEnabled();
   const featureOn = videoArmed();
   const credentialsPresent = videoCredentialsPresent();
   const gate = videoJoinGate({
     featureOn,
     credentialsPresent,
     stripeLive,
-    subscriptionsOn: subscriptionsEnabled(),
+    subscriptionsOn: subsOn,
     actor: {
       role: desk || profile.role,
       plusPlan: profile.plus_plan,
@@ -206,6 +208,7 @@ async function buildStatus(userId: string, roomId: string): Promise<VideoJoinSta
     reason,
     error: !allowed ? "This video room was not found." : gate.ok ? "" : gate.error,
     sdkWired: VIDEO_SDK_WIRED,
+    subscriptionsOn: subsOn,
     recording: false,
     minutesEnforced: false,
     minutesMessage: VIDEO_MINUTES_NOT_ENFORCED_MESSAGE,
