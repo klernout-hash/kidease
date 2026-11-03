@@ -21,7 +21,7 @@ login() { # $1 role $2 email
   sleep 5; dismiss
   if ! $UI wait '^(Email|E-mail|Courriel)' 25; then shot "$1-no-login-form"; mark "$1 reviewer login" FAIL "login form not found"; return 1; fi
   $UI focusemail && $UI type "$2" || { mark "$1 reviewer login" FAIL "email field not found"; return 1; }
-  $UI tap '^(Continue|Next|Continuer)( |$)' 4 && sleep 3
+  $UI tap '^(Continue|Next|Continuer)$' 4 && sleep 3
   $UI focuspw || { shot "$1-no-password"; mark "$1 reviewer login" FAIL "password field not found"; return 1; }
   $UI typeenv REVIEWER_ACCOUNT_PASSWORD || { mark "$1 reviewer login" FAIL "password guard"; return 1; }
   adb shell input keyevent 111 || true
