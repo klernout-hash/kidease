@@ -35,6 +35,14 @@ export type AgreementTerms = {
   holidaysEn: string;
   holidaysFr: string;
   clauses: AgreementClause[];
+  baseFeeEn?: string;
+  baseFeeFr?: string;
+  reducedFeeEn?: string;
+  reducedFeeFr?: string;
+  billingCycleEn?: string;
+  billingCycleFr?: string;
+  feeIncreaseEn?: string;
+  feeIncreaseFr?: string;
 };
 
 export type AgreementParties = {
@@ -138,6 +146,14 @@ export function normalizeAgreementTerms(input: Partial<AgreementTerms> | null | 
     sickFr: clip(source.sickFr || base.sickFr),
     holidaysEn: clip(source.holidaysEn || base.holidaysEn),
     holidaysFr: clip(source.holidaysFr || base.holidaysFr),
+    baseFeeEn: clip(source.baseFeeEn),
+    baseFeeFr: clip(source.baseFeeFr),
+    reducedFeeEn: clip(source.reducedFeeEn),
+    reducedFeeFr: clip(source.reducedFeeFr),
+    billingCycleEn: clip(source.billingCycleEn),
+    billingCycleFr: clip(source.billingCycleFr),
+    feeIncreaseEn: clip(source.feeIncreaseEn),
+    feeIncreaseFr: clip(source.feeIncreaseFr),
     clauses: clauses
       .map((row) => ({ en: clip(row?.en, MAX_CLAUSE), fr: clip(row?.fr, MAX_CLAUSE) }))
       .filter((row) => row.en || row.fr)
