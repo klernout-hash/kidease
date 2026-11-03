@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage } from "@/components/legal-doc";
-import { COOKIES_FR } from "@/lib/legal-copy";
+import { COOKIES_V2_FR } from "@/lib/legal-copy";
 import { LEGAL_PAGE_SEO_FR, pageSeoHead } from "@/lib/page-seo";
 
 export const Route = createFileRoute("/fr/cookies")({
@@ -9,5 +9,5 @@ export const Route = createFileRoute("/fr/cookies")({
 });
 
 function FrCookies() {
-  return <LegalPage doc={COOKIES_FR} />;
+  return <LegalPage doc={COOKIES_V2_FR} />;
 }
