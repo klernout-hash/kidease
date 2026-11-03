@@ -133,7 +133,30 @@ export function parseConnectAccountId(raw: string): string | null {
   return xml?.trim() || null;
 }
 
-export type ConnectSigner = { recipientId: string; routingOrder: string; status: string };
+export type ConnectSigner = {
+  recipientId: string;
+  routingOrder: string;
+  status: string;
+  deliveredDateTime?: string;
+};
+
+type ViewSigner = { status?: string; deliveredDateTime?: string };
+
+/** True once any signer has opened the envelope (delivered) or gone further. */
+export function signersViewed(signers: readonly ViewSigner[] | undefined) {
+  return (signers || []).some((signer) => {
+    const st = String(signer.status || "").trim().toLowerCase();
+    return Boolean(signer.deliveredDateTime) || st === "delivered" || st === "completed" || st === "signed";
+  });
+}
+
+/** Earliest signer deliveredDateTime as ISO, or null. */
+export function firstViewedAt(signers: readonly ViewSigner[] | undefined): string | null {
+  const times = (signers || [])
+    .map((signer) => Date.parse(String(signer.deliveredDateTime || "")))
+    .filter((t) => Number.isFinite(t));
+  return times.length ? new Date(Math.min(...times)).toISOString() : null;
+}
 
 export type ConnectPayload = { envelopeId: string; status: string; event: string; signers?: ConnectSigner[] };
 
@@ -143,11 +166,17 @@ function readSignerList(value: unknown): ConnectSigner[] {
   if (!Array.isArray(signers)) return [];
   return signers
     .map((row) => {
-      const signer = row as { recipientId?: string | number; routingOrder?: string | number; status?: string };
+      const signer = row as {
+        recipientId?: string | number;
+        routingOrder?: string | number;
+        status?: string;
+        deliveredDateTime?: string;
+      };
       return {
         recipientId: String(signer.recipientId ?? "").trim(),
         routingOrder: String(signer.routingOrder ?? "").trim(),
         status: String(signer.status ?? "").trim(),
+        ...(signer.deliveredDateTime ? { deliveredDateTime: String(signer.deliveredDateTime) } : {}),
       };
     })
     .filter((signer) => signer.recipientId || signer.routingOrder || signer.status);
