@@ -7,11 +7,14 @@ import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { saveNoticePeriod } from "@/lib/server/wiring/withdrawal";
 import { withdrawalEnabled } from "@/lib/wiring/withdrawal";
 import { useCopy } from "@/lib/use-copy";
+import { ToolError, ToolPending } from "@/components/tool-states";
 
 export const Route = createFileRoute("/provider_/withdrawal")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
   loader: () => ({ enabled: withdrawalEnabled() }),
   head: () => ({ meta: [{ title: "Notice period · KidEase" }, { name: "robots", content: "noindex" }] }),
+  pendingComponent: ToolPending,
+  errorComponent: ToolError,
   component: NoticePage,
 });
 

@@ -130,8 +130,8 @@ test("Explore filter chrome is one Airbnb/Maps bar, not three pill rows", () => 
 
 test("listing cards render one Request info CTA, not a stacked ghost layer", () => {
   const card = src("src/components/daycare-card.tsx");
-  const visual = card.slice(card.indexOf('presentation === "visual"'), card.indexOf("aspect-[3/2]"));
-  const rail = card.slice(card.indexOf("aspect-[3/2]"));
+  const visual = card.slice(card.indexOf('presentation === "visual"'), card.indexOf("card-photo:rail"));
+  const rail = card.slice(card.indexOf("card-photo:rail"));
   assert.equal((visual.match(/cardRequestInfo/g) ?? []).length, 1);
   assert.equal((rail.match(/cardRequestInfo/g) ?? []).length, 1);
   assert.match(card, /data-ke="card-request-info"/);

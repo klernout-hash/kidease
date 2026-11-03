@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { isShippedLocale, type ShippedLocale } from "@/lib/languages";
-import { parseThemePreference, type ThemePreference } from "@/lib/theme";
+import { DEFAULT_THEME_PREFERENCE, parseThemePreference, type ThemePreference } from "@/lib/theme";
 
 export const getMyTheme = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
@@ -14,7 +14,7 @@ export const getMyTheme = createServerFn({ method: "GET" })
       `;
       return parseThemePreference(rows[0]?.theme);
     } catch {
-      return "system";
+      return DEFAULT_THEME_PREFERENCE;
     }
   });
 

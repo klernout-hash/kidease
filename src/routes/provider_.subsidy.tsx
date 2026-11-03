@@ -7,11 +7,14 @@ import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { updateSubsidy } from "@/lib/server/wiring/subsidy-status";
 import { subsidyStatusEnabled } from "@/lib/wiring/subsidy-status";
 import { useCopy } from "@/lib/use-copy";
+import { ToolError, ToolPending } from "@/components/tool-states";
 
 export const Route = createFileRoute("/provider_/subsidy")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
   loader: () => ({ enabled: subsidyStatusEnabled() }),
   head: () => ({ meta: [{ title: "Update subsidy · KidEase" }, { name: "robots", content: "noindex" }] }),
+  pendingComponent: ToolPending,
+  errorComponent: ToolError,
   component: Page,
 });
 

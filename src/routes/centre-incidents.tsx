@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CentreIncidentsPage } from "@/components/compliance/incidents-page";
 import { loadCentreIncidents } from "@/lib/server/compliance-incidents";
+import { ToolError, ToolPending } from "@/components/tool-states";
 
 const EMPTY = { enabled: false as const, mode: "off" as const, centres: [], rows: [] };
 
@@ -12,6 +13,8 @@ export const Route = createFileRoute("/centre-incidents")({
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
+  pendingComponent: ToolPending,
+  errorComponent: ToolError,
   component: Page,
 });
 

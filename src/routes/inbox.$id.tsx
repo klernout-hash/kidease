@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ThreadCallActions } from "@/components/thread-call-actions";
 import { inboxSearch, parseInboxSearch, resolveInboxView } from "@/lib/inbox-view";
-import { Phone, Video, X } from "lucide-react";
+import { X } from "lucide-react";
 import { toast } from "sonner";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -346,20 +347,7 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
             onDetails={() => setDetailOpen(true)}
             actions={
               <div className="flex shrink-0">
-                {id && voiceReady ? (
-                  <Button variant="ghost" size="icon" asChild>
-                    <Link to="/call/$conversationId" params={{ conversationId: id }} reloadDocument aria-label={t("voiceStart")}>
-                      <Phone className="size-5" />
-                    </Link>
-                  </Button>
-                ) : null}
-                {id && videoSurface ? (
-                  <Button variant="ghost" size="icon" asChild>
-                    <Link to="/video/$roomId" params={{ roomId: id }} reloadDocument aria-label={t("videoCall")}>
-                      <Video className="size-5" />
-                    </Link>
-                  </Button>
-                ) : null}
+                <ThreadCallActions conversationId={id} voiceReady={voiceReady} videoReady={Boolean(videoSurface)} />
               </div>
             }
           />
@@ -378,7 +366,7 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
             ) : (
               <button
                 type="button"
-                className="mt-1 inline-flex min-h-11 items-center font-medium text-primary touch-manipulation"
+                className="mt-1 flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline touch-manipulation"
                 onClick={() => void openDirections(homePlace.lat, homePlace.lng, name, { address: homePlace.line })}
               >
                 {t("directions")}

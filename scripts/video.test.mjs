@@ -322,7 +322,8 @@ test("video route is registered, Plus-gated, and not a *.server.* client import"
   assert.doesNotMatch(route, /VIDEO_SDK_SCAFFOLD_MESSAGE/);
   assert.match(route, /from "@\/lib\/server\/video-join"/);
   assert.doesNotMatch(route, /\.server['"]/);
-  assert.match(inbox, /to="\/video\/\$roomId"/);
+  assert.match(inbox, /<ThreadCallActions/);
+  assert.match(src("src/components/thread-call-actions.tsx"), /to="\/video\/\$roomId"/);
   assert.match(inbox, /videoSurfaceEnabled/);
   assert.match(src("src/lib/server/family.ts"), /videoSurfaceEnabled/);
   assert.match(src("src/routes/video.$roomId.tsx"), /sdk_not_wired/);
@@ -336,4 +337,18 @@ test("video route is registered, Plus-gated, and not a *.server.* client import"
   assert.match(route, /videoFeatureOff/);
   assert.match(route, /comingSoon/);
   assert.match(src("src/lib/copy.ts"), /FEATURE_VIDEO is off/);
+});
+
+test("in-app call start triggers the background ring (FEATURE_CALL_PUSH gate is server-side)", () => {
+  const client = src("src/lib/call-ring-client.ts");
+  assert.match(client, /startCallRing/);
+  assert.match(client, /cancelCallRing/);
+  assert.match(client, /"timeout"/);
+  const voice = src("src/components/voice-call-panel.tsx");
+  assert.match(voice, /createCallRinger\(conversationId, "voice"\)/);
+  assert.match(voice, /endRing\("answered"\)/);
+  assert.match(voice, /endRing\("hangup"\)/);
+  const video = src("src/components/video-room-panel.tsx");
+  assert.match(video, /createCallRinger\(roomName, "video"\)/);
+  assert.match(video, /ringer\.end\("answered"\)/);
 });

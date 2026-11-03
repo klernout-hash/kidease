@@ -41,7 +41,7 @@ test("listing card copy stays a compact single stack with 44px save target", () 
   assert.match(card, /truncate text-\[12px\] font-semibold/);
   assert.match(card, /truncate text-\[12px\] font-normal leading-4/);
   assert.match(card, /text-\[12px\] leading-4 tabular-nums/);
-  assert.match(card, /aspect-\[3\/2\]/);
+  assert.doesNotMatch(card, /aspect-\[3\/2\]/); // P-09: every listing card photo is 4:3
   assert.match(card, /aspect-\[4\/3\]/);
   assert.match(card, /data-ke="visual-card"/);
   assert.match(card, /line-clamp-2 min-w-0 whitespace-normal text-\[15px\]/);

@@ -2,7 +2,7 @@
   try {
     var KEY = "kidease-theme";
     var raw = window.localStorage.getItem(KEY);
-    var pref = raw === "light" || raw === "dark" || raw === "system" ? raw : "system";
+    var pref = raw === "light" || raw === "dark" || raw === "system" ? raw : "dark";
     var dark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
     var resolved = pref === "dark" || (pref === "system" && dark) ? "dark" : "light";
     var r = document.documentElement;
@@ -10,6 +10,7 @@
     r.dataset.resolvedTheme = resolved;
     r.style.colorScheme = resolved;
   } catch {
-    document.documentElement.dataset.theme = "system";
+    document.documentElement.dataset.theme = "dark";
+    document.documentElement.dataset.resolvedTheme = "dark";
   }
 })();

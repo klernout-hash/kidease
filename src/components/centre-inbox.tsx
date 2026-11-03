@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { ThreadCallActions } from "@/components/thread-call-actions";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Inbox, Phone, Search, Video, X } from "lucide-react";
+import { Inbox, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { DeskShell } from "@/components/desk-shell";
 import { InboxDetailRail } from "@/components/inbox-detail-rail";
@@ -317,20 +318,7 @@ export function CentreInboxDesk({
             showDetails={false}
             actions={
               <div className="flex shrink-0 items-center">
-                {selected.id && voiceReady ? (
-                  <Button variant="ghost" size="icon" asChild>
-                    <Link to="/call/$conversationId" params={{ conversationId: selected.id }} reloadDocument aria-label={t("voiceStart")} data-ke="inbox-voice-call">
-                      <Phone className="size-5" />
-                    </Link>
-                  </Button>
-                ) : null}
-                {selected.id && videoSurface ? (
-                  <Button variant="ghost" size="icon" asChild>
-                    <Link to="/video/$roomId" params={{ roomId: selected.id }} reloadDocument aria-label={t("videoCall")} data-ke="inbox-video-call">
-                      <Video className="size-5" />
-                    </Link>
-                  </Button>
-                ) : null}
+                <ThreadCallActions conversationId={selected.id} voiceReady={voiceReady} videoReady={Boolean(videoSurface)} />
                 <button
                   type="button"
                   className="min-h-11 rounded-full px-3 text-sm font-medium ring-1 ring-border lg:hidden"

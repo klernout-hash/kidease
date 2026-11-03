@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useShowPayCtas } from "@/components/pay-chrome";
 import { useEffect, useRef, useState } from "react";
 import { CalendarCheck, Globe, MapPin, Megaphone, MessageCircle, Smartphone, TrendingUp, Users, Wallet } from "lucide-react";
 import { toast } from "sonner";
@@ -63,6 +64,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
   const id0 = search.id ?? "";
   const { t, locale } = useCopy();
   const nativeShell = useInNativeShell();
+  const showPayCtas = useShowPayCtas();
   const { user, isPending } = useCurrentUserState();
   const navigate = useNavigate();
   const [q, setQ] = useState(q0);
@@ -324,7 +326,8 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
       [TrendingUp, "perkGrow"],
     ] as const
   )
-    .filter((entry) => !(nativeShell && entry[1] === "perkPayLive"))
+    // In-app payments perk only when SHOW_PAY_CTAS is on (off today) and never in native shells.
+    .filter((entry) => !((nativeShell || !showPayCtas) && entry[1] === "perkPayLive"))
     .filter((entry) => !(nativeShell && entry[1] === "perkMobile"));
 
   return (

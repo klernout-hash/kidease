@@ -23,9 +23,9 @@ describe("theme preference", () => {
     assert.equal(parseThemePreference("light"), "light");
     assert.equal(parseThemePreference("dark"), "dark");
     assert.equal(parseThemePreference("system"), "system");
-    assert.equal(parseThemePreference("nope"), "system");
-    assert.equal(parseThemePreference(null), "system");
-    assert.equal(parseThemePreference(undefined), "system");
+    assert.equal(parseThemePreference("nope"), "dark");
+    assert.equal(parseThemePreference(null), "dark");
+    assert.equal(parseThemePreference(undefined), "dark");
   });
 
   it("resolves System from prefers-color-scheme", () => {
@@ -47,7 +47,7 @@ describe("theme preference", () => {
     };
     try {
       assert.equal(THEME_STORAGE_KEY, "kidease-theme");
-      assert.equal(readThemePreference(), "system");
+      assert.equal(readThemePreference(), "dark");
       writeThemePreference("dark");
       assert.equal(memory.get(THEME_STORAGE_KEY), "dark");
       assert.equal(readThemePreference(), "dark");
@@ -88,7 +88,7 @@ describe("appearance is wired across public + desks chrome", () => {
     assert.match(boot, /dataset\.theme/);
     assert.match(boot, /dataset\.resolvedTheme/);
     assert.match(rootHtml, /src="\/theme-boot\.js"/);
-    assert.match(rootHtml, /data-theme="system"/);
+    assert.match(rootHtml, /data-theme="dark"/);
     assert.match(rootHtml, /ThemeBoot/);
   });
 

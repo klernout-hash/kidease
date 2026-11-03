@@ -7,11 +7,14 @@ import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { submitChangeRequest } from "@/lib/server/wiring/change-requests";
 import { changeRequestsEnabled } from "@/lib/wiring/change-requests";
 import { useCopy } from "@/lib/use-copy";
+import { ToolError, ToolPending } from "@/components/tool-states";
 
 export const Route = createFileRoute("/provider_/change-requests")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
   loader: () => ({ enabled: changeRequestsEnabled() }),
   head: () => ({ meta: [{ title: "Listing change · KidEase" }, { name: "robots", content: "noindex" }] }),
+  pendingComponent: ToolPending,
+  errorComponent: ToolError,
   component: ChangePage,
 });
 

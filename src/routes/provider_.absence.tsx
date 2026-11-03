@@ -4,11 +4,14 @@ import { privateReturnPath } from "@/lib/role-access";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { absenceReportsEnabled } from "@/lib/wiring/absence-reports";
 import { useCopy } from "@/lib/use-copy";
+import { ToolError, ToolPending } from "@/components/tool-states";
 
 export const Route = createFileRoute("/provider_/absence")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
   loader: () => ({ enabled: absenceReportsEnabled() }),
   head: () => ({ meta: [{ title: "Absences · KidEase" }, { name: "robots", content: "noindex" }] }),
+  pendingComponent: ToolPending,
+  errorComponent: ToolError,
   component: CentreAbsencePage,
 });
 
@@ -24,7 +27,7 @@ function CentreAbsencePage() {
       next={fr ? "Ouvrez l’horaire du personnel si le ratio manque." : "Open staff shifts if the ratio is missing."}
       enabled={enabled}
     >
-      <Link to="/provider" className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 font-medium text-primary-fg">
+      <Link to="/provider" className="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-5 font-medium text-primary-fg">
         {fr ? "Retour au centre" : "Back to the centre"}
       </Link>
     </WiringDesk>

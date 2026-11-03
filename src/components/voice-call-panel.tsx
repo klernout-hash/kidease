@@ -5,6 +5,7 @@ import { useCopy } from "@/lib/use-copy";
 import { useViewAs } from "@/components/view-as-banner";
 import { mintThreadVoiceToken } from "@/lib/server/voice-call";
 import { primeCallMedia } from "@/lib/call-permissions";
+import { createCallRinger, type RingEnd } from "@/lib/call-ring-client";
 
 /**
  * Browser call through Twilio. The access token stays in memory.
@@ -79,9 +80,21 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
     };
   }, [conversationId, t, viewing]);
 
+  // Background ring (FEATURE_CALL_PUSH, off by default): the server no-ops while the flag is off.
+  const ringerRef = useRef<ReturnType<typeof createCallRinger> | null>(null);
+  function endRing(reason: RingEnd) {
+    ringerRef.current?.end(reason);
+    ringerRef.current = null;
+  }
+  function beginRing() {
+    ringerRef.current = createCallRinger(conversationId, "voice");
+    return ringerRef.current.start();
+  }
+
   function watch(call: Call) {
     callRef.current = call;
     call.on("accept", () => {
+      endRing("answered");
       setPhase("connected");
       setNote(t("voiceConnected"));
     });
@@ -92,11 +105,13 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
       setNote("");
     });
     call.on("cancel", () => {
+      endRing("hangup");
       callRef.current = null;
       setPhase("ready");
       setNote(t("voiceFailed"));
     });
     call.on("reject", () => {
+      endRing("declined");
       callRef.current = null;
       setPhase("ready");
       setNote(t("voiceFailed"));
@@ -122,6 +137,7 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
     try {
       const call = await device.connect({ params: { conversationId } });
       watch(call);
+      void beginRing();
     } catch {
       setPhase("error");
       setNote(t("voiceFailed"));
@@ -138,6 +154,7 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
   }
 
   function hangUp() {
+    endRing("hangup");
     callRef.current?.disconnect();
     callRef.current = null;
     setPhase("ready");

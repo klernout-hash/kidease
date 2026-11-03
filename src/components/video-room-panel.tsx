@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createCallRinger } from "@/lib/call-ring-client";
 import type { LocalAudioTrack, LocalVideoTrack, RemoteAudioTrack, RemoteParticipant, RemoteVideoTrack, Room } from "twilio-video";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
@@ -53,6 +54,7 @@ export function VideoRoomPanel({
   const localRef = useRef<HTMLDivElement>(null);
   const remoteRef = useRef<HTMLDivElement>(null);
   const roomRef = useRef<Room | null>(null);
+  const ringerRef = useRef<ReturnType<typeof createCallRinger> | null>(null);
   const [phase, setPhase] = useState<"joining" | "waiting" | "live" | "error">("joining");
   const [note, setNote] = useState("");
   const [muted, setMuted] = useState(false);
@@ -74,6 +76,9 @@ export function VideoRoomPanel({
     let cancelled = false;
     const localHost = localRef.current;
     const remoteHost = remoteRef.current;
+    // Background ring (FEATURE_CALL_PUSH, off): ring the other side if no one is here yet.
+    const ringer = createCallRinger(roomName, "video");
+    ringerRef.current = ringer;
     void (async () => {
       try {
         const mod = await import("twilio-video");
@@ -105,6 +110,7 @@ export function VideoRoomPanel({
           if (!remoteHost) return;
           clearHost(remoteHost);
           showRemote(participant, remoteHost);
+          ringer.end("answered");
           setPhase("live");
         };
         room.participants.forEach(paint);
@@ -114,6 +120,7 @@ export function VideoRoomPanel({
           setPhase("waiting");
         });
         if (!cancelled) setPhase(room.participants.size ? "live" : "waiting");
+        if (!cancelled && !room.participants.size) void ringer.start();
       } catch (err) {
         const e = err as { code?: number; name?: string };
         const tag = e?.code ? String(e.code) : e?.name || "";
@@ -126,6 +133,7 @@ export function VideoRoomPanel({
     })();
     return () => {
       cancelled = true;
+      ringer.end("hangup");
       const room = roomRef.current;
       roomRef.current = null;
       if (room) {
@@ -162,6 +170,7 @@ export function VideoRoomPanel({
   }
 
   function leave() {
+    ringerRef.current?.end("hangup");
     const room = roomRef.current;
     roomRef.current = null;
     if (room) {
