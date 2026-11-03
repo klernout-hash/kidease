@@ -9,11 +9,12 @@ RES="$OUT/results.txt"; : > "$RES"
 shot() { adb exec-out screencap -p > "$OUT/$1.png"; $UI texts > "$OUT/$1.ui.txt" 2>/dev/null || true; }
 mark() { echo "$1: $2${3:+ ($3)}" | tee -a "$RES"; }
 launch() { adb shell am force-stop $PKG; adb shell am start -W -n $PKG/.MainActivity >/dev/null; sleep 12; }
-dismiss() { $UI tap '^(Accept|Accept all|OK|Got it|Allow|While using the app|Only this time|Not now|Skip|Close|Dismiss)$' 4 || true; }
+grant() { for p in ACCESS_FINE_LOCATION ACCESS_COARSE_LOCATION POST_NOTIFICATIONS CAMERA; do adb shell pm grant $PKG android.permission.$p 2>/dev/null || true; done; }
+dismiss() { $UI tap '^(Accept|Accept all|OK|Got it|Allow|While using the app|Only this time|Not now|Skip|Close|Dismiss)( |$)' 4 || true; }
 
 login() { # $1 role $2 email
   launch; dismiss; dismiss
-  $UI tap '(^|\s)(Sign in|Log in|Se connecter)(\s|$)' 25 || true; sleep 4; dismiss
+  $UI tap '^(Sign in|Log in|Se connecter)( |$)' 25 || true; sleep 4; dismiss
   $UI wait 'EditText|Email' 30 >/dev/null
   $UI tapfield 0 && $UI type "$2"
   $UI tap '^(Continue|Next|Continuer)$' 4 && sleep 3
@@ -30,10 +31,10 @@ login() { # $1 role $2 email
   mark "$1 reviewer login" FAIL "$OUT/$1-after-login.png"; return 1
 }
 
-logout() { adb shell pm clear $PKG >/dev/null; }
+logout() { adb shell pm clear $PKG >/dev/null; grant; }
 
 # 1. Launch
-adb install -r "$APK" | tee "$OUT/install.log"
+adb install -r "$APK" | tee "$OUT/install.log"; grant
 adb shell dumpsys package $PKG | grep -E 'versionCode|versionName' | tee "$OUT/version.txt"
 launch; shot 01-launch
 if adb shell pidof $PKG >/dev/null && $UI wait 'KidEase|daycare|garderie|Sign in|Search' 30; then mark "App launches" PASS "$OUT/01-launch.png"; else mark "App launches" FAIL "$OUT/01-launch.png"; fi
@@ -53,7 +54,10 @@ logout
 
 # 3. Report / block on a listing (signed out is enough to see the controls; parent session re-used if needed)
 login parent-listing reviewer-parent@kidease.ca >/dev/null 2>&1 || true
-adb shell am start -W -a android.intent.action.VIEW -d "https://www.kidease.ca/daycare/abi-family-childcare-500e7862" $PKG >/dev/null; sleep 12; dismiss
+launch; dismiss
+$UI tap '^Find child care( |$)' 10 || true; sleep 10; dismiss
+shot 05a-search-results
+$UI tap '(Daycare|Child ?care|Childcare|Centre|Kids|Learning|Garderie|Montessori|Nursery)' 10 || true; sleep 10; dismiss
 shot 05-listing-top
 found=""
 for i in $(seq 1 18); do
