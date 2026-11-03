@@ -77,11 +77,16 @@ export function VideoRoomPanel({
     void (async () => {
       try {
         const sdk = await import("twilio-video");
-        const room = await sdk.connect(token, {
-          name: roomName,
-          audio: true,
-          video: { width: 640, height: 480, frameRate: 24 },
-        });
+        const opts = { name: roomName, audio: true, video: { width: 640, height: 480, frameRate: 24 } as false | { width: number; height: number; frameRate: number } };
+        let room: Room;
+        try {
+          room = await sdk.connect(token, opts);
+        } catch (first) {
+          const n = (first as { name?: string })?.name || "";
+          // Camera blocked or missing: join with audio only instead of failing the call.
+          if (!/NotAllowed|NotFound|NotReadable|Overconstrained/i.test(n)) throw first;
+          room = await sdk.connect(token, { ...opts, video: false });
+        }
         if (cancelled) {
           room.disconnect();
           return;
@@ -105,10 +110,13 @@ export function VideoRoomPanel({
           setPhase("waiting");
         });
         if (!cancelled) setPhase(room.participants.size ? "live" : "waiting");
-      } catch {
+      } catch (err) {
+        const e = err as { code?: number; name?: string };
+        const tag = e?.code ? String(e.code) : e?.name || "";
+        console.warn("[kidease-video] connect failed", tag);
         if (!cancelled) {
           setPhase("error");
-          setNote(t("videoTourFailed"));
+          setNote(tag ? `${t("videoTourFailed")} (${tag})` : t("videoTourFailed"));
         }
       }
     })();
