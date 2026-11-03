@@ -51,7 +51,7 @@ public class MainActivity extends BridgeActivity {
         String current = webView.getSettings().getUserAgentString();
         String next = userAgentWithPlayServices(
             ensureNativeToken(userAgentForStoreBuild(flavor, current, configured)),
-            PlayServicesStatus.available(this)
+            playServicesForFlavor(flavor, PlayServicesStatus.available(this))
         );
         next = withAmazonDeviceToken(next, flavor, Build.MANUFACTURER);
         boolean changed = current == null || !current.equals(next);
@@ -164,6 +164,16 @@ public class MainActivity extends BridgeActivity {
         if (next.isEmpty()) return token;
         if (next.contains(token)) return next;
         return next + " " + token;
+    }
+
+    /**
+     * The huawei flavor never reports Play services, so Continue with Google
+     * stays hidden even if a later library adds a stub. Other flavors use the
+     * real check. A missing library already fails closed.
+     */
+    static boolean playServicesForFlavor(String flavor, boolean detected) {
+        if ("huawei".equals(flavor)) return false;
+        return detected;
     }
 
     /** Drop KidEaseNoGms when Play services work. Add it when they do not. */

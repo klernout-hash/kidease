@@ -1,8 +1,10 @@
 package ca.kidease.app;
 
-/** huawei flavour: no Amazon plugins. CI fails if ADM or Login with Amazon classes appear in this build. */
+/** huawei flavour: HMS push plugin only. No Amazon, Firebase, or Play Services classes. */
 final class StorePlugins {
     private StorePlugins() {}
 
-    static void register(MainActivity activity) {}
+    static void register(MainActivity activity) {
+        activity.registerStorePlugin(HuaweiPushPlugin.class);
+    }
 }

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="location_permission_rationale">KidEase uses your location only while you search so we can show licensed daycares near you. Location is not used in the background.</string>
+    <string name="camera_permission_rationale">KidEase uses the camera only while a video call or video tour is open. The camera is not used in the background.</string>
+    <string name="microphone_permission_rationale">KidEase uses the microphone only while a voice or video call is open. Calls are not recorded.</string>
+    <string name="notifications_permission_rationale">KidEase uses notifications for an incoming call. KidEase does not send ads.</string>
+</resources>

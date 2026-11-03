@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import { signInChoicesForChannel } from "../src/lib/auth/providers.ts";
 import { amazonBuildOnAmazonDevice } from "../src/lib/amazon/gate.ts";
 import { storeChannelFromSignals } from "../src/lib/native-entitlements.ts";
-import { FORBIDDEN, scanBuffers } from "./check-store-isolation.mjs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { FORBIDDEN, SOURCE_STORES, scanBuffers, scanRepoSources } from "./check-store-isolation.mjs";
 
 const BASE = "Mozilla/5.0 (Linux; Android 11; KFTRWI) AppleWebKit/537.36 Chrome/120 Safari/537.36";
 const STORES = {
@@ -40,4 +42,10 @@ test("dex scan catches leaks and passes clean builds", () => {
   const manifest = [{ name: "AndroidManifest.xml", buf: Buffer.from("com.amazon.device.messaging.permission.RECEIVE", "utf16le") }];
   assert.ok(scanBuffers("huawei", manifest).length);
   assert.deepEqual(Object.keys(FORBIDDEN).sort(), ["amazon", "huawei", "play", "samsung"]);
+  assert.deepEqual(
+    [...Object.keys(FORBIDDEN), ...Object.keys(SOURCE_STORES)].sort(),
+    ["amazon", "huawei", "ios", "microsoft", "play", "samsung"],
+  );
+  const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+  assert.deepEqual(scanRepoSources(repoRoot), []);
 });

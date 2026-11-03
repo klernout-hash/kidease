@@ -208,6 +208,13 @@ export async function main() {
   await writeFile(join(root, "public/icon-1024.png"), icon1024.png);
   await writeFile(join(root, "public/store/appstore-icon.png"), icon1024.png);
 
+  const huaweiIconDir = join(root, "docs/store/huawei-appgallery");
+  await mkdir(huaweiIconDir, { recursive: true });
+  const huaweiIcon = await composeFile(216, join(huaweiIconDir, "icon-216.png"), APP_FILL);
+  console.log(
+    `[appgallery] 216 pin ${huaweiIcon.pinW}x${huaweiIcon.pinH} padT=${((huaweiIcon.top / 216) * 100).toFixed(1)}%`,
+  );
+
   const maskable512 = await composeFile(
     512,
     join(iconsDir, "icon-maskable-512.png"),

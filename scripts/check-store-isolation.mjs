@@ -9,7 +9,8 @@
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, readdirSync, readFileSync, existsSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, extname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 // Class needles are dex type descriptors (Lpkg/Name;), so a reflection *string* such as
 // PlayServicesStatus's "com.google.android.gms..." probe is not a false hit. Dotted needles
@@ -23,7 +24,48 @@ const AMAZON = [
   "KidEaseAdm",
 ];
 const GMS = ["Lcom/google/android/gms/", "Lcom/google/firebase/messaging/", "com.google.android.c2dm.permission.RECEIVE"];
-const HMS = ["Lcom/huawei/hms/", "Lcom/huawei/agconnect/", "com.huawei.hms.client.appid"];
+const HMS = [
+  "Lcom/huawei/hms/",
+  "Lcom/huawei/agconnect/",
+  "Lcom/huawei/android/hms/",
+  "com.huawei.hms.client.appid",
+  "Lca/kidease/app/KidEaseHmsMessageService;",
+  "Lca/kidease/app/HuaweiPushPlugin;",
+  "KidEaseHms",
+];
+
+/** iOS and Microsoft are not Android flavours. CI still scans their sources. */
+export const SOURCE_STORES = {
+  ios: ["ios"],
+  microsoft: ["public/manifest.microsoft.webmanifest"],
+};
+
+const SOURCE_NEEDLES = [
+  "com.huawei.hms",
+  "com.huawei.agconnect",
+  "com.amazon.device.messaging",
+  "KidEaseHmsMessageService",
+  "HuaweiPushPlugin",
+  "google-services.json",
+];
+
+const SOURCE_SKIP = new Set(["node_modules", "Pods", "build", "DerivedData", ".gradle"]);
+const SOURCE_EXT = new Set([
+  ".swift",
+  ".m",
+  ".h",
+  ".plist",
+  ".json",
+  ".xml",
+  ".gradle",
+  ".pbxproj",
+  ".webmanifest",
+  ".kt",
+  ".java",
+  ".entitlements",
+  ".xcconfig",
+  ".storyboard",
+]);
 
 export const FORBIDDEN = {
   play: [...AMAZON, ...HMS],
@@ -31,6 +73,43 @@ export const FORBIDDEN = {
   huawei: [...AMAZON, ...GMS],
   amazon: [...HMS, ...GMS],
 };
+
+function walkFiles(dir, out) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    if (SOURCE_SKIP.has(entry.name)) continue;
+    const p = join(dir, entry.name);
+    if (entry.isDirectory()) walkFiles(p, out);
+    else if (entry.isFile() && SOURCE_EXT.has(extname(entry.name))) out.push(p);
+  }
+}
+
+export function scanRepoSources(repoRoot) {
+  const hits = [];
+  for (const [store, rels] of Object.entries(SOURCE_STORES)) {
+    for (const rel of rels) {
+      const start = join(repoRoot, rel);
+      if (!existsSync(start)) {
+        hits.push(`${store}: missing ${rel}`);
+        continue;
+      }
+      const files = [];
+      if (statSync(start).isDirectory()) walkFiles(start, files);
+      else files.push(start);
+      for (const file of files) {
+        let text = "";
+        try {
+          text = readFileSync(file, "utf8");
+        } catch {
+          continue;
+        }
+        for (const needle of SOURCE_NEEDLES) {
+          if (text.includes(needle)) hits.push(`${store}: ${file}: ${needle}`);
+        }
+      }
+    }
+  }
+  return hits;
+}
 
 export function scanBuffers(flavor, buffers) {
   const needles = FORBIDDEN[flavor] || [];
@@ -61,6 +140,13 @@ function flavorOf(apk) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
+  const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+  const sourceHits = scanRepoSources(repoRoot);
+  if (sourceHits.length) {
+    console.error(`FAIL source scan:\n  ${sourceHits.join("\n  ")}`);
+  } else {
+    for (const store of Object.keys(SOURCE_STORES)) console.log(`ok   ${store}: no forbidden store SDKs in source`);
+  }
   const root = process.argv[2] || "android/app/build/outputs/apk";
   if (!existsSync(root)) {
     console.error(`No APK folder at ${root}`);
@@ -83,12 +169,14 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     } else {
       console.log(`ok   ${flavor}: no forbidden SDKs`);
     }
-    if (flavor === "amazon") {
-      const all = buffers.map((b) => b.buf.toString("latin1") + b.buf.toString("utf16le")).join("");
-      if (!all.includes("AmazonAdmPlugin")) {
-        failed = true;
-        console.error("FAIL amazon: AmazonAdmPlugin missing from the Amazon build");
-      }
+    const all = buffers.map((b) => b.buf.toString("latin1") + b.buf.toString("utf16le")).join("");
+    if (flavor === "amazon" && !all.includes("AmazonAdmPlugin")) {
+      failed = true;
+      console.error("FAIL amazon: AmazonAdmPlugin missing from the Amazon build");
+    }
+    if (flavor === "huawei" && !all.includes("KidEaseHmsMessageService")) {
+      failed = true;
+      console.error("FAIL huawei: KidEaseHmsMessageService missing from the Huawei build");
     }
   }
   for (const f of Object.keys(FORBIDDEN)) {
@@ -97,5 +185,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       console.error(`FAIL ${f}: no APK built`);
     }
   }
+  if (sourceHits.length) failed = true;
   process.exit(failed ? 1 : 0);
 }

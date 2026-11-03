@@ -141,6 +141,21 @@ dependencies {
     // Credential Manager only (Android 14+). Older AppGallery phones keep email sign-in.
     playImplementation "androidx.credentials:credentials-play-services-auth:$androidxCredentialsVersion"
     samsungImplementation "androidx.credentials:credentials-play-services-auth:$androidxCredentialsVersion"
+    // HMS Push Kit. The huawei source set is the only code that imports it.
+    // Token registration stays behind FEATURE_CALL_PUSH, which defaults off.
+    huaweiImplementation "com.huawei.hms:push:${rootProject.ext.huaweiPushVersion}"
+}
+
+// HMS must not ride along on Play, Samsung, or Amazon if the AppGallery plugin
+// adds an implementation dependency while agconnect-services.json is present.
+configurations.matching { cfg ->
+    def name = cfg.name.toLowerCase()
+    !name.contains("huawei") && (name.contains("play") || name.contains("samsung") || name.contains("amazon"))
+}.configureEach {
+    exclude group: "com.huawei.hms"
+    exclude group: "com.huawei.agconnect"
+    exclude group: "com.huawei.hmf"
+    exclude group: "com.huawei.android.hms"
 }
 
 try {
@@ -161,4 +176,15 @@ gradle.taskGraph.whenReady { graph ->
             task.enabled = false
         }
     }
+}
+
+// AppGallery Connect reads agconnect-services.json. Kyle supplies that file
+// from the AGCONNECT_SERVICES_JSON secret. It is not in git. Without the file
+// the plugin stays off so CI can still compile the huawei flavor.
+def agcServices = file("src/huawei/agconnect-services.json")
+if (!agcServices.exists()) {
+    agcServices = file("agconnect-services.json")
+}
+if (agcServices.exists()) {
+    apply plugin: "com.huawei.agconnect"
 }
