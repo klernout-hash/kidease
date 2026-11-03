@@ -14,18 +14,19 @@ dismiss() { $UI tap '^(Accept|Accept all|OK|Got it|Allow|While using the app|Onl
 
 login() { # $1 role $2 email
   launch; dismiss; dismiss
-  $UI tap '^(Sign in|Log in|Se connecter)( |$)' 25 || true; sleep 4; dismiss
-  $UI wait 'EditText|Email' 30 >/dev/null
-  $UI tapfield 0 && $UI type "$2"
-  $UI tap '^(Continue|Next|Continuer)$' 4 && sleep 3
-  $UI tapfield 1 || $UI tapfield 0
-  $UI typeenv REVIEWER_ACCOUNT_PASSWORD
+  $UI tap '^(Sign in|Log in|Se connecter)( |$)' 15 || { $UI tap '^Menu( |$)' 10; $UI tap '^(Sign in|Log in|Se connecter)( |$)' 15; } || true
+  sleep 5; dismiss
+  if ! $UI wait 'e-?mail' 20; then shot "$1-no-login-form"; mark "$1 reviewer login" FAIL "login form not found"; return 1; fi
+  $UI focusemail && $UI type "$2" || { mark "$1 reviewer login" FAIL "email field not found"; return 1; }
+  $UI tap '^(Continue|Next|Continuer)( |$)' 4 && sleep 3
+  $UI focuspw || { shot "$1-no-password"; mark "$1 reviewer login" FAIL "password field not found"; return 1; }
+  $UI typeenv REVIEWER_ACCOUNT_PASSWORD || { mark "$1 reviewer login" FAIL "password guard"; return 1; }
   adb shell input keyevent 111 || true
   shot "$1-login-filled"
   $UI tap '^(Sign in|Log in|Se connecter)$' 10 || adb shell input keyevent 66
   sleep 12; dismiss
   shot "$1-after-login"
-  if $UI wait '(Account|Compte|Messages|Saved|Dashboard|Sign out|Log out|Waitlist|Tours)' 20 && ! $UI wait '(Incorrect|Invalid|wrong password|Try again)' 2; then
+  if ! $UI wait '^(Sign in|Log in)( |$)' 3 && $UI wait '(Sign out|Log out|Messages|Dashboard|Waitlist|Account)' 15; then
     mark "$1 reviewer login" PASS "$OUT/$1-after-login.png"; return 0
   fi
   mark "$1 reviewer login" FAIL "$OUT/$1-after-login.png"; return 1
@@ -41,7 +42,8 @@ if adb shell pidof $PKG >/dev/null && $UI wait 'KidEase|daycare|garderie|Sign in
 
 # 2. Parent login, account deletion entry, report on a listing
 if login parent reviewer-parent@kidease.ca; then
-  $UI tap '^(Account|Compte|Profile|Settings)$' 15 || $UI tap '(Menu|Open menu|menu)' 8 && $UI tap '(Account|Settings)' 8
+  $UI tap '^Menu( |$)' 10; sleep 3; shot 02-menu
+  $UI tap '^(Account|Account settings|Settings|Compte)( |$)' 10 || true
   sleep 5
   for i in 1 2 3 4 5 6 7 8; do $UI wait 'Delete (my )?account|Supprimer le compte' 2 && break; adb shell input swipe 540 1700 540 500 300; sleep 1; done
   shot 03-account-settings
@@ -55,9 +57,10 @@ logout
 # 3. Report / block on a listing (signed out is enough to see the controls; parent session re-used if needed)
 login parent-listing reviewer-parent@kidease.ca >/dev/null 2>&1 || true
 launch; dismiss
-$UI tap '^Find child care( |$)' 10 || true; sleep 10; dismiss
-shot 05a-search-results
-$UI tap '(Daycare|Child ?care|Childcare|Centre|Kids|Learning|Garderie|Montessori|Nursery)' 10 || true; sleep 10; dismiss
+$UI tap '^Daycare( |$)' 10 && $UI type "Abi Family" && sleep 5
+shot 05a-search-suggest
+$UI tap '^Abi Family Child' 15 || { adb shell input keyevent 66; sleep 8; $UI tap '^Abi Family Child' 15; } || true
+sleep 10; dismiss
 shot 05-listing-top
 found=""
 for i in $(seq 1 18); do
@@ -84,4 +87,6 @@ adb shell dumpsys activity activities | grep -E 'mResumedActivity|topResumedActi
 shot 08-deeplink-kidease-ca
 if grep -q 'kidease.ca: verified' "$OUT/get-app-links.txt"; then mark "App links (kidease.ca)" PASS "$OUT/get-app-links.txt"; else mark "App links (kidease.ca)" FAIL "$OUT/get-app-links.txt"; fi
 adb logcat -d > "$OUT/logcat.txt" 2>/dev/null || true
+# scrub: never upload anything containing the secret
+grep -rlF "$REVIEWER_ACCOUNT_PASSWORD" "$OUT" 2>/dev/null | while read -r f; do rm -f "$f"; echo "removed $(basename "$f") (contained secret)" >> "$RES"; done
 cat "$RES"

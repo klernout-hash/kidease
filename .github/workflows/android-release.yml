@@ -107,3 +107,4 @@ jobs:
         with:
           name: android-emulator-test
           path: e2e-out/
+          retention-days: 1

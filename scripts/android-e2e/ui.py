@@ -63,6 +63,26 @@ if __name__ == "__main__":
                     sh("input", "tap", str((b[0]+b[2])//2), str((b[1]+b[3])//2)); time.sleep(1); sys.exit(0)
                 i += 1
         sys.exit(1)
-    if cmd == "typeenv": type_text(os.environ[sys.argv[2]]); sys.exit(0)
+    if cmd == "typeenv":
+        # Safety: only type a secret into a focused password field.
+        root = dump()
+        ok = root is not None and any(n.get("focused") == "true" and n.get("password") == "true" for n in root.iter("node"))
+        if not ok:
+            print("refusing to type secret: focused field is not a password field"); sys.exit(2)
+        type_text(os.environ[sys.argv[2]]); sys.exit(0)
+    if cmd == "focuspw":  # tap the first password EditText
+        root = dump()
+        for node in (root.iter("node") if root is not None else []):
+            if node.get("password") == "true":
+                b = list(map(int, re.findall(r"\d+", node.get("bounds"))))
+                sh("input", "tap", str((b[0]+b[2])//2), str((b[1]+b[3])//2)); time.sleep(1); sys.exit(0)
+        sys.exit(1)
+    if cmd == "focusemail":
+        root = dump()
+        for node in (root.iter("node") if root is not None else []):
+            if "EditText" in (node.get("class") or "") and re.search(r"e-?mail|username", label(node), re.I) and node.get("password") != "true":
+                b = list(map(int, re.findall(r"\d+", node.get("bounds"))))
+                sh("input", "tap", str((b[0]+b[2])//2), str((b[1]+b[3])//2)); time.sleep(1); sys.exit(0)
+        sys.exit(1)
     if cmd == "type": type_text(sys.argv[2]); sys.exit(0)
     if cmd == "texts": print(texts()); sys.exit(0)
