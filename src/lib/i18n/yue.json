@@ -3349,5 +3349,9 @@
   "shotCapListing": "資料 · Android",
   "shotCapLogin": "登入 · Android",
   "featPayBodyBills": "中心發送賬單。家長用 Stripe Checkout 付款。家長可以喺付款頁記下 Interac 電子轉賬。呢條記錄會保持等待。付款頁唔可以標做已付。",
-  "compareEmptyFree": "比較年齡、時間、距離、語言、文化和空位。"
+  "compareEmptyFree": "比較年齡、時間、距離、語言、文化和空位。",
+  "centreToolsNav": "中心工具",
+  "centreToolsNavHint": "餐單、清單、收費助手",
+  "parentCentreToolsNav": "嚟自你嘅托兒所",
+  "parentCentreToolsNavHint": "餐單、記錄同賬單"
 }

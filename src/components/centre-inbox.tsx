@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Inbox, Search, X } from "lucide-react";
+import { Inbox, Phone, Search, Video, X } from "lucide-react";
 import { toast } from "sonner";
 import { DeskShell } from "@/components/desk-shell";
 import { InboxDetailRail } from "@/components/inbox-detail-rail";
@@ -13,6 +13,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { providerNavSearch } from "@/lib/desk-nav";
 import { inboxSearch } from "@/lib/inbox-view";
 import { isOrphanInboxId, mergeUnifiedInbox } from "@/lib/desk-features";
+import { featureCopy } from "@/lib/flagged-feature-copy";
 import type { CentreInboxThread } from "@/lib/inbox-stages";
 import { fillQuickReply, opsQuickReplies } from "@/lib/inbox-quick-replies";
 import {
@@ -49,6 +50,7 @@ export function CentreInboxDesk({
 }) {
   const { user, isPending } = useCurrentUserState();
   const { t, locale } = useCopy();
+  const feature = featureCopy(locale);
   const viewing = useViewAs();
   const navigate = useNavigate();
   const [items, setItems] = useState<CentreInboxThread[] | null>(null);
@@ -66,6 +68,8 @@ export function CentreInboxDesk({
   const [threadReady, setThreadReady] = useState(false);
   const [details, setDetails] = useState<ConversationDetails | null>(null);
   const [stateBusy, setStateBusy] = useState(false);
+  const [videoSurface, setVideoSurface] = useState(false);
+  const [voiceReady, setVoiceReady] = useState(false);
 
   const visible = useMemo(
     () => (items ? filterInboxList(items, { filter, query }) : []),
@@ -102,6 +106,8 @@ export function CentreInboxDesk({
     setMessages(res.messages);
     setTours(res.tours ?? []);
     setCanWrite(res.canWrite !== false);
+    setVideoSurface(Boolean(res.videoSurfaceEnabled));
+    setVoiceReady(Boolean(res.voiceReady));
     setThreadReady(true);
     const meta = await getConversationDetails({ data: { conversationId: id } }).catch(() => null);
     setDetails(meta);
@@ -311,6 +317,20 @@ export function CentreInboxDesk({
             showDetails={false}
             actions={
               <div className="flex shrink-0 items-center">
+                {selected.id && voiceReady ? (
+                  <Button variant="ghost" size="icon" asChild>
+                    <Link to="/call/$conversationId" params={{ conversationId: selected.id }} reloadDocument aria-label={t("voiceStart")} data-ke="inbox-voice-call">
+                      <Phone className="size-5" />
+                    </Link>
+                  </Button>
+                ) : null}
+                {selected.id && videoSurface ? (
+                  <Button variant="ghost" size="icon" asChild>
+                    <Link to="/video/$roomId" params={{ roomId: selected.id }} reloadDocument aria-label={t("videoCall")} data-ke="inbox-video-call">
+                      <Video className="size-5" />
+                    </Link>
+                  </Button>
+                ) : null}
                 <button
                   type="button"
                   className="min-h-11 rounded-full px-3 text-sm font-medium ring-1 ring-border lg:hidden"
@@ -352,14 +372,10 @@ export function CentreInboxDesk({
             </p>
           ) : isOrphanInboxId(selected.id) ? (
             <div className="border-t border-border px-3 py-4">
-              <p className="text-sm text-muted">
-                {locale === "fr"
-                  ? "Cette demande n’a pas encore de fil. Ouvrez les demandes."
-                  : "This request does not have a thread yet. Open requests."}
-              </p>
+              <p className="text-sm text-muted">{feature.inboxNoThread}</p>
               <Button className="mt-3" asChild>
                 <Link to="/provider" search={{ desk: "requests" }}>
-                  {locale === "fr" ? "Voir les demandes" : "See requests"}
+                  {feature.inboxSeeRequests}
                 </Link>
               </Button>
             </div>

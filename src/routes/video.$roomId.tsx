@@ -108,11 +108,11 @@ function VideoRoomPage() {
         <Link to="/inbox" className="text-sm text-muted">
           ← {t("inbox")}
         </Link>
-        {nativeShell ? null : (
+        {nativeShell || !status?.subscriptionsOn ? null : (
           <p className="mt-4 text-xs font-medium uppercase tracking-[0.18em] text-subtle">{t("videoTourKicker")}</p>
         )}
         <h1 className="mt-2 font-display text-3xl">{t("videoTourTitle")}</h1>
-        <p className="mt-3 text-sm text-muted">{nativeShell ? t("videoJoinHint") : t("videoTourLead")}</p>
+        <p className="mt-3 text-sm text-muted">{nativeShell || !status?.subscriptionsOn ? t("videoJoinHint") : t("videoTourLead")}</p>
         <p className="mt-2 text-xs text-subtle" data-ke="media-permission-note">{t("mediaPermissionNote")}</p>
         <p className="mt-1 text-xs text-subtle">{t("videoNoRecording")}</p>
         <p className="mt-1 text-xs text-subtle">{t("videoMinutesNote")}</p>

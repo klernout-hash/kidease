@@ -3349,5 +3349,9 @@
   "shotCapListing": "Scheda · Android",
   "shotCapLogin": "Accesso · Android",
   "featPayBodyBills": "I centri inviano le fatture. I genitori pagano con Stripe Checkout. Un genitore può annotare un trasferimento Interac nella pagina di pagamento. La nota resta in attesa. La pagina non può segnarla come pagata.",
-  "compareEmptyFree": "Confronti età, orari, distanza, lingua, cultura e posti liberi."
+  "compareEmptyFree": "Confronti età, orari, distanza, lingua, cultura e posti liberi.",
+  "centreToolsNav": "Strumenti del centro",
+  "centreToolsNavHint": "Menù, liste e fatturazione",
+  "parentCentreToolsNav": "Dal tuo asilo",
+  "parentCentreToolsNavHint": "Menù, note e fatture"
 }

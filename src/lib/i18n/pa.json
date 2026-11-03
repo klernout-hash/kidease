@@ -3349,5 +3349,9 @@
   "shotCapListing": "ਵੇਰਵਾ · Android",
   "shotCapLogin": "ਸਾਈਨ ਇਨ · Android",
   "featPayBodyBills": "ਕੇਂਦਰ ਬਿੱਲ ਭੇਜਦੇ ਹਨ। ਮਾਪੇ Stripe Checkout ਨਾਲ ਭੁਗਤਾਨ ਕਰਦੇ ਹਨ। ਇੱਕ ਮਾਪਾ ਭੁਗਤਾਨ ਪੰਨੇ ਉੱਤੇ Interac ਟ੍ਰਾਂਸਫਰ ਨੋਟ ਕਰ ਸਕਦਾ ਹੈ। ਇਹ ਨੋਟ ਉਡੀਕ ਵਿੱਚ ਰਹਿੰਦਾ ਹੈ। ਪੰਨਾ ਇਸਨੂੰ ਅਦਾ ਨਿਸ਼ਾਨ ਨਹੀਂ ਲਾ ਸਕਦਾ।",
-  "compareEmptyFree": "ਉਮਰਾਂ, ਘੰਟਿਆਂ, ਦੂਰੀ, ਭਾਸ਼ਾ, ਸੱਭਿਆਚਾਰ ਅਤੇ ਖੁੱਲ੍ਹੀਆਂ ਥਾਵਾਂ ਦੀ ਤੁਲਨਾ ਕਰੋ।"
+  "compareEmptyFree": "ਉਮਰਾਂ, ਘੰਟਿਆਂ, ਦੂਰੀ, ਭਾਸ਼ਾ, ਸੱਭਿਆਚਾਰ ਅਤੇ ਖੁੱਲ੍ਹੀਆਂ ਥਾਵਾਂ ਦੀ ਤੁਲਨਾ ਕਰੋ।",
+  "centreToolsNav": "ਸੈਂਟਰ ਟੂਲ",
+  "centreToolsNavHint": "ਮੀਨੂ, ਚੈੱਕਲਿਸਟਾਂ, ਬਿੱਲ ਸਹਾਇਕ",
+  "parentCentreToolsNav": "ਤੁਹਾਡੇ ਡੇਅਕੇਅਰ ਵੱਲੋਂ",
+  "parentCentreToolsNavHint": "ਮੀਨੂ, ਨੋਟ ਅਤੇ ਬਿੱਲ"
 }

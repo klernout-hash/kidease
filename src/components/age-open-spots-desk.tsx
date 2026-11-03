@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { gapCopy, POST_AGES } from "@/lib/gap-features";
+import { featureCopy } from "@/lib/flagged-feature-copy";
+import { POST_AGES } from "@/lib/gap-features";
 import { localePath } from "@/lib/locale-path";
 import { ageOpenSpotsFlag, postAgeOpenSpots } from "@/lib/server/open-spot-posts";
 import { sendCentreSpotOffer } from "@/lib/server/spot-offers";
@@ -9,7 +10,7 @@ import { useCopy } from "@/lib/use-copy";
 
 export function AgeOpenSpotsDesk({ listings }: { listings: { id: string; name: string }[] }) {
   const { locale } = useCopy();
-  const copy = gapCopy(locale === "fr" ? "fr" : "en");
+  const copy = featureCopy(locale);
   const [on, setOn] = useState(false);
   const [daycareId, setDaycareId] = useState(listings[0]?.id || "");
   const [ageGroup, setAgeGroup] = useState<(typeof POST_AGES)[number]>("preschool");
