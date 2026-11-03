@@ -1,0 +1,66 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "kid ease",
+      "intents": [
+        {
+          "name": "FindSpotsIntent",
+          "slots": [
+            {
+              "name": "city",
+              "type": "AMAZON.City"
+            }
+          ],
+          "samples": [
+            "find spots near me",
+            "find spots near me in {city}",
+            "find daycare spots in {city}",
+            "are there open spots in {city}",
+            "what spots are open in {city}"
+          ]
+        },
+        {
+          "name": "DayLogIntent",
+          "slots": [],
+          "samples": [
+            "today's day log",
+            "what's in today's day log",
+            "read my day log",
+            "how was my child's day"
+          ]
+        },
+        {
+          "name": "NewMessagesIntent",
+          "slots": [],
+          "samples": [
+            "new messages",
+            "do I have new messages",
+            "any new daycare messages",
+            "check my messages"
+          ]
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        }
+      ],
+      "types": []
+    }
+  }
+}

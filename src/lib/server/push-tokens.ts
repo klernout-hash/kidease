@@ -8,6 +8,7 @@
 
 import { evaluateFeatureFlag, type EnvMap } from "../flags.ts";
 import { pushArmed } from "../channel-readiness.ts";
+import { admRegistrationAllowed } from "../amazon/gate.ts";
 
 export const PUSH_SCAFFOLD_MESSAGE =
   "Push is scaffolded only. FEATURE_PUSH is off until Kyle adds Firebase and Apple credentials.";
@@ -21,8 +22,11 @@ export const PUSH_DRY_RUN_MESSAGE =
 export const PUSH_WEB_BLOCKED_MESSAGE =
   "Push registration is native-only (iOS / Android). www does not collect tokens.";
 
+export const ADM_BLOCKED_MESSAGE =
+  "Amazon Device Messaging is only for the Amazon Appstore build on an Amazon device, with FEATURE_AMAZON_ADM on.";
+
 export type PushPlatform = "ios" | "android";
-export type PushProvider = "fcm" | "apns";
+export type PushProvider = "fcm" | "apns" | "adm";
 
 export type PushRegisterInput = {
   token: string;
@@ -30,6 +34,8 @@ export type PushRegisterInput = {
   provider?: string;
   deviceId?: string;
   locale?: string;
+  /** Request user agent. ADM tokens need the Amazon build on an Amazon device. */
+  userAgent?: string;
 };
 
 export type ValidPushRegister = {
@@ -86,6 +92,7 @@ export function parsePushProvider(raw: unknown, platform?: PushPlatform | null):
     .trim()
     .toLowerCase();
   if (v === "fcm" || v === "apns") return v;
+  if (v === "adm" && platform === "android") return v;
   if (!v && platform === "ios") return "apns";
   if (!v && platform === "android") return "fcm";
   return null;
@@ -97,7 +104,7 @@ export function validateRegisterInput(input: PushRegisterInput): { ok: true; dat
   const platform = parsePushPlatform(input.platform);
   if (!platform) return { ok: false, error: PUSH_WEB_BLOCKED_MESSAGE };
   const provider = parsePushProvider(input.provider, platform);
-  if (!provider) return { ok: false, error: "provider must be fcm or apns." };
+  if (!provider) return { ok: false, error: "provider must be fcm, apns, or adm (Android only)." };
   const deviceId = String(input.deviceId || "")
     .trim()
     .slice(0, 120);
@@ -130,6 +137,9 @@ export async function upsertPushDeviceToken(
   }
   const parsed = validateRegisterInput(input);
   if (!parsed.ok) return { ok: false, skipped: true, error: parsed.error };
+  if (parsed.data.provider === "adm" && !admRegistrationAllowed(env, { userAgent: input.userAgent })) {
+    return { ok: false, skipped: true, error: ADM_BLOCKED_MESSAGE };
+  }
 
   const existing = await sql.query<{ id: string }>(
     `select id from push_device_tokens where token = $1 limit 1`,

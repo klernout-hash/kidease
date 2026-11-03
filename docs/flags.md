@@ -189,6 +189,10 @@ Each one stays off until its own flag is `1`. None of them send email, SMS, push
 | `FEATURE_PAYROLL` | Gross pay export CSV from hours. Not a payroll processor. No credentials. Daycare desk `/provider?desk=tools`. |
 | `FEATURE_SUBSIDY_BILLING` | Agency subsidy share vs parent share, plus an agency claim CSV. Parent sees the split. Daycare desk `/provider?desk=tools`. |
 | `FEATURE_OFFLINE_CHECKIN` | Queue check-in taps offline and sync with the tap time on reconnect. Needs FEATURE_CHILD_CHECKIN. Daycare desk `/provider?desk=tools`. |
+| `FEATURE_AMAZON_ADM` | Amazon Device Messaging push on Fire devices. Needs FEATURE_PUSH, ADM_CLIENT_ID, ADM_CLIENT_SECRET. See docs/amazon.md. |
+| `FEATURE_LOGIN_AMAZON` | Login with Amazon on Fire / Amazon Appstore devices only. Needs AMAZON_CLIENT_ID, AMAZON_CLIENT_SECRET. |
+| `FEATURE_FIRE_KIOSK` | Landscape check-in kiosk `/kiosk` for Fire tablets, PIN exit. Needs FEATURE_CHILD_CHECKIN. |
+| `FEATURE_ALEXA_SKILL` | Alexa custom skill endpoint `/api/alexa`. Needs ALEXA_SKILL_ID. |
 
 ## What is wired
 

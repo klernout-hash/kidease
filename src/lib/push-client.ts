@@ -1,5 +1,6 @@
 import { PUSH_DISABLED_MESSAGE, PUSH_SCAFFOLD_MESSAGE, PUSH_WEB_BLOCKED_MESSAGE } from "@/lib/push";
 import { isNative, nativePlatform } from "@/lib/native";
+import { amazonBuildOnAmazonDevice } from "@/lib/amazon/gate";
 import { googleServicesHidden, readClientStoreChannel } from "@/lib/native-entitlements";
 
 export type PushRegisterResult =
@@ -18,6 +19,10 @@ export async function registerPushDevice(opts?: { enabled?: boolean }): Promise<
   }
   if (typeof window === "undefined" || !isNative()) {
     return { ok: false, reason: "disabled", error: PUSH_WEB_BLOCKED_MESSAGE };
+  }
+  // Amazon Appstore build on an Amazon device: ADM (FEATURE_AMAZON_ADM is checked on the server).
+  if (amazonBuildOnAmazonDevice({ userAgent: navigator.userAgent })) {
+    return registerAdmDevice();
   }
   // Huawei has no FCM. Do not call the Firebase plugin. HMS Push is a later slot.
   if (googleServicesHidden(readClientStoreChannel())) {
@@ -59,6 +64,25 @@ export async function registerPushDevice(opts?: { enabled?: boolean }): Promise<
     return { ok: true, platform };
   } catch {
     // Plugin missing, or FCM / APNs is not in this binary yet.
+    return { ok: false, reason: "no-plugin", error: PUSH_SCAFFOLD_MESSAGE };
+  }
+}
+
+type KidEaseAdmPlugin = { register(): Promise<{ registrationId: string }> };
+
+/** Only the amazon flavour ships the KidEaseAdm plugin. Other builds reject, and we never call it there. */
+async function registerAdmDevice(): Promise<PushRegisterResult> {
+  try {
+    const { registerPlugin } = await import("@capacitor/core");
+    const adm = registerPlugin<KidEaseAdmPlugin>("KidEaseAdm");
+    const { registrationId } = await adm.register();
+    const token = String(registrationId || "").trim();
+    if (!token) return { ok: false, reason: "register-failed", error: "ADM did not return a registration id yet." };
+    const { registerPushToken } = await import("@/lib/server/push-api");
+    const result = await registerPushToken({ data: { token, platform: "android", provider: "adm" } });
+    if (!result.ok) return { ok: false, reason: "disabled", error: result.error };
+    return { ok: true, platform: "android" };
+  } catch {
     return { ok: false, reason: "no-plugin", error: PUSH_SCAFFOLD_MESSAGE };
   }
 }

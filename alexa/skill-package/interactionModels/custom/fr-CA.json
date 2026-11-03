@@ -1,0 +1,63 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "kid ease",
+      "intents": [
+        {
+          "name": "FindSpotsIntent",
+          "slots": [
+            {
+              "name": "city",
+              "type": "AMAZON.City"
+            }
+          ],
+          "samples": [
+            "trouve des places près de moi",
+            "trouve des places à {city}",
+            "y a-t-il des places à {city}",
+            "places disponibles à {city}"
+          ]
+        },
+        {
+          "name": "DayLogIntent",
+          "slots": [],
+          "samples": [
+            "le journal du jour",
+            "qu'est-ce qu'il y a dans le journal du jour",
+            "comment s'est passée la journée"
+          ]
+        },
+        {
+          "name": "NewMessagesIntent",
+          "slots": [],
+          "samples": [
+            "nouveaux messages",
+            "ai-je de nouveaux messages",
+            "des messages de la garderie"
+          ]
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        }
+      ],
+      "types": []
+    }
+  }
+}
