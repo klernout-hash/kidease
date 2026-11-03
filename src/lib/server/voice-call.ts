@@ -132,3 +132,29 @@ export const mintThreadVoiceToken = createServerFn({ method: "POST" })
       peerLabel: status.peerLabel,
     };
   });
+
+/**
+ * App-wide token so the signed-in user's Device is registered on every
+ * page, not only on /call. Without this the other side never rang and the
+ * caller heard the no-answer message.
+ */
+export const mintInboxVoiceToken = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }): Promise<VoiceTokenResult> => {
+    if (!voiceCallsEnabled()) return { ok: false, error: VOICE_OFF };
+    if (!voiceCredentialsPresent()) return { ok: false, error: VOICE_CREDENTIALS_MESSAGE };
+    const { resolveAdminAccess } = await import("@/lib/server/roles");
+    const admin = await resolveAdminAccess(context.userId).catch(() => ({ ok: false as const }));
+    const { createVoiceAccessToken } = await import("./voice");
+    const identity = voiceIdentityForUser(context.userId, admin.ok ? "admin" : "user");
+    const token = createVoiceAccessToken({ identity });
+    if (!token.ok) return { ok: false, error: token.error };
+    return {
+      ok: true,
+      token: token.token,
+      identity: token.identity,
+      ttlSeconds: token.ttlSeconds,
+      desk: admin.ok ? "admin" : "parent",
+      peerLabel: "",
+    };
+  });
