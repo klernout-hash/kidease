@@ -13,6 +13,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { providerNavSearch } from "@/lib/desk-nav";
 import { inboxSearch } from "@/lib/inbox-view";
 import { isOrphanInboxId, mergeUnifiedInbox } from "@/lib/desk-features";
+import { featureCopy } from "@/lib/flagged-feature-copy";
 import type { CentreInboxThread } from "@/lib/inbox-stages";
 import { fillQuickReply, opsQuickReplies } from "@/lib/inbox-quick-replies";
 import {
@@ -49,6 +50,7 @@ export function CentreInboxDesk({
 }) {
   const { user, isPending } = useCurrentUserState();
   const { t, locale } = useCopy();
+  const feature = featureCopy(locale);
   const viewing = useViewAs();
   const navigate = useNavigate();
   const [items, setItems] = useState<CentreInboxThread[] | null>(null);
@@ -370,14 +372,10 @@ export function CentreInboxDesk({
             </p>
           ) : isOrphanInboxId(selected.id) ? (
             <div className="border-t border-border px-3 py-4">
-              <p className="text-sm text-muted">
-                {locale === "fr"
-                  ? "Cette demande n’a pas encore de fil. Ouvrez les demandes."
-                  : "This request does not have a thread yet. Open requests."}
-              </p>
+              <p className="text-sm text-muted">{feature.inboxNoThread}</p>
               <Button className="mt-3" asChild>
                 <Link to="/provider" search={{ desk: "requests" }}>
-                  {locale === "fr" ? "Voir les demandes" : "See requests"}
+                  {feature.inboxSeeRequests}
                 </Link>
               </Button>
             </div>

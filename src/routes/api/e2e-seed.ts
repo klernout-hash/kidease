@@ -18,7 +18,7 @@ function emailFor(role: "parent" | "provider" | "admin" | "government", paid: bo
 
 async function seed(request: Request) {
   if (!e2eLoopbackFixtureRequest(request)) return new Response("Not found", { status: 404 });
-  let body: { role?: string; paid?: boolean; ownSlug?: string; activity?: boolean; attention?: boolean; unlockHome?: boolean } = {};
+  let body: { role?: string; paid?: boolean; ownSlug?: string; activity?: boolean; attention?: boolean; unlockHome?: boolean; paidBills?: boolean } = {};
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -27,6 +27,7 @@ async function seed(request: Request) {
   const role =
     body.role === "provider" ? "provider" : body.role === "admin" ? "admin" : body.role === "government" ? "government" : "parent";
   const paid = Boolean(body.paid);
+  const paidBills = Boolean(body.paidBills);
   const activity = Boolean(body.activity);
   const attention = Boolean(body.attention);
   const unlockHome = Boolean(body.unlockHome);
@@ -279,6 +280,9 @@ async function seed(request: Request) {
     await seedKidsWorldLive(sql);
     flushSearchMemo();
   }
+  if (paidBills && (role === "parent" || role === "provider")) {
+    await seedTaxReceiptFixtures(sql, userId, role);
+  }
   if (role !== "admin") return response;
   const { signTwoFactorCookie, TWO_FACTOR_SESSION_TTL_MS } = await import("@/lib/two-factor-cookie");
   const { TWO_FACTOR_COOKIE } = await import("@/lib/auth/cookies");
@@ -291,6 +295,127 @@ async function seed(request: Request) {
     `${TWO_FACTOR_COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${Math.floor(TWO_FACTOR_SESSION_TTL_MS / 1000)}`,
   );
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers: cookieHeaders });
+}
+
+/**
+ * Loopback only, and only when the seed body asks for paidBills.
+ * Two stored paid invoices (Ontario and Quebec) plus one unpaid bill that must stay off the receipt.
+ */
+async function seedTaxReceiptFixtures(
+  sql: Awaited<ReturnType<typeof import("@/lib/db").getSql>>,
+  userId: string,
+  role: "parent" | "provider",
+) {
+  const centres = [
+    {
+      id: "e2e-tax-on",
+      slug: "e2e-tax-on",
+      name: "E2E Harbour",
+      city: "Toronto",
+      province: "ON",
+      postal: "M5X 1A9",
+      address: "100 King St",
+      licence: "E2E-ON-100",
+    },
+    {
+      id: "e2e-tax-qc",
+      slug: "e2e-tax-qc",
+      name: "E2E Garderie",
+      city: "Montreal",
+      province: "QC",
+      postal: "H3C 0G7",
+      address: "200 Rue Peel",
+      licence: "E2E-QC-100",
+    },
+  ];
+  for (const centre of centres) {
+    await sql`
+      insert into daycares (
+        id, slug, name, name_fr, tagline, tagline_fr, description, description_fr,
+        address, city, province, postal_code, lat, lng, hours, hours_fr,
+        age_min_months, age_max_months, photos, license_number
+      ) values (
+        ${centre.id}, ${centre.slug}, ${centre.name}, ${centre.name},
+        ${"Licensed centre"}, ${"Centre permis"},
+        ${"Seeded so a tax receipt can use a paid bill."}, ${"Créé pour un reçu à partir d'une facture payée."},
+        ${centre.address}, ${centre.city}, ${centre.province}, ${centre.postal},
+        ${45.42}, ${-75.7},
+        ${"7:30 a.m. to 5:30 p.m."}, ${"7 h 30 a 17 h 30"},
+        ${6}, ${72}, ${""}, ${centre.licence}
+      )
+      on conflict (id) do update set
+        province = excluded.province,
+        city = excluded.city,
+        address = excluded.address,
+        postal_code = excluded.postal_code,
+        license_number = excluded.license_number
+    `;
+    await sql`
+      update daycares
+      set is_test = 1, visibility = 'admin_only', listing_active = 0
+      where id = ${centre.id}
+    `.catch(() => undefined);
+    if (role === "provider") {
+      await sql`
+        insert into provider_daycares (user_id, daycare_id)
+        values (${userId}, ${centre.id})
+        on conflict do nothing
+      `;
+    }
+  }
+  if (role !== "parent") return;
+  await sql`
+    insert into children (id, user_id, name, birthdate)
+    values (${"e2e-tax-child"}, ${userId}, ${"Amina Parent"}, ${"2022-05-04"})
+    on conflict (id) do update set user_id = excluded.user_id, name = excluded.name, birthdate = excluded.birthdate
+  `;
+  await sql`
+    insert into bookings (
+      id, user_id, daycare_id, child_id, start_month, schedule, age_group, status, monthly_amount
+    ) values (
+      ${"e2e-tax-booking"}, ${userId}, ${"e2e-tax-on"}, ${"e2e-tax-child"},
+      ${"2026-01"}, ${"full"}, ${"toddler"}, ${"active"}, ${0}
+    )
+    on conflict (id) do update set
+      user_id = excluded.user_id,
+      daycare_id = excluded.daycare_id,
+      child_id = excluded.child_id,
+      status = 'active'
+  `;
+  const bills = [
+    { id: "e2e-tax-inv-on", number: "E2E-2026-ON", daycareId: "e2e-tax-on", period: "2026-03", paidAt: "2026-03-15T15:00:00.000Z", cents: 120000, dollars: 1200, status: "paid" },
+    { id: "e2e-tax-inv-qc", number: "E2E-2026-QC", daycareId: "e2e-tax-qc", period: "2026-04", paidAt: "2026-04-02T15:00:00.000Z", cents: 80000, dollars: 800, status: "paid" },
+    { id: "e2e-tax-inv-open", number: "E2E-2026-OPEN", daycareId: "e2e-tax-on", period: "2026-05", paidAt: null, cents: 99900, dollars: 999, status: "sent" },
+  ];
+  for (const bill of bills) {
+    await sql`
+      insert into invoices (
+        id, number, booking_id, parent_user_id, daycare_id, child_id, period, status,
+        currency, subtotal, platform_fee, total, amount_cents, paid_at
+      ) values (
+        ${bill.id}, ${bill.number}, ${"e2e-tax-booking"}, ${userId}, ${bill.daycareId}, ${"e2e-tax-child"},
+        ${bill.period}, ${bill.status}, ${"cad"}, ${bill.dollars}, ${0}, ${bill.dollars}, ${bill.cents}, ${bill.paidAt}
+      )
+      on conflict (id) do update set
+        status = excluded.status,
+        amount_cents = excluded.amount_cents,
+        total = excluded.total,
+        paid_at = excluded.paid_at,
+        parent_user_id = excluded.parent_user_id
+    `;
+  }
+  for (const day of ["2026-04-02", "2026-04-03", "2026-04-04"]) {
+    await sql`
+      insert into attendance (id, daycare_id, child_name, parent_user_id, day, status)
+      values (${`e2e-tax-day-${day}`}, ${"e2e-tax-qc"}, ${"Amina Parent"}, ${userId}, ${day}, ${"arrived"})
+      on conflict (id) do nothing
+    `.catch(() => undefined);
+  }
+  await sql`
+    insert into lead_requests (id, kind, status, user_id, daycare_id, message, conversation_id)
+    values (${"e2e-tax-lead"}, ${"waitlist"}, ${"requested"}, ${userId}, ${"e2e-tax-on"}, ${"We need a spot in March."}, ${null})
+    on conflict (id) do update set status = 'requested', conversation_id = null, user_id = excluded.user_id
+  `.catch(() => undefined);
 }
 
 /**

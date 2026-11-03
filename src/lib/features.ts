@@ -312,7 +312,7 @@ export function enrolmentEsignEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_ENROLMENT_ESIGN", env);
 }
 
-/** Tax receipt text a centre types. Default off. */
+/** Yearly receipt from paid invoices, as a PDF. Default off. */
 export function taxReceiptsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_TAX_RECEIPTS", env);
 }
