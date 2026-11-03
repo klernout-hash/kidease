@@ -14,9 +14,10 @@ dismiss() { $UI tap '^(Accept|Accept all|OK|Got it|Allow|While using the app|Onl
 
 login() { # $1 role $2 email
   launch; dismiss; dismiss
-  $UI tap '^(Sign in|Log in|Se connecter)( |$)' 15 || { $UI tap '^Menu( |$)' 10; $UI tap '^(Sign in|Log in|Se connecter)( |$)' 15; } || true
+  $UI tap '^Menu( |$)' 10; sleep 3; shot "$1-menu"
+  $UI tap '(Log in|Sign in|Se connecter|Account)' 10 || true
   sleep 5; dismiss
-  if ! $UI wait 'e-?mail' 20; then shot "$1-no-login-form"; mark "$1 reviewer login" FAIL "login form not found"; return 1; fi
+  if ! $UI wait '^(Email|E-mail|Courriel)' 25; then shot "$1-no-login-form"; mark "$1 reviewer login" FAIL "login form not found"; return 1; fi
   $UI focusemail && $UI type "$2" || { mark "$1 reviewer login" FAIL "email field not found"; return 1; }
   $UI tap '^(Continue|Next|Continuer)( |$)' 4 && sleep 3
   $UI focuspw || { shot "$1-no-password"; mark "$1 reviewer login" FAIL "password field not found"; return 1; }
