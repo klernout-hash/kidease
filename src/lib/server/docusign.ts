@@ -467,6 +467,24 @@ export async function pollOpenEnvelopes(limit = 25) {
   return { ok: true as const, checked: rows.length, updated, stored };
 }
 
+/**
+ * Re-read one envelope from the DocuSign API and apply what DocuSign says.
+ * Used when a Connect delivery fails HMAC: the payload is never trusted, only
+ * the envelope id, and only for envelopes we already track.
+ */
+export async function syncEnvelopeFromApi(envelopeId: string) {
+  if (!envelopeId || envelopeId.startsWith("demo_")) return { ok: false as const, reason: "untracked" };
+  const sql = await getSql();
+  const rows = await sql
+    .query<{ id: string }>(`select id from daycare_contracts where envelope_id = $1 limit 1`, [envelopeId])
+    .catch(() => []);
+  if (!rows.length) return { ok: false as const, reason: "untracked" };
+  const progress = await getEnvelopeProgress(envelopeId);
+  if (!progress || progress.envelopeId !== envelopeId) return { ok: false as const, reason: "remote_unavailable" };
+  await applyEnvelopeEvent(progress);
+  return { ok: true as const };
+}
+
 export async function loadSignedPdfBytes(input: {
   contractId: string;
   daycareId: string;
