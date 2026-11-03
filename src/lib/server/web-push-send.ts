@@ -28,7 +28,7 @@ type SubRow = {
 };
 
 export async function sendWebPushToUser(
-  input: { userId: string; title: string; body: string; url: string },
+  input: { userId: string; title: string; body: string; url: string; call?: { type: "call" | "call-cancel"; ringId: string } },
   options: { env?: EnvMap; fetchImpl?: typeof fetch; nowSec?: number } = {},
 ): Promise<WebPushSendResult> {
   const env = options.env ?? process.env;
@@ -59,6 +59,7 @@ export async function sendWebPushToUser(
     title: input.title.slice(0, 80),
     body: input.body.slice(0, 180),
     url: input.url.startsWith("/") ? input.url.slice(0, 300) : "/notifications",
+    ...(input.call ? { type: input.call.type, ringId: input.call.ringId.slice(0, 80) } : {}),
   });
   let sent = 0;
   let failed = 0;

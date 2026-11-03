@@ -282,7 +282,7 @@ test("Apple identity tokens accept the Services ID and the native bundle id", ()
 
 test("native plugin, entitlement, and delete-account revoke are wired", () => {
   assert.match(src("ios/App/App/App.entitlements"), /com\.apple\.developer\.applesignin/);
-  assert.doesNotMatch(src("ios/App/App/App.entitlements"), /aps-environment/);
+  assert.match(src("ios/App/App/App.entitlements"), /aps-environment/); // PushKit call ring
   assert.match(src("src/lib/auth/client.ts"), /storeNativeAppleAuthorization/);
   assert.match(src("src/lib/server/apple-account-revoke.ts"), /bundleId/);
   assert.match(src("src/lib/auth/apple-native-store.ts"), /NATIVE_APPLE_SCOPE/);
