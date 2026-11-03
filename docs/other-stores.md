@@ -176,7 +176,7 @@ cd android
 
 AAB: `android/app/build/outputs/bundle/playRelease/app-play-release.aab`
 
-The GitHub workflow job is still named `bundleRelease`. It runs `bundlePlayRelease`. `STORE_UA_TOKEN` is empty on Play. Play and iOS never send `KidEaseStoreSamsung`. Stripe stays hidden.
+The GitHub workflow job is still named `bundleRelease`. It runs `bundlePlayRelease`, then `assembleAmazonRelease` (artifact `app-amazon-release`), then the Huawei build when `AGCONNECT_SERVICES_JSON` is set. `STORE_UA_TOKEN` is empty on Play. Play and iOS never send `KidEaseStoreSamsung`. Stripe stays hidden.
 
 ## Required assets
 

@@ -20,7 +20,7 @@ Parents can search, save, and message at no charge. Daycares use the tools durin
 
 ## Build
 
-`android-release.yml` (manual) builds a signed Play AAB and uploads the `app-release-aab` artifact before any Huawei step. It signs with the existing upload keystore secrets. If `AGCONNECT_SERVICES_JSON` is set, that job writes `agconnect-services.json` into the huawei source set, then runs `bundleHuaweiRelease` and `assembleHuaweiRelease`. If that secret is missing, the Huawei build step is skipped with a warning and the Play artifact stays. The file is not committed.
+`android-release.yml` (manual) builds a signed Play AAB and uploads the `app-release-aab` artifact, then runs `assembleAmazonRelease` and uploads the signed `app-amazon-release` APK, before any Huawei step. Both are signed with the existing upload keystore secrets. If `AGCONNECT_SERVICES_JSON` is set, that job writes `agconnect-services.json` into the huawei source set, then runs `bundleHuaweiRelease` and `assembleHuaweiRelease`. If that secret is missing, the Huawei build step is skipped with a warning and the Play and Amazon artifacts stay. The file is not committed.
 
 Pull-request CI (`android-stores` in `ci.yml`) builds all four Android debug APKs, scans them, scans the iOS project and the Microsoft manifest, and uploads an unsigned Huawei AAB and APK named `app-huawei-release`.
 

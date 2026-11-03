@@ -137,16 +137,24 @@ test("CI builds every Android store and uploads a Huawei release artifact", () =
   assert.match(ci, /check-store-isolation\.mjs/);
   assert.match(ci, /app-huawei-release/);
   assert.match(release, /bundlePlayRelease/);
+  assert.match(release, /assembleAmazonRelease/);
+  assert.match(release, /name: app-amazon-release/);
+  assert.match(release, /apk\/amazon\/release\/app-amazon-release\.apk/);
   assert.match(release, /bundleHuaweiRelease/);
   assert.match(release, /assembleHuaweiRelease/);
   assert.match(release, /AGCONNECT_SERVICES_JSON/);
   const aabAt = release.indexOf("name: app-release-aab");
+  const amazonAt = release.indexOf("./gradlew assembleAmazonRelease");
+  const amazonNameAt = release.indexOf("name: app-amazon-release");
   const huaweiAt = release.indexOf("bundleHuaweiRelease");
-  assert.ok(aabAt > -1 && huaweiAt > aabAt, "Play app-release-aab uploads before the Huawei build");
+  assert.ok(
+    aabAt > -1 && amazonAt > aabAt && amazonNameAt > amazonAt && huaweiAt > amazonNameAt,
+    "Play app-release-aab, then signed Amazon APK, then Huawei",
+  );
   assert.match(release, /::warning title=Huawei skipped::/);
   assert.match(release, /steps\.agconnect\.outputs\.present == 'true'/);
   assert.doesNotMatch(ci, /FEATURE_CALL_PUSH:\s*["']?1/);
-  assert.doesNotMatch(release, /FEATURE_SIGNIN_HUAWEI/);
+  assert.doesNotMatch(release, /FEATURE_SIGNIN_HUAWEI|FEATURE_LOGIN_AMAZON|FEATURE_AMAZON_ADM|FEATURE_FIRE_KIOSK|FEATURE_ALEXA_SKILL|FEATURE_CALL_PUSH/);
   assert.match(src("scripts/inject-agconnect-services.mjs"), /Contents not printed/);
 });
 
