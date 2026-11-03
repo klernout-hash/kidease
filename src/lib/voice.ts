@@ -106,9 +106,21 @@ function clientNouns(identities: string[]): string {
   return safe.map((id) => `<Client>${xmlEscape(id)}</Client>`).join("");
 }
 
+function clientNounsWithThread(identities: string[], conversationId: string): string {
+  const conv = String(conversationId || "").trim().slice(0, 120);
+  if (!conv) return clientNouns(identities);
+  const param = `<Parameter name="conversationId" value="${xmlEscape(conv)}"/>`;
+  return identities
+    .map((id) => String(id || "").trim())
+    .filter((id) => /^ke[ua]_[0-9a-f]+$/i.test(id))
+    .slice(0, 10)
+    .map((id) => `<Client><Identity>${xmlEscape(id)}</Identity>${param}</Client>`)
+    .join("");
+}
+
 /** In-app call. Dials Twilio clients only. Never a <Number>. */
-export function clientDialTwiml(identities: string[]): string {
-  const clients = clientNouns(identities);
+export function clientDialTwiml(identities: string[], conversationId = ""): string {
+  const clients = clientNounsWithThread(identities, conversationId);
   if (!clients) {
     return `<?xml version="1.0" encoding="UTF-8"?><Response>${say(CANNOT_CONNECT)}<Hangup/></Response>`;
   }
