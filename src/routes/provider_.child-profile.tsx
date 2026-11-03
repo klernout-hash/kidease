@@ -7,11 +7,14 @@ import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { checkPickup } from "@/lib/server/wiring/child-profile";
 import { childProfileEnabled } from "@/lib/wiring/child-profile";
 import { useCopy } from "@/lib/use-copy";
+import { ToolError, ToolPending } from "@/components/tool-states";
 
 export const Route = createFileRoute("/provider_/child-profile")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
   loader: () => ({ enabled: childProfileEnabled() }),
   head: () => ({ meta: [{ title: "Pickup check · KidEase" }, { name: "robots", content: "noindex" }] }),
+  pendingComponent: ToolPending,
+  errorComponent: ToolError,
   component: PickupPage,
 });
 

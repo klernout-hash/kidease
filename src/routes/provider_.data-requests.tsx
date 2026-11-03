@@ -7,11 +7,14 @@ import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { completeDsrTask } from "@/lib/server/wiring/dsr-propagation";
 import { dsrPropagationEnabled } from "@/lib/wiring/dsr-propagation";
 import { useCopy } from "@/lib/use-copy";
+import { ToolError, ToolPending } from "@/components/tool-states";
 
 export const Route = createFileRoute("/provider_/data-requests")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
   loader: () => ({ enabled: dsrPropagationEnabled() }),
   head: () => ({ meta: [{ title: "Data requests · KidEase" }, { name: "robots", content: "noindex" }] }),
+  pendingComponent: ToolPending,
+  errorComponent: ToolError,
   component: Page,
 });
 

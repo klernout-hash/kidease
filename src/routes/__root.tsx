@@ -239,7 +239,8 @@ function RootDocument() {
       data-native={hideAdmin ? "1" : undefined}
       data-runtime={nativeShell ? "native" : "web"}
       data-store={storeChannel}
-      data-theme="system"
+      data-theme="dark"
+      data-resolved-theme="dark"
       suppressHydrationWarning
     >
       <head>

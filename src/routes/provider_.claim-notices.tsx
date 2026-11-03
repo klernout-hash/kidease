@@ -4,11 +4,14 @@ import { privateReturnPath } from "@/lib/role-access";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { claimNoticesEnabled } from "@/lib/wiring/claim-notices";
 import { useCopy } from "@/lib/use-copy";
+import { ToolError, ToolPending } from "@/components/tool-states";
 
 export const Route = createFileRoute("/provider_/claim-notices")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
   loader: () => ({ enabled: claimNoticesEnabled() }),
   head: () => ({ meta: [{ title: "Claim notices · KidEase" }, { name: "robots", content: "noindex" }] }),
+  pendingComponent: ToolPending,
+  errorComponent: ToolError,
   component: Page,
 });
 
@@ -24,7 +27,7 @@ function Page() {
       next={fr ? "Ouvrez votre boîte pour le lire." : "Open your inbox to read it."}
       enabled={enabled}
     >
-      <Link to="/notifications" className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 font-medium text-primary-fg">
+      <Link to="/notifications" className="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-5 font-medium text-primary-fg">
         {fr ? "Ouvrir les avis" : "Open notices"}
       </Link>
     </WiringDesk>

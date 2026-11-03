@@ -29,7 +29,8 @@
   --color-subtle: #6a645c;
   --color-primary: #1a3790;
   --color-primary-fg: #ffffff;
-  --color-accent: #1a3790;
+  --color-accent: #a8481a;
+  --color-accent-fg: #ffffff;
   --color-border: #e2e8f0;
   --color-ring: #1a3790;
   --color-danger: #b42318;
@@ -42,11 +43,12 @@
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 600;
-  --radius-xs: 6px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 22px;
+  /* Master UI/UX spec: 4px buttons/inputs (xs/sm/md), 8px cards and sheets (lg/xl), full pills. */
+  --radius-xs: 4px;
+  --radius-sm: 4px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
   --radius-device: 36px;
   --shadow-card: 0 1px 0 rgba(28, 36, 56, 0.04), 0 18px 40px -24px rgba(26, 55, 144, 0.28);
   --shadow-lift: 0 1px 0 rgba(28, 36, 56, 0.04), 0 24px 48px -20px rgba(26, 55, 144, 0.32);
@@ -69,7 +71,8 @@
     --color-subtle: #8d8a82;
     --color-primary: #6d89d8;
     --color-primary-fg: #ffffff;
-    --color-accent: #6d89d8;
+    --color-accent: #f0a868;
+    --color-accent-fg: #14161c;
     --color-border: #3d4556;
     --color-ring: #6d89d8;
     --color-danger: #f08880;
@@ -91,7 +94,8 @@
       --color-subtle: #8d8a82;
       --color-primary: #6d89d8;
       --color-primary-fg: #ffffff;
-      --color-accent: #6d89d8;
+      --color-accent: #f0a868;
+    --color-accent-fg: #14161c;
       --color-border: #3d4556;
       --color-ring: #6d89d8;
       --color-danger: #f08880;
@@ -1026,7 +1030,7 @@
   .ke-rail-more:focus-visible {
     outline: 2px solid var(--color-ring);
     outline-offset: 3px;
-    border-radius: 14px;
+    border-radius: var(--radius-lg);
   }
   .ke-rail-more-label {
     display: block;
@@ -1066,7 +1070,7 @@
     min-height: 3.25rem;
     align-items: center;
     justify-content: center;
-    border-radius: 14px;
+    border-radius: var(--radius-lg);
     border: 1px solid var(--color-border);
     background: var(--color-surface);
     padding: 0.5rem 0.75rem;
@@ -2560,3 +2564,15 @@ html[data-resolved-theme="dark"] .ke-site-footer {
 html[data-keyboard="open"] [data-ke="app-tab-bar"] {
   display: none !important;
 }
+
+/* P-08: one bottom layer at a time — the Get-alerts prompt waits until the cookie choice is made. */
+html[data-cookie-banner="open"] [data-ke="push-explainer"] {
+  display: none;
+}
+
+/* P-13: long FR/DE/other-locale words wrap instead of overflowing at 320px. */
+h1, h2, h3, h4, p, li, label, legend, dt, dd {
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+main { min-width: 0; }

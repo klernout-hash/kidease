@@ -192,7 +192,7 @@ export function ThreadComposer({
   menu?: ReactNode;
 }) {
   return (
-    <form onSubmit={onSubmit} className="sticky bottom-0 bg-bg px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+    <form onSubmit={onSubmit} data-ke="thread-composer" className="sticky bottom-0 z-20 border-t border-border/60 bg-bg/95 backdrop-blur px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
       {error ? (
         <p className="mb-2 text-sm text-danger" role="alert">
           {error}

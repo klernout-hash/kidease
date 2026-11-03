@@ -459,13 +459,14 @@ export const DaycareCard = memo(function DaycareCard({
     <article data-slug={item.slug} className="ke-tile group flex h-full min-w-0 w-full flex-col">
       <div className="relative">
         <ListingAnchor slug={item.slug} label={name} className="block text-inherit no-underline">
+          {/* card-photo:rail (4:3, object-cover) */}
           <PhotoCarousel
             photos={photos}
             eager={eager}
             priority={priority}
             claim={offerClaim}
-            rounded="rounded-[14px]"
-            className="aspect-[3/2]"
+            rounded="rounded-lg"
+            className="aspect-[4/3]"
           />
           <CardPhotoBadges
             item={item}

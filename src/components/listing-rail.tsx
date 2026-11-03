@@ -173,7 +173,7 @@ export function ListingRail({
                 <span
                   className={cn(
                     "relative block w-full overflow-hidden rounded-[14px]",
-                    visual ? "aspect-[4/3]" : "aspect-[3/2]",
+                    "aspect-[4/3]",
                   )}
                   aria-hidden="true"
                 >

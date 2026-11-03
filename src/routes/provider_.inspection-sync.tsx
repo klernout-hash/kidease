@@ -4,11 +4,14 @@ import { privateReturnPath } from "@/lib/role-access";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { inspectionSyncEnabled } from "@/lib/wiring/inspection-sync";
 import { useCopy } from "@/lib/use-copy";
+import { ToolError, ToolPending } from "@/components/tool-states";
 
 export const Route = createFileRoute("/provider_/inspection-sync")({
   beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
   loader: () => ({ enabled: inspectionSyncEnabled() }),
   head: () => ({ meta: [{ title: "Inspections · KidEase" }, { name: "robots", content: "noindex" }] }),
+  pendingComponent: ToolPending,
+  errorComponent: ToolError,
   component: Page,
 });
 
@@ -24,7 +27,7 @@ function Page() {
       next={fr ? "Ouvrez votre fiche publique pour le voir." : "Open your public listing to see it."}
       enabled={enabled}
     >
-      <Link to="/search" className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 font-medium text-primary-fg">
+      <Link to="/search" className="inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-5 font-medium text-primary-fg">
         {fr ? "Voir les fiches" : "See listings"}
       </Link>
     </WiringDesk>

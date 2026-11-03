@@ -107,6 +107,7 @@ export function ExploreFilterBar({
             aria-pressed={liveOn}
             onClick={onLive}
           >
+            <span aria-hidden className="mr-1.5 inline-block size-2 rounded-full bg-accent" />
             {t("liveOnKidEase")}
           </Link>
         ) : null}
