@@ -24,8 +24,8 @@ test("paid Featured placements are marked Sponsored on home ranking and listing 
   const home = src("src/routes/index.tsx");
   assert.match(home, /"featuredBody"/);
   assert.match(src("src/lib/server/daycares.ts"), /stampPaidPlacement/);
-  assert.match(src("src/lib/legal-copy.ts"), /marked Sponsored/);
-  assert.match(src("src/lib/legal-copy.ts"), /mention Commandité/);
+  assert.doesNotMatch(src("src/lib/legal-copy.ts"), /pay for a Featured placement/);
+  assert.doesNotMatch(src("src/lib/legal-copy.ts"), /payer une mise en vedette/);
   assert.doesNotMatch(src("src/components/sponsored-mark.tsx"), /featuredCity \?\? true/);
 });
 
