@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { applyEnvelopeEvent } from "@/lib/server/docusign";
-import { planConnectWebhook, webhookUrlHasSecret } from "@/lib/server/docusign-connect";
+import { applyEnvelopeEvent, syncEnvelopeFromApi } from "@/lib/server/docusign";
+import { parseConnectPayload, planConnectWebhook, webhookUrlHasSecret } from "@/lib/server/docusign-connect";
 import { logSecurityEvent, requestIp } from "@/lib/server/security-events";
 
 function ignored(reason: "not_configured" | "foreign_account" | "unknown_account" | "empty") {
@@ -20,6 +20,19 @@ async function run(request: Request) {
   if (plan.kind === "unknown_account") return ignored("unknown_account");
   if (plan.kind === "bad_signature") {
     await logSecurityEvent({ kind: "webhook_reject", detail: "docusign signature", ip });
+    // HMAC mismatch from our own account (e.g. a rotated Connect key). Never
+    // trust the body; re-read the envelope from DocuSign's API instead, so a
+    // key drift cannot freeze contract statuses until the hourly poll.
+    const envelopeId = parseConnectPayload(raw)?.envelopeId;
+    const { enrolmentEsignEnabled } = await import("@/lib/features");
+    if (envelopeId && enrolmentEsignEnabled()) {
+      try {
+        const synced = await syncEnvelopeFromApi(envelopeId);
+        if (synced.ok) return Response.json({ ok: true, verified: "api" });
+      } catch {
+        /* fall through to 401 */
+      }
+    }
     return new Response("Unauthorized", { status: 401 });
   }
   if (plan.kind === "empty") return ignored("empty");
