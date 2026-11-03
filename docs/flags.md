@@ -171,7 +171,7 @@ Each one stays off until its own flag is `1`. None of them send email, SMS, push
 | `FEATURE_REVIEW_REPLIES` | A centre reply under a public parent review, plus an in-app notice. |
 | `FEATURE_ENROLMENT_ESIGN` | `/sign/$id`, the signed contract PDF, and DocuSign send or sync. |
 | `FEATURE_PARENT_AGREEMENT` | Parent and centre enrolment agreement. Also needs `FEATURE_ENROLMENT_ESIGN`. DocuSign sends only when the director clicks. The fee stays in the agreement. |
-| `FEATURE_TAX_RECEIPTS` | T778 and Quebec RL-24 text. The centre types the amount. Provinces only. |
+| `FEATURE_TAX_RECEIPTS` | Ontario and federal child care PDF, and a Quebec RL-24 PDF. The total is paid invoices for that year. No typed fee. No email. |
 | `FEATURE_DAILY_LOGS` | Daily journal, meals, and naps for an enrolled child. |
 | `FEATURE_TOUR_CALENDAR` | Tour calendar at `/parent?tab=tours` and an in-app reminder. |
 | `FEATURE_FAMILY_VAULT` | Parent documents at `/parent?tab=documents`. |

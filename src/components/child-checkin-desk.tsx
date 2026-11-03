@@ -1,21 +1,22 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { gapCopy } from "@/lib/gap-features";
+import { featureCopy } from "@/lib/flagged-feature-copy";
 import { localePath } from "@/lib/locale-path";
+import { localeTag } from "@/lib/languages";
 import { listDoorRoster, listMyCheckHistory, recordChildCheck } from "@/lib/server/child-checkin";
+import type { Locale } from "@/lib/types";
 import { useCopy } from "@/lib/use-copy";
 
-function when(iso: string, locale: string) {
+function when(iso: string, locale: Locale) {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleString(locale === "fr" ? "fr-CA" : "en-CA", { dateStyle: "medium", timeStyle: "short" });
+  return date.toLocaleString(localeTag(locale), { dateStyle: "medium", timeStyle: "short" });
 }
 
 export function ChildCheckinDesk() {
   const { locale } = useCopy();
-  const lang = locale === "fr" ? "fr" : "en";
-  const copy = gapCopy(lang);
+  const copy = featureCopy(locale);
   const [desk, setDesk] = useState<Awaited<ReturnType<typeof listDoorRoster>> | null>(null);
   const [pickup, setPickup] = useState<Record<string, string>>({});
   const [message, setMessage] = useState("");
@@ -88,7 +89,7 @@ export function ChildCheckinDesk() {
         <ul className="mt-4 divide-y divide-border text-sm">
           {desk.events.map((event) => (
             <li key={event.id} className="py-2">
-              {event.childName} · {event.action === "check_in" ? copy.arrived : copy.left} · {when(event.at, lang)}
+              {event.childName} · {event.action === "check_in" ? copy.arrived : copy.left} · {when(event.at, locale)}
               {event.pickupName ? ` · ${event.pickupName}` : ""}
             </li>
           ))}
@@ -108,8 +109,7 @@ export function ChildCheckinDesk() {
 
 export function ChildCheckHistory() {
   const { locale } = useCopy();
-  const lang = locale === "fr" ? "fr" : "en";
-  const copy = gapCopy(lang);
+  const copy = featureCopy(locale);
   const [rows, setRows] = useState<Awaited<ReturnType<typeof listMyCheckHistory>> | null>(null);
   useEffect(() => {
     void listMyCheckHistory()
@@ -125,7 +125,7 @@ export function ChildCheckHistory() {
         <ul className="mt-3 divide-y divide-border text-sm">
           {rows.events.map((event) => (
             <li key={event.id} className="py-2">
-              {event.childName} · {event.daycareName} · {event.action === "check_in" ? copy.arrived : copy.left} · {when(event.at, lang)}
+              {event.childName} · {event.daycareName} · {event.action === "check_in" ? copy.arrived : copy.left} · {when(event.at, locale)}
               {event.pickupName ? ` · ${event.pickupName}` : ""}
             </li>
           ))}
