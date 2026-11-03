@@ -714,6 +714,8 @@ export type SessionDesks = {
   coparentLink?: boolean;
   /** Staff hours. Off unless FEATURE_STAFF_TIMESHEETS is on. */
   staffTimesheets?: boolean;
+  /** Centre tool ids that are on. Each tool flag defaults off. */
+  centreTools?: string[];
   /** Document vault nav. Off unless FEATURE_FAMILY_VAULT is on. */
   familyVault?: boolean;
   /** Tour calendar nav. Off unless FEATURE_TOUR_CALENDAR is on. */

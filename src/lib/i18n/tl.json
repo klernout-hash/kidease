@@ -3349,5 +3349,9 @@
   "shotCapListing": "Listing · Android",
   "shotCapLogin": "Sign in · Android",
   "featPayBodyBills": "Nagpapadala ng bill ang mga sentro. Nagbabayad ang mga magulang gamit ang Stripe Checkout. Maaaring itala ng magulang ang Interac e-Transfer sa pahina ng bayad. Nanatiling naghihintay ang tala. Hindi ito mamarkahan ng pahina bilang bayad.",
-  "compareEmptyFree": "Ihambing ang edad, oras, distansya, wika, kultura, at mga bakanteng puwesto."
+  "compareEmptyFree": "Ihambing ang edad, oras, distansya, wika, kultura, at mga bakanteng puwesto.",
+  "centreToolsNav": "Mga tool ng centre",
+  "centreToolsNavHint": "Menu, checklist, tulong sa singil",
+  "parentCentreToolsNav": "Mula sa iyong daycare",
+  "parentCentreToolsNavHint": "Menu, tala, at bill"
 }
