@@ -117,7 +117,7 @@ test("in-app back is true only for SPA history or same-origin referrer", () => {
 test("Shell wires MenuLeafBack on leaf routes only; listing/auth keep their own chrome", () => {
   const shell = src("src/components/shell.tsx");
   const back = src("src/components/menu-leaf-back.tsx");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(shell, /MenuLeafBack/);
   assert.match(shell, /isMenuLeafPath\(pathname\)/);
   assert.match(back, /data-ke-menu-leaf-back/);

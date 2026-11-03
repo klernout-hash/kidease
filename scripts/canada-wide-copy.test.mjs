@@ -10,7 +10,7 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-const copy = src("src/lib/copy.ts");
+const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
 const menu = src("src/lib/app-menu.ts");
 const verify = src("src/routes/verify.tsx");
 const req = src("src/routes/daycare-requirements.tsx");

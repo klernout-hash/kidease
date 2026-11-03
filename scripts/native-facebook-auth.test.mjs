@@ -365,7 +365,7 @@ describe("native Facebook auth (Better Auth socialProviders.facebook)", () => {
     assert.match(read("src/components/continue-age-notice.tsx"), /18 ans ou plus/);
     assert.doesNotMatch(login, /I confirm I am 18 or older\./);
     assert.doesNotMatch(login, /chooseAccountRole\("child"\)/);
-    const copy = read("src/lib/copy.ts");
+    const copy = (read("src/lib/copy-en.ts") + read("src/lib/copy-fr.ts"));
     assert.match(copy, /A child cannot have an account/);
     assert.match(copy, /Un enfant ne peut pas avoir de compte/);
   });
@@ -399,7 +399,7 @@ describe("native Facebook auth (Better Auth socialProviders.facebook)", () => {
     assert.match(slots, /assertFacebookContactEmail/);
     assert.match(read("src/lib/server/lead-requests.ts"), /assertFacebookContactEmail/);
     assert.match(read("src/components/facebook-email-prompt.tsx"), /facebookEmailLead/);
-    assert.match(read("src/lib/copy.ts"), /facebookEmailLead/);
+    assert.match((read("src/lib/copy-en.ts") + read("src/lib/copy-fr.ts")), /facebookEmailLead/);
     assert.match(read("src/lib/auth/email-password.ts"), /isFacebookPlaceholderEmail/);
   });
 

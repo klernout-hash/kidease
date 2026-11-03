@@ -60,7 +60,7 @@ test("header pills follow stored roles; Admin only for kyle", () => {
 });
 
 test("Daycare desk chrome is keyed for EN and FR", () => {
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /todayHome: "Today"/);
   assert.match(copy, /todayHome: "Aujourd’hui"/);
   assert.match(copy, /deskNavListings: "Listings"/);

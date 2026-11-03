@@ -142,7 +142,7 @@ test("listing route sets unique head tags and JSON-LD; grok OG does not overwrit
   assert.match(listing, /listingBreadcrumbJsonLdScript/);
   const grok = src("server/middleware/grok-pwa.ts");
   assert.match(grok, /path\.startsWith\("\/daycare\/"\)/);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /noLiveResultsClaim: "Directors: claim your listing"/);
   assert.match(copy, /noLiveResultsClaim: "Directeurs : revendiquez votre fiche"/);
   assert.match(copy, /liveToggleCount: "Live · \{n\}"/);

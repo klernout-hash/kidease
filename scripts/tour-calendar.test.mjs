@@ -144,7 +144,7 @@ test("empty listings stay empty and full or past slots are not bookable", () => 
 });
 
 test("EN and FR-CA copy keys exist for the tour calendar", () => {
-  const text = src("src/lib/copy.ts");
+  const text = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   for (const key of [
     "tourTimes",
     "tourTimesEmpty",

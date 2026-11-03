@@ -100,7 +100,7 @@ test("Today and listing editor use Action required + coach, not a Superhost publ
   const forms = src("src/components/provider-listing-forms.tsx");
   const coach = src("src/components/listing-readiness-coach.tsx");
   const provider = src("src/routes/provider.tsx");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   const model = src("src/lib/listing-verified.ts");
 
   assert.match(home, /ActionRequiredBanner/);

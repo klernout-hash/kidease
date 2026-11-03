@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const family = readFileSync(join(root, "src/lib/server/family.ts"), "utf8");
-const copy = readFileSync(join(root, "src/lib/copy.ts"), "utf8");
+const copy = readFileSync(join(root, "src/lib/copy-en.ts"), "utf8") + readFileSync(join(root, "src/lib/copy-fr.ts"), "utf8");
 
 test("account deletion keeps billing rows and says so", () => {
   const start = family.indexOf("export async function purgeAccountData");

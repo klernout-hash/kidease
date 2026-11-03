@@ -22,12 +22,9 @@ function src(rel) {
 const footer = src("src/components/site-footer.tsx");
 const nav = src("src/lib/site-footer-nav.ts");
 const css = src("src/styles.css");
-const copySrc = src("src/lib/copy.ts");
-
+const copySrc = src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts");
 function copyValue(key, locale) {
-  const start = locale === "fr" ? copySrc.indexOf("\n  fr: {") : copySrc.indexOf("export const copy");
-  const end = locale === "fr" ? copySrc.length : copySrc.indexOf("\n  fr: {");
-  const block = copySrc.slice(start, end);
+  const block = src(locale === "fr" ? "src/lib/copy-fr.ts" : "src/lib/copy-en.ts");
   const match = block.match(new RegExp(`\\n    ${key}: "([^"]*)"`));
   assert.ok(match, `copy ${locale}.${key}`);
   return match[1];

@@ -123,7 +123,7 @@ test("parent and daycare groups stay on the live headings", () => {
   const drawer = src("src/components/nav-drawer.tsx");
   assert.doesNotMatch(drawer, /phoneDeskGroupOpen/);
   assert.doesNotMatch(src("src/routes/provider.tsx"), /data-ke="listings-actions"/);
-  assert.doesNotMatch(src("src/lib/copy.ts"), /navMyRequests:/);
+  assert.doesNotMatch((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /navMyRequests:/);
   assert.doesNotMatch(src("src/components/join-waitlist.tsx"), /centre-not-joined/);
 });
 

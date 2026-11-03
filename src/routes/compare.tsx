@@ -16,7 +16,7 @@ import {
 } from "@/lib/now-loops";
 import { hasRealPhoto } from "@/lib/listing-readiness";
 import { parentListingFeesVisible } from "@/lib/public-fees";
-import { compareEmptyKey } from "@/lib/copy";
+import { compareEmptyKey } from "@/lib/copy-keys";
 import { useCopy } from "@/lib/use-copy";
 import { useRoleChrome } from "@/components/role-chrome";
 import { vacancyLine } from "@/components/vacancy-freshness";

@@ -39,7 +39,7 @@ test("fonts, sign-in aliases, Interac, and public admin words match the queue", 
 });
 
 test("French labels, sponsored mark, native store copy, and wallets", () => {
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /menu: "Menu"/);
   assert.match(copy, /menu: "Ouvrir le menu"/);
   assert.match(copy, /sponsored: "Commandité"/);

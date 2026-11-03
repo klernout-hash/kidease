@@ -15,7 +15,7 @@ test("explore and search share six daycare-type rows with in-row show more", () 
   const home = src("src/routes/index.tsx");
   const search = src("src/routes/search.tsx");
   const rail = src("src/components/listing-rail.tsx");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   const css = src("src/styles.css");
   const daycares = src("src/lib/server/daycares.ts");
 

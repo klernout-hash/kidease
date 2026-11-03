@@ -140,7 +140,7 @@ test("posted slots carry inventory and public book is not Instant Book placement
 });
 
 test("EN and FR copy keys exist for inventory and decline reason", () => {
-  const text = src("src/lib/copy.ts");
+  const text = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   for (const key of [
     "tourInventoryOpen",
     "tourInventorySoftHold",

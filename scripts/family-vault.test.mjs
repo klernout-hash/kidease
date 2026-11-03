@@ -31,7 +31,7 @@ test("vault keys stay under family-docs and only two kinds are allowed", () => {
 });
 
 test("vault is private, bilingual, and not a sixth phone tab", () => {
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   const account = src("src/routes/account.tsx");
   const api = src("src/routes/api/family-documents.ts");
   const download = src("src/routes/api/family-documents.$id.ts");

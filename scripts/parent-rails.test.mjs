@@ -189,7 +189,7 @@ test("parent rails are wired on parent desk, home, and search see-all", () => {
   assert.match(rail, /seeAllHref/);
   assert.match(rail, /seeAll/);
 
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /Paid plans never inflate Match/);
   assert.match(copy, /railBestMatch: "Best match for you"/);
   assert.match(copy, /seeAll: "See all"/);

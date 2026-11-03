@@ -403,8 +403,8 @@ test("search and explore wire one Top 7 chip row and ?cat=", () => {
   assert.match(chips, /RAIL_AGES/);
   assert.match(lib, /listingAgeUnknown/);
   assert.match(chips, /standardAgeLabel/);
-  assert.match(src("src/lib/copy.ts"), /catInfants: "Infants"/);
-  assert.match(src("src/lib/copy.ts"), /catBeforeAfter: "Before & after"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /catInfants: "Infants"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /catBeforeAfter: "Before & after"/);
   assert.match(explore, /redirect\(\{ to: "\/search" \}\)/);
   assert.doesNotMatch(rails, /FacilityTypeRails/);
   assert.match(src("src/lib/care-type.ts"), /export function isBeforeAfterProgram/);

@@ -49,6 +49,7 @@ import { getRoleChrome } from "@/lib/server/role-route";
 import { automationLiveEnv, automationMode } from "@/lib/automations";
 import { posthogErrorsEnabled } from "@/lib/features";
 import { STYLE_NONCE_BOOT } from "@/lib/style-nonce-boot";
+import { ensureFrenchCopy } from "@/lib/copy-runtime";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import {
   isAccessProtectedPath,
@@ -90,6 +91,8 @@ const GUEST_LOCALE = {
 
 export const Route = createRootRoute({
   beforeLoad: async ({ location }) => {
+    const frenchDoc = location.pathname === "/fr" || location.pathname.startsWith("/fr/");
+    if (frenchDoc) await ensureFrenchCopy();
     const barePath =
       location.pathname.length > 1 && location.pathname.endsWith("/")
         ? location.pathname.slice(0, -1)

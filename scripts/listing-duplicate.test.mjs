@@ -257,7 +257,7 @@ test("createListing blocks duplicates before insert and still queues first-time 
 });
 
 test("provider desk shows Daycare already Listed from the API message and locale copy", () => {
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /daycareAlreadyListed: "Daycare already Listed"/);
   assert.match(copy, /daycareAlreadyListed: "Garderie déjà inscrite"/);
   assert.equal(DUPLICATE_LISTING_MESSAGE_FR, "Garderie déjà inscrite");

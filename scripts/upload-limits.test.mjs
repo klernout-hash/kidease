@@ -29,13 +29,13 @@ test("upload constants stay honest to the real caps", () => {
   assert.equal(LISTING_PHOTO_MIN_SHORT_SIDE_PX, 800);
   assert.equal(PRIVATE_DOC_BAD_FILE, "Upload a PDF or image under 4 MB.");
   assert.equal(SCREENING_BAD_FILE, PRIVATE_DOC_BAD_FILE);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /uploadDocTooBig: "Upload a PDF or image under 4 MB\."/);
   assert.match(copy, /uploadDocTooBig: "Téléversez un PDF ou une image de moins de 4 Mo\."/);
 });
 
 test("EN + FR helper copy names the real size and recommended photo resolution", () => {
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /uploadDocHint: "PDF or image · max 4 MB"/);
   assert.match(copy, /uploadDocHint: "PDF ou image · max 4 Mo"/);
   assert.match(copy, /uploadPhotoHint: "JPG, PNG, HEIC, WebP, AVIF, GIF, BMP, or TIFF\. Phone photos are resized automatically\. Up to 10 photos\."/);

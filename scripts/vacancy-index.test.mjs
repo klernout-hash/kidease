@@ -117,7 +117,7 @@ test("the vacancy page is public, sourced, and has no upgrade path", () => {
   assert.match(src("src/routes/cities.tsx"), /counts\.vacancyIndex/);
   assert.match(src("src/routes/fr.vacancy-index.tsx"), /\/fr\/search/);
   assert.doesNotMatch(src("public/sitemap.xml"), /https:\/\/www\.kidease\.ca\/fr\/vacancy-index/);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /vacancyIndexTitle: "Open spots by province"/);
   assert.match(copy, /Fees are not on this page/);
   assert.doesNotMatch(copy.slice(copy.indexOf("vacancyIndexTitle"), copy.indexOf("vacancyIndexContact") + 40), /—/);

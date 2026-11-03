@@ -182,11 +182,15 @@ export function stripModulePreloads(html) {
 }
 
 export function applyDocumentNonces(html, nonce) {
-  return stripModulePreloads(
-    applyEmailObfuscationOff(
-      applyStyleNonces(applyScriptNonces(applyStyleNonceBoot(html, nonce), nonce), nonce),
-    ),
+  return applyEmailObfuscationOff(
+    applyStyleNonces(applyScriptNonces(applyStyleNonceBoot(html, nonce), nonce), nonce),
   );
+}
+
+/** Home only. Search and login keep their preloads so those pages stay fast. */
+export function stripModulePreloadsForPath(html, pathname) {
+  if (pathname !== "/" && pathname !== "/fr" && pathname !== "/fr/") return html;
+  return stripModulePreloads(html);
 }
 
 export function isHtmlResponse(contentType) {

@@ -6,6 +6,7 @@ import { test } from "node:test";
 import {
   applyDocumentNonces,
   stripModulePreloads,
+  stripModulePreloadsForPath,
   applyEmailObfuscationOff,
   applyHtmlDocumentCacheHeaders,
   applyScriptNonces,
@@ -187,5 +188,7 @@ test("HTML responses drop modulepreload hints and keep image preloads", () => {
   assert.doesNotMatch(out, /modulepreload/);
   assert.match(out, /logo\.svg/);
   assert.match(out, /styles\.css/);
-  assert.doesNotMatch(applyDocumentNonces(html, "n1"), /modulepreload/);
+  assert.doesNotMatch(stripModulePreloadsForPath(html, "/"), /modulepreload/);
+  assert.match(stripModulePreloadsForPath(html, "/search"), /modulepreload/);
+  assert.match(stripModulePreloadsForPath(html, "/login"), /modulepreload/);
 });

@@ -160,9 +160,9 @@ describe("plugin wiring and honest copy", () => {
     assert.doesNotMatch(home, /apps\.apple\.com|play\.google\.com|InAppReview/);
     assert.doesNotMatch(rate, /apps\.apple\.com|play\.google\.com/);
     assert.doesNotMatch(home, /CookieConsentBanner|cookie-consent/);
-    assert.match(src("src/lib/copy.ts"), /rateKidEase: "Rate KidEase"/);
-    assert.match(src("src/lib/copy.ts"), /rateKidEase: "Évaluer KidEase"/);
-    assert.match(src("src/lib/copy.ts"), /writeStoreReview: "Write a review"/);
+    assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /rateKidEase: "Rate KidEase"/);
+    assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /rateKidEase: "Évaluer KidEase"/);
+    assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /writeStoreReview: "Write a review"/);
     assert.match(src("docs/store-review.md"), /90-day/);
     assert.match(src("docs/store-review.md"), /Do \*\*not\*\*/);
     assert.match(src("docs/store-review.md"), /guest home/);
@@ -172,7 +172,7 @@ describe("plugin wiring and honest copy", () => {
     assert.doesNotMatch(src(".env.example"), /VITE_PLAY_STORE_URL=https:/);
     assert.match(src("src/routes/get-app.tsx"), /AMAZON_APPSTORE_URL/);
     assert.match(src("src/components/store-badges.tsx"), /storeComingSoon/);
-    assert.match(src("src/lib/copy.ts"), /storeComingSoon: "Coming soon"/);
+    assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /storeComingSoon: "Coming soon"/);
     assert.doesNotMatch(src("src/routes/get-app.tsx"), /apps\.apple\.com/);
     assert.doesNotMatch(src("src/components/store-badges.tsx"), /apps\.apple\.com|play\.google\.com\/store/);
     assert.match(src(".env.example"), /# NEXT_PUBLIC_AMAZON_APPSTORE_URL=/);

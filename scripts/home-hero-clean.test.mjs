@@ -41,7 +41,7 @@ test("live toggle stays off the home hero when the live count is 0", () => {
 
 test("home keeps a single trust disclaimer and the police-check wording", () => {
   const home = src("src/routes/index.tsx");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.doesNotMatch(home, /t\("heroTrust"\)/);
   assert.doesNotMatch(src("src/routes/fr.index.tsx"), /t\("heroTrust"\)/);
   assert.match(home, /<TrustBar/);
@@ -69,7 +69,7 @@ test("home search bar is a slim pill with a claim strip and a daycare header pil
   const home = src("src/routes/index.tsx");
   const fr = src("src/routes/fr.index.tsx");
   const shell = src("src/components/shell.tsx");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   const strip = src("src/components/hero-claim-strip.tsx");
   assert.match(bar, /lg:h-\[56px\]/);
   assert.match(bar, /whitespace-nowrap text-\[16px\] font-semibold leading-5 text-fg/);
@@ -122,8 +122,8 @@ test("search control has a Search button, radius, and no Care schedule subtitle"
   assert.doesNotMatch(bar, /whenFilled \? whenLabel : t\("searchWhen"\)/);
   assert.match(home, /onRadiusChange=\{setRadiusKm\}/);
   assert.doesNotMatch(home, /displayDistance\(radiusKm/);
-  assert.match(src("src/lib/copy.ts"), /searchSubmit: "Search"/);
-  assert.match(src("src/lib/copy.ts"), /searchSubmit: "Rechercher"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /searchSubmit: "Search"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /searchSubmit: "Rechercher"/);
 });
 
 test("cities index lists every province and only real city hubs", () => {

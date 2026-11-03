@@ -18,9 +18,9 @@ test("PIPEDA / store-review delete-account URL is a real public route", () => {
   assert.equal(existsSync(join(root, "src/components/delete-account-panel.tsx")), true);
   assert.match(src("src/routes/delete-account.tsx"), /createFileRoute\("\/delete-account"\)/);
   assert.match(src("src/routeTree.gen.ts"), /id: '\/delete-account'/);
-  assert.match(src("src/lib/copy.ts"), /deleteAccountGuestLead:/);
-  assert.match(src("src/lib/copy.ts"), /deleteAccountSignIn:/);
-  assert.match(src("src/lib/copy.ts"), /Se connecter pour supprimer mon compte/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /deleteAccountGuestLead:/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /deleteAccountSignIn:/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /Se connecter pour supprimer mon compte/);
 });
 
 test("in-app Delete my account lives on Account only; public footer and desks do not", () => {

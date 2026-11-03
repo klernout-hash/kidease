@@ -268,7 +268,7 @@ describe("PostHog client wiring", () => {
     const start = read("src/lib/posthog.ts");
     const legal = read("src/lib/legal-copy.ts");
     const help = read("src/lib/help-knowledge.ts");
-    const copy = read("src/lib/copy.ts");
+    const copy = (read("src/lib/copy-en.ts") + read("src/lib/copy-fr.ts"));
     assert.match(rootRoute, /CookieConsentBanner/);
     assert.match(banner, /shouldShowAnalyticsConsentBanner/);
     assert.match(banner, /scheduleAnalyticsConsentBannerReveal/);

@@ -163,7 +163,7 @@ test("parent listing honesty never labels unknown vacancy as stale", () => {
   assert.match(search, /filterConfirmedSpots/);
   assert.match(search, /filterDetailsReady/);
   assert.match(search, /noFilterResults/);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /A few details to confirm/);
   assert.match(copy, /Ask about current spots/);
   assert.match(copy, /KidEase does not invent availability/);
@@ -177,7 +177,7 @@ test("provider guest gate and declined claims stay honest", () => {
   assert.match(provider, /declined/);
   assert.doesNotMatch(provider, /PromotePanel/);
   assert.match(provider, /plansNotOffered/);
-  assert.match(src("src/lib/copy.ts"), /Promote is off while this listing is declined/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /Promote is off while this listing is declined/);
   assert.match(provider, /VacancyConfirmLoop/);
   const loop = src("src/components/vacancy-confirm.tsx");
   assert.match(loop, /refreshVacancy/);
@@ -195,7 +195,7 @@ test("provider guest gate and declined claims stay honest", () => {
   assert.match(forms, /ListingHealthPanel/);
   assert.match(forms, /ListingReadinessCoach/);
   assert.doesNotMatch(forms, /QualityIssuesPanel/);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.doesNotMatch(copy, /Background checked by KidEase/);
   assert.match(copy, /KidEase does not invent availability/);
 });

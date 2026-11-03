@@ -83,8 +83,8 @@ test("Live on KidEase is a shareable claim-verified filter", () => {
   assert.match(src("src/components/explore-filter-bar.tsx"), /data-ke="live-on-kidease"/);
   assert.match(src("src/components/shell.tsx"), /data-ke="live-on-kidease-tab"/);
   assert.match(src("src/routes/index.tsx"), /data-ke="home-live-on-kidease"/);
-  assert.match(src("src/lib/copy.ts"), /liveOnKidEase: "Live on KidEase"/);
-  assert.match(src("src/lib/copy.ts"), /liveOnKidEase: "En ligne sur KidEase"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /liveOnKidEase: "Live on KidEase"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /liveOnKidEase: "En ligne sur KidEase"/);
   for (const pack of ["ar", "de", "es", "it", "pa", "tl", "yue", "zh"]) {
     const json = JSON.parse(src(`src/lib/i18n/${pack}.json`));
     assert.equal(typeof json.liveOnKidEase, "string");

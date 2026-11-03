@@ -30,7 +30,7 @@ test("all 13 provinces and territories are first-class", () => {
 
 test("trust badges never claim KidEase police-checks staff or invent scores", () => {
   const labels = [
-    src("src/lib/copy.ts"),
+    (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")),
     src("src/components/trust-badge.tsx"),
     src("src/components/listing-badges.tsx"),
   ].join("\n");
@@ -47,16 +47,16 @@ test("trust badges never claim KidEase police-checks staff or invent scores", ()
   assert.match(src("src/lib/trust.ts"), /id: "license_matched"/);
   assert.match(src("src/lib/trust.ts"), /claim\.id === "claim_verified"/);
   assert.match(src("src/lib/trust.ts"), /It does NOT police-check every educator/);
-  assert.match(src("src/lib/copy.ts"), /trustCatalogueMatched: "Catalogue-matched"/);
-  assert.match(src("src/lib/copy.ts"), /trustLicensedMatched: "Registry-checked"/);
-  assert.match(src("src/lib/copy.ts"), /trustLicenseUnverified: "Unverified"/);
-  assert.match(src("src/lib/copy.ts"), /trustClaimVerified: "Claim verified"/);
-  assert.match(src("src/lib/copy.ts"), /trustStaffAttested: "Staff attested"/);
-  assert.match(src("src/lib/copy.ts"), /trustScreeningOnFile: "Screening on file"/);
-  assert.match(src("src/lib/copy.ts"), /trustScreeningOnFile: "Dossier de filtrage"/);
-  assert.match(src("src/lib/copy.ts"), /Payments: not charged yet/);
-  assert.doesNotMatch(src("src/lib/copy.ts"), /KidEase background-checked/);
-  assert.doesNotMatch(src("src/lib/copy.ts"), /Background checked by KidEase/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /trustCatalogueMatched: "Catalogue-matched"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /trustLicensedMatched: "Registry-checked"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /trustLicenseUnverified: "Unverified"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /trustClaimVerified: "Claim verified"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /trustStaffAttested: "Staff attested"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /trustScreeningOnFile: "Screening on file"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /trustScreeningOnFile: "Dossier de filtrage"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /Payments: not charged yet/);
+  assert.doesNotMatch((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /KidEase background-checked/);
+  assert.doesNotMatch((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /Background checked by KidEase/);
 });
 
 test("registry adapters do not scrape; stubs stay non-live", () => {

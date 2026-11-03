@@ -50,7 +50,7 @@ test("listing card photo uses the live and fee pills instead of registry-checked
   assert.match(card, /cardPhotoLicenseWarning\(license\.id\)/);
   assert.doesNotMatch(card, /trustLicensedMatched/);
   assert.doesNotMatch(card, /listingPill/);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /cardTenPerDay: "\$10\/day"/);
   assert.match(copy, /cardQcPerDay: "\$9.65\/day subsidized"/);
   assert.match(copy, /cardTenPerDay: "10 \$\/jour"/);

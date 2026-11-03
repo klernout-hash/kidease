@@ -275,7 +275,7 @@ test("migration seeds MB thoroughly and stubs other provinces", () => {
 });
 
 test("public copy and desks stay honest and PIPEDA-tight", () => {
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   const trust = src("src/lib/trust.ts");
   assert.match(copy, /trustScreeningOnFile: "Screening on file"/);
   assert.match(copy, /trustScreeningOnFile: "Dossier de filtrage"/);
@@ -296,8 +296,8 @@ test("public copy and desks stay honest and PIPEDA-tight", () => {
   assert.match(src("src/routes/daycare-requirements.tsx"), /reqPoliceBody/);
   assert.match(src("src/components/trust-bar.tsx"), /localePath\("\/verify"/);
   assert.match(src("src/lib/site-footer-nav.ts"), /\/daycare-requirements/);
-  assert.match(src("src/lib/copy.ts"), /does not run police checks/);
-  assert.match(src("src/lib/copy.ts"), /ne fait pas de contrôle policier/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /does not run police checks/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /ne fait pas de contrôle policier/);
   assert.doesNotMatch(src("src/lib/site-footer-nav.ts"), /delete-account/);
   assert.match(src("src/lib/server/provider-screening.ts"), /kind: "screening_upload"/);
   assert.match(src("src/lib/server/provider-screening.ts"), /screening_approve/);

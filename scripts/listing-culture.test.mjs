@@ -135,7 +135,7 @@ describe("listing culture wiring", () => {
     const search = src("src/routes/search.tsx");
     assert.doesNotMatch(search, /staffLanguages|culturalPrograms|filter by race|caregiver race/i);
 
-    const copy = src("src/lib/copy.ts");
+    const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
     assert.match(copy, /Share languages and programs only/);
     assert.match(copy, /Do not list staff members’ race, ethnicity, immigration status/);
     assert.doesNotMatch(copy, /shop by race|caregiver race|racial categor/i);

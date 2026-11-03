@@ -1,5 +1,5 @@
 import { useRoleChrome } from "@/components/role-chrome";
-import { parentPayLeadKey } from "@/lib/copy";
+import { parentPayLeadKey } from "@/lib/copy-keys";
 import { listingStatusFromClaim, listingStatusLabel } from "@/lib/listing-status";
 import { useCopy } from "@/lib/use-copy";
 import { useStoreShell } from "@/lib/use-native-shell";
