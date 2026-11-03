@@ -3349,5 +3349,9 @@
   "shotCapListing": "Eintrag · Android",
   "shotCapLogin": "Anmelden · Android",
   "featPayBodyBills": "Einrichtungen senden Rechnungen. Eltern zahlen mit Stripe Checkout. Ein Elternteil kann auf der Bezahlseite eine Interac-Überweisung notieren. Die Notiz bleibt offen. Die Seite kann sie nicht als bezahlt markieren.",
-  "compareEmptyFree": "Vergleichen Sie Alter, Öffnungszeiten, Entfernung, Sprache, Kultur und freie Plätze."
+  "compareEmptyFree": "Vergleichen Sie Alter, Öffnungszeiten, Entfernung, Sprache, Kultur und freie Plätze.",
+  "centreToolsNav": "Kita-Werkzeuge",
+  "centreToolsNavHint": "Speisepläne, Checklisten, Abrechnung",
+  "parentCentreToolsNav": "Von Ihrer Kita",
+  "parentCentreToolsNavHint": "Speisepläne, Notizen und Rechnungen"
 }
