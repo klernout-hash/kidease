@@ -46,7 +46,7 @@ async function callTargets(sql: Awaited<ReturnType<typeof getSql>>, userIds: str
   if (!userIds.length) return [];
   const rows = await sql<{ id: string; token: string; provider: CallPushProvider }>`
     select id, token, provider from push_device_tokens
-    where user_id = any(${userIds}) and kind = 'call' and provider in ('apns_voip', 'fcm', 'hms')
+    where user_id = any(${userIds}) and kind = 'call' and provider in ('apns_voip', 'fcm', 'hms', 'adm')
   `.catch(() => []);
   return rows;
 }
@@ -71,8 +71,8 @@ export const registerCallDevice = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     if (!callPushEnabled()) return OFF;
     if (!/^[\x21-\x7E]{16,4096}$/.test(data.token)) return { ok: false as const, error: "Bad token." };
-    if (!["apns_voip", "fcm", "hms"].includes(data.provider)) return { ok: false as const, error: "Bad provider." };
-    if (!["ios", "android", "huawei"].includes(data.platform)) return { ok: false as const, error: "Bad platform." };
+    if (!["apns_voip", "fcm", "hms", "adm"].includes(data.provider)) return { ok: false as const, error: "Bad provider." };
+    if (!["ios", "android", "huawei", "amazon"].includes(data.platform)) return { ok: false as const, error: "Bad platform." };
     const sql = await getSql();
     await sql`
       insert into push_device_tokens (id, user_id, token, platform, provider, kind)

@@ -5,6 +5,7 @@
  * Delivery per stored device token:
  *   - iOS        apns_voip  PushKit VoIP push (apns-push-type: voip) -> CallKit
  *   - Android    fcm        high-priority data message -> full-screen call notification
+ *   - Amazon     adm        ADM data message (Fire tablets, no Google Play)
  *   - Huawei     hms        HMS Push Kit data message (urgency HIGH)
  *   - Web        web push   service-worker notification (reuses VAPID sender)
  * Cancel (answer / decline / caller hang-up / 25 s timeout) sends a
@@ -23,7 +24,7 @@ type EnvMap = Record<string, string | undefined>;
 export const CALL_RING_TIMEOUT_SECONDS = 25;
 
 export type CallMedia = "voice" | "video";
-export type CallPushProvider = "apns_voip" | "fcm" | "hms";
+export type CallPushProvider = "apns_voip" | "fcm" | "hms" | "adm";
 
 export type CallTokenTarget = { id: string; token: string; provider: CallPushProvider };
 
@@ -52,6 +53,7 @@ export function callPushKeysStatus(env: EnvMap = process.env): Record<string, bo
     apnsVoip: Boolean(env.APNS_KEY && env.APNS_KEY_ID && env.APNS_TEAM_ID && env.APNS_BUNDLE_ID),
     fcm: Boolean(env.FCM_PROJECT_ID && env.FCM_CLIENT_EMAIL && env.FCM_PRIVATE_KEY),
     hms: Boolean(env.HMS_APP_ID && env.HMS_CLIENT_ID && env.HMS_CLIENT_SECRET),
+    adm: Boolean(env.ADM_CLIENT_ID && env.ADM_CLIENT_SECRET),
     webPush: Boolean(env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_KEY),
   };
 }
@@ -134,6 +136,24 @@ export function hmsCallBody(msg: CallRingMessage, token: string) {
 
 let fcmAccess: { token: string; exp: number } | null = null;
 let hmsAccess: { token: string; exp: number } | null = null;
+let admAccess: { token: string; exp: number } | null = null;
+
+export function admCallBody(msg: CallRingMessage) {
+  return { data: callDataPayload(msg), expiresAfter: CALL_RING_TIMEOUT_SECONDS, consolidationKey: msg.ringId.slice(0, 64) };
+}
+
+async function admAccessToken(env: EnvMap, t: Transport): Promise<string> {
+  if (admAccess && admAccess.exp > t.nowSec + 60) return admAccess.token;
+  const res = await t.fetchImpl("https://api.amazon.com/auth/o2/token", {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ grant_type: "client_credentials", scope: "messaging:push", client_id: String(env.ADM_CLIENT_ID), client_secret: String(env.ADM_CLIENT_SECRET) }).toString(),
+  });
+  const j = (await res.json().catch(() => ({}))) as { access_token?: string; expires_in?: number };
+  if (!j.access_token) throw new Error("adm_oauth_failed");
+  admAccess = { token: j.access_token, exp: t.nowSec + (j.expires_in || 3600) };
+  return j.access_token;
+}
 
 async function fcmAccessToken(env: EnvMap, t: Transport): Promise<string> {
   if (fcmAccess && fcmAccess.exp > t.nowSec + 60) return fcmAccess.token;
@@ -170,6 +190,7 @@ async function hmsAccessToken(env: EnvMap, t: Transport): Promise<string> {
 export function resetCallRingCacheForTests(): void {
   fcmAccess = null;
   hmsAccess = null;
+  admAccess = null;
 }
 
 export type CallFanout = { sent: number; failed: number; skipped: number; invalid: string[] };
@@ -207,6 +228,16 @@ export async function fanoutCallMessage(msg: CallRingMessage, targets: CallToken
         const j = (await r.json().catch(() => ({}))) as { code?: string };
         if (r.ok && j.code === "80000000") out.sent++;
         else { out.failed++; if (j.code === "80300007") out.invalid.push(target.id); }
+      } else if (target.provider === "adm") {
+        if (!keys.adm) { out.skipped++; continue; }
+        const access = await admAccessToken(env, t);
+        const r = await t.fetchImpl(`https://api.amazon.com/messaging/registrations/${encodeURIComponent(target.token)}/messages`, {
+          method: "POST",
+          headers: { authorization: `Bearer ${access}`, "content-type": "application/json", accept: "application/json", "x-amzn-type-version": "com.amazon.device.messaging.ADMMessage@1.0", "x-amzn-accept-type": "com.amazon.device.messaging.ADMSendResult@1.0" },
+          body: JSON.stringify(admCallBody(msg)),
+        });
+        if (r.ok) out.sent++;
+        else { out.failed++; if (r.status === 410) out.invalid.push(target.id); }
       } else out.skipped++;
     } catch {
       out.failed++;

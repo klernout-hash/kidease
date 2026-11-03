@@ -6,11 +6,11 @@ alter table push_device_tokens add column if not exists kind text not null defau
 
 alter table push_device_tokens drop constraint if exists push_device_tokens_platform_chk;
 alter table push_device_tokens
-  add constraint push_device_tokens_platform_chk check (platform in ('ios', 'android', 'huawei'));
+  add constraint push_device_tokens_platform_chk check (platform in ('ios', 'android', 'huawei', 'amazon'));
 
 alter table push_device_tokens drop constraint if exists push_device_tokens_provider_chk;
 alter table push_device_tokens
-  add constraint push_device_tokens_provider_chk check (provider in ('fcm', 'apns', 'apns_voip', 'hms'));
+  add constraint push_device_tokens_provider_chk check (provider in ('fcm', 'apns', 'apns_voip', 'hms', 'adm'));
 
 create table if not exists call_rings (
   id text primary key,

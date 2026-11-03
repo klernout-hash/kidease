@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { generateKeyPairSync } from "node:crypto";
 import {
   CALL_RING_TIMEOUT_SECONDS, apnsVoipRequest, callDataPayload, callPushEnabled, cleanCallerName,
-  fanoutCallMessage, fcmCallBody, hmsCallBody, resetCallRingCacheForTests,
+  fanoutCallMessage, admCallBody, fcmCallBody, hmsCallBody, resetCallRingCacheForTests,
 } from "../src/lib/server/call-ring.ts";
 
 const msg = { type: "call", ringId: "ring_abc", conversationId: "cv_1", media: "video", callerName: "North Elm" };
@@ -50,4 +50,10 @@ test("APNs VoIP push uses voip type, .voip topic, 25 s expiry", async () => {
   assert.equal(r.skipped, 1);
   assert.equal(seen[0].type, "call-cancel");
   assert.equal(seen[0].reason, "answered");
+});
+
+test("ADM body expires after 25 s", () => {
+  const a = admCallBody(msg);
+  assert.equal(a.expiresAfter, 25);
+  assert.equal(a.data.type, "call");
 });
