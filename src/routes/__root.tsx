@@ -29,6 +29,7 @@ import { AdultConfirmBoot } from "@/components/adult-confirm-boot";
 import { RoleBoot } from "@/components/role-boot";
 import { LiveChatSlot } from "@/components/help-bot";
 import { KidEaseToaster } from "@/components/kidease-toaster";
+import { IncomingCallListener } from "@/components/incoming-call-listener";
 import { SuccessConfirmHost } from "@/components/success-confirm";
 import { SafeRouteError } from "@/components/safe-error-boundary";
 import { installStaleChunkReload, safeErrorCopy } from "@/lib/safe-error";
@@ -153,7 +154,7 @@ export const Route = createRootRoute({
   head: ({ match }) => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, minimum-scale=1, viewport-fit=cover, shrink-to-fit=no" },
       { name: "theme-color", content: "#1A3790" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "mobile-web-app-capable", content: "yes" },
@@ -290,6 +291,7 @@ function RootDocument() {
             <Outlet />
           </div>
           <LiveChatSlot />
+          <IncomingCallListener />
           </ViewAsProvider>
           <CookieConsentBanner />
           <KidEaseToaster />

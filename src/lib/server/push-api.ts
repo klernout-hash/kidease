@@ -72,8 +72,15 @@ export const registerPushToken = createServerFn({ method: "POST" })
   }))
   .handler(async ({ context, data }): Promise<PushRegisterFnResult> => {
     const { upsertPushDeviceToken } = await import("./push-tokens");
+    const { getRequest } = await import("@tanstack/react-start/server");
+    let userAgent = "";
+    try {
+      userAgent = getRequest()?.headers.get("user-agent") || "";
+    } catch {
+      userAgent = "";
+    }
     const sql = await getSql();
-    return upsertPushDeviceToken(sql, context.userId, data);
+    return upsertPushDeviceToken(sql, context.userId, { ...data, userAgent });
   });
 
 export const dryRunPush = createServerFn({ method: "POST" })

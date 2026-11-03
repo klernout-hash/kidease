@@ -1,5 +1,5 @@
 /** Centre tools copy in all 10 shipped languages. */
-export type CentreToolsCopy = Record<"title"|"lead"|"offTitle"|"offBody"|"centre"|"child"|"save"|"saved"|"fail"|"noRows"|"exportCsv"|"date"|"notes"|"meals"|"observations"|"pd"|"maintenance"|"cleaning"|"quickbooks"|"tap"|"attendance"|"payroll"|"subsidy"|"offline"|"weekOf"|"food"|"allergyNote"|"foodGuideGap"|"allergens"|"domain"|"level"|"staffName"|"course"|"provider"|"hours"|"targetHours"|"initials"|"room"|"done"|"asset"|"quickbooksNote"|"tapNote"|"tapTest"|"amount"|"month"|"dailyFee"|"scheduledDays"|"chargeAbsent"|"sickDays"|"subsidyPct"|"agency"|"billed"|"agencyShare"|"parentShare"|"rate"|"gross"|"payrollNote"|"offlineWaiting"|"offlineSynced"|"offlineNote"|"parentTitle"|"parentLead"|"receipts"|"billHistory"|"noPhotos"|"pickup"|"arrival"|"testNoCharge"|"foundation", string>;
+export type CentreToolsCopy = Record<"title"|"lead"|"offTitle"|"offBody"|"centre"|"child"|"save"|"saved"|"fail"|"noRows"|"exportCsv"|"date"|"notes"|"meals"|"observations"|"pd"|"maintenance"|"cleaning"|"quickbooks"|"tap"|"attendance"|"payroll"|"subsidy"|"offline"|"weekOf"|"food"|"allergyNote"|"foodGuideGap"|"allergens"|"domain"|"level"|"staffName"|"course"|"provider"|"hours"|"targetHours"|"initials"|"room"|"done"|"asset"|"quickbooksNote"|"tapNote"|"tapSoon"|"tapTest"|"amount"|"month"|"dailyFee"|"scheduledDays"|"chargeAbsent"|"sickDays"|"subsidyPct"|"agency"|"billed"|"agencyShare"|"parentShare"|"rate"|"gross"|"payrollNote"|"offlineWaiting"|"offlineSynced"|"offlineNote"|"parentTitle"|"parentLead"|"receipts"|"billHistory"|"noPhotos"|"pickup"|"arrival"|"testNoCharge"|"foundation", string>;
 
 const COPY: Record<string, CentreToolsCopy> = {
   en: {
@@ -45,6 +45,7 @@ const COPY: Record<string, CentreToolsCopy> = {
     asset: "Asset",
     quickbooksNote: "Download a file to import into QuickBooks Online. KidEase does not connect to QuickBooks.",
     tapNote: "Tap to Pay is not connected. No card is charged.",
+    tapSoon: "Tap to Pay is coming soon. No card is charged.",
     tapTest: "Save test receipt (no charge)",
     amount: "Amount ($)",
     month: "Month",
@@ -116,6 +117,7 @@ const COPY: Record<string, CentreToolsCopy> = {
     asset: "Équipement",
     quickbooksNote: "Téléchargez un fichier à importer dans QuickBooks Online. KidEase ne se connecte pas à QuickBooks.",
     tapNote: "Le paiement sans contact n'est pas connecté. Aucune carte n'est débitée.",
+    tapSoon: "Le paiement sans contact arrive bientôt. Aucune carte n'est débitée.",
     tapTest: "Reçu test (sans frais)",
     amount: "Montant ($)",
     month: "Mois",
@@ -187,6 +189,7 @@ const COPY: Record<string, CentreToolsCopy> = {
     asset: "设备",
     quickbooksNote: "下载文件导入 QuickBooks Online。KidEase 不连接 QuickBooks。",
     tapNote: "Tap to Pay 未连接。不会扣款。",
+    tapSoon: "Tap to Pay 即将推出。不会扣款。",
     tapTest: "保存测试收据（不扣款）",
     amount: "金额 ($)",
     month: "月份",
@@ -258,6 +261,7 @@ const COPY: Record<string, CentreToolsCopy> = {
     asset: "設備",
     quickbooksNote: "下載檔案匯入 QuickBooks Online。KidEase 唔會連接 QuickBooks。",
     tapNote: "Tap to Pay 未連接。唔會扣款。",
+    tapSoon: "Tap to Pay 即將推出。唔會扣款。",
     tapTest: "儲存測試收據（唔扣款）",
     amount: "金額 ($)",
     month: "月份",
@@ -329,6 +333,7 @@ const COPY: Record<string, CentreToolsCopy> = {
     asset: "ਸਾਮਾਨ",
     quickbooksNote: "QuickBooks Online ਵਿੱਚ ਆਯਾਤ ਲਈ ਫਾਈਲ ਡਾਊਨਲੋਡ ਕਰੋ। KidEase QuickBooks ਨਾਲ ਨਹੀਂ ਜੁੜਦਾ।",
     tapNote: "Tap to Pay ਜੁੜਿਆ ਨਹੀਂ। ਕੋਈ ਕਾਰਡ ਚਾਰਜ ਨਹੀਂ ਹੁੰਦਾ।",
+    tapSoon: "Tap to Pay ਜਲਦੀ ਆ ਰਿਹਾ ਹੈ। ਕੋਈ ਕਾਰਡ ਚਾਰਜ ਨਹੀਂ ਹੁੰਦਾ।",
     tapTest: "ਟੈਸਟ ਰਸੀਦ ਸੇਵ ਕਰੋ (ਕੋਈ ਚਾਰਜ ਨਹੀਂ)",
     amount: "ਰਕਮ ($)",
     month: "ਮਹੀਨਾ",
@@ -400,6 +405,7 @@ const COPY: Record<string, CentreToolsCopy> = {
     asset: "Equipo",
     quickbooksNote: "Descargue un archivo para importar en QuickBooks Online. KidEase no se conecta a QuickBooks.",
     tapNote: "Tap to Pay no está conectado. No se cobra ninguna tarjeta.",
+    tapSoon: "Tap to Pay llegará pronto. No se cobra ninguna tarjeta.",
     tapTest: "Guardar recibo de prueba (sin cargo)",
     amount: "Importe ($)",
     month: "Mes",
@@ -471,6 +477,7 @@ const COPY: Record<string, CentreToolsCopy> = {
     asset: "المعدات",
     quickbooksNote: "نزّل ملفًا لاستيراده في QuickBooks Online. لا يتصل KidEase بـ QuickBooks.",
     tapNote: "Tap to Pay غير متصل. لا يتم خصم أي بطاقة.",
+    tapSoon: "Tap to Pay قادم قريبًا. لا يتم خصم أي بطاقة.",
     tapTest: "حفظ إيصال تجريبي (بلا خصم)",
     amount: "المبلغ ($)",
     month: "الشهر",
@@ -542,6 +549,7 @@ const COPY: Record<string, CentreToolsCopy> = {
     asset: "Gamit",
     quickbooksNote: "I-download ang file para i-import sa QuickBooks Online. Hindi kumokonekta ang KidEase sa QuickBooks.",
     tapNote: "Hindi konektado ang Tap to Pay. Walang card na sinisingil.",
+    tapSoon: "Malapit nang dumating ang Tap to Pay. Walang card na sinisingil.",
     tapTest: "I-save ang test na resibo (walang singil)",
     amount: "Halaga ($)",
     month: "Buwan",
@@ -613,6 +621,7 @@ const COPY: Record<string, CentreToolsCopy> = {
     asset: "Bene",
     quickbooksNote: "Scarica un file da importare in QuickBooks Online. KidEase non si collega a QuickBooks.",
     tapNote: "Tap to Pay non è collegato. Nessuna carta viene addebitata.",
+    tapSoon: "Tap to Pay arriverà presto. Nessuna carta viene addebitata.",
     tapTest: "Salva ricevuta di prova (senza addebito)",
     amount: "Importo ($)",
     month: "Mese",
@@ -684,6 +693,7 @@ const COPY: Record<string, CentreToolsCopy> = {
     asset: "Gerät",
     quickbooksNote: "Datei für den Import in QuickBooks Online herunterladen. KidEase verbindet sich nicht mit QuickBooks.",
     tapNote: "Tap to Pay ist nicht verbunden. Keine Karte wird belastet.",
+    tapSoon: "Tap to Pay is coming soon. No card is charged.",
     tapTest: "Testbeleg speichern (ohne Belastung)",
     amount: "Betrag ($)",
     month: "Monat",

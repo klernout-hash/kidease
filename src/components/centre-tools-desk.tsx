@@ -361,12 +361,14 @@ function TapTool({ copy, data, records, save }: ToolProps) {
   return (
     <div data-testid="tool-tap">
       <h3 className="text-xl font-semibold">{copy.tap}</h3>
-      <p className="mt-1 rounded-md bg-amber-50 p-3 text-sm text-amber-900" role="note">{copy.tapNote}{data.terminalConfigured ? "" : " (STRIPE_TERMINAL_LOCATION_ID not set)"}</p>
+      <p className="mt-1 rounded-md bg-amber-50 p-3 text-sm text-amber-900" role="note" data-testid="tap-note">{data.terminalConfigured ? copy.tapNote : copy.tapSoon}</p>
+      {data.terminalConfigured ? (<>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <ChildPicker copy={copy} data={data} value={bookingId} onChange={setBookingId} />
         <label className={label}>{copy.amount}<input type="number" min="1" step="0.01" className={field} value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
       </div>
       <Button className="mt-3 min-h-11" disabled={!bookingId || !(cents >= 100)} onClick={() => void save("tap_receipt", { amountCents: cents, method: "tap_to_pay_test", date: new Date().toISOString() }, bookingId)}>{copy.tapTest}</Button>
+      </>) : null}
       <History copy={copy} rows={records.filter((r) => r.kind === "tap_receipt")} render={(r) => `${r.createdAt.slice(0, 10)} · $${money(Number(r.payload.amountCents) || 0)} · test`} />
     </div>
   );

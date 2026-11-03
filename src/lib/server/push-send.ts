@@ -12,7 +12,7 @@ import { connect as http2Connect } from "node:http2";
 import { envFlagOn, evaluateFeatureFlag } from "../flags.ts";
 
 type EnvMap = Record<string, string | undefined>;
-type PushProvider = "fcm" | "apns";
+type PushProvider = "fcm" | "apns" | "adm";
 
 const PUSH_SCAFFOLD_MESSAGE =
   "Push is scaffolded only. FEATURE_PUSH is off until Kyle adds Firebase and Apple credentials.";
@@ -73,6 +73,7 @@ let cachedFcm: { email: string; token: string; exp: number } | null = null;
 
 /** Test-only: drop the in-process FCM access-token cache. */
 export function resetPushSendCacheForTests(): void {
+  admTokenCache = null;
   cachedFcm = null;
 }
 
@@ -86,6 +87,71 @@ function pushEnabled(env: EnvMap): boolean {
 
 function fcmConfigured(env: EnvMap): boolean {
   return Boolean(envStr(env, "FCM_PROJECT_ID") && envStr(env, "FCM_CLIENT_EMAIL") && envStr(env, "FCM_PRIVATE_KEY"));
+}
+
+/** ADM security profile (Amazon developer console). FEATURE_AMAZON_ADM must also be on. */
+export function admConfigured(env: EnvMap): boolean {
+  return (
+    evaluateFeatureFlag("FEATURE_AMAZON_ADM", env) && Boolean(envStr(env, "ADM_CLIENT_ID") && envStr(env, "ADM_CLIENT_SECRET"))
+  );
+}
+
+export const ADM_TOKEN_URL = "https://api.amazon.com/auth/o2/token";
+export const ADM_SEND_URL = (registrationId: string) =>
+  `https://api.amazon.com/messaging/registrations/${encodeURIComponent(registrationId)}/messages`;
+
+let admTokenCache: { token: string; exp: number } | null = null;
+
+async function admAccessToken(env: EnvMap, fetchImpl: typeof fetch, nowSec: number): Promise<string> {
+  if (admTokenCache && admTokenCache.exp - 60 > nowSec) return admTokenCache.token;
+  const res = await fetchImpl(ADM_TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      scope: "messaging:push",
+      client_id: envStr(env, "ADM_CLIENT_ID"),
+      client_secret: envStr(env, "ADM_CLIENT_SECRET"),
+    }).toString(),
+  });
+  if (!res.ok) throw new Error(`ADM token failed (${res.status}).`);
+  const json = (await res.json()) as { access_token?: string; expires_in?: number };
+  if (!json.access_token) throw new Error("ADM token missing.");
+  admTokenCache = { token: json.access_token, exp: nowSec + Number(json.expires_in || 3600) };
+  return json.access_token;
+}
+
+async function sendAdm(
+  target: PushTokenTarget,
+  title: string,
+  body: string,
+  env: EnvMap,
+  fetchImpl: typeof fetch,
+  nowSec: number,
+  url = "",
+): Promise<{ ok: boolean; invalid?: boolean; error?: string }> {
+  const access = await admAccessToken(env, fetchImpl, nowSec);
+  const res = await fetchImpl(ADM_SEND_URL(target.token), {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${access}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "X-Amzn-Type-Version": "com.amazon.device.messaging.ADMMessage@1.0",
+      "X-Amzn-Accept-Type": "com.amazon.device.messaging.ADMSendResult@1.0",
+    },
+    body: JSON.stringify({
+      data: { title, body, ...(url ? { url } : {}) },
+      expiresAfter: 86400,
+    }),
+  });
+  const text = await res.text();
+  if (res.ok) return { ok: true };
+  return {
+    ok: false,
+    invalid: res.status === 410 || /InvalidRegistrationId|Unregistered/i.test(text),
+    error: `ADM send failed (${res.status}).`,
+  };
 }
 
 function apnsConfigured(env: EnvMap): boolean {
@@ -358,7 +424,8 @@ export async function sendPushToDevices(
   }
   const canFcm = fcmConfigured(env);
   const canApns = apnsConfigured(env);
-  if (!canFcm && !canApns) {
+  const canAdm = admConfigured(env);
+  if (!canFcm && !canApns && !canAdm) {
     return { ok: false, skipped: true, error: PUSH_CREDENTIALS_MESSAGE };
   }
 
@@ -380,6 +447,19 @@ export async function sendPushToDevices(
 
   for (const target of input.tokens) {
     try {
+      if (target.provider === "adm") {
+        if (!canAdm) {
+          skipped += 1;
+          continue;
+        }
+        const result = await sendAdm(target, title, body, env, fetchImpl, nowSec, url);
+        if (result.ok) sent += 1;
+        else {
+          failed += 1;
+          if (result.invalid) invalidTokens.push(target.token);
+        }
+        continue;
+      }
       if (target.provider === "fcm") {
         if (!canFcm) {
           skipped += 1;

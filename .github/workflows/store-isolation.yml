@@ -1,0 +1,41 @@
+name: Store isolation
+
+# Builds every Android store flavour and fails if another store's SDK leaks in.
+# LWA / ADM only in amazon. GMS / FCM never in huawei or amazon. HMS never in play / samsung.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: store-isolation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  flavors:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npx cap sync android
+      - name: Unit tests (STORE constant, Amazon device token)
+        working-directory: android
+        run: chmod +x ./gradlew && ./gradlew testPlayDebugUnitTest testAmazonDebugUnitTest testHuaweiDebugUnitTest testSamsungDebugUnitTest
+      - name: Build every flavour
+        working-directory: android
+        run: ./gradlew assemblePlayDebug assembleSamsungDebug assembleHuaweiDebug assembleAmazonDebug
+      - name: Dex and manifest scan
+        run: node scripts/check-store-isolation.mjs android/app/build/outputs/apk
+      - name: Per-store sign-in and Amazon UI gate tests
+        run: node --experimental-strip-types --test scripts/store-isolation.test.mjs scripts/amazon-features.test.mjs

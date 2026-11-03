@@ -92,6 +92,10 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_PAYROLL",
   "FEATURE_SUBSIDY_BILLING",
   "FEATURE_OFFLINE_CHECKIN",
+  "FEATURE_AMAZON_ADM",
+  "FEATURE_LOGIN_AMAZON",
+  "FEATURE_FIRE_KIOSK",
+  "FEATURE_ALEXA_SKILL",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -265,6 +269,14 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_SUBSIDY_BILLING: false,
   /** Queue check-in taps offline and sync with the tap time on reconnect. Needs FEATURE_CHILD_CHECKIN. Off. */
   FEATURE_OFFLINE_CHECKIN: false,
+  /** Amazon Device Messaging push for Fire devices (no Google Play services). Off. Needs ADM_CLIENT_ID / ADM_CLIENT_SECRET. */
+  FEATURE_AMAZON_ADM: false,
+  /** Login with Amazon button, shown only on Fire / Amazon Appstore devices. Off. */
+  FEATURE_LOGIN_AMAZON: false,
+  /** Landscape daycare check-in kiosk for Fire tablets with a PIN exit. Off. */
+  FEATURE_FIRE_KIOSK: false,
+  /** Alexa custom skill endpoint /api/alexa. Off. Needs ALEXA_SKILL_ID. */
+  FEATURE_ALEXA_SKILL: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -760,6 +772,30 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary: "Queue check-in taps offline and sync with the tap time on reconnect. Needs FEATURE_CHILD_CHECKIN.",
+  },
+  {
+    key: "FEATURE_AMAZON_ADM",
+    defaultOn: false,
+    docs: "docs/amazon.md",
+    summary: "Amazon Device Messaging push on Fire devices, next to FCM / APNs. Needs FEATURE_PUSH and ADM keys.",
+  },
+  {
+    key: "FEATURE_LOGIN_AMAZON",
+    defaultOn: false,
+    docs: "docs/amazon.md",
+    summary: "Login with Amazon button on Fire / Amazon Appstore devices only. Apple, Google, Facebook order is unchanged.",
+  },
+  {
+    key: "FEATURE_FIRE_KIOSK",
+    defaultOn: false,
+    docs: "docs/amazon.md",
+    summary: "Landscape check-in kiosk at /kiosk for Fire tablets. Big buttons, PIN to exit. Needs FEATURE_CHILD_CHECKIN.",
+  },
+  {
+    key: "FEATURE_ALEXA_SKILL",
+    defaultOn: false,
+    docs: "docs/amazon.md",
+    summary: "Alexa custom skill at /api/alexa with request signature checks. Open spots, linked parent day log, daycare messages.",
   },
 ];
 

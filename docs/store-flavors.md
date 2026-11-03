@@ -1,0 +1,44 @@
+# Store flavours and isolation
+
+Each store gets its own build. A build only has its own store's SDKs. The website has no store at all.
+
+| Target | How it is built | `STORE` constant | Push | Sign-in extras | Forbidden in the build |
+| --- | --- | --- | --- | --- | --- |
+| Website | Vite / Vercel | none (channel `web`) | none | Apple, Facebook | any store SDK, Amazon UI |
+| Google Play | `assemblePlayRelease` / `bundlePlayRelease` | `play` | FCM | Google (hidden), Apple, Facebook | LWA, ADM, HMS |
+| Samsung Galaxy Store | `assembleSamsungRelease` | `samsung` | FCM | Apple, Facebook | LWA, ADM, HMS |
+| Huawei AppGallery | `assembleHuaweiRelease` | `huawei` | (HMS later) | Apple, Facebook | LWA, ADM, GMS, FCM |
+| Amazon Appstore | `assembleAmazonRelease` | `amazon` | ADM (`FEATURE_AMAZON_ADM`) | Login with Amazon (`FEATURE_LOGIN_AMAZON`) | GMS, FCM, HMS |
+| iOS App Store | Xcode | iOS UA, no Android flavour | APNs | Sign in with Apple | LWA, ADM, GMS, HMS |
+| Microsoft Store | PWA / MSIX (`KidEaseStoreMicrosoft`) | `microsoft` UA | none | Apple, Facebook | LWA, ADM |
+
+## The STORE constant
+
+`android/app/build.gradle` bakes `BuildConfig.STORE` per flavour (`play`, `samsung`, `huawei`, `amazon`). It always equals `BuildConfig.FLAVOR` (unit test `AmazonDeviceTokenTest.storeConstantMatchesFlavor`). `MainActivity.applyStoreUserAgent` adds `KidEaseNative` plus the store token (`KidEaseStoreAmazon`, …) to the WebView user agent. The server reads only these tokens (`storeChannelFromSignals`). The website never has them, so it is always `web`.
+
+## Amazon features: two gates
+
+Login with Amazon, ADM push and the Fire kiosk need **both**:
+
+1. **Build gate:** the amazon flavour (`KidEaseStoreAmazon` token, `BuildConfig.STORE == "amazon"`).
+2. **Device gate:** `Build.MANUFACTURER` equals `Amazon` at runtime. Only then does the shell add `KidEaseAmazonDevice` (`MainActivity.withAmazonDeviceToken`).
+
+Plus the feature flag. A Silk browser or a Fire UA on the website is never enough. See `src/lib/amazon/gate.ts`.
+
+## SDK stripping
+
+- `AmazonAdmPlugin` and the ADM permissions live only in `android/app/src/amazon/`. Other flavours get a no-op `StorePlugins`.
+- ADM is called by reflection. No ADM jar is bundled; Fire OS provides the classes at runtime. The Play, Samsung and Huawei dex has no `com/amazon/device/messaging`.
+- Google Play services and Firebase are excluded for `huawei` and `amazon` (existing `configurations` excludes, plus the `FirebaseInitProvider` manifest removal).
+- LWA runs as a server-side OAuth web flow (`/api/auth/callback/amazon`), so there is no LWA SDK in any APK.
+
+## CI guard
+
+`.github/workflows/store-isolation.yml` runs on every PR:
+
+1. Runs the Android unit tests for every flavour.
+2. Runs `assemble{Play,Samsung,Huawei,Amazon}Debug`.
+3. Runs `node scripts/check-store-isolation.mjs`. It unzips each APK and scans `classes*.dex` and `AndroidManifest.xml` for forbidden strings (the `FORBIDDEN` table in the script). A missing APK fails the job too, and so does an amazon APK without `AmazonAdmPlugin`.
+4. Runs `scripts/store-isolation.test.mjs`. For each store it asserts the sign-in buttons and Amazon UI that the server returns: no other store's buttons, and no Amazon UI off the Amazon build or off Amazon hardware.
+
+Adding a store: add a flavour with `buildConfigField STORE`, a `StorePlugins.java` in its source set, a row in `FORBIDDEN`, and a row above.

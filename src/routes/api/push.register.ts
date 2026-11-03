@@ -43,6 +43,7 @@ async function run(request: Request) {
       provider: body.provider != null ? String(body.provider) : undefined,
       deviceId: body.deviceId != null ? String(body.deviceId) : undefined,
       locale: body.locale != null ? String(body.locale) : undefined,
+      userAgent: request.headers.get("user-agent") || "",
     });
     return Response.json(result, { status: result.ok ? 200 : 403 });
   } catch (err) {
