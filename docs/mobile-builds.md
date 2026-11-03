@@ -80,7 +80,7 @@ Needs a Play Console account and an app created with application id `ca.kidease.
    ./gradlew bundlePlayRelease
    ```
 
-   The Play AAB lands at `android/app/build/outputs/bundle/playRelease/app-play-release.aab` (gitignored). The GitHub workflow job is still named bundleRelease and runs this Play task.
+   The Play AAB lands at `android/app/build/outputs/bundle/playRelease/app-play-release.aab` (gitignored). The GitHub workflow job is still named bundleRelease. It runs this Play task, then the signed Amazon APK, then Huawei when the AppGallery secret is set.
 3. Play Console → Testing → Internal testing → create a release → upload the AAB → add testers by email.
 
 Debug USB installs (`./gradlew installDebug`) use the debug keystore and are enough for the physical-device smoke list below.
@@ -125,8 +125,9 @@ CI does not run this on every pull request (the secrets are not required for che
 1. Decodes `ANDROID_KEYSTORE_BASE64` to `android/kidease-upload.jks`.
 2. Writes `android/key.properties` with the alias and passwords. `storeFile` is an absolute path so Gradle can see it from the app module.
 3. Runs `./gradlew bundlePlayRelease` with Java 21.
-4. Uploads `android/app/build/outputs/bundle/playRelease/app-play-release.aab` as the `app-release-aab` artifact before any Huawei step.
-5. If `AGCONNECT_SERVICES_JSON` is set, writes `agconnect-services.json` and runs `bundleHuaweiRelease` and `assembleHuaweiRelease`. If that secret is missing, the Huawei build step is skipped with a warning. The Play artifact stays.
+4. Uploads `android/app/build/outputs/bundle/playRelease/app-play-release.aab` as the `app-release-aab` artifact.
+5. Runs `./gradlew assembleAmazonRelease` with that same upload keystore and uploads `android/app/build/outputs/apk/amazon/release/app-amazon-release.apk` as the `app-amazon-release` artifact, before any Huawei step.
+6. If `AGCONNECT_SERVICES_JSON` is set, writes `agconnect-services.json` and runs `bundleHuaweiRelease` and `assembleHuaweiRelease`. If that secret is missing, the Huawei build step is skipped with a warning. The Play and Amazon artifacts stay.
 
 Download that artifact and upload it in Play Console. Do not upload `app-release.apk`.
 
