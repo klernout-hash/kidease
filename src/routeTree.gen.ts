@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AccessibilityRouteImport } from './routes/accessibility'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminAiRouteImport } from './routes/admin-ai'
@@ -67,6 +68,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FrRouteImport } from './routes/fr'
 import { Route as GetAppRouteImport } from './routes/get-app'
 import { Route as GovRouteImport } from './routes/gov'
+import { Route as GovTermsRouteImport } from './routes/gov-terms'
 import { Route as GuidesRouteImport } from './routes/guides'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
@@ -87,6 +89,7 @@ import { Route as PlansRouteImport } from './routes/plans'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProviderRouteImport } from './routes/provider'
+import { Route as ProviderTermsRouteImport } from './routes/provider-terms'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SearchRouteImport } from './routes/search'
@@ -311,6 +314,11 @@ const IndexRoute = IndexRouteImport.update({
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
   path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccessibilityRoute = AccessibilityRouteImport.update({
+  id: '/accessibility',
+  path: '/accessibility',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountRoute = AccountRouteImport.update({
@@ -594,6 +602,11 @@ const GovRoute = GovRouteImport.update({
   path: '/gov',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GovTermsRoute = GovTermsRouteImport.update({
+  id: '/gov-terms',
+  path: '/gov-terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GuidesRoute = GuidesRouteImport.update({
   id: '/guides',
   path: '/guides',
@@ -692,6 +705,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const ProviderRoute = ProviderRouteImport.update({
   id: '/provider',
   path: '/provider',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProviderTermsRoute = ProviderTermsRouteImport.update({
+  id: '/provider-terms',
+  path: '/provider-terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReportRoute = ReportRouteImport.update({
@@ -1775,6 +1793,7 @@ const FrDaycareCityCityRoute = FrDaycareCityCityRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/accessibility': typeof AccessibilityRoute
   '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
   '/admin-ai': typeof AdminAiRoute
@@ -1831,6 +1850,7 @@ export interface FileRoutesByFullPath {
   '/fr': typeof FrRouteWithChildren
   '/get-app': typeof GetAppRoute
   '/gov': typeof GovRoute
+  '/gov-terms': typeof GovTermsRoute
   '/guides': typeof GuidesRouteWithChildren
   '/help': typeof HelpRouteWithChildren
   '/how-it-works': typeof HowItWorksRoute
@@ -1851,6 +1871,7 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRouteWithChildren
+  '/provider-terms': typeof ProviderTermsRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
@@ -2070,6 +2091,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/accessibility': typeof AccessibilityRoute
   '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
   '/admin-ai': typeof AdminAiRoute
@@ -2125,6 +2147,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/get-app': typeof GetAppRoute
   '/gov': typeof GovRoute
+  '/gov-terms': typeof GovTermsRoute
   '/guides': typeof GuidesRouteWithChildren
   '/help': typeof HelpRouteWithChildren
   '/how-it-works': typeof HowItWorksRoute
@@ -2144,6 +2167,7 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRouteWithChildren
+  '/provider-terms': typeof ProviderTermsRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
@@ -2364,6 +2388,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/accessibility': typeof AccessibilityRoute
   '/account': typeof AccountRoute
   '/admin': typeof AdminRouteWithChildren
   '/admin-ai': typeof AdminAiRoute
@@ -2420,6 +2445,7 @@ export interface FileRoutesById {
   '/fr': typeof FrRouteWithChildren
   '/get-app': typeof GetAppRoute
   '/gov': typeof GovRoute
+  '/gov-terms': typeof GovTermsRoute
   '/guides': typeof GuidesRouteWithChildren
   '/help': typeof HelpRouteWithChildren
   '/how-it-works': typeof HowItWorksRoute
@@ -2440,6 +2466,7 @@ export interface FileRoutesById {
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/provider': typeof ProviderRouteWithChildren
+  '/provider-terms': typeof ProviderTermsRoute
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
@@ -2661,6 +2688,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/accessibility'
     | '/account'
     | '/admin'
     | '/admin-ai'
@@ -2717,6 +2745,7 @@ export interface FileRouteTypes {
     | '/fr'
     | '/get-app'
     | '/gov'
+    | '/gov-terms'
     | '/guides'
     | '/help'
     | '/how-it-works'
@@ -2737,6 +2766,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/provider'
+    | '/provider-terms'
     | '/report'
     | '/reset-password'
     | '/search'
@@ -2956,6 +2986,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/accessibility'
     | '/account'
     | '/admin'
     | '/admin-ai'
@@ -3011,6 +3042,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/get-app'
     | '/gov'
+    | '/gov-terms'
     | '/guides'
     | '/help'
     | '/how-it-works'
@@ -3030,6 +3062,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/provider'
+    | '/provider-terms'
     | '/report'
     | '/reset-password'
     | '/search'
@@ -3249,6 +3282,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/about'
+    | '/accessibility'
     | '/account'
     | '/admin'
     | '/admin-ai'
@@ -3305,6 +3339,7 @@ export interface FileRouteTypes {
     | '/fr'
     | '/get-app'
     | '/gov'
+    | '/gov-terms'
     | '/guides'
     | '/help'
     | '/how-it-works'
@@ -3325,6 +3360,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/privacy'
     | '/provider'
+    | '/provider-terms'
     | '/report'
     | '/reset-password'
     | '/search'
@@ -3545,6 +3581,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  AccessibilityRoute: typeof AccessibilityRoute
   AccountRoute: typeof AccountRoute
   AdminRoute: typeof AdminRouteWithChildren
   AdminAiRoute: typeof AdminAiRoute
@@ -3601,6 +3638,7 @@ export interface RootRouteChildren {
   FrRoute: typeof FrRouteWithChildren
   GetAppRoute: typeof GetAppRoute
   GovRoute: typeof GovRoute
+  GovTermsRoute: typeof GovTermsRoute
   GuidesRoute: typeof GuidesRouteWithChildren
   HelpRoute: typeof HelpRouteWithChildren
   HowItWorksRoute: typeof HowItWorksRoute
@@ -3621,6 +3659,7 @@ export interface RootRouteChildren {
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   ProviderRoute: typeof ProviderRouteWithChildren
+  ProviderTermsRoute: typeof ProviderTermsRoute
   ReportRoute: typeof ReportRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SearchRoute: typeof SearchRoute
@@ -3759,6 +3798,13 @@ declare module '@tanstack/react-router' {
       path: '/about'
       fullPath: '/about'
       preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/accessibility': {
+      id: '/accessibility'
+      path: '/accessibility'
+      fullPath: '/accessibility'
+      preLoaderRoute: typeof AccessibilityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account': {
@@ -4153,6 +4199,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GovRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gov-terms': {
+      id: '/gov-terms'
+      path: '/gov-terms'
+      fullPath: '/gov-terms'
+      preLoaderRoute: typeof GovTermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/guides': {
       id: '/guides'
       path: '/guides'
@@ -4291,6 +4344,13 @@ declare module '@tanstack/react-router' {
       path: '/provider'
       fullPath: '/provider'
       preLoaderRoute: typeof ProviderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/provider-terms': {
+      id: '/provider-terms'
+      path: '/provider-terms'
+      fullPath: '/provider-terms'
+      preLoaderRoute: typeof ProviderTermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/report': {
@@ -6145,6 +6205,7 @@ const ApiScreeningDocumentsRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  AccessibilityRoute: AccessibilityRoute,
   AccountRoute: AccountRoute,
   AdminRoute: AdminRouteWithChildren,
   AdminAiRoute: AdminAiRoute,
@@ -6201,6 +6262,7 @@ const rootRouteChildren: RootRouteChildren = {
   FrRoute: FrRouteWithChildren,
   GetAppRoute: GetAppRoute,
   GovRoute: GovRoute,
+  GovTermsRoute: GovTermsRoute,
   GuidesRoute: GuidesRouteWithChildren,
   HelpRoute: HelpRouteWithChildren,
   HowItWorksRoute: HowItWorksRoute,
@@ -6221,6 +6283,7 @@ const rootRouteChildren: RootRouteChildren = {
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   ProviderRoute: ProviderRouteWithChildren,
+  ProviderTermsRoute: ProviderTermsRoute,
   ReportRoute: ReportRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SearchRoute: SearchRoute,

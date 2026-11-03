@@ -278,8 +278,14 @@ export const verifyClaim = createServerFn({ method: "POST" })
     infantMonthly?: unknown;
     toddlerMonthly?: unknown;
     preschoolMonthly?: unknown;
+    acceptTermsVersion?: string;
+    locale?: string;
   }) => input)
   .handler(async ({ context, data }) => {
+    const { PROVIDER_TERMS_VERSION } = await import("@/lib/legal-copy-v2");
+    if (data.acceptTermsVersion !== PROVIDER_TERMS_VERSION) {
+      throw new Error("Accept the Provider Terms to finish your claim");
+    }
     const { assertTurnstileToken } = await import("@/lib/server/turnstile");
     await assertTurnstileToken(data.turnstileToken);
     const photo = await persistLicenseInput(data.licensePhoto, data.daycareId);
@@ -301,6 +307,16 @@ export const verifyClaim = createServerFn({ method: "POST" })
       where id = ${claim.id}
     `;
     await storeLicensePhoto(sql, data.daycareId, photo);
+    {
+      const { getRequest } = await import("@tanstack/react-start/server");
+      const { clientIpFromHeaders } = await import("@/lib/server/turnstile-verify");
+      const headers = getRequest().headers;
+      await sql`
+        insert into provider_terms_acceptances (id, user_id, daycare_id, terms_version, locale, ip, user_agent)
+        values (${nid()}, ${context.userId}, ${data.daycareId}, ${PROVIDER_TERMS_VERSION},
+          ${data.locale === "fr" ? "fr" : "en"}, ${clientIpFromHeaders(headers) ?? null}, ${(headers.get("user-agent") || "").slice(0, 300)})
+      `;
+    }
     const { saveCentreMonthlyFees } = await import("@/lib/server/fee-confidence");
     await saveCentreMonthlyFees(data.daycareId, data).catch(() => undefined);
     await sql`
