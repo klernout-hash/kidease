@@ -401,7 +401,8 @@ describe("PostHog client wiring", () => {
     assert.match(boot, /startPostHog\(/);
     assert.match(read("src/lib/posthog.ts"), /if \(started \|\| typeof window === "undefined"\) return/);
     assert.match(read("src/lib/posthog.ts"), /started = false/);
-    assert.doesNotMatch(read("src/components/posthog-boot.tsx"), /requestIdleCallback/);
+    assert.match(boot, /pointerdown/);
+    assert.match(boot, /setTimeout\(start, 4000\)/);
     assert.match(read("src/components/posthog-boot.tsx"), /Missing VITE_PUBLIC_POSTHOG_KEY is a no-op/);
   });
 

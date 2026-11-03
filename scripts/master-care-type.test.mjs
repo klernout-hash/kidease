@@ -50,7 +50,7 @@ test("a city category keeps that daycare type and a wider list", () => {
   const care = readFileSync(join(root, "src/lib/care-type.ts"), "utf8");
   const search = readFileSync(join(root, "src/lib/server/daycares.ts"), "utf8");
   const neon = readFileSync(join(root, "src/lib/server/catalog-neon.ts"), "utf8");
-  const rails = readFileSync(join(root, "src/components/facility-type-rails.tsx"), "utf8");
+  const rails = readFileSync(join(root, "src/components/facility-type-rail-list.tsx"), "utf8");
   assert.match(care, /export function matchesListedDaycareType/);
   assert.match(search, /matchesListedDaycareType\(card, facility\)/);
   assert.match(search, /CITY_TYPE_LIST_CAP/);

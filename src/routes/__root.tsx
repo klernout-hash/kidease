@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import {
   createRootRoute,
   HeadContent,
@@ -18,19 +18,31 @@ import { AuthProvider } from "@/lib/auth/provider";
 import { ViewAsProvider } from "@/components/view-as-banner";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { NativeBoot } from "@/components/native-boot";
-import { NativeCommerceStrip } from "@/components/native-commerce-strip";
-import { PushExplain } from "@/components/push-explain";
-import { GetAlertsPrompt } from "@/components/get-alerts-prompt";
+const NativeCommerceStrip = lazy(() =>
+  import("@/components/native-commerce-strip").then((m) => ({ default: m.NativeCommerceStrip })),
+);
+const PushExplain = lazy(() => import("@/components/push-explain").then((m) => ({ default: m.PushExplain })));
+const GetAlertsPrompt = lazy(() =>
+  import("@/components/get-alerts-prompt").then((m) => ({ default: m.GetAlertsPrompt })),
+);
 import { ThemeBoot } from "@/components/theme-boot";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
 import { RouteProgress } from "@/components/route-progress";
 import { PostHogBoot } from "@/components/posthog-boot";
 import { AdultConfirmBoot } from "@/components/adult-confirm-boot";
 import { RoleBoot } from "@/components/role-boot";
-import { LiveChatSlot } from "@/components/help-bot";
-import { KidEaseToaster } from "@/components/kidease-toaster";
-import { IncomingCallListener } from "@/components/incoming-call-listener";
-import { SuccessConfirmHost } from "@/components/success-confirm";
+const LiveChatSlot = lazy(() =>
+  import("@/components/help-bot").then((m) => ({ default: m.LiveChatSlot })),
+);
+const KidEaseToaster = lazy(() =>
+  import("@/components/kidease-toaster").then((m) => ({ default: m.KidEaseToaster })),
+);
+const IncomingCallListener = lazy(() =>
+  import("@/components/incoming-call-listener").then((m) => ({ default: m.IncomingCallListener })),
+);
+const SuccessConfirmHost = lazy(() =>
+  import("@/components/success-confirm").then((m) => ({ default: m.SuccessConfirmHost })),
+);
 import { SafeRouteError } from "@/components/safe-error-boundary";
 import { installStaleChunkReload, safeErrorCopy } from "@/lib/safe-error";
 import { getRoleChrome } from "@/lib/server/role-route";
@@ -200,6 +212,33 @@ export const Route = createRootRoute({
   component: RootDocument,
 });
 
+/** Call and chat chunks wait until a tap or a few seconds, so they miss the first paint. */
+function AfterFirstPaint({ children }: { children: ReactNode }) {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    let open = false;
+    const start = () => {
+      if (open) return;
+      open = true;
+      setShow(true);
+    };
+    const opts = { once: true, passive: true } as const;
+    window.addEventListener("pointerdown", start, opts);
+    window.addEventListener("keydown", start, opts);
+    const idle =
+      typeof requestIdleCallback === "function" ? requestIdleCallback(start, { timeout: 4000 }) : undefined;
+    const timer = window.setTimeout(start, 4000);
+    return () => {
+      window.removeEventListener("pointerdown", start);
+      window.removeEventListener("keydown", start);
+      if (idle !== undefined) cancelIdleCallback(idle);
+      window.clearTimeout(timer);
+    };
+  }, []);
+  if (!show) return null;
+  return <Suspense fallback={null}>{children}</Suspense>;
+}
+
 async function readRequestStoreChannel(search: string): Promise<ServerStoreRead> {
   if (typeof window !== "undefined") {
     const signals = {
@@ -281,9 +320,11 @@ function RootDocument() {
           <LocaleChoiceSync />
           <FrCaDeviceBoot />
           <NativeBoot />
-          <NativeCommerceStrip />
-          <PushExplain />
-          {nativeShell ? null : <GetAlertsPrompt />}
+          <Suspense fallback={null}>
+            <NativeCommerceStrip />
+            <PushExplain />
+            {nativeShell ? null : <GetAlertsPrompt />}
+          </Suspense>
           <PostHogBoot captureExceptions={posthogErrors} />
           <RoleBoot />
           <AdultConfirmBoot />
@@ -291,12 +332,16 @@ function RootDocument() {
           <div id="main-content" tabIndex={-1} className="flex w-full min-w-0 flex-1 flex-col outline-none">
             <Outlet />
           </div>
-          <LiveChatSlot />
-          <IncomingCallListener />
+          <AfterFirstPaint>
+            <LiveChatSlot />
+            <IncomingCallListener />
+          </AfterFirstPaint>
           </ViewAsProvider>
           <CookieConsentBanner />
-          <KidEaseToaster />
-          <SuccessConfirmHost />
+          <Suspense fallback={null}>
+            <KidEaseToaster />
+            <SuccessConfirmHost />
+          </Suspense>
         </AuthProvider>
         <Scripts />
       </body>

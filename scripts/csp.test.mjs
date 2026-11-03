@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import {
   applyDocumentNonces,
+  stripModulePreloads,
   applyEmailObfuscationOff,
   applyHtmlDocumentCacheHeaders,
   applyScriptNonces,
@@ -178,4 +179,13 @@ test("Nitro owns CSP; vercel.json no longer ships a static policy", () => {
   assert.match(rootHtml, /__html: STYLE_NONCE_BOOT/);
   assert.match(src("src/lib/style-nonce-boot.ts"), /export \{ STYLE_NONCE_BOOT \}/);
   assert.doesNotMatch(rootHtml, /channel-boot\.js[\s\S]*data-ke-style-nonce/);
+});
+
+test("HTML responses drop modulepreload hints and keep image preloads", () => {
+  const html = `<head><link rel="modulepreload" href="/assets/admin.js" fetchPriority="low"><link rel="preload" href="/logo.svg" as="image"><link rel="stylesheet" href="/assets/styles.css"></head>`;
+  const out = stripModulePreloads(html);
+  assert.doesNotMatch(out, /modulepreload/);
+  assert.match(out, /logo\.svg/);
+  assert.match(out, /styles\.css/);
+  assert.doesNotMatch(applyDocumentNonces(html, "n1"), /modulepreload/);
 });

@@ -23,12 +23,30 @@ export function PostHogBoot({ captureExceptions = false }: { captureExceptions?:
   const { user, isPending } = useCurrentUserState();
 
   useEffect(() => {
-    // Granted visitors must init on mount. Deferring until the browser is
-    // idle dropped the landing pageview when they left first.
+    // The product-events library stays off the first paint. A tap starts it
+    // immediately. Otherwise it starts once the browser is idle, or after a
+    // few seconds, so a landing pageview still records if they stay.
     // startPostHog still no-ops until Allow.
     // Exception capture stays off unless FEATURE_POSTHOG_ERRORS_LIVE is on.
-    startPostHog({ captureExceptions });
-    captureRetentionTouch();
+    let started = false;
+    const start = () => {
+      if (started) return;
+      started = true;
+      startPostHog({ captureExceptions });
+      captureRetentionTouch();
+    };
+    const opts = { once: true, passive: true } as const;
+    window.addEventListener("pointerdown", start, opts);
+    window.addEventListener("keydown", start, opts);
+    const idle =
+      typeof requestIdleCallback === "function" ? requestIdleCallback(start, { timeout: 4000 }) : undefined;
+    const timer = window.setTimeout(start, 4000);
+    return () => {
+      window.removeEventListener("pointerdown", start);
+      window.removeEventListener("keydown", start);
+      if (idle !== undefined) cancelIdleCallback(idle);
+      window.clearTimeout(timer);
+    };
   }, [captureExceptions]);
 
   useEffect(() => {

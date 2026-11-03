@@ -4,6 +4,9 @@
  */
 
 import { RAIL_AGES, matchesRailAge, type RailAge } from "@/lib/care-type";
+import { SEARCH_STARTS, isSearchStart, type SearchStart } from "@/lib/search-start";
+
+export { SEARCH_STARTS, isSearchStart, type SearchStart };
 import { confirmedFeeProgramBadge, hasConfirmedFeeLine } from "@/lib/fee-program";
 import {
   hasConfirmedAges,
@@ -20,9 +23,6 @@ export type SearchAge = RailAge;
 
 /** Home rails hide hollow rather than invent facts to pad density. */
 export const WINNIPEG_LIVE_LOOKING_RAIL_MIN = 0.8;
-
-export const SEARCH_STARTS = ["now", "this-month", "next-month"] as const;
-export type SearchStart = (typeof SEARCH_STARTS)[number];
 
 export type LiveLookingGap = "ages" | "fees" | "photo";
 
@@ -67,10 +67,6 @@ export type HonestVacancy =
 
 export function isSearchAge(raw: unknown): raw is SearchAge {
   return SEARCH_AGES.includes(raw as SearchAge);
-}
-
-export function isSearchStart(raw: unknown): raw is SearchStart {
-  return SEARCH_STARTS.includes(raw as SearchStart);
 }
 
 export type SearchPlaceInput = {

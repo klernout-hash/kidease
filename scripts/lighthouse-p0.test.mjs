@@ -30,7 +30,7 @@ test("home LCP hero is preloaded and sized instead of a late 1200-only AVIF", ()
   assert.doesNotMatch(home, /imageSrcSet: HERO_LCP_AVIF_SRCSET/);
   assert.doesNotMatch(home, /HeroBanner/);
   assert.doesNotMatch(home, /eager=\{i < 3\}/);
-  assert.match(home, /eagerThumbs=\{false\}/);
+  assert.match(src("src/components/home-discovery.tsx"), /eagerThumbs=\{false\}/);
 
   const avif480 = statSync(join(root, "public/photos/hero-480-k2.avif")).size;
   const avif768 = statSync(join(root, "public/photos/hero-768-k2.avif")).size;

@@ -9,7 +9,7 @@ import { isNeutralCanadaOrigin } from "@/lib/default-origin";
 import { nearestCities } from "@/lib/geo";
 import { DISMISS_POPOVERS } from "@/lib/dismiss-popovers";
 import type { CopyKey } from "@/lib/copy";
-import { SEARCH_STARTS, type SearchStart } from "@/lib/now-loops";
+import { SEARCH_STARTS, type SearchStart } from "@/lib/search-start";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
