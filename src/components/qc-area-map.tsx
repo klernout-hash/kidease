@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { createKidEaseMap, mapHostStyle, osmMaps, type OsmCircle, type OsmMap } from "@/lib/osm-map";
-import { useStoreChannel } from "@/lib/use-native-shell";
 
 type Props = {
   lat: number;
@@ -13,13 +12,12 @@ type Props = {
 /** Municipality circle only. Never draws a pin. */
 export function QcAreaMap({ lat, lng, radiusM, label, caption }: Props) {
   const host = useRef<HTMLDivElement>(null);
-  const channel = useStoreChannel();
   const valid = Number.isFinite(lat) && Number.isFinite(lng) && radiusM >= 1500;
   const [live, setLive] = useState(false);
 
   useEffect(() => {
     const el = host.current;
-    if (channel === "huawei" || !el || !valid) return;
+    if (!el || !valid) return;
     let cancelled = false;
     let circle: OsmCircle | null = null;
     let map: OsmMap | null = null;
@@ -59,7 +57,7 @@ export function QcAreaMap({ lat, lng, radiusM, label, caption }: Props) {
       circle?.setMap(null);
       map?.destroy();
     };
-  }, [channel, lat, lng, radiusM, valid]);
+  }, [lat, lng, radiusM, valid]);
 
   if (!valid) return null;
 
@@ -69,7 +67,6 @@ export function QcAreaMap({ lat, lng, radiusM, label, caption }: Props) {
         className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-[#F7F4EF]"
         role="img"
         aria-label={label}
-        data-ke={channel === "huawei" ? "map-fallback" : undefined}
       >
         <div className="grid h-full place-items-center">
           <div className="size-[min(68%,16rem)] rounded-full border-2 border-primary/80 bg-primary/10" />

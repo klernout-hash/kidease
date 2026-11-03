@@ -5,11 +5,10 @@ import com.huawei.hms.push.RemoteMessage;
 import java.util.Map;
 
 /**
- * Huawei (no Google Play services) build only. Not compiled in the Play build.
- * To enable: add the huawei flavor with com.huawei.hms:push and
- * agconnect-services.json, copy this file into that flavor's source set, and
- * register the service with the com.huawei.push.action.MESSAGING_EVENT filter.
- * Token goes to registerCallDevice with provider "hms", platform "huawei".
+ * Huawei flavour only. HMS Push Kit delivers call-ring data messages here.
+ * The server sends nothing while FEATURE_CALL_PUSH is off. Token is stored
+ * for a later registerCallDevice call with provider "hms". Do not register
+ * this service on Play, Samsung, or Amazon.
  */
 public class KidEaseHmsMessageService extends HmsMessageService {
     @Override

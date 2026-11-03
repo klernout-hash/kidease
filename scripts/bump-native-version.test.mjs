@@ -7,6 +7,13 @@ test("bump writes the same version into gradle and Xcode", () => {
   const gradle = bumpGradle('versionCode 1\nversionName "1.0.0"\n', "1.0.1", "2");
   assert.match(gradle, /versionCode 2/);
   assert.match(gradle, /versionName "1.0.1"/);
+  const shared = [
+    'defaultConfig {\n        versionCode 3\n        versionName "1.0.0"\n    }',
+    "huawei {\n        versionCode(huaweiCode != null ? huaweiCode : 3)\n    }",
+  ].join("\n");
+  const bumped = bumpGradle(shared, "1.0.1", "4");
+  assert.match(bumped, /versionCode 4/);
+  assert.match(bumped, /versionCode\(huaweiCode != null \? huaweiCode : 3\)/);
   const pbx = bumpPbxproj("MARKETING_VERSION = 1.0.0;\nCURRENT_PROJECT_VERSION = 1;\n", "1.0.1", "2");
   assert.match(pbx, /MARKETING_VERSION = 1.0.1;/);
   assert.match(pbx, /CURRENT_PROJECT_VERSION = 2;/);

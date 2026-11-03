@@ -24,7 +24,8 @@ export async function registerPushDevice(opts?: { enabled?: boolean }): Promise<
   if (amazonBuildOnAmazonDevice({ userAgent: navigator.userAgent })) {
     return registerAdmDevice();
   }
-  // Huawei has no FCM. Do not call the Firebase plugin. HMS Push is a later slot.
+  // Huawei has no FCM. Do not call the Firebase plugin.
+  // HMS call push is compiled into the huawei flavour and stays behind FEATURE_CALL_PUSH.
   if (googleServicesHidden(readClientStoreChannel())) {
     return { ok: false, reason: "disabled", error: PUSH_DISABLED_MESSAGE };
   }

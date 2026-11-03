@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="location_permission_rationale">KidEase utilise votre position uniquement pendant la recherche afin d’afficher les garderies autorisées près de vous. La position n’est pas utilisée en arrière-plan.</string>
+    <string name="camera_permission_rationale">KidEase utilise la caméra pour les appels vidéo avec une garderie. La caméra reste éteinte tant que vous n’êtes pas dans l’appel.</string>
+    <string name="microphone_permission_rationale">KidEase utilise le micro pour les appels vocaux et vidéo avec une garderie. Le micro reste éteint tant que vous n’êtes pas dans l’appel.</string>
+    <string name="notifications_permission_rationale">KidEase envoie une notification quand une garderie vous écrit ou quand un appel arrive.</string>
+</resources>

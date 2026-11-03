@@ -1,14 +1,20 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-    
+    def huaweiAgcPresent = file("app/src/huawei/agconnect-services.json").exists()
     repositories {
         google()
         mavenCentral()
+        maven { url "https://developer.huawei.com/repo/" }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:8.13.0'
         classpath 'com.google.gms:google-services:4.4.4'
+        // AppGallery Connect plugin only when the Huawei json is on disk.
+        // CI decodes AGCONNECT_SERVICES_JSON before Gradle. A missing file still builds.
+        if (huaweiAgcPresent) {
+            classpath 'com.huawei.agconnect:agcp:1.9.6.300'
+        }
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -21,6 +27,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        maven { url "https://developer.huawei.com/repo/" }
     }
 }
 

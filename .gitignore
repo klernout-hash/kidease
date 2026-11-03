@@ -32,6 +32,7 @@ android/key.properties
 android/app/google-services.json
 **/google-services.json
 **/GoogleService-Info.plist
+**/agconnect-services.json
 **/*.p8
 **/AuthKey_*.p8
 android/*.iml

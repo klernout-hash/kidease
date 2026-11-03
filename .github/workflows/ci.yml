@@ -344,3 +344,47 @@ jobs:
             exit 0
           fi
           echo "Smoke shards passed. Desktop visual passed."
+
+  # Play, Samsung, Huawei, and Amazon debug builds, plus the Huawei release
+  # variant. iOS and Microsoft are not Android flavours; the check job covers them.
+  android-stores:
+    name: Android store builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Huawei AppGallery config
+        env:
+          AGCONNECT_SERVICES_JSON: ${{ secrets.AGCONNECT_SERVICES_JSON }}
+        run: |
+          set -euo pipefail
+          python3 - << 'PY'
+          import base64, os
+          from pathlib import Path
+          raw = os.environ.get("AGCONNECT_SERVICES_JSON", "").strip()
+          dest = Path("android/app/src/huawei/agconnect-services.json")
+          if not raw:
+              print("AGCONNECT_SERVICES_JSON is not set. HMS plugin stays off. The build still succeeds.")
+          else:
+              dest.write_bytes(base64.b64decode(raw, validate=True))
+              print("Wrote agconnect-services.json")
+          PY
+      - run: npx cap sync android
+      - name: Build Play, Samsung, Huawei, and Amazon
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assemblePlayDebug assembleSamsungDebug assembleHuaweiDebug assembleAmazonDebug assembleHuaweiRelease bundleHuaweiRelease
+      - name: Store isolation scan
+        run: node scripts/check-store-isolation.mjs android/app/build/outputs/apk
+      - name: Huawei GMS tests
+        run: node --experimental-strip-types --test scripts/huawei-gms.test.mjs

@@ -19,8 +19,6 @@ import type { Booking, DaycareCard as Card, TourRequest } from "@/lib/types";
 import { parentListingFeesVisible } from "@/lib/public-fees";
 import { useCopy } from "@/lib/use-copy";
 import { useRoleChrome } from "@/components/role-chrome";
-import { useStoreChannel } from "@/lib/use-native-shell";
-import { StoreMapFallback } from "@/components/store-map-fallback";
 import { useParentPlusAccess } from "@/lib/use-parent-plus";
 
 const MapView = lazy(() => import("@/components/map-view").then((m) => ({ default: m.MapView })));
@@ -52,7 +50,6 @@ export function ParentShortlist({
   const items = useMemo(() => (Array.isArray(rawItems) ? rawItems : []), [rawItems]);
   const { t, locale } = useCopy();
   const feesOn = parentListingFeesVisible(useRoleChrome().subscriptionsEnabled);
-  const storeChannel = useStoreChannel();
   const { plusOpen } = useParentPlusAccess();
   const leadKey = plusOpen ? "shortlistLeadOpen" : "shortlistLead";
   const origin = useAppStore((s) => s.origin);
@@ -237,9 +234,6 @@ export function ParentShortlist({
 
       {mapOn ? (
         <div className="h-[min(72dvh,36rem)] min-h-[18rem] overflow-hidden rounded-[14px] shadow-card ring-1 ring-border">
-          {storeChannel === "huawei" ? (
-            <StoreMapFallback />
-          ) : (
           <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
             <MapView
               items={feesOn ? visible : visible.map((item) => ({ ...item, fromPrice: 0 }))}
@@ -253,7 +247,6 @@ export function ParentShortlist({
               onFallback={() => setMapOn(false)}
             />
           </Suspense>
-          )}
         </div>
       ) : (
       <div className="ke-listings ke-listings-narrow">

@@ -65,6 +65,10 @@ key.properties
 google-services.json
 app/google-services.json
 
+# AppGallery Connect. Decode from AGCONNECT_SERVICES_JSON. Never commit.
+agconnect-services.json
+app/src/huawei/agconnect-services.json
+
 # Freeline
 freeline.py
 freeline/

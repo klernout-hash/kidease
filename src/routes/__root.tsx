@@ -62,9 +62,8 @@ function manifestHref(channel: StoreChannel | undefined): string {
   return `${file}?v=${ICON_VER}`;
 }
 
-/** Warm the map tile host. Huawei keeps the static fallback and skips this. */
-function mapDnsPrefetch(channel: StoreChannel | undefined): { rel: "dns-prefetch"; href: string }[] {
-  if (channel === "huawei") return [];
+/** Warm OpenFreeMap. Huawei uses the same tiles. There is no Google Maps SDK. */
+function mapDnsPrefetch(): { rel: "dns-prefetch"; href: string }[] {
   return [{ rel: "dns-prefetch", href: "https://tiles.openfreemap.org" }];
 }
 
@@ -194,7 +193,7 @@ export const Route = createRootRoute({
         crossOrigin: "anonymous",
       },
       { rel: "preload", href: "/logo-transparent.svg?v=17", as: "image", type: "image/svg+xml" },
-      ...mapDnsPrefetch(match.context.storeChannel),
+      ...mapDnsPrefetch(),
     ],
   }),
   component: RootDocument,

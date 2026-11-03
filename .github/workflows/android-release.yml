@@ -41,6 +41,28 @@ jobs:
           ]
           Path("android/key.properties").write_text("\n".join(lines) + "\n")
           PY
+      - name: Huawei AppGallery config
+        env:
+          AGCONNECT_SERVICES_JSON: ${{ secrets.AGCONNECT_SERVICES_JSON }}
+          HUAWEI_VERSION_CODE: ${{ vars.HUAWEI_VERSION_CODE }}
+        run: |
+          set -euo pipefail
+          python3 - << 'PY'
+          import base64, os
+          from pathlib import Path
+          raw = os.environ.get("AGCONNECT_SERVICES_JSON", "").strip()
+          dest = Path("android/app/src/huawei/agconnect-services.json")
+          if not raw:
+              print("AGCONNECT_SERVICES_JSON is not set. HMS plugin stays off. The build still succeeds.")
+          else:
+              dest.write_bytes(base64.b64decode(raw, validate=True))
+              print("Wrote agconnect-services.json")
+          code = os.environ.get("HUAWEI_VERSION_CODE", "").strip()
+          if code:
+              print("HUAWEI_VERSION_CODE is set")
+          else:
+              print("HUAWEI_VERSION_CODE is not set. Huawei versionCode stays 3.")
+          PY
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -49,9 +71,21 @@ jobs:
       - run: npx cap sync android
       - name: bundleRelease
         working-directory: android
-        run: chmod +x ./gradlew && ./gradlew bundlePlayRelease
+        env:
+          HUAWEI_VERSION_CODE: ${{ vars.HUAWEI_VERSION_CODE }}
+        run: chmod +x ./gradlew && ./gradlew bundlePlayRelease bundleHuaweiRelease assembleHuaweiRelease
       - uses: actions/upload-artifact@v4
         with:
           name: app-release-aab
           path: android/app/build/outputs/bundle/playRelease/app-play-release.aab
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-huawei-release-aab
+          path: android/app/build/outputs/bundle/huaweiRelease/app-huawei-release.aab
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-huawei-release-apk
+          path: android/app/build/outputs/apk/huawei/release/app-huawei-release.apk
           if-no-files-found: error

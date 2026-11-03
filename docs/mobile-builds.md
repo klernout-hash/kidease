@@ -124,10 +124,10 @@ CI does not run this on every pull request (the secrets are not required for che
 
 1. Decodes `ANDROID_KEYSTORE_BASE64` to `android/kidease-upload.jks`.
 2. Writes `android/key.properties` with the alias and passwords. `storeFile` is an absolute path so Gradle can see it from the app module.
-3. Runs `./gradlew bundlePlayRelease` with Java 21.
-4. Uploads `android/app/build/outputs/bundle/playRelease/app-play-release.aab` as the `app-release-aab` artifact.
+3. Runs `./gradlew bundlePlayRelease bundleHuaweiRelease assembleHuaweiRelease` with Java 21. If the `AGCONNECT_SERVICES_JSON` secret is set, it writes `agconnect-services.json` first and does not print it. Without that secret the Huawei build still succeeds and the AppGallery Connect plugin stays off.
+4. Uploads the Play AAB as `app-release-aab`, the Huawei AAB as `app-huawei-release-aab`, and the Huawei APK as `app-huawei-release-apk`.
 
-Download that artifact and upload it in Play Console. Do not upload `app-release.apk`.
+Download `app-release-aab` and upload it in Play Console. Do not upload a Play APK. Huawei upload steps are in [`huawei-appgallery.md`](huawei-appgallery.md).
 
 ## Location permissions (when-in-use)
 

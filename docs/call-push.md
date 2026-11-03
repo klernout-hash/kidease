@@ -7,7 +7,7 @@ The flag is off by default. While it is off, every server function returns "Back
 |---|---|---|
 | iOS | PushKit VoIP push (`apns-push-type: voip`, topic `<bundle>.voip`) | CallKit system incoming-call screen |
 | Android (Play) | FCM HTTP v1 data message, `priority: HIGH`, `ttl: 25s` | Full-screen `CallStyle` notification (`CATEGORY_CALL`, `USE_FULL_SCREEN_INTENT`) |
-| Huawei (no GMS) | HMS Push Kit data message, `urgency: HIGH`, `category: VOIP` | Same notification (`android/hms/KidEaseHmsMessageService.java`) |
+| Huawei (no GMS) | HMS Push Kit data message, `urgency: HIGH`, `category: VOIP` | Same notification (`android/app/src/huawei/java/ca/kidease/app/KidEaseHmsMessageService.java`). The service is in the Huawei build. The server still sends nothing while `FEATURE_CALL_PUSH` is off. |
 | Amazon Fire (no GMS) | ADM data message, `expiresAfter: 25` | Same notification (`android/adm/KidEaseAdmHandler.java`) |
 | Web | Web Push (VAPID) through `public/sw.js` | `requireInteraction` notification with Answer / Decline |
 

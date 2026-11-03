@@ -35,6 +35,8 @@ test("dex scan catches leaks and passes clean builds", () => {
   assert.deepEqual(scanBuffers("huawei", dex("com.google.android.gms.common.GoogleApiAvailability")), [], "reflection string is ok");
   assert.ok(scanBuffers("play", dex("Lcom/amazon/device/messaging/ADM;")).length);
   assert.ok(scanBuffers("samsung", dex("Lcom/huawei/hms/push/HmsMessaging;")).length);
+  assert.deepEqual(scanBuffers("huawei", dex("Lcom/huawei/hms/push/HmsMessageService;")), []);
+  assert.ok(scanBuffers("play", dex("Lcom/huawei/hms/push/HmsMessageService;")).length);
   assert.ok(scanBuffers("huawei", dex("Lcom/google/firebase/messaging/FirebaseMessaging;")).length);
   assert.ok(scanBuffers("amazon", dex("Lcom/google/android/gms/common;")).length);
   const manifest = [{ name: "AndroidManifest.xml", buf: Buffer.from("com.amazon.device.messaging.permission.RECEIVE", "utf16le") }];

@@ -1,7 +1,7 @@
 name: Store isolation
 
 # Builds every Android store flavour and fails if another store's SDK leaks in.
-# LWA / ADM only in amazon. GMS / FCM never in huawei or amazon. HMS never in play / samsung.
+# LWA / ADM only in amazon. GMS / FCM never in huawei or amazon. HMS Push only in huawei.
 on:
   pull_request:
     branches: [main]
@@ -38,4 +38,4 @@ jobs:
       - name: Dex and manifest scan
         run: node scripts/check-store-isolation.mjs android/app/build/outputs/apk
       - name: Per-store sign-in and Amazon UI gate tests
-        run: node --experimental-strip-types --test scripts/store-isolation.test.mjs scripts/amazon-features.test.mjs
+        run: node --experimental-strip-types --test scripts/store-isolation.test.mjs scripts/amazon-features.test.mjs scripts/huawei-gms.test.mjs

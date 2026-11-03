@@ -7,7 +7,7 @@ Each store gets its own build. A build only has its own store's SDKs. The websit
 | Website | Vite / Vercel | none (channel `web`) | none | Apple, Facebook | any store SDK, Amazon UI |
 | Google Play | `assemblePlayRelease` / `bundlePlayRelease` | `play` | FCM | Google (hidden), Apple, Facebook | LWA, ADM, HMS |
 | Samsung Galaxy Store | `assembleSamsungRelease` | `samsung` | FCM | Apple, Facebook | LWA, ADM, HMS |
-| Huawei AppGallery | `assembleHuaweiRelease` | `huawei` | (HMS later) | Apple, Facebook | LWA, ADM, GMS, FCM |
+| Huawei AppGallery | `assembleHuaweiRelease` / `bundleHuaweiRelease` | `huawei` | HMS Push Kit (send stays off until `FEATURE_CALL_PUSH`) | Apple, Facebook. Huawei ID stays off (`FEATURE_SIGNIN_HUAWEI`) | LWA, ADM, GMS, FCM |
 | Amazon Appstore | `assembleAmazonRelease` | `amazon` | ADM (`FEATURE_AMAZON_ADM`) | Login with Amazon (`FEATURE_LOGIN_AMAZON`) | GMS, FCM, HMS |
 | iOS App Store | Xcode | iOS UA, no Android flavour | APNs | Sign in with Apple | LWA, ADM, GMS, HMS |
 | Microsoft Store | PWA / MSIX (`KidEaseStoreMicrosoft`) | `microsoft` UA | none | Apple, Facebook | LWA, ADM |
@@ -30,6 +30,7 @@ Plus the feature flag. A Silk browser or a Fire UA on the website is never enoug
 - `AmazonAdmPlugin` and the ADM permissions live only in `android/app/src/amazon/`. Other flavours get a no-op `StorePlugins`.
 - ADM is called by reflection. No ADM jar is bundled; Fire OS provides the classes at runtime. The Play, Samsung and Huawei dex has no `com/amazon/device/messaging`.
 - Google Play services and Firebase are excluded for `huawei` and `amazon` (existing `configurations` excludes, plus the `FirebaseInitProvider` manifest removal).
+- HMS Push Kit is a `huaweiImplementation` dependency only. Play, Samsung, and Amazon must not contain `com.huawei.hms`. The AppGallery Connect plugin is applied only when `android/app/src/huawei/agconnect-services.json` is present.
 - LWA runs as a server-side OAuth web flow (`/api/auth/callback/amazon`), so there is no LWA SDK in any APK.
 
 ## CI guard

@@ -90,6 +90,17 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         console.error("FAIL amazon: AmazonAdmPlugin missing from the Amazon build");
       }
     }
+    if (flavor === "huawei") {
+      const all = buffers.map((b) => b.buf.toString("latin1") + b.buf.toString("utf16le")).join("");
+      if (!all.includes("KidEaseHmsMessageService")) {
+        failed = true;
+        console.error("FAIL huawei: KidEaseHmsMessageService missing from the Huawei build");
+      }
+      if (!all.includes("Lcom/huawei/hms/")) {
+        failed = true;
+        console.error("FAIL huawei: HMS Push Kit missing from the Huawei build");
+      }
+    }
   }
   for (const f of Object.keys(FORBIDDEN)) {
     if (!seen.has(f)) {

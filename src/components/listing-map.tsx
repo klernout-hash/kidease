@@ -11,9 +11,7 @@ import {
   webglMapAvailable,
 } from "@/lib/osm-map";
 import { useCopy } from "@/lib/use-copy";
-import { useStoreChannel } from "@/lib/use-native-shell";
 import { MapUnavailable } from "@/components/map-unavailable";
-import { StoreMapFallback } from "@/components/store-map-fallback";
 
 /** Same smiling teardrop as search MapView. */
 const PIN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" aria-hidden="true">
@@ -34,10 +32,8 @@ type Props = {
   radiusM?: number | null;
 };
 
-/** Listing preview. OpenStreetMap tiles, loaded when the page opens. */
+/** Listing preview. OpenFreeMap tiles, including on the Huawei build. No Google Maps SDK. */
 export function ListingMap(props: Props) {
-  const channel = useStoreChannel();
-  if (channel === "huawei") return <StoreMapFallback compact />;
   return <OsmListingMap {...props} />;
 }
 
