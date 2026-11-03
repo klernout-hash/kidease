@@ -4,9 +4,19 @@ name: Android release
 # Does not run on pull requests, so a missing keystore does not fail CI.
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "build = signed AAB/APK; emulator-test = run the APK from apk_run_id on an API 34 emulator"
+        type: choice
+        options: [build, emulator-test]
+        default: build
+      apk_run_id:
+        description: Run id that produced app-release-apk (emulator-test only)
+        default: "41554693656"
 
 jobs:
   bundleRelease:
+    if: ${{ inputs.mode != 'emulator-test' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -60,3 +70,40 @@ jobs:
           name: app-release-apk
           path: android/app/build/outputs/apk/play/release/*.apk
           if-no-files-found: error
+
+  emulator:
+    if: ${{ inputs.mode == 'emulator-test' }}
+    permissions:
+      contents: read
+      actions: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-release-apk
+          path: apk
+          run-id: ${{ inputs.apk_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - name: Run emulator test
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          REVIEWER_ACCOUNT_PASSWORD: ${{ secrets.REVIEWER_ACCOUNT_PASSWORD }}
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: APK=$(ls apk/*.apk | head -1) OUT=e2e-out bash scripts/android-e2e/run.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-emulator-test
+          path: e2e-out/
