@@ -257,7 +257,7 @@ function ObservationsTool({ copy, data, records, save }: ToolProps) {
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <ChildPicker copy={copy} data={data} value={bookingId} onChange={setBookingId} />
         <label className={label}>{copy.domain}<select className={field} value={domain} onChange={(e) => setDomain(e.target.value)}>{OBS_DOMAINS.map((d) => <option key={d} value={d}>{pretty(d)}</option>)}</select></label>
-        <label className={label}>How Does Learning Happen?<select className={field} value={foundation} onChange={(e) => setFoundation(e.target.value)}>{OBS_FOUNDATIONS.map((d) => <option key={d} value={d}>{pretty(d)}</option>)}</select></label>
+        <label className={label}>{copy.foundation}<select className={field} value={foundation} onChange={(e) => setFoundation(e.target.value)}>{OBS_FOUNDATIONS.map((d) => <option key={d} value={d}>{pretty(d)}</option>)}</select></label>
         <label className={label}>{copy.level}<select className={field} value={level} onChange={(e) => setLevel(e.target.value)}>{OBS_LEVELS.map((d) => <option key={d} value={d}>{d}</option>)}</select></label>
       </div>
       <label className={`${label} mt-3`}>{copy.notes}<textarea className={`${field} min-h-24 py-2`} value={note} onChange={(e) => setNote(e.target.value)} /></label>
@@ -322,7 +322,7 @@ function ChecklistTool({ copy, records, save, kind }: ToolProps & { kind: "maint
       </ul>
       <p className="mt-2 text-sm">{copy.done}: {progress.done}/{progress.total}</p>
       {kind === "maintenance" ? (
-        <label className={`${label} mt-3`}>{copy.asset}<input className={field} value={asset} onChange={(e) => setAsset(e.target.value)} placeholder="e.g. Furnace — service due 2027-01" /></label>
+        <label className={`${label} mt-3`}>{copy.asset}<input className={field} value={asset} onChange={(e) => setAsset(e.target.value)} /></label>
       ) : null}
       <Button className="mt-3 min-h-11" disabled={!initialsText.trim()} onClick={() => void save(kind, { ...run, asset }).then((ok) => ok && setDone([]))}>{copy.save}</Button>
       <History copy={copy} rows={records.filter((r) => r.kind === kind)} render={(r) => `${String(r.payload.date)} · ${String(r.payload.room || "")} · ${(r.payload.done as unknown[] | undefined)?.length || 0}/${template.length} · ${String(r.payload.initials)}`} />
@@ -408,7 +408,7 @@ function BillingTool({ copy, data, records, save, month, setMonth, subsidy }: To
         <label className="flex min-h-11 items-center gap-2 text-sm font-medium"><input type="checkbox" className="h-5 w-5" checked={chargeAbsent} onChange={(e) => setChargeAbsent(e.target.checked)} />{copy.chargeAbsent}</label>
         {subsidy ? (
           <>
-            <label className={label}>{copy.agency}<input className={field} value={agency} onChange={(e) => setAgency(e.target.value)} placeholder="e.g. City of Toronto fee subsidy" /></label>
+            <label className={label}>{copy.agency}<input className={field} value={agency} onChange={(e) => setAgency(e.target.value)} /></label>
             <label className={label}>{copy.subsidyPct}<input type="number" min="0" max="100" className={field} value={pct} onChange={(e) => setPct(e.target.value)} /></label>
           </>
         ) : null}
@@ -526,7 +526,7 @@ export function OfflineTool({ copy }: { copy: CentreToolsCopy }) {
         {roster.map((child) => (
           <li key={child.bookingId} className="flex items-center justify-between gap-2 py-2">
             <span>{child.childName}</span>
-            <Button className="min-h-11" onClick={() => tap(child.bookingId, child.next, child.pickups[0] || "")}>{child.next === "check_out" ? "Pickup" : "Arrival"}</Button>
+            <Button className="min-h-11" onClick={() => tap(child.bookingId, child.next, child.pickups[0] || "")}>{child.next === "check_out" ? copy.pickup : copy.arrival}</Button>
           </li>
         ))}
       </ul>

@@ -1,5 +1,5 @@
 /** Centre tools copy in all 10 shipped languages. */
-export type CentreToolsCopy = Record<"title"|"lead"|"offTitle"|"offBody"|"centre"|"child"|"save"|"saved"|"fail"|"noRows"|"exportCsv"|"date"|"notes"|"meals"|"observations"|"pd"|"maintenance"|"cleaning"|"quickbooks"|"tap"|"attendance"|"payroll"|"subsidy"|"offline"|"weekOf"|"food"|"allergyNote"|"foodGuideGap"|"allergens"|"domain"|"level"|"staffName"|"course"|"provider"|"hours"|"targetHours"|"initials"|"room"|"done"|"asset"|"quickbooksNote"|"tapNote"|"tapTest"|"amount"|"month"|"dailyFee"|"scheduledDays"|"chargeAbsent"|"sickDays"|"subsidyPct"|"agency"|"billed"|"agencyShare"|"parentShare"|"rate"|"gross"|"payrollNote"|"offlineWaiting"|"offlineSynced"|"offlineNote"|"parentTitle"|"parentLead"|"receipts"|"billHistory"|"noPhotos", string>;
+export type CentreToolsCopy = Record<"title"|"lead"|"offTitle"|"offBody"|"centre"|"child"|"save"|"saved"|"fail"|"noRows"|"exportCsv"|"date"|"notes"|"meals"|"observations"|"pd"|"maintenance"|"cleaning"|"quickbooks"|"tap"|"attendance"|"payroll"|"subsidy"|"offline"|"weekOf"|"food"|"allergyNote"|"foodGuideGap"|"allergens"|"domain"|"level"|"staffName"|"course"|"provider"|"hours"|"targetHours"|"initials"|"room"|"done"|"asset"|"quickbooksNote"|"tapNote"|"tapTest"|"amount"|"month"|"dailyFee"|"scheduledDays"|"chargeAbsent"|"sickDays"|"subsidyPct"|"agency"|"billed"|"agencyShare"|"parentShare"|"rate"|"gross"|"payrollNote"|"offlineWaiting"|"offlineSynced"|"offlineNote"|"parentTitle"|"parentLead"|"receipts"|"billHistory"|"noPhotos"|"pickup"|"arrival"|"testNoCharge"|"foundation", string>;
 
 const COPY: Record<string, CentreToolsCopy> = {
   en: {
@@ -68,6 +68,10 @@ const COPY: Record<string, CentreToolsCopy> = {
     receipts: "Receipts",
     billHistory: "Bill history",
     noPhotos: "Text only. No photos of children.",
+    pickup: "Pickup",
+    arrival: "Arrival",
+    testNoCharge: "test, not charged",
+    foundation: "How Does Learning Happen?",
   },
   fr: {
     title: "Outils du centre",
@@ -135,6 +139,10 @@ const COPY: Record<string, CentreToolsCopy> = {
     receipts: "Reçus",
     billHistory: "Historique des factures",
     noPhotos: "Texte seulement. Aucune photo d'enfant.",
+    pickup: "Départ",
+    arrival: "Arrivée",
+    testNoCharge: "test, non débité",
+    foundation: "Comment apprend-on?",
   },
   zh: {
     title: "中心工具",
@@ -202,6 +210,10 @@ const COPY: Record<string, CentreToolsCopy> = {
     receipts: "收据",
     billHistory: "账单记录",
     noPhotos: "仅文字。无儿童照片。",
+    pickup: "接走",
+    arrival: "到达",
+    testNoCharge: "测试，未扣款",
+    foundation: "学习如何发生？",
   },
   yue: {
     title: "中心工具",
@@ -269,6 +281,10 @@ const COPY: Record<string, CentreToolsCopy> = {
     receipts: "收據",
     billHistory: "賬單記錄",
     noPhotos: "只有文字。冇小朋友相片。",
+    pickup: "接走",
+    arrival: "到達",
+    testNoCharge: "測試，冇扣款",
+    foundation: "學習點樣發生？",
   },
   pa: {
     title: "ਸੈਂਟਰ ਟੂਲ",
@@ -336,6 +352,10 @@ const COPY: Record<string, CentreToolsCopy> = {
     receipts: "ਰਸੀਦਾਂ",
     billHistory: "ਬਿੱਲ ਇਤਿਹਾਸ",
     noPhotos: "ਸਿਰਫ਼ ਲਿਖਤ। ਬੱਚਿਆਂ ਦੀਆਂ ਫੋਟੋਆਂ ਨਹੀਂ।",
+    pickup: "ਲੈ ਜਾਣਾ",
+    arrival: "ਪਹੁੰਚ",
+    testNoCharge: "ਟੈਸਟ, ਕੋਈ ਖਰਚਾ ਨਹੀਂ",
+    foundation: "ਸਿੱਖਣਾ ਕਿਵੇਂ ਹੁੰਦਾ ਹੈ?",
   },
   es: {
     title: "Herramientas del centro",
@@ -403,6 +423,10 @@ const COPY: Record<string, CentreToolsCopy> = {
     receipts: "Recibos",
     billHistory: "Historial de facturas",
     noPhotos: "Solo texto. Sin fotos de niños.",
+    pickup: "Salida",
+    arrival: "Llegada",
+    testNoCharge: "prueba, sin cargo",
+    foundation: "¿Cómo sucede el aprendizaje?",
   },
   ar: {
     title: "أدوات المركز",
@@ -470,6 +494,10 @@ const COPY: Record<string, CentreToolsCopy> = {
     receipts: "الإيصالات",
     billHistory: "سجل الفواتير",
     noPhotos: "نص فقط. لا صور للأطفال.",
+    pickup: "الاستلام",
+    arrival: "الوصول",
+    testNoCharge: "تجربة، بدون خصم",
+    foundation: "كيف يحدث التعلّم؟",
   },
   tl: {
     title: "Mga tool ng centre",
@@ -537,6 +565,10 @@ const COPY: Record<string, CentreToolsCopy> = {
     receipts: "Mga resibo",
     billHistory: "Kasaysayan ng bill",
     noPhotos: "Teksto lang. Walang larawan ng bata.",
+    pickup: "Sundo",
+    arrival: "Pagdating",
+    testNoCharge: "test, walang singil",
+    foundation: "Paano Nangyayari ang Pagkatuto?",
   },
   it: {
     title: "Strumenti del centro",
@@ -604,6 +636,10 @@ const COPY: Record<string, CentreToolsCopy> = {
     receipts: "Ricevute",
     billHistory: "Storico fatture",
     noPhotos: "Solo testo. Nessuna foto di bambini.",
+    pickup: "Ritiro",
+    arrival: "Arrivo",
+    testNoCharge: "prova, non addebitato",
+    foundation: "Come avviene l'apprendimento?",
   },
   de: {
     title: "Kita-Werkzeuge",
@@ -671,6 +707,10 @@ const COPY: Record<string, CentreToolsCopy> = {
     receipts: "Belege",
     billHistory: "Rechnungsverlauf",
     noPhotos: "Nur Text. Keine Fotos von Kindern.",
+    pickup: "Abholung",
+    arrival: "Ankunft",
+    testNoCharge: "Test, nicht belastet",
+    foundation: "Wie geschieht Lernen?",
   },
 };
 
