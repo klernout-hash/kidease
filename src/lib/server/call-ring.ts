@@ -60,6 +60,7 @@ export function callPushKeysStatus(env: EnvMap = process.env): Record<string, bo
 
 export function cleanCallerName(raw: unknown): string {
   const s = String(raw || "")
+  // eslint-disable-next-line no-control-regex -- strip control chars from caller names
     .replace(/[\u0000-\u001f]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
