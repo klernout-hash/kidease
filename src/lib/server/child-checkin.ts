@@ -7,7 +7,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { centreCanWriteCare } from "@/lib/centre-roles";
 import { getSql } from "@/lib/db";
-import { childCheckinEnabled } from "@/lib/features";
+import { childCheckinEnabled, centreToolIds } from "@/lib/features";
+import { clampTapTime } from "@/lib/centre-tools";
 import { checkoutAllowed, nextDoorAction } from "@/lib/gap-features";
 import { ENROLLED_BOOKING_STATUSES } from "@/lib/review-gate";
 import { nid } from "@/lib/utils";
@@ -106,10 +107,11 @@ export const listDoorRoster = createServerFn({ method: "GET" })
 
 export const recordChildCheck = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { bookingId?: string; action?: string; pickupName?: string }) => ({
+  .validator((input: { bookingId?: string; action?: string; pickupName?: string; at?: string }) => ({
     bookingId: String(input?.bookingId || "").trim(),
     action: input?.action === "check_out" ? ("check_out" as const) : ("check_in" as const),
     pickupName: String(input?.pickupName || ""),
+    at: String(input?.at || ""),
   }))
   .handler(async ({ context, data }) => {
     if (!childCheckinEnabled()) return { ok: false as const, reason: "off" as const };
@@ -153,12 +155,15 @@ export const recordChildCheck = createServerFn({ method: "POST" })
       if (!decision.ok) throw new Error(decision.reason === "need_pickup" ? "Choose a pickup person" : "That person is not on the pickup list");
       pickup = decision.pickup;
     }
+    // FEATURE_OFFLINE_CHECKIN: a tap saved offline keeps its own time (last 24 h, never future).
+    const offlineAt =
+      data.at && (centreToolIds() as string[]).includes("offline") ? clampTapTime(data.at, Date.now()) : null;
     await sql`
       insert into child_check_events (
-        id, daycare_id, booking_id, child_name, parent_user_id, action, pickup_name, recorded_by
+        id, daycare_id, booking_id, child_name, parent_user_id, action, at, pickup_name, recorded_by
       ) values (
         ${nid("chk")}, ${booking.daycare_id}, ${booking.id}, ${booking.child_name},
-        ${booking.user_id}, ${data.action}, ${pickup}, ${context.userId}
+        ${booking.user_id}, ${data.action}, ${offlineAt ?? new Date().toISOString()}, ${pickup}, ${context.userId}
       )
     `;
     return { ok: true as const };

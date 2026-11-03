@@ -22,6 +22,7 @@ import {
   familyVaultEnabled,
   showPayCtas,
   staffTimesheetsEnabled,
+  centreToolIds,
   subscriptionsEnabled,
   tourCalendarEnabled,
 } from "@/lib/features";
@@ -338,6 +339,7 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
     curriculumPack: curriculumPackEnabled(),
     coparentLink: coparentLinkEnabled(),
     staffTimesheets: staffTimesheetsEnabled(),
+    centreTools: centreToolIds() as string[],
     familyVault: familyVaultEnabled(),
     tourCalendar: tourCalendarEnabled(),
     attention,
