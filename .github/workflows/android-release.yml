@@ -2,6 +2,8 @@ name: Android release
 
 # Manual only. Needs the four upload-keystore secrets in docs/mobile-builds.md.
 # Does not run on pull requests, so a missing keystore does not fail CI.
+# The Play app-release-aab artifact is uploaded before Huawei. A missing
+# AGCONNECT_SERVICES_JSON secret skips the Huawei build with a warning.
 on:
   workflow_dispatch:
 
@@ -50,19 +52,34 @@ jobs:
       - name: Play bundle
         working-directory: android
         run: chmod +x ./gradlew && ./gradlew bundlePlayRelease
-      - name: Inject AppGallery services file
-        env:
-          AGCONNECT_SERVICES_JSON: ${{ secrets.AGCONNECT_SERVICES_JSON }}
-        run: node scripts/inject-agconnect-services.mjs
-      - name: Huawei bundle and APK
-        working-directory: android
-        run: ./gradlew bundleHuaweiRelease assembleHuaweiRelease
       - uses: actions/upload-artifact@v4
         with:
           name: app-release-aab
           path: android/app/build/outputs/bundle/playRelease/app-play-release.aab
           if-no-files-found: error
+      - name: Check AppGallery services secret
+        id: agconnect
+        env:
+          AGCONNECT_SERVICES_JSON: ${{ secrets.AGCONNECT_SERVICES_JSON }}
+        run: |
+          set -euo pipefail
+          if [ -z "${AGCONNECT_SERVICES_JSON}" ]; then
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Huawei skipped::AGCONNECT_SERVICES_JSON is missing. Skipping the Huawei release build. The Play app-release-aab artifact is already uploaded."
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Inject AppGallery services file
+        if: success() && steps.agconnect.outputs.present == 'true'
+        env:
+          AGCONNECT_SERVICES_JSON: ${{ secrets.AGCONNECT_SERVICES_JSON }}
+        run: node scripts/inject-agconnect-services.mjs
+      - name: Huawei bundle and APK
+        if: success() && steps.agconnect.outputs.present == 'true'
+        working-directory: android
+        run: ./gradlew bundleHuaweiRelease assembleHuaweiRelease
       - uses: actions/upload-artifact@v4
+        if: success() && steps.agconnect.outputs.present == 'true'
         with:
           name: app-huawei-release
           path: |

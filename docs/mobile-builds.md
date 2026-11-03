@@ -125,7 +125,8 @@ CI does not run this on every pull request (the secrets are not required for che
 1. Decodes `ANDROID_KEYSTORE_BASE64` to `android/kidease-upload.jks`.
 2. Writes `android/key.properties` with the alias and passwords. `storeFile` is an absolute path so Gradle can see it from the app module.
 3. Runs `./gradlew bundlePlayRelease` with Java 21.
-4. Uploads `android/app/build/outputs/bundle/playRelease/app-play-release.aab` as the `app-release-aab` artifact.
+4. Uploads `android/app/build/outputs/bundle/playRelease/app-play-release.aab` as the `app-release-aab` artifact before any Huawei step.
+5. If `AGCONNECT_SERVICES_JSON` is set, writes `agconnect-services.json` and runs `bundleHuaweiRelease` and `assembleHuaweiRelease`. If that secret is missing, the Huawei build step is skipped with a warning. The Play artifact stays.
 
 Download that artifact and upload it in Play Console. Do not upload `app-release.apk`.
 
