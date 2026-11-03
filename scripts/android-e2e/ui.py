@@ -78,11 +78,33 @@ if __name__ == "__main__":
                 sh("input", "tap", str((b[0]+b[2])//2), str((b[1]+b[3])//2)); time.sleep(1); sys.exit(0)
         sys.exit(1)
     if cmd == "focusemail":
-        root = dump()
-        for node in (root.iter("node") if root is not None else []):
-            if "EditText" in (node.get("class") or "") and re.search(r"e-?mail|username", label(node), re.I) and node.get("password") != "true":
-                b = list(map(int, re.findall(r"\d+", node.get("bounds"))))
-                sh("input", "tap", str((b[0]+b[2])//2), str((b[1]+b[3])//2)); time.sleep(1); sys.exit(0)
+        # WebView inputs often carry no text/hint, so the "Email" label is a sibling node.
+        for attempt in range(4):
+            root = dump()
+            nodes = list(root.iter("node")) if root is not None else []
+            def box(n):
+                b = list(map(int, re.findall(r"\d+", n.get("bounds") or "")))
+                return b if len(b) == 4 and b[2] > b[0] and b[3] > b[1] else None
+            edits = [n for n in nodes if "EditText" in (n.get("class") or "") and n.get("password") != "true" and box(n)]
+            pick = next((n for n in edits if re.search(r"e-?mail|username|courriel", label(n), re.I)), None)
+            if pick is None and edits:
+                lbl = next((box(n) for n in nodes if box(n) and re.fullmatch(r"\s*(Email|E-mail|Courriel)\s*", n.get("text") or "")), None)
+                if lbl:
+                    below = [n for n in edits if box(n)[1] >= lbl[1] - 10]
+                    pick = min(below, key=lambda n: box(n)[1]) if below else None
+                pw = next((box(n) for n in nodes if n.get("password") == "true" and box(n)), None)
+                if pick is None and pw:
+                    above = [n for n in edits if box(n)[3] <= pw[1] + 5]
+                    pick = max(above, key=lambda n: box(n)[1]) if above else None
+            if pick is not None:
+                b = box(pick)
+                sh("input", "tap", str((b[0]+b[2])//2), str((b[1]+b[3])//2)); time.sleep(1)
+                sys.stderr.write("focusemail: tapped field %d of %d\n" % (edits.index(pick), len(edits))); sys.exit(0)
+            sys.stderr.write("focusemail: %d edit fields, none matched; scrolling\n" % len(edits))
+            sh("input", "swipe", "540", "1500", "540", "900", "300"); time.sleep(1.5)
         sys.exit(1)
+    if cmd == "haspw":
+        root = dump()
+        sys.exit(0 if root is not None and any(n.get("password") == "true" for n in root.iter("node")) else 1)
     if cmd == "type": type_text(sys.argv[2]); sys.exit(0)
     if cmd == "texts": print(texts()); sys.exit(0)

@@ -29,10 +29,14 @@ login() { # $1 role $2 email
   $UI tap '^(Sign in|Log in|Se connecter)$' 10 || adb shell input keyevent 66
   sleep 12; dismiss
   shot "$1-after-login"
-  if ! $UI wait '^(Sign in|Log in)( |$)' 3 && $UI wait '(Sign out|Log out|Messages|Dashboard|Waitlist|Account)' 15; then
-    mark "$1 reviewer login" PASS "$OUT/$1-after-login.png"; return 0
+  # Strict: no password field left, and the account menu offers Sign out.
+  if $UI haspw; then mark "$1 reviewer login" FAIL "$OUT/$1-after-login.png (still on sign-in form)"; return 1; fi
+  $UI tap '^Menu( |$)' 10; sleep 3
+  if $UI wait '^(Sign out|Log out|Se déconnecter)( |$)' 10; then
+    shot "$1-signed-in-menu"; adb shell input keyevent 4; sleep 2
+    mark "$1 reviewer login" PASS "$OUT/$1-after-login.png, $OUT/$1-signed-in-menu.png"; return 0
   fi
-  mark "$1 reviewer login" FAIL "$OUT/$1-after-login.png"; return 1
+  shot "$1-no-signout"; mark "$1 reviewer login" FAIL "$OUT/$1-no-signout.png (no Sign out after login)"; return 1
 }
 
 logout() { adb shell pm clear $PKG >/dev/null; grant; }
@@ -59,6 +63,7 @@ logout
 
 # 3. Report / block on a listing (signed out is enough to see the controls; parent session re-used if needed)
 login parent-listing reviewer-parent@kidease.ca >/dev/null 2>&1 || true
+adb shell input keyevent 3; sleep 5  # backgrounding flushes WebView cookies
 launch; dismiss
 $UI tap '^Daycare( |$)' 10 && $UI type "Abi Family" && sleep 5
 shot 05a-search-suggest
@@ -71,10 +76,10 @@ for i in $(seq 1 18); do
   adb shell input swipe 540 1700 540 500 300; sleep 1
 done
 shot 06-listing-report
-if [ -n "$found" ]; then
+if [ -n "$found" ] && ! $UI wait 'Sign in to report or block' 2; then
   $UI tap '(Report (this )?(listing|centre|daycare)|Report a problem|Signaler)' 5 && sleep 3 && shot 07-listing-report-open
-  mark "Report/block on a listing" PASS "$OUT/06-listing-report.png"
-else mark "Report/block on a listing" FAIL "$OUT/06-listing-report.png"; fi
+  mark "Signed-in report/block on a listing" PASS "$OUT/06-listing-report.png"
+else mark "Signed-in report/block on a listing" FAIL "$OUT/06-listing-report.png"; fi
 logout
 
 # 4. Daycare login
