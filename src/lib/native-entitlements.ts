@@ -213,14 +213,16 @@ export function storeChannelFromSignals(input: {
   if (!ios && ua.includes(STORE_UA_HUAWEI)) return "huawei";
   if (!ios && ua.includes(STORE_UA_AMAZON)) return "amazon";
   if (!ios && ua.includes(STORE_UA_SAMSUNG)) return "samsung";
+  const builtEarly = storeChannelFromBuild(
+    input.buildChannel !== undefined ? input.buildChannel : viteStoreChannel(),
+  );
+  // A non-GMS build must not look like Play just because the WebView says KidEaseNative.
+  if (builtEarly === "huawei" || builtEarly === "amazon") return builtEarly;
   if (ua.includes(NATIVE_UA_TOKEN)) return "google";
   if (ua.includes(STORE_UA_MICROSOFT)) return "microsoft";
   const store = searchParams(input.search).get("store");
   if (store === "microsoft" || cookieHasMicrosoft(input.cookie)) return "microsoft";
-  const built = storeChannelFromBuild(
-    input.buildChannel !== undefined ? input.buildChannel : viteStoreChannel(),
-  );
-  if (built && built !== "web") return built;
+  if (builtEarly && builtEarly !== "web") return builtEarly;
   return "web";
 }
 

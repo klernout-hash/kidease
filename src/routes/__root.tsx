@@ -270,7 +270,7 @@ function RootDocument() {
         <HeadContent />
         <script src="/channel-boot.js?v=10" />
         <script src="/theme-boot.js" />
-        <script src="/asset-recover.js" />
+        <script defer src="/asset-recover.js" />
       </head>
       <body className="flex min-h-[100dvh] w-full min-w-0 flex-col overflow-x-clip">
         <SkipLink enabled={a11yPass} />

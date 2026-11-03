@@ -21,8 +21,8 @@ import { SITEMAP_ORIGIN } from "@/lib/sitemap";
 
 export const Route = createFileRoute("/need-care-fast")({
   validateSearch: parseNeedCareFastSearch,
-  loaderDeps: ({ search }) => ({ q: parseNeedCareFastSearch(search).q }),
-  loader: ({ deps }) => loadNeedCareFast({ data: parseNeedCareFastSearch(deps).q }),
+  loaderDeps: ({ search }) => parseNeedCareFastSearch(search),
+  loader: ({ deps }) => loadNeedCareFast({ data: deps }),
   head: () =>
     pageSeoHead({
       title: "Need care fast · KidEase",

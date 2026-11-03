@@ -244,11 +244,25 @@ export function notFoundDocument(kind = "page") {
  * @param {{ host?: string | null, pathname?: string | null, search?: string | null, method?: string | null, cookie?: string | null }} input
  * @returns {{ action: "next" } | { action: "redirect", status: 301 | 302 | 308, location: string } | { action: "not_found", status: 404 }}
  */
+/** Drop vacancy-index and gov-admin chunks from the public page preload list. */
+export function stripPrivateRoutePreloads(html) {
+  if (typeof html !== "string" || !html.includes("modulepreload")) return html;
+  return html.replace(
+    /<link\s+rel="modulepreload"\s+href="\/assets\/(?:vacancy-index|fr\.vacancy-index|gov-admin)-[^"]+\.js"[^>]*>/g,
+    "",
+  );
+}
+
 export function decideRequest(input = {}) {
   const path = normalizePath(input.pathname);
 
   if (path === "/for-daycares") {
     return { action: "redirect", status: 301, location: "/claim" };
+  }
+
+  if (path === "/provider/desk/requests" || path === "/fr/provider/desk/requests") {
+    const dest = path.startsWith("/fr/") ? "/fr/provider" : "/provider";
+    return { action: "redirect", status: 302, location: `${dest}?desk=requests` };
   }
 
   const authAlias = {

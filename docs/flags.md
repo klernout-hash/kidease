@@ -62,6 +62,7 @@ Automation-pack flags (`FEATURE_POSTHOG_ERRORS`, `FEATURE_OPS_ALERTS`, `FEATURE_
 | `FEATURE_GOV_PORTAL` | off | Footer link “For governments”. `/gov` sign-in stays available either way. | A small footer link when this is on. Not in the phone app. | No footer link. The government desk is not linked from public nav. |
 | `FEATURE_PRODUCT_EVENTS` | off | Server capture for enrolment, invoice paid, and area waitlist. | Browser events for signup, search, listing view, waitlist, enrolment, and claim. | No new event names are sent. |
 | `FEATURE_NCF_STREET` | off | Geocode a street address with OpenStreetMap Nominatim and keep centres inside 15 km. Results are cached by a hash of the address. | Need care fast accepts a street address when this is on. | City search only. No call to Nominatim. |
+| `FEATURE_NCF_POINT_DISTANCE` | off | Sort Need care fast by the listing pin versus a postal code or device location. Home daycares use a coarse pin. No street is returned. | Closer centres when this is on. | City-centre distance stays. Does not turn on street search or spots-first sort. |
 | `FEATURE_PRIVATE_MEDIA` | off | Daily-log and learning-story photos are returned as a short-lived R2 link. Public URLs are dropped. | The feed shows the signed photo or nothing. | Saved photo values stay as they are today. |
 | `FEATURE_QR_KIOSK` | off | Mint and redeem a rotating check-in code. Writes attendance only after a valid scan for an enrolled child. | Daycare daily desk shows the code. Parent daily feed can scan it. | The screen stays hidden. |
 | `FEATURE_PROVINCE_REPORTS` | off | Build a CSV or PDF from saved listings. Manitoba and Ontario columns differ. | Admin registries page offers a download when this is on. | The download stays hidden. |
@@ -139,6 +140,7 @@ Env still works as a fallback when PostHog is down (last successful overlay is k
 | `FEATURE_PRIVATE_PHOTO_FEED` | no | Default **off**. Set `1` so classroom photos need enrolment and consent, and stay off public pages. |
 | `FEATURE_PRODUCT_EVENTS` | no | Default **off**. Server events. Also set `VITE_FEATURE_PRODUCT_EVENTS=1` for browser events. Uses the existing public PostHog key. No personal details in properties. |
 | `FEATURE_NCF_STREET` | no | Default **off**. Set `1` to geocode street addresses with OpenStreetMap Nominatim. No Google key. |
+| `FEATURE_NCF_POINT_DISTANCE` | no | Default **off**. Set `1` to sort by listing pin versus postal code or device location. Home daycares stay coarse. Does not enable `FEATURE_NCF_STREET` or `FEATURE_NEED_CARE_FAST`. |
 | `FEATURE_PRIVATE_MEDIA` | no | Default **off**. Set `1` to require private R2 keys for daily-log and learning-story photos. Needs the existing R2 keys. No public bucket URL is returned. |
 | `FEATURE_QR_KIOSK` | no | Default **off**. Set `1` to show the rotating check-in code. Also set `KIOSK_TOKEN_SECRET` (a random string, not a vendor key). |
 | `KIOSK_TOKEN_SECRET` | no | Server-only signing key for check-in codes. Leave blank to keep minting off. Never commit a real value. |

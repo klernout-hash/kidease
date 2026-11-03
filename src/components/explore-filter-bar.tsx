@@ -104,7 +104,7 @@ export function ExploreFilterBar({
             search={liveSearch as never}
             data-ke="live-on-kidease"
             className={cn("ke-chip shrink-0", liveOn && "ke-chip-on")}
-            aria-pressed={liveOn}
+            aria-current={liveOn ? "true" : undefined}
             onClick={onLive}
           >
             <span aria-hidden className="mr-1.5 inline-block size-2 rounded-full bg-accent" />
@@ -120,7 +120,7 @@ export function ExploreFilterBar({
             to={localePath("/search", locale)}
             search={openSpotsSearch as never}
             className={cn("ke-chip", openSpotsOn && "ke-chip-on")}
-            aria-pressed={openSpotsOn}
+            aria-current={openSpotsOn ? "true" : undefined}
             onClick={onOpenSpots}
           >
             {t("sortOpen")}

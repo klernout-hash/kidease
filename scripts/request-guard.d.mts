@@ -12,6 +12,7 @@ export function isApexKideaseHost(hostHeader: string | null | undefined): boolea
 export function shouldCanonicalizeApexPath(pathname: string | null | undefined): boolean;
 export function hasAuthSessionCookie(cookieHeader: string | null | undefined): boolean;
 export function notFoundDocument(kind?: "listing" | "page"): string;
+export function stripPrivateRoutePreloads(html: string): string;
 export function decideRequest(input?: {
   host?: string | null;
   pathname?: string | null;

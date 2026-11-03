@@ -6,8 +6,8 @@ import { pageSeoHead } from "@/lib/page-seo";
 
 export const Route = createFileRoute("/fr/need-care-fast")({
   validateSearch: parseNeedCareFastSearch,
-  loaderDeps: ({ search }) => ({ q: parseNeedCareFastSearch(search).q }),
-  loader: ({ deps }) => loadNeedCareFast({ data: parseNeedCareFastSearch(deps).q }),
+  loaderDeps: ({ search }) => parseNeedCareFastSearch(search),
+  loader: ({ deps }) => loadNeedCareFast({ data: deps }),
   head: () =>
     pageSeoHead({
       title: "Besoin de garde vite · KidEase",

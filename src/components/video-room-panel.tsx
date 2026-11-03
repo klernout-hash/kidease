@@ -3,6 +3,7 @@ import { createCallRinger } from "@/lib/call-ring-client";
 import type { LocalAudioTrack, LocalVideoTrack, RemoteAudioTrack, RemoteParticipant, RemoteVideoTrack, Room } from "twilio-video";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
+import { bindRemoteMedia, setLocalTracksEnabled, type RemoteMediaState } from "@/lib/video-media";
 
 type MediaTrack = RemoteAudioTrack | RemoteVideoTrack | LocalAudioTrack | LocalVideoTrack;
 
@@ -59,6 +60,7 @@ export function VideoRoomPanel({
   const [note, setNote] = useState("");
   const [muted, setMuted] = useState(false);
   const [cameraOff, setCameraOff] = useState(false);
+  const [remoteMedia, setRemoteMedia] = useState<RemoteMediaState>({ audio: true, video: true });
 
   useEffect(() => {
     const stage = remoteRef.current?.closest("[data-ke='video-room']");
@@ -110,6 +112,7 @@ export function VideoRoomPanel({
           if (!remoteHost) return;
           clearHost(remoteHost);
           showRemote(participant, remoteHost);
+          bindRemoteMedia(participant, setRemoteMedia);
           ringer.end("answered");
           setPhase("live");
         };
@@ -151,22 +154,16 @@ export function VideoRoomPanel({
     const room = roomRef.current;
     if (!room) return;
     const next = !muted;
-    room.localParticipant.audioTracks.forEach((publication) => {
-      if (next) publication.track.disable();
-      else publication.track.enable();
-    });
-    setMuted(next);
+    const changed = setLocalTracksEnabled(room.localParticipant, "audio", !next);
+    if (changed > 0) setMuted(next);
   }
 
   function toggleCamera() {
     const room = roomRef.current;
     if (!room) return;
     const next = !cameraOff;
-    room.localParticipant.videoTracks.forEach((publication) => {
-      if (next) publication.track.disable();
-      else publication.track.enable();
-    });
-    setCameraOff(next);
+    const changed = setLocalTracksEnabled(room.localParticipant, "video", !next);
+    if (changed > 0) setCameraOff(next);
   }
 
   function leave() {
@@ -188,7 +185,20 @@ export function VideoRoomPanel({
   return (
     <div className="ke-video-room mt-6" data-ke="video-room" data-ke-live="video">
       <div className="ke-video-stage relative overflow-hidden rounded-2xl bg-fg/5 ring-1 ring-border">
-        <div ref={remoteRef} className="aspect-video w-full min-h-0 bg-fg/10 [[data-channel=app]_&]:bg-[#141820]" aria-label={t("videoInCall")} />
+        <div
+          ref={remoteRef}
+          className="aspect-video w-full min-h-0 bg-fg/10 [[data-channel=app]_&]:bg-[#141820]"
+          aria-label={t("videoInCall")}
+          data-remote-audio={remoteMedia.audio ? "on" : "off"}
+          data-remote-video={remoteMedia.video ? "on" : "off"}
+        />
+        {!remoteMedia.video || !remoteMedia.audio ? (
+          <p className="pointer-events-none absolute left-3 top-3 rounded-full bg-fg/80 px-3 py-2 text-sm font-medium text-bg" role="status">
+            {!remoteMedia.video ? t("videoCamOff") : null}
+            {!remoteMedia.video && !remoteMedia.audio ? " · " : null}
+            {!remoteMedia.audio ? t("voiceMute") : null}
+          </p>
+        ) : null}
         <div
           ref={localRef}
           className="absolute bottom-3 right-3 aspect-video w-[28%] overflow-hidden rounded-xl bg-fg/20 ring-1 ring-border [[data-channel=app]_&]:max-h-[40%] [[data-channel=app]_&]:w-[clamp(5.5rem,28%,9rem)]"

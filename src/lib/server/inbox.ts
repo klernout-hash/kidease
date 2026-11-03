@@ -17,7 +17,6 @@ import { chatBodyWithoutSmsFooter, daycareReplySms, parentMessageSms } from "@/l
 import { notificationSourceKey } from "@/lib/notifications";
 import { saveParentInAppNotice } from "@/lib/server/parent-notice";
 import { nid } from "@/lib/utils";
-import { ensureConversationUserState } from "./conversation-state";
 import { lookupUser, notifyPlatform, notifyThreadParty } from "./notify";
 import {
   listCentreOwnerEmails,
@@ -35,8 +34,7 @@ export const listInbox = createServerFn({ method: "GET" })
     const sql = await getSql();
     const { familyScopeFor } = await import("@/lib/server/coparent");
     const parentId = (await familyScopeFor(context.userId)).dataUserId;
-    await sql.query(`alter table conversations add column if not exists staff_note text`).catch(() => undefined);
-    await ensureConversationUserState(sql);
+    const view = data.view ?? "all";
     const rows = await sql<{
       id: string;
       daycare_id: string;
@@ -72,6 +70,8 @@ export const listInbox = createServerFn({ method: "GET" })
       marked_unread: boolean | null;
       member_names: string | null;
       start_date: string | null;
+      last_body: string | null;
+      last_sender: string | null;
     }>`
       select c.id, c.daycare_id, c.user_id as parent_user_id,
              d.name, d.slug, d.photos, c.last_at, d.phone,
@@ -188,38 +188,51 @@ export const listInbox = createServerFn({ method: "GET" })
                  order by case m.role when 'owner' then 0 when 'manager' then 1 else 2 end, u2.name
                  limit 3
                ) members
-             ) as member_names
+             ) as member_names,
+             lm.body as last_body,
+             lm.sender as last_sender
       from conversations c
       join daycares d on d.id = c.daycare_id
       left join "user" u on u.id = c.user_id
       left join conversation_user_state s
         on s.conversation_id = c.id and s.user_id = ${context.userId}
-      where c.user_id = ${parentId}
-         or exists (
-           select 1 from provider_daycares p
-           where p.user_id = ${context.userId} and p.daycare_id = c.daycare_id
-         )
-         or exists (
-           select 1 from centre_members m
-           where m.user_id = ${context.userId} and m.daycare_id = c.daycare_id and m.status = 'active'
-         )
+      left join lateral (
+        select m.body, m.sender
+        from messages m
+        where m.conversation_id = c.id
+          and m.sender <> 'system'
+          and coalesce(m.kind, 'chat') = 'chat'
+        order by m.created_at desc
+        limit 1
+      ) lm on true
+      where (
+          ${view} <> 'centre' and c.user_id = ${parentId}
+        )
+        or (
+          ${view} <> 'family'
+          and c.user_id <> ${parentId}
+          and (
+            exists (
+              select 1 from provider_daycares p
+              where p.user_id = ${context.userId} and p.daycare_id = c.daycare_id
+            )
+            or exists (
+              select 1 from centre_members m
+              where m.user_id = ${context.userId} and m.daycare_id = c.daycare_id and m.status = 'active'
+            )
+          )
+        )
       order by c.last_at desc
+      limit 50
     `;
 
     const out: Conversation[] = [];
     for (const r of rows) {
-      const last = await sql<{ body: string; sender: string }>`
-        select body, sender from messages
-        where conversation_id = ${r.id}
-          and sender <> 'system'
-          and coalesce(kind, 'chat') = 'chat'
-        order by created_at desc
-        limit 1
-      `;
+      const lastBody = r.last_body ?? "";
+      const lastSender = r.last_sender ?? null;
       const isParent = r.parent_user_id === parentId;
       if (data.view === "centre" && isParent) continue;
       if (data.view === "family" && !isParent) continue;
-      const lastBody = last[0]?.body ?? "";
       const tourStatus = (r.tour_status as TourStatus | null) ?? null;
       const times = parsePreferredTimes(r.tour_times);
       const remaining =
@@ -267,7 +280,7 @@ export const listInbox = createServerFn({ method: "GET" })
         requestInfoCount: Number(r.info_count) || 0,
         centreName: r.name,
         memberNames: r.member_names,
-        lastSender: last[0]?.sender ?? null,
+        lastSender,
         archived: Boolean(r.archived_at),
         starred: r.starred === true || Number(r.starred) === 1,
         startDate: r.start_date ? String(r.start_date).slice(0, 10) : null,
@@ -460,7 +473,6 @@ export const saveInboxStaffNote = createServerFn({ method: "POST" })
     const sql = await getSql();
     const access = await requireConversationWrite(sql, data.conversationId, context.userId);
     if (access.role === "parent") throw new Error("Staff only");
-    await sql.query(`alter table conversations add column if not exists staff_note text`).catch(() => undefined);
     await sql`
       update conversations set staff_note = ${data.note || null} where id = ${data.conversationId}
     `;

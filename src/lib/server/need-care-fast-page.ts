@@ -1,6 +1,7 @@
 import { getSql } from "@/lib/db";
-import { needCareFastEnabled, ncfStreetEnabled } from "@/lib/features";
+import { needCareFastEnabled, ncfPointDistanceEnabled, ncfStreetEnabled } from "@/lib/features";
 import { geocode, haversineKm } from "@/lib/geo";
+import { listingDistancePoint } from "@/lib/ncf-point-distance";
 import { PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
 import {
   formatFastKm,
@@ -10,6 +11,7 @@ import {
   rankNeedCareFastByAvailability,
 } from "@/lib/need-care-fast";
 import {
+  geocodeCanadianPostal,
   geocodeStreetAddress,
   looksLikeStreetAddress,
   withinStreetRadius,
@@ -51,6 +53,9 @@ type Row = {
   spots_toddler: number | null;
   spots_preschool: number | null;
   last_vacancy_updated_at: string | Date | null;
+  facility_type: string | null;
+  amenities: string | null;
+  show_public_address: boolean | null;
 };
 
 function iso(value: string | Date | null): string | null {
@@ -68,13 +73,27 @@ export function emptyNeedCareFastPage(q = ""): NeedCareFastPage {
  * Real spots only. Imported from the server function handler, never from a route.
  * If the database is unreachable, return an empty list instead of the error screen.
  */
-export async function loadNeedCareFastPage(rawQuery: string, now = Date.now()): Promise<NeedCareFastPage> {
+export async function loadNeedCareFastPage(
+  rawQuery: string,
+  now = Date.now(),
+  point?: { lat?: number | null; lng?: number | null },
+): Promise<NeedCareFastPage> {
   const q = needCareFastQuery(rawQuery);
-  if (!q) return emptyNeedCareFastPage();
+  const pointOn = ncfPointDistanceEnabled();
+  const lat = Number(point?.lat);
+  const lng = Number(point?.lng);
+  const hasDevicePoint = pointOn && Number.isFinite(lat) && Number.isFinite(lng);
+  if (!q && !hasDevicePoint) return emptyNeedCareFastPage();
   try {
     const sql = await getSql();
     let street = false;
-    let origin = geocode(q);
+    let origin = q ? geocode(q) : null;
+    if (hasDevicePoint) {
+      origin = { lat, lng, label: origin?.label || q || "Your location" };
+    } else if (pointOn && q) {
+      const postal = await geocodeCanadianPostal(q, { cache: nominatimCache(sql) });
+      if (postal) origin = postal;
+    }
     if (ncfStreetEnabled() && looksLikeStreetAddress(q)) {
       const pin = await geocodeStreetAddress(q, { cache: nominatimCache(sql) });
       if (pin) {
@@ -86,7 +105,8 @@ export async function loadNeedCareFastPage(rawQuery: string, now = Date.now()): 
     const since = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
     const rows = await sql.query<Row>(
       `select id, slug, name, city, province, lat, lng,
-              spots_infant, spots_toddler, spots_preschool, last_vacancy_updated_at
+              spots_infant, spots_toddler, spots_preschool, last_vacancy_updated_at,
+              facility_type, amenities, show_public_address
          from daycares
         where ${PUBLIC_LISTING_SQL}
           and last_vacancy_updated_at is not null
@@ -102,11 +122,21 @@ export async function loadNeedCareFastPage(rawQuery: string, now = Date.now()): 
         const spots = (Number(row.spots_infant) || 0) + (Number(row.spots_toddler) || 0) + (Number(row.spots_preschool) || 0);
         const confirmedAt = iso(row.last_vacancy_updated_at);
         if (!confirmedAt || !qualifiesNeedCareFast({ spots, confirmedAt }, now)) return [];
-        const lat = Number(row.lat);
-        const lng = Number(row.lng);
-        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return [];
+        const rawLat = Number(row.lat);
+        const rawLng = Number(row.lng);
+        if (!Number.isFinite(rawLat) || !Number.isFinite(rawLng)) return [];
         if (!row.slug || !row.name) return [];
-        const distanceKm = haversineKm(origin, { lat, lng });
+        const pin = pointOn
+          ? listingDistancePoint({
+              id: String(row.id),
+              lat: rawLat,
+              lng: rawLng,
+              facilityType: row.facility_type,
+              amenities: row.amenities,
+              showPublicAddress: row.show_public_address === true,
+            })
+          : { lat: rawLat, lng: rawLng, coarse: false };
+        const distanceKm = haversineKm(origin, { lat: pin.lat, lng: pin.lng });
         if (street && !withinStreetRadius(distanceKm)) return [];
         return [{
           id: String(row.id),

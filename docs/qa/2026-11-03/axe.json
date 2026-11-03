@@ -1,0 +1,74 @@
+{
+  "dark:home": {
+    "status": 200,
+    "counts": {
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0
+    },
+    "rules": [],
+    "title": "KidEase · Licensed daycare near you",
+    "href": "http://127.0.0.1:8080/"
+  },
+  "dark:search": {
+    "status": 200,
+    "counts": {
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0
+    },
+    "rules": [],
+    "title": "Search licensed daycare near you · KidEase",
+    "href": "http://127.0.0.1:8080/search"
+  },
+  "dark:pricing": {
+    "status": 200,
+    "counts": {
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0
+    },
+    "rules": [],
+    "title": "KidEase · Licensed daycare near you",
+    "href": "http://127.0.0.1:8080/"
+  },
+  "light:home": {
+    "status": 200,
+    "counts": {
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0
+    },
+    "rules": [],
+    "title": "KidEase · Licensed daycare near you",
+    "href": "http://127.0.0.1:8080/"
+  },
+  "light:search": {
+    "status": 200,
+    "counts": {
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0
+    },
+    "rules": [],
+    "title": "Search licensed daycare near you · KidEase",
+    "href": "http://127.0.0.1:8080/search"
+  },
+  "light:pricing": {
+    "status": 200,
+    "counts": {
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0
+    },
+    "rules": [],
+    "title": "KidEase · Licensed daycare near you",
+    "href": "http://127.0.0.1:8080/"
+  }
+}
