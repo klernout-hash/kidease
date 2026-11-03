@@ -7,7 +7,9 @@ import { test } from "node:test";
 import {
   authorizedWebhook,
   mapEnvelopeStatus,
+  firstViewedAt,
   parseConnectPayload,
+  signersViewed,
   planConnectWebhook,
   webhookSecretsFromEnv,
   webhookUrlHasSecret,
@@ -558,4 +560,50 @@ test("bad HMAC from our account re-reads the envelope from DocuSign instead of t
   const fn = lib.slice(lib.indexOf("export async function syncEnvelopeFromApi"), lib.indexOf("export async function loadSignedPdfBytes"));
   assert.match(fn, /from daycare_contracts where envelope_id = \$1/);
   assert.match(fn, /getEnvelopeProgress\(envelopeId\)/);
+});
+
+test("signer-level views count as viewed even while the envelope is still sent", () => {
+  assert.equal(signersViewed([{ status: "sent" }, { status: "created" }]), false);
+  assert.equal(signersViewed([{ status: "delivered" }, { status: "created" }]), true);
+  assert.equal(signersViewed([{ status: "completed" }]), true);
+  assert.equal(signersViewed([{ status: "sent", deliveredDateTime: "2026-11-03T03:51:43.01Z" }]), true);
+  assert.equal(signersViewed(undefined), false);
+  assert.equal(
+    firstViewedAt([
+      { deliveredDateTime: "2026-11-03T04:10:00Z" },
+      { deliveredDateTime: "2026-11-03T03:51:43.01Z" },
+      { status: "created" },
+    ]),
+    "2026-11-03T03:51:43.010Z",
+  );
+  assert.equal(firstViewedAt([{ status: "sent" }]), null);
+});
+
+test("Connect payload keeps signer deliveredDateTime", () => {
+  const raw = JSON.stringify({
+    event: "recipient-delivered",
+    data: {
+      envelopeId: "env-1",
+      envelopeSummary: {
+        status: "sent",
+        recipients: { signers: [{ recipientId: "1", routingOrder: "1", status: "delivered", deliveredDateTime: "2026-11-03T03:51:43Z" }] },
+      },
+    },
+  });
+  const parsed = parseConnectPayload(raw);
+  assert.equal(parsed?.envelopeId, "env-1");
+  assert.equal(parsed?.signers?.[0]?.deliveredDateTime, "2026-11-03T03:51:43Z");
+  assert.equal(signersViewed(parsed?.signers), true);
+});
+
+test("applyEnvelopeEvent and poll record viewed_at from signers", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const lib = readFileSync(join(here, "../src/lib/server/docusign.ts"), "utf8");
+  const apply = lib.slice(lib.indexOf("export async function applyEnvelopeEvent"), lib.indexOf("function classifiedDocusignError"));
+  assert.match(apply, /signersViewed\(signers\)/);
+  assert.match(apply, /getEnvelopeProgress\(input\.envelopeId\)/);
+  assert.match(apply, /coalesce\(viewed_at, \$7::timestamptz, now\(\)\)/);
+  const poll = lib.slice(lib.indexOf("export async function pollOpenEnvelopes"), lib.indexOf("export async function syncEnvelopeFromApi"));
+  assert.match(poll, /newlyViewed/);
+  assert.match(poll, /viewed_at/);
 });

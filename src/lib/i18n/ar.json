@@ -3353,5 +3353,7 @@
   "centreToolsNav": "أدوات المركز",
   "centreToolsNavHint": "القوائم وقوائم التحقق والفوترة",
   "parentCentreToolsNav": "من حضانتك",
-  "parentCentreToolsNavHint": "القوائم والملاحظات والفواتير"
+  "parentCentreToolsNavHint": "القوائم والملاحظات والفواتير",
+  "cookieConsentAllowShort": "سماح",
+  "cookieSettings": "إعدادات ملفات تعريف الارتباط"
 }

@@ -40,7 +40,7 @@ export function HelpBot() {
 
   useEffect(() => {
     const root = document.documentElement;
-    const chrome = "[data-ke=listing-sticky-bar], [data-ke=compare-bar], [data-ke=app-tab-bar], [data-ke=cookie-consent]";
+    const chrome = "[data-ke=listing-sticky-bar], [data-ke=compare-bar], [data-ke=app-tab-bar], [data-ke=cookie-consent], [data-ke=push-explainer]";
     const apply = () => {
       let top = window.innerHeight;
       for (const node of document.querySelectorAll(chrome)) {
