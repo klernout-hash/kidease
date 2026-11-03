@@ -1322,7 +1322,7 @@
   "cookieConsentBody": "必要 Cookie 會令你保持登入，同埋記住你嘅搜尋。呢啲係必須嘅。可選分析（PostHog）會記錄頁面瀏覽，同埋一段遮咗私隱嘅使用過程重播，等我哋改善 KidEase：唔係廣告，亦唔係用網站所必須。",
   "cookieConsentBannerLead": "你未允許之前，分析唔會開。",
   "cookieConsentEssential": "必要",
-  "cookieConsentAllow": "允許分析",
+  "cookieConsentAllow": "允許分析，等我哋改進 KidEase",
   "support": "支援",
   "footerCaregivers": "照顧者同職位",
   "footerKidEase": "KidEase",

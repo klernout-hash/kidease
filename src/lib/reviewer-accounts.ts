@@ -16,6 +16,27 @@ export function isStoreReviewerEmail(email: string | null | undefined): boolean 
   return STORE_REVIEWER_EMAILS.has(String(email || "").trim().toLowerCase());
 }
 
+/** Domain only. The local part of a reviewer address is not written to logs. */
+export function emailDomainForLog(email: string | null | undefined): string {
+  const raw = String(email || "").trim().toLowerCase();
+  const at = raw.lastIndexOf("@");
+  const domain = at >= 0 ? raw.slice(at + 1) : "";
+  if (!domain || !/^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain)) return "redacted";
+  return domain;
+}
+
+/** One JSON line. Role is parent or daycare. The full address is not included. */
+export function logStoreReviewerSignupSkip(role: string, email?: string | null): void {
+  console.info(
+    JSON.stringify({
+      event: "ghl_signup_skipped",
+      reason: "store_reviewer_skip",
+      role,
+      email_domain: emailDomainForLog(email),
+    }),
+  );
+}
+
 /**
  * App Review networks often block the Turnstile iframe. These two mailboxes
  * may skip the widget. Password checks and rate limits still run.

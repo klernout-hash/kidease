@@ -1322,7 +1322,7 @@
   "cookieConsentBody": "Pinapanatili ka ng mga essential cookie na naka-sign in at naaalala ang iyong paghahanap. Kinakailangan ang mga ito. Ang opsyonal na analytics (PostHog) ay nagtatala ng mga page view at ng privacy-masked na session replay para mapabuti namin ang KidEase: hindi para sa ads, at hindi kinakailangan para magamit ang site.",
   "cookieConsentBannerLead": "Naka-off ang analytics hanggang sa payagan mo.",
   "cookieConsentEssential": "Kinakailangan",
-  "cookieConsentAllow": "Payagan ang analytics",
+  "cookieConsentAllow": "Payagan ang analytics para mapabuti namin ang KidEase",
   "support": "Suporta",
   "footerCaregivers": "Mga caregiver at trabaho",
   "footerKidEase": "KidEase",

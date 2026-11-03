@@ -2344,6 +2344,19 @@ html[data-cookie-banner="open"] body {
     padding-bottom: 10rem;
   }
 }
+/* A taller consent card stays above the listing actions and under the filter chips. */
+@media (max-width: 767px) {
+  html[data-cookie-banner="open"] body {
+    padding-bottom: calc(16rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
+  }
+  html[data-cookie-banner="open"] .ke-explore-filter-sticky {
+    z-index: 60;
+    background: var(--color-bg);
+  }
+  html[data-cookie-banner="open"]:has([data-ke="listing-sticky-bar"]) body {
+    padding-bottom: calc(24rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
+  }
+}
 
 /*
   Light cards that ignore the theme token. In dark mode their text follows
@@ -2413,6 +2426,12 @@ html[data-runtime="native"] [data-ke="cookie-consent"],
 html[data-native="1"] [data-ke="cookie-consent"] {
   bottom: calc(5.25rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
   z-index: 40;
+}
+/* Listing actions sit above the tab bar. The consent card stays above both. */
+@media (max-width: 767px) {
+  html:has([data-ke="listing-sticky-bar"]) [data-ke="cookie-consent"] {
+    bottom: calc(15rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
+  }
 }
 html[data-native="1"] [data-ke="cookie-consent"][data-compact="native"] .ke-cookie-consent-panel,
 html[data-channel="app"] [data-ke="cookie-consent"][data-compact="native"] .ke-cookie-consent-panel {

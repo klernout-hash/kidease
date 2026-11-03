@@ -1322,7 +1322,7 @@
   "cookieConsentBody": "Las cookies esenciales mantienen su sesión iniciada y recuerdan su búsqueda. Son obligatorias. La analítica opcional (PostHog) registra las visitas a las páginas y una reproducción de sesión con privacidad enmascarada para que podamos mejorar KidEase: no son anuncios y no son necesarias para usar el sitio.",
   "cookieConsentBannerLead": "La analítica permanece desactivada hasta Permitir.",
   "cookieConsentEssential": "Esencial",
-  "cookieConsentAllow": "Permitir analítica",
+  "cookieConsentAllow": "Permitir analítica para mejorar KidEase",
   "support": "Soporte",
   "footerCaregivers": "Cuidadores y empleos",
   "footerKidEase": "KidEase",

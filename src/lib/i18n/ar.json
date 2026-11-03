@@ -1322,7 +1322,7 @@
   "cookieConsentBody": "تبقي ملفات تعريف الارتباط الأساسية تسجيل دخولك وتتذكّر بحثك. وهي مطلوبة. تسجّل التحليلات الاختيارية (PostHog) مشاهدات الصفحات وإعادة تشغيل جلسة مقنّعة للخصوصية حتى نحسّن KidEase: وليست إعلانات، وليست مطلوبة لاستخدام الموقع.",
   "cookieConsentBannerLead": "تبقى التحليلات متوقفة حتى السماح.",
   "cookieConsentEssential": "أساسي",
-  "cookieConsentAllow": "اسمح بالتحليلات",
+  "cookieConsentAllow": "اسمحوا بالتحليلات لنحسّن KidEase",
   "support": "الدعم",
   "footerCaregivers": "مقدّمو الرعاية والوظائف",
   "footerKidEase": "KidEase",

@@ -15,7 +15,7 @@
  * This POST is the signup event. It does not send a stage field.
  */
 
-import { isStoreReviewerEmail } from "./reviewer-accounts.ts";
+import { isStoreReviewerEmail, logStoreReviewerSignupSkip } from "./reviewer-accounts.ts";
 import { runtimeProcessEnv, type EnvMap } from "./runtime-env.ts";
 
 export const GHL_DAYCARE_SIGNUP_URL_ENV = "GHL_WEBHOOK_DAYCARE_SIGNUP_URL";
@@ -141,6 +141,7 @@ export async function postGhlSignupIntake(input: {
   onError?: (err: unknown) => void;
 }): Promise<GhlIntakeResult> {
   if (isStoreReviewerEmail(input.email)) {
+    logStoreReviewerSignupSkip(ghlAudienceForTrigger(input.trigger), input.email);
     return { ok: true, skipped: true, reason: "reviewer-account" };
   }
   const env = readEnv(input.env);

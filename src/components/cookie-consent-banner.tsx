@@ -74,7 +74,7 @@ export function CookieConsentBanner() {
             <p id="ke-cookie-consent-body" className="sr-only">
               {t("cookieConsentBody")}
             </p>
-            <p className="mt-0.5 truncate text-[11px] leading-4 text-muted">
+            <p className="mt-0.5 text-[11px] leading-4 text-muted [overflow-wrap:normal]">
               {t("cookieConsentBannerLead")}{" "}
               <Link to={localePath("/cookies", locale)} className="font-medium text-primary underline-offset-4 hover:underline">
                 {t("cookies")}
@@ -84,18 +84,27 @@ export function CookieConsentBanner() {
                 {t("privacy")}
               </Link>
             </p>
-            <div className="mt-2 flex flex-wrap gap-2">
+            {/* Nothing is pre-selected. Allow is the brand button. Essential is one tap, same as Allow. */}
+            <div className="mt-3 flex flex-col gap-2">
+              <Button
+                type="button"
+                role="button"
+                variant="primary"
+                data-ke="cookie-allow"
+                className="h-auto min-h-14 w-full whitespace-normal px-4 py-2.5 text-center text-base leading-snug [overflow-wrap:normal]"
+                onClick={() => choose("granted")}
+              >
+                {t("cookieConsentAllow")}
+              </Button>
               <Button
                 type="button"
                 role="button"
                 variant="secondary"
-                size="sm"
+                data-ke="cookie-essential"
+                className="h-auto min-h-11 w-full whitespace-normal px-4 py-2 text-center leading-snug [overflow-wrap:normal]"
                 onClick={() => choose("denied")}
               >
                 {t("cookieConsentEssential")}
-              </Button>
-              <Button type="button" role="button" size="sm" onClick={() => choose("granted")}>
-                {t("cookieConsentAllow")}
               </Button>
             </div>
           </div>
