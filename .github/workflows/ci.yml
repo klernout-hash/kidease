@@ -300,6 +300,50 @@ jobs:
           path: artifacts/e2e/
           if-no-files-found: ignore
 
+  # Six store builds: Play, Samsung, Huawei, and Amazon APKs, plus iOS and Microsoft
+  # source scans inside check-store-isolation.mjs. Huawei release AAB/APK is unsigned
+  # here (no upload keystore on pull requests). android-release.yml signs it.
+  android-stores:
+    name: android-stores
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npx cap sync android
+      - name: Debug builds for every Android store
+        working-directory: android
+        run: chmod +x ./gradlew && ./gradlew assemblePlayDebug assembleSamsungDebug assembleHuaweiDebug assembleAmazonDebug testPlayDebugUnitTest testSamsungDebugUnitTest testHuaweiDebugUnitTest testAmazonDebugUnitTest
+      - name: Store isolation (four APKs plus iOS and Microsoft sources)
+        run: node scripts/check-store-isolation.mjs android/app/build/outputs/apk
+      - name: Sign-in isolation tests
+        run: node --experimental-strip-types --test scripts/store-isolation.test.mjs scripts/huawei-gms.test.mjs scripts/huawei-appgallery.test.mjs
+      - name: Inject AppGallery services file when the secret exists
+        env:
+          AGCONNECT_SERVICES_JSON: ${{ secrets.AGCONNECT_SERVICES_JSON }}
+        run: node scripts/inject-agconnect-services.mjs
+      - name: Huawei release AAB and APK
+        working-directory: android
+        run: ./gradlew bundleHuaweiRelease assembleHuaweiRelease
+      - name: Scan the Huawei release APK
+        run: node scripts/check-store-isolation.mjs android/app/build/outputs/apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-huawei-release
+          path: |
+            android/app/build/outputs/bundle/huaweiRelease/*.aab
+            android/app/build/outputs/apk/huawei/release/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
   # Same check name as before (`e2e`) so branch protection still matches.
   # Smoke shards must pass. A desktop-visual pixel miss is a warning on pull
   # requests and main; a preview or install failure still fails the check.

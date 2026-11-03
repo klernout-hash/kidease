@@ -14,4 +14,7 @@ ext {
     androidxJunitVersion = '1.3.0'
     androidxEspressoCoreVersion = '3.7.0'
     cordovaAndroidVersion = '14.0.1'
+    // HMS Push Kit. huaweiImplementation only. Play, Samsung, and Amazon do not get it.
+    // The AppGallery plugin classpath is in android/build.gradle (1.9.6.300).
+    huaweiPushVersion = '6.13.0.301'
 }

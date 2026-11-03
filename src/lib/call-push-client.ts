@@ -8,6 +8,7 @@
 
 import { registerPlugin } from "@capacitor/core";
 import { registerCallDevice, cancelCallRing } from "@/lib/server/call-ring-fns";
+import { readClientStoreChannel } from "@/lib/native-entitlements";
 
 type CallKitVoip = {
   register(): Promise<void>;
@@ -20,6 +21,25 @@ type CallKitVoip = {
 };
 
 const CallKit = registerPlugin<CallKitVoip>("CallKitVoip");
+
+type KidEaseHmsPlugin = { register(): Promise<{ token?: string }> };
+
+/**
+ * HMS token from the huawei flavor only. Posts to push_device_tokens as
+ * provider "hms". The server drops it while FEATURE_CALL_PUSH is off.
+ * Other builds never call this plugin.
+ */
+export async function registerHuaweiCallToken(): Promise<void> {
+  if (readClientStoreChannel() !== "huawei") return;
+  try {
+    const hms = registerPlugin<KidEaseHmsPlugin>("KidEaseHms");
+    const token = String((await hms.register())?.token || "").trim();
+    if (!token) return;
+    await registerCallDevice({ data: { token, provider: "hms", platform: "huawei" } }).catch(() => null);
+  } catch {
+    // Plugin missing, or AppGallery Push Kit is not configured in this binary yet.
+  }
+}
 
 export async function registerBackgroundRing(platform: "ios" | "android", fcmToken?: string): Promise<void> {
   if (platform === "android") {

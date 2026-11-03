@@ -47,11 +47,25 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx cap sync android
-      - name: bundleRelease
+      - name: Play bundle
         working-directory: android
         run: chmod +x ./gradlew && ./gradlew bundlePlayRelease
+      - name: Inject AppGallery services file
+        env:
+          AGCONNECT_SERVICES_JSON: ${{ secrets.AGCONNECT_SERVICES_JSON }}
+        run: node scripts/inject-agconnect-services.mjs
+      - name: Huawei bundle and APK
+        working-directory: android
+        run: ./gradlew bundleHuaweiRelease assembleHuaweiRelease
       - uses: actions/upload-artifact@v4
         with:
           name: app-release-aab
           path: android/app/build/outputs/bundle/playRelease/app-play-release.aab
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-huawei-release
+          path: |
+            android/app/build/outputs/bundle/huaweiRelease/*.aab
+            android/app/build/outputs/apk/huawei/release/*.apk
           if-no-files-found: error
