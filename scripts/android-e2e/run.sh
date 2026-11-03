@@ -26,7 +26,7 @@ login() { # $1 role $2 email
   $UI typeenv REVIEWER_ACCOUNT_PASSWORD || { mark "$1 reviewer login" FAIL "password guard"; return 1; }
   adb shell input keyevent 111 || true
   shot "$1-login-filled"
-  $UI tap '^(Sign in|Log in|Se connecter)$' 10 || adb shell input keyevent 66
+  $UI tapbutton '^(Sign in|Log in|Se connecter)$' 10 || adb shell input keyevent 66
   sleep 12; dismiss
   shot "$1-after-login"
   # Strict: no password field left, and the account menu offers Sign out.

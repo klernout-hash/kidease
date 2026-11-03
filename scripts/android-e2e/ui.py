@@ -29,6 +29,20 @@ def find(rx, cls=None):
                 return ((b[0]+b[2])//2, (b[1]+b[3])//2)
     return None
 
+def find_button(rx):
+    """Prefer a Button node (the page heading can share the button's text); else the last match."""
+    root = dump()
+    if root is None: return None
+    r = re.compile(rx, re.I); hits = []
+    for n in root.iter("node"):
+        if r.search(label(n)):
+            b = list(map(int, re.findall(r"\d+", n.get("bounds"))))
+            if b[2] > b[0] and b[3] > b[1]:
+                hits.append(("Button" in (n.get("class") or ""), ((b[0]+b[2])//2, (b[1]+b[3])//2)))
+    if not hits: return None
+    btn = [h for h in hits if h[0]]
+    return (btn[0] if btn else hits[-1])[1]
+
 def wait(rx, t=40, cls=None):
     end = time.time() + t
     while time.time() < end:
@@ -53,6 +67,12 @@ def texts():
 if __name__ == "__main__":
     cmd = sys.argv[1]
     if cmd == "tap": sys.exit(0 if tap(sys.argv[2], int(sys.argv[3]) if len(sys.argv) > 3 else 40) else 1)
+    if cmd == "tapbutton":
+        end = time.time() + (int(sys.argv[3]) if len(sys.argv) > 3 else 10); p = None
+        while time.time() < end and not p:
+            p = find_button(sys.argv[2]) or time.sleep(2)
+        if not p: sys.exit(1)
+        sh("input", "tap", str(p[0]), str(p[1])); time.sleep(1.5); sys.exit(0)
     if cmd == "wait": sys.exit(0 if wait(sys.argv[2], int(sys.argv[3]) if len(sys.argv) > 3 else 40) else 1)
     if cmd == "tapfield":  # tap nth EditText
         root = dump(); n = int(sys.argv[2]); i = 0
