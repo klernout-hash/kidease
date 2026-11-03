@@ -1,4 +1,4 @@
-import { agreementTemplateV2, DIRECTOR_ANCHORS, guardianAnchors, parentAgreementDocumentV2 } from "../parent-agreement-v2.ts";
+import { agreementTemplateV2, coparentSignerInputs, DIRECTOR_ANCHORS, guardianAnchors, parentAgreementDocumentV2 } from "../parent-agreement-v2.ts";
 import { isHomeDaycare } from "../home-address-privacy.ts";
 import { createServerFn } from "@tanstack/react-start";
 import { getSql, type Sql } from "@/lib/db";
@@ -111,6 +111,20 @@ async function centreUserIds(sql: Sql, daycareId: string) {
     where daycare_id = ${daycareId} and status = 'active'
   `.catch(() => []);
   return [...new Set([...owners, ...members].map((row) => row.user_id).filter(Boolean))];
+}
+
+/** v2: linked co-parents sign too (parallel with parent 1, before the director). */
+async function coparentSigners(sql: Sql, childId: string | null, exclude: string[]) {
+  const ids = await linkedCoparentIds(sql, childId || "");
+  if (!ids.length) return [];
+  const rows = await sql.query<{ name: string | null; email: string | null }>(
+    `select name, email from "user" where id = any($1)`,
+    [ids],
+  ).catch(() => []);
+  return rows
+    .map((row) => ({ name: (row.name || "").trim(), email: (row.email || "").trim().toLowerCase() }))
+    .filter((row) => row.name && validEmail(row.email) && !exclude.includes(row.email))
+    .slice(0, 3);
 }
 
 async function linkedCoparentIds(sql: Sql, childId: string) {
@@ -368,6 +382,7 @@ export const sendParentAgreement = createServerFn({ method: "POST" })
     const agreedDays = String(booking.days || "").trim();
 
     const v2 = agreementTemplateV2();
+    const coparents = v2 ? await coparentSigners(sql, booking.child_id, [parentEmail, directorEmail]) : [];
     const partyFields = {
       centreName: centre.name,
       address: centre.address || "",
@@ -387,7 +402,12 @@ export const sendParentAgreement = createServerFn({ method: "POST" })
       ? parentAgreementDocumentV2(terms, {
           ...partyFields,
           isHomeDaycare: isHomeDaycare({ facilityType: centre.facility_type, amenities: centre.amenities } as never),
-          guardians: [{ name: parentName, email: parentEmail }],
+          guardians: [{ name: parentName, email: parentEmail }, ...coparents.map((row) => ({ name: row.name, email: row.email }))],
+        }, {
+          baseFee: { en: terms.baseFeeEn || "", fr: terms.baseFeeFr || "" },
+          reducedFee: { en: terms.reducedFeeEn || "", fr: terms.reducedFeeFr || "" },
+          billingCycle: { en: terms.billingCycleEn || "", fr: terms.billingCycleFr || "" },
+          feeIncrease: { en: terms.feeIncreaseEn || "", fr: terms.feeIncreaseFr || "" },
         })
       : parentAgreementDocument(terms, partyFields);
     const parentAnchors = guardianAnchors(0);
@@ -424,6 +444,7 @@ export const sendParentAgreement = createServerFn({ method: "POST" })
           ...(v2 ? { initialAnchor: DIRECTOR_ANCHORS.initial, dateAnchor: DIRECTOR_ANCHORS.date } : {}),
           roleName: "Director",
         },
+        ...coparentSignerInputs(coparents),
       ],
     });
 

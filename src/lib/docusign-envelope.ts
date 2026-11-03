@@ -133,7 +133,7 @@ export function centreEnvelopeCreateBody(
                 },
               ],
               ...(signer.initialAnchor
-                ? { initialHereTabs: [{ anchorString: signer.initialAnchor, anchorUnits: "pixels", anchorXOffset: "0", anchorYOffset: "-4", anchorIgnoreIfNotPresent: "true" }] }
+                ? { initialHereTabs: [{ anchorString: signer.initialAnchor, anchorUnits: "pixels", anchorXOffset: "0", anchorYOffset: "-4", anchorIgnoreIfNotPresent: "true", optional: "false" }] }
                 : {}),
               ...(signer.dateAnchor
                 ? { dateSignedTabs: [{ anchorString: signer.dateAnchor, anchorUnits: "pixels", anchorXOffset: "0", anchorYOffset: "-4" }] }

@@ -38,3 +38,15 @@ test("envelope carries initial and date tabs", () => {
   assert.equal(tabs.initialHereTabs[0].anchorString, "/pg1ini/");
   assert.equal(tabs.dateSignedTabs[0].anchorString, "/pg1date/");
 });
+import { coparentSignerInputs } from "../src/lib/parent-agreement-v2.ts";
+import { normalizeAgreementTerms } from "../src/lib/parent-agreement.ts";
+test("co-parents get their own anchors, recipient ids and parallel routing", () => {
+  const rows = coparentSignerInputs([{ name: "B", email: "b@x.ca" }, { name: "C", email: "c@x.ca" }]);
+  assert.deepEqual(rows.map((r) => [r.recipientId, r.routingOrder, r.anchorString, r.dateAnchor]), [["3", "1", "/pg2sig/", "/pg2date/"], ["4", "1", "/pg3sig/", "/pg3date/"]]);
+});
+test("centre-editable fee fields survive normalize and autofill the document", () => {
+  const t = normalizeAgreementTerms({ ...terms, baseFeeEn: "$48/day", baseFeeFr: "48 $/jour", reducedFeeEn: "$10/day", reducedFeeFr: "10 $/jour" });
+  assert.equal(t.baseFeeEn, "$48/day");
+  const html = parentAgreementDocumentV2(t, base, { baseFee: { en: t.baseFeeEn, fr: t.baseFeeFr }, reducedFee: { en: t.reducedFeeEn, fr: t.reducedFeeFr } });
+  for (const s of ["$48/day", "10 $/jour", "Little Stars", "L-1", "Dee Director", "Pat Parent", "2026-12-01"]) assert.ok(html.includes(s), s);
+});

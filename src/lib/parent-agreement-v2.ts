@@ -293,3 +293,11 @@ ${sections}
 <div class="foot">${frFirst ? "Envoyé via KidEase. KidEase n’est pas une partie à cette entente." : "Sent via KidEase. KidEase is not a party to this agreement."} ${AGREEMENT_TEMPLATE_VERSION}</div>
 </body></html>`;
 }
+
+/** DocuSign signers for guardians 2..4: recipientId 3+, routing 1 (parallel with parent 1). */
+export function coparentSignerInputs(rows: { name: string; email: string }[]) {
+  return rows.map((row, idx) => {
+    const a = guardianAnchors(idx + 1);
+    return { email: row.email, name: row.name, recipientId: String(idx + 3), routingOrder: "1", anchorString: a.sign, initialAnchor: a.initial, dateAnchor: a.date, roleName: "Guardian" };
+  });
+}
