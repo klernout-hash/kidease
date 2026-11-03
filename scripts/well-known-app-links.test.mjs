@@ -38,7 +38,7 @@ test("uses the Capacitor appId and the KidEase Apple Team ID", () => {
 });
 
 test("uses the Play signing fingerprints when env is blank", () => {
-  assert.equal(PLAY_SHA256_CERT_FINGERPRINTS.length, 2);
+  assert.equal(PLAY_SHA256_CERT_FINGERPRINTS.length, 3);
   assert.deepEqual(resolveAndroidSha256Fingerprints({}), PLAY_SHA256_CERT_FINGERPRINTS);
   assert.deepEqual(resolveAndroidSha256Fingerprints({ ANDROID_SHA256_CERT_FINGERPRINTS: "" }), PLAY_SHA256_CERT_FINGERPRINTS);
   assert.deepEqual(resolveAndroidSha256Fingerprints({ ANDROID_CERT_SHA256S: "" }), PLAY_SHA256_CERT_FINGERPRINTS);
