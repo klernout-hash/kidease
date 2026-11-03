@@ -158,6 +158,12 @@ export async function runMobileLayoutRegression(browser, base) {
         const w = window.innerWidth;
         for (const el of document.querySelectorAll("[data-ke='page'] *")) {
           if (el.closest(".ke-rail, .ke-chip-carousel, [data-ke='map'], .maplibregl-map, [aria-hidden='true']")) continue;
+          // Content inside its own horizontal scroller (chip rows, tabs) is meant to extend.
+          let inScroller = false;
+          for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+            if (getComputedStyle(a).overflowX !== "visible") { inScroller = true; break; }
+          }
+          if (inScroller) continue;
           const r = el.getBoundingClientRect();
           if (r.width > 0 && r.height > 0 && (r.right > w + 2 || r.left < -2)) {
             out.push(`overflow ${el.tagName.toLowerCase()}${el.getAttribute("data-ke") ? `[${el.getAttribute("data-ke")}]` : ""} ${Math.round(r.left)}..${Math.round(r.right)}`);
