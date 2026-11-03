@@ -107,6 +107,13 @@ export const GROUPS = [
         notes: "Native Google OAuth client secret.",
       },
       {
+        name: "GOOGLE_SIGNIN_ENABLED",
+        concealed: false,
+        vercel: "both",
+        required: false,
+        notes: "Show Continue with Google. Default 0 while the Google Cloud project is suspended. Does not replace GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET.",
+      },
+      {
         name: "FACEBOOK_CLIENT_ID",
         concealed: false,
         vercel: "both",

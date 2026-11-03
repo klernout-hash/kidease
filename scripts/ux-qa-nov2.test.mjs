@@ -45,9 +45,10 @@ test("store buttons stay off until the listings config is on", () => {
   if (previous == null) delete process.env.VITE_STORE_LISTINGS_LIVE;
   else process.env.VITE_STORE_LISTINGS_LIVE = previous;
   const page = src("src/routes/get-app.tsx");
-  assert.match(page, /storeListingsLive\(\)/);
-  assert.match(page, /storeComingSoonTitle/);
+  assert.match(page, /AMAZON_APPSTORE_URL\(\)/);
+  assert.match(src("src/components/store-badges.tsx"), /storeComingSoonTitle/);
   assert.doesNotMatch(page, /Ready for App Store/);
+  assert.doesNotMatch(page, /apps\.apple\.com/);
 });
 
 test("listing age source is a link, not the machine note", () => {

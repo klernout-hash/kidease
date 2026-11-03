@@ -435,6 +435,16 @@ export const PRIVACY_EN: LegalDoc = {
       ],
     },
     {
+      id: "home-address",
+      title: "Home daycare addresses",
+      blocks: [
+        {
+          type: "p",
+          text: "Family child care, group child care homes, and recognized home daycares show the city and the first three characters of the postal code on public pages. The map is an area circle, not the front door. The exact street and map pin are shared with a signed-in parent after a tour is booked, they enrol, a waitlist place is accepted, or the daycare replies in the inbox. A verified owner can choose to show the street on the public listing. Licensed child care centres keep their street address.",
+        },
+      ],
+    },
+    {
       id: "rights",
       title: "Your rights",
       blocks: [
@@ -856,6 +866,16 @@ export const PRIVACY_FR: LegalDoc = {
             "Le répertoire public est sur la page Milieux familiaux reconnus quand cette liste est activée.",
             `Personne responsable de la protection des renseignements personnels : ${privacyOfficerLine("fr")}. Vous pouvez aussi joindre la Commission d'accès à l'information du Québec, ou le Commissariat à la protection de la vie privée du Canada.`,
           ],
+        },
+      ],
+    },
+    {
+      id: "home-address",
+      title: "Adresses des garderies en milieu familial",
+      blocks: [
+        {
+          type: "p",
+          text: "Les milieux familiaux, les garderies de groupe en milieu familial et les services reconnus montrent la ville et les trois premiers caractères du code postal sur les pages publiques. La carte est un cercle de secteur, pas la porte. L’adresse exacte et l’épingle sont partagées avec un parent connecté après une visite réservée, une inscription, une place acceptée sur la liste d’attente, ou une réponse de la garderie dans la boîte de réception. Un propriétaire vérifié peut choisir d’afficher la rue sur la fiche publique. Les centres de garde permis gardent leur adresse.",
         },
       ],
     },

@@ -140,6 +140,9 @@ export function QcHomeListing({
             ? "KidEase est une entreprise canadienne. Cette fiche est un milieu familial reconnu. Vous voyez le secteur, pas le domicile."
             : "KidEase is a Canadian company. This is a recognized home daycare. You see the area, not the home."}
         </p>
+        <p className="mt-3 max-w-prose text-sm leading-6" data-ke="home-address-note">
+          {copy.privacyNote}
+        </p>
         {listing.sample ? (
           <p className="mt-3 rounded-lg bg-surface-2 px-3 py-2 text-sm" role="note">
             {copy.sample}

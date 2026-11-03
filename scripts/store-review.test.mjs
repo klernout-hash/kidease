@@ -170,9 +170,12 @@ describe("plugin wiring and honest copy", () => {
     assert.match(src(".env.example"), /VITE_APPLE_APP_STORE_ID=6827660912/);
     assert.match(src(".env.example"), /VITE_PLAY_STORE_URL=/);
     assert.doesNotMatch(src(".env.example"), /VITE_PLAY_STORE_URL=https:/);
-    assert.match(src("src/routes/get-app.tsx"), /appleStoreListingUrl/);
-    assert.match(src("src/routes/get-app.tsx"), /playStoreListingUrl/);
-    assert.match(src("src/routes/get-app.tsx"), /Coming soon on the App Store/);
-    assert.doesNotMatch(src("src/routes/get-app.tsx"), /apps\.apple\.com\/app\/id[1-9]/);
+    assert.match(src("src/routes/get-app.tsx"), /AMAZON_APPSTORE_URL/);
+    assert.match(src("src/components/store-badges.tsx"), /storeComingSoon/);
+    assert.match(src("src/lib/copy.ts"), /storeComingSoon: "Coming soon"/);
+    assert.doesNotMatch(src("src/routes/get-app.tsx"), /apps\.apple\.com/);
+    assert.doesNotMatch(src("src/components/store-badges.tsx"), /apps\.apple\.com|play\.google\.com\/store/);
+    assert.match(src(".env.example"), /# NEXT_PUBLIC_AMAZON_APPSTORE_URL=/);
+    assert.doesNotMatch(src(".env.example"), /^NEXT_PUBLIC_AMAZON_APPSTORE_URL=https:/m);
   });
 });

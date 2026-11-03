@@ -15,15 +15,15 @@ import {
   promptInstall,
 } from "@/lib/native";
 import { STORE } from "@/lib/store-listing";
-import { appleStoreListingUrl, playStoreListingUrl, storeListingsLive } from "@/lib/store-review";
+import { AMAZON_APPSTORE_URL } from "@/lib/amazon-appstore";
 import { featPayBodyKey } from "@/lib/copy";
 import { useRoleChrome } from "@/components/role-chrome";
 import { localePath } from "@/lib/locale-path";
-import { comingSoonStores } from "@/lib/native-entitlements";
 import { showStoreComingSoon } from "@/lib/store-placeholders";
 import { useCopy } from "@/lib/use-copy";
 import { useInNativeShell, useStoreChannel } from "@/lib/use-native-shell";
 import { HomeScreenGuide } from "@/components/home-screen-guide";
+import { StoreBadges } from "@/components/store-badges";
 import { JsonLd } from "@/components/json-ld";
 import { MARKETING_PAGE_SEO, organizationGraphJsonLdScript, pageSeoHead } from "@/lib/page-seo";
 
@@ -39,26 +39,16 @@ export const Route = createFileRoute("/get-app")({
   component: GetApp,
 });
 
-const SHOTS: { key: string; device: "iphone" | "android"; captionEn: string; captionFr: string; screen: ReactNode }[] = [
-  { key: "home", device: "iphone", captionEn: "Home · iPhone", captionFr: "Accueil · iPhone", screen: <ShotHome /> },
-  { key: "search", device: "iphone", captionEn: "Search · iPhone", captionFr: "Recherche · iPhone", screen: <ShotSearch /> },
-  { key: "listing", device: "android", captionEn: "Listing · Android", captionFr: "Fiche · Android", screen: <ShotListing /> },
-  { key: "login", device: "android", captionEn: "Sign in · Android", captionFr: "Connexion · Android", screen: <ShotLogin /> },
+const SHOTS: { key: "shotCapHome" | "shotCapSearch" | "shotCapListing" | "shotCapLogin"; device: "iphone" | "android"; screen: ReactNode }[] = [
+  { key: "shotCapHome", device: "iphone", screen: <ShotHome /> },
+  { key: "shotCapSearch", device: "iphone", screen: <ShotSearch /> },
+  { key: "shotCapListing", device: "android", screen: <ShotListing /> },
+  { key: "shotCapLogin", device: "android", screen: <ShotLogin /> },
 ];
 
 export function GetApp() {
   const { dev } = Route.useSearch();
   return <GetAppScreen dev={dev} />;
-}
-
-function storeComingLine(locale: string, badges: Array<"apple" | "play">): string {
-  const fr = locale === "fr";
-  if (badges.length === 2) {
-    return fr ? "Bientôt dans l’App Store et sur Google Play." : "Coming soon on the App Store and Google Play.";
-  }
-  if (badges[0] === "apple") return fr ? "Bientôt dans l’App Store." : "Coming soon on the App Store.";
-  if (badges[0] === "play") return fr ? "Bientôt sur Google Play." : "Coming soon on Google Play.";
-  return "";
 }
 
 export function GetAppScreen({ dev }: { dev?: "1" }) {
@@ -67,9 +57,7 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
   const plansOn = useRoleChrome().subscriptionsEnabled === true;
   const storeChannel = useStoreChannel();
   const showStores = showStoreComingSoon(storeChannel);
-  const listingsLive = storeListingsLive();
-  const fromChannel = hideCommerce ? [] : comingSoonStores(storeChannel);
-  const storeBadges = listingsLive && showStores ? fromChannel : [];
+  const amazonUrl = AMAZON_APPSTORE_URL();
   const showDev = dev === "1";
   const [canPrompt, setCanPrompt] = useState(false);
   const [installed, setInstalled] = useState(false);
@@ -90,8 +78,7 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
   }
 
   const desc = locale === "fr" ? STORE.descriptionFr : STORE.description;
-  const phoneLead = t("getAppPhoneLead");
-  const coming = storeComingLine(locale, storeBadges);
+  const installVariant = amazonUrl && showStores ? "secondary" : "primary";
 
   return (
     <Shell>
@@ -100,14 +87,19 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
         <section className="grid items-center gap-10 md:grid-cols-[1fr_minmax(16rem,20rem)]">
           <div>
             <BrandMark size="md" align="start" />
-            <p className="mt-6 text-xs font-medium uppercase tracking-[0.16em] text-muted">{storeBadges.length === 2 ? t("getAppKicker") : t("onYourPhone")}</p>
+            <p className="mt-6 text-xs font-medium uppercase tracking-[0.16em] text-muted">{t("getAppKicker")}</p>
             <h1 className="mt-3 font-display text-4xl md:text-5xl">{t("getApp")}</h1>
             <p className="mt-4 max-w-md text-muted">{t("getAppLead")}</p>
-            <div className="mt-6 flex flex-wrap items-center gap-3">
+            {showStores && amazonUrl ? (
+              <div data-ke="store-coming-soon">
+                <StoreBadges />
+              </div>
+            ) : null}
+            <div className="mt-6 flex flex-wrap items-center gap-3 max-[430px]:pr-[4.75rem]">
               {installed ? (
                 <p className="rounded-md bg-surface px-4 py-3 text-sm ring-1 ring-border">{t("installed")}</p>
               ) : canPrompt ? (
-                <Button size="lg" onClick={() => void install()}>
+                <Button size="lg" variant={installVariant} onClick={() => void install()}>
                   <Smartphone className="size-4" />
                   {t("installThisDevice")}
                 </Button>
@@ -116,7 +108,7 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
               ) : mac ? (
                 <p className="max-w-sm text-sm text-muted">{t("installMacHint")}</p>
               ) : (
-                <Button size="lg" asChild>
+                <Button size="lg" variant={installVariant} asChild>
                   <a href="#add-to-home">
                     <Smartphone className="size-4" />
                     {t("installThisDevice")}
@@ -130,29 +122,14 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
                 </Link>
               </Button>
             </div>
-            {listingsLive && showStores && storeBadges.length === 2 ? (
-              <div className="mt-5 flex flex-wrap gap-2" data-ke="store-listings">
-                <StoreBadge store="apple" label={t("appStore")} />
-                <StoreBadge store="play" label={t("googlePlay")} />
+            {showStores && !amazonUrl ? (
+              <div data-ke="store-coming-soon">
+                <StoreBadges />
               </div>
-            ) : listingsLive && showStores && storeBadges.length === 1 ? (
-              <div className="mt-5 flex flex-wrap gap-2" data-ke="store-listings">
-                <StoreBadge store={storeBadges[0]} label={storeBadges[0] === "apple" ? t("appStore") : t("googlePlay")} />
-              </div>
-            ) : !showStores ? (
+            ) : null}
+            {!showStores ? (
               <p className="mt-5 max-w-md text-sm text-muted" data-ke="store-already-in-app">
-                {locale === "fr"
-                  ? "Vous êtes dans l’appli KidEase. Cherchez une garderie permise au Canada."
-                  : "You are in the KidEase app. Search licensed daycares in Canada."}
-              </p>
-            ) : (
-              <p className="mt-5 max-w-md text-sm text-muted" data-ke="store-coming-soon">
-                {t("storeComingSoonLead")}
-              </p>
-            )}
-            {listingsLive && coming ? (
-              <p className="mt-3 max-w-md text-xs text-subtle" data-ke="store-coming-soon">
-                {coming}
+                {t("storeAlreadyInApp")}
               </p>
             ) : null}
           </div>
@@ -170,9 +147,9 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
             </span>
             <h2 className="mt-3 font-display text-2xl">{t("addToDock")}</h2>
             <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-muted">
-              <li>{locale === "fr" ? "Ouvrez cette page dans Safari." : "Open this page in Safari."}</li>
-              <li>{locale === "fr" ? "Menu Fichier \u2192 Ajouter au Dock." : "File menu \u2192 Add to Dock."}</li>
-              <li>{locale === "fr" ? "Lancez KidEase depuis le Dock, en plein \u00e9cran." : "Launch KidEase from the Dock, full screen."}</li>
+              <li>{t("dockStep1")}</li>
+              <li>{t("dockStep2")}</li>
+              <li>{t("dockStep3")}</li>
             </ol>
           </section>
         ) : null}
@@ -206,67 +183,45 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
 
         <section className="mt-14 overflow-hidden rounded-xl bg-primary px-4 py-10 text-primary-fg sm:px-8 md:px-10 md:py-14">
           <h2 className="font-display text-2xl text-primary-fg md:text-3xl">{t("onYourPhone")}</h2>
-          <p className="mt-2 max-w-xl text-sm text-primary-fg/80">{storeBadges.length === 2 ? phoneLead : t("getAppLead")}</p>
+          <p className="mt-2 max-w-xl text-sm text-primary-fg/80">{t("getAppPhoneLead")}</p>
           <ul className="mt-10 grid grid-cols-2 items-center gap-5 lg:grid-cols-4 lg:gap-8">
-            {(storeBadges[0] === "apple"
-              ? SHOTS.filter((s) => s.device === "iphone")
-              : storeBadges[0] === "play"
-                ? SHOTS.filter((s) => s.device === "android")
-                : storeBadges.length === 2
-                  ? SHOTS
-                  : []
-            ).map((s) => (
+            {SHOTS.map((s) => (
               <li key={s.key} className="min-w-0">
                 <DeviceFrame device={s.device}>{s.screen}</DeviceFrame>
-                <p className="mt-4 text-center text-xs font-medium tracking-wide text-primary-fg/75">
-                  {locale === "fr" ? s.captionFr : s.captionEn}
-                </p>
+                <p className="mt-4 text-center text-xs font-medium tracking-wide text-primary-fg/75">{t(s.key)}</p>
               </li>
             ))}
           </ul>
         </section>
 
-        <section id="store-ready" className="mt-14 rounded-xl bg-surface p-6 ring-1 ring-border md:p-8">
-          {listingsLive && storeBadges.length === 2 ? (
-            <>
-              <h2 className="font-display text-2xl">{t("storeReady")}</h2>
-              <p className="mt-3 max-w-2xl text-sm text-muted">{coming}</p>
-              <p className="mt-3 max-w-2xl text-sm text-muted">{t("storeReadyBody")}</p>
-            </>
-          ) : (
-            <>
-              <h2 className="font-display text-2xl">{t("storeComingSoonTitle")}</h2>
-              <p className="mt-3 max-w-2xl text-sm text-muted" data-ke="store-coming-soon">{t("storeComingSoonLead")}</p>
-            </>
-          )}
-          {showDev ? (
-            <>
-              <dl className="mt-6 grid gap-3 text-sm sm:grid-cols-2">
-                <Meta k="Bundle ID" v={STORE.bundleId} />
-                <Meta k="Version" v={`${STORE.version} (${STORE.build})`} />
-                <Meta k={locale === "fr" ? "Cat\u00e9gorie" : "Category"} v={`${STORE.category} / ${STORE.secondaryCategory}`} />
-                <Meta k={locale === "fr" ? "Classification" : "Age rating"} v={STORE.ageRating} />
-              </dl>
-              <pre className="mt-6 max-h-48 overflow-auto whitespace-pre-wrap rounded-md bg-bg p-4 text-xs text-muted">
-                {desc.split("\n").slice(0, 8).join("\n")}
-              </pre>
-            </>
-          ) : null}
-          <div className="mt-6 flex flex-wrap gap-4 text-sm">
-            <Link to={localePath("/privacy", locale)} className="underline-offset-4 hover:underline">
-              {t("privacy")}
-            </Link>
-            <Link to={localePath("/terms", locale)} className="underline-offset-4 hover:underline">
-              {t("terms")}
-            </Link>
-            <Link to={localePath("/cookies", locale)} className="underline-offset-4 hover:underline">
-              {t("cookies")}
-            </Link>
-            <Link to={localePath("/help", locale)} className="underline-offset-4 hover:underline">
-              {t("helpTitle")}
-            </Link>
-          </div>
-        </section>
+        {showDev ? (
+          <section id="store-ready" className="mt-14 rounded-xl bg-surface p-6 ring-1 ring-border md:p-8">
+            <dl className="grid gap-3 text-sm sm:grid-cols-2">
+              <Meta k="Bundle ID" v={STORE.bundleId} />
+              <Meta k="Version" v={`${STORE.version} (${STORE.build})`} />
+              <Meta k={locale === "fr" ? "Cat\u00e9gorie" : "Category"} v={`${STORE.category} / ${STORE.secondaryCategory}`} />
+              <Meta k={locale === "fr" ? "Classification" : "Age rating"} v={STORE.ageRating} />
+            </dl>
+            <pre className="mt-6 max-h-48 overflow-auto whitespace-pre-wrap rounded-md bg-bg p-4 text-xs text-muted">
+              {desc.split("\n").slice(0, 8).join("\n")}
+            </pre>
+          </section>
+        ) : null}
+
+        <nav aria-label={t("helpTitle")} className="mt-10 flex max-[430px]:pr-[4.75rem] flex-wrap gap-x-4 gap-y-2 text-sm">
+          <Link to={localePath("/privacy", locale)} className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
+            {t("privacy")}
+          </Link>
+          <Link to={localePath("/terms", locale)} className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
+            {t("terms")}
+          </Link>
+          <Link to={localePath("/cookies", locale)} className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
+            {t("cookies")}
+          </Link>
+          <Link to={localePath("/help", locale)} className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">
+            {t("helpTitle")}
+          </Link>
+        </nav>
 
         <HomeScreenGuide />
       </main>
@@ -383,39 +338,5 @@ function DeviceFrame({ device, children }: { device: "iphone" | "android"; child
         </div>
       </div>
     </div>
-  );
-}
-
-function StoreBadge({ store, label }: { store: "apple" | "play"; label: string }) {
-  const href = store === "apple" ? appleStoreListingUrl() : playStoreListingUrl();
-  const inner = (
-    <>
-      {store === "apple" ? (
-        <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
-          <path
-            fill="currentColor"
-            d="M16.4 12.3c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.2-2.8.9-3.5.9s-1.8-.8-3-.8c-1.5 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.3 2.9 2.3 1.1 0 1.6-.8 3-.8s1.8.8 3 .8 2-.1 2.9-2.3c.6-.9 1.1-1.9 1.4-3-1.7-.7-2.7-2.4-2.7-4.4ZM14.7 5.6c.6-.8 1.1-1.9.9-3-1 .1-2.1.7-2.8 1.5-.6.7-1.2 1.8-1 2.9 1.1.1 2.2-.6 2.9-1.4Z"
-          />
-        </svg>
-      ) : (
-        <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
-          <path fill="currentColor" d="M4 3.5v17l10.2-8.5L4 3.5Zm11.1 9.2 2.3 1.9-10 5.8 7.7-7.7Zm2.3-7.1-2.3 1.9L7.4 3.8l10 5.8ZM16.7 12 14 9.8l2.8-2.3 3.5 2.1c.6.4.6 1.2 0 1.6L16.7 12Z" />
-        </svg>
-      )}
-      {label}
-    </>
-  );
-  const className = "inline-flex h-11 items-center gap-2 rounded-md bg-fg/90 px-3 text-sm text-bg";
-  if (href) {
-    return (
-      <a href={href} target="_blank" rel="noreferrer" className={className}>
-        {inner}
-      </a>
-    );
-  }
-  return (
-    <span className={className} aria-disabled="true">
-      {inner}
-    </span>
   );
 }

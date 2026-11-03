@@ -1113,15 +1113,18 @@ function MapPinPopup({
   const away = parentDistanceLabel({
     km: item.distanceKm,
     away: t("km"),
+    approximate: Boolean(item.addressProtected) || ("radiusM" in item && Number(item.radiusM) >= 500),
+    about: t("homeAddressAbout"),
     show:
       isDoorPin(item.lat, item.lng) &&
       item.distanceKm < UNMEASURED_DISTANCE_KM &&
       originIsParentLocation(originSource) &&
       plausibleListingKm(item.distanceKm, item.city, origin.label),
   });
+  const areaPostal = "postalCode" in item ? String(item.postalCode || "").replace(/\s+/g, "").slice(0, 3) : "";
   const place = mapPinPlaceLine({
-    address: displayListingText(item.address),
-    city: item.city,
+    address: item.addressProtected || ("radiusM" in item && Number(item.radiusM) >= 500) ? "" : displayListingText(item.address),
+    city: item.addressPlace || [item.city, areaPostal].filter(Boolean).join(" · "),
     away,
   });
   const ages = standardAgeLabelsForListing(item, locale === "fr" ? "fr" : "en").join(" · ");
@@ -1248,6 +1251,12 @@ function PinPopupSummary({
       </span>
     </>
   );
+}
+
+function pinAreaRadiusM(item: DotItem): number | null {
+  const radius = "mapRadiusM" in item ? item.mapRadiusM : "radiusM" in item ? item.radiusM : null;
+  const n = Number(radius);
+  return Number.isFinite(n) && n >= 500 ? n : null;
 }
 
 function pinLabel(item: { name: string; nameFr?: string }, locale: "en" | "fr") {
@@ -1392,7 +1401,7 @@ function mountPinCanvas(input: {
     placed.length = 0;
     centers.length = 0;
     const image = sprite;
-    if (!image.complete || image.naturalWidth === 0) return;
+    const spriteReady = image.complete && image.naturalWidth > 0;
     for (const item of pins) {
       if (!Number.isFinite(item.lat) || !Number.isFinite(item.lng)) continue;
       const point = projection.fromLatLngToDivPixel(new maps.LatLng(item.lat, item.lng));
@@ -1406,6 +1415,23 @@ function mountPinCanvas(input: {
       ) {
         continue;
       }
+      const areaRadius = pinAreaRadiusM(item);
+      if (areaRadius) {
+        const edge = projection.fromLatLngToDivPixel(new maps.LatLng(item.lat + areaRadius / 111320, item.lng));
+        const edgeLocal = edge ? mapPinCanvasPoint(edge, frame) : null;
+        const rPx = edgeLocal ? Math.max(10, Math.hypot(edgeLocal.x - local.x, edgeLocal.y - local.y)) : 18;
+        ctx.beginPath();
+        ctx.arc(local.x, local.y, rPx, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(26, 55, 144, 0.18)";
+        ctx.strokeStyle = "#1A3790";
+        ctx.lineWidth = 2;
+        ctx.fill();
+        ctx.stroke();
+        placed.push(item);
+        centers.push({ x: local.x, y: local.y });
+        continue;
+      }
+      if (!spriteReady) continue;
       ctx.drawImage(image, local.x - drawPx / 2, local.y - drawPx, drawPx, drawPx);
       placed.push(item);
       centers.push({ x: local.x, y: local.y - drawPx / 2 });

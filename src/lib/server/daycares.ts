@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
+import { sealPublicHomes } from "@/lib/server/home-address-privacy";
 import { eceJobsEnabled, reviewReportsEnabled } from "@/lib/features";
 import { filterByLocationLock, resolveLocationLock } from "@/lib/location-lock";
 import { cardSortKm, includeCardInRadius } from "@/lib/card-distance";
@@ -779,7 +780,7 @@ export const searchDaycares = createServerFn({ method: "GET" })
       `${searchMemoKey(data)}:${parentFitCacheKey(data.parentFit ?? null)}`,
       () => searchIncludingLive(data),
     );
-    return appendTestAccountFixtures(data, found);
+    return sealPublicHomes(await appendTestAccountFixtures(data, found));
   });
 
 /** Same ranking as searchDaycares, then one page of 96 cards. */
@@ -796,7 +797,7 @@ export const searchDaycarePage = createServerFn({ method: "GET" })
     );
     const listed = query.live ? found.filter((card) => isClaimVerified(card) && !card.isTest) : found;
     const all = await appendTestAccountFixtures(query, listed);
-    return sliceSearchPage(all, page);
+    return sealPublicHomes(sliceSearchPage(all, page));
   });
 
 /** Home type rows page 12 at a time. Keep a few pages of each nearby type. */
@@ -843,15 +844,15 @@ export const featuredDaycares = createServerFn({ method: "GET" })
       label: (data.label || "").trim(),
     };
     const full = await withTimeoutFallback(loadFeatured(origin, radiusKm), LOADER_SETTLE_MS, null);
-    if (full && full.length > 0) return full;
-    return liveCardsForSearch({
+    if (full && full.length > 0) return sealPublicHomes(full);
+    return sealPublicHomes(await liveCardsForSearch({
       lat: origin.lat,
       lng: origin.lng,
       radiusKm,
       sort: "best",
       ageGroup: "any",
       label: origin.label,
-    });
+    }));
   });
 
 export const getDaycare = createServerFn({ method: "GET" })
@@ -968,7 +969,7 @@ export const getDaycare = createServerFn({ method: "GET" })
       const mainReady = stampHidden(withInboxReady(mainStamped[0] ?? daycare));
       const [mainPinned] = await stampPaidPlacement([mainReady]);
       const nearbyPinned = await stampPaidPlacement(nearbyStamped);
-      return {
+      return sealPublicHomes({
         daycare: mainPinned ?? mainReady,
         reviews: mapReviews(reviews),
         availability,
@@ -978,13 +979,13 @@ export const getDaycare = createServerFn({ method: "GET" })
         inspectionSync,
         reviewReports: reviewReportsEnabled(),
         eceJobs: eceJobsEnabled(),
-      };
+      });
     } catch {
       const catalogScored = await overlayQuality([catalogDaycare, ...metroPeers]);
       const catalogDaycareOut = stampHidden(withInboxReady(catalogScored[0] ?? catalogDaycare));
       const [catalogPinned] = await stampPaidPlacement([catalogDaycareOut]);
       const catalogNearby = await stampPaidPlacement(withQualityCards(nearby, catalogScored));
-      return {
+      return sealPublicHomes({
         daycare: catalogPinned ?? catalogDaycareOut,
         reviews: [] as Review[],
         availability: catalogAvailability(found),
@@ -994,7 +995,7 @@ export const getDaycare = createServerFn({ method: "GET" })
         inspectionSync: null,
         reviewReports: reviewReportsEnabled(),
         eceJobs: eceJobsEnabled(),
-      };
+      });
     }
   });
 
@@ -1023,30 +1024,33 @@ export const getListingSeo = createServerFn({ method: "GET" })
       callerIsTestAccount(),
     ]);
     if (hideListingFromPublicPage(found, { admin: adminView, testAccount })) return null;
+    const sealed = await sealPublicHomes(toDaycare(found));
     return {
       noindex: isExactSlugDemoListing(found),
-      slug: found.slug,
-      name: found.name,
-      nameFr: found.nameFr,
-      city: found.city,
-      province: found.province,
-      address: found.address,
-      postalCode: found.postalCode,
-      phone: found.phone || null,
+      slug: sealed.slug,
+      name: sealed.name,
+      nameFr: sealed.nameFr,
+      city: sealed.city,
+      province: sealed.province,
+      address: sealed.address,
+      postalCode: sealed.postalCode,
+      addressProtected: sealed.addressProtected === true,
+      phone: sealed.phone || null,
       agesKnown: hasConfirmedAges({
-        agesKnown: found.agesKnown,
-        ageMinMonths: found.ageMinMonths,
-        ageMaxMonths: found.ageMaxMonths,
+        agesKnown: sealed.agesKnown,
+        ageMinMonths: sealed.ageMinMonths,
+        ageMaxMonths: sealed.ageMaxMonths,
       }),
-      ageMinMonths: found.ageMinMonths,
-      ageMaxMonths: found.ageMaxMonths,
-      photos: found.photos,
-      amenities: found.amenities,
-      feeProgram: found.feeProgram || null,
-      description: found.description || "",
-      descriptionFr: found.descriptionFr || "",
-      hours: found.hours || "",
-      hoursFr: found.hoursFr || "",
+      ageMinMonths: sealed.ageMinMonths,
+      ageMaxMonths: sealed.ageMaxMonths,
+      photos: sealed.photos,
+      amenities: sealed.amenities,
+      facilityType: sealed.facilityType,
+      feeProgram: sealed.feeProgram || null,
+      description: sealed.description || "",
+      descriptionFr: sealed.descriptionFr || "",
+      hours: sealed.hours || "",
+      hoursFr: sealed.hoursFr || "",
     };
   });
 
@@ -1065,5 +1069,5 @@ export const getDaycaresByIds = createServerFn({ method: "GET" })
     const found = [...byId, ...extras].filter(isPublicListing);
     const cards = uniqueById(found.map((d) => toCard(d, origin)));
     const claimed = await overlayQuality(await overlayParentReviews(await overlayClaimed(cards, mergeClaimedCard)));
-    return stampPaidPlacement(await overlayParentRank(claimed, { distanceKnown: false, ageGroup: "any" }));
+    return sealPublicHomes(await stampPaidPlacement(await overlayParentRank(claimed, { distanceKnown: false, ageGroup: "any" })));
   });

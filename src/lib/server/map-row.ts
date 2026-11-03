@@ -98,6 +98,7 @@ export type DaycareRow = {
   quality_scored_at?: string | null;
   guest_favorite?: number | boolean | null;
   facility_type?: string | null;
+  show_public_address?: boolean | number | null;
   schedule_options?: unknown;
   opening_window?: string | null;
   programs?: unknown;
@@ -221,6 +222,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
     }),
     qualityScore: typeof r.quality_score === "number" ? r.quality_score : undefined,
     guestFavorite: r.guest_favorite === 1 || r.guest_favorite === true,
+    showPublicAddress: r.show_public_address === true || r.show_public_address === 1,
     ...parentListingFrom({
       facility_type: r.facility_type,
       schedule_options: r.schedule_options,

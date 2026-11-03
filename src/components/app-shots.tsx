@@ -329,12 +329,6 @@ export function ShotLogin() {
           <div className="mt-2.5 flex h-7 items-center justify-center rounded-full text-[9px] font-medium text-white" style={{ background: NAVY }}>
             {t("signIn")}
           </div>
-          <p className="mt-2.5 text-center text-[7px] uppercase tracking-[0.14em]" style={{ color: SUBTLE }}>
-            {t("shotOrGoogle")}
-          </p>
-          <div className="mt-1.5 flex h-6 items-center justify-center rounded-full text-[8px]" style={{ background: PAPER, boxShadow: `inset 0 0 0 1px ${LINE}` }}>
-            {t("shotContinueGoogle")}
-          </div>
         </div>
       </div>
     </AppChrome>
