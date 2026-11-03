@@ -140,6 +140,11 @@ test("CI builds every Android store and uploads a Huawei release artifact", () =
   assert.match(release, /bundleHuaweiRelease/);
   assert.match(release, /assembleHuaweiRelease/);
   assert.match(release, /AGCONNECT_SERVICES_JSON/);
+  const aabAt = release.indexOf("name: app-release-aab");
+  const huaweiAt = release.indexOf("bundleHuaweiRelease");
+  assert.ok(aabAt > -1 && huaweiAt > aabAt, "Play app-release-aab uploads before the Huawei build");
+  assert.match(release, /::warning title=Huawei skipped::/);
+  assert.match(release, /steps\.agconnect\.outputs\.present == 'true'/);
   assert.doesNotMatch(ci, /FEATURE_CALL_PUSH:\s*["']?1/);
   assert.doesNotMatch(release, /FEATURE_SIGNIN_HUAWEI/);
   assert.match(src("scripts/inject-agconnect-services.mjs"), /Contents not printed/);
