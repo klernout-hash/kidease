@@ -142,7 +142,9 @@ test("a call opened from messages can use the camera and microphone", () => {
     assert.doesNotMatch(policy, /camera=\(\)/, source);
     assert.doesNotMatch(policy, /microphone=\(\)/, source);
   }
-  const inbox = src("src/routes/inbox.$id.tsx");
+  const inbox = src("src/components/thread-call-actions.tsx");
+  assert.match(src("src/routes/inbox.$id.tsx"), /<ThreadCallActions/);
+  assert.match(src("src/components/centre-inbox.tsx"), /<ThreadCallActions/);
   assert.match(inbox, /to="\/call\/\$conversationId"[\s\S]*reloadDocument/);
   assert.match(inbox, /to="\/video\/\$roomId"[\s\S]*reloadDocument/);
   assert.doesNotMatch(src("src/routes/__root.tsx"), /@tanstack\/react-start\/server/);
