@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Inbox, Search, X } from "lucide-react";
+import { Inbox, Phone, Search, Video, X } from "lucide-react";
 import { toast } from "sonner";
 import { DeskShell } from "@/components/desk-shell";
 import { InboxDetailRail } from "@/components/inbox-detail-rail";
@@ -68,6 +68,8 @@ export function CentreInboxDesk({
   const [threadReady, setThreadReady] = useState(false);
   const [details, setDetails] = useState<ConversationDetails | null>(null);
   const [stateBusy, setStateBusy] = useState(false);
+  const [videoSurface, setVideoSurface] = useState(false);
+  const [voiceReady, setVoiceReady] = useState(false);
 
   const visible = useMemo(
     () => (items ? filterInboxList(items, { filter, query }) : []),
@@ -104,6 +106,8 @@ export function CentreInboxDesk({
     setMessages(res.messages);
     setTours(res.tours ?? []);
     setCanWrite(res.canWrite !== false);
+    setVideoSurface(Boolean(res.videoSurfaceEnabled));
+    setVoiceReady(Boolean(res.voiceReady));
     setThreadReady(true);
     const meta = await getConversationDetails({ data: { conversationId: id } }).catch(() => null);
     setDetails(meta);
@@ -313,6 +317,20 @@ export function CentreInboxDesk({
             showDetails={false}
             actions={
               <div className="flex shrink-0 items-center">
+                {selected.id && voiceReady ? (
+                  <Button variant="ghost" size="icon" asChild>
+                    <Link to="/call/$conversationId" params={{ conversationId: selected.id }} reloadDocument aria-label={t("voiceStart")} data-ke="inbox-voice-call">
+                      <Phone className="size-5" />
+                    </Link>
+                  </Button>
+                ) : null}
+                {selected.id && videoSurface ? (
+                  <Button variant="ghost" size="icon" asChild>
+                    <Link to="/video/$roomId" params={{ roomId: selected.id }} reloadDocument aria-label={t("videoCall")} data-ke="inbox-video-call">
+                      <Video className="size-5" />
+                    </Link>
+                  </Button>
+                ) : null}
                 <button
                   type="button"
                   className="min-h-11 rounded-full px-3 text-sm font-medium ring-1 ring-border lg:hidden"
