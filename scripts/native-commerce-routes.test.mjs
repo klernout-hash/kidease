@@ -53,7 +53,7 @@ test("native commerce is guarded in the page and the component", () => {
   assert.match(videoRoute, /nativeVideoNeedsPlus/);
   assert.match(videoRoute, /data-ke="native-video-entitlement"/);
   assert.doesNotMatch(videoRoute, /data-ke="native-video-off"/);
-  assert.match(videoRoute, /nativeShell \? t\("videoJoinHint"\) : t\("videoTourLead"\)/);
+  assert.match(videoRoute, /nativeShell \|\| !status\?\.subscriptionsOn \? t\("videoJoinHint"\) : t\("videoTourLead"\)/);
   assert.match(callRoute, /VoiceCallPanel/);
   assert.doesNotMatch(callRoute, /comingSoon/);
   assert.doesNotMatch(desk, /data-ke="daycare-plan"|\/provider\/subscription|navPlans/);

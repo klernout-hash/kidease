@@ -822,7 +822,7 @@ export function ProviderPage() {
         centreOwner ? (
           <div className="space-y-6">
             <ProviderMoneyPanel />
-            <TaxReceiptStudio quebec />
+            <TaxReceiptStudio desk="centre" />
           </div>
         ) : (
           <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>

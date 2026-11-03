@@ -29,6 +29,7 @@ import { AdultConfirmBoot } from "@/components/adult-confirm-boot";
 import { RoleBoot } from "@/components/role-boot";
 import { LiveChatSlot } from "@/components/help-bot";
 import { KidEaseToaster } from "@/components/kidease-toaster";
+import { IncomingCallListener } from "@/components/incoming-call-listener";
 import { SuccessConfirmHost } from "@/components/success-confirm";
 import { SafeRouteError } from "@/components/safe-error-boundary";
 import { installStaleChunkReload, safeErrorCopy } from "@/lib/safe-error";
@@ -290,6 +291,7 @@ function RootDocument() {
             <Outlet />
           </div>
           <LiveChatSlot />
+          <IncomingCallListener />
           </ViewAsProvider>
           <CookieConsentBanner />
           <KidEaseToaster />

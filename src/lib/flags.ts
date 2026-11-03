@@ -221,7 +221,7 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_REVIEW_REPLIES: false,
   /** Enrolment contract, the sign page, and the signed PDF. Off. No DocuSign call. */
   FEATURE_ENROLMENT_ESIGN: false,
-  /** T778 and Quebec RL-24 summaries a centre types. Off. */
+  /** Ontario or federal receipt and Quebec RL-24 from paid invoices. Off. */
   FEATURE_TAX_RECEIPTS: false,
   /** Daily journal plus meal and nap logs. Off. No email. */
   FEATURE_DAILY_LOGS: false,
@@ -628,7 +628,8 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     key: "FEATURE_TAX_RECEIPTS",
     defaultOn: false,
     docs: "docs/flags.md",
-    summary: "T778 and Quebec RL-24 text a centre types from amounts it already has. Default off. No invented fee.",
+    summary:
+      "Ontario and federal child care PDF, plus a Quebec RL-24 PDF. The total is paid invoices for that year. Default off. No invented fee. No email.",
   },
   {
     key: "FEATURE_DAILY_LOGS",
