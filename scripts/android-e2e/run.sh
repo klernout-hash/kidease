@@ -10,12 +10,14 @@ shot() { adb exec-out screencap -p > "$OUT/$1.png"; $UI texts > "$OUT/$1.ui.txt"
 mark() { echo "$1: $2${3:+ ($3)}" | tee -a "$RES"; }
 launch() { adb shell am force-stop $PKG; adb shell am start -W -n $PKG/.MainActivity >/dev/null; sleep 12; }
 grant() { for p in ACCESS_FINE_LOCATION ACCESS_COARSE_LOCATION POST_NOTIFICATIONS CAMERA; do adb shell pm grant $PKG android.permission.$p 2>/dev/null || true; done; }
-dismiss() { $UI tap '^(Accept|Accept all|OK|Got it|Allow|While using the app|Only this time|Not now|Skip|Close|Dismiss)( |$)' 4 || true; }
+dismiss() { $UI tap '^Essential( |$)' 2 || true; $UI tap '^(Accept|Accept all|OK|Got it|Allow|While using the app|Only this time|Not now|Skip|Close|Dismiss)( |$)' 4 || true; }
 
 login() { # $1 role $2 email
   launch; dismiss; dismiss
   $UI tap '^Menu( |$)' 10; sleep 3; shot "$1-menu"
-  $UI tap '(Log in|Sign in|Se connecter|Account)' 10 || true
+  $UI tap '^Essential( |$)' 4 || true
+  $UI tap '^Account settings( |$)' 10 || true; sleep 5
+  $UI wait '^(Email|E-mail|Courriel)' 8 >/dev/null || $UI tap '^(Log in|Sign in)( |$)' 8 || true
   sleep 5; dismiss
   if ! $UI wait '^(Email|E-mail|Courriel)' 25; then shot "$1-no-login-form"; mark "$1 reviewer login" FAIL "login form not found"; return 1; fi
   $UI focusemail && $UI type "$2" || { mark "$1 reviewer login" FAIL "email field not found"; return 1; }
