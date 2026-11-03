@@ -4,15 +4,16 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { canRegisterWebPush, getAlertsPromptCopy, webAlertPromptStep, webPushPermissionAllowed } from "@/lib/alert-push";
+import { canRegisterWebPush, getAlertsPromptCopy, webPushPermissionAllowed } from "@/lib/alert-push";
 import { isNative } from "@/lib/native";
 import { useInNativeShell } from "@/lib/use-native-shell";
 import { getWebAlertStatus, registerWebPush } from "@/lib/server/alert-push-api";
 import { isGovPortalPath } from "@/lib/gov/access";
 import { useCopy } from "@/lib/use-copy";
+import { readAnalyticsConsent } from "@/lib/analytics-consent";
+import { alertPromptAllowed, FIRST_VISIT_QUIET_MS, MEANINGFUL_ACTION_EVENT } from "@/lib/prompt-manager";
 
 const CHOICE_KEY = "ke-web-alert-choice";
-const SEEN_KEY = "ke-web-alert-seen";
 const ALERTS_NEXT = "/account?section=alerts&desk=parent";
 
 function vapidKey(): string {
@@ -44,28 +45,57 @@ export function GetAlertsPrompt() {
   const [serverReady, setServerReady] = useState(false);
   const copy = getAlertsPromptCopy(locale === "fr" ? "fr" : "en");
 
+  // No floating card on load. Email + in-app alerts are already ON by default (Account > Notification preferences).
+  // Push: one short explainer, once ever, right after sign-up or the first save; then the browser sheet.
   useEffect(() => {
     if (typeof window === "undefined" || nativeShell || isNative() || isPending || onGovDesk) return;
     if (!user?.id) return;
-    const choice = window.localStorage.getItem(CHOICE_KEY);
-    const seen = window.sessionStorage.getItem(SEEN_KEY);
-    if (!seen) {
-      window.sessionStorage.setItem(SEEN_KEY, "1");
-      return;
+    const loadedAt = Date.now();
+    const maybeShow = () => {
+      const allowed = alertPromptAllowed({
+        consent: readAnalyticsConsent(),
+        cookieBannerOpen: document.documentElement.dataset.cookieBanner === "open",
+        acted: true,
+        now: Date.now(),
+        snoozeUntil: 0,
+        declines: 0,
+        choice: window.localStorage.getItem(CHOICE_KEY),
+        msSinceLoad: Date.now() - loadedAt + FIRST_VISIT_QUIET_MS,
+      });
+      if (!allowed) return;
+      // Asked once: whatever they pick, never ask again.
+      window.localStorage.setItem(CHOICE_KEY, "never");
+      setOpen(true);
+      void getWebAlertStatus()
+        .then((status) =>
+          setServerReady(
+            webPushPermissionAllowed({
+              pushArmed: status.pushArmed,
+              vapidPublic: status.vapid,
+              vapidPrivate: status.vapidPrivate,
+            }),
+          ),
+        )
+        .catch(() => undefined);
+    };
+    const onAction = (e: Event) => {
+      const kind = (e as CustomEvent<{ kind?: string }>).detail?.kind;
+      if (kind === "save" || kind === "signup") maybeShow();
+    };
+    window.addEventListener(MEANINGFUL_ACTION_EVENT, onAction);
+    let signupTimer = 0;
+    try {
+      if (window.sessionStorage.getItem("ke-just-signed-up")) {
+        window.sessionStorage.removeItem("ke-just-signed-up");
+        signupTimer = window.setTimeout(maybeShow, 1500);
+      }
+    } catch {
+      /* storage blocked */
     }
-    if (webAlertPromptStep({ native: false, signedIn: true, choice, seenThisVisit: true }) !== "show") return;
-    setOpen(true);
-    void getWebAlertStatus()
-      .then((status) =>
-        setServerReady(
-          webPushPermissionAllowed({
-            pushArmed: status.pushArmed,
-            vapidPublic: status.vapid,
-            vapidPrivate: status.vapidPrivate,
-          }),
-        ),
-      )
-      .catch(() => undefined);
+    return () => {
+      window.clearTimeout(signupTimer);
+      window.removeEventListener(MEANINGFUL_ACTION_EVENT, onAction);
+    };
   }, [user?.id, isPending, nativeShell, onGovDesk]);
 
   async function turnOn() {
@@ -126,23 +156,30 @@ export function GetAlertsPrompt() {
   }
 
   function notNow() {
-    window.localStorage.setItem(CHOICE_KEY, "no");
+    window.localStorage.setItem(CHOICE_KEY, "never");
     setOpen(false);
   }
 
   if (nativeShell || onGovDesk || !open) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-40 px-4">
-      <div className="mx-auto w-full max-w-lg rounded-2xl bg-surface p-4 shadow-card ring-1 ring-border">
-        <p className="text-base font-semibold text-fg">{copy.title}</p>
-        <p className="mt-1 text-sm text-muted">{copy.body}</p>
-        <div className="mt-3 flex flex-col gap-2">
-          <Button className="min-h-11 w-full" onClick={() => void turnOn()}>
-            {user?.id ? copy.yes : copy.signIn}
-          </Button>
-          <Button variant="secondary" className="min-h-11 w-full" onClick={notNow}>
+    <div
+      data-ke="push-explainer"
+      role="dialog"
+      aria-label={copy.title}
+      className="ke-bottom-prompt fixed inset-x-0 bottom-0 z-[55] px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] [[data-channel=app]_&]:bottom-[calc(4.25rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]"
+    >
+      <div className="mx-auto flex max-w-[560px] flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-surface/95 px-3 py-2 shadow-lift ring-1 ring-border backdrop-blur-md">
+        <div className="min-w-0 flex-1 basis-48">
+          <p className="text-xs font-semibold leading-4 text-fg">{copy.title}</p>
+          <p className="text-[11px] leading-4 text-muted">{copy.body}</p>
+        </div>
+        <div className="grid w-full grid-cols-2 gap-2 sm:w-auto">
+          <Button variant="secondary" className="min-h-10 px-3 text-sm" onClick={notNow}>
             {copy.no}
+          </Button>
+          <Button className="min-h-10 px-3 text-sm" onClick={() => void turnOn()}>
+            {copy.yes}
           </Button>
         </div>
       </div>

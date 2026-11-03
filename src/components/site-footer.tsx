@@ -4,6 +4,7 @@ import { localePath } from "@/lib/locale-path";
 import { isKidEaseOperatorEmail } from "@/lib/admin-email";
 import type { CopyKey } from "@/lib/copy";
 import { useCopy } from "@/lib/use-copy";
+import { openCookieSettings } from "@/lib/prompt-manager";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { HeaderSocial } from "@/components/header-social";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -184,6 +185,11 @@ export function SiteFooter() {
                 {t("dataSourcesBody")}
               </p>
               <p className="ke-footer-legal-note">{t("neverSell")}</p>
+              <p className="ke-footer-legal-note">
+                <button type="button" data-ke="cookie-settings-link" className="ke-footer-link min-h-11 underline-offset-4 hover:underline" onClick={openCookieSettings}>
+                  {t("cookieSettings")}
+                </button>
+              </p>
               <p className="ke-footer-legal-note" data-ke="company-operator">
                 {companyOperatorLine(fr ? "fr" : "en")}
               </p>
