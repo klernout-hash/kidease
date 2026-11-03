@@ -31,6 +31,7 @@ import { readLocationConsent } from "@/lib/location-consent";
 import { bindAndroidBack } from "@/lib/android-back";
 import { currentAuthBackFallback, isAuthPagePath } from "@/lib/auth/auth-back";
 import { usePushRegistration } from "@/lib/use-push";
+import { useHuaweiCallPushRegistration } from "@/lib/use-huawei-call-push";
 import { applyTheme, readThemePreference } from "@/lib/theme";
 
 /**
@@ -40,6 +41,7 @@ import { applyTheme, readThemePreference } from "@/lib/theme";
  */
 export function NativeBoot() {
   usePushRegistration();
+  useHuaweiCallPushRegistration();
   const searchStr = useRouterState({ select: (s) => s.location.searchStr });
   const setOrigin = useAppStore((s) => s.setOrigin);
   const setWorkOrigin = useAppStore((s) => s.setWorkOrigin);

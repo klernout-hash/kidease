@@ -124,23 +124,24 @@ Listing fees that are facts about a daycare can still show. The pay button does 
 
 ### No Google Play Services
 
-Huawei phones do not ship Google Play Services. This flavour degrades on purpose. No new Huawei SDK is compiled, because HMS Push and Map Kit need an `agconnect-services.json` that must not be committed, and the app has to open without it.
+Huawei phones do not ship Google Play Services. This flavour degrades on purpose. HMS Push Kit is compiled into the huawei source set only. Map Kit is not. The app opens without `agconnect-services.json`. That file is not in git. The AppGallery plugin is applied only when the file is present. `FEATURE_CALL_PUSH` stays off, so this version does not register a push token and does not send a call ring.
 
 | Feature | Huawei build |
 | --- | --- |
 | Email and password sign-in | Stays |
 | Facebook sign-in | Stays when `FEATURE_FACEBOOK_LOGIN` and the Facebook env vars are set |
 | Sign in with Apple | Web redirect only (the native Apple sheet is iOS) |
-| Google sign-in | Hidden. The button is not rendered. |
-| FCM / Capacitor push | Not started. `registerPushDevice` returns disabled. `FirebaseInitProvider` is removed so launch does not crash. |
-| HMS Push | Not in this build. Later, after Kyle adds AppGallery Connect and `agconnect-services.json`. |
+| Google sign-in | Hidden. The button is not rendered. The huawei flavor always sends `KidEaseNoGms`. |
+| Huawei ID | Off. `FEATURE_SIGNIN_HUAWEI` stays unset. |
+| FCM / Capacitor push | Not in this flavor. `FirebaseInitProvider` is removed so launch does not crash. |
+| HMS Push | Compiled for this flavor only. Token path is `push_device_tokens` with provider `hms`, and only when `FEATURE_CALL_PUSH` is on. That flag is off. |
 | Google Maps and Places | Not loaded. Search by city still uses the local city list. The map panel says Google Maps is not on this device. |
 | “Near me” | Uses the phone location through the WebView, not the Google location plugin. If the phone denies location, search by city still works. |
 | Stripe | Blocked |
 
 The user-agent token is `KidEaseStoreHuawei`, set in `android/app/src/huawei/assets/capacitor.config.json` and checked again on the WebView. A Huawei debug build crashes if that token is missing, so a broken build cannot fall through to the Play channel. A release build logs the same error. `google-services.json` must not be applied to this variant. The Gradle task that processes it is turned off for the Huawei flavour, and `android/app/src/huawei/AndroidManifest.xml` removes `FirebaseInitProvider`.
 
-The Huawei flavour also drops `com.google.android.gms:play-services-location`, `com.google.android.play:review`, `com.google.firebase:firebase-messaging`, and the rest of `com.google.android.gms`, `com.google.android.play`, and `com.google.firebase`. Play and Samsung still compile geolocation, in-app review, and push. The AppGallery binary does not. There is no in-app review sheet on Huawei. Location uses the WebView geolocation API. HMS Location is only used if a later shell sets `window.HMSLocation`. No HMS SDK is compiled in. The first HTML does not dns-prefetch map tiles on Huawei. Other channels prefetch `tiles.openfreemap.org`. The website content security policy allows `tiles.openfreemap.org` and `tiles.maps.eox.at` for the map. It does not allow `maps.googleapis.com`. Huawei does not load that map. The Plans row in the phone menu stays hidden, the same as Apple and Play.
+The Huawei flavour also drops `com.google.android.gms:play-services-location`, `com.google.android.play:review`, `com.google.firebase:firebase-messaging`, and the rest of `com.google.android.gms`, `com.google.android.play`, and `com.google.firebase`. Play and Samsung still compile geolocation, in-app review, and push. The AppGallery binary does not. There is no in-app review sheet on Huawei. Location uses the WebView geolocation API. HMS Location is only used if a later shell sets `window.HMSLocation`. HMS Location Kit is not compiled in. HMS Push Kit is. The first HTML does not dns-prefetch map tiles on Huawei. Other channels prefetch `tiles.openfreemap.org`. The website content security policy allows `tiles.openfreemap.org` and `tiles.maps.eox.at` for the map. It does not allow `maps.googleapis.com`. Huawei does not load that map. The Plans row in the phone menu stays hidden, the same as Apple and Play.
 
 Trade-off to tell parents in the store listing: message alerts are not delivered on this Huawei build yet. Saved centres in the browser cache are not the same as the Capacitor offline shortlist. City search is the way to find a daycare.
 
@@ -153,7 +154,7 @@ cd android
 
 AAB: `android/app/build/outputs/bundle/huaweiRelease/app-huawei-release.aab`
 
-Do not put `google-services.json` under `android/app/src/huawei/`. Do not commit `agconnect-services.json`.
+Do not put `google-services.json` under `android/app/src/huawei/`. Do not commit `agconnect-services.json`. Listing text, the 216 icon, and reviewer notes are in `docs/store/huawei-appgallery/`.
 
 ### AppGallery Connect account (Kyle)
 
@@ -164,7 +165,7 @@ Do not put `google-services.json` under `android/app/src/huawei/`. Do not commit
 5. Age **18+**. Not a kids or education-for-children category.
 6. Privacy policy `https://www.kidease.ca/privacy`. Say that child health details (allergies, medications, medical notes) can be stored for a parent, and that this Huawei build does not send them to Google Maps.
 7. In the review notes, say digital plans are not sold in this build and Google services are not used.
-8. Leave Huawei IAP, HMS Push, and Map Kit off until a later version. Do not promise them as live.
+8. Leave Huawei ID and Huawei IAP off. HMS Push is in the binary for a later call ring. `FEATURE_CALL_PUSH` stays off, so do not promise push as live. Map Kit stays off.
 
 ## Play flavour (so the other two do not change Play)
 
@@ -225,7 +226,7 @@ Do not draw fake fees, ratings, or open spots into screenshots.
 - [ ] Google sign-in button is absent
 - [ ] Map panel explains that Google Maps is not available, and city search still works
 - [ ] No Stripe button and no “pay on the website” line
-- [ ] Push is described as not available on this version
+- [ ] Push is described as not sending in this version (`FEATURE_CALL_PUSH` off)
 - [ ] Age 18+
 - [ ] Huawei IAP left off until a merchant agreement exists
 
@@ -238,6 +239,6 @@ No secret belongs in git or in a pull request.
 - Huawei AppGallery Connect enterprise account, plus the upload certificate fingerprint Huawei displays
 - The existing upload keystore, kept in 1Password (already the Play plan). A store that demands its own key gets a new keystore on Kyle’s machine, still not committed
 - Store screenshots and the English and French listing text he wants on each store
-- Later, only if he wants Huawei push or Huawei billing: AppGallery Connect app id, `agconnect-services.json`, and a Huawei IAP merchant agreement
+- AppGallery Connect app, Push Kit turned on, and `agconnect-services.json` as the `AGCONNECT_SERVICES_JSON` secret (base64, not committed). Huawei ID stays off. Huawei IAP stays off until a merchant agreement exists.
 
 Enrolment id `B7UM5AC9JQ` is an Apple enrolment id. It is not a Microsoft, Samsung, or Huawei id.

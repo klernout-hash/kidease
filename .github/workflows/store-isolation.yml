@@ -1,7 +1,8 @@
 name: Store isolation
 
 # Builds every Android store flavour and fails if another store's SDK leaks in.
-# LWA / ADM only in amazon. GMS / FCM never in huawei or amazon. HMS never in play / samsung.
+# Six stores: Play, Samsung, Huawei, and Amazon APKs, plus iOS and Microsoft source scans.
+# LWA / ADM only in amazon. GMS / FCM never in huawei or amazon. HMS never in play / samsung / ios / microsoft.
 on:
   pull_request:
     branches: [main]

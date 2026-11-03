@@ -60,6 +60,11 @@ async function webPush(userIds: string[], msg: CallRingMessage) {
   }
 }
 
+/** True only when FEATURE_CALL_PUSH is on. No secrets. The flag defaults off. */
+export const getCallPushStatus = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async () => ({ enabled: callPushEnabled() }));
+
 /** Register a VoIP / call-capable device token for the signed-in user. */
 export const registerCallDevice = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
