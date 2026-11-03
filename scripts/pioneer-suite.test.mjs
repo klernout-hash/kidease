@@ -12,7 +12,7 @@ import {
 } from "../src/lib/net-cost-engine.ts";
 import { RATIO_PROVINCES, ratioRule, ratioStatus } from "../src/lib/provincial-ratios.ts";
 import { INSPECTION_PROVINCES, inspectionChecklistBadge, inspectionPortal } from "../src/lib/provincial-inspections.ts";
-import { buildRl24Summary, buildT778Receipt } from "../src/lib/tax-receipts.ts";
+import { buildTaxReceiptGroups, federalReceiptLines, rl24ReceiptLines } from "../src/lib/tax-receipts.ts";
 import { BROADCAST_MAX, planUrgentBroadcast } from "../src/lib/urgent-broadcast.ts";
 import { qcMilieuPrivacyCentroid } from "../src/lib/qc-home-daycare.ts";
 import { pickCardMicroPills, siblingFitBadge } from "../src/lib/card-micro-pills.ts";
@@ -110,44 +110,75 @@ test("inspection portals are official https links and checklists stay off unclai
   assert.equal(inspectionChecklistBadge([{ id: "a", ok: true }], true).show, true);
 });
 
-test("T778 and RL-24 receipts name the family, not a child, and never invent a permit", () => {
-  const t778 = buildT778Receipt({
-    taxYear: 2026,
-    receiptFor: "Nguyen family",
-    providerName: "Centre",
-    amountPaid: 2400,
-    periodStart: "2026-01-01",
-    periodEnd: "2026-12-31",
+test("T778 and RL-24 receipts name the family and never invent a permit", () => {
+  const built = buildTaxReceiptGroups({
+    invoices: [
+      {
+        id: "inv-family",
+        status: "paid",
+        amountCents: 240000,
+        paidAt: "2026-12-31",
+        period: "2026",
+        daycareId: "d1",
+        daycareName: "Centre",
+        province: "ON",
+        parentUserId: "p1",
+        parentName: "Nguyen family",
+      },
+    ],
   });
-  assert.match(t778.text, /Receipt for: Nguyen family/);
-  assert.match(t778.text, /Centre: Centre/);
-  assert.match(t778.text, /Amount:/);
-  assert.match(t778.text, /Period: 2026-01-01 to 2026-12-31/);
-  assert.match(t778.text, /Receipt number: T778-2026/);
-  assert.doesNotMatch(t778.text, /Child:|Amina|birthdate|allerg/i);
-  const missing = buildRl24Summary({
-    taxYear: 2026,
-    receiptFor: "Parent",
-    providerName: "CPE",
-    permitOrNeq: "",
-    slipNumber: "",
-    boxA: 100,
+  const t778 = federalReceiptLines(built.groups[0]).join("\n");
+  assert.match(t778, /Receipt for: Nguyen family/);
+  assert.match(t778, /Centre: Centre/);
+  assert.match(t778, /Amount:/);
+  assert.match(t778, /Period: 2026-01-01 to 2026-12-31/);
+  assert.match(t778, /KidEase reference: KE-2026-/);
+  assert.doesNotMatch(t778, /Child:|Amina|birthdate|allerg/i);
+  const blank = buildTaxReceiptGroups({
+    invoices: [
+      {
+        id: "inv-blank",
+        status: "paid",
+        amountCents: 10000,
+        paidAt: "2026-03-01",
+        period: "2026-03",
+        daycareId: "d2",
+        daycareName: "CPE",
+        province: "QC",
+        parentUserId: "p1",
+        parentName: "Parent",
+      },
+    ],
   });
-  assert.equal(missing.ok, false);
-  const rl = buildRl24Summary({
-    taxYear: 2026,
-    receiptFor: "Parent",
-    providerName: "CPE",
-    permitOrNeq: "NEQ-123",
-    slipNumber: "RL-9",
-    boxA: 900,
+  const missing = rl24ReceiptLines(blank.groups[0]);
+  assert.ok(missing);
+  assert.match(missing.join("\n"), /H Provider identification: \(not on file\)/);
+  assert.match(missing.join("\n"), /no barcode/);
+  assert.doesNotMatch(missing.join("\n"), /NEQ|RL-9/);
+  const filed = buildTaxReceiptGroups({
+    invoices: [
+      {
+        id: "inv-filed",
+        status: "paid",
+        amountCents: 90000,
+        paidAt: "2026-03-01",
+        period: "2026-03",
+        daycareId: "d2",
+        daycareName: "CPE",
+        province: "QC",
+        licenseNumber: "E2E-QC-100",
+        parentUserId: "p1",
+        parentName: "Parent",
+      },
+    ],
   });
-  assert.equal(rl.ok, true);
-  if (rl.ok) {
-    assert.match(rl.text, /Receipt for: Parent/);
-    assert.match(rl.text, /Receipt number: RL-9/);
-    assert.doesNotMatch(rl.text, /Child:|Leo|Box A|NEQ-123/);
-  }
+  const rl = rl24ReceiptLines(filed.groups[0]);
+  assert.ok(rl);
+  const text = rl.join("\n");
+  assert.match(text, /Receipt for: Parent/);
+  assert.match(text, /H Provider identification: E2E-QC-100/);
+  assert.match(text, /C Total paid: \$900\.00/);
+  assert.doesNotMatch(text, /Child: Leo|Box A: 1|NEQ-123/);
 });
 
 test("urgent broadcast stays inside 10 centres and one send per 7 days", () => {

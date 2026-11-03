@@ -218,6 +218,26 @@ function gateGoogleMapsClientKey(browserKey: string): Plugin {
 // `0.0.0.0:8080` is the live-preview contract — don't change host/port.
 // The Grok preview proxy forwards with Host like `<sandbox>-8080-fuocs`.
 // Vite 6+ blocks unknown hosts by default (403 → "Preview not available").
+/**
+ * twilio-video's util/dynamicimport.js builds `Function("url","return import(url)")`
+ * at module load. Our CSP has no 'unsafe-eval', so that throws and the whole SDK
+ * fails to load ("Could not start the video room"). It is only used for optional
+ * plugins (Krisp noise cancellation) we don't ship, so swap in a CSP-safe stub.
+ */
+function twilioVideoCspSafe(): Plugin {
+  return {
+    name: "kidease:twilio-video-csp-safe",
+    enforce: "pre",
+    transform(_code, id) {
+      if (!/twilio-video[\\/]es5[\\/]util[\\/]dynamicimport\.js$/.test(id.split("?")[0])) return null;
+      return {
+        code: "module.exports = function () { return function (url) { return Promise.reject(new Error('Failed to import: ' + url + ': dynamicImport is disabled')); }; }();\n",
+        map: null,
+      };
+    },
+  };
+}
+
 export default defineConfig(({ command, isPreview, mode }) => {
   const fileEnv = loadEnv(mode, process.cwd(), "");
   const mapsBrowserKey = googleMapsBrowserKey({ ...fileEnv, ...process.env });
@@ -299,6 +319,7 @@ export default defineConfig(({ command, isPreview, mode }) => {
   ssr: { external: ["sharp", "posthog-js", "@sentry/node", "inngest"] },
   optimizeDeps: { exclude: ["sharp"] },
   plugins: [
+    twilioVideoCspSafe(),
     gateGoogleMapsClientKey(mapsBrowserKey),
     clientNodeBuiltinStub(),
     pgliteBootstrapPlugin(),

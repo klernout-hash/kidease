@@ -8,6 +8,7 @@
  */
 
 import { evaluateFeatureFlag, type EnvMap } from "./flags.ts";
+import { enabledToolIds, type CentreToolId } from "./centre-tools.ts";
 
 export { envFlagOn, evaluateFeatureFlag, describeFeatureFlag } from "./flags.ts";
 export type { EnvMap, FeatureFlagKey, FlagDecision, FlagSource } from "./flags.ts";
@@ -311,7 +312,7 @@ export function enrolmentEsignEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_ENROLMENT_ESIGN", env);
 }
 
-/** Tax receipt text a centre types. Default off. */
+/** Yearly receipt from paid invoices, as a PDF. Default off. */
 export function taxReceiptsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_TAX_RECEIPTS", env);
 }
@@ -401,4 +402,9 @@ export function canSeeProviderSubscriptions(
   if (r === "admin") return true;
   if (r === "provider" || ownsCentre) return providerSubscriptionsEnabled(env);
   return false;
+}
+
+/** Centre tools (meal plans, observations, checklists, billing helpers). Each default off. */
+export function centreToolIds(env?: EnvMap): CentreToolId[] {
+  return enabledToolIds((flag) => evaluateFeatureFlag(flag, env));
 }

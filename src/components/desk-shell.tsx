@@ -178,6 +178,7 @@ export function DeskShell({
     curriculumPack: session?.curriculumPack,
     coparentLink: session?.coparentLink,
     staffTimesheets: session?.staffTimesheets,
+    centreTools: session?.centreTools,
     familyVault: session?.familyVault,
     tourCalendar: session?.tourCalendar,
   };

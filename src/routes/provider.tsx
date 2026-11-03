@@ -83,6 +83,7 @@ import type { ProviderEntitlements } from "@/lib/provider-entitlements";
 import { CentreEmployeesPanel } from "@/components/centre-employees";
 import { StaffSchedulingDesk } from "@/components/staff-scheduling-desk";
 import { StaffTimesheetDesk } from "@/components/staff-timesheet-desk";
+import { CentreToolsDesk } from "@/components/centre-tools-desk";
 import { LearningStoriesDesk, StoriesDeskLink } from "@/components/learning-stories-desk";
 import { CurriculumDeskLink, CurriculumPackDesk } from "@/components/curriculum-pack";
 import { OrgDeskLink, OrgOccupancyDesk } from "@/components/org-occupancy-desk";
@@ -97,7 +98,7 @@ import { useRoleChrome } from "@/components/role-chrome";
 import { DaycareDeskHome } from "@/components/daycare-desk-home";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 
-const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "tours", "licence", "contract", "promote", "employees", "screening", "staff", "stories", "sites", "learning", "hours"];
+const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "tours", "licence", "contract", "promote", "employees", "screening", "staff", "stories", "sites", "learning", "hours", "tools"];
 const OWNER_DESKS = new Set<DaycareDesk>(["money", "licence", "contract", "promote"]);
 const DEFAULT_DESK: DaycareDesk = "today";
 const COACH_FOCUS = new Set<ListingCoachFocus>([
@@ -782,6 +783,7 @@ export function ProviderPage() {
       {desk === "employees" ? <EceJobDesk mode="staff" /> : null}
       {desk === "staff" ? <StaffSchedulingDesk /> : null}
       {desk === "hours" ? <StaffTimesheetDesk /> : null}
+      {desk === "tools" ? <CentreToolsDesk /> : null}
       {desk === "staff" ? <EceJobDesk mode="staff" /> : null}
       {desk === "stories" ? <LearningStoriesDesk /> : null}
       {desk === "learning" ? <CurriculumPackDesk /> : null}
@@ -820,7 +822,7 @@ export function ProviderPage() {
         centreOwner ? (
           <div className="space-y-6">
             <ProviderMoneyPanel />
-            <TaxReceiptStudio quebec />
+            <TaxReceiptStudio desk="centre" />
           </div>
         ) : (
           <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("employeeStaffForbidden")}</p>

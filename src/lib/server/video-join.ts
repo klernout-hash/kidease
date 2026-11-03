@@ -31,6 +31,7 @@ export type VideoJoinStatus = {
   roomName: string;
   kind: VideoSourceKind;
   featureOn: boolean;
+  subscriptionsOn: boolean;
   credentialsPresent: boolean;
   stripeLive: boolean;
   desk: "parent" | "provider" | "admin" | null;
@@ -93,6 +94,7 @@ async function resolveDesk(
   kind: VideoSourceKind,
   sourceId: string,
   profileRole: string,
+  rawSourceId?: string,
 ): Promise<{ allowed: boolean; desk: "parent" | "provider" | "admin" | null }> {
   const role = String(profileRole || "")
     .trim()
@@ -102,6 +104,20 @@ async function resolveDesk(
 
   const sql = await getSql();
   if (kind === "thread") {
+    // Conversation ids may contain ":" (e.g. qa-reviewer-thread:<hash>). The room name is
+    // sanitized, but membership must be checked against the raw id.
+    const rawId = String(rawSourceId || sourceId);
+    const ids = rawId !== sourceId ? [rawId, sourceId] : [sourceId];
+    for (const cid of ids) {
+      const hit = await sql<{ user_id: string; daycare_id: string }>`
+        select user_id, daycare_id from conversations where id = ${cid} limit 1
+      `.catch(() => []);
+      if (hit[0]) {
+        if (hit[0].user_id === userId) return { allowed: true, desk: "parent" };
+        if (await ownsDaycare(userId, hit[0].daycare_id)) return { allowed: true, desk: "provider" };
+        return { allowed: false, desk: null };
+      }
+    }
     const conv = await sql<{ user_id: string; daycare_id: string }>`
       select user_id, daycare_id from conversations where id = ${sourceId} limit 1
     `.catch(() => []);
@@ -146,19 +162,30 @@ async function resolveDesk(
   return { allowed: false, desk: null };
 }
 
+function rawThreadId(roomId: string): string {
+  let v = String(roomId || "").trim();
+  try {
+    v = decodeURIComponent(v);
+  } catch {
+    /* keep raw */
+  }
+  return /^[a-zA-Z0-9_:.-]{1,120}$/.test(v) ? v : "";
+}
+
 async function buildStatus(userId: string, roomId: string): Promise<VideoJoinStatus> {
   const parsed = parseVideoRoomParam(roomId);
   const roomName = videoRoomName(parsed.kind, parsed.sourceId);
   const profile = await loadProfile(userId);
-  const { allowed, desk } = await resolveDesk(userId, parsed.kind, parsed.sourceId, profile.role || "parent");
+  const { allowed, desk } = await resolveDesk(userId, parsed.kind, parsed.sourceId, profile.role || "parent", rawThreadId(roomId));
   const stripeLive = stripeChargesLive();
+  const subsOn = subscriptionsEnabled();
   const featureOn = videoArmed();
   const credentialsPresent = videoCredentialsPresent();
   const gate = videoJoinGate({
     featureOn,
     credentialsPresent,
     stripeLive,
-    subscriptionsOn: subscriptionsEnabled(),
+    subscriptionsOn: subsOn,
     actor: {
       role: desk || profile.role,
       plusPlan: profile.plus_plan,
@@ -181,6 +208,7 @@ async function buildStatus(userId: string, roomId: string): Promise<VideoJoinSta
     reason,
     error: !allowed ? "This video room was not found." : gate.ok ? "" : gate.error,
     sdkWired: VIDEO_SDK_WIRED,
+    subscriptionsOn: subsOn,
     recording: false,
     minutesEnforced: false,
     minutesMessage: VIDEO_MINUTES_NOT_ENFORCED_MESSAGE,
