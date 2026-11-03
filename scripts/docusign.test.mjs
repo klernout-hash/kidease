@@ -546,3 +546,16 @@ test("legal copy names DocuSign in EN and FR", () => {
   assert.match(legal, /DocuSign, when centre paperwork is sent/);
   assert.match(legal, /DocuSign, lorsque les documents du centre sont envoyés/);
 });
+
+test("bad HMAC from our account re-reads the envelope from DocuSign instead of trusting the body", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const route = readFileSync(join(here, "../src/routes/api/docusign.webhook.ts"), "utf8");
+  const branch = route.slice(route.indexOf('plan.kind === "bad_signature"'), route.indexOf('plan.kind === "empty"'));
+  assert.match(branch, /syncEnvelopeFromApi\(envelopeId\)/);
+  assert.doesNotMatch(branch, /applyEnvelopeEvent/);
+  assert.match(branch, /status: 401/);
+  const lib = readFileSync(join(here, "../src/lib/server/docusign.ts"), "utf8");
+  const fn = lib.slice(lib.indexOf("export async function syncEnvelopeFromApi"), lib.indexOf("export async function loadSignedPdfBytes"));
+  assert.match(fn, /from daycare_contracts where envelope_id = \$1/);
+  assert.match(fn, /getEnvelopeProgress\(envelopeId\)/);
+});
