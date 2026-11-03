@@ -10,17 +10,15 @@ import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
 import type { BrowseDaycareType } from "@/components/facility-type-rails";
 import { getHomeCareType, setHomeCareType, subscribeHomeCareType } from "@/lib/home-care-selection";
-const ListingRail = lazy(() => import("@/components/listing-rail").then((m) => ({ default: m.ListingRail })));
-const HomeDiscovery = lazy(() =>
-  import("@/components/home-discovery").then((m) => ({ default: m.HomeDiscovery })),
-);
+import { ListingRail } from "@/components/listing-rail";
+import { HomeDiscovery } from "@/components/home-discovery";
 import { RecentlyViewedRow } from "@/components/recently-viewed-row";
 import { Button } from "@/components/ui/button";
 import {
   FeelPhoto,
 } from "@/components/building-photo";
 import { ChipButton } from "@/components/chip";
-import { CARD_SIZES, CARD_WIDTHS, STEP_SIZES, photoSrcSet, photoUrl } from "@/lib/photo";
+import { CARD_SIZES, CARD_WIDTHS, STEP_SIZES, photoSrcSet, photoUrl, listingThumb } from "@/lib/photo";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useRoleChrome } from "@/components/role-chrome";
 import { getMyRole } from "@/lib/server/family";
@@ -114,8 +112,11 @@ export const Route = createFileRoute("/")({
   pendingComponent: BootPending,
   head: ({ loaderData }) => {
     const seo = pageSeoHead(MARKETING_PAGE_SEO.home);
-    const rows = Array.isArray(loaderData?.featured) ? loaderData.featured : [];
-    const src = rows.map((row) => row.photos?.[0]).find((photo) => typeof photo === "string" && photo && !photo.startsWith("data:"));
+    const rows = publicListings(Array.isArray(loaderData?.featured) ? loaderData.featured : []);
+    const claimed = rows.filter((row) => isClaimVerified(row));
+    const src = [...(claimed.length ? claimed : rows)]
+      .map((row) => listingThumb(row.photos))
+      .find((photo) => photo && !photo.includes("storefront-placeholder"));
     if (!src) return seo;
     return {
       ...seo,
@@ -497,15 +498,13 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
 
         {liveRail.items.length ? (
           <section className="ke-gutter mx-auto w-full pt-6" data-ke="home-live-on-kidease">
-            <Suspense fallback={null}>
-              <ListingRail
-                title={t("liveOnKidEase")}
-                items={liveRail.items.slice(0, 12)}
-                visual
-                showDistance={liveRail.showDistance}
-                seeAllHref={`${localePath("/search", locale)}?live=1`}
-              />
-            </Suspense>
+            <ListingRail
+              title={t("liveOnKidEase")}
+              items={liveRail.items.slice(0, 12)}
+              visual
+              showDistance={liveRail.showDistance}
+              seeAllHref={`${localePath("/search", locale)}?live=1`}
+            />
           </section>
         ) : null}
 
@@ -513,21 +512,19 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
         <section id="featured" className="ke-gutter mx-auto w-full pb-8 pt-4 md:pb-12 md:pt-5">
           <h2 className="scroll-mb-32 text-xl tracking-[-0.03em] md:text-2xl">{t(strip.featuredTitleKey)}</h2>
           <p className="mt-2 max-w-2xl text-sm text-muted">{t(FEATURE_SPONSORED_LISTINGS ? "featuredBody" : "featuredBodyPlain")}</p>
-          <Suspense fallback={null}>
-            <HomeDiscovery
-              ready={featuredReady}
-              shown={liveClaimed ? claimedLive : shown}
-              publicFeatured={publicFeatured}
-              placeLabel={origin.label}
-              priorityFirst={liveRail.items.length === 0}
-              liveOnly={liveOnly}
-              hasPublic={publicFeatured.length > 0}
-              onShowAll={() => setLiveOnly(false)}
-              careType={homeType}
-              onCareType={(type) => setHomeCareType(type)}
-              city={origin.label}
-            />
-          </Suspense>
+          <HomeDiscovery
+            ready={featuredReady}
+            shown={liveClaimed ? claimedLive : shown}
+            publicFeatured={publicFeatured}
+            placeLabel={origin.label}
+            priorityFirst={liveRail.items.length === 0}
+            liveOnly={liveOnly}
+            hasPublic={publicFeatured.length > 0}
+            onShowAll={() => setLiveOnly(false)}
+            careType={homeType}
+            onCareType={(type) => setHomeCareType(type)}
+            city={origin.label}
+          />
           <div className="mt-6">
             <Button size="md" variant="secondary" className="rounded-[14px]" onClick={() => goSearch(origin.label)}>
               <Search className="size-5" />
@@ -640,34 +637,30 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
           <TrustBar />
           {liveRail.items.length ? (
             <div className="mt-4" data-ke="home-live-on-kidease">
-              <Suspense fallback={null}>
-                <ListingRail
-                  title={t("liveOnKidEase")}
-                  items={liveRail.items.slice(0, 12)}
-                  visual
-                  showDistance={liveRail.showDistance}
-                  seeAllHref={`${localePath("/search", locale)}?live=1`}
-                />
-              </Suspense>
+              <ListingRail
+                title={t("liveOnKidEase")}
+                items={liveRail.items.slice(0, 12)}
+                visual
+                showDistance={liveRail.showDistance}
+                seeAllHref={`${localePath("/search", locale)}?live=1`}
+              />
             </div>
           ) : null}
           <h2 className="mt-4 scroll-mb-32 text-xl tracking-[-0.03em]">{t(strip.featuredTitleKey)}</h2>
           <p className="mt-2 max-w-2xl text-sm text-muted">{t(FEATURE_SPONSORED_LISTINGS ? "featuredBody" : "featuredBodyPlain")}</p>
-          <Suspense fallback={null}>
-            <HomeDiscovery
-              ready={featuredReady}
-              shown={liveClaimed ? claimedLive : shown}
-              publicFeatured={publicFeatured}
-              placeLabel={origin.label}
-              priorityFirst={liveRail.items.length === 0}
-              liveOnly={liveOnly}
-              hasPublic={publicFeatured.length > 0}
-              onShowAll={() => setLiveOnly(false)}
-              careType={homeType}
-              onCareType={(type) => setHomeCareType(type)}
-              city={origin.label}
-            />
-          </Suspense>
+          <HomeDiscovery
+            ready={featuredReady}
+            shown={liveClaimed ? claimedLive : shown}
+            publicFeatured={publicFeatured}
+            placeLabel={origin.label}
+            priorityFirst={liveRail.items.length === 0}
+            liveOnly={liveOnly}
+            hasPublic={publicFeatured.length > 0}
+            onShowAll={() => setLiveOnly(false)}
+            careType={homeType}
+            onCareType={(type) => setHomeCareType(type)}
+            city={origin.label}
+          />
           <div className="mt-6">
             <Button size="md" variant="secondary" className="w-full rounded-[14px]" onClick={() => goSearch(origin.label)}>
               <Search className="size-5" />

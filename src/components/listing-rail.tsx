@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, House, School, ToyBrick } from "lucide-react
 import type { DaycareCard as Card } from "@/lib/types";
 import { ListingShadowArt } from "@/components/building-photo";
 import { DaycareCard } from "@/components/daycare-card";
+import { listingThumb } from "@/lib/listing-photo";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -149,7 +150,15 @@ export function ListingRail({
       )}
       <div className="ke-listing-rail-port">
         <div ref={scroller} className={cn("ke-rail", visual && "ke-rail--visual")}>
-          {shown.map((item, i) => (
+          {(() => {
+            const firstWithPhoto = shown.findIndex((row) => {
+              const thumb = listingThumb(row.photos);
+              return Boolean(thumb && !thumb.includes("storefront-placeholder"));
+            });
+            return shown.map((item, i) => {
+            const lead = eagerThumbs && firstWithPhoto >= 0 && i === firstWithPhoto;
+            const nearLead = eagerThumbs && firstWithPhoto >= 0 && i >= firstWithPhoto && i < firstWithPhoto + 2;
+            return (
             <div
               key={item.id}
               className={cn("ke-rail-card", enteredFrom > 0 && i >= enteredFrom && "ke-rail-card--in")}
@@ -159,14 +168,16 @@ export function ListingRail({
                 item={item}
                 presentation={visual ? "visual" : "rail"}
                 compact={!visual}
-                eager={eagerThumbs && i < 2}
-                priority={eagerThumbs && i === 0}
+                eager={nearLead}
+                priority={lead}
                 labelFar={labelFar}
                 showDistance={showDistance}
                 ratingFloor={ratingFloor}
               />
             </div>
-          ))}
+            );
+          });
+          })()}
           {more ? (
             <div className="ke-rail-card">
               <button type="button" className="ke-rail-more" onClick={revealMore}>

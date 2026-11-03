@@ -3,8 +3,9 @@
  * Exit 0 skips the deployment. Exit 1 builds it.
  *
  * The project skips every cursor/* preview. These branches need a public
- * preview: the parent sign-up form, the PostHog Allow opt-in fix, and the
- * Stripe test-invoice preview. Other cursor branches stay skipped.
+ * preview: the parent sign-up form, the PostHog Allow opt-in fix, the
+ * Stripe test-invoice preview, and the home LCP measurement. Other cursor
+ * branches stay skipped.
  * main and every other ref still build.
  */
 import { execFileSync } from "node:child_process";
@@ -14,6 +15,7 @@ const PREVIEW_BRANCHES = new Set([
   "cursor/parent-sms-signup-ba39",
   "cursor/posthog-opt-in-allow-e792",
   "cursor/stripe-test-invoices-031c",
+  "cursor/home-lcp-13f1",
 ]);
 
 /** Paths that do not change the website Vercel ships. */
