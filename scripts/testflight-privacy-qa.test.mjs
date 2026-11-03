@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { buildT778Receipt } from "../src/lib/tax-receipts.ts";
+import { buildTaxReceiptGroups, federalReceiptLines } from "../src/lib/tax-receipts.ts";
 import { openInMapsHref } from "../src/lib/open-in-maps.ts";
 import { orderSocialSignIn } from "../src/lib/auth/providers.ts";
 
@@ -13,37 +13,58 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("tax receipt prints family, centre, amount, period, and number only", () => {
-  const text = buildT778Receipt({
-    taxYear: 2026,
-    receiptFor: "Nguyen family",
-    providerName: "Harbour Centre",
-    amountPaid: 1200,
-    periodStart: "2026-01-01",
-    periodEnd: "2026-12-31",
-  }).text;
+test("tax receipt prints family, centre, amount, and period from paid bills", () => {
+  const plain = buildTaxReceiptGroups({
+    invoices: [
+      {
+        id: "inv-harbour",
+        status: "paid",
+        amountCents: 120000,
+        paidAt: "2026-12-31",
+        period: "2026",
+        daycareId: "d1",
+        daycareName: "Harbour Centre",
+        province: "ON",
+        parentUserId: "p1",
+        parentName: "Nguyen family",
+      },
+    ],
+  });
+  const text = federalReceiptLines(plain.groups[0]).join("\n");
   assert.match(text, /Receipt for: Nguyen family/);
   assert.match(text, /Centre: Harbour Centre/);
   assert.match(text, /Amount:/);
   assert.match(text, /Period: 2026-01-01 to 2026-12-31/);
-  assert.match(text, /Receipt number:/);
+  assert.match(text, /KidEase reference:/);
   assert.doesNotMatch(text, /Child:/);
-  const withChild = buildT778Receipt({
-    taxYear: 2026,
-    receiptFor: "Nguyen family",
-    childName: "Amina",
-    providerName: "Harbour Centre",
-    amountPaid: 1200,
-    periodStart: "2026-01-01",
-    periodEnd: "2026-12-31",
-  }).text;
+  const withChild = federalReceiptLines(
+    buildTaxReceiptGroups({
+      invoices: [
+        {
+          id: "inv-harbour-child",
+          status: "paid",
+          amountCents: 120000,
+          paidAt: "2026-12-31",
+          period: "2026",
+          daycareId: "d1",
+          daycareName: "Harbour Centre",
+          province: "ON",
+          childId: "c1",
+          childName: "Amina",
+          parentUserId: "p1",
+          parentName: "Nguyen family",
+        },
+      ],
+    }).groups[0],
+  ).join("\n");
   assert.match(withChild, /Receipt for: Nguyen family/);
   assert.match(withChild, /Child: Amina/);
-  const studio = src("src/components/tax-receipt-studio.tsx");
-  assert.match(studio, /Receipt for/);
-  assert.match(studio, /Reçu pour/);
-  assert.match(studio, /"Child"/);
-  assert.match(studio, /"Enfant"/);
+  const copy = src("src/lib/flagged-feature-copy.ts");
+  assert.match(copy, /Receipt for/);
+  assert.match(copy, /Reçu pour/);
+  assert.match(copy, /taxChild: "Child"/);
+  assert.match(copy, /taxChild: "Enfant"/);
+  assert.doesNotMatch(src("src/components/tax-receipt-studio.tsx"), /amountPaid|Amount paid/);
 });
 
 test("map fallback stays provider-agnostic and opens the device maps app", () => {

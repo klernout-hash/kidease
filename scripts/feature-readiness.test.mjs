@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { FLAG_DEFAULTS } from "../src/lib/flags.ts";
 import { showPayCtas, subscriptionsEnabled } from "../src/lib/features.ts";
 import { placeInLine, SPOT_OFFER_WINDOW_MS } from "../src/lib/spot-offers.ts";
-import { buildRl24Summary, buildT778Receipt } from "../src/lib/tax-receipts.ts";
+import { buildTaxReceiptGroups, federalReceiptLines, rl24ReceiptLines } from "../src/lib/tax-receipts.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const src = (rel) => readFileSync(join(root, rel), "utf8");
@@ -45,27 +45,59 @@ test("spot offers last 48 hours and waitlist rank is sign-up order", () => {
 });
 
 test("sample tax receipts, OSM commute, and DocuSign demo stay honest", () => {
-  const t778 = buildT778Receipt({
-    taxYear: 2026,
-    receiptFor: "Ada Parent",
-    providerName: "Maple Care",
-    amountPaid: 1200,
-    periodStart: "2026-01-01",
-    periodEnd: "2026-06-30",
+  const paid = buildTaxReceiptGroups({
+    invoices: [
+      {
+        id: "inv-maple",
+        status: "paid",
+        amountCents: 120000,
+        paidAt: "2026-06-30",
+        period: "2026-01",
+        daycareId: "d1",
+        daycareName: "Maple Care",
+        province: "ON",
+        parentUserId: "p1",
+        parentName: "Ada Parent",
+      },
+      {
+        id: "inv-open",
+        status: "sent",
+        amountCents: 99900,
+        paidAt: "2026-06-30",
+        period: "2026-02",
+        daycareId: "d1",
+        daycareName: "Maple Care",
+        province: "ON",
+        parentUserId: "p1",
+        parentName: "Ada Parent",
+      },
+    ],
   });
-  assert.equal(t778.kind, "t778");
-  assert.match(t778.text, /Maple Care/);
-  assert.match(t778.text, /1200|1,200/);
-  const rl = buildRl24Summary({
-    taxYear: 2026,
-    receiptFor: "Ada Parent",
-    providerName: "Garderie Érable",
-    boxA: 800,
-    permitOrNeq: "1234567890",
-    slipNumber: "RL-1",
+  assert.equal(paid.groups.length, 1);
+  assert.equal(paid.groups[0].amountCents, 120000);
+  const t778 = federalReceiptLines(paid.groups[0]).join("\n");
+  assert.match(t778, /Maple Care/);
+  assert.match(t778, /\$1,200\.00/);
+  assert.doesNotMatch(t778, /\$999/);
+  const qc = buildTaxReceiptGroups({
+    invoices: [
+      {
+        id: "inv-qc",
+        status: "paid",
+        amountCents: 80000,
+        paidAt: "2026-04-02",
+        period: "2026-04",
+        daycareId: "d2",
+        daycareName: "Garderie Erable",
+        province: "QC",
+        parentUserId: "p1",
+        parentName: "Ada Parent",
+      },
+    ],
   });
-  assert.equal(rl.ok, true);
-  if (rl.ok) assert.match(rl.text, /Garderie/);
+  const rl = rl24ReceiptLines(qc.groups[0]);
+  assert.ok(rl);
+  assert.match(rl.join("\n"), /Garderie/);
   const map = src("src/lib/osm-map.ts");
   assert.match(map, /openfreemap|openstreetmap/i);
   assert.doesNotMatch(map, /maps\.googleapis\.com/);

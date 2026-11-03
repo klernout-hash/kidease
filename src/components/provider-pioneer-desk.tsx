@@ -155,7 +155,7 @@ export function ProviderPioneerDesk() {
       ) : null}
       {tab === "billing" ? (
         <div className="mt-4">
-          <TaxReceiptStudio quebec />
+          <TaxReceiptStudio desk="centre" />
         </div>
       ) : null}
       {tab === "org" ? (

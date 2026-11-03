@@ -942,11 +942,45 @@
     gap: 0.75rem;
   }
   .ke-rail--visual .ke-rail-card {
-    flex-basis: min(78vw, 18.5rem);
-    width: min(78vw, 18.5rem);
-    max-width: min(78vw, 18.5rem);
-    min-width: min(78vw, 18.5rem);
-    contain-intrinsic-size: min(78vw, 18.5rem) 22rem;
+    flex-basis: min(85vw, 18.5rem);
+    width: min(85vw, 18.5rem);
+    max-width: min(85vw, 18.5rem);
+    min-width: min(85vw, 18.5rem);
+    contain-intrinsic-size: min(85vw, 18.5rem) 22rem;
+  }
+  /* Phone: snap each card, keep the first card inside the gutter, and let the next card peek. */
+  @media (max-width: 767px) {
+    .ke-rail--visual {
+      scroll-snap-type: x mandatory;
+      scroll-padding-inline: 1rem;
+      padding-inline: 0.25rem 1rem;
+    }
+    .ke-rail--visual .ke-rail-card {
+      min-width: 0;
+      overflow: hidden;
+    }
+    .ke-rail--visual .ke-rail-card img,
+    .ke-rail--visual .ke-rail-card [data-ke="card-photo"] {
+      aspect-ratio: 4 / 3;
+      width: 100%;
+      height: auto;
+      object-fit: cover;
+    }
+    .ke-rail--visual .ke-rail-card h3 {
+      white-space: normal;
+      overflow-wrap: anywhere;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .ke-listing-rail-port {
+      max-width: 100%;
+      overflow: hidden;
+    }
+    html, body {
+      overflow-x: clip;
+    }
   }
   @media (min-width: 768px) {
     .ke-rail--visual .ke-rail-card {
@@ -2520,4 +2554,9 @@ html[data-resolved-theme="dark"] .ke-site-footer {
   html:has([data-ke="listing-more"] [role="menu"]) .ke-help-bot {
     z-index: 15;
   }
+}
+
+/* Keyboard open: the bottom tab bar steps aside instead of floating over content. */
+html[data-keyboard="open"] [data-ke="app-tab-bar"] {
+  display: none !important;
 }

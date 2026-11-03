@@ -3353,5 +3353,7 @@
   "centreToolsNav": "Herramientas del centro",
   "centreToolsNavHint": "Menús, listas y facturación",
   "parentCentreToolsNav": "De su guardería",
-  "parentCentreToolsNavHint": "Menús, notas y facturas"
+  "parentCentreToolsNavHint": "Menús, notas y facturas",
+  "cookieConsentAllowShort": "Permitir",
+  "cookieSettings": "Configuración de cookies"
 }

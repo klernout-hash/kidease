@@ -9,6 +9,7 @@ import { LISTING_PLACEHOLDER } from "@/lib/listing-photo";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
+import { PROVIDER_TERMS_VERSION } from "@/lib/legal-copy-v2";
 import { searchClaimable, startClaim, submitEnrollLicense, verifyClaim, type ClaimHit } from "@/lib/server/claims";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
@@ -68,6 +69,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
   const [hits, setHits] = useState<ClaimHit[]>([]);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [pending, setPending] = useState<{ daycareId: string; name: string; code: string } | null>(null);
   const [code, setCode] = useState("");
   const [claimFees, setClaimFees] = useState({ infantMonthly: "", toddlerMonthly: "", preschoolMonthly: "" });
@@ -211,10 +213,16 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
       toast.error(t("licensePhoto"));
       return;
     }
+    if (!acceptTerms) {
+      toast.error(locale === "fr" ? "Acceptez les Conditions des fournisseurs." : "Accept the Provider Terms to continue.");
+      return;
+    }
     setBusy(true);
     try {
       await verifyClaim({
         data: {
+          acceptTermsVersion: PROVIDER_TERMS_VERSION,
+          locale,
           daycareId: pending.daycareId,
           code,
           licensePhoto: license,
@@ -385,9 +393,21 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
                 </label>
               ))}
             </fieldset>
+            <label className="flex items-start gap-2 text-sm">
+              <input type="checkbox" required checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)} className="mt-1 size-4" />
+              <span>
+                {locale === "fr" ? "J’accepte les " : "I agree to the "}
+                <a href="/provider-terms" target="_blank" rel="noreferrer" className="underline">
+                  {locale === "fr" ? "Conditions des fournisseurs" : "Provider Terms"}
+                </a>
+                {locale === "fr"
+                  ? " et confirme être autorisé à engager ce service de garde. La version, l’heure et l’adresse IP sont enregistrées."
+                  : " and confirm I can bind this child care program. The version, time, and IP address are recorded."}
+              </span>
+            </label>
             <TurnstileField onToken={claimChallenge.onToken} />
             <div className="flex flex-wrap gap-2">
-              <Button type="submit" disabled={busy}>
+              <Button type="submit" disabled={busy || !acceptTerms}>
                 {t("finishClaim")}
               </Button>
               <Button type="button" variant="secondary" onClick={() => setPending(null)}>

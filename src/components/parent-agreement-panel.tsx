@@ -223,6 +223,38 @@ export function CentreAgreementEditor() {
                 : "This fee stays inside the agreement. It does not become the public listing price."}
             </p>
             <Pair
+              enLabel={fr ? "Frais de base avant réduction (anglais)" : "Base fee before reduction (English)"}
+              frLabel={fr ? "Frais de base avant réduction (français)" : "Base fee before reduction (French)"}
+              en={terms.baseFeeEn || ""}
+              fr={terms.baseFeeFr || ""}
+              onEn={(baseFeeEn) => patch({ baseFeeEn })}
+              onFr={(baseFeeFr) => patch({ baseFeeFr })}
+            />
+            <Pair
+              enLabel={fr ? "Frais après réduction APGJE / provinciale (anglais)" : "Fee after CWELCC / provincial reduction (English)"}
+              frLabel={fr ? "Frais après réduction APGJE / provinciale (français)" : "Fee after CWELCC / provincial reduction (French)"}
+              en={terms.reducedFeeEn || ""}
+              fr={terms.reducedFeeFr || ""}
+              onEn={(reducedFeeEn) => patch({ reducedFeeEn })}
+              onFr={(reducedFeeFr) => patch({ reducedFeeFr })}
+            />
+            <Pair
+              enLabel={fr ? "Cycle de facturation (anglais)" : "Billing cycle (English)"}
+              frLabel={fr ? "Cycle de facturation (français)" : "Billing cycle (French)"}
+              en={terms.billingCycleEn || ""}
+              fr={terms.billingCycleFr || ""}
+              onEn={(billingCycleEn) => patch({ billingCycleEn })}
+              onFr={(billingCycleFr) => patch({ billingCycleFr })}
+            />
+            <Pair
+              enLabel={fr ? "Avis de hausse des frais (anglais)" : "Fee increase notice (English)"}
+              frLabel={fr ? "Avis de hausse des frais (français)" : "Fee increase notice (French)"}
+              en={terms.feeIncreaseEn || ""}
+              fr={terms.feeIncreaseFr || ""}
+              onEn={(feeIncreaseEn) => patch({ feeIncreaseEn })}
+              onFr={(feeIncreaseFr) => patch({ feeIncreaseFr })}
+            />
+            <Pair
               enLabel={fr ? "Dépôt (anglais)" : "Deposit (English)"}
               frLabel={fr ? "Dépôt (français)" : "Deposit (French)"}
               en={terms.depositEn}
