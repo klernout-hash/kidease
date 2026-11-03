@@ -24,7 +24,9 @@ import {
 import {
   authorizedWebhook,
   mapEnvelopeStatus,
+  firstViewedAt,
   parseConnectPayload,
+  signersViewed,
 } from "@/lib/server/docusign-connect";
 import {
   docusignConfig,
@@ -255,7 +257,7 @@ export async function getEnvelopeProgress(envelopeId: string): Promise<{
   envelopeId: string;
   status: string;
   event: string;
-  signers: { recipientId: string; routingOrder: string; status: string }[];
+  signers: { recipientId: string; routingOrder: string; status: string; deliveredDateTime?: string }[];
 } | null> {
   const cfg = docusignConfig();
   if (!cfg || envelopeId.startsWith("demo_")) return null;
@@ -264,7 +266,9 @@ export async function getEnvelopeProgress(envelopeId: string): Promise<{
     const json = await ds<{
       status?: string;
       envelopeId?: string;
-      recipients?: { signers?: { recipientId?: string; routingOrder?: string; status?: string }[] };
+      recipients?: {
+        signers?: { recipientId?: string; routingOrder?: string; status?: string; deliveredDateTime?: string }[];
+      };
     }>(cfg, token, `/envelopes/${encodeURIComponent(envelopeId)}?include=recipients`);
     return {
       envelopeId: json.envelopeId || envelopeId,
@@ -274,6 +278,7 @@ export async function getEnvelopeProgress(envelopeId: string): Promise<{
         recipientId: String(signer.recipientId || ""),
         routingOrder: String(signer.routingOrder || ""),
         status: String(signer.status || ""),
+        ...(signer.deliveredDateTime ? { deliveredDateTime: String(signer.deliveredDateTime) } : {}),
       })),
     };
   });
@@ -338,23 +343,33 @@ export async function applyEnvelopeEvent(input: {
   envelopeId: string;
   status: string;
   event: string;
-  signers?: { recipientId?: string; routingOrder?: string; status?: string }[];
+  signers?: { recipientId?: string; routingOrder?: string; status?: string; deliveredDateTime?: string }[];
 }) {
   const sql = await getSql();
   const status = mapEnvelopeStatus(input.status || input.event);
-  const viewed = status === "viewed" || status === "signed";
+  // A multi-signer envelope stays "sent" until everyone has opened it, so
+  // also count a signer-level delivered/completed as viewed.
+  // Connect payloads are sent without recipient data, so read signers from
+  // the API when the event did not carry them.
+  let signers = input.signers;
+  if (!signers?.length && !input.envelopeId.startsWith("demo_")) {
+    const progress = await getEnvelopeProgress(input.envelopeId).catch(() => null);
+    if (progress?.signers?.length) signers = progress.signers;
+  }
+  const viewed = status === "viewed" || status === "signed" || signersViewed(signers);
+  const viewedAt = firstViewedAt(signers);
   const signed = status === "signed";
   const declined = status === "declined";
   await sql.query(
     `update daycare_contracts
        set status = $2,
            last_event = $3,
-           viewed_at = case when $4 then coalesce(viewed_at, now()) else viewed_at end,
+           viewed_at = case when $4 then coalesce(viewed_at, $7::timestamptz, now()) else viewed_at end,
            signed_at = case when $5 then coalesce(signed_at, now()) else signed_at end,
            declined_at = case when $6 then coalesce(declined_at, now()) else declined_at end,
            updated_at = now()
      where envelope_id = $1`,
-    [input.envelopeId, status, input.event.slice(0, 80), viewed, signed, declined],
+    [input.envelopeId, status, input.event.slice(0, 80), viewed, signed, declined, viewedAt],
   );
   const rows = await sql
     .query<{ id: string; daycare_id: string; pack_kind: string | null; signed_pdf_key: string | null }>(
@@ -372,11 +387,6 @@ export async function applyEnvelopeEvent(input: {
   }
   let agreementStatus: string | null = null;
   if (row?.pack_kind === PARENT_AGREEMENT_PACK) {
-    let signers = input.signers;
-    if (!signers?.length && !input.envelopeId.startsWith("demo_")) {
-      const progress = await getEnvelopeProgress(input.envelopeId).catch(() => null);
-      if (progress?.signers?.length) signers = progress.signers;
-    }
     agreementStatus = parentAgreementStatusFromConnect({
       envelopeStatus: input.status || input.event,
       signers,
@@ -415,8 +425,9 @@ export async function pollOpenEnvelopes(limit = 25) {
       status: string;
       signed_pdf_key: string | null;
       pack_kind: string | null;
+      viewed_at: string | null;
     }>(
-      `select id, daycare_id, envelope_id, status, signed_pdf_key, pack_kind
+      `select id, daycare_id, envelope_id, status, signed_pdf_key, pack_kind, viewed_at
          from daycare_contracts
         where envelope_id is not null
           and envelope_id not like 'demo_%'
@@ -434,15 +445,21 @@ export async function pollOpenEnvelopes(limit = 25) {
   let stored = 0;
   for (const row of rows) {
     try {
-      const progress = row.pack_kind === PARENT_AGREEMENT_PACK ? await getEnvelopeProgress(row.envelope_id) : null;
-      const remote = progress ?? (await getEnvelopeStatus(row.envelope_id));
-      const nextStatus = progress
-        ? parentAgreementStatusFromConnect({
-            envelopeStatus: progress.status,
-            signers: progress.signers,
-          })
-        : remote?.status;
-      if (remote && nextStatus && nextStatus !== row.status) {
+      // Progress includes signers, so the poll can record viewed_at even when
+      // the envelope status itself has not moved.
+      const progress = await getEnvelopeProgress(row.envelope_id);
+      const remote = progress
+        ? { envelopeId: progress.envelopeId, status: mapEnvelopeStatus(progress.status), event: progress.event }
+        : await getEnvelopeStatus(row.envelope_id);
+      const nextStatus =
+        progress && row.pack_kind === PARENT_AGREEMENT_PACK
+          ? parentAgreementStatusFromConnect({
+              envelopeStatus: progress.status,
+              signers: progress.signers,
+            })
+          : remote?.status;
+      const newlyViewed = !row.viewed_at && Boolean(progress && signersViewed(progress.signers));
+      if (remote && nextStatus && (nextStatus !== row.status || newlyViewed)) {
         await applyEnvelopeEvent(progress ?? remote);
         updated += 1;
       } else if ((row.status === "signed" || row.status === "completed" || nextStatus === "completed") && !row.signed_pdf_key) {

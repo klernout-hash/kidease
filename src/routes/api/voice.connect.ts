@@ -28,7 +28,8 @@ async function run(request: Request) {
     detail: identities.length ? "twilio voice client" : "twilio voice client denied",
     ip,
   });
-  return new Response(clientDialTwiml(identities), {
+  const conversationId = auth.params.conversationId || auth.params.ConversationId || "";
+  return new Response(clientDialTwiml(identities, conversationId), {
     status: 200,
     headers: { "Content-Type": "text/xml" },
   });

@@ -1,3 +1,4 @@
+import { markMeaningfulAction } from "@/lib/prompt-manager";
 import { useEffect, useId, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { toast } from "sonner";
@@ -278,7 +279,8 @@ export function RequestTourSheet({ daycare, open, unclaimed = false, onClose, on
             email: email.trim() || undefined,
           },
         });
-        capturePostHogEvent("listing_request_submitted", { intent: "tour" });
+        markMeaningfulAction("tour");
+      capturePostHogEvent("listing_request_submitted", { intent: "tour" });
         captureLeadSubmitted({ daycareSlug: daycare.slug, requestType: "tour", role: guest ? "guest" : "parent" });
         captureMarketplaceFunnel({ step: "tour_request", source: "listing", dest_path: "/daycare", contact: "tour" });
         {

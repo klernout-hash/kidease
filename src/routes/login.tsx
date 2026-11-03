@@ -661,6 +661,7 @@ export function LoginScreen({
           await withTimeoutFallback(confirmAdultAge(), LOGIN_CONTINUE_MS, undefined);
         }
         trackProductEvent("signup_completed", { method: "email", source: "login", role });
+        try { window.sessionStorage.setItem("ke-just-signed-up", "1"); } catch { /* storage blocked */ }
         confirmAction(t, "accountCreated");
       } else {
         const res = await withTimeout(

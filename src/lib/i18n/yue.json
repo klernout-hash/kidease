@@ -3353,5 +3353,7 @@
   "centreToolsNav": "中心工具",
   "centreToolsNavHint": "餐單、清單、收費助手",
   "parentCentreToolsNav": "嚟自你嘅托兒所",
-  "parentCentreToolsNavHint": "餐單、記錄同賬單"
+  "parentCentreToolsNavHint": "餐單、記錄同賬單",
+  "cookieConsentAllowShort": "允許",
+  "cookieSettings": "Cookie 設定"
 }

@@ -289,14 +289,14 @@ describe("PostHog client wiring", () => {
     assert.match(banner, /role="region"/);
     assert.doesNotMatch(banner, /\[\[data-channel=app\]_&\]:hidden/);
     assert.match(start, /shouldStartPostHog\(\)/);
-    assert.match(copy, /cookieConsentEssential: "Essential"/);
-    assert.match(copy, /cookieConsentAllow: "Allow analytics so we can improve KidEase"/);
-    assert.match(copy, /cookieConsentEssential: "Essentiel"/);
-    assert.match(copy, /cookieConsentAllow: "Autoriser l’analytique pour améliorer KidEase"/);
-    assert.ok(banner.indexOf('data-ke="cookie-allow"') < banner.indexOf('data-ke="cookie-essential"'));
-    assert.match(banner, /variant="primary"/);
-    assert.match(banner, /min-h-14/);
-    assert.match(banner, /min-h-11/);
+    assert.match(copy, /cookieConsentEssential: "Essential only"/);
+    assert.match(copy, /cookieConsentAllowShort: "Allow"/);
+    assert.match(copy, /cookieConsentEssential: "Essentiels seulement"/);
+    assert.match(copy, /cookieConsentAllowShort: "Autoriser"/);
+    // Equal weight: both secondary, same size, Essential first; slim bar max 560px.
+    assert.ok(banner.indexOf('data-ke="cookie-essential"') < banner.indexOf('data-ke="cookie-allow"'));
+    assert.doesNotMatch(banner, /variant="primary"/);
+    assert.match(banner, /max-w-\[560px\]/);
     assert.doesNotMatch(banner, /type="checkbox"/);
     assert.match(legal, /Allow analytics/);
     assert.match(legal, /Autoriser l’analytique/);
