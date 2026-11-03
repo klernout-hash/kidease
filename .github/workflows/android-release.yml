@@ -49,9 +49,14 @@ jobs:
       - run: npx cap sync android
       - name: bundleRelease
         working-directory: android
-        run: chmod +x ./gradlew && ./gradlew bundlePlayRelease
+        run: chmod +x ./gradlew && ./gradlew bundlePlayRelease assemblePlayRelease
       - uses: actions/upload-artifact@v4
         with:
           name: app-release-aab
           path: android/app/build/outputs/bundle/playRelease/app-play-release.aab
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: android/app/build/outputs/apk/play/release/*.apk
           if-no-files-found: error

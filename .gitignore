@@ -53,3 +53,4 @@ ios/**/*.moved-aside
 *.dSYM.zip
 *.aab
 *.apk
+.env*
