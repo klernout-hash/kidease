@@ -105,6 +105,31 @@ self.addEventListener("push", (event) => {
   const title = typeof payload.title === "string" && payload.title.trim() ? payload.title.trim() : "KidEase";
   const body = typeof payload.body === "string" ? payload.body : "";
   const url = notificationPath(payload.url);
+  // Background ring (FEATURE_CALL_PUSH): a call rings until answered or cancelled.
+  if (payload.type === "call-cancel" && typeof payload.ringId === "string") {
+    event.waitUntil(
+      self.registration.getNotifications({ tag: "call-" + payload.ringId }).then((list) => list.forEach((n) => n.close())),
+    );
+    return;
+  }
+  if (payload.type === "call" && typeof payload.ringId === "string") {
+    event.waitUntil(
+      self.registration.showNotification(title, {
+        body,
+        icon: "/icon-512.png",
+        tag: "call-" + payload.ringId,
+        renotify: true,
+        requireInteraction: true,
+        vibrate: [400, 200, 400, 200, 400],
+        actions: [
+          { action: "answer", title: "Answer" },
+          { action: "decline", title: "Decline" },
+        ],
+        data: { url, ringId: payload.ringId },
+      }),
+    );
+    return;
+  }
   event.waitUntil(
     self.registration.showNotification(title, {
       body,

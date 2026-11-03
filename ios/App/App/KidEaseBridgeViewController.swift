@@ -21,6 +21,7 @@ class KidEaseBridgeViewController: CAPBridgeViewController {
         super.capacitorDidLoad()
         bridge?.registerPluginInstance(AppleSignInPlugin())
         bridge?.registerPluginInstance(AuthSessionPlugin())
+        bridge?.registerPluginInstance(CallKitVoipPlugin())
         bridge?.registerPluginInstance(AdminWebOnlyPlugin())
         if let controller = webView?.configuration.userContentController {
             installTextScaleScript(on: controller)
