@@ -97,10 +97,12 @@ describe("native project scaffolding", () => {
       if (m) assert.match(m[1], /only while you search/);
     }
     assert.doesNotMatch(info, /<string>location<\/string>/);
-    assert.doesNotMatch(info, /<string>remote-notification<\/string>/);
+    // Call ring: CallKit/PushKit need voip + remote-notification background modes.
+    assert.match(info, /<string>voip<\/string>/);
+    assert.match(info, /<string>remote-notification<\/string>/);
     assert.match(info, /NSCameraUsageDescription/);
     assert.match(info, /NSMicrophoneUsageDescription/);
-    assert.doesNotMatch(info, /UIBackgroundModes/);
+    assert.match(info, /UIBackgroundModes/);
 
     const manifest = read("android/app/src/main/AndroidManifest.xml");
     assert.match(manifest, /ACCESS_COARSE_LOCATION/);
@@ -120,7 +122,7 @@ describe("native project scaffolding", () => {
     assert.match(entitlements, /applinks:www\.kidease\.ca/);
     assert.match(entitlements, /applinks:kidease\.ca/);
     assert.match(entitlements, /webcredentials:www\.kidease\.ca/);
-    assert.doesNotMatch(entitlements, /aps-environment/);
+    assert.match(entitlements, /aps-environment/); // PushKit call ring
     assert.match(entitlements, /com\.apple\.developer\.applesignin/);
     assert.match(read("ios/App/App.xcodeproj/project.pbxproj"), /CODE_SIGN_ENTITLEMENTS = App\/App.entitlements/);
     assert.doesNotMatch(read("ios/App/App.xcodeproj/project.pbxproj"), /DEVELOPMENT_TEAM = [A-Z0-9]{10}/);

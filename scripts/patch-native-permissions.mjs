@@ -222,8 +222,8 @@ ${schemes}
       "",
     );
     plist = plist.replace(/\s*<string>location<\/string>/g, "");
-    // Push is not in v1. Strip the remote-notification background mode if a plugin added it.
-    plist = plist.replace(/\s*<string>remote-notification<\/string>/g, "");
+    // Background call ring (PR: feat/call-push-background-ring) keeps voip, audio and
+    // remote-notification background modes. Ringing stays off until FEATURE_CALL_PUSH is set.
     plist = plist.replace(/\s*<key>UIBackgroundModes<\/key>\s*<array>\s*<\/array>/g, "");
     await writeFile(infoPlist, plist);
     console.log("[native-permissions] patched ios Info.plist");
