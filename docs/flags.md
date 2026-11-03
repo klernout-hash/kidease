@@ -178,6 +178,17 @@ Each one stays off until its own flag is `1`. None of them send email, SMS, push
 | `FEATURE_UNIFIED_INBOX` | Daycare messages also list requests that have no thread yet. |
 | `FEATURE_VOICE` | The call button on a thread. Off means no dial. |
 | `FEATURE_PICKUP_CONTACTS` | Pickup name, phone, and relationship. Allergies stay either way. |
+| `FEATURE_MEAL_PLANNING` | Weekly menu with Canada's Food Guide groups and allergens. Parents see the menu. Daycare desk `/provider?desk=tools`. |
+| `FEATURE_DEV_OBSERVATIONS` | Developmental observations by ELECT domain. Text only, no photos. Parents see their child's notes. Daycare desk `/provider?desk=tools`. |
+| `FEATURE_STAFF_PD` | Staff professional development hours log. Daycare only. Daycare desk `/provider?desk=tools`. |
+| `FEATURE_MAINTENANCE_CHECKLISTS` | Maintenance and safety checklists. Daycare only. Daycare desk `/provider?desk=tools`. |
+| `FEATURE_CLEANING_CHECKLISTS` | Cleaning and sanitation checklists. Daycare only. Daycare desk `/provider?desk=tools`. |
+| `FEATURE_QUICKBOOKS_EXPORT` | QuickBooks Online import CSV. No QuickBooks connection or credentials. Daycare desk `/provider?desk=tools`. |
+| `FEATURE_TAP_TO_PAY` | Tap to Pay scaffold. Never charges a card in this build. Parent sees receipts. Daycare desk `/provider?desk=tools`. |
+| `FEATURE_ATTENDANCE_BILLING` | Bill drafts from attended days. Parent sees the bill. Daycare desk `/provider?desk=tools`. |
+| `FEATURE_PAYROLL` | Gross pay export CSV from hours. Not a payroll processor. No credentials. Daycare desk `/provider?desk=tools`. |
+| `FEATURE_SUBSIDY_BILLING` | Agency subsidy share vs parent share, plus an agency claim CSV. Parent sees the split. Daycare desk `/provider?desk=tools`. |
+| `FEATURE_OFFLINE_CHECKIN` | Queue check-in taps offline and sync with the tap time on reconnect. Needs FEATURE_CHILD_CHECKIN. Daycare desk `/provider?desk=tools`. |
 
 ## What is wired
 

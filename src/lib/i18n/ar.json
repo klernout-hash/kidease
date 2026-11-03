@@ -3349,5 +3349,9 @@
   "shotCapListing": "الصفحة · Android",
   "shotCapLogin": "دخول · Android",
   "featPayBodyBills": "ترسل المراكز الفواتير. يدفع أولياء الأمور عبر Stripe Checkout. يمكن لولي الأمر تسجيل تحويل Interac في صفحة الدفع. يبقى هذا التسجيل بانتظار. لا يمكن للصفحة تعليمه مدفوعاً.",
-  "compareEmptyFree": "قارنوا الأعمار والساعات والمسافة واللغة والثقافة والأماكن المتاحة."
+  "compareEmptyFree": "قارنوا الأعمار والساعات والمسافة واللغة والثقافة والأماكن المتاحة.",
+  "centreToolsNav": "أدوات المركز",
+  "centreToolsNavHint": "القوائم وقوائم التحقق والفوترة",
+  "parentCentreToolsNav": "من حضانتك",
+  "parentCentreToolsNavHint": "القوائم والملاحظات والفواتير"
 }
