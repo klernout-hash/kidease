@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage } from "@/components/legal-doc";
-import { PRIVACY_EN, PRIVACY_FR } from "@/lib/legal-copy";
+import { PRIVACY_V2_EN, PRIVACY_V2_FR } from "@/lib/legal-copy";
 import { LEGAL_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { SMS_PRIVACY_EN, SMS_PRIVACY_FR, withSmsSection } from "@/lib/sms-legal";
 import { legalDocWithoutStorePurchase } from "@/lib/store-purchase-copy";
@@ -17,8 +17,8 @@ function Privacy() {
   const hideCommerce = useInNativeShell();
   const raw =
     locale === "fr"
-      ? withSmsSection(PRIVACY_FR, SMS_PRIVACY_FR)
-      : withSmsSection(PRIVACY_EN, SMS_PRIVACY_EN);
+      ? withSmsSection(PRIVACY_V2_FR, SMS_PRIVACY_FR)
+      : withSmsSection(PRIVACY_V2_EN, SMS_PRIVACY_EN);
   const doc = hideCommerce ? legalDocWithoutStorePurchase(raw) : raw;
   return <LegalPage doc={doc} />;
 }

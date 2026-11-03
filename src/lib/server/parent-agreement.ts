@@ -1,3 +1,5 @@
+import { agreementTemplateV2, coparentSignerInputs, DIRECTOR_ANCHORS, guardianAnchors, parentAgreementDocumentV2 } from "../parent-agreement-v2.ts";
+import { isHomeDaycare } from "../home-address-privacy.ts";
 import { createServerFn } from "@tanstack/react-start";
 import { getSql, type Sql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
@@ -109,6 +111,20 @@ async function centreUserIds(sql: Sql, daycareId: string) {
     where daycare_id = ${daycareId} and status = 'active'
   `.catch(() => []);
   return [...new Set([...owners, ...members].map((row) => row.user_id).filter(Boolean))];
+}
+
+/** v2: linked co-parents sign too (parallel with parent 1, before the director). */
+async function coparentSigners(sql: Sql, childId: string | null, exclude: string[]) {
+  const ids = await linkedCoparentIds(sql, childId || "");
+  if (!ids.length) return [];
+  const rows = await sql.query<{ name: string | null; email: string | null }>(
+    `select name, email from "user" where id = any($1)`,
+    [ids],
+  ).catch(() => []);
+  return rows
+    .map((row) => ({ name: (row.name || "").trim(), email: (row.email || "").trim().toLowerCase() }))
+    .filter((row) => row.name && validEmail(row.email) && !exclude.includes(row.email))
+    .slice(0, 3);
 }
 
 async function linkedCoparentIds(sql: Sql, childId: string) {
@@ -345,8 +361,11 @@ export const sendParentAgreement = createServerFn({ method: "POST" })
       province: string | null;
       licence: string | null;
       photos: string | null;
+      facility_type?: string | null;
+      amenities?: string | null;
     }>`
-      select name, address, city, province, license_number as licence, photos
+      select name, address, city, province, license_number as licence, photos,
+             facility_type, amenities
         from daycares where id = ${booking.daycare_id} limit 1
     `;
     const centre = centres[0];
@@ -362,7 +381,9 @@ export const sendParentAgreement = createServerFn({ method: "POST" })
     if (!isStartDate(start)) deny("start_required");
     const agreedDays = String(booking.days || "").trim();
 
-    const body = parentAgreementDocument(terms, {
+    const v2 = agreementTemplateV2();
+    const coparents = v2 ? await coparentSigners(sql, booking.child_id, [parentEmail, directorEmail]) : [];
+    const partyFields = {
       centreName: centre.name,
       address: centre.address || "",
       city: centre.city || "",
@@ -376,7 +397,20 @@ export const sendParentAgreement = createServerFn({ method: "POST" })
       startDate: start,
       daysEn: agreedDays || undefined,
       daysFr: agreedDays || undefined,
-    });
+    };
+    const body = v2
+      ? parentAgreementDocumentV2(terms, {
+          ...partyFields,
+          isHomeDaycare: isHomeDaycare({ facilityType: centre.facility_type, amenities: centre.amenities } as never),
+          guardians: [{ name: parentName, email: parentEmail }, ...coparents.map((row) => ({ name: row.name, email: row.email }))],
+        }, {
+          baseFee: { en: terms.baseFeeEn || "", fr: terms.baseFeeFr || "" },
+          reducedFee: { en: terms.reducedFeeEn || "", fr: terms.reducedFeeFr || "" },
+          billingCycle: { en: terms.billingCycleEn || "", fr: terms.billingCycleFr || "" },
+          feeIncrease: { en: terms.feeIncreaseEn || "", fr: terms.feeIncreaseFr || "" },
+        })
+      : parentAgreementDocument(terms, partyFields);
+    const parentAnchors = guardianAnchors(0);
 
     const contractId = nid("ct");
     const agreementId = nid("pa");
@@ -397,7 +431,8 @@ export const sendParentAgreement = createServerFn({ method: "POST" })
           name: parentName,
           recipientId: "1",
           routingOrder: "1",
-          anchorString: "Parent signature / Signature du parent",
+          anchorString: v2 ? parentAnchors.sign : "Parent signature / Signature du parent",
+          ...(v2 ? { initialAnchor: parentAnchors.initial, dateAnchor: parentAnchors.date } : {}),
           roleName: "Parent",
         },
         {
@@ -405,9 +440,11 @@ export const sendParentAgreement = createServerFn({ method: "POST" })
           name: directorName,
           recipientId: "2",
           routingOrder: "2",
-          anchorString: "Centre signature / Signature du centre",
+          anchorString: v2 ? DIRECTOR_ANCHORS.sign : "Centre signature / Signature du centre",
+          ...(v2 ? { initialAnchor: DIRECTOR_ANCHORS.initial, dateAnchor: DIRECTOR_ANCHORS.date } : {}),
           roleName: "Director",
         },
+        ...coparentSignerInputs(coparents),
       ],
     });
 

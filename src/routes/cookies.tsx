@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { LegalPage } from "@/components/legal-doc";
-import { COOKIES_EN, COOKIES_FR } from "@/lib/legal-copy";
+import { COOKIES_V2_EN, COOKIES_V2_FR } from "@/lib/legal-copy";
 import { LEGAL_PAGE_SEO, pageSeoHead } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 
@@ -11,5 +11,5 @@ export const Route = createFileRoute("/cookies")({
 
 function Cookies() {
   const { locale } = useCopy();
-  return <LegalPage doc={locale === "fr" ? COOKIES_FR : COOKIES_EN} />;
+  return <LegalPage doc={locale === "fr" ? COOKIES_V2_FR : COOKIES_V2_EN} />;
 }

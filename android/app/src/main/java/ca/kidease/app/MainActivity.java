@@ -1,5 +1,6 @@
 package ca.kidease.app;
 
+import android.os.Build;
 import android.util.Log;
 import android.webkit.WebView;
 import androidx.webkit.WebSettingsCompat;
@@ -23,6 +24,7 @@ public class MainActivity extends BridgeActivity {
     protected void load() {
         // Register before the bridge is created. Capacitor copies initial plugins in super.load().
         registerPlugin(PasskeyPlugin.class);
+        StorePlugins.register(this);
         super.load();
         installAdminWebOnlyClient();
         String flavor = BuildConfig.FLAVOR == null ? "" : BuildConfig.FLAVOR;
@@ -51,6 +53,7 @@ public class MainActivity extends BridgeActivity {
             ensureNativeToken(userAgentForStoreBuild(flavor, current, configured)),
             PlayServicesStatus.available(this)
         );
+        next = withAmazonDeviceToken(next, flavor, Build.MANUFACTURER);
         boolean changed = current == null || !current.equals(next);
         if (changed) {
             webView.getSettings().setUserAgentString(next);
@@ -76,6 +79,24 @@ public class MainActivity extends BridgeActivity {
         if (next.contains(NATIVE_TOKEN)) return next;
         if (next.isEmpty()) return NATIVE_TOKEN;
         return next + " " + NATIVE_TOKEN;
+    }
+
+    void registerStorePlugin(Class<? extends com.getcapacitor.Plugin> plugin) {
+        registerPlugin(plugin);
+    }
+
+    static final String AMAZON_DEVICE_TOKEN = "KidEaseAmazonDevice";
+
+    /**
+     * Amazon-only features (ADM, Login with Amazon, Fire kiosk) need BOTH the amazon
+     * flavour AND an Amazon-made device. Every other flavour strips the token.
+     */
+    static String withAmazonDeviceToken(String agent, String flavor, String manufacturer) {
+        String next = agent == null ? "" : agent.replace(AMAZON_DEVICE_TOKEN, "").replaceAll("\\s+", " ").trim();
+        boolean amazonFlavor = flavor != null && flavor.startsWith("amazon");
+        boolean amazonDevice = manufacturer != null && manufacturer.trim().equalsIgnoreCase("Amazon");
+        if (amazonFlavor && amazonDevice) return next.isEmpty() ? AMAZON_DEVICE_TOKEN : next + " " + AMAZON_DEVICE_TOKEN;
+        return next;
     }
 
     private void dropSamsungStoreLink() {

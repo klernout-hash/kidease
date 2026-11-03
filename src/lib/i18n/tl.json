@@ -3353,5 +3353,7 @@
   "centreToolsNav": "Mga tool ng centre",
   "centreToolsNavHint": "Menu, checklist, tulong sa singil",
   "parentCentreToolsNav": "Mula sa iyong daycare",
-  "parentCentreToolsNavHint": "Menu, tala, at bill"
+  "parentCentreToolsNavHint": "Menu, tala, at bill",
+  "cookieConsentAllowShort": "Payagan",
+  "cookieSettings": "Mga setting ng cookie"
 }

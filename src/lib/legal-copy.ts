@@ -1,5 +1,6 @@
 import { PRIVACY_CONTACT_EMAIL, privacyOfficerLine } from "./company";
 import { SUPPORT_INBOX_EMAIL } from "./support";
+import { COOKIES_ADD_EN, COOKIES_ADD_FR, PRIVACY_ADD_EN, PRIVACY_ADD_FR, TERMS_ADD_EN, TERMS_ADD_FR } from "./legal-copy-v2";
 
 export type LegalProcessor = {
   name: string;
@@ -93,7 +94,7 @@ export const PRIVACY_EN: LegalDoc = {
             "Send transactional email (sign-in codes, password reset, claim codes, request notices).",
             "Record a deposit when in-app payment is used, and improve search quality.",
             "We do not use parent accounts for advertising or to train public machine-learning models. Analytics loads only after you choose Allow analytics.",
-            "A centre may pay for a Featured placement. Those cards are marked Sponsored on the website and in the app. That label is not a quality score. We do not sell parent or child details for ads.",
+            "No centre can pay to rank higher. We do not sell parent or child details for ads.",
           ],
         },
       ],
@@ -526,7 +527,7 @@ export const PRIVACY_FR: LegalDoc = {
             "Envoyer des courriels transactionnels (codes, réinitialisation, avis de demande).",
             "Enregistrer un dépôt lorsque le paiement dans l’appli est utilisé, et améliorer la recherche.",
             "Nous n’utilisons pas les profils d’enfants pour la publicité ni pour entraîner des modèles d’apprentissage automatique publics.",
-            "Un centre peut payer une mise en vedette. Ces fiches portent la mention Commandité sur le site et dans l’appli. Ce n’est pas une note de qualité. Nous ne vendons pas les renseignements des parents ou des enfants pour de la publicité.",
+            "Aucun centre ne peut payer pour être mieux classé. Nous ne vendons pas les renseignements des parents ou des enfants pour de la publicité.",
           ],
         },
       ],
@@ -1159,7 +1160,7 @@ export const TERMS_EN: LegalDoc = {
             "Spots, hours, fees, photos, and amenities must stay reasonably current. Do not invent a fee or an open spot.",
             "KidEase may check a claim against the provincial or territorial registry. A false claim, a borrowed licence, or an unlicensed operation can lead to immediate suspension of the listing and the director account.",
             "Parents: registry data and Google bits can lag. Treat KidEase as a starting point, not a government certificate.",
-            "A centre may pay for a Featured placement in search and on the home ranking. Those cards are marked Sponsored. Other listings stay in the usual order.",
+            "Listings are ordered by distance, search match, and data quality. No centre can pay to rank higher.",
           ],
         },
       ],
@@ -1304,7 +1305,7 @@ export const TERMS_FR: LegalDoc = {
             "Places, heures, tarifs, photos et services doivent rester raisonnablement à jour. N’inventez pas un tarif ni une place.",
             "KidEase peut vérifier une revendication auprès du registre. Une fausse revendication, un permis emprunté ou un service sans permis peut entraîner la suspension immédiate de la fiche et du compte.",
             "Parents : les registres et les données Google peuvent être en retard. KidEase est un point de départ, pas un certificat gouvernemental.",
-            "Un centre peut payer une mise en vedette dans la recherche et sur l’accueil. Ces fiches portent la mention Commandité. Les autres fiches restent dans l’ordre habituel.",
+            "Les fiches sont classées selon la distance, la recherche et la qualité des données. Aucun centre ne peut payer pour être mieux classé.",
           ],
         },
       ],
@@ -1400,3 +1401,17 @@ export const TERMS_FR: LegalDoc = {
   contactLead: "Questions sur les conditions :",
   disclaimer: DISCLAIMER_FR,
 };
+
+// Legal v2 (Nov 2026 audit): appended sections. Later ids replace earlier ones with the same id.
+function withV2(doc: LegalDoc, add: LegalSection[], updated: string): LegalDoc {
+  const ids = new Set(add.map((x) => x.id));
+  return { ...doc, updated, sections: [...doc.sections.filter((x) => !ids.has(x.id)), ...add] };
+}
+const V2_EN = "Effective 3 November 2026 · KidEase · Canada";
+const V2_FR = "En vigueur le 3 novembre 2026 · KidEase · Canada";
+export const PRIVACY_V2_EN = withV2(PRIVACY_EN, PRIVACY_ADD_EN, V2_EN);
+export const PRIVACY_V2_FR = withV2(PRIVACY_FR, PRIVACY_ADD_FR, V2_FR);
+export const COOKIES_V2_EN = withV2(COOKIES_EN, COOKIES_ADD_EN, V2_EN);
+export const COOKIES_V2_FR = withV2(COOKIES_FR, COOKIES_ADD_FR, V2_FR);
+export const TERMS_V2_EN = withV2(TERMS_EN, TERMS_ADD_EN, V2_EN);
+export const TERMS_V2_FR = withV2(TERMS_FR, TERMS_ADD_FR, V2_FR);

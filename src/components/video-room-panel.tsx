@@ -76,7 +76,11 @@ export function VideoRoomPanel({
     const remoteHost = remoteRef.current;
     void (async () => {
       try {
-        const sdk = await import("twilio-video");
+        const mod = await import("twilio-video");
+        // twilio-video is CommonJS; in the production bundle connect() sits on .default.
+        const sdk = (typeof (mod as { connect?: unknown }).connect === "function"
+          ? mod
+          : (mod as unknown as { default: typeof mod }).default) as typeof mod;
         const opts = { name: roomName, audio: true, video: { width: 640, height: 480, frameRate: 24 } as false | { width: number; height: number; frameRate: number } };
         let room: Room;
         try {
@@ -113,7 +117,7 @@ export function VideoRoomPanel({
       } catch (err) {
         const e = err as { code?: number; name?: string };
         const tag = e?.code ? String(e.code) : e?.name || "";
-        console.warn("[kidease-video] connect failed", tag);
+        console.warn("[kidease-video] connect failed", tag, (err as Error)?.message);
         if (!cancelled) {
           setPhase("error");
           setNote(tag ? `${t("videoTourFailed")} (${tag})` : t("videoTourFailed"));

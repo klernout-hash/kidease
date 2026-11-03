@@ -34,6 +34,21 @@ class KidEaseBridgeViewController: CAPBridgeViewController {
         )
     }
 
+    /// The web view always fills the window at device width. A page wider than the screen
+    /// made WKWebView zoom out, so the desk showed shrunk and letterboxed; zoom is pinned to 1.
+    override open func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        guard let webView = webView else { return }
+        if webView.frame != view.bounds { webView.frame = view.bounds }
+        webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        if #available(iOS 14.0, *) { webView.pageZoom = 1 }
+        let scroll = webView.scrollView
+        scroll.minimumZoomScale = 1
+        scroll.maximumZoomScale = 1
+        if scroll.zoomScale != 1 { scroll.setZoomScale(1, animated: false) }
+        scroll.contentInsetAdjustmentBehavior = .never
+    }
+
     deinit {
         NotificationCenter.default.removeObserver(self)
     }

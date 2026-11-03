@@ -3353,5 +3353,7 @@
   "centreToolsNav": "Kita-Werkzeuge",
   "centreToolsNavHint": "Speisepläne, Checklisten, Abrechnung",
   "parentCentreToolsNav": "Von Ihrer Kita",
-  "parentCentreToolsNavHint": "Speisepläne, Notizen und Rechnungen"
+  "parentCentreToolsNavHint": "Speisepläne, Notizen und Rechnungen",
+  "cookieConsentAllowShort": "Erlauben",
+  "cookieSettings": "Cookie-Einstellungen"
 }

@@ -1696,7 +1696,9 @@ export const copy = {
     cookieConsentBody:
       "Essential cookies keep you signed in and remember your search. They are required. Optional analytics (PostHog) records page views and a privacy-masked session replay so we can improve KidEase: not ads, and not required to use the site.",
     cookieConsentBannerLead: "Analytics stay off until Allow.",
-    cookieConsentEssential: "Essential",
+    cookieConsentEssential: "Essential only",
+    cookieConsentAllowShort: "Allow",
+    cookieSettings: "Cookie settings",
     cookieConsentAllow: "Allow analytics so we can improve KidEase",
     support: "Support",
     footerCaregivers: "Caregivers & jobs",
@@ -5289,7 +5291,9 @@ export const copy = {
     cookieConsentBody:
       "Les témoins essentiels vous gardent connecté et mémorisent la recherche. Ils sont nécessaires. L’analytique facultative (PostHog) enregistre les pages vues et un replay de session masqué pour améliorer KidEase : pas de publicité, et pas exigé pour utiliser le site.",
     cookieConsentBannerLead: "L’analytique reste off jusqu’à Autoriser.",
-    cookieConsentEssential: "Essentiel",
+    cookieConsentEssential: "Essentiels seulement",
+    cookieConsentAllowShort: "Autoriser",
+    cookieSettings: "Paramètres des témoins",
     cookieConsentAllow: "Autoriser l’analytique pour améliorer KidEase",
     support: "Soutien",
     footerCaregivers: "Éducatrices et emplois",

@@ -1,3 +1,4 @@
+import { markMeaningfulAction } from "@/lib/prompt-manager";
 import { Heart } from "lucide-react";
 import { useEffect, useState, type MouseEvent } from "react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
@@ -113,6 +114,7 @@ export function SaveListingButton({
       setSaved(nowSaved);
       markShortlistCache(daycareId, nowSaved, user.id);
       if (nowSaved) {
+        markMeaningfulAction("save");
         const ctx = rankingContextFor(daycareId);
         captureRankingEvent("listing_saved", {
           listing_id: daycareId,

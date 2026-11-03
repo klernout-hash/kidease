@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Building2, Calendar, ClipboardCheck, ClipboardList, Heart, Home, LifeBuoy, Menu, MessageCircle, Search } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { RoleSwitchPill } from "@/components/role-switch-pill";
 import { CountBadge } from "@/components/count-badge";
 import { useSessionDesks } from "@/components/session-desks";
@@ -44,38 +44,58 @@ export function AppTabBar() {
     hideAdmin,
   );
   const [native, setNative] = useState(false);
-  const barRef = useRef<HTMLElement>(null);
   useEffect(() => {
     setNative(isNative());
   }, []);
+  // One bar only: if a nested Shell mounts a second AppTabBar, the later one renders nothing.
+  const [primary, setPrimary] = useState(true);
   useEffect(() => {
-    const el = barRef.current;
-    const vv = window.visualViewport;
-    if (!vv || !el) return;
-    const pin = () => {
-      const lift = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop));
-      el.style.bottom = lift > 0 ? `${lift}px` : "";
-    };
-    pin();
-    vv.addEventListener("resize", pin);
-    vv.addEventListener("scroll", pin);
-    window.addEventListener("orientationchange", pin);
+    const owner = (window as { __keTabBarOwner?: object }).__keTabBarOwner;
+    const me = {};
+    if (owner) {
+      setPrimary(false);
+      return;
+    }
+    (window as { __keTabBarOwner?: object }).__keTabBarOwner = me;
     return () => {
-      vv.removeEventListener("resize", pin);
-      vv.removeEventListener("scroll", pin);
-      window.removeEventListener("orientationchange", pin);
-      el.style.bottom = "";
+      if ((window as { __keTabBarOwner?: object }).__keTabBarOwner === me) delete (window as { __keTabBarOwner?: object }).__keTabBarOwner;
+    };
+  }, []);
+  // Keyboard open (visual viewport shrinks): hide the bar rather than lifting it mid-screen.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const root = document.documentElement;
+    const check = () => {
+      const covered = window.innerHeight - vv.height - vv.offsetTop;
+      const el = document.activeElement as HTMLElement | null;
+      const typing = !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
+      if (covered > 120 || (typing && covered > 40)) root.dataset.keyboard = "open";
+      else delete root.dataset.keyboard;
+    };
+    check();
+    vv.addEventListener("resize", check);
+    vv.addEventListener("scroll", check);
+    window.addEventListener("focusin", check);
+    window.addEventListener("focusout", check);
+    return () => {
+      vv.removeEventListener("resize", check);
+      vv.removeEventListener("scroll", check);
+      window.removeEventListener("focusin", check);
+      window.removeEventListener("focusout", check);
+      delete root.dataset.keyboard;
     };
   }, []);
   const storeTabs = native ? nativeStoreTabs(kind) : null;
   const requestBadge = attentionForItem(session?.attention, "bookings");
   const menuActive = bare === "/menu" || bare.startsWith("/menu/");
 
+  if (!primary) return null;
+
   return (
     <>
       <RoleSwitchPill />
       <nav
-        ref={barRef}
         data-ke="app-tab-bar"
         data-bar={storeTabs ? "store" : kind}
         className="ke-app-only fixed inset-x-0 bottom-0 z-50 hidden border-t border-slate-200/80 bg-surface pb-[var(--ke-safe-bottom,env(safe-area-inset-bottom))] pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] dark:border-white/15 [[data-channel=app]_&]:block"
