@@ -52,6 +52,9 @@ export type EnvelopeSignerInput = {
   routingOrder: string;
   anchorString: string;
   roleName?: string;
+  /** v2 agreement: initial and date anchors. */
+  initialAnchor?: string;
+  dateAnchor?: string;
 };
 
 export type CentreEnvelopeInput = {
@@ -129,6 +132,12 @@ export function centreEnvelopeCreateBody(
                   anchorYOffset: "20",
                 },
               ],
+              ...(signer.initialAnchor
+                ? { initialHereTabs: [{ anchorString: signer.initialAnchor, anchorUnits: "pixels", anchorXOffset: "0", anchorYOffset: "-4", anchorIgnoreIfNotPresent: "true" }] }
+                : {}),
+              ...(signer.dateAnchor
+                ? { dateSignedTabs: [{ anchorString: signer.dateAnchor, anchorUnits: "pixels", anchorXOffset: "0", anchorYOffset: "-4" }] }
+                : {}),
             },
           })),
         },
