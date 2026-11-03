@@ -188,8 +188,9 @@ test("flags wrap the live surfaces and do not send", () => {
   assert.match(src("src/lib/server/contracts.ts"), /Signing is not open yet/);
   assert.match(src("src/routes/api/docusign.webhook.ts"), /ignored: "off"/);
   assert.match(src("src/routes/api/docusign.poll.ts"), /skipped: "off"/);
-  assert.match(src("src/components/tax-receipt-studio.tsx"), /taxReceipts/);
-  assert.match(src("src/components/tax-receipt-studio.tsx"), /CANADA_PROVINCE_CODES/);
+  assert.match(src("src/components/tax-receipt-studio.tsx"), /data-ke="tax-receipts"/);
+  assert.match(src("src/components/tax-receipt-studio.tsx"), /downloadTaxReceipt/);
+  assert.doesNotMatch(src("src/components/tax-receipt-studio.tsx"), /amountPaid|Amount paid/);
   assert.match(src("src/lib/server/daily-care.ts"), /Daily logs are not open yet/);
   assert.match(src("src/lib/server/daily-care.ts"), /logDailyCare/);
   assert.match(src("src/lib/server/daily-care.ts"), /email: false/);
