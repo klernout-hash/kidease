@@ -58,6 +58,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_GOV_PORTAL",
   "FEATURE_PRODUCT_EVENTS",
   "FEATURE_NCF_STREET",
+  "FEATURE_NCF_POINT_DISTANCE",
   "FEATURE_PRIVATE_MEDIA",
   "FEATURE_QR_KIOSK",
   "FEATURE_PROVINCE_REPORTS",
@@ -201,6 +202,12 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_PRODUCT_EVENTS: false,
   /** Street address matching on Need care fast via OpenStreetMap. Off until Kyle turns it on. */
   FEATURE_NCF_STREET: false,
+  /**
+   * Need care fast distance uses the listing pin and the parent's point
+   * (device location or postal code). Off. Home daycares stay on a coarse pin.
+   * Does not turn on FEATURE_NCF_STREET or FEATURE_NEED_CARE_FAST.
+   */
+  FEATURE_NCF_POINT_DISTANCE: false,
   /** Short-lived private URLs for daily logs and learning stories. Off until Kyle turns it on. */
   FEATURE_PRIVATE_MEDIA: false,
   /** Daycare tablet QR and parent scan check-in. Off until Kyle turns it on. */
@@ -553,6 +560,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Need care fast can geocode a street address with OpenStreetMap Nominatim and keep centres inside 15 km. Default off. No Google. City search stays the same.",
+  },
+  {
+    key: "FEATURE_NCF_POINT_DISTANCE",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Need care fast sorts by distance from a postal code or device location to each listing pin. Default off. Home daycares use a coarse pin. No street address is returned. Does not turn on street search or availability-first sort.",
   },
   {
     key: "FEATURE_PRIVATE_MEDIA",

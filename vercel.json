@@ -114,6 +114,16 @@
   ],
   "redirects": [
     {
+      "source": "/provider/desk/requests",
+      "destination": "/provider?desk=requests",
+      "permanent": false
+    },
+    {
+      "source": "/fr/provider/desk/requests",
+      "destination": "/fr/provider?desk=requests",
+      "permanent": false
+    },
+    {
       "source": "/admin",
       "has": [
         {

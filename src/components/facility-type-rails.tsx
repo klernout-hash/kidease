@@ -191,7 +191,7 @@ export function HomeCareTypeRow({
       } ${compact ? "gap-1 px-0.5" : "gap-1 pb-1"}`}
       data-ke="home-care-types"
       data-fit={fit ? "1" : undefined}
-      role="tablist"
+      role={toSearch ? "group" : "tablist"}
       aria-label={t("railByCare")}
     >
       {BROWSE_DAYCARE_TYPES.map((type, index) => {

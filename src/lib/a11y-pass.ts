@@ -10,8 +10,13 @@ const SKIP: Record<string, string> = {
   en: "Skip to main content",
   fr: "Aller au contenu principal",
   zh: "跳到主要内容",
+  yue: "跳去主要內容",
   pa: "ਮੁੱਖ ਸਮੱਗਰੀ ਤੇ ਜਾਓ",
+  es: "Saltar al contenido principal",
+  ar: "انتقل إلى المحتوى الرئيسي",
   tl: "Lumaktaw sa pangunahing nilalaman",
+  it: "Vai al contenuto principale",
+  de: "Zum Hauptinhalt springen",
 };
 
 function flagOn(raw: string | undefined): boolean {
@@ -52,4 +57,6 @@ export const A11Y_PAIRS = [
   { name: "text on background", fg: "#1c2438", bg: "#f6f3ee" },
   { name: "muted on surface", fg: "#5c6578", bg: "#fffcf8" },
   { name: "primary button", fg: "#ffffff", bg: "#1a3790" },
+  { name: "dark primary button", fg: "#0e1424", bg: "#8eabef" },
+  { name: "dark primary link", fg: "#8eabef", bg: "#14161c" },
 ] as const;

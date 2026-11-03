@@ -57,18 +57,24 @@ export function CentreToolsDesk() {
   const { locale } = useCopy();
   const copy = centreToolsCopy(locale);
   const [data, setData] = useState<Data | null>(null);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [daycareId, setDaycareId] = useState("");
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [tab, setTab] = useState<CentreToolId | "">("");
 
   const load = useCallback(() => {
+    setStatus("loading");
     void listCentreTools({ data: { daycareId, month } })
       .then((next) => {
         setData(next);
+        setStatus("ready");
         if (next.daycareId && next.daycareId !== daycareId) setDaycareId(next.daycareId);
         setTab((current) => (current && next.tools.includes(current) ? current : ((next.tools[0] as CentreToolId) ?? "")));
       })
-      .catch(() => setData(null));
+      .catch(() => {
+        setData(null);
+        setStatus("error");
+      });
   }, [daycareId, month]);
   useEffect(load, [load]);
 
@@ -88,7 +94,26 @@ export function CentreToolsDesk() {
     [daycareId, copy, load],
   );
 
-  if (!data || !data.tools.length) {
+  if (status === "loading") {
+    return (
+      <section className="rounded-xl border p-5" data-testid="centre-tools-loading" aria-busy="true">
+        <span className="sr-only" role="status">{copy.lead ? (locale === "fr" ? "Chargement…" : "Loading…") : "Loading…"}</span>
+        <div className="h-8 w-2/3 animate-pulse rounded-md bg-surface-2 motion-reduce:animate-none" />
+        <div className="mt-4 h-4 w-full animate-pulse rounded-md bg-surface-2 motion-reduce:animate-none" />
+        <div className="mt-6 h-32 w-full animate-pulse rounded-lg bg-surface-2 motion-reduce:animate-none" />
+      </section>
+    );
+  }
+  if (status === "error" || !data) {
+    return (
+      <section className="rounded-xl border p-5" data-testid="centre-tools-error" role="alert">
+        <h2 className="font-display text-2xl">{locale === "fr" ? "Les outils n’ont pas chargé" : "Tools didn’t load"}</h2>
+        <p className="mt-2 text-base">{locale === "fr" ? "Rien n’a changé. Réessayez dans un instant." : "Nothing was changed. Try again in a moment."}</p>
+        <Button type="button" className="mt-4 min-h-11" onClick={load}>{locale === "fr" ? "Réessayer" : "Try again"}</Button>
+      </section>
+    );
+  }
+  if (!data.tools.length) {
     return (
       <section className="rounded-xl border p-5" data-testid="centre-tools-off">
         <h2 className="font-display text-2xl">{copy.offTitle}</h2>

@@ -304,7 +304,13 @@ export default defineConfig(({ command, isPreview, mode }) => {
     },
     modulePreload: {
       resolveDependencies(_filename, deps) {
-        return deps.filter((dep) => !/locale-(?:zh|yue|pa|es|ar|tl|it|de)/.test(dep) && !/posthog/i.test(dep));
+        return deps.filter(
+          (dep) =>
+            !/locale-(?:zh|yue|pa|es|ar|tl|it|de)/.test(dep) &&
+            !/posthog/i.test(dep) &&
+            !/vacancy-index/i.test(dep) &&
+            !/gov-admin/i.test(dep),
+        );
       },
     },
   },

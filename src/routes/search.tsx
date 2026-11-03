@@ -1709,7 +1709,7 @@ export function SearchScreen({
               search={{ q: locationKnown ? String(city || "").trim().slice(0, 80) : "" }}
               className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline"
             >
-              {locale === "fr" ? "Besoin de garde vite" : "Need care fast"}
+              {t("needCareFast")}
             </Link>
             <p className="mt-0.5 min-h-5 text-sm text-muted text-balance" aria-live="polite" data-ke="search-count">
               {items === null ? (

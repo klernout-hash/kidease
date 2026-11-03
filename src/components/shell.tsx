@@ -193,7 +193,7 @@ export function Shell({ children }: { children: ReactNode }) {
                       : { ...(headerCity ? { q: headerCity } : {}), live: 1 as const }
                   }
                   data-ke="live-on-kidease-tab"
-                  aria-pressed={headerLive}
+                  aria-current={headerLive ? "true" : undefined}
                   className={`ke-chip shrink-0 ${headerLive ? "ke-chip-on" : ""}`}
                 >
                   {t("liveOnKidEase")}
@@ -263,7 +263,7 @@ export function Shell({ children }: { children: ReactNode }) {
                     : { ...(headerCity ? { q: headerCity } : {}), live: 1 as const }
                 }
                 data-ke="live-on-kidease-tab"
-                aria-pressed={headerLive}
+                aria-current={headerLive ? "true" : undefined}
                 className={`ke-chip shrink-0 ${headerLive ? "ke-chip-on" : ""}`}
               >
                 {t("liveOnKidEase")}

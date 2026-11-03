@@ -35,7 +35,7 @@ export function ExploreCategoryChips({
         <ExploreCatChip
           label={t("catAll")}
           on={allOn}
-          aria-pressed={allOn}
+          aria-current={allOn ? "true" : undefined}
           data-explore-cat="all"
           search={searchFor(undefined)}
           to={localePath("/search", locale)}
@@ -51,7 +51,7 @@ export function ExploreCategoryChips({
             icon={Icon}
             label={standardAgeLabel(cat, locale)}
             on={on}
-            aria-pressed={on}
+            aria-current={on ? "true" : undefined}
             data-explore-cat={cat}
             search={searchFor(cat)}
             to={localePath("/search", locale)}

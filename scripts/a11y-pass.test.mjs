@@ -13,12 +13,12 @@ test("the screen reader pass defaults off", () => {
   assert.equal(a11yPassEnabled({ FEATURE_A11Y_PASS: "1" }), true);
 });
 
-test("skip labels exist for English, French, Chinese, Punjabi, and Tagalog", () => {
+test("skip labels exist for every shipped locale", () => {
   assert.equal(skipLinkLabel("en"), "Skip to main content");
   assert.match(skipLinkLabel("fr"), /contenu/);
-  assert.notEqual(skipLinkLabel("zh"), skipLinkLabel("en"));
-  assert.notEqual(skipLinkLabel("pa"), skipLinkLabel("en"));
-  assert.notEqual(skipLinkLabel("tl"), skipLinkLabel("en"));
+  for (const code of ["zh", "yue", "pa", "es", "ar", "tl", "it", "de"]) {
+    assert.notEqual(skipLinkLabel(code), skipLinkLabel("en"), code);
+  }
   for (const code of ["zh", "pa", "tl"]) {
     const pack = JSON.parse(readFileSync(join(root, `src/lib/i18n/${code}.json`), "utf8"));
     assert.equal(typeof pack.search, "string");

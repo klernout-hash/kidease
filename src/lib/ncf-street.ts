@@ -76,6 +76,42 @@ const EMPTY_CACHE: StreetGeocodeCache = {
   },
 };
 
+/** Full Canadian postal code to a map point. Caller decides the flag. No Google. */
+export async function geocodeCanadianPostal(
+  query: string,
+  options: {
+    fetchImpl?: typeof fetch;
+    cache?: StreetGeocodeCache;
+    timeoutMs?: number;
+  } = {},
+): Promise<StreetPin | null> {
+  const compact = String(query || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (!/^[A-Z]\d[A-Z]\d[A-Z]\d$/.test(compact)) return null;
+  const formatted = `${compact.slice(0, 3)} ${compact.slice(3)}`;
+  const cache = options.cache ?? EMPTY_CACHE;
+  const hash = streetQueryHash(`postal:${formatted}`);
+  const cached = await cache.get(hash).catch(() => null);
+  if (cached) return cached;
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? 4000);
+  try {
+    const res = await fetchImpl(nominatimSearchUrl(`${formatted}, Canada`), {
+      headers: { accept: "application/json", "user-agent": NOMINATIM_USER_AGENT },
+      signal: controller.signal,
+    });
+    if (!res.ok) return null;
+    const pin = parseNominatimBody(await res.json());
+    if (!pin) return null;
+    await cache.set(hash, pin).catch(() => undefined);
+    return pin;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function geocodeStreetAddress(
   query: string,
   options: {

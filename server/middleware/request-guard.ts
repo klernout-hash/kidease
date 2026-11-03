@@ -9,7 +9,7 @@
  * after Access. `/` on kidease-git.vercel.app is left alone for the
  * Cloudflare Health Check.
  */
-import { decideRequest, isDirectDemoListingPath, notFoundDocument } from "../../scripts/request-guard.mjs";
+import { decideRequest, isDirectDemoListingPath, notFoundDocument, stripPrivateRoutePreloads } from "../../scripts/request-guard.mjs";
 
 function adminNoindexPath(pathname: string): boolean {
   const raw = pathname.split("?")[0] || "/";
@@ -55,6 +55,18 @@ export default async function requestGuardMiddleware(
   }
 
   const result = await next();
+  const path = event.url.pathname;
+  const isPublicHtml =
+    result instanceof Response &&
+    (result.headers.get("content-type") || "").includes("text/html") &&
+    !adminNoindexPath(path) &&
+    !path.startsWith("/gov");
+  if (isPublicHtml && result instanceof Response) {
+    const html = stripPrivateRoutePreloads(await result.text());
+    const headers = new Headers(result.headers);
+    headers.delete("content-length");
+    return new Response(html, { status: result.status, statusText: result.statusText, headers });
+  }
   if ((adminNoindexPath(event.url.pathname) || isDirectDemoListingPath(event.url.pathname)) && result instanceof Response) {
     const headers = new Headers(result.headers);
     headers.set("x-robots-tag", "noindex, nofollow");

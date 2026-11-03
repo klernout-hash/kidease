@@ -53,11 +53,18 @@ export function formatFastKm(km: number): string {
 }
 
 /** Never throws. /search can hand over an empty city, a number, or extra filters. */
-export function parseNeedCareFastSearch(search: unknown): { q: string } {
+export function parseNeedCareFastSearch(search: unknown): { q: string; lat?: number; lng?: number } {
   const bag = search && typeof search === "object" ? (search as Record<string, unknown>) : {};
   const raw = typeof bag.q === "string" ? bag.q : Array.isArray(bag.q) && typeof bag.q[0] === "string" ? bag.q[0] : bag.city;
   const text = typeof raw === "string" ? raw : "";
-  return { q: text.trim().slice(0, 80) };
+  const out: { q: string; lat?: number; lng?: number } = { q: text.trim().slice(0, 80) };
+  const lat = Number(bag.lat);
+  const lng = Number(bag.lng);
+  if (Number.isFinite(lat) && Number.isFinite(lng) && lat >= 41 && lat <= 84 && lng >= -141 && lng <= -52) {
+    out.lat = lat;
+    out.lng = lng;
+  }
+  return out;
 }
 
 export function needCareFastQuery(value: unknown): string {

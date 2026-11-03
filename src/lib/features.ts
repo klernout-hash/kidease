@@ -248,6 +248,14 @@ export function ncfStreetEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_NCF_STREET", env);
 }
 
+/**
+ * Listing-pin distance on Need care fast. Default off.
+ * Does not enable FEATURE_NCF_STREET or FEATURE_NEED_CARE_FAST.
+ */
+export function ncfPointDistanceEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_NCF_POINT_DISTANCE", env);
+}
+
 /** Private R2 links for daily logs and learning stories. Default off. */
 export function privateMediaEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_PRIVATE_MEDIA", env);
