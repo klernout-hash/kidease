@@ -133,6 +133,10 @@ dependencies {
     samsungImplementation project(":capacitor-community-in-app-review")
     playImplementation project(":capacitor-push-notifications")
     samsungImplementation project(":capacitor-push-notifications")
+    // CallMessagingService (play/samsung source sets) extends FirebaseMessagingService directly;
+    // the push plugin keeps firebase-messaging as an implementation dep, so expose it here.
+    playImplementation "com.google.firebase:firebase-messaging:${rootProject.ext.has("firebaseMessagingVersion") ? rootProject.ext.firebaseMessagingVersion : "25.0.1"}"
+    samsungImplementation "com.google.firebase:firebase-messaging:${rootProject.ext.has("firebaseMessagingVersion") ? rootProject.ext.firebaseMessagingVersion : "25.0.1"}"
     // Play Services credential provider. Huawei stays on the platform
     // Credential Manager only (Android 14+). Older AppGallery phones keep email sign-in.
     playImplementation "androidx.credentials:credentials-play-services-auth:$androidxCredentialsVersion"
