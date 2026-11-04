@@ -808,7 +808,10 @@ export function Listing() {
         </nav>
         <header className="mt-1">
           <div className="flex items-start justify-between gap-3">
-            <h1 className="font-display text-[1.75rem] leading-tight md:text-[2rem]">{name}</h1>
+            <div className="flex min-w-0 flex-1 items-start gap-1" data-ke="listing-name">
+              <h1 className="min-w-0 font-display text-[1.75rem] leading-tight md:text-[2rem]">{name}</h1>
+              {verifiedCheck ? <VerifiedCheck className="mt-1 shrink-0" /> : null}
+            </div>
           {!isPublicListing(d) ? (
             <p
               className="mt-2 rounded-xl bg-surface px-3 py-2 text-sm font-medium ring-1 ring-border"
@@ -830,14 +833,13 @@ export function Listing() {
           <SponsoredMark show={d.featuredCity} className="mt-2" />
           <FoundingMemberBadge show={d.foundingMember} className="mt-2" />
           {tagline.trim() ? <p className="mt-0.5 text-sm text-muted">{tagline}</p> : null}
-          {approved || licensed || verifiedCheck ? (
+          {approved || licensed ? (
             <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm" data-ke="listing-trust-line">
               {approved ? (
                 <KidEaseApprovalStrip eligible={publicApprovalEligible(d)} variant="inline" />
               ) : licensed ? (
                 <TrustBadge badge={licensed} compact />
               ) : null}
-              {verifiedCheck ? <VerifiedCheck /> : null}
             </p>
           ) : null}
           {parentRated ? (
