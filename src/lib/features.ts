@@ -49,6 +49,11 @@ export function providerSubscriptionsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_PROVIDER_SUBSCRIPTIONS", env);
 }
 
+/** Daycare Insights tab. Off until Kyle turns it on. Numbers stay on the server. */
+export function providerInsightsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PROVIDER_INSIGHTS", env);
+}
+
 /** Honest copy when SHOW_PAY_CTAS is off. Stripe / plan code stays compiled. */
 export const PLANS_NOT_OFFERED_YET =
   "Plans are not offered on this site yet. Listing and claim stay free.";
@@ -378,6 +383,11 @@ export function childCheckinEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_CHILD_CHECKIN", env);
 }
 
+/** Listing editor and day calendar on the daycare desk. Default off. */
+export function hostListingEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_HOST_LISTING", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;
@@ -410,6 +420,16 @@ export function canSeeProviderSubscriptions(
   if (r === "admin") return true;
   if (r === "provider" || ownsCentre) return providerSubscriptionsEnabled(env);
   return false;
+}
+
+/** Unified alerts. Off. Saving choices does not send. */
+export function unifiedAlertsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_UNIFIED_ALERTS", env);
+}
+
+/** Email and existing phone push for unified alerts. Off unless both flags are on. */
+export function unifiedAlertsLive(env?: EnvMap): boolean {
+  return unifiedAlertsEnabled(env) && evaluateFeatureFlag("FEATURE_UNIFIED_ALERTS_LIVE", env);
 }
 
 /** Centre tools (meal plans, observations, checklists, billing helpers). Each default off. */

@@ -133,11 +133,11 @@ export function AppTabBar() {
               />
               <Tab
                 to={providerDeskPath(pathname)}
-                search={{ desk: "tours" }}
+                search={{ desk: session?.hostListing ? "calendar" : "tours" }}
                 label={t("navCalendar")}
                 icon={Calendar}
                 marker="calendar"
-                active={bare.startsWith("/provider") && desk === "tours"}
+                active={bare.startsWith("/provider") && desk === (session?.hostListing ? "calendar" : "tours")}
               />
               <Tab
                 to={providerDeskPath(pathname)}

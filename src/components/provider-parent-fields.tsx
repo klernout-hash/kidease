@@ -93,24 +93,30 @@ export function ProviderParentFields({
   daycareId,
   website,
   onWriterApplied,
+  part,
 }: {
   value: ParentDeskState;
   onChange: (next: ParentDeskState) => void;
   daycareId?: string;
   website?: string | null;
   onWriterApplied?: () => void;
+  /** One editor page. Omit to keep the full daycare form. */
+  part?: import("@/lib/host-listing").HostParentPart;
 }) {
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
   const [careDetails, setCareDetails] = useState(false);
+  const show = (name: string) => !part || part === name || (part === "programs" && name === "curriculum");
   useEffect(() => {
     void inclusiveFiltersFlag()
       .then((on) => setCareDetails(Boolean(on)))
       .catch(() => setCareDetails(false));
   }, []);
+  if (part === "skip") return null;
 
   return (
     <div className="space-y-6" data-parent-desk-fields>
+      {show("facility") ? (
       <fieldset>
         <legend className="font-display text-xl">{t("deskFacility")}</legend>
         <p className="mt-1 text-sm text-muted">{t("deskFacilityLead")}</p>
@@ -127,7 +133,9 @@ export function ProviderParentFields({
           ))}
         </div>
       </fieldset>
+      ) : null}
 
+      {show("policies") ? (
       <fieldset>
         <legend className="font-display text-xl">{t("deskSchedule")}</legend>
         <p className="mt-1 text-sm text-muted">{t("deskScheduleLead")}</p>
@@ -144,7 +152,9 @@ export function ProviderParentFields({
           ))}
         </div>
       </fieldset>
+      ) : null}
 
+      {show("policies") ? (
       <fieldset>
         <legend className="font-display text-xl">{t("deskOpenings")}</legend>
         <p className="mt-1 text-sm text-muted">{t("deskOpeningsLead")}</p>
@@ -165,7 +175,9 @@ export function ProviderParentFields({
           ))}
         </div>
       </fieldset>
+      ) : null}
 
+      {show("programs") ? (
       <fieldset>
         <legend className="font-display text-xl">{t("deskPrograms")}</legend>
         <p className="mt-1 text-sm text-muted">{t("deskProgramsLead")}</p>
@@ -283,7 +295,9 @@ export function ProviderParentFields({
           />
         </label>
       </fieldset>
+      ) : null}
 
+      {show("financial") ? (
       <fieldset>
         <legend className="font-display text-xl">{t("deskFinancial")}</legend>
         <p className="mt-1 text-sm text-muted">{t("deskFinancialLead")}</p>
@@ -306,7 +320,24 @@ export function ProviderParentFields({
           ))}
         </div>
       </fieldset>
+      ) : null}
 
+      {part === "meals" ? (
+        <fieldset>
+          <legend className="font-display text-xl">{t("financialMeals")}</legend>
+          <div className="mt-2">
+            <ChipButton
+              on={value.financial.meals}
+              aria-pressed={value.financial.meals}
+              onClick={() => onChange({ ...value, financial: { ...value.financial, meals: !value.financial.meals } })}
+            >
+              {t("financialMeals")}
+            </ChipButton>
+          </div>
+        </fieldset>
+      ) : null}
+
+      {show("curriculum") ? (
       <fieldset>
         <legend className="font-display text-xl">{t("deskCurriculum")}</legend>
         <div className="mt-2 flex flex-wrap gap-2">
@@ -321,7 +352,9 @@ export function ProviderParentFields({
           ))}
         </div>
       </fieldset>
+      ) : null}
 
+      {show("safety") ? (
       <fieldset>
         <legend className="font-display text-xl">{t("deskSafety")}</legend>
         <div className="mt-2 flex flex-wrap gap-2">
@@ -336,11 +369,13 @@ export function ProviderParentFields({
           ))}
         </div>
       </fieldset>
+      ) : null}
 
+      {show("amenities") || part === "meals" ? (
       <fieldset>
         <legend className="font-display text-xl">{t("deskAmenities")}</legend>
         <div className="mt-2 flex flex-wrap gap-2">
-          {DESK_AMENITIES.map((id) => (
+          {(part === "meals" ? DESK_AMENITIES.filter((id) => id === "meals") : DESK_AMENITIES).map((id) => (
             <ChipButton
               key={id}
               on={value.amenityKeys.includes(id)}
@@ -351,8 +386,9 @@ export function ProviderParentFields({
           ))}
         </div>
       </fieldset>
+      ) : null}
 
-      {careDetails ? (
+      {careDetails && (!part || part === "amenities") ? (
         <fieldset data-ke="care-details">
           <legend className="font-display text-xl">{loc === "fr" ? "Repas et soutien" : "Meals and support"}</legend>
           <p className="mt-1 text-sm text-muted">
@@ -380,8 +416,11 @@ export function ProviderParentFields({
         </fieldset>
       ) : null}
 
+      {!part || part === "promo" || part === "values" || part === "french" ? (
       <fieldset className="grid gap-3">
-        <legend className="font-display text-xl">{t("deskPromo")}</legend>
+        <legend className="font-display text-xl">{part === "values" ? t("deskValues") : part === "french" ? t("about") : t("deskPromo")}</legend>
+        {!part || part === "promo" ? (
+          <>
         <label className="text-sm">
           {t("deskTagline")}
           <input
@@ -405,7 +444,7 @@ export function ProviderParentFields({
             daycareId={daycareId}
             website={website}
             onUse={(draft) => {
-              const parts = [draft.description, draft.programSummary, draft.highlights.join("\n")].filter((part) => part.trim());
+              const parts = [draft.description, draft.programSummary, draft.highlights.join("\n")].filter((bit) => bit.trim());
               if (!parts.length) return;
               onChange({ ...value, description: parts.join("\n\n").slice(0, 2000) });
               onWriterApplied?.();
@@ -421,13 +460,16 @@ export function ProviderParentFields({
             onChange={(e) => onChange({ ...value, description: e.target.value })}
           />
         </label>
-        {daycareId ? (
+          </>
+        ) : null}
+        {(!part || part === "french") && daycareId ? (
           <ListingTranslate
             daycareId={daycareId}
             value={value.descriptionFr}
             onChange={(descriptionFr) => onChange({ ...value, descriptionFr })}
           />
         ) : null}
+        {!part || part === "values" ? (
         <label className="text-sm">
           {t("deskValues")}
           <textarea
@@ -438,7 +480,9 @@ export function ProviderParentFields({
           />
           <span className="mt-1 block text-xs text-muted">{t("deskValuesLead")}</span>
         </label>
+        ) : null}
       </fieldset>
+      ) : null}
     </div>
   );
 }

@@ -18,6 +18,12 @@ async function run(request: Request) {
   if (!token.trim()) {
     return new Response("Missing token", { status: 400 });
   }
+  if (token.startsWith("hl.")) {
+    const { applyHostActionUnsubscribe } = await import("@/lib/server/host-action");
+    const host = await applyHostActionUnsubscribe(token);
+    if (!host.ok) return new Response("Invalid token", { status: 400 });
+    return new Response(null, { status: 204 });
+  }
   if (token.startsWith("ka.")) {
     const { applyAlertUnsubscribeToken } = await import("@/lib/server/alert-dispatch");
     const alert = await applyAlertUnsubscribeToken(token);
