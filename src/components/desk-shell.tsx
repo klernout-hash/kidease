@@ -184,6 +184,7 @@ export function DeskShell({
     tourCalendar: session?.tourCalendar,
     hostListing: session?.hostListing,
     providerInsights: session?.providerInsights,
+    topRated: session?.topRated,
   };
   const labelPlan = (item: DeskItem) => {
     const planned = planNavItem(item, chrome.paid);

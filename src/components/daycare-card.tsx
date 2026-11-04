@@ -35,6 +35,7 @@ import { parentIncompleteLabel } from "@/components/listing-completeness";
 import { photoLine, vacancyLine } from "@/components/vacancy-freshness";
 import { TrustBadge, TrustSignals } from "@/components/trust-badge";
 import { GuestFavoriteBadge } from "@/components/guest-favorite";
+import { TopRatedBadge } from "@/components/top-rated-badge";
 import { MatchCue, UrgencyCue } from "@/components/rank-cues";
 import { CompareChip } from "@/components/compare-chip";
 import {
@@ -153,6 +154,7 @@ function CardPhotoBadges({
       {!compact && !hollowPhoto ? (
         <span className="pointer-events-auto">
           <GuestFavoriteBadge item={item} compact surface="photo" />
+          <TopRatedBadge pass={item.topRated} />
         </span>
       ) : null}
     </div>

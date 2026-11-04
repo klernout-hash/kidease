@@ -1,5 +1,5 @@
-import { SEARCH_ALERTS_CRON, SEARCH_ALERTS_EVENT, TOUR_HOLDS_CRON, TOUR_HOLDS_EVENT, WAITLIST_PULSE_EVENT, RANKING_MARKET_CRON, RANKING_MARKET_EVENT, PROVINCIAL_VACANCY_CRON, PROVINCIAL_VACANCY_EVENT, TRUTH_CHECK_CRON, TRUTH_CHECK_EVENT, SPOT_OFFERS_CRON, SPOT_OFFERS_EVENT, OPEN_SPOTS_CHECKIN_CRON, OPEN_SPOTS_CHECKIN_EVENT, OPS_ALERTS_CRON, OPS_ALERTS_EVENT, INVOICE_REMINDERS_CRON, INVOICE_REMINDERS_EVENT, LISTING_REMINDERS_CRON, LISTING_REMINDERS_EVENT, STALE_OPEN_SPOTS_CRON, STALE_OPEN_SPOTS_EVENT, TOUR_FOLLOWUPS_CRON, TOUR_FOLLOWUPS_EVENT, NEON_BACKUP_CRON, NEON_BACKUP_EVENT, CARE_REMINDERS_CRON, CARE_REMINDERS_EVENT, UNIFIED_ALERTS_CRON, UNIFIED_ALERTS_EVENT } from "@/lib/inngest";
-import { runSearchAlertJob } from "@/lib/server/search-alerts";
+import { SEARCH_ALERTS_CRON, SEARCH_ALERTS_EVENT, TOUR_HOLDS_CRON, TOUR_HOLDS_EVENT, WAITLIST_PULSE_EVENT, RANKING_MARKET_CRON, RANKING_MARKET_EVENT, PROVINCIAL_VACANCY_CRON, PROVINCIAL_VACANCY_EVENT, TRUTH_CHECK_CRON, TRUTH_CHECK_EVENT, SPOT_OFFERS_CRON, SPOT_OFFERS_EVENT, OPEN_SPOTS_CHECKIN_CRON, OPEN_SPOTS_CHECKIN_EVENT, OPS_ALERTS_CRON, OPS_ALERTS_EVENT, INVOICE_REMINDERS_CRON, INVOICE_REMINDERS_EVENT, LISTING_REMINDERS_CRON, LISTING_REMINDERS_EVENT, STALE_OPEN_SPOTS_CRON, STALE_OPEN_SPOTS_EVENT, TOUR_FOLLOWUPS_CRON, TOUR_FOLLOWUPS_EVENT, NEON_BACKUP_CRON, NEON_BACKUP_EVENT, CARE_REMINDERS_CRON, CARE_REMINDERS_EVENT, UNIFIED_ALERTS_CRON, UNIFIED_ALERTS_EVENT, TOP_RATED_CRON, TOP_RATED_EVENT } from "@/lib/inngest";
+import { runTopRatedSweep } from "@/lib/server/top-rated-job";
 import { runExpireTourHoldsJob } from "@/lib/server/tour-holds";
 import { runWaitlistPulseJob } from "@/lib/server/waitlist-pulse";
 import { runRankingMarketJob } from "@/lib/server/ranking-market";
@@ -215,6 +215,15 @@ export const unifiedAlertsQuarterHour = inngest.createFunction(
   async ({ step }) => step.run("unified-alerts", () => runUnifiedAlertScan()),
 );
 
+export const topRatedMonthly = inngest.createFunction(
+  {
+    id: "top-rated-monthly",
+    name: "Top Rated recheck",
+    triggers: [{ cron: TOP_RATED_CRON }, { event: TOP_RATED_EVENT }],
+  },
+  async ({ step }) => step.run("top-rated", () => runTopRatedSweep()),
+);
+
 export const functions = [
   searchAlertsHourly,
   waitlistPulse,
@@ -232,4 +241,5 @@ export const functions = [
   neonBackupWeekly,
   careRemindersTick,
   unifiedAlertsQuarterHour,
+  topRatedMonthly,
 ];

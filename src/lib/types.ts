@@ -77,6 +77,8 @@ export type Daycare = {
   parentReviewCount?: number;
   qualityScore?: number;
   guestFavorite?: boolean;
+  /** KidEase Top Rated. Hidden until FEATURE_TOP_RATED_BADGE is on. Not a government rating. */
+  topRated?: boolean;
   matchScore?: number;
   urgencyScore?: number;
   replyMedianHours?: number | null;

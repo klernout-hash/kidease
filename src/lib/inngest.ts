@@ -82,6 +82,10 @@ export const CARE_REMINDERS_EVENT = "kidease/care-reminders.run";
 export const UNIFIED_ALERTS_CRON = "TZ=America/Winnipeg */15 * * * *";
 export const UNIFIED_ALERTS_EVENT = "kidease/unified-alerts.run";
 
+/** 06:00 on the 1st, America/Winnipeg. No-ops while FEATURE_TOP_RATED_BADGE is off. */
+export const TOP_RATED_CRON = "TZ=America/Winnipeg 0 6 1 * *";
+export const TOP_RATED_EVENT = "kidease/top-rated.run";
+
 export function inngestEventKey(env: EnvMap = process.env): string {
   return String(env.INNGEST_EVENT_KEY || "").trim();
 }

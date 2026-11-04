@@ -203,6 +203,7 @@ Each one stays off until its own flag is `1`. None of them send email, SMS, push
 | `FEATURE_UNIFIED_ALERTS` | Unified parent, daycare, staff, and web desk alerts. Default off. Nothing is sent. See docs/unified-alerts.md. |
 | `FEATURE_UNIFIED_ALERTS_LIVE` | Email and existing phone push for those alerts. Default off. Also needs `FEATURE_UNIFIED_ALERTS`. Preview and tests never send. No texts. Does not turn on `FEATURE_CALL_PUSH`. |
 | `FEATURE_PROVIDER_INSIGHTS` | Insights on the daycare desk (`/provider?desk=insights`, French label Statistiques). Real rows only. Area averages stay hidden under 5 centres. |
+| `FEATURE_TOP_RATED_BADGE` | KidEase Top Rated on listing cards and the daycare status page. Default off. Not a government rating. |
 
 ## What is wired
 
