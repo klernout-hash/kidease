@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { preferredMapProvider } from "@/lib/map-provider";
 import {
   LISTING_MAP_TILE_WAIT_MS,
-  OsmCircle,
+  MAP_STYLE_WAIT_MS,
   createKidEaseMap,
   createListingOverlay,
   listingMapGiveUp,
@@ -9,6 +10,7 @@ import {
   mapHostStyle,
   waitForMapHost,
   webglMapAvailable,
+  whenMapHostVisible,
 } from "@/lib/osm-map";
 import { useCopy } from "@/lib/use-copy";
 import { useStoreChannel } from "@/lib/use-native-shell";
@@ -34,7 +36,7 @@ type Props = {
   radiusM?: number | null;
 };
 
-/** Listing preview. OpenStreetMap tiles, loaded when the page opens. */
+/** Listing preview. Google Maps by default, loaded when this box is on screen. */
 export function ListingMap(props: Props) {
   const channel = useStoreChannel();
   if (channel === "huawei") return <StoreMapFallback compact />;
@@ -47,10 +49,11 @@ function OsmListingMap({ lat, lng, title, address, radiusM }: Props) {
   const { t } = useCopy();
   const [failed, setFailed] = useState(!valid);
   const [basemapReady, setBasemapReady] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const el = host.current;
-    const webgl = webglMapAvailable();
+    const webgl = preferredMapProvider() === "google" || webglMapAvailable();
     if (
       !el ||
       listingMapGiveUp({
@@ -67,12 +70,15 @@ function OsmListingMap({ lat, lng, title, address, radiusM }: Props) {
     }
     let cancelled = false;
     let pin: { setMap(map: null): void } | null = null;
-    let area: OsmCircle | null = null;
+    let area: { setMap(map: null): void } | null = null;
     const areaRadius = Number(radiusM);
     const showArea = Number.isFinite(areaRadius) && areaRadius >= 500;
     let map: { destroy(): void; resize(): void } | null = null;
     let resizeObserver: ResizeObserver | null = null;
-    const started = Date.now();
+    let watchdog = 0;
+    const ac = new AbortController();
+    const budget = preferredMapProvider() === "google" ? MAP_STYLE_WAIT_MS : LISTING_MAP_TILE_WAIT_MS;
+    let started = Date.now();
     const giveUp = () => {
       if (cancelled) return;
       cancelled = true;
@@ -83,11 +89,18 @@ function OsmListingMap({ lat, lng, title, address, radiusM }: Props) {
       setBasemapReady(false);
       setFailed(true);
     };
-    const watchdog = window.setTimeout(giveUp, LISTING_MAP_TILE_WAIT_MS);
 
     void (async () => {
       try {
-        const remaining = () => Math.max(0, LISTING_MAP_TILE_WAIT_MS - (Date.now() - started));
+        await whenMapHostVisible(el, ac.signal);
+      } catch {
+        return;
+      }
+      if (cancelled) return;
+      started = Date.now();
+      watchdog = window.setTimeout(giveUp, budget);
+      try {
+        const remaining = () => Math.max(0, budget - (Date.now() - started));
         const sized = await waitForMapHost(el, remaining());
         if (cancelled) return;
         if (
@@ -112,6 +125,10 @@ function OsmListingMap({ lat, lng, title, address, radiusM }: Props) {
           cooperative: true,
           tileWaitMs: Math.max(250, remaining()),
           requireTiles: true,
+          signal: ac.signal,
+          onAuthFailure: () => {
+            if (!cancelled) setAttempt((n) => n + 1);
+          },
         });
         if (cancelled) {
           created.map.destroy();
@@ -143,7 +160,7 @@ function OsmListingMap({ lat, lng, title, address, radiusM }: Props) {
           created.map.resize();
         }
         if (showArea) {
-          area = new OsmCircle({
+          area = new created.maps.Circle({
             map: created.map,
             center,
             radius: areaRadius,
@@ -170,6 +187,7 @@ function OsmListingMap({ lat, lng, title, address, radiusM }: Props) {
 
     return () => {
       cancelled = true;
+      ac.abort();
       window.clearTimeout(watchdog);
       setBasemapReady(false);
       resizeObserver?.disconnect();
@@ -177,7 +195,7 @@ function OsmListingMap({ lat, lng, title, address, radiusM }: Props) {
       area?.setMap(null);
       map?.destroy();
     };
-  }, [lat, lng, radiusM, valid]);
+  }, [attempt, lat, lng, radiusM, valid]);
 
   if (failed) {
     return <MapUnavailable compact address={address || title} lat={lat} lng={lng} />;

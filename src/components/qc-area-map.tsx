@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { createKidEaseMap, mapHostStyle, osmMaps, type OsmCircle, type OsmMap } from "@/lib/osm-map";
+import { createKidEaseMap, mapHostStyle, whenMapHostVisible, type KidEaseCircle, type KidEaseMap } from "@/lib/osm-map";
 import { useStoreChannel } from "@/lib/use-native-shell";
 
 type Props = {
@@ -21,22 +21,26 @@ export function QcAreaMap({ lat, lng, radiusM, label, caption }: Props) {
     const el = host.current;
     if (channel === "huawei" || !el || !valid) return;
     let cancelled = false;
-    let circle: OsmCircle | null = null;
-    let map: OsmMap | null = null;
+    let circle: KidEaseCircle | null = null;
+    let map: KidEaseMap | null = null;
+    const ac = new AbortController();
     void (async () => {
       try {
+        await whenMapHostVisible(el, ac.signal);
+        if (cancelled) return;
         const created = await createKidEaseMap(el, {
           center: { lat, lng },
           zoom: 12,
           mapTypeId: "roadmap",
           cooperative: true,
+          signal: ac.signal,
         });
         if (cancelled) {
           created.map.destroy();
           return;
         }
         map = created.map;
-        circle = new osmMaps.Circle({
+        circle = new created.maps.Circle({
           map: created.map,
           center: { lat, lng },
           radius: radiusM,
@@ -48,7 +52,7 @@ export function QcAreaMap({ lat, lng, radiusM, label, caption }: Props) {
           clickable: false,
         });
         const bounds = circle.getBounds();
-        if (!bounds.isEmpty()) created.map.fitBounds(bounds, 24);
+        if (bounds && !bounds.isEmpty()) created.map.fitBounds(bounds, 24);
         setLive(true);
       } catch {
         if (!cancelled) setLive(false);
@@ -56,6 +60,7 @@ export function QcAreaMap({ lat, lng, radiusM, label, caption }: Props) {
     })();
     return () => {
       cancelled = true;
+      ac.abort();
       circle?.setMap(null);
       map?.destroy();
     };

@@ -22,7 +22,7 @@ Seed with `POST /api/e2e-seed` on a loopback preview. Do not use these on produc
 | 48-hour spot offer | `src/lib/spot-offers.ts` | Offer window is 48 hours. The parent answers on `/parent/spot-offers`. |
 | Multi-waitlist rank | `placeInLine` in the same file | Place in line is sign-up order at that centre. |
 | Tour booking | `bookTourSlot` | Guest is sent to sign in. A signed-in parent can book a posted time. |
-| Commute search | `src/lib/osm-map.ts` | The map uses OpenStreetMap tiles. Google Maps stays off. |
+| Commute search | `src/lib/osm-map.ts` | The map uses Google Maps. OpenFreeMap stays in the bundle as the backup. |
 | T778 and RL-24 samples | `src/lib/tax-receipts.ts` | The daycare desk downloads a sample from the numbers the centre typed. |
 | DocuSign sandbox | `src/lib/server/contracts.ts` | Without JWT, envelopes stay `demo_…` and in-app sign still works at `/sign/{id}`. |
 

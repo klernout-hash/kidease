@@ -251,9 +251,11 @@ test("store redirects, CSP, and search/login paint hooks", () => {
   assert.match(csp, /form-action 'self' https:\/\/accounts\.google\.com/);
   assert.match(csp, /connect-src[^;]*https:\/\/tiles\.openfreemap\.org/);
   assert.match(csp, /connect-src[^;]*https:\/\/tiles\.maps\.eox\.at/);
-  assert.doesNotMatch(csp, /maps\.googleapis\.com/);
+  assert.match(csp, /connect-src[^;]*https:\/\/maps\.googleapis\.com/);
+  assert.doesNotMatch(csp, /places\.googleapis\.com/);
   assert.doesNotMatch(csp, /tile\.googleapis\.com/);
-  assert.doesNotMatch(src("src/routes/__root.tsx"), /href: "https:\/\/maps\.googleapis\.com"/);
+  assert.match(src("src/routes/__root.tsx"), /channel === "huawei"/);
+  assert.match(src("src/routes/__root.tsx"), /https:\/\/maps\.googleapis\.com/);
 
   assert.match(src("public/apple-app-site-association"), /GAUC28WJXZ\.ca\.kidease\.app/);
   assert.doesNotMatch(src("public/apple-app-site-association"), /XXXXXXXXXX/);

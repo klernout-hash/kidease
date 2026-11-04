@@ -82,12 +82,13 @@ import {
   osmMapTypeId,
   MAP_VIEW_WAIT_MS,
   MAP_LOAD_TIMEOUT,
-  osmMaps,
+  whenMapHostVisible,
+  type KidEaseCircle,
+  type KidEaseMap,
+  type KidEaseMaps,
+  type KidEaseOverlay,
   type ListingOverlay,
   type MovableDot,
-  type OsmCircle,
-  type OsmMap,
-  type OsmOverlay,
 } from "@/lib/osm-map";
 import { BuildingPhoto } from "@/components/building-photo";
 import { mapPinThumb } from "@/lib/listing-photo";
@@ -151,7 +152,7 @@ const PIN_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" a
 const LOGO_PIN_URL = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(PIN_SVG)}`;
 
 type AnyPin = {
-  setMap(map: OsmMap | null): void;
+  setMap(map: KidEaseMap | null): void;
   hitTest?(event: { clientX: number; clientY: number }): DotItem | null;
 };
 
@@ -181,15 +182,15 @@ function OsmMapView({
   placeLabel,
 }: Props) {
   const host = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<OsmMap | null>(null);
-  const mapsApiRef = useRef<typeof osmMaps | null>(null);
+  const mapRef = useRef<KidEaseMap | null>(null);
+  const mapsApiRef = useRef<KidEaseMaps | null>(null);
   const overlayFactoryRef = useRef<typeof createListingOverlay | null>(null);
   const pinsRef = useRef<AnyPin[]>([]);
   const pinHitRef = useRef<(event: { clientX: number; clientY: number }) => DotItem | null>(() => null);
   const youRef = useRef<MovableDot | null>(null);
   const workYouRef = useRef<MovableDot | null>(null);
-  const circleRef = useRef<OsmCircle | null>(null);
-  const circle2Ref = useRef<OsmCircle | null>(null);
+  const circleRef = useRef<KidEaseCircle | null>(null);
+  const circle2Ref = useRef<KidEaseCircle | null>(null);
   const markersBySlug = useRef(new Map<string, SlugPin>());
   const popupRef = useRef<HTMLDivElement>(null);
   const popupBoxRef = useRef<PinPopupBox | null>(null);
@@ -297,11 +298,19 @@ function OsmMapView({
     const el = host.current;
     if (!el) return;
     let cancelled = false;
-    let map: OsmMap | null = null;
+    let map: KidEaseMap | null = null;
+    let watchdog = 0;
+    const ac = new AbortController();
     const markers = markersBySlug.current;
 
     void (async () => {
-      const watchdog = window.setTimeout(() => {
+      try {
+        await whenMapHostVisible(el, ac.signal);
+      } catch {
+        return;
+      }
+      if (cancelled) return;
+      watchdog = window.setTimeout(() => {
         if (cancelled) return;
         setLoadError(MAP_LOAD_TIMEOUT);
         setBasemapReady(false);
@@ -314,6 +323,11 @@ function OsmMapView({
           center: { lat: framed.lat, lng: framed.lng },
           zoom: mapZoomForRadius(radiusRef.current),
           mapTypeId: osmMapTypeId(readMapBase()),
+          signal: ac.signal,
+          onAuthFailure: () => {
+            if (cancelled) return;
+            setLoadGen((n) => n + 1);
+          },
         });
         if (cancelled) {
           created.map.destroy();
@@ -348,6 +362,8 @@ function OsmMapView({
 
     return () => {
       cancelled = true;
+      ac.abort();
+      window.clearTimeout(watchdog);
       setReady(false);
       setBasemapReady(false);
       if (map) mapsApiRef.current?.event.clearInstanceListeners(map);
@@ -880,7 +896,7 @@ function OsmMapView({
     const lng = selected?.lng;
     if (!map || !maps || !slug || !Number.isFinite(lat) || !Number.isFinite(lng) || !ready) return;
 
-    let overlay: OsmOverlay | null = null;
+    let overlay: KidEaseOverlay | null = null;
     const place = () => {
       const el = popupRef.current;
       const hostEl = host.current;
@@ -1264,8 +1280,8 @@ function pinLabel(item: { name: string; nameFr?: string }, locale: "en" | "fr") 
 }
 
 function mountPinCanvas(input: {
-  maps: typeof osmMaps;
-  map: OsmMap;
+  maps: KidEaseMaps;
+  map: KidEaseMap;
   zoom: number;
   pins: DotItem[];
   locale: "en" | "fr";
@@ -1445,7 +1461,7 @@ function mountPinCanvas(input: {
   field.setMap(map);
   if (!sprite.complete) sprite.addEventListener("load", () => field.draw(), { once: true });
   return {
-    setMap(next: OsmMap | null) {
+    setMap(next: KidEaseMap | null) {
       field.setMap(next);
     },
     hitTest,
