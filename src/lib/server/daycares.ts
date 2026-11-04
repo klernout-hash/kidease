@@ -981,10 +981,10 @@ export const getDaycare = createServerFn({ method: "GET" })
             spotsInfant: extra.spots.infant,
             spotsToddler: extra.spots.toddler,
             spotsPreschool: extra.spots.preschool,
-            availabilityKnown: true,
             lastVacancyUpdatedAt: extra.spots.updatedAt || publicDaycare.lastVacancyUpdatedAt,
             spotsUpdatedAt: extra.spots.updatedAt || publicDaycare.spotsUpdatedAt,
           };
+          if (extra.spots.updatedAt) publicDaycare.availabilityKnown = Boolean(extra.spots.updatedAt);
           availability = patchAvailabilityMonth(availability, extra.month, extra.spots);
         }
         familyGuide = extra?.familyGuide ?? null;
