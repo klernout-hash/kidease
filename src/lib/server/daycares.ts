@@ -37,6 +37,8 @@ import { sponsoredPinsFirst } from "@/lib/sponsored-flag";
 import { collapseAdjacentDuplicates, withJunkLast } from "@/lib/search-result-quality";
 import { parseSearchSort } from "@/lib/search-sort";
 import { compareSmartMatchOrNearest, whyForListing, type RankAge, type SmartMatchQuery } from "@/lib/ranking/score";
+import { excludeRankingV2, rankingV2TieBreak } from "@/lib/ranking/v2";
+import { rankingV2Enabled } from "@/lib/features";
 import { listingSubsidy } from "@/lib/fee-program";
 import {
   compareParentFit,
@@ -624,6 +626,8 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
     cards = cards.map((card) => ({ ...card, parentFitChips: parentFitScore(fitListing(card), fit).chips }));
   }
   cards = collapseAdjacentDuplicates(cards);
+  const rankingV2 = rankingV2Enabled();
+  if (rankingV2) cards = excludeRankingV2(cards, true);
   const pinsOn = sponsoredPinsFirst();
   const useBest = data.sort === "best";
   const matchQuery = smartQuery(data);
@@ -638,7 +642,7 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
       }),
     );
   } else if (useBest) {
-    cards.sort(withJunkLast((a, b) => compareSmartMatchOrNearest(a, b, matchQuery)));
+    cards.sort(withJunkLast((a, b) => rankingV2TieBreak(a, b, (left, right) => compareSmartMatchOrNearest(left, right, matchQuery), { enabled: rankingV2, now: Date.now(), ageGroup })));
   } else {
     cards.sort(
       withJunkLast((a, b) =>

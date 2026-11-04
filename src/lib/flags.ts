@@ -104,6 +104,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_UNIFIED_ALERTS",
   "FEATURE_UNIFIED_ALERTS_LIVE",
   "FEATURE_PROVIDER_INSIGHTS",
+  "FEATURE_RANKING_V2",
   "FEATURE_TOP_RATED_BADGE",
 ] as const;
 
@@ -306,6 +307,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_UNIFIED_ALERTS_LIVE: false,
   /** Daycare Insights tab. Off. Real rows only. No area average under 5 centres. */
   FEATURE_PROVIDER_INSIGHTS: false,
+  /** Search ranking v2. Off. Best match stays as it is today. No paid rank. */
+  FEATURE_RANKING_V2: false,
   /** KidEase Top Rated. Off. Not a government rating. */
   FEATURE_TOP_RATED_BADGE: false,
 };
@@ -881,6 +884,12 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Insights on the daycare desk: views, saves, requests, reply time, waitlist, enrolment, tours, attendance, staff, and reviews. Default off. Area averages stay hidden under 5 centres. No invented numbers.",
+  },
+  {
+    key: "FEATURE_RANKING_V2",
+    defaultOn: false,
+    docs: "docs/ranking-v2-gap-report.md",
+    summary: "Search ranking v2. Off. Best match stays as it is today. No paid rank and no new Google calls.",
   },
   {
     key: "FEATURE_TOP_RATED_BADGE",

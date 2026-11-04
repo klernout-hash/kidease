@@ -54,6 +54,11 @@ export function providerInsightsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_PROVIDER_INSIGHTS", env);
 }
 
+/** Search ranking v2. Off. Best match is unchanged until this is on. */
+export function rankingV2Enabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_RANKING_V2", env);
+}
+
 /** KidEase Top Rated. Off. Not a government rating. */
 export function topRatedEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_TOP_RATED_BADGE", env);
