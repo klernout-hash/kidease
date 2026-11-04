@@ -339,7 +339,7 @@ async function deliverNotices(
   }
   for (const notice of notices) {
     if (notice.channel === "email" && notice.to && notice.subject && notice.text && notice.html) {
-      await sendEmailOnce(sql, eventId, notice);
+      await sendEmailOnce(sql, eventId, notice, plan.invoice?.daycareId);
     }
   }
   for (const notice of notices) {
@@ -377,17 +377,55 @@ async function deliverNotices(
   }
 }
 
-async function sendEmailOnce(sql: Sql, eventId: string, notice: PlannedInvoiceNotice): Promise<void> {
+async function sendEmailOnce(
+  sql: Sql,
+  eventId: string,
+  notice: PlannedInvoiceNotice,
+  daycareId?: string | null,
+): Promise<void> {
   const address = notice.to || "";
   const key = invoiceNoticeKey(eventId || notice.subject || "mail", notice.audience, "email", address);
   if (eventId && !(await takeNotice(sql, key, eventId))) return;
   try {
+    const { brandedNotice, emailLocaleFor } = await import("@/lib/email-layout");
+    const { isAdminOnlyListing } = await import("@/lib/listing-visibility");
+    let aboutTestListing = false;
+    let province: string | null = null;
+    if (daycareId) {
+      const rows = await sql<{
+        name: string;
+        slug: string | null;
+        visibility: string | null;
+        is_test: number | null;
+        province: string | null;
+      }>`
+        select name, slug, visibility, is_test, province from daycares where id = ${daycareId} limit 1
+      `.catch(() => []);
+      const row = rows[0];
+      if (row) {
+        aboutTestListing = isAdminOnlyListing({
+          name: row.name,
+          slug: row.slug,
+          visibility: row.visibility,
+          isTest: row.is_test,
+        });
+        province = row.province;
+      }
+    }
+    const guessed = emailLocaleFor(notice.locale, province);
+    const locale = guessed === "fr-qc" && notice.locale !== "fr" ? "en" : guessed;
     await sendTransactionalMail({
       to: address,
       purpose: "parent_invoice",
       subject: notice.subject || "KidEase",
       text: notice.text || "",
       html: notice.html || "",
+      aboutTestListing,
+      branded: brandedNotice({
+        heading: notice.subject || "KidEase",
+        text: notice.text || "",
+        locale,
+      }),
     });
   } catch (err) {
     if (eventId) await sql`delete from stripe_invoice_notices where id = ${key}`.catch(() => undefined);

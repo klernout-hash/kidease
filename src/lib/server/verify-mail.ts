@@ -1,5 +1,6 @@
 import { KIDEASE_OPERATOR_EMAIL } from "@/lib/admin-email";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
+import { brandedNotice } from "@/lib/email-layout";
 import { VERIFY_EMAIL_SUBJECT, verifyEmailHtml, verifyEmailText } from "@/lib/signup-user-mail";
 
 async function lookupVerifyAudience(email: string): Promise<"parent" | "provider" | undefined> {
@@ -47,13 +48,20 @@ export async function sendVerifyEmail(input: {
   if (!to || !to.includes("@")) throw new Error("A registered email is required.");
   if (recentlySentVerifyEmail(to)) return { status: "skipped" as const };
   const audience = input.audience ?? (await lookupVerifyAudience(to));
+  const text = verifyEmailText(input.url, input.name, audience);
   const result = await sendTransactionalMail({
     purpose: "verify_email",
     to,
     subject: VERIFY_EMAIL_SUBJECT,
-    text: verifyEmailText(input.url, input.name, audience),
+    text,
     html: verifyEmailHtml(input.url, input.name, audience),
     replyTo: KIDEASE_OPERATOR_EMAIL,
+    branded: brandedNotice({
+      heading: VERIFY_EMAIL_SUBJECT,
+      text,
+      cta: /^https:\/\//i.test(input.url) ? { label: "Verify email", href: input.url } : undefined,
+      reason: "You get this because a KidEase account was created with this email.",
+    }),
   });
   return result.status;
 }

@@ -5,6 +5,7 @@ import { nid } from "@/lib/utils";
 import { credentialStatus, isCredentialKind, scheduleDecision, screeningMode } from "@/lib/compliance/screening";
 import { smsPlan } from "@/lib/compliance/mode";
 import { caslSmsGranted, centreRow, logPractice, ownedCentreIds, readScope, sendComplianceEmail, sendComplianceSms, sqlClient } from "@/lib/server/compliance-common";
+import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { requireAdmin } from "@/lib/server/roles";
 
 function todayIso() {
@@ -152,6 +153,12 @@ export async function runScreeningJob() {
           to: centre.contact_email,
           subject: "KidEase: a staff record is due",
           text: "A staff screening date is due or expired. Open your daycare desk to update it.",
+          aboutTestListing: isAdminOnlyListing({
+            name: centre.name,
+            slug: centre.slug,
+            visibility: centre.visibility,
+            isTest: centre.is_test,
+          }),
         });
       }
       if (sms.delivery === "send") {

@@ -116,6 +116,8 @@ export function looksLikeTestFixture(d: ListingVisibilityInput | null | undefine
   if (KNOWN_ADMIN_ONLY_LICENCES.has(license) || license.startsWith("test-")) return true;
   if (QA_FIXTURE_NAME_RE.test(name) || QA_FIXTURE_QA_NAME_RE.test(name) || nameLc === "qa") return true;
   if (/\bqa\s+test\b/i.test(name)) return true;
+  // e.g. "KidEase Test Daycare (QA)": trailing (QA)/[QA]/(Test) tag or a "KidEase Test" name.
+  if (/[([]\s*(qa|test)\s*[)\]]\s*$/i.test(name) || /\bkidease\s+test\b/i.test(name)) return true;
   if (isDocuSignSmokeCentre(name)) return true;
   if (nameLc.includes("ghost claim") || nameLc.includes("ghost listing") || nameLc === "ghost listing") return true;
   if (address.includes("kidease test")) return true;

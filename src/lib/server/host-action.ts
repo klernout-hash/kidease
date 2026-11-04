@@ -16,6 +16,7 @@ import {
   type HostActionItem,
 } from "@/lib/host-action";
 import { nid } from "@/lib/utils";
+import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { lookupUser } from "@/lib/server/notify";
 import { ensureUserNotifications } from "@/lib/server/runtime-schema";
 
@@ -81,6 +82,9 @@ type CentreRow = {
   part_time_monthly: number | null;
   photos: string | null;
   screening_on_file: number | boolean | null;
+  slug: string | null;
+  visibility: string | null;
+  is_test: number | boolean | null;
 };
 
 async function loadCentres(userId: string): Promise<CentreRow[]> {
@@ -89,11 +93,16 @@ async function loadCentres(userId: string): Promise<CentreRow[]> {
     select d.id, d.name, d.province, d.hours, d.license_number, d.license_status, d.licensed_capacity,
            d.ages_confirmed, d.age_min_months, d.age_max_months,
            d.infant_monthly, d.toddler_monthly, d.preschool_monthly, d.part_time_monthly,
-           d.photos, d.screening_on_file
+           d.photos, d.screening_on_file, d.slug, d.visibility, d.is_test
     from daycares d
     join provider_daycares p on p.daycare_id = d.id
     where p.user_id = ${userId}
-  `.catch(() => []);
+  `
+    .then((rows) =>
+      // QA/test fixtures (is_test, admin_only, "(QA)"/TEST names) never trigger notices or email.
+      rows.filter((row) => !isAdminOnlyListing({ name: row.name, slug: row.slug, visibility: row.visibility, isTest: row.is_test })),
+    )
+    .catch(() => []);
 }
 
 function itemsFor(rows: CentreRow[]): HostActionItem[] {
@@ -149,6 +158,7 @@ async function sendAccountEmail(input: {
   locale: string;
   items: HostActionItem[];
   userId: string;
+  province?: string | null;
 }) {
   if (!hostActionEmailLive(process.env)) return { sent: false as const, reason: "quiet" as const };
   const fr = input.locale === "fr";
@@ -163,12 +173,45 @@ async function sendAccountEmail(input: {
   const text = [intro, "", ...lines, "", fr ? `Ne plus recevoir ces avis : ${unsub}` : `Stop these notices: ${unsub}`].join("\n");
   const html = `<p>${intro}</p><ul>${lines.map((line) => `<li>${line}</li>`).join("")}</ul><p><a href="${unsub}">${fr ? "Se désabonner" : "Unsubscribe"}</a></p>`;
   const { sendTransactionalMail } = await import("@/lib/transactional-mail");
+  const { emailLocaleFor } = await import("@/lib/email-layout");
+  const mailLocale = emailLocaleFor(input.locale, input.province);
+  const frPrimary = mailLocale !== "en";
+  const linesFr = input.items.map((item) => hostActionSentence(item.code, item.daycareName, "fr"));
+  const linesEn = input.items.map((item) => hostActionSentence(item.code, item.daycareName, "en"));
+  const introFr = "Ceci est un avis de compte. KidEase n'invente pas les faits manquants.";
+  const introEn = "This is an account notice. KidEase does not invent the missing facts.";
+  const ctaHref = `${origin()}/provider?desk=today`;
   await sendTransactionalMail({
     purpose: "host_action",
     to: input.to,
     subject,
     text,
     html,
+    unsubscribeUrl: unsub,
+    branded: {
+      locale: mailLocale,
+      origin: origin(),
+      preheader: frPrimary ? "Ajoutez les faits manquants à votre fiche." : "Add the missing facts to your listing.",
+      heading: frPrimary ? "Votre fiche a encore besoin de quelques faits" : "Your listing still needs a few facts",
+      blocks: [
+        { kind: "p", text: frPrimary ? introFr : introEn },
+        { kind: "list", items: frPrimary ? linesFr : linesEn },
+      ],
+      cta: { label: frPrimary ? "Compléter ma fiche" : "Finish my listing", href: ctaHref },
+      reason: frPrimary
+        ? "Vous recevez ce courriel parce que vous gérez une fiche sur KidEase."
+        : "You get this because you manage a listing on KidEase.",
+      en: mailLocale === "fr-qc"
+        ? {
+            heading: "Your listing still needs a few facts",
+            blocks: [
+              { kind: "p", text: introEn },
+              { kind: "list", items: linesEn },
+            ],
+            cta: { label: "Finish my listing" },
+          }
+        : undefined,
+    },
   });
   return { sent: true as const };
 }
@@ -225,7 +268,8 @@ export const syncHostActionNotices = createServerFn({ method: "POST" })
       sent += 1;
     }
     if (due.length && actor.email) {
-      await sendAccountEmail({ to: actor.email, locale, items: due, userId: context.userId }).catch(() => undefined);
+      const qc = due.some((item) => String(centres.find((row) => row.id === item.daycareId)?.province || "").trim().toUpperCase() === "QC");
+      await sendAccountEmail({ to: actor.email, locale, items: due, userId: context.userId, province: qc ? "QC" : null }).catch(() => undefined);
     }
     return { enabled: true as const, sent };
   });

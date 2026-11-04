@@ -1,5 +1,7 @@
 import { ADMIN_EMAIL } from "@/lib/server/notify";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
+import { brandedNotice } from "@/lib/email-layout";
+import { isAdminOnlyListing } from "@/lib/listing-visibility";
 
 export function employeeInviteAppOrigin(): string {
   return (process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://www.kidease.ca").replace(
@@ -56,6 +58,13 @@ Vous avez été invité(e) à joindre ${input.centreName} sur KidEase. Ouvrez le
     text,
     html,
     replyTo: ADMIN_EMAIL,
+    aboutTestListing: isAdminOnlyListing({ name: input.centreName }),
+    branded: brandedNotice({
+      heading: `Join ${input.centreName}`,
+      text: `${hello} You've been invited to join ${input.centreName} on KidEase as ${input.roleLabel}. This invite expires in 14 days. If you were not expecting this, you can ignore the email.`,
+      cta: /^https:\/\//i.test(input.url) ? { label: "Accept invite", href: input.url } : undefined,
+      reason: "You get this because a daycare invited this email to KidEase.",
+    }),
   });
 }
 

@@ -12,6 +12,7 @@ import {
   smsPlan,
 } from "@/lib/compliance/incidents";
 import { caslSmsGranted, centreRow, logPractice, ownedCentreIds, readScope, sendComplianceEmail, sendComplianceSms, sqlClient } from "@/lib/server/compliance-common";
+import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { requireAdmin } from "@/lib/server/roles";
 
 const ZONE: Record<string, string> = {
@@ -221,10 +222,26 @@ export async function runIncidentJob(now = new Date()) {
       sms: sms.delivery,
     });
     if (mail.delivery === "send" && email) {
+      const named = await sql<{ name: string; slug: string | null; visibility: string | null; is_test: number | null }>`
+        select d.name, d.slug, d.visibility, d.is_test
+        from serious_incidents i
+        join daycares d on d.id = i.daycare_id
+        where i.id = ${row.id}
+        limit 1
+      `.catch(() => []);
+      const centre = named[0];
       const sent = await sendComplianceEmail({
         to: email,
         subject: "KidEase: a note from your daycare",
         text: "Your daycare filed a same-day note. Sign in to KidEase to read it. This is not a text.",
+        aboutTestListing: centre
+          ? isAdminOnlyListing({
+              name: centre.name,
+              slug: centre.slug,
+              visibility: centre.visibility,
+              isTest: centre.is_test,
+            })
+          : false,
       });
       if (sent === "sent") {
         await sql`update serious_incidents set parent_notice_at = now() where id = ${row.id}`;

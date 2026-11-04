@@ -16,6 +16,7 @@ import {
 } from "@/lib/earnings-desk";
 import { periodLabel } from "@/lib/stripe-methods";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
+import { brandedNotice } from "@/lib/email-layout";
 import { formatPlanCad } from "@/lib/upgrade-plans";
 
 const BILL_LIMIT = 180;
@@ -85,6 +86,14 @@ export const sendEarningsStatement = createServerFn({ method: "POST" })
         subject: `${tx(locale, "earningsStatement")} · ${periodLabel(statement.period, locale)}`,
         text,
         html: `<p>${text.replace(/[&<>]/g, (char) => (char === "&" ? "&amp;" : char === "<" ? "&lt;" : "&gt;")).replace(/\n/g, "<br>")}</p>`,
+        branded: brandedNotice({
+          heading: `${tx(locale, "earningsStatement")} · ${periodLabel(statement.period, locale)}`,
+          text,
+          locale: locale === "fr" ? "fr" : "en",
+          reason: locale === "fr"
+            ? "Vous recevez ce courriel parce que vous gérez une fiche sur KidEase."
+            : "You get this because you manage a listing on KidEase.",
+        }),
       });
       return { ok: sent.status === "sent", maskedEmail };
     } catch {

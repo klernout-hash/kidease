@@ -208,6 +208,7 @@ Each one stays off until its own flag is `1`. None of them send email, SMS, push
 | `FEATURE_SUPPORT_SMS_REPLY` | Owner SMS replies into that thread. Default off. Also needs `FEATURE_SUPPORT_CHAT`. Bad signatures are rejected. |
 | `FEATURE_TOP_RATED_BADGE` | KidEase Top Rated on listing cards and the daycare status page. Default off. Not a government rating. |
 | `FEATURE_MOBILE_SEARCH_V2` | Mobile Home search with Where, When, and Who. Default off. Desktop and the current search stay as they are. No paid place lookup. |
+| `BRANDED_EMAILS` | Env only, not a PostHog flag. Default off. When `1`, notification email uses the KidEase layout (logo, button, plain-text part, one-click unsubscribe). Unset keeps today's bodies. Do not turn on until `send.kidease.ca` mail DNS is confirmed. |
 
 ## What is wired
 

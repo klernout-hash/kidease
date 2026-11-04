@@ -10,6 +10,7 @@ import {
   reminderPlan,
 } from "@/lib/compliance/calendar";
 import { centreRow, logPractice, ownedCentreIds, readScope, sendComplianceEmail, sqlClient } from "@/lib/server/compliance-common";
+import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { requireAdmin } from "@/lib/server/roles";
 
 function todayIso(now = new Date()) {
@@ -154,6 +155,12 @@ export async function runCalendarJob(now = new Date()) {
         to: centre.contact_email,
         subject: "KidEase: a compliance date is coming up",
         text: `A ${row.kind.replaceAll("_", " ")} date is in ${plan.day} days. Open your daycare desk to review it.`,
+        aboutTestListing: isAdminOnlyListing({
+          name: centre.name,
+          slug: centre.slug,
+          visibility: centre.visibility,
+          isTest: centre.is_test,
+        }),
       });
       if (sent === "sent") {
         await sql`update compliance_dates set reminded_day = ${plan.day} where id = ${row.id}`;
