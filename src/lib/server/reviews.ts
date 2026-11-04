@@ -198,6 +198,9 @@ export const submitListingReview = createServerFn({ method: "POST" })
     const daycareId = data.daycareId.trim();
     const body = data.body.trim();
     if (!daycareId) throw new Error("Missing listing.");
+    const { assertChatNotBlocked } = await import("@/lib/server/safety");
+    const sqlEarly = await getSql();
+    await assertChatNotBlocked(sqlEarly, { senderId: context.userId, parentUserId: context.userId, daycareId });
     if (body.length < 12) throw new Error("Please write a short review (at least a sentence).");
     if (body.length > MAX_BODY) throw new Error("Review is too long.");
     const rating = clampRating(data.rating);

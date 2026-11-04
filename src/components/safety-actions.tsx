@@ -118,12 +118,20 @@ export function SafetyReportButton({
   );
 }
 
-export function BlockMessagesButton({ conversationId }: { conversationId: string }) {
+export function BlockMessagesButton({
+  conversationId,
+  side = "daycare",
+}: {
+  conversationId: string;
+  side?: "daycare" | "family";
+}) {
   const { locale } = useCopy();
   const { user } = useCurrentUserState();
   const text = safetyText(locale);
-  const [blocked, setBlocked] = useState(false);
+  const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [blocked, setBlocked] = useState(false);
+  const label = blocked ? text.unblockPerson : side === "family" ? text.blockFamily : text.blockDaycare;
 
   useEffect(() => {
     if (!user) return;
@@ -135,23 +143,67 @@ export function BlockMessagesButton({ conversationId }: { conversationId: string
   if (!user) return null;
 
   return (
-    <button
-      type="button"
-      data-ke="safety-block"
-      disabled={busy}
-      className="inline-flex min-h-11 items-center text-sm font-medium text-fg underline-offset-4 hover:underline disabled:opacity-50"
-      onClick={() => {
-        setBusy(true);
-        void setMessageBlock({ data: { conversationId, blocked: !blocked } })
-          .then((result) => {
-            setBlocked(result.blocked);
-            toast.success(result.blocked ? text.blockedNow : text.unblocked);
-          })
-          .catch(() => toast.error(text.blockedSend))
-          .finally(() => setBusy(false));
-      }}
-    >
-      {blocked ? text.unblock : text.block}
-    </button>
+    <>
+      <button
+        type="button"
+        data-ke="safety-block"
+        disabled={busy}
+        className="inline-flex min-h-11 items-center text-sm font-medium text-fg underline-offset-4 hover:underline disabled:opacity-50"
+        onClick={() => {
+          if (blocked) {
+            setBusy(true);
+            void setMessageBlock({ data: { conversationId, blocked: false } })
+              .then(() => {
+                setBlocked(false);
+                toast.success(text.unblocked);
+              })
+              .catch(() => toast.error(text.failed))
+              .finally(() => setBusy(false));
+            return;
+          }
+          setOpen(true);
+        }}
+      >
+        {label}
+      </button>
+      {open ? (
+        <div className="fixed inset-0 z-[80] grid place-items-end bg-black/40 p-4 sm:place-items-center" role="presentation" onClick={() => setOpen(false)}>
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="block-thread-title"
+            className="w-full max-w-md rounded-2xl bg-surface p-5 shadow-lift ring-1 ring-border"
+            data-ke="block-confirm"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="block-thread-title" className="font-display text-xl">{text.blockConfirmTitle}</h2>
+            <p className="mt-2 text-sm leading-6 text-muted">{text.blockConfirmBody}</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                data-ke="block-confirm-go"
+                disabled={busy}
+                onClick={() => {
+                  setBusy(true);
+                  void setMessageBlock({ data: { conversationId, blocked: true } })
+                    .then(() => {
+                      setBlocked(true);
+                      toast.success(text.blockedNow);
+                      setOpen(false);
+                    })
+                    .catch(() => toast.error(text.failed))
+                    .finally(() => setBusy(false));
+                }}
+              >
+                {text.blockConfirm}
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
+                {text.cancel}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }

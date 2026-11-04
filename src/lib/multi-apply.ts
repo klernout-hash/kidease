@@ -4,7 +4,7 @@ export const MULTI_APPLY_MAX = 5;
 export const MULTI_APPLY_DUPLICATE_DAYS = 30;
 export const MULTI_APPLY_DAILY_MAX = 15;
 
-export type MultiSkipReason = "not_accepting" | "duplicate" | "cap" | "missing";
+export type MultiSkipReason = "not_accepting" | "duplicate" | "cap" | "missing" | "blocked";
 
 export type MultiApplyCentre = {
   id: string;

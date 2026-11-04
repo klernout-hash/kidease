@@ -12,6 +12,7 @@ import { useRoleChrome } from "@/components/role-chrome";
 import { useSessionDesks } from "@/components/session-desks";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
+import { safetyText } from "@/lib/safety";
 import { menuGroupLinks, menuHighlight, type MenuGroupId } from "@/lib/app-menu";
 import { accountSearch, highlightDesk } from "@/lib/desks";
 import { accountDeskPath, menuDeskPath, parentDeskPath, providerDeskPath } from "@/lib/desk-nav";
@@ -67,6 +68,15 @@ export function AppMenuScreen({
         <HistoryBack fallbackHref={menuDeskPath(pathname)} fallbackLabel={t("navMenu")} fallbackAria={t("backToMenu")} marker="menu-section-back" />
         <h1 className="mt-2 text-[1.75rem] font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">{t(GROUP_COPY[section].title)}</h1>
         <nav className="ke-menu-group mt-4" aria-label={t(GROUP_COPY[section].title)}>
+          {section === "legal" ? (
+            <MenuRow
+              to={menuDeskPath(pathname)}
+              search={{ screen: "blocked" }}
+              label={safetyText(locale).blockedListTitle}
+              icon="privacy"
+              marker="blocked"
+            />
+          ) : null}
           {menuGroupLinks(section, { native, plansOn })
             .filter((link) => link.to !== "/get-app" || showStores)
             .map((link) => (

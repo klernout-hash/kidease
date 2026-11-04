@@ -38,12 +38,19 @@ export function logStoreReviewerSignupSkip(role: string, email?: string | null):
 }
 
 /**
- * App Review networks often block the Turnstile iframe. These two mailboxes
- * may skip the widget. Password checks and rate limits still run.
+ * App Review networks often block the Turnstile iframe. These reviewer
+ * mailboxes may skip the widget. Password checks and rate limits still run.
+ * Exact addresses only, after trim and lower-case:
+ * reviewer-parent@, reviewer-provider@, reviewer.parent@, reviewer.daycare@.
  */
 export function reviewerSignInSkipsTurnstile(email: string | null | undefined): boolean {
   const value = String(email || "").trim().toLowerCase();
-  return value === STORE_REVIEWER_PARENT_EMAIL_HYPHEN || value === STORE_REVIEWER_PROVIDER_EMAIL_HYPHEN;
+  return (
+    value === STORE_REVIEWER_PARENT_EMAIL ||
+    value === STORE_REVIEWER_DAYCARE_EMAIL ||
+    value === STORE_REVIEWER_PARENT_EMAIL_HYPHEN ||
+    value === STORE_REVIEWER_PROVIDER_EMAIL_HYPHEN
+  );
 }
 
 /** John Doe and Jonny Doey stay untouched. Names and emails both count. */
