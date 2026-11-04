@@ -41,6 +41,6 @@ Plus the feature flag. A Silk browser or a Fire UA on the website is never enoug
 2. Runs `assemble{Play,Samsung,Huawei,Amazon}Debug`.
 3. Runs `node scripts/check-store-isolation.mjs`. It unzips each APK and scans `classes*.dex` and `AndroidManifest.xml` for forbidden strings (the `FORBIDDEN` table in the script). A missing APK fails the job too. An amazon APK must contain `AmazonAdmPlugin`. A huawei APK must contain `KidEaseHmsMessageService`. The same script scans the iOS project and the Microsoft manifest for Huawei, Amazon, and Firebase files.
 4. Runs `scripts/store-isolation.test.mjs`. For each store it asserts the sign-in buttons and Amazon UI that the server returns: no other store's buttons, and no Amazon UI off the Amazon build or off Amazon hardware.
-5. `ci.yml` also runs `bundleHuaweiRelease` and `assembleHuaweiRelease` and uploads the AAB and APK. Pull requests do not have the upload keystore, so that artifact is unsigned. `android-release.yml` signs it.
+5. `ci.yml` also runs `bundleHuaweiRelease` and `assembleHuaweiRelease` and uploads the AAB and APK. Pull requests do not have the upload keystore, so that artifact is unsigned. `android-release.yml` signs the Play AAB, then signs `assembleAmazonRelease` and uploads it as `app-amazon-release`, then signs the Huawei artifact when `AGCONNECT_SERVICES_JSON` is set. A missing AppGallery secret skips Huawei only.
 
 Adding a store: add a flavour with `buildConfigField STORE`, a `StorePlugins.java` in its source set, a row in `FORBIDDEN`, and a row above.
