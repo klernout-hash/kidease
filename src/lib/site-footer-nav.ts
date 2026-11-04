@@ -55,8 +55,9 @@ export const FOOTER_LEGAL: FooterLinkDef[] = [
   copyLink("/privacy", "privacy", { localePaired: true }),
   copyLink("/terms", "terms", { localePaired: true }),
   copyLink("/cookies", "cookies", { localePaired: true }),
-  copyLink("/status", "statusNav", { localePaired: true }),
 ];
+
+/** Status page stays up for operators. Help links to /status. Parents do not get a System item. */
 
 export const FOOTER_COLUMNS: Record<FooterColumnId, FooterLinkDef[]> = {
   parents: FOOTER_PARENTS,

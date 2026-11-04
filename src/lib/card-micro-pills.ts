@@ -41,12 +41,7 @@ export function freshnessPill(
   now = Date.now(),
 ): { en: string; fr: string } | null {
   const ts = Date.parse(String(input.spotsUpdatedAt || ""));
-  if (Number.isFinite(ts) && ts <= now) {
-    const days = Math.floor((now - ts) / (24 * 60 * 60 * 1000));
-    if (days <= 45) {
-      return { en: `Updated ${days}d ago`, fr: `Mis à jour il y a ${days} j` };
-    }
-  }
+  if (Number.isFinite(ts) && ts <= now) return null;
   if (input.verified) return { en: "Verified listing", fr: "Fiche vérifiée" };
   return null;
 }

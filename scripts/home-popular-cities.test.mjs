@@ -156,7 +156,12 @@ test("guest menu shows each help link once and hides empty headings", () => {
   assert.doesNotMatch(guest, /<details/);
   assert.match(guest, /marker="drawer-find-care"[\s\S]*\{navExtra\}/);
   assert.doesNotMatch(guest, />KidEase</);
-  assert.match(drawer, /guestMenu \? null : items\.map/);
+  assert.match(drawer, /data-ke="drawer-kidease"/);
+  assert.match(drawer, /data-ke="drawer-help-links"/);
+  assert.match(drawer, /icon=\{item\.icon\}/);
+  assert.doesNotMatch(guest, /items\.map/);
+  assert.match(src("src/components/footer-more-links.tsx"), /<details/);
+  assert.doesNotMatch(src("src/lib/site-footer-nav.ts"), /statusNav/);
   assert.match(drawer, /visibleRows\.length === 0 && group\.id !== "settings"/);
   const overflow = src("src/components/shell.tsx");
   const fn = overflow.slice(overflow.indexOf("function HeaderCareOverflow"));

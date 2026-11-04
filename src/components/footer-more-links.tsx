@@ -1,5 +1,14 @@
 import { companyOperatorLine } from "@/lib/company";
-import { footerLinkLabel, footerLinksForShell } from "@/lib/site-footer-nav";
+import {
+  FOOTER_DAYCARES,
+  FOOTER_KIDEASE,
+  FOOTER_LEGAL,
+  FOOTER_PARENTS,
+  FOOTER_SUPPORT,
+  footerLinkLabel,
+  footerLinksForShell,
+  type FooterLinkDef,
+} from "@/lib/site-footer-nav";
 import { localePath } from "@/lib/locale-path";
 import { STORE } from "@/lib/store-listing";
 import { useCopy } from "@/lib/use-copy";
@@ -57,35 +66,70 @@ export function FooterMoreLinks({
   const chrome = useRoleChrome();
   const plansOn = !native && chrome.subscriptionsEnabled === true;
   const hidden = new Set(omit);
-  const links = footerLinksForShell({ native, plansOn }).filter((link) => !hidden.has(link.to));
+  const show = (links: readonly FooterLinkDef[]) =>
+    footerLinksForShell({ native, plansOn }, links).filter((link) => !hidden.has(link.to));
   const fr = locale === "fr";
+  const groups = [
+    { id: "find", title: t("navFindCare"), links: show(FOOTER_PARENTS) },
+    { id: "daycares", title: t("navForDaycares"), links: show(FOOTER_DAYCARES) },
+    { id: "help", title: t("menuGetHelp"), links: show(FOOTER_SUPPORT) },
+    { id: "about", title: t("about"), links: show(FOOTER_KIDEASE) },
+    { id: "legal", title: t("menuPrivacyLegal"), links: show(FOOTER_LEGAL) },
+  ].filter((group) => group.links.length > 0);
+
+  if (appearance === "drawer") {
+    return (
+      <section data-ke="footer-more" data-role={chrome.role} className="mt-2">
+        {groups.map((group) => (
+          <details key={group.id} className="py-0.5" data-ke={`drawer-more-${group.id}`}>
+            <summary className="flex min-h-11 cursor-pointer list-none items-center rounded-xl px-3 text-xs font-semibold uppercase tracking-normal text-subtle [&::-webkit-details-marker]:hidden">
+              {group.title}
+            </summary>
+            <div data-ke="mobile-menu-links">
+              {group.links.map((link) => (
+                <MenuRow
+                  key={link.to}
+                  to={localePath(link.to, locale)}
+                  label={footerLinkLabel(link, t, locale)}
+                  icon={ICONS[link.to] ?? "help"}
+                  appearance="drawer"
+                  marker={`more-${link.to.replace(/^\//, "") || "home"}`}
+                  onClick={onNavigate}
+                />
+              ))}
+            </div>
+          </details>
+        ))}
+        {share ? <ShareKidEaseButton appearance="drawer" onDone={onNavigate} /> : null}
+      </section>
+    );
+  }
+
+  const links = groups.flatMap((group) => group.links);
   const title = fr ? "Plus" : "More";
-  const List = appearance === "drawer" ? "div" : "nav";
 
   return (
-    <section data-ke="footer-more" data-role={chrome.role} className={appearance === "page" ? "mt-8" : "mt-2"}>
-      <h2 className={appearance === "page" ? "px-1 text-sm font-semibold text-fg" : "px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle"}>
+    <section data-ke="footer-more" data-role={chrome.role} className="mt-8">
+      <h2 className="px-1 text-sm font-semibold text-fg">
         {title}
       </h2>
-      <List aria-label={title} data-ke="mobile-menu-links" role={appearance === "drawer" ? "navigation" : undefined}>
+      <nav aria-label={title} data-ke="mobile-menu-links">
         {links.map((link) => (
           <MenuRow
             key={link.to}
             to={localePath(link.to, locale)}
             label={footerLinkLabel(link, t, locale)}
             icon={ICONS[link.to] ?? "help"}
-            appearance={appearance}
+            appearance="page"
             marker={`more-${link.to.replace(/^\//, "") || "home"}`}
             onClick={onNavigate}
           />
         ))}
-        {share ? <ShareKidEaseButton appearance={appearance === "drawer" ? "drawer" : "row"} onDone={onNavigate} /> : null}
-        {appearance === "page" ? (
-          <div className="mt-3 flex min-h-11 items-center gap-3 px-1">
-            <LanguageSelect className="w-full justify-start" />
-          </div>
-        ) : null}
-      </List>
+        {share ? <ShareKidEaseButton appearance="row" onDone={onNavigate} /> : null}
+        <div className="mt-3 flex min-h-11 items-center gap-3 px-1">
+          <LanguageSelect className="w-full justify-start" />
+        </div>
+      </nav>
       <p className="mt-4 px-1 text-xs leading-5 text-subtle" data-ke="more-company">
         © {new Date().getFullYear()} KidEase
         <span aria-hidden> · </span>
