@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { createFileRoute, Link, Navigate, useLoaderData, useNavigate, useRouter, useRouterState, useSearch } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useLoaderData, useNavigate, useRouterState, useSearch } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { privateReturnPath } from "@/lib/role-access";
@@ -9,7 +9,8 @@ import { Shell } from "@/components/shell";
 import { DeskShell } from "@/components/desk-shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
-import { AdminDeskLink } from "@/components/admin-desk-link";
+import { HistoryBack } from "@/components/history-back";
+import { historyHref } from "@/lib/screen-history";
 import { DESK_PATH, accountDeskFor, deskQueryValue, openAdminDesk, parseDeskQuery, type DeskKey } from "@/lib/desks";
 import { accountDeskPath, menuDeskPath, parentDeskPath, parentNavSearch, providerDeskPath, providerNavSearch, supportDeskPath } from "@/lib/desk-nav";
 import { useSessionDesks } from "@/components/session-desks";
@@ -524,6 +525,16 @@ function ProfilePane() {
           : desk === "parent"
             ? t("accountBackParent")
             : null;
+  const backShort =
+    desk === "provider"
+      ? t("daycareDeskTitle")
+      : desk === "admin"
+        ? t("deskAdmin")
+        : desk === "support"
+          ? t("support")
+          : desk === "parent"
+            ? t("familyDeskTitle")
+            : t("navMenu");
 
   const connect = useLoaderData({ strict: false }) as Awaited<ReturnType<typeof accountLoader>>;
   const hideUpgrade = desk === "admin" || desk === "provider" || chrome.subscriptionsEnabled !== true;
@@ -559,7 +570,6 @@ function ProfilePane() {
     if (item.id === "subscription" && hideUpgrade) return false;
     return true;
   });
-  const router = useRouter();
   const editing = search.edit === "1" && section === "profile";
   const french = locale === "fr";
 
@@ -703,37 +713,20 @@ function ProfilePane() {
           ) : editing ? (
             <span className="size-11" aria-hidden />
           ) : section !== "profile" ? (
-            <Link
-              to={accountTo}
-              search={homeSearch}
-              aria-label={t("back")}
-              data-ke="profile-back"
-              className="grid size-11 place-items-center rounded-full text-fg touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-            >
-              <ChevronLeft className="size-6" aria-hidden />
-            </Link>
-          ) : desk === "admin" ? (
-            <AdminDeskLink
-              className="grid size-11 place-items-center rounded-full text-fg touch-manipulation"
-              aria-label={backCopy ?? t("back")}
-              data-ke="profile-back"
-            >
-              <ChevronLeft className="size-6" aria-hidden />
-            </AdminDeskLink>
+            <HistoryBack
+              fallbackHref={historyHref(accountTo, homeSearch)}
+              fallbackLabel={t("profile")}
+              fallbackAria={t("back")}
+              marker="profile-back"
+            />
           ) : (
-            <Link
-              to={backTo}
-              aria-label={backCopy ?? t("back")}
-              data-ke="profile-back"
-              onClick={(event) => {
-                if (!router.history.canGoBack()) return;
-                event.preventDefault();
-                router.history.back();
-              }}
-              className="grid size-11 place-items-center rounded-full text-fg touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-            >
-              <ChevronLeft className="size-6" aria-hidden />
-            </Link>
+            <HistoryBack
+              fallbackHref={backTo}
+              fallbackLabel={backShort}
+              fallbackAria={backCopy ?? t("back")}
+              marker="profile-back"
+              onFallback={desk === "admin" ? () => openAdminDesk() : undefined}
+            />
           )}
           {section === "profile" && !editing && canEditProfile ? (
             <Link
@@ -781,7 +774,6 @@ function ProfilePane() {
         </div>
         {section === "profile" && !editing && user ? (
           <>
-            <RoleSwitchPill placement="flow" />
             <ProfileHeroCard
               userId={user.id}
               photo={user.profileImageUrl}
@@ -804,6 +796,7 @@ function ProfilePane() {
             ) : null}
             <nav data-ke="account-sections" aria-label={t("menuAccountSettings")} className="mt-8 border-t border-border">
               <h2 className="px-1 pb-1 pt-4 text-sm font-semibold">{t("menuAccountSettings")}</h2>
+              <RoleSwitchPill />
               {sections
                 .filter((item) => item.id !== "profile")
                 .map((item) => (

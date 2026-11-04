@@ -114,7 +114,7 @@ export function WaitlistPulseButton({
 
   return (
     <div className={compact ? "" : "mt-3"}>
-      <Button type="button" size={compact ? "sm" : "md"} variant="secondary" className="min-h-11" disabled={disabled} onClick={pulse}>
+      <Button type="button" size={compact ? "sm" : "md"} variant="secondary" className="min-h-11 w-full max-w-full whitespace-normal text-center sm:w-auto" disabled={disabled} onClick={pulse}>
         {busy && spotOn ? t("spotAlertWorking") : t("waitlistPulseNotify")}
       </Button>
       {draft ? (

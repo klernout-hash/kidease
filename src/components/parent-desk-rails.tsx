@@ -127,13 +127,13 @@ export function ParentDeskRails({
             visual
           />
           <section className="mt-8 first:mt-4 md:mt-10">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div className="ke-see-all-row mb-3 flex flex-wrap items-center justify-between gap-3">
               <h2 className="min-w-0 truncate text-[1.2rem] font-semibold tracking-[-0.03em] md:text-[1.45rem]">
                 {t("railByAge")}
               </h2>
               <a
                 href={parentRailSearchHref({ age })}
-                className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+                className="ke-see-all inline-flex min-h-11 items-center pe-1 text-sm font-medium text-primary underline-offset-4 hover:underline"
               >
                 {t("seeAll")}
               </a>

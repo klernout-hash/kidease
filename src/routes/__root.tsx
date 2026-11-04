@@ -27,6 +27,7 @@ const GetAlertsPrompt = lazy(() =>
 );
 import { ThemeBoot } from "@/components/theme-boot";
 import { CookieConsentBanner } from "@/components/cookie-consent-banner";
+import { ScreenHistoryRecorder } from "@/components/history-back";
 import { RouteProgress } from "@/components/route-progress";
 import { PostHogBoot } from "@/components/posthog-boot";
 import { AdultConfirmBoot } from "@/components/adult-confirm-boot";
@@ -337,6 +338,7 @@ function RootDocument() {
           <RoleBoot />
           <AdultConfirmBoot />
           <RouteProgress />
+          <ScreenHistoryRecorder />
           <div id="main-content" tabIndex={-1} className="flex w-full min-w-0 flex-1 flex-col outline-none">
             <Outlet />
           </div>

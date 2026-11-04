@@ -105,7 +105,7 @@ export function ListingRail({
       {hideTitle && !seeAllHref && !showChevrons ? (
         <h2 className="sr-only">{title}</h2>
       ) : (
-        <div className={cn("ke-listing-rail-head mb-2 flex items-center justify-between gap-3", !hideTitle && "md:mb-3")}>
+        <div className={cn("ke-listing-rail-head ke-see-all-row mb-2 flex items-center justify-between gap-3", !hideTitle && "md:mb-3")}>
           {hideTitle ? <h2 className="sr-only">{title}</h2> : (
             <h2
               className={cn(
@@ -120,7 +120,7 @@ export function ListingRail({
             {seeAllHref ? (
               <a
                 href={seeAllHref}
-                className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+                className="ke-see-all inline-flex min-h-11 items-center pe-1 text-sm font-medium text-primary underline-offset-4 hover:underline"
               >
                 {t("seeAll")}
               </a>

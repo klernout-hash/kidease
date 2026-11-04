@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
+import { HistoryBack } from "@/components/history-back";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { EarningsBillSheet } from "@/components/earnings-bill-sheet";
@@ -39,13 +40,7 @@ export function ParentPaymentsScreen({ data, billId }: { data: Payments | null; 
   return (
     <main className="ke-screen-enter ke-gutter mx-auto w-full max-w-lg pb-28 pt-4" data-ke="parent-payments">
       <div className="flex items-center gap-2">
-        <Link
-          to="/menu"
-          aria-label={t("back")}
-          className="inline-flex min-h-11 items-center text-sm font-medium"
-        >
-          {t("back")}
-        </Link>
+        <HistoryBack fallbackHref="/menu" fallbackLabel={t("navMenu")} fallbackAria={t("backToMenu")} marker="payments-back" />
         <h1 className="font-display text-2xl">{t("earningsPayments")}</h1>
       </div>
       <ParentPayChoices />

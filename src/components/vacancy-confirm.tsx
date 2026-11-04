@@ -59,16 +59,17 @@ export function VacancyConfirmLoop({
           return (
             <li
               key={d.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-bg px-4 py-3 ring-1 ring-border"
+              className="flex w-full min-w-0 flex-col items-stretch gap-3 rounded-lg bg-bg px-4 py-3 ring-1 ring-border sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
             >
               <div className="min-w-0">
                 <p className="font-medium">{name}</p>
                 <p className="mt-0.5 text-sm text-muted">{lastConfirmedLabel(d, t, locale)}</p>
               </div>
-              <div className="flex flex-wrap items-center justify-end gap-2">
+              <div className="flex w-full min-w-0 flex-col items-stretch gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
                 <Button
                   type="button"
                   size="sm"
+                  className="w-full whitespace-normal sm:w-auto"
                   disabled={busyId === d.id}
                   onClick={() => {
                     setBusyId(d.id);
