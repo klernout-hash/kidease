@@ -74,6 +74,10 @@ export const TOUR_FOLLOWUPS_EVENT = "kidease/tour-followups.run";
 export const NEON_BACKUP_CRON = "TZ=America/Winnipeg 30 2 * * 0";
 export const NEON_BACKUP_EVENT = "kidease/neon-backup.run";
 
+/** Every 15 minutes. No-ops while FEATURE_UNIFIED_ALERTS is off. Preview never sends. */
+export const UNIFIED_ALERTS_CRON = "TZ=America/Winnipeg */15 * * * *";
+export const UNIFIED_ALERTS_EVENT = "kidease/unified-alerts.run";
+
 export function inngestEventKey(env: EnvMap = process.env): string {
   return String(env.INNGEST_EVENT_KEY || "").trim();
 }

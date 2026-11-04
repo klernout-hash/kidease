@@ -10,6 +10,8 @@ import { fillNotificationCopy, isCriticalNotification, notificationCopyKey, type
 import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { listMyNotifications, markNotificationRead } from "@/lib/server/notifications";
 import { LifecyclePrefs } from "@/components/lifecycle-prefs";
+import { UnifiedAlertPanel } from "@/components/unified-alert-panel";
+import { markUnifiedAlertRead } from "@/lib/server/unified-alert-api";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
 import { confirmAction } from "@/lib/success-confirm";
@@ -49,7 +51,7 @@ export function NotificationsInbox() {
 
   return (
     <Shell>
-      <main className="ke-gutter mx-auto max-w-lg pb-8 pt-5">
+      <main className="ke-gutter mx-auto w-full max-w-3xl pb-8 pt-5">
         <div className="flex items-start justify-between gap-3">
           <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em]">{t("notifications")}</h1>
           {items?.some((row) => !row.readAt) ? (
@@ -58,6 +60,7 @@ export function NotificationsInbox() {
               variant="secondary"
               onClick={() => {
                 void markNotificationRead({ data: { all: true } })
+                  .then(() => markUnifiedAlertRead({ data: { all: true } }).catch(() => undefined))
                   .then(() => {
                     confirmAction(t, "markedRead");
                     return listMyNotifications().then(setItems);
@@ -70,6 +73,7 @@ export function NotificationsInbox() {
           ) : null}
         </div>
         <LifecyclePrefs />
+        <UnifiedAlertPanel />
         <ul className="mt-6 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
           {items === null ? (
             <li className="space-y-3 p-4" aria-hidden="true">

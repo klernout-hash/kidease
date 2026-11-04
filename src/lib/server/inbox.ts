@@ -350,6 +350,17 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
     void import("@/lib/server/admin-tools")
       .then((mod) => mod.maybeQueueSpam({ kind: "message", text: body, email: actor.email, sourceId: row.id }))
       .catch(() => undefined);
+    void import("@/lib/server/unified-alerts")
+      .then((mod) =>
+        mod.emitMessageAlert({
+          messageId,
+          sender,
+          parentUserId: row.user_id,
+          daycareId: row.daycare_id,
+          centreName: "",
+        }),
+      )
+      .catch(() => undefined);
     if (sender === "parent") {
       void import("@/lib/server/sms-notify")
         .then((mod) => mod.notifyCentreSms({ daycareId: row.daycare_id, body: parentMessageSms(row.name) }))
