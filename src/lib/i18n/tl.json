@@ -3360,5 +3360,17 @@
   "parentCentreToolsNavHint": "Menu, tala, at bill",
   "cookieConsentAllowShort": "Payagan",
   "cookieSettings": "Mga setting ng cookie",
-  "needCareFast": "Mabilis na pangangalaga"
+  "needCareFast": "Mabilis na pangangalaga",
+  "topRatedBadge": "Pinakamataas na rating",
+  "topRatedBadgeTip": "Ang KidEase Pinakamataas na rating ay marka namin. Hindi ito rating ng gobyerno.",
+  "topRatedTitle": "Pinakamataas na rating",
+  "topRatedLead": "Ang KidEase Pinakamataas na rating ay marka namin. Hindi ito rating ng gobyerno. Kailangan ng sentro ang 4.8 mula sa 10 review sa nakaraang taon, balidong dokumento, mabilis na sagot, bagong kumpirmasyon ng bakante, at walang pinagtibay na ulat sa kaligtasan.",
+  "deskNavTopRated": "Pinakamataas na rating",
+  "deskNavTopRatedHint": "Ano ang pumasa, at ano ang aayusin",
+  "topRatedRuleRating": "Average na rating na 4.8 o mas mataas sa huling 12 buwan",
+  "topRatedRuleReviews": "Hindi bababa sa 10 beripikadong review sa huling 12 buwan",
+  "topRatedRuleDocuments": "Lisensya, sertipiko ng staff, at screening, lahat balido",
+  "topRatedRuleReplies": "Hindi bababa sa 90% ng mga sagot sa loob ng 24 na oras",
+  "topRatedRuleSpots": "Mga bakante na kinumpirma sa huling 14 na araw",
+  "topRatedRuleSafety": "Walang pinagtibay na ulat sa kaligtasan sa huling 12 buwan"
 }
