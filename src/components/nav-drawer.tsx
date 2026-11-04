@@ -31,18 +31,31 @@ type Item = { to: string; label: string; search?: Record<string, string>; icon: 
 const drawerSummaryClass =
   "flex min-h-11 cursor-pointer list-none items-center rounded-xl px-3 text-xs font-semibold uppercase tracking-normal text-subtle whitespace-normal break-words [&::-webkit-details-marker]:hidden";
 
-const drawerHeadingClass =
-  "flex min-h-11 items-center rounded-xl px-3 text-xs font-semibold uppercase tracking-normal text-subtle whitespace-normal break-words";
-
-/** A heading with no links is not a section. Guest groups stay open so the links are on screen. */
-function DrawerSection({ title, marker, children }: { title: string; marker?: string; children: ReactNode }) {
+/** A heading with no links is not a section. Groups collapse so the menu is not one long list. */
+function DrawerSection({
+  title,
+  marker,
+  children,
+  startOpen = false,
+}: {
+  title: string;
+  marker?: string;
+  children: ReactNode;
+  startOpen?: boolean;
+}) {
   const rows = Children.toArray(children);
   if (rows.length === 0) return null;
+  const groupId = marker || title;
   return (
-    <div className="py-0.5" data-ke={marker}>
-      <p className={drawerHeadingClass}>{title}</p>
+    <details
+      className="py-0.5"
+      data-ke={marker}
+      ref={(node) => bindDeskGroup(node, "menu", groupId, startOpen)}
+      onToggle={(event) => writeDeskGroupOpen("menu", groupId, event.currentTarget.open)}
+    >
+      <summary className={drawerSummaryClass}>{title}</summary>
       <div>{rows}</div>
-    </div>
+    </details>
   );
 }
 
@@ -63,7 +76,7 @@ function GuestDrawerLinks({
   const showPlans = !nativeShell && chrome.subscriptionsEnabled === true;
   return (
     <nav data-ke="role-nav" data-role="guest" aria-label={title}>
-      <DrawerSection title={t("navFindCare")} marker="drawer-find-care">
+      <DrawerSection title={t("navFindCare")} marker="drawer-find-care" startOpen>
         {navExtra}
         <div className="px-3 py-1">
           <SmartMatchEntry inline />
@@ -142,6 +155,7 @@ export function NavDrawer({
   void isAdmin;
   void parentLabel;
   void providerLabel;
+  void items;
   const deskRole =
     deskMenu?.desk === "daycare" ? "provider" : deskMenu?.desk === "support" ? "support" : deskMenu?.desk ?? roleShown;
   const guestMenu = !deskMenu && !signedIn && showMenus;
@@ -238,12 +252,22 @@ export function NavDrawer({
             <GuestDrawerLinks navExtra={navExtra} onClose={onClose} title={title} />
           ) : (
             <>
-          {navExtra ? <DrawerSection title={t("navFindCare")} marker="drawer-find-care">{navExtra}</DrawerSection> : null}
+          {navExtra ? <DrawerSection title={t("navFindCare")} marker="drawer-find-care" startOpen>{navExtra}</DrawerSection> : null}
           <div className="px-3 py-1">
             <SmartMatchEntry inline />
           </div>
           {roleList ? (
-            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">KidEase</p>
+            <details
+              className="py-0.5"
+              data-ke="drawer-kidease"
+              ref={(node) => bindDeskGroup(node, "menu", "kidease", true)}
+              onToggle={(event) => writeDeskGroupOpen("menu", "kidease", event.currentTarget.open)}
+            >
+              <summary className={drawerSummaryClass}>KidEase</summary>
+              <RoleNavLinks role={roleShown} paid={paidShown} appearance="drawer" onNavigate={onClose} />
+            </details>
+          ) : showMenus ? (
+            <RoleNavLinks role={roleShown} paid={paidShown} appearance="drawer" onNavigate={onClose} />
           ) : null}
           {switcher ? (
             <div className="mb-3 md:hidden">
@@ -320,25 +344,9 @@ export function NavDrawer({
                 );
               })}
             </nav>
-          ) : showMenus ? (
-            <RoleNavLinks role={roleShown} paid={paidShown} appearance="drawer" onNavigate={onClose} />
           ) : null}
             </>
           )}
-          {guestMenu ? null : items.map((item) => (
-            <span key={item.to + item.label}>
-              {item.to === "/about" ? <div className="my-3 h-px bg-border" /> : null}
-              <MenuRow
-                to={item.to}
-                search={item.search}
-                label={item.label}
-                icon={item.icon}
-                appearance="drawer"
-                marker={item.marker}
-                onClick={onClose}
-              />
-            </span>
-          ))}
           <FooterMoreLinks
             appearance="drawer"
             onNavigate={onClose}
@@ -346,7 +354,9 @@ export function NavDrawer({
             omit={
               guestMenu
                 ? ["/search", "/cities", "/compare", "/tour-checklist", "/claim", "/plans", "/jobs", "/help", "/faq", "/contact"]
-                : ["/help", "/faq", "/contact"]
+                : roleList
+                  ? ["/search"]
+                  : []
             }
           />
           {signedIn ? <ShareKidEaseButton appearance="drawer" onDone={onClose} /> : null}

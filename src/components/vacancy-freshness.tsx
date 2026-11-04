@@ -39,9 +39,15 @@ export function vacancyLine(
       ? t("vacancyUpdatedNow")
       : `${t("vacancyUpdated")} ${formatAgo(locale, state.age)}`;
   if (window === "out_of_date") {
+    const ts = at ? Date.parse(at) : Number.NaN;
+    const days = Number.isFinite(ts) ? Math.max(1, Math.floor((Date.now() - ts) / 86_400_000)) : null;
+    const when =
+      days == null
+        ? ""
+        : new Intl.RelativeTimeFormat(locale === "fr" ? "fr-CA" : "en-CA", { numeric: "auto" }).format(-days, "day");
     return {
       kind: "stale" as const,
-      text: `${confirmed}. ${t("vacancyMayBeOutOfDate")}`,
+      text: when ? `${t("vacancyUpdated")} ${when}` : confirmed,
       detail: t("vacancyMayBeOutOfDate"),
     };
   }
