@@ -17,6 +17,7 @@ import { paymentSourceLabel } from "@/lib/payment-source";
 import { reportError } from "@/lib/observe";
 import {
   canSeeProviderSubscriptions,
+  coparentEmailEnabled,
   coparentLinkEnabled,
   curriculumPackEnabled,
   familyVaultEnabled,
@@ -338,6 +339,7 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
     centreLinked: owned || member,
     curriculumPack: curriculumPackEnabled(),
     coparentLink: coparentLinkEnabled(),
+    coparentEmail: coparentEmailEnabled(),
     staffTimesheets: staffTimesheetsEnabled(),
     centreTools: centreToolIds() as string[],
     familyVault: familyVaultEnabled(),

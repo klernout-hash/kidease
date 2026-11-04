@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { isAutomationCronJob } from "@/lib/automations";
 import { cronAuthorized } from "@/lib/cron-auth";
 import { shouldDeferCronToInngest } from "@/lib/inngest";
+import { runCareReminderJob } from "@/lib/server/care-reminders";
 import { runNeonBackupJob } from "@/lib/server/automation-backup";
 import {
   runInvoiceRemindersJob,
@@ -20,6 +21,7 @@ const JOBS = {
   "stale-open-spots": runStaleOpenSpotsJob,
   "tour-followups": runTourFollowupsJob,
   "neon-backup": runNeonBackupJob,
+  "care-reminders": runCareReminderJob,
 } as const;
 
 async function clientError(request: Request) {

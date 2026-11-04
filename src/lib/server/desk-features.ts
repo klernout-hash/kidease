@@ -4,6 +4,9 @@ import {
   enrolmentEsignEnabled,
   familyVaultEnabled,
   parentAgreementEnabled,
+  careRemindersEnabled,
+  childPortfolioGateEnabled,
+  coparentEmailEnabled,
   pickupContactsEnabled,
   reviewRepliesEnabled,
   taxReceiptsEnabled,
@@ -24,4 +27,7 @@ export const loadDeskFeatureFlags = createServerFn({ method: "GET" }).handler(as
   voice: voiceCallsEnabled(),
   pickupContacts: pickupContactsEnabled(),
   parentAgreement: parentAgreementEnabled(),
+  portfolioGate: childPortfolioGateEnabled(),
+  coparentEmail: coparentEmailEnabled(),
+  careReminders: careRemindersEnabled(),
 }));

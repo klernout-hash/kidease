@@ -12,7 +12,9 @@ import { TaxReceiptStudio } from "@/components/tax-receipt-studio";
 import { EceJobDesk } from "@/components/ece-job-desk";
 import { ChildCheckHistory } from "@/components/child-checkin-desk";
 import { ChildCareCard } from "@/components/child-care-card";
+import { CareReminderForm } from "@/components/care-reminder-form";
 import { CoparentDesk } from "@/components/coparent-desk";
+import { PortfolioGaps } from "@/components/portfolio-gaps";
 import { ChildAgreementFile } from "@/components/parent-agreement-panel";
 import { EmptyState } from "@/components/empty-state";
 import { KidNotebook } from "@/components/kid-art";
@@ -125,6 +127,7 @@ export function ParentDesk({
   initialSaved = [],
   initialShared = false,
   initialChild = null,
+  initialFocus = null,
   familyInvite = null,
 }: {
   initialTab?: ParentTab;
@@ -135,6 +138,7 @@ export function ParentDesk({
   initialSaved?: Card[];
   initialShared?: boolean;
   initialChild?: string | null;
+  initialFocus?: string | null;
   familyInvite?: string | null;
 }) {
   const { user } = useCurrentUserState();
@@ -376,8 +380,8 @@ export function ParentDesk({
     if (!found) return;
     setChildFocus(found.id);
     setChildOpen(true);
-    setEditing(null);
-  }, [children, childrenReady, initialChild]);
+    setEditing(initialFocus ? found : null);
+  }, [children, childrenReady, initialChild, initialFocus]);
 
   useEffect(() => {
     if (contentTab !== "saved") {
@@ -785,6 +789,7 @@ export function ParentDesk({
 
       {contentTab === "children" ? (
         <div className="mt-6 space-y-4">
+          <PortfolioGaps children={children} />
           <div>
             <h2 className="font-display text-2xl">{t("childProfileTitle")}</h2>
             <p className="mt-1 text-sm text-muted">
@@ -843,6 +848,7 @@ export function ParentDesk({
               <Suspense fallback={<div className="ke-skel h-48 rounded-xl" aria-hidden="true" />}>
                 <ChildProfileForm
                   initial={editing === "new" ? null : editing}
+                  focus={initialFocus}
                   onSaved={() => {
                     setEditing(null);
                     void load();
@@ -872,6 +878,7 @@ export function ParentDesk({
                         ) : undefined}
                       />
                       {c.id === activeChild?.id ? <ChildAgreementFile childId={c.id} /> : null}
+                      {c.id === activeChild?.id ? <CareReminderForm childId={c.id} childName={c.name} /> : null}
                       {familyCanWrite ? (
                       <>
                       <div className="px-3 pb-3">

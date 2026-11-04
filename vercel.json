@@ -62,6 +62,10 @@
       "schedule": "30 8 * * 0"
     },
     {
+      "path": "/api/automations?job=care-reminders",
+      "schedule": "*/5 * * * *"
+    },
+    {
       "path": "/api/compliance/calendar",
       "schedule": "20 13 * * *"
     },

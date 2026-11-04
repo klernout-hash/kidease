@@ -216,7 +216,7 @@ export const getFamily = createServerFn({ method: "GET" })
       select id, name, preferred_name, birthdate, allergies, epi_pen, medical_notes, medications,
              doctor_name, doctor_phone, foods_like, foods_avoid, diet, likes, comfort_item, nap_routine,
              toilet, home_language, soothes, fears, emergency_name, emergency_phone, pickup_people,
-             photo_ok, sunscreen_ok, notes
+             photo_ok, sunscreen_ok, notes, immunization_status, immunization_note, home_address
       from children where user_id = ${homeId} order by created_at
     `;
     for (const row of children) {
@@ -304,12 +304,20 @@ export const getFamily = createServerFn({ method: "GET" })
       join conversations c on c.id = m.conversation_id
       where c.user_id = ${homeId} and m.sender = 'parent'
     `;
+    const { childrenForViewer } = await import("@/lib/server/child-portfolio");
+    const viewedChildren = await childrenForViewer(
+      sql,
+      context.userId,
+      home,
+      children.map((row) => mapChild(revealChildHealth(row))),
+    );
     return {
       role: (profile[0]?.role === "admin" ? "admin" : profile[0]?.role === "provider" ? "provider" : "parent") as
         | "parent"
         | "provider"
         | "admin",
-      children: children.map((row) => mapChild(revealChildHealth(row))),
+      children: viewedChildren.children,
+      portfolioLocked: viewedChildren.fileLocked,
       saved: (
         await overlayParentRank(
           await overlayQuality(
@@ -404,6 +412,9 @@ function childFields(data: ChildWrite) {
     photoOk: Boolean(data.photoOk),
     sunscreenOk: data.sunscreenOk !== false,
     notes: sealHealth(data.notes?.trim() || null),
+    immunizationStatus: data.immunizationStatus?.trim() || null,
+    immunizationNote: sealHealth(data.immunizationNote?.trim() || null),
+    homeAddress: data.homeAddress?.trim() || null,
   };
 }
 
@@ -413,6 +424,8 @@ export const addChild = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const home = await familyWrite(context.userId);
     const sql = await getSql();
+    const { assertChildFileWrite } = await import("@/lib/server/child-portfolio");
+    await assertChildFileWrite(sql, context.userId, home);
     const id = nid("ch");
     const f = childFields({ ...emptyChild(), ...data });
     if (!f.name || !f.birthdate) throw new Error("Name and birthdate are required");
@@ -423,13 +436,14 @@ export const addChild = createServerFn({ method: "POST" })
         id, user_id, name, preferred_name, birthdate, allergies, epi_pen, medical_notes, medications,
         doctor_name, doctor_phone, foods_like, foods_avoid, diet, likes, comfort_item, nap_routine,
         toilet, home_language, soothes, fears, emergency_name, emergency_phone, pickup_people,
-        photo_ok, sunscreen_ok, notes
+        photo_ok, sunscreen_ok, notes, immunization_status, immunization_note, home_address
       ) values (
         ${id}, ${home.dataUserId}, ${f.name}, ${f.preferredName}, ${f.birthdate}, ${f.allergies},
         ${f.epiPen}, ${f.medicalNotes}, ${f.medications}, ${f.doctorName}, ${f.doctorPhone},
         ${f.foodsLike}, ${f.foodsAvoid}, ${f.diet}, ${f.likes}, ${f.comfortItem}, ${f.napRoutine},
         ${f.toilet}, ${f.homeLanguage}, ${f.soothes}, ${f.fears}, ${f.emergencyName}, ${f.emergencyPhone},
-        ${f.pickupPeople},         ${f.photoOk}, ${f.sunscreenOk}, ${f.notes}
+        ${f.pickupPeople}, ${f.photoOk}, ${f.sunscreenOk}, ${f.notes},
+        ${f.immunizationStatus}, ${f.immunizationNote}, ${f.homeAddress}
       )
     `;
     await logChildProfileAccess(sql, { childId: id, actorId: context.userId, action: "write" });
@@ -442,6 +456,11 @@ export const updateChild = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const home = await familyWrite(context.userId);
     const sql = await getSql();
+    const { assertChildFileWrite } = await import("@/lib/server/child-portfolio");
+    await assertChildFileWrite(sql, context.userId, home);
+    const previous = await sql<{ pickup_people: string | null }>`
+      select pickup_people from children where id = ${data.id} and user_id = ${home.dataUserId} limit 1
+    `;
     const f = childFields(data);
     if (!f.name || !f.birthdate) throw new Error("Name and birthdate are required");
     const birthProblem = childBirthdateProblem(f.birthdate);
@@ -472,12 +491,21 @@ export const updateChild = createServerFn({ method: "POST" })
         pickup_people = ${f.pickupPeople},
         photo_ok = ${f.photoOk},
         sunscreen_ok = ${f.sunscreenOk},
-        notes = ${f.notes}
+        notes = ${f.notes},
+        immunization_status = ${f.immunizationStatus},
+        immunization_note = ${f.immunizationNote},
+        home_address = ${f.homeAddress}
       where id = ${data.id} and user_id = ${home.dataUserId}
       returning id
     `;
     if (!rows[0]) throw new Error("Child not found");
     await logChildProfileAccess(sql, { childId: rows[0].id, actorId: context.userId, action: "write" });
+    const before = (previous[0]?.pickup_people || "").trim();
+    const after = (f.pickupPeople || "").trim();
+    if (before !== after) {
+      const { notifyPickupChange } = await import("@/lib/server/coparent-email");
+      await notifyPickupChange(sql, home.dataUserId, context.userId, rows[0].id).catch(() => undefined);
+    }
     return { id: rows[0].id };
   });
 
@@ -618,7 +646,11 @@ export const createBooking = createServerFn({ method: "POST" })
         : data.ageGroup === "toddler"
           ? d.spotsToddler
           : d.spotsPreschool;
-    const status = spots > 0 ? "accepted" : "waitlist";
+    let status: BookingStatus = spots > 0 ? "accepted" : "waitlist";
+    if (status === "accepted") {
+      const { holdIncompleteBooking } = await import("@/lib/server/child-portfolio");
+      if (await holdIncompleteBooking(sql, data.childId, d.province)) status = "requested";
+    }
     const existingConvo = await sql<{ id: string }>`
       select id from conversations where user_id = ${homeId} and daycare_id = ${data.daycareId}
     `;
@@ -643,7 +675,7 @@ export const createBooking = createServerFn({ method: "POST" })
       } else {
         await sql`update daycares set spots_preschool = spots_preschool - 1 where id = ${data.daycareId} and spots_preschool > 0`;
       }
-    } else {
+    } else if (status === "waitlist") {
       await sql`update daycares set waitlist = waitlist + 1 where id = ${data.daycareId}`;
     }
     const convoId = nid("cv");
@@ -659,7 +691,9 @@ export const createBooking = createServerFn({ method: "POST" })
     const body =
       status === "accepted"
         ? `Enrolment request received for ${data.startMonth}. A spot is held: please pay the first-month deposit to confirm.`
-        : `We've added you to the waitlist for ${data.startMonth}. We'll message you when a spot opens.`;
+        : status === "requested"
+          ? `Enrolment request received for ${data.startMonth}. The daycare reviews it once the child file is complete.`
+          : `We've added you to the waitlist for ${data.startMonth}. We'll message you when a spot opens.`;
     await sql`
       insert into messages (id, conversation_id, sender, body)
       values (${nid("msg")}, ${cid}, 'provider', ${body})
@@ -1113,10 +1147,12 @@ export const updateRequestStatus = createServerFn({ method: "POST" })
       child_name: string | null;
       birthdate: string | null;
       daycare_name: string;
+      child_id: string | null;
+      province: string | null;
     }>`
-      select b.id, b.user_id, b.daycare_id, b.status, b.age_group, b.conversation_id,
+      select b.id, b.user_id, b.daycare_id, b.child_id, b.status, b.age_group, b.conversation_id,
              b.start_date, b.start_month, b.schedule, b.days, b.parent_name,
-             ch.name as child_name, ch.birthdate, d.name as daycare_name
+             ch.name as child_name, ch.birthdate, d.name as daycare_name, d.province as province
       from bookings b
       join daycares d on d.id = b.daycare_id
       left join children ch on ch.id = b.child_id
@@ -1137,6 +1173,15 @@ export const updateRequestStatus = createServerFn({ method: "POST" })
       })
     ) {
       throw new Error(accessDeniedMessage("request"));
+    }
+    if (data.status === "accepted") {
+      const { assertEnrolmentApproval } = await import("@/lib/server/child-portfolio");
+      await assertEnrolmentApproval(sql, {
+        child_id: b.child_id,
+        daycare_id: b.daycare_id,
+        user_id: b.user_id,
+        province: b.province || "",
+      });
     }
     const prev = b.status;
     await sql`update bookings set status = ${data.status}, status_updated_at = now() where id = ${b.id}`.catch(async () => {

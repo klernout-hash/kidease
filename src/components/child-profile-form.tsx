@@ -19,10 +19,12 @@ export function ChildProfileForm({
   initial,
   onSaved,
   onCancel,
+  focus,
 }: {
   initial?: Child | null;
   onSaved: () => void;
   onCancel?: () => void;
+  focus?: string | null;
 }) {
   const { t, locale } = useCopy();
   const [draft, setDraft] = useState<Draft>(initial ?? emptyChild());
@@ -34,12 +36,19 @@ export function ChildProfileForm({
   const formRef = useRef<HTMLFormElement>(null);
   const french = locale === "fr";
   const [pickupOn, setPickupOn] = useState(false);
+  const [portfolioOn, setPortfolioOn] = useState(false);
   const [contacts, setContacts] = useState<PickupContact[]>(() => parsePickupContacts(initial?.pickupPeople || ""));
 
   useEffect(() => {
     void loadDeskFeatureFlags().then(
-      (flags) => setPickupOn(flags.pickupContacts),
-      () => setPickupOn(false),
+      (flags) => {
+        setPickupOn(flags.pickupContacts);
+        setPortfolioOn(flags.portfolioGate === true);
+      },
+      () => {
+        setPickupOn(false);
+        setPortfolioOn(false);
+      },
     );
   }, []);
 
@@ -47,6 +56,12 @@ export function ChildProfileForm({
     if (!gapTick) return;
     focusFirstInvalid(formRef.current);
   }, [gapTick]);
+
+  useEffect(() => {
+    if (!focus) return;
+    const node = document.getElementById(`portfolio-${focus}`);
+    node?.scrollIntoView({ block: "center" });
+  }, [focus, portfolioOn]);
 
   function set<K extends keyof Draft>(key: K, value: Draft[K]) {
     setSaved(false);
@@ -96,6 +111,7 @@ export function ChildProfileForm({
       <Section title={t("childIdentity")}>
         <Field label={t("childFullName")} required french={french}>
           <input
+            id="portfolio-name"
             data-ke="child-name"
             value={draft.name}
             aria-required="true"
@@ -118,6 +134,7 @@ export function ChildProfileForm({
         <Field label={t("birthdate")} required french={french}>
           <input
             type="date"
+            id="portfolio-birthdate"
             data-ke="child-birthdate"
             aria-required="true"
             aria-invalid={birthError ? true : undefined}
@@ -147,6 +164,7 @@ export function ChildProfileForm({
       <Section title={t("childHealth")} warn>
         <Field label={t("allergies")}>
           <textarea
+            id="portfolio-health"
             value={draft.allergies}
             onChange={(e) => set("allergies", e.target.value)}
             placeholder={t("allergiesPh")}
@@ -182,6 +200,7 @@ export function ChildProfileForm({
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label={t("doctorName")}>
             <input
+              id="portfolio-doctor"
               value={draft.doctorName}
               onChange={(e) => set("doctorName", e.target.value)}
               className="h-11 w-full rounded-md border border-border bg-bg px-3"
@@ -288,6 +307,7 @@ export function ChildProfileForm({
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label={t("emergencyName")}>
             <input
+              id="portfolio-emergency"
               value={draft.emergencyName}
               onChange={(e) => set("emergencyName", e.target.value)}
               className="h-11 w-full rounded-md border border-border bg-bg px-3"
@@ -302,6 +322,7 @@ export function ChildProfileForm({
             />
           </Field>
         </div>
+        <div id="portfolio-pickup">
         {pickupOn ? (
           <div className="space-y-3" data-ke="pickup-contacts">
             <p className="text-sm text-muted">
@@ -330,6 +351,51 @@ export function ChildProfileForm({
                 {french ? "Ajouter une personne" : "Add a person"}
               </Button>
             ) : null}
+          </div>
+        ) : portfolioOn ? (
+          <Field label={french ? "Personnes autorisées" : "People who can pick up"}>
+            <textarea
+              value={draft.pickupPeople}
+              onChange={(event) => set("pickupPeople", event.target.value)}
+              rows={2}
+              placeholder={french ? "Un nom par ligne. Écrivez Aucun seulement s’il n’y en a pas." : "One name on each line."}
+              className="w-full rounded-md border border-border bg-bg px-3 py-2"
+            />
+          </Field>
+        ) : null}
+        </div>
+        {portfolioOn ? (
+          <div className="space-y-3" id="portfolio-immunization">
+            <label className="block text-sm">
+              {french ? "Vaccins" : "Immunization"}
+              <select
+                className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3"
+                value={draft.immunizationStatus || ""}
+                onChange={(event) => set("immunizationStatus", event.target.value)}
+              >
+                <option value="">{french ? "Choisir" : "Choose"}</option>
+                <option value="record">{french ? "Le dossier est au centre" : "Record is on file"}</option>
+                <option value="exempt">{french ? "Exemption" : "Exemption"}</option>
+                <option value="note">{french ? "Une note à la place" : "A note instead"}</option>
+              </select>
+            </label>
+            <Field label={french ? "Note sur les vaccins" : "Immunization note"}>
+              <textarea
+                value={draft.immunizationNote || ""}
+                onChange={(event) => set("immunizationNote", event.target.value)}
+                rows={2}
+                className="w-full rounded-md border border-border bg-bg px-3 py-2"
+              />
+            </Field>
+            <Field label={french ? "Adresse à la maison" : "Home address"}>
+              <input
+                id="portfolio-address"
+                value={draft.homeAddress || ""}
+                onChange={(event) => set("homeAddress", event.target.value)}
+                className="h-11 w-full rounded-md border border-border bg-bg px-3"
+                autoComplete="street-address"
+              />
+            </Field>
           </div>
         ) : null}
       </Section>

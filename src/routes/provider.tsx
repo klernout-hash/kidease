@@ -24,6 +24,7 @@ import {
   isDaycareAlreadyListedMessage,
   listingCreateErrorMessage,
 } from "@/lib/listing-identity";
+import { CentreRequestGuard } from "@/components/centre-request-guard";
 import { decideParentRequest, listDaycareIncoming } from "@/lib/server/enrol-queue";
 import { listTourRequests } from "@/lib/server/tours";
 import { listLeadRequests } from "@/lib/server/lead-requests";
@@ -496,6 +497,7 @@ export function ProviderPage() {
                 });
                 await load();
               }}
+              onChanged={() => void load()}
               locale={locale}
             />
           </div>
@@ -512,6 +514,7 @@ export function ProviderPage() {
                 confirmSuccess({ variant: "toast", title: t("requestUpdatedToast") });
                 await load();
               }}
+              onChanged={() => void load()}
               locale={locale}
             />
           </div>
@@ -876,11 +879,13 @@ function RequestList({
   items,
   empty,
   onDecide,
+  onChanged,
   locale,
 }: {
   items: SpotRequest[];
   empty: string;
   onDecide: (id: string, decision: "approve" | "decline" | "waiting") => Promise<void>;
+  onChanged?: () => void;
   locale: "en" | "fr" | string;
 }) {
   const { t } = useCopy();
@@ -922,6 +927,7 @@ function RequestList({
             <Button
               size="sm"
               variant={r.status === "accepted" ? "primary" : "secondary"}
+              disabled={r.portfolioComplete === false || r.familyBlocked === true}
               onClick={() => void onDecide(r.id, "approve").catch((err) => toast.error(err instanceof Error ? err.message : t("requestUpdateFailed")))}
             >
               {t("approveRequest")}
@@ -943,6 +949,7 @@ function RequestList({
               </>
             )}
           </div>
+          <CentreRequestGuard request={r} onChanged={onChanged ?? (() => undefined)} />
           <AgreementRequestAction
             bookingId={r.id}
             bookingStatus={r.status}

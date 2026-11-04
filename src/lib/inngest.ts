@@ -74,6 +74,10 @@ export const TOUR_FOLLOWUPS_EVENT = "kidease/tour-followups.run";
 export const NEON_BACKUP_CRON = "TZ=America/Winnipeg 30 2 * * 0";
 export const NEON_BACKUP_EVENT = "kidease/neon-backup.run";
 
+/** Every 5 minutes. Drop-off and pick-up reminders. No-ops while the flag is off. */
+export const CARE_REMINDERS_CRON = "TZ=America/Winnipeg */5 * * * *";
+export const CARE_REMINDERS_EVENT = "kidease/care-reminders.run";
+
 export function inngestEventKey(env: EnvMap = process.env): string {
   return String(env.INNGEST_EVENT_KEY || "").trim();
 }

@@ -51,6 +51,7 @@ const HEALTH_FIELDS = [
   "emergency_name",
   "emergency_phone",
   "notes",
+  "immunization_note",
 ] as const;
 
 export function revealChildHealth<T extends Record<string, unknown>>(row: T, env?: NodeJS.ProcessEnv): T {

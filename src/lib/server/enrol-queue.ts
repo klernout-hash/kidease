@@ -31,6 +31,8 @@ type IncomingRow = {
   payment_status: string | null;
   allergies: string | null;
   epi_pen: boolean | number | string | null;
+  user_id: string;
+  province: string | null;
 };
 
 function mapRequest(b: IncomingRow, child: Child | null): SpotRequest {
@@ -54,6 +56,8 @@ function mapRequest(b: IncomingRow, child: Child | null): SpotRequest {
     createdAt: String(b.created_at),
     paymentStatus: b.payment_status,
     birthdate: b.birthdate,
+    parentUserId: b.user_id,
+    province: b.province,
     allergies: child?.allergies || openHealth(b.allergies) || "",
     epiPen: Boolean(
       b.epi_pen === true || b.epi_pen === 1 || b.epi_pen === "t" || b.epi_pen === "true" || child?.epiPen,
@@ -76,7 +80,7 @@ export const listDaycareIncoming = createServerFn({ method: "GET" })
     if (!owned.length) return [] as SpotRequest[];
 
     const rows = await sql<IncomingRow>`
-      select b.id, b.daycare_id, d.name as daycare_name, d.slug, b.child_id,
+      select b.id, b.user_id, b.daycare_id, d.name as daycare_name, d.slug, d.province, b.child_id,
              ch.name as child_name, ch.birthdate, ch.allergies, ch.epi_pen,
              b.start_month, b.start_date, b.schedule, b.days, b.parent_note, b.parent_name,
              b.conversation_id, b.age_group, b.status, b.monthly_amount, b.created_at,
@@ -113,7 +117,9 @@ export const listDaycareIncoming = createServerFn({ method: "GET" })
     for (const id of childIds) {
       void logChildProfileAccess(sql, { childId: id, actorId: context.userId, action: "read" });
     }
-    return rows.map((r) => mapRequest(r, r.child_id ? byId.get(r.child_id) ?? null : null));
+    const mapped = rows.map((r) => mapRequest(r, r.child_id ? byId.get(r.child_id) ?? null : null));
+    const { decorateCentreRequests } = await import("@/lib/server/child-portfolio");
+    return decorateCentreRequests(sql, mapped);
   });
 
 export const decideParentRequest = createServerFn({ method: "POST" })

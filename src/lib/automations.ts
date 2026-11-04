@@ -896,6 +896,7 @@ export const AUTOMATION_CRONS = [
   { job: "stale-open-spots", path: "/api/automations?job=stale-open-spots", vercel: "15 15 * * *", inngest: "TZ=America/Winnipeg 15 10 * * *" },
   { job: "tour-followups", path: "/api/automations?job=tour-followups", vercel: "25 * * * *", inngest: "TZ=America/Winnipeg 25 * * * *" },
   { job: "neon-backup", path: "/api/automations?job=neon-backup", vercel: "30 8 * * 0", inngest: "TZ=America/Winnipeg 30 2 * * 0" },
+  { job: "care-reminders", path: "/api/automations?job=care-reminders", vercel: "*/5 * * * *", inngest: "TZ=America/Winnipeg */5 * * * *" },
 ] as const;
 
 export type AutomationCronJob = (typeof AUTOMATION_CRONS)[number]["job"];

@@ -97,6 +97,9 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_LOGIN_AMAZON",
   "FEATURE_FIRE_KIOSK",
   "FEATURE_ALEXA_SKILL",
+  "FEATURE_CHILD_PORTFOLIO_GATE",
+  "FEATURE_COPARENT_EMAIL",
+  "FEATURE_CARE_REMINDERS",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -284,6 +287,12 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_FIRE_KIOSK: false,
   /** Alexa custom skill endpoint /api/alexa. Off. Needs ALEXA_SKILL_ID. */
   FEATURE_ALEXA_SKILL: false,
+  /** A daycare cannot approve a request until the child file is complete. Off. */
+  FEATURE_CHILD_PORTFOLIO_GATE: false,
+  /** Email a co-parent. They must accept. A daycare confirms them before pickup. Off. */
+  FEATURE_COPARENT_EMAIL: false,
+  /** Drop-off and pick-up reminders. Off. In-app, and phone alerts only when FEATURE_PUSH is already on. No SMS. */
+  FEATURE_CARE_REMINDERS: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -810,6 +819,27 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/amazon.md",
     summary: "Alexa custom skill at /api/alexa with request signature checks. Open spots, linked parent day log, daycare messages.",
+  },
+  {
+    key: "FEATURE_CHILD_PORTFOLIO_GATE",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "A daycare cannot approve a request until the child file has a name, birthdate, health note, emergency contact, pickup person, and immunization status. Some provinces also ask for a doctor or home address. Off. The file is shared only with a daycare the family has asked or enrolled with.",
+  },
+  {
+    key: "FEATURE_COPARENT_EMAIL",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Email invite for one other parent. They accept with their own login. A daycare confirms them before pickup or the child file. Custody limits stay with that daycare. Off. No email in preview or tests.",
+  },
+  {
+    key: "FEATURE_CARE_REMINDERS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "A parent sets drop-off and pick-up times for each child. Each login has its own reminders. In-app notice, and a phone alert only when FEATURE_PUSH is already on. No SMS. Off.",
   },
 ];
 

@@ -710,8 +710,9 @@ export type SessionDesks = {
   centreLinked?: boolean;
   /** Province learning pack nav. Off unless FEATURE_CURRICULUM_PACK is on. */
   curriculumPack?: boolean;
-  /** Co-parent invite. Off unless FEATURE_COPARENT_LINK is on. */
+  /** Co-parent invite. Off unless FEATURE_COPARENT_LINK or FEATURE_COPARENT_EMAIL is on. */
   coparentLink?: boolean;
+  coparentEmail?: boolean;
   /** Staff hours. Off unless FEATURE_STAFF_TIMESHEETS is on. */
   staffTimesheets?: boolean;
   /** Centre tool ids that are on. Each tool flag defaults off. */

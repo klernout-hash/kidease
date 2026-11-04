@@ -3038,6 +3038,8 @@ export const fr = {
     notifClaimDeclined: "Revendication refusée · {name}",
     notifClaimWaiting: "Revendication toujours en révision · {name}",
     notifInbox: "Nouveau message · {name}",
+    notifFamily: "{name}",
+    notifCare: "{name}",
     notifSearchAlert: "Alerte de recherche",
     notifCustomerAlert: "{name}",
     notifAdminClaim: "Revendication en attente · {name}",

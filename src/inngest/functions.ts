@@ -1,4 +1,4 @@
-import { SEARCH_ALERTS_CRON, SEARCH_ALERTS_EVENT, TOUR_HOLDS_CRON, TOUR_HOLDS_EVENT, WAITLIST_PULSE_EVENT, RANKING_MARKET_CRON, RANKING_MARKET_EVENT, PROVINCIAL_VACANCY_CRON, PROVINCIAL_VACANCY_EVENT, TRUTH_CHECK_CRON, TRUTH_CHECK_EVENT, SPOT_OFFERS_CRON, SPOT_OFFERS_EVENT, OPEN_SPOTS_CHECKIN_CRON, OPEN_SPOTS_CHECKIN_EVENT, OPS_ALERTS_CRON, OPS_ALERTS_EVENT, INVOICE_REMINDERS_CRON, INVOICE_REMINDERS_EVENT, LISTING_REMINDERS_CRON, LISTING_REMINDERS_EVENT, STALE_OPEN_SPOTS_CRON, STALE_OPEN_SPOTS_EVENT, TOUR_FOLLOWUPS_CRON, TOUR_FOLLOWUPS_EVENT, NEON_BACKUP_CRON, NEON_BACKUP_EVENT } from "@/lib/inngest";
+import { SEARCH_ALERTS_CRON, SEARCH_ALERTS_EVENT, TOUR_HOLDS_CRON, TOUR_HOLDS_EVENT, WAITLIST_PULSE_EVENT, RANKING_MARKET_CRON, RANKING_MARKET_EVENT, PROVINCIAL_VACANCY_CRON, PROVINCIAL_VACANCY_EVENT, TRUTH_CHECK_CRON, TRUTH_CHECK_EVENT, SPOT_OFFERS_CRON, SPOT_OFFERS_EVENT, OPEN_SPOTS_CHECKIN_CRON, OPEN_SPOTS_CHECKIN_EVENT, OPS_ALERTS_CRON, OPS_ALERTS_EVENT, INVOICE_REMINDERS_CRON, INVOICE_REMINDERS_EVENT, LISTING_REMINDERS_CRON, LISTING_REMINDERS_EVENT, STALE_OPEN_SPOTS_CRON, STALE_OPEN_SPOTS_EVENT, TOUR_FOLLOWUPS_CRON, TOUR_FOLLOWUPS_EVENT, NEON_BACKUP_CRON, NEON_BACKUP_EVENT, CARE_REMINDERS_CRON, CARE_REMINDERS_EVENT } from "@/lib/inngest";
 import { runSearchAlertJob } from "@/lib/server/search-alerts";
 import { runExpireTourHoldsJob } from "@/lib/server/tour-holds";
 import { runWaitlistPulseJob } from "@/lib/server/waitlist-pulse";
@@ -14,6 +14,7 @@ import {
   runTourFollowupsJob,
 } from "@/lib/server/automation-jobs";
 import { runNeonBackupJob } from "@/lib/server/automation-backup";
+import { runCareReminderJob } from "@/lib/server/care-reminders";
 import { runOpsAlertsJob } from "@/lib/server/automation-ops";
 import { inngest } from "./client";
 
@@ -194,6 +195,16 @@ export const neonBackupWeekly = inngest.createFunction(
     step.run("neon-backup", () => runNeonBackupJob({ dryRun: dryRunFromEvent(event) })),
 );
 
+export const careRemindersTick = inngest.createFunction(
+  {
+    id: "care-reminders",
+    name: "Drop-off and pick-up reminders",
+    triggers: [{ cron: CARE_REMINDERS_CRON }, { event: CARE_REMINDERS_EVENT }],
+  },
+  async ({ event, step }) =>
+    step.run("care-reminders", () => runCareReminderJob({ dryRun: dryRunFromEvent(event) })),
+);
+
 export const functions = [
   searchAlertsHourly,
   waitlistPulse,
@@ -209,4 +220,5 @@ export const functions = [
   staleOpenSpotsDaily,
   tourFollowupsHourly,
   neonBackupWeekly,
+  careRemindersTick,
 ];
