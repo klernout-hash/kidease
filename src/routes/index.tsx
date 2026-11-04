@@ -1,5 +1,5 @@
 import { FEATURE_SPONSORED_LISTINGS } from "@/lib/sponsored-flag";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { JsonLd } from "@/components/json-ld";
 import { MARKETING_PAGE_SEO, organizationGraphJsonLdScript, pageSeoHead } from "@/lib/page-seo";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
@@ -8,16 +8,17 @@ import { HeroClaimStrip } from "@/components/hero-claim-strip";
 import { HomeHowVideo } from "@/components/home-how-video";
 import { TrustBar } from "@/components/trust-bar";
 import { Shell } from "@/components/shell";
-import { FacilityTypeRails, type BrowseDaycareType } from "@/components/facility-type-rails";
+import type { BrowseDaycareType } from "@/components/facility-type-rails";
 import { getHomeCareType, setHomeCareType, subscribeHomeCareType } from "@/lib/home-care-selection";
 import { ListingRail } from "@/components/listing-rail";
+import { HomeDiscovery } from "@/components/home-discovery";
 import { RecentlyViewedRow } from "@/components/recently-viewed-row";
 import { Button } from "@/components/ui/button";
 import {
   FeelPhoto,
 } from "@/components/building-photo";
 import { ChipButton } from "@/components/chip";
-import { STEP_SIZES } from "@/lib/photo";
+import { CARD_SIZES, CARD_WIDTHS, STEP_SIZES, photoSrcSet, photoUrl, listingThumb } from "@/lib/photo";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useRoleChrome } from "@/components/role-chrome";
 import { getMyRole } from "@/lib/server/family";
@@ -57,20 +58,14 @@ import { ExploreSearchBar } from "@/components/explore-search-bar";
 import { SmartMatchEntry } from "@/components/smart-match";
 import { resolveLocationQuery } from "@/components/place-search";
 import { compactExploreSearch, readLiveSearchFlag } from "@/lib/explore-search";
-import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
 import { ResumeVisitCard } from "@/components/resume-visit";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
 import { featuredHomeAgreement, homeLiveStrip } from "@/lib/home-live-strip";
 import { listingMatchesLocationLock, resolveLocationLock } from "@/lib/location-lock";
 import type { DaycareCard as Card } from "@/lib/types";
-import {
-  honestVacancy,
-  homeRailItems,
-  liveLookingOnly,
-  type SearchAge,
-  type SearchStart,
-} from "@/lib/now-loops";
+import type { SearchAge } from "@/lib/now-loops";
+import type { SearchStart } from "@/lib/search-start";
 
 const RoleEnrollChooser = lazy(() =>
   import("@/components/role-enroll").then((m) => ({ default: m.RoleEnrollChooser })),
@@ -115,7 +110,29 @@ export const Route = createFileRoute("/")({
   pendingMs: 0,
   pendingMinMs: 0,
   pendingComponent: BootPending,
-  head: () => pageSeoHead(MARKETING_PAGE_SEO.home),
+  head: ({ loaderData }) => {
+    const seo = pageSeoHead(MARKETING_PAGE_SEO.home);
+    const rows = publicListings(Array.isArray(loaderData?.featured) ? loaderData.featured : []);
+    const claimed = rows.filter((row) => isClaimVerified(row));
+    const src = [...(claimed.length ? claimed : rows)]
+      .map((row) => listingThumb(row.photos))
+      .find((photo) => photo && !photo.includes("storefront-placeholder"));
+    if (!src) return seo;
+    return {
+      ...seo,
+      links: [
+        ...seo.links,
+        {
+          rel: "preload" as const,
+          as: "image" as const,
+          href: photoUrl(src, 480),
+          imageSrcSet: photoSrcSet(src, CARD_WIDTHS),
+          imageSizes: CARD_SIZES,
+          fetchPriority: "high" as const,
+        },
+      ],
+    };
+  },
   component: Home,
 });
 
@@ -328,17 +345,6 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
     () => uniqueById(liveOnly ? publicFeatured.filter((r) => r.live) : publicFeatured),
     [publicFeatured, liveOnly],
   );
-  const liveLookingRail = useMemo(
-    () => homeRailItems(liveLookingOnly(publicFeatured), { city: origin.label, label: origin.label }),
-    [publicFeatured, origin.label],
-  );
-  const availableNow = useMemo(() => {
-    return uniqueById(liveLookingRail.filter((r) => honestVacancy(r).kind === "open")).slice(0, 18);
-  }, [liveLookingRail]);
-  const availableNextMonth = useMemo(() => {
-    const top = new Set(availableNow.slice(0, 6).map((r) => r.id));
-    return shown.filter((r) => honestVacancy(r).kind === "open" && !top.has(r.id)).slice(0, 18);
-  }, [shown, availableNow]);
   const recentPublic = useMemo(
     () => publicListings(recent).filter((row) => isSafeSitemapSlug(row.slug)),
     [recent],
@@ -509,8 +515,9 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
           <HomeDiscovery
             ready={featuredReady}
             shown={liveClaimed ? claimedLive : shown}
-            availableNow={availableNow}
-            availableNextMonth={availableNextMonth}
+            publicFeatured={publicFeatured}
+            placeLabel={origin.label}
+            priorityFirst={liveRail.items.length === 0}
             liveOnly={liveOnly}
             hasPublic={publicFeatured.length > 0}
             onShowAll={() => setLiveOnly(false)}
@@ -644,8 +651,9 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
           <HomeDiscovery
             ready={featuredReady}
             shown={liveClaimed ? claimedLive : shown}
-            availableNow={availableNow}
-            availableNextMonth={availableNextMonth}
+            publicFeatured={publicFeatured}
+            placeLabel={origin.label}
+            priorityFirst={liveRail.items.length === 0}
             liveOnly={liveOnly}
             hasPublic={publicFeatured.length > 0}
             onShowAll={() => setLiveOnly(false)}
@@ -668,69 +676,6 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
         <RoleEnrollDialog open={enrollOpen} onClose={() => setEnrollOpen(false)} />
       </Suspense>
     </Shell>
-  );
-}
-
-function HomeDiscovery({
-  ready,
-  shown,
-  availableNow,
-  availableNextMonth,
-  liveOnly,
-  hasPublic,
-  onShowAll,
-  careType,
-  onCareType,
-  city,
-}: {
-  ready: boolean;
-  shown: Card[];
-  availableNow: Card[];
-  availableNextMonth: Card[];
-  liveOnly: boolean;
-  hasPublic: boolean;
-  onShowAll: () => void;
-  careType?: BrowseDaycareType;
-  onCareType?: (type?: BrowseDaycareType) => void;
-  city?: string;
-}) {
-  const { t, locale } = useCopy();
-  if (!ready && shown.length === 0) return <HomeCardSkeleton />;
-  if (shown.length === 0) {
-    return (
-      <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
-        <EmptyState
-          title={liveOnly && hasPublic ? t("noLiveResults") : t("noResults")}
-          body={liveOnly && hasPublic ? t("noLiveResultsLead") : t("noResultsLead")}
-          action={liveOnly && hasPublic ? t("showAll") : t("changeLocation")}
-          onAction={liveOnly && hasPublic ? onShowAll : undefined}
-          actionTo={liveOnly && hasPublic ? undefined : `${localePath("/", locale)}?change=1`}
-          secondary={liveOnly && hasPublic ? t("noLiveResultsClaim") : undefined}
-          secondaryTo={liveOnly && hasPublic ? "/claim" : undefined}
-        />
-      </div>
-    );
-  }
-  return (
-    <>
-      <ListingRail title={t("availableNow")} items={availableNow} eagerThumbs={false} visual />
-      <ListingRail title={t("availableNextMonth")} items={availableNextMonth} eagerThumbs={false} visual />
-      <FacilityTypeRails items={shown} visual skipLiveLooking menu={!onCareType} selected={careType} onSelect={onCareType} city={city} />
-    </>
-  );
-}
-
-function HomeCardSkeleton() {
-  return (
-    <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="space-y-2" aria-hidden="true">
-          <div className="ke-skel aspect-[4/3] w-full" />
-          <div className="ke-skel h-4 w-3/4" />
-          <div className="ke-skel h-3 w-1/2" />
-        </div>
-      ))}
-    </div>
   );
 }
 

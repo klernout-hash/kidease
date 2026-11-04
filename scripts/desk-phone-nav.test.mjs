@@ -86,7 +86,7 @@ test("phone desk destinations live in one hamburger, and the desktop sidebar sta
 });
 
 test("Family desk and Daycare desk titles are keyed for EN and FR", () => {
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /familyDeskTitle: "Family desk"/);
   assert.match(copy, /familyDeskTitle: "Bureau famille"/);
   assert.equal(DESK_META.parent.titleKey, "familyDeskTitle");

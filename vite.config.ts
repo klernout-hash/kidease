@@ -12,6 +12,8 @@ import { grokPwaPlugin } from "./scripts/grok-pwa-plugin.mjs";
 import { wellKnownAppLinksPlugin } from "./scripts/well-known-app-links.mjs";
 // @ts-expect-error JS plugin alongside the TS vite config
 import { clientNodeBuiltinStub } from "./scripts/client-node-stub.mjs";
+// @ts-expect-error JS plugin alongside the TS vite config
+import { routeUiSplitPlugin } from "./scripts/route-ui-split.mjs";
 
 /**
  * Finish PGLite bootstrap during dev-server setup (before traffic). Vite awaits
@@ -292,6 +294,25 @@ export default defineConfig(({ command, isPreview, mode }) => {
               minSize: 0,
               minShareCount: 1,
             },
+            {
+              // Shared with the header. Must not be folded into the fee-list chunk.
+              name: "facility-type",
+              test: /src\/lib\/facility-type\.ts$/,
+              minSize: 0,
+              minShareCount: 1,
+            },
+            {
+              name: "care-type",
+              test: /src\/lib\/care-type\.ts$/,
+              minSize: 0,
+              minShareCount: 1,
+            },
+            {
+              name: "search-start",
+              test: /src\/lib\/search-start\.ts$/,
+              minSize: 0,
+              minShareCount: 1,
+            },
             ...(["zh", "yue", "pa", "es", "ar", "tl", "it", "de"] as const).map((code) => ({
             name: `locale-${code}`,
             test: new RegExp(`/src/lib/i18n/${code}\\.json$`),
@@ -307,7 +328,7 @@ export default defineConfig(({ command, isPreview, mode }) => {
         return deps.filter(
           (dep) =>
             !/locale-(?:zh|yue|pa|es|ar|tl|it|de)/.test(dep) &&
-            !/posthog/i.test(dep) &&
+            !/posthog|product-events/i.test(dep) &&
             !/vacancy-index/i.test(dep) &&
             !/gov-admin/i.test(dep),
         );
@@ -337,6 +358,8 @@ export default defineConfig(({ command, isPreview, mode }) => {
     // PWA head + ?install=1 tutorial page; runs before Start/Nitro.
     grokPwaPlugin(),
     tailwindcss(),
+    // Before Start so route screens are local functions when the code splitter runs.
+    routeUiSplitPlugin(),
     tanstackStart(),
     ...(command === "build" || isPreview
       ? [

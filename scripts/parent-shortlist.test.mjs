@@ -102,7 +102,7 @@ test("parent desk shortlist compares up to five centres", () => {
   const table = src("src/components/shortlist-compare.tsx");
   const compare = src("src/routes/compare.tsx");
   const nav = src("src/lib/desk-nav.ts");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   const localCompare = src("src/lib/compare.ts");
   assert.match(desk, /ParentShortlist/);
   assert.match(shortlist, /MAX_SHORTLIST_COMPARE/);

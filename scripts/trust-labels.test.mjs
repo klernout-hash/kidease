@@ -15,7 +15,7 @@ test("Google ratings are labeled Google rating and are omitted when the data is 
   assert.match(widget, /t\("googleReviews"\)/);
   assert.match(widget, /ratingX10 <= 0 \|\| reviewCount <= 0/);
   assert.match(widget, /data-ke="google-rating"/);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /googleReviews: "Google rating"/);
   assert.match(copy, /googleReviews: "Note Google"/);
   assert.doesNotMatch(widget, /—/);
@@ -30,7 +30,7 @@ test("enrolled parents see a verified review prompt on the listing", () => {
   assert.match(listing, /verifiedReviewNote/);
   assert.match(listing, /data-ke="verified-review-note"/);
   assert.match(listing, /data-ke="listing-google-rating"/);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /Verified reviews are from parents enrolled at this centre/);
   assert.match(copy, /You are enrolled here\. Write a verified review\./);
   assert.doesNotMatch(copy.slice(copy.indexOf("verifiedReviewNote"), copy.indexOf("verifiedReviewLead") + 200), /—/);
@@ -44,7 +44,7 @@ test("Start a daycare ends on Create your KidEase listing with no upgrade path",
   assert.doesNotMatch(page, /enrollToday/);
   assert.doesNotMatch(page, /\/plans/);
   assert.doesNotMatch(page, /upgrade/i);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /createKideaseListing: "Create your KidEase listing"/);
   assert.match(copy, /createKideaseListing: "Créez votre fiche KidEase"/);
   assert.match(copy, /not a payment to become licensed/);

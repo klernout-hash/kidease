@@ -363,7 +363,7 @@ test("add-on webhooks never write the centre plan or Parent Plus", () => {
   assert.match(src("src/lib/server/provider-subscriptions.ts"), /centre_job_posts/);
   assert.match(src("src/components/checkout-return.tsx"), /confirmSuccess/);
   assert.match(src("src/components/success-confirm.tsx"), /modal\.kicker \|\| kicker/);
-  assert.match(src("src/lib/copy.ts"), /successKicker: "Good job!"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /successKicker: "Good job!"/);
   assert.match(src("src/components/admin-review-card.tsx"), /admin-centre-addons/);
   assert.match(src("migrations/0064_parent_alerts_plan.sql"), /plus_plan in \('free', 'plus', 'alerts'\)/);
   const plusFn = lifecycle.slice(lifecycle.indexOf("export async function applyParentPlus"));
@@ -681,6 +681,10 @@ test("parents and daycares cannot buy or receive each other's upgrades", () => {
   assert.match(lifecycle, /refused cross-role upgrade/);
   assert.match(src("src/routes/provider.subscription.tsx"), /Navigate to="\/provider"/);
   assert.match(src("src/routes/provider.subscription.tsx"), /desk: "today"/);
+  assert.match(
+    src("src/routes/provider.subscription.tsx"),
+    /if \(chrome\?\.subscriptionsEnabled !== true\) redirectToProviderToday\(\);\n\s*redirectToProviderToday\(\);/,
+  );
   assert.doesNotMatch(src("src/routes/provider.subscription.tsx"), /plan-checkout|startProviderCheckout/);
   assert.match(src("src/routes/parent.tsx"), /canBuyParentUpgrade/);
   assert.doesNotMatch(src("src/routes/parent.tsx"), /Navigate to="\/provider\/subscription"/);

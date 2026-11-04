@@ -10,7 +10,7 @@ import { useCopy } from "@/lib/use-copy";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { useRoleChrome } from "@/components/role-chrome";
 import { LedgerHonesty } from "@/components/listing-status-badge";
-import { bookingPayLeadKey } from "@/lib/copy";
+import { bookingPayLeadKey } from "@/lib/copy-keys";
 import { money } from "@/lib/utils";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { NativePayNote } from "@/components/native-pay-note";

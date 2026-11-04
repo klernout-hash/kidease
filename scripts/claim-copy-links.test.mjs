@@ -26,7 +26,7 @@ test("privacy and start-a-daycare point at live official pages", () => {
 });
 
 test("claim perk says the phone apps are coming soon", () => {
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   const en = "Phone apps are coming soon. Manage your listing on the website for now.";
   const fr = "Les applications pour téléphone arrivent bientôt. Gérez votre fiche sur le site pour le moment.";
   assert.match(copy, new RegExp(en.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));

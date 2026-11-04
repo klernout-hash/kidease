@@ -53,7 +53,7 @@ test("app home uses one location bar; website does not stack rails and the featu
   assert.doesNotMatch(webBlock, /heroCityBrowse/);
   assert.doesNotMatch(webBlock, /HomePopularCities/);
   assert.match(webBlock, /<HomeDiscovery/);
-  assert.match(home, /FacilityTypeRails items=\{shown\} visual/);
+  assert.match(src("src/components/home-discovery.tsx"), /FacilityTypeRails items=\{shown\} visual/);
   assert.doesNotMatch(webBlock, /ke-web-grid/);
   assert.doesNotMatch(home, /const locationForm/);
   assert.doesNotMatch(home, /const \[manual, setManual\]/);
@@ -72,7 +72,7 @@ test("listing nearby uses a rail; compare and missing listing use EmptyState cop
   assert.match(compare, /noCompare/);
   assert.match(compare, /items.length \? \(/);
 
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /listingMissing: "Listing not available"/);
   assert.match(copy, /listingMissing: "Fiche indisponible"/);
   assert.match(copy, /noCompare: "Nothing to compare yet."/);

@@ -108,7 +108,7 @@ describe("appearance is wired across public + desks chrome", () => {
     const menu = src("src/components/app-menu-screen.tsx");
     const shell = src("src/components/shell.tsx");
     const drawer = src("src/components/nav-drawer.tsx");
-    const copy = src("src/lib/copy.ts");
+    const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
     assert.match(control, /role="radiogroup"/);
     assert.match(control, /appearanceLight/);
     assert.match(control, /appearanceDark/);

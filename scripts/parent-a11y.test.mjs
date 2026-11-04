@@ -40,7 +40,7 @@ test("text size grows the root font and never locks pinch zoom", () => {
 
 test("listing photos and text size use bilingual labels", () => {
   const carousel = src("src/components/listing-carousel.tsx");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   const appearance = src("src/components/appearance-control.tsx");
   assert.match(carousel, /t\("photoPrev"\)/);
   assert.match(carousel, /t\("photoNext"\)/);

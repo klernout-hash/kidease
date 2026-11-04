@@ -1,6 +1,6 @@
 import { startTransition, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { EmptyState } from "@/components/empty-state";
-import { FacilityTypeRails } from "@/components/facility-type-rails";
+import { FacilityTypeRails } from "@/components/facility-type-rail-list";
 import { ListingRail } from "@/components/listing-rail";
 import { useCopy } from "@/lib/use-copy";
 import { useAppStore } from "@/lib/store";

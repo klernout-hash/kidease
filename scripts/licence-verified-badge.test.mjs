@@ -88,7 +88,7 @@ test("Licence verified only when an operator confirmed and the licence is still 
 
 test("public badge uses the helper and keeps Registry-checked for older matches", () => {
   const trust = src("src/lib/trust.ts");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(trust, /if \(showLicenceVerifiedBadge\(item\)\)/);
   assert.match(src("src/lib/server/map-row.ts"), /licenseVerifiedAt: asIsoString\(r\.license_verified_at\)/);
   assert.doesNotMatch(src("src/lib/license-status.ts"), /licenseVerifiedAt\?\.trim/);

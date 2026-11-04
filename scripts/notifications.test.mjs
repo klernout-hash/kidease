@@ -131,7 +131,7 @@ test("source keys stay stable and titles stay honest", () => {
 });
 
 test("EN and FR-CA ship the same notification copy keys", () => {
-  const text = src("src/lib/copy.ts");
+  const text = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   for (const key of COPY_KEYS) {
     assert.equal(text.split(`${key}:`).length >= 3, true, key);
   }

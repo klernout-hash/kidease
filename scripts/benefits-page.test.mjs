@@ -50,7 +50,7 @@ test("benefits page has Federal, CWELCC, and provincial sections; no KidEase cal
 });
 
 test("EN and FR copy cover 2026–27 stacking rules without inventing a BC table", () => {
-  const copySrc = src("src/lib/copy.ts");
+  const copySrc = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copySrc, /benefitsReviewed:\s*\n\s*"Last reviewed September 2026/);
   assert.match(copySrc, /Dernière revue : septembre 2026/);
   assert.match(copySrc, /Effective September 13, 2026/);

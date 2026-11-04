@@ -142,7 +142,7 @@ test("km distances and 0-live home honesty from #270 stay intact", () => {
   const strip = homeLiveStrip(0, 8);
   assert.equal(strip.liveCount, 0);
   assert.equal(strip.zeroLiveHint, true);
-  assert.match(src("src/lib/copy.ts"), /searchLiveEmptyCount: "0 live on KidEase · \{n\} licensed nearby"/);
+  assert.match(src("src/lib/copy-en.ts"), /searchLiveEmptyCount: "0 live on KidEase · \{n\} licensed nearby"/);
   assert.doesNotMatch(src("src/routes/index.tsx"), /data-ke="home-zero-live"/);
   assert.match(src("src/routes/index.tsx"), /strip\.liveCount > 0/);
   assert.match(src("src/routes/search.tsx"), /exploreBrowseHint/);

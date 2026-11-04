@@ -131,7 +131,7 @@ test("notify kinds stay on existing Resend paths — no GHL", () => {
 });
 
 test("copy keys exist in English and French", () => {
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   for (const key of [
     "myRequestsLead",
     "leadInbox",

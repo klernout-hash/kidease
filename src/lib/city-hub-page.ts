@@ -1,8 +1,6 @@
 import { notFound } from "@tanstack/react-router";
-import { cityHubBySlug } from "@/lib/city-hub-data";
 import { CITY_HUB_LISTING_CAP, cityHubCityName, cityHubDefBySlug, cityHubPath, type CityHubSnapshot } from "@/lib/city-hubs";
 import { cityHubNotFoundHead } from "@/lib/city-hub-not-found";
-import { isPublicListing } from "@/lib/listing-visibility";
 import { pageSeoHead } from "@/lib/page-seo";
 import { provinceAbbrev } from "@/lib/province-phrase";
 import { formatCount } from "@/lib/utils";
@@ -13,6 +11,10 @@ export async function loadCityHub(city: string): Promise<CityHubSnapshot> {
   // Published Canadian hubs only. US and unknown slugs 404: they must not
   // fall through to the Winnipeg search page. The document edge does the
   // same in scripts/request-guard.mjs so the SPA shell cannot return 200.
+  const [{ cityHubBySlug }, { isPublicListing }] = await Promise.all([
+    import("@/lib/city-hub-data"),
+    import("@/lib/listing-visibility"),
+  ]);
   const hub = cityHubBySlug(city);
   if (!hub) throw notFound();
   const [live, liveListings] = await Promise.all([

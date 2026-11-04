@@ -124,14 +124,14 @@ test("free landing page keeps claim free and never invents $10-a-day fees", () =
   assert.match(listing, /ListingPhotoFallback/);
   assert.match(listing, /claim=\{offerClaim\}/);
   assert.match(src("src/components/listing-hero-gallery.tsx"), /claimQuery/);
-  assert.match(src("src/lib/copy.ts"), /claimListingFrame: "Claim listing"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /claimListingFrame: "Claim listing"/);
   assert.match(listing, /claimFreeListing/);
   assert.match(listing, /parentRequestNotLive/);
   assert.match(listing, /FreeListingShareActions/);
   assert.match(listing, /listingJsonLdScript/);
   assert.doesNotMatch(listing, /\$49/);
   assert.doesNotMatch(listing, /\$7\.99/);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /freeListingNotAd: "Free KidEase listing · not a paid ad"/);
   assert.match(copy, /claimThisFreePage: "Claim this free page"/);
   assert.match(copy, /plansNotOffered: "Plans are not offered on this site yet/);

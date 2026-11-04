@@ -151,12 +151,13 @@ test("public Help / contact / legal copy use SUPPORT_INBOX_EMAIL, not kyle@", ()
     "src/routes/__root.tsx",
     "src/components/legal-doc.tsx",
     "src/components/listing-contact.tsx",
-    "src/lib/copy.ts",
+    "src/lib/copy-en.ts",
+    "src/lib/copy-fr.ts",
     "src/lib/help-knowledge.ts",
   ];
   for (const rel of publicFacing) {
     let src = readFileSync(join(root, rel), "utf8");
-    if (rel.endsWith("copy.ts")) {
+    if (rel.includes("/copy-")) {
       src = src.replace(/operatorEmailNote:\s*"[^"]*"/g, 'operatorEmailNote: ""');
     }
     assert.doesNotMatch(src, /kyle@kidease\.ca/, rel);
@@ -189,7 +190,7 @@ test("public Help / contact / legal copy use SUPPORT_INBOX_EMAIL, not kyle@", ()
   assert.match(help, /t\("helpTitle"\)/);
   assert.match(help, /t\("helpKicker"\)/);
   assert.doesNotMatch(help, /t\("support"\)/);
-  const copy = readFileSync(join(root, "src/lib/copy.ts"), "utf8");
+  const copy = readFileSync(join(root, "src/lib/copy-en.ts"), "utf8") + readFileSync(join(root, "src/lib/copy-fr.ts"), "utf8");
   assert.match(copy, /helpKicker: "Help"/);
   assert.match(copy, /helpTitle: "Help centre"/);
 });

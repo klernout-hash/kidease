@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { getTurnstileSiteKey } from "@/lib/server/turnstile";
 import { beginTurnstileReset, coalesceTurnstileToken, readTurnstileResponseValue } from "@/lib/turnstile-widget";
-import { tx } from "@/lib/copy";
+import { tx } from "@/lib/copy-runtime";
 import { useCopy } from "@/lib/use-copy";
 
 type TurnstileApi = {

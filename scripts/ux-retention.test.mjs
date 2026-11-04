@@ -53,7 +53,7 @@ test("Explore empty states distinguish load failure from a true empty radius", (
   assert.match(search, /widenSearchRadius/);
   assert.doesNotMatch(search, /ExploreHint/);
   assert.match(search, /ke-skel size-full/);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /searchFailedTitle: "Couldn't load centres"/);
   assert.match(copy, /searchFailedTitle: "Impossible de charger les centres"/);
   assert.match(copy, /exploreHintTitle: "What to do next"/);
@@ -85,7 +85,7 @@ test("listing cards use the heart to save to the parent shortlist", () => {
 
 test("home offers a resume CTA and records a sanitized last path", () => {
   const home = src("src/routes/index.tsx");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   const boot = src("src/components/posthog-boot.tsx");
   const shell = src("src/components/shell.tsx");
   assert.match(home, /ResumeVisitCard/);

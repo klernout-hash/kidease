@@ -34,7 +34,7 @@ describe("home live strip matches search honesty", () => {
 
   it("home renders the strip from that helper and the search browse hint", () => {
     const home = src("src/routes/index.tsx");
-    const copy = src("src/lib/copy.ts");
+    const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
     assert.match(home, /homeLiveStrip\(liveCount/);
     assert.match(home, /strip\.liveCount > 0/);
     assert.doesNotMatch(home, /data-ke="home-zero-live"/);
@@ -104,7 +104,7 @@ describe("Canada distances stay in kilometres", () => {
 describe("subscription honesty is one localized line", () => {
   it("drops the duplicate free line and the English fallback under FR", () => {
     const panel = src("src/components/provider-subscription.tsx");
-    const copy = src("src/lib/copy.ts");
+    const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
     assert.match(panel, /data-ke="plans-not-offered"/);
     assert.match(panel, /tx\("plansNotOffered"\)/);
     assert.doesNotMatch(panel, /listingStayFree/);

@@ -106,8 +106,8 @@ test("Explore wires facility-type categories and listing copy", () => {
   assert.match(src("src/routes/verify.tsx"), /facilityTypeLeadNursery/);
   assert.match(src("src/routes/verify.tsx"), /facilityTypeLeadGroupHome/);
   assert.match(src("src/routes/verify.tsx"), /verifyFacilityTitle/);
-  assert.match(src("src/lib/copy.ts"), /Show Centres/);
-  assert.match(src("src/lib/copy.ts"), /Afficher les prématernelles/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /Show Centres/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /Afficher les prématernelles/);
   assert.match((src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx")), /data-facility-type-taxonomy/);
   const care = src("src/lib/care-type.ts");
   assert.match(care, /nursery/);
@@ -118,7 +118,7 @@ test("Explore wires facility-type categories and listing copy", () => {
   assert.doesNotMatch(explore, /Highest rated/);
   assert.doesNotMatch(explore, /Garderies près/);
   assert.doesNotMatch(explore, /Mieux notées/);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /railDaycareCentres: "Child care centres"/);
   assert.match(copy, /railNursery: "Nursery schools"/);
   assert.match(copy, /railNursery: "Prématernelles"/);

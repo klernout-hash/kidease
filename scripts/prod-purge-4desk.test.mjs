@@ -125,7 +125,7 @@ test("P1 FR search stick, contact thank-you, cookie Essential role", () => {
   assert.equal(localeSwitchPath("/search", "fr"), "/fr/search");
   assert.equal(localeSwitchPath("/fr/search", "en"), "/search");
   assert.match(src("src/components/language-select.tsx"), /window\.location\.assign\(dest\)/);
-  assert.match(src("src/lib/copy.ts"), /contactSendFailed:/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /contactSendFailed:/);
   const banner = src("src/components/cookie-consent-banner.tsx");
   assert.match(banner, /role="button"/);
   assert.match(banner, /cookieConsentEssential/);

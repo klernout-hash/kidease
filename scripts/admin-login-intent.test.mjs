@@ -79,7 +79,7 @@ test("signed-out /admin gate and footer send Admin email-first search", () => {
 });
 
 test("operator copy is gone from the public bundle; the owner email still forces a password", () => {
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.doesNotMatch(copy, /operatorEmailNote/);
   assert.doesNotMatch(copy, /operatorLead/);
   assert.doesNotMatch(copy, /operatorSignIn/);

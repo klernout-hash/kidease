@@ -16,7 +16,7 @@ test("store apps hide the coming-soon store line; the website keeps it", () => {
   for (const channel of ["apple", "google", "microsoft", "samsung", "huawei", "amazon"]) {
     assert.equal(showStoreComingSoon(channel), false);
   }
-  assert.match(src("src/lib/copy.ts"), /storeComingSoon: "Coming soon"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /storeComingSoon: "Coming soon"/);
   assert.match(src("src/components/store-badges.tsx"), /storeComingSoon/);
   assert.match(src("src/routes/get-app.tsx"), /data-ke="store-coming-soon"/);
   assert.match(src("src/routes/get-app.tsx"), /data-ke="store-already-in-app"/);

@@ -1,4 +1,4 @@
-import { tx, type CopyKey } from "../copy.ts";
+import { tx, type CopyKey } from "../copy-runtime.ts";
 import {
   PASSWORD_BREACHED_MESSAGE,
   PASSWORD_COMMON_MESSAGE,

@@ -94,7 +94,7 @@ test("migration 0045 maps legacy centre/home enums to Canada facility types", ()
 });
 
 test("FR-CA chip labels exist for /fr routes", () => {
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   for (const key of [
     "chipAge",
     "chipOpenings",

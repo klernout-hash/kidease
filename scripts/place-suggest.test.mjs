@@ -45,6 +45,6 @@ test("PlaceSearch anchors suggestions under the input and falls back when server
   assert.match(places, /resolveLocationQuery/);
   assert.doesNotMatch(places, /contain-layout/);
   assert.match(src("src/components/dual-anchor-bar.tsx"), /anchorWorkMiss/);
-  assert.match(src("src/lib/copy.ts"), /anchorWorkMiss: "We couldn’t find that address/);
-  assert.match(src("src/lib/copy.ts"), /Adresse introuvable/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /anchorWorkMiss: "We couldn’t find that address/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /Adresse introuvable/);
 });

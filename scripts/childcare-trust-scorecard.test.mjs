@@ -38,7 +38,7 @@ test("footer How we verify listings goes to /verify, not /about", () => {
 });
 
 test("claim and help copy say Stripe card payments are live", () => {
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /perkPayLive: "Payments processed in the app and paid to you directly, quickly"/);
   assert.match(src("src/routes/claim.tsx"), /"perkPayLive"/);
   assert.doesNotMatch(src("src/routes/claim.tsx"), /payoutsLive \? "perkPayLive"/);
@@ -70,12 +70,12 @@ test("non-MB registry stubs never light a live government match", () => {
   const trust = src("src/lib/trust.ts");
   assert.match(trust, /isHonestLicenseMatch/);
   assert.match(trust, /trustCatalogueMatched/);
-  assert.match(src("src/lib/copy.ts"), /trustCatalogueMatched: "Catalogue-matched"/);
-  assert.match(src("src/lib/copy.ts"), /trustLicensedMatched: "Registry-checked"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /trustCatalogueMatched: "Catalogue-matched"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /trustLicensedMatched: "Registry-checked"/);
 });
 
 test("home quotes and hero do not invent gated parent reviews", () => {
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /heroSub: "See monthly fees and open spots before you tour\."/);
   assert.doesNotMatch(copy, /heroSub: "See monthly fees, open spots, and reviews before you tour\."/);
   assert.match(copy, /quotesLead:/);

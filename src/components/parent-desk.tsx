@@ -27,7 +27,7 @@ import type { LeadRequest } from "@/lib/lead-requests";
 import { listParentBills } from "@/lib/server/billing";
 import { StripeInvoiceList } from "@/components/stripe-invoice-list";
 import { shareChildWithCentres } from "@/lib/server/enrol-queue";
-import { parentPayEmptyKey } from "@/lib/copy";
+import { parentPayEmptyKey } from "@/lib/copy-keys";
 import { useCopy } from "@/lib/use-copy";
 import { ageGroupFromMonths, asList, formatMonth, money, monthsBetween } from "@/lib/utils";
 import { useSessionDesks } from "@/components/desk-switcher";

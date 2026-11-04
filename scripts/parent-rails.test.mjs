@@ -158,7 +158,7 @@ test("parent rails are wired on parent desk, home, and search see-all", () => {
   assert.match(rails, /school-age/);
   assert.match(rails, /FacilityTypeRails items=\{pool\}/);
   assert.doesNotMatch(rails, /railByCare/);
-  const typeRails = src("src/components/facility-type-rails.tsx");
+  const typeRails = src("src/components/facility-type-rails.tsx") + src("src/components/facility-type-rail-list.tsx");
   assert.match(typeRails, /railDaycareCentres/);
   assert.match(typeRails, /railNursery/);
   assert.match(typeRails, /railHome/);
@@ -174,7 +174,7 @@ test("parent rails are wired on parent desk, home, and search see-all", () => {
   assert.match(parent, /LOADER_SETTLE_MS/);
 
   const home = src("src/routes/index.tsx");
-  assert.match(home, /FacilityTypeRails/);
+  assert.match(src("src/components/home-discovery.tsx"), /FacilityTypeRails/);
   assert.match(home, /<HomeDiscovery/);
   assert.doesNotMatch(home, /ParentDeskRails/);
   assert.match(home, /withTimeoutFallback/);
@@ -189,7 +189,7 @@ test("parent rails are wired on parent desk, home, and search see-all", () => {
   assert.match(rail, /seeAllHref/);
   assert.match(rail, /seeAll/);
 
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /Paid plans never inflate Match/);
   assert.match(copy, /railBestMatch: "Best match for you"/);
   assert.match(copy, /seeAll: "See all"/);
