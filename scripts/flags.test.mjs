@@ -172,7 +172,7 @@ test("docs and env example stay placeholders; SMS and push stay off", () => {
   assert.doesNotMatch(flags, /phc_[A-Za-z0-9]+/);
   assert.doesNotMatch(flags, /POSTHOG_PERSONAL/);
   assert.doesNotMatch(vite, /POSTHOG_FLAGS_KEY/);
-  assert.match(vite, /envPrefix: \["VITE_", "POSTHOG_HOST", "NEXT_PUBLIC_AMAZON_APPSTORE_URL"\]/);
+  assert.match(vite, /envPrefix: \["VITE_", "POSTHOG_HOST", "NEXT_PUBLIC_AMAZON_APPSTORE_URL", "NEXT_PUBLIC_MAP_PROVIDER"\]/);
   assert.match(readFileSync(join(root, "src/lib/server/sms.ts"), "utf8"), /evaluateFeatureFlag\("FEATURE_SMS"/);
   assert.match(readFileSync(join(root, "src/lib/server/push-send.ts"), "utf8"), /evaluateFeatureFlag\("FEATURE_PUSH"/);
   assert.match(readFileSync(join(root, "src/lib/server/video.ts"), "utf8"), /evaluateFeatureFlag\("FEATURE_VIDEO"/);

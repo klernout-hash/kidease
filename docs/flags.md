@@ -127,7 +127,8 @@ Env still works as a fallback when PostHog is down (last successful overlay is k
 | `FEATURE_STORY_CORNER` | no | Default **off**. Local Global Digital Library books. StoryWeaver stays off until a token exists, and this build does not call it. Unite for Literacy is a link out. |
 | `FEATURE_COPARENT_LINK` | no | Default **off**. Set `1` to let a main parent share children, tours, waitlists, messages, and bills with one other login. The invite is a link in the app. No email or SMS. |
 | `FEATURE_STAFF_TIMESHEETS` | no | Default **off**. Set `1` to open staff hours on the daycare desk. Not payroll. No email or SMS. Does not turn on subscriptions. |
-| `FEATURE_GOOGLE_MAPS` | no | Default **off**. Build-time only. The website map stays OpenFreeMap. The Google Maps browser key may stay in the host env and is copied into client JavaScript only when this is `1` for that build. |
+| `VITE_MAP_PROVIDER` | no | `google` (default) or `openfreemap`. Build-time. `openfreemap` keeps OpenStreetMap tiles and leaves the browser key out of client JavaScript. `NEXT_PUBLIC_MAP_PROVIDER` is an alias. |
+| `FEATURE_GOOGLE_MAPS` | no | Unused for the map. Google sign-in is `GOOGLE_SIGNIN_ENABLED`. Leave this `0`. |
 | `FEATURE_REVIEW_REPORTS` | no | Default **off**. Set `1` to let a signed-in person report a published review and to show a rating from the first review. |
 | `FEATURE_TOUR_PIPELINE` | no | Default **off**. Set `1` for no-show, moved reminders, and a calendar file in the tour email. |
 | `FEATURE_NEED_CARE_FAST` | no | Default **off**. Set `1` to sort Need care fast by open spots, then distance. |

@@ -15,19 +15,24 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-test("the map waits for OpenFreeMap tiles and does not load Google Maps", () => {
+test("the map waits for tiles and falls back when Google Maps does not load", () => {
   assert.equal(MAP_STYLE_WAIT_MS, 12_000);
   assert.ok(MAP_VIEW_WAIT_MS > MAP_STYLE_WAIT_MS);
   assert.equal(MAP_LOAD_TIMEOUT, "Map timed out");
   const maps = src("src/lib/osm-map.ts");
   assert.match(maps, /tiles\.openfreemap\.org/);
   assert.match(maps, /preloadOsmMap/);
+  assert.match(maps, /createGoogleKidEaseMap/);
+  assert.match(maps, /whenMapHostVisible/);
   assert.doesNotMatch(maps, /maps\.googleapis\.com/);
-  assert.doesNotMatch(maps, /document\.head\.appendChild\(script\)/);
+  const google = src("src/lib/google-map.ts");
+  assert.match(google, /maps\.googleapis\.com/);
+  assert.match(google, /gm_authFailure/);
+  assert.doesNotMatch(google, /maps\.places|importLibrary\("places"\)|importLibrary\("geocoding"\)|Geocoder/);
   const view = src("src/components/map-view.tsx");
   assert.match(view, /createKidEaseMap/);
   assert.match(view, /setLoadGen/);
-  assert.doesNotMatch(view, /loadGoogleMaps/);
+  assert.match(view, /whenMapHostVisible/);
 });
 
 test("featured chip and section share one count and hide together at zero", () => {

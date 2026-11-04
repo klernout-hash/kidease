@@ -21,6 +21,12 @@ interface ImportMetaEnv {
   readonly VITE_STORE_CHANNEL?: string;
   /** Public Amazon Appstore listing. Empty hides the Get it button. Not a secret. */
   readonly NEXT_PUBLIC_AMAZON_APPSTORE_URL?: string;
+  /** Map basemap. `google` (default) or `openfreemap`. Not a secret. */
+  readonly VITE_MAP_PROVIDER?: string;
+  /** Alias of VITE_MAP_PROVIDER. Not a secret. */
+  readonly NEXT_PUBLIC_MAP_PROVIDER?: string;
+  /** Inlined only when the map provider is google. Never commit a real value. */
+  readonly VITE_GOOGLE_MAPS_API_KEY?: string;
 }
 
 interface ImportMeta {

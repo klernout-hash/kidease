@@ -457,9 +457,9 @@ export function SearchScreen({
 
   useEffect(() => {
     if (view === "map") setMapEnabled(true);
-    if (view !== "map") return;
-    void import("@/lib/osm-map").then((mod) => mod.preloadOsmMap().catch(() => undefined));
-  }, [view]);
+    if (view !== "map" || storeChannel === "huawei") return;
+    void import("@/lib/osm-map").then((mod) => mod.preloadMapLibrary().catch(() => undefined));
+  }, [storeChannel, view]);
 
   useEffect(() => {
     const place = (incoming.q || "").trim() || (incoming.city || "").trim();
