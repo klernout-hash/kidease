@@ -99,7 +99,6 @@ function CardPhotoBadges({
   live,
   showLivePill,
   licenseWarning,
-  verifiedCheck = false,
   clearShare = false,
 }: {
   item: Card;
@@ -108,8 +107,6 @@ function CardPhotoBadges({
   live: boolean;
   showLivePill: boolean;
   licenseWarning: TrustBadgeModel | null;
-  /** Search cards only. Sits beside the Live pill. */
-  verifiedCheck?: boolean;
   /** Rail cards also place a share control beside the heart. */
   clearShare?: boolean;
 }) {
@@ -124,14 +121,13 @@ function CardPhotoBadges({
       )}
     >
       <SponsoredMark show={item.featuredCity} />
-      {showLivePill || verifiedCheck || listingSubsidy(item) ? (
+      {showLivePill || listingSubsidy(item) ? (
         <div className="flex flex-wrap items-center gap-1" data-ke="card-photo-pills">
           {showLivePill ? (
             <span data-ke="card-live-pill" className={cn(LIVE_PILL, pill)}>
               {t("live")}
             </span>
           ) : null}
-          {verifiedCheck ? <VerifiedCheck /> : null}
           <SubsidyPill item={item} className={cn(FEE_PILL, pill)} />
         </div>
       ) : null}
@@ -323,6 +319,7 @@ export const DaycareCard = memo(function DaycareCard({
   const priceUnit = subsidy?.subsidy_type === "ten_max" ? " / day max" : daily ? " / day" : feeOk ? t("month") : "";
   const priceOnPhoto = daily;
   const showParentAverage = parentRatingShown(item.parentReviewCount, item.parentRatingX10, ratingFloor);
+  const verifiedCheck = showVerifiedCheck(item);
 
   if (presentation === "visual") {
     const placeLine = [item.city, farAway ? item.province : "", away].filter(Boolean).join(" · ");
@@ -345,16 +342,18 @@ export const DaycareCard = memo(function DaycareCard({
               live={live}
               showLivePill={showLivePill}
               licenseWarning={licenseWarning}
-              verifiedCheck={showVerifiedCheck(item)}
             />
           </ListingAnchor>
           {parentActions ? <SaveListingButton daycareId={item.id} /> : null}
         </div>
         <ListingAnchor slug={item.slug} className="mt-2 flex min-h-0 flex-1 flex-col text-inherit no-underline">
-          <div className="flex min-h-10 items-start justify-between gap-2">
-            <h3 className="line-clamp-2 min-w-0 whitespace-normal text-[15px] min-h-10 font-semibold leading-5 tracking-[-0.02em] text-fg">
-              {name}
-            </h3>
+          <div className="flex min-h-10 items-start gap-1" data-ke="card-name">
+            <div className="flex min-w-0 flex-1 items-start gap-0.5">
+              <h3 className="line-clamp-2 min-w-0 whitespace-normal text-[15px] min-h-10 font-semibold leading-5 tracking-[-0.02em] text-fg">
+                {name}
+              </h3>
+              {verifiedCheck ? <VerifiedCheck className="shrink-0" /> : null}
+            </div>
             {showParentAverage ? (
               <span className="mt-0.5 inline-flex shrink-0 items-center gap-0.5 text-[13px] leading-none tabular-nums">
                 <Star className="size-3 fill-fg text-fg" strokeWidth={0} />
@@ -498,10 +497,13 @@ export const DaycareCard = memo(function DaycareCard({
 
       <ListingAnchor slug={item.slug} className="flex min-h-0 flex-1 flex-col text-inherit no-underline">
         <div className="mt-1 flex flex-1 flex-col space-y-px text-fg">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="min-w-0 truncate text-[12px] font-semibold leading-[1.25] tracking-[-0.2px] text-fg dark:text-white">
-              {name}
-            </h3>
+          <div className="flex items-start gap-1" data-ke="card-name">
+            <div className="flex min-w-0 flex-1 items-start gap-0.5">
+              <h3 className="min-w-0 truncate text-[12px] font-semibold leading-[1.25] tracking-[-0.2px] text-fg dark:text-white">
+                {name}
+              </h3>
+              {verifiedCheck ? <VerifiedCheck className="shrink-0" /> : null}
+            </div>
             {showParentAverage ? (
               <span className="mt-px inline-flex shrink-0 items-center gap-0.5 text-[12px] leading-none tabular-nums" title={t("parentReviews")}>
                 <Star className="size-2.5 fill-fg text-fg dark:fill-white dark:text-white" strokeWidth={0} />

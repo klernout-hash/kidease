@@ -280,9 +280,10 @@ export function claimIsApproved(claimStatus?: string | null): boolean {
  * The claim token must already be approved.
  */
 export function showVerifiedCheck(
-  input: ListingVerifiedInput & { claimStatus?: string | null },
+  input: ListingVerifiedInput & { claimStatus?: string | null; live?: boolean | null },
 ): boolean {
   if (!claimIsApproved(input.claimStatus)) return false;
+  if (input.live === false) return false;
   return isListingVerified(input);
 }
 

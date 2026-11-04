@@ -78,6 +78,7 @@ test("the blue check reuses the eight-item rule and an approved claim", () => {
   assert.equal(showVerifiedCheck({ ...ready, licensedCapacity: null }), false);
   assert.equal(showVerifiedCheck({ ...ready, licenseStatus: "expired" }), false);
   assert.equal(showVerifiedCheck({ ...ready, agesKnown: false, ageMinMonths: 0, ageMaxMonths: 0 }), false);
+  assert.equal(showVerifiedCheck({ ...ready, live: false }), false);
 
   const model = src("src/lib/listing-verified.ts");
   const start = model.indexOf("export function showVerifiedCheck");
@@ -87,18 +88,22 @@ test("the blue check reuses the eight-item rule and an approved claim", () => {
   assert.doesNotMatch(fn, /staffScreeningAttested/);
 });
 
-test("the check sits beside Live, KidEase approved, and Approved by KidEase", () => {
+test("the check sits beside the daycare name under the photo", () => {
   const card = src("src/components/daycare-card.tsx");
   const map = src("src/components/map-view.tsx");
   const page = src("src/routes/daycare.$slug.tsx");
   const icon = src("src/components/verified-check.tsx");
   const calls = [...card.matchAll(/<CardPhotoBadges[\s\S]*?\/>/g)];
   assert.equal(calls.length, 2);
-  assert.match(calls[0][0], /verifiedCheck=\{showVerifiedCheck\(item\)\}/);
+  assert.doesNotMatch(calls[0][0], /verifiedCheck/);
   assert.doesNotMatch(calls[1][0], /verifiedCheck/);
   const pillsAt = card.indexOf('data-ke="card-photo-pills"');
   const pills = card.slice(pillsAt, pillsAt + 420);
-  assert.match(pills, /data-ke="card-live-pill"[\s\S]*<VerifiedCheck/);
+  assert.match(pills, /data-ke="card-live-pill"/);
+  assert.doesNotMatch(pills, /VerifiedCheck/);
+  assert.equal((card.match(/data-ke="card-name"/g) || []).length, 2);
+  assert.match(card, /data-ke="card-name"[\s\S]*\{name\}[\s\S]*<VerifiedCheck/);
+  assert.match(card, /const verifiedCheck = showVerifiedCheck\(item\)/);
   assert.match(card, /showCardLivePill\(live, publicApprovalEligible\(item\)\)/);
 
   const marker = map.slice(map.indexOf("kidease-approved-marker") - 280, map.indexOf("kidease-approved-marker") + 220);
@@ -107,9 +112,13 @@ test("the check sits beside Live, KidEase approved, and Approved by KidEase", ()
   assert.match(map, /showVerifiedCheck\(item\)/);
   assert.match(map, /publicApprovalEligible\(item\)/);
 
-  const line = page.slice(page.indexOf('data-ke="listing-trust-line"'), page.indexOf('data-ke="listing-trust-line"') + 520);
+  const nameAt = page.indexOf('data-ke="listing-name"');
+  const nameRow = page.slice(nameAt, nameAt + 320);
+  assert.match(nameRow, /<h1/);
+  assert.match(nameRow, /<VerifiedCheck/);
+  const line = page.slice(page.indexOf('data-ke="listing-trust-line"'), page.indexOf('data-ke="listing-trust-line"') + 420);
   assert.match(line, /KidEaseApprovalStrip/);
-  assert.match(line, /<VerifiedCheck/);
+  assert.doesNotMatch(line, /VerifiedCheck/);
   assert.match(page, /showVerifiedCheck\(d\)/);
   assert.match(page, /publicApprovalEligible\(d\)/);
 
