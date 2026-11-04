@@ -624,6 +624,8 @@ export const createBooking = createServerFn({ method: "POST" })
     const home = await familyWrite(context.userId);
     const homeId = home.dataUserId;
     const sql = await getSql();
+    const { assertChatNotBlocked } = await import("@/lib/server/safety");
+    await assertChatNotBlocked(sql, { senderId: homeId, parentUserId: homeId, daycareId: data.daycareId });
     const listed = await catalogByIdGet(data.daycareId);
     if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerMayUseAdminOnlyListing())) {
       throw new Error("Listing not found");
@@ -746,6 +748,8 @@ export const createSpotRequest = createServerFn({ method: "POST" })
     const homeId = home.dataUserId;
     const sql = await getSql();
     await ensureProfile(sql, context.userId);
+    const { assertChatNotBlocked } = await import("@/lib/server/safety");
+    await assertChatNotBlocked(sql, { senderId: homeId, parentUserId: homeId, daycareId: data.daycareId });
     const listed = await catalogByIdGet(data.daycareId);
     if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerMayUseAdminOnlyListing())) {
       throw new Error("Listing not found");

@@ -123,6 +123,8 @@ export async function recordLeadRequest(
     notify?: boolean;
   },
 ): Promise<{ id: string; reused: boolean; conversationId: string | null } | null> {
+  const { assertChatNotBlocked } = await import("@/lib/server/safety");
+  await assertChatNotBlocked(sql, { senderId: input.userId, parentUserId: input.userId, daycareId: input.daycareId });
   const kind = input.kind;
   const message = (input.message || "").trim() || null;
   const sourceKind = input.sourceKind ?? null;
@@ -382,11 +384,19 @@ export const listLeadRequests = createServerFn({ method: "GET" })
         case when l.status in ('requested', 'received') then 0 else 1 end,
         l.created_at desc
     `.catch(() => []);
-    return rows.map((row) => {
-      const lead = mapLead(row);
-      if (data.desk === "centre") return { ...lead, parentEmail: null };
-      return lead;
-    });
+    const { omitHiddenParents } = await import("@/lib/server/safety");
+    const centreRows = rows
+      .filter((row) => row.user_id && row.user_id !== context.userId)
+      .map((row) => ({ id: row.id, userId: row.user_id, daycareId: row.daycare_id }));
+    const visibleCentre = await omitHiddenParents(sql, centreRows);
+    const visibleIds = new Set(visibleCentre.map((row) => row.id));
+    return rows
+      .filter((row) => !row.user_id || row.user_id === context.userId || visibleIds.has(row.id))
+      .map((row) => {
+        const lead = mapLead(row);
+        if (data.desk === "centre") return { ...lead, parentEmail: null };
+        return lead;
+      });
   });
 
 export const createLeadRequest = createServerFn({ method: "POST" })

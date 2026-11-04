@@ -6,6 +6,7 @@ import { confirmSuccess } from "@/lib/success-confirm";
 import { EmptyState } from "@/components/empty-state";
 import { LeadKindChip, LeadStatusChip } from "@/components/lead-status-chip";
 import { Button } from "@/components/ui/button";
+import { BlockFamilyButton } from "@/components/block-user";
 import { updateLeadRequest } from "@/lib/server/lead-requests";
 import type { LeadAction, LeadRequest } from "@/lib/lead-requests";
 import { isOpenLeadStatus, nextLeadStatus } from "@/lib/lead-requests";
@@ -113,6 +114,7 @@ function LeadInboxList({
               </Button>
             ) : null}
           </div>
+          {lead.userId ? <BlockFamilyButton parentUserId={lead.userId} daycareId={lead.daycareId} /> : null}
           {canAct ? <LeadActions lead={lead} onChanged={onChanged} /> : null}
         </li>
       ))}
