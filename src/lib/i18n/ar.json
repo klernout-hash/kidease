@@ -3360,5 +3360,17 @@
   "parentCentreToolsNavHint": "القوائم والملاحظات والفواتير",
   "cookieConsentAllowShort": "سماح",
   "cookieSettings": "إعدادات ملفات تعريف الارتباط",
-  "needCareFast": "رعاية عاجلة"
+  "needCareFast": "رعاية عاجلة",
+  "topRatedBadge": "الأعلى تقييماً",
+  "topRatedBadgeTip": "الأعلى تقييماً من KidEase علامتنا. ليست تقييماً حكومياً.",
+  "topRatedTitle": "الأعلى تقييماً",
+  "topRatedLead": "الأعلى تقييماً من KidEase علامتنا. ليست تقييماً حكومياً. يحتاج المركز إلى 4.8 من 10 مراجعات في السنة الماضية، ووثائق سارية، وردود سريعة، وتأكيد حديث للأماكن، ومن دون بلاغ سلامة مثبت.",
+  "deskNavTopRated": "الأعلى تقييماً",
+  "deskNavTopRatedHint": "ما الذي ينجح، وما الذي يجب إصلاحه",
+  "topRatedRuleRating": "متوسط تقييم 4.8 أو أعلى خلال آخر 12 شهراً",
+  "topRatedRuleReviews": "ما لا يقل عن 10 مراجعات موثّقة خلال آخر 12 شهراً",
+  "topRatedRuleDocuments": "الترخيص وشهادات الموظفين والفحص كلها سارية",
+  "topRatedRuleReplies": "ما لا يقل عن 90% من الردود خلال 24 ساعة",
+  "topRatedRuleSpots": "الأماكن الشاغرة مؤكدة خلال آخر 14 يوماً",
+  "topRatedRuleSafety": "لا بلاغ سلامة مثبت خلال آخر 12 شهراً"
 }

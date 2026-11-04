@@ -3360,5 +3360,17 @@
   "parentCentreToolsNavHint": "Menús, notas y facturas",
   "cookieConsentAllowShort": "Permitir",
   "cookieSettings": "Configuración de cookies",
-  "needCareFast": "Cuidado pronto"
+  "needCareFast": "Cuidado pronto",
+  "topRatedBadge": "Mejor valorado",
+  "topRatedBadgeTip": "Mejor valorado de KidEase es nuestra marca. No es una calificación del gobierno.",
+  "topRatedTitle": "Mejor valorado",
+  "topRatedLead": "Mejor valorado de KidEase es nuestra marca. No es una calificación del gobierno. Un centro necesita un 4,8 en 10 reseñas del último año, documentos válidos, respuestas rápidas, una confirmación reciente de cupos y ningún informe de seguridad confirmado.",
+  "deskNavTopRated": "Mejor valorado",
+  "deskNavTopRatedHint": "Qué cumple y qué hay que corregir",
+  "topRatedRuleRating": "Nota media de 4,8 o más en los últimos 12 meses",
+  "topRatedRuleReviews": "Al menos 10 reseñas verificadas en los últimos 12 meses",
+  "topRatedRuleDocuments": "Licencia, certificados del personal y verificación, todos vigentes",
+  "topRatedRuleReplies": "Al menos el 90 % de las respuestas en 24 horas",
+  "topRatedRuleSpots": "Cupos confirmados en los últimos 14 días",
+  "topRatedRuleSafety": "Ningún informe de seguridad confirmado en los últimos 12 meses"
 }

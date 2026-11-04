@@ -3597,6 +3597,19 @@ export const en = {
     insightsViews: "Views",
     insightsRequests: "Requests",
     insightsTours: "Tours",
+
+    topRatedBadge: "Top Rated",
+    topRatedBadgeTip: "KidEase Top Rated is our mark. It is not a government rating.",
+    topRatedTitle: "Top Rated",
+    topRatedLead: "KidEase Top Rated is our mark. It is not a government rating. A centre needs a 4.8 from 10 reviews in the last year, valid documents, fast replies, a recent spot check, and no upheld safety report.",
+    deskNavTopRated: "Top Rated",
+    deskNavTopRatedHint: "What is passing, and what to fix",
+    topRatedRuleRating: "Average rating of 4.8 or better from the last 12 months",
+    topRatedRuleReviews: "At least 10 verified reviews in the last 12 months",
+    topRatedRuleDocuments: "Licence, staff certificates, and screening all valid",
+    topRatedRuleReplies: "At least 90% of replies within 24 hours",
+    topRatedRuleSpots: "Open spots confirmed in the last 14 days",
+    topRatedRuleSafety: "No upheld safety report in the last 12 months",
 } as const;
 
 export type CopyKey = keyof typeof en;

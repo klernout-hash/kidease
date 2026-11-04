@@ -3360,5 +3360,17 @@
   "parentCentreToolsNavHint": "菜单、记录和账单",
   "cookieConsentAllowShort": "允许",
   "cookieSettings": "Cookie 设置",
-  "needCareFast": "快速找托育"
+  "needCareFast": "快速找托育",
+  "topRatedBadge": "高评分",
+  "topRatedBadgeTip": "KidEase 高评分是我们的标志。这不是政府评分。",
+  "topRatedTitle": "高评分",
+  "topRatedLead": "KidEase 高评分是我们的标志。这不是政府评分。中心需要过去一年内 10 条评价达到 4.8，证件有效，回复及时，最近确认过空位，并且没有被认定的安全报告。",
+  "deskNavTopRated": "高评分",
+  "deskNavTopRatedHint": "哪些达标，哪些要改",
+  "topRatedRuleRating": "过去 12 个月平均评分 4.8 或更高",
+  "topRatedRuleReviews": "过去 12 个月至少 10 条已核实评价",
+  "topRatedRuleDocuments": "牌照、员工证书和筛查均有效",
+  "topRatedRuleReplies": "至少 90% 的回复在 24 小时内",
+  "topRatedRuleSpots": "空位在过去 14 天内确认",
+  "topRatedRuleSafety": "过去 12 个月没有被认定的安全报告"
 }

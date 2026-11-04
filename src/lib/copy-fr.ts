@@ -3611,4 +3611,17 @@ export const fr = {
     insightsViews: "Vues",
     insightsRequests: "Demandes",
     insightsTours: "Visites",
+
+    topRatedBadge: "Mieux noté",
+    topRatedBadgeTip: "Mieux noté est notre marque. Ce n’est pas une note du gouvernement.",
+    topRatedTitle: "Mieux noté",
+    topRatedLead: "Mieux noté est notre marque. Ce n’est pas une note du gouvernement. Il faut 4,8 sur au moins 10 avis de la dernière année, des documents valides, des réponses rapides, une confirmation récente des places, et aucun signalement de sécurité retenu.",
+    deskNavTopRated: "Mieux noté",
+    deskNavTopRatedHint: "Ce qui passe, et quoi corriger",
+    topRatedRuleRating: "Note moyenne de 4,8 ou plus sur les 12 derniers mois",
+    topRatedRuleReviews: "Au moins 10 avis vérifiés sur les 12 derniers mois",
+    topRatedRuleDocuments: "Permis, certificats du personnel et vérifications tous valides",
+    topRatedRuleReplies: "Au moins 90 % des réponses en moins de 24 heures",
+    topRatedRuleSpots: "Places confirmées dans les 14 derniers jours",
+    topRatedRuleSafety: "Aucun signalement de sécurité retenu sur les 12 derniers mois",
 } as const satisfies Record<CopyKey, string>;
