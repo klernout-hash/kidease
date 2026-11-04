@@ -422,6 +422,16 @@ export function canSeeProviderSubscriptions(
   return false;
 }
 
+/** Unified alerts. Off. Saving choices does not send. */
+export function unifiedAlertsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_UNIFIED_ALERTS", env);
+}
+
+/** Email and existing phone push for unified alerts. Off unless both flags are on. */
+export function unifiedAlertsLive(env?: EnvMap): boolean {
+  return unifiedAlertsEnabled(env) && evaluateFeatureFlag("FEATURE_UNIFIED_ALERTS_LIVE", env);
+}
+
 /** Centre tools (meal plans, observations, checklists, billing helpers). Each default off. */
 export function centreToolIds(env?: EnvMap): CentreToolId[] {
   return enabledToolIds((flag) => evaluateFeatureFlag(flag, env));
