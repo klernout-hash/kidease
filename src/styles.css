@@ -486,8 +486,10 @@
     /* Phone search header is two rows (logo + care types). 3.2rem covered those tabs. */
     top: var(--ke-header-h, calc(7.25rem + var(--ke-safe-top, env(safe-area-inset-top, 0px))));
     z-index: 30;
-    margin-inline: calc(-1 * clamp(12px, 3vw, 40px));
-    padding-inline: clamp(12px, 3vw, 40px);
+    margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+    margin-right: calc(-1 * max(16px, env(safe-area-inset-right, 0px)));
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
     padding-block: 0.2rem 0.3rem;
     background: color-mix(in oklab, var(--color-bg) 92%, transparent);
     backdrop-filter: blur(12px);

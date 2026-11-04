@@ -103,6 +103,8 @@ test("phone layout source keeps history back, photo frames, and the launcher abo
   assert.match(css, /\[data-ke="legal-page"\]/);
   assert.match(css, /\.ke-see-all-row/);
   assert.match(css, /max-width:\s*calc\(100% - 6\.75rem\)/);
+  assert.match(css, /margin-left:\s*calc\(-1 \* max\(16px, env\(safe-area-inset-left/);
+  assert.doesNotMatch(css, /clamp\(12px, 3vw, 40px\)/);
   assert.match(legal, /data-ke="legal-page"/);
   assert.match(carousel, /ke-photo-frame/);
   assert.match(vacancy, /flex-col/);
