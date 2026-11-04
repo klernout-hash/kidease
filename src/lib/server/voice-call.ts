@@ -89,6 +89,23 @@ async function loadThread(userId: string, conversationId: string): Promise<Voice
       error: "This call was not found.",
     };
   }
+  const { assertChatNotBlocked } = await import("@/lib/server/safety");
+  try {
+    await assertChatNotBlocked(sql, {
+      senderId: userId,
+      parentUserId: rows[0].user_id,
+      daycareId: rows[0].daycare_id,
+    });
+  } catch {
+    return {
+      conversationId,
+      allowed: false,
+      desk: null,
+      peerLabel: "",
+      credentialsPresent,
+      error: "This call was not found.",
+    };
+  }
   const parentName = (rows[0].parent_name || "").trim();
   const peerLabel =
     desk === "provider" ? parentName || "Parent" : (rows[0].daycare_name || "").trim() || "Daycare";
