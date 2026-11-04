@@ -681,6 +681,10 @@ test("parents and daycares cannot buy or receive each other's upgrades", () => {
   assert.match(lifecycle, /refused cross-role upgrade/);
   assert.match(src("src/routes/provider.subscription.tsx"), /Navigate to="\/provider"/);
   assert.match(src("src/routes/provider.subscription.tsx"), /desk: "today"/);
+  assert.match(
+    src("src/routes/provider.subscription.tsx"),
+    /if \(chrome\?\.subscriptionsEnabled !== true\) redirectToProviderToday\(\);\n\s*redirectToProviderToday\(\);/,
+  );
   assert.doesNotMatch(src("src/routes/provider.subscription.tsx"), /plan-checkout|startProviderCheckout/);
   assert.match(src("src/routes/parent.tsx"), /canBuyParentUpgrade/);
   assert.doesNotMatch(src("src/routes/parent.tsx"), /Navigate to="\/provider\/subscription"/);
