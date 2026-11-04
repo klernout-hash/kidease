@@ -96,9 +96,10 @@ import { ProviderScreeningPanel } from "@/components/provider-screening";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { useRoleChrome } from "@/components/role-chrome";
 import { DaycareDeskHome } from "@/components/daycare-desk-home";
+import { ProviderInsightsDesk } from "@/components/provider-insights-desk";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 
-const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "tours", "licence", "contract", "promote", "employees", "screening", "staff", "stories", "sites", "learning", "hours", "tools"];
+const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "insights", "tours", "licence", "contract", "promote", "employees", "screening", "staff", "stories", "sites", "learning", "hours", "tools"];
 const OWNER_DESKS = new Set<DaycareDesk>(["money", "licence", "contract", "promote"]);
 const DEFAULT_DESK: DaycareDesk = "today";
 const COACH_FOCUS = new Set<ListingCoachFocus>([
@@ -389,7 +390,8 @@ export function ProviderPage() {
         setDesk(id as DaycareDesk);
       }}
     >
-      {deskSettled && deskListings.length === 0 && centreOwner ? (
+      {desk === "insights" ? <ProviderInsightsDesk /> : null}
+      {deskSettled && deskListings.length === 0 && centreOwner && desk !== "insights" ? (
         <ProviderOnboarding
           onShowForm={() => {
             setDesk("listings");
