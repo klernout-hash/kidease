@@ -38,6 +38,7 @@ import { SignedInDevices } from "@/components/signed-in-devices";
 import { AccountSecurity } from "@/components/account-security";
 import { DeleteAccountPanel } from "@/components/delete-account-panel";
 import { AlertPushSettings } from "@/components/alert-push-settings";
+import { HostActionEmailPref } from "@/components/host-action-list";
 import { GovernmentScopeCard } from "@/components/government-scope-card";
 import { ReferFriendPanel } from "@/components/refer-friend-panel";
 import { fieldErrorClass, RequiredMark } from "@/components/required-field";
@@ -842,10 +843,13 @@ function ProfilePane() {
         ) : null}
         {section === "documents" ? <FamilyVaultPanel signedIn={Boolean(user)} /> : null}
         {section === "alerts" && user ? (
+          <>
           <AlertPushSettings
             audience={desk === "provider" ? "daycare" : "parent"}
             subscriptionsOn={chrome.subscriptionsEnabled === true}
           />
+          {session?.hostListing ? <HostActionEmailPref /> : null}
+          </>
         ) : null}
         {section === "appearance" ? (
           <section className="mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">

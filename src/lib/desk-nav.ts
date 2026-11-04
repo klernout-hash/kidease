@@ -78,6 +78,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "today", label: "Today", hint: "What needs you now", labelKey: "todayHome", hintKey: "deskNavTodayHint", href: "/provider", search: { desk: "today" } },
     { id: "messages", label: "Messages", hint: "Parent inquiries + tours", labelKey: "messages", hintKey: "deskNavMessagesHint", href: "/inbox", search: { view: "centre" } },
     { id: "tours", label: "Tour times", hint: "When families can visit", labelKey: "tourTimes", hintKey: "deskNavToursHint", href: "/provider", search: { desk: "tours" } },
+    { id: "calendar", label: "Calendar", hint: "Open spots by day", labelKey: "navCalendar", href: "/provider", search: { desk: "calendar" } },
     { id: "listings", label: "Listings", hint: "Spots, photos, fees", labelKey: "deskNavListings", hintKey: "deskNavListingsHint", href: "/provider", search: { desk: "listings" } },
     { id: "insights", label: "Insights", hint: "Views, tours, and spots", labelKey: "deskNavInsights", hintKey: "deskNavInsightsHint", href: "/provider", search: { desk: "insights" } },
     { id: "requests", label: "Requests", hint: "Tours, waitlist, and spots", labelKey: "navRequestsShort", hintKey: "deskNavRequestsHint", href: "/provider", search: { desk: "requests" } },
@@ -135,6 +136,7 @@ export type DaycareDesk =
   | "listings"
   | "insights"
   | "tours"
+  | "calendar"
   | "licence"
   | "contract"
   | "promote"
@@ -154,6 +156,7 @@ export function providerNavSearch(id: string): { desk: DaycareDesk } {
     id === "listings" ||
     id === "insights" ||
     id === "tours" ||
+    id === "calendar" ||
     id === "licence" ||
     id === "contract" ||
     id === "promote" ||
@@ -247,6 +250,8 @@ type DeskNavOpts = {
   familyVault?: boolean;
   /** Tour calendar page. Hidden until FEATURE_TOUR_CALENDAR is on. */
   tourCalendar?: boolean;
+  /** Listing editor calendar. Hidden until FEATURE_HOST_LISTING is on. */
+  hostListing?: boolean;
   /** Daycare Insights. Hidden until FEATURE_PROVIDER_INSIGHTS is on. */
   providerInsights?: boolean;
 };
@@ -286,6 +291,8 @@ export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
     if (item.id === "centre-tools") return (opts?.centreTools ?? []).some((id) => PARENT_TOOL_IDS.has(id));
     if (item.id === "documents") return opts?.familyVault === true;
     if (item.id === "tour-calendar") return opts?.tourCalendar === true;
+    if (item.id === "calendar") return opts?.hostListing === true;
+    if (item.id === "tours" && opts?.hostListing === true) return false;
     if (item.id === "insights") return opts?.providerInsights === true;
     if (item.id === "promote" || item.id === "subscription") return false;
     if (item.id === "upgrade") return opts?.subscriptionsEnabled === true;

@@ -380,7 +380,14 @@ export async function syncAndListNotifications(userId: string): Promise<Notifica
 export async function countUnreadNotifications(userId: string): Promise<number> {
   try {
     const listed = await syncAndListNotifications(userId);
-    return failClosedUnread(listed.filter((row) => !row.readAt).length);
+    let extra = 0;
+    try {
+      const { countUnreadUnifiedAlerts } = await import("./unified-alerts");
+      extra = await countUnreadUnifiedAlerts(userId);
+    } catch {
+      extra = 0;
+    }
+    return failClosedUnread(listed.filter((row) => !row.readAt).length + extra);
   } catch {
     return 0;
   }
