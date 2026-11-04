@@ -54,6 +54,11 @@ export function providerInsightsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_PROVIDER_INSIGHTS", env);
 }
 
+/** Search ranking v2. Off. Best match is unchanged until this is on. */
+export function rankingV2Enabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_RANKING_V2", env);
+}
+
 /** Honest copy when SHOW_PAY_CTAS is off. Stripe / plan code stays compiled. */
 export const PLANS_NOT_OFFERED_YET =
   "Plans are not offered on this site yet. Listing and claim stay free.";
