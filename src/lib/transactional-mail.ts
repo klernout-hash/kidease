@@ -38,7 +38,8 @@ export type TransactionalMailPurpose =
   | "area_waitlist"
   | "earnings_statement"
   | "parent_invoice"
-  | "coparent";
+  | "coparent"
+  | "host_action";
 export type TransactionalMailProvider = "resend" | "sendgrid" | "titan" | "logged";
 export type TransactionalMailReason =
   | "domain_unverified"

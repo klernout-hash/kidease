@@ -61,6 +61,7 @@ Automation-pack flags (`FEATURE_POSTHOG_ERRORS`, `FEATURE_OPS_ALERTS`, `FEATURE_
 | `FEATURE_WAITLIST_TOOLS` | off | Save a rank on the centre waitlist. The parent sees that place. | Move up and move down on the daycare requests desk. | Sign-up order stays. Offer, accept, and decline stay. No fee. |
 | `FEATURE_AGE_OPEN_SPOTS` | off | Save an age-group spot count and tell matching saved or waitlisted parents through the existing mail and push path. | Listings desk posts infant, toddler, or preschool spots and can offer the next family. | Hidden. Mail still needs `FEATURE_OPEN_SPOT_ALERTS`. Push still needs `FEATURE_PUSH`. |
 | `FEATURE_CHILD_CHECKIN` | off | Write an arrival or pickup time for an enrolled child. Pickup name is checked only when the parent already listed people. | Daycare today desk, and the parent's daily care history. | Hidden. No photo. The camera check-in stays on its own flag. |
+| `FEATURE_HOST_LISTING` | off | Save one calendar day and optional family-guide notes. Today's spots also update the public open-spot counts. | Daycare desk: Today, listing editor, Calendar. | The current daycare desk stays. Home addresses stay protected. |
 | `FEATURE_PRIVATE_PHOTO_FEED` | off | Classroom photo posts require an enrolled booking and photo consent. Parent feed requires an active enrolment. | Consent card on the daily feed. | The feed page stays. Photos are not public. No SMS. The thread email does not attach the photo. |
 | `FEATURE_GOV_PORTAL` | off | Footer link “For governments”. `/gov` sign-in stays available either way. | A small footer link when this is on. Not in the phone app. | No footer link. The government desk is not linked from public nav. |
 | `FEATURE_PRODUCT_EVENTS` | off | Server capture for enrolment, invoice paid, and area waitlist. | Browser events for signup, search, listing view, waitlist, enrolment, and claim. | No new event names are sent. |
@@ -198,6 +199,8 @@ Each one stays off until its own flag is `1`. None of them send email, SMS, push
 | `FEATURE_LOGIN_AMAZON` | Login with Amazon on Fire / Amazon Appstore devices only. Needs AMAZON_CLIENT_ID, AMAZON_CLIENT_SECRET. |
 | `FEATURE_FIRE_KIOSK` | Landscape check-in kiosk `/kiosk` for Fire tablets, PIN exit. Needs FEATURE_CHILD_CHECKIN. |
 | `FEATURE_ALEXA_SKILL` | Alexa custom skill endpoint `/api/alexa`. Needs ALEXA_SKILL_ID. |
+| `FEATURE_UNIFIED_ALERTS` | Unified parent, daycare, staff, and web desk alerts. Default off. Nothing is sent. See docs/unified-alerts.md. |
+| `FEATURE_UNIFIED_ALERTS_LIVE` | Email and existing phone push for those alerts. Default off. Also needs `FEATURE_UNIFIED_ALERTS`. Preview and tests never send. No texts. Does not turn on `FEATURE_CALL_PUSH`. |
 | `FEATURE_PROVIDER_INSIGHTS` | Insights on the daycare desk (`/provider?desk=insights`, French label Statistiques). Real rows only. Area averages stay hidden under 5 centres. |
 
 ## What is wired

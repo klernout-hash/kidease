@@ -97,10 +97,16 @@ import { ProviderScreeningPanel } from "@/components/provider-screening";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { useRoleChrome } from "@/components/role-chrome";
 import { DaycareDeskHome } from "@/components/daycare-desk-home";
+import { HostCalendarDesk } from "@/components/host-calendar-desk";
+import { HostListingsDesk } from "@/components/host-listing-desk";
+import { HostTodayHome } from "@/components/host-today-home";
+import { hostSectionFromFocus } from "@/lib/host-action";
+import { isHostSection } from "@/lib/host-listing";
+import { syncHostActionNotices } from "@/lib/server/host-action";
 import { ProviderInsightsDesk } from "@/components/provider-insights-desk";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 
-const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "insights", "tours", "licence", "contract", "promote", "employees", "screening", "staff", "stories", "sites", "learning", "hours", "tools"];
+const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "insights", "tours", "calendar", "licence", "contract", "promote", "employees", "screening", "staff", "stories", "sites", "learning", "hours", "tools"];
 const OWNER_DESKS = new Set<DaycareDesk>(["money", "licence", "contract", "promote"]);
 const DEFAULT_DESK: DaycareDesk = "today";
 const COACH_FOCUS = new Set<ListingCoachFocus>([
@@ -137,7 +143,7 @@ export function providerHead() {
 }
 
 export function providerValidateSearch(s: Record<string, unknown>) {
-    const out: { desk?: DaycareDesk; preview?: "support"; claimed?: boolean; focus?: ListingCoachFocus; centre?: string } = {};
+    const out: { desk?: DaycareDesk; preview?: "support"; claimed?: boolean; focus?: ListingCoachFocus; centre?: string; section?: string } = {};
     const desk = typeof s.desk === "string" ? s.desk : "";
     if (DESKS.includes(desk as DaycareDesk)) out.desk = desk as DaycareDesk;
     if (s.preview === "support") out.preview = "support";
@@ -145,6 +151,7 @@ export function providerValidateSearch(s: Record<string, unknown>) {
     const focus = typeof s.focus === "string" ? s.focus : "";
     if (COACH_FOCUS.has(focus as ListingCoachFocus)) out.focus = focus as ListingCoachFocus;
     if (typeof s.centre === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(s.centre)) out.centre = s.centre;
+    if (typeof s.section === "string" && isHostSection(s.section)) out.section = s.section;
   return out;
 }
 
@@ -174,6 +181,12 @@ export function ProviderPage() {
   const { t, locale } = useCopy();
   const { session } = useSessionDesks();
   const centreOwner = session?.centreOwner !== false;
+  const hostListing = session?.hostListing === true;
+  const [listingEditorOpen, setListingEditorOpen] = useState(false);
+  useEffect(() => {
+    if (!hostListing || !user?.id) return;
+    void syncHostActionNotices().catch(() => undefined);
+  }, [hostListing, user?.id]);
   const search = useSearch({ strict: false }) as ReturnType<typeof providerValidateSearch>;
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -423,7 +436,10 @@ export function ProviderPage() {
       ) : null}
       {desk === "today" ? <ChildCheckinDesk /> : null}
       {desk === "today" ? <EceJobDesk mode={centreOwner ? "daycare" : "staff"} /> : null}
-      {desk === "today" && deskListings.length > 0 ? (
+      {desk === "today" && hostListing && deskListings.length > 0 ? (
+        <HostTodayHome listings={deskListings} stats={stats} onChanged={() => void load()} />
+      ) : null}
+      {desk === "today" && !hostListing && deskListings.length > 0 ? (
         <>
         <DaycareDeskHome
           listings={deskListings}
@@ -533,8 +549,20 @@ export function ProviderPage() {
         </div>
       ) : null}
 
-      {desk === "listings" ? <AgeOpenSpotsDesk listings={deskListings.map((row) => ({ id: row.id, name: row.name }))} /> : null}
-      {desk === "listings" ? (
+      {desk === "calendar" && hostListing ? (
+        <HostCalendarDesk listings={deskListings} onSaved={() => void load()} />
+      ) : null}
+      {desk === "listings" && hostListing ? (
+        <HostListingsDesk
+          listings={deskListings}
+          onSaved={() => void load()}
+          onOpenChange={setListingEditorOpen}
+          initialSection={search.section && isHostSection(search.section) ? search.section : hostSectionFromFocus(search.focus)}
+          initialCentre={search.centre}
+        />
+      ) : null}
+      {desk === "listings" && !hostListing ? <AgeOpenSpotsDesk listings={deskListings.map((row) => ({ id: row.id, name: row.name }))} /> : null}
+      {desk === "listings" && !hostListing ? (
         <>
           {operatorTools ? (
           <label className="mb-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border" data-ke="test-listing-toggle">
@@ -636,7 +664,9 @@ export function ProviderPage() {
               </dl>
             </section>
           ) : null}
-          {centreOwner ? (
+        </>
+      ) : null}
+      {desk === "listings" && centreOwner && !(hostListing && listingEditorOpen) ? (
           <details id="list-new" className="group rounded-xl bg-surface ring-1 ring-border" data-ke="list-missing-centre">
             <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 marker:content-none [&::-webkit-details-marker]:hidden">
               <span className="font-display text-lg">{t("providerOnboardingListNew")}</span>
@@ -780,8 +810,6 @@ export function ProviderPage() {
             </form>
             </div>
           </details>
-          ) : null}
-        </>
       ) : null}
 
       {desk === "employees" ? <CentreEmployeesPanel canInvite={centreOwner} /> : null}

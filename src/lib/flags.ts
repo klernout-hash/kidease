@@ -82,6 +82,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_WAITLIST_TOOLS",
   "FEATURE_AGE_OPEN_SPOTS",
   "FEATURE_CHILD_CHECKIN",
+  "FEATURE_HOST_LISTING",
   "FEATURE_MEAL_PLANNING",
   "FEATURE_DEV_OBSERVATIONS",
   "FEATURE_STAFF_PD",
@@ -100,6 +101,8 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_CHILD_PORTFOLIO_GATE",
   "FEATURE_COPARENT_EMAIL",
   "FEATURE_CARE_REMINDERS",
+  "FEATURE_UNIFIED_ALERTS",
+  "FEATURE_UNIFIED_ALERTS_LIVE",
   "FEATURE_PROVIDER_INSIGHTS",
 ] as const;
 
@@ -258,6 +261,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_AGE_OPEN_SPOTS: false,
   /** Timestamped child check-in and check-out. Off. No photo. */
   FEATURE_CHILD_CHECKIN: false,
+  /** Airbnb-style daycare listing editor and day calendar. Off. */
+  FEATURE_HOST_LISTING: false,
   /** Weekly menu with Canada's Food Guide groups and allergens. Parents see the menu. Off. */
   FEATURE_MEAL_PLANNING: false,
   /** Developmental observations by ELECT domain. Text only, no photos. Parents see their child's notes. Off. */
@@ -294,6 +299,10 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_COPARENT_EMAIL: false,
   /** Drop-off and pick-up reminders. Off. In-app, and phone alerts only when FEATURE_PUSH is already on. No SMS. */
   FEATURE_CARE_REMINDERS: false,
+  /** Unified parent, daycare, staff, and desk alerts. Off. Nothing is sent until this is on. */
+  FEATURE_UNIFIED_ALERTS: false,
+  /** Email and phone push for unified alerts. Off. Also needs FEATURE_UNIFIED_ALERTS. Preview never sends. */
+  FEATURE_UNIFIED_ALERTS_LIVE: false,
   /** Daycare Insights tab. Off. Real rows only. No area average under 5 centres. */
   FEATURE_PROVIDER_INSIGHTS: false,
 };
@@ -734,6 +743,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
       "Daycare desk records child arrival and pickup with a time. Uses pickup people when the parent already listed them. Parent sees the history. Default off. No photo.",
   },
   {
+    key: "FEATURE_HOST_LISTING",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Daycare desk splits into today, a listing editor, and a month calendar. Default off. The current desk stays. Today's saved spots update the public listing.",
+  },
+  {
     key: "FEATURE_MEAL_PLANNING",
     defaultOn: false,
     docs: "docs/flags.md",
@@ -843,6 +859,18 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "A parent sets drop-off and pick-up times for each child. Each login has its own reminders. In-app notice, and a phone alert only when FEATURE_PUSH is already on. No SMS. Off.",
+  },
+  {
+    key: "FEATURE_UNIFIED_ALERTS",
+    defaultOn: false,
+    docs: "docs/unified-alerts.md",
+    summary: "One alert list for parents, daycares, staff, and the web desk. Off. Choices can be saved. Nothing is sent.",
+  },
+  {
+    key: "FEATURE_UNIFIED_ALERTS_LIVE",
+    defaultOn: false,
+    docs: "docs/unified-alerts.md",
+    summary: "Email and existing phone push for unified alerts. Off. Needs FEATURE_UNIFIED_ALERTS. Preview and tests never send. No texts. Does not turn on call push.",
   },
   {
     key: "FEATURE_PROVIDER_INSIGHTS",
