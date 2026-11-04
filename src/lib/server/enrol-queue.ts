@@ -23,6 +23,7 @@ type IncomingRow = {
   days: string | null;
   parent_note: string | null;
   parent_name: string | null;
+  user_id: string | null;
   conversation_id: string | null;
   age_group: AgeGroup;
   status: BookingStatus;
@@ -47,6 +48,7 @@ function mapRequest(b: IncomingRow, child: Child | null): SpotRequest {
     days: b.days,
     parentNote: b.parent_note,
     parentName: b.parent_name,
+    parentUserId: b.user_id,
     conversationId: b.conversation_id,
     ageGroup: b.age_group,
     status: b.status,
@@ -78,6 +80,7 @@ export const listDaycareIncoming = createServerFn({ method: "GET" })
     const rows = await sql<IncomingRow>`
       select b.id, b.daycare_id, d.name as daycare_name, d.slug, b.child_id,
              ch.name as child_name, ch.birthdate, ch.allergies, ch.epi_pen,
+             b.user_id,
              b.start_month, b.start_date, b.schedule, b.days, b.parent_note, b.parent_name,
              b.conversation_id, b.age_group, b.status, b.monthly_amount, b.created_at,
              (select p.status from payments p where p.booking_id = b.id order by p.created_at desc limit 1) as payment_status
@@ -113,7 +116,13 @@ export const listDaycareIncoming = createServerFn({ method: "GET" })
     for (const id of childIds) {
       void logChildProfileAccess(sql, { childId: id, actorId: context.userId, action: "read" });
     }
-    return rows.map((r) => mapRequest(r, r.child_id ? byId.get(r.child_id) ?? null : null));
+    const { omitHiddenParents } = await import("@/lib/server/safety");
+    const visible = await omitHiddenParents(
+      sql,
+      rows.map((row) => ({ ...row, userId: row.user_id, daycareId: row.daycare_id })),
+    );
+    const visibleIds = new Set(visible.map((row) => row.id));
+    return rows.filter((row) => visibleIds.has(row.id)).map((r) => mapRequest(r, r.child_id ? byId.get(r.child_id) ?? null : null));
   });
 
 export const decideParentRequest = createServerFn({ method: "POST" })

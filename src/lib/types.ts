@@ -281,6 +281,7 @@ export type Booking = {
   days: string | null;
   parentNote: string | null;
   parentName: string | null;
+  parentUserId?: string | null;
   conversationId: string | null;
   ageGroup: AgeGroup;
   status: BookingStatus;
@@ -319,6 +320,7 @@ export type TourRequest = {
   childId: string | null;
   childName: string | null;
   parentName: string | null;
+  parentUserId?: string | null;
   preferredTimes: PreferredTime[];
   parentNote: string | null;
   status: TourStatus;
