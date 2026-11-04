@@ -83,6 +83,15 @@ export function alignSearchOrigin(input: {
   return { lat: pin.lat, lng: pin.lng, label: label || named.label };
 }
 
+/** A city or postal code already in KidEase's index. These searches paint the first page. */
+export function indexedPlaceQuery(q?: string | null, city?: string | null): boolean {
+  const primary = typeof q === "string" ? q.trim() : "";
+  const extra = typeof city === "string" ? city.trim() : "";
+  if (primary && originFromSearchQuery(primary)) return true;
+  if (extra && originFromSearchQuery(extra)) return true;
+  return false;
+}
+
 /** URL `q` wins. An empty string must not hide the text the search pill is showing. */
 export function placeQueryForCamera(q?: string | null, query?: string | null) {
   const fromUrl = typeof q === "string" ? q.trim() : "";

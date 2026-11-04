@@ -108,6 +108,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_SUPPORT_CHAT",
   "FEATURE_SUPPORT_SMS_REPLY",
   "FEATURE_TOP_RATED_BADGE",
+  "FEATURE_MOBILE_SEARCH_V2",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -317,6 +318,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_SUPPORT_SMS_REPLY: false,
   /** KidEase Top Rated. Off. Not a government rating. */
   FEATURE_TOP_RATED_BADGE: false,
+  /** Mobile Where / When / Who search. Off. The current search stays until this is on. */
+  FEATURE_MOBILE_SEARCH_V2: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -914,6 +917,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary: "KidEase Top Rated mark on listings and a status page for the daycare. Off. Not a government rating.",
+  },
+  {
+    key: "FEATURE_MOBILE_SEARCH_V2",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Mobile Home search: Where, When, and Who. Off. Desktop and the current search stay as they are. No paid place lookup.",
   },
 ];
 

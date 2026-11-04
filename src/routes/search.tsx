@@ -24,13 +24,14 @@ import { isIqaluitQuery, reverseGeocode } from "@/lib/geo";
 import { originFromDeviceFix, productHomeOrigin, readClientTimeZone, searchOriginOrWinnipeg } from "@/lib/default-origin";
 import { BootPending } from "@/components/boot-pending";
 import { CARD_SIZES, CARD_WIDTHS, photoSrcSet, photoUrl } from "@/lib/photo";
-import { ORIGIN_BUDGET_MS, PAINT_BUDGET_MS, withPaintBudget, withTimeoutFallback } from "@/lib/timeout";
+import { ORIGIN_BUDGET_MS, PAINT_BUDGET_MS, SQL_SETTLE_MS, withPaintBudget, withTimeoutFallback } from "@/lib/timeout";
 import { bootSearchOrigin } from "@/lib/search-origin";
 import {
   anchorsForSearchMap,
   cityParamFromUnknown,
   originFromSearchQuery,
   originsMatchSearchQuery,
+  indexedPlaceQuery,
   coerceSearchText,
   searchQueryFromUnknown,
 } from "@/lib/search-query";
@@ -60,6 +61,8 @@ import { EmptyState } from "@/components/empty-state";
 import { LocationConsentCard } from "@/components/location-consent";
 import { DualAnchorBar } from "@/components/dual-anchor-bar";
 import { ExploreSearchBar } from "@/components/explore-search-bar";
+import { MobileSearchResults } from "@/components/mobile-search-sheet";
+import { draftFromParams, type MobileSearchParams } from "@/lib/mobile-search-v2";
 import { SmartMatchEntry } from "@/components/smart-match";
 import { resolveLocationQuery } from "@/components/place-search";
 import {
@@ -159,6 +162,8 @@ const CompareBar = lazy(() =>
 
 export async function searchLoader({ location }: { location: { search: unknown } }) {
     const { reviewReportsEnabled } = await import("@/lib/features");
+    const { readMobileSearchV2 } = await import("@/lib/mobile-search-flag");
+    const mobileSearchV2 = await readMobileSearchV2().catch(() => false);
     const reviewRatingFloor = ratingFloor(reviewReportsEnabled(), MIN_REVIEW_COUNT);
     const q = searchQueryFromUnknown(location.search);
     const city = cityParamFromUnknown(location.search);
@@ -174,6 +179,7 @@ export async function searchLoader({ location }: { location: { search: unknown }
         hasMore: false,
         total: 0,
         reviewRatingFloor,
+        mobileSearchV2,
       };
     }
     const place = q || (city ? originFromSearchQuery(city)?.label || city : "");
@@ -195,6 +201,7 @@ export async function searchLoader({ location }: { location: { search: unknown }
         hasMore: false,
         total: 0,
         reviewRatingFloor,
+        mobileSearchV2,
       };
     }
     const page = pageFromSearch(location.search);
@@ -204,32 +211,41 @@ export async function searchLoader({ location }: { location: { search: unknown }
       typeof searchRecord.sort === "string" && searchRecord.sort ? parseSearchSort(searchRecord.sort) : null;
     const bootRank = parseRankingOverride(searchRecord.rank);
     const sort = explicitSort ?? (bootRank === "nearest" ? "distance" : DEFAULT_SEARCH_SORT);
-    const painted = await withPaintBudget(
-      searchDaycarePage({
-        data: {
-          lat: origin.lat,
-          lng: origin.lng,
-          radiusKm: 25,
-          sort,
-          ageGroup: "any",
-          label: origin.label,
-          q: place || origin.label,
-          city: city || undefined,
-          facility: listedDaycareTypeFromSearch(location.search),
-          page,
-          name:
-            location.search && typeof location.search === "object" && "name" in location.search
-              ? String((location.search as { name?: unknown }).name || "")
-              : "",
-          live: readLiveSearchFlag(
-            location.search && typeof location.search === "object" && "live" in location.search
-              ? (location.search as { live?: unknown }).live
-              : undefined,
-          ),
-        },
-      }),
-      PAINT_BUDGET_MS,
-    );
+    const pageRequest = {
+      data: {
+        lat: origin.lat,
+        lng: origin.lng,
+        radiusKm: 25,
+        sort,
+        ageGroup: "any" as const,
+        label: origin.label,
+        q: place || origin.label,
+        city: city || undefined,
+        facility: listedDaycareTypeFromSearch(location.search),
+        page,
+        name:
+          location.search && typeof location.search === "object" && "name" in location.search
+            ? String((location.search as { name?: unknown }).name || "")
+            : "",
+        live: readLiveSearchFlag(
+          location.search && typeof location.search === "object" && "live" in location.search
+            ? (location.search as { live?: unknown }).live
+            : undefined,
+        ),
+      },
+    };
+    const indexed = indexedPlaceQuery(place, city);
+    type SearchPaint = {
+      value: Awaited<ReturnType<typeof searchDaycarePage>> | null;
+      ready: boolean;
+    };
+    const painted: SearchPaint = indexed
+      ? await withTimeoutFallback<SearchPaint>(
+          searchDaycarePage(pageRequest).then((value) => ({ value, ready: true })),
+          SQL_SETTLE_MS,
+          { value: null, ready: false },
+        )
+      : await withPaintBudget(searchDaycarePage(pageRequest), PAINT_BUDGET_MS);
     return {
       items: painted.value?.items ?? [],
       itemsReady: painted.ready,
@@ -240,6 +256,7 @@ export async function searchLoader({ location }: { location: { search: unknown }
       hasMore: painted.value?.hasMore === true,
       total: painted.value?.total ?? 0,
       reviewRatingFloor,
+      mobileSearchV2,
     };
 }
 
@@ -407,14 +424,16 @@ export function SearchScreen({
   const [items, setItems] = useState<Card[] | null>(
     boot.needsPlace || boot.unknownCity
       ? boot.items
-      : boot.items.length > 0 && (Boolean(incoming.name) || originsMatchSearchQuery(boot.origin, incoming.q))
-        ? incoming.name
-          ? boot.items
-          : filterByLocationLock(
-              boot.items,
-              resolveLocationLock({ ...boot.origin, q: incoming.q }),
-            )
-        : null,
+      : boot.itemsReady && boot.items.length === 0
+        ? boot.items
+        : boot.items.length > 0 && (Boolean(incoming.name) || originsMatchSearchQuery(boot.origin, incoming.q))
+          ? incoming.name
+            ? boot.items
+            : filterByLocationLock(
+                boot.items,
+                resolveLocationLock({ ...boot.origin, q: incoming.q }),
+              )
+          : null,
   );
   const resultPage = incoming.page ?? 1;
   const [hasMore, setHasMore] = useState(boot.hasMore === true);
@@ -1687,12 +1706,174 @@ export function SearchScreen({
 
   const exploreCatCounts = countExploreCategories(catalog);
   const activeCat = resolvedExploreCategory(incoming);
+  const [licensedChip, setLicensedChip] = useState(true);
+  const [topRatedChip, setTopRatedChip] = useState(false);
+  const mobileDraft = useMemo(
+    () =>
+      draftFromParams({
+        q: incoming.q,
+        from: incoming.from,
+        to: incoming.to,
+        age: incoming.age,
+        ages: incoming.ages,
+        sched: incoming.sched,
+        fac: incoming.fac,
+        cat: incoming.cat,
+        openings: incoming.openings,
+        subsidy: incoming.subsidy,
+        inclusive: incoming.inclusive,
+        spoken: incoming.spoken,
+      }),
+    [incoming],
+  );
+  function commitMobileSearch(params: MobileSearchParams) {
+    void navigate({
+      search: {
+        q: params.q,
+        from: params.from,
+        to: params.to,
+        age: params.age,
+        ages: params.ages,
+        sched: params.sched,
+        fac: params.fac,
+        cat: params.cat,
+        openings: params.openings,
+        subsidy: params.subsidy,
+        inclusive: params.inclusive,
+        spoken: params.spoken,
+      },
+    });
+  }
+  const mobileRows = visualItems.filter((row) => {
+    if (licensedChip && !row.licenseNumber) return false;
+    if (topRatedChip && row.topRated !== true) return false;
+    return true;
+  });
 
   return (
     <SearchCardAgesProvider ages={selectedAges}>
     <Shell>
       <div className="ke-dense ke-gutter mx-auto max-w-7xl pb-6 pt-2">
-        <div className="flex items-end justify-between gap-3 max-md:flex-wrap max-md:gap-y-1">
+        {boot.mobileSearchV2 ? (
+          <div className="md:hidden">
+            <MobileSearchResults
+              draft={mobileDraft}
+              countLabel={items === null ? t("searchCountLoading") : searchCountLine}
+              onCommit={commitMobileSearch}
+              onFilters={() => setFilters(true)}
+              chips={[
+                {
+                  id: "open",
+                  label: t("filterOpen"),
+                  on: openingsOn,
+                  onToggle: () => writeRailSelection({ openings: !openingsOn }),
+                },
+                {
+                  id: "licensed",
+                  label: t("msv2Licensed"),
+                  on: licensedChip,
+                  onToggle: () => setLicensedChip((on) => !on),
+                },
+                {
+                  id: "subsidy",
+                  label: t("msv2SubsidyChip"),
+                  on: incoming.subsidy === "1",
+                  onToggle: () =>
+                    writePioneer({
+                      ...parsePioneerSearch(incoming as Record<string, unknown>),
+                      subsidy: incoming.subsidy === "1" ? undefined : "1",
+                    }),
+                },
+                {
+                  id: "infant",
+                  label: t("msv2Infant"),
+                  on: selectedAges.includes("infant"),
+                  onToggle: () => writeAgeSearch("infant"),
+                },
+                {
+                  id: "toddler",
+                  label: t("msv2Toddler"),
+                  on: selectedAges.includes("toddler"),
+                  onToggle: () => writeAgeSearch("toddler"),
+                },
+                {
+                  id: "preschool",
+                  label: t("msv2Preschool"),
+                  on: selectedAges.includes("preschool"),
+                  onToggle: () => writeAgeSearch("preschool"),
+                },
+                {
+                  id: "meals",
+                  label: t("msv2Meals"),
+                  on: incoming.meals === "1",
+                  onToggle: () =>
+                    writePioneer({
+                      ...parsePioneerSearch(incoming as Record<string, unknown>),
+                      meals: incoming.meals === "1" ? undefined : "1",
+                    }),
+                },
+                {
+                  id: "french",
+                  label: t("filterFrench"),
+                  on: (incoming.spoken || "").split(",").includes("fr"),
+                  onToggle: () => {
+                    const current = parsePioneerSearch(incoming as Record<string, unknown>);
+                    const langs = (current.spoken || "").split(",").filter((part) => part && part !== "fr");
+                    const has = (current.spoken || "").split(",").includes("fr");
+                    writePioneer({ ...current, spoken: has ? langs.join(",") || undefined : [...langs, "fr"].join(",") });
+                  },
+                },
+                {
+                  id: "top",
+                  label: t("msv2TopRated"),
+                  on: topRatedChip,
+                  onToggle: () => setTopRatedChip((on) => !on),
+                },
+              ]}
+            />
+            <div data-ke="msv2-split" className="mt-2">
+              {mapEnabled && storeChannel !== "huawei" ? (
+                <div className="h-[46dvh] min-h-52 overflow-hidden rounded-2xl ring-1 ring-border">
+                  <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
+                    <MapView
+                      items={mobileRows}
+                      origin={mapOrigin}
+                      placeLabel={whereLabel || origin.label}
+                      secondOrigin={anchors.intersect && workOrigin ? workOrigin : null}
+                      radiusKm={radiusKm}
+                      activeSlug={active}
+                      onSelect={(slug) => setActive(slug)}
+                      onRelocate={(pos) => followDevice(pos)}
+                      onLocate={() => void geo()}
+                      onFallback={() => setView("list")}
+                    />
+                  </Suspense>
+                </div>
+              ) : null}
+              <div
+                data-ke="msv2-list"
+                className="relative z-10 -mt-5 max-h-[58dvh] overflow-y-auto rounded-t-3xl bg-bg px-1 pb-8 shadow-card"
+              >
+                <div className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-border" aria-hidden="true" />
+                <p className="px-3 py-2 text-sm font-semibold text-fg">{items === null ? t("searchCountLoading") : searchCountLine}</p>
+                {items === null ? null : mobileRows.length === 0 ? (
+                  <p className="px-3 text-base text-muted">{t("noResults")}</p>
+                ) : (
+                  <DaycareTypeRails
+                    items={mobileRows}
+                    visual
+                    eagerThumbs
+                    labelFar={nameSearch}
+                    skipLiveLooking
+                    ratingFloor={boot.reviewRatingFloor}
+                    seeAll={false}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        ) : null}
+        <div className={cn("flex items-end justify-between gap-3 max-md:flex-wrap max-md:gap-y-1", boot.mobileSearchV2 && "max-md:hidden")}>
           <div className="min-w-0 max-md:max-w-full max-md:flex-1 max-md:basis-[min(100%,12rem)]">
             <h1
               className="font-display text-[1.35rem] leading-tight tracking-[-0.03em] text-balance max-md:break-words"
@@ -1784,8 +1965,11 @@ export function SearchScreen({
           </div>
         ) : null}
 
+        <div className={boot.mobileSearchV2 ? "max-md:hidden" : undefined}>
         <AreaWaitlistForm returnTo={localePath("/search", locale)} />
+        </div>
 
+        <div className={boot.mobileSearchV2 ? "max-md:hidden" : undefined}>
         <ExploreSearchBar
           className="mt-2"
           startCollapsed
@@ -1830,7 +2014,8 @@ export function SearchScreen({
           </div>
         ) : null}
         <SmartMatchEntry />
-        <div className="ke-explore-filter-sticky mt-3">
+        </div>
+        <div className="ke-explore-filter-sticky mt-3" data-msv2-hide={boot.mobileSearchV2 ? "mobile" : undefined}>
         <ExploreFilterBar
           listingCount={items !== null ? resultCount : undefined}
           liveOn={liveOn}
@@ -1877,8 +2062,12 @@ export function SearchScreen({
           }}
         />
         </div>
-        <PioneerFilterRail value={parsePioneerSearch(incoming as Record<string, unknown>)} onChange={writePioneer} />
-        <CommuteDetourBar />
+        <div className={boot.mobileSearchV2 ? "max-md:hidden" : undefined}>
+          <PioneerFilterRail value={parsePioneerSearch(incoming as Record<string, unknown>)} onChange={writePioneer} />
+        </div>
+        <div className={boot.mobileSearchV2 ? "max-md:hidden" : undefined}>
+          <CommuteDetourBar />
+        </div>
 
         {askLocation ? (
           <div className="mt-3">
@@ -2068,6 +2257,7 @@ export function SearchScreen({
             "ke-search-results relative z-0 mt-2 contain-layout",
             view !== "map" && "min-h-[10rem]",
             refreshing && "opacity-70",
+            boot.mobileSearchV2 && "max-md:hidden",
           )}
         >
           {view === "map" ? (

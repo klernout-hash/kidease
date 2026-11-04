@@ -55,6 +55,8 @@ import { isClaimVerified } from "@/lib/trust";
 import { readRecent } from "@/lib/recent";
 import { isSafeSitemapSlug } from "@/lib/sitemap";
 import { ExploreSearchBar } from "@/components/explore-search-bar";
+import { MobileSearchHome } from "@/components/mobile-search-sheet";
+import { readMobileSearchV2 } from "@/lib/mobile-search-flag";
 import { SmartMatchEntry } from "@/components/smart-match";
 import { resolveLocationQuery } from "@/components/place-search";
 import { compactExploreSearch, readLiveSearchFlag } from "@/lib/explore-search";
@@ -95,9 +97,15 @@ export async function loadProductHome() {
       featured: Array.isArray(painted.value) ? painted.value : [],
       featuredReady: painted.ready,
       origin,
+      mobileSearchV2: await readMobileSearchV2().catch(() => false),
     };
   } catch {
-    return { featured: [], featuredReady: true, origin };
+    return {
+      featured: [],
+      featuredReady: true,
+      origin,
+      mobileSearchV2: await readMobileSearchV2().catch(() => false),
+    };
   }
 }
 
@@ -377,6 +385,17 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
 
   const featuredSearch = (
     <>
+      {boot.mobileSearchV2 ? (
+        <div className="md:hidden">
+          <MobileSearchHome
+            origin={origin}
+            onCommit={(params) => {
+              void navigate({ to: locale === "fr" ? "/fr/search" : "/search", search: params });
+            }}
+          />
+        </div>
+      ) : null}
+      <div className={boot.mobileSearchV2 ? "max-md:hidden" : undefined}>
       <ExploreSearchBar
         className="mx-auto mt-1 w-full max-w-[960px]"
         prominent
@@ -437,6 +456,8 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
           });
         }}
       />
+      </div>
+      <div className={boot.mobileSearchV2 ? "max-md:hidden" : undefined}>
       <div
         data-ke="home-hero-pills"
         className="mx-auto mt-2 flex min-h-11 w-full max-w-[960px] flex-wrap items-center justify-center gap-x-2.5 [&:has([data-ke=smart-match-open]):has([data-ke=resume-visit])_[data-ke=home-hero-dot]]:inline"
@@ -448,6 +469,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
         <ResumeVisitCard quiet />
       </div>
       <HeroClaimStrip />
+      </div>
 
       {featuredReady && strip.liveCount > 0 ? (
         <div className="mt-4 flex min-h-11 flex-wrap gap-2" data-ke="home-live-strip">
