@@ -1807,7 +1807,7 @@ export const en = {
     requestSentSending: "Sending",
     requestSentFailed: "Could not send. Try again.",
     messageSheetLead: "Write to {name}. Replies stay in Messages.",
-    successKicker: "Good job!",
+    successKicker: "Good Job",
     successDone: "Done",
     successSavedBody: "Your changes are saved.",
     successProfileSaved: "Profile saved",

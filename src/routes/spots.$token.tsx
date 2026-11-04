@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
@@ -35,6 +36,7 @@ function OpenSpotsPage() {
   const { band } = Route.useSearch();
   const { token } = Route.useParams();
   const { locale } = useCopy();
+  const { celebrate } = useSuccessConfirm();
   const copy = openSpotsCopy(locale);
   const [busy, setBusy] = useState<OpenSpotsBand | null>(null);
   const [saved, setSaved] = useState<null | { band: OpenSpotsBand; splitKnown: boolean; age: string | null }>(null);
@@ -59,6 +61,7 @@ function OpenSpotsPage() {
           return;
         }
         setSaved({ band: result.band, splitKnown: result.splitKnown, age: result.age });
+        celebrate();
       })
       .catch(() => toast.error(copy.invalid))
       .finally(() => setBusy(null));

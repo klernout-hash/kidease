@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { ComplianceFrame } from "@/components/compliance/frame";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { INCIDENT_KINDS, incidentCopy } from "@/lib/compliance/incidents";
 import type { PackMode } from "@/lib/compliance/mode";
@@ -28,6 +29,7 @@ type ParentData = {
 
 export function CentreIncidentsPage({ data, locale }: { data: CentreData; locale: "en" | "fr" }) {
   const copy = incidentCopy(locale);
+  const { celebrate } = useSuccessConfirm();
   const [daycareId, setDaycareId] = useState(data.centres[0]?.id || "");
   const [kind, setKind] = useState<(typeof INCIDENT_KINDS)[number]>("injury");
   const [summary, setSummary] = useState("");
@@ -42,7 +44,10 @@ export function CentreIncidentsPage({ data, locale }: { data: CentreData; locale
     try {
       const result = await saveIncident({ data: { daycareId, kind, summary, childLabel } });
       setNote(result.ok ? (locale === "fr" ? "Rapport enregistré." : "Report saved.") : copy.off);
-      if (result.ok) setSummary("");
+      if (result.ok) {
+        setSummary("");
+        celebrate();
+      }
     } catch {
       setNote(locale === "fr" ? "Essayez encore, ou ouvrez l’aide." : "Try again, or open Help.");
     } finally {

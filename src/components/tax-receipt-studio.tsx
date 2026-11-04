@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { featureCopy } from "@/lib/flagged-feature-copy";
 import { localePath } from "@/lib/locale-path";
@@ -24,6 +25,7 @@ function savePdf(filename: string, pdfBase64: string) {
 
 export function TaxReceiptStudio({ desk = "parent" }: { desk?: "parent" | "centre" }) {
   const { locale } = useCopy();
+  const { celebrate } = useSuccessConfirm();
   const copy = featureCopy(locale);
   const [hidden, setHidden] = useState(true);
   const [years, setYears] = useState<number[]>([]);
@@ -96,6 +98,7 @@ export function TaxReceiptStudio({ desk = "parent" }: { desk?: "parent" | "centr
         }
         savePdf(result.filename, result.pdfBase64);
         setProblem("saved");
+        celebrate();
       })
       .catch(() => setProblem("unavailable"))
       .finally(() => setBusy(""));

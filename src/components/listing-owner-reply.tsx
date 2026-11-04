@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { loadDeskFeatureFlags } from "@/lib/server/desk-features";
 import { replyToListingReview } from "@/lib/server/reviews";
@@ -16,6 +17,7 @@ export function ListingOwnerReply({
   reply: string | null;
 }) {
   const { t } = useCopy();
+  const { celebrate } = useSuccessConfirm();
   const [enabled, setEnabled] = useState(false);
   const [text, setText] = useState(reply || "");
   const [shown, setShown] = useState(reply || "");
@@ -49,6 +51,7 @@ export function ListingOwnerReply({
               .then(() => {
                 setShown(body);
                 toast(t("reviewReplySaved"));
+                celebrate();
               })
               .catch((err) => toast.error(err instanceof Error ? err.message : t("reviewReplySave")))
               .finally(() => setBusy(false));

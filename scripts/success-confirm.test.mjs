@@ -8,6 +8,8 @@ import {
   SUCCESS_ACTIONS,
   SUCCESS_TOAST_MS,
   approvalSuccessReady,
+  attachSuccessToastBridge,
+  bindSuccessHost,
   successAction,
 } from "../src/lib/success-confirm.ts";
 
@@ -18,9 +20,9 @@ function src(rel) {
 }
 
 test("each success action has a specific title and the right variant", () => {
-  assert.equal(tx("en", "successKicker"), "Good job!");
-  assert.equal(tx("fr", "successKicker"), "Bien joué\u202f!");
-  assert.equal(SUCCESS_TOAST_MS, 2500);
+  assert.equal(tx("en", "successKicker"), "Good Job");
+  assert.equal(tx("fr", "successKicker"), "Bravo\u202f!");
+  assert.equal(SUCCESS_TOAST_MS, 1500);
   for (const [id, action] of Object.entries(SUCCESS_ACTIONS)) {
     const title = tx("en", action.titleKey);
     const fr = tx("fr", action.titleKey);
@@ -89,4 +91,57 @@ test("quick saves and milestones call confirm only on the success path", () => {
   assert.match(src("src/components/provider-listing-forms.tsx"), /"photoUploaded"/);
   assert.match(src("src/components/provider-listing-forms.tsx"), /"openingsUpdated"/);
   assert.match(src("src/components/save-listing-button.tsx"), /confirmAction\(t, nowSaved \? "listingSaved" : "listingRemoved"\)/);
+});
+
+test("the brief toast says Good Job, stays polite, and errors do not celebrate", () => {
+  const confirm = src("src/components/success-confirm.tsx");
+  assert.match(confirm, /role="status"/);
+  assert.match(confirm, /aria-live="polite"/);
+  assert.match(confirm, /pointer-events-none/);
+  assert.match(confirm, /env\(safe-area-inset-top\)/);
+  assert.match(confirm, /4\.75rem \+ env\(safe-area-inset-bottom\)/);
+  assert.match(confirm, /data-success-dismiss=\{String\(SUCCESS_TOAST_MS\)\}/);
+  assert.match(src("src/components/use-success-confirm.ts"), /celebrate\(title\?: string\)/);
+  assert.match(src("src/components/kidease-toaster.tsx"), /attachSuccessToastBridge\(/);
+  assert.doesNotMatch(src("src/components/kidease-toaster.tsx"), /toast\.error\s*=/);
+
+  const seen = [];
+  const unbind = bindSuccessHost((request) => seen.push(request));
+  const api = {
+    success(message) {
+      seen.push(message);
+      return message;
+    },
+    error(message) {
+      seen.push(`err:${message}`);
+    },
+  };
+  attachSuccessToastBridge(api);
+  attachSuccessToastBridge(api);
+  api.success("Saved");
+  api.success("Saved again");
+  api.error("No");
+  const toasts = seen.filter((row) => row && row.variant === "toast");
+  assert.equal(toasts.length, 1);
+  assert.equal(toasts[0].title, "");
+  assert.equal(seen.includes("err:No"), true);
+  assert.equal(seen.filter((row) => row === "Saved" || row === "Saved again").length, 2);
+  unbind();
+});
+
+test("spots, reports, and block-style saves celebrate only on the success branch", () => {
+  const spots = src("src/routes/spots.$token.tsx");
+  assert.ok(spots.indexOf("celebrate()") > spots.indexOf("if (!result.ok)"));
+  assert.doesNotMatch(spots.slice(spots.indexOf(".catch("), spots.indexOf(".finally(")), /celebrate\(/);
+
+  const review = src("src/components/review-report-button.tsx");
+  const okBranch = review.slice(review.indexOf("if (result.ok)"), review.indexOf("} catch"));
+  assert.match(okBranch, /celebrate\(\)/);
+  assert.doesNotMatch(review.slice(review.indexOf("} catch")), /celebrate\(/);
+
+  const safety = src("src/components/safety-actions.tsx");
+  assert.match(safety, /toast\.success\(text\.sent\)/);
+  assert.match(safety, /toast\.success\(result\.blocked \? text\.blockedNow : text\.unblocked\)/);
+  assert.match(safety, /toast\.error\(text\.failed\)/);
+  assert.match(safety, /toast\.error\(text\.blockedSend\)/);
 });

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { photoCheckEventProps } from "@/lib/ai/photo-check";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -9,6 +10,7 @@ type Held = { id: string; daycareId: string; preview: string; createdAt: string 
 
 export function PhotoCheckReview() {
   const { t } = useCopy();
+  const { celebrate } = useSuccessConfirm();
   const [rows, setRows] = useState<Held[] | null>(null);
   const [notice, setNotice] = useState<"allowed" | "rejected" | "full" | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -40,6 +42,7 @@ export function PhotoCheckReview() {
       if (!result.ok) return;
       setRows((list) => (list ?? []).filter((item) => item.id !== row.id));
       setNotice(action === "allow" ? "allowed" : "rejected");
+      celebrate();
       capturePostHogEvent(action === "allow" ? "photo_check_allowed" : "photo_check_rejected", photoCheckEventProps({ daycare_id: row.daycareId }));
     } catch {
       setNotice(null);

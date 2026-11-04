@@ -3,6 +3,8 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   bindSuccessHost,
+  celebrateSuccess,
+  consumePendingCelebration,
   SUCCESS_TOAST_MS,
   type SuccessRequest,
 } from "@/lib/success-confirm";
@@ -166,9 +168,16 @@ export function SuccessConfirm({
     };
   }, []);
 
+  const tabClear =
+    typeof document !== "undefined" && document.documentElement.dataset.channel === "app"
+      ? "calc(4.75rem + env(safe-area-inset-bottom))"
+      : "0px";
+
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-end justify-center md:items-center"
+      className="fixed inset-x-0 top-0 z-[70] flex items-end justify-center md:items-center"
+      style={{ bottom: tabClear }}
+      data-success-tab-clear={tabClear === "0px" ? "off" : "on"}
       role="presentation"
     >
       <button
@@ -295,22 +304,27 @@ export function SuccessToast({
     return () => window.clearTimeout(timer);
   }, [title]);
 
+  const detail = title.trim();
+  const showDetail = detail.length > 0 && detail !== kicker;
+
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-3 z-[80] flex justify-center px-4">
+    <div className="pointer-events-none fixed inset-x-0 top-[max(0.75rem,env(safe-area-inset-top))] z-[60] flex justify-center px-4">
       <div
         role="status"
         aria-live="polite"
+        aria-atomic="true"
         data-ke="success-toast"
         data-success-variant="toast"
+        data-success-dismiss={String(SUCCESS_TOAST_MS)}
         data-request-sent-motion={flourish ? "on" : "off"}
-        className="pointer-events-auto flex max-w-sm items-center gap-2 rounded-full bg-surface py-1.5 pl-1.5 pr-3 shadow-lift ring-1 ring-border"
+        className="pointer-events-none flex w-full max-w-sm items-center gap-2 rounded-full bg-surface py-1.5 pl-1.5 pr-3 shadow-lift ring-1 ring-border"
       >
         <SuccessMark flourish={flourish} size="sm" />
-        <p className="min-w-0 truncate text-sm">
+        <p className="min-w-0 text-sm leading-5">
           <span className="font-semibold text-ok" data-success-kicker="">
             {kicker}
-          </span>{" "}
-          <span className="font-medium">{title}</span>
+          </span>
+          {showDetail ? <span className="mt-0.5 block truncate font-medium">{detail}</span> : null}
         </p>
       </div>
     </div>
@@ -325,13 +339,25 @@ export function SuccessConfirmHost() {
   dismissToast.current = () => setToast(null);
 
   useEffect(() => {
-    return bindSuccessHost((request) => {
+    const unbind = bindSuccessHost((request) => {
       if (request.variant === "toast") {
         setToast(request);
         return;
       }
       setModal(request);
     });
+    consumePendingCelebration();
+    if (import.meta.env.DEV) {
+      const win = window as Window & { __keCelebrate?: () => void };
+      win.__keCelebrate = () => celebrateSuccess();
+    }
+    return () => {
+      unbind();
+      if (import.meta.env.DEV) {
+        const win = window as Window & { __keCelebrate?: () => void };
+        delete win.__keCelebrate;
+      }
+    };
   }, []);
 
   function closeModal() {
