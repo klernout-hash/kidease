@@ -3360,5 +3360,17 @@
   "parentCentreToolsNavHint": "Speisepläne, Notizen und Rechnungen",
   "cookieConsentAllowShort": "Erlauben",
   "cookieSettings": "Cookie-Einstellungen",
-  "needCareFast": "Betreuung schnell"
+  "needCareFast": "Betreuung schnell",
+  "topRatedBadge": "Bestbewertet",
+  "topRatedBadgeTip": "KidEase Bestbewertet ist unser Zeichen. Es ist keine staatliche Bewertung.",
+  "topRatedTitle": "Bestbewertet",
+  "topRatedLead": "KidEase Bestbewertet ist unser Zeichen. Es ist keine staatliche Bewertung. Eine Einrichtung braucht 4,8 aus 10 Bewertungen des letzten Jahres, gültige Dokumente, schnelle Antworten, eine aktuelle Platzbestätigung und keinen bestätigten Sicherheitsbericht.",
+  "deskNavTopRated": "Bestbewertet",
+  "deskNavTopRatedHint": "Was erfüllt ist und was zu korrigieren ist",
+  "topRatedRuleRating": "Durchschnitt von 4,8 oder besser in den letzten 12 Monaten",
+  "topRatedRuleReviews": "Mindestens 10 geprüfte Bewertungen in den letzten 12 Monaten",
+  "topRatedRuleDocuments": "Lizenz, Personalzertifikate und Überprüfung alle gültig",
+  "topRatedRuleReplies": "Mindestens 90 % der Antworten innerhalb von 24 Stunden",
+  "topRatedRuleSpots": "Freie Plätze in den letzten 14 Tagen bestätigt",
+  "topRatedRuleSafety": "Kein bestätigter Sicherheitsbericht in den letzten 12 Monaten"
 }

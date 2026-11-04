@@ -105,9 +105,10 @@ import { hostSectionFromFocus } from "@/lib/host-action";
 import { isHostSection } from "@/lib/host-listing";
 import { syncHostActionNotices } from "@/lib/server/host-action";
 import { ProviderInsightsDesk } from "@/components/provider-insights-desk";
+import { TopRatedDesk } from "@/components/top-rated-desk";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 
-const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "insights", "tours", "calendar", "licence", "contract", "promote", "employees", "screening", "staff", "stories", "sites", "learning", "hours", "tools"];
+const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "insights", "top-rated", "tours", "calendar", "licence", "contract", "promote", "employees", "screening", "staff", "stories", "sites", "learning", "hours", "tools"];
 const OWNER_DESKS = new Set<DaycareDesk>(["money", "licence", "contract", "promote"]);
 const DEFAULT_DESK: DaycareDesk = "today";
 const COACH_FOCUS = new Set<ListingCoachFocus>([
@@ -406,6 +407,7 @@ export function ProviderPage() {
       }}
     >
       {desk === "insights" ? <ProviderInsightsDesk /> : null}
+      {desk === "top-rated" ? <TopRatedDesk /> : null}
       {deskSettled && deskListings.length === 0 && centreOwner && desk !== "insights" ? (
         <ProviderOnboarding
           onShowForm={() => {

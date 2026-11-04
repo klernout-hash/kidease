@@ -107,6 +107,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_RANKING_V2",
   "FEATURE_SUPPORT_CHAT",
   "FEATURE_SUPPORT_SMS_REPLY",
+  "FEATURE_TOP_RATED_BADGE",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -314,6 +315,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_SUPPORT_CHAT: false,
   /** Owner text replies into that thread. Off. Also needs FEATURE_SUPPORT_CHAT. */
   FEATURE_SUPPORT_SMS_REPLY: false,
+  /** KidEase Top Rated. Off. Not a government rating. */
+  FEATURE_TOP_RATED_BADGE: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -905,6 +908,12 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary: "Owner text replies land in the support thread. Off. Needs FEATURE_SUPPORT_CHAT. A bad signature is rejected.",
+  },
+  {
+    key: "FEATURE_TOP_RATED_BADGE",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "KidEase Top Rated mark on listings and a status page for the daycare. Off. Not a government rating.",
   },
 ];
 

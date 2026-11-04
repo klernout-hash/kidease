@@ -3360,5 +3360,17 @@
   "parentCentreToolsNavHint": "餐單、記錄同賬單",
   "cookieConsentAllowShort": "允許",
   "cookieSettings": "Cookie 設定",
-  "needCareFast": "快手找托兒"
+  "needCareFast": "快手找托兒",
+  "topRatedBadge": "高評分",
+  "topRatedBadgeTip": "KidEase 高評分係我哋嘅標誌。呢個唔係政府評分。",
+  "topRatedTitle": "高評分",
+  "topRatedLead": "KidEase 高評分係我哋嘅標誌。呢個唔係政府評分。中心要過去一年有 10 個評價達到 4.8，證件有效，回覆快，最近確認過空位，而且冇被裁定嘅安全報告。",
+  "deskNavTopRated": "高評分",
+  "deskNavTopRatedHint": "邊啲達標，邊啲要改",
+  "topRatedRuleRating": "過去 12 個月平均評分 4.8 或以上",
+  "topRatedRuleReviews": "過去 12 個月至少 10 個已核實評價",
+  "topRatedRuleDocuments": "牌照、員工證書同篩查都有效",
+  "topRatedRuleReplies": "至少 90% 回覆喺 24 小時內",
+  "topRatedRuleSpots": "空位喺過去 14 日內確認",
+  "topRatedRuleSafety": "過去 12 個月冇被裁定嘅安全報告"
 }

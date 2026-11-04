@@ -3360,5 +3360,17 @@
   "parentCentreToolsNavHint": "ਮੀਨੂ, ਨੋਟ ਅਤੇ ਬਿੱਲ",
   "cookieConsentAllowShort": "ਇਜਾਜ਼ਤ ਦਿਓ",
   "cookieSettings": "ਕੁਕੀ ਸੈਟਿੰਗਾਂ",
-  "needCareFast": "ਜਲਦੀ ਦੇਖਭਾਲ ਚਾਹੀਦੀ"
+  "needCareFast": "ਜਲਦੀ ਦੇਖਭਾਲ ਚਾਹੀਦੀ",
+  "topRatedBadge": "ਉੱਚ ਦਰਜਾ",
+  "topRatedBadgeTip": "KidEase ਉੱਚ ਦਰਜਾ ਸਾਡਾ ਨਿਸ਼ਾਨ ਹੈ। ਇਹ ਸਰਕਾਰੀ ਰੇਟਿੰਗ ਨਹੀਂ ਹੈ।",
+  "topRatedTitle": "ਉੱਚ ਦਰਜਾ",
+  "topRatedLead": "KidEase ਉੱਚ ਦਰਜਾ ਸਾਡਾ ਨਿਸ਼ਾਨ ਹੈ। ਇਹ ਸਰਕਾਰੀ ਰੇਟਿੰਗ ਨਹੀਂ ਹੈ। ਕੇਂਦਰ ਨੂੰ ਪਿਛਲੇ ਸਾਲ ਦੀਆਂ 10 ਸਮੀਖਿਆਵਾਂ ਵਿੱਚ 4.8, ਵੈਧ ਦਸਤਾਵੇਜ਼, ਤੇਜ਼ ਜਵਾਬ, ਹਾਲ ਹੀ ਦੀ ਥਾਂ ਪੁਸ਼ਟੀ, ਅਤੇ ਕੋਈ ਪੱਕੀ ਸੁਰੱਖਿਆ ਰਿਪੋਰਟ ਨਹੀਂ ਚਾਹੀਦੀ।",
+  "deskNavTopRated": "ਉੱਚ ਦਰਜਾ",
+  "deskNavTopRatedHint": "ਕੀ ਪਾਸ ਹੈ, ਅਤੇ ਕੀ ਠੀਕ ਕਰਨਾ ਹੈ",
+  "topRatedRuleRating": "ਪਿਛਲੇ 12 ਮਹੀਨਿਆਂ ਦੀ ਔਸਤ ਰੇਟਿੰਗ 4.8 ਜਾਂ ਵਧੇਰੇ",
+  "topRatedRuleReviews": "ਪਿਛਲੇ 12 ਮਹੀਨਿਆਂ ਵਿੱਚ ਘੱਟੋ-ਘੱਟ 10 ਪੁਸ਼ਟੀਯੋਗ ਸਮੀਖਿਆਵਾਂ",
+  "topRatedRuleDocuments": "ਲਾਇਸੈਂਸ, ਸਟਾਫ਼ ਸਰਟੀਫਿਕੇਟ ਅਤੇ ਜਾਂਚ ਸਾਰੇ ਵੈਧ",
+  "topRatedRuleReplies": "ਘੱਟੋ-ਘੱਟ 90% ਜਵਾਬ 24 ਘੰਟਿਆਂ ਵਿੱਚ",
+  "topRatedRuleSpots": "ਖਾਲੀ ਥਾਂਵਾਂ ਪਿਛਲੇ 14 ਦਿਨਾਂ ਵਿੱਚ ਪੁਸ਼ਟੀ ਹੋਈਆਂ",
+  "topRatedRuleSafety": "ਪਿਛਲੇ 12 ਮਹੀਨਿਆਂ ਵਿੱਚ ਕੋਈ ਪੱਕੀ ਸੁਰੱਖਿਆ ਰਿਪੋਰਟ ਨਹੀਂ"
 }

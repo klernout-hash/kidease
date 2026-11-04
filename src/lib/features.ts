@@ -69,6 +69,11 @@ export function supportSmsReplyEnabled(env?: EnvMap): boolean {
   return supportDeskEnabled(env) && evaluateFeatureFlag("FEATURE_SUPPORT_SMS_REPLY", env);
 }
 
+/** KidEase Top Rated. Off. Not a government rating. */
+export function topRatedEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_TOP_RATED_BADGE", env);
+}
+
 /** Honest copy when SHOW_PAY_CTAS is off. Stripe / plan code stays compiled. */
 export const PLANS_NOT_OFFERED_YET =
   "Plans are not offered on this site yet. Listing and claim stay free.";
