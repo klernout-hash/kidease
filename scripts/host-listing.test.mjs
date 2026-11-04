@@ -18,6 +18,14 @@ import {
   spotTotal,
 } from "../src/lib/host-calendar.ts";
 import { CENTRE_SECTIONS, GUIDE_SECTIONS, parentPartFor, sectionSummary } from "../src/lib/host-listing.ts";
+import {
+  decideHostActionNotice,
+  hostActionEmailLive,
+  hostActionFingerprint,
+  hostActionItems,
+  hostActionSentence,
+  HOST_ACTION_WEEK_MS,
+} from "../src/lib/host-action.ts";
 import { visibleDeskNav } from "../src/lib/desk-nav.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -130,4 +138,84 @@ test("editor pages keep one set of spot fields and the old desk stays in source"
   assert.match(server, /insert into availability/);
   assert.match(server, /hostListingEnabled\(\)/);
   assert.doesNotMatch(src("src/lib/server/host-calendar.ts") + src("src/components/host-calendar-desk.tsx"), /crm/i);
+  assert.match(src("src/components/host-today-home.tsx"), /HostActionList/);
+  assert.doesNotMatch(src("src/components/host-today-home.tsx"), /ActionRequiredBanner/);
+});
+
+function contrast(fg, bg) {
+  const lum = (hex) => {
+    const n = Number.parseInt(hex.slice(1), 16);
+    const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((c) => {
+      const s = c / 255;
+      return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
+  };
+  const a = lum(fg);
+  const b = lum(bg);
+  const [hi, lo] = a > b ? [a, b] : [b, a];
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+test("action rows name the gap, link to the fix, and mail stays quiet outside production", () => {
+  const items = hostActionItems([
+    {
+      id: "centre-1",
+      name: "Harbour",
+      province: "MB",
+      hours: "7:30 a.m. – 5:30 p.m.",
+      agesKnown: true,
+      ageMinMonths: 6,
+      ageMaxMonths: 72,
+      licenseStatus: "expired",
+      licenseNumber: "MB-100",
+      photos: [],
+      screeningOnFile: false,
+    },
+  ]);
+  const codes = items.map((item) => item.code);
+  assert.ok(codes.includes("license_expired"));
+  assert.ok(codes.includes("photo"));
+  assert.ok(codes.includes("screening"));
+  assert.equal(hostActionSentence("photo", "Harbour", "en"), "Harbour needs a photo of the building.");
+  assert.match(hostActionSentence("screening", "Harbour", "fr"), /vérification du secteur vulnérable/);
+  const photo = items.find((item) => item.code === "photo");
+  assert.equal(photo.fix.desk, "listings");
+  assert.equal(photo.fix.section, "photos");
+  assert.equal(items.find((item) => item.code === "screening").tone, "danger");
+  assert.equal(items.find((item) => item.code === "photo").tone, "warning");
+  const fp = hostActionFingerprint(["photo", "screening"]);
+  assert.equal(decideHostActionNotice({ codes: ["photo"], previousFingerprint: null, lastAtMs: null, nowMs: 0 }), "first");
+  assert.equal(
+    decideHostActionNotice({ codes: ["photo"], previousFingerprint: fp, lastAtMs: 0, nowMs: HOST_ACTION_WEEK_MS - 1 }),
+    "first",
+  );
+  assert.equal(
+    decideHostActionNotice({ codes: ["photo", "screening"], previousFingerprint: fp, lastAtMs: 0, nowMs: 1000 }),
+    "wait",
+  );
+  assert.equal(
+    decideHostActionNotice({
+      codes: ["photo", "screening"],
+      previousFingerprint: fp,
+      lastAtMs: 0,
+      nowMs: HOST_ACTION_WEEK_MS,
+    }),
+    "remind",
+  );
+  assert.equal(decideHostActionNotice({ codes: [], previousFingerprint: fp, lastAtMs: 0, nowMs: HOST_ACTION_WEEK_MS }), "clear");
+  assert.equal(hostActionEmailLive({ VERCEL_ENV: "production" }), true);
+  assert.equal(hostActionEmailLive({ VERCEL_ENV: "preview" }), false);
+  assert.equal(hostActionEmailLive({ VERCEL_ENV: "production", NODE_ENV: "test" }), false);
+  assert.equal(hostActionEmailLive({ VERCEL_ENV: "production", E2E_ROLE_FIXTURE: "1" }), false);
+  assert.equal(hostActionEmailLive({ VERCEL_ENV: "production", CI: "true" }), false);
+  assert.ok(contrast("#7c2d12", "#fffbeb") >= 4.5);
+  assert.ok(contrast("#7f1d1d", "#fff5f5") >= 4.5);
+  const list = src("src/components/host-action-list.tsx");
+  assert.match(list, /AlertTriangle/);
+  assert.match(list, /ShieldAlert/);
+  assert.match(list, /hostActionLabel/);
+  assert.match(list, /Fix this|actionFix/);
+  assert.match(src("src/lib/server/host-action.ts"), /hostActionEmailLive/);
+  assert.match(src("src/routes/api/unsubscribe.ts"), /hl\./);
 });

@@ -31,6 +31,13 @@ export type CentreSection = (typeof CENTRE_SECTIONS)[number];
 export type GuideSection = (typeof GUIDE_SECTIONS)[number];
 export type HostSection = CentreSection | GuideSection;
 
+export function isHostSection(value: string | null | undefined): value is HostSection {
+  return (
+    (CENTRE_SECTIONS as readonly string[]).includes(value || "") ||
+    (GUIDE_SECTIONS as readonly string[]).includes(value || "")
+  );
+}
+
 export type HostParentPart =
   | "facility"
   | "financial"

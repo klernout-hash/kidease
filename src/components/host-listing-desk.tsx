@@ -24,15 +24,27 @@ export function HostListingsDesk({
   listings,
   onSaved,
   onOpenChange,
+  initialSection,
+  initialCentre,
 }: {
   listings: Daycare[];
   onSaved: () => void | Promise<void>;
   onOpenChange?: (open: boolean) => void;
+  initialSection?: HostSection | null;
+  initialCentre?: string | null;
 }) {
   const { locale } = useCopy();
   const copy = hostCopy(locale);
   const [openId, setOpenId] = useState<string | null>(null);
   const open = listings.find((row) => row.id === openId) ?? null;
+
+  useEffect(() => {
+    if (!initialSection || !listings.length) return;
+    const id = listings.some((row) => row.id === initialCentre) ? initialCentre : listings[0]?.id;
+    if (!id) return;
+    setOpenId(id);
+    onOpenChange?.(true);
+  }, [initialSection, initialCentre, listings, onOpenChange]);
 
   function choose(id: string | null) {
     setOpenId(id);
@@ -60,6 +72,7 @@ export function HostListingsDesk({
         daycare={open}
         onBack={() => choose(null)}
         onSaved={onSaved}
+        initialSection={open.id === (initialCentre || listings[0]?.id) ? initialSection : null}
       />
     );
   }
@@ -112,15 +125,17 @@ function HostEditor({
   daycare,
   onBack,
   onSaved,
+  initialSection,
 }: {
   daycare: Daycare;
   onBack: () => void;
   onSaved: () => void | Promise<void>;
+  initialSection?: HostSection | null;
 }) {
   const { t, locale } = useCopy();
   const copy = hostCopy(locale);
   const [tab, setTab] = useState<"centre" | "guide">("centre");
-  const [section, setSection] = useState<HostSection | null>(null);
+  const [section, setSection] = useState<HostSection | null>(initialSection ?? null);
   const [guide, setGuide] = useState<FamilyGuide | null>(null);
 
   useEffect(() => {

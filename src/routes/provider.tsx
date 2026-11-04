@@ -99,6 +99,9 @@ import { DaycareDeskHome } from "@/components/daycare-desk-home";
 import { HostCalendarDesk } from "@/components/host-calendar-desk";
 import { HostListingsDesk } from "@/components/host-listing-desk";
 import { HostTodayHome } from "@/components/host-today-home";
+import { hostSectionFromFocus } from "@/lib/host-action";
+import { isHostSection } from "@/lib/host-listing";
+import { syncHostActionNotices } from "@/lib/server/host-action";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 
 const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "tours", "calendar", "licence", "contract", "promote", "employees", "screening", "staff", "stories", "sites", "learning", "hours", "tools"];
@@ -138,7 +141,7 @@ export function providerHead() {
 }
 
 export function providerValidateSearch(s: Record<string, unknown>) {
-    const out: { desk?: DaycareDesk; preview?: "support"; claimed?: boolean; focus?: ListingCoachFocus; centre?: string } = {};
+    const out: { desk?: DaycareDesk; preview?: "support"; claimed?: boolean; focus?: ListingCoachFocus; centre?: string; section?: string } = {};
     const desk = typeof s.desk === "string" ? s.desk : "";
     if (DESKS.includes(desk as DaycareDesk)) out.desk = desk as DaycareDesk;
     if (s.preview === "support") out.preview = "support";
@@ -146,6 +149,7 @@ export function providerValidateSearch(s: Record<string, unknown>) {
     const focus = typeof s.focus === "string" ? s.focus : "";
     if (COACH_FOCUS.has(focus as ListingCoachFocus)) out.focus = focus as ListingCoachFocus;
     if (typeof s.centre === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(s.centre)) out.centre = s.centre;
+    if (typeof s.section === "string" && isHostSection(s.section)) out.section = s.section;
   return out;
 }
 
@@ -177,6 +181,10 @@ export function ProviderPage() {
   const centreOwner = session?.centreOwner !== false;
   const hostListing = session?.hostListing === true;
   const [listingEditorOpen, setListingEditorOpen] = useState(false);
+  useEffect(() => {
+    if (!hostListing || !user?.id) return;
+    void syncHostActionNotices().catch(() => undefined);
+  }, [hostListing, user?.id]);
   const search = useSearch({ strict: false }) as ReturnType<typeof providerValidateSearch>;
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -540,7 +548,13 @@ export function ProviderPage() {
         <HostCalendarDesk listings={deskListings} onSaved={() => void load()} />
       ) : null}
       {desk === "listings" && hostListing ? (
-        <HostListingsDesk listings={deskListings} onSaved={() => void load()} onOpenChange={setListingEditorOpen} />
+        <HostListingsDesk
+          listings={deskListings}
+          onSaved={() => void load()}
+          onOpenChange={setListingEditorOpen}
+          initialSection={search.section && isHostSection(search.section) ? search.section : hostSectionFromFocus(search.focus)}
+          initialCentre={search.centre}
+        />
       ) : null}
       {desk === "listings" && !hostListing ? <AgeOpenSpotsDesk listings={deskListings.map((row) => ({ id: row.id, name: row.name }))} /> : null}
       {desk === "listings" && !hostListing ? (

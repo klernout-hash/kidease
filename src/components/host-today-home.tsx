@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { ActionRequiredBanner } from "@/components/listing-readiness-coach";
+import { HostActionList } from "@/components/host-action-list";
 import { Button } from "@/components/ui/button";
 import { WaitlistPulseButton } from "@/components/waitlist-pulse-button";
 import { confirmAction } from "@/lib/success-confirm";
@@ -61,7 +61,7 @@ export function HostTodayHome({
   return (
     <div className="space-y-3" data-ke="host-today">
       <p className="text-sm text-muted">{copy.todayLead}</p>
-      <ActionRequiredBanner listings={listings} />
+      <HostActionList listings={listings} />
       <section className="rounded-xl bg-surface p-4 ring-1 ring-border" data-ke="host-confirm-spots">
         <h2 className="font-display text-xl">{listings.length > 1 ? copy.pickCentre : centre.name}</h2>
         {listings.length > 1 ? (

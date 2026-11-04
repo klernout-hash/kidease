@@ -28,6 +28,11 @@ export type HostCopy = {
   spotsCount: string;
   closed: string;
   todayLead: string;
+  actionRequired: string;
+  actionLead: string;
+  actionFix: string;
+  actionEmail: string;
+  actionEmailLead: string;
   waitlistSummary: string;
   waitlistNone: string;
   statsViews: string;
@@ -94,6 +99,11 @@ const en: HostCopy = {
   spotsCount: "{n} spots",
   closed: "Closed",
   todayLead: "What needs you today.",
+  actionRequired: "Action required",
+  actionLead: "Each line says what is missing. Fix this opens that part of the listing.",
+  actionFix: "Fix this",
+  actionEmail: "Email me when the listing needs something",
+  actionEmailLead: "An account notice, at most once a week. You can turn this off here or from the email.",
   waitlistSummary: "{n} families on the waitlist",
   waitlistNone: "No one is on the waitlist yet",
   statsViews: "Views",
@@ -160,6 +170,11 @@ const fr: HostCopy = {
   spotsCount: "{n} places",
   closed: "Fermé",
   todayLead: "Ce qui vous attend aujourd'hui.",
+  actionRequired: "Action requise",
+  actionLead: "Chaque ligne dit ce qui manque. Corriger ouvre cette partie de la fiche.",
+  actionFix: "Corriger",
+  actionEmail: "M'écrire quand la fiche a besoin de quelque chose",
+  actionEmailLead: "Un avis de compte, au plus une fois par semaine. Vous pouvez l'arrêter ici ou dans le courriel.",
   waitlistSummary: "{n} familles sur la liste d'attente",
   waitlistNone: "Personne sur la liste d'attente",
   statsViews: "Vues",
