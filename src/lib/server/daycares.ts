@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { sealPublicHomes } from "@/lib/server/home-address-privacy";
-import { eceJobsEnabled, reviewReportsEnabled } from "@/lib/features";
+import { eceJobsEnabled, hostListingEnabled, reviewReportsEnabled } from "@/lib/features";
+import { patchAvailabilityMonth } from "@/lib/host-calendar";
 import { filterByLocationLock, resolveLocationLock } from "@/lib/location-lock";
 import { cardSortKm, includeCardInRadius } from "@/lib/card-distance";
 import { catchmentMatch, clampRadiusKm, compareProximity, recommendedRank } from "@/lib/proximity";
@@ -969,10 +970,30 @@ export const getDaycare = createServerFn({ method: "GET" })
       const mainReady = stampHidden(withInboxReady(mainStamped[0] ?? daycare));
       const [mainPinned] = await stampPaidPlacement([mainReady]);
       const nearbyPinned = await stampPaidPlacement(nearbyStamped);
+      let publicDaycare = mainPinned ?? mainReady;
+      let familyGuide: { dropoff: string; bring: string; handbook: string } | null = null;
+      if (hostListingEnabled()) {
+        const { readPublicHostDay } = await import("@/lib/server/host-calendar");
+        const extra = await readPublicHostDay(sql, publicDaycare).catch(() => null);
+        if (extra?.spots) {
+          publicDaycare = {
+            ...publicDaycare,
+            spotsInfant: extra.spots.infant,
+            spotsToddler: extra.spots.toddler,
+            spotsPreschool: extra.spots.preschool,
+            availabilityKnown: true,
+            lastVacancyUpdatedAt: extra.spots.updatedAt || publicDaycare.lastVacancyUpdatedAt,
+            spotsUpdatedAt: extra.spots.updatedAt || publicDaycare.spotsUpdatedAt,
+          };
+          availability = patchAvailabilityMonth(availability, extra.month, extra.spots);
+        }
+        familyGuide = extra?.familyGuide ?? null;
+      }
       return sealPublicHomes({
-        daycare: mainPinned ?? mainReady,
+        daycare: publicDaycare,
         reviews: mapReviews(reviews),
         availability,
+        familyGuide,
         nearby: nearbyPinned,
         jobs,
         inspections,
@@ -989,6 +1010,7 @@ export const getDaycare = createServerFn({ method: "GET" })
         daycare: catalogPinned ?? catalogDaycareOut,
         reviews: [] as Review[],
         availability: catalogAvailability(found),
+        familyGuide: null,
         nearby: catalogNearby,
         jobs: [] as CentreJobPost[],
         inspections: [] as PublicInspection[],

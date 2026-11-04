@@ -78,6 +78,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "today", label: "Today", hint: "What needs you now", labelKey: "todayHome", hintKey: "deskNavTodayHint", href: "/provider", search: { desk: "today" } },
     { id: "messages", label: "Messages", hint: "Parent inquiries + tours", labelKey: "messages", hintKey: "deskNavMessagesHint", href: "/inbox", search: { view: "centre" } },
     { id: "tours", label: "Tour times", hint: "When families can visit", labelKey: "tourTimes", hintKey: "deskNavToursHint", href: "/provider", search: { desk: "tours" } },
+    { id: "calendar", label: "Calendar", hint: "Open spots by day", labelKey: "navCalendar", href: "/provider", search: { desk: "calendar" } },
     { id: "listings", label: "Listings", hint: "Spots, photos, fees", labelKey: "deskNavListings", hintKey: "deskNavListingsHint", href: "/provider", search: { desk: "listings" } },
     { id: "requests", label: "Requests", hint: "Tours, waitlist, and spots", labelKey: "navRequestsShort", hintKey: "deskNavRequestsHint", href: "/provider", search: { desk: "requests" } },
     { id: "employees", label: "Employees", hint: "Add an employee", labelKey: "employeesTitle", hintKey: "deskNavEmployeesHint", href: "/provider", search: { desk: "employees" } },
@@ -133,6 +134,7 @@ export type DaycareDesk =
   | "money"
   | "listings"
   | "tours"
+  | "calendar"
   | "licence"
   | "contract"
   | "promote"
@@ -151,6 +153,7 @@ export function providerNavSearch(id: string): { desk: DaycareDesk } {
     id === "money" ||
     id === "listings" ||
     id === "tours" ||
+    id === "calendar" ||
     id === "licence" ||
     id === "contract" ||
     id === "promote" ||
@@ -244,6 +247,8 @@ type DeskNavOpts = {
   familyVault?: boolean;
   /** Tour calendar page. Hidden until FEATURE_TOUR_CALENDAR is on. */
   tourCalendar?: boolean;
+  /** Listing editor calendar. Hidden until FEATURE_HOST_LISTING is on. */
+  hostListing?: boolean;
 };
 
 /**
@@ -274,6 +279,8 @@ export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
     if (item.id === "centre-tools") return (opts?.centreTools ?? []).some((id) => PARENT_TOOL_IDS.has(id));
     if (item.id === "documents") return opts?.familyVault === true;
     if (item.id === "tour-calendar") return opts?.tourCalendar === true;
+    if (item.id === "calendar") return opts?.hostListing === true;
+    if (item.id === "tours" && opts?.hostListing === true) return false;
     if (item.id === "promote" || item.id === "subscription") return false;
     if (item.id === "upgrade") return opts?.subscriptionsEnabled === true;
     if (OWNER_ONLY_NAV.has(item.id) && opts?.centreOwner === false) return false;
@@ -322,7 +329,7 @@ export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
     { id: "settings", label: "Settings", labelKey: "settings", open: true, itemIds: ["notify-prefs", "security", "email-sms"] },
   ],
   daycare: [
-    { id: "desk", label: "Daycare desk", labelKey: "daycareDeskTitle", open: true, itemIds: ["today", "requests", "tours", "listings", "messages"] },
+    { id: "desk", label: "Daycare desk", labelKey: "daycareDeskTitle", open: true, itemIds: ["today", "calendar", "requests", "tours", "listings", "messages"] },
     { id: "business", label: "Business", labelKey: "navBusiness", open: true, itemIds: ["money", "promote"] },
     { id: "team", label: "Team", labelKey: "navTeam", itemIds: ["employees", "hours", "screening", "learning", "tools"] },
     { id: "compliance", label: "Compliance", labelKey: "navCompliance", itemIds: ["licence", "contract"] },
