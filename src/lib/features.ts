@@ -54,6 +54,16 @@ export function providerInsightsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_PROVIDER_INSIGHTS", env);
 }
 
+/** Messages support thread. Off. Nothing is created or sent until this is on. */
+export function supportDeskEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_SUPPORT_CHAT", env);
+}
+
+/** Owner SMS replies into a support thread. Off. Also needs FEATURE_SUPPORT_CHAT. */
+export function supportSmsReplyEnabled(env?: EnvMap): boolean {
+  return supportDeskEnabled(env) && evaluateFeatureFlag("FEATURE_SUPPORT_SMS_REPLY", env);
+}
+
 /** Honest copy when SHOW_PAY_CTAS is off. Stripe / plan code stays compiled. */
 export const PLANS_NOT_OFFERED_YET =
   "Plans are not offered on this site yet. Listing and claim stay free.";
