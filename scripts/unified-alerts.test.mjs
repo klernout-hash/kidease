@@ -67,7 +67,7 @@ test("preview and tests never send, and push is not call push", () => {
   assert.doesNotMatch(server, /sendSms/);
   assert.match(server, /pushArmed/);
   assert.match(server, /sendPushNotification/);
-  assert.match(src("migrations/0171_unified_alerts.sql"), /drop table if exists unified_alert_events/);
+  assert.match(src("migrations/0173_unified_alerts.sql"), /drop table if exists unified_alert_events/);
 });
 
 test("every alert has English and French copy and no street or endorsement", () => {
