@@ -74,6 +74,11 @@ export function topRatedEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_TOP_RATED_BADGE", env);
 }
 
+/** Mobile Where / When / Who search. Off. The current search stays until this is on. */
+export function mobileSearchV2Enabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_MOBILE_SEARCH_V2", env);
+}
+
 /** Honest copy when SHOW_PAY_CTAS is off. Stripe / plan code stays compiled. */
 export const PLANS_NOT_OFFERED_YET =
   "Plans are not offered on this site yet. Listing and claim stay free.";
