@@ -150,6 +150,13 @@ export const createMultiSpotRequest = createServerFn({ method: "POST" })
         skipped.push({ daycareId, reason: "cap" });
         continue;
       }
+      const { assertChatNotBlocked } = await import("@/lib/server/safety");
+      try {
+        await assertChatNotBlocked(sql, { senderId: context.userId, parentUserId: context.userId, daycareId });
+      } catch {
+        skipped.push({ daycareId, reason: "blocked" });
+        continue;
+      }
       const d = mapDaycare(row);
       const ageGroup = ageGroupFromMonths(monthsBetween(birthdate));
       const priceMap = { infant: d.infantMonthly, toddler: d.toddlerMonthly, preschool: d.preschoolMonthly };

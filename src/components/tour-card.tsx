@@ -8,6 +8,7 @@ import { localePath } from "@/lib/locale-path";
 import { listCentreTourWindows } from "@/lib/server/tour-calendar";
 import { formatPreferredTimes } from "@/lib/threads";
 import { PipelineBadge } from "@/components/pipeline-badge";
+import { BlockFamilyButton } from "@/components/block-user";
 import { useCopy } from "@/lib/use-copy";
 import { canCancelTour, canProposeTourTime, declineReasonValid } from "@/lib/tour-hold";
 import { formatTourSlotRange, type PublicTourSlot } from "@/lib/tour-calendar";
@@ -149,6 +150,9 @@ export function TourCard({
         <TourStatusPill status={tour.status} />
       </div>
       {tour.parentNote ? <p className="mt-2 text-sm text-muted">{tour.parentNote}</p> : null}
+      {canRespond && tour.parentUserId ? (
+        <BlockFamilyButton parentUserId={tour.parentUserId} daycareId={tour.daycareId} />
+      ) : null}
       {tour.centreNote ? (
         <p className="mt-2 text-sm text-muted">
           {t("tourCentreNote")}: {tour.centreNote}
