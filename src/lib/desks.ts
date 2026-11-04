@@ -720,6 +720,8 @@ export type SessionDesks = {
   familyVault?: boolean;
   /** Tour calendar nav. Off unless FEATURE_TOUR_CALENDAR is on. */
   tourCalendar?: boolean;
+  /** Listing editor and day calendar. Off unless FEATURE_HOST_LISTING is on. */
+  hostListing?: boolean;
   /** Insights nav. Off unless FEATURE_PROVIDER_INSIGHTS is on. */
   providerInsights?: boolean;
   /** Shared menu badges. One payload so every desk shows the same numbers. */

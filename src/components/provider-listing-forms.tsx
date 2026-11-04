@@ -35,6 +35,8 @@ import { useAiFeatureFlag } from "@/lib/ai/use-ai-flag";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { checkListingPhoto } from "@/lib/server/photo-check";
 import { ProviderParentFields, parentDeskFromDaycare } from "@/components/provider-parent-fields";
+import { parentPartFor, type FamilyGuide, type HostSection } from "@/lib/host-listing";
+import { hostCopy } from "@/lib/host-listing-copy";
 import { WaitlistPulseButton } from "@/components/waitlist-pulse-button";
 import { useCopy } from "@/lib/use-copy";
 import { standardAgeLabelsForListing } from "@/lib/standard-age-groups";
@@ -328,10 +330,17 @@ export function CapacityForm({
   daycare,
   onSaved,
   mode,
+  focus,
+  guide,
+  onGuide,
 }: {
   daycare: Daycare;
   onSaved: () => void;
   mode: "listing" | "licence";
+  /** One editor page. Omit to keep the full listing form. */
+  focus?: HostSection;
+  guide?: FamilyGuide | null;
+  onGuide?: (next: FamilyGuide) => Promise<void>;
 }) {
   const { t, locale } = useCopy();
   const reauth = useReauthPrompt();
@@ -351,6 +360,18 @@ export function CapacityForm({
   const [licenseBusy, setLicenseBusy] = useState(false);
   const licencePrompting = useRef(false);
   const writerApplied = useRef(false);
+  const [guideNotes, setGuideNotes] = useState<FamilyGuide>(guide ?? { dropoff: "", bring: "", handbook: "" });
+  const guideKey = `${guide?.dropoff ?? ""}\n${guide?.bring ?? ""}\n${guide?.handbook ?? ""}`;
+  const [guideKeyApplied, setGuideKeyApplied] = useState(guideKey);
+  if (guideKey !== guideKeyApplied) {
+    setGuideKeyApplied(guideKey);
+    setGuideNotes(guide ?? { dropoff: "", bring: "", handbook: "" });
+  }
+  const see = (id: HostSection) => !focus || focus === id;
+  const guideDirty =
+    (focus === "dropoff" && guideNotes.dropoff !== (guide?.dropoff ?? "")) ||
+    (focus === "bring" && guideNotes.bring !== (guide?.bring ?? "")) ||
+    (focus === "handbook" && guideNotes.handbook !== (guide?.handbook ?? ""));
   if (appliedRev !== serverRev) {
     setAppliedRev(serverRev);
     setState(listingFormState(daycare));
@@ -400,7 +421,8 @@ export function CapacityForm({
     JSON.stringify(state.financial) !== JSON.stringify(savedParent.financial) ||
     JSON.stringify(state.curriculumTags) !== JSON.stringify(savedParent.curriculumTags) ||
     JSON.stringify(state.safetyFeatures) !== JSON.stringify(savedParent.safetyFeatures) ||
-    JSON.stringify(state.amenityKeys) !== JSON.stringify(savedParent.amenityKeys);
+    JSON.stringify(state.amenityKeys) !== JSON.stringify(savedParent.amenityKeys) ||
+    guideDirty;
   const draft = {
     ...daycare,
     hours: state.hours,
@@ -552,6 +574,19 @@ export function CapacityForm({
       onSubmit={(e) => {
         e.preventDefault();
         if (saving) return;
+        const guideOnly = focus === "bring" || focus === "handbook";
+        if (guideOnly) {
+          if (!onGuide) return;
+          setSaving(true);
+          void onGuide(guideNotes)
+            .then(() => {
+              confirmAction(t, "listingEdits");
+              onSaved();
+            })
+            .catch((err) => toast.error(err instanceof Error ? err.message : t("actionFailed")))
+            .finally(() => setSaving(false));
+          return;
+        }
         setSaving(true);
         void updateListing({
           data: {
@@ -598,7 +633,8 @@ export function CapacityForm({
           },
         })
           .then(() => onSaved())
-          .then(() => {
+          .then(async () => {
+            if (focus === "dropoff" && onGuide) await onGuide(guideNotes);
             const photo = galleryDirty;
             const spots =
               state.spotsInfant !== daycare.spotsInfant ||
@@ -681,8 +717,14 @@ export function CapacityForm({
         </>
       ) : (
         <>
+          {!focus || focus === "health" ? (
+            <>
           <ListingReadinessCoach item={draft} variant="editor" />
           <ListingHealthPanel item={{ ...draft, detailsReady: complete.ready, completenessMissing: complete.missing }} />
+            </>
+          ) : null}
+          {see("photos") ? (
+          <>
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h3 id="listing-health-photo" className="font-display text-xl">{t("storefrontPhoto")}</h3>
             <p data-ke="listing-photo-count" className="text-sm tabular-nums text-muted">
@@ -818,6 +860,10 @@ export function CapacityForm({
               ))}
             </div>
           ) : null}
+          </>
+          ) : null}
+          {!focus ? (
+          <>
           <h3 className="font-display text-xl">{t("businessDetails")}</h3>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label={t("centreName")} value={state.name} onChange={(v) => setState({ ...state, name: v })} />
@@ -906,9 +952,128 @@ export function CapacityForm({
             </Button>
             <WaitlistPulseButton daycareId={daycare.id} onPulsed={onSaved} />
           </div>
+          </>
+          ) : (
+          <>
+          {see("name") ? <Field label={t("centreName")} value={state.name} onChange={(v) => setState({ ...state, name: v })} /> : null}
+          {see("location") || see("dropoff") ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {see("location") ? <Field label={t("addressLabel")} value={state.address} onChange={(v) => setState({ ...state, address: v })} /> : null}
+              {see("location") ? <HomeAddressSetting daycare={daycare} /> : null}
+              {see("location") ? <Field label={t("cityLabel")} value={state.city} onChange={(v) => setState({ ...state, city: v })} /> : null}
+              {see("location") ? (
+                <div id="listing-health-province">
+                  <Field label={t("provinceLabel")} value={state.province} onChange={(v) => setState({ ...state, province: v })} />
+                </div>
+              ) : null}
+              {see("location") ? <Field label={t("postalLabel")} value={state.postalCode} onChange={(v) => setState({ ...state, postalCode: v })} /> : null}
+              <div id="listing-health-hours">
+                <Field label={t("hours")} value={state.hours} onChange={(v) => setState({ ...state, hours: v })} />
+              </div>
+            </div>
+          ) : null}
+          {see("contact") ? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label={t("phoneLabel")} value={state.phone} onChange={(v) => setState({ ...state, phone: v })} />
+              <Field label={t("contactEmail")} value={state.email} onChange={(v) => setState({ ...state, email: v })} />
+              {daycare.website ? <p className="text-sm text-muted sm:col-span-2">{daycare.website}</p> : null}
+            </div>
+          ) : null}
+          {see("ages") ? (
+            <div id="listing-health-ages" className="grid grid-cols-2 gap-3 sm:grid-cols-3" data-ke="listing-spots">
+              <Num label={t("spotsInfant")} value={state.spotsInfant} onChange={(n) => setState({ ...state, spotsInfant: n })} />
+              <Num label={t("spotsToddler")} value={state.spotsToddler} onChange={(n) => setState({ ...state, spotsToddler: n })} />
+              <Num label={t("spotsPreschool")} value={state.spotsPreschool} onChange={(n) => setState({ ...state, spotsPreschool: n })} />
+              <Num label={t("ageMin")} value={state.ageMinMonths} onChange={(n) => setState({ ...state, ageMinMonths: n })} />
+              <Num label={t("ageMax")} value={state.ageMaxMonths} onChange={(n) => setState({ ...state, ageMaxMonths: n })} />
+            </div>
+          ) : null}
+          {see("fees") ? (
+            <div id="listing-health-fees" className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <Num label={t("infantFee")} value={state.infantMonthly} onChange={(n) => setState({ ...state, infantMonthly: n })} />
+              <Num label={t("toddlerFee")} value={state.toddlerMonthly} onChange={(n) => setState({ ...state, toddlerMonthly: n })} />
+              <Num label={t("preschoolFee")} value={state.preschoolMonthly} onChange={(n) => setState({ ...state, preschoolMonthly: n })} />
+            </div>
+          ) : null}
+          {see("languages") ? (
+            <ListingCultureFields
+              value={{
+                staffLanguages: state.staffLanguages,
+                culturalPrograms: state.culturalPrograms,
+                culturalTeamNote: state.culturalTeamNote,
+              }}
+              onChange={(culture) => setState({ ...state, ...culture })}
+            />
+          ) : null}
+          {see("safety") ? (
+            <>
+              <Field label={t("licenceNo")} value={state.licenseNumber} onChange={(v) => setState({ ...state, licenseNumber: v })} />
+              <label className="block text-sm font-medium">
+                {t("licensePhoto")}
+                <input
+                  type="file"
+                  accept="application/pdf,image/jpeg,image/png,image/webp"
+                  className="mt-2 block w-full text-sm"
+                  data-ke="licence-file"
+                  disabled={licenseBusy}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (!file || licenseBusy) return;
+                    void (async () => {
+                      const result = await sendLicence(file);
+                      if (result !== "confirm") return;
+                      const ok = await promptForLicence();
+                      if (!ok) return;
+                      await sendLicence(file);
+                    })();
+                  }}
+                />
+              </label>
+            </>
+          ) : null}
+          {focus === "dropoff" || focus === "bring" || focus === "handbook" ? (
+            <label className="block text-sm">
+              {hostCopy(locale).guideDropoff && focus === "dropoff"
+                ? hostCopy(locale).guideDropoff
+                : focus === "bring"
+                  ? hostCopy(locale).guideBring
+                  : hostCopy(locale).guideHandbook}
+              <textarea
+                className="mt-1 min-h-28 w-full rounded-md border border-border bg-bg px-3 py-2"
+                value={focus === "dropoff" ? guideNotes.dropoff : focus === "bring" ? guideNotes.bring : guideNotes.handbook}
+                maxLength={2000}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setGuideNotes((current) =>
+                    focus === "dropoff"
+                      ? { ...current, dropoff: value }
+                      : focus === "bring"
+                        ? { ...current, bring: value }
+                        : { ...current, handbook: value },
+                  );
+                }}
+                onFocus={(event) => event.currentTarget.scrollIntoView({ block: "nearest" })}
+              />
+            </label>
+          ) : null}
+          {focus && parentPartFor(focus) !== "skip" ? (
+            <ProviderParentFields
+              part={parentPartFor(focus)}
+              daycareId={daycare.id}
+              website={daycare.website}
+              onWriterApplied={() => {
+                writerApplied.current = true;
+              }}
+              value={parentDeskFromDaycare({ ...daycare, ...state, amenities: state.amenityKeys.join(",") })}
+              onChange={(parent) => setState({ ...state, ...parent })}
+            />
+          ) : null}
+          </>
+          )}
         </>
       )}
-      <Button type="submit" variant="secondary" disabled={!dirty || saving}>
+      <Button type="submit" variant={focus ? "primary" : "secondary"} disabled={!dirty || saving}>
         {t("saveChanges")}
       </Button>
     </form>
