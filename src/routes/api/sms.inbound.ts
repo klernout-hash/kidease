@@ -52,6 +52,14 @@ async function run(request: Request) {
       userAgent: request.headers.get("user-agent"),
     });
   }
+  const { supportSmsReplyEnabled } = await import("@/lib/features");
+  if (supportSmsReplyEnabled()) {
+    const { maybeRecordSupportOwnerReply } = await import("@/lib/server/support-desk");
+    const recorded = await maybeRecordSupportOwnerReply(params.Body || params.body || "").catch(() => false);
+    if (recorded) {
+      return new Response(twimlEmpty(), { status: 200, headers: { "Content-Type": "text/xml" } });
+    }
+  }
   const live = liveAgentSmsDecision(params.From || params.from, params.Body || params.body || "", liveChatAgentPhone());
   if (live.route && opt !== "stop" && opt !== "start" && opt !== "help") {
     const { routeAgentSms } = await import("@/lib/server/support-chat");

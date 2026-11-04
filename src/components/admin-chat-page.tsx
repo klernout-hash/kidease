@@ -19,6 +19,7 @@ import { FEATURE_FLAG_CATALOG } from "@/lib/flags";
 import { FCM_LAB_NEXT_STEPS } from "@/lib/push";
 import { TWILIO_VIDEO_LAB_NEXT_STEPS } from "@/lib/video";
 import { canVisitDesk } from "@/lib/desks";
+import { AdminSupportDesk } from "@/components/support-desk-panel";
 
 export function AdminChatPage() {
   const { user, isPending } = useCurrentUserState();
@@ -78,6 +79,9 @@ export function AdminChatPage() {
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">Scaffold only</p>
             <h2 className="mt-2 font-display text-2xl">Chat lab</h2>
+            <div className="mt-4">
+              <AdminSupportDesk />
+            </div>
             <p className="mt-2 max-w-xl text-sm text-muted">{CHAT_SCAFFOLD_MESSAGE}</p>
             {lab === null ? <p className="mt-3 text-sm text-warn">{CHAT_SCAFFOLD_EMPTY}</p> : null}
           </div>
