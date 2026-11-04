@@ -1,7 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Building2, Calendar, ClipboardCheck, ClipboardList, Heart, Home, LifeBuoy, Menu, MessageCircle, Search } from "lucide-react";
 import { useEffect, useState } from "react";
-import { RoleSwitchPill } from "@/components/role-switch-pill";
 import { CountBadge } from "@/components/count-badge";
 import { useSessionDesks } from "@/components/session-desks";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -94,7 +93,6 @@ export function AppTabBar() {
 
   return (
     <>
-      <RoleSwitchPill />
       <nav
         data-ke="app-tab-bar"
         data-bar={storeTabs ? "store" : kind}

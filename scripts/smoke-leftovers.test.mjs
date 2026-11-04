@@ -18,12 +18,17 @@ test("daycare account settings stays on the daycare profile", () => {
   assert.match(menu, /search=\{\{ tab: "children" \}\}/);
 });
 
-test("parent profile lists children and the phone switch sits in the page", () => {
+test("parent profile lists children and the role switch is a row, not a floating pill", () => {
   const account = src("src/routes/account.tsx");
+  const menu = src("src/components/app-menu-screen.tsx");
   const pill = src("src/components/role-switch-pill.tsx");
+  const tabs = src("src/components/app-tab-bar.tsx");
   assert.match(account, /<ProfileChildren /);
-  assert.match(account, /<RoleSwitchPill placement="flow" \/>/);
-  assert.match(pill, /placement === "fixed" && onAccount/);
+  assert.match(account, /<RoleSwitchPill \/>/);
+  assert.match(menu, /<RoleSwitchPill \/>/);
+  assert.doesNotMatch(tabs, /RoleSwitchPill/);
+  assert.match(pill, /data-ke="role-switch-row"/);
+  assert.doesNotMatch(pill, /fixed left-1\/2/);
   assert.match(src("src/components/profile-children.tsx"), /profileAddChild/);
   assert.match(src("src/components/profile-children.tsx"), /MAX_CHILDREN_PER_PARENT/);
   assert.match(src("src/routes/parent.tsx"), /initialChild/);

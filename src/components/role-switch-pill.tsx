@@ -1,22 +1,22 @@
 import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { KidBlocks, KidFamily } from "@/components/kid-art";
 import { useSessionDesks } from "@/components/session-desks";
 import { roleSwitchTarget } from "@/lib/app-menu";
 import { parentDeskPath, providerDeskPath } from "@/lib/desk-nav";
 import { headerDesks, highlightDesk, parseDeskQuery, showDeskSwitcher } from "@/lib/desks";
-import { stripLocalePrefix } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 
 /**
- * One pill above the phone tab bar for people who have both Parent and Daycare.
+ * Role switch as a normal row in Menu and Profile.
  * It only switches the open desk. It does not change the account role.
+ * The old floating pill sat on top of the tab bar and covered desk content.
  */
-export function RoleSwitchPill({ placement = "fixed" }: { placement?: "fixed" | "flow" }) {
+export function RoleSwitchPill() {
   const { t } = useCopy();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const onAccount = stripLocalePrefix(pathname) === "/account";
   const queryDesk = useRouterState({
     select: (s) => parseDeskQuery((s.location.search as { desk?: unknown }).desk as string | undefined),
   });
@@ -36,15 +36,12 @@ export function RoleSwitchPill({ placement = "fixed" }: { placement?: "fixed" | 
     return () => window.clearTimeout(timer);
   }, [navigate, pathname, setSticky, switching]);
 
-  if (placement === "fixed" && onAccount) return null;
-  if (placement === "flow" && !onAccount) return null;
   if (!session || !showDeskSwitcher(session.desks, session.role, session.email)) return null;
   const desks = headerDesks(session.desks, session.role, session.email);
   const current = highlightDesk(pathname, sticky, queryDesk);
   const target = roleSwitchTarget(current, desks);
   if (!target && !switching) return null;
   const next = switching ?? target;
-  if (!next) return null;
 
   return (
     <>
@@ -52,18 +49,15 @@ export function RoleSwitchPill({ placement = "fixed" }: { placement?: "fixed" | 
         <button
           type="button"
           onClick={() => setSwitching(target)}
-          data-ke="role-switch-pill"
+          data-ke="role-switch-row"
           data-desk={target}
-          className={
-            placement === "flow"
-              ? "mb-4 inline-flex w-full max-w-full items-center justify-center whitespace-normal rounded-full bg-fg px-4 py-2 text-center text-sm font-semibold leading-snug text-bg min-h-11 touch-manipulation"
-              : "ke-app-only fixed left-1/2 z-40 hidden -translate-x-1/2 items-center justify-center rounded-full bg-fg px-4 text-sm font-semibold text-bg shadow-lg min-h-11 touch-manipulation bottom-[calc(4.75rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))] [[data-channel=app]_&]:inline-flex"
-          }
+          className="flex min-h-14 w-full items-center justify-between gap-3 border-b border-border px-1 text-left text-[15px] font-medium text-fg touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
         >
-          {t(target === "parent" ? "switchToParent" : "switchToDaycare")}
+          <span className="min-w-0 flex-1">{t(target === "parent" ? "switchToParent" : "switchToDaycare")}</span>
+          <ChevronRight className="size-4 shrink-0 text-muted" aria-hidden="true" />
         </button>
       ) : null}
-      {switching ? (
+      {next && switching ? (
         <div
           className="ke-screen-enter fixed inset-0 z-[80] flex flex-col items-center justify-center gap-4 bg-bg px-6 text-center"
           data-ke="mode-switch"

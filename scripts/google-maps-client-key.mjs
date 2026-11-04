@@ -1,23 +1,27 @@
 /**
  * Browser Google Maps key.
  *
- * The host env may keep VITE_GOOGLE_MAPS_API_KEY for a later switch back.
- * Public JavaScript receives it only when FEATURE_GOOGLE_MAPS or
- * VITE_GOOGLE_MAPS is on at build time. Maps stay on OpenFreeMap until then.
+ * Public JavaScript receives VITE_GOOGLE_MAPS_API_KEY only when the map
+ * provider is google (the default). VITE_MAP_PROVIDER=openfreemap, or the
+ * NEXT_PUBLIC_MAP_PROVIDER alias, keeps the key out of the client bundle.
+ * The value is never logged.
  */
 
-function flagOn(raw) {
-  const value = String(raw ?? "")
+const OPENFREE_MAP = new Set(["openfreemap", "osm", "maplibre", "openstreetmap"]);
+
+export function mapProviderFromEnv(env = {}) {
+  const raw = String(env.VITE_MAP_PROVIDER ?? env.NEXT_PUBLIC_MAP_PROVIDER ?? "")
     .trim()
     .toLowerCase();
-  return value === "1" || value === "true" || value === "on" || value === "yes";
+  if (OPENFREE_MAP.has(raw)) return "openfreemap";
+  return "google";
 }
 
 export function googleMapsBrowserEnabled(env = {}) {
-  return flagOn(env.FEATURE_GOOGLE_MAPS) || flagOn(env.VITE_GOOGLE_MAPS);
+  return mapProviderFromEnv(env) === "google";
 }
 
-/** Empty string unless the build flag is on. Never logs the key. */
+/** Empty string when this build is on OpenFreeMap. Never logs the key. */
 export function googleMapsBrowserKey(env = {}) {
   if (!googleMapsBrowserEnabled(env)) return "";
   return String(env.VITE_GOOGLE_MAPS_API_KEY || env.GOOGLE_MAPS_API_KEY || "").trim();

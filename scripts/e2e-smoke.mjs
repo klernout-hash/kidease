@@ -16,7 +16,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium, webkit } from "playwright";
 import { runIpadViewportPass } from "./ipad-viewports.mjs";
-import { runPhoneViewportPass, runMobileLayoutRegression } from "./phone-viewports.mjs";
+import { runPhoneViewportPass, runMobileLayoutRegression, runPhoneIssuePass } from "./phone-viewports.mjs";
 import { runFoldResizePass } from "./fold-resize.mjs";
 import { STORE_GROUP_NAMES, runStoreViewportPass } from "./store-viewports.mjs";
 import { runDesktopVisualPass } from "./desktop-visual.mjs";
@@ -1911,6 +1911,13 @@ try {
       runMobileLayoutRegression(browser, base).then((layoutProblems) => {
         record("mobile-layout-390", layoutProblems.length === 0, {
           note: layoutProblems.length ? layoutProblems.slice(0, 8).join(" | ") : "390x844 single nav, no overflow",
+        });
+      }),
+    );
+    firstWave.push(
+      runPhoneIssuePass(browser, base).then((issueProblems) => {
+        record("phone-issues-390", issueProblems.length === 0, {
+          note: issueProblems.length ? issueProblems.slice(0, 8).join(" | ") : "390 photos, back chrome, privacy, map, help",
         });
       }),
     );

@@ -121,10 +121,13 @@ test("Shell wires MenuLeafBack on leaf routes only; listing/auth keep their own 
   assert.match(shell, /MenuLeafBack/);
   assert.match(shell, /isMenuLeafPath\(pathname\)/);
   assert.match(back, /data-ke-menu-leaf-back/);
-  assert.match(back, /to=\{MENU_ROUTE\}/);
-  assert.match(back, /history\.canGoBack\(\)/);
-  assert.match(back, /router\.history\.back\(\)/);
+  assert.match(back, /MENU_ROUTE/);
   assert.match(back, /t\("backToMenu"\)/);
+  assert.match(back, /HistoryBack/);
+  const history = src("src/components/history-back.tsx");
+  assert.match(history, /history\.canGoBack\(\)/);
+  assert.match(history, /router\.history\.back\(\)/);
+  assert.match(history, /router\.history\.replace/);
   assert.match(copy, /backToMenu: "Back to menu"/);
   assert.match(copy, /backToMenu: "Retour au menu"/);
   assert.doesNotMatch(src("src/routes/index.tsx"), /MenuLeafBack/);

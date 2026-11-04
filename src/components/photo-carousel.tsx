@@ -50,7 +50,7 @@ export function PhotoCarousel({
   }
 
   return (
-    <div className={cn("relative overflow-hidden bg-surface-2", rounded, className)}>
+    <div className={cn("ke-photo-frame relative overflow-hidden bg-surface-2", rounded, className)}>
       <BuildingPhoto
         src={list[i]}
         eager={eager || priority}
