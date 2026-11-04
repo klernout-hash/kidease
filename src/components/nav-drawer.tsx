@@ -266,8 +266,6 @@ export function NavDrawer({
               <summary className={drawerSummaryClass}>KidEase</summary>
               <RoleNavLinks role={roleShown} paid={paidShown} appearance="drawer" onNavigate={onClose} />
             </details>
-          ) : showMenus ? (
-            <RoleNavLinks role={roleShown} paid={paidShown} appearance="drawer" onNavigate={onClose} />
           ) : null}
           {switcher ? (
             <div className="mb-3 md:hidden">

@@ -107,32 +107,29 @@ export function FooterMoreLinks({
 
   const links = groups.flatMap((group) => group.links);
   const title = fr ? "Plus" : "More";
-  const List = "nav";
 
   return (
-    <section data-ke="footer-more" data-role={chrome.role} className={appearance === "page" ? "mt-8" : "mt-2"}>
-      <h2 className={appearance === "page" ? "px-1 text-sm font-semibold text-fg" : "px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle"}>
+    <section data-ke="footer-more" data-role={chrome.role} className="mt-8">
+      <h2 className="px-1 text-sm font-semibold text-fg">
         {title}
       </h2>
-      <List aria-label={title} data-ke="mobile-menu-links" role={appearance === "drawer" ? "navigation" : undefined}>
+      <nav aria-label={title} data-ke="mobile-menu-links">
         {links.map((link) => (
           <MenuRow
             key={link.to}
             to={localePath(link.to, locale)}
             label={footerLinkLabel(link, t, locale)}
             icon={ICONS[link.to] ?? "help"}
-            appearance={appearance}
+            appearance="page"
             marker={`more-${link.to.replace(/^\//, "") || "home"}`}
             onClick={onNavigate}
           />
         ))}
-        {share ? <ShareKidEaseButton appearance={appearance === "drawer" ? "drawer" : "row"} onDone={onNavigate} /> : null}
-        {appearance === "page" ? (
-          <div className="mt-3 flex min-h-11 items-center gap-3 px-1">
-            <LanguageSelect className="w-full justify-start" />
-          </div>
-        ) : null}
-      </List>
+        {share ? <ShareKidEaseButton appearance="row" onDone={onNavigate} /> : null}
+        <div className="mt-3 flex min-h-11 items-center gap-3 px-1">
+          <LanguageSelect className="w-full justify-start" />
+        </div>
+      </nav>
       <p className="mt-4 px-1 text-xs leading-5 text-subtle" data-ke="more-company">
         © {new Date().getFullYear()} KidEase
         <span aria-hidden> · </span>
