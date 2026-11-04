@@ -1,5 +1,6 @@
 -- Listing gaps for the host desk. FEATURE_HOST_LISTING stays off.
 -- One row per daycare account and centre. Email is at most weekly.
+-- Reverse: migrations/down/0172_host_action_notices.sql
 
 create table if not exists host_action_notices (
   user_id text not null,

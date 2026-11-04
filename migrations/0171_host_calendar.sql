@@ -1,5 +1,6 @@
 -- Host listing calendar. FEATURE_HOST_LISTING stays off.
 -- A row is one centre day. Today's row is also copied onto the public spot counts.
+-- Reverse: migrations/down/0171_host_calendar.sql
 
 create table if not exists host_calendar_days (
   daycare_id text not null references daycares(id) on delete cascade,
