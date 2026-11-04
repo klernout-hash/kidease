@@ -184,6 +184,8 @@ export const en = {
     deskNavToursHint: "When families can visit",
     deskNavListings: "Listings",
     deskNavListingsHint: "Spots, photos, fees",
+    deskNavInsights: "Insights",
+    deskNavInsightsHint: "Views, tours, and spots",
     deskNavMore: "More",
     deskNavRequestsHint: "Tours, waitlist, and spots",
     deskNavEmployeesHint: "Add an employee",

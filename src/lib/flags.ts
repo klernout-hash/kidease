@@ -100,6 +100,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_CHILD_PORTFOLIO_GATE",
   "FEATURE_COPARENT_EMAIL",
   "FEATURE_CARE_REMINDERS",
+  "FEATURE_PROVIDER_INSIGHTS",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -293,6 +294,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_COPARENT_EMAIL: false,
   /** Drop-off and pick-up reminders. Off. In-app, and phone alerts only when FEATURE_PUSH is already on. No SMS. */
   FEATURE_CARE_REMINDERS: false,
+  /** Daycare Insights tab. Off. Real rows only. No area average under 5 centres. */
+  FEATURE_PROVIDER_INSIGHTS: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -840,6 +843,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "A parent sets drop-off and pick-up times for each child. Each login has its own reminders. In-app notice, and a phone alert only when FEATURE_PUSH is already on. No SMS. Off.",
+  },
+  {
+    key: "FEATURE_PROVIDER_INSIGHTS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Insights on the daycare desk: views, saves, requests, reply time, waitlist, enrolment, tours, attendance, staff, and reviews. Default off. Area averages stay hidden under 5 centres. No invented numbers.",
   },
 ];
 

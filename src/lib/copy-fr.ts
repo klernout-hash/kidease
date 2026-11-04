@@ -185,6 +185,8 @@ export const fr = {
     deskNavToursHint: "Quand les familles peuvent visiter",
     deskNavListings: "Fiches",
     deskNavListingsHint: "Places, photos, tarifs",
+    deskNavInsights: "Statistiques",
+    deskNavInsightsHint: "Vues, visites et places",
     deskNavMore: "Plus",
     deskNavRequestsHint: "Visites, liste d’attente et places",
     deskNavEmployeesHint: "Ajouter un employé",

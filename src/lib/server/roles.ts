@@ -25,6 +25,7 @@ import {
   staffTimesheetsEnabled,
   centreToolIds,
   subscriptionsEnabled,
+  providerInsightsEnabled,
   tourCalendarEnabled,
 } from "@/lib/features";
 import {
@@ -344,6 +345,7 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
     centreTools: centreToolIds() as string[],
     familyVault: familyVaultEnabled(),
     tourCalendar: tourCalendarEnabled(),
+    providerInsights: providerInsightsEnabled(),
     attention,
     restoreUntil,
     viewAs: viewing,

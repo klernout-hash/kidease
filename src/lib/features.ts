@@ -49,6 +49,11 @@ export function providerSubscriptionsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_PROVIDER_SUBSCRIPTIONS", env);
 }
 
+/** Daycare Insights tab. Off until Kyle turns it on. Numbers stay on the server. */
+export function providerInsightsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PROVIDER_INSIGHTS", env);
+}
+
 /** Honest copy when SHOW_PAY_CTAS is off. Stripe / plan code stays compiled. */
 export const PLANS_NOT_OFFERED_YET =
   "Plans are not offered on this site yet. Listing and claim stay free.";
