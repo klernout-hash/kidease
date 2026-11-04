@@ -113,6 +113,8 @@ async function resolveDesk(
         select user_id, daycare_id from conversations where id = ${cid} limit 1
       `.catch(() => []);
       if (hit[0]) {
+        const opened = await allowIfUnblocked(userId, hit[0].user_id, hit[0].daycare_id);
+        if (!opened) return { allowed: false, desk: null };
         if (hit[0].user_id === userId) return { allowed: true, desk: "parent" };
         if (await ownsDaycare(userId, hit[0].daycare_id)) return { allowed: true, desk: "provider" };
         return { allowed: false, desk: null };
@@ -122,6 +124,8 @@ async function resolveDesk(
       select user_id, daycare_id from conversations where id = ${sourceId} limit 1
     `.catch(() => []);
     if (conv[0]) {
+      const opened = await allowIfUnblocked(userId, conv[0].user_id, conv[0].daycare_id);
+      if (!opened) return { allowed: false, desk: null };
       if (conv[0].user_id === userId) return { allowed: true, desk: "parent" };
       if (await ownsDaycare(userId, conv[0].daycare_id)) return { allowed: true, desk: "provider" };
       return { allowed: false, desk: null };
@@ -130,6 +134,8 @@ async function resolveDesk(
       select user_id, daycare_id from bookings where id = ${sourceId} limit 1
     `.catch(() => []);
     if (booking[0]) {
+      const opened = await allowIfUnblocked(userId, booking[0].user_id, booking[0].daycare_id);
+      if (!opened) return { allowed: false, desk: null };
       if (booking[0].user_id === userId) return { allowed: true, desk: "parent" };
       if (await ownsDaycare(userId, booking[0].daycare_id)) return { allowed: true, desk: "provider" };
       return { allowed: false, desk: null };
@@ -146,6 +152,8 @@ async function resolveDesk(
       select user_id, daycare_id from bookings where id = ${sourceId} limit 1
     `.catch(() => []);
     if (!booking[0]) return { allowed: false, desk: null };
+    const opened = await allowIfUnblocked(userId, booking[0].user_id, booking[0].daycare_id);
+    if (!opened) return { allowed: false, desk: null };
     if (booking[0].user_id === userId) return { allowed: true, desk: "parent" };
     if (await ownsDaycare(userId, booking[0].daycare_id)) return { allowed: true, desk: "provider" };
     return { allowed: false, desk: null };
@@ -160,6 +168,17 @@ async function resolveDesk(
   }
 
   return { allowed: false, desk: null };
+}
+
+async function allowIfUnblocked(userId: string, parentUserId: string, daycareId: string): Promise<boolean> {
+  const { assertChatNotBlocked } = await import("@/lib/server/safety");
+  const sql = await getSql();
+  try {
+    await assertChatNotBlocked(sql, { senderId: userId, parentUserId, daycareId });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function rawThreadId(roomId: string): string {

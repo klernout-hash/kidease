@@ -11,6 +11,7 @@ import { Shell } from "@/components/shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { DeskShell } from "@/components/desk-shell";
 import { Button } from "@/components/ui/button";
+import { BlockFamilyButton } from "@/components/block-user";
 import { StatusBadge } from "@/components/status-badge";
 import { PriorityPill } from "@/components/priority-pill";
 import { TwoFactorGate } from "@/lib/auth/gates";
@@ -943,6 +944,9 @@ function RequestList({
               </Button>
             ) : null}
           </div>
+          {r.parentUserId ? (
+            <BlockFamilyButton parentUserId={r.parentUserId} daycareId={r.daycareId} />
+          ) : null}
           <ChildPacket child={r.child} allergies={r.allergies} epiPen={r.epiPen} note={r.parentNote} />
           <div className="mt-3 flex flex-wrap gap-2">
             {["accepted", "declined", "active", "cancelled"].includes(r.status) ? (

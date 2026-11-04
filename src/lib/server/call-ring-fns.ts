@@ -98,6 +98,12 @@ export const startCallRing = createServerFn({ method: "POST" })
     if (!callPushEnabled()) return OFF;
     const { sql, row } = await threadParties(data.conversationId);
     if (!row) return { ok: false as const, error: "This call was not found." };
+    const { assertChatNotBlocked } = await import("@/lib/server/safety");
+    try {
+      await assertChatNotBlocked(sql, { senderId: context.userId, parentUserId: row.user_id, daycareId: row.daycare_id });
+    } catch {
+      return { ok: false as const, error: "safety_blocked" };
+    }
     const isParent = row.user_id === context.userId;
     if (!isParent) {
       const { hasCentreDeskAccess } = await import("./centre-access");

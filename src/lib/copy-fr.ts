@@ -3466,7 +3466,7 @@ export const fr = {
     menuResources: "Ressources",
     menuGuides: "Guides",
     menuGetHelp: "Obtenir de l’aide",
-    menuPrivacyLegal: "Confidentialité et mentions légales",
+    menuPrivacyLegal: "Confidentialité et sécurité",
     profileEdit: "Modifier",
     profileYears: "Années sur KidEase",
     profileRating: "Note",

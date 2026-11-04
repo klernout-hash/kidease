@@ -377,7 +377,7 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
         {loadState === "ready" ? (
           <div className="flex flex-wrap gap-x-4 px-4 pt-1">
             <SafetyReportButton target="thread" conversationId={id} />
-            <BlockMessagesButton conversationId={id} />
+            <BlockMessagesButton conversationId={id} side={isParent ? "daycare" : "family"} />
           </div>
         ) : null}
         {tours[0] || booking ? (
