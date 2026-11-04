@@ -2457,6 +2457,8 @@
   "notifClaimDeclined": "ਕਲੇਮ ਰੱਦ · {name}",
   "notifClaimWaiting": "ਕਲੇਮ ਹਾਲੇ ਸਮੀਖਿਆ ਵਿੱਚ · {name}",
   "notifInbox": "ਨਵਾਂ ਸੁਨੇਹਾ · {name}",
+  "notifFamily": "{name}",
+  "notifCare": "{name}",
   "notifSearchAlert": "ਖੋਜ ਚੇਤਾਵਨੀ",
   "notifCustomerAlert": "{name}",
   "notifAdminClaim": "ਕਲੇਮ ਉਡੀਕ ਵਿੱਚ · {name}",

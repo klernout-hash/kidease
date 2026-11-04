@@ -266,6 +266,9 @@ export type Child = {
   photoOk: boolean;
   sunscreenOk: boolean;
   notes: string;
+  immunizationStatus?: string;
+  immunizationNote?: string;
+  homeAddress?: string;
 };
 
 export type Booking = {
@@ -359,4 +362,21 @@ export type SpotRequest = Booking & {
   allergies?: string;
   epiPen?: boolean;
   child?: Child | null;
+  parentUserId?: string | null;
+  province?: string | null;
+  portfolioComplete?: boolean;
+  portfolioGaps?: string[];
+  familyBlocked?: boolean;
+  custodyOn?: boolean;
+  guardians?: Array<{
+    userId: string;
+    name: string;
+    role: "owner" | "member";
+    verified: boolean;
+    pickup: boolean;
+    messaging: boolean;
+    restriction: "restrict" | "block" | null;
+    restrictionId?: string | null;
+    linkId: string | null;
+  }>;
 };

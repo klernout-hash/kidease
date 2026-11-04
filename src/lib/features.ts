@@ -310,6 +310,21 @@ export function coparentLinkEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_COPARENT_LINK", env);
 }
 
+/** Child file must be complete before a daycare can approve. Default off. */
+export function childPortfolioGateEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_CHILD_PORTFOLIO_GATE", env);
+}
+
+/** Co-parent email invite, daycare confirm, and custody limits. Default off. */
+export function coparentEmailEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_COPARENT_EMAIL", env);
+}
+
+/** Drop-off and pick-up reminders. Default off. Does not turn on push or SMS. */
+export function careRemindersEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_CARE_REMINDERS", env);
+}
+
 /** Staff clock in and clock out on the daycare desk. Default off. Not payroll. */
 export function staffTimesheetsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_STAFF_TIMESHEETS", env);

@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { randomBytes } from "node:crypto";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
-import { coparentLinkEnabled } from "@/lib/features";
+import { coparentEmailEnabled, coparentLinkEnabled } from "@/lib/features";
 import {
   VIEW_ONLY_MESSAGE,
   canRemoveLink,
@@ -82,9 +82,13 @@ async function linksFor(userId: string): Promise<CoparentLink[]> {
   });
 }
 
+function householdOn() {
+  return coparentLinkEnabled() || coparentEmailEnabled();
+}
+
 /** Flag off: the signed-in person only. No extra query. */
 export async function familyScopeFor(userId: string): Promise<FamilyScope> {
-  if (!coparentLinkEnabled()) return scopeFromLinks(userId, [], false);
+  if (!householdOn()) return scopeFromLinks(userId, [], false);
   await ensureCoparentTable();
   return scopeFromLinks(userId, await linksFor(userId), true);
 }
@@ -109,14 +113,15 @@ async function displayName(userId: string | null): Promise<string | null> {
 
 export const coparentStatus = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .handler(async () => ({ enabled: coparentLinkEnabled() }));
+  .handler(async () => ({ enabled: householdOn(), email: coparentEmailEnabled() }));
 
 export const listCoparent = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    if (!coparentLinkEnabled()) {
+    if (!householdOn()) {
       return {
         enabled: false as const,
+        emailEnabled: false as const,
         role: "none" as const,
         access: "owner" as const,
         canWrite: true,
@@ -157,6 +162,7 @@ export const listCoparent = createServerFn({ method: "GET" })
       inviteToken: role === "owner" && mine?.status === "pending" ? mine.inviteToken : null,
       memberName: mine?.memberUserId ? await displayName(mine.memberUserId) : null,
       ownerName: role === "member" && mine ? await displayName(mine.ownerUserId) : null,
+      emailEnabled: coparentEmailEnabled(),
     };
   });
 
@@ -202,7 +208,7 @@ export const setCoparentAccess = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { access?: string } | undefined) => ({ access: parseAccess(input?.access) }))
   .handler(async ({ context, data }) => {
-    if (!coparentLinkEnabled()) fail("off");
+    if (!householdOn()) fail("off");
     await ensureCoparentTable();
     const sql = await getSql();
     const rows = await sql<LinkRow>`
@@ -220,11 +226,11 @@ export const setCoparentAccess = createServerFn({ method: "POST" })
 export const removeCoparent = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    if (!coparentLinkEnabled()) fail("off");
+    if (!householdOn()) fail("off");
     await ensureCoparentTable();
     const sql = await getSql();
-    const rows = await sql<LinkRow>`
-      select id, owner_user_id, member_user_id, access, status, invite_token
+    const rows = await sql<LinkRow & { invite_email?: string | null }>`
+      select id, owner_user_id, member_user_id, access, status, invite_token, invite_email
       from coparent_links
       where owner_user_id = ${context.userId} and status in ('pending', 'active')
       limit 1
@@ -236,6 +242,19 @@ export const removeCoparent = createServerFn({ method: "POST" })
       set status = 'removed', removed_at = now()
       where id = ${link.id} and owner_user_id = ${context.userId}
     `;
+    if (coparentEmailEnabled()) {
+      const { afterCoparentRevoked } = await import("@/lib/server/coparent-email");
+      await afterCoparentRevoked(
+        sql,
+        {
+          id: link.id,
+          ownerUserId: link.ownerUserId,
+          memberUserId: link.memberUserId,
+          inviteEmail: rows[0]?.invite_email || null,
+        },
+        context.userId,
+      ).catch(() => undefined);
+    }
     return { ok: true as const };
   });
 
@@ -243,12 +262,12 @@ export const acceptCoparentInvite = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { token?: string } | undefined) => ({ token: String(input?.token || "").trim() }))
   .handler(async ({ context, data }) => {
-    if (!coparentLinkEnabled()) fail("off");
+    if (!householdOn()) fail("off");
     if (!tokenOk(data.token)) fail("missing");
     await ensureCoparentTable();
     const sql = await getSql();
-    const rows = await sql<LinkRow>`
-      select id, owner_user_id, member_user_id, access, status, invite_token
+    const rows = await sql<LinkRow & { invite_email: string | null; expires_at: string | null }>`
+      select id, owner_user_id, member_user_id, access, status, invite_token, invite_email, expires_at
       from coparent_links
       where invite_token = ${data.token}
       limit 1
@@ -261,12 +280,18 @@ export const acceptCoparentInvite = createServerFn({ method: "POST" })
         and id is distinct from ${link?.id || ""}
       limit 1
     `.catch(() => []);
-    const decision = decideAccept({
-      actorId: context.userId,
-      link,
-      actorHasOpenFamily: others.length > 0,
-    });
-    if (!decision.ok) fail(decision.error);
+    if (coparentEmailEnabled() || rows[0]?.invite_email || rows[0]?.expires_at) {
+      const { guardCoparentAccept } = await import("@/lib/server/coparent-email");
+      const decision = await guardCoparentAccept(sql, context.userId, rows[0] || null, others.length > 0);
+      if (!decision.ok) fail(decision.error);
+    } else {
+      const decision = decideAccept({
+        actorId: context.userId,
+        link,
+        actorHasOpenFamily: others.length > 0,
+      });
+      if (!decision.ok) fail(decision.error);
+    }
     if (!link) fail("missing");
     const saved = await sql<{ id: string }>`
       update coparent_links
@@ -275,5 +300,13 @@ export const acceptCoparentInvite = createServerFn({ method: "POST" })
       returning id
     `;
     if (!saved[0]) fail("closed");
+    if (coparentEmailEnabled()) {
+      const { afterCoparentAccepted } = await import("@/lib/server/coparent-email");
+      await afterCoparentAccepted(sql, {
+        id: link.id,
+        ownerUserId: link.ownerUserId,
+        memberUserId: context.userId,
+      }).catch(() => undefined);
+    }
     return { ok: true as const };
   });

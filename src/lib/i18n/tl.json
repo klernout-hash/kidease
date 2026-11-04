@@ -2457,6 +2457,8 @@
   "notifClaimDeclined": "Tinanggihan ang claim · {name}",
   "notifClaimWaiting": "Claim na sinusuri pa · {name}",
   "notifInbox": "Bagong mensahe · {name}",
+  "notifFamily": "{name}",
+  "notifCare": "{name}",
   "notifSearchAlert": "Alerto sa paghahanap",
   "notifCustomerAlert": "{name}",
   "notifAdminClaim": "Claim na naghihintay · {name}",

@@ -177,6 +177,7 @@ export function DeskShell({
     centreLinked: session?.centreLinked,
     curriculumPack: session?.curriculumPack,
     coparentLink: session?.coparentLink,
+    coparentEmail: session?.coparentEmail,
     staffTimesheets: session?.staffTimesheets,
     centreTools: session?.centreTools,
     familyVault: session?.familyVault,

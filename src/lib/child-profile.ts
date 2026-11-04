@@ -27,6 +27,9 @@ export type ChildRow = {
   photo_ok: boolean | number | string | null;
   sunscreen_ok: boolean | number | string | null;
   notes: string | null;
+  immunization_status?: string | null;
+  immunization_note?: string | null;
+  home_address?: string | null;
 };
 
 function flag(v: boolean | number | string | null | undefined) {
@@ -65,6 +68,9 @@ export function emptyChild(): Omit<Child, "id"> {
     photoOk: false,
     sunscreenOk: true,
     notes: "",
+    immunizationStatus: "",
+    immunizationNote: "",
+    homeAddress: "",
   };
 }
 
@@ -96,6 +102,9 @@ export function mapChild(row: ChildRow): Child {
     photoOk: flag(row.photo_ok),
     sunscreenOk: row.sunscreen_ok == null ? true : flag(row.sunscreen_ok),
     notes: text(row.notes),
+    immunizationStatus: text(row.immunization_status),
+    immunizationNote: text(row.immunization_note),
+    homeAddress: text(row.home_address),
   };
 }
 

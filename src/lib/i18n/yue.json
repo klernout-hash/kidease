@@ -2457,6 +2457,8 @@
   "notifClaimDeclined": "申索已拒絕 · {name}",
   "notifClaimWaiting": "申索仍然審核中 · {name}",
   "notifInbox": "新訊息 · {name}",
+  "notifFamily": "{name}",
+  "notifCare": "{name}",
   "notifSearchAlert": "搜尋提示",
   "notifCustomerAlert": "{name}",
   "notifAdminClaim": "申索等候中 · {name}",

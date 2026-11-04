@@ -2457,6 +2457,8 @@
   "notifClaimDeclined": "Reclamo rechazado · {name}",
   "notifClaimWaiting": "Reclamo aún en revisión · {name}",
   "notifInbox": "Nuevo mensaje · {name}",
+  "notifFamily": "{name}",
+  "notifCare": "{name}",
   "notifSearchAlert": "Alerta de búsqueda",
   "notifCustomerAlert": "{name}",
   "notifAdminClaim": "Reclamo en espera · {name}",

@@ -74,6 +74,10 @@ export const TOUR_FOLLOWUPS_EVENT = "kidease/tour-followups.run";
 export const NEON_BACKUP_CRON = "TZ=America/Winnipeg 30 2 * * 0";
 export const NEON_BACKUP_EVENT = "kidease/neon-backup.run";
 
+/** Every 5 minutes. Drop-off and pick-up reminders. No-ops while the flag is off. */
+export const CARE_REMINDERS_CRON = "TZ=America/Winnipeg */5 * * * *";
+export const CARE_REMINDERS_EVENT = "kidease/care-reminders.run";
+
 /** Every 15 minutes. No-ops while FEATURE_UNIFIED_ALERTS is off. Preview never sends. */
 export const UNIFIED_ALERTS_CRON = "TZ=America/Winnipeg */15 * * * *";
 export const UNIFIED_ALERTS_EVENT = "kidease/unified-alerts.run";

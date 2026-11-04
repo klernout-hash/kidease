@@ -30,6 +30,8 @@ export const NOTIFICATION_TITLE_KEYS = [
   "notifAdminParentSignup",
   "notifAdminProviderSignup",
   "notifAdminListing",
+  "notifFamily",
+  "notifCare",
 ] as const;
 export type NotificationTitleKey = (typeof NOTIFICATION_TITLE_KEYS)[number];
 

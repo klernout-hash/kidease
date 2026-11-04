@@ -2457,6 +2457,8 @@
   "notifClaimDeclined": "رُفضت المطالبة · {name}",
   "notifClaimWaiting": "المطالبة ما تزال قيد المراجعة · {name}",
   "notifInbox": "رسالة جديدة · {name}",
+  "notifFamily": "{name}",
+  "notifCare": "{name}",
   "notifSearchAlert": "تنبيه بحث",
   "notifCustomerAlert": "{name}",
   "notifAdminClaim": "مطالبة قيد الانتظار · {name}",

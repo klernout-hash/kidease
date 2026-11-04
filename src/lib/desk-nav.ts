@@ -240,8 +240,9 @@ type DeskNavOpts = {
   centreLinked?: boolean;
   /** Province learning pack. Hidden until FEATURE_CURRICULUM_PACK is on. */
   curriculumPack?: boolean;
-  /** Second parent invite. Hidden until FEATURE_COPARENT_LINK is on. */
+  /** Second parent invite. Hidden until FEATURE_COPARENT_LINK or FEATURE_COPARENT_EMAIL is on. */
   coparentLink?: boolean;
+  coparentEmail?: boolean;
   /** Staff hours. Hidden until FEATURE_STAFF_TIMESHEETS is on. */
   staffTimesheets?: boolean;
   /** Centre tool ids that are on. Empty hides the Centre tools desk. */
@@ -285,7 +286,7 @@ export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
   return DESK_NAV[desk].filter((item) => {
     if (item.devOnly && import.meta.env?.PROD === true) return false;
     if (item.id === "learning") return opts?.curriculumPack === true;
-    if (item.id === "family") return opts?.coparentLink === true;
+    if (item.id === "family") return opts?.coparentLink === true || opts?.coparentEmail === true;
     if (item.id === "hours") return opts?.staffTimesheets === true;
     if (item.id === "tools") return (opts?.centreTools?.length ?? 0) > 0;
     if (item.id === "centre-tools") return (opts?.centreTools ?? []).some((id) => PARENT_TOOL_IDS.has(id));

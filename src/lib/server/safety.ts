@@ -222,6 +222,10 @@ export async function assertChatNotBlocked(
     const error = new Error("safety_blocked");
     throw error;
   }
+  const { coparentEmailEnabled } = await import("@/lib/features");
+  if (!coparentEmailEnabled()) return;
+  const { messagingBlocked } = await import("@/lib/server/coparent-email");
+  if (await messagingBlocked(sql, input)) throw new Error("safety_blocked");
 }
 
 export type SafetyQueueRow = {

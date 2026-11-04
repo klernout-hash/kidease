@@ -2457,6 +2457,8 @@
   "notifClaimDeclined": "Rivendicazione rifiutata · {name}",
   "notifClaimWaiting": "Rivendicazione ancora in revisione · {name}",
   "notifInbox": "Nuovo messaggio · {name}",
+  "notifFamily": "{name}",
+  "notifCare": "{name}",
   "notifSearchAlert": "Avviso di ricerca",
   "notifCustomerAlert": "{name}",
   "notifAdminClaim": "Rivendicazione in attesa · {name}",

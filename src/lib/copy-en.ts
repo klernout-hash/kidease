@@ -3028,6 +3028,8 @@ export const en = {
     notifClaimDeclined: "Claim declined · {name}",
     notifClaimWaiting: "Claim still in review · {name}",
     notifInbox: "New message · {name}",
+    notifFamily: "{name}",
+    notifCare: "{name}",
     notifSearchAlert: "Search alert",
     notifCustomerAlert: "{name}",
     notifAdminClaim: "Claim waiting · {name}",

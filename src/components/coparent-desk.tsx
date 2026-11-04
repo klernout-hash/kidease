@@ -6,6 +6,8 @@ import { EmptyState } from "@/components/empty-state";
 import { coparentCopy } from "@/lib/coparent-copy";
 import { invitePath } from "@/lib/coparent";
 import { parentDeskPath } from "@/lib/desk-nav";
+import { custodyCopy } from "@/lib/custody-copy";
+import { inviteCoparentByEmail } from "@/lib/server/coparent-email";
 import {
   acceptCoparentInvite,
   createCoparentInvite,
@@ -27,12 +29,14 @@ function explain(err: unknown, errors: Record<string, string>, fallback: string)
 export function CoparentDesk({ inviteToken = null }: { inviteToken?: string | null }) {
   const { locale } = useCopy();
   const copy = coparentCopy(locale);
+  const emailCopy = custodyCopy(locale);
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const deskPath = parentDeskPath(pathname);
   const [desk, setDesk] = useState<Desk | null>(null);
   const [access, setAccess] = useState<"full" | "view">("view");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [email, setEmail] = useState("");
 
   function load() {
     void listCoparent()
@@ -61,7 +65,7 @@ export function CoparentDesk({ inviteToken = null }: { inviteToken?: string | nu
         <h2 className="font-display text-2xl">{copy.title}</h2>
         <p className="mt-1 text-sm text-muted">{copy.lead}</p>
         <p className="mt-2 text-sm">{copy.shared}</p>
-        <p className="mt-2 text-sm text-muted">{copy.noSend}</p>
+        <p className="mt-2 text-sm text-muted">{desk.emailEnabled ? emailCopy.lead : copy.noSend}</p>
       </div>
       {desk.role === "member" && desk.access === "view" ? (
         <p className="rounded-xl bg-surface p-4 text-sm ring-1 ring-border" role="status">
@@ -107,7 +111,43 @@ export function CoparentDesk({ inviteToken = null }: { inviteToken?: string | nu
         </div>
       ) : null}
 
-      {desk.role === "none" && !showJoin ? (
+      {desk.emailEnabled && desk.role === "none" && !showJoin ? (
+        <form
+          className="space-y-3 rounded-xl bg-surface p-4 ring-1 ring-border"
+          onSubmit={(event) => {
+            event.preventDefault();
+            setBusy(true);
+            setError("");
+            void inviteCoparentByEmail({ data: { email, access, deskPath } })
+              .then((row) => {
+                toast.success(row.mailed ? emailCopy.sent : emailCopy.preview);
+                load();
+              })
+              .catch((err) => setError(explain(err, emailCopy.errors, emailCopy.bad)))
+              .finally(() => setBusy(false));
+          }}
+        >
+          <label className="block text-sm">
+            {emailCopy.emailLabel}
+            <input
+              type="email"
+              required
+              autoComplete="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              onFocus={(event) => event.currentTarget.scrollIntoView({ block: "center" })}
+              className="ke-input mt-1 min-h-11 w-full"
+            />
+          </label>
+          <p className="text-sm text-muted">{emailCopy.mustAccept}</p>
+          <p className="text-sm text-muted">{emailCopy.expires}</p>
+          <Button type="submit" disabled={busy}>
+            {emailCopy.send}
+          </Button>
+        </form>
+      ) : null}
+
+      {desk.role === "none" && !showJoin && !desk.emailEnabled ? (
         <form
           className="space-y-3 rounded-xl bg-surface p-4 ring-1 ring-border"
           onSubmit={(event) => {

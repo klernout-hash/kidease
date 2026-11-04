@@ -80,6 +80,7 @@ export function parentValidateSearch(s: Record<string, unknown>) {
     billing?: "return";
     share?: string;
     child?: string;
+    focus?: "name" | "birthdate" | "health" | "emergency" | "pickup" | "immunization" | "doctor" | "address";
   } = {};
   const tab = parentUrlTab(s.tab);
   if (tab) out.tab = tab;
@@ -92,6 +93,18 @@ export function parentValidateSearch(s: Record<string, unknown>) {
   const share = parseShareToken(s.share);
   if (share) out.share = share;
   if (typeof s.child === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(s.child)) out.child = s.child;
+  if (
+    s.focus === "name" ||
+    s.focus === "birthdate" ||
+    s.focus === "health" ||
+    s.focus === "emergency" ||
+    s.focus === "pickup" ||
+    s.focus === "immunization" ||
+    s.focus === "doctor" ||
+    s.focus === "address"
+  ) {
+    out.focus = s.focus;
+  }
   if (typeof s.invite === "string" && /^[A-Za-z0-9_-]{20,80}$/.test(s.invite)) {
     out.invite = s.invite;
     out.tab = "family";
@@ -281,6 +294,7 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
           initialSaved={loaded.saved}
           initialShared={loaded.shortlistShared}
           initialChild={search.child ?? null}
+          initialFocus={search.focus ?? null}
           familyInvite={search.invite ?? null}
         />
       </Suspense>
