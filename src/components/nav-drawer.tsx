@@ -155,7 +155,6 @@ export function NavDrawer({
   void isAdmin;
   void parentLabel;
   void providerLabel;
-  void items;
   const deskRole =
     deskMenu?.desk === "daycare" ? "provider" : deskMenu?.desk === "support" ? "support" : deskMenu?.desk ?? roleShown;
   const guestMenu = !deskMenu && !signedIn && showMenus;
@@ -345,6 +344,23 @@ export function NavDrawer({
           ) : null}
             </>
           )}
+          {guestMenu || items.length === 0 ? null : (
+            <details className="py-0.5" data-ke="drawer-help-links">
+              <summary className={drawerSummaryClass}>{t("menuGetHelp")}</summary>
+              {items.map((item) => (
+                <MenuRow
+                  key={item.to + item.label}
+                  to={item.to}
+                  search={item.search}
+                  label={item.label}
+                  icon={item.icon}
+                  appearance="drawer"
+                  marker={item.marker}
+                  onClick={onClose}
+                />
+              ))}
+            </details>
+          )}
           <FooterMoreLinks
             appearance="drawer"
             onNavigate={onClose}
@@ -353,8 +369,8 @@ export function NavDrawer({
               guestMenu
                 ? ["/search", "/cities", "/compare", "/tour-checklist", "/claim", "/plans", "/jobs", "/help", "/faq", "/contact"]
                 : roleList
-                  ? ["/search"]
-                  : []
+                  ? ["/search", "/help", "/faq", "/contact"]
+                  : ["/help", "/faq", "/contact"]
             }
           />
           {signedIn ? <ShareKidEaseButton appearance="drawer" onDone={onClose} /> : null}
