@@ -2,6 +2,7 @@ import { useEffect, useId, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { X } from "lucide-react";
 import { toast } from "sonner";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -133,6 +134,7 @@ function MultiApplySheet({
   onNeedSignIn: () => void;
 }) {
   const { t, locale } = useCopy();
+  const { celebrate } = useSuccessConfirm();
   const titleId = useId();
   const [childName, setChildName] = useState("");
   const [birthdate, setBirthdate] = useState("");
@@ -193,6 +195,7 @@ function MultiApplySheet({
       }
       capturePostHogEvent("multi_apply_submitted", { count: res.sent.length });
       setSentCount(res.sent.length);
+      celebrate();
       if (res.skipped.length) toast.message(t("multiApplySkipped"));
     } catch {
       toast.error(t("needSignIn"));

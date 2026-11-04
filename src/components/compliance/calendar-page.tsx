@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { ComplianceFrame } from "@/components/compliance/frame";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { CALENDAR_KINDS, calendarCopy } from "@/lib/compliance/calendar";
 import type { PackMode } from "@/lib/compliance/mode";
@@ -22,6 +23,7 @@ type GovData = {
 
 export function CentreCalendarPage({ data, locale }: { data: CentreData; locale: "en" | "fr" }) {
   const copy = calendarCopy(locale);
+  const { celebrate } = useSuccessConfirm();
   const [daycareId, setDaycareId] = useState(data.centres[0]?.id || "");
   const [kind, setKind] = useState<(typeof CALENDAR_KINDS)[number]>("licence_renewal");
   const [dueOn, setDueOn] = useState("");
@@ -34,6 +36,7 @@ export function CentreCalendarPage({ data, locale }: { data: CentreData; locale:
     try {
       const result = await saveCalendarItem({ data: { daycareId, kind, dueOn } });
       setNote(result.ok ? (locale === "fr" ? "Date enregistrée." : "Date saved.") : copy.off);
+      if (result.ok) celebrate();
     } catch {
       setNote(locale === "fr" ? "Essayez encore, ou ouvrez l’aide." : "Try again, or open Help.");
     } finally {

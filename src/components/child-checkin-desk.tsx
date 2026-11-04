@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { featureCopy } from "@/lib/flagged-feature-copy";
 import { localePath } from "@/lib/locale-path";
@@ -16,6 +17,7 @@ function when(iso: string, locale: Locale) {
 
 export function ChildCheckinDesk() {
   const { locale } = useCopy();
+  const { celebrate } = useSuccessConfirm();
   const copy = featureCopy(locale);
   const [desk, setDesk] = useState<Awaited<ReturnType<typeof listDoorRoster>> | null>(null);
   const [pickup, setPickup] = useState<Record<string, string>>({});
@@ -72,6 +74,7 @@ export function ChildCheckinDesk() {
                   })
                     .then((result) => {
                       setMessage(result.ok ? copy.checkSaved : copy.checkEmpty);
+                      if (result.ok) celebrate();
                       return load();
                     })
                     .catch(() => setMessage(copy.checkEmpty));

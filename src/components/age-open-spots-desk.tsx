@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { featureCopy } from "@/lib/flagged-feature-copy";
 import { POST_AGES } from "@/lib/gap-features";
@@ -10,6 +11,7 @@ import { useCopy } from "@/lib/use-copy";
 
 export function AgeOpenSpotsDesk({ listings }: { listings: { id: string; name: string }[] }) {
   const { locale } = useCopy();
+  const { celebrate } = useSuccessConfirm();
   const copy = featureCopy(locale);
   const [on, setOn] = useState(false);
   const [daycareId, setDaycareId] = useState(listings[0]?.id || "");
@@ -44,6 +46,7 @@ export function AgeOpenSpotsDesk({ listings }: { listings: { id: string; name: s
               }
               setMessage(copy.spotsPosted);
               setNextId(result.nextWaitlistId);
+              celebrate();
             })
             .catch(() => setMessage(copy.spotsOff));
         }}
@@ -87,7 +90,10 @@ export function AgeOpenSpotsDesk({ listings }: { listings: { id: string; name: s
           className="mt-3"
           onClick={() => {
             void sendCentreSpotOffer({ data: { waitlistId: nextId } })
-              .then(() => setMessage(copy.spotsOffer))
+              .then(() => {
+                setMessage(copy.spotsOffer);
+                celebrate();
+              })
               .catch(() => setMessage(copy.spotsOff));
           }}
         >

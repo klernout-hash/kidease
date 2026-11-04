@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { NOTICE_CATEGORIES, type NoticePrefs } from "@/lib/lifecycle";
 import { loadLifecyclePrefs, saveLifecyclePrefs } from "@/lib/server/lifecycle";
@@ -14,6 +15,7 @@ const LABELS: Record<(typeof NOTICE_CATEGORIES)[number], { en: string; fr: strin
 
 export function LifecyclePrefs() {
   const { locale } = useCopy();
+  const { celebrate } = useSuccessConfirm();
   const fr = locale === "fr";
   const [prefs, setPrefs] = useState<NoticePrefs | null>(null);
   const [enabled, setEnabled] = useState(false);
@@ -86,7 +88,10 @@ export function LifecyclePrefs() {
         className="mt-4"
         onClick={() => {
           void saveLifecyclePrefs({ data: prefs })
-            .then((result) => setNote(result.ok ? (fr ? "Enregistré." : "Saved.") : fr ? "Éteint." : "Off."))
+            .then((result) => {
+              setNote(result.ok ? (fr ? "Enregistré." : "Saved.") : fr ? "Éteint." : "Off.");
+              if (result.ok) celebrate();
+            })
             .catch(() => setNote(fr ? "Pas enregistré." : "Not saved."));
         }}
       >
