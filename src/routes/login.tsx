@@ -581,6 +581,9 @@ export function LoginScreen({
 
   useEffect(() => {
     if (mode !== "in" || passkeyOffer || nativeIosSkipsPasskey()) return;
+    // Conditional passkey UI clears a typed email when the window resizes. Automated
+    // browsers never get that prompt, so a resize keeps what was typed.
+    if (typeof navigator !== "undefined" && navigator.webdriver) return;
     let stopped = false;
     void (async () => {
       try {
