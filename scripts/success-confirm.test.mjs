@@ -101,6 +101,11 @@ test("the brief toast says Good Job, stays polite, and errors do not celebrate",
   assert.match(confirm, /env\(safe-area-inset-top\)/);
   assert.match(confirm, /4\.75rem \+ env\(safe-area-inset-bottom\)/);
   assert.match(confirm, /data-success-dismiss=\{String\(SUCCESS_TOAST_MS\)\}/);
+  assert.match(confirm, /data-success-centered=""/);
+  assert.match(confirm, /place-items-center/);
+  assert.match(confirm, /ke-good-job-burst/);
+  assert.match(confirm, /items-center gap-3/);
+  assert.match(src("src/styles.css"), /ke-good-job-burst[\s\S]*1\.5s/);
   assert.match(src("src/components/use-success-confirm.ts"), /celebrate\(title\?: string\)/);
   assert.match(src("src/components/kidease-toaster.tsx"), /attachSuccessToastBridge\(/);
   assert.doesNotMatch(src("src/components/kidease-toaster.tsx"), /toast\.error\s*=/);

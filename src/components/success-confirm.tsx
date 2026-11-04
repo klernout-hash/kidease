@@ -308,7 +308,14 @@ export function SuccessToast({
   const showDetail = detail.length > 0 && detail !== kicker;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-[max(0.75rem,env(safe-area-inset-top))] z-[60] flex justify-center px-4">
+    <div
+      className="pointer-events-none fixed inset-0 z-[60] grid place-items-center px-4"
+      style={{
+        paddingTop: "max(0.75rem, env(safe-area-inset-top))",
+        paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))",
+      }}
+      data-success-centered=""
+    >
       <div
         role="status"
         aria-live="polite"
@@ -317,8 +324,24 @@ export function SuccessToast({
         data-success-variant="toast"
         data-success-dismiss={String(SUCCESS_TOAST_MS)}
         data-request-sent-motion={flourish ? "on" : "off"}
-        className="pointer-events-none flex w-full max-w-sm items-center gap-2 rounded-full bg-surface py-1.5 pl-1.5 pr-3 shadow-lift ring-1 ring-border"
+        className="pointer-events-none relative flex w-full max-w-sm items-center gap-3 rounded-2xl bg-surface px-4 py-3 shadow-lift ring-1 ring-border"
       >
+        {flourish ? (
+          <span className="pointer-events-none absolute inset-0" aria-hidden="true">
+            {CONFETTI.map((bit) => (
+              <span
+                key={`${bit.x}-${bit.y}`}
+                className="ke-confetti-bit ke-good-job-burst absolute left-1/2 top-1/2 size-1.5 rounded-full"
+                style={{
+                  background: bit.color,
+                  ["--x" as string]: bit.x,
+                  ["--y" as string]: bit.y,
+                  animationDelay: bit.delay,
+                }}
+              />
+            ))}
+          </span>
+        ) : null}
         <SuccessMark flourish={flourish} size="sm" />
         <p className="min-w-0 text-sm leading-5">
           <span className="font-semibold text-ok" data-success-kicker="">
