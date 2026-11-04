@@ -98,6 +98,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_LOGIN_AMAZON",
   "FEATURE_FIRE_KIOSK",
   "FEATURE_ALEXA_SKILL",
+  "FEATURE_PROVIDER_INSIGHTS",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -287,6 +288,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_FIRE_KIOSK: false,
   /** Alexa custom skill endpoint /api/alexa. Off. Needs ALEXA_SKILL_ID. */
   FEATURE_ALEXA_SKILL: false,
+  /** Daycare Insights tab. Off. Real rows only. No area average under 5 centres. */
+  FEATURE_PROVIDER_INSIGHTS: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -820,6 +823,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/amazon.md",
     summary: "Alexa custom skill at /api/alexa with request signature checks. Open spots, linked parent day log, daycare messages.",
+  },
+  {
+    key: "FEATURE_PROVIDER_INSIGHTS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Insights on the daycare desk: views, saves, requests, reply time, waitlist, enrolment, tours, attendance, staff, and reviews. Default off. Area averages stay hidden under 5 centres. No invented numbers.",
   },
 ];
 

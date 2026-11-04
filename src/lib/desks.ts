@@ -722,6 +722,8 @@ export type SessionDesks = {
   tourCalendar?: boolean;
   /** Listing editor and day calendar. Off unless FEATURE_HOST_LISTING is on. */
   hostListing?: boolean;
+  /** Insights nav. Off unless FEATURE_PROVIDER_INSIGHTS is on. */
+  providerInsights?: boolean;
   /** Shared menu badges. One payload so every desk shows the same numbers. */
   attention?: import("@/lib/attention").AttentionCounts;
   /** ISO time the 30-day restore window ends. Null when the account is active. */
