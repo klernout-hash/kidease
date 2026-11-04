@@ -13,6 +13,7 @@ import { parentDeskPath, parentNavSearch, providerNavSearch } from "@/lib/desk-n
 import { resolveInboxView, type InboxView } from "@/lib/inbox-view";
 import { listInbox } from "@/lib/server/inbox";
 import { filterInboxList, MESSAGE_FILTERS, messageFilterCopyKey, parseMessageFilter, type MessageFilter } from "@/lib/inbox-thread-ui";
+import { SupportDeskBar } from "@/components/support-desk-panel";
 import { useCopy } from "@/lib/use-copy";
 import type { CentreInboxThread } from "@/lib/inbox-stages";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,7 @@ export function InboxList({ bare = false }: { bare?: boolean }) {
   const view: InboxView = resolveInboxView({ search: search.view, sticky });
   const [items, setItems] = useState<CentreInboxThread[] | null>(null);
   const [filter, setFilter] = useState<MessageFilter>("all");
+  const [supportOpen, setSupportOpen] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -58,6 +60,9 @@ export function InboxList({ bare = false }: { bare?: boolean }) {
       ) : items && items.length ? (
         <p className="mt-1 text-sm text-muted">{t("inboxHasThreads")}</p>
       ) : null}
+      <SupportDeskBar open={supportOpen} onOpen={setSupportOpen} />
+      {supportOpen ? null : (
+      <>
       <div className="mt-4 flex flex-wrap gap-1.5" data-ke="inbox-stage-filters" role="group" aria-label={t("messages")}>
         {MESSAGE_FILTERS.map((id) => (
           <button
@@ -112,6 +117,8 @@ export function InboxList({ bare = false }: { bare?: boolean }) {
           ))
         )}
       </ul>
+      </>
+      )}
     </div>
   );
 

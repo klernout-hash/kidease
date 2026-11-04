@@ -59,6 +59,16 @@ export function rankingV2Enabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_RANKING_V2", env);
 }
 
+/** Messages support thread. Off. Nothing is created or sent until this is on. */
+export function supportDeskEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_SUPPORT_CHAT", env);
+}
+
+/** Owner SMS replies into a support thread. Off. Also needs FEATURE_SUPPORT_CHAT. */
+export function supportSmsReplyEnabled(env?: EnvMap): boolean {
+  return supportDeskEnabled(env) && evaluateFeatureFlag("FEATURE_SUPPORT_SMS_REPLY", env);
+}
+
 /** KidEase Top Rated. Off. Not a government rating. */
 export function topRatedEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_TOP_RATED_BADGE", env);
