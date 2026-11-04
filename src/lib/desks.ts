@@ -720,6 +720,8 @@ export type SessionDesks = {
   familyVault?: boolean;
   /** Tour calendar nav. Off unless FEATURE_TOUR_CALENDAR is on. */
   tourCalendar?: boolean;
+  /** Insights nav. Off unless FEATURE_PROVIDER_INSIGHTS is on. */
+  providerInsights?: boolean;
   /** Shared menu badges. One payload so every desk shows the same numbers. */
   attention?: import("@/lib/attention").AttentionCounts;
   /** ISO time the 30-day restore window ends. Null when the account is active. */
