@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { ComplianceFrame } from "@/components/compliance/frame";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { broadcastCopy } from "@/lib/compliance/broadcast";
 import type { PackMode } from "@/lib/compliance/mode";
@@ -7,6 +8,7 @@ import { sendAdminBroadcast, sendGovBroadcast } from "@/lib/server/compliance-br
 type Data = { enabled: boolean; mode: PackMode; province: string; rows: { id: string; body: string }[] };
 export function GovBroadcastPage({ data, locale, admin }: { data: Data; locale: "en" | "fr"; admin?: boolean }) {
   const copy = broadcastCopy(locale);
+  const { celebrate } = useSuccessConfirm();
   const [body, setBody] = useState("");
   const [city, setCity] = useState("");
   const [note, setNote] = useState<string | null>(null);
@@ -18,6 +20,7 @@ export function GovBroadcastPage({ data, locale, admin }: { data: Data; locale: 
       const payload = { kind: city ? "city" : "province", province: data.province === "ALL" ? "ON" : data.province, city, body };
       const result = admin ? await sendAdminBroadcast({ data: payload }) : await sendGovBroadcast({ data: payload });
       setNote(result.ok ? (locale === "fr" ? "Avis préparé." : "Notice prepared.") : copy.off);
+      if (result.ok) celebrate();
     } catch { setNote(locale === "fr" ? "Essayez encore, ou ouvrez l’aide." : "Try again, or open Help."); }
     finally { setBusy(false); }
   }

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { ComplianceFrame } from "@/components/compliance/frame";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { CREDENTIAL_KINDS, screeningCopy } from "@/lib/compliance/screening";
 import type { PackMode } from "@/lib/compliance/mode";
@@ -16,6 +17,7 @@ type GovData = { enabled: boolean; mode: PackMode; province: string; expired: nu
 
 export function CentreScreeningPage({ data, locale }: { data: CentreData; locale: "en" | "fr" }) {
   const copy = screeningCopy(locale);
+  const { celebrate } = useSuccessConfirm();
   const [daycareId, setDaycareId] = useState(data.centres[0]?.id || "");
   const [staffName, setStaffName] = useState("");
   const [kind, setKind] = useState<(typeof CREDENTIAL_KINDS)[number]>("vulnerable_sector");
@@ -29,6 +31,7 @@ export function CentreScreeningPage({ data, locale }: { data: CentreData; locale
     try {
       const result = await saveCredential({ data: { daycareId, staffName, kind, expiresOn } });
       setNote(result.ok ? (locale === "fr" ? "Date enregistrée." : "Date saved.") : copy.off);
+      if (result.ok) celebrate();
     } catch {
       setNote(locale === "fr" ? "Essayez encore, ou ouvrez l’aide." : "Try again, or open Help.");
     } finally {

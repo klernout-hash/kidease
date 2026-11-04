@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { ComplianceFrame } from "@/components/compliance/frame";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { fundingCopy } from "@/lib/compliance/funding";
 import type { PackMode } from "@/lib/compliance/mode";
@@ -10,6 +11,7 @@ type GovData = { enabled: boolean; mode: PackMode; province: string; rows: { blo
 
 export function CentreFundingPage({ data, locale }: { data: CentreData; locale: "en" | "fr" }) {
   const copy = fundingCopy(locale);
+  const { celebrate } = useSuccessConfirm();
   const [daycareId, setDaycareId] = useState(data.centres[0]?.id || "");
   const [period, setPeriod] = useState("");
   const [note, setNote] = useState<string | null>(null);
@@ -21,7 +23,10 @@ export function CentreFundingPage({ data, locale }: { data: CentreData; locale: 
       const result = await buildFundingReport({ data: { daycareId, period } });
       if (!result.ok) setNote(copy.off);
       else if (result.plan === "blocked") setNote(locale === "fr" ? "Il y a un écart. Rien n’est soumis." : "There is a mismatch. Nothing is submitted.");
-      else setNote(locale === "fr" ? "Rapport vérifié." : "Report checked.");
+      else {
+        setNote(locale === "fr" ? "Rapport vérifié." : "Report checked.");
+        celebrate();
+      }
     } catch {
       setNote(locale === "fr" ? "Essayez encore, ou ouvrez l’aide." : "Try again, or open Help.");
     } finally { setBusy(false); }

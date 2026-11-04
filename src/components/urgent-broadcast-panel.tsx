@@ -4,6 +4,7 @@ import { planUrgentBroadcast, type BroadcastCentre } from "@/lib/urgent-broadcas
 import { localePath } from "@/lib/locale-path";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 
 const STORAGE = "kidease-urgent-broadcast-at";
@@ -22,6 +23,7 @@ function readLast(userId: string): string | null {
 
 export function UrgentBroadcastPanel({ centres }: { centres: Array<BroadcastCentre & { name: string; slug: string }> }) {
   const { locale } = useCopy();
+  const { celebrate } = useSuccessConfirm();
   const fr = locale === "fr";
   const { user } = useCurrentUserState();
   const [days, setDays] = useState("7");
@@ -50,6 +52,7 @@ export function UrgentBroadcastPanel({ centres }: { centres: Array<BroadcastCent
       /* ignore */
     }
     setSent(at);
+    celebrate();
   }
 
   const reason =

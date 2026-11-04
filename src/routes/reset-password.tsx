@@ -6,6 +6,7 @@ import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field"
 import { Button } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
 import { PasswordField } from "@/components/password-field";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Shell } from "@/components/shell";
 import { MARKETING_PAGE_SEO, pageSeoHead, withNoindex } from "@/lib/page-seo";
 import { PasswordRules } from "@/components/password-rules";
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/reset-password")({
 function ResetPassword() {
   const { token } = Route.useSearch();
   const { t, locale } = useCopy();
+  const { celebrate } = useSuccessConfirm();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +68,7 @@ function ResetPassword() {
       });
       if (res.error) throw new Error(friendlyAuthError(authClientErrorMessage(res.error)) || "Could not reset the password.");
       setDone(true);
+      celebrate();
     } catch (err) {
       setError(friendlyAuthError(authClientErrorMessage(err)) || "Could not reset the password.");
       resetTurnstile();

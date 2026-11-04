@@ -1,7 +1,10 @@
 import type { CopyKey } from "./copy.ts";
 
-/** Compact toast lifetime. Milestone dialogs stay until dismissed. */
-export const SUCCESS_TOAST_MS = 2500;
+/** Compact toast lifetime. Milestone dialogs stay until the person picks a next step. */
+export const SUCCESS_TOAST_MS = 1500;
+
+/** Ignore a second toast from the same success (catalog confirm + sonner). */
+const TOAST_DEDUPE_MS = 700;
 
 export type SuccessVariant = "modal" | "toast";
 
@@ -53,7 +56,7 @@ export type SuccessAction = {
 
 /**
  * One map for every milestone and quick confirmation.
- * Titles stay specific. The "Good job!" kicker is shared and not stored here.
+ * Titles stay specific. The "Good Job" / "Bravo !" kicker is shared and not stored here.
  */
 export const SUCCESS_ACTIONS: Record<SuccessActionId, SuccessAction> = {
   info: { variant: "modal", titleKey: "requestSentHeadline", bodyKey: "requestSentBodyInfo" },
@@ -134,9 +137,13 @@ export type SuccessRequest = {
 type Deliver = (request: SuccessRequest) => void;
 
 let deliver: Deliver | null = null;
+let lastShownAt = 0;
+
+const PENDING_CELEBRATION_KEY = "ke-good-job";
 
 export function bindSuccessHost(next: Deliver | null) {
   deliver = next;
+  lastShownAt = 0;
   return () => {
     if (deliver === next) deliver = null;
   };
@@ -144,7 +151,63 @@ export function bindSuccessHost(next: Deliver | null) {
 
 /** Show a confirmation. Call only after the write has succeeded. */
 export function confirmSuccess(request: SuccessRequest) {
+  const now = Date.now();
+  const bareToast = request.variant === "toast" && !request.title.trim();
+  // A bare Good Job right after a catalog toast or dialog would stack. Keep the first.
+  if (bareToast && now - lastShownAt < TOAST_DEDUPE_MS) return;
+  lastShownAt = now;
   deliver?.(request);
+}
+
+/**
+ * Brief Good Job toast. Call only after a write succeeds.
+ * An empty title leaves the shared kicker ("Good Job" / "Bravo !") on its own.
+ */
+export function celebrateSuccess(title?: string) {
+  const detail = (title || "").trim();
+  confirmSuccess({ variant: "toast", title: detail });
+}
+
+/** Full-page navigations (government sign-in) unload before the toast can paint. */
+export function celebrateAfterNavigation() {
+  try {
+    sessionStorage.setItem(PENDING_CELEBRATION_KEY, "1");
+  } catch {
+    /* private mode */
+  }
+}
+
+export function consumePendingCelebration() {
+  try {
+    if (sessionStorage.getItem(PENDING_CELEBRATION_KEY) !== "1") return;
+    sessionStorage.removeItem(PENDING_CELEBRATION_KEY);
+  } catch {
+    return;
+  }
+  celebrateSuccess();
+}
+
+type SuccessToastApi = {
+  success: (message?: unknown, data?: unknown) => unknown;
+};
+
+/**
+ * Every sonner success toast also shows Good Job.
+ * `toast.error` is left alone.
+ */
+export function attachSuccessToastBridge(
+  api: SuccessToastApi,
+  celebrate: () => void = () => celebrateSuccess(),
+) {
+  const current = api.success as SuccessToastApi["success"] & { __keGoodJob?: boolean };
+  if (current.__keGoodJob) return;
+  const original = api.success.bind(api);
+  const wrapped = ((message?: unknown, data?: unknown) => {
+    celebrate();
+    return original(message, data);
+  }) as typeof current;
+  wrapped.__keGoodJob = true;
+  api.success = wrapped;
 }
 
 /** Map a catalog action through the active locale, then show it. */

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { homeFeedEnabled } from "@/lib/home-feed";
@@ -29,6 +30,7 @@ export function ForYouPage({
   initial: { enabled: boolean; prefs: { city: string; province: string; childAgeMonths: number | null; startDate: string | null } | null };
 }) {
   const { locale } = useCopy();
+  const { celebrate } = useSuccessConfirm();
   const fr = locale === "fr";
   const [city, setCity] = useState(initial.prefs?.city ?? "");
   const [province, setProvince] = useState(initial.prefs?.province ?? "");
@@ -48,6 +50,7 @@ export function ForYouPage({
       },
     });
     setMessage(result.ok ? (fr ? "Préférences enregistrées." : "Preferences saved.") : fr ? "Pas enregistré." : "Not saved.");
+    if (result.ok) celebrate();
   }
 
   return (
