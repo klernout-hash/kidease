@@ -101,3 +101,10 @@ test("login, settings, and Android fallback are wired", () => {
   assert.match(read("docs/passkeys.md"), /webcredentials/);
   assert.doesNotMatch(read("src/lib/native-entitlements.ts"), /passkey/);
 });
+
+test("automated browsers do not start passkey autofill on the login email", () => {
+  const login = read("src/routes/login.tsx");
+  const start = login.indexOf("signInWithPasskey({ autofill: true })");
+  assert.ok(start > 0);
+  assert.match(login.slice(start - 500, start), /navigator\.webdriver/);
+});
