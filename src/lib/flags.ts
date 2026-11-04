@@ -97,6 +97,8 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_LOGIN_AMAZON",
   "FEATURE_FIRE_KIOSK",
   "FEATURE_ALEXA_SKILL",
+  "FEATURE_UNIFIED_ALERTS",
+  "FEATURE_UNIFIED_ALERTS_LIVE",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -284,6 +286,10 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_FIRE_KIOSK: false,
   /** Alexa custom skill endpoint /api/alexa. Off. Needs ALEXA_SKILL_ID. */
   FEATURE_ALEXA_SKILL: false,
+  /** Unified parent, daycare, staff, and desk alerts. Off. Nothing is sent until this is on. */
+  FEATURE_UNIFIED_ALERTS: false,
+  /** Email and phone push for unified alerts. Off. Also needs FEATURE_UNIFIED_ALERTS. Preview never sends. */
+  FEATURE_UNIFIED_ALERTS_LIVE: false,
 };
 
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
@@ -810,6 +816,18 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/amazon.md",
     summary: "Alexa custom skill at /api/alexa with request signature checks. Open spots, linked parent day log, daycare messages.",
+  },
+  {
+    key: "FEATURE_UNIFIED_ALERTS",
+    defaultOn: false,
+    docs: "docs/unified-alerts.md",
+    summary: "One alert list for parents, daycares, staff, and the web desk. Off. Choices can be saved. Nothing is sent.",
+  },
+  {
+    key: "FEATURE_UNIFIED_ALERTS_LIVE",
+    defaultOn: false,
+    docs: "docs/unified-alerts.md",
+    summary: "Email and existing phone push for unified alerts. Off. Needs FEATURE_UNIFIED_ALERTS. Preview and tests never send. No texts. Does not turn on call push.",
   },
 ];
 
