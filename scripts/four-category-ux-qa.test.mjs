@@ -30,7 +30,7 @@ test("Guest: live vs all counts, empty-search lead, and listing login handoff", 
   assert.match(src("src/components/listing-parent-pack.tsx"), /aria-current=\{active === id \? "true"/);
   assert.match(src("src/components/explore-filter-bar.tsx"), /arrows=\{false\}/);
   assert.match(src("src/routes/provider.tsx"), /enquiriesEmptyTitle/);
-  assert.match(src("src/lib/copy.ts"), /proWhyTitle: "Get more families with Pro"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /proWhyTitle: "Get more families with Pro"/);
   assert.match(search, /data-ke="search-result-list"/);
   assert.match(search, /areaPresence\(catalog\)/);
   assert.match(search, /parentSignupSearch\(localePath\("\/search", locale\), "alerts"\)/);
@@ -45,7 +45,7 @@ test("Guest: live vs all counts, empty-search lead, and listing login handoff", 
   const login = src("src/routes/login.tsx");
   assert.match(login, /loginLeadListing/);
   assert.match(login, /loginLeadSearchSave/);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /noLiveResultsLead:/);
   assert.match(copy, /guestSignInReturn:/);
 });
@@ -60,7 +60,7 @@ test("Parent: request empty copy, inbox subtitle, and search ↔ child wayfindin
   const search = src("src/routes/search.tsx");
   assert.match(search, /changeLocation/);
   assert.match(search, /parentSignupSearch\(localePath\("\/search", locale\), "alerts"\)/);
-  assert.match(src("src/lib/copy.ts"), /wayfindChildProfile/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /wayfindChildProfile/);
   const card = src("src/components/child-care-card.tsx");
   assert.match(card, /tab: "children"/);
   const rails = src("src/components/parent-desk-rails.tsx");

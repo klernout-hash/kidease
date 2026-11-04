@@ -142,12 +142,12 @@ test("account oracle stays generic", () => {
 
 test("booking pay helper copy stays honest", () => {
   assert.match(BOOKING_CARD_PAY_DISABLED, /support@kidease\.ca/);
-  assert.match(src("src/lib/copy.ts"), /featPay: "Bills in-app"/);
-  assert.doesNotMatch(src("src/lib/copy.ts"), /featPay: "Deposits in-app"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /featPay: "Bills in-app"/);
+  assert.doesNotMatch((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /featPay: "Deposits in-app"/);
 });
 
 test("parent Pay / Start Plus copy does not contradict live Stripe", () => {
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.doesNotMatch(copy, /Card Pay stays off until Stripe is live/);
   assert.doesNotMatch(copy, /Stripe live keys are set — charges can settle/);
   assert.match(copy, /ledgerLiveParent/);

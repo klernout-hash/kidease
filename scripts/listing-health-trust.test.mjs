@@ -71,7 +71,7 @@ const empty = {
 };
 
 test("Kyle-approved trust labels are the only public badge words", () => {
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /trustCatalogueMatched: "Catalogue-matched"/);
   assert.match(copy, /trustLicensedMatched: "Registry-checked"/);
   assert.match(copy, /trustLicenseUnverified: "Unverified"/);

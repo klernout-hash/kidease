@@ -37,7 +37,7 @@ describe("forgot-password flow", () => {
     assert.match(routeFile, /getResetMailReady/);
     assert.match(routeFile, /mailReady/);
     assert.match(routeFile, /forgotPasswordMailMissing/);
-    assert.match(read("src/lib/copy.ts"), /RESEND_API_KEY or SENDGRID_API_KEY or TITAN_APP_PASSWORD/);
+    assert.match((read("src/lib/copy-en.ts") + read("src/lib/copy-fr.ts")), /RESEND_API_KEY or SENDGRID_API_KEY or TITAN_APP_PASSWORD/);
     assert.match(routeTree, /from '\.\/routes\/forgot-password'/);
     assert.match(routeTree, /id:\s*'\/forgot-password'/);
     assert.match(routeTree, /path:\s*'\/forgot-password'/);
@@ -47,7 +47,7 @@ describe("forgot-password flow", () => {
 
   it("login Forgot password is a real link to /forgot-password", () => {
     const login = read("src/routes/login.tsx");
-    const copy = read("src/lib/copy.ts");
+    const copy = (read("src/lib/copy-en.ts") + read("src/lib/copy-fr.ts"));
     assert.match(login, /to="\/forgot-password"/);
     assert.match(login, /t\("forgotPassword"\)/);
     assert.match(login, /t\("forgotPasswordLead"\)/);
@@ -67,15 +67,15 @@ describe("forgot-password flow", () => {
     assert.match(reset, /authClient\.resetPassword/);
     assert.match(reset, /to="\/login"/);
     assert.match(reset, /t\("backToSignIn"\)/);
-    assert.match(read("src/lib/copy.ts"), /backToSignIn: "Back to sign in"/);
-    assert.match(read("src/lib/copy.ts"), /backToSignIn: "Retour à la connexion"/);
+    assert.match((read("src/lib/copy-en.ts") + read("src/lib/copy-fr.ts")), /backToSignIn: "Back to sign in"/);
+    assert.match((read("src/lib/copy-en.ts") + read("src/lib/copy-fr.ts")), /backToSignIn: "Retour à la connexion"/);
   });
 
   it("shows a password visibility toggle on login and reset forms", () => {
     const field = read("src/components/password-field.tsx");
     const login = read("src/routes/login.tsx");
     const reset = read("src/routes/reset-password.tsx");
-    const copy = read("src/lib/copy.ts");
+    const copy = (read("src/lib/copy-en.ts") + read("src/lib/copy-fr.ts"));
     assert.match(field, /t\("showPassword"\)/);
     assert.match(field, /t\("hidePassword"\)/);
     assert.match(field, /EyeOff/);

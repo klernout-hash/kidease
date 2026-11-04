@@ -33,7 +33,7 @@ test("search count stays on a loading state instead of flashing 0 centres", () =
   assert.doesNotMatch(search, /searchResultCount/);
   assert.doesNotMatch(search, /liveVsAllNone/);
   assert.doesNotMatch(search, /searchLiveEmptyCount/);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /searchCountLoading: "Loading centres…"/);
   assert.match(copy, /searchCountLoading: "Chargement des centres…"/);
 });

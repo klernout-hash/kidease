@@ -28,7 +28,7 @@ test("updateListing persists interiors through applyInteriorPhotos, not a raw ap
 test("provider listing form and public listing expose interiors", () => {
   const forms = src("src/components/provider-listing-forms.tsx");
   const detail = src("src/routes/daycare.$slug.tsx");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(forms, /t\("interiors"\)/);
   assert.match(forms, /t\("interiorCta"\)/);
   assert.match(forms, /data-ke="listing-photo-count"/);

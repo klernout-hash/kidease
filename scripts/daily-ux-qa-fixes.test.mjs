@@ -155,7 +155,7 @@ test("Edmonton search keeps the map circle off a Manitoba device pin", () => {
 
 test("public privacy and parent waitlist copy do not leak FEATURE_SMS", () => {
   const privacy = src("src/lib/legal-copy.ts");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.doesNotMatch(privacy, /FEATURE_SMS/);
   assert.match(privacy, /SMS alerts stay off until you grant express consent/);
   assert.doesNotMatch(copy, /waitlistOptInSmsHint:[\s\S]{0,240}FEATURE_SMS/);
@@ -180,7 +180,7 @@ test("listing health percent is separate from Listing Verified", () => {
   assert.match(complete, /ListingHealthPanel/);
   assert.doesNotMatch(complete, /ListingReadinessCoach/);
   assert.match(src("src/components/listing-readiness-coach.tsx"), /listingVerifiedNotHealth/);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /listingHealthLead:[\s\S]{0,280}not Listing Verified/);
   assert.match(copy, /100% complete listing can still be waiting/);
   assert.match(copy, /n’est pas le pourcentage/);
@@ -196,7 +196,7 @@ test("Stripe Checkout CTAs stay honest when there are no bills", () => {
   assert.match(src("src/components/provider-subscription.tsx"), /savedFree/);
   assert.match(src("src/components/provider-subscription.tsx"), /variant=\{current \? "secondary" : "primary"\}/);
   assert.match(src("src/components/provider-subscription.tsx"), /data-ke=\{current && !canCharge \? undefined : "plan-checkout"\}/);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /No centre bills yet/);
   assert.match(copy, /Aucune facture de centre/);
   assert.match(copy, /it is not a centre bill/);

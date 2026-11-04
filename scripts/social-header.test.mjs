@@ -39,7 +39,7 @@ test("header Facebook button href is the Kyle-confirmed Page URL", () => {
 test("header wires website-only Facebook and Instagram buttons with a11y labels", () => {
   const header = src("src/components/header-social.tsx");
   const shell = src("src/components/shell.tsx");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   const login = src("src/routes/login.tsx");
   const footer = src("src/components/site-footer.tsx");
   assert.doesNotMatch(shell, /HeaderSocial/);

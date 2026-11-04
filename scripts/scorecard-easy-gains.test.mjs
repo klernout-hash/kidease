@@ -122,7 +122,7 @@ test("health counts stay read-only and the status page is bilingual", () => {
   assert.match(src("src/routes/fr.status.tsx"), /loadPublicStatus/);
   assert.match(src("src/lib/server/status-page.ts"), /await import\("\.\/uptime"\)/);
   assert.doesNotMatch(src("src/lib/server/status-page.ts"), /^import .*from ["']\.\/uptime["']/m);
-  assert.match(src("src/lib/copy.ts"), /statusTitle: "Is KidEase working\?"/);
-  assert.match(src("src/lib/copy.ts"), /statusTitle: "KidEase fonctionne-t-il\?"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /statusTitle: "Is KidEase working\?"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /statusTitle: "KidEase fonctionne-t-il\?"/);
   assert.match(src("src/lib/site-footer-nav.ts"), /\/status/);
 });

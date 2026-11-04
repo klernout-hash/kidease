@@ -7,7 +7,8 @@ import { Shell } from "@/components/shell";
 import { ParentHelperPanel } from "@/components/parent-helper";
 import { Button } from "@/components/ui/button";
 import { listedDaycareTypeFromSearch } from "@/lib/care-type";
-import { DaycareTypeRails, BROWSE_RAIL_COPY, type BrowseDaycareType } from "@/components/facility-type-rails";
+import { DaycareTypeRails } from "@/components/facility-type-rail-list";
+import { BROWSE_RAIL_COPY, type BrowseDaycareType } from "@/components/facility-type-rails";
 import { ExploreCategoryChips } from "@/components/explore-category-chips";
 import { ExploreFilterBar } from "@/components/explore-filter-bar";
 import { ExploreFilterChips } from "@/components/explore-filter-chips";
@@ -96,16 +97,15 @@ import { useRankingBestMatchFlag } from "@/lib/ranking/use-ranking-flag";
 import { assignRankingVariant, parseRankingOverride } from "@/lib/ranking/variant";
 import { DEFAULT_SEARCH_SORT, parseSearchSort } from "@/lib/search-sort";
 import type { RankAge } from "@/lib/ranking/score";
+import { isSearchStart, type SearchStart } from "@/lib/search-start";
 import {
   honestVacancy,
   isSearchAge,
-  isSearchStart,
   listingAgeUnknown,
   searchFiltersReady,
   splitSearchResults,
   startWindowToDate,
   type SearchAge,
-  type SearchStart,
 } from "@/lib/now-loops";
 import {
   RAIL_AGES,

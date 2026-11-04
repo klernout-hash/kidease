@@ -60,7 +60,7 @@ test("Cards quiet overlapping labels and keep a reserved photo aspect", () => {
 test("Listing has one primary CTA, sticky enquire, and a hero that shares the title", () => {
   const listing = src("src/routes/daycare.$slug.tsx");
   const more = src("src/components/listing-more-actions.tsx");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
 
   assert.match(listing, /data-ke="listing-primary-cta"/);
   assert.match(listing, /data-ke="listing-sticky-cta"/);

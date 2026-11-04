@@ -17,7 +17,7 @@ test("Explore filter chrome is one Airbnb/Maps bar, not three pill rows", () => 
   const carousel = src("src/components/chip-carousel.tsx");
   const filters = src("src/components/explore-filter-chips.tsx");
   const css = src("src/styles.css");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   const explore = src("src/routes/explore.tsx");
 
   assert.match(carousel, /overflow-x: auto|ke-chip-carousel/);

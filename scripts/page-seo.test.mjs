@@ -62,7 +62,7 @@ test("marketing pages have unique titles and descriptions that are not the home 
 
 test("FAQ JSON-LD uses the same on-page Q&As and invents nothing", () => {
   assert.equal(FAQ_ITEM_KEYS.length, 8);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /faqQ5: "Does KidEase list nannies or babysitters\?"/);
   assert.match(copy, /licensed daycare directory only/);
   assert.match(copy, /does not process subsidy applications/);

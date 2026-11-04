@@ -163,9 +163,9 @@ test("UI and docs stay honest: tooltip, aria, no scrape on listing load", () => 
   assert.match(docs, /Do not scrape/);
   assert.match(docs, /never invents a licence number/i);
   assert.match(src("docs/catalog-source.md"), /licensing\.md/);
-  assert.match(src("src/lib/copy.ts"), /trustCatalogueMatched: "Catalogue-matched"/);
-  assert.match(src("src/lib/copy.ts"), /trustLicensedMatched: "Registry-checked"/);
-  assert.match(src("src/lib/copy.ts"), /trustLicensedMatchedMbTip/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /trustCatalogueMatched: "Catalogue-matched"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /trustLicensedMatched: "Registry-checked"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /trustLicensedMatchedMbTip/);
   assert.match(src("src/lib/catalog-seed.ts"), /persistLocalLicenseMatches/);
 });
 

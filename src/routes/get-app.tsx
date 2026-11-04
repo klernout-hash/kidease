@@ -16,7 +16,7 @@ import {
 } from "@/lib/native";
 import { STORE } from "@/lib/store-listing";
 import { AMAZON_APPSTORE_URL } from "@/lib/amazon-appstore";
-import { featPayBodyKey } from "@/lib/copy";
+import { featPayBodyKey } from "@/lib/copy-keys";
 import { useRoleChrome } from "@/components/role-chrome";
 import { localePath } from "@/lib/locale-path";
 import { showStoreComingSoon } from "@/lib/store-placeholders";

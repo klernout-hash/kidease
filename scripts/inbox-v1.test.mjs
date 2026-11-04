@@ -183,7 +183,7 @@ test("bell critical kinds deep-link into centre thread + Detail and do not mass-
 test("centre inbox ships three-pane, empty truth, and ops composer — not CMS", () => {
   const desk = src("src/components/centre-inbox.tsx");
   const rail = src("src/components/inbox-detail-rail.tsx");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(desk, /data-ke="centre-inbox"/);
   assert.match(desk, /md:grid-cols/);
   assert.match(desk, /xl:grid-cols/);

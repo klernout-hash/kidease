@@ -147,7 +147,7 @@ test("accept invite requires matching mailbox and a live pending token", () => {
 });
 
 test("EN and FR-CA employee labels exist and match", () => {
-  const dict = src("src/lib/copy.ts");
+  const dict = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   for (const key of [
     "employeesTitle",
     "employeeAddTitle",

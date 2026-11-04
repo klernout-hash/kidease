@@ -11,11 +11,11 @@ function src(rel) {
 }
 
 test("explore and search share six daycare-type rows with in-row show more", () => {
-  const rails = src("src/components/facility-type-rails.tsx");
+  const rails = src("src/components/facility-type-rails.tsx") + src("src/components/facility-type-rail-list.tsx");
   const home = src("src/routes/index.tsx");
   const search = src("src/routes/search.tsx");
   const rail = src("src/components/listing-rail.tsx");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   const css = src("src/styles.css");
   const daycares = src("src/lib/server/daycares.ts");
 
@@ -33,7 +33,7 @@ test("explore and search share six daycare-type rows with in-row show more", () 
   assert.match(rails, /BROWSE_RAIL_PAGE = 12/);
   assert.match(rails, /expandable/);
   assert.match(rails, /pageSize=\{BROWSE_RAIL_PAGE\}/);
-  assert.match(home, /FacilityTypeRails items=\{shown\} visual/);
+  assert.match(src("src/components/home-discovery.tsx"), /FacilityTypeRails items=\{shown\} visual/);
   assert.match(search, /DaycareTypeRails/);
   assert.match(search, /data-ke="search-result-list"/);
   assert.match(search, /writeBrowseType/);

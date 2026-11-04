@@ -336,7 +336,7 @@ test("video route is registered, Plus-gated, and not a *.server.* client import"
   assert.match(src("docs/video.md"), /Vercel env checklist/);
   assert.match(route, /videoFeatureOff/);
   assert.match(route, /comingSoon/);
-  assert.match(src("src/lib/copy.ts"), /FEATURE_VIDEO is off/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /FEATURE_VIDEO is off/);
 });
 
 test("in-app call start triggers the background ring (FEATURE_CALL_PUSH gate is server-side)", () => {

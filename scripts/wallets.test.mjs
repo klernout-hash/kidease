@@ -176,7 +176,7 @@ test("Pay bill and catalog checkout do not open Stripe inside the native app", (
   assert.match(src("src/lib/wallets.ts"), /Payments are not part of this app/);
   assert.doesNotMatch(src("src/lib/wallets.ts"), /Browser\.open/);
 
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /payWalletsNative/);
   assert.match(copy, /payWalletsUnavailable/);
   assert.match(copy, /Canadian dollars \(CAD\)/);

@@ -115,7 +115,7 @@ test("delete account warns, confirms, signs out, and revokes Apple", () => {
   assert.match(panel, /DELETE_CONFIRM_PHRASE/);
   assert.match(panel, /signOut\("\/"\)/);
   assert.match(src("src/lib/server/family.ts"), /revokeStoredAppleSignIn\(uid\)/);
-  const warn = src("src/lib/copy.ts");
+  const warn = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(warn, /deleteAccountWarn: "This closes your KidEase account/);
   assert.match(warn, /nous révoquons cette connexion/);
 });

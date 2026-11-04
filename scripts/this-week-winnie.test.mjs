@@ -13,13 +13,13 @@ function src(rel) {
 test("THIS WEEK acceptance: age+start+place gate, hollow-free rails, Top7, vacancy, request, compare, 23927", () => {
   const helpers = src("src/lib/now-loops.ts");
   const search = src("src/routes/search.tsx");
-  const home = src("src/routes/index.tsx");
+  const home = src("src/routes/index.tsx") + src("src/components/home-discovery.tsx");
   const chips = src("src/components/explore-category-chips.tsx");
   const cats = src("src/lib/explore-categories.ts");
   const listing = src("src/routes/daycare.$slug.tsx");
   const compare = src("src/routes/compare.tsx");
   const card = src("src/components/daycare-card.tsx");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   const flags = src("src/lib/flags.ts");
   const stats = JSON.parse(src("src/lib/data/catalog-stats.json"));
   const readiness = src("src/lib/listing-readiness.ts");

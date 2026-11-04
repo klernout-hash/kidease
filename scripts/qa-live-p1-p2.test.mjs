@@ -44,7 +44,7 @@ test("featured chip and section share one count and hide together at zero", () =
   assert.equal(twelve.showSection, true);
   assert.equal(twelve.count, 12);
 
-  const home = src("src/routes/index.tsx");
+  const home = src("src/routes/index.tsx") + src("src/components/home-discovery.tsx");
   const daycares = src("src/lib/server/daycares.ts");
   assert.match(home, /featuredHomeAgreement\(publicFeatured\.length\)/);
   assert.match(home, /featuredAgreement\.showChip/);
@@ -92,7 +92,7 @@ test("a 404 photo is flagged and the next render skips it", () => {
   assert.match(carousel, /isFailedPhotoUrl/);
   assert.match(listing, /ListingPhotoFallback/);
   assert.doesNotMatch(listing, /storefront-placeholder-480\.webp/);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.doesNotMatch(copy, /Every listing shows a real photo/);
   assert.doesNotMatch(copy, /Chaque fiche montre une vraie photo du lieu/);
   assert.match(copy, /so you can recognise the location/);

@@ -74,7 +74,7 @@ test("Explore list is stacked category rails with arrows, not a grid", () => {
   const rails = src("src/components/explore-category-rails.tsx");
   const lib = src("src/lib/explore-category-rails.ts");
   const listingRail = src("src/components/listing-rail.tsx");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
 
   assert.doesNotMatch(search, /<ExploreCategoryRails/);
   assert.match(search, /railItems/);

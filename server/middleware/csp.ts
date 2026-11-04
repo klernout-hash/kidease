@@ -8,6 +8,7 @@
  */
 import {
   applyDocumentNonces,
+  stripModulePreloadsForPath,
   applyHtmlDocumentCacheHeaders,
   buildContentSecurityPolicy,
   generateNonce,
@@ -50,7 +51,7 @@ export default async function cspMiddleware(
     });
   }
 
-  const stamped = applyDocumentNonces(await result.text(), nonce);
+  const stamped = stripModulePreloadsForPath(applyDocumentNonces(await result.text(), nonce), event.url.pathname);
   headers.delete("content-length");
   return new Response(stamped, {
     status: result.status,

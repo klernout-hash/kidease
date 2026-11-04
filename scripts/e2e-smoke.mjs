@@ -1587,7 +1587,17 @@ async function runWebkitSearchGuard(base) {
     page.on("pageerror", (err) => crashes.push(String(err?.message || err)));
     async function quiet(path) {
       crashes.length = 0;
-      await page.goto(new URL(path, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+      const url = new URL(path, base).href;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          await page.goto(url, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+          break;
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          if (attempt === 1 || !/interrupted by another navigation/i.test(message)) throw err;
+          await page.waitForLoadState("domcontentloaded").catch(() => {});
+        }
+      }
       await page
         .locator('[data-ke="safe-error"], [data-ke="search-count"], [data-ke="search-result-list"], [data-ke="parent-identity"], [data-ke="saved-fallback"]')
         .first()

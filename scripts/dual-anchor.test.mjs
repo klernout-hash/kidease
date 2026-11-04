@@ -124,7 +124,7 @@ describe("search stack keeps single-anchor and adds dual PostGIS", () => {
 
   it("Explore shows Home / Work / Both and dual empty copy", () => {
     const page = read("src/routes/search.tsx");
-    const copy = read("src/lib/copy.ts");
+    const copy = (read("src/lib/copy-en.ts") + read("src/lib/copy-fr.ts"));
     const map = read("src/components/map-view.tsx");
     assert.match(page, /DualAnchorBar/);
     const bar = read("src/components/dual-anchor-bar.tsx");
@@ -139,7 +139,7 @@ describe("search stack keeps single-anchor and adds dual PostGIS", () => {
     assert.match(places, /suggestPlacesBrowser/);
     assert.match(places, /geocodeWithBrowser/);
     assert.match(places, /suggestLocalPlaces/);
-    assert.match(read("src/lib/copy.ts"), /anchorWorkMiss: "We couldn’t find that address/);
+    assert.match((read("src/lib/copy-en.ts") + read("src/lib/copy-fr.ts")), /anchorWorkMiss: "We couldn’t find that address/);
     assert.match(page, /noDualResults/);
     assert.match(page, /secondOrigin/);
     assert.match(page, /getMySearchAnchors/);

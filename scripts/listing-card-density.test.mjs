@@ -57,7 +57,7 @@ test("listing card copy stays a compact single stack with 44px save target", () 
 test("rails, search skeletons, and featured grids share the tighter footprint", () => {
   const rail = src("src/components/listing-rail.tsx");
   const search = src("src/routes/search.tsx");
-  const home = src("src/routes/index.tsx");
+  const home = src("src/routes/index.tsx") + src("src/components/home-discovery.tsx");
   const photo = src("src/lib/photo.ts");
   assert.match(rail, /scrollBy\(\{ left: dir \* step/);
   assert.match(search, /data-ke="search-result-list"/);

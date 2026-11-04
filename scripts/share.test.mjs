@@ -201,7 +201,7 @@ test("listing cards and listing detail share the centre deep link", () => {
 });
 
 test("share copy is present in English and French", () => {
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /shareKidEase: "Share KidEase"/);
   assert.match(copy, /shareKidEase: "Partager KidEase"/);
   assert.match(copy, /shareKidEaseText: "Find licensed child care near you on KidEase"/);

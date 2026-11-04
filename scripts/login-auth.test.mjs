@@ -314,7 +314,7 @@ describe("production email sign-in is not globally rate-limited", () => {
     assert.match(read("docs/cloudflare.md"), /\/api\/auth\/\*/);
     assert.match(read("docs/cloudflare.md"), /\/_serverFn\/\*/);
     assert.match(read("src/routes/login.tsx"), /loginMethodsFailed/);
-    assert.match(read("src/lib/copy.ts"), /security filter may be blocking/i);
+    assert.match((read("src/lib/copy-en.ts") + read("src/lib/copy-fr.ts")), /security filter may be blocking/i);
     assert.match(read("src/routes/forgot-password.tsx"), /authClientErrorMessage/);
   });
 });

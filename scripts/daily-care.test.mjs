@@ -130,8 +130,8 @@ test("Daily care is wired on parent desk and daycare Today without touching mark
   assert.doesNotMatch(src("migrations/0050_daily_journals.sql"), /bytea|video_url|mp4/);
   assert.match(src("src/lib/server/ops.ts"), /centreCanWriteCare/);
   assert.match(src("src/lib/server/ops.ts"), /insertCareStatusMessage/);
-  assert.match(src("src/lib/copy.ts"), /dailyCare: "Daily care"/);
-  assert.match(src("src/lib/copy.ts"), /dailyCare: "Soins du jour"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /dailyCare: "Daily care"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /dailyCare: "Soins du jour"/);
   assert.match(src("src/lib/casl.ts"), /emailCommercial/);
   assert.doesNotMatch(src("src/lib/server/daily-care.ts"), /FEATURE_SMS|sendSms|emailCommercial/);
   assert.doesNotMatch(src("src/lib/server/care-ops.ts"), /FEATURE_SMS|sendSms|emailCommercial/);

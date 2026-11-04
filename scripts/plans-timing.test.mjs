@@ -42,8 +42,8 @@ test("guests reach plans from the main menu only while subscriptions are on", ()
   assert.match(src("src/components/role-nav.tsx"), /plans: "navPlans"/);
   assert.match(src("src/components/role-chrome.tsx"), /subscriptionsEnabled: remote\.subscriptionsEnabled === true/);
   assert.doesNotMatch(src("src/components/role-chrome.tsx"), /return GUEST;/);
-  assert.match(src("src/lib/copy.ts"), /navPlans: "Plans"/);
-  assert.match(src("src/lib/copy.ts"), /navPlans: "Forfaits"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /navPlans: "Plans"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /navPlans: "Forfaits"/);
 });
 
 test("home upgrade card waits for a real action and stays hidden after dismissal", () => {

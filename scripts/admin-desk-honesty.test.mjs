@@ -10,13 +10,8 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-function packKeys(text, pack) {
-  const start = text.indexOf(`  ${pack}: {`);
-  assert.ok(start >= 0, `missing ${pack} pack`);
-  const rest = text.slice(start);
-  const end = pack === "en" ? rest.indexOf("\n  fr: {") : rest.lastIndexOf("\n  },");
-  const block = end === -1 ? rest : rest.slice(0, end);
-  return [...block.matchAll(/^\s{4}([A-Za-z][A-Za-z0-9]*):/gm)].map((m) => m[1]);
+function packKeys(text) {
+  return [...text.matchAll(/^\s{4}([A-Za-z][A-Za-z0-9]*):/gm)].map((m) => m[1]);
 }
 
 test("DocuSign Send is disabled when keys are not live", () => {
@@ -62,9 +57,8 @@ test("activity has kind filters and money says pending is not settled", () => {
   const admin = (src("src/routes/admin.tsx") + "\n" + src("src/components/admin-desk-page.tsx"));
   assert.match(admin, /activityKind/);
   assert.match(admin, /Pending totals are not settled/);
-  const copy = src("src/lib/copy.ts");
-  const en = packKeys(copy, "en");
-  const fr = packKeys(copy, "fr");
+  const en = packKeys(src("src/lib/copy-en.ts"));
+  const fr = packKeys(src("src/lib/copy-fr.ts"));
   assert.deepEqual(fr, en);
 });
 

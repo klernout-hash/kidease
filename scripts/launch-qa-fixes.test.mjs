@@ -46,7 +46,7 @@ test("parent can delete an owned child profile after confirm", () => {
   const desk = src("src/components/parent-desk.tsx");
   const form = src("src/components/child-profile-form.tsx");
   const control = src("src/components/delete-child-control.tsx");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   const deleteFn = family.slice(family.indexOf("export const deleteChild"), family.indexOf("export const toggleSave"));
   assert.match(deleteFn, /authMiddleware/);
   assert.match(deleteFn, /familyWrite\(context\.userId\)/);
@@ -100,7 +100,7 @@ test("B-03 employee invite is saved even when mail fails", () => {
   assert.match(members, /mailed/);
   assert.match(src("src/lib/server/invite-mail.ts"), /export async function trySendEmployeeInviteEmail/);
   assert.match(src("src/components/centre-employees.tsx"), /employeeInviteSaved/);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /employeeInviteSaved:/);
 });
 

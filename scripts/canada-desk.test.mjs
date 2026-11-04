@@ -81,7 +81,7 @@ test("alert settings stay closed and quiet hours are not labeled Winnipeg time",
   const push = src("src/lib/alert-push.ts");
   assert.doesNotMatch(push, /Winnipeg time/i);
   assert.match(push, /your time zone/i);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.doesNotMatch(copy, /in Winnipeg/);
   assert.doesNotMatch(copy, /21 h à Winnipeg/);
   assert.match(copy, /in your time zone/);
@@ -135,6 +135,6 @@ test("plain search uses the parent's area, then Winnipeg", () => {
   assert.match(search, /searchOriginOrWinnipeg/);
   assert.doesNotMatch(search, /q=Winnipeg/);
   assert.match(src("src/lib/search-origin.ts"), /searchOriginOrWinnipeg/);
-  assert.match(src("src/lib/copy.ts"), /canadaSearchTitle/);
-  assert.match(src("src/lib/copy.ts"), /Daycares across Canada/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /canadaSearchTitle/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /Daycares across Canada/);
 });

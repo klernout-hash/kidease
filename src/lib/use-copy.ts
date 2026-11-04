@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useRouteContext, useRouterState } from "@tanstack/react-router";
-import { tx, type CopyKey } from "./copy";
+import { tx, type CopyKey } from "./copy-runtime";
 import { isShippedLocale, type ShippedLocale } from "./languages";
 import { localeFromSearch } from "./locale-geo";
 import { pathLocale } from "./locale-path";

@@ -77,7 +77,7 @@ test("bare /pay is an empty-state hub, not a missing route", () => {
 });
 
 test("home/about marketing copy uses Canadian recognise", () => {
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /so you can recognise the location/);
   assert.match(copy, /so you can recognise the location/);
   assert.doesNotMatch(copy, /trustWhy2: ".*recognize/);
@@ -89,6 +89,6 @@ test("header theme control keeps a full System label at laptop width", () => {
   assert.match(appearance, /appearanceSystem/);
   assert.match(appearance, /min-w-\[5\.5rem\]/);
   assert.match(appearance, /shrink-0/);
-  assert.match(src("src/lib/copy.ts"), /appearanceSystem: "System"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /appearanceSystem: "System"/);
   assert.doesNotMatch(appearance, /Syste"/);
 });

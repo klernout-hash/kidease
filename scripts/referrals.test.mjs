@@ -34,8 +34,8 @@ test("friend links are codes only, with no payout", () => {
     src("migrations/0093_referrals.sql"),
   ].join("\n");
   assert.doesNotMatch(blob, /payout|stripe|STORE_PAYMENTS|credit/i);
-  assert.match(src("src/lib/copy.ts"), /does not pay you for sharing/);
-  assert.match(src("src/lib/copy.ts"), /ne vous paie pas pour le partage/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /does not pay you for sharing/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /ne vous paie pas pour le partage/);
   assert.match(src("src/lib/server/family.ts"), /purgeReferralRows/);
   assert.match(src("src/routes/account.tsx"), /data-ke="refer-friend"|ReferFriendPanel/);
   assert.match(src("src/components/shell.tsx"), /ApplyReferral/);

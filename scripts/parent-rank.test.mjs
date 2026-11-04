@@ -228,7 +228,7 @@ test("server overlay, search sorts, desks, and docs stay honest", () => {
   assert.match(src("src/routes/provider.tsx"), /DemandCues/);
   assert.match(src("src/lib/server/family.ts"), /overlayDemandSnapshots/);
 
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /Paid plans never inflate Match/);
   assert.match(copy, /Paid plans never inflate Urgency/);
   assert.match(copy, /Les forfaits payants n’augmentent jamais la correspondance/);

@@ -108,8 +108,8 @@ test("send paths and UI capture consent without enabling FEATURE_SMS", () => {
   assert.match(src("src/routes/pay.bill.$billId.tsx"), /CaslConsentFields/);
   assert.match(src(".env.example"), /^FEATURE_SMS=0$/m);
   assert.doesNotMatch(src(".env.example"), /^FEATURE_SMS=1$/m);
-  assert.match(src("src/lib/copy.ts"), /caslLegend: "CASL consent"/);
-  assert.match(src("src/lib/copy.ts"), /caslLegend: "Consentement LCAP"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /caslLegend: "CASL consent"/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /caslLegend: "Consentement LCAP"/);
 });
 
 test("client-reachable CASL server-fns do not statically import node:crypto", () => {

@@ -42,6 +42,7 @@ test("FEATURE_PUSH, FEATURE_SMS, and provider subscriptions default off", () => 
   assert.equal(FLAG_DEFAULTS.FEATURE_VIDEO, false);
   assert.equal(FLAG_DEFAULTS.FEATURE_INAPP_CHAT, false);
   assert.equal(FLAG_DEFAULTS.FEATURE_PROVIDER_SUBSCRIPTIONS, false);
+  assert.equal(FLAG_DEFAULTS.FEATURE_PROVIDER_INSIGHTS, false);
   assert.equal(FLAG_DEFAULTS.SHOW_PAY_CTAS, false);
   assert.equal(envFlagOn(undefined), false);
   assert.equal(smsEnabled({}), false);

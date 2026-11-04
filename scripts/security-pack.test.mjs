@@ -64,7 +64,7 @@ describe("1) trusted devices + session list", () => {
     assert.match(devices, /devicesTitle/);
     assert.match(devices, /devicesRevokeThis/);
     assert.match(devices, /devicesRevokeOthers/);
-    const copy = src("src/lib/copy.ts");
+    const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
     assert.match(copy, /Devices signed in/);
     assert.match(copy, /Revoke this device/);
     assert.match(copy, /Revoke all other devices/);

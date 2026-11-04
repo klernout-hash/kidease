@@ -9,6 +9,8 @@ export function buildContentSecurityPolicy(nonce: string): string;
 export function applyScriptNonces(html: string, nonce: string): string;
 export function applyStyleNonces(html: string, nonce: string): string;
 export function applyStyleNonceBoot(html: string, nonce: string): string;
+export function stripModulePreloads(html: string): string;
 export function applyDocumentNonces(html: string, nonce: string): string;
+export function stripModulePreloadsForPath(html: string, pathname: string): string;
 export function applyHtmlDocumentCacheHeaders(headers: Headers): void;
 export function isHtmlResponse(contentType: string | null | undefined): boolean;

@@ -196,6 +196,7 @@ Each one stays off until its own flag is `1`. None of them send email, SMS, push
 | `FEATURE_LOGIN_AMAZON` | Login with Amazon on Fire / Amazon Appstore devices only. Needs AMAZON_CLIENT_ID, AMAZON_CLIENT_SECRET. |
 | `FEATURE_FIRE_KIOSK` | Landscape check-in kiosk `/kiosk` for Fire tablets, PIN exit. Needs FEATURE_CHILD_CHECKIN. |
 | `FEATURE_ALEXA_SKILL` | Alexa custom skill endpoint `/api/alexa`. Needs ALEXA_SKILL_ID. |
+| `FEATURE_PROVIDER_INSIGHTS` | Insights on the daycare desk (`/provider?desk=insights`, French label Statistiques). Real rows only. Area averages stay hidden under 5 centres. |
 
 ## What is wired
 

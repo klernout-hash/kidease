@@ -300,8 +300,8 @@ test("public approval strip is statuses only and stays off until trust really ho
   assert.doesNotMatch(page.slice(page.indexOf("KidEaseApprovalStrip"), page.indexOf("KidEaseApprovalStrip") + 180), /licensePhoto/);
   assert.match(searchCard, /data-ke="kidease-approved-marker"/);
   assert.match(searchCard, /publicApprovalEligible\(item\)/);
-  assert.match(src("src/lib/copy.ts"), /met KidEase licence and screening requirements/);
-  assert.doesNotMatch(src("src/lib/copy.ts"), /Background checked by KidEase/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /met KidEase licence and screening requirements/);
+  assert.doesNotMatch((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /Background checked by KidEase/);
 });
 
 test("approval clears the search memo and does not cache an empty Live result", async () => {
@@ -383,7 +383,7 @@ test("guest, parent, and daycare stay in sync with the approval strip", () => {
   assert.match(today, /KidEaseApprovalStrip/);
   assert.match(src("src/lib/server/daycares.ts"), /screeningOnFile: Boolean\(d\.screeningOnFile\)/);
   assert.match(src("src/lib/server/catalog-neon.ts"), /screening_on_file/);
-  assert.match(src("src/lib/copy.ts"), /Parents can find it in Live search/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /Parents can find it in Live search/);
 });
 
 test("kh2t approval, licence, Live, and Edmonton search move together", () => {

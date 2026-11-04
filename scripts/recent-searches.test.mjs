@@ -6,7 +6,7 @@ import { test } from "node:test";
 import { rememberSearch } from "../src/lib/recent-searches.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const copy = readFileSync(join(root, "src/lib/copy.ts"), "utf8");
+const copy = readFileSync(join(root, "src/lib/copy-en.ts"), "utf8") + readFileSync(join(root, "src/lib/copy-fr.ts"), "utf8");
 const search = readFileSync(join(root, "src/routes/search.tsx"), "utf8");
 
 test("recent searches stay on the phone, newest first, and skip blanks", () => {

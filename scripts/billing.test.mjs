@@ -174,7 +174,7 @@ test("money path uses Bill / Pay / Paid and extends invoices", () => {
   const honesty = src("src/components/listing-status-badge.tsx");
   assert.match(honesty, /moneyModeLoading/);
   assert.match(honesty, /if \(!ready\)/);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /moneyModeLoading: "Checking whether Stripe Checkout is live…"/);
   assert.match(copy, /newBillLiveHint:/);
   assert.match(copy, /connectFeeParentPay:/);

@@ -30,7 +30,7 @@ describe("QA 2026-09-10: Turnstile token pass-through", () => {
     assert.match(client, /onRequest\(ctx/);
     assert.match(client, /x-turnstile-token/);
     assert.match(field, /turnstileExpired/);
-    assert.match(src("src/lib/copy.ts"), /Security check expired/);
+    assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /Security check expired/);
     assert.match(field, /size: "flexible"/);
     assert.match(field, /resolvedTheme/);
     assert.match(field, /appearance: "always"/);
@@ -101,10 +101,10 @@ describe("login strength: email Connexion primary, logout, honest errors", () =>
     assert.match(login, /t\("signIn"\)/);
     assert.match(buttons, /continueGoogle/);
     assert.match(buttons, /data-ke="social-secondary"/);
-    assert.match(src("src/lib/copy.ts"), /orSocial: "or continue with"/);
-    assert.match(src("src/lib/copy.ts"), /orSocial: "ou continuer avec"/);
-    assert.doesNotMatch(src("src/lib/copy.ts"), /orSocial: "or continue with Google"/);
-    assert.doesNotMatch(src("src/lib/copy.ts"), /orSocial: "ou continuer avec Google"/);
+    assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /orSocial: "or continue with"/);
+    assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /orSocial: "ou continuer avec"/);
+    assert.doesNotMatch((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /orSocial: "or continue with Google"/);
+    assert.doesNotMatch((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /orSocial: "ou continuer avec Google"/);
     assert.match(src(".env.example"), /^FEATURE_FACEBOOK_LOGIN=0$/m);
   });
 
@@ -144,7 +144,7 @@ describe("QA 2026-09-10: map hang + licensed-not-live honesty", () => {
   });
 
   it("guest copy is honest when 0 live and licensed centres exist", () => {
-    const copy = src("src/lib/copy.ts");
+    const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
     const search = src("src/routes/search.tsx");
     assert.match(copy, /licensedNotLiveTitle/);
     assert.match(copy, /licensedNotLiveLead/);

@@ -199,5 +199,5 @@ test("prefs stay free and school-age saves as school-age", () => {
   assert.match(src("src/lib/saved-search.ts"), /"school-age"/);
   assert.match(src("migrations/0043_honest_search_alerts.sql"), /request_reply/);
   assert.match(src("src/lib/server/inbox.ts"), /request_reply/);
-  assert.doesNotMatch(src("src/lib/copy.ts"), /upgrade to get alerts/i);
+  assert.doesNotMatch((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /upgrade to get alerts/i);
 });

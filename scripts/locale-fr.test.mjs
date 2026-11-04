@@ -160,6 +160,6 @@ test("FR routes and language toggle are wired to the existing locale store", () 
   assert.match(src("src/components/native-boot.tsx"), /isFrPath/);
   assert.equal(MARKETING_PAGE_SEO_FR.home.path, "/fr");
   assert.equal(LEGAL_PAGE_SEO_FR.privacy.path, "/fr/privacy");
-  assert.match(src("src/lib/copy.ts"), /listingCopyEnNote:/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /listingCopyEnNote:/);
   assert.match(src("docs/i18n.md"), /catalogue \/ user-provided copy stay English/);
 });

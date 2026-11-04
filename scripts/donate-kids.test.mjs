@@ -14,12 +14,8 @@ function src(rel) {
   return readFileSync(join(root, rel), "utf8");
 }
 
-const copySrc = src("src/lib/copy.ts");
-
 function copyValue(key, locale) {
-  const start = locale === "fr" ? copySrc.indexOf("\n  fr: {") : copySrc.indexOf("export const copy");
-  const end = locale === "fr" ? copySrc.length : copySrc.indexOf("\n  fr: {");
-  const block = copySrc.slice(start, end);
+  const block = src(locale === "fr" ? "src/lib/copy-fr.ts" : "src/lib/copy-en.ts");
   const match = block.match(new RegExp(`\\n    ${key}: "([^"]*)"`));
   assert.ok(match, `copy ${locale}.${key}`);
   return match[1];

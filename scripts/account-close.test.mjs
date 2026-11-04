@@ -56,7 +56,7 @@ test("delete and purge call the closer and do not touch payment tables", () => {
   assert.match(closer, /update payments/);
   assert.match(closer, /DELETED_ACCOUNT_TOMBSTONE/);
   assert.doesNotMatch(closer, /stripe/i);
-  assert.match(src("src/lib/copy.ts"), /deleteAccountPendingNow/);
-  assert.match(src("src/lib/copy.ts"), /Les demandes de place ouvertes/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /deleteAccountPendingNow/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /Les demandes de place ouvertes/);
   assert.match(src("src/components/delete-account-panel.tsx"), /deleteAccountWeb/);
 });

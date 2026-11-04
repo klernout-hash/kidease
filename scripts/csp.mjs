@@ -181,10 +181,26 @@ export function applyEmailObfuscationOff(html) {
   return out;
 }
 
+/**
+ * Drop route-graph modulepreload hints. They are not required to boot.
+ * Leaving them in makes the browser compile the whole route graph before
+ * the server-rendered headline can paint.
+ * Image and font preloads stay.
+ */
+export function stripModulePreloads(html) {
+  return String(html).replace(/<link\b[^>]*\brel=["']modulepreload["'][^>]*>/gi, "");
+}
+
 export function applyDocumentNonces(html, nonce) {
   return applyEmailObfuscationOff(
     applyStyleNonces(applyScriptNonces(applyStyleNonceBoot(html, nonce), nonce), nonce),
   );
+}
+
+/** Home only. Search and login keep their preloads so those pages stay fast. */
+export function stripModulePreloadsForPath(html, pathname) {
+  if (pathname !== "/" && pathname !== "/fr" && pathname !== "/fr/") return html;
+  return stripModulePreloads(html);
 }
 
 export function isHtmlResponse(contentType) {

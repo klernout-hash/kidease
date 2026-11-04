@@ -217,7 +217,7 @@ test("server overlay, cards, desk, and docs stay honest", () => {
   assert.doesNotMatch(src("src/components/provider-listing-forms.tsx"), /QualityIssuesPanel/);
   assert.match(src("src/routes/compare.tsx"), /guestFavorite/);
 
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /guestFavorite: "Guest favorite"/);
   assert.match(copy, /KidEase does not invent this badge/);
   assert.match(copy, /KidEase does not invent ratings/);

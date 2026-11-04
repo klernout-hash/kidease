@@ -57,7 +57,7 @@ test("Explore search bar is an Airbnb-style pill wired to /search params", () =>
   const bar = src("src/components/explore-search-bar.tsx");
   const search = src("src/routes/search.tsx");
   const home = src("src/routes/index.tsx");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
 
   assert.match(bar, /searchWhere/);
   assert.match(bar, /searchWhen/);
@@ -97,8 +97,8 @@ test("a start date in the next 14 days asks for a confirmed opening", () => {
   const search = src("src/routes/search.tsx");
   assert.match(bar, /data-ke="when-calendar"/);
   assert.match(search, /dateAsksForOpenSpot\(needBy\)/);
-  assert.match(src("src/lib/copy.ts"), /searchWhenNote:/);
-  assert.match(src("src/lib/copy.ts"), /confirmed opening/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /searchWhenNote:/);
+  assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /confirmed opening/);
 });
 
 test("daycare name search lists public records, not only the current radius", () => {
@@ -123,7 +123,7 @@ test("guest hero treats unresolved text as a daycare name search", () => {
   assert.deepEqual(guestHeroSearch("   ", null), {});
 
   const home = src("src/routes/index.tsx");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.doesNotMatch(home, /guestHeroSearch/);
   assert.match(home, /name: homeName/);
   assert.match(copy, /locationPh: "Address, city, postal code, or daycare"/);

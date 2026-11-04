@@ -125,7 +125,7 @@ nodeTest("signup and settings ask Lookup before SMS is turned on, and say so in 
   assert.match(src("src/routes/account.tsx"), /smsUnreachable/);
   assert.match(src("src/components/parent-signup-form.tsx"), /smsOptInWasBlocked/);
   assert.match(src("src/routes/login.tsx"), /smsOptInWasBlocked/);
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   assert.match(copy, /smsUnreachable: "Texts can't reach that number\. Use a mobile phone that can get text messages\."/);
   assert.match(copy, /smsUnreachable: "Les textos ne peuvent pas joindre ce numéro\./);
   assert.equal(smsOptInWasBlocked({ smsUnreachable: true }), true);

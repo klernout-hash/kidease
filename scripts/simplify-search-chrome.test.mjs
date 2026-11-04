@@ -15,7 +15,7 @@ test("/search chrome is one filter bar and keeps existing filter math", () => {
   const bar = src("src/components/explore-search-bar.tsx");
   const filterBar = src("src/components/explore-filter-bar.tsx");
   const chips = src("src/components/explore-category-chips.tsx");
-  const copy = src("src/lib/copy.ts");
+  const copy = (src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts"));
   const explore = src("src/routes/explore.tsx");
   const home = src("src/routes/index.tsx");
 
