@@ -146,7 +146,12 @@ test("spots, reports, and block-style saves celebrate only on the success branch
 
   const safety = src("src/components/safety-actions.tsx");
   assert.match(safety, /toast\.success\(text\.sent\)/);
-  assert.match(safety, /toast\.success\(result\.blocked \? text\.blockedNow : text\.unblocked\)/);
+  assert.match(safety, /toast\.success\(text\.blockedNow\)/);
+  assert.match(safety, /toast\.success\(text\.unblocked\)/);
   assert.match(safety, /toast\.error\(text\.failed\)/);
-  assert.match(safety, /toast\.error\(text\.blockedSend\)/);
+  assert.doesNotMatch(safety, /toast\.success\(text\.blockedSend\)/);
+  const blockStart = safety.indexOf("setMessageBlock");
+  assert.ok(blockStart > 0);
+  assert.doesNotMatch(safety.slice(blockStart), /\.catch\([\s\S]{0,80}toast\.success/);
+  assert.match(src("src/routes/inbox.$id.tsx") + src("src/components/centre-inbox.tsx"), /blockedSend/);
 });

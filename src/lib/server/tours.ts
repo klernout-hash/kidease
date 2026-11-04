@@ -43,6 +43,7 @@ type TourRow = {
   child_id: string | null;
   child_name: string | null;
   parent_name: string | null;
+  user_id: string | null;
   preferred_times: string;
   parent_note: string | null;
   status: TourStatus;
@@ -74,6 +75,7 @@ function mapTour(row: TourRow): TourRequest {
     childId: row.child_id,
     childName: row.child_name,
     parentName: guestParentName(row),
+    parentUserId: row.user_id,
     preferredTimes: parsePreferredTimes(row.preferred_times),
     parentNote: row.parent_note,
     status: row.status,
@@ -136,10 +138,12 @@ export const createTourRequest = createServerFn({ method: "POST" })
     await assertFacebookContactEmail(context.userId);
     const { assertFamilyWrite } = await import("@/lib/server/coparent");
     const homeId = (await assertFamilyWrite(context.userId)).dataUserId;
+    const sql = await getSql();
+    const { assertChatNotBlocked } = await import("@/lib/server/safety");
+    await assertChatNotBlocked(sql, { senderId: homeId, parentUserId: homeId, daycareId: data.daycareId });
     const times = parsePreferredTimes(data.preferredTimes);
     if (!preferredTimesValid(times)) throw new Error("Pick at least one preferred time");
 
-    const sql = await getSql();
     const listed = await catalogByIdGet(data.daycareId);
     if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerMayUseAdminOnlyListing())) {
       throw new Error("Listing not found");
@@ -292,7 +296,7 @@ export const listTourRequests = createServerFn({ method: "GET" })
     const homeId = (await familyScopeFor(context.userId)).dataUserId;
     const rows = await sql<TourRow>`
       select t.id, t.conversation_id, t.daycare_id, d.name as daycare_name, d.slug,
-             t.child_id, t.child_name, u.name as parent_name, t.preferred_times,
+             t.user_id, t.child_id, t.child_name, u.name as parent_name, t.preferred_times,
              t.parent_note, t.status, t.centre_note, t.created_at, t.responded_at,
              t.window_id, t.hold_expires_at, t.parent_first_name, t.parent_last_name, t.parent_phone, t.contact_email
       from tour_requests t
@@ -317,7 +321,15 @@ export const listTourRequests = createServerFn({ method: "GET" })
       )
       order by t.created_at desc
     `.catch(() => []);
-    return rows.map(mapTour);
+    const { omitHiddenParents } = await import("@/lib/server/safety");
+    const centreRows = rows
+      .filter((row) => row.user_id && row.user_id !== homeId)
+      .map((row) => ({ id: row.id, userId: row.user_id, daycareId: row.daycare_id }));
+    const visibleCentre = await omitHiddenParents(sql, centreRows);
+    const visibleIds = new Set(visibleCentre.map((row) => row.id));
+    return rows
+      .filter((row) => !row.user_id || row.user_id === homeId || visibleIds.has(row.id))
+      .map(mapTour);
   });
 
 export const respondTourRequest = createServerFn({ method: "POST" })

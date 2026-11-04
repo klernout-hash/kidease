@@ -31,7 +31,7 @@ type IncomingRow = {
   payment_status: string | null;
   allergies: string | null;
   epi_pen: boolean | number | string | null;
-  user_id: string;
+  user_id: string | null;
   province: string | null;
 };
 
@@ -117,7 +117,15 @@ export const listDaycareIncoming = createServerFn({ method: "GET" })
     for (const id of childIds) {
       void logChildProfileAccess(sql, { childId: id, actorId: context.userId, action: "read" });
     }
-    const mapped = rows.map((r) => mapRequest(r, r.child_id ? byId.get(r.child_id) ?? null : null));
+    const { omitHiddenParents } = await import("@/lib/server/safety");
+    const visible = await omitHiddenParents(
+      sql,
+      rows.map((row) => ({ ...row, userId: row.user_id, daycareId: row.daycare_id })),
+    );
+    const visibleIds = new Set(visible.map((row) => row.id));
+    const mapped = rows
+      .filter((row) => visibleIds.has(row.id))
+      .map((r) => mapRequest(r, r.child_id ? byId.get(r.child_id) ?? null : null));
     const { decorateCentreRequests } = await import("@/lib/server/child-portfolio");
     return decorateCentreRequests(sql, mapped);
   });
