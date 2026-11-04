@@ -1,4 +1,4 @@
--- Reverse of migrations/0173_care_reminders.sql.
+-- Reverse of migrations/0175_care_reminders.sql.
 -- Drops only the reminder tables. Does not delete children or profiles.
 -- The migrator does not run files in this folder.
 

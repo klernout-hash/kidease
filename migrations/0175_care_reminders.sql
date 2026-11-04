@@ -1,5 +1,5 @@
 -- Per-parent drop-off and pick-up reminders. Adds tables only.
--- Reverse: migrations/down/0173_care_reminders.sql
+-- Reverse: migrations/down/0175_care_reminders.sql
 
 create table if not exists care_reminders (
   user_id text not null,

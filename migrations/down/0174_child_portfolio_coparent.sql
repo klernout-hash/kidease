@@ -1,4 +1,4 @@
--- Reverse of migrations/0172_child_portfolio_coparent.sql.
+-- Reverse of migrations/0174_child_portfolio_coparent.sql.
 -- Drops only the columns and tables that migration added.
 -- Does not delete children, bookings, or coparent_links rows.
 -- The migrator does not run files in this folder.

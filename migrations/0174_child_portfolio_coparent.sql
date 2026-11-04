@@ -1,6 +1,6 @@
 -- Child portfolio answers and co-parent custody records.
 -- Adds columns and tables only. Does not update or delete existing rows.
--- Reverse: migrations/down/0172_child_portfolio_coparent.sql
+-- Reverse: migrations/down/0174_child_portfolio_coparent.sql
 
 alter table children add column if not exists immunization_status text;
 alter table children add column if not exists immunization_note text;

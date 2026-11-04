@@ -179,9 +179,9 @@ test("co-parent invites stay pending until that person accepts", () => {
   assert.match(familyNotice("fr", "linked").subject, /famille/);
   assert.match(custodyCopy("en").mustAccept, /until they accept/);
   assert.match(custodyCopy("fr").lead, /propre compte/);
-  assert.match(src("migrations/0172_child_portfolio_coparent.sql"), /coparent_audit/);
-  assert.match(src("migrations/down/0172_child_portfolio_coparent.sql"), /drop table if exists coparent_audit/);
-  assert.doesNotMatch(src("migrations/0172_child_portfolio_coparent.sql"), /delete from children/i);
+  assert.match(src("migrations/0174_child_portfolio_coparent.sql"), /coparent_audit/);
+  assert.match(src("migrations/down/0174_child_portfolio_coparent.sql"), /drop table if exists coparent_audit/);
+  assert.doesNotMatch(src("migrations/0174_child_portfolio_coparent.sql"), /delete from children/i);
 });
 
 test("drop-off reminders follow the family clock and skip a closed day", () => {
@@ -241,8 +241,8 @@ test("drop-off reminders follow the family clock and skip a closed day", () => {
   assert.equal(day?.weekday, 4);
   assert.match(careReminderCopy("fr").yours, /autre parent/);
   assert.match(careReminderCopy("en").noSms, /No text/);
-  assert.match(src("migrations/0173_care_reminders.sql"), /care_reminders/);
-  assert.match(src("migrations/down/0173_care_reminders.sql"), /drop table if exists care_reminders/);
+  assert.match(src("migrations/0175_care_reminders.sql"), /care_reminders/);
+  assert.match(src("migrations/down/0175_care_reminders.sql"), /drop table if exists care_reminders/);
   assert.match(src("src/lib/server/care-reminders.ts"), /sendPushNotification/);
   assert.doesNotMatch(src("src/lib/server/care-reminders.ts"), /sendSms|FEATURE_CALL_PUSH/);
 });
