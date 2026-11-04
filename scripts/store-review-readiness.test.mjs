@@ -33,8 +33,18 @@ function signStripe(raw, secret) {
 test("store reviewer sign-in skips Turnstile and still checks the password", () => {
   assert.equal(reviewerSignInSkipsTurnstile("  Reviewer-Parent@KidEase.ca "), true);
   assert.equal(reviewerSignInSkipsTurnstile("reviewer-provider@kidease.ca"), true);
+  assert.equal(reviewerSignInSkipsTurnstile("  Reviewer.Parent@KidEase.ca "), true);
+  assert.equal(reviewerSignInSkipsTurnstile("reviewer.daycare@kidease.ca"), true);
+  assert.equal(reviewerSignInSkipsTurnstile("REVIEWER.DAYCARE@KIDEASE.CA"), true);
   assert.equal(reviewerSignInSkipsTurnstile("parent@example.com"), false);
-  assert.equal(reviewerSignInSkipsTurnstile("reviewer.parent@kidease.ca"), false);
+  assert.equal(reviewerSignInSkipsTurnstile("reviewer.parent@kidease.com"), false);
+  assert.equal(reviewerSignInSkipsTurnstile("reviewer.parent@kidease.ca.evil.com"), false);
+  assert.equal(reviewerSignInSkipsTurnstile("xreviewer.parent@kidease.ca"), false);
+  assert.equal(reviewerSignInSkipsTurnstile("reviewer-daycare@kidease.ca"), false);
+  assert.equal(reviewerSignInSkipsTurnstile("reviewer.provider@kidease.ca"), false);
+  assert.equal(reviewerSignInSkipsTurnstile("not-reviewer.parent@kidease.ca"), false);
+  assert.equal(reviewerSignInSkipsTurnstile(""), false);
+  assert.equal(reviewerSignInSkipsTurnstile(null), false);
   const login = src("src/routes/login.tsx");
   assert.match(login, /reviewerSignInSkipsTurnstile\(email\)/);
   assert.match(login, /turnstileRequired && !token\.trim\(\)/);
