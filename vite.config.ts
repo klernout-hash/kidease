@@ -198,7 +198,7 @@ function authPopupPlugin(): Plugin {
 
 /**
  * Vite copies every VITE_* value into client chunks that read import.meta.env.
- * Blank the Maps key in that snapshot unless this build turned Google Maps on.
+ * Blank the Maps key unless this build's map provider is Google (the default).
  */
 function gateGoogleMapsClientKey(browserKey: string): Plugin {
   return {
@@ -269,7 +269,7 @@ export default defineConfig(({ command, isPreview, mode }) => {
   // POSTHOG_HOST is a public ingest URL (already on Vercel). Narrow prefix so
   // a future POSTHOG_* / SENTRY_DSN secret is not inlined into the client bundle.
   // Browser Sentry reads VITE_PUBLIC_SENTRY_DSN only.
-  envPrefix: ["VITE_", "POSTHOG_HOST", "NEXT_PUBLIC_AMAZON_APPSTORE_URL"],
+  envPrefix: ["VITE_", "POSTHOG_HOST", "NEXT_PUBLIC_AMAZON_APPSTORE_URL", "NEXT_PUBLIC_MAP_PROVIDER"],
   // Only the enabled build receives the key. An empty define would still
   // leave the name in every chunk that reads import.meta.env.
   ...(mapsBrowserKey

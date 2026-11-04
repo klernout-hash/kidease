@@ -1,11 +1,21 @@
 /**
- * MapLibre map for search, listing, and area pages.
+ * OpenFreeMap (MapLibre) backup for search, listing, and area pages.
  *
- * Tiles are OpenFreeMap (OpenStreetMap data, no key, free for production).
+ * Tiles are OpenStreetMap data via OpenFreeMap, with no key.
  * Satellite is Sentinel-2 cloudless from EOX, also free with attribution.
- * The library is loaded only when a map is opened.
+ * The library is loaded only when a map is opened on this provider,
+ * or after Google Maps fails to load.
  */
 import type { GeoJSONSource, Map as MlMap, Marker, StyleSpecification } from "maplibre-gl";
+import { readClientStoreChannel } from "./native-entitlements.ts";
+import { preferredMapProvider, forceMapProvider } from "./map-provider.ts";
+import {
+  createGoogleKidEaseMap,
+  isGoogleMap,
+  mountGoogleHtmlMarker,
+  mountGoogleYouAreHere,
+  preloadGoogleMaps,
+} from "./google-map.ts";
 
 export const OSM_ROAD_STYLE = "https://tiles.openfreemap.org/styles/liberty";
 export const OSM_TILE_HOST = "https://tiles.openfreemap.org";
@@ -141,6 +151,128 @@ export function preloadOsmMap(): Promise<MlModule> {
 
 /** @deprecated Use preloadOsmMap. Kept so search can warm the library. */
 export const loadOsmMap = preloadOsmMap;
+
+/** Warm the provider that will actually paint. Skips MapLibre when Google is selected. */
+export function preloadMapLibrary(): Promise<unknown> {
+  if (typeof window === "undefined") return Promise.reject(new Error("Map is browser-only"));
+  if (readClientStoreChannel() === "huawei") return Promise.resolve();
+  if (preferredMapProvider() === "google") return preloadGoogleMaps();
+  return preloadOsmMap();
+}
+
+export type KidEaseMap = {
+  destroy(): void;
+  resize(): void;
+  setCenter(position: LatLng): void;
+  getCenter(): MapPoint | null | undefined;
+  getZoom(): number | undefined;
+  setZoom(zoom: number): void;
+  panTo(position: LatLng): void;
+  fitBounds(bounds: { isEmpty(): boolean }, padding?: number | Padding): void;
+  getBounds(): { getNorthEast(): MapPoint; getSouthWest(): MapPoint } | null | undefined;
+  getDiv(): HTMLElement;
+  setMapTypeId(id: string): void;
+  addListener(name: string, fn: () => void): MapListener;
+};
+
+export type KidEaseCircle = {
+  setCenter(center: LatLng): void;
+  setRadius(radius: number): void;
+  setOptions(style: Partial<CircleStyle>): void;
+  setMap(map: KidEaseMap | null): void;
+  getBounds(): { isEmpty(): boolean } | null | undefined;
+};
+
+export type KidEaseOverlay = {
+  onAdd(): void;
+  draw(): void;
+  onRemove(): void;
+  setMap(map: KidEaseMap | null): void;
+  getPanes(): { overlayMouseTarget: HTMLElement } | null | undefined;
+  getProjection(): {
+    fromLatLngToDivPixel(point: MapPoint): { x: number; y: number } | null | undefined;
+    fromLatLngToContainerPixel(point: MapPoint): { x: number; y: number } | null | undefined;
+  } | null | undefined;
+};
+
+export type KidEaseMaps = {
+  event: {
+    addListener(map: KidEaseMap, name: string, fn: () => void): MapListener;
+    addListenerOnce(map: KidEaseMap, name: string, fn: () => void): MapListener;
+    removeListener(listener?: MapListener | null): void;
+    trigger(map: KidEaseMap, name: string): void;
+    clearInstanceListeners(map: KidEaseMap): void;
+  };
+  LatLng: new (lat: number, lng: number) => MapPoint;
+  LatLngBounds: new (sw?: LatLng, ne?: LatLng) => {
+    extend(point: LatLng): void;
+    isEmpty(): boolean;
+    getSouthWest(): MapPoint;
+    getNorthEast(): MapPoint;
+  };
+  Circle: new (opts: { map: KidEaseMap; center: LatLng; radius: number } & CircleStyle) => KidEaseCircle;
+  OverlayView: new () => KidEaseOverlay;
+};
+
+export type KidEaseMapInput = {
+  center: LatLng;
+  zoom: number;
+  mapTypeId: "roadmap" | "hybrid" | "satellite";
+  cooperative?: boolean;
+  /** Defaults to MAP_STYLE_WAIT_MS. Listing previews pass LISTING_MAP_TILE_WAIT_MS. */
+  tileWaitMs?: number;
+  /** Idle with only the style background is not a painted map. */
+  requireTiles?: boolean;
+  signal?: AbortSignal;
+  /** Google rejected the key after paint. The provider is already OpenFreeMap. */
+  onAuthFailure?: () => void;
+};
+
+function skipOpenFreeMapFallback(err: unknown) {
+  const name = err instanceof Error ? err.name : "";
+  return name === "AbortError" || name === "MapSupersededError" || name === "MapUnavailableError";
+}
+
+/** Start the Maps script only once the host is on screen (or about to be). */
+export function whenMapHostVisible(el: HTMLElement, signal?: AbortSignal): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  if (signal?.aborted) return Promise.reject(closedMap());
+  if (mapHostOnScreen(el) || typeof IntersectionObserver === "undefined") return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = (err?: Error) => {
+      if (settled) return;
+      settled = true;
+      io.disconnect();
+      signal?.removeEventListener("abort", onAbort);
+      if (err) reject(err);
+      else resolve();
+    };
+    const onAbort = () => finish(closedMap());
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) finish();
+      },
+      { root: null, rootMargin: "160px 0px", threshold: 0.01 },
+    );
+    signal?.addEventListener("abort", onAbort);
+    io.observe(el);
+  });
+}
+
+function closedMap() {
+  const err = new Error("Map closed");
+  err.name = "AbortError";
+  return err;
+}
+
+function mapHostOnScreen(el: HTMLElement) {
+  const rect = el.getBoundingClientRect();
+  if (rect.width < 8 || rect.height < 8) return false;
+  const height = window.innerHeight || document.documentElement.clientHeight;
+  const width = window.innerWidth || document.documentElement.clientWidth;
+  return rect.bottom >= -160 && rect.right >= 0 && rect.top <= height + 160 && rect.left <= width;
+}
 
 function satelliteStyle(): StyleSpecification {
   return {
@@ -511,13 +643,13 @@ export class OsmCircle {
 }
 
 export type ListingOverlay = {
-  setMap(map: OsmMap | null): void;
+  setMap(map: KidEaseMap | null): void;
   getElement(): HTMLElement;
   setZIndex(z: number): void;
 };
 
 export function createListingOverlay(opts: {
-  map: OsmMap;
+  map: OsmMap | KidEaseMap;
   position: LatLng;
   content: HTMLElement;
   onClick?: () => void;
@@ -525,9 +657,20 @@ export function createListingOverlay(opts: {
   zIndex?: number;
   collision?: string;
 }): ListingOverlay {
+  if (isGoogleMap(opts.map)) {
+    return mountGoogleHtmlMarker({
+      map: opts.map,
+      position: opts.position,
+      content: opts.content,
+      centered: opts.centered,
+      onClick: opts.onClick,
+      zIndex: opts.zIndex,
+    });
+  }
   const content = opts.content;
+  const osm = opts.map as OsmMap;
   if (opts.zIndex != null) content.style.zIndex = String(opts.zIndex);
-  let marker: Marker | null = opts.map.marker({
+  let marker: Marker | null = osm.marker({
     element: content,
     anchor: opts.centered ? "center" : "bottom",
     lng: opts.position.lng,
@@ -541,13 +684,13 @@ export function createListingOverlay(opts: {
   }
   return {
     setMap(map) {
-      if (!map) {
+      if (!map || isGoogleMap(map)) {
         marker?.remove();
         marker = null;
         return;
       }
       if (!marker) {
-        marker = map.marker({
+        marker = (map as OsmMap).marker({
           element: content,
           anchor: opts.centered ? "center" : "bottom",
           lng: opts.position.lng,
@@ -566,15 +709,17 @@ export function createListingOverlay(opts: {
 
 export type MovableDot = {
   setPosition(position: LatLng): void;
-  setMap(map: OsmMap | null): void;
+  setMap(map: KidEaseMap | null): void;
 };
 
-export function createYouAreHereDot(opts: { map: OsmMap; position: LatLng }): MovableDot {
+export function createYouAreHereDot(opts: { map: OsmMap | KidEaseMap; position: LatLng }): MovableDot {
+  if (isGoogleMap(opts.map)) return mountGoogleYouAreHere({ map: opts.map, position: opts.position });
   const content = document.createElement("div");
   content.className = "ke-you-dot";
   content.style.pointerEvents = "none";
   content.setAttribute("aria-hidden", "true");
-  let marker: Marker | null = opts.map.marker({
+  const osm = opts.map as OsmMap;
+  let marker: Marker | null = osm.marker({
     element: content,
     anchor: "center",
     lng: opts.position.lng,
@@ -587,13 +732,13 @@ export function createYouAreHereDot(opts: { map: OsmMap; position: LatLng }): Mo
       marker?.setLngLat([next.lng, next.lat]);
     },
     setMap(map) {
-      if (!map) {
+      if (!map || isGoogleMap(map)) {
         marker?.remove();
         marker = null;
         return;
       }
       if (!marker) {
-        marker = map.marker({
+        marker = (map as OsmMap).marker({
           element: content,
           anchor: "center",
           lng: position.lng,
@@ -711,19 +856,39 @@ export function listingMapGiveUp(input: {
 
 type SourceDataEvent = { sourceDataType?: string; tile?: unknown; error?: Error };
 
+/**
+ * One map for the host. Google Maps is the default. OpenFreeMap paints when
+ * the switch says so, or when the Google script or key fails.
+ * Huawei never loads either map.
+ */
 export async function createKidEaseMap(
   el: HTMLElement,
-  input: {
-    center: LatLng;
-    zoom: number;
-    mapTypeId: "roadmap" | "hybrid" | "satellite";
-    cooperative?: boolean;
-    /** Defaults to MAP_STYLE_WAIT_MS. Listing previews pass LISTING_MAP_TILE_WAIT_MS. */
-    tileWaitMs?: number;
-    /** Idle with only the style background is not a painted map. */
-    requireTiles?: boolean;
-  },
-): Promise<{ map: OsmMap; maps: typeof osmMaps; tilesReady: boolean }> {
+  input: KidEaseMapInput,
+): Promise<{ map: KidEaseMap; maps: KidEaseMaps; tilesReady: boolean }> {
+  await whenMapHostVisible(el, input.signal);
+  if (input.signal?.aborted) throw closedMap();
+  if (readClientStoreChannel() === "huawei") {
+    const err = new Error("Map is not available on this device");
+    err.name = "MapUnavailableError";
+    throw err;
+  }
+  if (preferredMapProvider() === "google") {
+    try {
+      const created = await createGoogleKidEaseMap(el, input);
+      return created as unknown as { map: KidEaseMap; maps: KidEaseMaps; tilesReady: boolean };
+    } catch (err) {
+      if (skipOpenFreeMapFallback(err)) throw err;
+      forceMapProvider("openfreemap");
+      if (input.signal?.aborted) throw closedMap();
+    }
+  }
+  return createOsmKidEaseMap(el, input);
+}
+
+async function createOsmKidEaseMap(
+  el: HTMLElement,
+  input: KidEaseMapInput,
+): Promise<{ map: KidEaseMap; maps: KidEaseMaps; tilesReady: boolean }> {
   const lib = await preloadOsmMap();
   const satellite = input.mapTypeId === "hybrid" || input.mapTypeId === "satellite";
   const basemap = satellite ? "satellite" : "roadmap";
@@ -793,5 +958,6 @@ export async function createKidEaseMap(
     map.destroy();
     throw new Error(MAP_LOAD_TIMEOUT);
   }
-  return { map, maps: osmMaps, tilesReady };
+  el.dataset.keMapProvider = "openfreemap";
+  return { map: map as unknown as KidEaseMap, maps: osmMaps as unknown as KidEaseMaps, tilesReady: true };
 }

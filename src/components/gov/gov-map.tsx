@@ -2,29 +2,34 @@ import { useEffect, useRef, useState } from "react";
 import type { GovDashboard } from "@/lib/gov/aggregate";
 import { dashboardView } from "@/lib/gov/aggregate";
 import { govCopy } from "@/lib/gov/copy";
+import { StoreMapFallback } from "@/components/store-map-fallback";
+import { useStoreChannel } from "@/lib/use-native-shell";
 
 export function GovMap({ data }: { data: GovDashboard }) {
   const copy = govCopy(data.locale);
   const host = useRef<HTMLDivElement>(null);
+  const channel = useStoreChannel();
   const [failed, setFailed] = useState(false);
   const view = dashboardView(data.province);
   const points = data.map;
 
   useEffect(() => {
     const el = host.current;
-    if (!el || points.length === 0) return;
+    if (channel === "huawei" || !el || points.length === 0) return;
     let dead = false;
     let map: { destroy: () => void } | null = null;
     const circles: { setMap: (value: null) => void }[] = [];
+    const ac = new AbortController();
     void (async () => {
       try {
-        const { createKidEaseMap, OsmCircle } = await import("@/lib/osm-map");
+        const { createKidEaseMap } = await import("@/lib/osm-map");
         const created = await createKidEaseMap(el, {
           center: { lat: view.lat, lng: view.lng },
           zoom: view.zoom,
           mapTypeId: "roadmap",
           cooperative: true,
           tileWaitMs: 8000,
+          signal: ac.signal,
         });
         if (dead) {
           created.map.destroy();
@@ -35,7 +40,7 @@ export function GovMap({ data }: { data: GovDashboard }) {
         for (const point of points) {
           const desert = point.desert != null;
           circles.push(
-            new OsmCircle({
+            new created.maps.Circle({
               map: created.map,
               center: { lat: point.lat, lng: point.lng },
               radius: 8000 + (point.centres / max) * 24000,
@@ -54,10 +59,11 @@ export function GovMap({ data }: { data: GovDashboard }) {
     })();
     return () => {
       dead = true;
+      ac.abort();
       for (const circle of circles) circle.setMap(null);
       map?.destroy();
     };
-  }, [points, view.lat, view.lng, view.zoom]);
+  }, [channel, points, view.lat, view.lng, view.zoom]);
 
   return (
     <section className="mt-8" aria-labelledby="gov-map-title">
@@ -66,12 +72,18 @@ export function GovMap({ data }: { data: GovDashboard }) {
       </h2>
       <p className="mt-1 text-sm text-muted">{copy.mapNote}</p>
       {failed ? <p className="mt-3 text-sm">{copy.mapNote}</p> : null}
-      <div
-        ref={host}
-        className="mt-3 h-[min(70dvh,28rem)] w-full overflow-hidden rounded-2xl bg-surface-2"
-        role="img"
-        aria-label={copy.map}
-      />
+      {channel === "huawei" ? (
+        <div className="mt-3">
+          <StoreMapFallback />
+        </div>
+      ) : (
+        <div
+          ref={host}
+          className="mt-3 h-[min(70dvh,28rem)] w-full overflow-hidden rounded-2xl bg-surface-2"
+          role="img"
+          aria-label={copy.map}
+        />
+      )}
     </section>
   );
 }

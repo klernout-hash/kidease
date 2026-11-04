@@ -9,7 +9,8 @@
  * script-src uses a per-request nonce + 'strict-dynamic' so first-party HTML
  * scripts (channel-boot, TanStack <Scripts />) can load Stripe /
  * Turnstile / PostHog. Those SDKs append scripts with createElement.
- * The map is MapLibre in the bundle. Tiles are fetched, not a third-party script.
+ * The map script is injected by our nonce'd app code (strict-dynamic). Google
+ * Maps is the default. OpenFreeMap tiles stay allowed for the backup.
  * Sign in with Google stays on form-action for accounts.google.com.
  *
  * style-src is nonce-only (no 'unsafe-inline'). SSR <style> tags are stamped
@@ -27,17 +28,26 @@
  */
 
 /** Site fonts inject stylesheets. The map CSS is bundled. style-src stays nonce-first. */
-export const CSP_STYLE_HOSTS = ["https://fonts.googleapis.com", "https://fonts.gstatic.com"];
+export const CSP_STYLE_HOSTS = [
+  "https://fonts.googleapis.com",
+  "https://fonts.gstatic.com",
+  "https://maps.googleapis.com",
+  "https://maps.gstatic.com",
+];
 
 export const CSP_SCRIPT_HOSTS = [
+  "https://maps.googleapis.com",
+  "https://maps.gstatic.com",
   "https://js.stripe.com",
   "https://challenges.cloudflare.com",
   "https://us.i.posthog.com",
   "https://us-assets.i.posthog.com",
 ];
 
-/** OpenFreeMap vector tiles and EOX satellite imagery. No Google map hosts. */
+/** Google Maps JS, plus OpenFreeMap vector tiles and EOX satellite imagery. */
 export const CSP_CONNECT_HOSTS = [
+  "https://maps.googleapis.com",
+  "https://maps.gstatic.com",
   "https://tiles.openfreemap.org",
   "https://tiles.maps.eox.at",
   "https://api.stripe.com",

@@ -63,6 +63,7 @@ import {
   type StoreChannel,
 } from "@/lib/native-entitlements";
 import { a11yPassEnabled } from "@/lib/a11y-pass";
+import { preferredMapProvider } from "@/lib/map-provider";
 import { SkipLink } from "@/components/skip-link";
 import appCss from "../styles.css?url";
 
@@ -75,10 +76,14 @@ function manifestHref(channel: StoreChannel | undefined): string {
   return `${file}?v=${ICON_VER}`;
 }
 
-/** Warm the map tile host. Huawei keeps the static fallback and skips this. */
+/** Warm the map host. Huawei keeps the static fallback and skips this. */
 function mapDnsPrefetch(channel: StoreChannel | undefined): { rel: "dns-prefetch"; href: string }[] {
   if (channel === "huawei") return [];
-  return [{ rel: "dns-prefetch", href: "https://tiles.openfreemap.org" }];
+  const hosts =
+    preferredMapProvider() === "google"
+      ? ["https://maps.googleapis.com", "https://maps.gstatic.com", "https://tiles.openfreemap.org"]
+      : ["https://tiles.openfreemap.org"];
+  return hosts.map((href) => ({ rel: "dns-prefetch" as const, href }));
 }
 
 const GUEST_LOCALE = {
