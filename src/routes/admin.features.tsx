@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Shell } from "@/components/shell";
 import { beforeLoadAdminDesk } from "@/lib/server/admin-route";
 import { killAiFeatures, loadFeaturePage, updateFeatureSwitch, type FeatureCard } from "@/lib/server/admin-features";
@@ -33,6 +34,7 @@ function FeaturesPage() {
   const page = Route.useLoaderData();
   const router = useRouter();
   const { t } = useCopy();
+  const { celebrate } = useSuccessConfirm();
   const [pending, setPending] = useState<{ key: string; rollout: number } | null>(null);
   const [killConfirm, setKillConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -49,6 +51,7 @@ function FeaturesPage() {
         return;
       }
       setPending(null);
+      celebrate();
       await router.invalidate();
     } catch {
       setError(t("adminFeaturesSaveFailed"));
@@ -63,6 +66,7 @@ function FeaturesPage() {
     try {
       const result = await killAiFeatures();
       if (!result.ok) setError(t("adminFeaturesSaveFailed"));
+      else celebrate();
       setKillConfirm(false);
       await router.invalidate();
     } catch {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { eceJobCopy } from "@/lib/ece-jobs";
 import { localePath } from "@/lib/locale-path";
@@ -17,6 +18,7 @@ type PublicJob = { id: string; role: string; note: string; name: string; slug: s
 
 export function EceJobApply({ jobId }: { jobId: string }) {
   const { locale } = useCopy();
+  const { celebrate } = useSuccessConfirm();
   const copy = eceJobCopy(locale === "fr" ? "fr" : "en");
   const [note, setNote] = useState("");
   const [message, setMessage] = useState("");
@@ -27,7 +29,10 @@ export function EceJobApply({ jobId }: { jobId: string }) {
       onSubmit={(event) => {
         event.preventDefault();
         void applyToEceJob({ data: { jobId, note } })
-          .then((result) => setMessage(result.ok ? copy.applied : copy.off))
+          .then((result) => {
+            setMessage(result.ok ? copy.applied : copy.off);
+            if (result.ok) celebrate();
+          })
           .catch(() => setMessage(copy.signIn));
       }}
     >
@@ -55,6 +60,7 @@ export function EceJobApply({ jobId }: { jobId: string }) {
 
 export function EceJobBoard() {
   const { locale } = useCopy();
+  const { celebrate } = useSuccessConfirm();
   const lang = locale === "fr" ? "fr" : "en";
   const copy = eceJobCopy(lang);
   const [enabled, setEnabled] = useState(false);
@@ -115,7 +121,10 @@ export function EceJobBoard() {
           onSubmit={(event) => {
             event.preventDefault();
             void postEceJob({ data: { daycareId, role, note } })
-              .then((result) => setMessage(result.ok ? copy.posted : copy.off))
+              .then((result) => {
+                setMessage(result.ok ? copy.posted : copy.off);
+                if (result.ok) celebrate();
+              })
               .catch(() => setMessage(copy.off));
           }}
         >

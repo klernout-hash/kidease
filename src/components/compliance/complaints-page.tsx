@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { ComplianceFrame } from "@/components/compliance/frame";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { COMPLAINT_KINDS, complaintCopy } from "@/lib/compliance/complaints";
 import type { PackMode } from "@/lib/compliance/mode";
@@ -8,6 +9,7 @@ type ParentData = { enabled: boolean; mode: PackMode; rows: { id: string; tracki
 type GovData = { enabled: boolean; mode: PackMode; province: string; rows: { id: string; kind: string; status: string; trackingCode: string }[] };
 export function ParentComplaintsPage({ data, locale }: { data: ParentData; locale: "en" | "fr" }) {
   const copy = complaintCopy(locale);
+  const { celebrate } = useSuccessConfirm();
   const [province, setProvince] = useState("ON");
   const [kind, setKind] = useState<(typeof COMPLAINT_KINDS)[number]>("supervision");
   const [detail, setDetail] = useState("");
@@ -19,6 +21,7 @@ export function ParentComplaintsPage({ data, locale }: { data: ParentData; local
     try {
       const result = await saveComplaint({ data: { province, kind, detail } });
       setNote(result.ok ? (locale === "fr" ? `Numéro : ${result.trackingCode}` : `Your number is ${result.trackingCode}`) : copy.off);
+      if (result.ok) celebrate();
     } catch { setNote(locale === "fr" ? "Essayez encore, ou ouvrez l’aide." : "Try again, or open Help."); }
     finally { setBusy(false); }
   }

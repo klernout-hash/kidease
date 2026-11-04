@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { localePath } from "@/lib/locale-path";
 import { reviewReportCopy, REVIEW_REPORT_REASONS } from "@/lib/review-reports";
@@ -8,6 +9,7 @@ import { useCopy } from "@/lib/use-copy";
 
 export function ReviewReportButton({ reviewId }: { reviewId: string }) {
   const { locale } = useCopy();
+  const { celebrate } = useSuccessConfirm();
   const lang = locale === "fr" ? "fr" : "en";
   const copy = reviewReportCopy(lang);
   const [open, setOpen] = useState(false);
@@ -22,7 +24,10 @@ export function ReviewReportButton({ reviewId }: { reviewId: string }) {
     try {
       const result = await reportListingReview({ data: { reviewId, reason, note } });
       setMessage(result.ok ? copy.sent : copy.off);
-      if (result.ok) setOpen(false);
+      if (result.ok) {
+        setOpen(false);
+        celebrate();
+      }
     } catch {
       setMessage(copy.off);
     } finally {

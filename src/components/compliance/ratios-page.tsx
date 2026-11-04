@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { ComplianceFrame } from "@/components/compliance/frame";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { ratioCopy } from "@/lib/compliance/ratios";
 import type { PackMode } from "@/lib/compliance/mode";
@@ -15,6 +16,7 @@ type GovData = { enabled: boolean; mode: PackMode; province: string; rows: { age
 
 export function CentreRatiosPage({ data, locale }: { data: CentreData; locale: "en" | "fr" }) {
   const copy = ratioCopy(locale);
+  const { celebrate } = useSuccessConfirm();
   const [daycareId, setDaycareId] = useState(data.centres[0]?.id || "");
   const [ageKey, setAgeKey] = useState("infant");
   const [children, setChildren] = useState("0");
@@ -27,6 +29,7 @@ export function CentreRatiosPage({ data, locale }: { data: CentreData; locale: "
     try {
       const result = await saveRatioCheck({ data: { daycareId, ageKey, children: Number(children), staff: Number(staff) } });
       setNote(result.ok ? (result.result.ok ? (locale === "fr" ? "Le ratio est bon." : "The ratio is fine.") : (locale === "fr" ? "Il manque des adultes." : "More adults are needed.")) : copy.off);
+      if (result.ok && result.result.ok) celebrate();
     } catch {
       setNote(locale === "fr" ? "Essayez encore, ou ouvrez l’aide." : "Try again, or open Help.");
     } finally { setBusy(false); }

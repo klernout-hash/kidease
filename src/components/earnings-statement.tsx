@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { EarningsHeader } from "@/components/earnings-header";
 import { EarningsSheet } from "@/components/earnings-sheet";
 import { EmptyState } from "@/components/empty-state";
@@ -165,6 +166,7 @@ function ReportSheet({
   onClose: () => void;
 }) {
   const { t, locale } = useCopy();
+  const { celebrate } = useSuccessConfirm();
   const [mode, setMode] = useState<"download" | "email">("download");
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -204,6 +206,7 @@ function ReportSheet({
                   ? t("earningsEmailSent").replace("{email}", result.maskedEmail)
                   : t("earningsEmailFailed"),
               );
+              if (result.ok && result.maskedEmail) celebrate();
             })
             .catch(() => setNote(t("earningsEmailFailed")))
             .finally(() => setBusy(false));

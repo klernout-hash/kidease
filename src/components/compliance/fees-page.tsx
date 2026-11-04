@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { ComplianceFrame } from "@/components/compliance/frame";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { feeCopy, publishedCapsFor } from "@/lib/compliance/fees";
 import type { PackMode } from "@/lib/compliance/mode";
@@ -8,6 +9,7 @@ type CentreData = { enabled: boolean; mode: PackMode; centres: { id: string; nam
 type GovData = { enabled: boolean; mode: PackMode; province: string; rows: { name: string; age_key: string; daily_cents: number; cap_cents: number | null }[] };
 export function CentreFeesPage({ data, locale }: { data: CentreData; locale: "en" | "fr" }) {
   const copy = feeCopy(locale);
+  const { celebrate } = useSuccessConfirm();
   const [daycareId, setDaycareId] = useState(data.centres[0]?.id || "");
   const [ageKey, setAgeKey] = useState("infant");
   const [daily, setDaily] = useState("");
@@ -22,7 +24,10 @@ export function CentreFeesPage({ data, locale }: { data: CentreData; locale: "en
       else if (result.decision.status === "warn") setNote(locale === "fr" ? "Ce tarif est au-dessus du plafond. Vous pouvez quand même le changer avant de publier." : "This fee is above the cap. You can still change it before you publish.");
       else if (result.decision.status === "no_cap") setNote(locale === "fr" ? "Cette province n’a pas un seul plafond." : "This province does not have one cap.");
       else if (result.decision.status === "unknown") setNote(locale === "fr" ? "Le plafond n’est pas confirmé. Rien n’est bloqué." : "The cap is not confirmed. Nothing is blocked.");
-      else setNote(locale === "fr" ? "Le tarif est sous le plafond." : "The fee is under the cap.");
+      else {
+        setNote(locale === "fr" ? "Le tarif est sous le plafond." : "The fee is under the cap.");
+        celebrate();
+      }
     } catch { setNote(locale === "fr" ? "Essayez encore, ou ouvrez l’aide." : "Try again, or open Help."); }
     finally { setBusy(false); }
   }

@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { QcAreaMap } from "@/components/qc-area-map";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
@@ -23,6 +24,7 @@ export function QcHomeListing({
   error: boolean;
 }) {
   const copy = qcHomeCopy(locale);
+  const { celebrate } = useSuccessConfirm();
   const fr = locale === "fr";
   const [phone, setPhone] = useState<string | null>(null);
   const [email, setEmail] = useState<string | null>(null);
@@ -77,6 +79,7 @@ export function QcHomeListing({
         },
       });
       setSaved(true);
+      celebrate();
     } catch {
       setFormError(copy.formError);
     } finally {

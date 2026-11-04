@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { PROVINCES } from "@/lib/geo";
 import { exportProvinceReport, provinceReportsReady } from "@/lib/server/province-reports";
@@ -7,6 +8,7 @@ import { useCopy } from "@/lib/use-copy";
 
 export function ProvinceReportPanel() {
   const { locale } = useCopy();
+  const { celebrate } = useSuccessConfirm();
   const fr = locale === "fr";
   const [province, setProvince] = useState("MB");
   const [format, setFormat] = useState<"csv" | "pdf">("csv");
@@ -45,6 +47,7 @@ export function ProvinceReportPanel() {
       link.download = result.filename;
       link.click();
       URL.revokeObjectURL(url);
+      celebrate();
     } catch {
       toast.error(fr ? "Le rapport n’a pas pu être préparé." : "The report could not be prepared.");
     } finally {
