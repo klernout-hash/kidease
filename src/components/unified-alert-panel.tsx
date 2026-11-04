@@ -25,7 +25,11 @@ function scrollFocus(event: { currentTarget: HTMLElement }) {
   event.currentTarget.scrollIntoView({ block: "center", behavior: "smooth" });
 }
 
-export function UnifiedAlertPanel() {
+export type UnifiedAlertPanelMode = "feed" | "settings" | "all";
+
+export function UnifiedAlertPanel({ mode = "all" }: { mode?: UnifiedAlertPanelMode } = {}) {
+  const showSettings = mode !== "feed";
+  const showFeed = mode !== "settings";
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
   const copy = unifiedUiCopy(loc);
@@ -61,7 +65,9 @@ export function UnifiedAlertPanel() {
   }
 
   return (
-    <section className="mt-6" data-ke="unified-alerts" aria-labelledby="unified-alerts-title">
+    <section className="mt-6" data-ke="unified-alerts" data-mode={mode} aria-labelledby="unified-alerts-title">
+      {showSettings ? (
+      <>
       <h2 id="unified-alerts-title" className="text-[1.35rem] font-semibold tracking-[-0.03em]">
         {copy.title}
       </h2>
@@ -220,8 +226,12 @@ export function UnifiedAlertPanel() {
           {saving ? "…" : copy.save}
         </Button>
       </form>
+      </>
+      ) : null}
 
-      <h3 className="mt-8 text-lg font-semibold">{copy.listTitle}</h3>
+      {showFeed ? (
+      <>
+      <h3 id={showSettings ? undefined : "unified-alerts-title"} className={`${showSettings ? "mt-8" : ""} text-lg font-semibold`}>{copy.listTitle}</h3>
       <ul className="mt-3 divide-y divide-border rounded-xl bg-surface ring-1 ring-border" data-ke="unified-alert-list">
         {desk && desk.events.length > 0 ? (
           desk.events.map((item) => (
@@ -254,6 +264,8 @@ export function UnifiedAlertPanel() {
           </li>
         )}
       </ul>
+      </>
+      ) : null}
     </section>
   );
 }
