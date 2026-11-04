@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
-import { ArrowUp, ChevronLeft, Plus } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { ArrowUp, Plus } from "lucide-react";
+import { HistoryBack } from "@/components/history-back";
+import { historyHref } from "@/lib/screen-history";
 import { chatBodyWithoutSmsFooter } from "@/lib/sms-copy";
 import {
   joinNames,
@@ -121,16 +122,15 @@ export function ThreadHeader({
 }) {
   const { t } = useCopy();
   const faces = avatars.slice(0, 3);
+  const shortBack = backSearch?.view === "centre" ? t("messages") : t("inbox");
   return (
     <header className="flex items-center gap-2 border-b border-border px-2 py-2">
-      <Link
-        to={backTo}
-        search={backSearch}
-        aria-label={backLabel}
-        className="grid size-11 shrink-0 place-items-center rounded-full hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-      >
-        <ChevronLeft className="size-5" aria-hidden />
-      </Link>
+      <HistoryBack
+        fallbackHref={historyHref(backTo, backSearch)}
+        fallbackLabel={shortBack}
+        fallbackAria={backLabel}
+        marker="thread-back"
+      />
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <div className="flex shrink-0 -space-x-2" aria-hidden>
           {faces.map((face) =>

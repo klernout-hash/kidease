@@ -1,5 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronLeft, Settings, X } from "lucide-react";
+import { Settings, X } from "lucide-react";
+import { HistoryBack } from "@/components/history-back";
+import { historyHref } from "@/lib/screen-history";
 import { useCopy } from "@/lib/use-copy";
 
 type EarningsSearch = {
@@ -21,18 +23,27 @@ export function EarningsHeader({
   gear?: boolean;
 }) {
   const { t } = useCopy();
-  const Icon = icon === "close" ? X : ChevronLeft;
+  const fallbackHref = historyHref("/menu", back.screen ? back : {});
   return (
     <div className="flex items-center gap-2">
-      <Link
-        to="/menu"
-        search={back}
-        aria-label={t("back")}
-        data-ke={icon === "close" ? "earnings-close" : "earnings-back"}
-        className="ke-press grid size-11 shrink-0 place-items-center rounded-full text-fg touch-manipulation hover:bg-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-      >
-        <Icon className="size-6" aria-hidden />
-      </Link>
+      {icon === "close" ? (
+        <Link
+          to="/menu"
+          search={back}
+          aria-label={t("close")}
+          data-ke="earnings-close"
+          className="ke-press grid size-11 shrink-0 place-items-center rounded-full text-fg touch-manipulation hover:bg-surface focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+          <X className="size-6" aria-hidden />
+        </Link>
+      ) : (
+        <HistoryBack
+          fallbackHref={fallbackHref}
+          fallbackLabel={back.screen ? t("earningsTitle") : t("navMenu")}
+          fallbackAria={t("back")}
+          marker="earnings-back"
+        />
+      )}
       <h1 className="min-w-0 flex-1 truncate text-center font-display text-xl">{title}</h1>
       {gear ? (
         <Link

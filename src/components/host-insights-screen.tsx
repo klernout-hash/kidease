@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronLeft, Star } from "lucide-react";
+import { Star } from "lucide-react";
+import { HistoryBack } from "@/components/history-back";
 import { useEffect, useState } from "react";
 import { CountUp } from "@/components/count-up";
 import { EmptyState } from "@/components/empty-state";
@@ -49,13 +50,7 @@ export function HostInsightsScreen({ initial }: { initial?: HostInsights | null 
   return (
     <main className="ke-screen-enter ke-gutter mx-auto w-full max-w-lg pb-10 pt-4" data-ke="host-insights">
       <div className="flex items-center gap-2">
-        <Link
-          to="/menu"
-          aria-label={t("back")}
-          className="ke-press grid size-11 shrink-0 place-items-center rounded-full text-fg touch-manipulation hover:bg-surface"
-        >
-          <ChevronLeft className="size-6" aria-hidden />
-        </Link>
+        <HistoryBack fallbackHref="/menu" fallbackLabel={t("navMenu")} fallbackAria={t("backToMenu")} marker="insights-back" />
         <h1 className="font-display text-2xl">{t("insightsTitle")}</h1>
       </div>
 

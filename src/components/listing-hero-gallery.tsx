@@ -1,6 +1,6 @@
 import { useRef, type TouchEvent } from "react";
-import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { HistoryBack } from "@/components/history-back";
 import { BuildingPhoto, ListingPhotoFallback } from "@/components/building-photo";
 import { SaveListingButton } from "@/components/save-listing-button";
 import { ShareListingButton } from "@/components/share-button";
@@ -54,14 +54,6 @@ export function ListingHeroGallery({
     onIndex((current + dir + count) % count);
   }
 
-  function backIfInApp(event: { preventDefault: () => void }) {
-    const idx = (window.history.state as { idx?: number } | null)?.idx;
-    if (typeof idx === "number" && idx > 0) {
-      event.preventDefault();
-      window.history.back();
-    }
-  }
-
   function onTouchStart(event: TouchEvent) {
     if ((event.target as HTMLElement).closest("a,button")) return;
     const touch = event.changedTouches[0];
@@ -79,21 +71,17 @@ export function ListingHeroGallery({
     step(dx < 0 ? 1 : -1);
   }
 
-  const backLink =
-    back.to === "/search" ? (
-      <Link to={localePath("/search", locale)} className={count ? overlayControl : emptyControl} aria-label={t("backToExplore")} onClick={backIfInApp}>
-        <ChevronLeft className="size-6" strokeWidth={1.75} aria-hidden />
-      </Link>
-    ) : (
-      <Link
-        to={localePath(`/daycare/city/${back.city}`, locale)}
-        className={count ? overlayControl : emptyControl}
-        aria-label={t("backToExplore")}
-        onClick={backIfInApp}
-      >
-        <ChevronLeft className="size-6" strokeWidth={1.75} aria-hidden />
-      </Link>
-    );
+  const backHref =
+    back.to === "/search" ? localePath("/search", locale) : localePath(`/daycare/city/${back.city}`, locale);
+  const backLink = (
+    <HistoryBack
+      fallbackHref={backHref}
+      fallbackLabel={t("search")}
+      fallbackAria={t("backToExplore")}
+      marker="listing-back"
+      className={count ? overlayControl : "text-fg"}
+    />
+  );
 
   return (
     <div
@@ -168,10 +156,7 @@ export function ListingHeroGallery({
 }
 
 const overlayControl =
-  "grid size-11 place-items-center rounded-full bg-black/40 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white";
+  "max-w-[11rem] bg-black/40 px-1.5 pr-3 text-white hover:bg-black/50 focus-visible:ring-white";
 
 const countControl =
   "grid size-11 place-items-center rounded-full text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white";
-
-const emptyControl =
-  "grid size-11 place-items-center rounded-full text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";

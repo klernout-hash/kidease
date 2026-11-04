@@ -91,7 +91,7 @@ export function LegalPage({ doc }: { doc: LegalDoc }) {
   const { t, locale } = useCopy();
   return (
     <Shell>
-      <main className="ke-gutter mx-auto max-w-2xl py-10 md:py-14">
+      <main className="ke-gutter mx-auto w-full min-w-0 max-w-2xl py-10 md:py-14" data-ke="legal-page">
         <p className="text-xs font-medium uppercase tracking-[0.18em] text-subtle">{line(locale, doc.kicker)}</p>
         <h1 className="mt-2 font-display text-3xl md:text-4xl">{line(locale, doc.title)}</h1>
         <p className="mt-2 text-sm text-subtle">{line(locale, doc.updated)}</p>

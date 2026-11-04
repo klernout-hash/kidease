@@ -963,12 +963,9 @@
       min-width: 0;
       overflow: hidden;
     }
-    .ke-rail--visual .ke-rail-card img,
-    .ke-rail--visual .ke-rail-card [data-ke="card-photo"] {
+    .ke-rail--visual .ke-rail-card .ke-photo-frame {
       aspect-ratio: 4 / 3;
       width: 100%;
-      height: auto;
-      object-fit: cover;
     }
     .ke-rail--visual .ke-rail-card h3 {
       white-space: normal;
@@ -2538,20 +2535,8 @@ html[data-resolved-theme="dark"] .ke-site-footer {
 }
 
 @media (max-width: 767px) {
-  /* Scroll rows end before the help button. The rest of the page stays full width. */
-  html:has(.ke-help-bot) .ke-explore-filter-bar,
-  html:has(.ke-help-bot) .ke-rail,
-  html:has(.ke-help-bot) .ke-listing-jump,
-  html:has(.ke-help-bot) [data-ke="daycare-type-menu"],
-  html:has(.ke-help-bot) [data-ke="pioneer-filter-rail"],
-  html:has(.ke-help-bot) [data-ke="text-size"] {
-    width: calc(100% - 6.25rem);
-    max-width: calc(100% - 6.25rem);
-  }
-  html:has(.ke-help-bot):has([data-ke="listing-sticky-bar"]) .ke-page > article {
-    padding-inline-end: 6.25rem;
-  }
-  html:has(.ke-help-bot) .ke-help-bot {
+  /* Website only. The app channel places the launcher above the tab bar. */
+  html:not([data-channel="app"]):not([data-runtime="native"]):has(.ke-help-bot) .ke-help-bot {
     bottom: calc(var(--ke-help-clear, 5.75rem) + var(--ke-keyboard, 0px));
   }
   /* An open More menu stays above the help button and the sticky actions. */
@@ -2574,5 +2559,103 @@ html[data-cookie-banner="open"] [data-ke="push-explainer"] {
 h1, h2, h3, h4, p, li, label, legend, dt, dd {
   overflow-wrap: break-word;
   hyphens: auto;
+}
+
+/* Phone layout. These sit outside @layer so they beat `height: auto` on img
+   and the help-button offsets that used to cover the tab bar. */
+.ke-gutter {
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.ke-see-all-row {
+  max-width: 100%;
+  padding-inline-end: max(0.75rem, env(safe-area-inset-right, 0px));
+}
+.ke-see-all {
+  margin-inline-end: max(0.15rem, env(safe-area-inset-right, 0px));
+}
+[data-ke="legal-page"] {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 42rem;
+  margin-inline: auto;
+  padding-left: max(1.25rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1.25rem, env(safe-area-inset-right, 0px));
+  padding-bottom: calc(8rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
+}
+.ke-photo-frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  height: auto;
+  overflow: hidden;
+  align-self: flex-start;
+  flex: none;
+}
+.ke-listing-hero {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  max-height: none;
+  overflow: hidden;
+}
+.ke-photo-frame > span,
+.ke-photo-frame > [data-ke="photo-fallback"],
+.ke-listing-hero > span,
+.ke-listing-hero > [data-ke="photo-fallback"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+}
+.ke-photo-frame img,
+.ke-listing-hero img.ke-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: center;
+}
+.ke-explore-filter-bar > [data-chip-carousel] {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+}
+@media (max-width: 767px) {
+  .ke-explore-filter-bar > [data-chip-carousel] {
+    flex: 1 1 calc(100% - 6.75rem);
+    max-width: calc(100% - 6.75rem);
+  }
+  .ke-explore-filter-actions {
+    position: relative;
+    z-index: 2;
+    margin-left: auto;
+  }
+  /* The help launcher sits in the bottom-right, just above the tab bar.
+     Keep the map and filter buttons to its left. */
+  html[data-channel="app"] .ke-explore-filter-bar,
+  html[data-runtime="native"] .ke-explore-filter-bar {
+    box-sizing: border-box;
+    padding-inline-end: 4.75rem;
+  }
+}
+html[data-channel="app"] .ke-help-bot,
+html[data-runtime="native"] .ke-help-bot {
+  right: max(0.75rem, env(safe-area-inset-right, 0px));
+  bottom: calc(4.75rem + 0.75rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
+  z-index: 40;
+}
+html[data-channel="app"] .ke-page::after,
+html[data-runtime="native"] .ke-page::after {
+  content: "";
+  display: block;
+  width: 100%;
+  height: calc(10rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
+  pointer-events: none;
+  flex: none;
 }
 main { min-width: 0; }

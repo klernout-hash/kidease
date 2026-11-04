@@ -194,3 +194,117 @@ export async function runMobileLayoutRegression(browser, base) {
   await context.close();
   return problems;
 }
+
+/**
+ * 390px checks for the phone issues Kyle recorded: photo frames, see-all inset,
+ * map toggle clear of the chips, privacy padding, no floating role pill, and
+ * the help launcher sitting above the tab bar.
+ */
+export async function runPhoneIssuePass(browser, base) {
+  const problems = [];
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    userAgent: NATIVE_UA,
+    deviceScaleFactor: 1,
+  });
+  const page = await context.newPage();
+
+  async function open(path) {
+    const res = await page.goto(new URL(path, base).href, { waitUntil: "domcontentloaded", timeout: 25000 });
+    if ((res?.status() ?? 0) >= 500) problems.push(`${path} status ${res?.status()}`);
+    await page.waitForTimeout(400);
+  }
+
+  try {
+    await open("/");
+    const home = await page.evaluate(() => {
+      const notes = [];
+      const frame = document.createElement("div");
+      frame.className = "ke-photo-frame";
+      frame.style.width = "200px";
+      const img = document.createElement("img");
+      img.className = "ke-photo";
+      img.alt = "";
+      frame.appendChild(img);
+      document.body.appendChild(frame);
+      const frameStyle = getComputedStyle(frame);
+      const imgStyle = getComputedStyle(img);
+      const box = frame.getBoundingClientRect();
+      const ratio = box.width > 0 ? box.width / box.height : 0;
+      if (frameStyle.overflow !== "hidden" || ratio < 1.2 || ratio > 1.45) {
+        notes.push(`photo-frame ratio ${ratio.toFixed(2)} overflow ${frameStyle.overflow}`);
+      }
+      if (imgStyle.objectFit !== "cover" || imgStyle.position !== "absolute") {
+        notes.push(`photo object-fit ${imgStyle.objectFit} position ${imgStyle.position}`);
+      }
+      frame.remove();
+      const visible = (el) => {
+        const s = getComputedStyle(el);
+        if (s.display === "none" || s.visibility === "hidden") return false;
+        const r = el.getBoundingClientRect();
+        return r.width > 8 && r.height > 8;
+      };
+      const link = [...document.querySelectorAll(".ke-see-all")].find(visible);
+      if (link) {
+        const right = link.getBoundingClientRect().right;
+        if (right > window.innerWidth - 8) notes.push(`see-all flush right ${Math.round(right)}`);
+      }
+      if (document.querySelector("[data-ke='role-switch-pill']")) notes.push("floating role pill");
+      return notes;
+    });
+    for (const note of home) problems.push(`home ${note}`);
+
+    await open("/search");
+    const search = await page.evaluate(() => {
+      const notes = [];
+      const toggle = document.querySelector("[data-ke='explore-map-toggle']");
+      const chips = document.querySelector(".ke-explore-filter-bar [data-chip-carousel]");
+      if (toggle && chips) {
+        const t = toggle.getBoundingClientRect();
+        const c = chips.getBoundingClientRect();
+        const overlap = t.left < c.right - 4 && t.right > c.left + 4 && t.top < c.bottom - 4 && t.bottom > c.top + 4;
+        if (overlap) notes.push(`map toggle overlaps chips ${Math.round(t.left)}<${Math.round(c.right)}`);
+      } else notes.push("map toggle or chips missing");
+      return notes;
+    });
+    for (const note of search) problems.push(`search ${note}`);
+
+    await open("/privacy");
+    const privacy = await page.evaluate(() => {
+      const notes = [];
+      const main = document.querySelector("[data-ke='legal-page']");
+      if (!main) return ["legal page missing"];
+      const style = getComputedStyle(main);
+      const padL = parseFloat(style.paddingLeft) || 0;
+      const padR = parseFloat(style.paddingRight) || 0;
+      if (padL < 16) notes.push(`privacy pad-left ${padL}`);
+      if (padR < 16) notes.push(`privacy pad-right ${padR}`);
+      return notes;
+    });
+    for (const note of privacy) problems.push(`privacy ${note}`);
+
+    await page.mouse.click(20, 20).catch(() => undefined);
+    const launcher = page.locator("[data-ke='help-launcher']");
+    const seen = await launcher.waitFor({ state: "visible", timeout: 5000 }).then(() => true).catch(() => false);
+    if (!seen) {
+      problems.push("help launcher did not show");
+    } else {
+      const overlap = await page.evaluate(() => {
+        const bot = document.querySelector(".ke-help-bot");
+        const bar = document.querySelector("[data-ke='app-tab-bar']");
+        if (!bot || !bar) return "help or tab bar missing";
+        const b = bot.getBoundingClientRect();
+        const t = bar.getBoundingClientRect();
+        if (b.height < 8 || t.height < 8) return "help or tab bar has no box";
+        if (b.bottom > t.top + 2) return `help overlaps tab ${Math.round(b.bottom)}>${Math.round(t.top)}`;
+        return "";
+      });
+      if (overlap) problems.push(overlap);
+    }
+  } catch (err) {
+    problems.push(err instanceof Error ? err.message : String(err));
+  }
+
+  await context.close();
+  return problems;
+}

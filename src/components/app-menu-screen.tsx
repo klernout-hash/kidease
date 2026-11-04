@@ -4,7 +4,9 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { CountUp } from "@/components/count-up";
 import { KidBlocks, KidStars } from "@/components/kid-art";
 import { LanguageSelect } from "@/components/language-select";
+import { HistoryBack } from "@/components/history-back";
 import { MenuGlyph, MenuRow } from "@/components/menu-row";
+import { RoleSwitchPill } from "@/components/role-switch-pill";
 import { ShareKidEaseButton } from "@/components/share-button";
 import { useRoleChrome } from "@/components/role-chrome";
 import { useSessionDesks } from "@/components/session-desks";
@@ -62,9 +64,7 @@ export function AppMenuScreen({
   if (section) {
     return (
       <main className="ke-menu-main ke-screen-enter ke-gutter mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col pb-6 pt-6" data-ke="app-menu" data-section={section}>
-        <Link to={menuDeskPath(pathname)} className="inline-flex min-h-11 items-center text-sm font-medium text-primary">
-          {t("back")}
-        </Link>
+        <HistoryBack fallbackHref={menuDeskPath(pathname)} fallbackLabel={t("navMenu")} fallbackAria={t("backToMenu")} marker="menu-section-back" />
         <h1 className="mt-2 text-[1.75rem] font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">{t(GROUP_COPY[section].title)}</h1>
         <nav className="ke-menu-group mt-4" aria-label={t(GROUP_COPY[section].title)}>
           {menuGroupLinks(section, { native, plansOn })
@@ -144,6 +144,7 @@ export function AppMenuScreen({
           icon={highlight === "create" || user ? "settings" : "login"}
           marker="account"
         />
+        <RoleSwitchPill />
         <MenuRow to={menuDeskPath(pathname)} search={{ section: "resources" }} label={t("menuResources")} icon="daycare" marker="resources" />
         <MenuRow to={menuDeskPath(pathname)} search={{ section: "guides" }} label={t("menuGuides")} icon="howItWorks" marker="guides" />
         <MenuRow to={menuDeskPath(pathname)} search={{ section: "help" }} label={t("menuGetHelp")} icon="help" marker="help" />
