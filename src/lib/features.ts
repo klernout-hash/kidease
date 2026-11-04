@@ -383,6 +383,11 @@ export function childCheckinEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_CHILD_CHECKIN", env);
 }
 
+/** Listing editor and day calendar on the daycare desk. Default off. */
+export function hostListingEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_HOST_LISTING", env);
+}
+
 /** Live checkout for KidEase plans. Refuses everyone while subscriptions are off. */
 export function canUsePayCheckout(role?: string | null, env?: EnvMap): boolean {
   if (!subscriptionsEnabled(env)) return false;

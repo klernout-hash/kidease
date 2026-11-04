@@ -228,6 +228,7 @@ export function Listing() {
     daycare: Daycare;
     reviews: Review[];
     availability: AvailabilityRow[];
+    familyGuide?: { dropoff: string; bring: string; handbook: string } | null;
     nearby: Card[];
     jobs?: CentreJobPost[];
     inspections?: PublicInspection[];
@@ -1103,6 +1104,31 @@ export function Listing() {
             ) : null}
             <ListingSnapshotGrid item={d} />
 
+            {data.familyGuide && (data.familyGuide.dropoff || data.familyGuide.bring || data.familyGuide.handbook) ? (
+              <section data-ke="public-family-guide">
+                <h2 className="font-display text-2xl">{locale === "fr" ? "Guide des familles" : "Family guide"}</h2>
+                <dl className="mt-3 space-y-2 text-sm">
+                  {data.familyGuide.dropoff ? (
+                    <div>
+                      <dt className="font-medium">{locale === "fr" ? "Arrivée et départ" : "Drop-off and pickup"}</dt>
+                      <dd className="text-muted">{data.familyGuide.dropoff}</dd>
+                    </div>
+                  ) : null}
+                  {data.familyGuide.bring ? (
+                    <div>
+                      <dt className="font-medium">{locale === "fr" ? "Quoi apporter" : "What to bring"}</dt>
+                      <dd className="text-muted">{data.familyGuide.bring}</dd>
+                    </div>
+                  ) : null}
+                  {data.familyGuide.handbook ? (
+                    <div>
+                      <dt className="font-medium">{locale === "fr" ? "Manuel des parents" : "Parent handbook"}</dt>
+                      <dd className="text-muted">{data.familyGuide.handbook}</dd>
+                    </div>
+                  ) : null}
+                </dl>
+              </section>
+            ) : null}
             <section>
               <h2 className="font-display text-2xl">{t("availability")}</h2>
               {known ? (
