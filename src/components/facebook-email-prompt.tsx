@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { isFacebookPlaceholderEmail } from "@/lib/auth/facebook-address";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
@@ -14,6 +15,7 @@ const PENDING_KEY = "ke-facebook-email-pending";
 export function FacebookEmailPrompt() {
   const { user } = useCurrentUserState();
   const { t, locale } = useCopy();
+  const { celebrate } = useSuccessConfirm();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [email, setEmail] = useState("");
   const [pending, setPending] = useState(false);
@@ -47,6 +49,7 @@ export function FacebookEmailPrompt() {
       if (typeof sessionStorage !== "undefined") sessionStorage.setItem(PENDING_KEY, "1");
       setPending(true);
       toast.message(saved.sent ? t("facebookEmailSaved") : t("facebookEmailPending"));
+      celebrate();
     } catch (err) {
       const message = err instanceof Error ? err.message : t("facebookEmailRequired");
       setError(presentAuthCopy(locale, message));

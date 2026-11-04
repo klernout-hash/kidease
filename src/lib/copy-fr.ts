@@ -1815,7 +1815,7 @@ export const fr = {
     requestSentSending: "Envoi",
     requestSentFailed: "Impossible d’envoyer. Réessayez.",
     messageSheetLead: "Écrivez à {name}. Les réponses restent dans Messages.",
-    successKicker: "Bien joué !",
+    successKicker: "Bravo !",
     successDone: "Terminé",
     successSavedBody: "Vos changements sont enregistrés.",
     successProfileSaved: "Profil enregistré",

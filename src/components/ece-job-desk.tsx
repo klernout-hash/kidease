@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { EceJobApply } from "@/components/ece-job-board";
 import { gapCopy, jobDeskPowers, type JobDesk } from "@/lib/gap-features";
@@ -26,6 +27,7 @@ function fieldClass() {
 
 export function EceJobDesk({ mode }: { mode: Exclude<JobDesk, "public" | "gov"> }) {
   const { locale } = useCopy();
+  const { celebrate } = useSuccessConfirm();
   const copy = gapCopy(locale === "fr" ? "fr" : "en");
   const powers = jobDeskPowers(mode);
   const [on, setOn] = useState(false);
@@ -104,6 +106,7 @@ export function EceJobDesk({ mode }: { mode: Exclude<JobDesk, "public" | "gov"> 
               .then((result) => {
                 setMessage(result.ok ? copy.jobsPosted : copy.jobsOff);
                 if (result.ok) {
+                  celebrate();
                   setRole("");
                   setNote("");
                   return load();
@@ -152,7 +155,10 @@ export function EceJobDesk({ mode }: { mode: Exclude<JobDesk, "public" | "gov"> 
                     variant="secondary"
                     className="mt-2"
                     onClick={() => {
-                      void setEceJobStatus({ data: { jobId: post.id, status: post.status === "open" ? "closed" : "open" } }).then(() => load());
+                      void setEceJobStatus({ data: { jobId: post.id, status: post.status === "open" ? "closed" : "open" } }).then(() => {
+                        celebrate();
+                        return load();
+                      });
                     }}
                   >
                     {post.status === "open" ? copy.jobsClose : copy.jobsReopen}
@@ -175,10 +181,16 @@ export function EceJobDesk({ mode }: { mode: Exclude<JobDesk, "public" | "gov"> 
                   <p className="text-muted">{row.email}</p>
                   {row.note ? <p className="mt-1">{row.note}</p> : null}
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <Button type="button" size="sm" variant="secondary" onClick={() => void setEceApplicationStatus({ data: { applicationId: row.id, status: "reviewed" } }).then(() => load())}>
+                    <Button type="button" size="sm" variant="secondary" onClick={() => void setEceApplicationStatus({ data: { applicationId: row.id, status: "reviewed" } }).then(() => {
+                      celebrate();
+                      return load();
+                    })}>
                       {copy.reviewed}
                     </Button>
-                    <Button type="button" size="sm" variant="secondary" onClick={() => void setEceApplicationStatus({ data: { applicationId: row.id, status: "declined" } }).then(() => load())}>
+                    <Button type="button" size="sm" variant="secondary" onClick={() => void setEceApplicationStatus({ data: { applicationId: row.id, status: "declined" } }).then(() => {
+                      celebrate();
+                      return load();
+                    })}>
                       {copy.declined}
                     </Button>
                   </div>

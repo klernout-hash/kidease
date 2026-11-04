@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { familyInvitePath, growthAttribution } from "@/lib/growth-loops";
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/provider/families")({
 function FamiliesPage() {
   const initial = Route.useLoaderData();
   const { locale } = useCopy();
+  const { celebrate } = useSuccessConfirm();
   const fr = locale === "fr";
   const [invite, setInvite] = useState(initial.invite);
   const [reason, setReason] = useState<string | null>(initial.enabled ? null : "off");
@@ -33,6 +35,7 @@ function FamiliesPage() {
       if (result.ok) {
         setInvite({ code: result.code, centreName: result.centreName, opens: invite?.opens ?? 0 });
         setReason(null);
+        celebrate();
         const hit = growthAttribution({ enabled: true, event: "family_invite_created", code: result.code, locale });
         if (hit) capturePostHogEvent(hit.event, hit.properties);
       } else {

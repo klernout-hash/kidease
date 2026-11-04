@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowUp } from "lucide-react";
+import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -176,6 +177,7 @@ function SmartMatchChat({
   visitorId?: string | null;
 }) {
   const { t, locale } = useCopy();
+  const { celebrate } = useSuccessConfirm();
   const navigate = useNavigate();
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -393,6 +395,7 @@ function SmartMatchChat({
         },
       });
       setSaved(true);
+      celebrate();
       track("smart_match_applied", { age_group: filters?.age, budget: filters?.budget, result_count: results.length });
     } catch {
       setSaveError(true);

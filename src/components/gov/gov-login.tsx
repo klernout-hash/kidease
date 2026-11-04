@@ -4,6 +4,7 @@ import { authClient, dropExistingSession, turnstileFetchOptions } from "@/lib/au
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { Button } from "@/components/ui/button";
+import { celebrateAfterNavigation } from "@/lib/success-confirm";
 import { govCopy, govPath } from "@/lib/gov/copy";
 import type { GovLocale } from "@/lib/gov/aggregate";
 import { GovHelp } from "@/components/gov/gov-help";
@@ -67,6 +68,7 @@ export function GovLogin({ locale, invite }: { locale: GovLocale; invite: string
         setError(copy.denied);
         return;
       }
+      celebrateAfterNavigation();
       window.location.assign(home);
     } catch (err) {
       setError(friendlyAuthError(authClientErrorMessage(err)) || copy.failed);
