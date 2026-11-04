@@ -60,8 +60,6 @@ export function moderationActionLabel(action: string, locale: "en" | "fr" = "en"
   return action;
 }
 
-type Locale = "en" | "fr";
-
 const COPY = {
   en: {
     reportListing: "Report this listing",
@@ -70,6 +68,17 @@ const COPY = {
     reportReview: "Report this review",
     block: "Block messages",
     unblock: "Unblock messages",
+    blockDaycare: "Block this daycare",
+    blockFamily: "Block family",
+    blockConfirmTitle: "Block this person?",
+    blockConfirmBody:
+      "Blocking works both ways. It stops messages, voice and video calls, tour requests, enrolment requests, and reviews. The family is hidden from that daycare's request list. You can unblock later in Menu, under Privacy and safety.",
+    blockConfirm: "Block",
+    unblockPerson: "Unblock",
+    blockedListTitle: "Blocked",
+    blockedEmpty: "No one is blocked.",
+    blockedSignIn: "Sign in to see people you blocked.",
+    reportMenu: "Report",
     reason: "Reason",
     detail: "What happened",
     send: "Send report",
@@ -87,7 +96,7 @@ const COPY = {
     other: "Something else",
     helpTitle: "Safety and reporting",
     helpLead:
-      "KidEase is for adults. You can report a listing, a centre, or a message, and you can block someone from messaging you.",
+      "KidEase is for adults. You can report a listing, a centre, or a message, and you can block a daycare or a family. A block works both ways. It stops messages, calls, tour and enrolment requests, and reviews. The family is hidden from that daycare's request list.",
     helpReview: "KidEase staff review open reports. This is not a child-protection investigation.",
     helpEmail: "Email",
     helpMail: "Mail",
@@ -100,6 +109,17 @@ const COPY = {
     reportReview: "Signaler cet avis",
     block: "Bloquer les messages",
     unblock: "Débloquer les messages",
+    blockDaycare: "Bloquer cette garderie",
+    blockFamily: "Bloquer la famille",
+    blockConfirmTitle: "Bloquer cette personne?",
+    blockConfirmBody:
+      "Le blocage marche dans les deux sens. Il arrête les messages, les appels vocaux et vidéo, les demandes de visite, les demandes d’inscription et les avis. La famille est cachée de la liste de demandes de cette garderie. Vous pouvez débloquer plus tard dans Menu, sous Confidentialité et sécurité.",
+    blockConfirm: "Bloquer",
+    unblockPerson: "Débloquer",
+    blockedListTitle: "Bloqués",
+    blockedEmpty: "Personne n’est bloqué.",
+    blockedSignIn: "Connectez-vous pour voir les personnes bloquées.",
+    reportMenu: "Signaler",
     reason: "Raison",
     detail: "Ce qui s’est passé",
     send: "Envoyer le signalement",
@@ -117,7 +137,7 @@ const COPY = {
     other: "Autre chose",
     helpTitle: "Sécurité et signalement",
     helpLead:
-      "KidEase est pour les adultes. Vous pouvez signaler une fiche, un centre ou un message, et bloquer quelqu’un.",
+      "KidEase est pour les adultes. Vous pouvez signaler une fiche, un centre ou un message, et bloquer une garderie ou une famille. Le blocage marche dans les deux sens. Il arrête les messages, les appels, les demandes de visite et d’inscription, et les avis. La famille est cachée de la liste de demandes de cette garderie.",
     helpReview:
       "Le personnel KidEase revoit les signalements ouverts. Ce n’est pas une enquête de protection de l’enfance.",
     helpEmail: "Courriel",
@@ -139,6 +159,33 @@ export function safetyReasonLabel(locale: string, reason: SafetyReason): string 
  * A block works in both directions. A parent who blocks a centre also stops
  * later staff on that centre.
  */
+/** Same rule as chat: a block stops calls, requests, reviews, and new inquiries. */
+export function interactionIsBlocked(input: {
+  senderId: string;
+  parentUserId: string;
+  daycareId: string;
+  centreUserIds: readonly string[];
+  blocks: readonly SafetyBlock[];
+}): boolean {
+  return messageIsBlocked(input);
+}
+
+/** True when this parent must disappear from the daycare's request and family lists. */
+export function parentIsHidden(input: {
+  parentUserId: string;
+  daycareId: string;
+  blocks: readonly SafetyBlock[];
+}): boolean {
+  const parent = input.parentUserId;
+  const daycare = input.daycareId;
+  if (!parent || !daycare) return false;
+  return input.blocks.some(
+    (block) =>
+      block.daycareId === daycare &&
+      (block.blockerUserId === parent || block.blockedUserId === parent),
+  );
+}
+
 export function messageIsBlocked(input: {
   senderId: string;
   parentUserId: string;

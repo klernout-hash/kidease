@@ -7,6 +7,7 @@ import { DeskShell } from "@/components/desk-shell";
 import { InboxDetailRail } from "@/components/inbox-detail-rail";
 import { InboxMessageRow } from "@/components/inbox-row";
 import { PipelineBadge } from "@/components/pipeline-badge";
+import { BlockMessagesButton } from "@/components/safety-actions";
 import { ThreadComposer, ThreadHeader, ThreadTranscript } from "@/components/thread-chrome";
 import { Button } from "@/components/ui/button";
 import { RedirectToSignIn } from "@/lib/auth/gates";
@@ -319,6 +320,7 @@ export function CentreInboxDesk({
             actions={
               <div className="flex shrink-0 items-center">
                 <ThreadCallActions conversationId={selected.id} voiceReady={voiceReady} videoReady={Boolean(videoSurface)} />
+                <BlockMessagesButton conversationId={selected.id} side="family" />
                 <button
                   type="button"
                   className="min-h-11 rounded-full px-3 text-sm font-medium ring-1 ring-border lg:hidden"

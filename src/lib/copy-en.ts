@@ -3454,7 +3454,7 @@ export const en = {
     menuResources: "Resources",
     menuGuides: "Guides",
     menuGetHelp: "Get help",
-    menuPrivacyLegal: "Privacy & legal",
+    menuPrivacyLegal: "Privacy & safety",
     profileEdit: "Edit",
     profileYears: "Years on KidEase",
     profileRating: "Rating",

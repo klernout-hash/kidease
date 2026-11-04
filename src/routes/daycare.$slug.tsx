@@ -53,11 +53,12 @@ import { TrustBadge } from "@/components/trust-badge";
 import { VerifiedCheck } from "@/components/verified-check";
 import { showVerifiedCheck } from "@/lib/listing-verified";
 import { ListingReport } from "@/components/listing-report";
+import { ListingMoreActions, ListingMoreItem } from "@/components/listing-more-actions";
 import { SafetyReportButton } from "@/components/safety-actions";
 import type { CopyKey } from "@/lib/copy";
 import { hasCompare, toggleCompareItem } from "@/lib/compare";
 import { useParentPlusAccess } from "@/lib/use-parent-plus";
-import { ListingMoreActions, ListingMoreItem } from "@/components/listing-more-actions";
+import { BlockDaycareButton } from "@/components/block-user";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { provinceCode } from "@/lib/product-events";
 import { trackProductEvent } from "@/lib/track-product-event";
@@ -706,6 +707,12 @@ export function Listing() {
         >
           {t("checkSubsidy")}
         </a>
+        {parentActions ? (
+          <div onClick={(event) => event.stopPropagation()}>
+            <BlockDaycareButton daycareId={d.id} />
+            <SafetyReportButton target="listing" daycareId={d.id} />
+          </div>
+        ) : null}
       </>
     );
   }

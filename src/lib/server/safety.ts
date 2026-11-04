@@ -7,6 +7,7 @@ import {
   isSafetyStatus,
   isSafetyTarget,
   messageIsBlocked,
+  parentIsHidden,
   viewerHasBlocked,
   type SafetyBlock,
   type SafetyTarget,
@@ -203,6 +204,181 @@ export const setMessageBlock = createServerFn({ method: "POST" })
     }
     return { ok: true as const, blocked: true as const };
   });
+
+export type BlockedListItem = {
+  key: string;
+  daycareId: string | null;
+  blockedUserId: string | null;
+  title: string;
+};
+
+export const listMyBlocks = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }): Promise<BlockedListItem[]> => {
+    const sql = await getSql();
+    const rows = await sql<{
+      daycare_id: string | null;
+      blocked_user_id: string | null;
+      daycare_name: string | null;
+      person_name: string | null;
+    }>`
+      select b.daycare_id, b.blocked_user_id, d.name as daycare_name, u.name as person_name
+      from safety_blocks b
+      left join daycares d on d.id = b.daycare_id
+      left join "user" u on u.id = b.blocked_user_id
+      where b.blocker_user_id = ${context.userId}
+      order by b.created_at desc
+    `.catch(() => []);
+    const seen = new Set<string>();
+    const items: BlockedListItem[] = [];
+    for (const row of rows) {
+      const key = `${row.daycare_id || ""}:${row.blocked_user_id || "centre"}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const title = (row.blocked_user_id ? row.person_name : row.daycare_name) || row.daycare_name || "Blocked";
+      items.push({
+        key,
+        daycareId: row.daycare_id,
+        blockedUserId: row.blocked_user_id,
+        title: title.trim() || "Blocked",
+      });
+    }
+    return items;
+  });
+
+export const clearMyBlock = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId?: string; blockedUserId?: string }) => input)
+  .handler(async ({ context, data }) => {
+    const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
+    blockViewAsSideEffect("write");
+    const daycareId = (data.daycareId || "").trim();
+    const blockedUserId = (data.blockedUserId || "").trim();
+    if (!daycareId && !blockedUserId) throw new Error("Nothing to unblock");
+    const sql = await getSql();
+    await sql`
+      delete from safety_blocks
+      where blocker_user_id = ${context.userId}
+        and (
+          (${daycareId} <> '' and daycare_id = ${daycareId})
+          or (${blockedUserId} <> '' and blocked_user_id = ${blockedUserId})
+        )
+    `;
+    return { ok: true as const };
+  });
+
+/** Parent blocks a daycare from the listing page. Same rows as Block messages. */
+export const setDaycareBlock = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { daycareId: string; blocked: boolean }) => input)
+  .handler(async ({ context, data }) => {
+    const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
+    blockViewAsSideEffect("write");
+    const daycareId = (data.daycareId || "").trim();
+    if (!daycareId) throw new Error("Listing not found");
+    const sql = await getSql();
+    if (!data.blocked) {
+      await sql`
+        delete from safety_blocks
+        where blocker_user_id = ${context.userId} and daycare_id = ${daycareId}
+      `;
+      return { ok: true as const, blocked: false as const };
+    }
+    const centres = await centreUserIds(sql, daycareId);
+    const existing = await sql<{ id: string }>`
+      select id from safety_blocks
+      where blocker_user_id = ${context.userId} and daycare_id = ${daycareId} and blocked_user_id is null
+      limit 1
+    `;
+    if (!existing[0]) {
+      await sql`
+        insert into safety_blocks (id, blocker_user_id, daycare_id)
+        values (${nid("sb")}, ${context.userId}, ${daycareId})
+      `;
+    }
+    for (const centreUserId of centres) {
+      if (!centreUserId || centreUserId === context.userId) continue;
+      const pair = await sql<{ id: string }>`
+        select id from safety_blocks
+        where blocker_user_id = ${context.userId} and blocked_user_id = ${centreUserId}
+        limit 1
+      `;
+      if (pair[0]) continue;
+      await sql`
+        insert into safety_blocks (id, blocker_user_id, blocked_user_id, daycare_id)
+        values (${nid("sb")}, ${context.userId}, ${centreUserId}, ${daycareId})
+      `;
+    }
+    return { ok: true as const, blocked: true as const };
+  });
+
+/** Daycare blocks one family. Same rows as Block messages from the centre side. */
+export const setFamilyBlock = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { parentUserId: string; daycareId: string; blocked: boolean }) => input)
+  .handler(async ({ context, data }) => {
+    const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
+    blockViewAsSideEffect("write");
+    const parentUserId = (data.parentUserId || "").trim();
+    const daycareId = (data.daycareId || "").trim();
+    if (!parentUserId || !daycareId) throw new Error("Family not found");
+    const sql = await getSql();
+    const { hasCentreDeskAccess } = await import("@/lib/server/centre-access");
+    if (!(await hasCentreDeskAccess(sql, context.userId, daycareId))) throw new Error("Family not found");
+    if (!data.blocked) {
+      await sql`
+        delete from safety_blocks
+        where blocker_user_id = ${context.userId}
+          and blocked_user_id = ${parentUserId}
+          and daycare_id = ${daycareId}
+      `;
+      return { ok: true as const, blocked: false as const };
+    }
+    const pair = await sql<{ id: string }>`
+      select id from safety_blocks
+      where blocker_user_id = ${context.userId} and blocked_user_id = ${parentUserId}
+      limit 1
+    `;
+    if (!pair[0]) {
+      await sql`
+        insert into safety_blocks (id, blocker_user_id, blocked_user_id, daycare_id)
+        values (${nid("sb")}, ${context.userId}, ${parentUserId}, ${daycareId})
+      `;
+    }
+    return { ok: true as const, blocked: true as const };
+  });
+
+export async function blocksForDaycares(sql: Sql, daycareIds: readonly string[]): Promise<SafetyBlock[]> {
+  const ids = [...new Set(daycareIds.filter(Boolean))];
+  if (!ids.length) return [];
+  const rows = await sql<{
+    blocker_user_id: string;
+    blocked_user_id: string | null;
+    daycare_id: string | null;
+  }>`
+    select blocker_user_id, blocked_user_id, daycare_id
+    from safety_blocks
+    where daycare_id = any(${ids})
+  `.catch(() => []);
+  return rows.map((row) => ({
+    blockerUserId: row.blocker_user_id,
+    blockedUserId: row.blocked_user_id,
+    daycareId: row.daycare_id,
+  }));
+}
+
+export async function omitHiddenParents<T extends { userId: string | null; daycareId: string }>(
+  sql: Sql,
+  rows: readonly T[],
+): Promise<T[]> {
+  const blocks = await blocksForDaycares(
+    sql,
+    rows.map((row) => row.daycareId),
+  );
+  return rows.filter(
+    (row) => !row.userId || !parentIsHidden({ parentUserId: row.userId, daycareId: row.daycareId, blocks }),
+  );
+}
 
 export async function assertChatNotBlocked(
   sql: Sql,
