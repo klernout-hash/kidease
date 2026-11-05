@@ -2715,6 +2715,17 @@ html[data-ui="airbnb-v1"][data-theme="dark"] {
   --airbnb-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
 }
 .ke-airbnb-phone-only { display: none; }
+.ke-phone-cats { padding: 8px 20px 32px; }
+.ke-phone-cats-title { display: flex; align-items: center; justify-content: space-between; }
+.ke-phone-cats-title h1 { margin: 8px 0 0; font-size: 2rem; font-weight: 700; letter-spacing: -0.03em; }
+.ke-phone-cats-profile { display: flex; align-items: center; gap: 14px; margin: 22px 0 8px; text-decoration: none; color: inherit; }
+.ke-phone-cats-profile > span:first-child { display: grid; width: 56px; height: 56px; place-items: center; border-radius: 999px; background: #1a3790; color: #fff; font-weight: 700; }
+.ke-phone-cats-profile strong { display: block; font-size: 1.05rem; }
+.ke-phone-cats-profile em { color: var(--airbnb-muted, #6a6a6a); font-style: normal; }
+.ke-phone-cats h2, .ke-phone-cats-heading { margin: 28px 0 4px; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--airbnb-muted, #6a6a6a); }
+.ke-phone-cats-actions { display: flex; flex-direction: column; gap: 12px; margin-top: 28px; }
+.ke-phone-cats-actions a, .ke-phone-cats-actions button { display: flex; min-height: 48px; align-items: center; justify-content: center; gap: 8px; border-radius: 999px; font-weight: 650; }
+.ke-phone-cats-actions button { border: 0; background: var(--airbnb-text, #222); color: var(--airbnb-card, #fff); }
 @media (max-width: 767px) {
   html[data-ui="airbnb-v1"] .ke-airbnb-phone-only { display: block; }
   html[data-ui="airbnb-v1"] .ke-airbnb-hide-phone { display: none !important; }
