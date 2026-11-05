@@ -10,6 +10,7 @@ import {
   trustedSavedOrigin,
   type SearchOrigin,
 } from "@/lib/default-origin";
+import { isGenericCareQuery } from "@/lib/generic-care-query";
 import { clearSavedOrigin, geocode, readSavedOrigin, reverseGeocode } from "@/lib/geo";
 import { getDeviceLocation } from "@/lib/native";
 import { useAppStore } from "@/lib/store";
@@ -43,7 +44,7 @@ export async function bootSearchOrigin(incomingQ?: string, ssrOrigin?: SearchOri
   const setLocationConsent = useAppStore.getState().setLocationConsent;
   const timeZone = readClientTimeZone();
 
-  if (incomingQ) {
+  if (incomingQ && !isGenericCareQuery(incomingQ)) {
     setQuery(incomingQ);
     const local = geocode(incomingQ);
     if (local) {
@@ -54,6 +55,11 @@ export async function bootSearchOrigin(incomingQ?: string, ssrOrigin?: SearchOri
     if (stale()) return;
     if (hit) setOrigin({ ...hit, explicit: true }, "manual");
     return;
+  }
+
+  // Generic care words stay keywords — settle location from GPS / saved / default.
+  if (incomingQ && isGenericCareQuery(incomingQ)) {
+    setQuery(incomingQ);
   }
 
   const saved = applyTrustedSaved(timeZone);

@@ -26,6 +26,7 @@ import { BootPending } from "@/components/boot-pending";
 import { CARD_SIZES, CARD_WIDTHS, photoSrcSet, photoUrl } from "@/lib/photo";
 import { ORIGIN_BUDGET_MS, PAINT_BUDGET_MS, SQL_SETTLE_MS, withPaintBudget, withTimeoutFallback } from "@/lib/timeout";
 import { bootSearchOrigin } from "@/lib/search-origin";
+import { isGenericCareQuery } from "@/lib/generic-care-query";
 import {
   anchorsForSearchMap,
   cityParamFromUnknown,
@@ -165,7 +166,9 @@ export async function searchLoader({ location }: { location: { search: unknown }
     const { readMobileSearchV2 } = await import("@/lib/mobile-search-flag");
     const mobileSearchV2 = await readMobileSearchV2().catch(() => false);
     const reviewRatingFloor = ratingFloor(reviewReportsEnabled(), MIN_REVIEW_COUNT);
-    const q = searchQueryFromUnknown(location.search);
+    const rawQ = searchQueryFromUnknown(location.search);
+    const genericCare = isGenericCareQuery(rawQ);
+    const q = genericCare ? "" : rawQ;
     const city = cityParamFromUnknown(location.search);
     const decision = resolveSearchDirectory({ q, city });
     if (decision.kind === "unknown") {
@@ -223,10 +226,13 @@ export async function searchLoader({ location }: { location: { search: unknown }
         city: city || undefined,
         facility: listedDaycareTypeFromSearch(location.search),
         page,
-        name:
-          location.search && typeof location.search === "object" && "name" in location.search
-            ? String((location.search as { name?: unknown }).name || "")
-            : "",
+        name: (
+          (
+            location.search && typeof location.search === "object" && "name" in location.search
+              ? String((location.search as { name?: unknown }).name || "")
+              : ""
+          ).trim() || (genericCare ? rawQ : "")
+        ),
         live: readLiveSearchFlag(
           location.search && typeof location.search === "object" && "live" in location.search
             ? (location.search as { live?: unknown }).live
@@ -457,7 +463,9 @@ export function SearchScreen({
   const [claimVerifiedOnly, setClaimVerifiedOnly] = useState(readLiveSearchFlag(incoming.live));
   const [needBy, setNeedBy] = useState(incoming.from ?? "");
   const [needUntil, setNeedUntil] = useState(incoming.to ?? "");
-  const [nameQuery, setNameQuery] = useState(incoming.name ?? "");
+  const [nameQuery, setNameQuery] = useState(
+    (incoming.name || (isGenericCareQuery(incoming.q) ? incoming.q : "") || "").trim(),
+  );
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [careType, setCareType] = useState<CareType | "any">("any");
   const [schoolAgeOnly, setSchoolAgeOnly] = useState(false);
@@ -488,6 +496,16 @@ export function SearchScreen({
       if (cancelled) return;
       bootHoldUrl.current = false;
       const label = useAppStore.getState().origin.label.trim();
+      if (place && isGenericCareQuery(place)) {
+        // Keep the care word as a name keyword; do not treat it as the place pin.
+        writeExploreSearch({
+          q: label || undefined,
+          name: place,
+          from: needBy,
+          to: needUntil,
+        });
+        return;
+      }
       if (!place && label && !(incoming.q || "").trim()) {
         writeExploreSearch({ q: label, name: nameQuery, from: needBy, to: needUntil });
       }
@@ -528,8 +546,8 @@ export function SearchScreen({
   }, [incoming.live]);
 
   useEffect(() => {
-    setNameQuery(incoming.name ?? "");
-  }, [incoming.name]);
+    setNameQuery((incoming.name || (isGenericCareQuery(incoming.q) ? incoming.q : "") || "").trim());
+  }, [incoming.name, incoming.q]);
 
   useEffect(() => {
     setNeedBy(incoming.from ?? "");

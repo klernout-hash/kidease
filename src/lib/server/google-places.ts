@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { catalogByIdGet } from "@/lib/catalog";
 import { placesBiasOrigin } from "@/lib/default-origin";
+import { isGenericCareQuery } from "@/lib/generic-care-query";
 import {
   PHOTON_MAX_WAIT_MS,
   PHOTON_MIN_INTERVAL_MS,
@@ -88,6 +89,7 @@ export const suggestPlaces = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data }): Promise<PlaceSuggestion[]> => {
     if (data.q.length < 2) return [];
+    if (isGenericCareQuery(data.q)) return [];
     const bias = placesBiasOrigin({ lat: data.lat, lng: data.lng });
     const cacheKey = `${data.q.toLowerCase()}|${bias.lat.toFixed(2)},${bias.lng.toFixed(2)}`;
     const saved = suggestCache.get(cacheKey);
@@ -115,6 +117,7 @@ export const geocodePlace = createServerFn({ method: "POST" })
   .validator((q: string) => String(q ?? "").trim().slice(0, 160))
   .handler(async ({ data }): Promise<ResolvedPlace | null> => {
     if (!data) return null;
+    if (isGenericCareQuery(data)) return null;
     const cacheKey = data.toLowerCase();
     const cached = readGeo(cacheKey);
     if (cached !== undefined) return cached;

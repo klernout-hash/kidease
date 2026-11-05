@@ -1,5 +1,7 @@
 /** Recent place searches stay on this device. Nothing is sent to KidEase. */
 
+import { isTaintedCareOriginLabel } from "./generic-care-query.ts";
+
 export type RecentSearch = { label: string; at: string };
 
 const STORAGE_KEY = "kidease-recent-searches";
@@ -8,6 +10,7 @@ const LIMIT = 5;
 export function rememberSearch(current: readonly RecentSearch[], label: string, at = new Date().toISOString()): RecentSearch[] {
   const clean = label.trim().replace(/\s+/g, " ").slice(0, 80);
   if (clean.length < 2) return [...current];
+  if (isTaintedCareOriginLabel(clean)) return [...current];
   const next = [{ label: clean, at }, ...current.filter((item) => item.label.toLowerCase() !== clean.toLowerCase())];
   return next.slice(0, LIMIT);
 }

@@ -21,6 +21,7 @@ import {
   suggestLocalPlaces,
   suggestPlacesBrowser,
 } from "@/lib/place-suggest";
+import { isGenericCareQuery } from "@/lib/generic-care-query";
 import { cn } from "@/lib/utils";
 
 export type ResolvedPlace = { lat: number; lng: number; label: string };
@@ -38,6 +39,8 @@ export type WhereEmptyMenu = {
 export async function resolveLocationQuery(query: string): Promise<ResolvedPlace | null> {
   const q = query.trim();
   if (!q) return null;
+  // Care words are keywords / categories, not places — never spend a Photon call.
+  if (isGenericCareQuery(q)) return null;
   const local = geocode(q);
   if (local) return local;
   try {
