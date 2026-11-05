@@ -28,6 +28,8 @@ import { formatPlanCad } from "@/lib/upgrade-plans";
 import { useInNativeShell, useStoreChannel } from "@/lib/use-native-shell";
 import { useMounted } from "@/lib/use-mounted";
 import { useCopy } from "@/lib/use-copy";
+import { useAirbnbUi } from "@/lib/use-airbnb-ui";
+import { PhoneCategoryMenu } from "@/components/phone-category-menu";
 import { MonthBars } from "@/components/month-bars";
 
 const AppearanceControl = lazy(() =>
@@ -58,6 +60,7 @@ export function AppMenuScreen({
   const native = useInNativeShell();
   const showStores = showStoreComingSoon(useStoreChannel());
   const plansOn = chrome.subscriptionsEnabled === true;
+  const airbnb = useAirbnbUi();
   const currentDesk = highlightDesk("/menu", sticky, null);
   const ownsCentre = Boolean(session?.ownsCentre);
   const highlight = menuHighlight({ role: chrome.role, ownsCentre, currentDesk });
@@ -97,7 +100,12 @@ export function AppMenuScreen({
 
   return (
     <>
-      <main className="ke-menu-main ke-screen-enter ke-gutter mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col pb-6 pt-6" data-ke="app-menu" data-role={chrome.role}>
+      {airbnb ? (
+        <div className="ke-airbnb-phone-only">
+          <PhoneCategoryMenu host={highlight === "create"} />
+        </div>
+      ) : null}
+      <main className={`ke-menu-main ke-screen-enter ke-gutter mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col pb-6 pt-6${airbnb ? " ke-airbnb-hide-phone" : ""}`} data-ke="app-menu" data-role={chrome.role}>
       <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">{t("navMenu")}</h1>
       {hostCards ? <HostCards initialEarnings={earnings} initialInsights={insights} /> : null}
       {highlight === "create" ? (

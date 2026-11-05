@@ -28,9 +28,10 @@ test("flag off does not add the airbnb attribute or home class", () => {
   assert.match(home, /boot\.airbnbUi \? "ke-home ke-airbnb-hide-phone/);
   assert.match(home, /boot\.airbnbUi \? \(/);
   const menu = src("src/components/app-menu-screen.tsx");
-  assert.doesNotMatch(menu, /ke-airbnb-hide-phone/);
-  assert.match(menu, /data-ke="menu-sign-out"/);
-  assert.match(menu, /data-ke="menu-delete-account"/);
+  assert.match(menu, /PhoneCategoryMenu/);
+  assert.match(src("src/components/phone-category-menu.tsx"), /Your centre/);
+  assert.match(src("src/components/phone-category-menu.tsx"), /data-ke="menu-sign-out"/);
+  assert.doesNotMatch(src("src/components/phone-category-menu.tsx"), /subscription|upgrade/i);
 });
 
 test("phone and email masks and home addresses stay private", () => {
