@@ -48,7 +48,8 @@ import { SafeRouteError } from "@/components/safe-error-boundary";
 import { installStaleChunkReload, safeErrorCopy } from "@/lib/safe-error";
 import { getRoleChrome } from "@/lib/server/role-route";
 import { automationLiveEnv, automationMode } from "@/lib/automations";
-import { posthogErrorsEnabled } from "@/lib/features";
+import { airbnbUiEnabled, posthogErrorsEnabled } from "@/lib/features";
+import { readAirbnbUi } from "@/lib/airbnb-ui-flag";
 import { STYLE_NONCE_BOOT } from "@/lib/style-nonce-boot";
 import { ensureFrenchCopy } from "@/lib/copy-runtime";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
@@ -148,6 +149,7 @@ export const Route = createRootRoute({
         automationMode(posthogErrorsEnabled(), process.env[automationLiveEnv("FEATURE_POSTHOG_ERRORS")]) ===
         "live",
       frCa: frCa === true,
+      airbnbUi: await readAirbnbUi().catch(() => airbnbUiEnabled()),
     };
   },
   errorComponent: (props) => {
@@ -276,6 +278,7 @@ function RootDocument() {
   const storeChannel = Route.useRouteContext({ select: (s) => s.storeChannel ?? "web" });
   const a11yPass = Route.useRouteContext({ select: (s) => Boolean(s.a11yPass) });
   const posthogErrors = Route.useRouteContext({ select: (s) => Boolean(s.posthogErrors) });
+  const airbnbUi = Route.useRouteContext({ select: (s) => s.airbnbUi === true });
   const { locale } = useCopy();
   const lang =
     pathLocale(pathname) === "fr" || locale === "fr" ? "fr-CA" : locale === "en" ? "en" : localeTag(locale);
@@ -289,6 +292,7 @@ function RootDocument() {
       data-store={storeChannel}
       data-theme="dark"
       data-resolved-theme="dark"
+      data-ui={airbnbUi ? "airbnb-v1" : undefined}
       suppressHydrationWarning
     >
       <head>

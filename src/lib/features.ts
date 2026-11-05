@@ -79,6 +79,11 @@ export function mobileSearchV2Enabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_MOBILE_SEARCH_V2", env);
 }
 
+/** Calm full-screen phone shell. Off. Today’s screens stay until this is on. */
+export function airbnbUiEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_UI_AIRBNB_V1", env);
+}
+
 /** Honest copy when SHOW_PAY_CTAS is off. Stripe / plan code stays compiled. */
 export const PLANS_NOT_OFFERED_YET =
   "Plans are not offered on this site yet. Listing and claim stay free.";
