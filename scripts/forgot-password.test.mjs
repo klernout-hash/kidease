@@ -33,7 +33,8 @@ describe("forgot-password flow", () => {
     const routeTree = read("src/routeTree.gen.ts");
     assert.match(routeFile, /createFileRoute\("\/forgot-password"\)/);
     assert.match(routeFile, /authClient\.requestPasswordReset/);
-    assert.match(routeFile, /redirectTo:\s*"\/reset-password"/);
+    assert.match(routeFile, /redirectTo:/);
+    assert.match(routeFile, /"\/reset-password"/);
     assert.match(routeFile, /getResetMailReady/);
     assert.match(routeFile, /mailReady/);
     assert.match(routeFile, /forgotPasswordMailMissing/);
@@ -48,7 +49,8 @@ describe("forgot-password flow", () => {
   it("login Forgot password is a real link to /forgot-password", () => {
     const login = read("src/routes/login.tsx");
     const copy = (read("src/lib/copy-en.ts") + read("src/lib/copy-fr.ts"));
-    assert.match(login, /to="\/forgot-password"/);
+    assert.match(login, /forgotTo/);
+    assert.match(login, /\/forgot-password/);
     assert.match(login, /t\("forgotPassword"\)/);
     assert.match(login, /t\("forgotPasswordLead"\)/);
     assert.match(copy, /forgotPassword: "Forgot password\?"/);
@@ -65,7 +67,7 @@ describe("forgot-password flow", () => {
     const reset = read("src/routes/reset-password.tsx");
     assert.match(reset, /createFileRoute\("\/reset-password"\)/);
     assert.match(reset, /authClient\.resetPassword/);
-    assert.match(reset, /to="\/login"/);
+    assert.match(reset, /"\/login"/);
     assert.match(reset, /t\("backToSignIn"\)/);
     assert.match((read("src/lib/copy-en.ts") + read("src/lib/copy-fr.ts")), /backToSignIn: "Back to sign in"/);
     assert.match((read("src/lib/copy-en.ts") + read("src/lib/copy-fr.ts")), /backToSignIn: "Retour à la connexion"/);

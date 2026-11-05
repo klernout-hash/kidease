@@ -1,6 +1,7 @@
 import { readSessionTokenFromHeader, unsignedSessionToken } from "@/lib/auth/cookies";
 import { withTimeout } from "@/lib/timeout";
 import { applyFrCaDecision, frCaRedirectExtras, frCaRedirectInput } from "@/lib/fr-ca";
+import { frAuthQcEnabled } from "@/lib/features";
 import {
   emptyVisitorLocale,
   isLocaleDocumentRequest,
@@ -104,8 +105,8 @@ async function computeHint(request: Request, url: URL, asDocument: boolean): Pro
   const extras = frCaRedirectExtras(request.headers);
   const decision = applyFrCaDecision(shared, extras);
   // Route loads ask about the page. The server-fn request itself is not a document.
-  const redirectTo = localeRedirectTarget(
-    frCaRedirectInput(
+  const redirectTo = localeRedirectTarget({
+    ...frCaRedirectInput(
       {
         ...shared,
         method: asDocument ? "GET" : request.method,
@@ -117,7 +118,8 @@ async function computeHint(request: Request, url: URL, asDocument: boolean): Pro
       },
       extras,
     ),
-  );
+    frAuthQc: frAuthQcEnabled(),
+  });
   return { ...decision, redirectTo };
 }
 

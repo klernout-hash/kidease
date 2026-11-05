@@ -12,7 +12,8 @@
  * with a French URL are `/fr/parent`, `/fr/inbox`, `/fr/account`, `/fr/menu`,
  * `/fr/provider`, and `/fr/support`. Nested French URLs exist for parent and
  * inbox only. `/admin` stays unprefixed. `/login` has a `/fr/login`
- * counterpart so the URL is not a 404; other auth desks stay English.
+ * counterpart. Forgot-password, reset-password, and verify-2fa have `/fr`
+ * twins too. Quebec geo opens those three only when FEATURE_FR_AUTH_QC is on.
  */
 
 export const DEFAULT_LOCALE = "en" as const;
@@ -79,6 +80,14 @@ export const LOCALE_PAIRED_PATHS = [
   "/guides/nu",
 ] as const;
 
+/** Auth desks with a French URL. Noindex, so they stay out of the sitemap. */
+export const AUTH_FR_PATHS = ["/forgot-password", "/reset-password", "/verify-2fa"] as const;
+
+export function isAuthFrPath(pathname: string | null | undefined): boolean {
+  const bare = stripLocalePrefix(pathname);
+  return (AUTH_FR_PATHS as readonly string[]).includes(bare);
+}
+
 export type LocalePairedPath = (typeof LOCALE_PAIRED_PATHS)[number];
 
 /** Redirect-only pairs — exist so `/fr/explore` is not a 404, omitted from sitemap. `/signup` is a real page. */
@@ -143,6 +152,7 @@ export function isFamilyWelcomePath(pathname: string | null | undefined): boolea
 export function isPairedPath(pathname: string | null | undefined): boolean {
   return (
     PAIRED.has(stripLocalePrefix(pathname)) ||
+    isAuthFrPath(pathname) ||
     isCatalogueDocumentPath(pathname) ||
     isQcHomePath(pathname) ||
     isFamilyWelcomePath(pathname)
@@ -188,7 +198,7 @@ export function localePath(enPath: string, locale: string): string {
   if (bare === "/explore") return locale === "fr" ? frenchPath("/search") : "/search";
   if (
     locale === "fr" &&
-    (PAIRED.has(bare) || isCatalogueDocumentPath(bare) || isQcHomePath(bare) || isFrenchDeskPath(bare) || isFamilyWelcomePath(bare))
+    (PAIRED.has(bare) || isAuthFrPath(bare) || isCatalogueDocumentPath(bare) || isQcHomePath(bare) || isFrenchDeskPath(bare) || isFamilyWelcomePath(bare))
   ) {
     return frenchPath(bare);
   }
@@ -219,9 +229,6 @@ const DESK_OR_AUTH_PREFIXES = [
   "/support",
   "/account",
   "/inbox",
-  "/verify-2fa",
-  "/forgot-password",
-  "/reset-password",
   "/menu",
   "/sign",
   "/pay",

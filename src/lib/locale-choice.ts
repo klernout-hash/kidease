@@ -7,6 +7,12 @@ export const readFrCaEnabled = createServerFn({ method: "GET" }).handler(async (
   return frCaEnabled();
 });
 
+/** Server-read so the browser does not treat a missing env as off by accident in the wrong place. */
+export const readFrAuthQc = createServerFn({ method: "GET" }).handler(async () => {
+  const { frAuthQcEnabled } = await import("@/lib/features");
+  return frAuthQcEnabled();
+});
+
 export type { VisitorLocaleHint };
 
 /** Page language for this request. Location is read on the server from Vercel headers. */

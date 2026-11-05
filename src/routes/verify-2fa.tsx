@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouterState } from "@tanstack/react-router";
 import { memo, useEffect, useRef, useState } from "react";
 import { ShellLite } from "@/components/shell-lite";
 import { BrandMark } from "@/components/brand-mark";
@@ -27,11 +27,16 @@ import { sanitizePostLoginNext, staffTwoFactorRequired } from "@/lib/desks";
 import { LOGIN_TAKING_TOO_LONG_MESSAGE } from "@/lib/auth/login-stall";
 import { isNative } from "@/lib/native";
 import { yieldToMain } from "@/lib/yield-main";
+import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
+import { useCopy } from "@/lib/use-copy";
+import { isFrPath } from "@/lib/locale-path";
+
+export const verify2faValidateSearch = (s: Record<string, unknown>) => ({
+  next: verify2faSearchNext(s.next),
+});
 
 export const Route = createFileRoute("/verify-2fa")({
-  validateSearch: (s: Record<string, unknown>) => ({
-    next: verify2faSearchNext(s.next),
-  }),
+  validateSearch: verify2faValidateSearch,
   head: () => ({
     meta: [
       { title: "Check your sign-in · KidEase" },
@@ -82,8 +87,12 @@ function useVerify2faSession() {
 }
 
 function VerifyTwoFactorPage() {
-  const { user, phase } = useVerify2faSession();
   const { next } = Route.useSearch();
+  return <VerifyTwoFactorScreen next={next} />;
+}
+
+export function VerifyTwoFactorScreen({ next }: { next?: string }) {
+  const { user, phase } = useVerify2faSession();
   const dest = verify2faSearchNext(next);
 
   if (phase === "wait") {
@@ -108,14 +117,16 @@ const OtpCodeField = memo(function OtpCodeField({
   value,
   onChange,
   disabled,
+  label,
 }: {
   value: string;
   onChange: (next: string) => void;
   disabled: boolean;
+  label: string;
 }) {
   return (
     <label className="block text-sm">
-      Verification code
+      {label}
       <input
         name="one-time-code"
         inputMode="numeric"
@@ -142,6 +153,10 @@ async function leave(rawDest: string) {
 }
 
 function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string }) {
+  const { locale } = useCopy();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const signInTo = locale === "fr" || isFrPath(pathname) ? "/fr/login" : "/login";
+  const show = (message: string) => presentAuthCopy(locale, message);
   const staff = staffTwoFactorRequired(dest);
   const [code, setCode] = useState("");
   const [hint, setHint] = useState("");
@@ -283,15 +298,17 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
           <BrandMark size="md" />
         </div>
         <h1 className="mt-6 text-3xl font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">
-          Check your email
+          {show("Check your email")}
         </h1>
         <p className="mt-2 text-sm text-muted" data-ke="otp-send-copy">
-          {delivered === false
-            ? "We could not email a sign-in code. Nothing was sent. Try Send a new code, or email support@kidease.ca."
-            : `We sent a 6-digit code${hint ? ` to ${hint}` : ""}. Enter it to finish signing in.`}
+          {show(
+            delivered === false
+              ? "We could not email a sign-in code. Nothing was sent. Try Send a new code, or email support@kidease.ca."
+              : `We sent a 6-digit code${hint ? ` to ${hint}` : ""}. Enter it to finish signing in.`,
+          )}
         </p>
         <form ref={formRef} className="mt-6 space-y-3 ph-no-capture" onSubmit={onSubmit}>
-          <OtpCodeField value={code} onChange={onCodeChange} disabled={busy} />
+          <OtpCodeField value={code} onChange={onCodeChange} disabled={busy} label={show("Verification code")} />
           <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm">
             <input
               type="checkbox"
@@ -309,9 +326,9 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
               data-form-type="other"
             />
             <span>
-              <span className="font-medium">Remember this device for 30 days</span>
+              <span className="font-medium">{show("Remember this device for 30 days")}</span>
               <span className="mt-1 block text-[12px] text-muted">
-                Skip the email code on this browser for 30 days. Do not use this on a shared computer.
+                {show("Skip the email code on this browser for 30 days. Do not use this on a shared computer.")}
               </span>
             </span>
           </label>
@@ -320,15 +337,15 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
           ) : (
             <div className="min-h-[65px]" aria-hidden="true" />
           )}
-          {error ? <p className="text-sm text-danger" data-ke="auth-error">{error}</p> : null}
-          {notice && !error ? <p className="text-sm text-muted">{notice}</p> : null}
+          {error ? <p className="text-sm text-danger" data-ke="auth-error">{show(error)}</p> : null}
+          {notice && !error ? <p className="text-sm text-muted">{show(notice)}</p> : null}
           {stalled ? (
             <p className="text-sm text-muted" data-ke="verify-stall">
-              Still opening your desk. You can send a new code, or continue below.
+              {show("Still opening your desk. You can send a new code, or continue below.")}
             </p>
           ) : null}
           <Button type="submit" className="w-full min-h-12" disabled={busy} aria-busy={busy}>
-            {busy ? "Opening your desk…" : "Verify and continue"}
+            {busy ? show("Opening your desk…") : show("Verify and continue")}
           </Button>
         </form>
         <button
@@ -372,7 +389,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
               });
           }}
         >
-          {resendWait > 0 ? twoFactorResendWaitCopy(resendWait) : "Send a new code"}
+          {resendWait > 0 ? show(twoFactorResendWaitCopy(resendWait)) : show("Send a new code")}
         </button>
         {(canSkip || stalled || pageStalled) && !staff ? (
           <button
@@ -387,18 +404,18 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
               void leave(dest);
             }}
           >
-            Continue to your desk
+            {show("Continue to your desk")}
           </button>
         ) : null}
         <p className="mt-6 text-center text-xs text-subtle">
-          <Link to="/login" className="underline-offset-4 hover:underline">
-            Back to sign in
+          <Link to={signInTo} className="underline-offset-4 hover:underline">
+            {show("Back to sign in")}
           </Link>
           {delivered === false ? (
             <>
               {" · "}
               <a href="mailto:support@kidease.ca" className="underline-offset-4 hover:underline">
-                Email support@kidease.ca
+                {show("Email support@kidease.ca")}
               </a>
             </>
           ) : null}

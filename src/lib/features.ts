@@ -320,6 +320,11 @@ export function frCaEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_FR_CA", env);
 }
 
+/** French auth pages' geo redirect plus French reset, code, and verify mail. Off until set. */
+export function frAuthQcEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_FR_AUTH_QC", env);
+}
+
 /** Province curriculum pack. Default off. */
 export function curriculumPackEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_CURRICULUM_PACK", env);

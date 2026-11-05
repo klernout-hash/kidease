@@ -100,7 +100,7 @@ test("daycare verify and next-steps say the listing is not live until verified",
   assert.equal(isPlatformLive("new-centre", false, { claimStatus: "unclaimed" }), false);
   assert.equal(isPlatformLive("new-centre", false, { claimStatus: "pending" }), false);
   assert.match(src("src/lib/server/verify-mail.ts"), /lookupVerifyAudience/);
-  assert.match(src("src/lib/server/verify-mail.ts"), /verifyEmailText\(input\.url, input\.name, audience\)/);
+  assert.match(src("src/lib/server/verify-mail.ts"), /verifyEmailText\(input\.url, input\.name, audience, french\)/);
 });
 
 test("signup sends verify-email only — next-steps wait for emailVerified", () => {

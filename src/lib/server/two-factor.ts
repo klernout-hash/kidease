@@ -14,6 +14,8 @@ import { TWO_FACTOR_HOURLY_MS } from "@/lib/auth-rate-limit";
 import { TWO_FACTOR_DEVICE_TTL_MS } from "@/lib/two-factor-cookie";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
 import { brandedNotice } from "@/lib/email-layout";
+import { OTP_SUBJECT_EN, OTP_SUBJECT_FR } from "@/lib/fr-auth-qc";
+import { frenchAuthMailForEmail } from "@/lib/server/fr-auth-mail.server";
 
 const TTL_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = TWO_FACTOR_MAX_ATTEMPTS;
@@ -34,15 +36,27 @@ async function ensureTable() {
 }
 
 async function sendCodeEmail(to: string, code: string) {
-  const subject = "Your KidEase sign-in code";
-  const text = `Your KidEase verification code is ${code}.\n\nIt expires in 10 minutes. If you did not try to sign in, you can ignore this email.`;
+  const french = await frenchAuthMailForEmail(to);
+  const subject = french ? OTP_SUBJECT_FR : OTP_SUBJECT_EN;
+  const lead = french
+    ? "Ce code expire dans 10 minutes. Utilisez-le pour terminer la connexion."
+    : "This code expires in 10 minutes. Use it to finish signing in.";
+  const ignore = french
+    ? "Il expire dans 10 minutes. Si vous n’avez pas essayé de vous connecter, ignorez ce courriel."
+    : "It expires in 10 minutes. If you did not try to sign in, you can ignore this email.";
+  const reason = french
+    ? "Vous recevez ce message parce qu’une connexion à KidEase a été demandée."
+    : "You get this because someone asked to sign in to KidEase.";
+  const text = french
+    ? `Votre code de vérification KidEase est ${code}.\n\nIl expire dans 10 minutes. Si vous n’avez pas essayé de vous connecter, ignorez ce courriel.`
+    : `Your KidEase verification code is ${code}.\n\nIt expires in 10 minutes. If you did not try to sign in, you can ignore this email.`;
   const html = `<!doctype html>
 <html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">
     <tr><td style="padding:28px;">
       <p style="margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#5c6578;">KidEase</p>
       <h1 style="margin:12px 0 0;font-size:28px;letter-spacing:.12em;">${code}</h1>
-      <p style="margin:16px 0 0;color:#5c6578;">This code expires in 10 minutes. Use it to finish signing in.</p>
+      <p style="margin:16px 0 0;color:#5c6578;">${lead}</p>
     </td></tr>
   </table>
 </body></html>`;
@@ -55,9 +69,10 @@ async function sendCodeEmail(to: string, code: string) {
     replyTo: ADMIN_EMAIL,
     branded: brandedNotice({
       heading: subject,
-      text: "It expires in 10 minutes. If you did not try to sign in, you can ignore this email.",
+      text: ignore,
       code,
-      reason: "You get this because someone asked to sign in to KidEase.",
+      reason,
+      locale: french ? "fr" : "en",
     }),
   });
   if (result.via === "resend") console.info("[kidease-2fa] resend", result.via);

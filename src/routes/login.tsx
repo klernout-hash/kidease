@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useRouter, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouteContext, useRouter, useRouterState } from "@tanstack/react-router";
 import { authBackFallback, currentAuthBackFallback } from "@/lib/auth/auth-back";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type MutableRefObject } from "react";
 import { authClient, authEnabled, clearLocalSignedOut, dropExistingSession, signIn, turnstileFetchOptions } from "@/lib/auth/client";
@@ -287,6 +287,9 @@ export function LoginScreen({
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const loginPath = isFrPath(pathname) ? "/fr/login" : "/login";
+  const frAuthQc = useRouteContext({ from: "__root__" }).frAuthQc === true;
+  const forgotTo =
+    isFrPath(pathname) || (frAuthQc && locale === "fr") ? "/fr/forgot-password" : "/forgot-password";
   const storeChannel = useStoreChannel();
   const hideAdmin = useNativeHidesAdmin();
   const shownProviders = signInProvidersForDevice(providers, {
@@ -998,7 +1001,7 @@ export function LoginScreen({
           {mode === "in" && !pickingRole ? (
             <div className="mt-3">
               <Link
-                to="/forgot-password"
+                to={forgotTo}
                 search={{ email: (operator ? OPERATOR_EMAIL : emailLink).trim() }}
                 className="text-[13px] font-medium text-muted underline-offset-4 hover:text-fg hover:underline"
               >

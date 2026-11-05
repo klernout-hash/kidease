@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouteContext, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 import { authClient, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage } from "@/lib/auth/login-errors";
@@ -13,16 +13,21 @@ import { Shell } from "@/components/shell";
 import { MARKETING_PAGE_SEO, pageSeoHead, withNoindex } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 import { confirmAction } from "@/lib/success-confirm";
+import { isFrPath } from "@/lib/locale-path";
+
+export const forgotPasswordValidateSearch = (s: Record<string, unknown>) => {
+  const email = typeof s.email === "string" ? s.email.trim() : "";
+  return email ? { email } : {};
+};
+
+export async function forgotPasswordLoader() {
+  const mailReady = await withTimeoutFallback(getResetMailReady(), LOADER_SETTLE_MS, true);
+  return { mailReady };
+}
 
 export const Route = createFileRoute("/forgot-password")({
-  validateSearch: (s: Record<string, unknown>) => {
-    const email = typeof s.email === "string" ? s.email.trim() : "";
-    return email ? { email } : {};
-  },
-  loader: async () => {
-    const mailReady = await withTimeoutFallback(getResetMailReady(), LOADER_SETTLE_MS, true);
-    return { mailReady };
-  },
+  validateSearch: forgotPasswordValidateSearch,
+  loader: forgotPasswordLoader,
   head: () => withNoindex(pageSeoHead(MARKETING_PAGE_SEO.forgotPassword)),
   component: ForgotPassword,
 });
@@ -30,8 +35,23 @@ export const Route = createFileRoute("/forgot-password")({
 function ForgotPassword() {
   const { mailReady } = Route.useLoaderData();
   const search = Route.useSearch();
+  return <ForgotPasswordScreen mailReady={mailReady} initialEmail={search.email} />;
+}
+
+export function ForgotPasswordScreen({
+  mailReady,
+  initialEmail,
+}: {
+  mailReady: boolean;
+  initialEmail?: string;
+}) {
   const { t, locale } = useCopy();
-  const [email, setEmail] = useState(search.email ?? "");
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const frAuthQc = useRouteContext({ from: "__root__" }).frAuthQc === true;
+  const frenchDesk = isFrPath(pathname) || (frAuthQc && locale === "fr");
+  const resetTo = frenchDesk ? "/fr/reset-password" : "/reset-password";
+  const signInTo = locale === "fr" || isFrPath(pathname) ? "/fr/login" : "/login";
+  const [email, setEmail] = useState(initialEmail ?? "");
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -57,7 +77,7 @@ function ForgotPassword() {
     try {
       const res = await authClient.requestPasswordReset({
         email: target,
-        redirectTo: "/reset-password",
+        redirectTo: resetTo,
         fetchOptions: turnstileFetchOptions(challenge),
       });
       if (res.error) throw new Error(friendlyResetMailError(authClientErrorMessage(res.error)));
@@ -103,7 +123,7 @@ function ForgotPassword() {
             </Button>
           </form>
           <p className="mt-6 text-center text-xs text-subtle">
-            <Link to="/login" className="underline-offset-4 hover:underline">
+            <Link to={signInTo} className="underline-offset-4 hover:underline">
               {t("backToSignIn")}
             </Link>
           </p>
