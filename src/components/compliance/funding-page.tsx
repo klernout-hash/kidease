@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { ComplianceFrame } from "@/components/compliance/frame";
+import { suppressRows } from "@/lib/gov/k-anonymity";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { fundingCopy } from "@/lib/compliance/funding";
@@ -56,7 +57,7 @@ export function GovFundingPage({ data, locale }: { data: GovData; locale: "en" |
   return (
     <ComplianceFrame locale={locale} title={locale === "fr" ? "Rapports mensuels" : "Monthly reports"} copy={{ ...copy, what: copy.govWhat, why: copy.govWhy }} mode={data.mode} gov>
       <p>{data.province}</p>
-      <ul className="mt-3 space-y-2">{data.rows.map((row) => <li key={String(row.blocked)}>{row.blocked ? (locale === "fr" ? "Avec écart" : "With a mismatch") : (locale === "fr" ? "Sans écart" : "No mismatch")}: {row.count}</li>)}</ul>
+      <ul className="mt-3 space-y-2">{suppressRows(data.rows.map((row) => ({ ...row, n: row.count }))).map((row) => <li key={String(row.blocked)}>{row.blocked ? (locale === "fr" ? "Avec écart" : "With a mismatch") : (locale === "fr" ? "Sans écart" : "No mismatch")}: {row.suppressed ? (locale === "fr" ? "masqué (<5)" : "hidden (<5)") : row.n}</li>)}</ul>
       {data.rows.length === 0 ? <p className="mt-3 text-sm">{copy.empty}</p> : null}
       <Button asChild className="mt-4"><a href={locale === "fr" ? "/fr/gov" : "/gov"}>{locale === "fr" ? "Bureau du gouvernement" : "Government desk"}</a></Button>
     </ComplianceFrame>

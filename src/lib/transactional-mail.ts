@@ -372,7 +372,12 @@ export async function sendTransactionalMail(
   const replyTo = (input.replyTo || env.ADMIN_EMAIL || KIDEASE_OPERATOR_EMAIL).trim() || KIDEASE_OPERATOR_EMAIL;
   const providers = otpProvidersFromEnv(env);
   recordOtpMailHealth({ ...providers, lastEvent: lastHealth.lastEvent ?? "logged" });
-  if (input.aboutTestListing) {
+  const blob = `${input.subject}\n${input.text || ""}`;
+  const aboutTestListing =
+    input.aboutTestListing === true ||
+    /[([]\s*(qa|test)\s*[)\]]/i.test(blob) ||
+    /\bkidease\s+test\b/i.test(blob);
+  if (aboutTestListing) {
     emit(deps, input.purpose, "logged", { via: "logged", reason: "not_configured" });
     return { status: "logged", via: "logged", reason: "not_configured" };
   }

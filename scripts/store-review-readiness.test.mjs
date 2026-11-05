@@ -130,7 +130,7 @@ test("Twilio inbound rejects a bad signature and handles STOP, START, HELP, and 
   assert.match(inboundKeywordTwiml({ Body: "HELP" }, "help"), /Reply STOP/);
   assert.match(inboundKeywordTwiml({ Body: "STOP", OptOutType: "STOP" }, "stop"), /<Response><\/Response>/);
 
-  const agent = liveAgentSmsDecision("+12048088398", "On my way #KE-4401");
+  const agent = liveAgentSmsDecision("+12045550199", "On my way #KE-4401", "+12045550199");
   assert.equal(agent.route, true);
   assert.equal(agent.code, "KE-4401");
   assert.equal(liveAgentSmsDecision("+12045550100", "STOP").route, false);

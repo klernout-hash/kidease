@@ -109,7 +109,7 @@ export function proximityScore(card: DaycareCard, opts?: { paidPinBoost?: boolea
   if (card.inCatchment) score += 0.16;
   if (card.live) score += 0.12;
   if (card.spotsTotal > 0) score += Math.min(0.1, card.spotsTotal * 0.02);
-  if (card.priority && opts?.paidPinBoost !== false) score += 0.22;
+  if (card.priority && opts?.paidPinBoost === true) score += 0.22;
   if (card.ratingX10 > 0) score += (card.ratingX10 / 50) * 0.08;
   score += listingQualityBoost(card);
   return score;

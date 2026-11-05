@@ -37,7 +37,10 @@ import { dayKeyInTimeZone, formatInTimeZone } from "@/lib/family-time";
 
 /** Owner / admin notify. Support cases route through support@kidease.ca on the desk — not this address. */
 export const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "kyle@kidease.ca").trim();
-const ADMIN_SMS = (process.env.ADMIN_SMS || "+12048088398").replace(/[^\d+]/g, "");
+
+function adminSmsNumber(): string {
+  return (process.env.ADMIN_SMS || process.env.SUPPORT_ALERT_PHONE || "").replace(/[^\d+]/g, "");
+}
 const SMS_KINDS = new Set<PlatformKind>(["chat", "contact", "enroll", "spot_request", "account", "signup", "claim"]);
 
 export type PlatformKind =
@@ -559,7 +562,12 @@ async function deliverSms(kind: PlatformKind, title: string, detail?: string, bo
   const body =
     (bodyOverride || "").trim() ||
     `KidEase ${kind === "chat" ? "Live Chat" : title}: ${snippet}`;
-  const result = await sendSms({ to: ADMIN_SMS, body, audience: "internal" });
+  const to = adminSmsNumber();
+  if (!to) {
+    console.info("[kidease-sms] admin_sms_unconfigured");
+    return "skip";
+  }
+  const result = await sendSms({ to, body, audience: "internal" });
   if (result.ok) return "sent";
   if (result.skipped) {
     console.info("[kidease-sms]", result.error);

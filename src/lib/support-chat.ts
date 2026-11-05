@@ -1,6 +1,5 @@
 /** Pure helpers for the KidEase Help text bridge. No database. */
 
-export const DEFAULT_LIVE_CHAT_AGENT_PHONE = "+12048088398";
 export const LIVE_CHAT_AGENT_LABEL = "Kyle · KidEase Live Support";
 
 export function normalizeChatPhone(raw: string | null | undefined): string {
@@ -12,7 +11,7 @@ export function normalizeChatPhone(raw: string | null | undefined): string {
 }
 
 export function liveChatAgentPhone(env: Record<string, string | undefined> = process.env): string {
-  return normalizeChatPhone(env.LIVE_CHAT_AGENT_PHONE) || DEFAULT_LIVE_CHAT_AGENT_PHONE;
+  return normalizeChatPhone(env.LIVE_CHAT_AGENT_PHONE || env.ADMIN_SMS || env.SUPPORT_ALERT_PHONE);
 }
 
 export function ticketCodeFromSms(body: string): string | null {
@@ -28,11 +27,11 @@ export function agentReplyText(body: string): string {
   return stripped.slice(0, 1000);
 }
 
-/** Only Kyle's phone can write into a help thread. Other texts stay out of chat. */
+/** Only the configured support phone can write into a help thread. Other texts stay out of chat. */
 export function liveAgentSmsDecision(
   from: string | null | undefined,
   body: string,
-  agentPhone = DEFAULT_LIVE_CHAT_AGENT_PHONE,
+  agentPhone = liveChatAgentPhone(),
 ): { route: boolean; code: string | null } {
   if (normalizeChatPhone(from) !== normalizeChatPhone(agentPhone)) {
     return { route: false, code: null };

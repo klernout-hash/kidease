@@ -1,7 +1,7 @@
 /**
  * Server-side home address filter.
- * Guests receive a stable area circle. Connected parents, the verified
- * owner's public opt-in, and admin or government desks receive the street.
+ * Guests and government desks receive a stable area circle. Connected parents,
+ * the verified owner's public opt-in, and admin desks receive the street.
  * This module does not write over street, postal, or coordinates.
  */
 
@@ -52,8 +52,11 @@ export async function loadHomeViewer(): Promise<HomeViewer> {
       ),
     ]);
     const role = String(profile[0]?.role || "").toLowerCase();
-    if (admin.ok || role === "admin" || role === "government") {
+    if (admin.ok || role === "admin") {
       return { userId: user.id, revealAll: true, revealIds: new Set() };
+    }
+    if (role === "government") {
+      return { userId: user.id, revealAll: false, revealIds: new Set() };
     }
     const familyId = await familyDataUserId(user.id);
     const ids = [...new Set([user.id, familyId].filter(Boolean))];
