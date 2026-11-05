@@ -2735,6 +2735,9 @@ html[data-ui="airbnb-v1"][data-theme="dark"] {
     border-top: 1px solid var(--airbnb-line);
     color: var(--airbnb-text);
   }
+  html[data-ui="airbnb-v1"] [data-ke="listing-sticky-bar"] {
+    bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
   html[data-ui="airbnb-v1"]:has([data-ke="airbnb-home"], [data-ke="airbnb-menu"], [data-ke="airbnb-account"], [data-ke="airbnb-language"], [data-ke="airbnb-alerts"], [data-ke="airbnb-listing"]) .ke-site-header,
   html[data-ui="airbnb-v1"]:has([data-ke="airbnb-home"], [data-ke="airbnb-menu"], [data-ke="airbnb-account"], [data-ke="airbnb-language"], [data-ke="airbnb-alerts"], [data-ke="airbnb-listing"]) .ke-site-footer {
     display: none;
