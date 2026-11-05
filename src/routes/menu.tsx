@@ -3,6 +3,7 @@ import { lazy, Suspense } from "react";
 import { ShellLite } from "@/components/shell-lite";
 import { AppMenuScreen } from "@/components/app-menu-screen";
 import { BlockedListScreen } from "@/components/blocked-list";
+import { NotificationSettingsScreen } from "@/components/notification-settings-screen";
 import { EarningsDetailsScreen } from "@/components/earnings-details";
 import { EarningsListScreen } from "@/components/earnings-list";
 import { EarningsPayoutsScreen } from "@/components/earnings-payouts";
@@ -25,7 +26,7 @@ const MenuDeskTools = lazy(() =>
 
 const SECTIONS = ["resources", "guides", "help", "legal"] as const;
 
-type MenuScreen = "earnings" | "insights" | "payments" | "blocked";
+type MenuScreen = "earnings" | "insights" | "payments" | "blocked" | "notifications";
 type EarningsView = "payouts" | "details" | "upcoming" | "paid" | "statement";
 
 const VIEWS: EarningsView[] = ["payouts", "details", "upcoming", "paid", "statement"];
@@ -45,7 +46,7 @@ export function menuValidateSearch(
   s: Record<string, unknown>,
 ): { section?: MenuGroupId; screen?: MenuScreen; view?: EarningsView; period?: string; bill?: string } {
     const section = SECTIONS.includes(s.section as MenuGroupId) ? (s.section as MenuGroupId) : undefined;
-    const screen = s.screen === "earnings" || s.screen === "insights" || s.screen === "payments" || s.screen === "blocked" ? s.screen : undefined;
+    const screen = s.screen === "earnings" || s.screen === "insights" || s.screen === "payments" || s.screen === "blocked" || s.screen === "notifications" ? s.screen : undefined;
     const view = VIEWS.includes(s.view as EarningsView) ? (s.view as EarningsView) : undefined;
     const period = typeof s.period === "string" && /^\d{4}-\d{2}$/.test(s.period) ? s.period : undefined;
     const bill = typeof s.bill === "string" && s.bill.trim() && s.bill.length <= 80 ? s.bill.trim() : undefined;
@@ -189,6 +190,13 @@ export function MenuPage() {
     return (
       <ShellLite appTabs>
         <BlockedListScreen />
+      </ShellLite>
+    );
+  }
+  if (screen === "notifications") {
+    return (
+      <ShellLite appTabs>
+        <NotificationSettingsScreen />
       </ShellLite>
     );
   }
