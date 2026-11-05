@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { suppressRows } from "@/lib/gov/k-anonymity";
 import { ComplianceFrame } from "@/components/compliance/frame";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
@@ -116,9 +117,9 @@ export function GovIncidentsPage({ data, locale }: { data: GovData; locale: "en"
     <ComplianceFrame locale={locale} title={locale === "fr" ? "Rapports reçus" : "Reports filed"} copy={{ ...copy, what: copy.govWhat, why: copy.govWhy }} mode={data.mode} gov>
       <p className="text-sm text-muted">{data.province}</p>
       <ul className="mt-4 space-y-2">
-        {data.counts.map((row) => (
+        {suppressRows(data.counts.map((row) => ({ ...row, n: row.count }))).map((row) => (
           <li key={row.kind}>
-            {row.kind.replaceAll("_", " ")}: {row.count}
+            {row.kind.replaceAll("_", " ")}: {row.suppressed ? (locale === "fr" ? "masqué (<5)" : "hidden (<5)") : row.n}
           </li>
         ))}
       </ul>

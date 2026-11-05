@@ -401,7 +401,8 @@ async function withProvincial<T extends { id: string; claimed?: boolean; lastVac
 async function stampPaidPlacement<T extends { id: string; priority?: boolean; priorityUntil?: string | null; featuredCity?: boolean }>(
   items: T[],
 ): Promise<T[]> {
-  return overlayFeaturedCity(await overlayPriority(items));
+  const placed = sponsoredPinsFirst() ? await overlayPriority(items) : items;
+  return overlayFeaturedCity(placed);
 }
 
 function slimCard(card: DaycareCard): DaycareCard {
@@ -611,7 +612,7 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
     startDate: data.startDate || null,
   };
   cards = await overlayParentRank(cards, rankPrefs);
-  cards = await overlayPriority(cards);
+  cards = sponsoredPinsFirst() ? await overlayPriority(cards) : cards;
   cards = await overlayFeaturedCity(cards);
   if (distanceTail.length) cards = cards.concat(distanceTail);
   const ageGroup = data.ageGroup;
@@ -824,10 +825,13 @@ async function loadFeatured(
     nearby.push(toCard(d, origin));
   }
   const pinned = await mergePinnedCentres(nearby, lock, origin);
-  pinned.sort(compareProximity);
+  const pinsOn = sponsoredPinsFirst();
+  pinned.sort((a, b) => compareProximity(a, b, Date.now(), { paidPinBoost: pinsOn }));
   const merged = await overlayQuality(await overlayParentReviews(await overlayClaimed(pinned, mergeClaimedCard)));
   const scored = await overlayParentRank(merged, { distanceKnown: true, radiusKm: radius, ageGroup: "any" });
-  const withPins = await overlayFeaturedCity(await overlayPriority(scored));
+  const withPins = pinsOn
+    ? await overlayFeaturedCity(await overlayPriority(scored))
+    : await overlayFeaturedCity(scored);
   const ranked = (sponsoredPinsFirst() ? sortFeaturedCityAfterPriority(withPins) : withPins).filter((card) =>
     includeCardInRadius(card, origin, radius),
   );
