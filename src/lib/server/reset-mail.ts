@@ -4,7 +4,6 @@ import { assertResetMailConfigured, resetMailConfigured } from "@/lib/server/res
 import { sendTransactionalMail } from "@/lib/transactional-mail";
 import { brandedNotice } from "@/lib/email-layout";
 import { preferFrenchResetUrl, RESET_SUBJECT_EN, RESET_SUBJECT_FR } from "@/lib/fr-auth-qc";
-import { frenchAuthMailForEmail } from "@/lib/server/fr-auth-mail.server";
 
 export { RESET_MAIL_NOT_CONFIGURED, assertResetMailConfigured, resetMailConfigured } from "@/lib/server/reset-mail-config";
 
@@ -34,7 +33,11 @@ export async function sendPasswordResetEmail(input: { to: string; url: string; f
   const to = input.to.trim().toLowerCase();
   if (!to || !to.includes("@")) throw new Error("A registered email is required.");
   assertResetMailConfigured();
-  const french = input.french ?? (await frenchAuthMailForEmail(to));
+  let french = input.french;
+  if (french === undefined) {
+    const { frenchAuthMailForEmail } = await import("@/lib/server/fr-auth-mail.server");
+    french = await frenchAuthMailForEmail(to);
+  }
   const url = preferFrenchResetUrl(input.url, french);
   const subject = french ? RESET_SUBJECT_FR : RESET_SUBJECT_EN;
   const heading = french ? "Réinitialiser votre mot de passe" : "Reset your password";

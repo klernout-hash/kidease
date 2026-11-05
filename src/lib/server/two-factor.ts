@@ -15,7 +15,6 @@ import { TWO_FACTOR_DEVICE_TTL_MS } from "@/lib/two-factor-cookie";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
 import { brandedNotice } from "@/lib/email-layout";
 import { OTP_SUBJECT_EN, OTP_SUBJECT_FR } from "@/lib/fr-auth-qc";
-import { frenchAuthMailForEmail } from "@/lib/server/fr-auth-mail.server";
 
 const TTL_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = TWO_FACTOR_MAX_ATTEMPTS;
@@ -36,6 +35,7 @@ async function ensureTable() {
 }
 
 async function sendCodeEmail(to: string, code: string) {
+  const { frenchAuthMailForEmail } = await import("@/lib/server/fr-auth-mail.server");
   const french = await frenchAuthMailForEmail(to);
   const subject = french ? OTP_SUBJECT_FR : OTP_SUBJECT_EN;
   const lead = french

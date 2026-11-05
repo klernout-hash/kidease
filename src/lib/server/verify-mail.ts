@@ -2,7 +2,6 @@ import { KIDEASE_OPERATOR_EMAIL } from "@/lib/admin-email";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
 import { brandedNotice } from "@/lib/email-layout";
 import { VERIFY_EMAIL_SUBJECT, VERIFY_EMAIL_SUBJECT_FR, verifyEmailHtml, verifyEmailText } from "@/lib/signup-user-mail";
-import { frenchAuthMailForEmail } from "@/lib/server/fr-auth-mail.server";
 
 async function lookupVerifyAudience(email: string): Promise<"parent" | "provider" | undefined> {
   try {
@@ -50,7 +49,11 @@ export async function sendVerifyEmail(input: {
   if (!to || !to.includes("@")) throw new Error("A registered email is required.");
   if (recentlySentVerifyEmail(to)) return { status: "skipped" as const };
   const audience = input.audience ?? (await lookupVerifyAudience(to));
-  const french = input.french ?? (await frenchAuthMailForEmail(to));
+  let french = input.french;
+  if (french === undefined) {
+    const { frenchAuthMailForEmail } = await import("@/lib/server/fr-auth-mail.server");
+    french = await frenchAuthMailForEmail(to);
+  }
   const subject = french ? VERIFY_EMAIL_SUBJECT_FR : VERIFY_EMAIL_SUBJECT;
   const text = verifyEmailText(input.url, input.name, audience, french);
   const result = await sendTransactionalMail({
