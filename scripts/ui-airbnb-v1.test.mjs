@@ -68,3 +68,16 @@ test("the new shell does not call Google or change payment flags", () => {
   assert.match(src("src/components/app-tab-bar.tsx"), /marker="bookings"/);
   assert.match(src("src/components/app-tab-bar.tsx"), /!airbnb/);
 });
+
+test("phone home shows every childcare category as an icon row", () => {
+  const ui = src("src/components/airbnb-screens.tsx");
+  const css = src("src/styles.css");
+  for (const id of ["all", "child_care_centre", "family_home", "group_home", "nursery_preschool", "school_age", "before_after", "open"]) {
+    assert.match(ui, new RegExp(`id: "${id}"`));
+  }
+  assert.match(ui, /data-ke="airbnb-care-cats"/);
+  assert.match(ui, /airbnb-care-\$\{cat\.id\}/);
+  assert.match(css, /ke-cat-bob/);
+  assert.match(css, /ke-cat-draw/);
+  assert.match(css, /\[data-ke="airbnb-home"\] \[data-ke="msv2-categories"\]/);
+});

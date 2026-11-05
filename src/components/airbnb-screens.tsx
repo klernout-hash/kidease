@@ -9,7 +9,6 @@ import { AppearanceControl } from "@/components/appearance-control";
 import { signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import {
-  AIRBNB_CHIPS,
   ageRangeLabel,
   airbnbAccountRows,
   airbnbPublicPlace,
@@ -20,7 +19,7 @@ import {
   writeKnownLanguages,
   type AirbnbAccountRowId,
 } from "@/lib/airbnb-ui";
-import { airbnbChipLabel, airbnbCopy } from "@/lib/airbnb-ui-copy";
+import { airbnbCopy, type AirbnbCopy } from "@/lib/airbnb-ui-copy";
 import { applyDocumentLocale, languageMeta, shippedLanguages } from "@/lib/languages";
 import { localePath, localeSwitchPath } from "@/lib/locale-path";
 import { writeLocaleChoiceCookie } from "@/lib/locale-geo";
@@ -37,19 +36,138 @@ import { headerDesks, highlightDesk, parseDeskQuery, showDeskSwitcher } from "@/
 import type { DaycareCard, Locale } from "@/lib/types";
 
 function useFr() {
-  const { locale } = useCopy();
-  return { locale, copy: airbnbCopy(locale), fr: locale === "fr" };
+  const { locale, t } = useCopy();
+  return { locale, copy: airbnbCopy(locale), fr: locale === "fr", t };
+}
+
+/** Every licensed childcare class, plus the open-spots filter. Short labels already in the product dictionary. */
+const CARE_CATEGORIES: { id: string; label: keyof AirbnbCopy; search?: Record<string, string> }[] = [
+  { id: "all", label: "careAll" },
+  { id: "child_care_centre", label: "careCentres", search: { fac: "child_care_centre" } },
+  { id: "family_home", label: "careHomes", search: { fac: "family_home" } },
+  { id: "group_home", label: "careGroup", search: { fac: "group_home" } },
+  { id: "nursery_preschool", label: "careNursery", search: { fac: "nursery_preschool" } },
+  { id: "school_age", label: "careSchool", search: { fac: "school_age" } },
+  { id: "before_after", label: "careBefore", search: { cat: "before-after" } },
+  { id: "open", label: "careOpen", search: { openings: "1" } },
+];
+
+function CareIcon({ id }: { id: string }) {
+  const props = {
+    viewBox: "0 0 32 32",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.7,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true as const,
+  };
+  if (id === "child_care_centre") {
+    return (
+      <svg {...props}>
+        <path d="M6 28V12l10-6 10 6v16" />
+        <path d="M13 28v-7h6v7M10 16h2M20 16h2M10 21h2M20 21h2" />
+      </svg>
+    );
+  }
+  if (id === "family_home") {
+    return (
+      <svg {...props}>
+        <path d="M5 15 16 6l11 9" />
+        <path d="M8 14v13h16V14" />
+        <path d="M13 27v-6h6v6" />
+      </svg>
+    );
+  }
+  if (id === "group_home") {
+    return (
+      <svg {...props}>
+        <path d="M3 16 10 10l7 6" />
+        <path d="M5 15v10h10V15" />
+        <path d="M15 18l6-5 7 6" />
+        <path d="M17 18v7h10v-7" />
+      </svg>
+    );
+  }
+  if (id === "nursery_preschool") {
+    return (
+      <svg {...props}>
+        <rect x="7" y="16" width="7" height="7" rx="1.5" />
+        <rect x="18" y="16" width="7" height="7" rx="1.5" />
+        <path d="M10.5 16v-2a5.5 5.5 0 0 1 11 0v2" />
+      </svg>
+    );
+  }
+  if (id === "school_age") {
+    return (
+      <svg {...props}>
+        <path d="M7 13h12l4 4v10H7V13z" />
+        <path d="M19 13v4h4M11 13V9a3 3 0 0 1 6 0v4" />
+      </svg>
+    );
+  }
+  if (id === "before_after") {
+    return (
+      <svg {...props}>
+        <path d="M6 20a8 8 0 0 1 14-5" />
+        <path d="M16 6v3M22 8l-2 2M24 15h-3" />
+        <path d="M8 24h16" />
+      </svg>
+    );
+  }
+  if (id === "open") {
+    return (
+      <svg {...props}>
+        <circle cx="16" cy="16" r="8" />
+        <path d="m12.5 16.2 2.2 2.2 4.8-5" />
+      </svg>
+    );
+  }
+  return (
+    <svg {...props}>
+      <rect x="5" y="5" width="8" height="8" rx="2" />
+      <rect x="19" y="5" width="8" height="8" rx="2" />
+      <rect x="5" y="19" width="8" height="8" rx="2" />
+      <rect x="19" y="19" width="8" height="8" rx="2" />
+    </svg>
+  );
+}
+
+function AirbnbCareCategories() {
+  const { locale, copy, t } = useFr();
+  return (
+    <div className="ke-airbnb-cats" data-ke="airbnb-care-cats" role="navigation" aria-label={t("railByCare")}>
+      {CARE_CATEGORIES.map((cat, index) => {
+        const on = cat.id === "all";
+        return (
+          <Link
+            key={cat.id}
+            to={localePath(cat.search ? "/search" : "/", locale)}
+            {...(cat.search ? { search: cat.search as never } : {})}
+            data-ke={`airbnb-care-${cat.id}`}
+            className={cn("ke-airbnb-cat", on && "is-on")}
+            aria-current={on ? "page" : undefined}
+          >
+            <span className="ke-airbnb-cat-art" style={{ animationDelay: `${index * 0.14}s` }}>
+              <CareIcon id={cat.id} />
+            </span>
+            <span className="ke-airbnb-cat-label">{copy[cat.label]}</span>
+          </Link>
+        );
+      })}
+    </div>
+  );
 }
 
 export function AirbnbHome({
   listings,
   place,
   search,
-  showChips = true,
 }: {
   listings: DaycareCard[];
   place: string;
   search?: ReactNode;
+  /** Kept so older callers still type-check. The icon row replaces the text chips. */
   showChips?: boolean;
 }) {
   const { locale, copy } = useFr();
@@ -67,21 +185,7 @@ export function AirbnbHome({
             <span>{copy.findNear}</span>
           </Link>
         )}
-        {showChips ? (
-          <div className="ke-airbnb-chips" data-ke="airbnb-chips">
-            {AIRBNB_CHIPS.map((chip) => (
-              <Link
-                key={chip.id}
-                to={localePath("/search", locale)}
-                search={chip.search}
-                data-ke={`airbnb-chip-${chip.id}`}
-                className="ke-airbnb-chip"
-              >
-                {airbnbChipLabel(chip.id, copy)}
-              </Link>
-            ))}
-          </div>
-        ) : null}
+        <AirbnbCareCategories />
       </div>
       {rows.length ? (
         <p className="ke-airbnb-count" data-ke="airbnb-count">
