@@ -26,7 +26,6 @@ const MenuDeskTools = lazy(() =>
 );
 const AirbnbAccount = lazy(() => import("@/components/airbnb-screens").then((m) => ({ default: m.AirbnbAccount })));
 const AirbnbLanguage = lazy(() => import("@/components/airbnb-screens").then((m) => ({ default: m.AirbnbLanguage })));
-const AirbnbAlerts = lazy(() => import("@/components/airbnb-screens").then((m) => ({ default: m.AirbnbAlerts })));
 
 const SECTIONS = ["resources", "guides", "help", "legal"] as const;
 
@@ -210,14 +209,7 @@ export function MenuPage() {
   if (screen === "notifications") {
     return (
       <ShellLite appTabs>
-        {airbnb ? (
-          <Suspense fallback={null}>
-            <AirbnbAlerts />
-          </Suspense>
-        ) : null}
-        <div className={airbnb ? "ke-airbnb-hide-phone" : undefined}>
-          <NotificationSettingsScreen />
-        </div>
+        <NotificationSettingsScreen />
       </ShellLite>
     );
   }
