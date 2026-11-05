@@ -240,8 +240,15 @@ export const sendEceExpiryReminders = createServerFn({ method: "POST" })
       new Date(),
     );
     if (!due.length) return { ok: true as const, sent: 0 };
-    const mailRows = await sql<{ email: string | null; contact: string | null; name: string }>`
-      select u.email, d.contact_email as contact, d.name
+    const mailRows = await sql<{
+      email: string | null;
+      contact: string | null;
+      name: string;
+      slug: string | null;
+      visibility: string | null;
+      is_test: number | null;
+    }>`
+      select u.email, d.contact_email as contact, d.name, d.slug, d.visibility, d.is_test
       from daycares d
       left join provider_daycares p on p.daycare_id = d.id
       left join "user" u on u.id = p.user_id
@@ -252,12 +259,27 @@ export const sendEceExpiryReminders = createServerFn({ method: "POST" })
     if (!to) return { ok: true as const, sent: 0 };
     const lines = due.map((row) => `${row.staffName} expires ${row.expiresOn}`).join("\n");
     const { sendTransactionalMail } = await import("@/lib/transactional-mail");
+    const { brandedNotice } = await import("@/lib/email-layout");
+    const { isAdminOnlyListing } = await import("@/lib/listing-visibility");
+    const centreName = mailRows[0]?.name || "your centre";
+    const text = `These ECE certificates expire within 60 days or are already expired.\n\n${lines}\n\nKidEase does not text staff.`;
     await sendTransactionalMail({
       purpose: "customer_alert",
       to,
-      subject: `ECE certificates expiring: ${mailRows[0]?.name || "your centre"}`,
-      text: `These ECE certificates expire within 60 days or are already expired.\n\n${lines}\n\nKidEase does not text staff.`,
+      subject: `ECE certificates expiring: ${centreName}`,
+      text,
       html: `<p>These ECE certificates expire within 60 days or are already expired.</p><pre>${lines}</pre>`,
+      aboutTestListing: isAdminOnlyListing({
+        name: mailRows[0]?.name,
+        slug: mailRows[0]?.slug,
+        visibility: mailRows[0]?.visibility,
+        isTest: mailRows[0]?.is_test,
+      }),
+      branded: brandedNotice({
+        heading: `ECE certificates expiring: ${centreName}`,
+        text,
+        reason: "You get this because you manage a listing on KidEase.",
+      }),
     }).catch(() => undefined);
     for (const row of due) {
       await sql`update ece_certificates set reminded_at = now() where id = ${row.id}`.catch(() => undefined);

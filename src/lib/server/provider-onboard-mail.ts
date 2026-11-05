@@ -1,5 +1,7 @@
 import { KIDEASE_OPERATOR_EMAIL } from "@/lib/admin-email";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
+import { brandedNotice } from "@/lib/email-layout";
+import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import {
   PROVIDER_ONBOARD_SUBJECT,
   providerOnboardHtml,
@@ -21,12 +23,21 @@ export async function sendProviderNextStepsMail(input: {
   const to = input.to.trim().toLowerCase();
   if (!to || !to.includes("@")) throw new Error("A registered email is required.");
   const origin = signupMailAppOrigin(input.origin || providerOnboardOrigin());
+  const text = providerOnboardText(origin, input.name, input.listingName);
   return sendTransactionalMail({
     purpose: "provider_onboard",
     to,
     subject: PROVIDER_ONBOARD_SUBJECT,
-    text: providerOnboardText(origin, input.name, input.listingName),
+    text,
     html: providerOnboardHtml(origin, input.name, input.listingName),
     replyTo: KIDEASE_OPERATOR_EMAIL,
+    aboutTestListing: isAdminOnlyListing({ name: input.listingName }),
+    branded: brandedNotice({
+      heading: PROVIDER_ONBOARD_SUBJECT,
+      text,
+      cta: { label: "Open your listing", href: `${origin}/provider` },
+      origin,
+      reason: "You get this because you created or claimed a listing on KidEase.",
+    }),
   });
 }

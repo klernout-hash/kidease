@@ -6,6 +6,8 @@ import { isSuppressed } from "@/lib/server/email-suppressions";
 import { lookupUser } from "@/lib/server/notify";
 import { readFamilyTimeZone } from "@/lib/server/alert-dispatch";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
+import { brandedNotice } from "@/lib/email-layout";
+import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { waitlistToolsEnabled } from "@/lib/features";
 import { placeFromRank, type RankRow } from "@/lib/gap-features";
 import { nid } from "@/lib/utils";
@@ -257,6 +259,12 @@ async function deliverWaitlistMail(input: { email: string; userId: string; centr
     text: letter.text,
     html: letter.html,
     purpose: "waitlist_status",
+    aboutTestListing: isAdminOnlyListing({ name: input.centre }),
+    branded: brandedNotice({
+      heading: letter.subject,
+      text: letter.text,
+      reason: "You get this because you asked this daycare for a spot on KidEase.",
+    }),
   });
   return sent.status === "sent" || sent.status === "logged" ? ("sent" as const) : ("skipped" as const);
 }

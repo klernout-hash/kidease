@@ -364,7 +364,10 @@ export async function emitUnifiedAlert(candidate: UnifiedCandidate): Promise<{ s
   `.catch(() => [] as Array<{ id: string }>);
   if (!inserted.length) return { status: "skipped", reason: "duplicate" };
   if (decision.outbound === "now") {
-    await deliverOutbound(candidate.userId, text, safeUnifiedHref(candidate.href), decision.channels);
+    await deliverOutbound(candidate.userId, text, safeUnifiedHref(candidate.href), decision.channels, {
+      centreName: candidate.daycareId ? candidate.name : "",
+      locale,
+    });
     if (decision.channels.includes("email") || decision.channels.includes("push")) {
       await sql`
         update unified_alert_events
@@ -382,6 +385,7 @@ async function deliverOutbound(
   text: { title: string; body: string },
   href: string,
   channels: string[],
+  meta?: { centreName?: string; locale?: "en" | "fr" },
 ): Promise<void> {
   if (unifiedDeliveryBlocked(process.env) || !unifiedAlertsLive()) return;
   if (channels.includes("email")) {
@@ -389,13 +393,25 @@ async function deliverOutbound(
     const email = user?.email?.trim() || "";
     if (email && !(await isSuppressed(email).catch(() => false))) {
       const { sendTransactionalMail } = await import("@/lib/transactional-mail");
+      const { brandedNotice } = await import("@/lib/email-layout");
+      const { isAdminOnlyListing } = await import("@/lib/listing-visibility");
       const safeBody = text.body.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const locale = meta?.locale === "fr" ? "fr" : "en";
+      const origin = (process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://www.kidease.ca").replace(/\/$/, "");
+      const ctaHref = href.startsWith("http") ? href : `${origin}${href.startsWith("/") ? href : `/${href}`}`;
       await sendTransactionalMail({
         purpose: "customer_alert",
         to: email,
         subject: text.title,
         text: text.body,
         html: `<p>${safeBody}</p>`,
+        aboutTestListing: Boolean(meta?.centreName) && isAdminOnlyListing({ name: meta?.centreName }),
+        branded: brandedNotice({
+          heading: text.title,
+          text: text.body,
+          locale,
+          cta: /^https:\/\//i.test(ctaHref) ? { label: locale === "fr" ? "Ouvrir" : "Open", href: ctaHref } : undefined,
+        }),
       }).catch(() => undefined);
     }
   }

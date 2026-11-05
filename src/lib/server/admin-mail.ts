@@ -127,6 +127,21 @@ export const sendAdminMail = createServerFn({ method: "POST" })
     }
 
     const from = transactionalMailFrom();
+    const { prepareMailBody } = await import("@/lib/transactional-mail");
+    const prepared = await prepareMailBody({
+      purpose: "customer_alert",
+      to: data.to,
+      subject: data.subject,
+      text: data.body,
+      html,
+    });
+    const mailText = prepared.text;
+    const mailHtml = prepared.html;
+    const headers = {
+      ...prepared.headers,
+      ...(data.inReplyTo ? { "In-Reply-To": data.inReplyTo } : {}),
+      ...(data.references ? { References: data.references } : {}),
+    };
     const resend = process.env.RESEND_API_KEY?.trim();
     if (resend) {
       const res = await fetch("https://api.resend.com/emails", {
@@ -137,13 +152,10 @@ export const sendAdminMail = createServerFn({ method: "POST" })
           to: [data.to],
           reply_to: ADMIN_EMAIL,
           subject: data.subject,
-          text: data.body,
-          html,
+          text: mailText,
+          html: mailHtml,
           tags: resendCampaignTags("admin-reply"),
-          headers: {
-            ...(data.inReplyTo ? { "In-Reply-To": data.inReplyTo } : {}),
-            ...(data.references ? { References: data.references } : {}),
-          },
+          headers,
         }),
       });
       if (!res.ok) throw new Error(`Could not send: ${await res.text()}`);
@@ -162,13 +174,10 @@ export const sendAdminMail = createServerFn({ method: "POST" })
           reply_to: { email: ADMIN_EMAIL },
           subject: data.subject,
           content: [
-            { type: "text/plain", value: data.body },
-            { type: "text/html", value: html },
+            { type: "text/plain", value: mailText },
+            { type: "text/html", value: mailHtml },
           ],
-          headers: {
-            ...(data.inReplyTo ? { "In-Reply-To": data.inReplyTo } : {}),
-            ...(data.references ? { References: data.references } : {}),
-          },
+          headers,
         }),
       });
       if (!res.ok) throw new Error(`Could not send: ${await res.text()}`);

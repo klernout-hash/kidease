@@ -1,5 +1,6 @@
 import { ADMIN_EMAIL } from "@/lib/server/notify";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
+import { brandedNotice } from "@/lib/email-layout";
 
 export async function sendResetPasswordMail(input: {
   to: string;
@@ -31,6 +32,12 @@ export async function sendResetPasswordMail(input: {
     text,
     html,
     replyTo: ADMIN_EMAIL,
+    branded: brandedNotice({
+      heading: "Reset your password",
+      text,
+      cta: /^https:\/\//i.test(input.url) ? { label: "Choose a new password", href: input.url } : undefined,
+      reason: "You get this because a password reset was requested for this email.",
+    }),
   });
   return result.status;
 }

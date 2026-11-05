@@ -1,5 +1,7 @@
 import { ADMIN_EMAIL } from "@/lib/server/notify";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
+import { brandedNotice } from "@/lib/email-layout";
+import { isAdminOnlyListing } from "@/lib/listing-visibility";
 
 function maskEmail(email: string) {
   return email.replace(/(^.).*(@.*$)/, "$1•••$2");
@@ -29,6 +31,12 @@ export async function sendClaimUnmatchedEmail(input: { to: string; centreName: s
     text,
     html,
     replyTo: ADMIN_EMAIL,
+    aboutTestListing: isAdminOnlyListing({ name: centre }),
+    branded: brandedNotice({
+      heading: subject,
+      text,
+      reason: "You get this because a listing claim was started for this email.",
+    }),
   });
   return { status: result.status };
 }
@@ -57,6 +65,13 @@ export async function sendClaimCodeEmail(input: { to: string; code: string; cent
     text,
     html,
     replyTo: ADMIN_EMAIL,
+    aboutTestListing: isAdminOnlyListing({ name: centre }),
+    branded: brandedNotice({
+      heading: `Claim code for ${centre}`,
+      text: "Enter this code on the claim page to verify you manage the listing. If you did not start a claim, you can ignore this email.",
+      code: input.code,
+      reason: "You get this because a listing claim was started for this email.",
+    }),
   });
   if (result.status === "logged") console.info("[kidease-claim] code emailed to registered inbox");
   return { status: result.status, emailed: maskEmail(to) };

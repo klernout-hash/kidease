@@ -22,7 +22,7 @@ import {
   selectIncompleteRows,
   type IncompleteMissingField,
 } from "@/lib/listing-incomplete";
-import { HIDDEN_REVIEW_POSSIBLE_SECOND_SITE } from "@/lib/listing-visibility";
+import { HIDDEN_REVIEW_POSSIBLE_SECOND_SITE, isAdminOnlyListing } from "@/lib/listing-visibility";
 
 export type AdminCentreRow = {
   daycareId: string;
@@ -84,7 +84,11 @@ async function requireOperator(userId: string) {
   return requireAdmin(userId);
 }
 
-async function deliverToProvider(to: string, subject: string, text: string) {
+async function deliverToProvider(to: string, subject: string, text: string, aboutTestListing = false) {
+  if (aboutTestListing) {
+    console.info("[kidease-mail] provider-decision skipped test listing", subject);
+    return "logged";
+  }
   if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return "skip";
   const html = `<!doctype html>
 <html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
@@ -100,6 +104,23 @@ async function deliverToProvider(to: string, subject: string, text: string) {
     </td></tr>
   </table>
 </body></html>`;
+  const { prepareMailBody } = await import("@/lib/transactional-mail");
+  const { brandedNotice } = await import("@/lib/email-layout");
+  const prepared = await prepareMailBody({
+    purpose: "claim",
+    to,
+    subject,
+    text,
+    html,
+    branded: brandedNotice({
+      heading: subject,
+      text,
+      cta: { label: "Open your dashboard", href: "https://kidease.ca/provider" },
+    }),
+  });
+  const sendText = prepared.text;
+  const sendHtml = prepared.html;
+  const headers = Object.keys(prepared.headers).length ? prepared.headers : undefined;
   const from = transactionalMailFrom();
   const resend = process.env.RESEND_API_KEY?.trim();
   if (resend) {
@@ -111,8 +132,9 @@ async function deliverToProvider(to: string, subject: string, text: string) {
         to: [to],
         reply_to: ADMIN_EMAIL,
         subject,
-        text,
-        html,
+        text: sendText,
+        html: sendHtml,
+        ...(headers ? { headers } : {}),
         tags: resendCampaignTags("centre-decision"),
       }),
     });
@@ -130,9 +152,10 @@ async function deliverToProvider(to: string, subject: string, text: string) {
         from: { email: fromMatch?.[2]?.trim() || ADMIN_EMAIL, name: fromMatch?.[1]?.replace(/"/g, "").trim() || "KidEase" },
         reply_to: { email: ADMIN_EMAIL },
         subject,
+        ...(headers ? { headers } : {}),
         content: [
-          { type: "text/plain", value: text },
-          { type: "text/html", value: html },
+          { type: "text/plain", value: sendText },
+          { type: "text/html", value: sendHtml },
         ],
       }),
     });
@@ -410,8 +433,10 @@ export const decideCentre = createServerFn({ method: "POST" })
       city: string;
       province: string;
       contact_email: string | null;
+      visibility: string | null;
+      is_test: number | null;
     }>`
-      select id, slug, name, address, city, province, contact_email
+      select id, slug, name, address, city, province, contact_email, visibility, is_test
       from daycares where id = ${data.daycareId} limit 1
     `;
     const centre = listed[0];
@@ -475,7 +500,7 @@ export const decideCentre = createServerFn({ method: "POST" })
     const copy = decisionCopy(decision, centre.name);
     let mail = "skip";
     try {
-      mail = await deliverToProvider(to, copy.subject, copy.text);
+      mail = await deliverToProvider(to, copy.subject, copy.text, isAdminOnlyListing({ name: centre.name, slug: centre.slug, visibility: centre.visibility, isTest: centre.is_test }));
     } catch (err) {
       mail = "failed";
       console.error("[kidease-mail] decision notify failed", err);

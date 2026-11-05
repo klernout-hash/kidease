@@ -30,6 +30,8 @@ import {
 import { sendSms } from "@/lib/server/sms";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 import { transactionalMailFrom } from "@/lib/mail-from";
+import { brandedNotice } from "@/lib/email-layout";
+import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { mailPreheaderHtml } from "@/lib/mail-copy";
 import { dayKeyInTimeZone, formatInTimeZone } from "@/lib/family-time";
 
@@ -424,7 +426,36 @@ function esc(s: string) {
     .join("");
 }
 
-async function deliverEmail(subject: string, text: string, html: string, to = ADMIN_EMAIL, replyTo?: string) {
+async function deliverEmail(
+  subject: string,
+  text: string,
+  html: string,
+  to = ADMIN_EMAIL,
+  replyTo?: string,
+  opts?: {
+    branded?: import("@/lib/email-layout").BrandedEmailInput;
+    aboutTestListing?: boolean;
+    unsubscribeUrl?: string;
+  },
+) {
+  if (opts?.aboutTestListing) {
+    console.info("[kidease-mail] skipped test listing", subject);
+    return "logged";
+  }
+  const { prepareMailBody } = await import("@/lib/transactional-mail");
+  const prepared = await prepareMailBody({
+    purpose: "customer_alert",
+    to,
+    subject,
+    text,
+    html,
+    replyTo,
+    unsubscribeUrl: opts?.unsubscribeUrl,
+    branded: opts?.branded,
+  });
+  text = prepared.text;
+  html = prepared.html;
+  const headers = Object.keys(prepared.headers).length ? prepared.headers : undefined;
   const reply = resolveMailReplyTo(replyTo, ADMIN_EMAIL);
   const resend = process.env.RESEND_API_KEY?.trim();
   if (resend) {
@@ -438,6 +469,7 @@ async function deliverEmail(subject: string, text: string, html: string, to = AD
         subject,
         text,
         html,
+        ...(headers ? { headers } : {}),
         tags: resendCampaignTags("admin-notify"),
       }),
     });
@@ -457,6 +489,7 @@ async function deliverEmail(subject: string, text: string, html: string, to = AD
         from: { email: fromEmail, name: fromName },
         reply_to: { email: reply },
         subject,
+        ...(headers ? { headers } : {}),
         content: [
           { type: "text/plain", value: text },
           { type: "text/html", value: html },
@@ -494,7 +527,9 @@ function thanksEmailCopy(subject: string, text: string) {
 async function sendActorConfirmation(kind: string, to: string) {
   if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return;
   const { title, text, html } = thanksEmailCopy(ACTOR_CONFIRM_SUBJECT, actorConfirmationText(kind));
-  await deliverEmail(title, text, html, to, actorConfirmationReplyTo(SUPPORT_INBOX_EMAIL));
+  await deliverEmail(title, text, html, to, actorConfirmationReplyTo(SUPPORT_INBOX_EMAIL), {
+    branded: brandedNotice({ heading: title, text }),
+  });
 }
 
 async function sendVisitorAutoReply(to: string, name: string) {
@@ -512,7 +547,9 @@ async function sendVisitorAutoReply(to: string, name: string) {
     </td></tr>
   </table>
 </body></html>`;
-  await deliverEmail(VISITOR_AUTO_REPLY_SUBJECT, text, html, to, SUPPORT_INBOX_EMAIL);
+  await deliverEmail(VISITOR_AUTO_REPLY_SUBJECT, text, html, to, SUPPORT_INBOX_EMAIL, {
+    branded: brandedNotice({ heading: VISITOR_AUTO_REPLY_SUBJECT, text }),
+  });
 }
 
 /** Parallel to email. sendSms no-ops when FEATURE_SMS is off or Twilio env is missing. */
@@ -558,7 +595,11 @@ export async function notifyPlatform(p: PlatformEvent) {
       })
     : (filled.detail ?? null);
   const { status, error } = await sendMailThenPersist({
-    send: () => deliverEmail(title, text, html, ADMIN_EMAIL, filled.actorEmail ?? undefined),
+    send: () =>
+      deliverEmail(title, text, html, ADMIN_EMAIL, filled.actorEmail ?? undefined, {
+        aboutTestListing: !account && isAdminOnlyListing({ name: filled.daycareName, slug: filled.slug }),
+        branded: brandedNotice({ heading: title, text }),
+      }),
     persist: async ({ status, error }) => {
       await sql.query(
         `insert into platform_events (
@@ -710,7 +751,14 @@ export async function notifyThreadParty(p: {
   </table>
 </body></html>`;
   try {
-    const status = await deliverEmail(p.subject, text, html, to, ADMIN_EMAIL);
+    const status = await deliverEmail(p.subject, text, html, to, ADMIN_EMAIL, {
+      aboutTestListing: isAdminOnlyListing({ name: p.daycareName }),
+      branded: brandedNotice({
+        heading: p.subject,
+        text,
+        cta: /^https:\/\//i.test(p.threadUrl) ? { label: "Open thread", href: p.threadUrl } : undefined,
+      }),
+    });
     return { status };
   } catch (err) {
     console.error("[kidease-thread] mail failed", err);
@@ -762,7 +810,14 @@ export async function notifyParentBill(p: {
   </table>
 </body></html>`;
   try {
-    const status = await deliverEmail(title, text, html, to, ADMIN_EMAIL);
+    const status = await deliverEmail(title, text, html, to, ADMIN_EMAIL, {
+      aboutTestListing: isAdminOnlyListing({ name: p.daycareName }),
+      branded: brandedNotice({
+        heading: title,
+        text,
+        cta: /^https:\/\//i.test(p.payUrl) ? { label: "Pay this bill", href: p.payUrl } : undefined,
+      }),
+    });
     return { status };
   } catch (err) {
     console.error("[kidease-bill] parent mail failed", err);

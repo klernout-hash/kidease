@@ -85,12 +85,20 @@ async function sendFamilyMail(to: string, locale: string, kind: FamilyNoticeKind
     <p><a href="${escapeMailHtml(url)}">${escapeMailHtml(url)}</a></p>
   </body></html>`;
   const { sendTransactionalMail } = await import("@/lib/transactional-mail");
+  const { brandedNotice } = await import("@/lib/email-layout");
+  const localeCode = locale === "fr" ? "fr" : "en";
   await sendTransactionalMail({
     purpose: "coparent",
     to,
     subject: notice.subject,
     text,
     html,
+    branded: brandedNotice({
+      heading: notice.subject,
+      text,
+      locale: localeCode,
+      cta: /^https:\/\//i.test(url) ? { label: localeCode === "fr" ? "Ouvrir" : "Open", href: url } : undefined,
+    }),
   });
   return plan;
 }

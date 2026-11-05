@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { ADMIN_EMAIL } from "@/lib/server/notify";
 import { assertResetMailConfigured, resetMailConfigured } from "@/lib/server/reset-mail-config";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
+import { brandedNotice } from "@/lib/email-layout";
 
 export { RESET_MAIL_NOT_CONFIGURED, assertResetMailConfigured, resetMailConfigured } from "@/lib/server/reset-mail-config";
 
@@ -37,6 +38,12 @@ export async function sendPasswordResetEmail(input: { to: string; url: string })
     text,
     html,
     replyTo: ADMIN_EMAIL,
+    branded: brandedNotice({
+      heading: "Reset your password",
+      text: "Use the button below. The link expires in about an hour. If you did not ask for this, ignore the email.",
+      cta: /^https:\/\//i.test(input.url) ? { label: "Choose a new password", href: input.url } : undefined,
+      reason: "You get this because a password reset was requested for this email.",
+    }),
   });
   return result.status;
 }

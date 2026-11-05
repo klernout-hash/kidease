@@ -5,6 +5,7 @@ import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
 import { nid } from "@/lib/utils";
 import { complaintVisible, complaintsMode, isComplaintKind, reminderPlan, routeComplaint, trackingCode } from "@/lib/compliance/complaints";
 import { centreRow, logPractice, readScope, sendComplianceEmail, sqlClient } from "@/lib/server/compliance-common";
+import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { requireAdmin } from "@/lib/server/roles";
 
 export const loadParentComplaints = createServerFn({ method: "GET" })
@@ -51,6 +52,14 @@ export const saveComplaint = createServerFn({ method: "POST" })
           to: parent[0].email,
           subject: "KidEase: your complaint number",
           text: `Your tracking number is ${code}. Keep it to ask about the complaint.`,
+          aboutTestListing: centre
+            ? isAdminOnlyListing({
+                name: centre.name,
+                slug: centre.slug,
+                visibility: centre.visibility,
+                isTest: centre.is_test,
+              })
+            : false,
         });
       }
     }

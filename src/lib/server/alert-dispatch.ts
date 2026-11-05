@@ -234,12 +234,23 @@ async function sendFallbackEmail(row: OutboxRow, href: string): Promise<boolean>
     locale,
   });
   const { sendTransactionalMail } = await import("@/lib/transactional-mail");
+  const { brandedNotice } = await import("@/lib/email-layout");
+  const blob = `${row.title}\n${row.body}`;
+  const aboutTestListing = /[([]\s*(qa|test)\s*[)\]]/i.test(blob) || /\bkidease\s+test\b/i.test(blob);
   const sent = await sendTransactionalMail({
     purpose: "customer_alert",
     to: email,
     subject: letter.subject,
     text: letter.text,
     html: letter.html,
+    unsubscribeUrl: alertUnsubUrl(row.user_id, category),
+    aboutTestListing,
+    branded: brandedNotice({
+      heading: letter.subject,
+      text: letter.text,
+      locale: locale === "fr" ? "fr" : "en",
+      cta: /^https:\/\//i.test(href) ? { label: locale === "fr" ? "Ouvrir" : "Open", href } : undefined,
+    }),
   }).catch(() => null);
   return sent?.status === "sent";
 }

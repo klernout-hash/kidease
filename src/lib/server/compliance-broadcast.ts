@@ -4,6 +4,7 @@ import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
 import { nid } from "@/lib/utils";
 import { broadcastMode, centreInAudience, daycareEmailPlan, noticeBodyOk, parentChannelPlan, type Audience } from "@/lib/compliance/broadcast";
 import { caslSmsGranted, logPractice, readScope, sendComplianceEmail, sendComplianceSms, sqlClient } from "@/lib/server/compliance-common";
+import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { requireAdmin } from "@/lib/server/roles";
 import { assertGovWritable } from "@/lib/server/gov-actor.server";
 
@@ -18,8 +19,18 @@ function audienceOf(input: { kind?: string; province?: string; city?: string; fs
 
 async function deliver(input: { body: string; audience: Audience; actorId: string; mode: ReturnType<typeof broadcastMode> }) {
   const sql = await sqlClient();
-  const centres = await sql<{ id: string; province: string; city: string; postal_code: string; contact_email: string | null }>`
-    select id, province, city, postal_code, contact_email from daycares where province = ${input.audience.province} limit 500
+  const centres = await sql<{
+    id: string;
+    name: string;
+    province: string;
+    city: string;
+    postal_code: string;
+    contact_email: string | null;
+    slug: string | null;
+    visibility: string | null;
+    is_test: number | null;
+  }>`
+    select id, name, province, city, postal_code, contact_email, slug, visibility, is_test from daycares where province = ${input.audience.province} limit 500
   `.catch(() => []);
   const hits = centres.filter((row) => centreInAudience({ province: row.province, city: row.city, postal: row.postal_code }, input.audience));
   const id = nid("brd");
@@ -38,7 +49,17 @@ async function deliver(input: { body: string; audience: Audience; actorId: strin
       values (${nid("dlv")}, ${id}, 'email', ${status}, 'daycare')
     `;
     if (emailPlan === "send" && centre.contact_email) {
-      const result = await sendComplianceEmail({ to: centre.contact_email, subject: "KidEase: a notice for your area", text: input.body });
+      const result = await sendComplianceEmail({
+        to: centre.contact_email,
+        subject: "KidEase: a notice for your area",
+        text: input.body,
+        aboutTestListing: isAdminOnlyListing({
+          name: centre.name,
+          slug: centre.slug,
+          visibility: centre.visibility,
+          isTest: centre.is_test,
+        }),
+      });
       if (result === "sent") sent += 1;
       else logged += 1;
     } else if (emailPlan === "log") logged += 1;
@@ -61,7 +82,17 @@ async function deliver(input: { body: string; audience: Audience; actorId: strin
         if (delivery === "log") logged += 1;
         if (delivery === "skip") skipped += 1;
         if (delivery === "send" && channel === "email" && emailRow[0]?.email) {
-          const result = await sendComplianceEmail({ to: emailRow[0].email, subject: "KidEase: a notice for your area", text: input.body });
+          const result = await sendComplianceEmail({
+            to: emailRow[0].email,
+            subject: "KidEase: a notice for your area",
+            text: input.body,
+            aboutTestListing: isAdminOnlyListing({
+              name: centre.name,
+              slug: centre.slug,
+              visibility: centre.visibility,
+              isTest: centre.is_test,
+            }),
+          });
           if (result === "sent") sent += 1;
         }
         if (delivery === "send" && channel === "sms" && emailRow[0]?.phone) {

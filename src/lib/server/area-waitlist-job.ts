@@ -16,7 +16,7 @@ import { getSql, type Sql } from "@/lib/db";
 import { geocode, haversineKm } from "@/lib/geo";
 import { PHOTON_USER_AGENT, photonSearchUrl, photonToPlace, type PhotonFeature } from "@/lib/photon";
 import { areaWaitlistAlertsEnabled } from "@/lib/features";
-import { isPublicListing, listingVisibilityInputFromDb } from "@/lib/listing-visibility";
+import { isPublicListing, isAdminOnlyListing, listingVisibilityInputFromDb } from "@/lib/listing-visibility";
 import { showsParentBrowseActions, navRoleForSession } from "@/lib/role-access";
 import { isAlertQuietHours, winnipegDayKey } from "@/lib/search-alert-policy";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
@@ -450,12 +450,62 @@ async function sendAreaEmail(
     url: `${origin}/daycare/${hit.slug}`,
     manageUrl: `${origin}/parent?tab=waitlists`,
   });
+  const { brandedNotice, emailLocaleFor } = await import("@/lib/email-layout");
+  const provinceRows = await sql<{ province: string | null }>`
+    select province from daycares where id = ${hit.daycareId} limit 1
+  `.catch(() => [] as Array<{ province: string | null }>);
+  const mailLocale = emailLocaleFor(hit.locale, provinceRows[0]?.province);
+  const primary = mailLocale === "en" ? "en" : "fr";
+  const brandedLetter = primary === hit.locale
+    ? letter
+    : areaWaitlistLetter({
+        locale: primary,
+        centre: hit.name,
+        city: hit.city,
+        place: hit.label,
+        km: hit.distanceKm,
+        ageBand: hit.ageBand,
+        url: `${origin}/daycare/${hit.slug}`,
+        manageUrl: `${origin}/parent?tab=waitlists`,
+      });
+  const enLetter = mailLocale === "fr-qc"
+    ? areaWaitlistLetter({
+        locale: "en",
+        centre: hit.name,
+        city: hit.city,
+        place: hit.label,
+        km: hit.distanceKm,
+        ageBand: hit.ageBand,
+        url: `${origin}/daycare/${hit.slug}`,
+        manageUrl: `${origin}/parent?tab=waitlists`,
+      })
+    : null;
   const sent = await sendTransactionalMail({
     to: email,
     subject: letter.subject,
     text: letter.text,
     html: letter.html,
     purpose: "area_waitlist",
+    aboutTestListing: isAdminOnlyListing({ name: hit.name, slug: hit.slug }),
+    branded: brandedNotice({
+      heading: brandedLetter.subject,
+      text: brandedLetter.text,
+      locale: mailLocale,
+      cta: {
+        label: primary === "fr" ? "Ouvrir la fiche" : "Open the listing",
+        href: `${origin}/daycare/${hit.slug}`,
+      },
+      reason: primary === "fr"
+        ? "Vous recevez ce courriel parce que vous avez une alerte de secteur sur KidEase."
+        : "You get this because you have an area alert on KidEase.",
+      en: enLetter
+        ? {
+            heading: enLetter.subject,
+            blocks: brandedNotice({ heading: enLetter.subject, text: enLetter.text }).blocks,
+            cta: { label: "Open the listing" },
+          }
+        : undefined,
+    }),
   }).catch(() => null);
   if (sent && (sent.status === "sent" || sent.status === "logged")) {
     await sql`update area_waitlist_sends set emailed = 1 where id = ${hit.sendId}`.catch(() => undefined);

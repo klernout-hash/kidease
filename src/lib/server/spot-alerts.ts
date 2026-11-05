@@ -27,6 +27,7 @@ import { isSuppressed } from "@/lib/server/email-suppressions";
 import { transactionalMailFrom } from "@/lib/mail-from";
 import { resendCampaignTags } from "@/lib/email-suppressions";
 import { nid } from "@/lib/utils";
+import { isAdminOnlyListing } from "@/lib/listing-visibility";
 
 type DaycareSpotRow = {
   id: string;
@@ -37,6 +38,9 @@ type DaycareSpotRow = {
   spots_infant: number;
   spots_toddler: number;
   spots_preschool: number;
+  slug: string | null;
+  visibility: string | null;
+  is_test: number | null;
 };
 
 export type SpotAlertDraft = {
@@ -73,7 +77,7 @@ async function flagOn(userId: string): Promise<boolean> {
 async function loadDaycare(daycareId: string): Promise<DaycareSpotRow | null> {
   const sql = await getSql();
   const rows = await sql<DaycareSpotRow>`
-    select id, name, city, lat, lng, spots_infant, spots_toddler, spots_preschool
+    select id, name, city, lat, lng, spots_infant, spots_toddler, spots_preschool, slug, visibility, is_test
     from daycares
     where id = ${daycareId}
     limit 1
@@ -151,13 +155,40 @@ function esc(value: string): string {
     .join("");
 }
 
-async function sendSpotMail(input: { to: string; userId: string; subject: string; text: string; html: string }) {
+async function sendSpotMail(input: {
+  to: string;
+  userId: string;
+  subject: string;
+  text: string;
+  html: string;
+  aboutTestListing?: boolean;
+}) {
+  if (input.aboutTestListing) return "failed" as const;
   const unsub = caslUnsubscribeUrl({ userId: input.userId, channel: "email", purpose: "service", address: input.to });
   const oneClick = caslOneClickUrl({ userId: input.userId, channel: "email", purpose: "service", address: input.to });
   const listUnsub = oneClick ? `<${oneClick}>` : unsub ? `<${unsub}>` : undefined;
-  const headers = listUnsub
+  const existing = listUnsub
     ? { "List-Unsubscribe": listUnsub, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" }
     : undefined;
+  const { prepareMailBody } = await import("@/lib/transactional-mail");
+  const { brandedNotice } = await import("@/lib/email-layout");
+  const prepared = await prepareMailBody({
+    purpose: "customer_alert",
+    to: input.to,
+    subject: input.subject,
+    text: input.text,
+    html: input.html,
+    unsubscribeUrl: oneClick || unsub || undefined,
+    branded: brandedNotice({
+      heading: input.subject,
+      text: input.text,
+      reason: "You get this because you asked KidEase to email you about open spots.",
+    }),
+  });
+  const merged = { ...prepared.headers, ...(existing || {}) };
+  const headers = Object.keys(merged).length ? merged : undefined;
+  const sendText = prepared.text;
+  const sendHtml = prepared.html;
   const resend = process.env.RESEND_API_KEY?.trim();
   if (resend) {
     const res = await fetch("https://api.resend.com/emails", {
@@ -167,8 +198,8 @@ async function sendSpotMail(input: { to: string; userId: string; subject: string
         from: transactionalMailFrom(),
         to: [input.to],
         subject: input.subject,
-        text: input.text,
-        html: input.html,
+        text: sendText,
+        html: sendHtml,
         headers,
         tags: resendCampaignTags("spot-alert"),
       }),
@@ -191,8 +222,8 @@ async function sendSpotMail(input: { to: string; userId: string; subject: string
         },
         subject: input.subject,
         content: [
-          { type: "text/plain", value: input.text },
-          { type: "text/html", value: input.html },
+          { type: "text/plain", value: sendText },
+          { type: "text/html", value: sendHtml },
         ],
         headers,
       }),
@@ -346,7 +377,7 @@ export const sendSpotAlert = createServerFn({ method: "POST" })
       const personalUnsub = caslUnsubscribeUrl({ userId, channel: "email", purpose: "service", address: to });
       const text = `${body}${personalUnsub ? `\n\nUnsubscribe: ${personalUnsub}` : unsubFooter}`;
       const html = `<p>${esc(body)}</p><p><a href="${esc(personalUnsub || `${appOrigin()}/unsubscribe`)}">Unsubscribe</a></p>`;
-      const status = await sendSpotMail({ to, userId, subject: title, text, html }).catch(() => "failed" as const);
+      const status = await sendSpotMail({ to, userId, subject: title, text, html, aboutTestListing: isAdminOnlyListing({ name: daycare.name, slug: daycare.slug, visibility: daycare.visibility, isTest: daycare.is_test }) }).catch(() => "failed" as const);
       await sql`
         insert into spot_alert_sends (id, draft_id, user_id, channel, status)
         values (${nid("sas")}, ${draft.id}, ${userId}, 'email', ${status === "sent" ? "sent" : status === "stubbed" ? "stubbed" : "failed"})
