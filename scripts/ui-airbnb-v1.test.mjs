@@ -28,7 +28,7 @@ test("flag off does not add the airbnb attribute or home class", () => {
   assert.match(home, /boot\.airbnbUi \? "ke-home ke-airbnb-hide-phone/);
   assert.match(home, /boot\.airbnbUi \? \(/);
   const menu = src("src/components/app-menu-screen.tsx");
-  assert.match(menu, /airbnb \? " ke-airbnb-hide-phone"/);
+  assert.doesNotMatch(menu, /ke-airbnb-hide-phone/);
   assert.match(menu, /data-ke="menu-sign-out"/);
   assert.match(menu, /data-ke="menu-delete-account"/);
 });
