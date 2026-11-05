@@ -43,6 +43,7 @@ export async function sendTourBookedMail(input: {
   email: string;
   centre: string;
   locale: "en" | "fr";
+  province?: string | null;
   uid?: string;
   tourId?: string;
   startAt?: string;
@@ -85,12 +86,26 @@ export async function sendTourBookedMail(input: {
       : "";
   const text = `${letter.text}${extra}`;
   const { sendTransactionalMail } = await import("@/lib/transactional-mail");
+  const { brandedNotice, emailLocaleFor } = await import("@/lib/email-layout");
+  const { isAdminOnlyListing } = await import("@/lib/listing-visibility");
+  const locale = emailLocaleFor(input.locale, input.province);
+  const frLetter = tourInviteCopy("fr", input.centre);
+  const enLetter = tourInviteCopy("en", input.centre);
   await sendTransactionalMail({
     purpose: "customer_alert",
     to: input.email,
     subject: letter.subject,
     text,
     html: `<p>${letter.text}</p>${links ? `<p><a href="${links.google}">Google</a> · <a href="${links.outlook}">Outlook</a></p>` : ""}`,
+    aboutTestListing: isAdminOnlyListing({ name: input.centre }),
+    branded: brandedNotice({
+      locale,
+      heading: locale === "en" ? enLetter.subject : frLetter.subject,
+      text: locale === "en" ? text : `${frLetter.text}${extra}`,
+      en: locale === "fr-qc" ? { heading: enLetter.subject, blocks: [{ kind: "p", text: enLetter.text }] } : undefined,
+      cta: links?.google && /^https:\/\//i.test(links.google) ? { label: locale === "en" ? "Add to calendar" : "Ajouter au calendrier", href: links.google } : undefined,
+      reason: locale === "en" ? "You get this because a tour is booked on KidEase." : "Vous recevez ce courriel parce qu'une visite est prévue sur KidEase.",
+    }),
   }).catch(() => undefined);
 }
 

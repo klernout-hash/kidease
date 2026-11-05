@@ -35,6 +35,9 @@ type DaycareRow = {
   confirmed_open_spots: number | null;
   owner_id: string | null;
   email: string | null;
+  slug: string | null;
+  visibility: string | null;
+  is_test: number | null;
 };
 
 function spotsOf(row: Pick<DaycareRow, "spots_infant" | "spots_toddler" | "spots_preschool">): SpotCounts {
@@ -168,6 +171,7 @@ async function listRecipients(): Promise<Recipient[]> {
   return sql<Recipient>`
     select d.id, d.name, d.phone, d.age_min_months, d.age_max_months,
            d.spots_infant, d.spots_toddler, d.spots_preschool, d.confirmed_open_spots,
+           d.slug, d.visibility, d.is_test,
            owner.user_id as owner_id,
            coalesce(nullif(trim(d.contact_email), ''), owner.email) as email
     from daycares d
@@ -234,6 +238,8 @@ export async function runOpenSpotsCheckinJob(options: { dryRun?: boolean; now?: 
   let pushed = 0;
   const plansOn = subscriptionsEnabled();
   const { sendTransactionalMail } = await import("@/lib/transactional-mail");
+  const { brandedNotice } = await import("@/lib/email-layout");
+  const { isAdminOnlyListing } = await import("@/lib/listing-visibility");
   const { sendSms } = await import("@/lib/server/sms");
   const { readConsent } = await import("@/lib/server/casl-consent");
   for (const row of rows) {
@@ -268,6 +274,18 @@ export async function runOpenSpotsCheckinJob(options: { dryRun?: boolean; now?: 
             subject: mail.subject,
             text: mail.text,
             html: `<p>${mail.text.replace(/\n/g, "<br>")}</p>`,
+            aboutTestListing: isAdminOnlyListing({
+              name: row.name,
+              slug: row.slug,
+              visibility: row.visibility,
+              isTest: row.is_test,
+            }),
+            branded: brandedNotice({
+              heading: mail.subject,
+              text: mail.text,
+              cta: { label: "Update open spots", href: links[0] },
+              reason: "You get this because you manage a listing on KidEase.",
+            }),
           });
           emailed += 1;
         } catch {

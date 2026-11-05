@@ -86,7 +86,39 @@ export type TransactionalMailInput = {
   text: string;
   html: string;
   replyTo?: string;
+  /** One-click unsubscribe URL (RFC 8058). Adds List-Unsubscribe headers. */
+  unsubscribeUrl?: string;
+  /** Structured branded content. Used instead of `html`/`text` when BRANDED_EMAILS=1. */
+  branded?: import("./email-layout.ts").BrandedEmailInput;
+  /** Set true when the email is about a test/QA listing; it is never sent. */
+  aboutTestListing?: boolean;
 };
+
+export function brandedEmailsEnabled(env: EnvMap = process.env): boolean {
+  return env.BRANDED_EMAILS === "1" || env.BRANDED_EMAILS === "true";
+}
+
+/** Branded body + List-Unsubscribe headers when the flag is on; otherwise unchanged. */
+export async function prepareMailBody(
+  input: TransactionalMailInput,
+  env: EnvMap = process.env,
+): Promise<{ text: string; html: string; headers: Record<string, string> }> {
+  const headers: Record<string, string> = {};
+  let { text, html } = input;
+  if (brandedEmailsEnabled(env)) {
+    if (input.unsubscribeUrl) {
+      headers["List-Unsubscribe"] = `<${input.unsubscribeUrl}>, <mailto:unsubscribe@kidease.ca?subject=unsubscribe>`;
+      headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
+    }
+    if (input.branded) {
+      const { renderBrandedEmail, renderBrandedText } = await import("./email-layout.ts");
+      const b = { ...input.branded, unsubscribeUrl: input.branded.unsubscribeUrl ?? input.unsubscribeUrl };
+      html = renderBrandedEmail(b);
+      text = renderBrandedText(b);
+    }
+  }
+  return { text, html, headers };
+}
 
 export type EnvMap = Record<string, string | undefined>;
 
@@ -340,6 +372,12 @@ export async function sendTransactionalMail(
   const replyTo = (input.replyTo || env.ADMIN_EMAIL || KIDEASE_OPERATOR_EMAIL).trim() || KIDEASE_OPERATOR_EMAIL;
   const providers = otpProvidersFromEnv(env);
   recordOtpMailHealth({ ...providers, lastEvent: lastHealth.lastEvent ?? "logged" });
+  if (input.aboutTestListing) {
+    emit(deps, input.purpose, "logged", { via: "logged", reason: "not_configured" });
+    return { status: "logged", via: "logged", reason: "not_configured" };
+  }
+  const body = await prepareMailBody(input, env);
+  input = { ...input, text: body.text, html: body.html };
 
   let resendUnhealthy = !providers.resendConfigured;
   let lastReason: TransactionalMailReason | undefined;
@@ -359,6 +397,7 @@ export async function sendTransactionalMail(
           subject: input.subject,
           text: input.text,
           html: input.html,
+          ...(Object.keys(body.headers).length ? { headers: body.headers } : {}),
           tags: resendCampaignTags(`txn-${input.purpose}`),
         },
       );
@@ -386,6 +425,7 @@ export async function sendTransactionalMail(
         from: { email: parts.email, name: parts.name },
         reply_to: { email: replyTo },
         subject: input.subject,
+        ...(Object.keys(body.headers).length ? { headers: body.headers } : {}),
         content: [
           { type: "text/plain", value: input.text },
           { type: "text/html", value: input.html },

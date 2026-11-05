@@ -14,6 +14,7 @@ import {
 import { sendSms } from "@/lib/server/sms";
 import { requireSupport } from "@/lib/server/roles";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
+import { brandedNotice } from "@/lib/email-layout";
 import { nid } from "@/lib/utils";
 
 type ThreadRow = {
@@ -85,6 +86,11 @@ export async function notifySupportOwner(input: {
         subject: "New KidEase support message",
         text: alert,
         html,
+        branded: brandedNotice({
+          heading: "New KidEase support message",
+          text: alert,
+          reason: "You get this because you own KidEase support.",
+        }),
       }).catch(() => undefined);
       await input.sql`update support_threads set owner_emailed = 1 where id = ${input.thread.id}`;
       emailed = true;

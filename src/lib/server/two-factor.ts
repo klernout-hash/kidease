@@ -13,6 +13,7 @@ import {
 import { TWO_FACTOR_HOURLY_MS } from "@/lib/auth-rate-limit";
 import { TWO_FACTOR_DEVICE_TTL_MS } from "@/lib/two-factor-cookie";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
+import { brandedNotice } from "@/lib/email-layout";
 
 const TTL_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = TWO_FACTOR_MAX_ATTEMPTS;
@@ -52,6 +53,12 @@ async function sendCodeEmail(to: string, code: string) {
     text,
     html,
     replyTo: ADMIN_EMAIL,
+    branded: brandedNotice({
+      heading: subject,
+      text: "It expires in 10 minutes. If you did not try to sign in, you can ignore this email.",
+      code,
+      reason: "You get this because someone asked to sign in to KidEase.",
+    }),
   });
   if (result.via === "resend") console.info("[kidease-2fa] resend", result.via);
   if (result.status === "logged") console.info("[kidease-2fa]", to, code);

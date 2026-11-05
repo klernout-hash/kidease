@@ -5,6 +5,7 @@ import { getSql } from "@/lib/db";
 import { clampTrackNote, normalizeShareEmail, parseShareToken, parseTrackStatus } from "@/lib/parent-tracker";
 import { lookupUser } from "@/lib/server/notify";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
+import { brandedNotice } from "@/lib/email-layout";
 import { nid } from "@/lib/utils";
 
 const SHARE_DAILY_MAX = 8;
@@ -170,6 +171,12 @@ Un parent vous invite à voir et modifier sa liste de garderies sur KidEase. Ouv
       subject: "A parent shared a KidEase shortlist with you",
       text,
       html,
+      branded: brandedNotice({
+        heading: "A shared shortlist",
+        text: "A parent invited you to view and edit their daycare shortlist. Sign in with this email, then open the link.",
+        cta: /^https:\/\//i.test(url) ? { label: "Open the shortlist", href: url } : undefined,
+        reason: "You get this because a parent shared a KidEase shortlist with this email.",
+      }),
     });
     return mail.status === "sent";
   } catch {

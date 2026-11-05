@@ -157,12 +157,14 @@ export async function dispatchAutomationMail(input: {
 
   try {
     const { sendTransactionalMail } = await import("@/lib/transactional-mail");
+    const { brandedNotice } = await import("@/lib/email-layout");
     await sendTransactionalMail({
       purpose: "customer_alert",
       to: recipient,
       subject: input.subject,
       text: input.text,
       html: input.html,
+      branded: brandedNotice({ heading: input.subject, text: input.text }),
     });
     await sql`
       update automation_sends

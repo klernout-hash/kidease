@@ -1055,7 +1055,38 @@ export async function sendSearchAlertEmail(payload: {
     return { ok: true as const, via: "suppressed" as const };
   }
 
+  const { isAdminOnlyListing } = await import("@/lib/listing-visibility");
+  if (
+    payload.events.length > 0 &&
+    payload.events.every((ev) => isAdminOnlyListing({ name: ev.name, slug: ev.slug }))
+  ) {
+    console.info("[kidease-search-alerts] email skipped — test listing");
+    return { ok: true as const, via: "stub" as const };
+  }
+  const { prepareMailBody } = await import("@/lib/transactional-mail");
+  const { brandedNotice } = await import("@/lib/email-layout");
+  const deskOrigin = process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://www.kidease.ca";
+  const prepared = await prepareMailBody({
+    purpose: "customer_alert",
+    to,
+    subject,
+    text,
+    html,
+    unsubscribeUrl: oneClick || unsubUrl || undefined,
+    branded: brandedNotice({
+      heading: subject,
+      text,
+      cta: { label: "Open family desk", href: `${deskOrigin}/parent?tab=alerts` },
+    }),
+  });
+  const sendText = prepared.text;
+  const sendHtml = prepared.html;
   const listUnsub = oneClick ? `<${oneClick}>` : unsubUrl ? `<${unsubUrl}>` : undefined;
+  const ownHeaders = listUnsub
+    ? { "List-Unsubscribe": listUnsub, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" }
+    : {};
+  const headers = { ...prepared.headers, ...ownHeaders };
+  const headerField = Object.keys(headers).length ? headers : undefined;
   const resend = process.env.RESEND_API_KEY?.trim();
   if (resend) {
     const res = await fetch("https://api.resend.com/emails", {
@@ -1065,12 +1096,10 @@ export async function sendSearchAlertEmail(payload: {
         from: transactionalMailFrom(),
         to: [to],
         subject,
-        text,
-        html,
+        text: sendText,
+        html: sendHtml,
         tags: [{ name: "campaign", value: SEARCH_ALERTS_CAMPAIGN_TAG }],
-        headers: listUnsub
-          ? { "List-Unsubscribe": listUnsub, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" }
-          : undefined,
+        headers: headerField,
       }),
     });
     if (!res.ok) throw new Error(`Resend ${res.status}: ${await res.text()}`);
@@ -1088,17 +1117,16 @@ export async function sendSearchAlertEmail(payload: {
         from: { email: fromMatch?.[2]?.trim() || "noreply@send.kidease.ca", name: fromMatch?.[1]?.replace(/"/g, "").trim() || "KidEase" },
         subject,
         content: [
-          { type: "text/plain", value: text },
-          { type: "text/html", value: html },
+          { type: "text/plain", value: sendText },
+          { type: "text/html", value: sendHtml },
         ],
-        headers: listUnsub
-          ? { "List-Unsubscribe": listUnsub, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" }
-          : undefined,
+        headers: headerField,
       }),
     });
     if (!res.ok) throw new Error(`SendGrid ${res.status}: ${await res.text()}`);
     return { ok: true as const, via: "sendgrid" as const };
   }
+
 
   console.info("[kidease-search-alerts] email stub — no RESEND_API_KEY / SENDGRID_API_KEY", to, subject, "\n", text);
   return { ok: true as const, via: "stub" as const };

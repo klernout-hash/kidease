@@ -322,6 +322,12 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_MOBILE_SEARCH_V2: false,
 };
 
+/**
+ * BRANDED_EMAILS is env-only. It is not a PostHog product flag and it is not in
+ * FEATURE_FLAG_KEYS. Unset or any value other than "1" / "true" keeps today's
+ * email bodies. See docs/flags.md. Do not turn this on in production from code.
+ */
+
 /** Staff-facing catalog. Names match env / PostHog keys exactly. */
 export type FeatureFlagCatalogRow = {
   key: FeatureFlagKey;

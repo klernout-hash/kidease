@@ -180,13 +180,21 @@ export async function deliverNotice(input: {
     if (email && !(await emailSuppressed(email))) {
       try {
         const { sendTransactionalMail } = await import("@/lib/transactional-mail");
+        const { brandedNotice } = await import("@/lib/email-layout");
         const safe = input.body.replace(/[&<>]/g, (ch) => (ch === "&" ? "&amp;" : ch === "<" ? "&lt;" : "&gt;"));
+        const origin = (process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://www.kidease.ca").replace(/\/$/, "");
+        const ctaHref = input.href.startsWith("http") ? input.href : `${origin}${input.href.startsWith("/") ? input.href : `/${input.href}`}`;
         await sendTransactionalMail({
           purpose: "customer_alert",
           to: email,
           subject: input.title.slice(0, 140),
           text: input.body,
           html: `<p>${safe}</p>`,
+          branded: brandedNotice({
+            heading: input.title.slice(0, 140),
+            text: input.body,
+            cta: /^https:\/\//i.test(ctaHref) ? { label: "Open", href: ctaHref } : undefined,
+          }),
         });
       } catch {
         console.error("[kidease-wiring] mail skipped", input.feature);

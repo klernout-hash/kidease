@@ -59,8 +59,11 @@ export async function centreRow(sql: Sql, daycareId: string) {
     city: string;
     postal_code: string;
     contact_email: string | null;
+    slug: string | null;
+    visibility: string | null;
+    is_test: number | null;
   }>`
-    select id, name, province, city, postal_code, contact_email
+    select id, name, province, city, postal_code, contact_email, slug, visibility, is_test
     from daycares
     where id = ${daycareId}
     limit 1
@@ -73,21 +76,36 @@ export async function sendComplianceEmail(input: {
   to: string;
   subject: string;
   text: string;
+  aboutTestListing?: boolean;
 }): Promise<"sent" | "logged_no_mailer" | "failed"> {
   const key = process.env.RESEND_API_KEY?.trim();
   if (!key) return "logged_no_mailer";
   const to = input.to.trim();
   if (!to.includes("@")) return "failed";
+  if (input.aboutTestListing) return "sent";
   try {
+    const { prepareMailBody } = await import("@/lib/transactional-mail");
+    const { brandedNotice } = await import("@/lib/email-layout");
+    const prepared = await prepareMailBody({
+      purpose: "customer_alert",
+      to,
+      subject: input.subject,
+      text: input.text,
+      html: "",
+      branded: brandedNotice({ heading: input.subject, text: input.text }),
+    });
+    const payload: Record<string, unknown> = {
+      from: transactionalMailFrom(),
+      to: [to],
+      subject: input.subject.slice(0, 140),
+      text: prepared.text.slice(0, 2000),
+    };
+    if (prepared.html) payload.html = prepared.html;
+    if (Object.keys(prepared.headers).length) payload.headers = prepared.headers;
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: transactionalMailFrom(),
-        to: [to],
-        subject: input.subject.slice(0, 140),
-        text: input.text.slice(0, 2000),
-      }),
+      body: JSON.stringify(payload),
     });
     return res.ok ? "sent" : "failed";
   } catch {
