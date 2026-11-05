@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { Bell } from "lucide-react";
+import { Bell, Settings } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { notificationSettingsCopy } from "@/lib/notification-settings-copy";
 import { Shell } from "@/components/shell";
 import { EmptyState } from "@/components/empty-state";
 import { DeskSkeleton } from "@/components/page-skeleton";
@@ -9,7 +11,6 @@ import { notificationHrefForShell } from "@/lib/native-admin";
 import { fillNotificationCopy, isCriticalNotification, notificationCopyKey, type NotificationItem } from "@/lib/notifications";
 import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { listMyNotifications, markNotificationRead } from "@/lib/server/notifications";
-import { LifecyclePrefs } from "@/components/lifecycle-prefs";
 import { UnifiedAlertPanel } from "@/components/unified-alert-panel";
 import { markUnifiedAlertRead } from "@/lib/server/unified-alert-api";
 import { Button } from "@/components/ui/button";
@@ -72,8 +73,17 @@ export function NotificationsInbox() {
             </Button>
           ) : null}
         </div>
-        <LifecyclePrefs />
-        <UnifiedAlertPanel />
+        <Link
+          to="/menu"
+          search={{ screen: "notifications" }}
+          data-ke="bell-settings-link"
+          aria-label={notificationSettingsCopy(locale).linkAria}
+          className="mt-2 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary underline-offset-4 hover:underline"
+        >
+          <Settings className="size-4" aria-hidden />
+          {notificationSettingsCopy(locale).title}
+        </Link>
+        <UnifiedAlertPanel mode="feed" />
         <ul className="mt-6 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
           {items === null ? (
             <li className="space-y-3 p-4" aria-hidden="true">

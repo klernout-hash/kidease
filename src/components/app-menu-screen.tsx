@@ -13,6 +13,7 @@ import { useSessionDesks } from "@/components/session-desks";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
 import { safetyText } from "@/lib/safety";
+import { notificationSettingsCopy } from "@/lib/notification-settings-copy";
 import { menuGroupLinks, menuHighlight, type MenuGroupId } from "@/lib/app-menu";
 import { accountSearch, highlightDesk } from "@/lib/desks";
 import { accountDeskPath, menuDeskPath, parentDeskPath, providerDeskPath } from "@/lib/desk-nav";
@@ -154,6 +155,15 @@ export function AppMenuScreen({
           icon={highlight === "create" || user ? "settings" : "login"}
           marker="account"
         />
+        {user ? (
+          <MenuRow
+            to={menuDeskPath(pathname)}
+            search={{ screen: "notifications" }}
+            label={notificationSettingsCopy(locale).title}
+            icon="notifications"
+            marker="notification-settings"
+          />
+        ) : null}
         <RoleSwitchPill />
         <MenuRow to={menuDeskPath(pathname)} search={{ section: "resources" }} label={t("menuResources")} icon="daycare" marker="resources" />
         <MenuRow to={menuDeskPath(pathname)} search={{ section: "guides" }} label={t("menuGuides")} icon="howItWorks" marker="guides" />
