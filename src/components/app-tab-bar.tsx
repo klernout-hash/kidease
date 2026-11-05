@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Building2, Calendar, ClipboardCheck, ClipboardList, Heart, Home, LifeBuoy, Menu, MessageCircle, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { CountBadge } from "@/components/count-badge";
 import { useSessionDesks } from "@/components/session-desks";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -14,7 +14,10 @@ import { nativeStoreTabs, type NativeStoreTabId } from "@/lib/native-store-tabs"
 import { deskHrefForLocale, inboxListPath, menuDeskPath, parentDeskPath, providerDeskPath, supportDeskPath } from "@/lib/desk-nav";
 import { localePath, stripLocalePrefix } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
+import { useAirbnbUi } from "@/lib/use-airbnb-ui";
 import { cn } from "@/lib/utils";
+
+const AirbnbDeskPill = lazy(() => import("@/components/airbnb-screens").then((m) => ({ default: m.AirbnbDeskPill })));
 
 /**
  * Phone tab bar. The last tab is Menu for every role.
@@ -33,6 +36,7 @@ export function AppTabBar() {
   const chrome = useRoleChrome();
   const { session, sticky } = useSessionDesks();
   const hideAdmin = useNativeHidesAdmin();
+  const airbnb = useAirbnbUi();
   const kind = bottomBarKindInShell(
     bottomBarKind({
       role: chrome.role,
@@ -93,6 +97,11 @@ export function AppTabBar() {
 
   return (
     <>
+      {airbnb ? (
+        <Suspense fallback={null}>
+          <AirbnbDeskPill />
+        </Suspense>
+      ) : null}
       <nav
         data-ke="app-tab-bar"
         data-bar={storeTabs ? "store" : kind}
@@ -101,7 +110,13 @@ export function AppTabBar() {
         <div
           className={cn(
             "mx-auto grid max-w-lg px-1 pt-1 md:max-w-3xl",
-            storeTabs ? "grid-cols-4" : kind === "guest" ? "grid-cols-3" : "grid-cols-5",
+            storeTabs
+              ? "grid-cols-4"
+              : airbnb && (kind === "parent" || kind === "guest")
+                ? "grid-cols-4"
+                : kind === "guest"
+                  ? "grid-cols-3"
+                  : "grid-cols-5",
           )}
         >
           {storeTabs
@@ -156,7 +171,7 @@ export function AppTabBar() {
               <MenuTab active={menuActive} />
             </>
           ) : null}
-          {kind === "parent" && !storeTabs ? (
+          {kind === "parent" && !storeTabs && !airbnb ? (
             <>
               <Tab
                 to={localePath("/search", locale)}
@@ -193,6 +208,34 @@ export function AppTabBar() {
               <MenuTab active={menuActive} />
             </>
           ) : null}
+          {kind === "parent" && !storeTabs && airbnb ? (
+            <>
+              <Tab
+                to={localePath("/", locale)}
+                label={t("explore")}
+                icon={Search}
+                marker="explore"
+                active={bare === "/" || bare.startsWith("/search") || bare.startsWith("/daycare")}
+              />
+              <Tab
+                to={parentDeskPath(pathname)}
+                search={{ tab: "saved" }}
+                label={t("saved")}
+                icon={Heart}
+                marker="saved"
+                active={bare.startsWith("/parent") && tab === "saved"}
+              />
+              <Tab
+                to={inboxListPath(pathname)}
+                search={{ view: "family" }}
+                label={t("messages")}
+                icon={MessageCircle}
+                marker="messages"
+                active={bare.startsWith("/inbox")}
+              />
+              <MenuTab active={menuActive} />
+            </>
+          ) : null}
           {kind === "admin" && !storeTabs ? (
             <>
               <Tab to="/admin" search={{ tab: "queue" }} label={t("navHome")} icon={Home} marker="queue" active={pathname.startsWith("/admin") && (!tab || tab === "queue")} />
@@ -202,7 +245,7 @@ export function AppTabBar() {
               <MenuTab active={menuActive} />
             </>
           ) : null}
-          {kind === "guest" && !storeTabs ? (
+          {kind === "guest" && !storeTabs && !airbnb ? (
             <>
               <Tab
                 to={localePath("/search", locale)}
@@ -217,6 +260,34 @@ export function AppTabBar() {
                 label={t("saved")}
                 icon={Heart}
                 marker="saved"
+                active={false}
+              />
+              <MenuTab active={menuActive} />
+            </>
+          ) : null}
+          {kind === "guest" && !storeTabs && airbnb ? (
+            <>
+              <Tab
+                to={localePath("/", locale)}
+                label={t("explore")}
+                icon={Search}
+                marker="explore"
+                active={bare === "/" || bare.startsWith("/search") || bare.startsWith("/daycare")}
+              />
+              <Tab
+                to={localePath("/login", locale)}
+                search={{ next: "/parent?tab=saved" }}
+                label={t("saved")}
+                icon={Heart}
+                marker="saved"
+                active={false}
+              />
+              <Tab
+                to={localePath("/login", locale)}
+                search={{ next: "/inbox" }}
+                label={t("messages")}
+                icon={MessageCircle}
+                marker="messages"
                 active={false}
               />
               <MenuTab active={menuActive} />

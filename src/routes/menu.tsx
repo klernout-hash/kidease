@@ -4,6 +4,7 @@ import { ShellLite } from "@/components/shell-lite";
 import { AppMenuScreen } from "@/components/app-menu-screen";
 import { BlockedListScreen } from "@/components/blocked-list";
 import { NotificationSettingsScreen } from "@/components/notification-settings-screen";
+import { useAirbnbUi } from "@/lib/use-airbnb-ui";
 import { EarningsDetailsScreen } from "@/components/earnings-details";
 import { EarningsListScreen } from "@/components/earnings-list";
 import { EarningsPayoutsScreen } from "@/components/earnings-payouts";
@@ -23,10 +24,13 @@ import type { ConnectPublicState } from "@/lib/connect-payments";
 const MenuDeskTools = lazy(() =>
   import("@/components/menu-desk-tools").then((m) => ({ default: m.MenuDeskTools })),
 );
+const AirbnbAccount = lazy(() => import("@/components/airbnb-screens").then((m) => ({ default: m.AirbnbAccount })));
+const AirbnbLanguage = lazy(() => import("@/components/airbnb-screens").then((m) => ({ default: m.AirbnbLanguage })));
+const AirbnbAlerts = lazy(() => import("@/components/airbnb-screens").then((m) => ({ default: m.AirbnbAlerts })));
 
 const SECTIONS = ["resources", "guides", "help", "legal"] as const;
 
-type MenuScreen = "earnings" | "insights" | "payments" | "blocked" | "notifications";
+type MenuScreen = "earnings" | "insights" | "payments" | "blocked" | "notifications" | "account" | "language";
 type EarningsView = "payouts" | "details" | "upcoming" | "paid" | "statement";
 
 const VIEWS: EarningsView[] = ["payouts", "details", "upcoming", "paid", "statement"];
@@ -46,7 +50,7 @@ export function menuValidateSearch(
   s: Record<string, unknown>,
 ): { section?: MenuGroupId; screen?: MenuScreen; view?: EarningsView; period?: string; bill?: string } {
     const section = SECTIONS.includes(s.section as MenuGroupId) ? (s.section as MenuGroupId) : undefined;
-    const screen = s.screen === "earnings" || s.screen === "insights" || s.screen === "payments" || s.screen === "blocked" || s.screen === "notifications" ? s.screen : undefined;
+    const screen = s.screen === "earnings" || s.screen === "insights" || s.screen === "payments" || s.screen === "blocked" || s.screen === "notifications" || s.screen === "account" || s.screen === "language" ? s.screen : undefined;
     const view = VIEWS.includes(s.view as EarningsView) ? (s.view as EarningsView) : undefined;
     const period = typeof s.period === "string" && /^\d{4}-\d{2}$/.test(s.period) ? s.period : undefined;
     const bill = typeof s.bill === "string" && s.bill.trim() && s.bill.length <= 80 ? s.bill.trim() : undefined;
@@ -137,6 +141,16 @@ export function MenuPage() {
   const { section, screen, view, bill, period } = useSearch({ strict: false }) as ReturnType<typeof menuValidateSearch>;
   const { earnings, insights, desk, payments, connect, centres } = useLoaderData({ strict: false }) as MenuLoader;
   const { user } = useCurrentUserState();
+  const airbnb = useAirbnbUi();
+  if ((screen === "account" || screen === "language") && airbnb) {
+    return (
+      <ShellLite appTabs>
+        <Suspense fallback={null}>
+          {screen === "language" ? <AirbnbLanguage /> : <AirbnbAccount />}
+        </Suspense>
+      </ShellLite>
+    );
+  }
   if (screen === "earnings" && view === "payouts") {
     return (
       <ShellLite appTabs>
@@ -196,7 +210,14 @@ export function MenuPage() {
   if (screen === "notifications") {
     return (
       <ShellLite appTabs>
-        <NotificationSettingsScreen />
+        {airbnb ? (
+          <Suspense fallback={null}>
+            <AirbnbAlerts />
+          </Suspense>
+        ) : null}
+        <div className={airbnb ? "ke-airbnb-hide-phone" : undefined}>
+          <NotificationSettingsScreen />
+        </div>
       </ShellLite>
     );
   }

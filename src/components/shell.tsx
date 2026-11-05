@@ -44,7 +44,7 @@ const SHELL_FRAME =
   "flex min-h-dvh min-h-[100dvh] w-full min-w-0 flex-col bg-bg pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] text-fg";
 const APP_TAB_PAD = "[[data-channel=app]_&]:pb-[calc(4.75rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]";
 const HEADER_BAR =
-  "sticky top-[var(--ke-view-as-h,0px)] z-40 border-b border-slate-200/80 bg-bg/95 pt-[var(--ke-safe-top,env(safe-area-inset-top))] backdrop-blur-md dark:border-white/15";
+  "ke-site-header sticky top-[var(--ke-view-as-h,0px)] z-40 border-b border-slate-200/80 bg-bg/95 pt-[var(--ke-safe-top,env(safe-area-inset-top))] backdrop-blur-md dark:border-white/15";
 const HEADER_CTA =
   "ke-web-only inline-flex min-h-11 max-w-[9.5rem] touch-manipulation items-center justify-center gap-1.5 whitespace-normal rounded-full border border-primary px-2.5 text-center text-[13px] font-medium leading-tight text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 active:scale-[0.99] sm:max-w-none sm:px-3 sm:text-sm";
 

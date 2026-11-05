@@ -109,6 +109,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_SUPPORT_SMS_REPLY",
   "FEATURE_TOP_RATED_BADGE",
   "FEATURE_MOBILE_SEARCH_V2",
+  "FEATURE_UI_AIRBNB_V1",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -320,6 +321,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_TOP_RATED_BADGE: false,
   /** Mobile Where / When / Who search. Off. The current search stays until this is on. */
   FEATURE_MOBILE_SEARCH_V2: false,
+  /** Phone shell: edge-to-edge home, menu, and account. Off. Today’s UI stays until this is on. */
+  FEATURE_UI_AIRBNB_V1: false,
 };
 
 /**
@@ -930,6 +933,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Mobile Home search: Where, When, and Who. Off. Desktop and the current search stay as they are. No paid place lookup.",
+  },
+  {
+    key: "FEATURE_UI_AIRBNB_V1",
+    defaultOn: false,
+    docs: "docs/ui-airbnb-v1/README.md",
+    summary:
+      "Phone shell modelled on a calm full-screen app. Off. Desktop, admin, and gov stay as they are. No paid placement and no new search API.",
   },
 ];
 
