@@ -134,7 +134,7 @@ function CareIcon({ id }: { id: string }) {
   );
 }
 
-function AirbnbCareCategories() {
+export function AirbnbCareCategories() {
   const { locale, copy, t } = useFr();
   return (
     <div className="ke-airbnb-cats" data-ke="airbnb-care-cats" role="navigation" aria-label={t("railByCare")}>

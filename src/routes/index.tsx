@@ -75,7 +75,9 @@ const RoleEnrollChooser = lazy(() =>
 const RoleEnrollDialog = lazy(() =>
   import("@/components/role-enroll").then((m) => ({ default: m.RoleEnrollDialog })),
 );
-const AirbnbHome = lazy(() => import("@/components/airbnb-screens").then((m) => ({ default: m.AirbnbHome })));
+const AirbnbCareCategories = lazy(() =>
+  import("@/components/airbnb-screens").then((m) => ({ default: m.AirbnbCareCategories })),
+);
 
 export function homeValidateSearch(s: Record<string, unknown>) {
   const change = s.change === "1" || s.change === true;
@@ -509,26 +511,14 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
   return (
     <Shell>
       <JsonLd json={organizationGraphJsonLdScript(locale === "fr" ? "fr" : "en")} />
+      <div className="ke-home w-full min-w-0">
       {boot.airbnbUi ? (
-        <Suspense fallback={null}>
-          <AirbnbHome
-            listings={featured}
-            place={origin.label}
-            showChips={!boot.mobileSearchV2}
-            search={
-              boot.mobileSearchV2 ? (
-                <MobileSearchHome
-                  origin={origin}
-                  onCommit={(params) => {
-                    void navigate({ to: locale === "fr" ? "/fr/search" : "/search", search: params });
-                  }}
-                />
-              ) : undefined
-            }
-          />
-        </Suspense>
+        <div className="ke-airbnb-phone-only">
+          <Suspense fallback={null}>
+            <AirbnbCareCategories />
+          </Suspense>
+        </div>
       ) : null}
-      <div className={boot.airbnbUi ? "ke-home ke-airbnb-hide-phone w-full min-w-0" : "ke-home w-full min-w-0"}>
       <h1 className="ke-gutter mx-auto w-full pt-4 text-center text-[clamp(1.6rem,4.2vw,2.75rem)] leading-tight tracking-[-0.03em]">
         {t("tagline")}
       </h1>

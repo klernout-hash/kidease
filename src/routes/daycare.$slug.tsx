@@ -4,7 +4,7 @@ import { parentLoginSearch, parentSignupSearch } from "@/lib/auth/parent-login";
 import { FoundingMemberBadge } from "@/components/founding-member-badge";
 import { ShareListingButton } from "@/components/share-button";
 import { FreeListingShareActions } from "@/components/free-listing-share";
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Shell } from "@/components/shell";
 import { ListingHeroGallery } from "@/components/listing-hero-gallery";
@@ -106,12 +106,7 @@ import { classifyFacilityType, type FacilityType } from "@/lib/facility-type";
 import { publicAgeSourceUrl, standardAgeLabelsForListing } from "@/lib/standard-age-groups";
 import type { ListingSeoSource } from "@/lib/listing-seo";
 import { formatMonth, money, displayCentreName, displayListingText } from "@/lib/utils";
-import { airbnbPublicPlace, freshnessLine } from "@/lib/airbnb-ui";
-import { useAirbnbUi } from "@/lib/use-airbnb-ui";
 
-const AirbnbListingPhone = lazy(() =>
-  import("@/components/airbnb-screens").then((m) => ({ default: m.AirbnbListingPhone })),
-);
 import { openDirections } from "@/lib/maps";
 import { ListingMap } from "@/components/listing-map";
 import { OpenInMapsLink } from "@/components/map-unavailable";
@@ -223,7 +218,6 @@ export function Listing() {
   const search = useSearch({ strict: false }) as { ask?: ListingAsk };
   const seo = useLoaderData({ strict: false }) as ListingSeoSource | undefined;
   const { t, locale } = useCopy();
-  const airbnb = useAirbnbUi();
   function reportSafetyHref(province: string | null | undefined) {
     const code = reportSearchProvince(province) || (province || "").trim().toUpperCase();
     return `${localePath("/report", locale)}?province=${encodeURIComponent(code)}#${encodeURIComponent(code)}`;
@@ -771,19 +765,7 @@ export function Listing() {
 
   return (
     <Shell>
-      {airbnb ? (
-        <Suspense fallback={null}>
-          <AirbnbListingPhone
-            name={name}
-            photo={gallery[0]}
-            place={airbnbPublicPlace(d)}
-            freshness={freshnessLine(d.spotsUpdatedAt || d.lastVacancyUpdatedAt, locale)}
-            action={parentActions ? "message" : "tour"}
-            onAction={parentActions ? onMessage : onTour}
-          />
-        </Suspense>
-      ) : null}
-      <article className={`ke-dense mx-auto max-w-5xl overflow-x-hidden pb-[calc(15rem+env(safe-area-inset-bottom))] md:pb-10${airbnb ? " ke-airbnb-hide-phone" : ""}`}>
+      <article className={`ke-dense mx-auto max-w-5xl overflow-x-hidden pb-[calc(15rem+env(safe-area-inset-bottom))] md:pb-10`}>
         <div className="lg:ke-gutter lg:pt-4">
           <ListingHeroGallery
             photos={gallery}
@@ -1317,7 +1299,7 @@ export function Listing() {
       </article>
 
       {!requestOpen ? (
-      <div className={`fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden [[data-channel=app]_&]:bottom-20${airbnb ? " ke-airbnb-hide-phone" : ""}`} data-ke="listing-sticky-bar">
+      <div className={`fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden [[data-channel=app]_&]:bottom-20`} data-ke="listing-sticky-bar">
         <div className="mx-auto flex max-w-lg flex-col gap-2">
           <ListingCtaSnippet live={live} from={from} hours={hours} />
           {parentActions ? (
