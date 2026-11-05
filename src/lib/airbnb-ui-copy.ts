@@ -55,6 +55,14 @@ export type AirbnbCopy = {
   tour: string;
   back: string;
   newPill: string;
+  careAll: string;
+  careCentres: string;
+  careHomes: string;
+  careGroup: string;
+  careNursery: string;
+  careSchool: string;
+  careBefore: string;
+  careOpen: string;
 };
 
 const en: AirbnbCopy = {
@@ -109,6 +117,14 @@ const en: AirbnbCopy = {
   tour: "Request a tour",
   back: "Back",
   newPill: "New",
+  careAll: "All",
+  careCentres: "Centres",
+  careHomes: "Home daycares",
+  careGroup: "Group homes",
+  careNursery: "Nursery",
+  careSchool: "School-age",
+  careBefore: "Before & after",
+  careOpen: "Open spots",
 };
 
 const fr: AirbnbCopy = {
@@ -163,6 +179,14 @@ const fr: AirbnbCopy = {
   tour: "Demander une visite",
   back: "Retour",
   newPill: "Nouveau",
+  careAll: "Tout",
+  careCentres: "Centres",
+  careHomes: "Milieu familial",
+  careGroup: "Groupe",
+  careNursery: "Prématernelle",
+  careSchool: "Scolaire",
+  careBefore: "Avant et après",
+  careOpen: "Places libres",
 };
 
 export function airbnbCopy(locale: string): AirbnbCopy {
