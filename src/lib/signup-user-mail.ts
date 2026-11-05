@@ -117,9 +117,14 @@ export function verifyEmailIncludesNotLiveLine(audience?: "parent" | "provider" 
   return audience !== "parent";
 }
 
-export function verifyEmailText(url: string, name?: string | null, audience?: "parent" | "provider" | null): string {
+export function verifyEmailText(
+  url: string,
+  name?: string | null,
+  audience?: "parent" | "provider" | null,
+  french = false,
+): string {
   const notLive = verifyEmailIncludesNotLiveLine(audience);
-  return [
+  const enFirst = [
     hello(name, "en"),
     "",
     "Thanks for signing up with KidEase.",
@@ -150,15 +155,44 @@ export function verifyEmailText(url: string, name?: string | null, audience?: "p
     "KidEase",
     "support@kidease.ca",
   ].join("\n");
+  if (!french) return enFirst;
+  const marker = "\n---\n";
+  const at = enFirst.indexOf(marker);
+  if (at < 0) return enFirst;
+  const en = enFirst.slice(0, at).replace(/\n+$/, "");
+  const fr = enFirst.slice(at + marker.length).replace(/^\n+/, "");
+  return `${fr}\n\n---\n\n${en}`;
 }
 
-export function verifyEmailHtml(url: string, name?: string | null, audience?: "parent" | "provider" | null): string {
+export function verifyEmailHtml(
+  url: string,
+  name?: string | null,
+  audience?: "parent" | "provider" | null,
+  french = false,
+): string {
   const href = escapeAttr(url);
   const enHi = escapeHtml(hello(name, "en"));
   const frHi = escapeHtml(hello(name, "fr"));
   const notLive = verifyEmailIncludesNotLiveLine(audience);
   const enNotLive = notLive ? ` <strong>${escapeHtml(NOT_LIVE_UNTIL_VERIFIED_EN)}</strong>` : "";
   const frNotLive = notLive ? ` <strong>${escapeHtml(NOT_LIVE_UNTIL_VERIFIED_FR)}</strong>` : "";
+  if (french) {
+    return `<!doctype html>
+<html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">
+    <tr><td style="padding:28px;">
+      <p style="margin:0;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#5c6578;">KidEase</p>
+      <h1 style="margin:12px 0 0;font-size:24px;">Confirmer le courriel</h1>
+      <p style="margin:16px 0 0;">${frHi}</p>
+      <p style="margin:16px 0 0;color:#5c6578;">Merci de vous inscrire à KidEase.${frNotLive} Confirmez ce courriel pour que nous puissions vous joindre. Ce lien expire dans environ 24 heures.</p>
+      <p style="margin:24px 0 0;">
+        <a href="${href}" style="display:inline-block;background:#1a3790;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:600;">Confirmer le courriel</a>
+      </p>
+      <p style="margin:28px 0 0;font-size:13px;color:#5c6578;">${enHi} Thanks for signing up with KidEase.${enNotLive} Please verify this email so we can reach you about your account. The link expires in about 24 hours.</p>
+    </td></tr>
+  </table>
+</body></html>`;
+  }
   return `<!doctype html>
 <html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">

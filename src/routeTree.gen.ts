@@ -156,6 +156,7 @@ import { Route as FrExploreRouteImport } from './routes/fr.explore'
 import { Route as FrFaqRouteImport } from './routes/fr.faq'
 import { Route as FrForDaycaresRouteImport } from './routes/fr.for-daycares'
 import { Route as FrForYouRouteImport } from './routes/fr.for-you'
+import { Route as FrForgotPasswordRouteImport } from './routes/fr.forgot-password'
 import { Route as FrGetAppRouteImport } from './routes/fr.get-app'
 import { Route as FrGovRouteImport } from './routes/fr.gov'
 import { Route as FrGuidesRouteImport } from './routes/fr.guides'
@@ -175,6 +176,7 @@ import { Route as FrPricingRouteImport } from './routes/fr.pricing'
 import { Route as FrPrivacyRouteImport } from './routes/fr.privacy'
 import { Route as FrProviderRouteImport } from './routes/fr.provider'
 import { Route as FrReportRouteImport } from './routes/fr.report'
+import { Route as FrResetPasswordRouteImport } from './routes/fr.reset-password'
 import { Route as FrSearchRouteImport } from './routes/fr.search'
 import { Route as FrSignupRouteImport } from './routes/fr.signup'
 import { Route as FrStartADaycareRouteImport } from './routes/fr.start-a-daycare'
@@ -187,6 +189,7 @@ import { Route as FrTrustSafetyRouteImport } from './routes/fr.trust-safety'
 import { Route as FrUnsubscribeRouteImport } from './routes/fr.unsubscribe'
 import { Route as FrVacancyIndexRouteImport } from './routes/fr.vacancy-index'
 import { Route as FrVerifyRouteImport } from './routes/fr.verify'
+import { Route as FrVerify2faRouteImport } from './routes/fr.verify-2fa'
 import { Route as FrWaitlistRouteImport } from './routes/fr.waitlist'
 import { Route as GovAuditRouteImport } from './routes/gov_.audit'
 import { Route as GovBroadcastsRouteImport } from './routes/gov_.broadcasts'
@@ -1045,6 +1048,11 @@ const FrForYouRoute = FrForYouRouteImport.update({
   path: '/for-you',
   getParentRoute: () => FrRoute,
 } as any)
+const FrForgotPasswordRoute = FrForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrGetAppRoute = FrGetAppRouteImport.update({
   id: '/get-app',
   path: '/get-app',
@@ -1140,6 +1148,11 @@ const FrReportRoute = FrReportRouteImport.update({
   path: '/report',
   getParentRoute: () => FrRoute,
 } as any)
+const FrResetPasswordRoute = FrResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrSearchRoute = FrSearchRouteImport.update({
   id: '/search',
   path: '/search',
@@ -1198,6 +1211,11 @@ const FrVacancyIndexRoute = FrVacancyIndexRouteImport.update({
 const FrVerifyRoute = FrVerifyRouteImport.update({
   id: '/verify',
   path: '/verify',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrVerify2faRoute = FrVerify2faRouteImport.update({
+  id: '/verify-2fa',
+  path: '/verify-2fa',
   getParentRoute: () => FrRoute,
 } as any)
 const FrWaitlistRoute = FrWaitlistRouteImport.update({
@@ -1949,6 +1967,7 @@ export interface FileRoutesByFullPath {
   '/fr/faq': typeof FrFaqRoute
   '/fr/for-daycares': typeof FrForDaycaresRoute
   '/fr/for-you': typeof FrForYouRoute
+  '/fr/forgot-password': typeof FrForgotPasswordRoute
   '/fr/get-app': typeof FrGetAppRoute
   '/fr/gov': typeof FrGovRoute
   '/fr/guides': typeof FrGuidesRouteWithChildren
@@ -1968,6 +1987,7 @@ export interface FileRoutesByFullPath {
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/provider': typeof FrProviderRoute
   '/fr/report': typeof FrReportRoute
+  '/fr/reset-password': typeof FrResetPasswordRoute
   '/fr/search': typeof FrSearchRoute
   '/fr/signup': typeof FrSignupRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
@@ -1980,6 +2000,7 @@ export interface FileRoutesByFullPath {
   '/fr/unsubscribe': typeof FrUnsubscribeRoute
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/fr/verify': typeof FrVerifyRoute
+  '/fr/verify-2fa': typeof FrVerify2faRoute
   '/fr/waitlist': typeof FrWaitlistRoute
   '/gov/audit': typeof GovAuditRoute
   '/gov/broadcasts': typeof GovBroadcastsRoute
@@ -2247,6 +2268,7 @@ export interface FileRoutesByTo {
   '/fr/faq': typeof FrFaqRoute
   '/fr/for-daycares': typeof FrForDaycaresRoute
   '/fr/for-you': typeof FrForYouRoute
+  '/fr/forgot-password': typeof FrForgotPasswordRoute
   '/fr/get-app': typeof FrGetAppRoute
   '/fr/gov': typeof FrGovRoute
   '/fr/guides': typeof FrGuidesRouteWithChildren
@@ -2266,6 +2288,7 @@ export interface FileRoutesByTo {
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/provider': typeof FrProviderRoute
   '/fr/report': typeof FrReportRoute
+  '/fr/reset-password': typeof FrResetPasswordRoute
   '/fr/search': typeof FrSearchRoute
   '/fr/signup': typeof FrSignupRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
@@ -2278,6 +2301,7 @@ export interface FileRoutesByTo {
   '/fr/unsubscribe': typeof FrUnsubscribeRoute
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/fr/verify': typeof FrVerifyRoute
+  '/fr/verify-2fa': typeof FrVerify2faRoute
   '/fr/waitlist': typeof FrWaitlistRoute
   '/gov/audit': typeof GovAuditRoute
   '/gov/broadcasts': typeof GovBroadcastsRoute
@@ -2548,6 +2572,7 @@ export interface FileRoutesById {
   '/fr/faq': typeof FrFaqRoute
   '/fr/for-daycares': typeof FrForDaycaresRoute
   '/fr/for-you': typeof FrForYouRoute
+  '/fr/forgot-password': typeof FrForgotPasswordRoute
   '/fr/get-app': typeof FrGetAppRoute
   '/fr/gov': typeof FrGovRoute
   '/fr/guides': typeof FrGuidesRouteWithChildren
@@ -2567,6 +2592,7 @@ export interface FileRoutesById {
   '/fr/privacy': typeof FrPrivacyRoute
   '/fr/provider': typeof FrProviderRoute
   '/fr/report': typeof FrReportRoute
+  '/fr/reset-password': typeof FrResetPasswordRoute
   '/fr/search': typeof FrSearchRoute
   '/fr/signup': typeof FrSignupRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
@@ -2579,6 +2605,7 @@ export interface FileRoutesById {
   '/fr/unsubscribe': typeof FrUnsubscribeRoute
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
   '/fr/verify': typeof FrVerifyRoute
+  '/fr/verify-2fa': typeof FrVerify2faRoute
   '/fr/waitlist': typeof FrWaitlistRoute
   '/gov_/audit': typeof GovAuditRoute
   '/gov_/broadcasts': typeof GovBroadcastsRoute
@@ -2850,6 +2877,7 @@ export interface FileRouteTypes {
     | '/fr/faq'
     | '/fr/for-daycares'
     | '/fr/for-you'
+    | '/fr/forgot-password'
     | '/fr/get-app'
     | '/fr/gov'
     | '/fr/guides'
@@ -2869,6 +2897,7 @@ export interface FileRouteTypes {
     | '/fr/privacy'
     | '/fr/provider'
     | '/fr/report'
+    | '/fr/reset-password'
     | '/fr/search'
     | '/fr/signup'
     | '/fr/start-a-daycare'
@@ -2881,6 +2910,7 @@ export interface FileRouteTypes {
     | '/fr/unsubscribe'
     | '/fr/vacancy-index'
     | '/fr/verify'
+    | '/fr/verify-2fa'
     | '/fr/waitlist'
     | '/gov/audit'
     | '/gov/broadcasts'
@@ -3148,6 +3178,7 @@ export interface FileRouteTypes {
     | '/fr/faq'
     | '/fr/for-daycares'
     | '/fr/for-you'
+    | '/fr/forgot-password'
     | '/fr/get-app'
     | '/fr/gov'
     | '/fr/guides'
@@ -3167,6 +3198,7 @@ export interface FileRouteTypes {
     | '/fr/privacy'
     | '/fr/provider'
     | '/fr/report'
+    | '/fr/reset-password'
     | '/fr/search'
     | '/fr/signup'
     | '/fr/start-a-daycare'
@@ -3179,6 +3211,7 @@ export interface FileRouteTypes {
     | '/fr/unsubscribe'
     | '/fr/vacancy-index'
     | '/fr/verify'
+    | '/fr/verify-2fa'
     | '/fr/waitlist'
     | '/gov/audit'
     | '/gov/broadcasts'
@@ -3448,6 +3481,7 @@ export interface FileRouteTypes {
     | '/fr/faq'
     | '/fr/for-daycares'
     | '/fr/for-you'
+    | '/fr/forgot-password'
     | '/fr/get-app'
     | '/fr/gov'
     | '/fr/guides'
@@ -3467,6 +3501,7 @@ export interface FileRouteTypes {
     | '/fr/privacy'
     | '/fr/provider'
     | '/fr/report'
+    | '/fr/reset-password'
     | '/fr/search'
     | '/fr/signup'
     | '/fr/start-a-daycare'
@@ -3479,6 +3514,7 @@ export interface FileRouteTypes {
     | '/fr/unsubscribe'
     | '/fr/vacancy-index'
     | '/fr/verify'
+    | '/fr/verify-2fa'
     | '/fr/waitlist'
     | '/gov_/audit'
     | '/gov_/broadcasts'
@@ -4841,6 +4877,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrForYouRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/forgot-password': {
+      id: '/fr/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/fr/forgot-password'
+      preLoaderRoute: typeof FrForgotPasswordRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/get-app': {
       id: '/fr/get-app'
       path: '/get-app'
@@ -4974,6 +5017,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrReportRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/reset-password': {
+      id: '/fr/reset-password'
+      path: '/reset-password'
+      fullPath: '/fr/reset-password'
+      preLoaderRoute: typeof FrResetPasswordRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/search': {
       id: '/fr/search'
       path: '/search'
@@ -5056,6 +5106,13 @@ declare module '@tanstack/react-router' {
       path: '/verify'
       fullPath: '/fr/verify'
       preLoaderRoute: typeof FrVerifyRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/verify-2fa': {
+      id: '/fr/verify-2fa'
+      path: '/verify-2fa'
+      fullPath: '/fr/verify-2fa'
+      preLoaderRoute: typeof FrVerify2faRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/waitlist': {
@@ -5991,6 +6048,7 @@ interface FrRouteChildren {
   FrFaqRoute: typeof FrFaqRoute
   FrForDaycaresRoute: typeof FrForDaycaresRoute
   FrForYouRoute: typeof FrForYouRoute
+  FrForgotPasswordRoute: typeof FrForgotPasswordRoute
   FrGetAppRoute: typeof FrGetAppRoute
   FrGovRoute: typeof FrGovRoute
   FrGuidesRoute: typeof FrGuidesRouteWithChildren
@@ -6010,6 +6068,7 @@ interface FrRouteChildren {
   FrPrivacyRoute: typeof FrPrivacyRoute
   FrProviderRoute: typeof FrProviderRoute
   FrReportRoute: typeof FrReportRoute
+  FrResetPasswordRoute: typeof FrResetPasswordRoute
   FrSearchRoute: typeof FrSearchRoute
   FrSignupRoute: typeof FrSignupRoute
   FrStartADaycareRoute: typeof FrStartADaycareRoute
@@ -6022,6 +6081,7 @@ interface FrRouteChildren {
   FrUnsubscribeRoute: typeof FrUnsubscribeRoute
   FrVacancyIndexRoute: typeof FrVacancyIndexRoute
   FrVerifyRoute: typeof FrVerifyRoute
+  FrVerify2faRoute: typeof FrVerify2faRoute
   FrWaitlistRoute: typeof FrWaitlistRoute
   FrIndexRoute: typeof FrIndexRoute
   FrDaycareSlugRoute: typeof FrDaycareSlugRoute
@@ -6065,6 +6125,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrFaqRoute: FrFaqRoute,
   FrForDaycaresRoute: FrForDaycaresRoute,
   FrForYouRoute: FrForYouRoute,
+  FrForgotPasswordRoute: FrForgotPasswordRoute,
   FrGetAppRoute: FrGetAppRoute,
   FrGovRoute: FrGovRoute,
   FrGuidesRoute: FrGuidesRouteWithChildren,
@@ -6084,6 +6145,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrPrivacyRoute: FrPrivacyRoute,
   FrProviderRoute: FrProviderRoute,
   FrReportRoute: FrReportRoute,
+  FrResetPasswordRoute: FrResetPasswordRoute,
   FrSearchRoute: FrSearchRoute,
   FrSignupRoute: FrSignupRoute,
   FrStartADaycareRoute: FrStartADaycareRoute,
@@ -6096,6 +6158,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrUnsubscribeRoute: FrUnsubscribeRoute,
   FrVacancyIndexRoute: FrVacancyIndexRoute,
   FrVerifyRoute: FrVerifyRoute,
+  FrVerify2faRoute: FrVerify2faRoute,
   FrWaitlistRoute: FrWaitlistRoute,
   FrIndexRoute: FrIndexRoute,
   FrDaycareSlugRoute: FrDaycareSlugRoute,

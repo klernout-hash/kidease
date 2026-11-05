@@ -2,6 +2,7 @@ import { isShippedLocale, type ShippedLocale } from "./languages.ts";
 import {
   englishPath,
   frenchPath,
+  isAuthFrPath,
   isFrenchDeskPath,
   isFrPath,
   isPairedPath,
@@ -80,6 +81,8 @@ export type LocaleRedirectInput = VisitorLocaleInput & {
    * and nobody has saved a choice. Ignored when unset.
    */
   preferredLocale?: "en" | "fr" | null;
+  /** When true, Quebec / French may hop forgot, reset, and 2-step onto `/fr`. */
+  frAuthQc?: boolean;
 };
 
 export function normalizeGeoRegion(region?: string | null): string {
@@ -225,6 +228,11 @@ export function decideVisitorLocale(input: VisitorLocaleInput = {}): VisitorLoca
   return { locale: "en", explicit: false, source: "default", suppressGeo: false };
 }
 
+function pairedForRedirect(pathname: string, frAuthQc?: boolean): boolean {
+  if (isAuthFrPath(pathname) && frAuthQc !== true) return false;
+  return isPairedPath(pathname);
+}
+
 function attachSearch(path: string, search?: string | null): string {
   const raw = (search || "").trim();
   if (!raw || raw === "?" || raw === "#") return path;
@@ -253,7 +261,7 @@ export function localeRedirectTarget(input: LocaleRedirectInput): string | null 
     const target = attachSearch(next, input.search);
     return target.startsWith("/") && !target.startsWith("//") ? target : null;
   }
-  if (queryLocale === "fr" && !isFrPath(pathname) && isPairedPath(pathname)) {
+  if (queryLocale === "fr" && !isFrPath(pathname) && pairedForRedirect(pathname, input.frAuthQc)) {
     const next = frenchPath(pathname);
     if (normalizePathname(next) === pathname) return null;
     const target = attachSearch(next, input.search);
@@ -262,7 +270,7 @@ export function localeRedirectTarget(input: LocaleRedirectInput): string | null 
   if (decision.suppressGeo) return null;
   if (decision.locale !== "en" && decision.locale !== "fr") return null;
 
-  if (!isPairedPath(pathname)) return null;
+  if (!pairedForRedirect(pathname, input.frAuthQc)) return null;
 
   const current = pathLocale(pathname);
   let desired = decision.locale;

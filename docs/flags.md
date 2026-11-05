@@ -209,6 +209,7 @@ Each one stays off until its own flag is `1`. None of them send email, SMS, push
 | `FEATURE_TOP_RATED_BADGE` | KidEase Top Rated on listing cards and the daycare status page. Default off. Not a government rating. |
 | `FEATURE_MOBILE_SEARCH_V2` | Mobile Home search with Where, When, and Who. Default off. Desktop and the current search stay as they are. No paid place lookup. |
 | `FEATURE_UI_AIRBNB_V1` | Phone shell: search pill, one-card home, account hub, language list. Default off. Desktop, admin, and gov stay as they are. No paid placement. |
+| `FEATURE_FR_AUTH_QC` | French password-reset, sign-in code, and verify-email for Quebec (country CA, region QC) and French locale. Default off. Also lets Accept-Language and Quebec geo open `/fr/forgot-password`, `/fr/reset-password`, and `/fr/verify-2fa`. English mail subjects stay byte-for-byte until this is on. |
 | `BRANDED_EMAILS` | Env only, not a PostHog flag. Default off. When `1`, notification email uses the KidEase layout (logo, button, plain-text part, one-click unsubscribe). Unset keeps today's bodies. Do not turn on until `send.kidease.ca` mail DNS is confirmed. |
 
 ## What is wired

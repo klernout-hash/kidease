@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 import { authClient, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
@@ -13,18 +13,29 @@ import { PasswordRules } from "@/components/password-rules";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { useCopy } from "@/lib/use-copy";
 import { localPasswordIssue, PASSWORD_POLICY_HINT, passwordMeetsPolicy } from "@/lib/password-hygiene";
+import { isFrPath } from "@/lib/locale-path";
+
+export const resetPasswordValidateSearch = (s: Record<string, unknown>) => ({
+  token: typeof s.token === "string" ? s.token : "",
+});
 
 export const Route = createFileRoute("/reset-password")({
-  validateSearch: (s: Record<string, unknown>) => ({
-    token: typeof s.token === "string" ? s.token : "",
-  }),
+  validateSearch: resetPasswordValidateSearch,
   head: () => withNoindex(pageSeoHead(MARKETING_PAGE_SEO.resetPassword)),
   component: ResetPassword,
 });
 
 function ResetPassword() {
   const { token } = Route.useSearch();
+  return <ResetPasswordScreen token={token} />;
+}
+
+export function ResetPasswordScreen({ token }: { token: string }) {
   const { t, locale } = useCopy();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const french = locale === "fr" || isFrPath(pathname);
+  const signInTo = french ? "/fr/login" : "/login";
+  const forgotTo = french ? "/fr/forgot-password" : "/forgot-password";
   const { celebrate } = useSuccessConfirm();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -88,14 +99,14 @@ function ResetPassword() {
           {done ? (
             <>
               <p className="mt-3 text-sm text-muted">{t("resetPasswordDone")}</p>
-              <Link to="/login" className="mt-6 inline-flex text-sm text-primary underline-offset-4 hover:underline">
+              <Link to={signInTo} className="mt-6 inline-flex text-sm text-primary underline-offset-4 hover:underline">
                 {t("backToSignIn")}
               </Link>
             </>
           ) : !token ? (
             <>
               <p className="mt-3 text-sm text-danger">{t("resetPasswordMissing")}</p>
-              <Link to="/forgot-password" className="mt-6 inline-flex text-sm text-primary underline-offset-4 hover:underline">
+              <Link to={forgotTo} className="mt-6 inline-flex text-sm text-primary underline-offset-4 hover:underline">
                 {t("resetPasswordNewLink")}
               </Link>
             </>
@@ -130,7 +141,7 @@ function ResetPassword() {
                 </Button>
               </form>
               <p className="mt-6 text-center text-xs text-subtle">
-                <Link to="/login" className="underline-offset-4 hover:underline">
+                <Link to={signInTo} className="underline-offset-4 hover:underline">
                   {t("backToSignIn")}
                 </Link>
               </p>

@@ -9,7 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { localeTag } from "@/lib/languages";
 import { pathLocale } from "@/lib/locale-path";
-import { getVisitorLocale, readFrCaEnabled } from "@/lib/locale-choice";
+import { getVisitorLocale, readFrAuthQc, readFrCaEnabled } from "@/lib/locale-choice";
 import { readServerStoreChannel, type ServerStoreRead } from "@/lib/store-channel-request";
 import { FrCaDeviceBoot } from "@/components/fr-ca-boot";
 import { LocaleChoiceSync } from "@/components/language-select";
@@ -111,7 +111,7 @@ export const Route = createRootRoute({
       throw redirect({ href: "/fr/delete-account", statusCode: 301 });
     }
     const search = `${location.searchStr || ""}${location.hash || ""}`;
-    const [roleChrome, visitorLocale, frCa] = await Promise.all([
+    const [roleChrome, visitorLocale, frCa, frAuthQc] = await Promise.all([
       getRoleChrome().catch(() => ({
         signedIn: true,
         role: null as null,
@@ -126,6 +126,7 @@ export const Route = createRootRoute({
       })),
       getVisitorLocale({ data: { pathname: location.pathname, search } }).catch(() => GUEST_LOCALE),
       readFrCaEnabled().catch(() => false),
+      readFrAuthQc().catch(() => false),
     ]);
     if (visitorLocale.redirectTo) {
       throw redirect({ href: visitorLocale.redirectTo, statusCode: 302 });
@@ -149,6 +150,7 @@ export const Route = createRootRoute({
         automationMode(posthogErrorsEnabled(), process.env[automationLiveEnv("FEATURE_POSTHOG_ERRORS")]) ===
         "live",
       frCa: frCa === true,
+      frAuthQc: frAuthQc === true,
       airbnbUi: await readAirbnbUi().catch(() => airbnbUiEnabled()),
     };
   },

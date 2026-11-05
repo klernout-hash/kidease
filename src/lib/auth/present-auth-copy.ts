@@ -70,6 +70,32 @@ const EXACT: Array<[string, CopyKey]> = [
     "Continue with Facebook is not available on this address. Open kidease.ca.",
     "facebookHostUnavailable",
   ],
+  [
+    "We could not email a sign-in code. Nothing was sent. Try Send a new code, or email support@kidease.ca.",
+    "verify2faLeadFail",
+  ],
+  ["Check your email", "verify2faTitle"],
+  ["Verification code", "verify2faCodeLabel"],
+  ["Remember this device for 30 days", "verify2faRemember"],
+  [
+    "Skip the email code on this browser for 30 days. Do not use this on a shared computer.",
+    "verify2faRememberHint",
+  ],
+  ["Verify and continue", "verify2faSubmit"],
+  ["Opening your desk…", "verify2faSubmitting"],
+  ["Send a new code", "verify2faResend"],
+  ["A new code is on its way. Use the latest email.", "verify2faResent"],
+  ["Please wait a moment, then try Send a new code again.", "verify2faWaitRetry"],
+  ["Could not send a code. Use Send a new code, or go back to sign in.", "verify2faSendFailed"],
+  ["Could not send a code. Email support@kidease.ca.", "verify2faSendFailedMail"],
+  ["Still sending your code. Try again in a moment.", "verify2faStillSending"],
+  ["Enter the 6-digit code from your email.", "verify2faNeedCode"],
+  ["Complete the security check, then tap Verify.", "verify2faNeedTurnstile"],
+  ["Could not verify", "verify2faCouldNot"],
+  ["Still opening your desk. You can send a new code, or continue below.", "verify2faStall"],
+  ["Continue to your desk", "verify2faContinue"],
+  ["Email support@kidease.ca", "verify2faSupport"],
+  ["Back to sign in", "backToSignIn"],
 ];
 
 /**
@@ -101,5 +127,7 @@ export function presentAuthCopy(locale: string, message: string | null | undefin
   if (text === "Try again in 1 min.") return tx("fr", "reauthTryMinOne");
   const againMin = text.match(/^Try again in (\d+) min\.$/);
   if (againMin) return tx("fr", "reauthTryMin").replace("{n}", againMin[1]);
+  const sent = text.match(/^We sent a 6-digit code(?: to (.+))?\. Enter it to finish signing in\.$/);
+  if (sent) return tx("fr", "verify2faLeadSent").replace("{to}", sent[1] ? ` à ${sent[1]}` : "");
   return text;
 }

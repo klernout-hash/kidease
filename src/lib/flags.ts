@@ -110,6 +110,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_TOP_RATED_BADGE",
   "FEATURE_MOBILE_SEARCH_V2",
   "FEATURE_UI_AIRBNB_V1",
+  "FEATURE_FR_AUTH_QC",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -323,6 +324,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_MOBILE_SEARCH_V2: false,
   /** Phone shell: edge-to-edge home, menu, and account. Off. Today’s UI stays until this is on. */
   FEATURE_UI_AIRBNB_V1: false,
+  /** French password reset, sign-in code, and verify mail for Quebec and French. Off. English mail stays. */
+  FEATURE_FR_AUTH_QC: false,
 };
 
 /**
@@ -940,6 +943,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/ui-airbnb-v1/README.md",
     summary:
       "Phone shell modelled on a calm full-screen app. Off. Desktop, admin, and gov stay as they are. No paid placement and no new search API.",
+  },
+  {
+    key: "FEATURE_FR_AUTH_QC",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "French password reset, sign-in code, and verify-email for people in Quebec or using French. Off. English mail subjects stay as they are.",
   },
 ];
 

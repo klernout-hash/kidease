@@ -1,7 +1,7 @@
 import { KIDEASE_OPERATOR_EMAIL } from "@/lib/admin-email";
 import { sendTransactionalMail } from "@/lib/transactional-mail";
 import { brandedNotice } from "@/lib/email-layout";
-import { VERIFY_EMAIL_SUBJECT, verifyEmailHtml, verifyEmailText } from "@/lib/signup-user-mail";
+import { VERIFY_EMAIL_SUBJECT, VERIFY_EMAIL_SUBJECT_FR, verifyEmailHtml, verifyEmailText } from "@/lib/signup-user-mail";
 
 async function lookupVerifyAudience(email: string): Promise<"parent" | "provider" | undefined> {
   try {
@@ -43,24 +43,36 @@ export async function sendVerifyEmail(input: {
   url: string;
   name?: string | null;
   audience?: "parent" | "provider" | null;
+  french?: boolean;
 }) {
   const to = input.to.trim().toLowerCase();
   if (!to || !to.includes("@")) throw new Error("A registered email is required.");
   if (recentlySentVerifyEmail(to)) return { status: "skipped" as const };
   const audience = input.audience ?? (await lookupVerifyAudience(to));
-  const text = verifyEmailText(input.url, input.name, audience);
+  let french = input.french;
+  if (french === undefined) {
+    const { frenchAuthMailForEmail } = await import("@/lib/server/fr-auth-mail.server");
+    french = await frenchAuthMailForEmail(to);
+  }
+  const subject = french ? VERIFY_EMAIL_SUBJECT_FR : VERIFY_EMAIL_SUBJECT;
+  const text = verifyEmailText(input.url, input.name, audience, french);
   const result = await sendTransactionalMail({
     purpose: "verify_email",
     to,
-    subject: VERIFY_EMAIL_SUBJECT,
+    subject,
     text,
-    html: verifyEmailHtml(input.url, input.name, audience),
+    html: verifyEmailHtml(input.url, input.name, audience, french),
     replyTo: KIDEASE_OPERATOR_EMAIL,
     branded: brandedNotice({
-      heading: VERIFY_EMAIL_SUBJECT,
+      heading: french ? "Confirmer le courriel" : subject,
       text,
-      cta: /^https:\/\//i.test(input.url) ? { label: "Verify email", href: input.url } : undefined,
-      reason: "You get this because a KidEase account was created with this email.",
+      cta: /^https:\/\//i.test(input.url)
+        ? { label: french ? "Confirmer le courriel" : "Verify email", href: input.url }
+        : undefined,
+      reason: french
+        ? "Vous recevez ce message parce qu’un compte KidEase a été créé avec ce courriel."
+        : "You get this because a KidEase account was created with this email.",
+      locale: french ? "fr" : "en",
     }),
   });
   return result.status;

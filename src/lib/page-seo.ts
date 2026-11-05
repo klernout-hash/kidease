@@ -418,6 +418,22 @@ export const MARKETING_PAGE_SEO_FR = {
       "Créez un compte KidEase ou connectez-vous pour enregistrer des centres permis, demander une visite et écrire à une garderie.",
     path: "/fr/login",
   },
+  forgotPassword: {
+    title: "Mot de passe oublié · KidEase",
+    description:
+      "Demandez un lien si vous ne vous souvenez plus du mot de passe KidEase. Nous l’envoyons à l’adresse du compte.",
+    path: "/fr/forgot-password",
+  },
+  resetPassword: {
+    title: "Choisir un nouveau mot de passe · KidEase",
+    description: "Définissez un nouveau mot de passe KidEase après avoir ouvert le lien reçu par courriel.",
+    path: "/fr/reset-password",
+  },
+  verify2fa: {
+    title: "Vérifiez votre connexion · KidEase",
+    description: "Terminez votre connexion à KidEase. Cette page est privée.",
+    path: "/fr/verify-2fa",
+  },
   jobs: {
     title: "Trouver des emplois en garderie au Canada · KidEase",
     description:
