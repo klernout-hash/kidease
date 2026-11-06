@@ -1332,6 +1332,16 @@
     border-top: 1px solid var(--color-border);
     padding-top: 1.5rem;
   }
+  .ke-visual-card a:focus-visible,
+  .ke-tile a:focus-visible,
+  .ke-visual-card button:focus-visible,
+  .ke-tile button:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+  .ke-listing-rail-title {
+    overflow-wrap: anywhere;
+  }
   .ke-crumb {
     display: inline-flex;
     align-items: center;

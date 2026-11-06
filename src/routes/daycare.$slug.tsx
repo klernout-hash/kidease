@@ -737,27 +737,24 @@ export function Listing() {
     return (
       <div data-ke={parentActions ? "listing-parent-actions" : ownEdit ? "listing-own-edit" : "listing-actions-none"}>
         <ListingEditLink />
-        {parentActions ? (
+        {parentActions && live ? (
           <Button className="min-h-11 w-full whitespace-normal rounded-[14px] touch-manipulation" data-ke="listing-tour-cta" onClick={onTour}>
             {t("bookTour")}
           </Button>
         ) : null}
-        {parentActions ? (
+        {parentActions && live ? (
           <Button className="min-h-11 rounded-[14px] touch-manipulation" variant="secondary" data-ke="listing-primary-cta" onClick={onInfo}>
             {t("requestInfo")}
           </Button>
         ) : null}
-        {parentActions ? (
+        {parentActions && live ? (
           <Button className="min-h-11 rounded-[14px] touch-manipulation" variant="secondary" data-ke="listing-message-cta" onClick={onMessage}>
             {t("message")}
           </Button>
         ) : null}
         {parentActions && !live ? (
-          <Button className="min-h-11 rounded-[14px] touch-manipulation" variant="secondary" asChild>
-            <Link to={localePath("/search", locale)}>{t("searchNearbyShort")}</Link>
-          </Button>
+          <p className="text-xs text-muted" data-ke="listing-not-live">{t("parentRequestNotLive")}</p>
         ) : null}
-        {parentActions && !live ? <p className="text-xs text-muted">{t("parentRequestNotLive")}</p> : null}
         <DirectionsButton />
       </div>
     );
@@ -1302,7 +1299,7 @@ export function Listing() {
       <div className={`fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden [[data-channel=app]_&]:bottom-20`} data-ke="listing-sticky-bar">
         <div className="mx-auto flex max-w-lg flex-col gap-2">
           <ListingCtaSnippet live={live} from={from} hours={hours} />
-          {parentActions ? (
+          {parentActions && live ? (
             <Button className="ke-sticky-action h-auto min-h-11 w-full rounded-[14px] px-3 py-2 touch-manipulation" data-ke="listing-sticky-tour" onClick={onTour}>
               <Calendar className="size-4 shrink-0" aria-hidden="true" />
               <span className="ke-sticky-label">{t("bookTour")}</span>
@@ -1321,7 +1318,7 @@ export function Listing() {
           >
             <MapPinned className="size-4" aria-hidden="true" />
           </Button>
-          {parentActions ? (
+          {parentActions && live ? (
             <div className="flex min-w-0 flex-1 flex-wrap gap-1.5" data-ke="listing-parent-actions">
               <Button className="ke-sticky-action h-auto min-h-11 rounded-[14px] px-2 py-2 touch-manipulation" variant="secondary" data-ke="listing-sticky-cta" aria-label={t("requestInfo")} onClick={onInfo}>
                 <Info className="size-4 shrink-0" aria-hidden="true" />
@@ -1332,6 +1329,8 @@ export function Listing() {
                 <span className="ke-sticky-label">{t("stickyMessage")}</span>
               </Button>
             </div>
+          ) : parentActions ? (
+            <p className="min-w-0 flex-1 text-xs text-muted" data-ke="listing-not-live">{t("parentRequestNotLive")}</p>
           ) : null}
           {parentActions ? <SaveListingButton daycareId={d.id} nextPath={localePath(`/daycare/${slug}`, locale)} appearance="bar" className="shrink-0" /> : null}
           <ListingMoreActions compact>

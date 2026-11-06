@@ -13,7 +13,7 @@ export function helpLauncherVisible(pathname: string | null | undefined): boolea
   const bare = stripLocalePrefix(pathname);
   if (bare === "/video" || bare.startsWith("/video/")) return false;
   if (bare === "/call" || bare.startsWith("/call/")) return false;
-  if (isGovPortalPath(bare)) return false;
+  if (bare === "/help" || bare.startsWith("/help/") || bare === "/menu" || bare.startsWith("/menu/")) return false;
   return true;
 }
 

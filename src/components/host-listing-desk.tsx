@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ChevronLeft } from "lucide-react";
+import { localePath } from "@/lib/locale-path";
 import { BuildingPhoto } from "@/components/building-photo";
 import { CapacityForm } from "@/components/provider-listing-forms";
 import { KidEaseApprovalStrip } from "@/components/kidease-approval";
@@ -121,6 +122,27 @@ export function HostListingsDesk({
   );
 }
 
+function PublishedPreview({ slug, locale }: { slug: string; locale: string }) {
+  if (!slug) return null;
+  return (
+    <p className="mt-3 text-sm" data-ke="host-preview">
+      <a
+        href={localePath(`/daycare/${slug}`, locale)}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline"
+      >
+        {locale === "fr" ? "Aperçu de la fiche publiée" : "Preview published listing"}
+      </a>
+      <span className="mt-1 block text-muted">
+        {locale === "fr"
+          ? "Ouvre la page que les parents voient. Ce n’est pas un brouillon."
+          : "Opens the page parents see. This is not a draft."}
+      </span>
+    </p>
+  );
+}
+
 function HostEditor({
   daycare,
   onBack,
@@ -169,6 +191,7 @@ function HostEditor({
           {t("back")}
         </button>
         <h2 className="mt-2 font-display text-2xl">{sectionTitle(section, locale)}</h2>
+        <PublishedPreview slug={daycare.slug} locale={locale} />
         <CapacityForm
           daycare={daycare}
           mode="listing"
@@ -202,6 +225,7 @@ function HostEditor({
         </button>
         <h2 className="font-display text-xl">{copy.editor}</h2>
       </div>
+      <PublishedPreview slug={daycare.slug} locale={locale} />
       <div role="tablist" aria-label={copy.editor} className="mt-3 inline-flex max-w-full rounded-full bg-bg p-1 ring-1 ring-border">
         {(
           [

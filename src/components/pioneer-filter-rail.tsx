@@ -3,7 +3,7 @@ import { PIONEER_LANGS, PIONEER_LANG_LABELS, type PioneerLang, type PioneerSearc
 import { useCopy } from "@/lib/use-copy";
 
 const CHIPS: Array<{ key: keyof PioneerSearch; en: string; fr: string }> = [
-  { key: "cwelcc", en: "CWELCC $10/day", fr: "AGJE 10 $/jour" },
+  { key: "cwelcc", en: "Fee-cap program", fr: "Programme à tarif plafonné" },
   { key: "openings", en: "Verified openings", fr: "Places confirmées" },
   { key: "inclusive", en: "Inclusive / special needs", fr: "Inclusion / besoins particuliers" },
   { key: "meals", en: "Meals / dietary", fr: "Repas / alimentation" },
