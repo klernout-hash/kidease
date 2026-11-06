@@ -2821,6 +2821,11 @@ html[data-ui="airbnb-v1"][data-theme="dark"] {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
 }
+/* Airbnb v1 phone home: keep the icon care row; hide emoji + pill duplicates. */
+html[data-ui="airbnb-v1"] .ke-home [data-ke="msv2-categories"] { display: none !important; }
+html[data-ui="airbnb-v1"] .ke-home [data-ke="msv2-home"] .sticky { padding-bottom: 0; }
+html[data-ui="airbnb-v1"]:has(.ke-home) [data-ke="phone-care-tabs"] { display: none !important; }
+/* Legacy selector kept for older airbnb-home markup. */
 html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-categories"] { display: none !important; }
 html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-home"] .sticky { padding-bottom: 0; }
 .ke-airbnb-pill, .ke-airbnb-pill-btn {

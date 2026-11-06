@@ -1,4 +1,5 @@
 import { CANADA_CAMERA, isInCanada } from "./canada-origin.ts";
+import { isTaintedCareOriginLabel } from "./generic-care-query.ts";
 import { CITIES, PROVINCES, WINNIPEG, haversineKm, type LatLng } from "./geo.ts";
 
 /**
@@ -391,6 +392,8 @@ export function trustedSavedOrigin(
   if (!isInCanada(saved.lat, saved.lng)) return null;
   const label = (saved.label || "").trim();
   if (!label) return null;
+  // Drop pins that came from geocoding a generic care word (e.g. daycare → Lower South River).
+  if (isTaintedCareOriginLabel(label)) return null;
   return {
     lat: saved.lat,
     lng: saved.lng,

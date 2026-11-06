@@ -252,7 +252,10 @@ export function Shell({ children }: { children: ReactNode }) {
             </div>
           </div>
           {barePath === "/" || barePath === "/search" ? (
-            <div className="flex w-full min-w-0 items-center gap-2 overflow-x-auto pb-1.5 md:hidden">
+            <div
+              data-ke="phone-care-tabs"
+              className="flex w-full min-w-0 items-center gap-2 overflow-x-auto pb-1.5 md:hidden"
+            >
               <Link
                 to={localePath("/search", locale)}
                 search={

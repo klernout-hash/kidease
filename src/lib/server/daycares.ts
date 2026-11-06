@@ -76,6 +76,7 @@ import { resolveSearchDirectory, listingBelongsToHub } from "@/lib/city-director
 import { cityHubDefBySlug, cityHubMapSearchQuery, normalizeCityKey } from "@/lib/city-hubs";
 import { listingsForCityHub } from "@/lib/server/city-directory";
 import { geocode } from "@/lib/geo";
+import { ClientInputError } from "@/lib/observe";
 import type { AgeGroup, AvailabilityRow, Daycare, DaycareCard, Review } from "@/lib/types";
 
 export type CentreJobPost = { id: string; role: string; note: string; createdAt: string };
@@ -706,7 +707,8 @@ async function runSearch(data: SearchInput): Promise<DaycareCard[]> {
   });
 }
 
-function normalizeSearchInput(input: SearchInput): SearchInput {
+function normalizeSearchInput(input: SearchInput | null | undefined): SearchInput {
+  if (!input || typeof input !== "object") throw new ClientInputError();
   const city = typeof input.city === "string" ? input.city.trim().slice(0, 80) : "";
   const located = city ? geocode(city) : null;
   return {
@@ -791,7 +793,8 @@ export const searchDaycares = createServerFn({ method: "GET" })
 
 /** Same ranking as searchDaycares, then one page of 96 cards. */
 export const searchDaycarePage = createServerFn({ method: "GET" })
-  .validator((input: SearchInput & { page?: unknown }) => {
+  .validator((input: (SearchInput & { page?: unknown }) | undefined) => {
+    if (!input || typeof input !== "object") throw new ClientInputError();
     const page = pageFromSearch({ page: input.page });
     return { ...normalizeSearchInput(input), page };
   })
@@ -839,10 +842,13 @@ async function loadFeatured(
 }
 
 export const featuredDaycares = createServerFn({ method: "GET" })
-  .validator((input: { lat: number; lng: number; label?: string; radiusKm?: number }) => ({
-    ...input,
-    radiusKm: clampRadiusKm(Number(input.radiusKm) || 25),
-  }))
+  .validator((input: { lat: number; lng: number; label?: string; radiusKm?: number } | undefined) => {
+    if (!input || typeof input !== "object") throw new ClientInputError();
+    return {
+      ...input,
+      radiusKm: clampRadiusKm(Number(input.radiusKm) || 25),
+    };
+  })
   .handler(async ({ data }) => {
     const radiusKm = data.radiusKm;
     // Keep the parent's coordinates. A city label must not snap the pin to
@@ -1085,7 +1091,10 @@ export const getListingSeo = createServerFn({ method: "GET" })
   });
 
 export const getDaycaresByIds = createServerFn({ method: "GET" })
-  .validator((ids: string[]) => ids)
+  .validator((ids: string[] | undefined) => {
+    if (!Array.isArray(ids)) throw new ClientInputError();
+    return ids.filter((id) => typeof id === "string" && id.length > 0);
+  })
   .handler(async ({ data: keys }) => {
     const origin = { lat: 49.8951, lng: -97.1384 };
     const byId = await catalogByIdsGet(keys);

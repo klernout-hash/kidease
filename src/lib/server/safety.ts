@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { ClientInputError } from "@/lib/observe";
 import { getSql, type Sql } from "@/lib/db";
 import {
   isReviewModerationAction,
@@ -119,7 +120,10 @@ export const reportSafety = createServerFn({ method: "POST" })
 
 export const safetyThreadState = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator((input: { conversationId: string }) => input)
+  .validator((input: { conversationId: string } | undefined) => {
+    if (!input?.conversationId) throw new ClientInputError();
+    return input;
+  })
   .handler(async ({ context, data }) => {
     const sql = await getSql();
     const access = await requireConversationRead(sql, data.conversationId, context.userId);
@@ -140,7 +144,10 @@ export const safetyThreadState = createServerFn({ method: "GET" })
 
 export const setMessageBlock = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { conversationId: string; blocked: boolean }) => input)
+  .validator((input: { conversationId: string; blocked: boolean } | undefined) => {
+    if (!input?.conversationId) throw new ClientInputError();
+    return input;
+  })
   .handler(async ({ context, data }) => {
     const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
     blockViewAsSideEffect("write");
