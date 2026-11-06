@@ -14,6 +14,7 @@ import { homeRailItems } from "@/lib/now-loops";
 import { matchesFacilityType, type FacilityType } from "@/lib/facility-type";
 import type { DaycareCard as Card } from "@/lib/types";
 import { useCopy } from "@/lib/use-copy";
+import { localePath } from "@/lib/locale-path";
 import { uniqueById } from "@/lib/utils";
 
 function matchesBrowseDaycareType(
@@ -113,7 +114,7 @@ export function DaycareTypeRails({
   city?: string;
   ratingFloor?: number;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const [localType, setLocalType] = useState<BrowseDaycareType | undefined>();
   const active = onSelect ? selected : localType;
   function pick(type?: BrowseDaycareType) {
@@ -149,9 +150,12 @@ export function DaycareTypeRails({
               pageSize={BROWSE_RAIL_PAGE}
               seeAllHref={
                 seeAll
-                  ? `${
-                      kind === "before_after" ? "/search?cat=before-after" : `/search?fac=${kind}`
-                    }${city?.trim() ? `&q=${encodeURIComponent(city.trim())}` : ""}`
+                  ? localePath(
+                      `${
+                        kind === "before_after" ? "/search?cat=before-after" : `/search?fac=${kind}`
+                      }${city?.trim() ? `&q=${encodeURIComponent(city.trim())}` : ""}`,
+                      locale,
+                    )
                   : undefined
               }
               eagerThumbs={Boolean(eagerThumbs) && kind === kinds[0]}

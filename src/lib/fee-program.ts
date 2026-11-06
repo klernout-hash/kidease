@@ -11,7 +11,8 @@
  *     CCFRI is a fee reduction, not $10 a day, and gets no pill until confirmed.
  *   Prince Edward Island — stored pe-10-day (designated Early Years Centre)
  *   Newfoundland and Labrador — stored nl-10-day after that centre is confirmed
- * Show "$10/day max" only for Manitoba fee program mb-10-day (funded).
+ * Show "Fee cap" only for Manitoba fee program mb-10-day (funded).
+ * The dollar amount stays in the sourced note, not as a quote on the card.
  * Show "$9.65/day subsidized" only for Quebec services marked contribution réduite (subv=CR).
  * Show "Reduced fees" only where the NWT directory says subsidy=Yes or free,
  *   or a stored yt-reduced / nt-reduced code. Never show "$10/day" for NT or YT.
@@ -200,8 +201,8 @@ export function listingSubsidy(d: SubsidyInput): ListingSubsidy | null {
   if (stored === "mb-10-day") {
     return subsidyFact(
       "ten_max",
-      "$10/day max",
-      "10 $/jour max.",
+      "Fee cap",
+      "Plafond",
       "Manitoba funded centre, parent fee capped at $10/day for 4–10 hours.",
       "Centre financé du Manitoba. Le tarif parental est plafonné à 10 $ par jour pour 4 à 10 heures.",
       "https://www.gov.mb.ca/education/childcare/families/childcare_fees.html",

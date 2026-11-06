@@ -33,6 +33,7 @@ test("French paths prefix paired English routes and leave desks alone", () => {
   assert.equal(isFrPath("/search"), false);
   assert.equal(localePath("/privacy", "fr"), "/fr/privacy");
   assert.equal(localePath("/search", "fr"), "/fr/search");
+  assert.equal(localePath("/search?fac=child_care_centre", "fr"), "/fr/search?fac=child_care_centre");
   assert.equal(localePath("/parent", "fr"), "/fr/parent");
   assert.equal(localePath("/inbox", "fr"), "/fr/inbox");
   assert.equal(localePath("/admin", "fr"), "/admin");

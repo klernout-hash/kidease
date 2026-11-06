@@ -1293,7 +1293,7 @@ export function Listing() {
         </div>
 
         {data.nearby.length ? (
-          <ListingRail title={t("similar")} items={liveLookingOnly(data.nearby)} seeAllHref="/search" className="mt-12 first:mt-12" />
+          <ListingRail title={t("similar")} items={liveLookingOnly(data.nearby)} seeAllHref={localePath("/search", locale)} className="mt-12 first:mt-12" />
         ) : null}
         </div>
       </article>
