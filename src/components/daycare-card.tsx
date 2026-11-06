@@ -25,7 +25,7 @@ import { standardAgeLabelsForListing } from "@/lib/standard-age-groups";
 import { classifyFacilityType, facilityTypeSeoKind } from "@/lib/facility-type";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { isCatalogueMatchedBadge, trustBadgesFor, type TrustBadge as TrustBadgeModel } from "@/lib/trust";
-import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
+import { publicApprovalEligible } from "@/lib/approve-live";
 import {
   cardPhotoLicenseWarning,
   showCardLivePill,
@@ -284,7 +284,6 @@ export const DaycareCard = memo(function DaycareCard({
   });
   const photos = (Array.isArray(item.photos) ? item.photos : []).filter((p) => p && !p.includes("-logo"));
   const hollowPhoto = !photos.some((p) => isRealListingPhoto(p));
-  const offerClaim = showPublicClaimPrompt(item);
 
   const license = publicLicenseBadge(item);
   const cardTrust = trustBadgesFor(item, "card");
@@ -332,7 +331,6 @@ export const DaycareCard = memo(function DaycareCard({
               photos={photos}
               eager={eager}
               priority={priority}
-              claim={offerClaim}
               rounded="rounded-[14px]"
               className="aspect-[4/3]"
             />
@@ -461,7 +459,6 @@ export const DaycareCard = memo(function DaycareCard({
             photos={photos}
             eager={eager}
             priority={priority}
-            claim={offerClaim}
             rounded="rounded-lg"
             className="aspect-[4/3]"
           />

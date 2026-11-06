@@ -102,7 +102,8 @@ test("FAQ is a real page and registry names get hyphen spacing", () => {
   assert.match(utils, /\\s\+-\\s\*/);
   const card = src("src/components/daycare-card.tsx");
   assert.match(card, /hollowPhoto/);
-  assert.match(card, /showPublicClaimPrompt/);
+  assert.doesNotMatch(card, /showPublicClaimPrompt/);
+  assert.match(src("src/routes/daycare.$slug.tsx"), /showPublicClaimPrompt/);
   assert.match(src("src/components/building-photo.tsx"), /claimListingFrame/);
   assert.match(src("src/components/photo-carousel.tsx"), /claim=\{claim\}/);
   const origin = src("src/lib/search-origin.ts");
