@@ -17,6 +17,7 @@ import { chatBodyWithoutSmsFooter, daycareReplySms, parentMessageSms } from "@/l
 import { notificationSourceKey } from "@/lib/notifications";
 import { saveParentInAppNotice } from "@/lib/server/parent-notice";
 import { nid } from "@/lib/utils";
+import { ClientInputError } from "@/lib/observe";
 import { lookupUser, notifyPlatform, notifyThreadParty } from "./notify";
 import {
   listCentreOwnerEmails,
@@ -312,7 +313,10 @@ function parseScheduleOptions(raw: unknown): string[] {
 
 export const sendConnectedMessage = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { conversationId: string; body: string }) => input)
+  .validator((input: { conversationId: string; body: string } | undefined) => {
+    if (!input?.conversationId) throw new ClientInputError();
+    return input;
+  })
   .handler(async ({ context, data }) => {
     const { blockViewAsSideEffect } = await import("@/lib/view-as-public");
     blockViewAsSideEffect("message");

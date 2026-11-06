@@ -16,6 +16,19 @@ export function registerErrorCapture(fn: Capture) {
   capture = fn;
 }
 
+/** A caller sent no payload. Not a production incident. */
+export class ClientInputError extends Error {
+  constructor() {
+    super("Bad request");
+    this.name = "ClientInputError";
+  }
+}
+
+export function requireClientRecord<T extends object>(input: T | null | undefined): T {
+  if (!input || typeof input !== "object") throw new ClientInputError();
+  return input;
+}
+
 function asError(err: unknown) {
   if (err instanceof Error) return err;
   return new Error(typeof err === "string" ? err : "Unknown error");
@@ -30,6 +43,7 @@ function isControlFlow(err: unknown) {
   const message = flagged.message || "";
   return (
     name === "UnauthorizedError" ||
+    name === "ClientInputError" ||
     name === "CrossSiteRequestError" ||
     message === "Unauthorized" ||
     message === "Not authorized"

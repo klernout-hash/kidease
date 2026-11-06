@@ -9,6 +9,7 @@ import { ensureSeed, upsertDaycare } from "./seed";
 import { lookupUser, notifyNewAccountFromUser, notifyPlatform, notifyProviderJoined } from "./notify";
 import { resolveSessionDesks, writeProfileRole } from "./roles";
 import { catalogByIdGet } from "@/lib/catalog";
+import { ClientInputError } from "@/lib/observe";
 import { splitPhotoList } from "@/lib/listing-photo";
 import { cultureFieldsToSql } from "@/lib/listing-culture";
 import { isAdminOnlyListing, listingVisibilityForOwners, providerDeskListingVisible } from "@/lib/listing-visibility";
@@ -616,7 +617,10 @@ export const createBooking = createServerFn({ method: "POST" })
       startMonth: string;
       schedule: Schedule;
       ageGroup: AgeGroup;
-    }) => input,
+    } | undefined) => {
+      if (!input?.daycareId) throw new ClientInputError();
+      return input;
+    },
   )
   .handler(async ({ context, data }) => {
     const { assertFacebookContactEmail } = await import("@/lib/server/facebook-contact");
@@ -741,7 +745,10 @@ export const createSpotRequest = createServerFn({ method: "POST" })
       message?: string;
       parentName?: string;
       locale?: Locale;
-    }) => input,
+    } | undefined) => {
+      if (!input?.daycareId) throw new ClientInputError();
+      return input;
+    },
   )
   .handler(async ({ context, data }) => {
     const home = await familyWrite(context.userId);

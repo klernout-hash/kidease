@@ -11,6 +11,7 @@ import {
   type PackKind,
 } from "@/lib/contracts";
 import { enrolmentEsignEnabled } from "@/lib/features";
+import { ClientInputError } from "@/lib/observe";
 import { nid } from "@/lib/utils";
 import {
   applyEnvelopeEvent,
@@ -464,7 +465,10 @@ export const sendCentreContract = createServerFn({ method: "POST" })
 
 export const voidCentreContract = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { contractId: string }) => input)
+  .validator((input: { contractId: string } | undefined) => {
+    if (!input?.contractId) throw new ClientInputError();
+    return input;
+  })
   .handler(async ({ context, data }) => {
     if (!enrolmentEsignEnabled()) throw new Error("Signing is not open yet.");
     await requireOperator(context.userId);
@@ -489,7 +493,10 @@ export const voidCentreContract = createServerFn({ method: "POST" })
 
 export const syncCentreContract = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { contractId: string }) => input)
+  .validator((input: { contractId: string } | undefined) => {
+    if (!input?.contractId) throw new ClientInputError();
+    return input;
+  })
   .handler(async ({ context, data }) => {
     if (!enrolmentEsignEnabled()) throw new Error("Signing is not open yet.");
     await requireOperator(context.userId);
@@ -589,7 +596,10 @@ export const listProviderContracts = createServerFn({ method: "GET" })
 
 export const getSignContract = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator((input: { contractId: string }) => input)
+  .validator((input: { contractId: string } | undefined) => {
+    if (!input?.contractId) throw new ClientInputError();
+    return input;
+  })
   .handler(async ({ context, data }) => {
     if (!enrolmentEsignEnabled()) throw new Error("Signing is not open yet.");
     const admin = await isOperator(context.userId);
@@ -657,7 +667,10 @@ export const getSignContract = createServerFn({ method: "GET" })
 
 export const signCentreContract = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .validator((input: { contractId: string }) => input)
+  .validator((input: { contractId: string } | undefined) => {
+    if (!input?.contractId) throw new ClientInputError();
+    return input;
+  })
   .handler(async ({ context, data }) => {
     if (!enrolmentEsignEnabled()) throw new Error("Signing is not open yet.");
     const actor = await lookupUser(context.userId);
