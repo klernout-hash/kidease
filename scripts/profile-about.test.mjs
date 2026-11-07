@@ -31,7 +31,7 @@ test("about you keeps only short text the person typed", () => {
 test("about you is private account UI and does not grant a verified badge", () => {
   const form = readFileSync(new URL("../src/components/about-you-form.tsx", import.meta.url), "utf8");
   const server = readFileSync(new URL("../src/lib/server/profile-about.ts", import.meta.url), "utf8");
-  const migration = readFileSync(new URL("../migrations/0178_profile_about.sql", import.meta.url), "utf8");
+  const migration = readFileSync(new URL("../migrations/0180_profile_about.sql", import.meta.url), "utf8");
   assert.match(form, /data-ke="about-you"/);
   assert.match(form, /does not add a verified badge/);
   assert.match(server, /authMiddleware/);
