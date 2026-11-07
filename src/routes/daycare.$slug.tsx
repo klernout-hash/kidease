@@ -651,7 +651,7 @@ export function Listing() {
   }
 
   const waitlisted = known && spots <= 0;
-  const offerClaim = showPublicClaimPrompt(d);
+  const offerClaim = chrome.role !== "government" && showPublicClaimPrompt(d);
   const cityHub = cityHubDefForPlace(d.city, d.province);
   const heroBack = cityHub ? { to: "/daycare/city/$city" as const, city: cityHub.slug } : { to: "/search" as const };
 
