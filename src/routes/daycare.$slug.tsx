@@ -403,7 +403,7 @@ export function Listing() {
       .join(", ");
     return (
       <Shell>
-        <main className="mx-auto max-w-5xl overflow-x-hidden">
+        <main className="ke-listing-page mx-auto max-w-5xl overflow-x-hidden">
           <div className="lg:ke-gutter lg:pt-4">
             <div className="ke-listing-hero relative overflow-hidden lg:rounded-[14px]" data-empty={earlyReal ? undefined : "true"}>
               {earlyReal ? (
@@ -418,17 +418,48 @@ export function Listing() {
                   className="size-full object-cover"
                 />
               ) : (
-                <ListingPhotoFallback className="size-full" />
+                <ListingPhotoFallback plain className="size-full" />
               )}
             </div>
           </div>
           <div className="ke-gutter">
             {earlyName ? <h1 className="mt-3 font-display text-[1.75rem] leading-tight md:text-[2rem]">{earlyName}</h1> : null}
+            <p className="mt-1 text-sm text-muted">{[seo?.city, seo?.province].filter(Boolean).join(", ")}</p>
+            <ul className="mt-4 divide-y divide-border" data-ke="listing-highlights">
+              {earlyHours ? (
+                <li className="py-3">
+                  <p className="text-base font-semibold">{t("hours")}</p>
+                  <p className="text-sm leading-5 text-muted">{earlyHours}</p>
+                </li>
+              ) : null}
+              <li className="py-3">
+                <p className="text-base font-semibold">{locale === "fr" ? "Disponibilité" : "Availability"}</p>
+                <p className="text-sm leading-5 text-muted">{locale === "fr" ? "Non confirmée" : "Not confirmed"}</p>
+              </li>
+              <li className="py-3">
+                <p className="text-base font-semibold">{locale === "fr" ? "Frais et soutien" : "Fees and support"}</p>
+                <p className="text-sm leading-5 text-muted">
+                  {locale === "fr"
+                    ? "Frais non confirmés. Un plafond quotidien n’est pas une facture mensuelle."
+                    : "Fees not confirmed. A daily cap is not a monthly bill."}
+                </p>
+              </li>
+            </ul>
             <div id="listing-overview" className="mt-6 space-y-6">
               {earlyDesc ? (
-                <section>
+                <section data-ke="listing-about">
                   <h2 className="font-display text-2xl">{t("about")}</h2>
-                  <p className="mt-2 max-w-prose text-muted">{earlyDesc}</p>
+                  {earlyDesc.length > 180 ? (
+                    <details className="group mt-2">
+                      <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                        <span className="block max-w-prose font-normal text-muted line-clamp-4 group-open:hidden">{earlyDesc}</span>
+                        <span className="inline-flex min-h-11 items-center text-sm font-semibold">{locale === "fr" ? "Voir plus" : "Show more"}</span>
+                      </summary>
+                      <p className="mt-2 hidden max-w-prose text-muted group-open:block">{earlyDesc}</p>
+                    </details>
+                  ) : (
+                    <p className="mt-2 max-w-prose text-muted">{earlyDesc}</p>
+                  )}
                 </section>
               ) : null}
               {earlyHours ? (
@@ -468,10 +499,24 @@ export function Listing() {
                   <div className="ke-skel h-8 w-32 rounded-full" />
                 </div>
                 <div className="ke-skel h-28 w-full rounded-xl" />
-                <div className="ke-skel aspect-[16/9] w-full max-h-64 rounded-xl" />
               </div>
             </div>
           </div>
+          <aside className="ke-listing-summary ke-panel mx-4 mb-6 hidden h-fit px-4 py-4 shadow-card md:mx-0 md:block" data-ke="listing-action-summary">
+            <p className="text-sm font-semibold">{locale === "fr" ? "Disponibilité" : "Availability"}</p>
+            <p className="text-sm text-muted">{locale === "fr" ? "Non confirmée" : "Not confirmed"}</p>
+            <p className="mt-3 text-sm font-semibold">{locale === "fr" ? "Frais et soutien" : "Fees and support"}</p>
+            <p className="text-sm text-muted">
+              {locale === "fr"
+                ? "Frais non confirmés. Un plafond quotidien n’est pas une facture mensuelle."
+                : "Fees not confirmed. A daily cap is not a monthly bill."}
+            </p>
+            <p className="mt-3 text-sm text-muted">
+              {locale === "fr"
+                ? "Les demandes s’affichent quand la fiche a fini de s’ouvrir."
+                : "Requests show once this listing has finished opening."}
+            </p>
+          </aside>
         </main>
       </Shell>
     );
@@ -757,7 +802,7 @@ export function Listing() {
 
   return (
     <Shell>
-      <article className={`ke-dense mx-auto max-w-5xl overflow-x-hidden pb-[calc(12rem+env(safe-area-inset-bottom))] md:pb-10`}>
+      <article className={`ke-listing-page ke-dense mx-auto max-w-5xl overflow-x-hidden pb-[calc(12rem+env(safe-area-inset-bottom))] md:pb-10`}>
         <div className="lg:ke-gutter lg:pt-4">
           <ListingHeroGallery
             photos={gallery}
@@ -849,6 +894,40 @@ export function Listing() {
             </div>
           ) : null}
           <ListingHeaderPills item={d} agesLabel={agesLabel} hours={hours} feeFrom={showCentreFees ? from : 0} />
+          <ul className="mt-4 divide-y divide-border" data-ke="listing-highlights">
+            <li className="py-3">
+              <p className="text-base font-semibold">{d.addressProtected ? d.addressPlace || `${d.city}, ${d.province}` : `${d.city}, ${d.province}`}</p>
+              <p className="text-sm leading-5 text-muted">{facilityLabel}{agesLabel ? ` · ${agesLabel}` : ""}</p>
+            </li>
+            {hours.trim() && hours.trim() !== "—" ? (
+              <li className="py-3">
+                <p className="text-base font-semibold">{locale === "fr" ? "Heures" : "Hours"}</p>
+                <p className="text-sm leading-5 text-muted">{hours}</p>
+              </li>
+            ) : null}
+            <li className="py-3">
+              <p className="text-base font-semibold">{locale === "fr" ? "Disponibilité" : "Availability"}</p>
+              <p className="text-sm leading-5 text-muted">
+                {known && spots > 0
+                  ? `${spots} ${t("spots")}`
+                  : locale === "fr"
+                    ? "Non confirmée"
+                    : "Not confirmed"}
+              </p>
+            </li>
+            <li className="py-3">
+              <a href="#listing-fees" className="block">
+                <p className="text-base font-semibold">{locale === "fr" ? "Frais et soutien" : "Fees and support"}</p>
+                <p className="text-sm leading-5 text-muted">
+                  {showCentreFees && from > 0
+                    ? `${money(from, locale)}${t("month")}`
+                    : locale === "fr"
+                      ? "Frais non confirmés. Un plafond quotidien n’est pas une facture mensuelle."
+                      : "Fees not confirmed. A daily cap is not a monthly bill."}
+                </p>
+              </a>
+            </li>
+          </ul>
           {ageSourceUrl ? (
             <p className="mt-1 text-xs leading-5 text-muted" data-ke="province-age-label">
               {t("agesFromProvince")}{" "}
@@ -893,7 +972,7 @@ export function Listing() {
           ) : null}
         </header>
         <ListingJumpNav />
-        <div className="mt-6 grid items-start gap-8 md:grid-cols-[minmax(0,1.15fr)_minmax(16rem,20rem)]">
+        <div className="mt-6">
         <div id="listing-overview" className="ke-listing-sections min-w-0 scroll-mt-24">
             {!live && d.claimStatus && d.claimStatus !== "unclaimed" ? (
               <ListingStatusBadge claimStatus={d.claimStatus} live={live} />
@@ -921,9 +1000,21 @@ export function Listing() {
             ) : null}
 
             {(desc || "").trim() ? (
-              <section>
+              <section data-ke="listing-about">
                 <h2 className="font-display text-2xl">{t("about")}</h2>
-                <p className="mt-2 max-w-prose text-muted">{desc}</p>
+                {desc.length > 180 ? (
+                  <details className="group mt-2">
+                    <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                      <span className="block max-w-prose font-normal text-muted line-clamp-4 group-open:hidden">{desc}</span>
+                      <span className="inline-flex min-h-11 items-center text-sm font-semibold">
+                        {locale === "fr" ? "Voir plus" : "Show more"}
+                      </span>
+                    </summary>
+                    <p className="mt-2 hidden max-w-prose text-muted group-open:block">{desc}</p>
+                  </details>
+                ) : (
+                  <p className="mt-2 max-w-prose text-muted">{desc}</p>
+                )}
               </section>
             ) : null}
 
@@ -1267,7 +1358,13 @@ export function Listing() {
                 .join(" · ")}
             </p>
         </div>
-        <aside className="ke-panel hidden h-fit px-4 py-4 shadow-card md:sticky md:top-20 md:block">
+        </div>
+
+        {data.nearby.length ? (
+          <ListingRail title={t("similar")} items={liveLookingOnly(data.nearby)} seeAllHref={localePath("/search", locale)} className="mt-12 first:mt-12" />
+        ) : null}
+        </div>
+        <aside className="ke-listing-summary ke-panel mx-4 hidden h-fit px-4 py-4 shadow-card md:mx-0 md:block" data-ke="listing-action-summary">
           <ListingCtaSnippet live={live} from={from} hours={hours} prominent />
           <p className="mt-1 text-sm text-muted">{live ? t("listingCtaLead") : t("guestListingTrust")}</p>
           {!user && live ? <p className="mt-1 text-xs text-subtle">{t("guestBrowse")}</p> : null}
@@ -1287,54 +1384,39 @@ export function Listing() {
           </div>
           <p className="mt-3 text-xs text-subtle">{t("privacyNote")}</p>
         </aside>
-        </div>
-
-        {data.nearby.length ? (
-          <ListingRail title={t("similar")} items={liveLookingOnly(data.nearby)} seeAllHref={localePath("/search", locale)} className="mt-12 first:mt-12" />
-        ) : null}
-        </div>
       </article>
 
       {!requestOpen ? (
       <div className={`fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden [[data-channel=app]_&]:bottom-20`} data-ke="listing-sticky-bar">
-        <div className="mx-auto flex max-w-lg flex-col gap-2">
-          <ListingCtaSnippet live={live} from={from} hours={hours} />
-          <div className="ke-listing-sticky-row">
+        <div className="mx-auto flex max-w-lg items-center gap-3" data-ke={parentActions ? "listing-parent-actions" : undefined}>
+          <div className="min-w-0 flex-1">
+            <ListingCtaSnippet live={live} from={from} hours={hours} />
+            <p className="truncate text-xs text-muted">
+              {known && spots > 0
+                ? `${spots} ${t("spots")}`
+                : locale === "fr"
+                  ? "Disponibilité non confirmée"
+                  : "Availability not confirmed"}
+            </p>
+          </div>
           {ownEdit ? <ListingEditLink /> : null}
-          <Button
-            type="button"
-            variant="secondary"
-            size="icon"
-            className="shrink-0 rounded-[14px]"
-            data-ke="get-directions"
-            aria-label={t("getDirections")}
-            onClick={() => void openDirections(d.lat, d.lng, name, directionsPlace)}
-          >
-            <MapPinned className="size-4" aria-hidden="true" />
-          </Button>
           {parentActions && live ? (
-            <div className="flex min-w-0 flex-1 flex-wrap gap-1.5" data-ke="listing-parent-actions">
-              <Button className="ke-sticky-action h-auto min-h-11 rounded-[14px] px-2 py-2 touch-manipulation" variant="secondary" data-ke="listing-sticky-cta" aria-label={t("requestInfo")} onClick={onInfo}>
-                <Info className="size-4 shrink-0" aria-hidden="true" />
-                <span className="ke-sticky-label">{t("stickyInfo")}</span>
-              </Button>
-              <Button className="ke-sticky-action h-auto min-h-11 rounded-[14px] px-2 py-2 touch-manipulation" variant="secondary" data-ke="listing-sticky-message" aria-label={t("message")} onClick={onMessage}>
-                <MessageCircle className="size-4 shrink-0" aria-hidden="true" />
-                <span className="ke-sticky-label">{t("stickyMessage")}</span>
-              </Button>
-            </div>
+            <Button className="min-h-11 shrink-0 rounded-full px-4 touch-manipulation" data-ke="listing-sticky-cta" onClick={onInfo}>
+              {locale === "fr" ? "Demander" : "Enquire"}
+            </Button>
           ) : parentActions ? (
-            <p className="min-w-0 flex-1 text-xs text-muted" data-ke="listing-not-live">{t("parentRequestNotLive")}</p>
+            <p className="max-w-[9rem] text-xs text-muted" data-ke="listing-not-live">{t("parentRequestNotLive")}</p>
           ) : null}
           {parentActions ? <SaveListingButton daycareId={d.id} nextPath={localePath(`/daycare/${slug}`, locale)} appearance="bar" className="shrink-0" /> : null}
           <ListingMoreActions compact>
             <ListingOverflowItems />
+            <ListingMoreItem onClick={onMessage} data-ke="listing-sticky-message">{t("stickyMessage")}</ListingMoreItem>
+            <span className="sr-only">{t("stickyInfo")}</span>
             <div className="px-1 py-1">
               <ShareListingButton slug={d.slug} name={name} appearance="labeled" className="w-full" />
               <FreeListingShareActions slug={d.slug} name={name} lat={d.lat} lng={d.lng} {...directionsPlace} />
             </div>
           </ListingMoreActions>
-          </div>
         </div>
       </div>
       ) : null}

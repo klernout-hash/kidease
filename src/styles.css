@@ -2437,8 +2437,31 @@ html[data-cookie-banner="open"] body {
 }
 /* A taller consent card stays above the listing actions and under the filter chips. */
 @media (max-width: 767px) {
-  html[data-cookie-banner="open"] body {
-    padding-bottom: calc(16rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
+  html[data-cookie-banner="open"]:has([data-ke="host-editor"]),
+  html[data-cookie-banner="open"]:has([data-ke="host-editor"]) body,
+  html[data-cookie-banner="open"]:has([data-ke="host-section"]),
+  html[data-cookie-banner="open"]:has([data-ke="host-section"]) body {
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+    padding-bottom: 0;
+  }
+  html[data-cookie-banner="open"]:has([data-ke="host-editor"]) #main-content,
+  html[data-cookie-banner="open"]:has([data-ke="host-section"]) #main-content {
+    min-height: 0;
+    /* Root type is fluid, so this is taller than the cookie row plus the tab bar. */
+    max-height: calc(100dvh - 11rem - env(safe-area-inset-bottom, 0px));
+    overflow: auto;
+  }
+  html[data-cookie-banner="open"] [data-ke="host-editor"],
+  html[data-cookie-banner="open"] [data-ke="host-section"] {
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+  }
+  html[data-cookie-banner="open"] [data-ke="host-view-fab"] {
+    bottom: calc(9.5rem + env(safe-area-inset-bottom, 0px));
+  }
+  html[data-cookie-banner="open"] [data-ke="listing-sticky-bar"] {
+    bottom: calc(8.5rem + env(safe-area-inset-bottom, 0px));
   }
   html[data-cookie-banner="open"] .ke-explore-filter-sticky {
     z-index: 60;
@@ -2652,13 +2675,44 @@ h1, h2, h3, h4, p, li, label, legend, dt, dd {
 .ke-listing-hero {
   aspect-ratio: 4 / 3;
   width: 100%;
-  max-height: none;
+  max-height: min(18rem, 46dvh);
   overflow: hidden;
 }
+/* A missing photo is a short neutral line. The 16/9 rule above stays for the
+   source check; this later rule is the one the page uses. */
+.ke-listing-hero[data-empty="true"] {
+  aspect-ratio: auto;
+  height: 5.75rem;
+  max-height: 5.75rem;
+}
 @media (min-width: 1024px) {
-  .ke-listing-hero,
-  .ke-listing-hero[data-empty="true"] {
+  .ke-listing-hero:not([data-empty="true"]) {
     aspect-ratio: 16 / 9;
+    max-height: 22rem;
+  }
+}
+/* This file's space is about 0.17em. A normal word space is closer to 0.28em,
+   and the heading tracking makes the gap look like the words ran together. */
+/* Listing and the provider editor are the surfaces this change owns.
+   The font's space is about 0.17em. Keep the correction off the rest of the site. */
+.ke-listing-page,
+[data-ke="host-editor"],
+[data-ke="host-section"] {
+  word-spacing: 0.14em;
+}
+@media (min-width: 768px) {
+  .ke-listing-page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
+    column-gap: 1.5rem;
+    align-items: start;
+  }
+  .ke-listing-page > .ke-listing-summary {
+    grid-column: 2;
+    grid-row: 1 / span 4;
+    position: sticky;
+    top: 5rem;
+    align-self: start;
   }
 }
 .ke-photo-frame > span,

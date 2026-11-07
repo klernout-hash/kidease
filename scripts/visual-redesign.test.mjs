@@ -47,6 +47,14 @@ test("launch hold hides discovery only while a role desk is still resolving", ()
   );
   assert.equal(
     shouldHoldHomeDiscovery({
+      pending: false,
+      signedIn: true,
+      role: null,
+    }),
+    true,
+  );
+  assert.equal(
+    shouldHoldHomeDiscovery({
       landed: true,
       pending: true,
       signedIn: true,
@@ -106,5 +114,19 @@ test("provider editor is photo-led with a published preview", () => {
   assert.match(editor, /Preview published listing/);
   assert.match(editor, /Manage photos/);
   assert.match(editor, /data-ke="host-section-card"/);
+  assert.match(editor, /data-ke="host-section-group"/);
   assert.match(editor, /Registry facts stay locked/);
+  assert.match(editor, /not a draft/);
+  const fields = src("src/components/provider-parent-fields.tsx");
+  assert.match(fields, /data-ke="editor-meals"/);
+  assert.match(fields, /data-ke="editor-amenities"/);
+  assert.match(fields, /Leave blank if unknown/);
+  assert.doesNotMatch(fields, /part === "meals" \? DESK_AMENITIES/);
+  assert.match(src("src/components/provider-listing-forms.tsx"), /data-ke="photo-tour-preview"/);
+  assert.match(src("src/components/gov/gov-login.tsx"), /forgot-password\?from=gov/);
+  assert.match(src("src/components/gov/gov-dashboard.tsx"), /data-ke="gov-task"/);
+  assert.match(src("src/components/gov/gov-dashboard.tsx"), /data-ke="gov-expiries"/);
+  assert.match(src("src/lib/server/gov-portal.ts"), /cannot widen/);
+  assert.match(src("src/lib/server/gov-portal.ts"), /province: actor\.province/);
+  assert.match(src("src/routes/__root.tsx"), /kidease-session-hint/);
 });

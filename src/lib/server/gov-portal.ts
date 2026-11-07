@@ -23,19 +23,27 @@ export async function dashboardForActor(
   const { assertGovBudget, auditGov } = await import("@/lib/server/gov-actor.server");
   const { bundleForProvince, loadGovBundle } = await import("@/lib/server/gov-data.server");
   assertGovBudget(actor, "read");
+  // The org province is the scope. A URL or "All of Canada" cannot widen it.
   const scope = parseGovScope({
-    province: input.province || actor.province,
+    province: actor.province,
     region: input.region,
     city: input.city,
   });
   const bundle = await loadGovBundle();
   const raw = bundleForProvince(bundle, scope.province);
   await auditGov({ userId: actor.userId, action: "login", province: scope.province });
-  return buildGovDashboard(raw, scope, localeOf(input.locale), {
+  const view = buildGovDashboard(raw, scope, localeOf(input.locale), {
     orgName: actor.orgName,
     demo: actor.demo,
     readOnly: actor.readOnly,
   });
+  return {
+    ...view,
+    selectors: {
+      ...view.selectors,
+      provinces: view.selectors.provinces.filter((row) => row.code === actor.province),
+    },
+  };
 }
 
 export const getGovSession = createServerFn({ method: "GET" })

@@ -306,7 +306,7 @@ function RootDocument() {
           data-ke="launch-hold-boot"
           dangerouslySetInnerHTML={{
             __html:
-              "(function(){try{var p=location.pathname;if(p!=='/'&&p!=='/fr'&&p!=='/fr/')return;if(sessionStorage.getItem('kidease-desk-landed')==='1')return;if(sessionStorage.getItem('kidease-just-signed-out')==='1')return;var role=localStorage.getItem('kidease-role');var desk=sessionStorage.getItem('kidease-desk')||localStorage.getItem('kidease-desk')||'';if(role==='parent'||desk==='parent')return;if(role==='provider'||desk==='provider'||desk==='director'||desk==='centre'||desk==='center'||desk==='daycare'||desk==='admin'||desk==='support'){document.documentElement.setAttribute('data-ke-launch-hold','1');}}catch(e){}})();",
+              "(function(){try{var p=location.pathname;if(p!=='/'&&p!=='/fr'&&p!=='/fr/')return;if(sessionStorage.getItem('kidease-desk-landed')==='1')return;if(sessionStorage.getItem('kidease-just-signed-out')==='1')return;var role=localStorage.getItem('kidease-role');var desk=sessionStorage.getItem('kidease-desk')||localStorage.getItem('kidease-desk')||'';if(role==='parent'||desk==='parent')return;var hint=localStorage.getItem('kidease-session-hint')==='1';if(hint||role==='provider'||desk==='provider'||desk==='director'||desk==='centre'||desk==='center'||desk==='daycare'||desk==='admin'||desk==='support'){document.documentElement.setAttribute('data-ke-launch-hold','1');}}catch(e){}})();",
           }}
         />
         <style

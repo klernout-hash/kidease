@@ -132,6 +132,10 @@ export function shouldHoldHomeDiscovery(input: {
   hideStaffWebOnly?: boolean;
 }): boolean {
   if (input.guestView || input.landed || input.justSignedOut) return false;
+  if (input.remembered === "parent" || input.sticky === "parent") return false;
+  // Signed in, role not back yet: keep the neutral shell. Discovery under Today
+  // is the provider launch flash.
+  if (input.signedIn && input.role == null) return true;
   const dest = homeLandPath({
     role: input.role,
     sticky: input.sticky,
@@ -141,6 +145,27 @@ export function shouldHoldHomeDiscovery(input: {
   if (!dest) return false;
   if (!input.signedIn && !input.pending) return false;
   return true;
+}
+
+/** Non-secret flag so the next cold start can hide discovery before role fetch. */
+export const SESSION_HINT_KEY = "kidease-session-hint";
+
+export function markSessionHint(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(SESSION_HINT_KEY, "1");
+  } catch {
+    /* ignore */
+  }
+}
+
+export function clearSessionHint(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(SESSION_HINT_KEY);
+  } catch {
+    /* ignore */
+  }
 }
 
 /** Shared Account settings — keep `?desk=` so the pill stays on the current desk. */

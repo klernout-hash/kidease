@@ -299,11 +299,14 @@ export async function captureDesktopShots(browser, base, outDir) {
       viewport: size,
       deviceScaleFactor: 1,
       reducedMotion: "reduce",
+      colorScheme: "light",
     });
     await context.addInitScript(() => {
       const deny = () => {
         try {
           localStorage.setItem("kidease-analytics-consent", "denied");
+          /* Baselines are the light site. An empty preference resolves to dark. */
+          localStorage.setItem("kidease-theme", "light");
         } catch {
           /* private mode */
         }

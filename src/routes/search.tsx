@@ -1899,6 +1899,7 @@ export function SearchScreen({
                     skipLiveLooking
                     ratingFloor={boot.reviewRatingFloor}
                     seeAll={false}
+                    layout="stack"
                   />
                 )}
               </div>
@@ -1997,9 +1998,12 @@ export function SearchScreen({
           </div>
         ) : null}
 
-        <div className={boot.mobileSearchV2 ? "max-md:hidden" : undefined}>
-        <AreaWaitlistForm returnTo={localePath("/search", locale)} />
-        </div>
+        <details className={cn("mt-2 rounded-xl bg-surface px-3 ring-1 ring-border", boot.mobileSearchV2 && "max-md:hidden")}>
+          <summary className="flex min-h-11 cursor-pointer items-center text-sm font-semibold">
+            {locale === "fr" ? "Liste d’attente du quartier" : "Area waitlist"}
+          </summary>
+          <AreaWaitlistForm returnTo={localePath("/search", locale)} />
+        </details>
 
         <div className={boot.mobileSearchV2 ? "max-md:hidden" : undefined}>
         <ExploreSearchBar
@@ -2367,7 +2371,7 @@ export function SearchScreen({
           ) : (
             <div
               data-ke="search-result-list"
-              data-ke-layout="type-rails"
+              data-ke-layout="guest-stack"
               onMouseOver={(e) => {
                 const node = (e.target as HTMLElement).closest("[data-slug]");
                 const slug = node?.getAttribute("data-slug");
@@ -2382,6 +2386,7 @@ export function SearchScreen({
                 skipLiveLooking
                 ratingFloor={boot.reviewRatingFloor}
                 seeAll={false}
+                layout="stack"
                 selected={
                   parentFilters.fac.length === 1
                     ? parentFilters.fac[0]

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Camera, ChevronLeft, ChevronRight, Megaphone, Trash2 } from "lucide-react";
 import { RequiredMark, fieldErrorClass } from "@/components/required-field";
 import { cn } from "@/lib/utils";
@@ -333,6 +333,7 @@ export function CapacityForm({
   focus,
   guide,
   onGuide,
+  onDirtyChange,
 }: {
   daycare: Daycare;
   onSaved: () => void;
@@ -341,6 +342,7 @@ export function CapacityForm({
   focus?: HostSection;
   guide?: FamilyGuide | null;
   onGuide?: (next: FamilyGuide) => Promise<void>;
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
   const { t, locale } = useCopy();
   const reauth = useReauthPrompt();
@@ -348,6 +350,7 @@ export function CapacityForm({
   const [appliedRev, setAppliedRev] = useState(serverRev);
   const [state, setState] = useState(() => listingFormState(daycare));
   const [gallery, setGallery] = useState<string[] | null>(null);
+  const [photoPick, setPhotoPick] = useState(0);
   const [photoJobs, setPhotoJobs] = useState<{ id: string; name: string; progress: number }[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -385,6 +388,7 @@ export function CapacityForm({
   const serverPhotos = managedListingPhotos(daycare.photos);
   const galleryDirty =
     gallery !== null && (gallery.length !== serverPhotos.length || gallery.some((src, index) => src !== serverPhotos[index]));
+  const feeHint = locale === "fr" ? "Laissez vide si inconnu. Zéro n’est pas gratuit." : "Leave blank if unknown. Zero is not free.";
   const dirty =
     state.name !== daycare.name ||
     state.address !== daycare.address ||
@@ -423,6 +427,18 @@ export function CapacityForm({
     JSON.stringify(state.safetyFeatures) !== JSON.stringify(savedParent.safetyFeatures) ||
     JSON.stringify(state.amenityKeys) !== JSON.stringify(savedParent.amenityKeys) ||
     guideDirty;
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
+  useEffect(() => {
+    if (!dirty) return;
+    const onLeave = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onLeave);
+    return () => window.removeEventListener("beforeunload", onLeave);
+  }, [dirty]);
   const draft = {
     ...daycare,
     hours: state.hours,
@@ -725,6 +741,36 @@ export function CapacityForm({
           ) : null}
           {see("photos") ? (
           <>
+          {shown.length ? (
+            <div data-ke="photo-tour-preview" className="space-y-2">
+              <img
+                src={shown[Math.min(photoPick, shown.length - 1)]}
+                alt={locale === "fr" ? `Photo ${Math.min(photoPick, shown.length - 1) + 1} de ${shown.length}` : `Photo ${Math.min(photoPick, shown.length - 1) + 1} of ${shown.length}`}
+                className="aspect-[4/3] w-full rounded-[16px] object-cover"
+                width={960}
+                height={720}
+              />
+              <p className="text-sm text-muted">
+                {Math.min(photoPick, shown.length - 1) + 1} / {shown.length}
+                {Math.min(photoPick, shown.length - 1) === 0
+                  ? locale === "fr"
+                    ? " · Photo de couverture"
+                    : " · Cover photo"
+                  : ""}
+              </p>
+              <p className="text-sm text-muted">
+                {locale === "fr"
+                  ? "Photos du centre seulement. N’ajoutez pas de photo d’enfant."
+                  : "Centre photos only. Do not add a photo of a child."}
+              </p>
+            </div>
+          ) : null}
+          <h2 className="text-[24px] font-semibold leading-[30px]">{locale === "fr" ? "Couverture et intérieur" : "Cover and inside"}</h2>
+          <p className="text-sm text-muted">
+            {locale === "fr"
+              ? "La première photo est la couverture. Les suivantes sont à l’intérieur du centre."
+              : "The first photo is the cover. The photos after it are inside the centre."}
+          </p>
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h3 id="listing-health-photo" className="font-display text-xl">{t("storefrontPhoto")}</h3>
             <p data-ke="listing-photo-count" className="text-sm tabular-nums text-muted">
@@ -735,15 +781,24 @@ export function CapacityForm({
           <p className="text-sm text-muted">{t("interiorPhotoNote")}</p>
           <UploadLimitHint hint={t("uploadPhotoHint")} error={photoError} />
           {shown.length >= MAX_LISTING_PHOTOS ? <p className="text-sm text-muted">{t("photoAtCap")}</p> : null}
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-ke="photo-groups">
             {shown.map((src, i) => (
-              <div key={`${i}-${src.slice(-24)}`} data-ke="listing-photo-card" className="rounded-lg bg-bg p-2 ring-1 ring-border">
+              <Fragment key={`${i}-${src.slice(-24)}`}>
+              {i === 0 ? (
+                <h3 className="col-span-full text-sm font-semibold">{locale === "fr" ? "Couverture" : "Cover"}</h3>
+              ) : null}
+              {i === 1 ? (
+                <h3 className="col-span-full text-sm font-semibold">{locale === "fr" ? "À l’intérieur du centre" : "Inside the centre"}</h3>
+              ) : null}
+              <div data-ke="listing-photo-card" data-photo-group={i === 0 ? "cover" : "inside"} className={cn("rounded-lg bg-bg p-2 ring-1", i === Math.min(photoPick, shown.length - 1) ? "ring-primary" : "ring-border")}>
+                <button type="button" className="block w-full touch-manipulation" onClick={() => setPhotoPick(i)} aria-label={locale === "fr" ? `Voir la photo ${i + 1}` : `Show photo ${i + 1}`}>
                 <div className="relative">
                   <img src={src} alt="" className="aspect-[4/3] w-full rounded-lg object-cover" />
                   {i === 0 ? (
                     <span className="absolute left-2 top-2 rounded-full bg-primary px-2 py-0.5 text-xs text-primary-fg">{t("photoCover")}</span>
                   ) : null}
                 </div>
+                </button>
                 <div className="mt-2 flex flex-wrap gap-1">
                   <Button
                     type="button"
@@ -814,7 +869,18 @@ export function CapacityForm({
                   </Button>
                 </div>
               </div>
+              </Fragment>
             ))}
+            {shown.length === 1 ? (
+              <>
+                <h3 className="col-span-full text-sm font-semibold">{locale === "fr" ? "À l’intérieur du centre" : "Inside the centre"}</h3>
+                <p className="col-span-full text-sm text-muted" data-ke="photo-inside-empty">
+                  {locale === "fr"
+                    ? "Pas encore de photo de l’intérieur. N’ajoutez pas de photo d’enfant."
+                    : "No inside photos yet. Do not add a photo of a child."}
+                </p>
+              </>
+            ) : null}
             {photoJobs.map((job) => (
               <div key={job.id} data-ke="listing-photo-progress" className="flex aspect-[4/3] flex-col justify-end rounded-lg bg-bg p-3 ring-1 ring-border">
                 <p className="text-sm text-muted">{t("photoPreparing").replace("{name}", job.name).replace("{n}", String(job.progress))}</p>
@@ -958,6 +1024,13 @@ export function CapacityForm({
           {see("name") ? <Field label={t("centreName")} value={state.name} onChange={(v) => setState({ ...state, name: v })} /> : null}
           {see("location") || see("dropoff") ? (
             <div className="grid gap-3 sm:grid-cols-2">
+              {see("location") ? (
+                <p className="text-sm leading-5 text-muted sm:col-span-2">
+                  {locale === "fr"
+                    ? "Adresse et heures que les familles peuvent utiliser. Une adresse à domicile reste protégée si ce réglage est activé."
+                    : "Address and hours families can use. A home address stays protected when that setting is on."}
+                </p>
+              ) : null}
               {see("location") ? <Field label={t("addressLabel")} value={state.address} onChange={(v) => setState({ ...state, address: v })} /> : null}
               {see("location") ? <HomeAddressSetting daycare={daycare} /> : null}
               {see("location") ? <Field label={t("cityLabel")} value={state.city} onChange={(v) => setState({ ...state, city: v })} /> : null}
@@ -990,9 +1063,9 @@ export function CapacityForm({
           ) : null}
           {see("fees") ? (
             <div id="listing-health-fees" className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              <Num label={t("infantFee")} value={state.infantMonthly} onChange={(n) => setState({ ...state, infantMonthly: n })} />
-              <Num label={t("toddlerFee")} value={state.toddlerMonthly} onChange={(n) => setState({ ...state, toddlerMonthly: n })} />
-              <Num label={t("preschoolFee")} value={state.preschoolMonthly} onChange={(n) => setState({ ...state, preschoolMonthly: n })} />
+              <Num label={t("infantFee")} value={state.infantMonthly} blankWhenZero hint={feeHint} onChange={(n) => setState({ ...state, infantMonthly: n })} />
+              <Num label={t("toddlerFee")} value={state.toddlerMonthly} blankWhenZero hint={feeHint} onChange={(n) => setState({ ...state, toddlerMonthly: n })} />
+              <Num label={t("preschoolFee")} value={state.preschoolMonthly} blankWhenZero hint={feeHint} onChange={(n) => setState({ ...state, preschoolMonthly: n })} />
             </div>
           ) : null}
           {see("languages") ? (
@@ -1082,11 +1155,40 @@ export function CapacityForm({
   );
 }
 
-function Num({ label, value, onChange }: { label: string; value: number; onChange: (n: number) => void }) {
+function Num({
+  label,
+  value,
+  onChange,
+  blankWhenZero = false,
+  hint,
+}: {
+  label: string;
+  value: number;
+  onChange: (n: number) => void;
+  blankWhenZero?: boolean;
+  hint?: string;
+}) {
   return (
     <label className="text-sm">
       {label}
-      <input type="number" className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3 tabular-nums" value={value} onChange={(e) => onChange(Number(e.target.value))} />
+      <input
+        type="number"
+        inputMode="decimal"
+        min={blankWhenZero ? 0 : undefined}
+        placeholder={blankWhenZero ? "Unknown" : undefined}
+        className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3 tabular-nums"
+        value={blankWhenZero && value <= 0 ? "" : value}
+        onChange={(e) => {
+          const raw = e.target.value.trim();
+          if (blankWhenZero && raw === "") {
+            onChange(0);
+            return;
+          }
+          const next = Number(raw);
+          onChange(blankWhenZero && (!Number.isFinite(next) || next <= 0) ? 0 : next);
+        }}
+      />
+      {hint ? <span className="mt-1 block text-xs leading-5 text-muted">{hint}</span> : null}
     </label>
   );
 }

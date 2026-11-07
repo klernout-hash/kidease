@@ -285,7 +285,9 @@ export async function runPhoneIssuePass(browser, base) {
 
     await page.mouse.click(20, 20).catch(() => undefined);
     const launcher = page.locator("[data-ke='help-launcher']");
-    const seen = await launcher.waitFor({ state: "visible", timeout: 5000 }).then(() => true).catch(() => false);
+    /* Help is a lazy chunk after the first tap (or a 4s idle cap). The tap above
+       starts it; the wait covers the chunk on a busy preview. */
+    const seen = await launcher.waitFor({ state: "visible", timeout: 12000 }).then(() => true).catch(() => false);
     if (!seen) {
       problems.push("help launcher did not show");
     } else {

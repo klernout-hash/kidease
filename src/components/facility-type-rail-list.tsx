@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DaycareCard } from "@/components/daycare-card";
 import { ListingRail } from "@/components/listing-rail";
 import { ChipButton } from "@/components/chip";
 import { ChipCarousel } from "@/components/chip-carousel";
@@ -97,6 +98,8 @@ export function DaycareTypeRails({
   onSelect,
   city,
   ratingFloor,
+  /** Search uses one readable column. Explore keeps the horizontal rails. */
+  layout = "rails",
 }: {
   items?: Card[];
   rows?: Partial<Record<BrowseDaycareType, Card[]>>;
@@ -113,6 +116,7 @@ export function DaycareTypeRails({
   onSelect?: (type?: BrowseDaycareType) => void;
   city?: string;
   ratingFloor?: number;
+  layout?: "rails" | "stack";
 }) {
   const { t, locale } = useCopy();
   const [localType, setLocalType] = useState<BrowseDaycareType | undefined>();
@@ -131,6 +135,32 @@ export function DaycareTypeRails({
     before_after: rows?.before_after ?? browseTypeRailItems(source, "before_after", BROWSE_RAIL_CAP, skipLiveLooking),
   };
   const kinds = active ? BROWSE_DAYCARE_TYPES.filter((kind) => kind === active) : BROWSE_DAYCARE_TYPES;
+  const stackItems = active ? resolved[active] : uniqueById(source);
+
+  if (layout === "stack") {
+    return (
+      <div data-ke="daycare-type-browse" data-ke-layout="guest-stack">
+        {menu ? <DaycareTypeMenu selected={active} onSelect={pick} /> : null}
+        {stackItems.length ? (
+          <div className="ke-result-stack mt-4" data-ke="guest-search-stack">
+            {stackItems.map((item, index) => (
+              <DaycareCard
+                key={item.id}
+                item={item}
+                presentation="visual"
+                eager={index < 2}
+                priority={index === 0}
+                labelFar={labelFar}
+                ratingFloor={ratingFloor}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="mt-6 text-sm text-muted">{t("noFacilityTypeResultsLead").replace("{type}", active ? t(BROWSE_RAIL_COPY[active]).toLowerCase() : t("catAll").toLowerCase())}</p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div data-ke="daycare-type-browse">

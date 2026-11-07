@@ -406,12 +406,17 @@ export const DaycareCard = memo(function DaycareCard({
           <CardPhotoBadges
             item={item}
             compact={false}
-            hollowPhoto={hollowPhoto}
+            hollowPhoto={false}
             live={live}
-            showLivePill={showLivePill}
+            showLivePill={false}
             licenseWarning={licenseWarning}
             showSubsidy={false}
           />
+          {hollowPhoto ? (
+            <span className="pointer-events-none absolute inset-0 grid place-items-center px-4 text-center text-sm font-medium text-muted" data-ke="card-photo-empty">
+              {locale === "fr" ? "Photo non disponible" : "Photo not available"}
+            </span>
+          ) : null}
           {parentActions ? <SaveListingButton daycareId={item.id} /> : null}
         </div>
         <ListingAnchor slug={item.slug} className="mt-3 flex min-h-0 flex-1 flex-col gap-1 text-inherit no-underline">
