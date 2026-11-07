@@ -21,8 +21,7 @@ test("government sign-in stays on the desk and public browse can return", () => 
   const shell = read("src/components/shell.tsx");
   const listing = read("src/routes/daycare.$slug.tsx");
   assert.match(login, /callbackURL: home/);
-  assert.match(guard, /closed=1/);
-  assert.doesNotMatch(guard, /throw redirect\(\{ href: govClosedHome/);
+  assert.match(guard, /throw redirect\(\{ href: govClosedHome\(locale\) \}\)/);
   assert.match(shell, /data-ke="gov-public-browse"/);
   assert.match(shell, /chrome\.role === "government"/);
   assert.match(listing, /chrome\.role !== "government" && showPublicClaimPrompt/);

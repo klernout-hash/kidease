@@ -10,24 +10,18 @@ function govClosedHome(locale: GovLocale): string {
 }
 
 export async function guardGovDesk(locale: GovLocale, nativeShell: boolean) {
-  if (!govPortalFooterEnabled()) throw redirect({ href: `${govPath(locale, "login")}?closed=1` });
-  if (nativeShell) return { nativeOnly: true as const, closed: false as const };
+  if (!govPortalFooterEnabled()) throw redirect({ href: govClosedHome(locale) });
+  if (nativeShell) return { nativeOnly: true as const };
   const session = await getGovSession();
   if (!session.ok) throw redirect({ href: govPath(locale, "login") });
-  return { nativeOnly: false as const, closed: false as const };
+  return { nativeOnly: false as const };
 }
 
 export async function guardGovLogin(locale: GovLocale, nativeShell: boolean) {
-  if (!govPortalFooterEnabled()) return { closed: true as const };
-  if (nativeShell) return { closed: false as const };
+  if (!govPortalFooterEnabled()) throw redirect({ href: govClosedHome(locale) });
+  if (nativeShell) return;
   const session = await getGovSession();
   if (session.ok) throw redirect({ href: govPath(locale) });
-  return { closed: false as const };
-}
-
-/** Public website link on the closed desk. Not an automatic redirect. */
-export function govPublicSite(locale: GovLocale) {
-  return govClosedHome(locale);
 }
 
 export function govRobotsHead(title: string) {

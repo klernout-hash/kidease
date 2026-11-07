@@ -5,7 +5,6 @@ import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-erro
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { Button } from "@/components/ui/button";
 import { celebrateAfterNavigation } from "@/lib/success-confirm";
-import { govPublicSite } from "@/lib/gov/desk-guard";
 import { govCopy, govPath } from "@/lib/gov/copy";
 import type { GovLocale } from "@/lib/gov/aggregate";
 import { GovHelp } from "@/components/gov/gov-help";
@@ -38,7 +37,7 @@ export function GovClosedNote({ locale }: { locale: GovLocale }) {
           : "The government desk is not open in this browser. You stay here, not on the parent home."}
       </p>
       <p className="mt-6">
-        <a href={govPublicSite(locale)} className="inline-flex min-h-11 items-center font-medium text-primary">
+        <a href={locale === "fr" ? "/fr" : "/"} className="inline-flex min-h-11 items-center font-medium text-primary">
           {copy.home}
         </a>
       </p>
