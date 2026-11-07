@@ -1332,6 +1332,59 @@
     border-top: 1px solid var(--color-border);
     padding-top: 1.5rem;
   }
+  .ke-listing-read {
+    font-size: 1.0625rem;
+    line-height: 1.6;
+  }
+  .ke-listing-read .text-sm {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  .ke-listing-read .text-xs {
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+  .ke-listing-read h1 {
+    font-size: clamp(1.75rem, 4vw, 2.25rem);
+    line-height: 1.2;
+  }
+  .ke-listing-read h2 {
+    font-size: 1.375rem;
+    line-height: 1.3;
+    font-weight: 650;
+  }
+  .ke-listing-read .ke-listing-sections > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 2rem;
+    padding-top: 2rem;
+  }
+  .ke-room-rail {
+    scroll-snap-type: x proximity;
+    touch-action: pan-x pan-y;
+    overscroll-behavior-x: contain;
+  }
+  .ke-room-rail [data-ke="listing-room-card"] {
+    scroll-snap-align: start;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .ke-listing-read details[open] .ke-listing-expand,
+    .ke-listing-read details[open] > ul {
+      animation: ke-listing-fade 180ms ease;
+    }
+    .ke-listing-read button:active {
+      transform: scale(0.98);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ke-listing-read details[open] .ke-listing-expand,
+    .ke-listing-read button:active {
+      animation: none;
+      transform: none;
+    }
+  }
+  @keyframes ke-listing-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
   .ke-visual-card a:focus-visible,
   .ke-tile a:focus-visible,
   .ke-visual-card button:focus-visible,

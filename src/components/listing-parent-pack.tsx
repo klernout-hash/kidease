@@ -218,10 +218,11 @@ export function ListingSnapshotGrid({ item }: { item: Daycare }) {
   const financial = financialLabels(item.financial ?? { subsidy: false, sliding: false, sibling: false, meals: false }, loc);
   const curriculum = (item.curriculumTags ?? []).map((id) => curriculumLabel(id, loc));
   const safety = (item.safetyFeatures ?? []).map((id) => safetyLabel(id, loc));
+  const skip = new Set(["licensed", "funded", "unfunded", "ten-a-day", "subsidy", "open-spots"]);
   const amenities = (item.amenities || "")
     .split(",")
     .map((key) => key.trim())
-    .filter(Boolean)
+    .filter((key) => key && !skip.has(key))
     .map((key) => amenityLabel(key, loc));
   const chips = [...new Set([...financial, ...curriculum, ...safety, ...amenities])];
   const promo = displayListingText(item.promoText).trim();

@@ -43,7 +43,9 @@ import { SaveListingButton } from "@/components/save-listing-button";
 import { ClaimListingCta } from "@/components/claim-listing-cta";
 import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
-import { amenityLabel } from "@/lib/amenities";
+import { listingOfferGroups } from "@/lib/listing-offers";
+import { safetyLabel } from "@/lib/parent-listing";
+import { ListingRoomRail } from "@/components/listing-room-rail";
 import { licenseRecordUrl, subsidyEstimatorUrl } from "@/lib/licensing";
 import { reportSearchProvince } from "@/lib/licensing-offices";
 import { listingSubsidy, subsidyNote, subsidyNoteKey } from "@/lib/fee-program";
@@ -802,7 +804,7 @@ export function Listing() {
 
   return (
     <Shell>
-      <article className={`ke-listing-page ke-dense mx-auto max-w-5xl overflow-x-hidden pb-[calc(12rem+env(safe-area-inset-bottom))] md:pb-10`}>
+      <article className={`ke-listing-page ke-listing-read mx-auto max-w-5xl overflow-x-hidden pb-[calc(12rem+env(safe-area-inset-bottom))] md:pb-10`}>
         <div className="lg:ke-gutter lg:pt-4">
           <ListingHeroGallery
             photos={gallery}
@@ -1005,15 +1007,15 @@ export function Listing() {
                 {desc.length > 180 ? (
                   <details className="group mt-2">
                     <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-                      <span className="block max-w-prose font-normal text-muted line-clamp-4 group-open:hidden">{desc}</span>
+                      <span className="block max-w-prose text-base font-normal leading-7 text-fg line-clamp-4 group-open:hidden">{desc}</span>
                       <span className="inline-flex min-h-11 items-center text-sm font-semibold">
                         {locale === "fr" ? "Voir plus" : "Show more"}
                       </span>
                     </summary>
-                    <p className="mt-2 hidden max-w-prose text-muted group-open:block">{desc}</p>
+                    <p className="ke-listing-expand mt-2 hidden max-w-prose text-base leading-7 text-fg group-open:block">{desc}</p>
                   </details>
                 ) : (
-                  <p className="mt-2 max-w-prose text-muted">{desc}</p>
+                  <p className="mt-2 max-w-prose text-base leading-7 text-fg">{desc}</p>
                 )}
               </section>
             ) : null}
@@ -1166,24 +1168,7 @@ export function Listing() {
               <ListingReviewForm daycareId={d.id} slug={d.slug} />
             </section>
 
-            {roomPhotos.length ? (
-              <section id="listing-photos" className="scroll-mt-24">
-                <h2 className="font-display text-2xl">{t("interiors")}</h2>
-                <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {roomPhotos.map((src, i) => (
-                    <button
-                      key={src}
-                      type="button"
-                      onClick={() => setPhoto(gallery.indexOf(src))}
-                      className="aspect-[4/3] overflow-hidden rounded-lg bg-surface-2"
-                      aria-label={`${t("interiors")} ${i + 1}`}
-                    >
-                      <BuildingPhoto src={src} className="size-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-              </section>
-            ) : null}
+            <ListingRoomRail photos={roomPhotos} onOpen={(src) => setPhoto(gallery.indexOf(src))} />
 
             <ListingTourTimes daycare={d} onBook={onTour} canBook={live && parentActions} />
             {data.jobs?.length ? (
@@ -1252,27 +1237,34 @@ export function Listing() {
               {parentActions ? <JoinWaitlist daycareId={d.id} next={`/daycare/${d.slug}`} /> : null}
             </section>
 
-            {String(d.amenities ?? "").split(",").filter(Boolean).length ? (
-              <section>
-                <h2 className="font-display text-2xl">{t("amenities")}</h2>
-                <ul className="mt-3 flex flex-wrap gap-2">
-                  {String(d.amenities ?? "")
-                    .split(",")
-                    .filter(Boolean)
-                    .map((key) => (
-                      <li key={key} className="ke-chip-meta">
-                        {amenityLabel(key, locale)}
-                      </li>
-                    ))}
-                </ul>
-              </section>
-            ) : null}
+            <ListingOffers amenities={d.amenities} mealsOn={Boolean(d.financial?.meals)} />
 
             <ListingCultureCard daycare={d} />
 
+            {live ? (
+              <section data-ke="listing-provider">
+                <h2 className="font-display text-[1.375rem] font-semibold leading-snug">{locale === "fr" ? "Le centre" : "The centre"}</h2>
+                <div className="mt-3 max-w-lg rounded-2xl bg-surface p-4 ring-1 ring-border">
+                  <p className="text-lg font-semibold leading-7">{name}</p>
+                  <p className="text-base leading-7 text-muted">{[d.city, d.province].filter(Boolean).join(", ")}</p>
+                  {d.licenseNumber ? (
+                    <p className="mt-2 text-base leading-7">{locale === "fr" ? "Numéro de permis" : "Licence number"} · {d.licenseNumber}</p>
+                  ) : null}
+                </div>
+              </section>
+            ) : null}
+
             <div className="grid gap-4 sm:grid-cols-2" data-ke="listing-record-groups">
-            <section id="listing-licence" className="scroll-mt-24 rounded-xl bg-surface p-4 ring-1 ring-border">
-              <h2 className="font-display text-2xl">{t("licenceAndInspections")}</h2>
+            <section id="listing-licence" className="scroll-mt-24" data-ke="listing-things">
+              <h2 className="font-display text-[1.375rem] font-semibold leading-snug">{locale === "fr" ? "Bon à savoir" : "Things to know"}</h2>
+              {d.safetyFeatures?.length ? (
+                <ul className="mt-3 space-y-2 text-base leading-7" data-ke="listing-safety">
+                  {d.safetyFeatures.map((id) => (
+                    <li key={id}>{safetyLabel(id, locale)}</li>
+                  ))}
+                </ul>
+              ) : null}
+              <h3 className="mt-4 text-base font-semibold">{t("licenceAndInspections")}</h3>
               <p className="mt-2 max-w-prose text-sm text-muted">{t("licenceRecordLead")}</p>
               <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm">
                 {licensed && !approved ? (
@@ -1387,7 +1379,7 @@ export function Listing() {
       </article>
 
       {!requestOpen ? (
-      <div className={`fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden [[data-channel=app]_&]:bottom-20`} data-ke="listing-sticky-bar">
+      <div className={`fixed inset-x-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden bottom-[var(--ke-keyboard,0px)] [[data-channel=app]_&]:bottom-[calc(5rem+var(--ke-keyboard,0px))]`} data-ke="listing-sticky-bar">
         <div className="mx-auto flex max-w-lg items-center gap-3" data-ke={parentActions ? "listing-parent-actions" : undefined}>
           <div className="min-w-0 flex-1">
             <ListingCtaSnippet live={live} from={from} hours={hours} />
@@ -1448,6 +1440,57 @@ function facilityTypeLabelKey(type: FacilityType): CopyKey {
   return FACILITY_LABEL[type];
 }
 
+function ListingOffers({ amenities, mealsOn }: { amenities?: string | null; mealsOn: boolean }) {
+  const { locale } = useCopy();
+  const loc = locale === "fr" ? "fr" : "en";
+  const offer = listingOfferGroups(amenities, loc);
+  const meals = mealsOn && offer.meals.length === 0 ? [loc === "fr" ? "Repas inclus" : "Meals included"] : offer.meals;
+  if (!meals.length && !offer.groups.length) return null;
+  return (
+    <>
+      {meals.length ? (
+        <section data-ke="listing-meals">
+          <h2 className="font-display text-[1.375rem] font-semibold leading-snug">{loc === "fr" ? "Repas" : "Meals"}</h2>
+          <ul className="mt-3 space-y-2 text-base leading-7">
+            {meals.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      {offer.groups.length ? (
+        <section data-ke="listing-offers">
+          <h2 className="font-display text-[1.375rem] font-semibold leading-snug">
+            {loc === "fr" ? "Ce que cette garderie offre" : "What this daycare offers"}
+          </h2>
+          {offer.groups.map((group) => (
+            <div key={group.id} className="mt-4">
+              <h3 className="text-base font-semibold">{group.title}</h3>
+              <ul className="mt-2 space-y-2 text-base leading-7">
+                {group.items.slice(0, 6).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+              {group.items.length > 6 ? (
+                <details className="mt-1">
+                  <summary className="inline-flex min-h-11 cursor-pointer items-center text-base font-semibold">
+                    {loc === "fr" ? "Tout afficher" : "Show all"}
+                  </summary>
+                  <ul className="space-y-2 text-base leading-7">
+                    {group.items.slice(6).map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </details>
+              ) : null}
+            </div>
+          ))}
+        </section>
+      ) : null}
+    </>
+  );
+}
+
 function Meta({ label, value }: { label: string; value: string }) {
   return (
     <div className="ke-fact">
@@ -1474,7 +1517,7 @@ function ListingCtaSnippet({
   const showHours = Boolean(hoursText && hoursText !== "—" && hoursText !== "-");
   if (!fee && !showHours) return null;
   return (
-    <p className={prominent ? "text-sm leading-5" : "mb-1.5 truncate text-sm leading-5"} data-ke="listing-cta-snippet">
+    <p className={prominent ? "text-base leading-6" : "mb-1 truncate text-base leading-6"} data-ke="listing-cta-snippet">
       {fee ? <span className="font-semibold text-fg">{fee}</span> : null}
       {fee && showHours ? <span className="text-muted"> · </span> : null}
       {showHours ? <span className="text-muted">{hoursText}</span> : null}
