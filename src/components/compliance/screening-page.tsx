@@ -88,6 +88,7 @@ export function GovScreeningPage({ data, locale }: { data: GovData; locale: "en"
       <p>{data.province}</p>
       <p className="mt-2">{locale === "fr" ? "Expirés" : "Expired"}: {data.expired}</p>
       <p>{locale === "fr" ? "Bientôt dus" : "Due soon"}: {data.expiring}</p>
+      <p className="mt-2 text-sm">{locale === "fr" ? "Ces totaux sont les dossiers de cet outil, pas la preuve que chaque vérification est à jour. Aucun dossier privé n’est montré." : "These counts are records in this tool, not proof every check is current. No private staff file is shown."}</p>
       <Button asChild className="mt-4">
         <a href={locale === "fr" ? "/fr/gov" : "/gov"}>{locale === "fr" ? "Bureau du gouvernement" : "Government desk"}</a>
       </Button>

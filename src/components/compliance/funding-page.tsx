@@ -58,7 +58,7 @@ export function GovFundingPage({ data, locale }: { data: GovData; locale: "en" |
     <ComplianceFrame locale={locale} title={locale === "fr" ? "Rapports mensuels" : "Monthly reports"} copy={{ ...copy, what: copy.govWhat, why: copy.govWhy }} mode={data.mode} gov>
       <p>{data.province}</p>
       <ul className="mt-3 space-y-2">{suppressRows(data.rows.map((row) => ({ ...row, n: row.count }))).map((row) => <li key={String(row.blocked)}>{row.blocked ? (locale === "fr" ? "Avec écart" : "With a mismatch") : (locale === "fr" ? "Sans écart" : "No mismatch")}: {row.suppressed ? (locale === "fr" ? "masqué (<5)" : "hidden (<5)") : row.n}</li>)}</ul>
-      {data.rows.length === 0 ? <p className="mt-3 text-sm">{copy.empty}</p> : null}
+      {data.rows.length === 0 ? <p className="mt-3 text-sm">{locale === "fr" ? "Aucun chiffre pour ce mois dans cet outil. Aucune conclusion financière n’est possible." : "No numbers for this month in this tool. No financial conclusion is supported."}</p> : null}
       <Button asChild className="mt-4"><a href={locale === "fr" ? "/fr/gov" : "/gov"}>{locale === "fr" ? "Bureau du gouvernement" : "Government desk"}</a></Button>
     </ComplianceFrame>
   );

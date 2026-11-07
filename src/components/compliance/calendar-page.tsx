@@ -93,7 +93,7 @@ export function GovCalendarPage({ data, locale }: { data: GovData; locale: "en" 
   return (
     <ComplianceFrame locale={locale} title={locale === "fr" ? "Dates en retard" : "Overdue dates"} copy={{ ...copy, what: copy.govWhat, why: copy.govWhy }} mode={data.mode} gov>
       <p className="text-sm">{data.province}: {data.overdue}</p>
-      {data.rows.length === 0 ? <p className="mt-3 text-sm">{copy.empty}</p> : null}
+      {data.rows.length === 0 ? <p className="mt-3 text-sm" data-ke="gov-no-dates">{locale === "fr" ? "Aucune date suivie. Un zéro ne veut pas dire que chaque permis est à jour." : "No tracked dates. A zero does not mean every licence is current."}</p> : null}
       <ul className="mt-3 space-y-2">
         {data.rows.map((row) => (
           <li key={`${row.daycareId}-${row.kind}-${row.dueOn}`} className="rounded-2xl bg-surface px-4 py-3 text-sm ring-1 ring-border">

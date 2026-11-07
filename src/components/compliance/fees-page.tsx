@@ -69,7 +69,7 @@ export function GovFeesPage({ data, locale }: { data: GovData; locale: "en" | "f
       ) : (
         <p className="mt-3 text-sm">{copy.empty}</p>
       )}
-      {data.rows.length === 0 && caps.length ? <p className="mt-3 text-sm">{copy.clear}</p> : null}
+      {data.rows.length === 0 && caps.length ? <p className="mt-3 text-sm" data-ke="gov-fee-assess">{locale === "fr" ? "Impossible d’évaluer. Les tarifs quotidiens comparables ne sont pas au dossier." : "Unable to assess. Comparable daily fees are not on file."}</p> : null}
       <ul className="mt-3 space-y-2">{data.rows.map((row, i) => <li key={i}>{row.name} — {row.age_key}</li>)}</ul>
       <Button asChild className="mt-4"><a href={locale === "fr" ? "/fr/gov" : "/gov"}>{locale === "fr" ? "Bureau du gouvernement" : "Government desk"}</a></Button>
     </ComplianceFrame>

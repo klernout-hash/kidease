@@ -15,7 +15,7 @@ export function GovDemandPage({ data, locale }: { data: Data; locale: "en" | "fr
           ))}
         </ul>
       ) : (
-        <p className="mt-3 text-sm">{copy.empty}</p>
+        <p className="mt-3 text-sm">{locale === "fr" ? "Pas assez de recherches enregistrées pour montrer un chiffre. Ce n’est pas un nombre d’enfants." : "Not enough saved searches to show a number. This is not a count of children."}</p>
       )}
       <Button asChild className="mt-4"><a href={locale === "fr" ? "/fr/gov" : "/gov"}>{locale === "fr" ? "Bureau du gouvernement" : "Government desk"}</a></Button>
     </ComplianceFrame>
