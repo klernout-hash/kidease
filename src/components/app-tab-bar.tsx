@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Building2, Calendar, ClipboardCheck, ClipboardList, Heart, Home, LifeBuoy, Menu, MessageCircle, Search } from "lucide-react";
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useState } from "react";
 import { CountBadge } from "@/components/count-badge";
 import { useSessionDesks } from "@/components/session-desks";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -16,8 +16,6 @@ import { localePath, stripLocalePrefix } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
 import { useAirbnbUi } from "@/lib/use-airbnb-ui";
 import { cn } from "@/lib/utils";
-
-const AirbnbDeskPill = lazy(() => import("@/components/airbnb-screens").then((m) => ({ default: m.AirbnbDeskPill })));
 
 /**
  * Phone tab bar. The last tab is Menu for every role.
@@ -97,11 +95,6 @@ export function AppTabBar() {
 
   return (
     <>
-      {airbnb ? (
-        <Suspense fallback={null}>
-          <AirbnbDeskPill />
-        </Suspense>
-      ) : null}
       <nav
         data-ke="app-tab-bar"
         data-bar={storeTabs ? "store" : kind}

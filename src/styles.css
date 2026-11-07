@@ -2650,10 +2650,16 @@ h1, h2, h3, h4, p, li, label, legend, dt, dd {
   flex: none;
 }
 .ke-listing-hero {
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 4 / 3;
   width: 100%;
   max-height: none;
   overflow: hidden;
+}
+@media (min-width: 1024px) {
+  .ke-listing-hero,
+  .ke-listing-hero[data-empty="true"] {
+    aspect-ratio: 16 / 9;
+  }
 }
 .ke-photo-frame > span,
 .ke-photo-frame > [data-ke="photo-fallback"],
@@ -2988,18 +2994,7 @@ html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-home"] .sticky 
   color: var(--airbnb-text);
 }
 .ke-airbnb-desk-pill {
-  position: fixed;
-  left: 50%;
-  bottom: calc(4.7rem + env(safe-area-inset-bottom, 0px));
-  transform: translateX(-50%);
-  z-index: 60;
-  min-height: 2.75rem;
-  border: 0;
-  border-radius: 999px;
-  padding: 0 1rem;
-  background: #222;
-  color: #fff;
-  font-weight: 700;
+  display: none !important;
 }
 @media (min-width: 768px) {
   .ke-airbnb-desk-pill { display: none; }
