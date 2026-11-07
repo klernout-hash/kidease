@@ -1,3 +1,10 @@
+export type LinkedCentre = {
+  slug: string;
+  name: string;
+  city: string;
+  province: string;
+};
+
 export type ProfileAbout = {
   work: string;
   education: string;

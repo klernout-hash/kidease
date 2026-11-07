@@ -1,12 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
-import { cleanProfileAbout, emptyProfileAbout, type ProfileAbout } from "@/lib/profile-about";
+import { cleanProfileAbout, emptyProfileAbout, type LinkedCentre, type ProfileAbout } from "@/lib/profile-about";
 
 export type AboutProfile = ProfileAbout & {
   /** True only when a real identity check exists. This save never sets it. */
   identityVerified: false;
-  centres: string[];
+  centres: LinkedCentre[];
 };
 
 function parseAbout(raw: unknown): ProfileAbout {
@@ -20,20 +20,28 @@ function parseAbout(raw: unknown): ProfileAbout {
   return cleanProfileAbout(raw);
 }
 
-async function linkedCentres(sql: Awaited<ReturnType<typeof getSql>>, userId: string) {
+async function linkedCentres(sql: Awaited<ReturnType<typeof getSql>>, userId: string): Promise<LinkedCentre[]> {
   try {
-    const centres = await sql<{ slug: string }>`
-      select d.slug
+    const centres = await sql<{ slug: string | null; name: string | null; city: string | null; province: string | null }>`
+      select d.slug, d.name, d.city, d.province
       from provider_daycares pd
       join daycares d on d.id = pd.daycare_id
       where pd.user_id = ${userId}
       union
-      select d.slug
+      select d.slug, d.name, d.city, d.province
       from centre_members m
       join daycares d on d.id = m.daycare_id
       where m.user_id = ${userId} and m.status = 'active'
     `;
-    return centres.map((row) => row.slug).filter(Boolean).slice(0, 12);
+    return centres
+      .map((row) => ({
+        slug: String(row.slug || "").trim(),
+        name: String(row.name || "").trim(),
+        city: String(row.city || "").trim(),
+        province: String(row.province || "").trim(),
+      }))
+      .filter((row) => row.slug && row.name)
+      .slice(0, 12);
   } catch {
     return [];
   }

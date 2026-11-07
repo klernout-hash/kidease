@@ -36,6 +36,11 @@ test("about you is private account UI and does not grant a verified badge", () =
   assert.match(form, /does not add a verified badge/);
   assert.match(server, /authMiddleware/);
   assert.match(server, /identityVerified: false/);
+  assert.match(server, /select d.slug, d.name, d.city, d.province/);
+  assert.doesNotMatch(server, /date_of_birth|child_profiles|address/);
+  assert.match(form, /data-ke="about-you-cancel"/);
+  assert.match(form, /data-ke="about-centre-card"/);
+  assert.match(form, /ProfileAvatar/);
   assert.doesNotMatch(server, /set role =/);
   assert.match(migration, /about jsonb/);
   assert.doesNotMatch(readFileSync(new URL("../src/routes/daycare.$slug.tsx", import.meta.url), "utf8"), /AboutYouForm/);
