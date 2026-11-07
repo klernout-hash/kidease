@@ -83,13 +83,6 @@ function SurveyContext({ locale }: { locale: "en" | "fr" }) {
     </section>
   );
 }
-  return (
-    <div className="rounded-2xl bg-surface p-4 ring-1 ring-border">
-      <dt className="text-sm text-muted">{label}</dt>
-      <dd className="mt-1 font-display text-2xl">{value}</dd>
-    </div>
-  );
-}
 
 export function GovDashboardView({ data }: { data: GovDashboard }) {
   const copy = govCopy(data.locale);
