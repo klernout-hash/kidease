@@ -45,6 +45,7 @@ import { ReferFriendPanel } from "@/components/refer-friend-panel";
 import { fieldErrorClass, RequiredMark } from "@/components/required-field";
 import { focusFirstInvalid } from "@/lib/profile-form";
 import { ProfileFacts, ProfileHeroCard, type ProfileFact } from "@/components/profile-hero";
+import { ChildCheckHistory } from "@/components/child-checkin-desk";
 import { ProfileChildren } from "@/components/profile-children";
 import { RoleSwitchPill } from "@/components/role-switch-pill";
 import { ProfileDeskExtras } from "@/components/profile-public";
@@ -732,7 +733,7 @@ function ProfilePane() {
           {section === "profile" && !editing && canEditProfile ? (
             <Link
               to={accountTo}
-              search={{ ...homeSearch, edit: "1" as const }}
+              search={{ ...homeSearch, section: "profile" as const, edit: "1" as const }}
               data-ke="profile-edit"
               className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-primary touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
             >
@@ -791,6 +792,7 @@ function ProfilePane() {
             {roleId === "parent" ? (
               <ProfileChildren children={profileDesk?.ok ? profileDesk.children : []} />
             ) : null}
+            {roleId === "parent" ? <ChildCheckHistory /> : null}
             <ProfileFacts rows={profileFactRows()} bio={bio} />
             {daycareStats && profileDesk?.ok ? (
               <ProfileDeskExtras listings={profileDesk.listings} reviews={profileDesk.reviews} />

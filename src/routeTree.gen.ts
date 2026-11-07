@@ -234,6 +234,7 @@ import { Route as ParentSubsidyRouteImport } from './routes/parent_.subsidy'
 import { Route as ParentWithdrawalRouteImport } from './routes/parent_.withdrawal'
 import { Route as PayIndexRouteImport } from './routes/pay.index'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
+import { Route as PreviewAttendanceRouteImport } from './routes/preview.attendance'
 import { Route as ProviderFamiliesRouteImport } from './routes/provider.families'
 import { Route as ProviderSubscriptionRouteImport } from './routes/provider.subscription'
 import { Route as ProviderAbsenceRouteImport } from './routes/provider_.absence'
@@ -1438,6 +1439,11 @@ const PayBookingIdRoute = PayBookingIdRouteImport.update({
   path: '/$bookingId',
   getParentRoute: () => PayRoute,
 } as any)
+const PreviewAttendanceRoute = PreviewAttendanceRouteImport.update({
+  id: '/preview/attendance',
+  path: '/preview/attendance',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProviderFamiliesRoute = ProviderFamiliesRouteImport.update({
   id: '/families',
   path: '/families',
@@ -2044,6 +2050,7 @@ export interface FileRoutesByFullPath {
   '/parent/subsidy': typeof ParentSubsidyRoute
   '/parent/withdrawal': typeof ParentWithdrawalRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
+  '/preview/attendance': typeof PreviewAttendanceRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/provider/absence': typeof ProviderAbsenceRoute
@@ -2345,6 +2352,7 @@ export interface FileRoutesByTo {
   '/parent/subsidy': typeof ParentSubsidyRoute
   '/parent/withdrawal': typeof ParentWithdrawalRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
+  '/preview/attendance': typeof PreviewAttendanceRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/provider/absence': typeof ProviderAbsenceRoute
@@ -2649,6 +2657,7 @@ export interface FileRoutesById {
   '/parent_/subsidy': typeof ParentSubsidyRoute
   '/parent_/withdrawal': typeof ParentWithdrawalRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
+  '/preview/attendance': typeof PreviewAttendanceRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/provider_/absence': typeof ProviderAbsenceRoute
@@ -2954,6 +2963,7 @@ export interface FileRouteTypes {
     | '/parent/subsidy'
     | '/parent/withdrawal'
     | '/pay/$bookingId'
+    | '/preview/attendance'
     | '/provider/families'
     | '/provider/subscription'
     | '/provider/absence'
@@ -3255,6 +3265,7 @@ export interface FileRouteTypes {
     | '/parent/subsidy'
     | '/parent/withdrawal'
     | '/pay/$bookingId'
+    | '/preview/attendance'
     | '/provider/families'
     | '/provider/subscription'
     | '/provider/absence'
@@ -3558,6 +3569,7 @@ export interface FileRouteTypes {
     | '/parent_/subsidy'
     | '/parent_/withdrawal'
     | '/pay/$bookingId'
+    | '/preview/attendance'
     | '/provider/families'
     | '/provider/subscription'
     | '/provider_/absence'
@@ -3798,6 +3810,7 @@ export interface RootRouteChildren {
   ParentNotificationsRoute: typeof ParentNotificationsRoute
   ParentSubsidyRoute: typeof ParentSubsidyRoute
   ParentWithdrawalRoute: typeof ParentWithdrawalRoute
+  PreviewAttendanceRoute: typeof PreviewAttendanceRoute
   ProviderAbsenceRoute: typeof ProviderAbsenceRoute
   ProviderChangeRequestsRoute: typeof ProviderChangeRequestsRoute
   ProviderChildProfileRoute: typeof ProviderChildProfileRoute
@@ -5423,6 +5436,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PayBookingIdRouteImport
       parentRoute: typeof PayRoute
     }
+    '/preview/attendance': {
+      id: '/preview/attendance'
+      path: '/preview/attendance'
+      fullPath: '/preview/attendance'
+      preLoaderRoute: typeof PreviewAttendanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/provider/families': {
       id: '/provider/families'
       path: '/families'
@@ -6465,6 +6485,7 @@ const rootRouteChildren: RootRouteChildren = {
   ParentNotificationsRoute: ParentNotificationsRoute,
   ParentSubsidyRoute: ParentSubsidyRoute,
   ParentWithdrawalRoute: ParentWithdrawalRoute,
+  PreviewAttendanceRoute: PreviewAttendanceRoute,
   ProviderAbsenceRoute: ProviderAbsenceRoute,
   ProviderChangeRequestsRoute: ProviderChangeRequestsRoute,
   ProviderChildProfileRoute: ProviderChildProfileRoute,
