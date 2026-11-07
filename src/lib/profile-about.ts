@@ -24,11 +24,12 @@ const EMPTY: ProfileAbout = {
 };
 
 function line(value: unknown) {
-  return String(value ?? "")
-    .replace(/[\u0000-\u001f]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 80);
+  let text = "";
+  for (const char of String(value ?? "")) {
+    const code = char.charCodeAt(0);
+    text += code < 32 ? " " : char;
+  }
+  return text.replace(/\s+/g, " ").trim().slice(0, 80);
 }
 
 /** Drop anything the person did not type. A client cannot mark themselves verified. */

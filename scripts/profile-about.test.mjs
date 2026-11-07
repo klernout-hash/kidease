@@ -15,6 +15,7 @@ test("about you keeps only short text the person typed", () => {
     role: "admin",
   });
   assert.equal(about.work, "Teacher");
+  assert.equal(cleanProfileAbout({ work: "A\u0000B\nC" }).work, "A B C");
   assert.equal(about.education.length, 80);
   assert.equal("identityVerified" in about, false);
   assert.equal("role" in about, false);
