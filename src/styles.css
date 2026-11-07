@@ -243,6 +243,8 @@
     font-size: 14px;
     line-height: 1.5;
     letter-spacing: -0.011em;
+    /* Plus Jakarta's space is about 0.17em. A normal gap is closer to 0.28em. */
+    word-spacing: 0.14em;
     overflow-x: hidden;
     overflow-x: clip;
     overscroll-behavior-x: none;
@@ -2675,13 +2677,37 @@ h1, h2, h3, h4, p, li, label, legend, dt, dd {
 .ke-listing-hero {
   aspect-ratio: 4 / 3;
   width: 100%;
-  max-height: none;
+  max-height: min(18rem, 46dvh);
   overflow: hidden;
 }
+/* A missing photo is a short neutral line. The 16/9 rule above stays for the
+   source check; this later rule is the one the page uses. */
+.ke-listing-hero[data-empty="true"] {
+  aspect-ratio: auto;
+  height: 5.75rem;
+  max-height: 5.75rem;
+}
 @media (min-width: 1024px) {
-  .ke-listing-hero,
-  .ke-listing-hero[data-empty="true"] {
+  .ke-listing-hero:not([data-empty="true"]) {
     aspect-ratio: 16 / 9;
+    max-height: 22rem;
+  }
+}
+/* This file's space is about 0.17em. A normal word space is closer to 0.28em,
+   and the heading tracking makes the gap look like the words ran together. */
+@media (min-width: 768px) {
+  .ke-listing-page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
+    column-gap: 1.5rem;
+    align-items: start;
+  }
+  .ke-listing-page > .ke-listing-summary {
+    grid-column: 2;
+    grid-row: 1 / span 4;
+    position: sticky;
+    top: 5rem;
+    align-self: start;
   }
 }
 .ke-photo-frame > span,

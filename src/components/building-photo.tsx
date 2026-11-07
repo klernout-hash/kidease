@@ -75,6 +75,7 @@ export function ListingPhotoFallback({
   claim = false,
   claimQuery,
   quiet = false,
+  plain = false,
 }: {
   className?: string;
   style?: CSSProperties;
@@ -83,6 +84,8 @@ export function ListingPhotoFallback({
   claimQuery?: string;
   /** Flat theme fill while a real photo is still loading. Empty photos use the wash. */
   quiet?: boolean;
+  /** Short neutral line. Used when a listing has no photo, instead of the large wash. */
+  plain?: boolean;
 }) {
   const { t, locale } = useCopy();
   const showClaim = claim && !quiet;
@@ -103,17 +106,31 @@ export function ListingPhotoFallback({
     <div
       className={cn(
         "relative grid place-items-center overflow-hidden text-primary",
-        quiet && "bg-surface-2",
+        (quiet || plain) && "bg-surface-2",
         className,
       )}
       style={style}
       data-ke="photo-fallback"
       data-claim={showClaim ? "listing" : undefined}
-      data-placeholder={quiet ? "loading" : "theme"}
-      aria-hidden={showClaim ? undefined : true}
+      data-placeholder={quiet ? "loading" : plain ? "none" : "theme"}
+      aria-hidden={showClaim || plain ? undefined : true}
     >
-      {quiet ? null : <UnclaimedWash />}
-      {showClaim ? (
+      {plain ? (
+        <p className="relative z-[1] px-4 text-center text-sm text-muted" data-ke="listing-photo-empty">
+          {locale === "fr" ? "Photo non disponible" : "Photo not available"}
+        </p>
+      ) : null}
+      {quiet || plain ? null : <UnclaimedWash />}
+      {showClaim && plain && claimQuery !== undefined ? (
+        <Link
+          to={localePath("/claim", locale)}
+          search={claimQuery ? { q: claimQuery } : {}}
+          className="relative z-[1] text-sm font-medium text-primary underline-offset-4 hover:underline"
+        >
+          {t("claimListingFrame")}
+        </Link>
+      ) : null}
+      {showClaim && !plain ? (
         claimQuery !== undefined ? (
           <Link
             to={localePath("/claim", locale)}

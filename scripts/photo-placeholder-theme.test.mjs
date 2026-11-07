@@ -54,7 +54,8 @@ test("empty listing photos use the theme wash, not a light-only fill", () => {
   assert.match(photo, /isMissingCatalogueBuilding/);
   assert.match(photo, /function photoNeedsFallback/);
   assert.match(photo, /ke-unclaimed-wash/);
-  assert.match(photo, /data-placeholder=\{quiet \? "loading" : "theme"\}/);
+  assert.match(photo, /quiet \? "loading" : plain \? "none" : "theme"/);
+  assert.match(photo, /<UnclaimedWash \/>/);
   assert.doesNotMatch(photo, /bg-\[#F7F4EF\]/);
   assert.doesNotMatch(photo, /M8 22 24 10/);
   assert.doesNotMatch(card, /bg-\[#EBEBEB\]/);

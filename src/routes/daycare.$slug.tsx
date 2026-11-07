@@ -403,7 +403,7 @@ export function Listing() {
       .join(", ");
     return (
       <Shell>
-        <main className="mx-auto max-w-5xl overflow-x-hidden">
+        <main className="ke-listing-page mx-auto max-w-5xl overflow-x-hidden">
           <div className="lg:ke-gutter lg:pt-4">
             <div className="ke-listing-hero relative overflow-hidden lg:rounded-[14px]" data-empty={earlyReal ? undefined : "true"}>
               {earlyReal ? (
@@ -418,7 +418,7 @@ export function Listing() {
                   className="size-full object-cover"
                 />
               ) : (
-                <ListingPhotoFallback className="size-full" />
+                <ListingPhotoFallback plain className="size-full" />
               )}
             </div>
           </div>
@@ -499,10 +499,24 @@ export function Listing() {
                   <div className="ke-skel h-8 w-32 rounded-full" />
                 </div>
                 <div className="ke-skel h-28 w-full rounded-xl" />
-                <div className="ke-skel aspect-[16/9] w-full max-h-64 rounded-xl" />
               </div>
             </div>
           </div>
+          <aside className="ke-listing-summary ke-panel mx-4 mb-6 hidden h-fit px-4 py-4 shadow-card md:mx-0 md:block" data-ke="listing-action-summary">
+            <p className="text-sm font-semibold">{locale === "fr" ? "Disponibilité" : "Availability"}</p>
+            <p className="text-sm text-muted">{locale === "fr" ? "Non confirmée" : "Not confirmed"}</p>
+            <p className="mt-3 text-sm font-semibold">{locale === "fr" ? "Frais et soutien" : "Fees and support"}</p>
+            <p className="text-sm text-muted">
+              {locale === "fr"
+                ? "Frais non confirmés. Un plafond quotidien n’est pas une facture mensuelle."
+                : "Fees not confirmed. A daily cap is not a monthly bill."}
+            </p>
+            <p className="mt-3 text-sm text-muted">
+              {locale === "fr"
+                ? "Les demandes s’affichent quand la fiche a fini de s’ouvrir."
+                : "Requests show once this listing has finished opening."}
+            </p>
+          </aside>
         </main>
       </Shell>
     );
@@ -788,7 +802,7 @@ export function Listing() {
 
   return (
     <Shell>
-      <article className={`ke-dense mx-auto max-w-5xl overflow-x-hidden pb-[calc(12rem+env(safe-area-inset-bottom))] md:pb-10`}>
+      <article className={`ke-listing-page ke-dense mx-auto max-w-5xl overflow-x-hidden pb-[calc(12rem+env(safe-area-inset-bottom))] md:pb-10`}>
         <div className="lg:ke-gutter lg:pt-4">
           <ListingHeroGallery
             photos={gallery}
@@ -958,7 +972,7 @@ export function Listing() {
           ) : null}
         </header>
         <ListingJumpNav />
-        <div className="mt-6 grid items-start gap-8 md:grid-cols-[minmax(0,1.15fr)_minmax(16rem,20rem)]">
+        <div className="mt-6">
         <div id="listing-overview" className="ke-listing-sections min-w-0 scroll-mt-24">
             {!live && d.claimStatus && d.claimStatus !== "unclaimed" ? (
               <ListingStatusBadge claimStatus={d.claimStatus} live={live} />
@@ -1344,7 +1358,13 @@ export function Listing() {
                 .join(" · ")}
             </p>
         </div>
-        <aside className="ke-panel hidden h-fit px-4 py-4 shadow-card md:sticky md:top-20 md:block">
+        </div>
+
+        {data.nearby.length ? (
+          <ListingRail title={t("similar")} items={liveLookingOnly(data.nearby)} seeAllHref={localePath("/search", locale)} className="mt-12 first:mt-12" />
+        ) : null}
+        </div>
+        <aside className="ke-listing-summary ke-panel mx-4 hidden h-fit px-4 py-4 shadow-card md:mx-0 md:block" data-ke="listing-action-summary">
           <ListingCtaSnippet live={live} from={from} hours={hours} prominent />
           <p className="mt-1 text-sm text-muted">{live ? t("listingCtaLead") : t("guestListingTrust")}</p>
           {!user && live ? <p className="mt-1 text-xs text-subtle">{t("guestBrowse")}</p> : null}
@@ -1364,12 +1384,6 @@ export function Listing() {
           </div>
           <p className="mt-3 text-xs text-subtle">{t("privacyNote")}</p>
         </aside>
-        </div>
-
-        {data.nearby.length ? (
-          <ListingRail title={t("similar")} items={liveLookingOnly(data.nearby)} seeAllHref={localePath("/search", locale)} className="mt-12 first:mt-12" />
-        ) : null}
-        </div>
       </article>
 
       {!requestOpen ? (

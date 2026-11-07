@@ -50,7 +50,7 @@ test("listing, turnstile, login, radius, contact, and the menu match the QA note
   assert.match(listing, /listingRetry/);
   assert.match(listing, /data-ke=\{retrying \? "listing-retry"/);
   assert.match(listing, /md:hidden/);
-  assert.match(listing, /md:grid-cols-/);
+  assert.match(listing, /data-ke="listing-action-summary"/);
   assert.match(listing, /w-full whitespace-normal/);
   assert.match(src("src/lib/use-copy.ts"), /useCallback/);
   assert.match(src("src/client.tsx"), /installServerFnFetchGate/);

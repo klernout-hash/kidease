@@ -108,9 +108,9 @@ export function ListingHeroGallery({
           className="size-full object-cover"
         />
       ) : claim ? (
-        <ListingPhotoFallback claim claimQuery={name} className="size-full" />
+        <ListingPhotoFallback plain claim claimQuery={name} className="size-full" />
       ) : (
-        <ListingPhotoFallback className="size-full" />
+        <ListingPhotoFallback plain className="size-full" />
       )}
       {count ? (
         <>
