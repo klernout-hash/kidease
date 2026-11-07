@@ -2,7 +2,7 @@ import { FEATURE_SPONSORED_LISTINGS } from "@/lib/sponsored-flag";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { JsonLd } from "@/components/json-ld";
 import { MARKETING_PAGE_SEO, organizationGraphJsonLdScript, pageSeoHead } from "@/lib/page-seo";
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { BadgeCheck, Camera, Lock, MapPin, MessageCircle, Search, ListChecks } from "lucide-react";
 import { HeroClaimStrip } from "@/components/hero-claim-strip";
 import { HomeHowVideo } from "@/components/home-how-video";
@@ -28,6 +28,7 @@ import {
   homeLandPath,
   readRememberedRole,
   readStickyDesk,
+  shouldHoldHomeDiscovery,
   type AppRole,
 } from "@/lib/desks";
 import { nativeShellHidesAdminNow } from "@/lib/native-admin";
@@ -388,8 +389,35 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
     } catch {
       /* ignore */
     }
-    void navigate({ to: dest });
+    void navigate({ to: dest, replace: true });
   }, [guestView, isPending, user, role, navigate]);
+
+  useLayoutEffect(() => {
+    let landed = false;
+    let signedOut = false;
+    try {
+      landed = sessionStorage.getItem(DESK_LANDED_KEY) === "1";
+      signedOut = sessionStorage.getItem("kidease-just-signed-out") === "1";
+    } catch {
+      /* ignore */
+    }
+    const hold = shouldHoldHomeDiscovery({
+      guestView,
+      landed,
+      justSignedOut: signedOut,
+      pending: isPending,
+      signedIn: Boolean(user),
+      role,
+      sticky: readStickyDesk(),
+      remembered: readRememberedRole(),
+      hideStaffWebOnly: nativeShellHidesAdminNow(),
+    });
+    if (hold) document.documentElement.setAttribute("data-ke-launch-hold", "1");
+    else document.documentElement.removeAttribute("data-ke-launch-hold");
+    return () => {
+      document.documentElement.removeAttribute("data-ke-launch-hold");
+    };
+  }, [guestView, isPending, user, role]);
 
   const featuredSearch = (
     <>
@@ -510,8 +538,14 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
 
   return (
     <Shell>
+      <div data-ke="launch-shell" role="status" aria-live="polite" className="w-full text-center">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">KidEase</p>
+        <p className="mt-3 text-base font-medium text-fg">
+          {locale === "fr" ? "Ouverture de votre espace" : "Opening your space"}
+        </p>
+      </div>
       <JsonLd json={organizationGraphJsonLdScript(locale === "fr" ? "fr" : "en")} />
-      <div className="ke-home w-full min-w-0">
+      <div className="ke-home w-full min-w-0" data-ke="home-discovery-surface">
       {boot.airbnbUi ? (
         <div className="ke-airbnb-phone-only">
           <Suspense fallback={null}>

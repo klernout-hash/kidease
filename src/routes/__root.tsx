@@ -302,10 +302,20 @@ function RootDocument() {
           data-ke-style-nonce=""
           dangerouslySetInnerHTML={{ __html: STYLE_NONCE_BOOT }}
         />
+        <script
+          data-ke="launch-hold-boot"
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var p=location.pathname;if(p!=='/'&&p!=='/fr'&&p!=='/fr/')return;if(sessionStorage.getItem('kidease-desk-landed')==='1')return;if(sessionStorage.getItem('kidease-just-signed-out')==='1')return;var role=localStorage.getItem('kidease-role');var desk=sessionStorage.getItem('kidease-desk')||localStorage.getItem('kidease-desk')||'';if(role==='parent'||desk==='parent')return;if(role==='provider'||desk==='provider'||desk==='director'||desk==='centre'||desk==='center'||desk==='daycare'||desk==='admin'||desk==='support'){document.documentElement.setAttribute('data-ke-launch-hold','1');}}catch(e){}})();",
+          }}
+        />
         <style
           dangerouslySetInnerHTML={{
             __html:
               "html,body{margin:0;background:#f6f3ee;color:#1c2438}" +
+              "html[data-ke-launch-hold] [data-ke=home-discovery-surface]{display:none!important}" +
+              "[data-ke=launch-shell]{display:none}" +
+              "html[data-ke-launch-hold] [data-ke=launch-shell]{display:flex!important;min-height:70dvh;align-items:center;justify-content:center;padding:24px}" +
               'html[data-resolved-theme="dark"],html[data-resolved-theme="dark"] body{background:#14161c;color:#f3efe8}' +
               ".ke-skel{border-radius:14px;background:#eee8df}" +
               'html[data-resolved-theme="dark"] .ke-skel{background:#262b36}' +

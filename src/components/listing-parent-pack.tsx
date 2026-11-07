@@ -130,6 +130,28 @@ export function ListingProgramsTable({ item }: { item: Daycare }) {
   const partTime = partTimeMonthlyFee(item.partTimeMonthly);
   const showPart = partTime != null;
   const confidence = listingFeeNotes(item).confidence;
+  const feeKnown = (amount: number | null | undefined) =>
+    confidence !== "estimate" &&
+    monthlyFeeVisible(publicMonthlyFee(amount, item), item) &&
+    publicMonthlyFee(amount, item) != null;
+  const everyUnknown =
+    rows.length > 0 &&
+    rows.every((row) => !row.schedules.length && !feeKnown(row.monthlyFee)) &&
+    !(showPart && feeKnown(partTime));
+  if (everyUnknown) {
+    const ages = rows.map((row) => standardAgeLabel(row.band, loc)).join(" · ");
+    return (
+      <section id="listing-programs" className="scroll-mt-24" data-ke="programs-unknown-once">
+        <h2 className="font-display text-2xl">{t("programsTitle")}</h2>
+        <p className="mt-2 max-w-prose text-[15px] leading-6 text-fg">{ages}</p>
+        <p className="mt-2 max-w-prose text-sm leading-6 text-muted">
+          {locale === "fr"
+            ? "Les horaires et les frais de ces groupes ne sont pas confirmés. Demandez au centre."
+            : "Schedules and fees for these age groups are not confirmed. Ask the centre."}
+        </p>
+      </section>
+    );
+  }
   return (
     <section id="listing-programs" className="scroll-mt-24">
       <h2 className="font-display text-2xl">{t("programsTitle")}</h2>
