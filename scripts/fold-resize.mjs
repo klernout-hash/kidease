@@ -79,17 +79,34 @@ export async function runFoldResizePass(browser, base) {
       if (armed.hasField) {
         const field = page.locator(route.field).first();
         if (await field.isVisible().catch(() => false)) {
-          // A controlled input filled before hydration resets to empty. Fill again once React owns it.
-          let kept = false;
-          for (let attempt = 0; attempt < 6 && !kept; attempt += 1) {
+          // React mounts the controlled input after the first paint and writes
+          // its empty state over a value typed too early. Fill once that wipe
+          // has happened. Resizing after that must keep the typed value.
+          await field.fill(route.value);
+          const wiped = await page
+            .waitForFunction(
+              ({ sel, value }) => document.querySelector(sel)?.value !== value,
+              { sel: route.field, value: route.value },
+              { timeout: 1800 },
+            )
+            .then(() => true)
+            .catch(() => false);
+          let kept = !wiped;
+          if (wiped) {
             await field.fill(route.value);
             kept = await page
               .waitForFunction(
                 ({ sel, value }) => document.querySelector(sel)?.value === value,
                 { sel: route.field, value: route.value },
-                { timeout: 500 },
+                { timeout: 1000 },
               )
-              .then(() => true)
+              .then(async () => {
+                await page.waitForTimeout(400);
+                return page.evaluate(
+                  ({ sel, value }) => document.querySelector(sel)?.value === value,
+                  { sel: route.field, value: route.value },
+                );
+              })
               .catch(() => false);
           }
           if (!kept) armed.hasField = false;
