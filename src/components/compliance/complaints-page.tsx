@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { suppressRows } from "@/lib/gov/k-anonymity";
 import { ComplianceFrame } from "@/components/compliance/frame";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { COMPLAINT_KINDS, complaintCopy } from "@/lib/compliance/complaints";
 import type { PackMode } from "@/lib/compliance/mode";
 import { saveComplaint } from "@/lib/server/compliance-complaints";
 type ParentData = { enabled: boolean; mode: PackMode; rows: { id: string; tracking_code: string; province: string; status: string }[] };
-type GovData = { enabled: boolean; mode: PackMode; province: string; rows: { id: string; kind: string; status: string; trackingCode: string }[] };
+type GovData = { enabled: boolean; mode: PackMode; province: string; rows: { id: string; kind: string; status: string; trackingCode: string }[]; counts?: { kind: string; status: string; n: number }[] };
 export function ParentComplaintsPage({ data, locale }: { data: ParentData; locale: "en" | "fr" }) {
   const copy = complaintCopy(locale);
   const { celebrate } = useSuccessConfirm();
@@ -48,13 +49,24 @@ export function ParentComplaintsPage({ data, locale }: { data: ParentData; local
     </ComplianceFrame>
   );
 }
-export function GovComplaintsPage({ data, locale }: { data: GovData; locale: "en" | "fr" }) {
+export function GovComplaintsPage({ data, locale, showCases = false }: { data: GovData; locale: "en" | "fr"; showCases?: boolean }) {
   const copy = complaintCopy(locale);
+  const counts = data.counts ?? [];
   return (
     <ComplianceFrame locale={locale} title={locale === "fr" ? "Plaintes" : "Complaints"} copy={{ ...copy, what: copy.govWhat, why: copy.govWhy }} mode={data.mode} gov>
       <p>{data.province}</p>
-      {data.rows.length === 0 ? <p className="mt-3 text-sm">{locale === "fr" ? "Aucune plainte dans cet outil. Cela ne veut pas dire qu’il n’y a aucune plainte réelle." : "No complaints in this tool. That is not proof there are no real complaints."}</p> : null}
-      <ul className="mt-3 space-y-2">{data.rows.map((row) => <li key={row.id}>{row.trackingCode} — {row.kind} — {row.status}</li>)}</ul>
+      {showCases ? null : (
+      <p className="mt-3 text-sm" data-ke="gov-complaint-aggregate">{locale === "fr" ? "Totaux seulement. Le numéro de suivi reste avec la personne qui a déposé la plainte." : "Counts only. The tracking number stays with the person who filed it."}</p>
+      )}
+      {counts.length === 0 && data.rows.length === 0 ? <p className="mt-3 text-sm">{locale === "fr" ? "Aucune plainte dans cet outil. Cela ne veut pas dire qu’il n’y a aucune plainte réelle." : "No complaints in this tool. That is not proof there are no real complaints."}</p> : null}
+      <ul className="mt-3 space-y-2">
+        {suppressRows(counts).map((row) => (
+          <li key={`${row.kind}-${row.status}`}>
+            {row.kind} — {row.status}: {row.suppressed ? (locale === "fr" ? "masqué (<5)" : "hidden (<5)") : row.n}
+          </li>
+        ))}
+      </ul>
+      {showCases ? <ul className="mt-3 space-y-2">{data.rows.map((row) => <li key={row.id}>{row.trackingCode} — {row.kind} — {row.status}</li>)}</ul> : null}
       <Button asChild className="mt-4"><a href={locale === "fr" ? "/fr/gov" : "/gov"}>{locale === "fr" ? "Bureau du gouvernement" : "Government desk"}</a></Button>
     </ComplianceFrame>
   );

@@ -8,4 +8,4 @@ export const Route = createFileRoute("/admin-gov-complaints")({
   head: () => ({ meta: [{ title: "Complaints · KidEase" }, { name: "robots", content: "noindex, nofollow" }] }),
   component: Page,
 });
-function Page() { return <GovComplaintsPage data={Route.useLoaderData()} locale="en" />; }
+function Page() { return <GovComplaintsPage data={Route.useLoaderData()} locale="en" showCases />; }

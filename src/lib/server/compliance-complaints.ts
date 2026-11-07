@@ -3,7 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
 import { nid } from "@/lib/utils";
-import { complaintVisible, complaintsMode, isComplaintKind, reminderPlan, routeComplaint, trackingCode } from "@/lib/compliance/complaints";
+import { complaintsMode, isComplaintKind, reminderPlan, routeComplaint, trackingCode } from "@/lib/compliance/complaints";
 import { centreRow, logPractice, readScope, sendComplianceEmail, sqlClient } from "@/lib/server/compliance-common";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { requireAdmin } from "@/lib/server/roles";
@@ -73,15 +73,27 @@ export const loadGovComplaints = createServerFn({ method: "GET" })
     const gov = context.gov as { province: string; userId: string };
     const scope = await readScope(gov.userId);
     const province = scope?.province || gov.province;
-    if (mode === "off") return { enabled: false as const, mode, province, rows: [] };
+    if (mode === "off") return { enabled: false as const, mode, province, rows: [], counts: [] };
     const sql = await sqlClient();
-    const rows = await sql<{ id: string; kind: string; status: string; created_at: string; tracking_code: string }>`
-      select id, kind, status, created_at, tracking_code from licensing_complaints
+    const rows = await sql<{ kind: string; status: string }>`
+      select kind, status from licensing_complaints
       where province = ${province}
-      order by created_at desc limit 40
     `.catch(() => []);
-    const visible = rows.filter(() => complaintVisible({ role: "government", govProvince: province, rowProvince: province }));
-    return { enabled: true as const, mode, province, rows: visible.map((row) => ({ id: row.id, kind: row.kind, status: row.status, trackingCode: row.tracking_code })) };
+    const counts = new Map<string, number>();
+    for (const row of rows) {
+      const key = `${row.kind}\t${row.status}`;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return {
+      enabled: true as const,
+      mode,
+      province,
+      rows: [],
+      counts: [...counts.entries()].map(([key, n]) => {
+        const [kind, status] = key.split("\t");
+        return { kind, status, n };
+      }),
+    };
   });
 
 export const loadAdminComplaints = createServerFn({ method: "GET" })

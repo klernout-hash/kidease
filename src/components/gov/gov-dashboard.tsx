@@ -227,6 +227,9 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
         <p className="mt-1 text-sm text-muted">
           {copy.org}: {data.orgName}
         </p>
+        <p className="mt-1 text-sm text-muted" data-ke="gov-as-of">
+          {copy.asOf} {data.generatedAt.slice(0, 16).replace("T", " ")} UTC
+        </p>
         {data.demo ? <p className="mt-3 rounded-2xl bg-surface px-4 py-3 text-sm ring-1 ring-border">{copy.demo}</p> : null}
 
         <div className="sticky top-0 z-20 -mx-4 mt-6 border-b border-border bg-bg/95 px-4 py-3 backdrop-blur-md" data-ke="gov-filters">
