@@ -5,14 +5,17 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
-import { centreCanWriteCare } from "@/lib/centre-roles";
+import { maxCentreRole } from "@/lib/centre-roles";
 import { getSql } from "@/lib/db";
-import { childCheckinEnabled, centreToolIds } from "@/lib/features";
 import { clampTapTime } from "@/lib/centre-tools";
-import { checkoutAllowed, nextDoorAction } from "@/lib/gap-features";
-import { ENROLLED_BOOKING_STATUSES } from "@/lib/review-gate";
-import { nid } from "@/lib/utils";
+import { childCheckinEnabled, centreToolIds } from "@/lib/features";
+import { attendancePreviewEnabled } from "@/lib/attendance-handoff";
 import { listAccessibleDaycareIds, loadCentreRole } from "./centre-access";
+import { commitCorrection, commitHandoff, readCentreDay, readParentDay, seedDemoChildren } from "./attendance-handoff";
+
+function doorOn() {
+  return childCheckinEnabled() || attendancePreviewEnabled();
+}
 
 export const childCheckinFlag = createServerFn({ method: "GET" }).handler(async () => childCheckinEnabled());
 
@@ -26,82 +29,18 @@ function iso(value: string | Date | null | undefined): string {
 export const listDoorRoster = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    if (!childCheckinEnabled()) return { enabled: false as const, children: [], events: [] };
+    if (!doorOn()) return { enabled: false as const, children: [], events: [], headcount: 0, canCorrect: false };
     const sql = await getSql();
     const centres = await listAccessibleDaycareIds(sql, context.userId);
-    if (!centres.length) return { enabled: true as const, children: [], events: [] };
-    const kids = await sql
-      .query<{
-        booking_id: string;
-        parent_user_id: string;
-        child_id: string | null;
-        daycare_id: string;
-        child_name: string;
-        daycare_name: string;
-      }>(
-        `select b.id as booking_id, b.user_id as parent_user_id, b.child_id, b.daycare_id,
-                coalesce(c.name, 'Child') as child_name, d.name as daycare_name
-         from bookings b
-         join daycares d on d.id = b.daycare_id
-         left join children c on c.id = b.child_id
-         where b.daycare_id = any($1::text[])
-           and b.status = any($2::text[])
-         order by d.name, child_name
-         limit 80`,
-        [centres, [...ENROLLED_BOOKING_STATUSES]],
-      )
-      .catch(() => []);
-    const childIds = kids.map((row) => row.child_id).filter((id): id is string => Boolean(id));
-    const pickups = childIds.length
-      ? await sql
-          .query<{ child_id: string; name: string }>(
-            `select child_id, name from child_care_people where kind = 'pickup' and child_id = any($1::text[])`,
-            [childIds],
-          )
-          .catch(() => [] as { child_id: string; name: string }[])
-      : [];
-    const events = await sql
-      .query<{
-        id: string;
-        booking_id: string | null;
-        child_name: string;
-        action: string;
-        at: string | Date;
-        pickup_name: string;
-        daycare_name: string;
-      }>(
-        `select e.id, e.booking_id, e.child_name, e.action, e.at, e.pickup_name, d.name as daycare_name
-         from child_check_events e
-         join daycares d on d.id = e.daycare_id
-         where e.daycare_id = any($1::text[])
-         order by e.at desc
-         limit 40`,
-        [centres],
-      )
-      .catch(() => []);
-    const lastByBooking = new Map<string, "check_in" | "check_out">();
-    for (const event of [...events].reverse()) {
-      if (!event.booking_id) continue;
-      if (event.action === "check_in" || event.action === "check_out") lastByBooking.set(event.booking_id, event.action);
-    }
+    if (!centres.length) return { enabled: true as const, children: [], events: [], headcount: 0, canCorrect: false };
+    const roles = await Promise.all(centres.map((id) => loadCentreRole(sql, context.userId, id)));
+    const day = await readCentreDay(sql, { centreIds: centres, role: maxCentreRole(roles), now: new Date() });
     return {
       enabled: true as const,
-      children: kids.map((row) => ({
-        bookingId: row.booking_id,
-        daycareId: row.daycare_id,
-        daycareName: row.daycare_name,
-        childName: row.child_name,
-        pickups: pickups.filter((person) => person.child_id === row.child_id).map((person) => person.name),
-        next: nextDoorAction(lastByBooking.get(row.booking_id) ?? null),
-      })),
-      events: events.map((row) => ({
-        id: row.id,
-        childName: row.child_name,
-        daycareName: row.daycare_name,
-        action: row.action === "check_out" ? ("check_out" as const) : ("check_in" as const),
-        at: iso(row.at),
-        pickupName: row.pickup_name || "",
-      })),
+      headcount: day.headcount,
+      canCorrect: day.canCorrect,
+      children: day.children,
+      events: [],
     };
   });
 
@@ -114,65 +53,75 @@ export const recordChildCheck = createServerFn({ method: "POST" })
     at: String(input?.at || ""),
   }))
   .handler(async ({ context, data }) => {
-    if (!childCheckinEnabled()) return { ok: false as const, reason: "off" as const };
-    if (!data.bookingId) throw new Error("That child is not enrolled here");
+    if (!doorOn()) return { ok: false as const, reason: "off" as const };
+    if (!data.bookingId) return { ok: false as const, error: "That child is not enrolled here." };
     const sql = await getSql();
-    const rows = await sql<{
-      id: string;
-      user_id: string;
-      daycare_id: string;
-      child_id: string | null;
-      child_name: string;
-    }>`
-      select b.id, b.user_id, b.daycare_id, b.child_id, coalesce(c.name, 'Child') as child_name
-      from bookings b
-      left join children c on c.id = b.child_id
-      where b.id = ${data.bookingId}
-        and b.status in ('accepted', 'active')
-      limit 1
+    const found = await sql<{ daycare_id: string }>`
+      select daycare_id from bookings where id = ${data.bookingId} limit 1
     `;
-    const booking = rows[0];
-    if (!booking) throw new Error("That child is not enrolled here");
-    const role = await loadCentreRole(sql, context.userId, booking.daycare_id);
-    if (!centreCanWriteCare(role)) throw new Error("That centre is not on this account");
-    const last = await sql<{ action: string }>`
-      select action from child_check_events
-      where booking_id = ${booking.id}
-      order by at desc
-      limit 1
-    `.catch(() => [] as { action: string }[]);
-    const previous = last[0]?.action === "check_in" || last[0]?.action === "check_out" ? last[0].action : null;
-    if (nextDoorAction(previous) !== data.action) throw new Error("That time is already saved");
-    let pickup = "";
-    if (data.action === "check_out") {
-      const people = booking.child_id
-        ? await sql<{ name: string }>`
-            select name from child_care_people
-            where child_id = ${booking.child_id} and kind = 'pickup'
-          `.catch(() => [] as { name: string }[])
-        : [];
-      const decision = checkoutAllowed(data.pickupName, people);
-      if (!decision.ok) throw new Error(decision.reason === "need_pickup" ? "Choose a pickup person" : "That person is not on the pickup list");
-      pickup = decision.pickup;
-    }
-    // FEATURE_OFFLINE_CHECKIN: a tap saved offline keeps its own time (last 24 h, never future).
+    const role = found[0] ? await loadCentreRole(sql, context.userId, found[0].daycare_id) : null;
     const offlineAt =
       data.at && (centreToolIds() as string[]).includes("offline") ? clampTapTime(data.at, Date.now()) : null;
-    await sql`
-      insert into child_check_events (
-        id, daycare_id, booking_id, child_name, parent_user_id, action, at, pickup_name, recorded_by
-      ) values (
-        ${nid("chk")}, ${booking.daycare_id}, ${booking.id}, ${booking.child_name},
-        ${booking.user_id}, ${data.action}, ${offlineAt ?? new Date().toISOString()}, ${pickup}, ${context.userId}
-      )
-    `;
-    return { ok: true as const };
+    return commitHandoff(sql, {
+      actorId: context.userId,
+      role,
+      bookingId: data.bookingId,
+      action: data.action,
+      pickupName: data.pickupName,
+      now: offlineAt ? new Date(offlineAt) : new Date(),
+    });
   });
+
+export const correctChildCheck = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { bookingId?: string; action?: string; reason?: string }) => ({
+    bookingId: String(input?.bookingId || "").trim(),
+    action: input?.action === "check_in" ? ("check_in" as const) : ("check_out" as const),
+    reason: String(input?.reason || ""),
+  }))
+  .handler(async ({ context, data }) => {
+    if (!doorOn()) return { ok: false as const, reason: "off" as const };
+    const sql = await getSql();
+    const found = await sql<{ daycare_id: string }>`
+      select daycare_id from bookings where id = ${data.bookingId} limit 1
+    `;
+    const role = found[0] ? await loadCentreRole(sql, context.userId, found[0].daycare_id) : null;
+    return commitCorrection(sql, {
+      actorId: context.userId,
+      role,
+      bookingId: data.bookingId,
+      action: data.action,
+      reason: data.reason,
+      now: new Date(),
+    });
+  });
+
+export const listMyChildAttendance = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    if (!doorOn()) return { enabled: false as const, children: [] };
+    const sql = await getSql();
+    const children = await readParentDay(sql, context.userId, new Date());
+    return { enabled: true as const, children };
+  });
+
+export const seedDemoAttendance = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    if (!attendancePreviewEnabled()) return { ok: false as const, error: "The attendance preview is closed." };
+    const sql = await getSql();
+    const seeded = await seedDemoChildren(sql, context.userId);
+    return { ok: true as const, ...seeded };
+  });
+
+export const attendancePreviewOpen = createServerFn({ method: "GET" }).handler(async () => ({
+  open: attendancePreviewEnabled(),
+}));
 
 export const listMyCheckHistory = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    if (!childCheckinEnabled()) return { enabled: false as const, events: [] };
+    if (!doorOn()) return { enabled: false as const, events: [] };
     const sql = await getSql();
     const rows = await sql<{
       id: string;
