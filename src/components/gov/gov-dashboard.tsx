@@ -84,6 +84,106 @@ function SurveyContext({ locale }: { locale: "en" | "fr" }) {
   );
 }
 
+const SOURCE_LINKS: Array<[string, string]> = [
+  ["British Columbia", "https://www2.gov.bc.ca/gov/content/family-social-supports/caring-for-young-children/family-information/licensed-unlicensed-child-care"],
+  ["Alberta", "https://www.alberta.ca/find-childcare"],
+  ["Saskatchewan", "https://www.saskatchewan.ca/residents/family-and-social-support/child-care/child-care-in-saskatchewan"],
+  ["Manitoba", "https://www.manitoba.ca/education/childcare/mccs-faq.html"],
+  ["Ontario", "https://www.earlyyears.edu.gov.on.ca/LCCWWeb/childcare/search.xhtml"],
+  ["Quebec", "https://www.quebec.ca/famille-et-soutien-aux-personnes/enfance/garderies-et-services-de-garde/types-services-garde"],
+  ["New Brunswick", "https://www2.gnb.ca/content/gnb/en/departments/education/elcc/content/inspection_reports.html"],
+  ["Nova Scotia", "https://nsbr-online-services.novascotia.ca/DCSOnline/ECDS/loadSearchPage"],
+  ["Prince Edward Island", "https://www.princeedwardisland.ca/en/information/education-and-early-years/early-learning-and-child-care-space-creation-progress"],
+  ["Newfoundland and Labrador", "https://www.childcare.gov.nl.ca/public/ccr/family/"],
+  ["Yukon", "https://yukon.ca/en/education-and-schools/early-childhood-learning-and-programs/find-early-learning-and-child-care-yukoners"],
+  ["Northwest Territories", "https://www.ece.gov.nt.ca/en/elcc/licensed-programs"],
+  ["Nunavut", "https://www.gov.nu.ca/en/education-and-schools/licensed-child-care-centres"],
+  ["Statistics Canada", "https://www150.statcan.gc.ca/n1/daily-quotidien/250319/t001b-eng.htm"],
+];
+
+function deskGroups(locale: "en" | "fr", copy: ReturnType<typeof govCopy>) {
+  const fr = locale === "fr";
+  const p = (leaf: string) => (fr ? `/fr/gov/${leaf}` : `/gov/${leaf}`);
+  const pair = (href: string, label: string): [string, string] => [href, label];
+  return [
+    { title: copy.overviewLink, links: [pair("#gov-cards", copy.overviewLink), pair("#gov-needs-title", copy.needsTitle)] },
+    { title: fr ? "Permis et renouvellements" : "Licences and renewals", links: [pair(p("compliance"), fr ? "Dates de permis" : "Licence dates"), pair(p("screening"), fr ? "Vérifications du personnel" : "Staff screening")] },
+    { title: fr ? "Conformité" : "Compliance", links: [pair(p("incidents"), fr ? "Événements graves" : "Serious occurrences"), pair(p("complaints"), fr ? "Plaintes" : "Complaints"), pair(p("fee-caps"), fr ? "Plafonds de tarifs" : "Fee caps"), pair(p("ratios"), fr ? "Ratios" : "Room ratios")] },
+    { title: fr ? "Capacité et demande" : "Capacity and demand", links: [pair(p("demand"), fr ? "Demande enregistrée" : "Saved-search demand"), pair(p("funding"), fr ? "Rapports de financement" : "Funding reports"), pair("#gov-cities-title", copy.areasLink)] },
+    { title: copy.workforceLink, links: [pair("#gov-jobs", copy.workforceLink)] },
+    { title: fr ? "Rapports et sources" : "Reports and sources", links: [pair("#gov-sources", copy.sourcesTitle), pair(p("exports"), fr ? "Exportations" : "Exports"), pair(p("audit"), fr ? "Préparation à l’effacement" : "Deletion readiness"), pair(p("broadcasts"), fr ? "Avis d’urgence" : "Emergency notice")] },
+  ];
+}
+
+function DeskNav({ locale, copy, variant }: { locale: "en" | "fr"; copy: ReturnType<typeof govCopy>; variant: "rail" | "strip" }) {
+  const groups = deskGroups(locale, copy);
+  if (variant === "strip") {
+    return (
+      <nav className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden" aria-label={copy.navLabel} data-ke="gov-nav-mobile">
+        {groups.flatMap((group) => group.links).map(([href, label]) => (
+          <a key={`${href}-${label}`} className="inline-flex min-h-11 shrink-0 items-center rounded-full bg-surface px-3 text-sm font-medium ring-1 ring-border" href={href}>
+            {label}
+          </a>
+        ))}
+      </nav>
+    );
+  }
+  return (
+    <nav className="sticky top-28 hidden max-h-[calc(100dvh-8rem)] space-y-4 self-start overflow-y-auto lg:block" data-ke="gov-nav" aria-label={copy.navLabel}>
+      {groups.map((group) => (
+        <NavGroup key={group.title} title={group.title} links={group.links} />
+      ))}
+    </nav>
+  );
+}
+
+function TrendBars({ rows }: { rows: Array<{ month: string; listings: number | null }> }) {
+  const max = Math.max(1, ...rows.map((row) => row.listings ?? 0));
+  if (rows.every((row) => (row.listings ?? 0) === 0)) return null;
+  return (
+    <div className="mt-3 space-y-2" aria-hidden="true" data-ke="gov-trend-bars">
+      {rows.map((row) => (
+        <div key={row.month} className="grid grid-cols-[5.5rem_minmax(0,1fr)_auto] items-center gap-2 text-xs">
+          <span>{row.month}</span>
+          <span className="block h-2 rounded-full bg-border">
+            <span className="block h-2 rounded-full bg-primary" style={{ width: `${Math.round(((row.listings ?? 0) / max) * 100)}%` }} />
+          </span>
+          <span>{row.listings ?? "—"}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Ledgers({ copy }: { copy: ReturnType<typeof govCopy> }) {
+  return (
+    <section className="mt-8" data-ke="gov-ledgers" aria-labelledby="gov-ledgers-title">
+      <h2 id="gov-ledgers-title" className="font-display text-xl">{copy.ledgersTitle}</h2>
+      <ul className="mt-3 space-y-2 text-sm leading-6">
+        <li>{copy.ledgerOfficial}</li>
+        <li>{copy.ledgerDirectory}</li>
+        <li>{copy.ledgerSurvey}</li>
+      </ul>
+    </section>
+  );
+}
+
+function SourceRegister({ copy }: { copy: ReturnType<typeof govCopy> }) {
+  return (
+    <section className="mt-8" id="gov-sources" data-ke="gov-sources" aria-labelledby="gov-sources-title">
+      <h2 id="gov-sources-title" className="font-display text-xl">{copy.sourcesTitle}</h2>
+      <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">{copy.sourcesNote}</p>
+      <ul className="mt-3 space-y-2 text-sm">
+        {SOURCE_LINKS.map(([label, href]) => (
+          <li key={href}>
+            <a className="font-medium text-primary underline-offset-4 hover:underline" href={href}>{label}</a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export function GovDashboardView({ data }: { data: GovDashboard }) {
   const copy = govCopy(data.locale);
   const hidden = copy.suppressed;
@@ -206,7 +306,11 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
         </div>
         </div>
 
-        <div className="mt-6 flex flex-wrap gap-3">
+        <DeskNav locale={data.locale} copy={copy} variant="strip" />
+        <div className="mt-6 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-8">
+        <DeskNav locale={data.locale} copy={copy} variant="rail" />
+        <div>
+        <div className="flex flex-wrap gap-3">
           <a
             href={`${exportBase}&format=pdf&locale=${data.locale}`}
             className="inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-medium text-primary-fg touch-manipulation"
@@ -221,7 +325,7 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
           </a>
         </div>
 
-        <dl className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-ke="gov-decision-cards">
+        <dl id="gov-cards" className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-ke="gov-decision-cards">
           <div className="rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke="gov-card-providers">
             <dt className="text-sm text-muted">{copy.cardObserved}</dt>
             <dd className="mt-1 font-display text-2xl">{show(kpis.licensedCentres, data.locale, hidden)}</dd>
@@ -346,6 +450,8 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
           <h2 id="gov-trend-title" className="font-display text-xl">
             {copy.trends}
           </h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">{copy.trendChart}</p>
+          <TrendBars rows={data.trends} />
           <div className="mt-3 overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
@@ -401,6 +507,8 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
           <p className="mt-3 text-sm text-muted">{data.locale === "fr" ? "Le chiffre de population est la population totale du Recensement de 2021 par place permise, pas les enfants de 0 à 5 ans. La demande ci-dessus compte des recherches enregistrées, pas des enfants." : "The population figure is 2021 Census total population per licensed space, not children aged 0 to 5. Demand above counts saved searches, not children."}</p>
         </section>
         <SurveyContext locale={data.locale} />
+        <Ledgers copy={copy} />
+        <SourceRegister copy={copy} />
         <section className="mt-8" aria-labelledby="gov-coverage-title">
           <h2 id="gov-coverage-title" className="font-display text-xl">
             {copy.coverage}
@@ -411,29 +519,9 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
             ))}
           </ul>
         </section>
-        <nav className="mt-8 grid gap-4 sm:grid-cols-2" data-ke="gov-nav" aria-label={data.locale === "fr" ? "Sections du bureau" : "Desk sections"}>
-          <NavGroup title={data.locale === "fr" ? "Permis et renouvellements" : "Licences and renewals"} links={[
-            [data.locale === "fr" ? "/fr/gov/compliance" : "/gov/compliance", data.locale === "fr" ? "Dates de permis" : "Licence dates"],
-            [data.locale === "fr" ? "/fr/gov/screening" : "/gov/screening", data.locale === "fr" ? "Vérifications du personnel" : "Staff screening"],
-          ]} />
-          <NavGroup title={data.locale === "fr" ? "Conformité" : "Compliance"} links={[
-            [data.locale === "fr" ? "/fr/gov/incidents" : "/gov/incidents", data.locale === "fr" ? "Événements graves" : "Serious occurrences"],
-            [data.locale === "fr" ? "/fr/gov/complaints" : "/gov/complaints", data.locale === "fr" ? "Plaintes" : "Complaints"],
-            [data.locale === "fr" ? "/fr/gov/fee-caps" : "/gov/fee-caps", data.locale === "fr" ? "Plafonds de tarifs" : "Fee caps"],
-            [data.locale === "fr" ? "/fr/gov/ratios" : "/gov/ratios", data.locale === "fr" ? "Ratios" : "Room ratios"],
-          ]} />
-          <NavGroup title={data.locale === "fr" ? "Capacité et demande" : "Capacity and demand"} links={[
-            [data.locale === "fr" ? "/fr/gov/demand" : "/gov/demand", data.locale === "fr" ? "Demande enregistrée" : "Saved-search demand"],
-            [data.locale === "fr" ? "/fr/gov/funding" : "/gov/funding", data.locale === "fr" ? "Rapports de financement" : "Funding reports"],
-          ]} />
-          <NavGroup title={data.locale === "fr" ? "Rapports et sources" : "Reports and sources"} links={[
-            ["#gov-coverage-title", copy.coverage],
-            [data.locale === "fr" ? "/fr/gov/exports" : "/gov/exports", data.locale === "fr" ? "Exportations" : "Exports"],
-            [data.locale === "fr" ? "/fr/gov/audit" : "/gov/audit", data.locale === "fr" ? "Préparation à l’effacement" : "Deletion readiness"],
-            [data.locale === "fr" ? "/fr/gov/broadcasts" : "/gov/broadcasts", data.locale === "fr" ? "Avis d’urgence" : "Emergency notice"],
-          ]} />
-        </nav>
         <CurriculumGovStrip province={data.province} />
+        </div>
+        </div>
       </main>
     </div>
   );

@@ -6,7 +6,7 @@ type Data = { enabled: boolean; mode: PackMode; province: string; quarter: strin
 export function GovDemandPage({ data, locale }: { data: Data; locale: "en" | "fr" }) {
   const copy = demandCopy(locale);
   return (
-    <ComplianceFrame locale={locale} title={locale === "fr" ? "Demande de places" : "Space demand"} copy={copy} mode={data.mode} gov>
+    <ComplianceFrame locale={locale} title={locale === "fr" ? "Demande des recherches enregistrées" : "Saved-search demand"} copy={{ ...copy, why: locale === "fr" ? "Ce total compte des recherches enregistrées, pas des enfants ni des demandes officielles." : "This total counts saved searches, not children or official applications." }} mode={data.mode} gov>
       <p>{data.province} {data.quarter}</p>
       {data.rows.some((row) => !row.suppressed) ? (
         <ul className="mt-3 space-y-2">
