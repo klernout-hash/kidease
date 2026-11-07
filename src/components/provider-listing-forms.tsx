@@ -765,7 +765,12 @@ export function CapacityForm({
               </p>
             </div>
           ) : null}
-          <h2 className="text-[24px] font-semibold leading-[30px]">{locale === "fr" ? "Toutes les photos" : "All photos"}</h2>
+          <h2 className="text-[24px] font-semibold leading-[30px]">{locale === "fr" ? "Couverture et intérieur" : "Cover and inside"}</h2>
+          <p className="text-sm text-muted">
+            {locale === "fr"
+              ? "La première photo est la couverture. Les suivantes sont à l’intérieur du centre."
+              : "The first photo is the cover. The photos after it are inside the centre."}
+          </p>
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h3 id="listing-health-photo" className="font-display text-xl">{t("storefrontPhoto")}</h3>
             <p data-ke="listing-photo-count" className="text-sm tabular-nums text-muted">
@@ -867,11 +872,14 @@ export function CapacityForm({
               </Fragment>
             ))}
             {shown.length === 1 ? (
-              <p className="col-span-full text-sm text-muted" data-ke="photo-inside-empty">
-                {locale === "fr"
-                  ? "Pas encore de photo de l’intérieur. N’ajoutez pas de photo d’enfant."
-                  : "No inside photos yet. Do not add a photo of a child."}
-              </p>
+              <>
+                <h3 className="col-span-full text-sm font-semibold">{locale === "fr" ? "À l’intérieur du centre" : "Inside the centre"}</h3>
+                <p className="col-span-full text-sm text-muted" data-ke="photo-inside-empty">
+                  {locale === "fr"
+                    ? "Pas encore de photo de l’intérieur. N’ajoutez pas de photo d’enfant."
+                    : "No inside photos yet. Do not add a photo of a child."}
+                </p>
+              </>
             ) : null}
             {photoJobs.map((job) => (
               <div key={job.id} data-ke="listing-photo-progress" className="flex aspect-[4/3] flex-col justify-end rounded-lg bg-bg p-3 ring-1 ring-border">

@@ -2449,7 +2449,8 @@ html[data-cookie-banner="open"] body {
   html[data-cookie-banner="open"]:has([data-ke="host-editor"]) #main-content,
   html[data-cookie-banner="open"]:has([data-ke="host-section"]) #main-content {
     min-height: 0;
-    max-height: calc(100dvh - 13.5rem - env(safe-area-inset-bottom, 0px));
+    /* Root type is fluid, so this is taller than the cookie row plus the tab bar. */
+    max-height: calc(100dvh - 11rem - env(safe-area-inset-bottom, 0px));
     overflow: auto;
   }
   html[data-cookie-banner="open"] [data-ke="host-editor"],
