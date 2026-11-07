@@ -1,5 +1,7 @@
 /** Pure rules for the Messages support thread. No database. No phone numbers. */
 
+import { conversationIdFromReference, threadReferenceFromId } from "./thread-reference.ts";
+
 export const SUPPORT_PREVIEW_CHARS = 80;
 export const SUPPORT_SMS_WINDOW_MS = 10 * 60 * 1000;
 export const SUPPORT_HOUR_LIMIT = 20;
@@ -41,6 +43,21 @@ export function ownerAlertText(input: { role: SupportRoleLabel; name: string; pr
   return `KidEase support. ${input.role} ${name}: "${preview}" https://kidease.ca/admin-chat #${code}`;
 }
 
+/** Attach a real message number to a support note. A bad number is left off. */
+export function withMessageReference(body: string, reference: string | null | undefined): string {
+  const id = conversationIdFromReference(reference || "");
+  const code = id ? threadReferenceFromId(id) : null;
+  const text = cleanSupportBody(body);
+  if (!code) return text;
+  return cleanSupportBody(`Message number ${code}\n${text}`).slice(0, SUPPORT_BODY_MAX);
+}
+
+export function messageReferenceInBody(body: string): string | null {
+  const match = String(body || "").match(/\bKE-[A-Z0-9]{4}(?:-[A-Z0-9]{4}){1,3}\b/);
+  if (!match) return null;
+  return conversationIdFromReference(match[0]) ? match[0] : null;
+}
+
 export function threadCode(threadId: string): string {
   return threadId.replace(/[^a-zA-Z0-9]/g, "").slice(-6);
 }
@@ -72,11 +89,12 @@ export const supportCopy = {
     daycares: "Daycares",
     support: "Support",
     title: "KidEase Support",
+    reference: "Message number",
     lead: "We read this. We do not promise a reply time.",
     placeholder: "Write a message",
     send: "Send",
     empty: "No messages yet.",
-    off: "",
+    off: "KidEase Support is not open in Messages yet. Nothing is sent.",
     sent: "Sent.",
     limited: "Too many messages. Try again in an hour.",
     failed: "Could not send. Try again.",
@@ -86,11 +104,12 @@ export const supportCopy = {
     daycares: "Garderies",
     support: "Aide",
     title: "Aide KidEase",
+    reference: "Numéro du message",
     lead: "Nous lisons ceci. Nous ne promettons pas un délai de réponse.",
     placeholder: "Écrire un message",
     send: "Envoyer",
     empty: "Aucun message pour le moment.",
-    off: "",
+    off: "L’aide KidEase n’est pas ouverte dans Messages. Rien n’est envoyé.",
     sent: "Envoyé.",
     limited: "Trop de messages. Réessayez dans une heure.",
     failed: "Envoi impossible. Réessayez.",

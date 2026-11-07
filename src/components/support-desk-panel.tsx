@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useCopy } from "@/lib/use-copy";
-import { supportCopy, type SupportLocale } from "@/lib/support-desk";
+import { messageReferenceInBody, supportCopy, withMessageReference, type SupportLocale } from "@/lib/support-desk";
 import { loadSupportDesk, postSupportDesk, supportDeskStatus } from "@/lib/server/support-desk";
 import { listAdminSupportDesk, replyAdminSupportDesk } from "@/lib/server/support-desk";
 
@@ -34,10 +34,17 @@ export function SupportDeskBar({
     };
   }, []);
 
-  if (!enabled) return null;
+  if (!enabled) {
+    return (
+      <section className="mt-4 rounded-2xl bg-surface p-4 shadow-card ring-1 ring-border" data-ke="support-desk" data-open="no">
+        <h3 className="font-display text-xl">{copy.title}</h3>
+        <p className="mt-1 text-sm text-muted">{copy.off}</p>
+      </section>
+    );
+  }
 
   return (
-    <div className="mt-4" data-ke="support-desk">
+    <div className="mt-4" data-ke="support-desk" data-open="yes">
       <div className="flex flex-wrap gap-1.5" role="group" aria-label={copy.title}>
         {(
           [
@@ -70,6 +77,7 @@ export function SupportDeskBar({
 function SupportThread({ copy }: { copy: (typeof supportCopy)[SupportLocale] }) {
   const [lines, setLines] = useState<Array<{ id: string; sender: string; body: string }>>([]);
   const [text, setText] = useState("");
+  const [reference, setReference] = useState("");
   const [note, setNote] = useState("");
 
   useEffect(() => {
@@ -94,10 +102,10 @@ function SupportThread({ copy }: { copy: (typeof supportCopy)[SupportLocale] }) 
         ))}
       </ul>
       <form
-        className="mt-3 flex gap-2"
+        className="mt-3 flex flex-col gap-2"
         onSubmit={(event) => {
           event.preventDefault();
-          const body = text.trim();
+          const body = withMessageReference(text, reference);
           if (!body) return;
           void postSupportDesk({ data: { body } })
             .then((row) => {
@@ -117,6 +125,17 @@ function SupportThread({ copy }: { copy: (typeof supportCopy)[SupportLocale] }) 
             .catch(() => setNote(copy.failed));
         }}
       >
+        <label className="mb-2 block text-sm">
+          <span className="text-muted">{copy.reference}</span>
+          <input
+            value={reference}
+            onChange={(event) => setReference(event.target.value)}
+            placeholder="KE-0000-0000"
+            autoComplete="off"
+            className="mt-1 min-h-11 w-full rounded-lg border border-border bg-bg px-3 font-mono"
+          />
+        </label>
+        <div className="flex gap-2">
         <label className="min-w-0 flex-1 text-sm">
           <span className="sr-only">{copy.placeholder}</span>
           <input
@@ -130,6 +149,7 @@ function SupportThread({ copy }: { copy: (typeof supportCopy)[SupportLocale] }) 
         <button type="submit" className="min-h-11 min-w-11 rounded-lg bg-fg px-4 text-sm font-medium text-bg touch-manipulation">
           {copy.send}
         </button>
+        </div>
       </form>
       {note ? (
         <p className="mt-2 text-sm" role="status">
@@ -173,6 +193,7 @@ export function AdminSupportDesk() {
               onClick={() => setActive(thread.id)}
             >
               {thread.unread ? "• " : ""}
+              {messageReferenceInBody(thread.preview) ? `${messageReferenceInBody(thread.preview)} · ` : ""}
               {thread.preview || copy.empty}
             </button>
           </li>
