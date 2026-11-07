@@ -15,7 +15,7 @@ test("support notes can carry a message number and a bad number is dropped", () 
 test("cancellation text stays a draft and does not invent one national fee", () => {
   const tour = draftCancellation({ topic: "tour", province: "ON" });
   assert.equal(tour.inForce, false);
-  assert.equal(tour.status, "draft-for-counsel");
+  assert.equal(tour.status, "counsel-review");
   const qc = draftCancellation({ topic: "provider-cancel", province: "QC" });
   assert.match(qc.summary, /not settled/);
   assert.equal(qc.counselOpen.length > 0, true);

@@ -3,7 +3,7 @@
  * It does not change a contract, collect a fee, or confirm a spot.
  */
 
-export const POLICY_DRAFT_STATUS = "draft-for-counsel" as const;
+export const POLICY_DRAFT_STATUS = "counsel-review" as const;
 
 export const PROVINCES = ["AB", "BC", "MB", "NB", "NL", "NS", "NT", "NU", "ON", "PE", "QC", "SK", "YT"] as const;
 export type ProvinceCode = (typeof PROVINCES)[number];
