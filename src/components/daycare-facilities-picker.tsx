@@ -225,7 +225,7 @@ export function FacilityPublicList({ amenities, locale }: { amenities: string; l
               <h3 className="text-sm font-semibold">{categoryLabel(group.category, locale)}</h3>
               <ul className="mt-1 space-y-1">
                 {group.items.map((item) => (
-                  <li key={item.id} data-ke="facility-public-item">
+                  <li key={item.id} className="ke-chip-meta" data-ke="facility-public-item">
                     {locale === "fr" ? item.fr : item.en}
                   </li>
                 ))}

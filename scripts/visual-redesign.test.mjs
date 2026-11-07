@@ -110,7 +110,8 @@ test("provider editor is photo-led with a published preview", () => {
   assert.match(editor, /data-ke="host-cover"/);
   assert.match(editor, /data-ke="host-cover-empty"/);
   assert.match(editor, /Photo not available/);
-  assert.match(editor, /Listed/);
+  assert.match(editor, /copy\.listed/);
+  assert.match(src("src/lib/host-listing-copy.ts"), /listed: "Listed"/);
   assert.match(editor, /Preview published listing/);
   assert.match(editor, /Manage photos/);
   assert.match(editor, /data-ke="host-section-card"/);
@@ -118,7 +119,7 @@ test("provider editor is photo-led with a published preview", () => {
   assert.match(editor, /Registry facts stay locked/);
   assert.match(editor, /not a draft/);
   const fields = src("src/components/provider-parent-fields.tsx");
-  assert.match(fields, /data-ke="editor-meals"/);
+  assert.match(src("src/components/meals-editor.tsx"), /data-ke="editor-meals"/);
   assert.match(fields, /data-ke="editor-amenities"/);
   assert.match(fields, /Leave blank if unknown/);
   assert.doesNotMatch(fields, /part === "meals" \? DESK_AMENITIES/);
