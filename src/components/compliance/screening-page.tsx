@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { suppressCount } from "@/lib/gov/k-anonymity";
+import { releasedCount } from "@/lib/gov/k-anonymity";
 import { ComplianceFrame } from "@/components/compliance/frame";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ type CentreData = {
   rows: { id: string; staff_name: string; kind: string; expires_on: string | null; status: string }[];
 };
 
-type GovData = { enabled: boolean; mode: PackMode; province: string; expired: number; expiring: number };
+type GovData = { enabled: boolean; mode: PackMode; province: string; expired: number | null; expiring: number | null };
 
 export function CentreScreeningPage({ data, locale }: { data: CentreData; locale: "en" | "fr" }) {
   const copy = screeningCopy(locale);
@@ -84,8 +84,8 @@ export function CentreScreeningPage({ data, locale }: { data: CentreData; locale
 
 export function GovScreeningPage({ data, locale }: { data: GovData; locale: "en" | "fr" }) {
   const copy = screeningCopy(locale);
-  const show = (n: number) => {
-    const value = suppressCount(n);
+  const show = (n: number | null) => {
+    const value = releasedCount(n);
     return value === null ? (locale === "fr" ? "masqué (<5)" : "hidden (<5)") : String(value);
   };
   return (

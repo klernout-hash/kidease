@@ -6,6 +6,7 @@ import { credentialStatus, isCredentialKind, scheduleDecision, screeningMode } f
 import { smsPlan } from "@/lib/compliance/mode";
 import { caslSmsGranted, centreRow, logPractice, ownedCentreIds, readScope, sendComplianceEmail, sendComplianceSms, sqlClient } from "@/lib/server/compliance-common";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
+import { suppressCount } from "@/lib/gov/k-anonymity";
 import { requireAdmin } from "@/lib/server/roles";
 
 function todayIso() {
@@ -114,7 +115,7 @@ export const loadGovScreening = createServerFn({ method: "GET" })
     const province = scope?.province || gov.province;
     if (mode === "off") return { enabled: false as const, mode, province, expired: 0, expiring: 0 };
     const counts = await provinceCounts(province);
-    return { enabled: true as const, mode, province, ...counts };
+    return { enabled: true as const, mode, province, expired: suppressCount(counts.expired), expiring: suppressCount(counts.expiring) };
   });
 
 export const loadAdminScreening = createServerFn({ method: "GET" })

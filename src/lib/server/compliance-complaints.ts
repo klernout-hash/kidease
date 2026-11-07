@@ -4,6 +4,7 @@ import { authMiddleware } from "@/lib/auth/middleware";
 import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
 import { nid } from "@/lib/utils";
 import { complaintsMode, isComplaintKind, reminderPlan, routeComplaint, trackingCode } from "@/lib/compliance/complaints";
+import { suppressRows } from "@/lib/gov/k-anonymity";
 import { centreRow, logPractice, readScope, sendComplianceEmail, sqlClient } from "@/lib/server/compliance-common";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { requireAdmin } from "@/lib/server/roles";
@@ -89,10 +90,12 @@ export const loadGovComplaints = createServerFn({ method: "GET" })
       mode,
       province,
       rows: [],
-      counts: [...counts.entries()].map(([key, n]) => {
-        const [kind, status] = key.split("\t");
-        return { kind, status, n };
-      }),
+      counts: suppressRows(
+        [...counts.entries()].map(([key, n]) => {
+          const [kind, status] = key.split("\t");
+          return { kind, status, n };
+        }),
+      ).map((row) => ({ kind: row.kind, status: row.status, n: row.suppressed ? null : row.n })),
     };
   });
 

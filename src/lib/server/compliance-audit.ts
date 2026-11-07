@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
 import { nid } from "@/lib/utils";
+import { suppressCount } from "@/lib/gov/k-anonymity";
 import { auditMode, purgePlan, type AuditRow } from "@/lib/compliance/audit";
 import { logPractice, readScope, sqlClient } from "@/lib/server/compliance-common";
 import { requireAdmin } from "@/lib/server/roles";
@@ -36,7 +37,7 @@ export const loadGovAudit = createServerFn({ method: "GET" })
     await writeAudit({ actorId: gov.userId, province, action: "read_audit", target: "gov" });
     if (mode === "off") return { enabled: false as const, mode, province, wouldDelete: 0 };
     const plan = purgePlan(await rowsFor(province), new Date(), mode);
-    return { enabled: true as const, mode, province, wouldDelete: plan.length };
+    return { enabled: true as const, mode, province, wouldDelete: suppressCount(plan.length) };
   });
 
 export const loadAdminAudit = createServerFn({ method: "GET" })

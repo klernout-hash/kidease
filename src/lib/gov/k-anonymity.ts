@@ -44,7 +44,26 @@ export function suppressRows<T extends CountRow>(rows: readonly T[], k = K_ANONY
   );
 }
 
-/** True when a published number would reveal a person, child, or small group. */
+/** A count the server may already have removed. Null stays hidden. */
+export function releasedCount(n: number | null | undefined, k = K_ANONYMITY): number | null {
+  if (n == null) return null;
+  return suppressCount(n, k);
+}
+
+/**
+ * Render rows for a government desk.
+ * If the server already removed a small number, keep that decision.
+ * Do not put the small number back by subtracting the rows that remain.
+ */
+export function releasedRows<T extends { n: number | null }>(
+  rows: readonly T[],
+  k = K_ANONYMITY,
+): Array<T & { n: number | null; suppressed: boolean }> {
+  if (rows.some((row) => row.n == null)) {
+    return rows.map((row) => ({ ...row, suppressed: row.n == null }));
+  }
+  return suppressRows(rows as readonly (T & CountRow)[], k);
+}
 export function isSuppressedValue(n: number | null | undefined, k = K_ANONYMITY): boolean {
   if (n == null) return true;
   return n > 0 && n < k;

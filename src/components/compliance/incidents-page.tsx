@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { suppressRows } from "@/lib/gov/k-anonymity";
+import { releasedRows } from "@/lib/gov/k-anonymity";
 import { ComplianceFrame } from "@/components/compliance/frame";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ type GovData = {
   mode: PackMode;
   province: string;
   filings: { id: string; kind: string; summary: string; child_label: string | null; filed_at: string | null; aware_at: string }[];
-  counts: { kind: string; count: number }[];
+  counts: { kind: string; count: number | null }[];
 };
 
 type ParentData = {
@@ -117,7 +117,7 @@ export function GovIncidentsPage({ data, locale, showFilings = false }: { data: 
     <ComplianceFrame locale={locale} title={locale === "fr" ? "Rapports reçus" : "Reports filed"} copy={{ ...copy, what: copy.govWhat, why: copy.govWhy }} mode={data.mode} gov>
       <p className="text-sm text-muted">{data.province}</p>
       <ul className="mt-4 space-y-2">
-        {suppressRows(data.counts.map((row) => ({ ...row, n: row.count }))).map((row) => (
+        {releasedRows(data.counts.map((row) => ({ ...row, n: row.count }))).map((row) => (
           <li key={row.kind}>
             {row.kind.replaceAll("_", " ")}: {row.suppressed ? (locale === "fr" ? "masqué (<5)" : "hidden (<5)") : row.n}
           </li>
