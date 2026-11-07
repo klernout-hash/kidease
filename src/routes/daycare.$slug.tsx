@@ -43,7 +43,10 @@ import { SaveListingButton } from "@/components/save-listing-button";
 import { ClaimListingCta } from "@/components/claim-listing-cta";
 import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
-import { amenityLabel } from "@/lib/amenities";
+import { FacilityPublicList } from "@/components/daycare-facilities-picker";
+import { MealPublicSummary } from "@/components/meals-editor";
+import { emptyMealOfferings } from "@/lib/meal-offerings";
+import type { SpaceGroup } from "@/lib/listing-spaces";
 import { licenseRecordUrl, subsidyEstimatorUrl } from "@/lib/licensing";
 import { reportSearchProvince } from "@/lib/licensing-offices";
 import { listingSubsidy, subsidyNote, subsidyNoteKey } from "@/lib/fee-program";
@@ -231,6 +234,7 @@ export function Listing() {
     reviews: Review[];
     availability: AvailabilityRow[];
     familyGuide?: { dropoff: string; bring: string; handbook: string } | null;
+    spaces?: SpaceGroup | null;
     nearby: Card[];
     jobs?: CentreJobPost[];
     inspections?: PublicInspection[];
@@ -1166,7 +1170,31 @@ export function Listing() {
               <ListingReviewForm daycareId={d.id} slug={d.slug} />
             </section>
 
-            {roomPhotos.length ? (
+            {data.spaces && data.spaces.spaces.some((space) => space.photos.length) ? (
+              <section id="listing-photos" className="scroll-mt-24" data-ke="public-room-photos">
+                <h2 className="font-display text-2xl">{locale === "fr" ? "Pièces et espaces" : "Rooms and spaces"}</h2>
+                <div className="mt-3 space-y-4">
+                  {data.spaces.spaces.filter((space) => space.photos.length).map((space) => (
+                    <div key={space.id}>
+                      <h3 className="text-sm font-semibold">{space.name}</h3>
+                      <div className="mt-2 grid grid-cols-2 gap-3">
+                        {space.photos.map((src, index) => (
+                          <button
+                            key={src}
+                            type="button"
+                            onClick={() => setPhoto(gallery.indexOf(src))}
+                            className="aspect-[4/3] overflow-hidden rounded-lg bg-surface-2"
+                            aria-label={`${space.name} ${index + 1}`}
+                          >
+                            <BuildingPhoto src={src} alt="" className="size-full object-cover" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : roomPhotos.length ? (
               <section id="listing-photos" className="scroll-mt-24">
                 <h2 className="font-display text-2xl">{t("interiors")}</h2>
                 <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -1252,21 +1280,12 @@ export function Listing() {
               {parentActions ? <JoinWaitlist daycareId={d.id} next={`/daycare/${d.slug}`} /> : null}
             </section>
 
-            {String(d.amenities ?? "").split(",").filter(Boolean).length ? (
-              <section>
-                <h2 className="font-display text-2xl">{t("amenities")}</h2>
-                <ul className="mt-3 flex flex-wrap gap-2">
-                  {String(d.amenities ?? "")
-                    .split(",")
-                    .filter(Boolean)
-                    .map((key) => (
-                      <li key={key} className="ke-chip-meta">
-                        {amenityLabel(key, locale)}
-                      </li>
-                    ))}
-                </ul>
-              </section>
-            ) : null}
+            <FacilityPublicList amenities={String(d.amenities ?? "")} locale={locale} />
+            <MealPublicSummary
+              offerings={d.mealOfferings ?? emptyMealOfferings()}
+              legacyMeals={Boolean(d.financial?.meals) || String(d.amenities ?? "").split(",").map((part) => part.trim()).includes("meals")}
+              locale={locale}
+            />
 
             <ListingCultureCard daycare={d} />
 

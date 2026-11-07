@@ -53,7 +53,7 @@ test("listing and search chips use ke-chip (AA contrast + 44px target), not mute
   assert.match(chip, /ke-chip/);
 
   const listing = src("src/routes/daycare.$slug.tsx");
-  assert.match(listing, /className="ke-chip-meta"/);
+  assert.match(src("src/components/daycare-facilities-picker.tsx"), /className="ke-chip-meta"/);
   assert.doesNotMatch(listing, /<li key=\{key\} className="rounded-full bg-surface px-3 py-1/);
 
   const search = src("src/routes/search.tsx");

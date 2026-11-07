@@ -37,6 +37,8 @@ import { checkListingPhoto } from "@/lib/server/photo-check";
 import { ProviderParentFields, parentDeskFromDaycare } from "@/components/provider-parent-fields";
 import { parentPartFor, type FamilyGuide, type HostSection } from "@/lib/host-listing";
 import { hostCopy } from "@/lib/host-listing-copy";
+import { ListingSpacesEditor } from "@/components/listing-spaces-editor";
+import { mealOfferingsFromStored } from "@/lib/meal-offerings";
 import { WaitlistPulseButton } from "@/components/waitlist-pulse-button";
 import { useCopy } from "@/lib/use-copy";
 import { standardAgeLabelsForListing } from "@/lib/standard-age-groups";
@@ -291,7 +293,7 @@ function HomeAddressSetting({ daycare }: { daycare: Daycare }) {
       <label className="flex min-h-11 items-start gap-3 text-sm">
         <input
           type="checkbox"
-          className="mt-1 size-5"
+          className="ke-switch"
           checked={show}
           disabled={!verified || busy}
           onChange={(event) => {
@@ -426,6 +428,7 @@ export function CapacityForm({
     JSON.stringify(state.curriculumTags) !== JSON.stringify(savedParent.curriculumTags) ||
     JSON.stringify(state.safetyFeatures) !== JSON.stringify(savedParent.safetyFeatures) ||
     JSON.stringify(state.amenityKeys) !== JSON.stringify(savedParent.amenityKeys) ||
+    JSON.stringify(state.mealOfferings) !== JSON.stringify(savedParent.mealOfferings) ||
     guideDirty;
   useEffect(() => {
     onDirtyChange?.(dirty);
@@ -646,6 +649,7 @@ export function CapacityForm({
             valuesNote: state.valuesNote,
             safetyFeatures: state.safetyFeatures,
             promoText: state.promoText,
+            mealOfferings: state.mealOfferings,
           },
         })
           .then(() => onSaved())
@@ -739,7 +743,10 @@ export function CapacityForm({
           <ListingHealthPanel item={{ ...draft, detailsReady: complete.ready, completenessMissing: complete.missing }} />
             </>
           ) : null}
-          {see("photos") ? (
+          {see("photos") && mode === "listing" ? (
+            <ListingSpacesEditor daycare={daycare} onChanged={onSaved} />
+          ) : null}
+          {see("photos") && mode !== "listing" ? (
           <>
           {shown.length ? (
             <div data-ke="photo-tour-preview" className="space-y-2">
@@ -988,6 +995,8 @@ export function CapacityForm({
                 onWriterApplied={() => {
                   writerApplied.current = true;
                 }}
+                savedAmenityKeys={parentDeskFromDaycare(daycare).amenityKeys}
+              savedMealOfferings={mealOfferingsFromStored(daycare.mealOfferings, daycare.amenities || "")}
                 value={parentDeskFromDaycare({ ...daycare, ...state, amenities: state.amenityKeys.join(",") })}
                 onChange={(parent) => setState({ ...state, ...parent })}
               />
@@ -1138,6 +1147,8 @@ export function CapacityForm({
               onWriterApplied={() => {
                 writerApplied.current = true;
               }}
+              savedAmenityKeys={parentDeskFromDaycare(daycare).amenityKeys}
+              savedMealOfferings={mealOfferingsFromStored(daycare.mealOfferings, daycare.amenities || "")}
               value={parentDeskFromDaycare({ ...daycare, ...state, amenities: state.amenityKeys.join(",") })}
               onChange={(parent) => setState({ ...state, ...parent })}
             />
