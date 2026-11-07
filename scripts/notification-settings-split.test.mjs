@@ -28,7 +28,8 @@ test("menu route accepts screen=notifications and renders settings screen", asyn
   assert.match(menu, /s\.screen === "notifications"/);
   assert.match(menu, /<NotificationSettingsScreen \/>/);
   const screen = src("src/components/notification-settings-screen.tsx");
-  assert.match(screen, /<UnifiedAlertPanel mode="settings" \/>/);
+  assert.match(screen, /<NotificationPreferences embedded \/>/);
+  assert.doesNotMatch(screen, /<UnifiedAlertPanel mode="settings"/);
   assert.match(screen, /<LifecyclePrefs \/>/);
   assert.match(src("src/components/app-menu-screen.tsx"), /marker="notification-settings"/);
 });
