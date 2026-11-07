@@ -2437,14 +2437,17 @@ html[data-cookie-banner="open"] body {
 }
 /* A taller consent card stays above the listing actions and under the filter chips. */
 @media (max-width: 767px) {
-  html[data-cookie-banner="open"],
-  html[data-cookie-banner="open"] body {
+  html[data-cookie-banner="open"]:has([data-ke="host-editor"]),
+  html[data-cookie-banner="open"]:has([data-ke="host-editor"]) body,
+  html[data-cookie-banner="open"]:has([data-ke="host-section"]),
+  html[data-cookie-banner="open"]:has([data-ke="host-section"]) body {
     height: 100dvh;
     max-height: 100dvh;
     overflow: hidden;
     padding-bottom: 0;
   }
-  html[data-cookie-banner="open"] #main-content {
+  html[data-cookie-banner="open"]:has([data-ke="host-editor"]) #main-content,
+  html[data-cookie-banner="open"]:has([data-ke="host-section"]) #main-content {
     min-height: 0;
     max-height: calc(100dvh - 13.5rem - env(safe-area-inset-bottom, 0px));
     overflow: auto;
