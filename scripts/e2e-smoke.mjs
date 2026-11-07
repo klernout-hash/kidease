@@ -420,15 +420,17 @@ async function runRoleFixture(page, base) {
     const parentPlaces = await upgradePlaces(page);
     const parentChrome = await page.locator("body").innerText();
     const parentSignIn = /parent sign in|daycare sign in/i.test(parentChrome);
+    const subscriptionsOff = plansHidden;
+    const parentUpgradeOk = subscriptionsOff
+      ? parentPlaces.header === "" && parentPlaces.panel === "" && parentPlaces.drawer === ""
+      : parentPlaces.drawer === "Upgrade";
     record(
       "menu-parent",
       parentHome &&
         parentCross.length === 0 &&
         /home/i.test(parentNav) &&
         !parentSignIn &&
-        parentPlaces.header === "" &&
-        parentPlaces.panel === "" &&
-        parentPlaces.drawer === "",
+        parentUpgradeOk,
       { note: parentSignIn ? "sign-in leak" : parentCross.join(",") || JSON.stringify(parentPlaces) },
     );
     const parentBar = await appBarText(page, new URL("/parent", base).href);
@@ -496,16 +498,17 @@ async function runRoleFixture(page, base) {
     await childrenRow.waitFor({ timeout: timeoutMs }).catch(() => {});
     const drawerUpgrade = await upgradeRow.count();
     const phoneSwitcher = await page.locator('[data-ke="desk-switcher"]').count();
+    const phoneUpgradeOk = subscriptionsOff ? drawerUpgrade === 0 : drawerUpgrade > 0;
     record(
       "nav-phone-shell",
       phoneMenuHidden &&
-        drawerUpgrade === 0 &&
+        phoneUpgradeOk &&
         (await childrenRow.count()) > 0 &&
         (await accountRow.count()) > 0 &&
         phoneSwitcher === 0 &&
         /^(\d+|99\+)$/.test(drawerBadge),
       {
-        note: `subscriptions-off menuHidden=${phoneMenuHidden} upgrade=${drawerUpgrade} children=${await childrenRow.count()} account=${await accountRow.count()} switcher=${phoneSwitcher} badge=${drawerBadge}`,
+        note: `${subscriptionsOff ? "subscriptions-off" : "subscriptions-on"} menuHidden=${phoneMenuHidden} upgrade=${drawerUpgrade} children=${await childrenRow.count()} account=${await accountRow.count()} switcher=${phoneSwitcher} badge=${drawerBadge}`,
       },
     );
     await page.setViewportSize({ width: 1280, height: 900 });
@@ -557,15 +560,19 @@ async function runRoleFixture(page, base) {
     await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     const paidPlaces = await upgradePlaces(page);
     const paidCheckout = await page.locator('[data-ke="plan-checkout"]').count();
-    const managed = (await page.locator('[data-ke="manage-or-cancel"]').count()) > 0;
+    let managed = (await page.locator('[data-ke="manage-or-cancel"]').count()) > 0;
+    if (!subscriptionsOff) {
+      await openHeaderMenu(page);
+      await clickDrawerUpgrade(page);
+      await page.locator('[data-ke="manage-or-cancel"]').waitFor({ timeout: timeoutMs }).catch(() => {});
+      managed = (await page.locator('[data-ke="manage-or-cancel"]').count()) > 0;
+    }
     record(
       "upgrade-my-plan-parent",
-      paidPlaces.header === "" &&
-        paidPlaces.panel === "" &&
-        paidPlaces.drawer === "" &&
-        !managed &&
-        paidCheckout === 0,
-      { note: `subscriptions-off ${JSON.stringify(paidPlaces)} checkout=${paidCheckout}` },
+      subscriptionsOff
+        ? paidPlaces.header === "" && paidPlaces.panel === "" && paidPlaces.drawer === "" && !managed && paidCheckout === 0
+        : paidPlaces.drawer === "My plan" && managed,
+      { note: `${subscriptionsOff ? "subscriptions-off" : "subscriptions-on"} ${JSON.stringify(paidPlaces)} checkout=${paidCheckout}` },
     );
 
     await page.setViewportSize({ width: 1280, height: 900 });
@@ -682,41 +689,70 @@ async function runRoleFixture(page, base) {
     await setFixture(context, base, { role: "parent" });
     await gotoSettled(page, new URL("/parent", base).href);
     await page.locator('[data-ke="parent-home"]').waitFor({ timeout: timeoutMs });
-    const parentHeaderUpgrade = ((await page.locator('[data-ke="desk-desktop-nav"] [data-nav="upgrade"]').innerText().catch(() => "")) || "").trim();
-    const parentUpgradeCount = await page.locator('[data-nav="upgrade"]').count();
-    await page.goto(new URL("/parent?tab=subscription", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-    await page.waitForFunction(() => new URL(location.href).searchParams.get("tab") !== "subscription", { timeout: timeoutMs }).catch(() => {});
-    const stayedOffSubscription = !/tab=subscription/i.test(page.url());
-    const parentCheckout = await page.locator('[data-ke="plan-checkout"]').count();
-    const parentSubscription = await page.locator('[data-ke="parent-subscription"]').count();
-    record(
-      "parent-plus-two-clicks",
-      parentHeaderUpgrade === "" &&
+    let parentPlusOk = false;
+    let parentPlusNote = "";
+    if (subscriptionsOff) {
+      const parentHeaderUpgrade = ((await page.locator('[data-ke="desk-desktop-nav"] [data-nav="upgrade"]').innerText().catch(() => "")) || "").trim();
+      const parentUpgradeCount = await page.locator('[data-nav="upgrade"]').count();
+      await page.goto(new URL("/parent?tab=subscription", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+      await page.waitForFunction(() => new URL(location.href).searchParams.get("tab") !== "subscription", { timeout: timeoutMs }).catch(() => {});
+      const stayedOffSubscription = !/tab=subscription/i.test(page.url());
+      const parentCheckout = await page.locator('[data-ke="plan-checkout"]').count();
+      const parentSubscription = await page.locator('[data-ke="parent-subscription"]').count();
+      parentPlusOk =
+        parentHeaderUpgrade === "" &&
         parentUpgradeCount === 0 &&
         stayedOffSubscription &&
         parentCheckout === 0 &&
-        parentSubscription === 0,
-      {
-        note: `subscriptions-off label=${parentHeaderUpgrade || "none"} links=${parentUpgradeCount} left=${page.url()} checkout=${parentCheckout} panel=${parentSubscription}`,
-      },
-    );
+        parentSubscription === 0;
+      parentPlusNote = `subscriptions-off label=${parentHeaderUpgrade || "none"} links=${parentUpgradeCount} left=${page.url()} checkout=${parentCheckout} panel=${parentSubscription}`;
+    } else {
+      await openAccountGroup(page, '[data-ke="desk-desktop-nav"]');
+      const parentHeaderUpgrade = ((await page.locator('[data-ke="desk-desktop-nav"] [data-nav="upgrade"]:visible').first().innerText().catch(() => "")) || "").trim();
+      await page.locator('[data-ke="desk-desktop-nav"] [data-nav="upgrade"]').click();
+      await page.waitForURL(/tab=subscription/i, { timeout: timeoutMs }).catch(() => {});
+      const deskPlus = page.locator('[data-ke="plan-checkout"]:visible').first();
+      await deskPlus.waitFor({ timeout: timeoutMs }).catch(() => {});
+      const parentDeskHit = page.waitForRequest((req) => req.url().includes("cs_test_e2e_mock"), { timeout: timeoutMs }).catch(() => null);
+      if ((await deskPlus.count()) > 0) await deskPlus.click();
+      const parentDeskReached = Boolean(await parentDeskHit);
+      await settleMockCheckout(page);
+      await gotoSettled(page, new URL("/parent", base).href);
+      await openHeaderMenu(page);
+      await clickDrawerUpgrade(page);
+      await page.waitForURL(/tab=subscription/i, { timeout: timeoutMs }).catch(() => {});
+      const homePlus = page.locator('[data-ke="plan-checkout"]:visible').first();
+      await homePlus.waitFor({ timeout: timeoutMs }).catch(() => {});
+      const parentHomeHit = page.waitForRequest((req) => req.url().includes("cs_test_e2e_mock"), { timeout: timeoutMs }).catch(() => null);
+      if ((await homePlus.count()) > 0) await homePlus.click();
+      const parentHomeReached = Boolean(await parentHomeHit);
+      await settleMockCheckout(page);
+      parentPlusOk = parentHeaderUpgrade === "Upgrade" && parentDeskReached && parentHomeReached;
+      parentPlusNote = `subscriptions-on ${parentHeaderUpgrade} desk=${parentDeskReached} home=${parentHomeReached}`;
+    }
+    record("parent-plus-two-clicks", parentPlusOk, { note: parentPlusNote });
 
     await page.setViewportSize({ width: 1280, height: 900 });
     await setFixture(context, base, { role: "parent", activity: true });
     await page.goto(new URL("/parent", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await page.locator('[data-ke="parent-home"]').waitFor({ timeout: timeoutMs });
     await shot(page, "parent-active", 1280, '[data-ke="parent-home"]');
+    if (!subscriptionsOff) {
+      await page.locator('[data-ke="upgrade-card"]').waitFor({ timeout: timeoutMs });
+    }
     const parentCardNow = await page.locator('[data-ke="upgrade-card"]').count();
-    if (parentCardNow > 0) {
+    if (parentCardNow > 0 || !subscriptionsOff) {
       await page.locator('[data-ke="upgrade-card-dismiss"]').click();
       await page.locator('[data-ke="upgrade-card"]').waitFor({ state: "hidden", timeout: timeoutMs });
     }
     await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
     await page.locator('[data-ke="parent-home"]').waitFor({ timeout: timeoutMs });
     const parentCardAfter = await page.locator('[data-ke="upgrade-card"]').count();
-    record("parent-card-dismissed", parentCardNow === 0 && parentCardAfter === 0, {
-      note: `subscriptions-off before=${parentCardNow} after=${parentCardAfter}`,
-    });
+    record(
+      "parent-card-dismissed",
+      (subscriptionsOff ? parentCardNow === 0 : parentCardNow > 0) && parentCardAfter === 0,
+      { note: `${subscriptionsOff ? "subscriptions-off" : "subscriptions-on"} before=${parentCardNow} after=${parentCardAfter}` },
+    );
 
     await setFixture(context, base, { role: "provider", activity: true });
     await page.goto(new URL("/provider", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
