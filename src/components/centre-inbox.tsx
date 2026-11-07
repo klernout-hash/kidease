@@ -8,6 +8,7 @@ import { InboxDetailRail } from "@/components/inbox-detail-rail";
 import { InboxMessageRow } from "@/components/inbox-row";
 import { PipelineBadge } from "@/components/pipeline-badge";
 import { BlockMessagesButton } from "@/components/safety-actions";
+import { SupportDeskBar } from "@/components/support-desk-panel";
 import { ThreadComposer, ThreadHeader, ThreadTranscript } from "@/components/thread-chrome";
 import { Button } from "@/components/ui/button";
 import { RedirectToSignIn } from "@/lib/auth/gates";
@@ -58,6 +59,7 @@ export function CentreInboxDesk({
   const [items, setItems] = useState<CentreInboxThread[] | null>(null);
   const [filter, setFilter] = useState<MessageFilter>("all");
   const [query, setQuery] = useState("");
+  const [supportOpen, setSupportOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [tours, setTours] = useState<TourRequest[]>([]);
   const [canWrite, setCanWrite] = useState(true);
@@ -223,6 +225,7 @@ export function CentreInboxDesk({
       <div className="shrink-0 space-y-3 p-3">
         <h2 className="font-display text-[clamp(1.6rem,4vw,2rem)]">{t("messages")}</h2>
         <p className="text-sm text-muted">{t("inboxCentreTitle")}</p>
+        <SupportDeskBar open={supportOpen} onOpen={setSupportOpen} />
         <label className="relative block">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-subtle" />
           <input
