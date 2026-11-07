@@ -93,7 +93,7 @@ export function homeLandPath(input: {
   remembered?: "parent" | "provider" | null;
   /** Native shell: do not send an admin account to /admin on launch. */
   hideStaffWebOnly?: boolean;
-}): "/admin" | "/support" | "/provider" | null {
+}): "/admin" | "/support" | "/provider" | "/gov" | null {
   if (input.remembered === "parent") return null;
   if (input.remembered === "provider") {
     return input.sticky === "parent" ? null : "/provider";
@@ -107,10 +107,40 @@ export function homeLandPath(input: {
     return null;
   }
   if (!input.role) return null;
+  if (input.role === "government") return "/gov";
   if (input.role === "admin") return input.hideStaffWebOnly ? null : "/admin";
   if (input.role === "provider") return "/provider";
   if (input.role === "support" || input.role === "support_lead") return "/support";
   return null;
+}
+
+/**
+ * Keep a neutral shell on `/` until we know the signed-in person should stay
+ * on discovery. Prevents the provider launch flash: Explore content under the
+ * Today tab, then a jump to the daycare desk.
+ * Signed-out visitors are never held. Parent Explore (`null` land path) is never held.
+ */
+export function shouldHoldHomeDiscovery(input: {
+  guestView?: boolean;
+  landed?: boolean;
+  justSignedOut?: boolean;
+  pending?: boolean;
+  signedIn?: boolean;
+  role?: AppRole | null;
+  sticky?: DeskKey | null;
+  remembered?: "parent" | "provider" | null;
+  hideStaffWebOnly?: boolean;
+}): boolean {
+  if (input.guestView || input.landed || input.justSignedOut) return false;
+  const dest = homeLandPath({
+    role: input.role,
+    sticky: input.sticky,
+    remembered: input.remembered,
+    hideStaffWebOnly: input.hideStaffWebOnly,
+  });
+  if (!dest) return false;
+  if (!input.signedIn && !input.pending) return false;
+  return true;
 }
 
 /** Shared Account settings — keep `?desk=` so the pill stays on the current desk. */

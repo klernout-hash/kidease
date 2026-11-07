@@ -11,6 +11,7 @@ export function InspectionTrustCard({
   claimed,
   checklist,
   inspections,
+  compact = false,
 }: {
   province: string;
   name: string;
@@ -20,6 +21,8 @@ export function InspectionTrustCard({
   claimed?: boolean;
   checklist?: ChecklistItem[] | null;
   inspections?: PublicInspection[];
+  /** Guest detail: one line plus a disclosure, not a dominant panel. */
+  compact?: boolean;
 }) {
   const { locale, t } = useCopy();
   const fr = locale === "fr";
@@ -27,6 +30,52 @@ export function InspectionTrustCard({
   const portal = inspectionPortal(province, name, fr ? "fr" : "en");
   const badge = inspectionChecklistBadge(checklist, Boolean(claimed));
   if (!licence && !portal) return null;
+
+  if (compact) {
+    return (
+      <section className="mt-4 text-sm leading-6" data-ke="inspection-trust" data-licence-status={licenseStatus || ""} data-compact="1">
+        <h2 className="text-[16px] font-semibold leading-[22px]">{t("licenceAndInspection")}</h2>
+        <p className="mt-1 text-muted">
+          {licence ? (
+            <>
+              {t("licenceOnRecord")} <span className="font-medium text-fg tabular-nums">{licence}</span>
+              {" · "}
+            </>
+          ) : null}
+          {t("licenceNotLiveGov")}
+        </p>
+        <details className="mt-1">
+          <summary className="inline-flex min-h-11 cursor-pointer items-center font-medium text-primary">
+            {fr ? "Voir le détail" : "View details"}
+          </summary>
+          {badge.show ? (
+            <p className="mt-2 text-muted">
+              {t("kideaseChecklist").replace("{passed}", String(badge.passed)).replace("{total}", String(badge.total))}
+            </p>
+          ) : null}
+          {inspections?.length ? (
+            <ul className="mt-2 space-y-2" data-ke="inspection-history">
+              {inspections.map((row) => (
+                <li key={`${row.inspectedOn}-${row.sourceUrl}`}>
+                  <p className="font-medium">
+                    {row.inspectedOn} · {row.outcome}
+                  </p>
+                  <a href={row.sourceUrl} target="_blank" rel="noreferrer" className="text-primary underline-offset-4 hover:underline">
+                    {t("publicRecord")}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {portal ? (
+            <a href={portal.url} target="_blank" rel="noreferrer" className="mt-1 inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline">
+              {fr ? portal.labelFr : portal.labelEn || t("openPublicRegistry")}
+            </a>
+          ) : null}
+        </details>
+      </section>
+    );
+  }
 
   return (
     <section
