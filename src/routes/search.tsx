@@ -2094,6 +2094,14 @@ export function SearchScreen({
           }}
         />
         </div>
+        {!filters && sheetFilterCount > 0 ? (
+          <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm" data-ke="filters-applied">
+            <span>{locale === "fr" ? `Filtres appliqués · ${sheetFilterCount}` : `Filters applied · ${sheetFilterCount}`}</span>
+            <button type="button" className="min-h-11 font-medium text-primary" onClick={clearListingFilters}>
+              {locale === "fr" ? "Tout effacer" : "Clear all"}
+            </button>
+          </p>
+        ) : null}
 
         {askLocation ? (
           <div className="mt-3">

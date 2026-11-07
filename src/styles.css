@@ -1451,6 +1451,16 @@
     min-width: max(5.25rem, min-content);
     min-height: 2.75rem;
   }
+  @media (max-width: 1023px) {
+    .ke-explore-filter-sticky,
+    .ke-visual-card,
+    .ke-tile,
+    [data-ke="explore-filters-sheet"],
+    [data-ke="filters-applied"] {
+      max-width: 100%;
+      min-width: 0;
+    }
+  }
   .ke-sheet {
     position: absolute;
     left: 0;

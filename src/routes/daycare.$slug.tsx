@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound, redirect, useNavigate, useParams, useSearch, useLoaderData, type ErrorComponentProps } from "@tanstack/react-router";
-import { Calendar, Info, MapPinned, MessageCircle, Star } from "lucide-react";
+import { Info, MapPinned, MessageCircle, Star } from "lucide-react";
 import { parentLoginSearch, parentSignupSearch } from "@/lib/auth/parent-login";
 import { FoundingMemberBadge } from "@/components/founding-member-badge";
 import { ShareListingButton } from "@/components/share-button";
@@ -624,10 +624,10 @@ export function Listing() {
   function ListingOverflowItems() {
     return (
       <>
-        {parentActions ? <ListingMoreItem onClick={onTour}>{t("bookTour")}</ListingMoreItem> : null}
+        {parentActions ? <ListingMoreItem onClick={onTour} data-ke="listing-sticky-tour">{t("bookTour")}</ListingMoreItem> : null}
         {parentActions && live ? <ListingMoreItem onClick={onRequest}>{t("requestSpotCta")}</ListingMoreItem> : null}
         {parentActions ? (
-          <ListingMoreItem onClick={onMessage}>
+          <ListingMoreItem onClick={onMessage} data-ke="listing-message-cta">
             <MessageCircle className="size-4" /> {t("message")}
           </ListingMoreItem>
         ) : null}
@@ -738,18 +738,8 @@ export function Listing() {
       <div data-ke={parentActions ? "listing-parent-actions" : ownEdit ? "listing-own-edit" : "listing-actions-none"}>
         <ListingEditLink />
         {parentActions && live ? (
-          <Button className="min-h-11 w-full whitespace-normal rounded-[14px] touch-manipulation" data-ke="listing-tour-cta" onClick={onTour}>
-            {t("bookTour")}
-          </Button>
-        ) : null}
-        {parentActions && live ? (
-          <Button className="min-h-11 rounded-[14px] touch-manipulation" variant="secondary" data-ke="listing-primary-cta" onClick={onInfo}>
+          <Button className="min-h-11 rounded-[14px] touch-manipulation" data-ke="listing-primary-cta" onClick={onInfo}>
             {t("requestInfo")}
-          </Button>
-        ) : null}
-        {parentActions && live ? (
-          <Button className="min-h-11 rounded-[14px] touch-manipulation" variant="secondary" data-ke="listing-message-cta" onClick={onMessage}>
-            {t("message")}
           </Button>
         ) : null}
         {parentActions && !live ? (
@@ -1304,12 +1294,6 @@ export function Listing() {
       <div className={`fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden [[data-channel=app]_&]:bottom-20`} data-ke="listing-sticky-bar">
         <div className="mx-auto flex max-w-lg flex-col gap-2">
           <ListingCtaSnippet live={live} from={from} hours={hours} />
-          {parentActions && live ? (
-            <Button className="ke-sticky-action h-auto min-h-11 w-full rounded-[14px] px-3 py-2 touch-manipulation" data-ke="listing-sticky-tour" onClick={onTour}>
-              <Calendar className="size-4 shrink-0" aria-hidden="true" />
-              <span className="ke-sticky-label">{t("bookTour")}</span>
-            </Button>
-          ) : null}
           <div className="ke-listing-sticky-row">
           {ownEdit ? <ListingEditLink /> : null}
           <Button
