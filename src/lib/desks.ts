@@ -83,8 +83,11 @@ export function stickyFromStores(sessionValue: string | null, localValue: string
 }
 
 /**
- * First `/` visit for a signed-in multi-role user. Sticky desk wins so Kyle
- * on Parent is not dumped back to Admin. Parent stays on Explore (`/` → null).
+ * Where a signed-in role would open a desk. The Home route does not call this
+ * after session restore. An opened `/` or `/fr` stays there. Sign-in still
+ * uses resolvePostLoginPath and destinationAfterSignIn, which treat `/` as
+ * "no next" and send the person to their own desk.
+ * Sticky desk wins so a parent choice is not dumped back to Admin.
  */
 export function homeLandPath(input: {
   role?: AppRole | null;

@@ -74,6 +74,8 @@ test("launch hold hides discovery only while a role desk is still resolving", ()
   assert.match(src("src/routes/index.tsx"), /data-ke="launch-shell"/);
   assert.match(src("src/routes/index.tsx"), /data-ke="home-discovery-surface"/);
   assert.match(src("src/routes/__root.tsx"), /data-ke-launch-hold/);
+  assert.doesNotMatch(src("src/routes/index.tsx"), /homeLandPath/);
+  assert.doesNotMatch(src("src/routes/__root.tsx"), /launch-hold-boot/);
   assert.doesNotMatch(src("src/components/app-tab-bar.tsx"), /AirbnbDeskPill/);
 });
 
@@ -133,5 +135,6 @@ test("provider editor is photo-led with a published preview", () => {
   assert.match(src("src/components/gov/gov-dashboard.tsx"), /data-ke="gov-expiries"/);
   assert.match(src("src/lib/server/gov-portal.ts"), /cannot widen/);
   assert.match(src("src/lib/server/gov-portal.ts"), /province: actor\.province/);
-  assert.match(src("src/routes/__root.tsx"), /kidease-session-hint/);
+  assert.match(src("src/lib/desks.ts"), /kidease-session-hint/);
+  assert.doesNotMatch(src("src/routes/__root.tsx"), /kidease-session-hint/);
 });
