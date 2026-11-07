@@ -1159,6 +1159,9 @@ export function SearchScreen({
     setFavoritesOnly(false);
     setCareType("any");
     setSchoolAgeOnly(false);
+    setWorkOrigin(null);
+    setWorkQuery("");
+    setAnchorMode("home");
     void navigate({
       search: {
         ...withParentSearch({
@@ -1176,6 +1179,11 @@ export function SearchScreen({
           favorites: undefined,
           openings: undefined,
           live: undefined,
+          cwelcc: undefined,
+          inclusive: undefined,
+          meals: undefined,
+          subsidy: undefined,
+          spoken: undefined,
         }),
         fac: undefined,
         cat: undefined,
@@ -1498,7 +1506,13 @@ export function SearchScreen({
     (claimVerifiedOnly ? 1 : 0) +
     (favoritesOnly ? 1 : 0) +
     (careType !== "any" ? 1 : 0) +
-    (isFacilityExploreCategory(resolvedExploreCategory(incoming)) ? 1 : 0);
+    (isFacilityExploreCategory(resolvedExploreCategory(incoming)) ? 1 : 0) +
+    (parsePioneerSearch(incoming as Record<string, unknown>).cwelcc ? 1 : 0) +
+    (parsePioneerSearch(incoming as Record<string, unknown>).inclusive ? 1 : 0) +
+    (parsePioneerSearch(incoming as Record<string, unknown>).meals ? 1 : 0) +
+    (parsePioneerSearch(incoming as Record<string, unknown>).subsidy ? 1 : 0) +
+    (parsePioneerSearch(incoming as Record<string, unknown>).spoken ? 1 : 0) +
+    (workOrigin && anchorMode !== "home" ? 1 : 0);
   const anchors = viewAnchors;
   const catalog = items ?? [];
   const fabric = areaPresence(catalog);
@@ -2080,12 +2094,14 @@ export function SearchScreen({
           }}
         />
         </div>
-        <div className={boot.mobileSearchV2 ? "max-md:hidden" : undefined}>
-          <PioneerFilterRail value={parsePioneerSearch(incoming as Record<string, unknown>)} onChange={writePioneer} />
-        </div>
-        <div className={boot.mobileSearchV2 ? "max-md:hidden" : undefined}>
-          <CommuteDetourBar />
-        </div>
+        {!filters && sheetFilterCount > 0 ? (
+          <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm" data-ke="filters-applied">
+            <span>{locale === "fr" ? `Filtres appliqués · ${sheetFilterCount}` : `Filters applied · ${sheetFilterCount}`}</span>
+            <button type="button" className="min-h-11 font-medium text-primary" onClick={clearListingFilters}>
+              {locale === "fr" ? "Tout effacer" : "Clear all"}
+            </button>
+          </p>
+        ) : null}
 
         {askLocation ? (
           <div className="mt-3">
@@ -2101,6 +2117,15 @@ export function SearchScreen({
             className="mt-3 space-y-4 rounded-xl bg-surface p-4 ring-1 ring-border"
             data-ke="explore-filters-sheet"
           >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-semibold">{t("filters")}</p>
+              <div className="flex items-center gap-2">
+                <ChipButton onClick={clearListingFilters}>{locale === "fr" ? "Tout effacer" : "Clear all"}</ChipButton>
+                <ChipButton onClick={() => setFilters(false)}>{t("close")}</ChipButton>
+              </div>
+            </div>
+            <PioneerFilterRail value={parsePioneerSearch(incoming as Record<string, unknown>)} onChange={writePioneer} />
+            <CommuteDetourBar />
             <div>
               <p className="text-sm font-semibold">{t("recommendedForYou")}</p>
               <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -2120,12 +2145,10 @@ export function SearchScreen({
                 ))}
               </div>
             </div>
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-semibold">{t("filters")}</p>
-              <div className="flex items-center gap-2">
-                {user ? (
-                  <ChipButton onClick={openSaveSearch}>{t("saveSearch")}</ChipButton>
-                ) : (
+            <div className="flex items-center justify-end gap-3">
+              {user ? (
+                <ChipButton onClick={openSaveSearch}>{t("saveSearch")}</ChipButton>
+              ) : (
                   <Link
                     to={locale === "fr" ? "/fr/login" : "/login"}
                     search={parentSignupSearch(localePath("/search", locale), "alerts")}
@@ -2140,8 +2163,6 @@ export function SearchScreen({
                     {t("signupWhyAlerts")}
                   </Link>
                 )}
-                <ChipButton onClick={() => setFilters(false)}>{t("close")}</ChipButton>
-              </div>
             </div>
             <div data-ke="near-work">
               <p className="text-sm font-medium">{t("nearWork")}</p>

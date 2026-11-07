@@ -6,7 +6,6 @@ import { isSafeSitemapSlug } from "@/lib/sitemap";
 import { PhotoCarousel } from "@/components/photo-carousel";
 import { FoundingMemberBadge } from "@/components/founding-member-badge";
 import { SaveListingButton } from "@/components/save-listing-button";
-import { ClaimListingCta } from "@/components/claim-listing-cta";
 import { ShareListingButton } from "@/components/share-button";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
@@ -26,7 +25,7 @@ import { standardAgeLabelsForListing } from "@/lib/standard-age-groups";
 import { classifyFacilityType, facilityTypeSeoKind } from "@/lib/facility-type";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { isCatalogueMatchedBadge, trustBadgesFor, type TrustBadge as TrustBadgeModel } from "@/lib/trust";
-import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
+import { publicApprovalEligible } from "@/lib/approve-live";
 import {
   cardPhotoLicenseWarning,
   showCardLivePill,
@@ -65,8 +64,8 @@ function whyMatchLine(
     any: "whySpotsWhoAny",
   };
   const parts = (item.smartMatchWhy ?? []).map((reason) => {
-    if (reason.code === "close_work") return t("whyCloseWork");
-    if (reason.code === "close_home") return t("whyCloseHome");
+    if (reason.code === "close_work" || reason.code === "close_home") return "";
+    if (reason.code === "complete" || reason.code === "claim_verified") return "";
     if (reason.code === "age_fit") {
       if (reason.age === "infant") return t("whyAgeInfant");
       if (reason.age === "toddler") return t("whyAgeToddler");
@@ -285,7 +284,6 @@ export const DaycareCard = memo(function DaycareCard({
   });
   const photos = (Array.isArray(item.photos) ? item.photos : []).filter((p) => p && !p.includes("-logo"));
   const hollowPhoto = !photos.some((p) => isRealListingPhoto(p));
-  const offerClaim = showPublicClaimPrompt(item);
 
   const license = publicLicenseBadge(item);
   const cardTrust = trustBadgesFor(item, "card");
@@ -333,19 +331,18 @@ export const DaycareCard = memo(function DaycareCard({
               photos={photos}
               eager={eager}
               priority={priority}
-              claim={offerClaim}
               rounded="rounded-[14px]"
               className="aspect-[4/3]"
             />
-            <CardPhotoBadges
-              item={item}
-              compact={false}
-              hollowPhoto={hollowPhoto}
-              live={live}
-              showLivePill={showLivePill}
-              licenseWarning={licenseWarning}
-            />
           </ListingAnchor>
+          <CardPhotoBadges
+            item={item}
+            compact={false}
+            hollowPhoto={hollowPhoto}
+            live={live}
+            showLivePill={showLivePill}
+            licenseWarning={licenseWarning}
+          />
           {parentActions ? <SaveListingButton daycareId={item.id} /> : null}
         </div>
         <ListingAnchor slug={item.slug} className="mt-2 flex min-h-0 flex-1 flex-col text-inherit no-underline">
@@ -448,9 +445,6 @@ export const DaycareCard = memo(function DaycareCard({
               {joinLabel}
             </ListingAnchor>
           ) : null}
-          {offerClaim ? (
-            <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10" />
-          ) : null}
         </div>
       </article>
     );
@@ -465,20 +459,19 @@ export const DaycareCard = memo(function DaycareCard({
             photos={photos}
             eager={eager}
             priority={priority}
-            claim={offerClaim}
             rounded="rounded-lg"
             className="aspect-[4/3]"
           />
-          <CardPhotoBadges
-            item={item}
-            compact={compact}
-            hollowPhoto={hollowPhoto}
-            live={live}
-            showLivePill={showLivePill}
-            licenseWarning={licenseWarning}
-            clearShare={!compact}
-          />
         </ListingAnchor>
+        <CardPhotoBadges
+          item={item}
+          compact={compact}
+          hollowPhoto={hollowPhoto}
+          live={live}
+          showLivePill={showLivePill}
+          licenseWarning={licenseWarning}
+          clearShare={!compact}
+        />
         {isSafeSitemapSlug(item.slug) && !compact ? (
           <CompareChip
             id={item.id}
@@ -519,17 +512,6 @@ export const DaycareCard = memo(function DaycareCard({
             <p className="text-[11px] font-medium leading-4 text-primary" data-ke="kidease-approved-marker">
               {t("kideaseApprovedMarker")}
             </p>
-          ) : null}
-          {!compact && cardTrust.length ? (
-            <div
-              className="pt-0.5"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-            >
-              <TrustSignals item={item} surface="card" compact />
-            </div>
           ) : null}
           {showDistance ? (
             <p className="truncate text-[12px] font-normal leading-4 text-muted">
@@ -584,6 +566,11 @@ export const DaycareCard = memo(function DaycareCard({
           </div>
         </div>
       </ListingAnchor>
+      {!compact && cardTrust.length ? (
+        <div className="pt-0.5">
+          <TrustSignals item={item} surface="card" compact />
+        </div>
+      ) : null}
       <div className="mt-1.5 flex w-full min-w-0 flex-wrap items-center gap-2">
         {parentActions ? (
           <ListingAnchor
@@ -617,9 +604,6 @@ export const DaycareCard = memo(function DaycareCard({
           >
             {joinLabel}
           </ListingAnchor>
-        ) : null}
-        {offerClaim ? (
-          <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10" />
         ) : null}
       </div>
     </article>

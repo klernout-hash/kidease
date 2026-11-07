@@ -3,6 +3,7 @@ import { EmptyState } from "@/components/empty-state";
 import { FacilityTypeRails } from "@/components/facility-type-rail-list";
 import { ListingRail } from "@/components/listing-rail";
 import { useCopy } from "@/lib/use-copy";
+import { localePath } from "@/lib/locale-path";
 import { useAppStore } from "@/lib/store";
 import {
   ageGroupRail,
@@ -53,7 +54,7 @@ export function ParentDeskRails({
   children?: Child[];
   bookings?: Booking[];
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const located = useAppStore((s) => s.located);
   const radiusKm = useAppStore((s) => s.radiusKm);
   const child = children[0];
@@ -108,21 +109,21 @@ export function ParentDeskRails({
   if (!looking.length) {
     return (
       <div className="mt-6 rounded-xl bg-bg ring-1 ring-border">
-        <EmptyState title={t("noResults")} body={t("parentRailsEmptyLead")} action={t("emptyFindCare")} actionTo="/search" />
+        <EmptyState title={t("noResults")} body={t("parentRailsEmptyLead")} action={t("emptyFindCare")} actionTo={localePath("/search", locale)} />
       </div>
     );
   }
 
   return (
     <div className="pb-4">
-      <ListingRail title={t("railBestMatch")} items={match} seeAllHref={parentRailSearchHref({ sort: "match" })} visual />
+      <ListingRail title={t("railBestMatch")} items={match} seeAllHref={localePath(parentRailSearchHref({ sort: "match" }), locale)} visual />
       {extraReady ? (
         <>
-          <ListingRail title={t("railNeedSoon")} items={urgency} seeAllHref={parentRailSearchHref({ sort: "urgency" })} visual />
+          <ListingRail title={t("railNeedSoon")} items={urgency} seeAllHref={localePath(parentRailSearchHref({ sort: "urgency" }), locale)} visual />
           <ListingRail
             title={t("railGuestFavorites")}
             items={favorites}
-            seeAllHref={parentRailSearchHref({ favorites: true })}
+            seeAllHref={localePath(parentRailSearchHref({ favorites: true }), locale)}
             eagerThumbs={false}
             visual
           />
@@ -132,7 +133,7 @@ export function ParentDeskRails({
                 {t("railByAge")}
               </h2>
               <a
-                href={parentRailSearchHref({ age })}
+                href={localePath(parentRailSearchHref({ age }), locale)}
                 className="ke-see-all inline-flex min-h-11 items-center pe-1 text-sm font-medium text-primary underline-offset-4 hover:underline"
               >
                 {t("seeAll")}

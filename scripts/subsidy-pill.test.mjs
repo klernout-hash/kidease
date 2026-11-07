@@ -57,7 +57,8 @@ test("Manitoba, PEI, and Newfoundland need a sourced yes, not a harvested amenit
   assert.equal(listingSubsidy(row({ province: "MB", city: "Winnipeg" })), null);
   const funded = row({ province: "MB", city: "Winnipeg", feeProgram: "mb-10-day", feeConfirmed: false });
   assert.equal(confirmedFeeProgramBadge(funded), "badgeTen");
-  assert.equal(listingSubsidy(funded)?.subsidy_label, "$10/day max");
+  assert.equal(listingSubsidy(funded)?.subsidy_label, "Fee cap");
+  assert.equal(listingSubsidy(funded)?.subsidy_label_fr, "Plafond");
   assert.match(listingSubsidy(funded)?.subsidy_note ?? "", /capped at \$10\/day for 4–10 hours/);
   assert.equal(confirmedFeeProgramBadge(row({ province: "PE", city: "Charlottetown" })), null);
   assert.equal(listingSubsidy(row({ province: "PE", feeProgram: "pe-10-day" }))?.subsidy_label, "$10/day");

@@ -41,7 +41,8 @@ test("Cards quiet overlapping labels and keep a reserved photo aspect", () => {
 
   assert.match(card, /hollowPhoto/);
   assert.match(card, /photoPending/);
-  assert.match(card, /showPublicClaimPrompt/);
+  assert.doesNotMatch(card, /showPublicClaimPrompt/);
+  assert.match(src("src/routes/daycare.$slug.tsx"), /showPublicClaimPrompt/);
   assert.match(src("src/components/building-photo.tsx"), /claimListingFrame/);
   assert.match(src("src/components/photo-carousel.tsx"), /claim=\{claim\}/);
   assert.match(card, /!compact \? \(/);

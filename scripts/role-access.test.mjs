@@ -5,6 +5,8 @@ import {
   guardPrivatePath,
   homeForRole,
   listingActionMode,
+  showsOwnListingEdit,
+  showsParentBrowseActions,
   navRoleForSession,
   privateReturnPath,
   bottomBarKind,
@@ -119,6 +121,13 @@ test("listing actions follow the viewer, and a role sticks after sign-up", () =>
   assert.equal(listingActionMode({ role: "provider", ownsListing: false }), "none");
   assert.equal(listingActionMode({ role: "provider", ownsListing: true }), "edit");
   assert.equal(listingActionMode({ role: "admin", ownsListing: false }), "all");
+  assert.equal(showsParentBrowseActions("parent"), true);
+  assert.equal(showsParentBrowseActions("guest"), true);
+  assert.equal(showsParentBrowseActions("provider"), false);
+  assert.equal(showsParentBrowseActions("government"), false);
+  assert.equal(showsOwnListingEdit("edit", true), true);
+  assert.equal(showsOwnListingEdit("edit", false), false);
+  assert.equal(showsOwnListingEdit("none", true), false);
   assert.equal(roleFlipAllowed("parent", "provider", 60_000), true);
   assert.equal(roleFlipAllowed("parent", "provider", 31 * 60 * 1000), false);
   assert.equal(roleFlipAllowed("admin", "parent", 0), false);

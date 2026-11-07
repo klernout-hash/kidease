@@ -192,17 +192,20 @@ export function isFrenchDeskPath(pathname: string | null | undefined): boolean {
   return false;
 }
 
-/** Prefix a paired English path when the UI locale is French. `/search` ↔ `/fr/search`. */
+/** Prefix a paired English path when the UI locale is French. `/search` ↔ `/fr/search`. Query and hash stay on the path. */
 export function localePath(enPath: string, locale: string): string {
-  const bare = enPath.startsWith("/") ? enPath : `/${enPath}`;
-  if (bare === "/explore") return locale === "fr" ? frenchPath("/search") : "/search";
+  const bareInput = enPath.startsWith("/") ? enPath : `/${enPath}`;
+  const cut = ["?", "#"].map((mark) => bareInput.indexOf(mark)).filter((n) => n >= 0).sort((a, b) => a - b)[0] ?? bareInput.length;
+  const bare = bareInput.slice(0, cut);
+  const rest = bareInput.slice(cut);
+  if (bare === "/explore") return (locale === "fr" ? frenchPath("/search") : "/search") + rest;
   if (
     locale === "fr" &&
     (PAIRED.has(bare) || isAuthFrPath(bare) || isCatalogueDocumentPath(bare) || isQcHomePath(bare) || isFrenchDeskPath(bare) || isFamilyWelcomePath(bare))
   ) {
-    return frenchPath(bare);
+    return frenchPath(bare) + rest;
   }
-  return bare;
+  return bare + rest;
 }
 
 export function sitemapFrenchPaths(enPaths: readonly string[] = LOCALE_PAIRED_PATHS): string[] {
