@@ -43,7 +43,7 @@ import { SaveListingButton } from "@/components/save-listing-button";
 import { ClaimListingCta } from "@/components/claim-listing-cta";
 import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-live";
-import { amenityLabel } from "@/lib/amenities";
+import { FacilityPublicList } from "@/components/daycare-facilities-picker";
 import { licenseRecordUrl, subsidyEstimatorUrl } from "@/lib/licensing";
 import { reportSearchProvince } from "@/lib/licensing-offices";
 import { listingSubsidy, subsidyNote, subsidyNoteKey } from "@/lib/fee-program";
@@ -1252,21 +1252,7 @@ export function Listing() {
               {parentActions ? <JoinWaitlist daycareId={d.id} next={`/daycare/${d.slug}`} /> : null}
             </section>
 
-            {String(d.amenities ?? "").split(",").filter(Boolean).length ? (
-              <section>
-                <h2 className="font-display text-2xl">{t("amenities")}</h2>
-                <ul className="mt-3 flex flex-wrap gap-2">
-                  {String(d.amenities ?? "")
-                    .split(",")
-                    .filter(Boolean)
-                    .map((key) => (
-                      <li key={key} className="ke-chip-meta">
-                        {amenityLabel(key, locale)}
-                      </li>
-                    ))}
-                </ul>
-              </section>
-            ) : null}
+            <FacilityPublicList amenities={String(d.amenities ?? "")} locale={locale} />
 
             <ListingCultureCard daycare={d} />
 

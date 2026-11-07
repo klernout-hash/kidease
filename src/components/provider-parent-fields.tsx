@@ -25,7 +25,8 @@ import {
   type ParentSchedule,
 } from "@/lib/parent-listing";
 import { FACILITY_TYPES, normalizeFacilityType, type FacilityType } from "@/lib/facility-type";
-import { amenityLabel } from "@/lib/amenities";
+import { DaycareFacilitiesPicker } from "@/components/daycare-facilities-picker";
+import { toggleFacility } from "@/lib/daycare-facilities";
 import { CARE_DETAIL_KEYS, careDetailLabel, isCareDetailKey } from "@/lib/inclusive-filters";
 import { localePath } from "@/lib/locale-path";
 import { inclusiveFiltersFlag } from "@/lib/server/inclusive-filters";
@@ -415,26 +416,14 @@ export function ProviderParentFields({
       ) : null}
 
       {show("amenities") ? (
-      <fieldset data-ke="editor-amenities">
-        <legend className="font-display text-xl">{t("deskAmenities")}</legend>
-        <p className="mt-1 text-sm text-muted">
-          {loc === "fr"
-            ? "Lieux et programmes. Les repas sont sur la page Repas, pas ici."
-            : "Place and program features. Meals are on the Meals page, not here."}
-        </p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {DESK_AMENITIES.filter((id) => id !== "meals").map((id) => (
-            <ChipButton
-              key={id}
-              on={value.amenityKeys.includes(id)}
-              aria-pressed={value.amenityKeys.includes(id)}
-              onClick={() => onChange({ ...value, amenityKeys: toggle(value.amenityKeys, id) })}
-            >
-              {amenityLabel(id, loc)}
-            </ChipButton>
-          ))}
-        </div>
-      </fieldset>
+      <div data-ke="editor-amenities">
+        <DaycareFacilitiesPicker
+          scope="centre"
+          locale={loc}
+          selected={value.amenityKeys}
+          onToggle={(id, on) => onChange({ ...value, amenityKeys: toggleFacility(value.amenityKeys, id, on) })}
+        />
+      </div>
       ) : null}
 
       {careDetails && (!part || part === "amenities") ? (

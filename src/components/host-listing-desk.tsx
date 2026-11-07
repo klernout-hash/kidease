@@ -8,13 +8,7 @@ import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { ProviderTrustChecklist } from "@/components/provider-trust";
 import { publicApprovalEligible } from "@/lib/approve-live";
 import { managedListingPhotos } from "@/lib/listing-photo";
-import {
-  DEMO_DAYCARE_PHOTOS,
-  centrePublication,
-  demoPhotoAlt,
-  filterOwnedCentres,
-  usesDemoPhotoPreview,
-} from "@/lib/host-listings-overview";
+import { centrePublication, filterOwnedCentres } from "@/lib/host-listings-overview";
 import {
   CENTRE_SECTIONS,
   GUIDE_SECTIONS,
@@ -341,11 +335,9 @@ function CentreRow({
   layout: "cards" | "rows";
   onOpen: () => void;
 }) {
-  const demo = usesDemoPhotoPreview(row);
-  const stored = managedListingPhotos(row.photos)[0] ?? "";
-  const photo = demo ? DEMO_DAYCARE_PHOTOS[0] : stored;
+  const photo = managedListingPhotos(row.photos)[0] ?? "";
   const status = centrePublication(row.live) === "listed" ? copy.listed : copy.notPublished;
-  const alt = demo ? demoPhotoAlt(copy.demoPhotoAlt, 1, DEMO_DAYCARE_PHOTOS.length) : photo ? row.name : "";
+  const alt = photo ? row.name : "";
   const coverClass =
     layout === "rows"
       ? "size-16 shrink-0 rounded-xl object-cover"
@@ -355,7 +347,6 @@ function CentreRow({
       type="button"
       data-ke="host-listing-card"
       data-layout={layout}
-      data-demo={demo ? "preview" : undefined}
       className={
         layout === "rows"
           ? "flex min-h-11 w-full items-center gap-3 py-3 text-left touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -365,11 +356,7 @@ function CentreRow({
     >
       <span className={layout === "rows" ? "relative shrink-0" : "relative block"}>
         {photo ? (
-          demo ? (
-            <img src={photo} alt={alt} width={layout === "rows" ? 128 : 640} height={layout === "rows" ? 128 : 400} className={coverClass} />
-          ) : (
-            <BuildingPhoto src={photo} alt={alt} className={coverClass} width={layout === "rows" ? 128 : 640} height={layout === "rows" ? 128 : 400} />
-          )
+          <BuildingPhoto src={photo} alt={alt} className={coverClass} width={layout === "rows" ? 128 : 640} height={layout === "rows" ? 128 : 400} />
         ) : (
           <span
             className={
@@ -382,11 +369,6 @@ function CentreRow({
             {noPhoto}
           </span>
         )}
-        {demo ? (
-          <span className="absolute left-1.5 top-1.5 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-semibold text-[#11151C]">
-            {copy.demoLabel}
-          </span>
-        ) : null}
         {layout === "cards" ? (
           <span className="absolute bottom-2 left-2 rounded-full bg-white/95 px-2.5 py-1 text-[12px] font-semibold leading-4 text-[#11151C] shadow-sm">
             {status}
@@ -557,8 +539,8 @@ function HostEditor({
   }
 
   const photos = managedListingPhotos(daycare.photos);
-  const demoPreview = usesDemoPhotoPreview(daycare);
-  const cover = demoPreview ? DEMO_DAYCARE_PHOTOS[0] : photos[0] ?? "";
+  const cover = photos[0] ?? "";
+  const stack = photos.slice(0, 3);
 
   return (
     <div data-ke="host-editor" className="mx-auto w-full max-w-[1120px] pb-16">
@@ -588,31 +570,26 @@ function HostEditor({
       >
         <span className="block text-[16px] font-semibold leading-[22px]">{locale === "fr" ? "Visite photo" : "Photo tour"}</span>
         <span className="mt-0.5 block text-[14px] leading-5 text-muted">
-          {demoPreview
-            ? copy.demoPreviewLead
-            : photos.length
-              ? `${photos.length} ${locale === "fr" ? "photos" : photos.length === 1 ? "photo" : "photos"}`
-              : locale === "fr"
-                ? "Photo non disponible"
-                : "Photo not available"}
+          {photos.length
+            ? `${photos.length} ${locale === "fr" ? "photos" : photos.length === 1 ? "photo" : "photos"}`
+            : locale === "fr"
+              ? "Photo non disponible"
+              : "Photo not available"}
         </span>
-        {demoPreview ? (
-          <span className="mt-3 grid grid-cols-5 gap-1.5" data-ke="demo-photo-preview">
-            {DEMO_DAYCARE_PHOTOS.map((src, index) => (
-              <img
-                key={src}
-                src={src}
-                alt={demoPhotoAlt(copy.demoPhotoAlt, index + 1, DEMO_DAYCARE_PHOTOS.length)}
-                width={192}
-                height={144}
-                className="aspect-[4/3] w-full rounded-lg object-cover"
-              />
+        {cover ? (
+          <span className="relative mt-3 block h-48" data-ke="photo-tour-stack">
+            {stack.map((src, index) => (
+              <span key={src} className="absolute top-0 w-[88%]" style={{ left: `${index * 6}%`, top: `${index * 8}px` }}>
+                <BuildingPhoto
+                  src={src}
+                  alt=""
+                  className="aspect-[16/10] w-full rounded-2xl object-cover shadow-card ring-1 ring-border"
+                  width={640}
+                  height={400}
+                />
+              </span>
             ))}
-          </span>
-        ) : cover ? (
-          <span className="relative mt-3 block">
-            <BuildingPhoto src={cover} alt="" className="aspect-[16/10] max-h-56 w-full rounded-[16px] object-cover" width={960} height={600} />
-            <span className="absolute bottom-3 left-3 rounded-full bg-black/70 px-2.5 py-1 text-[12px] font-medium text-white">
+            <span className="absolute bottom-2 left-2 z-[1] rounded-full bg-black/70 px-2.5 py-1 text-[12px] font-medium text-white" data-ke="photo-tour-count">
               {photos.length} {locale === "fr" ? "photos" : photos.length === 1 ? "photo" : "photos"}
             </span>
           </span>
