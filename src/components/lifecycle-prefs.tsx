@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
+import { SwitchRow } from "@/components/switch-row";
 import { NOTICE_CATEGORIES, type NoticePrefs } from "@/lib/lifecycle";
 import { loadLifecyclePrefs, saveLifecyclePrefs } from "@/lib/server/lifecycle";
 import { useCopy } from "@/lib/use-copy";
@@ -18,6 +19,7 @@ export function LifecyclePrefs() {
   const { celebrate } = useSuccessConfirm();
   const fr = locale === "fr";
   const [prefs, setPrefs] = useState<NoticePrefs | null>(null);
+  const [saved, setSaved] = useState<NoticePrefs | null>(null);
   const [enabled, setEnabled] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
@@ -26,11 +28,24 @@ export function LifecyclePrefs() {
       .then((row) => {
         setEnabled(row.enabled);
         setPrefs(row.prefs);
+        setSaved(row.prefs);
       })
       .catch(() => setEnabled(false));
   }, []);
 
-  if (!enabled || !prefs) return null;
+  const dirty = Boolean(prefs && saved && JSON.stringify(prefs) !== JSON.stringify(saved));
+
+  useEffect(() => {
+    if (!dirty) return;
+    const onLeave = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onLeave);
+    return () => window.removeEventListener("beforeunload", onLeave);
+  }, [dirty]);
+
+  if (!enabled || !prefs || !saved) return null;
 
   function setChoice(category: (typeof NOTICE_CATEGORIES)[number], channel: "email" | "sms", value: boolean) {
     setPrefs((current) => {
@@ -48,55 +63,77 @@ export function LifecyclePrefs() {
           ? "Les textos partent seulement avec un consentement CASL. Les conseils sont éteints tant que vous ne les ouvrez pas. Se désabonner coupe tout."
           : "Texts go out only with CASL consent. Tips stay off until you turn them on. Unsubscribe stops everything."}
       </p>
-      <ul className="mt-4 space-y-3">
+      {dirty ? (
+        <p className="mt-3 text-sm font-medium" role="status" data-ke="notice-dirty">
+          {fr ? "Modifications non enregistrées" : "Unsaved changes"}
+        </p>
+      ) : null}
+      <div className="mt-4">
         {NOTICE_CATEGORIES.map((category) => (
-          <li key={category} className="flex flex-wrap items-center justify-between gap-3 text-sm">
-            <span>{LABELS[category][fr ? "fr" : "en"]}</span>
-            <span className="flex gap-4">
-              <label className="inline-flex min-h-11 items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={prefs[category].email}
-                  onChange={(event) => setChoice(category, "email", event.target.checked)}
-                />
-                {fr ? "Courriel" : "Email"}
-              </label>
-              {category === "tips" ? null : (
-                <label className="inline-flex min-h-11 items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={prefs[category].sms}
-                    onChange={(event) => setChoice(category, "sms", event.target.checked)}
-                  />
-                  SMS
-                </label>
-              )}
-            </span>
-          </li>
+          <div key={category}>
+            <SwitchRow
+              id={`notice-${category}-email`}
+              locale={locale}
+              label={`${LABELS[category][fr ? "fr" : "en"]} · ${fr ? "Courriel" : "Email"}`}
+              description={
+                category === "tips"
+                  ? fr
+                    ? "Les conseils restent éteints tant que vous ne les ouvrez pas."
+                    : "Tips stay off until you turn them on."
+                  : fr
+                    ? "Un avis par courriel pour cette catégorie."
+                    : "An email notice for this category."
+              }
+              checked={prefs[category].email}
+              onCheckedChange={(next) => setChoice(category, "email", next)}
+            />
+            {category === "tips" ? null : (
+              <SwitchRow
+                id={`notice-${category}-sms`}
+                locale={locale}
+                label={`${LABELS[category][fr ? "fr" : "en"]} · SMS`}
+                description={
+                  fr
+                    ? "Les textos partent seulement si vous avez déjà accepté."
+                    : "Texts go out only if you already agreed."
+                }
+                checked={prefs[category].sms}
+                onCheckedChange={(next) => setChoice(category, "sms", next)}
+              />
+            )}
+          </div>
         ))}
-      </ul>
-      <label className="mt-4 flex min-h-11 items-center gap-2 text-sm">
-        <input
-          type="checkbox"
+        <SwitchRow
+          id="notice-unsubscribe"
+          locale={locale}
+          label={fr ? "Se désabonner de tout" : "Unsubscribe from all"}
+          description={fr ? "Coupe tous ces avis." : "Stops all of these notices."}
           checked={prefs.unsubscribedAll}
-          onChange={(event) => setPrefs({ ...prefs, unsubscribedAll: event.target.checked })}
+          onCheckedChange={(next) => setPrefs({ ...prefs, unsubscribedAll: next })}
         />
-        {fr ? "Se désabonner de tout" : "Unsubscribe from all"}
-      </label>
-      <Button
-        type="button"
-        className="mt-4"
-        onClick={() => {
-          void saveLifecyclePrefs({ data: prefs })
-            .then((result) => {
-              setNote(result.ok ? (fr ? "Enregistré." : "Saved.") : fr ? "Éteint." : "Off.");
-              if (result.ok) celebrate();
-            })
-            .catch(() => setNote(fr ? "Pas enregistré." : "Not saved."));
-        }}
-      >
-        {fr ? "Enregistrer" : "Save"}
-      </Button>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Button
+          type="button"
+          disabled={!dirty}
+          onClick={() => {
+            void saveLifecyclePrefs({ data: prefs })
+              .then((result) => {
+                setNote(result.ok ? (fr ? "Enregistré." : "Saved.") : fr ? "Éteint." : "Off.");
+                if (result.ok) {
+                  setSaved(prefs);
+                  celebrate();
+                }
+              })
+              .catch(() => setNote(fr ? "Pas enregistré." : "Not saved."));
+          }}
+        >
+          {fr ? "Enregistrer" : "Save"}
+        </Button>
+        <Button type="button" variant="secondary" data-ke="notice-cancel" disabled={!dirty} onClick={() => setPrefs(saved)}>
+          {fr ? "Annuler" : "Cancel"}
+        </Button>
+      </div>
       {note ? <p className="mt-2 text-sm" role="status">{note}</p> : null}
     </section>
   );

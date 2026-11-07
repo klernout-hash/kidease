@@ -2,7 +2,7 @@ import { FEATURE_SPONSORED_LISTINGS } from "@/lib/sponsored-flag";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { JsonLd } from "@/components/json-ld";
 import { MARKETING_PAGE_SEO, organizationGraphJsonLdScript, pageSeoHead } from "@/lib/page-seo";
-import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { BadgeCheck, Camera, Lock, MapPin, MessageCircle, Search, ListChecks } from "lucide-react";
 import { HeroClaimStrip } from "@/components/hero-claim-strip";
 import { HomeHowVideo } from "@/components/home-how-video";
@@ -19,19 +19,6 @@ import {
 } from "@/components/building-photo";
 import { ChipButton } from "@/components/chip";
 import { CARD_SIZES, CARD_WIDTHS, STEP_SIZES, photoSrcSet, photoUrl, listingThumb } from "@/lib/photo";
-import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { useRoleChrome } from "@/components/role-chrome";
-import { getMyRole } from "@/lib/server/family";
-import {
-  consumeJustSignedOut,
-  DESK_LANDED_KEY,
-  homeLandPath,
-  readRememberedRole,
-  readStickyDesk,
-  shouldHoldHomeDiscovery,
-  type AppRole,
-} from "@/lib/desks";
-import { nativeShellHidesAdminNow } from "@/lib/native-admin";
 import { featuredDaycares } from "@/lib/server/daycares";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import { BootPending } from "@/components/boot-pending";
@@ -161,8 +148,6 @@ function Home() {
 export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot; liveClaimed?: boolean }) {
   const { t, locale } = useCopy();
   const navigate = useNavigate();
-  const { user, isPending } = useCurrentUserState();
-  const guestView = useRoleChrome().guestView === true;
   const origin = useAppStore((s) => s.origin);
   const originSource = useAppStore((s) => s.originSource);
   const setOrigin = useAppStore((s) => s.setOrigin);
@@ -173,7 +158,6 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
   const setQuery = useAppStore((s) => s.setQuery);
   const locationConsent = useAppStore((s) => s.locationConsent);
   const setLocationConsent = useAppStore((s) => s.setLocationConsent);
-  const [role, setRole] = useState<AppRole | null>(null);
   const [place, setPlace] = useState(() =>
     boot.origin.source === "manual" ? boot.origin.label : t("nearMe"),
   );
@@ -194,17 +178,6 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
     if (!featured.length) return;
     captureMarketplaceFunnel({ step: "explore", source: "home", dest_path: "/search" });
   }, [featured.length]);
-
-  useEffect(() => {
-    const uid = user?.id;
-    if (!uid) {
-      setRole(null);
-      return;
-    }
-    void dedupedQuery(`home-role:${uid}`, QUERY_STALE_MS, () => getMyRole())
-      .then((r) => setRole(r.role))
-      .catch(() => setRole("parent"));
-  }, [user?.id]);
 
   useEffect(() => {
     const timeZone = readClientTimeZone();
@@ -366,58 +339,6 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
     () => publicListings(recent).filter((row) => isSafeSitemapSlug(row.slug)),
     [recent],
   );
-
-  useEffect(() => {
-    if (guestView) return;
-    if (isPending) return;
-    try {
-      if (sessionStorage.getItem(DESK_LANDED_KEY) === "1") return;
-    } catch {
-      /* ignore */
-    }
-    if (consumeJustSignedOut()) return;
-    if (!user) return;
-    const dest = homeLandPath({
-      role,
-      sticky: readStickyDesk(),
-      remembered: readRememberedRole(),
-      hideStaffWebOnly: nativeShellHidesAdminNow(),
-    });
-    if (!dest) return;
-    try {
-      sessionStorage.setItem(DESK_LANDED_KEY, "1");
-    } catch {
-      /* ignore */
-    }
-    void navigate({ to: dest, replace: true });
-  }, [guestView, isPending, user, role, navigate]);
-
-  useLayoutEffect(() => {
-    let landed = false;
-    let signedOut = false;
-    try {
-      landed = sessionStorage.getItem(DESK_LANDED_KEY) === "1";
-      signedOut = sessionStorage.getItem("kidease-just-signed-out") === "1";
-    } catch {
-      /* ignore */
-    }
-    const hold = shouldHoldHomeDiscovery({
-      guestView,
-      landed,
-      justSignedOut: signedOut,
-      pending: isPending,
-      signedIn: Boolean(user),
-      role,
-      sticky: readStickyDesk(),
-      remembered: readRememberedRole(),
-      hideStaffWebOnly: nativeShellHidesAdminNow(),
-    });
-    if (hold) document.documentElement.setAttribute("data-ke-launch-hold", "1");
-    else document.documentElement.removeAttribute("data-ke-launch-hold");
-    return () => {
-      document.documentElement.removeAttribute("data-ke-launch-hold");
-    };
-  }, [guestView, isPending, user, role]);
 
   const featuredSearch = (
     <>

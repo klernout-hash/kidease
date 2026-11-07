@@ -107,6 +107,7 @@ export type DaycareRow = {
   values_note?: string | null;
   safety_features?: unknown;
   promo_text?: string | null;
+  meal_offerings?: unknown;
   timezone?: string | null;
 };
 
@@ -233,6 +234,7 @@ export function mapDaycare(r: DaycareRow): Daycare {
       values_note: r.values_note,
       safety_features: r.safety_features,
       promo_text: r.promo_text,
+      meal_offerings: r.meal_offerings,
       amenities: r.amenities,
       staffScreeningAttested: r.staff_screening_attested === 1 || r.staff_screening_attested === true,
     }),

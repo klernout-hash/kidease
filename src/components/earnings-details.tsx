@@ -108,9 +108,11 @@ export function EarningsDetailsScreen({ desk }: { desk: EarningsResult | null })
           aria-labelledby="future-earnings"
           data-ke="earnings-future"
           onClick={() => setShowFuture((value) => !value)}
-          className={`relative h-7 w-12 rounded-full touch-manipulation ${showFuture ? "bg-fg" : "bg-border"}`}
+          className="inline-flex min-h-11 min-w-11 items-center justify-center touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          <span className={`absolute top-0.5 size-6 rounded-full bg-bg ${showFuture ? "end-0.5" : "start-0.5"}`} />
+          <span className={`ke-switch-track ${showFuture ? "is-on" : ""}`} aria-hidden>
+            <span className="ke-switch-thumb" />
+          </span>
         </button>
       </div>
       <details className="mt-4 rounded-[1.25rem] bg-surface p-4 ring-1 ring-border" data-ke="earnings-paid-breakdown">

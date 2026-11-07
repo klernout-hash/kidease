@@ -1,13 +1,16 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Archive, Mail, Star } from "lucide-react";
 import { formatPreferredTimes } from "@/lib/threads";
 import {
   formatStayDate,
+  inboxRelationshipKey,
   inboxStatusLine,
   participantInitials,
   type ConversationDetails,
 } from "@/lib/inbox-thread-ui";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
+import { threadReferenceFromId } from "@/lib/thread-reference";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
@@ -34,11 +37,14 @@ export function ConversationDetailsBody({
 }) {
   const { t, locale } = useCopy();
   const status = inboxStatusLine({ status: details.status, tourStatus: details.tourStatus });
+  const relationship = inboxRelationshipKey({ status: details.status, tourStatus: details.tourStatus });
   const dates =
     formatStayDate(details.startDate, locale) ||
     (details.preferredTimes.length ? formatPreferredTimes(details.preferredTimes, locale) : "");
   const photoOk = isRealListingPhoto(details.photo);
   const manage = details.viewerRole === "centre";
+  const reference = threadReferenceFromId(details.conversationId);
+  const [copied, setCopied] = useState(false);
 
   return (
     <div data-ke="conversation-details" className="flex flex-col gap-6">
@@ -53,7 +59,10 @@ export function ConversationDetailsBody({
           )}
           <div className="min-w-0">
             <p className="truncate font-medium">{details.daycareName}</p>
-            {details.childName ? <p className="truncate text-sm text-muted">{details.childName}</p> : null}
+            <p className="text-sm text-muted" data-ke="inbox-relationship">{t(relationship)}</p>
+            {details.childName && relationship === "inboxStatusEnrolled" ? (
+              <p className="truncate text-sm text-muted">{details.childName}</p>
+            ) : null}
             {status ? (
               <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
                 <span className={cn("size-2 rounded-full", status.dot === "ok" ? "bg-ok" : "bg-warn")} aria-hidden />
@@ -83,6 +92,24 @@ export function ConversationDetailsBody({
           ) : null}
         </div>
       </div>
+      {reference ? (
+        <div className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-border" data-ke="thread-reference">
+          <p className="text-sm font-semibold">{t("inboxReference")}</p>
+          <p className="mt-1 font-mono text-lg tracking-wide" data-ke="thread-reference-code">{reference}</p>
+          <p className="mt-1 text-sm text-muted">{t("inboxReferenceLead")}</p>
+          <button
+            type="button"
+            className="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-primary"
+            onClick={() => {
+              void navigator.clipboard?.writeText(reference).then(() => {
+                setCopied(true);
+              });
+            }}
+          >
+            {copied ? t("inboxReferenceCopied") : t("inboxReferenceCopy")}
+          </button>
+        </div>
+      ) : null}
 
       <div>
         <h3 className="text-base font-semibold">{t("inboxInConversation")}</h3>

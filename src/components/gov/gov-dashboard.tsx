@@ -8,6 +8,7 @@ import { CurriculumGovStrip } from "@/components/curriculum-pack";
 import { GovJobShortage } from "@/components/ece-job-desk";
 import { GovMap } from "@/components/gov/gov-map";
 import { signOut } from "@/lib/auth/client";
+import { GovDeskNav } from "@/components/gov/gov-desk-nav";
 
 function show(value: number | null, locale: "en" | "fr", hidden: string): string {
   if (value == null) return hidden;
@@ -239,6 +240,7 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
         <p className="mt-1 text-sm text-muted">
           {copy.org}: {data.orgName}
         </p>
+        <GovDeskNav locale={data.locale} pathname={path} province={data.province} orgName={data.orgName} />
         <p className="mt-1 text-sm text-muted" data-ke="gov-as-of">
           {copy.asOf} {data.generatedAt.slice(0, 16).replace("T", " ")} UTC
         </p>

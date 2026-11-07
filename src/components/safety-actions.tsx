@@ -167,7 +167,7 @@ export function BlockMessagesButton({
         {label}
       </button>
       {open ? (
-        <div className="fixed inset-0 z-[80] grid place-items-end bg-black/40 p-4 sm:place-items-center" role="presentation" onClick={() => setOpen(false)}>
+        <div className="fixed inset-0 z-[90] grid place-items-end bg-black/40 p-4 sm:place-items-center" role="presentation" onClick={() => setOpen(false)}>
           <div
             role="dialog"
             aria-modal="true"

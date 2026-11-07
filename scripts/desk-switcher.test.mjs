@@ -69,7 +69,7 @@ test("admin desk stays gated by profiles.role + owner email", () => {
   assert.doesNotMatch(src("src/components/nav-drawer.tsx"), /desksSlot/);
   assert.match(src("src/components/session-desks.tsx"), /sanitizeStickyDesk/);
   assert.match(src("src/components/session-desks.tsx"), /canVisitDesk/);
-  assert.match(src("src/routes/index.tsx"), /homeLandPath/);
+  assert.doesNotMatch(src("src/routes/index.tsx"), /homeLandPath/);
 });
 
 test("admin sees Parent, Daycare, and Admin as the top desk tabs", () => {

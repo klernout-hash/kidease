@@ -172,6 +172,7 @@ export type Daycare = {
     sibling: boolean;
     meals: boolean;
   };
+  mealOfferings?: import("@/lib/meal-offerings").MealOfferings | null;
   curriculumTags?: string[];
   /** Optional values / faith note. Hidden when empty. Not a US religion list. */
   valuesNote?: string | null;
