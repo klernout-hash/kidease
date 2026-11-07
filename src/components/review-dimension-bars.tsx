@@ -14,6 +14,11 @@ export function ReviewDimensionBars({
 }) {
   const { locale } = useCopy();
   const fr = locale === "fr";
+  const explicit = reviews.some((review) => {
+    if (!review || typeof review !== "object") return false;
+    const dimensions = (review as { dimensions?: object | null }).dimensions;
+    return Boolean(dimensions && Object.keys(dimensions).length);
+  });
   const bars = reviewDimensionBars(
     reviews.map((review) => {
       if (!review || typeof review !== "object") return {};
@@ -23,12 +28,22 @@ export function ReviewDimensionBars({
   );
   const login = localePath("/login", locale);
   const next = localePath(`/daycare/${slug}`, locale);
+  const shown = explicit
+    ? bars.filter((bar) =>
+        reviews.some((review) => {
+          if (!review || typeof review !== "object") return false;
+          const dimensions = (review as { dimensions?: Partial<Record<ReviewDimensionId, number>> | null }).dimensions;
+          return typeof dimensions?.[bar.id] === "number";
+        }),
+      )
+    : [];
+  if (!shown.length) return null;
 
   return (
     <div className="mt-4 rounded-2xl bg-surface p-4 text-fg shadow-sm ring-1 ring-border" data-ke="review-dimensions">
       <h3 className="text-sm font-semibold">{fr ? "Cinq points, parents vérifiés" : "Five scores from verified parents"}</h3>
       <ul className="mt-3 space-y-3">
-        {bars.map((bar) => {
+        {shown.map((bar) => {
           const label = REVIEW_DIMENSIONS.find((dim) => dim.id === bar.id);
           const width = bar.average == null ? 0 : (bar.average / 5) * 100;
           return (

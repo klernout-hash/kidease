@@ -31,7 +31,8 @@ test("listing detail keeps website CTAs, login next, and a back link", () => {
   assert.match(listing, /backToExplore/);
   assert.match(listing, /listingCtaLead/);
   assert.match(listing, /searchNearby/);
-  assert.match(listing, /md:hidden \[\[data-channel=app\]_&\]:bottom-20/);
+  assert.match(listing, /md:hidden/);
+  assert.match(listing, /\[\[data-channel=app\]_&\]:bottom-\[calc\(5rem\+var\(--ke-keyboard,0px\)\)\]/);
   assert.doesNotMatch(listing, /\[\[data-channel=website\]_&\]:hidden/);
   assert.doesNotMatch(listing, /to="\/checkin\/\$id"/);
   assert.doesNotMatch(listing, /<Button disabled>\{t\("notOnKidEase"\)\}<\/Button>/);

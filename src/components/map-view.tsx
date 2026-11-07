@@ -99,7 +99,12 @@ import { originIsParentLocation } from "@/lib/presence";
 import { displayDistance } from "@/lib/units";
 import { plausibleListingKm } from "@/lib/plausible-distance";
 import { honestVacancy } from "@/lib/now-loops";
-import { publicApprovalEligible } from "@/lib/approve-live";
+import { publicApprovalEligible, publicBrowseClaim } from "@/lib/approve-live";
+import { showCardLivePill } from "@/lib/card-photo-pills";
+import { listingSubsidy } from "@/lib/fee-program";
+import { SubsidyPill } from "@/components/subsidy-pill";
+import { ClaimListingCta } from "@/components/claim-listing-cta";
+import { useRoleChrome } from "@/components/role-chrome";
 import { showVerifiedCheck } from "@/lib/listing-verified";
 import { VerifiedCheck } from "@/components/verified-check";
 
@@ -1155,6 +1160,17 @@ function MapPinPopup({
   const approved = publicApprovalEligible(item);
   const verifiedCheck = showVerifiedCheck(item);
   const thumb = mapPinThumb(item.photos);
+  const role = useRoleChrome().role;
+  const showLivePill = showCardLivePill(Boolean(item.live), approved);
+  const subsidy = listingSubsidy(item);
+  const offerClaim = publicBrowseClaim({
+    role,
+    listingActive: item.listingActive,
+    claimed: item.claimed,
+    live: item.live,
+    claimStatus: item.claimStatus,
+    claimedAt: item.claimedAt,
+  });
 
   return (
     <div
@@ -1192,6 +1208,17 @@ function MapPinPopup({
         </div>
       )}
       <div className="px-2 pb-2">
+        {showLivePill || subsidy || offerClaim ? (
+          <div className="mb-2 flex flex-wrap items-center gap-1" data-ke="map-card-pills">
+            {showLivePill ? (
+              <span data-ke="card-live-pill" className="inline-flex items-center rounded-full bg-[#22C55E] px-2 py-0.5 text-[10px] font-bold leading-none text-[#052e16]">
+                {t("live")}
+              </span>
+            ) : null}
+            <SubsidyPill item={item} className="inline-flex items-center rounded-full bg-[#1D4ED8] px-2 py-0.5 text-[10px] font-bold leading-none text-white" />
+            {offerClaim ? <ClaimListingCta daycareId={item.id} name={name} source="card" /> : null}
+          </div>
+        ) : null}
         <button
           type="button"
           data-ke="map-pin-directions"

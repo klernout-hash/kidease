@@ -2,7 +2,7 @@
  * Listing editor sections. Summaries use saved fields only.
  */
 
-import { amenityLabel } from "./amenities.ts";
+import { facilitySummary } from "./daycare-facilities.ts";
 import { managedListingPhotos } from "./listing-photo.ts";
 import type { Daycare } from "./types.ts";
 import { spotTotal } from "./host-calendar.ts";
@@ -156,9 +156,10 @@ export function sectionSummary(section: HostSection, daycare: Daycare, locale: s
       return meals ? (locale === "fr" ? "Repas inclus" : "Meals included") : blank;
     }
     case "amenities": {
-      const keys = amenityList(daycare).filter((key) => key !== "meals" && key !== "licensed");
-      const labels = keys.slice(0, 3).map((key) => amenityLabel(key, locale === "fr" ? "fr" : "en"));
-      return labels.length ? clip(labels.join(", ")) : blank;
+      const summary = facilitySummary(amenityList(daycare), locale === "fr" ? "fr" : "en");
+      if (!summary.labels.length) return blank;
+      const line = summary.labels.join(", ");
+      return clip(summary.more ? `${line} +${summary.more}` : line);
     }
     case "safety":
       return clip(daycare.licenseNumber) || (daycare.safetyFeatures?.length ? daycare.safetyFeatures.slice(0, 2).join(", ") : "") || blank;

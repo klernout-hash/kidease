@@ -7,6 +7,7 @@
 
 import { amenityLabel } from "@/lib/amenities";
 import { CARE_DETAIL_KEYS } from "@/lib/inclusive-filters";
+import { mealOfferingsFromStored, normalizeMealOfferings } from "@/lib/meal-offerings";
 import {
   classifyFacilityType,
   normalizeFacilityType,
@@ -85,6 +86,25 @@ export const DESK_AMENITIES = [
   "walkable",
   "app",
   "documentation",
+  "toys",
+  "books",
+  "art-materials",
+  "sensory",
+  "indoor-play",
+  "shade",
+  "nap-area",
+  "changing-station",
+  "child-toilets",
+  "handwashing",
+  "heating",
+  "cooling",
+  "stroller-storage",
+  "dropoff-parking",
+  "step-free",
+  "wide-opening",
+  "accessible-washroom",
+  "visual-supports",
+  "quiet-space",
 ] as const;
 
 export const PROMO_TEXT_MAX = 280;
@@ -108,6 +128,7 @@ export type ParentListingFields = {
   valuesNote: string | null;
   safetyFeatures: string[];
   promoText: string | null;
+  mealOfferings?: import("./meal-offerings.ts").MealOfferings;
 };
 
 export type ParentListingSearch = {
@@ -320,6 +341,8 @@ export function parentListingFrom(input: {
   safety_features?: unknown;
   promoText?: unknown;
   promo_text?: unknown;
+  mealOfferings?: unknown;
+  meal_offerings?: unknown;
   amenities?: string | null;
   staffScreeningAttested?: boolean;
 }): ParentListingFields {
@@ -338,6 +361,7 @@ export function parentListingFrom(input: {
       Boolean(input.staffScreeningAttested),
     ),
     promoText: normalizePromoText(input.promoText ?? input.promo_text),
+    mealOfferings: mealOfferingsFromStored(input.mealOfferings ?? input.meal_offerings, amenities),
   };
 }
 
@@ -353,6 +377,7 @@ export function parentListingToSql(fields: Partial<ParentListingFields>) {
     valuesNote: normalizeValuesNote(fields.valuesNote),
     safetyJson: JSON.stringify(uniqueTokens(fields.safetyFeatures ?? [], SAFE_IDS)),
     promoText: normalizePromoText(fields.promoText),
+    mealJson: JSON.stringify(normalizeMealOfferings(fields.mealOfferings)),
   };
 }
 

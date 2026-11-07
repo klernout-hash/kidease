@@ -1,11 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { Star } from "lucide-react";
-import { memo, useState, type MouseEvent, type ReactNode } from "react";
+import { memo, type MouseEvent, type ReactNode } from "react";
 import type { DaycareCard as Card } from "@/lib/types";
 import { isSafeSitemapSlug } from "@/lib/sitemap";
 import { PhotoCarousel } from "@/components/photo-carousel";
 import { FoundingMemberBadge } from "@/components/founding-member-badge";
 import { SaveListingButton } from "@/components/save-listing-button";
+import { ClaimListingCta } from "@/components/claim-listing-cta";
 import { ShareListingButton } from "@/components/share-button";
 import { localePath } from "@/lib/locale-path";
 import { useCopy } from "@/lib/use-copy";
@@ -25,7 +26,7 @@ import { standardAgeLabelsForListing } from "@/lib/standard-age-groups";
 import { classifyFacilityType, facilityTypeSeoKind } from "@/lib/facility-type";
 import { publicLicenseBadge } from "@/lib/license-verify";
 import { isCatalogueMatchedBadge, trustBadgesFor, type TrustBadge as TrustBadgeModel } from "@/lib/trust";
-import { publicApprovalEligible } from "@/lib/approve-live";
+import { publicApprovalEligible, publicBrowseClaim } from "@/lib/approve-live";
 import {
   cardPhotoLicenseWarning,
   showCardLivePill,
@@ -45,8 +46,9 @@ import {
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { MIN_REVIEW_COUNT } from "@/lib/quality";
 import { parentRatingShown } from "@/lib/review-reports";
-import { listingSubsidy, subsidyNote } from "@/lib/fee-program";
+import { listingSubsidy } from "@/lib/fee-program";
 import { SubsidyPill } from "@/components/subsidy-pill";
+import { CardMicroPills } from "@/components/card-micro-pills";
 import { SponsoredMark } from "@/components/sponsored-mark";
 import { VerifiedCheck } from "@/components/verified-check";
 import { showVerifiedCheck } from "@/lib/listing-verified";
@@ -109,7 +111,6 @@ function CardPhotoBadges({
   licenseWarning: TrustBadgeModel | null;
   /** Rail cards also place a share control beside the heart. */
   clearShare?: boolean;
-  /** Visual cards explain the fee in the text stack, not as a price pill. */
   showSubsidy?: boolean;
 }) {
   const { t } = useCopy();
@@ -218,53 +219,6 @@ function ProvincialOpeningLine({ item }: { item: Card }) {
   );
 }
 
-function CardSourceNote({
-  date,
-  note,
-  href,
-  locale,
-}: {
-  date?: string | null;
-  note: string;
-  href?: string | null;
-  locale: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const label = locale === "fr" ? "Source et date" : "Source and date";
-  return (
-    <div className="mt-1">
-      <button
-        type="button"
-        data-ke="card-source"
-        className="inline-flex min-h-11 items-center text-left text-[14px] font-medium leading-5 text-primary touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-      >
-        {label}
-        {date ? ` · ${date}` : ""}
-      </button>
-      {open ? (
-        <p className="pb-2 text-[14px] leading-5 text-muted" data-ke="card-source-note">
-          {note}
-          {href ? (
-            <>
-              {" "}
-              <a
-                href={href}
-                target="_blank"
-                rel="noreferrer"
-                className="font-medium text-primary underline-offset-2 hover:underline"
-              >
-                {locale === "fr" ? "Source officielle" : "Official source"}
-              </a>
-            </>
-          ) : null}
-        </p>
-      ) : null}
-    </div>
-  );
-}
-
 export const DaycareCard = memo(function DaycareCard({
   item,
   showDistance = true,
@@ -293,10 +247,19 @@ export const DaycareCard = memo(function DaycareCard({
   showFees?: boolean;
 }) {
   const { t, locale } = useCopy();
-  const parentActions = showsParentBrowseActions(useRoleChrome().role);
+  const role = useRoleChrome().role;
+  const parentActions = showsParentBrowseActions(role);
   const joinLabel = spotOfferCopy(locale).join;
   const name = displayCentreName(locale === "fr" ? item.nameFr : item.name);
   const live = Boolean(item.live);
+  const offerClaim = publicBrowseClaim({
+    role,
+    listingActive: item.listingActive,
+    claimed: item.claimed,
+    live: item.live,
+    claimStatus: item.claimStatus,
+    claimedAt: item.claimedAt,
+  });
   const origin = useAppStore((s) => s.origin);
   const originSource = useAppStore((s) => s.originSource);
   const sort = useAppStore((s) => s.sort);
@@ -372,25 +335,6 @@ export const DaycareCard = memo(function DaycareCard({
 
   if (presentation === "visual") {
     const placeLine = [item.city, farAway ? item.province : "", typeLabel, away].filter(Boolean).join(" · ");
-    const factLine = [ages, hours].filter(Boolean).join(" · ");
-    const feeLine = !showFees
-      ? ""
-      : subsidy?.subsidy_type === "qc_965"
-        ? locale === "fr"
-          ? "Contribution de base du Québec · conditions applicables"
-          : "Quebec base contribution · conditions apply"
-        : subsidy?.subsidy_type === "ten" || subsidy?.subsidy_type === "ten_max"
-          ? locale === "fr"
-            ? "Plafond provincial · l’admissibilité varie"
-            : "Provincial fee cap · eligibility varies"
-          : feeOk && priceAmount
-            ? `${priceAmount}${priceUnit}`
-            : locale === "fr"
-              ? "Frais non confirmés"
-              : "Fees not confirmed";
-    const availabilityLine =
-      openSpotsLine || freshnessText || (locale === "fr" ? "Disponibilité non confirmée" : "Availability not confirmed");
-    const sourceNote = subsidy ? subsidyNote(subsidy, locale === "fr" ? "fr" : "en") : "";
     return (
       <article data-slug={item.slug} data-ke="visual-card" className="ke-visual-card group flex h-full w-full min-w-0 flex-col">
         <div className="relative">
@@ -399,72 +343,125 @@ export const DaycareCard = memo(function DaycareCard({
               photos={photos}
               eager={eager}
               priority={priority}
-              rounded="rounded-[16px]"
+              claim={offerClaim}
+              rounded="rounded-[14px]"
               className="aspect-[4/3]"
             />
           </ListingAnchor>
           <CardPhotoBadges
             item={item}
             compact={false}
-            hollowPhoto={false}
+            hollowPhoto={hollowPhoto}
             live={live}
-            showLivePill={false}
+            showLivePill={showLivePill}
             licenseWarning={licenseWarning}
-            showSubsidy={false}
           />
-          {hollowPhoto ? (
-            <span className="pointer-events-none absolute inset-0 grid place-items-center px-4 text-center text-sm font-medium text-muted" data-ke="card-photo-empty">
-              {locale === "fr" ? "Photo non disponible" : "Photo not available"}
-            </span>
-          ) : null}
           {parentActions ? <SaveListingButton daycareId={item.id} /> : null}
         </div>
-        <ListingAnchor slug={item.slug} className="mt-3 flex min-h-0 flex-1 flex-col gap-1 text-inherit no-underline">
-          <div className="flex min-h-0 items-start gap-1" data-ke="card-name">
-            <h3 className="line-clamp-2 min-w-0 flex-1 text-[16px] font-semibold leading-[22px] tracking-[-0.02em] text-fg">
-              {name}
-            </h3>
-            {verifiedCheck ? <VerifiedCheck className="mt-0.5 shrink-0" /> : null}
+        <ListingAnchor slug={item.slug} className="mt-2 flex min-h-0 flex-1 flex-col text-inherit no-underline">
+          <div className="flex min-h-10 items-start gap-1" data-ke="card-name">
+            <div className="flex min-w-0 flex-1 items-start gap-0.5">
+              <h3 className="line-clamp-2 min-w-0 whitespace-normal text-[15px] min-h-10 font-semibold leading-5 tracking-[-0.02em] text-fg">
+                {name}
+              </h3>
+              {verifiedCheck ? <VerifiedCheck className="shrink-0" /> : null}
+            </div>
             {showParentAverage ? (
-              <span className="mt-0.5 inline-flex shrink-0 items-center gap-0.5 text-[14px] leading-5 tabular-nums">
-                <Star className="size-3.5 fill-fg text-fg" strokeWidth={0} />
+              <span className="mt-0.5 inline-flex shrink-0 items-center gap-0.5 text-[13px] leading-none tabular-nums">
+                <Star className="size-3 fill-fg text-fg" strokeWidth={0} />
                 <span className="font-semibold">{((item.parentRatingX10 ?? 0) / 10).toFixed(1)}</span>
                 <span className="font-normal text-muted">({item.parentReviewCount})</span>
               </span>
             ) : null}
           </div>
-          <p className="truncate text-[14px] leading-5 text-muted" data-far={farAway ? "1" : undefined}>
+          <FoundingMemberBadge show={item.foundingMember} className="mt-1" />
+          <p className="mt-0.5 min-h-5 truncate text-[13px] leading-5 text-muted" data-far={farAway ? "1" : undefined}>
             {placeLine || "\u00a0"}
           </p>
-          {factLine ? (
-            <p className="line-clamp-2 text-[14px] leading-5 text-fg" data-ke="card-age-range">
-              {factLine}
-            </p>
-          ) : null}
-          {feeLine ? <p className="text-[14px] leading-5 text-fg">{feeLine}</p> : null}
-          <p className="text-[14px] leading-5 text-muted" data-ke="vacancy-confirmed">
-            {availabilityLine}
-          </p>
-          <ProvincialOpeningLine item={item} />
-          {openSpotsLine ? (
-            <p className="sr-only" data-ke="card-open-spots">
-              {openSpotsLine}
-            </p>
-          ) : null}
           {sort === "best" && whyMatchLine(item, t) ? (
-            <p className="line-clamp-2 text-[14px] leading-5 text-muted" data-ke="why-match">
+            <p className="mt-0.5 line-clamp-2 text-[13px] leading-5 text-muted" data-ke="why-match">
+              <span className="font-medium text-fg">{t("whyMatch")}. </span>
               {whyMatchLine(item, t)}
             </p>
           ) : null}
+          {item.parentFitChips?.length ? (
+            <p className="mt-0.5 line-clamp-2 text-[13px] leading-5 text-fg" data-ke="parent-fit">
+              {item.parentFitChips.map((chip) => (locale === "fr" ? chip.fr : chip.en)).join(" · ")}
+            </p>
+          ) : null}
+          {ages ? (
+            <p className="mt-0.5 text-[13px] font-medium leading-5 text-fg" data-ke="card-age-range">
+              {ages}
+            </p>
+          ) : null}
+          {openSpotsLine ? (
+            <p className="mt-0.5 text-[13px] font-medium leading-5 text-fg" data-ke="card-open-spots">
+              {openSpotsLine}
+            </p>
+          ) : null}
+          {freshnessText ? (
+            <p className="mt-0.5 text-[13px] leading-5 text-muted" data-ke="vacancy-confirmed">
+              {freshnessText}
+            </p>
+          ) : null}
+          <ProvincialOpeningLine item={item} />
+          {publicApprovalEligible(item) ? (
+            <p className="mt-0.5 truncate text-[12px] font-medium leading-4 text-primary" data-ke="kidease-approved-marker">
+              {t("kideaseApprovedMarker")}
+            </p>
+          ) : null}
+          <div className="mt-auto pt-3">
+            {!showFees ? (
+              <p className="min-h-5" />
+            ) : !priceOnPhoto && priceAmount ? (
+              <p className="min-h-5 text-[14px] leading-5 tabular-nums">
+                <span className="font-semibold">{priceAmount}</span>
+                <span className="font-normal text-muted">{priceUnit}</span>
+              </p>
+            ) : (
+              <p className="min-h-5 text-[14px] leading-5 text-muted">{priceOnPhoto ? "\u00a0" : t("cardGapFees")}</p>
+            )}
+            <CardMicroPills item={item} />
+          </div>
         </ListingAnchor>
-        {subsidy ? (
-          <CardSourceNote
-            date={subsidy.verified_at}
-            note={sourceNote}
-            href={subsidy.subsidy_source}
-            locale={locale}
-          />
-        ) : null}
+        <div className="mt-1 flex w-full min-w-0 flex-wrap items-center gap-2">
+          {parentActions ? (
+            <ListingAnchor
+              slug={item.slug}
+              search={{ ask: "tour" }}
+              data-ke="card-book-tour"
+              className="relative z-10 inline-flex min-h-11 items-center justify-center whitespace-normal rounded-[14px] bg-primary px-3 text-center text-[13px] font-semibold leading-tight text-primary-fg no-underline touch-manipulation"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {t("bookTour")}
+            </ListingAnchor>
+          ) : null}
+          {parentActions ? (
+            <ListingAnchor
+              slug={item.slug}
+              search={{ ask: "info" }}
+              data-ke="card-request-info"
+              className="relative z-10 inline-flex min-h-11 items-center text-[13px] font-semibold text-primary no-underline touch-manipulation"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {t("cardRequestInfo")}
+            </ListingAnchor>
+          ) : null}
+          {parentActions ? (
+            <ListingAnchor
+              slug={item.slug}
+              hash="join-waitlist"
+              data-ke="card-join-waitlist"
+              className="relative z-10 inline-flex min-h-11 items-center justify-center rounded-full bg-surface px-3 text-center text-[13px] font-semibold leading-tight text-fg no-underline ring-1 ring-border touch-manipulation"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {joinLabel}
+            </ListingAnchor>
+          ) : null}
+          {offerClaim ? (
+            <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10 min-h-11" />
+          ) : null}
+        </div>
       </article>
     );
   }
@@ -478,6 +475,7 @@ export const DaycareCard = memo(function DaycareCard({
             photos={photos}
             eager={eager}
             priority={priority}
+            claim={offerClaim}
             rounded="rounded-lg"
             className="aspect-[4/3]"
           />
@@ -627,6 +625,9 @@ export const DaycareCard = memo(function DaycareCard({
           >
             {joinLabel}
           </ListingAnchor>
+        ) : null}
+        {offerClaim ? (
+          <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10 min-h-11" />
         ) : null}
       </div>
     </article>

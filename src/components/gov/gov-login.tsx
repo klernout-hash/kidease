@@ -26,6 +26,25 @@ export function GovNativeNote({ locale }: { locale: GovLocale }) {
   );
 }
 
+export function GovClosedNote({ locale }: { locale: GovLocale }) {
+  const copy = govCopy(locale);
+  return (
+    <main className="mx-auto w-full max-w-lg px-4 py-16" data-ke="gov-closed">
+      <h1 className="font-display text-3xl">{copy.loginTitle}</h1>
+      <p className="mt-3 text-base">
+        {locale === "fr"
+          ? "Le bureau gouvernemental n’est pas ouvert dans ce navigateur. Vous restez ici, pas sur la page des parents."
+          : "The government desk is not open in this browser. You stay here, not on the parent home."}
+      </p>
+      <p className="mt-6">
+        <a href={locale === "fr" ? "/fr" : "/"} className="inline-flex min-h-11 items-center font-medium text-primary">
+          {copy.home}
+        </a>
+      </p>
+    </main>
+  );
+}
+
 export function GovLogin({ locale, invite }: { locale: GovLocale; invite: string }) {
   const copy = govCopy(locale);
   const [email, setEmail] = useState("");
@@ -51,6 +70,7 @@ export function GovLogin({ locale, invite }: { locale: GovLocale; invite: string
         const signed = await authClient.signIn.email({
           email: created.email,
           password,
+          callbackURL: home,
           fetchOptions: turnstileFetchOptions(takeChallenge()),
         });
         if (signed.error) throw new Error(friendlyAuthError(authClientErrorMessage(signed.error)));
@@ -58,6 +78,7 @@ export function GovLogin({ locale, invite }: { locale: GovLocale; invite: string
         const signed = await authClient.signIn.email({
           email: email.trim(),
           password,
+          callbackURL: home,
           fetchOptions: turnstileFetchOptions(takeChallenge()),
         });
         if (signed.error) throw new Error(friendlyAuthError(authClientErrorMessage(signed.error)));

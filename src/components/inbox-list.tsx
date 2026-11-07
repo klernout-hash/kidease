@@ -1,4 +1,5 @@
 import { useNavigate, useRouterState, useSearch } from "@tanstack/react-router";
+import { Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Shell } from "@/components/shell";
 import { DeskShell } from "@/components/desk-shell";
@@ -28,6 +29,7 @@ export function InboxList({ bare = false }: { bare?: boolean }) {
   const view: InboxView = resolveInboxView({ search: search.view, sticky });
   const [items, setItems] = useState<CentreInboxThread[] | null>(null);
   const [filter, setFilter] = useState<MessageFilter>("all");
+  const [query, setQuery] = useState("");
   const [supportOpen, setSupportOpen] = useState(false);
 
   useEffect(() => {
@@ -38,8 +40,8 @@ export function InboxList({ bare = false }: { bare?: boolean }) {
   }, [user?.id, view]);
 
   const visible = useMemo(
-    () => (items ? filterInboxList(items, { filter }) : []),
-    [items, filter],
+    () => (items ? filterInboxList(items, { filter, query }) : []),
+    [items, filter, query],
   );
 
   if (isPending) {
@@ -55,6 +57,19 @@ export function InboxList({ bare = false }: { bare?: boolean }) {
   const list = (
     <div>
       <h2 className="font-display text-[clamp(1.6rem,4vw,2rem)]">{t("messages")}</h2>
+      <label className="mt-3 block">
+        <span className="sr-only">{t("inboxSearchThreads")}</span>
+        <span className="flex h-11 items-center gap-2 rounded-full border border-border bg-surface px-3">
+          <Search className="size-4 shrink-0 text-muted" aria-hidden />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={view === "centre" ? t("inboxSearchPh") : t("inboxSearchThreads")}
+            onFocus={(event) => event.currentTarget.scrollIntoView({ block: "center" })}
+            className="h-11 min-w-0 flex-1 bg-transparent text-base outline-none"
+          />
+        </span>
+      </label>
       {view === "centre" ? (
         <p className="mt-1 text-sm text-muted">{t("inboxCentreTitle")}</p>
       ) : items && items.length ? (

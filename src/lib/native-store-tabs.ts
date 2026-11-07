@@ -11,7 +11,7 @@ export type NativeStoreTab = {
 };
 
 export function nativeStoreTabs(
-  _kind: "guest" | "parent" | "daycare" | "admin",
+  _kind: "guest" | "parent" | "daycare" | "admin" | "government",
 ): NativeStoreTab[] | null {
   return null;
 }

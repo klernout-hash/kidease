@@ -74,21 +74,28 @@ test("launch hold hides discovery only while a role desk is still resolving", ()
   assert.match(src("src/routes/index.tsx"), /data-ke="launch-shell"/);
   assert.match(src("src/routes/index.tsx"), /data-ke="home-discovery-surface"/);
   assert.match(src("src/routes/__root.tsx"), /data-ke-launch-hold/);
+  assert.doesNotMatch(src("src/routes/index.tsx"), /homeLandPath/);
+  assert.doesNotMatch(src("src/routes/__root.tsx"), /launch-hold-boot/);
   assert.doesNotMatch(src("src/components/app-tab-bar.tsx"), /AirbnbDeskPill/);
 });
 
-test("guest visual cards are one detail target with an honest fee line", () => {
+test("guest visual cards use the compact photo layout with live, fee, and claim", () => {
   const card = src("src/components/daycare-card.tsx");
   assert.match(card, /data-ke="visual-card"/);
   assert.match(card, /aspect-\[4\/3\]/);
-  assert.match(card, /rounded-\[16px\]/);
-  assert.match(card, /Provincial fee cap · eligibility varies/);
-  assert.match(card, /data-ke="card-source"/);
+  assert.match(card, /rounded-\[14px\]/);
+  assert.match(card, /data-ke="card-live-pill"/);
+  assert.match(card, /SubsidyPill/);
+  assert.match(card, /publicBrowseClaim/);
+  assert.match(card, /ClaimListingCta/);
   assert.match(card, /data-ke="card-age-range"/);
-  assert.match(card, /Availability not confirmed/);
+  assert.doesNotMatch(card, /Provincial fee cap · eligibility varies/);
+  assert.doesNotMatch(card, /data-ke="card-source"/);
+  assert.doesNotMatch(card, /Availability not confirmed/);
   const visual = card.slice(card.indexOf('presentation === "visual"'), card.indexOf("return (\n    <article data-slug"));
-  assert.doesNotMatch(visual, /claimFreeListing|ClaimListing/);
-  assert.doesNotMatch(visual, /data-ke="card-book-tour"/);
+  assert.match(visual, /ClaimListingCta/);
+  assert.match(visual, /showLivePill=\{showLivePill\}/);
+  assert.match(visual, /data-ke="card-book-tour"/);
   assert.match(card, /data-ke="card-request-info"/);
 });
 
@@ -110,7 +117,8 @@ test("provider editor is photo-led with a published preview", () => {
   assert.match(editor, /data-ke="host-cover"/);
   assert.match(editor, /data-ke="host-cover-empty"/);
   assert.match(editor, /Photo not available/);
-  assert.match(editor, /Listed/);
+  assert.match(editor, /copy\.listed/);
+  assert.match(src("src/lib/host-listing-copy.ts"), /listed: "Listed"/);
   assert.match(editor, /Preview published listing/);
   assert.match(editor, /Manage photos/);
   assert.match(editor, /data-ke="host-section-card"/);
@@ -118,7 +126,7 @@ test("provider editor is photo-led with a published preview", () => {
   assert.match(editor, /Registry facts stay locked/);
   assert.match(editor, /not a draft/);
   const fields = src("src/components/provider-parent-fields.tsx");
-  assert.match(fields, /data-ke="editor-meals"/);
+  assert.match(src("src/components/meals-editor.tsx"), /data-ke="editor-meals"/);
   assert.match(fields, /data-ke="editor-amenities"/);
   assert.match(fields, /Leave blank if unknown/);
   assert.doesNotMatch(fields, /part === "meals" \? DESK_AMENITIES/);
@@ -128,5 +136,6 @@ test("provider editor is photo-led with a published preview", () => {
   assert.match(src("src/components/gov/gov-dashboard.tsx"), /data-ke="gov-expiries"/);
   assert.match(src("src/lib/server/gov-portal.ts"), /cannot widen/);
   assert.match(src("src/lib/server/gov-portal.ts"), /province: actor\.province/);
-  assert.match(src("src/routes/__root.tsx"), /kidease-session-hint/);
+  assert.match(src("src/lib/desks.ts"), /kidease-session-hint/);
+  assert.doesNotMatch(src("src/routes/__root.tsx"), /kidease-session-hint/);
 });

@@ -209,9 +209,9 @@ export function bottomBarKind(input: {
    * Family desk (`parent`) keeps parent tabs for a dual-role daycare account.
    */
   highlightedDesk?: "parent" | "provider" | "admin" | "support" | null;
-}): "daycare" | "parent" | "admin" | "guest" {
+}): "daycare" | "parent" | "admin" | "guest" | "government" {
   const path = barePath(input.pathname);
-  if (input.role === "government") return "guest";
+  if (input.role === "government") return "government";
   if (path.startsWith("/provider")) return "daycare";
   if (path.startsWith("/parent")) return "parent";
   if (input.highlightedDesk === "parent") return "parent";
@@ -269,7 +269,10 @@ export function roleNavItems(input: { role: ChromeRole; paid?: boolean; subscrip
   if (input.role === "government") {
     return [
       { id: "gov", label: "Government desk", to: "/gov", icon: "verify" },
-      { id: "help", label: "Help", to: "/gov", icon: "help" },
+      { id: "compliance", label: "Licence dates", to: "/gov/compliance", icon: "verify" },
+      { id: "complaints", label: "Complaints", to: "/gov/complaints", icon: "support" },
+      { id: "listings", label: "Public listings", to: "/search", icon: "explore" },
+      { id: "exports", label: "Exports", to: "/gov/exports", icon: "claim" },
     ];
   }
   const guest: RoleNavItem[] = [

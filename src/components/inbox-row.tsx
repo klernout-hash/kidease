@@ -10,7 +10,6 @@ import {
   withYouPrefix,
   type InboxListRow,
 } from "@/lib/inbox-thread-ui";
-import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { inboxThreadTo } from "@/lib/desk-nav";
 import { inboxSearch, type InboxView } from "@/lib/inbox-view";
 import { useCopy } from "@/lib/use-copy";
@@ -38,8 +37,6 @@ export function InboxMessageRow({
     centreName: centre,
     parentName: row.parentName,
   }) || centre || row.daycareName;
-  const photo = "photo" in row ? row.photo : "";
-  const realPhoto = isRealListingPhoto(photo);
   const fromYou = lastMessageFromViewer(viewerIsParent, "lastSender" in row ? row.lastSender : null);
   const preview = withYouPrefix(
     fromYou,
@@ -61,17 +58,8 @@ export function InboxMessageRow({
         selected && "bg-bg",
       )}
     >
-      <span className="relative size-16 shrink-0">
-        {realPhoto ? (
-          <img src={photo} alt="" width={64} height={64} className="size-16 rounded-xl object-cover" />
-        ) : (
-          <span className="grid size-16 place-items-center rounded-xl bg-soft text-sm font-semibold text-primary" aria-hidden>
-            {participantInitials(centre || title)}
-          </span>
-        )}
-        <span className="absolute -bottom-1 -right-1 grid size-8 place-items-center rounded-full bg-primary text-[11px] font-semibold text-primary-fg ring-2 ring-surface">
-          {participantInitials(avatarName)}
-        </span>
+      <span className="grid size-12 shrink-0 place-items-center rounded-full bg-surface-2 text-sm font-semibold text-fg" aria-hidden>
+        {participantInitials(avatarName || title)}
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-baseline gap-2">
