@@ -334,7 +334,7 @@ export const DaycareCard = memo(function DaycareCard({
   const verifiedCheck = showVerifiedCheck(item);
 
   if (presentation === "visual") {
-    const placeLine = [item.city, farAway ? item.province : "", away].filter(Boolean).join(" · ");
+    const placeLine = [item.city, farAway ? item.province : "", typeLabel, away].filter(Boolean).join(" · ");
     return (
       <article data-slug={item.slug} data-ke="visual-card" className="ke-visual-card group flex h-full w-full min-w-0 flex-col">
         <div className="relative">

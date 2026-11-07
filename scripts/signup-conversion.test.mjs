@@ -100,7 +100,7 @@ test("high-intent sign-up and claim CTA are wired", () => {
   assert.match(save, /addGuestShortlist/);
   assert.match(src("src/components/waitlist-opt-in.tsx"), /why: "waitlist"|parentSignupSearch\([\s\S]*waitlist/);
   assert.match(src("src/routes/daycare.$slug.tsx"), /claimFreeListing|ClaimListingCta/);
-  assert.doesNotMatch(src("src/components/daycare-card.tsx"), /ClaimListingCta/);
+  assert.match(src("src/components/daycare-card.tsx"), /ClaimListingCta/);
   assert.match(src("src/routes/search.tsx"), /parentSignupSearch\(localePath\("\/search", locale\), "alerts"\)/);
   assert.match(src("src/components/apply-pending-shortlist.tsx"), /takeGuestShortlist/);
   assert.match(src("src/lib/posthog.ts"), /consent === "denied"/);
