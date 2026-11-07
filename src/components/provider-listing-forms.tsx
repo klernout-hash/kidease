@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Camera, ChevronLeft, ChevronRight, Megaphone, Trash2 } from "lucide-react";
 import { RequiredMark, fieldErrorClass } from "@/components/required-field";
 import { cn } from "@/lib/utils";
@@ -776,9 +776,16 @@ export function CapacityForm({
           <p className="text-sm text-muted">{t("interiorPhotoNote")}</p>
           <UploadLimitHint hint={t("uploadPhotoHint")} error={photoError} />
           {shown.length >= MAX_LISTING_PHOTOS ? <p className="text-sm text-muted">{t("photoAtCap")}</p> : null}
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-ke="photo-groups">
             {shown.map((src, i) => (
-              <div key={`${i}-${src.slice(-24)}`} data-ke="listing-photo-card" className={cn("rounded-lg bg-bg p-2 ring-1", i === Math.min(photoPick, shown.length - 1) ? "ring-primary" : "ring-border")}>
+              <Fragment key={`${i}-${src.slice(-24)}`}>
+              {i === 0 ? (
+                <h3 className="col-span-full text-sm font-semibold">{locale === "fr" ? "Couverture" : "Cover"}</h3>
+              ) : null}
+              {i === 1 ? (
+                <h3 className="col-span-full text-sm font-semibold">{locale === "fr" ? "À l’intérieur du centre" : "Inside the centre"}</h3>
+              ) : null}
+              <div data-ke="listing-photo-card" data-photo-group={i === 0 ? "cover" : "inside"} className={cn("rounded-lg bg-bg p-2 ring-1", i === Math.min(photoPick, shown.length - 1) ? "ring-primary" : "ring-border")}>
                 <button type="button" className="block w-full touch-manipulation" onClick={() => setPhotoPick(i)} aria-label={locale === "fr" ? `Voir la photo ${i + 1}` : `Show photo ${i + 1}`}>
                 <div className="relative">
                   <img src={src} alt="" className="aspect-[4/3] w-full rounded-lg object-cover" />
@@ -857,7 +864,15 @@ export function CapacityForm({
                   </Button>
                 </div>
               </div>
+              </Fragment>
             ))}
+            {shown.length === 1 ? (
+              <p className="col-span-full text-sm text-muted" data-ke="photo-inside-empty">
+                {locale === "fr"
+                  ? "Pas encore de photo de l’intérieur. N’ajoutez pas de photo d’enfant."
+                  : "No inside photos yet. Do not add a photo of a child."}
+              </p>
+            ) : null}
             {photoJobs.map((job) => (
               <div key={job.id} data-ke="listing-photo-progress" className="flex aspect-[4/3] flex-col justify-end rounded-lg bg-bg p-3 ring-1 ring-border">
                 <p className="text-sm text-muted">{t("photoPreparing").replace("{name}", job.name).replace("{n}", String(job.progress))}</p>
