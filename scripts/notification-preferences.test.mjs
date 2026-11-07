@@ -95,6 +95,7 @@ test("preferences stay on the signed-in account and do not send", () => {
   assert.doesNotMatch(api, /userId: input/);
   assert.doesNotMatch(ui, /sendSms|sendTransactionalMail|web-push/);
   assert.match(ui, /emailVerified === true/);
+  assert.match(server, /user\?\.emailVerified === true/);
   assert.match(read("src/lib/notification-preferences.ts"), /These choices do not change who can pick up a child/);
   assert.match(ui, /copy\.pickup/);
   assert.doesNotMatch(read("src/components/airbnb-screens.tsx"), /alertsStatus/);
