@@ -91,8 +91,15 @@ export function CentreCalendarPage({ data, locale }: { data: CentreData; locale:
 export function GovCalendarPage({ data, locale }: { data: GovData; locale: "en" | "fr" }) {
   const copy = calendarCopy(locale);
   return (
-    <ComplianceFrame locale={locale} title={locale === "fr" ? "Dates en retard" : "Overdue dates"} copy={{ ...copy, what: copy.govWhat, why: copy.govWhy }} mode={data.mode} gov>
-      <p className="text-sm">{data.province}: {data.overdue}</p>
+    <ComplianceFrame locale={locale} title={locale === "fr" ? "Dates de permis" : "Licence dates"} copy={{ ...copy, what: copy.govWhat, why: locale === "fr" ? "Seules les dates enregistrées dans cet outil. Un permis, un document, une inspection et un constat officiel sont des choses distinctes." : "Only dates saved in this tool. A licence, a document, an inspection, and an official finding are different things." }} mode={data.mode} gov>
+      <ul className="mt-3 space-y-2 text-sm leading-6" data-ke="gov-status-lanes">
+        <li>{locale === "fr" ? "Permis : seulement les dates qu’un fournisseur a enregistrées ici. Une date inconnue, sans expiration, ou un renouvellement en cours n’est pas marqué expiré." : "Licence: only dates a provider saved here. An unknown date, a licence with no expiry, or a renewal in progress is not marked expired."}</li>
+        <li>{locale === "fr" ? "Documents : une assurance ou une formation téléversée n’est pas suivie ici, et ce n’est pas le permis." : "Documents: an uploaded insurance or training file is not tracked here, and it is not the licence."}</li>
+        <li>{locale === "fr" ? "Inspections : un rapport public absent n’est pas une inspection manquée." : "Inspections: a missing public report is not a missed inspection."}</li>
+        <li>{locale === "fr" ? "Constats officiels : non chargés. Une plainte n’est pas un constat." : "Official findings: not loaded. A complaint is not a finding."}</li>
+        <li>{locale === "fr" ? "Fraîcheur de la fiche : un import en retard est un problème de source, pas une infraction." : "Listing freshness: a late import is a feed issue, not a provider violation."}</li>
+      </ul>
+      <p className="mt-3 text-sm">{locale === "fr" ? "Dates en retard suivies dans cet outil" : "Tracked overdue dates in this tool"}: {data.overdue}. {locale === "fr" ? "Un zéro ne veut pas dire que chaque permis est à jour." : "A zero does not mean every licence is current."}</p>
       {data.rows.length === 0 ? <p className="mt-3 text-sm" data-ke="gov-no-dates">{locale === "fr" ? "Aucune date suivie. Un zéro ne veut pas dire que chaque permis est à jour." : "No tracked dates. A zero does not mean every licence is current."}</p> : null}
       <ul className="mt-3 space-y-2">
         {data.rows.map((row) => (

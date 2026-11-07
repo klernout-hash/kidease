@@ -229,14 +229,19 @@ export function GovJobShortage({ province, locale }: { province: string; locale:
         {copy.jobsGovTitle}
       </h2>
       <p className="mt-2 max-w-2xl text-sm text-muted">{copy.jobsGovLead}</p>
+      <p className="mt-2 max-w-2xl text-sm text-muted" data-ke="gov-jobs-view-only">
+        {locale === "fr"
+          ? "Lecture seule. Une annonce n’est pas un manque de personnel. Ce bureau ne montre pas les candidats."
+          : "View only. A posting is not a staffing shortage. This desk does not show applicants."}
+      </p>
       <dl className="mt-4 grid gap-3 sm:grid-cols-2">
         <div className="rounded-2xl bg-surface p-4 ring-1 ring-border">
           <dt className="text-sm text-muted">{copy.openJobs}</dt>
-          <dd className="mt-1 font-display text-2xl">{row.openJobs.toLocaleString(locale === "fr" ? "fr-CA" : "en-CA")}</dd>
+          <dd className="mt-1 font-display text-2xl">{row.openJobs === 0 ? (locale === "fr" ? "0 déclaré; couverture inconnue" : "0 reported; coverage unknown") : row.openJobs.toLocaleString(locale === "fr" ? "fr-CA" : "en-CA")}</dd>
         </div>
         <div className="rounded-2xl bg-surface p-4 ring-1 ring-border">
           <dt className="text-sm text-muted">{copy.hiringCentres}</dt>
-          <dd className="mt-1 font-display text-2xl">{row.centres.toLocaleString(locale === "fr" ? "fr-CA" : "en-CA")}</dd>
+          <dd className="mt-1 font-display text-2xl">{row.centres === 0 ? (locale === "fr" ? "0 déclaré; couverture inconnue" : "0 reported; coverage unknown") : row.centres.toLocaleString(locale === "fr" ? "fr-CA" : "en-CA")}</dd>
         </div>
       </dl>
     </section>
