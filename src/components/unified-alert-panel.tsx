@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { SwitchRow } from "@/components/switch-row";
+import { alertPrefsToWrite, alertShownOn } from "@/lib/alert-pref-save";
 import { isNative } from "@/lib/native";
 import { confirmAction } from "@/lib/success-confirm";
 import {
@@ -39,6 +41,8 @@ export function UnifiedAlertPanel({ mode = "all" }: { mode?: UnifiedAlertPanelMo
   const [prefs, setPrefs] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
   const [loadNote, setLoadNote] = useState("");
+  const [snapshot, setSnapshot] = useState<{ settings: UnifiedSettings; prefs: Record<string, boolean> } | null>(null);
+  const [touched, setTouched] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,6 +52,8 @@ export function UnifiedAlertPanel({ mode = "all" }: { mode?: UnifiedAlertPanelMo
         setDesk(next);
         setSettings(next.settings);
         setPrefs(next.prefs);
+        setSnapshot({ settings: next.settings, prefs: next.prefs });
+        setTouched([]);
       })
       .catch(() => {
         if (!cancelled) setLoadNote(copy.error);
@@ -63,6 +69,20 @@ export function UnifiedAlertPanel({ mode = "all" }: { mode?: UnifiedAlertPanelMo
   function setQuiet(patch: Partial<UnifiedSettings>) {
     setSettings((current) => ({ ...current, ...patch, quietCustom: true }));
   }
+
+  const dirty = snapshot
+    ? JSON.stringify(settings) !== JSON.stringify(snapshot.settings) || JSON.stringify(prefs) !== JSON.stringify(snapshot.prefs)
+    : false;
+
+  useEffect(() => {
+    if (!dirty) return;
+    const onLeave = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onLeave);
+    return () => window.removeEventListener("beforeunload", onLeave);
+  }, [dirty]);
 
   return (
     <section className="mt-6" data-ke="unified-alerts" data-mode={mode} aria-labelledby="unified-alerts-title">
@@ -89,52 +109,58 @@ export function UnifiedAlertPanel({ mode = "all" }: { mode?: UnifiedAlertPanelMo
         className="mt-4 space-y-4"
         onSubmit={(event) => {
           event.preventDefault();
+          if (!dirty) return;
           setSaving(true);
-          const typeIds = audiences.flatMap((audience) => alertsForAudience(audience).map((row) => row.id));
           void saveUnifiedAlertDesk({
             data: {
               settings,
-              prefs: typeIds.map((typeId) => ({ typeId, enabled: prefs[typeId] !== false })),
+              prefs: alertPrefsToWrite(prefs, touched),
             },
           })
             .then((next) => {
               setDesk(next);
               setSettings(next.settings);
               setPrefs(next.prefs);
+              setSnapshot({ settings: next.settings, prefs: next.prefs });
+              setTouched([]);
               confirmAction(t, "alertsSaved");
             })
             .catch(() => toast.error(copy.error))
             .finally(() => setSaving(false));
         }}
       >
-        <label className="flex min-h-11 items-start gap-3 rounded-xl bg-surface px-4 py-3 text-sm ring-1 ring-border">
-          <input
-            type="checkbox"
-            className="mt-1 size-5 shrink-0 accent-primary"
-            checked={settings.master}
-            onChange={(event) => setSettings((current) => ({ ...current, master: event.target.checked }))}
-          />
-          <span className="min-w-0">
-            <span className="font-medium text-fg">{copy.master}</span>
-            <span className="mt-1 block text-muted">{copy.masterDetail}</span>
-          </span>
-        </label>
+        {dirty ? (
+          <p className="text-sm font-medium" role="status" data-ke="alert-dirty">
+            {loc === "fr" ? "Modifications non enregistrées" : "Unsaved changes"}
+          </p>
+        ) : null}
+        <SwitchRow
+          id="alert-master"
+          locale={loc}
+          label={copy.master}
+          description={copy.masterDetail}
+          checked={settings.master}
+          onCheckedChange={(next) => setSettings((current) => ({ ...current, master: next }))}
+        />
 
         <fieldset className="rounded-xl bg-surface px-4 py-3 ring-1 ring-border">
           <legend className="px-1 text-sm font-medium text-fg">{copy.channels}</legend>
           <Channel
+            id="alert-in-app"
             label={copy.inApp}
             detail={copy.inAppDetail}
             checked={settings.inApp}
             onChange={(checked) => setSettings((current) => ({ ...current, inApp: checked }))}
           />
           <Channel
+            id="alert-email"
             label={copy.email}
             detail={copy.emailDetail}
             checked={settings.email}
             onChange={(checked) => setSettings((current) => ({ ...current, email: checked }))}
           />
           <Channel
+            id="alert-push"
             label={copy.push}
             detail={desk?.pushArmed ? copy.pushDetail : copy.pushOff}
             checked={settings.push}
@@ -217,14 +243,33 @@ export function UnifiedAlertPanel({ mode = "all" }: { mode?: UnifiedAlertPanelMo
             important={copy.critical}
             locale={loc}
             prefs={prefs}
-            onToggle={(typeId, enabled) => setPrefs((current) => ({ ...current, [typeId]: enabled }))}
+            onToggle={(typeId, enabled) => {
+              setTouched((current) => (current.includes(typeId) ? current : [...current, typeId]));
+              setPrefs((current) => ({ ...current, [typeId]: enabled }));
+            }}
           />
         ))}
 
         <p className="text-sm text-muted">{copy.hidden}</p>
-        <Button type="submit" className="w-full" disabled={saving}>
-          {saving ? "…" : copy.save}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button type="submit" disabled={saving || !dirty}>
+            {saving ? "…" : copy.save}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            data-ke="alert-cancel"
+            disabled={!dirty || !snapshot}
+            onClick={() => {
+              if (!snapshot) return;
+              setSettings(snapshot.settings);
+              setPrefs(snapshot.prefs);
+              setTouched([]);
+            }}
+          >
+            {loc === "fr" ? "Annuler" : "Cancel"}
+          </Button>
+        </div>
       </form>
       </>
       ) : null}
@@ -271,30 +316,19 @@ export function UnifiedAlertPanel({ mode = "all" }: { mode?: UnifiedAlertPanelMo
 }
 
 function Channel({
+  id,
   label,
   detail,
   checked,
   onChange,
 }: {
+  id: string;
   label: string;
   detail: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
 }) {
-  return (
-    <label className="mt-2 flex min-h-11 items-start gap-3 text-sm">
-      <input
-        type="checkbox"
-        className="mt-1 size-5 shrink-0 accent-primary"
-        checked={checked}
-        onChange={(event) => onChange(event.target.checked)}
-      />
-      <span className="min-w-0">
-        <span className="font-medium text-fg">{label}</span>
-        <span className="mt-1 block text-muted">{detail}</span>
-      </span>
-    </label>
-  );
+  return <SwitchRow id={id} label={label} description={detail} checked={checked} onCheckedChange={onChange} />;
 }
 
 function AlertGroup({
@@ -322,19 +356,14 @@ function AlertGroup({
           const text = row[locale];
           return (
             <li key={row.id}>
-              <label className="flex min-h-11 items-start gap-3 py-2 text-sm">
-                <input
-                  type="checkbox"
-                  className="mt-1 size-5 shrink-0 accent-primary"
-                  checked={prefs[row.id] !== false}
-                  onChange={(event) => onToggle(row.id, event.target.checked)}
-                />
-                <span className="min-w-0">
-                  <span className="font-medium text-fg">{text.label}</span>
-                  {row.critical ? <span className="ml-2 text-xs font-medium text-danger">{important}</span> : null}
-                  <span className="mt-1 block text-muted">{text.detail}</span>
-                </span>
-              </label>
+              <SwitchRow
+                id={`alert-type-${row.id}`}
+                label={row.critical ? `${text.label} · ${important}` : text.label}
+                description={text.detail}
+                checked={alertShownOn(prefs, row.id)}
+                onCheckedChange={(next) => onToggle(row.id, next)}
+                locale={locale}
+              />
             </li>
           );
         })}

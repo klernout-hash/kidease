@@ -4,11 +4,9 @@ import {
   Baby,
   BookOpen,
   Car,
-  Check,
   Droplets,
   Moon,
   Palette,
-  Plus,
   Search,
   Shapes,
   Sun,
@@ -18,6 +16,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { amenityLabel } from "@/lib/amenities";
+import { CheckRow } from "@/components/switch-row";
 import {
   FACILITY_CATEGORIES,
   categoryLabel,
@@ -122,28 +121,18 @@ export function DaycareFacilitiesPicker({
             const on = selected.includes(item.id);
             const Icon = ICONS[item.id] ?? Shapes;
             return (
-              <li key={item.id}>
-                <button
-                  type="button"
-                  data-ke="facility-row"
-                  data-facility={item.id}
-                  data-on={on ? "yes" : "no"}
-                  aria-pressed={on}
-                  className="flex min-h-11 w-full items-center gap-3 py-2 text-left touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  onClick={() => onToggle(item.id, !on)}
-                >
+              <li key={item.id} data-ke="facility-row" data-facility={item.id} data-on={on ? "yes" : "no"}>
+                <div className="flex items-center gap-3">
                   <Icon className="size-5 shrink-0 text-muted" aria-hidden />
-                  <span className="min-w-0 flex-1 text-[15px] leading-5">{locale === "fr" ? item.fr : item.en}</span>
-                  <span
-                    className={cn(
-                      "grid size-8 shrink-0 place-items-center rounded-full ring-1",
-                      on ? "bg-primary text-primary-fg ring-primary" : "bg-surface text-fg ring-border",
-                    )}
-                    aria-hidden
-                  >
-                    {on ? <Check className="size-4" /> : <Plus className="size-4" />}
-                  </span>
-                </button>
+                  <div className="min-w-0 flex-1">
+                    <CheckRow
+                      id={`facility-${scope}-${item.id}`}
+                      label={locale === "fr" ? item.fr : item.en}
+                      checked={on}
+                      onCheckedChange={(next) => onToggle(item.id, next)}
+                    />
+                  </div>
+                </div>
               </li>
             );
           })}

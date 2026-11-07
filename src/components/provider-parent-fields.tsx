@@ -29,7 +29,7 @@ import { DaycareFacilitiesPicker } from "@/components/daycare-facilities-picker"
 import { MealsEditor } from "@/components/meals-editor";
 import { SwitchRow } from "@/components/switch-row";
 import { mealOfferingsFromStored, mealsFlagFromOfferings, type MealOfferings } from "@/lib/meal-offerings";
-import { toggleFacility } from "@/lib/daycare-facilities";
+import { isDaycareFacility, toggleFacility } from "@/lib/daycare-facilities";
 import { CARE_DETAIL_KEYS, careDetailLabel, isCareDetailKey } from "@/lib/inclusive-filters";
 import { localePath } from "@/lib/locale-path";
 import { inclusiveFiltersFlag } from "@/lib/server/inclusive-filters";
@@ -101,6 +101,7 @@ export function ProviderParentFields({
   onWriterApplied,
   part,
   savedMealOfferings,
+  savedAmenityKeys,
 }: {
   value: ParentDeskState;
   onChange: (next: ParentDeskState) => void;
@@ -110,6 +111,7 @@ export function ProviderParentFields({
   /** One editor page. Omit to keep the full daycare form. */
   part?: import("@/lib/host-listing").HostParentPart;
   savedMealOfferings?: MealOfferings;
+  savedAmenityKeys?: string[];
 }) {
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
@@ -411,6 +413,20 @@ export function ProviderParentFields({
           selected={value.amenityKeys}
           onToggle={(id, on) => onChange({ ...value, amenityKeys: toggleFacility(value.amenityKeys, id, on) })}
         />
+        {savedAmenityKeys ? (
+          <button
+            type="button"
+            className="inline-flex min-h-11 items-center text-sm font-semibold"
+            data-ke="facility-cancel"
+            onClick={() => {
+              const kept = value.amenityKeys.filter((key) => !isDaycareFacility(key));
+              const restored = savedAmenityKeys.filter((key) => isDaycareFacility(key));
+              onChange({ ...value, amenityKeys: [...kept, ...restored] });
+            }}
+          >
+            {loc === "fr" ? "Annuler les commodités" : "Cancel facility changes"}
+          </button>
+        ) : null}
       </div>
       ) : null}
 

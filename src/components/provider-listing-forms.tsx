@@ -995,7 +995,8 @@ export function CapacityForm({
                 onWriterApplied={() => {
                   writerApplied.current = true;
                 }}
-                savedMealOfferings={mealOfferingsFromStored(daycare.mealOfferings, daycare.amenities || "")}
+                savedAmenityKeys={parentDeskFromDaycare(daycare).amenityKeys}
+              savedMealOfferings={mealOfferingsFromStored(daycare.mealOfferings, daycare.amenities || "")}
                 value={parentDeskFromDaycare({ ...daycare, ...state, amenities: state.amenityKeys.join(",") })}
                 onChange={(parent) => setState({ ...state, ...parent })}
               />
@@ -1146,6 +1147,7 @@ export function CapacityForm({
               onWriterApplied={() => {
                 writerApplied.current = true;
               }}
+              savedAmenityKeys={parentDeskFromDaycare(daycare).amenityKeys}
               savedMealOfferings={mealOfferingsFromStored(daycare.mealOfferings, daycare.amenities || "")}
               value={parentDeskFromDaycare({ ...daycare, ...state, amenities: state.amenityKeys.join(",") })}
               onChange={(parent) => setState({ ...state, ...parent })}

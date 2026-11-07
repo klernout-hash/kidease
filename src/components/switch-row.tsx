@@ -1,9 +1,10 @@
 /**
  * A labelled on/off row. Only the switch changes the value.
  * The text is a label, not a scrolling button.
- * Converted: meal offerings, financial flags, extra support.
+ * Converted: meal offerings, financial flags, extra support, parent alerts, notice prefs.
+ * Checkbox rows: centre and room facilities. Unchecked means not confirmed.
  * Left as chips: search filters, facility type, schedules, openings, programs,
- * curriculum tags, languages, safety features, and the facility catalogue.
+ * curriculum tags, languages, and safety claims.
  */
 
 export function SwitchRow({
@@ -51,6 +52,35 @@ export function SwitchRow({
           onChange={(event) => onCheckedChange(event.target.checked)}
         />
       </span>
+    </div>
+  );
+}
+
+/** A facility or room feature. Unchecked is not a stored "no". */
+export function CheckRow({
+  id,
+  label,
+  checked,
+  onCheckedChange,
+}: {
+  id: string;
+  label: string;
+  checked: boolean;
+  onCheckedChange: (next: boolean) => void;
+}) {
+  return (
+    <div className="flex min-h-11 items-center justify-between gap-3 border-b border-border py-3" data-ke="check-row">
+      <label htmlFor={id} className="min-w-0 flex-1 text-[15px] leading-5">
+        {label}
+      </label>
+      <input
+        id={id}
+        type="checkbox"
+        className="size-11 shrink-0 accent-primary"
+        checked={checked}
+        aria-checked={checked}
+        onChange={(event) => onCheckedChange(event.target.checked)}
+      />
     </div>
   );
 }
