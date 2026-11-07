@@ -48,7 +48,6 @@ import { parentRatingShown } from "@/lib/review-reports";
 import { listingSubsidy, subsidyNote } from "@/lib/fee-program";
 import { SubsidyPill } from "@/components/subsidy-pill";
 import { SponsoredMark } from "@/components/sponsored-mark";
-import { CardMicroPills } from "@/components/card-micro-pills";
 import { VerifiedCheck } from "@/components/verified-check";
 import { showVerifiedCheck } from "@/lib/listing-verified";
 
@@ -372,7 +371,7 @@ export const DaycareCard = memo(function DaycareCard({
   const verifiedCheck = showVerifiedCheck(item);
 
   if (presentation === "visual") {
-    const placeLine = [item.city, typeLabel, away].filter(Boolean).join(" · ");
+    const placeLine = [item.city, farAway ? item.province : "", typeLabel, away].filter(Boolean).join(" · ");
     const factLine = [ages, hours].filter(Boolean).join(" · ");
     const feeLine = !showFees
       ? ""
@@ -531,10 +530,14 @@ export const DaycareCard = memo(function DaycareCard({
           {showDistance ? (
             <p className="truncate text-[12px] font-normal leading-4 text-muted">
               {item.city}
+              {farAway ? ` · ${item.province}` : ""}
               {away ? ` · ${away}` : ""}
             </p>
           ) : (
-            <p className="truncate text-[12px] font-normal leading-4 text-muted">{item.city}</p>
+            <p className="truncate text-[12px] font-normal leading-4 text-muted">
+              {item.city}
+              {farAway ? ` · ${item.province}` : ""}
+            </p>
           )}
           {line3 ? <p className="truncate text-[12px] font-normal leading-4 text-muted">{line3}</p> : null}
           {gaps.length ? (
