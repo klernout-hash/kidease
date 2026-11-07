@@ -274,7 +274,7 @@ export function ratioCopy(locale: "en" | "fr") {
       practice: "Mode pratique : l’alerte est écrite, pas envoyée.",
       empty: "Aucune vérification pour l’instant.",
       govWhat: "KidEase pour votre province",
-      govWhy: "Voyez le nombre de salles hors ratio. Aucun nom d’enfant.",
+      govWhy: "Totaux des vérifications enregistrées dans cet outil. Un vide ne prouve pas que chaque salle respectait son ratio. Aucun nom d’enfant.",
     };
   }
   return {
@@ -287,6 +287,6 @@ export function ratioCopy(locale: "en" | "fr") {
     practice: "Practice mode: the alert is written down, not sent.",
     empty: "No checks yet.",
     govWhat: "KidEase for your province",
-    govWhy: "See how many rooms were out of ratio. No child names.",
+    govWhy: "Counts of checks saved in this tool. A blank is not proof that every room met its ratio. No child names.",
   };
 }

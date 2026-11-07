@@ -160,7 +160,7 @@ export function feeCopy(locale: "en" | "fr") {
       clear: "Aucun centre n’est au-dessus du plafond publié.",
       capLine: "Plafond publié",
       govWhat: "KidEase pour votre province",
-      govWhy: "Voyez les centres au-dessus du plafond. Aucun nom d’enfant.",
+      govWhy: "Les plafonds quotidiens publiés sont là pour référence. Les tarifs comparables ne sont pas évalués tant qu’ils ne sont pas au dossier. Aucun nom d’enfant.",
     };
   }
   return {
@@ -175,6 +175,6 @@ export function feeCopy(locale: "en" | "fr") {
     clear: "No centre is above the published cap.",
     capLine: "Published cap",
     govWhat: "KidEase for your province",
-    govWhy: "See centres above the cap. No child names.",
+    govWhy: "Published daily caps are listed for reference. Comparable fees are not assessed until they are on file. No child names.",
   };
 }

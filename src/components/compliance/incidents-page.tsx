@@ -111,7 +111,7 @@ export function CentreIncidentsPage({ data, locale }: { data: CentreData; locale
   );
 }
 
-export function GovIncidentsPage({ data, locale }: { data: GovData; locale: "en" | "fr" }) {
+export function GovIncidentsPage({ data, locale, showFilings = false }: { data: GovData; locale: "en" | "fr"; showFilings?: boolean }) {
   const copy = incidentCopy(locale);
   return (
     <ComplianceFrame locale={locale} title={locale === "fr" ? "Rapports reçus" : "Reports filed"} copy={{ ...copy, what: copy.govWhat, why: copy.govWhy }} mode={data.mode} gov>
@@ -123,16 +123,18 @@ export function GovIncidentsPage({ data, locale }: { data: GovData; locale: "en"
           </li>
         ))}
       </ul>
-      {data.filings.length === 0 ? <p className="mt-4 text-sm">{locale === "fr" ? "Aucun rapport dans cet outil. Cela ne veut pas dire qu’il n’y a aucun événement réel." : "No reports in this tool. That is not proof there are no real occurrences."}</p> : null}
-      <ul className="mt-4 space-y-2">
-        {data.filings.map((row) => (
-          <li key={row.id} className="rounded-2xl bg-surface px-4 py-3 text-sm ring-1 ring-border">
-            <p>{row.kind.replaceAll("_", " ")}</p>
-            <p>{row.summary}</p>
-            {row.child_label ? <p>{row.child_label}</p> : null}
-          </li>
-        ))}
-      </ul>
+      <p className="mt-4 text-sm" data-ke="gov-incident-aggregate">{locale === "fr" ? "Totaux seulement. La note écrite et tout nom d’enfant restent hors de ce bureau." : "Counts only. The written note and any child name stay off this desk."}</p>
+      {data.counts.length === 0 ? <p className="mt-4 text-sm">{locale === "fr" ? "Aucun rapport dans cet outil. Cela ne veut pas dire qu’il n’y a aucun événement réel." : "No reports in this tool. That is not proof there are no real occurrences."}</p> : null}
+      {showFilings ? (
+        <ul className="mt-4 space-y-2">
+          {data.filings.map((row) => (
+            <li key={row.id} className="rounded-2xl bg-surface px-4 py-3 text-sm ring-1 ring-border">
+              <p>{row.kind.replaceAll("_", " ")}</p>
+              <p>{row.summary}</p>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       <Button asChild className="mt-4">
         <a href={locale === "fr" ? "/fr/gov" : "/gov"}>{locale === "fr" ? "Bureau du gouvernement" : "Government desk"}</a>
       </Button>

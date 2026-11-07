@@ -175,7 +175,7 @@ export function screeningCopy(locale: "en" | "fr") {
       practice: "Mode pratique : un dossier expiré donne un avertissement. Le quart n’est pas bloqué.",
       empty: "Aucun dossier pour l’instant.",
       govWhat: "KidEase pour votre province",
-      govWhy: "Voyez combien de dossiers sont expirés. Pas de nom d’enfant.",
+      govWhy: "Totaux des vérifications du personnel enregistrées ici. Un zéro ne prouve pas que chaque vérification est à jour. Aucun dossier privé n’est montré.",
     };
   }
   return {
@@ -188,6 +188,6 @@ export function screeningCopy(locale: "en" | "fr") {
     practice: "Practice mode: an expired record shows a warning. The shift is not blocked.",
     empty: "No records yet.",
     govWhat: "KidEase for your province",
-    govWhy: "See how many records are expired. No child names.",
+    govWhy: "Counts of staff-check records saved in this tool. A zero is not proof every check is current. No staff file is shown.",
   };
 }

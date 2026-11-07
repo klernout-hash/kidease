@@ -161,7 +161,7 @@ export function incidentCopy(locale: "en" | "fr") {
       abuse: "Si un enfant est en danger, appelez la police ou l’aide à l’enfance. KidEase ne remplace pas cet appel.",
       empty: "Aucun rapport pour l’instant.",
       govWhat: "KidEase pour votre province",
-      govWhy: "Voyez les rapports de votre province. Les totaux n’ont pas de nom d’enfant.",
+      govWhy: "Totaux des rapports enregistrés dans cet outil. Ce n’est pas un dossier provincial officiel, et les noms d’enfants ne sont pas montrés.",
     };
   }
   return {
@@ -175,6 +175,6 @@ export function incidentCopy(locale: "en" | "fr") {
     abuse: "If a child is in danger, call the police or child protection. KidEase does not replace that call.",
     empty: "No reports yet.",
     govWhat: "KidEase for your province",
-    govWhy: "See reports from your province. The totals do not include a child's name.",
+    govWhy: "Counts of reports saved in this tool. This is not an official provincial file, and child names are not shown.",
   };
 }

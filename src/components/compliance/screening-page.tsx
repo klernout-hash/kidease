@@ -84,10 +84,10 @@ export function CentreScreeningPage({ data, locale }: { data: CentreData; locale
 export function GovScreeningPage({ data, locale }: { data: GovData; locale: "en" | "fr" }) {
   const copy = screeningCopy(locale);
   return (
-    <ComplianceFrame locale={locale} title={locale === "fr" ? "Dossiers expirés" : "Expired records"} copy={{ ...copy, what: copy.govWhat, why: copy.govWhy }} mode={data.mode} gov>
+    <ComplianceFrame locale={locale} title={locale === "fr" ? "Vérifications du personnel" : "Staff screening records"} copy={{ ...copy, what: copy.govWhat, why: copy.govWhy }} mode={data.mode} gov>
       <p>{data.province}</p>
-      <p className="mt-2">{locale === "fr" ? "Expirés" : "Expired"}: {data.expired}</p>
-      <p>{locale === "fr" ? "Bientôt dus" : "Due soon"}: {data.expiring}</p>
+      <p className="mt-2">{locale === "fr" ? "Expirés dans cet outil" : "Expired in this tool"}: {data.expired}</p>
+      <p>{locale === "fr" ? "Bientôt dus dans cet outil" : "Due soon in this tool"}: {data.expiring}</p>
       <p className="mt-2 text-sm">{locale === "fr" ? "Ces totaux sont les dossiers de cet outil, pas la preuve que chaque vérification est à jour. Aucun dossier privé n’est montré." : "These counts are records in this tool, not proof every check is current. No private staff file is shown."}</p>
       <Button asChild className="mt-4">
         <a href={locale === "fr" ? "/fr/gov" : "/gov"}>{locale === "fr" ? "Bureau du gouvernement" : "Government desk"}</a>
