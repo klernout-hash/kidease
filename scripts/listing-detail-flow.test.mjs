@@ -20,6 +20,9 @@ test("opened listing keeps enquire and drops rental wording", () => {
   assert.match(page, /data-ke="listing-sticky-cta"/);
   assert.match(page, /Enquire/);
   assert.match(page, /ListingRoomRail/);
+  assert.match(page, /data-ke="public-room-photos"/);
+  assert.match(page, /data-ke="named-room"/);
+  assert.match(page, /MealPublicSummary/);
   assert.match(page, /data-ke="listing-meals"/);
   assert.match(page, /data-ke="listing-offers"/);
   assert.match(page, /data-ke="listing-things"/);

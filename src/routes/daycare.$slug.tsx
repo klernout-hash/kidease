@@ -46,6 +46,9 @@ import { publicApprovalEligible, showPublicClaimPrompt } from "@/lib/approve-liv
 import { listingOfferGroups } from "@/lib/listing-offers";
 import { safetyLabel } from "@/lib/parent-listing";
 import { ListingRoomRail } from "@/components/listing-room-rail";
+import { MealPublicSummary } from "@/components/meals-editor";
+import { emptyMealOfferings, publicMealSummary } from "@/lib/meal-offerings";
+import { spaceTypeLabel, type SpaceGroup } from "@/lib/listing-spaces";
 import { licenseRecordUrl, subsidyEstimatorUrl } from "@/lib/licensing";
 import { reportSearchProvince } from "@/lib/licensing-offices";
 import { listingSubsidy, subsidyNote, subsidyNoteKey } from "@/lib/fee-program";
@@ -234,6 +237,7 @@ export function Listing() {
     availability: AvailabilityRow[];
     familyGuide?: { dropoff: string; bring: string; handbook: string } | null;
     nearby: Card[];
+    spaces?: SpaceGroup | null;
     jobs?: CentreJobPost[];
     inspections?: PublicInspection[];
     inspectionSync?: { inspectedOn: string; outcome: string; summary: string; sourceUrl: string; source: string } | null;
@@ -1168,7 +1172,35 @@ export function Listing() {
               <ListingReviewForm daycareId={d.id} slug={d.slug} />
             </section>
 
-            <ListingRoomRail photos={roomPhotos} onOpen={(src) => setPhoto(gallery.indexOf(src))} />
+            {(data.spaces?.spaces ?? []).some((space) => space.photos.length) ? (
+              <section id="listing-photos" className="scroll-mt-24" data-ke="public-room-photos">
+                <h2 className="font-display text-[1.375rem] font-semibold leading-snug">{locale === "fr" ? "Pièces et espaces" : "Rooms and spaces"}</h2>
+                <div className="mt-4 space-y-5">
+                  {data.spaces!.spaces.filter((space) => space.photos.length).map((space) => (
+                    <div key={space.id} data-ke="named-room">
+                      <h3 className="text-base font-semibold leading-6">{space.name}</h3>
+                      <p className="text-base leading-6 text-muted">{spaceTypeLabel(space.spaceType, locale)}</p>
+                      <div className="ke-room-rail mt-2 flex gap-3 overflow-x-auto pb-1" tabIndex={0}>
+                        {space.photos.map((src, index) => (
+                          <button
+                            key={src}
+                            type="button"
+                            data-ke="listing-room-card"
+                            onClick={() => setPhoto(gallery.indexOf(src))}
+                            className="w-[min(78%,16rem)] shrink-0 text-left touch-manipulation"
+                            aria-label={`${space.name} ${index + 1}`}
+                          >
+                            <BuildingPhoto src={src} alt="" className="aspect-[4/3] w-full rounded-xl object-cover" width={480} height={360} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : (
+              <ListingRoomRail photos={roomPhotos} onOpen={(src) => setPhoto(gallery.indexOf(src))} />
+            )}
 
             <ListingTourTimes daycare={d} onBook={onTour} canBook={live && parentActions} />
             {data.jobs?.length ? (
@@ -1237,7 +1269,11 @@ export function Listing() {
               {parentActions ? <JoinWaitlist daycareId={d.id} next={`/daycare/${d.slug}`} /> : null}
             </section>
 
-            <ListingOffers amenities={d.amenities} mealsOn={Boolean(d.financial?.meals)} />
+            <ListingOffers
+              amenities={d.amenities}
+              mealsOn={Boolean(d.financial?.meals)}
+              offerings={d.mealOfferings ?? emptyMealOfferings()}
+            />
 
             <ListingCultureCard daycare={d} />
 
@@ -1440,23 +1476,26 @@ function facilityTypeLabelKey(type: FacilityType): CopyKey {
   return FACILITY_LABEL[type];
 }
 
-function ListingOffers({ amenities, mealsOn }: { amenities?: string | null; mealsOn: boolean }) {
+function ListingOffers({
+  amenities,
+  mealsOn,
+  offerings,
+}: {
+  amenities?: string | null;
+  mealsOn: boolean;
+  offerings: ReturnType<typeof emptyMealOfferings>;
+}) {
   const { locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
   const offer = listingOfferGroups(amenities, loc);
-  const meals = mealsOn && offer.meals.length === 0 ? [loc === "fr" ? "Repas inclus" : "Meals included"] : offer.meals;
-  if (!meals.length && !offer.groups.length) return null;
+  const meals = publicMealSummary(offerings, loc, mealsOn);
+  if (!meals.lines.length && !meals.legacyOnly && !offer.groups.length) return null;
   return (
     <>
-      {meals.length ? (
-        <section data-ke="listing-meals">
-          <h2 className="font-display text-[1.375rem] font-semibold leading-snug">{loc === "fr" ? "Repas" : "Meals"}</h2>
-          <ul className="mt-3 space-y-2 text-base leading-7">
-            {meals.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </section>
+      {meals.lines.length || meals.legacyOnly ? (
+        <div data-ke="listing-meals">
+          <MealPublicSummary offerings={offerings} legacyMeals={mealsOn} locale={loc} />
+        </div>
       ) : null}
       {offer.groups.length ? (
         <section data-ke="listing-offers">
