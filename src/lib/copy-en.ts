@@ -1083,6 +1083,8 @@ export const en = {
     inboxYouPrefix: "You: ",
     inboxStatusEnrolled: "Enrolled",
     inboxStatusRequestPending: "Request pending",
+    inboxRelationshipMessage: "This is a message. A spot is not confirmed.",
+    inboxSearchThreads: "Search messages",
     inboxStatusTourBooked: "Tour booked",
     inboxStatusWaitlist: "Waitlist",
     inboxStatusTourRequested: "Tour requested",

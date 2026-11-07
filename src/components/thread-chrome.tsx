@@ -19,6 +19,24 @@ function showChatBubble(m: Message) {
   return m.kind === "status" || (m.kind !== "system" && m.kind !== "notify" && m.sender !== "system");
 }
 
+function peerFor(sender: Message["sender"], peers: Array<{ name: string; image?: string | null; role?: string }>) {
+  const role = sender === "parent" ? "parent" : "owner";
+  return peers.find((person) => person.role === role) || peers.find((person) => person.role !== "parent");
+}
+
+function PersonFace({ name, image, large = false }: { name: string; image?: string | null; large?: boolean }) {
+  const box = large ? "size-10 text-xs" : "size-8 text-[11px]";
+  const px = large ? 40 : 32;
+  if (image) {
+    return <img src={image} alt="" width={px} height={px} className={cn(box, "shrink-0 rounded-full object-cover")} />;
+  }
+  return (
+    <span className={cn("grid shrink-0 place-items-center rounded-full bg-surface-2 font-semibold text-fg", box)} aria-hidden>
+      {participantInitials(name)}
+    </span>
+  );
+}
+
 function mineOf(viewerRole: string, sender: Message["sender"]) {
   if (viewerRole === "parent") return sender === "parent";
   if (viewerRole === "centre") return sender === "provider";
@@ -32,6 +50,7 @@ export function ThreadTranscript({
   parentName,
   centreName,
   reads,
+  peers = [],
   now = new Date(),
 }: {
   messages: Message[];
@@ -40,6 +59,7 @@ export function ThreadTranscript({
   parentName: string;
   centreName: string;
   reads: InboxRead[];
+  peers?: Array<{ name: string; image?: string | null; role?: string }>;
   now?: Date;
 }) {
   const { t, locale } = useCopy();
@@ -59,6 +79,7 @@ export function ThreadTranscript({
         lastDay = dayKey;
         const mine = mineOf(viewerRole, m.sender);
         const senderName = m.sender === "parent" ? parentName : centreName;
+        const peer = peerFor(m.sender, peers);
         const readers = lastOwn && m.id === lastOwn.id ? readByNames(reads, m.createdAt, viewerId) : [];
         return (
           <li key={m.id} className="contents">
@@ -70,7 +91,9 @@ export function ThreadTranscript({
             {m.kind === "status" ? (
               <p className="mx-auto max-w-md rounded-full bg-surface-2 px-3 py-1 text-center text-xs text-muted">{m.body}</p>
             ) : (
-              <div className={cn("flex max-w-[85%] flex-col", mine ? "self-end items-end" : "self-start items-start")}>
+              <div className={cn("flex max-w-[85%] items-end gap-2", mine ? "self-end flex-row-reverse" : "self-start")}>
+                {mine ? null : <PersonFace name={peer?.name || senderName} image={peer?.image} />}
+                <div className={cn("flex min-w-0 flex-col", mine ? "items-end" : "items-start")}>
                 {messageClock(m.createdAt, locale) ? (
                   <p className={cn("mb-1 px-1 text-xs text-muted", mine && "text-right")}>
                     {!mine ? <span className="font-medium text-fg">{senderName}</span> : null}
@@ -90,6 +113,7 @@ export function ThreadTranscript({
                     {t("inboxReadBy").replace("{names}", joinNames(readers, t("inboxAnd")))}
                   </p>
                 ) : null}
+                </div>
               </div>
             )}
           </li>
@@ -107,8 +131,8 @@ export function ThreadHeader({
   subtitle,
   avatars,
   onDetails,
-  actions,
   showDetails = true,
+  bare = false,
 }: {
   backTo: "/inbox";
   backSearch?: Record<string, string>;
@@ -117,47 +141,33 @@ export function ThreadHeader({
   subtitle: string;
   avatars: Array<{ name: string; image?: string | null }>;
   onDetails?: () => void;
-  actions?: ReactNode;
   showDetails?: boolean;
+  bare?: boolean;
 }) {
   const { t } = useCopy();
-  const faces = avatars.slice(0, 3);
-  const shortBack = backSearch?.view === "centre" ? t("messages") : t("inbox");
+  const face = avatars.find((item) => item.image) || avatars[0];
   return (
-    <header className="flex items-center gap-2 border-b border-border px-2 py-2">
+    <header className={cn("flex min-w-0 items-center gap-1 px-1 py-1", bare ? "" : "border-b border-border")} data-ke="thread-header">
       <HistoryBack
         fallbackHref={historyHref(backTo, backSearch)}
-        fallbackLabel={shortBack}
+        fallbackLabel={t("back")}
         fallbackAria={backLabel}
         marker="thread-back"
+        className="max-w-11 min-w-11 justify-center px-0 [&>span]:sr-only"
       />
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        <div className="flex shrink-0 -space-x-2" aria-hidden>
-          {faces.map((face) =>
-            face.image ? (
-              <img key={face.name} src={face.image} alt="" className="size-9 rounded-full object-cover ring-2 ring-surface" />
-            ) : (
-              <span
-                key={face.name}
-                className="grid size-9 place-items-center rounded-full bg-primary/15 text-[11px] font-semibold text-primary ring-2 ring-surface"
-              >
-                {participantInitials(face.name)}
-              </span>
-            ),
-          )}
-        </div>
+        {face ? <PersonFace name={face.name} image={face.image} large /> : null}
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{title}</p>
+          <p className="line-clamp-2 break-words text-[15px] font-semibold leading-5">{title}</p>
           {subtitle ? <p className="truncate text-xs text-muted">{subtitle}</p> : null}
         </div>
       </div>
-      {actions}
       {showDetails && onDetails ? (
         <button
           type="button"
           onClick={onDetails}
           data-ke="inbox-detail-open"
-          className="min-h-11 shrink-0 rounded-full px-3 text-sm font-medium ring-1 ring-border hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+          className="min-h-11 shrink-0 rounded-full px-3 text-sm font-semibold touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 lg:hidden"
         >
           {t("inboxDetail")}
         </button>

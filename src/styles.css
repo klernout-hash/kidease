@@ -1606,9 +1606,16 @@
     html:has([data-ke="listing-sticky-bar"]) .ke-help-bot {
       bottom: calc(11rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
     }
+    html:has([data-ke="thread-composer"]) .ke-help-bot {
+      bottom: calc(7.5rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
+    }
     html[data-cookie-banner="open"]:has(.ke-help-bot) body {
       padding-bottom: calc(12rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
     }
+  }
+  html:has([data-ke="thread-header"]) .ke-help-bot {
+    visibility: hidden;
+    pointer-events: none;
   }
   .ke-sticky-action,
   .ke-sticky-label {

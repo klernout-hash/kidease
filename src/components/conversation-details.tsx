@@ -3,6 +3,7 @@ import { Archive, Mail, Star } from "lucide-react";
 import { formatPreferredTimes } from "@/lib/threads";
 import {
   formatStayDate,
+  inboxRelationshipKey,
   inboxStatusLine,
   participantInitials,
   type ConversationDetails,
@@ -34,6 +35,7 @@ export function ConversationDetailsBody({
 }) {
   const { t, locale } = useCopy();
   const status = inboxStatusLine({ status: details.status, tourStatus: details.tourStatus });
+  const relationship = inboxRelationshipKey({ status: details.status, tourStatus: details.tourStatus });
   const dates =
     formatStayDate(details.startDate, locale) ||
     (details.preferredTimes.length ? formatPreferredTimes(details.preferredTimes, locale) : "");
@@ -53,7 +55,10 @@ export function ConversationDetailsBody({
           )}
           <div className="min-w-0">
             <p className="truncate font-medium">{details.daycareName}</p>
-            {details.childName ? <p className="truncate text-sm text-muted">{details.childName}</p> : null}
+            <p className="text-sm text-muted" data-ke="inbox-relationship">{t(relationship)}</p>
+            {details.childName && relationship === "inboxStatusEnrolled" ? (
+              <p className="truncate text-sm text-muted">{details.childName}</p>
+            ) : null}
             {status ? (
               <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
                 <span className={cn("size-2 rounded-full", status.dot === "ok" ? "bg-ok" : "bg-warn")} aria-hidden />

@@ -94,6 +94,15 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
   const [voiceReady, setVoiceReady] = useState(false);
   const [details, setDetails] = useState<ConversationDetails | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  useEffect(() => {
+    if (!detailOpen) return;
+    document.querySelector<HTMLButtonElement>('[data-ke="inbox-detail-close"]')?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setDetailOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [detailOpen]);
   const [plusOpen, setPlusOpen] = useState(false);
   const [stateBusy, setStateBusy] = useState(false);
   const [homePlace, setHomePlace] = useState<{
@@ -329,13 +338,15 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
   const headerTitle = peopleTitle || name;
   const headerSub = [headerTitle === name ? "" : name, stay].filter(Boolean).join(" · ");
   const cleaned = messages.map((m) => ({ ...m, body: chatBodyWithoutSmsFooter(m.body) }));
-  const avatars = (details?.participants || [{ name, image: null }]).map((person) => ({
+  const others = (details?.participants || []).filter((person) => person.id !== user?.id);
+  const avatars = (others.length ? others : [{ name, image: null }]).map((person) => ({
     name: person.name,
     image: "image" in person ? person.image : null,
   }));
 
   return (
-      <main className="mx-auto flex min-h-[70dvh] w-full max-w-3xl flex-col">
+      <main className="mx-auto flex h-[calc(100dvh-12.5rem)] min-h-0 w-full max-w-5xl flex-col lg:h-[calc(100dvh-8rem)] lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)]">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {loadState === "ready" ? (
           <ThreadHeader
             backTo="/inbox"
@@ -345,11 +356,6 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
             subtitle={headerSub}
             avatars={avatars}
             onDetails={() => setDetailOpen(true)}
-            actions={
-              <div className="flex shrink-0">
-                <ThreadCallActions conversationId={id} voiceReady={voiceReady} videoReady={Boolean(videoSurface)} />
-              </div>
-            }
           />
         ) : (
           <div className="px-4 pt-4">
@@ -358,34 +364,12 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
             </Link>
           </div>
         )}
-        {loadState === "ready" && homePlace?.line ? (
-          <p className="border-b border-border px-4 py-3 text-sm" data-ke="inbox-home-address">
-            <span className="font-medium">{homePlace.line}</span>
-            {homePlace.protected ? (
-              <span className="mt-1 block text-muted">{t("homeAddressNote")}</span>
-            ) : (
-              <button
-                type="button"
-                className="mt-1 flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline touch-manipulation"
-                onClick={() => void openDirections(homePlace.lat, homePlace.lng, name, { address: homePlace.line })}
-              >
-                {t("directions")}
-              </button>
-            )}
-          </p>
-        ) : null}
-        {loadState === "ready" ? (
-          <div className="flex flex-wrap gap-x-4 px-4 pt-1">
-            <SafetyReportButton target="thread" conversationId={id} />
-            <BlockMessagesButton conversationId={id} side={isParent ? "daycare" : "family"} />
-          </div>
-        ) : null}
         {tours[0] || booking ? (
           <div className="px-4 pt-2">
             <PipelineBadge tourStatus={tours[0]?.status} bookingStatus={booking?.status ?? null} />
           </div>
         ) : null}
-        <div className="ph-no-capture flex min-h-0 flex-1 flex-col gap-3 px-3 py-3">
+        <div className="ph-no-capture min-h-0 flex-1 overflow-y-auto px-3 py-3">
           {loadState === "loading" ? <p className="text-sm text-muted">{t("loading")}</p> : null}
           {loadState === "missing" ? (
             <div className="rounded-2xl bg-surface px-5 py-6 ring-1 ring-border">
@@ -422,6 +406,7 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
               parentName={booking?.parentName || user.displayName || t("inboxRoleParent")}
               centreName={name}
               reads={details?.reads ?? []}
+              peers={details?.participants || []}
             />
           ) : null}
         </div>
@@ -455,20 +440,25 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
             {viewerRole === "admin" ? t("threadAdminRead") : t("threadReadOnly")}
           </p>
         ) : null}
-        {detailOpen && loadState === "ready" ? (
-          <div className="fixed inset-0 z-[80] flex items-end justify-center md:items-center" role="presentation">
-            <button type="button" className="absolute inset-0 bg-fg/40" aria-label={t("inboxDetailClose")} onClick={() => setDetailOpen(false)} />
+        </div>
+        {loadState === "ready" ? (
+          <div className={detailOpen ? "fixed inset-0 z-[80] flex items-end bg-fg/40 lg:static lg:inset-auto lg:z-auto lg:block lg:bg-transparent" : "hidden lg:block"} role="presentation">
+            {detailOpen ? (
+              <button type="button" className="absolute inset-0 lg:hidden" aria-label={t("inboxDetailClose")} onClick={() => setDetailOpen(false)} />
+            ) : null}
             <div
               role="dialog"
-              aria-modal="true"
+              aria-modal={detailOpen ? true : undefined}
               aria-label={t("inboxDetail")}
-              className="relative z-10 flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-bg shadow-card ring-1 ring-border md:rounded-2xl"
+              className="relative z-10 flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-bg shadow-card ring-1 ring-border lg:max-h-none lg:h-full lg:rounded-none lg:shadow-none lg:ring-0 lg:border-l"
             >
               <div className="flex items-center justify-between border-b border-border px-4 py-3">
                 <p className="font-medium">{t("inboxDetail")}</p>
-                <Button size="icon" variant="ghost" onClick={() => setDetailOpen(false)} aria-label={t("inboxDetailClose")}>
+                {detailOpen ? (
+                <Button size="icon" variant="ghost" className="lg:hidden" data-ke="inbox-detail-close" onClick={() => setDetailOpen(false)} aria-label={t("inboxDetailClose")}>
                   <X className="size-5" />
                 </Button>
+                ) : null}
               </div>
               <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                 {details ? (
@@ -485,6 +475,27 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
                     {t("inboxViewListing")}
                   </Link>
                 ) : null}
+                {homePlace?.line ? (
+                  <p className="text-sm" data-ke="inbox-home-address">
+                    <span className="font-medium">{homePlace.line}</span>
+                    {homePlace.protected ? (
+                      <span className="mt-1 block text-muted">{t("homeAddressNote")}</span>
+                    ) : (
+                      <button
+                        type="button"
+                        className="mt-1 flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline touch-manipulation"
+                        onClick={() => void openDirections(homePlace.lat, homePlace.lng, name, { address: homePlace.line })}
+                      >
+                        {t("directions")}
+                      </button>
+                    )}
+                  </p>
+                ) : null}
+                <div className="space-y-2 border-t border-border pt-3" data-ke="inbox-safety">
+                  <ThreadCallActions conversationId={id} voiceReady={voiceReady} videoReady={Boolean(videoSurface)} />
+                  <SafetyReportButton target="thread" conversationId={id} />
+                  <BlockMessagesButton conversationId={id} side={isParent ? "daycare" : "family"} />
+                </div>
                 {notice && isParent ? (
                   <div className="rounded-lg bg-primary px-3 py-2 text-sm text-primary-fg">
                     <p className="font-medium">{notice.title}</p>

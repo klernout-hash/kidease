@@ -1088,6 +1088,8 @@ export const fr = {
     inboxYouPrefix: "Vous : ",
     inboxStatusEnrolled: "Inscrit",
     inboxStatusRequestPending: "Demande en attente",
+    inboxRelationshipMessage: "Ceci est un message. Une place n’est pas confirmée.",
+    inboxSearchThreads: "Chercher dans les messages",
     inboxStatusTourBooked: "Visite réservée",
     inboxStatusWaitlist: "Liste d’attente",
     inboxStatusTourRequested: "Visite demandée",

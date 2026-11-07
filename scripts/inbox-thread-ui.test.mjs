@@ -5,6 +5,7 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import {
   filterInboxList,
+  inboxRelationshipKey,
   inboxStatusLine,
   messageFilterCopyKey,
   readByNames,
@@ -79,4 +80,14 @@ test("in-app chat never shows SMS STOP wording", () => {
   }
   assert.match(src("src/routes/inbox.$id.tsx"), /chatBodyWithoutSmsFooter/);
   assert.match(src("src/components/thread-chrome.tsx"), /chatBodyWithoutSmsFooter/);
+});
+
+test("an enquiry is not called enrolled, and block stays out of the thread header", () => {
+  assert.equal(inboxRelationshipKey({ status: "requested" }), "inboxStatusRequestPending");
+  assert.equal(inboxRelationshipKey({}), "inboxRelationshipMessage");
+  assert.equal(inboxRelationshipKey({ status: "accepted" }), "inboxStatusEnrolled");
+  const header = src("src/components/thread-chrome.tsx");
+  assert.doesNotMatch(header, /BlockMessagesButton|ThreadCallActions/);
+  assert.match(src("src/routes/inbox.$id.tsx"), /data-ke="inbox-safety"[\s\S]*BlockMessagesButton/);
+  assert.match(src("src/components/centre-inbox.tsx"), /data-ke="inbox-safety"[\s\S]*BlockMessagesButton/);
 });

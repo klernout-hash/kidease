@@ -303,10 +303,12 @@ export function CentreInboxDesk({
   const cleaned = messages.map((m) => ({ ...m, body: chatBodyWithoutSmsFooter(m.body) }));
 
   const threadPane = (
-    <div className="flex min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-1 flex-col">
       {selected ? (
         <>
+          <div className="flex min-w-0 items-center border-b border-border">
           <ThreadHeader
+            bare
             backTo="/inbox"
             backSearch={inboxSearch("centre")}
             backLabel={t("inboxBackCentre")}
@@ -317,21 +319,16 @@ export function CentreInboxDesk({
               image: person.image,
             }))}
             showDetails={false}
-            actions={
-              <div className="flex shrink-0 items-center">
-                <ThreadCallActions conversationId={selected.id} voiceReady={voiceReady} videoReady={Boolean(videoSurface)} />
-                <BlockMessagesButton conversationId={selected.id} side="family" />
-                <button
-                  type="button"
-                  className="min-h-11 rounded-full px-3 text-sm font-medium ring-1 ring-border lg:hidden"
-                  data-ke="inbox-detail-open"
-                  onClick={() => setDetailOpen(true)}
-                >
-                  {t("inboxDetail")}
-                </button>
-              </div>
-            }
           />
+          <button
+            type="button"
+            className="mr-1 min-h-11 shrink-0 rounded-full px-3 text-sm font-semibold lg:hidden"
+            data-ke="inbox-detail-open"
+            onClick={() => setDetailOpen(true)}
+          >
+            {t("inboxDetail")}
+          </button>
+          </div>
           {confirmedTour ? (
             <div className="mx-3 mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-ok/10 px-3 py-2 text-sm text-ok">
               <span className="font-medium">{t("inboxTourConfirmedBanner")}</span>
@@ -353,6 +350,7 @@ export function CentreInboxDesk({
                 parentName={selected.parentName}
                 centreName={centreName || selected.centreName || selected.daycareName}
                 reads={details?.reads || []}
+                peers={details?.participants || []}
               />
             )}
           </div>
@@ -421,6 +419,7 @@ export function CentreInboxDesk({
       return <div className="hidden p-4 text-sm text-muted lg:block">{t("inboxSelectThreadLead")}</div>;
     }
     return (
+      <>
       <InboxDetailRail
         thread={selected}
         tour={tour}
@@ -429,12 +428,17 @@ export function CentreInboxDesk({
         canWrite={canWrite}
         onChanged={refresh}
         details={details}
-                viewerId={viewer.id}
+        viewerId={viewer.id}
         stateBusy={stateBusy}
         onMarkUnread={() => void onState("unread")}
         onToggleStar={() => void onState("star")}
         onToggleArchive={() => void onState("archive")}
       />
+      <div className="space-y-3 border-t border-border px-4 py-4" data-ke="inbox-safety">
+        <ThreadCallActions conversationId={selected.id} voiceReady={voiceReady} videoReady={Boolean(videoSurface)} />
+        <BlockMessagesButton conversationId={selected.id} side="family" />
+      </div>
+      </>
     );
   }
 
@@ -450,7 +454,7 @@ export function CentreInboxDesk({
     >
       <div
         data-ke="centre-inbox"
-        className="grid min-h-[70dvh] overflow-hidden rounded-xl bg-surface ring-1 ring-border md:grid-cols-[minmax(15rem,20rem)_minmax(0,1fr)] xl:grid-cols-[minmax(16rem,22rem)_minmax(0,1fr)_minmax(15rem,18rem)]"
+        className="grid h-[calc(100dvh-6.5rem)] min-h-0 overflow-hidden md:grid-cols-[minmax(15rem,20rem)_minmax(0,1fr)] xl:grid-cols-[minmax(16rem,22rem)_minmax(0,1fr)_minmax(15rem,18rem)]"
       >
         <div className={cn(selectedId ? "hidden md:flex md:flex-col" : "flex flex-col")}>{listPane}</div>
         <div className={cn(!selectedId ? "hidden md:flex md:flex-col" : "flex flex-col")}>{threadPane}</div>
