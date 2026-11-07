@@ -22,6 +22,68 @@ function Kpi({ label, value }: { label: string; value: string }) {
   );
 }
 
+function NavGroup({ title, links }: { title: string; links: Array<[string, string]> }) {
+  return (
+    <div>
+      <h2 className="text-sm font-semibold">{title}</h2>
+      <div className="mt-1 flex flex-col">
+        {links.map(([href, label]) => (
+          <a key={href} className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline" href={href}>
+            {label}
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const SURVEY_ROWS: Array<[string, string, string, string]> = [
+  ["Canada", "14523", "17800", "14663"],
+  ["NL", "122", "83", "190"],
+  ["PE", "103", "F", "87"],
+  ["NS", "219", "146", "519"],
+  ["NB", "402", "136", "374"],
+  ["QC", "4227", "8966", "3484"],
+  ["ON", "4425", "2451", "6463"],
+  ["MB", "656", "429", "426"],
+  ["SK", "338", "451", "952"],
+  ["AB", "1823", "2721", "1790"],
+  ["BC", "2138", "2364", "371"],
+  ["Territories", "71", "46", "F"],
+];
+
+function SurveyContext({ locale }: { locale: "en" | "fr" }) {
+  const copy = govCopy(locale);
+  const heads = locale === "fr"
+    ? ["Région", "En installation", "Domicile permis", "Domicile non permis"]
+    : ["Area", "Centre-based", "Licensed home", "Unlicensed home"];
+  return (
+    <section className="mt-8" data-ke="gov-survey" aria-labelledby="gov-survey-title">
+      <h2 id="gov-survey-title" className="font-display text-xl">{copy.surveyTitle}</h2>
+      <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">{copy.surveyNote}</p>
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr>{heads.map((head) => <th key={head} className="py-2 pr-3">{head}</th>)}</tr>
+          </thead>
+          <tbody>
+            {SURVEY_ROWS.map((row) => (
+              <tr key={row[0]} className="border-t border-border">
+                {row.map((cell, index) => <td key={index} className="py-2 pr-3">{cell}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-3 text-sm leading-6">{copy.surveyF}</p>
+      <p className="mt-2 text-sm leading-6">{copy.surveyOther}</p>
+      <p className="mt-2 text-sm">
+        <a className="font-medium text-primary underline-offset-4 hover:underline" href="https://www150.statcan.gc.ca/n1/daily-quotidien/250319/t001b-eng.htm">Statistics Canada, table 001b</a>
+      </p>
+    </section>
+  );
+}
+
 export function GovDashboardView({ data }: { data: GovDashboard }) {
   const copy = govCopy(data.locale);
   const hidden = copy.suppressed;
@@ -80,7 +142,8 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
         </p>
         {data.demo ? <p className="mt-3 rounded-2xl bg-surface px-4 py-3 text-sm ring-1 ring-border">{copy.demo}</p> : null}
 
-        <form className="mt-6 grid gap-3 sm:grid-cols-3" onSubmit={(event) => event.preventDefault()}>
+        <div className="sticky top-0 z-20 -mx-4 mt-6 border-b border-border bg-bg/95 px-4 py-3 backdrop-blur-md" data-ke="gov-filters">
+        <form className="grid gap-3 sm:grid-cols-3" onSubmit={(event) => event.preventDefault()}>
           <label className="block text-sm font-medium">
             {copy.province}
             <select
@@ -124,6 +187,24 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
             </select>
           </label>
         </form>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {data.region !== "ALL" ? (
+            <button type="button" className="inline-flex min-h-11 items-center rounded-full bg-surface px-3 text-sm ring-1 ring-border" onClick={() => go({ region: "ALL", city: "ALL" })}>
+              {regionLabel(data.region, data.locale)}
+            </button>
+          ) : null}
+          {data.city !== "ALL" ? (
+            <button type="button" className="inline-flex min-h-11 items-center rounded-full bg-surface px-3 text-sm ring-1 ring-border" onClick={() => go({ city: "ALL" })}>
+              {data.city}
+            </button>
+          ) : null}
+          {data.region !== "ALL" || data.city !== "ALL" ? (
+            <button type="button" className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-medium text-primary" onClick={() => go({ region: "ALL", city: "ALL" })}>
+              {copy.clearFilters}
+            </button>
+          ) : null}
+        </div>
+        </div>
 
         <div className="mt-6 flex flex-wrap gap-3">
           <a
@@ -140,34 +221,55 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
           </a>
         </div>
 
-        <dl className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <Kpi label={copy.licensed} value={show(kpis.licensedCentres, data.locale, hidden)} />
-          <Kpi label={copy.directory} value={show(kpis.directoryCentres, data.locale, hidden)} />
-          <Kpi label={copy.capacity} value={show(kpis.capacity, data.locale, hidden)} />
-          <Kpi label={copy.reporters} value={show(kpis.vacancyReporters, data.locale, hidden)} />
-          <Kpi label={copy.fresh} value={show(kpis.vacancyFresh30, data.locale, hidden)} />
-          <Kpi label={copy.spots} value={show(kpis.openSpots, data.locale, hidden)} />
-          <Kpi label={copy.fill} value={kpis.avgFillDays == null ? copy.fillMissing : show(kpis.avgFillDays, data.locale, hidden)} />
-          <Kpi label={copy.feesConfirmed} value={show(kpis.feesConfirmedCentres, data.locale, hidden)} />
-          <Kpi label={copy.feesUncited} value={show(kpis.feesUncitedCentres, data.locale, hidden)} />
-          <Kpi label={copy.feesNone} value={show(kpis.feesNoneCentres, data.locale, hidden)} />
-          <Kpi label={copy.program} value={show(kpis.cwelccKnown, data.locale, hidden)} />
-          <Kpi label={copy.programUnknown} value={show(kpis.cwelccUnknown, data.locale, hidden)} />
-          <Kpi label={copy.french} value={show(kpis.frenchCentres, data.locale, hidden)} />
-          <Kpi label={copy.english} value={show(kpis.englishCentres, data.locale, hidden)} />
-          <Kpi label={copy.inclusion} value={show(kpis.inclusionCentres, data.locale, hidden)} />
-          <Kpi label={copy.jobs} value={show(kpis.jobPosts, data.locale, hidden)} />
-          <Kpi
-            label={copy.desert}
-            value={
-              data.desert.perSpace != null
-                ? show(data.desert.perSpace, data.locale, hidden)
-                : data.desert.population == null
-                  ? copy.desertMissing
-                  : copy.desertNoSpaces
-            }
-          />
+        <dl className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-ke="gov-decision-cards">
+          <div className="rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke="gov-card-providers">
+            <dt className="text-sm text-muted">{copy.cardObserved}</dt>
+            <dd className="mt-1 font-display text-2xl">{show(kpis.licensedCentres, data.locale, hidden)}</dd>
+            <p className="mt-2 text-xs leading-5 text-muted">{copy.cardObservedNote}</p>
+            <p className="mt-1 text-xs leading-5 text-muted">{copy.cardScope}</p>
+          </div>
+          <div className="rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke="gov-card-capacity">
+            <dt className="text-sm text-muted">{copy.capacity}</dt>
+            <dd className="mt-1 font-display text-2xl">{show(kpis.capacity, data.locale, hidden)}</dd>
+            <p className="mt-2 text-xs leading-5 text-muted">{copy.cardCapacityNote}</p>
+            <p className="mt-1 text-xs leading-5 text-muted">{copy.cardScope}</p>
+          </div>
+          <div className="rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke="gov-card-vacancies">
+            <dt className="text-sm text-muted">{copy.spots}</dt>
+            <dd className="mt-1 font-display text-2xl">{kpis.vacancyReporters === 0 ? copy.noReporting : show(kpis.openSpots, data.locale, hidden)}</dd>
+            <p className="mt-2 text-xs leading-5 text-muted">{copy.cardVacancyNote}</p>
+            <p className="mt-1 text-xs leading-5 text-muted">{copy.cardScope}</p>
+          </div>
+          <a className="rounded-2xl bg-surface p-4 ring-1 ring-border no-underline" data-ke="gov-card-renewals" href={data.locale === "fr" ? "/fr/gov/compliance" : "/gov/compliance"}>
+            <p className="text-sm text-muted">{copy.cardRenewals}</p>
+            <p className="mt-1 font-display text-2xl">{copy.notTracked}</p>
+            <p className="mt-2 text-xs leading-5 text-muted">{copy.cardRenewalsNote}</p>
+          </a>
+          <div className="rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke="gov-card-findings">
+            <dt className="text-sm text-muted">{copy.cardFindings}</dt>
+            <dd className="mt-1 font-display text-2xl">{copy.notTracked}</dd>
+            <p className="mt-2 text-xs leading-5 text-muted">{copy.cardFindingsNote}</p>
+          </div>
+          <div className="rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke="gov-card-jobs" id="gov-jobs">
+            <dt className="text-sm text-muted">{copy.jobs}</dt>
+            <dd className="mt-1 font-display text-2xl">{kpis.jobPosts === 0 ? copy.reportedUnknown : show(kpis.jobPosts, data.locale, hidden)}</dd>
+            <p className="mt-2 text-xs leading-5 text-muted">{copy.cardJobsNote}</p>
+            <p className="mt-1 text-xs leading-5 text-muted">{copy.cardScope}</p>
+          </div>
         </dl>
+        <section className="mt-6 grid gap-3 lg:grid-cols-2" data-ke="gov-needs-attention" aria-labelledby="gov-needs-title">
+          <div className="rounded-2xl bg-surface p-4 ring-1 ring-border">
+            <h2 id="gov-needs-title" className="font-display text-xl">{copy.needsTitle}</h2>
+            <ul className="mt-3 space-y-2 text-sm leading-6">
+              <li>{copy.needLicence}</li>
+              <li>{copy.needDocument}</li>
+              <li>{copy.needInspection}</li>
+              <li>{copy.needFindings}</li>
+              <li>{copy.needStale}</li>
+            </ul>
+          </div>
+          <p className="self-end text-sm text-muted">{copy.mapNote}</p>
+        </section>
         {data.hiddenAreas > 0 ? (
           <p className="mt-3 text-sm text-muted">
             {show(data.hiddenAreas, data.locale, hidden)} {copy.hidden}
@@ -269,6 +371,36 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
         </section>
 
         <GovJobShortage province={data.province} locale={data.locale} />
+        <section className="mt-8" id="gov-detail" aria-labelledby="gov-detail-title">
+          <h2 id="gov-detail-title" className="font-display text-xl">{copy.detailTitle}</h2>
+          <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <Kpi label={copy.directory} value={show(kpis.directoryCentres, data.locale, hidden)} />
+            <Kpi label={copy.licensed} value={show(kpis.licensedCentres, data.locale, hidden)} />
+            <Kpi label={copy.reporters} value={kpis.vacancyReporters === 0 ? copy.reportedUnknown : show(kpis.vacancyReporters, data.locale, hidden)} />
+            <Kpi label={copy.fresh} value={kpis.vacancyFresh30 === 0 ? copy.reportedUnknown : show(kpis.vacancyFresh30, data.locale, hidden)} />
+            <Kpi label={copy.fill} value={kpis.avgFillDays == null ? copy.fillMissing : show(kpis.avgFillDays, data.locale, hidden)} />
+            <Kpi label={copy.feesConfirmed} value={show(kpis.feesConfirmedCentres, data.locale, hidden)} />
+            <Kpi label={copy.feesUncited} value={show(kpis.feesUncitedCentres, data.locale, hidden)} />
+            <Kpi label={copy.feesNone} value={show(kpis.feesNoneCentres, data.locale, hidden)} />
+            <Kpi label={copy.program} value={show(kpis.cwelccKnown, data.locale, hidden)} />
+            <Kpi label={copy.programUnknown} value={show(kpis.cwelccUnknown, data.locale, hidden)} />
+            <Kpi label={copy.french} value={kpis.frenchCentres === 0 ? copy.reportedUnknown : show(kpis.frenchCentres, data.locale, hidden)} />
+            <Kpi label={copy.english} value={show(kpis.englishCentres, data.locale, hidden)} />
+            <Kpi label={copy.inclusion} value={kpis.inclusionCentres === 0 ? copy.reportedUnknown : show(kpis.inclusionCentres, data.locale, hidden)} />
+            <Kpi
+              label={copy.desert}
+              value={
+                data.desert.perSpace != null
+                  ? show(data.desert.perSpace, data.locale, hidden)
+                  : data.desert.population == null
+                    ? copy.desertMissing
+                    : copy.desertNoSpaces
+              }
+            />
+          </dl>
+          <p className="mt-3 text-sm text-muted">{data.locale === "fr" ? "Le chiffre de population est la population totale du Recensement de 2021 par place permise, pas les enfants de 0 à 5 ans. La demande ci-dessus compte des recherches enregistrées, pas des enfants." : "The population figure is 2021 Census total population per licensed space, not children aged 0 to 5. Demand above counts saved searches, not children."}</p>
+        </section>
+        <SurveyContext locale={data.locale} />
         <section className="mt-8" aria-labelledby="gov-coverage-title">
           <h2 id="gov-coverage-title" className="font-display text-xl">
             {copy.coverage}
@@ -279,40 +411,27 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
             ))}
           </ul>
         </section>
-        <nav className="mt-8 flex flex-col gap-2" aria-label={data.locale === "fr" ? "Outils de conformité" : "Compliance tools"}>
-          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/compliance" : "/gov/compliance"}>
-            {data.locale === "fr" ? "Dates de conformité" : "Compliance dates"}
-          </a>
-          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/ratios" : "/gov/ratios"}>
-            {data.locale === "fr" ? "Ratios" : "Room ratios"}
-          </a>
-          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/funding" : "/gov/funding"}>
-            {data.locale === "fr" ? "Rapports de financement" : "Funding reports"}
-          </a>
-          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/incidents" : "/gov/incidents"}>
-            {data.locale === "fr" ? "Événements graves" : "Serious occurrences"}
-          </a>
-          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/complaints" : "/gov/complaints"}>
-            {data.locale === "fr" ? "Plaintes" : "Complaints"}
-          </a>
-          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/broadcasts" : "/gov/broadcasts"}>
-            {data.locale === "fr" ? "Avis d’urgence" : "Emergency notice"}
-          </a>
-          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/screening" : "/gov/screening"}>
-            {data.locale === "fr" ? "Vérifications du personnel" : "Staff screening"}
-          </a>
-          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/fee-caps" : "/gov/fee-caps"}>
-            {data.locale === "fr" ? "Plafonds de tarifs" : "Fee caps"}
-          </a>
-          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/audit" : "/gov/audit"}>
-            {data.locale === "fr" ? "Journal" : "Audit log"}
-          </a>
-          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/demand" : "/gov/demand"}>
-            {data.locale === "fr" ? "Demande de places" : "Space demand"}
-          </a>
-          <a className="inline-flex min-h-11 items-center font-medium text-primary underline" href={data.locale === "fr" ? "/fr/gov/exports" : "/gov/exports"}>
-            {data.locale === "fr" ? "Exportations" : "Exports"}
-          </a>
+        <nav className="mt-8 grid gap-4 sm:grid-cols-2" data-ke="gov-nav" aria-label={data.locale === "fr" ? "Sections du bureau" : "Desk sections"}>
+          <NavGroup title={data.locale === "fr" ? "Permis et renouvellements" : "Licences and renewals"} links={[
+            [data.locale === "fr" ? "/fr/gov/compliance" : "/gov/compliance", data.locale === "fr" ? "Dates de permis" : "Licence dates"],
+            [data.locale === "fr" ? "/fr/gov/screening" : "/gov/screening", data.locale === "fr" ? "Vérifications du personnel" : "Staff screening"],
+          ]} />
+          <NavGroup title={data.locale === "fr" ? "Conformité" : "Compliance"} links={[
+            [data.locale === "fr" ? "/fr/gov/incidents" : "/gov/incidents", data.locale === "fr" ? "Événements graves" : "Serious occurrences"],
+            [data.locale === "fr" ? "/fr/gov/complaints" : "/gov/complaints", data.locale === "fr" ? "Plaintes" : "Complaints"],
+            [data.locale === "fr" ? "/fr/gov/fee-caps" : "/gov/fee-caps", data.locale === "fr" ? "Plafonds de tarifs" : "Fee caps"],
+            [data.locale === "fr" ? "/fr/gov/ratios" : "/gov/ratios", data.locale === "fr" ? "Ratios" : "Room ratios"],
+          ]} />
+          <NavGroup title={data.locale === "fr" ? "Capacité et demande" : "Capacity and demand"} links={[
+            [data.locale === "fr" ? "/fr/gov/demand" : "/gov/demand", data.locale === "fr" ? "Demande enregistrée" : "Saved-search demand"],
+            [data.locale === "fr" ? "/fr/gov/funding" : "/gov/funding", data.locale === "fr" ? "Rapports de financement" : "Funding reports"],
+          ]} />
+          <NavGroup title={data.locale === "fr" ? "Rapports et sources" : "Reports and sources"} links={[
+            ["#gov-coverage-title", copy.coverage],
+            [data.locale === "fr" ? "/fr/gov/exports" : "/gov/exports", data.locale === "fr" ? "Exportations" : "Exports"],
+            [data.locale === "fr" ? "/fr/gov/audit" : "/gov/audit", data.locale === "fr" ? "Préparation à l’effacement" : "Deletion readiness"],
+            [data.locale === "fr" ? "/fr/gov/broadcasts" : "/gov/broadcasts", data.locale === "fr" ? "Avis d’urgence" : "Emergency notice"],
+          ]} />
         </nav>
         <CurriculumGovStrip province={data.province} />
       </main>

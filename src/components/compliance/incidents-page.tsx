@@ -123,7 +123,7 @@ export function GovIncidentsPage({ data, locale }: { data: GovData; locale: "en"
           </li>
         ))}
       </ul>
-      {data.filings.length === 0 ? <p className="mt-4 text-sm">{copy.empty}</p> : null}
+      {data.filings.length === 0 ? <p className="mt-4 text-sm">{locale === "fr" ? "Aucun rapport dans cet outil. Cela ne veut pas dire qu’il n’y a aucun événement réel." : "No reports in this tool. That is not proof there are no real occurrences."}</p> : null}
       <ul className="mt-4 space-y-2">
         {data.filings.map((row) => (
           <li key={row.id} className="rounded-2xl bg-surface px-4 py-3 text-sm ring-1 ring-border">

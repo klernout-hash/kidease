@@ -68,7 +68,7 @@ export function GovRatiosPage({ data, locale }: { data: GovData; locale: "en" | 
   return (
     <ComplianceFrame locale={locale} title={locale === "fr" ? "Rapport mensuel" : "Monthly ratio report"} copy={{ ...copy, what: copy.govWhat, why: copy.govWhy }} mode={data.mode} gov>
       <p>{data.province}</p>
-      {data.rows.length === 0 ? <p className="mt-3 text-sm">{copy.empty}</p> : null}
+      {data.rows.length === 0 ? <p className="mt-3 text-sm">{locale === "fr" ? "Aucune vérification dans cet outil. Ce n’est pas une conformité des ratios confirmée." : "No checks in this tool. This is not verified staffing-ratio compliance."}</p> : null}
       <ul className="mt-3 space-y-2">{data.rows.map((row) => <li key={row.ageKey}>{row.ageKey}: {row.breaches}</li>)}</ul>
       <Button asChild className="mt-4"><a href={locale === "fr" ? "/fr/gov" : "/gov"}>{locale === "fr" ? "Bureau du gouvernement" : "Government desk"}</a></Button>
     </ComplianceFrame>

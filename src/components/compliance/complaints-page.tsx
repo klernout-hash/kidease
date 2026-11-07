@@ -53,7 +53,7 @@ export function GovComplaintsPage({ data, locale }: { data: GovData; locale: "en
   return (
     <ComplianceFrame locale={locale} title={locale === "fr" ? "Plaintes" : "Complaints"} copy={{ ...copy, what: copy.govWhat, why: copy.govWhy }} mode={data.mode} gov>
       <p>{data.province}</p>
-      {data.rows.length === 0 ? <p className="mt-3 text-sm">{copy.empty}</p> : null}
+      {data.rows.length === 0 ? <p className="mt-3 text-sm">{locale === "fr" ? "Aucune plainte dans cet outil. Cela ne veut pas dire qu’il n’y a aucune plainte réelle." : "No complaints in this tool. That is not proof there are no real complaints."}</p> : null}
       <ul className="mt-3 space-y-2">{data.rows.map((row) => <li key={row.id}>{row.trackingCode} — {row.kind} — {row.status}</li>)}</ul>
       <Button asChild className="mt-4"><a href={locale === "fr" ? "/fr/gov" : "/gov"}>{locale === "fr" ? "Bureau du gouvernement" : "Government desk"}</a></Button>
     </ComplianceFrame>
