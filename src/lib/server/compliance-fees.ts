@@ -4,6 +4,7 @@ import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
 import { nid } from "@/lib/utils";
 import { feeDecision, feeMode, monthlyNeedsDays } from "@/lib/compliance/fees";
 import { centreRow, logPractice, ownedCentreIds, readScope, sqlClient } from "@/lib/server/compliance-common";
+import { suppressRows } from "@/lib/gov/k-anonymity";
 import { requireAdmin } from "@/lib/server/roles";
 
 export async function recordFeeCheck(input: {
@@ -124,7 +125,14 @@ export const loadGovFees = createServerFn({ method: "GET" })
     const scope = await readScope(gov.userId);
     const province = scope?.province || gov.province;
     if (mode === "off") return { enabled: false as const, mode, province, rows: [], counts: [] };
-    return { enabled: true as const, mode, province, rows: [], counts: await govFlagCounts(province) };
+    const counts = await govFlagCounts(province);
+    return {
+      enabled: true as const,
+      mode,
+      province,
+      rows: [],
+      counts: suppressRows(counts).map((row) => ({ age_key: row.age_key, n: row.suppressed ? null : row.n })),
+    };
   });
 
 export const loadAdminFees = createServerFn({ method: "GET" })

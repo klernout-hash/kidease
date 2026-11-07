@@ -4,6 +4,7 @@ import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
 import { nid } from "@/lib/utils";
 import { fundingMode, fundingReport, submissionPlan } from "@/lib/compliance/funding";
 import { centreRow, logPractice, ownedCentreIds, readScope, sqlClient } from "@/lib/server/compliance-common";
+import { suppressRows } from "@/lib/gov/k-anonymity";
 import { requireAdmin } from "@/lib/server/roles";
 
 async function linesFor(daycareId: string, period: string) {
@@ -88,7 +89,16 @@ export const loadGovFunding = createServerFn({ method: "GET" })
     const scope = await readScope(gov.userId);
     const province = scope?.province || gov.province;
     if (mode === "off") return { enabled: false as const, mode, province, rows: [] };
-    return { enabled: true as const, mode, province, rows: await govSummary(province) };
+    const rows = await govSummary(province);
+    return {
+      enabled: true as const,
+      mode,
+      province,
+      rows: suppressRows(rows.map((row) => ({ blocked: row.blocked, n: row.count }))).map((row) => ({
+        blocked: row.blocked,
+        count: row.suppressed ? null : row.n,
+      })),
+    };
   });
 
 export const loadAdminFunding = createServerFn({ method: "GET" })

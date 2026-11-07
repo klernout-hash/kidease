@@ -9,6 +9,7 @@ import {
   overdueForProvince,
   reminderPlan,
 } from "@/lib/compliance/calendar";
+import { suppressRows } from "@/lib/gov/k-anonymity";
 import { centreRow, logPractice, ownedCentreIds, readScope, sendComplianceEmail, sqlClient } from "@/lib/server/compliance-common";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { requireAdmin } from "@/lib/server/roles";
@@ -106,7 +107,10 @@ export const loadGovCalendar = createServerFn({ method: "GET" })
       province,
       overdue: 0,
       rows: [],
-      counts: [...counts.entries()].map(([kind, n]) => ({ kind, n })),
+      counts: suppressRows([...counts.entries()].map(([kind, n]) => ({ kind, n }))).map((row) => ({
+        kind: row.kind,
+        n: row.suppressed ? null : row.n,
+      })),
     };
   });
 

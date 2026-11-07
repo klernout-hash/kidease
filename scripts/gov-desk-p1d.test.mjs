@@ -7,7 +7,7 @@ const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 test("small government tool counts stay hidden", () => {
   assert.match(read("../src/components/compliance/ratios-page.tsx"), /data-ke="gov-ratio-counts"/);
   assert.match(read("../src/components/compliance/screening-page.tsx"), /data-ke="gov-screening-counts"/);
-  assert.match(read("../src/components/compliance/screening-page.tsx"), /suppressCount/);
+  assert.match(read("../src/components/compliance/screening-page.tsx"), /releasedCount/);
   assert.match(read("../src/components/compliance/calendar-page.tsx"), /data-ke="gov-date-counts"/);
   assert.doesNotMatch(read("../src/routes/gov_.compliance.tsx"), /showDates/);
   assert.doesNotMatch(read("../src/routes/fr.gov_.compliance.tsx"), /showDates/);

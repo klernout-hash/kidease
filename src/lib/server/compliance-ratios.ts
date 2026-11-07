@@ -4,6 +4,7 @@ import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
 import { nid } from "@/lib/utils";
 import { directorAlertPlan, monthlyReport, ratioCheck, ratioMode } from "@/lib/compliance/ratios";
 import { caslSmsGranted, centreRow, logPractice, ownedCentreIds, readScope, sendComplianceSms, sqlClient } from "@/lib/server/compliance-common";
+import { suppressRows } from "@/lib/gov/k-anonymity";
 import { requireAdmin } from "@/lib/server/roles";
 
 export const loadCentreRatios = createServerFn({ method: "GET" })
@@ -90,7 +91,16 @@ export const loadGovRatios = createServerFn({ method: "GET" })
     const scope = await readScope(gov.userId);
     const province = scope?.province || gov.province;
     if (mode === "off") return { enabled: false as const, mode, province, rows: [] };
-    return { enabled: true as const, mode, province, rows: await monthCounts(province) };
+    const rows = await monthCounts(province);
+    return {
+      enabled: true as const,
+      mode,
+      province,
+      rows: suppressRows(rows.map((row) => ({ ageKey: row.ageKey, n: row.breaches }))).map((row) => ({
+        ageKey: row.ageKey,
+        breaches: row.suppressed ? null : row.n,
+      })),
+    };
   });
 
 export const loadAdminRatios = createServerFn({ method: "GET" })

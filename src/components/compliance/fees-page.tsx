@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { suppressRows } from "@/lib/gov/k-anonymity";
+import { releasedRows } from "@/lib/gov/k-anonymity";
 import { ComplianceFrame } from "@/components/compliance/frame";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { feeCopy, publishedCapsFor } from "@/lib/compliance/fees";
 import type { PackMode } from "@/lib/compliance/mode";
 import { checkDailyFee } from "@/lib/server/compliance-fees";
 type CentreData = { enabled: boolean; mode: PackMode; centres: { id: string; name: string; province: string }[]; rows: { age_key: string; daily_cents: number; cap_cents: number | null }[] };
-type GovData = { enabled: boolean; mode: PackMode; province: string; rows: { name: string; age_key: string; daily_cents: number; cap_cents: number | null }[]; counts?: { age_key: string; n: number }[] };
+type GovData = { enabled: boolean; mode: PackMode; province: string; rows: { name: string; age_key: string; daily_cents: number; cap_cents: number | null }[]; counts?: { age_key: string; n: number | null }[] };
 export function CentreFeesPage({ data, locale }: { data: CentreData; locale: "en" | "fr" }) {
   const copy = feeCopy(locale);
   const { celebrate } = useSuccessConfirm();
@@ -57,7 +57,7 @@ export function GovFeesPage({ data, locale, showCentres = false }: { data: GovDa
   const copy = feeCopy(locale);
   const caps = publishedCapsFor(data.province);
   const counts = data.counts ?? [];
-  const flagged = showCentres ? data.rows.length : counts.reduce((sum, row) => sum + row.n, 0);
+  const flagged = showCentres ? data.rows.length : counts.length;
   return (
     <ComplianceFrame locale={locale} title={locale === "fr" ? "Plafonds de tarifs" : "Fee caps"} copy={{ ...copy, what: copy.govWhat, why: copy.govWhy }} mode={data.mode} gov>
       <p>{data.province}</p>
@@ -77,7 +77,7 @@ export function GovFeesPage({ data, locale, showCentres = false }: { data: GovDa
         <>
           <p className="mt-3 text-sm" data-ke="gov-fee-aggregate">{locale === "fr" ? "Les noms des centres restent hors de ce bureau. Un total est un signal enregistré ici, pas un constat officiel de tarif." : "Centre names stay off this desk. A count is a flag saved here, not an official fee finding."}</p>
           <ul className="mt-3 space-y-2">
-            {suppressRows(counts).map((row) => (
+            {releasedRows(counts).map((row) => (
               <li key={row.age_key}>{row.age_key}: {row.suppressed ? (locale === "fr" ? "masqué (<5)" : "hidden (<5)") : row.n}</li>
             ))}
           </ul>

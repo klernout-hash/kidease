@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { suppressRows } from "@/lib/gov/k-anonymity";
+import { releasedRows } from "@/lib/gov/k-anonymity";
 import { ComplianceFrame } from "@/components/compliance/frame";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { COMPLAINT_KINDS, complaintCopy } from "@/lib/compliance/complaints";
 import type { PackMode } from "@/lib/compliance/mode";
 import { saveComplaint } from "@/lib/server/compliance-complaints";
 type ParentData = { enabled: boolean; mode: PackMode; rows: { id: string; tracking_code: string; province: string; status: string }[] };
-type GovData = { enabled: boolean; mode: PackMode; province: string; rows: { id: string; kind: string; status: string; trackingCode: string }[]; counts?: { kind: string; status: string; n: number }[] };
+type GovData = { enabled: boolean; mode: PackMode; province: string; rows: { id: string; kind: string; status: string; trackingCode: string }[]; counts?: { kind: string; status: string; n: number | null }[] };
 export function ParentComplaintsPage({ data, locale }: { data: ParentData; locale: "en" | "fr" }) {
   const copy = complaintCopy(locale);
   const { celebrate } = useSuccessConfirm();
@@ -60,7 +60,7 @@ export function GovComplaintsPage({ data, locale, showCases = false }: { data: G
       )}
       {counts.length === 0 && data.rows.length === 0 ? <p className="mt-3 text-sm">{locale === "fr" ? "Aucune plainte dans cet outil. Cela ne veut pas dire qu’il n’y a aucune plainte réelle." : "No complaints in this tool. That is not proof there are no real complaints."}</p> : null}
       <ul className="mt-3 space-y-2">
-        {suppressRows(counts).map((row) => (
+        {releasedRows(counts).map((row) => (
           <li key={`${row.kind}-${row.status}`}>
             {row.kind} — {row.status}: {row.suppressed ? (locale === "fr" ? "masqué (<5)" : "hidden (<5)") : row.n}
           </li>

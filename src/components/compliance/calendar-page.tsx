@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { suppressRows } from "@/lib/gov/k-anonymity";
+import { releasedRows } from "@/lib/gov/k-anonymity";
 import { ComplianceFrame } from "@/components/compliance/frame";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ type GovData = {
   province: string;
   overdue: number;
   rows: { daycareId: string; kind: string; dueOn: string }[];
-  counts?: { kind: string; n: number }[];
+  counts?: { kind: string; n: number | null }[];
 };
 
 export function CentreCalendarPage({ data, locale }: { data: CentreData; locale: "en" | "fr" }) {
@@ -119,7 +119,7 @@ export function GovCalendarPage({ data, locale, showDates = false }: { data: Gov
           <p className="mt-3 text-sm" data-ke="gov-date-counts">{locale === "fr" ? "Totaux seulement. Le centre et sa date restent hors de ce bureau. Un petit groupe est masqué." : "Counts only. The centre and its date stay off this desk. A small group is hidden."}</p>
           {counts.length === 0 ? <p className="mt-3 text-sm" data-ke="gov-no-dates">{locale === "fr" ? "Aucune date suivie. Un zéro ne veut pas dire que chaque permis est à jour." : "No tracked dates. A zero does not mean every licence is current."}</p> : null}
           <ul className="mt-3 space-y-2">
-            {suppressRows(counts).map((row) => (
+            {releasedRows(counts).map((row) => (
               <li key={row.kind}>{row.kind.replaceAll("_", " ")}: {row.suppressed ? (locale === "fr" ? "masqué (<5)" : "hidden (<5)") : row.n}</li>
             ))}
           </ul>

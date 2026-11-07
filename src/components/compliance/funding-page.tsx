@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { ComplianceFrame } from "@/components/compliance/frame";
-import { suppressRows } from "@/lib/gov/k-anonymity";
+import { releasedRows } from "@/lib/gov/k-anonymity";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
 import { fundingCopy } from "@/lib/compliance/funding";
@@ -8,7 +8,7 @@ import type { PackMode } from "@/lib/compliance/mode";
 import { buildFundingReport } from "@/lib/server/compliance-funding";
 
 type CentreData = { enabled: boolean; mode: PackMode; centres: { id: string; name: string }[]; report: null };
-type GovData = { enabled: boolean; mode: PackMode; province: string; rows: { blocked: boolean; count: number }[] };
+type GovData = { enabled: boolean; mode: PackMode; province: string; rows: { blocked: boolean; count: number | null }[] };
 
 export function CentreFundingPage({ data, locale }: { data: CentreData; locale: "en" | "fr" }) {
   const copy = fundingCopy(locale);
@@ -57,7 +57,7 @@ export function GovFundingPage({ data, locale }: { data: GovData; locale: "en" |
   return (
     <ComplianceFrame locale={locale} title={locale === "fr" ? "Rapports mensuels" : "Monthly reports"} copy={{ ...copy, what: copy.govWhat, why: copy.govWhy }} mode={data.mode} gov>
       <p>{data.province}</p>
-      <ul className="mt-3 space-y-2">{suppressRows(data.rows.map((row) => ({ ...row, n: row.count }))).map((row) => <li key={String(row.blocked)}>{row.blocked ? (locale === "fr" ? "Avec écart" : "With a mismatch") : (locale === "fr" ? "Sans écart" : "No mismatch")}: {row.suppressed ? (locale === "fr" ? "masqué (<5)" : "hidden (<5)") : row.n}</li>)}</ul>
+      <ul className="mt-3 space-y-2">{releasedRows(data.rows.map((row) => ({ ...row, n: row.count }))).map((row) => <li key={String(row.blocked)}>{row.blocked ? (locale === "fr" ? "Avec écart" : "With a mismatch") : (locale === "fr" ? "Sans écart" : "No mismatch")}: {row.suppressed ? (locale === "fr" ? "masqué (<5)" : "hidden (<5)") : row.n}</li>)}</ul>
       {data.rows.length === 0 ? <p className="mt-3 text-sm">{locale === "fr" ? "Aucun chiffre pour ce mois dans cet outil. Aucune conclusion financière n’est possible." : "No numbers for this month in this tool. No financial conclusion is supported."}</p> : null}
       <Button asChild className="mt-4"><a href={locale === "fr" ? "/fr/gov" : "/gov"}>{locale === "fr" ? "Bureau du gouvernement" : "Government desk"}</a></Button>
     </ComplianceFrame>

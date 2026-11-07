@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
 import { nid } from "@/lib/utils";
+import { suppressRows } from "@/lib/gov/k-anonymity";
 import {
   deadlineFor,
   escalationDecision,
@@ -150,7 +151,16 @@ export const loadGovIncidents = createServerFn({ method: "GET" })
     const province = scope?.province || gov.province;
     if (mode === "off") return { enabled: false as const, mode, province, filings: [], counts: [] };
     const data = await govCounts(province);
-    return { enabled: true as const, mode, province, ...data };
+    return {
+      enabled: true as const,
+      mode,
+      province,
+      filings: [],
+      counts: suppressRows(data.counts.map((row) => ({ kind: row.kind, n: row.count }))).map((row) => ({
+        kind: row.kind,
+        count: row.suppressed ? null : row.n,
+      })),
+    };
   });
 
 export const loadAdminIncidents = createServerFn({ method: "GET" })
