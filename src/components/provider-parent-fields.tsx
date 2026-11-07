@@ -244,19 +244,27 @@ export function ProviderParentFields({
                   {t("programsFee")}
                   <input
                     type="number"
+                    inputMode="decimal"
+                    min={0}
                     className="mt-1 h-11 w-full rounded-md border border-border bg-surface px-3 tabular-nums"
-                    value={row.monthlyFee ?? 0}
-                    onChange={(e) =>
+                    value={row.monthlyFee && row.monthlyFee > 0 ? row.monthlyFee : ""}
+                    placeholder={loc === "fr" ? "Inconnu" : "Unknown"}
+                    onChange={(e) => {
+                      const raw = e.target.value.trim();
+                      const next = raw === "" ? null : Number(raw);
                       onChange({
                         ...value,
                         programs: value.programs.map((item) =>
                           item.band === row.band
-                            ? { ...item, monthlyFee: Number(e.target.value) || null }
+                            ? { ...item, monthlyFee: next != null && Number.isFinite(next) && next > 0 ? next : null }
                             : item,
                         ),
-                      })
-                    }
+                      });
+                    }}
                   />
+                  <span className="mt-1 block text-xs leading-5 text-muted">
+                    {loc === "fr" ? "Vide = inconnu, pas gratuit." : "Blank means unknown, not free."}
+                  </span>
                 </label>
                 <div className="text-sm">
                   {t("deskSchedule")}
@@ -289,10 +297,22 @@ export function ProviderParentFields({
           {t("partTimeFee")}
           <input
             type="number"
+            inputMode="decimal"
+            min={0}
             className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3 tabular-nums"
-            value={value.partTimeMonthly}
-            onChange={(e) => onChange({ ...value, partTimeMonthly: Number(e.target.value) })}
+            value={value.partTimeMonthly > 0 ? value.partTimeMonthly : ""}
+            placeholder={loc === "fr" ? "Inconnu" : "Unknown"}
+            onChange={(e) => {
+              const raw = e.target.value.trim();
+              const next = raw === "" ? 0 : Number(raw);
+              onChange({ ...value, partTimeMonthly: Number.isFinite(next) && next > 0 ? next : 0 });
+            }}
           />
+          <span className="mt-1 block text-xs leading-5 text-muted">
+            {loc === "fr"
+              ? "Laissez vide si le frais est inconnu. Zéro n’est pas gratuit."
+              : "Leave blank if unknown. Zero is not free."}
+          </span>
         </label>
       </fieldset>
       ) : null}
@@ -323,16 +343,39 @@ export function ProviderParentFields({
       ) : null}
 
       {part === "meals" ? (
-        <fieldset>
+        <fieldset data-ke="editor-meals">
           <legend className="font-display text-xl">{t("financialMeals")}</legend>
-          <div className="mt-2">
+          <p className="mt-1 text-sm text-muted">
+            {loc === "fr"
+              ? "Cochez seulement les repas que le centre sert vraiment. Les commodités du lieu sont sur une autre page."
+              : "Tick only meals this centre really serves. Building amenities are on their own page."}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
             <ChipButton
               on={value.financial.meals}
               aria-pressed={value.financial.meals}
-              onClick={() => onChange({ ...value, financial: { ...value.financial, meals: !value.financial.meals } })}
+              onClick={() => {
+                const meals = !value.financial.meals;
+                const amenityKeys = meals
+                  ? value.amenityKeys.includes("meals")
+                    ? value.amenityKeys
+                    : [...value.amenityKeys, "meals"]
+                  : value.amenityKeys.filter((key) => key !== "meals");
+                onChange({ ...value, financial: { ...value.financial, meals }, amenityKeys });
+              }}
             >
               {t("financialMeals")}
             </ChipButton>
+            {CARE_DETAIL_KEYS.filter((id) => id !== "special-needs").map((id) => (
+              <ChipButton
+                key={id}
+                on={value.amenityKeys.includes(id)}
+                aria-pressed={value.amenityKeys.includes(id)}
+                onClick={() => onChange({ ...value, amenityKeys: toggle(value.amenityKeys, id) })}
+              >
+                {careDetailLabel(id, loc)}
+              </ChipButton>
+            ))}
           </div>
         </fieldset>
       ) : null}
@@ -371,14 +414,20 @@ export function ProviderParentFields({
       </fieldset>
       ) : null}
 
-      {show("amenities") || part === "meals" ? (
-      <fieldset>
+      {show("amenities") ? (
+      <fieldset data-ke="editor-amenities">
         <legend className="font-display text-xl">{t("deskAmenities")}</legend>
+        <p className="mt-1 text-sm text-muted">
+          {loc === "fr"
+            ? "Lieux et programmes. Les repas sont sur la page Repas, pas ici."
+            : "Place and program features. Meals are on the Meals page, not here."}
+        </p>
         <div className="mt-2 flex flex-wrap gap-2">
-          {(part === "meals" ? DESK_AMENITIES.filter((id) => id === "meals") : DESK_AMENITIES).map((id) => (
+          {DESK_AMENITIES.filter((id) => id !== "meals").map((id) => (
             <ChipButton
               key={id}
               on={value.amenityKeys.includes(id)}
+              aria-pressed={value.amenityKeys.includes(id)}
               onClick={() => onChange({ ...value, amenityKeys: toggle(value.amenityKeys, id) })}
             >
               {amenityLabel(id, loc)}
@@ -390,17 +439,18 @@ export function ProviderParentFields({
 
       {careDetails && (!part || part === "amenities") ? (
         <fieldset data-ke="care-details">
-          <legend className="font-display text-xl">{loc === "fr" ? "Repas et soutien" : "Meals and support"}</legend>
+          <legend className="font-display text-xl">{loc === "fr" ? "Soutien supplémentaire" : "Extra support"}</legend>
           <p className="mt-1 text-sm text-muted">
             {loc === "fr"
               ? "Cochez seulement ce que le centre offre vraiment. Les parents peuvent filtrer avec ces mots."
               : "Tick only what this centre really offers. Parents can filter with these words."}
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
-            {CARE_DETAIL_KEYS.map((id) => (
+            {CARE_DETAIL_KEYS.filter((id) => id === "special-needs").map((id) => (
               <ChipButton
                 key={id}
                 on={value.amenityKeys.includes(id)}
+                aria-pressed={value.amenityKeys.includes(id)}
                 onClick={() => onChange({ ...value, amenityKeys: toggle(value.amenityKeys, id) })}
               >
                 {careDetailLabel(id, loc)}

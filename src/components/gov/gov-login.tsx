@@ -130,6 +130,15 @@ export function GovLogin({ locale, invite }: { locale: GovLocale; invite: string
               minLength={invite ? 12 : 8}
             />
           </label>
+          <p>
+            <a
+              href={locale === "fr" ? "/fr/forgot-password?from=gov" : "/forgot-password?from=gov"}
+              className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+              data-ke="gov-forgot-password"
+            >
+              {locale === "fr" ? "Mot de passe oublié ?" : "Forgot password?"}
+            </a>
+          </p>
           <TurnstileField onToken={onToken} resetSignal={resetSignal} onRequired={onRequired} />
           {error ? (
             <p className="text-sm text-danger" role="alert">

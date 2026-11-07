@@ -1,6 +1,6 @@
 import { createAuthClient } from "better-auth/react";
 import { clearCompare } from "@/lib/compare";
-import { clearDeskLanded, clearStickyDesk, forgetRememberedRole, markJustSignedOut } from "@/lib/desks";
+import { clearDeskLanded, clearSessionHint, clearStickyDesk, forgetRememberedRole, markJustSignedOut } from "@/lib/desks";
 import { resetPostHogIdentity } from "@/lib/posthog";
 import { clearSearchCache } from "@/lib/search-cache";
 import { clearShortlistCache, takePendingSave } from "@/lib/shortlist";
@@ -328,6 +328,7 @@ export function clearClientAuthState(): void {
   clearStickyDesk();
   clearDeskLanded();
   forgetRememberedRole();
+  clearSessionHint();
   markJustSignedOut();
   clearShortlistCache();
   takePendingSave();

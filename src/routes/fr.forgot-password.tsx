@@ -12,5 +12,5 @@ export const Route = createFileRoute("/fr/forgot-password")({
 function FrForgotPassword() {
   const { mailReady } = Route.useLoaderData();
   const search = Route.useSearch();
-  return <ForgotPasswordScreen mailReady={mailReady} initialEmail={search.email} />;
+  return <ForgotPasswordScreen mailReady={mailReady} initialEmail={search.email} fromGov={search.from === "gov"} />;
 }

@@ -9,6 +9,6 @@ export const Route = createFileRoute("/fr/reset-password")({
 });
 
 function FrResetPassword() {
-  const { token } = Route.useSearch();
-  return <ResetPasswordScreen token={token} />;
+  const { token, from } = Route.useSearch();
+  return <ResetPasswordScreen token={token} fromGov={from === "gov"} />;
 }

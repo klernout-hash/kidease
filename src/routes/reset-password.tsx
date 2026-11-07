@@ -17,6 +17,7 @@ import { isFrPath } from "@/lib/locale-path";
 
 export const resetPasswordValidateSearch = (s: Record<string, unknown>) => ({
   token: typeof s.token === "string" ? s.token : "",
+  from: s.from === "gov" ? ("gov" as const) : undefined,
 });
 
 export const Route = createFileRoute("/reset-password")({
@@ -26,15 +27,15 @@ export const Route = createFileRoute("/reset-password")({
 });
 
 function ResetPassword() {
-  const { token } = Route.useSearch();
-  return <ResetPasswordScreen token={token} />;
+  const { token, from } = Route.useSearch();
+  return <ResetPasswordScreen token={token} fromGov={from === "gov"} />;
 }
 
-export function ResetPasswordScreen({ token }: { token: string }) {
+export function ResetPasswordScreen({ token, fromGov = false }: { token: string; fromGov?: boolean }) {
   const { t, locale } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const french = locale === "fr" || isFrPath(pathname);
-  const signInTo = french ? "/fr/login" : "/login";
+  const signInTo = fromGov ? (french ? "/fr/gov/login" : "/gov/login") : french ? "/fr/login" : "/login";
   const forgotTo = french ? "/fr/forgot-password" : "/forgot-password";
   const { celebrate } = useSuccessConfirm();
   const [password, setPassword] = useState("");
@@ -99,9 +100,9 @@ export function ResetPasswordScreen({ token }: { token: string }) {
           {done ? (
             <>
               <p className="mt-3 text-sm text-muted">{t("resetPasswordDone")}</p>
-              <Link to={signInTo} className="mt-6 inline-flex text-sm text-primary underline-offset-4 hover:underline">
+              <a href={signInTo} className="mt-6 inline-flex min-h-11 items-center text-sm text-primary underline-offset-4 hover:underline">
                 {t("backToSignIn")}
-              </Link>
+              </a>
             </>
           ) : !token ? (
             <>
@@ -141,9 +142,9 @@ export function ResetPasswordScreen({ token }: { token: string }) {
                 </Button>
               </form>
               <p className="mt-6 text-center text-xs text-subtle">
-                <Link to={signInTo} className="underline-offset-4 hover:underline">
+                <a href={signInTo} className="underline-offset-4 hover:underline">
                   {t("backToSignIn")}
-                </Link>
+                </a>
               </p>
             </>
           )}

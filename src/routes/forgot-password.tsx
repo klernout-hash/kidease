@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useRouteContext, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, useRouteContext, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 import { authClient, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage } from "@/lib/auth/login-errors";
@@ -17,7 +17,11 @@ import { isFrPath } from "@/lib/locale-path";
 
 export const forgotPasswordValidateSearch = (s: Record<string, unknown>) => {
   const email = typeof s.email === "string" ? s.email.trim() : "";
-  return email ? { email } : {};
+  const from = s.from === "gov" ? ("gov" as const) : undefined;
+  return {
+    ...(email ? { email } : {}),
+    ...(from ? { from } : {}),
+  };
 };
 
 export async function forgotPasswordLoader() {
@@ -35,22 +39,26 @@ export const Route = createFileRoute("/forgot-password")({
 function ForgotPassword() {
   const { mailReady } = Route.useLoaderData();
   const search = Route.useSearch();
-  return <ForgotPasswordScreen mailReady={mailReady} initialEmail={search.email} />;
+  return <ForgotPasswordScreen mailReady={mailReady} initialEmail={search.email} fromGov={search.from === "gov"} />;
 }
 
 export function ForgotPasswordScreen({
   mailReady,
   initialEmail,
+  fromGov = false,
 }: {
   mailReady: boolean;
   initialEmail?: string;
+  fromGov?: boolean;
 }) {
   const { t, locale } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const frAuthQc = useRouteContext({ from: "__root__" }).frAuthQc === true;
   const frenchDesk = isFrPath(pathname) || (frAuthQc && locale === "fr");
-  const resetTo = frenchDesk ? "/fr/reset-password" : "/reset-password";
-  const signInTo = locale === "fr" || isFrPath(pathname) ? "/fr/login" : "/login";
+  const resetPath = "/reset-password";
+  const resetTo = frenchDesk ? "/fr/reset-password" : resetPath;
+  const redirectTo = fromGov ? `${resetTo}?from=gov` : resetTo;
+  const signInTo = fromGov ? (frenchDesk ? "/fr/gov/login" : "/gov/login") : locale === "fr" || isFrPath(pathname) ? "/fr/login" : "/login";
   const [email, setEmail] = useState(initialEmail ?? "");
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -77,7 +85,7 @@ export function ForgotPasswordScreen({
     try {
       const res = await authClient.requestPasswordReset({
         email: target,
-        redirectTo: resetTo,
+        redirectTo: redirectTo,
         fetchOptions: turnstileFetchOptions(challenge),
       });
       if (res.error) throw new Error(friendlyResetMailError(authClientErrorMessage(res.error)));
@@ -123,9 +131,9 @@ export function ForgotPasswordScreen({
             </Button>
           </form>
           <p className="mt-6 text-center text-xs text-subtle">
-            <Link to={signInTo} className="underline-offset-4 hover:underline">
+            <a href={signInTo} className="underline-offset-4 hover:underline">
               {t("backToSignIn")}
-            </Link>
+            </a>
           </p>
         </div>
       </main>

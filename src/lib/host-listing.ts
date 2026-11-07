@@ -2,6 +2,7 @@
  * Listing editor sections. Summaries use saved fields only.
  */
 
+import { amenityLabel } from "./amenities.ts";
 import { managedListingPhotos } from "./listing-photo.ts";
 import type { Daycare } from "./types.ts";
 import { spotTotal } from "./host-calendar.ts";
@@ -98,6 +99,13 @@ export function parentPartFor(section: HostSection | undefined): HostParentPart 
   return "skip";
 }
 
+function amenityList(daycare: Daycare): string[] {
+  return String(daycare.amenities || "")
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
 function clip(value: string | null | undefined, max = 80): string {
   const text = String(value || "").replace(/\s+/g, " ").trim();
   if (!text) return "";
@@ -144,15 +152,13 @@ export function sectionSummary(section: HostSection, daycare: Daycare, locale: s
       return langs.length ? clip(langs.slice(0, 4).join(", ")) : blank;
     }
     case "meals": {
-      const meals = daycare.financial?.meals || String(daycare.amenities || "").split(",").includes("meals");
-      return meals ? copy.meals : blank;
+      const meals = daycare.financial?.meals || amenityList(daycare).includes("meals");
+      return meals ? (locale === "fr" ? "Repas inclus" : "Meals included") : blank;
     }
     case "amenities": {
-      const keys = String(daycare.amenities || "")
-        .split(",")
-        .map((part) => part.trim())
-        .filter(Boolean);
-      return keys.length ? clip(keys.slice(0, 3).join(", ")) : blank;
+      const keys = amenityList(daycare).filter((key) => key !== "meals" && key !== "licensed");
+      const labels = keys.slice(0, 3).map((key) => amenityLabel(key, locale === "fr" ? "fr" : "en"));
+      return labels.length ? clip(labels.join(", ")) : blank;
     }
     case "safety":
       return clip(daycare.licenseNumber) || (daycare.safetyFeatures?.length ? daycare.safetyFeatures.slice(0, 2).join(", ") : "") || blank;

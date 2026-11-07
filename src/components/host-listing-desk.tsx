@@ -160,6 +160,35 @@ function PublishedPreview({ slug, locale, prominent = false }: { slug: string; l
   );
 }
 
+function pickSections(source: readonly HostSection[], ids: readonly HostSection[]): HostSection[] {
+  return source.filter((id) => ids.includes(id));
+}
+
+function sectionGroups(tab: "centre" | "guide", locale: string): Array<{ title: string; ids: HostSection[] }> {
+  const fr = locale === "fr";
+  if (tab === "guide") {
+    return [
+      { title: fr ? "Arrivée" : "Arrival", ids: pickSections(GUIDE_SECTIONS, ["dropoff", "bring"]) },
+      { title: fr ? "Guide écrit" : "Written guide", ids: pickSections(GUIDE_SECTIONS, ["handbook"]) },
+      { title: fr ? "Joindre le centre" : "Reach the centre", ids: pickSections(GUIDE_SECTIONS, ["contact"]) },
+    ];
+  }
+  return [
+    { title: fr ? "Photos et nom" : "Photos and name", ids: pickSections(CENTRE_SECTIONS, ["photos", "name", "french"]) },
+    { title: fr ? "Lieu et heures" : "Place and hours", ids: pickSections(CENTRE_SECTIONS, ["location"]) },
+    {
+      title: fr ? "Âges, programmes et frais" : "Ages, programs and fees",
+      ids: pickSections(CENTRE_SECTIONS, ["ages", "programs", "fees", "languages"]),
+    },
+    {
+      title: fr ? "Repas, lieux et sécurité" : "Meals, place and safety",
+      ids: pickSections(CENTRE_SECTIONS, ["meals", "amenities", "safety", "policies"]),
+    },
+    { title: fr ? "Mots pour les familles" : "Words for families", ids: pickSections(CENTRE_SECTIONS, ["promo", "values"]) },
+    { title: fr ? "Vérification" : "Checks", ids: pickSections(CENTRE_SECTIONS, ["health"]) },
+  ];
+}
+
 function HostEditor({
   daycare,
   onBack,
@@ -196,22 +225,40 @@ function HostEditor({
     setGuide(next);
   }
 
+  const [dirty, setDirty] = useState(false);
+
+  function leaveSection() {
+    if (dirty) {
+      const ok = window.confirm(
+        locale === "fr"
+          ? "Quitter sans enregistrer? Les changements non enregistrés seront perdus."
+          : "Leave without saving? Unsaved changes will be lost.",
+      );
+      if (!ok) return;
+    }
+    setDirty(false);
+    setSection(null);
+  }
+
   if (section) {
     return (
-      <div data-ke="host-section" data-section={section} className="mx-auto w-full max-w-[720px]">
-        <button
-          type="button"
-          className="inline-flex min-h-11 min-w-11 items-center gap-1 text-sm font-medium touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          onClick={() => setSection(null)}
-        >
-          <ChevronLeft className="size-5" aria-hidden />
-          {t("back")}
-        </button>
-        <h2 className="mt-2 text-[24px] font-semibold leading-[30px]">{sectionTitle(section, locale)}</h2>
+      <div data-ke="host-section" data-section={section} className="mx-auto w-full max-w-[720px] pb-16">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <button
+            type="button"
+            className="inline-flex min-h-11 min-w-11 items-center gap-1 self-start text-sm font-medium touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onClick={leaveSection}
+          >
+            <ChevronLeft className="size-5" aria-hidden />
+            {t("back")}
+          </button>
+          <PublishedPreview slug={daycare.slug} locale={locale} prominent />
+        </div>
+        <h2 className="mt-2 text-balance text-[24px] font-semibold leading-[30px]">{sectionTitle(section, locale)}</h2>
         <p className="mt-1 text-[14px] leading-5 text-muted">
           {locale === "fr"
-            ? "Les changements restent ici jusqu’à l’enregistrement. L’aperçu montre seulement la fiche publiée."
-            : "Changes stay here until you save. Preview shows only the published listing."}
+            ? "Les changements restent ici jusqu’à l’enregistrement. L’aperçu ouvre la fiche publiée, pas un brouillon."
+            : "Changes stay here until you save. Preview opens the published listing, not a draft."}
         </p>
         <CapacityForm
           daycare={daycare}
@@ -219,7 +266,11 @@ function HostEditor({
           focus={section}
           guide={guide}
           onGuide={saveGuide}
-          onSaved={() => void onSaved()}
+          onDirtyChange={setDirty}
+          onSaved={() => {
+            setDirty(false);
+            void onSaved();
+          }}
         />
         {section === "health" ? (
           <div className="mt-4 space-y-3">
@@ -231,17 +282,16 @@ function HostEditor({
     );
   }
 
-  const sections = tab === "centre" ? CENTRE_SECTIONS : GUIDE_SECTIONS;
   const photos = managedListingPhotos(daycare.photos);
   const cover = photos[0] ?? "";
 
   return (
-    <div data-ke="host-editor" className="mx-auto w-full max-w-[1120px]">
-      <div className="flex items-start justify-between gap-3">
+    <div data-ke="host-editor" className="mx-auto w-full max-w-[1120px] pb-16">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-1">
           <button
             type="button"
-            className="inline-flex min-h-11 min-w-11 items-center justify-center touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label={t("back")}
             onClick={onBack}
           >
@@ -249,7 +299,7 @@ function HostEditor({
           </button>
           <div className="min-w-0 pt-2">
             <p className="text-[14px] leading-5 text-muted">{copy.editor}</p>
-            <h2 className="truncate text-[24px] font-semibold leading-[30px]">{daycare.name}</h2>
+            <h2 className="text-balance text-[24px] font-semibold leading-[30px]">{daycare.name}</h2>
           </div>
         </div>
         <PublishedPreview slug={daycare.slug} locale={locale} prominent />
@@ -314,25 +364,32 @@ function HostEditor({
           </button>
         ))}
       </div>
-      <ul className="mt-4 overflow-hidden rounded-[16px] bg-white ring-1 ring-black/8 dark:bg-[#1B2230] dark:ring-white/10">
-        {sections.map((id) => (
-          <li key={id} className="border-b border-black/8 last:border-b-0 dark:border-white/10">
-            <button
-              type="button"
-              data-ke="host-section-card"
-              data-section={id}
-              className="flex w-full items-center gap-3 px-4 py-4 text-left touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-              onClick={() => setSection(id)}
-            >
-              <span className="min-w-0 flex-1">
-                <span className="block text-[16px] font-semibold leading-[22px]">{sectionTitle(id, locale)}</span>
-                <span className="mt-0.5 block text-[14px] leading-5 text-muted">{sectionSummary(id, daycare, locale, guide)}</span>
-              </span>
-              <ChevronRight className="size-5 shrink-0 text-muted" aria-hidden />
-            </button>
-          </li>
+      <div className="mt-6 space-y-6">
+        {sectionGroups(tab, locale).map((group) => (
+          <section key={group.title} data-ke="host-section-group" aria-label={group.title}>
+            <h3 className="text-[18px] font-semibold leading-6">{group.title}</h3>
+            <ul className="mt-3 space-y-3">
+              {group.ids.map((id) => (
+                <li key={id}>
+                  <button
+                    type="button"
+                    data-ke="host-section-card"
+                    data-section={id}
+                    className="flex w-full items-center gap-3 rounded-[16px] bg-white px-4 py-4 text-left shadow-sm ring-1 ring-black/8 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:bg-[#1B2230] dark:ring-white/10"
+                    onClick={() => setSection(id)}
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[16px] font-semibold leading-[22px]">{sectionTitle(id, locale)}</span>
+                      <span className="mt-0.5 block text-[14px] leading-5 text-muted">{sectionSummary(id, daycare, locale, guide)}</span>
+                    </span>
+                    <ChevronRight className="size-5 shrink-0 text-muted" aria-hidden />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
         ))}
-      </ul>
+      </div>
       <p className="mt-3 text-[13px] leading-5 text-muted">
         {locale === "fr"
           ? "L’aperçu ouvre la fiche publiée, pas un brouillon. Les faits du registre restent verrouillés."

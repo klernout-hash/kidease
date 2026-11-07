@@ -1,7 +1,7 @@
+import { useState } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import type { GovDashboard } from "@/lib/gov/aggregate";
 import { feeBucketLabel, govCopy, govPath } from "@/lib/gov/copy";
-import { deskGroups } from "@/lib/gov/sections";
 import { regionLabel } from "@/lib/gov/places";
 import { GovHelp } from "@/components/gov/gov-help";
 import { CurriculumGovStrip } from "@/components/curriculum-pack";
@@ -23,18 +23,50 @@ function Kpi({ label, value }: { label: string; value: string }) {
   );
 }
 
-function NavGroup({ title, links }: { title: string; links: Array<[string, string]> }) {
+type GovView = "overview" | "marketplace" | "health" | "expiries" | "workforce" | "analytics" | "sources";
+
+const GOV_VIEWS: Array<{ id: GovView; en: string; fr: string }> = [
+  { id: "overview", en: "Overview", fr: "Aperçu" },
+  { id: "marketplace", en: "Marketplace and availability", fr: "Places et disponibilité" },
+  { id: "health", en: "Listing health and compliance", fr: "Santé des fiches et conformité" },
+  { id: "expiries", en: "Expiries and alerts", fr: "Échéances et alertes" },
+  { id: "workforce", en: "Workforce and jobs", fr: "Personnel et emplois" },
+  { id: "analytics", en: "Analytics and data", fr: "Analyses et données" },
+  { id: "sources", en: "Sources and definitions", fr: "Sources et définitions" },
+];
+
+function GovTaskNav({
+  locale,
+  view,
+  onView,
+}: {
+  locale: "en" | "fr";
+  view: GovView;
+  onView: (next: GovView) => void;
+}) {
   return (
-    <div>
-      <h2 className="text-sm font-semibold">{title}</h2>
-      <div className="mt-1 flex flex-col">
-        {links.map(([href, label]) => (
-          <a key={href} className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline" href={href}>
-            {label}
-          </a>
-        ))}
-      </div>
-    </div>
+    <nav className="mt-4 flex flex-col gap-1 lg:sticky lg:top-28 lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto" data-ke="gov-nav" aria-label={locale === "fr" ? "Tâches du bureau" : "Desk tasks"}>
+      {GOV_VIEWS.map((item) => {
+        const current = view === item.id;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            data-ke="gov-task"
+            data-view={item.id}
+            aria-current={current ? "page" : undefined}
+            className={
+              current
+                ? "inline-flex min-h-11 items-center rounded-xl bg-surface px-3 text-left text-sm font-semibold ring-1 ring-border touch-manipulation"
+                : "inline-flex min-h-11 items-center rounded-xl px-3 text-left text-sm font-medium text-muted touch-manipulation hover:bg-surface"
+            }
+            onClick={() => onView(item.id)}
+          >
+            {locale === "fr" ? item.fr : item.en}
+          </button>
+        );
+      })}
+    </nav>
   );
 }
 
@@ -101,28 +133,6 @@ const SOURCE_LINKS: Array<[string, string]> = [
   ["Nunavut", "https://www.gov.nu.ca/en/education-and-schools/licensed-child-care-centres"],
   ["Statistics Canada", "https://www150.statcan.gc.ca/n1/daily-quotidien/250319/t001b-eng.htm"],
 ];
-
-function DeskNav({ locale, copy, variant }: { locale: "en" | "fr"; copy: ReturnType<typeof govCopy>; variant: "rail" | "strip" }) {
-  const groups = deskGroups(locale, copy);
-  if (variant === "strip") {
-    return (
-      <nav className="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden" aria-label={copy.navLabel} data-ke="gov-nav-mobile">
-        {groups.flatMap((group) => group.links).map(([href, label]) => (
-          <a key={`${href}-${label}`} className="inline-flex min-h-11 shrink-0 items-center rounded-full bg-surface px-3 text-sm font-medium ring-1 ring-border" href={href}>
-            {label}
-          </a>
-        ))}
-      </nav>
-    );
-  }
-  return (
-    <nav className="sticky top-28 hidden max-h-[calc(100dvh-8rem)] space-y-4 self-start overflow-y-auto lg:block" data-ke="gov-nav" aria-label={copy.navLabel}>
-      {groups.map((group) => (
-        <NavGroup key={group.title} title={group.title} links={group.links} />
-      ))}
-    </nav>
-  );
-}
 
 function TrendBars({ rows }: { rows: Array<{ month: string; listings: number | null }> }) {
   const max = Math.max(1, ...rows.map((row) => row.listings ?? 0));
@@ -195,6 +205,8 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
   }
 
   const kpis = data.kpis;
+  const [view, setView] = useState<GovView>("overview");
+  const complianceHref = data.locale === "fr" ? "/fr/gov/compliance" : "/gov/compliance";
   return (
     <div className="w-full min-h-dvh overflow-x-hidden bg-bg text-fg pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
       <a href="#gov-main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-10 focus:bg-surface focus:px-3 focus:py-2">
@@ -296,10 +308,11 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
         </div>
         </div>
 
-        <DeskNav locale={data.locale} copy={copy} variant="strip" />
-        <div className="mt-6 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start lg:gap-8">
-        <DeskNav locale={data.locale} copy={copy} variant="rail" />
+        <div className="mt-6 lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start lg:gap-8">
+        <GovTaskNav locale={data.locale} view={view} onView={setView} />
         <div>
+        {view === "overview" ? (
+        <>
         <div className="flex flex-wrap gap-3">
           <a
             href={`${exportBase}&format=pdf&locale=${data.locale}`}
@@ -369,7 +382,16 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
             {show(data.hiddenAreas, data.locale, hidden)} {copy.hidden}
           </p>
         ) : null}
+        <p className="mt-4 text-sm text-muted">
+          {data.locale === "fr"
+            ? "Les autres tâches sont dans le menu. Un zéro n’est pas une preuve qu’un service n’existe pas."
+            : "Other tasks are in the menu. A zero is not proof that a service does not exist."}
+        </p>
+        </>
+        ) : null}
 
+        {view === "marketplace" ? (
+        <>
         <GovMap data={data} />
 
         <section className="mt-8" aria-labelledby="gov-cities-title">
@@ -401,7 +423,11 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
             </table>
           </div>
         </section>
+        </>
+        ) : null}
 
+        {view === "analytics" ? (
+        <>
         <section className="mt-8" aria-labelledby="gov-fees-title">
           <h2 id="gov-fees-title" className="font-display text-xl">
             {copy.fees}
@@ -465,8 +491,14 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
             </table>
           </div>
         </section>
+        <SurveyContext locale={data.locale} />
+        </>
+        ) : null}
 
-        <GovJobShortage province={data.province} locale={data.locale} />
+        {view === "workforce" ? <GovJobShortage province={data.province} locale={data.locale} /> : null}
+
+        {view === "health" ? (
+        <>
         <section className="mt-8" id="gov-detail" aria-labelledby="gov-detail-title">
           <h2 id="gov-detail-title" className="font-display text-xl">{copy.detailTitle}</h2>
           <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -494,9 +526,32 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
               }
             />
           </dl>
-          <p className="mt-3 text-sm text-muted">{data.locale === "fr" ? "Le chiffre de population est la population totale du Recensement de 2021 par place permise, pas les enfants de 0 à 5 ans. La demande ci-dessus compte des recherches enregistrées, pas des enfants." : "The population figure is 2021 Census total population per licensed space, not children aged 0 to 5. Demand above counts saved searches, not children."}</p>
+          <p className="mt-3 text-sm text-muted">{data.locale === "fr" ? "Le chiffre de population est la population totale du Recensement de 2021 par place permise, pas les enfants de 0 à 5 ans. La demande compte des recherches enregistrées, pas des enfants. Une photo manquante ou une fiche non réclamée n’est pas un problème de conformité." : "The population figure is 2021 Census total population per licensed space, not children aged 0 to 5. Demand counts saved searches, not children. A missing photo or an unclaimed listing is not a compliance problem."}</p>
+          <p className="mt-3 text-sm">
+            <a className="font-medium text-primary underline-offset-4 hover:underline" href={data.locale === "fr" ? "/fr/gov/incidents" : "/gov/incidents"}>
+              {data.locale === "fr" ? "Événements graves" : "Serious occurrences"}
+            </a>
+          </p>
         </section>
-        <SurveyContext locale={data.locale} />
+        <CurriculumGovStrip province={data.province} />
+        </>
+        ) : null}
+
+        {view === "expiries" ? (
+          <section className="mt-2 max-w-2xl space-y-3 text-sm leading-6" data-ke="gov-expiries">
+            <h2 className="font-display text-xl">{data.locale === "fr" ? "Échéances et alertes" : "Expiries and alerts"}</h2>
+            <p>{data.locale === "fr" ? "Une date de document, une inspection et un permis sont des choses différentes. Une vieille importation n’est pas une preuve que le centre est fermé ou non conforme." : "A document date, an inspection and a licence are different things. An old import is not proof that a centre is closed or non-compliant."}</p>
+            <p>{copy.notTracked}</p>
+            <p>
+              <a className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline" href={complianceHref}>
+                {data.locale === "fr" ? "Ouvrir les dates suivies" : "Open tracked dates"}
+              </a>
+            </p>
+          </section>
+        ) : null}
+
+        {view === "sources" ? (
+        <>
         <Ledgers copy={copy} />
         <SourceRegister copy={copy} />
         <section className="mt-8" aria-labelledby="gov-coverage-title">
@@ -509,7 +564,8 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
             ))}
           </ul>
         </section>
-        <CurriculumGovStrip province={data.province} />
+        </>
+        ) : null}
         </div>
         </div>
       </main>
