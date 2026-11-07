@@ -1339,6 +1339,83 @@
       transition: none;
     }
   }
+  /* Circular multi-select. The oval track stays on .ke-switch. */
+  .ke-check {
+    appearance: none;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    margin: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    position: relative;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .ke-check::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    border: 1.5px solid var(--color-subtle);
+    background: var(--color-surface);
+    transform: translate(-50%, -50%);
+    transition: background-color 160ms ease, border-color 160ms ease;
+  }
+  .ke-check::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 14px;
+    height: 14px;
+    background: var(--color-fg);
+    transform: translate(-50%, -50%);
+    transition: background-color 160ms ease, transform 160ms ease;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M12 6v12M6 12h12'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M12 6v12M6 12h12'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+  .ke-check:checked::before {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+  .ke-check:checked::after {
+    background: var(--color-primary-fg);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5 10 17.5 19 7'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5 10 17.5 19 7'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+  .ke-check:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+  .ke-check:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+  html[data-resolved-theme="dark"] .ke-check:checked::before {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ke-check::before,
+    .ke-check::after {
+      transition: none;
+    }
+  }
+  @media (forced-colors: active) {
+    .ke-check {
+      appearance: auto;
+      forced-color-adjust: auto;
+    }
+    .ke-check::before,
+    .ke-check::after {
+      content: none;
+    }
+  }
   .ke-callout {
     border-radius: var(--radius-md);
     padding: var(--spacing-box-tight) var(--spacing-box);

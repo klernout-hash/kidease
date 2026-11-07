@@ -28,6 +28,13 @@ test("opening alerts does not write unknown rows, and a real off is stored", () 
 test("facility rows are checkboxes, and safety chips stay chips", () => {
   const picker = readFileSync(new URL("src/components/daycare-facilities-picker.tsx", root), "utf8");
   assert.match(picker, /CheckRow/);
+  assert.match(readFileSync(new URL("src/components/switch-row.tsx", root), "utf8"), /type="checkbox"/);
+  const css = readFileSync(new URL("src/styles.css", root), "utf8");
+  assert.match(css, /\.ke-check::before[\s\S]*border-radius: 999px/);
+  assert.match(css, /M12 6v12M6 12h12/);
+  assert.match(css, /ke-check:checked::after[\s\S]*M5 12\.5 10 17\.5 19 7/);
+  assert.match(readFileSync(new URL("src/components/switch-row.tsx", root), "utf8"), /Ajouter/);
+  assert.doesNotMatch(readFileSync(new URL("src/components/casl-consent-fields.tsx", root), "utf8"), /ke-check/);
   assert.doesNotMatch(picker, /data-ke="facility-row"[\s\S]{0,200}<button/);
   const fields = readFileSync(new URL("src/components/provider-parent-fields.tsx", root), "utf8");
   assert.match(fields, /SAFETY_FEATURES\.map/);

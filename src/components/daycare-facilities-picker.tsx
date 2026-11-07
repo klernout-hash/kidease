@@ -127,6 +127,7 @@ export function DaycareFacilitiesPicker({
                   <div className="min-w-0 flex-1">
                     <CheckRow
                       id={`facility-${scope}-${item.id}`}
+                      locale={locale}
                       label={locale === "fr" ? item.fr : item.en}
                       checked={on}
                       onCheckedChange={(next) => onToggle(item.id, next)}

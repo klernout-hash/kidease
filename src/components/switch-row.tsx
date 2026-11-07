@@ -56,18 +56,24 @@ export function SwitchRow({
   );
 }
 
-/** A facility or room feature. Unchecked is not a stored "no". */
+/** A facility or room feature. Unchecked is not a stored "no". The control stays a checkbox. */
 export function CheckRow({
   id,
   label,
   checked,
+  disabled = false,
+  locale = "en",
   onCheckedChange,
 }: {
   id: string;
   label: string;
   checked: boolean;
+  disabled?: boolean;
+  locale?: string;
   onCheckedChange: (next: boolean) => void;
 }) {
+  const add = locale === "fr" ? "Ajouter" : "Add";
+  const remove = locale === "fr" ? "Retirer" : "Remove";
   return (
     <div className="flex min-h-11 items-center justify-between gap-3 border-b border-border py-3" data-ke="check-row">
       <label htmlFor={id} className="min-w-0 flex-1 text-[15px] leading-5">
@@ -76,9 +82,11 @@ export function CheckRow({
       <input
         id={id}
         type="checkbox"
-        className="size-11 shrink-0 accent-primary"
+        className="ke-check"
         checked={checked}
+        disabled={disabled}
         aria-checked={checked}
+        aria-label={`${checked ? remove : add}, ${label}`}
         onChange={(event) => onCheckedChange(event.target.checked)}
       />
     </div>
