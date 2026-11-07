@@ -24,6 +24,7 @@ import { compressProfileFile, writeProfilePhoto } from "@/lib/profile-photo";
 import { polishProfilePhoto } from "@/lib/server/profile-photo";
 import { authClient, signOut } from "@/lib/auth/client";
 import { getMyContact, saveMyContact } from "@/lib/server/profile-contact";
+import { AboutYouForm } from "@/components/about-you-form";
 import { CaslConsentFields } from "@/components/casl-consent-fields";
 import { FamilyVaultPanel } from "@/components/family-vault";
 import { getMyCaslConsents, saveMyCaslConsents } from "@/lib/server/casl-consent-api";
@@ -1057,6 +1058,7 @@ function ProfilePane() {
                 <span className="mt-1 block text-right text-[12px] text-subtle">{bio.length}/400</span>
               </label>
             ) : null}
+            {editField === "about" ? <AboutYouForm /> : null}
             {smsNote ? (
               <p className="mt-3 text-sm text-danger" role="alert">
                 {smsNote}
