@@ -11,5 +11,5 @@ export const Route = createFileRoute("/admin-gov-compliance")({
 });
 
 function Page() {
-  return <GovCalendarPage data={Route.useLoaderData()} locale="en" />;
+  return <GovCalendarPage data={Route.useLoaderData()} locale="en" showDates />;
 }

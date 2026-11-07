@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { suppressCount } from "@/lib/gov/k-anonymity";
 import { ComplianceFrame } from "@/components/compliance/frame";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
@@ -83,12 +84,16 @@ export function CentreScreeningPage({ data, locale }: { data: CentreData; locale
 
 export function GovScreeningPage({ data, locale }: { data: GovData; locale: "en" | "fr" }) {
   const copy = screeningCopy(locale);
+  const show = (n: number) => {
+    const value = suppressCount(n);
+    return value === null ? (locale === "fr" ? "masqué (<5)" : "hidden (<5)") : String(value);
+  };
   return (
     <ComplianceFrame locale={locale} title={locale === "fr" ? "Vérifications du personnel" : "Staff screening records"} copy={{ ...copy, what: copy.govWhat, why: copy.govWhy }} mode={data.mode} gov>
       <p>{data.province}</p>
-      <p className="mt-2">{locale === "fr" ? "Expirés dans cet outil" : "Expired in this tool"}: {data.expired}</p>
-      <p>{locale === "fr" ? "Bientôt dus dans cet outil" : "Due soon in this tool"}: {data.expiring}</p>
-      <p className="mt-2 text-sm">{locale === "fr" ? "Ces totaux sont les dossiers de cet outil, pas la preuve que chaque vérification est à jour. Aucun dossier privé n’est montré." : "These counts are records in this tool, not proof every check is current. No private staff file is shown."}</p>
+      <p className="mt-2" data-ke="gov-screening-counts">{locale === "fr" ? "Expirés dans cet outil" : "Expired in this tool"}: {show(data.expired)}</p>
+      <p>{locale === "fr" ? "Bientôt dus dans cet outil" : "Due soon in this tool"}: {show(data.expiring)}</p>
+      <p className="mt-2 text-sm">{locale === "fr" ? "Ces totaux sont les dossiers de cet outil, pas la preuve que chaque vérification est à jour. Un petit groupe est masqué. Aucun dossier privé n’est montré." : "These counts are records in this tool, not proof every check is current. A small group is hidden. No private staff file is shown."}</p>
       <Button asChild className="mt-4">
         <a href={locale === "fr" ? "/fr/gov" : "/gov"}>{locale === "fr" ? "Bureau du gouvernement" : "Government desk"}</a>
       </Button>

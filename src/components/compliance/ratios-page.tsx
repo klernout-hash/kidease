@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { suppressRows } from "@/lib/gov/k-anonymity";
 import { ComplianceFrame } from "@/components/compliance/frame";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
@@ -69,7 +70,7 @@ export function GovRatiosPage({ data, locale }: { data: GovData; locale: "en" | 
     <ComplianceFrame locale={locale} title={locale === "fr" ? "Rapport mensuel" : "Monthly ratio report"} copy={{ ...copy, what: copy.govWhat, why: copy.govWhy }} mode={data.mode} gov>
       <p>{data.province}</p>
       {data.rows.length === 0 ? <p className="mt-3 text-sm">{locale === "fr" ? "Aucune vérification dans cet outil. Ce n’est pas une conformité des ratios confirmée." : "No checks in this tool. This is not verified staffing-ratio compliance."}</p> : null}
-      <ul className="mt-3 space-y-2">{data.rows.map((row) => <li key={row.ageKey}>{row.ageKey}: {row.breaches}</li>)}</ul>
+      <ul className="mt-3 space-y-2" data-ke="gov-ratio-counts">{suppressRows(data.rows.map((row) => ({ ...row, n: row.breaches }))).map((row) => <li key={row.ageKey}>{row.ageKey}: {row.suppressed ? (locale === "fr" ? "masqué (<5)" : "hidden (<5)") : row.n}</li>)}</ul>
       <Button asChild className="mt-4"><a href={locale === "fr" ? "/fr/gov" : "/gov"}>{locale === "fr" ? "Bureau du gouvernement" : "Government desk"}</a></Button>
     </ComplianceFrame>
   );
