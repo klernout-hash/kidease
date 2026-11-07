@@ -77,18 +77,23 @@ test("launch hold hides discovery only while a role desk is still resolving", ()
   assert.doesNotMatch(src("src/components/app-tab-bar.tsx"), /AirbnbDeskPill/);
 });
 
-test("guest visual cards are one detail target with an honest fee line", () => {
+test("guest visual cards use the compact photo layout with live, fee, and claim", () => {
   const card = src("src/components/daycare-card.tsx");
   assert.match(card, /data-ke="visual-card"/);
   assert.match(card, /aspect-\[4\/3\]/);
-  assert.match(card, /rounded-\[16px\]/);
-  assert.match(card, /Provincial fee cap · eligibility varies/);
-  assert.match(card, /data-ke="card-source"/);
+  assert.match(card, /rounded-\[14px\]/);
+  assert.match(card, /data-ke="card-live-pill"/);
+  assert.match(card, /SubsidyPill/);
+  assert.match(card, /publicBrowseClaim/);
+  assert.match(card, /ClaimListingCta/);
   assert.match(card, /data-ke="card-age-range"/);
-  assert.match(card, /Availability not confirmed/);
+  assert.doesNotMatch(card, /Provincial fee cap · eligibility varies/);
+  assert.doesNotMatch(card, /data-ke="card-source"/);
+  assert.doesNotMatch(card, /Availability not confirmed/);
   const visual = card.slice(card.indexOf('presentation === "visual"'), card.indexOf("return (\n    <article data-slug"));
-  assert.doesNotMatch(visual, /claimFreeListing|ClaimListing/);
-  assert.doesNotMatch(visual, /data-ke="card-book-tour"/);
+  assert.match(visual, /ClaimListingCta/);
+  assert.match(visual, /showLivePill=\{showLivePill\}/);
+  assert.match(visual, /data-ke="card-book-tour"/);
   assert.match(card, /data-ke="card-request-info"/);
 });
 

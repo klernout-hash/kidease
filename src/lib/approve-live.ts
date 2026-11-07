@@ -162,6 +162,25 @@ export function showPublicClaimPrompt(centre: {
   return status !== "live";
 }
 
+/**
+ * Claim button on a public browse card.
+ * Live, already claimed, and approved centres stay off it.
+ * A licensed catalogue row is not Live, and open spots are not Live.
+ * Government browsing does not grant a claim. An unpublished row is not eligible.
+ */
+export function publicBrowseClaim(input: {
+  role?: string | null;
+  listingActive?: boolean | null;
+  claimed?: boolean | null;
+  live?: boolean | null;
+  claimStatus?: string | null;
+  claimedAt?: string | null;
+}): boolean {
+  if (input.role === "government") return false;
+  if (input.listingActive === false) return false;
+  return showPublicClaimPrompt(input);
+}
+
 export function approvalLicenseSource(current?: string | null): string {
   if (isOperatorLicenseSource(current)) return (current || "").trim().toLowerCase();
   return "admin";

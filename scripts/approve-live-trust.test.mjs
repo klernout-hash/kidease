@@ -15,9 +15,11 @@ import {
   hasLicenceEvidence,
   publicApprovalEligible,
   selectCanonicalClaim,
+  publicBrowseClaim,
   showPublicClaimPrompt,
   verifiedSearchPoint,
 } from "../src/lib/approve-live.ts";
+import { listingSubsidy } from "../src/lib/fee-program.ts";
 import { isPlatformLive } from "../src/lib/live.ts";
 import { flushSearchMemo, rememberSearch } from "../src/lib/server/search-memo.ts";
 import { reviewDecisionFacts } from "../src/lib/admin-review-card.ts";
@@ -355,6 +357,18 @@ test("guest, parent, and daycare stay in sync with the approval strip", () => {
   assert.equal(showPublicClaimPrompt({ live: true, claimed: false, claimStatus: "approved" }), false);
   assert.equal(showPublicClaimPrompt({ live: false, claimed: false, claimStatus: "approved", claimedAt: "2026-09-01" }), false);
   assert.equal(showPublicClaimPrompt({ live: false, claimed: false, claimStatus: "unclaimed" }), true);
+  const unclaimed = { live: false, claimed: false, claimStatus: "unclaimed", listingActive: true };
+  assert.equal(publicBrowseClaim({ ...unclaimed, role: "guest" }), true);
+  assert.equal(publicBrowseClaim({ ...unclaimed, role: "parent" }), true);
+  assert.equal(publicBrowseClaim({ ...unclaimed, role: "government" }), false);
+  assert.equal(publicBrowseClaim({ ...unclaimed, listingActive: false, role: "guest" }), false);
+  assert.equal(publicBrowseClaim({ live: true, claimed: true, claimStatus: "approved", role: "guest" }), false);
+  assert.equal(publicBrowseClaim({ live: false, claimed: true, claimStatus: "waiting", role: "guest" }), false);
+  assert.equal(listingSubsidy({ province: "MB", feeProgram: "mb-10-day" })?.subsidy_label, "Fee cap");
+  assert.equal(listingSubsidy({ province: "PE", feeProgram: "pe-10-day" })?.subsidy_label, "$10/day");
+  assert.equal(listingSubsidy({ province: "ON" }), null);
+  assert.equal(listingSubsidy({ province: "QC", feeProgram: "qc-9-65" })?.subsidy_label, "$9.65/day subsidized");
+  assert.notEqual(listingSubsidy({ province: "NT", feeProgram: "nt-reduced" })?.subsidy_label, "$10/day");
   assert.equal(approvalScreeningFact({ screeningOnFile: false, staffScreeningAttested: true }).status, "Attested");
   assert.equal(
     reviewDecisionFacts({ licenseNumber: "70051797", id: "ab-kh2t", staffScreeningAttested: true }).find((fact) => fact.id === "screening")?.status,
