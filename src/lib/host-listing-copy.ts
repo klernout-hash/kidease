@@ -63,6 +63,19 @@ export type HostCopy = {
   thisMonth: string;
   emptyListings: string;
   addCentre: string;
+  yourCentres: string;
+  searchCentres: string;
+  searchPlaceholder: string;
+  listed: string;
+  notPublished: string;
+  noSearchMatch: string;
+  clearSearch: string;
+  cardView: string;
+  listView: string;
+  addChooserLead: string;
+  demoLabel: string;
+  demoPhotoAlt: string;
+  demoPreviewLead: string;
   pickCentre: string;
   guideDropoff: string;
   guideBring: string;
@@ -134,6 +147,19 @@ const en: HostCopy = {
   thisMonth: "This month",
   emptyListings: "You have no centre yet. Add one to open the editor.",
   addCentre: "Add a centre",
+  yourCentres: "Your centres",
+  searchCentres: "Search your centres",
+  searchPlaceholder: "Name or city",
+  listed: "Listed",
+  notPublished: "Not published",
+  noSearchMatch: "No centres match that search.",
+  clearSearch: "Clear search",
+  cardView: "Show as cards",
+  listView: "Show as a list",
+  addChooserLead: "Claim a centre already in the directory, or add one that is not listed yet.",
+  demoLabel: "Demo",
+  demoPhotoAlt: "Demo photo {n} of {total}. Not a photo of this centre.",
+  demoPreviewLead: "Layout preview only. These 10 photos are not saved and are not photos of this centre.",
   pickCentre: "Centre",
   guideDropoff: "When families arrive and leave. Hours stay on the listing.",
   guideBring: "What a family should bring. Leave blank if you have not written it.",
@@ -205,6 +231,19 @@ const fr: HostCopy = {
   thisMonth: "Ce mois-ci",
   emptyListings: "Vous n'avez pas encore de centre. Ajoutez-en un pour ouvrir l'éditeur.",
   addCentre: "Ajouter un centre",
+  yourCentres: "Vos centres",
+  searchCentres: "Chercher vos centres",
+  searchPlaceholder: "Nom ou ville",
+  listed: "Publiée",
+  notPublished: "Pas publiée",
+  noSearchMatch: "Aucun centre ne correspond à cette recherche.",
+  clearSearch: "Effacer la recherche",
+  cardView: "Afficher en cartes",
+  listView: "Afficher en liste",
+  addChooserLead: "Revendiquez un centre déjà dans le répertoire, ou ajoutez-en un qui n'y est pas.",
+  demoLabel: "Démo",
+  demoPhotoAlt: "Photo démo {n} sur {total}. Ce n'est pas une photo de ce centre.",
+  demoPreviewLead: "Aperçu de mise en page seulement. Ces 10 photos ne sont pas enregistrées et ne sont pas des photos de ce centre.",
   pickCentre: "Centre",
   guideDropoff: "Quand les familles arrivent et partent. Les heures restent sur la fiche.",
   guideBring: "Ce qu'une famille doit apporter. Laissez vide si ce n'est pas écrit.",

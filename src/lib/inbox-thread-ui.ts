@@ -124,6 +124,14 @@ export function inboxStatusLine(input: {
   return null;
 }
 
+/** A message or enquiry is not a confirmed spot. Enrolled only when the record says so. */
+export function inboxRelationshipKey(input: {
+  status?: string | null;
+  tourStatus?: string | null;
+}): InboxStatusKey | "inboxRelationshipMessage" {
+  return inboxStatusLine(input)?.key ?? "inboxRelationshipMessage";
+}
+
 export function lastMessageFromViewer(viewerIsParent: boolean, sender: string | null | undefined): boolean {
   if (!sender || sender === "system") return false;
   return viewerIsParent ? sender === "parent" : sender === "provider";

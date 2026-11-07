@@ -185,6 +185,7 @@ export function ProviderPage() {
   const centreOwner = session?.centreOwner !== false;
   const hostListing = session?.hostListing === true;
   const [listingEditorOpen, setListingEditorOpen] = useState(false);
+  const [createListingOpen, setCreateListingOpen] = useState(false);
   useEffect(() => {
     if (!hostListing || !user?.id) return;
     void syncHostActionNotices().catch(() => undefined);
@@ -313,9 +314,13 @@ export function ProviderPage() {
 
   useEffect(() => {
     if (desk !== "listings" || window.location.hash !== "#list-new") return;
-    const node = document.getElementById("list-new");
-    if (node instanceof HTMLDetailsElement) node.open = true;
-    node?.scrollIntoView({ block: "start" });
+    setCreateListingOpen(true);
+    const timer = window.setTimeout(() => {
+      const node = document.getElementById("list-new");
+      if (node instanceof HTMLDetailsElement) node.open = true;
+      node?.scrollIntoView({ block: "start" });
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [desk, listings.length]);
 
   if (childRoute) return <Outlet />;
@@ -387,11 +392,13 @@ export function ProviderPage() {
     {search.preview === "support" && operatorTools ? <SupportPreviewBanner /> : null}
     <DeskShell
       desk="daycare"
+      headingMode={desk === "listings" && hostListing && !listingEditorOpen ? "aside" : "page"}
       active={desk}
       onSelect={(id) => {
         if (id === "add") {
           if (!centreOwner) return;
           setDesk("listings");
+          setCreateListingOpen(true);
           queueMicrotask(() => {
             const el = document.getElementById("list-new");
             if (el instanceof HTMLDetailsElement) el.open = true;
@@ -412,6 +419,7 @@ export function ProviderPage() {
         <ProviderOnboarding
           onShowForm={() => {
             setDesk("listings");
+            setCreateListingOpen(true);
             queueMicrotask(() => {
               const el = document.getElementById("list-new");
               if (el instanceof HTMLDetailsElement) el.open = true;
@@ -560,6 +568,15 @@ export function ProviderPage() {
           listings={deskListings}
           onSaved={() => void load()}
           onOpenChange={setListingEditorOpen}
+          onCreateListing={() => {
+            setCreateListingOpen(true);
+            queueMicrotask(() => {
+              const el = document.getElementById("list-new");
+              if (el instanceof HTMLDetailsElement) el.open = true;
+              el?.scrollIntoView({ block: "start" });
+              el?.querySelector<HTMLElement>("input, textarea, select")?.focus();
+            });
+          }}
           initialSection={search.section && isHostSection(search.section) ? search.section : hostSectionFromFocus(search.focus)}
           initialCentre={search.centre}
         />
@@ -670,7 +687,12 @@ export function ProviderPage() {
         </>
       ) : null}
       {desk === "listings" && centreOwner && !(hostListing && listingEditorOpen) ? (
-          <details id="list-new" className="group rounded-xl bg-surface ring-1 ring-border" data-ke="list-missing-centre">
+          <details
+            id="list-new"
+            className="group rounded-xl bg-surface ring-1 ring-border"
+            data-ke="list-missing-centre"
+            hidden={hostListing && !createListingOpen ? true : undefined}
+          >
             <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 marker:content-none [&::-webkit-details-marker]:hidden">
               <span className="font-display text-lg">{t("providerOnboardingListNew")}</span>
               <ChevronDown className="size-5 shrink-0 text-muted transition-transform group-open:rotate-180" aria-hidden />

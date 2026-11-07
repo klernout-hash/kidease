@@ -21,17 +21,17 @@
 }
 
 @theme {
-  --color-bg: #f6f3ee;
-  --color-surface: #fffcf8;
-  --color-surface-2: #eee8df;
-  --color-fg: #1c2438;
-  --color-muted: #5c6578;
+  --color-bg: #f3f1ec;
+  --color-surface: #ffffff;
+  --color-surface-2: #efece6;
+  --color-fg: #1c1915;
+  --color-muted: #5c564e;
   --color-subtle: #6a645c;
   --color-primary: #1a3790;
   --color-primary-fg: #ffffff;
   --color-accent: #a8481a;
   --color-accent-fg: #ffffff;
-  --color-border: #e2e8f0;
+  --color-border: #e6e1d8;
   --color-ring: #1a3790;
   --color-danger: #b42318;
   --color-warn: #8a5110;
@@ -42,7 +42,7 @@
   --font-display: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
-  --font-weight-bold: 600;
+  --font-weight-bold: 700;
   /* Master UI/UX spec: 4px buttons/inputs (xs/sm/md), 8px cards and sheets (lg/xl), full pills. */
   --radius-xs: 4px;
   --radius-sm: 4px;
@@ -50,8 +50,8 @@
   --radius-lg: 8px;
   --radius-xl: 8px;
   --radius-device: 36px;
-  --shadow-card: 0 1px 0 rgba(28, 36, 56, 0.04), 0 18px 40px -24px rgba(26, 55, 144, 0.28);
-  --shadow-lift: 0 1px 0 rgba(28, 36, 56, 0.04), 0 24px 48px -20px rgba(26, 55, 144, 0.32);
+  --shadow-card: 0 1px 2px rgba(28, 24, 20, 0.04), 0 8px 24px rgba(28, 24, 20, 0.06);
+  --shadow-lift: 0 2px 6px rgba(28, 24, 20, 0.05), 0 16px 36px rgba(28, 24, 20, 0.08);
   --ke-card-w: 11.25rem;
   /* Marketplace density. 14px root scales rem spacing; these tighten boxes further. */
   --spacing-box: 0.625rem;
@@ -80,8 +80,8 @@
     --color-ok: #4ea882;
     --color-soft: #1c2438;
     --color-map: #1a1e26;
-    --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.28), 0 18px 40px -24px rgba(0, 0, 0, 0.55);
-    --shadow-lift: 0 1px 0 rgba(0, 0, 0, 0.28), 0 24px 48px -20px rgba(0, 0, 0, 0.6);
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 28px rgba(0, 0, 0, 0.28);
+    --shadow-lift: 0 2px 8px rgba(0, 0, 0, 0.4), 0 16px 36px rgba(0, 0, 0, 0.32);
   }
   @media (prefers-color-scheme: dark) {
     html:not([data-theme="light"]):not([data-resolved-theme="light"]) {
@@ -103,8 +103,8 @@
       --color-ok: #4ea882;
       --color-soft: #1c2438;
       --color-map: #1a1e26;
-      --shadow-card: 0 1px 0 rgba(0, 0, 0, 0.28), 0 18px 40px -24px rgba(0, 0, 0, 0.55);
-      --shadow-lift: 0 1px 0 rgba(0, 0, 0, 0.28), 0 24px 48px -20px rgba(0, 0, 0, 0.6);
+      --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 28px rgba(0, 0, 0, 0.28);
+      --shadow-lift: 0 2px 8px rgba(0, 0, 0, 0.4), 0 16px 36px rgba(0, 0, 0, 0.32);
     }
   }
   html[data-channel="app"] {
@@ -258,19 +258,19 @@
   h3,
   h4 {
     font-family: var(--font-display);
-    font-weight: 600;
+    font-weight: 700;
     text-wrap: balance;
-    letter-spacing: -0.022em;
+    letter-spacing: -0.015em;
     line-height: 1.2;
   }
   h1 {
     font-size: clamp(1.75rem, 1.15rem + 1.5vw, 2.5rem);
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
     line-height: 1.15;
   }
   h2 {
     font-size: clamp(1.35rem, 1.05rem + 0.7vw, 1.75rem);
-    letter-spacing: -0.025em;
+    letter-spacing: -0.018em;
     line-height: 1.22;
   }
   h3 {
@@ -1234,10 +1234,187 @@
   }
   /* Shared box recipes. Roles pick these up instead of one-off page padding. */
   .ke-panel {
-    border-radius: var(--radius-md);
+    border-radius: 1rem;
     background: var(--color-surface);
     padding: var(--spacing-box);
-    border: 1px solid var(--color-border);
+    border: 1px solid color-mix(in srgb, var(--color-border) 85%, transparent);
+    box-shadow: var(--shadow-card);
+  }
+  /* Soft lift for the existing surface cards. Ring and shadow both use
+     box-shadow, so this one rule keeps a hairline and the blended shadow. */
+  .rounded-xl.bg-surface.ring-1,
+  .rounded-2xl.bg-surface.ring-1,
+  .rounded-\[16px\].bg-surface.ring-1 {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--color-border) 80%, transparent),
+      var(--shadow-card);
+  }
+  .ke-visual-card {
+    filter: drop-shadow(0 6px 16px rgba(28, 24, 20, 0.07));
+  }
+  html[data-resolved-theme="dark"] .ke-visual-card {
+    filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.35));
+  }
+  .ke-switch {
+    appearance: none;
+    flex: none;
+    width: 3.5rem;
+    height: 2.75rem;
+    margin-top: 0.15rem;
+    border: 0;
+    border-radius: 999px;
+    background: #d5cfc6;
+    position: relative;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .ke-switch::before {
+    content: "";
+    position: absolute;
+    inset: -0.45rem -0.15rem;
+  }
+  .ke-switch::after {
+    content: "";
+    position: absolute;
+    top: 0.2rem;
+    left: 0.2rem;
+    width: 2.15rem;
+    height: 2.15rem;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(28, 24, 20, 0.18);
+    transition: transform 160ms ease;
+  }
+  .ke-switch:checked {
+    background: var(--color-primary);
+  }
+  .ke-switch:checked::after {
+    transform: translateX(1.15rem);
+  }
+  .ke-switch:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 3px;
+  }
+  .ke-switch:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
+  .ke-switch-track {
+    display: inline-flex;
+    width: 3.5rem;
+    height: 2.75rem;
+    flex: none;
+    align-items: center;
+    border-radius: 999px;
+    background: #d5cfc6;
+    padding: 0.2rem;
+    transition: background 160ms ease;
+  }
+  .ke-switch-track.is-on {
+    background: var(--color-primary);
+  }
+  .ke-switch-thumb {
+    width: 2.15rem;
+    height: 2.15rem;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(28, 24, 20, 0.18);
+    transition: transform 160ms ease;
+  }
+  .ke-switch-track.is-on .ke-switch-thumb {
+    transform: translateX(1.15rem);
+  }
+  html[data-resolved-theme="dark"] .ke-switch,
+  html[data-resolved-theme="dark"] .ke-switch-track {
+    background: #3d4556;
+  }
+  html[data-resolved-theme="dark"] .ke-switch:checked,
+  html[data-resolved-theme="dark"] .ke-switch-track.is-on {
+    background: var(--color-primary);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ke-switch::after,
+    .ke-switch-track,
+    .ke-switch-thumb {
+      transition: none;
+    }
+  }
+  /* Circular multi-select. The oval track stays on .ke-switch. */
+  .ke-check {
+    appearance: none;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    margin: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    position: relative;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .ke-check::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    border: 1.5px solid var(--color-subtle);
+    background: var(--color-surface);
+    transform: translate(-50%, -50%);
+    transition: background-color 160ms ease, border-color 160ms ease;
+  }
+  .ke-check::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 14px;
+    height: 14px;
+    background: var(--color-fg);
+    transform: translate(-50%, -50%);
+    transition: background-color 160ms ease, transform 160ms ease;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M12 6v12M6 12h12'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M12 6v12M6 12h12'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+  .ke-check:checked::before {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+  .ke-check:checked::after {
+    background: var(--color-primary-fg);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5 10 17.5 19 7'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5 10 17.5 19 7'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+  .ke-check:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+  .ke-check:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+  html[data-resolved-theme="dark"] .ke-check:checked::before {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ke-check::before,
+    .ke-check::after {
+      transition: none;
+    }
+  }
+  @media (forced-colors: active) {
+    .ke-check {
+      appearance: auto;
+      forced-color-adjust: auto;
+    }
+    .ke-check::before,
+    .ke-check::after {
+      content: none;
+    }
   }
   .ke-callout {
     border-radius: var(--radius-md);
@@ -1482,9 +1659,16 @@
     html:has([data-ke="listing-sticky-bar"]) .ke-help-bot {
       bottom: calc(11rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
     }
+    html:has([data-ke="thread-composer"]) .ke-help-bot {
+      bottom: calc(7.5rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
+    }
     html[data-cookie-banner="open"]:has(.ke-help-bot) body {
       padding-bottom: calc(12rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
     }
+  }
+  html:has([data-ke="thread-header"]) .ke-help-bot {
+    visibility: hidden;
+    pointer-events: none;
   }
   .ke-sticky-action,
   .ke-sticky-label {
@@ -2749,6 +2933,7 @@ h1, h2, h3, h4, p, li, label, legend, dt, dd {
 /* Listing and the provider editor are the surfaces this change owns.
    The font's space is about 0.17em. Keep the correction off the rest of the site. */
 .ke-listing-page,
+[data-ke="host-listings"],
 [data-ke="host-editor"],
 [data-ke="host-section"] {
   word-spacing: 0.14em;

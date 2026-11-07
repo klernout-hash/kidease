@@ -13,6 +13,8 @@ import {
   searchSupportCentres,
   searchSupportPeople,
 } from "@/lib/server/support";
+import { lookupThreadReference } from "@/lib/server/thread-reference";
+import { useCopy } from "@/lib/use-copy";
 import {
   SUPPORT_CASE_STATUSES,
   SUPPORT_CASE_TYPES,
@@ -61,6 +63,7 @@ export function SupportDesk({ initialTab = "inbox" }: { initialTab?: Tab }) {
         Case inbox is {SUPPORT_INBOX_EMAIL}. Refunds are a billing case type on that inbox, not a
         separate mailbox.
       </p>
+      <ThreadReferenceLookup />
       {tab === "new" ? (
         <NewCaseForm
           onCreated={() => {
@@ -362,6 +365,63 @@ function NewCaseForm({ onCreated }: { onCreated: () => void }) {
       <Button type="submit" disabled={busy}>
         Open case
       </Button>
+    </form>
+  );
+}
+
+function ThreadReferenceLookup() {
+  const { t } = useCopy();
+  const [number, setNumber] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState("");
+  const [card, setCard] = useState<Awaited<ReturnType<typeof lookupThreadReference>> | null>(null);
+
+  return (
+    <form
+      className="mt-4 max-w-lg rounded-2xl bg-surface p-4 shadow-card ring-1 ring-border"
+      data-ke="support-reference-lookup"
+      onSubmit={(event) => {
+        event.preventDefault();
+        setBusy(true);
+        setNote("");
+        setCard(null);
+        void lookupThreadReference({ data: { reference: number } })
+          .then((result) => {
+            setCard(result);
+            if (!result.found) setNote(result.retry ? t("supportReferenceRetry") : t("supportReferenceNone"));
+          })
+          .catch(() => setNote(t("supportReferenceNone")))
+          .finally(() => setBusy(false));
+      }}
+    >
+      <h2 className="text-base font-semibold">{t("supportReferenceTitle")}</h2>
+      <label className="mt-3 block text-sm font-medium">
+        {t("inboxReference")}
+        <input
+          value={number}
+          onChange={(event) => setNumber(event.target.value)}
+          placeholder={t("supportReferencePh")}
+          autoComplete="off"
+          className="mt-1 h-11 w-full rounded-xl border border-border bg-bg px-3 font-mono text-base"
+        />
+      </label>
+      <Button type="submit" className="mt-3" disabled={busy || number.trim().length < 8}>
+        {t("supportReferenceFind")}
+      </Button>
+      {note ? <p className="mt-3 text-sm text-muted" role="status">{note}</p> : null}
+      {card && card.found ? (
+        <div className="mt-4 rounded-2xl bg-bg p-4 shadow-card ring-1 ring-border" data-ke="support-reference-card">
+          <p className="font-mono text-lg tracking-wide">{card.card.reference}</p>
+          <p className="mt-1 text-sm text-muted">{t(card.card.relationship)}</p>
+          <p className="mt-3 font-semibold">{card.card.parentName || t("inboxRoleParent")}</p>
+          <p className="text-sm text-muted">{t("inboxRoleParent")}</p>
+          <p className="mt-3 font-semibold">{card.card.daycareName}</p>
+          <p className="text-sm text-muted">
+            {[card.card.ownerName, card.card.city].filter(Boolean).join(" · ")}
+          </p>
+          {card.card.when ? <p className="mt-2 text-sm">{card.card.when}</p> : null}
+        </div>
+      ) : null}
     </form>
   );
 }

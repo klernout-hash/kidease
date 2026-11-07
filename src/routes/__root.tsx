@@ -305,7 +305,7 @@ function RootDocument() {
         <style
           dangerouslySetInnerHTML={{
             __html:
-              "html,body{margin:0;background:#f6f3ee;color:#1c2438}" +
+              "html,body{margin:0;background:#f3f1ec;color:#1c1915}" +
               "html[data-ke-launch-hold] [data-ke=home-discovery-surface]{display:none!important}" +
               "[data-ke=launch-shell]{display:none}" +
               "html[data-ke-launch-hold] [data-ke=launch-shell]{display:flex!important;min-height:70dvh;align-items:center;justify-content:center;padding:24px}" +
