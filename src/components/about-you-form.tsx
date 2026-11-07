@@ -90,8 +90,8 @@ export function AboutYouForm({ preview }: { preview?: AboutProfile }) {
         <ProfileAvatar userId={user?.id} fallback={user?.profileImageUrl} name={user?.displayName} size="lg" />
         <p className="text-sm leading-6 text-muted">
           {fr
-            ? "Facultatif. Visible seulement sur votre compte. Aucun badge vérifié n’est ajouté ici."
-            : "Optional. Only on your account. This does not add a verified badge."}
+            ? "Facultatif. Vous seul pouvez voir ceci. Ce n’est pas sur la fiche publique et aucun badge vérifié n’est ajouté."
+            : "Optional. Only you can see this. It is not on the public listing and it does not add a verified badge."}
         </p>
       </div>
       {FIELDS.map((field) => {
