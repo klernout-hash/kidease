@@ -69,9 +69,9 @@ export function CookieConsentBanner() {
       aria-labelledby="ke-cookie-consent-title"
       aria-describedby="ke-cookie-consent-body"
       data-compact={native ? "native" : undefined}
-      className="ke-cookie-consent ke-bottom-prompt pointer-events-none fixed inset-x-0 bottom-0 z-[55] px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] [[data-channel=app]_&]:bottom-[calc(4.25rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))] [[data-channel=app]_&]:pb-2"
+      className="ke-cookie-consent ke-bottom-prompt pointer-events-none fixed inset-x-0 z-[55] px-3 pb-2 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] md:bottom-3 md:pb-[max(0.5rem,env(safe-area-inset-bottom))]"
     >
-      <div className="ke-cookie-consent-panel pointer-events-auto mx-auto flex max-w-[560px] flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-surface/95 px-3 py-2 shadow-lift ring-1 ring-border backdrop-blur-md">
+      <div className="ke-cookie-consent-panel pointer-events-auto mx-auto flex max-w-[560px] flex-nowrap items-center gap-2 rounded-xl bg-surface/95 px-3 py-2 shadow-lift ring-1 ring-border backdrop-blur-md">
         <span className="hidden size-7 shrink-0 place-items-center rounded-full bg-primary/10 text-primary sm:grid">
           <Cookie className="size-3.5" aria-hidden />
         </span>
@@ -94,11 +94,11 @@ export function CookieConsentBanner() {
           </p>
         </div>
         {/* Equal weight: same size, side by side. Nothing pre-selected. */}
-        <div className="grid w-full grid-cols-2 gap-2 sm:w-auto">
-          <Button type="button" role="button" variant="secondary" data-ke="cookie-essential" className="min-h-10 px-3 text-sm" onClick={() => choose("denied")}>
+        <div className="flex shrink-0 gap-2">
+          <Button type="button" role="button" variant="secondary" data-ke="cookie-essential" className="min-h-11 px-3 text-sm" onClick={() => choose("denied")}>
             {t("cookieConsentEssential")}
           </Button>
-          <Button type="button" role="button" variant="secondary" data-ke="cookie-allow" className="min-h-10 px-3 text-sm" onClick={() => choose("granted")}>
+          <Button type="button" role="button" variant="secondary" data-ke="cookie-allow" className="min-h-11 px-3 text-sm" onClick={() => choose("granted")}>
             {t("cookieConsentAllowShort")}
           </Button>
         </div>

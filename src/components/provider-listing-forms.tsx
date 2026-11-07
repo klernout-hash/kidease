@@ -765,6 +765,7 @@ export function CapacityForm({
               </p>
             </div>
           ) : null}
+          <h2 className="text-[24px] font-semibold leading-[30px]">{locale === "fr" ? "Toutes les photos" : "All photos"}</h2>
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <h3 id="listing-health-photo" className="font-display text-xl">{t("storefrontPhoto")}</h3>
             <p data-ke="listing-photo-count" className="text-sm tabular-nums text-muted">

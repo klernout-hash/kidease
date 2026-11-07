@@ -174,7 +174,7 @@ function sectionGroups(tab: "centre" | "guide", locale: string): Array<{ title: 
     ];
   }
   return [
-    { title: fr ? "Photos et nom" : "Photos and name", ids: pickSections(CENTRE_SECTIONS, ["photos", "name", "french"]) },
+    { title: fr ? "Nom" : "Name", ids: pickSections(CENTRE_SECTIONS, ["name", "french"]) },
     { title: fr ? "Lieu et heures" : "Place and hours", ids: pickSections(CENTRE_SECTIONS, ["location"]) },
     {
       title: fr ? "Âges, programmes et frais" : "Ages, programs and fees",
@@ -304,44 +304,37 @@ function HostEditor({
         </div>
         <PublishedPreview slug={daycare.slug} locale={locale} prominent />
       </div>
-      {cover ? (
-        <div className="relative mt-4 overflow-hidden rounded-[16px]" data-ke="host-cover">
-          <BuildingPhoto src={cover} alt="" className="aspect-[4/3] max-h-80 w-full object-cover" width={960} height={720} />
-          <span className="absolute bottom-3 left-3 rounded-full bg-black/70 px-2.5 py-1 text-[12px] font-medium text-white">
-            {photos.length} {locale === "fr" ? "photos" : photos.length === 1 ? "photo" : "photos"}
+      <button
+        type="button"
+        data-ke="host-cover"
+        data-section="photos"
+        className="mt-4 w-full rounded-[16px] bg-white p-4 text-left shadow-sm ring-1 ring-black/8 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:bg-[#1B2230] dark:ring-white/10"
+        onClick={() => setSection("photos")}
+      >
+        <span className="block text-[16px] font-semibold leading-[22px]">{locale === "fr" ? "Visite photo" : "Photo tour"}</span>
+        <span className="mt-0.5 block text-[14px] leading-5 text-muted">
+          {photos.length
+            ? `${photos.length} ${locale === "fr" ? "photos" : photos.length === 1 ? "photo" : "photos"}`
+            : locale === "fr"
+              ? "Photo non disponible"
+              : "Photo not available"}
+        </span>
+        {cover ? (
+          <span className="relative mt-3 block">
+            <BuildingPhoto src={cover} alt="" className="aspect-[4/3] w-full rounded-[16px] object-cover" width={960} height={720} />
+            <span className="absolute bottom-3 left-3 rounded-full bg-black/70 px-2.5 py-1 text-[12px] font-medium text-white">
+              {photos.length} {locale === "fr" ? "photos" : photos.length === 1 ? "photo" : "photos"}
+            </span>
           </span>
-          <button
-            type="button"
-            className="absolute bottom-3 right-3 inline-flex min-h-11 items-center rounded-full bg-white px-3 text-sm font-semibold text-[#11151C] shadow-sm touch-manipulation"
-            onClick={() => setSection("photos")}
-          >
-            {locale === "fr" ? "Gérer les photos" : "Manage photos"}
-          </button>
-        </div>
-      ) : (
-        <div
-          className="mt-4 grid min-h-48 place-items-center rounded-[16px] bg-[#F7F8FA] px-6 py-10 text-center ring-1 ring-black/5 dark:bg-[#11151C] dark:ring-white/10"
-          data-ke="host-cover-empty"
-        >
-          <div>
-            <p className="text-[16px] font-semibold leading-[22px]">
-              {locale === "fr" ? "Photo non disponible" : "Photo not available"}
-            </p>
-            <p className="mx-auto mt-1 max-w-sm text-[14px] leading-5 text-muted">
-              {locale === "fr"
-                ? "Ajoutez une photo du centre. N’utilisez pas de photo d’enfant."
-                : "Add a photo of the centre. Do not use a photo of a child."}
-            </p>
-            <button
-              type="button"
-              className="mt-3 inline-flex min-h-11 items-center font-semibold text-primary touch-manipulation"
-              onClick={() => setSection("photos")}
-            >
-              {locale === "fr" ? "Ajouter des photos" : "Add photos"}
-            </button>
-          </div>
-        </div>
-      )}
+        ) : (
+          <span className="mt-3 grid min-h-36 place-items-center rounded-[16px] bg-[#F7F8FA] px-4 text-center text-sm text-muted dark:bg-[#11151C]" data-ke="host-cover-empty">
+            {locale === "fr" ? "Ajouter des photos du centre. Pas de photo d’enfant." : "Add photos of the centre. Do not add a photo of a child."}
+          </span>
+        )}
+        <span className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-primary">
+          {cover ? (locale === "fr" ? "Gérer les photos" : "Manage photos") : locale === "fr" ? "Ajouter des photos" : "Add photos"}
+        </span>
+      </button>
       <div role="tablist" aria-label={copy.editor} className="mt-5 inline-flex max-w-full rounded-full bg-[#F7F8FA] p-1 ring-1 ring-black/5 dark:bg-[#11151C] dark:ring-white/10">
         {(
           [
@@ -395,6 +388,13 @@ function HostEditor({
           ? "L’aperçu ouvre la fiche publiée, pas un brouillon. Les faits du registre restent verrouillés."
           : "Preview opens the published listing, not a draft. Registry facts stay locked."}
       </p>
+      <a
+        href={localePath(`/daycare/${daycare.slug}`, locale)}
+        data-ke="host-view-fab"
+        className="fixed bottom-6 left-1/2 z-30 hidden min-h-11 -translate-x-1/2 items-center rounded-full bg-[#11151C] px-5 text-sm font-semibold text-white shadow-lg touch-manipulation md:inline-flex"
+      >
+        {locale === "fr" ? "Voir" : "View"}
+      </a>
     </div>
   );
 }

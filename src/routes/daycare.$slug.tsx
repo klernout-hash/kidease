@@ -424,11 +424,42 @@ export function Listing() {
           </div>
           <div className="ke-gutter">
             {earlyName ? <h1 className="mt-3 font-display text-[1.75rem] leading-tight md:text-[2rem]">{earlyName}</h1> : null}
+            <p className="mt-1 text-sm text-muted">{[seo?.city, seo?.province].filter(Boolean).join(", ")}</p>
+            <ul className="mt-4 divide-y divide-border" data-ke="listing-highlights">
+              {earlyHours ? (
+                <li className="py-3">
+                  <p className="text-base font-semibold">{t("hours")}</p>
+                  <p className="text-sm leading-5 text-muted">{earlyHours}</p>
+                </li>
+              ) : null}
+              <li className="py-3">
+                <p className="text-base font-semibold">{locale === "fr" ? "Disponibilité" : "Availability"}</p>
+                <p className="text-sm leading-5 text-muted">{locale === "fr" ? "Non confirmée" : "Not confirmed"}</p>
+              </li>
+              <li className="py-3">
+                <p className="text-base font-semibold">{locale === "fr" ? "Frais et soutien" : "Fees and support"}</p>
+                <p className="text-sm leading-5 text-muted">
+                  {locale === "fr"
+                    ? "Frais non confirmés. Un plafond quotidien n’est pas une facture mensuelle."
+                    : "Fees not confirmed. A daily cap is not a monthly bill."}
+                </p>
+              </li>
+            </ul>
             <div id="listing-overview" className="mt-6 space-y-6">
               {earlyDesc ? (
-                <section>
+                <section data-ke="listing-about">
                   <h2 className="font-display text-2xl">{t("about")}</h2>
-                  <p className="mt-2 max-w-prose text-muted">{earlyDesc}</p>
+                  {earlyDesc.length > 180 ? (
+                    <details className="group mt-2">
+                      <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                        <span className="block max-w-prose font-normal text-muted line-clamp-4 group-open:hidden">{earlyDesc}</span>
+                        <span className="inline-flex min-h-11 items-center text-sm font-semibold">{locale === "fr" ? "Voir plus" : "Show more"}</span>
+                      </summary>
+                      <p className="mt-2 hidden max-w-prose text-muted group-open:block">{earlyDesc}</p>
+                    </details>
+                  ) : (
+                    <p className="mt-2 max-w-prose text-muted">{earlyDesc}</p>
+                  )}
                 </section>
               ) : null}
               {earlyHours ? (
@@ -849,6 +880,40 @@ export function Listing() {
             </div>
           ) : null}
           <ListingHeaderPills item={d} agesLabel={agesLabel} hours={hours} feeFrom={showCentreFees ? from : 0} />
+          <ul className="mt-4 divide-y divide-border" data-ke="listing-highlights">
+            <li className="py-3">
+              <p className="text-base font-semibold">{d.addressProtected ? d.addressPlace || `${d.city}, ${d.province}` : `${d.city}, ${d.province}`}</p>
+              <p className="text-sm leading-5 text-muted">{facilityLabel}{agesLabel ? ` · ${agesLabel}` : ""}</p>
+            </li>
+            {hours.trim() && hours.trim() !== "—" ? (
+              <li className="py-3">
+                <p className="text-base font-semibold">{locale === "fr" ? "Heures" : "Hours"}</p>
+                <p className="text-sm leading-5 text-muted">{hours}</p>
+              </li>
+            ) : null}
+            <li className="py-3">
+              <p className="text-base font-semibold">{locale === "fr" ? "Disponibilité" : "Availability"}</p>
+              <p className="text-sm leading-5 text-muted">
+                {known && spots > 0
+                  ? `${spots} ${t("spots")}`
+                  : locale === "fr"
+                    ? "Non confirmée"
+                    : "Not confirmed"}
+              </p>
+            </li>
+            <li className="py-3">
+              <a href="#listing-fees" className="block">
+                <p className="text-base font-semibold">{locale === "fr" ? "Frais et soutien" : "Fees and support"}</p>
+                <p className="text-sm leading-5 text-muted">
+                  {showCentreFees && from > 0
+                    ? `${money(from, locale)}${t("month")}`
+                    : locale === "fr"
+                      ? "Frais non confirmés. Un plafond quotidien n’est pas une facture mensuelle."
+                      : "Fees not confirmed. A daily cap is not a monthly bill."}
+                </p>
+              </a>
+            </li>
+          </ul>
           {ageSourceUrl ? (
             <p className="mt-1 text-xs leading-5 text-muted" data-ke="province-age-label">
               {t("agesFromProvince")}{" "}
@@ -921,9 +986,21 @@ export function Listing() {
             ) : null}
 
             {(desc || "").trim() ? (
-              <section>
+              <section data-ke="listing-about">
                 <h2 className="font-display text-2xl">{t("about")}</h2>
-                <p className="mt-2 max-w-prose text-muted">{desc}</p>
+                {desc.length > 180 ? (
+                  <details className="group mt-2">
+                    <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                      <span className="block max-w-prose font-normal text-muted line-clamp-4 group-open:hidden">{desc}</span>
+                      <span className="inline-flex min-h-11 items-center text-sm font-semibold">
+                        {locale === "fr" ? "Voir plus" : "Show more"}
+                      </span>
+                    </summary>
+                    <p className="mt-2 hidden max-w-prose text-muted group-open:block">{desc}</p>
+                  </details>
+                ) : (
+                  <p className="mt-2 max-w-prose text-muted">{desc}</p>
+                )}
               </section>
             ) : null}
 
@@ -1297,44 +1374,35 @@ export function Listing() {
 
       {!requestOpen ? (
       <div className={`fixed inset-x-0 bottom-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden [[data-channel=app]_&]:bottom-20`} data-ke="listing-sticky-bar">
-        <div className="mx-auto flex max-w-lg flex-col gap-2">
-          <ListingCtaSnippet live={live} from={from} hours={hours} />
-          <div className="ke-listing-sticky-row">
+        <div className="mx-auto flex max-w-lg items-center gap-3" data-ke={parentActions ? "listing-parent-actions" : undefined}>
+          <div className="min-w-0 flex-1">
+            <ListingCtaSnippet live={live} from={from} hours={hours} />
+            <p className="truncate text-xs text-muted">
+              {known && spots > 0
+                ? `${spots} ${t("spots")}`
+                : locale === "fr"
+                  ? "Disponibilité non confirmée"
+                  : "Availability not confirmed"}
+            </p>
+          </div>
           {ownEdit ? <ListingEditLink /> : null}
-          <Button
-            type="button"
-            variant="secondary"
-            size="icon"
-            className="shrink-0 rounded-[14px]"
-            data-ke="get-directions"
-            aria-label={t("getDirections")}
-            onClick={() => void openDirections(d.lat, d.lng, name, directionsPlace)}
-          >
-            <MapPinned className="size-4" aria-hidden="true" />
-          </Button>
           {parentActions && live ? (
-            <div className="flex min-w-0 flex-1 flex-wrap gap-1.5" data-ke="listing-parent-actions">
-              <Button className="ke-sticky-action h-auto min-h-11 rounded-[14px] px-2 py-2 touch-manipulation" variant="secondary" data-ke="listing-sticky-cta" aria-label={t("requestInfo")} onClick={onInfo}>
-                <Info className="size-4 shrink-0" aria-hidden="true" />
-                <span className="ke-sticky-label">{t("stickyInfo")}</span>
-              </Button>
-              <Button className="ke-sticky-action h-auto min-h-11 rounded-[14px] px-2 py-2 touch-manipulation" variant="secondary" data-ke="listing-sticky-message" aria-label={t("message")} onClick={onMessage}>
-                <MessageCircle className="size-4 shrink-0" aria-hidden="true" />
-                <span className="ke-sticky-label">{t("stickyMessage")}</span>
-              </Button>
-            </div>
+            <Button className="min-h-11 shrink-0 rounded-full px-4 touch-manipulation" data-ke="listing-sticky-cta" onClick={onInfo}>
+              {locale === "fr" ? "Demander" : "Enquire"}
+            </Button>
           ) : parentActions ? (
-            <p className="min-w-0 flex-1 text-xs text-muted" data-ke="listing-not-live">{t("parentRequestNotLive")}</p>
+            <p className="max-w-[9rem] text-xs text-muted" data-ke="listing-not-live">{t("parentRequestNotLive")}</p>
           ) : null}
           {parentActions ? <SaveListingButton daycareId={d.id} nextPath={localePath(`/daycare/${slug}`, locale)} appearance="bar" className="shrink-0" /> : null}
           <ListingMoreActions compact>
             <ListingOverflowItems />
+            <ListingMoreItem onClick={onMessage} data-ke="listing-sticky-message">{t("stickyMessage")}</ListingMoreItem>
+            <span className="sr-only">{t("stickyInfo")}</span>
             <div className="px-1 py-1">
               <ShareListingButton slug={d.slug} name={name} appearance="labeled" className="w-full" />
               <FreeListingShareActions slug={d.slug} name={name} lat={d.lat} lng={d.lng} {...directionsPlace} />
             </div>
           </ListingMoreActions>
-          </div>
         </div>
       </div>
       ) : null}
