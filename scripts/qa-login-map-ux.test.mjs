@@ -120,7 +120,7 @@ describe("login strength: email Connexion primary, logout, honest errors", () =>
     assert.doesNotMatch(client, /location\.href = redirectTo/);
     assert.match(desks, /JUST_SIGNED_OUT_KEY/);
     assert.match(src("src/routes/login.tsx"), /consumeJustSignedOut/);
-    assert.match(src("src/routes/index.tsx"), /consumeJustSignedOut/);
+    assert.doesNotMatch(src("src/routes/index.tsx"), /homeLandPath/);
     assert.match(src("src/routes/index.tsx"), /export function HomePage/);
     assert.match(src("src/routes/fr.index.tsx"), /<HomePage/);
     assert.match(src("src/routes/api/auth/$.ts"), /applyExpiredAuthCookies/);

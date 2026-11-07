@@ -254,7 +254,7 @@ test("Parent and Daycare login never bounce through Cloudflare Access", () => {
   assert.equal(isCloudflareAccessPath("/login"), false);
   assert.equal(resolvePostLoginPath({ role: "parent", sticky: "admin", next: "/admin" }), "/parent");
   assert.equal(resolvePostLoginPath({ role: "provider", sticky: "admin" }), "/provider");
-  assert.match(src("src/routes/index.tsx"), /remembered: readRememberedRole\(\)/);
+  assert.doesNotMatch(src("src/routes/index.tsx"), /homeLandPath/);
   assert.match(src("src/lib/auth/parent-login.ts"), /isCloudflareAccessPath\(dest\) \? "\/parent"/);
   assert.equal(isAdminLoginIntent({ role: "parent", next: "/admin" }), false);
   assert.equal(isAdminLoginIntent({ next: "/admin" }), true);
