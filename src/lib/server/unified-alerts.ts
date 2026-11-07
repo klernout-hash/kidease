@@ -85,9 +85,11 @@ async function ensure(sql: Sql) {
   if (ensured) return;
   try {
     await sql.query(ENSURE_SQL);
+    await sql.query(`alter table unified_alert_prefs add column if not exists email_on int`);
+    await sql.query(`alter table unified_alert_prefs add column if not exists push_on int`);
     ensured = true;
   } catch {
-    /* next call retries */
+    ensured = false;
   }
 }
 
@@ -137,12 +139,12 @@ export async function readUnifiedSettings(userId: string, audience: UnifiedAudie
 
 export async function writeUnifiedSettings(
   userId: string,
-  settings: UnifiedSettings,
-  prefs: Array<{ typeId: string; enabled: boolean }>,
+  settings: UnifiedSettings | null,
+  prefs: Array<{ typeId: string; enabled: boolean; email?: boolean | null; push?: boolean | null }>,
 ): Promise<void> {
   const sql = await getSql();
   await ensure(sql);
-  await sql`
+  if (settings) await sql`
     insert into unified_alert_settings (
       user_id, master_enabled, in_app, email_on, push_on, quiet_start, quiet_end, quiet_custom, time_zone, digest, updated_at
     ) values (
@@ -172,10 +174,15 @@ export async function writeUnifiedSettings(
   `;
   for (const pref of prefs) {
     if (!isUnifiedAlertType(pref.typeId)) continue;
+    const email = pref.email == null ? null : pref.email ? 1 : 0;
+    const push = pref.push == null ? null : pref.push ? 1 : 0;
     await sql`
-      insert into unified_alert_prefs (user_id, type_id, enabled)
-      values (${userId}, ${pref.typeId}, ${pref.enabled ? 1 : 0})
-      on conflict (user_id, type_id) do update set enabled = excluded.enabled
+      insert into unified_alert_prefs (user_id, type_id, enabled, email_on, push_on)
+      values (${userId}, ${pref.typeId}, ${pref.enabled ? 1 : 0}, ${email}, ${push})
+      on conflict (user_id, type_id) do update set
+        enabled = excluded.enabled,
+        email_on = excluded.email_on,
+        push_on = excluded.push_on
     `;
   }
 }
@@ -188,12 +195,26 @@ async function typeEnabled(sql: Sql, userId: string, typeId: string): Promise<bo
   return on(rows[0]?.enabled);
 }
 
+function tri(value: number | boolean | null | undefined): boolean | null {
+  if (value == null) return null;
+  return on(value);
+}
+
 async function prefMap(sql: Sql, userId: string): Promise<Record<string, boolean>> {
   const rows = await sql<{ type_id: string; enabled: number | boolean }>`
     select type_id, enabled from unified_alert_prefs where user_id = ${userId}
   `.catch(() => [] as Array<{ type_id: string; enabled: number | boolean }>);
   const out: Record<string, boolean> = {};
   for (const row of rows) out[row.type_id] = on(row.enabled);
+  return out;
+}
+
+async function channelMap(sql: Sql, userId: string): Promise<Record<string, { email: boolean | null; push: boolean | null }>> {
+  const rows = await sql<{ type_id: string; email_on: number | null; push_on: number | null }>`
+    select type_id, email_on, push_on from unified_alert_prefs where user_id = ${userId}
+  `.catch(() => [] as Array<{ type_id: string; email_on: number | null; push_on: number | null }>);
+  const out: Record<string, { email: boolean | null; push: boolean | null }> = {};
+  for (const row of rows) out[row.type_id] = { email: tri(row.email_on), push: tri(row.push_on) };
   return out;
 }
 
@@ -321,11 +342,14 @@ export async function emitUnifiedAlert(candidate: UnifiedCandidate): Promise<{ s
   const audience: UnifiedAudience = type.audience === "admin" ? "admin" : type.audience;
   const settings = await readUnifiedSettings(candidate.userId, audience === "admin" ? "parent" : audience);
   const enabled = await typeEnabled(sql, candidate.userId, candidate.typeId);
+  const channelsForType = (await channelMap(sql, candidate.userId))[candidate.typeId] || { email: null, push: null };
   const blocked = await blockedPair(sql, candidate);
   const decision = decideUnifiedAlert({
     typeId: candidate.typeId,
     settings,
     typeEnabled: enabled,
+    typeEmail: channelsForType.email,
+    typePush: channelsForType.push,
     flagOn: true,
     live: unifiedAlertsLive(),
     pushArmed: pushArmed(),
@@ -364,15 +388,15 @@ export async function emitUnifiedAlert(candidate: UnifiedCandidate): Promise<{ s
   `.catch(() => [] as Array<{ id: string }>);
   if (!inserted.length) return { status: "skipped", reason: "duplicate" };
   if (decision.outbound === "now") {
-    await deliverOutbound(candidate.userId, text, safeUnifiedHref(candidate.href), decision.channels, {
+    const sent = await deliverOutbound(candidate.userId, text, safeUnifiedHref(candidate.href), decision.channels, {
       centreName: candidate.daycareId ? candidate.name : "",
       locale,
     });
-    if (decision.channels.includes("email") || decision.channels.includes("push")) {
+    if (sent.email || sent.push) {
       await sql`
         update unified_alert_events
-        set emailed_at = case when ${decision.channels.includes("email") ? 1 : 0} = 1 then now() else emailed_at end,
-            pushed_at = case when ${decision.channels.includes("push") ? 1 : 0} = 1 then now() else pushed_at end
+        set emailed_at = case when ${sent.email ? 1 : 0} = 1 then now() else emailed_at end,
+            pushed_at = case when ${sent.push ? 1 : 0} = 1 then now() else pushed_at end
         where id = ${id}
       `.catch(() => undefined);
     }
@@ -386,12 +410,13 @@ async function deliverOutbound(
   href: string,
   channels: string[],
   meta?: { centreName?: string; locale?: "en" | "fr" },
-): Promise<void> {
-  if (unifiedDeliveryBlocked(process.env) || !unifiedAlertsLive()) return;
+): Promise<{ email: boolean; push: boolean }> {
+  const sent = { email: false, push: false };
+  if (unifiedDeliveryBlocked(process.env) || !unifiedAlertsLive()) return sent;
   if (channels.includes("email")) {
     const user = await lookupUser(userId).catch(() => null);
     const email = user?.email?.trim() || "";
-    if (email && !(await isSuppressed(email).catch(() => false))) {
+    if (email && user?.emailVerified === true && !(await isSuppressed(email).catch(() => false))) {
       const { sendTransactionalMail } = await import("@/lib/transactional-mail");
       const { brandedNotice } = await import("@/lib/email-layout");
       const { isAdminOnlyListing } = await import("@/lib/listing-visibility");
@@ -399,26 +424,37 @@ async function deliverOutbound(
       const locale = meta?.locale === "fr" ? "fr" : "en";
       const origin = (process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://www.kidease.ca").replace(/\/$/, "");
       const ctaHref = href.startsWith("http") ? href : `${origin}${href.startsWith("/") ? href : `/${href}`}`;
-      await sendTransactionalMail({
-        purpose: "customer_alert",
-        to: email,
-        subject: text.title,
-        text: text.body,
-        html: `<p>${safeBody}</p>`,
-        aboutTestListing: Boolean(meta?.centreName) && isAdminOnlyListing({ name: meta?.centreName }),
-        branded: brandedNotice({
-          heading: text.title,
+      try {
+        await sendTransactionalMail({
+          purpose: "customer_alert",
+          to: email,
+          subject: text.title,
           text: text.body,
-          locale,
-          cta: /^https:\/\//i.test(ctaHref) ? { label: locale === "fr" ? "Ouvrir" : "Open", href: ctaHref } : undefined,
-        }),
-      }).catch(() => undefined);
+          html: `<p>${safeBody}</p>`,
+          aboutTestListing: Boolean(meta?.centreName) && isAdminOnlyListing({ name: meta?.centreName }),
+          branded: brandedNotice({
+            heading: text.title,
+            text: text.body,
+            locale,
+            cta: /^https:\/\//i.test(ctaHref) ? { label: locale === "fr" ? "Ouvrir" : "Open", href: ctaHref } : undefined,
+          }),
+        });
+        sent.email = true;
+      } catch {
+        sent.email = false;
+      }
     }
   }
   if (channels.includes("push") && pushArmed()) {
-    const { sendPushNotification } = await import("@/lib/server/push.server");
-    await sendPushNotification({ userId, title: text.title, body: text.body, url: href }).catch(() => undefined);
+    try {
+      const { sendPushNotification } = await import("@/lib/server/push.server");
+      await sendPushNotification({ userId, title: text.title, body: text.body, url: href });
+      sent.push = true;
+    } catch {
+      sent.push = false;
+    }
   }
+  return sent;
 }
 
 export async function emitPluginHook(input: Parameters<typeof planPluginHook>[0] & { hook: PluginHook | string }) {
@@ -569,6 +605,7 @@ export async function unifiedDesk(userId: string, native: boolean) {
   const sql = await getSql();
   await ensure(sql);
   const prefs = await prefMap(sql, userId);
+  const channels = await channelMap(sql, userId);
   const events = await listUnifiedEvents(userId, native);
   return {
     enabled: unifiedAlertsEnabled(),
@@ -577,6 +614,7 @@ export async function unifiedDesk(userId: string, native: boolean) {
     audiences,
     settings,
     prefs,
+    channels,
     events,
   };
 }
