@@ -753,6 +753,11 @@ export function Listing() {
           </Button>
         ) : null}
         {parentActions && !live ? (
+          <Button className="min-h-11 rounded-[14px] touch-manipulation" variant="secondary" asChild>
+            <Link to={localePath("/search", locale)}>{t("searchNearbyShort")}</Link>
+          </Button>
+        ) : null}
+        {parentActions && !live ? (
           <p className="text-xs text-muted" data-ke="listing-not-live">{t("parentRequestNotLive")}</p>
         ) : null}
         <DirectionsButton />
