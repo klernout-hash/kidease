@@ -238,6 +238,13 @@ export function AppTabBar() {
               <MenuTab active={menuActive} />
             </>
           ) : null}
+          {kind === "government" && !storeTabs ? (
+            <>
+              <Tab to={localePath("/gov", locale)} label={locale === "fr" ? "Bureau" : "Desk"} icon={Building2} marker="gov" active={bare.startsWith("/gov")} />
+              <Tab to={localePath("/search", locale)} label={locale === "fr" ? "Fiches" : "Listings"} icon={Search} marker="listings" active={bare === "/search" || bare.startsWith("/search/") || bare.startsWith("/daycare")} />
+              <Tab to="/account" search={{ tab: "profile" }} label={t("account")} icon={Menu} marker="account" active={bare.startsWith("/account")} />
+            </>
+          ) : null}
           {kind === "guest" && !storeTabs && !airbnb ? (
             <>
               <Tab

@@ -122,7 +122,10 @@ export function Shell({ children }: { children: ReactNode }) {
     pathname.startsWith("/menu");
   const menuLeaf = isMenuLeafPath(pathname);
 
-  const homeTo = localePath("/", locale);
+  const homeTo = chrome.role === "government" ? localePath("/gov", locale) : localePath("/", locale);
+  const govBrowsing =
+    chrome.role === "government" &&
+    (barePath === "/" || barePath.startsWith("/search") || barePath.startsWith("/daycare"));
   const drawerItems = [
     { to: localePath("/help", locale), label: t("helpTitle"), icon: "help" as const },
     { to: localePath("/faq", locale), label: t("faqShort"), icon: "faq" as const },
@@ -330,7 +333,7 @@ export function Shell({ children }: { children: ReactNode }) {
         role={chrome.role}
         paid={chrome.paid}
         isAdmin={!viewingGuest && canSeeAdminDesk(session?.role, session?.email ?? user?.primaryEmail)}
-        onSignOut={() => void signOut("/")}
+        onSignOut={() => void signOut(chrome.role === "government" ? localePath("/gov/login", locale) : "/")}
         headerExtra={null}
         navExtra={hiddenCare.length ? <HeaderCareOverflow types={hiddenCare} city={headerCity} onNavigate={close} /> : null}
       />
@@ -338,6 +341,14 @@ export function Shell({ children }: { children: ReactNode }) {
         <ApplyPendingShortlist />
         <ApplyReferral />
         <div className="ke-page min-h-0 min-w-0 flex-1" data-ke="page">
+          {govBrowsing ? (
+            <p className="ke-gutter flex flex-wrap items-center justify-between gap-2 bg-surface py-2 text-sm" data-ke="gov-public-browse">
+              <span>{locale === "fr" ? "Fiches publiques permises, partout au Canada." : "Public licensed listings, all of Canada."}</span>
+              <a className="inline-flex min-h-11 items-center font-semibold text-primary" href={locale === "fr" ? "/fr/gov" : "/gov"}>
+                {locale === "fr" ? "Retour au bureau" : "Return to the government desk"}
+              </a>
+            </p>
+          ) : null}
           {children}
           {hideFooter ? null : <SiteFooter />}
         </div>
