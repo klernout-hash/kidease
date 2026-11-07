@@ -1431,6 +1431,21 @@ async function signOutFromMenu(page) {
   await page.waitForURL((url) => url.pathname === "/" || url.pathname === "", { timeout: timeoutMs });
 }
 
+async function openProfileAbout(page) {
+  const about = page.locator('[data-ke="profile-edit-about"]');
+  const edit = page.locator('[data-ke="profile-edit"]').first();
+  if ((await about.count()) === 0) {
+    await edit.click();
+    const opened = await about.waitFor({ timeout: 8000 }).then(() => true).catch(() => false);
+    if (!opened) {
+      const href = await edit.getAttribute("href");
+      if (!href) throw new Error("profile edit link has no address");
+      await page.goto(new URL(href, page.url()).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    }
+  }
+  await about.waitFor({ timeout: timeoutMs });
+}
+
 async function runSignedInSessions(page, base) {
   const context = page.context();
   await setFixture(context, base, { role: "parent" });
@@ -1515,9 +1530,7 @@ async function runSignedInSessions(page, base) {
 
       await page.goto(new URL(item.account, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
       const photo = await page.getByRole("link", { name: /sign in to add a photo|connectez-vous pour ajouter une photo/i }).count();
-      const openProfileEdit = page.locator('[data-ke="profile-edit"]');
-      await openProfileEdit.click();
-      await page.locator('[data-ke="profile-edit-about"]').waitFor({ timeout: timeoutMs });
+      await openProfileAbout(page);
       const bioBox = page.locator("textarea").first();
       if (tag === "parent-en") {
         await page.waitForFunction(() => {
@@ -1549,8 +1562,8 @@ async function runSignedInSessions(page, base) {
           note: `${page.url()} updateUser=${rewroteSession}`,
         });
         if (!stayed || !stillIn) throw new Error(`unchanged save left ${page.url()}`);
-        await editAgain.click();
       }
+      await openProfileAbout(page);
       await page.locator('[data-ke="profile-edit-about"]').click();
       await bioBox.waitFor({ timeout: timeoutMs });
       const bio = `Saved ${tag} ${Date.now()}`;
@@ -1566,7 +1579,7 @@ async function runSignedInSessions(page, base) {
       await saved;
       await waitUntilEditClosed(page);
       await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
-      await page.locator('[data-ke="profile-edit"]').click();
+      await openProfileAbout(page);
       await page.locator('[data-ke="profile-edit-about"]').click();
       await page.waitForFunction((expected) => {
         const box = document.querySelector("textarea");

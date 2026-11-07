@@ -733,7 +733,7 @@ function ProfilePane() {
           {section === "profile" && !editing && canEditProfile ? (
             <Link
               to={accountTo}
-              search={{ ...homeSearch, edit: "1" as const }}
+              search={{ ...homeSearch, section: "profile" as const, edit: "1" as const }}
               data-ke="profile-edit"
               className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-primary touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
             >
