@@ -91,6 +91,18 @@ export const checkDailyFee = createServerFn({ method: "POST" })
     return { ok: true as const, decision };
   });
 
+async function govFlagCounts(province: string) {
+  const sql = await sqlClient();
+  const rows = await sql<{ age_key: string }>`
+    select age_key
+    from fee_cap_flags
+    where province = ${province}
+  `.catch(() => []);
+  const counts = new Map<string, number>();
+  for (const row of rows) counts.set(row.age_key, (counts.get(row.age_key) ?? 0) + 1);
+  return [...counts.entries()].map(([age_key, n]) => ({ age_key, n }));
+}
+
 async function govFlags(province: string) {
   const sql = await sqlClient();
   const rows = await sql<{ name: string; age_key: string; daily_cents: number; cap_cents: number | null }>`
@@ -111,8 +123,8 @@ export const loadGovFees = createServerFn({ method: "GET" })
     const gov = context.gov as { province: string; userId: string };
     const scope = await readScope(gov.userId);
     const province = scope?.province || gov.province;
-    if (mode === "off") return { enabled: false as const, mode, province, rows: [] };
-    return { enabled: true as const, mode, province, rows: await govFlags(province) };
+    if (mode === "off") return { enabled: false as const, mode, province, rows: [], counts: [] };
+    return { enabled: true as const, mode, province, rows: [], counts: await govFlagCounts(province) };
   });
 
 export const loadAdminFees = createServerFn({ method: "GET" })

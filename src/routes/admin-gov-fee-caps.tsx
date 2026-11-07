@@ -8,4 +8,4 @@ export const Route = createFileRoute("/admin-gov-fee-caps")({
   head: () => ({ meta: [{ title: "Fee caps · KidEase" }, { name: "robots", content: "noindex, nofollow" }] }),
   component: Page,
 });
-function Page() { return <GovFeesPage data={Route.useLoaderData()} locale="en" />; }
+function Page() { return <GovFeesPage data={Route.useLoaderData()} locale="en" showCentres />; }

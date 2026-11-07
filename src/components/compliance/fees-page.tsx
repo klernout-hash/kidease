@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { suppressRows } from "@/lib/gov/k-anonymity";
 import { ComplianceFrame } from "@/components/compliance/frame";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,7 @@ import { feeCopy, publishedCapsFor } from "@/lib/compliance/fees";
 import type { PackMode } from "@/lib/compliance/mode";
 import { checkDailyFee } from "@/lib/server/compliance-fees";
 type CentreData = { enabled: boolean; mode: PackMode; centres: { id: string; name: string; province: string }[]; rows: { age_key: string; daily_cents: number; cap_cents: number | null }[] };
-type GovData = { enabled: boolean; mode: PackMode; province: string; rows: { name: string; age_key: string; daily_cents: number; cap_cents: number | null }[] };
+type GovData = { enabled: boolean; mode: PackMode; province: string; rows: { name: string; age_key: string; daily_cents: number; cap_cents: number | null }[]; counts?: { age_key: string; n: number }[] };
 export function CentreFeesPage({ data, locale }: { data: CentreData; locale: "en" | "fr" }) {
   const copy = feeCopy(locale);
   const { celebrate } = useSuccessConfirm();
@@ -52,9 +53,11 @@ export function CentreFeesPage({ data, locale }: { data: CentreData; locale: "en
     </ComplianceFrame>
   );
 }
-export function GovFeesPage({ data, locale }: { data: GovData; locale: "en" | "fr" }) {
+export function GovFeesPage({ data, locale, showCentres = false }: { data: GovData; locale: "en" | "fr"; showCentres?: boolean }) {
   const copy = feeCopy(locale);
   const caps = publishedCapsFor(data.province);
+  const counts = data.counts ?? [];
+  const flagged = showCentres ? data.rows.length : counts.reduce((sum, row) => sum + row.n, 0);
   return (
     <ComplianceFrame locale={locale} title={locale === "fr" ? "Plafonds de tarifs" : "Fee caps"} copy={{ ...copy, what: copy.govWhat, why: copy.govWhy }} mode={data.mode} gov>
       <p>{data.province}</p>
@@ -69,8 +72,17 @@ export function GovFeesPage({ data, locale }: { data: GovData; locale: "en" | "f
       ) : (
         <p className="mt-3 text-sm">{copy.empty}</p>
       )}
-      {data.rows.length === 0 && caps.length ? <p className="mt-3 text-sm" data-ke="gov-fee-assess">{locale === "fr" ? "Impossible d’évaluer. Les tarifs quotidiens comparables ne sont pas au dossier." : "Unable to assess. Comparable daily fees are not on file."}</p> : null}
-      <ul className="mt-3 space-y-2">{data.rows.map((row, i) => <li key={i}>{row.name} — {row.age_key}</li>)}</ul>
+      {flagged === 0 && caps.length ? <p className="mt-3 text-sm" data-ke="gov-fee-assess">{locale === "fr" ? "Impossible d’évaluer. Les tarifs quotidiens comparables ne sont pas au dossier." : "Unable to assess. Comparable daily fees are not on file."}</p> : null}
+      {showCentres ? <ul className="mt-3 space-y-2">{data.rows.map((row, i) => <li key={i}>{row.name} — {row.age_key}</li>)}</ul> : (
+        <>
+          <p className="mt-3 text-sm" data-ke="gov-fee-aggregate">{locale === "fr" ? "Les noms des centres restent hors de ce bureau. Un total est un signal enregistré ici, pas un constat officiel de tarif." : "Centre names stay off this desk. A count is a flag saved here, not an official fee finding."}</p>
+          <ul className="mt-3 space-y-2">
+            {suppressRows(counts).map((row) => (
+              <li key={row.age_key}>{row.age_key}: {row.suppressed ? (locale === "fr" ? "masqué (<5)" : "hidden (<5)") : row.n}</li>
+            ))}
+          </ul>
+        </>
+      )}
       <Button asChild className="mt-4"><a href={locale === "fr" ? "/fr/gov" : "/gov"}>{locale === "fr" ? "Bureau du gouvernement" : "Government desk"}</a></Button>
     </ComplianceFrame>
   );
