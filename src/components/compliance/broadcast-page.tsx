@@ -39,6 +39,7 @@ export function GovBroadcastPage({ data, locale, admin }: { data: Data; locale: 
           <Button type="submit" disabled={busy}>{copy.next}</Button>
         </form>
       )}
+      <p className="mt-3 text-sm" data-ke="gov-broadcast-separate">{locale === "fr" ? "Préparer un avis ne change pas un statut de permis et ne modifie pas les totaux de l’aperçu." : "Preparing a notice does not change a licence status and does not change the overview counts."}</p>
       <ul className="mt-4 space-y-2">{data.rows.map((row) => <li key={row.id} className="text-sm">{row.body}</li>)}</ul>
     </ComplianceFrame>
   );

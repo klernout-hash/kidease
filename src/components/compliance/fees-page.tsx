@@ -56,7 +56,7 @@ export function GovFeesPage({ data, locale }: { data: GovData; locale: "en" | "f
   const copy = feeCopy(locale);
   const caps = publishedCapsFor(data.province);
   return (
-    <ComplianceFrame locale={locale} title={locale === "fr" ? "Tarifs au-dessus du plafond" : "Fees above the cap"} copy={{ ...copy, what: copy.govWhat, why: copy.govWhy }} mode={data.mode} gov>
+    <ComplianceFrame locale={locale} title={locale === "fr" ? "Plafonds de tarifs" : "Fee caps"} copy={{ ...copy, what: copy.govWhat, why: copy.govWhy }} mode={data.mode} gov>
       <p>{data.province}</p>
       {caps.length ? (
         <ul className="mt-3 space-y-2 text-sm">

@@ -1,5 +1,6 @@
 import type { GovDashboard } from "@/lib/gov/aggregate";
 import { govCopy } from "@/lib/gov/copy";
+import { GovSectionStrip } from "@/components/gov/gov-section-strip";
 
 /** Same PDF and CSV the dashboard already builds. This page is the /gov/exports address. */
 export function GovExportsPage({ data }: { data: GovDashboard }) {
@@ -18,6 +19,8 @@ export function GovExportsPage({ data }: { data: GovDashboard }) {
         <p className="text-sm font-medium text-muted">{copy.what}</p>
         <h1 className="mt-1 font-display text-3xl">{copy.exportsTitle}</h1>
         <p className="mt-2 max-w-2xl text-base">{copy.exportsWhy}</p>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted" data-ke="gov-export-limit">{copy.exportsLimit}</p>
+        <GovSectionStrip locale={data.locale} />
         <p className="mt-2 text-sm text-muted">{data.placeLabel}</p>
         <div className="mt-6 flex flex-wrap gap-3">
           <a

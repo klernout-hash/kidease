@@ -58,7 +58,7 @@ export function broadcastCopy(locale: "en" | "fr") {
   if (locale === "fr") {
     return {
       what: "KidEase pour votre province",
-      why: "Rédigez un avis de fermeture pour les garderies et les parents touchés.",
+      why: "Rédigez un avis de fermeture. Le préparer n’est pas une décision de permis, et c’est distinct des totaux de l’aperçu.",
       next: "Préparer l’avis",
       help: "Aide",
       home: "Accueil",
@@ -69,7 +69,7 @@ export function broadcastCopy(locale: "en" | "fr") {
   }
   return {
     what: "KidEase for your province",
-    why: "Write a closure notice for the daycares and parents it affects.",
+    why: "Write a closure notice. Preparing it is not a licence decision, and it is separate from the overview counts.",
     next: "Prepare the notice",
     help: "Help",
     home: "Home",

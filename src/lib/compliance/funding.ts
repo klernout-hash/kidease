@@ -102,7 +102,7 @@ export function fundingCopy(locale: "en" | "fr") {
       practice: "Mode pratique : les écarts sont notés. Rien n’est soumis.",
       empty: "Aucun chiffre pour ce mois.",
       govWhat: "KidEase pour votre province",
-      govWhy: "Voyez les totaux et les écarts. Aucun nom d’enfant.",
+      govWhy: "Lignes de financement enregistrées dans cet outil pour le mois. Un mois vide ne permet aucune conclusion financière. Aucun nom d’enfant.",
     };
   }
   return {
@@ -115,6 +115,6 @@ export function fundingCopy(locale: "en" | "fr") {
     practice: "Practice mode: mismatches are noted. Nothing is submitted.",
     empty: "No numbers for this month.",
     govWhat: "KidEase for your province",
-    govWhy: "See totals and mismatches. No child names.",
+    govWhy: "Funding rows saved in this tool for the month. No financial conclusion is made from an empty month. No child names.",
   };
 }

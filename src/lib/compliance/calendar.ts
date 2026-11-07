@@ -134,7 +134,7 @@ export function calendarCopy(locale: "en" | "fr") {
       practice: "Mode pratique : les rappels sont écrits, pas envoyés.",
       empty: "Aucune date pour l’instant.",
       govWhat: "KidEase pour votre province",
-      govWhy: "Voyez les dates en retard dans votre province. Aucun renseignement sur un enfant.",
+      govWhy: "Dates qu’un fournisseur a enregistrées dans cet outil. Un permis, un document, une inspection et un constat officiel sont distincts. Aucun renseignement sur un enfant.",
     };
   }
   return {
@@ -147,7 +147,7 @@ export function calendarCopy(locale: "en" | "fr") {
     practice: "Practice mode: reminders are written down, not sent.",
     empty: "No dates yet.",
     govWhat: "KidEase for your province",
-    govWhy: "See overdue dates in your province. No child details.",
+    govWhy: "Dates a provider saved in this tool. A licence date, a document, an inspection, and an official finding are different. No child details.",
   };
 }
 

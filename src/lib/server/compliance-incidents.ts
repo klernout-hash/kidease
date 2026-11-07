@@ -115,10 +115,20 @@ export const loadParentIncidents = createServerFn({ method: "GET" })
     return { enabled: true as const, mode, rows };
   });
 
+async function govCounts(province: string) {
+  const sql = await sqlClient();
+  const kinds = await sql<{ kind: string }>`
+    select kind
+    from serious_incidents
+    where province = ${province}
+  `.catch(() => []);
+  return { filings: [], counts: incidentAggregate(kinds.map((row) => ({ kind: row.kind, province })), province) };
+}
+
 async function govRows(province: string) {
   const sql = await sqlClient();
-  const filings = await sql<{ id: string; kind: string; summary: string; child_label: string | null; filed_at: string | null; aware_at: string }>`
-    select id, kind, summary, child_label, filed_at, aware_at
+  const filings = await sql<{ id: string; kind: string; summary: string; filed_at: string | null; aware_at: string }>`
+    select id, kind, summary, filed_at, aware_at
     from serious_incidents
     where province = ${province}
     order by aware_at desc
@@ -128,7 +138,7 @@ async function govRows(province: string) {
     filings.map((row) => ({ kind: row.kind, province })),
     province,
   );
-  return { filings, counts };
+  return { filings: filings.map((row) => ({ ...row, child_label: null })), counts };
 }
 
 export const loadGovIncidents = createServerFn({ method: "GET" })
@@ -139,7 +149,7 @@ export const loadGovIncidents = createServerFn({ method: "GET" })
     const scope = await readScope(gov.userId);
     const province = scope?.province || gov.province;
     if (mode === "off") return { enabled: false as const, mode, province, filings: [], counts: [] };
-    const data = await govRows(province);
+    const data = await govCounts(province);
     return { enabled: true as const, mode, province, ...data };
   });
 

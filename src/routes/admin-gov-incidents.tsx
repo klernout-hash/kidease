@@ -17,5 +17,5 @@ export const Route = createFileRoute("/admin-gov-incidents")({
 
 function Page() {
   const data = Route.useLoaderData();
-  return <GovIncidentsPage data={data} locale="en" />;
+  return <GovIncidentsPage data={data} locale="en" showFilings />;
 }

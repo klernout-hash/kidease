@@ -108,7 +108,7 @@ export function complaintCopy(locale: "en" | "fr") {
       practice: "Mode pratique : le bureau verrait ceci. Rien n’est envoyé.",
       empty: "Aucune plainte dans votre province.",
       govWhat: "KidEase pour votre province",
-      govWhy: "Voyez les plaintes de votre province et les délais.",
+      govWhy: "Plaintes enregistrées dans cet outil. Une plainte est une allégation, pas un constat officiel. Une liste vide ne prouve pas qu’il n’y a eu aucune plainte.",
     };
   }
   return {
@@ -121,6 +121,6 @@ export function complaintCopy(locale: "en" | "fr") {
     practice: "Practice mode: the office would see this. Nothing is sent.",
     empty: "No complaints in your province.",
     govWhat: "KidEase for your province",
-    govWhy: "See complaints for your province and the time left.",
+    govWhy: "Complaints saved in this tool. A complaint is an allegation, not an official finding. An empty list is not proof there were no complaints.",
   };
 }

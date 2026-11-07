@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { GovHelp } from "@/components/gov/gov-help";
+import { GovSectionStrip } from "@/components/gov/gov-section-strip";
 import type { PackMode } from "@/lib/compliance/mode";
 
 export function ComplianceFrame({
@@ -41,6 +42,7 @@ export function ComplianceFrame({
         <p className="text-sm font-medium text-muted">{copy.what}</p>
         <h1 className="mt-1 font-display text-3xl">{title}</h1>
         <p className="mt-2 max-w-2xl text-base">{copy.why}</p>
+        {gov ? <GovSectionStrip locale={locale} /> : null}
         {mode === "off" ? <p className="mt-4 rounded-2xl bg-surface px-4 py-3 text-sm ring-1 ring-border">{copy.off}</p> : null}
         {mode === "dry_run" ? (
           <p className="mt-4 rounded-2xl bg-surface px-4 py-3 text-sm ring-1 ring-border" role="status">
