@@ -88,7 +88,7 @@ export type GovDashboard = {
   fees: Array<{ bucket: string; kind: "confirmed" | "uncited"; centres: GovNumber; suppressed: boolean }>;
   waitlist: Array<{ age: string; start: string; n: GovNumber; suppressed: boolean }>;
   trends: Array<{ month: string; listings: GovNumber; vacancyUpdates: GovNumber; jobs: GovNumber }>;
-  map: Array<{ lat: number; lng: number; centres: number; capacity: number; openSpots: number; desert: number | null }>;
+  map: Array<{ lat: number; lng: number; centres: number; capacity: number | null; openSpots: number | null; desert: number | null }>;
   desert: { population: number | null; perSpace: number | null; source: string | null };
   selectors: {
     provinces: Array<{ code: string; name: string }>;
@@ -291,6 +291,23 @@ export function buildGovDashboard(
 
   const fillDays = raw.fill.n >= K_ANONYMITY && raw.fill.avgDays != null ? Math.round(raw.fill.avgDays * 10) / 10 : null;
   const desert = desertFor(scope, suppressCount(capacity));
+  const feeParts = suppressRows([
+    { key: "confirmed" as const, n: feesConfirmed },
+    { key: "uncited" as const, n: feesUncited },
+    { key: "none" as const, n: Math.max(0, directory - feesConfirmed - feesUncited) },
+  ]);
+  const feePart = (key: "confirmed" | "uncited" | "none") => {
+    const row = feeParts.find((part) => part.key === key);
+    return row && !row.suppressed ? row.n : null;
+  };
+  const programParts = suppressRows([
+    { key: "known" as const, n: cwelcc },
+    { key: "unknown" as const, n: Math.max(0, licensed - cwelcc) },
+  ]);
+  const programPart = (key: "known" | "unknown") => {
+    const row = programParts.find((part) => part.key === key);
+    return row && !row.suppressed ? row.n : null;
+  };
 
   const map = visibleCities
     .filter((row) => Number.isFinite(row.lat) && Number.isFinite(row.lng) && row.n != null)
@@ -301,8 +318,8 @@ export function buildGovDashboard(
         lat: row.lat,
         lng: row.lng,
         centres: row.n as number,
-        capacity: cap ?? 0,
-        openSpots: suppressCount(row.openSpots) ?? 0,
+        capacity: cap,
+        openSpots: suppressCount(row.openSpots),
         desert: cityDesert != null && cap != null && cap > 0 ? Math.round((cityDesert / cap) * 10) / 10 : null,
       };
     });
@@ -331,15 +348,15 @@ export function buildGovDashboard(
       vacancyFresh30: suppressCount(fresh),
       openSpots: suppressCount(openSpots),
       avgFillDays: fillDays,
-      cwelccKnown: suppressCount(cwelcc),
-      cwelccUnknown: suppressCount(Math.max(0, licensed - cwelcc)),
+      cwelccKnown: programPart("known"),
+      cwelccUnknown: programPart("unknown"),
       frenchCentres: suppressCount(french),
       englishCentres: suppressCount(english),
       inclusionCentres: suppressCount(inclusion),
       jobPosts: suppressCount(raw.jobs),
-      feesConfirmedCentres: suppressCount(feesConfirmed),
-      feesUncitedCentres: suppressCount(feesUncited),
-      feesNoneCentres: suppressCount(Math.max(0, directory - feesConfirmed - feesUncited)),
+      feesConfirmedCentres: feePart("confirmed"),
+      feesUncitedCentres: feePart("uncited"),
+      feesNoneCentres: feePart("none"),
     },
     cities: cityRows.map((row) => ({
       label: row.suppressed ? "" : row.label,
