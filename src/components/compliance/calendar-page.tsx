@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { suppressRows } from "@/lib/gov/k-anonymity";
 import { ComplianceFrame } from "@/components/compliance/frame";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ type GovData = {
   province: string;
   overdue: number;
   rows: { daycareId: string; kind: string; dueOn: string }[];
+  counts?: { kind: string; n: number }[];
 };
 
 export function CentreCalendarPage({ data, locale }: { data: CentreData; locale: "en" | "fr" }) {
@@ -88,8 +90,9 @@ export function CentreCalendarPage({ data, locale }: { data: CentreData; locale:
   );
 }
 
-export function GovCalendarPage({ data, locale }: { data: GovData; locale: "en" | "fr" }) {
+export function GovCalendarPage({ data, locale, showDates = false }: { data: GovData; locale: "en" | "fr"; showDates?: boolean }) {
   const copy = calendarCopy(locale);
+  const counts = data.counts ?? [];
   return (
     <ComplianceFrame locale={locale} title={locale === "fr" ? "Dates de permis" : "Licence dates"} copy={{ ...copy, what: copy.govWhat, why: locale === "fr" ? "Seules les dates enregistrées dans cet outil. Un permis, un document, une inspection et un constat officiel sont des choses distinctes." : "Only dates saved in this tool. A licence, a document, an inspection, and an official finding are different things." }} mode={data.mode} gov>
       <ul className="mt-3 space-y-2 text-sm leading-6" data-ke="gov-status-lanes">
@@ -99,15 +102,29 @@ export function GovCalendarPage({ data, locale }: { data: GovData; locale: "en" 
         <li>{locale === "fr" ? "Constats officiels : non chargés. Une plainte n’est pas un constat." : "Official findings: not loaded. A complaint is not a finding."}</li>
         <li>{locale === "fr" ? "Fraîcheur de la fiche : un import en retard est un problème de source, pas une infraction." : "Listing freshness: a late import is a feed issue, not a provider violation."}</li>
       </ul>
-      <p className="mt-3 text-sm">{locale === "fr" ? "Dates en retard suivies dans cet outil" : "Tracked overdue dates in this tool"}: {data.overdue}. {locale === "fr" ? "Un zéro ne veut pas dire que chaque permis est à jour." : "A zero does not mean every licence is current."}</p>
-      {data.rows.length === 0 ? <p className="mt-3 text-sm" data-ke="gov-no-dates">{locale === "fr" ? "Aucune date suivie. Un zéro ne veut pas dire que chaque permis est à jour." : "No tracked dates. A zero does not mean every licence is current."}</p> : null}
-      <ul className="mt-3 space-y-2">
-        {data.rows.map((row) => (
-          <li key={`${row.daycareId}-${row.kind}-${row.dueOn}`} className="rounded-2xl bg-surface px-4 py-3 text-sm ring-1 ring-border">
-            {row.kind.replaceAll("_", " ")} — {row.dueOn}
-          </li>
-        ))}
-      </ul>
+      {showDates ? (
+        <>
+          <p className="mt-3 text-sm">{locale === "fr" ? "Dates en retard suivies dans cet outil" : "Tracked overdue dates in this tool"}: {data.overdue}. {locale === "fr" ? "Un zéro ne veut pas dire que chaque permis est à jour." : "A zero does not mean every licence is current."}</p>
+          {data.rows.length === 0 ? <p className="mt-3 text-sm" data-ke="gov-no-dates">{locale === "fr" ? "Aucune date suivie. Un zéro ne veut pas dire que chaque permis est à jour." : "No tracked dates. A zero does not mean every licence is current."}</p> : null}
+          <ul className="mt-3 space-y-2">
+            {data.rows.map((row) => (
+              <li key={`${row.daycareId}-${row.kind}-${row.dueOn}`} className="rounded-2xl bg-surface px-4 py-3 text-sm ring-1 ring-border">
+                {row.kind.replaceAll("_", " ")} — {row.dueOn}
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <>
+          <p className="mt-3 text-sm" data-ke="gov-date-counts">{locale === "fr" ? "Totaux seulement. Le centre et sa date restent hors de ce bureau. Un petit groupe est masqué." : "Counts only. The centre and its date stay off this desk. A small group is hidden."}</p>
+          {counts.length === 0 ? <p className="mt-3 text-sm" data-ke="gov-no-dates">{locale === "fr" ? "Aucune date suivie. Un zéro ne veut pas dire que chaque permis est à jour." : "No tracked dates. A zero does not mean every licence is current."}</p> : null}
+          <ul className="mt-3 space-y-2">
+            {suppressRows(counts).map((row) => (
+              <li key={row.kind}>{row.kind.replaceAll("_", " ")}: {row.suppressed ? (locale === "fr" ? "masqué (<5)" : "hidden (<5)") : row.n}</li>
+            ))}
+          </ul>
+        </>
+      )}
       <Button asChild className="mt-4">
         <a href={locale === "fr" ? "/fr/gov" : "/gov"}>{locale === "fr" ? "Bureau du gouvernement" : "Government desk"}</a>
       </Button>

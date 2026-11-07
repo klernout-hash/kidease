@@ -96,9 +96,18 @@ export const loadGovCalendar = createServerFn({ method: "GET" })
     const gov = context.gov as { province: string; userId: string };
     const scope = await readScope(gov.userId);
     const province = scope?.province || gov.province;
-    if (mode === "off") return { enabled: false as const, mode, province, overdue: 0, rows: [] };
+    if (mode === "off") return { enabled: false as const, mode, province, overdue: 0, rows: [], counts: [] };
     const data = await govOverdue(province, "government", province);
-    return { enabled: true as const, mode, province, ...data };
+    const counts = new Map<string, number>();
+    for (const row of data.rows) counts.set(row.kind, (counts.get(row.kind) ?? 0) + 1);
+    return {
+      enabled: true as const,
+      mode,
+      province,
+      overdue: 0,
+      rows: [],
+      counts: [...counts.entries()].map(([kind, n]) => ({ kind, n })),
+    };
   });
 
 export const loadAdminCalendar = createServerFn({ method: "GET" })
