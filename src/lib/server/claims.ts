@@ -15,7 +15,7 @@ import { callerIsAdmin } from "./public-listing";
 import { mapDaycare, type DaycareRow } from "./map-row";
 import { lookupUser, notifyPlatform, notifyProviderJoined } from "./notify";
 import { writeProfileRole } from "./roles";
-import { applyInteriorPhotos, applyManagedListingPhotos, applyStorefrontPhoto, listingPhotosChanged, MAX_LISTING_PHOTOS } from "@/lib/listing-photo";
+import { applyInteriorPhotos, applyManagedListingPhotos, applyStorefrontPhoto, listingPhotosChanged, managedListingPhotos, MAX_LISTING_PHOTOS } from "@/lib/listing-photo";
 import { claimCityScore } from "@/lib/claim-search";
 import { isHomeDaycare, postalFsa } from "@/lib/home-address-privacy";
 import { applyMasterCareType } from "@/lib/server/master-care-type";
@@ -553,6 +553,7 @@ export const updateListing = createServerFn({ method: "POST" })
       valuesNote?: string | null;
       safetyFeatures?: string[];
       promoText?: string | null;
+      mealOfferings?: import("@/lib/meal-offerings").MealOfferings;
     }) => input,
   )
   .handler(async ({ context, data }) => {
@@ -717,6 +718,10 @@ export const updateListing = createServerFn({ method: "POST" })
       `;
     });
     if (!wrote[0]) throw new Error(LISTING_NOT_FOUND);
+    if (photosChanged) {
+      const { pruneListingSpacePhotos } = await import("@/lib/listing-spaces-store");
+      await pruneListingSpacePhotos(sql, data.daycareId, managedListingPhotos(photos)).catch(() => undefined);
+    }
     const culture = cultureFieldsToSql({
       staffLanguages: data.staffLanguages,
       culturalPrograms: data.culturalPrograms,
@@ -741,6 +746,7 @@ export const updateListing = createServerFn({ method: "POST" })
       valuesNote: data.valuesNote,
       safetyFeatures: data.safetyFeatures,
       promoText: data.promoText,
+      mealOfferings: data.mealOfferings,
     });
     const amenities = mergeListingAmenities(current[0]?.amenities ?? "", {
       facilityType,
@@ -773,6 +779,7 @@ export const updateListing = createServerFn({ method: "POST" })
         values_note = ${pack.valuesNote},
         safety_features = ${pack.safetyJson}::jsonb,
         promo_text = ${pack.promoText},
+        meal_offerings = ${pack.mealJson}::jsonb,
         amenities = ${amenities},
         tagline = case when ${tagline} = '' then tagline else ${tagline} end,
         tagline_fr = case when ${tagline} = '' then tagline_fr else ${tagline} end,

@@ -48,7 +48,7 @@ describe("shell does not wait on catalogue", () => {
 
   it("critical CSS and the media preconnect sit ahead of boot scripts", () => {
     const rootHtml = src("src/routes/__root.tsx");
-    const cssAt = rootHtml.indexOf("html,body{margin:0;background:#f6f3ee");
+    const cssAt = rootHtml.indexOf("html,body{margin:0;background:#f3f1ec");
     const preloadAt = rootHtml.indexOf('rel="preload" href={appCss}');
     const mediaAt = rootHtml.indexOf('rel="preconnect" href="https://media.kidease.ca"');
     const bootAt = rootHtml.indexOf('src="/channel-boot.js?v=10"');

@@ -753,12 +753,12 @@ function Toggle({ on, label, onClick }: { on: boolean; label: string; onClick: (
       type="button"
       role="switch"
       aria-checked={on}
-      className="flex min-h-12 w-full items-center justify-between gap-3 text-left text-base font-semibold"
+      className="flex min-h-12 w-full items-center justify-between gap-3 text-left text-base font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       onClick={onClick}
     >
       <span>{label}</span>
-      <span className={cn("h-7 w-12 rounded-full p-1", on ? "bg-primary" : "bg-border")}>
-        <span className={cn("block size-5 rounded-full bg-bg", on && "translate-x-5")} />
+      <span className={cn("ke-switch-track", on && "is-on")} aria-hidden>
+        <span className="ke-switch-thumb" />
       </span>
     </button>
   );

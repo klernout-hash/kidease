@@ -44,7 +44,7 @@ test("listing card copy stays a compact single stack with 44px save target", () 
   assert.doesNotMatch(card, /aspect-\[3\/2\]/); // P-09: every listing card photo is 4:3
   assert.match(card, /aspect-\[4\/3\]/);
   assert.match(card, /data-ke="visual-card"/);
-  assert.match(card, /line-clamp-2 min-w-0 flex-1 text-\[16px\] font-semibold leading-\[22px\]/);
+  assert.match(card, /line-clamp-2 min-w-0 whitespace-normal text-\[15px\] min-h-10 font-semibold leading-5/);
   assert.doesNotMatch(card, /aspect-\[20\/19\]/);
   assert.match(card, /SaveListingButton/);
   assert.match(save, /grid place-items-center rounded-full/);

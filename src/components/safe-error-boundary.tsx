@@ -7,7 +7,7 @@ import { nativeShellHidesAdminNow } from "@/lib/native-admin";
 import { SUPPORT_INBOX_EMAIL } from "@/lib/support";
 
 const SAFE_ERROR_CSS =
-  ".ke-safe-error{font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:48px 20px;min-height:100dvh;box-sizing:border-box}" +
+  ".ke-safe-error{font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f3f1ec;color:#1c1915;padding:48px 20px;min-height:100dvh;box-sizing:border-box}" +
   ".ke-safe-error h1{font-size:1.75rem;margin:8px 0}" +
   ".ke-safe-kicker{font-size:12px;letter-spacing:.16em;text-transform:uppercase;margin:0}" +
   ".ke-safe-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}" +

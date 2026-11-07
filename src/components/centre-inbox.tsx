@@ -8,6 +8,7 @@ import { InboxDetailRail } from "@/components/inbox-detail-rail";
 import { InboxMessageRow } from "@/components/inbox-row";
 import { PipelineBadge } from "@/components/pipeline-badge";
 import { BlockMessagesButton } from "@/components/safety-actions";
+import { SupportDeskBar } from "@/components/support-desk-panel";
 import { ThreadComposer, ThreadHeader, ThreadTranscript } from "@/components/thread-chrome";
 import { Button } from "@/components/ui/button";
 import { RedirectToSignIn } from "@/lib/auth/gates";
@@ -58,6 +59,7 @@ export function CentreInboxDesk({
   const [items, setItems] = useState<CentreInboxThread[] | null>(null);
   const [filter, setFilter] = useState<MessageFilter>("all");
   const [query, setQuery] = useState("");
+  const [supportOpen, setSupportOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [tours, setTours] = useState<TourRequest[]>([]);
   const [canWrite, setCanWrite] = useState(true);
@@ -223,6 +225,7 @@ export function CentreInboxDesk({
       <div className="shrink-0 space-y-3 p-3">
         <h2 className="font-display text-[clamp(1.6rem,4vw,2rem)]">{t("messages")}</h2>
         <p className="text-sm text-muted">{t("inboxCentreTitle")}</p>
+        <SupportDeskBar open={supportOpen} onOpen={setSupportOpen} />
         <label className="relative block">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-subtle" />
           <input
@@ -303,10 +306,12 @@ export function CentreInboxDesk({
   const cleaned = messages.map((m) => ({ ...m, body: chatBodyWithoutSmsFooter(m.body) }));
 
   const threadPane = (
-    <div className="flex min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-1 flex-col">
       {selected ? (
         <>
+          <div className="flex min-w-0 items-center border-b border-border">
           <ThreadHeader
+            bare
             backTo="/inbox"
             backSearch={inboxSearch("centre")}
             backLabel={t("inboxBackCentre")}
@@ -317,21 +322,16 @@ export function CentreInboxDesk({
               image: person.image,
             }))}
             showDetails={false}
-            actions={
-              <div className="flex shrink-0 items-center">
-                <ThreadCallActions conversationId={selected.id} voiceReady={voiceReady} videoReady={Boolean(videoSurface)} />
-                <BlockMessagesButton conversationId={selected.id} side="family" />
-                <button
-                  type="button"
-                  className="min-h-11 rounded-full px-3 text-sm font-medium ring-1 ring-border lg:hidden"
-                  data-ke="inbox-detail-open"
-                  onClick={() => setDetailOpen(true)}
-                >
-                  {t("inboxDetail")}
-                </button>
-              </div>
-            }
           />
+          <button
+            type="button"
+            className="mr-1 min-h-11 shrink-0 rounded-full px-3 text-sm font-semibold lg:hidden"
+            data-ke="inbox-detail-open"
+            onClick={() => setDetailOpen(true)}
+          >
+            {t("inboxDetail")}
+          </button>
+          </div>
           {confirmedTour ? (
             <div className="mx-3 mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-ok/10 px-3 py-2 text-sm text-ok">
               <span className="font-medium">{t("inboxTourConfirmedBanner")}</span>
@@ -353,6 +353,7 @@ export function CentreInboxDesk({
                 parentName={selected.parentName}
                 centreName={centreName || selected.centreName || selected.daycareName}
                 reads={details?.reads || []}
+                peers={details?.participants || []}
               />
             )}
           </div>
@@ -421,6 +422,7 @@ export function CentreInboxDesk({
       return <div className="hidden p-4 text-sm text-muted lg:block">{t("inboxSelectThreadLead")}</div>;
     }
     return (
+      <>
       <InboxDetailRail
         thread={selected}
         tour={tour}
@@ -429,12 +431,17 @@ export function CentreInboxDesk({
         canWrite={canWrite}
         onChanged={refresh}
         details={details}
-                viewerId={viewer.id}
+        viewerId={viewer.id}
         stateBusy={stateBusy}
         onMarkUnread={() => void onState("unread")}
         onToggleStar={() => void onState("star")}
         onToggleArchive={() => void onState("archive")}
       />
+      <div className="space-y-3 border-t border-border px-4 py-4" data-ke="inbox-safety">
+        <ThreadCallActions conversationId={selected.id} voiceReady={voiceReady} videoReady={Boolean(videoSurface)} />
+        <BlockMessagesButton conversationId={selected.id} side="family" />
+      </div>
+      </>
     );
   }
 
@@ -450,7 +457,7 @@ export function CentreInboxDesk({
     >
       <div
         data-ke="centre-inbox"
-        className="grid min-h-[70dvh] overflow-hidden rounded-xl bg-surface ring-1 ring-border md:grid-cols-[minmax(15rem,20rem)_minmax(0,1fr)] xl:grid-cols-[minmax(16rem,22rem)_minmax(0,1fr)_minmax(15rem,18rem)]"
+        className="grid h-[calc(100dvh-6.5rem)] min-h-0 overflow-hidden md:grid-cols-[minmax(15rem,20rem)_minmax(0,1fr)] xl:grid-cols-[minmax(16rem,22rem)_minmax(0,1fr)_minmax(15rem,18rem)]"
       >
         <div className={cn(selectedId ? "hidden md:flex md:flex-col" : "flex flex-col")}>{listPane}</div>
         <div className={cn(!selectedId ? "hidden md:flex md:flex-col" : "flex flex-col")}>{threadPane}</div>
