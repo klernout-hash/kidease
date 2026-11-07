@@ -57,7 +57,7 @@ test("a missing personal key stays read-only and never rides along in the page",
   assert.match(server, /key-not-set/);
   assert.doesNotMatch(server, /console\.(log|info|debug|error)\([^)]*POSTHOG_PERSONAL_API_KEY/);
   assert.match(source("src/routes/admin.features.tsx"), /beforeLoadAdminDesk/);
-  assert.match(source("src/routes/admin.features.tsx"), /data-ke="feature-card"/);
+  assert.match(source("src/components/admin-feature-controls.tsx"), /data-ke="feature-card"/);
   assert.match(source("src/routes/admin.tsx"), /\/admin\/features/);
 });
 

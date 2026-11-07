@@ -235,6 +235,7 @@ import { Route as ParentWithdrawalRouteImport } from './routes/parent_.withdrawa
 import { Route as PayIndexRouteImport } from './routes/pay.index'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
 import { Route as PreviewAttendanceRouteImport } from './routes/preview.attendance'
+import { Route as PreviewFeatureControlsRouteImport } from './routes/preview.feature-controls'
 import { Route as ProviderFamiliesRouteImport } from './routes/provider.families'
 import { Route as ProviderSubscriptionRouteImport } from './routes/provider.subscription'
 import { Route as ProviderAbsenceRouteImport } from './routes/provider_.absence'
@@ -1444,6 +1445,11 @@ const PreviewAttendanceRoute = PreviewAttendanceRouteImport.update({
   path: '/preview/attendance',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PreviewFeatureControlsRoute = PreviewFeatureControlsRouteImport.update({
+  id: '/preview/feature-controls',
+  path: '/preview/feature-controls',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProviderFamiliesRoute = ProviderFamiliesRouteImport.update({
   id: '/families',
   path: '/families',
@@ -2051,6 +2057,7 @@ export interface FileRoutesByFullPath {
   '/parent/withdrawal': typeof ParentWithdrawalRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/preview/attendance': typeof PreviewAttendanceRoute
+  '/preview/feature-controls': typeof PreviewFeatureControlsRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/provider/absence': typeof ProviderAbsenceRoute
@@ -2353,6 +2360,7 @@ export interface FileRoutesByTo {
   '/parent/withdrawal': typeof ParentWithdrawalRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/preview/attendance': typeof PreviewAttendanceRoute
+  '/preview/feature-controls': typeof PreviewFeatureControlsRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/provider/absence': typeof ProviderAbsenceRoute
@@ -2658,6 +2666,7 @@ export interface FileRoutesById {
   '/parent_/withdrawal': typeof ParentWithdrawalRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/preview/attendance': typeof PreviewAttendanceRoute
+  '/preview/feature-controls': typeof PreviewFeatureControlsRoute
   '/provider/families': typeof ProviderFamiliesRoute
   '/provider/subscription': typeof ProviderSubscriptionRoute
   '/provider_/absence': typeof ProviderAbsenceRoute
@@ -2964,6 +2973,7 @@ export interface FileRouteTypes {
     | '/parent/withdrawal'
     | '/pay/$bookingId'
     | '/preview/attendance'
+    | '/preview/feature-controls'
     | '/provider/families'
     | '/provider/subscription'
     | '/provider/absence'
@@ -3266,6 +3276,7 @@ export interface FileRouteTypes {
     | '/parent/withdrawal'
     | '/pay/$bookingId'
     | '/preview/attendance'
+    | '/preview/feature-controls'
     | '/provider/families'
     | '/provider/subscription'
     | '/provider/absence'
@@ -3570,6 +3581,7 @@ export interface FileRouteTypes {
     | '/parent_/withdrawal'
     | '/pay/$bookingId'
     | '/preview/attendance'
+    | '/preview/feature-controls'
     | '/provider/families'
     | '/provider/subscription'
     | '/provider_/absence'
@@ -3811,6 +3823,7 @@ export interface RootRouteChildren {
   ParentSubsidyRoute: typeof ParentSubsidyRoute
   ParentWithdrawalRoute: typeof ParentWithdrawalRoute
   PreviewAttendanceRoute: typeof PreviewAttendanceRoute
+  PreviewFeatureControlsRoute: typeof PreviewFeatureControlsRoute
   ProviderAbsenceRoute: typeof ProviderAbsenceRoute
   ProviderChangeRequestsRoute: typeof ProviderChangeRequestsRoute
   ProviderChildProfileRoute: typeof ProviderChildProfileRoute
@@ -5443,6 +5456,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PreviewAttendanceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/preview/feature-controls': {
+      id: '/preview/feature-controls'
+      path: '/preview/feature-controls'
+      fullPath: '/preview/feature-controls'
+      preLoaderRoute: typeof PreviewFeatureControlsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/provider/families': {
       id: '/provider/families'
       path: '/families'
@@ -6486,6 +6506,7 @@ const rootRouteChildren: RootRouteChildren = {
   ParentSubsidyRoute: ParentSubsidyRoute,
   ParentWithdrawalRoute: ParentWithdrawalRoute,
   PreviewAttendanceRoute: PreviewAttendanceRoute,
+  PreviewFeatureControlsRoute: PreviewFeatureControlsRoute,
   ProviderAbsenceRoute: ProviderAbsenceRoute,
   ProviderChangeRequestsRoute: ProviderChangeRequestsRoute,
   ProviderChildProfileRoute: ProviderChildProfileRoute,

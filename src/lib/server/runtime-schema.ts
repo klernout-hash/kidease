@@ -10,9 +10,13 @@ export async function ensureAdminFeatureAudit(sql: Sql) {
       flag_key text not null,
       old_value text not null,
       new_value text not null,
+      reason text not null default '',
+      source text not null default 'posthog',
       created_at timestamptz not null default now()
     )
   `;
+  await sql`alter table admin_feature_audit add column if not exists reason text not null default ''`.catch(() => undefined);
+  await sql`alter table admin_feature_audit add column if not exists source text not null default 'posthog'`.catch(() => undefined);
 }
 
 export async function ensureWaitlistMailTable() {
