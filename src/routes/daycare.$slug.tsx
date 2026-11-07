@@ -757,7 +757,7 @@ export function Listing() {
 
   return (
     <Shell>
-      <article className={`ke-dense mx-auto max-w-5xl overflow-x-hidden pb-[calc(15rem+env(safe-area-inset-bottom))] md:pb-10`}>
+      <article className={`ke-dense mx-auto max-w-5xl overflow-x-hidden pb-[calc(12rem+env(safe-area-inset-bottom))] md:pb-10`}>
         <div className="lg:ke-gutter lg:pt-4">
           <ListingHeroGallery
             photos={gallery}
@@ -774,7 +774,7 @@ export function Listing() {
           />
         </div>
         <div className="ke-gutter">
-        <nav className="relative z-10 mt-3 flex flex-wrap items-center gap-x-1.5 gap-y-0 bg-bg text-muted">
+        <nav className="relative z-10 mt-3 hidden flex-wrap items-center gap-x-1.5 gap-y-0 bg-bg text-muted md:flex">
           <Link to={localePath("/", locale)} className="ke-crumb hover:text-fg hover:underline">
             KidEase
           </Link>
@@ -802,7 +802,7 @@ export function Listing() {
         <header className="mt-1">
           <div className="flex items-start justify-between gap-3">
             <div className="flex min-w-0 flex-1 items-start gap-1" data-ke="listing-name">
-              <h1 className="min-w-0 font-display text-[1.75rem] leading-tight md:text-[2rem]">{name}</h1>
+              <h1 className="min-w-0 font-display text-[24px] font-semibold leading-[30px] md:text-[30px] md:leading-9">{name}</h1>
               {verifiedCheck ? <VerifiedCheck className="mt-1 shrink-0" /> : null}
             </div>
           {!isPublicListing(d) ? (
@@ -858,9 +858,13 @@ export function Listing() {
             </p>
           ) : null}
           {offerClaim ? (
-            <div className="mt-3" data-ke="listing-claim-button">
-              <ClaimListingButton id={d.id} name={name} />
-            </div>
+            <p className="mt-3 text-sm" data-ke="listing-claim-button">
+              <ClaimListingButton
+                id={d.id}
+                name={name}
+                className="min-h-11 bg-transparent px-0 text-sm font-medium text-primary shadow-none underline underline-offset-4 hover:bg-transparent"
+              />
+            </p>
           ) : null}
           <ListingBadges item={ranked} compact feeOnly />
           <HiringEceBadge show={Boolean(data.jobs?.length)} />
@@ -872,6 +876,7 @@ export function Listing() {
             licenseStatus={d.licenseStatus}
             claimed={Boolean(d.claimed)}
             inspections={data.inspections}
+            compact
           />
           {data.inspectionSync ? (
             <section className="mt-4 rounded-2xl bg-surface p-4 text-sm leading-6" data-ke="inspection-sync">
@@ -924,8 +929,8 @@ export function Listing() {
 
             <ListingProgramsTable item={d} />
 
-            <section id="listing-fees" className="scroll-mt-24">
-              <h2 className="font-display text-2xl">{t("pricing")}</h2>
+            <section id="listing-fees" className="scroll-mt-24" data-ke="fees-and-support">
+              <h2 className="font-display text-2xl">{locale === "fr" ? "Frais et soutien" : "Fees and support"}</h2>
               {feeNotes.priceList && feeNotes.confidence === "centre" ? (
                 <ul className="mt-3 divide-y divide-border">
                   {d.infantMonthly != null ? (
