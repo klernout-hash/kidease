@@ -194,6 +194,8 @@ const HIDDEN_FROM_PARENTS = new Set([
   "sliding-scale",
   "sibling-discount",
   "fob",
+  "nut-free",
+  "allergen-free",
 ]);
 
 export function FacilityPublicList({ amenities, locale }: { amenities: string; locale: string }) {

@@ -553,6 +553,7 @@ export const updateListing = createServerFn({ method: "POST" })
       valuesNote?: string | null;
       safetyFeatures?: string[];
       promoText?: string | null;
+      mealOfferings?: import("@/lib/meal-offerings").MealOfferings;
     }) => input,
   )
   .handler(async ({ context, data }) => {
@@ -745,6 +746,7 @@ export const updateListing = createServerFn({ method: "POST" })
       valuesNote: data.valuesNote,
       safetyFeatures: data.safetyFeatures,
       promoText: data.promoText,
+      mealOfferings: data.mealOfferings,
     });
     const amenities = mergeListingAmenities(current[0]?.amenities ?? "", {
       facilityType,
@@ -777,6 +779,7 @@ export const updateListing = createServerFn({ method: "POST" })
         values_note = ${pack.valuesNote},
         safety_features = ${pack.safetyJson}::jsonb,
         promo_text = ${pack.promoText},
+        meal_offerings = ${pack.mealJson}::jsonb,
         amenities = ${amenities},
         tagline = case when ${tagline} = '' then tagline else ${tagline} end,
         tagline_fr = case when ${tagline} = '' then tagline_fr else ${tagline} end,

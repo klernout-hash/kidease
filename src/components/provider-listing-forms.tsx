@@ -38,6 +38,7 @@ import { ProviderParentFields, parentDeskFromDaycare } from "@/components/provid
 import { parentPartFor, type FamilyGuide, type HostSection } from "@/lib/host-listing";
 import { hostCopy } from "@/lib/host-listing-copy";
 import { ListingSpacesEditor } from "@/components/listing-spaces-editor";
+import { mealOfferingsFromStored } from "@/lib/meal-offerings";
 import { WaitlistPulseButton } from "@/components/waitlist-pulse-button";
 import { useCopy } from "@/lib/use-copy";
 import { standardAgeLabelsForListing } from "@/lib/standard-age-groups";
@@ -427,6 +428,7 @@ export function CapacityForm({
     JSON.stringify(state.curriculumTags) !== JSON.stringify(savedParent.curriculumTags) ||
     JSON.stringify(state.safetyFeatures) !== JSON.stringify(savedParent.safetyFeatures) ||
     JSON.stringify(state.amenityKeys) !== JSON.stringify(savedParent.amenityKeys) ||
+    JSON.stringify(state.mealOfferings) !== JSON.stringify(savedParent.mealOfferings) ||
     guideDirty;
   useEffect(() => {
     onDirtyChange?.(dirty);
@@ -647,6 +649,7 @@ export function CapacityForm({
             valuesNote: state.valuesNote,
             safetyFeatures: state.safetyFeatures,
             promoText: state.promoText,
+            mealOfferings: state.mealOfferings,
           },
         })
           .then(() => onSaved())
@@ -992,6 +995,7 @@ export function CapacityForm({
                 onWriterApplied={() => {
                   writerApplied.current = true;
                 }}
+                savedMealOfferings={mealOfferingsFromStored(daycare.mealOfferings, daycare.amenities || "")}
                 value={parentDeskFromDaycare({ ...daycare, ...state, amenities: state.amenityKeys.join(",") })}
                 onChange={(parent) => setState({ ...state, ...parent })}
               />
@@ -1142,6 +1146,7 @@ export function CapacityForm({
               onWriterApplied={() => {
                 writerApplied.current = true;
               }}
+              savedMealOfferings={mealOfferingsFromStored(daycare.mealOfferings, daycare.amenities || "")}
               value={parentDeskFromDaycare({ ...daycare, ...state, amenities: state.amenityKeys.join(",") })}
               onChange={(parent) => setState({ ...state, ...parent })}
             />

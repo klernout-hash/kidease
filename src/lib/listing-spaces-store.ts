@@ -98,11 +98,12 @@ export async function listListingSpacesForCentre(sql: Sql, userId: string, dayca
 }
 
 /** Public labels for photos already on the listing. Missing table returns no spaces. */
-export async function readPublicListingSpaces(sql: Sql, daycareId: string, rawPhotos: string): Promise<SpaceGroup> {
+export async function readPublicListingSpaces(sql: Sql, daycareId: string, rawPhotos: string | string[]): Promise<SpaceGroup> {
+  const photos = Array.isArray(rawPhotos) ? rawPhotos.join(",") : rawPhotos;
   try {
-    return await readSpaces(sql, daycareId, rawPhotos);
+    return await readSpaces(sql, daycareId, photos);
   } catch {
-    return groupListingSpaces(rawPhotos, []);
+    return groupListingSpaces(photos, []);
   }
 }
 

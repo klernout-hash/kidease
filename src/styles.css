@@ -1258,8 +1258,8 @@
   .ke-switch {
     appearance: none;
     flex: none;
-    width: 3.25rem;
-    height: 2rem;
+    width: 3.5rem;
+    height: 2.75rem;
     margin-top: 0.15rem;
     border: 0;
     border-radius: 999px;
@@ -1278,8 +1278,8 @@
     position: absolute;
     top: 0.2rem;
     left: 0.2rem;
-    width: 1.6rem;
-    height: 1.6rem;
+    width: 2.15rem;
+    height: 2.15rem;
     border-radius: 999px;
     background: #fff;
     box-shadow: 0 1px 2px rgba(28, 24, 20, 0.18);
@@ -1289,7 +1289,7 @@
     background: var(--color-primary);
   }
   .ke-switch:checked::after {
-    transform: translateX(1.25rem);
+    transform: translateX(1.15rem);
   }
   .ke-switch:focus-visible {
     outline: 2px solid var(--color-ring);
@@ -1301,8 +1301,8 @@
   }
   .ke-switch-track {
     display: inline-flex;
-    width: 3.25rem;
-    height: 2rem;
+    width: 3.5rem;
+    height: 2.75rem;
     flex: none;
     align-items: center;
     border-radius: 999px;
@@ -1314,15 +1314,15 @@
     background: var(--color-primary);
   }
   .ke-switch-thumb {
-    width: 1.6rem;
-    height: 1.6rem;
+    width: 2.15rem;
+    height: 2.15rem;
     border-radius: 999px;
     background: #fff;
     box-shadow: 0 1px 2px rgba(28, 24, 20, 0.18);
     transition: transform 160ms ease;
   }
   .ke-switch-track.is-on .ke-switch-thumb {
-    transform: translateX(1.25rem);
+    transform: translateX(1.15rem);
   }
   html[data-resolved-theme="dark"] .ke-switch,
   html[data-resolved-theme="dark"] .ke-switch-track {

@@ -1003,11 +1003,14 @@ export const getDaycare = createServerFn({ method: "GET" })
         }
         familyGuide = extra?.familyGuide ?? null;
       }
+      const { readPublicListingSpaces } = await import("@/lib/listing-spaces-store");
+      const spaces = await readPublicListingSpaces(sql, publicDaycare.id, publicDaycare.photos).catch(() => null);
       return sealPublicHomes({
         daycare: publicDaycare,
         reviews: mapReviews(reviews),
         availability,
         familyGuide,
+        spaces,
         nearby: nearbyPinned,
         jobs,
         inspections,
@@ -1025,6 +1028,7 @@ export const getDaycare = createServerFn({ method: "GET" })
         reviews: [] as Review[],
         availability: catalogAvailability(found),
         familyGuide: null,
+        spaces: null,
         nearby: catalogNearby,
         jobs: [] as CentreJobPost[],
         inspections: [] as PublicInspection[],

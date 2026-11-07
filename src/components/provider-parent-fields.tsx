@@ -26,6 +26,9 @@ import {
 } from "@/lib/parent-listing";
 import { FACILITY_TYPES, normalizeFacilityType, type FacilityType } from "@/lib/facility-type";
 import { DaycareFacilitiesPicker } from "@/components/daycare-facilities-picker";
+import { MealsEditor } from "@/components/meals-editor";
+import { SwitchRow } from "@/components/switch-row";
+import { mealOfferingsFromStored, mealsFlagFromOfferings, type MealOfferings } from "@/lib/meal-offerings";
 import { toggleFacility } from "@/lib/daycare-facilities";
 import { CARE_DETAIL_KEYS, careDetailLabel, isCareDetailKey } from "@/lib/inclusive-filters";
 import { localePath } from "@/lib/locale-path";
@@ -49,6 +52,7 @@ export type ParentDeskState = {
   descriptionFr: string;
   partTimeMonthly: number;
   amenityKeys: string[];
+  mealOfferings: MealOfferings;
 };
 
 export function parentDeskFromDaycare(daycare: Daycare): ParentDeskState {
@@ -70,6 +74,7 @@ export function parentDeskFromDaycare(daycare: Daycare): ParentDeskState {
       .split(",")
       .map((part) => part.trim())
       .filter((key) => DESK_AMENITIES.includes(key as (typeof DESK_AMENITIES)[number]) || isCareDetailKey(key)),
+    mealOfferings: mealOfferingsFromStored(daycare.mealOfferings, daycare.amenities || ""),
   };
 }
 
@@ -95,6 +100,7 @@ export function ProviderParentFields({
   website,
   onWriterApplied,
   part,
+  savedMealOfferings,
 }: {
   value: ParentDeskState;
   onChange: (next: ParentDeskState) => void;
@@ -103,6 +109,7 @@ export function ProviderParentFields({
   onWriterApplied?: () => void;
   /** One editor page. Omit to keep the full daycare form. */
   part?: import("@/lib/host-listing").HostParentPart;
+  savedMealOfferings?: MealOfferings;
 }) {
   const { t, locale } = useCopy();
   const loc = locale === "fr" ? "fr" : "en";
@@ -322,63 +329,44 @@ export function ProviderParentFields({
       <fieldset>
         <legend className="font-display text-xl">{t("deskFinancial")}</legend>
         <p className="mt-1 text-sm text-muted">{t("deskFinancialLead")}</p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {FINANCIAL_FLAGS.map((id) => (
-            <ChipButton
+        <div className="mt-2">
+          {FINANCIAL_FLAGS.filter((id) => id !== "meals").map((id) => (
+            <SwitchRow
               key={id}
-              on={value.financial[id]}
-              aria-pressed={value.financial[id]}
-              onClick={() => onChange({ ...value, financial: { ...value.financial, [id]: !value.financial[id] } })}
-            >
-              {id === "subsidy"
-                ? t("financialSubsidy")
-                : id === "sliding"
-                  ? t("financialSliding")
-                  : id === "sibling"
-                    ? t("financialSibling")
-                    : t("financialMeals")}
-            </ChipButton>
+              id={`financial-${id}`}
+              locale={loc}
+              label={
+                id === "subsidy" ? t("financialSubsidy") : id === "sliding" ? t("financialSliding") : t("financialSibling")
+              }
+              description={
+                loc === "fr"
+                  ? "Activez seulement si c'est vrai pour ce centre."
+                  : "Turn on only if this is true for this centre."
+              }
+              checked={value.financial[id]}
+              onCheckedChange={(next) => onChange({ ...value, financial: { ...value.financial, [id]: next } })}
+            />
           ))}
         </div>
       </fieldset>
       ) : null}
 
       {part === "meals" ? (
-        <fieldset data-ke="editor-meals">
-          <legend className="font-display text-xl">{t("financialMeals")}</legend>
-          <p className="mt-1 text-sm text-muted">
-            {loc === "fr"
-              ? "Cochez seulement les repas que le centre sert vraiment. Les commodités du lieu sont sur une autre page."
-              : "Tick only meals this centre really serves. Building amenities are on their own page."}
-          </p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <ChipButton
-              on={value.financial.meals}
-              aria-pressed={value.financial.meals}
-              onClick={() => {
-                const meals = !value.financial.meals;
-                const amenityKeys = meals
-                  ? value.amenityKeys.includes("meals")
-                    ? value.amenityKeys
-                    : [...value.amenityKeys, "meals"]
-                  : value.amenityKeys.filter((key) => key !== "meals");
-                onChange({ ...value, financial: { ...value.financial, meals }, amenityKeys });
-              }}
-            >
-              {t("financialMeals")}
-            </ChipButton>
-            {CARE_DETAIL_KEYS.filter((id) => id !== "special-needs").map((id) => (
-              <ChipButton
-                key={id}
-                on={value.amenityKeys.includes(id)}
-                aria-pressed={value.amenityKeys.includes(id)}
-                onClick={() => onChange({ ...value, amenityKeys: toggle(value.amenityKeys, id) })}
-              >
-                {careDetailLabel(id, loc)}
-              </ChipButton>
-            ))}
-          </div>
-        </fieldset>
+        <MealsEditor
+          value={value.mealOfferings}
+          saved={savedMealOfferings ?? value.mealOfferings}
+          amenities={(value.amenityKeys || []).join(",")}
+          locale={loc}
+          onChange={(mealOfferings) => {
+            const meals = mealsFlagFromOfferings(mealOfferings, value.financial.meals);
+            const amenityKeys = meals
+              ? value.amenityKeys.includes("meals")
+                ? value.amenityKeys
+                : [...value.amenityKeys, "meals"]
+              : value.amenityKeys.filter((key) => key !== "meals");
+            onChange({ ...value, mealOfferings, financial: { ...value.financial, meals }, amenityKeys });
+          }}
+        />
       ) : null}
 
       {show("curriculum") ? (
@@ -436,14 +424,24 @@ export function ProviderParentFields({
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             {CARE_DETAIL_KEYS.filter((id) => id === "special-needs").map((id) => (
-              <ChipButton
+              <SwitchRow
                 key={id}
-                on={value.amenityKeys.includes(id)}
-                aria-pressed={value.amenityKeys.includes(id)}
-                onClick={() => onChange({ ...value, amenityKeys: toggle(value.amenityKeys, id) })}
-              >
-                {careDetailLabel(id, loc)}
-              </ChipButton>
+                id={`care-${id}`}
+                locale={loc}
+                label={careDetailLabel(id, loc)}
+                description={
+                  loc === "fr"
+                    ? "Activez seulement si le centre offre ce soutien."
+                    : "Turn on only if this centre offers this support."
+                }
+                checked={value.amenityKeys.includes(id)}
+                onCheckedChange={(next) =>
+                  onChange({
+                    ...value,
+                    amenityKeys: next ? (value.amenityKeys.includes(id) ? value.amenityKeys : [...value.amenityKeys, id]) : value.amenityKeys.filter((key) => key !== id),
+                  })
+                }
+              />
             ))}
           </div>
           <Link
