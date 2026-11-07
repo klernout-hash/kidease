@@ -738,7 +738,7 @@ export function Listing() {
       <div data-ke={parentActions ? "listing-parent-actions" : ownEdit ? "listing-own-edit" : "listing-actions-none"}>
         <ListingEditLink />
         {parentActions && live ? (
-          <Button className="min-h-11 rounded-[14px] touch-manipulation" data-ke="listing-primary-cta" onClick={onInfo}>
+          <Button className="min-h-11 w-full whitespace-normal rounded-[14px] touch-manipulation" data-ke="listing-primary-cta" onClick={onInfo}>
             {t("requestInfo")}
           </Button>
         ) : null}
