@@ -37,7 +37,8 @@ test("provider listing form and public listing expose interiors", () => {
   assert.match(forms, /LISTING_PHOTO_ACCEPT/);
   assert.doesNotMatch(forms, /accept="image\/\*"/);
   assert.match(detail, /classifyListingPhotos/);
-  assert.match(detail, /t\("interiors"\)/);
+  assert.match(detail, /ListingRoomRail/);
+  assert.match(src("src/components/listing-room-rail.tsx"), /t\("interiors"\)/);
   assert.match(copy, /interiorCta: "Add interior photo"/);
   assert.match(copy, /interiorCta: "Ajouter une photo intérieure"/);
   assert.match(copy, /interiors: "Interior photos"/);
