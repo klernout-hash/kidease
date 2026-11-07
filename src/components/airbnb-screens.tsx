@@ -27,8 +27,7 @@ import { saveMyLocale } from "@/lib/server/account-prefs";
 import { getMyContact, saveMyContact, type ContactProfile } from "@/lib/server/profile-contact";
 import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
-import { useRoleChrome } from "@/components/role-chrome";
-import { alertsForAudience, type UnifiedAlertType } from "@/lib/unified-alerts";
+import { NotificationPreferences } from "@/components/notification-preferences";
 import { cn } from "@/lib/utils";
 import { useSessionDesks } from "@/components/session-desks";
 import { roleSwitchTarget } from "@/lib/app-menu";
@@ -648,91 +647,11 @@ export function AirbnbLanguage() {
 }
 
 export function AirbnbAlerts() {
-  const { copy, locale } = useFr();
-  const { user } = useCurrentUserState();
-  const chrome = useRoleChrome();
-  const [tab, setTab] = useState<"alerts" | "account">("alerts");
-  const fr = locale === "fr";
-  const audience = chrome.role === "provider" ? "daycare" : "parent";
-  const topics = alertsForAudience(audience).filter((row) => row.readiness !== "hook");
-  const groups = groupAlertTopics(topics, fr);
   return (
     <section className="ke-airbnb-phone-only ke-airbnb-screen" data-ke="airbnb-alerts">
-      <h1>{copy.notifications}</h1>
-      <div className="ke-airbnb-tabs" role="tablist">
-        <button type="button" role="tab" aria-selected={tab === "alerts"} className={cn(tab === "alerts" && "is-on")} onClick={() => setTab("alerts")}>
-          {copy.alertsTab}
-        </button>
-        <button type="button" role="tab" aria-selected={tab === "account"} className={cn(tab === "account" && "is-on")} onClick={() => setTab("account")}>
-          {copy.accountTab}
-        </button>
-      </div>
-      {tab === "alerts"
-        ? groups.map((group) => (
-            <nav key={group.title} aria-label={group.title} data-ke="airbnb-alert-group">
-              <h2 className="ke-phone-cats-heading">{group.title}</h2>
-              {group.rows.map((row) => (
-                <article key={row.id} className="ke-airbnb-alert-row" data-ke={`airbnb-alert-${row.id}`}>
-                  <div>
-                    <strong>{fr ? row.fr.label : row.en.label}</strong>
-                    <span>{fr ? row.fr.detail : row.en.detail}</span>
-                  </div>
-                  <span className="ke-airbnb-text-btn">{copy.alertsStatus}</span>
-                </article>
-              ))}
-            </nav>
-          ))
-        : (
-            <nav aria-label={copy.accountTab}>
-              <article className="ke-airbnb-alert-row">
-                <div>
-                  <strong>{fr ? "Connexion et sécurité" : "Login and security"}</strong>
-                  <span>{fr ? "Mot de passe et vérification" : "Password and verification"}</span>
-                </div>
-                <Link to={localePath("/menu", locale)} search={{ screen: "account" }} className="ke-airbnb-text-btn">
-                  {copy.edit}
-                </Link>
-              </article>
-              <article className="ke-airbnb-alert-row">
-                <div>
-                  <strong>{fr ? "Langue" : "Language"}</strong>
-                  <span>{fr ? "Langue de l'appli" : "App language"}</span>
-                </div>
-                <Link to={localePath("/menu", locale)} search={{ screen: "language" }} className="ke-airbnb-text-btn">
-                  {copy.edit}
-                </Link>
-              </article>
-              <article className="ke-airbnb-alert-row">
-                <div>
-                  <strong>{copy.accountTab}</strong>
-                  <span>{copy.smsNote}</span>
-                </div>
-              </article>
-            </nav>
-          )}
-      <p className="ke-airbnb-help">{copy.noAlerts}</p>
-      {!user ? (
-        <Link to="/login" search={{ next: "/menu?screen=notifications" }} className="ke-airbnb-pill-btn">
-          {copy.signIn}
-        </Link>
-      ) : null}
+      <NotificationPreferences />
     </section>
   );
-}
-
-function groupAlertTopics(rows: UnifiedAlertType[], fr: boolean) {
-  const buckets: Array<{ title: string; test: (id: string) => boolean; rows: UnifiedAlertType[] }> = [
-    { title: fr ? "Demandes et visites" : "Requests and visits", test: (id) => /request|tour|family_left/.test(id), rows: [] },
-    { title: fr ? "Places" : "Spots", test: (id) => /spot|wait/.test(id), rows: [] },
-    { title: fr ? "Messages et avis" : "Messages and reviews", test: (id) => /message|review/.test(id), rows: [] },
-    { title: fr ? "Documents" : "Documents", test: (id) => /licen|immun|allerg|screen/.test(id), rows: [] },
-    { title: fr ? "Autre" : "More", test: () => true, rows: [] },
-  ];
-  for (const row of rows) {
-    const bucket = buckets.find((item) => item.test(row.id));
-    bucket?.rows.push(row);
-  }
-  return buckets.filter((item) => item.rows.length > 0);
 }
 
 export function AirbnbListingPhone({

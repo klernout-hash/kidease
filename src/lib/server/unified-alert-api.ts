@@ -29,26 +29,34 @@ export const saveUnifiedAlertDesk = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: {
     settings?: Partial<UnifiedSettings>;
-    prefs?: Array<{ typeId?: string; enabled?: boolean }>;
+    prefs?: Array<{ typeId?: string; enabled?: boolean; email?: boolean | null; push?: boolean | null }>;
   }) => {
+    const hasSettings = Boolean(input?.settings) && typeof input?.settings === "object";
     const digest = DIGEST_MODES.includes(input?.settings?.digest as DigestMode)
       ? (input?.settings?.digest as DigestMode)
       : "off";
     const zone = isValidTimeZone(input?.settings?.timeZone) ? String(input?.settings?.timeZone) : "America/Winnipeg";
     return {
-      settings: {
-        master: input?.settings?.master !== false,
-        inApp: input?.settings?.inApp !== false,
-        email: input?.settings?.email !== false,
-        push: input?.settings?.push === true,
-        quietStart: clock(input?.settings?.quietStart, "21:00"),
-        quietEnd: clock(input?.settings?.quietEnd, "08:00"),
-        quietCustom: input?.settings?.quietCustom === true,
-        timeZone: zone,
-        digest,
-      } satisfies UnifiedSettings,
+      settings: hasSettings
+        ? ({
+            master: input?.settings?.master !== false,
+            inApp: input?.settings?.inApp !== false,
+            email: input?.settings?.email !== false,
+            push: input?.settings?.push === true,
+            quietStart: clock(input?.settings?.quietStart, "21:00"),
+            quietEnd: clock(input?.settings?.quietEnd, "08:00"),
+            quietCustom: input?.settings?.quietCustom === true,
+            timeZone: zone,
+            digest,
+          } satisfies UnifiedSettings)
+        : null,
       prefs: (Array.isArray(input?.prefs) ? input.prefs : [])
-        .map((pref) => ({ typeId: String(pref?.typeId || "").trim(), enabled: pref?.enabled !== false }))
+        .map((pref) => ({
+          typeId: String(pref?.typeId || "").trim(),
+          enabled: pref?.enabled !== false,
+          email: pref?.email === true ? true : pref?.email === false ? false : null,
+          push: pref?.push === true ? true : pref?.push === false ? false : null,
+        }))
         .filter((pref) => isUnifiedAlertType(pref.typeId))
         .slice(0, 80),
     };

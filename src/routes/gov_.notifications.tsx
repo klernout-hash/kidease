@@ -35,6 +35,10 @@ function Page() {
         <Link to="/notifications" className="underline-offset-4 hover:underline">
           {fr ? "Ouvrir les alertes KidEase sur le web" : "Open KidEase alerts on the web"}
         </Link>
+        {" · "}
+        <Link to="/menu" search={{ screen: "notifications" }} className="underline-offset-4 hover:underline">
+          {fr ? "Vos avis" : "Your notices"}
+        </Link>
       </p>
       <p className="mt-2 text-sm text-muted">
         {fr

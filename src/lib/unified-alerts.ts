@@ -738,6 +738,10 @@ export function decideUnifiedAlert(input: {
   pushArmed: boolean;
   previewOrTest: boolean;
   blocked: boolean;
+  /** Null means no saved choice: keep the account email setting. */
+  typeEmail?: boolean | null;
+  /** Null means no saved choice: keep the account push setting. */
+  typePush?: boolean | null;
   nativeShell?: boolean;
   duplicate?: boolean;
   lastSentAt?: Date | null;
@@ -768,9 +772,11 @@ export function decideUnifiedAlert(input: {
 
   const channels: UnifiedChannel[] = [];
   if (input.settings.inApp) channels.push("in_app");
-  const emailOk = type.emailOwner === "unified" && input.settings.email && input.live;
+  const emailWanted = input.typeEmail == null ? input.settings.email : input.typeEmail;
+  const pushWanted = input.typePush == null ? input.settings.push : input.typePush;
+  const emailOk = type.emailOwner === "unified" && emailWanted && input.live;
   if (emailOk) channels.push("email");
-  const pushOk = input.settings.push && input.pushArmed && input.live && !type.webOnly;
+  const pushOk = pushWanted && input.pushArmed && input.live && !type.webOnly;
   if (pushOk) channels.push("push");
   if (channels.length === 0) return none("no_channel");
 

@@ -85,9 +85,11 @@ async function ensure(sql: Sql) {
   if (ensured) return;
   try {
     await sql.query(ENSURE_SQL);
+    await sql.query(`alter table unified_alert_prefs add column if not exists email_on int`);
+    await sql.query(`alter table unified_alert_prefs add column if not exists push_on int`);
     ensured = true;
   } catch {
-    /* next call retries */
+    ensured = false;
   }
 }
 
@@ -137,12 +139,12 @@ export async function readUnifiedSettings(userId: string, audience: UnifiedAudie
 
 export async function writeUnifiedSettings(
   userId: string,
-  settings: UnifiedSettings,
-  prefs: Array<{ typeId: string; enabled: boolean }>,
+  settings: UnifiedSettings | null,
+  prefs: Array<{ typeId: string; enabled: boolean; email?: boolean | null; push?: boolean | null }>,
 ): Promise<void> {
   const sql = await getSql();
   await ensure(sql);
-  await sql`
+  if (settings) await sql`
     insert into unified_alert_settings (
       user_id, master_enabled, in_app, email_on, push_on, quiet_start, quiet_end, quiet_custom, time_zone, digest, updated_at
     ) values (
@@ -172,10 +174,15 @@ export async function writeUnifiedSettings(
   `;
   for (const pref of prefs) {
     if (!isUnifiedAlertType(pref.typeId)) continue;
+    const email = pref.email == null ? null : pref.email ? 1 : 0;
+    const push = pref.push == null ? null : pref.push ? 1 : 0;
     await sql`
-      insert into unified_alert_prefs (user_id, type_id, enabled)
-      values (${userId}, ${pref.typeId}, ${pref.enabled ? 1 : 0})
-      on conflict (user_id, type_id) do update set enabled = excluded.enabled
+      insert into unified_alert_prefs (user_id, type_id, enabled, email_on, push_on)
+      values (${userId}, ${pref.typeId}, ${pref.enabled ? 1 : 0}, ${email}, ${push})
+      on conflict (user_id, type_id) do update set
+        enabled = excluded.enabled,
+        email_on = excluded.email_on,
+        push_on = excluded.push_on
     `;
   }
 }
@@ -188,12 +195,26 @@ async function typeEnabled(sql: Sql, userId: string, typeId: string): Promise<bo
   return on(rows[0]?.enabled);
 }
 
+function tri(value: number | boolean | null | undefined): boolean | null {
+  if (value == null) return null;
+  return on(value);
+}
+
 async function prefMap(sql: Sql, userId: string): Promise<Record<string, boolean>> {
   const rows = await sql<{ type_id: string; enabled: number | boolean }>`
     select type_id, enabled from unified_alert_prefs where user_id = ${userId}
   `.catch(() => [] as Array<{ type_id: string; enabled: number | boolean }>);
   const out: Record<string, boolean> = {};
   for (const row of rows) out[row.type_id] = on(row.enabled);
+  return out;
+}
+
+async function channelMap(sql: Sql, userId: string): Promise<Record<string, { email: boolean | null; push: boolean | null }>> {
+  const rows = await sql<{ type_id: string; email_on: number | null; push_on: number | null }>`
+    select type_id, email_on, push_on from unified_alert_prefs where user_id = ${userId}
+  `.catch(() => [] as Array<{ type_id: string; email_on: number | null; push_on: number | null }>);
+  const out: Record<string, { email: boolean | null; push: boolean | null }> = {};
+  for (const row of rows) out[row.type_id] = { email: tri(row.email_on), push: tri(row.push_on) };
   return out;
 }
 
@@ -321,11 +342,14 @@ export async function emitUnifiedAlert(candidate: UnifiedCandidate): Promise<{ s
   const audience: UnifiedAudience = type.audience === "admin" ? "admin" : type.audience;
   const settings = await readUnifiedSettings(candidate.userId, audience === "admin" ? "parent" : audience);
   const enabled = await typeEnabled(sql, candidate.userId, candidate.typeId);
+  const channelsForType = (await channelMap(sql, candidate.userId))[candidate.typeId] || { email: null, push: null };
   const blocked = await blockedPair(sql, candidate);
   const decision = decideUnifiedAlert({
     typeId: candidate.typeId,
     settings,
     typeEnabled: enabled,
+    typeEmail: channelsForType.email,
+    typePush: channelsForType.push,
     flagOn: true,
     live: unifiedAlertsLive(),
     pushArmed: pushArmed(),
@@ -569,6 +593,7 @@ export async function unifiedDesk(userId: string, native: boolean) {
   const sql = await getSql();
   await ensure(sql);
   const prefs = await prefMap(sql, userId);
+  const channels = await channelMap(sql, userId);
   const events = await listUnifiedEvents(userId, native);
   return {
     enabled: unifiedAlertsEnabled(),
@@ -577,6 +602,7 @@ export async function unifiedDesk(userId: string, native: boolean) {
     audiences,
     settings,
     prefs,
+    channels,
     events,
   };
 }

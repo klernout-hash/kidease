@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { LifecyclePrefs } from "@/components/lifecycle-prefs";
-import { UnifiedAlertPanel } from "@/components/unified-alert-panel";
+import { NotificationPreferences } from "@/components/notification-preferences";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { notificationSettingsCopy } from "@/lib/notification-settings-copy";
 import { useCopy } from "@/lib/use-copy";
@@ -27,7 +27,7 @@ export function NotificationSettingsScreen() {
       ) : null}
       {user ? (
         <>
-          <UnifiedAlertPanel mode="settings" />
+          <NotificationPreferences embedded />
           <section className="mt-8" aria-label={copy.emailTopics}>
             <LifecyclePrefs />
           </section>
