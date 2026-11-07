@@ -37,6 +37,7 @@ import { checkListingPhoto } from "@/lib/server/photo-check";
 import { ProviderParentFields, parentDeskFromDaycare } from "@/components/provider-parent-fields";
 import { parentPartFor, type FamilyGuide, type HostSection } from "@/lib/host-listing";
 import { hostCopy } from "@/lib/host-listing-copy";
+import { DEMO_DAYCARE_PHOTOS, demoPhotoAlt, usesDemoPhotoPreview } from "@/lib/host-listings-overview";
 import { WaitlistPulseButton } from "@/components/waitlist-pulse-button";
 import { useCopy } from "@/lib/use-copy";
 import { standardAgeLabelsForListing } from "@/lib/standard-age-groups";
@@ -291,7 +292,7 @@ function HomeAddressSetting({ daycare }: { daycare: Daycare }) {
       <label className="flex min-h-11 items-start gap-3 text-sm">
         <input
           type="checkbox"
-          className="mt-1 size-5"
+          className="ke-switch"
           checked={show}
           disabled={!verified || busy}
           onChange={(event) => {
@@ -741,7 +742,24 @@ export function CapacityForm({
           ) : null}
           {see("photos") ? (
           <>
-          {shown.length ? (
+          {usesDemoPhotoPreview(daycare) ? (
+            <div data-ke="demo-photo-preview" className="space-y-2">
+              <p className="text-sm text-muted">{hostCopy(locale).demoPreviewLead}</p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                {DEMO_DAYCARE_PHOTOS.map((src, index) => (
+                  <img
+                    key={src}
+                    src={src}
+                    alt={demoPhotoAlt(hostCopy(locale).demoPhotoAlt, index + 1, DEMO_DAYCARE_PHOTOS.length)}
+                    width={960}
+                    height={720}
+                    className="aspect-[4/3] w-full rounded-xl object-cover"
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {shown.length > 0 && !usesDemoPhotoPreview(daycare) ? (
             <div data-ke="photo-tour-preview" className="space-y-2">
               <img
                 src={shown[Math.min(photoPick, shown.length - 1)]}

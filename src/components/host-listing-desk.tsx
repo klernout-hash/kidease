@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { ChevronLeft, ChevronRight, LayoutGrid, List, Plus, Search, X } from "lucide-react";
 import { localePath } from "@/lib/locale-path";
 import { BuildingPhoto } from "@/components/building-photo";
 import { CapacityForm } from "@/components/provider-listing-forms";
@@ -7,6 +8,13 @@ import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { ProviderTrustChecklist } from "@/components/provider-trust";
 import { publicApprovalEligible } from "@/lib/approve-live";
 import { managedListingPhotos } from "@/lib/listing-photo";
+import {
+  DEMO_DAYCARE_PHOTOS,
+  centrePublication,
+  demoPhotoAlt,
+  filterOwnedCentres,
+  usesDemoPhotoPreview,
+} from "@/lib/host-listings-overview";
 import {
   CENTRE_SECTIONS,
   GUIDE_SECTIONS,
@@ -21,23 +29,47 @@ import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 import type { Daycare } from "@/lib/types";
 
+const VIEW_KEY = "ke-host-listing-view";
+
 export function HostListingsDesk({
   listings,
   onSaved,
   onOpenChange,
+  onCreateListing,
   initialSection,
   initialCentre,
 }: {
   listings: Daycare[];
   onSaved: () => void | Promise<void>;
   onOpenChange?: (open: boolean) => void;
+  /** Opens the existing create-listing form. Claim stays a link to /claim. */
+  onCreateListing?: () => void;
   initialSection?: HostSection | null;
   initialCentre?: string | null;
 }) {
-  const { locale } = useCopy();
+  const { t, locale } = useCopy();
   const copy = hostCopy(locale);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [view, setView] = useState<"cards" | "rows">("cards");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
+  const addRef = useRef<HTMLButtonElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const returnFocus = useRef<HTMLElement | null>(null);
+  const dialogTitleId = useId();
   const open = listings.find((row) => row.id === openId) ?? null;
+  const noPhoto = locale === "fr" ? "Photo non disponible" : "Photo not available";
+
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(VIEW_KEY);
+      if (saved === "rows" || saved === "cards") setView(saved);
+    } catch {
+      /* private mode */
+    }
+  }, []);
 
   useEffect(() => {
     if (!initialSection || !listings.length) return;
@@ -47,24 +79,74 @@ export function HostListingsDesk({
     onOpenChange?.(true);
   }, [initialSection, initialCentre, listings, onOpenChange]);
 
+  useEffect(() => {
+    if (!addOpen) return;
+    const root = dialogRef.current;
+    const items = () =>
+      Array.from(root?.querySelectorAll<HTMLElement>("button, a[href]") ?? []).filter((el) => !el.hasAttribute("disabled"));
+    items()[0]?.focus();
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setAddOpen(false);
+        queueMicrotask(() => (returnFocus.current ?? addRef.current)?.focus());
+        return;
+      }
+      if (event.key !== "Tab" || !root) return;
+      const focusable = items();
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [addOpen]);
+
   function choose(id: string | null) {
     setOpenId(id);
     onOpenChange?.(id != null);
   }
 
-  if (!listings.length) {
-    return (
-      <section className="rounded-xl bg-surface px-4 py-6 ring-1 ring-border" data-ke="host-listings">
-        <p className="text-sm text-muted">{copy.emptyListings}</p>
-        <button
-          type="button"
-          className="mt-3 inline-flex min-h-11 items-center font-medium text-primary touch-manipulation"
-          onClick={() => document.getElementById("list-new")?.scrollIntoView({ block: "start" })}
-        >
-          {copy.addCentre}
-        </button>
-      </section>
-    );
+  function setViewMode(next: "cards" | "rows") {
+    setView(next);
+    try {
+      sessionStorage.setItem(VIEW_KEY, next);
+    } catch {
+      /* private mode */
+    }
+  }
+
+  function openAdd() {
+    returnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : addRef.current;
+    setAddOpen(true);
+  }
+
+  function closeAdd() {
+    setAddOpen(false);
+    queueMicrotask(() => (returnFocus.current ?? addRef.current)?.focus());
+  }
+
+  function cancelSearch() {
+    setQuery("");
+    setSearchOpen(false);
+  }
+
+  function startCreate() {
+    closeAdd();
+    if (onCreateListing) {
+      onCreateListing();
+      return;
+    }
+    const el = document.getElementById("list-new");
+    if (el instanceof HTMLDetailsElement) el.open = true;
+    el?.scrollIntoView({ block: "start" });
   }
 
   if (open) {
@@ -78,57 +160,249 @@ export function HostListingsDesk({
     );
   }
 
+  const matches = filterOwnedCentres(listings, query);
+  const listed = matches.filter((row) => centrePublication(row.live) === "listed");
+  const unpublished = matches.filter((row) => centrePublication(row.live) === "unpublished");
+  const groups = [
+    listed.length ? { id: "listed" as const, label: copy.listed, rows: listed } : null,
+    unpublished.length ? { id: "unpublished" as const, label: copy.notPublished, rows: unpublished } : null,
+  ].filter((group) => group != null);
+
   return (
-    <div className="space-y-3" data-ke="host-listings">
-      <ul className="grid gap-3 sm:grid-cols-2">
-        {listings.map((row) => {
-          const photo = managedListingPhotos(row.photos)[0] ?? "";
-          return (
-            <li key={row.id}>
+    <div className="pb-8" data-ke="host-listings" data-view={view}>
+      <div className="flex items-start justify-between gap-3">
+        <h1 className="min-w-0 text-balance font-display text-[1.75rem] font-bold leading-tight md:text-[2rem]">{copy.yourCentres}</h1>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            className="inline-flex size-11 items-center justify-center rounded-full bg-surface shadow-card ring-1 ring-border touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={copy.searchCentres}
+            aria-expanded={searchOpen}
+            onClick={() => {
+              setSearchOpen(true);
+              queueMicrotask(() => searchRef.current?.focus());
+            }}
+          >
+            <Search className="size-5" aria-hidden />
+          </button>
+          <button
+            type="button"
+            className="inline-flex size-11 items-center justify-center rounded-full bg-surface shadow-card ring-1 ring-border touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={view === "cards" ? copy.listView : copy.cardView}
+            aria-pressed={view === "rows"}
+            onClick={() => setViewMode(view === "cards" ? "rows" : "cards")}
+          >
+            {view === "cards" ? <List className="size-5" aria-hidden /> : <LayoutGrid className="size-5" aria-hidden />}
+          </button>
+          <button
+            ref={addRef}
+            type="button"
+            className="inline-flex size-11 items-center justify-center rounded-full bg-surface shadow-card ring-1 ring-border touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={copy.addCentre}
+            aria-haspopup="dialog"
+            aria-expanded={addOpen}
+            onClick={openAdd}
+          >
+            <Plus className="size-5" aria-hidden />
+          </button>
+        </div>
+      </div>
+      {searchOpen ? (
+        <div className="mt-3 flex items-center gap-2">
+          <label className="sr-only" htmlFor="host-centre-search">
+            {copy.searchCentres}
+          </label>
+          <input
+            ref={searchRef}
+            id="host-centre-search"
+            type="search"
+            value={query}
+            placeholder={copy.searchPlaceholder}
+            data-ke="host-listings-search"
+            className="h-11 min-w-0 flex-1 rounded-full border border-border bg-surface px-4 text-base text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onChange={(event) => setQuery(event.target.value)}
+            onFocus={(event) => event.currentTarget.scrollIntoView({ block: "center" })}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                cancelSearch();
+              }
+            }}
+          />
+          <button
+            type="button"
+            className="inline-flex min-h-11 items-center px-2 text-sm font-medium touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onClick={cancelSearch}
+          >
+            {t("cancel")}
+          </button>
+        </div>
+      ) : null}
+      {!listings.length ? (
+        <section className="mt-6" data-ke="host-listings-empty">
+          <p className="text-sm text-muted">{copy.emptyListings}</p>
+        </section>
+      ) : null}
+      {listings.length && !matches.length ? (
+        <section className="mt-6" data-ke="host-listings-empty">
+          <p className="text-sm text-muted">{copy.noSearchMatch}</p>
+          <button
+            type="button"
+            className="mt-3 inline-flex min-h-11 items-center font-medium text-primary touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onClick={cancelSearch}
+          >
+            {copy.clearSearch}
+          </button>
+        </section>
+      ) : null}
+      <div className="mt-4 space-y-6">
+        {groups.map((group) => (
+          <section key={group.id} aria-label={group.label}>
+            <h2 className="text-sm font-semibold text-fg">{group.label}</h2>
+            {view === "rows" ? (
+              <ul className="mt-1 divide-y divide-border">
+                {group.rows.map((row) => (
+                  <li key={row.id}>
+                    <CentreRow row={row} copy={copy} noPhoto={noPhoto} layout="rows" onOpen={() => choose(row.id)} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <ul className="mt-3 grid gap-5 sm:grid-cols-2">
+                {group.rows.map((row) => (
+                  <li key={row.id}>
+                    <CentreRow row={row} copy={copy} noPhoto={noPhoto} layout="cards" onOpen={() => choose(row.id)} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        ))}
+      </div>
+      {addOpen ? (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center md:items-center" role="presentation">
+          <button type="button" className="absolute inset-0 bg-fg/40" aria-label={t("close")} onClick={closeAdd} />
+          <div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={dialogTitleId}
+            data-ke="host-add-centre"
+            className="relative z-10 w-full max-w-lg rounded-t-2xl bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5 shadow-card ring-1 ring-border md:rounded-2xl md:pb-5"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <h2 id={dialogTitleId} className="font-display text-2xl font-bold">
+                {copy.addCentre}
+              </h2>
               <button
                 type="button"
-                data-ke="host-listing-card"
-                className="w-full overflow-hidden rounded-[16px] bg-white text-left shadow-sm ring-1 ring-black/8 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:bg-[#1B2230] dark:ring-white/10"
-                onClick={() => choose(row.id)}
+                className="inline-flex size-11 items-center justify-center rounded-full touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={t("close")}
+                onClick={closeAdd}
               >
-                <span className="relative block">
-                  <BuildingPhoto
-                    src={photo}
-                    alt={photo ? row.name : ""}
-                    className="aspect-[4/3] w-full bg-[#F7F8FA] object-cover dark:bg-[#11151C]"
-                    width={640}
-                    height={480}
-                  />
-                  {!photo ? (
-                    <span className="absolute inset-0 grid place-items-center px-4 text-center text-sm font-medium text-muted" data-ke="host-card-no-photo">
-                      {locale === "fr" ? "Photo non disponible" : "Photo not available"}
-                    </span>
-                  ) : null}
-                  <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[12px] font-semibold leading-4 text-[#11151C] shadow-sm">
-                    {row.live ? (locale === "fr" ? "Publiée" : "Listed") : locale === "fr" ? "Pas publiée" : "Not published"}
-                  </span>
-                </span>
-                <span className="block px-4 py-3">
-                  <span className="block text-[16px] font-semibold leading-[22px] text-fg">{row.name}</span>
-                  <span className="mt-1 block text-[14px] leading-5 text-muted">{row.city}</span>
-                </span>
+                <X className="size-5" aria-hidden />
               </button>
-            </li>
-          );
-        })}
-      </ul>
-      <button
-        type="button"
-        className="inline-flex min-h-11 items-center font-medium text-primary touch-manipulation"
-        onClick={() => {
-          const el = document.getElementById("list-new");
-          if (el instanceof HTMLDetailsElement) el.open = true;
-          el?.scrollIntoView({ block: "start" });
-        }}
-      >
-        {copy.addCentre}
-      </button>
+            </div>
+            <p className="mt-1 text-sm text-muted">{copy.addChooserLead}</p>
+            <div className="mt-4 flex flex-col gap-2">
+              <Link
+                to="/claim"
+                className="inline-flex min-h-11 items-center rounded-xl px-3 text-base font-semibold text-fg touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={closeAdd}
+              >
+                {t("providerOnboardingClaim")}
+              </Link>
+              <button
+                type="button"
+                className="inline-flex min-h-11 items-center rounded-xl px-3 text-left text-base font-semibold text-fg touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                data-ke="host-add-create"
+                onClick={startCreate}
+              >
+                {t("providerOnboardingListNew")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
+  );
+}
+
+function CentreRow({
+  row,
+  copy,
+  noPhoto,
+  layout,
+  onOpen,
+}: {
+  row: Daycare;
+  copy: ReturnType<typeof hostCopy>;
+  noPhoto: string;
+  layout: "cards" | "rows";
+  onOpen: () => void;
+}) {
+  const demo = usesDemoPhotoPreview(row);
+  const stored = managedListingPhotos(row.photos)[0] ?? "";
+  const photo = demo ? DEMO_DAYCARE_PHOTOS[0] : stored;
+  const status = centrePublication(row.live) === "listed" ? copy.listed : copy.notPublished;
+  const alt = demo ? demoPhotoAlt(copy.demoPhotoAlt, 1, DEMO_DAYCARE_PHOTOS.length) : photo ? row.name : "";
+  const coverClass =
+    layout === "rows"
+      ? "size-16 shrink-0 rounded-xl object-cover"
+      : "aspect-[16/10] max-h-44 w-full rounded-2xl object-cover";
+  return (
+    <button
+      type="button"
+      data-ke="host-listing-card"
+      data-layout={layout}
+      data-demo={demo ? "preview" : undefined}
+      className={
+        layout === "rows"
+          ? "flex min-h-11 w-full items-center gap-3 py-3 text-left touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          : "w-full text-left touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      }
+      onClick={onOpen}
+    >
+      <span className={layout === "rows" ? "relative shrink-0" : "relative block"}>
+        {photo ? (
+          demo ? (
+            <img src={photo} alt={alt} width={layout === "rows" ? 128 : 640} height={layout === "rows" ? 128 : 400} className={coverClass} />
+          ) : (
+            <BuildingPhoto src={photo} alt={alt} className={coverClass} width={layout === "rows" ? 128 : 640} height={layout === "rows" ? 128 : 400} />
+          )
+        ) : (
+          <span
+            className={
+              layout === "rows"
+                ? "grid size-16 place-items-center rounded-xl bg-surface-2 px-1 text-center text-[11px] leading-tight text-muted"
+                : "grid aspect-[16/10] max-h-44 w-full place-items-center rounded-2xl bg-surface-2 px-4 text-center text-sm text-muted"
+            }
+            data-ke="host-card-no-photo"
+          >
+            {noPhoto}
+          </span>
+        )}
+        {demo ? (
+          <span className="absolute left-1.5 top-1.5 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-semibold text-[#11151C]">
+            {copy.demoLabel}
+          </span>
+        ) : null}
+        {layout === "cards" ? (
+          <span className="absolute bottom-2 left-2 rounded-full bg-white/95 px-2.5 py-1 text-[12px] font-semibold leading-4 text-[#11151C] shadow-sm">
+            {status}
+          </span>
+        ) : null}
+      </span>
+      <span className={layout === "rows" ? "min-w-0 flex-1" : "mt-2 block"}>
+        <span className="block truncate text-[16px] font-semibold leading-[22px] text-fg">{row.name}</span>
+        <span className="mt-0.5 block truncate text-[14px] leading-5 text-muted">{row.city}</span>
+      </span>
+      {layout === "rows" ? (
+        <span className="shrink-0 rounded-full bg-surface px-2.5 py-1 text-[12px] font-semibold leading-4 text-fg ring-1 ring-border">
+          {status}
+        </span>
+      ) : null}
+    </button>
   );
 }
 
@@ -283,7 +557,8 @@ function HostEditor({
   }
 
   const photos = managedListingPhotos(daycare.photos);
-  const cover = photos[0] ?? "";
+  const demoPreview = usesDemoPhotoPreview(daycare);
+  const cover = demoPreview ? DEMO_DAYCARE_PHOTOS[0] : photos[0] ?? "";
 
   return (
     <div data-ke="host-editor" className="mx-auto w-full max-w-[1120px] pb-16">
@@ -308,20 +583,35 @@ function HostEditor({
         type="button"
         data-ke="host-cover"
         data-section="photos"
-        className="mt-4 w-full rounded-[16px] bg-white p-4 text-left shadow-sm ring-1 ring-black/8 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:bg-[#1B2230] dark:ring-white/10"
+        className="mt-4 w-full rounded-[16px] bg-surface p-4 text-left ring-1 ring-border touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         onClick={() => setSection("photos")}
       >
         <span className="block text-[16px] font-semibold leading-[22px]">{locale === "fr" ? "Visite photo" : "Photo tour"}</span>
         <span className="mt-0.5 block text-[14px] leading-5 text-muted">
-          {photos.length
-            ? `${photos.length} ${locale === "fr" ? "photos" : photos.length === 1 ? "photo" : "photos"}`
-            : locale === "fr"
-              ? "Photo non disponible"
-              : "Photo not available"}
+          {demoPreview
+            ? copy.demoPreviewLead
+            : photos.length
+              ? `${photos.length} ${locale === "fr" ? "photos" : photos.length === 1 ? "photo" : "photos"}`
+              : locale === "fr"
+                ? "Photo non disponible"
+                : "Photo not available"}
         </span>
-        {cover ? (
+        {demoPreview ? (
+          <span className="mt-3 grid grid-cols-5 gap-1.5" data-ke="demo-photo-preview">
+            {DEMO_DAYCARE_PHOTOS.map((src, index) => (
+              <img
+                key={src}
+                src={src}
+                alt={demoPhotoAlt(copy.demoPhotoAlt, index + 1, DEMO_DAYCARE_PHOTOS.length)}
+                width={192}
+                height={144}
+                className="aspect-[4/3] w-full rounded-lg object-cover"
+              />
+            ))}
+          </span>
+        ) : cover ? (
           <span className="relative mt-3 block">
-            <BuildingPhoto src={cover} alt="" className="aspect-[4/3] w-full rounded-[16px] object-cover" width={960} height={720} />
+            <BuildingPhoto src={cover} alt="" className="aspect-[16/10] max-h-56 w-full rounded-[16px] object-cover" width={960} height={600} />
             <span className="absolute bottom-3 left-3 rounded-full bg-black/70 px-2.5 py-1 text-[12px] font-medium text-white">
               {photos.length} {locale === "fr" ? "photos" : photos.length === 1 ? "photo" : "photos"}
             </span>
@@ -349,7 +639,7 @@ function HostEditor({
             aria-selected={tab === id}
             className={cn(
               "min-h-11 rounded-full px-4 text-sm font-semibold touch-manipulation",
-              tab === id ? "bg-white text-[#11151C] shadow-sm dark:bg-[#1B2230] dark:text-white" : "text-muted",
+              tab === id ? "bg-surface text-fg shadow-card" : "text-muted",
             )}
             onClick={() => setTab(id)}
           >
@@ -368,7 +658,7 @@ function HostEditor({
                     type="button"
                     data-ke="host-section-card"
                     data-section={id}
-                    className="flex w-full items-center gap-3 rounded-[16px] bg-white px-4 py-4 text-left shadow-sm ring-1 ring-black/8 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:bg-[#1B2230] dark:ring-white/10"
+                    className="flex w-full items-center gap-3 rounded-[16px] bg-surface px-4 py-4 text-left shadow-card ring-1 ring-border/80 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     onClick={() => setSection(id)}
                   >
                     <span className="min-w-0 flex-1">

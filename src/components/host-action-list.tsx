@@ -74,7 +74,7 @@ export function HostActionEmailPref() {
     <label className="mt-4 flex min-h-11 items-start gap-3 rounded-xl bg-surface px-4 py-3 text-sm ring-1 ring-border" data-ke="host-action-email">
       <input
         type="checkbox"
-        className="mt-1 size-5"
+        className="ke-switch"
         checked={email}
         onChange={(event) => {
           const next = event.target.checked;

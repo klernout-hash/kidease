@@ -157,12 +157,15 @@ export function DeskShell({
   onSelect,
   children,
   wide,
+  headingMode = "page",
 }: {
   desk: DeskId;
   active: string;
   onSelect: (id: string) => void;
   children: ReactNode;
   wide?: boolean;
+  /** Aside label when the page already has its own h1, such as Your centres. */
+  headingMode?: "page" | "aside";
 }) {
   const meta = DESK_META[desk];
   const { t } = useCopy();
@@ -196,6 +199,7 @@ export function DeskShell({
   const allItems = visibleDeskNav(desk, opts).map(labelPlan);
   const eyebrow = meta.eyebrowKey ? t(meta.eyebrowKey) : meta.eyebrow;
   const title = meta.titleKey ? t(meta.titleKey) : meta.title;
+  const Heading = headingMode === "aside" ? "p" : "h1";
   const showSwitcher = Boolean(session && showDeskSwitcher(session.desks, session.role, session.email));
 
   return (
@@ -205,7 +209,7 @@ export function DeskShell({
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:gap-4">
             <aside className="md:sticky md:top-14 md:w-44 md:shrink-0">
               <p className="hidden text-[11px] font-medium uppercase tracking-[0.14em] text-subtle md:block">{eyebrow}</p>
-              <h1 className="font-display text-[1.2rem] leading-tight md:mt-0.5">{title}</h1>
+              <Heading className={cn("font-display text-[1.2rem] leading-tight md:mt-0.5", headingMode === "aside" && "max-md:sr-only")}>{title}</Heading>
               {showSwitcher ? (
                 <div className="mt-2 hidden md:block" data-ke="desk-switcher-slot">
                   <DeskSwitcher />
