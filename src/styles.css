@@ -243,8 +243,6 @@
     font-size: 14px;
     line-height: 1.5;
     letter-spacing: -0.011em;
-    /* Plus Jakarta's space is about 0.17em. A normal gap is closer to 0.28em. */
-    word-spacing: 0.14em;
     overflow-x: hidden;
     overflow-x: clip;
     overscroll-behavior-x: none;
@@ -2695,6 +2693,13 @@ h1, h2, h3, h4, p, li, label, legend, dt, dd {
 }
 /* This file's space is about 0.17em. A normal word space is closer to 0.28em,
    and the heading tracking makes the gap look like the words ran together. */
+/* Listing and the provider editor are the surfaces this change owns.
+   The font's space is about 0.17em. Keep the correction off the rest of the site. */
+.ke-listing-page,
+[data-ke="host-editor"],
+[data-ke="host-section"] {
+  word-spacing: 0.14em;
+}
 @media (min-width: 768px) {
   .ke-listing-page {
     display: grid;
