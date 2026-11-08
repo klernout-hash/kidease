@@ -26,6 +26,15 @@ import {
   type DoorAction,
   type DoorEvent,
 } from "../attendance-handoff.ts";
+import {
+  canReadNotice,
+  eligibilityFor,
+  isDemoAttendance,
+  noticeRecipients,
+  refuseHeldReplay,
+  type ChannelGate,
+  type Eligibility,
+} from "../attendance-notices.ts";
 import { nid } from "../utils.ts";
 
 type BookingRow = {
@@ -90,6 +99,161 @@ async function holdNotice(sql: Sql, input: { eventId: string; daycareId: string;
   return "held" as const;
 }
 
+async function daycareFacts(sql: Sql, daycareId: string) {
+  const rows = await sql<{ name: string | null; is_test: number | boolean | null }>`
+    select name, is_test from daycares where id = ${daycareId} limit 1
+  `;
+  const row = rows[0];
+  return {
+    name: row?.name || "",
+    demo: isDemoAttendance({ daycareId, isTest: row?.is_test, daycareName: row?.name }),
+  };
+}
+
+async function insertAccountNotice(
+  sql: Sql,
+  input: { eventId: string; daycareId: string; userId: string; audience: "guardian" | "centre" },
+) {
+  const dedupe = `${input.eventId}:${input.audience}:${input.userId}`;
+  try {
+    await sql`
+      insert into attendance_notice_outbox
+        (id, event_id, daycare_id, recipient_label, recipient_user_id, audience, channel, status, dedupe_key)
+      values
+        (${nid("ntc")}, ${input.eventId}, ${input.daycareId}, ${input.audience}, ${input.userId},
+         ${input.audience}, 'account', 'eligible', ${dedupe})
+    `;
+  } catch (err) {
+    if (!duplicate(err)) throw err;
+  }
+}
+
+async function auditNotice(sql: Sql, input: { outboxId: string; from: string; to: string; reason: string }) {
+  await sql`
+    insert into attendance_notice_audit (id, outbox_id, from_status, to_status, reason)
+    values (${nid("aud")}, ${input.outboxId}, ${input.from}, ${input.to}, ${input.reason})
+  `;
+}
+
+export async function enqueueAttendanceNotices(
+  sql: Sql,
+  input: { eventId: string; daycareId: string; childId: string | null; guardianUserId: string; actorId: string },
+): Promise<"held" | "waiting" | "none"> {
+  const centre = await daycareFacts(sql, input.daycareId);
+  if (centre.demo) return holdNotice(sql, input);
+  const members = await sql<{ user_id: string; role: string }>`
+    select user_id, role from centre_members
+    where daycare_id = ${input.daycareId} and status = 'active'
+  `.catch(() => [] as { user_id: string; role: string }[]);
+  const people = noticeRecipients({
+    guardianUserId: input.guardianUserId,
+    centreUserIds: members.map((row) => ({ userId: row.user_id, role: row.role })),
+    actorId: input.actorId,
+  });
+  if (!people.length) return "none";
+  for (const person of people) {
+    await insertAccountNotice(sql, {
+      eventId: input.eventId,
+      daycareId: input.daycareId,
+      userId: person.userId,
+      audience: person.audience,
+    });
+  }
+  await settleAttendanceNotices(sql, { eventId: input.eventId, gateFor: () => ({
+    transportLive: false,
+    emailVerified: false,
+    pushArmed: false,
+    emailWanted: null,
+    pushWanted: null,
+  }) });
+  return "waiting";
+}
+
+type OutboxRow = {
+  id: string;
+  channel: string;
+  status: string;
+  recipient_user_id: string | null;
+  attempts: number;
+};
+
+/** Applies preference and channel gates. Does not send, and does not replay held demo rows. */
+export async function settleAttendanceNotices(
+  sql: Sql,
+  input: {
+    eventId?: string;
+    gateFor: (userId: string) => ChannelGate;
+    failOnce?: Set<string>;
+  },
+): Promise<{ settled: number; refused: number }> {
+  const rows = input.eventId
+    ? await sql<OutboxRow>`
+        select id, channel, status, recipient_user_id, attempts
+        from attendance_notice_outbox
+        where event_id = ${input.eventId} and channel = 'account' and status in ('eligible', 'retry')
+      `
+    : await sql<OutboxRow>`
+        select id, channel, status, recipient_user_id, attempts
+        from attendance_notice_outbox
+        where channel = 'account' and status in ('eligible', 'retry')
+        order by created_at asc
+        limit 40
+      `;
+  let settled = 0;
+  let refused = 0;
+  for (const row of rows) {
+    const replay = refuseHeldReplay(row);
+    if (!replay.ok) {
+      refused += 1;
+      continue;
+    }
+    const claimed = await sql<{ id: string }>`
+      update attendance_notice_outbox
+      set status = 'retry', updated_at = now()
+      where id = ${row.id} and status = ${row.status}
+      returning id
+    `;
+    if (!claimed[0]) continue;
+    if (input.failOnce?.has(row.id)) {
+      input.failOnce.delete(row.id);
+      const attempts = Number(row.attempts || 0) + 1;
+      const next = attempts >= 5 ? "suppressed" : "retry";
+      await sql`
+        update attendance_notice_outbox
+        set status = ${next}, attempts = ${attempts}, last_error = 'transient', updated_at = now()
+        where id = ${row.id}
+      `;
+      await auditNotice(sql, { outboxId: row.id, from: row.status, to: next, reason: "transient" });
+      settled += 1;
+      continue;
+    }
+    const gate = input.gateFor(row.recipient_user_id || "");
+    const decision: Eligibility = eligibilityFor(gate);
+    await sql`
+      update attendance_notice_outbox
+      set status = ${decision.status}, last_error = ${decision.reason}, updated_at = now()
+      where id = ${row.id}
+    `;
+    await auditNotice(sql, { outboxId: row.id, from: row.status, to: decision.status, reason: decision.reason });
+    settled += 1;
+  }
+  return { settled, refused };
+}
+
+export async function readMyNotice(sql: Sql, userId: string, outboxId: string) {
+  const rows = await sql<{ id: string; recipient_user_id: string | null; status: string; channel: string }>`
+    select id, recipient_user_id, status, channel
+    from attendance_notice_outbox where id = ${outboxId} limit 1
+  `;
+  const row = rows[0];
+  if (!row || !canReadNotice(userId, row.recipient_user_id)) return null;
+  return row;
+}
+
+export async function promoteHeldNotices(): Promise<{ ok: false; reason: "held_not_live" }> {
+  return { ok: false, reason: "held_not_live" };
+}
+
 export async function commitHandoff(
   sql: Sql,
   input: {
@@ -100,7 +264,7 @@ export async function commitHandoff(
     pickupName: string;
     now: Date;
   },
-): Promise<{ ok: true; eventId: string; duplicate: boolean; notice: "held" | "none" } | { ok: false; error: string }> {
+): Promise<{ ok: true; eventId: string; duplicate: boolean; notice: "held" | "waiting" | "none" } | { ok: false; error: string }> {
   if (!canConfirmHandoff(input.role)) return { ok: false, error: "Only assigned centre staff can confirm this." };
   const rows = await sql<BookingRow>`
     select b.id, b.user_id, b.daycare_id, b.child_id, coalesce(c.name, 'Child') as child_name, d.timezone
@@ -170,9 +334,15 @@ export async function commitHandoff(
     if (again[0]) return { ok: true, eventId: again[0].id, duplicate: true, notice: "none" };
     return { ok: false, error: "That time is already saved." };
   }
-  let notice: "held" | "none" = "none";
+  let notice: "held" | "waiting" | "none" = "none";
   try {
-    notice = await holdNotice(sql, { eventId, daycareId: booking.daycare_id, childId: booking.child_id });
+    notice = await enqueueAttendanceNotices(sql, {
+      eventId,
+      daycareId: booking.daycare_id,
+      childId: booking.child_id,
+      guardianUserId: booking.user_id,
+      actorId: input.actorId,
+    });
   } catch {
     notice = "none";
   }
@@ -227,7 +397,13 @@ export async function commitCorrection(
   const still = await sql<{ id: string }>`select id from child_check_events where id = ${target.id} limit 1`;
   if (!still[0]) return { ok: false, error: "The original row must stay." };
   try {
-    await holdNotice(sql, { eventId, daycareId: booking.daycare_id, childId: booking.child_id });
+    await enqueueAttendanceNotices(sql, {
+      eventId,
+      daycareId: booking.daycare_id,
+      childId: booking.child_id,
+      guardianUserId: booking.user_id,
+      actorId: input.actorId,
+    });
   } catch {
     /* A failed notice does not undo the correction. */
   }
@@ -246,9 +422,10 @@ export async function readCentreDay(
     child_name: string;
     daycare_name: string;
     timezone: string | null;
+    is_test: number | boolean | null;
   }>(
     `select b.id as booking_id, b.child_id, b.daycare_id, coalesce(c.name, 'Child') as child_name,
-            d.name as daycare_name, d.timezone
+            d.name as daycare_name, d.timezone, d.is_test
      from bookings b
      join daycares d on d.id = b.daycare_id
      left join children c on c.id = b.child_id
@@ -281,6 +458,7 @@ export async function readCentreDay(
       status: attendanceStatus(last),
       next: nextHandoffAction(last),
       last,
+      demo: isDemoAttendance({ daycareId: kid.daycare_id, isTest: kid.is_test, daycareName: kid.daycare_name }),
     });
   }
   return {
@@ -296,8 +474,10 @@ export async function readParentDay(sql: Sql, userId: string, now: Date) {
     child_name: string;
     daycare_name: string;
     timezone: string | null;
+    is_test: number | boolean | null;
+    daycare_id: string;
   }>`
-    select b.id as booking_id, coalesce(c.name, 'Child') as child_name, d.name as daycare_name, d.timezone
+    select b.id as booking_id, coalesce(c.name, 'Child') as child_name, d.name as daycare_name, d.timezone, d.is_test, b.daycare_id
     from bookings b
     join daycares d on d.id = b.daycare_id
     left join children c on c.id = b.child_id
@@ -317,6 +497,7 @@ export async function readParentDay(sql: Sql, userId: string, now: Date) {
       childName: kid.child_name,
       daycareName: kid.daycare_name,
       status: attendanceStatus(last),
+      demo: isDemoAttendance({ daycareId: kid.daycare_id, isTest: kid.is_test, daycareName: kid.daycare_name }),
       events: events.map((event) => ({
         id: event.id,
         action: event.action,
