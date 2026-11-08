@@ -7,7 +7,7 @@
  * FEATURE_PUSH and FEATURE_SMS stay off unless env or PostHog explicitly enables them.
  */
 
-import { evaluateFeatureFlag, type EnvMap } from "./flags.ts";
+import { envFlagOn, evaluateFeatureFlag, type EnvMap } from "./flags.ts";
 import { enabledToolIds, type CentreToolId } from "./centre-tools.ts";
 
 export { envFlagOn, evaluateFeatureFlag, describeFeatureFlag } from "./flags.ts";
@@ -67,6 +67,12 @@ export function supportDeskEnabled(env?: EnvMap): boolean {
 /** Owner SMS replies into a support thread. Off. Also needs FEATURE_SUPPORT_CHAT. */
 export function supportSmsReplyEnabled(env?: EnvMap): boolean {
   return supportDeskEnabled(env) && evaluateFeatureFlag("FEATURE_SUPPORT_SMS_REPLY", env);
+}
+
+/** Owner email when a support message arrives. Off. The chat flag does not turn this on. */
+export function supportEmailAlertEnabled(env?: EnvMap): boolean {
+  const source = env ?? (typeof process !== "undefined" ? (process.env as EnvMap) : {});
+  return evaluateFeatureFlag("FEATURE_SUPPORT_CHAT", source) && envFlagOn(source.SUPPORT_EMAIL_ALERTS);
 }
 
 /** KidEase Top Rated. Off. Not a government rating. */

@@ -1,10 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql, type Sql } from "@/lib/db";
-import { supportDeskEnabled, supportSmsReplyEnabled, type EnvMap } from "@/lib/features";
+import { supportDeskEnabled, supportEmailAlertEnabled, supportSmsReplyEnabled, type EnvMap } from "@/lib/features";
 import {
   cleanSupportBody,
   ownerAlertText,
+  planOwnerAlert,
   shouldSendOwnerSms,
   supportPreview,
   supportRateAllows,
@@ -69,57 +70,71 @@ export async function notifySupportOwner(input: {
 }) {
   const env = input.env ?? process.env;
   const nowMs = input.nowMs ?? Date.now();
-  let emailed = false;
-  if (!input.thread.owner_emailed && sendsLive(env)) {
-    const to = String(env.ADMIN_EMAIL || env.SUPPORT_INBOX_EMAIL || "").trim();
-    if (to) {
-      const alert = ownerAlertText({
-        role: input.role,
-        name: input.name,
-        preview: input.body,
-        threadId: input.thread.id,
-      });
-      const html = `<p>${alert.replace(/[&<>]/g, (ch) => (ch === "&" ? "&" : ch === "<" ? "<" : ">"))}</p>`;
+  const emailTo = String(env.ADMIN_EMAIL || env.SUPPORT_INBOX_EMAIL || "").trim();
+  const phone = String(env.SUPPORT_ALERT_PHONE || "").trim();
+  const plan = planOwnerAlert({
+    production: sendsLive(env),
+    emailChannelOn: supportEmailAlertEnabled(env),
+    smsChannelOn: supportSmsReplyEnabled(env),
+    emailTo,
+    phone,
+    alreadyEmailed: Boolean(input.thread.owner_emailed),
+    smsWindowOpen: shouldSendOwnerSms(input.thread.last_owner_sms_at, nowMs),
+  });
+  let email: "sent" | "skipped" | "failed" = "skipped";
+  let sms: "sent" | "skipped" | "wait" | "failed" = plan.sms === "wait" ? "wait" : "skipped";
+  if (plan.email === "send") {
+    const alert = ownerAlertText({
+      role: input.role,
+      name: input.name,
+      preview: input.body,
+      threadId: input.thread.id,
+    });
+    try {
       await sendTransactionalMail({
-        to,
+        to: emailTo,
         purpose: "customer_alert",
         subject: "New KidEase support message",
         text: alert,
-        html,
+        html: `<p>${alert.replace(/[&<>]/g, (ch) => (ch === "&" ? "&amp;" : ch === "<" ? "&lt;" : "&gt;"))}</p>`,
         branded: brandedNotice({
           heading: "New KidEase support message",
           text: alert,
           reason: "You get this because you own KidEase support.",
         }),
-      }).catch(() => undefined);
+      });
       await input.sql`update support_threads set owner_emailed = 1 where id = ${input.thread.id}`;
-      emailed = true;
+      email = "sent";
+    } catch {
+      email = "failed";
     }
   }
-  const phone = String(env.SUPPORT_ALERT_PHONE || "").trim();
-  let sms: "sent" | "batched" | "skipped" = "skipped";
-  if (phone && sendsLive(env) && supportDeskEnabled(env) && shouldSendOwnerSms(input.thread.last_owner_sms_at, nowMs)) {
-    const result = await sendSms(
-      {
-        to: phone,
-        body: ownerAlertText({
-          role: input.role,
-          name: input.name,
-          preview: supportPreview(input.body),
-          threadId: input.thread.id,
-        }),
-        audience: "internal",
-      },
-      { operatorAlert: true, env },
-    );
-    if (result.ok) {
-      await input.sql`update support_threads set last_owner_sms_at = now() where id = ${input.thread.id}`;
-      sms = "sent";
+  if (plan.sms === "send") {
+    try {
+      const result = await sendSms(
+        {
+          to: phone,
+          body: ownerAlertText({
+            role: input.role,
+            name: input.name,
+            preview: supportPreview(input.body),
+            threadId: input.thread.id,
+          }),
+          audience: "internal",
+        },
+        { operatorAlert: true, env },
+      );
+      if (!result.ok) {
+        sms = "failed";
+      } else {
+        await input.sql`update support_threads set last_owner_sms_at = now() where id = ${input.thread.id}`;
+        sms = "sent";
+      }
+    } catch {
+      sms = "failed";
     }
-  } else if (phone && !shouldSendOwnerSms(input.thread.last_owner_sms_at, nowMs)) {
-    sms = "batched";
   }
-  return { emailed, sms };
+  return { email, sms, emailReason: plan.emailReason, smsReason: plan.smsReason };
 }
 
 export const supportDeskStatus = createServerFn({ method: "GET" })
@@ -167,7 +182,12 @@ export const postSupportDesk = createServerFn({ method: "POST" })
     `;
     const who = await senderFacts(sql, context.userId);
     const notice = await notifySupportOwner({ sql, thread, role: who.role, name: who.name, body: data.body });
-    return { enabled: true as const, ok: true as const, id, notice: { emailed: notice.emailed, sms: notice.sms } };
+    return {
+      enabled: true as const,
+      ok: true as const,
+      id,
+      notice: { email: notice.email, sms: notice.sms, emailReason: notice.emailReason, smsReason: notice.smsReason },
+    };
   });
 
 export const listAdminSupportDesk = createServerFn({ method: "GET" })
