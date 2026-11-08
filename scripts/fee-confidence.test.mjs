@@ -39,9 +39,9 @@ test("claim and check-in accept a real monthly fee and ignore blanks", () => {
   assert.equal(parseOptionalMonthlyFee("1025"), 1025);
   assert.equal(parseOptionalMonthlyFee("$1,200"), 1200);
   assert.equal(parseOptionalMonthlyFee("9000"), null);
-  assert.match(src("src/routes/claim.tsx"), /claimFeeLead/);
+  assert.match(src("src/components/claim-wizard.tsx"), /claimFeesAfter/);
   assert.match(src("src/routes/spots.\$token.tsx"), /feesLead/);
-  assert.match(src("src/lib/server/claims.ts"), /saveCentreMonthlyFees/);
+  assert.doesNotMatch(src("src/lib/server/claims.ts"), /saveCentreMonthlyFees/);
   assert.match(src("src/lib/server/open-spots-checkin.ts"), /saveCentreMonthlyFees/);
   assert.match(src("src/lib/server/fee-confidence.ts"), /fee_confidence = 'centre'/);
   assert.match(src("migrations/0108_fee_confidence.sql"), /add column if not exists fee_confidence/);

@@ -11,7 +11,9 @@ import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { PROVIDER_TERMS_VERSION } from "@/lib/legal-copy-v2";
-import { searchClaimable, startClaim, submitEnrollLicense, verifyClaim, type ClaimHit } from "@/lib/server/claims";
+import { searchClaimable, saveClaimFees, startClaim, submitEnrollLicense, verifyClaim, type ClaimHit } from "@/lib/server/claims";
+import { ClaimVerifyWizard, type ClaimDeliveryView } from "@/components/claim-wizard";
+import { isClaimProduction } from "@/lib/claim-contact";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useCopy } from "@/lib/use-copy";
 import { useInNativeShell } from "@/lib/use-native-shell";
@@ -43,9 +45,12 @@ function ClaimHitPhoto({ photo, name, compact = false }: { photo: string; name: 
 export function claimValidateSearch(s: Record<string, unknown>) {
   const q = typeof s.q === "string" ? s.q : "";
   const id = typeof s.id === "string" ? s.id : "";
+  const rawPreview = s.preview;
+  const preview = typeof rawPreview === "string" ? rawPreview : typeof rawPreview === "number" ? String(rawPreview) : "";
   return {
     ...(q ? { q } : {}),
     ...(id ? { id } : {}),
+    ...(preview && !isClaimProduction() ? { preview } : {}),
   };
 }
 
@@ -71,14 +76,12 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
   const [hits, setHits] = useState<ClaimHit[]>([]);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [acceptTerms, setAcceptTerms] = useState(false);
-  const [pending, setPending] = useState<{ daycareId: string; name: string; code: string } | null>(null);
-  const [code, setCode] = useState("");
-  const [claimFees, setClaimFees] = useState({ infantMonthly: "", toddlerMonthly: "", preschoolMonthly: "" });
-  const [license, setLicense] = useState("");
+  const [pending, setPending] = useState<{ daycareId: string; name: string; delivery: ClaimDeliveryView } | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [claimError, setClaimError] = useState<string | null>(null);
+  const [feesNote, setFeesNote] = useState<string | null>(null);
   const [enroll, setEnroll] = useState({ name: "", email: "", centre: "", city: "", phone: "", body: "", daycareId: "" });
   const [enrollLicense, setEnrollLicense] = useState("");
-  const [licenseError, setLicenseError] = useState<string | null>(null);
   const [enrollLicenseError, setEnrollLicenseError] = useState<string | null>(null);
   const [enrollBusy, setEnrollBusy] = useState(false);
   const [enrollHits, setEnrollHits] = useState<ClaimHit[]>([]);
@@ -86,7 +89,6 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
   const [enrollManual, setEnrollManual] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const enrollBox = useRef<HTMLDivElement>(null);
-  const claimFileRef = useRef<HTMLInputElement>(null);
   const enrollFileRef = useRef<HTMLInputElement>(null);
   const claimChallenge = useTurnstileToken();
   const enrollChallenge = useTurnstileToken();
@@ -194,8 +196,13 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
         void navigate({ to: "/provider" });
         return;
       }
-      setPending({ daycareId: res.daycareId, name: res.centreName ?? t("provider"), code: res.code });
-      setCode(res.code);
+      const delivery: ClaimDeliveryView =
+        res.delivery === "sent" && res.mask
+          ? { kind: "sent", channel: "email", mask: res.mask }
+          : { kind: "manual", reason: res.reason || "no_verified_contact" };
+      setSubmitted(false);
+      setClaimError(null);
+      setPending({ daycareId: res.daycareId, name: res.centreName ?? t("provider"), delivery });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("claimFailed"));
     } finally {
@@ -203,43 +210,53 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
     }
   }
 
-  async function verify(e: React.FormEvent) {
-    e.preventDefault();
-    if (!pending) return;
-    const picked = claimFileRef.current?.files?.[0];
-    if (picked && isListingPhotoTooBig(picked.size)) {
-      rejectLicense("claim", claimFileRef.current);
+  async function verify(input: { code: string; license: string; acceptTerms: boolean }) {
+    if (!pending || busy) return;
+    if (!input.license.startsWith("data:image") && !input.license.startsWith("data:application/pdf")) {
+      setClaimError(t("licensePhoto"));
       return;
     }
-    if (!license.startsWith("data:image") && !license.startsWith("data:application/pdf")) {
-      toast.error(t("licensePhoto"));
-      return;
-    }
-    if (!acceptTerms) {
-      toast.error(locale === "fr" ? "Acceptez les Conditions des fournisseurs." : "Accept the Provider Terms to continue.");
+    if (!input.acceptTerms) {
+      setClaimError(locale === "fr" ? "Acceptez les Conditions des fournisseurs." : "Accept the Provider Terms to continue.");
       return;
     }
     setBusy(true);
+    setClaimError(null);
     try {
       await verifyClaim({
         data: {
           acceptTermsVersion: PROVIDER_TERMS_VERSION,
           locale,
           daycareId: pending.daycareId,
-          code,
-          licensePhoto: license,
+          code: input.code,
+          licensePhoto: input.license,
           turnstileToken: claimChallenge.token,
-          infantMonthly: claimFees.infantMonthly,
-          toddlerMonthly: claimFees.toddlerMonthly,
-          preschoolMonthly: claimFees.preschoolMonthly,
         },
       });
-      confirmAction(t, "claimSubmitted", {
-        primaryLabel: t("successOpenDesk"),
-        onClose: () => {
-          void navigate({ to: "/provider", search: { claimed: true } });
+      setSubmitted(true);
+      confirmAction(t, "claimSubmitted");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t("claimFailed");
+      setClaimError(message);
+      toast.error(message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveFees(fees: { infantMonthly: string; toddlerMonthly: string; preschoolMonthly: string }) {
+    if (!pending || busy) return;
+    setBusy(true);
+    try {
+      await saveClaimFees({
+        data: {
+          daycareId: pending.daycareId,
+          infantMonthly: fees.infantMonthly,
+          toddlerMonthly: fees.toddlerMonthly,
+          preschoolMonthly: fees.preschoolMonthly,
         },
       });
+      setFeesNote(t("claimFeesSaved"));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("claimFailed"));
     } finally {
@@ -247,33 +264,23 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
     }
   }
 
-  function rejectLicense(into: "claim" | "enroll", input?: HTMLInputElement | null) {
+  function rejectLicense(input?: HTMLInputElement | null) {
     const message = t("uploadClaimDocTooBig");
-    if (into === "claim") {
-      setLicenseError(message);
-      setLicense("");
-    } else {
-      setEnrollLicenseError(message);
-      setEnrollLicense("");
-    }
+    setEnrollLicenseError(message);
+    setEnrollLicense("");
     if (input) input.value = "";
     toast.error(message);
   }
 
-  function readLicense(file: File | undefined, into: "claim" | "enroll", input?: HTMLInputElement | null) {
+  function readLicense(file: File | undefined, input?: HTMLInputElement | null) {
     if (!file) return;
     if (isListingPhotoTooBig(file.size)) {
-      rejectLicense(into, input);
+      rejectLicense(input);
       return;
     }
-    if (into === "claim") setLicenseError(null);
-    else setEnrollLicenseError(null);
+    setEnrollLicenseError(null);
     const reader = new FileReader();
-    reader.onload = () => {
-      const value = String(reader.result ?? "");
-      if (into === "claim") setLicense(value);
-      else setEnrollLicense(value);
-    };
+    reader.onload = () => setEnrollLicense(String(reader.result ?? ""));
     reader.readAsDataURL(file);
   }
 
@@ -281,7 +288,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
     e.preventDefault();
     const picked = enrollFileRef.current?.files?.[0];
     if (picked && isListingPhotoTooBig(picked.size)) {
-      rejectLicense("enroll", enrollFileRef.current);
+      rejectLicense(enrollFileRef.current);
       return;
     }
     if (!enrollLicense.startsWith("data:image") && !enrollLicense.startsWith("data:application/pdf")) {
@@ -313,6 +320,16 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
     }
   }
 
+  const previewWizard = ((): "pending" | "fees" | 1 | 2 | 3 | null => {
+    if (isClaimProduction()) return null;
+    const raw = search.preview;
+    if (raw === "pending" || raw === "fees") return raw;
+    if (raw === "1" || raw === "code") return 1;
+    if (raw === "2" || raw === "licence") return 2;
+    if (raw === "3" || raw === "terms") return 3;
+    return null;
+  })();
+
   const partnerPerks = (
     [
       [Users, "perkParents"],
@@ -335,89 +352,22 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
       <main className="mx-auto max-w-3xl px-4 py-10" data-ke="claim-page" data-commerce={nativeShell ? "hidden" : "web"}>
         <h1 className="font-display text-4xl">{t("claimFindTitle")}</h1>
         <p className="mt-3 max-w-xl text-muted">{t("claimFindLead")}</p>
-        {pending ? (
-          <form onSubmit={verify} className="mt-8 space-y-4 rounded-xl bg-surface p-5 ring-1 ring-border">
-            <h2 className="font-display text-2xl">{t("verifyListing")}</h2>
-            <p className="text-sm text-muted">
-              {t("verifyLead")} <span className="font-medium text-fg">{pending.name}</span>
-            </p>
-            <div className="rounded-lg bg-primary/10 px-3 py-3 text-sm">
-              <p className="font-medium">{t("claimCodeSent")}</p>
-              <p className="mt-1 font-mono text-lg tracking-[0.2em]">{pending.code}</p>
-              <p className="mt-1 text-xs text-muted">{t("claimCodeHint")}</p>
-            </div>
-            <label className="block text-sm">
-              {t("claimCode")}
-              <input
-                required
-                value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
-                className="ke-input mt-1 font-mono tracking-widest"
-                autoComplete="one-time-code"
-              />
-            </label>
-            <label className="block text-sm font-medium">
-              {t("licensePhoto")}
-              <span className="mt-1 block text-xs font-normal text-muted">{t("licenceUploadLead")}</span>
-              <input
-                ref={claimFileRef}
-                required
-                type="file"
-                accept="application/pdf,image/jpeg,image/png,image/webp"
-              className="mt-2 block min-h-11 w-full rounded-xl bg-bg px-3 py-2 text-sm text-fg ring-1 ring-border file:mr-3 file:min-h-11 file:rounded-full file:border-0 file:bg-primary file:px-4 file:text-sm file:font-medium file:text-primary-fg"
-              data-ke="claim-license-file"
-                onChange={(e) => readLicense(e.target.files?.[0], "claim", e.currentTarget)}
-              />
-              <UploadLimitHint hint={t("uploadClaimDocHint")} error={licenseError} />
-            </label>
-            {license.startsWith("data:image") ? (
-              <img src={license} alt={t("claimLicenseAlt")} className="max-h-40 rounded-md object-contain ring-1 ring-border" />
-            ) : license ? (
-              <p className="text-sm text-muted">{t("claimPdfSelected")}</p>
-            ) : null}
-            <fieldset className="space-y-3">
-              <legend className="text-sm font-medium">{t("claimFeeLead")}</legend>
-              {(
-                [
-                  ["infantMonthly", "infantFee"],
-                  ["toddlerMonthly", "toddlerFee"],
-                  ["preschoolMonthly", "preschoolFee"],
-                ] as const
-              ).map(([key, label]) => (
-                <label key={key} className="block text-sm">
-                  {t(label)}
-                  <input
-                    inputMode="decimal"
-                    value={claimFees[key]}
-                    onChange={(e) => setClaimFees((s) => ({ ...s, [key]: e.target.value }))}
-                    className="ke-input mt-1 min-h-11"
-                    autoComplete="off"
-                  />
-                </label>
-              ))}
-            </fieldset>
-            <label className="flex items-start gap-2 text-sm">
-              <input type="checkbox" required checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)} className="mt-1 size-4" />
-              <span>
-                {locale === "fr" ? "J’accepte les " : "I agree to the "}
-                <a href="/provider-terms" target="_blank" rel="noreferrer" className="underline">
-                  {locale === "fr" ? "Conditions des fournisseurs" : "Provider Terms"}
-                </a>
-                {locale === "fr"
-                  ? " et confirme être autorisé à engager ce service de garde. La version, l’heure et l’adresse IP sont enregistrées."
-                  : " and confirm I can bind this child care program. The version, time, and IP address are recorded."}
-              </span>
-            </label>
-            <TurnstileField onToken={claimChallenge.onToken} />
-            <div className="flex flex-wrap gap-2">
-              <Button type="submit" disabled={busy || !acceptTerms}>
-                {t("finishClaim")}
-              </Button>
-              <Button type="button" variant="secondary" onClick={() => setPending(null)}>
-                {t("back")}
-              </Button>
-            </div>
-          </form>
+        {pending || previewWizard ? (
+          <ClaimVerifyWizard
+            centreName={pending?.name || (locale === "fr" ? "Centre exemple" : "Example centre")}
+            delivery={pending?.delivery || { kind: "manual", reason: "no_verified_contact" }}
+            busy={busy}
+            error={claimError}
+            submitted={submitted}
+            feesNote={feesNote}
+            startStep={previewWizard || undefined}
+            challenge={<TurnstileField onToken={claimChallenge.onToken} />}
+            onResend={() => {
+              if (pending) void begin(pending.daycareId, pending.name);
+            }}
+            onSubmit={(input) => void verify(input)}
+            onSaveFees={(fees) => void saveFees(fees)}
+          />
         ) : (
           <>
             <div ref={box} className="relative mt-6">
@@ -590,7 +540,7 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
               accept="application/pdf,image/jpeg,image/png,image/webp"
               className="mt-2 block min-h-11 w-full rounded-xl bg-bg px-3 py-2 text-sm text-fg ring-1 ring-border file:mr-3 file:min-h-11 file:rounded-full file:border-0 file:bg-primary file:px-4 file:text-sm file:font-medium file:text-primary-fg"
               data-ke="enroll-license-file"
-              onChange={(e) => readLicense(e.target.files?.[0], "enroll", e.currentTarget)}
+              onChange={(e) => readLicense(e.target.files?.[0], e.currentTarget)}
             />
             <UploadLimitHint hint={t("uploadClaimDocHint")} error={enrollLicenseError} />
           </label>

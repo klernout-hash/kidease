@@ -34,11 +34,13 @@ import {
 import type { FacilityType } from "@/lib/facility-type";
 import { writeTrustEvent } from "@/lib/server/trust";
 import { LISTING_NOT_FOUND, decideStartClaim } from "@/lib/access-control";
+import { isClaimProduction, maskClaimEmail } from "@/lib/claim-contact";
+import { claimFeesAllowed, judgeClaimCode, planClaimDelivery } from "@/lib/claim-wizard";
+import { envFlagOn } from "@/lib/flags";
 import { nonNegativeInt } from "@/lib/spot-counts";
 import {
   assertCentreCanMutateListing,
   assertCentreCanMutateVacancies,
-  ensureOwnerMembership,
 } from "@/lib/server/centre-access";
 
 export type ClaimHit = {
@@ -231,15 +233,19 @@ export const startClaim = createServerFn({ method: "POST" })
     if (!claim.ok) throw new Error(claim.error);
     if (!listed) throw new Error("Listing not found");
     if (claim.alreadyOwned) {
-      return { alreadyOwned: true as const, daycareId, slug: listed.slug, code: "" };
+      return { alreadyOwned: true as const, daycareId, slug: listed.slug };
     }
     await upsertDaycare(sql, listed);
-    const pending = await sql<{ id: string; code: string }>`
-      select id, code from listing_claims
+    const pending = await sql<{
+      id: string;
+      code_sends: number | null;
+      code_sent_at: string | null;
+    }>`
+      select id, code_sends, code_sent_at from listing_claims
       where user_id = ${context.userId} and daycare_id = ${daycareId} and status = 'pending'
       order by created_at desc limit 1
     `;
-    const code = pending[0]?.code ?? makeCode();
+    const code = makeCode();
     if (!pending[0]) {
       await sql`
         insert into listing_claims (id, daycare_id, user_id, code, status)
@@ -258,13 +264,55 @@ export const startClaim = createServerFn({ method: "POST" })
     // Do not set profiles.role to provider and do not call syncDaycareCrm.
     // A parent can open this step by mistake. Daycare Sign Up waits for the
     // licence submit below, or for an explicit daycare role choice.
+    // Catalogue contact_email is not a confirmed contact, so it is not used here.
+    const sentAt = pending[0]?.code_sent_at ? Date.parse(pending[0].code_sent_at) : null;
+    const plan = planClaimDelivery({
+      verifiedEmail: null,
+      verifiedPhone: null,
+      emailChannelOn: envFlagOn(process.env.FEATURE_CLAIM_CODE_EMAIL),
+      smsChannelOn: envFlagOn(process.env.FEATURE_CLAIM_CODE_SMS),
+      production: isClaimProduction(),
+      sends: Number(pending[0]?.code_sends ?? 0),
+      sentAt: Number.isFinite(sentAt) ? sentAt : null,
+      now: Date.now(),
+    });
+    let delivery: "sent" | "manual" = "manual";
+    let channel: "email" | "sms" | null = null;
+    let mask = "";
+    let reason: string = plan.action === "manual" ? plan.reason : "not_sent";
+    if (plan.action === "send" && plan.channel === "email") {
+      const { sendClaimCodeEmail } = await import("@/lib/server/claim-mail");
+      const mailed = await sendClaimCodeEmail({
+        to: plan.destination,
+        code,
+        centreName: listed.name,
+      }).catch(() => ({ status: "logged" as const, emailed: "" }));
+      if (mailed.status === "sent") {
+        delivery = "sent";
+        channel = "email";
+        mask = maskClaimEmail(plan.destination);
+        reason = "";
+        await sql`
+          update listing_claims
+          set code = ${code},
+              contact_verified = 1,
+              contact_channel = 'email',
+              code_sends = coalesce(code_sends, 0) + 1,
+              code_sent_at = now(),
+              code_attempts = 0
+          where user_id = ${context.userId} and daycare_id = ${daycareId} and status = 'pending'
+        `;
+      }
+    }
     return {
       alreadyOwned: false as const,
       daycareId,
       slug: listed.slug,
-      code,
       centreName: listed.name,
-      phone: listed.phone,
+      delivery,
+      channel,
+      mask,
+      reason,
     };
   });
 
@@ -291,19 +339,53 @@ export const verifyClaim = createServerFn({ method: "POST" })
     const photo = await persistLicenseInput(data.licensePhoto, data.daycareId);
     if (!photo) throw new Error("Upload a photo or PDF of your provincial licence");
     const sql = await getSql();
-    const rows = await sql<{ id: string; code: string }>`
-      select id, code from listing_claims
+    const waiting = await sql<{ id: string }>`
+      select id from listing_claims
+      where user_id = ${context.userId} and daycare_id = ${data.daycareId} and status = 'waiting'
+      order by created_at desc limit 1
+    `;
+    if (waiting[0]) return { ok: true as const, status: "waiting" as const, alreadyPending: true as const };
+    const rows = await sql<{
+      id: string;
+      code: string;
+      contact_verified: number | null;
+      code_attempts: number | null;
+      code_sent_at: string | null;
+    }>`
+      select id, code, contact_verified, code_attempts, code_sent_at from listing_claims
       where user_id = ${context.userId} and daycare_id = ${data.daycareId} and status = 'pending'
       order by created_at desc limit 1
     `;
     const claim = rows[0];
     if (!claim) throw new Error("No pending claim");
-    if (claim.code.toUpperCase() !== data.code.trim().toUpperCase()) {
-      throw new Error("That code does not match");
+    const sentAt = claim.code_sent_at ? Date.parse(claim.code_sent_at) : null;
+    const judged = judgeClaimCode({
+      required: Number(claim.contact_verified) === 1,
+      stored: claim.code,
+      entered: data.code || "",
+      sentAt: Number.isFinite(sentAt) ? sentAt : null,
+      now: Date.now(),
+      attempts: Number(claim.code_attempts ?? 0),
+    });
+    if (!judged.ok) {
+      await sql`
+        update listing_claims
+        set code_attempts = coalesce(code_attempts, 0) + 1
+        where id = ${claim.id}
+      `;
+      throw new Error(
+        judged.reason === "expired"
+          ? "That code has expired"
+          : judged.reason === "locked"
+            ? "Too many tries. Ask for a new code."
+            : "That code does not match",
+      );
     }
     await sql`
       update listing_claims
-      set status = 'waiting', license_photo = ${photo}, verified_at = now()
+      set status = 'waiting',
+          license_photo = ${photo},
+          verified_at = case when ${judged.matched} then now() else verified_at end
       where id = ${claim.id}
     `;
     await storeLicensePhoto(sql, data.daycareId, photo);
@@ -317,23 +399,6 @@ export const verifyClaim = createServerFn({ method: "POST" })
           ${data.locale === "fr" ? "fr" : "en"}, ${clientIpFromHeaders(headers) ?? null}, ${(headers.get("user-agent") || "").slice(0, 300)})
       `;
     }
-    const { saveCentreMonthlyFees } = await import("@/lib/server/fee-confidence");
-    await saveCentreMonthlyFees(data.daycareId, data).catch(() => undefined);
-    await sql`
-      insert into provider_daycares (user_id, daycare_id)
-      values (${context.userId}, ${data.daycareId})
-      on conflict (user_id, daycare_id) do nothing
-    `;
-    try {
-      const { subscriptionsEnabled } = await import("@/lib/features");
-      if (subscriptionsEnabled()) {
-        const { applyPendingClaimBoost } = await import("@/lib/server/stripe-lifecycle");
-        await applyPendingClaimBoost(sql, context.userId);
-      }
-    } catch (err) {
-      console.error("[kidease-stripe] claim boost apply failed", err);
-    }
-    await ensureOwnerMembership(sql, context.userId, data.daycareId);
     await sql`
       update daycares
       set claim_status = 'waiting'
@@ -406,6 +471,40 @@ export const verifyClaim = createServerFn({ method: "POST" })
       testListing: flags.isTest === 1,
       eventId,
     });
+    return { ok: true as const, status: "waiting" as const };
+  });
+
+export const saveClaimFees = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: {
+    daycareId: string;
+    infantMonthly?: unknown;
+    toddlerMonthly?: unknown;
+    preschoolMonthly?: unknown;
+  }) => input)
+  .handler(async ({ context, data }) => {
+    const { parseOptionalMonthlyFee } = await import("@/lib/fee-confidence");
+    const infant = parseOptionalMonthlyFee(data.infantMonthly);
+    const toddler = parseOptionalMonthlyFee(data.toddlerMonthly);
+    const preschool = parseOptionalMonthlyFee(data.preschoolMonthly);
+    if (infant == null && toddler == null && preschool == null) {
+      throw new Error("Enter a monthly fee or leave this for later");
+    }
+    const sql = await getSql();
+    const rows = await sql<{ id: string; status: string }>`
+      select id, status from listing_claims
+      where user_id = ${context.userId} and daycare_id = ${data.daycareId} and status = 'waiting'
+      order by created_at desc limit 1
+    `;
+    const claim = rows[0];
+    if (!claim || !claimFeesAllowed(claim.status)) throw new Error("No claim is pending review");
+    await sql`
+      update listing_claims
+      set fee_infant = ${infant},
+          fee_toddler = ${toddler},
+          fee_preschool = ${preschool}
+      where id = ${claim.id} and user_id = ${context.userId}
+    `;
     return { ok: true as const, status: "waiting" as const };
   });
 
