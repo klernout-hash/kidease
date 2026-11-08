@@ -19,13 +19,6 @@ import { NavDrawer } from "@/components/nav-drawer";
 import { applyDocumentLocale } from "@/lib/languages";
 import { localePath, stripLocalePrefix } from "@/lib/locale-path";
 import { useSessionDesks } from "@/components/desk-switcher";
-import {
-  BROWSE_RAIL_COPY,
-  HomeCareTypeRow,
-  browseTypeSearch,
-  selectedBrowseType,
-  type BrowseDaycareType,
-} from "@/components/facility-type-rails";
 import { useRoleChrome } from "@/components/role-chrome";
 import { clearGuestViewCookie } from "@/lib/guest-view";
 import { accountSearch, canSeeAdminDesk } from "@/lib/desks";
@@ -51,7 +44,6 @@ const HEADER_CTA =
 export function Shell({ children }: { children: ReactNode }) {
   const { t, locale } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const headerType = useRouterState({ select: (s) => selectedBrowseType(s.location.search) });
   const headerCity = useRouterState({
     select: (s) => {
       const search = s.location.search as { q?: unknown } | undefined;
@@ -72,13 +64,6 @@ export function Shell({ children }: { children: ReactNode }) {
   const hideAdmin = useNativeHidesAdmin();
   const headerUser = viewingGuest ? null : user;
   const [open, setOpen] = useState(false);
-  const [hiddenCare, setHiddenCare] = useState<BrowseDaycareType[]>([]);
-  const onCareOverflow = useCallback((hidden: BrowseDaycareType[]) => {
-    setHiddenCare((prev) => {
-      if (prev.length === hidden.length && prev.every((type, index) => type === hidden[index])) return prev;
-      return hidden;
-    });
-  }, []);
 
   useEffect(() => {
     applyDocumentLocale(locale);
@@ -201,15 +186,6 @@ export function Shell({ children }: { children: ReactNode }) {
                 >
                   {t("liveOnKidEase")}
                 </Link>
-                <HomeCareTypeRow
-                  compact
-                  toSearch
-                  fit
-                  selected={headerType}
-                  city={headerCity}
-                  onSelect={() => {}}
-                  onOverflow={onCareOverflow}
-                />
               </div>
             ) : null}
             <div className="relative z-20 ml-auto flex items-center gap-2 bg-bg pl-1 max-md:min-w-0 max-md:max-w-full max-md:gap-1.5 md:shrink-0 [[data-channel=website]_&]:flex">
@@ -274,13 +250,6 @@ export function Shell({ children }: { children: ReactNode }) {
               >
                 {t("liveOnKidEase")}
               </Link>
-              <HomeCareTypeRow
-                compact
-                toSearch
-                selected={headerType}
-                city={headerCity}
-                onSelect={() => {}}
-              />
             </div>
           ) : null}
         </div>
@@ -335,7 +304,7 @@ export function Shell({ children }: { children: ReactNode }) {
         isAdmin={!viewingGuest && canSeeAdminDesk(session?.role, session?.email ?? user?.primaryEmail)}
         onSignOut={() => void signOut(chrome.role === "government" ? localePath("/gov/login", locale) : "/")}
         headerExtra={null}
-        navExtra={hiddenCare.length ? <HeaderCareOverflow types={hiddenCare} city={headerCity} onNavigate={close} /> : null}
+        navExtra={null}
       />
       <div className={`flex min-h-0 min-w-0 flex-1 flex-col ${hideTabs ? "" : APP_TAB_PAD}`}>
         <ApplyPendingShortlist />
@@ -358,29 +327,3 @@ export function Shell({ children }: { children: ReactNode }) {
   );
 }
 
-function HeaderCareOverflow({
-  types,
-  city,
-  onNavigate,
-}: {
-  types: BrowseDaycareType[];
-  city: string;
-  onNavigate: () => void;
-}) {
-  const { t, locale } = useCopy();
-  return (
-    <div data-ke="header-overflow-types">
-      {types.map((type) => (
-        <Link
-          key={type}
-          to={localePath("/search", locale)}
-          search={browseTypeSearch(type, city)}
-          onClick={onNavigate}
-          className="flex min-h-11 items-center rounded-xl px-3 text-sm font-medium text-fg hover:bg-surface"
-        >
-          {t(BROWSE_RAIL_COPY[type])}
-        </Link>
-      ))}
-    </div>
-  );
-}

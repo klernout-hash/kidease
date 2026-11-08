@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { feePillPulses } from "@/lib/card-photo-pills";
 import { listingSubsidy, subsidyLabel, subsidyNote } from "@/lib/fee-program";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,7 @@ export function SubsidyPill({
   if (!subsidy) return null;
   const loc = locale === "fr" ? "fr" : "en";
   const note = subsidyNote(subsidy, loc);
+  const pulse = feePillPulses(subsidy.subsidy_type);
   return (
     <span className="pointer-events-auto relative inline-flex max-w-full flex-col items-start">
       <button
@@ -36,7 +38,7 @@ export function SubsidyPill({
         data-verified-at={subsidy.verified_at}
         title={note}
         aria-expanded={open}
-        className={cn(className)}
+        className={cn(pulse && "ke-priority-pill", className)}
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();

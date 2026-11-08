@@ -22,6 +22,9 @@ import { airbnbCopy, type AirbnbCopy } from "@/lib/airbnb-ui-copy";
 import { applyDocumentLocale, languageMeta, shippedLanguages } from "@/lib/languages";
 import { localePath, localeSwitchPath } from "@/lib/locale-path";
 import { writeLocaleChoiceCookie } from "@/lib/locale-geo";
+import { careCategoryArt } from "@/lib/care-category-art";
+import { feePillPulses } from "@/lib/card-photo-pills";
+import { listingSubsidy, subsidyLabel } from "@/lib/fee-program";
 import { photoUrl } from "@/lib/photo";
 import { saveMyLocale } from "@/lib/server/account-prefs";
 import { getMyContact, saveMyContact, type ContactProfile } from "@/lib/server/profile-contact";
@@ -52,93 +55,27 @@ const CARE_CATEGORIES: { id: string; label: keyof AirbnbCopy; search?: Record<st
   { id: "open", label: "careOpen", search: { openings: "1" } },
 ];
 
-function CareIcon({ id }: { id: string }) {
-  const props = {
-    viewBox: "0 0 32 32",
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 1.7,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    "aria-hidden": true as const,
-  };
-  if (id === "child_care_centre") {
-    return (
-      <svg {...props}>
-        <path d="M6 28V12l10-6 10 6v16" />
-        <path d="M13 28v-7h6v7M10 16h2M20 16h2M10 21h2M20 21h2" />
-      </svg>
-    );
-  }
-  if (id === "family_home") {
-    return (
-      <svg {...props}>
-        <path d="M5 15 16 6l11 9" />
-        <path d="M8 14v13h16V14" />
-        <path d="M13 27v-6h6v6" />
-      </svg>
-    );
-  }
-  if (id === "group_home") {
-    return (
-      <svg {...props}>
-        <path d="M3 16 10 10l7 6" />
-        <path d="M5 15v10h10V15" />
-        <path d="M15 18l6-5 7 6" />
-        <path d="M17 18v7h10v-7" />
-      </svg>
-    );
-  }
-  if (id === "nursery_preschool") {
-    return (
-      <svg {...props}>
-        <rect x="7" y="16" width="7" height="7" rx="1.5" />
-        <rect x="18" y="16" width="7" height="7" rx="1.5" />
-        <path d="M10.5 16v-2a5.5 5.5 0 0 1 11 0v2" />
-      </svg>
-    );
-  }
-  if (id === "school_age") {
-    return (
-      <svg {...props}>
-        <path d="M7 13h12l4 4v10H7V13z" />
-        <path d="M19 13v4h4M11 13V9a3 3 0 0 1 6 0v4" />
-      </svg>
-    );
-  }
-  if (id === "before_after") {
-    return (
-      <svg {...props}>
-        <path d="M6 20a8 8 0 0 1 14-5" />
-        <path d="M16 6v3M22 8l-2 2M24 15h-3" />
-        <path d="M8 24h16" />
-      </svg>
-    );
-  }
-  if (id === "open") {
-    return (
-      <svg {...props}>
-        <circle cx="16" cy="16" r="8" />
-        <path d="m12.5 16.2 2.2 2.2 4.8-5" />
-      </svg>
-    );
-  }
-  return (
-    <svg {...props}>
-      <rect x="5" y="5" width="8" height="8" rx="2" />
-      <rect x="19" y="5" width="8" height="8" rx="2" />
-      <rect x="5" y="19" width="8" height="8" rx="2" />
-      <rect x="19" y="19" width="8" height="8" rx="2" />
-    </svg>
-  );
+function careCategoryOn(
+  cat: (typeof CARE_CATEGORIES)[number],
+  search: { fac?: unknown; cat?: unknown; openings?: unknown },
+) {
+  if (cat.id === "open") return search.openings === "1" || search.openings === 1;
+  if (cat.id === "before_after") return search.cat === "before-after";
+  if (cat.search?.fac) return search.fac === cat.search.fac;
+  return !search.fac && search.cat !== "before-after" && search.openings !== "1" && search.openings !== 1;
 }
 
 export function AirbnbCareCategories() {
   const { locale, copy, t } = useFr();
+  const search = useRouterState({
+    select: (s) => (s.location.search ?? {}) as { fac?: unknown; cat?: unknown; openings?: unknown },
+  });
   return (
     <div className="ke-airbnb-cats" data-ke="airbnb-care-cats" role="navigation" aria-label={t("railByCare")}>
       {CARE_CATEGORIES.map((cat, index) => {
-        const on = cat.id === "all";
+        const on = careCategoryOn(cat, search);
+        const art = careCategoryArt(cat.id);
+        const label = copy[cat.label];
         return (
           <Link
             key={cat.id}
@@ -149,9 +86,14 @@ export function AirbnbCareCategories() {
             aria-current={on ? "page" : undefined}
           >
             <span className="ke-airbnb-cat-art" style={{ animationDelay: `${index * 0.14}s` }}>
-              <CareIcon id={cat.id} />
+              {art ? (
+                <>
+                  <img className="ke-care-gif" src={art.gif} alt="" width={44} height={44} />
+                  <img className="ke-care-still" src={art.still} alt="" width={44} height={44} />
+                </>
+              ) : null}
             </span>
-            <span className="ke-airbnb-cat-label">{copy[cat.label]}</span>
+            <span className="ke-airbnb-cat-label">{label}</span>
           </Link>
         );
       })}
@@ -201,6 +143,8 @@ export function AirbnbHome({
           const where = airbnbPublicPlace(row);
           const ages = ageRangeLabel(row.ageMinMonths, row.ageMaxMonths, locale);
           const fresh = freshnessLine(row.spotsUpdatedAt || row.lastVacancyUpdatedAt, locale);
+          const subsidy = listingSubsidy(row);
+          const fee = subsidy ? subsidyLabel(subsidy, locale) : "";
           return (
             <Link
               key={row.id}
@@ -210,6 +154,15 @@ export function AirbnbHome({
             >
               <span className="ke-airbnb-photo">
                 {photo ? <img src={photoUrl(photo, 800)} alt="" /> : null}
+                {subsidy && fee ? (
+                  <span
+                    data-ke="card-fee-pill"
+                    data-subsidy-type={subsidy.subsidy_type}
+                    className={cn("ke-airbnb-fee", feePillPulses(subsidy.subsidy_type) && "ke-priority-pill")}
+                  >
+                    {fee}
+                  </span>
+                ) : null}
               </span>
               <span className="ke-airbnb-card-title">{locale === "fr" && row.nameFr ? row.nameFr : row.name}</span>
               {where ? <span className="ke-airbnb-card-meta">{where}</span> : null}
