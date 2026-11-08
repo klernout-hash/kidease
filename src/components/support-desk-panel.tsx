@@ -120,7 +120,8 @@ function SupportThread({ copy }: { copy: (typeof supportCopy)[SupportLocale] }) 
               }
               setLines((current) => [...current, { id: row.id, sender: "user", body }]);
               setText("");
-              setNote(copy.sent);
+              const outside = row.notice?.email === "sent" || row.notice?.sms === "sent";
+              setNote(outside ? copy.sent : `${copy.sent} ${copy.quiet}`);
             })
             .catch(() => setNote(copy.failed));
         }}

@@ -28,6 +28,54 @@ export function supportRateAllows(messagesInLastHour: number): boolean {
   return messagesInLastHour < SUPPORT_HOUR_LIMIT;
 }
 
+export type OwnerAlertPlan = {
+  email: "skip" | "send";
+  sms: "skip" | "send" | "wait";
+  emailReason: "channel_off" | "no_destination" | "not_production" | "already_sent" | "ready";
+  smsReason: "channel_off" | "no_destination" | "not_production" | "window" | "ready";
+};
+
+/**
+ * In-app chat does not turn on email or text.
+ * Each outside channel needs its own switch and a real destination.
+ * This does not read or invent a phone number.
+ */
+export function planOwnerAlert(input: {
+  production: boolean;
+  emailChannelOn: boolean;
+  smsChannelOn: boolean;
+  emailTo: string;
+  phone: string;
+  alreadyEmailed: boolean;
+  smsWindowOpen: boolean;
+}): OwnerAlertPlan {
+  const emailTo = input.emailTo.trim();
+  const phone = input.phone.trim();
+  let email: OwnerAlertPlan["email"] = "skip";
+  let emailReason: OwnerAlertPlan["emailReason"] = "channel_off";
+  if (!input.emailChannelOn) emailReason = "channel_off";
+  else if (!emailTo.includes("@")) emailReason = "no_destination";
+  else if (!input.production) emailReason = "not_production";
+  else if (input.alreadyEmailed) emailReason = "already_sent";
+  else {
+    email = "send";
+    emailReason = "ready";
+  }
+  let sms: OwnerAlertPlan["sms"] = "skip";
+  let smsReason: OwnerAlertPlan["smsReason"] = "channel_off";
+  if (!input.smsChannelOn) smsReason = "channel_off";
+  else if (!phone) smsReason = "no_destination";
+  else if (!input.production) smsReason = "not_production";
+  else if (!input.smsWindowOpen) {
+    sms = "wait";
+    smsReason = "window";
+  } else {
+    sms = "send";
+    smsReason = "ready";
+  }
+  return { email, sms, emailReason, smsReason };
+}
+
 /** One owner text per thread per 10 minutes. A missing last time means this is the first. */
 export function shouldSendOwnerSms(lastSentAt: string | null | undefined, nowMs: number): boolean {
   if (!lastSentAt) return true;
@@ -95,7 +143,8 @@ export const supportCopy = {
     send: "Send",
     empty: "No messages yet.",
     off: "KidEase Support is not open in Messages yet. Nothing is sent.",
-    sent: "Sent.",
+    sent: "Saved in Messages.",
+    quiet: "No email or text was sent.",
     limited: "Too many messages. Try again in an hour.",
     failed: "Could not send. Try again.",
   },
@@ -110,7 +159,8 @@ export const supportCopy = {
     send: "Envoyer",
     empty: "Aucun message pour le moment.",
     off: "L’aide KidEase n’est pas ouverte dans Messages. Rien n’est envoyé.",
-    sent: "Envoyé.",
+    sent: "Enregistré dans Messages.",
+    quiet: "Aucun courriel ni texto n’a été envoyé.",
     limited: "Trop de messages. Réessayez dans une heure.",
     failed: "Envoi impossible. Réessayez.",
   },
