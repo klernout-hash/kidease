@@ -5,7 +5,7 @@ import { PGlite } from "@electric-sql/pglite";
 
 const sql = (name) => readFileSync(new URL(`../migrations/${name}`, import.meta.url), "utf8");
 
-test("preview migrations 0164 then 0178-0182 apply in order and keep holds", async () => {
+test("preview migrations 0164 then 0178-0183 apply in order and keep holds", async () => {
   const pg = new PGlite();
   await pg.exec(`
     create table daycares (id text primary key, photos text);
@@ -20,6 +20,7 @@ test("preview migrations 0164 then 0178-0182 apply in order and keep holds", asy
     "0180_profile_about.sql",
     "0181_draft_policy_workflow.sql",
     "0182_attendance_handoff.sql",
+    "0183_attendance_notice_eligibility.sql",
   ]) {
     await pg.exec(sql(name));
   }
@@ -34,6 +35,14 @@ test("preview migrations 0164 then 0178-0182 apply in order and keep holds", asy
   );
   await pg.query(
     "insert into attendance_notice_outbox (id, event_id, daycare_id, recipient_label, channel, status, dedupe_key) values ('o', 'e', 'd', 'Quinn', 'demo', 'held', 'k')",
+  );
+  await assert.rejects(
+    pg.query(
+      "insert into attendance_notice_outbox (id, event_id, daycare_id, recipient_label, channel, status, dedupe_key) values ('s', 'e', 'd', 'Quinn', 'account', 'sent', 'sent')",
+    ),
+  );
+  await pg.query(
+    "insert into attendance_notice_outbox (id, event_id, daycare_id, recipient_label, recipient_user_id, audience, channel, status, dedupe_key) values ('a', 'e2', 'd', 'guardian', 'parent-1', 'guardian', 'account', 'waiting', 'a')",
   );
   await assert.rejects(
     pg.query(

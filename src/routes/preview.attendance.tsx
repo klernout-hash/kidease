@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { AttendanceSamples } from "@/components/child-checkin-desk";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
-import { attendanceCopy } from "@/lib/attendance-handoff";
+import { attendanceCopy, attendancePreviewEnabled } from "@/lib/attendance-handoff";
 import { parentLoginSearch } from "@/lib/auth/parent-login";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { attendancePreviewOpen, seedDemoAttendance } from "@/lib/server/child-checkin";
@@ -13,6 +13,7 @@ export const Route = createFileRoute("/preview/attendance")({
     look: search.look === "dark" ? ("dark" as const) : ("light" as const),
     lang: search.lang === "fr" ? ("fr" as const) : ("en" as const),
   }),
+  loader: () => ({ open: attendancePreviewEnabled() }),
   head: () => ({
     meta: [
       { title: "Attendance preview · KidEase" },
@@ -24,9 +25,10 @@ export const Route = createFileRoute("/preview/attendance")({
 
 function AttendancePreviewPage() {
   const { look, lang } = Route.useSearch();
+  const loaded = Route.useLoaderData();
   const copy = attendanceCopy(lang);
   const { user, isPending } = useCurrentUserState();
-  const [open, setOpen] = useState<boolean | null>(null);
+  const [open, setOpen] = useState<boolean | null>(loaded.open);
   const [note, setNote] = useState("");
 
   useEffect(() => {
@@ -37,7 +39,7 @@ function AttendancePreviewPage() {
   useEffect(() => {
     void attendancePreviewOpen()
       .then((row) => setOpen(row.open))
-      .catch(() => setOpen(false));
+      .catch(() => setOpen(loaded.open));
   }, []);
 
   return (

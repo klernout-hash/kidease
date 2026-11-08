@@ -73,6 +73,7 @@ export function ChildCheckinDesk() {
                 </span>
                 <div className="min-w-0">
                   <p className="truncate text-xl font-semibold leading-7">{child.childName}</p>
+                  {child.demo ? <p className="text-sm text-muted">{copy.demo}</p> : null}
                   <p className="text-base leading-6 text-muted">{child.daycareName}</p>
                   <p className="mt-1 text-base font-medium" data-ke="attendance-status">
                     {statusWord(child.status, copy)}
@@ -114,7 +115,15 @@ export function ChildCheckinDesk() {
                         setMessage("error" in result ? result.error : legacy.checkEmpty);
                         return;
                       }
-                      setMessage(result.duplicate ? copy.already : result.notice === "held" ? `${copy.saved} ${copy.held}` : copy.saved);
+                      setMessage(
+                        result.duplicate
+                          ? copy.already
+                          : result.notice === "held"
+                            ? `${copy.saved} ${copy.held}`
+                            : result.notice === "waiting"
+                              ? copy.queued
+                              : copy.saved,
+                      );
                       celebrate();
                       return load();
                     })
@@ -263,6 +272,7 @@ export function ChildCheckHistory() {
                 </span>
                 <div>
                   <p className="text-lg font-semibold">{child.childName}</p>
+                  {child.demo ? <p className="text-sm text-muted">{copy.demo}</p> : null}
                   <p className="text-sm text-muted">{child.daycareName}</p>
                   <p className="mt-1 text-base font-medium">{statusWord(child.status, copy)}</p>
                 </div>
