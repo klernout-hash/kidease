@@ -59,12 +59,15 @@ test("a city category keeps that daycare type and a wider list", () => {
   assert.match(rails, /city\?\.trim\(\)/);
 });
 
-test("header care types open a search URL", () => {
+test("home category pictures open a search URL and stay out of the header", () => {
   const rails = readFileSync(join(root, "src/components/facility-type-rails.tsx"), "utf8");
   const shell = readFileSync(join(root, "src/components/shell.tsx"), "utf8");
+  const home = readFileSync(join(root, "src/components/airbnb-screens.tsx"), "utf8");
   assert.match(rails, /export function browseTypeSearch/);
   assert.match(rails, /cat: "before-after"/);
   assert.match(rails, /localePath\("\/search", locale\)/);
-  assert.match(shell, /toSearch/);
-  assert.match(shell, /selectedBrowseType/);
+  assert.match(home, /localePath\(cat\.search \? "\/search" : "\/", locale\)/);
+  assert.match(home, /fac: "child_care_centre"/);
+  assert.match(home, /cat: "before-after"/);
+  assert.doesNotMatch(shell, /toSearch|selectedBrowseType|HomeCareTypeRow/);
 });
