@@ -28,6 +28,11 @@ export function cardFeePillLabelKey(
   return null;
 }
 
+/** The pulsing $10/day pill is only the sourced $10 programs, never a province guess. */
+export function feePillPulses(subsidyType: string | null | undefined): boolean {
+  return subsidyType === "ten" || subsidyType === "ten_max";
+}
+
 /** Registry-checked stays off the photo. Expired and suspended still warn. */
 export function cardPhotoLicenseWarning(id: string | null | undefined): boolean {
   return id === "license_expired" || id === "license_suspended";

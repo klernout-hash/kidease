@@ -3092,7 +3092,8 @@ html[data-ui="airbnb-v1"][data-theme="dark"] {
   flex-direction: column;
   align-items: center;
   gap: 0.45rem;
-  width: 5.35rem;
+  width: 6.4rem;
+  min-width: 2.75rem;
   min-height: 5.6rem;
   padding: 0.35rem 0.2rem 0.75rem;
   color: var(--airbnb-muted);
@@ -3113,11 +3114,19 @@ html[data-ui="airbnb-v1"][data-theme="dark"] {
 }
 .ke-airbnb-cat-art {
   display: grid;
-  width: 2.15rem;
-  height: 2.15rem;
+  width: 2.75rem;
+  height: 2.75rem;
   place-items: center;
   animation: ke-cat-bob 2.6s ease-in-out infinite;
 }
+.ke-airbnb-cat-art img {
+  width: 2.75rem;
+  height: 2.75rem;
+  max-width: 2.75rem;
+  border-radius: 0.7rem;
+  object-fit: cover;
+}
+.ke-care-still { display: none; }
 .ke-airbnb-cat-art svg { width: 2rem; height: 2rem; }
 .ke-airbnb-cat-art path,
 .ke-airbnb-cat-art circle,
@@ -3130,7 +3139,7 @@ html[data-ui="airbnb-v1"][data-theme="dark"] {
 .ke-airbnb-cat-label {
   display: -webkit-box;
   overflow: hidden;
-  max-width: 4.6rem;
+  max-width: 6rem;
   min-height: 2.2em;
   font-size: 11px;
   font-weight: 650;
@@ -3184,11 +3193,28 @@ html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-home"] .sticky 
 }
 .ke-airbnb-rail { scroll-snap-type: x mandatory; margin-top: 0.9rem; }
 .ke-airbnb-photo {
+  position: relative;
   display: block;
   aspect-ratio: 4 / 3;
   border-radius: 1rem;
   overflow: hidden;
   background: var(--airbnb-line);
+}
+.ke-airbnb-fee {
+  position: absolute;
+  top: 0.55rem;
+  left: 0.55rem;
+  z-index: 1;
+  display: inline-flex;
+  min-height: 1.5rem;
+  align-items: center;
+  border-radius: 999px;
+  background: #1d4ed8;
+  padding: 0.15rem 0.55rem;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
 }
 .ke-airbnb-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .ke-airbnb-card-title { display: block; margin-top: 0.6rem; font-weight: 700; }
@@ -3312,5 +3338,8 @@ html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-home"] .sticky 
   .ke-airbnb-cat-art path,
   .ke-airbnb-cat-art circle,
   .ke-airbnb-cat-art rect { stroke-dashoffset: 0; }
+  .ke-care-gif { display: none; }
+  .ke-care-still { display: block; }
+  .ke-priority-pill { animation: none; }
 }
 

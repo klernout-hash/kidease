@@ -129,12 +129,12 @@ test("guest home hero keeps the search bar and drops the city grid and trust dup
   assert.doesNotMatch(hero, /t\("sortOpen"\)/);
   assert.doesNotMatch(hero, /t\("requestInfo"\)/);
   assert.doesNotMatch(hero, /HomeCareTypeRow/);
-  assert.match(src("src/components/shell.tsx"), /HomeCareTypeRow/);
+  assert.doesNotMatch(src("src/components/shell.tsx"), /HomeCareTypeRow/);
   assert.doesNotMatch(src("src/components/shell.tsx"), /lg:absolute/);
   assert.doesNotMatch(src("src/components/shell.tsx"), /inset-x-16/);
   assert.match(src("src/components/shell.tsx"), /whitespace-normal/);
   assert.match(src("src/components/shell.tsx"), /data-ke="list-your-daycare"/);
-  assert.match(src("src/components/shell.tsx"), /header-overflow-types/);
+  assert.doesNotMatch(src("src/components/shell.tsx"), /header-overflow-types/);
   assert.match(src("src/components/facility-type-rails.tsx"), /ResizeObserver/);
   assert.match(src("src/components/facility-type-rails.tsx"), /fonts\?\.ready/);
   assert.match(src("src/components/facility-type-rails.tsx"), /loadingdone/);
@@ -163,8 +163,5 @@ test("guest menu shows each help link once and hides empty headings", () => {
   assert.match(src("src/components/footer-more-links.tsx"), /<details/);
   assert.doesNotMatch(src("src/lib/site-footer-nav.ts"), /statusNav/);
   assert.match(drawer, /visibleRows\.length === 0 && group\.id !== "settings"/);
-  const overflow = src("src/components/shell.tsx");
-  const fn = overflow.slice(overflow.indexOf("function HeaderCareOverflow"));
-  assert.match(fn, /header-overflow-types/);
-  assert.match(fn, /localePath\("\/search", locale\)/);
+  assert.doesNotMatch(src("src/components/shell.tsx"), /function HeaderCareOverflow/);
 });
