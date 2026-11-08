@@ -249,6 +249,15 @@ export async function runApproval(
         `;
         const { ensureOwnerMembership } = await import("@/lib/server/centre-access");
         await ensureOwnerMembership(sql, ownerId, row.id);
+        try {
+          const { subscriptionsEnabled } = await import("@/lib/features");
+          if (subscriptionsEnabled()) {
+            const { applyPendingClaimBoost } = await import("@/lib/server/stripe-lifecycle");
+            await applyPendingClaimBoost(sql, ownerId);
+          }
+        } catch (err) {
+          console.error("[kidease-stripe] claim boost apply failed", err);
+        }
       }
     }
     for (const claimId of plan.suppressClaimIds) {
