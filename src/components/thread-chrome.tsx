@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ArrowUp, Plus } from "lucide-react";
 import { HistoryBack } from "@/components/history-back";
 import { historyHref } from "@/lib/screen-history";
+import { messageReceipt } from "@/lib/engagement";
 import { chatBodyWithoutSmsFooter } from "@/lib/sms-copy";
 import {
   joinNames,
@@ -109,8 +110,14 @@ export function ThreadTranscript({
                   {m.body}
                 </p>
                 {readers.length ? (
-                  <p className="mt-1 px-1 text-xs text-subtle">
+                  <p className="mt-1 px-1 text-xs text-subtle" data-ke="inbox-seen">
+                    {t("inboxSeenHere")}
+                    {" · "}
                     {t("inboxReadBy").replace("{names}", joinNames(readers, t("inboxAnd")))}
+                  </p>
+                ) : mine && lastOwn && m.id === lastOwn.id ? (
+                  <p className="mt-1 px-1 text-xs text-subtle" data-ke="inbox-not-phoned">
+                    {t(messageReceipt({ seenInApp: false }).label === "saved_not_phoned" ? "inboxPhoneNotSent" : "inboxSeenHere")}
                   </p>
                 ) : null}
                 </div>

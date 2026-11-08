@@ -342,6 +342,8 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
     }
 
     const sender = access.role === "parent" ? "parent" : "provider";
+    const prior = await sql<{ last_at: string }>`select last_at from conversations where id = ${row.id} limit 1`;
+    const priorAt = String(prior[0]?.last_at || "");
     const messageId = nid("msg");
     await sql`
       insert into messages (id, conversation_id, sender, body, kind)
@@ -353,6 +355,40 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
     const actor = await lookupUser(context.userId);
     void import("@/lib/server/admin-tools")
       .then((mod) => mod.maybeQueueSpam({ kind: "message", text: body, email: actor.email, sourceId: row.id }))
+      .catch(() => undefined);
+    void import("@/lib/server/engagement")
+      .then(async (mod) => {
+        const qa = await mod.centreIsQa(row.daycare_id);
+        if (sender === "provider") {
+          await mod.recordEngagement({
+            event: "provider_reply",
+            actorId: context.userId,
+            centreId: row.daycare_id,
+            threadId: row.id,
+            role: "provider",
+            qa,
+          });
+          return;
+        }
+        const { withinSevenDays } = await import("@/lib/engagement");
+        if (!withinSevenDays(priorAt, new Date().toISOString())) return;
+        const { getSql } = await import("@/lib/db");
+        const sql = await getSql();
+        const priorReplies = await sql<{ n: number }>`
+          select count(*)::int as n from messages
+          where conversation_id = ${row.id} and sender = 'provider'
+        `;
+        if (!priorReplies[0] || priorReplies[0].n < 1) return;
+        await mod.recordEngagement({
+          event: "thread_return_7d",
+          actorId: context.userId,
+          centreId: row.daycare_id,
+          threadId: row.id,
+          role: "parent",
+          qa,
+          day: new Date().toISOString().slice(0, 10),
+        });
+      })
       .catch(() => undefined);
     void import("@/lib/server/unified-alerts")
       .then((mod) =>

@@ -423,6 +423,19 @@ export const createLeadRequest = createServerFn({ method: "POST" })
       message: data.message,
     });
     if (!recorded) throw new Error("Could not save request");
+    void import("@/lib/server/engagement")
+      .then(async (mod) => {
+        const qa = await mod.centreIsQa(daycareId);
+        await mod.recordEngagement({
+          event: "inquiry_sent",
+          actorId: context.userId,
+          centreId: daycareId,
+          threadId: recorded.id,
+          role: "parent",
+          qa,
+        });
+      })
+      .catch(() => undefined);
     return { id: recorded.id, status: "requested" as const, reused: recorded.reused };
   });
 

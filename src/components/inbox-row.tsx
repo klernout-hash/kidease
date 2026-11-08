@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { chatBodyWithoutSmsFooter } from "@/lib/sms-copy";
 import { maskInboxPreview } from "@/lib/inbox-secrets";
+import { nextInboxAction } from "@/lib/engagement";
 import {
   inboxStatusLine,
   inboxTimeLabel,
@@ -44,6 +45,25 @@ export function InboxMessageRow({
     t("inboxYouPrefix"),
   );
   const status = inboxStatusLine({ status: row.status, tourStatus: "tourStatus" in row ? row.tourStatus : null });
+  const next = nextInboxAction({
+    unread: row.unread,
+    viewerIsParent,
+    providerReplied: "providerReplied" in row ? Boolean(row.providerReplied) : !row.unread && !viewerIsParent,
+    tourStatus: "tourStatus" in row ? row.tourStatus : null,
+    bookingStatus: row.status,
+  });
+  const nextKey =
+    next === "reply"
+      ? "inboxNextReply"
+      : next === "tour"
+        ? viewerIsParent
+          ? "inboxNextTourParent"
+          : "inboxNextTour"
+        : next === "follow_up"
+          ? "inboxNextFollow"
+          : next === "waitlist"
+            ? "inboxNextWaitlist"
+            : null;
   const when = inboxTimeLabel("lastAt" in row ? row.lastAt : "", now, locale);
   const avatarName = viewerIsParent ? title : "parentName" in row ? row.parentName : title;
 
@@ -71,6 +91,7 @@ export function InboxMessageRow({
         <span className={cn("mt-0.5 block truncate text-sm", row.unread ? "text-fg" : "text-muted")}>
           {preview || t("inboxNoMessagesYet")}
         </span>
+        {nextKey ? <span className="mt-1 block text-sm font-medium text-primary" data-ke="inbox-next">{t(nextKey)}</span> : null}
         {status ? (
           <span className="mt-1 flex min-w-0 items-center gap-1.5 text-sm text-muted">
             <span className={cn("size-2 shrink-0 rounded-full", status.dot === "ok" ? "bg-ok" : "bg-warn")} aria-hidden />
