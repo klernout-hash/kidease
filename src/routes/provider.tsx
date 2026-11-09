@@ -185,6 +185,7 @@ export function ProviderPage() {
   const { session } = useSessionDesks();
   const centreOwner = session?.centreOwner !== false;
   const hostListing = session?.hostListing === true;
+  const topRated = session?.topRated === true;
   const [listingEditorOpen, setListingEditorOpen] = useState(false);
   const [createListingOpen, setCreateListingOpen] = useState(false);
   useEffect(() => {
@@ -411,11 +412,13 @@ export function ProviderPage() {
           setDesk(DEFAULT_DESK);
           return;
         }
-        setDesk(id as DaycareDesk);
+        const nextDesk = id as DaycareDesk;
+        setDesk(nextDesk);
+        void navigate({ to: "/provider", search: { ...search, desk: nextDesk }, replace: true });
       }}
     >
       {desk === "insights" ? <ProviderInsightsDesk /> : null}
-      {desk === "top-rated" ? <TopRatedDesk /> : null}
+      {desk === "top-rated" ? <TopRatedDesk on={topRated} /> : null}
       {deskSettled && deskListings.length === 0 && centreOwner && desk !== "insights" ? (
         <ProviderOnboarding
           onShowForm={() => {
@@ -562,7 +565,20 @@ export function ProviderPage() {
       ) : null}
 
       {desk === "calendar" && hostListing ? (
-        <HostCalendarDesk listings={deskListings} onSaved={() => void load()} />
+        <HostCalendarDesk
+          listings={deskListings}
+          centreFromUrl={search.centre}
+          onCentre={(id) => {
+            void navigate({ to: "/provider", search: { ...search, desk: "calendar", centre: id }, replace: true });
+          }}
+          onSaved={() => void load()}
+        />
+      ) : null}
+      {desk === "calendar" && !hostListing ? (
+        <section className="mx-auto max-w-2xl px-4 py-6" data-ke="host-calendar">
+          <h1 className="font-display text-2xl">{t("navCalendar")}</h1>
+          <p className="mt-2 text-sm text-muted">{t("comingSoon")}</p>
+        </section>
       ) : null}
       {desk === "listings" && hostListing ? (
         <HostListingsDesk

@@ -5,6 +5,7 @@ import { ArrowRight, Building2, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCopy } from "@/lib/use-copy";
 import { localePath } from "@/lib/locale-path";
+import { parentEnrolLogin } from "@/lib/qa-fixes";
 import { cn } from "@/lib/utils";
 
 export function RoleEnrollChooser({
@@ -18,7 +19,7 @@ export function RoleEnrollChooser({
 }) {
   const { t, locale } = useCopy();
   const loginTo = (localePath("/login", locale) === "/fr/login" ? "/fr/login" : "/login") as "/login" | "/fr/login";
-  const contactTo = (localePath("/contact", locale) === "/fr/contact" ? "/fr/contact" : "/contact") as "/contact" | "/fr/contact";
+  const parentEnrol = parentEnrolLogin(locale === "fr" ? "fr" : "en");
   const claimTo = (localePath("/claim", locale) === "/fr/claim" ? "/fr/claim" : "/claim") as "/claim" | "/fr/claim";
   const Title = heading;
   const CardTitle = heading === "h2" ? "h3" : "h4";
@@ -39,7 +40,7 @@ export function RoleEnrollChooser({
           <CardTitle className="mt-4 text-xl font-semibold text-fg">{t("roleParentTitle")}</CardTitle>
           <p className="mt-2 flex-1 text-sm leading-6 text-muted">{t("roleParentBody")}</p>
           <Button size="lg" className="mt-6 w-full min-h-12" asChild>
-            <Link to={contactTo} search={{ intent: "parent" }}>
+            <Link to={parentEnrol.to} search={parentEnrol.search}>
               <ArrowRight className="size-4" aria-hidden />
               {t("roleParentCta")}
             </Link>

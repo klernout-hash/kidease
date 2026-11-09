@@ -1,10 +1,19 @@
 import { topRatedEnabled } from "@/lib/features";
+import { topRatedPage } from "@/lib/qa-fixes";
 import { useCopy } from "@/lib/use-copy";
 
 /** Status page. Rules only. No invented progress numbers. */
-export function TopRatedDesk() {
+export function TopRatedDesk({ on = false }: { on?: boolean }) {
   const { t } = useCopy();
-  if (!topRatedEnabled()) return null;
+  const page = topRatedPage(on || topRatedEnabled());
+  if (page === "soon") {
+    return (
+      <section className="mx-auto max-w-2xl px-4 py-6" data-ke="top-rated-desk">
+        <h1 className="font-display text-2xl">{t("topRatedTitle")}</h1>
+        <p className="mt-2 text-sm text-muted">{t("comingSoon")}</p>
+      </section>
+    );
+  }
   return (
     <section className="mx-auto max-w-2xl px-4 py-6" data-ke="top-rated-desk">
       <h1 className="font-display text-2xl">{t("topRatedTitle")}</h1>
