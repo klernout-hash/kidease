@@ -32,14 +32,20 @@ import {
   withoutHostedInvoice,
 } from "../src/lib/connect-payments.ts";
 import { isStripePublishableKey } from "../src/lib/stripe-browser.ts";
+import { DEFAULT_PLATFORM_FEE_BPS, platformFeeBps } from "../src/lib/stripe-methods.ts";
+import { receiveCents } from "../src/lib/bill.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (rel) => readFileSync(join(root, rel), "utf8");
 
-test("Connect fee is exactly 2% and tax stays off the application fee", () => {
-  assert.equal(CONNECT_FEE_BPS_DEFAULT, 200);
-  assert.equal(connectFeeBps(null), 200);
-  assert.equal(connectFeeBps(""), 200);
+test("Connect fee is exactly 3% and tax stays off the application fee", () => {
+  assert.equal(CONNECT_FEE_BPS_DEFAULT, 300);
+  assert.equal(CONNECT_FEE_BPS_DEFAULT, DEFAULT_PLATFORM_FEE_BPS);
+  assert.equal(connectFeeBps(null), 300);
+  assert.equal(connectFeeBps(""), 300);
+  assert.equal(connectFeeBps(null), platformFeeBps(null));
+  assert.equal(connectFeeBps(""), platformFeeBps(""));
+  assert.equal(receiveCents(10_000), 9_700);
   assert.equal(applicationFeeCents(10_000, 200), 200);
   assert.equal(applicationFeeCents(10_050, 200), 201);
   assert.equal(applicationFeeCents(0, 200), 0);
@@ -95,9 +101,9 @@ test("a month collects tax from every paid bill, once each", () => {
   assert.equal(isEarlierPeriod("2026-9", "2026-10"), false);
 });
 
-test("sample env keeps Connect off and the fee at 2%", () => {
+test("sample env keeps Connect off and the fee at 3%", () => {
   const env = read(".env.example");
-  assert.match(env, /^KIDEASE_PLATFORM_FEE_BPS=200$/m);
+  assert.match(env, /^KIDEASE_PLATFORM_FEE_BPS=300$/m);
   assert.doesNotMatch(env, /KIDEASE_CONNECT_PAYMENTS\s*=\s*1/);
   for (const name of [
     "STRIPE_SECRET_KEY",
