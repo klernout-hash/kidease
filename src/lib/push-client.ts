@@ -2,6 +2,9 @@ import { PUSH_DISABLED_MESSAGE, PUSH_SCAFFOLD_MESSAGE, PUSH_WEB_BLOCKED_MESSAGE 
 import { isNative, nativePlatform } from "@/lib/native";
 import { amazonBuildOnAmazonDevice } from "@/lib/amazon/gate";
 import { googleServicesHidden, readClientStoreChannel } from "@/lib/native-entitlements";
+import { pushOpenPath, pushPermissionDecision, pushRegisterLocale } from "@/lib/push-lifecycle";
+
+const PUSH_TOKEN_KEY = "ke-push-token";
 
 export type PushRegisterResult =
   | { ok: true; platform: "ios" | "android" }
@@ -37,11 +40,9 @@ export async function registerPushDevice(opts?: { enabled?: boolean }): Promise<
   try {
     const { PushNotifications } = await import("@capacitor/push-notifications");
     const current = await PushNotifications.checkPermissions();
-    const receive =
-      current.receive === "prompt" || current.receive === "prompt-with-rationale"
-        ? (await PushNotifications.requestPermissions()).receive
-        : current.receive;
-    if (receive !== "granted") {
+    const decision = pushPermissionDecision(current.receive);
+    const receive = decision === "ask" ? (await PushNotifications.requestPermissions()).receive : current.receive;
+    if (pushPermissionDecision(receive) === "denied") {
       return { ok: false, reason: "denied", error: "Notifications are off for KidEase." };
     }
     if (!registrationListening) {
@@ -49,15 +50,23 @@ export async function registerPushDevice(opts?: { enabled?: boolean }): Promise<
       await PushNotifications.addListener("registration", (event) => {
         const token = String(event?.value || "").trim();
         if (!token) return;
+        void rememberPushToken(token);
         void import("@/lib/server/push-api").then(({ registerPushToken }) =>
           registerPushToken({
             data: {
               token,
               platform,
               provider: platform === "ios" ? "apns" : "fcm",
+              locale: currentPushLocale(),
             },
           }),
         );
+      });
+      await PushNotifications.addListener("registrationError", () => undefined);
+      await PushNotifications.addListener("pushNotificationActionPerformed", (event) => {
+        const data = event.notification?.data || {};
+        const path = pushOpenPath(String(data.url || ""));
+        if (path) window.location.assign(path);
       });
     }
     await PushNotifications.register();
@@ -65,6 +74,52 @@ export async function registerPushDevice(opts?: { enabled?: boolean }): Promise<
   } catch {
     // Plugin missing, or FCM / APNs is not in this binary yet.
     return { ok: false, reason: "no-plugin", error: PUSH_SCAFFOLD_MESSAGE };
+  }
+}
+
+function currentPushLocale(): "en" | "fr" {
+  try {
+    const match = document.cookie.match(/(?:^|; )kidease-locale=([^;]+)/);
+    const cookie = match ? decodeURIComponent(match[1]) : "";
+    if (cookie) return pushRegisterLocale(cookie);
+    return pushRegisterLocale(document.documentElement.lang);
+  } catch {
+    return "en";
+  }
+}
+
+async function rememberPushToken(token: string): Promise<void> {
+  try {
+    const { Preferences } = await import("@capacitor/preferences");
+    await Preferences.set({ key: PUSH_TOKEN_KEY, value: token });
+  } catch {
+    /* the website has no Preferences store */
+  }
+}
+
+/** Drop this phone's token while the session still exists. Other phones stay. */
+export async function releasePushOnSignOut(): Promise<void> {
+  if (typeof window === "undefined") return;
+  let token = "";
+  try {
+    const { Preferences } = await import("@capacitor/preferences");
+    const saved = await Preferences.get({ key: PUSH_TOKEN_KEY });
+    token = String(saved.value || "").trim();
+  } catch {
+    return;
+  }
+  if (!token) return;
+  try {
+    const { revokeMyPushDevice } = await import("@/lib/server/push-api");
+    await revokeMyPushDevice({ data: { token } });
+  } catch {
+    return;
+  }
+  try {
+    const { Preferences } = await import("@capacitor/preferences");
+    await Preferences.remove({ key: PUSH_TOKEN_KEY });
+  } catch {
+    /* the server row is already gone */
   }
 }
 

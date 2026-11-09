@@ -189,6 +189,15 @@ export async function listPushDeviceTokens(sql: Sql, userId?: string): Promise<P
   return sql.query<PushTokenRow>(`select id, user_id, token, platform, provider from push_device_tokens`);
 }
 
+/** Drop this phone only. Another account's token, or this account's other phones, stay. */
+export async function revokePushDeviceToken(sql: Sql, userId: string, token: string): Promise<boolean> {
+  const owner = String(userId || "").trim();
+  const value = String(token || "").trim();
+  if (!owner || !isPushToken(value)) return false;
+  await sql.query(`delete from push_device_tokens where user_id = $1 and token = $2`, [owner, value]);
+  return true;
+}
+
 export async function countPushDeviceTokens(sql: Sql): Promise<number> {
   const rows = await sql.query<{ n: number }>(`select count(*)::int as n from push_device_tokens`).catch(() => [{ n: 0 }]);
   return rows[0]?.n ?? 0;
