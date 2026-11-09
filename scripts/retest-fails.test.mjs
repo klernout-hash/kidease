@@ -60,6 +60,11 @@ test("admin alert settings use admin labels and stay nine", () => {
   const rows = alertSettingRows("admin", "en", false);
   assert.equal(rows.length, 9);
   assert.equal(rows.some((row) => row.label === "Spot opened"), false);
-  assert.equal(rows.some((row) => row.label === "A centre reports an opening"), true);
+  assert.equal(rows.some((row) => row.label === "Waitlist moves"), false);
+  assert.equal(rows.some((row) => row.label === "Visits and tours"), false);
+  assert.equal(rows.some((row) => row.label === "Licence or screening"), false);
+  assert.equal(rows.some((row) => row.label === "Family waitlist changes"), true);
+  assert.equal(rows.some((row) => row.label === "Visit bookings"), true);
+  assert.equal(rows.some((row) => row.label === "Stored licence changes"), true);
   assert.match(read("src/routes/account.tsx"), /desk === "admin" \? "admin"/);
 });
