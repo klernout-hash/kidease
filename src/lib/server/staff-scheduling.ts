@@ -6,7 +6,6 @@ import { staffSchedulingEnabled } from "@/lib/features";
 import {
   parseChildrenPresent,
   parseShift,
-  planEceReminders,
   rosterRatio,
   ROOM_BANDS,
   staffOnShift,
@@ -213,76 +212,8 @@ export const checkRoomRatio = createServerFn({ method: "POST" })
     };
   });
 
+/** Certificate email stays off. Past dates are not replayed and nothing is sent. */
 export const sendEceExpiryReminders = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { daycareId?: string }) => ({ daycareId: String(input?.daycareId || "").trim() }))
-  .handler(async ({ context, data }) => {
-    if (!staffSchedulingEnabled()) return { ok: true as const, sent: 0 };
-    await assertCentre(context.userId, data.daycareId);
-    const sql = await getSql();
-    await ensureStaffTables();
-    const certs = await sql<{
-      id: string;
-      staff_name: string;
-      expires_on: string;
-      reminded_at: string | null;
-    }>`
-      select id, staff_name, expires_on, reminded_at
-      from ece_certificates where daycare_id = ${data.daycareId}
-    `.catch(() => []);
-    const due = planEceReminders(
-      certs.map((row) => ({
-        id: row.id,
-        staffName: row.staff_name,
-        expiresOn: String(row.expires_on).slice(0, 10),
-        remindedAt: row.reminded_at ? new Date(row.reminded_at).toISOString() : null,
-      })),
-      new Date(),
-    );
-    if (!due.length) return { ok: true as const, sent: 0 };
-    const mailRows = await sql<{
-      email: string | null;
-      contact: string | null;
-      name: string;
-      slug: string | null;
-      visibility: string | null;
-      is_test: number | null;
-    }>`
-      select u.email, d.contact_email as contact, d.name, d.slug, d.visibility, d.is_test
-      from daycares d
-      left join provider_daycares p on p.daycare_id = d.id
-      left join "user" u on u.id = p.user_id
-      where d.id = ${data.daycareId}
-      limit 1
-    `.catch(() => []);
-    const to = (mailRows[0]?.contact || mailRows[0]?.email || "").trim();
-    if (!to) return { ok: true as const, sent: 0 };
-    const lines = due.map((row) => `${row.staffName} expires ${row.expiresOn}`).join("\n");
-    const { sendTransactionalMail } = await import("@/lib/transactional-mail");
-    const { brandedNotice } = await import("@/lib/email-layout");
-    const { isAdminOnlyListing } = await import("@/lib/listing-visibility");
-    const centreName = mailRows[0]?.name || "your centre";
-    const text = `These ECE certificates expire within 60 days or are already expired.\n\n${lines}\n\nKidEase does not text staff.`;
-    await sendTransactionalMail({
-      purpose: "customer_alert",
-      to,
-      subject: `ECE certificates expiring: ${centreName}`,
-      text,
-      html: `<p>These ECE certificates expire within 60 days or are already expired.</p><pre>${lines}</pre>`,
-      aboutTestListing: isAdminOnlyListing({
-        name: mailRows[0]?.name,
-        slug: mailRows[0]?.slug,
-        visibility: mailRows[0]?.visibility,
-        isTest: mailRows[0]?.is_test,
-      }),
-      branded: brandedNotice({
-        heading: `ECE certificates expiring: ${centreName}`,
-        text,
-        reason: "You get this because you manage a listing on KidEase.",
-      }),
-    }).catch(() => undefined);
-    for (const row of due) {
-      await sql`update ece_certificates set reminded_at = now() where id = ${row.id}`.catch(() => undefined);
-    }
-    return { ok: true as const, sent: due.length };
-  });
+  .handler(async () => ({ ok: true as const, sent: 0 as const }));

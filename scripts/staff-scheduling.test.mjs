@@ -13,8 +13,10 @@ test("staff scheduling stays off and does not text or pay staff", () => {
   assert.equal(FLAG_DEFAULTS.FEATURE_STAFF_SCHEDULING, false);
   assert.match(src(".env.example"), /^FEATURE_STAFF_SCHEDULING=0$/m);
   const server = src("src/lib/server/staff-scheduling.ts");
-  assert.doesNotMatch(server, /sendSms|FEATURE_SMS/);
-  assert.match(server, /sendTransactionalMail/);
+  assert.doesNotMatch(server, /sendSms|FEATURE_SMS|sendTransactionalMail/);
+  assert.match(server, /sent: 0 as const/);
+  assert.doesNotMatch(src("src/components/staff-scheduling-desk.tsx"), /sendEceExpiryReminders/);
+  assert.match(src("src/components/staff-scheduling-desk.tsx"), /data-ke="ece-reminders-off"/);
   assert.match(src("src/routes/provider.tsx"), /desk === "staff"/);
   assert.doesNotMatch(src("src/lib/desk-nav.ts"), /id: "staff"/);
 });
