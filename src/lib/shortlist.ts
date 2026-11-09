@@ -117,10 +117,8 @@ export function readShortlistCache(userId?: string | null): Set<string> | null {
   return new Set(cachedIds);
 }
 
-/** One saved-list read for every card on the page. */
+/** One saved-list read for every card on the page. A stored list only paints the heart until this returns. */
 export function loadShortlistIds(userId: string, load: () => Promise<string[]>): Promise<string[]> {
-  const cached = readShortlistCache(userId);
-  if (cached) return Promise.resolve([...cached]);
   if (!loadingIds) {
     loadingIds = load()
       .then((ids) => {
@@ -134,17 +132,20 @@ export function loadShortlistIds(userId: string, load: () => Promise<string[]>):
   return loadingIds;
 }
 
+function persistShortlist(userId?: string | null) {
+  if (typeof window === "undefined" || !userId || !cachedIds) return;
+  try {
+    window.sessionStorage.setItem(`${SHORTLIST_STORAGE}:${userId}`, JSON.stringify([...cachedIds]));
+  } catch {
+    /* private mode */
+  }
+}
+
 export function writeShortlistCache(ids: string[], userId?: string | null) {
   const clean = ids.filter(isValidDaycareId);
   cachedIds = new Set(clean);
   if (userId) cachedUserId = userId;
-  if (typeof window !== "undefined" && userId) {
-    try {
-      window.sessionStorage.setItem(`${SHORTLIST_STORAGE}:${userId}`, JSON.stringify(clean));
-    } catch {
-      /* private mode */
-    }
-  }
+  persistShortlist(userId);
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event(SHORTLIST_EVENT));
   }
@@ -159,14 +160,23 @@ export function markShortlistCache(id: string, saved: boolean, userId?: string |
   if (userId) cachedUserId = userId;
   if (saved) cachedIds.add(id);
   else cachedIds.delete(id);
+  persistShortlist(userId ?? cachedUserId);
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event(SHORTLIST_EVENT));
   }
 }
 
 export function clearShortlistCache() {
+  const userId = cachedUserId;
   cachedIds = null;
   cachedUserId = null;
+  if (typeof window !== "undefined" && userId) {
+    try {
+      window.sessionStorage.removeItem(`${SHORTLIST_STORAGE}:${userId}`);
+    } catch {
+      /* private mode */
+    }
+  }
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event(SHORTLIST_EVENT));
   }
