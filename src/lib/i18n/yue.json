@@ -837,6 +837,15 @@
   "inboxManageRequest": "處理申請",
   "inboxConversationActions": "對話操作",
   "inboxNoMessagesYet": "未有訊息",
+  "inboxNextReply": "Reply. This family is waiting.",
+  "inboxNextTour": "Accept the tour or suggest a new time in this thread.",
+  "inboxNextTourParent": "The centre has not confirmed a tour time yet.",
+  "inboxNextFollow": "Follow up. This tour is no longer pending.",
+  "inboxNextWaitlist": "On the waitlist. This is not a spot yet.",
+  "inboxSeenHere": "Seen in KidEase",
+  "inboxPhoneNotSent": "Saved in KidEase. A phone alert was not sent.",
+  "inboxAssignLead": "Only a manager can assign this thread.",
+  "waitlistNotASpot": "This is a waitlist place. It is not an enrolled spot.",
   "inboxMarkedUnread": "已標為未讀",
   "inboxStarred": "已加星",
   "inboxUnstarred": "已取消星",
@@ -3465,5 +3474,10 @@
   "msv2Licensed": "持牌",
   "msv2TopRated": "高評價",
   "msv2Meals": "包餐",
-  "msv2SubsidyChip": "接受津貼"
+  "msv2SubsidyChip": "接受津貼",
+  "inboxPhoneNotSentTo": "A phone alert was not sent to {name}.",
+  "inboxPhoneSent": "A phone alert was sent to {name}.",
+  "inboxAssignMe": "Assign to me",
+  "inboxOlderSearch": "{count} older messages",
+  "inboxAssignedYou": "Assigned to you"
 }

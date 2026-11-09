@@ -837,6 +837,15 @@
   "inboxManageRequest": "Pamahalaan ang kahilingan",
   "inboxConversationActions": "Mga aksyon sa usapan",
   "inboxNoMessagesYet": "Wala pang mensahe",
+  "inboxNextReply": "Reply. This family is waiting.",
+  "inboxNextTour": "Accept the tour or suggest a new time in this thread.",
+  "inboxNextTourParent": "The centre has not confirmed a tour time yet.",
+  "inboxNextFollow": "Follow up. This tour is no longer pending.",
+  "inboxNextWaitlist": "On the waitlist. This is not a spot yet.",
+  "inboxSeenHere": "Seen in KidEase",
+  "inboxPhoneNotSent": "Saved in KidEase. A phone alert was not sent.",
+  "inboxAssignLead": "Only a manager can assign this thread.",
+  "waitlistNotASpot": "This is a waitlist place. It is not an enrolled spot.",
   "inboxMarkedUnread": "Minarkahan bilang hindi pa nabasa",
   "inboxStarred": "Na-star",
   "inboxUnstarred": "Inalis ang star",
@@ -3465,5 +3474,10 @@
   "msv2Licensed": "May lisensya",
   "msv2TopRated": "Pinakamataas ang rating",
   "msv2Meals": "May kasamang pagkain",
-  "msv2SubsidyChip": "Tumatanggap ng subsidy"
+  "msv2SubsidyChip": "Tumatanggap ng subsidy",
+  "inboxPhoneNotSentTo": "A phone alert was not sent to {name}.",
+  "inboxPhoneSent": "A phone alert was sent to {name}.",
+  "inboxAssignMe": "Assign to me",
+  "inboxOlderSearch": "{count} older messages",
+  "inboxAssignedYou": "Assigned to you"
 }

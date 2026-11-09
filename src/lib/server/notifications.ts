@@ -58,10 +58,11 @@ async function projectFromLeads(sql: Sql, userId: string): Promise<ProjectedNoti
     limit 40
   `.catch(() => []);
 
-  return rows.map((row) => {
+  return rows.flatMap((row) => {
     const audience = row.user_id === userId ? ("parent" as const) : ("provider" as const);
+    if (audience === "parent" && (row.status === "requested" || row.status === "received")) return [];
     const kind: NotificationKind = row.kind === "tour" ? "tour" : "lead";
-    return {
+    return [{
       kind,
       titleKey: leadTitleKey({
         audience,
@@ -73,7 +74,7 @@ async function projectFromLeads(sql: Sql, userId: string): Promise<ProjectedNoti
       createdAt: String(row.updated_at || row.created_at),
       daycareName: row.daycare_name,
       status: row.status,
-    };
+    }];
   });
 }
 

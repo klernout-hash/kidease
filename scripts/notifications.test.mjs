@@ -14,6 +14,7 @@ import {
   adminSignupHref,
   leadNotificationHref,
   leadTitleKey,
+  messageAlertFor,
   notificationSourceKey,
   projectAdminSignupNotification,
   searchAlertHref,
@@ -211,6 +212,22 @@ test("hamburger and /menu rows keep an icon for every category", () => {
   assert.match(menu, /MenuGlyph id="logout"/);
   assert.match(src("src/components/share-button.tsx"), /Share2 className="size-5/);
   assert.match(src("src/components/rate-kidease.tsx"), /Star className="size-5/);
+});
+
+test("ordinary chat is a message for the other person, never a request for the sender", () => {
+  assert.equal(messageAlertFor({ senderId: "parent", recipientId: "parent" }), null);
+  assert.equal(messageAlertFor({ senderId: "", recipientId: "centre" }), null);
+  const chat = messageAlertFor({ senderId: "parent", recipientId: "centre" });
+  assert.equal(chat.titleKey, "notifInbox");
+  assert.equal(chat.kind, "inbox");
+  const request = messageAlertFor({ senderId: "parent", recipientId: "centre", explicitRequest: true });
+  assert.equal(request.titleKey, "notifLeadNew");
+  const server = src("src/lib/server/notifications.ts");
+  assert.match(server, /row.status === "requested"/);
+  const roles = src("src/lib/server/roles.ts");
+  assert.match(roles, /notifications: notificationUnread/);
+  assert.match(roles, /unread\.centre/);
+  assert.doesNotMatch(src("src/lib/server/inbox.ts"), /titleKey: "notifLeadNew"/);
 });
 
 test("king-admin stays kyle-only and notifications do not invent Clerk", () => {

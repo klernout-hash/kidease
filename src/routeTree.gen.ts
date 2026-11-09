@@ -235,6 +235,7 @@ import { Route as ParentWithdrawalRouteImport } from './routes/parent_.withdrawa
 import { Route as PayIndexRouteImport } from './routes/pay.index'
 import { Route as PayBookingIdRouteImport } from './routes/pay.$bookingId'
 import { Route as PreviewAttendanceRouteImport } from './routes/preview.attendance'
+import { Route as PreviewEngagementRouteImport } from './routes/preview.engagement'
 import { Route as PreviewFeatureControlsRouteImport } from './routes/preview.feature-controls'
 import { Route as PreviewNotificationPreferencesRouteImport } from './routes/preview.notification-preferences'
 import { Route as ProviderFamiliesRouteImport } from './routes/provider.families'
@@ -1446,6 +1447,11 @@ const PreviewAttendanceRoute = PreviewAttendanceRouteImport.update({
   path: '/preview/attendance',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PreviewEngagementRoute = PreviewEngagementRouteImport.update({
+  id: '/preview/engagement',
+  path: '/preview/engagement',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PreviewFeatureControlsRoute = PreviewFeatureControlsRouteImport.update({
   id: '/preview/feature-controls',
   path: '/preview/feature-controls',
@@ -2064,6 +2070,7 @@ export interface FileRoutesByFullPath {
   '/parent/withdrawal': typeof ParentWithdrawalRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/preview/attendance': typeof PreviewAttendanceRoute
+  '/preview/engagement': typeof PreviewEngagementRoute
   '/preview/feature-controls': typeof PreviewFeatureControlsRoute
   '/preview/notification-preferences': typeof PreviewNotificationPreferencesRoute
   '/provider/families': typeof ProviderFamiliesRoute
@@ -2368,6 +2375,7 @@ export interface FileRoutesByTo {
   '/parent/withdrawal': typeof ParentWithdrawalRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/preview/attendance': typeof PreviewAttendanceRoute
+  '/preview/engagement': typeof PreviewEngagementRoute
   '/preview/feature-controls': typeof PreviewFeatureControlsRoute
   '/preview/notification-preferences': typeof PreviewNotificationPreferencesRoute
   '/provider/families': typeof ProviderFamiliesRoute
@@ -2675,6 +2683,7 @@ export interface FileRoutesById {
   '/parent_/withdrawal': typeof ParentWithdrawalRoute
   '/pay/$bookingId': typeof PayBookingIdRoute
   '/preview/attendance': typeof PreviewAttendanceRoute
+  '/preview/engagement': typeof PreviewEngagementRoute
   '/preview/feature-controls': typeof PreviewFeatureControlsRoute
   '/preview/notification-preferences': typeof PreviewNotificationPreferencesRoute
   '/provider/families': typeof ProviderFamiliesRoute
@@ -2983,6 +2992,7 @@ export interface FileRouteTypes {
     | '/parent/withdrawal'
     | '/pay/$bookingId'
     | '/preview/attendance'
+    | '/preview/engagement'
     | '/preview/feature-controls'
     | '/preview/notification-preferences'
     | '/provider/families'
@@ -3287,6 +3297,7 @@ export interface FileRouteTypes {
     | '/parent/withdrawal'
     | '/pay/$bookingId'
     | '/preview/attendance'
+    | '/preview/engagement'
     | '/preview/feature-controls'
     | '/preview/notification-preferences'
     | '/provider/families'
@@ -3593,6 +3604,7 @@ export interface FileRouteTypes {
     | '/parent_/withdrawal'
     | '/pay/$bookingId'
     | '/preview/attendance'
+    | '/preview/engagement'
     | '/preview/feature-controls'
     | '/preview/notification-preferences'
     | '/provider/families'
@@ -3836,6 +3848,7 @@ export interface RootRouteChildren {
   ParentSubsidyRoute: typeof ParentSubsidyRoute
   ParentWithdrawalRoute: typeof ParentWithdrawalRoute
   PreviewAttendanceRoute: typeof PreviewAttendanceRoute
+  PreviewEngagementRoute: typeof PreviewEngagementRoute
   PreviewFeatureControlsRoute: typeof PreviewFeatureControlsRoute
   PreviewNotificationPreferencesRoute: typeof PreviewNotificationPreferencesRoute
   ProviderAbsenceRoute: typeof ProviderAbsenceRoute
@@ -5470,6 +5483,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PreviewAttendanceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/preview/engagement': {
+      id: '/preview/engagement'
+      path: '/preview/engagement'
+      fullPath: '/preview/engagement'
+      preLoaderRoute: typeof PreviewEngagementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/preview/feature-controls': {
       id: '/preview/feature-controls'
       path: '/preview/feature-controls'
@@ -6527,6 +6547,7 @@ const rootRouteChildren: RootRouteChildren = {
   ParentSubsidyRoute: ParentSubsidyRoute,
   ParentWithdrawalRoute: ParentWithdrawalRoute,
   PreviewAttendanceRoute: PreviewAttendanceRoute,
+  PreviewEngagementRoute: PreviewEngagementRoute,
   PreviewFeatureControlsRoute: PreviewFeatureControlsRoute,
   PreviewNotificationPreferencesRoute: PreviewNotificationPreferencesRoute,
   ProviderAbsenceRoute: ProviderAbsenceRoute,

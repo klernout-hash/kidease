@@ -12,6 +12,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { useSessionDesks } from "@/components/session-desks";
 import { parentDeskPath, parentNavSearch, providerNavSearch } from "@/lib/desk-nav";
 import { resolveInboxView, type InboxView } from "@/lib/inbox-view";
+import { searchInboxList } from "@/lib/server/engagement";
 import { listInbox } from "@/lib/server/inbox";
 import { filterInboxList, MESSAGE_FILTERS, messageFilterCopyKey, parseMessageFilter, type MessageFilter } from "@/lib/inbox-thread-ui";
 import { SupportDeskBar } from "@/components/support-desk-panel";
@@ -30,6 +31,7 @@ export function InboxList({ bare = false }: { bare?: boolean }) {
   const [items, setItems] = useState<CentreInboxThread[] | null>(null);
   const [filter, setFilter] = useState<MessageFilter>("all");
   const [query, setQuery] = useState("");
+  const [bodyMatchIds, setBodyMatchIds] = useState<string[]>([]);
   const [supportOpen, setSupportOpen] = useState(false);
 
   useEffect(() => {
@@ -40,9 +42,31 @@ export function InboxList({ bare = false }: { bare?: boolean }) {
   }, [user?.id, view]);
 
   const visible = useMemo(
-    () => (items ? filterInboxList(items, { filter, query }) : []),
-    [items, filter, query],
+    () => (items ? filterInboxList(items, { filter, query, bodyMatchIds: new Set(bodyMatchIds) }) : []),
+    [items, filter, query, bodyMatchIds],
   );
+
+  useEffect(() => {
+    const needle = query.trim();
+    if (!user?.id || needle.length < 2) {
+      setBodyMatchIds([]);
+      return;
+    }
+    let live = true;
+    const timer = window.setTimeout(() => {
+      void searchInboxList({ data: { query: needle } })
+        .then((res) => {
+          if (live) setBodyMatchIds(res.ok ? res.ids : []);
+        })
+        .catch(() => {
+          if (live) setBodyMatchIds([]);
+        });
+    }, 250);
+    return () => {
+      live = false;
+      window.clearTimeout(timer);
+    };
+  }, [query, user?.id]);
 
   if (isPending) {
     if (bare) return <DeskSkeleton />;

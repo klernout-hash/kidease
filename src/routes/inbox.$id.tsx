@@ -32,6 +32,7 @@ import { useCopy } from "@/lib/use-copy";
 import { confirmAction } from "@/lib/success-confirm";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { TourCard } from "@/components/tour-card";
+import { nextInboxAction } from "@/lib/engagement";
 import { money } from "@/lib/utils";
 import { openDirections } from "@/lib/maps";
 import { MIN_POLL_MS, pollBackoffMs } from "@/lib/fn-query";
@@ -343,6 +344,25 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
     name: person.name,
     image: "image" in person ? person.image : null,
   }));
+  const parentNext = nextInboxAction({
+    unread: false,
+    viewerIsParent: isParent,
+    providerReplied: messages.some((m) => m.sender === "provider"),
+    tourStatus: tours[0]?.status,
+    bookingStatus: booking?.status,
+  });
+  const parentNextKey =
+    parentNext === "reply"
+      ? "inboxNextReply"
+      : parentNext === "tour"
+        ? isParent
+          ? "inboxNextTourParent"
+          : "inboxNextTour"
+        : parentNext === "follow_up"
+          ? "inboxNextFollow"
+          : parentNext === "waitlist"
+            ? "inboxNextWaitlist"
+            : null;
 
   return (
       <main className="mx-auto flex h-[calc(100dvh-12.5rem)] min-h-0 w-full max-w-5xl flex-col lg:h-[calc(100dvh-8rem)] lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)]">
@@ -364,6 +384,11 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
             </Link>
           </div>
         )}
+        {loadState === "ready" && parentNextKey ? (
+          <p className="px-4 pt-3 text-sm font-medium text-primary" data-ke="inbox-thread-next">
+            {t(parentNextKey)}
+          </p>
+        ) : null}
         {tours[0] || booking ? (
           <div className="px-4 pt-2">
             <PipelineBadge tourStatus={tours[0]?.status} bookingStatus={booking?.status ?? null} />
@@ -406,6 +431,7 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
               parentName={booking?.parentName || user.displayName || t("inboxRoleParent")}
               centreName={name}
               reads={details?.reads ?? []}
+              phoneAlerts={details?.phoneAlerts || []}
               peers={details?.participants || []}
             />
           ) : null}

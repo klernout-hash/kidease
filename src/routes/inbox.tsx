@@ -49,7 +49,7 @@ export function InboxDesk({
   const selectedId = pathname.startsWith(threadPrefix)
     ? decodeURIComponent(pathname.slice(threadPrefix.length).split("/")[0] || "")
     : undefined;
-  const onList = pathname === listPath;
+  const onThread = Boolean(selectedId);
   if (view === "centre") {
     return (
       <CentreInboxDesk
@@ -58,7 +58,6 @@ export function InboxDesk({
       />
     );
   }
-  const onThread = Boolean(selectedId);
   const split = (
     <DeskShell
       desk="parent"
@@ -85,12 +84,7 @@ export function InboxDesk({
       </div>
     </DeskShell>
   );
-  return (
-    <>
-      <div className="ke-site-desktop">{onList ? <InboxList /> : <Outlet />}</div>
-      <div className="ke-site-compact">{split}</div>
-    </>
-  );
+  return split;
 }
 
 export const Route = createFileRoute("/inbox")({

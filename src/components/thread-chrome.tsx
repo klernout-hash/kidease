@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ArrowUp, Plus } from "lucide-react";
 import { HistoryBack } from "@/components/history-back";
 import { historyHref } from "@/lib/screen-history";
+import { messageReceipt } from "@/lib/engagement";
 import { chatBodyWithoutSmsFooter } from "@/lib/sms-copy";
 import {
   joinNames,
@@ -37,6 +38,52 @@ function PersonFace({ name, image, large = false }: { name: string; image?: stri
   );
 }
 
+function ReceiptLine({
+  messageId,
+  createdAt,
+  reads,
+  peers,
+  phoneAlerts,
+  viewerId,
+}: {
+  messageId: string;
+  createdAt: string;
+  reads: InboxRead[];
+  peers: Array<{ id?: string; name: string }>;
+  phoneAlerts: Array<{ messageId?: string; userId: string; state: "sent" | "not_sent" }>;
+  viewerId: string;
+}) {
+  const { t } = useCopy();
+  const readers = readByNames(reads, createdAt, viewerId);
+  const seen = readers.length
+    ? `${t("inboxSeenHere")} · ${t("inboxReadBy").replace("{names}", joinNames(readers, t("inboxAnd")))}`
+    : "";
+  const phone = phoneAlerts
+    .filter((alert) => !alert.messageId || alert.messageId === messageId)
+    .map((alert) => {
+      const person = reads.find((read) => read.userId === alert.userId);
+      const named = peers.find((peer) => peer.id === alert.userId);
+      const receipt = messageReceipt({
+        userId: alert.userId,
+        seenInApp: reads.some((read) => read.userId === alert.userId && read.lastReadAt >= createdAt),
+        pushState: alert.state,
+      });
+      const name = person?.name || named?.name || "";
+      if (!name || receipt.phone === "unknown") return "";
+      return receipt.phone === "sent"
+        ? t("inboxPhoneSent").replace("{name}", name)
+        : t("inboxPhoneNotSentTo").replace("{name}", name);
+    })
+    .filter(Boolean);
+  const text = [seen, ...phone].filter(Boolean).join(" ");
+  if (!text) return null;
+  return (
+    <p className="mt-1 px-1 text-xs text-subtle" data-ke="inbox-receipt">
+      {text}
+    </p>
+  );
+}
+
 function mineOf(viewerRole: string, sender: Message["sender"]) {
   if (viewerRole === "parent") return sender === "parent";
   if (viewerRole === "centre") return sender === "provider";
@@ -50,6 +97,7 @@ export function ThreadTranscript({
   parentName,
   centreName,
   reads,
+  phoneAlerts = [],
   peers = [],
   now = new Date(),
 }: {
@@ -59,7 +107,8 @@ export function ThreadTranscript({
   parentName: string;
   centreName: string;
   reads: InboxRead[];
-  peers?: Array<{ name: string; image?: string | null; role?: string }>;
+  phoneAlerts?: Array<{ messageId?: string; userId: string; state: "sent" | "not_sent" }>;
+  peers?: Array<{ id?: string; name: string; image?: string | null; role?: string }>;
   now?: Date;
 }) {
   const { t, locale } = useCopy();
@@ -67,7 +116,6 @@ export function ThreadTranscript({
     .filter(showChatBubble)
     .map((m) => ({ ...m, body: chatBodyWithoutSmsFooter(m.body) }))
     .filter((m) => m.body);
-  const lastOwn = [...visible].reverse().find((m) => mineOf(viewerRole, m.sender) && m.kind !== "status");
   let lastDay = "";
 
   return (
@@ -80,7 +128,6 @@ export function ThreadTranscript({
         const mine = mineOf(viewerRole, m.sender);
         const senderName = m.sender === "parent" ? parentName : centreName;
         const peer = peerFor(m.sender, peers);
-        const readers = lastOwn && m.id === lastOwn.id ? readByNames(reads, m.createdAt, viewerId) : [];
         return (
           <li key={m.id} className="contents">
             {showDay && (day.today || day.yesterday || day.text) ? (
@@ -108,10 +155,15 @@ export function ThreadTranscript({
                 >
                   {m.body}
                 </p>
-                {readers.length ? (
-                  <p className="mt-1 px-1 text-xs text-subtle">
-                    {t("inboxReadBy").replace("{names}", joinNames(readers, t("inboxAnd")))}
-                  </p>
+                {mine ? (
+                  <ReceiptLine
+                    messageId={m.id}
+                    createdAt={m.createdAt}
+                    reads={reads}
+                    peers={peers}
+                    phoneAlerts={phoneAlerts}
+                    viewerId={viewerId}
+                  />
                 ) : null}
                 </div>
               </div>

@@ -187,6 +187,7 @@ export function MyWaitlists() {
                     {row.place ? ` · ${locale === "fr" ? "Place" : "Place"} ${row.place}` : ""}
                   </p>
                   <p className="mt-1 text-xs text-subtle">{copy.joinedOn.replace("{date}", when(row.joinedAt, locale))}</p>
+                  <p className="mt-1 text-sm text-fg" data-ke="waitlist-not-a-spot">{t("waitlistNotASpot")}</p>
                   {row.offerStatus === "open" && row.offerExpiresAt ? (
                     <p className="mt-1 text-sm text-muted">
                       {copy.offerOpen.replace("{date}", when(row.offerExpiresAt, locale))}

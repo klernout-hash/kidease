@@ -837,6 +837,15 @@
   "inboxManageRequest": "إدارة الطلب",
   "inboxConversationActions": "إجراءات المحادثة",
   "inboxNoMessagesYet": "لا رسائل بعد",
+  "inboxNextReply": "Reply. This family is waiting.",
+  "inboxNextTour": "Accept the tour or suggest a new time in this thread.",
+  "inboxNextTourParent": "The centre has not confirmed a tour time yet.",
+  "inboxNextFollow": "Follow up. This tour is no longer pending.",
+  "inboxNextWaitlist": "On the waitlist. This is not a spot yet.",
+  "inboxSeenHere": "Seen in KidEase",
+  "inboxPhoneNotSent": "Saved in KidEase. A phone alert was not sent.",
+  "inboxAssignLead": "Only a manager can assign this thread.",
+  "waitlistNotASpot": "This is a waitlist place. It is not an enrolled spot.",
   "inboxMarkedUnread": "تم التعليم كغير مقروء",
   "inboxStarred": "تم التمييز",
   "inboxUnstarred": "أزيل التمييز",
@@ -3465,5 +3474,10 @@
   "msv2Licensed": "مرخّص",
   "msv2TopRated": "الأعلى تقييمًا",
   "msv2Meals": "وجبات مشمولة",
-  "msv2SubsidyChip": "يقبل الإعانة"
+  "msv2SubsidyChip": "يقبل الإعانة",
+  "inboxPhoneNotSentTo": "A phone alert was not sent to {name}.",
+  "inboxPhoneSent": "A phone alert was sent to {name}.",
+  "inboxAssignMe": "Assign to me",
+  "inboxOlderSearch": "{count} older messages",
+  "inboxAssignedYou": "Assigned to you"
 }
