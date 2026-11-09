@@ -10,7 +10,6 @@ import {
   listStaffDesk,
   saveEceCertificate,
   saveStaffShift,
-  sendEceExpiryReminders,
   staffDeskStatus,
 } from "@/lib/server/staff-scheduling";
 import { useCopy } from "@/lib/use-copy";
@@ -198,23 +197,8 @@ export function StaffSchedulingDesk() {
           {copy.expires}
           <input type="date" className="ke-input mt-1 min-h-11 w-full" value={cert.expiresOn} onChange={(e) => setCert({ ...cert, expiresOn: e.target.value })} required />
         </label>
-        <div className="flex flex-wrap gap-2">
-          <Button type="submit" variant="secondary" disabled={busy}>{copy.saveCert}</Button>
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={busy}
-            onClick={() => {
-              setBusy(true);
-              void sendEceExpiryReminders({ data: { daycareId: activeId } })
-                .then((row) => toast.success(row.sent ? copy.reminded : copy.noCerts))
-                .catch(() => toast.error(copy.bad))
-                .finally(() => setBusy(false));
-            }}
-          >
-            {copy.remind}
-          </Button>
-        </div>
+        <Button type="submit" variant="secondary" disabled={busy}>{copy.saveCert}</Button>
+        <p className="text-sm text-muted" data-ke="ece-reminders-off">{copy.remind}</p>
       </form>
 
       {desk.certs.length === 0 ? <p className="text-sm text-muted">{copy.noCerts}</p> : (
