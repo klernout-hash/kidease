@@ -14,6 +14,7 @@ import { isClaimVerified } from "@/lib/trust";
 import { tourSlaRemainingMs } from "@/lib/today-sla";
 import { formatPreferredTimes, parsePreferredTimes } from "@/lib/threads";
 import { customerAlertSummary, sameMailbox } from "@/lib/customer-alert-policy";
+import { QA_TOUR_CENTRE_ID, QA_TOUR_CENTRE_SLUG } from "@/lib/qa-tour-access";
 import { chatBodyWithoutSmsFooter, daycareReplySms, parentMessageSms } from "@/lib/sms-copy";
 import { messageAlertFor, notificationSourceKey } from "@/lib/notifications";
 import { saveParentInAppNotice } from "@/lib/server/parent-notice";
@@ -26,6 +27,13 @@ import {
   requireConversationWrite,
 } from "./thread-access";
 import type { BookingStatus, Conversation, TourStatus } from "@/lib/types";
+
+async function savedMessageLocale(sql: Awaited<ReturnType<typeof getSql>>, userId: string): Promise<"en" | "fr"> {
+  const rows = await sql<{ locale: string | null }>`
+    select locale from profiles where user_id = ${userId} limit 1
+  `.catch(() => [] as Array<{ locale: string | null }>);
+  return String(rows[0]?.locale || "").toLowerCase().startsWith("fr") ? "fr" : "en";
+}
 
 export const listInbox = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
@@ -368,6 +376,8 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
     await markConversationRead(sql, row.id, context.userId);
 
     const actor = await lookupUser(context.userId);
+    const hiddenQa = row.daycare_id === QA_TOUR_CENTRE_ID || row.slug === QA_TOUR_CENTRE_SLUG;
+    if (hiddenQa) return { ok: true as const, sender };
     void import("@/lib/server/admin-tools")
       .then((mod) => mod.maybeQueueSpam({ kind: "message", text: body, email: actor.email, sourceId: row.id }))
       .catch(() => undefined);
@@ -412,7 +422,7 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
       slug: row.slug,
       actorName: actor.name,
       actorEmail: actor.email,
-      detail: body.slice(0, 400),
+      detail: "A message was sent. The note stays in the thread.",
     }).catch(() => undefined);
 
     const origin = process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://kidease.ca";
@@ -425,9 +435,10 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
       if (extras && !recipients.some((r) => r.email.toLowerCase() === extras.toLowerCase())) {
         recipients.push({ email: extras, name: row.name });
       }
-      const centreMail = customerAlertSummary({ kind: "message", centreName: row.name, locale: "en" });
       for (const r of recipients) {
         if (sameMailbox(actor.email, r.email)) continue;
+        const centreLocale = r.userId ? await savedMessageLocale(sql, r.userId) : "en";
+        const centreMail = customerAlertSummary({ kind: "message", centreName: row.name, locale: centreLocale });
         void notifyThreadParty({
           to: r.email,
           name: r.name,
@@ -474,7 +485,8 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
       }
       const parent = await lookupUser(row.user_id);
       if (!sameMailbox(actor.email, parent.email)) {
-        const parentMail = customerAlertSummary({ kind: "message", centreName: row.name, locale: "en" });
+        const parentLocale = await savedMessageLocale(sql, row.user_id);
+        const parentMail = customerAlertSummary({ kind: "message", centreName: row.name, locale: parentLocale });
         void notifyThreadParty({
           to: parent.email,
           name: parent.name,
