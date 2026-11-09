@@ -11,6 +11,7 @@ import {
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
 test("children aged 0 to 5 are the published census-family counts", () => {
+  // Counts are the published rounded figures from table 98-10-0666-01.
   assert.equal(children0to5("MB"), 93690);
   assert.equal(children0to5("ALL"), 2208195);
   assert.equal(CHILDREN_0_TO_5_2021.ON, 827350);
