@@ -2494,7 +2494,7 @@
   "notifications": "通知",
   "notificationsEmpty": "暂无通知",
   "notificationsEmptyLead": "当参观、请求、认领或消息需要您处理时，会显示在这里。",
-  "notificationsUnread": "{n} 条未读",
+  "notificationsUnread": "{n} 条提醒",
   "notifLeadNew": "新请求 · {name}",
   "notifLeadUpdated": "{name} 更新了您的请求",
   "notifTourNew": "参观请求 · {name}",
@@ -3487,5 +3487,6 @@
   "inboxPhoneSent": "A phone alert was sent to {name}.",
   "inboxAssignMe": "Assign to me",
   "inboxOlderSearch": "{count} older messages",
-  "inboxAssignedYou": "Assigned to you"
+  "inboxAssignedYou": "Assigned to you",
+  "notificationsBellHint": "提醒，不是未读消息"
 }

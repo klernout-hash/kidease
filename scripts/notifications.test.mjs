@@ -33,6 +33,7 @@ const COPY_KEYS = [
   "notificationsEmpty",
   "notificationsEmptyLead",
   "notificationsUnread",
+  "notificationsBellHint",
   "notifLeadNew",
   "notifLeadUpdated",
   "notifTourNew",
@@ -138,6 +139,10 @@ test("EN and FR-CA ship the same notification copy keys", () => {
   }
   assert.match(text, /notificationsEmpty: "No notifications yet"/);
   assert.match(text, /notificationsEmpty: "Aucune notification pour l’instant"/);
+  assert.match(text, /notificationsBellHint: "Alerts, not unread messages"/);
+  assert.match(text, /notificationsBellHint: "Alertes, pas des messages non lus"/);
+  assert.match(text, /notificationsUnread: "\{n\} alerts"/);
+  assert.match(text, /notificationsUnread: "\{n\} alertes"/);
 });
 
 test("routeTree and page register /notifications", () => {
@@ -163,6 +168,8 @@ test("signed-in header and menus show a bell; guests do not get a badge", () => 
   assert.match(drawer, /signedIn \? \(/);
   assert.match(src("src/components/notification-bell.tsx"), /to=\{NOTIFICATIONS_PATH\}/);
   assert.match(src("src/components/notification-bell.tsx"), /failClosedUnread/);
+  assert.match(src("src/components/notification-bell.tsx"), /notificationsBellHint/);
+  assert.match(src("src/components/notification-bell.tsx"), /title=\{hint\}/);
   assert.doesNotMatch(header, /NotificationBell className="[^"]*guest/);
 });
 
