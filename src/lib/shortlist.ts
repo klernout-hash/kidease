@@ -31,6 +31,8 @@ const LANG_NAMES: Record<string, { en: string; fr: string }> = Object.fromEntrie
 
 let cachedIds: Set<string> | null = null;
 let cachedUserId: string | null = null;
+let loadingIds: Promise<string[]> | null = null;
+const SHORTLIST_STORAGE = "kidease-shortlist";
 
 export type ShortlistListing = {
   id: string;
@@ -91,15 +93,58 @@ export function takePendingSave(): string | null {
   return id;
 }
 
+function storedShortlist(userId?: string | null): string[] | null {
+  if (typeof window === "undefined" || !userId) return null;
+  try {
+    const raw = window.sessionStorage.getItem(`${SHORTLIST_STORAGE}:${userId}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return null;
+    return parsed.filter(isValidDaycareId);
+  } catch {
+    return null;
+  }
+}
+
 export function readShortlistCache(userId?: string | null): Set<string> | null {
-  if (!cachedIds) return null;
+  if (!cachedIds) {
+    const stored = storedShortlist(userId);
+    if (!stored) return null;
+    cachedIds = new Set(stored);
+    if (userId) cachedUserId = userId;
+  }
   if (userId && cachedUserId && cachedUserId !== userId) return null;
   return new Set(cachedIds);
 }
 
+/** One saved-list read for every card on the page. */
+export function loadShortlistIds(userId: string, load: () => Promise<string[]>): Promise<string[]> {
+  const cached = readShortlistCache(userId);
+  if (cached) return Promise.resolve([...cached]);
+  if (!loadingIds) {
+    loadingIds = load()
+      .then((ids) => {
+        writeShortlistCache(ids, userId);
+        return ids;
+      })
+      .finally(() => {
+        loadingIds = null;
+      });
+  }
+  return loadingIds;
+}
+
 export function writeShortlistCache(ids: string[], userId?: string | null) {
-  cachedIds = new Set(ids.filter(isValidDaycareId));
+  const clean = ids.filter(isValidDaycareId);
+  cachedIds = new Set(clean);
   if (userId) cachedUserId = userId;
+  if (typeof window !== "undefined" && userId) {
+    try {
+      window.sessionStorage.setItem(`${SHORTLIST_STORAGE}:${userId}`, JSON.stringify(clean));
+    } catch {
+      /* private mode */
+    }
+  }
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event(SHORTLIST_EVENT));
   }
