@@ -122,6 +122,9 @@ test("the claim page does not print a code or grant listing ownership", () => {
   const claims = src("src/lib/server/claims.ts");
   const start = claims.slice(claims.indexOf("export const startClaim"), claims.indexOf("export const verifyClaim"));
   const verify = claims.slice(claims.indexOf("export const verifyClaim"), claims.indexOf("export const saveClaimFees"));
+  assert.match(page, /role: "provider"/);
+  assert.match(page, /intent: "up"/);
+  assert.doesNotMatch(page, /intent: "in"/);
   assert.doesNotMatch(page, /pending\.code|font-mono text-lg/);
   assert.match(page, /claim-step-code/);
   assert.match(page, /claim-step-licence/);
