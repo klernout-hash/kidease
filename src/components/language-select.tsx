@@ -6,7 +6,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { activateLocale, isExtraLocale } from "@/lib/extra-copy";
 import { applyDocumentLocale, languageMeta, shippedLanguages } from "@/lib/languages";
 import { LOCALE_SYNC_KEY, readLocaleCookie, writeLocaleChoiceCookie } from "@/lib/locale-geo";
-import { localeSwitchPath } from "@/lib/locale-path";
+import { localeSwitchHref } from "@/lib/locale-path";
 import { saveMyLocale } from "@/lib/server/account-prefs";
 import { useAppStore } from "@/lib/store";
 import { useCopy } from "@/lib/use-copy";
@@ -90,13 +90,17 @@ export function LanguageSelect({
           const next = e.target.value as Locale;
           if (a11yPass) setAnnounced(languageMeta(next).native);
           const apply = () => {
-            const dest = localeSwitchPath(pathname, next);
+            const path = typeof window !== "undefined" ? window.location.pathname : pathname;
+            const search = typeof window !== "undefined" ? window.location.search : "";
+            const dest = localeSwitchHref(path, search, next);
             writeLocaleChoiceCookie(next);
+            if (dest) {
+              window.location.assign(dest);
+              return;
+            }
             setLocale(next, { lock: true });
             applyDocumentLocale(next);
-            const finish = () => {
-              if (dest) window.location.assign(dest);
-            };
+            const finish = () => undefined;
             if (!user) {
               if (isPending) queueLocaleSync();
               finish();

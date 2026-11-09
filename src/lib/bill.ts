@@ -1,3 +1,5 @@
+import { DEFAULT_PLATFORM_FEE_BPS } from "./stripe-methods.ts";
+
 /** KidEase bill statuses. User-facing words: Bill / Pay / Paid. */
 export type BillStatus = "draft" | "sent" | "paid" | "void" | "refunded" | "disputed";
 
@@ -63,8 +65,8 @@ export function billDollars(bill: Pick<Bill, "amountCents">): number {
   return centsToDollars(bill.amountCents);
 }
 
-/** Same default as KIDEASE_PLATFORM_FEE_BPS / DEFAULT_PLATFORM_FEE_BPS (300). */
-const FALLBACK_PLATFORM_FEE_BPS = 300;
+/** Same default as the Connect charge. */
+const FALLBACK_PLATFORM_FEE_BPS = DEFAULT_PLATFORM_FEE_BPS;
 
 /** Provider copy: “You receive $X” after the KidEase platform fee. */
 export function receiveCents(

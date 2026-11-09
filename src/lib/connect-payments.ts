@@ -5,7 +5,7 @@
  * PostHog flag, so a remote toggle cannot turn charges on.
  *
  * application_fee_amount is exactly KIDEASE_PLATFORM_FEE_BPS of the invoice
- * (200 = 2% when unset). GST/HST/PST/QST is never added to that fee. Tax on
+ * (300 = 3% when unset, the same default as the bill screen). GST/HST/PST/QST is never added to that fee. Tax on
  * KidEase fees is a separate monthly invoice. The rate follows the daycare's
  * province when a tax method is turned on. Daycares pay Stripe processing
  * fees (on_behalf_of + fees.payer = account).
@@ -15,12 +15,15 @@
  * No secret values live here.
  */
 
+import { DEFAULT_PLATFORM_FEE_BPS, MAX_PLATFORM_FEE_BPS, platformFeeBps } from "./stripe-methods.ts";
+
 export type ConnectEnv = Record<string, string | undefined>;
 
 export const CONNECT_PAYMENTS_ENV = "KIDEASE_CONNECT_PAYMENTS";
 export const CONNECT_LIVE_ENV = "KIDEASE_CONNECT_LIVE";
-export const CONNECT_FEE_BPS_DEFAULT = 200;
-export const CONNECT_FEE_BPS_MAX = 2000;
+/** Same number as the bill screen. Do not set a second default. */
+export const CONNECT_FEE_BPS_DEFAULT = DEFAULT_PLATFORM_FEE_BPS;
+export const CONNECT_FEE_BPS_MAX = MAX_PLATFORM_FEE_BPS;
 /** Card plus Canadian pre-authorised debit (PAD / acss_debit). */
 export const CONNECT_CHARGE_METHOD_TYPES = ["card", "acss_debit"] as const;
 
@@ -107,10 +110,7 @@ export function connectChargeGate(env: ConnectEnv = process.env): ConnectChargeG
 }
 
 export function connectFeeBps(raw: string | undefined | null = process.env.KIDEASE_PLATFORM_FEE_BPS): number {
-  if (raw == null || String(raw).trim() === "") return CONNECT_FEE_BPS_DEFAULT;
-  const n = Number(raw);
-  if (!Number.isFinite(n) || n < 0) return CONNECT_FEE_BPS_DEFAULT;
-  return Math.min(Math.round(n), CONNECT_FEE_BPS_MAX);
+  return platformFeeBps(raw);
 }
 
 /** Exactly bps of the invoice. Tax is not included. */
@@ -311,7 +311,7 @@ export function stripeTaxCalculationBody(feeCents: number, place?: FeeTaxPlace |
   };
 }
 
-/** Invoice line is the tax only, so the 2% fee is not charged again. */
+/** Invoice line is the tax only, so the posted platform fee is not charged again. */
 export function monthlyFeeTaxLine(input: {
   plan: FeeTaxPlan;
   feeCents: number;

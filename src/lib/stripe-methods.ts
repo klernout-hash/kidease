@@ -79,8 +79,9 @@ export function stripeConfigured(): boolean {
   return Boolean(process.env.STRIPE_SECRET_KEY?.trim());
 }
 
-export function platformFeeBps(raw = process.env.KIDEASE_PLATFORM_FEE_BPS): number {
-  const n = Number(raw ?? String(DEFAULT_PLATFORM_FEE_BPS));
+export function platformFeeBps(raw: string | null | undefined = process.env.KIDEASE_PLATFORM_FEE_BPS): number {
+  if (raw == null || String(raw).trim() === "") return DEFAULT_PLATFORM_FEE_BPS;
+  const n = Number(raw);
   if (!Number.isFinite(n) || n < 0) return DEFAULT_PLATFORM_FEE_BPS;
   return Math.min(Math.round(n), MAX_PLATFORM_FEE_BPS);
 }

@@ -280,6 +280,16 @@ export function localeSwitchPath(pathname: string, nextLocale: string): string |
   return null;
 }
 
+/** Language switch URL, including the current query. Null when this page has no twin. */
+export function localeSwitchHref(pathname: string, search: string, nextLocale: string): string | null {
+  const dest = localeSwitchPath(pathname, nextLocale);
+  if (!dest) return null;
+  const query = search && search !== "?" ? (search.startsWith("?") ? search : `?${search}`) : "";
+  const href = `${dest}${query}`;
+  const here = `${normalizePathname(pathname)}${query}`;
+  return href === here ? null : href;
+}
+
 export function hreflangLinks(
   pathname: string,
   origin = "https://www.kidease.ca",
