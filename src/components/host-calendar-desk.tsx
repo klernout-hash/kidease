@@ -19,6 +19,7 @@ import {
   type SpotCounts,
 } from "@/lib/host-calendar";
 import { fillCount, hostCopy } from "@/lib/host-listing-copy";
+import { calendarCentreId } from "@/lib/qa-fixes";
 import { loadHostCalendar, saveHostCalendarDay, type HostCalendarDay, type HostCalendarPayload } from "@/lib/server/host-calendar";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -29,13 +30,23 @@ type Gear = "spots" | "closures" | "tours" | "waitlist";
 export function HostCalendarDesk({
   listings,
   onSaved,
+  centreFromUrl,
+  onCentre,
 }: {
   listings: Daycare[];
   onSaved: () => void | Promise<void>;
+  centreFromUrl?: string;
+  onCentre?: (id: string) => void;
 }) {
   const { locale } = useCopy();
   const copy = hostCopy(locale);
-  const [centreId, setCentreId] = useState(listings[0]?.id ?? "");
+  const listingIds = listings.map((row) => row.id);
+  const [centreId, setCentreId] = useState(() => calendarCentreId(centreFromUrl, listingIds));
+  const listingKey = listingIds.join("|");
+  useEffect(() => {
+    const next = calendarCentreId(centreFromUrl, listingKey ? listingKey.split("|") : []);
+    if (next) setCentreId((current) => (current === next ? current : next));
+  }, [centreFromUrl, listingKey]);
   const centre = listings.find((row) => row.id === centreId) ?? listings[0];
   const [month, setMonth] = useState(() => monthOf(centreDateISO(centre?.timezone, new Date())));
   const [payload, setPayload] = useState<HostCalendarPayload | null>(null);
@@ -108,6 +119,7 @@ export function HostCalendarDesk({
             onChange={(event) => {
               setCentreId(event.target.value);
               setSelected(null);
+              onCentre?.(event.target.value);
             }}
           >
             {listings.map((row) => (

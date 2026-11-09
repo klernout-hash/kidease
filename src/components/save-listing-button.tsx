@@ -5,6 +5,7 @@ import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
 import { parentSignupSearch } from "@/lib/auth/parent-login";
+import { saveLoginTo, saveReturnPath } from "@/lib/qa-fixes";
 import { addGuestShortlist } from "@/lib/guest-shortlist";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { SIGNUP_FUNNEL_EVENT, signupFunnelPayload, signupPromptStep } from "@/lib/signup-funnel";
@@ -49,10 +50,11 @@ export function SaveListingButton({
   framed?: boolean;
   className?: string;
 }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const navigate = useNavigate();
   const { user, isPending } = useCurrentUserState();
   const fallbackPath = useRouterState({ select: (s) => s.location.pathname });
+  const fallbackSearch = useRouterState({ select: (s) => s.location.searchStr });
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -91,8 +93,8 @@ export function SaveListingButton({
     capturePostHogEvent(SIGNUP_FUNNEL_EVENT, signupFunnelPayload(signupPromptStep("save"), { source: "listing" }));
     toast.message(t("signupWhySave"));
     void navigate({
-      to: "/login",
-      search: parentSignupSearch(nextPath || fallbackPath, "save"),
+      to: saveLoginTo(locale === "fr" ? "fr" : "en"),
+      search: parentSignupSearch(saveReturnPath(fallbackPath, fallbackSearch, nextPath), "save"),
     });
   }
 
