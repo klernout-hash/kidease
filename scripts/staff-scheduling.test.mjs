@@ -16,6 +16,9 @@ test("staff scheduling stays off and does not text or pay staff", () => {
   assert.doesNotMatch(server, /sendSms|FEATURE_SMS|sendTransactionalMail/);
   assert.match(server, /sent: 0 as const/);
   assert.doesNotMatch(src("src/components/staff-scheduling-desk.tsx"), /sendEceExpiryReminders/);
+  assert.match(server, /assertCentreWrite/);
+  assert.match(server, /centreCanWriteCare/);
+  assert.doesNotMatch(server, /Email expiry reminders/);
   assert.match(src("src/components/staff-scheduling-desk.tsx"), /data-ke="ece-reminders-off"/);
   assert.match(src("src/routes/provider.tsx"), /desk === "staff"/);
   assert.doesNotMatch(src("src/lib/desk-nav.ts"), /id: "staff"/);

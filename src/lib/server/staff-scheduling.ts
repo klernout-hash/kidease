@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
-import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
+import { centreCanWriteCare } from "@/lib/centre-roles";
+import { listAccessibleDaycareIds, loadCentreRole } from "@/lib/server/centre-access";
 import { staffSchedulingEnabled } from "@/lib/features";
 import {
   parseChildrenPresent,
@@ -48,6 +49,14 @@ async function assertCentre(userId: string, daycareId: string) {
   const sql = await getSql();
   const ids = await listAccessibleDaycareIds(sql, userId);
   if (!ids.includes(daycareId)) throw new Error("This centre is not yours.");
+}
+
+/** A read-only member can look. They cannot add a shift or a certificate. */
+async function assertCentreWrite(userId: string, daycareId: string) {
+  await assertCentre(userId, daycareId);
+  const sql = await getSql();
+  const role = await loadCentreRole(sql, userId, daycareId);
+  if (!centreCanWriteCare(role)) throw new Error("You can view this centre. You cannot change it.");
 }
 
 export const staffDeskStatus = createServerFn({ method: "GET" })
@@ -122,7 +131,7 @@ export const saveStaffShift = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     if (!staffSchedulingEnabled()) throw new Error("Staff shifts are off.");
     const daycareId = String(data.daycareId || "").trim();
-    await assertCentre(context.userId, daycareId);
+    await assertCentreWrite(context.userId, daycareId);
     const parsed = parseShift(data);
     if (!parsed.ok) throw new Error("Check the name and the times.");
     const { screeningGate } = await import("@/lib/server/compliance-screening");
@@ -153,7 +162,7 @@ export const saveEceCertificate = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     if (!staffSchedulingEnabled()) throw new Error("Staff shifts are off.");
     const daycareId = String(data.daycareId || "").trim();
-    await assertCentre(context.userId, daycareId);
+    await assertCentreWrite(context.userId, daycareId);
     const staffName = String(data.staffName || "").trim().slice(0, 80);
     const expiresOn = String(data.expiresOn || "").slice(0, 10);
     if (staffName.length < 2 || !/^\d{4}-\d{2}-\d{2}$/.test(expiresOn)) throw new Error("Check the name and the date.");
