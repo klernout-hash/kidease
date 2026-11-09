@@ -368,7 +368,7 @@ export async function dropExistingSession(): Promise<void> {
 
 export async function signOut(redirectTo = "/"): Promise<void> {
   try {
-    await releaseThisPhone();
+    await Promise.race([releaseThisPhone(), rejectAfter(400, "push-release-timeout")]).catch(() => undefined);
     clearClientAuthState();
     await signOutBestEffort();
     clearClientAuthState();

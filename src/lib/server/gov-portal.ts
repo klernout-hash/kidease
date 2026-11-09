@@ -2,12 +2,15 @@ import { createServerFn } from "@tanstack/react-start";
 import { sessionBearerMiddleware } from "@/lib/auth/middleware";
 import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
 import { buildGovDashboard, parseGovScope, type GovLocale } from "@/lib/gov/aggregate";
+import { govProvinceChoices, govScopeProvince } from "@/lib/gov/province-choice";
+import { govPortalFooterEnabled } from "@/lib/features";
 
 type GovActor = {
   userId: string;
   orgId: string;
   orgName: string;
   province: string;
+  national: boolean;
   demo: boolean;
   readOnly: boolean;
 };
@@ -23,9 +26,9 @@ export async function dashboardForActor(
   const { assertGovBudget, auditGov } = await import("@/lib/server/gov-actor.server");
   const { bundleForProvince, loadGovBundle } = await import("@/lib/server/gov-data.server");
   assertGovBudget(actor, "read");
-  // The org province is the scope. A URL or "All of Canada" cannot widen it.
+  // A province account stays in that province. All of Canada is only for an org stored as Canada.
   const scope = parseGovScope({
-    province: actor.province,
+    province: govScopeProvince(actor, input.province),
     region: input.region,
     city: input.city,
   });
@@ -41,7 +44,7 @@ export async function dashboardForActor(
     ...view,
     selectors: {
       ...view.selectors,
-      provinces: view.selectors.provinces.filter((row) => row.code === actor.province),
+      provinces: govProvinceChoices(view.selectors.provinces, actor),
     },
   };
 }
@@ -51,6 +54,7 @@ export const getGovSession = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { getSessionUser } = await import("@/lib/auth/verify.server");
     const { loadGovActor } = await import("@/lib/server/gov-actor.server");
+    if (!govPortalFooterEnabled()) return { ok: false as const, closed: true as const };
     const user = await getSessionUser(context.bearerToken);
     if (!user) return { ok: false as const };
     const actor = await loadGovActor(user.id);
