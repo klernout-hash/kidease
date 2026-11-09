@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ThreadCallActions } from "@/components/thread-call-actions";
 import { inboxSearch, parseInboxSearch, resolveInboxView } from "@/lib/inbox-view";
+import { visibleThreadMessages } from "@/lib/thread-history";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import { useEffect, useRef, useState } from "react";
@@ -50,7 +51,7 @@ function InboxThreadRoute() {
 }
 
 function showChatBubble(m: Message) {
-  return m.kind === "status" || (m.kind !== "system" && m.kind !== "notify" && m.sender !== "system");
+  return visibleThreadMessages([m]).length === 1;
 }
 
 type BookingInfo = {
