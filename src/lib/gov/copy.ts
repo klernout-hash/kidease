@@ -37,6 +37,19 @@ const EN = {
   mapNote: "Dots are city totals, not a single centre.",
   mapEmpty: "No city on this filter has 5 or more centres, so the map stays blank on purpose.",
   mapFailed: "The map did not load. The city table below still has the counts.",
+  childRatio: "Children 0 to 5 per licensed space",
+  childRatioNote:
+    "2021 Census table 98-10-0666. Children aged 0 to 5 in census families, divided by licensed spaces on KidEase. Counts are rounded. This is not total population, and the provincial register is not loaded.",
+  childRatioCity: "This figure is for the province. A city count of children aged 0 to 5 is not loaded.",
+  childRatioMissing: "There is no licensed-space total, so this ratio is not shown.",
+  flagsTitle: "Stored licence flags",
+  flagsEmpty:
+    "No public listing here is stored as expired, suspended, or revoked. The provincial register is not loaded, so this is not a clearance.",
+  flagsHistory: "This is the status on the listing today. There is no earlier register event.",
+  alertsNotWired:
+    "Alert subscriptions are not on. Nothing is sent from this page. A test would need a preview first, and it would go only to the QA accounts Kyle names.",
+  registerNotLoaded: "The official provincial register is not wired.",
+  otherPages: "Other desk pages",
   desert: "Population per licensed space",
   desertMissing: "No census figure for this city, so there is no desert score.",
   desertNoSpaces: "No licensed spaces are on file, so there is no desert score.",
@@ -158,6 +171,19 @@ const FR = {
   mapNote: "Un point est le total d’une ville, pas un seul centre.",
   mapEmpty: "Aucune ville de ce filtre n’a 5 centres ou plus, donc la carte reste vide exprès.",
   mapFailed: "La carte n’a pas chargé. Le tableau des villes a quand même les totaux.",
+  childRatio: "Enfants de 0 à 5 ans par place permise",
+  childRatioNote:
+    "Tableau 98-10-0666 du Recensement de 2021. Enfants de 0 à 5 ans dans les familles de recensement, divisés par les places permises sur KidEase. Les comptes sont arrondis. Ce n’est pas la population totale, et le registre provincial n’est pas branché.",
+  childRatioCity: "Ce chiffre est pour la province. Un compte par ville des enfants de 0 à 5 ans n’est pas chargé.",
+  childRatioMissing: "Il n’y a pas de total de places permises, donc ce ratio n’est pas affiché.",
+  flagsTitle: "Drapeaux de permis enregistrés",
+  flagsEmpty:
+    "Aucune fiche publique ici n’est enregistrée comme expirée, suspendue ou révoquée. Le registre provincial n’est pas branché, donc ce n’est pas une attestation.",
+  flagsHistory: "C’est le statut sur la fiche aujourd’hui. Il n’y a pas d’événement antérieur du registre.",
+  alertsNotWired:
+    "Les abonnements aux alertes ne sont pas ouverts. Rien n’est envoyé depuis cette page. Un essai exigerait d’abord un aperçu, et irait seulement aux comptes d’essai que Kyle nomme.",
+  registerNotLoaded: "Le registre provincial officiel n’est pas branché.",
+  otherPages: "Autres pages du bureau",
   desert: "Population par place permise",
   desertMissing: "Pas de chiffre du recensement pour cette ville, donc pas de score de désert.",
   desertNoSpaces: "Aucune place permise au dossier, donc pas de score de désert.",

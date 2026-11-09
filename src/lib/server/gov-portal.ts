@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { sessionBearerMiddleware } from "@/lib/auth/middleware";
 import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
 import { buildGovDashboard, parseGovScope, type GovLocale } from "@/lib/gov/aggregate";
+import { children0to5, childrenPerLicensedSpace, CHILDREN_0_TO_5_SOURCE } from "@/lib/gov/places";
 import { govProvinceChoices, govScopeProvince } from "@/lib/gov/province-choice";
 import { govPortalFooterEnabled } from "@/lib/features";
 
@@ -24,7 +25,7 @@ export async function dashboardForActor(
   input: { province?: string | null; region?: string | null; city?: string | null; locale?: string | null },
 ) {
   const { assertGovBudget, auditGov } = await import("@/lib/server/gov-actor.server");
-  const { bundleForProvince, loadGovBundle } = await import("@/lib/server/gov-data.server");
+  const { bundleForProvince, loadGovBundle, loadStoredLicenceFlags } = await import("@/lib/server/gov-data.server");
   assertGovBudget(actor, "read");
   // A province account stays in that province and cannot widen. All of Canada is only for an org stored as Canada.
   const scope = parseGovScope({
@@ -40,12 +41,19 @@ export async function dashboardForActor(
     demo: actor.demo,
     readOnly: actor.readOnly,
   });
+  const children = children0to5(scope.province);
+  const spaces = typeof view.kpis.capacity === "number" ? view.kpis.capacity : null;
   return {
     ...view,
     selectors: {
       ...view.selectors,
       provinces: govProvinceChoices(view.selectors.provinces, actor),
     },
+    licenceFlags: await loadStoredLicenceFlags(scope.province),
+    childPopulation: children,
+    childPerSpace: childrenPerLicensedSpace(children, spaces),
+    childSource: CHILDREN_0_TO_5_SOURCE,
+    childRatioIsProvince: scope.city !== "ALL",
   };
 }
 
