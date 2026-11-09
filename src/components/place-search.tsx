@@ -106,6 +106,7 @@ export function PlaceSearch({
   inputClassName,
   origin,
   id,
+  name,
   ariaLabel,
   ariaLabelledBy,
   emptyMenu,
@@ -119,6 +120,8 @@ export function PlaceSearch({
   inputClassName?: string;
   origin?: { lat: number; lng: number };
   id?: string;
+  /** Lets a search form submit the city even before JavaScript runs. */
+  name?: string;
   ariaLabel?: string;
   ariaLabelledBy?: string;
   /** Shown on focus before a city is typed. Nearby stays first. */
@@ -253,6 +256,7 @@ export function PlaceSearch({
       <input
         ref={input}
         id={id}
+        name={name}
         value={value}
         onFocus={() => {
           if (!placeHostVisible(wrap.current)) return;

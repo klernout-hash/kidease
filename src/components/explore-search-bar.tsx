@@ -274,6 +274,8 @@ export function ExploreSearchBar({
     const meta = [whenFilled ? whenLabel : "", childSummary].filter(Boolean).join(" · ");
     return (
       <form
+        method="get"
+        action={locale === "fr" ? "/fr/search" : "/search"}
         className={cn("relative z-[35] w-full overflow-visible", className)}
         aria-label={t("searchBarAria")}
         onSubmit={(e) => {
@@ -314,6 +316,8 @@ export function ExploreSearchBar({
   return (
     <form
       ref={wrap}
+      method="get"
+      action={locale === "fr" ? "/fr/search" : "/search"}
       className={cn("relative z-[35] w-full overflow-visible", className)}
       aria-label={t("searchBarAria")}
       data-search-row="where-when-name"
@@ -369,6 +373,7 @@ export function ExploreSearchBar({
               </label>
               <PlaceSearch
                 id={whereId}
+                name="q"
                 value={values.where}
                 onChange={onWhereChange}
                 onResolved={(place) => {

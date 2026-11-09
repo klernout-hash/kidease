@@ -307,7 +307,7 @@ function VerifyTwoFactorForm({ dest, userId }: { dest: string; userId: string })
               : `We sent a 6-digit code${hint ? ` to ${hint}` : ""}. Enter it to finish signing in.`,
           )}
         </p>
-        <form ref={formRef} className="mt-6 space-y-3 ph-no-capture" onSubmit={onSubmit}>
+        <form ref={formRef} method="post" action={isFrPath(pathname) ? "/fr/verify-2fa" : "/verify-2fa"} className="mt-6 space-y-3 ph-no-capture" onSubmit={onSubmit}>
           <OtpCodeField value={code} onChange={onCodeChange} disabled={busy} label={show("Verification code")} />
           <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm">
             <input
