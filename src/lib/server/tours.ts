@@ -10,6 +10,7 @@ import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { callerMayUseAdminOnlyListing } from "@/lib/server/public-listing";
 import { upsertDaycare } from "@/lib/server/seed";
 import { centreCanAcceptInquiry } from "@/lib/server/provider-entitlements";
+import { customerAlertSummary } from "@/lib/customer-alert-policy";
 import { lookupUser, notifyPlatform, notifyThreadParty } from "@/lib/server/notify";
 import { notifyTourParties, syncLeadFromTour } from "@/lib/server/tour-hold-notify";
 import { tourUpdateCalendarText } from "@/lib/tour-ics";
@@ -419,7 +420,11 @@ export const respondTourRequest = createServerFn({ method: "POST" })
       parentEmail: tour.contact_email,
       parentName: guestName || null,
       subject: next === "accepted" ? `Tour confirmed: ${tour.daycare_name}` : `Tour declined: ${tour.daycare_name}`,
-      preview: body,
+      preview: customerAlertSummary({
+        kind: "tour",
+        centreName: tour.daycare_name,
+        tour: next === "declined" ? "declined" : "confirmed",
+      }).preview,
     }).catch(() => undefined);
 
     try {
