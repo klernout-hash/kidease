@@ -24,9 +24,9 @@ export function uniqueById<T extends { id: string }>(rows: readonly T[] | null |
   });
 }
 
-/** Public listing prose. Decodes entities so the UI never shows a literal `&amp;`. */
+/** Public listing prose. Decodes entities and the known Cetnre letter-swap. Other words stay. */
 export function displayListingText(value: string | null | undefined) {
-  return decodeHtml(value);
+  return decodeHtml(value).replace(/\bCetnres\b/g, "Centres").replace(/\bCetnre\b/g, "Centre");
 }
 
 /**

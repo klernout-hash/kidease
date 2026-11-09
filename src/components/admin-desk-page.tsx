@@ -8,7 +8,8 @@ import { LedgerHonesty } from "@/components/listing-status-badge";
 import { TwoFactorGate } from "@/lib/auth/gates";
 import { PageNotFound } from "@/components/page-not-found";
 import { LoginFunnelDeskLand } from "@/lib/auth/login-funnel";
-import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { useCurrentUserState, useLocallySignedOut } from "@/lib/auth/use-current-user";
+import { AdminSignedOut } from "@/components/admin-signed-out";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { canVisitDesk } from "@/lib/desks";
 import { formatStamp } from "@/lib/family-time";
@@ -115,6 +116,7 @@ function provCode(raw: string | null | undefined) {
 export function AdminPage() {
   const { t } = useCopy();
   const { user, isPending } = useCurrentUserState();
+  const locallySignedOut = useLocallySignedOut();
   const { session, ready } = useSessionDesks();
   const reauth = useReauthPrompt();
   const route = getRouteApi("/admin");
@@ -501,14 +503,20 @@ export function AdminPage() {
   }
 
   // Not found unless profiles.role = admin. Signed-out visitors get the same page.
+  if (locallySignedOut) return <AdminSignedOut />;
   if (isPending) {
     return (
       <Shell>
-        <p className="p-8 text-muted">Loading…</p>
+        <div className="p-8" data-ke="admin-session-pending">
+          <p className="text-sm text-muted">Loading…</p>
+          <Link to="/login" search={ADMIN_LOGIN_SEARCH} className="mt-4 inline-flex min-h-11 items-center text-sm font-medium text-primary">
+            Sign in
+          </Link>
+        </div>
       </Shell>
     );
   }
-  if (!user) return <PageNotFound />;
+  if (!user) return <AdminSignedOut />;
   if (!ready) {
     return (
       <Shell>

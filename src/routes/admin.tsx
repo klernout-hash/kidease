@@ -1,7 +1,9 @@
 import { lazy, Suspense } from "react";
-import { Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
+import { Link, Outlet, createFileRoute, useRouterState } from "@tanstack/react-router";
 import { beforeLoadAdminDesk } from "@/lib/server/admin-route";
 import { DeskSkeleton } from "@/components/page-skeleton";
+import { ADMIN_LOGIN_SEARCH } from "@/lib/admin-desk-gate";
+import { AdminSignedOut } from "@/components/admin-signed-out";
 import {
   isAdminDeskTab,
   parseAdminActivityKind,
@@ -41,7 +43,23 @@ export const Route = createFileRoute("/admin")({
     ],
   }),
   component: AdminRoute,
+  pendingComponent: AdminGatePending,
+  notFoundComponent: AdminSignedOut,
 });
+
+function AdminGatePending() {
+  return (
+    <div className="min-h-dvh bg-bg px-4 py-8 text-fg" data-ke="admin-gate-pending">
+      <p className="text-sm text-muted">Loading…</p>
+      <div className="mt-4">
+        <DeskSkeleton />
+      </div>
+      <Link to="/login" search={ADMIN_LOGIN_SEARCH} className="mt-6 inline-flex min-h-11 items-center text-sm font-medium text-primary">
+        Sign in
+      </Link>
+    </div>
+  );
+}
 
 function AdminRoute() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
