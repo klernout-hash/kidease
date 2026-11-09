@@ -53,7 +53,7 @@ test("listing save reports failures and keeps parent-desk fields dirty", () => {
 });
 
 test("licence claim accepts a PDF and the provider desk can see a claim-row file", () => {
-  const claim = src("src/routes/claim.tsx");
+  const claim = src("src/routes/claim.tsx") + src("src/components/claim-wizard.tsx");
   assert.match(claim, /!license\.startsWith\("data:image"\) && !license\.startsWith\("data:application\/pdf"\)/);
   assert.match(src("src/lib/server/family.ts"), /overlayClaimLicensePhotos/);
   assert.match(src("src/lib/server/daycares.ts"), /provider_daycares pd where pd\.daycare_id = d\.id/);

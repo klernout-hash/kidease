@@ -136,7 +136,8 @@ test("free landing page keeps claim free and never invents $10-a-day fees", () =
   assert.match(copy, /claimThisFreePage: "Claim this free page"/);
   assert.match(copy, /plansNotOffered: "Plans are not offered on this site yet/);
   const claim = src("src/routes/claim.tsx");
-  assert.match(claim, /claimed: true/);
+  assert.match(claim, /setSubmitted\(true\)/);
+  assert.doesNotMatch(claim, /claimed: true/);
   const explainer = src("src/components/free-listing-share.tsx");
   assert.match(explainer, /does not auto-post|freePageShareHint/);
   assert.match(explainer, /listingMailtoHref/);
