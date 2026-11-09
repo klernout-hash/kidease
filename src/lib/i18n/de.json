@@ -2494,7 +2494,7 @@
   "notifications": "Benachrichtigungen",
   "notificationsEmpty": "Noch keine Benachrichtigungen",
   "notificationsEmptyLead": "Wenn eine Besichtigung, eine Anfrage, eine Beanspruchung oder eine Nachricht Sie braucht, erscheint das hier.",
-  "notificationsUnread": "{n} ungelesen",
+  "notificationsUnread": "{n} Hinweise",
   "notifLeadNew": "Neue Anfrage · {name}",
   "notifLeadUpdated": "{name} hat Ihre Anfrage aktualisiert",
   "notifTourNew": "Besichtigungsanfrage · {name}",
@@ -3487,5 +3487,6 @@
   "inboxPhoneSent": "A phone alert was sent to {name}.",
   "inboxAssignMe": "Assign to me",
   "inboxOlderSearch": "{count} older messages",
-  "inboxAssignedYou": "Assigned to you"
+  "inboxAssignedYou": "Assigned to you",
+  "notificationsBellHint": "Hinweise, keine ungelesenen Nachrichten"
 }

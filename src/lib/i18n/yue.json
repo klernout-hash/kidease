@@ -2494,7 +2494,7 @@
   "notifications": "通知",
   "notificationsEmpty": "暫時未有通知",
   "notificationsEmptyLead": "當參觀、申請、申索或者訊息需要你，就會喺呢度出現。",
-  "notificationsUnread": "{n} 未讀",
+  "notificationsUnread": "{n} 個提醒",
   "notifLeadNew": "新申請 · {name}",
   "notifLeadUpdated": "{name} 更新咗你嘅申請",
   "notifTourNew": "參觀申請 · {name}",
@@ -3487,5 +3487,6 @@
   "inboxPhoneSent": "A phone alert was sent to {name}.",
   "inboxAssignMe": "Assign to me",
   "inboxOlderSearch": "{count} older messages",
-  "inboxAssignedYou": "Assigned to you"
+  "inboxAssignedYou": "Assigned to you",
+  "notificationsBellHint": "提醒，唔係未讀訊息"
 }
