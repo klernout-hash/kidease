@@ -13,6 +13,7 @@ import { useCopy } from "@/lib/use-copy";
 import { canCancelTour, canProposeTourTime, declineReasonValid } from "@/lib/tour-hold";
 import { formatTourSlotRange, type PublicTourSlot } from "@/lib/tour-calendar";
 import type { TourRequest, TourStatus } from "@/lib/types";
+import { admissionJourney } from "@/lib/admission-journey";
 
 export function TourStatusPill({ status }: { status: TourStatus }) {
   return <PipelineBadge tourStatus={status} />;
@@ -149,6 +150,9 @@ export function TourCard({
         </div>
         <TourStatusPill status={tour.status} />
       </div>
+      <p className="mt-2 text-sm" data-ke="admission-step">
+        {t(admissionJourney({ tourStatus: tour.status }).copyKey)}
+      </p>
       {tour.parentNote ? <p className="mt-2 text-sm text-muted">{tour.parentNote}</p> : null}
       {canRespond && tour.parentUserId ? (
         <BlockFamilyButton parentUserId={tour.parentUserId} daycareId={tour.daycareId} />
