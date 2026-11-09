@@ -4,6 +4,7 @@
  * A missing fact never becomes an alert.
  */
 
+import { classifySafeArrival, safeArrivalGate } from "./safe-arrival.ts";
 import {
   publicCentreName,
   safeUnifiedHref,
@@ -70,6 +71,9 @@ export type ScanFacts = {
     checkedOut: boolean;
     staffUserIds: string[];
     timeZone: string;
+    consent?: boolean;
+    parentNotified?: boolean;
+    day?: string;
   }>;
   pickups?: Array<{ id: string; daycareId: string; name: string; listed: boolean; known: boolean; staffUserIds: string[] }>;
   meds?: Array<{ id: string; daycareId: string; name: string; time: string; logged: boolean; staffUserIds: string[]; timeZone: string }>;
@@ -475,8 +479,17 @@ export function planUnifiedScan(facts: ScanFacts): UnifiedCandidate[] {
   for (const sheet of facts.attendance || []) {
     const minute = zonedMinutes(now, sheet.timeZone || "America/Winnipeg");
     if (minute == null) continue;
-    const drop = clockToMinutes(sheet.dropOff);
-    if (drop != null && !sheet.checkedIn && minute > drop + 15 && minute < drop + 180) {
+    const kind = classifySafeArrival({
+      nowMinutes: minute,
+      dropOff: sheet.dropOff,
+      pickUp: sheet.pickUp,
+      checkedIn: sheet.checkedIn,
+      checkedOut: sheet.checkedOut,
+      parentNotified: sheet.parentNotified === true,
+    });
+    const gate = safeArrivalGate({ consent: sheet.consent === true, day: sheet.day || day, now });
+    if (!kind || !gate.record) continue;
+    if (kind === "absent_without_notice") {
       for (const userId of sheet.staffUserIds) {
         out.push(
           row({
@@ -491,8 +504,7 @@ export function planUnifiedScan(facts: ScanFacts): UnifiedCandidate[] {
         );
       }
     }
-    const pick = clockToMinutes(sheet.pickUp);
-    if (pick != null && sheet.checkedIn && !sheet.checkedOut && minute > pick + 15 && minute < pick + 180) {
+    if (kind === "late_pickup") {
       for (const userId of sheet.staffUserIds) {
         out.push(
           row({

@@ -789,20 +789,22 @@ export function decideUnifiedAlert(input: {
     staffShiftQuiet: type.audience === "staff" && !input.settings.quietCustom,
     shift: input.shift,
   });
-  const outboundChannels = channels.filter((channel) => channel !== "in_app");
+  const safeArrival = input.typeId === "staff_child_not_arrived" || input.typeId === "staff_child_still_here";
+  const outboundChannels = safeArrival ? [] : channels.filter((channel) => channel !== "in_app");
+  const kept = safeArrival ? channels.filter((channel) => channel === "in_app") : channels;
   if (!outboundChannels.length) {
-    return { action: "record", status: "inbox", channels, outbound: "none" };
+    return { action: "record", status: "inbox", channels: kept, outbound: "none" };
   }
   if (critical || !quiet) {
     if (!critical && type.digestable && input.settings.digest !== "off" && outboundChannels.length > 0) {
-      return { action: "record", status: "digest", channels, outbound: "later" };
+      return { action: "record", status: "digest", channels: kept, outbound: "later" };
     }
-    return { action: "record", status: "inbox", channels, outbound: outboundChannels.length ? "now" : "none" };
+    return { action: "record", status: "inbox", channels: kept, outbound: outboundChannels.length ? "now" : "none" };
   }
   return {
     action: "record",
     status: "held",
-    channels,
+    channels: kept,
     outbound: outboundChannels.length ? "later" : "none",
   };
 }
