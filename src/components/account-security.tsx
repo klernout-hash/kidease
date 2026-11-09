@@ -85,7 +85,7 @@ export function AccountSecurity({ email }: { email: string }) {
       <section className="mt-8 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="account-password">
         <h2 className="font-display text-lg tracking-[-0.02em]">{t("accountChangePassword")}</h2>
         <p className="text-[13px] text-muted">{t("passwordPolicyHint")}</p>
-        <form onSubmit={onChangePassword} className="space-y-3 ph-no-capture">
+        <form method="post" action="/account" onSubmit={onChangePassword} className="space-y-3 ph-no-capture">
           <PasswordField
             label={t("resetPasswordCurrent")}
             required
@@ -120,7 +120,7 @@ export function AccountSecurity({ email }: { email: string }) {
       <section className="mt-8 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="account-email">
         <h2 className="font-display text-lg tracking-[-0.02em]">{t("accountChangeEmail")}</h2>
         <p className="text-[13px] text-muted">{t("accountChangeEmailLead")}</p>
-        <form onSubmit={onChangeEmail} className="space-y-3 ph-no-capture">
+        <form method="post" action="/account" onSubmit={onChangeEmail} className="space-y-3 ph-no-capture">
           <label className="block text-sm">
             {t("accountNewEmail")}
             <input

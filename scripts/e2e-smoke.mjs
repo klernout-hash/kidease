@@ -785,7 +785,7 @@ async function runRoleFixture(page, base) {
       await page.getByRole("button", { name: /^Essential$/ }).click().catch(() => {});
       await page.locator('[data-ke="listing-parent-actions"]:visible').first().waitFor({ timeout: timeoutMs }).catch(() => {});
       const guestActions = await page.locator('[data-ke="listing-parent-actions"]:visible').count();
-      const save = page.getByRole("button", { name: /^save$/i });
+      const save = page.getByRole("link", { name: /^save$/i }).or(page.getByRole("button", { name: /^save$/i }));
       const tour = page.getByRole("button", { name: /book a tour/i });
       if (await save.count()) await save.first().click();
       else if (await tour.count()) await tour.first().click();
@@ -963,6 +963,63 @@ function record(name, pass, detail = {}) {
   results.push({ name, ok: pass, ...detail });
   const mark = pass ? "ok" : "FAIL";
   console.log(`[e2e] ${mark}  ${name}${detail.note ? ` — ${detail.note}` : ""}`);
+}
+
+/** Search, Save, language, and login must work with JavaScript, and a missed handler must not put a password in the URL. */
+async function clientHandlerSmoke(page, base) {
+  try {
+    await page.goto(new URL("/", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    const where = page.locator("[data-ke=where-field] input").first();
+    await where.waitFor({ timeout: timeoutMs });
+    await where.fill("Winnipeg");
+    await page.locator("[data-ke=search-submit]").first().click();
+    await page.waitForURL(/\/search/i, { timeout: timeoutMs }).catch(() => {});
+    const landed = page.url();
+    record(
+      "home-search-submit",
+      /\/search/i.test(landed) && /Winnipeg/i.test(decodeURIComponent(landed)),
+      { note: landed.split("?")[0] },
+    );
+
+    const save = page.locator("[data-ke=save-listing]").first();
+    await save.waitFor({ timeout: timeoutMs });
+    const saveHref = (await save.getAttribute("href")) || "";
+    record("save-opens-login", /\/login/.test(saveHref) && /why=save/.test(saveHref), { note: "href" });
+    await save.click();
+    await page.waitForURL(/\/login/i, { timeout: timeoutMs }).catch(() => {});
+    record("save-click-login", /\/login/i.test(page.url()) && /why=save/.test(page.url()), { note: "login" });
+
+    await page.goto(new URL("/", base).href, { waitUntil: "networkidle", timeout: timeoutMs });
+    const lang = page.locator("select").filter({ has: page.locator("option[value=fr]") }).first();
+    await lang.waitFor({ timeout: timeoutMs });
+    await page.waitForFunction(() => {
+      const sel = [...document.querySelectorAll("select")].find((node) =>
+        [...node.options].some((option) => option.value === "fr"),
+      );
+      return Boolean(sel && Object.keys(sel).some((key) => key.startsWith("__reactProps")));
+    }, { timeout: timeoutMs });
+    await lang.selectOption("fr");
+    await page.waitForURL(/\/fr(\/|$)/i, { timeout: timeoutMs }).catch(() => {});
+    record("locale-switch", /\/fr(\/|$)/i.test(new URL(page.url()).pathname), { note: new URL(page.url()).pathname });
+
+    await page.goto(new URL("/login", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    const form = page.locator("[data-ke=email-sign-in]");
+    await form.waitFor({ timeout: timeoutMs });
+    const method = await form.getAttribute("method");
+    await page.locator('input[name="password"]').fill("not-a-real-secret");
+    await page.locator("[data-ke=email-primary]").click({ timeout: 8000 }).catch(() => {});
+    await page.waitForTimeout(600);
+    record("login-no-password-query", method === "post" && !page.url().includes("password="), {
+      note: `method=${method || "missing"}`,
+    });
+    await page.context().clearCookies().catch(() => {});
+    await page.evaluate(() => {
+      sessionStorage.clear();
+      localStorage.clear();
+    }).catch(() => {});
+  } catch (err) {
+    record("client-handlers", false, { note: err instanceof Error ? err.message : String(err) });
+  }
 }
 
 async function waitForOrigin(url, ms) {
@@ -1767,6 +1824,7 @@ try {
   await page.screenshot({ path: join(dirname(outDir), "home.png"), fullPage: false }).catch(() => {});
   record("homepage", home.ok, { note: home.reason, status: homeResp?.status() ?? 0 });
 
+  await clientHandlerSmoke(page, base);
   await radiusLabelSmoke(page, base);
   await rankingSortSmoke(page, base);
   await frenchCityHubSmoke(page, base);
@@ -1783,6 +1841,14 @@ try {
     status: healthResp?.status() ?? 0,
   });
 
+  await page.context().clearCookies().catch(() => {});
+  await page.context().addCookies([
+    { name: "kidease-locale", value: "en", url: base },
+  ]).catch(() => {});
+  await page.evaluate(() => {
+    sessionStorage.clear();
+    localStorage.clear();
+  }).catch(() => {});
   const loginResp = await page.goto(new URL(SMOKE_PATHS.login, base).href, {
     waitUntil: "domcontentloaded",
     timeout: timeoutMs,

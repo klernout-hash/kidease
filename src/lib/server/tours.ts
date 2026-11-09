@@ -7,6 +7,7 @@ import { parentRequestSms } from "@/lib/sms-copy";
 import { nid } from "@/lib/utils";
 import { catalogByIdGet } from "@/lib/catalog";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
+import { isQaTourCentre, qaTourEmailAllowed } from "@/lib/qa-tour-access";
 import { callerMayUseAdminOnlyListing } from "@/lib/server/public-listing";
 import { upsertDaycare } from "@/lib/server/seed";
 import { centreCanAcceptInquiry } from "@/lib/server/provider-entitlements";
@@ -186,6 +187,9 @@ export const createTourRequest = createServerFn({ method: "POST" })
     const note = (data.note || "").trim() || null;
     const locale = data.locale === "fr" ? "fr" : "en";
     const actor = await lookupUser(context.userId);
+    if (isQaTourCentre({ id: d.id, slug: d.slug }) && !qaTourEmailAllowed(actor.email)) {
+      throw new Error("Listing not found");
+    }
     const parentName = (actor.name || "A parent").trim() || "A parent";
 
     await sql`
@@ -227,6 +231,10 @@ export const createTourRequest = createServerFn({ method: "POST" })
       values (${nid("msg")}, ${cid}, ${"system"}, ${systemBody}, ${"system"})
     `;
     await sql`update conversations set last_at = now() where id = ${cid}`;
+
+    if (isQaTourCentre({ id: d.id, slug: d.slug })) {
+      return { id: tourId, conversationId: cid, status: "pending" as const };
+    }
 
     const slots = formatPreferredTimes(times, locale);
     const detail = [

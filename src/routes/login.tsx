@@ -166,6 +166,10 @@ function LoginEmailControl({
       className="ke-input mt-1"
       defaultValue=""
       onInput={(e) => remember(e.currentTarget.value)}
+      onChange={(e) => remember(e.currentTarget.value)}
+      onAnimationStart={(e) => {
+        if (e.animationName === "ke-autofill-start") remember(e.currentTarget.value);
+      }}
       onBlur={() => onBlurEmail(emailRef.current.trim())}
       autoComplete={mode === "in" ? "username webauthn" : "email"}
       autoCapitalize="none"
@@ -200,6 +204,12 @@ function LoginPasswordControl({
           const value = e.currentTarget.value;
           passwordRef.current = value;
           if (showRules) setPassword(value);
+        }}
+        onChange={(e) => {
+          passwordRef.current = e.currentTarget.value;
+        }}
+        onAnimationStart={(e) => {
+          if (e.animationName === "ke-autofill-start") passwordRef.current = e.currentTarget.value;
         }}
         autoComplete={mode === "up" ? "new-password" : "current-password"}
       />
@@ -618,10 +628,10 @@ export function LoginScreen({
     const form = new FormData(e.currentTarget as HTMLFormElement);
     const email = loginSubmittedText(form, "email", emailRef.current, true);
     const password = loginSubmittedText(form, "password", passwordRef.current, false);
-    if (!email || !password) throw new Error("Enter your email and password.");
-    const name = nameRef.current.trim();
-    const signingOperator = email.toLowerCase() === OPERATOR_EMAIL;
     try {
+      if (!email || !password) throw new Error("Enter your email and password.");
+      const name = nameRef.current.trim();
+      const signingOperator = email.toLowerCase() === OPERATOR_EMAIL;
       if (operator && !signingOperator) {
         throw new Error("Operator sign-in is only for the KidEase owner account.");
       }
@@ -913,7 +923,7 @@ export function LoginScreen({
             ) : null}
           </div>
           ) : null}
-          <form onSubmit={onEmail} className={`mt-6 space-y-3 ph-no-capture ${pickingRole ? "hidden" : ""}`} data-ke={operator ? "admin-email-first" : "email-sign-in"}>
+          <form method="post" action={loginPath} onSubmit={onEmail} className={`mt-6 space-y-3 ph-no-capture ${pickingRole ? "hidden" : ""}`} data-ke={operator ? "admin-email-first" : "email-sign-in"}>
             {mode === "up" && !operator ? (
               <label className="block text-sm">
                 {t("name")}
@@ -984,7 +994,7 @@ export function LoginScreen({
               size="lg"
               className="w-full min-h-12"
               data-ke="email-primary"
-              disabled={busy || (turnstileRequired && !token.trim() && !(mode === "in" && reviewerSignIn))}
+              disabled={busy}
             >
               {busy ? t("openingDesk") : mode === "up" && !operator ? t("createAccount") : t("signIn")}
             </Button>

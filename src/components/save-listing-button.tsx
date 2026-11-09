@@ -5,13 +5,14 @@ import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
 import { parentSignupSearch } from "@/lib/auth/parent-login";
-import { saveLoginTo, saveReturnPath } from "@/lib/qa-fixes";
+import { guestSaveHref, saveLoginTo, saveReturnPath } from "@/lib/qa-fixes";
 import { addGuestShortlist } from "@/lib/guest-shortlist";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { SIGNUP_FUNNEL_EVENT, signupFunnelPayload, signupPromptStep } from "@/lib/signup-funnel";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { listSavedIds, saveDaycare, unsaveDaycare } from "@/lib/server/family";
 import {
+  loadShortlistIds,
   markShortlistCache,
   readShortlistCache,
   SHORTLIST_EVENT,
@@ -29,10 +30,7 @@ const HEART_SAVED = "#FF385C";
 export type SaveListingAppearance = "photo" | "ghost" | "bar";
 
 async function hydrateShortlistCache(userId: string) {
-  const cached = readShortlistCache(userId);
-  if (cached) return cached;
-  const ids = await listSavedIds();
-  writeShortlistCache(ids, userId);
+  const ids = await loadShortlistIds(userId, listSavedIds);
   return new Set(ids);
 }
 
@@ -80,7 +78,9 @@ export function SaveListingButton({
         if (live) setSaved(ids.has(daycareId));
       })
       .catch(() => {
-        if (live) setSaved(false);
+        if (!live) return;
+        const cache = readShortlistCache(user.id);
+        if (cache) setSaved(cache.has(daycareId));
       });
     return () => {
       live = false;
@@ -137,10 +137,37 @@ export function SaveListingButton({
   }
 
   const label = saved ? t("unsave") : t("save");
+  const guestHref = guestSaveHref(fallbackPath, fallbackSearch, locale === "fr" ? "fr" : "en");
+
+  if (!user) {
+    return (
+      <a
+        href={guestHref}
+        aria-label={label}
+        data-ke="save-listing"
+        onClick={(e) => {
+          e.preventDefault();
+          goLogin();
+        }}
+        className={cn(
+          appearance === "photo"
+            ? cn(
+                "pointer-events-auto absolute right-2 top-2 z-20 grid place-items-center rounded-full",
+                framed ? "size-12 bg-white ring-1 ring-black/10" : "size-11",
+              )
+            : "inline-flex min-h-11 min-w-11 items-center justify-center",
+          className,
+        )}
+      >
+        <Heart className={appearance === "photo" ? "size-7 text-[#1a1a1a]" : "size-4"} />
+      </a>
+    );
+  }
 
   if (appearance === "ghost") {
     return (
       <Button
+        type="button"
         variant="ghost"
         onClick={(e) => void onSave(e)}
         aria-label={label}
@@ -156,6 +183,7 @@ export function SaveListingButton({
   if (appearance === "bar") {
     return (
       <Button
+        type="button"
         variant="secondary"
         size="icon"
         onClick={(e) => void onSave(e)}

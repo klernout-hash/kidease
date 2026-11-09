@@ -8,6 +8,26 @@ import { clientIpFromHeaders, consumeServerFnBudget } from "@/lib/server-fn-thro
  * path before this app when it is on the DNS edge, so this hop only runs when
  * the request reaches Vercel. The destination is not under /admin.
  */
+const credentialQueryMiddleware = createMiddleware({ type: "request" }).server(async ({ next, request }) => {
+  let url: URL;
+  try {
+    url = new URL(request.url);
+  } catch {
+    return next();
+  }
+  const { credentialQueryLocation } = await import("@/lib/credential-query-guard");
+  const path = credentialQueryLocation(url);
+  if (!path) return next();
+  return new Response(null, {
+    status: 303,
+    headers: {
+      location: path,
+      "cache-control": "no-store",
+      "referrer-policy": "no-referrer",
+    },
+  });
+});
+
 const nativeShellMiddleware = createMiddleware({ type: "request" }).server(async ({ next, request }) => {
   let url: URL;
   try {
@@ -153,6 +173,7 @@ const govHttpIsolation = createMiddleware({ type: "request" }).server(async ({ n
 
 export const startInstance = createStart(() => ({
   requestMiddleware: [
+    credentialQueryMiddleware,
     nativeShellMiddleware,
     sentryRequestMiddleware,
     localeRequestMiddleware,

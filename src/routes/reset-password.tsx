@@ -37,6 +37,7 @@ export function ResetPasswordScreen({ token, fromGov = false }: { token: string;
   const french = locale === "fr" || isFrPath(pathname);
   const signInTo = fromGov ? (french ? "/fr/gov/login" : "/gov/login") : french ? "/fr/login" : "/login";
   const forgotTo = french ? "/fr/forgot-password" : "/forgot-password";
+  const formAction = isFrPath(pathname) ? "/fr/reset-password" : "/reset-password";
   const { celebrate } = useSuccessConfirm();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -114,7 +115,7 @@ export function ResetPasswordScreen({ token, fromGov = false }: { token: string;
           ) : (
             <>
               <p className="mt-2 text-sm text-muted">{t("resetPasswordLead")}</p>
-              <form onSubmit={onSubmit} className="mt-6 space-y-3 ph-no-capture">
+              <form method="post" action={formAction} onSubmit={onSubmit} className="mt-6 space-y-3 ph-no-capture">
                 <PasswordField
                   label={t("resetPasswordNew")}
                   required

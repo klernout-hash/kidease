@@ -140,7 +140,7 @@ export function ParentSignupForm() {
   return (
     <main className="ke-auth-viewport mx-auto grid w-full min-w-0 place-items-center overflow-x-hidden px-[clamp(0.75rem,3vw,2rem)] py-8 sm:py-10">
       <div className="w-full min-w-0 max-w-md rounded-xl bg-surface p-4 shadow-card ring-1 ring-border sm:p-8">
-        <form onSubmit={onSubmit} className="space-y-3 ph-no-capture" data-ke="parent-signup">
+        <form method="post" action="/signup" onSubmit={onSubmit} className="space-y-3 ph-no-capture" data-ke="parent-signup">
           <div className="flex justify-center pb-2">
             <BrandMark size="md" />
           </div>
