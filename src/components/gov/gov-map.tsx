@@ -3,6 +3,7 @@ import type { GovDashboard } from "@/lib/gov/aggregate";
 import { dashboardView } from "@/lib/gov/aggregate";
 import { govCopy } from "@/lib/gov/copy";
 import { StoreMapFallback } from "@/components/store-map-fallback";
+import { mapHostStyle } from "@/lib/osm-map";
 import { useStoreChannel } from "@/lib/use-native-shell";
 
 export function GovMap({ data }: { data: GovDashboard }) {
@@ -71,18 +72,18 @@ export function GovMap({ data }: { data: GovDashboard }) {
         {copy.map}
       </h2>
       <p className="mt-1 text-sm text-muted">{copy.mapNote}</p>
-      {failed ? <p className="mt-3 text-sm">{copy.mapNote}</p> : null}
       {channel === "huawei" ? (
         <div className="mt-3">
           <StoreMapFallback />
         </div>
+      ) : points.length === 0 ? (
+        <p className="mt-3 text-sm text-muted" data-ke="gov-map-empty">{copy.mapEmpty}</p>
+      ) : failed ? (
+        <p className="mt-3 text-sm text-muted" data-ke="gov-map-failed">{copy.mapFailed}</p>
       ) : (
-        <div
-          ref={host}
-          className="mt-3 h-[min(70dvh,28rem)] w-full overflow-hidden rounded-2xl bg-surface-2"
-          role="img"
-          aria-label={copy.map}
-        />
+        <div className="relative mt-3 h-[min(70dvh,28rem)] w-full overflow-hidden rounded-2xl bg-surface-2">
+          <div ref={host} style={mapHostStyle} role="img" aria-label={copy.map} />
+        </div>
       )}
     </section>
   );

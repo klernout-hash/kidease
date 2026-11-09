@@ -222,7 +222,29 @@ export function GovJobShortage({ province, locale }: { province: string; locale:
       .then((result) => setRow(result))
       .catch(() => setRow({ enabled: false, openJobs: 0, centres: 0 }));
   }, [province]);
-  if (!row?.enabled) return null;
+  if (!row) {
+    return (
+      <section className="mt-8" data-ke="ece-jobs-gov" aria-labelledby="gov-jobs-title" role="status">
+        <h2 id="gov-jobs-title" className="font-display text-xl">
+          {copy.jobsGovTitle}
+        </h2>
+        <p className="mt-2 text-sm text-muted">{locale === "fr" ? "Chargement." : "Loading."}</p>
+      </section>
+    );
+  }
+  if (!row.enabled) {
+    return (
+      <section className="mt-8" data-ke="ece-jobs-gov" aria-labelledby="gov-jobs-title">
+        <h2 id="gov-jobs-title" className="font-display text-xl">
+          {copy.jobsGovTitle}
+        </h2>
+        <p className="mt-2 max-w-2xl text-sm text-muted">{copy.jobsGovLead}</p>
+        <p className="mt-2 max-w-2xl text-sm text-muted" data-ke="gov-jobs-off">
+          {copy.jobsOff}
+        </p>
+      </section>
+    );
+  }
   return (
     <section className="mt-8" data-ke="ece-jobs-gov" aria-labelledby="gov-jobs-title">
       <h2 id="gov-jobs-title" className="font-display text-xl">

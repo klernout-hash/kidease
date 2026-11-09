@@ -1,13 +1,15 @@
 import { createHash, randomBytes } from "node:crypto";
 import { getSql } from "@/lib/db";
 import { takeGovBudget } from "@/lib/gov/rate-limit";
-import { isProvinceCode } from "@/lib/gov/places";
+import { govActorProvince } from "@/lib/gov/province-choice";
 
 export type GovActor = {
   userId: string;
   orgId: string;
   orgName: string;
   province: string;
+  /** True only when the organization is stored as Canada, not one province. */
+  national: boolean;
   demo: boolean;
   readOnly: boolean;
 };
@@ -46,7 +48,7 @@ export async function loadGovActor(userId: string): Promise<GovActor | null> {
     userId,
     orgId: row.org_id,
     orgName: row.org_name,
-    province: isProvinceCode(row.province) ? row.province : "MB",
+    ...govActorProvince(row.province),
     demo: Number(row.demo) === 1,
     readOnly: Number(row.read_only) === 1 || Number(row.demo) === 1,
   };

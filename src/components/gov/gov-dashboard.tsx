@@ -195,12 +195,15 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
   const exportBase = `/api/gov/export?${query.toString()}`;
 
   function go(next: { province?: string; region?: string; city?: string }) {
+    const province = next.province ?? data.province;
+    const region = next.region ?? data.region;
+    const city = next.city ?? data.city;
     void navigate({
-      to: path,
+      to: data.locale === "fr" ? "/fr/gov" : "/gov",
       search: {
-        province: next.province ?? data.province,
-        region: next.region ?? "ALL",
-        city: next.city ?? "ALL",
+        province,
+        region: region && region !== "ALL" ? region : "",
+        city: city && city !== "ALL" ? city : "",
       },
     });
   }
