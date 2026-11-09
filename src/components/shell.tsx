@@ -11,7 +11,6 @@ import { signOut } from "@/lib/auth/client";
 import { useCopy } from "@/lib/use-copy";
 import { BrandMark } from "@/components/brand-mark";
 import { CountBadge } from "@/components/count-badge";
-import { attentionTotal } from "@/lib/attention";
 import { restoreMyAccount } from "@/lib/server/family";
 import { MenuLeafBack } from "@/components/menu-leaf-back";
 import { isMenuLeafPath } from "@/lib/menu-leaf";
@@ -223,7 +222,7 @@ export function Shell({ children }: { children: ReactNode }) {
               >
                 <Menu className="size-6" strokeWidth={1.75} />
                 <CountBadge
-                  count={attentionTotal(session?.attention)}
+                  count={Math.max(0, Number(session?.attention?.notifications) || 0)}
                   marker="menu-badge"
                   className="absolute right-0.5 top-0.5"
                 />

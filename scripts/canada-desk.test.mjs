@@ -71,8 +71,7 @@ test("GET /api/e2e-seed is a 404 and private pages are noindex", () => {
 test("alert settings stay closed and quiet hours are not labeled Winnipeg time", () => {
   const alerts = src("src/components/alert-push-settings.tsx");
   const parent = src("src/components/parent-desk.tsx");
-  assert.match(alerts, /<details/);
-  assert.doesNotMatch(alerts, /<details[^>]*\sopen/);
+  assert.match(alerts, /<details open/);
   assert.match(alerts, /data-ke="alert-settings-summary"/);
   assert.match(alerts, /alertSummary/);
   assert.match(alerts, /alertPrefs/);

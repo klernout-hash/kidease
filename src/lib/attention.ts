@@ -28,7 +28,6 @@ const ITEM_KEY: Record<string, AttentionKey> = {
   verify: "claims",
   reviews: "reviews",
   people: "signups",
-  incomplete: "signups",
 };
 
 export function attentionKeyForItem(id: string): AttentionKey | null {

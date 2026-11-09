@@ -1,14 +1,19 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { BrandMark } from "@/components/brand-mark";
 import { EmptyState } from "@/components/empty-state";
+import { useRoleChrome } from "@/components/role-chrome";
 import { useCopy } from "@/lib/use-copy";
 
 export function PageNotFound({
   title,
   body,
+  action,
+  actionTo,
 }: {
   title?: string;
   body?: string;
+  action?: string;
+  actionTo?: "/search" | "/parent" | "/provider";
 }) {
   const { t } = useCopy();
   return (
@@ -24,8 +29,8 @@ export function PageNotFound({
         <EmptyState
           title={title ?? t("pageNotFoundTitle")}
           body={body ?? t("pageNotFoundBody")}
-          action={t("notFoundExplore")}
-          actionTo="/search"
+          action={action ?? t("notFoundExplore")}
+          actionTo={actionTo ?? "/search"}
           secondary={t("notFoundHome")}
           secondaryTo="/"
         />
@@ -45,7 +50,27 @@ export function CityHubNotFoundPage() {
   return <PageNotFound title={t("cityHubNotFoundTitle")} body={t("cityHubNotFoundBody")} />;
 }
 
+/** /admissions is not a separate page. Send people to the desk that holds requests. */
+export function AdmissionsForward() {
+  const chrome = useRoleChrome();
+  const provider = chrome.role === "provider";
+  return (
+    <PageNotFound
+      title="Requests live on your desk"
+      body={
+        provider
+          ? "Spot requests are on the daycare desk. There is no separate admissions page, and there is no queue number."
+          : "Spot requests and waitlists are on your family desk. There is no separate admissions page, and there is no queue number."
+      }
+      action={provider ? "Open the daycare desk" : "Open your requests"}
+      actionTo={provider ? "/provider" : "/parent"}
+    />
+  );
+}
+
 /** Router defaultNotFoundComponent: ignore TanStack's unused route props. */
 export function DefaultNotFound() {
+  const path = useRouterState({ select: (state) => state.location.pathname });
+  if (path === "/admissions" || path === "/fr/admissions") return <AdmissionsForward />;
   return <PageNotFound />;
 }

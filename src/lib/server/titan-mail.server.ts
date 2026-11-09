@@ -108,24 +108,32 @@ class LineBuf {
   }
 }
 
+/** Pause until the caller is listening, so the server greeting is not dropped. */
 function connectTls(host: string, port: number, socket?: Socket): Promise<TLSSocket> {
   return new Promise((resolve, reject) => {
-    const sock = tlsConnect(
-      {
-        host,
-        port,
-        servername: host,
-        socket,
-        timeout: SOCKET_MS,
-      },
-      () => resolve(sock),
-    );
-    sock.on("error", reject);
-    sock.on("timeout", () => {
-      sock.destroy();
-      reject(new Error("Titan connection timed out"));
+    const sock = tlsConnect({
+      host,
+      port,
+      servername: host,
+      socket,
+      timeout: SOCKET_MS,
     });
+    sock.pause();
+    const fail = (err: Error) => {
+      sock.destroy();
+      reject(err);
+    };
+    sock.once("secureConnect", () => resolve(sock));
+    sock.once("error", fail);
+    sock.once("timeout", () => fail(new Error("Titan connection timed out")));
   });
+}
+
+async function openTls(host: string, port: number, socket?: Socket): Promise<{ sock: TLSSocket; buf: LineBuf }> {
+  const sock = await connectTls(host, port, socket);
+  const buf = new LineBuf(sock);
+  sock.resume();
+  return { sock, buf };
 }
 
 function connectTcp(host: string, port: number): Promise<Socket> {
@@ -196,8 +204,7 @@ function requireConfig(): TitanMailConfig {
 
 export async function listTitanInbox(limit = 40): Promise<TitanListItem[]> {
   const cfg = requireConfig();
-  const sock = await connectTls(cfg.imapHost, cfg.imapPort);
-  const buf = new LineBuf(sock);
+  const { sock, buf } = await openTls(cfg.imapHost, cfg.imapPort);
   const io = imapIo(buf);
   try {
     const greet = await buf.readLine();
@@ -219,8 +226,7 @@ export async function listTitanInbox(limit = 40): Promise<TitanListItem[]> {
 
 export async function getTitanMessage(uid: number): Promise<TitanMessage> {
   const cfg = requireConfig();
-  const sock = await connectTls(cfg.imapHost, cfg.imapPort);
-  const buf = new LineBuf(sock);
+  const { sock, buf } = await openTls(cfg.imapHost, cfg.imapPort);
   const io = imapIo(buf);
   try {
     const greet = await buf.readLine();
@@ -275,8 +281,9 @@ async function smtpSend(cfg: TitanMailConfig, mail: BuiltMail) {
   let buf: LineBuf | null = null;
   try {
     if (cfg.smtpSecure) {
-      sock = await connectTls(cfg.smtpHost, cfg.smtpPort);
-      buf = new LineBuf(sock);
+      const opened = await openTls(cfg.smtpHost, cfg.smtpPort);
+      sock = opened.sock;
+      buf = opened.buf;
       await smtpTransaction(smtpIo(buf), {
         user: cfg.user,
         password: cfg.password,
@@ -300,6 +307,7 @@ async function smtpSend(cfg: TitanMailConfig, mail: BuiltMail) {
         const upgraded = await connectTls(cfg.smtpHost, cfg.smtpPort, sock as Socket);
         sock = upgraded;
         buf?.attach(upgraded);
+        upgraded.resume();
       },
     });
   } catch (err) {
@@ -310,8 +318,7 @@ async function smtpSend(cfg: TitanMailConfig, mail: BuiltMail) {
 }
 
 async function appendSentCopy(cfg: TitanMailConfig, raw: string) {
-  const sock = await connectTls(cfg.imapHost, cfg.imapPort);
-  const buf = new LineBuf(sock);
+  const { sock, buf } = await openTls(cfg.imapHost, cfg.imapPort);
   const io = imapIo(buf);
   try {
     const greet = await buf.readLine();

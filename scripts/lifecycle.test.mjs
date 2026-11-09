@@ -27,6 +27,19 @@ test("lifecycle stays off and tips do not text", () => {
   );
 });
 
+test("spot email follows email consent, not a default-on switch", () => {
+  const prefs = defaultNoticePrefs();
+  assert.equal(prefs.spots.email, true);
+  assert.equal(
+    noticeAllowed({ enabled: true, category: "spots", channel: "email", prefs, emailConsent: false, smsConsent: true, smsFlag: true }),
+    false,
+  );
+  assert.equal(
+    noticeAllowed({ enabled: true, category: "spots", channel: "email", prefs, emailConsent: true, smsConsent: false, smsFlag: false }),
+    true,
+  );
+});
+
 test("SMS needs consent and the SMS flag", () => {
   const prefs = defaultNoticePrefs();
   prefs.tours.sms = true;

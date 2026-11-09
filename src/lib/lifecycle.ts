@@ -59,9 +59,8 @@ export function noticeAllowed(input: {
   const choice = input.prefs[input.category];
   if (!choice[input.channel]) return false;
   if (input.channel === "sms") return input.smsFlag && input.smsConsent;
-  if (input.category === "tips") return input.emailConsent;
   if (input.category === "account") return true;
-  return true;
+  return input.emailConsent;
 }
 
 /** Inactive parents get one email, and only with commercial consent. Never SMS. */

@@ -5,7 +5,7 @@ export function CatalogueHealthStrip({ rows }: { rows: HealthRow[] }) {
   return (
     <section className="rounded-2xl bg-surface p-4 text-fg shadow-sm ring-1 ring-border" data-ke="catalogue-health">
       <h2 className="text-sm font-semibold">Catalogue health in this queue</h2>
-      <p className="mt-1 text-sm text-muted">Counts from the centres loaded here. National fee totals stay on the status page.</p>
+      <p className="mt-1 text-sm text-muted">Same centres as Daycares, without QA fixtures unless that toggle is on. National fee totals stay on the status page.</p>
       <ul className="mt-3 flex flex-wrap gap-2 text-sm">
         <li className="rounded-full bg-stone-100 px-3 py-1">Listings {health.listingsTotal}</li>
         <li className="rounded-full bg-stone-100 px-3 py-1">Claimed {health.claimedCount}</li>

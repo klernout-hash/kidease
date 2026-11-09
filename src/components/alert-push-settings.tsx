@@ -65,7 +65,7 @@ export function AlertPushSettings({
   const summary = t("alertSummary").replace("{on}", String(onCount)).replace("{total}", String(rows.length));
 
   return (
-    <details className="mt-8 rounded-xl bg-surface shadow-card ring-1 ring-border" data-ke="alert-settings">
+    <details open className="mt-8 rounded-xl bg-surface shadow-card ring-1 ring-border" data-ke="alert-settings">
       <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-5 py-3 marker:content-none [&::-webkit-details-marker]:hidden">
         <span className="font-display text-lg tracking-[-0.03em]">{t("alertPrefs")}</span>
         <span className="text-sm text-muted" data-ke="alert-settings-summary">{summary}</span>

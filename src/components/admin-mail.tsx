@@ -178,8 +178,8 @@ export function AdminMailPanel() {
           Mail inside KidEase is not connected yet. Use Titan webmail for this mailbox. Nothing else on the admin desk changes.
         </p>
       ) : inboxError ? (
-        <p className="mb-6 rounded-2xl bg-surface px-5 py-4 text-sm text-muted ring-1 ring-border">
-          Messages could not be loaded. Use Titan webmail if you need them now.
+        <p className="mb-6 rounded-2xl bg-surface px-5 py-4 text-sm text-muted ring-1 ring-border" data-ke="admin-mail-error">
+          {inboxError} Use Titan webmail if you need the mailbox now.
         </p>
       ) : null}
 
