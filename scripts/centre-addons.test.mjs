@@ -73,7 +73,14 @@ test("Claim boost moves only the bought centre ahead for 30 days", () => {
   assert.match(life, /interval '30 days'/);
   assert.match(life, /d\.id = \$\{target\}/);
   assert.match(life, /claim_boost_centre_id/);
-  assert.match(src("src/lib/server/claims.ts"), /applyPendingClaimBoost/);
+  assert.match(src("src/lib/server/approve-centre.ts"), /applyPendingClaimBoost/);
+  assert.doesNotMatch(
+    src("src/lib/server/claims.ts").slice(
+      src("src/lib/server/claims.ts").indexOf("export const verifyClaim"),
+      src("src/lib/server/claims.ts").indexOf("export const saveClaimFees"),
+    ),
+    /applyPendingClaimBoost/,
+  );
   const boosted = { id: "boost", priority: true, featuredCity: false };
   const featured = { id: "pin", priority: false, featuredCity: true };
   assert.ok(compareWithPaidPins(featured, boosted, () => 0) > 0);

@@ -984,7 +984,7 @@ export const getThread = createServerFn({ method: "GET" })
     }
     const conv = [access.conversation];
     if (data.markRead === false) {
-      /* Centre inbox: opening list/thread must not clear unread. */
+      /* List and preview stay unread. */
     } else {
       await markConversationRead(sql, conversationId, context.userId);
     }

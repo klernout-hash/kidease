@@ -14,7 +14,7 @@ import { isClaimVerified } from "@/lib/trust";
 import { tourSlaRemainingMs } from "@/lib/today-sla";
 import { formatPreferredTimes, parsePreferredTimes } from "@/lib/threads";
 import { chatBodyWithoutSmsFooter, daycareReplySms, parentMessageSms } from "@/lib/sms-copy";
-import { notificationSourceKey } from "@/lib/notifications";
+import { messageAlertFor, notificationSourceKey } from "@/lib/notifications";
 import { saveParentInAppNotice } from "@/lib/server/parent-notice";
 import { nid } from "@/lib/utils";
 import { ClientInputError } from "@/lib/observe";
@@ -222,6 +222,20 @@ export const listInbox = createServerFn({ method: "GET" })
               where m.user_id = ${context.userId} and m.daycare_id = c.daycare_id and m.status = 'active'
             )
           )
+          and (
+            c.user_id = ${context.userId}
+            or exists (
+              select 1 from centre_members m
+              where m.user_id = ${context.userId} and m.daycare_id = c.daycare_id and m.status = 'active'
+                and m.role in ('owner', 'manager')
+            )
+            or exists (
+              select 1 from provider_daycares p
+              where p.user_id = ${context.userId} and p.daycare_id = c.daycare_id
+            )
+            or c.assigned_user_id is null
+            or c.assigned_user_id = ${context.userId}
+          )
         )
       order by c.last_at desc
       limit 50
@@ -342,6 +356,8 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
     }
 
     const sender = access.role === "parent" ? "parent" : "provider";
+    const prior = await sql<{ last_at: string }>`select last_at from conversations where id = ${row.id} limit 1`;
+    const priorAt = String(prior[0]?.last_at || "");
     const messageId = nid("msg");
     await sql`
       insert into messages (id, conversation_id, sender, body, kind)
@@ -353,6 +369,19 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
     const actor = await lookupUser(context.userId);
     void import("@/lib/server/admin-tools")
       .then((mod) => mod.maybeQueueSpam({ kind: "message", text: body, email: actor.email, sourceId: row.id }))
+      .catch(() => undefined);
+    void import("@/lib/server/engagement")
+      .then((mod) =>
+        mod.noteSentMessage({
+          messageId,
+          sender,
+          actorId: context.userId,
+          centreId: row.daycare_id,
+          threadId: row.id,
+          conversationUserId: row.user_id,
+          priorAt,
+        }),
+      )
       .catch(() => undefined);
     void import("@/lib/server/unified-alerts")
       .then((mod) =>
@@ -389,15 +418,6 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
     const threadUrl = `${origin}/inbox/${row.id}`;
     const { dispatchCustomerAlert } = await import("@/lib/server/alert-dispatch");
     if (sender === "parent") {
-      await saveParentInAppNotice(sql, {
-        userId: context.userId,
-        kind: "lead",
-        titleKey: "notifLeadNew",
-        href: `/inbox/${row.id}`,
-        sourceKey: notificationSourceKey("lead", messageId, "parent:sent"),
-        daycareName: row.name,
-        status: "requested",
-      });
       const owners = await listCentreOwnerEmails(sql, row.daycare_id);
       const extras = (row.contact_email || "").trim();
       const recipients = [...owners];
@@ -414,6 +434,18 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
           daycareName: row.name,
         }).catch(() => undefined);
         if (r.userId) {
+          const alert = messageAlertFor({ senderId: context.userId, recipientId: r.userId });
+          if (alert) {
+            await saveParentInAppNotice(sql, {
+              userId: alert.userId,
+              kind: alert.kind,
+              titleKey: alert.titleKey,
+              href: `/inbox/${row.id}?view=centre&detail=1`,
+              sourceKey: notificationSourceKey("inbox", messageId, "incoming"),
+              daycareName: row.name,
+              status: "unread",
+            });
+          }
           void dispatchCustomerAlert({
             userId: r.userId,
             category: "message",
@@ -425,15 +457,18 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
         }
       }
     } else {
-      await saveParentInAppNotice(sql, {
-        userId: row.user_id,
-        kind: "inbox",
-        titleKey: "notifInbox",
-        href: `/inbox/${row.id}`,
-        sourceKey: notificationSourceKey("inbox", messageId, "reply"),
-        daycareName: row.name,
-        status: "unread",
-      });
+      const alert = messageAlertFor({ senderId: context.userId, recipientId: row.user_id });
+      if (alert) {
+        await saveParentInAppNotice(sql, {
+          userId: alert.userId,
+          kind: alert.kind,
+          titleKey: alert.titleKey,
+          href: `/inbox/${row.id}`,
+          sourceKey: notificationSourceKey("inbox", messageId, "reply"),
+          daycareName: row.name,
+          status: "unread",
+        });
+      }
       const parent = await lookupUser(row.user_id);
       void notifyThreadParty({
         to: parent.email,

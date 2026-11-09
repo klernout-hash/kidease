@@ -237,6 +237,28 @@ export async function runApproval(
             review_note = ${input.note?.trim() || null}
         where id = ${plan.canonicalClaimId}
       `;
+      const claimant = await sql<{ user_id: string }>`
+        select user_id from listing_claims where id = ${plan.canonicalClaimId} limit 1
+      `;
+      const ownerId = claimant[0]?.user_id;
+      if (ownerId) {
+        await sql`
+          insert into provider_daycares (user_id, daycare_id)
+          values (${ownerId}, ${row.id})
+          on conflict (user_id, daycare_id) do nothing
+        `;
+        const { ensureOwnerMembership } = await import("@/lib/server/centre-access");
+        await ensureOwnerMembership(sql, ownerId, row.id);
+        try {
+          const { subscriptionsEnabled } = await import("@/lib/features");
+          if (subscriptionsEnabled()) {
+            const { applyPendingClaimBoost } = await import("@/lib/server/stripe-lifecycle");
+            await applyPendingClaimBoost(sql, ownerId);
+          }
+        } catch (err) {
+          console.error("[kidease-stripe] claim boost apply failed", err);
+        }
+      }
     }
     for (const claimId of plan.suppressClaimIds) {
       await sql`

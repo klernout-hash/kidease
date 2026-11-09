@@ -59,16 +59,17 @@ test("admissions stages follow inquiry → tour → waitlist without inventing e
   assert.equal(parseInboxFilter("nope"), "all");
 });
 
-test("opening list or preview never clears unread", () => {
+test("opening the list never clears unread, opening the thread does", () => {
   assert.equal(inboxClearsUnreadOn("list_open"), false);
   assert.equal(inboxClearsUnreadOn("preview"), false);
-  assert.equal(inboxClearsUnreadOn("thread_open"), false);
+  assert.equal(inboxClearsUnreadOn("thread_open"), true);
   assert.equal(inboxClearsUnreadOn("mark_read"), true);
   assert.equal(inboxClearsUnreadOn("reply"), true);
   assert.equal(inboxClearsUnreadOn("accept"), true);
   assert.match(src("src/lib/server/family.ts"), /markRead === false/);
-  assert.match(src("src/components/centre-inbox.tsx"), /markRead:\s*false/);
-  assert.doesNotMatch(src("src/components/centre-inbox.tsx"), /markRead:\s*true/);
+  assert.match(src("src/components/centre-inbox.tsx"), /markRead:\s*true/);
+  assert.doesNotMatch(src("src/components/centre-inbox.tsx"), /markRead:\s*false/);
+  assert.doesNotMatch(src("src/lib/server/inbox.ts"), /parent:sent/);
   assert.doesNotMatch(src("src/components/notifications-inbox.tsx"), /rows\.some\([\s\S]*all:\s*true/);
 });
 

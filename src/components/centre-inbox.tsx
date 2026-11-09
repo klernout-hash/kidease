@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ThreadCallActions } from "@/components/thread-call-actions";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Inbox, Search, X } from "lucide-react";
@@ -30,6 +30,8 @@ import {
   type MessageFilter,
 } from "@/lib/inbox-thread-ui";
 import { loadDeskFeatureFlags } from "@/lib/server/desk-features";
+import { nextInboxAction } from "@/lib/engagement";
+import { assignInboxThread, searchInboxList, searchInboxText } from "@/lib/server/engagement";
 import { listInbox, sendConnectedMessage } from "@/lib/server/inbox";
 import { useViewAs } from "@/components/view-as-banner";
 import { chatBodyWithoutSmsFooter } from "@/lib/sms-copy";
@@ -59,6 +61,9 @@ export function CentreInboxDesk({
   const [items, setItems] = useState<CentreInboxThread[] | null>(null);
   const [filter, setFilter] = useState<MessageFilter>("all");
   const [query, setQuery] = useState("");
+  const [olderHits, setOlderHits] = useState<number | null>(null);
+  const [bodyMatchIds, setBodyMatchIds] = useState<string[]>([]);
+  const listGen = useRef(0);
   const [supportOpen, setSupportOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [tours, setTours] = useState<TourRequest[]>([]);
@@ -76,16 +81,19 @@ export function CentreInboxDesk({
   const [voiceReady, setVoiceReady] = useState(false);
 
   const visible = useMemo(
-    () => (items ? filterInboxList(items, { filter, query }) : []),
-    [items, filter, query],
+    () => (items ? filterInboxList(items, { filter, query, bodyMatchIds: new Set(bodyMatchIds) }) : []),
+    [items, filter, query, bodyMatchIds],
   );
   const selected = visible.find((row) => row.id === selectedId) ?? items?.find((row) => row.id === selectedId) ?? null;
   const tour = tours[0] ?? null;
   const templates = opsQuickReplies();
 
   async function loadList() {
+    const gen = ++listGen.current;
     const rows = (await listInbox({ data: { view: "centre" } })) as CentreInboxThread[];
+    if (gen !== listGen.current) return;
     const flags = await loadDeskFeatureFlags().catch(() => null);
+    if (gen !== listGen.current) return;
     if (!flags?.unifiedInbox) {
       setItems(rows);
       return;
@@ -99,7 +107,7 @@ export function CentreInboxDesk({
 
   async function loadThread(id: string) {
     setThreadReady(false);
-    const res = await getThread({ data: { conversationId: id, markRead: false } });
+    const res = await getThread({ data: { conversationId: id, markRead: true } });
     if (!res) {
       setMessages([]);
       setTours([]);
@@ -115,7 +123,44 @@ export function CentreInboxDesk({
     setThreadReady(true);
     const meta = await getConversationDetails({ data: { conversationId: id } }).catch(() => null);
     setDetails(meta);
+    void loadList().catch(() => undefined);
   }
+
+  useEffect(() => {
+    const needle = query.trim();
+    if (!user?.id || needle.length < 2) {
+      setBodyMatchIds([]);
+      return;
+    }
+    let live = true;
+    const timer = window.setTimeout(() => {
+      void searchInboxList({ data: { query: needle } })
+        .then((res) => {
+          if (live) setBodyMatchIds(res.ok ? res.ids : []);
+        })
+        .catch(() => {
+          if (live) setBodyMatchIds([]);
+        });
+    }, 250);
+    return () => {
+      live = false;
+      window.clearTimeout(timer);
+    };
+  }, [query, user?.id]);
+
+  useEffect(() => {
+    const needle = query.trim();
+    if (!user?.id || !selectedId || needle.length < 2) {
+      setOlderHits(null);
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      void searchInboxText({ data: { conversationId: selectedId, query: needle } })
+        .then((res) => setOlderHits(res.ok ? res.hits.length : 0))
+        .catch(() => setOlderHits(0));
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [query, selectedId, user?.id]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -235,6 +280,11 @@ export function CentreInboxDesk({
             className="h-11 w-full rounded-md border border-border bg-surface pl-9 pr-3 text-sm"
           />
         </label>
+        {olderHits != null ? (
+          <p className="text-sm text-muted" data-ke="inbox-older-search">
+            {t("inboxOlderSearch").replace("{count}", String(olderHits))}
+          </p>
+        ) : null}
         <div className="flex flex-wrap gap-1.5" data-ke="inbox-stage-filters" role="group" aria-label={t("messages")}>
           {MESSAGE_FILTERS.map((id) => (
             <button
@@ -304,6 +354,25 @@ export function CentreInboxDesk({
   const threadDates = formatStayDate(selected?.startDate, locale) || selected?.tourDatetime || "";
   const threadSub = [centreName || selected?.centreName, threadDates].filter(Boolean).join(" · ");
   const cleaned = messages.map((m) => ({ ...m, body: chatBodyWithoutSmsFooter(m.body) }));
+  const threadNext = selected
+    ? nextInboxAction({
+        unread: selected.unread,
+        viewerIsParent: false,
+        providerReplied: selected.lastSender === "provider",
+        tourStatus: selected.tourStatus,
+        bookingStatus: selected.status,
+      })
+    : "none";
+  const threadNextKey =
+    threadNext === "reply"
+      ? "inboxNextReply"
+      : threadNext === "tour"
+        ? "inboxNextTour"
+        : threadNext === "follow_up"
+          ? "inboxNextFollow"
+          : threadNext === "waitlist"
+            ? "inboxNextWaitlist"
+            : null;
 
   const threadPane = (
     <div className="flex h-full min-h-0 flex-1 flex-col">
@@ -316,7 +385,7 @@ export function CentreInboxDesk({
             backSearch={inboxSearch("centre")}
             backLabel={t("inboxBackCentre")}
             title={threadTitle || selected.parentName}
-            subtitle={threadSub}
+            subtitle={[threadSub, details?.assignedUserId ? t("inboxAssignedYou") : ""].filter(Boolean).join(" · ")}
             avatars={(details?.participants || [{ id: "parent", name: selected.parentName, image: null, role: "parent" as const }]).map((person) => ({
               name: person.name,
               image: person.image,
@@ -332,6 +401,47 @@ export function CentreInboxDesk({
             {t("inboxDetail")}
           </button>
           </div>
+          <div className="flex justify-end px-3 pt-2">
+            <button
+              type="button"
+              className="min-h-11 rounded-full px-3 text-sm font-semibold"
+              data-ke="inbox-assign"
+              onClick={() => {
+                if (!selected || !user?.id) return;
+                void assignInboxThread({ data: { conversationId: selected.id, assigneeId: user.id } })
+                  .then((res) => {
+                    if (!res.ok) toast.error(t("inboxAssignLead"));
+                    else {
+                      toast.success(t("inboxAssignedYou"));
+                      setDetails((current) => (current ? { ...current, assignedUserId: user.id } : current));
+                    }
+                  })
+                  .catch(() => toast.error(t("inboxAssignLead")));
+              }}
+            >
+              {t("inboxAssignMe")}
+            </button>
+          </div>
+          {threadNextKey ? (
+            <p className="px-4 pt-3 text-sm font-medium text-primary" data-ke="inbox-thread-next">
+              {t(threadNextKey)}
+            </p>
+          ) : null}
+          <label className="mx-3 mt-2 block">
+            <span className="sr-only">{t("inboxSearchPh")}</span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t("inboxSearchPh")}
+              data-ke="inbox-thread-search"
+              className="h-11 w-full rounded-md border border-border bg-surface px-3 text-sm"
+            />
+          </label>
+          {olderHits != null ? (
+            <p className="px-4 pt-2 text-sm text-muted" data-ke="inbox-thread-older">
+              {t("inboxOlderSearch").replace("{count}", String(olderHits))}
+            </p>
+          ) : null}
           {confirmedTour ? (
             <div className="mx-3 mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-ok/10 px-3 py-2 text-sm text-ok">
               <span className="font-medium">{t("inboxTourConfirmedBanner")}</span>
@@ -353,6 +463,7 @@ export function CentreInboxDesk({
                 parentName={selected.parentName}
                 centreName={centreName || selected.centreName || selected.daycareName}
                 reads={details?.reads || []}
+                phoneAlerts={details?.phoneAlerts || []}
                 peers={details?.participants || []}
               />
             )}

@@ -208,15 +208,19 @@ export async function recordLeadRequest(
       select name from daycares where id = ${input.daycareId} limit 1
     `.catch(() => [] as { name: string }[]);
     const noticeKind = kind === "tour" ? "tour" : "lead";
-    await saveParentInAppNotice(sql, {
-      userId: input.userId,
-      kind: noticeKind,
-      titleKey: leadTitleKey({ audience: "parent", kind, status: "requested" }),
-      href: leadNotificationHref({ audience: "parent", conversationId }),
-      sourceKey: notificationSourceKey(noticeKind, id, "parent:requested"),
-      daycareName: names[0]?.name,
-      status: "requested",
-    });
+    const owners = await listCentreOwnerEmails(sql, input.daycareId);
+    for (const owner of owners) {
+      if (!owner.userId || owner.userId === input.userId) continue;
+      await saveParentInAppNotice(sql, {
+        userId: owner.userId,
+        kind: noticeKind,
+        titleKey: leadTitleKey({ audience: "provider", kind, status: "requested" }),
+        href: leadNotificationHref({ audience: "provider", conversationId }),
+        sourceKey: notificationSourceKey(noticeKind, id, "centre:requested"),
+        daycareName: names[0]?.name,
+        status: "requested",
+      });
+    }
   }
 
   if (input.notify !== false) {
@@ -423,6 +427,19 @@ export const createLeadRequest = createServerFn({ method: "POST" })
       message: data.message,
     });
     if (!recorded) throw new Error("Could not save request");
+    void import("@/lib/server/engagement")
+      .then(async (mod) => {
+        const qa = await mod.centreIsQa(daycareId);
+        await mod.recordEngagement({
+          event: "inquiry_sent",
+          actorId: context.userId,
+          centreId: daycareId,
+          threadId: recorded.id,
+          role: "parent",
+          qa,
+        });
+      })
+      .catch(() => undefined);
     return { id: recorded.id, status: "requested" as const, reused: recorded.reused };
   });
 

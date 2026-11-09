@@ -18,7 +18,7 @@ function emailFor(role: "parent" | "provider" | "admin" | "government", paid: bo
 
 async function seed(request: Request) {
   if (!e2eLoopbackFixtureRequest(request)) return new Response("Not found", { status: 404 });
-  let body: { role?: string; paid?: boolean; ownSlug?: string; activity?: boolean; attention?: boolean; unlockHome?: boolean; paidBills?: boolean } = {};
+  let body: { role?: string; paid?: boolean; ownSlug?: string; activity?: boolean; attention?: boolean; unlockHome?: boolean; paidBills?: boolean; engagement?: boolean } = {};
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -31,6 +31,7 @@ async function seed(request: Request) {
   const activity = Boolean(body.activity);
   const attention = Boolean(body.attention);
   const unlockHome = Boolean(body.unlockHome);
+  const engagement = Boolean(body.engagement);
   const ownSlug = String(body.ownSlug || "")
     .trim()
     .toLowerCase()
@@ -270,6 +271,79 @@ async function seed(request: Request) {
         insert into lead_requests (id, kind, status, user_id, daycare_id, message)
         values (${`e2e-attn-${userId}`.slice(0, 40)}, ${"tour"}, ${"requested"}, ${userId}, ${daycareId}, ${"E2E attention"})
         on conflict (id) do update set status = 'requested', user_id = excluded.user_id
+      `.catch(() => undefined);
+    }
+  }
+  if (engagement && role === "provider") {
+    const parents = await sql<{ id: string }>`
+      select id from "user" where lower(email) = 'e2e-parent@kidease.test' limit 1
+    `;
+    const parentId = parents[0]?.id;
+    const centres = await sql<{ id: string }>`select id from daycares where slug = 'e2e-centre' limit 1`;
+    const daycareId = centres[0]?.id;
+    if (parentId && daycareId) {
+      await sql`
+        insert into centre_members (id, daycare_id, user_id, role, status)
+        values ('e2e-eng-owner', ${daycareId}, ${userId}, 'owner', 'active')
+        on conflict (id) do nothing
+      `.catch(() => undefined);
+      await sql`
+        insert into conversations (id, user_id, daycare_id, last_at)
+        values ('e2e-eng-thread', ${parentId}, ${daycareId}, now())
+        on conflict (id) do nothing
+      `;
+      await sql`
+        insert into messages (id, conversation_id, sender, body, kind)
+        values ('e2e-eng-msg-parent', 'e2e-eng-thread', 'parent', 'Can we visit this week and bring the blue folder for the morning drop off?', 'chat')
+        on conflict (id) do update set body = excluded.body
+      `.catch(() => undefined);
+      await sql`delete from conversation_reads where conversation_id = 'e2e-eng-thread'`.catch(() => undefined);
+      await sql`
+        update conversation_user_state set marked_unread = false
+        where conversation_id = 'e2e-eng-thread'
+      `.catch(() => undefined);
+      await sql`
+        insert into messages (id, conversation_id, sender, body, kind)
+        values ('e2e-eng-msg-centre', 'e2e-eng-thread', 'provider', 'Tuesday at 10 still works.', 'chat')
+        on conflict (id) do nothing
+      `.catch(() => undefined);
+      await sql`
+        insert into message_push_state (message_id, recipient_user_id, state)
+        values ('e2e-eng-msg-centre', ${parentId}, 'not_sent')
+        on conflict (message_id, recipient_user_id) do nothing
+      `.catch(() => undefined);
+      await sql`
+        insert into tour_requests (id, conversation_id, user_id, daycare_id, preferred_times, status)
+        values ('e2e-eng-tour', 'e2e-eng-thread', ${parentId}, ${daycareId}, '[]', 'pending')
+        on conflict (id) do update set status = 'pending'
+      `.catch(() => undefined);
+      await sql`
+        insert into daycare_waitlist (id, daycare_id, user_id, age_group, status)
+        values ('e2e-eng-spot', ${daycareId}, ${parentId}, 'toddler', 'waiting')
+        on conflict (id) do update set status = 'waiting'
+      `.catch(() => undefined);
+      await sql`
+        insert into daycares (
+          id, slug, name, name_fr, tagline, tagline_fr, description, description_fr,
+          address, city, province, postal_code, lat, lng, hours, hours_fr,
+          age_min_months, age_max_months, photos
+        ) values (
+          'e2e-other-centre', 'e2e-other-centre', 'Other Centre', 'Autre centre',
+          'Other', 'Autre', 'Not this provider.', 'Pas ce fournisseur.',
+          '2 Side St', 'Winnipeg', 'MB', 'R3C 0A2',
+          49.9, -97.1, '9–5', '9–17', 6, 72, ''
+        )
+        on conflict (slug) do nothing
+      `.catch(() => undefined);
+      await sql`
+        insert into conversations (id, user_id, daycare_id, last_at)
+        values ('e2e-other-thread', ${parentId}, 'e2e-other-centre', now())
+        on conflict (id) do nothing
+      `.catch(() => undefined);
+      await sql`
+        insert into messages (id, conversation_id, sender, body, kind)
+        values ('e2e-other-msg', 'e2e-other-thread', 'parent', 'Hidden other centre note', 'chat')
+        on conflict (id) do nothing
       `.catch(() => undefined);
     }
   }

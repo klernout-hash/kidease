@@ -82,7 +82,7 @@ test("how it works is a page, and empty compare or report search is omitted", ()
 });
 
 test("claim keeps one find form open and the enrol form opens from the hash", () => {
-  const claim = src("src/routes/claim.tsx");
+  const claim = src("src/routes/claim.tsx") + src("src/components/claim-wizard.tsx");
   assert.match(claim, /<details id="enroll"/);
   assert.match(claim, /el instanceof HTMLDetailsElement\) el\.open = true/);
   assert.match(claim, /data-ke="claim-license-file"/);

@@ -380,6 +380,23 @@ export const respondTourRequest = createServerFn({ method: "POST" })
       where id = ${tour.id}
     `;
 
+    void import("@/lib/server/engagement")
+      .then(async (mod) => {
+        const qa = await mod.centreIsQa(tour.daycare_id);
+        const role = await mod.centreReplyRole(context.userId, tour.daycare_id);
+        if (!role) return;
+        await mod.recordEngagement({
+          event: "tour_outcome",
+          actorId: context.userId,
+          centreId: tour.daycare_id,
+          threadId: tour.conversation_id || tour.id,
+          role,
+          qa,
+          tourOutcome: next,
+        });
+      })
+      .catch(() => undefined);
+
     const body = tourStatusBody({
       status: next,
       daycareName: tour.daycare_name,

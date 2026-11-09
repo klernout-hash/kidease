@@ -1592,6 +1592,12 @@
   .ke-badge-pulse {
     animation: ke-priority-pill 1.8s ease-in-out infinite;
   }
+  [data-ke="claim-page"] {
+    padding-bottom: calc(8rem + env(safe-area-inset-bottom));
+  }
+  html:has([data-ke="claim-page"]) .ke-help-bot {
+    bottom: calc(5.75rem + var(--ke-safe-bottom, env(safe-area-inset-bottom)) + var(--ke-keyboard, 0px));
+  }
   .ke-help-bot {
     position: fixed;
     right: max(1.25rem, env(safe-area-inset-right));
@@ -2534,12 +2540,18 @@ select.ke-lang-select.ke-header-chrome {
   }
 }
 
-/* On the website desktop, messages stay a single list. The split is the app. */
+/* On a wide website, messages stay one column: the list, or the open thread. */
 @media (min-width: 1280px) {
   html[data-channel="website"] .ke-site-desktop {
     display: block;
   }
   html[data-channel="website"] .ke-site-compact {
+    display: none;
+  }
+  html[data-channel="website"] [data-ke="inbox-split"][data-selected="false"] > .ke-split-detail {
+    display: none;
+  }
+  html[data-channel="website"] [data-ke="inbox-split"][data-selected="true"] > .ke-split-list {
     display: none;
   }
 }

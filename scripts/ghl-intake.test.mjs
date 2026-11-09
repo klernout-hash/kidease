@@ -355,7 +355,9 @@ test("signup and claim verify fire GHL after notify, even when mail fails", () =
   assert.match(verifyClaim, /trigger: "claim_verify"/);
   const claimPage = src("src/routes/claim.tsx");
   const begin = claimPage.slice(claimPage.indexOf("async function begin"), claimPage.indexOf("async function verify"));
-  assert.doesNotMatch(begin, /role: "provider"/);
+  // An unsigned claim is an explicit daycare account. startClaim still does not write the role.
+  assert.match(begin, /role: "provider"/);
+  assert.match(begin, /intent: "up"/);
   assert.doesNotMatch(begin, /desk: "director"/);
   const migration = src("migrations/0059_crm_intake_at.sql");
   assert.match(migration, /crm_signup_at timestamptz/);
