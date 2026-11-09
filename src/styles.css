@@ -2534,12 +2534,18 @@ select.ke-lang-select.ke-header-chrome {
   }
 }
 
-/* On the website desktop, messages stay a single list. The split is the app. */
+/* On a wide website, messages stay one column: the list, or the open thread. */
 @media (min-width: 1280px) {
   html[data-channel="website"] .ke-site-desktop {
     display: block;
   }
   html[data-channel="website"] .ke-site-compact {
+    display: none;
+  }
+  html[data-channel="website"] [data-ke="inbox-split"][data-selected="false"] > .ke-split-detail {
+    display: none;
+  }
+  html[data-channel="website"] [data-ke="inbox-split"][data-selected="true"] > .ke-split-list {
     display: none;
   }
 }

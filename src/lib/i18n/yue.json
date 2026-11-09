@@ -3455,5 +3455,10 @@
   "msv2Licensed": "持牌",
   "msv2TopRated": "高評價",
   "msv2Meals": "包餐",
-  "msv2SubsidyChip": "接受津貼"
+  "msv2SubsidyChip": "接受津貼",
+  "inboxPhoneNotSentTo": "A phone alert was not sent to {name}.",
+  "inboxPhoneSent": "A phone alert was sent to {name}.",
+  "inboxAssignMe": "Assign to me",
+  "inboxOlderSearch": "{count} older messages",
+  "inboxAssignedYou": "Assigned to you"
 }

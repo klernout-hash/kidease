@@ -1,3 +1,5 @@
+import { createServerFn } from "@tanstack/react-start";
+import { authMiddleware } from "@/lib/auth/middleware";
 import { isVercelProduction } from "@/lib/channel-readiness";
 import { canAssignThread, holdAttachment, planEngagementEvent, searchAllowed, staffSeesThread, type EngagementEventName } from "@/lib/engagement";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
@@ -16,7 +18,7 @@ export async function recordEngagement(input: {
   actorId: string;
   centreId: string;
   threadId: string;
-  role: "parent" | "provider" | "staff";
+  role: "parent" | "guardian" | "owner" | "manager" | "staff";
   qa: boolean;
   responseSeconds?: number | null;
   tourOutcome?: string | null;
@@ -40,6 +42,89 @@ export async function recordEngagement(input: {
   } catch {
     return { ok: false };
   }
+}
+
+export async function centreReplyRole(
+  userId: string,
+  daycareId: string,
+): Promise<"owner" | "manager" | "staff" | null> {
+  const sql = await getSql();
+  const members = await sql<{ role: string }>`
+    select role from centre_members
+    where user_id = ${userId} and daycare_id = ${daycareId} and status = 'active'
+    limit 1
+  `.catch(() => [] as Array<{ role: string }>);
+  const role = members[0]?.role;
+  if (role === "owner" || role === "manager" || role === "staff") return role;
+  const owners = await sql<{ user_id: string }>`
+    select user_id from provider_daycares where user_id = ${userId} and daycare_id = ${daycareId} limit 1
+  `.catch(() => [] as Array<{ user_id: string }>);
+  return owners[0] ? "owner" : null;
+}
+
+export async function noteSentMessage(input: {
+  messageId: string;
+  sender: "parent" | "provider";
+  actorId: string;
+  centreId: string;
+  threadId: string;
+  conversationUserId: string;
+  priorAt: string;
+}): Promise<void> {
+  const { persistedPushState, withinSevenDays } = await import("@/lib/engagement");
+  const { unifiedAlertsEnabled } = await import("@/lib/features");
+  const { evaluateFeatureFlag } = await import("@/lib/flags");
+  const qa = await centreIsQa(input.centreId);
+  const sql = await getSql();
+  const state = persistedPushState({
+    unifiedOn: unifiedAlertsEnabled(),
+    liveOn: evaluateFeatureFlag("FEATURE_UNIFIED_ALERTS_LIVE"),
+    pushArmed: false,
+    actuallySent: false,
+  });
+  const recipients =
+    input.sender === "parent"
+      ? await sql<{ user_id: string }>`
+          select user_id from centre_members
+          where daycare_id = ${input.centreId} and status = 'active' and role in ('owner', 'manager', 'staff')
+        `.catch(() => [] as Array<{ user_id: string }>)
+      : [{ user_id: input.conversationUserId }];
+  for (const recipient of recipients) {
+    if (!recipient.user_id || recipient.user_id === input.actorId) continue;
+    await sql`
+      insert into message_push_state (message_id, recipient_user_id, state)
+      values (${input.messageId}, ${recipient.user_id}, ${state})
+      on conflict (message_id, recipient_user_id) do nothing
+    `.catch(() => undefined);
+  }
+  if (input.sender === "provider") {
+    const role = await centreReplyRole(input.actorId, input.centreId);
+    if (!role) return;
+    await recordEngagement({
+      event: "provider_reply",
+      actorId: input.actorId,
+      centreId: input.centreId,
+      threadId: input.threadId,
+      role,
+      qa,
+    });
+    return;
+  }
+  if (!withinSevenDays(input.priorAt, new Date().toISOString())) return;
+  const priorReplies = await sql<{ n: number }>`
+    select count(*)::int as n from messages
+    where conversation_id = ${input.threadId} and sender = 'provider'
+  `.catch(() => [] as Array<{ n: number }>);
+  if (!priorReplies[0] || priorReplies[0].n < 1) return;
+  await recordEngagement({
+    event: "thread_return_7d",
+    actorId: input.actorId,
+    centreId: input.centreId,
+    threadId: input.threadId,
+    role: input.actorId === input.conversationUserId ? "parent" : "guardian",
+    qa,
+    day: new Date().toISOString().slice(0, 10),
+  });
 }
 
 export async function centreIsQa(daycareId: string): Promise<boolean> {
@@ -71,7 +156,18 @@ export async function assignThread(input: {
     select user_id, role, status from centre_members
     where daycare_id = ${daycareId} and status = 'active'
   `.catch(() => [] as Array<{ user_id: string; role: string; status: string }>);
-  const actor = members.find((row) => row.user_id === input.actorId);
+  let actor = members.find((row) => row.user_id === input.actorId);
+  if (!actor) {
+    const owners = await sql<{ user_id: string }>`
+      select user_id from provider_daycares
+      where user_id = ${input.actorId} and daycare_id = ${daycareId}
+      limit 1
+    `.catch(() => [] as Array<{ user_id: string }>);
+    if (owners[0]) {
+      actor = { user_id: input.actorId, role: "owner", status: "active" };
+      members.push(actor);
+    }
+  }
   if (!canAssignThread((actor?.role as CentreMemberRole) || null, actor?.status === "active")) {
     return { ok: false, reason: "denied" };
   }
@@ -109,6 +205,10 @@ export async function searchMyMessages(input: {
          select 1 from centre_members m
          where m.user_id = ${input.userId} and m.daycare_id = c.daycare_id and m.status = 'active'
        )
+       or exists (
+         select 1 from provider_daycares p
+         where p.user_id = ${input.userId} and p.daycare_id = c.daycare_id
+       )
   `;
   const ids = allowed.map((row) => row.id);
   if (!searchAllowed(input.conversationId, ids)) return { ok: false, reason: "denied" };
@@ -128,3 +228,29 @@ export function quarantineAttachment(input: { mime: string; bytes: number }) {
   if (!held.ok) return held;
   return { ...held, readable: false as const };
 }
+
+export const assignInboxThread = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { conversationId?: string; assigneeId?: string | null }) => ({
+    conversationId: String(input?.conversationId || "").trim(),
+    assigneeId: input?.assigneeId ? String(input.assigneeId) : null,
+  }))
+  .handler(async ({ context, data }) => {
+    if (!data.conversationId) return { ok: false as const, reason: "missing" as const };
+    return assignThread({
+      actorId: context.userId,
+      conversationId: data.conversationId,
+      assigneeId: data.assigneeId,
+    });
+  });
+
+export const searchInboxText = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { conversationId?: string; query?: string }) => ({
+    conversationId: String(input?.conversationId || "").trim(),
+    query: String(input?.query || ""),
+  }))
+  .handler(async ({ context, data }) => {
+    if (!data.conversationId) return { ok: false as const, reason: "denied" as const };
+    return searchMyMessages({ userId: context.userId, conversationId: data.conversationId, query: data.query });
+  });

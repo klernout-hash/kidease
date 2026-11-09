@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { InboxMessageRow } from "@/components/inbox-row";
 import { Shell } from "@/components/shell";
 import { ensureFrenchCopy } from "@/lib/copy-runtime";
-import { ENGAGEMENT_FOLLOWUPS, messageReceipt } from "@/lib/engagement";
+import { messageReceipt } from "@/lib/engagement";
 import { isVercelProduction } from "@/lib/channel-readiness";
 import { useCopy } from "@/lib/use-copy";
 import { useEffect, useState } from "react";
@@ -28,7 +28,7 @@ function EngagementPreview() {
   const { look } = Route.useSearch();
   const { t, locale } = useCopy();
   const open = engagementPreviewEnabled();
-  const receipt = messageReceipt({ seenInApp: true });
+  const receipt = messageReceipt({ userId: "preview", seenInApp: true, pushState: "not_sent" });
   const [copyReady, setCopyReady] = useState(locale !== "fr");
   useEffect(() => {
     document.documentElement.setAttribute("data-resolved-theme", look);
@@ -65,7 +65,9 @@ function EngagementPreview() {
   return (
     <Shell>
       <main className="mx-auto w-full max-w-lg px-4 py-6 pb-[calc(6rem+env(safe-area-inset-bottom))]" data-ke="engagement-preview">
-        <p className="text-sm text-muted">{locale === "fr" ? "Aperçu. Aucun message n’a été envoyé." : "Preview. No message was sent."}</p>
+        <p className="text-sm font-medium text-primary" data-ke="engagement-not-inbox">
+          {locale === "fr" ? "Ceci n’est pas la boîte de réception." : "This is not the inbox."}
+        </p>
         <h1 className="mt-2 font-display text-2xl">{locale === "fr" ? "Messages" : "Messages"}</h1>
         <ul className="mt-4 overflow-hidden rounded-xl bg-surface ring-1 ring-border">
           <li>
@@ -84,16 +86,10 @@ function EngagementPreview() {
           </li>
         </ul>
         <p className="mt-4 text-sm" data-ke="engagement-receipt">
-          {t(receipt.label === "seen_in_kidease" ? "inboxSeenHere" : "inboxPhoneNotSent")}
+          {receipt.phone === "not_sent" ? t("inboxPhoneNotSentTo").replace("{name}", "Alex") : t("inboxSeenHere")}
         </p>
-        <p className="mt-2 text-sm" data-ke="engagement-phone">{t("inboxPhoneNotSent")}</p>
         <p className="mt-4 text-sm" data-ke="waitlist-not-a-spot">{t("waitlistNotASpot")}</p>
         <p className="mt-4 text-sm">{t("inboxAssignLead")}</p>
-        <ul className="mt-6 space-y-2 text-sm text-muted">
-          {ENGAGEMENT_FOLLOWUPS.map((item) => (
-            <li key={item.id}>{item.reason}</li>
-          ))}
-        </ul>
       </main>
     </Shell>
   );

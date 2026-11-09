@@ -88,6 +88,17 @@ export const getConversationDetails = createServerFn({ method: "GET" })
       return rank[a.role] - rank[b.role];
     });
 
+    const assigned = await sql<{ assigned_user_id: string | null }>`
+      select assigned_user_id from conversations where id = ${conv.id} limit 1
+    `.catch(() => [] as Array<{ assigned_user_id: string | null }>);
+
+    const phoneAlerts = await sql<{ message_id: string; recipient_user_id: string; state: string }>`
+      select p.message_id, p.recipient_user_id, p.state
+      from message_push_state p
+      join messages m on m.id = p.message_id
+      where m.conversation_id = ${conv.id}
+    `.catch(() => [] as Array<{ message_id: string; recipient_user_id: string; state: string }>);
+
     const reads = await sql<{ user_id: string; name: string | null; last_read_at: string }>`
       select r.user_id, u.name, r.last_read_at
       from conversation_reads r
@@ -140,6 +151,10 @@ export const getConversationDetails = createServerFn({ method: "GET" })
         name: (row.name || "").trim(),
         lastReadAt: String(row.last_read_at),
       })),
+      phoneAlerts: phoneAlerts
+        .filter((row) => row.state === "sent" || row.state === "not_sent")
+        .map((row) => ({ messageId: row.message_id, userId: row.recipient_user_id, state: row.state as "sent" | "not_sent" })),
+      assignedUserId: assigned[0]?.assigned_user_id || null,
       starred: flag(state[0]?.starred),
       archived: Boolean(state[0]?.archived_at),
       markedUnread: flag(state[0]?.marked_unread),

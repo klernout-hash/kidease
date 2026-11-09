@@ -155,6 +155,19 @@ export function searchAlertHref(linkPath?: string | null): string {
   return safeNotificationHref(linkPath, PARENT_ALERTS_HREF);
 }
 
+/** Ordinary chat tells the other person "New message". A real request keeps its own title. Never the sender. */
+export function messageAlertFor(input: {
+  senderId: string;
+  recipientId: string;
+  explicitRequest?: boolean;
+}): { userId: string; kind: "inbox" | "lead"; titleKey: "notifInbox" | "notifLeadNew" } | null {
+  const senderId = String(input.senderId || "").trim();
+  const recipientId = String(input.recipientId || "").trim();
+  if (!senderId || !recipientId || senderId === recipientId) return null;
+  if (input.explicitRequest) return { userId: recipientId, kind: "lead", titleKey: "notifLeadNew" };
+  return { userId: recipientId, kind: "inbox", titleKey: "notifInbox" };
+}
+
 export function leadTitleKey(input: {
   audience: "parent" | "provider";
   kind: LeadKind | string;

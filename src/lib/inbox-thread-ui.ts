@@ -43,6 +43,8 @@ export type ConversationDetails = {
   preferredTimes: Array<{ date: string; time: string }>;
   participants: InboxParticipant[];
   reads: InboxRead[];
+  phoneAlerts?: Array<{ messageId?: string; userId: string; state: "sent" | "not_sent" }>;
+  assignedUserId?: string | null;
   starred: boolean;
   archived: boolean;
   markedUnread: boolean;

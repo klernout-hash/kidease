@@ -3455,5 +3455,10 @@
   "msv2Licensed": "مرخّص",
   "msv2TopRated": "الأعلى تقييمًا",
   "msv2Meals": "وجبات مشمولة",
-  "msv2SubsidyChip": "يقبل الإعانة"
+  "msv2SubsidyChip": "يقبل الإعانة",
+  "inboxPhoneNotSentTo": "A phone alert was not sent to {name}.",
+  "inboxPhoneSent": "A phone alert was sent to {name}.",
+  "inboxAssignMe": "Assign to me",
+  "inboxOlderSearch": "{count} older messages",
+  "inboxAssignedYou": "Assigned to you"
 }

@@ -93,11 +93,11 @@ export function inboxConfirmedDot(input: {
   return tour === "accepted" || tour === "enrolled" || booking === "accepted" || booking === "active";
 }
 
-/** Unread clears only on an explicit staff action — never on list/preview/thread open. */
+/** The list and a preview stay unread. Opening the thread marks it read for that person. */
 export function inboxClearsUnreadOn(
   event: "list_open" | "preview" | "thread_open" | "mark_read" | "reply" | "accept",
 ): boolean {
-  return event === "mark_read" || event === "reply" || event === "accept";
+  return event === "thread_open" || event === "mark_read" || event === "reply" || event === "accept";
 }
 
 export type CentreInboxThread = {

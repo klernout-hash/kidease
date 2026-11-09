@@ -3455,5 +3455,10 @@
   "msv2Licensed": "May lisensya",
   "msv2TopRated": "Pinakamataas ang rating",
   "msv2Meals": "May kasamang pagkain",
-  "msv2SubsidyChip": "Tumatanggap ng subsidy"
+  "msv2SubsidyChip": "Tumatanggap ng subsidy",
+  "inboxPhoneNotSentTo": "A phone alert was not sent to {name}.",
+  "inboxPhoneSent": "A phone alert was sent to {name}.",
+  "inboxAssignMe": "Assign to me",
+  "inboxOlderSearch": "{count} older messages",
+  "inboxAssignedYou": "Assigned to you"
 }

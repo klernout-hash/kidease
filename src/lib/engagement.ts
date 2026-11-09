@@ -1,6 +1,12 @@
 /**
  * Parent and centre engagement rules. Analytics stay coarse.
  * A file stays in quarantine until a scanner exists. This module never marks one clean.
+ *
+ * provider_reply is only an active owner, manager, or staff member.
+ * A parent or guardian reply is never that event.
+ * thread_return_7d means the parent or guardian wrote again within 7 days
+ * of the thread's previous activity, after a centre reply. It is not a
+ * day-7 retention cohort.
  */
 
 import type { CentreMemberRole } from "./centre-roles.ts";
@@ -24,7 +30,7 @@ export type EngagementPlan = {
   actorHash: string;
   centreHash: string;
   threadHash: string;
-  role: "parent" | "provider" | "staff";
+  role: "parent" | "guardian" | "owner" | "manager" | "staff";
   environment: "production" | "preview" | "test";
   responseSeconds: number | null;
   tourOutcome: string | null;
@@ -47,7 +53,7 @@ export function planEngagementEvent(input: {
   actorId: string;
   centreId: string;
   threadId: string;
-  role: "parent" | "provider" | "staff";
+  role: "parent" | "guardian" | "owner" | "manager" | "staff";
   environment: "production" | "preview" | "test";
   qa: boolean;
   responseSeconds?: number | null;
@@ -55,6 +61,9 @@ export function planEngagementEvent(input: {
   day?: string;
   extra?: Record<string, unknown>;
 }): EngagementPlan | null {
+  const centreReply = input.role === "owner" || input.role === "manager" || input.role === "staff";
+  if (input.event === "provider_reply" && !centreReply) return null;
+  if (input.event === "thread_return_7d" && input.role !== "parent" && input.role !== "guardian") return null;
   if (input.qa) return null;
   if (!input.actorId || !input.centreId || !input.threadId) return null;
   if (input.extra) {
@@ -137,19 +146,40 @@ export function staffSeesThread(input: {
   return input.assignedTo === input.staffId;
 }
 
+export type PushState = "sent" | "not_sent";
+
 export type MessageReceipt = {
+  userId: string;
   seenInApp: boolean;
-  phoneSent: false;
-  label: "seen_in_kidease" | "saved_not_phoned";
+  phone: PushState | "unknown";
 };
 
-/** Phone delivery is never claimed. Seen means a server read time is after the message. */
-export function messageReceipt(input: { seenInApp: boolean; pushDelivered?: boolean }): MessageReceipt {
+/**
+ * Seen is this participant's server read time.
+ * Phone is the stored row for that same person. Unknown means no row, so the
+ * UI must not claim a phone alert was or was not sent.
+ */
+export function messageReceipt(input: {
+  userId: string;
+  seenInApp: boolean;
+  pushState?: PushState | null;
+}): MessageReceipt {
   return {
+    userId: input.userId,
     seenInApp: input.seenInApp,
-    phoneSent: false,
-    label: input.seenInApp ? "seen_in_kidease" : "saved_not_phoned",
+    phone: input.pushState === "sent" || input.pushState === "not_sent" ? input.pushState : "unknown",
   };
+}
+
+/** Persist not_sent unless a real push accept happened while the live gates were on. */
+export function persistedPushState(input: {
+  unifiedOn: boolean;
+  liveOn: boolean;
+  pushArmed: boolean;
+  actuallySent: boolean;
+}): PushState {
+  if (input.actuallySent && input.unifiedOn && input.liveOn && input.pushArmed) return "sent";
+  return "not_sent";
 }
 
 export function searchAllowed(conversationId: string, allowed: readonly string[]): boolean {

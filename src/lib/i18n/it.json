@@ -3455,5 +3455,10 @@
   "msv2Licensed": "Autorizzato",
   "msv2TopRated": "Più votato",
   "msv2Meals": "Pasti inclusi",
-  "msv2SubsidyChip": "Accetta il sussidio"
+  "msv2SubsidyChip": "Accetta il sussidio",
+  "inboxPhoneNotSentTo": "A phone alert was not sent to {name}.",
+  "inboxPhoneSent": "A phone alert was sent to {name}.",
+  "inboxAssignMe": "Assign to me",
+  "inboxOlderSearch": "{count} older messages",
+  "inboxAssignedYou": "Assigned to you"
 }
