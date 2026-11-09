@@ -989,8 +989,15 @@ async function clientHandlerSmoke(page, base) {
     await page.waitForURL(/\/login/i, { timeout: timeoutMs }).catch(() => {});
     record("save-click-login", /\/login/i.test(page.url()) && /why=save/.test(page.url()), { note: "login" });
 
-    await page.goto(new URL("/", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await page.goto(new URL("/", base).href, { waitUntil: "networkidle", timeout: timeoutMs });
     const lang = page.locator("select").filter({ has: page.locator("option[value=fr]") }).first();
+    await lang.waitFor({ timeout: timeoutMs });
+    await page.waitForFunction(() => {
+      const sel = [...document.querySelectorAll("select")].find((node) =>
+        [...node.options].some((option) => option.value === "fr"),
+      );
+      return Boolean(sel && Object.keys(sel).some((key) => key.startsWith("__reactProps")));
+    }, { timeout: timeoutMs });
     await lang.selectOption("fr");
     await page.waitForURL(/\/fr(\/|$)/i, { timeout: timeoutMs }).catch(() => {});
     record("locale-switch", /\/fr(\/|$)/i.test(new URL(page.url()).pathname), { note: new URL(page.url()).pathname });
