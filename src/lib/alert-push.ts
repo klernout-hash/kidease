@@ -53,7 +53,7 @@ export type ParentAlertCategory = (typeof PARENT_ALERT_CATEGORIES)[number];
 export type DaycareAlertCategory = (typeof DAYCARE_ALERT_CATEGORIES)[number];
 export type AlertCategory = (typeof ALERT_CATEGORIES)[number];
 export type AlertPrefMap = Record<AlertCategory, boolean>;
-export type AlertAudience = "parent" | "daycare";
+export type AlertAudience = "parent" | "daycare" | "admin";
 export type AlertLocale = "en" | "fr";
 
 const CRITICAL = new Set<AlertCategory>([
@@ -83,6 +83,7 @@ export function normalizeAlertLocale(raw: unknown): AlertLocale {
 }
 
 export function categoriesForAudience(audience: AlertAudience, subscriptionsOn: boolean): AlertCategory[] {
+  if (audience === "admin") return [...PARENT_ALERT_CATEGORIES];
   const list = audience === "daycare" ? DAYCARE_ALERT_CATEGORIES : PARENT_ALERT_CATEGORIES;
   if (subscriptionsOn) return [...list];
   return list.filter((id) => id !== "billing");
@@ -360,9 +361,51 @@ const SETTING_COPY: Record<AlertCategory, { en: { label: string; detail: string 
   },
 };
 
+const ADMIN_SETTING_COPY: Record<
+  ParentAlertCategory,
+  { en: { label: string; detail: string }; fr: { label: string; detail: string } }
+> = {
+  spot_opened: {
+    en: { label: "A centre reports an opening", detail: "A claimed centre confirms a spot is open." },
+    fr: { label: "Un centre signale une place", detail: "Un centre réclamé confirme qu'une place est ouverte." },
+  },
+  saved_listing: {
+    en: { label: "Listing facts change", detail: "Price, ages, or hours change on a listing." },
+    fr: { label: "Faits de la fiche", detail: "Le prix, les âges ou les heures changent sur une fiche." },
+  },
+  waitlist: {
+    en: { label: "Waitlist moves", detail: "A family's spot request changes." },
+    fr: { label: "Mouvement de liste", detail: "La demande de place d'une famille change." },
+  },
+  tour: {
+    en: { label: "Visits and tours", detail: "A visit is booked, changed, or answered." },
+    fr: { label: "Visites", detail: "Une visite est réservée, changée ou répondue." },
+  },
+  message: {
+    en: { label: "Parent and centre messages", detail: "A family and a centre exchange a message." },
+    fr: { label: "Messages famille et centre", detail: "Une famille et un centre échangent un message." },
+  },
+  licence_status: {
+    en: { label: "Licence or screening", detail: "A centre's stored licence or screening status changes. Documents stay private." },
+    fr: { label: "Permis ou filtrage", detail: "Le statut de permis ou de filtrage d'un centre change. Les documents restent privés." },
+  },
+  still_looking: {
+    en: { label: "Families still looking", detail: "A family says they are still searching this week." },
+    fr: { label: "Familles qui cherchent", detail: "Une famille dit qu'elle cherche encore cette semaine." },
+  },
+  match: {
+    en: { label: "New search matches", detail: "A saved family search matches a centre." },
+    fr: { label: "Nouvelles correspondances", detail: "Une recherche enregistrée correspond à un centre." },
+  },
+  review_reply: {
+    en: { label: "Review replies", detail: "A centre replies to a parent review." },
+    fr: { label: "Réponses aux avis", detail: "Un centre répond à un avis d'un parent." },
+  },
+};
+
 export function alertSettingRows(audience: AlertAudience, locale: AlertLocale, subscriptionsOn: boolean): AlertSettingRow[] {
   return categoriesForAudience(audience, subscriptionsOn).map((category) => {
-    const row = SETTING_COPY[category][locale];
+    const row = audience === "admin" ? ADMIN_SETTING_COPY[category as ParentAlertCategory][locale] : SETTING_COPY[category][locale];
     return { category, label: row.label, detail: row.detail };
   });
 }
@@ -372,7 +415,9 @@ export function alertSettingsIntro(locale: AlertLocale, audience: AlertAudience)
     return {
       title: "Alertes KidEase",
       lead:
-        audience === "daycare"
+        audience === "admin"
+          ? "Ces neuf alertes sont pour le bureau admin. Elles sont ouvertes par défaut. Cette page n'envoie pas de campagne."
+          : audience === "daycare"
           ? "KidEase prévient votre garderie des demandes, des messages et des documents. Choisissez ce que vous voulez recevoir."
           : "KidEase vous prévient des places, des messages et des visites. Choisissez ce que vous voulez recevoir.",
       founding: "KidEase est une entreprise canadienne. Ces alertes font partie de la période fondatrice gratuite.",
@@ -388,7 +433,9 @@ export function alertSettingsIntro(locale: AlertLocale, audience: AlertAudience)
   return {
     title: "KidEase alerts",
     lead:
-      audience === "daycare"
+      audience === "admin"
+        ? "These nine alerts are for the admin desk. They start on. This page does not send a campaign."
+        : audience === "daycare"
         ? "KidEase tells your centre about requests, messages, and documents. Pick what you want."
         : "KidEase tells you about spots, messages, and visits. Pick what you want.",
     founding: "KidEase is a Canadian company. These alerts are part of the free founding period.",

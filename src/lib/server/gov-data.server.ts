@@ -287,6 +287,7 @@ export type StoredLicenceFlag = {
   name: string;
   city: string;
   status: "expired" | "suspended" | "revoked";
+  expiry: string | null;
 };
 
 /** Listing status only. This is not a provincial register and has no past events. */
@@ -296,9 +297,10 @@ export async function loadStoredLicenceFlags(province: string): Promise<StoredLi
   const sql = await getSql();
   const whereProvince = code === "ALL" ? "true" : `upper(btrim(province)) = '${code}'`;
   const rows = await sql
-    .query<{ slug: string; name: string; city: string; status: string }>(
+    .query<{ slug: string; name: string; city: string; status: string; expiry: string | null }>(
       `
-      select slug, name, btrim(city) as city, lower(btrim(license_status)) as status
+      select slug, name, btrim(city) as city, lower(btrim(license_status)) as status,
+        license_expiry::text as expiry
       from daycares
       where ${PUBLIC_LISTING_SQL}
         and lower(btrim(coalesce(license_status, ''))) in ('expired', 'suspended', 'revoked')
@@ -315,7 +317,8 @@ export async function loadStoredLicenceFlags(province: string): Promise<StoredLi
       const slug = String(row.slug || "").trim();
       const name = String(row.name || "").trim();
       if (!slug || !name) return null;
-      return { slug, name, city: String(row.city || "").trim(), status };
+      const expiry = String(row.expiry || "").slice(0, 10);
+      return { slug, name, city: String(row.city || "").trim(), status, expiry: expiry || null };
     })
     .filter((row): row is StoredLicenceFlag => Boolean(row));
 }

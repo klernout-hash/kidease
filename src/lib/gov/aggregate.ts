@@ -194,8 +194,8 @@ function coverage(locale: GovLocale, scope: GovScope, rows: CityFact[]): string[
       ? "Les frais confirmés ont une source citée. Un montant sans source est non cité. Les centres sans tarif au dossier sont comptés à part. Ces trois chiffres donnent le total des fiches publiques. KidEase n’invente pas un tarif provincial. Le programme de frais est un oui ou non, pas un montant."
       : "Confirmed fees have a cited source. A dollar amount with no source is uncited. Centres with no fee on file are counted separately. Those three numbers add up to the public listings. KidEase does not invent a provincial fee. A fee program is a yes or no, not a dollar amount.",
     fr
-      ? `Le signal de désert utilise la population du ${CENSUS_SOURCE}. C’est la population totale par place permise, pas le nombre d’enfants de 0 à 5 ans. Une ville sans chiffre de recensement n’a pas de score.`
-      : `The desert signal uses ${CENSUS_SOURCE} population. It is total population per licensed space, not a count of children aged 0 to 5. A city with no census figure has no score.`,
+      ? "Le chiffre enfants de 0 à 5 ans par place permise vient du tableau 98-10-0666 du Recensement de 2021. Ce n’est pas la population totale. Un compte par ville de cet âge n’est pas chargé."
+      : "Children 0 to 5 per licensed space uses 2021 Census table 98-10-0666. It is not total population. A city count for that age is not loaded.",
     fr
       ? "La région suit une courte liste de grandes villes. Les autres villes sont groupées. Ce n’est pas une limite officielle de Statistique Canada."
       : "Region follows a short list of major cities. Other cities are grouped. This is not an official Statistics Canada boundary.",
