@@ -59,6 +59,7 @@ export function ForgotPasswordScreen({
   const resetTo = frenchDesk ? "/fr/reset-password" : resetPath;
   const redirectTo = fromGov ? `${resetTo}?from=gov` : resetTo;
   const signInTo = fromGov ? (frenchDesk ? "/fr/gov/login" : "/gov/login") : locale === "fr" || isFrPath(pathname) ? "/fr/login" : "/login";
+  const formAction = isFrPath(pathname) ? "/fr/forgot-password" : "/forgot-password";
   const [email, setEmail] = useState(initialEmail ?? "");
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -111,7 +112,7 @@ export function ForgotPasswordScreen({
           {mailReady ? null : (
             <p className="mt-3 text-sm text-danger">{t("forgotPasswordMailMissing")}</p>
           )}
-          <form onSubmit={onSubmit} className="mt-6 space-y-3 ph-no-capture">
+          <form method="post" action={formAction} onSubmit={onSubmit} className="mt-6 space-y-3 ph-no-capture">
             <label className="block text-sm">
               {t("email")}
               <input

@@ -127,7 +127,7 @@ export function ReauthDialog({
             .replace("{window}", String(REAUTH_WINDOW_MINUTES))}
         </p>
         {mode === "password" ? (
-          <form onSubmit={onPassword} className="mt-4 space-y-3 ph-no-capture">
+          <form method="post" action="/login" onSubmit={onPassword} className="mt-4 space-y-3 ph-no-capture">
             <PasswordField
               label={t("resetPasswordCurrent")}
               required

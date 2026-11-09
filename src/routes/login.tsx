@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent, type MutableR
 import { authClient, authEnabled, clearLocalSignedOut, dropExistingSession, signIn, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
 import { loginSubmittedText } from "@/lib/login-fields";
+import { useCredentialFormReady } from "@/lib/use-credential-form";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { reviewerSignInSkipsTurnstile } from "@/lib/reviewer-accounts";
@@ -289,6 +290,7 @@ export function LoginScreen({
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const loginPath = isFrPath(pathname) ? "/fr/login" : "/login";
+  const formReady = useCredentialFormReady();
   const frAuthQc = useRouteContext({ from: "__root__" }).frAuthQc === true;
   const forgotTo =
     isFrPath(pathname) || (frAuthQc && locale === "fr") ? "/fr/forgot-password" : "/forgot-password";
@@ -913,7 +915,7 @@ export function LoginScreen({
             ) : null}
           </div>
           ) : null}
-          <form onSubmit={onEmail} className={`mt-6 space-y-3 ph-no-capture ${pickingRole ? "hidden" : ""}`} data-ke={operator ? "admin-email-first" : "email-sign-in"}>
+          <form method="post" action={loginPath} onSubmit={onEmail} className={`mt-6 space-y-3 ph-no-capture ${pickingRole ? "hidden" : ""}`} data-ke={operator ? "admin-email-first" : "email-sign-in"}>
             {mode === "up" && !operator ? (
               <label className="block text-sm">
                 {t("name")}
@@ -984,7 +986,7 @@ export function LoginScreen({
               size="lg"
               className="w-full min-h-12"
               data-ke="email-primary"
-              disabled={busy || (turnstileRequired && !token.trim() && !(mode === "in" && reviewerSignIn))}
+              disabled={!formReady || busy || (turnstileRequired && !token.trim() && !(mode === "in" && reviewerSignIn))}
             >
               {busy ? t("openingDesk") : mode === "up" && !operator ? t("createAccount") : t("signIn")}
             </Button>
