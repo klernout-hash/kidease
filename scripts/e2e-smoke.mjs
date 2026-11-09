@@ -785,7 +785,7 @@ async function runRoleFixture(page, base) {
       await page.getByRole("button", { name: /^Essential$/ }).click().catch(() => {});
       await page.locator('[data-ke="listing-parent-actions"]:visible').first().waitFor({ timeout: timeoutMs }).catch(() => {});
       const guestActions = await page.locator('[data-ke="listing-parent-actions"]:visible').count();
-      const save = page.getByRole("button", { name: /^save$/i });
+      const save = page.getByRole("link", { name: /^save$/i }).or(page.getByRole("button", { name: /^save$/i }));
       const tour = page.getByRole("button", { name: /book a tour/i });
       if (await save.count()) await save.first().click();
       else if (await tour.count()) await tour.first().click();
