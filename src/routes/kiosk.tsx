@@ -115,6 +115,8 @@ function KioskPage() {
       ) : null}
       {needsPin ? (
         <form
+          method="post"
+          action="/kiosk"
           className="flex items-end gap-3 rounded-2xl bg-surface p-4 ring-1 ring-border"
           data-ke="kiosk-pin"
           onSubmit={(e) => {

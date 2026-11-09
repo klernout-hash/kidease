@@ -114,7 +114,7 @@ export function GovLogin({ locale, invite }: { locale: GovLocale; invite: string
         <h1 className="mt-1 font-display text-3xl">{copy.loginTitle}</h1>
         <p className="mt-2 text-base">{copy.why}</p>
         <p className="mt-2 text-sm text-muted">{copy.next}</p>
-        <form className="mt-6 space-y-4" onSubmit={(event) => void onSubmit(event)}>
+        <form method="post" action={locale === "fr" ? "/fr/gov/login" : "/gov/login"} className="mt-6 space-y-4" onSubmit={(event) => void onSubmit(event)}>
           {invite ? (
             <label className="block text-sm font-medium">
               {locale === "fr" ? "Votre nom" : "Your name"}
