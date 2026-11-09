@@ -26,5 +26,6 @@ test("claim page leads with Find your centre", () => {
   assert.match(claim, /claimFindTitle/);
   assert.match(claim, /data-ke="claim-find"/);
   const server = readFileSync(join(root, "src/lib/server/claims.ts"), "utf8");
-  assert.match(server, /claimCityScore/);
+  assert.match(server, /claimListingScore/);
+  assert.match(readFileSync(join(root, "src/lib/claim-search.ts"), "utf8"), /claimCityScore/);
 });

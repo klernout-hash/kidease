@@ -16,7 +16,7 @@ import { mapDaycare, type DaycareRow } from "./map-row";
 import { lookupUser, notifyPlatform, notifyProviderJoined } from "./notify";
 import { writeProfileRole } from "./roles";
 import { applyInteriorPhotos, applyManagedListingPhotos, applyStorefrontPhoto, listingPhotosChanged, managedListingPhotos, MAX_LISTING_PHOTOS } from "@/lib/listing-photo";
-import { claimCityScore } from "@/lib/claim-search";
+import { claimListingScore } from "@/lib/claim-search";
 import { isHomeDaycare, postalFsa } from "@/lib/home-address-privacy";
 import { applyMasterCareType } from "@/lib/server/master-care-type";
 import { officialLicenceNumber } from "@/lib/licensing";
@@ -155,19 +155,8 @@ export const searchClaimable = createServerFn({ method: "POST" })
     for (const d of await getCatalog()) {
       if ((d.mergedInto || "").trim() || (d.importFault || "").trim()) continue;
       if (isAdminOnlyListing(d) && !admin) continue;
-      const name = (d.name || "").toLowerCase();
-      const addr = (d.address || "").toLowerCase();
-      const postal = (d.postalCode || "").toLowerCase();
-      const lic = (d.licenseNumber || "").toLowerCase();
-      let score = 0;
-      const cityScore = claimCityScore(q, d.city || "");
-      if (name.startsWith(q)) score = 100;
-      else if (name.includes(q)) score = 80;
-      else if (cityScore) score = cityScore;
-      else if (addr.includes(q)) score = 40;
-      else if (lic.includes(q)) score = 30;
-      else if (postal.includes(q)) score = 20;
-      else continue;
+      const score = claimListingScore(q, d);
+      if (!score) continue;
       const typed = applyMasterCareType({
         name: d.name,
         province: d.province,
@@ -193,6 +182,23 @@ export const searchClaimable = createServerFn({ method: "POST" })
     }
     scored.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
     return scored.slice(0, 10).map(({ score: _s, ...hit }) => hit);
+  });
+
+/** Public name and city for a claim link. Does not start a claim. */
+export const previewClaimTarget = createServerFn({ method: "GET" })
+  .validator((id: string) => String(id || "").trim().slice(0, 80))
+  .handler(async ({ data: id }) => {
+    if (!id) return null;
+    const listed = await catalogByIdGet(id);
+    if (!listed) return null;
+    if ((listed.mergedInto || "").trim() || (listed.importFault || "").trim()) return null;
+    if (isAdminOnlyListing(listed)) return null;
+    return {
+      id: listed.id,
+      name: listed.name,
+      city: listed.city || "",
+      province: listed.province || "",
+    };
   });
 
 export const startClaim = createServerFn({ method: "POST" })

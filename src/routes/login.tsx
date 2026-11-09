@@ -3,6 +3,7 @@ import { authBackFallback, currentAuthBackFallback } from "@/lib/auth/auth-back"
 import { useCallback, useEffect, useRef, useState, type FormEvent, type MutableRefObject } from "react";
 import { authClient, authEnabled, clearLocalSignedOut, dropExistingSession, signIn, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
+import { loginSubmittedText } from "@/lib/login-fields";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { reviewerSignInSkipsTurnstile } from "@/lib/reviewer-accounts";
@@ -142,30 +143,29 @@ function LoginEmailControl({
   onBlurEmail: (email: string) => void;
   onReviewer: (reviewer: boolean) => void;
 }) {
-  const [email, setEmail] = useState("");
   const operator = useRef(false);
   const reviewer = useRef(false);
+  function remember(value: string) {
+    emailRef.current = value;
+    const next = value.trim().toLowerCase() === OPERATOR_EMAIL;
+    if (next !== operator.current) {
+      operator.current = next;
+      onOperator(next);
+    }
+    const nextReviewer = reviewerSignInSkipsTurnstile(value);
+    if (nextReviewer !== reviewer.current) {
+      reviewer.current = nextReviewer;
+      onReviewer(nextReviewer);
+    }
+  }
   return (
     <input
       type="email"
+      name="email"
       required
       className="ke-input mt-1"
-      value={email}
-      onChange={(e) => {
-        const email = e.target.value;
-        emailRef.current = email;
-        setEmail(email);
-        const next = email.trim().toLowerCase() === OPERATOR_EMAIL;
-        if (next !== operator.current) {
-          operator.current = next;
-          onOperator(next);
-        }
-        const nextReviewer = reviewerSignInSkipsTurnstile(email);
-        if (nextReviewer !== reviewer.current) {
-          reviewer.current = nextReviewer;
-          onReviewer(nextReviewer);
-        }
-      }}
+      defaultValue=""
+      onInput={(e) => remember(e.currentTarget.value)}
       onBlur={() => onBlurEmail(emailRef.current.trim())}
       autoComplete={mode === "in" ? "username webauthn" : "email"}
       autoCapitalize="none"
@@ -192,12 +192,14 @@ function LoginPasswordControl({
     <>
       <PasswordField
         label={label}
+        name="password"
         required
         minLength={8}
-        value={password}
-        onChange={(e) => {
-          passwordRef.current = e.target.value;
-          setPassword(e.target.value);
+        defaultValue=""
+        onInput={(e) => {
+          const value = e.currentTarget.value;
+          passwordRef.current = value;
+          if (showRules) setPassword(value);
         }}
         autoComplete={mode === "up" ? "new-password" : "current-password"}
       />
@@ -613,8 +615,10 @@ export function LoginScreen({
     setBusy(true);
     setStalled(false);
     setError(null);
-    const email = emailRef.current.trim();
-    const password = passwordRef.current;
+    const form = new FormData(e.currentTarget as HTMLFormElement);
+    const email = loginSubmittedText(form, "email", emailRef.current, true);
+    const password = loginSubmittedText(form, "password", passwordRef.current, false);
+    if (!email || !password) throw new Error("Enter your email and password.");
     const name = nameRef.current.trim();
     const signingOperator = email.toLowerCase() === OPERATOR_EMAIL;
     try {
