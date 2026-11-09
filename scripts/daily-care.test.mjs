@@ -130,6 +130,11 @@ test("Daily care is wired on parent desk and daycare Today without touching mark
   assert.doesNotMatch(src("migrations/0050_daily_journals.sql"), /bytea|video_url|mp4/);
   assert.match(src("src/lib/server/ops.ts"), /centreCanWriteCare/);
   assert.match(src("src/lib/server/ops.ts"), /insertCareStatusMessage/);
+  const statusNote = src("src/lib/server/daily-care.ts");
+  const statusStart = statusNote.indexOf("export async function insertCareStatusMessage");
+  const statusFn = statusNote.slice(statusStart, statusNote.indexOf("export const listDailyJournals", statusStart));
+  assert.match(statusFn, /email: false/);
+  assert.match(src("src/lib/server/care-ops.ts"), /parent_notified_at = now\(\) where id/);
   assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /dailyCare: "Daily care"/);
   assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /dailyCare: "Soins du jour"/);
   assert.match(src("src/lib/casl.ts"), /emailCommercial/);

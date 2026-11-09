@@ -1152,7 +1152,6 @@ export const submitCareIncident = createServerFn({ method: "POST" })
     const occurredAt = data.occurredAt && !Number.isNaN(Date.parse(data.occurredAt)) ? data.occurredAt : new Date().toISOString();
     const authorName = await actorName(context.userId);
     const id = nid("inc");
-    const notifiedAt = new Date().toISOString();
     await sql`
       insert into care_incidents (
         id, daycare_id, booking_id, conversation_id, child_name, parent_user_id,
@@ -1164,12 +1163,12 @@ export const submitCareIncident = createServerFn({ method: "POST" })
         ${childName}, ${data.parentUserId ?? null}, ${day}, ${occurredAt},
         ${String(data.location || "").trim().slice(0, 120)}, ${data.kind}, ${description},
         ${String(data.actionTaken || "").trim().slice(0, 2000)}, ${Boolean(data.firstAid)},
-        ${context.userId}, ${authorName}, ${notifiedAt}
+        ${context.userId}, ${authorName}, ${null}
       )
     `;
     const centre = await sql<{ name: string }>`select name from daycares where id = ${daycareId} limit 1`;
     const daycareName = centre[0]?.name || "the centre";
-    await insertCareStatusMessage({
+    const noted = await insertCareStatusMessage({
       conversationId: data.conversationId ?? null,
       daycareId,
       daycareName,
@@ -1181,6 +1180,9 @@ export const submitCareIncident = createServerFn({ method: "POST" })
         incidentKind: data.kind,
       }),
       actorUserId: context.userId,
-    }).catch(() => undefined);
+    }).catch(() => false);
+    if (noted) {
+      await sql`update care_incidents set parent_notified_at = now() where id = ${id}`.catch(() => undefined);
+    }
     return { ok: true as const, id };
   });
