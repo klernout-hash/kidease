@@ -374,20 +374,20 @@ const ADMIN_SETTING_COPY: Record<
     fr: { label: "Faits de la fiche", detail: "Le prix, les âges ou les heures changent sur une fiche." },
   },
   waitlist: {
-    en: { label: "Waitlist moves", detail: "A family's spot request changes." },
-    fr: { label: "Mouvement de liste", detail: "La demande de place d'une famille change." },
+    en: { label: "Family waitlist changes", detail: "A family's spot request changes." },
+    fr: { label: "Liste d'attente d'une famille", detail: "La demande de place d'une famille change." },
   },
   tour: {
-    en: { label: "Visits and tours", detail: "A visit is booked, changed, or answered." },
-    fr: { label: "Visites", detail: "Une visite est réservée, changée ou répondue." },
+    en: { label: "Visit bookings", detail: "A visit is booked, changed, or answered." },
+    fr: { label: "Réservations de visite", detail: "Une visite est réservée, changée ou répondue." },
   },
   message: {
     en: { label: "Parent and centre messages", detail: "A family and a centre exchange a message." },
     fr: { label: "Messages famille et centre", detail: "Une famille et un centre échangent un message." },
   },
   licence_status: {
-    en: { label: "Licence or screening", detail: "A centre's stored licence or screening status changes. Documents stay private." },
-    fr: { label: "Permis ou filtrage", detail: "Le statut de permis ou de filtrage d'un centre change. Les documents restent privés." },
+    en: { label: "Stored licence changes", detail: "A centre's stored licence or screening status changes. Documents stay private." },
+    fr: { label: "Permis enregistré", detail: "Le statut de permis ou de filtrage d'un centre change. Les documents restent privés." },
   },
   still_looking: {
     en: { label: "Families still looking", detail: "A family says they are still searching this week." },

@@ -29,7 +29,7 @@ import { isInCanada } from "./canada-origin.ts";
 import { facilityTypeTagline, listingFacilityType } from "./facility-type.ts";
 import { fsaCentroid } from "./fsa-centroids.ts";
 import { CITIES, PROVINCES } from "./geo.ts";
-import { listingSlugFromName } from "./listing-slug.ts";
+import { correctCentreNameTypos, listingSlugFromName } from "./listing-slug.ts";
 import { REMOVED_FROM_MASTER_FAULT, isAdminOnlyListing } from "./listing-visibility.ts";
 import { isRemovedListing } from "./listing-removed.ts";
 import { isSafeSitemapSlug, publicSitemapSlugs } from "./sitemap.ts";
@@ -334,7 +334,7 @@ function buildNewRow(master: MasterFacility, point: { lat: number; lng: number }
   const city = master.city;
   const amenities = amenitiesFor(master.facilityType);
   const facility = listingFacilityType({ amenities, facilityType: null });
-  const name = master.name;
+  const name = correctCentreNameTypos(master.name);
   let slug = listingSlugFromName(name, id.slice(-8));
   if (slug.length > 80) slug = listingSlugFromName("centre", id.slice(-8));
   let n = 2;
