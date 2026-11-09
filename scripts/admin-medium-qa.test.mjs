@@ -41,7 +41,8 @@ test("activity uses the live profile role, and French home links stay prefixed",
   assert.equal(activityRoleBadge("account"), "Parent");
   const enroll = src("src/components/role-enroll.tsx");
   assert.match(enroll, /localePath\("\/login"/);
-  assert.match(enroll, /localePath\("\/contact"/);
+  assert.match(enroll, /parentEnrolLogin/);
+  assert.doesNotMatch(enroll, /intent: "parent"/);
   assert.match(enroll, /localePath\("\/claim"/);
   assert.match(src("src/routes/fr.parent.tsx"), /createFileRoute\("\/fr\/parent"\)/);
   assert.doesNotMatch(src("src/routes/__root.tsx"), /\/fr\/parent/);
