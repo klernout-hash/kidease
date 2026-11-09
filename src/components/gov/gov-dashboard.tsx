@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import type { GovDashboard } from "@/lib/gov/aggregate";
 import { feeBucketLabel, govCopy, govPath } from "@/lib/gov/copy";
-import { regionLabel } from "@/lib/gov/places";
+import { regionForCity, regionLabel } from "@/lib/gov/places";
 import { GovHelp } from "@/components/gov/gov-help";
 import { CurriculumGovStrip } from "@/components/curriculum-pack";
 import { GovJobShortage } from "@/components/ece-job-desk";
@@ -88,7 +88,7 @@ function LicenceFlags({
   data,
 }: {
   data: GovDashboard & {
-    licenceFlags?: Array<{ slug: string; name: string; city: string; status: string }>;
+    licenceFlags?: Array<{ slug: string; name: string; city: string; status: string; expiry?: string | null }>;
   };
 }) {
   const copy = govCopy(data.locale);
@@ -108,6 +108,9 @@ function LicenceFlags({
                 {flag.name}
               </a>
               <p className="mt-1 text-base">{flag.city ? `${flag.city} · ` : ""}{flag.status}</p>
+              {flag.expiry ? (
+                <p className="mt-1 text-base">{data.locale === "fr" ? "Échéance enregistrée" : "Stored expiry"}: {flag.expiry}</p>
+              ) : null}
               <p className="mt-1 text-base leading-6">{copy.flagsHistory}</p>
             </li>
           ))}
@@ -232,7 +235,7 @@ export function GovDashboardView({
   data,
 }: {
   data: GovDashboard & {
-    licenceFlags?: Array<{ slug: string; name: string; city: string; status: string }>;
+    licenceFlags?: Array<{ slug: string; name: string; city: string; status: string; expiry?: string | null }>;
     childPerSpace?: number | null;
     childRatioIsProvince?: boolean;
   };
@@ -247,10 +250,20 @@ export function GovDashboardView({
   if (data.city && data.city !== "ALL") query.set("city", data.city);
   const exportBase = `/api/gov/export?${query.toString()}`;
 
+  const [picked, setPicked] = useState<{ region: string; city: string } | null>(null);
+  useEffect(() => {
+    setPicked(null);
+  }, [data.province, data.region, data.city]);
+  const regionValue = picked?.region || data.region;
+  const cityValue = picked?.city || data.city;
+  const regionOptions = data.selectors.regions.includes(regionValue) ? data.selectors.regions : [...data.selectors.regions, regionValue];
+  const cityOptions = data.selectors.cities.includes(cityValue) ? data.selectors.cities : [...data.selectors.cities, cityValue];
+
   function go(next: { province?: string; region?: string; city?: string }) {
     const province = next.province ?? data.province;
-    const region = next.region ?? data.region;
-    const city = next.city ?? data.city;
+    const region = next.region ?? regionValue;
+    const city = next.city ?? cityValue;
+    setPicked({ region: region || "ALL", city: city || "ALL" });
     void navigate({
       to: data.locale === "fr" ? "/fr/gov" : "/gov",
       search: {
@@ -321,10 +334,10 @@ export function GovDashboardView({
             {copy.region}
             <select
               className="mt-1 min-h-11 w-full rounded-xl border border-border bg-surface px-3"
-              value={data.region}
+              value={regionValue}
               onChange={(event) => go({ region: event.target.value, city: "ALL" })}
             >
-              {data.selectors.regions.map((region) => (
+              {regionOptions.map((region) => (
                 <option key={region} value={region}>
                   {region === "ALL" ? (data.locale === "fr" ? "Toutes les régions" : "All regions") : regionLabel(region, data.locale)}
                 </option>
@@ -335,10 +348,14 @@ export function GovDashboardView({
             {copy.city}
             <select
               className="mt-1 min-h-11 w-full rounded-xl border border-border bg-surface px-3"
-              value={data.city}
-              onChange={(event) => go({ city: event.target.value })}
+              value={cityValue}
+              onChange={(event) => {
+                const city = event.target.value;
+                if (!city || city === "ALL") go({ city: "ALL" });
+                else go({ city, region: regionForCity(city) });
+              }}
             >
-              {data.selectors.cities.map((city) => (
+              {cityOptions.map((city) => (
                 <option key={city} value={city}>
                   {city === "ALL" ? (data.locale === "fr" ? "Toutes les villes" : "All cities") : city}
                 </option>
@@ -574,16 +591,6 @@ export function GovDashboardView({
             <Kpi label={copy.english} value={show(kpis.englishCentres, data.locale, hidden)} />
             <Kpi label={copy.inclusion} value={kpis.inclusionCentres === 0 ? copy.reportedUnknown : show(kpis.inclusionCentres, data.locale, hidden)} />
             <Kpi
-              label={copy.desert}
-              value={
-                data.desert.perSpace != null
-                  ? show(data.desert.perSpace, data.locale, hidden)
-                  : data.desert.population == null
-                    ? copy.desertMissing
-                    : copy.desertNoSpaces
-              }
-            />
-            <Kpi
               label={copy.childRatio}
               value={
                 data.childPerSpace != null
@@ -594,7 +601,7 @@ export function GovDashboardView({
           </dl>
           <p className="mt-3 text-base leading-6" data-ke="gov-child-ratio">{copy.childRatioNote}</p>
           {data.childRatioIsProvince ? <p className="mt-2 text-base leading-6">{copy.childRatioCity}</p> : null}
-          <p className="mt-3 text-base leading-6">{data.locale === "fr" ? "Le chiffre « population » plus haut est la population totale du Recensement de 2021 par place permise. La demande compte des recherches enregistrées, pas des enfants. Une photo manquante ou une fiche non réclamée n’est pas un problème de conformité." : "The population figure above is 2021 Census total population per licensed space. Demand counts saved searches, not children. A missing photo or an unclaimed listing is not a compliance problem."}</p>
+          <p className="mt-3 text-base leading-6">{data.locale === "fr" ? "La demande compte des recherches enregistrées, pas des enfants. Une photo manquante ou une fiche non réclamée n’est pas un problème de conformité." : "Demand counts saved searches, not children. A missing photo or an unclaimed listing is not a compliance problem."}</p>
           <p className="mt-3 text-sm">
             <a className="font-medium text-primary underline-offset-4 hover:underline" href={data.locale === "fr" ? "/fr/gov/incidents" : "/gov/incidents"}>
               {data.locale === "fr" ? "Événements graves" : "Serious occurrences"}

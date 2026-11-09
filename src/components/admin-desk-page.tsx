@@ -89,6 +89,7 @@ import {
 } from "@/lib/admin-stat-filter";
 import { AdminReviewsPanel } from "@/components/admin-reviews";
 import { compareTimeDesc } from "@/lib/sort-time";
+import { isGhostClaimLabRow, readQaFixtureToggle, withGhostClaimLab, writeQaFixtureToggle } from "@/lib/admin-ghost-fixture";
 import { looksLikeTestFixture, staffQueueRows } from "@/lib/listing-visibility";
 import { getCatalogHealth } from "@/lib/server/catalog-health";
 import { listAdminLeadCounts } from "@/lib/server/lead-requests";
@@ -147,6 +148,13 @@ export function AdminPage() {
   const [activityQ, setActivityQ] = useState("");
   const [peopleQ, setPeopleQ] = useState(search.q || "");
   const [showQaFixtures, setShowQaFixtures] = useState(false);
+  function setQaFixtures(on: boolean) {
+    setShowQaFixtures(on);
+    writeQaFixtureToggle(on);
+  }
+  useEffect(() => {
+    if (readQaFixtureToggle()) setShowQaFixtures(true);
+  }, []);
   const [showQaPeople, setShowQaPeople] = useState(false);
   const [openProv, setOpenProv] = useState<Record<string, boolean>>({});
   const [jurisdictions, setJurisdictions] = useState<Awaited<ReturnType<typeof listJurisdictions>>>([]);
@@ -249,8 +257,12 @@ export function AdminPage() {
     setPeopleQ(search.q || "");
   }, [search.q]);
 
-  const staffCentres = useMemo(() => staffQueueRows(centres, showQaFixtures), [centres, showQaFixtures]);
-  const qaCount = useMemo(() => centres.filter((c) => c.isTest).length, [centres]);
+  const centresForQueue = useMemo(() => withGhostClaimLab(centres), [centres]);
+  const staffCentres = useMemo(() => staffQueueRows(centresForQueue, showQaFixtures), [centresForQueue, showQaFixtures]);
+  const qaCount = useMemo(
+    () => centresForQueue.filter((c) => c.isTest || looksLikeTestFixture(c)).length,
+    [centresForQueue],
+  );
   const queueUnavailable = Boolean(centresError) && !centresReady;
   const queuePending = !centresReady && !centresError;
   const queueLoading = queuePending;
@@ -283,20 +295,25 @@ export function AdminPage() {
 
   const incompleteQueue = useMemo(() => listIncompleteAdminCentres(filtered), [filtered]);
   const listed = useMemo(() => {
-    const rows =
+    const base =
       stat === "license"
         ? filtered.filter((c) => needsLicenseReview(c))
         : stat === "photo"
           ? filtered.filter((c) => needsPhotoReview(c))
           : filterAdminCentresByStat(filtered, stat);
-    if (stat === "waiting") {
-      return [...rows].sort((a, b) => compareTimeDesc(a.submittedAt, b.submittedAt));
-    }
-    if (stat === "live" || stat === "declined" || stat === "license" || stat === "photo") {
-      return [...rows].sort((a, b) => compareTimeDesc(a.submittedAt, b.submittedAt) || a.name.localeCompare(b.name));
-    }
-    return rows;
-  }, [filtered, stat]);
+    const rows =
+      stat === "waiting" || stat === "live" || stat === "declined" || stat === "license" || stat === "photo"
+        ? [...base].sort((a, b) => compareTimeDesc(a.submittedAt, b.submittedAt) || a.name.localeCompare(b.name))
+        : base;
+    const needle = q.trim().toLowerCase();
+    if (!showQaFixtures || !needle) return rows;
+    const extras = staffCentres.filter((row) => {
+      if (!isGhostClaimLabRow(row) && !looksLikeTestFixture(row)) return false;
+      if (rows.some((kept) => kept.daycareId === row.daycareId)) return false;
+      return [row.name, row.slug, row.city].join(" ").toLowerCase().includes(needle);
+    });
+    return extras.length ? [...rows, ...extras] : rows;
+  }, [filtered, stat, showQaFixtures, q, staffCentres]);
   const verifyListed = stat === "license" || stat === "photo" ? listed : verifyQueue;
   const provinceRows = isAdminCentreListStat(stat) ? listed : filtered;
 
@@ -327,8 +344,8 @@ export function AdminPage() {
   }, [provinceRows]);
 
   const qaFixtureRows = useMemo(
-    () => centres.filter((row) => row.isTest || looksLikeTestFixture(row)),
-    [centres],
+    () => centresForQueue.filter((row) => row.isTest || looksLikeTestFixture(row)),
+    [centresForQueue],
   );
   const queueRows = useMemo(() => {
     if (!showQaFixtures) return listed;
@@ -525,7 +542,7 @@ export function AdminPage() {
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <label className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
-              <input type="checkbox" checked={showQaFixtures} onChange={(e) => setShowQaFixtures(e.target.checked)} />
+              <input type="checkbox" checked={showQaFixtures} onChange={(e) => setQaFixtures(e.target.checked)} />
               Show QA fixtures{qaCount ? ` · ${qaCount}` : ""}
             </label>
           </div>
@@ -555,7 +572,7 @@ export function AdminPage() {
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <label className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
-              <input type="checkbox" checked={showQaFixtures} onChange={(e) => setShowQaFixtures(e.target.checked)} />
+              <input type="checkbox" checked={showQaFixtures} onChange={(e) => setQaFixtures(e.target.checked)} />
               Show QA fixtures{qaCount ? ` · ${qaCount}` : ""}
             </label>
           </div>
@@ -642,7 +659,7 @@ export function AdminPage() {
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <label className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
-              <input type="checkbox" checked={showQaFixtures} onChange={(e) => setShowQaFixtures(e.target.checked)} />
+              <input type="checkbox" checked={showQaFixtures} onChange={(e) => setQaFixtures(e.target.checked)} />
               Show QA fixtures{qaCount ? ` · ${qaCount}` : ""}
             </label>
           </div>
@@ -698,7 +715,7 @@ export function AdminPage() {
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <label className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
-              <input type="checkbox" checked={showQaFixtures} onChange={(e) => setShowQaFixtures(e.target.checked)} />
+              <input type="checkbox" checked={showQaFixtures} onChange={(e) => setQaFixtures(e.target.checked)} />
               Show QA fixtures{qaCount ? ` · ${qaCount}` : ""}
             </label>
           </div>

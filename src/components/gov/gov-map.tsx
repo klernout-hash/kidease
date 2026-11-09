@@ -39,16 +39,15 @@ export function GovMap({ data }: { data: GovDashboard }) {
         map = created.map;
         const max = Math.max(...points.map((point) => point.centres), 1);
         for (const point of points) {
-          const desert = point.desert != null;
           circles.push(
             new created.maps.Circle({
               map: created.map,
               center: { lat: point.lat, lng: point.lng },
               radius: 8000 + (point.centres / max) * 24000,
-              strokeColor: desert ? "#9a3412" : "#1A3790",
+              strokeColor: "#1A3790",
               strokeOpacity: 0.9,
               strokeWeight: 2,
-              fillColor: desert ? "#c2410c" : "#1A3790",
+              fillColor: "#1A3790",
               fillOpacity: 0.28,
             }),
           );

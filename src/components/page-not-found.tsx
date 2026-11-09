@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, Navigate, useRouterState } from "@tanstack/react-router";
 import { BrandMark } from "@/components/brand-mark";
 import { EmptyState } from "@/components/empty-state";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -50,20 +50,29 @@ export function CityHubNotFoundPage() {
   return <PageNotFound title={t("cityHubNotFoundTitle")} body={t("cityHubNotFoundBody")} />;
 }
 
-/** /admissions is not a separate page. Send people to the desk that holds requests. */
+/** /admissions is not a page. Leave that URL for the desk that holds requests. */
 export function AdmissionsForward() {
   const chrome = useRoleChrome();
-  const provider = chrome.role === "provider";
+  const path = useRouterState({ select: (state) => state.location.pathname });
+  const french = path === "/fr/admissions" || path.startsWith("/fr/");
+  if (chrome.pending) {
+    return (
+      <p className="ke-gutter mx-auto max-w-lg py-16 text-sm text-muted">
+        {french ? "Ouverture de votre bureau…" : "Opening your desk…"}
+      </p>
+    );
+  }
+  if (chrome.role === "provider") {
+    return <Navigate to={french ? "/fr/provider" : "/provider"} search={{ desk: "requests" }} replace />;
+  }
+  if (chrome.signedIn) {
+    return <Navigate to={french ? "/fr/parent" : "/parent"} search={{ tab: "waitlists" }} replace />;
+  }
   return (
-    <PageNotFound
-      title="Requests live on your desk"
-      body={
-        provider
-          ? "Spot requests are on the daycare desk. There is no separate admissions page, and there is no queue number."
-          : "Spot requests and waitlists are on your family desk. There is no separate admissions page, and there is no queue number."
-      }
-      action={provider ? "Open the daycare desk" : "Open your requests"}
-      actionTo={provider ? "/provider" : "/parent"}
+    <Navigate
+      to={french ? "/fr/login" : "/login"}
+      search={{ intent: "in", next: french ? "/fr/admissions" : "/admissions" }}
+      replace
     />
   );
 }

@@ -848,7 +848,7 @@ function ProfilePane() {
         {section === "alerts" && user ? (
           <>
           <AlertPushSettings
-            audience={desk === "provider" ? "daycare" : "parent"}
+            audience={desk === "admin" ? "admin" : desk === "provider" ? "daycare" : "parent"}
             subscriptionsOn={chrome.subscriptionsEnabled === true}
           />
           {session?.hostListing ? <HostActionEmailPref /> : null}

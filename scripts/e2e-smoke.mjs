@@ -1665,7 +1665,7 @@ async function runSignedInSessions(page, base) {
         await summary.waitFor({ state: "visible", timeout: timeoutMs });
         const summaryText = ((await summary.innerText()) || "").trim();
         const openAttr = await page.locator('[data-ke="alert-settings"]').getAttribute("open");
-        record("signed-in-alert-summary", openAttr == null && /^\d+ of \d+ alerts on$/.test(summaryText), {
+        record("signed-in-alert-summary", openAttr != null && /^\d+ of \d+ alerts on$/.test(summaryText), {
           note: summaryText,
         });
         await signOutFromMenu(page);

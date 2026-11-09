@@ -959,6 +959,7 @@ export function Listing() {
             licenseNumber={d.licenseNumber}
             listingId={d.id}
             licenseStatus={d.licenseStatus}
+            licenseExpiry={d.licenseExpiry}
             claimed={Boolean(d.claimed)}
             inspections={data.inspections}
             compact
