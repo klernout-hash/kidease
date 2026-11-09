@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { credentialQueryLocation, queryCarriesSecret } from "../src/lib/credential-query-guard.ts";
+import { localeSwitchHref } from "../src/lib/locale-path.ts";
 
 function page(rel) {
   return readFileSync(new URL(rel, import.meta.url), "utf8");
@@ -17,12 +18,20 @@ test("a password query on an auth page redirects to the path with no query", () 
   assert.equal(queryCarriesSecret(new URLSearchParams("Password=x")), true);
 });
 
-test("credential forms post, and the login button waits for hydration", () => {
+test("French keeps the current page, including the search", () => {
+  assert.equal(localeSwitchHref("/", "", "fr"), "/fr");
+  assert.equal(localeSwitchHref("/search", "?q=Winnipeg%2C+MB", "fr"), "/fr/search?q=Winnipeg%2C+MB");
+  assert.equal(localeSwitchHref("/fr", "", "en"), "/");
+  assert.equal(localeSwitchHref("/fr/search", "?q=Winnipeg", "en"), "/search?q=Winnipeg");
+});
+
+test("credential forms post, and sign-in stays clickable", () => {
   const login = page("../src/routes/login.tsx");
   assert.match(login, /method="post"/);
   assert.match(login, /action=\{loginPath\}/);
-  assert.match(login, /disabled=\{!formReady/);
-  assert.match(login, /useCredentialFormReady/);
+  assert.match(login, /disabled=\{busy\}/);
+  assert.doesNotMatch(login, /disabled=\{!formReady/);
+  assert.match(login, /onAnimationStart/);
   const search = page("../src/components/explore-search-bar.tsx");
   assert.match(search, /method="get"/);
   assert.match(search, /action=\{locale === "fr" \? "\/fr\/search" : "\/search"\}/);

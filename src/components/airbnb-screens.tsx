@@ -20,7 +20,7 @@ import {
 } from "@/lib/airbnb-ui";
 import { airbnbCopy, type AirbnbCopy } from "@/lib/airbnb-ui-copy";
 import { applyDocumentLocale, languageMeta, shippedLanguages } from "@/lib/languages";
-import { localePath, localeSwitchPath } from "@/lib/locale-path";
+import { localePath, localeSwitchHref } from "@/lib/locale-path";
 import { writeLocaleChoiceCookie } from "@/lib/locale-geo";
 import { careCategoryArt } from "@/lib/care-category-art";
 import { feePillPulses } from "@/lib/card-photo-pills";
@@ -497,7 +497,9 @@ export function AirbnbLanguage() {
     writeLocaleChoiceCookie(code);
     setLocale(code, { lock: true });
     applyDocumentLocale(code);
-    const dest = localeSwitchPath(pathname, code);
+    const path = typeof window !== "undefined" ? window.location.pathname : pathname;
+    const search = typeof window !== "undefined" ? window.location.search : "";
+    const dest = localeSwitchHref(path, search, code);
     if (user) void saveMyLocale({ data: { locale: code } }).catch(() => undefined);
     if (dest) window.location.assign(dest);
   }

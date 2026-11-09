@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState, type FormEvent, type MutableR
 import { authClient, authEnabled, clearLocalSignedOut, dropExistingSession, signIn, turnstileFetchOptions } from "@/lib/auth/client";
 import { authClientErrorMessage, friendlyAuthError } from "@/lib/auth/login-errors";
 import { loginSubmittedText } from "@/lib/login-fields";
-import { useCredentialFormReady } from "@/lib/use-credential-form";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
 import { TurnstileField, useTurnstileToken } from "@/components/turnstile-field";
 import { reviewerSignInSkipsTurnstile } from "@/lib/reviewer-accounts";
@@ -167,6 +166,10 @@ function LoginEmailControl({
       className="ke-input mt-1"
       defaultValue=""
       onInput={(e) => remember(e.currentTarget.value)}
+      onChange={(e) => remember(e.currentTarget.value)}
+      onAnimationStart={(e) => {
+        if (e.animationName === "ke-autofill-start") remember(e.currentTarget.value);
+      }}
       onBlur={() => onBlurEmail(emailRef.current.trim())}
       autoComplete={mode === "in" ? "username webauthn" : "email"}
       autoCapitalize="none"
@@ -201,6 +204,12 @@ function LoginPasswordControl({
           const value = e.currentTarget.value;
           passwordRef.current = value;
           if (showRules) setPassword(value);
+        }}
+        onChange={(e) => {
+          passwordRef.current = e.currentTarget.value;
+        }}
+        onAnimationStart={(e) => {
+          if (e.animationName === "ke-autofill-start") passwordRef.current = e.currentTarget.value;
         }}
         autoComplete={mode === "up" ? "new-password" : "current-password"}
       />
@@ -290,7 +299,6 @@ export function LoginScreen({
   const router = useRouter();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const loginPath = isFrPath(pathname) ? "/fr/login" : "/login";
-  const formReady = useCredentialFormReady();
   const frAuthQc = useRouteContext({ from: "__root__" }).frAuthQc === true;
   const forgotTo =
     isFrPath(pathname) || (frAuthQc && locale === "fr") ? "/fr/forgot-password" : "/forgot-password";
@@ -620,10 +628,10 @@ export function LoginScreen({
     const form = new FormData(e.currentTarget as HTMLFormElement);
     const email = loginSubmittedText(form, "email", emailRef.current, true);
     const password = loginSubmittedText(form, "password", passwordRef.current, false);
-    if (!email || !password) throw new Error("Enter your email and password.");
-    const name = nameRef.current.trim();
-    const signingOperator = email.toLowerCase() === OPERATOR_EMAIL;
     try {
+      if (!email || !password) throw new Error("Enter your email and password.");
+      const name = nameRef.current.trim();
+      const signingOperator = email.toLowerCase() === OPERATOR_EMAIL;
       if (operator && !signingOperator) {
         throw new Error("Operator sign-in is only for the KidEase owner account.");
       }
@@ -981,12 +989,15 @@ export function LoginScreen({
                 {t("loginMethodsFailed")}
               </p>
             ) : null}
+            {turnstileRequired && !token.trim() && !(mode === "in" && reviewerSignIn) ? (
+              <p className="text-sm text-muted" role="status" data-ke="turnstile-status">{t("turnstileRequired")}</p>
+            ) : null}
             <Button
               type="submit"
               size="lg"
               className="w-full min-h-12"
               data-ke="email-primary"
-              disabled={!formReady || busy || (turnstileRequired && !token.trim() && !(mode === "in" && reviewerSignIn))}
+              disabled={busy}
             >
               {busy ? t("openingDesk") : mode === "up" && !operator ? t("createAccount") : t("signIn")}
             </Button>

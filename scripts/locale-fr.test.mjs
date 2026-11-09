@@ -157,7 +157,7 @@ test("FR routes and language toggle are wired to the existing locale store", () 
     assert.equal(existsSync(join(root, file)), true, file);
   }
   assert.match(src("src/routes/fr.tsx"), /LocalePathBoot locale="fr"/);
-  assert.match(src("src/components/language-select.tsx"), /localeSwitchPath/);
+  assert.match(src("src/components/language-select.tsx"), /localeSwitchHref/);
   assert.match(src("src/components/native-boot.tsx"), /isFrPath/);
   assert.equal(MARKETING_PAGE_SEO_FR.home.path, "/fr");
   assert.equal(LEGAL_PAGE_SEO_FR.privacy.path, "/fr/privacy");
