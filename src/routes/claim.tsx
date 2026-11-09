@@ -11,7 +11,7 @@ import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { PROVIDER_TERMS_VERSION } from "@/lib/legal-copy-v2";
-import { searchClaimable, saveClaimFees, startClaim, submitEnrollLicense, verifyClaim, type ClaimHit } from "@/lib/server/claims";
+import { previewClaimTarget, searchClaimable, saveClaimFees, startClaim, submitEnrollLicense, verifyClaim, type ClaimHit } from "@/lib/server/claims";
 import { ClaimVerifyWizard, type ClaimDeliveryView } from "@/components/claim-wizard";
 import { isClaimProduction } from "@/lib/claim-contact";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -67,6 +67,8 @@ function ClaimRoute() {
 export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateSearch> }) {
   const q0 = search.q ?? "";
   const id0 = search.id ?? "";
+  const [selected, setSelected] = useState<{ id: string; name: string; city: string; province: string } | null>(null);
+  const [selectedMiss, setSelectedMiss] = useState(false);
   const { t, locale } = useCopy();
   const nativeShell = useInNativeShell();
   const showPayCtas = useShowPayCtas();
@@ -119,6 +121,27 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
   useEffect(() => {
     if (!id0 || !user) return;
     void begin(id0);
+  }, [id0, user]);
+
+  useEffect(() => {
+    if (!id0 || user) {
+      setSelected(null);
+      setSelectedMiss(false);
+      return;
+    }
+    let live = true;
+    void previewClaimTarget({ data: id0 })
+      .then((row) => {
+        if (!live) return;
+        setSelected(row);
+        setSelectedMiss(!row);
+      })
+      .catch(() => {
+        if (live) setSelectedMiss(true);
+      });
+    return () => {
+      live = false;
+    };
   }, [id0, user]);
 
   useEffect(() => {
@@ -375,6 +398,20 @@ export function ClaimPage({ search }: { search: ReturnType<typeof claimValidateS
           />
         ) : (
           <>
+            {selected && !user ? (
+              <section className="mt-6 rounded-xl bg-surface p-4 ring-1 ring-border" data-ke="claim-selected">
+                <h2 className="font-display text-2xl">{selected.name}</h2>
+                <p className="mt-1 text-sm text-muted">{[selected.city, selected.province].filter(Boolean).join(", ")}</p>
+                <Button className="mt-4 min-h-11" type="button" onClick={() => void begin(selected.id, selected.name)}>
+                  {t("claimThis")}
+                </Button>
+              </section>
+            ) : null}
+            {selectedMiss && !user ? (
+              <p className="mt-4 text-sm text-muted" role="status" data-ke="claim-selected-miss">
+                {t("claimNoMatch")}
+              </p>
+            ) : null}
             <div ref={box} className="relative mt-6">
               <input
                 value={q}

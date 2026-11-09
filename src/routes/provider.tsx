@@ -146,7 +146,8 @@ export function providerHead() {
 
 export function providerValidateSearch(s: Record<string, unknown>) {
     const out: { desk?: DaycareDesk; preview?: "support"; claimed?: boolean; focus?: ListingCoachFocus; centre?: string; section?: string } = {};
-    const desk = typeof s.desk === "string" ? s.desk : "";
+    const deskRaw = typeof s.desk === "string" ? s.desk : "";
+    const desk = deskRaw === "overview" ? "today" : deskRaw;
     if (DESKS.includes(desk as DaycareDesk)) out.desk = desk as DaycareDesk;
     if (s.preview === "support") out.preview = "support";
     if (s.claimed === true || s.claimed === "1" || s.claimed === "true") out.claimed = true;
