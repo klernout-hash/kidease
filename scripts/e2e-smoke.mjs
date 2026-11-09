@@ -1013,6 +1013,10 @@ async function clientHandlerSmoke(page, base) {
       note: `method=${method || "missing"}`,
     });
     await page.context().clearCookies().catch(() => {});
+    await page.evaluate(() => {
+      sessionStorage.clear();
+      localStorage.clear();
+    }).catch(() => {});
   } catch (err) {
     record("client-handlers", false, { note: err instanceof Error ? err.message : String(err) });
   }
@@ -1837,6 +1841,14 @@ try {
     status: healthResp?.status() ?? 0,
   });
 
+  await page.context().clearCookies().catch(() => {});
+  await page.context().addCookies([
+    { name: "kidease-locale", value: "en", url: base },
+  ]).catch(() => {});
+  await page.evaluate(() => {
+    sessionStorage.clear();
+    localStorage.clear();
+  }).catch(() => {});
   const loginResp = await page.goto(new URL(SMOKE_PATHS.login, base).href, {
     waitUntil: "domcontentloaded",
     timeout: timeoutMs,
