@@ -92,7 +92,9 @@ test("stored QuickBooks tokens round-trip and a bad key returns nothing", () => 
 test("the provider desk opens Money when QuickBooks sends the centre back", () => {
   const provider = readFileSync(new URL("../src/routes/provider.tsx", import.meta.url), "utf8");
   assert.match(provider, /if \(out\.qboCode && out\.qboState && out\.realmId\) out\.desk = "money"/);
-  assert.match(provider, /<QboPanel daycareId=\{deskListings\[0\]\.id\} \/>/);
+  assert.match(provider, /moneyCentreChoice/);
+  assert.match(provider, /data-ke="money-centre-pick"/);
+  assert.match(provider, /<QboPanel daycareId=\{moneyListing\.id\} \/>/);
 });
 
 test("QuickBooks source does not print or store a credential", () => {

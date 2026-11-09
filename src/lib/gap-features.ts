@@ -234,6 +234,18 @@ export function pickCentre(ids: readonly string[], requested: string | null | un
   return ids.includes(want) ? want : null;
 }
 
+/** QuickBooks belongs to one centre. Two or more centres need an explicit pick. */
+export function moneyCentreChoice(
+  ids: readonly string[],
+  requested: string | null | undefined,
+): { id: string | null; needsPick: boolean } {
+  const unique = [...new Set(ids.map((id) => String(id || "").trim()).filter(Boolean))];
+  const picked = pickCentre(unique, requested);
+  if (picked) return { id: picked, needsPick: false };
+  if (unique.length === 1) return { id: unique[0], needsPick: false };
+  return { id: null, needsPick: unique.length > 1 };
+}
+
 export const GAP_COPY = {
   en: {
     jobsDaycareTitle: "ECE jobs",
