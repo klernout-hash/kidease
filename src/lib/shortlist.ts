@@ -31,6 +31,8 @@ const LANG_NAMES: Record<string, { en: string; fr: string }> = Object.fromEntrie
 
 let cachedIds: Set<string> | null = null;
 let cachedUserId: string | null = null;
+let loadingIds: Promise<string[]> | null = null;
+const SHORTLIST_STORAGE = "kidease-shortlist";
 
 export type ShortlistListing = {
   id: string;
@@ -91,15 +93,59 @@ export function takePendingSave(): string | null {
   return id;
 }
 
+function storedShortlist(userId?: string | null): string[] | null {
+  if (typeof window === "undefined" || !userId) return null;
+  try {
+    const raw = window.sessionStorage.getItem(`${SHORTLIST_STORAGE}:${userId}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return null;
+    return parsed.filter(isValidDaycareId);
+  } catch {
+    return null;
+  }
+}
+
 export function readShortlistCache(userId?: string | null): Set<string> | null {
-  if (!cachedIds) return null;
+  if (!cachedIds) {
+    const stored = storedShortlist(userId);
+    if (!stored) return null;
+    cachedIds = new Set(stored);
+    if (userId) cachedUserId = userId;
+  }
   if (userId && cachedUserId && cachedUserId !== userId) return null;
   return new Set(cachedIds);
 }
 
+/** One saved-list read for every card on the page. A stored list only paints the heart until this returns. */
+export function loadShortlistIds(userId: string, load: () => Promise<string[]>): Promise<string[]> {
+  if (!loadingIds) {
+    loadingIds = load()
+      .then((ids) => {
+        writeShortlistCache(ids, userId);
+        return ids;
+      })
+      .finally(() => {
+        loadingIds = null;
+      });
+  }
+  return loadingIds;
+}
+
+function persistShortlist(userId?: string | null) {
+  if (typeof window === "undefined" || !userId || !cachedIds) return;
+  try {
+    window.sessionStorage.setItem(`${SHORTLIST_STORAGE}:${userId}`, JSON.stringify([...cachedIds]));
+  } catch {
+    /* private mode */
+  }
+}
+
 export function writeShortlistCache(ids: string[], userId?: string | null) {
-  cachedIds = new Set(ids.filter(isValidDaycareId));
+  const clean = ids.filter(isValidDaycareId);
+  cachedIds = new Set(clean);
   if (userId) cachedUserId = userId;
+  persistShortlist(userId);
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event(SHORTLIST_EVENT));
   }
@@ -114,14 +160,23 @@ export function markShortlistCache(id: string, saved: boolean, userId?: string |
   if (userId) cachedUserId = userId;
   if (saved) cachedIds.add(id);
   else cachedIds.delete(id);
+  persistShortlist(userId ?? cachedUserId);
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event(SHORTLIST_EVENT));
   }
 }
 
 export function clearShortlistCache() {
+  const userId = cachedUserId;
   cachedIds = null;
   cachedUserId = null;
+  if (typeof window !== "undefined" && userId) {
+    try {
+      window.sessionStorage.removeItem(`${SHORTLIST_STORAGE}:${userId}`);
+    } catch {
+      /* private mode */
+    }
+  }
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event(SHORTLIST_EVENT));
   }

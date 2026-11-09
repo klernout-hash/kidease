@@ -12,6 +12,7 @@ import { SIGNUP_FUNNEL_EVENT, signupFunnelPayload, signupPromptStep } from "@/li
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { listSavedIds, saveDaycare, unsaveDaycare } from "@/lib/server/family";
 import {
+  loadShortlistIds,
   markShortlistCache,
   readShortlistCache,
   SHORTLIST_EVENT,
@@ -29,10 +30,7 @@ const HEART_SAVED = "#FF385C";
 export type SaveListingAppearance = "photo" | "ghost" | "bar";
 
 async function hydrateShortlistCache(userId: string) {
-  const cached = readShortlistCache(userId);
-  if (cached) return cached;
-  const ids = await listSavedIds();
-  writeShortlistCache(ids, userId);
+  const ids = await loadShortlistIds(userId, listSavedIds);
   return new Set(ids);
 }
 
@@ -80,7 +78,9 @@ export function SaveListingButton({
         if (live) setSaved(ids.has(daycareId));
       })
       .catch(() => {
-        if (live) setSaved(false);
+        if (!live) return;
+        const cache = readShortlistCache(user.id);
+        if (cache) setSaved(cache.has(daycareId));
       });
     return () => {
       live = false;

@@ -184,6 +184,7 @@ export function ProviderPage() {
   const { t, locale } = useCopy();
   const { session } = useSessionDesks();
   const centreOwner = session?.centreOwner !== false;
+  const hostListingKnown = session != null && typeof session.hostListing === "boolean";
   const hostListing = session?.hostListing === true;
   const topRated = session?.topRated === true;
   const [listingEditorOpen, setListingEditorOpen] = useState(false);
@@ -574,7 +575,13 @@ export function ProviderPage() {
           onSaved={() => void load()}
         />
       ) : null}
-      {desk === "calendar" && !hostListing ? (
+      {desk === "calendar" && !hostListingKnown ? (
+        <section className="mx-auto max-w-2xl px-4 py-6" data-ke="host-calendar" role="status" aria-live="polite" aria-busy="true">
+          <h1 className="font-display text-2xl">{t("navCalendar")}</h1>
+          <p className="mt-2 text-sm text-muted">{t("loading")}</p>
+        </section>
+      ) : null}
+      {desk === "calendar" && hostListingKnown && !hostListing ? (
         <section className="mx-auto max-w-2xl px-4 py-6" data-ke="host-calendar">
           <h1 className="font-display text-2xl">{t("navCalendar")}</h1>
           <p className="mt-2 text-sm text-muted">{t("comingSoon")}</p>

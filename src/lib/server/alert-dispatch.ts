@@ -5,6 +5,7 @@
  * delivery. This file does not invent seats, fees, or police checks.
  */
 
+import { customerAlertCutoffMs } from "@/lib/customer-alert-policy";
 import { getSql } from "@/lib/db";
 import { nid } from "@/lib/utils";
 import { subscriptionsEnabled } from "@/lib/features";
@@ -282,10 +283,13 @@ export async function drainAlertOutbox(opts?: { now?: Date }): Promise<{ drained
   const now = opts?.now ?? new Date();
   const sql = await getSql();
   await ensure(sql);
+  const cutoff = new Date(customerAlertCutoffMs()).toISOString();
   const rows = await sql<OutboxRow>`
     select id, user_id, category, locale, title, body, href, critical, email_fallback
     from notification_outbox
-    where sent_at is null and send_after <= ${now}
+    where sent_at is null
+      and send_after <= ${now}
+      and created_at >= ${cutoff}
     order by send_after asc
     limit 40
   `.catch(() => [] as OutboxRow[]);
