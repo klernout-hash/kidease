@@ -4,6 +4,7 @@
  * A missing fact never becomes an alert.
  */
 
+import { certExpiryDue } from "./cert-expiry.ts";
 import { classifySafeArrival, safeArrivalGate } from "./safe-arrival.ts";
 import {
   publicCentreName,
@@ -77,7 +78,7 @@ export type ScanFacts = {
   }>;
   pickups?: Array<{ id: string; daycareId: string; name: string; listed: boolean; known: boolean; staffUserIds: string[] }>;
   meds?: Array<{ id: string; daycareId: string; name: string; time: string; logged: boolean; staffUserIds: string[]; timeZone: string }>;
-  certs?: Array<{ id: string; daycareId: string; name: string; expiresOn: string; userIds: string[] }>;
+  certs?: Array<{ id: string; daycareId: string; name: string; expiresOn: string; userIds: string[]; consent?: boolean }>;
   safetyChecks?: Array<{ daycareId: string; name: string; lastAt: string | null; ever: boolean; ownerUserIds: string[] }>;
   incidents?: Array<{ id: string; daycareId: string; name: string; open: boolean; staffUserIds: string[] }>;
   notes?: Array<{ id: string; daycareId: string; name: string; staffUserIds: string[] }>;
@@ -561,7 +562,7 @@ export function planUnifiedScan(facts: ScanFacts): UnifiedCandidate[] {
   }
 
   for (const cert of facts.certs || []) {
-    if (!expiryDue(cert.expiresOn, now)) continue;
+    if (cert.consent !== true || !certExpiryDue(cert.expiresOn, now)) continue;
     for (const userId of cert.userIds) {
       out.push(
         row({
