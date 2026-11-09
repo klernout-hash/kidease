@@ -2486,7 +2486,7 @@
   "notifications": "ਸੂਚਨਾਵਾਂ",
   "notificationsEmpty": "ਹਾਲੇ ਕੋਈ ਸੂਚਨਾ ਨਹੀਂ",
   "notificationsEmptyLead": "ਜਦੋਂ ਕੋਈ ਟੂਰ, ਬੇਨਤੀ, ਕਲੇਮ ਜਾਂ ਸੁਨੇਹਾ ਤੁਹਾਡੀ ਲੋੜ ਰੱਖੇ, ਉਹ ਇੱਥੇ ਦਿਖੇਗਾ।",
-  "notificationsUnread": "{n} ਨਾ-ਪੜ੍ਹੀਆਂ",
+  "notificationsUnread": "{n} ਚਿਤਾਵਨੀਆਂ",
   "notifLeadNew": "ਨਵੀਂ ਬੇਨਤੀ · {name}",
   "notifLeadUpdated": "{name} ਨੇ ਤੁਹਾਡੀ ਬੇਨਤੀ ਅੱਪਡੇਟ ਕੀਤੀ",
   "notifTourNew": "ਟੂਰ ਬੇਨਤੀ · {name}",
@@ -3479,5 +3479,6 @@
   "inboxPhoneSent": "A phone alert was sent to {name}.",
   "inboxAssignMe": "Assign to me",
   "inboxOlderSearch": "{count} older messages",
-  "inboxAssignedYou": "Assigned to you"
+  "inboxAssignedYou": "Assigned to you",
+  "notificationsBellHint": "ਚਿਤਾਵਨੀਆਂ, ਨਾ-ਪੜ੍ਹੇ ਸੁਨੇਹੇ ਨਹੀਂ"
 }

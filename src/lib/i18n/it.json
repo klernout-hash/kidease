@@ -2486,7 +2486,7 @@
   "notifications": "Notifiche",
   "notificationsEmpty": "Ancora nessuna notifica",
   "notificationsEmptyLead": "Quando una visita, una richiesta, una rivendicazione o un messaggio richiede il Suo intervento, comparirà qui.",
-  "notificationsUnread": "{n} non lette",
+  "notificationsUnread": "{n} avvisi",
   "notifLeadNew": "Nuova richiesta · {name}",
   "notifLeadUpdated": "{name} ha aggiornato la Sua richiesta",
   "notifTourNew": "Richiesta di visita · {name}",
@@ -3479,5 +3479,6 @@
   "inboxPhoneSent": "A phone alert was sent to {name}.",
   "inboxAssignMe": "Assign to me",
   "inboxOlderSearch": "{count} older messages",
-  "inboxAssignedYou": "Assigned to you"
+  "inboxAssignedYou": "Assigned to you",
+  "notificationsBellHint": "Avvisi, non messaggi non letti"
 }

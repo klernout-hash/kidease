@@ -16,19 +16,23 @@ export function NotificationBell({
   const { session } = useSessionDesks();
   const unread = failClosedUnread(session?.notificationUnread);
   const badge = formatUnreadBadge(unread);
-  const label = badge ? `${t("notifications")}, ${t("notificationsUnread").replace("{n}", badge)}` : t("notifications");
+  const hint = t("notificationsBellHint");
+  const count = badge ? t("notificationsUnread").replace("{n}", badge) : "";
+  const label = count ? `${t("notifications")}. ${hint}. ${count}` : `${t("notifications")}. ${hint}`;
 
   return (
     <Link
       to={NOTIFICATIONS_PATH}
       onClick={onClick}
       aria-label={label}
+      title={hint}
       className={cn(
         "relative grid size-12 shrink-0 place-items-center rounded-full text-fg hover:bg-surface",
         className,
       )}
     >
       <Bell className="size-6" strokeWidth={1.75} />
+      <span className="sr-only" data-ke="notification-bell-hint">{hint}</span>
       {badge ? (
         <span
           data-ke="notification-unread"

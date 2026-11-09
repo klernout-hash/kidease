@@ -2486,7 +2486,7 @@
   "notifications": "الإشعارات",
   "notificationsEmpty": "لا توجد إشعارات بعد",
   "notificationsEmptyLead": "عندما تحتاج جولة أو طلب أو مطالبة أو رسالة إلى تدخلك، ستظهر هنا.",
-  "notificationsUnread": "{n} غير مقروء",
+  "notificationsUnread": "{n} تنبيهات",
   "notifLeadNew": "طلب جديد · {name}",
   "notifLeadUpdated": "حدّث {name} طلبك",
   "notifTourNew": "طلب جولة · {name}",
@@ -3479,5 +3479,6 @@
   "inboxPhoneSent": "A phone alert was sent to {name}.",
   "inboxAssignMe": "Assign to me",
   "inboxOlderSearch": "{count} older messages",
-  "inboxAssignedYou": "Assigned to you"
+  "inboxAssignedYou": "Assigned to you",
+  "notificationsBellHint": "تنبيهات، وليست رسائل غير مقروءة"
 }

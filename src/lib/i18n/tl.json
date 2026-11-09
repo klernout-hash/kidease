@@ -2486,7 +2486,7 @@
   "notifications": "Mga abiso",
   "notificationsEmpty": "Wala pang abiso",
   "notificationsEmptyLead": "Kapag may tour, request, claim, o mensaheng kailangan ka, lilitaw ito rito.",
-  "notificationsUnread": "{n} hindi pa nababasa",
+  "notificationsUnread": "{n} alerto",
   "notifLeadNew": "Bagong request · {name}",
   "notifLeadUpdated": "In-update ni {name} ang request mo",
   "notifTourNew": "Request sa tour · {name}",
@@ -3479,5 +3479,6 @@
   "inboxPhoneSent": "A phone alert was sent to {name}.",
   "inboxAssignMe": "Assign to me",
   "inboxOlderSearch": "{count} older messages",
-  "inboxAssignedYou": "Assigned to you"
+  "inboxAssignedYou": "Assigned to you",
+  "notificationsBellHint": "Mga alerto, hindi unread na mensahe"
 }
