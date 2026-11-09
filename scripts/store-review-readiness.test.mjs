@@ -47,7 +47,8 @@ test("store reviewer sign-in skips Turnstile and still checks the password", () 
   assert.equal(reviewerSignInSkipsTurnstile(null), false);
   const login = src("src/routes/login.tsx");
   assert.match(login, /reviewerSignInSkipsTurnstile\(email\)/);
-  assert.match(login, /turnstileRequired && !token\.trim\(\)/);
+  assert.match(login, /turnstileRequired && !challenge && !reviewerBypass/);
+  assert.doesNotMatch(login, /data-ke="turnstile-status"/);
   assert.match(login, /mode === "in" && reviewerSignIn/);
   const auth = src("src/routes/api/auth/$.ts");
   assert.match(auth, /signInEmailSkipsTurnstile/);
