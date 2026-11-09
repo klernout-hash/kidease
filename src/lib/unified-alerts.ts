@@ -789,7 +789,10 @@ export function decideUnifiedAlert(input: {
     staffShiftQuiet: type.audience === "staff" && !input.settings.quietCustom,
     shift: input.shift,
   });
-  const safeArrival = input.typeId === "staff_child_not_arrived" || input.typeId === "staff_child_still_here";
+  const safeArrival =
+    input.typeId === "staff_child_not_arrived" ||
+    input.typeId === "staff_child_still_here" ||
+    input.typeId === "staff_cert_expiring";
   const outboundChannels = safeArrival ? [] : channels.filter((channel) => channel !== "in_app");
   const kept = safeArrival ? channels.filter((channel) => channel === "in_app") : channels;
   if (!outboundChannels.length) {
