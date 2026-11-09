@@ -13,6 +13,7 @@ import { formatAgeLabel } from "@/lib/templates";
 import { isClaimVerified } from "@/lib/trust";
 import { tourSlaRemainingMs } from "@/lib/today-sla";
 import { formatPreferredTimes, parsePreferredTimes } from "@/lib/threads";
+import { customerAlertSummary, sameMailbox } from "@/lib/customer-alert-policy";
 import { chatBodyWithoutSmsFooter, daycareReplySms, parentMessageSms } from "@/lib/sms-copy";
 import { messageAlertFor, notificationSourceKey } from "@/lib/notifications";
 import { saveParentInAppNotice } from "@/lib/server/parent-notice";
@@ -424,12 +425,14 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
       if (extras && !recipients.some((r) => r.email.toLowerCase() === extras.toLowerCase())) {
         recipients.push({ email: extras, name: row.name });
       }
+      const centreMail = customerAlertSummary({ kind: "message", centreName: row.name, locale: "en" });
       for (const r of recipients) {
+        if (sameMailbox(actor.email, r.email)) continue;
         void notifyThreadParty({
           to: r.email,
           name: r.name,
-          subject: `New message about ${row.name}`,
-          preview: body.slice(0, 240),
+          subject: centreMail.subject,
+          preview: centreMail.preview,
           threadUrl,
           daycareName: row.name,
         }).catch(() => undefined);
@@ -470,14 +473,17 @@ export const sendConnectedMessage = createServerFn({ method: "POST" })
         });
       }
       const parent = await lookupUser(row.user_id);
-      void notifyThreadParty({
-        to: parent.email,
-        name: parent.name,
-        subject: `New message from ${row.name}`,
-        preview: body.slice(0, 240),
-        threadUrl,
-        daycareName: row.name,
-      }).catch(() => undefined);
+      if (!sameMailbox(actor.email, parent.email)) {
+        const parentMail = customerAlertSummary({ kind: "message", centreName: row.name, locale: "en" });
+        void notifyThreadParty({
+          to: parent.email,
+          name: parent.name,
+          subject: parentMail.subject,
+          preview: parentMail.preview,
+          threadUrl,
+          daycareName: row.name,
+        }).catch(() => undefined);
+      }
       void dispatchCustomerAlert({
         userId: row.user_id,
         category: "message",
