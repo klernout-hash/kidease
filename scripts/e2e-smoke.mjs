@@ -1012,6 +1012,7 @@ async function clientHandlerSmoke(page, base) {
     record("login-no-password-query", method === "post" && !page.url().includes("password="), {
       note: `method=${method || "missing"}`,
     });
+    await page.context().clearCookies().catch(() => {});
   } catch (err) {
     record("client-handlers", false, { note: err instanceof Error ? err.message : String(err) });
   }
