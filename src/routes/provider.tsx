@@ -68,6 +68,7 @@ import { publicApprovalEligible } from "@/lib/approve-live";
 import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { officialLicenceNumber } from "@/lib/licensing";
 import { ProviderMoneyPanel } from "@/components/provider-money";
+import { QboPanel } from "@/components/qbo-panel";
 import { TaxReceiptStudio } from "@/components/tax-receipt-studio";
 import { TourCalendarPage } from "@/components/tour-calendar-page";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
@@ -145,7 +146,17 @@ export function providerHead() {
 }
 
 export function providerValidateSearch(s: Record<string, unknown>) {
-    const out: { desk?: DaycareDesk; preview?: "support"; claimed?: boolean; focus?: ListingCoachFocus; centre?: string; section?: string } = {};
+    const out: {
+      desk?: DaycareDesk;
+      preview?: "support";
+      claimed?: boolean;
+      focus?: ListingCoachFocus;
+      centre?: string;
+      section?: string;
+      qboCode?: string;
+      qboState?: string;
+      realmId?: string;
+    } = {};
     const deskRaw = typeof s.desk === "string" ? s.desk : "";
     const desk = deskRaw === "overview" ? "today" : deskRaw;
     if (DESKS.includes(desk as DaycareDesk)) out.desk = desk as DaycareDesk;
@@ -155,6 +166,10 @@ export function providerValidateSearch(s: Record<string, unknown>) {
     if (COACH_FOCUS.has(focus as ListingCoachFocus)) out.focus = focus as ListingCoachFocus;
     if (typeof s.centre === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(s.centre)) out.centre = s.centre;
     if (typeof s.section === "string" && isHostSection(s.section)) out.section = s.section;
+    if (typeof s.code === "string" && s.code.length > 0 && s.code.length <= 512) out.qboCode = s.code;
+    if (typeof s.state === "string" && /^[A-Za-z0-9_-]{8,80}$/.test(s.state)) out.qboState = s.state;
+    if (typeof s.realmId === "string" && /^[0-9]{1,32}$/.test(s.realmId)) out.realmId = s.realmId;
+    if (out.qboCode && out.qboState && out.realmId) out.desk = "money";
   return out;
 }
 
@@ -904,6 +919,7 @@ export function ProviderPage() {
         centreOwner ? (
           <div className="space-y-6">
             <ProviderMoneyPanel />
+            {deskListings[0]?.id ? <QboPanel daycareId={deskListings[0].id} /> : null}
             <TaxReceiptStudio desk="centre" />
           </div>
         ) : (
