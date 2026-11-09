@@ -26,7 +26,7 @@ export async function dashboardForActor(
   const { assertGovBudget, auditGov } = await import("@/lib/server/gov-actor.server");
   const { bundleForProvince, loadGovBundle } = await import("@/lib/server/gov-data.server");
   assertGovBudget(actor, "read");
-  // A province account stays in that province. All of Canada is only for an org stored as Canada.
+  // A province account stays in that province and cannot widen. All of Canada is only for an org stored as Canada.
   const scope = parseGovScope({
     province: govScopeProvince(actor, input.province),
     region: input.region,
