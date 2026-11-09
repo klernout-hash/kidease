@@ -26,6 +26,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(PasskeyPlugin.class);
         StorePlugins.register(this);
         super.load();
+        MessageChannel.ensure(this);
         installAdminWebOnlyClient();
         String flavor = BuildConfig.FLAVOR == null ? "" : BuildConfig.FLAVOR;
         applyStoreUserAgent(flavor);

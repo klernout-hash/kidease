@@ -83,6 +83,18 @@ export const registerPushToken = createServerFn({ method: "POST" })
     return upsertPushDeviceToken(sql, context.userId, { ...data, userAgent });
   });
 
+export const revokeMyPushDevice = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { token?: string }) => ({
+    token: String(input?.token || "").trim(),
+  }))
+  .handler(async ({ context, data }) => {
+    const { revokePushDeviceToken } = await import("./push-tokens");
+    const sql = await getSql();
+    const ok = await revokePushDeviceToken(sql, context.userId, data.token);
+    return { ok };
+  });
+
 export const dryRunPush = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { userId?: string; title?: string; body?: string } = {}) => ({

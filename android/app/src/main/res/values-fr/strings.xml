@@ -3,4 +3,6 @@
     <string name="app_name">KidEase</string>
     <string name="title_activity_main">KidEase</string>
     <string name="location_permission_rationale">KidEase utilise votre position uniquement pendant la recherche afin d’afficher les garderies autorisées près de vous. La position n’est pas utilisée en arrière-plan.</string>
+    <string name="messages_channel_name">Messages</string>
+    <string name="messages_channel_description">Nouveaux messages. L’écran verrouillé n’affiche pas le texte du message.</string>
 </resources>
