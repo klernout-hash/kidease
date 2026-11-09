@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ThreadCallActions } from "@/components/thread-call-actions";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Inbox, Search, X } from "lucide-react";
@@ -31,7 +31,7 @@ import {
 } from "@/lib/inbox-thread-ui";
 import { loadDeskFeatureFlags } from "@/lib/server/desk-features";
 import { nextInboxAction } from "@/lib/engagement";
-import { assignInboxThread, searchInboxText } from "@/lib/server/engagement";
+import { assignInboxThread, searchInboxList, searchInboxText } from "@/lib/server/engagement";
 import { listInbox, sendConnectedMessage } from "@/lib/server/inbox";
 import { useViewAs } from "@/components/view-as-banner";
 import { chatBodyWithoutSmsFooter } from "@/lib/sms-copy";
@@ -62,6 +62,8 @@ export function CentreInboxDesk({
   const [filter, setFilter] = useState<MessageFilter>("all");
   const [query, setQuery] = useState("");
   const [olderHits, setOlderHits] = useState<number | null>(null);
+  const [bodyMatchIds, setBodyMatchIds] = useState<string[]>([]);
+  const listGen = useRef(0);
   const [supportOpen, setSupportOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [tours, setTours] = useState<TourRequest[]>([]);
@@ -79,16 +81,19 @@ export function CentreInboxDesk({
   const [voiceReady, setVoiceReady] = useState(false);
 
   const visible = useMemo(
-    () => (items ? filterInboxList(items, { filter, query }) : []),
-    [items, filter, query],
+    () => (items ? filterInboxList(items, { filter, query, bodyMatchIds: new Set(bodyMatchIds) }) : []),
+    [items, filter, query, bodyMatchIds],
   );
   const selected = visible.find((row) => row.id === selectedId) ?? items?.find((row) => row.id === selectedId) ?? null;
   const tour = tours[0] ?? null;
   const templates = opsQuickReplies();
 
   async function loadList() {
+    const gen = ++listGen.current;
     const rows = (await listInbox({ data: { view: "centre" } })) as CentreInboxThread[];
+    if (gen !== listGen.current) return;
     const flags = await loadDeskFeatureFlags().catch(() => null);
+    if (gen !== listGen.current) return;
     if (!flags?.unifiedInbox) {
       setItems(rows);
       return;
@@ -120,6 +125,28 @@ export function CentreInboxDesk({
     setDetails(meta);
     void loadList().catch(() => undefined);
   }
+
+  useEffect(() => {
+    const needle = query.trim();
+    if (!user?.id || needle.length < 2) {
+      setBodyMatchIds([]);
+      return;
+    }
+    let live = true;
+    const timer = window.setTimeout(() => {
+      void searchInboxList({ data: { query: needle } })
+        .then((res) => {
+          if (live) setBodyMatchIds(res.ok ? res.ids : []);
+        })
+        .catch(() => {
+          if (live) setBodyMatchIds([]);
+        });
+    }, 250);
+    return () => {
+      live = false;
+      window.clearTimeout(timer);
+    };
+  }, [query, user?.id]);
 
   useEffect(() => {
     const needle = query.trim();

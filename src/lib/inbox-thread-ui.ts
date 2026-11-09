@@ -90,18 +90,32 @@ export function isInboxRequest(row: Pick<InboxListRow, "status" | "tourStatus" |
   return false;
 }
 
+/**
+ * Names and the latest preview match immediately. Older message text matches
+ * only when the server says that thread id contains it. The clock label is
+ * not part of the search.
+ */
+export function inboxListMatches(
+  row: Pick<InboxListRow, "id" | "parentName" | "preview" | "daycareName" | "centreName" | "memberNames" | "childName">,
+  query: string,
+  bodyMatchIds?: ReadonlySet<string>,
+): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  if (bodyMatchIds?.has(row.id)) return true;
+  const hay = [row.parentName, row.preview, row.daycareName, row.centreName, row.memberNames, row.childName]
+    .map((part) => (part || "").toLowerCase())
+    .join("\n");
+  return hay.includes(q);
+}
+
 export function filterInboxList<T extends InboxListRow>(
   rows: T[],
-  input: { filter: MessageFilter; query?: string },
+  input: { filter: MessageFilter; query?: string; bodyMatchIds?: ReadonlySet<string> },
 ): T[] {
   const query = (input.query || "").trim().toLowerCase();
   return rows.filter((row) => {
-    if (query) {
-      const hay = [row.parentName, row.preview, row.daycareName, row.centreName, row.memberNames, row.childName]
-        .map((part) => (part || "").toLowerCase())
-        .join("\n");
-      if (!hay.includes(query)) return false;
-    }
+    if (query && !inboxListMatches(row, query, input.bodyMatchIds)) return false;
     const archived = Boolean(row.archived);
     if (input.filter === "archived") return archived;
     if (archived) return false;

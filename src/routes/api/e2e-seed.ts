@@ -294,8 +294,13 @@ async function seed(request: Request) {
       `;
       await sql`
         insert into messages (id, conversation_id, sender, body, kind)
-        values ('e2e-eng-msg-parent', 'e2e-eng-thread', 'parent', 'Can we visit this week?', 'chat')
-        on conflict (id) do nothing
+        values ('e2e-eng-msg-parent', 'e2e-eng-thread', 'parent', 'Can we visit this week and bring the blue folder for the morning drop off?', 'chat')
+        on conflict (id) do update set body = excluded.body
+      `.catch(() => undefined);
+      await sql`delete from conversation_reads where conversation_id = 'e2e-eng-thread'`.catch(() => undefined);
+      await sql`
+        update conversation_user_state set marked_unread = false
+        where conversation_id = 'e2e-eng-thread'
       `.catch(() => undefined);
       await sql`
         insert into messages (id, conversation_id, sender, body, kind)

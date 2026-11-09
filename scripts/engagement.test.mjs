@@ -18,6 +18,7 @@ import {
   staffSeesThread,
   withinSevenDays,
 } from "../src/lib/engagement.ts";
+import { filterInboxList, inboxListMatches } from "../src/lib/inbox-thread-ui.ts";
 
 test("events drop QA, message text, and repeat the first reply once", () => {
   const base = {
@@ -165,6 +166,58 @@ test("reading the centre thread clears the message count and leaves the bell row
   assert.equal(await unread("provider"), 0);
   const bell = await pg.query("select count(*)::int as n from user_notifications where user_id = 'parent' and read_at is null");
   assert.equal(bell.rows[0].n, 1);
+  await pg.close();
+});
+
+test("list search matches an older message, the latest line, and the sender, not the clock", async () => {
+  const row = {
+    id: "t",
+    parentName: "E2E Parent",
+    preview: "Tuesday at 10 still works.",
+    daycareName: "E2E Centre",
+    lastAt: "2026-11-08T23:59:00.000Z",
+  };
+  assert.equal(inboxListMatches(row, "Tuesday"), true);
+  assert.equal(inboxListMatches(row, "E2E Parent"), true);
+  assert.equal(inboxListMatches(row, "blue folder"), false);
+  assert.equal(inboxListMatches(row, "Nov 8"), false);
+  assert.equal(inboxListMatches(row, "blue folder", new Set(["t"])), true);
+  const listed = filterInboxList(
+    [{ ...row, unread: true, daycareName: "E2E Centre" }],
+    { filter: "all", query: "blue folder", bodyMatchIds: new Set(["t"]) },
+  );
+  assert.equal(listed.length, 1);
+  const pg = new PGlite();
+  await pg.exec(`
+    create table conversations (id text primary key, user_id text, daycare_id text, last_at timestamptz default now());
+    create table messages (id text primary key, conversation_id text, sender text, body text, kind text default 'chat', created_at timestamptz default now());
+    create table provider_daycares (user_id text, daycare_id text);
+    insert into conversations (id, user_id, daycare_id) values ('t', 'parent', 'centre');
+    insert into provider_daycares (user_id, daycare_id) values ('provider', 'centre');
+    insert into messages (id, conversation_id, sender, body, created_at) values
+      ('m1', 't', 'parent', 'Can we visit this week and bring the blue folder for the morning drop off?', now() - interval '2 minutes'),
+      ('m2', 't', 'provider', 'Tuesday at 10 still works.', now());
+  `);
+  const preview = await pg.query("select body from messages where conversation_id = 't' order by created_at desc limit 1");
+  assert.equal(String(preview.rows[0].body).includes("blue folder"), false);
+  const hits = await pg.query(
+    `select c.id from conversations c
+     where c.user_id = 'provider' or exists (
+       select 1 from provider_daycares p where p.user_id = 'provider' and p.daycare_id = c.daycare_id
+     )
+     and exists (
+       select 1 from messages m
+       where m.conversation_id = c.id and coalesce(m.kind, 'chat') = 'chat' and m.body ilike $1
+     )`,
+    ["%blue folder%"],
+  );
+  assert.equal(hits.rows[0].id, "t");
+  const other = await pg.query(
+    `select c.id from conversations c
+     where exists (select 1 from provider_daycares p where p.user_id = 'stranger' and p.daycare_id = c.daycare_id)
+     and exists (select 1 from messages m where m.conversation_id = c.id and m.body ilike '%blue folder%')`,
+  );
+  assert.equal(other.rows.length, 0);
   await pg.close();
 });
 

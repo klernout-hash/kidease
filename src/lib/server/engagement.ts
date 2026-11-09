@@ -244,6 +244,45 @@ export const assignInboxThread = createServerFn({ method: "POST" })
     });
   });
 
+export async function searchVisibleThreads(input: { userId: string; query: string }): Promise<{ ok: true; ids: string[] }> {
+  const needle = input.query.trim().replace(/\s+/g, " ").slice(0, 80);
+  if (needle.length < 2) return { ok: true, ids: [] };
+  const like = `%${needle.replace(/[%_]/g, "")}%`;
+  const sql = await getSql();
+  const rows = await sql<{ id: string }>`
+    select c.id
+    from conversations c
+    where (
+      c.user_id = ${input.userId}
+      or exists (
+        select 1 from centre_members m
+        where m.user_id = ${input.userId} and m.daycare_id = c.daycare_id and m.status = 'active'
+      )
+      or exists (
+        select 1 from provider_daycares p
+        where p.user_id = ${input.userId} and p.daycare_id = c.daycare_id
+      )
+    )
+    and exists (
+      select 1 from messages m
+      where m.conversation_id = c.id
+        and m.sender <> 'system'
+        and coalesce(m.kind, 'chat') = 'chat'
+        and m.body ilike ${like}
+    )
+    order by c.last_at desc
+    limit 50
+  `;
+  return { ok: true, ids: rows.map((row) => row.id) };
+}
+
+export const searchInboxList = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { query?: string }) => ({
+    query: String(input?.query || ""),
+  }))
+  .handler(async ({ context, data }) => searchVisibleThreads({ userId: context.userId, query: data.query }));
+
 export const searchInboxText = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator((input: { conversationId?: string; query?: string }) => ({
