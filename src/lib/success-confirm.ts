@@ -76,7 +76,7 @@ export const SUCCESS_ACTIONS: Record<SuccessActionId, SuccessAction> = {
   reviewSubmitted: { variant: "modal", titleKey: "successReviewSubmitted", bodyKey: "reviewSent" },
   contactSent: { variant: "modal", titleKey: "successMessageSent", bodyKey: "successContactBody" },
   resetRequested: { variant: "modal", titleKey: "successResetSent", bodyKey: "successResetBody" },
-  claimSubmitted: { variant: "modal", titleKey: "successClaimSubmitted", bodyKey: "claimVerified" },
+  claimSubmitted: { variant: "modal", titleKey: "successClaimSubmitted", bodyKey: "claimPendingBody" },
   applicationSubmitted: { variant: "modal", titleKey: "successApplicationSubmitted", bodyKey: "successApplicationBody" },
   listingEdits: { variant: "toast", titleKey: "successListingSaved", bodyKey: "successListingSavedBody" },
   photoUploaded: { variant: "toast", titleKey: "successPhotoUploaded", bodyKey: "successListingSavedBody" },

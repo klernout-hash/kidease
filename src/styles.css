@@ -1592,6 +1592,12 @@
   .ke-badge-pulse {
     animation: ke-priority-pill 1.8s ease-in-out infinite;
   }
+  [data-ke="claim-page"] {
+    padding-bottom: calc(8rem + env(safe-area-inset-bottom));
+  }
+  html:has([data-ke="claim-page"]) .ke-help-bot {
+    bottom: calc(5.75rem + var(--ke-safe-bottom, env(safe-area-inset-bottom)) + var(--ke-keyboard, 0px));
+  }
   .ke-help-bot {
     position: fixed;
     right: max(1.25rem, env(safe-area-inset-right));
