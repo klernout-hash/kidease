@@ -11,12 +11,16 @@ export const Route = createFileRoute("/fr/gov_/exports")({
     city: typeof search.city === "string" ? search.city : "",
   }),
   beforeLoad: ({ context }) => guardGovDesk("fr", Boolean((context as { nativeShell?: boolean }).nativeShell)),
-  loader: async ({ context, location }) => {
+  loaderDeps: ({ search }) => ({
+    province: search.province,
+    region: search.region,
+    city: search.city,
+  }),
+  loader: async ({ context, deps }) => {
     const gate = context as { nativeOnly?: boolean };
     if (gate.nativeOnly) return null;
-    const search = location.search as { province?: string; region?: string; city?: string };
     return getGovDashboard({
-      data: { province: search.province, region: search.region, city: search.city, locale: "fr" },
+      data: { province: deps.province, region: deps.region, city: deps.city, locale: "fr" },
     });
   },
   head: () => govRobotsHead("Exportations · KidEase"),

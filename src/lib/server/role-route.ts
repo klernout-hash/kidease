@@ -249,6 +249,11 @@ async function loadRoleChrome(bearer?: string): Promise<RoleChromePayload> {
   return pending;
 }
 
+/** Role for a raw request, used by the /admissions bounce before the router. */
+export function roleChromeForRequest(request: Request): Promise<RoleChromePayload> {
+  return computeRoleChrome(undefined, request);
+}
+
 export const getRoleChrome = createServerFn({ method: "GET" })
   .middleware([sessionBearerMiddleware])
   .handler(async ({ context }) => loadRoleChrome(context.bearerToken));

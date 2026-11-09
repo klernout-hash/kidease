@@ -8,6 +8,7 @@ export function InspectionTrustCard({
   licenseNumber,
   listingId,
   licenseStatus,
+  licenseExpiry,
   claimed,
   checklist,
   inspections,
@@ -18,6 +19,7 @@ export function InspectionTrustCard({
   licenseNumber?: string | null;
   listingId?: string | null;
   licenseStatus?: string | null;
+  licenseExpiry?: string | null;
   claimed?: boolean;
   checklist?: ChecklistItem[] | null;
   inspections?: PublicInspection[];
@@ -44,6 +46,16 @@ export function InspectionTrustCard({
           ) : null}
           {t("licenceNotLiveGov")}
         </p>
+        {licenseStatus && licenseStatus !== "unverified" && licenseStatus !== "unknown" ? (
+          <p className="mt-1" data-ke="stored-licence-status">
+            {fr ? "Statut enregistré" : "Stored status"}: {licenseStatus}
+          </p>
+        ) : null}
+        {licenseExpiry ? (
+          <p className="mt-1" data-ke="stored-licence-expiry">
+            {fr ? "Échéance enregistrée" : "Stored expiry"}: {licenseExpiry}
+          </p>
+        ) : null}
         <details className="mt-1">
           <summary className="inline-flex min-h-11 cursor-pointer items-center font-medium text-primary">
             {fr ? "Voir le détail" : "View details"}
@@ -93,6 +105,16 @@ export function InspectionTrustCard({
         <p className="mt-2 text-sm text-muted">{t("licenceNotPublished")}</p>
       )}
       <p className="mt-2 text-sm text-muted">{t("licenceNotLiveGov")}</p>
+      {licenseStatus && licenseStatus !== "unverified" && licenseStatus !== "unknown" ? (
+        <p className="mt-2 text-sm" data-ke="stored-licence-status">
+          {fr ? "Statut enregistré" : "Stored status"}: {licenseStatus}
+        </p>
+      ) : null}
+      {licenseExpiry ? (
+        <p className="mt-1 text-sm" data-ke="stored-licence-expiry">
+          {fr ? "Échéance enregistrée" : "Stored expiry"}: {licenseExpiry}
+        </p>
+      ) : null}
       {badge.show ? (
         <p className="mt-2 text-sm text-muted">
           {t("kideaseChecklist").replace("{passed}", String(badge.passed)).replace("{total}", String(badge.total))}
