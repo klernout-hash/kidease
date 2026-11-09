@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import type { GovDashboard } from "@/lib/gov/aggregate";
 import { feeBucketLabel, govCopy, govPath } from "@/lib/gov/copy";
 import { regionLabel } from "@/lib/gov/places";
@@ -8,7 +8,7 @@ import { CurriculumGovStrip } from "@/components/curriculum-pack";
 import { GovJobShortage } from "@/components/ece-job-desk";
 import { GovMap } from "@/components/gov/gov-map";
 import { signOut } from "@/lib/auth/client";
-import { GovDeskNav } from "@/components/gov/gov-desk-nav";
+import { deskGroups } from "@/lib/gov/sections";
 
 function show(value: number | null, locale: "en" | "fr", hidden: string): string {
   if (value == null) return hidden;
@@ -45,6 +45,10 @@ function GovTaskNav({
   view: GovView;
   onView: (next: GovView) => void;
 }) {
+  const copy = govCopy(locale);
+  const pages = deskGroups(locale, copy, true)
+    .flatMap((group) => group.links)
+    .filter(([href]) => href.startsWith("/"));
   return (
     <nav className="mt-4 flex flex-col gap-1 lg:sticky lg:top-28 lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto" data-ke="gov-nav" aria-label={locale === "fr" ? "Tâches du bureau" : "Desk tasks"}>
       {GOV_VIEWS.map((item) => {
@@ -58,8 +62,8 @@ function GovTaskNav({
             aria-current={current ? "page" : undefined}
             className={
               current
-                ? "inline-flex min-h-11 items-center rounded-xl bg-surface px-3 text-left text-sm font-semibold ring-1 ring-border touch-manipulation"
-                : "inline-flex min-h-11 items-center rounded-xl px-3 text-left text-sm font-medium text-muted touch-manipulation hover:bg-surface"
+                ? "inline-flex min-h-11 items-center rounded-xl bg-surface px-3 text-left text-base font-semibold ring-1 ring-border touch-manipulation"
+                : "inline-flex min-h-11 items-center rounded-xl px-3 text-left text-base font-medium touch-manipulation hover:bg-surface"
             }
             onClick={() => onView(item.id)}
           >
@@ -67,7 +71,49 @@ function GovTaskNav({
           </button>
         );
       })}
+      <p className="mt-4 px-3 text-base font-semibold">{copy.otherPages}</p>
+      {pages.map(([href, label]) => (
+        <a key={href} href={href} className="inline-flex min-h-11 items-center rounded-xl px-3 text-base font-medium hover:bg-surface">
+          {label}
+        </a>
+      ))}
+      <a className="inline-flex min-h-11 items-center rounded-xl px-3 text-base font-semibold text-primary" href={locale === "fr" ? "/fr/search" : "/search"} data-ke="gov-browse-public">
+        {locale === "fr" ? "Voir les fiches publiques" : "Browse public listings"}
+      </a>
     </nav>
+  );
+}
+
+function LicenceFlags({
+  data,
+}: {
+  data: GovDashboard & {
+    licenceFlags?: Array<{ slug: string; name: string; city: string; status: string }>;
+  };
+}) {
+  const copy = govCopy(data.locale);
+  const flags = data.licenceFlags ?? [];
+  return (
+    <section className="mt-6" data-ke="gov-centre-flags" aria-labelledby="gov-flags-title">
+      <h2 id="gov-flags-title" className="font-display text-xl">{copy.flagsTitle}</h2>
+      <p className="mt-2 max-w-2xl text-base leading-6">{copy.registerNotLoaded}</p>
+      <p className="mt-2 max-w-2xl text-base leading-6">{copy.alertsNotWired}</p>
+      {flags.length === 0 ? (
+        <p className="mt-3 max-w-2xl text-base leading-6" data-ke="gov-flags-empty">{copy.flagsEmpty}</p>
+      ) : (
+        <ul className="mt-3 space-y-3">
+          {flags.map((flag) => (
+            <li key={flag.slug} className="rounded-2xl bg-surface p-4 ring-1 ring-border">
+              <a className="text-base font-semibold underline-offset-4 hover:underline" href={`/daycare/${flag.slug}`}>
+                {flag.name}
+              </a>
+              <p className="mt-1 text-base">{flag.city ? `${flag.city} · ` : ""}{flag.status}</p>
+              <p className="mt-1 text-base leading-6">{copy.flagsHistory}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 
@@ -182,11 +228,18 @@ function SourceRegister({ copy }: { copy: ReturnType<typeof govCopy> }) {
   );
 }
 
-export function GovDashboardView({ data }: { data: GovDashboard }) {
+export function GovDashboardView({
+  data,
+}: {
+  data: GovDashboard & {
+    licenceFlags?: Array<{ slug: string; name: string; city: string; status: string }>;
+    childPerSpace?: number | null;
+    childRatioIsProvince?: boolean;
+  };
+}) {
   const copy = govCopy(data.locale);
   const hidden = copy.suppressed;
   const navigate = useNavigate();
-  const path = useRouterState({ select: (state) => state.location.pathname });
   const other = data.locale === "fr" ? "en" : "fr";
   const query = new URLSearchParams();
   if (data.province) query.set("province", data.province);
@@ -243,13 +296,12 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
         <p className="mt-1 text-sm text-muted">
           {copy.org}: {data.orgName}
         </p>
-        <GovDeskNav locale={data.locale} pathname={path} province={data.province} orgName={data.orgName} />
-        <p className="mt-1 text-sm text-muted" data-ke="gov-as-of">
+        <p className="mt-1 text-base" data-ke="gov-as-of">
           {copy.asOf} {data.generatedAt.slice(0, 16).replace("T", " ")} UTC
         </p>
         {data.demo ? <p className="mt-3 rounded-2xl bg-surface px-4 py-3 text-sm ring-1 ring-border">{copy.demo}</p> : null}
 
-        <div className="sticky top-0 z-20 -mx-4 mt-6 border-b border-border bg-bg/95 px-4 py-3 backdrop-blur-md" data-ke="gov-filters">
+        <div className="sticky top-0 z-30 -mx-4 mt-6 border-b border-border bg-bg px-4 py-3" data-ke="gov-filters">
         <form className="grid gap-3 sm:grid-cols-3" onSubmit={(event) => event.preventDefault()}>
           <label className="block text-sm font-medium">
             {copy.province}
@@ -337,42 +389,42 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
           <div className="rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke="gov-card-providers">
             <dt className="text-sm text-muted">{copy.cardObserved}</dt>
             <dd className="mt-1 font-display text-2xl">{show(kpis.licensedCentres, data.locale, hidden)}</dd>
-            <p className="mt-2 text-xs leading-5 text-muted">{copy.cardObservedNote}</p>
-            <p className="mt-1 text-xs leading-5 text-muted">{copy.cardScope}</p>
+            <p className="mt-2 text-base leading-6">{copy.cardObservedNote}</p>
+            <p className="mt-1 text-base leading-6">{copy.cardScope}</p>
           </div>
           <div className="rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke="gov-card-capacity">
             <dt className="text-sm text-muted">{copy.capacity}</dt>
             <dd className="mt-1 font-display text-2xl">{show(kpis.capacity, data.locale, hidden)}</dd>
-            <p className="mt-2 text-xs leading-5 text-muted">{copy.cardCapacityNote}</p>
-            <p className="mt-1 text-xs leading-5 text-muted">{copy.cardScope}</p>
+            <p className="mt-2 text-base leading-6">{copy.cardCapacityNote}</p>
+            <p className="mt-1 text-base leading-6">{copy.cardScope}</p>
           </div>
           <div className="rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke="gov-card-vacancies">
             <dt className="text-sm text-muted">{copy.spots}</dt>
             <dd className="mt-1 font-display text-2xl">{kpis.vacancyReporters === 0 ? copy.noReporting : show(kpis.openSpots, data.locale, hidden)}</dd>
-            <p className="mt-2 text-xs leading-5 text-muted">{copy.cardVacancyNote}</p>
-            <p className="mt-1 text-xs leading-5 text-muted">{copy.cardScope}</p>
+            <p className="mt-2 text-base leading-6">{copy.cardVacancyNote}</p>
+            <p className="mt-1 text-base leading-6">{copy.cardScope}</p>
           </div>
           <a className="rounded-2xl bg-surface p-4 ring-1 ring-border no-underline" data-ke="gov-card-renewals" href={data.locale === "fr" ? "/fr/gov/compliance" : "/gov/compliance"}>
             <p className="text-sm text-muted">{copy.cardRenewals}</p>
             <p className="mt-1 font-display text-2xl">{copy.notTracked}</p>
-            <p className="mt-2 text-xs leading-5 text-muted">{copy.cardRenewalsNote}</p>
+            <p className="mt-2 text-base leading-6">{copy.cardRenewalsNote}</p>
           </a>
           <div className="rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke="gov-card-findings">
             <dt className="text-sm text-muted">{copy.cardFindings}</dt>
             <dd className="mt-1 font-display text-2xl">{copy.notTracked}</dd>
-            <p className="mt-2 text-xs leading-5 text-muted">{copy.cardFindingsNote}</p>
+            <p className="mt-2 text-base leading-6">{copy.cardFindingsNote}</p>
           </div>
           <div className="rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke="gov-card-jobs" id="gov-jobs">
             <dt className="text-sm text-muted">{copy.jobs}</dt>
             <dd className="mt-1 font-display text-2xl">{kpis.jobPosts === 0 ? copy.reportedUnknown : show(kpis.jobPosts, data.locale, hidden)}</dd>
-            <p className="mt-2 text-xs leading-5 text-muted">{copy.cardJobsNote}</p>
-            <p className="mt-1 text-xs leading-5 text-muted">{copy.cardScope}</p>
+            <p className="mt-2 text-base leading-6">{copy.cardJobsNote}</p>
+            <p className="mt-1 text-base leading-6">{copy.cardScope}</p>
           </div>
         </dl>
         <section className="mt-6 grid gap-3 lg:grid-cols-2" data-ke="gov-needs-attention" aria-labelledby="gov-needs-title">
           <div className="rounded-2xl bg-surface p-4 ring-1 ring-border">
             <h2 id="gov-needs-title" className="font-display text-xl">{copy.needsTitle}</h2>
-            <ul className="mt-3 space-y-2 text-sm leading-6">
+            <ul className="mt-3 space-y-2 text-base leading-6">
               <li>{copy.needLicence}</li>
               <li>{copy.needDocument}</li>
               <li>{copy.needInspection}</li>
@@ -380,8 +432,9 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
               <li>{copy.needStale}</li>
             </ul>
           </div>
-          <p className="self-end text-sm text-muted">{copy.mapNote}</p>
+          <p className="self-end text-base leading-6">{copy.mapNote}</p>
         </section>
+        <LicenceFlags data={data} />
         {data.hiddenAreas > 0 ? (
           <p className="mt-3 text-sm text-muted">
             {show(data.hiddenAreas, data.locale, hidden)} {copy.hidden}
@@ -530,8 +583,18 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
                     : copy.desertNoSpaces
               }
             />
+            <Kpi
+              label={copy.childRatio}
+              value={
+                data.childPerSpace != null
+                  ? show(data.childPerSpace, data.locale, hidden)
+                  : copy.childRatioMissing
+              }
+            />
           </dl>
-          <p className="mt-3 text-sm text-muted">{data.locale === "fr" ? "Le chiffre de population est la population totale du Recensement de 2021 par place permise, pas les enfants de 0 à 5 ans. La demande compte des recherches enregistrées, pas des enfants. Une photo manquante ou une fiche non réclamée n’est pas un problème de conformité." : "The population figure is 2021 Census total population per licensed space, not children aged 0 to 5. Demand counts saved searches, not children. A missing photo or an unclaimed listing is not a compliance problem."}</p>
+          <p className="mt-3 text-base leading-6" data-ke="gov-child-ratio">{copy.childRatioNote}</p>
+          {data.childRatioIsProvince ? <p className="mt-2 text-base leading-6">{copy.childRatioCity}</p> : null}
+          <p className="mt-3 text-base leading-6">{data.locale === "fr" ? "Le chiffre « population » plus haut est la population totale du Recensement de 2021 par place permise. La demande compte des recherches enregistrées, pas des enfants. Une photo manquante ou une fiche non réclamée n’est pas un problème de conformité." : "The population figure above is 2021 Census total population per licensed space. Demand counts saved searches, not children. A missing photo or an unclaimed listing is not a compliance problem."}</p>
           <p className="mt-3 text-sm">
             <a className="font-medium text-primary underline-offset-4 hover:underline" href={data.locale === "fr" ? "/fr/gov/incidents" : "/gov/incidents"}>
               {data.locale === "fr" ? "Événements graves" : "Serious occurrences"}
@@ -546,7 +609,9 @@ export function GovDashboardView({ data }: { data: GovDashboard }) {
           <section className="mt-2 max-w-2xl space-y-3 text-sm leading-6" data-ke="gov-expiries">
             <h2 className="font-display text-xl">{data.locale === "fr" ? "Échéances et alertes" : "Expiries and alerts"}</h2>
             <p>{data.locale === "fr" ? "Une date de document, une inspection et un permis sont des choses différentes. Une vieille importation n’est pas une preuve que le centre est fermé ou non conforme." : "A document date, an inspection and a licence are different things. An old import is not proof that a centre is closed or non-compliant."}</p>
+            <p>{copy.registerNotLoaded}</p>
             <p>{copy.notTracked}</p>
+            <LicenceFlags data={data} />
             <p>
               <a className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline" href={complianceHref}>
                 {data.locale === "fr" ? "Ouvrir les dates suivies" : "Open tracked dates"}

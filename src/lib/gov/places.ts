@@ -51,6 +51,44 @@ export const PROVINCES: readonly ProvinceInfo[] = [
 
 export const CANADA_POPULATION_2021 = 36_991_981;
 
+/**
+ * 2021 Census, table 98-10-0666-01.
+ * Children aged 0 to 5 in census families. Published counts are rounded,
+ * so the provinces do not add exactly to the Canada total.
+ * https://www150.statcan.gc.ca/t1/tbl1/en/tv.action?pid=9810066601
+ */
+export const CHILDREN_0_TO_5_SOURCE =
+  "Statistics Canada, table 98-10-0666-01, 2021 Census. Children aged 0 to 5 in census families.";
+
+export const CHILDREN_0_TO_5_2021: Readonly<Record<string, number>> = {
+  ALL: 2_208_195,
+  NL: 23_065,
+  PE: 8_200,
+  NS: 49_190,
+  NB: 39_460,
+  QC: 511_750,
+  ON: 827_350,
+  MB: 93_690,
+  SK: 82_050,
+  AB: 300_890,
+  BC: 261_480,
+  YT: 2_670,
+  NT: 3_350,
+  NU: 5_045,
+};
+
+export function children0to5(province: string | null | undefined): number | null {
+  const code = String(province || "ALL").trim().toUpperCase();
+  const value = CHILDREN_0_TO_5_2021[code];
+  return typeof value === "number" ? value : null;
+}
+
+/** Children per licensed space. Null when either figure is missing. */
+export function childrenPerLicensedSpace(children: number | null, spaces: number | null): number | null {
+  if (children == null || spaces == null || spaces <= 0) return null;
+  return Math.round((children / spaces) * 10) / 10;
+}
+
 const BY_CODE = new Map(PROVINCES.map((row) => [row.code, row]));
 
 export function provinceInfo(code: string | null | undefined): ProvinceInfo | null {

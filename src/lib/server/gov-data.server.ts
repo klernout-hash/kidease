@@ -282,6 +282,44 @@ export function resetGovBundleCache(): void {
   cache = null;
 }
 
+export type StoredLicenceFlag = {
+  slug: string;
+  name: string;
+  city: string;
+  status: "expired" | "suspended" | "revoked";
+};
+
+/** Listing status only. This is not a provincial register and has no past events. */
+export async function loadStoredLicenceFlags(province: string): Promise<StoredLicenceFlag[]> {
+  const code = String(province || "").trim().toUpperCase();
+  if (code !== "ALL" && !isProvinceCode(code)) return [];
+  const sql = await getSql();
+  const whereProvince = code === "ALL" ? "true" : `upper(btrim(province)) = '${code}'`;
+  const rows = await sql
+    .query<{ slug: string; name: string; city: string; status: string }>(
+      `
+      select slug, name, btrim(city) as city, lower(btrim(license_status)) as status
+      from daycares
+      where ${PUBLIC_LISTING_SQL}
+        and lower(btrim(coalesce(license_status, ''))) in ('expired', 'suspended', 'revoked')
+        and ${whereProvince}
+      order by city, name
+      limit 40
+      `,
+    )
+    .catch(() => []);
+  return rows
+    .map((row) => {
+      const status = String(row.status || "");
+      if (status !== "expired" && status !== "suspended" && status !== "revoked") return null;
+      const slug = String(row.slug || "").trim();
+      const name = String(row.name || "").trim();
+      if (!slug || !name) return null;
+      return { slug, name, city: String(row.city || "").trim(), status };
+    })
+    .filter((row): row is StoredLicenceFlag => Boolean(row));
+}
+
 export function bundleForProvince(bundle: GovBundle, province: string): {
   cities: CityFact[];
   fees: Array<{ bucket: string; kind: "confirmed" | "uncited"; n: number }>;
