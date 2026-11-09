@@ -989,9 +989,6 @@ export function LoginScreen({
                 {t("loginMethodsFailed")}
               </p>
             ) : null}
-            {turnstileRequired && !token.trim() && !(mode === "in" && reviewerSignIn) ? (
-              <p className="text-sm text-muted" role="status" data-ke="turnstile-status">{t("turnstileRequired")}</p>
-            ) : null}
             <Button
               type="submit"
               size="lg"

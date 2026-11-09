@@ -94,12 +94,12 @@ export function LanguageSelect({
             const search = typeof window !== "undefined" ? window.location.search : "";
             const dest = localeSwitchHref(path, search, next);
             writeLocaleChoiceCookie(next);
-            setLocale(next, { lock: true });
-            applyDocumentLocale(next);
             if (dest) {
               window.location.assign(dest);
               return;
             }
+            setLocale(next, { lock: true });
+            applyDocumentLocale(next);
             const finish = () => undefined;
             if (!user) {
               if (isPending) queueLocaleSync();
