@@ -58,13 +58,16 @@ async function postCareThreadNotice(input: {
   actorUserId: string;
   /** Daily logs stay in the thread. They do not send email. */
   email?: boolean;
-}) {
+}): Promise<boolean> {
   const conversationId = (input.conversationId || "").trim();
-  if (!conversationId) return;
-  await input.sql`
+  if (!conversationId) return false;
+  const saved = await input.sql`
     insert into messages (id, conversation_id, sender, body, kind)
     values (${nid("msg")}, ${conversationId}, ${"system"}, ${input.body}, ${"status"})
-  `.catch(() => undefined);
+  `
+    .then(() => true)
+    .catch(() => false);
+  if (!saved) return false;
   await input.sql`update conversations set last_at = now() where id = ${conversationId}`.catch(() => undefined);
   await markConversationRead(input.sql, conversationId, input.actorUserId).catch(() => undefined);
 
@@ -81,8 +84,10 @@ async function postCareThreadNotice(input: {
       daycareName: input.daycareName,
     }).catch(() => undefined);
   }
+  return true;
 }
 
+/** In-app note only. Attendance, medication, and incident lines do not email. */
 export async function insertCareStatusMessage(input: {
   conversationId: string | null;
   daycareId: string;
@@ -90,9 +95,9 @@ export async function insertCareStatusMessage(input: {
   parentUserId: string | null;
   body: string;
   actorUserId: string;
-}) {
+}): Promise<boolean> {
   const sql = await getSql();
-  await postCareThreadNotice({ sql, ...input });
+  return postCareThreadNotice({ sql, ...input, email: false });
 }
 
 export const listDailyJournals = createServerFn({ method: "POST" })
