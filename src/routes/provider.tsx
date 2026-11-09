@@ -98,7 +98,7 @@ import { SafeArrivalPanel } from "@/components/safe-arrival-panel";
 import { ChildHealthLog } from "@/components/child-health-log";
 import { CertExpiryPanel } from "@/components/cert-expiry-panel";
 import { orgDeskStatus } from "@/lib/server/org-occupancy";
-import { gapCopy, pickCentre } from "@/lib/gap-features";
+import { gapCopy, moneyCentreChoice, pickCentre } from "@/lib/gap-features";
 import { ProviderScreeningPanel } from "@/components/provider-screening";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -405,6 +405,8 @@ export function ProviderPage() {
   // Their own demo stays on Today, listings, tours (calendar), and fees.
   // Public search and the sitemap still use isPublicListing.
   const focusedId = orgOn ? pickCentre(listings.map((row) => row.id), search.centre) : null;
+  const moneyChoice = moneyCentreChoice(listings.map((row) => row.id), search.centre);
+  const moneyListing = listings.find((row) => row.id === moneyChoice.id) ?? null;
   const deskListings = focusedId ? listings.filter((row) => row.id === focusedId) : listings;
   const gap = gapCopy(locale === "fr" ? "fr" : "en");
 
@@ -926,7 +928,34 @@ export function ProviderPage() {
         centreOwner ? (
           <div className="space-y-6">
             <ProviderMoneyPanel />
-            {deskListings[0]?.id ? <QboPanel daycareId={deskListings[0].id} /> : null}
+            {moneyChoice.needsPick ? (
+              <section className="rounded-xl bg-surface p-5 ring-1 ring-border" data-ke="money-centre-pick">
+                <h2 className="font-display text-xl">{locale === "fr" ? "Choisissez un centre" : "Pick a centre"}</h2>
+                <p className="mt-2 text-sm text-muted">
+                  {locale === "fr"
+                    ? "QuickBooks est enregistré pour un centre à la fois."
+                    : "QuickBooks is saved for one centre at a time."}
+                </p>
+                <ul className="mt-3 space-y-1">
+                  {listings.map((row) => (
+                    <li key={row.id}>
+                      <Link
+                        to="/provider"
+                        search={{ ...search, desk: "money", centre: row.id }}
+                        className="inline-flex min-h-11 items-center font-medium text-primary"
+                      >
+                        {storedCentreName(row.name, row.nameFr)}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : moneyListing ? (
+              <div data-ke="money-centre-name">
+                <p className="text-sm text-muted">{storedCentreName(moneyListing.name, moneyListing.nameFr)}</p>
+                <QboPanel daycareId={moneyListing.id} />
+              </div>
+            ) : null}
             <CwelccPanel />
             <TaxReceiptStudio desk="centre" />
           </div>

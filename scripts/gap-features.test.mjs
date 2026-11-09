@@ -16,6 +16,7 @@ import {
   moveInLine,
   nextDoorAction,
   openSpotChannels,
+  moneyCentreChoice,
   pickCentre,
   placeFromRank,
   provinceBucket,
@@ -110,6 +111,10 @@ test("waitlist rank, open-spot match, and door rules stay honest", () => {
   assert.equal(knownSum([1, null, 2]), 3);
   assert.equal(pickCentre(["c1"], "c2"), null);
   assert.equal(pickCentre(["c1"], "c1"), "c1");
+  assert.deepEqual(moneyCentreChoice(["oaks", "pines"], null), { id: null, needsPick: true });
+  assert.deepEqual(moneyCentreChoice(["oaks", "pines"], "pines"), { id: "pines", needsPick: false });
+  assert.deepEqual(moneyCentreChoice(["oaks", "pines"], "other"), { id: null, needsPick: true });
+  assert.deepEqual(moneyCentreChoice(["oaks"], null), { id: "oaks", needsPick: false });
   const en = JSON.stringify(gapCopy("en"));
   const fr = JSON.stringify(gapCopy("fr"));
   assert.doesNotMatch(en + fr, /\bzip\b|\bcounty\b|\bcenter\b|\bunited states\b/i);
