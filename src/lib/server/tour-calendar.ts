@@ -7,6 +7,7 @@ import { catalogByIdGet } from "@/lib/catalog";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { guestInfoUserId, normalizeInfoContact } from "@/lib/parent-listing";
 import { callerMayUseAdminOnlyListing } from "@/lib/server/public-listing";
+import { isQaTourCentre, qaTourEmailAllowed } from "@/lib/qa-tour-access";
 import { upsertDaycare } from "@/lib/server/seed";
 import { resolveActorUserId } from "@/lib/server/actor-user";
 import { saveParentInAppNotice } from "@/lib/server/parent-notice";
@@ -113,13 +114,29 @@ async function requireOwnedDaycare(
   if (!owned) throw new Error("Not authorized");
 }
 
+async function signedInEmail(): Promise<string> {
+  try {
+    const { getSessionUser } = await import("@/lib/auth/verify.server");
+    const user = await getSessionUser();
+    if (!user?.id) return "";
+    const actor = await lookupUser(user.id);
+    return String(actor.email || "");
+  } catch {
+    return "";
+  }
+}
+
 export const listPublicTourSlots = createServerFn({ method: "GET" })
   .validator((input: { daycareId: string }) => input)
   .handler(async ({ data }) => {
     const daycareId = (data.daycareId || "").trim();
     if (!daycareId) return { timezone: resolveTourTimezone(null), slots: [] as PublicTourSlot[], empty: "none_posted" as const };
     const listed = await catalogByIdGet(daycareId);
-    if (isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerMayUseAdminOnlyListing())) {
+    const qaCentre = isQaTourCentre({ id: daycareId, slug: listed?.slug });
+    if (qaCentre && !qaTourEmailAllowed(await signedInEmail())) {
+      return { timezone: resolveTourTimezone(null), slots: [] as PublicTourSlot[], empty: "none_posted" as const };
+    }
+    if (!qaCentre && isAdminOnlyListing(listed ?? { id: daycareId }) && !(await callerMayUseAdminOnlyListing())) {
       return { timezone: resolveTourTimezone(null), slots: [] as PublicTourSlot[], empty: "none_posted" as const };
     }
     const sql = await getSql();
@@ -318,7 +335,11 @@ export const bookTourSlot = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const sql = await getSql();
     const listed = await catalogByIdGet(data.daycareId);
-    if (isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerMayUseAdminOnlyListing())) {
+    const qaCentre = isQaTourCentre({ id: data.daycareId, slug: listed?.slug });
+    if (qaCentre && !qaTourEmailAllowed(await signedInEmail())) {
+      throw new Error("Listing not found");
+    }
+    if (!qaCentre && isAdminOnlyListing(listed ?? { id: data.daycareId }) && !(await callerMayUseAdminOnlyListing())) {
       throw new Error("Listing not found");
     }
     if (listed) await upsertDaycare(sql, listed);
@@ -499,6 +520,9 @@ export const bookTourSlot = createServerFn({ method: "POST" })
       values (${nid("msg")}, ${cid}, ${"system"}, ${systemBody}, ${"system"})
     `;
     await sql`update conversations set last_at = now() where id = ${cid}`;
+
+    const quiet = isQaTourCentre({ id: d.id, slug: d.slug });
+    if (quiet) return { id: tourId, conversationId: cid, status: "pending" as const, guest: userId.startsWith("guest:") };
 
     const slots = formatTourSlotRange(slot, locale);
     const detail = [
