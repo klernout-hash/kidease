@@ -7,6 +7,7 @@ import { lazy, Suspense } from "react";
 import { Shell } from "@/components/shell";
 import { FamilyVaultPanel } from "@/components/family-vault";
 import { ParentStoriesDesk, StoriesDeskLink } from "@/components/learning-stories-desk";
+import { ChildHealthLog } from "@/components/child-health-log";
 import { TourCalendarPage } from "@/components/tour-calendar-page";
 import { CurriculumParentDesk } from "@/components/curriculum-pack";
 import { DeskSkeleton } from "@/components/page-skeleton";
@@ -280,6 +281,11 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
       {search.preview === "support" && canUseOperatorTools(session?.email) ? <SupportPreviewBanner /> : null}
       <Suspense fallback={<DeskSkeleton />}>
         <StoriesDeskLink forParent />
+        {initialTab === "children" ? (
+          <div className="mx-auto w-full max-w-3xl px-4 pt-6">
+            <ChildHealthLog />
+          </div>
+        ) : null}
         <ParentDesk
           initialTab={initialTab}
           plusReturn={search.plus ?? null}
