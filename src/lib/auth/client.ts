@@ -350,7 +350,17 @@ export function clearClientAuthState(): void {
  * Use before email/password sign-in so a Daycare login cannot leave a
  * previous Parent identity on /parent.
  */
+async function releaseThisPhone(): Promise<void> {
+  try {
+    const { releasePushOnSignOut } = await import("@/lib/push-client");
+    await releasePushOnSignOut();
+  } catch {
+    /* sign-out still proceeds */
+  }
+}
+
 export async function dropExistingSession(): Promise<void> {
+  await releaseThisPhone();
   clearClientAuthState();
   await signOutBestEffort();
   clearClientAuthState();
@@ -358,6 +368,7 @@ export async function dropExistingSession(): Promise<void> {
 
 export async function signOut(redirectTo = "/"): Promise<void> {
   try {
+    await releaseThisPhone();
     clearClientAuthState();
     await signOutBestEffort();
     clearClientAuthState();

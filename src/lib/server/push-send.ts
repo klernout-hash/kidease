@@ -10,6 +10,7 @@
 import { createPrivateKey, sign } from "node:crypto";
 import { connect as http2Connect } from "node:http2";
 import { envFlagOn, evaluateFeatureFlag } from "../flags.ts";
+import { ordinaryApnsAps, ordinaryFcmMessage } from "../push-lifecycle.ts";
 
 type EnvMap = Record<string, string | undefined>;
 type PushProvider = "fcm" | "apns" | "adm";
@@ -320,14 +321,7 @@ async function sendFcm(
       Authorization: `Bearer ${access}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      message: {
-        token: target.token,
-        notification: { title, body },
-        android: { priority: "HIGH" },
-        ...(url ? { data: { url } } : {}),
-      },
-    }),
+    body: JSON.stringify(ordinaryFcmMessage({ token: target.token, title, body, url })),
   });
   const text = await res.text();
   if (res.ok) return { ok: true };
@@ -369,10 +363,7 @@ async function sendApns(
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      aps: {
-        alert: { title, body },
-        sound: "default",
-      },
+      aps: ordinaryApnsAps({ title, body }),
       ...(url ? { url } : {}),
     }),
   });
