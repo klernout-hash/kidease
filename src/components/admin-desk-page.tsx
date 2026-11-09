@@ -89,7 +89,7 @@ import {
 } from "@/lib/admin-stat-filter";
 import { AdminReviewsPanel } from "@/components/admin-reviews";
 import { compareTimeDesc } from "@/lib/sort-time";
-import { staffQueueRows } from "@/lib/listing-visibility";
+import { looksLikeTestFixture, staffQueueRows } from "@/lib/listing-visibility";
 import { getCatalogHealth } from "@/lib/server/catalog-health";
 import { listAdminLeadCounts } from "@/lib/server/lead-requests";
 import { DAYCARE_INBOX_HREF, emptyLeadCounts, type LeadCounts } from "@/lib/lead-requests";
@@ -326,6 +326,15 @@ export function AdminPage() {
     }));
   }, [provinceRows]);
 
+  const qaFixtureRows = useMemo(
+    () => centres.filter((row) => row.isTest || looksLikeTestFixture(row)),
+    [centres],
+  );
+  const queueRows = useMemo(() => {
+    if (!showQaFixtures) return listed;
+    const seen = new Set(listed.map((row) => row.daycareId));
+    return [...listed, ...qaFixtureRows.filter((row) => !seen.has(row.daycareId))];
+  }, [listed, qaFixtureRows, showQaFixtures]);
   const counts = useMemo(() => tallyAdminCentreStats(staffCentres), [staffCentres]);
 
   const activityKind = parseAdminActivityKind(search.kind);
@@ -520,6 +529,9 @@ export function AdminPage() {
               Show QA fixtures{qaCount ? ` · ${qaCount}` : ""}
             </label>
           </div>
+          <p className="mt-3 text-sm text-muted">
+            Needs complete counts listings that are missing a photo, fee, hours, ages, licence photo, or screening. It is not the pending-claims count.
+          </p>
           <div className="mt-8">
             <AdminIncompleteQueue
               rows={incompleteQueue}
@@ -606,7 +618,7 @@ export function AdminPage() {
         </>
       ) : tab === "queue" ? (
         <>
-          <CatalogueHealthStrip rows={centres} />
+          <CatalogueHealthStrip rows={staffCentres} />
           <div role="group" aria-label="Filter this list" className="mt-3 flex gap-1 overflow-x-auto rounded-full bg-surface p-1 ring-1 ring-border" data-ke="admin-queue-filters">
             <Stat compact label="Waiting on you" value={queueStat(counts.waiting)} accent={stat === "waiting"} filterId="waiting" onSelect={() => onSelectStat("waiting")} />
             <Stat compact label="Needs complete" value={queueStat(incompleteQueue.length)} accent={stat === "incomplete"} filterId="incomplete" onSelect={() => onSelectStat("incomplete")} />
@@ -635,9 +647,11 @@ export function AdminPage() {
             </label>
           </div>
           {!showQaFixtures && qaCount > 0 ? (
-            <p className="mt-3 text-xs text-muted">
-              {qaCount} QA / Claim Lab fixture{qaCount === 1 ? "" : "s"} hidden from Live and Waiting counts. Toggle to review TEST Ghost Claim Lab separately.
+            <p className="mt-3 text-sm text-muted">
+              {qaCount} QA fixture{qaCount === 1 ? "" : "s"} stay off the waiting count and off the public site. Turn on Show QA fixtures to review them in this list.
             </p>
+          ) : showQaFixtures ? (
+            <p className="mt-3 text-sm text-muted">QA fixtures are in this list for an admin. They are not published.</p>
           ) : null}
           {approvalHealth ? (
             <div className="mt-4">
@@ -649,7 +663,7 @@ export function AdminPage() {
           ) : (
             <AdminCentreStatList
               stat={isAdminCentreListStat(stat) ? stat : "waiting"}
-              rows={listed}
+              rows={queueRows}
               unavailable={queueUnavailable}
               loading={queueLoading}
               error={centresError}

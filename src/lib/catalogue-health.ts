@@ -26,7 +26,6 @@ export function summarizeCatalogueHealth(rows: HealthRow[]): CatalogueHealth {
   let licenceOnFile = 0;
   let photosConfirmed = 0;
   for (const row of rows) {
-    if (row.isTest) continue;
     listingsTotal += 1;
     const code = (row.province || "").trim().toUpperCase();
     if (byProvince[code] != null) byProvince[code] += 1;

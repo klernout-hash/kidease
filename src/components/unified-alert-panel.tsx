@@ -278,7 +278,11 @@ export function UnifiedAlertPanel({ mode = "all" }: { mode?: UnifiedAlertPanelMo
       <>
       <h3 id={showSettings ? undefined : "unified-alerts-title"} className={`${showSettings ? "mt-8" : ""} text-lg font-semibold`}>{copy.listTitle}</h3>
       <ul className="mt-3 divide-y divide-border rounded-xl bg-surface ring-1 ring-border" data-ke="unified-alert-list">
-        {desk && desk.events.length > 0 ? (
+        {desk == null ? (
+          <li className="px-4 py-5" role="status">
+            <p className="text-sm text-muted">{t("loading")}</p>
+          </li>
+        ) : desk.events.length > 0 ? (
           desk.events.map((item) => (
             <li key={item.id}>
               <a

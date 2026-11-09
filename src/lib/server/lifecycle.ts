@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
-import { defaultNoticePrefs, lifecycleEnabled, type NoticePrefs } from "@/lib/lifecycle";
+import { listConsents } from "@/lib/server/casl-consent";
+import { defaultNoticePrefs, lifecycleEnabled, type NoticeCategory, type NoticePrefs } from "@/lib/lifecycle";
 
 function readPrefs(raw: unknown): NoticePrefs {
   const base = defaultNoticePrefs();
@@ -25,7 +26,17 @@ export const loadLifecyclePrefs = createServerFn({ method: "GET" })
     const rows = await sql<{ prefs: unknown }>`
       select prefs from lifecycle_prefs where user_id = ${context.userId} limit 1
     `;
-    return { enabled: true as const, prefs: readPrefs(rows[0]?.prefs) };
+    const stored = readPrefs(rows[0]?.prefs);
+    const casl = await listConsents(context.userId).catch(() => null);
+    if (!casl) return { enabled: true as const, prefs: stored };
+    const categories = ["tours", "messages", "spots", "account"] as const satisfies readonly NoticeCategory[];
+    for (const key of categories) {
+      stored[key] = {
+        email: key === "account" ? stored[key].email : stored[key].email && casl.emailService,
+        sms: stored[key].sms && casl.smsService,
+      };
+    }
+    return { enabled: true as const, prefs: stored };
   });
 
 export const saveLifecyclePrefs = createServerFn({ method: "POST" })
