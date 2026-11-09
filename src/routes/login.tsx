@@ -145,14 +145,14 @@ function LoginEmailControl({
 }) {
   const operator = useRef(false);
   const reviewer = useRef(false);
-  function remember(value: string) {
-    emailRef.current = value;
-    const next = value.trim().toLowerCase() === OPERATOR_EMAIL;
+  function remember(email: string) {
+    emailRef.current = email;
+    const next = email.trim().toLowerCase() === OPERATOR_EMAIL;
     if (next !== operator.current) {
       operator.current = next;
       onOperator(next);
     }
-    const nextReviewer = reviewerSignInSkipsTurnstile(value);
+    const nextReviewer = reviewerSignInSkipsTurnstile(email);
     if (nextReviewer !== reviewer.current) {
       reviewer.current = nextReviewer;
       onReviewer(nextReviewer);
