@@ -69,6 +69,7 @@ import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { officialLicenceNumber } from "@/lib/licensing";
 import { ProviderMoneyPanel } from "@/components/provider-money";
 import { QboPanel } from "@/components/qbo-panel";
+import { CwelccPanel } from "@/components/cwelcc-panel";
 import { TaxReceiptStudio } from "@/components/tax-receipt-studio";
 import { TourCalendarPage } from "@/components/tour-calendar-page";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
@@ -920,6 +921,7 @@ export function ProviderPage() {
           <div className="space-y-6">
             <ProviderMoneyPanel />
             {deskListings[0]?.id ? <QboPanel daycareId={deskListings[0].id} /> : null}
+            <CwelccPanel />
             <TaxReceiptStudio desk="centre" />
           </div>
         ) : (
