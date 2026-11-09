@@ -13,11 +13,12 @@ import {
   type InboxRead,
 } from "@/lib/inbox-thread-ui";
 import type { Message } from "@/lib/types";
+import { visibleThreadMessages } from "@/lib/thread-history";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
 function showChatBubble(m: Message) {
-  return m.kind === "status" || (m.kind !== "system" && m.kind !== "notify" && m.sender !== "system");
+  return visibleThreadMessages([m]).length === 1;
 }
 
 function peerFor(sender: Message["sender"], peers: Array<{ name: string; image?: string | null; role?: string }>) {
