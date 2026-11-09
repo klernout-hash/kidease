@@ -5,6 +5,7 @@ import {
   calendarCentreId,
   claimAccountSearch,
   parentEnrolLogin,
+  guestSaveHref,
   saveLoginTo,
   saveReturnPath,
   topRatedPage,
@@ -31,6 +32,11 @@ test("save keeps the French search, including the query", () => {
   assert.equal(saveReturnPath("/fr/daycare/maple", "", "/fr/daycare/maple"), "/fr/daycare/maple");
   assert.equal(saveLoginTo("fr"), "/fr/login");
   assert.equal(saveLoginTo("en"), "/login");
+  const href = guestSaveHref("/search", "?q=Winnipeg%2C%20MB", "en");
+  assert.match(href, /^\/login\?/);
+  assert.match(href, /why=save/);
+  assert.match(href, /next=/);
+  assert.doesNotMatch(href, /password/);
 });
 
 test("parent enrol opens a parent account, not the contact form", () => {

@@ -23,6 +23,10 @@ test("credential forms post, and the login button waits for hydration", () => {
   assert.match(login, /action=\{loginPath\}/);
   assert.match(login, /disabled=\{!formReady/);
   assert.match(login, /useCredentialFormReady/);
+  const search = page("../src/components/explore-search-bar.tsx");
+  assert.match(search, /method="get"/);
+  assert.match(search, /action=\{locale === "fr" \? "\/fr\/search" : "\/search"\}/);
+  assert.match(page("../src/components/save-listing-button.tsx"), /data-ke="save-listing"/);
   for (const rel of [
     "../src/routes/forgot-password.tsx",
     "../src/routes/reset-password.tsx",

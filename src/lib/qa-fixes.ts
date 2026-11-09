@@ -1,4 +1,4 @@
-import { parentLoginSearch } from "./auth/parent-login.ts";
+import { parentLoginSearch, parentSignupSearch } from "./auth/parent-login.ts";
 
 /** Keep the page the parent was on, including the search query. */
 export function saveReturnPath(pathname: string, search: string, nextPath?: string): string {
@@ -11,6 +11,17 @@ export function saveReturnPath(pathname: string, search: string, nextPath?: stri
 
 export function saveLoginTo(locale: "en" | "fr"): "/login" | "/fr/login" {
   return locale === "fr" ? "/fr/login" : "/login";
+}
+
+/** Signed-out Save is a real link, so it still opens sign-in if JavaScript does not. */
+export function guestSaveHref(pathname: string, search: string, locale: "en" | "fr"): string {
+  const next = saveReturnPath(pathname, search);
+  const query = parentSignupSearch(next, "save");
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value) params.set(key, String(value));
+  }
+  return `${saveLoginTo(locale)}?${params.toString()}`;
 }
 
 /** Parent enrol opens an account, then the parent desk. It does not open the contact form. */
