@@ -3478,3 +3478,9 @@ html[data-look="clean"] .text-muted-foreground {
 html[data-look="clean"] .border-input {
   border-color: var(--ke-field-line);
 }
+/* The page behind everything. The first-paint style in the document head sets a fixed fill. */
+html[data-look="clean"],
+html[data-look="clean"] body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+}
