@@ -3363,3 +3363,177 @@ html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-home"] .sticky 
   .ke-priority-pill { animation: none; }
 }
 
+
+/*
+  Clean look. Every rule below matches only when public/theme-boot.js sets
+  data-look="clean" on <html>. Without it, today's look is unchanged.
+  Colours, corners, and shadows only. No layout, copy, or behaviour.
+  The rules sit outside @layer so they win over the tokens above.
+  Guide: docs/clean-look/README.md
+*/
+html[data-look="clean"] {
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-2: #f7f7f7;
+  --color-fg: #222222;
+  --color-muted: #6a6a6a;
+  --color-subtle: #6f6f6f;
+  --color-primary: #1a3790;
+  --color-primary-fg: #ffffff;
+  --color-accent: #b45309;
+  --color-accent-fg: #ffffff;
+  --color-border: #e4e4e4;
+  --color-ring: #1a3790;
+  --color-danger: #b42318;
+  --color-warn: #92400e;
+  --color-ok: #15803d;
+  --color-soft: #eef2fb;
+  --color-map: #f2f2f2;
+  --radius-xs: 8px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 14px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.1);
+  --ke-field-line: #b0b0b0;
+  --ke-skel-fill: #ebebeb;
+  --ke-switch-off: #c8c8c8;
+}
+html[data-look="clean"][data-resolved-theme="dark"],
+html[data-look="clean"][data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #14161c;
+  --color-surface: #1c1f26;
+  --color-surface-2: #272b34;
+  --color-fg: #f5f5f7;
+  --color-muted: #b4bac6;
+  --color-subtle: #9aa1ae;
+  --color-primary: #9db5f5;
+  --color-primary-fg: #0d1326;
+  --color-accent: #f2ab6b;
+  --color-accent-fg: #14161c;
+  --color-border: #343a46;
+  --color-ring: #9db5f5;
+  --color-danger: #f28b82;
+  --color-warn: #e6b566;
+  --color-ok: #5cc296;
+  --color-soft: #1b2338;
+  --color-map: #1a1d24;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.3);
+  --shadow-lift: 0 2px 8px rgba(0, 0, 0, 0.45), 0 16px 36px rgba(0, 0, 0, 0.36);
+  --ke-field-line: #4a5262;
+  --ke-skel-fill: #272b34;
+  --ke-switch-off: #4a5262;
+}
+/* Form fields get a line you can see. Focus and error colours keep their own rules. */
+html[data-look="clean"] :is(.ke-input, .ke-textarea):not(:focus):not([aria-invalid="true"]) {
+  border-color: var(--ke-field-line);
+}
+html[data-look="clean"] .ke-switch:not(:checked) {
+  background: var(--ke-switch-off);
+}
+/* Loading blocks and photo backdrops lose the warm tint. */
+html[data-look="clean"] .ke-skel,
+html[data-look="clean"] img.ke-photo {
+  background-color: var(--ke-skel-fill);
+}
+/* The no-photo placeholder keeps its shape and mark, in cool neutral tones. */
+html[data-look="clean"] .ke-unclaimed-wash {
+  background:
+    radial-gradient(68% 52% at 100% 0%, color-mix(in oklab, #8eb4e8 45%, transparent), transparent 70%),
+    linear-gradient(180deg, #f6f8fc 0%, #eceff5 100%);
+}
+html[data-look="clean"][data-resolved-theme="dark"] .ke-unclaimed-wash,
+html[data-look="clean"][data-theme="dark"] .ke-unclaimed-wash {
+  background:
+    radial-gradient(48% 40% at 0% 100%, color-mix(in oklab, #31456f 70%, transparent), transparent 72%),
+    linear-gradient(180deg, #1f232c 0%, #14161c 100%);
+}
+html[data-look="clean"] dialog.msv2-dialog {
+  background: var(--color-bg);
+}
+/* Hairlines follow the border token in both themes. */
+html[data-look="clean"] .ke-site-footer,
+html[data-look="clean"] [data-ke="app-tab-bar"],
+html[data-look="clean"] .ke-site-header {
+  border-color: var(--color-border);
+}
+/* Screens that set a fixed warm fill follow the tokens, so their text stays readable in dark. */
+html[data-look="clean"] .bg-\[\#f3f1ec\] {
+  background-color: var(--color-bg);
+}
+html[data-look="clean"] .bg-\[\#F7F4EF\],
+html[data-look="clean"] .bg-\[\#F7F8FA\] {
+  background-color: var(--color-surface-2);
+}
+/* Class names with no token behind them. They get the matching token here. */
+html[data-look="clean"] .bg-background {
+  background-color: var(--color-surface);
+}
+html[data-look="clean"] .text-muted-foreground {
+  color: var(--color-muted);
+}
+html[data-look="clean"] .border-input {
+  border-color: var(--ke-field-line);
+}
+/* The page behind everything. The first-paint style in the document head sets a fixed fill. */
+html[data-look="clean"],
+html[data-look="clean"] body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+}
+/* Listing cards. Photos get soft 20px corners, 16px on the small tiles. */
+html[data-look="clean"] .ke-visual-card .group\/photo {
+  border-radius: 20px;
+}
+html[data-look="clean"] .ke-tile .group\/photo {
+  border-radius: 16px;
+}
+/* The save heart sits on the photo with no white disc. A saved heart keeps its red. */
+html[data-look="clean"] :is(.ke-tile, .ke-visual-card) :is(a, button).size-12.bg-white.rounded-full:not(:focus-visible) {
+  background: transparent;
+  box-shadow: none;
+}
+html[data-look="clean"] :is(.ke-tile, .ke-visual-card) :is(a, button).size-12.bg-white.rounded-full > svg:not(.text-\[\#FF385C\]) {
+  color: #ffffff;
+  fill: rgba(0, 0, 0, 0.3);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+}
+/* Pills on a photo are white with dark text. Live keeps a green dot. */
+html[data-look="clean"] [data-ke="card-photo-pills"] :is([data-ke="card-live-pill"], .bg-\[\#1D4ED8\]) {
+  background: rgba(255, 255, 255, 0.96);
+  color: #222222;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
+}
+html[data-look="clean"] [data-ke="card-live-pill"]::before {
+  content: "";
+  flex: none;
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-right: 0.35rem;
+  border-radius: 999px;
+  background: #16a34a;
+}
+/* Desk menus. The current page is a soft grey row on wide screens and a dark pill on a phone. */
+html[data-look="clean"] .bg-primary.ring-primary.md\:rounded-lg:not(:focus-visible) {
+  background: var(--color-fg);
+  color: var(--color-bg);
+  box-shadow: none;
+}
+html[data-look="clean"] .bg-primary.ring-primary.md\:rounded-lg .text-primary-fg\/70 {
+  color: inherit;
+  opacity: 0.75;
+}
+@media (min-width: 768px) {
+  html[data-look="clean"] .bg-primary.ring-primary.md\:rounded-lg:not(:focus-visible) {
+    background: var(--color-surface-2);
+    color: var(--color-fg);
+  }
+  html[data-look="clean"] .bg-primary.ring-primary.md\:rounded-lg .text-primary-fg\/70 {
+    color: var(--color-muted);
+    opacity: 1;
+  }
+}
