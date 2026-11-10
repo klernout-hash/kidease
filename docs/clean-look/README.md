@@ -12,13 +12,13 @@ Today's look is still the default. Do not change the default until Kyle says so.
 
 ## How it works
 
-- `public/theme-boot.js` reads the choice and sets `data-look="clean"` on `<html>` before the first paint.
+- `public/look-boot.js` reads the choice and sets `data-look="clean"` on `<html>` before the first paint.
 - `src/styles.css` ends with a block scoped to `html[data-look="clean"]`. It replaces the shared colour, corner, and shadow tokens for light and dark.
 - Every screen that uses the shared tokens picks the look up with no other change.
 
 ## Going live and going back
 
-- Go live: change `DEFAULT_LOOK` in `public/theme-boot.js` from `classic` to `clean`. One line.
+- Go live: change `DEFAULT_LOOK` in `public/look-boot.js` from `classic` to `clean`, and raise the `v` number on its script tag in `src/routes/__root.tsx`.
 - Go back: change it back, or revert that commit. The branch `backup/pre-visual-redesign` holds the site as it was before this work.
 
 ## Tokens
