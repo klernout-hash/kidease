@@ -3365,7 +3365,7 @@ html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-home"] .sticky 
 
 
 /*
-  Clean look. Every rule below matches only when public/theme-boot.js sets
+  Clean look. Every rule below matches only when public/look-boot.js sets
   data-look="clean" on <html>. Without it, today's look is unchanged.
   Colours, corners, and shadows only. No layout, copy, or behaviour.
   The rules sit outside @layer so they win over the tokens above.
@@ -3536,4 +3536,13 @@ html[data-look="clean"] .bg-primary.ring-primary.md\:rounded-lg .text-primary-fg
     color: var(--color-muted);
     opacity: 1;
   }
+}
+/* Messages. A received message is a soft grey bubble with no outline. */
+html[data-look="clean"] p.rounded-2xl.rounded-bl-md.bg-surface.ring-border {
+  background: var(--color-surface-2);
+  box-shadow: none;
+}
+/* Main buttons are flat. The focus ring keeps its own rule. */
+html[data-look="clean"] :is(a, button).bg-primary.shadow-card:not(:focus-visible) {
+  box-shadow: none;
 }

@@ -22,12 +22,12 @@ function boot(search, stored = {}) {
     },
     document: { documentElement: { dataset, style: {} } },
   };
-  vm.runInNewContext(src("public/theme-boot.js"), context);
+  vm.runInNewContext(src("public/look-boot.js"), context);
   return { look: dataset.look, stored: store.get("kidease-look") };
 }
 
 test("today's look stays the default", () => {
-  assert.match(src("public/theme-boot.js"), /var DEFAULT_LOOK = "classic";/);
+  assert.match(src("public/look-boot.js"), /var DEFAULT_LOOK = "classic";/);
   assert.equal(boot("").look, undefined);
   assert.equal(boot("?q=winnipeg").look, undefined);
   assert.equal(boot("?look=other").look, undefined);
@@ -38,6 +38,11 @@ test("the clean look is a per-device choice from the link", () => {
   assert.equal(boot("?city=Winnipeg&look=clean").look, "clean");
   assert.equal(boot("", { "kidease-look": "clean" }).look, "clean");
   assert.deepEqual(boot("?look=classic", { "kidease-look": "clean" }), { look: undefined, stored: "classic" });
+});
+
+test("the look switch loads from its own versioned file", () => {
+  assert.match(src("src/routes/__root.tsx"), /<script src="\/look-boot\.js\?v=\d+" \/>/);
+  assert.doesNotMatch(src("public/theme-boot.js"), /kidease-look/);
 });
 
 test("every clean rule is scoped to the look attribute", () => {

@@ -327,6 +327,8 @@ function RootDocument() {
         <HeadContent />
         <script src="/channel-boot.js?v=10" />
         <script src="/theme-boot.js" />
+        {/* Versioned: the edge keeps boot scripts for a long time. Bump v when look-boot.js changes. */}
+        <script src="/look-boot.js?v=1" />
         <script defer src="/asset-recover.js" />
       </head>
       <body className="flex min-h-[100dvh] w-full min-w-0 flex-col overflow-x-clip">
