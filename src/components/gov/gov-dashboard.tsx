@@ -237,7 +237,7 @@ export function GovDashboardView({
   data: GovDashboard & {
     licenceFlags?: Array<{ slug: string; name: string; city: string; status: string; expiry?: string | null }>;
     childPerSpace?: number | null;
-    childRatioIsProvince?: boolean;
+    childRatioNarrowView?: boolean;
   };
 }) {
   const copy = govCopy(data.locale);
@@ -595,12 +595,14 @@ export function GovDashboardView({
               value={
                 data.childPerSpace != null
                   ? show(data.childPerSpace, data.locale, hidden)
-                  : copy.childRatioMissing
+                  : data.childRatioNarrowView
+                    ? copy.childRatioNarrowValue
+                    : copy.childRatioMissing
               }
             />
           </dl>
           <p className="mt-3 text-base leading-6" data-ke="gov-child-ratio">{copy.childRatioNote}</p>
-          {data.childRatioIsProvince ? <p className="mt-2 text-base leading-6">{copy.childRatioCity}</p> : null}
+          {data.childRatioNarrowView ? <p className="mt-2 text-base leading-6">{copy.childRatioNarrowNote}</p> : null}
           <p className="mt-3 text-base leading-6">{data.locale === "fr" ? "La demande compte des recherches enregistrées, pas des enfants. Une photo manquante ou une fiche non réclamée n’est pas un problème de conformité." : "Demand counts saved searches, not children. A missing photo or an unclaimed listing is not a compliance problem."}</p>
           <p className="mt-3 text-sm">
             <a className="font-medium text-primary underline-offset-4 hover:underline" href={data.locale === "fr" ? "/fr/gov/incidents" : "/gov/incidents"}>

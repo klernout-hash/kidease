@@ -89,6 +89,15 @@ export function childrenPerLicensedSpace(children: number | null, spaces: number
   return Math.round((children / spaces) * 10) / 10;
 }
 
+/**
+ * The census count is only loaded for a whole province or all of Canada. A city or
+ * region has spaces but no matching child count, so its ratio stays blank.
+ */
+export function childRatioForView(province: string, wholeView: boolean, spaces: number | null): number | null {
+  if (!wholeView) return null;
+  return childrenPerLicensedSpace(children0to5(province), spaces);
+}
+
 const BY_CODE = new Map(PROVINCES.map((row) => [row.code, row]));
 
 export function provinceInfo(code: string | null | undefined): ProvinceInfo | null {

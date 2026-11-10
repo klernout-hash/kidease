@@ -5,6 +5,7 @@ import {
   CHILDREN_0_TO_5_2021,
   CHILDREN_0_TO_5_SOURCE,
   children0to5,
+  childRatioForView,
   childrenPerLicensedSpace,
 } from "../src/lib/gov/places.ts";
 
@@ -22,6 +23,16 @@ test("children aged 0 to 5 are the published census-family counts", () => {
   assert.equal(childrenPerLicensedSpace(93690, 48473), 1.9);
   assert.equal(childrenPerLicensedSpace(100, 0), null);
   assert.equal(childrenPerLicensedSpace(null, 10), null);
+});
+
+test("the ratio only applies to a whole province or all of Canada", () => {
+  assert.equal(childRatioForView("ON", true, 40000), 20.7);
+  assert.equal(childRatioForView("ALL", true, 2000000), 1.1);
+  assert.equal(childRatioForView("ON", false, 40000), null);
+  assert.equal(childRatioForView("ON", true, null), null);
+  const portal = read("src/lib/server/gov-portal.ts");
+  assert.match(portal, /const wholeView = scope\.city === "ALL" && scope\.region === "ALL";/);
+  assert.match(portal, /childRatioForView\(scope\.province, wholeView, spaces\)/);
 });
 
 test("the desk names the missing register and does not send alerts", () => {
