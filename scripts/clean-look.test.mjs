@@ -60,7 +60,7 @@ test("every clean rule is scoped to the look attribute", () => {
 
 test("the clean look has light and dark tokens and leaves the logo alone", () => {
   const css = src("src/styles.css");
-  assert.match(css, /html\[data-look="clean"\] \{\n  --color-bg: #ffffff;/);
+  assert.match(css, /html\[data-look="clean"\] \{\n {2}--color-bg: #ffffff;/);
   assert.match(css, /html\[data-look="clean"\]\[data-resolved-theme="dark"\],/);
   const block = css.slice(css.indexOf("  Clean look. Every rule below"));
   assert.doesNotMatch(block, /data-ke-mark|brand-mark|logo/);
