@@ -40,7 +40,9 @@ const EN = {
   childRatio: "Children 0 to 5 per licensed space",
   childRatioNote:
     "2021 Census table 98-10-0666. Children aged 0 to 5 in census families, divided by licensed spaces on KidEase. Counts are rounded. This is not total population, and the provincial register is not loaded.",
-  childRatioCity: "This figure is for the province. A city count of children aged 0 to 5 is not loaded.",
+  childRatioNarrowNote:
+    "The census count of children aged 0 to 5 is only loaded for a whole province or all of Canada.",
+  childRatioNarrowValue: "Not shown for a city or region.",
   childRatioMissing: "There is no licensed-space total, so this ratio is not shown.",
   flagsTitle: "Stored licence flags",
   flagsEmpty:
@@ -174,7 +176,9 @@ const FR = {
   childRatio: "Enfants de 0 à 5 ans par place permise",
   childRatioNote:
     "Tableau 98-10-0666 du Recensement de 2021. Enfants de 0 à 5 ans dans les familles de recensement, divisés par les places permises sur KidEase. Les comptes sont arrondis. Ce n’est pas la population totale, et le registre provincial n’est pas branché.",
-  childRatioCity: "Ce chiffre est pour la province. Un compte par ville des enfants de 0 à 5 ans n’est pas chargé.",
+  childRatioNarrowNote:
+    "Le compte du recensement des enfants de 0 à 5 ans n’est chargé que pour une province entière ou tout le Canada.",
+  childRatioNarrowValue: "Non affiché pour une ville ou une région.",
   childRatioMissing: "Il n’y a pas de total de places permises, donc ce ratio n’est pas affiché.",
   flagsTitle: "Drapeaux de permis enregistrés",
   flagsEmpty:
