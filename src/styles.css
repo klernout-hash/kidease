@@ -3374,32 +3374,32 @@ html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-home"] .sticky 
 html[data-look="clean"] {
   --color-bg: #ffffff;
   --color-surface: #ffffff;
-  --color-surface-2: #f5f6f8;
-  --color-fg: #111827;
-  --color-muted: #5b6472;
-  --color-subtle: #636b78;
+  --color-surface-2: #f7f7f7;
+  --color-fg: #222222;
+  --color-muted: #6a6a6a;
+  --color-subtle: #6f6f6f;
   --color-primary: #1a3790;
   --color-primary-fg: #ffffff;
   --color-accent: #b45309;
   --color-accent-fg: #ffffff;
-  --color-border: #e5e7eb;
+  --color-border: #e4e4e4;
   --color-ring: #1a3790;
   --color-danger: #b42318;
   --color-warn: #92400e;
   --color-ok: #15803d;
   --color-soft: #eef2fb;
-  --color-map: #eef0f3;
+  --color-map: #f2f2f2;
   --radius-xs: 8px;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 14px;
   --radius-xl: 16px;
   --radius-2xl: 20px;
-  --shadow-card: 0 1px 2px rgba(17, 24, 39, 0.04), 0 4px 16px rgba(17, 24, 39, 0.06);
-  --shadow-lift: 0 2px 6px rgba(17, 24, 39, 0.06), 0 12px 32px rgba(17, 24, 39, 0.12);
-  --ke-field-line: #c9ced8;
-  --ke-skel-fill: #eef0f3;
-  --ke-switch-off: #cfd4dc;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-lift: 0 2px 4px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.1);
+  --ke-field-line: #b0b0b0;
+  --ke-skel-fill: #ebebeb;
+  --ke-switch-off: #c8c8c8;
 }
 html[data-look="clean"][data-resolved-theme="dark"],
 html[data-look="clean"][data-theme="dark"] {
@@ -3483,4 +3483,57 @@ html[data-look="clean"],
 html[data-look="clean"] body {
   background: var(--color-bg);
   color: var(--color-fg);
+}
+/* Listing cards. Photos get soft 20px corners, 16px on the small tiles. */
+html[data-look="clean"] .ke-visual-card .group\/photo {
+  border-radius: 20px;
+}
+html[data-look="clean"] .ke-tile .group\/photo {
+  border-radius: 16px;
+}
+/* The save heart sits on the photo with no white disc. A saved heart keeps its red. */
+html[data-look="clean"] :is(.ke-tile, .ke-visual-card) :is(a, button).size-12.bg-white.rounded-full:not(:focus-visible) {
+  background: transparent;
+  box-shadow: none;
+}
+html[data-look="clean"] :is(.ke-tile, .ke-visual-card) :is(a, button).size-12.bg-white.rounded-full > svg:not(.text-\[\#FF385C\]) {
+  color: #ffffff;
+  fill: rgba(0, 0, 0, 0.3);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+}
+/* Pills on a photo are white with dark text. Live keeps a green dot. */
+html[data-look="clean"] [data-ke="card-photo-pills"] :is([data-ke="card-live-pill"], .bg-\[\#1D4ED8\]) {
+  background: rgba(255, 255, 255, 0.96);
+  color: #222222;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
+}
+html[data-look="clean"] [data-ke="card-live-pill"]::before {
+  content: "";
+  flex: none;
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-right: 0.35rem;
+  border-radius: 999px;
+  background: #16a34a;
+}
+/* Desk menus. The current page is a soft grey row on wide screens and a dark pill on a phone. */
+html[data-look="clean"] .bg-primary.ring-primary.md\:rounded-lg:not(:focus-visible) {
+  background: var(--color-fg);
+  color: var(--color-bg);
+  box-shadow: none;
+}
+html[data-look="clean"] .bg-primary.ring-primary.md\:rounded-lg .text-primary-fg\/70 {
+  color: inherit;
+  opacity: 0.75;
+}
+@media (min-width: 768px) {
+  html[data-look="clean"] .bg-primary.ring-primary.md\:rounded-lg:not(:focus-visible) {
+    background: var(--color-surface-2);
+    color: var(--color-fg);
+  }
+  html[data-look="clean"] .bg-primary.ring-primary.md\:rounded-lg .text-primary-fg\/70 {
+    color: var(--color-muted);
+    opacity: 1;
+  }
 }

@@ -27,16 +27,16 @@ Today's look is still the default. Do not change the default until Kyle says so.
 | --- | --- | --- |
 | Page `--color-bg` | `#ffffff` | `#14161c` |
 | Card `--color-surface` | `#ffffff` | `#1c1f26` |
-| Soft fill `--color-surface-2` | `#f5f6f8` | `#272b34` |
-| Text `--color-fg` | `#111827` | `#f5f5f7` |
-| Quiet text `--color-muted` | `#5b6472` | `#b4bac6` |
+| Soft fill `--color-surface-2` | `#f7f7f7` | `#272b34` |
+| Text `--color-fg` | `#222222` | `#f5f5f7` |
+| Quiet text `--color-muted` | `#6a6a6a` | `#b4bac6` |
 | Brand `--color-primary` | `#1a3790` | `#9db5f5` |
 | Accent `--color-accent` | `#b45309` | `#f2ab6b` |
-| Line `--color-border` | `#e5e7eb` | `#343a46` |
+| Line `--color-border` | `#e4e4e4` | `#343a46` |
 | Good `--color-ok` | `#15803d` | `#5cc296` |
 | Problem `--color-danger` | `#b42318` | `#f28b82` |
 
-Corners: 8px small parts, 12px buttons and fields, 16px cards, 20px large sheets, full pills for chips.
+Corners: 8px small parts, 12px buttons and fields, 16px cards, 20px listing photos and large sheets, full pills for chips.
 
 ## Rules for every new screen and pull request
 

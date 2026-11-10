@@ -47,6 +47,7 @@ test("every clean rule is scoped to the look attribute", () => {
   const block = css.slice(css.indexOf("*/", start) + 2);
   const selectors = block
     .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/@media[^{]+\{/g, "")
     .split("}")
     .map((rule) => rule.split("{")[0].trim())
     .filter(Boolean);
