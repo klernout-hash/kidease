@@ -3460,3 +3460,21 @@ html[data-look="clean"] [data-ke="app-tab-bar"],
 html[data-look="clean"] .ke-site-header {
   border-color: var(--color-border);
 }
+/* Screens that set a fixed warm fill follow the tokens, so their text stays readable in dark. */
+html[data-look="clean"] .bg-\[\#f3f1ec\] {
+  background-color: var(--color-bg);
+}
+html[data-look="clean"] .bg-\[\#F7F4EF\],
+html[data-look="clean"] .bg-\[\#F7F8FA\] {
+  background-color: var(--color-surface-2);
+}
+/* Class names with no token behind them. They get the matching token here. */
+html[data-look="clean"] .bg-background {
+  background-color: var(--color-surface);
+}
+html[data-look="clean"] .text-muted-foreground {
+  color: var(--color-muted);
+}
+html[data-look="clean"] .border-input {
+  border-color: var(--ke-field-line);
+}
