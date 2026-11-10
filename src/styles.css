@@ -3546,3 +3546,17 @@ html[data-look="clean"] p.rounded-2xl.rounded-bl-md.bg-surface.ring-border {
 html[data-look="clean"] :is(a, button).bg-primary.shadow-card:not(:focus-visible) {
   box-shadow: none;
 }
+/* The green claim button needs darker green for white text to read at 4.5 to 1. */
+html[data-look="clean"] .bg-\[\#1f9d55\] {
+  background-color: #15803d;
+}
+html[data-look="clean"] .bg-\[\#1f9d55\]:hover {
+  background-color: #116b34;
+}
+/* Centred dialogs on wide screens get rounder corners. Bottom sheets on a phone keep theirs. */
+@media (min-width: 768px) {
+  html[data-look="clean"] [role="dialog"].bg-surface:is(.rounded-xl, .md\:rounded-xl, .rounded-2xl),
+  html[data-look="clean"] [role="dialog"] > .bg-surface:is(.rounded-xl, .md\:rounded-xl, .rounded-2xl) {
+    border-radius: 24px;
+  }
+}
