@@ -18,6 +18,7 @@ import { classifyFacilityType, isHomeBasedFacility } from "@/lib/facility-type";
 import { listingAgeUnknown } from "@/lib/now-loops";
 import type { CopyKey } from "@/lib/copy";
 import type { Daycare } from "@/lib/types";
+import { canonicalExploreCategory as beforeAfterKey } from "@/lib/category-keys";
 
 export const EXPLORE_CATEGORIES = [
   "infant",
@@ -45,6 +46,13 @@ export type ExploreTaggedListing = Pick<
   Daycare,
   "agesKnown" | "ageMinMonths" | "ageMaxMonths" | "amenities" | "hours" | "name"
 >;
+
+export function canonicalExploreCategory(value: unknown): ExploreCategory | undefined {
+  if (typeof value !== "string") return undefined;
+  const raw = value.trim().toLowerCase();
+  if ((EXPLORE_CATEGORIES as readonly string[]).includes(raw)) return raw as ExploreCategory;
+  return beforeAfterKey(value);
+}
 
 export function isExploreCategory(value: unknown): value is ExploreCategory {
   return typeof value === "string" && (EXPLORE_CATEGORIES as readonly string[]).includes(value);
@@ -152,7 +160,8 @@ export function resolvedExploreCategory(search: {
   age?: unknown;
   care?: unknown;
 }): ExploreCategory | undefined {
-  if (isExploreCategory(search.cat)) return search.cat;
+  const named = canonicalExploreCategory(search.cat);
+  if (named) return named;
   const ages = parseExploreRailAges(search);
   if (ages.length === 1) return ages[0];
   if (isExploreCategory(search.age)) return search.age;

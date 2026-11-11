@@ -108,6 +108,10 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_FEE_DISPLAY_GATE: "shared",
   FEATURE_CENTRE_LEAD_TRACKER: "daycare",
   FEATURE_CENTRE_API: "daycare",
+  FEATURE_WALKIN_LEADS: "daycare",
+  FEATURE_PROGRAM_WAITLIST: "shared",
+  FEATURE_WAITLIST_OFFERS: "shared",
+  FEATURE_FORM_STATUS: "shared",
 };
 
 const SWITCH_CATEGORY: Record<string, FeatureCategory> = {
