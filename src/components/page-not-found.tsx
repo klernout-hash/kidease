@@ -1,7 +1,8 @@
-import { Link, Navigate, useRouterState } from "@tanstack/react-router";
-import { BrandMark } from "@/components/brand-mark";
+import { useEffect } from "react";
+import { Navigate, useRouterState } from "@tanstack/react-router";
 import { EmptyState } from "@/components/empty-state";
 import { useRoleChrome } from "@/components/role-chrome";
+import { Shell } from "@/components/shell";
 import { useCopy } from "@/lib/use-copy";
 
 export function PageNotFound({
@@ -16,18 +17,15 @@ export function PageNotFound({
   actionTo?: "/search" | "/parent" | "/provider";
 }) {
   const { t } = useCopy();
+  const heading = title ?? t("pageNotFoundTitle");
+  useEffect(() => {
+    document.title = `${heading} · KidEase`;
+  }, [heading]);
   return (
-    <div className="min-h-dvh bg-bg text-fg">
-      <header className="sticky top-0 z-50 border-b border-border bg-bg pt-[env(safe-area-inset-top)]">
-        <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
-          <Link to="/" className="shrink-0" aria-label="KidEase">
-            <BrandMark size="sm" />
-          </Link>
-        </div>
-      </header>
-      <main className="ke-gutter mx-auto max-w-lg py-16">
+    <Shell>
+      <main className="ke-gutter mx-auto max-w-lg py-16" data-ke="page-not-found">
         <EmptyState
-          title={title ?? t("pageNotFoundTitle")}
+          title={heading}
           body={body ?? t("pageNotFoundBody")}
           action={action ?? t("notFoundExplore")}
           actionTo={actionTo ?? "/search"}
@@ -35,7 +33,7 @@ export function PageNotFound({
           secondaryTo="/"
         />
       </main>
-    </div>
+    </Shell>
   );
 }
 

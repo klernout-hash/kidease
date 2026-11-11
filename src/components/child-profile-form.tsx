@@ -344,10 +344,18 @@ export function ChildProfileForm({
                   {french ? "Lien" : "Relationship"}
                   <input className="mt-1 h-11 w-full rounded-md border border-border bg-bg px-3" value={person.relationship} onChange={(event) => setContacts((rows) => rows.map((row, i) => i === index ? { ...row, relationship: event.target.value } : row))} />
                 </label>
+                <label className="block text-sm sm:col-span-2">
+                  {french ? "Restriction ou note" : "Restriction or note"}
+                  <input className="ke-input mt-1 w-full" value={person.note} onChange={(event) => setContacts((rows) => rows.map((row, i) => i === index ? { ...row, note: event.target.value } : row))} onFocus={(event) => event.currentTarget.scrollIntoView({ block: "center" })} />
+                </label>
+                <label className="flex min-h-11 items-center gap-2 text-sm">
+                  <input type="checkbox" checked={person.restricted} onChange={(event) => setContacts((rows) => rows.map((row, i) => i === index ? { ...row, restricted: event.target.checked } : row))} />
+                  {french ? "Non autorisé" : "Not authorized"}
+                </label>
               </div>
             ))}
             {contacts.length < 4 ? (
-              <Button type="button" variant="secondary" onClick={() => setContacts((rows) => [...rows, { name: "", phone: "", relationship: "" }])}>
+              <Button type="button" variant="secondary" onClick={() => setContacts((rows) => [...rows, { name: "", phone: "", relationship: "", note: "", restricted: false }])}>
                 {french ? "Ajouter une personne" : "Add a person"}
               </Button>
             ) : null}

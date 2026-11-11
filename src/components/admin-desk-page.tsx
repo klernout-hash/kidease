@@ -1,6 +1,7 @@
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Shell } from "@/components/shell";
+import { Button } from "@/components/ui/button";
 import { AdminLicenceReads } from "@/components/admin-licence-reads";
 import { CatalogueHealthStrip } from "@/components/catalogue-health-strip";
 import { DeskShell } from "@/components/desk-shell";
@@ -14,6 +15,8 @@ import { useSessionDesks } from "@/components/desk-switcher";
 import { canVisitDesk } from "@/lib/desks";
 import { formatStamp } from "@/lib/family-time";
 import { canUseOperatorTools } from "@/lib/operator-tools";
+import { listCsv } from "@/lib/phase0-desk";
+import { loadDeskFeatureFlags } from "@/lib/server/desk-features";
 import { checkOperatorLocation } from "@/lib/server/location-check";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
 import {
@@ -113,6 +116,32 @@ function provCode(raw: string | null | undefined) {
   return hit?.code || (v || "—");
 }
 
+function downloadAdminListCsv(rows: Array<{ name: string; city: string; province: string; claimStatus: string; live: boolean }>) {
+  const planned = listCsv({
+    flagOn: true,
+    list: "admin-daycares",
+    canViewHealth: false,
+    columns: ["name", "city", "province", "claimStatus", "live"],
+    rows: rows.map((row) => ({
+      name: row.name,
+      city: row.city,
+      province: row.province,
+      claimStatus: row.claimStatus,
+      live: row.live ? "yes" : "no",
+    })),
+    timeZone: "America/Winnipeg",
+    dateColumns: [],
+  });
+  if (!planned.ok) return;
+  const blob = new Blob([planned.body], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "kidease-daycares.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 export function AdminPage() {
   const { t } = useCopy();
   const { user, isPending } = useCurrentUserState();
@@ -150,12 +179,18 @@ export function AdminPage() {
   const [activityQ, setActivityQ] = useState("");
   const [peopleQ, setPeopleQ] = useState(search.q || "");
   const [showQaFixtures, setShowQaFixtures] = useState(false);
+  const [listCsvOn, setListCsvOn] = useState(false);
   function setQaFixtures(on: boolean) {
     setShowQaFixtures(on);
     writeQaFixtureToggle(on);
   }
   useEffect(() => {
     if (readQaFixtureToggle()) setShowQaFixtures(true);
+  }, []);
+  useEffect(() => {
+    void loadDeskFeatureFlags()
+      .then((flags) => setListCsvOn(flags.listCsv))
+      .catch(() => setListCsvOn(false));
   }, []);
   const [showQaPeople, setShowQaPeople] = useState(false);
   const [openProv, setOpenProv] = useState<Record<string, boolean>>({});
@@ -757,7 +792,14 @@ export function AdminPage() {
                   <ApprovalHealthNotice health={approvalHealth} />
                 </div>
               ) : null}
-              <h2 className="font-display text-2xl">By province</h2>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="font-display text-2xl">By province</h2>
+                {listCsvOn ? (
+                  <Button type="button" data-ke="admin-list-csv" onClick={() => downloadAdminListCsv(listed)}>
+                    Download CSV
+                  </Button>
+                ) : null}
+              </div>
               {isAdminCentreListStat(stat) && stat !== "all" ? (
                 <p className="mt-2 text-sm text-muted" data-ke="admin-stat-list" data-ke-stat-list={stat}>
                   {ADMIN_CENTRE_STAT_COPY[stat].title}

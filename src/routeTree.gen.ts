@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AppRouteImport } from './routes/app'
 import { Route as AccessibilityRouteImport } from './routes/accessibility'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as AdminRouteImport } from './routes/admin'
@@ -95,6 +96,7 @@ import { Route as ProviderTermsRouteImport } from './routes/provider-terms'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as SecurityRouteImport } from './routes/security'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as StartADaycareRouteImport } from './routes/start-a-daycare'
 import { Route as StatusRouteImport } from './routes/status'
@@ -102,6 +104,7 @@ import { Route as SupportRouteImport } from './routes/support'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TourChecklistRouteImport } from './routes/tour-checklist'
+import { Route as TrustRouteImport } from './routes/trust'
 import { Route as TrustSafetyRouteImport } from './routes/trust-safety'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as UseTheWebsiteRouteImport } from './routes/use-the-website'
@@ -181,6 +184,7 @@ import { Route as FrProviderRouteImport } from './routes/fr.provider'
 import { Route as FrReportRouteImport } from './routes/fr.report'
 import { Route as FrResetPasswordRouteImport } from './routes/fr.reset-password'
 import { Route as FrSearchRouteImport } from './routes/fr.search'
+import { Route as FrSecurityRouteImport } from './routes/fr.security'
 import { Route as FrSignupRouteImport } from './routes/fr.signup'
 import { Route as FrStartADaycareRouteImport } from './routes/fr.start-a-daycare'
 import { Route as FrStatusRouteImport } from './routes/fr.status'
@@ -188,6 +192,7 @@ import { Route as FrSupportRouteImport } from './routes/fr.support'
 import { Route as FrTeamRouteImport } from './routes/fr.team'
 import { Route as FrTermsRouteImport } from './routes/fr.terms'
 import { Route as FrTourChecklistRouteImport } from './routes/fr.tour-checklist'
+import { Route as FrTrustRouteImport } from './routes/fr.trust'
 import { Route as FrTrustSafetyRouteImport } from './routes/fr.trust-safety'
 import { Route as FrUnsubscribeRouteImport } from './routes/fr.unsubscribe'
 import { Route as FrVacancyIndexRouteImport } from './routes/fr.vacancy-index'
@@ -326,6 +331,11 @@ import { Route as ApiV1CentreLeadsIdNotesRouteImport } from './routes/api/v1.cen
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -754,6 +764,11 @@ const SearchRoute = SearchRouteImport.update({
   path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SecurityRoute = SecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -787,6 +802,11 @@ const TermsRoute = TermsRouteImport.update({
 const TourChecklistRoute = TourChecklistRouteImport.update({
   id: '/tour-checklist',
   path: '/tour-checklist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrustRoute = TrustRouteImport.update({
+  id: '/trust',
+  path: '/trust',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TrustSafetyRoute = TrustSafetyRouteImport.update({
@@ -1185,6 +1205,11 @@ const FrSearchRoute = FrSearchRouteImport.update({
   path: '/search',
   getParentRoute: () => FrRoute,
 } as any)
+const FrSecurityRoute = FrSecurityRouteImport.update({
+  id: '/security',
+  path: '/security',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrSignupRoute = FrSignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -1218,6 +1243,11 @@ const FrTermsRoute = FrTermsRouteImport.update({
 const FrTourChecklistRoute = FrTourChecklistRouteImport.update({
   id: '/tour-checklist',
   path: '/tour-checklist',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrTrustRoute = FrTrustRouteImport.update({
+  id: '/trust',
+  path: '/trust',
   getParentRoute: () => FrRoute,
 } as any)
 const FrTrustSafetyRoute = FrTrustSafetyRouteImport.update({
@@ -1895,6 +1925,7 @@ const ApiV1CentreLeadsIdNotesRoute = ApiV1CentreLeadsIdNotesRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRoute
   '/about': typeof AboutRoute
   '/accessibility': typeof AccessibilityRoute
   '/account': typeof AccountRoute
@@ -1980,6 +2011,7 @@ export interface FileRoutesByFullPath {
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
+  '/security': typeof SecurityRoute
   '/signup': typeof SignupRoute
   '/start-a-daycare': typeof StartADaycareRoute
   '/status': typeof StatusRoute
@@ -1987,6 +2019,7 @@ export interface FileRoutesByFullPath {
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
+  '/trust': typeof TrustRoute
   '/trust-safety': typeof TrustSafetyRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/use-the-website': typeof UseTheWebsiteRoute
@@ -2065,6 +2098,7 @@ export interface FileRoutesByFullPath {
   '/fr/report': typeof FrReportRoute
   '/fr/reset-password': typeof FrResetPasswordRoute
   '/fr/search': typeof FrSearchRoute
+  '/fr/security': typeof FrSecurityRoute
   '/fr/signup': typeof FrSignupRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
   '/fr/status': typeof FrStatusRoute
@@ -2072,6 +2106,7 @@ export interface FileRoutesByFullPath {
   '/fr/team': typeof FrTeamRoute
   '/fr/terms': typeof FrTermsRoute
   '/fr/tour-checklist': typeof FrTourChecklistRoute
+  '/fr/trust': typeof FrTrustRoute
   '/fr/trust-safety': typeof FrTrustSafetyRoute
   '/fr/unsubscribe': typeof FrUnsubscribeRoute
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
@@ -2210,6 +2245,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/app': typeof AppRoute
   '/about': typeof AboutRoute
   '/accessibility': typeof AccessibilityRoute
   '/account': typeof AccountRoute
@@ -2293,6 +2329,7 @@ export interface FileRoutesByTo {
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
+  '/security': typeof SecurityRoute
   '/signup': typeof SignupRoute
   '/start-a-daycare': typeof StartADaycareRoute
   '/status': typeof StatusRoute
@@ -2300,6 +2337,7 @@ export interface FileRoutesByTo {
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
+  '/trust': typeof TrustRoute
   '/trust-safety': typeof TrustSafetyRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/use-the-website': typeof UseTheWebsiteRoute
@@ -2378,6 +2416,7 @@ export interface FileRoutesByTo {
   '/fr/report': typeof FrReportRoute
   '/fr/reset-password': typeof FrResetPasswordRoute
   '/fr/search': typeof FrSearchRoute
+  '/fr/security': typeof FrSecurityRoute
   '/fr/signup': typeof FrSignupRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
   '/fr/status': typeof FrStatusRoute
@@ -2385,6 +2424,7 @@ export interface FileRoutesByTo {
   '/fr/team': typeof FrTeamRoute
   '/fr/terms': typeof FrTermsRoute
   '/fr/tour-checklist': typeof FrTourChecklistRoute
+  '/fr/trust': typeof FrTrustRoute
   '/fr/trust-safety': typeof FrTrustSafetyRoute
   '/fr/unsubscribe': typeof FrUnsubscribeRoute
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
@@ -2524,6 +2564,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRoute
   '/about': typeof AboutRoute
   '/accessibility': typeof AccessibilityRoute
   '/account': typeof AccountRoute
@@ -2609,6 +2650,7 @@ export interface FileRoutesById {
   '/report': typeof ReportRoute
   '/reset-password': typeof ResetPasswordRoute
   '/search': typeof SearchRoute
+  '/security': typeof SecurityRoute
   '/signup': typeof SignupRoute
   '/start-a-daycare': typeof StartADaycareRoute
   '/status': typeof StatusRoute
@@ -2616,6 +2658,7 @@ export interface FileRoutesById {
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
+  '/trust': typeof TrustRoute
   '/trust-safety': typeof TrustSafetyRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/use-the-website': typeof UseTheWebsiteRoute
@@ -2694,6 +2737,7 @@ export interface FileRoutesById {
   '/fr/report': typeof FrReportRoute
   '/fr/reset-password': typeof FrResetPasswordRoute
   '/fr/search': typeof FrSearchRoute
+  '/fr/security': typeof FrSecurityRoute
   '/fr/signup': typeof FrSignupRoute
   '/fr/start-a-daycare': typeof FrStartADaycareRoute
   '/fr/status': typeof FrStatusRoute
@@ -2701,6 +2745,7 @@ export interface FileRoutesById {
   '/fr/team': typeof FrTeamRoute
   '/fr/terms': typeof FrTermsRoute
   '/fr/tour-checklist': typeof FrTourChecklistRoute
+  '/fr/trust': typeof FrTrustRoute
   '/fr/trust-safety': typeof FrTrustSafetyRoute
   '/fr/unsubscribe': typeof FrUnsubscribeRoute
   '/fr/vacancy-index': typeof FrVacancyIndexRoute
@@ -2841,6 +2886,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/app'
     | '/about'
     | '/accessibility'
     | '/account'
@@ -2926,6 +2972,7 @@ export interface FileRouteTypes {
     | '/report'
     | '/reset-password'
     | '/search'
+    | '/security'
     | '/signup'
     | '/start-a-daycare'
     | '/status'
@@ -2933,6 +2980,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/tour-checklist'
+    | '/trust'
     | '/trust-safety'
     | '/unsubscribe'
     | '/use-the-website'
@@ -3011,6 +3059,7 @@ export interface FileRouteTypes {
     | '/fr/report'
     | '/fr/reset-password'
     | '/fr/search'
+    | '/fr/security'
     | '/fr/signup'
     | '/fr/start-a-daycare'
     | '/fr/status'
@@ -3018,6 +3067,7 @@ export interface FileRouteTypes {
     | '/fr/team'
     | '/fr/terms'
     | '/fr/tour-checklist'
+    | '/fr/trust'
     | '/fr/trust-safety'
     | '/fr/unsubscribe'
     | '/fr/vacancy-index'
@@ -3156,6 +3206,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/app'
     | '/about'
     | '/accessibility'
     | '/account'
@@ -3239,6 +3290,7 @@ export interface FileRouteTypes {
     | '/report'
     | '/reset-password'
     | '/search'
+    | '/security'
     | '/signup'
     | '/start-a-daycare'
     | '/status'
@@ -3246,6 +3298,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/tour-checklist'
+    | '/trust'
     | '/trust-safety'
     | '/unsubscribe'
     | '/use-the-website'
@@ -3324,6 +3377,7 @@ export interface FileRouteTypes {
     | '/fr/report'
     | '/fr/reset-password'
     | '/fr/search'
+    | '/fr/security'
     | '/fr/signup'
     | '/fr/start-a-daycare'
     | '/fr/status'
@@ -3331,6 +3385,7 @@ export interface FileRouteTypes {
     | '/fr/team'
     | '/fr/terms'
     | '/fr/tour-checklist'
+    | '/fr/trust'
     | '/fr/trust-safety'
     | '/fr/unsubscribe'
     | '/fr/vacancy-index'
@@ -3469,6 +3524,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/app'
     | '/about'
     | '/accessibility'
     | '/account'
@@ -3554,6 +3610,7 @@ export interface FileRouteTypes {
     | '/report'
     | '/reset-password'
     | '/search'
+    | '/security'
     | '/signup'
     | '/start-a-daycare'
     | '/status'
@@ -3561,6 +3618,7 @@ export interface FileRouteTypes {
     | '/team'
     | '/terms'
     | '/tour-checklist'
+    | '/trust'
     | '/trust-safety'
     | '/unsubscribe'
     | '/use-the-website'
@@ -3639,6 +3697,7 @@ export interface FileRouteTypes {
     | '/fr/report'
     | '/fr/reset-password'
     | '/fr/search'
+    | '/fr/security'
     | '/fr/signup'
     | '/fr/start-a-daycare'
     | '/fr/status'
@@ -3646,6 +3705,7 @@ export interface FileRouteTypes {
     | '/fr/team'
     | '/fr/terms'
     | '/fr/tour-checklist'
+    | '/fr/trust'
     | '/fr/trust-safety'
     | '/fr/unsubscribe'
     | '/fr/vacancy-index'
@@ -3785,6 +3845,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRoute
   AboutRoute: typeof AboutRoute
   AccessibilityRoute: typeof AccessibilityRoute
   AccountRoute: typeof AccountRoute
@@ -3870,6 +3931,7 @@ export interface RootRouteChildren {
   ReportRoute: typeof ReportRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SearchRoute: typeof SearchRoute
+  SecurityRoute: typeof SecurityRoute
   SignupRoute: typeof SignupRoute
   StartADaycareRoute: typeof StartADaycareRoute
   StatusRoute: typeof StatusRoute
@@ -3877,6 +3939,7 @@ export interface RootRouteChildren {
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
   TourChecklistRoute: typeof TourChecklistRoute
+  TrustRoute: typeof TrustRoute
   TrustSafetyRoute: typeof TrustSafetyRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   UseTheWebsiteRoute: typeof UseTheWebsiteRoute
@@ -4005,6 +4068,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -4602,6 +4672,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/security': {
+      id: '/security'
+      path: '/security'
+      fullPath: '/security'
+      preLoaderRoute: typeof SecurityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -4649,6 +4726,13 @@ declare module '@tanstack/react-router' {
       path: '/tour-checklist'
       fullPath: '/tour-checklist'
       preLoaderRoute: typeof TourChecklistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/trust': {
+      id: '/trust'
+      path: '/trust'
+      fullPath: '/trust'
+      preLoaderRoute: typeof TrustRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/trust-safety': {
@@ -5204,6 +5288,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrSearchRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/security': {
+      id: '/fr/security'
+      path: '/security'
+      fullPath: '/fr/security'
+      preLoaderRoute: typeof FrSecurityRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/signup': {
       id: '/fr/signup'
       path: '/signup'
@@ -5251,6 +5342,13 @@ declare module '@tanstack/react-router' {
       path: '/tour-checklist'
       fullPath: '/fr/tour-checklist'
       preLoaderRoute: typeof FrTourChecklistRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/trust': {
+      id: '/fr/trust'
+      path: '/trust'
+      fullPath: '/fr/trust'
+      preLoaderRoute: typeof FrTrustRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/trust-safety': {
@@ -6307,6 +6405,7 @@ interface FrRouteChildren {
   FrReportRoute: typeof FrReportRoute
   FrResetPasswordRoute: typeof FrResetPasswordRoute
   FrSearchRoute: typeof FrSearchRoute
+  FrSecurityRoute: typeof FrSecurityRoute
   FrSignupRoute: typeof FrSignupRoute
   FrStartADaycareRoute: typeof FrStartADaycareRoute
   FrStatusRoute: typeof FrStatusRoute
@@ -6314,6 +6413,7 @@ interface FrRouteChildren {
   FrTeamRoute: typeof FrTeamRoute
   FrTermsRoute: typeof FrTermsRoute
   FrTourChecklistRoute: typeof FrTourChecklistRoute
+  FrTrustRoute: typeof FrTrustRoute
   FrTrustSafetyRoute: typeof FrTrustSafetyRoute
   FrUnsubscribeRoute: typeof FrUnsubscribeRoute
   FrVacancyIndexRoute: typeof FrVacancyIndexRoute
@@ -6386,6 +6486,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrReportRoute: FrReportRoute,
   FrResetPasswordRoute: FrResetPasswordRoute,
   FrSearchRoute: FrSearchRoute,
+  FrSecurityRoute: FrSecurityRoute,
   FrSignupRoute: FrSignupRoute,
   FrStartADaycareRoute: FrStartADaycareRoute,
   FrStatusRoute: FrStatusRoute,
@@ -6393,6 +6494,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrTeamRoute: FrTeamRoute,
   FrTermsRoute: FrTermsRoute,
   FrTourChecklistRoute: FrTourChecklistRoute,
+  FrTrustRoute: FrTrustRoute,
   FrTrustSafetyRoute: FrTrustSafetyRoute,
   FrUnsubscribeRoute: FrUnsubscribeRoute,
   FrVacancyIndexRoute: FrVacancyIndexRoute,
@@ -6571,6 +6673,7 @@ const ApiV1CentreLeadsRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRoute,
   AboutRoute: AboutRoute,
   AccessibilityRoute: AccessibilityRoute,
   AccountRoute: AccountRoute,
@@ -6656,6 +6759,7 @@ const rootRouteChildren: RootRouteChildren = {
   ReportRoute: ReportRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SearchRoute: SearchRoute,
+  SecurityRoute: SecurityRoute,
   SignupRoute: SignupRoute,
   StartADaycareRoute: StartADaycareRoute,
   StatusRoute: StatusRoute,
@@ -6663,6 +6767,7 @@ const rootRouteChildren: RootRouteChildren = {
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
   TourChecklistRoute: TourChecklistRoute,
+  TrustRoute: TrustRoute,
   TrustSafetyRoute: TrustSafetyRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   UseTheWebsiteRoute: UseTheWebsiteRoute,

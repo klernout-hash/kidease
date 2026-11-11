@@ -311,7 +311,8 @@ export const joinDaycareWaitlist = createServerFn({ method: "POST" })
     `;
     const row = rows[0];
     if (!row || !isPublicListing(listingVisibilityInputFromDb(row))) {
-      throw new Error("This listing is not open for a waitlist.");
+      console.info("[kidease-waitlist] listing not open", daycareId);
+      return { ok: false as const, error: "This listing is not open for a waitlist." };
     }
     const existing = await sql<EntryRow>`
       select id, daycare_id, user_id, age_group, child_label, note, status, joined_at

@@ -1,13 +1,14 @@
-import { createFileRoute, Navigate, Outlet, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Navigate, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Phase1Desk } from "@/components/phase1-desk";
 import { ParentCentreToolsPanel } from "@/components/parent-centre-tools";
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { privateReturnPath } from "@/lib/role-access";
 import { lazy, Suspense } from "react";
 import { Shell } from "@/components/shell";
+import { DeskShell } from "@/components/desk-shell";
 import { FamilyVaultPanel } from "@/components/family-vault";
-import { ParentStoriesDesk, StoriesDeskLink } from "@/components/learning-stories-desk";
-import { ChildHealthLog } from "@/components/child-health-log";
+import { ParentStoriesDesk } from "@/components/learning-stories-desk";
 import { TourCalendarPage } from "@/components/tour-calendar-page";
 import { CurriculumParentDesk } from "@/components/curriculum-pack";
 import { DeskSkeleton } from "@/components/page-skeleton";
@@ -21,7 +22,7 @@ import { canBuyDaycareUpgrade, canBuyParentUpgrade } from "@/lib/upgrade-role";
 import { parseShareToken } from "@/lib/parent-tracker";
 import { parentUrlTab } from "@/lib/parent-tab";
 import { canUseOperatorTools } from "@/lib/operator-tools";
-import { parentDeskPath } from "@/lib/desk-nav";
+import { parentDeskPath, parentNavSearch } from "@/lib/desk-nav";
 import { stripLocalePrefix } from "@/lib/locale-path";
 import { getFamily } from "@/lib/server/family";
 import { useCopy } from "@/lib/use-copy";
@@ -30,6 +31,23 @@ import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 const ParentDesk = lazy(() =>
   import("@/components/parent-desk").then((m) => ({ default: m.ParentDesk })),
 );
+
+function ParentMenuFrame({ active, children }: { active: string; children: ReactNode }) {
+  const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  return (
+    <DeskShell
+      desk="parent"
+      active={active}
+      headingMode="aside"
+      onSelect={(id) => {
+        void navigate({ to: parentDeskPath(pathname), search: parentNavSearch(id) });
+      }}
+    >
+      {children}
+    </DeskShell>
+  );
+}
 
 function isParentSignupPath(pathname: string) {
   const path = stripLocalePrefix(pathname).replace(/\/$/, "") || "/";
@@ -117,7 +135,7 @@ export type ParentSearch = ReturnType<typeof parentValidateSearch>;
 export type ParentLoaded = Awaited<ReturnType<typeof parentLoader>>;
 
 export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loaded: ParentLoaded }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, isPending } = useCurrentUserState();
   const locallyOut = useLocallySignedOut();
@@ -179,52 +197,26 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
     );
   }
   if (!user) return <RedirectToSignIn />;
-  if (search.tab === "tours") {
+  if (search.tab === "tours" || search.tab === "centre" || search.tab === "documents" || search.tab === "stories" || search.tab === "learning") {
+    const active = search.tab === "tours" ? "tour-calendar" : search.tab === "centre" ? "centre-tools" : search.tab === "learning" ? "learning" : search.tab;
     return (
-      <Shell>
-        <main className="mx-auto w-full max-w-3xl px-4 py-8 pb-[env(safe-area-inset-bottom)]">
-          <TourCalendarPage audience="parent" />
-        </main>
-      </Shell>
-    );
-  }
-  if (search.tab === "centre") {
-    return (
-      <Shell>
-        <main className="mx-auto w-full max-w-3xl px-4 py-8 pb-[env(safe-area-inset-bottom)]">
-          <ParentCentreToolsPanel />
-        </main>
-      </Shell>
-    );
-  }
-  if (search.tab === "documents") {
-    return (
-      <Shell>
-        <main className="mx-auto w-full max-w-3xl px-4 py-8 pb-[env(safe-area-inset-bottom)]">
-          <p className="text-sm font-semibold text-primary">KidEase</p>
-          <h1 className="mt-2 font-display text-3xl">{t("familyDocsTitle")}</h1>
-          <p className="mt-3 text-base">{t("familyDocsLead")}</p>
-          <FamilyVaultPanel signedIn />
-        </main>
-      </Shell>
-    );
-  }
-  if (search.tab === "stories") {
-    return (
-      <Shell>
-        <main className="mx-auto w-full max-w-3xl px-4 py-8">
-          <ParentStoriesDesk />
-        </main>
-      </Shell>
-    );
-  }
-  if (search.tab === "learning") {
-    return (
-      <Shell>
-        <main className="mx-auto w-full max-w-3xl px-4 py-8">
-          <CurriculumParentDesk />
-        </main>
-      </Shell>
+      <TwoFactorGate next={parentPath} pending={<Shell><DeskSkeleton /></Shell>}>
+        <ParentMenuFrame active={active}>
+          <main className="mx-auto w-full max-w-3xl px-4 py-8 pb-[env(safe-area-inset-bottom)]">
+            {search.tab === "tours" ? <TourCalendarPage audience="parent" /> : null}
+            {search.tab === "centre" ? <ParentCentreToolsPanel /> : null}
+            {search.tab === "documents" ? (
+              <>
+                <h1 className="font-display text-3xl">{t("familyDocsTitle")}</h1>
+                <p className="mt-3 text-base">{t("familyDocsLead")}</p>
+                <FamilyVaultPanel signedIn />
+              </>
+            ) : null}
+            {search.tab === "stories" ? <ParentStoriesDesk /> : null}
+            {search.tab === "learning" ? <CurriculumParentDesk /> : null}
+          </main>
+        </ParentMenuFrame>
+      </TwoFactorGate>
     );
   }
   if (upgradeSurface && ready && !session) {
@@ -280,12 +272,9 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
       <LoginFunnelDeskLand desk="parent" />
       {search.preview === "support" && canUseOperatorTools(session?.email) ? <SupportPreviewBanner /> : null}
       <Suspense fallback={<DeskSkeleton />}>
-        <StoriesDeskLink forParent />
-        {initialTab === "children" ? (
-          <div className="mx-auto w-full max-w-3xl px-4 pt-6">
-            <ChildHealthLog />
-          </div>
-        ) : null}
+        <div className="mx-auto w-full max-w-3xl px-4">
+          <Phase1Desk locale={locale === "fr" ? "fr" : "en"} role="parent" />
+        </div>
         <ParentDesk
           initialTab={initialTab}
           plusReturn={search.plus ?? null}

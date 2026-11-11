@@ -19,6 +19,7 @@ import {
   initials,
   menuAllergens,
   menuGaps,
+  menuLabel,
   money,
   payrollCsv,
   payrollSummary,
@@ -122,7 +123,7 @@ export function CentreToolsDesk() {
     );
   }
   const records = data.records;
-  const props = { copy, data, records, save, month, setMonth };
+  const props = { copy, data, records, save, month, setMonth, locale: locale === "fr" ? "fr" as const : "en" as const };
   return (
     <section className="space-y-4" data-testid="centre-tools-desk">
       <div>
@@ -196,7 +197,7 @@ function History({ copy, rows, render }: { copy: CentreToolsCopy; rows: Rec[]; r
   );
 }
 
-function MealsTool({ copy, records, save }: ToolProps) {
+function MealsTool({ copy, records, save, locale }: ToolProps & { locale: "en" | "fr" }) {
   const [weekOf, setWeekOf] = useState(new Date().toISOString().slice(0, 10));
   const [items, setItems] = useState<MenuItem[]>([]);
   const [note, setNote] = useState("");
@@ -221,13 +222,13 @@ function MealsTool({ copy, records, save }: ToolProps) {
           <thead>
             <tr>
               <th />
-              {DAYS.map((d) => <th key={d} className="p-1 text-left capitalize">{d}</th>)}
+              {DAYS.map((d) => <th key={d} className="p-1 text-left">{menuLabel(d, locale)}</th>)}
             </tr>
           </thead>
           <tbody>
             {MEAL_SLOTS.map((slot) => (
               <tr key={slot}>
-                <th className="p-1 text-left capitalize">{pretty(slot)}</th>
+                <th className="p-1 text-left">{menuLabel(slot, locale)}</th>
                 {DAYS.map((day) => {
                   const c = cell(day, slot);
                   return (
@@ -236,12 +237,12 @@ function MealsTool({ copy, records, save }: ToolProps) {
                       <div className="mt-1 flex flex-wrap gap-1">
                         {FOOD_GROUPS.map((g) => (
                           <label key={g} className="text-xs">
-                            <input type="checkbox" checked={c?.groups.includes(g) || false} onChange={(e) => setCell(day, slot, { groups: e.target.checked ? [...(c?.groups || []), g] : (c?.groups || []).filter((x) => x !== g) })} /> {pretty(g)}
+                            <input type="checkbox" checked={c?.groups.includes(g) || false} onChange={(e) => setCell(day, slot, { groups: e.target.checked ? [...(c?.groups || []), g] : (c?.groups || []).filter((x) => x !== g) })} /> {menuLabel(g, locale)}
                           </label>
                         ))}
                       </div>
                       <select aria-label={copy.allergens} className="mt-1 w-full text-xs" multiple value={c?.allergens || []} onChange={(e) => setCell(day, slot, { allergens: [...e.target.selectedOptions].map((o) => o.value) })}>
-                        {ALLERGENS.map((a) => <option key={a} value={a}>{pretty(a)}</option>)}
+                        {ALLERGENS.map((a) => <option key={a} value={a}>{menuLabel(a, locale)}</option>)}
                       </select>
                     </td>
                   );
@@ -253,10 +254,10 @@ function MealsTool({ copy, records, save }: ToolProps) {
       </div>
       {gaps.length ? (
         <p className="mt-2 text-sm text-amber-700" role="status">
-          {copy.foodGuideGap}: {gaps.map((g) => `${g.day} (${g.missing.map(pretty).join(", ")})`).join("; ")}
+          {copy.foodGuideGap}: {gaps.map((g) => `${menuLabel(g.day, locale)} (${g.missing.map((id) => menuLabel(id, locale)).join(", ")})`).join("; ")}
         </p>
       ) : null}
-      <p className="mt-2 text-sm">{copy.allergens}: {menuAllergens(menu).map(pretty).join(", ") || "—"}</p>
+      <p className="mt-2 text-sm">{copy.allergens}: {menuAllergens(menu).map((id) => menuLabel(id, locale)).join(", ") || "—"}</p>
       <label className={`${label} mt-3`}>
         {copy.allergyNote}
         <textarea className={`${field} min-h-20 py-2`} value={note} onChange={(e) => setNote(e.target.value)} />
