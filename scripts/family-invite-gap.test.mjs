@@ -11,6 +11,8 @@ test("connecting a family stays off and does not send", () => {
   assert.equal(familyInviteEnabled({ FEATURE_FAMILY_INVITE: "1" }), true);
   const panel = readFileSync(new URL("../src/components/family-invite-gap.tsx", import.meta.url), "utf8");
   assert.match(panel, /if \(!on\) return null/);
+  assert.match(panel, /from "@\/components\/ui\/button"/);
+  assert.match(panel, /<Button/);
   assert.match(panel, /disabled/);
   assert.doesNotMatch(panel, /sendMail|sendSms|fetch\(/);
 });
