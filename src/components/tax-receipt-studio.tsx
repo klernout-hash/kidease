@@ -174,7 +174,7 @@ export function TaxReceiptStudio({ desk = "parent" }: { desk?: "parent" | "centr
           {note}
         </p>
       ) : null}
-      <div className="mt-3">{help}</div>
+      {desk === "centre" ? <div className="mt-3">{help}</div> : null}
     </section>
   );
 }

@@ -182,6 +182,14 @@ export function splitLiveBrowseHint(hint: string): { count: string; browse: stri
  * Licensed count stays on the line.
  * A live count is extra text, never a replacement for the centre count.
  */
+/** `/daycares/winnipeg` should read Winnipeg, not winnipeg. */
+export function titleCaseCitySlug(slug: string): string {
+  return slug
+    .trim()
+    .replace(/-/g, " ")
+    .replace(/(^|\s)([a-zà-ÿ])/gi, (_match, space: string, letter: string) => `${space}${letter.toUpperCase()}`);
+}
+
 export function licensedSearchCountLine(input: {
   nameSearch: boolean;
   liveCount: number;

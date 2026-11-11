@@ -13,6 +13,7 @@ import {
   matchesDaycareName,
   parseExploreSearchFields,
   startWindowForDate,
+  titleCaseCitySlug,
 } from "../src/lib/explore-search.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -111,6 +112,11 @@ test("daycare name search lists public records, not only the current radius", ()
   assert.match(field, /data-ke="daycare-name-hits"/);
   assert.match(field, /to="\/daycare\/\$slug"/);
   assert.match(src("src/components/explore-search-bar.tsx"), /DaycareNameField/);
+});
+
+test("a city hub shows the city with a capital letter", () => {
+  assert.equal(titleCaseCitySlug("winnipeg"), "Winnipeg");
+  assert.equal(titleCaseCitySlug("st-johns"), "St Johns");
 });
 
 test("guest hero treats unresolved text as a daycare name search", () => {
