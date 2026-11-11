@@ -119,6 +119,10 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_FEE_DISPLAY_GATE",
   "FEATURE_CENTRE_LEAD_TRACKER",
   "FEATURE_CENTRE_API",
+  "FEATURE_WALKIN_LEADS",
+  "FEATURE_PROGRAM_WAITLIST",
+  "FEATURE_WAITLIST_OFFERS",
+  "FEATURE_FORM_STATUS",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -350,6 +354,14 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_CENTRE_LEAD_TRACKER: false,
   /** Per-centre API keys and webhooks. Off. Nothing is exposed until a centre turns a key on. */
   FEATURE_CENTRE_API: false,
+  /** Walk-in and phone leads. Off. Consent defaults off. */
+  FEATURE_WALKIN_LEADS: false,
+  /** Program waitlists and position bands. Off. */
+  FEATURE_PROGRAM_WAITLIST: false,
+  /** Waitlist offers. Off. No offer email is sent. */
+  FEATURE_WAITLIST_OFFERS: false,
+  /** Form and packet status board. Off. */
+  FEATURE_FORM_STATUS: false,
 };
 
 /**
@@ -1025,6 +1037,30 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "A centre key for its own families. Off. Keys are hashed, child health stays out, and webhooks stay off until the centre turns them on.",
+  },
+  {
+    key: "FEATURE_WALKIN_LEADS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Record a walk-in or phone lead. Off. Consent to be contacted defaults off. No email is sent.",
+  },
+  {
+    key: "FEATURE_PROGRAM_WAITLIST",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Waitlists per age group with a position band, not an exact place. Off. Parents see only their own rows.",
+  },
+  {
+    key: "FEATURE_WAITLIST_OFFERS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Offer a waitlist spot with a deadline. Off. Two accepts cannot take the last spot. No email is sent.",
+  },
+  {
+    key: "FEATURE_FORM_STATUS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Status of forms and packets from events. Off. A rejection is held, not emailed.",
   },
 ];
 
