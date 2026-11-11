@@ -34,6 +34,9 @@ export function CertExpiryPanel() {
           ? "Les dates des 60 prochains jours seulement. Une date déjà passée n'est pas reprise. La personne doit accepter l'alerte."
           : "Only dates in the next 60 days. A date that already passed is not replayed. The person has to agree to the alert."}
       </p>
+      <p className="mt-2 text-sm font-medium" data-ke="cert-expiry-not-payroll">
+        {fr ? "Ce n’est pas la paie." : "This is not payroll."}
+      </p>
       <p className="mt-2 text-sm font-medium" data-ke="cert-expiry-unsent">
         {fr ? "Rien n'est envoyé depuis cette page." : "Nothing is sent from this page."}
       </p>

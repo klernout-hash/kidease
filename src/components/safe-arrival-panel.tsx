@@ -1,3 +1,4 @@
+import { channelStateLabel, safeArrivalChannelState } from "@/lib/channel-state";
 import { useCopy } from "@/lib/use-copy";
 
 /** Safe arrival stays on the daycare desk. Nothing is sent from this screen. */
@@ -17,9 +18,29 @@ export function SafeArrivalPanel() {
           ? "La famille doit accepter d'abord. Seule la journée d'aujourd'hui compte. Les jours passés ne sont pas repris."
           : "The family has to agree first. Only today counts. Past days are not replayed."}
       </p>
+      <ChannelList locale={fr ? "fr" : "en"} />
       <p className="mt-2 text-sm font-medium" data-ke="safe-arrival-unsent">
         {fr ? "Rien n'est envoyé depuis cette page." : "Nothing is sent from this page."}
       </p>
     </section>
+  );
+}
+
+function ChannelList({ locale }: { locale: "en" | "fr" }) {
+  const state = safeArrivalChannelState();
+  const rows = [
+    { id: "email", name: locale === "fr" ? "Courriel" : "Email", value: state.email },
+    { id: "push", name: locale === "fr" ? "Alerte du téléphone" : "Phone alert", value: state.push },
+    { id: "in-app", name: locale === "fr" ? "Dans l'appli" : "In the app", value: state.inApp },
+  ] as const;
+  return (
+    <dl className="mt-3 space-y-2 text-sm" data-ke="safe-arrival-channels">
+      {rows.map((row) => (
+        <div key={row.id} className="flex min-h-11 items-center justify-between gap-3" data-channel={row.id} data-state={row.value}>
+          <dt className="font-medium">{row.name}</dt>
+          <dd>{channelStateLabel(row.value, locale)}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
