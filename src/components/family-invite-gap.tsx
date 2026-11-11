@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { familyInviteFlag } from "@/lib/server/family-invite";
 import { useCopy } from "@/lib/use-copy";
 
@@ -38,9 +39,9 @@ export function FamilyInviteGap() {
       <p className="mt-2 text-sm font-medium" data-ke="family-invite-unsent">
         {fr ? "Rien n'est envoyé depuis cette page." : "Nothing is sent from this page."}
       </p>
-      <button type="button" className="mt-3 inline-flex min-h-11 items-center rounded-full bg-fg px-4 text-sm font-semibold text-bg opacity-40" disabled>
+      <Button type="button" className="mt-3" disabled>
         {fr ? "Ajouter un enfant" : "Add a child"}
-      </button>
+      </Button>
     </section>
   );
 }
