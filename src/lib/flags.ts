@@ -166,6 +166,21 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_VIDEO_SHARE",
   "FEATURE_MILESTONES",
   "FEATURE_CREDENTIAL_RENEWAL",
+  "FEATURE_RULES_BADGE",
+  "FEATURE_FORM_SMS",
+  "FEATURE_EMERGENCY_SMS",
+  "FEATURE_TRANSLATION_UI",
+  "FEATURE_OVERTIME",
+  "FEATURE_CARD_PAY",
+  "FEATURE_AUTOPAY",
+  "FEATURE_PAD",
+  "FEATURE_MANDATORY_AUTOPAY",
+  "FEATURE_REFUNDS",
+  "FEATURE_CCFRI",
+  "FEATURE_AB_GRANT",
+  "FEATURE_PAYOUT_STATUS",
+  "FEATURE_MUNI_STATS",
+  "FEATURE_PUBLIC_API",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -468,6 +483,36 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_MILESTONES: false,
   /** Credential renewal status. Off. No reminder is sent. */
   FEATURE_CREDENTIAL_RENEWAL: false,
+  /** Rules-based badge. Off. The method page is the source. */
+  FEATURE_RULES_BADGE: false,
+  /** Text when a form is shared. Off. Nothing is sent. */
+  FEATURE_FORM_SMS: false,
+  /** Emergency text. Off. Nothing is sent. */
+  FEATURE_EMERGENCY_SMS: false,
+  /** Translation screen. Off. No machine translation runs. */
+  FEATURE_TRANSLATION_UI: false,
+  /** Overtime from a stored schedule. Off. */
+  FEATURE_OVERTIME: false,
+  /** Card pay. Off. Test mode only. No live charge. */
+  FEATURE_CARD_PAY: false,
+  /** Autopay. Off. Test mode only. No live charge. */
+  FEATURE_AUTOPAY: false,
+  /** Bank debit. Off. Test mode only. No live charge. */
+  FEATURE_PAD: false,
+  /** Required autopay. Off. Test mode only. No live charge. */
+  FEATURE_MANDATORY_AUTOPAY: false,
+  /** Refunds. Off. Test mode only. A 3% fee is calculated, not charged. */
+  FEATURE_REFUNDS: false,
+  /** BC CCFRI amount from an official rate. Off. A missing rate stays hidden. */
+  FEATURE_CCFRI: false,
+  /** Alberta affordability amount from an official rate. Off. */
+  FEATURE_AB_GRANT: false,
+  /** Payout status from a stored row. Off. No payout is sent. */
+  FEATURE_PAYOUT_STATUS: false,
+  /** Municipal counts from stored rows. Off. */
+  FEATURE_MUNI_STATS: false,
+  /** Public API scopes. Off. Child health is never in scope. */
+  FEATURE_PUBLIC_API: false,
 };
 
 /**
@@ -1217,6 +1262,21 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
   { key: "FEATURE_VIDEO_SHARE", defaultOn: false, docs: "docs/flags.md", summary: "Video share screen. Off. No upload and no send." },
   { key: "FEATURE_MILESTONES", defaultOn: false, docs: "docs/flags.md", summary: "Milestones a centre wrote down. Off. Age does not add one." },
   { key: "FEATURE_CREDENTIAL_RENEWAL", defaultOn: false, docs: "docs/flags.md", summary: "Credential renewal status. Off. No reminder is sent." },
+  { key: "FEATURE_RULES_BADGE", defaultOn: false, docs: "docs/flags.md", summary: "A badge from published rules. Off." },
+  { key: "FEATURE_FORM_SMS", defaultOn: false, docs: "docs/flags.md", summary: "Text when a form is shared. Off. Nothing is sent." },
+  { key: "FEATURE_EMERGENCY_SMS", defaultOn: false, docs: "docs/flags.md", summary: "Emergency text. Off. Nothing is sent." },
+  { key: "FEATURE_TRANSLATION_UI", defaultOn: false, docs: "docs/flags.md", summary: "Translation screen. Off. No machine translation runs." },
+  { key: "FEATURE_OVERTIME", defaultOn: false, docs: "docs/flags.md", summary: "Overtime from a stored schedule. Off." },
+  { key: "FEATURE_CARD_PAY", defaultOn: false, docs: "docs/flags.md", summary: "Card pay. Off. Test mode only. No live charge." },
+  { key: "FEATURE_AUTOPAY", defaultOn: false, docs: "docs/flags.md", summary: "Autopay. Off. Test mode only. No live charge." },
+  { key: "FEATURE_PAD", defaultOn: false, docs: "docs/flags.md", summary: "Bank debit. Off. Test mode only. No live charge." },
+  { key: "FEATURE_MANDATORY_AUTOPAY", defaultOn: false, docs: "docs/flags.md", summary: "Required autopay. Off. Test mode only. No live charge." },
+  { key: "FEATURE_REFUNDS", defaultOn: false, docs: "docs/flags.md", summary: "Refunds. Off. Test mode only. The 3% fee is calculated, not charged." },
+  { key: "FEATURE_CCFRI", defaultOn: false, docs: "docs/flags.md", summary: "BC CCFRI from an official rate. Off. A missing rate stays hidden." },
+  { key: "FEATURE_AB_GRANT", defaultOn: false, docs: "docs/flags.md", summary: "Alberta affordability grant from an official rate. Off." },
+  { key: "FEATURE_PAYOUT_STATUS", defaultOn: false, docs: "docs/flags.md", summary: "Payout status from a stored row. Off. No payout is sent." },
+  { key: "FEATURE_MUNI_STATS", defaultOn: false, docs: "docs/flags.md", summary: "Municipal counts from stored rows. Off." },
+  { key: "FEATURE_PUBLIC_API", defaultOn: false, docs: "docs/flags.md", summary: "Public API scopes on the centre API. Off. Child health is never in scope." },
 ];
 
 let cache: RemoteFlagSnapshot | null = null;
