@@ -111,6 +111,8 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_MOBILE_SEARCH_V2",
   "FEATURE_UI_AIRBNB_V1",
   "FEATURE_FR_AUTH_QC",
+  "FEATURE_FAMILY_BULK_MAIL",
+  "FEATURE_LIST_CSV",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -326,6 +328,10 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_UI_AIRBNB_V1: false,
   /** French password reset, sign-in code, and verify mail for Quebec and French. Off. English mail stays. */
   FEATURE_FR_AUTH_QC: false,
+  /** Centre email to families. Off. Nothing is sent. */
+  FEATURE_FAMILY_BULK_MAIL: false,
+  /** CSV download of centre lists. Off. */
+  FEATURE_LIST_CSV: false,
 };
 
 /**
@@ -950,6 +956,19 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "French password reset, sign-in code, and verify-email for people in Quebec or using French. Off. English mail subjects stay as they are.",
+  },
+  {
+    key: "FEATURE_FAMILY_BULK_MAIL",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "A centre email to families, in English or French, with delivery notes. Off. No message is sent. The sender stays on kidease.ca.",
+  },
+  {
+    key: "FEATURE_LIST_CSV",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Download a list as a CSV file. Off. Health columns stay hidden without document access.",
   },
 ];
 

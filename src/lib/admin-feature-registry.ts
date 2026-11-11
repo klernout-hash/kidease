@@ -100,6 +100,8 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_MOBILE_SEARCH_V2: "parent",
   FEATURE_UI_AIRBNB_V1: "shared",
   FEATURE_FR_AUTH_QC: "shared",
+  FEATURE_FAMILY_BULK_MAIL: "daycare",
+  FEATURE_LIST_CSV: "daycare",
 };
 
 const SWITCH_CATEGORY: Record<string, FeatureCategory> = {
