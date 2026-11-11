@@ -38,6 +38,66 @@ export function parseQaAllowlist(raw: string | null | undefined): string[] {
   return [...seen];
 }
 
+type PreviewEnv = {
+  QA_PREVIEW_SENDS?: string;
+  QA_SEND_ALLOWLIST?: string;
+  QA_SMS_ALLOWLIST?: string;
+  QA_PUSH_ALLOWLIST?: string;
+};
+
+/** Preview deployments set QA_PREVIEW_SENDS=1. Production leaves it unset. */
+export function previewSendsArmed(env: PreviewEnv | null | undefined): boolean {
+  const value = String(env?.QA_PREVIEW_SENDS || "").trim().toLowerCase();
+  return value === "1" || value === "true" || value === "on" || value === "yes";
+}
+
+function normalizeSms(raw: string): string {
+  const kept = String(raw || "").trim().replace(/[^\d+]/g, "");
+  if (!kept) return "";
+  if (kept.startsWith("+")) {
+    const rest = kept.slice(1).replace(/\D/g, "");
+    return rest ? `+${rest}` : "";
+  }
+  const digits = kept.replace(/\D/g, "");
+  if (digits.length === 10) return `+1${digits}`;
+  if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
+  if (digits.length >= 8 && digits.length <= 15) return `+${digits}`;
+  return "";
+}
+
+/** Phone numbers only. An empty value allows nobody. */
+export function parseQaSmsAllowlist(raw: string | null | undefined): string[] {
+  const seen = new Set<string>();
+  for (const part of String(raw || "").split(/[,;\n]+/)) {
+    const phone = normalizeSms(part);
+    if (/^\+[1-9]\d{7,14}$/.test(phone)) seen.add(phone);
+  }
+  return [...seen];
+}
+
+/** Fail closed while the preview gate is on. An empty list blocks every recipient. */
+export function previewEmailAllowed(recipient: string, env: PreviewEnv | null | undefined): boolean {
+  if (!previewSendsArmed(env)) return true;
+  const email = recipient.trim().toLowerCase();
+  if (!email.includes("@")) return false;
+  return parseQaAllowlist(env?.QA_SEND_ALLOWLIST).includes(email);
+}
+
+export function previewSmsAllowed(recipient: string, env: PreviewEnv | null | undefined): boolean {
+  if (!previewSendsArmed(env)) return true;
+  const phone = normalizeSms(recipient);
+  if (!phone) return false;
+  return parseQaSmsAllowlist(env?.QA_SMS_ALLOWLIST).includes(phone);
+}
+
+/** Devices of the QA accounts only. Separate from the two email inboxes. */
+export function previewPushAllowed(email: string, env: PreviewEnv | null | undefined): boolean {
+  if (!previewSendsArmed(env)) return true;
+  const value = email.trim().toLowerCase();
+  if (!value.includes("@")) return false;
+  return parseQaAllowlist(env?.QA_PUSH_ALLOWLIST).includes(value);
+}
+
 export function senderIsKidEaseMailbox(sender: string): boolean {
   const email = sender.trim().toLowerCase();
   if (!email || email.includes("openroadoutlet.ca")) return false;

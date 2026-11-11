@@ -5,6 +5,7 @@ import {
   pushCredentialsPresent,
   pushEnabled,
 } from "@/lib/push";
+import { previewPushAllowed, previewSendsArmed } from "@/lib/qa-send";
 
 export type PushSendResult =
   | {
@@ -37,6 +38,17 @@ export async function sendPushNotification(input: {
     return { ok: false, skipped: true, error: PUSH_SCAFFOLD_MESSAGE };
   }
   try {
+    if (previewSendsArmed(process.env)) {
+      const { getSql } = await import("@/lib/db");
+      const sql = await getSql();
+      const rows = await sql<{ email: string | null }>`
+        select email from "user" where id = ${input.userId} limit 1
+      `.catch(() => [] as { email: string | null }[]);
+      if (!previewPushAllowed(rows[0]?.email || "", process.env)) {
+        console.info("[kidease-qa-send]", JSON.stringify({ channel: "push", reason: "preview_blocked" }));
+        return { ok: false, skipped: true, error: "QA preview: this account is not on QA_PUSH_ALLOWLIST." };
+      }
+    }
     const { getSql } = await import("@/lib/db");
     const { listPushDeviceTokens, dryRunPushNotification } = await import("./push-tokens");
     const sql = await getSql();

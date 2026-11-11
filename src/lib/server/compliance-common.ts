@@ -6,6 +6,7 @@
 import { getSql, type Sql } from "@/lib/db";
 import { homeProvince, redactLog, type ProvinceCode } from "@/lib/compliance/mode";
 import { transactionalMailFrom } from "@/lib/mail-from";
+import { previewEmailAllowed } from "@/lib/qa-send";
 import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
 
 export type Scope = {
@@ -82,6 +83,10 @@ export async function sendComplianceEmail(input: {
   if (!key) return "logged_no_mailer";
   const to = input.to.trim();
   if (!to.includes("@")) return "failed";
+  if (!previewEmailAllowed(to, process.env)) {
+    console.info("[kidease-qa-send]", JSON.stringify({ channel: "email", reason: "preview_blocked" }));
+    return "logged_no_mailer";
+  }
   if (input.aboutTestListing) return "sent";
   try {
     const { prepareMailBody } = await import("@/lib/transactional-mail");

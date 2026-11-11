@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { transactionalMailFrom } from "@/lib/mail-from";
+import { previewEmailAllowed } from "@/lib/qa-send";
 import { resendCampaignTags } from "@/lib/email-suppressions";
 import { ADMIN_EMAIL } from "@/lib/server/notify";
 import { requireAdmin } from "@/lib/server/roles";
@@ -105,6 +106,10 @@ export const sendAdminMail = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await requireAdmin(context.userId);
     if (!EMAIL_RE.test(data.to)) throw new Error("Enter a valid email address.");
+    if (!previewEmailAllowed(data.to, process.env)) {
+      console.info("[kidease-qa-send]", JSON.stringify({ channel: "email", reason: "preview_blocked" }));
+      return { ok: true, via: "blocked", copiedToSent: false };
+    }
     if (!data.subject) throw new Error("Add a subject.");
     if (!data.body) throw new Error("Add a message.");
 

@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseQaAllowlist, qaSendDecision, senderIsKidEaseMailbox } from "../src/lib/qa-send.ts";
+import {
+  parseQaAllowlist,
+  parseQaSmsAllowlist,
+  previewEmailAllowed,
+  previewPushAllowed,
+  previewSmsAllowed,
+  qaSendDecision,
+  senderIsKidEaseMailbox,
+} from "../src/lib/qa-send.ts";
 
 const allow = ["kyle@kidease.ca", "klernout45@gmail.com"];
 const base = {
@@ -28,4 +36,27 @@ test("only the two approved inboxes can receive, and only by email from kidease.
   assert.equal(qaSendDecision({ ...base, allowlist: [] }).reason, "empty_allowlist");
   assert.equal(qaSendDecision({ ...base, alreadySent: true }).reason, "duplicate");
   assert.equal(qaSendDecision({ ...base, feature: "ADM-21" }).reason, "bad_feature");
+});
+
+test("the preview gate blocks every recipient except the named lists", () => {
+  const off = {};
+  assert.equal(previewEmailAllowed("parent@example.com", off), true);
+  assert.equal(previewSmsAllowed("+12045550199", off), true);
+  const on = {
+    QA_PREVIEW_SENDS: "1",
+    QA_SEND_ALLOWLIST: "kyle@kidease.ca, klernout45@gmail.com",
+    QA_SMS_ALLOWLIST: "",
+    QA_PUSH_ALLOWLIST: "reviewer-parent@kidease.ca",
+  };
+  assert.equal(previewEmailAllowed("kyle@kidease.ca", on), true);
+  assert.equal(previewEmailAllowed("klernout45@gmail.com", on), true);
+  assert.equal(previewEmailAllowed("parent@example.com", on), false);
+  assert.deepEqual(parseQaSmsAllowlist(""), []);
+  assert.deepEqual(parseQaSmsAllowlist("204-555-0199"), ["+12045550199"]);
+  assert.equal(previewSmsAllowed("+12045550199", on), false);
+  assert.equal(previewSmsAllowed("+12045550199", { ...on, QA_SMS_ALLOWLIST: "+1 204 555 0199" }), true);
+  assert.equal(previewSmsAllowed("+12045550100", { ...on, QA_SMS_ALLOWLIST: "+12045550199" }), false);
+  assert.equal(previewPushAllowed("reviewer-parent@kidease.ca", on), true);
+  assert.equal(previewPushAllowed("kyle@kidease.ca", on), false);
+  assert.equal(previewPushAllowed("parent@example.com", on), false);
 });

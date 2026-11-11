@@ -1,4 +1,5 @@
 import { getSql } from "@/lib/db";
+import { previewEmailAllowed } from "@/lib/qa-send";
 import { resendCampaignTags } from "@/lib/email-suppressions";
 import { nid } from "@/lib/utils";
 import { createServerFn } from "@tanstack/react-start";
@@ -443,6 +444,10 @@ async function deliverEmail(
 ) {
   if (opts?.aboutTestListing) {
     console.info("[kidease-mail] skipped test listing", subject);
+    return "logged";
+  }
+  if (!previewEmailAllowed(to, process.env)) {
+    console.info("[kidease-qa-send]", JSON.stringify({ channel: "email", reason: "preview_blocked" }));
     return "logged";
   }
   const { prepareMailBody } = await import("@/lib/transactional-mail");

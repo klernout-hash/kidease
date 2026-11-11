@@ -18,6 +18,7 @@ import {
   type SpotParentFact,
 } from "@/lib/ai/spot-alerts";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { previewEmailAllowed } from "@/lib/qa-send";
 import { getSql } from "@/lib/db";
 import { readFamilyTimeZone } from "@/lib/server/alert-dispatch";
 import { distanceKm } from "@/lib/proximity";
@@ -164,6 +165,10 @@ async function sendSpotMail(input: {
   aboutTestListing?: boolean;
 }) {
   if (input.aboutTestListing) return "failed" as const;
+  if (!previewEmailAllowed(input.to, process.env)) {
+    console.info("[kidease-qa-send]", JSON.stringify({ channel: "email", reason: "preview_blocked" }));
+    return "failed" as const;
+  }
   const unsub = caslUnsubscribeUrl({ userId: input.userId, channel: "email", purpose: "service", address: input.to });
   const oneClick = caslOneClickUrl({ userId: input.userId, channel: "email", purpose: "service", address: input.to });
   const listUnsub = oneClick ? `<${oneClick}>` : unsub ? `<${unsub}>` : undefined;

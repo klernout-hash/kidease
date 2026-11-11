@@ -16,6 +16,7 @@
  */
 import { getSql, dbSource, type Sql } from "@/lib/db";
 import { SEARCH_ALERTS_CAMPAIGN_TAG } from "@/lib/email-suppressions";
+import { previewEmailAllowed } from "@/lib/qa-send";
 import { isSuppressed } from "@/lib/server/email-suppressions";
 import { lookupUser } from "@/lib/server/notify";
 import { resetMailConfigured } from "@/lib/server/reset-mail-config";
@@ -1047,6 +1048,10 @@ export async function sendSearchAlertEmail(payload: {
 
   if (!to) {
     console.info("[kidease-search-alerts] email stub — no parent email", payload.searchName);
+    return { ok: true as const, via: "stub" as const };
+  }
+  if (!previewEmailAllowed(to, process.env)) {
+    console.info("[kidease-qa-send]", JSON.stringify({ channel: "email", reason: "preview_blocked" }));
     return { ok: true as const, via: "stub" as const };
   }
 

@@ -1,4 +1,5 @@
 import { connect as netConnect, type Socket } from "node:net";
+import { previewEmailAllowed } from "../qa-send.ts";
 import { connect as tlsConnect, type TLSSocket } from "node:tls";
 import {
   buildOutgoingMail,
@@ -253,7 +254,11 @@ export async function sendTitanMail(input: {
   html?: string;
   inReplyTo?: string;
   references?: string;
-}): Promise<{ ok: true; via: "titan"; copiedToSent: boolean }> {
+}): Promise<{ ok: true; via: "titan" | "blocked"; copiedToSent: boolean }> {
+  if (!previewEmailAllowed(input.to, process.env)) {
+    console.info("[kidease-qa-send]", JSON.stringify({ channel: "email", reason: "preview_blocked" }));
+    return { ok: true, via: "blocked", copiedToSent: false };
+  }
   const cfg = requireConfig();
   const mail = buildOutgoingMail({
     fromHeader: cfg.fromHeader,

@@ -10,6 +10,7 @@ import { splitPhotoList } from "@/lib/listing-photo";
 import { isRealListingPhoto } from "@/lib/listing-readiness";
 import { compareTimeDesc } from "@/lib/sort-time";
 import { transactionalMailFrom } from "@/lib/mail-from";
+import { previewEmailAllowed } from "@/lib/qa-send";
 import { resendCampaignTags } from "@/lib/email-suppressions";
 import { licenseReviewMarker } from "@/lib/private-docs";
 import { overlayStoredLicensePhotos } from "@/lib/server/license-photo-ref";
@@ -90,6 +91,10 @@ async function deliverToProvider(to: string, subject: string, text: string, abou
     return "logged";
   }
   if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return "skip";
+  if (!previewEmailAllowed(to, process.env)) {
+    console.info("[kidease-qa-send]", JSON.stringify({ channel: "email", reason: "preview_blocked" }));
+    return "logged";
+  }
   const html = `<!doctype html>
 <html><body style="font-family:Plus Jakarta Sans,Segoe UI,sans-serif;background:#f6f3ee;color:#1c2438;padding:24px;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#fffcf8;border:1px solid #e3ddd3;border-radius:16px;">

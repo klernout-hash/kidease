@@ -14,6 +14,7 @@
  */
 
 import { evaluateFeatureFlag } from "../flags.ts";
+import { previewSmsAllowed } from "../qa-send.ts";
 import { brandKidEaseSms } from "../sms-copy.ts";
 
 const SMS_SCAFFOLD_MESSAGE =
@@ -149,6 +150,10 @@ export async function sendSms(input: SendSmsInput, options: SendSmsOptions = {})
   const env = options.env ?? process.env;
   const fetchImpl = options.fetchImpl ?? fetch;
   const to = normalizeE164(input.to);
+  if (!previewSmsAllowed(to, env)) {
+    console.info("[kidease-qa-send]", JSON.stringify({ channel: "sms", reason: "preview_blocked" }));
+    return { ok: false, skipped: true, error: "QA preview: this number is not on QA_SMS_ALLOWLIST." };
+  }
   if (!isE164(to)) {
     return { ok: false, skipped: false, error: "Recipient must be an E.164 number (e.g. +12045550100)." };
   }

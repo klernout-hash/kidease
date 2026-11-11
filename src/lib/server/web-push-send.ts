@@ -5,6 +5,7 @@
  */
 
 import { getSql } from "@/lib/db";
+import { previewPushAllowed, previewSendsArmed } from "@/lib/qa-send";
 import { pushArmed } from "@/lib/channel-readiness";
 import { vapidPrivateKey, vapidPublicKey, vapidSubject, webPushCredentialsPresent } from "@/lib/push";
 import { isAllowedWebPushEndpoint } from "@/lib/web-push";
@@ -44,6 +45,15 @@ export async function sendWebPushToUser(
   const userId = String(input.userId || "").trim();
   if (!userId) return { sent: 0, failed: 0, removed: 0, skipped: true, reason: "no_user" };
   const sql = await getSql();
+  if (previewSendsArmed(env)) {
+    const owners = await sql<{ email: string | null }>`
+      select email from "user" where id = ${userId} limit 1
+    `.catch(() => [] as { email: string | null }[]);
+    if (!previewPushAllowed(owners[0]?.email || "", env)) {
+      console.info("[kidease-qa-send]", JSON.stringify({ channel: "push", reason: "preview_blocked" }));
+      return { sent: 0, failed: 0, removed: 0, skipped: true, reason: "preview_blocked" };
+    }
+  }
   const rows = await sql<SubRow>`
     select id, endpoint, p256dh, auth_key
     from web_push_subscriptions

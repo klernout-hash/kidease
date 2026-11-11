@@ -175,6 +175,10 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_IMMUNIZATION_FILE: "shared",
   FEATURE_CENTRE_MINISITE: "daycare",
   FEATURE_ROOM_FORECAST: "daycare",
+  FEATURE_CUSTODY_ORDERS: "daycare",
+  FEATURE_OPERATOR_PACKS: "daycare",
+  FEATURE_EXTRA_DAYS: "shared",
+  FEATURE_THIRD_PARTY_PAYER: "shared",
 };
 
 const SWITCH_CATEGORY: Record<string, FeatureCategory> = {

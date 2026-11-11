@@ -10,6 +10,7 @@
  */
 
 import { KIDEASE_OPERATOR_EMAIL, normalizeEmail } from "./admin-email.ts";
+import { previewEmailAllowed } from "./qa-send.ts";
 import { resendCampaignTags } from "./email-suppressions.ts";
 import {
   DEFAULT_TRANSACTIONAL_MAIL_FROM,
@@ -354,7 +355,8 @@ async function defaultSendTitan(input: {
 }): Promise<{ ok: true; via: "titan" }> {
   const { sendTitanMail } = await import("./server/titan-mail.server.ts");
   const sent = await sendTitanMail(input);
-  return { ok: true, via: sent.via };
+  if (sent.via !== "titan") throw new Error("preview_blocked");
+  return { ok: true, via: "titan" };
 }
 
 /**
@@ -369,6 +371,11 @@ export async function sendTransactionalMail(
   const env = deps.env ?? process.env;
   const fetchFn = deps.fetch ?? fetch;
   const to = normalizeEmail(input.to);
+  if (!previewEmailAllowed(to, env)) {
+    emit(deps, input.purpose, "logged", { via: "logged", reason: "rejected" });
+    console.info("[kidease-qa-send]", JSON.stringify({ channel: "email", reason: "preview_blocked" }));
+    return { status: "logged", via: "logged", reason: "rejected" };
+  }
   const replyTo = (input.replyTo || env.ADMIN_EMAIL || KIDEASE_OPERATOR_EMAIL).trim() || KIDEASE_OPERATOR_EMAIL;
   const providers = otpProvidersFromEnv(env);
   recordOtpMailHealth({ ...providers, lastEvent: lastHealth.lastEvent ?? "logged" });
