@@ -2876,7 +2876,7 @@ html[data-resolved-theme="dark"] .ke-site-footer {
     bottom: calc(var(--ke-help-clear, 5.75rem) + var(--ke-keyboard, 0px));
   }
   html:not([data-channel="app"]):not([data-runtime="native"]):has([data-ke="listing-sticky-bar"]) .ke-help-bot {
-    bottom: calc(6.5rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
+    bottom: calc(7.25rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
   }
   /* An open More menu stays above the help button and the sticky actions. */
   html:has([data-ke="listing-more"] [role="menu"]) .ke-help-bot {
@@ -3028,7 +3028,13 @@ html[data-runtime="native"] .ke-help-bot {
 }
 html[data-channel="app"]:has([data-ke="listing-sticky-bar"]) .ke-help-bot,
 html[data-runtime="native"]:has([data-ke="listing-sticky-bar"]) .ke-help-bot {
-  bottom: calc(5rem + 4.75rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
+  bottom: calc(6.75rem + 4.75rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
+}
+@media (min-width: 768px) {
+  html[data-channel="app"] [data-ke="app-tab-bar"],
+  html[data-ui="airbnb-v1"] [data-ke="app-tab-bar"] {
+    display: none !important;
+  }
 }
 html[data-channel="app"] .ke-page::after,
 html[data-runtime="native"] .ke-page::after {
@@ -3062,7 +3068,7 @@ html[data-ui="airbnb-v1"][data-theme="dark"] {
 .ke-airbnb-phone-only { display: none; }
 .ke-phone-cats { padding: 8px 20px 32px; }
 .ke-phone-cats-title { display: flex; align-items: center; justify-content: space-between; }
-.ke-phone-cats-title h1 { margin: 8px 0 0; font-size: 2rem; font-weight: 700; letter-spacing: -0.03em; }
+.ke-phone-cats-title h1, .ke-phone-cats-title p { margin: 8px 0 0; font-size: 2rem; font-weight: 700; letter-spacing: -0.03em; }
 .ke-phone-cats-profile { display: flex; align-items: center; gap: 14px; margin: 22px 0 8px; text-decoration: none; color: inherit; }
 .ke-phone-cats-profile > span:first-child { display: grid; width: 56px; height: 56px; place-items: center; border-radius: 999px; background: #1a3790; color: #fff; font-weight: 700; }
 .ke-phone-cats-profile strong { display: block; font-size: 1.05rem; }

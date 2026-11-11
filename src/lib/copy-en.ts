@@ -1027,6 +1027,7 @@ export const en = {
     invoiceStamp: "PAID",
     children: "Children",
     childrenLimit: "Up to 4 profiles",
+    parentStoriesNav: "Learning stories",
     shareFamilyNav: "Share family",
     shareFamilyNavHint: "Another parent, their own login",
     staffHoursNav: "Hours",

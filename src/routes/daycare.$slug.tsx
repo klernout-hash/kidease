@@ -860,7 +860,7 @@ export function Listing() {
                 <h1 className="min-w-0 font-display text-[24px] font-semibold leading-[30px] md:text-[30px] md:leading-9">{name}</h1>
                 {verifiedCheck ? <VerifiedCheck className="mt-1 shrink-0" /> : null}
               </div>
-              <p className="mt-2 text-sm text-muted" data-ke="listing-availability">
+              <p className="mt-1 text-sm text-muted" data-ke="listing-availability">
                 {known && spots > 0
                   ? `${spots} ${t("spots")}`
                   : locale === "fr"
@@ -1429,7 +1429,7 @@ export function Listing() {
 
       {!requestOpen ? (
       <div className={`fixed inset-x-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden bottom-[var(--ke-keyboard,0px)] [[data-channel=app]_&]:bottom-[calc(5rem+var(--ke-keyboard,0px))]`} data-ke="listing-sticky-bar">
-        <div className="mx-auto flex max-w-lg items-center gap-3" data-ke={parentActions ? "listing-parent-actions" : undefined}>
+        <div className="mx-auto flex max-w-lg items-center gap-2" data-ke={parentActions ? "listing-parent-actions" : undefined}>
           {parentActions ? (
             <Button className="min-h-11 min-w-0 flex-1 whitespace-normal rounded-full px-4 touch-manipulation" data-ke="listing-sticky-cta" onClick={live ? onTour : onInfo}>
               {live ? t("bookTour") : t("requestInfo")}

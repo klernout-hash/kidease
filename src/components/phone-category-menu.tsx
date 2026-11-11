@@ -1,6 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { MenuGlyph, MenuRow } from "@/components/menu-row";
-import { NotificationBell } from "@/components/notification-bell";
 import { RoleSwitchPill } from "@/components/role-switch-pill";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { signOut } from "@/lib/auth/client";
@@ -61,7 +60,7 @@ function hostGroups(pathname: string): Group[] {
   ];
 }
 
-function parentGroups(pathname: string, locale: string): Group[] {
+function parentGroups(pathname: string, locale: string, signedIn: boolean): Group[] {
   const menu = menuDeskPath(pathname);
   const parent = locale === "fr" ? "/fr/parent" : "/parent";
   return [
@@ -81,8 +80,29 @@ function parentGroups(pathname: string, locale: string): Group[] {
         { en: "Requests and tours", fr: "Demandes et visites", icon: "tourChecklist", to: parent, search: { tab: "enrolled" }, marker: "requests" },
         { en: "Waitlists", fr: "Listes d'attente", icon: "claim", to: parent, search: { tab: "waitlists" }, marker: "waitlists" },
         { en: "Daily care", fr: "Soins du jour", icon: "howItWorks", to: parent, search: { tab: "care" }, marker: "care" },
+        ...(signedIn
+          ? [
+              { en: "Pay", fr: "Payer", icon: "benefits" as const, to: parent, search: { tab: "payments" }, marker: "payments" },
+              { en: "Tour calendar", fr: "Calendrier des visites", icon: "howItWorks" as const, to: parent, search: { tab: "tours" }, marker: "tour-calendar" },
+              { en: "From your daycare", fr: "De votre garderie", icon: "daycare" as const, to: parent, search: { tab: "centre" }, marker: "centre-tools" },
+              { en: "Search alerts", fr: "Alertes de recherche", icon: "notifications" as const, to: parent, search: { tab: "alerts" }, marker: "alerts" },
+            ]
+          : []),
       ],
     },
+    ...(signedIn
+      ? [
+          {
+            en: "My family",
+            fr: "Ma famille",
+            rows: [
+              { en: "Share family", fr: "Partager la famille", icon: "share" as const, to: parent, search: { tab: "family" }, marker: "family" },
+              { en: "Documents", fr: "Documents", icon: "privacy" as const, to: parent, search: { tab: "documents" }, marker: "documents" },
+              { en: "Learning stories", fr: "Histoires d'apprentissage", icon: "howItWorks" as const, to: parent, search: { tab: "stories" }, marker: "stories" },
+            ],
+          },
+        ]
+      : []),
     accountGroup(menu),
     helpGroup(menu),
   ];
@@ -121,7 +141,7 @@ export function PhoneCategoryMenu({ host }: { host: boolean }) {
   const { user } = useCurrentUserState();
   const fr = locale === "fr";
   const signedIn = Boolean(user);
-  const groups = (host ? hostGroups(pathname) : parentGroups(pathname, locale))
+  const groups = (host ? hostGroups(pathname) : parentGroups(pathname, locale, signedIn))
     .map((group) => ({
       ...group,
       rows: signedIn ? group.rows : group.rows.filter((row) => !GUEST_HIDDEN.has(row.marker)),
@@ -132,7 +152,6 @@ export function PhoneCategoryMenu({ host }: { host: boolean }) {
     <section className="ke-phone-cats" data-ke="phone-menu-groups">
       <header className="ke-phone-cats-title">
         <h1>{t("navMenu")}</h1>
-        {signedIn ? <NotificationBell /> : null}
       </header>
       {signedIn ? (
         <Link to={menuDeskPath(pathname)} search={{ screen: "account" }} className="ke-phone-cats-profile">
