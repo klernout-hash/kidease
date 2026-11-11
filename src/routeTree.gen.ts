@@ -137,6 +137,7 @@ import { Route as ApiSpotOffersRouteImport } from './routes/api/spot-offers'
 import { Route as ApiTourHoldsRouteImport } from './routes/api/tour-holds'
 import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
+import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as CallConversationIdRouteImport } from './routes/call.$conversationId'
 import { Route as CheckinIdRouteImport } from './routes/checkin.$id'
 import { Route as DaycareSlugRouteImport } from './routes/daycare.$slug'
@@ -975,6 +976,11 @@ const ApiUnsubscribeRoute = ApiUnsubscribeRouteImport.update({
 const BookSlugRoute = BookSlugRouteImport.update({
   id: '/book/$slug',
   path: '/book/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CSlugRoute = CSlugRouteImport.update({
+  id: '/c/$slug',
+  path: '/c/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CallConversationIdRoute = CallConversationIdRouteImport.update({
@@ -2100,6 +2106,7 @@ export interface FileRoutesByFullPath {
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
+  '/c/$slug': typeof CSlugRoute
   '/call/$conversationId': typeof CallConversationIdRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
@@ -2426,6 +2433,7 @@ export interface FileRoutesByTo {
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
+  '/c/$slug': typeof CSlugRoute
   '/call/$conversationId': typeof CallConversationIdRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
@@ -2755,6 +2763,7 @@ export interface FileRoutesById {
   '/api/tour-holds': typeof ApiTourHoldsRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
+  '/c/$slug': typeof CSlugRoute
   '/call/$conversationId': typeof CallConversationIdRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
@@ -3085,6 +3094,7 @@ export interface FileRouteTypes {
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/book/$slug'
+    | '/c/$slug'
     | '/call/$conversationId'
     | '/checkin/$id'
     | '/daycare/$slug'
@@ -3411,6 +3421,7 @@ export interface FileRouteTypes {
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/book/$slug'
+    | '/c/$slug'
     | '/call/$conversationId'
     | '/checkin/$id'
     | '/daycare/$slug'
@@ -3739,6 +3750,7 @@ export interface FileRouteTypes {
     | '/api/tour-holds'
     | '/api/unsubscribe'
     | '/book/$slug'
+    | '/c/$slug'
     | '/call/$conversationId'
     | '/checkin/$id'
     | '/daycare/$slug'
@@ -4066,6 +4078,7 @@ export interface RootRouteChildren {
   ApiTourHoldsRoute: typeof ApiTourHoldsRoute
   ApiUnsubscribeRoute: typeof ApiUnsubscribeRoute
   BookSlugRoute: typeof BookSlugRoute
+  CSlugRoute: typeof CSlugRoute
   CallConversationIdRoute: typeof CallConversationIdRoute
   CheckinIdRoute: typeof CheckinIdRoute
   DaycareSlugRoute: typeof DaycareSlugRoute
@@ -5057,6 +5070,13 @@ declare module '@tanstack/react-router' {
       path: '/book/$slug'
       fullPath: '/book/$slug'
       preLoaderRoute: typeof BookSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/c/$slug': {
+      id: '/c/$slug'
+      path: '/c/$slug'
+      fullPath: '/c/$slug'
+      preLoaderRoute: typeof CSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/call/$conversationId': {
@@ -6962,6 +6982,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiTourHoldsRoute: ApiTourHoldsRoute,
   ApiUnsubscribeRoute: ApiUnsubscribeRoute,
   BookSlugRoute: BookSlugRoute,
+  CSlugRoute: CSlugRoute,
   CallConversationIdRoute: CallConversationIdRoute,
   CheckinIdRoute: CheckinIdRoute,
   DaycareSlugRoute: DaycareSlugRoute,
