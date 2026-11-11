@@ -59,6 +59,7 @@ export function SupportDesk({ initialTab = "inbox" }: { initialTab?: Tab }) {
 
   return (
     <DeskShell desk="support" active={tab} onSelect={(id) => setTab(id === "new" ? "new" : "inbox")}>
+      <div data-ke="support-inbox">
       <p className="text-sm text-muted">
         Case inbox is {SUPPORT_INBOX_EMAIL}. Refunds are a billing case type on that inbox, not a
         separate mailbox.
@@ -84,6 +85,7 @@ export function SupportDesk({ initialTab = "inbox" }: { initialTab?: Tab }) {
           onNew={() => setTab("new")}
         />
       )}
+      </div>
     </DeskShell>
   );
 }
@@ -109,6 +111,7 @@ function Inbox({
   onScope: (v: Scope) => void;
   onNew: () => void;
 }) {
+  const { locale } = useCopy();
   const openish = useMemo(
     () => cases.filter((c) => c.status !== "resolved" && c.status !== "closed").length,
     [cases],
@@ -176,7 +179,11 @@ function Inbox({
         <ul className="overflow-hidden rounded-2xl bg-surface ring-1 ring-border">
           {cases.map((c) => (
             <li key={c.id} className="border-b border-border last:border-0">
-              <Link to="/support/$caseId" params={{ caseId: c.id }} className="block px-4 py-3 hover:bg-surface-2">
+              <Link
+                to={locale === "fr" ? "/fr/support/$caseId" : "/support/$caseId"}
+                params={{ caseId: c.id }}
+                className="block min-h-11 px-4 py-3 hover:bg-surface-2"
+              >
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <p className="font-medium">{c.subject}</p>
                   <p className="text-xs text-subtle">{supportStatusLabel(c.status)}</p>

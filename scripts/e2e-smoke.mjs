@@ -1503,6 +1503,17 @@ async function openProfileAbout(page) {
   await about.waitFor({ timeout: timeoutMs });
 }
 
+async function openSupportCase(page, base, path, width) {
+  await page.setViewportSize({ width, height: width < 500 ? 844 : 900 });
+  await page.goto(new URL(path, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+  const caseText = page.getByText("This case is only for KidEase support staff");
+  const shown = await caseText.waitFor({ state: "visible", timeout: timeoutMs }).then(() => true).catch(() => false);
+  const inbox = await page.locator('[data-ke="support-inbox"]').count();
+  const marker = await page.locator('[data-ke="support-case"]').count();
+  const label = `support-case-${width}${path.startsWith("/fr") ? "-fr" : ""}`;
+  record(label, shown && inbox === 0 && marker > 0, { note: page.url() });
+}
+
 async function runSignedInSessions(page, base) {
   const context = page.context();
   await setFixture(context, base, { role: "parent" });
@@ -1580,6 +1591,9 @@ async function runSignedInSessions(page, base) {
         await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs }).catch(() => {});
         await page.screenshot({ path: join(shotDir, "signed-in-parent-390.png"), fullPage: false }).catch(() => {});
         await page.setViewportSize({ width: 1280, height: 800 });
+        await openSupportCase(page, base, "/support/sc_e2e", 1280);
+        await openSupportCase(page, base, "/support/sc_e2e", 390);
+        await openSupportCase(page, base, "/fr/support/sc_e2e", 390);
       }
 
       await page.goto(new URL(item.inbox, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });

@@ -101,7 +101,7 @@ test("document /admin gate requires the 2FA cookie and still reaches enrolment",
   assert.match(support, /two_factor/);
   assert.match(support, /\/verify-2fa/);
   assert.match(src("src/routes/support.tsx"), /beforeLoadSupportDesk\("\/support"\)/);
-  assert.match(src("src/routes/support.$caseId.tsx"), /beforeLoadSupportDesk/);
+  assert.match(src("src/routes/support_.$caseId.tsx"), /beforeLoadSupportDesk/);
   assert.doesNotMatch(src("src/routes/verify-2fa.tsx"), /beforeLoadAdminDesk|beforeLoadSupportDesk/);
 });
 
