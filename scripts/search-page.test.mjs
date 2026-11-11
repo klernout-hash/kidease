@@ -66,7 +66,8 @@ test("public search routes page the payload and keep a crawlable next link", () 
   assert.match(french, /searchLoader/);
   assert.doesNotMatch(french, /searchDaycares\(/);
   assert.match(daycares, /export const searchDaycares = createServerFn\(\{ method: "GET" \}\)/);
-  assert.match(daycares, /sliceSearchPage\(all, page\)/);
+  assert.match(daycares, /sliceSearchPage\(narrowed, page\)/);
+  assert.match(daycares, /inclusiveFiltersEnabled\(\)/);
   assert.match(src("src/components/parent-desk.tsx"), /searchDaycares\(/);
   assert.match(src("src/components/smart-match.tsx"), /searchDaycares\(/);
 });
