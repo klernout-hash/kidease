@@ -1929,7 +1929,6 @@ export function SearchScreen({
                 className="relative z-10 -mt-5 max-h-[58dvh] overflow-y-auto rounded-t-3xl bg-bg px-1 pb-8 shadow-card"
               >
                 <div className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-border" aria-hidden="true" />
-                <p className="px-3 py-2 text-sm font-semibold text-fg">{items === null ? t("searchCountLoading") : searchCountLine}</p>
                 {items === null ? null : mobileRows.length === 0 ? (
                   <p className="px-3 text-base text-muted">{t("noResults")}</p>
                 ) : (
