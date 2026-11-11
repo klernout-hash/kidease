@@ -411,6 +411,26 @@ export function listCsvEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_LIST_CSV", env);
 }
 
+/** Public licence-type filter. Off. Unknown is never guessed. */
+export function licenceTypeFilterEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_LICENCE_TYPE_FILTER", env);
+}
+
+/** Search for more than one child. Off. Ages are not saved. */
+export function multiChildSearchEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_MULTI_CHILD_SEARCH", env);
+}
+
+/** Hide an open-spot badge after the freshness window. Off. */
+export function vacancyFreshnessEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_VACANCY_FRESHNESS", env);
+}
+
+/** Hide fees that are not confirmed. Off. */
+export function feeDisplayGateEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_FEE_DISPLAY_GATE", env);
+}
+
 /** Daycare inbox also lists requests with no thread. Default off. */
 export function unifiedInboxEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_UNIFIED_INBOX", env);
