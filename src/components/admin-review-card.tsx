@@ -408,7 +408,7 @@ export function AdminReviewCard({
             </p>
           ) : null}
         </div>
-        <div className="shrink-0 pt-1 text-right">
+        <div className="max-w-[45%] shrink-0 break-words pt-1 text-right">
           <p className="text-xs font-medium tracking-wide text-primary">{kind.label}</p>
           {status !== "waiting" ? (
             <div className="mt-2">
