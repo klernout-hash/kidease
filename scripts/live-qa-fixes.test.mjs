@@ -31,7 +31,8 @@ test("the search page asks the server for the name and counts the cards it shows
   const server = src("src/lib/server/daycares.ts");
   assert.match(server, /if \(\(data\.name \|\| ""\)\.trim\(\)\.length >= 2\) return searchByName/);
   assert.match(server, /filterByDaycareName/);
-  assert.match(search, /nameSearch \|\| extraFilters \? visualItems\.length : resultTotal/);
+  assert.match(search, /nameSearch \|\| \(extraFilters && !dietOnly\) \? visualItems\.length : resultTotal/);
+  assert.match(search, /dietOnly = careKeys\.length > 0 && extraFilters === 1/);
   assert.match(search, /: nameQuery\.trim\(\)/);
   assert.doesNotMatch(search, /if \(workOrigin\?\.label && !workQuery\) setWorkQuery/);
   assert.match(search, /const workForSearch = workQuery\.trim\(\) && workOrigin \? workOrigin : null/);

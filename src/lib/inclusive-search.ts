@@ -22,6 +22,12 @@ export function careChipsWhen(flagOn: boolean): readonly CareDetailKey[] {
   return flagOn ? CARE_DETAIL_KEYS : [];
 }
 
+/** URL value for `?diet=`. Empty when nothing is selected. */
+export function careKeysParam(keys: readonly string[]): string | undefined {
+  const parsed = parseCareKeys(keys.join(","));
+  return parsed.length ? parsed.join(",") : undefined;
+}
+
 export function parseCareKeys(value: unknown): CareDetailKey[] {
   const raw = Array.isArray(value) ? value.join(",") : typeof value === "string" ? value : "";
   const seen = new Set<CareDetailKey>();
