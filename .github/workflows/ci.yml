@@ -180,6 +180,10 @@ jobs:
         timeout-minutes: 8
         run: |
           set -euo pipefail
+          # GitHub runners sometimes cannot resolve the Ubuntu mirrors. Point apt at public DNS before it hangs.
+          if ! getent hosts archive.ubuntu.com >/dev/null 2>&1; then
+            printf 'nameserver 1.1.1.1\nnameserver 8.8.8.8\n' | sudo tee /etc/resolv.conf >/dev/null
+          fi
           mkdir -p /tmp/playwright-apt
           shopt -s nullglob
           debs=(/tmp/playwright-apt/*.deb)
