@@ -5,6 +5,7 @@
  */
 import { CENTRE_LEAD_STAGES, type CentreLeadStage, type LeadSource } from "./centre-leads.ts";
 import type { CentreMemberRole } from "./centre-roles.ts";
+import { qaSendDecision, type QaSendChannel } from "./qa-send.ts";
 
 export type PipelineStage = {
   key: string;
@@ -187,4 +188,284 @@ export function planWorkflow(rules: readonly WorkflowRule[], event: WorkflowEven
 
 export function systemStageKeys(): readonly string[] {
   return CENTRE_LEAD_STAGES;
+}
+
+export const CENTRE_WORKFLOW_IDS = [
+  "inquiry",
+  "tour",
+  "application",
+  "offer",
+  "waitlist",
+  "lost",
+  "enrolled",
+] as const;
+
+export type CentreWorkflowId = (typeof CENTRE_WORKFLOW_IDS)[number];
+
+export type CentreWorkflowSettings = {
+  id: CentreWorkflowId;
+  enabled: boolean;
+  /** Offer only. How many days until the offer ends. */
+  offerDays?: number;
+  /** Offer only. Where an expired offer goes. */
+  expiryGoesTo?: "lost" | "waitlisted";
+  /** Lost only. The 90-day check is off until the centre turns it on. */
+  reengage?: boolean;
+};
+
+export function defaultCentreWorkflows(): CentreWorkflowSettings[] {
+  return CENTRE_WORKFLOW_IDS.map((id) => ({
+    id,
+    enabled: true,
+    offerDays: id === "offer" ? 7 : undefined,
+    expiryGoesTo: id === "offer" ? "lost" : undefined,
+    reengage: id === "lost" ? false : undefined,
+  }));
+}
+
+export function setWorkflowEnabled(
+  settings: readonly CentreWorkflowSettings[],
+  id: CentreWorkflowId,
+  enabled: boolean,
+): CentreWorkflowSettings[] {
+  return settings.map((item) => (item.id === id ? { ...item, enabled } : item));
+}
+
+export function configureOfferWorkflow(
+  settings: readonly CentreWorkflowSettings[],
+  patch: { offerDays?: number; expiryGoesTo?: "lost" | "waitlisted" },
+): CentreWorkflowSettings[] {
+  const days = patch.offerDays == null ? undefined : Math.min(90, Math.max(1, Math.round(patch.offerDays)));
+  return settings.map((item) => {
+    if (item.id !== "offer") return item;
+    return {
+      ...item,
+      offerDays: days ?? item.offerDays ?? 7,
+      expiryGoesTo: patch.expiryGoesTo ?? item.expiryGoesTo ?? "lost",
+    };
+  });
+}
+
+export function configureLostWorkflow(settings: readonly CentreWorkflowSettings[], reengage: boolean): CentreWorkflowSettings[] {
+  return settings.map((item) => (item.id === "lost" ? { ...item, reengage } : item));
+}
+
+function workflowOn(settings: readonly CentreWorkflowSettings[], id: CentreWorkflowId): CentreWorkflowSettings | null {
+  const row = settings.find((item) => item.id === id);
+  return row?.enabled ? row : null;
+}
+
+function plusHours(at: string, hours: number): string {
+  const start = Date.parse(at);
+  if (!Number.isFinite(start)) return at;
+  return new Date(start + hours * 3_600_000).toISOString();
+}
+
+export type PlannedTask = {
+  kind: "task";
+  key: string;
+  titleEn: string;
+  titleFr: string;
+  dueAt: string;
+};
+
+export type PlannedWork =
+  | { kind: "assign"; userId: string }
+  | PlannedTask
+  | { kind: "move"; stage: "contacted" | "lost" | "waitlisted" | "enrolled"; lostReason?: string }
+  | { kind: "checklist"; key: string; items: PlannedTask[] }
+  | { kind: "suggest"; leadIds: string[] }
+  | { kind: "block"; reason: "lost_reason" }
+  | { kind: "hold_message"; template: string; reason: string }
+  | { kind: "template_message"; template: string };
+
+export type WaitlistPerson = {
+  id: string;
+  joinedAt: string;
+  ageGroup?: string | null;
+  roomWanted?: string | null;
+  schedule?: string | null;
+  siblings?: number;
+};
+
+export type WorkflowMoment =
+  | { type: "stage"; stage: string; at: string; tourAt?: string | null; ownerUserId?: string | null; lostReason?: string | null }
+  | { type: "idle"; stage: string; idleHours: number; at: string }
+  | { type: "tour_no_show"; at: string }
+  | { type: "offer_expired"; at: string }
+  | { type: "offer_accepted"; at: string }
+  | { type: "spot_opened"; at: string; people: readonly WaitlistPerson[]; ageGroup?: string | null; room?: string | null; schedule?: string | null };
+
+function task(key: string, titleEn: string, titleFr: string, dueAt: string): PlannedTask {
+  return { kind: "task", key, titleEn, titleFr, dueAt };
+}
+
+export function planCentreWorkflows(
+  settings: readonly CentreWorkflowSettings[],
+  moment: WorkflowMoment,
+): PlannedWork[] {
+  if (moment.type === "idle") {
+    const inquiry = workflowOn(settings, "inquiry");
+    if (!inquiry || moment.stage !== "inquiry" || moment.idleHours < 48) return [];
+    return [task("inquiry_idle", "This inquiry has had no reply for 48 hours", "Cette demande n’a pas eu de réponse depuis 48 heures", moment.at)];
+  }
+  if (moment.type === "tour_no_show") {
+    if (!workflowOn(settings, "tour")) return [];
+    return [
+      { kind: "move", stage: "contacted" },
+      task("tour_no_show", "Call the family about the missed tour", "Appeler la famille pour la visite manquée", moment.at),
+    ];
+  }
+  if (moment.type === "offer_expired") {
+    const offer = workflowOn(settings, "offer");
+    if (!offer) return [];
+    const stage = offer.expiryGoesTo === "waitlisted" ? "waitlisted" : "lost";
+    return [{ kind: "move", stage, lostReason: stage === "lost" ? "offer_expired" : undefined }];
+  }
+  if (moment.type === "offer_accepted") {
+    if (!workflowOn(settings, "offer")) return [];
+    const at = moment.at;
+    return [
+      { kind: "move", stage: "enrolled" },
+      {
+        kind: "checklist",
+        key: "enrol_start",
+        items: [
+          task("enrol_forms", "Collect the enrolment forms", "Recueillir les formulaires d’inscription", at),
+          task("enrol_allergies", "Record allergies", "Noter les allergies", at),
+          task("enrol_pickup", "Confirm the pickup list", "Confirmer la liste de récupération", at),
+          task("enrol_start", "Confirm the start date", "Confirmer la date de début", at),
+        ],
+      },
+    ];
+  }
+  if (moment.type === "spot_opened") {
+    if (!workflowOn(settings, "waitlist")) return [];
+    return [{ kind: "suggest", leadIds: suggestForOpenSpot(moment.people, moment).map((person) => person.id) }];
+  }
+  if (moment.type !== "stage") return [];
+  const at = moment.at;
+  if (moment.stage === "inquiry") {
+    const inquiry = workflowOn(settings, "inquiry");
+    if (!inquiry) return [];
+    const works: PlannedWork[] = [];
+    if (moment.ownerUserId) works.push({ kind: "assign", userId: moment.ownerUserId });
+    works.push(task("inquiry_reply", "Reply within 24 hours", "Répondre dans les 24 heures", plusHours(at, 24)));
+    works.push(task("inquiry_idle", "This inquiry has had no reply for 48 hours", "Cette demande n’a pas eu de réponse depuis 48 heures", plusHours(at, 48)));
+    return works;
+  }
+  if (moment.stage === "tour_booked") {
+    if (!workflowOn(settings, "tour")) return [];
+    if (!moment.tourAt) {
+      return [task("tour_reminder", "Pick the tour time and remind the family the day before", "Choisir l’heure de la visite et rappeler la famille la veille", at)];
+    }
+    return [task("tour_reminder", "Remind the family about tomorrow's tour", "Rappeler la visite de demain à la famille", plusHours(moment.tourAt, -24))];
+  }
+  if (moment.stage === "toured") {
+    if (!workflowOn(settings, "tour")) return [];
+    return [task("tour_follow", "Follow up after the tour", "Faire le suivi après la visite", plusHours(at, 24))];
+  }
+  if (moment.stage === "applied") {
+    if (!workflowOn(settings, "application")) return [];
+    return [
+      task("application_docs", "Ask for the missing documents", "Demander les documents manquants", at),
+      task("application_review", "Review this application", "Examiner cette demande", plusHours(at, 72)),
+    ];
+  }
+  if (moment.stage === "offered") {
+    const offer = workflowOn(settings, "offer");
+    if (!offer) return [];
+    const days = offer.offerDays ?? 7;
+    const expiry = plusHours(at, days * 24);
+    return [
+      task("offer_expires", "The offer expiry date is set", "La date d’expiration de l’offre est fixée", expiry),
+      task("offer_reminder", "Remind the family before the offer expires", "Rappeler à la famille avant la fin de l’offre", plusHours(expiry, -24)),
+    ];
+  }
+  if (moment.stage === "waitlisted") {
+    if (!workflowOn(settings, "waitlist")) return [];
+    return [task("waitlist_check", "Ask if this family is still interested", "Demander si cette famille est encore intéressée", plusHours(at, 14 * 24))];
+  }
+  if (moment.stage === "lost") {
+    const lost = workflowOn(settings, "lost");
+    if (!lost) return [];
+    if (!String(moment.lostReason || "").trim()) return [{ kind: "block", reason: "lost_reason" }];
+    return lost.reengage
+      ? [task("lost_reengage", "Check if this family is ready to try again", "Vérifier si cette famille veut réessayer", plusHours(at, 90 * 24))]
+      : [];
+  }
+  if (moment.stage === "enrolled") {
+    if (!workflowOn(settings, "enrolled")) return [];
+    return [
+      task("enrolled_week", "Check in during the first week", "Prendre des nouvelles pendant la première semaine", plusHours(at, 7 * 24)),
+      task("enrolled_month", "Ask how the first month went", "Demander comment s’est passé le premier mois", plusHours(at, 30 * 24)),
+      task("enrol_forms", "Collect the enrolment forms", "Recueillir les formulaires d’inscription", at),
+      task("enrol_allergies", "Record allergies", "Noter les allergies", at),
+      task("enrol_pickup", "Confirm the pickup list", "Confirmer la liste de récupération", at),
+      task("enrol_start", "Confirm the start date", "Confirmer la date de début", at),
+      planWorkflowFamilyMail({
+        template: "review_request",
+        channel: "email",
+        feature: "CRM-FAMILY",
+        recipient: "",
+        sender: "hello@kidease.ca",
+        allowlist: [],
+        occurredAt: at,
+        enabledAt: at,
+      }),
+    ];
+  }
+  return [];
+}
+
+export function waitlistPosition(people: readonly WaitlistPerson[], id: string): number | null {
+  const ordered = [...people].sort((a, b) => a.joinedAt.localeCompare(b.joinedAt) || a.id.localeCompare(b.id));
+  const index = ordered.findIndex((person) => person.id === id);
+  return index < 0 ? null : index + 1;
+}
+
+export function suggestForOpenSpot(
+  people: readonly WaitlistPerson[],
+  spot: { ageGroup?: string | null; room?: string | null; schedule?: string | null },
+): WaitlistPerson[] {
+  const age = String(spot.ageGroup || "").trim().toLowerCase();
+  const room = String(spot.room || "").trim().toLowerCase();
+  const schedule = String(spot.schedule || "").trim().toLowerCase();
+  return [...people]
+    .filter((person) => {
+      if (age && age !== "any" && String(person.ageGroup || "").trim().toLowerCase() !== age) return false;
+      if (room && String(person.roomWanted || "").trim().toLowerCase() !== room) return false;
+      if (schedule && String(person.schedule || "").trim().toLowerCase() !== schedule) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      const sibling = Number(b.siblings || 0) - Number(a.siblings || 0);
+      if (sibling !== 0) return sibling;
+      return a.joinedAt.localeCompare(b.joinedAt);
+    });
+}
+
+/** Family mail from a workflow. It uses the existing send gate and never sends on its own. */
+export function planWorkflowFamilyMail(input: {
+  template: "still_interested" | "review_request" | "offer_reminder";
+  channel: QaSendChannel;
+  feature: string;
+  recipient: string;
+  sender: string;
+  allowlist: readonly string[];
+  occurredAt: string | null;
+  enabledAt: string | null;
+}): { kind: "hold_message"; template: string; reason: string } | { kind: "template_message"; template: string } {
+  const decision = qaSendDecision({
+    feature: input.feature,
+    channel: input.channel,
+    recipient: input.recipient,
+    sender: input.sender,
+    occurredAt: input.occurredAt,
+    enabledAt: input.enabledAt,
+    alreadySent: false,
+    allowlist: input.allowlist,
+  });
+  if (!decision.deliver) return { kind: "hold_message", template: input.template, reason: decision.reason };
+  return { kind: "template_message", template: input.template };
 }

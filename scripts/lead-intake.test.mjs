@@ -1,13 +1,16 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { leadDedupeKey } from "../src/lib/centre-crm.ts";
 import {
   ENTRY_GAP,
+  KIDEASE_BUSINESS_EVENTS,
   LEAD_ENTRY_POINTS,
   entryForLeadKind,
   mergeLeadIntake,
   planLeadIntake,
 } from "../src/lib/lead-intake.ts";
+import { createOrUpdateLead } from "../src/lib/server/lead-intake-write.ts";
 
 const family = { daycareId: "centre-1", parentUserId: "parent-1", email: "parent@example.com" };
 
@@ -132,6 +135,38 @@ test("lead kinds map onto the pipeline entries", () => {
   assert.equal(entryForLeadKind("waitlist"), "waitlist_join");
   assert.equal(entryForLeadKind("spot_inquiry"), "application");
   assert.equal(entryForLeadKind("info"), "listing_inquiry");
+});
+
+test("a listing claim and a provider signup never create a centre lead", async () => {
+  for (const entry of KIDEASE_BUSINESS_EVENTS) {
+    const plan = planLeadIntake({ entry, daycareId: "centre-1", parentUserId: "owner-1", email: "owner@day.ca" });
+    assert.equal(plan.wired, false);
+    if (!plan.wired) assert.equal(plan.reason, "kidease_business_lead");
+    let wrote = false;
+    const sql = async () => {
+      wrote = true;
+      return [];
+    };
+    const result = await createOrUpdateLead(sql, { entry, daycareId: "centre-1", parentUserId: "owner-1", email: "owner@day.ca" });
+    assert.equal(result.ok, false);
+    if (!result.ok) assert.equal(result.reason, "kidease_business_lead");
+    assert.equal(wrote, false);
+  }
+  const family = planLeadIntake({ entry: "listing_inquiry", daycareId: "centre-1", parentUserId: "parent-1" });
+  assert.equal(family.wired, true);
+});
+
+test("claim and provider signup code does not write a centre lead", () => {
+  const claims = readFileSync(new URL("../src/lib/server/claims.ts", import.meta.url), "utf8");
+  assert.equal(claims.includes("createOrUpdateLead"), false);
+  assert.equal(claims.includes("rememberCentreLead"), false);
+  const family = readFileSync(new URL("../src/lib/server/family.ts", import.meta.url), "utf8");
+  const intake = family.slice(family.indexOf("export async function ensureCrmIntake"), family.indexOf("export const getFamily"));
+  assert.equal(intake.includes("createOrUpdateLead"), false);
+  assert.equal(intake.includes("rememberCentreLead"), false);
+  const ghl = readFileSync(new URL("../src/lib/server/ghl-intake.ts", import.meta.url), "utf8");
+  assert.equal(ghl.includes("createOrUpdateLead"), false);
+  assert.equal(ghl.includes("rememberCentreLead"), false);
 });
 
 test("a locked stage stays put", () => {

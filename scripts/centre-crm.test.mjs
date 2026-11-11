@@ -3,16 +3,24 @@ import test from "node:test";
 import {
   DEFAULT_PIPELINE,
   addStage,
+  configureLostWorkflow,
+  configureOfferWorkflow,
   conversionByStage,
   crmCanEdit,
   crmCanView,
+  defaultCentreWorkflows,
   leadDedupeKey,
   monthlyCohort,
+  planCentreWorkflows,
   planWorkflow,
+  planWorkflowFamilyMail,
   renameStage,
   reorderStages,
+  setWorkflowEnabled,
   sourceBreakdown,
+  suggestForOpenSpot,
   timeInStageDays,
+  waitlistPosition,
 } from "../src/lib/centre-crm.ts";
 
 test("a centre can rename, reorder, and add a step", () => {
@@ -72,6 +80,96 @@ test("workflows suggest a tour, enrol an offer, and hold family mail", () => {
     planWorkflow(rules, { type: "entered_stage", stage: "contacted", casl: true, email: "a@kidease.ca" }, ["a@kidease.ca"]),
     { action: "hold_message", reason: "no_customer_sends" },
   );
+});
+
+test("each centre workflow can be switched off on its own", () => {
+  const at = "2026-11-01T15:00:00.000Z";
+  const on = defaultCentreWorkflows();
+  const inquiry = planCentreWorkflows(on, { type: "stage", stage: "inquiry", at, ownerUserId: "owner-1" });
+  assert.equal(inquiry.some((item) => item.kind === "assign" && item.userId === "owner-1"), true);
+  assert.equal(inquiry.some((item) => item.kind === "task" && item.key === "inquiry_reply" && item.dueAt === "2026-11-02T15:00:00.000Z"), true);
+  assert.equal(inquiry.some((item) => item.kind === "task" && item.key === "inquiry_idle"), true);
+  assert.equal(planCentreWorkflows(setWorkflowEnabled(on, "inquiry", false), { type: "stage", stage: "inquiry", at }).length, 0);
+
+  const tour = planCentreWorkflows(on, { type: "stage", stage: "tour_booked", at, tourAt: "2026-11-05T15:00:00.000Z" });
+  assert.equal(tour[0].kind === "task" && tour[0].dueAt, "2026-11-04T15:00:00.000Z");
+  const follow = planCentreWorkflows(on, { type: "stage", stage: "toured", at });
+  assert.equal(follow[0].kind === "task" && follow[0].key, "tour_follow");
+  const missed = planCentreWorkflows(on, { type: "tour_no_show", at });
+  assert.equal(missed[0].kind === "move" && missed[0].stage, "contacted");
+  assert.equal(planCentreWorkflows(setWorkflowEnabled(on, "tour", false), { type: "tour_no_show", at }).length, 0);
+
+  const application = planCentreWorkflows(on, { type: "stage", stage: "applied", at });
+  assert.equal(application.some((item) => item.kind === "task" && item.key === "application_docs"), true);
+  assert.equal(application.some((item) => item.kind === "task" && item.key === "application_review"), true);
+
+  const offered = configureOfferWorkflow(on, { offerDays: 3, expiryGoesTo: "waitlisted" });
+  const offer = planCentreWorkflows(offered, { type: "stage", stage: "offered", at });
+  assert.equal(offer.some((item) => item.kind === "task" && item.key === "offer_expires" && item.dueAt === "2026-11-04T15:00:00.000Z"), true);
+  const expired = planCentreWorkflows(offered, { type: "offer_expired", at });
+  assert.deepEqual(expired[0], { kind: "move", stage: "waitlisted", lostReason: undefined });
+  const accepted = planCentreWorkflows(on, { type: "offer_accepted", at });
+  assert.equal(accepted.some((item) => item.kind === "move" && item.stage === "enrolled"), true);
+  const checklist = accepted.find((item) => item.kind === "checklist");
+  assert.equal(checklist?.kind === "checklist" && checklist.items.map((item) => item.key).join(","), "enrol_forms,enrol_allergies,enrol_pickup,enrol_start");
+
+  const people = [
+    { id: "later", joinedAt: "2026-02-01", ageGroup: "toddler", roomWanted: "toddler", schedule: "full", siblings: 0 },
+    { id: "sib", joinedAt: "2026-03-01", ageGroup: "toddler", roomWanted: "toddler", schedule: "full", siblings: 1 },
+    { id: "infant", joinedAt: "2026-01-01", ageGroup: "infant", roomWanted: "infant", schedule: "full", siblings: 2 },
+  ];
+  assert.equal(waitlistPosition(people, "later"), 2);
+  assert.deepEqual(suggestForOpenSpot(people, { ageGroup: "toddler", room: "toddler", schedule: "full" }).map((person) => person.id), ["sib", "later"]);
+  const spot = planCentreWorkflows(on, { type: "spot_opened", at, people, ageGroup: "toddler", room: "toddler", schedule: "full" });
+  assert.deepEqual(spot[0], { kind: "suggest", leadIds: ["sib", "later"] });
+  assert.equal(planCentreWorkflows(on, { type: "stage", stage: "waitlisted", at })[0].kind, "task");
+
+  assert.deepEqual(planCentreWorkflows(on, { type: "stage", stage: "lost", at, lostReason: "" }), [{ kind: "block", reason: "lost_reason" }]);
+  assert.equal(planCentreWorkflows(on, { type: "stage", stage: "lost", at, lostReason: "chose_other" }).length, 0);
+  const reengage = planCentreWorkflows(configureLostWorkflow(on, true), { type: "stage", stage: "lost", at, lostReason: "chose_other" });
+  assert.equal(reengage[0].kind === "task" && reengage[0].dueAt, "2027-01-30T15:00:00.000Z");
+
+  const enrolled = planCentreWorkflows(on, { type: "stage", stage: "enrolled", at });
+  assert.equal(enrolled.some((item) => item.kind === "task" && item.key === "enrolled_week"), true);
+  assert.equal(enrolled.some((item) => item.kind === "task" && item.key === "enrolled_month"), true);
+  assert.equal(enrolled.some((item) => item.kind === "hold_message"), true);
+  assert.equal(planCentreWorkflows(setWorkflowEnabled(on, "enrolled", false), { type: "stage", stage: "enrolled", at }).length, 0);
+});
+
+test("workflow mail uses the send gate and does not text families", () => {
+  const held = planWorkflowFamilyMail({
+    template: "still_interested",
+    channel: "email",
+    feature: "CRM-FAMILY",
+    recipient: "a@kidease.ca",
+    sender: "hello@kidease.ca",
+    allowlist: ["a@kidease.ca"],
+    occurredAt: "2026-11-02T00:00:00.000Z",
+    enabledAt: "2026-11-01T00:00:00.000Z",
+  });
+  assert.equal(held.kind, "hold_message");
+  const sms = planWorkflowFamilyMail({
+    template: "offer_reminder",
+    channel: "sms",
+    feature: "ADM-08",
+    recipient: "a@kidease.ca",
+    sender: "hello@kidease.ca",
+    allowlist: ["a@kidease.ca"],
+    occurredAt: "2026-11-02T00:00:00.000Z",
+    enabledAt: "2026-11-01T00:00:00.000Z",
+  });
+  assert.deepEqual(sms, { kind: "hold_message", template: "offer_reminder", reason: "held_channel" });
+  const allowed = planWorkflowFamilyMail({
+    template: "review_request",
+    channel: "email",
+    feature: "ADM-08",
+    recipient: "a@kidease.ca",
+    sender: "hello@kidease.ca",
+    allowlist: ["a@kidease.ca"],
+    occurredAt: "2026-11-02T00:00:00.000Z",
+    enabledAt: "2026-11-01T00:00:00.000Z",
+  });
+  assert.deepEqual(allowed, { kind: "template_message", template: "review_request" });
 });
 
 test("analytics use the families already on the board", () => {

@@ -702,6 +702,7 @@ async function insertManualLead(
     ageGroup: cleanAgeGroup(data.ageGroup),
     desiredStart: cleanStartMonth(data.desiredStart),
     source: source === "website" ? "website" : "manual",
+    applyWorkflows: true,
   });
   if (!saved.ok) return null;
   const rows = await sql<Record<string, unknown>>`select * from centre_leads where id = ${saved.id} limit 1`;

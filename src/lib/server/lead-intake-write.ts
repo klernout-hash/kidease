@@ -2,14 +2,19 @@
  * Writes one centre lead per family. Later actions update that row and its timeline.
  * This file does not send mail, text, push, or webhooks, and it does not call an outside CRM.
  */
+import { defaultCentreWorkflows, planCentreWorkflows, type PlannedTask, type PlannedWork, type WorkflowMoment } from "../centre-crm.ts";
 import { entryForLeadKind, mergeLeadIntake, planLeadIntake, type LeadEntryPoint, type LeadIntakeInput } from "../lead-intake.ts";
 import type { LeadSource } from "../centre-leads.ts";
 import { nid } from "../utils.ts";
 
 type Sql = <T = Record<string, unknown>>(strings: TemplateStringsArray, ...values: unknown[]) => Promise<T[]>;
 
-export type LeadWriteInput = LeadIntakeInput & {
+export type LeadWriteInput = Omit<LeadIntakeInput, "entry"> & {
+  entry: string;
   eventId?: string | null;
+  applyWorkflows?: boolean;
+  tourAt?: string | null;
+  ownerUserId?: string | null;
 };
 
 export type LeadWriteResult =
@@ -174,7 +179,71 @@ export async function createOrUpdateLead(sql: Sql, input: LeadWriteInput): Promi
     on conflict (id) do nothing
   `;
 
+  if (input.applyWorkflows && (!existing || existing.stage !== merged.stage)) {
+    const owner = input.ownerUserId || (await centreOwnerId(sql, plan.daycareId));
+    await applyWorkflowMoment(sql, {
+      daycareId: plan.daycareId,
+      leadId: id,
+      parentUserId: plan.parentUserId,
+      moment: { type: "stage", stage: merged.stage, at: now, tourAt: input.tourAt, ownerUserId: owner, lostReason: null },
+    }).catch(() => undefined);
+  }
+
   return { ok: true, id, created: merged.created, stage: merged.stage, source: merged.source, entry: plan.entry };
+}
+
+async function centreOwnerId(sql: Sql, daycareId: string): Promise<string | null> {
+  const rows = await sql<{ user_id: string }>`
+    select user_id from provider_daycares where daycare_id = ${daycareId} limit 1
+  `.catch(() => []);
+  return rows[0]?.user_id || null;
+}
+
+function taskRows(work: PlannedWork): PlannedTask[] {
+  if (work.kind === "task") return [work];
+  if (work.kind === "checklist") return work.items;
+  return [];
+}
+
+/** Writes staff tasks for one workflow moment. Does not mail or text the family. */
+export async function applyWorkflowMoment(
+  sql: Sql,
+  input: { daycareId: string; leadId?: string | null; parentUserId?: string | null; moment: WorkflowMoment },
+): Promise<void> {
+  const works = planCentreWorkflows(defaultCentreWorkflows(), input.moment);
+  let leadId = input.leadId || null;
+  let stage = "";
+  if (!leadId && input.parentUserId) {
+    const rows = await sql<{ id: string; stage: string }>`
+      select id, stage from centre_leads
+      where daycare_id = ${input.daycareId} and parent_user_id = ${input.parentUserId}
+      limit 1
+    `.catch(() => []);
+    leadId = rows[0]?.id || null;
+    stage = rows[0]?.stage || "";
+  }
+  if (!leadId) return;
+  for (const work of works) {
+    if (work.kind === "assign") {
+      await sql`
+        update centre_leads set assigned_user_id = coalesce(assigned_user_id, ${work.userId})
+        where id = ${leadId}
+      `.catch(() => undefined);
+    }
+    if (work.kind === "move" && work.stage === "contacted" && ["inquiry", "contacted", "tour_booked", "toured"].includes(stage)) {
+      await sql`
+        update centre_leads set stage = ${"contacted"}, auto_rule = ${"workflow:tour_no_show"}, updated_at = now()
+        where id = ${leadId}
+      `.catch(() => undefined);
+    }
+    for (const item of taskRows(work)) {
+      await sql`
+        insert into centre_lead_tasks (id, daycare_id, lead_id, title, due_at)
+        values (${`wf-${leadId}-${item.key}`.slice(0, 120)}, ${input.daycareId}, ${leadId}, ${item.titleEn}, ${item.dueAt})
+        on conflict (id) do nothing
+      `.catch(() => undefined);
+    }
+  }
 }
 
 function cleanEventId(value: string | null | undefined): string | null {
@@ -184,7 +253,7 @@ function cleanEventId(value: string | null | undefined): string | null {
 
 export async function rememberCentreLead(sql: Sql, input: LeadWriteInput): Promise<LeadWriteResult> {
   try {
-    return await createOrUpdateLead(sql, input);
+    return await createOrUpdateLead(sql, { ...input, applyWorkflows: input.applyWorkflows ?? true });
   } catch {
     return { ok: false, reason: "save_failed" };
   }

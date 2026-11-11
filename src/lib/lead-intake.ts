@@ -33,6 +33,26 @@ export const LEAD_ENTRY_POINTS = [
 
 export type LeadEntryPoint = (typeof LEAD_ENTRY_POINTS)[number];
 
+/** KidEase's own business. These never become a centre's family lead. */
+export const KIDEASE_BUSINESS_EVENTS = [
+  "provider_signup",
+  "listing_claim",
+  "claim_verify",
+  "operator_demo",
+  "daycare_prospect",
+  "government_contact",
+] as const;
+
+export type KidEaseBusinessEvent = (typeof KIDEASE_BUSINESS_EVENTS)[number];
+
+export function isKidEaseBusinessLead(event: string): boolean {
+  return (KIDEASE_BUSINESS_EVENTS as readonly string[]).includes(event.trim());
+}
+
+export function isLeadEntryPoint(event: string): event is LeadEntryPoint {
+  return (LEAD_ENTRY_POINTS as readonly string[]).includes(event);
+}
+
 const SPEC: Record<LeadEntryPoint, { source: LeadSource; stage: CentreLeadStage; needsShare?: boolean }> = {
   listing_inquiry: { source: "inquiry", stage: "inquiry" },
   contact_form: { source: "inquiry", stage: "inquiry" },
@@ -113,9 +133,10 @@ function clean(value: string | null | undefined, max = 180): string | null {
   return text ? text.slice(0, max) : null;
 }
 
-export function planLeadIntake(input: LeadIntakeInput): LeadPlan {
+export function planLeadIntake(input: Omit<LeadIntakeInput, "entry"> & { entry: string }): LeadPlan {
+  if (isKidEaseBusinessLead(input.entry)) return { wired: false, reason: "kidease_business_lead" };
+  if (!isLeadEntryPoint(input.entry)) return { wired: false, reason: "unknown entry" };
   const spec = SPEC[input.entry];
-  if (!spec) return { wired: false, reason: "unknown entry" };
   const daycareId = clean(input.daycareId, 80);
   if (!daycareId) return { wired: false, reason: "no centre" };
   if (spec.needsShare && input.shareOptIn !== true) {
