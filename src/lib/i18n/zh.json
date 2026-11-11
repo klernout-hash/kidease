@@ -2796,6 +2796,7 @@
   "passkeyFailed": "面容或指纹登录没有成功。请使用邮箱和密码。",
   "passkeyNotReady": "还没准备好。请再点一次按钮。",
   "oauthSignInFailed": "登录没有完成（{reason}）。请再试一次。",
+  "signInScriptMissed": "登录没有加载。请刷新页面后再试。",
   "oauthSignInCancelled": "登录已取消。",
   "passkeyUnsupported": "此浏览器不能使用面容或指纹。请使用邮箱和密码。",
   "passkeyRateLimited": "尝试次数太多。请等几分钟再试。",
