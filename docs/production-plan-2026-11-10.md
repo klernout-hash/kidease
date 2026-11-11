@@ -101,3 +101,13 @@ Build only:
 
 - ADM2-14 Public developer API, extending the centre API with OAuth scopes
 - MSG-13 Design note only
+
+## Phase 5
+
+Flags stay off. No email, text, push, or charge.
+
+- P5-01 Parent-reported absence. Extends ATT-11. A parent marks a child absent for a date or a range, with an optional reason. The attendance register updates. The spot is not offered again. In-app only.
+- P5-02 Events calendar with RSVP. The centre creates events in the centre timezone, with a zone label, for a room or the whole centre. Parents answer yes, no, or maybe, with a headcount. No email, text, or push.
+- P5-03 Immunization records on file. Extends ADM-19 and the family vault. A parent adds a record or an exemption for a child. The centre sees on file, missing, or a date that has passed. Only that parent and that centre's staff can see it. Not billing, not other parents, not the public. Views are written to the audit log. No broadcast and no health score.
+- P5-04 Claimed listing as the centre page. A claimed centre can turn on a public page at `kidease.ca/c/<slug>` from its listing. KidEase does not certify or endorse the centre. Unclaimed listings do not get the page.
+- P5-05 Centre-only room-opening forecast. From enrolment birthdates, room age ranges, and waitlist start dates, the centre sees an estimate of when a room opens and why. It stays on the provider desk. It is not a public vacancy and it is not added to search.
