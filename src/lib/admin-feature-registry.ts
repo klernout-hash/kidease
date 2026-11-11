@@ -119,6 +119,14 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_ACCOUNT_CREDITS: "daycare",
   FEATURE_MEDICATION_LOG: "daycare",
   FEATURE_SITE_TRANSFER: "daycare",
+  FEATURE_FILLABLE_PDF: "daycare",
+  FEATURE_ADMISSION_PACKET: "daycare",
+  FEATURE_STAFF_MOBILE: "daycare",
+  FEATURE_LATE_FEE: "daycare",
+  FEATURE_CWELCC_MATH: "daycare",
+  FEATURE_VIDEO_SHARE: "shared",
+  FEATURE_MILESTONES: "daycare",
+  FEATURE_CREDENTIAL_RENEWAL: "daycare",
 };
 
 const SWITCH_CATEGORY: Record<string, FeatureCategory> = {

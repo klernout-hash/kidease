@@ -117,3 +117,88 @@ export function siteTransferAllowed(input: {
   if (!input.fromId || !input.toId || input.fromId === input.toId) return false;
   return input.ownerCentreIds.includes(input.fromId) && input.ownerCentreIds.includes(input.toId);
 }
+
+export function reviewReplyAllowed(input: { role: string | null | undefined; existingReplies: number; body: string }): "ok" | "role" | "one" | "empty" {
+  if (input.role !== "owner" && input.role !== "manager") return "role";
+  if (input.existingReplies > 0) return "one";
+  if (input.body.trim().length < 2) return "empty";
+  return "ok";
+}
+
+export function reviewIsPublic(moderated: boolean): boolean {
+  return moderated;
+}
+
+export function pdfFieldsReady(fields: readonly { value: string; required: boolean }[]): boolean {
+  return fields.every((field) => !field.required || field.value.trim().length > 0);
+}
+
+export function packetComplete(items: readonly { required: boolean; status: string }[]): boolean {
+  return items.filter((item) => item.required).every((item) => item.status === "submitted" || item.status === "approved");
+}
+
+export const STAFF_MOBILE_COPY = {
+  en: "The staff phone app is coming soon.",
+  fr: "L'application du personnel arrive bientôt.",
+} as const;
+
+export function staffMobileOpen(role: string | null | undefined): boolean {
+  return role === "owner" || role === "manager" || role === "staff";
+}
+
+export function paymentReminder(): { deliver: false; reason: "send_disabled" } {
+  return { deliver: false, reason: "send_disabled" };
+}
+
+export function lateFeeCents(input: {
+  balanceCents: number;
+  policy: { kind: "flat" | "percent"; amount: number } | null;
+}): number | null {
+  if (!input.policy) return null;
+  if (input.balanceCents <= 0) return 0;
+  if (input.policy.kind === "flat") return Math.max(0, Math.trunc(input.policy.amount));
+  if (input.policy.amount < 0 || input.policy.amount > 100) return null;
+  return Math.round(input.balanceCents * input.policy.amount / 100);
+}
+
+export function taxReceiptTotal(payments: readonly { cents: number; year: number }[], year: number): { count: number; cents: number } {
+  const rows = payments.filter((row) => row.year === year && row.cents > 0);
+  return { count: rows.length, cents: rows.reduce((sum, row) => sum + row.cents, 0) };
+}
+
+export function taxReceiptSend(): { deliver: false; reason: "held" } {
+  return { deliver: false, reason: "held" };
+}
+
+export function cwelccMonthly(input: { program: boolean; officialDailyCents: number | null; days: number }): number | null {
+  if (!input.program || input.officialDailyCents == null || input.officialDailyCents < 0) return null;
+  if (!Number.isInteger(input.days) || input.days < 1 || input.days > 31) return null;
+  return input.officialDailyCents * input.days;
+}
+
+export function videoSharePlan(): { upload: false; reason: "interface_only" } {
+  return { upload: false, reason: "interface_only" };
+}
+
+export function videoVisible(ownerIds: readonly string[], viewerId: string): boolean {
+  return ownerIds.includes(viewerId);
+}
+
+export function milestoneVisible(input: { recorded: boolean; childId: string; viewerChildIds: readonly string[] }): boolean {
+  if (!input.recorded) return false;
+  return input.viewerChildIds.includes(input.childId);
+}
+
+export function renewalStatus(input: { expiresOn: string | null; now: Date; leadDays: number }): "missing" | "current" | "due" | "overdue" {
+  if (!input.expiresOn) return "missing";
+  const expires = Date.parse(input.expiresOn);
+  if (!Number.isFinite(expires)) return "missing";
+  const days = (expires - input.now.getTime()) / 86_400_000;
+  if (days < 0) return "overdue";
+  if (days <= input.leadDays) return "due";
+  return "current";
+}
+
+export function renewalNotice(): { deliver: false; reason: "held" } {
+  return { deliver: false, reason: "held" };
+}

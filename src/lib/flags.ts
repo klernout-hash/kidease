@@ -130,6 +130,14 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_ACCOUNT_CREDITS",
   "FEATURE_MEDICATION_LOG",
   "FEATURE_SITE_TRANSFER",
+  "FEATURE_FILLABLE_PDF",
+  "FEATURE_ADMISSION_PACKET",
+  "FEATURE_STAFF_MOBILE",
+  "FEATURE_LATE_FEE",
+  "FEATURE_CWELCC_MATH",
+  "FEATURE_VIDEO_SHARE",
+  "FEATURE_MILESTONES",
+  "FEATURE_CREDENTIAL_RENEWAL",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -383,6 +391,22 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_MEDICATION_LOG: false,
   /** Move a child between two centres the same owner runs. Off. */
   FEATURE_SITE_TRANSFER: false,
+  /** Fill a stored PDF field list. Off. No new PDF vendor. */
+  FEATURE_FILLABLE_PDF: false,
+  /** Admission packet checklist. Off. Nothing is sent. */
+  FEATURE_ADMISSION_PACKET: false,
+  /** Staff phone view. Off. The store apps are not live. */
+  FEATURE_STAFF_MOBILE: false,
+  /** Late fee from a stored policy. Off. No charge is made. */
+  FEATURE_LATE_FEE: false,
+  /** CWELCC amount from an official daily rate. Off. A missing rate stays hidden. */
+  FEATURE_CWELCC_MATH: false,
+  /** Video share screen. Off. No file is uploaded. */
+  FEATURE_VIDEO_SHARE: false,
+  /** A milestone the centre recorded. Off. Age does not invent one. */
+  FEATURE_MILESTONES: false,
+  /** Credential renewal status. Off. No reminder is sent. */
+  FEATURE_CREDENTIAL_RENEWAL: false,
 };
 
 /**
@@ -1070,6 +1094,14 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
   { key: "FEATURE_ACCOUNT_CREDITS", defaultOn: false, docs: "docs/flags.md", summary: "Apply a stored credit. Off. The balance cannot go below zero. No charge is made." },
   { key: "FEATURE_MEDICATION_LOG", defaultOn: false, docs: "docs/flags.md", summary: "Medication name, permission, and health checks. Off. Reminders are not sent." },
   { key: "FEATURE_SITE_TRANSFER", defaultOn: false, docs: "docs/flags.md", summary: "Move a child between two centres one owner runs. Off." },
+  { key: "FEATURE_FILLABLE_PDF", defaultOn: false, docs: "docs/flags.md", summary: "Required fields on a form. Off. No new PDF vendor." },
+  { key: "FEATURE_ADMISSION_PACKET", defaultOn: false, docs: "docs/flags.md", summary: "Admission packet checklist. Off. Nothing is sent." },
+  { key: "FEATURE_STAFF_MOBILE", defaultOn: false, docs: "docs/flags.md", summary: "Staff phone view. Off. The phone apps are not in the stores." },
+  { key: "FEATURE_LATE_FEE", defaultOn: false, docs: "docs/flags.md", summary: "Late fee from a stored rule. Off. No charge is made." },
+  { key: "FEATURE_CWELCC_MATH", defaultOn: false, docs: "docs/flags.md", summary: "CWELCC total from an official daily rate. Off. A missing rate stays hidden." },
+  { key: "FEATURE_VIDEO_SHARE", defaultOn: false, docs: "docs/flags.md", summary: "Video share screen. Off. No upload and no send." },
+  { key: "FEATURE_MILESTONES", defaultOn: false, docs: "docs/flags.md", summary: "Milestones a centre wrote down. Off. Age does not add one." },
+  { key: "FEATURE_CREDENTIAL_RENEWAL", defaultOn: false, docs: "docs/flags.md", summary: "Credential renewal status. Off. No reminder is sent." },
 ];
 
 let cache: RemoteFlagSnapshot | null = null;

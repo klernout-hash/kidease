@@ -16,10 +16,26 @@ import {
   medicationReminder,
   nativePushPlan,
   parseLeadCsv,
+  cwelccMonthly,
+  lateFeeCents,
+  milestoneVisible,
+  packetComplete,
+  paymentReminder,
+  pdfFieldsReady,
+  renewalNotice,
+  renewalStatus,
+  reviewIsPublic,
+  reviewReplyAllowed,
   siteTransferAllowed,
   splitSharesOk,
+  STAFF_MOBILE_COPY,
   staffMessageVisible,
+  staffMobileOpen,
   startDateAvailable,
+  taxReceiptSend,
+  taxReceiptTotal,
+  videoSharePlan,
+  videoVisible,
 } from "../src/lib/phase2-rules.ts";
 
 test("a start date matches only a stored opening", () => {
@@ -81,4 +97,41 @@ test("medication needs permission, and a transfer stays with one owner", () => {
   assert.equal(siteTransferAllowed({ fromId: "a", toId: "a", ownerCentreIds: ["a"] }), false);
   assert.equal(siteTransferAllowed({ fromId: "a", toId: "b", ownerCentreIds: ["a"] }), false);
   assert.equal(siteTransferAllowed({ fromId: "a", toId: "b", ownerCentreIds: ["a", "b"] }), true);
+});
+
+test("reviews, packets, fees, video, milestones, and renewal stay held", () => {
+  assert.equal(FLAG_DEFAULTS.FEATURE_REVIEW_REPLIES, false);
+  assert.equal(FLAG_DEFAULTS.FEATURE_FILLABLE_PDF, false);
+  assert.equal(FLAG_DEFAULTS.FEATURE_ADMISSION_PACKET, false);
+  assert.equal(FLAG_DEFAULTS.FEATURE_STAFF_MOBILE, false);
+  assert.equal(FLAG_DEFAULTS.FEATURE_INVOICE_REMINDERS, false);
+  assert.equal(FLAG_DEFAULTS.FEATURE_LATE_FEE, false);
+  assert.equal(FLAG_DEFAULTS.FEATURE_TAX_RECEIPTS, false);
+  assert.equal(FLAG_DEFAULTS.FEATURE_CWELCC_MATH, false);
+  assert.equal(FLAG_DEFAULTS.FEATURE_VIDEO_SHARE, false);
+  assert.equal(FLAG_DEFAULTS.FEATURE_MILESTONES, false);
+  assert.equal(FLAG_DEFAULTS.FEATURE_CREDENTIAL_RENEWAL, false);
+  assert.equal(reviewReplyAllowed({ role: "parent", existingReplies: 0, body: "Thanks" }), "role");
+  assert.equal(reviewReplyAllowed({ role: "owner", existingReplies: 1, body: "Thanks" }), "one");
+  assert.equal(reviewReplyAllowed({ role: "owner", existingReplies: 0, body: "Thanks" }), "ok");
+  assert.equal(reviewIsPublic(false), false);
+  assert.equal(pdfFieldsReady([{ value: "", required: true }]), false);
+  assert.equal(packetComplete([{ required: true, status: "sent" }]), false);
+  assert.equal(packetComplete([{ required: true, status: "submitted" }]), true);
+  assert.equal(staffMobileOpen("parent"), false);
+  assert.equal(staffMobileOpen("staff"), true);
+  assert.equal(STAFF_MOBILE_COPY.fr.includes("bientôt"), true);
+  assert.equal(paymentReminder().deliver, false);
+  assert.equal(lateFeeCents({ balanceCents: 1000, policy: null }), null);
+  assert.equal(lateFeeCents({ balanceCents: 1000, policy: { kind: "percent", amount: 3 } }), 30);
+  assert.deepEqual(taxReceiptTotal([{ cents: 500, year: 2026 }, { cents: 100, year: 2025 }], 2026), { count: 1, cents: 500 });
+  assert.equal(taxReceiptSend().deliver, false);
+  assert.equal(cwelccMonthly({ program: true, officialDailyCents: null, days: 20 }), null);
+  assert.equal(cwelccMonthly({ program: true, officialDailyCents: 1000, days: 20 }), 20000);
+  assert.equal(videoSharePlan().upload, false);
+  assert.equal(videoVisible(["g1"], "g2"), false);
+  assert.equal(milestoneVisible({ recorded: false, childId: "c1", viewerChildIds: ["c1"] }), false);
+  assert.equal(milestoneVisible({ recorded: true, childId: "c1", viewerChildIds: ["c2"] }), false);
+  assert.equal(renewalStatus({ expiresOn: null, now: new Date("2026-11-11T00:00:00.000Z"), leadDays: 30 }), "missing");
+  assert.equal(renewalNotice().deliver, false);
 });
