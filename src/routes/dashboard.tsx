@@ -2,7 +2,9 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Shell } from "@/components/shell";
 import { ProviderPioneerDesk } from "@/components/provider-pioneer-desk";
 import { localePath } from "@/lib/locale-path";
+import { privateReturnPath } from "@/lib/role-access";
 import { pageSeoHead, withNoindex } from "@/lib/page-seo";
+import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { useCopy } from "@/lib/use-copy";
 
 export function dashboardHead(locale: "en" | "fr") {
@@ -51,8 +53,12 @@ export function redirectParentDashboard(role: string | null | undefined, locale:
 }
 
 export const Route = createFileRoute("/dashboard")({
-  beforeLoad: ({ context }) => {
-    redirectParentDashboard((context as { roleChrome?: { role?: string | null } }).roleChrome?.role, "en");
+  beforeLoad: ({ context, location }: {
+    context: { roleChrome?: Parameters<typeof beforeLoadPrivate>[1] };
+    location: Parameters<typeof privateReturnPath>[0];
+  }) => {
+    redirectParentDashboard(context.roleChrome?.role, "en");
+    return beforeLoadPrivate(privateReturnPath(location), context.roleChrome);
   },
   head: () => dashboardHead("en"),
   component: DashboardPage,

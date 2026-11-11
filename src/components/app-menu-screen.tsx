@@ -66,6 +66,7 @@ export function AppMenuScreen({
   const ownsCentre = Boolean(session?.ownsCentre);
   const highlight = menuHighlight({ role: chrome.role, ownsCentre, currentDesk });
   const hostCards = highlight === "create";
+  const signedIn = Boolean(user) || chrome.signedIn;
 
   if (section) {
     return (
@@ -128,6 +129,15 @@ export function AppMenuScreen({
           <span className="min-w-0 flex-1 text-lg font-semibold leading-snug">{t("menuCreateListing")}</span>
           <KidBlocks tone="onPrimary" className="h-12 w-20 shrink-0 text-primary-fg" />
         </Link>
+      ) : !signedIn ? (
+        <Link
+          to={localePath("/login", locale)}
+          search={{ intent: "in", next: menuDeskPath(pathname) }}
+          data-ke="menu-sign-in"
+          className="ke-press mt-6 flex min-h-24 items-center gap-3 rounded-[1.25rem] bg-primary px-5 py-5 text-lg font-semibold text-primary-fg touch-manipulation"
+        >
+          {t("menuSignInCard")}
+        </Link>
       ) : (
         <Link
           to={localePath("/search", locale)}
@@ -147,7 +157,7 @@ export function AppMenuScreen({
         {user && highlight !== "create" ? (
           <MenuRow to={menuDeskPath(pathname)} search={{ screen: "payments" }} label={t("earningsPayments")} icon="terms" marker="payments" />
         ) : null}
-        {highlight === "find" ? (
+        {signedIn && highlight === "find" ? (
           <MenuRow to={parentDeskPath(pathname)} search={{ tab: "children" }} label={t("children")} icon="parent" marker="children" />
         ) : null}
         {user && highlight === "find" ? (
@@ -161,6 +171,7 @@ export function AppMenuScreen({
             <MenuRow to={parentDeskPath(pathname)} search={{ tab: "stories" }} label={t("parentStoriesNav")} icon="howItWorks" marker="stories" />
           </>
         ) : null}
+        {signedIn ? (
         <MenuRow
           to={highlight === "create" || user ? accountDeskPath(pathname) : localePath("/login", locale)}
           search={
@@ -174,7 +185,8 @@ export function AppMenuScreen({
           icon={highlight === "create" || user ? "settings" : "login"}
           marker="account"
         />
-        {user ? (
+        ) : null}
+        {signedIn && user ? (
           <MenuRow
             to={menuDeskPath(pathname)}
             search={{ screen: "notifications" }}

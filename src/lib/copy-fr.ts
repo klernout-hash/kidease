@@ -3547,6 +3547,7 @@ export const fr = {
     menuReviews: "Avis",
     menuCreateListing: "Créer une nouvelle fiche",
     menuFindDaycare: "Trouver une garderie",
+    menuSignInCard: "Se connecter ou créer un compte",
     menuAccountSettings: "Paramètres du compte",
     menuResources: "Ressources",
     menuGuides: "Guides",

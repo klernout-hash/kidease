@@ -1431,7 +1431,7 @@ export function Listing() {
       <div className={`fixed inset-x-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden bottom-[var(--ke-keyboard,0px)] [[data-channel=app]_&]:bottom-[calc(5rem+var(--ke-keyboard,0px))]`} data-ke="listing-sticky-bar">
         <div className="mx-auto flex max-w-lg items-center gap-2" data-ke={parentActions ? "listing-parent-actions" : undefined}>
           {parentActions ? (
-            <Button className="min-h-11 min-w-0 flex-1 rounded-full px-4 touch-manipulation" data-ke="listing-sticky-cta" onClick={live ? onTour : onInfo}>
+            <Button className="min-h-11 min-w-0 flex-1 whitespace-normal rounded-full px-4 touch-manipulation" data-ke="listing-sticky-cta" onClick={live ? onTour : onInfo}>
               {live ? t("bookTour") : t("requestInfo")}
             </Button>
           ) : ownEdit ? (

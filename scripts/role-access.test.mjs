@@ -20,6 +20,17 @@ test("public browse stays open and private URLs follow the role", () => {
   assert.equal(guardPrivatePath({ pathname: "/daycare/city/winnipeg", signedIn: false }).kind, "allow");
   assert.equal(guardPrivatePath({ pathname: "/daycare/little-fox", signedIn: false }).kind, "allow");
   assert.equal(guardPrivatePath({ pathname: "/parent", signedIn: false }).kind, "signin");
+  assert.deepEqual(guardPrivatePath({ pathname: "/dashboard", signedIn: false }), {
+    kind: "signin",
+    next: "/dashboard",
+  });
+  assert.equal(guardPrivatePath({ pathname: "/fr/dashboard", signedIn: false }).kind, "signin");
+  assert.equal(guardPrivatePath({ pathname: "/dashboard", signedIn: true, role: "provider" }).kind, "allow");
+  assert.equal(guardPrivatePath({ pathname: "/parent/daily-feed", signedIn: false }).kind, "signin");
+  assert.equal(guardPrivatePath({ pathname: "/provider/leads", signedIn: false }).kind, "signin");
+  assert.equal(guardPrivatePath({ pathname: "/provider/families", signedIn: false }).kind, "signin");
+  assert.equal(guardPrivatePath({ pathname: "/inbox/thread-1", signedIn: false }).kind, "signin");
+  assert.equal(guardPrivatePath({ pathname: "/parent/signup", signedIn: false }).kind, "allow");
   assert.equal(guardPrivatePath({ pathname: "/provider/subscription", signedIn: false }).kind, "signin");
   assert.equal(guardPrivatePath({ pathname: "/admin", signedIn: false }).kind, "not_found");
   assert.equal(guardPrivatePath({ pathname: "/admin", signedIn: true, role: "parent" }).kind, "not_found");

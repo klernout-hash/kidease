@@ -508,7 +508,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
 
         {!featuredReady || featuredAgreement.showSection ? (
         <section id="featured" className="ke-gutter mx-auto w-full pb-8 pt-4 md:pb-12 md:pt-5">
-          <h2 className="scroll-mb-32 text-xl tracking-[-0.03em] md:text-2xl">{t(strip.featuredTitleKey)}</h2>
+          <h2 className="scroll-mb-32 text-xl tracking-[-0.03em] max-lg:sr-only md:text-2xl">{t(strip.featuredTitleKey)}</h2>
           <p className="mt-2 max-w-2xl text-sm text-muted">{t(FEATURE_SPONSORED_LISTINGS ? "featuredBody" : "featuredBodyPlain")}</p>
           <HomeDiscovery
             ready={featuredReady}
@@ -655,7 +655,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
               />
             </div>
           ) : null}
-          <h2 className="mt-4 scroll-mb-32 text-xl tracking-[-0.03em]">{t(strip.featuredTitleKey)}</h2>
+          <h2 className="mt-4 scroll-mb-32 text-xl tracking-[-0.03em] max-lg:sr-only">{t(strip.featuredTitleKey)}</h2>
           <p className="mt-2 max-w-2xl text-sm text-muted">{t(FEATURE_SPONSORED_LISTINGS ? "featuredBody" : "featuredBodyPlain")}</p>
           <HomeDiscovery
             ready={featuredReady}
