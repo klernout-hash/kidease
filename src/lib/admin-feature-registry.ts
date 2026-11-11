@@ -123,6 +123,18 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_INCIDENT_SHARE: "shared",
   FEATURE_INCIDENT_EXPORT: "daycare",
   FEATURE_CHILD_PORTFOLIO: "parent",
+  FEATURE_CREDENTIAL_FILES: "daycare",
+  FEATURE_CREDENTIAL_REMINDERS: "daycare",
+  FEATURE_SCREENING_DOCS: "daycare",
+  FEATURE_SCREENING_STATUS: "daycare",
+  FEATURE_CENTRE_SWITCHER: "daycare",
+  FEATURE_BILLING_ONLY_ROLE: "daycare",
+  FEATURE_FAMILY_MESSAGING_DENY: "daycare",
+  FEATURE_REVENUE_REPORT: "daycare",
+  FEATURE_PDF_EXPORT: "daycare",
+  FEATURE_AUDIT_LOG: "daycare",
+  FEATURE_SECURITY_PAGE: "shared",
+  FEATURE_PRIVACY_REQUESTS: "admin",
 };
 
 const SWITCH_CATEGORY: Record<string, FeatureCategory> = {
