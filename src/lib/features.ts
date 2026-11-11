@@ -411,6 +411,11 @@ export function listCsvEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_LIST_CSV", env);
 }
 
+/** Connect an existing parent's child from the daycare desk. Off. Nothing is sent. */
+export function familyInviteEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_FAMILY_INVITE", env);
+}
+
 /** Public licence-type filter. Off. Unknown is never guessed. */
 export function licenceTypeFilterEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_LICENCE_TYPE_FILTER", env);

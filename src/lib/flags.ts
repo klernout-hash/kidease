@@ -117,6 +117,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_MULTI_CHILD_SEARCH",
   "FEATURE_VACANCY_FRESHNESS",
   "FEATURE_FEE_DISPLAY_GATE",
+  "FEATURE_FAMILY_INVITE",
   "FEATURE_CENTRE_LEAD_TRACKER",
   "FEATURE_CENTRE_API",
   "FEATURE_WALKIN_LEADS",
@@ -373,6 +374,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_VACANCY_FRESHNESS: false,
   /** Hide unconfirmed fees. Off. */
   FEATURE_FEE_DISPLAY_GATE: false,
+  /** Connect an existing parent's child from the daycare desk. Off. Nothing is sent. */
+  FEATURE_FAMILY_INVITE: false,
   /** Family pipeline on the daycare desk. Off. No mail, text, or push. */
   FEATURE_CENTRE_LEAD_TRACKER: false,
   /** Per-centre API keys and webhooks. Off. Nothing is exposed until a centre turns a key on. */
@@ -1069,6 +1072,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary: "Hide fees that the centre or an official source has not confirmed. Off. Scraped fees stay hidden.",
+  },
+  {
+    key: "FEATURE_FAMILY_INVITE",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "A centre can connect a child who already has a KidEase parent, without a waitlist or a tour. Off. Nothing is emailed or texted.",
   },
   {
     key: "FEATURE_CENTRE_LEAD_TRACKER",
