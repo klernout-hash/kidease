@@ -1,3 +1,4 @@
+// Re-run after the desktop visual job timed out on an apt mirror, not a product failure.
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { FLAG_DEFAULTS } from "../src/lib/flags.ts";
