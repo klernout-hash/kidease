@@ -98,6 +98,7 @@ test("recently viewed moves up as photo cards in the clean look only", () => {
   assert.doesNotMatch(row, /rounded-\[/);
   assert.match(src("src/styles.css"), /html\[data-look="clean"\] \.ke-classic-only \{\n {2}display: none !important;/);
 });
+<<<<<<< HEAD
 
 test("each care type has its own icon in the clean look", () => {
   const css = src("src/styles.css");

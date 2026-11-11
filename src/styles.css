@@ -3758,6 +3758,7 @@ html[data-look="clean"] .border:not([class*="border-"]) {
 html[data-look="clean"] :is(input, select, textarea).border:not([class*="border-"]) {
   border-color: var(--ke-field-line);
 }
+<<<<<<< HEAD
 /* Category pictures. The clean look shows a drawn icon for each care type in place of the room photo. */
 html[data-look="clean"] [data-ke="airbnb-care-all"] .ke-airbnb-cat-art img {
   content: url("/photos/care-icons/all.webp");
