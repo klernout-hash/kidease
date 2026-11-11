@@ -20,6 +20,7 @@ export function searchCacheKey(input: {
   name?: string;
   /** Live on KidEase. Kept out of the unfiltered page cache. */
   claimLive?: boolean;
+  diet?: string;
 }) {
   return [
     "live6",
@@ -39,6 +40,7 @@ export function searchCacheKey(input: {
     input.parentFit || "",
     (input.name || "").trim().toLowerCase(),
     input.claimLive ? "claim" : "",
+    input.diet || "",
   ].join(":");
 }
 
