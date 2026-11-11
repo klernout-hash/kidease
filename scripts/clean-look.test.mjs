@@ -64,11 +64,18 @@ test("every clean rule is scoped to the look attribute", () => {
   }
 });
 
-test("the clean look has light and dark tokens and leaves the logo alone", () => {
+test("the clean look has light and dark tokens and keeps the logo artwork", () => {
   const css = src("src/styles.css");
   assert.match(css, /html\[data-look="clean"\] \{\n {2}--color-bg: #ffffff;/);
   assert.match(css, /html\[data-look="clean"\]\[data-resolved-theme="dark"\],/);
   const block = css.slice(css.indexOf("  Clean look. Every rule below"));
-  assert.doesNotMatch(block, /data-ke-mark|brand-mark|logo/);
+  // The logo may be shown larger. Its artwork and colours are never restyled.
+  assert.doesNotMatch(block, /data-ke-mark|brand-mark/);
   assert.match(src("docs/clean-look/README.md"), /Do not change the default until Kyle says so/);
+});
+
+test("the website home reuses the page's picture tabs and leaves the shell alone", () => {
+  const css = src("src/styles.css");
+  assert.match(css, /html\[data-look="clean"\] \.ke-home > \.ke-airbnb-phone-only \{\n {4}display: block;/);
+  assert.doesNotMatch(src("src/components/shell.tsx"), /care-cats|ke-care-gif/);
 });

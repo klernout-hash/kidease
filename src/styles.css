@@ -3367,7 +3367,7 @@ html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-home"] .sticky 
 /*
   Clean look. Every rule below matches only when public/look-boot.js sets
   data-look="clean" on <html>. Without it, today's look is unchanged.
-  Colours, corners, and shadows only. No layout, copy, or behaviour.
+  Colours, corners, shadows, and the home and header layout. No copy or behaviour change.
   The rules sit outside @layer so they win over the tokens above.
   Guide: docs/clean-look/README.md
 */
@@ -3558,5 +3558,113 @@ html[data-look="clean"] .bg-\[\#1f9d55\]:hover {
   html[data-look="clean"] [role="dialog"].bg-surface:is(.rounded-xl, .md\:rounded-xl, .rounded-2xl),
   html[data-look="clean"] [role="dialog"] > .bg-surface:is(.rounded-xl, .md\:rounded-xl, .rounded-2xl) {
     border-radius: 24px;
+  }
+}
+/* Web header. A taller bar and a larger logo from tablet width up. */
+@media (min-width: 768px) {
+  html[data-look="clean"] .ke-site-header .ke-gutter > .flex {
+    height: 5rem;
+  }
+  html[data-look="clean"] .ke-site-header a[aria-label="KidEase"] {
+    transform: scale(1.5);
+    transform-origin: left center;
+    margin-right: 1.75rem;
+  }
+  /* Home. The header runs edge to edge and blends into the search area. */
+  html[data-look="clean"]:has(.ke-home) .ke-site-header {
+    border-bottom-color: transparent;
+    background: var(--color-bg);
+  }
+  html[data-look="clean"]:has(.ke-home) .ke-site-header .ke-gutter {
+    max-width: none;
+  }
+  html[data-look="clean"]:has(.ke-home) .ke-site-header .ke-gutter > .flex {
+    height: 6rem;
+  }
+  html[data-look="clean"] .ke-home-web > section:first-child {
+    background: linear-gradient(180deg, var(--color-bg) 0%, var(--color-surface-2) 100%);
+  }
+  html[data-look="clean"] .ke-home > h1 {
+    padding-top: 0.5rem;
+    font-size: clamp(1.5rem, 2.2vw, 2rem);
+  }
+  /* Home rails. Photos are close to square with 20px corners. */
+  html[data-look="clean"] .ke-listing-rail .ke-photo-frame {
+    border-radius: 20px;
+    aspect-ratio: 20 / 19;
+  }
+}
+/* The care picture tabs from the phone home also show on the website home. They stay in the page,
+   right under the header, so they scroll away with it. */
+@media (min-width: 768px) {
+  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only {
+    display: block;
+  }
+  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only .ke-airbnb-cats {
+    justify-content: center;
+    gap: 0;
+    overflow: visible;
+    margin: 0;
+    padding: 0;
+  }
+  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only .ke-airbnb-cat {
+    justify-content: center;
+    gap: 0.3rem;
+    width: 6.2rem;
+    min-height: 5.5rem;
+    padding: 0.5rem 0.1rem 0.8rem;
+    color: var(--color-muted);
+  }
+  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only .ke-airbnb-cat:hover,
+  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only .ke-airbnb-cat.is-on {
+    color: var(--color-fg);
+  }
+  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only .ke-airbnb-cat.is-on::after {
+    left: 0.6rem;
+    right: 0.6rem;
+    bottom: 0.2rem;
+    height: 3px;
+    border-radius: 3px;
+  }
+  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only .ke-airbnb-cat-art {
+    width: 3rem;
+    height: 3rem;
+    animation: none;
+  }
+  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only .ke-airbnb-cat-art img {
+    width: 3rem;
+    height: 3rem;
+    max-width: 3rem;
+    border-radius: 0.85rem;
+  }
+  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only .ke-airbnb-cat-label {
+    max-width: 6.1rem;
+    min-height: 0;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    -webkit-line-clamp: 1;
+  }
+}
+/* Tablet widths have less room, so the row can scroll sideways. */
+@media (min-width: 768px) and (max-width: 1279px) {
+  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only .ke-airbnb-cats {
+    justify-content: safe center;
+    overflow-x: auto;
+  }
+}
+/* Wide screens. The row moves up beside the logo, in the header band. */
+@media (min-width: 1280px) {
+  html[data-look="clean"]:has(.ke-home) [data-ke="live-on-kidease-tab"] {
+    display: none;
+  }
+  html[data-look="clean"] .ke-home > .ke-airbnb-phone-only {
+    position: relative;
+    z-index: 41;
+    display: flex;
+    align-items: center;
+    width: fit-content;
+    height: 6rem;
+    margin: -6rem auto 0;
   }
 }

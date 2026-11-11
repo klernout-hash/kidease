@@ -1,6 +1,6 @@
 # Clean look
 
-A calmer, whiter look for the whole product: guest pages, the parent desk, the daycare desk, the admin desk, and the government desk. It changes colours, corners, and shadows. It does not change layout, copy, features, or the KidEase logo.
+A calmer, whiter look for the whole product: guest pages, the parent desk, the daycare desk, the admin desk, and the government desk. It changes colours, corners, and shadows. On the website it also gives the home page a taller header with a larger logo and the care picture tabs. It does not change copy, features, or the logo artwork.
 
 Today's look is still the default. Do not change the default until Kyle says so.
 
