@@ -4,6 +4,7 @@
  */
 
 import type { Sql } from "../db.ts";
+import { parsePickupContacts } from "../desk-features.ts";
 import type { CentreMemberRole } from "../centre-roles.ts";
 import {
   DEMO_CENTRE_ID,
@@ -423,9 +424,10 @@ export async function readCentreDay(
     daycare_name: string;
     timezone: string | null;
     is_test: number | boolean | null;
+    pickup_people: string | null;
   }>(
     `select b.id as booking_id, b.child_id, b.daycare_id, coalesce(c.name, 'Child') as child_name,
-            d.name as daycare_name, d.timezone, d.is_test
+            d.name as daycare_name, d.timezone, d.is_test, c.pickup_people
      from bookings b
      join daycares d on d.id = b.daycare_id
      left join children c on c.id = b.child_id
@@ -455,6 +457,7 @@ export async function readCentreDay(
       daycareName: kid.daycare_name,
       childName: kid.child_name,
       pickups: pickups.filter((person) => person.child_id === kid.child_id).map((person) => person.name),
+      pickupDetails: parsePickupContacts(kid.pickup_people),
       status: attendanceStatus(last),
       next: nextHandoffAction(last),
       last,

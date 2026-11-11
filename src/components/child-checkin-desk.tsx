@@ -95,6 +95,16 @@ export function ChildCheckinDesk() {
                       </option>
                     ))}
                   </select>
+                  {(() => {
+                    const chosen = (child.pickupDetails || []).find((person) => person.name === pickup[child.bookingId]);
+                    if (!chosen || (!chosen.note && !chosen.restricted)) return null;
+                    return (
+                      <p className="mt-2 text-sm text-danger" data-ke="pickup-restriction">
+                        {chosen.restricted ? (locale === "fr" ? "Non autorisé. " : "Not authorized. ") : ""}
+                        {chosen.note}
+                      </p>
+                    );
+                  })()}
                 </label>
               ) : null}
               <Button
