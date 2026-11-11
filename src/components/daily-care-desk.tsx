@@ -426,8 +426,11 @@ export function DailyCareDesk({
                   <div className="min-w-0">
                     <p className="font-medium">{row.childName}</p>
                     <p className="text-sm text-muted">{row.daycareName}</p>
-                    <p className="mt-1 text-sm">
-                      <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                    <p className="mt-1 flex flex-wrap gap-2 text-sm">
+                      <span className="rounded-full bg-ok/10 px-2.5 py-0.5 text-xs font-medium text-ok" data-ke="care-enrolment">
+                        {t("statusAccepted")}
+                      </span>
+                      <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary" data-ke="care-presence">
                         {t(PRESENCE_COPY[presence])}
                       </span>
                     </p>

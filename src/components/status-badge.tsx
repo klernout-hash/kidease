@@ -22,7 +22,9 @@ export function StatusBadge({ status, className }: { status: BookingStatus; clas
         className,
       )}
     >
-      {t(KEY[status])}
+      <span data-ke="booking-state" data-state={status === "accepted" || status === "active" ? "enrolled" : status}>
+        {t(KEY[status])}
+      </span>
     </span>
   );
 }

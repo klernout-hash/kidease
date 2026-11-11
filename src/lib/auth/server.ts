@@ -43,6 +43,7 @@ import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { getCookie, getRequest } from "@tanstack/react-start/server";
 import { randomBytes } from "node:crypto";
 import { Pool } from "pg";
+import { postgresPoolUrl, retryTransient } from "@/lib/pg-url";
 import { ensureDbReady, getPglite } from "../db";
 import { emailAndPasswordConfig, emailAndPasswordEnabled, emailVerificationConfig } from "./email-password";
 import { GROK_PROVIDERS, BROKER_PROVIDERS } from "./providers";
@@ -234,6 +235,18 @@ const trustedOrigins = (request?: Request) => {
 
 const databaseUrl = env("DATABASE_URL");
 
+/** Neon cold starts drop the first socket. Retry that, then let a real query error through. */
+function openAuthPool(url: string) {
+  const pool = new Pool({
+    connectionString: postgresPoolUrl(url),
+    connectionTimeoutMillis: 10_000,
+  });
+  const query = pool.query.bind(pool);
+  pool.query = ((...args: Parameters<typeof pool.query>) =>
+    retryTransient(async () => await query(...args))) as typeof pool.query;
+  return pool;
+}
+
 // Static broker OAuth endpoints (skip OIDC discovery on every sign-in / callback).
 // Discovery would cost an extra network hop to the broker before the popup can
 // even redirect to Google — the live-preview popup felt stuck on the app for
@@ -248,7 +261,7 @@ const grokUserInfoUrl = `${issuerBase}/api/auth/oauth2/userinfo`;
 // SAME DB as app data, including email/password users. Both use the Better Auth
 // schema from `migrations/0001_auth.sql`.
 const database = databaseUrl
-  ? new Pool({ connectionString: databaseUrl })
+  ? openAuthPool(databaseUrl)
   : process.env.VERCEL
     ? undefined
     : { dialect: pgliteDialect(() => getPglite()), type: "postgres" as const };
