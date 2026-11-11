@@ -431,6 +431,22 @@ export function feeDisplayGateEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_FEE_DISPLAY_GATE", env);
 }
 
+export function walkInLeadsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_WALKIN_LEADS", env);
+}
+
+export function programWaitlistEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PROGRAM_WAITLIST", env);
+}
+
+export function waitlistOffersEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_WAITLIST_OFFERS", env);
+}
+
+export function formStatusEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_FORM_STATUS", env);
+}
+
 /** Daycare inbox also lists requests with no thread. Default off. */
 export function unifiedInboxEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_UNIFIED_INBOX", env);
