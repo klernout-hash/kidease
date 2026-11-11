@@ -146,6 +146,7 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_AUDIT_LOG",
   "FEATURE_SECURITY_PAGE",
   "FEATURE_PRIVACY_REQUESTS",
+  "FEATURE_FAMILY_INVITE",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -408,6 +409,8 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_AUDIT_LOG: false,
   FEATURE_SECURITY_PAGE: false,
   FEATURE_PRIVACY_REQUESTS: false,
+  /** Connect an existing parent's child from the daycare desk. Off. Nothing is sent. */
+  FEATURE_FAMILY_INVITE: false,
 };
 
 /**
@@ -1131,6 +1134,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
   { key: "FEATURE_AUDIT_LOG", defaultOn: false, docs: "docs/flags.md", summary: "Append-only audit log. Off. Owners see only their centres." },
   { key: "FEATURE_SECURITY_PAGE", defaultOn: false, docs: "docs/flags.md", summary: "Public security statements with evidence. Off. No certification claim." },
   { key: "FEATURE_PRIVACY_REQUESTS", defaultOn: false, docs: "docs/flags.md", summary: "Privacy request case for the privacy officer. Off." },
+  {
+    key: "FEATURE_FAMILY_INVITE",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "A centre can connect a child who already has a KidEase parent, without a waitlist or a tour. Off. Nothing is emailed or texted.",
+  },
 ];
 
 let cache: RemoteFlagSnapshot | null = null;

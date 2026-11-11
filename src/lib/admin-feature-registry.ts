@@ -135,6 +135,7 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_AUDIT_LOG: "daycare",
   FEATURE_SECURITY_PAGE: "shared",
   FEATURE_PRIVACY_REQUESTS: "admin",
+  FEATURE_FAMILY_INVITE: "daycare",
 };
 
 const SWITCH_CATEGORY: Record<string, FeatureCategory> = {
