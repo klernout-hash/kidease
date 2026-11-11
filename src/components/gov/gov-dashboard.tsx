@@ -4,6 +4,7 @@ import type { GovDashboard } from "@/lib/gov/aggregate";
 import { feeBucketLabel, govCopy } from "@/lib/gov/copy";
 import { regionForCity } from "@/lib/gov/places";
 import { GovFrame } from "@/components/gov/gov-frame";
+import { GovJobShortage } from "@/components/ece-job-desk";
 import { CurriculumGovStrip } from "@/components/curriculum-pack";
 import { GovMap } from "@/components/gov/gov-map";
 
@@ -463,6 +464,7 @@ export function GovDashboardView({
           </div>
         </section>
         <SurveyContext locale={data.locale} />
+        <GovJobShortage province={data.province === "ALL" ? "CA" : data.province} locale={data.locale} />
         </>
         ) : null}
 
