@@ -2875,6 +2875,9 @@ html[data-resolved-theme="dark"] .ke-site-footer {
   html:not([data-channel="app"]):not([data-runtime="native"]):has(.ke-help-bot) .ke-help-bot {
     bottom: calc(var(--ke-help-clear, 5.75rem) + var(--ke-keyboard, 0px));
   }
+  html:not([data-channel="app"]):not([data-runtime="native"]):has([data-ke="listing-sticky-bar"]) .ke-help-bot {
+    bottom: calc(6.5rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
+  }
   /* An open More menu stays above the help button and the sticky actions. */
   html:has([data-ke="listing-more"] [role="menu"]) .ke-help-bot {
     z-index: 15;
@@ -3022,6 +3025,10 @@ html[data-runtime="native"] .ke-help-bot {
   right: max(0.75rem, env(safe-area-inset-right, 0px));
   bottom: calc(4.75rem + 0.75rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
   z-index: 40;
+}
+html[data-channel="app"]:has([data-ke="listing-sticky-bar"]) .ke-help-bot,
+html[data-runtime="native"]:has([data-ke="listing-sticky-bar"]) .ke-help-bot {
+  bottom: calc(5rem + 4.75rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)) + var(--ke-keyboard, 0px));
 }
 html[data-channel="app"] .ke-page::after,
 html[data-runtime="native"] .ke-page::after {

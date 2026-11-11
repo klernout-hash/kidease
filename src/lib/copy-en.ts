@@ -3525,6 +3525,7 @@ export const en = {
     menuReviews: "Reviews",
     menuCreateListing: "Create a new listing",
     menuFindDaycare: "Find daycare",
+    menuSignInCard: "Sign in or create account",
     menuAccountSettings: "Account settings",
     menuResources: "Resources",
     menuGuides: "Guides",

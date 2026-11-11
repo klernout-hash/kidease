@@ -113,26 +113,45 @@ function helpGroup(menu: string): Group {
   };
 }
 
+const GUEST_HIDDEN = new Set(["requests", "waitlists", "care", "account", "notifications", "saved", "children"]);
+
 export function PhoneCategoryMenu({ host }: { host: boolean }) {
   const { t, locale } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user } = useCurrentUserState();
   const fr = locale === "fr";
-  const groups = host ? hostGroups(pathname) : parentGroups(pathname, locale);
+  const signedIn = Boolean(user);
+  const groups = (host ? hostGroups(pathname) : parentGroups(pathname, locale))
+    .map((group) => ({
+      ...group,
+      rows: signedIn ? group.rows : group.rows.filter((row) => !GUEST_HIDDEN.has(row.marker)),
+    }))
+    .filter((group) => group.rows.length > 0);
   const name = user?.displayName || user?.primaryEmail || t("account");
   return (
     <section className="ke-phone-cats" data-ke="phone-menu-groups">
       <header className="ke-phone-cats-title">
         <h1>{t("navMenu")}</h1>
-        <NotificationBell />
+        {signedIn ? <NotificationBell /> : null}
       </header>
-      <Link to={menuDeskPath(pathname)} search={{ screen: "account" }} className="ke-phone-cats-profile">
-        <span aria-hidden="true">{(user?.displayName || "K").slice(0, 1).toUpperCase()}</span>
-        <span>
-          <strong>{name}</strong>
-          <em>{fr ? "Voir le profil" : "View profile"}</em>
-        </span>
-      </Link>
+      {signedIn ? (
+        <Link to={menuDeskPath(pathname)} search={{ screen: "account" }} className="ke-phone-cats-profile">
+          <span aria-hidden="true">{(user?.displayName || "K").slice(0, 1).toUpperCase()}</span>
+          <span>
+            <strong>{name}</strong>
+            <em>{fr ? "Voir le profil" : "View profile"}</em>
+          </span>
+        </Link>
+      ) : (
+        <Link
+          to={localePath("/login", locale)}
+          search={{ intent: "in", next: menuDeskPath(pathname) }}
+          className="ke-press mt-4 flex min-h-24 items-center rounded-[1.25rem] bg-primary px-5 text-lg font-semibold text-primary-fg touch-manipulation"
+          data-ke="menu-sign-in"
+        >
+          {t("menuSignInCard")}
+        </Link>
+      )}
       {groups.map((group) => (
         <nav key={group.en} aria-label={fr ? group.fr : group.en}>
           <h2>{fr ? group.fr : group.en}</h2>
