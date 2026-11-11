@@ -314,6 +314,7 @@ test("signup and claim verify fire GHL after notify, even when mail fails", () =
   const setRoleFn = setRole.slice(0, setRole.indexOf("\nexport const "));
   assert.match(setRoleFn, /ensureCrmIntake/);
   assert.doesNotMatch(setRoleFn, /pingNewAccount/);
+  assert.match(family, /interval '30 minutes'/);
   assert.match(setRoleFn, /written\.previous !== "parent"/);
   const createListing = family.slice(family.indexOf("export const createListing"));
   assert.match(createListing, /ensureCrmIntake\(context\.userId, "provider"/);

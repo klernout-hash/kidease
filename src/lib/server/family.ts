@@ -190,6 +190,11 @@ export async function ensureCrmIntake(
                 where u.id = ${userId}
                   and u."createdAt" < timestamptz '2026-09-24 17:34:00+00'
               )
+              and exists (
+                select 1 from "user" u
+                where u.id = ${userId}
+                  and u."createdAt" >= now() - interval '30 minutes'
+              )
             returning 1 as claimed
           `;
     if (!claimed.length) return false;
