@@ -117,8 +117,55 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_MULTI_CHILD_SEARCH",
   "FEATURE_VACANCY_FRESHNESS",
   "FEATURE_FEE_DISPLAY_GATE",
+  "FEATURE_FAMILY_INVITE",
   "FEATURE_CENTRE_LEAD_TRACKER",
   "FEATURE_CENTRE_API",
+  "FEATURE_WALKIN_LEADS",
+  "FEATURE_PROGRAM_WAITLIST",
+  "FEATURE_WAITLIST_OFFERS",
+  "FEATURE_FORM_STATUS",
+  "FEATURE_FAMILY_NEWSFEED",
+  "FEATURE_MEDIA_CONSENT",
+  "FEATURE_PICKUP_VERIFY",
+  "FEATURE_EMERGENCY_ROLL",
+  "FEATURE_ARRIVAL_NOTES",
+  "FEATURE_TOILETING_LOG",
+  "FEATURE_ALLERGEN_MENU",
+  "FEATURE_ALLERGY_BADGE",
+  "FEATURE_INCIDENT_SHARE",
+  "FEATURE_INCIDENT_EXPORT",
+  "FEATURE_CHILD_PORTFOLIO",
+  "FEATURE_CREDENTIAL_FILES",
+  "FEATURE_CREDENTIAL_REMINDERS",
+  "FEATURE_SCREENING_DOCS",
+  "FEATURE_SCREENING_STATUS",
+  "FEATURE_CENTRE_SWITCHER",
+  "FEATURE_BILLING_ONLY_ROLE",
+  "FEATURE_FAMILY_MESSAGING_DENY",
+  "FEATURE_REVENUE_REPORT",
+  "FEATURE_PDF_EXPORT",
+  "FEATURE_AUDIT_LOG",
+  "FEATURE_SECURITY_PAGE",
+  "FEATURE_PRIVACY_REQUESTS",
+  "FEATURE_START_DATE_SEARCH",
+  "FEATURE_LEAD_CSV",
+  "FEATURE_LEAD_TEMPLATES",
+  "FEATURE_CUSTOM_ROLES",
+  "FEATURE_STAFF_MESSAGES",
+  "FEATURE_NATIVE_PUSH",
+  "FEATURE_PTO",
+  "FEATURE_SPLIT_PAYERS",
+  "FEATURE_ACCOUNT_CREDITS",
+  "FEATURE_MEDICATION_LOG",
+  "FEATURE_SITE_TRANSFER",
+  "FEATURE_FILLABLE_PDF",
+  "FEATURE_ADMISSION_PACKET",
+  "FEATURE_STAFF_MOBILE",
+  "FEATURE_LATE_FEE",
+  "FEATURE_CWELCC_MATH",
+  "FEATURE_VIDEO_SHARE",
+  "FEATURE_MILESTONES",
+  "FEATURE_CREDENTIAL_RENEWAL",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -346,10 +393,81 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_VACANCY_FRESHNESS: false,
   /** Hide unconfirmed fees. Off. */
   FEATURE_FEE_DISPLAY_GATE: false,
+  /** Connect an existing parent's child from the daycare desk. Off. Nothing is sent. */
+  FEATURE_FAMILY_INVITE: false,
   /** Family pipeline on the daycare desk. Off. No mail, text, or push. */
   FEATURE_CENTRE_LEAD_TRACKER: false,
   /** Per-centre API keys and webhooks. Off. Nothing is exposed until a centre turns a key on. */
   FEATURE_CENTRE_API: false,
+  /** Walk-in and phone leads. Off. Consent defaults off. */
+  FEATURE_WALKIN_LEADS: false,
+  /** Program waitlists and position bands. Off. */
+  FEATURE_PROGRAM_WAITLIST: false,
+  /** Waitlist offers. Off. No offer email is sent. */
+  FEATURE_WAITLIST_OFFERS: false,
+  /** Form and packet status board. Off. */
+  FEATURE_FORM_STATUS: false,
+  FEATURE_FAMILY_NEWSFEED: false,
+  FEATURE_MEDIA_CONSENT: false,
+  FEATURE_PICKUP_VERIFY: false,
+  FEATURE_EMERGENCY_ROLL: false,
+  FEATURE_ARRIVAL_NOTES: false,
+  FEATURE_TOILETING_LOG: false,
+  FEATURE_ALLERGEN_MENU: false,
+  FEATURE_ALLERGY_BADGE: false,
+  FEATURE_INCIDENT_SHARE: false,
+  FEATURE_INCIDENT_EXPORT: false,
+  FEATURE_CHILD_PORTFOLIO: false,
+  FEATURE_CREDENTIAL_FILES: false,
+  FEATURE_CREDENTIAL_REMINDERS: false,
+  FEATURE_SCREENING_DOCS: false,
+  FEATURE_SCREENING_STATUS: false,
+  FEATURE_CENTRE_SWITCHER: false,
+  FEATURE_BILLING_ONLY_ROLE: false,
+  FEATURE_FAMILY_MESSAGING_DENY: false,
+  FEATURE_REVENUE_REPORT: false,
+  FEATURE_PDF_EXPORT: false,
+  FEATURE_AUDIT_LOG: false,
+  FEATURE_SECURITY_PAGE: false,
+  FEATURE_PRIVACY_REQUESTS: false,
+  /** Search by a stored opening date. Off. A missing date is unknown. */
+  FEATURE_START_DATE_SEARCH: false,
+  /** Import leads from a CSV. Off. No email is sent. */
+  FEATURE_LEAD_CSV: false,
+  /** English and French lead templates. Off. Nothing is sent. */
+  FEATURE_LEAD_TEMPLATES: false,
+  /** Custom staff permissions. Off. A permission is allowed only when it is listed. */
+  FEATURE_CUSTOM_ROLES: false,
+  /** Messages between staff at one centre. Off. Parents cannot read them. */
+  FEATURE_STAFF_MESSAGES: false,
+  /** Native push. Off. Sending stays disabled. */
+  FEATURE_NATIVE_PUSH: false,
+  /** Time off requests. Off. A person cannot approve their own request. */
+  FEATURE_PTO: false,
+  /** Split a charge across payers. Off. No charge is made. */
+  FEATURE_SPLIT_PAYERS: false,
+  /** Apply a stored credit to a balance. Off. No charge is made. */
+  FEATURE_ACCOUNT_CREDITS: false,
+  /** Medication name, permission, and health checks. Off. Reminders are not sent. */
+  FEATURE_MEDICATION_LOG: false,
+  /** Move a child between two centres the same owner runs. Off. */
+  FEATURE_SITE_TRANSFER: false,
+  /** Fill a stored PDF field list. Off. No new PDF vendor. */
+  FEATURE_FILLABLE_PDF: false,
+  /** Admission packet checklist. Off. Nothing is sent. */
+  FEATURE_ADMISSION_PACKET: false,
+  /** Staff phone view. Off. The store apps are not live. */
+  FEATURE_STAFF_MOBILE: false,
+  /** Late fee from a stored policy. Off. No charge is made. */
+  FEATURE_LATE_FEE: false,
+  /** CWELCC amount from an official daily rate. Off. A missing rate stays hidden. */
+  FEATURE_CWELCC_MATH: false,
+  /** Video share screen. Off. No file is uploaded. */
+  FEATURE_VIDEO_SHARE: false,
+  /** A milestone the centre recorded. Off. Age does not invent one. */
+  FEATURE_MILESTONES: false,
+  /** Credential renewal status. Off. No reminder is sent. */
+  FEATURE_CREDENTIAL_RENEWAL: false,
 };
 
 /**
@@ -1013,6 +1131,13 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     summary: "Hide fees that the centre or an official source has not confirmed. Off. Scraped fees stay hidden.",
   },
   {
+    key: "FEATURE_FAMILY_INVITE",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "A centre can connect a child who already has a KidEase parent, without a waitlist or a tour. Off. Nothing is emailed or texted.",
+  },
+  {
     key: "FEATURE_CENTRE_LEAD_TRACKER",
     defaultOn: false,
     docs: "docs/flags.md",
@@ -1026,6 +1151,72 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     summary:
       "A centre key for its own families. Off. Keys are hashed, child health stays out, and webhooks stay off until the centre turns them on.",
   },
+  {
+    key: "FEATURE_WALKIN_LEADS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Record a walk-in or phone lead. Off. Consent to be contacted defaults off. No email is sent.",
+  },
+  {
+    key: "FEATURE_PROGRAM_WAITLIST",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Waitlists per age group with a position band, not an exact place. Off. Parents see only their own rows.",
+  },
+  {
+    key: "FEATURE_WAITLIST_OFFERS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Offer a waitlist spot with a deadline. Off. Two accepts cannot take the last spot. No email is sent.",
+  },
+  {
+    key: "FEATURE_FORM_STATUS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Status of forms and packets from events. Off. A rejection is held, not emailed.",
+  },
+  { key: "FEATURE_FAMILY_NEWSFEED", defaultOn: false, docs: "docs/flags.md", summary: "Family news posts. Off. No digest email is sent." },
+  { key: "FEATURE_MEDIA_CONSENT", defaultOn: false, docs: "docs/flags.md", summary: "Photos only for guardians who consented. Off. No alert is sent." },
+  { key: "FEATURE_PICKUP_VERIFY", defaultOn: false, docs: "docs/flags.md", summary: "Pickup must be an authorized contact. Off. Overrides are held, not pushed." },
+  { key: "FEATURE_EMERGENCY_ROLL", defaultOn: false, docs: "docs/flags.md", summary: "Emergency roll of people checked in. Off. No automatic all-clear." },
+  { key: "FEATURE_ARRIVAL_NOTES", defaultOn: false, docs: "docs/flags.md", summary: "Late or absent notes. Off. Visible only to that child's room." },
+  { key: "FEATURE_TOILETING_LOG", defaultOn: false, docs: "docs/flags.md", summary: "Diaper and toilet log. Off. No health conclusion is drawn." },
+  { key: "FEATURE_ALLERGEN_MENU", defaultOn: false, docs: "docs/flags.md", summary: "Menu tags from the priority allergen list. Off." },
+  { key: "FEATURE_ALLERGY_BADGE", defaultOn: false, docs: "docs/flags.md", summary: "Allergy badge for staff. Off for anyone without care access." },
+  { key: "FEATURE_INCIDENT_SHARE", defaultOn: false, docs: "docs/flags.md", summary: "Share an incident with that child's guardians. Off. No detailed email." },
+  { key: "FEATURE_INCIDENT_EXPORT", defaultOn: false, docs: "docs/flags.md", summary: "Director export of incidents. Off. Other children's names are removed." },
+  { key: "FEATURE_CHILD_PORTFOLIO", defaultOn: false, docs: "docs/flags.md", summary: "Child portfolio for that child's guardians. Off." },
+  { key: "FEATURE_CREDENTIAL_FILES", defaultOn: false, docs: "docs/flags.md", summary: "Attach a certificate file. Off. No new virus-scan account." },
+  { key: "FEATURE_CREDENTIAL_REMINDERS", defaultOn: false, docs: "docs/flags.md", summary: "Credential expiry reminders. Off. Nothing is sent." },
+  { key: "FEATURE_SCREENING_DOCS", defaultOn: false, docs: "docs/flags.md", summary: "Store a screening document. Off. KidEase does not judge the check." },
+  { key: "FEATURE_SCREENING_STATUS", defaultOn: false, docs: "docs/flags.md", summary: "Screening status. Off. Missing stays missing." },
+  { key: "FEATURE_CENTRE_SWITCHER", defaultOn: false, docs: "docs/flags.md", summary: "Switch centre. Off. A centre you do not belong to is rejected." },
+  { key: "FEATURE_BILLING_ONLY_ROLE", defaultOn: false, docs: "docs/flags.md", summary: "Billing role. Off. Health pages stay closed." },
+  { key: "FEATURE_FAMILY_MESSAGING_DENY", defaultOn: false, docs: "docs/flags.md", summary: "Block family messaging for a staff role. Off." },
+  { key: "FEATURE_REVENUE_REPORT", defaultOn: false, docs: "docs/flags.md", summary: "Revenue report from the payment ledger. Off. No charge is made." },
+  { key: "FEATURE_PDF_EXPORT", defaultOn: false, docs: "docs/flags.md", summary: "Check report lines before a PDF. Off. No new PDF vendor." },
+  { key: "FEATURE_AUDIT_LOG", defaultOn: false, docs: "docs/flags.md", summary: "Append-only audit log. Off. Owners see only their centres." },
+  { key: "FEATURE_SECURITY_PAGE", defaultOn: false, docs: "docs/flags.md", summary: "Public security statements with evidence. Off. No certification claim." },
+  { key: "FEATURE_PRIVACY_REQUESTS", defaultOn: false, docs: "docs/flags.md", summary: "Privacy request case for the privacy officer. Off." },
+  { key: "FEATURE_START_DATE_SEARCH", defaultOn: false, docs: "docs/flags.md", summary: "Match a stored opening date. Off. A missing date stays unknown." },
+  { key: "FEATURE_LEAD_CSV", defaultOn: false, docs: "docs/flags.md", summary: "Import leads from a spreadsheet. Off. A row without a name is skipped. No email is sent." },
+  { key: "FEATURE_LEAD_TEMPLATES", defaultOn: false, docs: "docs/flags.md", summary: "Lead notes in English and French. Off. Nothing is sent." },
+  { key: "FEATURE_CUSTOM_ROLES", defaultOn: false, docs: "docs/flags.md", summary: "Extra staff permissions. Off. Only listed permissions are allowed." },
+  { key: "FEATURE_STAFF_MESSAGES", defaultOn: false, docs: "docs/flags.md", summary: "Staff notes at one centre. Off. Parents cannot read them." },
+  { key: "FEATURE_NATIVE_PUSH", defaultOn: false, docs: "docs/flags.md", summary: "Phone push. Off. Sending stays disabled." },
+  { key: "FEATURE_PTO", defaultOn: false, docs: "docs/flags.md", summary: "Time off requests and totals. Off. No one approves their own request." },
+  { key: "FEATURE_SPLIT_PAYERS", defaultOn: false, docs: "docs/flags.md", summary: "Split a bill across payers. Off. Shares must add to 100. No charge is made." },
+  { key: "FEATURE_ACCOUNT_CREDITS", defaultOn: false, docs: "docs/flags.md", summary: "Apply a stored credit. Off. The balance cannot go below zero. No charge is made." },
+  { key: "FEATURE_MEDICATION_LOG", defaultOn: false, docs: "docs/flags.md", summary: "Medication name, permission, and health checks. Off. Reminders are not sent." },
+  { key: "FEATURE_SITE_TRANSFER", defaultOn: false, docs: "docs/flags.md", summary: "Move a child between two centres one owner runs. Off." },
+  { key: "FEATURE_FILLABLE_PDF", defaultOn: false, docs: "docs/flags.md", summary: "Required fields on a form. Off. No new PDF vendor." },
+  { key: "FEATURE_ADMISSION_PACKET", defaultOn: false, docs: "docs/flags.md", summary: "Admission packet checklist. Off. Nothing is sent." },
+  { key: "FEATURE_STAFF_MOBILE", defaultOn: false, docs: "docs/flags.md", summary: "Staff phone view. Off. The phone apps are not in the stores." },
+  { key: "FEATURE_LATE_FEE", defaultOn: false, docs: "docs/flags.md", summary: "Late fee from a stored rule. Off. No charge is made." },
+  { key: "FEATURE_CWELCC_MATH", defaultOn: false, docs: "docs/flags.md", summary: "CWELCC total from an official daily rate. Off. A missing rate stays hidden." },
+  { key: "FEATURE_VIDEO_SHARE", defaultOn: false, docs: "docs/flags.md", summary: "Video share screen. Off. No upload and no send." },
+  { key: "FEATURE_MILESTONES", defaultOn: false, docs: "docs/flags.md", summary: "Milestones a centre wrote down. Off. Age does not add one." },
+  { key: "FEATURE_CREDENTIAL_RENEWAL", defaultOn: false, docs: "docs/flags.md", summary: "Credential renewal status. Off. No reminder is sent." },
 ];
 
 let cache: RemoteFlagSnapshot | null = null;
