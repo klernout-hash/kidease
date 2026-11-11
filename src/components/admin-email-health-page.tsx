@@ -148,7 +148,7 @@ export function EmailHealthPage() {
 
           <div className="mt-6 overflow-x-auto rounded-2xl bg-surface ring-1 ring-border">
             <table className="w-full min-w-[640px] text-left text-sm">
-              <thead className="text-[11px] uppercase tracking-[0.14em] text-subtle">
+              <thead className="whitespace-nowrap text-[11px] uppercase tracking-[0.14em] text-subtle">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Campaign</th>
                   <th className="px-4 py-3 font-semibold">Delivered</th>
