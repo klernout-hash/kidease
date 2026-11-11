@@ -111,6 +111,14 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_MOBILE_SEARCH_V2",
   "FEATURE_UI_AIRBNB_V1",
   "FEATURE_FR_AUTH_QC",
+  "FEATURE_FAMILY_BULK_MAIL",
+  "FEATURE_LIST_CSV",
+  "FEATURE_LICENCE_TYPE_FILTER",
+  "FEATURE_MULTI_CHILD_SEARCH",
+  "FEATURE_VACANCY_FRESHNESS",
+  "FEATURE_FEE_DISPLAY_GATE",
+  "FEATURE_CENTRE_LEAD_TRACKER",
+  "FEATURE_CENTRE_API",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -326,6 +334,22 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_UI_AIRBNB_V1: false,
   /** French password reset, sign-in code, and verify mail for Quebec and French. Off. English mail stays. */
   FEATURE_FR_AUTH_QC: false,
+  /** Centre email to families. Off. Nothing is sent. */
+  FEATURE_FAMILY_BULK_MAIL: false,
+  /** CSV download of centre lists. Off. */
+  FEATURE_LIST_CSV: false,
+  /** Licence type on public search. Off. Unknown is never guessed. */
+  FEATURE_LICENCE_TYPE_FILTER: false,
+  /** Search for two or more children. Off. No names are stored. */
+  FEATURE_MULTI_CHILD_SEARCH: false,
+  /** Open-spot freshness window. Off. No reminder is sent. */
+  FEATURE_VACANCY_FRESHNESS: false,
+  /** Hide unconfirmed fees. Off. */
+  FEATURE_FEE_DISPLAY_GATE: false,
+  /** Family pipeline on the daycare desk. Off. No mail, text, or push. */
+  FEATURE_CENTRE_LEAD_TRACKER: false,
+  /** Per-centre API keys and webhooks. Off. Nothing is exposed until a centre turns a key on. */
+  FEATURE_CENTRE_API: false,
 };
 
 /**
@@ -950,6 +974,57 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "French password reset, sign-in code, and verify-email for people in Quebec or using French. Off. English mail subjects stay as they are.",
+  },
+  {
+    key: "FEATURE_FAMILY_BULK_MAIL",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "A centre email to families, in English or French, with delivery notes. Off. No message is sent. The sender stays on kidease.ca.",
+  },
+  {
+    key: "FEATURE_LIST_CSV",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Download a list as a CSV file. Off. Health columns stay hidden without document access.",
+  },
+  {
+    key: "FEATURE_LICENCE_TYPE_FILTER",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Filter search by stored licence type. Off. Unknown stays its own group and is never guessed.",
+  },
+  {
+    key: "FEATURE_MULTI_CHILD_SEARCH",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Search once for more than one child. Off. Ages are not saved. No ranking boost for a sibling discount.",
+  },
+  {
+    key: "FEATURE_VACANCY_FRESHNESS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Hide an open-spot badge after the centre's freshness window. Off. No reminder email is sent.",
+  },
+  {
+    key: "FEATURE_FEE_DISPLAY_GATE",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Hide fees that the centre or an official source has not confirmed. Off. Scraped fees stay hidden.",
+  },
+  {
+    key: "FEATURE_CENTRE_LEAD_TRACKER",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Family steps on the daycare desk, from inquiry to enrolled. Off. Uses messages, tours, waitlists, and enrolments the family already shared. No mail, text, or push.",
+  },
+  {
+    key: "FEATURE_CENTRE_API",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "A centre key for its own families. Off. Keys are hashed, child health stays out, and webhooks stay off until the centre turns them on.",
   },
 ];
 

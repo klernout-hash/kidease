@@ -401,6 +401,36 @@ export function familyVaultEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_FAMILY_VAULT", env);
 }
 
+/** Centre email to one or more families. Off. No message is sent. */
+export function familyBulkMailEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_FAMILY_BULK_MAIL", env);
+}
+
+/** CSV download for centre lists. Off. */
+export function listCsvEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_LIST_CSV", env);
+}
+
+/** Public licence-type filter. Off. Unknown is never guessed. */
+export function licenceTypeFilterEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_LICENCE_TYPE_FILTER", env);
+}
+
+/** Search for more than one child. Off. Ages are not saved. */
+export function multiChildSearchEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_MULTI_CHILD_SEARCH", env);
+}
+
+/** Hide an open-spot badge after the freshness window. Off. */
+export function vacancyFreshnessEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_VACANCY_FRESHNESS", env);
+}
+
+/** Hide fees that are not confirmed. Off. */
+export function feeDisplayGateEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_FEE_DISPLAY_GATE", env);
+}
+
 /** Daycare inbox also lists requests with no thread. Default off. */
 export function unifiedInboxEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_UNIFIED_INBOX", env);
@@ -476,6 +506,16 @@ export function canSeeProviderSubscriptions(
   if (r === "admin") return true;
   if (r === "provider" || ownsCentre) return providerSubscriptionsEnabled(env);
   return false;
+}
+
+/** Family steps on the daycare desk. Off. Does not send mail, text, or push. */
+export function centreLeadTrackerEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_CENTRE_LEAD_TRACKER", env);
+}
+
+/** Per-centre API. Off. Also needs the lead tracker for the desk that creates keys. */
+export function centreApiEnabled(env?: EnvMap): boolean {
+  return centreLeadTrackerEnabled(env) && evaluateFeatureFlag("FEATURE_CENTRE_API", env);
 }
 
 /** Unified alerts. Off. Saving choices does not send. */

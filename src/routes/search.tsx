@@ -13,6 +13,10 @@ import { ExploreCategoryChips } from "@/components/explore-category-chips";
 import { ExploreFilterBar } from "@/components/explore-filter-bar";
 import { ExploreFilterChips } from "@/components/explore-filter-chips";
 import { PioneerFilterRail } from "@/components/pioneer-filter-rail";
+import { InclusiveCareFilters } from "@/components/inclusive-care-filters";
+import { LicenceTypeFilters } from "@/components/licence-type-filters";
+import { matchesDeclaredCare, type CareDetailKey } from "@/lib/inclusive-search";
+import { licenceMatches, type LicenceBucket } from "@/lib/phase1-search";
 import { CommuteDetourBar } from "@/components/commute-detour-bar";
 import { SearchCardAgesProvider } from "@/components/search-card-context";
 import { DaycareCard } from "@/components/daycare-card";
@@ -455,6 +459,8 @@ export function SearchScreen({
   const [meals, setMeals] = useState(false);
   const [outdoor, setOutdoor] = useState(false);
   const [inclusive, setInclusive] = useState(false);
+  const [careKeys, setCareKeys] = useState<CareDetailKey[]>([]);
+  const [licence, setLicence] = useState<LicenceBucket | null>(null);
   const [extended, setExtended] = useState(false);
   const [infantOnly, setInfantOnly] = useState(false);
   const [catchmentOnly, setCatchmentOnly] = useState(false);
@@ -1314,6 +1320,8 @@ export function SearchScreen({
         (r) => hasAmenity(r.amenities, "outdoor") || hasAmenity(r.amenities, "yard"),
       );
     if (inclusive || pioneer.inclusive) rows = rows.filter((r) => hasAmenity(r.amenities, "inclusive"));
+    if (careKeys.length) rows = rows.filter((r) => matchesDeclaredCare(r.amenities, careKeys));
+    if (licence) rows = rows.filter((r) => licenceMatches((r as { licenceType?: string | null }).licenceType, licence));
     if (extended) rows = rows.filter((r) => staysLate(r.hours, r.amenities) || opensEarly(r.hours));
     if (infantOnly) rows = rows.filter((r) => matchesRailAge(r, "infant"));
     if (catchmentOnly) rows = rows.filter((r) => r.inCatchment);
@@ -1340,6 +1348,8 @@ export function SearchScreen({
     meals,
     outdoor,
     inclusive,
+    careKeys,
+    licence,
     extended,
     infantOnly,
     catchmentOnly,
@@ -1700,6 +1710,7 @@ export function SearchScreen({
   );
 
   const filterChips = (
+    <div>
     <div className="flex flex-wrap gap-2">
       {chip(avail === "open", t("filterOpen"), () =>
         setAvail((v) => (v === "open" ? "any" : "open")),
@@ -1733,6 +1744,9 @@ export function SearchScreen({
       {chip(infantOnly, standardAgeLabel("infant", locale), () => setInfantOnly((v) => !v))}
       {chip(catchmentOnly, t("filterCatchment"), () => setCatchmentOnly((v) => !v))}
       {chip(favoritesOnly, t("filterFavorites"), () => setFavoritesOnly((v) => !v))}
+    </div>
+    <InclusiveCareFilters locale={locale === "fr" ? "fr" : "en"} selected={careKeys} onChange={setCareKeys} />
+    <LicenceTypeFilters locale={locale === "fr" ? "fr" : "en"} selected={licence} onChange={setLicence} />
     </div>
   );
 

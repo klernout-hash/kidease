@@ -10,6 +10,7 @@ import {
 } from "@/lib/notification-preferences";
 import { loadUnifiedAlertDesk, saveUnifiedAlertDesk } from "@/lib/server/unified-alert-api";
 import type { UnifiedAlertType, UnifiedAudience } from "@/lib/unified-alerts";
+import { channelStateLabel, providerChannelState } from "@/lib/channel-state";
 import { useCopy } from "@/lib/use-copy";
 
 type Group = { id: string; title: string; rows: UnifiedAlertType[] };
@@ -45,6 +46,36 @@ function ChannelSwitch({
 
 function choiceFor(channels: Record<string, ChannelChoice> | undefined, id: string): ChannelChoice {
   return channels?.[id] || { email: null, push: null };
+}
+
+function ChannelStatus({
+  locale,
+  email,
+  push,
+}: {
+  locale: "en" | "fr";
+  email: "off" | "held" | "on";
+  push: "off" | "held" | "on";
+}) {
+  const rows = [
+    { id: "email", name: locale === "fr" ? "Courriel" : "Email", value: email },
+    { id: "push", name: locale === "fr" ? "Alerte du téléphone" : "Phone alert", value: push },
+  ] as const;
+  return (
+    <div className="mt-3">
+      <dl className="space-y-2 text-sm">
+        {rows.map((row) => (
+          <div key={row.id} className="flex min-h-11 items-center justify-between gap-3" data-channel={row.id} data-state={row.value}>
+            <dt className="font-medium">{row.name}</dt>
+            <dd>{channelStateLabel(row.value, locale)}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-2 text-sm leading-6 text-muted" data-ke="channel-state-unsent">
+        {locale === "fr" ? "Rien n'est envoyé depuis cette page." : "Nothing is sent from this page."}
+      </p>
+    </div>
+  );
 }
 
 export function PreferenceBoard({
@@ -148,6 +179,8 @@ export function NotificationPreferences({
   const [inApp, setInApp] = useState(true);
   const [emailCanSend, setEmailCanSend] = useState(preview && previewSending);
   const [pushCanSend, setPushCanSend] = useState(false);
+  const [alertsOn, setAlertsOn] = useState(preview && previewSending);
+  const [alertsLive, setAlertsLive] = useState(preview && previewSending);
   const [sending, setSending] = useState(preview && previewSending);
   const [enabledFlags, setEnabledFlags] = useState<Record<string, boolean>>({});
   const [open, setOpen] = useState<UnifiedAlertType | null>(null);
@@ -173,6 +206,8 @@ export function NotificationPreferences({
         setEnabledFlags(desk.prefs);
         setEmailCanSend(desk.live && user.emailVerified === true);
         setPushCanSend(desk.pushArmed === true);
+        setAlertsOn(desk.enabled === true);
+        setAlertsLive(desk.live === true);
         setSending(desk.enabled && desk.live);
       })
       .catch(() => {
@@ -273,8 +308,9 @@ export function NotificationPreferences({
           ) : (user || preview) && !error && !isPending ? (
         <p className="mt-6 text-sm text-muted">{copy.empty}</p>
       ) : null}
-      <section className="mt-8 border-t border-border pt-6">
+      <section className="mt-8 border-t border-border pt-6" data-ke="provider-channel-state">
         <h2 className="text-[1.35rem] font-semibold">{copy.account}</h2>
+        <ChannelStatus locale={loc} {...providerChannelState({ alertsOn, alertsLive, pushArmed: pushCanSend })} />
         <p className="mt-2 max-w-prose text-sm leading-6 text-muted">{copy.marketing}</p>
       </section>
       <dialog

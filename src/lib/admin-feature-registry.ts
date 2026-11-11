@@ -100,6 +100,14 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_MOBILE_SEARCH_V2: "parent",
   FEATURE_UI_AIRBNB_V1: "shared",
   FEATURE_FR_AUTH_QC: "shared",
+  FEATURE_FAMILY_BULK_MAIL: "daycare",
+  FEATURE_LIST_CSV: "daycare",
+  FEATURE_LICENCE_TYPE_FILTER: "parent",
+  FEATURE_MULTI_CHILD_SEARCH: "parent",
+  FEATURE_VACANCY_FRESHNESS: "daycare",
+  FEATURE_FEE_DISPLAY_GATE: "shared",
+  FEATURE_CENTRE_LEAD_TRACKER: "daycare",
+  FEATURE_CENTRE_API: "daycare",
 };
 
 const SWITCH_CATEGORY: Record<string, FeatureCategory> = {
@@ -128,6 +136,7 @@ export const FLAG_DEPENDENCIES: Record<string, readonly string[]> = {
   FEATURE_FIRE_KIOSK: ["FEATURE_CHILD_CHECKIN"],
   FEATURE_CARE_REMINDERS: ["FEATURE_PUSH"],
   FEATURE_OPEN_SPOTS_CHECKIN_SMS: ["FEATURE_SMS"],
+  FEATURE_CENTRE_API: ["FEATURE_CENTRE_LEAD_TRACKER"],
   FEATURE_AMAZON_ADM: ["FEATURE_PUSH"],
 };
 

@@ -293,7 +293,7 @@ export const createTourRequest = createServerFn({ method: "POST" })
 
 export const listTourRequests = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .validator((input?: { desk?: "parent" | "centre" }) => input ?? {})
+  .validator((input?: { desk?: "parent" | "centre"; centreId?: string }) => input ?? {})
   .handler(async ({ context, data }) => {
     await import("@/lib/server/tour-holds")
       .then((mod) => mod.expireDueTourHolds({ notify: true }))
@@ -301,6 +301,18 @@ export const listTourRequests = createServerFn({ method: "GET" })
     const sql = await getSql();
     const asParent = data.desk !== "centre";
     const asCentre = data.desk !== "parent";
+    let lockedCentreId = "";
+    if (data.desk === "centre") {
+      const { tourCalendarEnabled } = await import("@/lib/features");
+      if (tourCalendarEnabled()) {
+        const { listAccessibleDaycareIds } = await import("@/lib/server/centre-access");
+        const { resolveTourCentre } = await import("@/lib/tour-phase0");
+        const memberships = await listAccessibleDaycareIds(sql, context.userId);
+        const decision = resolveTourCentre({ selectedId: data.centreId, memberships });
+        if (!decision.ok) throw new Error("Not authorized");
+        lockedCentreId = decision.centreId;
+      }
+    }
     const { familyScopeFor } = await import("@/lib/server/coparent");
     const homeId = (await familyScopeFor(context.userId)).dataUserId;
     const rows = await sql<TourRow>`
@@ -337,6 +349,7 @@ export const listTourRequests = createServerFn({ method: "GET" })
     const visibleCentre = await omitHiddenParents(sql, centreRows);
     const visibleIds = new Set(visibleCentre.map((row) => row.id));
     return rows
+      .filter((row) => !lockedCentreId || row.daycare_id === lockedCentreId)
       .filter((row) => !row.user_id || row.user_id === homeId || visibleIds.has(row.id))
       .map(mapTour);
   });

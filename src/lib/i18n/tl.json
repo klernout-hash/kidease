@@ -2796,6 +2796,7 @@
   "passkeyFailed": "Hindi umandar ang Face ID o fingerprint na pag-sign in. Gamitin ang email at password.",
   "passkeyNotReady": "Hindi pa ito handa. Pindutin muli ang button.",
   "oauthSignInFailed": "Hindi natapos ang pag-sign in ({reason}). Subukan muli.",
+  "signInScriptMissed": "Hindi na-load ang pag-sign in. I-refresh ang pahina at subukan muli.",
   "oauthSignInCancelled": "Kinansela ang pag-sign in.",
   "passkeyUnsupported": "Hindi magamit ng browser na ito ang Face ID o fingerprint. Gamitin ang email at password.",
   "passkeyRateLimited": "Masyadong maraming subok. Maghintay ng ilang minuto, tapos subukan ulit.",
@@ -3488,5 +3489,7 @@
   "inboxAssignMe": "Assign to me",
   "inboxOlderSearch": "{count} older messages",
   "inboxAssignedYou": "Assigned to you",
-  "notificationsBellHint": "Mga alerto, hindi unread na mensahe"
+  "notificationsBellHint": "Mga alerto, hindi unread na mensahe",
+  "leadTrackerNav": "Mga pamilya",
+  "leadTrackerNavHint": "Kung saang hakbang ang bawat pamilya"
 }

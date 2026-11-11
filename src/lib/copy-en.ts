@@ -3394,6 +3394,7 @@ export const en = {
     passkeyFailed: "Face ID / fingerprint sign-in did not work. Use your email and password.",
     passkeyNotReady: "Still getting this ready. Tap the button again.",
     oauthSignInFailed: "Sign-in did not finish ({reason}). Try again.",
+    signInScriptMissed: "Sign-in did not load. Refresh the page and try again.",
     oauthSignInCancelled: "Sign-in was cancelled.",
     passkeyUnsupported: "This browser cannot use Face ID or a fingerprint. Use your email and password.",
     passkeyRateLimited: "Too many tries. Wait a few minutes, then try again.",
@@ -3728,6 +3729,8 @@ export const en = {
     msv2TopRated: "Top rated",
     msv2Meals: "Meals included",
     msv2SubsidyChip: "Subsidy accepted",
+    leadTrackerNav: "Families",
+    leadTrackerNavHint: "Which step each family is on",
 } as const;
 
 export type CopyKey = keyof typeof en;

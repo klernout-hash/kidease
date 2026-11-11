@@ -37,7 +37,37 @@ export default async function requestGuardMiddleware(
   if (decision.action === "redirect") {
     return new Response(null, {
       status: decision.status,
-      headers: { location: decision.location },
+      headers: {
+        location: decision.location,
+        ...(decision.status === 303 ? { "cache-control": "no-store" } : {}),
+      },
+    });
+  }
+
+  if (decision.action === "asset_miss") {
+    // Static files are served before this middleware. If one still arrives as
+    // JavaScript or CSS, keep it. An HTML body is the app shell standing in
+    // for a missing chunk, and browsers will cache that under the script URL.
+    let result: unknown = null;
+    try {
+      result = await next();
+    } catch {
+      result = null;
+    }
+    if (result instanceof Response) {
+      const type = (result.headers.get("content-type") || "").toLowerCase();
+      if (result.ok && (type.includes("javascript") || type.includes("text/css"))) return result;
+    }
+    return new Response("Not found", {
+      status: 404,
+      headers: {
+        "content-type": "text/plain; charset=utf-8",
+        "cache-control": "private, no-store",
+        "cdn-cache-control": "no-store",
+        "cloudflare-cdn-cache-control": "no-store",
+        "x-content-type-options": "nosniff",
+        "x-robots-tag": "noindex, nofollow",
+      },
     });
   }
 

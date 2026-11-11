@@ -395,3 +395,28 @@ test("a signed-in request can open a hidden listing document; guests get a style
   assert.match(html, /KidEase/);
   assert.doesNotMatch(html, /^Not Found$/);
 });
+
+test("a missing hashed asset does not fall through to the HTML shell", () => {
+  assert.deepEqual(
+    decideRequest({ host: "www.kidease.ca", pathname: "/assets/lazyRouteComponent-CDTijG_g.js" }),
+    { action: "asset_miss", status: 404 },
+  );
+  assert.deepEqual(
+    decideRequest({ host: "www.kidease.ca", pathname: "/assets/styles-BB1FE53t.css", method: "GET" }),
+    { action: "asset_miss", status: 404 },
+  );
+  assert.deepEqual(decideRequest({ host: "www.kidease.ca", pathname: "/login" }), { action: "next" });
+});
+
+test("a login form post without JavaScript explains the miss", () => {
+  for (const path of ["/login", "/fr/login", "/gov/login", "/fr/gov/login"]) {
+    assert.deepEqual(decideRequest({ host: "www.kidease.ca", pathname: path, method: "POST" }), {
+      action: "redirect",
+      status: 303,
+      location: `${path}?error=script`,
+    });
+  }
+  assert.deepEqual(decideRequest({ host: "www.kidease.ca", pathname: "/api/auth/sign-in/email", method: "POST" }), {
+    action: "next",
+  });
+});

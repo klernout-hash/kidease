@@ -2796,6 +2796,7 @@
   "passkeyFailed": "Die Anmeldung mit Face ID oder Fingerabdruck hat nicht geklappt. Nutze E-Mail und Passwort.",
   "passkeyNotReady": "Das ist noch nicht bereit. Tippe noch einmal auf die Taste.",
   "oauthSignInFailed": "Die Anmeldung ist nicht fertig ({reason}). Versuch es noch einmal.",
+  "signInScriptMissed": "Die Anmeldung hat nicht geladen. Aktualisiere die Seite und versuch es noch einmal.",
   "oauthSignInCancelled": "Anmeldung abgebrochen.",
   "passkeyUnsupported": "Dieser Browser kann Face ID oder einen Fingerabdruck nicht nutzen. Nutze E-Mail und Passwort.",
   "passkeyRateLimited": "Zu viele Versuche. Warte ein paar Minuten und versuche es erneut.",
@@ -3488,5 +3489,7 @@
   "inboxAssignMe": "Assign to me",
   "inboxOlderSearch": "{count} older messages",
   "inboxAssignedYou": "Assigned to you",
-  "notificationsBellHint": "Hinweise, keine ungelesenen Nachrichten"
+  "notificationsBellHint": "Hinweise, keine ungelesenen Nachrichten",
+  "leadTrackerNav": "Familien",
+  "leadTrackerNavHint": "Welcher Schritt für jede Familie"
 }

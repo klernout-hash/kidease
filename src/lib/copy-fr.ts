@@ -3408,6 +3408,7 @@ export const fr = {
     passkeyFailed: "La connexion Face ID / empreinte n’a pas fonctionné. Utilisez votre courriel et votre mot de passe.",
     passkeyNotReady: "Ce n’est pas encore prêt. Touchez le bouton encore une fois.",
     oauthSignInFailed: "La connexion n’a pas abouti ({reason}). Réessayez.",
+    signInScriptMissed: "La connexion ne s’est pas chargée. Actualisez la page, puis réessayez.",
     oauthSignInCancelled: "Connexion annulée.",
     passkeyUnsupported: "Ce navigateur ne peut pas utiliser Face ID ni une empreinte. Utilisez votre courriel et votre mot de passe.",
     passkeyRateLimited: "Trop d’essais. Attendez quelques minutes, puis réessayez.",
@@ -3743,4 +3744,6 @@ export const fr = {
     msv2TopRated: "Mieux noté",
     msv2Meals: "Repas inclus",
     msv2SubsidyChip: "Subvention acceptée",
+    leadTrackerNav: "Familles",
+    leadTrackerNavHint: "L’étape de chaque famille",
 } as const satisfies Record<CopyKey, string>;
