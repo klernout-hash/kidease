@@ -50,7 +50,13 @@ export function GovLogin({ locale, invite }: { locale: GovLocale; invite: string
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(() =>
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("error") === "script"
+      ? locale === "fr"
+        ? "La connexion ne s’est pas chargée. Actualisez la page, puis réessayez."
+        : "Sign-in did not load. Refresh the page and try again."
+      : "",
+  );
   const [busy, setBusy] = useState(false);
   const { onToken, takeChallenge, resetSignal, onRequired } = useTurnstileToken();
   const home = govPath(locale);
