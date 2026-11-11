@@ -62,9 +62,20 @@
     return typeof url === "string" && /posthog/i.test(url);
   }
 
-  function recover() {
-    if (flagged()) return;
-    flag();
+  function hashedAssetUrl(value) {
+    if (typeof value !== "string" || isBlockedAnalytics(value)) return "";
+    var match = value.match(/https?:\/\/[^)\s"']+\/assets\/[^)\s"'?]+\.(?:js|css)/i);
+    if (match && !isBlockedAnalytics(match[0])) return match[0];
+    if (value.indexOf("/assets/") === -1 || !/\.(?:js|css)(?:$|\?)/i.test(value)) return "";
+    try {
+      var url = new URL(value, location.origin).href;
+      return isBlockedAnalytics(url) ? "" : url;
+    } catch {
+      return "";
+    }
+  }
+
+  function reloadFresh() {
     var reload = function () {
       location.reload();
     };
@@ -94,20 +105,54 @@
     Promise.all(jobs).then(reload).catch(reload);
   }
 
+  function recover() {
+    if (flagged()) return;
+    flag();
+    reloadFresh();
+  }
+
+  // A missing chunk used to be saved as HTML for a day. Ask the network again
+  // before reloading so a file that exists now replaces that cached miss.
+  function heal(url) {
+    if (flagged()) return;
+    flag();
+    var target = hashedAssetUrl(url);
+    if (!target || typeof fetch !== "function") {
+      reloadFresh();
+      return;
+    }
+    fetch(target, { cache: "reload", credentials: "same-origin" })
+      .then(function (res) {
+        var type = (res.headers.get("content-type") || "").toLowerCase();
+        if (res.ok && (type.indexOf("javascript") !== -1 || type.indexOf("text/css") !== -1)) {
+          location.reload();
+          return;
+        }
+        reloadFresh();
+      })
+      .catch(function () {
+        reloadFresh();
+      });
+  }
+
   window.addEventListener(
     "error",
     function (event) {
       var el = event.target;
       if (!el || el === window) {
         var message = event.message ? String(event.message) : "";
-        if (isBlockedAnalytics(message) || !isChunkMiss(message)) return;
+        var filename = event.filename ? String(event.filename) : "";
+        if (isBlockedAnalytics(message) || isBlockedAnalytics(filename) || !isChunkMiss(message)) return;
         markChunk();
-        recover();
+        heal(filename || message);
         return;
       }
       var url = el.href || el.src || "";
       if (!isHashedAsset(url) || isBlockedAnalytics(url)) return;
-      if (el.tagName === "LINK" || el.tagName === "SCRIPT") recover();
+      if (el.tagName === "LINK" || el.tagName === "SCRIPT") {
+        markChunk();
+        heal(url);
+      }
     },
     true,
   );
@@ -118,7 +163,7 @@
     if (isBlockedAnalytics(message) || !isChunkMiss(message)) return;
     if (event.preventDefault) event.preventDefault();
     markChunk();
-    recover();
+    heal(message);
   });
 
   window.addEventListener("vite:preloadError", function (event) {
@@ -131,7 +176,7 @@
     }
     if (event.preventDefault) event.preventDefault();
     markChunk();
-    recover();
+    heal(url || message);
   });
 
   window.addEventListener("load", function () {
