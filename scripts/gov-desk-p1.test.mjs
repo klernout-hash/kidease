@@ -4,6 +4,7 @@ import { test } from "node:test";
 import { govCopy } from "../src/lib/gov/copy.ts";
 
 const dash = readFileSync(new URL("../src/components/gov/gov-dashboard.tsx", import.meta.url), "utf8");
+const frame = readFileSync(new URL("../src/components/gov/gov-frame.tsx", import.meta.url), "utf8");
 const calendar = readFileSync(new URL("../src/components/compliance/calendar-page.tsx", import.meta.url), "utf8");
 const demand = readFileSync(new URL("../src/components/compliance/demand-page.tsx", import.meta.url), "utf8");
 const jobs = readFileSync(new URL("../src/components/ece-job-desk.tsx", import.meta.url), "utf8");
@@ -14,7 +15,7 @@ test("the government desk keeps the three ledgers and the source list apart from
   const fr = govCopy("fr");
   assert.match(dash, /data-ke="gov-ledgers"/);
   assert.match(dash, /data-ke="gov-sources"/);
-  assert.match(dash, /data-ke="gov-nav"/);
+  assert.match(frame, /data-ke="gov-menu"/);
   assert.match(dash, /data-ke="gov-trend-bars"/);
   assert.match(en.sourcesNote, /not a live feed/);
   assert.doesNotMatch(dash, /Territories", "71", "46", "0"/);

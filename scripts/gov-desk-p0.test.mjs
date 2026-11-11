@@ -5,10 +5,12 @@ import { govCopy } from "../src/lib/gov/copy.ts";
 
 const dash = readFileSync(new URL("../src/components/gov/gov-dashboard.tsx", import.meta.url), "utf8");
 
-test("the government overview keeps six labelled decision cards", () => {
-  for (const id of ["gov-card-providers", "gov-card-capacity", "gov-card-vacancies", "gov-card-renewals", "gov-card-findings", "gov-card-jobs"]) {
+test("the government overview keeps the public count cards and does not invent the rest", () => {
+  for (const id of ["gov-card-providers", "gov-card-capacity", "gov-card-vacancies"]) {
     assert.match(dash, new RegExp(id));
   }
+  assert.match(dash, /data-ke="gov-not-tracked"/);
+  assert.doesNotMatch(dash, /gov-card-renewals|gov-card-findings|gov-card-jobs/);
   assert.match(dash, /data-ke="gov-needs-attention"/);
   assert.match(dash, /data-ke="gov-survey"/);
   assert.match(dash, /"F"/);
