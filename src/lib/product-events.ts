@@ -14,6 +14,20 @@ export const PRODUCT_EVENTS = [
   "enrolment_requested",
   "invoice_paid",
   "claim_started",
+  "inclusive_filter_applied",
+  "tour_confirmation_sent",
+  "tour_confirmation_failed",
+  "centre_context_switched",
+  "tour_followup_sent",
+  "tour_followup_skipped",
+  "document_request_created",
+  "document_request_fulfilled",
+  "agreement_sent",
+  "agreement_completed",
+  "form_share_email_sent",
+  "family_email_sent",
+  "email_bounced",
+  "csv_exported",
 ] as const;
 
 export type ProductEventName = (typeof PRODUCT_EVENTS)[number];
@@ -28,6 +42,18 @@ const ALLOWED_KEYS = new Set([
   "result",
   "count_bucket",
   "surface",
+  "key",
+  "channel",
+  "locale",
+  "reason",
+  "list",
+  "doc_type",
+  "days_bucket",
+  "hours_bucket",
+  "signer_count",
+  "recipients_bucket",
+  "batched",
+  "type",
 ]);
 
 const PII = /email|e-mail|phone|name|child|address|postal|street|slug|token|secret|password|birth/i;
