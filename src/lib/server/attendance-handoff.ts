@@ -498,6 +498,7 @@ export async function readParentDay(sql: Sql, userId: string, now: Date) {
       daycareName: kid.daycare_name,
       status: attendanceStatus(last),
       demo: isDemoAttendance({ daycareId: kid.daycare_id, isTest: kid.is_test, daycareName: kid.daycare_name }),
+      timeZone: kid.timezone || "America/Winnipeg",
       events: events.map((event) => ({
         id: event.id,
         action: event.action,
@@ -505,6 +506,7 @@ export async function readParentDay(sql: Sql, userId: string, now: Date) {
         pickupName: event.pickupName,
         reason: event.reason,
         correction: Boolean(event.correctionOf),
+        timeZone: kid.timezone || "America/Winnipeg",
       })),
     });
   }
