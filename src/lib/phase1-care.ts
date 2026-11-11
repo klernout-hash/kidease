@@ -38,6 +38,37 @@ export function pickupAllowed(input: { contactId: string; activeIds: readonly st
   return { ok: true, reason: "authorized" };
 }
 
+/** A name or mark the centre typed. Empty is not a signature. */
+export function pickupSignatureOk(mark: string): boolean {
+  const value = mark.trim();
+  return value.length >= 2 && value.length <= 80;
+}
+
+export const TOILET_EVENTS = ["dry", "wet", "bowel", "attempt"] as const;
+export type ToiletEvent = (typeof TOILET_EVENTS)[number];
+
+export const TOILET_LABELS: Record<ToiletEvent, { en: string; fr: string }> = {
+  dry: { en: "Dry", fr: "Sec" },
+  wet: { en: "Wet", fr: "Mouillé" },
+  bowel: { en: "Bowel movement", fr: "Selle" },
+  attempt: { en: "Tried the toilet", fr: "A essayé" },
+};
+
+export function canLogToileting(role: string | null | undefined): boolean {
+  return role === "owner" || role === "manager" || role === "staff";
+}
+
+/** Staff who care for the room may see the log. A parent sees only their own child. */
+export function toiletingVisible(input: {
+  role: string | null | undefined;
+  childId: string;
+  viewerChildIds: readonly string[];
+}): boolean {
+  if (canLogToileting(input.role)) return input.viewerChildIds.includes(input.childId);
+  if (input.role === "parent") return input.viewerChildIds.includes(input.childId);
+  return false;
+}
+
 export function pickupOverrideNotice(input: {
   flagOn: boolean;
   enabledAt: string | null;

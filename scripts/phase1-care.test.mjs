@@ -3,14 +3,19 @@ import { test } from "node:test";
 import { FLAG_DEFAULTS } from "../src/lib/flags.ts";
 import {
   allergenConflict,
+  arrivalNoteVisible,
   audienceCanSee,
   canSeeAllergyBadge,
   emergencyRoll,
   guardianCanEditPickup,
   incidentVisible,
   mediaAllowed,
+  canLogToileting,
   pickupAllowed,
   pickupOverrideNotice,
+  pickupSignatureOk,
+  toiletingVisible,
+  TOILET_LABELS,
   portfolioVisible,
   redactOtherChildren,
   restrictedListVisible,
@@ -43,6 +48,22 @@ test("a restricted pickup cannot be chosen and an override is only held", () => 
   assert.equal(guardianCanEditPickup(["g1"], "g2"), false);
   assert.equal(restrictedListVisible("staff"), false);
   assert.equal(restrictedListVisible("director"), true);
+  assert.equal(pickupSignatureOk("A"), false);
+  assert.equal(pickupSignatureOk("  Sam Lee  "), true);
+});
+
+test("a toileting note stays with that child's room and draws no conclusion", () => {
+  assert.equal(FLAG_DEFAULTS.FEATURE_TOILETING_LOG, false);
+  assert.equal(FLAG_DEFAULTS.FEATURE_ARRIVAL_NOTES, false);
+  assert.equal(canLogToileting("parent"), false);
+  assert.equal(canLogToileting("billing"), false);
+  assert.equal(canLogToileting("staff"), true);
+  assert.equal(toiletingVisible({ role: "parent", childId: "c1", viewerChildIds: ["c2"] }), false);
+  assert.equal(toiletingVisible({ role: "parent", childId: "c1", viewerChildIds: ["c1"] }), true);
+  assert.equal(toiletingVisible({ role: "staff", childId: "c1", viewerChildIds: ["c2"] }), false);
+  assert.equal(toiletingVisible({ role: "billing", childId: "c1", viewerChildIds: ["c1"] }), false);
+  assert.equal(TOILET_LABELS.attempt.fr, "A essayé");
+  assert.equal(arrivalNoteVisible({ childId: "c1", staffRoomChildIds: ["c2"] }), false);
 });
 
 test("an emergency roll keeps later check-ins and does not auto-clear", () => {
