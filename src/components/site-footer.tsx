@@ -9,6 +9,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { HeaderSocial } from "@/components/header-social";
 import { useRoleChrome } from "@/components/role-chrome";
 import type { ChromeRole } from "@/lib/role-access";
+import { AppStoreStatus } from "@/components/app-store-status";
 import { LanguageSelect } from "@/components/language-select";
 import { isStorePurchasePath } from "@/lib/store-purchase-copy";
 import { useInNativeShell } from "@/lib/use-native-shell";
@@ -171,6 +172,7 @@ export function SiteFooter() {
             </p>
           ) : null}
 
+          <AppStoreStatus compact />
           <div className="ke-footer-legal">
             <div className="ke-footer-legal-copy">
               <p>

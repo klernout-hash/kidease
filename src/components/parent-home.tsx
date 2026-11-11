@@ -76,6 +76,79 @@ export function ParentHome({
           onDismiss={card === "upgrade" ? onDismiss : undefined}
         />
       ) : null}
+      <section data-ke="parent-home-saved">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-display text-xl">{t("parentHomeSaved")}</h2>
+          <Link to={parentPath} search={{ tab: "saved" }} className="text-sm font-medium text-primary">
+            {t("saved")}
+          </Link>
+        </div>
+        {saved.length === 0 ? (
+          <p className="mt-2 text-sm text-muted">{t("parentHomeNoneSaved")}</p>
+        ) : (
+          <ul className="mt-2 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
+            {saved.slice(0, 4).map((item) => (
+              <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+                {isSafeSitemapSlug(item.slug) ? (
+                  <Link to="/daycare/$slug" params={{ slug: item.slug }} className="flex min-h-12 min-w-0 flex-1 items-center text-sm font-medium">
+                    {item.name}
+                  </Link>
+                ) : (
+                  <span className="flex min-h-12 min-w-0 flex-1 items-center text-sm font-medium">{item.name}</span>
+                )}
+                {parentActions && isSafeSitemapSlug(item.slug) ? (
+                  <Link
+                    to="/daycare/$slug"
+                    params={{ slug: item.slug }}
+                    hash="join-waitlist"
+                    data-ke="card-join-waitlist"
+                    className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-primary"
+                  >
+                    {joinLabel}
+                  </Link>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+      <section data-ke="parent-home-waiting">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-display text-xl">{t("parentHomeRequests")}</h2>
+          <Link to={parentPath} search={{ tab: "requests" }} className="text-sm font-medium text-primary">
+            {t("parentHomeSeeAll")}
+          </Link>
+        </div>
+        {bookings.length === 0 && leads.length === 0 ? (
+          <p className="mt-2 text-sm text-muted">{t("parentHomeNoRequests")}</p>
+        ) : (
+          <ul className="mt-2 space-y-2">
+            {bookings.slice(0, 3).map((booking) => (
+              <li key={booking.id} className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2 ring-1 ring-border">
+                <span className="min-w-0 truncate text-sm">{booking.daycareName}</span>
+                <StatusBadge status={booking.status} />
+              </li>
+            ))}
+            {leads.slice(0, 3).map((lead) => (
+              <li key={lead.id} className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2 ring-1 ring-border">
+                <span className="min-w-0 truncate text-sm">{lead.daycareName || t("parentHomeRequests")}</span>
+                <span className="text-xs text-muted">{lead.status}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="mt-4">
+          <h3 className="text-sm font-medium text-fg">{t("parentNextTour")}</h3>
+          {nextTour ? (
+            <p className="mt-1 text-sm text-muted">
+              {nextTour.daycareName}
+              {nextTour.status === "pending" ? ` · ${t("parentTourWaiting")}` : ` · ${t("parentTourConfirmed")}`}
+            </p>
+          ) : (
+            <p className="mt-1 text-sm text-muted">{t("parentNoTour")}</p>
+          )}
+        </div>
+      </section>
       <form action="/search" method="get" className="flex gap-2" data-ke="parent-home-search">
         <label className="min-w-0 flex-1">
           <span className="sr-only">{t("parentHomeSearchLabel")}</span>
@@ -99,84 +172,7 @@ export function ParentHome({
           action={t("parentHomeFindAction")}
           actionTo="/search"
         />
-      ) : (
-        <>
-          <section>
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="font-display text-xl">{t("parentHomeSaved")}</h2>
-              <Link to={parentPath} search={{ tab: "saved" }} className="text-sm font-medium text-primary">
-                {t("saved")}
-              </Link>
-            </div>
-            {saved.length === 0 ? (
-              <p className="mt-2 text-sm text-muted">{t("parentHomeNoneSaved")}</p>
-            ) : (
-              <ul className="mt-2 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">
-                {saved.slice(0, 4).map((item) => (
-                  <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
-                    {isSafeSitemapSlug(item.slug) ? (
-                      <Link to="/daycare/$slug" params={{ slug: item.slug }} className="flex min-h-12 min-w-0 flex-1 items-center text-sm font-medium">
-                        {item.name}
-                      </Link>
-                    ) : (
-                      <span className="flex min-h-12 min-w-0 flex-1 items-center text-sm font-medium">{item.name}</span>
-                    )}
-                    {parentActions && isSafeSitemapSlug(item.slug) ? (
-                      <Link
-                        to="/daycare/$slug"
-                        params={{ slug: item.slug }}
-                        hash="join-waitlist"
-                        data-ke="card-join-waitlist"
-                        className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-primary"
-                      >
-                        {joinLabel}
-                      </Link>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          <section>
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="font-display text-xl">{t("parentHomeRequests")}</h2>
-              <Link to={parentPath} search={{ tab: "requests" }} className="text-sm font-medium text-primary">
-                {t("parentHomeSeeAll")}
-              </Link>
-            </div>
-            {bookings.length === 0 && leads.length === 0 ? (
-              <p className="mt-2 text-sm text-muted">{t("parentHomeNoRequests")}</p>
-            ) : (
-              <ul className="mt-2 space-y-2">
-                {bookings.slice(0, 3).map((booking) => (
-                  <li key={booking.id} className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2 ring-1 ring-border">
-                    <span className="min-w-0 truncate text-sm">{booking.daycareName}</span>
-                    <StatusBadge status={booking.status} />
-                  </li>
-                ))}
-                {leads.slice(0, 3).map((lead) => (
-                  <li key={lead.id} className="flex items-center justify-between gap-3 rounded-xl bg-surface px-3 py-2 ring-1 ring-border">
-                    <span className="min-w-0 truncate text-sm">{lead.daycareName || t("parentHomeRequests")}</span>
-                    <span className="text-xs text-muted">{lead.status}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div className="mt-4">
-              <h3 className="text-sm font-medium text-fg">{t("parentNextTour")}</h3>
-              {nextTour ? (
-                <p className="mt-1 text-sm text-muted">
-                  {nextTour.daycareName}
-                  {nextTour.status === "pending" ? ` · ${t("parentTourWaiting")}` : ` · ${t("parentTourConfirmed")}`}
-                </p>
-              ) : (
-                <p className="mt-1 text-sm text-muted">{t("parentNoTour")}</p>
-              )}
-            </div>
-          </section>
-        </>
-      )}
+      ) : null}
     </div>
   );
 }

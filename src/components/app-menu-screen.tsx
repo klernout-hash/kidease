@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Plus, Star } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
+import { AppStoreStatus } from "@/components/app-store-status";
 import { CountUp } from "@/components/count-up";
 import { KidBlocks, KidStars } from "@/components/kid-art";
 import { LanguageSelect } from "@/components/language-select";
@@ -65,6 +66,7 @@ export function AppMenuScreen({
   const ownsCentre = Boolean(session?.ownsCentre);
   const highlight = menuHighlight({ role: chrome.role, ownsCentre, currentDesk });
   const hostCards = highlight === "create";
+  const signedIn = Boolean(user) || chrome.signedIn;
 
   if (section) {
     return (
@@ -106,7 +108,11 @@ export function AppMenuScreen({
         </div>
       ) : null}
       <main className={`ke-menu-main ke-screen-enter ke-gutter mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col pb-6 pt-6${airbnb ? " ke-airbnb-hide-phone" : ""}`} data-ke="app-menu" data-role={chrome.role}>
-      <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">{t("navMenu")}</h1>
+      {airbnb ? (
+        <p className="text-[1.75rem] font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">{t("navMenu")}</p>
+      ) : (
+        <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">{t("navMenu")}</h1>
+      )}
       {hostCards ? <HostCards initialEarnings={earnings} initialInsights={insights} /> : null}
       {highlight === "create" ? (
         <Link
@@ -122,6 +128,15 @@ export function AppMenuScreen({
           </span>
           <span className="min-w-0 flex-1 text-lg font-semibold leading-snug">{t("menuCreateListing")}</span>
           <KidBlocks tone="onPrimary" className="h-12 w-20 shrink-0 text-primary-fg" />
+        </Link>
+      ) : !signedIn ? (
+        <Link
+          to={localePath("/login", locale)}
+          search={{ intent: "in", next: menuDeskPath(pathname) }}
+          data-ke="menu-sign-in"
+          className="ke-press mt-6 flex min-h-24 items-center gap-3 rounded-[1.25rem] bg-primary px-5 py-5 text-lg font-semibold text-primary-fg touch-manipulation"
+        >
+          {t("menuSignInCard")}
         </Link>
       ) : (
         <Link
@@ -142,15 +157,21 @@ export function AppMenuScreen({
         {user && highlight !== "create" ? (
           <MenuRow to={menuDeskPath(pathname)} search={{ screen: "payments" }} label={t("earningsPayments")} icon="terms" marker="payments" />
         ) : null}
-        {highlight === "find" ? (
-          <MenuRow
-            to={parentDeskPath(pathname)}
-            search={{ tab: "children" }}
-            label={t("children")}
-            icon="parent"
-            marker="children"
-          />
+        {signedIn && highlight === "find" ? (
+          <MenuRow to={parentDeskPath(pathname)} search={{ tab: "children" }} label={t("children")} icon="parent" marker="children" />
         ) : null}
+        {user && highlight === "find" ? (
+          <>
+            <MenuRow to={parentDeskPath(pathname)} search={{ tab: "payments" }} label={t("payments")} icon="benefits" marker="payments" />
+            <MenuRow to={parentDeskPath(pathname)} search={{ tab: "documents" }} label={t("familyDocs")} icon="privacy" marker="documents" />
+            <MenuRow to={parentDeskPath(pathname)} search={{ tab: "tours" }} label={t("inboxTourCalendar")} icon="howItWorks" marker="tour-calendar" />
+            <MenuRow to={parentDeskPath(pathname)} search={{ tab: "family" }} label={t("shareFamilyNav")} icon="share" marker="family" />
+            <MenuRow to={parentDeskPath(pathname)} search={{ tab: "centre" }} label={t("parentCentreToolsNav")} icon="daycare" marker="centre-tools" />
+            <MenuRow to={parentDeskPath(pathname)} search={{ tab: "alerts" }} label={t("searchAlerts")} icon="notifications" marker="alerts" />
+            <MenuRow to={parentDeskPath(pathname)} search={{ tab: "stories" }} label={t("parentStoriesNav")} icon="howItWorks" marker="stories" />
+          </>
+        ) : null}
+        {signedIn ? (
         <MenuRow
           to={highlight === "create" || user ? accountDeskPath(pathname) : localePath("/login", locale)}
           search={
@@ -164,7 +185,8 @@ export function AppMenuScreen({
           icon={highlight === "create" || user ? "settings" : "login"}
           marker="account"
         />
-        {user ? (
+        ) : null}
+        {signedIn && user ? (
           <MenuRow
             to={menuDeskPath(pathname)}
             search={{ screen: "notifications" }}
@@ -212,6 +234,7 @@ export function AppMenuScreen({
         </div>
         <ShareKidEaseButton appearance="row" />
       </nav>
+      <AppStoreStatus compact />
 
       {user ? (
         <div className="relative z-[45] mt-auto flex flex-col gap-3 pt-8 pb-[max(3.25rem,env(safe-area-inset-bottom))]" data-ke="menu-account-actions">

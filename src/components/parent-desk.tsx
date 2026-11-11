@@ -9,6 +9,7 @@ import { ParentShortlist } from "@/components/parent-shortlist";
 import { StatusBadge } from "@/components/status-badge";
 import { LedgerHonesty } from "@/components/listing-status-badge";
 import { TaxReceiptStudio } from "@/components/tax-receipt-studio";
+import { ChildHealthLog } from "@/components/child-health-log";
 import { EceJobDesk } from "@/components/ece-job-desk";
 import { ChildCheckHistory } from "@/components/child-checkin-desk";
 import { ChildCareCard } from "@/components/child-care-card";
@@ -789,6 +790,7 @@ export function ParentDesk({
 
       {contentTab === "children" ? (
         <div className="mt-6 space-y-4">
+          <ChildHealthLog />
           <PortfolioGaps children={children} />
           <div>
             <h2 className="font-display text-2xl">{t("childProfileTitle")}</h2>

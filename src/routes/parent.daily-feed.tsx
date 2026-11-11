@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { privateReturnPath } from "@/lib/role-access";
+import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { lazy, Suspense, useEffect } from "react";
 import { stashKioskHash } from "@/components/qr-kiosk-panel";
 import { Shell } from "@/components/shell";
@@ -80,6 +82,7 @@ export function DailyFeedPage() {
 }
 
 export const Route = createFileRoute("/parent/daily-feed")({
+  beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
   head: () => dailyFeedHead("en"),
   component: DailyFeedPage,
 });
