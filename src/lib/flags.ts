@@ -119,6 +119,10 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_FEE_DISPLAY_GATE",
   "FEATURE_CENTRE_LEAD_TRACKER",
   "FEATURE_CENTRE_API",
+  "FEATURE_CUSTODY_ORDERS",
+  "FEATURE_OPERATOR_PACKS",
+  "FEATURE_EXTRA_DAYS",
+  "FEATURE_THIRD_PARTY_PAYER",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -350,6 +354,14 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_CENTRE_LEAD_TRACKER: false,
   /** Per-centre API keys and webhooks. Off. Nothing is exposed until a centre turns a key on. */
   FEATURE_CENTRE_API: false,
+  /** Court order and pickup list. Off. Both parents keep access unless an order says otherwise. */
+  FEATURE_CUSTODY_ORDERS: false,
+  /** Operator report drafts. Off. The centre files them. No portal password is stored. */
+  FEATURE_OPERATOR_PACKS: false,
+  /** Extra days and exchange days. Off. Test mode only. No charge is made. */
+  FEATURE_EXTRA_DAYS: false,
+  /** A third party can be the payer. Off. No tax advice and no waitlist jump. */
+  FEATURE_THIRD_PARTY_PAYER: false,
 };
 
 /**
@@ -1026,6 +1038,10 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     summary:
       "A centre key for its own families. Off. Keys are hashed, child health stays out, and webhooks stay off until the centre turns them on.",
   },
+  { key: "FEATURE_CUSTODY_ORDERS", defaultOn: false, docs: "docs/flags.md", summary: "Court order and pickup list. Off. Both parents keep access unless an order says otherwise." },
+  { key: "FEATURE_OPERATOR_PACKS", defaultOn: false, docs: "docs/flags.md", summary: "Draft packs for the licensee to file. Off. No government password is stored." },
+  { key: "FEATURE_EXTRA_DAYS", defaultOn: false, docs: "docs/flags.md", summary: "Exchange days, then extra days. Off. No charge. A full room is blocked." },
+  { key: "FEATURE_THIRD_PARTY_PAYER", defaultOn: false, docs: "docs/flags.md", summary: "An employer or other payer. Off. No tax advice and no waitlist jump." },
 ];
 
 let cache: RemoteFlagSnapshot | null = null;
