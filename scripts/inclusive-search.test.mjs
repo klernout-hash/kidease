@@ -5,6 +5,7 @@ import { inclusiveFiltersEnabled } from "../src/lib/features.ts";
 import {
   CARE_DECLARATION_NOTE,
   careChipsWhen,
+  careKeysParam,
   matchesDeclaredCare,
   parseCareKeys,
 } from "../src/lib/inclusive-search.ts";
@@ -30,4 +31,10 @@ test("a care filter matches only an exact declared key", () => {
   assert.deepEqual(sanitizeProductProperties("inclusive_filter_applied", { key: "halal", email: "a@b.c" }), {
     key: "halal",
   });
+});
+
+test("diet keys survive as one URL value", () => {
+  assert.equal(careKeysParam(["nut-free", "special-needs", "nope"]), "nut-free,special-needs");
+  assert.equal(careKeysParam([]), undefined);
+  assert.deepEqual(parseCareKeys("nut-free,special-needs"), ["nut-free", "special-needs"]);
 });

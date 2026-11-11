@@ -411,6 +411,11 @@ export function listCsvEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_LIST_CSV", env);
 }
 
+/** Connect an existing parent's child from the daycare desk. Off. Nothing is sent. */
+export function familyInviteEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_FAMILY_INVITE", env);
+}
+
 /** Public licence-type filter. Off. Unknown is never guessed. */
 export function licenceTypeFilterEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_LICENCE_TYPE_FILTER", env);
@@ -429,6 +434,22 @@ export function vacancyFreshnessEnabled(env?: EnvMap): boolean {
 /** Hide fees that are not confirmed. Off. */
 export function feeDisplayGateEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_FEE_DISPLAY_GATE", env);
+}
+
+export function walkInLeadsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_WALKIN_LEADS", env);
+}
+
+export function programWaitlistEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PROGRAM_WAITLIST", env);
+}
+
+export function waitlistOffersEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_WAITLIST_OFFERS", env);
+}
+
+export function formStatusEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_FORM_STATUS", env);
 }
 
 /** Daycare inbox also lists requests with no thread. Default off. */
