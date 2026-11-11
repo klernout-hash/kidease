@@ -185,6 +185,11 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_PAYOUT_STATUS",
   "FEATURE_MUNI_STATS",
   "FEATURE_PUBLIC_API",
+  "FEATURE_PARENT_ABSENCE",
+  "FEATURE_EVENT_RSVP",
+  "FEATURE_IMMUNIZATION_FILE",
+  "FEATURE_CENTRE_MINISITE",
+  "FEATURE_ROOM_FORECAST",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -525,6 +530,16 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_MUNI_STATS: false,
   /** Public API scopes. Off. Child health is never in scope. */
   FEATURE_PUBLIC_API: false,
+  /** Parent-reported absence. Off. In-app only. The spot is not offered again. */
+  FEATURE_PARENT_ABSENCE: false,
+  /** Centre events and RSVP. Off. No email, text, or push. */
+  FEATURE_EVENT_RSVP: false,
+  /** Immunization file status. Off. No health score and no broadcast. */
+  FEATURE_IMMUNIZATION_FILE: false,
+  /** Claimed centre page. Off. KidEase does not certify the centre. */
+  FEATURE_CENTRE_MINISITE: false,
+  /** Room opening estimate. Off. Never shown on public search. */
+  FEATURE_ROOM_FORECAST: false,
 };
 
 /**
@@ -1293,6 +1308,11 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
   { key: "FEATURE_PAYOUT_STATUS", defaultOn: false, docs: "docs/flags.md", summary: "Payout status from a stored row. Off. No payout is sent." },
   { key: "FEATURE_MUNI_STATS", defaultOn: false, docs: "docs/flags.md", summary: "Municipal counts from stored rows. Off." },
   { key: "FEATURE_PUBLIC_API", defaultOn: false, docs: "docs/flags.md", summary: "Public API scopes on the centre API. Off. Child health is never in scope." },
+  { key: "FEATURE_PARENT_ABSENCE", defaultOn: false, docs: "docs/flags.md", summary: "A parent marks a child absent. Off. In-app only. The spot is not offered again." },
+  { key: "FEATURE_EVENT_RSVP", defaultOn: false, docs: "docs/flags.md", summary: "Centre events and RSVP. Off. No email, text, or push." },
+  { key: "FEATURE_IMMUNIZATION_FILE", defaultOn: false, docs: "docs/flags.md", summary: "Immunization file status. Off. No score and no broadcast." },
+  { key: "FEATURE_CENTRE_MINISITE", defaultOn: false, docs: "docs/flags.md", summary: "A page for a claimed centre. Off. KidEase does not certify the centre." },
+  { key: "FEATURE_ROOM_FORECAST", defaultOn: false, docs: "docs/flags.md", summary: "Room opening estimate for the centre only. Off. Not a public vacancy." },
 ];
 
 let cache: RemoteFlagSnapshot | null = null;
