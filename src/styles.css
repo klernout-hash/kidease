@@ -3674,6 +3674,14 @@ html[data-look="clean"] .bg-\[\#1f9d55\]:hover {
     margin: -6rem auto 0;
   }
 }
+/* Signed-out visitors get two extra header buttons (Book a tour, For daycares). On
+   laptop widths a centred row would run under them, so it sits beside the logo instead. */
+@media (min-width: 1280px) and (max-width: 1535.98px) {
+  html[data-look="clean"]:has(header [data-ke="book-a-tour"]) .ke-home > .ke-airbnb-phone-only {
+    margin-right: auto;
+    margin-left: 7rem;
+  }
+}
 /* Home hero. One quiet line of links under the search bar, then straight to the listings. */
 html[data-look="clean"] [data-ke="home-claim-strip"][data-place="hero"] {
   display: none;
