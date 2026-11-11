@@ -66,7 +66,7 @@ export function FormSharePreview() {
       </label>
       <textarea
         id="form-share-note"
-        className="mt-1 min-h-24 w-full rounded-xl bg-bg px-3 py-2 text-sm ring-1 ring-border"
+        className="ke-textarea mt-1 min-h-24 w-full"
         value={note}
         onChange={(event) => setNote(event.target.value.slice(0, 500))}
         onFocus={(event) => event.currentTarget.scrollIntoView({ block: "center" })}
@@ -107,7 +107,7 @@ export function FamilyEmailPreview({ centreName }: { centreName: string }) {
       </label>
       <textarea
         id="family-email-body"
-        className="mt-1 min-h-24 w-full rounded-xl bg-bg px-3 py-2 text-sm ring-1 ring-border"
+        className="ke-textarea mt-1 min-h-24 w-full"
         value={body}
         onChange={(event) => setBody(event.target.value.slice(0, 500))}
         onFocus={(event) => event.currentTarget.scrollIntoView({ block: "center" })}
