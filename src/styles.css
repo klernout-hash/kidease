@@ -3364,6 +3364,11 @@ html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-home"] .sticky 
 }
 
 
+/* Parts that only belong to the clean look stay hidden in today's look. */
+html:not([data-look="clean"]) .ke-clean-only {
+  display: none !important;
+}
+
 /*
   Clean look. Every rule below matches only when public/look-boot.js sets
   data-look="clean" on <html>. Without it, today's look is unchanged.
@@ -3640,8 +3645,9 @@ html[data-look="clean"] .bg-\[\#1f9d55\]:hover {
   html[data-look="clean"] .ke-home > .ke-airbnb-phone-only .ke-airbnb-cat-label {
     max-width: 6.1rem;
     min-height: 0;
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 600;
+    letter-spacing: -0.01em;
     white-space: nowrap;
     -webkit-line-clamp: 1;
   }
@@ -3667,4 +3673,59 @@ html[data-look="clean"] .bg-\[\#1f9d55\]:hover {
     height: 6rem;
     margin: -6rem auto 0;
   }
+}
+/* Home hero. One quiet line of links under the search bar, then straight to the listings. */
+html[data-look="clean"] [data-ke="home-claim-strip"][data-place="hero"] {
+  display: none;
+}
+html[data-look="clean"] .ke-home-web > section:first-child > div {
+  padding-bottom: 1rem;
+}
+html[data-look="clean"] .ke-home-web > div:has(> [data-ke="home-trust-line"]) {
+  padding-top: 0.75rem;
+}
+html[data-look="clean"] [data-ke="home-trust-line"] {
+  max-width: none;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+/* Home rails. Each row keeps its own title. The section title stays for screen readers,
+   and its note moves under the rows. */
+html[data-look="clean"] .ke-home-web #featured {
+  display: flex;
+  flex-direction: column;
+  padding-top: 0.25rem;
+}
+html[data-look="clean"] .ke-home-web #featured > h2 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+html[data-look="clean"] .ke-home-web #featured > p {
+  order: 3;
+  margin-top: 1rem;
+  font-size: 12.5px;
+}
+/* Search bar. The Where part shows the place and a small distance. "Nearby" is the first row
+   of the Where list, so the target button is not repeated in the bar. */
+html[data-look="clean"] [data-ke="where-controls"] > button {
+  display: none;
+}
+html[data-look="clean"] select[data-ke="search-radius"] {
+  width: auto;
+  min-width: 5.25rem !important;
+  height: 2.75rem;
+  padding-left: 0.5rem;
+  border-color: transparent;
+  background-color: transparent;
+  box-shadow: none;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+html[data-look="clean"] select[data-ke="search-radius"]:hover {
+  background-color: var(--color-surface-2);
+  color: var(--color-fg);
 }

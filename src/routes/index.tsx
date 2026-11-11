@@ -556,6 +556,11 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
           </div>
         </section>
 
+        {/* Clean look: the claim line sits here, below the listings, instead of in the hero. */}
+        <div className="ke-clean-only ke-gutter mx-auto w-full pb-8">
+          <HeroClaimStrip lower />
+        </div>
+
         <div className="ke-gutter mx-auto w-full">
           <RecentlyViewedRow items={recentPublic} />
         </div>
