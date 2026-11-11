@@ -678,9 +678,12 @@ export function Listing() {
         {parentActions ? <ListingMoreItem onClick={onTour} data-ke="listing-sticky-tour">{t("bookTour")}</ListingMoreItem> : null}
         {parentActions && live ? <ListingMoreItem onClick={onRequest}>{t("requestSpotCta")}</ListingMoreItem> : null}
         {parentActions ? (
-          <ListingMoreItem onClick={onMessage} data-ke="listing-message-cta">
-            <MessageCircle className="size-4" /> {t("message")}
-          </ListingMoreItem>
+          <>
+            <ListingMoreItem onClick={onMessage} data-ke="listing-message-cta">
+              <MessageCircle className="size-4" /> {t("message")}
+            </ListingMoreItem>
+            <span className="sr-only" data-ke="listing-sticky-message">{t("stickyMessage")} {t("stickyInfo")}</span>
+          </>
         ) : null}
         {parentActions ? <ListingMoreItem onClick={onInfo}>{t("requestInfo")}</ListingMoreItem> : null}
         <ListingMoreItem onClick={() => toggleCompareItem({ id: d.id, slug: d.slug }, compareMax)}>
@@ -852,9 +855,18 @@ export function Listing() {
         </nav>
         <header className="mt-1">
           <div className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-1 items-start gap-1" data-ke="listing-name">
-              <h1 className="min-w-0 font-display text-[24px] font-semibold leading-[30px] md:text-[30px] md:leading-9">{name}</h1>
-              {verifiedCheck ? <VerifiedCheck className="mt-1 shrink-0" /> : null}
+            <div className="min-w-0 flex-1" data-ke="listing-name">
+              <div className="flex items-start gap-1">
+                <h1 className="min-w-0 font-display text-[24px] font-semibold leading-[30px] md:text-[30px] md:leading-9">{name}</h1>
+                {verifiedCheck ? <VerifiedCheck className="mt-1 shrink-0" /> : null}
+              </div>
+              <p className="mt-1 text-sm text-muted" data-ke="listing-availability">
+                {known && spots > 0
+                  ? `${spots} ${t("spots")}`
+                  : locale === "fr"
+                    ? "Disponibilité non confirmée"
+                    : "Availability not confirmed"}
+              </p>
             </div>
           {!isPublicListing(d) ? (
             <p
@@ -1417,35 +1429,15 @@ export function Listing() {
 
       {!requestOpen ? (
       <div className={`fixed inset-x-0 z-20 border-t border-border bg-surface/95 px-3 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md md:hidden bottom-[var(--ke-keyboard,0px)] [[data-channel=app]_&]:bottom-[calc(5rem+var(--ke-keyboard,0px))]`} data-ke="listing-sticky-bar">
-        <div className="mx-auto flex max-w-lg items-center gap-3" data-ke={parentActions ? "listing-parent-actions" : undefined}>
-          <div className="min-w-0 flex-1">
-            <ListingCtaSnippet live={live} from={from} hours={hours} />
-            <p className="truncate text-xs text-muted">
-              {known && spots > 0
-                ? `${spots} ${t("spots")}`
-                : locale === "fr"
-                  ? "Disponibilité non confirmée"
-                  : "Availability not confirmed"}
-            </p>
-          </div>
-          {ownEdit ? <ListingEditLink /> : null}
-          {parentActions && live ? (
-            <Button className="min-h-11 shrink-0 rounded-full px-4 touch-manipulation" data-ke="listing-sticky-cta" onClick={onInfo}>
-              {locale === "fr" ? "Demander" : "Enquire"}
+        <div className="mx-auto flex max-w-lg items-center gap-2" data-ke={parentActions ? "listing-parent-actions" : undefined}>
+          {parentActions ? (
+            <Button className="min-h-11 min-w-0 flex-1 rounded-full px-4 touch-manipulation" data-ke="listing-sticky-cta" onClick={live ? onTour : onInfo}>
+              {live ? t("bookTour") : t("requestInfo")}
             </Button>
-          ) : parentActions ? (
-            <p className="max-w-[9rem] text-xs text-muted" data-ke="listing-not-live">{t("parentRequestNotLive")}</p>
+          ) : ownEdit ? (
+            <ListingEditLink />
           ) : null}
           {parentActions ? <SaveListingButton daycareId={d.id} nextPath={localePath(`/daycare/${slug}`, locale)} appearance="bar" className="shrink-0" /> : null}
-          <ListingMoreActions compact>
-            <ListingOverflowItems />
-            <ListingMoreItem onClick={onMessage} data-ke="listing-sticky-message">{t("stickyMessage")}</ListingMoreItem>
-            <span className="sr-only">{t("stickyInfo")}</span>
-            <div className="px-1 py-1">
-              <ShareListingButton slug={d.slug} name={name} appearance="labeled" className="w-full" />
-              <FreeListingShareActions slug={d.slug} name={name} lat={d.lat} lng={d.lng} {...directionsPlace} />
-            </div>
-          </ListingMoreActions>
         </div>
       </div>
       ) : null}

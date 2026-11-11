@@ -193,6 +193,7 @@ function AccountDeskFrame({ desk, children }: { desk: DeskKey | null; children: 
       <DeskShell
         desk="daycare"
         active="account"
+        headingMode="aside"
         onSelect={(id) => {
           if (id === "account") return;
           void navigate({ to: providerDeskPath(pathname), search: providerNavSearch(id) });
@@ -207,6 +208,7 @@ function AccountDeskFrame({ desk, children }: { desk: DeskKey | null; children: 
       <DeskShell
         desk="parent"
         active="account"
+        headingMode="aside"
         onSelect={(id) => {
           if (id === "account") return;
           void navigate({ to: parentDeskPath(pathname), search: parentNavSearch(id) });
@@ -221,6 +223,7 @@ function AccountDeskFrame({ desk, children }: { desk: DeskKey | null; children: 
       <DeskShell
         desk="admin"
         active="account"
+        headingMode="aside"
         onSelect={(id) => {
           if (id === "account") return;
           openAdminDesk();
@@ -235,6 +238,7 @@ function AccountDeskFrame({ desk, children }: { desk: DeskKey | null; children: 
       <DeskShell
         desk="support"
         active="account"
+        headingMode="aside"
         onSelect={(id) => {
           if (id === "account") return;
           void navigate({ to: supportDeskPath(pathname) });
