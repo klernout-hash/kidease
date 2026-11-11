@@ -190,26 +190,40 @@ export function AirbnbMenu({
     <section className="ke-airbnb-phone-only ke-airbnb-screen" data-ke="airbnb-menu">
       <header className="ke-airbnb-title-row">
         <h1>{copy.menu}</h1>
-        <NotificationBell />
+        {user ? <NotificationBell /> : null}
       </header>
-      <Link
-        to={localePath("/menu", locale)}
-        search={{ screen: "account" }}
-        className="ke-airbnb-profile"
-        data-ke="airbnb-profile"
-      >
-        <span className="ke-airbnb-avatar" aria-hidden="true">
-          {(user?.displayName || "K").slice(0, 1).toUpperCase()}
-        </span>
-        <span>
-          <strong>{name}</strong>
-          <em>{copy.viewProfile}</em>
-        </span>
-      </Link>
-      <button type="button" className="ke-airbnb-row" data-ke="airbnb-row-account" onClick={onAccount}>
-        <span>{copy.account}</span>
-        <ChevronRight aria-hidden="true" />
-      </button>
+      {user ? null : (
+        <Link
+          to={localePath("/login", locale)}
+          search={{ intent: "in", next: localePath("/menu", locale) }}
+          className="ke-press mt-4 flex min-h-24 items-center rounded-[1.25rem] bg-primary px-5 text-lg font-semibold text-primary-fg touch-manipulation"
+          data-ke="menu-sign-in"
+        >
+          {locale === "fr" ? "Se connecter ou créer un compte" : "Sign in or create account"}
+        </Link>
+      )}
+      {user ? (
+        <Link
+          to={localePath("/menu", locale)}
+          search={{ screen: "account" }}
+          className="ke-airbnb-profile"
+          data-ke="airbnb-profile"
+        >
+          <span className="ke-airbnb-avatar" aria-hidden="true">
+            {(user.displayName || "K").slice(0, 1).toUpperCase()}
+          </span>
+          <span>
+            <strong>{name}</strong>
+            <em>{copy.viewProfile}</em>
+          </span>
+        </Link>
+      ) : null}
+      {user ? (
+        <button type="button" className="ke-airbnb-row" data-ke="airbnb-row-account" onClick={onAccount}>
+          <span>{copy.account}</span>
+          <ChevronRight aria-hidden="true" />
+        </button>
+      ) : null}
       <Link to={localePath("/menu", locale)} search={{ section: "help" }} className="ke-airbnb-row">
         <span>{locale === "fr" ? "Aide" : "Get help"}</span>
         <ChevronRight aria-hidden="true" />

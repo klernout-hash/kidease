@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BadgeCheck, Camera, MapPin, ListChecks } from "lucide-react";
+import { AppStoreStatus } from "@/components/app-store-status";
 import { FeelBanner } from "@/components/building-photo";
 import { Shell } from "@/components/shell";
 import { companyAddress, companyOperatorLine } from "@/lib/company";
@@ -54,6 +55,7 @@ export function About() {
           <li>{t("aboutCommit5")}</li>
         </ul>
         <p className="mt-8 font-medium">{t("aboutClose")}</p>
+        <AppStoreStatus />
       </main>
     </Shell>
   );

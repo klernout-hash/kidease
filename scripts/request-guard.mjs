@@ -48,7 +48,13 @@ export function normalizePath(pathname) {
 /** Document paths that must send X-Robots-Tag instead of a robots.txt Disallow line. */
 export function isAdminNoindexPath(pathname) {
   const path = normalizePath(pathname);
-  return path === "/admin" || path.startsWith("/admin/") || path.startsWith("/admin-");
+  return (
+    path === "/admin" ||
+    path.startsWith("/admin/") ||
+    path.startsWith("/admin-") ||
+    path === "/use-the-website" ||
+    path === "/app-admin-unavailable"
+  );
 }
 
 export function isSensitiveDeskPath(pathname) {

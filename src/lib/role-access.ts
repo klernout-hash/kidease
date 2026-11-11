@@ -73,7 +73,11 @@ export function privateArea(pathname: string): PrivateArea {
   ) {
     return "admin";
   }
-  if (path === "/parent" || path.startsWith("/parent/")) return "parent";
+  if (path === "/parent" || path.startsWith("/parent/")) {
+    if (path === "/parent/signup") return "public";
+    return "parent";
+  }
+  if (path === "/dashboard" || path.startsWith("/dashboard/")) return "provider";
   if (path === "/provider" || path.startsWith("/provider/")) return "provider";
   if (
     path === "/account" ||
