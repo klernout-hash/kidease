@@ -1,4 +1,5 @@
 import { createFileRoute, Navigate, Outlet, useRouterState } from "@tanstack/react-router";
+import { Phase5Desk } from "@/components/phase5-desk";
 import { ParentCentreToolsPanel } from "@/components/parent-centre-tools";
 import { useEffect } from "react";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
@@ -117,7 +118,7 @@ export type ParentSearch = ReturnType<typeof parentValidateSearch>;
 export type ParentLoaded = Awaited<ReturnType<typeof parentLoader>>;
 
 export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loaded: ParentLoaded }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, isPending } = useCurrentUserState();
   const locallyOut = useLocallySignedOut();
@@ -286,6 +287,9 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
             <ChildHealthLog />
           </div>
         ) : null}
+        <div className="mx-auto w-full max-w-3xl px-4">
+          <Phase5Desk locale={locale === "fr" ? "fr" : "en"} role="parent" />
+        </div>
         <ParentDesk
           initialTab={initialTab}
           plusReturn={search.plus ?? null}
