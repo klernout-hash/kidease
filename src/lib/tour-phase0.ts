@@ -7,8 +7,6 @@ import { buildTourIcs } from "./tour-ics.ts";
 
 export type TourNotice = "booked" | "rescheduled" | "cancelled";
 
-const QUIET_NOTE = "quiet";
-
 export function tourConfirmKey(tourId: string, event: TourNotice, version: number): string {
   const id = tourId.trim();
   const ver = Number.isFinite(version) ? Math.max(0, Math.floor(version)) : 0;
