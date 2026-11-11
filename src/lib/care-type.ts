@@ -18,6 +18,7 @@ import {
   type FacilityType,
 } from "@/lib/facility-type";
 import type { AgeGroup, Daycare } from "@/lib/types";
+import { canonicalExploreCategory as beforeAfterKey } from "@/lib/category-keys";
 
 export const CARE_TYPES = ["centre", "nursery", "home", "before-after"] as const;
 export type CareType = (typeof CARE_TYPES)[number];
@@ -36,8 +37,14 @@ export function isRailAge(value: string): value is RailAge {
   return (RAIL_AGES as readonly string[]).includes(value);
 }
 
-export function isBeforeAfterProgram(item: Pick<Daycare, "amenities" | "hours">): boolean {
+export function isBeforeAfterProgram(item: {
+  amenities?: string | null;
+  hours?: string | null;
+  name?: string | null;
+  facilityType?: string | null;
+}): boolean {
   const amenities = item.amenities || "";
+  if (classifyFacilityType(item).type === "school_age") return true;
   return (
     hasAmenity(amenities, "before-after") ||
     hasAmenity(amenities, "school-age") ||
@@ -63,10 +70,12 @@ export function matchesListedDaycareType(
   type: FacilityType | "before_after",
 ): boolean {
   if (type === "before_after") {
-    return (
-      isBeforeAfterProgram({ amenities: item.amenities || "", hours: item.hours || "" }) &&
-      classifyFacilityType(item).type !== "school_age"
-    );
+    return isBeforeAfterProgram({
+      amenities: item.amenities || "",
+      hours: item.hours || "",
+      name: item.name,
+      facilityType: item.facilityType,
+    });
   }
   return matchesFacilityType(item, type);
 }
@@ -80,7 +89,7 @@ export function listedDaycareTypeFromSearch(search: unknown): FacilityType | "be
         : {};
   const fac = typeof bag.fac === "string" ? bag.fac : "";
   if (fac && !fac.includes(",") && isFacilityType(fac)) return fac;
-  if (bag.cat === "before-after") return "before_after";
+  if (beforeAfterKey(bag.cat) === "before-after") return "before_after";
   return undefined;
 }
 
