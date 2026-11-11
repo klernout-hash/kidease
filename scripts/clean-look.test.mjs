@@ -87,3 +87,23 @@ test("the tidy home keeps every part reachable", () => {
   assert.match(src("src/components/hero-claim-strip.tsx"), /data-place=\{lower \? "lower" : "hero"\}/);
   assert.match(src("src/components/explore-search-bar.tsx"), /onNearby: onLocate/);
 });
+
+test("recently viewed moves up as photo cards in the clean look only", () => {
+  const home = src("src/routes/index.tsx");
+  assert.equal(home.match(/<RecentlyViewedRow items=\{recentPublic\} cards \/>/g)?.length, 2);
+  assert.equal(home.match(/className="ke-classic-only[^"]*">\s*<RecentlyViewedRow items=\{recentPublic\} \/>/g)?.length, 2);
+  const row = src("src/components/recently-viewed-row.tsx");
+  assert.match(row, /data-ke="recent-card"/);
+  assert.match(row, /rounded-2xl/);
+  assert.doesNotMatch(row, /rounded-\[/);
+  assert.match(src("src/styles.css"), /html\[data-look="clean"\] \.ke-classic-only \{\n {2}display: none !important;/);
+});
+
+test("each care type has its own icon in the clean look", () => {
+  const css = src("src/styles.css");
+  const ids = ["all", "child_care_centre", "family_home", "group_home", "nursery_preschool", "school_age", "before_after", "open"];
+  for (const id of ids) {
+    assert.ok(css.includes(`[data-ke="airbnb-care-${id}"] .ke-airbnb-cat-art img {\n  content: url("/photos/care-icons/${id}.webp");`), id);
+    assert.ok(readFileSync(join(root, "public/photos/care-icons", `${id}.webp`)).length > 1000, id);
+  }
+});

@@ -65,6 +65,11 @@ export function JoinWaitlist({ daycareId, next }: { daycareId: string; next: str
     setError(null);
     void joinDaycareWaitlist({ data: { daycareId, ageGroup, childLabel, note } })
       .then((row) => {
+        if (!row.ok) {
+          setError(row.error);
+          toast.error(row.error);
+          return;
+        }
         setMineId(row.id);
         toast.success(copy.joined);
       })
