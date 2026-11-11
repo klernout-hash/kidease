@@ -13,6 +13,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import pg from "pg";
+import { postgresPoolUrl } from "../src/lib/pg-url.ts";
 import { applyOperatorCredentialFromEnv } from "./set-operator-password.mjs";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -26,7 +27,7 @@ if (!databaseUrl) {
 const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), "..", "migrations");
 
 async function main() {
-  const pool = new pg.Pool({ connectionString: databaseUrl, max: 1 });
+  const pool = new pg.Pool({ connectionString: postgresPoolUrl(databaseUrl), max: 1 });
   const client = await pool.connect();
   try {
     await client.query(

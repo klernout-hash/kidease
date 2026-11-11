@@ -7,6 +7,7 @@ import { useViewAs } from "@/components/view-as-banner";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { mintInboxVoiceToken } from "@/lib/server/voice-call";
 import { primeCallMedia } from "@/lib/call-permissions";
+import { voiceErrorPlan, voiceTokenRefreshPlan } from "@/lib/voice-device";
 
 /**
  * Registers the signed-in user's Twilio Device on every page so the other
@@ -48,9 +49,29 @@ export function IncomingCallListener() {
           call.on("cancel", reset);
           call.on("reject", reset);
         });
-        device.on("tokenWillExpire", async () => {
+        const refresh = async () => {
           const next = await mintInboxVoiceToken().catch(() => null);
+          const plan = voiceTokenRefreshPlan({
+            registered: device.state === "registered",
+            token: next?.ok ? next.token : null,
+          });
+          if (plan === "skip") return;
+          if (plan === "register") {
+            await device.register().catch(() => undefined);
+            if (device.state === "registered" && next?.ok) device.updateToken(next.token);
+            return;
+          }
           if (next?.ok) device.updateToken(next.token);
+        };
+        device.on("tokenWillExpire", () => {
+          void refresh();
+        });
+        device.on("error", (error: { code?: number }) => {
+          const plan = voiceErrorPlan(Number(error?.code));
+          if (plan === "register" || plan === "refresh") {
+            if (plan === "register") void device.register().catch(() => undefined);
+            else void refresh();
+          }
         });
         await device.register();
         deviceRef.current = device;
@@ -87,10 +108,10 @@ export function IncomingCallListener() {
       role="alertdialog"
       aria-live="assertive"
       data-ke="incoming-call"
-      className="fixed inset-x-3 top-3 z-[1000] mx-auto max-w-md rounded-2xl border bg-background p-4 shadow-xl"
+      className="fixed inset-x-3 top-3 z-[1000] mx-auto max-w-md rounded-xl border border-border bg-surface p-4 text-fg shadow-card"
     >
       <p className="font-semibold">{phase === "incoming" ? t("voiceIncoming") : t("voiceConnected")}</p>
-      {thread ? <p className="text-xs text-subtle">{t("mediaPermissionNote")}</p> : null}
+      {thread ? <p className="text-xs text-muted">{t("mediaPermissionNote")}</p> : null}
       <div className="mt-3 flex gap-2">
         {phase === "incoming" ? (
           <>
