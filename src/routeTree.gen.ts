@@ -19,6 +19,7 @@ import { Route as AdminAutomationsRouteImport } from './routes/admin-automations
 import { Route as AdminChatRouteImport } from './routes/admin-chat'
 import { Route as AdminContractsRouteImport } from './routes/admin-contracts'
 import { Route as AdminEmailHealthRouteImport } from './routes/admin-email-health'
+import { Route as AdminGhlLeadsRouteImport } from './routes/admin-ghl-leads'
 import { Route as AdminGovAuditRouteImport } from './routes/admin-gov-audit'
 import { Route as AdminGovBroadcastsRouteImport } from './routes/admin-gov-broadcasts'
 import { Route as AdminGovComplaintsRouteImport } from './routes/admin-gov-complaints'
@@ -134,6 +135,7 @@ import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
 import { Route as ApiSeedCatalogRouteImport } from './routes/api/seed-catalog'
 import { Route as ApiSpotOffersRouteImport } from './routes/api/spot-offers'
 import { Route as ApiTourHoldsRouteImport } from './routes/api/tour-holds'
+import { Route as ApiGhlLeadReconcileRouteImport } from './routes/api/ghl-lead-reconcile'
 import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as CallConversationIdRouteImport } from './routes/call.$conversationId'
@@ -375,6 +377,11 @@ const AdminContractsRoute = AdminContractsRouteImport.update({
 const AdminEmailHealthRoute = AdminEmailHealthRouteImport.update({
   id: '/admin-email-health',
   path: '/admin-email-health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminGhlLeadsRoute = AdminGhlLeadsRouteImport.update({
+  id: '/admin-ghl-leads',
+  path: '/admin-ghl-leads',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminGovAuditRoute = AdminGovAuditRouteImport.update({
@@ -951,6 +958,11 @@ const ApiSpotOffersRoute = ApiSpotOffersRouteImport.update({
 const ApiTourHoldsRoute = ApiTourHoldsRouteImport.update({
   id: '/api/tour-holds',
   path: '/api/tour-holds',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGhlLeadReconcileRoute = ApiGhlLeadReconcileRouteImport.update({
+  id: '/api/ghl-lead-reconcile',
+  path: '/api/ghl-lead-reconcile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiUnsubscribeRoute = ApiUnsubscribeRouteImport.update({
@@ -1928,6 +1940,7 @@ export interface FileRoutesByFullPath {
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
+  '/admin-ghl-leads': typeof AdminGhlLeadsRoute
   '/admin-gov-audit': typeof AdminGovAuditRoute
   '/admin-gov-broadcasts': typeof AdminGovBroadcastsRoute
   '/admin-gov-complaints': typeof AdminGovComplaintsRoute
@@ -2043,6 +2056,7 @@ export interface FileRoutesByFullPath {
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
+  '/api/ghl-lead-reconcile': typeof ApiGhlLeadReconcileRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
   '/call/$conversationId': typeof CallConversationIdRoute
@@ -2247,6 +2261,7 @@ export interface FileRoutesByTo {
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
+  '/admin-ghl-leads': typeof AdminGhlLeadsRoute
   '/admin-gov-audit': typeof AdminGovAuditRoute
   '/admin-gov-broadcasts': typeof AdminGovBroadcastsRoute
   '/admin-gov-complaints': typeof AdminGovComplaintsRoute
@@ -2360,6 +2375,7 @@ export interface FileRoutesByTo {
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
+  '/api/ghl-lead-reconcile': typeof ApiGhlLeadReconcileRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
   '/call/$conversationId': typeof CallConversationIdRoute
@@ -2565,6 +2581,7 @@ export interface FileRoutesById {
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
+  '/admin-ghl-leads': typeof AdminGhlLeadsRoute
   '/admin-gov-audit': typeof AdminGovAuditRoute
   '/admin-gov-broadcasts': typeof AdminGovBroadcastsRoute
   '/admin-gov-complaints': typeof AdminGovComplaintsRoute
@@ -2680,6 +2697,7 @@ export interface FileRoutesById {
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
+  '/api/ghl-lead-reconcile': typeof ApiGhlLeadReconcileRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
   '/call/$conversationId': typeof CallConversationIdRoute
@@ -2886,6 +2904,7 @@ export interface FileRouteTypes {
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
+    | '/admin-ghl-leads'
     | '/admin-gov-audit'
     | '/admin-gov-broadcasts'
     | '/admin-gov-complaints'
@@ -3001,6 +3020,7 @@ export interface FileRouteTypes {
     | '/api/seed-catalog'
     | '/api/spot-offers'
     | '/api/tour-holds'
+    | '/api/ghl-lead-reconcile'
     | '/api/unsubscribe'
     | '/book/$slug'
     | '/call/$conversationId'
@@ -3205,6 +3225,7 @@ export interface FileRouteTypes {
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
+    | '/admin-ghl-leads'
     | '/admin-gov-audit'
     | '/admin-gov-broadcasts'
     | '/admin-gov-complaints'
@@ -3318,6 +3339,7 @@ export interface FileRouteTypes {
     | '/api/seed-catalog'
     | '/api/spot-offers'
     | '/api/tour-holds'
+    | '/api/ghl-lead-reconcile'
     | '/api/unsubscribe'
     | '/book/$slug'
     | '/call/$conversationId'
@@ -3522,6 +3544,7 @@ export interface FileRouteTypes {
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
+    | '/admin-ghl-leads'
     | '/admin-gov-audit'
     | '/admin-gov-broadcasts'
     | '/admin-gov-complaints'
@@ -3637,6 +3660,7 @@ export interface FileRouteTypes {
     | '/api/seed-catalog'
     | '/api/spot-offers'
     | '/api/tour-holds'
+    | '/api/ghl-lead-reconcile'
     | '/api/unsubscribe'
     | '/book/$slug'
     | '/call/$conversationId'
@@ -3842,6 +3866,7 @@ export interface RootRouteChildren {
   AdminChatRoute: typeof AdminChatRoute
   AdminContractsRoute: typeof AdminContractsRoute
   AdminEmailHealthRoute: typeof AdminEmailHealthRoute
+  AdminGhlLeadsRoute: typeof AdminGhlLeadsRoute
   AdminGovAuditRoute: typeof AdminGovAuditRoute
   AdminGovBroadcastsRoute: typeof AdminGovBroadcastsRoute
   AdminGovComplaintsRoute: typeof AdminGovComplaintsRoute
@@ -3955,6 +3980,7 @@ export interface RootRouteChildren {
   ApiSeedCatalogRoute: typeof ApiSeedCatalogRoute
   ApiSpotOffersRoute: typeof ApiSpotOffersRoute
   ApiTourHoldsRoute: typeof ApiTourHoldsRoute
+  ApiGhlLeadReconcileRoute: typeof ApiGhlLeadReconcileRoute
   ApiUnsubscribeRoute: typeof ApiUnsubscribeRoute
   BookSlugRoute: typeof BookSlugRoute
   CallConversationIdRoute: typeof CallConversationIdRoute
@@ -4118,6 +4144,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-email-health'
       fullPath: '/admin-email-health'
       preLoaderRoute: typeof AdminEmailHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-ghl-leads': {
+      id: '/admin-ghl-leads'
+      path: '/admin-ghl-leads'
+      fullPath: '/admin-ghl-leads'
+      preLoaderRoute: typeof AdminGhlLeadsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin-gov-audit': {
@@ -4923,6 +4956,13 @@ declare module '@tanstack/react-router' {
       path: '/api/tour-holds'
       fullPath: '/api/tour-holds'
       preLoaderRoute: typeof ApiTourHoldsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ghl-lead-reconcile': {
+      id: '/api/ghl-lead-reconcile'
+      path: '/api/ghl-lead-reconcile'
+      fullPath: '/api/ghl-lead-reconcile'
+      preLoaderRoute: typeof ApiGhlLeadReconcileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/unsubscribe': {
@@ -6662,6 +6702,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminChatRoute: AdminChatRoute,
   AdminContractsRoute: AdminContractsRoute,
   AdminEmailHealthRoute: AdminEmailHealthRoute,
+  AdminGhlLeadsRoute: AdminGhlLeadsRoute,
   AdminGovAuditRoute: AdminGovAuditRoute,
   AdminGovBroadcastsRoute: AdminGovBroadcastsRoute,
   AdminGovComplaintsRoute: AdminGovComplaintsRoute,
@@ -6775,6 +6816,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSeedCatalogRoute: ApiSeedCatalogRoute,
   ApiSpotOffersRoute: ApiSpotOffersRoute,
   ApiTourHoldsRoute: ApiTourHoldsRoute,
+  ApiGhlLeadReconcileRoute: ApiGhlLeadReconcileRoute,
   ApiUnsubscribeRoute: ApiUnsubscribeRoute,
   BookSlugRoute: BookSlugRoute,
   CallConversationIdRoute: CallConversationIdRoute,

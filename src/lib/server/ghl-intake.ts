@@ -88,6 +88,28 @@ export async function captureSignupIntakeFromUser(input: {
   email?: string | null;
   testListing?: boolean;
 }) {
+  if (input.trigger === "parent_signup" || input.trigger === "provider_signup" || input.trigger === "claim_verify") {
+    try {
+      const { pushLeadToGhl } = await import("@/lib/server/ghl-lead-push");
+      const pushed = await pushLeadToGhl({
+        userId: input.userId,
+        role: input.role,
+        trigger: input.trigger,
+        email: input.email,
+        name: input.name,
+        phone: input.phone,
+        company: input.company,
+        testListing: input.testListing,
+      });
+      if (pushed.tookOver) {
+        return pushed.result === "ok"
+          ? { ok: true as const, skipped: false as const, status: 200 }
+          : { ok: false as const, error: "ghl-lead-push" };
+      }
+    } catch (err) {
+      logError(err);
+    }
+  }
   try {
     const actor = await lookupUser(input.userId).catch(() => ({
       email: null as string | null,
