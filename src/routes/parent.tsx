@@ -1,5 +1,7 @@
 import { createFileRoute, Navigate, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Phase6Desk } from "@/components/phase6-desk";
 import { Phase1Desk } from "@/components/phase1-desk";
+import { Phase5Desk } from "@/components/phase5-desk";
 import { ParentCentreToolsPanel } from "@/components/parent-centre-tools";
 import { useEffect, type ReactNode } from "react";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
@@ -273,7 +275,9 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
       {search.preview === "support" && canUseOperatorTools(session?.email) ? <SupportPreviewBanner /> : null}
       <Suspense fallback={<DeskSkeleton />}>
         <div className="mx-auto w-full max-w-3xl px-4">
+          <Phase6Desk locale={locale === "fr" ? "fr" : "en"} role="parent" />
           <Phase1Desk locale={locale === "fr" ? "fr" : "en"} role="parent" />
+          <Phase5Desk locale={locale === "fr" ? "fr" : "en"} role="parent" />
         </div>
         <ParentDesk
           initialTab={initialTab}
