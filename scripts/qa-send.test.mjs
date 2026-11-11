@@ -29,3 +29,4 @@ test("only the two approved inboxes can receive, and only by email from kidease.
   assert.equal(qaSendDecision({ ...base, alreadySent: true }).reason, "duplicate");
   assert.equal(qaSendDecision({ ...base, feature: "ADM-21" }).reason, "bad_feature");
 });
+
