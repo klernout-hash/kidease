@@ -2,7 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import {
   dailyLogsEnabled,
   enrolmentEsignEnabled,
+  familyBulkMailEnabled,
   familyVaultEnabled,
+  listCsvEnabled,
+  postTourFollowupEnabled,
   parentAgreementEnabled,
   careRemindersEnabled,
   childPortfolioGateEnabled,
@@ -19,6 +22,9 @@ import {
 export const loadDeskFeatureFlags = createServerFn({ method: "GET" }).handler(async () => ({
   reviewReplies: reviewRepliesEnabled(),
   enrolmentEsign: enrolmentEsignEnabled(),
+  familyBulkMail: familyBulkMailEnabled(),
+  postTourFollowup: postTourFollowupEnabled(),
+  listCsv: listCsvEnabled(),
   taxReceipts: taxReceiptsEnabled(),
   dailyLogs: dailyLogsEnabled(),
   tourCalendar: tourCalendarEnabled(),

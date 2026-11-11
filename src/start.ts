@@ -2,6 +2,7 @@ import { createMiddleware, createStart } from "@tanstack/react-start";
 import { reportError } from "@/lib/observe";
 import { nativeAdminRedirectTarget } from "@/lib/native-admin";
 import { clientIpFromHeaders, consumeServerFnBudget } from "@/lib/server-fn-throttle";
+import { bareServerFnRequest } from "@/lib/server-fn-request";
 
 /**
  * Native shells must not document-GET /admin*. Cloudflare Access answers that
@@ -93,6 +94,21 @@ const sentryFunctionMiddleware = createMiddleware({ type: "function" }).server(a
  * request so a method mismatch (an old tab still POSTing) is counted too.
  * A normal desk load fits in the burst. No CF-Connecting-IP → allow.
  */
+/** A plain visit to /_serverFn/ has no route component and used to 500. */
+const bareServerFnMiddleware = createMiddleware({ type: "request" }).server(async ({ next, request }) => {
+  let pathname = "";
+  try {
+    pathname = new URL(request.url).pathname;
+  } catch {
+    return next();
+  }
+  if (!bareServerFnRequest(pathname, request.headers.get("x-tsr-serverfn"))) return next();
+  return new Response("Bad request", {
+    status: 400,
+    headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
+  });
+});
+
 const serverFnThrottleMiddleware = createMiddleware({ type: "request" }).server(async ({ next, request }) => {
   let fnId = "";
   try {
@@ -173,6 +189,7 @@ const govHttpIsolation = createMiddleware({ type: "request" }).server(async ({ n
 
 export const startInstance = createStart(() => ({
   requestMiddleware: [
+    bareServerFnMiddleware,
     credentialQueryMiddleware,
     nativeShellMiddleware,
     sentryRequestMiddleware,

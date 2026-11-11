@@ -19,7 +19,7 @@ export function enrolmentSignLinks(contractId: string): { signPath: string; pdfP
   return { signPath: `/sign/${id}`, pdfPath: `/api/contracts/${encodeURIComponent(id)}/pdf` };
 }
 
-export type PickupContact = { name: string; phone: string; relationship: string };
+export type PickupContact = { name: string; phone: string; relationship: string; note: string; restricted: boolean };
 
 const PICKUP_MAX = 4;
 
@@ -33,6 +33,8 @@ export function parsePickupContacts(raw: string | null | undefined): PickupConta
       name,
       phone: (parts[1] || "").slice(0, 20),
       relationship: (parts[2] || "").slice(0, 40),
+      note: (parts[3] || "").slice(0, 200),
+      restricted: parts[4] === "1",
     });
     if (people.length >= PICKUP_MAX) break;
   }
@@ -45,10 +47,17 @@ export function formatPickupContacts(people: readonly PickupContact[]): string {
       name: person.name.replace(/\s+/g, " ").trim().slice(0, 80),
       phone: person.phone.replace(/\s+/g, " ").trim().slice(0, 20),
       relationship: person.relationship.replace(/\s+/g, " ").trim().slice(0, 40),
+      note: (person.note || "").replace(/\s+/g, " ").trim().slice(0, 200),
+      restricted: Boolean(person.restricted),
     }))
     .filter((person) => person.name)
     .slice(0, PICKUP_MAX)
-    .map((person) => `${person.name} | ${person.phone} | ${person.relationship}`)
+    .map((person) => {
+      const note = person.note.replace(/\s+/g, " ").trim().slice(0, 200);
+      const flag = person.restricted ? "1" : "";
+      if (!note && !flag) return `${person.name} | ${person.phone} | ${person.relationship}`;
+      return `${person.name} | ${person.phone} | ${person.relationship} | ${note} | ${flag}`;
+    })
     .join("\n");
 }
 

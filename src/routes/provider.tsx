@@ -10,6 +10,7 @@ import { confirmSuccess } from "@/lib/success-confirm";
 import { Shell } from "@/components/shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { DeskShell } from "@/components/desk-shell";
+import { AuditDeskLink } from "@/components/audit-desk-link";
 import { Phase1Desk } from "@/components/phase1-desk";
 import { Button } from "@/components/ui/button";
 import { BlockFamilyButton } from "@/components/block-user";
@@ -32,6 +33,7 @@ import { listTourRequests } from "@/lib/server/tours";
 import { listLeadRequests } from "@/lib/server/lead-requests";
 import { DaycareLeadInbox } from "@/components/daycare-lead-inbox";
 import { CentreFamilyDocs } from "@/components/family-vault";
+import { FamilyEmailPreview, FormSharePreview, TourFollowupPreview } from "@/components/phase0-mail-preview";
 import { EmptyState } from "@/components/empty-state";
 import { TodayUrgencyHome } from "@/components/today-urgency-home";
 import { type DaycareDesk } from "@/lib/desk-nav";
@@ -461,6 +463,7 @@ export function ProviderPage() {
           <p className="mt-2 text-sm text-muted">{t("claimSuccessLead")}</p>
         </section>
       ) : null}
+      {desk === "today" ? <AuditDeskLink locale={locale === "fr" ? "fr" : "en"} /> : null}
       {desk === "today" ? <Phase1Desk locale={locale === "fr" ? "fr" : "en"} role={centreOwner ? "owner" : "staff"} /> : null}
       {desk === "today" ? <StoriesDeskLink /> : null}
       {desk === "today" ? <CurriculumDeskLink /> : null}
@@ -513,11 +516,13 @@ export function ProviderPage() {
           onChanged={() => void load()}
           onOpenDesk={(next) => setDesk(next)}
         />
+        <FamilyEmailPreview centreName={listings[0]?.name || ""} />
         </>
       ) : null}
       {desk === "requests" ? (
         <div className="min-w-0 max-w-full space-y-6">
         <CentreFamilyDocs />
+        <FormSharePreview />
         {leads.length === 0 && tours.length === 0 && pipeline.length === 0 && waiting.length === 0 ? (
           <EmptyState title={t("enquiriesEmptyTitle")} body={t("enquiriesEmptyLead")} />
         ) : (
@@ -587,6 +592,7 @@ export function ProviderPage() {
       {desk === "tours" ? (
         <div className="space-y-8">
           <TourCalendarPage audience="provider" />
+          <TourFollowupPreview centreName={listings[0]?.name || ""} />
           <TourAvailabilityDesk listings={listings} onSaved={() => void load()} />
         </div>
       ) : null}

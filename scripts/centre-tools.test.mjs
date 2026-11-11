@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { centreToolIds } from "../src/lib/features.ts";
-import { CENTRE_TOOLS, parentKindsFor, quickbooksCsv, tapToPayDecision, clampTapTime, attendanceBill } from "../src/lib/centre-tools.ts";
+import { ALLERGENS, CENTRE_TOOLS, menuLabel, parentKindsFor, quickbooksCsv, tapToPayDecision, clampTapTime, attendanceBill } from "../src/lib/centre-tools.ts";
 import { FLAG_DEFAULTS } from "../src/lib/flags.ts";
 
 test("every centre tool flag defaults off", () => {
@@ -39,4 +39,12 @@ test("attendance bill counts attended days", () => {
   assert.equal(bill.grossCents, 4400);
   assert.equal(bill.agencyCents + bill.parentCents, 4400);
   assert.equal(bill.agencyCents, 3300);
+});
+
+test("menu labels are French on the French desk", () => {
+  assert.equal(ALLERGENS.length, 11);
+  assert.equal(menuLabel("peanut", "fr"), "Arachide");
+  assert.equal(menuLabel("mon", "fr"), "Lundi");
+  assert.equal(menuLabel("lunch", "fr"), "Dîner");
+  assert.equal(menuLabel("sulphites", "en"), "Sulphites");
 });

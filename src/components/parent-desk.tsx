@@ -622,7 +622,7 @@ export function ParentDesk({
                         </Button>
                       );
                     }
-                    if (b.status === "accepted" && b.paymentStatus !== "paid" && desks?.stripeLive) {
+                    if (b.status === "accepted" && b.monthlyAmount > 0 && b.paymentStatus !== "paid" && desks?.stripeLive) {
                       return (
                         <div className="max-w-[14rem] text-right">
                           <p className="text-xs text-muted">{t("awaitingCentreBill")}</p>
