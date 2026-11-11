@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Plus, Star } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
+import { AppStoreStatus } from "@/components/app-store-status";
 import { CountUp } from "@/components/count-up";
 import { KidBlocks, KidStars } from "@/components/kid-art";
 import { LanguageSelect } from "@/components/language-select";
@@ -221,6 +222,7 @@ export function AppMenuScreen({
         </div>
         <ShareKidEaseButton appearance="row" />
       </nav>
+      <AppStoreStatus compact />
 
       {user ? (
         <div className="relative z-[45] mt-auto flex flex-col gap-3 pt-8 pb-[max(3.25rem,env(safe-area-inset-bottom))]" data-ke="menu-account-actions">
