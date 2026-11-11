@@ -35,6 +35,7 @@ export const PRODUCT_EVENTS = [
   "vacancy_marked_stale",
   "vacancy_reminder_sent",
   "fee_display_state",
+  "centre_lead_stage",
 ] as const;
 
 export type ProductEventName = (typeof PRODUCT_EVENTS)[number];
