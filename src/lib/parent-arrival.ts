@@ -5,26 +5,43 @@ export type ArrivalEvent = {
   daycareName: string;
   action: "check_in" | "check_out";
   at: string;
+  /** IANA zone for the centre. Missing uses Winnipeg. */
+  timeZone?: string | null;
 };
 
-function winnipegDay(value: string): string | null {
+function zoneOf(value: string | null | undefined): string {
+  const zone = String(value || "").trim();
+  try {
+    if (zone) {
+      new Intl.DateTimeFormat("en-CA", { timeZone: zone }).format(new Date());
+      return zone;
+    }
+  } catch {
+    /* fall through */
+  }
+  return "America/Winnipeg";
+}
+
+function centreDay(value: string, timeZone: string): string | null {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
   return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Winnipeg",
+    timeZone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
   }).format(date);
 }
 
-function winnipegTime(value: string, locale: "en" | "fr"): string | null {
+/** English uses a.m./p.m. French uses 24-hour. Both use the centre zone. */
+function centreTime(value: string, locale: "en" | "fr", timeZone: string): string | null {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
-  return new Intl.DateTimeFormat(locale === "fr" ? "fr-CA" : "en-CA", {
-    timeZone: "America/Winnipeg",
-    hour: "numeric",
+  return new Intl.DateTimeFormat(locale === "fr" ? "en-GB" : "en-CA", {
+    timeZone,
+    hour: locale === "fr" ? "2-digit" : "numeric",
     minute: "2-digit",
+    hourCycle: locale === "fr" ? "h23" : "h12",
   }).format(date);
 }
 
@@ -33,21 +50,22 @@ export function parentArrivalSentences(
   now = new Date(),
   locale: "en" | "fr" = "en",
 ): string[] {
-  const today = winnipegDay(now.toISOString());
-  if (!today) return [];
-  const latest = new Map<string, { inAt?: string; outAt?: string; child: string; centre: string }>();
+  const latest = new Map<string, { inAt?: string; outAt?: string; child: string; centre: string; timeZone?: string | null }>();
   for (const event of events) {
-    if (winnipegDay(event.at) !== today) continue;
-    const key = `${event.childName}|${event.daycareName}`;
-    const row = latest.get(key) ?? { child: event.childName, centre: event.daycareName };
+    const timeZone = zoneOf(event.timeZone);
+    const today = centreDay(now.toISOString(), timeZone);
+    if (!today || centreDay(event.at, timeZone) !== today) continue;
+    const key = `${event.childName}|${event.daycareName}|${timeZone}`;
+    const row = latest.get(key) ?? { child: event.childName, centre: event.daycareName, timeZone };
     if (event.action === "check_in") row.inAt = event.at;
     if (event.action === "check_out") row.outAt = event.at;
     latest.set(key, row);
   }
   const lines: string[] = [];
   for (const row of latest.values()) {
-    const arrived = row.inAt ? winnipegTime(row.inAt, locale) : null;
-    const left = row.outAt ? winnipegTime(row.outAt, locale) : null;
+    const timeZone = zoneOf(row.timeZone);
+    const arrived = row.inAt ? centreTime(row.inAt, locale, timeZone) : null;
+    const left = row.outAt ? centreTime(row.outAt, locale, timeZone) : null;
     if (!arrived && !left) continue;
     if (locale === "fr") {
       const parts = [`${row.child} à ${row.centre}.`];

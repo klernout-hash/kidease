@@ -22,10 +22,12 @@ test("a parent sees only today's saved arrival and departure", () => {
     parentArrivalSentences([{ childName: "Ada", daycareName: "Oaks", action: "check_in", at: "not-a-time" }], now, "en").length,
     0,
   );
+  assert.match(lines[0], /a\.m\.|p\.m\./);
   const fr = parentArrivalSentences(
-    [{ childName: "Ada", daycareName: "Oaks", action: "check_in", at: "2026-11-09T14:12:00.000Z" }],
+    [{ childName: "Ada", daycareName: "Oaks", action: "check_in", at: "2026-11-09T14:12:00.000Z", timeZone: "America/Winnipeg" }],
     now,
     "fr",
   );
-  assert.match(fr[0], /Arrivée à/);
+  assert.match(fr[0], /Arrivée à \d{2}:\d{2}/);
+  assert.doesNotMatch(fr[0], /a\.m\.|p\.m\./);
 });
