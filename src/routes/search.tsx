@@ -15,7 +15,7 @@ import { ExploreFilterChips } from "@/components/explore-filter-chips";
 import { PioneerFilterRail } from "@/components/pioneer-filter-rail";
 import { InclusiveCareFilters } from "@/components/inclusive-care-filters";
 import { LicenceTypeFilters } from "@/components/licence-type-filters";
-import { matchesDeclaredCare, type CareDetailKey } from "@/lib/inclusive-search";
+import { careKeysParam, matchesDeclaredCare, parseCareKeys, type CareDetailKey } from "@/lib/inclusive-search";
 import { licenceMatches, type LicenceBucket } from "@/lib/phase1-search";
 import { CommuteDetourBar } from "@/components/commute-detour-bar";
 import { SearchCardAgesProvider } from "@/components/search-card-context";
@@ -242,6 +242,7 @@ export async function searchLoader({ location }: { location: { search: unknown }
             ? (location.search as { live?: unknown }).live
             : undefined,
         ),
+        diet: careKeysParam(parseCareKeys(searchRecord.diet)),
       },
     };
     const indexed = indexedPlaceQuery(place, city);
@@ -292,6 +293,7 @@ export function searchValidateSearch(s: Record<string, unknown>) {
       rank?: "best" | "nearest";
       page?: number;
       live?: 1;
+      diet?: string;
       cwelcc?: "1";
       inclusive?: "1";
       meals?: "1";
@@ -321,6 +323,8 @@ export function searchValidateSearch(s: Record<string, unknown>) {
     if (typeof s.care === "string" && isCareType(s.care)) out.care = s.care;
     else if (typeof s.facility === "string" && isCareType(s.facility)) out.care = s.facility;
     if (s.favorites === "1" || s.favorites === true) out.favorites = "1";
+    const diet = careKeysParam(parseCareKeys(s.diet));
+    if (diet) out.diet = diet;
     const parent = compactParentListingSearch(parseParentListingSearch(s));
     return { ...out, ...parent, ...parsePioneerSearch(s) };
 }
@@ -459,7 +463,8 @@ export function SearchScreen({
   const [meals, setMeals] = useState(false);
   const [outdoor, setOutdoor] = useState(false);
   const [inclusive, setInclusive] = useState(false);
-  const [careKeys, setCareKeys] = useState<CareDetailKey[]>([]);
+  const dietParam = careKeysParam(parseCareKeys(incoming.diet)) || "";
+  const [careKeys, setCareKeys] = useState<CareDetailKey[]>(() => parseCareKeys(incoming.diet));
   const [licence, setLicence] = useState<LicenceBucket | null>(null);
   const [extended, setExtended] = useState(false);
   const [infantOnly, setInfantOnly] = useState(false);
@@ -701,6 +706,7 @@ export function SearchScreen({
     startDate: needBy || null,
     name: nameQuery.trim() || undefined,
     live: claimVerifiedOnly || readLiveSearchFlag(incoming.live),
+    diet: dietParam || undefined,
     lat2: viewAnchors.cityOwned ? undefined : workForSearch?.lat,
     lng2: viewAnchors.cityOwned ? undefined : workForSearch?.lng,
     mode: viewAnchors.mode,
@@ -733,6 +739,7 @@ export function SearchScreen({
     page: resultPage,
     parentFit: fitKey,
     claimLive: claimVerifiedOnly || readLiveSearchFlag(incoming.live),
+    diet: dietParam,
   };
   const locationLock = useMemo(
     () =>
@@ -744,6 +751,10 @@ export function SearchScreen({
       }),
     [cameraHome.lat, cameraHome.lng, cameraHome.label, placeQuery],
   );
+
+  useEffect(() => {
+    setCareKeys(parseCareKeys(dietParam));
+  }, [dietParam]);
 
   useEffect(() => {
     if ((boot.needsPlace && !requestedPlace && !(origin.label || "").trim()) || (unknownCity && !nameQuery.trim())) {
@@ -819,6 +830,7 @@ export function SearchScreen({
     claimVerifiedOnly,
     nameQuery,
     incoming.city,
+    dietParam,
     incoming.fac,
     incoming.cat,
     needBy,
@@ -889,7 +901,19 @@ export function SearchScreen({
       city: incoming.city,
       rank: incoming.rank,
       live: liveSearchParam(liveOn),
+      diet: dietParam || undefined,
       page: page > 1 ? page : undefined,
+    });
+  }
+
+  function writeDiet(keys: CareDetailKey[]) {
+    const next = careKeysParam(keys);
+    setCareKeys(parseCareKeys(next));
+    void navigate({
+      search: {
+        ...listingPageSearch(1),
+        diet: next,
+      },
     });
   }
 
@@ -1165,6 +1189,7 @@ export function SearchScreen({
     setFavoritesOnly(false);
     setCareType("any");
     setSchoolAgeOnly(false);
+    setCareKeys([]);
     setWorkOrigin(null);
     setWorkQuery("");
     setAnchorMode("home");
@@ -1190,6 +1215,7 @@ export function SearchScreen({
           meals: undefined,
           subsidy: undefined,
           spoken: undefined,
+          diet: undefined,
         }),
         fac: undefined,
         cat: undefined,
@@ -1499,6 +1525,7 @@ export function SearchScreen({
     (favoritesOnly ? 1 : 0) +
     (careType !== "any" ? 1 : 0) +
     (schoolAgeOnly ? 1 : 0) +
+    (careKeys.length ? 1 : 0) +
     (selectedAges.length ? 1 : 0) +
     (openingsOn ? 1 : 0) +
     (resolvedCat && !isRailAge(resolvedCat) ? 1 : 0);
@@ -1637,7 +1664,8 @@ export function SearchScreen({
   const whereSet = Boolean(whereLabel);
   const mapOrigin = anchors.primary;
   const nameSearch = Boolean(nameQuery.trim());
-  const centreCount = nameSearch || extraFilters ? visualItems.length : resultTotal;
+  const dietOnly = careKeys.length > 0 && extraFilters === 1;
+  const centreCount = nameSearch || (extraFilters && !dietOnly) ? visualItems.length : resultTotal;
   const licensedCount =
     centreCount === 1
       ? t("searchLicensedCountOne")
@@ -1745,7 +1773,7 @@ export function SearchScreen({
       {chip(catchmentOnly, t("filterCatchment"), () => setCatchmentOnly((v) => !v))}
       {chip(favoritesOnly, t("filterFavorites"), () => setFavoritesOnly((v) => !v))}
     </div>
-    <InclusiveCareFilters locale={locale === "fr" ? "fr" : "en"} selected={careKeys} onChange={setCareKeys} />
+    <InclusiveCareFilters locale={locale === "fr" ? "fr" : "en"} selected={careKeys} onChange={writeDiet} />
     <LicenceTypeFilters locale={locale === "fr" ? "fr" : "en"} selected={licence} onChange={setLicence} />
     </div>
   );

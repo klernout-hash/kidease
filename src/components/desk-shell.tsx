@@ -187,6 +187,7 @@ export function DeskShell({
     tourCalendar: session?.tourCalendar,
     hostListing: session?.hostListing,
     providerInsights: session?.providerInsights,
+    leadTracker: session?.leadTracker,
     topRated: session?.topRated,
   };
   const labelPlan = (item: DeskItem) => {

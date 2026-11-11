@@ -573,16 +573,17 @@ export async function runTourFollowupsJob(options: { dryRun?: boolean; now?: Dat
           centre: row.centre,
           applyPath: `${AUTOMATION_ORIGIN}${locale === "fr" ? "/fr" : ""}/daycare/${row.slug}`,
         });
-        await sendOne({
-          automation: "tour_followup",
+        const { deliverQaEmail } = await import("@/lib/server/qa-send-mail");
+        const sent = await deliverQaEmail({
+          feature: "ADM-11",
+          recipient: row.email || "",
+          subject: letter.subject,
+          text: letter.text,
+          html: `<p>${letter.text}</p>`,
+          occurredAt: row.tour_at || "",
           dedupeKey: `tour-follow:${row.id}`,
-          recipient: row.email,
-          letter: { ...letter, html: `<p>${letter.text}</p>` },
-          // Live mail stays off until Kyle approves a real send. Dry-run only records the note.
-          mode: "dry_run",
-          quiet: automationQuietNow(now, row.time_zone, row.province),
-          bag,
         });
+        add(bag, sent.reason);
       }
     }
     if (flag.review !== "off") {

@@ -57,7 +57,7 @@ export function ExploreFilterChips({
     {
       key: "sched" as ChipKey,
       label: t("chipSchedule"),
-      options: visible.schedules.map((id) => ({ id, label: parentScheduleLabel(id, loc) })),
+      options: (["full", "part"] as const).map((id) => ({ id, label: parentScheduleLabel(id, loc) })),
       selected: value.sched,
     },
     {

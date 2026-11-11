@@ -436,6 +436,22 @@ export function feeDisplayGateEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_FEE_DISPLAY_GATE", env);
 }
 
+export function walkInLeadsEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_WALKIN_LEADS", env);
+}
+
+export function programWaitlistEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_PROGRAM_WAITLIST", env);
+}
+
+export function waitlistOffersEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_WAITLIST_OFFERS", env);
+}
+
+export function formStatusEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_FORM_STATUS", env);
+}
+
 /** Daycare inbox also lists requests with no thread. Default off. */
 export function unifiedInboxEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_UNIFIED_INBOX", env);
@@ -511,6 +527,16 @@ export function canSeeProviderSubscriptions(
   if (r === "admin") return true;
   if (r === "provider" || ownsCentre) return providerSubscriptionsEnabled(env);
   return false;
+}
+
+/** Family steps on the daycare desk. Off. Does not send mail, text, or push. */
+export function centreLeadTrackerEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_CENTRE_LEAD_TRACKER", env);
+}
+
+/** Per-centre API. Off. Also needs the lead tracker for the desk that creates keys. */
+export function centreApiEnabled(env?: EnvMap): boolean {
+  return centreLeadTrackerEnabled(env) && evaluateFeatureFlag("FEATURE_CENTRE_API", env);
 }
 
 /** Unified alerts. Off. Saving choices does not send. */

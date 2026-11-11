@@ -1572,7 +1572,7 @@ export const en = {
     deposit: "First-month deposit",
     statusRequested: "Request sent",
     statusWaitlist: "Waitlist",
-    statusAccepted: "Spot offered",
+    statusAccepted: "Enrolled",
     statusActive: "Spot confirmed",
     statusCancelled: "Cancelled",
     statusDeclined: "Declined",
@@ -1895,7 +1895,7 @@ export const en = {
     successWaiting: "Marked as waiting",
     goToConversation: "Go to conversation",
     statusUnderReview: "Under review",
-    statusOffered: "Spot offered",
+    statusOffered: "Enrolled",
     myRequests: "My requests",
     myRequestsLead: "Tours, waitlist, and spot inquiries you sent. The centre updates status here: this is not chat yet.",
     myWaitlists: "My waitlists",
@@ -3729,6 +3729,8 @@ export const en = {
     msv2TopRated: "Top rated",
     msv2Meals: "Meals included",
     msv2SubsidyChip: "Subsidy accepted",
+    leadTrackerNav: "Families",
+    leadTrackerNavHint: "Which step each family is on",
 } as const;
 
 export type CopyKey = keyof typeof en;

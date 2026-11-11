@@ -130,8 +130,9 @@ export const listMyCheckHistory = createServerFn({ method: "GET" })
       at: string | Date;
       pickup_name: string;
       daycare_name: string;
+      timezone: string | null;
     }>`
-      select e.id, e.child_name, e.action, e.at, e.pickup_name, d.name as daycare_name
+      select e.id, e.child_name, e.action, e.at, e.pickup_name, d.name as daycare_name, d.timezone
       from child_check_events e
       join daycares d on d.id = e.daycare_id
       where e.parent_user_id = ${context.userId}
@@ -146,6 +147,7 @@ export const listMyCheckHistory = createServerFn({ method: "GET" })
         daycareName: row.daycare_name,
         action: row.action === "check_out" ? ("check_out" as const) : ("check_in" as const),
         at: iso(row.at),
+        timeZone: row.timezone,
         pickupName: row.pickup_name || "",
       })),
     };
