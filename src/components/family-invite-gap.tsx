@@ -5,7 +5,7 @@ import { useCopy } from "@/lib/use-copy";
 
 /**
  * Gap: a centre cannot connect an existing parent's child without a waitlist or a tour.
- * Hidden while FEATURE_FAMILY_INVITE is off. The button does not send email, SMS, or push.
+ * Hidden while FEATURE_FAMILY_INVITE is off. The button does not send email, SMS, or a push.
  */
 export function FamilyInviteGap() {
   const { locale } = useCopy();
