@@ -1368,7 +1368,8 @@ export const setRole = createServerFn({ method: "POST" })
     if (isViewAsReadOnly()) return { role: written.role };
     if (written.role === "provider") {
       await ensureCrmIntake(context.userId, "provider");
-    } else if (written.role === "parent") {
+    } else if (written.role === "parent" && written.previous !== "parent") {
+      // A later sign-in must not send the new-parent SMS, admin mail, or CRM welcome again.
       await ensureCrmIntake(context.userId, "parent", { explicitParent: true });
     }
     return { role: written.role };
