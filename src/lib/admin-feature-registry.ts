@@ -108,6 +108,21 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_FEE_DISPLAY_GATE: "shared",
   FEATURE_CENTRE_LEAD_TRACKER: "daycare",
   FEATURE_CENTRE_API: "daycare",
+  FEATURE_RULES_BADGE: "shared",
+  FEATURE_FORM_SMS: "daycare",
+  FEATURE_EMERGENCY_SMS: "daycare",
+  FEATURE_TRANSLATION_UI: "shared",
+  FEATURE_OVERTIME: "daycare",
+  FEATURE_CARD_PAY: "daycare",
+  FEATURE_AUTOPAY: "daycare",
+  FEATURE_PAD: "daycare",
+  FEATURE_MANDATORY_AUTOPAY: "daycare",
+  FEATURE_REFUNDS: "daycare",
+  FEATURE_CCFRI: "daycare",
+  FEATURE_AB_GRANT: "daycare",
+  FEATURE_PAYOUT_STATUS: "daycare",
+  FEATURE_MUNI_STATS: "admin",
+  FEATURE_PUBLIC_API: "daycare",
 };
 
 const SWITCH_CATEGORY: Record<string, FeatureCategory> = {
