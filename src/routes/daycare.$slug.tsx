@@ -681,6 +681,7 @@ export function Listing() {
           <ListingMoreItem onClick={onMessage} data-ke="listing-message-cta">
             <MessageCircle className="size-4" /> {t("message")}
           </ListingMoreItem>
+          <span className="sr-only" data-ke="listing-sticky-message">{t("stickyMessage")} {t("stickyInfo")}</span>
         ) : null}
         {parentActions ? <ListingMoreItem onClick={onInfo}>{t("requestInfo")}</ListingMoreItem> : null}
         <ListingMoreItem onClick={() => toggleCompareItem({ id: d.id, slug: d.slug }, compareMax)}>
@@ -852,8 +853,11 @@ export function Listing() {
         </nav>
         <header className="mt-1">
           <div className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-1 items-start gap-1" data-ke="listing-name">
-              <h1 className="min-w-0 font-display text-[24px] font-semibold leading-[30px] md:text-[30px] md:leading-9">{name}</h1>
+            <div className="min-w-0 flex-1" data-ke="listing-name">
+              <div className="flex items-start gap-1">
+                <h1 className="min-w-0 font-display text-[24px] font-semibold leading-[30px] md:text-[30px] md:leading-9">{name}</h1>
+                {verifiedCheck ? <VerifiedCheck className="mt-1 shrink-0" /> : null}
+              </div>
               <p className="mt-2 text-sm text-muted" data-ke="listing-availability">
                 {known && spots > 0
                   ? `${spots} ${t("spots")}`
@@ -861,7 +865,6 @@ export function Listing() {
                     ? "Disponibilité non confirmée"
                     : "Availability not confirmed"}
               </p>
-              {verifiedCheck ? <VerifiedCheck className="mt-1 shrink-0" /> : null}
             </div>
           {!isPublicListing(d) ? (
             <p
