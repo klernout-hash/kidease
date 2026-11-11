@@ -58,6 +58,37 @@ export const FOOD_GROUPS = ["veg_fruit", "whole_grain", "protein"] as const;
 /** Health Canada priority food allergens. */
 export const ALLERGENS = ["peanut", "tree_nut", "milk", "egg", "wheat", "soy", "sesame", "fish", "shellfish", "mustard", "sulphites"] as const;
 
+const MENU_LABELS: Record<string, { en: string; fr: string }> = {
+  mon: { en: "Monday", fr: "Lundi" },
+  tue: { en: "Tuesday", fr: "Mardi" },
+  wed: { en: "Wednesday", fr: "Mercredi" },
+  thu: { en: "Thursday", fr: "Jeudi" },
+  fri: { en: "Friday", fr: "Vendredi" },
+  breakfast: { en: "Breakfast", fr: "Déjeuner" },
+  am_snack: { en: "Morning snack", fr: "Collation du matin" },
+  lunch: { en: "Lunch", fr: "Dîner" },
+  pm_snack: { en: "Afternoon snack", fr: "Collation de l'après-midi" },
+  veg_fruit: { en: "Vegetables and fruit", fr: "Légumes et fruits" },
+  whole_grain: { en: "Whole grain", fr: "Grains entiers" },
+  protein: { en: "Protein", fr: "Protéines" },
+  peanut: { en: "Peanut", fr: "Arachide" },
+  tree_nut: { en: "Tree nut", fr: "Noix" },
+  milk: { en: "Milk", fr: "Lait" },
+  egg: { en: "Egg", fr: "Œuf" },
+  wheat: { en: "Wheat", fr: "Blé" },
+  soy: { en: "Soy", fr: "Soya" },
+  sesame: { en: "Sesame", fr: "Sésame" },
+  fish: { en: "Fish", fr: "Poisson" },
+  shellfish: { en: "Shellfish", fr: "Crustacés et mollusques" },
+  mustard: { en: "Mustard", fr: "Moutarde" },
+  sulphites: { en: "Sulphites", fr: "Sulfites" },
+};
+
+export function menuLabel(id: string, locale: "en" | "fr"): string {
+  const row = MENU_LABELS[id];
+  return row ? row[locale] : id.replace(/_/g, " ");
+}
+
 export type MenuItem = { day: string; slot: string; food: string; groups: string[]; allergens: string[] };
 export type WeeklyMenu = { weekOf: string; items: MenuItem[]; allergyNote: string };
 

@@ -3758,3 +3758,35 @@ html[data-look="clean"] .border:not([class*="border-"]) {
 html[data-look="clean"] :is(input, select, textarea).border:not([class*="border-"]) {
   border-color: var(--ke-field-line);
 }
+/* Category pictures. The clean look shows a drawn icon for each care type in place of the room photo. */
+html[data-look="clean"] [data-ke="airbnb-care-all"] .ke-airbnb-cat-art img {
+  content: url("/photos/care-icons/all.webp");
+}
+html[data-look="clean"] [data-ke="airbnb-care-child_care_centre"] .ke-airbnb-cat-art img {
+  content: url("/photos/care-icons/child_care_centre.webp");
+}
+html[data-look="clean"] [data-ke="airbnb-care-family_home"] .ke-airbnb-cat-art img {
+  content: url("/photos/care-icons/family_home.webp");
+}
+html[data-look="clean"] [data-ke="airbnb-care-group_home"] .ke-airbnb-cat-art img {
+  content: url("/photos/care-icons/group_home.webp");
+}
+html[data-look="clean"] [data-ke="airbnb-care-nursery_preschool"] .ke-airbnb-cat-art img {
+  content: url("/photos/care-icons/nursery_preschool.webp");
+}
+html[data-look="clean"] [data-ke="airbnb-care-school_age"] .ke-airbnb-cat-art img {
+  content: url("/photos/care-icons/school_age.webp");
+}
+html[data-look="clean"] [data-ke="airbnb-care-before_after"] .ke-airbnb-cat-art img {
+  content: url("/photos/care-icons/before_after.webp");
+}
+html[data-look="clean"] [data-ke="airbnb-care-open"] .ke-airbnb-cat-art img {
+  content: url("/photos/care-icons/open.webp");
+}
+html[data-look="clean"] .ke-airbnb-cat-art {
+  animation: none;
+}
+html[data-look="clean"] .ke-airbnb-cat .ke-airbnb-cat-art img {
+  border-radius: 0;
+  object-fit: contain;
+}

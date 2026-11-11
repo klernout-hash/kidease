@@ -10,6 +10,9 @@ import { confirmSuccess } from "@/lib/success-confirm";
 import { Shell } from "@/components/shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { DeskShell } from "@/components/desk-shell";
+import { AuditDeskLink } from "@/components/audit-desk-link";
+import { Phase1Desk } from "@/components/phase1-desk";
+import { Phase2Desk } from "@/components/phase2-desk";
 import { Phase5Desk } from "@/components/phase5-desk";
 import { Button } from "@/components/ui/button";
 import { BlockFamilyButton } from "@/components/block-user";
@@ -32,6 +35,7 @@ import { listTourRequests } from "@/lib/server/tours";
 import { listLeadRequests } from "@/lib/server/lead-requests";
 import { DaycareLeadInbox } from "@/components/daycare-lead-inbox";
 import { CentreFamilyDocs } from "@/components/family-vault";
+import { FamilyEmailPreview, FormSharePreview, TourFollowupPreview } from "@/components/phase0-mail-preview";
 import { EmptyState } from "@/components/empty-state";
 import { TodayUrgencyHome } from "@/components/today-urgency-home";
 import { type DaycareDesk } from "@/lib/desk-nav";
@@ -98,6 +102,7 @@ import { ChildCheckinDesk } from "@/components/child-checkin-desk";
 import { SafeArrivalPanel } from "@/components/safe-arrival-panel";
 import { ChildHealthLog } from "@/components/child-health-log";
 import { CertExpiryPanel } from "@/components/cert-expiry-panel";
+import { FamilyInviteGap } from "@/components/family-invite-gap";
 import { orgDeskStatus } from "@/lib/server/org-occupancy";
 import { gapCopy, moneyCentreChoice, pickCentre } from "@/lib/gap-features";
 import { ProviderScreeningPanel } from "@/components/provider-screening";
@@ -461,6 +466,9 @@ export function ProviderPage() {
           <p className="mt-2 text-sm text-muted">{t("claimSuccessLead")}</p>
         </section>
       ) : null}
+      {desk === "today" ? <AuditDeskLink locale={locale === "fr" ? "fr" : "en"} /> : null}
+      {desk === "today" ? <Phase1Desk locale={locale === "fr" ? "fr" : "en"} role={centreOwner ? "owner" : "staff"} /> : null}
+      {desk === "today" ? <Phase2Desk locale={locale === "fr" ? "fr" : "en"} role={centreOwner ? "owner" : "staff"} /> : null}
       {desk === "today" ? (
         <Phase5Desk locale={locale === "fr" ? "fr" : "en"} role={centreOwner ? "owner" : "staff"} slug={deskListings[0]?.slug} />
       ) : null}
@@ -477,6 +485,7 @@ export function ProviderPage() {
       ) : null}
       {desk === "today" && centreOwner ? <SafeArrivalPanel /> : null}
       {desk === "today" && centreOwner ? <CertExpiryPanel /> : null}
+      {desk === "today" && centreOwner ? <FamilyInviteGap /> : null}
       {desk === "today" && centreOwner ? <ChildHealthLog /> : null}
       {desk === "today" ? <ChildCheckinDesk /> : null}
       {desk === "today" ? <EceJobDesk mode={centreOwner ? "daycare" : "staff"} /> : null}
@@ -515,11 +524,13 @@ export function ProviderPage() {
           onChanged={() => void load()}
           onOpenDesk={(next) => setDesk(next)}
         />
+        <FamilyEmailPreview centreName={listings[0]?.name || ""} />
         </>
       ) : null}
       {desk === "requests" ? (
         <div className="min-w-0 max-w-full space-y-6">
         <CentreFamilyDocs />
+        <FormSharePreview />
         {leads.length === 0 && tours.length === 0 && pipeline.length === 0 && waiting.length === 0 ? (
           <EmptyState title={t("enquiriesEmptyTitle")} body={t("enquiriesEmptyLead")} />
         ) : (
@@ -589,6 +600,7 @@ export function ProviderPage() {
       {desk === "tours" ? (
         <div className="space-y-8">
           <TourCalendarPage audience="provider" />
+          <TourFollowupPreview centreName={listings[0]?.name || ""} />
           <TourAvailabilityDesk listings={listings} onSaved={() => void load()} />
         </div>
       ) : null}

@@ -98,3 +98,12 @@ test("recently viewed moves up as photo cards in the clean look only", () => {
   assert.doesNotMatch(row, /rounded-\[/);
   assert.match(src("src/styles.css"), /html\[data-look="clean"\] \.ke-classic-only \{\n {2}display: none !important;/);
 });
+
+test("each care type has its own icon in the clean look", () => {
+  const css = src("src/styles.css");
+  const ids = ["all", "child_care_centre", "family_home", "group_home", "nursery_preschool", "school_age", "before_after", "open"];
+  for (const id of ids) {
+    assert.ok(css.includes(`[data-ke="airbnb-care-${id}"] .ke-airbnb-cat-art img {\n  content: url("/photos/care-icons/${id}.webp");`), id);
+    assert.ok(readFileSync(join(root, "public/photos/care-icons", `${id}.webp`)).length > 1000, id);
+  }
+});
