@@ -1481,6 +1481,13 @@ async function passwordLogin(page, base, email, locale) {
  * Login, reload, desk, messages, an unchanged Save details, and Save details.
  */
 async function signOutFromMenu(page) {
+  if ((page.viewportSize()?.width ?? 0) < 1024) {
+    await page.setViewportSize({ width: 1280, height: 800 });
+  }
+  const menu = page.locator('header button[aria-label="Menu"]').first();
+  if (!(await menu.isVisible().catch(() => false))) {
+    await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
+  }
   await openHeaderMenu(page);
   const button = page.locator("#ke-nav-drawer").getByRole("button", { name: /^sign out$/i });
   await button.waitFor({ state: "visible", timeout: timeoutMs });
