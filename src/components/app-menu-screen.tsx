@@ -106,7 +106,11 @@ export function AppMenuScreen({
         </div>
       ) : null}
       <main className={`ke-menu-main ke-screen-enter ke-gutter mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col pb-6 pt-6${airbnb ? " ke-airbnb-hide-phone" : ""}`} data-ke="app-menu" data-role={chrome.role}>
-      <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">{t("navMenu")}</h1>
+      {airbnb ? (
+        <p className="text-[1.75rem] font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">{t("navMenu")}</p>
+      ) : (
+        <h1 className="text-[1.75rem] font-semibold tracking-[-0.03em] [font-family:system-ui,Segoe_UI,sans-serif]">{t("navMenu")}</h1>
+      )}
       {hostCards ? <HostCards initialEarnings={earnings} initialInsights={insights} /> : null}
       {highlight === "create" ? (
         <Link
@@ -143,13 +147,18 @@ export function AppMenuScreen({
           <MenuRow to={menuDeskPath(pathname)} search={{ screen: "payments" }} label={t("earningsPayments")} icon="terms" marker="payments" />
         ) : null}
         {highlight === "find" ? (
-          <MenuRow
-            to={parentDeskPath(pathname)}
-            search={{ tab: "children" }}
-            label={t("children")}
-            icon="parent"
-            marker="children"
-          />
+          <MenuRow to={parentDeskPath(pathname)} search={{ tab: "children" }} label={t("children")} icon="parent" marker="children" />
+        ) : null}
+        {user && highlight === "find" ? (
+          <>
+            <MenuRow to={parentDeskPath(pathname)} search={{ tab: "payments" }} label={t("payments")} icon="benefits" marker="payments" />
+            <MenuRow to={parentDeskPath(pathname)} search={{ tab: "documents" }} label={t("familyDocs")} icon="privacy" marker="documents" />
+            <MenuRow to={parentDeskPath(pathname)} search={{ tab: "tours" }} label={t("inboxTourCalendar")} icon="howItWorks" marker="tour-calendar" />
+            <MenuRow to={parentDeskPath(pathname)} search={{ tab: "family" }} label={t("shareFamilyNav")} icon="share" marker="family" />
+            <MenuRow to={parentDeskPath(pathname)} search={{ tab: "centre" }} label={t("parentCentreToolsNav")} icon="daycare" marker="centre-tools" />
+            <MenuRow to={parentDeskPath(pathname)} search={{ tab: "alerts" }} label={t("searchAlerts")} icon="notifications" marker="alerts" />
+            <MenuRow to={parentDeskPath(pathname)} search={{ tab: "stories" }} label={t("parentStoriesNav")} icon="howItWorks" marker="stories" />
+          </>
         ) : null}
         <MenuRow
           to={highlight === "create" || user ? accountDeskPath(pathname) : localePath("/login", locale)}
