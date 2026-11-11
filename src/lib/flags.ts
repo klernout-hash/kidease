@@ -122,6 +122,10 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_CENTRE_CRM_PIPELINE",
   "FEATURE_CENTRE_CRM_WORKFLOWS",
   "FEATURE_CENTRE_API",
+  "FEATURE_CUSTODY_ORDERS",
+  "FEATURE_OPERATOR_PACKS",
+  "FEATURE_EXTRA_DAYS",
+  "FEATURE_THIRD_PARTY_PAYER",
   "FEATURE_WALKIN_LEADS",
   "FEATURE_PROGRAM_WAITLIST",
   "FEATURE_WAITLIST_OFFERS",
@@ -183,6 +187,11 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_PAYOUT_STATUS",
   "FEATURE_MUNI_STATS",
   "FEATURE_PUBLIC_API",
+  "FEATURE_PARENT_ABSENCE",
+  "FEATURE_EVENT_RSVP",
+  "FEATURE_IMMUNIZATION_FILE",
+  "FEATURE_CENTRE_MINISITE",
+  "FEATURE_ROOM_FORECAST",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -420,6 +429,14 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_CENTRE_CRM_WORKFLOWS: false,
   /** Per-centre API keys and webhooks. Off. Nothing is exposed until a centre turns a key on. */
   FEATURE_CENTRE_API: false,
+  /** Court order and pickup list. Off. Both parents keep access unless an order says otherwise. */
+  FEATURE_CUSTODY_ORDERS: false,
+  /** Operator report drafts. Off. The centre files them. No portal password is stored. */
+  FEATURE_OPERATOR_PACKS: false,
+  /** Extra days and exchange days. Off. Test mode only. No charge is made. */
+  FEATURE_EXTRA_DAYS: false,
+  /** A third party can be the payer. Off. No tax advice and no waitlist jump. */
+  FEATURE_THIRD_PARTY_PAYER: false,
   /** Walk-in and phone leads. Off. Consent defaults off. */
   FEATURE_WALKIN_LEADS: false,
   /** Program waitlists and position bands. Off. */
@@ -519,6 +536,16 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_MUNI_STATS: false,
   /** Public API scopes. Off. Child health is never in scope. */
   FEATURE_PUBLIC_API: false,
+  /** Parent-reported absence. Off. In-app only. The spot is not offered again. */
+  FEATURE_PARENT_ABSENCE: false,
+  /** Centre events and RSVP. Off. No email, text, or push. */
+  FEATURE_EVENT_RSVP: false,
+  /** Immunization file status. Off. No health score and no broadcast. */
+  FEATURE_IMMUNIZATION_FILE: false,
+  /** Claimed centre page. Off. KidEase does not certify the centre. */
+  FEATURE_CENTRE_MINISITE: false,
+  /** Room opening estimate. Off. Never shown on public search. */
+  FEATURE_ROOM_FORECAST: false,
 };
 
 /**
@@ -1214,6 +1241,10 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     summary:
       "A centre key for its own families. Off. Keys are hashed, child health stays out, and webhooks stay off until the centre turns them on.",
   },
+  { key: "FEATURE_CUSTODY_ORDERS", defaultOn: false, docs: "docs/flags.md", summary: "Court order and pickup list. Off. Both parents keep access unless an order says otherwise." },
+  { key: "FEATURE_OPERATOR_PACKS", defaultOn: false, docs: "docs/flags.md", summary: "Draft packs for the licensee to file. Off. No government password is stored." },
+  { key: "FEATURE_EXTRA_DAYS", defaultOn: false, docs: "docs/flags.md", summary: "Exchange days, then extra days. Off. No charge. A full room is blocked." },
+  { key: "FEATURE_THIRD_PARTY_PAYER", defaultOn: false, docs: "docs/flags.md", summary: "An employer or other payer. Off. No tax advice and no waitlist jump." },
   {
     key: "FEATURE_WALKIN_LEADS",
     defaultOn: false,
@@ -1295,6 +1326,11 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
   { key: "FEATURE_PAYOUT_STATUS", defaultOn: false, docs: "docs/flags.md", summary: "Payout status from a stored row. Off. No payout is sent." },
   { key: "FEATURE_MUNI_STATS", defaultOn: false, docs: "docs/flags.md", summary: "Municipal counts from stored rows. Off." },
   { key: "FEATURE_PUBLIC_API", defaultOn: false, docs: "docs/flags.md", summary: "Public API scopes on the centre API. Off. Child health is never in scope." },
+  { key: "FEATURE_PARENT_ABSENCE", defaultOn: false, docs: "docs/flags.md", summary: "A parent marks a child absent. Off. In-app only. The spot is not offered again." },
+  { key: "FEATURE_EVENT_RSVP", defaultOn: false, docs: "docs/flags.md", summary: "Centre events and RSVP. Off. No email, text, or push." },
+  { key: "FEATURE_IMMUNIZATION_FILE", defaultOn: false, docs: "docs/flags.md", summary: "Immunization file status. Off. No score and no broadcast." },
+  { key: "FEATURE_CENTRE_MINISITE", defaultOn: false, docs: "docs/flags.md", summary: "A page for a claimed centre. Off. KidEase does not certify the centre." },
+  { key: "FEATURE_ROOM_FORECAST", defaultOn: false, docs: "docs/flags.md", summary: "Room opening estimate for the centre only. Off. Not a public vacancy." },
 ];
 
 let cache: RemoteFlagSnapshot | null = null;
