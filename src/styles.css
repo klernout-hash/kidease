@@ -3729,3 +3729,32 @@ html[data-look="clean"] select[data-ke="search-radius"]:hover {
   background-color: var(--color-surface-2);
   color: var(--color-fg);
 }
+/* Parts that the clean look shows in a new spot are hidden where today's look has them. */
+html[data-look="clean"] .ke-classic-only {
+  display: none !important;
+}
+/* Fixes from the daycare desk check. */
+/* White text on a status or brand fill is unreadable in dark, where those fills are light. */
+html[data-look="clean"][data-resolved-theme="dark"] :is(.bg-danger, .bg-ok, .bg-warn, .bg-accent, .bg-primary).text-white,
+html[data-look="clean"][data-theme="dark"] :is(.bg-danger, .bg-ok, .bg-warn, .bg-accent, .bg-primary).text-white {
+  color: var(--color-primary-fg);
+}
+/* Amber status text on the page takes the warning colour, which has a dark-mode value. */
+html[data-look="clean"] .text-amber-700 {
+  color: var(--color-warn);
+}
+/* The fixed navy panel keeps white text in both themes. */
+html[data-look="clean"] .bg-\[\#1a3790\],
+html[data-look="clean"] .bg-\[\#1a3790\] .text-primary-fg {
+  color: #ffffff;
+}
+html[data-look="clean"] .bg-\[\#1a3790\] .text-primary-fg\/70 {
+  color: rgba(255, 255, 255, 0.75);
+}
+/* A box with a border and no border colour would take the text colour. It takes the line colour. */
+html[data-look="clean"] .border:not([class*="border-"]) {
+  border-color: var(--color-border);
+}
+html[data-look="clean"] :is(input, select, textarea).border:not([class*="border-"]) {
+  border-color: var(--ke-field-line);
+}
