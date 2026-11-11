@@ -105,7 +105,7 @@ export function AdminContractsPanel({
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder={ds(locale, "search")}
-          className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border"
+          className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border"
         />
         <div className="flex flex-wrap gap-2">
           {(
