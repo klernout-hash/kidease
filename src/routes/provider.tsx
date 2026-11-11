@@ -97,6 +97,7 @@ import { ChildCheckinDesk } from "@/components/child-checkin-desk";
 import { SafeArrivalPanel } from "@/components/safe-arrival-panel";
 import { ChildHealthLog } from "@/components/child-health-log";
 import { CertExpiryPanel } from "@/components/cert-expiry-panel";
+import { FamilyInviteGap } from "@/components/family-invite-gap";
 import { orgDeskStatus } from "@/lib/server/org-occupancy";
 import { gapCopy, moneyCentreChoice, pickCentre } from "@/lib/gap-features";
 import { ProviderScreeningPanel } from "@/components/provider-screening";
@@ -473,6 +474,7 @@ export function ProviderPage() {
       ) : null}
       {desk === "today" && centreOwner ? <SafeArrivalPanel /> : null}
       {desk === "today" && centreOwner ? <CertExpiryPanel /> : null}
+      {desk === "today" && centreOwner ? <FamilyInviteGap /> : null}
       {desk === "today" && centreOwner ? <ChildHealthLog /> : null}
       {desk === "today" ? <ChildCheckinDesk /> : null}
       {desk === "today" ? <EceJobDesk mode={centreOwner ? "daycare" : "staff"} /> : null}

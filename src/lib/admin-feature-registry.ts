@@ -106,6 +106,7 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_MULTI_CHILD_SEARCH: "parent",
   FEATURE_VACANCY_FRESHNESS: "daycare",
   FEATURE_FEE_DISPLAY_GATE: "shared",
+  FEATURE_FAMILY_INVITE: "daycare",
 };
 
 const SWITCH_CATEGORY: Record<string, FeatureCategory> = {
