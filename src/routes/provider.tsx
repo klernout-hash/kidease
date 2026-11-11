@@ -10,6 +10,7 @@ import { confirmSuccess } from "@/lib/success-confirm";
 import { Shell } from "@/components/shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { DeskShell } from "@/components/desk-shell";
+import { AuditDeskLink } from "@/components/audit-desk-link";
 import { Button } from "@/components/ui/button";
 import { BlockFamilyButton } from "@/components/block-user";
 import { StatusBadge } from "@/components/status-badge";
@@ -461,6 +462,7 @@ export function ProviderPage() {
           <p className="mt-2 text-sm text-muted">{t("claimSuccessLead")}</p>
         </section>
       ) : null}
+      {desk === "today" ? <AuditDeskLink locale={locale === "fr" ? "fr" : "en"} /> : null}
       {desk === "today" ? <StoriesDeskLink /> : null}
       {desk === "today" ? <CurriculumDeskLink /> : null}
       {desk === "today" ? <OrgDeskLink /> : null}
