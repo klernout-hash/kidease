@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ThreadCallActions } from "@/components/thread-call-actions";
 import { inboxSearch, parseInboxSearch, resolveInboxView } from "@/lib/inbox-view";
+import { privateReturnPath } from "@/lib/role-access";
+import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { visibleThreadMessages } from "@/lib/thread-history";
 import { X } from "lucide-react";
 import { toast } from "sonner";
@@ -40,6 +42,8 @@ import { MIN_POLL_MS, pollBackoffMs } from "@/lib/fn-query";
 import type { BookingStatus, Child, Message, Schedule, TourRequest } from "@/lib/types";
 
 export const Route = createFileRoute("/inbox/$id")({
+  beforeLoad: ({ context, location }) =>
+    beforeLoadPrivate(privateReturnPath(location), (context as { roleChrome?: Parameters<typeof beforeLoadPrivate>[1] }).roleChrome),
   validateSearch: (s: Record<string, unknown>) => parseInboxSearch(s),
   component: InboxThreadRoute,
 });

@@ -18,7 +18,8 @@ test("offers split meals from programs and drop harvested fee words", () => {
 test("opened listing keeps enquire and drops rental wording", () => {
   assert.match(page, /ke-listing-read/);
   assert.match(page, /data-ke="listing-sticky-cta"/);
-  assert.match(page, /Enquire/);
+  assert.match(page, /data-ke="listing-availability"/);
+  assert.match(page, /bookTour/);
   assert.match(page, /ListingRoomRail/);
   assert.match(page, /data-ke="public-room-photos"/);
   assert.match(page, /data-ke="named-room"/);

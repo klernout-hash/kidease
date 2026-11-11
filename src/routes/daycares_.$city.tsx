@@ -1,12 +1,13 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { titleCaseCitySlug } from "@/lib/explore-search";
 
 /** Dead `/daycares/:city` hub → working search for that city. */
 export const Route = createFileRoute("/daycares_/$city")({
   beforeLoad: ({ params }) => {
-    const city = String(params.city || "").trim();
+    const label = titleCaseCitySlug(String(params.city || ""));
     throw redirect({
       to: "/search",
-      search: city ? { q: city.replace(/-/g, " ") } : undefined,
+      search: label ? { q: label } : undefined,
     });
   },
 });
