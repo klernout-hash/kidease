@@ -11,6 +11,7 @@ import { Shell } from "@/components/shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { DeskShell } from "@/components/desk-shell";
 import { AuditDeskLink } from "@/components/audit-desk-link";
+import { Phase1Desk } from "@/components/phase1-desk";
 import { Button } from "@/components/ui/button";
 import { BlockFamilyButton } from "@/components/block-user";
 import { StatusBadge } from "@/components/status-badge";
@@ -463,6 +464,7 @@ export function ProviderPage() {
         </section>
       ) : null}
       {desk === "today" ? <AuditDeskLink locale={locale === "fr" ? "fr" : "en"} /> : null}
+      {desk === "today" ? <Phase1Desk locale={locale === "fr" ? "fr" : "en"} role={centreOwner ? "owner" : "staff"} /> : null}
       {desk === "today" ? <StoriesDeskLink /> : null}
       {desk === "today" ? <CurriculumDeskLink /> : null}
       {desk === "today" ? <OrgDeskLink /> : null}
