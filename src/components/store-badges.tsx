@@ -125,7 +125,9 @@ export function StoreBadges() {
               <BadgeImage store="amazon" locale={lang} />
             </a>
           ) : (
-            <BadgeImage store="amazon" locale={lang} muted />
+            <span className="inline-flex" aria-disabled="true">
+              <BadgeImage store="amazon" locale={lang} muted />
+            </span>
           )}
           <p className="mt-2 text-sm font-medium">{names.amazon}</p>
           <p className="text-sm text-muted">{amazonUrl ? t("storeAvailableNow") : t("storeAmazonPending")}</p>
@@ -134,7 +136,7 @@ export function StoreBadges() {
           const configured = APP_STORES.find((row) => row.id === store);
           const href = configured?.live ? configured.url : null;
           return (
-            <li key={store} className="min-w-0 rounded-xl bg-surface p-3 ring-1 ring-border" aria-disabled={href ? undefined : true}>
+            <li key={store} className="min-w-0 rounded-xl bg-surface p-3 ring-1 ring-border" aria-disabled={href ? undefined : "true"}>
               {href ? (
                 <a href={href} rel="noopener noreferrer" className="inline-flex min-h-11 items-center" data-ke={`store-link-${store}`}>
                   {store === "huawei" ? null : <BadgeImage store={store} locale={lang} />}

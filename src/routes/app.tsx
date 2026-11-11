@@ -1,14 +1,12 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { GetAppScreen } from "@/routes/get-app";
-import { storeForDevice } from "@/lib/app-stores";
+import { appStoreHrefForRequest } from "@/lib/server/app-store-href";
 import { pageSeoHead } from "@/lib/page-seo";
 
 export const Route = createFileRoute("/app")({
   beforeLoad: async () => {
-    const { getRequest } = await import("@tanstack/react-start/server");
-    const request = getRequest();
-    const store = storeForDevice(request?.headers.get("user-agent"));
-    if (store?.url) throw redirect({ href: store.url });
+    const href = await appStoreHrefForRequest();
+    if (href) throw redirect({ href });
   },
   head: () =>
     pageSeoHead({
