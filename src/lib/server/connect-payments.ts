@@ -14,6 +14,8 @@ import {
   applicationFeeCents,
   classifyConnectEvent,
   connectChargeGate,
+  connectLiveEnabled,
+  connectPaymentsEnabled,
   connectFeeBps,
   connectedAccountBody,
   destinationChargeFields,
@@ -77,10 +79,9 @@ async function centreRow(sql: Sql, daycareId: string) {
   return rows[0] || null;
 }
 
-/** QA payer or hidden centre → test keys. Otherwise the live keys. Never the other way. */
+/** QA payer or hidden centre → test keys. Live keys only when KIDEASE_CONNECT_LIVE is exactly 1. */
 async function stripeCallFor(sql: Sql, userId: string, daycareId?: string | null): Promise<StripeCall | { ok: false; reason: "missing" | "off" | "live" }> {
-  const check = gate();
-  if (!check.ok) return { ok: false, reason: check.reason };
+  if (!connectPaymentsEnabled()) return { ok: false, reason: "off" };
   const payer = await payerRow(sql, userId);
   const centre = daycareId ? await centreRow(sql, daycareId) : null;
   const mode = paymentStripeMode({
@@ -94,6 +95,7 @@ async function stripeCallFor(sql: Sql, userId: string, daycareId?: string | null
           isDemo: centre.is_demo,
         })
       : false,
+    liveEnabled: connectLiveEnabled(),
   });
   const creds = stripeCredentialsForMode(mode);
   if (!creds.ok) return { ok: false, reason: "missing" };
@@ -109,6 +111,7 @@ export const connectPaymentsPublic = createServerFn({ method: "GET" }).handler(a
   const mode = paymentStripeMode({
     payerQa: payerUsesTestStripe({ email: payer?.email || user.email, isTest: payer?.is_test }),
     centreQa: false,
+    liveEnabled: connectLiveEnabled(),
   });
   return publicConnectState(process.env, mode);
 });
@@ -334,7 +337,11 @@ export const listParentPayChoices = createServerFn({ method: "GET" })
     const payer = await payerRow(sql, context.userId);
     const state = publicConnectState(
       process.env,
-      paymentStripeMode({ payerQa: payerUsesTestStripe({ email: payer?.email, isTest: payer?.is_test }), centreQa: false }),
+      paymentStripeMode({
+        payerQa: payerUsesTestStripe({ email: payer?.email, isTest: payer?.is_test }),
+        centreQa: false,
+        liveEnabled: connectLiveEnabled(),
+      }),
     );
     if (!state.enabled) {
       return { enabled: false as const, ready: false, blockedLive: false, modes: [] as { daycareId: string; daycareName: string; mode: PayMode }[], open: [] as OpenBill[] };

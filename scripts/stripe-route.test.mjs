@@ -14,10 +14,18 @@ const env = {
   STRIPE_PUBLISHABLE_KEY_TEST: "pk_test_qa",
 };
 
-test("a real parent at a public centre uses the live keys", () => {
+test("a real parent at a public centre uses the live keys only when the live switch is on", () => {
   assert.equal(payerUsesTestStripe({ email: "parent@example.com", isTest: 0 }), false);
   assert.equal(centreUsesTestStripe({ visibility: "public", isTest: 0, slug: "elm-street-daycare" }), false);
-  const mode = paymentStripeMode({ payerQa: false, centreQa: false });
+  const held = paymentStripeMode({ payerQa: false, centreQa: false, liveEnabled: false });
+  assert.equal(held, "test");
+  const heldKeys = stripeCredentialsForMode(held, env);
+  assert.equal(heldKeys.ok, true);
+  if (heldKeys.ok) {
+    assert.equal(heldKeys.secret, "sk_test_qa");
+    assert.equal(heldKeys.secret.startsWith("sk_live_"), false);
+  }
+  const mode = paymentStripeMode({ payerQa: false, centreQa: false, liveEnabled: true });
   assert.equal(mode, "live");
   const keys = stripeCredentialsForMode(mode, env);
   assert.equal(keys.ok, true);
@@ -33,7 +41,7 @@ test("a QA account uses test keys even at a real centre", () => {
   assert.equal(payerUsesTestStripe({ email: "kyle+qa-parent2@kidease.ca" }), true);
   assert.equal(payerUsesTestStripe({ email: "kyle@kidease.ca", isTest: 0 }), false);
   assert.equal(payerUsesTestStripe({ email: "parent@example.com", isTest: 1 }), true);
-  const mode = paymentStripeMode({ payerQa: true, centreQa: false });
+  const mode = paymentStripeMode({ payerQa: true, centreQa: false, liveEnabled: true });
   assert.equal(mode, "test");
   const keys = stripeCredentialsForMode(mode, env);
   assert.equal(keys.ok, true);
@@ -51,6 +59,7 @@ test("a hidden QA centre uses test keys even for a real parent", () => {
   const mode = paymentStripeMode({
     payerQa: payerUsesTestStripe({ email: "parent@example.com" }),
     centreQa: centreUsesTestStripe({ visibility: "admin_only", isTest: 1 }),
+    liveEnabled: true,
   });
   assert.equal(mode, "test");
   const keys = stripeCredentialsForMode(mode, env);

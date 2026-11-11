@@ -1,7 +1,8 @@
 /**
- * Real parents pay real centres on live Stripe.
- * A QA account or a hidden QA centre stays on test keys, so a test card
- * cannot become a real charge. No secret values are stored here.
+ * Parent payments use test keys until KIDEASE_CONNECT_LIVE is exactly 1.
+ * After that switch is on, a real parent at a public centre uses live keys.
+ * A QA account or a hidden centre stays on test keys either way.
+ * No secret values are stored here.
  */
 
 export type PaymentStripeMode = "test" | "live";
@@ -56,8 +57,18 @@ export function centreUsesTestStripe(input: {
   return false;
 }
 
-/** Either side being QA forces test mode. A real parent at a real centre is live. */
-export function paymentStripeMode(input: { payerQa?: boolean; centreQa?: boolean }): PaymentStripeMode {
+/**
+ * Live charges stay off until KIDEASE_CONNECT_LIVE is exactly 1.
+ * While that switch is off, every payment uses test keys.
+ * After it is on, a QA account or a hidden centre still uses test keys.
+ * A real parent at a public centre uses the live keys.
+ */
+export function paymentStripeMode(input: {
+  payerQa?: boolean;
+  centreQa?: boolean;
+  liveEnabled?: boolean;
+}): PaymentStripeMode {
+  if (input.liveEnabled !== true) return "test";
   if (input.payerQa || input.centreQa) return "test";
   return "live";
 }
