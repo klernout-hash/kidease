@@ -3,6 +3,8 @@
 
 alter table centre_leads add column if not exists schedule text;
 alter table centre_leads add column if not exists room_wanted text;
+alter table centre_leads add column if not exists child_id text;
+alter table centre_leads add column if not exists intake_entry text;
 alter table centre_leads add column if not exists next_step text;
 alter table centre_leads add column if not exists last_contact_at timestamptz;
 

@@ -22,7 +22,6 @@ import {
   planCentreLeadAlerts,
   planLeadStageEvent,
   resolveLeadCentre,
-  type LeadFact,
   type LostReason,
   type Reached,
   type SourceBundle,
@@ -692,42 +691,22 @@ async function insertManualLead(
   const contactName = cleanContact(data.contactName);
   const contactEmail = cleanContact(data.contactEmail, 180);
   if (!contactName && !contactEmail) return null;
-  if (contactEmail) {
-    const existing = await sql<Record<string, unknown>>`
-      select * from centre_leads
-      where daycare_id = ${daycareId} and parent_user_id is null and lower(contact_email) = ${contactEmail.toLowerCase()}
-      limit 1
-    `;
-    if (existing[0]) return { lead: toStored(existing[0]), reused: true };
-  }
-  const now = new Date().toISOString();
-  const fact: LeadFact = {
-    parentUserId: "",
-    contactName,
-    contactEmail,
-    contactPhone: cleanContact(data.contactPhone, 40),
+  const { createOrUpdateLead } = await import("@/lib/server/lead-intake-write");
+  const saved = await createOrUpdateLead(sql, {
+    entry: "manual_add",
+    daycareId,
+    email: contactEmail,
+    name: contactName,
+    phone: cleanContact(data.contactPhone, 40),
     childLabel: cleanContact(data.childLabel, 80),
     ageGroup: cleanAgeGroup(data.ageGroup),
     desiredStart: cleanStartMonth(data.desiredStart),
-    signals: { inquiry: true, tours: [], bookings: [], waitlist: [], offers: [], agreementStatus: null },
-    startedAt: now,
-    activityAt: now,
-    tourAt: null,
-    offerExpiresAt: null,
-    sourceHint: source,
-  };
-  const result = applyLeadUpdate({
-    existing: null,
-    fact,
-    now,
-    id: nid("cl"),
-    daycareId,
+    source: source === "website" ? "website" : "manual",
   });
-  if (result.error) return null;
-  const lead = { ...result.lead, parentUserId: null };
-  await saveLead(sql, lead);
-  if (result.event) await recordEvent(sql, lead, result.event, null);
-  return { lead, reused: false };
+  if (!saved.ok) return null;
+  const rows = await sql<Record<string, unknown>>`select * from centre_leads where id = ${saved.id} limit 1`;
+  if (!rows[0]) return null;
+  return { lead: toStored(rows[0]), reused: !saved.created };
 }
 
 export const saveCentreLeadSettings = createServerFn({ method: "POST" })

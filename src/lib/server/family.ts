@@ -709,6 +709,16 @@ export const createBooking = createServerFn({ method: "POST" })
       insert into messages (id, conversation_id, sender, body)
       values (${nid("msg")}, ${cid}, 'provider', ${body})
     `;
+    const { rememberCentreLead } = await import("@/lib/server/lead-intake-write");
+    await rememberCentreLead(sql, {
+      entry: status === "accepted" ? "booking_accepted" : status === "waitlist" ? "waitlist_join" : "enrol_now",
+      daycareId: data.daycareId,
+      parentUserId: homeId,
+      childId: data.childId,
+      ageGroup: data.ageGroup,
+      desiredStart: data.startMonth,
+      schedule: data.schedule,
+    });
     const actor = await lookupUser(context.userId);
     try {
       await notifyPlatform({
@@ -750,6 +760,7 @@ export const createSpotRequest = createServerFn({ method: "POST" })
       message?: string;
       parentName?: string;
       locale?: Locale;
+      intakeEntry?: "enrol_now" | "assisted_enrol" | "application";
     } | undefined) => {
       if (!input?.daycareId) throw new ClientInputError();
       return input;
@@ -861,6 +872,12 @@ export const createSpotRequest = createServerFn({ method: "POST" })
         sourceId: bookingId,
         conversationId: cid,
         notify: false,
+        entry: data.intakeEntry || "application",
+        childId: childId || null,
+        childLabel: childName,
+        ageGroup,
+        desiredStart: data.startDate,
+        schedule: data.schedule,
       });
     } catch (err) {
       console.error("[kidease-lead] spot lead skipped", err);
@@ -1139,6 +1156,12 @@ export const openConversation = createServerFn({ method: "POST" })
     if (!gate.ok) throw new Error(gate.error);
     const id = nid("cv");
     await sql`insert into conversations (id, user_id, daycare_id) values (${id}, ${home.dataUserId}, ${daycareId})`;
+    const { rememberCentreLead } = await import("@/lib/server/lead-intake-write");
+    await rememberCentreLead(sql, {
+      entry: "listing_message",
+      daycareId,
+      parentUserId: home.dataUserId,
+    });
     return { id };
   });
 
@@ -1203,6 +1226,19 @@ export const updateRequestStatus = createServerFn({ method: "POST" })
     await sql`update bookings set status = ${data.status}, status_updated_at = now() where id = ${b.id}`.catch(async () => {
       await sql`update bookings set status = ${data.status} where id = ${b.id}`;
     });
+    if (data.status === "accepted" || data.status === "waitlist") {
+      const { rememberCentreLead } = await import("@/lib/server/lead-intake-write");
+      await rememberCentreLead(sql, {
+        entry: data.status === "accepted" ? "booking_accepted" : "waitlist_join",
+        daycareId: b.daycare_id,
+        parentUserId: b.user_id,
+        childId: b.child_id,
+        childLabel: b.child_name,
+        ageGroup: b.age_group,
+        desiredStart: b.start_date || b.start_month,
+        schedule: b.schedule,
+      });
+    }
 
     if (data.status === "waitlist" && prev !== "waitlist") {
       await sql`update daycares set waitlist = waitlist + 1 where id = ${b.daycare_id}`;

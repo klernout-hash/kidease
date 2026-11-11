@@ -215,6 +215,7 @@ export const shareChildWithCentres = createServerFn({ method: "POST" })
           days: [],
           message: noteBits.join(" · ") || undefined,
           parentName: parent[0]?.name ?? undefined,
+          intakeEntry: "assisted_enrol",
         },
       });
       sent.push({

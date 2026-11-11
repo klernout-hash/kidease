@@ -213,6 +213,9 @@ export const createTourRequest = createServerFn({ method: "POST" })
         sourceId: tourId,
         conversationId: cid,
         notify: false,
+        entry: "tour_request",
+        childId: childId || null,
+        childLabel: childName || null,
       });
     } catch (err) {
       console.error("[kidease-lead] tour lead skipped", err);
