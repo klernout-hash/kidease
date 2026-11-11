@@ -1,3 +1,4 @@
+// Flags on these cards stay off.
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { PHASE1_CARD_COPY, phase1CardsFor } from "../src/lib/phase1-screens.ts";
