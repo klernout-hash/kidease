@@ -87,3 +87,11 @@ test("the tidy home keeps every part reachable", () => {
   assert.match(src("src/components/hero-claim-strip.tsx"), /data-place=\{lower \? "lower" : "hero"\}/);
   assert.match(src("src/components/explore-search-bar.tsx"), /onNearby: onLocate/);
 });
+
+test("recently viewed moves up as photo cards in the clean look only", () => {
+  const home = src("src/routes/index.tsx");
+  assert.equal(home.match(/<RecentlyViewedRow items=\{recentPublic\} cards \/>/g)?.length, 2);
+  assert.equal(home.match(/className="ke-classic-only[^"]*">\s*<RecentlyViewedRow items=\{recentPublic\} \/>/g)?.length, 2);
+  assert.match(src("src/components/recently-viewed-row.tsx"), /data-ke="recent-card"/);
+  assert.match(src("src/styles.css"), /html\[data-look="clean"\] \.ke-classic-only \{\n {2}display: none !important;/);
+});

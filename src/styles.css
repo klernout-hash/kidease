@@ -3729,3 +3729,7 @@ html[data-look="clean"] select[data-ke="search-radius"]:hover {
   background-color: var(--color-surface-2);
   color: var(--color-fg);
 }
+/* Parts that the clean look shows in a new spot are hidden where today's look has them. */
+html[data-look="clean"] .ke-classic-only {
+  display: none !important;
+}
