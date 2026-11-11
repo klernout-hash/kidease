@@ -27,7 +27,7 @@ test("product events default off and drop personal details", () => {
   assert.equal(countBucket(0), "0");
   assert.equal(countBucket(4), "1-5");
   assert.equal(countBucket(12), "6+");
-  assert.equal(PRODUCT_EVENTS.length, 29);
+  assert.equal(PRODUCT_EVENTS.length, 30);
   for (const name of [
     "signup_started",
     "signup_completed",

@@ -78,6 +78,7 @@ export const LOCALE_PAIRED_PATHS = [
   "/guides/yt",
   "/guides/nt",
   "/guides/nu",
+  "/daycare-api",
 ] as const;
 
 /** Auth desks with a French URL. Noindex, so they stay out of the sitemap. */
@@ -185,6 +186,7 @@ const FRENCH_DESK_NESTED = new Set<string>(["/parent", "/inbox"]);
 /** Parent, inbox, account, menu, provider, and support have French URLs. */
 export function isFrenchDeskPath(pathname: string | null | undefined): boolean {
   const bare = stripLocalePrefix(pathname);
+  if (bare === "/provider/leads") return true;
   if ((FRENCH_DESK_PREFIXES as readonly string[]).includes(bare)) return true;
   for (const prefix of FRENCH_DESK_NESTED) {
     if (bare.startsWith(`${prefix}/`)) return true;

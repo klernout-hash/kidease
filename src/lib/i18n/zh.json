@@ -3489,5 +3489,7 @@
   "inboxAssignMe": "Assign to me",
   "inboxOlderSearch": "{count} older messages",
   "inboxAssignedYou": "Assigned to you",
-  "notificationsBellHint": "提醒，不是未读消息"
+  "notificationsBellHint": "提醒，不是未读消息",
+  "leadTrackerNav": "家庭",
+  "leadTrackerNavHint": "每个家庭走到哪一步"
 }
