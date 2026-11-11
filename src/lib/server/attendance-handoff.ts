@@ -424,10 +424,9 @@ export async function readCentreDay(
     daycare_name: string;
     timezone: string | null;
     is_test: number | boolean | null;
-    pickup_people: string | null;
   }>(
     `select b.id as booking_id, b.child_id, b.daycare_id, coalesce(c.name, 'Child') as child_name,
-            d.name as daycare_name, d.timezone, d.is_test, c.pickup_people
+            d.name as daycare_name, d.timezone, d.is_test
      from bookings b
      join daycares d on d.id = b.daycare_id
      left join children c on c.id = b.child_id
@@ -438,6 +437,15 @@ export async function readCentreDay(
     [input.centreIds, ["accepted", "active"]],
   );
   const childIds = kids.map((row) => row.child_id).filter((id): id is string => Boolean(id));
+  const notes = childIds.length
+    ? await sql
+        .query<{ id: string; pickup_people: string | null }>(
+          `select id, pickup_people from children where id = any($1::text[])`,
+          [childIds],
+        )
+        .catch(() => [] as { id: string; pickup_people: string | null }[])
+    : [];
+  const noteByChild = new Map(notes.map((row) => [row.id, row.pickup_people]));
   const pickups = childIds.length
     ? await sql
         .query<{ child_id: string; name: string }>(
@@ -457,7 +465,7 @@ export async function readCentreDay(
       daycareName: kid.daycare_name,
       childName: kid.child_name,
       pickups: pickups.filter((person) => person.child_id === kid.child_id).map((person) => person.name),
-      pickupDetails: parsePickupContacts(kid.pickup_people),
+      pickupDetails: parsePickupContacts(kid.child_id ? noteByChild.get(kid.child_id) : ""),
       status: attendanceStatus(last),
       next: nextHandoffAction(last),
       last,
