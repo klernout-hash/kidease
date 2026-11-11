@@ -484,6 +484,11 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
           </div>
         </section>
 
+        {/* Clean look: centres this family opened sit right under the search. */}
+        <div className="ke-clean-only ke-gutter mx-auto w-full pt-4">
+          <RecentlyViewedRow items={recentPublic} cards />
+        </div>
+
         <div className="ke-gutter mx-auto w-full pt-6 md:pt-8">
           <TrustBar />
         </div>
@@ -561,7 +566,7 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
           <HeroClaimStrip lower />
         </div>
 
-        <div className="ke-gutter mx-auto w-full">
+        <div className="ke-classic-only ke-gutter mx-auto w-full">
           <RecentlyViewedRow items={recentPublic} />
         </div>
 
@@ -631,6 +636,9 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
           </div>
         </section>
         <section className="ke-gutter mx-auto w-full pb-6 pt-6">
+          <div className="ke-clean-only pb-5">
+            <RecentlyViewedRow items={recentPublic} cards />
+          </div>
           <TrustBar />
           {liveRail.items.length ? (
             <div className="mt-4" data-ke="home-live-on-kidease">
@@ -664,7 +672,9 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
               {t("heroCta")}
             </Button>
           </div>
-          <RecentlyViewedRow items={recentPublic} />
+          <div className="ke-classic-only">
+            <RecentlyViewedRow items={recentPublic} />
+          </div>
         </section>
       </div>
       </div>

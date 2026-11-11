@@ -4,6 +4,7 @@
  */
 
 import type { Sql } from "../db.ts";
+import { parsePickupContacts } from "../desk-features.ts";
 import type { CentreMemberRole } from "../centre-roles.ts";
 import {
   DEMO_CENTRE_ID,
@@ -436,6 +437,15 @@ export async function readCentreDay(
     [input.centreIds, ["accepted", "active"]],
   );
   const childIds = kids.map((row) => row.child_id).filter((id): id is string => Boolean(id));
+  const notes = childIds.length
+    ? await sql
+        .query<{ id: string; pickup_people: string | null }>(
+          `select id, pickup_people from children where id = any($1::text[])`,
+          [childIds],
+        )
+        .catch(() => [] as { id: string; pickup_people: string | null }[])
+    : [];
+  const noteByChild = new Map(notes.map((row) => [row.id, row.pickup_people]));
   const pickups = childIds.length
     ? await sql
         .query<{ child_id: string; name: string }>(
@@ -455,6 +465,7 @@ export async function readCentreDay(
       daycareName: kid.daycare_name,
       childName: kid.child_name,
       pickups: pickups.filter((person) => person.child_id === kid.child_id).map((person) => person.name),
+      pickupDetails: parsePickupContacts(kid.child_id ? noteByChild.get(kid.child_id) : ""),
       status: attendanceStatus(last),
       next: nextHandoffAction(last),
       last,
@@ -498,6 +509,7 @@ export async function readParentDay(sql: Sql, userId: string, now: Date) {
       daycareName: kid.daycare_name,
       status: attendanceStatus(last),
       demo: isDemoAttendance({ daycareId: kid.daycare_id, isTest: kid.is_test, daycareName: kid.daycare_name }),
+      timeZone: kid.timezone || "America/Winnipeg",
       events: events.map((event) => ({
         id: event.id,
         action: event.action,
@@ -505,6 +517,7 @@ export async function readParentDay(sql: Sql, userId: string, now: Date) {
         pickupName: event.pickupName,
         reason: event.reason,
         correction: Boolean(event.correctionOf),
+        timeZone: kid.timezone || "America/Winnipeg",
       })),
     });
   }

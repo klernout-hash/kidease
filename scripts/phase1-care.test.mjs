@@ -1,3 +1,4 @@
+// Flags on these cards stay off.
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { FLAG_DEFAULTS } from "../src/lib/flags.ts";
