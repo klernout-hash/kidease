@@ -294,6 +294,7 @@ export function LoginScreen({
     const clean = sanitizeNativeOAuthError(code);
     if (!clean) return null;
     if (clean === "access_denied") return t("oauthSignInCancelled");
+    if (clean === "script") return t("signInScriptMissed");
     return t("oauthSignInFailed").replace("{reason}", clean);
   }, [t]);
   const router = useRouter();

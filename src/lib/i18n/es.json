@@ -2796,6 +2796,7 @@
   "passkeyFailed": "El acceso con Face ID o huella no funcionó. Usa tu correo y tu contraseña.",
   "passkeyNotReady": "Todavía no está listo. Toca el botón otra vez.",
   "oauthSignInFailed": "El acceso no terminó ({reason}). Inténtalo de nuevo.",
+  "signInScriptMissed": "El acceso no se cargó. Actualiza la página e inténtalo de nuevo.",
   "oauthSignInCancelled": "El acceso se canceló.",
   "passkeyUnsupported": "Este navegador no puede usar Face ID ni una huella. Usa tu correo y tu contraseña.",
   "passkeyRateLimited": "Demasiados intentos. Espera unos minutos y vuelve a probar.",

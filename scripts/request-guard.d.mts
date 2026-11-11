@@ -21,5 +21,6 @@ export function decideRequest(input?: {
   cookie?: string | null;
 }):
   | { action: "next" }
-  | { action: "redirect"; status: 301 | 302 | 308; location: string }
-  | { action: "not_found"; status: 404 };
+  | { action: "redirect"; status: 301 | 302 | 303 | 308; location: string }
+  | { action: "not_found"; status: 404 }
+  | { action: "asset_miss"; status: 404 };

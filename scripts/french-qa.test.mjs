@@ -71,4 +71,5 @@ test("blocked analytics files do not reload the page", () => {
   const boundary = readFileSync(join(root, "src/lib/safe-error.ts"), "utf8");
   assert.match(boundary, /if \(\/posthog\/i\.test\(msg\)\) return false/);
   assert.match(readFileSync(join(root, "public/asset-recover.js"), "utf8"), /isBlockedAnalytics\(url\) \|\| isBlockedAnalytics\(message\)/);
+  assert.match(readFileSync(join(root, "public/asset-recover.js"), "utf8"), /cache:\s*"reload"/);
 });

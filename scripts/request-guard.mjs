@@ -241,9 +241,23 @@ export function notFoundDocument(kind = "page") {
 }
 
 /**
- * @param {{ host?: string | null, pathname?: string | null, search?: string | null, method?: string | null, cookie?: string | null }} input
- * @returns {{ action: "next" } | { action: "redirect", status: 301 | 302 | 308, location: string } | { action: "not_found", status: 404 }}
+ * Hashed build files. A miss must not fall through to the HTML shell:
+ * browsers cache that HTML under the script URL and sign-in never hydrates.
+ * @param {string} path
  */
+export function isHashedBuildAsset(path) {
+  return /^\/assets\/[^/]+\.(?:js|css|map)$/.test(path);
+}
+
+/**
+ * The login forms post only when JavaScript did not load. That must not
+ * look like a successful return to the same page.
+ * @param {string} path
+ */
+export function isLoginDocument(path) {
+  return path === "/login" || path === "/fr/login" || path === "/gov/login" || path === "/fr/gov/login";
+}
+
 /** Drop vacancy-index and gov-admin chunks from the public page preload list. */
 export function stripPrivateRoutePreloads(html) {
   if (typeof html !== "string" || !html.includes("modulepreload")) return html;
@@ -253,8 +267,21 @@ export function stripPrivateRoutePreloads(html) {
   );
 }
 
+/**
+ * @param {{ host?: string | null, pathname?: string | null, search?: string | null, method?: string | null, cookie?: string | null }} input
+ * @returns {{ action: "next" } | { action: "redirect", status: 301 | 302 | 303 | 308, location: string } | { action: "not_found", status: 404 } | { action: "asset_miss", status: 404 }}
+ */
 export function decideRequest(input = {}) {
   const path = normalizePath(input.pathname);
+  const method = String(input.method || "GET").toUpperCase();
+
+  if (isHashedBuildAsset(path)) {
+    return { action: "asset_miss", status: 404 };
+  }
+
+  if (method === "POST" && isLoginDocument(path)) {
+    return { action: "redirect", status: 303, location: `${path}?error=script` };
+  }
 
   if (path === "/for-daycares") {
     return { action: "redirect", status: 301, location: "/claim" };
