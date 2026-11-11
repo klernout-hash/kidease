@@ -113,6 +113,10 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_FR_AUTH_QC",
   "FEATURE_FAMILY_BULK_MAIL",
   "FEATURE_LIST_CSV",
+  "FEATURE_LICENCE_TYPE_FILTER",
+  "FEATURE_MULTI_CHILD_SEARCH",
+  "FEATURE_VACANCY_FRESHNESS",
+  "FEATURE_FEE_DISPLAY_GATE",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -332,6 +336,14 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_FAMILY_BULK_MAIL: false,
   /** CSV download of centre lists. Off. */
   FEATURE_LIST_CSV: false,
+  /** Licence type on public search. Off. Unknown is never guessed. */
+  FEATURE_LICENCE_TYPE_FILTER: false,
+  /** Search for two or more children. Off. No names are stored. */
+  FEATURE_MULTI_CHILD_SEARCH: false,
+  /** Open-spot freshness window. Off. No reminder is sent. */
+  FEATURE_VACANCY_FRESHNESS: false,
+  /** Hide unconfirmed fees. Off. */
+  FEATURE_FEE_DISPLAY_GATE: false,
 };
 
 /**
@@ -969,6 +981,30 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary: "Download a list as a CSV file. Off. Health columns stay hidden without document access.",
+  },
+  {
+    key: "FEATURE_LICENCE_TYPE_FILTER",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Filter search by stored licence type. Off. Unknown stays its own group and is never guessed.",
+  },
+  {
+    key: "FEATURE_MULTI_CHILD_SEARCH",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Search once for more than one child. Off. Ages are not saved. No ranking boost for a sibling discount.",
+  },
+  {
+    key: "FEATURE_VACANCY_FRESHNESS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Hide an open-spot badge after the centre's freshness window. Off. No reminder email is sent.",
+  },
+  {
+    key: "FEATURE_FEE_DISPLAY_GATE",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Hide fees that the centre or an official source has not confirmed. Off. Scraped fees stay hidden.",
   },
 ];
 

@@ -102,6 +102,10 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_FR_AUTH_QC: "shared",
   FEATURE_FAMILY_BULK_MAIL: "daycare",
   FEATURE_LIST_CSV: "daycare",
+  FEATURE_LICENCE_TYPE_FILTER: "parent",
+  FEATURE_MULTI_CHILD_SEARCH: "parent",
+  FEATURE_VACANCY_FRESHNESS: "daycare",
+  FEATURE_FEE_DISPLAY_GATE: "shared",
 };
 
 const SWITCH_CATEGORY: Record<string, FeatureCategory> = {

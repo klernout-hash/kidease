@@ -28,6 +28,13 @@ export const PRODUCT_EVENTS = [
   "family_email_sent",
   "email_bounced",
   "csv_exported",
+  "search_filter_applied",
+  "search_filter_cleared",
+  "multi_child_search_run",
+  "vacancy_confirmed",
+  "vacancy_marked_stale",
+  "vacancy_reminder_sent",
+  "fee_display_state",
 ] as const;
 
 export type ProductEventName = (typeof PRODUCT_EVENTS)[number];
@@ -54,6 +61,12 @@ const ALLOWED_KEYS = new Set([
   "recipients_bucket",
   "batched",
   "type",
+  "filter_key",
+  "value_bucket",
+  "result_count_bucket",
+  "child_count_bucket",
+  "full_match_count_bucket",
+  "state",
 ]);
 
 const PII = /email|e-mail|phone|name|child|address|postal|street|slug|token|secret|password|birth/i;
@@ -81,7 +94,8 @@ export function sanitizeProductProperties(
   if (!isProductEvent(event)) return null;
   const out: Record<string, string> = {};
   for (const [key, raw] of Object.entries(properties || {})) {
-    if (!ALLOWED_KEYS.has(key) || PII.test(key)) continue;
+    if (!ALLOWED_KEYS.has(key)) continue;
+    if (PII.test(key) && key !== "child_count_bucket" && key !== "children_tagged_bucket") continue;
     const value = String(raw ?? "").trim().slice(0, 40);
     if (!value || value.includes("@") || /\d{3}[-.\s]?\d{3}/.test(value)) continue;
     out[key] = value;
