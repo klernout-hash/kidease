@@ -5,10 +5,13 @@ import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { familyInvitePath, growthAttribution } from "@/lib/growth-loops";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { privateReturnPath } from "@/lib/role-access";
 import { createFamilyInvite, loadGrowthSummary } from "@/lib/server/growth-loops";
+import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { useCopy } from "@/lib/use-copy";
 
 export const Route = createFileRoute("/provider/families")({
+  beforeLoad: ({ context, location }) => beforeLoadPrivate(privateReturnPath(location), context.roleChrome),
   loader: () => loadGrowthSummary().catch(() => ({ enabled: false as const, thankYous: 0, invite: null })),
   head: () => ({
     meta: [

@@ -28,7 +28,7 @@ export function HeaderAccount() {
 
   return (
     <div className="flex items-center gap-0.5" data-ke="header-account">
-      <NotificationBell />
+      {showAvatar ? <NotificationBell /> : null}
       {showAvatar ? (
         <Link
           to={accountDeskPath(pathname)}
