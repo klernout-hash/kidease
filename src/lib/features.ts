@@ -401,6 +401,16 @@ export function familyVaultEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_FAMILY_VAULT", env);
 }
 
+/** Centre email to one or more families. Off. No message is sent. */
+export function familyBulkMailEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_FAMILY_BULK_MAIL", env);
+}
+
+/** CSV download for centre lists. Off. */
+export function listCsvEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_LIST_CSV", env);
+}
+
 /** Daycare inbox also lists requests with no thread. Default off. */
 export function unifiedInboxEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_UNIFIED_INBOX", env);
