@@ -119,6 +119,17 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_FEE_DISPLAY_GATE",
   "FEATURE_CENTRE_LEAD_TRACKER",
   "FEATURE_CENTRE_API",
+  "FEATURE_START_DATE_SEARCH",
+  "FEATURE_LEAD_CSV",
+  "FEATURE_LEAD_TEMPLATES",
+  "FEATURE_CUSTOM_ROLES",
+  "FEATURE_STAFF_MESSAGES",
+  "FEATURE_NATIVE_PUSH",
+  "FEATURE_PTO",
+  "FEATURE_SPLIT_PAYERS",
+  "FEATURE_ACCOUNT_CREDITS",
+  "FEATURE_MEDICATION_LOG",
+  "FEATURE_SITE_TRANSFER",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -350,6 +361,28 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_CENTRE_LEAD_TRACKER: false,
   /** Per-centre API keys and webhooks. Off. Nothing is exposed until a centre turns a key on. */
   FEATURE_CENTRE_API: false,
+  /** Search by a stored opening date. Off. A missing date is unknown. */
+  FEATURE_START_DATE_SEARCH: false,
+  /** Import leads from a CSV. Off. No email is sent. */
+  FEATURE_LEAD_CSV: false,
+  /** English and French lead templates. Off. Nothing is sent. */
+  FEATURE_LEAD_TEMPLATES: false,
+  /** Custom staff permissions. Off. A permission is allowed only when it is listed. */
+  FEATURE_CUSTOM_ROLES: false,
+  /** Messages between staff at one centre. Off. Parents cannot read them. */
+  FEATURE_STAFF_MESSAGES: false,
+  /** Native push. Off. Sending stays disabled. */
+  FEATURE_NATIVE_PUSH: false,
+  /** Time off requests. Off. A person cannot approve their own request. */
+  FEATURE_PTO: false,
+  /** Split a charge across payers. Off. No charge is made. */
+  FEATURE_SPLIT_PAYERS: false,
+  /** Apply a stored credit to a balance. Off. No charge is made. */
+  FEATURE_ACCOUNT_CREDITS: false,
+  /** Medication name, permission, and health checks. Off. Reminders are not sent. */
+  FEATURE_MEDICATION_LOG: false,
+  /** Move a child between two centres the same owner runs. Off. */
+  FEATURE_SITE_TRANSFER: false,
 };
 
 /**
@@ -1026,6 +1059,17 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     summary:
       "A centre key for its own families. Off. Keys are hashed, child health stays out, and webhooks stay off until the centre turns them on.",
   },
+  { key: "FEATURE_START_DATE_SEARCH", defaultOn: false, docs: "docs/flags.md", summary: "Match a stored opening date. Off. A missing date stays unknown." },
+  { key: "FEATURE_LEAD_CSV", defaultOn: false, docs: "docs/flags.md", summary: "Import leads from a spreadsheet. Off. A row without a name is skipped. No email is sent." },
+  { key: "FEATURE_LEAD_TEMPLATES", defaultOn: false, docs: "docs/flags.md", summary: "Lead notes in English and French. Off. Nothing is sent." },
+  { key: "FEATURE_CUSTOM_ROLES", defaultOn: false, docs: "docs/flags.md", summary: "Extra staff permissions. Off. Only listed permissions are allowed." },
+  { key: "FEATURE_STAFF_MESSAGES", defaultOn: false, docs: "docs/flags.md", summary: "Staff notes at one centre. Off. Parents cannot read them." },
+  { key: "FEATURE_NATIVE_PUSH", defaultOn: false, docs: "docs/flags.md", summary: "Phone push. Off. Sending stays disabled." },
+  { key: "FEATURE_PTO", defaultOn: false, docs: "docs/flags.md", summary: "Time off requests and totals. Off. No one approves their own request." },
+  { key: "FEATURE_SPLIT_PAYERS", defaultOn: false, docs: "docs/flags.md", summary: "Split a bill across payers. Off. Shares must add to 100. No charge is made." },
+  { key: "FEATURE_ACCOUNT_CREDITS", defaultOn: false, docs: "docs/flags.md", summary: "Apply a stored credit. Off. The balance cannot go below zero. No charge is made." },
+  { key: "FEATURE_MEDICATION_LOG", defaultOn: false, docs: "docs/flags.md", summary: "Medication name, permission, and health checks. Off. Reminders are not sent." },
+  { key: "FEATURE_SITE_TRANSFER", defaultOn: false, docs: "docs/flags.md", summary: "Move a child between two centres one owner runs. Off." },
 ];
 
 let cache: RemoteFlagSnapshot | null = null;
