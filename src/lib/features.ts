@@ -524,6 +524,16 @@ export function canSeeProviderSubscriptions(
   return false;
 }
 
+/** Family steps on the daycare desk. Off. Does not send mail, text, or push. */
+export function centreLeadTrackerEnabled(env?: EnvMap): boolean {
+  return evaluateFeatureFlag("FEATURE_CENTRE_LEAD_TRACKER", env);
+}
+
+/** Per-centre API. Off. Also needs the lead tracker for the desk that creates keys. */
+export function centreApiEnabled(env?: EnvMap): boolean {
+  return centreLeadTrackerEnabled(env) && evaluateFeatureFlag("FEATURE_CENTRE_API", env);
+}
+
 /** Unified alerts. Off. Saving choices does not send. */
 export function unifiedAlertsEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_UNIFIED_ALERTS", env);

@@ -3744,4 +3744,6 @@ export const fr = {
     msv2TopRated: "Mieux noté",
     msv2Meals: "Repas inclus",
     msv2SubsidyChip: "Subvention acceptée",
+    leadTrackerNav: "Familles",
+    leadTrackerNavHint: "L’étape de chaque famille",
 } as const satisfies Record<CopyKey, string>;
