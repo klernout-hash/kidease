@@ -117,6 +117,8 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_MULTI_CHILD_SEARCH",
   "FEATURE_VACANCY_FRESHNESS",
   "FEATURE_FEE_DISPLAY_GATE",
+  "FEATURE_CENTRE_LEAD_TRACKER",
+  "FEATURE_CENTRE_API",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -344,6 +346,10 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_VACANCY_FRESHNESS: false,
   /** Hide unconfirmed fees. Off. */
   FEATURE_FEE_DISPLAY_GATE: false,
+  /** Family pipeline on the daycare desk. Off. No mail, text, or push. */
+  FEATURE_CENTRE_LEAD_TRACKER: false,
+  /** Per-centre API keys and webhooks. Off. Nothing is exposed until a centre turns a key on. */
+  FEATURE_CENTRE_API: false,
 };
 
 /**
@@ -1005,6 +1011,20 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     defaultOn: false,
     docs: "docs/flags.md",
     summary: "Hide fees that the centre or an official source has not confirmed. Off. Scraped fees stay hidden.",
+  },
+  {
+    key: "FEATURE_CENTRE_LEAD_TRACKER",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "Family steps on the daycare desk, from inquiry to enrolled. Off. Uses messages, tours, waitlists, and enrolments the family already shared. No mail, text, or push.",
+  },
+  {
+    key: "FEATURE_CENTRE_API",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary:
+      "A centre key for its own families. Off. Keys are hashed, child health stays out, and webhooks stay off until the centre turns them on.",
   },
 ];
 

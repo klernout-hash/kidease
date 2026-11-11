@@ -3729,6 +3729,8 @@ export const en = {
     msv2TopRated: "Top rated",
     msv2Meals: "Meals included",
     msv2SubsidyChip: "Subsidy accepted",
+    leadTrackerNav: "Families",
+    leadTrackerNavHint: "Which step each family is on",
 } as const;
 
 export type CopyKey = keyof typeof en;
