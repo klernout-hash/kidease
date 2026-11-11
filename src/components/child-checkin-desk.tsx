@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { attendanceCopy, initialsFor, type AttendanceStatus } from "@/lib/attendance-handoff";
 import { featureCopy } from "@/lib/flagged-feature-copy";
 import { localePath } from "@/lib/locale-path";
-import { localeTag } from "@/lib/languages";
+import { centreClockLabel } from "@/lib/parent-arrival";
 import {
   correctChildCheck,
   listDoorRoster,
@@ -15,10 +15,8 @@ import {
 import type { Locale } from "@/lib/types";
 import { useCopy } from "@/lib/use-copy";
 
-function when(iso: string, locale: Locale) {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleString(localeTag(locale), { dateStyle: "medium", timeStyle: "short" });
+function when(iso: string, locale: Locale, timeZone?: string | null) {
+  return centreClockLabel(iso, locale === "fr" ? "fr" : "en", timeZone || "America/Winnipeg");
 }
 
 function statusWord(status: AttendanceStatus, copy: ReturnType<typeof attendanceCopy>) {
@@ -282,7 +280,7 @@ export function ChildCheckHistory() {
                   {child.events.map((event) => (
                     <li key={event.id} className="py-2">
                       {event.correction ? `${copy.correct}: ` : ""}
-                      {event.action === "check_in" ? legacy.arrived : legacy.left} · {when(event.at, locale)}
+                      {event.action === "check_in" ? legacy.arrived : legacy.left} · {when(event.at, locale, event.timeZone || child.timeZone)}
                       {event.pickupName ? ` · ${event.pickupName}` : ""}
                       {event.reason ? ` · ${event.reason}` : ""}
                     </li>

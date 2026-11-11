@@ -23,6 +23,7 @@ test("a parent sees only today's saved arrival and departure", () => {
     0,
   );
   assert.match(lines[0], /a\.m\.|p\.m\./);
+  assert.match(lines[0], /\b(EST|CST|CDT|CT)\b/);
   const fr = parentArrivalSentences(
     [{ childName: "Ada", daycareName: "Oaks", action: "check_in", at: "2026-11-09T14:12:00.000Z", timeZone: "America/Winnipeg" }],
     now,

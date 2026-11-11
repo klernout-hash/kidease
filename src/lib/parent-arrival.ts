@@ -33,16 +33,37 @@ function centreDay(value: string, timeZone: string): string | null {
   }).format(date);
 }
 
-/** English uses a.m./p.m. French uses 24-hour. Both use the centre zone. */
-function centreTime(value: string, locale: "en" | "fr", timeZone: string): string | null {
+function shortZone(date: Date, timeZone: string): string {
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      hour: "numeric",
+      timeZoneName: "short",
+    }).formatToParts(date);
+    return parts.find((part) => part.type === "timeZoneName")?.value || "";
+  } catch {
+    return "";
+  }
+}
+
+/** English uses a.m./p.m. French uses 24-hour. Both use the centre zone and show its short name. */
+export function centreClockLabel(value: string, locale: "en" | "fr", timeZone: string | null | undefined): string {
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return new Intl.DateTimeFormat(locale === "fr" ? "en-GB" : "en-CA", {
-    timeZone,
+  if (Number.isNaN(date.getTime())) return "";
+  const zone = zoneOf(timeZone);
+  const clock = new Intl.DateTimeFormat(locale === "fr" ? "en-GB" : "en-CA", {
+    timeZone: zone,
     hour: locale === "fr" ? "2-digit" : "numeric",
     minute: "2-digit",
     hourCycle: locale === "fr" ? "h23" : "h12",
   }).format(date);
+  const name = shortZone(date, zone);
+  return name ? `${clock} ${name}` : clock;
+}
+
+function centreTime(value: string, locale: "en" | "fr", timeZone: string): string | null {
+  const label = centreClockLabel(value, locale, timeZone);
+  return label || null;
 }
 
 export function parentArrivalSentences(
