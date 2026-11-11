@@ -45,6 +45,8 @@ test("admin documents are noindex paths and are not listed as robots Disallow", 
   assert.equal(isAdminNoindexPath("/parent"), false);
   assert.equal(isAdminNoindexPath("/provider"), false);
   assert.equal(isAdminNoindexPath("/login"), false);
+  assert.equal(isAdminNoindexPath("/use-the-website"), true);
+  assert.equal(isAdminNoindexPath("/app-admin-unavailable"), true);
 });
 
 test("isSensitiveDeskPath is prefix-safe", () => {

@@ -1,4 +1,5 @@
 import type { CopyKey } from "./copy.ts";
+import type { ParentUrlTab } from "./parent-tab.ts";
 import { CENTRE_TOOLS } from "./centre-tools.ts";
 import { frenchPath, isFrenchDeskPath, isFrPath, stripLocalePrefix } from "./locale-path.ts";
 
@@ -126,6 +127,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "email-sms", label: "Email and SMS", labelKey: "emailAndSms", href: "/account", search: { tab: "profile", section: "email-sms", desk: "parent" } },
     { id: "centre-tools", label: "From your daycare", hint: "Menus, notes, and bills", labelKey: "parentCentreToolsNav", hintKey: "parentCentreToolsNavHint", href: "/parent", search: { tab: "centre" } },
     { id: "documents", label: "Documents", hint: "Immunization records and subsidy forms", labelKey: "familyDocs", hintKey: "familyDocsHint", href: "/parent", search: { tab: "documents" } },
+    { id: "stories", label: "Learning stories", hint: "Notes from your daycare", labelKey: "parentStoriesNav", href: "/parent", search: { tab: "stories" } },
     { id: "tour-calendar", label: "Tour calendar", hint: "Visit times and a notice reminder", labelKey: "inboxTourCalendar", hintKey: "deskNavToursHint", href: "/parent", search: { tab: "tours" } },
     { id: "account", label: "Account", hint: "Family profile and alerts", labelKey: "account", hintKey: "deskNavParentAccountHint", href: "/account", search: { tab: "profile", desk: "parent" } },
   ],
@@ -177,9 +179,7 @@ export function providerNavSearch(id: string): { desk: DaycareDesk } {
   return { desk: "today" };
 }
 
-export function parentNavSearch(
-  id: string,
-): { tab?: "explore" | "saved" | "enrolled" | "requests" | "payments" | "alerts" | "children" | "care" | "waitlists" | "family" } {
+export function parentNavSearch(id: string): { tab?: ParentUrlTab } {
   if (id === "saved") return { tab: "saved" };
   if (id === "bookings") return { tab: "enrolled" };
   if (id === "waitlists") return { tab: "waitlists" };
@@ -189,6 +189,11 @@ export function parentNavSearch(
   if (id === "family") return { tab: "family" };
   if (id === "care") return { tab: "care" };
   if (id === "explore") return { tab: "explore" };
+  if (id === "documents") return { tab: "documents" };
+  if (id === "tour-calendar") return { tab: "tours" };
+  if (id === "centre-tools") return { tab: "centre" };
+  if (id === "stories") return { tab: "stories" };
+  if (id === "learning") return { tab: "learning" };
   return {};
 }
 
@@ -347,7 +352,7 @@ export type DeskGroup = {
 export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
   parent: [
     { id: "family", label: "Family desk", labelKey: "familyDeskTitle", open: true, itemIds: ["explore", "saved", "bookings", "waitlists", "messages"] },
-    { id: "my-family", label: "My family", labelKey: "navMyFamily", open: true, itemIds: ["children", "family", "care", "payments", "documents", "tour-calendar", "centre-tools"] },
+    { id: "my-family", label: "My family", labelKey: "navMyFamily", open: true, itemIds: ["children", "family", "care", "payments", "documents", "stories", "tour-calendar", "centre-tools"] },
     { id: "search-tools", label: "Search tools", labelKey: "navSearchTools", open: true, itemIds: ["search", "alerts"] },
     { id: "account", label: "Account", labelKey: "account", open: true, itemIds: ["profile", "appearance", "upgrade", "delete"] },
     { id: "settings", label: "Settings", labelKey: "settings", open: true, itemIds: ["notify-prefs", "security", "email-sms"] },

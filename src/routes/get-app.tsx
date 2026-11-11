@@ -23,6 +23,7 @@ import { showStoreComingSoon } from "@/lib/store-placeholders";
 import { useCopy } from "@/lib/use-copy";
 import { useInNativeShell, useStoreChannel } from "@/lib/use-native-shell";
 import { HomeScreenGuide } from "@/components/home-screen-guide";
+import { AppStoreStatus } from "@/components/app-store-status";
 import { StoreBadges } from "@/components/store-badges";
 import { JsonLd } from "@/components/json-ld";
 import { MARKETING_PAGE_SEO, organizationGraphJsonLdScript, pageSeoHead } from "@/lib/page-seo";
@@ -90,6 +91,7 @@ export function GetAppScreen({ dev }: { dev?: "1" }) {
             <p className="mt-6 text-xs font-medium uppercase tracking-[0.16em] text-muted">{t("getAppKicker")}</p>
             <h1 className="mt-3 font-display text-4xl md:text-5xl">{t("getApp")}</h1>
             <p className="mt-4 max-w-md text-muted">{t("getAppLead")}</p>
+            <AppStoreStatus />
             {showStores && amazonUrl ? (
               <div data-ke="store-coming-soon">
                 <StoreBadges />
