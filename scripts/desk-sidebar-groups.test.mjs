@@ -34,6 +34,7 @@ const PARENT_ON = [
   "/parent?tab=explore",
   "/parent?tab=payments",
   "/parent?tab=saved",
+  "/parent?tab=stories",
   "/parent?tab=subscription",
   "/parent?tab=waitlists",
   "/search",
@@ -106,7 +107,7 @@ test("parent and daycare groups stay on the live headings", () => {
     DESK_GROUPS.parent.map((group) => [...group.itemIds]),
     [
       ["explore", "saved", "bookings", "waitlists", "messages"],
-      ["children", "family", "care", "payments", "documents", "tour-calendar", "centre-tools"],
+      ["children", "family", "care", "payments", "documents", "stories", "tour-calendar", "centre-tools"],
       ["search", "alerts"],
       ["profile", "appearance", "upgrade", "delete"],
       ["notify-prefs", "security", "email-sms"],

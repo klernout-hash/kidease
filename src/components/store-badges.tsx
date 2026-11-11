@@ -1,5 +1,6 @@
 import type { MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
+import { APP_STORES } from "@/lib/app-stores";
 import { AMAZON_APPSTORE_URL, openAmazonListing } from "@/lib/amazon-appstore";
 import type { ShippedLocale } from "@/lib/languages";
 import { useCopy } from "@/lib/use-copy";
@@ -65,7 +66,7 @@ const BADGES: Record<
   },
 };
 
-const SOON = ["apple", "play", "samsung", "microsoft", "huawei"] as const;
+const TILES = ["amazon", "play", "huawei", "apple", "samsung", "microsoft"] as const;
 
 function badgeSrc(store: keyof typeof BADGES, locale: ShippedLocale): string {
   return BADGES[store].src[locale] ?? BADGES[store].src.en;
@@ -124,18 +125,30 @@ export function StoreBadges() {
               <BadgeImage store="amazon" locale={lang} />
             </a>
           ) : (
-            <BadgeImage store="amazon" locale={lang} muted />
+            <span className="inline-flex" aria-disabled="true">
+              <BadgeImage store="amazon" locale={lang} muted />
+            </span>
           )}
           <p className="mt-2 text-sm font-medium">{names.amazon}</p>
           <p className="text-sm text-muted">{amazonUrl ? t("storeAvailableNow") : t("storeAmazonPending")}</p>
         </li>
-        {SOON.map((store) => (
-          <li key={store} className="min-w-0 rounded-xl bg-surface p-3 ring-1 ring-border" aria-disabled="true">
-            {store === "huawei" ? null : <BadgeImage store={store} locale={lang} muted />}
-            <p className={store === "huawei" ? "text-sm font-medium" : "mt-2 text-sm font-medium"}>{names[store]}</p>
-            <p className="text-sm text-muted">{t("storeComingSoon")}</p>
-          </li>
-        ))}
+        {TILES.filter((store) => store !== "amazon").map((store) => {
+          const configured = APP_STORES.find((row) => row.id === store);
+          const href = configured?.live ? configured.url : null;
+          return (
+            <li key={store} className="min-w-0 rounded-xl bg-surface p-3 ring-1 ring-border" aria-disabled={href ? undefined : "true"}>
+              {href ? (
+                <a href={href} rel="noopener noreferrer" className="inline-flex min-h-11 items-center" data-ke={`store-link-${store}`}>
+                  {store === "huawei" ? null : <BadgeImage store={store} locale={lang} />}
+                </a>
+              ) : store === "huawei" ? null : (
+                <BadgeImage store={store} locale={lang} muted />
+              )}
+              <p className={store === "huawei" && !href ? "text-sm font-medium" : "mt-2 text-sm font-medium"}>{names[store]}</p>
+              <p className="text-sm text-muted">{href ? t("storeAvailableNow") : t("storeComingSoon")}</p>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

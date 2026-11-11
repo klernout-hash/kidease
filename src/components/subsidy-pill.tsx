@@ -38,7 +38,7 @@ export function SubsidyPill({
         data-verified-at={subsidy.verified_at}
         title={note}
         aria-expanded={open}
-        className={cn(pulse && "ke-priority-pill", className)}
+        className={cn("inline-flex min-h-11 items-center px-3 touch-manipulation", pulse && "ke-priority-pill", className)}
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();
@@ -47,12 +47,12 @@ export function SubsidyPill({
       >
         {subsidyLabel(subsidy, loc)}
       </button>
-      <span data-ke="card-fee-source" className="mt-0.5 inline-flex max-w-[16rem] rounded bg-black/75 px-1.5 py-0.5 text-left text-[11px] font-normal leading-4 text-white">
+      <span data-ke="card-fee-source" className="mt-0.5 inline-flex max-w-[16rem] items-center rounded bg-black/75 text-left text-[11px] font-normal leading-4 text-white">
         <a
           href={subsidy.subsidy_source}
           target="_blank"
           rel="noreferrer"
-          className="underline"
+          className="inline-flex min-h-11 items-center px-3 underline touch-manipulation"
           onClick={(event) => event.stopPropagation()}
         >
           {loc === "fr" ? "Source" : "Source"}
