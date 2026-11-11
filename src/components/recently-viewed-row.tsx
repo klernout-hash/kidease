@@ -31,7 +31,7 @@ export function RecentlyViewedRow({ items, cards = false }: { items: Card[]; car
                   <Link
                     to={localePath(`/daycare/${item.slug}`, locale)}
                     data-ke="recent-card"
-                    className="block min-h-11 touch-manipulation rounded-[20px] text-inherit no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                    className="block min-h-11 touch-manipulation rounded-2xl text-inherit no-underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                   >
                     <BuildingPhoto
                       src={photo}
@@ -39,7 +39,7 @@ export function RecentlyViewedRow({ items, cards = false }: { items: Card[]; car
                       width={336}
                       height={320}
                       sizes="(max-width: 767px) 42vw, 168px"
-                      className="aspect-[20/19] w-full overflow-hidden rounded-[20px]"
+                      className="aspect-[20/19] w-full overflow-hidden rounded-2xl"
                     />
                     <span className="mt-2 line-clamp-2 block text-sm font-semibold leading-5 text-fg">{name}</span>
                     <span className="block truncate text-[13px] font-normal leading-5 text-muted">{item.city}</span>
