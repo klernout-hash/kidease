@@ -74,7 +74,10 @@ test("meals, naps, pickup people, and provinces stay factual", () => {
     { name: "Amina B.", phone: "204-555-0100", relationship: "Grandmother" },
     { name: "", phone: "1", relationship: "x" },
   ]);
-  assert.deepEqual(parsePickupContacts(stored), [{ name: "Amina B.", phone: "204-555-0100", relationship: "Grandmother" }]);
+  assert.deepEqual(parsePickupContacts(stored), [{ name: "Amina B.", phone: "204-555-0100", relationship: "Grandmother", note: "", restricted: false }]);
+  const restricted = formatPickupContacts([{ name: "Sam", phone: "", relationship: "Uncle", note: "Custody order", restricted: true }]);
+  assert.equal(parsePickupContacts(restricted)[0]?.restricted, true);
+  assert.match(restricted, /Custody order/);
   assert.equal(isCanadaProvince("MB"), true);
   assert.equal(isCanadaProvince("QC"), true);
   assert.equal(isCanadaProvince("NY"), false);

@@ -6,6 +6,7 @@ import { useViewAs } from "@/components/view-as-banner";
 import { mintThreadVoiceToken } from "@/lib/server/voice-call";
 import { primeCallMedia } from "@/lib/call-permissions";
 import { createCallRinger, type RingEnd } from "@/lib/call-ring-client";
+import { voiceErrorPlan, voiceTokenRefreshPlan } from "@/lib/voice-device";
 
 /**
  * Browser call through Twilio. The access token stays in memory.
@@ -16,6 +17,7 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
   const viewing = useViewAs();
   const deviceRef = useRef<Device | null>(null);
   const callRef = useRef<Call | null>(null);
+  const toldRef = useRef(false);
   const [phase, setPhase] = useState<"ready" | "ringing" | "incoming" | "connected" | "error">("ready");
   const [note, setNote] = useState("");
   const [muted, setMuted] = useState(false);
@@ -60,6 +62,39 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
             setPhase("ready");
           });
         });
+        const refresh = async () => {
+          const next = await mintThreadVoiceToken({ data: { conversationId } }).catch(() => null);
+          const plan = voiceTokenRefreshPlan({
+            registered: device.state === "registered",
+            token: next?.ok ? next.token : null,
+          });
+          if (plan === "skip") return;
+          if (plan === "register") {
+            await device.register().catch(() => undefined);
+            if (device.state === "registered" && next?.ok) device.updateToken(next.token);
+            return;
+          }
+          if (next?.ok) device.updateToken(next.token);
+        };
+        const onTrouble = (error: { code?: number }) => {
+          const plan = voiceErrorPlan(Number(error?.code));
+          if (plan === "register") {
+            void device.register().catch(() => undefined);
+            return;
+          }
+          if (plan === "refresh") {
+            void refresh();
+            return;
+          }
+          if (plan !== "once" || toldRef.current) return;
+          toldRef.current = true;
+          setPhase("error");
+          setNote(t("voiceFailed"));
+        };
+        device.on("tokenWillExpire", () => {
+          void refresh();
+        });
+        device.on("error", onTrouble);
         await device.register();
         deviceRef.current = device;
         if (!cancelled) setBusy(false);
@@ -93,6 +128,17 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
 
   function watch(call: Call) {
     callRef.current = call;
+    call.on("error", (error: { code?: number }) => {
+      const plan = voiceErrorPlan(Number(error?.code));
+      if (plan === "register") {
+        void deviceRef.current?.register().catch(() => undefined);
+        return;
+      }
+      if (plan !== "once" || toldRef.current) return;
+      toldRef.current = true;
+      setPhase("error");
+      setNote(t("voiceFailed"));
+    });
     call.on("accept", () => {
       endRing("answered");
       setPhase("connected");
@@ -182,11 +228,11 @@ export function VoiceCallPanel({ conversationId }: { conversationId: string }) {
   const incoming = phase === "incoming";
 
   return (
-    <div className="mt-6 min-w-0 rounded-2xl bg-surface px-5 py-6 ring-1 ring-border" data-ke-live="voice">
+    <div className="mt-6 min-w-0 rounded-xl bg-surface px-5 py-6 ring-1 ring-border" data-ke-live="voice">
       <p className="text-sm text-muted" aria-live="polite">
         {busy ? t("loading") : note || t("voiceWaitingHint")}
       </p>
-      <p className="mt-2 text-xs text-subtle" data-ke="media-permission-note">{t("mediaPermissionNote")}</p>
+      <p className="mt-2 text-xs text-muted" data-ke="media-permission-note">{t("mediaPermissionNote")}</p>
       <div className="mt-4 flex flex-wrap gap-2">
         {incoming ? (
           <Button type="button" className="min-w-11" onClick={() => void answer()}>

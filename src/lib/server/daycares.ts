@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { sealPublicHomes } from "@/lib/server/home-address-privacy";
-import { eceJobsEnabled, hostListingEnabled, reviewReportsEnabled } from "@/lib/features";
+import { eceJobsEnabled, hostListingEnabled, inclusiveFiltersEnabled, reviewReportsEnabled } from "@/lib/features";
 import { patchAvailabilityMonth } from "@/lib/host-calendar";
 import { filterByLocationLock, resolveLocationLock } from "@/lib/location-lock";
 import { cardSortKm, includeCardInRadius } from "@/lib/card-distance";
@@ -39,6 +39,7 @@ import { parseSearchSort } from "@/lib/search-sort";
 import { compareSmartMatchOrNearest, whyForListing, type RankAge, type SmartMatchQuery } from "@/lib/ranking/score";
 import { excludeRankingV2, rankingV2TieBreak } from "@/lib/ranking/v2";
 import { rankingV2Enabled } from "@/lib/features";
+import { matchesDeclaredCare, parseCareKeys } from "@/lib/inclusive-search";
 import { listingSubsidy } from "@/lib/fee-program";
 import {
   compareParentFit,
@@ -116,6 +117,8 @@ type SearchInput = {
   name?: string;
   /** Live on KidEase. Same centres as Claim verified. Filtered before paging. */
   live?: boolean;
+  /** Declared diet and extra support, comma-separated. Ignored while the flag is off. */
+  diet?: string;
 };
 
 function parseSort(raw: unknown): SearchSort {
@@ -729,6 +732,7 @@ function normalizeSearchInput(input: SearchInput | null | undefined): SearchInpu
     parentFit: parseParentFit(input.parentFit),
     name: typeof input.name === "string" ? input.name.trim().slice(0, 80) : "",
     live: readLiveSearchFlag(input.live),
+    diet: parseCareKeys(input.diet).join(","),
     facility: listedDaycareTypeFromSearch(
       input.facility === "before_after" ? { cat: "before-after" } : { fac: input.facility },
     ),
@@ -801,12 +805,16 @@ export const searchDaycarePage = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { page, ...query } = data;
     const found = await rememberSearch(
-      `${searchMemoKey(query)}:${parentFitCacheKey(query.parentFit ?? null)}`,
+      `${searchMemoKey(query)}:${parentFitCacheKey(query.parentFit ?? null)}:diet=${query.diet || ""}`,
       () => searchIncludingLive(query),
     );
     const listed = query.live ? found.filter((card) => isClaimVerified(card) && !card.isTest) : found;
     const all = await appendTestAccountFixtures(query, listed);
-    return sealPublicHomes(sliceSearchPage(all, page));
+    const diet = parseCareKeys(query.diet);
+    const narrowed = diet.length && inclusiveFiltersEnabled()
+      ? all.filter((card) => matchesDeclaredCare(card.amenities, diet))
+      : all;
+    return sealPublicHomes(sliceSearchPage(narrowed, page));
   });
 
 /** Home type rows page 12 at a time. Keep a few pages of each nearby type. */

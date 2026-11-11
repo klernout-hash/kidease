@@ -1,0 +1,122 @@
+# Production plan, 10 Nov 2026
+
+Source list for Phases 1–4. Nothing here ships until Kyle says the phases go out together. No merge, and no production flag or environment change, until then.
+
+Every new feature sits behind a flag that defaults off. Where a Kyle decision is still open, the safe default is no sends, no charges, and nothing a family can see until that flag is on. New screens follow `docs/clean-look/README.md`, in English and French.
+
+## Phase 1
+
+- MKT-04 Search filters (age, schedule, licence)
+- MKT-06 Sibling/multi-child search
+- MKT-16 Vacancy freshness
+- ADM-03 Walk-in lead entry
+- ADM-12 Program-specific waitlist
+- SEC-01 Audit log
+- ADM-13 Waitlist rank
+- ADM-14 Waitlist sibling/age/start-date
+- ADM-15 Enrol from waitlist
+- ADM-22 Form/packet statuses
+- ADM-31 Fees hidden until claim
+- MSG-12 Photos/video in family comms
+- MSG-09 Newsfeed/announcements
+- HR-17 Pickup authorized contacts
+- ATT-07 Pickup signature/authorized pickup
+- ATT-09 Emergency/fire attendance view
+- ATT-11 Parent arrival/late note
+- DAY-04 Allergens on menus
+- DAY-09 Potty logging
+- DAY-14 Allergy badges/alerts
+- ADM2-13 PDF export
+- DAY-17 Incident export
+- DAY-16 Incident share controls
+- LRN-04 Learning portfolios
+- HR-08 Certificate attachments
+- HR-09 Credential expiry
+- HR-12 Screening doc upload
+- HR-13 Screening doc expiry
+- ADM2-02 Instant location switching
+- ADM2-05 Billing-only role
+- ADM2-06 Staff without parent-messaging
+- ADM2-10 Revenue reporting
+- SEC-02 Security page
+- SEC-03 Privacy controls page
+
+## Phase 2
+
+- MKT-05 Start-date availability search
+- MKT-10 Reviews with one centre reply and moderation
+- ADM-04 Lead CSV import
+- ADM-05 Lead email templates EN/FR
+- ADM-18 Fillable PDFs
+- ADM-20 Admission packets
+- ADM2-08 Custom roles
+- APP-01 Parent iOS app (store-gated, skip)
+- APP-03 Staff mobile experience
+- MSG-06 Native push (send-disabled)
+- MSG-02 Staff messaging
+- ATT-08 Health screen at check-in
+- STF-06 PTO tracking
+- STF-07 PTO reporting
+- BIL-04 Split payers
+- BIL-09 Payment reminders (send-disabled)
+- BIL-11 Credits
+- BIL-17 CWELCC calculation
+- BIL-13 Late fees
+- BIL-15 Year-end tax receipts
+- DAY-10 Medication profile
+- DAY-13 Medication permission
+- DAY-12 Medication reminders
+- DAY-18 Health checks
+- LRN-02 Video sharing (interface only)
+- LRN-09 Milestones
+- HR-10 Credential renewal workflow
+- ADM2-03 Transfers between sites
+
+## Phase 3
+
+- MKT-11 Rules-based badge with published method
+- LOC-04 Provincial regulatory reports
+- MKT-14 Inspection history from public data
+- ADM-24 SMS when forms shared (send-disabled)
+- MSG-05 Emergency SMS (send-disabled)
+- MSG-11 Machine translation (interface only)
+- STF-04 Overtime tracking
+- BIL-05 Card payments
+- BIL-02 Autopay
+- BIL-06 PAD
+- BIL-03 Mandatory autopay
+- BIL-12 Refunds (Stripe in test mode only, no live charges, 3% fee)
+- BIL-18 BC CCFRI/ACCB
+- BIL-19 Alberta Affordability Grant
+- BIL-23 Payout status
+- LRN-07 Framework alignment (held, skip)
+- ADM2-15 Municipal statistics reports
+- LOC-03 Extra languages (held, skip)
+
+## Phase 4
+
+Standing holds, do not build: ADM-02 CRM, MSG-10 bulk email, STF-10/11/12 payroll, DAY-08 sensors, LRN-08/10/12, LRN-13 photo sales, HR-01 through HR-05 handbooks, HR-11, SEC-04, PAY-01/02 in-app purchase and subscriptions, ADM2-16 automations.
+
+Build only:
+
+- ADM2-14 Public developer API, extending the centre API with OAuth scopes
+- MSG-13 Design note only
+
+## Phase 5
+
+Flags stay off. No email, text, push, or charge.
+
+- P5-01 Parent-reported absence. Extends ATT-11. A parent marks a child absent for a date or a range, with an optional reason. The attendance register updates. The spot is not offered again. In-app only.
+- P5-02 Events calendar with RSVP. The centre creates events in the centre timezone, with a zone label, for a room or the whole centre. Parents answer yes, no, or maybe, with a headcount. No email, text, or push.
+- P5-03 Immunization records on file. Extends ADM-19 and the family vault. A parent adds a record or an exemption for a child. The centre sees on file, missing, or a date that has passed. Only that parent and that centre's staff can see it. Not billing, not other parents, not the public. Views are written to the audit log. No broadcast and no health score.
+- P5-04 Claimed listing as the centre page. A claimed centre can turn on a public page at `kidease.ca/c/<slug>` from its listing. KidEase does not certify or endorse the centre. Unclaimed listings do not get the page.
+- P5-05 Centre-only room-opening forecast. From enrolment birthdates, room age ranges, and waitlist start dates, the centre sees an estimate of when a room opens and why. It stays on the provider desk. It is not a public vacancy and it is not added to search.
+
+## Phase 6
+
+Flags stay off. No email, text, push, or charge. Stripe stays in test mode.
+
+- P6-01 Custody and authorized pickup. Extends HR-17 and ATT-07. A current order has an effective date, an authorized and not-authorized list, and a confidential safety flag that staff see at checkout. Only that centre's staff can see it, and views and changes are logged. Both legal parents keep access and can be billing contacts. One parent cannot remove or hide the other unless an order is on file or both have written the instruction. If staff are unsure, they follow the most recent order and call the police in an emergency.
+- P6-02 Operator report packs. Extends LOC-04. Draft packs for attendance, enrolment, staff qualifications, and serious occurrences, with notes for Ontario CCLS, Manitoba's four-week Child Care Online attendance, British Columbia's $10 a Day monthly report, Alberta, and Quebec. The licensee submits them. KidEase does not file them, store a government password, or script a login.
+- P6-03 Extra days and exchange days. A day that would pass licensed capacity, group size, or the age-room ratio is refused. A drop-in counts the same as an enrolled child. An exchange of an already paid day comes first and adds no fee. The centre types any extra-day fee. A province cap can warn or block. Funded and unfunded stay separate. No invented surcharge and no automatic re-offer of an empty spot. Quebec keeps the 261-day year and the 20-days-in-4-weeks counters. No charge is made.
+- P6-04 Employer or third-party payer. A third party can be billed for part of an invoice. The receipt goes to whoever paid. There is no tax advice, only a link to the CRA page. No reserved spot and no waitlist jump. The family's share is never above the lawful parent fee.
