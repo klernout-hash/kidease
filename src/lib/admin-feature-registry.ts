@@ -112,6 +112,17 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_PROGRAM_WAITLIST: "shared",
   FEATURE_WAITLIST_OFFERS: "shared",
   FEATURE_FORM_STATUS: "shared",
+  FEATURE_FAMILY_NEWSFEED: "daycare",
+  FEATURE_MEDIA_CONSENT: "shared",
+  FEATURE_PICKUP_VERIFY: "daycare",
+  FEATURE_EMERGENCY_ROLL: "daycare",
+  FEATURE_ARRIVAL_NOTES: "parent",
+  FEATURE_TOILETING_LOG: "daycare",
+  FEATURE_ALLERGEN_MENU: "daycare",
+  FEATURE_ALLERGY_BADGE: "daycare",
+  FEATURE_INCIDENT_SHARE: "shared",
+  FEATURE_INCIDENT_EXPORT: "daycare",
+  FEATURE_CHILD_PORTFOLIO: "parent",
 };
 
 const SWITCH_CATEGORY: Record<string, FeatureCategory> = {
