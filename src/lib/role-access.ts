@@ -268,11 +268,11 @@ export function roleNavItems(input: { role: ChromeRole; paid?: boolean; subscrip
   }
   if (input.role === "government") {
     return [
-      { id: "gov", label: "Government desk", to: "/gov", icon: "verify" },
-      { id: "compliance", label: "Licence dates", to: "/gov/compliance", icon: "verify" },
-      { id: "complaints", label: "Complaints", to: "/gov/complaints", icon: "support" },
-      { id: "listings", label: "Public listings", to: "/search", icon: "explore" },
-      { id: "exports", label: "Exports", to: "/gov/exports", icon: "claim" },
+      { id: "overview", label: "Overview", to: "/gov", icon: "verify" },
+      { id: "expiries", label: "Expiries and alerts", to: "/gov/expiries", icon: "verify" },
+      { id: "analytics", label: "Analytics", to: "/gov/analytics", icon: "explore" },
+      { id: "reports", label: "Reports", to: "/gov/reports", icon: "support" },
+      { id: "data", label: "Data and exports", to: "/gov/data", icon: "claim" },
     ];
   }
   const guest: RoleNavItem[] = [

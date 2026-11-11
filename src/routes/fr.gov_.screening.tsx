@@ -1,20 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { GovNativeNote } from "@/components/gov/gov-login";
-import { GovScreeningPage } from "@/components/compliance/screening-page";
-import { guardGovDesk, govRobotsHead, govRobotsHeaders } from "@/lib/gov/desk-guard";
-import { loadGovScreening } from "@/lib/server/compliance-screening";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/fr/gov_/screening")({
-  beforeLoad: ({ context }) => guardGovDesk("fr", Boolean((context as { nativeShell?: boolean }).nativeShell)),
-  loader: async ({ context }) => ((context as { nativeOnly?: boolean }).nativeOnly ? null : loadGovScreening()),
-  head: () => govRobotsHead("Vérifications du personnel · KidEase"),
-  headers: govRobotsHeaders,
-  component: Page,
+  beforeLoad: () => {
+    throw redirect({ href: "/fr/gov/reports?tab=screening" });
+  },
 });
-
-function Page() {
-  const gate = Route.useRouteContext() as { nativeOnly?: boolean };
-  const data = Route.useLoaderData();
-  if (gate.nativeOnly || !data) return <GovNativeNote locale="fr" />;
-  return <GovScreeningPage data={data} locale="fr" />;
-}

@@ -75,6 +75,9 @@ test("a government session is sent to /gov and not the parent desk", () => {
   if (parent.kind === "home") assert.equal(parent.to, "/gov");
   const admin = guardPrivatePath({ pathname: "/admin", signedIn: true, role: "government" });
   assert.equal(admin.kind, "not_found");
+  const providerBlocked = guardPrivatePath({ pathname: "/provider", signedIn: true, role: "government" });
+  assert.equal(providerBlocked.kind, "home");
+  if (providerBlocked.kind === "home") assert.equal(providerBlocked.to, "/gov");
   const provider = guardPrivatePath({ pathname: "/provider", signedIn: true, role: "provider" });
   assert.equal(provider.kind, "allow");
 });
