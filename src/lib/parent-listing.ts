@@ -560,17 +560,16 @@ export function matchesParentOpening(
   return honestOpeningWindow(d, now) === opening;
 }
 
-export function matchesParentSchedule(
-  d: Pick<Daycare, "scheduleOptions" | "partTimeMonthly" | "infantMonthly" | "toddlerMonthly" | "preschoolMonthly">,
-  schedule: ParentSchedule,
-): boolean {
+export function matchesParentSchedule(d: Pick<Daycare, "scheduleOptions">, schedule: ParentSchedule): boolean {
+  const fees = d as Pick<Daycare, "scheduleOptions"> &
+    Partial<Pick<Daycare, "partTimeMonthly" | "infantMonthly" | "toddlerMonthly" | "preschoolMonthly">>;
   return scheduleFromStoredFees({
     stored: listingSchedules(d),
     schedule,
-    partTimeMonthly: d.partTimeMonthly,
-    infantMonthly: d.infantMonthly,
-    toddlerMonthly: d.toddlerMonthly,
-    preschoolMonthly: d.preschoolMonthly,
+    partTimeMonthly: fees.partTimeMonthly,
+    infantMonthly: fees.infantMonthly,
+    toddlerMonthly: fees.toddlerMonthly,
+    preschoolMonthly: fees.preschoolMonthly,
   });
 }
 
