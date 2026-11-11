@@ -5,6 +5,31 @@ import { phase6Flags } from "@/lib/server/phase6-flags";
 type Flags = Awaited<ReturnType<typeof phase6Flags>>;
 const EMPTY: Flags = { custody: false, packs: false, extra: false, payer: false };
 
+/** Staff alert at checkout. Hidden while the custody flag is off. */
+export function CustodyCheckoutAlert({ locale }: { locale: "en" | "fr" }) {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    let live = true;
+    void phase6Flags()
+      .then((flags) => {
+        if (live) setOn(flags.custody);
+      })
+      .catch(() => {
+        if (live) setOn(false);
+      });
+    return () => {
+      live = false;
+    };
+  }, []);
+  if (!on) return null;
+  const fr = locale === "fr";
+  return (
+    <p className="mt-2 text-sm text-danger" data-ke="custody-checkout" role="status">
+      {fr ? CUSTODY_GUIDANCE.fr : CUSTODY_GUIDANCE.en}
+    </p>
+  );
+}
+
 /** Hidden until a Phase 6 flag is on. Nothing here sends or charges. */
 export function Phase6Desk({ locale, role }: { locale: "en" | "fr"; role: string | null }) {
   const [flags, setFlags] = useState<Flags>(EMPTY);
@@ -31,8 +56,8 @@ export function Phase6Desk({ locale, role }: { locale: "en" | "fr"; role: string
           <p className="mt-1 text-sm text-muted">{fr ? CUSTODY_GUIDANCE.fr : CUSTODY_GUIDANCE.en}</p>
           <p className="mt-2 text-sm text-muted">
             {fr
-              ? "Les deux parents gardent l'accès, sauf une ordonnance ou une consigne écrite des deux. Personne ne peut cacher l'autre."
-              : "Both parents keep access, unless an order or a written note from both says otherwise. One parent cannot hide the other."}
+              ? "Les deux parents gardent l'accès. On ne peut pas cacher un parent sans une ordonnance au dossier."
+              : "Both parents keep access. A parent cannot be hidden unless an order is on file."}
           </p>
         </section>
       ) : null}

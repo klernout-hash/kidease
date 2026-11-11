@@ -7,8 +7,8 @@ export const CRA_CHILD_CARE_URL =
   "https://www.canada.ca/en/revenue-agency/services/tax/individuals/topics/about-your-tax-return/tax-return/completing-a-tax-return/deductions-credits-expenses/line-21400-child-care-expenses.html";
 
 export const CUSTODY_GUIDANCE = {
-  en: "Follow the most recent order. In an emergency, call the police.",
-  fr: "Suivez l'ordonnance la plus récente. En urgence, appelez la police.",
+  en: "Follow the most recent order. If it is unclear, or in an emergency, call the police.",
+  fr: "Suivez l'ordonnance la plus récente. Si ce n'est pas clair, ou en urgence, appelez la police.",
 } as const;
 
 export type CustodyOrder = { id: string; effectiveOn: string; uploaded: boolean };
@@ -18,8 +18,9 @@ export function bothParentsKeepAccess(): true {
   return true;
 }
 
-export function hideFromParent(): false {
-  return false;
+/** A hide switch exists only when an order is already on file. */
+export function canHideFromParent(uploadedOrder: boolean): boolean {
+  return uploadedOrder;
 }
 
 export function canRemoveParent(input: { uploadedOrder: boolean; jointInstruction: boolean }): boolean {
@@ -73,6 +74,10 @@ export function storePortalPassword(): false {
   return false;
 }
 
+export function scriptPortalLogin(): false {
+  return false;
+}
+
 export type RoomLoad = { present: number; dropIns: number; capacity: number; groupMax: number; staff: number; childrenPerStaff: number };
 
 export function headcount(room: Pick<RoomLoad, "present" | "dropIns">): number {
@@ -95,10 +100,15 @@ export function exchangeFeeCents(): 0 {
   return 0;
 }
 
-export function extraDayFee(input: { enteredCents: number | null; capCents: number | null; mode: "warn" | "block" }): { cents: number | null; overCap: boolean; blocked: boolean } {
-  if (input.enteredCents == null || input.enteredCents < 0) return { cents: null, overCap: false, blocked: true };
+export function extraDayFee(input: {
+  enteredCents: number | null;
+  capCents: number | null;
+  mode: "warn" | "block";
+  funded: boolean;
+}): { cents: number | null; overCap: boolean; blocked: boolean; funded: boolean } {
+  if (input.enteredCents == null || input.enteredCents < 0) return { cents: null, overCap: false, blocked: true, funded: input.funded };
   const over = input.capCents != null && input.enteredCents > input.capCents;
-  return { cents: input.enteredCents, overCap: over, blocked: over && input.mode === "block" };
+  return { cents: input.enteredCents, overCap: over, blocked: over && input.mode === "block", funded: input.funded };
 }
 
 export function quebecCounters(days: readonly string[]): { yearDays: number; overYear: boolean; busiestFourWeeks: number; overFourWeeks: boolean } {
@@ -132,6 +142,19 @@ export function receiptGoesTo(payer: PayerKind): PayerKind {
 
 export function parentFeeOk(input: { chargedCents: number; lawfulParentCents: number }): boolean {
   return input.chargedCents >= 0 && input.chargedCents <= input.lawfulParentCents;
+}
+
+/** A third party can be billed for part of the invoice. The family's share stays within the lawful fee. */
+export function splitInvoice(input: { invoiceCents: number; thirdPartyCents: number; lawfulParentCents: number }): {
+  familyCents: number;
+  thirdPartyCents: number;
+  ok: boolean;
+} {
+  if (input.invoiceCents < 0 || input.thirdPartyCents < 0 || input.thirdPartyCents > input.invoiceCents) {
+    return { familyCents: 0, thirdPartyCents: 0, ok: false };
+  }
+  const familyCents = input.invoiceCents - input.thirdPartyCents;
+  return { familyCents, thirdPartyCents: input.thirdPartyCents, ok: familyCents <= input.lawfulParentCents };
 }
 
 export function waitlistJump(): false {

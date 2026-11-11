@@ -15,7 +15,9 @@ import {
   exchangeFeeCents,
   extraDayFee,
   headcount,
-  hideFromParent,
+  canHideFromParent,
+  scriptPortalLogin,
+  splitInvoice,
   latestOrder,
   packIssues,
   parentFeeOk,
@@ -33,7 +35,8 @@ test("both parents stay unless an order or a joint note says otherwise", () => {
     assert.equal(FLAG_DEFAULTS[key], false, key);
   }
   assert.equal(bothParentsKeepAccess(), true);
-  assert.equal(hideFromParent(), false);
+  assert.equal(canHideFromParent(false), false);
+  assert.equal(canHideFromParent(true), true);
   assert.equal(canRemoveParent({ uploadedOrder: false, jointInstruction: false }), false);
   assert.equal(canRemoveParent({ uploadedOrder: true, jointInstruction: false }), true);
   assert.equal(canRemoveParent({ uploadedOrder: false, jointInstruction: true }), true);
@@ -49,6 +52,7 @@ test("both parents stay unless an order or a joint note says otherwise", () => {
 test("report packs are drafts and never log into a government site", () => {
   assert.equal(autoFilePack(), false);
   assert.equal(storePortalPassword(), false);
+  assert.equal(scriptPortalLogin(), false);
   assert.match(packIssues({ kind: "attendance", rows: 0, province: "MB" }).join(","), /empty/);
   assert.equal(packIssues({ kind: "attendance", rows: 2, province: "ON" }).length, 0);
   assert.match(packIssues({ kind: "enrolment", rows: 1, province: "XX" }).join(","), /province/);
@@ -61,9 +65,9 @@ test("an extra day cannot pass capacity and an exchange day has no fee", () => {
   assert.equal(bookingChoice({ swapFrom: "2026-11-12" }), "exchange");
   assert.equal(bookingChoice({ swapFrom: null }), "extra");
   assert.equal(exchangeFeeCents(), 0);
-  assert.equal(extraDayFee({ enteredCents: null, capCents: 2000, mode: "block" }).cents, null);
-  assert.equal(extraDayFee({ enteredCents: 2500, capCents: 2000, mode: "block" }).blocked, true);
-  assert.equal(extraDayFee({ enteredCents: 1500, capCents: 2000, mode: "warn" }).blocked, false);
+  assert.equal(extraDayFee({ enteredCents: null, capCents: 2000, mode: "block", funded: true }).cents, null);
+  assert.equal(extraDayFee({ enteredCents: 2500, capCents: 2000, mode: "block", funded: true }).blocked, true);
+  assert.equal(extraDayFee({ enteredCents: 1500, capCents: 2000, mode: "warn", funded: false }).blocked, false);
   const days = Array.from({ length: 21 }, (_, index) => `2026-11-${String(index + 1).padStart(2, "0")}`);
   assert.equal(quebecCounters(days).overFourWeeks, true);
   assert.equal(chargeExtraDay().charged, false);
@@ -74,6 +78,12 @@ test("a third party can pay, and the family is not charged above the lawful fee"
   assert.equal(receiptGoesTo("employer"), "employer");
   assert.equal(parentFeeOk({ chargedCents: 800, lawfulParentCents: 700 }), false);
   assert.equal(parentFeeOk({ chargedCents: 700, lawfulParentCents: 700 }), true);
+  assert.deepEqual(splitInvoice({ invoiceCents: 1000, thirdPartyCents: 400, lawfulParentCents: 700 }), {
+    familyCents: 600,
+    thirdPartyCents: 400,
+    ok: true,
+  });
+  assert.equal(splitInvoice({ invoiceCents: 1000, thirdPartyCents: 200, lawfulParentCents: 700 }).ok, false);
   assert.equal(waitlistJump(), false);
   assert.equal(reserveSpot(), false);
   assert.equal(taxAdvice(), null);

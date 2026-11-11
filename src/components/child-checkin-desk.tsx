@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useSuccessConfirm } from "@/components/use-success-confirm";
+import { CustodyCheckoutAlert } from "@/components/phase6-desk";
 import { Button } from "@/components/ui/button";
 import { attendanceCopy, initialsFor, type AttendanceStatus } from "@/lib/attendance-handoff";
 import { featureCopy } from "@/lib/flagged-feature-copy";
@@ -95,6 +96,7 @@ export function ChildCheckinDesk() {
                       </option>
                     ))}
                   </select>
+                  <CustodyCheckoutAlert locale={locale === "fr" ? "fr" : "en"} />
                 </label>
               ) : null}
               <Button
