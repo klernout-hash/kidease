@@ -123,6 +123,17 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_PROGRAM_WAITLIST",
   "FEATURE_WAITLIST_OFFERS",
   "FEATURE_FORM_STATUS",
+  "FEATURE_FAMILY_NEWSFEED",
+  "FEATURE_MEDIA_CONSENT",
+  "FEATURE_PICKUP_VERIFY",
+  "FEATURE_EMERGENCY_ROLL",
+  "FEATURE_ARRIVAL_NOTES",
+  "FEATURE_TOILETING_LOG",
+  "FEATURE_ALLERGEN_MENU",
+  "FEATURE_ALLERGY_BADGE",
+  "FEATURE_INCIDENT_SHARE",
+  "FEATURE_INCIDENT_EXPORT",
+  "FEATURE_CHILD_PORTFOLIO",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -362,6 +373,17 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_WAITLIST_OFFERS: false,
   /** Form and packet status board. Off. */
   FEATURE_FORM_STATUS: false,
+  FEATURE_FAMILY_NEWSFEED: false,
+  FEATURE_MEDIA_CONSENT: false,
+  FEATURE_PICKUP_VERIFY: false,
+  FEATURE_EMERGENCY_ROLL: false,
+  FEATURE_ARRIVAL_NOTES: false,
+  FEATURE_TOILETING_LOG: false,
+  FEATURE_ALLERGEN_MENU: false,
+  FEATURE_ALLERGY_BADGE: false,
+  FEATURE_INCIDENT_SHARE: false,
+  FEATURE_INCIDENT_EXPORT: false,
+  FEATURE_CHILD_PORTFOLIO: false,
 };
 
 /**
@@ -1062,6 +1084,17 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary: "Status of forms and packets from events. Off. A rejection is held, not emailed.",
   },
+  { key: "FEATURE_FAMILY_NEWSFEED", defaultOn: false, docs: "docs/flags.md", summary: "Family news posts. Off. No digest email is sent." },
+  { key: "FEATURE_MEDIA_CONSENT", defaultOn: false, docs: "docs/flags.md", summary: "Photos only for guardians who consented. Off. No alert is sent." },
+  { key: "FEATURE_PICKUP_VERIFY", defaultOn: false, docs: "docs/flags.md", summary: "Pickup must be an authorized contact. Off. Overrides are held, not pushed." },
+  { key: "FEATURE_EMERGENCY_ROLL", defaultOn: false, docs: "docs/flags.md", summary: "Emergency roll of people checked in. Off. No automatic all-clear." },
+  { key: "FEATURE_ARRIVAL_NOTES", defaultOn: false, docs: "docs/flags.md", summary: "Late or absent notes. Off. Visible only to that child's room." },
+  { key: "FEATURE_TOILETING_LOG", defaultOn: false, docs: "docs/flags.md", summary: "Diaper and toilet log. Off. No health conclusion is drawn." },
+  { key: "FEATURE_ALLERGEN_MENU", defaultOn: false, docs: "docs/flags.md", summary: "Menu tags from the priority allergen list. Off." },
+  { key: "FEATURE_ALLERGY_BADGE", defaultOn: false, docs: "docs/flags.md", summary: "Allergy badge for staff. Off for anyone without care access." },
+  { key: "FEATURE_INCIDENT_SHARE", defaultOn: false, docs: "docs/flags.md", summary: "Share an incident with that child's guardians. Off. No detailed email." },
+  { key: "FEATURE_INCIDENT_EXPORT", defaultOn: false, docs: "docs/flags.md", summary: "Director export of incidents. Off. Other children's names are removed." },
+  { key: "FEATURE_CHILD_PORTFOLIO", defaultOn: false, docs: "docs/flags.md", summary: "Child portfolio for that child's guardians. Off." },
 ];
 
 let cache: RemoteFlagSnapshot | null = null;
