@@ -51,6 +51,7 @@ import { compactExploreSearch, readLiveSearchFlag } from "@/lib/explore-search";
 import { LocationConsentCard } from "@/components/location-consent";
 import { ResumeVisitCard } from "@/components/resume-visit";
 import { captureMarketplaceFunnel } from "@/lib/marketplace-funnel";
+import { AppStoreStatus } from "@/components/app-store-status";
 import { featuredHomeAgreement, homeLiveStrip } from "@/lib/home-live-strip";
 import { listingMatchesLocationLock, resolveLocationLock } from "@/lib/location-lock";
 import type { DaycareCard as Card } from "@/lib/types";
@@ -626,6 +627,9 @@ export function HomePage({ boot, liveClaimed = false }: { boot: ProductHomeBoot;
             </Button>
           </div>
         </section>
+        <div className="ke-gutter mx-auto w-full pb-10">
+          <AppStoreStatus compact />
+        </div>
 
       </div>
 
