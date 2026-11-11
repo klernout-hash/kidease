@@ -43,8 +43,8 @@ test("gov desk fixes stay in the screens Test Bot used", () => {
   const map = read("src/components/gov/gov-map.tsx");
   const guard = read("src/lib/gov/desk-guard.ts");
   const signOut = read("src/lib/auth/client.ts");
-  assert.match(dash, /const region = next\.region \?\? regionValue/);
-  assert.match(dash, /regionForCity\(city\)/);
+  assert.match(dash, /region: next\.region \?\? "ALL"/);
+  assert.match(dash, /regionForCity\(next\.city\)/);
   assert.match(jobs, /data-ke="gov-jobs-off"/);
   assert.doesNotMatch(jobs, /if \(!row\?\.enabled\) return null/);
   assert.match(map, /mapHostStyle/);
