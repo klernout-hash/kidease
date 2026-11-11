@@ -134,6 +134,18 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_INCIDENT_SHARE",
   "FEATURE_INCIDENT_EXPORT",
   "FEATURE_CHILD_PORTFOLIO",
+  "FEATURE_CREDENTIAL_FILES",
+  "FEATURE_CREDENTIAL_REMINDERS",
+  "FEATURE_SCREENING_DOCS",
+  "FEATURE_SCREENING_STATUS",
+  "FEATURE_CENTRE_SWITCHER",
+  "FEATURE_BILLING_ONLY_ROLE",
+  "FEATURE_FAMILY_MESSAGING_DENY",
+  "FEATURE_REVENUE_REPORT",
+  "FEATURE_PDF_EXPORT",
+  "FEATURE_AUDIT_LOG",
+  "FEATURE_SECURITY_PAGE",
+  "FEATURE_PRIVACY_REQUESTS",
 ] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
@@ -384,6 +396,18 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_INCIDENT_SHARE: false,
   FEATURE_INCIDENT_EXPORT: false,
   FEATURE_CHILD_PORTFOLIO: false,
+  FEATURE_CREDENTIAL_FILES: false,
+  FEATURE_CREDENTIAL_REMINDERS: false,
+  FEATURE_SCREENING_DOCS: false,
+  FEATURE_SCREENING_STATUS: false,
+  FEATURE_CENTRE_SWITCHER: false,
+  FEATURE_BILLING_ONLY_ROLE: false,
+  FEATURE_FAMILY_MESSAGING_DENY: false,
+  FEATURE_REVENUE_REPORT: false,
+  FEATURE_PDF_EXPORT: false,
+  FEATURE_AUDIT_LOG: false,
+  FEATURE_SECURITY_PAGE: false,
+  FEATURE_PRIVACY_REQUESTS: false,
 };
 
 /**
@@ -1095,6 +1119,18 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
   { key: "FEATURE_INCIDENT_SHARE", defaultOn: false, docs: "docs/flags.md", summary: "Share an incident with that child's guardians. Off. No detailed email." },
   { key: "FEATURE_INCIDENT_EXPORT", defaultOn: false, docs: "docs/flags.md", summary: "Director export of incidents. Off. Other children's names are removed." },
   { key: "FEATURE_CHILD_PORTFOLIO", defaultOn: false, docs: "docs/flags.md", summary: "Child portfolio for that child's guardians. Off." },
+  { key: "FEATURE_CREDENTIAL_FILES", defaultOn: false, docs: "docs/flags.md", summary: "Attach a certificate file. Off. No new virus-scan account." },
+  { key: "FEATURE_CREDENTIAL_REMINDERS", defaultOn: false, docs: "docs/flags.md", summary: "Credential expiry reminders. Off. Nothing is sent." },
+  { key: "FEATURE_SCREENING_DOCS", defaultOn: false, docs: "docs/flags.md", summary: "Store a screening document. Off. KidEase does not judge the check." },
+  { key: "FEATURE_SCREENING_STATUS", defaultOn: false, docs: "docs/flags.md", summary: "Screening status. Off. Missing stays missing." },
+  { key: "FEATURE_CENTRE_SWITCHER", defaultOn: false, docs: "docs/flags.md", summary: "Switch centre. Off. A centre you do not belong to is rejected." },
+  { key: "FEATURE_BILLING_ONLY_ROLE", defaultOn: false, docs: "docs/flags.md", summary: "Billing role. Off. Health pages stay closed." },
+  { key: "FEATURE_FAMILY_MESSAGING_DENY", defaultOn: false, docs: "docs/flags.md", summary: "Block family messaging for a staff role. Off." },
+  { key: "FEATURE_REVENUE_REPORT", defaultOn: false, docs: "docs/flags.md", summary: "Revenue report from the payment ledger. Off. No charge is made." },
+  { key: "FEATURE_PDF_EXPORT", defaultOn: false, docs: "docs/flags.md", summary: "Check report lines before a PDF. Off. No new PDF vendor." },
+  { key: "FEATURE_AUDIT_LOG", defaultOn: false, docs: "docs/flags.md", summary: "Append-only audit log. Off. Owners see only their centres." },
+  { key: "FEATURE_SECURITY_PAGE", defaultOn: false, docs: "docs/flags.md", summary: "Public security statements with evidence. Off. No certification claim." },
+  { key: "FEATURE_PRIVACY_REQUESTS", defaultOn: false, docs: "docs/flags.md", summary: "Privacy request case for the privacy officer. Off." },
 ];
 
 let cache: RemoteFlagSnapshot | null = null;
