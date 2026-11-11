@@ -27,6 +27,7 @@ import {
   subscriptionsEnabled,
   hostListingEnabled,
   providerInsightsEnabled,
+  centreLeadTrackerEnabled,
   topRatedEnabled,
   tourCalendarEnabled,
 } from "@/lib/features";
@@ -349,6 +350,7 @@ export async function resolveSessionDesks(userId: string): Promise<SessionDesks>
     tourCalendar: tourCalendarEnabled(),
     hostListing: hostListingEnabled(),
     providerInsights: providerInsightsEnabled(),
+    leadTracker: centreLeadTrackerEnabled(),
     topRated: topRatedEnabled(),
     attention,
     restoreUntil,
