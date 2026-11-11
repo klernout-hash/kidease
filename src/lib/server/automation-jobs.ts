@@ -7,6 +7,7 @@
 import { getSql } from "@/lib/db";
 import {
   AUTOMATION_FALLBACK_TZ,
+  AUTOMATION_ORIGIN,
   automationLocale,
   automationModeFromEnv,
   automationQuietNow,
@@ -29,8 +30,6 @@ import {
   reviewRequestLetter,
   staleSpotAction,
   staleSpotLetter,
-  tourFollowupDue,
-  tourFollowupLetter,
   weekKey,
   type AutomationLocale,
   type AutomationMode,
@@ -523,11 +522,23 @@ export async function runTourFollowupsJob(options: { dryRun?: boolean; now?: Dat
         centre: string;
         slug: string;
         tour_at: string | null;
+        cancelled: boolean;
+        applied: boolean;
+        waitlisted: boolean;
       }>`
         select t.id,
                coalesce(nullif(trim(t.contact_email), ''), u.email) as email,
                p.locale, p.time_zone, d.province, d.name as centre, d.slug,
-               coalesce(w.start_at, t.responded_at)::text as tour_at
+               coalesce(w.start_at, t.responded_at)::text as tour_at,
+               (t.status = 'declined') as cancelled,
+               exists (
+                 select 1 from enrolment_handoffs e
+                 where e.parent_user_id = t.user_id and e.daycare_id = t.daycare_id
+               ) as applied,
+               exists (
+                 select 1 from waitlist_interests wli
+                 where wli.user_id = t.user_id and wli.daycare_id = t.daycare_id
+               ) as waitlisted
         from tour_requests t
         join daycares d on d.id = t.daycare_id
         left join tour_windows w on w.id = t.window_id
@@ -538,15 +549,37 @@ export async function runTourFollowupsJob(options: { dryRun?: boolean; now?: Dat
         order by coalesce(w.start_at, t.responded_at)
         limit 200
       `.catch(() => []);
+      const { planTourFollowup, tourNextStepLetter } = await import("@/lib/tour-phase0");
+      const enabledAt = process.env.FEATURE_POST_TOUR_FOLLOWUP_SINCE || null;
       for (const row of tours) {
-        if (!tourFollowupDue(row.tour_at, now.getTime())) continue;
         const locale = centreLocale(row.province, row.locale);
+        const plan = planTourFollowup({
+          flagOn: flag.tour !== "off",
+          tourAt: row.tour_at,
+          enabledAt,
+          now,
+          timeZone: row.time_zone,
+          cancelled: row.cancelled === true || String(row.cancelled) === "true" || String(row.cancelled) === "t",
+          applied: row.applied === true || String(row.applied) === "true" || String(row.applied) === "t",
+          waitlisted: row.waitlisted === true || String(row.waitlisted) === "true" || String(row.waitlisted) === "t",
+          alreadySent: false,
+        });
+        if (!plan.send) {
+          add(bag, plan.reason);
+          continue;
+        }
+        const letter = tourNextStepLetter({
+          locale,
+          centre: row.centre,
+          applyPath: `${AUTOMATION_ORIGIN}${locale === "fr" ? "/fr" : ""}/daycare/${row.slug}`,
+        });
         await sendOne({
           automation: "tour_followup",
           dedupeKey: `tour-follow:${row.id}`,
           recipient: row.email,
-          letter: tourFollowupLetter({ locale, centreName: row.centre, slug: row.slug }),
-          mode: flag.tour,
+          letter: { ...letter, html: `<p>${letter.text}</p>` },
+          // Live mail stays off until Kyle approves a real send. Dry-run only records the note.
+          mode: "dry_run",
           quiet: automationQuietNow(now, row.time_zone, row.province),
           bag,
         });
