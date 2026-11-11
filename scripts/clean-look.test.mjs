@@ -79,3 +79,11 @@ test("the website home reuses the page's picture tabs and leaves the shell alone
   assert.match(css, /html\[data-look="clean"\] \.ke-home > \.ke-airbnb-phone-only \{\n {4}display: block;/);
   assert.doesNotMatch(src("src/components/shell.tsx"), /care-cats|ke-care-gif/);
 });
+
+test("the tidy home keeps every part reachable", () => {
+  const css = src("src/styles.css");
+  assert.match(css, /html:not\(\[data-look="clean"\]\) \.ke-clean-only \{\n {2}display: none !important;/);
+  assert.match(src("src/routes/index.tsx"), /className="ke-clean-only [^"]*">\s*<HeroClaimStrip lower \/>/);
+  assert.match(src("src/components/hero-claim-strip.tsx"), /data-place=\{lower \? "lower" : "hero"\}/);
+  assert.match(src("src/components/explore-search-bar.tsx"), /onNearby: onLocate/);
+});

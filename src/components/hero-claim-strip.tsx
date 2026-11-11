@@ -7,12 +7,13 @@ import type { CopyKey } from "@/lib/copy";
 
 const POINTS: CopyKey[] = ["heroTrustLicensed", "heroTrustCount", "heroTrustFounding"];
 
-/** Slim claim line under the home search pills. Server-rendered, fixed copy. */
-export function HeroClaimStrip() {
+/** Slim claim line under the home search pills. Server-rendered, fixed copy. `lower` is the copy further down the home page. */
+export function HeroClaimStrip({ lower = false }: { lower?: boolean } = {}) {
   const { t, locale } = useCopy();
   return (
     <div
       data-ke="home-claim-strip"
+      data-place={lower ? "lower" : "hero"}
       className="mx-auto mt-3 flex w-full max-w-[960px] flex-wrap items-center justify-center gap-x-3 gap-y-2"
     >
       <p className="text-center text-sm font-normal leading-5 text-fg">{t("heroDaycareLead")}</p>
