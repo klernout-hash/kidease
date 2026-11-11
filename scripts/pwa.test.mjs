@@ -71,6 +71,7 @@ test("service worker caches chrome only and registers from NativeBoot", () => {
   assert.match(src("public/asset-recover.js"), /ke-asset-recover/);
   assert.match(src("public/asset-recover.js"), /isBlockedAnalytics/);
   assert.match(src("public/asset-recover.js"), /vite:preloadError/);
+  assert.match(src("public/asset-recover.js"), /cache:\s*"reload"/);
   assert.match(src("src/lib/safe-error.ts"), /posthog\/i/);
   assert.match(src("public/asset-recover.js"), /unregister/);
   assert.match(src("src/routes/__root.tsx"), /asset-recover\.js/);
