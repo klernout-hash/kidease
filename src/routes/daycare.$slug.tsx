@@ -678,10 +678,12 @@ export function Listing() {
         {parentActions ? <ListingMoreItem onClick={onTour} data-ke="listing-sticky-tour">{t("bookTour")}</ListingMoreItem> : null}
         {parentActions && live ? <ListingMoreItem onClick={onRequest}>{t("requestSpotCta")}</ListingMoreItem> : null}
         {parentActions ? (
-          <ListingMoreItem onClick={onMessage} data-ke="listing-message-cta">
-            <MessageCircle className="size-4" /> {t("message")}
-          </ListingMoreItem>
-          <span className="sr-only" data-ke="listing-sticky-message">{t("stickyMessage")} {t("stickyInfo")}</span>
+          <>
+            <ListingMoreItem onClick={onMessage} data-ke="listing-message-cta">
+              <MessageCircle className="size-4" /> {t("message")}
+            </ListingMoreItem>
+            <span className="sr-only" data-ke="listing-sticky-message">{t("stickyMessage")} {t("stickyInfo")}</span>
+          </>
         ) : null}
         {parentActions ? <ListingMoreItem onClick={onInfo}>{t("requestInfo")}</ListingMoreItem> : null}
         <ListingMoreItem onClick={() => toggleCompareItem({ id: d.id, slug: d.slug }, compareMax)}>
