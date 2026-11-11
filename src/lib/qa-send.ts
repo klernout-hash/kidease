@@ -27,7 +27,7 @@ export type QaSendDecision = {
   channel: QaSendChannel;
 };
 
-const APPROVED = new Set<string>(QA_SEND_FEATURES);
+const APPROVED_FEATURES: readonly string[] = QA_SEND_FEATURES;
 
 export function parseQaAllowlist(raw: string | null | undefined): string[] {
   const seen = new Set<string>();
@@ -56,7 +56,9 @@ export function qaSendDecision(input: {
   alreadySent: boolean;
   allowlist: readonly string[];
 }): QaSendDecision {
-  const feature = APPROVED.has(input.feature) ? (input.feature as QaSendFeature) : "";
+  const feature: QaSendDecision["feature"] = APPROVED_FEATURES.includes(input.feature)
+    ? (input.feature as QaSendFeature)
+    : "";
   const base = { feature, channel: input.channel };
   if (!feature) return { ...base, deliver: false, reason: "bad_feature" };
   if (input.channel !== "email") return { ...base, deliver: false, reason: "held_channel" };
