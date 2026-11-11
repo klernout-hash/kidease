@@ -108,52 +108,37 @@ export function gstHstForFee(province: string): { bps: number; tax: "gst" | "hst
   return { bps, tax: bps === 500 ? "gst" : "hst" };
 }
 
-/** Balanced journal for one paid parent bill. Parent fee is GST/HST exempt. */
+/**
+ * Centre journal for one paid parent bill. The parent pays the KidEase fee,
+ * so the centre's Stripe deposit is the full invoice. Tax on that fee is a
+ * separate KidEase invoice and is not posted here. Parent childcare stays exempt.
+ */
 export function qboJournal(input: {
   invoiceCents: number;
   feeCents: number;
   province: string;
 }): QboJournalLine[] {
   const invoice = Math.max(0, Math.round(input.invoiceCents));
-  const fee = Math.min(invoice, Math.max(0, Math.round(input.feeCents)));
-  const net = invoice - fee;
-  const tax = gstHstForFee(input.province);
-  const itc = tax ? Math.round((fee * tax.bps) / (10000 + tax.bps)) : 0;
-  const lines: QboJournalLine[] = [
+  const parentPaidFee = Math.max(0, Math.round(input.feeCents));
+  void input.province;
+  return [
     {
       account: "stripe_clearing",
-      debitCents: net,
+      debitCents: invoice,
       creditCents: 0,
       tax: "exempt",
-      memo: "Stripe deposit after the KidEase fee",
+      memo: parentPaidFee > 0
+        ? "Stripe deposit of the full centre bill. The parent paid the KidEase service fee."
+        : "Stripe deposit of the full centre bill.",
     },
     {
-      account: "platform_fee",
-      debitCents: fee - itc,
-      creditCents: 0,
-      tax: tax?.tax ?? "exempt",
-      memo: tax
-        ? "KidEase fee before GST/HST. Confirm the rate with your accountant."
-        : "KidEase fee. Province has no mapped GST/HST rate, so no tax was split.",
+      account: "parent_fees",
+      debitCents: 0,
+      creditCents: invoice,
+      tax: "exempt",
+      memo: "Parent childcare fee. Exempt from GST/HST in this export.",
     },
   ];
-  if (itc > 0 && tax) {
-    lines.push({
-      account: "gst_itc",
-      debitCents: itc,
-      creditCents: 0,
-      tax: tax.tax,
-      memo: "Estimated GST/HST paid on the KidEase fee. Confirm before you file.",
-    });
-  }
-  lines.push({
-    account: "parent_fees",
-    debitCents: 0,
-    creditCents: invoice,
-    tax: "exempt",
-    memo: "Parent childcare fee. Exempt from GST/HST in this export.",
-  });
-  return lines;
 }
 
 export function qboJournalBalances(lines: QboJournalLine[]): boolean {

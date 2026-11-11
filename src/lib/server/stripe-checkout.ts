@@ -8,6 +8,7 @@
  * read clearly in CAD.
  */
 
+import { connectFeeBps, parentServiceFeeLabel } from "../connect-payments.ts";
 import { StripeApiError } from "../stripe-public-error.ts";
 import { checkoutCurrency, checkoutLocale, checkoutPaymentMethodTypes } from "../stripe-wallets.ts";
 
@@ -135,7 +136,9 @@ export type StripeCheckoutInput = {
   locale?: string | null;
   /** Connect account id when the centre can receive funds. Parent never sees this. */
   destinationAccount?: string | null;
+  /** KidEase service fee in cents. Equals application_fee_amount. Not tax. */
   applicationFeeCents?: number;
+  serviceFeeLabel?: string | null;
 };
 
 export type StripeCheckoutSession = {
@@ -226,9 +229,36 @@ export function checkoutSessionBody(input: StripeCheckoutInput): Record<string, 
     metadata: { bill_id: input.billId, kidease: "bill" },
     statement_descriptor_suffix: STRIPE_STATEMENT_SUFFIX,
   };
-  if (input.destinationAccount && (input.applicationFeeCents ?? 0) >= 0) {
-    paymentIntent.application_fee_amount = input.applicationFeeCents ?? 0;
+  const serviceFeeCents =
+    input.destinationAccount && (input.applicationFeeCents ?? 0) > 0 ? Math.round(input.applicationFeeCents ?? 0) : 0;
+  if (input.destinationAccount && serviceFeeCents >= 0) {
+    paymentIntent.application_fee_amount = serviceFeeCents;
     paymentIntent.transfer_data = { destination: input.destinationAccount };
+  }
+  const lineItems: Array<Record<string, unknown>> = [
+    {
+      quantity: 1,
+      price_data: {
+        currency,
+        unit_amount: input.amountCents,
+        product_data: {
+          name: `KidEase bill ${input.number}`,
+          description: `${input.daycareName} · ${input.period}`,
+        },
+      },
+    },
+  ];
+  if (serviceFeeCents > 0) {
+    lineItems.push({
+      quantity: 1,
+      price_data: {
+        currency,
+        unit_amount: serviceFeeCents,
+        product_data: {
+          name: input.serviceFeeLabel || parentServiceFeeLabel(connectFeeBps()),
+        },
+      },
+    });
   }
   const body: Record<string, unknown> = {
     mode: "payment",
@@ -237,19 +267,7 @@ export function checkoutSessionBody(input: StripeCheckoutInput): Record<string, 
     success_url: input.successUrl,
     cancel_url: input.cancelUrl,
     client_reference_id: input.billId,
-    line_items: [
-      {
-        quantity: 1,
-        price_data: {
-          currency,
-          unit_amount: input.amountCents,
-          product_data: {
-            name: `KidEase bill ${input.number}`,
-            description: `${input.daycareName} · ${input.period}`,
-          },
-        },
-      },
-    ],
+    line_items: lineItems,
     currency,
     metadata: { bill_id: input.billId, kidease: "bill" },
     payment_intent_data: paymentIntent,
