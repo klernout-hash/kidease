@@ -37,6 +37,7 @@ import {
   webhookNextAttempt,
   webhookUrlAllowed,
 } from "../src/lib/centre-api.ts";
+import { openWebhookSecret, sealWebhookSecret } from "../src/lib/centre-webhook-crypto.ts";
 import { resolveTourCentre } from "../src/lib/tour-phase0.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -436,6 +437,25 @@ test("api keys, scopes, health fields, and webhooks stay inside one centre", asy
     now: new Date(now),
   });
   assert.equal(healthPost.status, 400);
+});
+
+test("webhook signing secrets are encrypted at rest and opened only to sign", () => {
+  const env = { CENTRE_WEBHOOK_KEY: "ab".repeat(32) };
+  const plain = "ke_webhook_signing_secret";
+  assert.equal(sealWebhookSecret(plain, {}), null);
+  assert.equal(openWebhookSecret(plain, env), "");
+  const sealed = sealWebhookSecret(plain, env);
+  assert.ok(sealed);
+  assert.equal(sealed.startsWith("kew1:"), true);
+  assert.equal(sealed.includes(plain), false);
+  assert.equal(openWebhookSecret(sealed, env), plain);
+  assert.equal(openWebhookSecret(sealed, { CENTRE_WEBHOOK_KEY: "cd".repeat(32) }), "");
+  const body = JSON.stringify({ event: "lead.stage_changed" });
+  assert.equal(webhookHeader(openWebhookSecret(sealed, env), "100", body), webhookHeader(plain, "100", body));
+  const server = readFileSync(join(root, "src/lib/server/centre-leads.ts"), "utf8");
+  assert.match(server, /sealWebhookSecret/);
+  assert.match(server, /openWebhookSecret\(hook\.secret\)/);
+  assert.doesNotMatch(server, /webhookHeader\(hook\.secret/);
 });
 
 test("flags stay off and the docs name privacy in English and French", () => {

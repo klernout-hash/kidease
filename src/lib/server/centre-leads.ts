@@ -28,7 +28,8 @@ import {
   type SourceBundle,
   type StoredLead,
 } from "@/lib/centre-leads";
-import { hashCentreApiKey, mintCentreApiKey, parseScopes, webhookNextAttempt, webhookUrlAllowed, type CentreApiStore } from "@/lib/centre-api";
+import { hashCentreApiKey, mintCentreApiKey, parseScopes, webhookHeader, webhookNextAttempt, webhookUrlAllowed, type CentreApiStore } from "@/lib/centre-api";
+import { isSealedWebhookSecret, openWebhookSecret, sealWebhookSecret } from "@/lib/centre-webhook-crypto";
 import { centreApiEnabled, centreLeadTrackerEnabled } from "@/lib/features";
 import { getSql, type Sql } from "@/lib/db";
 import { nid } from "@/lib/utils";
@@ -825,17 +826,19 @@ export const saveCentreWebhook = createServerFn({ method: "POST" })
     if (!centreLeadAccess({ centreRole: role, daycareId: resolved.centreId, accessibleIds: accessible, action: "keys" }).ok) {
       return { ok: false as const, error: "not_found" };
     }
-    const secret = mintCentreApiKey().token;
     const existing = await sql<{ secret: string }>`
       select secret from centre_webhooks where daycare_id = ${resolved.centreId} limit 1
     `;
-    const nextSecret = existing[0]?.secret || secret;
+    const fresh = mintCentreApiKey().token;
+    const prior = existing[0]?.secret || "";
+    const stored = isSealedWebhookSecret(prior) ? prior : sealWebhookSecret(prior || fresh);
+    if (!stored) return { ok: false as const, error: "key" };
     await sql`
       insert into centre_webhooks (daycare_id, url, secret, enabled, created_by)
-      values (${resolved.centreId}, ${data.url}, ${nextSecret}, ${data.enabled}, ${context.userId})
-      on conflict (daycare_id) do update set url = excluded.url, enabled = excluded.enabled
+      values (${resolved.centreId}, ${data.url}, ${stored}, ${data.enabled}, ${context.userId})
+      on conflict (daycare_id) do update set url = excluded.url, secret = excluded.secret, enabled = excluded.enabled
     `;
-    return { ok: true as const, secret: existing[0] ? null : nextSecret, enabled: data.enabled };
+    return { ok: true as const, secret: prior ? null : fresh, enabled: data.enabled };
   });
 
 export function centreApiStore(sql: Sql): CentreApiStore {
@@ -1000,7 +1003,8 @@ async function deliverDueWebhooks(sql: Sql, fetchImpl: typeof fetch) {
       select url, secret, enabled from centre_webhooks where daycare_id = ${row.daycare_id} limit 1
     `;
     const hook = hooks[0];
-    if (!hook?.enabled || !webhookUrlAllowed(hook.url)) {
+    const signingSecret = hook ? openWebhookSecret(hook.secret) : "";
+    if (!hook?.enabled || !webhookUrlAllowed(hook.url) || !signingSecret) {
       await sql`update centre_webhook_deliveries set status = ${"skipped"} where id = ${row.id}`;
       continue;
     }
@@ -1014,13 +1018,12 @@ async function deliverDueWebhooks(sql: Sql, fetchImpl: typeof fetch) {
       privacy: "This is information the family shared with your centre. Child health details are not included.",
     });
     const timestamp = String(Math.floor(Date.now() / 1000));
-    const { webhookHeader } = await import("@/lib/centre-api");
     try {
       const response = await fetchImpl(hook.url, {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          "x-kidease-signature": webhookHeader(hook.secret, timestamp, body),
+          "x-kidease-signature": webhookHeader(signingSecret, timestamp, body),
         },
         body,
         signal: AbortSignal.timeout(4000),

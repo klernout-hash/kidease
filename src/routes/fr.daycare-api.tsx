@@ -1,13 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ApiDocs } from "@/routes/daycare-api";
+import { centreApiEnabled } from "@/lib/features";
 
 export const Route = createFileRoute("/fr/daycare-api")({
+  loader: () => ({ apiOn: centreApiEnabled() }),
   head: () => ({
     meta: [
       { title: "API du centre · KidEase" },
       {
         name: "description",
-        content: "Comment un centre lit et met à jour ses familles. L’API est fermée jusqu’à ce que KidEase l’ouvre.",
+        content: "Comment un centre lit et met à jour ses familles.",
       },
     ],
   }),
@@ -15,5 +17,6 @@ export const Route = createFileRoute("/fr/daycare-api")({
 });
 
 function FrenchApiDocs() {
-  return <ApiDocs french />;
+  const { apiOn } = Route.useLoaderData();
+  return <ApiDocs french apiOn={apiOn} />;
 }

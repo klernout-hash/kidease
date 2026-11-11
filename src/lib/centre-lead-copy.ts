@@ -59,6 +59,7 @@ export const LEAD_COPY = {
     noneYet: "Nothing here yet.",
     apiTitle: "Centre API",
     apiOff: "The API is off until KidEase turns it on.",
+    apiOn: "The API is on. A centre owner or director creates a key in Families. Mail, text, and phone alerts stay off.",
     apiLead: "A key lets your own website add a family or read the steps. It is shown once. Child health details are never included.",
     apiDocs: "Read the API guide",
     keyName: "Key name",
@@ -170,6 +171,7 @@ export const LEAD_COPY = {
     noneYet: "Rien ici pour le moment.",
     apiTitle: "API du centre",
     apiOff: "L’API est fermée jusqu’à ce que KidEase l’ouvre.",
+    apiOn: "L’API est ouverte. Le propriétaire ou la direction crée une clé dans Familles. Les courriels, textos et alertes du téléphone restent fermés.",
     apiLead: "Une clé permet à votre site d’ajouter une famille ou de lire les étapes. Elle s’affiche une seule fois. Les renseignements de santé de l’enfant ne sont jamais inclus.",
     apiDocs: "Lire le guide de l’API",
     keyName: "Nom de la clé",
@@ -238,7 +240,7 @@ export const API_DOC_SECTIONS = {
   en: [
     {
       heading: "What this is",
-      body: "The centre API lets your website read families and their step, add a note, change a step, or add a family from your own form. It is off until KidEase turns it on for the site. It is not a paid plan.",
+      body: "The centre API lets your website read families and their step, add a note, change a step, or add a family from your own form. It is not a paid plan.",
     },
     {
       heading: "Create a key",
@@ -264,7 +266,7 @@ export const API_DOC_SECTIONS = {
   fr: [
     {
       heading: "De quoi il s’agit",
-      body: "L’API du centre permet à votre site de lire les familles et leur étape, d’ajouter une note, de changer une étape, ou d’ajouter une famille depuis votre formulaire. Elle est fermée jusqu’à ce que KidEase l’ouvre. Ce n’est pas un forfait payant.",
+      body: "L’API du centre permet à votre site de lire les familles et leur étape, d’ajouter une note, de changer une étape, ou d’ajouter une famille depuis votre formulaire. Ce n’est pas un forfait payant.",
     },
     {
       heading: "Créer une clé",
