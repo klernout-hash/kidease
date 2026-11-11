@@ -10,6 +10,7 @@ import {
   parentSeesOwnWaitlist,
   positionBand,
   resolveOffer,
+  sameProgram,
   sortWaitlist,
   suggestLeadMerge,
 } from "../src/lib/phase1-waitlist.ts";
@@ -40,6 +41,11 @@ test("waitlist bands and policy order stay deterministic", () => {
   assert.equal(parentSeesOwnWaitlist("p1", "p2"), false);
   assert.equal(ageAtStartBand("2024-01-31", "2026-01-31"), "toddler");
   assert.equal(ageAtStartBand(null, "2026-01-31"), "unknown");
+  assert.equal(sameProgram("infant", "infant"), true);
+  assert.equal(sameProgram("", "infant"), false);
+  assert.equal(sameProgram("toddler", null), true);
+  assert.equal(canCreateLead("parent"), false);
+  assert.equal(canCreateLead("billing"), false);
 });
 
 test("two accepts on the last spot cannot both enrol", () => {

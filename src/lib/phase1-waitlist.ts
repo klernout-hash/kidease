@@ -28,6 +28,14 @@ export function positionBand(index: number): "1-5" | "6-20" | "21+" {
   return "21+";
 }
 
+/** A blank program is not guessed. It only matches when no program is selected. */
+export function sameProgram(rowProgram: string | null | undefined, selected: string | null): boolean {
+  if (!selected) return true;
+  const stored = String(rowProgram || "").trim();
+  if (!stored) return false;
+  return stored === selected;
+}
+
 export type WaitRow = { id: string; joinedAt: string; sibling: boolean; staffChild: boolean };
 
 export function sortWaitlist(rows: readonly WaitRow[], priorities: readonly ("sibling" | "staff_child")[]): WaitRow[] {
