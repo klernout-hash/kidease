@@ -3489,5 +3489,7 @@
   "inboxAssignMe": "Assign to me",
   "inboxOlderSearch": "{count} older messages",
   "inboxAssignedYou": "Assigned to you",
-  "notificationsBellHint": "Mga alerto, hindi unread na mensahe"
+  "notificationsBellHint": "Mga alerto, hindi unread na mensahe",
+  "leadTrackerNav": "Mga pamilya",
+  "leadTrackerNavHint": "Kung saang hakbang ang bawat pamilya"
 }
