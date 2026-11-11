@@ -582,8 +582,8 @@ export function AdminPage() {
             <Stat label="Live" value={queueStat(counts.approved)} accent={stat === "live"} filterId="live" onSelect={() => onSelectStat("live")} />
           </div>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
-            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <label className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
               <input type="checkbox" checked={showQaFixtures} onChange={(e) => setQaFixtures(e.target.checked)} />
               Show QA fixtures{qaCount ? ` · ${qaCount}` : ""}
@@ -612,8 +612,8 @@ export function AdminPage() {
             <Stat label="Waiting claims" value={queueStat(waitingOnYou.length)} accent={stat === "waiting"} filterId="waiting" onSelect={() => onSelectStat("waiting")} />
           </div>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
-            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <label className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
               <input type="checkbox" checked={showQaFixtures} onChange={(e) => setQaFixtures(e.target.checked)} />
               Show QA fixtures{qaCount ? ` · ${qaCount}` : ""}
@@ -699,8 +699,8 @@ export function AdminPage() {
             </div>
           </details>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
-            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <label className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
               <input type="checkbox" checked={showQaFixtures} onChange={(e) => setQaFixtures(e.target.checked)} />
               Show QA fixtures{qaCount ? ` · ${qaCount}` : ""}
@@ -755,8 +755,8 @@ export function AdminPage() {
             <Stat label="Leads declined" value={leadCounts.declined} accent={stat === "leads-declined"} filterId="leads-declined" onSelect={() => onSelectStat("leads-declined")} />
           </div>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
-            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, city, email…" className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+            <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note on next decision" className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
             <label className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
               <input type="checkbox" checked={showQaFixtures} onChange={(e) => setQaFixtures(e.target.checked)} />
               Show QA fixtures{qaCount ? ` · ${qaCount}` : ""}
@@ -933,7 +933,7 @@ export function AdminPage() {
             value={activityQ}
             onChange={(e) => setActivityQ(e.target.value)}
             placeholder="Search activity…"
-            className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border"
+            className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border"
           />
           <div className="flex flex-wrap gap-2">
             {activityKinds.map((kind) => (
@@ -1105,7 +1105,7 @@ function PeoplePanel({
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search name or email…"
           data-ke="people-search"
-          className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border"
+          className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border"
         />
         <label className="inline-flex min-h-11 items-center gap-2 rounded-full bg-surface px-4 text-sm ring-1 ring-border">
           <input type="checkbox" checked={showQa} onChange={(e) => onShowQa(e.target.checked)} />
@@ -1215,7 +1215,7 @@ function MoneyPanel({
         <CashStat label="Platform fees" value={ledger.fees} />
       </dl>
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search parent, centre, reference…" className="h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search parent, centre, reference…" className="h-11 min-h-11 flex-1 rounded-full bg-surface px-4 text-sm ring-1 ring-border" />
         <div className="flex gap-2">
           {([["all", "All"], ["in", "Money in"], ["out", "Money out"]] as const).map(([key, label]) => (
             <button key={key} type="button" onClick={() => setDir(key)} className={dir === key ? "rounded-full bg-primary px-3 py-2 text-sm text-primary-fg" : "rounded-full bg-surface px-3 py-2 text-sm ring-1 ring-border"}>

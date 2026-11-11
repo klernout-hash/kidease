@@ -33,7 +33,7 @@ Today's look is still the default. Do not change the default until Kyle says so.
 | Brand `--color-primary` | `#1a3790` | `#9db5f5` |
 | Accent `--color-accent` | `#b45309` | `#f2ab6b` |
 | Line `--color-border` | `#e4e4e4` | `#343a46` |
-| Good `--color-ok` | `#15803d` | `#5cc296` |
+| Good `--color-ok` | `#166534` | `#5cc296` |
 | Problem `--color-danger` | `#b42318` | `#f28b82` |
 
 Corners: 8px small parts, 12px buttons and fields, 16px cards, 20px listing photos and large sheets, full pills for chips.
