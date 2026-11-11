@@ -36,6 +36,8 @@ import { trustBadgesFor, type TrustListing } from "@/lib/trust";
 import { useCopy } from "@/lib/use-copy";
 import { ViewAsButton } from "@/components/view-as-button";
 import { cn } from "@/lib/utils";
+import { queueStorefrontSrc } from "@/lib/queue-photo";
+import { LISTING_PLACEHOLDER } from "@/lib/listing-photo";
 
 const FACT_TONE: Record<ReviewFactTone, string> = {
   ready: "font-medium text-fg",
@@ -185,9 +187,15 @@ function ReviewDocuments({
       {bare ? null : centre.storefrontPhoto ? (
         <figure className="border-t border-border p-2">
           <img
-            src={centre.storefrontPhoto}
+            src={queueStorefrontSrc(centre.storefrontPhoto)}
             alt={`Storefront for ${centre.name}`}
             className="h-16 w-full max-w-[12rem] rounded-md object-cover ring-1 ring-border"
+            onError={(event) => {
+              const img = event.currentTarget;
+              if (img.getAttribute("data-fallback") === "1") return;
+              img.setAttribute("data-fallback", "1");
+              img.src = LISTING_PLACEHOLDER;
+            }}
           />
           <figcaption className="mt-1 text-[11px] text-subtle">Storefront</figcaption>
         </figure>

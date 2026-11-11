@@ -1,5 +1,5 @@
 import { createPrivateKey, createSign } from "node:crypto";
-import { getSql } from "@/lib/db";
+import { envFlagOn } from "@/lib/flags";
 import { centreEnvelopeCreateBody, type EnvelopeSignerInput } from "@/lib/docusign-envelope";
 import { PARENT_AGREEMENT_PACK, parentAgreementStatusFromConnect } from "@/lib/parent-agreement";
 import {
@@ -202,6 +202,15 @@ export async function createCentreEnvelope(input: {
     if (input.packKind === PARENT_AGREEMENT_PACK) {
       throw new Error("agreement:docusign_off");
     }
+    return {
+      mode: "demo",
+      envelopeId: `demo_${input.contractId}`,
+      signingUrl: `${appOrigin()}/sign/${input.contractId}`,
+      status: "sent",
+    };
+  }
+  // Feature on is not a live send. No DocuSign envelope until Kyle sets the live flag.
+  if (!envFlagOn(process.env.FEATURE_ENROLMENT_ESIGN_LIVE)) {
     return {
       mode: "demo",
       envelopeId: `demo_${input.contractId}`,
