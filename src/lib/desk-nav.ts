@@ -83,6 +83,7 @@ export const DESK_NAV: Record<DeskId, DeskItem[]> = {
     { id: "insights", label: "Insights", hint: "Views, tours, and spots", labelKey: "deskNavInsights", hintKey: "deskNavInsightsHint", href: "/provider", search: { desk: "insights" } },
     { id: "top-rated", label: "Top Rated", hint: "KidEase mark, not a government rating", labelKey: "deskNavTopRated", hintKey: "deskNavTopRatedHint", href: "/provider", search: { desk: "top-rated" } },
     { id: "requests", label: "Requests", hint: "Tours, waitlist, and spots", labelKey: "navRequestsShort", hintKey: "deskNavRequestsHint", href: "/provider", search: { desk: "requests" } },
+    { id: "leads", label: "Families", hint: "Which step each family is on", labelKey: "leadTrackerNav", hintKey: "leadTrackerNavHint", href: "/provider/leads" },
     { id: "employees", label: "Employees", hint: "Add an employee", labelKey: "employeesTitle", hintKey: "deskNavEmployeesHint", href: "/provider", search: { desk: "employees" } },
     { id: "screening", label: "Screening", hint: "Required documents", labelKey: "listingCoachOpenScreening", hintKey: "deskNavScreeningHint", href: "/provider", search: { desk: "screening" } },
     { id: "learning", label: "Learning", hint: "Goals, stories, and plans", labelKey: "learningNav", hintKey: "learningNavHint", href: "/provider", search: { desk: "learning" } },
@@ -260,6 +261,8 @@ type DeskNavOpts = {
   providerInsights?: boolean;
   /** KidEase Top Rated page. Hidden until FEATURE_TOP_RATED_BADGE is on. */
   topRated?: boolean;
+  /** Family steps. Hidden until FEATURE_CENTRE_LEAD_TRACKER is on. */
+  leadTracker?: boolean;
 };
 
 /** Today, Listings, Calendar, and Insights sit together. Calendar arrives with FEATURE_HOST_LISTING. */
@@ -300,6 +303,7 @@ export function visibleDeskNav(desk: DeskId, opts?: DeskNavOpts): DeskItem[] {
     if (item.id === "calendar") return opts?.hostListing === true;
     if (item.id === "tours" && opts?.hostListing === true) return false;
     if (item.id === "insights") return opts?.providerInsights === true;
+    if (item.id === "leads") return opts?.leadTracker === true;
     if (item.id === "top-rated") return opts?.topRated === true;
     if (item.id === "promote" || item.id === "subscription") return false;
     if (item.id === "upgrade") return opts?.subscriptionsEnabled === true;
@@ -349,7 +353,7 @@ export const DESK_GROUPS: Record<DeskId, DeskGroup[]> = {
     { id: "settings", label: "Settings", labelKey: "settings", open: true, itemIds: ["notify-prefs", "security", "email-sms"] },
   ],
   daycare: [
-    { id: "desk", label: "Daycare desk", labelKey: "daycareDeskTitle", open: true, itemIds: ["today", "listings", "calendar", "insights", "top-rated", "requests", "tours", "messages"] },
+    { id: "desk", label: "Daycare desk", labelKey: "daycareDeskTitle", open: true, itemIds: ["today", "listings", "calendar", "insights", "top-rated", "requests", "leads", "tours", "messages"] },
     { id: "business", label: "Business", labelKey: "navBusiness", open: true, itemIds: ["money", "promote"] },
     { id: "team", label: "Team", labelKey: "navTeam", itemIds: ["employees", "hours", "screening", "learning", "tools"] },
     { id: "compliance", label: "Compliance", labelKey: "navCompliance", itemIds: ["licence", "contract"] },

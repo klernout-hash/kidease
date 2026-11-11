@@ -3489,5 +3489,7 @@
   "inboxAssignMe": "Assign to me",
   "inboxOlderSearch": "{count} older messages",
   "inboxAssignedYou": "Assigned to you",
-  "notificationsBellHint": "تنبيهات، وليست رسائل غير مقروءة"
+  "notificationsBellHint": "تنبيهات، وليست رسائل غير مقروءة",
+  "leadTrackerNav": "العائلات",
+  "leadTrackerNavHint": "الخطوة التي وصلت إليها كل عائلة"
 }
