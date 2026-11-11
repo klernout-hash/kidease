@@ -18,6 +18,7 @@ import { hasAmenity } from "@/lib/licensing";
 import { hasConfirmedAges } from "@/lib/listing-readiness";
 import { clipAgeBand, generatedAgeBands } from "@/lib/public-programs";
 import { matchesRailAge } from "@/lib/care-type";
+import { scheduleFromStoredFees } from "@/lib/category-keys";
 import { listingStandardGroups, standardAgeGroup, standardAgeLabel } from "@/lib/standard-age-groups";
 import { honestVacancy, isLiveOrClaimed, type VacancyHonestyInput } from "@/lib/now-loops";
 import type { Daycare } from "@/lib/types";
@@ -559,8 +560,18 @@ export function matchesParentOpening(
   return honestOpeningWindow(d, now) === opening;
 }
 
-export function matchesParentSchedule(d: Pick<Daycare, "scheduleOptions">, schedule: ParentSchedule): boolean {
-  return listingSchedules(d).includes(schedule);
+export function matchesParentSchedule(
+  d: Pick<Daycare, "scheduleOptions" | "partTimeMonthly" | "infantMonthly" | "toddlerMonthly" | "preschoolMonthly">,
+  schedule: ParentSchedule,
+): boolean {
+  return scheduleFromStoredFees({
+    stored: listingSchedules(d),
+    schedule,
+    partTimeMonthly: d.partTimeMonthly,
+    infantMonthly: d.infantMonthly,
+    toddlerMonthly: d.toddlerMonthly,
+    preschoolMonthly: d.preschoolMonthly,
+  });
 }
 
 export function matchesParentFacility(
