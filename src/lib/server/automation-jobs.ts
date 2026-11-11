@@ -554,7 +554,7 @@ export async function runTourFollowupsJob(options: { dryRun?: boolean; now?: Dat
       for (const row of tours) {
         const locale = centreLocale(row.province, row.locale);
         const plan = planTourFollowup({
-          flagOn: flag.tour !== "off",
+          flagOn: true,
           tourAt: row.tour_at,
           enabledAt,
           now,
