@@ -15,6 +15,9 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { gzipSync } from "node:zlib";
+import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
+import { loadavg } from "node:os";
 import { chromium } from "playwright";
 import { POLISH_PAGES, polishPath } from "./polish-coverage.mjs";
 
@@ -43,6 +46,11 @@ if (![repo, resolve(repo, ".."), "/tmp"].some((root) => out.startsWith(`${root}/
 const runCount = Number(value("runs", "3"));
 const runOffset = Number(value("run-offset", "0"));
 const recoverReports = argv.includes("--recover-reports");
+const captureNavigation = argv.includes("--capture-navigation");
+const warmDocument = argv.includes("--warm-document");
+const quietHost = argv.includes("--quiet-host");
+const mobileUserAgent =
+  "Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36";
 if (!Number.isInteger(runCount) || runCount < 1 || runCount > 9)
   throw new Error("--runs must be between 1 and 9.");
 if (!Number.isInteger(runOffset) || runOffset < 0 || runOffset > 99)
@@ -99,6 +107,13 @@ const methodology = {
   lighthouseVersion,
   sampleCountPerRoute: runCount,
   runOffset,
+  captureNavigation,
+  documentWarmup: warmDocument
+    ? "One same-URL/same-mobile-UA document GET through the separate API client before each Lighthouse sample. No browser assets or HTTP cache are warmed; fallback responses are retained without retrying until fast."
+    : "No per-sample document warmup.",
+  hostQuietDeclaration: quietHost
+    ? "Operator declared that other agent layout workers, tests, builds and automation browsers were stopped for this serial collection. Existing user browsers may remain. Sanitized process observations are recorded at sample boundaries; this is not continuous CPU-isolation proof."
+    : "No quiet-host declaration.",
   serverState: value(
     "server-state",
     "Operator-specified preview process; server cache warmness is not inferred by this script.",
@@ -176,6 +191,94 @@ function localAsset(url) {
   return parsed;
 }
 
+function documentFacts(body) {
+  const slugs = [...body.matchAll(/<article\b[^>]*\bdata-slug=["']([^"']+)["']/g)].map(
+    (match) => match[1],
+  );
+  return {
+    bytes: Buffer.byteLength(body),
+    sha256: createHash("sha256").update(body).digest("hex"),
+    listingArticleCount: slugs.length,
+    uniqueListingCount: new Set(slugs).size,
+    listingSlugs: [...new Set(slugs)],
+    containsSkeletonMarkup: /\bke-skel\b/.test(body),
+    containsParentHome: /data-ke=["']parent-home["']/.test(body),
+    containsDaycareHome: /data-ke=["']daycare-desk["']/.test(body),
+    containsLaunchHoldReference: /data-ke-launch-hold/.test(body),
+    htmlLaunchHoldAttribute: /\bdata-ke-launch-hold(?:\s|=|>)/.test(
+      body.match(/<html\b[^>]*>/i)?.[0] || "",
+    ),
+  };
+}
+
+const knownMeasurementPids = new Set([process.pid]);
+function hostSnapshot() {
+  const snapshot = {
+    capturedAt: new Date().toISOString(),
+    loadAverage: loadavg(),
+    expectedMeasurementPid: process.pid,
+  };
+  if (!quietHost) return snapshot;
+  try {
+    let serverPids = [];
+    try {
+      serverPids = execFileSync("lsof", ["-nP", `-iTCP:${base.port}`, "-sTCP:LISTEN", "-t"], {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+      })
+        .trim()
+        .split(/\s+/)
+        .map(Number)
+        .filter((pid) => Number.isInteger(pid) && pid > 0);
+    } catch {
+      /* Preserve absence of listener-PID visibility. */
+    }
+    snapshot.expectedServerPids = serverPids;
+    const text = execFileSync("ps", ["-axo", "pid=,ppid=,pcpu=,comm="], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    const processes = text
+      .split("\n")
+      .map((line) => line.match(/^\s*(\d+)\s+(\d+)\s+([\d.]+)\s+(.+)$/))
+      .filter(Boolean)
+      .map((match) => ({
+        pid: Number(match[1]),
+        parentPid: Number(match[2]),
+        cpuPercent: Number(match[3]),
+        executable: match[4],
+      }));
+    const expected = new Set([...knownMeasurementPids, ...serverPids]);
+    for (let changed = true; changed;) {
+      changed = false;
+      for (const item of processes)
+        if (expected.has(item.parentPid) && !expected.has(item.pid)) {
+          expected.add(item.pid);
+          changed = true;
+        }
+    }
+    for (const pid of expected) knownMeasurementPids.add(pid);
+    const dev = (item) =>
+      /(?:^|\/)(?:node|npm|npx|python\d*|vite|esbuild|tsc)(?:$|\s)|Chrome|Safari|firefox|WebKit/i.test(
+        item.executable,
+      );
+    snapshot.developmentAndBrowserProcesses = processes
+      .filter(dev)
+      .map((item) => ({ ...item, expected: expected.has(item.pid) }));
+    snapshot.potentialCompetingDevelopmentProcesses = processes.filter(
+      (item) => dev(item) && !expected.has(item.pid) && item.cpuPercent >= 1,
+    );
+    snapshot.otherCpuPercentSum = processes
+      .filter((item) => !expected.has(item.pid) && !dev(item))
+      .reduce((sum, item) => sum + item.cpuPercent, 0);
+    snapshot.note =
+      "Executable names and CPU only; no command-line arguments, environment values, or process payloads are collected. CPU percentages are OS observations, not continuous sampling.";
+  } catch (error) {
+    snapshot.error = String(error?.message || error).split("\n")[0];
+  }
+  return snapshot;
+}
+
 async function measureScripts(lhr) {
   const network = lhr.audits["network-requests"]?.details?.items || [];
   const scripts = [
@@ -221,6 +324,7 @@ for (const definition of pages.filter((page) => selected.includes(page.id))) {
         requestedUrl: url,
         limitation: definition.limitation || null,
       };
+      const host = { before: hostSnapshot() };
       if (definition.id === "admin" && locale === "fr") {
         row.localeLimitation =
           "French locale requested via /admin?lang=fr; existing admin main content remains English. This verifies the loaded admin surface, not complete French localization.";
@@ -242,6 +346,40 @@ for (const definition of pages.filter((page) => selected.includes(page.id))) {
         });
         browser = await chromium.connectOverCDP(`http://127.0.0.1:${chrome.port}`);
         const context = browser.contexts()[0];
+        const observed = { documents: [], requests: [], errors: [] };
+        const responseReads = [];
+        let gatheringNavigation = false;
+        if (captureNavigation)
+          context.on("response", (response) => {
+            if (!gatheringNavigation) return;
+            const request = response.request();
+            const parsed = localAsset(response.url());
+            if (!parsed) return;
+            const kind = request.resourceType();
+            if (kind !== "document" && !parsed.pathname.startsWith("/_serverFn/")) return;
+            const reading = (async () => {
+              const body = await response.body();
+              const timing = request.timing();
+              const entry = {
+                path: parsed.pathname,
+                resourceType: kind,
+                method: request.method(),
+                status: response.status(),
+                bytes: body.length,
+                timing,
+              };
+              observed.requests.push(entry);
+              if (kind === "document")
+                observed.documents.push({ ...entry, ...documentFacts(body.toString("utf8")) });
+            })().catch((error) =>
+              observed.errors.push({
+                path: parsed.pathname,
+                resourceType: kind,
+                error: String(error?.message || error).split("\n")[0],
+              }),
+            );
+            responseReads.push(reading);
+          });
         await context.route("**/*", async (route) => {
           const requestUrl = route.request().url();
           if (/^(?:data|blob|about):/.test(requestUrl)) return route.continue();
@@ -256,6 +394,21 @@ for (const definition of pages.filter((page) => selected.includes(page.id))) {
           await seedFixture(context, definition.role);
           row.fixtureSessionVerified = true;
         }
+        if (warmDocument && !recoverReports) {
+          const started = Date.now();
+          const response = await context.request.get(url, {
+            headers: { "user-agent": mobileUserAgent, accept: "text/html" },
+            maxRedirects: 0,
+          });
+          const body = await response.text();
+          row.documentWarmup = {
+            status: response.status(),
+            durationMs: Date.now() - started,
+            ...documentFacts(body),
+          };
+        }
+        host.beforeNavigation = hostSnapshot();
+        gatheringNavigation = true;
         const result = recoverReports
           ? { lhr: JSON.parse(readFileSync(resolve(out, `${name}.json`), "utf8")) }
           : await lighthouse(url, {
@@ -277,14 +430,36 @@ for (const definition of pages.filter((page) => selected.includes(page.id))) {
               blockedUrlPatterns: ["*/api/health", "*/api/health?*", "*/api/health/*"],
               maxWaitForLoad: 45000,
             });
+        gatheringNavigation = false;
+        await Promise.allSettled(responseReads);
         if (!result?.lhr) throw new Error("Lighthouse did not return a navigation report.");
         const { lhr } = result;
-        row.documentBodyBytes =
+        const lcpDetails = lhr.audits["lcp-breakdown-insight"]?.details?.items || [];
+        row.lcpCandidate = lcpDetails.find((item) => item.type === "node") || null;
+        row.observedLcpBreakdown = lcpDetails.find((item) => item.type === "table")?.items || null;
+        row.lcpCandidateSkeletonLike = /ke-skel|skeleton|loading|chargement|starting/i.test(
+          `${row.lcpCandidate?.snippet || ""} ${row.lcpCandidate?.nodeLabel || ""}`,
+        );
+        if (captureNavigation) {
+          row.originalNavigation = observed;
+          row.searchDaycarePageCalls = observed.requests.filter((item) =>
+            item.path.startsWith("/_serverFn/61609873"),
+          ).length;
+          row.readAiFeatureFlagCalls = observed.requests.filter((item) =>
+            item.path.startsWith("/_serverFn/8d52baba"),
+          ).length;
+          row.ssrDocumentFacts = observed.documents[0] || null;
+          if (row.ssrDocumentFacts)
+            row.ssrListingArticleCount = row.ssrDocumentFacts.listingArticleCount;
+          writeFileSync(resolve(out, `${name}-navigation.json`), JSON.stringify(observed, null, 2));
+        }
+        row.lighthouseDocumentResourceBytes =
           lhr.audits["document-latency-insight"]?.details?.debugData?.uncompressedResponseBytes ??
           null;
+        row.documentBodyBytes = row.ssrDocumentFacts?.bytes ?? row.lighthouseDocumentResourceBytes;
         row.observedServerResponseMs = lhr.audits["server-response-time"]?.numericValue ?? null;
         const mainDocument = result.artifacts?.MainDocumentContent;
-        if (typeof mainDocument === "string") {
+        if (typeof mainDocument === "string" && row.ssrListingArticleCount === undefined) {
           row.ssrListingArticleCount = [
             ...mainDocument.matchAll(/<article\b[^>]*\bdata-slug=/g),
           ].length;
@@ -420,6 +595,25 @@ for (const definition of pages.filter((page) => selected.includes(page.id))) {
           await chrome?.kill();
         } catch {
           /* Browser disconnect can already have stopped this fresh profile. */
+        }
+        host.after = hostSnapshot();
+        if (quietHost) {
+          row.hostObservations = {
+            before: host.before,
+            beforeNavigation: host.beforeNavigation,
+            after: host.after,
+          };
+          row.hostSnapshotCompetingDevelopmentJobs = [
+            host.before,
+            host.beforeNavigation,
+            host.after,
+          ]
+            .filter(Boolean)
+            .flatMap((snapshot) => snapshot.potentialCompetingDevelopmentProcesses || []);
+          row.hostSnapshotVisibilityComplete = [host.before, host.beforeNavigation, host.after]
+            .filter(Boolean)
+            .every((snapshot) => !snapshot.error);
+          writeFileSync(resolve(out, `${name}-host.json`), JSON.stringify(host, null, 2));
         }
       }
       summary.rows.push(row);

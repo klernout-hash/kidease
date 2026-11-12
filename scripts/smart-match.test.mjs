@@ -147,7 +147,7 @@ test("events drop notes, addresses, and contact", () => {
 
 test("smart match stays on the page and does not send places to the model", () => {
   const server = read("src/lib/server/smart-match.ts");
-  const ui = read("src/components/smart-match.tsx");
+  const ui = read("src/components/smart-match.tsx") + read("src/components/smart-match-chat.tsx");
   const home = read("src/routes/index.tsx");
   const search = read("src/routes/search.tsx");
   assert.match(server, /feature: "smart-match"/);

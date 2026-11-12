@@ -77,10 +77,13 @@ export function homeValidateSearch(s: Record<string, unknown>) {
   };
 }
 
-export async function loadProductHome() {
-  const airbnbUi = await import("@/lib/airbnb-ui-flag")
-    .then((mod) => mod.readAirbnbUi())
-    .catch(() => false);
+export async function loadProductHome(knownAirbnbUi?: boolean) {
+  const flags = Promise.all([
+    typeof knownAirbnbUi === "boolean"
+      ? Promise.resolve(knownAirbnbUi)
+      : import("@/lib/airbnb-ui-flag").then((mod) => mod.readAirbnbUi()).catch(() => false),
+    readMobileSearchV2().catch(() => false),
+  ]);
   const raw = await withTimeoutFallback(resolveRequestSearchOrigin(), ORIGIN_BUDGET_MS, productHomeOrigin());
   const origin = searchOriginOrWinnipeg(raw);
   try {
@@ -88,19 +91,21 @@ export async function loadProductHome() {
       featuredDaycares({ data: { lat: origin.lat, lng: origin.lng, label: origin.label, radiusKm: 25 } }),
       HOME_PAINT_BUDGET_MS,
     );
+    const [airbnbUi, mobileSearchV2] = await flags;
     return {
       featured: Array.isArray(painted.value) ? painted.value : [],
       featuredReady: painted.ready,
       origin,
-      mobileSearchV2: await readMobileSearchV2().catch(() => false),
+      mobileSearchV2,
       airbnbUi,
     };
   } catch {
+    const [airbnbUi, mobileSearchV2] = await flags;
     return {
       featured: [],
       featuredReady: true,
       origin,
-      mobileSearchV2: await readMobileSearchV2().catch(() => false),
+      mobileSearchV2,
       airbnbUi,
     };
   }
@@ -110,7 +115,7 @@ export type ProductHomeBoot = Awaited<ReturnType<typeof loadProductHome>>;
 
 export const Route = createFileRoute("/")({
   validateSearch: homeValidateSearch,
-  loader: () => loadProductHome(),
+  loader: ({ context }) => loadProductHome(context.airbnbUi),
   staleTime: 60_000,
   pendingMs: 0,
   pendingMinMs: 0,

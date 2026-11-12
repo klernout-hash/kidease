@@ -31,6 +31,7 @@ import { ApplyReferral } from "@/components/apply-referral";
 import { KeyboardInset } from "@/components/keyboard-inset";
 import { FacebookEmailPrompt } from "@/components/facebook-email-prompt";
 import { FacebookRoleBoot } from "@/components/facebook-role-boot";
+import { cn } from "@/lib/utils";
 
 const SHELL_FRAME =
   "flex min-h-dvh min-h-[100dvh] w-full min-w-0 flex-col bg-bg pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] text-fg";
@@ -40,7 +41,7 @@ const HEADER_BAR =
 const HEADER_CTA =
   "ke-web-only inline-flex min-h-[44px] max-w-[9.5rem] touch-manipulation items-center justify-center gap-1.5 whitespace-normal rounded-full border border-primary px-2.5 text-center text-[13px] font-medium leading-tight text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 active:scale-[0.99] sm:max-w-none sm:px-3 sm:text-sm";
 
-export function Shell({ children }: { children: ReactNode }) {
+export function Shell({ children, pageClassName }: { children: ReactNode; pageClassName?: string }) {
   const { t, locale } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const headerCity = useRouterState({
@@ -127,7 +128,7 @@ export function Shell({ children }: { children: ReactNode }) {
             </Link>
           </div>
         </header>
-        <div className="ke-page min-h-0 min-w-0 flex-1" data-ke="page">
+        <div className={cn("ke-page min-h-0 min-w-0 flex-1", pageClassName)} data-ke="page">
           {children}
         </div>
       </div>
@@ -149,7 +150,7 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
         </header>
         <div className={`flex min-h-0 min-w-0 flex-1 flex-col ${APP_TAB_PAD}`}>
-          <div className="ke-page min-h-0 min-w-0 flex-1" data-ke="page">
+          <div className={cn("ke-page min-h-0 min-w-0 flex-1", pageClassName)} data-ke="page">
             {children}
           </div>
         </div>
@@ -308,7 +309,7 @@ export function Shell({ children }: { children: ReactNode }) {
       <div className={`flex min-h-0 min-w-0 flex-1 flex-col ${hideTabs ? "" : APP_TAB_PAD}`}>
         <ApplyPendingShortlist />
         <ApplyReferral />
-        <div className="ke-page min-h-0 min-w-0 flex-1" data-ke="page">
+        <div className={cn("ke-page min-h-0 min-w-0 flex-1", pageClassName)} data-ke="page">
           {govBrowsing ? (
             <p className="ke-gutter flex flex-wrap items-center justify-between gap-2 bg-surface py-2 text-sm" data-ke="gov-public-browse">
               <span>{locale === "fr" ? "Fiches publiques permises, partout au Canada." : "Public licensed listings, all of Canada."}</span>

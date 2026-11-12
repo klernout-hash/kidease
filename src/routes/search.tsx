@@ -168,7 +168,7 @@ const CompareBar = lazy(() =>
 export async function searchLoader({ location }: { location: { search: unknown } }) {
     const { reviewReportsEnabled } = await import("@/lib/features");
     const { readMobileSearchV2 } = await import("@/lib/mobile-search-flag");
-    const mobileSearchV2 = await readMobileSearchV2().catch(() => false);
+    const mobileSearchV2Read = readMobileSearchV2().catch(() => false);
     const reviewRatingFloor = ratingFloor(reviewReportsEnabled(), MIN_REVIEW_COUNT);
     const rawQ = searchQueryFromUnknown(location.search);
     const genericCare = isGenericCareQuery(rawQ);
@@ -186,7 +186,7 @@ export async function searchLoader({ location }: { location: { search: unknown }
         hasMore: false,
         total: 0,
         reviewRatingFloor,
-        mobileSearchV2,
+        mobileSearchV2: await mobileSearchV2Read,
       };
     }
     const place = q || (city ? originFromSearchQuery(city)?.label || city : "");
@@ -208,7 +208,7 @@ export async function searchLoader({ location }: { location: { search: unknown }
         hasMore: false,
         total: 0,
         reviewRatingFloor,
-        mobileSearchV2,
+        mobileSearchV2: await mobileSearchV2Read,
       };
     }
     const page = pageFromSearch(location.search);
@@ -267,7 +267,7 @@ export async function searchLoader({ location }: { location: { search: unknown }
       hasMore: painted.value?.hasMore === true,
       total: painted.value?.total ?? 0,
       reviewRatingFloor,
-      mobileSearchV2,
+      mobileSearchV2: await mobileSearchV2Read,
     };
 }
 
@@ -1945,7 +1945,7 @@ export function SearchScreen({
             </div>
           </div>
         ) : null}
-        <div className={cn("flex items-end justify-between gap-3 max-md:flex-wrap max-md:gap-y-1", boot.mobileSearchV2 && "max-md:hidden")}>
+        <div className={cn("flex items-end justify-between gap-3 max-md:flex-wrap max-md:gap-y-[8px]", boot.mobileSearchV2 && "max-md:hidden")}>
           <div className="min-w-0 max-md:max-w-full max-md:flex-1 max-md:basis-[min(100%,12rem)]">
             <h1
               className="font-display text-[1.35rem] leading-tight tracking-[-0.03em] text-balance max-md:break-words"
@@ -1960,7 +1960,7 @@ export function SearchScreen({
             <Link
               to="/need-care-fast"
               search={{ q: locationKnown ? String(city || "").trim().slice(0, 80) : "" }}
-              className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-primary underline-offset-4 hover:underline"
+              className="mt-1 inline-flex min-h-[44px] min-w-[44px] items-center text-sm font-semibold text-primary underline-offset-4 hover:underline"
             >
               {t("needCareFast")}
             </Link>
@@ -1995,7 +1995,7 @@ export function SearchScreen({
           <Link
             to="/"
             search={{ change: "1" }}
-            className="inline-flex min-h-11 shrink-0 items-center text-sm font-medium text-primary max-w-full text-left"
+            className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center text-sm font-medium text-primary max-w-full text-left"
           >
             {t("changeLocation")}
           </Link>
@@ -2038,7 +2038,7 @@ export function SearchScreen({
         ) : null}
 
         <details className={cn("mt-2 rounded-xl bg-surface px-3 ring-1 ring-border", boot.mobileSearchV2 && "max-md:hidden")}>
-          <summary className="flex min-h-11 cursor-pointer items-center text-sm font-semibold">
+          <summary className="flex min-h-[44px] min-w-[44px] cursor-pointer items-center text-sm font-semibold">
             {locale === "fr" ? "Liste d’attente du quartier" : "Area waitlist"}
           </summary>
           <AreaWaitlistForm returnTo={localePath("/search", locale)} />

@@ -230,7 +230,7 @@ export const Route = createFileRoute("/provider")({
 function ProviderPending() {
   const { t } = useCopy();
   return (
-    <Shell>
+    <Shell pageClassName="ke-provider-page">
       <div role="status" aria-live="polite" aria-label={t("loading")}>
         <DeskSkeleton />
       </div>
@@ -395,28 +395,28 @@ export function ProviderPage() {
 
   if (locallyOut) {
     return (
-      <Shell>
+      <Shell pageClassName="ke-provider-page">
         <DeskSkeleton />
       </Shell>
     );
   }
   if (isPending) {
     return (
-      <Shell>
+      <Shell pageClassName="ke-provider-page">
         <DeskSkeleton />
       </Shell>
     );
   }
   if (!user && (chrome.pending || chrome.signedIn)) {
     return (
-      <Shell>
+      <Shell pageClassName="ke-provider-page">
         <DeskSkeleton />
       </Shell>
     );
   }
   if (!user) {
     return (
-      <Shell>
+      <Shell pageClassName="ke-provider-page">
         <main className="ke-gutter mx-auto max-w-lg py-16">
           <h1 className="font-display text-3xl">{t("providerGuestTitle")}</h1>
           <p className="mt-3 text-muted">{t("providerGuestLead")}</p>
@@ -462,6 +462,7 @@ export function ProviderPage() {
     {search.preview === "support" && operatorTools ? <SupportPreviewBanner /> : null}
     <DeskShell
       desk="daycare"
+      pageClassName="ke-provider-page"
       headingMode={desk === "listings" && hostListing && !listingEditorOpen ? "aside" : "page"}
       active={desk}
       onSelect={(id) => {

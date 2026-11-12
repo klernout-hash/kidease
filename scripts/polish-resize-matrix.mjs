@@ -5,6 +5,7 @@ import { resolve, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { inspectLayout } from "./polish-layout.mjs";
+import { waitForPolishReadiness } from "./polish-readiness.mjs";
 import { POLISH_PAGES, localAuditUrl, polishPath, polishProfiles } from "./polish-coverage.mjs";
 
 const args = {
@@ -75,16 +76,6 @@ const report = {
 };
 const save = () => writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`);
 save();
-const selectorFor = (id) =>
-  id === "parent"
-    ? '[data-ke="parent-home-saved"]'
-    : id === "daycare"
-      ? '[data-ke="daycare-desk"][data-settled="1"]'
-      : id === "admin"
-        ? '[data-ke="admin-queue-filters"]'
-        : ["org", "staff"].includes(id)
-          ? ".ke-dense h2, .ke-dense p.font-display"
-          : "h1";
 
 async function installGuards(context, blocks) {
   await context.routeWebSocket("**", (socket) => {
@@ -181,12 +172,10 @@ async function runCohort(browser, task) {
         new URL(page.url()).pathname !== new URL(requestedPath, args.base).pathname
       )
         unavailable = `Expected ${new URL(requestedPath, args.base).pathname}, received ${response?.status() || 0} ${new URL(page.url()).pathname}.`;
-      if (!unavailable)
-        await page
-          .locator(selectorFor(pageSpec.id))
-          .first()
-          .waitFor({ state: "visible", timeout: 20000 });
-      await page.waitForTimeout(600);
+      if (!unavailable) {
+        const loaded = await waitForPolishReadiness(page, { pageId: pageSpec.id });
+        if (!loaded.ready) unavailable = loaded.reason;
+      }
     } catch (error) {
       unavailable = String(error.message || error).slice(0, 400);
     }
@@ -238,10 +227,18 @@ async function runCohort(browser, task) {
           window.scrollTo(0, 0);
         }, profile);
         await page.waitForTimeout(150);
-        await page
-          .locator(selectorFor(pageSpec.id))
-          .first()
-          .waitFor({ state: "visible", timeout: 5000 });
+        const content = await waitForPolishReadiness(page, {
+          pageId: pageSpec.id,
+          timeoutMs: 5000,
+          stableMs: 300,
+        });
+        result.readiness = { ...content, contract: "content-v2" };
+        if (!content.ready) {
+          result.status = "blocked";
+          result.reason = content.reason;
+          save();
+          continue;
+        }
         const sample = await page.evaluate(inspectLayout);
         result.rendered = sample.page;
         result.issues = sample.issues;
@@ -250,8 +247,11 @@ async function runCohort(browser, task) {
         result.blockedRequests = [...blocks];
         result.httpStatus = response?.status() || 0;
         result.finalPath = new URL(page.url()).pathname;
-        result.readiness = { ready: true, selector: selectorFor(pageSpec.id) };
-        result.status = result.issues.length || result.pageErrors.length ? "failed" : "passed";
+        result.geometryStatus =
+          result.issues.length || result.pageErrors.length ? "failed" : "passed";
+        result.status = result.geometryStatus === "passed" && content.healthy ? "passed" : "failed";
+        if (!content.healthy)
+          result.reason = "Settled error surface; healthy result-data coverage unavailable.";
       } catch (error) {
         result.status = "error";
         result.reason = String(error.message || error).slice(0, 400);
@@ -293,6 +293,7 @@ async function run() {
           if (
             (profile.look !== "classic" || profile.theme !== "light") &&
             prior &&
+            (pageSpec.id !== "search" || prior.readiness?.contract === "content-v2") &&
             ["passed", "failed", "blocked"].includes(prior.status)
           ) {
             report.results.push({

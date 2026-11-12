@@ -354,6 +354,14 @@
   }
 }
 
+/* Keep the shared Button's touch floor when a caller supplies a smaller rem
+   minimum. This unlayered component rule wins over layered size utilities;
+   explicit larger heights and the existing size variants still grow. */
+.ke-button {
+  min-height: max(44px, 2.75rem);
+  min-width: 44px;
+}
+
 /* Header buttons use rem, so a large text size makes them wider than a 320px
    phone once the back control is also in the row. Kept outside @layer so it
    wins over the size utilities. 44px stays a full touch target. */
@@ -627,7 +635,7 @@
     display: flex;
     flex: 0 0 auto;
     align-items: center;
-    gap: 0.35rem;
+    gap: 8px;
     padding-left: 0.15rem;
     background: var(--color-bg);
     isolation: isolate;
@@ -648,8 +656,8 @@
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
-    min-height: 2.75rem;
-    min-width: 2.75rem;
+    min-height: max(44px, 2.75rem);
+    min-width: max(44px, 2.75rem);
     padding: 0 0.7rem;
     border: 0;
     border-radius: 9999px;
@@ -692,7 +700,7 @@
       max-width: none;
     }
     .ke-explore-icon-btn {
-      width: 2.75rem;
+      width: max(44px, 2.75rem);
       padding: 0;
     }
     .ke-explore-icon-btn-label {
@@ -2886,6 +2894,12 @@ html[data-resolved-theme="dark"] .ke-site-footer {
   }
 }
 
+/* Consent height changes with French, text size and wrapping. Reuse the
+   launcher's existing measured clearance in every channel while it is open. */
+html[data-cookie-banner="open"]:has(.ke-help-bot) .ke-help-bot {
+  bottom: calc(var(--ke-help-clear, calc(10.5rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)))) + var(--ke-keyboard, 0px));
+}
+
 /* Keyboard open: the bottom tab bar steps aside instead of floating over content. */
 html[data-keyboard="open"] [data-ke="app-tab-bar"] {
   display: none !important;
@@ -3046,6 +3060,16 @@ html[data-runtime="native"] .ke-page::after {
   height: calc(10rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
   pointer-events: none;
   flex: none;
+}
+/* The provider desk grows as its centre data arrives. Keep the same bottom
+   clearance on the page box so an anonymous spacer cannot shift offscreen. */
+html[data-channel="app"] .ke-page.ke-provider-page,
+html[data-runtime="native"] .ke-page.ke-provider-page {
+  padding-block-end: calc(10rem + var(--ke-safe-bottom, env(safe-area-inset-bottom, 0px)));
+}
+html[data-channel="app"] .ke-page.ke-provider-page::after,
+html[data-runtime="native"] .ke-page.ke-provider-page::after {
+  content: none;
 }
 main { min-width: 0; }
 

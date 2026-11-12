@@ -12,6 +12,6 @@ test("zod skips the new Function probe under CSP", () => {
   assert.equal(config().jitless, true);
   const client = readFileSync(join(root, "src/client.tsx"), "utf8");
   const cspAt = client.indexOf('import { zodCspInstalled } from "./lib/zod-csp"');
-  const sentryAt = client.indexOf('import "./instrument.client"');
+  const sentryAt = client.indexOf('from "./instrument.client"');
   assert.ok(cspAt >= 0 && sentryAt > cspAt);
 });

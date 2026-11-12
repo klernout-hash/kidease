@@ -104,6 +104,73 @@ body gzip sizes without collecting a new timing sample. The summary records
 that recovery. It does not repair a failed Lighthouse navigation or fabricate
 a missing sample.
 
+## Follow-up with a warmed server and serial agent jobs
+
+Preserve the first-pass evidence. Use a new iteration directory and the exact
+frozen build SHA. Stop other agent browsers, test runners, builds and archives
+before capture; restart them only after the measurement agent confirms all
+Lighthouse and diagnostic browsers have closed.
+
+```sh
+node scripts/polish-lighthouse.mjs \
+  --base http://127.0.0.1:8091 \
+  --out ../evidence/iteration-2/before/lighthouse \
+  --source-sha 729002b216e220d6a2d78699ea2095d16ec496c7 \
+  --pages home,search,daycare --runs 3 --local-fixtures \
+  --warm-document --capture-navigation --quiet-host \
+  --server-state 'Frozen local build; one document warmup per fresh profile'
+```
+
+`--warm-document` makes exactly one same-URL, same-mobile-user-agent document
+GET through the API client before each Lighthouse navigation. It shares the
+synthetic session, but fetches no browser assets and warms no browser HTTP cache.
+Record the returned status, body bytes, card counts and any fallback verbatim;
+do not repeat warmups until a desired timing appears.
+
+`--capture-navigation` reads the original navigation's document and readonly
+server-function responses. It stores document hashes, UTF-8 bytes, SSR article
+counts/slugs and request timing/response sizes. Query strings, request payloads,
+headers and cookie values are not stored. The actual captured HTML byte count
+is separate from Lighthouse's document resource-size estimate. LCP candidate
+and observed breakdown details are retained alongside the simulated LCP value.
+Skeleton markup or a launch-hold CSS reference does not prove the final page
+is held; review the actual final frames and separate runtime state.
+
+`--quiet-host` records an operator declaration and sanitized boundary process
+observations: executable names, CPU percentages, expected measurement/server
+PIDs and possible competing development/browser jobs. It never records process
+arguments or environment values. If process visibility is unavailable, the
+error remains explicit. These boundary samples are not continuous proof that
+the Mac is idle. The iteration-2 baseline stopped other agent jobs, but observed
+existing user Chrome/Safari/WebKit CPU activity; do not call it an exclusively
+isolated or otherwise idle host. Do not close or inspect those user browsers.
+
+Collect startup interactions separately, after Lighthouse completes, while
+the same agent quiet window remains held:
+
+```sh
+node scripts/polish-startup-trace.mjs \
+  --base http://127.0.0.1:8091 \
+  --out ../evidence/iteration-2/before/startup \
+  --source-sha 729002b216e220d6a2d78699ea2095d16ec496c7 \
+  --pages home,search,daycare --local-fixtures
+```
+
+This opens only the existing header Menu control at a 1280×800 desktop
+viewport, with explicitly applied CDP 4× CPU and adjusted Slow-4G throttling.
+It records navigation/DCL, actual click timing, handler-property detection,
+aria-expanded/panel state, launch hold, visible skeletons, long tasks and lab
+EventTiming. First activation is assessed and saved before any diagnostic
+second activation. A later opening never turns a failed first activation into
+a pass. DCL+1 second occurs at different times after navigation on different
+routes, so success at that point is not proof of fast startup after navigation.
+React handler-property detection is a local marker, not whole-app hydration
+certification. The DOM/PerformanceObserver and trace instrumentation adds
+overhead; these traces are diagnostic and are neither Lighthouse samples nor
+field INP. Trace URLs are stripped of query/hash and sensitive header/payload
+fields are redacted. Every trace uses local fixtures and remains separate from
+the first-pass artifacts.
+
 After the full matrices and the two additional core replicates are available,
 generate a comparison without collecting new data:
 

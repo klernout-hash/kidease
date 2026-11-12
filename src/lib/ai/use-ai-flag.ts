@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { readAiFeatureFlags } from "@/lib/server/ai-flags";
+import { readClientAiFlags } from "./client-flags.ts";
 import { aiBucket, type AiFlag } from "./flags.ts";
 import { aiFeatureVisible } from "./flag-gate.ts";
 import { getPostHog } from "../posthog.ts";
@@ -28,7 +28,7 @@ export function useAiFeatureFlag(flag: AiFlag): boolean {
     let unlisten: (() => void) | undefined;
     const id = user?.id && user.id !== "dev-user" ? user.id : anonId();
     const bucket = aiBucket(id);
-    void readAiFeatureFlags({ data: { distinctId: id } })
+    void readClientAiFlags(id)
       .then((snapshot) => {
         if (!stop) setOn(aiFeatureVisible({ flag, bucket, snapshot }));
       })

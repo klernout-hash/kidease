@@ -199,6 +199,7 @@ export function SaveListingButton({
   return (
     <button
       type="button"
+      data-ke="save-listing"
       onPointerDown={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => void onSave(e)}

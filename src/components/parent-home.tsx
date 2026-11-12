@@ -156,7 +156,7 @@ export function ParentHome({
           <input
             name="q"
             placeholder={t("parentHomePlaceholder")}
-            className="ke-input min-h-12 w-full"
+            className="ke-input w-full"
             autoComplete="off"
           />
         </label>

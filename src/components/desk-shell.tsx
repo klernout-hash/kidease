@@ -158,6 +158,7 @@ export function DeskShell({
   children,
   wide,
   headingMode = "page",
+  pageClassName,
 }: {
   desk: DeskId;
   active: string;
@@ -166,6 +167,7 @@ export function DeskShell({
   wide?: boolean;
   /** Aside label when the page already has its own h1, such as Your centres. */
   headingMode?: "page" | "aside";
+  pageClassName?: string;
 }) {
   const meta = DESK_META[desk];
   const { t } = useCopy();
@@ -205,7 +207,7 @@ export function DeskShell({
 
   return (
     <DeskMenuProvider value={{ desk, items: allItems, active, pathname, onSelect }}>
-      <Shell>
+      <Shell pageClassName={pageClassName}>
         <div className={cn("ke-dense mx-auto flex flex-col gap-3 px-3 py-2 md:py-3", wide ? "max-w-[90rem]" : "max-w-6xl")}>
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:gap-4">
             <aside className="md:sticky md:top-14 md:w-44 md:shrink-0">

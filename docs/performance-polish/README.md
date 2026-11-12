@@ -26,6 +26,18 @@ Run `node scripts/polish-summarize.mjs artifacts/performance-polish` to create a
 
 Checks cover document and element horizontal overflow, under-44-pixel touch targets, overlapping or nested interactive elements, clipped text and missing image alt text. Pages are scrolled in overlapping viewport samples. Controls outside a horizontal scroll rail's visible area are not treated as visible, while the rail exception is recorded. Large associated checkbox labels are recorded as effective touch targets. Ellipsis is recorded as an exception only when full text is available through `aria-label` or `title`; an inaccessible clipped label fails. Overlap checks report geometric collisions for review; overlays can require human interpretation. These are layout checks, not a complete WCAG audit or contrast/focus certification.
 
+The revised overlap collector clips each control's client rectangles to all ancestor scroll/clip regions, then checks actual pointer-hit stacks in shared areas. It permits a Save/image overlay only when both controls share the same card photo region and remain independently reachable. A password toggle must identify its input and fit entirely within reserved input padding. Fixed navigation may obscure ordinary scrolling content only when document scrolling can reveal the whole target; two fixed controls or a cookie action covering Save receive no blanket exemption. A zero-hit target and an action completely clipped by a non-scrollable ancestor fail separately. Active modal scope is explicitly recorded.
+
+`scripts/polish-readiness.mjs` requires two stable content-state observations. Search must show actual listing slugs or an explicit settled empty/error surface with no result/count loading state. An `h1` is insufficient. Settled error geometry can be recorded, but it is never counted as healthy result-data coverage. Both screenshot and resize runners use this contract; screenshot state is checked again before capture, and old search evidence using the heading-only contract is not reused as certified loaded coverage. Original reports remain unchanged when validity corrections are issued.
+
+Run the behavioral collector fixtures separately from the unit suite:
+
+```sh
+POLISH_BROWSER_TESTS=1 node --test scripts/polish-layout.behavior.test.mjs
+```
+
+These tests use static HTML with all HTTP/WebSocket requests blocked. They assert real click destinations and native label/toggle behavior as well as observed overlap, clipping and loading states. They are explicitly skipped in the general unit suite unless opted in, because that job need not have a browser installed; a skipped browser fixture is not a passed browser check.
+
 ## Authenticated local fixtures
 
 Only after independently verifying that the loopback server uses a disposable PGLite database, opt in to local seed sessions:

@@ -26,5 +26,5 @@ test("a missing or null slug is not a listing link and is a 404", () => {
   assert.match(home, /isSafeSitemapSlug\(item\.slug\)/);
   assert.match(card, /isSafeSitemapSlug\(slug\)/);
   const search = readFileSync(join(root, "src/routes/search.tsx"), "utf8");
-  assert.match(search, /min-h-11 shrink-0 items-center text-sm font-medium text-primary/);
+  assert.match(search, /min-h-\[44px\] min-w-\[44px\] shrink-0 items-center text-sm font-medium text-primary/);
 });
