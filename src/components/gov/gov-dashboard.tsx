@@ -59,7 +59,7 @@ function GovReports({ locale, exportBase }: { locale: "en" | "fr"; exportBase: s
         {fr ? "Pas encore relié. Aucun dossier n’est affiché. Rien n’est envoyé." : "Not connected yet. No case file is shown. Nothing is sent."}
       </p>
       <a className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-primary" href={`${exportBase}&format=csv&locale=${locale}`} data-ke="gov-table-download">
-        {fr ? "Télécharger le tableau" : "Download this table"}
+        {fr ? "Télécharger le sommaire du répertoire (CSV)" : "Download the directory summary (CSV)"}
       </a>
     </section>
   );
@@ -438,7 +438,7 @@ export function GovDashboardView({
             {data.locale === "fr" ? "Changement depuis le mois dernier" : "Change since last month"}: {monthDelta(trendLast?.listings ?? null, trendPrev?.listings ?? null)}
           </p>
           <a className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-primary" href={`${exportBase}&format=csv&locale=${data.locale}`} data-ke="gov-table-download">
-            {data.locale === "fr" ? "Télécharger le tableau" : "Download this table"}
+            {data.locale === "fr" ? "Télécharger le sommaire du répertoire (CSV)" : "Download the directory summary (CSV)"}
           </a>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">{copy.trendChart}</p>
           <TrendBars rows={data.trends} />
