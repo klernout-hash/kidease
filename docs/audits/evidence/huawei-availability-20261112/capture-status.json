@@ -1,0 +1,75 @@
+{
+  "recordedAt": "2026-11-12T20:59:50.095Z",
+  "scope": "Planned local synthetic source-component fixtures; no live, route, hydration or layout acceptance.",
+  "plannedProfiles": {
+    "count": 16,
+    "locales": [
+      "en",
+      "fr"
+    ],
+    "looks": [
+      "classic",
+      "clean"
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "viewports": [
+      {
+        "width": 390,
+        "height": 844
+      },
+      {
+        "width": 1280,
+        "height": 900
+      }
+    ],
+    "deviceScaleFactor": 1
+  },
+  "screenshotsCaptured": 0,
+  "layoutStatus": "not_checked",
+  "blockers": [
+    {
+      "attempt": "System /usr/bin/chromium via Playwright",
+      "outcome": "browser launch failed before page creation",
+      "error": "FATAL:chrome/browser/process_singleton_posix.cc:297 Check failed: . socket() failed: Operation not permitted (1)"
+    },
+    {
+      "attempt": "Pinned Playwright Chromium/headless-shell revision1234 installation",
+      "outcome": "download failed",
+      "evidence": "Parent verification reported corrupt/truncated ZIP downloads through the configured proxy; no pinned browser became available."
+    }
+  ],
+  "separateRegressionEvidence": {
+    "suite": "scripts/store-badges.test.mjs",
+    "result": "8/8 rendered component tests passed in parent verification",
+    "covers": [
+      "Both actual components in English and French",
+      "Huawei available with no link and no Coming soon label",
+      "Verified Google Play link preserved",
+      "Pending stores remain unlinked",
+      "Non-live fixture with a URL remains unlinked"
+    ],
+    "limit": "Server-rendered markup assertions do not establish browser layout or interactions."
+  },
+  "sourceFiles": [
+    {
+      "path": "src/components/store-badges.tsx",
+      "sha256": "81f5238faa4c88e7f92d17efaf8266956fbf0066f581a5f085d9f74bb1690d92"
+    },
+    {
+      "path": "src/components/app-store-status.tsx",
+      "sha256": "2af2b0f5f2619805d040c4bc9d64c847696ada991c28de23c91d73ef1bf9dbb9"
+    },
+    {
+      "path": "src/lib/app-stores.ts",
+      "sha256": "aeb66c87507397c9943082907f10c5a198e0a4fdaeb6dbb7ca79f298e914f53f"
+    },
+    {
+      "path": "scripts/store-badges.test.mjs",
+      "sha256": "365524cef17faadb3146c77bfa3500391662117179066f28d7d2d775d8872baa"
+    }
+  ],
+  "safety": "Capture fixture was loopback-only. No production health or desk loader was called. Browser attempts stopped after the environment/install blockers."
+}
