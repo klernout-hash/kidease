@@ -95,6 +95,9 @@ test("checkout metadata carries bill_id and Connect fee only when destinated", (
   const cflat = Object.fromEntries(flattenStripeBody(connected));
   assert.equal(cflat["payment_intent_data[application_fee_amount]"], "3600");
   assert.equal(cflat["payment_intent_data[transfer_data][destination]"], "acct_123");
+  assert.equal(cflat["line_items[0][price_data][unit_amount]"], "120000");
+  assert.equal(cflat["line_items[1][price_data][unit_amount]"], "3600");
+  assert.equal(cflat["line_items[1][price_data][product_data][name]"], "KidEase service fee (3%) / Frais de service KidEase (3 %)");
 });
 
 test("webhook objects resolve the shared bill id", () => {
@@ -186,7 +189,8 @@ test("money path uses Bill / Pay / Paid and extends invoices", () => {
 
   const payBill = src("src/routes/pay.bill.$billId.tsx");
   assert.match(payBill, /connectFeeParentPay/);
-  assert.match(payBill, /platformFeePercentLabel/);
+  assert.match(payBill, /serviceFee\.label/);
+  assert.match(payBill, /serviceFee\.feeCents/);
   assert.doesNotMatch(payBill, /t\("cardNumber"\)/);
 
   const inbox = src("src/routes/inbox.$id.tsx");

@@ -320,7 +320,7 @@ function Workspace(props: {
       ) : null}
       {props.view === "report" && data.report ? <ReportView copy={copy} report={data.report} /> : null}
       {props.view !== "report" && props.filtered.length === 0 ? (
-        <p className="rounded-2xl bg-surface p-4 shadow-card ring-1 ring-slate-200/80">
+        <p className="rounded-xl bg-surface p-4 shadow-card ring-1 ring-border">
           {copy.empty} {copy.emptyNext}
         </p>
       ) : null}
@@ -334,9 +334,9 @@ function Workspace(props: {
         </ul>
       ) : null}
       {props.view === "board" ? (
-        <div className="flex gap-3 overflow-x-auto pb-2">
+        <div className="flex gap-3 overflow-x-auto pb-2" data-ke="lead-kanban">
           {CENTRE_LEAD_STAGES.map((id) => (
-            <section key={id} className="min-w-[16rem] flex-1 rounded-2xl bg-surface-2/60 p-2">
+            <section key={id} className="w-[min(100%,16rem)] shrink-0 rounded-xl bg-surface p-2 ring-1 ring-border">
               <h2 className="px-2 py-2 text-sm font-semibold">{copy.stages[id]}</h2>
               <ul className="flex flex-col gap-2">
                 {props.filtered
@@ -418,7 +418,7 @@ function LeadButton({ copy, lead, onOpen }: { copy: LeadCopy; lead: Lead; onOpen
     <button
       type="button"
       onClick={onOpen}
-      className="flex min-h-11 w-full flex-col items-start gap-1 rounded-2xl bg-surface p-4 text-left shadow-card ring-1 ring-slate-200/80 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 dark:ring-white/15"
+      className="flex min-h-11 w-full flex-col items-start gap-1 rounded-xl bg-surface p-4 text-left shadow-card ring-1 ring-border touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
     >
       <span className="font-semibold">{lead.contactName || lead.contactEmail || copy.stages.inquiry}</span>
       <span className="text-sm text-muted">
@@ -426,6 +426,7 @@ function LeadButton({ copy, lead, onOpen }: { copy: LeadCopy; lead: Lead; onOpen
         {lead.childLabel ? ` · ${lead.childLabel}` : ""}
         {lead.ageGroup ? ` · ${lead.ageGroup}` : ""}
         {lead.desiredStart ? ` · ${lead.desiredStart}` : ""}
+        {lead.source ? ` · ${copy.sources[lead.source as keyof typeof copy.sources] || lead.source}` : ""}
       </span>
     </button>
   );

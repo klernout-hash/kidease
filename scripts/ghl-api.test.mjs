@@ -83,7 +83,13 @@ test("token alone creates a Daycare Sign Up opportunity at Signed up", async () 
     env: { GHL_API_TOKEN: "pit-test" },
     fetchImpl: async (url, init) => route(url, init, calls),
   });
-  assert.deepEqual(result, { ok: true, skipped: false, contactId: "contact_1", opportunity: "created" });
+  assert.deepEqual(result, {
+    ok: true,
+    skipped: false,
+    contactId: "contact_1",
+    opportunity: "created",
+    opportunityId: "opp_1",
+  });
   assert.equal(calls[0].url, "https://services.leadconnectorhq.com/contacts/upsert");
   assert.equal(calls[0].method, "POST");
   assert.equal(calls[0].headers.Authorization, "Bearer pit-test");

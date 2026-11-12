@@ -493,6 +493,9 @@ export const bookTourSlot = createServerFn({ method: "POST" })
         sourceId: tourId,
         conversationId: cid,
         notify: false,
+        entry: "tour_booking",
+        childId: childId || null,
+        childLabel: childName || null,
       });
     } catch (err) {
       console.error("[kidease-lead] tour slot lead skipped", err);

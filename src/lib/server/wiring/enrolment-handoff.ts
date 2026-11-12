@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
-import { splitFee } from "@/lib/stripe-methods";
+import { parentChargeQuote } from "@/lib/connect-payments";
 import { currentPeriod } from "@/lib/stripe-methods";
 import {
   advanceEnrolment,
@@ -150,7 +150,7 @@ export const runEnrolmentStep = createServerFn({ method: "POST" })
     let invoiceId: string | null = null;
     if (event === "invoice" && mode === "live" && next.invoiceCents != null) {
       const amountCad = Math.round(next.invoiceCents / 100);
-      const split = splitFee(next.invoiceCents);
+      const quote = parentChargeQuote({ invoiceCents: next.invoiceCents, daycareId: offer.daycare_id });
       invoiceId = newId("bl");
       const number = `KE-${invoiceId.slice(-8).toUpperCase()}`;
       await sql`
@@ -160,8 +160,8 @@ export const runEnrolmentStep = createServerFn({ method: "POST" })
           issued_by, memo, created_by
         ) values (
           ${invoiceId}, ${number}, ${context.userId}, ${offer.daycare_id}, ${currentPeriod()}, ${"draft"}, ${"cad"},
-          ${amountCad}, ${Math.round(split.platformFee / 100)}, ${amountCad},
-          ${next.invoiceCents}, ${split.platformFee}, ${split.net},
+          ${amountCad}, ${Math.round(quote.feeCents / 100)}, ${amountCad},
+          ${next.invoiceCents}, ${quote.feeCents}, ${quote.centreReceivesCents},
           ${"provider"}, ${"First invoice after enrolment"}, ${context.userId}
         )
       `;
