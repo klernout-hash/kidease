@@ -293,6 +293,8 @@ export const en = {
     searchIqaluitEmptyLead:
       "We don't have a licensed daycare in Iqaluit in this search. Widen the area to see the nearest ones, or try another city.",
     mapSearchRadius: "{n} {u} search",
+    mapSavedOnly: "Saved centres only",
+    mapSavedCount: "Saved centres: {n}",
     liveVsAllNone: "0 live on KidEase · {n} licensed in the directory",
     licensedNotLiveTitle: "Licensed centres nearby: none live on KidEase yet",
     licensedNotLiveLead:

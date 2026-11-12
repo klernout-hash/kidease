@@ -879,12 +879,19 @@ export function projectMapRows(rows: MapPin[], zoom: number, box: MapBbox): MapV
  * Frame pins the search page already has so the map can draw them before the
  * viewport query returns. `markersForMapView` still draws nothing when `view`
  * is null. A camera wider than the search circle is covered by a small pad.
+ * An items-only map uses this as its complete data source, including at close
+ * and country zooms where a search map normally waits for viewport data.
  */
-export function listPinsForCamera(pins: MapPin[], zoom: number, camera: MapBbox): MapViewData | null {
+export function listPinsForCamera(
+  pins: MapPin[],
+  zoom: number,
+  camera: MapBbox,
+  options: { itemsOnly?: boolean } = {},
+): MapViewData | null {
   if (!pins.length) return null;
   const latSpan = camera.maxLat - camera.minLat;
   const lngSpan = camera.maxLng - camera.minLng;
-  if (latSpan < 0.02 || lngSpan < 0.02 || latSpan > 8 || lngSpan > 12) return null;
+  if (!options.itemsOnly && (latSpan < 0.02 || lngSpan < 0.02 || latSpan > 8 || lngSpan > 12)) return null;
   const box = paddedMapBbox(camera, 0.05);
   if (!bboxCovers(box, camera)) return null;
   return projectMapRows(pins, zoom, box);

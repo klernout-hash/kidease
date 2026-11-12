@@ -242,6 +242,7 @@ export function ParentShortlist({
           ) : (
           <Suspense fallback={<div className="ke-skel size-full" aria-hidden="true" />}>
             <MapView
+              itemsOnly
               items={feesOn ? visible : visible.map((item) => ({ ...item, fromPrice: 0 }))}
               origin={
                 located && Number.isFinite(origin.lat)

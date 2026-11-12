@@ -192,6 +192,8 @@
   "searchIqaluitEmpty": "伊魁特还没有日托",
   "searchIqaluitEmptyLead": "这次搜索在伊魁特没有持牌日托。扩大范围查看最近的，或换一个城市。",
   "mapSearchRadius": "{n} {u} 搜索",
+  "mapSavedOnly": "仅显示已保存的中心",
+  "mapSavedCount": "已保存的中心：{n}",
   "liveVsAllNone": "KidEase 上 0 家实时 · 名录中 {n} 家持牌",
   "licensedNotLiveTitle": "附近的持牌中心：尚无一家在 KidEase 上实时在线",
   "licensedNotLiveLead": "本地区有 {n} 家持牌中心。尚无一家在 KidEase 上实时在线，因此收费和空位可能已过时。请浏览全部名录，或由园长认领名录。",
