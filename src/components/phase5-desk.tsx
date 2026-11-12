@@ -7,8 +7,22 @@ import { phase5Flags } from "@/lib/server/phase5";
 type Flags = Awaited<ReturnType<typeof phase5Flags>>;
 const EMPTY: Flags = { absence: false, events: false, immunization: false, miniSite: false, forecast: false };
 
-/** Hidden until a Phase 5 flag is on. Nothing on this desk sends or charges. */
-export function Phase5Desk({ locale, role, slug }: { locale: "en" | "fr"; role: string | null; slug?: string }) {
+/**
+ * Hidden until a Phase 5 flag is on. Nothing on this desk sends or charges.
+ * `actionsOnly` keeps just the card with a working link (the centre page), so a
+ * daily work screen is not buried under cards that only describe a feature.
+ */
+export function Phase5Desk({
+  locale,
+  role,
+  slug,
+  actionsOnly = false,
+}: {
+  locale: "en" | "fr";
+  role: string | null;
+  slug?: string;
+  actionsOnly?: boolean;
+}) {
   const [flags, setFlags] = useState<Flags>(EMPTY);
   const fr = locale === "fr";
   useEffect(() => {
@@ -25,6 +39,16 @@ export function Phase5Desk({ locale, role, slug }: { locale: "en" | "fr"; role: 
     };
   }, []);
   if (!Object.values(flags).some(Boolean)) return null;
+  if (actionsOnly) {
+    if (!flags.miniSite || role === "parent" || !slug) return null;
+    return (
+      <p className="mt-4 text-sm" data-ke="centre-minisite">
+        <Link to="/c/$slug" params={{ slug }} className="inline-flex min-h-11 items-center font-medium text-primary">
+          {fr ? "Voir la page du centre" : "View your centre page"}
+        </Link>
+      </p>
+    );
+  }
   const sample = eventZoneLabel("2026-11-09T15:00:00.000Z", "America/Winnipeg");
   return (
     <div className="mt-6 space-y-4" data-ke="phase5-desk">

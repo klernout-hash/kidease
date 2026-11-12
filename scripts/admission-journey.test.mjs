@@ -21,3 +21,10 @@ test("another family's facts are not inferred", () => {
   assert.equal(step.queuePosition, null);
   assert.equal(typeof step.copyKey, "string");
 });
+
+test("a completed visit is not described as booked", () => {
+  const done = admissionJourney({ tourStatus: "completed" });
+  assert.equal(done.step, "visit_done");
+  assert.equal(done.copyKey, null);
+  assert.equal(admissionJourney({ tourStatus: "accepted" }).copyKey, "admissionVisitBooked");
+});

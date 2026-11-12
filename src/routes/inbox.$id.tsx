@@ -1,3 +1,4 @@
+import { applyQuickReply, threadQuickReplies } from "@/lib/thread-quick-replies";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ThreadCallActions } from "@/components/thread-call-actions";
 import { inboxSearch, parseInboxSearch, resolveInboxView } from "@/lib/inbox-view";
@@ -464,7 +465,25 @@ export function InboxThreadPage({ id, search }: { id: string; search: ReturnType
             sendLabel={t("send")}
             plusOpen={plusOpen}
             onPlus={() => setPlusOpen((open) => !open)}
-            menu={<p className="mb-2 rounded-2xl bg-surface px-3 py-2 text-sm text-muted ring-1 ring-border">{t("inboxAttachSoon")}</p>}
+            menu={
+              <ul className="mb-2 max-h-56 space-y-1 overflow-y-auto rounded-xl bg-surface p-2 ring-1 ring-border" data-ke="thread-quick-replies">
+                {threadQuickReplies({ viewerIsParent: isParent, locale }).map((reply) => (
+                  <li key={reply.id}>
+                    <button
+                      type="button"
+                      className="min-h-11 w-full rounded-lg px-3 py-2 text-left hover:bg-bg"
+                      onClick={() => {
+                        setBody((draft) => applyQuickReply(draft, reply));
+                        setPlusOpen(false);
+                      }}
+                    >
+                      <p className="text-sm font-medium">{reply.title}</p>
+                      <p className="text-xs text-muted">{reply.body}</p>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            }
           />
         ) : loadState === "ready" ? (
           <p className="mx-3 mb-3 rounded-lg bg-surface-2 px-3 py-2 text-sm text-muted">

@@ -108,7 +108,7 @@ export const listDaycareIncoming = createServerFn({ method: "GET" })
           `select id, name, preferred_name, birthdate, allergies, epi_pen, medical_notes, medications,
                   doctor_name, doctor_phone, foods_like, foods_avoid, diet, likes, comfort_item, nap_routine,
                   toilet, home_language, soothes, fears, emergency_name, emergency_phone, pickup_people,
-                  photo_ok, sunscreen_ok, notes
+                  photo_ok, sunscreen_ok, notes, immunization_status, immunization_note, home_address
            from children where id = any($1::text[])`,
           [childIds],
         )
@@ -169,7 +169,7 @@ export const shareChildWithCentres = createServerFn({ method: "POST" })
       select id, name, preferred_name, birthdate, allergies, epi_pen, medical_notes, medications,
              doctor_name, doctor_phone, foods_like, foods_avoid, diet, likes, comfort_item, nap_routine,
              toilet, home_language, soothes, fears, emergency_name, emergency_phone, pickup_people,
-             photo_ok, sunscreen_ok, notes
+             photo_ok, sunscreen_ok, notes, immunization_status, immunization_note, home_address
       from children where id = ${data.childId} and user_id = ${context.userId} limit 1
     `;
     const kid = kids[0];

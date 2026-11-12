@@ -88,11 +88,24 @@ export function parseRadiusKm(text: string): MatchRadius | null {
   return null;
 }
 
+/**
+ * Takes the distance out of typed place text and keeps the place.
+ * "Toronto within 10 km" becomes "Toronto", not "Toronto within".
+ */
 export function stripRadiusWords(text: string): string {
+  const lead = "(?:within|inside|under|about|around|up to|à moins de|a moins de|dans un rayon de|moins de|rayon de)";
+  const tail = "(?:of|from|de|du)\\s+(?:home|here|me|my home|la maison|chez moi|ici)";
+  const distance = new RegExp(
+    `(?:\\b${lead}\\s+)?(\\d{1,2})\\s*(?:km|kilometres|kilometers|kilometre|kilometer|kilom[eè]tres?)\\b(?:\\s+${tail})?`,
+    "gi",
+  );
   return text
-    .replace(/(\d{1,2})\s*(?:km|kilometres|kilometers|kilometre|kilometer|kilom[eè]tres)/gi, " ")
+    .replace(distance, " ")
     .replace(/[·,]/g, " ")
     .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^(?:of|from|in|near|de|du|à|a)\s+/i, "")
+    .replace(/\s+(?:within|in|near|of|from|de|du|à)$/i, "")
     .trim();
 }
 

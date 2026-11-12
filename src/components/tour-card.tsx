@@ -133,6 +133,7 @@ export function TourCard({
     }
   }
 
+  const admissionLine = admissionJourney({ tourStatus: tour.status }).copyKey;
   return (
     <div className="rounded-xl bg-surface p-4 ring-1 ring-border" id={`tour-${tour.id}`}>
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -150,9 +151,11 @@ export function TourCard({
         </div>
         <TourStatusPill status={tour.status} />
       </div>
-      <p className="mt-2 text-sm" data-ke="admission-step">
-        {t(admissionJourney({ tourStatus: tour.status }).copyKey)}
-      </p>
+      {admissionLine ? (
+        <p className="mt-2 text-sm" data-ke="admission-step">
+          {t(admissionLine)}
+        </p>
+      ) : null}
       {tour.parentNote ? <p className="mt-2 text-sm text-muted">{tour.parentNote}</p> : null}
       {canRespond && tour.parentUserId ? (
         <BlockFamilyButton parentUserId={tour.parentUserId} daycareId={tour.daycareId} />

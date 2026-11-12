@@ -10,6 +10,7 @@ import {
   parseAgeText,
   parsePriorityText,
   parseRadiusKm,
+  stripRadiusWords,
   parseScheduleText,
   parseStartText,
   rewindMatchAnswers,
@@ -65,4 +66,15 @@ test("the match chat asks in bubbles and does not use the old step sheet", () =>
   assert.doesNotMatch(ui, /smartMatchStep/);
   assert.doesNotMatch(ui, /callAi|XAI_API_KEY/);
   assert.doesNotMatch(ui, /Reply STOP|unsubscribe/i);
+});
+
+test("typed place text keeps the city and drops the distance words", () => {
+  assert.equal(stripRadiusWords("Toronto within 10 km"), "Toronto");
+  assert.equal(stripRadiusWords("within 10 km of Toronto"), "Toronto");
+  assert.equal(stripRadiusWords("Winnipeg, 25 km"), "Winnipeg");
+  assert.equal(stripRadiusWords("Montréal à moins de 5 km"), "Montréal");
+  assert.equal(stripRadiusWords("within 10 km of home"), "");
+  assert.equal(stripRadiusWords("Portage la Prairie"), "Portage la Prairie");
+  assert.equal(stripRadiusWords("Salmon Arm"), "Salmon Arm");
+  assert.equal(parseRadiusKm("Toronto within 10 km"), 10);
 });
