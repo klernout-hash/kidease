@@ -192,6 +192,8 @@
   "searchIqaluitEmpty": "Noch keine Kita in Iqaluit",
   "searchIqaluitEmptyLead": "In dieser Suche gibt es keine lizenzierte Kita in Iqaluit. Vergrößern Sie den Umkreis für die nächsten, oder versuchen Sie eine andere Stadt.",
   "mapSearchRadius": "{n} {u} Suche",
+  "mapSavedOnly": "Nur gespeicherte Einrichtungen",
+  "mapSavedCount": "Gespeicherte Einrichtungen: {n}",
   "liveVsAllNone": "0 live auf KidEase · {n} lizenzierte Kitas im Verzeichnis",
   "licensedNotLiveTitle": "Lizenzierte Kitas in der Nähe: noch keine live auf KidEase",
   "licensedNotLiveLead": "{n} lizenzierte Kitas befinden sich in dieser Gegend. Keine davon ist auf KidEase live, daher können Gebühren und Plätze veraltet sein. Sehen Sie sich alle Inserate an, oder eine Leitung kann ein Inserat beanspruchen.",

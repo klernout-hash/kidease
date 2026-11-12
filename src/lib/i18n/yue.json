@@ -192,6 +192,8 @@
   "searchIqaluitEmpty": "伊魁特暫時未有托兒",
   "searchIqaluitEmptyLead": "呢次搜尋喺伊魁特冇持牌托兒。擴大範圍睇最近嘅，或者換一個城市。",
   "mapSearchRadius": "{n} {u} 搜尋",
+  "mapSavedOnly": "只顯示已儲存嘅中心",
+  "mapSavedCount": "已儲存嘅中心：{n}",
   "liveVsAllNone": "KidEase 上有 0 間上線 · 名錄入面有 {n} 間持牌",
   "licensedNotLiveTitle": "附近嘅持牌中心: 暫時未有喺 KidEase 上線",
   "licensedNotLiveLead": "呢區有 {n} 間持牌中心。未有喺 KidEase 上線，所以收費同空位可能已經過時。瀏覽全部刊登，或者主任可以認領刊登。",

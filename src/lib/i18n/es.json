@@ -192,6 +192,8 @@
   "searchIqaluitEmpty": "Aún no hay guarderías en Iqaluit",
   "searchIqaluitEmptyLead": "No hay una guardería con licencia en Iqaluit en esta búsqueda. Amplíe el área para ver las más cercanas, o pruebe otra ciudad.",
   "mapSearchRadius": "{n} {u} de búsqueda",
+  "mapSavedOnly": "Solo centros guardados",
+  "mapSavedCount": "Centros guardados: {n}",
   "liveVsAllNone": "0 en vivo en KidEase · {n} con licencia en el directorio",
   "licensedNotLiveTitle": "Centros con licencia cerca: ninguno en vivo en KidEase todavía",
   "licensedNotLiveLead": "{n} centros con licencia están en esta zona. Ninguno está en vivo en KidEase, así que las tarifas y los cupos pueden estar desactualizados. Explora Todas las fichas, o un director puede reclamar una ficha.",
