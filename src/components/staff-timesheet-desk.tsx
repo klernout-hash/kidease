@@ -168,7 +168,7 @@ export function StaffTimesheetDesk() {
 
       <div>
         <h3 className="font-display text-xl">{copy.stillIn}</h3>
-        {desk.open.length === 0 ? <p className="mt-2 text-sm text-muted">{copy.noRows}</p> : null}
+        {desk.open.length === 0 ? <p className="mt-2 text-sm text-muted">{copy.noActive}</p> : null}
         <ul className="mt-3 divide-y divide-border rounded-xl bg-surface ring-1 ring-border">
           {desk.open.map((entry) => (
             <li key={entry.id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">

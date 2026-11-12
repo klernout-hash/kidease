@@ -3,13 +3,13 @@ import { Shell } from "@/components/shell";
 import { citiesIndexGroups } from "@/lib/cities-index";
 import { localePath } from "@/lib/locale-path";
 import { pageSeoHead } from "@/lib/page-seo";
-import { loadDirectoryCounts } from "@/lib/server/city-directory";
 import { provincialVacancyIndexEnabled } from "@/lib/features";
 import { useCopy } from "@/lib/use-copy";
 
 export async function citiesLoader() {
   const vacancyIndex = provincialVacancyIndexEnabled();
   try {
+    const { loadDirectoryCounts } = await import("@/lib/server/city-directory");
     const counts = await loadDirectoryCounts();
     return { provinces: counts.provinces, hubs: counts.hubs, source: counts.source, vacancyIndex };
   } catch {

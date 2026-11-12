@@ -10,8 +10,9 @@ import { getSql } from "@/lib/db";
 import { clampTapTime } from "@/lib/centre-tools";
 import { childCheckinEnabled, centreToolIds } from "@/lib/features";
 import { attendancePreviewEnabled } from "@/lib/attendance-handoff";
+import { parentAbsenceBody } from "@/lib/daily-care";
 import { listAccessibleDaycareIds, loadCentreRole } from "./centre-access";
-import { commitCorrection, commitHandoff, readCentreDay, readParentDay, seedDemoChildren } from "./attendance-handoff";
+import { commitCorrection, commitHandoff, readCentreDay, readParentDay, saveParentAbsenceReport, seedDemoChildren } from "./attendance-handoff";
 
 function doorOn() {
   return childCheckinEnabled() || attendancePreviewEnabled();
@@ -99,10 +100,32 @@ export const correctChildCheck = createServerFn({ method: "POST" })
 export const listMyChildAttendance = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    if (!doorOn()) return { enabled: false as const, children: [] };
+    const enabled = doorOn();
     const sql = await getSql();
-    const children = await readParentDay(sql, context.userId, new Date());
-    return { enabled: true as const, children };
+    const children = await readParentDay(sql, context.userId, new Date(), enabled);
+    return { enabled, children };
+  });
+
+export const reportMyChildAbsence = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .validator((input: { bookingId?: string; status?: string; locale?: string }) => ({
+    bookingId: String(input?.bookingId || "").trim().slice(0, 100),
+    status: String(input?.status || ""),
+    locale: input?.locale === "fr" ? "fr" : "en",
+  }))
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    const report = await saveParentAbsenceReport(sql, {
+      userId: context.userId, bookingId: data.bookingId, status: data.status, now: new Date(),
+    });
+    if (!report.ok) return report;
+    const { insertCareStatusMessage } = await import("./daily-care");
+    await insertCareStatusMessage({
+      conversationId: report.conversationId, daycareId: report.daycareId, daycareName: report.daycareName,
+      parentUserId: context.userId, actorUserId: context.userId,
+      body: parentAbsenceBody({ ...report, locale: data.locale }),
+    }).catch(() => undefined);
+    return { ok: true as const, localDay: report.localDay };
   });
 
 export const seedDemoAttendance = createServerFn({ method: "POST" })

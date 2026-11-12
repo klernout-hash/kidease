@@ -177,7 +177,7 @@ test("co-parent invites stay pending until that person accepts", () => {
     true,
   );
   assert.match(familyNotice("fr", "linked").subject, /famille/);
-  assert.match(custodyCopy("en").mustAccept, /until they accept/);
+  assert.match(custodyCopy("en").mustAccept, /7 days to accept/);
   assert.match(custodyCopy("fr").lead, /propre compte/);
   assert.match(src("migrations/0174_child_portfolio_coparent.sql"), /coparent_audit/);
   assert.match(src("migrations/down/0174_child_portfolio_coparent.sql"), /drop table if exists coparent_audit/);

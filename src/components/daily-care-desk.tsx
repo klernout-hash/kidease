@@ -32,6 +32,7 @@ import { getWeekSchedule, saveAttendance, type AttendanceRow } from "@/lib/serve
 import { createBill, sendBill } from "@/lib/server/billing";
 import { buildMonthLedger, canWriteDayNote, dollarsToDailyCents, parentShareDollars } from "@/lib/licensed-day";
 import { CareChildOps } from "@/components/care-child-ops";
+import { ChildCheckHistory } from "@/components/child-checkin-desk";
 import { KioskParentScan, KioskTablet } from "@/components/qr-kiosk-panel";
 import { CareChildRoomSelect, CareOpsPanel } from "@/components/care-ops-panel";
 import { useCopy } from "@/lib/use-copy";
@@ -353,6 +354,7 @@ export function DailyCareDesk({
         <p className="mt-1 text-xs text-subtle">{t("careLaterOut")}</p>
       </div>
       {role === "provider" ? <KioskTablet daycareId={daycareId} /> : <KioskParentScan />}
+      {role === "parent" ? <ChildCheckHistory /> : null}
 
       {ops ? (
         <CareOpsPanel
@@ -430,9 +432,9 @@ export function DailyCareDesk({
                       <span className="rounded-full bg-ok/10 px-2.5 py-0.5 text-xs font-medium text-ok" data-ke="care-enrolment">
                         {t("statusAccepted")}
                       </span>
-                      <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary" data-ke="care-presence">
+                      {role === "provider" ? <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary" data-ke="care-presence">
                         {t(PRESENCE_COPY[presence])}
-                      </span>
+                      </span> : null}
                     </p>
                     {ops ? (
                       <div className="mt-2">
@@ -448,6 +450,7 @@ export function DailyCareDesk({
                     ) : null}
                   </div>
                   <div className="flex flex-wrap gap-2">
+                    {role === "provider" ? <>
                     <Button
                       size="sm"
                       disabled={busy !== null || row.status === "arrived"}
@@ -487,6 +490,7 @@ export function DailyCareDesk({
                     >
                       {t("careMarkVacation")}
                     </Button>
+                    </> : null}
                     {row.conversationId ? (
                       <Button size="sm" variant="secondary" asChild>
                         <Link to="/inbox/$id" params={{ id: row.conversationId }}>
@@ -693,7 +697,7 @@ function DayRecord({
   return (
     <div className="mt-4 border-t border-border pt-4" data-ke="day-record">
       <p className="font-medium">{t("careDayNote")}</p>
-      {marked ? null : <p className="mt-1 text-sm text-muted">{t("careDayNoteLocked")}</p>}
+      {role === "provider" && !marked ? <p className="mt-1 text-sm text-muted">{t("careDayNoteLocked")}</p> : null}
       {note && (note.food || note.nap || note.incident || note.photo) ? (
         <div className="mt-2 space-y-1 text-sm">
           {logsOn && note.food ? <p>{t("careFood")}: {note.food}</p> : null}

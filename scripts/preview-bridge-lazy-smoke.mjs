@@ -27,7 +27,7 @@ const browser = await chromium.launch({
 });
 
 async function ready(page) {
-  const button = page.locator('button[aria-controls="ke-nav-drawer"]').first();
+  const button = page.locator('[aria-controls="ke-nav-drawer"]').first();
   await button.waitFor({ state: "visible" });
   await page.waitForFunction((element) => {
     const key = Object.keys(element).find((name) => name.startsWith("__reactProps$"));

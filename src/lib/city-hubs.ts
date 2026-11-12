@@ -6,7 +6,7 @@
 
 import { isPublicListing } from "./listing-visibility.ts";
 import { normalizeListingSlug } from "./listing-slug.ts";
-import { isSafeSitemapSlug, SITEMAP_ORIGIN } from "./sitemap.ts";
+import { isSafeSitemapSlug, SITEMAP_ORIGIN } from "./public-url.ts";
 
 export const CITY_HUB_PATH_PREFIX = "/daycare/city";
 export const CITY_HUB_LISTING_CAP = 80;

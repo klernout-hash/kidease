@@ -1,5 +1,7 @@
 {
   "app": "KidEase",
+  "searchAlertsLoading": "Benachrichtigungen werden geladen…",
+  "searchAlertsLoadFailed": "Deine Benachrichtigungen konnten nicht geladen werden. Versuche es erneut.",
   "tagline": "Lizenzierte Betreuung, nah am Zuhause.",
   "search": "Suchen",
   "explore": "Entdecken",
@@ -192,6 +194,8 @@
   "searchIqaluitEmpty": "Noch keine Kita in Iqaluit",
   "searchIqaluitEmptyLead": "In dieser Suche gibt es keine lizenzierte Kita in Iqaluit. Vergrößern Sie den Umkreis für die nächsten, oder versuchen Sie eine andere Stadt.",
   "mapSearchRadius": "{n} {u} Suche",
+  "mapSavedOnly": "Nur gespeicherte Einrichtungen",
+  "mapSavedCount": "Gespeicherte Einrichtungen: {n}",
   "liveVsAllNone": "0 live auf KidEase · {n} lizenzierte Kitas im Verzeichnis",
   "licensedNotLiveTitle": "Lizenzierte Kitas in der Nähe: noch keine live auf KidEase",
   "licensedNotLiveLead": "{n} lizenzierte Kitas befinden sich in dieser Gegend. Keine davon ist auf KidEase live, daher können Gebühren und Plätze veraltet sein. Sehen Sie sich alle Inserate an, oder eine Leitung kann ein Inserat beanspruchen.",
@@ -3501,5 +3505,19 @@
   "inboxAssignedYou": "Assigned to you",
   "notificationsBellHint": "Hinweise, keine ungelesenen Nachrichten",
   "leadTrackerNav": "Familien",
-  "leadTrackerNavHint": "Welcher Schritt für jede Familie"
+  "leadTrackerNavHint": "Welcher Schritt für jede Familie",
+  "careParentNoticeTitle": "Mitteilungen der Eltern",
+  "careParentNoticeDay": "Plan für {date}",
+  "careParentNoticeLead": "Speichere eine Notiz, dass dein Kind fehlen wird. Ankunft und Abholung werden weiterhin vom Personal bestätigt.",
+  "careParentReported": "Von Eltern gemeldet: {status}",
+  "careReportAbsent": "Abwesenheit melden",
+  "careReportSick": "Krankheit melden",
+  "careReportVacation": "Urlaub melden",
+  "careParentReportSaved": "Meldung gespeichert.",
+  "careNoArrivalConfirmed": "Keine Ankunft bestätigt",
+  "careCentreDate": "Datum im Zentrum",
+  "careAttendanceUpdated": "Zuletzt von {name} um {time} aktualisiert",
+  "careCentreStaff": "Personal des Zentrums",
+  "careAttendanceHistory": "Verlauf für dieses Datum",
+  "careAttendanceCorrection": "Korrektur"
 }

@@ -1571,7 +1571,7 @@ async function runSignedInSessions(page, base) {
       const reloaded = !/\/login\/?$/i.test(new URL(page.url()).pathname);
       record(`signed-in-reload-${tag}`, reloaded && (await pageIsQuiet(page)), { note: page.url() });
 
-      const menuLabel = await page.locator('header button[aria-controls="ke-nav-drawer"]').getAttribute("aria-label");
+      const menuLabel = await page.locator('header [aria-controls="ke-nav-drawer"]').getAttribute("aria-label");
       record(`signed-in-menu-${tag}`, menuLabel === item.menu, { note: menuLabel || "" });
 
       await page.goto(new URL(item.home, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });

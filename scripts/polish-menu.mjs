@@ -213,7 +213,7 @@ try {
             );
             row.httpStatus = response?.status() || 0;
             await page.waitForTimeout(1000);
-            const opener = page.locator('header button[aria-controls="ke-nav-drawer"]');
+            const opener = page.locator('header [aria-controls="ke-nav-drawer"]');
             if (!(await opener.isVisible()))
               throw new Error("Guest website menu opener unavailable; menu was not audited.");
             await opener.focus();

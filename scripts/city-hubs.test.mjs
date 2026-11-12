@@ -178,15 +178,16 @@ test("French city hubs read their own loader instead of the English route hook",
 test("hub route, listing breadcrumbs, and internal links are wired", () => {
   const hubRoute = src("src/routes/daycare.city.$city.tsx");
   const hubPage = src("src/lib/city-hub-page.ts");
+  const hubHead = src("src/lib/city-hub-head.ts");
   assert.match(hubRoute, /createFileRoute\("\/daycare\/city\/\$city"\)/);
   assert.match(hubPage, /throw notFound\(\)/);
   assert.match(hubRoute, /CityHubNotFoundPage/);
-  assert.match(hubPage, /cityHubNotFoundHead/);
+  assert.match(hubHead, /cityHubNotFoundHead/);
   assert.doesNotMatch(hubRoute + hubPage, /redirect\(\{\s*to:\s*"\/search"/);
   assert.match(hubRoute, /cityHubMapSearchQuery/);
   assert.equal((hubRoute.match(/search=\{\{\s*q:\s*mapSearch\s*\}\}/g) ?? []).length, 2);
   assert.doesNotMatch(hubRoute, /<Link to="\/search">/);
-  assert.match(hubPage, /pageSeoHead/);
+  assert.match(hubHead, /pageSeoHead/);
   assert.match(hubRoute, /faqPageJsonLdScript/);
   assert.match(hubRoute, /breadcrumbJsonLdScript/);
   assert.match(hubRoute, /do not list nannies or sitters/);

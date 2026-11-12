@@ -210,13 +210,16 @@ export function Shell({ children, pageClassName }: { children: ReactNode; pageCl
                 </Link>
               ) : null}
               <HeaderAccount />
-              <button
-                type="button"
+              <a
+                href={localePath("/menu", locale)}
+                data-ke="menu-trigger"
                 className="ke-web-only relative grid size-12 min-h-[44px] min-w-[44px] shrink-0 place-items-center rounded-full text-fg transition-colors duration-150 ease-out hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation [[data-channel=website]_&]:grid"
                 aria-label={t("menu")}
                 aria-expanded={open}
                 aria-controls="ke-nav-drawer"
                 onClick={(e) => {
+                  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                  e.preventDefault();
                   e.stopPropagation();
                   setOpen(true);
                 }}
@@ -227,7 +230,7 @@ export function Shell({ children, pageClassName }: { children: ReactNode; pageCl
                   marker="menu-badge"
                   className="absolute right-0.5 top-0.5"
                 />
-              </button>
+              </a>
             </div>
           </div>
           {barePath === "/" || barePath === "/search" ? (

@@ -354,7 +354,7 @@ async function windowsInputs(browser, base, problems) {
         const notes = [];
         if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) notes.push("pointer");
         if (root.dataset.channel !== "website") notes.push(`channel ${root.dataset.channel}`);
-        const menu = document.querySelector("button[aria-controls='ke-nav-drawer']");
+        const menu = document.querySelector("[aria-controls='ke-nav-drawer']");
         if (menu && "focus" in menu) menu.focus({ focusVisible: true });
         const active = document.activeElement;
         const shadow = active ? getComputedStyle(active).boxShadow : "";
@@ -409,11 +409,11 @@ async function windowsInputs(browser, base, problems) {
         if (root.dataset.channel !== "website") notes.push(`channel ${root.dataset.channel}`);
         return notes;
       });
-      const menu = touchPage.locator("button[aria-controls='ke-nav-drawer']");
+      const menu = touchPage.locator("[aria-controls='ke-nav-drawer']");
       if (await menu.isVisible().catch(() => false)) {
         await touchPage.evaluate(() => {
           window.__keTap = 0;
-          document.querySelector("button[aria-controls='ke-nav-drawer']")?.addEventListener("pointerup", () => {
+          document.querySelector("[aria-controls='ke-nav-drawer']")?.addEventListener("pointerup", () => {
             window.__keTap = 1;
           }, { once: true });
         });

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { confirmAction } from "@/lib/success-confirm";
@@ -59,25 +59,30 @@ export function SavedSearchesPanel() {
   const [notices, setNotices] = useState<SearchAlertNotice[]>([]);
   const [editing, setEditing] = useState<SavedSearch | null>(null);
   const [savingPrefs, setSavingPrefs] = useState(false);
+  const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading");
 
-  async function load() {
-    const desk = await loadSearchAlertsDesk();
-    setSearches(desk.searches);
-    setPrefs({
-      ...desk.prefs,
-      emailEnabled: desk.prefs.emailEnabled === true,
-      smsEnabled: desk.prefs.smsEnabled === true,
-      emailCommercial: desk.prefs.emailCommercial === true,
-    });
-    setPrefsReady(true);
-    setNotices(desk.notices);
-  }
+  const load = useCallback(async () => {
+    setLoadState("loading");
+    try {
+      const desk = await loadSearchAlertsDesk();
+      setSearches(desk.searches);
+      setPrefs({
+        ...desk.prefs,
+        emailEnabled: desk.prefs.emailEnabled === true,
+        smsEnabled: desk.prefs.smsEnabled === true,
+        emailCommercial: desk.prefs.emailCommercial === true,
+      });
+      setPrefsReady(true);
+      setNotices(desk.notices);
+      setLoadState("ready");
+    } catch {
+      setLoadState("error");
+    }
+  }, []);
 
   useEffect(() => {
-    void load().catch(() => {
-      setSearches([]);
-    });
-  }, []);
+    void load();
+  }, [load]);
 
   function openSearch(search: SavedSearch) {
     stashSavedSearchToApply(search);
@@ -86,6 +91,14 @@ export function SavedSearchesPanel() {
 
   return (
     <div className="space-y-8">
+      {loadState === "error" ? (
+        <div className="rounded-xl bg-surface p-4 ring-1 ring-border" role="alert">
+          <p className="text-sm">{t("searchAlertsLoadFailed")}</p>
+          <Button className="mt-3" type="button" variant="secondary" onClick={() => void load()}>
+            {t("tryAgain")}
+          </Button>
+        </div>
+      ) : null}
       <section>
         <div className="space-y-2 rounded-xl bg-surface p-4 ring-1 ring-border">
           <label className="flex min-h-11 cursor-pointer items-start gap-3 text-sm">
@@ -186,7 +199,7 @@ export function SavedSearchesPanel() {
 
       <section>
         <h2 className="font-display text-2xl">{t("savedSearches")}</h2>
-        {searches === null ? (
+        {loadState === "error" ? null : searches === null ? (
           <div className="mt-3 space-y-2" aria-hidden="true">
             <div className="ke-skel h-20 w-full rounded-xl" />
             <div className="ke-skel h-20 w-full rounded-xl" />
@@ -276,7 +289,9 @@ export function SavedSearchesPanel() {
             </Button>
           ) : null}
         </div>
-        {notices.length === 0 ? (
+        {loadState === "loading" ? (
+          <p className="mt-3 text-sm text-muted" role="status">{t("searchAlertsLoading")}</p>
+        ) : loadState === "error" ? null : notices.length === 0 ? (
           <p className="mt-3 text-sm text-muted">{t("noAlertNotices")}</p>
         ) : (
           <ul className="mt-3 divide-y divide-border overflow-hidden rounded-xl bg-surface ring-1 ring-border">

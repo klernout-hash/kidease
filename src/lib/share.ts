@@ -1,6 +1,6 @@
 /** Relative .ts imports so scripts/share.test.mjs can load this file in Node. */
 import { shareText, shouldOfferWebShare } from "./native.ts";
-import { SITEMAP_ORIGIN, sitemapListingPath } from "./sitemap.ts";
+import { SITEMAP_ORIGIN, sitemapListingPath } from "./public-url.ts";
 
 /** Canonical public origin for share links. App Store IDs are not required for v1. */
 export const SHARE_APP_URL = SITEMAP_ORIGIN;

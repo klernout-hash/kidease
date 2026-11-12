@@ -1,5 +1,7 @@
 {
   "app": "KidEase",
+  "searchAlertsLoading": "Caricamento degli avvisi…",
+  "searchAlertsLoadFailed": "Non è stato possibile caricare i tuoi avvisi. Riprova.",
   "tagline": "Nidi autorizzati, vicino a casa.",
   "search": "Cerca",
   "explore": "Esplora",
@@ -192,6 +194,8 @@
   "searchIqaluitEmpty": "Nessun asilo a Iqaluit per ora",
   "searchIqaluitEmptyLead": "Non c’è un asilo autorizzato a Iqaluit in questa ricerca. Allarga l’area per vedere i più vicini, oppure prova un’altra città.",
   "mapSearchRadius": "Ricerca {n} {u}",
+  "mapSavedOnly": "Solo centri salvati",
+  "mapSavedCount": "Centri salvati: {n}",
   "liveVsAllNone": "0 in diretta su KidEase · {n} autorizzati nell'elenco",
   "licensedNotLiveTitle": "Centri autorizzati nelle vicinanze: nessuno ancora in diretta su KidEase",
   "licensedNotLiveLead": "{n} centri autorizzati si trovano in questa zona. Nessuno è andato in diretta su KidEase, quindi tariffe e posti potrebbero non essere aggiornati. Consulti Tutti gli annunci, oppure un direttore può rivendicare un annuncio.",
@@ -3501,5 +3505,19 @@
   "inboxAssignedYou": "Assigned to you",
   "notificationsBellHint": "Avvisi, non messaggi non letti",
   "leadTrackerNav": "Famiglie",
-  "leadTrackerNavHint": "A che punto è ogni famiglia"
+  "leadTrackerNavHint": "A che punto è ogni famiglia",
+  "careParentNoticeTitle": "Avvisi dei genitori",
+  "careParentNoticeDay": "Programma per il {date}",
+  "careParentNoticeLead": "Salva una nota per segnalare che tuo figlio sarà assente. Il personale conferma comunque arrivo e ritiro.",
+  "careParentReported": "Segnalato dal genitore: {status}",
+  "careReportAbsent": "Segnala l'assenza",
+  "careReportSick": "Segnala malattia",
+  "careReportVacation": "Segnala vacanza",
+  "careParentReportSaved": "Segnalazione salvata.",
+  "careNoArrivalConfirmed": "Nessun arrivo confermato",
+  "careCentreDate": "Data del centro",
+  "careAttendanceUpdated": "Ultimo aggiornamento di {name} alle {time}",
+  "careCentreStaff": "Personale del centro",
+  "careAttendanceHistory": "Cronologia di questa data",
+  "careAttendanceCorrection": "Correzione"
 }

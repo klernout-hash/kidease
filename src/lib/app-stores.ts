@@ -1,6 +1,6 @@
 /**
- * Which phone stores are open. Flip `live` and set `url` to publish a store.
- * Coming soon tiles have no link. scripts/app-stores.test.mjs loads this file.
+ * Which phone stores are open. Availability and a verified download URL are separate.
+ * A store without a URL has no link. scripts/app-stores.test.mjs loads this file.
  */
 import { STORE } from "./store-listing.ts";
 
@@ -9,7 +9,7 @@ export type AppStoreId = "play" | "amazon" | "huawei" | "apple" | "samsung" | "m
 export type AppStoreTile = {
   id: AppStoreId;
   live: boolean;
-  /** Download page. Null while the store is coming soon. */
+  /** Verified download page. Null until its exact listing URL is known. */
   url: string | null;
   nameEn: string;
   nameFr: string;
@@ -20,13 +20,13 @@ export const PLAY_STORE_URL = `https://play.google.com/store/apps/details?id=${S
 export const AMAZON_STORE_URL = `https://www.amazon.com/gp/mas/dl/android?p=${STORE.playPackageName}`;
 
 /**
- * AppGallery Connect has no public app id in this repo, so Huawei stays
- * coming soon until that listing URL is pasted here.
+ * Kyle confirmed Huawei is live on 12 Nov 2026. Its public listing URL has
+ * not been verified, so show availability without inventing a download link.
  */
 export const APP_STORES: readonly AppStoreTile[] = [
   { id: "play", live: true, url: PLAY_STORE_URL, nameEn: "Google Play", nameFr: "Google Play" },
   { id: "amazon", live: true, url: AMAZON_STORE_URL, nameEn: "Amazon Appstore", nameFr: "Amazon Appstore" },
-  { id: "huawei", live: false, url: null, nameEn: "Huawei AppGallery", nameFr: "Huawei AppGallery" },
+  { id: "huawei", live: true, url: null, nameEn: "Huawei AppGallery", nameFr: "Huawei AppGallery" },
   { id: "apple", live: false, url: null, nameEn: "App Store", nameFr: "App Store" },
   { id: "samsung", live: false, url: null, nameEn: "Galaxy Store", nameFr: "Galaxy Store" },
   { id: "microsoft", live: false, url: null, nameEn: "Microsoft Store", nameFr: "Microsoft Store" },

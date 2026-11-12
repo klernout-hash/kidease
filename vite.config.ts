@@ -14,6 +14,8 @@ import { wellKnownAppLinksPlugin } from "./scripts/well-known-app-links.mjs";
 import { clientNodeBuiltinStub } from "./scripts/client-node-stub.mjs";
 // @ts-expect-error JS plugin alongside the TS vite config
 import { routeUiSplitPlugin } from "./scripts/route-ui-split.mjs";
+// @ts-expect-error Optional QA-only build observer alongside the TS config
+import { polishBuildGraphPlugin } from "./scripts/polish-build-graph.mjs";
 
 /**
  * Finish PGLite bootstrap during dev-server setup (before traffic). Vite awaits
@@ -347,6 +349,7 @@ export default defineConfig(({ command, isPreview, mode }) => {
   ssr: { external: ["sharp", "posthog-js", "@sentry/node", "inngest"] },
   optimizeDeps: { exclude: ["sharp"] },
   plugins: [
+    polishBuildGraphPlugin(),
     twilioVideoCspSafe(),
     gateGoogleMapsClientKey(mapsBrowserKey),
     clientNodeBuiltinStub(),
@@ -361,7 +364,21 @@ export default defineConfig(({ command, isPreview, mode }) => {
     tailwindcss(),
     // Before Start so route screens are local functions when the code splitter runs.
     routeUiSplitPlugin(),
-    tanstackStart(),
+    tanstackStart({
+      router: {
+        codeSplittingOptions: {
+          // Unselected route loaders must not retain their data helpers in
+          // every browser startup. SSR still runs the same loaders; Nitro's
+          // existing inlineDynamicImports keeps the server graph together.
+          defaultBehavior: [
+            ["loader"],
+            ["component"],
+            ["errorComponent"],
+            ["notFoundComponent"],
+          ],
+        },
+      },
+    }),
     ...(command === "build" || isPreview
       ? [
           nitro({

@@ -50,7 +50,7 @@ export function dashboardCsv(data: GovDashboard): string {
   }
   for (const row of data.waitlist) {
     if (row.suppressed) continue;
-    rows.push(line(["waitlist", `${row.age} ${row.start}`.trim(), row.n, ""]));
+    rows.push(line(["waitlist", `${row.age} ${row.start}`.trim(), row.n, data.waitlistContext || ""]));
   }
   for (const row of data.trends) {
     rows.push(line(["trend_listings", row.month, row.listings, ""]));

@@ -1,5 +1,7 @@
 {
   "app": "KidEase",
+  "searchAlertsLoading": "正在加载提醒…",
+  "searchAlertsLoadFailed": "无法加载你的提醒。请重试。",
   "tagline": "持证托儿，离家更近。",
   "search": "搜索",
   "explore": "发现",
@@ -192,6 +194,8 @@
   "searchIqaluitEmpty": "伊魁特还没有日托",
   "searchIqaluitEmptyLead": "这次搜索在伊魁特没有持牌日托。扩大范围查看最近的，或换一个城市。",
   "mapSearchRadius": "{n} {u} 搜索",
+  "mapSavedOnly": "仅显示已保存的中心",
+  "mapSavedCount": "已保存的中心：{n}",
   "liveVsAllNone": "KidEase 上 0 家实时 · 名录中 {n} 家持牌",
   "licensedNotLiveTitle": "附近的持牌中心：尚无一家在 KidEase 上实时在线",
   "licensedNotLiveLead": "本地区有 {n} 家持牌中心。尚无一家在 KidEase 上实时在线，因此收费和空位可能已过时。请浏览全部名录，或由园长认领名录。",
@@ -3501,5 +3505,19 @@
   "inboxAssignedYou": "Assigned to you",
   "notificationsBellHint": "提醒，不是未读消息",
   "leadTrackerNav": "家庭",
-  "leadTrackerNavHint": "每个家庭走到哪一步"
+  "leadTrackerNavHint": "每个家庭走到哪一步",
+  "careParentNoticeTitle": "家长通知",
+  "careParentNoticeDay": "{date}的计划",
+  "careParentNoticeLead": "记录孩子将缺席的情况。到园和接走仍由工作人员确认。",
+  "careParentReported": "家长报告：{status}",
+  "careReportAbsent": "报告缺席",
+  "careReportSick": "报告生病",
+  "careReportVacation": "报告休假",
+  "careParentReportSaved": "报告已保存。",
+  "careNoArrivalConfirmed": "尚未确认到园",
+  "careCentreDate": "托育中心日期",
+  "careAttendanceUpdated": "最近由{name}于{time}更新",
+  "careCentreStaff": "托育中心工作人员",
+  "careAttendanceHistory": "该日期的记录",
+  "careAttendanceCorrection": "更正"
 }

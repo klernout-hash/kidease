@@ -7,7 +7,6 @@ import { Shell } from "@/components/shell";
 import { useRoleChrome } from "@/components/role-chrome";
 import { localePath } from "@/lib/locale-path";
 import { PhotoConsentCard } from "@/components/photo-consent-card";
-import { ParentArrivalLine } from "@/components/parent-arrival-line";
 import { pageSeoHead, withNoindex } from "@/lib/page-seo";
 import { useCopy } from "@/lib/use-copy";
 
@@ -55,7 +54,6 @@ export function DailyFeedPage() {
         {parent ? (
           <PhotoConsentCard />
         ) : null}
-        {parent ? <ParentArrivalLine /> : null}
         {parent ? (
           <div className="mt-6">
             <Suspense fallback={<p className="text-sm text-muted">{fr ? "Chargement du journal." : "Loading the feed."}</p>}>

@@ -13,6 +13,7 @@ export type DoorEvent = {
   pickupName: string;
   correctionOf: string | null;
   reason: string;
+  recordedBy?: string;
 };
 
 export const DEMO_CENTRE_ID = "demo-att-centre";

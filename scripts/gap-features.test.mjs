@@ -125,7 +125,7 @@ test("waitlist rank, open-spot match, and door rules stay honest", () => {
   assert.match(src("src/components/age-open-spots-desk.tsx"), /data-ke="age-open-spots"/);
   assert.match(src("src/routes/provider.tsx"), /AgeOpenSpotsDesk/);
   assert.match(src("src/routes/provider.tsx"), /ChildCheckinDesk/);
-  assert.match(src("src/components/parent-desk.tsx"), /ChildCheckHistory/);
+  assert.match(src("src/components/daily-care-desk.tsx"), /ChildCheckHistory/);
   assert.match(src("migrations/0161_job_board_manage.sql"), /centre_job_posts/);
   assert.match(src("migrations/0165_org_centre_focus.sql"), /org_centre_focus/);
 });
