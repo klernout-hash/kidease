@@ -150,8 +150,8 @@ export function ParentHome({
           )}
         </div>
       </section>
-      <form action="/search" method="get" className="flex gap-[8px]" data-ke="parent-home-search">
-        <label className="min-w-0 flex-1">
+      <form action="/search" method="get" className="flex flex-wrap gap-[8px]" data-ke="parent-home-search">
+        <label className="min-w-[44px] flex-1">
           <span className="sr-only">{t("parentHomeSearchLabel")}</span>
           <input
             name="q"
