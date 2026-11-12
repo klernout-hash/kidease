@@ -20,8 +20,12 @@ import {
   type SpotCounts,
 } from "@/lib/host-calendar";
 import { EMPTY_GUIDE, type FamilyGuide } from "@/lib/host-listing";
-import { assertCentreCanMutateListing, assertCentreCanMutateVacancies } from "@/lib/server/centre-access";
+import {
+  assertCentreCanMutateListing,
+  assertCentreCanMutateVacancies,
+} from "@/lib/server/centre-access";
 import { resolveListingTourTimezone } from "@/lib/tour-calendar";
+import { effectiveTourStatus } from "@/lib/tour-hold";
 import type { Daycare } from "@/lib/types";
 
 export type HostCalendarDay = SpotCounts & { day: string; closed: boolean };
@@ -42,7 +46,11 @@ export type HostCalendarPayload = {
 const EMPTY_SPOTS: SpotCounts = { infant: 0, toddler: 0, preschool: 0 };
 
 function clipNote(value: unknown): string {
-  return String(value ?? "").split("\0").join("").trim().slice(0, 2000);
+  return String(value ?? "")
+    .split("\0")
+    .join("")
+    .trim()
+    .slice(0, 2000);
 }
 
 function emptyPayload(month: string): HostCalendarPayload {
@@ -155,13 +163,30 @@ export const loadHostCalendar = createServerFn({ method: "GET" })
         and window_date < ${monthEnd}::date
     `.catch(() => []);
     for (const row of windows) bump(tours, dayKey(row.day));
-    const requests = await sql<{ preferred_times: string | null; status: string }>`
-      select preferred_times, status
+    const requests = await sql<{
+      preferred_times: string | null;
+      status: string;
+      created_at: string;
+      hold_expires_at: string | null;
+    }>`
+      select preferred_times, status, created_at, hold_expires_at
       from tour_requests
       where daycare_id = ${data.daycareId}
         and status in ('pending', 'accepted')
     `.catch(() => []);
+    const now = Date.now();
     for (const row of requests) {
+      if (
+        effectiveTourStatus(
+          {
+            status: row.status,
+            createdAt: row.created_at,
+            holdExpiresAt: row.hold_expires_at,
+          },
+          now,
+        ) === "expired"
+      )
+        continue;
       let parsed: unknown = [];
       try {
         parsed = JSON.parse(row.preferred_times || "[]");
@@ -170,7 +195,10 @@ export const loadHostCalendar = createServerFn({ method: "GET" })
       }
       if (!Array.isArray(parsed)) continue;
       for (const slot of parsed) {
-        const date = slot && typeof slot === "object" && "date" in slot ? String((slot as { date?: string }).date || "") : "";
+        const date =
+          slot && typeof slot === "object" && "date" in slot
+            ? String((slot as { date?: string }).date || "")
+            : "";
         if (date.slice(0, 7) === month) bump(tours, date.slice(0, 10));
       }
     }
@@ -199,7 +227,14 @@ export const loadHostCalendar = createServerFn({ method: "GET" })
 export const saveHostCalendarDay = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(
-    (input: { daycareId: string; day: string; infant: number; toddler: number; preschool: number; closed: boolean }) => ({
+    (input: {
+      daycareId: string;
+      day: string;
+      infant: number;
+      toddler: number;
+      preschool: number;
+      closed: boolean;
+    }) => ({
       daycareId: String(input?.daycareId || "").trim(),
       day: String(input?.day || "").trim(),
       infant: clampSpots(input?.infant),
@@ -209,7 +244,8 @@ export const saveHostCalendarDay = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ context, data }) => {
-    if (!hostListingEnabled()) return { ok: false as const, reason: "off" as const, offerNotify: false };
+    if (!hostListingEnabled())
+      return { ok: false as const, reason: "off" as const, offerNotify: false };
     if (!isIsoDate(data.day)) throw new Error("Pick a real day");
     const sql = await getSql();
     await assertCentreCanMutateVacancies(sql, context.userId, data.daycareId);
@@ -287,7 +323,11 @@ export const loadFamilyGuide = createServerFn({ method: "GET" })
     if (!hostListingEnabled() || !daycareId) return EMPTY_GUIDE;
     const sql = await getSql();
     await assertCentreCanMutateListing(sql, context.userId, daycareId);
-    const rows = await sql<{ dropoff_note: string | null; bring_note: string | null; handbook_note: string | null }>`
+    const rows = await sql<{
+      dropoff_note: string | null;
+      bring_note: string | null;
+      handbook_note: string | null;
+    }>`
       select dropoff_note, bring_note, handbook_note
       from daycare_family_guides
       where daycare_id = ${daycareId}
@@ -356,10 +396,18 @@ export async function readPublicHostDay(
           preschool: clampSpots(row.spots_preschool),
           closed: row.closed === true || row.closed === 1,
         },
-        row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at ? String(row.updated_at) : today,
+        row.updated_at instanceof Date
+          ? row.updated_at.toISOString()
+          : row.updated_at
+            ? String(row.updated_at)
+            : today,
       )
     : null;
-  const notes = await sql<{ dropoff_note: string | null; bring_note: string | null; handbook_note: string | null }>`
+  const notes = await sql<{
+    dropoff_note: string | null;
+    bring_note: string | null;
+    handbook_note: string | null;
+  }>`
     select dropoff_note, bring_note, handbook_note
     from daycare_family_guides
     where daycare_id = ${daycare.id}

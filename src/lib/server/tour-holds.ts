@@ -23,7 +23,7 @@ type DueHold = {
 
 /**
  * Expire overdue pending soft-holds and free the seat.
- * Safe to call from book/list paths and the hourly cron.
+ * Scheduled worker only. Reads project expiry without persisting or notifying.
  */
 export async function expireDueTourHolds(input?: { dryRun?: boolean; notify?: boolean }): Promise<ExpireTourHoldsResult> {
   const dryRun = Boolean(input?.dryRun);
@@ -36,18 +36,25 @@ export async function expireDueTourHolds(input?: { dryRun?: boolean; notify?: bo
     join daycares d on d.id = t.daycare_id
     where t.status = ${"pending"}
       and coalesce(t.hold_expires_at, t.created_at + interval '48 hours') <= now()
-  `.catch(() => [] as DueHold[]);
+  `;
 
   if (dryRun) return { ok: true as const, expired: due.length, dryRun: true };
 
+  let expired = 0;
   for (const tour of due) {
-    await sql`
+    // Another worker or a centre response may have changed this hold since the scan.
+    // Only the successful transition owns the status message, lead sync and notices.
+    const claimed = await sql<{ id: string }>`
       update tour_requests
       set status = ${"expired"},
           centre_note = coalesce(centre_note, ${"Hold expired: slot released"}),
           responded_at = coalesce(responded_at, now())
       where id = ${tour.id} and status = ${"pending"}
-    `.catch(() => undefined);
+        and coalesce(hold_expires_at, created_at + interval '48 hours') <= now()
+      returning id
+    `;
+    if (!claimed[0]) continue;
+    expired += 1;
 
     const body = tourStatusBody({ status: "expired", daycareName: tour.daycare_name });
     await sql`
@@ -72,7 +79,7 @@ export async function expireDueTourHolds(input?: { dryRun?: boolean; notify?: bo
     }
   }
 
-  return { ok: true as const, expired: due.length, dryRun: false };
+  return { ok: true as const, expired, dryRun: false };
 }
 
 export function nextHoldExpiresAt(): string {

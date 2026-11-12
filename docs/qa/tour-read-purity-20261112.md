@@ -1,0 +1,31 @@
+# Tour read side effects: draft release handoff
+
+Base: shipped main `7e7c65689dd76c7a33f8e2a1faab8f9ee256e63b`. Isolated branch: `cursor/tour-read-purity-20261112`. This is a separate draft fix. No merge, deployment, production worker invocation, dry-run/force call, production database access, or live authenticated desk probe is authorized by this handoff.
+
+## Problem and design
+
+Parent desk extras load the tour GET even on Saved. Previously, `listTourRequests` and `windowsForDaycare` ran a global expiry sweep before caller/centre filtering; public slot reads reached the same sweep. Expiry can update tours, linked leads, conversation timestamps and system messages, send email/push, and reach the global alert outbox dispatcher. One earlier production Saved preflight is known; its actual effect is unknown. This work does not repeat it or claim no customer impact.
+
+The fix removes all opportunistic expiry calls from lists, window reads, booking and proposing another time. A pure `effectiveTourStatus` projects overdue pending holds as expired, with the existing 48-hour created-at fallback and `deadline <= now` boundary. It preserves driver Date milliseconds. Tours, inbox summaries/details, linked lead requests/admin counts, CRM pipeline and host-calendar counts consume the same semantics. Linked lead joins require matching source kind/id, centre and parent. Read projection does not invent response timestamps, centre notes, conversation activity or system messages. Existing migrations replace runtime schema creation in conversation-details GET and the family-scope helper used by these reads.
+
+Every slot capacity and duplicate check counts accepted requests plus pending requests with `deadline > now`; accepted requests retain seats regardless of an old deadline. Scoped response UPDATEs recheck status and deadline before effects. Reschedules also compare the original window and exact SQL deadline text, preserving database microseconds, so concurrent expiry, renewal, response or move wins safely. No unrelated tours are mutated by booking/proposing.
+
+The authorized expiry worker remains. Its guarded `UPDATE ... RETURNING` rechecks pending status and deadline; only the winning worker emits expiry effects and contributes to the expired count. Database scan/claim failures now reject rather than report a successful sweep. Reminder dispatch remains in `runExpireTourHoldsJob`. Existing post-claim crash/delivery gaps remain: this change does not add a durable transactional outbox. Embedded Postgres overlap tests do not replace multi-connection production stress tests. The pre-existing separate capacity count/insert and target-window reschedule race remains; this patch does not introduce a new locking/transaction architecture.
+
+## Scheduler and release gates
+
+Source retains Vercel `/api/tour-holds` at `50 * * * *` and Inngest `tour-holds-hourly` at `50 * * * *`. Both Inngest keys cause the authenticated Vercel route to defer. Keys do not prove function registration or scheduler health. A deferred route can log `tour_holds_run` without running expiry, and an authorized dry-run can ping its heartbeat; neither alone proves a successful mutative worker run.
+
+Recent successful production scheduler execution and current registration/health are **unverified**. The coordinator must verify an actual recent successful scheduled expiry/reminder run through existing read-only operational evidence before any deployment decision. Do not call the worker, including dry-run/force, to establish that evidence. Deployment is blocked until this gate is resolved.
+
+Removing page-read notices moves expiry notices entirely to the hourly scheduler, delaying notices by up to one hour under a healthy worker. Overdue display and freed capacity take effect from reads immediately; unhealthy scheduling can delay persistence/notices indefinitely. The coordinator must explicitly accept the hourly notice timing and retain the no-deploy gate until scheduler health is evidenced.
+
+The feature-gated centre lead tracker (`centre-leads.ts`) is a separate pre-existing write-on-read flow: its GET synchronizes stored leads, events/webhooks and in-app alerts. Its shared source bundle still consumes persisted tour state until the worker runs. Adding projection inside that persistence path would reintroduce expiry-caused page writes. Separating tracker derivation from persistence is follow-up work; the current purity/status guarantee covers the tour/inbox/linked-request/CRM/calendar paths listed above, not every repository GET or this tracker. Support thread-reference lookup is a POST with its own audit write and likewise retains persisted status. No feature flags were changed to hide these limitations.
+
+## Validation and readiness
+
+Local tests use an empty credential environment (`env -i`, preserving PATH/HOME and setting TZ=UTC); `DATABASE_URL` is absent. Synthetic PGlite fixtures and explicit dependency boundaries exercise actual handlers and SQL, reject read writes, record notification/outbox calls even when caught, and compare rows across tenants. Coverage includes deadline/fallback status and capacity, Date milliseconds/database microseconds, stale acceptance and proposal races, duplicate/concurrent workers, scan/claim failures, and existing cron authorization/deferral/dry-run/reminder behavior.
+
+Final local results and exact published head/check links are recorded in the PR description. Earlier failed validation runs are not release evidence. The cursor branch's Vercel ignored-build step is verified to exit 0 before publication. No UI components, layout, copy, default look, payment/subscription configuration or bot settings are changed; screenshots are not required for this backend behavior preservation. Huawei fallback files and excluded PRs 357/336/307/289/841 are untouched.
+
+Keep the PR draft until required `check` and aggregate `e2e` succeed on its exact current head and the operational/timing gates above are resolved. Local synthetic success does not establish live scheduler health or customer impact.

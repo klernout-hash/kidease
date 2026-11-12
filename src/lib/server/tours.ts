@@ -31,7 +31,7 @@ import {
   tourSystemBody,
   type PreferredTime,
 } from "@/lib/threads";
-import { canProposeTourTime, declineReasonValid, holdExpiresAtIso } from "@/lib/tour-hold";
+import { canProposeTourTime, declineReasonValid, effectiveTourStatus, holdExpiresAtIso } from "@/lib/tour-hold";
 import { nextTourPipeline, tourStatusStampedByBooking } from "@/lib/tour-pipeline";
 import { isTourWindowBookable, remainingTourSeats, toPublicTourSlot } from "@/lib/tour-calendar";
 import type { BookingStatus, TourRequest, TourStatus } from "@/lib/types";
@@ -50,7 +50,7 @@ type TourRow = {
   parent_note: string | null;
   status: TourStatus;
   centre_note: string | null;
-  created_at: string;
+  created_at: string | Date;
   responded_at: string | null;
   window_id?: string | null;
   hold_expires_at?: string | Date | null;
@@ -80,12 +80,16 @@ function mapTour(row: TourRow): TourRequest {
     parentUserId: row.user_id,
     preferredTimes: parsePreferredTimes(row.preferred_times),
     parentNote: row.parent_note,
-    status: row.status,
+    status: effectiveTourStatus({
+      status: row.status,
+      createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
+      holdExpiresAt: row.hold_expires_at instanceof Date ? row.hold_expires_at.toISOString() : row.hold_expires_at ?? null,
+    }),
     centreNote: row.centre_note,
-    createdAt: String(row.created_at),
+    createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : String(row.created_at),
     respondedAt: row.responded_at ? String(row.responded_at) : null,
     windowId: row.window_id ?? null,
-    holdExpiresAt: row.hold_expires_at ? String(row.hold_expires_at) : null,
+    holdExpiresAt: row.hold_expires_at instanceof Date ? row.hold_expires_at.toISOString() : row.hold_expires_at ?? null,
     parentPhone: row.parent_phone ?? null,
     parentEmail: row.contact_email ?? null,
   };
@@ -298,9 +302,6 @@ export const listTourRequests = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .validator((input?: { desk?: "parent" | "centre"; centreId?: string }) => input ?? {})
   .handler(async ({ context, data }) => {
-    await import("@/lib/server/tour-holds")
-      .then((mod) => mod.expireDueTourHolds({ notify: true }))
-      .catch(() => undefined);
     const sql = await getSql();
     const asParent = data.desk !== "centre";
     const asCentre = data.desk !== "parent";
@@ -365,6 +366,8 @@ export const respondTourRequest = createServerFn({ method: "POST" })
     const rows = await sql<{
       id: string;
       status: string;
+      created_at: string | Date;
+      hold_expires_at: string | Date | null;
       conversation_id: string;
       user_id: string;
       daycare_id: string;
@@ -374,7 +377,7 @@ export const respondTourRequest = createServerFn({ method: "POST" })
       parent_first_name: string | null;
       parent_last_name: string | null;
     }>`
-      select t.id, t.status, t.conversation_id, t.user_id, t.daycare_id, d.name as daycare_name, d.slug,
+      select t.id, t.status, t.created_at, t.hold_expires_at, t.conversation_id, t.user_id, t.daycare_id, d.name as daycare_name, d.slug,
              t.contact_email, t.parent_first_name, t.parent_last_name
       from tour_requests t
       join daycares d on d.id = t.daycare_id
@@ -388,22 +391,30 @@ export const respondTourRequest = createServerFn({ method: "POST" })
     const owned = await canCentreWriteLeadsFor(sql, context.userId, tour.daycare_id);
     if (!owned) throw new Error("Not authorized");
 
-    const next = nextTourStatus(tour.status, data.status);
+    const status = effectiveTourStatus({
+      status: tour.status,
+      createdAt: tour.created_at,
+      holdExpiresAt: tour.hold_expires_at,
+    });
+    const next = nextTourStatus(status, data.status);
     if (!next || (next !== "accepted" && next !== "declined")) throw new Error("This tour request was already answered");
 
     const note = (data.note || "").trim() || null;
     if (next === "declined" && !declineReasonValid(note)) {
       throw new Error("Add a reason so the parent knows why this tour was declined");
     }
-    await sql`
+    const updated = await sql<{ id: string }>`
       update tour_requests
       set status = ${next},
           centre_note = ${note},
           responded_by = ${context.userId},
           responded_at = now(),
           hold_expires_at = null
-      where id = ${tour.id}
+      where id = ${tour.id} and status = ${tour.status}
+        and (status <> 'pending' or coalesce(hold_expires_at, created_at + interval '48 hours') > now())
+      returning id
     `;
+    if (!updated[0]) throw new Error("This tour request was already answered or expired");
 
     void import("@/lib/server/engagement")
       .then(async (mod) => {
@@ -480,13 +491,13 @@ export const proposeTourTime = createServerFn({ method: "POST" })
   .validator((input: { tourId: string; windowId: string; note?: string }) => input)
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    await import("@/lib/server/tour-holds")
-      .then((mod) => mod.expireDueTourHolds({ notify: true }))
-      .catch(() => undefined);
 
     const rows = await sql<{
       id: string;
       status: string;
+      created_at: string | Date;
+      hold_expires_at: string | Date | null;
+      hold_expires_at_snapshot: string | null;
       conversation_id: string;
       user_id: string;
       daycare_id: string;
@@ -497,7 +508,8 @@ export const proposeTourTime = createServerFn({ method: "POST" })
       parent_first_name: string | null;
       parent_last_name: string | null;
     }>`
-      select t.id, t.status, t.conversation_id, t.user_id, t.daycare_id, d.name as daycare_name, d.slug,
+      select t.id, t.status, t.created_at, t.hold_expires_at,
+             t.hold_expires_at::text as hold_expires_at_snapshot, t.conversation_id, t.user_id, t.daycare_id, d.name as daycare_name, d.slug,
              t.window_id, t.contact_email, t.parent_first_name, t.parent_last_name
       from tour_requests t
       join daycares d on d.id = t.daycare_id
@@ -506,7 +518,11 @@ export const proposeTourTime = createServerFn({ method: "POST" })
     `.catch(() => []);
     const tour = rows[0];
     if (!tour) throw new Error("Tour request not found");
-    if (!canProposeTourTime(tour.status)) throw new Error("This tour cannot be rescheduled");
+    if (!canProposeTourTime(effectiveTourStatus({
+      status: tour.status,
+      createdAt: tour.created_at,
+      holdExpiresAt: tour.hold_expires_at,
+    }))) throw new Error("This tour cannot be rescheduled");
 
     const { canCentreWriteLeadsFor } = await import("@/lib/server/centre-access");
     const owned = await canCentreWriteLeadsFor(sql, context.userId, tour.daycare_id);
@@ -529,7 +545,9 @@ export const proposeTourTime = createServerFn({ method: "POST" })
       select w.id, w.daycare_id, w.window_date, w.start_time, w.end_time, w.capacity, w.timezone, w.start_at,
              coalesce((
                select count(*)::int from tour_requests t
-               where t.window_id = w.id and t.status in ('pending', 'accepted') and t.id <> ${tour.id}
+               where t.window_id = w.id and (t.status = 'accepted' or (
+                 t.status = 'pending' and coalesce(t.hold_expires_at, t.created_at + interval '48 hours') > now()
+               )) and t.id <> ${tour.id}
              ), 0) as booked
       from tour_windows w
       where w.id = ${windowId} and w.daycare_id = ${tour.daycare_id}
@@ -555,7 +573,7 @@ export const proposeTourTime = createServerFn({ method: "POST" })
     const times: PreferredTime[] = [{ date: slot.date, time: slot.startTime }];
     const note = (data.note || "").trim() || null;
     const staysPending = tour.status === "pending";
-    await sql`
+    const updated = await sql<{ id: string }>`
       update tour_requests
       set window_id = ${slot.id},
           preferred_times = ${serializePreferredTimes(times)},
@@ -563,8 +581,15 @@ export const proposeTourTime = createServerFn({ method: "POST" })
           hold_expires_at = ${staysPending ? holdExpiresAtIso() : null},
           responded_by = ${context.userId},
           responded_at = coalesce(responded_at, now())
-      where id = ${tour.id}
+      where id = ${tour.id} and status = ${tour.status}
+        and window_id is not distinct from ${tour.window_id}
+        and hold_expires_at is not distinct from ${tour.hold_expires_at_snapshot}::timestamptz
+        and (status = 'accepted' or (
+          status = 'pending' and coalesce(hold_expires_at, created_at + interval '48 hours') > now()
+        ))
+      returning id
     `;
+    if (!updated[0]) throw new Error("This tour request changed or expired. Refresh and try again.");
 
     const body = tourRescheduleBody({ daycareName: tour.daycare_name, times, note });
     await sql`
