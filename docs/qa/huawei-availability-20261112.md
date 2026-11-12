@@ -23,6 +23,14 @@ Classic remains the source default. Payment/subscription flags and configuration
 
 Local command logs are `/tmp/kidease-huawei-{typecheck,lint,tests-utc,build,e2e}.log` in this task environment. Tests/build ran against the final runtime edit; generated route ordering was restored and excluded from the PR. No production data was used.
 
+## CI capture follow-up
+
+The normal desktop visual test now runs a separate app-store availability regression on the isolated loopback preview. It captures the actual `/get-app` and `/fr/get-app` routes at 390×844 and 1280×900, in classic/clean and light/dark (16 full-page PNGs). It verifies both Huawei panels, pending-store and Google Play link behaviour, actual viewport/DPR/theme/look, and horizontal overflow. It never follows store links or opens a production route; off-origin requests are blocked. No Amazon URL override or runtime feature change is needed.
+
+PNGs and `manifest.json` use the existing always-uploaded `artifacts/e2e/desktop-actual/app-store-availability/` directory in `desktop-visual-report`. No workflow, permission, secret or external service changes were made. The manifest records PR head separately from the CI checkout/merge SHA, source/image hashes and observed results. A capture/assertion exception blocks the desktop job and aggregate e2e; it does not inherit the desktop pixel comparison's nonblocking mismatch policy. Manual external-URL desktop runs skip this loopback-only regression.
+
+The earlier local capture failures above remain historical. CI screenshots and final-head required checks are pending until their actual artifact is retrieved and reviewed; final provenance and links belong in the PR description.
+
 ## Release and acceptance boundaries
 
 Required GitHub `check` and aggregate `e2e` must be read against the exact published follow-up head. Earlier PRs' passing checks do not transfer. Branch-protection inspection through the GitHub integration returned 403, Resource not accessible by integration; Kyle's named requirements remain authoritative. Record final-head results in the draft PR description.
