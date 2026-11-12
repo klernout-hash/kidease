@@ -1,19 +1,10 @@
 import { getSql } from "@/lib/db";
 import { PUBLIC_LISTING_SQL } from "@/lib/listing-visibility";
-import type { FeeBucketFact, FillFact, TrendFact, WaitlistFact, CityFact } from "@/lib/gov/aggregate";
+import type { TrendFact, CityFact } from "@/lib/gov/aggregate";
+import type { GovBundle } from "@/lib/gov/bundle";
 import { isProvinceCode, PROVINCE_BOXES, type ProvinceCode } from "@/lib/gov/places";
 
 const TTL_MS = 10 * 60 * 1000;
-
-export type GovBundle = {
-  cities: CityFact[];
-  fees: Array<FeeBucketFact & { province: string; city: string }>;
-  waitlist: Array<WaitlistFact & { province: string }>;
-  trends: Array<TrendFact & { province: string }>;
-  fill: Array<FillFact & { province: string }>;
-  jobCounts: Array<{ province: string; n: number }>;
-  generatedAt: string;
-};
 
 let cache: { at: number; value: GovBundle } | null = null;
 
@@ -74,11 +65,11 @@ async function loadUncached(): Promise<GovBundle> {
           coalesce(amenities, '') ~* 'inclus|special[- ]need|besoins particuliers'
           or coalesce(programs::text, '') ~* 'inclus|special[- ]need'
         )::int as inclusion,
-        avg(lat)::float8 as lat,
-        avg(lng)::float8 as lng
+        count(*) filter (where lat is not null and lng is not null and not (lat = 0 and lng = 0))::int as "coordinateCount",
+        avg(lat) filter (where lat is not null and lng is not null and not (lat = 0 and lng = 0))::float8 as lat,
+        avg(lng) filter (where lat is not null and lng is not null and not (lat = 0 and lng = 0))::float8 as lng
       from daycares
       where ${PUBLIC_LISTING_SQL}
-        and not (lat = 0 and lng = 0)
       group by 1, 2
       `,
     )
@@ -135,38 +126,38 @@ async function loadUncached(): Promise<GovBundle> {
     .catch(() => []);
 
   const listingTrend = await sql
-    .query<{ province: string; month: string; n: number }>(
+    .query<{ province: string; city: string; month: string; n: number }>(
       `
-      select upper(btrim(province)) as province,
+      select upper(btrim(province)) as province, btrim(city) as city,
         to_char(date_trunc('month', created_at), 'YYYY-MM') as month,
         count(*)::int as n
       from daycares
       where ${PUBLIC_LISTING_SQL}
         and created_at >= now() - interval '18 months'
-      group by 1, 2
+      group by 1, 2, 3
       `,
     )
     .catch(() => []);
 
   const vacancyTrend = await sql
-    .query<{ province: string; month: string; n: number }>(
+    .query<{ province: string; city: string; month: string; n: number }>(
       `
-      select upper(btrim(province)) as province,
+      select upper(btrim(province)) as province, btrim(city) as city,
         to_char(date_trunc('month', last_vacancy_updated_at), 'YYYY-MM') as month,
         count(*)::int as n
       from daycares
       where ${PUBLIC_LISTING_SQL}
         and last_vacancy_updated_at is not null
         and last_vacancy_updated_at >= now() - interval '18 months'
-      group by 1, 2
+      group by 1, 2, 3
       `,
     )
     .catch(() => []);
 
   const jobTrend = await sql
-    .query<{ province: string; month: string; n: number }>(
+    .query<{ province: string; city: string; month: string; n: number }>(
       `
-      select upper(btrim(daycares.province)) as province,
+      select upper(btrim(daycares.province)) as province, btrim(daycares.city) as city,
         to_char(date_trunc('month', centre_job_posts.created_at), 'YYYY-MM') as month,
         count(*)::int as n
       from centre_job_posts
@@ -174,51 +165,53 @@ async function loadUncached(): Promise<GovBundle> {
         on daycares.id = centre_job_posts.daycare_id
       where true
         and centre_job_posts.created_at >= now() - interval '18 months'
-      group by 1, 2
+      group by 1, 2, 3
       `,
     )
     .catch(() => []);
 
   const jobCounts = await sql
-    .query<{ province: string; n: number }>(
+    .query<{ province: string; city: string; n: number }>(
       `
-      select upper(btrim(daycares.province)) as province, count(*)::int as n
+      select upper(btrim(daycares.province)) as province, btrim(daycares.city) as city, count(*)::int as n
       from centre_job_posts
-      join (select id, province from daycares where ${PUBLIC_LISTING_SQL}) daycares
+      join (select id, province, city from daycares where ${PUBLIC_LISTING_SQL}) daycares
         on daycares.id = centre_job_posts.daycare_id
-      group by 1
+      group by 1, 2
       `,
     )
     .catch(() => []);
 
   const fillRows = await sql
-    .query<{ province: string; n: number; avg_days: number | null }>(
+    .query<{ province: string; city: string; n: number; avg_days: number | null }>(
       `
-      select upper(btrim(daycares.province)) as province,
+      select upper(btrim(daycares.province)) as province, btrim(daycares.city) as city,
         count(*)::int as n,
         avg(extract(epoch from (spot_offers.responded_at - spot_offers.offered_at)) / 86400.0)::float8 as avg_days
       from spot_offers
-      join (select id, province from daycares where ${PUBLIC_LISTING_SQL}) daycares
+      join (select id, province, city from daycares where ${PUBLIC_LISTING_SQL}) daycares
         on daycares.id = spot_offers.daycare_id
       where spot_offers.status = 'accepted'
         and spot_offers.responded_at is not null
-      group by 1
+      group by 1, 2
       `,
     )
     .catch(() => []);
 
-  const trendKey = new Map<string, TrendFact & { province: string }>();
-  function trend(province: string, month: string): TrendFact & { province: string } {
-    const key = `${province}|${month}`;
+  const trendKey = new Map<string, TrendFact & { province: string; city: string }>();
+  function trend(province: string, city: string, month: string): TrendFact & { province: string; city: string } {
+    province = String(province || "");
+    city = String(city || "");
+    const key = `${province}|${city}|${month}`;
     const found = trendKey.get(key);
     if (found) return found;
-    const row = { province, month, listings: 0, vacancyUpdates: 0, jobs: 0 };
+    const row = { province, city, month, listings: 0, vacancyUpdates: 0, jobs: 0 };
     trendKey.set(key, row);
     return row;
   }
-  for (const row of listingTrend) trend(row.province, row.month).listings = num(row.n);
-  for (const row of vacancyTrend) trend(row.province, row.month).vacancyUpdates = num(row.n);
-  for (const row of jobTrend) trend(row.province, row.month).jobs = num(row.n);
+  for (const row of listingTrend) trend(row.province, row.city, row.month).listings = num(row.n);
+  for (const row of vacancyTrend) trend(row.province, row.city, row.month).vacancyUpdates = num(row.n);
+  for (const row of jobTrend) trend(row.province, row.city, row.month).jobs = num(row.n);
 
   return {
     cities: cityRows.map((row) => ({
@@ -239,6 +232,7 @@ async function loadUncached(): Promise<GovBundle> {
       inclusion: num(row.inclusion),
       lat: num(row.lat),
       lng: num(row.lng),
+      coordinateCount: num(row.coordinateCount),
     })),
     fees: feeRows.map((row) => ({
       province: String(row.province || ""),
@@ -263,10 +257,11 @@ async function loadUncached(): Promise<GovBundle> {
     trends: [...trendKey.values()],
     fill: fillRows.map((row) => ({
       province: String(row.province || ""),
+      city: String(row.city || ""),
       n: num(row.n),
       avgDays: row.avg_days == null ? null : num(row.avg_days),
     })),
-    jobCounts: jobCounts.map((row) => ({ province: String(row.province || ""), n: num(row.n) })),
+    jobCounts: jobCounts.map((row) => ({ province: String(row.province || ""), city: String(row.city || ""), n: num(row.n) })),
     generatedAt: new Date().toISOString(),
   };
 }
@@ -321,63 +316,4 @@ export async function loadStoredLicenceFlags(province: string): Promise<StoredLi
       return { slug, name, city: String(row.city || "").trim(), status, expiry: expiry || null };
     })
     .filter((row): row is StoredLicenceFlag => Boolean(row));
-}
-
-export function bundleForProvince(bundle: GovBundle, province: string): {
-  cities: CityFact[];
-  fees: Array<{ bucket: string; kind: "confirmed" | "uncited"; n: number }>;
-  waitlist: WaitlistFact[];
-  trends: TrendFact[];
-  fill: FillFact;
-  jobs: number;
-  generatedAt: string;
-} {
-  const all = province === "ALL";
-  const cities = bundle.cities.filter((row) => all || row.province === province);
-  const feeMap = new Map<string, { bucket: string; kind: "confirmed" | "uncited"; n: number }>();
-  for (const row of bundle.fees) {
-    if (!all && row.province !== province) continue;
-    const key = `${row.kind}|${row.bucket}`;
-    const found = feeMap.get(key) ?? { bucket: row.bucket, kind: row.kind, n: 0 };
-    found.n += row.n;
-    feeMap.set(key, found);
-  }
-  const waitMap = new Map<string, WaitlistFact>();
-  for (const row of bundle.waitlist) {
-    if (!all && row.province !== province) continue;
-    const key = `${row.age}|${row.start}`;
-    const found = waitMap.get(key) ?? { age: row.age, start: row.start, n: 0 };
-    found.n += row.n;
-    waitMap.set(key, found);
-  }
-  const trendMap = new Map<string, TrendFact>();
-  let trendJobs = 0;
-  for (const row of bundle.trends) {
-    if (!all && row.province !== province) continue;
-    trendJobs += row.jobs;
-    const found = trendMap.get(row.month) ?? { month: row.month, listings: 0, vacancyUpdates: 0, jobs: 0 };
-    found.listings += row.listings;
-    found.vacancyUpdates += row.vacancyUpdates;
-    found.jobs += row.jobs;
-    trendMap.set(row.month, found);
-  }
-  const fills = bundle.fill.filter((row) => all || row.province === province);
-  let fillN = 0;
-  let weighted = 0;
-  for (const row of fills) {
-    fillN += row.n;
-    if (row.avgDays != null) weighted += row.avgDays * row.n;
-  }
-  const countedJobs = (bundle.jobCounts || [])
-    .filter((row) => all || row.province === province)
-    .reduce((total, row) => total + row.n, 0);
-  return {
-    cities,
-    fees: [...feeMap.values()],
-    waitlist: [...waitMap.values()],
-    trends: [...trendMap.values()].sort((a, b) => a.month.localeCompare(b.month)),
-    fill: { n: fillN, avgDays: fillN > 0 ? weighted / fillN : null },
-    jobs: countedJobs || trendJobs,
-    generatedAt: bundle.generatedAt,
-  };
 }

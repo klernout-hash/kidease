@@ -1,0 +1,320 @@
+{
+  "ok": true,
+  "component": "actual src/components/map-view.tsx",
+  "basemap": "synthetic local style with real MapLibre/OsmMap adapter",
+  "results": [
+    {
+      "width": 390,
+      "look": "clean",
+      "theme": "light",
+      "lang": "en",
+      "onePin": true,
+      "pixels": {
+        "count": 733,
+        "width": 30,
+        "height": 35
+      },
+      "center": {
+        "lat": 49.90000000000023,
+        "lng": -97.13999999999919
+      },
+      "directoryCalls": 0,
+      "panZoomEmptyPassed": true,
+      "screenshot": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-map-390-clean-light-en.png"
+    },
+    {
+      "width": 390,
+      "look": "clean",
+      "theme": "light",
+      "lang": "fr",
+      "onePin": true,
+      "pixels": {
+        "count": 733,
+        "width": 30,
+        "height": 35
+      },
+      "center": {
+        "lat": 49.89999999999921,
+        "lng": -97.14000000000033
+      },
+      "directoryCalls": 0,
+      "panZoomEmptyPassed": true,
+      "screenshot": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-map-390-clean-light-fr.png"
+    },
+    {
+      "width": 390,
+      "look": "clean",
+      "theme": "dark",
+      "lang": "en",
+      "onePin": true,
+      "pixels": {
+        "count": 733,
+        "width": 30,
+        "height": 35
+      },
+      "center": {
+        "lat": 49.89999999999975,
+        "lng": -97.14000000000004
+      },
+      "directoryCalls": 0,
+      "panZoomEmptyPassed": true,
+      "screenshot": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-map-390-clean-dark-en.png"
+    },
+    {
+      "width": 390,
+      "look": "clean",
+      "theme": "dark",
+      "lang": "fr",
+      "onePin": true,
+      "pixels": {
+        "count": 733,
+        "width": 30,
+        "height": 35
+      },
+      "center": {
+        "lat": 49.89999999999969,
+        "lng": -97.13999999999965
+      },
+      "directoryCalls": 0,
+      "panZoomEmptyPassed": true,
+      "screenshot": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-map-390-clean-dark-fr.png"
+    },
+    {
+      "width": 390,
+      "look": "classic",
+      "theme": "light",
+      "lang": "en",
+      "onePin": true,
+      "pixels": {
+        "count": 733,
+        "width": 30,
+        "height": 35
+      },
+      "center": {
+        "lat": 49.9,
+        "lng": -97.14
+      },
+      "directoryCalls": 0,
+      "panZoomEmptyPassed": true,
+      "screenshot": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-map-390-classic-light-en.png"
+    },
+    {
+      "width": 390,
+      "look": "classic",
+      "theme": "light",
+      "lang": "fr",
+      "onePin": true,
+      "pixels": {
+        "count": 733,
+        "width": 30,
+        "height": 35
+      },
+      "center": {
+        "lat": 49.89999999999978,
+        "lng": -97.13999999999953
+      },
+      "directoryCalls": 0,
+      "panZoomEmptyPassed": true,
+      "screenshot": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-map-390-classic-light-fr.png"
+    },
+    {
+      "width": 390,
+      "look": "classic",
+      "theme": "dark",
+      "lang": "en",
+      "onePin": true,
+      "pixels": {
+        "count": 733,
+        "width": 30,
+        "height": 35
+      },
+      "center": {
+        "lat": 49.899999999999466,
+        "lng": -97.14000000000016
+      },
+      "directoryCalls": 0,
+      "panZoomEmptyPassed": true,
+      "screenshot": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-map-390-classic-dark-en.png"
+    },
+    {
+      "width": 390,
+      "look": "classic",
+      "theme": "dark",
+      "lang": "fr",
+      "onePin": true,
+      "pixels": {
+        "count": 733,
+        "width": 30,
+        "height": 35
+      },
+      "center": {
+        "lat": 49.9,
+        "lng": -97.14
+      },
+      "directoryCalls": 0,
+      "panZoomEmptyPassed": true,
+      "screenshot": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-map-390-classic-dark-fr.png"
+    },
+    {
+      "width": 1280,
+      "look": "clean",
+      "theme": "light",
+      "lang": "en",
+      "onePin": true,
+      "pixels": {
+        "count": 733,
+        "width": 30,
+        "height": 35
+      },
+      "center": {
+        "lat": 49.900000000000034,
+        "lng": -97.13999999999976
+      },
+      "directoryCalls": 0,
+      "panZoomEmptyPassed": true,
+      "screenshot": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-map-1280-clean-light-en.png"
+    },
+    {
+      "width": 1280,
+      "look": "clean",
+      "theme": "light",
+      "lang": "fr",
+      "onePin": true,
+      "pixels": {
+        "count": 733,
+        "width": 30,
+        "height": 35
+      },
+      "center": {
+        "lat": 49.899999999999466,
+        "lng": -97.14000000000038
+      },
+      "directoryCalls": 0,
+      "panZoomEmptyPassed": true,
+      "screenshot": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-map-1280-clean-light-fr.png"
+    },
+    {
+      "width": 1280,
+      "look": "clean",
+      "theme": "dark",
+      "lang": "en",
+      "onePin": true,
+      "pixels": {
+        "count": 733,
+        "width": 30,
+        "height": 35
+      },
+      "center": {
+        "lat": 49.90000000000029,
+        "lng": -97.13999999999965
+      },
+      "directoryCalls": 0,
+      "panZoomEmptyPassed": true,
+      "screenshot": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-map-1280-clean-dark-en.png"
+    },
+    {
+      "width": 1280,
+      "look": "clean",
+      "theme": "dark",
+      "lang": "fr",
+      "onePin": true,
+      "pixels": {
+        "count": 733,
+        "width": 30,
+        "height": 35
+      },
+      "center": {
+        "lat": 49.90000000000009,
+        "lng": -97.13999999999987
+      },
+      "directoryCalls": 0,
+      "panZoomEmptyPassed": true,
+      "screenshot": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-map-1280-clean-dark-fr.png"
+    },
+    {
+      "width": 1280,
+      "look": "classic",
+      "theme": "light",
+      "lang": "en",
+      "onePin": true,
+      "pixels": {
+        "count": 733,
+        "width": 30,
+        "height": 35
+      },
+      "center": {
+        "lat": 49.900000000000176,
+        "lng": -97.13999999999953
+      },
+      "directoryCalls": 0,
+      "panZoomEmptyPassed": true,
+      "screenshot": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-map-1280-classic-light-en.png"
+    },
+    {
+      "width": 1280,
+      "look": "classic",
+      "theme": "light",
+      "lang": "fr",
+      "onePin": true,
+      "pixels": {
+        "count": 733,
+        "width": 30,
+        "height": 35
+      },
+      "center": {
+        "lat": 49.90000000000052,
+        "lng": -97.14000000000055
+      },
+      "directoryCalls": 0,
+      "panZoomEmptyPassed": true,
+      "screenshot": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-map-1280-classic-light-fr.png"
+    },
+    {
+      "width": 1280,
+      "look": "classic",
+      "theme": "dark",
+      "lang": "en",
+      "onePin": true,
+      "pixels": {
+        "count": 733,
+        "width": 30,
+        "height": 35
+      },
+      "center": {
+        "lat": 49.900000000000546,
+        "lng": -97.14000000000021
+      },
+      "directoryCalls": 0,
+      "panZoomEmptyPassed": true,
+      "screenshot": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-map-1280-classic-dark-en.png"
+    },
+    {
+      "width": 1280,
+      "look": "classic",
+      "theme": "dark",
+      "lang": "fr",
+      "onePin": true,
+      "pixels": {
+        "count": 733,
+        "width": 30,
+        "height": 35
+      },
+      "center": {
+        "lat": 49.90000000000046,
+        "lng": -97.13999999999987
+      },
+      "directoryCalls": 0,
+      "panZoomEmptyPassed": true,
+      "screenshot": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-map-1280-classic-dark-fr.png"
+    },
+    {
+      "case": "general to itemsOnly",
+      "generalCallsBefore": 1,
+      "generalPinsBefore": 2,
+      "savedPinsAfter": 1,
+      "newDirectoryCalls": 0
+    }
+  ],
+  "errors": [],
+  "externalRequests": []
+}

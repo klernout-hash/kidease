@@ -37,6 +37,7 @@ export type CityFact = {
   inclusion: number;
   lat: number;
   lng: number;
+  coordinateCount?: number;
 };
 
 export type FeeBucketFact = { bucket: string; kind: "confirmed" | "uncited"; n: number };
@@ -96,6 +97,8 @@ export type GovDashboard = {
     cities: string[];
   };
   hiddenAreas: number;
+  /** Area searches have province attribution only; do not present them as city demand. */
+  waitlistContext?: string;
 };
 
 export type GovRaw = {
@@ -105,23 +108,43 @@ export type GovRaw = {
   trends: TrendFact[];
   fill: FillFact;
   jobs: number;
+  waitlistProvinceContext?: boolean;
   generatedAt?: string;
 };
+
+function placeKey(value: string): string {
+  return value.normalize("NFD").replace(/\p{M}/gu, "").trim().toLowerCase();
+}
+
+function hasMapPoint(row: { lat: number; lng: number }): boolean {
+  return Number.isFinite(row.lat) && Number.isFinite(row.lng) && !(row.lat === 0 && row.lng === 0);
+}
 
 function mergeCityFacts(rows: CityFact[]): CityFact[] {
   const map = new Map<string, CityFact>();
   for (const row of rows) {
     const province = row.province.trim().toUpperCase();
     const city = canonicalGovCity(province, row.city);
-    const key = `${province}|${city.toLowerCase()}`;
+    const key = `${province}|${placeKey(city)}`;
     const found = map.get(key);
     if (!found) {
       map.set(key, { ...row, province, city });
       continue;
     }
     const centres = found.centres + row.centres;
-    found.lat = centres > 0 ? (found.lat * found.centres + row.lat * row.centres) / centres : found.lat;
-    found.lng = centres > 0 ? (found.lng * found.centres + row.lng * row.centres) / centres : found.lng;
+    const foundCoordinates = found.coordinateCount ?? (hasMapPoint(found) ? found.centres : 0);
+    const rowCoordinates = row.coordinateCount ?? (hasMapPoint(row) ? row.centres : 0);
+    const coordinateCount = foundCoordinates + rowCoordinates;
+    if (hasMapPoint(row)) {
+      if (hasMapPoint(found) && coordinateCount > 0) {
+        found.lat = (found.lat * foundCoordinates + row.lat * rowCoordinates) / coordinateCount;
+        found.lng = (found.lng * foundCoordinates + row.lng * rowCoordinates) / coordinateCount;
+      } else {
+        found.lat = row.lat;
+        found.lng = row.lng;
+      }
+    }
+    found.coordinateCount = coordinateCount;
     found.centres = centres;
     found.licensed += row.licensed;
     found.capacity += row.capacity;
@@ -143,16 +166,19 @@ function sum(rows: CityFact[], pick: (row: CityFact) => number): number {
   return rows.reduce((total, row) => total + (Number.isFinite(pick(row)) ? pick(row) : 0), 0);
 }
 
+export function matchesGovScope(row: { province: string; city: string }, scope: GovScope): boolean {
+  const province = row.province.trim().toUpperCase();
+  if (scope.province !== "ALL" && province !== scope.province) return false;
+  const city = canonicalGovCity(province, row.city);
+  if (scope.region && scope.region !== "ALL" && placeKey(regionForCity(city)) !== placeKey(scope.region)) return false;
+  if (scope.city && scope.city !== "ALL" && placeKey(city) !== placeKey(canonicalGovCity(province, scope.city))) {
+    return false;
+  }
+  return true;
+}
+
 function scopeRows(raw: CityFact[], scope: GovScope): CityFact[] {
-  return raw.filter((row) => {
-    const province = row.province.trim().toUpperCase();
-    if (scope.province !== "ALL" && province !== scope.province) return false;
-    if (scope.region && scope.region !== "ALL" && regionForCity(row.city) !== scope.region) return false;
-    if (scope.city && scope.city !== "ALL" && row.city.trim().toLowerCase() !== scope.city.trim().toLowerCase()) {
-      return false;
-    }
-    return true;
-  });
+  return raw.filter((row) => matchesGovScope(row, scope));
 }
 
 export function parseGovScope(input: { province?: string | null; region?: string | null; city?: string | null }): GovScope {
@@ -161,7 +187,7 @@ export function parseGovScope(input: { province?: string | null; region?: string
     .toUpperCase();
   const province = provinceRaw === "ALL" || isProvinceCode(provinceRaw) ? (provinceRaw as GovScope["province"]) : "ALL";
   const region = String(input.region || "ALL").trim().slice(0, 80) || "ALL";
-  const city = String(input.city || "ALL").trim().slice(0, 80) || "ALL";
+  const city = canonicalGovCity(province, String(input.city || "ALL").trim().slice(0, 80) || "ALL");
   return { province, region, city };
 }
 
@@ -224,6 +250,8 @@ function coverage(locale: GovLocale, scope: GovScope, rows: CityFact[]): string[
 }
 
 function desertFor(scope: GovScope, capacity: number | null): GovDashboard["desert"] {
+  // A region has no loaded census population; never divide a province by region spaces.
+  if (scope.region !== "ALL" && scope.city === "ALL") return { population: null, perSpace: null, source: null };
   const population = censusPopulationForPlace({
     province: scope.province,
     city: scope.city !== "ALL" ? scope.city : null,
@@ -269,7 +297,7 @@ export function buildGovDashboard(
   const hiddenAreas = cityRows.filter((row) => row.suppressed).length;
 
   const regionMap = new Map<string, number>();
-  for (const row of inProvince) {
+  for (const row of rows) {
     const region = regionForCity(row.city);
     regionMap.set(region, (regionMap.get(region) ?? 0) + row.centres);
   }
@@ -310,7 +338,7 @@ export function buildGovDashboard(
   };
 
   const map = visibleCities
-    .filter((row) => Number.isFinite(row.lat) && Number.isFinite(row.lng) && row.n != null)
+    .filter((row) => hasMapPoint(row) && row.n != null)
     .map((row) => {
       const cityDesert = censusPopulationForPlace({ province: scope.province, city: row.label });
       const cap = suppressCount(row.capacity);
@@ -324,8 +352,19 @@ export function buildGovDashboard(
       };
     });
 
-  const regionChoices = [...regionMap.keys()].filter((label) => (regionMap.get(label) ?? 0) >= K_ANONYMITY);
-  const cityChoices = visibleCities.map((row) => row.label).sort((a, b) => a.localeCompare(b, locale === "fr" ? "fr-CA" : "en"));
+  const selectorCities = suppressRows(inProvince.map((row) => ({ label: row.city, n: row.centres })));
+  const selectorRegions = new Map<string, number>();
+  for (const row of inProvince) {
+    const region = regionForCity(row.city);
+    selectorRegions.set(region, (selectorRegions.get(region) ?? 0) + row.centres);
+  }
+  const regionChoices = [...selectorRegions.keys()].filter((label) => (selectorRegions.get(label) ?? 0) >= K_ANONYMITY);
+  const cityChoices = selectorCities.filter((row) => !row.suppressed).map((row) => row.label).sort((a, b) => a.localeCompare(b, locale === "fr" ? "fr-CA" : "en"));
+  const waitlistContext = raw.waitlistProvinceContext
+    ? locale === "fr"
+      ? `${scope.province === "ALL" ? "Contexte pour tout le Canada" : `Contexte pour ${provinceName(scope.province, locale)} au complet`}. Ces recherches ne sont pas attribuées à une ville ou une région.`
+      : `${scope.province === "ALL" ? "Context for all of Canada" : `Context for all of ${provinceName(scope.province, locale)}`}. These searches are not attributed to a city or region.`
+    : undefined;
 
   return {
     locale,
@@ -338,7 +377,8 @@ export function buildGovDashboard(
     orgName: actor.orgName,
     demo: actor.demo,
     readOnly: actor.readOnly,
-    coverage: coverage(locale, scope, rows),
+    coverage: [...coverage(locale, scope, rows), ...(waitlistContext ? [waitlistContext] : [])],
+    ...(waitlistContext ? { waitlistContext } : {}),
     kpis: {
       licensedCentres: suppressCount(licensed),
       directoryCentres: suppressCount(directory),

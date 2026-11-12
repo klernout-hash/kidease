@@ -294,6 +294,8 @@ export const fr = {
     searchIqaluitEmptyLead:
       "Aucune garderie permise à Iqaluit dans cette recherche. Élargissez la zone pour voir les plus près, ou essayez une autre ville.",
     mapSearchRadius: "Recherche {n} {u}",
+    mapSavedOnly: "Centres enregistrés seulement",
+    mapSavedCount: "Centres enregistrés : {n}",
     liveVsAllNone: "0 actifs sur KidEase · {n} permis dans le répertoire",
     licensedNotLiveTitle: "Centres permis près d’ici : aucun encore actif sur KidEase",
     licensedNotLiveLead:

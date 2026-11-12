@@ -192,6 +192,8 @@
   "searchIqaluitEmpty": "Wala pang daycare sa Iqaluit",
   "searchIqaluitEmptyLead": "Walang lisensyadong daycare sa Iqaluit sa paghahanap na ito. Palawakin ang lugar para makita ang pinakamalapit, o subukan ang ibang lungsod.",
   "mapSearchRadius": "{n} {u} na paghahanap",
+  "mapSavedOnly": "Mga naka-save na sentro lang",
+  "mapSavedCount": "Mga naka-save na sentro: {n}",
   "liveVsAllNone": "0 live sa KidEase · {n} lisensyado sa directory",
   "licensedNotLiveTitle": "Mga lisensyadong sentro sa malapit: wala pang live sa KidEase",
   "licensedNotLiveLead": "{n} lisensyadong sentro ang nasa lugar na ito. Wala pang nag-live sa KidEase, kaya maaaring luma na ang mga bayarin at spot. Mag-browse ng Lahat ng listing, o maaaring mag-claim ng listing ang isang direktor.",
