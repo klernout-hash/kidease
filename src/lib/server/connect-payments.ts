@@ -14,6 +14,8 @@ import {
   applicationFeeCents,
   classifyConnectEvent,
   connectChargeGate,
+  connectLiveEnabled,
+  connectPaymentsEnabled,
   connectFeeBps,
   connectedAccountBody,
   destinationChargeFields,
@@ -36,6 +38,13 @@ import {
   type WalletMethodView,
 } from "@/lib/connect-payments";
 import { ensureCanadaStripeCustomer, stripeRequest } from "@/lib/server/stripe-checkout";
+import {
+  centreUsesTestStripe,
+  payerUsesTestStripe,
+  paymentStripeMode,
+  stripeCredentialsForMode,
+  type PaymentStripeMode,
+} from "@/lib/stripe-route";
 
 type Sql = Awaited<ReturnType<typeof getSql>>;
 
@@ -43,8 +52,68 @@ function gate() {
   return connectChargeGate();
 }
 
+type StripeCall = { mode: PaymentStripeMode; secret: string; publishable: string };
+
+async function payerRow(sql: Sql, userId: string) {
+  const rows = await sql<{ email: string | null; is_test: number | boolean | null }>`
+    select u.email, p.is_test
+    from "user" u
+    left join profiles p on p.user_id = u.id
+    where u.id = ${userId}
+    limit 1
+  `.catch(() => [] as { email: string | null; is_test: number | boolean | null }[]);
+  return rows[0] || null;
+}
+
+async function centreRow(sql: Sql, daycareId: string) {
+  const rows = await sql<{
+    id: string;
+    slug: string | null;
+    visibility: string | null;
+    is_test: number | boolean | null;
+    is_demo: number | boolean | null;
+  }>`
+    select id, slug, visibility, is_test, is_demo
+    from daycares where id = ${daycareId} limit 1
+  `.catch(() => []);
+  return rows[0] || null;
+}
+
+/** QA payer or hidden centre → test keys. Live keys only when KIDEASE_CONNECT_LIVE is exactly 1. */
+async function stripeCallFor(sql: Sql, userId: string, daycareId?: string | null): Promise<StripeCall | { ok: false; reason: "missing" | "off" | "live" }> {
+  if (!connectPaymentsEnabled()) return { ok: false, reason: "off" };
+  const payer = await payerRow(sql, userId);
+  const centre = daycareId ? await centreRow(sql, daycareId) : null;
+  const mode = paymentStripeMode({
+    payerQa: payerUsesTestStripe({ email: payer?.email, isTest: payer?.is_test }),
+    centreQa: centre
+      ? centreUsesTestStripe({
+          id: centre.id,
+          slug: centre.slug,
+          visibility: centre.visibility,
+          isTest: centre.is_test,
+          isDemo: centre.is_demo,
+        })
+      : false,
+    liveEnabled: connectLiveEnabled(),
+  });
+  const creds = stripeCredentialsForMode(mode);
+  if (!creds.ok) return { ok: false, reason: "missing" };
+  return creds;
+}
+
 export const connectPaymentsPublic = createServerFn({ method: "GET" }).handler(async () => {
-  return publicConnectState();
+  const { getSessionUser } = await import("@/lib/auth/verify.server");
+  const user = await getSessionUser().catch(() => null);
+  if (!user?.id) return publicConnectState();
+  const sql = await getSql();
+  const payer = await payerRow(sql, user.id);
+  const mode = paymentStripeMode({
+    payerQa: payerUsesTestStripe({ email: payer?.email || user.email, isTest: payer?.is_test }),
+    centreQa: false,
+    liveEnabled: connectLiveEnabled(),
+  });
+  return publicConnectState(process.env, mode);
 });
 
 async function profileCustomer(sql: Sql, userId: string): Promise<{ customerId: string | null; email: string | null }> {
@@ -58,24 +127,26 @@ async function profileCustomer(sql: Sql, userId: string): Promise<{ customerId: 
   return { customerId: rows[0]?.stripe_customer_id ?? null, email: rows[0]?.email ?? null };
 }
 
-async function defaultPaymentMethod(customerId: string): Promise<string | null> {
+async function defaultPaymentMethod(customerId: string, secret?: string): Promise<string | null> {
   const customer = await stripeRequest<{ invoice_settings?: { default_payment_method?: string | { id?: string } | null } }>(
     `/customers/${encodeURIComponent(customerId)}`,
     {},
     "GET",
+    { secret },
   );
   const value = customer.invoice_settings?.default_payment_method;
   if (!value) return null;
   return typeof value === "string" ? value : value.id || null;
 }
 
-async function listStripeMethods(customerId: string, defaultId: string | null): Promise<WalletMethodView[]> {
+async function listStripeMethods(customerId: string, defaultId: string | null, secret?: string): Promise<WalletMethodView[]> {
   const out: WalletMethodView[] = [];
   for (const type of ["card", "acss_debit"] as const) {
     const page = await stripeRequest<{ data?: Array<Parameters<typeof shapeWalletMethod>[0]> }>(
       "/payment_methods",
       { customer: customerId, type, limit: 20 },
       "GET",
+      { secret },
     );
     for (const row of page.data || []) {
       const shaped = shapeWalletMethod(row, defaultId);
@@ -88,33 +159,35 @@ async function listStripeMethods(customerId: string, defaultId: string | null): 
 export const listWalletMethods = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    const check = gate();
-    if (!check.ok) return { ok: false as const, reason: check.reason, methods: [] as WalletMethodView[] };
     const sql = await getSql();
+    const routed = await stripeCallFor(sql, context.userId);
+    if (!("secret" in routed)) return { ok: false as const, reason: routed.reason, methods: [] as WalletMethodView[] };
     const profile = await profileCustomer(sql, context.userId);
     if (!profile.customerId) return { ok: true as const, methods: [] as WalletMethodView[] };
-    const fallback = await defaultPaymentMethod(profile.customerId).catch(() => null);
-    const methods = await listStripeMethods(profile.customerId, fallback);
+    const fallback = await defaultPaymentMethod(profile.customerId, routed.secret).catch(() => null);
+    const methods = await listStripeMethods(profile.customerId, fallback, routed.secret);
     return { ok: true as const, methods };
   });
 
 export const createWalletSetup = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    const check = gate();
-    if (!check.ok) return { ok: false as const, reason: check.reason, clientSecret: null as string | null };
     const sql = await getSql();
+    const routed = await stripeCallFor(sql, context.userId);
+    if (!("secret" in routed)) return { ok: false as const, reason: routed.reason, clientSecret: null as string | null };
     const profile = await profileCustomer(sql, context.userId);
     const customerId = await ensureCanadaStripeCustomer({
-      customerId: profile.customerId,
+      customerId: routed.mode === "live" ? profile.customerId : null,
       email: profile.email,
       userId: context.userId,
+      secret: routed.secret,
+      persist: routed.mode === "live" || payerUsesTestStripe({ email: profile.email }),
     });
     const intent = await stripeRequest<{ client_secret?: string | null }>("/setup_intents", {
       ...walletSetupIntentBody(),
       customer: customerId,
-      metadata: { kidease: "wallet", user_id: context.userId },
-    }, "POST", { idempotencyKey: `wallet-setup-${context.userId}-${nid("set")}` });
+      metadata: { kidease: "wallet", user_id: context.userId, stripe_mode: routed.mode },
+    }, "POST", { idempotencyKey: `wallet-setup-${routed.mode}-${context.userId}-${nid("set")}`, secret: routed.secret });
     const clientSecret = String(intent.client_secret || "");
     if (!clientSecret) return { ok: false as const, reason: "missing" as const, clientSecret: null };
     return { ok: true as const, clientSecret };
@@ -137,15 +210,16 @@ export const updateWalletMethod = createServerFn({ method: "POST" })
     };
   })
   .handler(async ({ context, data }) => {
-    const check = gate();
-    if (!check.ok) return { ok: false as const, reason: check.reason };
     const sql = await getSql();
+    const routed = await stripeCallFor(sql, context.userId);
+    if (!("secret" in routed)) return { ok: false as const, reason: routed.reason };
     const profile = await profileCustomer(sql, context.userId);
     if (!profile.customerId) return { ok: false as const, reason: "missing" as const };
     const owned = await stripeRequest<{ customer?: string | null }>(
       `/payment_methods/${encodeURIComponent(data.paymentMethodId)}`,
       {},
       "GET",
+      { secret: routed.secret },
     );
     if (owned.customer !== profile.customerId) return { ok: false as const, reason: "missing" as const };
     const body: Record<string, unknown> = {};
@@ -154,12 +228,12 @@ export const updateWalletMethod = createServerFn({ method: "POST" })
       body.card = { exp_month: data.expMonth, exp_year: data.expYear };
     }
     if (Object.keys(body).length) {
-      await stripeRequest(`/payment_methods/${encodeURIComponent(data.paymentMethodId)}`, body);
+      await stripeRequest(`/payment_methods/${encodeURIComponent(data.paymentMethodId)}`, body, "POST", { secret: routed.secret });
     }
     if (data.makeDefault) {
       await stripeRequest(`/customers/${encodeURIComponent(profile.customerId)}`, {
         invoice_settings: { default_payment_method: data.paymentMethodId },
-      });
+      }, "POST", { secret: routed.secret });
     }
     return { ok: true as const };
   });
@@ -172,18 +246,19 @@ export const removeWalletMethod = createServerFn({ method: "POST" })
     return id;
   })
   .handler(async ({ context, data: paymentMethodId }) => {
-    const check = gate();
-    if (!check.ok) return { ok: false as const, reason: check.reason };
     const sql = await getSql();
+    const routed = await stripeCallFor(sql, context.userId);
+    if (!("secret" in routed)) return { ok: false as const, reason: routed.reason };
     const profile = await profileCustomer(sql, context.userId);
     if (!profile.customerId) return { ok: false as const, reason: "missing" as const };
     const owned = await stripeRequest<{ customer?: string | null }>(
       `/payment_methods/${encodeURIComponent(paymentMethodId)}`,
       {},
       "GET",
+      { secret: routed.secret },
     );
     if (owned.customer !== profile.customerId) return { ok: false as const, reason: "missing" as const };
-    await stripeRequest(`/payment_methods/${encodeURIComponent(paymentMethodId)}/detach`, {});
+    await stripeRequest(`/payment_methods/${encodeURIComponent(paymentMethodId)}/detach`, {}, "POST", { secret: routed.secret });
     return { ok: true as const };
   });
 
@@ -204,9 +279,9 @@ export const createConnectAccountSession = createServerFn({ method: "POST" })
     return id;
   })
   .handler(async ({ context, data: daycareId }) => {
-    const check = gate();
-    if (!check.ok) return { ok: false as const, reason: check.reason, clientSecret: null as string | null };
     const sql = await getSql();
+    const routed = await stripeCallFor(sql, context.userId, daycareId);
+    if (!("secret" in routed)) return { ok: false as const, reason: routed.reason, clientSecret: null as string | null };
     if (!(await ownsCentre(sql, context.userId, daycareId))) {
       return { ok: false as const, reason: "missing" as const, clientSecret: null };
     }
@@ -216,7 +291,8 @@ export const createConnectAccountSession = createServerFn({ method: "POST" })
     let accountId = String(existing[0]?.stripe_account_id || "");
     if (!accountId.startsWith("acct_")) {
       const created = await stripeRequest<{ id?: string }>("/accounts", connectedAccountBody(), "POST", {
-        idempotencyKey: `connect-acct-${daycareId}`,
+        idempotencyKey: `connect-acct-${routed.mode}-${daycareId}`,
+        secret: routed.secret,
       });
       accountId = String(created.id || "");
       if (!accountId.startsWith("acct_")) return { ok: false as const, reason: "missing" as const, clientSecret: null };
@@ -227,7 +303,8 @@ export const createConnectAccountSession = createServerFn({ method: "POST" })
       `.catch(() => undefined);
     }
     const session = await stripeRequest<{ client_secret?: string }>("/account_sessions", accountSessionBody(accountId), "POST", {
-      idempotencyKey: `connect-session-${accountId}-${nid("as")}`,
+      idempotencyKey: `connect-session-${routed.mode}-${accountId}-${nid("as")}`,
+      secret: routed.secret,
     });
     const clientSecret = String(session.client_secret || "");
     if (!clientSecret) return { ok: false as const, reason: "missing" as const, clientSecret: null };
@@ -256,11 +333,19 @@ type OpenBill = { id: string; daycareId: string; daycareName: string; amountCent
 export const listParentPayChoices = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    const state = publicConnectState();
+    const sql = await getSql();
+    const payer = await payerRow(sql, context.userId);
+    const state = publicConnectState(
+      process.env,
+      paymentStripeMode({
+        payerQa: payerUsesTestStripe({ email: payer?.email, isTest: payer?.is_test }),
+        centreQa: false,
+        liveEnabled: connectLiveEnabled(),
+      }),
+    );
     if (!state.enabled) {
       return { enabled: false as const, ready: false, blockedLive: false, modes: [] as { daycareId: string; daycareName: string; mode: PayMode }[], open: [] as OpenBill[] };
     }
-    const sql = await getSql();
     const centres = await sql<{ daycare_id: string; name: string; mode: string | null }>`
       select distinct i.daycare_id, d.name, pref.mode
       from invoices i
@@ -331,8 +416,6 @@ async function payModeFor(sql: Sql, parentUserId: string, daycareId: string): Pr
 
 /** Called when a centre sends a bill. Flag off or a live key: no Stripe call. */
 export async function attachConnectBill(billId: string): Promise<{ ok: boolean; reason?: string }> {
-  const check = gate();
-  if (!check.ok) return { ok: false, reason: check.reason };
   const sql = await getSql();
   const rows = await sql<{
     id: string;
@@ -357,14 +440,19 @@ export async function attachConnectBill(billId: string): Promise<{ ok: boolean; 
   const invoiceCents = bill.amount_cents != null ? Number(bill.amount_cents) : Math.round(Number(bill.total) || 0) * 100;
   const fee = applicationFeeCents(invoiceCents, connectFeeBps());
   destinationChargeFields({ invoiceCents, destination, bps: connectFeeBps() });
+  const routed = await stripeCallFor(sql, bill.parent_user_id, bill.daycare_id);
+  if (!("secret" in routed)) return { ok: false, reason: routed.reason };
   const profile = await profileCustomer(sql, bill.parent_user_id);
+  const payerQa = payerUsesTestStripe({ email: profile.email });
   const customerId = await ensureCanadaStripeCustomer({
-    customerId: profile.customerId,
+    customerId: routed.mode === "live" ? profile.customerId : null,
     email: profile.email,
     userId: bill.parent_user_id,
+    secret: routed.secret,
+    persist: routed.mode === "live" || payerQa,
   });
   const mode = await payModeFor(sql, bill.parent_user_id, bill.daycare_id);
-  const fallback = mode === "automatic" ? await defaultPaymentMethod(customerId).catch(() => null) : null;
+  const fallback = mode === "automatic" ? await defaultPaymentMethod(customerId, routed.secret).catch(() => null) : null;
   if (!bill.stripe_invoice_id) {
     const invoice = await stripeRequest<{ id?: string; payment_intent?: string | { id?: string } | null }>(
       "/invoices",
@@ -378,7 +466,7 @@ export async function attachConnectBill(billId: string): Promise<{ ok: boolean; 
         bps: connectFeeBps(),
       }),
       "POST",
-      { idempotencyKey: `bill-inv-${bill.id}` },
+      { idempotencyKey: `bill-inv-${routed.mode}-${bill.id}`, secret: routed.secret },
     );
     const invoiceId = String(invoice.id || "");
     if (invoiceId.startsWith("in_")) {
@@ -386,10 +474,11 @@ export async function attachConnectBill(billId: string): Promise<{ ok: boolean; 
         ...parentInvoiceLine(invoiceCents, `Daycare bill ${bill.number}`),
         customer: customerId,
         invoice: invoiceId,
-      }, "POST", { idempotencyKey: `bill-item-${bill.id}` });
+      }, "POST", { idempotencyKey: `bill-item-${routed.mode}-${bill.id}`, secret: routed.secret });
       const finalized = withoutHostedInvoice(
         await stripeRequest<Record<string, unknown>>(`/invoices/${encodeURIComponent(invoiceId)}/finalize`, {}, "POST", {
-          idempotencyKey: `bill-final-${bill.id}`,
+          idempotencyKey: `bill-final-${routed.mode}-${bill.id}`,
+          secret: routed.secret,
         }),
       );
       const pi = finalized.payment_intent;
@@ -415,41 +504,42 @@ export const startManualPay = createServerFn({ method: "POST" })
     paymentMethodId: String(input?.paymentMethodId || "").trim(),
   }))
   .handler(async ({ context, data }) => {
-    const check = gate();
-    if (!check.ok) return { ok: false as const, reason: check.reason, clientSecret: null as string | null };
     if (!data.billId || !data.paymentMethodId.startsWith("pm_")) {
-      return { ok: false as const, reason: "missing" as const, clientSecret: null };
+      return { ok: false as const, reason: "missing" as const, clientSecret: null, publishableKey: null as string | null };
     }
     const sql = await getSql();
-    const rows = await sql<{ id: string; parent_user_id: string; status: string; stripe_payment_intent_id: string | null }>`
-      select id, parent_user_id, status, stripe_payment_intent_id
+    const rows = await sql<{ id: string; parent_user_id: string; daycare_id: string; status: string; stripe_payment_intent_id: string | null }>`
+      select id, parent_user_id, daycare_id, status, stripe_payment_intent_id
       from invoices where id = ${data.billId} limit 1
     `.catch(() => []);
     const bill = rows[0];
     if (!bill || bill.parent_user_id !== context.userId || bill.status !== "sent") {
-      return { ok: false as const, reason: "missing" as const, clientSecret: null };
+      return { ok: false as const, reason: "missing" as const, clientSecret: null, publishableKey: null };
     }
+    const routed = await stripeCallFor(sql, context.userId, bill.daycare_id);
+    if (!("secret" in routed)) return { ok: false as const, reason: routed.reason, clientSecret: null, publishableKey: null };
     await attachConnectBill(bill.id);
     const fresh = await sql<{ stripe_payment_intent_id: string | null }>`
       select stripe_payment_intent_id from invoices where id = ${bill.id} limit 1
     `.catch(() => []);
     const paymentIntentId = String(fresh[0]?.stripe_payment_intent_id || bill.stripe_payment_intent_id || "");
-    if (!paymentIntentId.startsWith("pi_")) return { ok: false as const, reason: "missing" as const, clientSecret: null };
+    if (!paymentIntentId.startsWith("pi_")) return { ok: false as const, reason: "missing" as const, clientSecret: null, publishableKey: null };
     const profile = await profileCustomer(sql, context.userId);
-    if (profile.customerId) {
+    if (profile.customerId && routed.mode === "live") {
       const owned = await stripeRequest<{ customer?: string | null }>(
         `/payment_methods/${encodeURIComponent(data.paymentMethodId)}`,
         {},
         "GET",
+        { secret: routed.secret },
       );
-      if (owned.customer !== profile.customerId) return { ok: false as const, reason: "missing" as const, clientSecret: null };
+      if (owned.customer !== profile.customerId) return { ok: false as const, reason: "missing" as const, clientSecret: null, publishableKey: null };
     }
     const intent = withoutHostedInvoice(
-      await stripeRequest<Record<string, unknown>>(`/payment_intents/${encodeURIComponent(paymentIntentId)}`, {}, "GET"),
+      await stripeRequest<Record<string, unknown>>(`/payment_intents/${encodeURIComponent(paymentIntentId)}`, {}, "GET", { secret: routed.secret }),
     );
     const clientSecret = typeof intent.client_secret === "string" ? intent.client_secret : "";
-    if (!clientSecret) return { ok: false as const, reason: "missing" as const, clientSecret: null };
-    return { ok: true as const, clientSecret, paymentMethodId: data.paymentMethodId };
+    if (!clientSecret) return { ok: false as const, reason: "missing" as const, clientSecret: null, publishableKey: null };
+    return { ok: true as const, clientSecret, paymentMethodId: data.paymentMethodId, publishableKey: routed.publishable };
   });
 
 async function feeTaxQuote(

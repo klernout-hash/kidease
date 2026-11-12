@@ -280,7 +280,7 @@ function ParentPayChoices() {
                       toast.error(t("actionFailed"));
                       return;
                     }
-                    const stripe = await loadStripeClient(publishableKey);
+                    const stripe = await loadStripeClient(res.publishableKey || publishableKey);
                     if (!stripe) {
                       toast.error(t("walletNotSetUp"));
                       return;
