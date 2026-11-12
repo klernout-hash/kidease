@@ -4,11 +4,15 @@
  * Off unless KIDEASE_CONNECT_PAYMENTS is on. This is an env gate, not a
  * PostHog flag, so a remote toggle cannot turn charges on.
  *
- * application_fee_amount is exactly KIDEASE_PLATFORM_FEE_BPS of the invoice
- * (300 = 3% when unset, the same default as the bill screen). GST/HST/PST/QST is never added to that fee. Tax on
- * KidEase fees is a separate monthly invoice. The rate follows the daycare's
- * province when a tax method is turned on. Daycares pay Stripe processing
- * fees (on_behalf_of + fees.payer = account).
+ * The parent pays the invoice plus a KidEase service fee. The rate is
+ * KIDEASE_PLATFORM_FEE_BPS (300 = 3% when unset). application_fee_amount
+ * equals that fee line, so the daycare receives the full invoice.
+ * GST/HST/PST/QST is never added to that fee. Tax on the fee stays a
+ * separate monthly invoice. Daycares pay Stripe processing fees
+ * (on_behalf_of + fees.payer = account).
+ * The parent fee is on unless KIDEASE_PARENT_SERVICE_FEE is 0, or the
+ * centre or province is listed in an exclude env. Live keys still need
+ * KIDEASE_CONNECT_LIVE=1.
  *
  * Test keys work when KIDEASE_CONNECT_PAYMENTS is on. sk_live_ / pk_live_
  * also need KIDEASE_CONNECT_LIVE=1. Otherwise live keys are refused.
@@ -16,6 +20,7 @@
  */
 
 import { DEFAULT_PLATFORM_FEE_BPS, MAX_PLATFORM_FEE_BPS, platformFeeBps } from "./stripe-methods.ts";
+import { stripeCredentialsForMode, type PaymentStripeMode } from "./stripe-route.ts";
 
 export type ConnectEnv = Record<string, string | undefined>;
 
@@ -120,7 +125,88 @@ export function applicationFeeCents(invoiceCents: number, bps = connectFeeBps())
   return Math.round((cents * bps) / 10000);
 }
 
-export function destinationChargeFields(input: { invoiceCents: number; destination: string; bps?: number }): {
+function feeList(raw: string | undefined): string[] {
+  return String(raw || "")
+    .split(/[,;\s]+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Parent-paid service fee. On everywhere unless the env is 0, or this
+ * centre or province is listed for a later counsel exclusion.
+ */
+export function parentServiceFeeApplies(input: {
+  province?: string | null;
+  daycareId?: string | null;
+  env?: ConnectEnv;
+} = {}): boolean {
+  const env = input.env ?? process.env;
+  const raw = String(env.KIDEASE_PARENT_SERVICE_FEE ?? "").trim().toLowerCase();
+  if (raw === "0" || raw === "false" || raw === "off") return false;
+  const provinces = new Set(
+    feeList(env.KIDEASE_PARENT_FEE_EXCLUDE_PROVINCES)
+      .map((item) => provinceCodeFromPlace(item))
+      .filter(Boolean),
+  );
+  const centres = new Set(feeList(env.KIDEASE_PARENT_FEE_EXCLUDE_CENTRES));
+  const province = provinceCodeFromPlace(input.province);
+  if (province && provinces.has(province)) return false;
+  const id = String(input.daycareId || "").trim();
+  if (id && centres.has(id)) return false;
+  return true;
+}
+
+/** Bilingual line. 300 bps reads "KidEase service fee (3%) / Frais de service KidEase (3 %)". */
+export function parentServiceFeeLabel(bps: number): string {
+  const pct = Math.round((Number(bps) / 100) * 1000) / 1000;
+  const en = Number.isInteger(pct) ? String(pct) : String(pct);
+  return `KidEase service fee (${en}%) / Frais de service KidEase (${en.replace(".", ",")} %)`;
+}
+
+export type ParentChargeQuote = {
+  invoiceCents: number;
+  feeCents: number;
+  parentPaysCents: number;
+  applicationFeeCents: number;
+  centreReceivesCents: number;
+  passedToParent: boolean;
+  label: string;
+  bps: number;
+};
+
+/** Parent total is the invoice plus the fee line. The centre keeps the invoice. */
+export function parentChargeQuote(input: {
+  invoiceCents: number;
+  bps?: number;
+  province?: string | null;
+  daycareId?: string | null;
+  env?: ConnectEnv;
+}): ParentChargeQuote {
+  const invoiceCents = Math.max(0, Math.round(Number(input.invoiceCents)) || 0);
+  const bps = input.bps ?? connectFeeBps(input.env?.KIDEASE_PLATFORM_FEE_BPS);
+  const passed = parentServiceFeeApplies(input);
+  const feeCents = passed ? applicationFeeCents(invoiceCents, bps) : 0;
+  return {
+    invoiceCents,
+    feeCents,
+    parentPaysCents: invoiceCents + feeCents,
+    applicationFeeCents: feeCents,
+    centreReceivesCents: invoiceCents,
+    passedToParent: feeCents > 0,
+    label: parentServiceFeeLabel(bps),
+    bps,
+  };
+}
+
+export function destinationChargeFields(input: {
+  invoiceCents: number;
+  destination: string;
+  bps?: number;
+  province?: string | null;
+  daycareId?: string | null;
+  env?: ConnectEnv;
+}): {
   amount: number;
   currency: "cad";
   application_fee_amount: number;
@@ -129,14 +215,13 @@ export function destinationChargeFields(input: { invoiceCents: number; destinati
 } {
   const destination = clean(input.destination);
   if (!destination.startsWith("acct_")) throw new Error("Connect account id required");
-  const amount = Math.round(Number(input.invoiceCents));
-  if (!Number.isFinite(amount) || amount <= 0) throw new Error("Invoice amount required");
-  const fee = applicationFeeCents(amount, input.bps ?? connectFeeBps());
-  if (fee > amount) throw new Error("Fee is larger than the invoice");
+  const quote = parentChargeQuote(input);
+  if (!Number.isFinite(quote.invoiceCents) || quote.invoiceCents <= 0) throw new Error("Invoice amount required");
+  if (quote.applicationFeeCents > quote.parentPaysCents) throw new Error("Fee is larger than the invoice");
   return {
-    amount,
+    amount: quote.parentPaysCents,
     currency: "cad",
-    application_fee_amount: fee,
+    application_fee_amount: quote.applicationFeeCents,
     on_behalf_of: destination,
     transfer_data: { destination },
   };
@@ -409,11 +494,17 @@ export function parentInvoiceBody(input: {
   billId: string;
   defaultPaymentMethod?: string | null;
   bps?: number;
+  province?: string | null;
+  daycareId?: string | null;
+  env?: ConnectEnv;
 }): Record<string, unknown> {
   const charge = destinationChargeFields({
     invoiceCents: input.invoiceCents,
     destination: input.destination,
     bps: input.bps,
+    province: input.province,
+    daycareId: input.daycareId,
+    env: input.env,
   });
   const body: Record<string, unknown> = {
     customer: input.customerId,
@@ -436,6 +527,13 @@ export function parentInvoiceBody(input: {
 export function parentInvoiceLine(invoiceCents: number, description: string): Record<string, unknown> {
   const amount = Math.round(Number(invoiceCents));
   return { amount, currency: "cad", description: description.slice(0, 250) || "Daycare bill" };
+}
+
+/** The parent-paid fee. Omitted when the fee is zero. Tax is not this line. */
+export function parentServiceFeeLine(feeCents: number, label: string): Record<string, unknown> | null {
+  const amount = Math.round(Number(feeCents));
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+  return { amount, currency: "cad", description: label.slice(0, 250) };
 }
 
 /** Invoice payment methods. Card, plus Canadian PAD. The daycare absorbs Stripe fees. */
@@ -514,20 +612,35 @@ export type ConnectPublicState = {
   googlePayMerchantId: string | null;
 };
 
-export function publicConnectState(env: ConnectEnv = process.env): ConnectPublicState {
+export function publicConnectState(env: ConnectEnv = process.env, mode?: PaymentStripeMode): ConnectPublicState {
   const enabled = connectPaymentsEnabled(env);
-  const gate = connectChargeGate(env);
-  const publishable = clean(env.STRIPE_PUBLISHABLE_KEY);
-  const publishableMode = stripeKeyMode(publishable, "publishable");
-  const ready = gate.ok && (publishableMode === "test" || publishableMode === "live");
-  const blockedLive = enabled && gate.ok === false && gate.reason === "live";
-  return {
-    enabled,
-    ready,
-    blockedLive,
-    publishableKey: ready ? publishable : null,
+  const merchants = {
     appleMerchantId: enabled ? clean(env.APPLE_MERCHANT_ID) || null : null,
     googlePayMerchantId: enabled ? clean(env.GOOGLE_PAY_MERCHANT_ID) || null : null,
+  };
+  if (!mode) {
+    const gate = connectChargeGate(env);
+    const publishable = clean(env.STRIPE_PUBLISHABLE_KEY);
+    const publishableMode = stripeKeyMode(publishable, "publishable");
+    const ready = gate.ok && (publishableMode === "test" || publishableMode === "live");
+    return {
+      enabled,
+      ready,
+      blockedLive: enabled && gate.ok === false && gate.reason === "live",
+      publishableKey: ready ? publishable : null,
+      ...merchants,
+    };
+  }
+  if (mode === "live" && !connectLiveEnabled(env)) {
+    return { enabled, ready: false, blockedLive: enabled, publishableKey: null, ...merchants };
+  }
+  const creds = stripeCredentialsForMode(mode, env);
+  return {
+    enabled,
+    ready: enabled && creds.ok,
+    blockedLive: enabled && mode === "live" && !creds.ok,
+    publishableKey: enabled && creds.ok ? creds.publishable : null,
+    ...merchants,
   };
 }
 

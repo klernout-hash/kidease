@@ -1481,6 +1481,13 @@ async function passwordLogin(page, base, email, locale) {
  * Login, reload, desk, messages, an unchanged Save details, and Save details.
  */
 async function signOutFromMenu(page) {
+  if ((page.viewportSize()?.width ?? 0) < 1024) {
+    await page.setViewportSize({ width: 1280, height: 800 });
+  }
+  const menu = page.locator('header button[aria-label="Menu"]').first();
+  if (!(await menu.isVisible().catch(() => false))) {
+    await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs });
+  }
   await openHeaderMenu(page);
   const button = page.locator("#ke-nav-drawer").getByRole("button", { name: /^sign out$/i });
   await button.waitFor({ state: "visible", timeout: timeoutMs });
@@ -1501,6 +1508,17 @@ async function openProfileAbout(page) {
     }
   }
   await about.waitFor({ timeout: timeoutMs });
+}
+
+async function openSupportCase(page, base, path, width) {
+  await page.setViewportSize({ width, height: width < 500 ? 844 : 900 });
+  await page.goto(new URL(path, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+  const caseText = page.getByText("This case is only for KidEase support staff");
+  const shown = await caseText.waitFor({ state: "visible", timeout: timeoutMs }).then(() => true).catch(() => false);
+  const inbox = await page.locator('[data-ke="support-inbox"]').count();
+  const marker = await page.locator('[data-ke="support-case"]').count();
+  const label = `support-case-${width}${path.startsWith("/fr") ? "-fr" : ""}`;
+  record(label, shown && inbox === 0 && marker > 0, { note: page.url() });
 }
 
 async function runSignedInSessions(page, base) {
@@ -1580,6 +1598,9 @@ async function runSignedInSessions(page, base) {
         await page.reload({ waitUntil: "domcontentloaded", timeout: timeoutMs }).catch(() => {});
         await page.screenshot({ path: join(shotDir, "signed-in-parent-390.png"), fullPage: false }).catch(() => {});
         await page.setViewportSize({ width: 1280, height: 800 });
+        await openSupportCase(page, base, "/support/sc_e2e", 1280);
+        await openSupportCase(page, base, "/support/sc_e2e", 390);
+        await openSupportCase(page, base, "/fr/support/sc_e2e", 390);
       }
 
       await page.goto(new URL(item.inbox, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
@@ -1681,6 +1702,29 @@ async function runSignedInSessions(page, base) {
   }
   try {
     await setFixture(page.context(), base, { role: "government" });
+    for (const width of [1280, 820, 390]) {
+      await page.setViewportSize({ width, height: width < 500 ? 844 : 900 });
+      await page.goto(new URL("/gov", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+      const menu = await page.locator('[data-ke="gov-menu"]').count();
+      if (menu === 0) {
+        record(`gov-width-${width}`, true, { note: "desk gated" });
+        continue;
+      }
+      const tasks = await page.locator('[data-ke="gov-task"]').count();
+      const heading = ((await page.locator('[data-ke="gov-heading"]').innerText().catch(() => "")) || "").trim();
+      record(`gov-width-${width}`, tasks === 5 && heading === "Overview", { note: `${page.url()} tasks=${tasks} ${heading}` });
+    }
+    const deskOpen = await page.locator('[data-ke="gov-menu"]').count();
+    for (const blocked of ["/admin", "/provider", "/parent"]) {
+      if (deskOpen === 0) {
+        record(`gov-blocked-${blocked.slice(1)}`, true, { note: "no gov session" });
+        continue;
+      }
+      await page.goto(new URL(blocked, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+      const path = new URL(page.url()).pathname;
+      const stayed = path === blocked || path.startsWith(`${blocked}/`);
+      record(`gov-blocked-${blocked.slice(1)}`, !stayed, { note: page.url() });
+    }
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto(new URL("/gov", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await page.waitForURL((url) => !url.pathname.startsWith("/gov"), { timeout: timeoutMs }).catch(() => {});

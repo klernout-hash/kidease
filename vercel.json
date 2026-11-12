@@ -18,6 +18,10 @@
       "schedule": "50 * * * *"
     },
     {
+      "path": "/api/ghl-lead-reconcile",
+      "schedule": "10 12 * * *"
+    },
+    {
       "path": "/api/ranking-market",
       "schedule": "15 7 * * *"
     },

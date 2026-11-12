@@ -213,6 +213,9 @@ export const createTourRequest = createServerFn({ method: "POST" })
         sourceId: tourId,
         conversationId: cid,
         notify: false,
+        entry: "tour_request",
+        childId: childId || null,
+        childLabel: childName || null,
       });
     } catch (err) {
       console.error("[kidease-lead] tour lead skipped", err);
@@ -760,6 +763,14 @@ export const advanceTourRequest = createServerFn({ method: "POST" })
     `;
     await sql`update conversations set last_at = now() where id = ${tour.conversation_id}`;
     await markConversationRead(sql, tour.conversation_id, context.userId);
+    if (next === "no_show") {
+      const { applyWorkflowMoment } = await import("@/lib/server/lead-intake-write");
+      await applyWorkflowMoment(sql, {
+        daycareId: tour.daycare_id,
+        parentUserId: tour.user_id,
+        moment: { type: "tour_no_show", at: new Date().toISOString() },
+      }).catch(() => undefined);
+    }
 
     return { ok: true as const, status: next, conversationId: tour.conversation_id };
   });

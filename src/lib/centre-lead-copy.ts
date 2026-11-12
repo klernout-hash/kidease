@@ -76,7 +76,8 @@ export const LEAD_COPY = {
     webhookSecret: "Copy this signing secret now. KidEase will not show it again.",
     consent: "Once a family leaves KidEase for your website, your centre is responsible for that data under PIPEDA and Quebec Law 25.",
     stages: {
-      inquiry: "Inquiry",
+      inquiry: "New inquiry",
+      contacted: "Contacted",
       tour_booked: "Tour booked",
       toured: "Toured",
       applied: "Applied",
@@ -94,6 +95,8 @@ export const LEAD_COPY = {
       enrolment: "Enrolment",
       website: "Your website",
       manual: "Added here",
+      phone: "Phone",
+      walk_in: "Walk-in",
     },
     reasons: {
       tour_declined: "Tour declined",
@@ -188,7 +191,8 @@ export const LEAD_COPY = {
     webhookSecret: "Copiez ce secret de signature maintenant. KidEase ne le montrera plus.",
     consent: "Quand une famille quitte KidEase vers votre site, votre centre est responsable de ces données selon la LPRPDE et la Loi 25 du Québec.",
     stages: {
-      inquiry: "Demande",
+      inquiry: "Nouvelle demande",
+      contacted: "Contacté",
       tour_booked: "Visite réservée",
       toured: "Visite faite",
       applied: "Demande de place",
@@ -206,6 +210,8 @@ export const LEAD_COPY = {
       enrolment: "Inscription",
       website: "Votre site",
       manual: "Ajouté ici",
+      phone: "Téléphone",
+      walk_in: "Sans rendez-vous",
     },
     reasons: {
       tour_declined: "Visite refusée",

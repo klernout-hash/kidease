@@ -1,14 +1,13 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { govMenuHref, type GovSection } from "@/lib/gov/menu";
 import type { GovDashboard } from "@/lib/gov/aggregate";
-import { feeBucketLabel, govCopy, govPath } from "@/lib/gov/copy";
-import { regionForCity, regionLabel } from "@/lib/gov/places";
-import { GovHelp } from "@/components/gov/gov-help";
-import { CurriculumGovStrip } from "@/components/curriculum-pack";
+import { feeBucketLabel, govCopy } from "@/lib/gov/copy";
+import { regionForCity } from "@/lib/gov/places";
+import { GovFrame } from "@/components/gov/gov-frame";
+import { OVERSIGHT_ITEMS, accessNeed, facilityRisk, govOversightEnabled } from "@/lib/gov/oversight";
 import { GovJobShortage } from "@/components/ece-job-desk";
+import { CurriculumGovStrip } from "@/components/curriculum-pack";
 import { GovMap } from "@/components/gov/gov-map";
-import { signOut } from "@/lib/auth/client";
-import { deskGroups } from "@/lib/gov/sections";
 
 function show(value: number | null, locale: "en" | "fr", hidden: string): string {
   if (value == null) return hidden;
@@ -24,63 +23,45 @@ function Kpi({ label, value }: { label: string; value: string }) {
   );
 }
 
-type GovView = "overview" | "marketplace" | "health" | "expiries" | "workforce" | "analytics" | "sources";
-
-const GOV_VIEWS: Array<{ id: GovView; en: string; fr: string }> = [
-  { id: "overview", en: "Overview", fr: "Aperçu" },
-  { id: "marketplace", en: "Marketplace and availability", fr: "Places et disponibilité" },
-  { id: "health", en: "Listing health and compliance", fr: "Santé des fiches et conformité" },
-  { id: "expiries", en: "Expiries and alerts", fr: "Échéances et alertes" },
-  { id: "workforce", en: "Workforce and jobs", fr: "Personnel et emplois" },
-  { id: "analytics", en: "Analytics and data", fr: "Analyses et données" },
-  { id: "sources", en: "Sources and definitions", fr: "Sources et définitions" },
-];
-
-function GovTaskNav({
-  locale,
-  view,
-  onView,
-}: {
-  locale: "en" | "fr";
-  view: GovView;
-  onView: (next: GovView) => void;
-}) {
-  const copy = govCopy(locale);
-  const pages = deskGroups(locale, copy, true)
-    .flatMap((group) => group.links)
-    .filter(([href]) => href.startsWith("/"));
+function TileInfo({ text, locale }: { text: string; locale: "en" | "fr" }) {
   return (
-    <nav className="mt-4 flex flex-col gap-1 lg:sticky lg:top-28 lg:max-h-[calc(100dvh-8rem)] lg:overflow-y-auto" data-ke="gov-nav" aria-label={locale === "fr" ? "Tâches du bureau" : "Desk tasks"}>
-      {GOV_VIEWS.map((item) => {
-        const current = view === item.id;
-        return (
-          <button
-            key={item.id}
-            type="button"
-            data-ke="gov-task"
-            data-view={item.id}
-            aria-current={current ? "page" : undefined}
-            className={
-              current
-                ? "inline-flex min-h-11 items-center rounded-xl bg-surface px-3 text-left text-base font-semibold ring-1 ring-border touch-manipulation"
-                : "inline-flex min-h-11 items-center rounded-xl px-3 text-left text-base font-medium touch-manipulation hover:bg-surface"
-            }
-            onClick={() => onView(item.id)}
-          >
-            {locale === "fr" ? item.fr : item.en}
+    <details className="mt-2">
+      <summary className="inline-flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-full text-sm font-semibold ring-1 ring-border" aria-label={locale === "fr" ? "Détail" : "Detail"}>
+        i
+      </summary>
+      <p className="mt-2 text-sm leading-6 text-muted">{text}</p>
+    </details>
+  );
+}
+
+const REPORT_TABS = ["screening", "ratios", "complaints", "incidents", "funding"] as const;
+
+function GovReports({ locale, exportBase }: { locale: "en" | "fr"; exportBase: string }) {
+  const fr = locale === "fr";
+  const labels: Record<(typeof REPORT_TABS)[number], string> = fr
+    ? { screening: "Vérifications du personnel", ratios: "Ratios", complaints: "Plaintes", incidents: "Événements graves", funding: "Financement" }
+    : { screening: "Staff screening", ratios: "Ratios", complaints: "Complaints", incidents: "Serious occurrences", funding: "Funding" };
+  const [tab, setTab] = useState<(typeof REPORT_TABS)[number]>("screening");
+  useEffect(() => {
+    const found = new URLSearchParams(window.location.search).get("tab");
+    if (found && (REPORT_TABS as readonly string[]).includes(found)) setTab(found as (typeof REPORT_TABS)[number]);
+  }, []);
+  return (
+    <section className="mt-6" data-ke="gov-reports">
+      <div className="flex gap-2 overflow-x-auto" role="tablist">
+        {REPORT_TABS.map((id) => (
+          <button key={id} type="button" role="tab" aria-selected={tab === id} className="inline-flex min-h-11 shrink-0 items-center rounded-full px-3 text-sm font-medium ring-1 ring-border touch-manipulation" onClick={() => setTab(id)}>
+            {labels[id]}
           </button>
-        );
-      })}
-      <p className="mt-4 px-3 text-base font-semibold">{copy.otherPages}</p>
-      {pages.map(([href, label]) => (
-        <a key={href} href={href} className="inline-flex min-h-11 items-center rounded-xl px-3 text-base font-medium hover:bg-surface">
-          {label}
-        </a>
-      ))}
-      <a className="inline-flex min-h-11 items-center rounded-xl px-3 text-base font-semibold text-primary" href={locale === "fr" ? "/fr/search" : "/search"} data-ke="gov-browse-public">
-        {locale === "fr" ? "Voir les fiches publiques" : "Browse public listings"}
+        ))}
+      </div>
+      <p className="mt-4 max-w-2xl text-base leading-6" data-ke="gov-report-empty">
+        {fr ? "Pas encore relié. Aucun dossier n’est affiché. Rien n’est envoyé." : "Not connected yet. No case file is shown. Nothing is sent."}
+      </p>
+      <a className="mt-3 inline-flex min-h-11 items-center text-sm font-medium text-primary" href={`${exportBase}&format=csv&locale=${locale}`} data-ke="gov-table-download">
+        {fr ? "Télécharger le tableau" : "Download this table"}
       </a>
-    </nav>
+    </section>
   );
 }
 
@@ -233,22 +214,22 @@ function SourceRegister({ copy }: { copy: ReturnType<typeof govCopy> }) {
 
 export function GovDashboardView({
   data,
+  section = "overview",
 }: {
   data: GovDashboard & {
     licenceFlags?: Array<{ slug: string; name: string; city: string; status: string; expiry?: string | null }>;
     childPerSpace?: number | null;
     childRatioNarrowView?: boolean;
   };
+  section?: GovSection;
 }) {
   const copy = govCopy(data.locale);
   const hidden = copy.suppressed;
-  const navigate = useNavigate();
-  const other = data.locale === "fr" ? "en" : "fr";
-  const query = new URLSearchParams();
-  if (data.province) query.set("province", data.province);
-  if (data.region && data.region !== "ALL") query.set("region", data.region);
-  if (data.city && data.city !== "ALL") query.set("city", data.city);
-  const exportBase = `/api/gov/export?${query.toString()}`;
+  const exportQuery = new URLSearchParams();
+  if (data.province) exportQuery.set("province", data.province);
+  if (data.region && data.region !== "ALL") exportQuery.set("region", data.region);
+  if (data.city && data.city !== "ALL") exportQuery.set("city", data.city);
+  const exportBase = `/api/gov/export?${exportQuery.toString()}`;
 
   const [picked, setPicked] = useState<{ region: string; city: string } | null>(null);
   useEffect(() => {
@@ -263,129 +244,50 @@ export function GovDashboardView({
     const province = next.province ?? data.province;
     const region = next.region ?? regionValue;
     const city = next.city ?? cityValue;
-    setPicked({ region: region || "ALL", city: city || "ALL" });
-    void navigate({
-      to: data.locale === "fr" ? "/fr/gov" : "/gov",
-      search: {
-        province,
-        region: region && region !== "ALL" ? region : "",
-        city: city && city !== "ALL" ? city : "",
-      },
-    });
+    const params = new URLSearchParams();
+    if (province) params.set("province", province);
+    if (region && region !== "ALL") params.set("region", region);
+    if (city && city !== "ALL") params.set("city", city);
+    const path = govMenuHref(data.locale, section);
+    const href = params.toString() ? `${path}?${params}` : path;
+    if (typeof window !== "undefined") window.location.assign(href);
   }
 
   const kpis = data.kpis;
-  const [view, setView] = useState<GovView>("overview");
-  const complianceHref = data.locale === "fr" ? "/fr/gov/compliance" : "/gov/compliance";
+  const [searchText, setSearchText] = useState("");
+  const needle = searchText.trim().toLowerCase();
+  const flagged = (data.licenceFlags ?? []).filter((flag) => {
+    if (!needle) return true;
+    return `${flag.name} ${flag.city} ${flag.slug}`.toLowerCase().includes(needle);
+  });
+  function monthDelta(current: number | null, previous: number | null): string {
+    if (current == null || previous == null) return data.locale === "fr" ? "Pas encore relié" : "Not connected yet";
+    const delta = current - previous;
+    const sign = delta > 0 ? "+" : "";
+    return `${sign}${delta.toLocaleString(data.locale === "fr" ? "fr-CA" : "en-CA")}`;
+  }
+  const trendLast = data.trends.at(-1);
+  const trendPrev = data.trends.at(-2);
   return (
-    <div className="w-full min-h-dvh overflow-x-hidden bg-bg text-fg pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
-      <a href="#gov-main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-10 focus:bg-surface focus:px-3 focus:py-2">
-        {copy.title}
-      </a>
-      <header className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-4">
-        <p className="font-display text-lg">KidEase</p>
-        <div className="flex flex-wrap items-center gap-2">
-          <GovHelp locale={data.locale} />
-          <Link
-            to={govPath(other)}
-            search={{ province: data.province, region: data.region, city: data.city }}
-            className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-medium underline-offset-4 hover:underline"
-          >
-            {copy.language}
-          </Link>
-          <button
-            type="button"
-            className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-medium touch-manipulation"
-            onClick={() => void signOut(govPath(data.locale, "login"))}
-          >
-            {copy.signOut}
-          </button>
-        </div>
-      </header>
-      <main id="gov-main" className="mx-auto w-full max-w-5xl px-4 pb-16" data-ke="gov-dashboard">
-        <p className="text-sm font-medium text-muted">{copy.what}</p>
-        <h1 className="mt-1 font-display text-3xl">{data.placeLabel}</h1>
-        <p className="mt-2 max-w-2xl text-base">{copy.why}</p>
-        <p className="mt-1 text-sm text-muted">
-          {copy.org}: {data.orgName}
-        </p>
-        <p className="mt-1 text-base" data-ke="gov-as-of">
-          {copy.asOf} {data.generatedAt.slice(0, 16).replace("T", " ")} UTC
-        </p>
-        {data.demo ? <p className="mt-3 rounded-2xl bg-surface px-4 py-3 text-sm ring-1 ring-border">{copy.demo}</p> : null}
-
-        <div className="sticky top-0 z-30 -mx-4 mt-6 border-b border-border bg-bg px-4 py-3" data-ke="gov-filters">
-        <form className="grid gap-3 sm:grid-cols-3" onSubmit={(event) => event.preventDefault()}>
-          <label className="block text-sm font-medium">
-            {copy.province}
-            <select
-              className="mt-1 min-h-11 w-full rounded-xl border border-border bg-surface px-3"
-              value={data.province}
-              onChange={(event) => go({ province: event.target.value, region: "ALL", city: "ALL" })}
-            >
-              {data.selectors.provinces.map((row) => (
-                <option key={row.code} value={row.code}>
-                  {row.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block text-sm font-medium">
-            {copy.region}
-            <select
-              className="mt-1 min-h-11 w-full rounded-xl border border-border bg-surface px-3"
-              value={regionValue}
-              onChange={(event) => go({ region: event.target.value, city: "ALL" })}
-            >
-              {regionOptions.map((region) => (
-                <option key={region} value={region}>
-                  {region === "ALL" ? (data.locale === "fr" ? "Toutes les régions" : "All regions") : regionLabel(region, data.locale)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block text-sm font-medium">
-            {copy.city}
-            <select
-              className="mt-1 min-h-11 w-full rounded-xl border border-border bg-surface px-3"
-              value={cityValue}
-              onChange={(event) => {
-                const city = event.target.value;
-                if (!city || city === "ALL") go({ city: "ALL" });
-                else go({ city, region: regionForCity(city) });
-              }}
-            >
-              {cityOptions.map((city) => (
-                <option key={city} value={city}>
-                  {city === "ALL" ? (data.locale === "fr" ? "Toutes les villes" : "All cities") : city}
-                </option>
-              ))}
-            </select>
-          </label>
-        </form>
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          {data.region !== "ALL" ? (
-            <button type="button" className="inline-flex min-h-11 items-center rounded-full bg-surface px-3 text-sm ring-1 ring-border" onClick={() => go({ region: "ALL", city: "ALL" })}>
-              {regionLabel(data.region, data.locale)}
-            </button>
-          ) : null}
-          {data.city !== "ALL" ? (
-            <button type="button" className="inline-flex min-h-11 items-center rounded-full bg-surface px-3 text-sm ring-1 ring-border" onClick={() => go({ city: "ALL" })}>
-              {data.city}
-            </button>
-          ) : null}
-          {data.region !== "ALL" || data.city !== "ALL" ? (
-            <button type="button" className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-medium text-primary" onClick={() => go({ region: "ALL", city: "ALL" })}>
-              {copy.clearFilters}
-            </button>
-          ) : null}
-        </div>
-        </div>
-
-        <div className="mt-6 lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start lg:gap-8">
-        <GovTaskNav locale={data.locale} view={view} onView={setView} />
-        <div>
-        {view === "overview" ? (
+    <GovFrame
+      locale={data.locale}
+      section={section}
+      province={data.province}
+      region={regionValue}
+      city={cityValue}
+      regions={regionOptions}
+      cities={cityOptions}
+      asOf={`${data.generatedAt.slice(0, 16).replace("T", " ")} UTC`}
+      orgName={data.orgName}
+      search={searchText}
+      onSearch={setSearchText}
+      onFilter={(next) => {
+        if (next.city && next.city !== "ALL") go({ city: next.city, region: regionForCity(next.city) });
+        else go({ region: next.region ?? "ALL", city: next.city ?? "ALL" });
+      }}
+    >
+        {data.demo ? <p className="mt-3 rounded-xl bg-surface px-4 py-3 text-sm ring-1 ring-border">{copy.demo}</p> : null}
+        {section === "overview" ? (
         <>
         <div className="flex flex-wrap gap-3">
           <a
@@ -403,41 +305,32 @@ export function GovDashboardView({
         </div>
 
         <dl id="gov-cards" className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" data-ke="gov-decision-cards">
-          <div className="rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke="gov-card-providers">
-            <dt className="text-sm text-muted">{copy.cardObserved}</dt>
-            <dd className="mt-1 font-display text-2xl">{show(kpis.licensedCentres, data.locale, hidden)}</dd>
-            <p className="mt-2 text-base leading-6">{copy.cardObservedNote}</p>
-            <p className="mt-1 text-base leading-6">{copy.cardScope}</p>
-          </div>
-          <div className="rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke="gov-card-capacity">
-            <dt className="text-sm text-muted">{copy.capacity}</dt>
-            <dd className="mt-1 font-display text-2xl">{show(kpis.capacity, data.locale, hidden)}</dd>
-            <p className="mt-2 text-base leading-6">{copy.cardCapacityNote}</p>
-            <p className="mt-1 text-base leading-6">{copy.cardScope}</p>
-          </div>
-          <div className="rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke="gov-card-vacancies">
-            <dt className="text-sm text-muted">{copy.spots}</dt>
-            <dd className="mt-1 font-display text-2xl">{kpis.vacancyReporters === 0 ? copy.noReporting : show(kpis.openSpots, data.locale, hidden)}</dd>
-            <p className="mt-2 text-base leading-6">{copy.cardVacancyNote}</p>
-            <p className="mt-1 text-base leading-6">{copy.cardScope}</p>
-          </div>
-          <a className="rounded-2xl bg-surface p-4 ring-1 ring-border no-underline" data-ke="gov-card-renewals" href={data.locale === "fr" ? "/fr/gov/compliance" : "/gov/compliance"}>
-            <p className="text-sm text-muted">{copy.cardRenewals}</p>
-            <p className="mt-1 font-display text-2xl">{copy.notTracked}</p>
-            <p className="mt-2 text-base leading-6">{copy.cardRenewalsNote}</p>
+          <a className="rounded-xl bg-surface p-4 ring-1 ring-border no-underline" data-ke="gov-card-providers" href="#gov-detail">
+            <dt className="text-sm text-muted">{data.locale === "fr" ? "Fournisseurs" : "Providers"}</dt>
+            <dd className="mt-1 font-display text-2xl whitespace-nowrap hyphens-none tabular-nums">{show(kpis.licensedCentres, data.locale, hidden)}</dd>
+            <TileInfo text={copy.cardObservedNote} locale={data.locale} />
           </a>
-          <div className="rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke="gov-card-findings">
-            <dt className="text-sm text-muted">{copy.cardFindings}</dt>
-            <dd className="mt-1 font-display text-2xl">{copy.notTracked}</dd>
-            <p className="mt-2 text-base leading-6">{copy.cardFindingsNote}</p>
-          </div>
-          <div className="rounded-2xl bg-surface p-4 ring-1 ring-border" data-ke="gov-card-jobs" id="gov-jobs">
-            <dt className="text-sm text-muted">{copy.jobs}</dt>
-            <dd className="mt-1 font-display text-2xl">{kpis.jobPosts === 0 ? copy.reportedUnknown : show(kpis.jobPosts, data.locale, hidden)}</dd>
-            <p className="mt-2 text-base leading-6">{copy.cardJobsNote}</p>
-            <p className="mt-1 text-base leading-6">{copy.cardScope}</p>
-          </div>
+          <a className="rounded-xl bg-surface p-4 ring-1 ring-border no-underline" data-ke="gov-card-capacity" href="#gov-detail">
+            <dt className="text-sm text-muted">{data.locale === "fr" ? "Places permises" : "Licensed spaces"}</dt>
+            <dd className="mt-1 font-display text-2xl whitespace-nowrap hyphens-none tabular-nums">{show(kpis.capacity, data.locale, hidden)}</dd>
+            <TileInfo text={copy.cardCapacityNote} locale={data.locale} />
+          </a>
+          <a className="rounded-xl bg-surface p-4 ring-1 ring-border no-underline" data-ke="gov-card-vacancies" href="#gov-detail">
+            <dt className="text-sm text-muted">{data.locale === "fr" ? "Places ouvertes" : "Open spots"}</dt>
+            <dd className="mt-1 font-display text-2xl whitespace-nowrap hyphens-none tabular-nums">{kpis.vacancyReporters === 0 ? copy.noReporting : show(kpis.openSpots, data.locale, hidden)}</dd>
+            <TileInfo text={copy.cardVacancyNote} locale={data.locale} />
+          </a>
         </dl>
+        <section className="mt-4 rounded-xl bg-surface-2 p-4 text-sm text-muted" data-ke="gov-not-tracked">
+          <h2 className="font-medium text-fg">{data.locale === "fr" ? "Pas encore suivi" : "Not tracked yet"}</h2>
+          <ul className="mt-2 space-y-1">
+            <li><a className="underline-offset-4 hover:underline" href={data.locale === "fr" ? "/fr/gov/expiries" : "/gov/expiries"}>{data.locale === "fr" ? "Permis qui expirent dans 30, 60 ou 90 jours" : "Licences expiring in 30, 60, or 90 days"}</a></li>
+            <li><a className="underline-offset-4 hover:underline" href={data.locale === "fr" ? "/fr/gov/reports?tab=complaints" : "/gov/reports?tab=complaints"}>{data.locale === "fr" ? "Plaintes ouvertes" : "Open complaints"}</a></li>
+            <li><a className="underline-offset-4 hover:underline" href={data.locale === "fr" ? "/fr/gov/reports?tab=incidents" : "/gov/reports?tab=incidents"}>{data.locale === "fr" ? "Événements graves ce mois-ci" : "Serious occurrences this month"}</a></li>
+          </ul>
+        </section>
+        <OversightNote locale={data.locale} spaces={typeof kpis.capacity === "number" ? kpis.capacity : null} />
+        <GovMap data={data} />
         <section className="mt-6 grid gap-3 lg:grid-cols-2" data-ke="gov-needs-attention" aria-labelledby="gov-needs-title">
           <div className="rounded-2xl bg-surface p-4 ring-1 ring-border">
             <h2 id="gov-needs-title" className="font-display text-xl">{copy.needsTitle}</h2>
@@ -465,7 +358,7 @@ export function GovDashboardView({
         </>
         ) : null}
 
-        {view === "marketplace" ? (
+        {section === "overview" ? (
         <>
         <GovMap data={data} />
 
@@ -501,7 +394,7 @@ export function GovDashboardView({
         </>
         ) : null}
 
-        {view === "analytics" ? (
+        {section === "analytics" ? (
         <>
         <section className="mt-8" aria-labelledby="gov-fees-title">
           <h2 id="gov-fees-title" className="font-display text-xl">
@@ -541,6 +434,12 @@ export function GovDashboardView({
           <h2 id="gov-trend-title" className="font-display text-xl">
             {copy.trends}
           </h2>
+          <p className="mt-2 text-sm" data-ke="gov-month-change">
+            {data.locale === "fr" ? "Changement depuis le mois dernier" : "Change since last month"}: {monthDelta(trendLast?.listings ?? null, trendPrev?.listings ?? null)}
+          </p>
+          <a className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-primary" href={`${exportBase}&format=csv&locale=${data.locale}`} data-ke="gov-table-download">
+            {data.locale === "fr" ? "Télécharger le tableau" : "Download this table"}
+          </a>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">{copy.trendChart}</p>
           <TrendBars rows={data.trends} />
           <div className="mt-3 overflow-x-auto">
@@ -567,12 +466,13 @@ export function GovDashboardView({
           </div>
         </section>
         <SurveyContext locale={data.locale} />
+        <GovJobShortage province={data.province === "ALL" ? "CA" : data.province} locale={data.locale} />
         </>
         ) : null}
 
-        {view === "workforce" ? <GovJobShortage province={data.province} locale={data.locale} /> : null}
+        {section === "reports" ? <GovReports locale={data.locale} exportBase={exportBase} /> : null}
 
-        {view === "health" ? (
+        {section === "overview" ? (
         <>
         <section className="mt-8" id="gov-detail" aria-labelledby="gov-detail-title">
           <h2 id="gov-detail-title" className="font-display text-xl">{copy.detailTitle}</h2>
@@ -614,22 +514,25 @@ export function GovDashboardView({
         </>
         ) : null}
 
-        {view === "expiries" ? (
-          <section className="mt-2 max-w-2xl space-y-3 text-sm leading-6" data-ke="gov-expiries">
-            <h2 className="font-display text-xl">{data.locale === "fr" ? "Échéances et alertes" : "Expiries and alerts"}</h2>
-            <p>{data.locale === "fr" ? "Une date de document, une inspection et un permis sont des choses différentes. Une vieille importation n’est pas une preuve que le centre est fermé ou non conforme." : "A document date, an inspection and a licence are different things. An old import is not proof that a centre is closed or non-compliant."}</p>
-            <p>{copy.registerNotLoaded}</p>
-            <p>{copy.notTracked}</p>
-            <LicenceFlags data={data} />
-            <p>
-              <a className="inline-flex min-h-11 items-center font-medium text-primary underline-offset-4 hover:underline" href={complianceHref}>
-                {data.locale === "fr" ? "Ouvrir les dates suivies" : "Open tracked dates"}
-              </a>
-            </p>
+        {section === "expiries" ? (
+          <section className="mt-6 max-w-2xl space-y-3 text-base leading-6" data-ke="gov-expiries">
+            <p data-ke="gov-not-connected">{data.locale === "fr" ? "Pas encore relié. Les dates de permis ne sont pas connectées. Rien n’est envoyé." : "Not connected yet. Licence dates are not connected. Nothing is sent."}</p>
+            <div className="flex flex-wrap gap-2" data-ke="gov-expiry-windows">
+              {[30, 60, 90].map((days) => (
+                <button key={days} type="button" className="inline-flex min-h-11 items-center rounded-full bg-surface px-3 text-sm ring-1 ring-border" disabled>
+                  {days} {data.locale === "fr" ? "jours" : "days"}
+                </button>
+              ))}
+            </div>
+            <label className="flex min-h-11 items-center gap-2 text-sm">
+              <input type="checkbox" disabled data-ke="gov-alert-switch" />
+              {data.locale === "fr" ? "Alerte courriel (en attente, rien n’est envoyé)" : "Email alert (held, nothing is sent)"}
+            </label>
+            {flagged.length > 0 ? <LicenceFlags data={{ ...data, licenceFlags: flagged }} /> : null}
           </section>
         ) : null}
 
-        {view === "sources" ? (
+        {section === "data" ? (
         <>
         <Ledgers copy={copy} />
         <SourceRegister copy={copy} />
@@ -645,9 +548,49 @@ export function GovDashboardView({
         </section>
         </>
         ) : null}
-        </div>
-        </div>
-      </main>
-    </div>
+    </GovFrame>
+  );
+}
+
+function OversightNote({ locale, spaces }: { locale: "en" | "fr"; spaces: number | null }) {
+  const fr = locale === "fr";
+  const enabled = govOversightEnabled();
+  const need = accessNeed({ spaces, children: null });
+  const risk = facilityRisk({ enabled, factors: {} });
+  return (
+    <section className="mt-6 rounded-xl bg-surface p-4 ring-1 ring-border" data-ke="gov-oversight">
+      <h2 className="font-display text-xl">{fr ? "Ce qu’un régulateur peut voir" : "What a regulator can see"}</h2>
+      <p className="mt-2 text-base leading-6 text-muted">
+        {fr
+          ? "Les chiffres publics viennent du registre déjà dans KidEase. Les inspections, les échéances et les ordres attendent une entente avec le Manitoba. Aucun courriel n’est envoyé d’ici."
+          : "Public counts come from the register KidEase already holds. Inspections, expiry dates, and orders wait on a Manitoba agreement. Nothing is emailed from here."}
+      </p>
+      <ul className="mt-4 space-y-2 text-base leading-6">
+        {OVERSIGHT_ITEMS.map((item) => (
+          <li key={item.id} data-ke={`gov-oversight-${item.id}`}>
+            <span className="font-medium text-fg">{fr ? item.fr : item.en}.</span>{" "}
+            <span className="text-muted">
+              {item.state === "public"
+                ? fr ? "Déjà dans les données publiques." : "Already in the public data."
+                : item.state === "agreement"
+                  ? fr ? "En attente de l’entente." : "Waiting on the agreement."
+                  : enabled
+                    ? fr ? "Le pointage est allumé, mais les facteurs provinciaux manquent." : "The score is on, but the provincial factors are missing."
+                    : fr ? "Éteint tant que le drapeau n’est pas à 1." : "Off until the flag is set to 1."}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-4 text-sm text-muted" data-ke="gov-oversight-need">
+        {need.childrenPerSpace == null
+          ? fr ? "Enfants par place : pas encore relié." : "Children per space: not connected yet."
+          : fr ? `${need.childrenPerSpace} enfants par place.` : `${need.childrenPerSpace} children per space.`}
+      </p>
+      <p className="mt-1 text-sm text-muted" data-ke="gov-oversight-risk">
+        {risk.blocked
+          ? fr ? "Pointage de risque : non calculé." : "Risk score: not calculated."
+          : fr ? `Pointage ${risk.score}.` : `Score ${risk.score}.`}
+      </p>
+    </section>
   );
 }

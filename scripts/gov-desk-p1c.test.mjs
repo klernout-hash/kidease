@@ -9,7 +9,7 @@ test("the overview says when the counts were taken", () => {
   assert.match(govCopy("en").asOf, /Counts as of/);
   assert.match(govCopy("fr").asOf, /Totaux en date du/);
   assert.deepEqual(Object.keys(govCopy("en")).sort(), Object.keys(govCopy("fr")).sort());
-  assert.match(read("../src/components/gov/gov-dashboard.tsx"), /data-ke="gov-as-of"/);
+  assert.match(read("../src/components/gov/gov-frame.tsx"), /data-ke="gov-as-of"/);
 });
 
 test("government complaints and fee flags stay as counts", () => {

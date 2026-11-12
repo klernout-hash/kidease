@@ -534,6 +534,16 @@ export function centreLeadTrackerEnabled(env?: EnvMap): boolean {
   return evaluateFeatureFlag("FEATURE_CENTRE_LEAD_TRACKER", env);
 }
 
+/** Pipeline board. Off. Needs the lead tracker. No mail or text. */
+export function centreCrmPipelineEnabled(env?: EnvMap): boolean {
+  return centreLeadTrackerEnabled(env) && evaluateFeatureFlag("FEATURE_CENTRE_CRM_PIPELINE", env);
+}
+
+/** Stage tasks and in-app reminders. Off. Family mail and text stay held. */
+export function centreCrmWorkflowsEnabled(env?: EnvMap): boolean {
+  return centreCrmPipelineEnabled(env) && evaluateFeatureFlag("FEATURE_CENTRE_CRM_WORKFLOWS", env);
+}
+
 /** Per-centre API. Off. Also needs the lead tracker for the desk that creates keys. */
 export function centreApiEnabled(env?: EnvMap): boolean {
   return centreLeadTrackerEnabled(env) && evaluateFeatureFlag("FEATURE_CENTRE_API", env);

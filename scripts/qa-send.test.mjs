@@ -26,6 +26,11 @@ test("only the two approved inboxes can receive, and only by email from kidease.
   assert.equal(qaSendDecision({ ...base, occurredAt: "2026-11-01T00:00:00.000Z" }).reason, "pre_enable");
   assert.equal(qaSendDecision({ ...base, enabledAt: null }).reason, "enable_time_unset");
   assert.equal(qaSendDecision({ ...base, allowlist: [] }).reason, "empty_allowlist");
+  assert.deepEqual(parseQaAllowlist("*"), ["*"]);
+  assert.equal(qaSendDecision({ ...base, allowlist: ["*"], recipient: "parent@example.com" }).deliver, true);
+  assert.equal(qaSendDecision({ ...base, allowlist: ["*"], recipient: "parent@example.com", occurredAt: "2026-11-01T00:00:00.000Z" }).reason, "pre_enable");
+  assert.equal(qaSendDecision({ ...base, allowlist: ["*"], recipient: "parent@example.com", alreadySent: true }).reason, "duplicate");
+  assert.equal(qaSendDecision({ ...base, allowlist: ["*"], channel: "sms" }).reason, "held_channel");
   assert.equal(qaSendDecision({ ...base, alreadySent: true }).reason, "duplicate");
   assert.equal(qaSendDecision({ ...base, feature: "ADM-21" }).reason, "bad_feature");
 });

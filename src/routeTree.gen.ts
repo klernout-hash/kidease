@@ -20,6 +20,7 @@ import { Route as AdminAutomationsRouteImport } from './routes/admin-automations
 import { Route as AdminChatRouteImport } from './routes/admin-chat'
 import { Route as AdminContractsRouteImport } from './routes/admin-contracts'
 import { Route as AdminEmailHealthRouteImport } from './routes/admin-email-health'
+import { Route as AdminGhlLeadsRouteImport } from './routes/admin-ghl-leads'
 import { Route as AdminGovAuditRouteImport } from './routes/admin-gov-audit'
 import { Route as AdminGovBroadcastsRouteImport } from './routes/admin-gov-broadcasts'
 import { Route as AdminGovComplaintsRouteImport } from './routes/admin-gov-complaints'
@@ -135,8 +136,10 @@ import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
 import { Route as ApiSeedCatalogRouteImport } from './routes/api/seed-catalog'
 import { Route as ApiSpotOffersRouteImport } from './routes/api/spot-offers'
 import { Route as ApiTourHoldsRouteImport } from './routes/api/tour-holds'
+import { Route as ApiGhlLeadReconcileRouteImport } from './routes/api/ghl-lead-reconcile'
 import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
+import { Route as CSlugRouteImport } from './routes/c.$slug'
 import { Route as CallConversationIdRouteImport } from './routes/call.$conversationId'
 import { Route as CheckinIdRouteImport } from './routes/checkin.$id'
 import { Route as DaycareSlugRouteImport } from './routes/daycare.$slug'
@@ -199,6 +202,7 @@ import { Route as FrVacancyIndexRouteImport } from './routes/fr.vacancy-index'
 import { Route as FrVerifyRouteImport } from './routes/fr.verify'
 import { Route as FrVerify2faRouteImport } from './routes/fr.verify-2fa'
 import { Route as FrWaitlistRouteImport } from './routes/fr.waitlist'
+import { Route as GovAnalyticsRouteImport } from './routes/gov_.analytics'
 import { Route as GovAuditRouteImport } from './routes/gov_.audit'
 import { Route as GovBroadcastsRouteImport } from './routes/gov_.broadcasts'
 import { Route as GovChangeRequestsRouteImport } from './routes/gov_.change-requests'
@@ -206,9 +210,11 @@ import { Route as GovClaimNoticesRouteImport } from './routes/gov_.claim-notices
 import { Route as GovComplaintUpdatesRouteImport } from './routes/gov_.complaint-updates'
 import { Route as GovComplaintsRouteImport } from './routes/gov_.complaints'
 import { Route as GovComplianceRouteImport } from './routes/gov_.compliance'
+import { Route as GovDataRouteImport } from './routes/gov_.data'
 import { Route as GovDataRequestsRouteImport } from './routes/gov_.data-requests'
 import { Route as GovDemandRouteImport } from './routes/gov_.demand'
 import { Route as GovEscalationsRouteImport } from './routes/gov_.escalations'
+import { Route as GovExpiriesRouteImport } from './routes/gov_.expiries'
 import { Route as GovExportsRouteImport } from './routes/gov_.exports'
 import { Route as GovFeeCapsRouteImport } from './routes/gov_.fee-caps'
 import { Route as GovFundingRouteImport } from './routes/gov_.funding'
@@ -217,6 +223,7 @@ import { Route as GovInspectionSyncRouteImport } from './routes/gov_.inspection-
 import { Route as GovLoginRouteImport } from './routes/gov_.login'
 import { Route as GovNotificationsRouteImport } from './routes/gov_.notifications'
 import { Route as GovRatiosRouteImport } from './routes/gov_.ratios'
+import { Route as GovReportsRouteImport } from './routes/gov_.reports'
 import { Route as GovScreeningRouteImport } from './routes/gov_.screening'
 import { Route as GovSubsidyRouteImport } from './routes/gov_.subsidy'
 import { Route as GuidesCodeRouteImport } from './routes/guides.$code'
@@ -260,7 +267,7 @@ import { Route as ProviderWithdrawalRouteImport } from './routes/provider_.withd
 import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as SignIdRouteImport } from './routes/sign.$id'
 import { Route as SpotsTokenRouteImport } from './routes/spots.$token'
-import { Route as SupportCaseIdRouteImport } from './routes/support.$caseId'
+import { Route as SupportCaseIdRouteImport } from './routes/support_.$caseId'
 import { Route as VideoRoomIdRouteImport } from './routes/video.$roomId'
 import { Route as WelcomeCodeRouteImport } from './routes/welcome.$code'
 import { Route as ApiAdminContractsRouteImport } from './routes/api/admin.contracts'
@@ -297,17 +304,21 @@ import { Route as ApiWebhooksResendRouteImport } from './routes/api/webhooks.res
 import { Route as DaycareCityAgeRouteImport } from './routes/daycare.$city.$age'
 import { Route as DaycareCityCityRouteImport } from './routes/daycare.city.$city'
 import { Route as FrDaycareSlugRouteImport } from './routes/fr.daycare.$slug'
+import { Route as FrGovAnalyticsRouteImport } from './routes/fr.gov_.analytics'
 import { Route as FrGovAuditRouteImport } from './routes/fr.gov_.audit'
 import { Route as FrGovBroadcastsRouteImport } from './routes/fr.gov_.broadcasts'
 import { Route as FrGovComplaintsRouteImport } from './routes/fr.gov_.complaints'
 import { Route as FrGovComplianceRouteImport } from './routes/fr.gov_.compliance'
+import { Route as FrGovDataRouteImport } from './routes/fr.gov_.data'
 import { Route as FrGovDemandRouteImport } from './routes/fr.gov_.demand'
+import { Route as FrGovExpiriesRouteImport } from './routes/fr.gov_.expiries'
 import { Route as FrGovExportsRouteImport } from './routes/fr.gov_.exports'
 import { Route as FrGovFeeCapsRouteImport } from './routes/fr.gov_.fee-caps'
 import { Route as FrGovFundingRouteImport } from './routes/fr.gov_.funding'
 import { Route as FrGovIncidentsRouteImport } from './routes/fr.gov_.incidents'
 import { Route as FrGovLoginRouteImport } from './routes/fr.gov_.login'
 import { Route as FrGovRatiosRouteImport } from './routes/fr.gov_.ratios'
+import { Route as FrGovReportsRouteImport } from './routes/fr.gov_.reports'
 import { Route as FrGovScreeningRouteImport } from './routes/fr.gov_.screening'
 import { Route as FrGuidesCodeRouteImport } from './routes/fr.guides.$code'
 import { Route as FrHelpArticlesRouteImport } from './routes/fr.help.articles'
@@ -318,6 +329,7 @@ import { Route as FrMilieuxFamiliauxIdRouteImport } from './routes/fr.milieux-fa
 import { Route as FrParentDailyFeedRouteImport } from './routes/fr.parent.daily-feed'
 import { Route as FrProviderLeadsRouteImport } from './routes/fr.provider_.leads'
 import { Route as FrRCodeRouteImport } from './routes/fr.r.$code'
+import { Route as FrSupportCaseIdRouteImport } from './routes/fr.support_.$caseId'
 import { Route as FrWelcomeCodeRouteImport } from './routes/fr.welcome.$code'
 import { Route as PayBillBillIdRouteImport } from './routes/pay.bill.$billId'
 import { Route as ApiContractsIdPdfRouteImport } from './routes/api/contracts.$id.pdf'
@@ -381,6 +393,11 @@ const AdminContractsRoute = AdminContractsRouteImport.update({
 const AdminEmailHealthRoute = AdminEmailHealthRouteImport.update({
   id: '/admin-email-health',
   path: '/admin-email-health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminGhlLeadsRoute = AdminGhlLeadsRouteImport.update({
+  id: '/admin-ghl-leads',
+  path: '/admin-ghl-leads',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminGovAuditRoute = AdminGovAuditRouteImport.update({
@@ -959,6 +976,11 @@ const ApiTourHoldsRoute = ApiTourHoldsRouteImport.update({
   path: '/api/tour-holds',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiGhlLeadReconcileRoute = ApiGhlLeadReconcileRouteImport.update({
+  id: '/api/ghl-lead-reconcile',
+  path: '/api/ghl-lead-reconcile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiUnsubscribeRoute = ApiUnsubscribeRouteImport.update({
   id: '/api/unsubscribe',
   path: '/api/unsubscribe',
@@ -967,6 +989,11 @@ const ApiUnsubscribeRoute = ApiUnsubscribeRouteImport.update({
 const BookSlugRoute = BookSlugRouteImport.update({
   id: '/book/$slug',
   path: '/book/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CSlugRoute = CSlugRouteImport.update({
+  id: '/c/$slug',
+  path: '/c/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CallConversationIdRoute = CallConversationIdRouteImport.update({
@@ -1280,6 +1307,11 @@ const FrWaitlistRoute = FrWaitlistRouteImport.update({
   path: '/waitlist',
   getParentRoute: () => FrRoute,
 } as any)
+const GovAnalyticsRoute = GovAnalyticsRouteImport.update({
+  id: '/gov_/analytics',
+  path: '/gov/analytics',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GovAuditRoute = GovAuditRouteImport.update({
   id: '/gov_/audit',
   path: '/gov/audit',
@@ -1315,6 +1347,11 @@ const GovComplianceRoute = GovComplianceRouteImport.update({
   path: '/gov/compliance',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GovDataRoute = GovDataRouteImport.update({
+  id: '/gov_/data',
+  path: '/gov/data',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GovDataRequestsRoute = GovDataRequestsRouteImport.update({
   id: '/gov_/data-requests',
   path: '/gov/data-requests',
@@ -1328,6 +1365,11 @@ const GovDemandRoute = GovDemandRouteImport.update({
 const GovEscalationsRoute = GovEscalationsRouteImport.update({
   id: '/gov_/escalations',
   path: '/gov/escalations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovExpiriesRoute = GovExpiriesRouteImport.update({
+  id: '/gov_/expiries',
+  path: '/gov/expiries',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GovExportsRoute = GovExportsRouteImport.update({
@@ -1368,6 +1410,11 @@ const GovNotificationsRoute = GovNotificationsRouteImport.update({
 const GovRatiosRoute = GovRatiosRouteImport.update({
   id: '/gov_/ratios',
   path: '/gov/ratios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovReportsRoute = GovReportsRouteImport.update({
+  id: '/gov_/reports',
+  path: '/gov/reports',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GovScreeningRoute = GovScreeningRouteImport.update({
@@ -1587,9 +1634,9 @@ const SpotsTokenRoute = SpotsTokenRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const SupportCaseIdRoute = SupportCaseIdRouteImport.update({
-  id: '/$caseId',
-  path: '/$caseId',
-  getParentRoute: () => SupportRoute,
+  id: '/support_/$caseId',
+  path: '/support/$caseId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const VideoRoomIdRoute = VideoRoomIdRouteImport.update({
   id: '/video/$roomId',
@@ -1772,6 +1819,11 @@ const FrDaycareSlugRoute = FrDaycareSlugRouteImport.update({
   path: '/daycare/$slug',
   getParentRoute: () => FrRoute,
 } as any)
+const FrGovAnalyticsRoute = FrGovAnalyticsRouteImport.update({
+  id: '/gov_/analytics',
+  path: '/gov/analytics',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrGovAuditRoute = FrGovAuditRouteImport.update({
   id: '/gov_/audit',
   path: '/gov/audit',
@@ -1792,9 +1844,19 @@ const FrGovComplianceRoute = FrGovComplianceRouteImport.update({
   path: '/gov/compliance',
   getParentRoute: () => FrRoute,
 } as any)
+const FrGovDataRoute = FrGovDataRouteImport.update({
+  id: '/gov_/data',
+  path: '/gov/data',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrGovDemandRoute = FrGovDemandRouteImport.update({
   id: '/gov_/demand',
   path: '/gov/demand',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovExpiriesRoute = FrGovExpiriesRouteImport.update({
+  id: '/gov_/expiries',
+  path: '/gov/expiries',
   getParentRoute: () => FrRoute,
 } as any)
 const FrGovExportsRoute = FrGovExportsRouteImport.update({
@@ -1825,6 +1887,11 @@ const FrGovLoginRoute = FrGovLoginRouteImport.update({
 const FrGovRatiosRoute = FrGovRatiosRouteImport.update({
   id: '/gov_/ratios',
   path: '/gov/ratios',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrGovReportsRoute = FrGovReportsRouteImport.update({
+  id: '/gov_/reports',
+  path: '/gov/reports',
   getParentRoute: () => FrRoute,
 } as any)
 const FrGovScreeningRoute = FrGovScreeningRouteImport.update({
@@ -1875,6 +1942,11 @@ const FrProviderLeadsRoute = FrProviderLeadsRouteImport.update({
 const FrRCodeRoute = FrRCodeRouteImport.update({
   id: '/r/$code',
   path: '/r/$code',
+  getParentRoute: () => FrRoute,
+} as any)
+const FrSupportCaseIdRoute = FrSupportCaseIdRouteImport.update({
+  id: '/support_/$caseId',
+  path: '/support/$caseId',
   getParentRoute: () => FrRoute,
 } as any)
 const FrWelcomeCodeRoute = FrWelcomeCodeRouteImport.update({
@@ -1935,6 +2007,7 @@ export interface FileRoutesByFullPath {
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
+  '/admin-ghl-leads': typeof AdminGhlLeadsRoute
   '/admin-gov-audit': typeof AdminGovAuditRoute
   '/admin-gov-broadcasts': typeof AdminGovBroadcastsRoute
   '/admin-gov-complaints': typeof AdminGovComplaintsRoute
@@ -2015,7 +2088,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/start-a-daycare': typeof StartADaycareRoute
   '/status': typeof StatusRoute
-  '/support': typeof SupportRouteWithChildren
+  '/support': typeof SupportRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
@@ -2050,8 +2123,10 @@ export interface FileRoutesByFullPath {
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
+  '/api/ghl-lead-reconcile': typeof ApiGhlLeadReconcileRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
+  '/c/$slug': typeof CSlugRoute
   '/call/$conversationId': typeof CallConversationIdRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
@@ -2113,6 +2188,7 @@ export interface FileRoutesByFullPath {
   '/fr/verify': typeof FrVerifyRoute
   '/fr/verify-2fa': typeof FrVerify2faRoute
   '/fr/waitlist': typeof FrWaitlistRoute
+  '/gov/analytics': typeof GovAnalyticsRoute
   '/gov/audit': typeof GovAuditRoute
   '/gov/broadcasts': typeof GovBroadcastsRoute
   '/gov/change-requests': typeof GovChangeRequestsRoute
@@ -2120,9 +2196,11 @@ export interface FileRoutesByFullPath {
   '/gov/complaint-updates': typeof GovComplaintUpdatesRoute
   '/gov/complaints': typeof GovComplaintsRoute
   '/gov/compliance': typeof GovComplianceRoute
+  '/gov/data': typeof GovDataRoute
   '/gov/data-requests': typeof GovDataRequestsRoute
   '/gov/demand': typeof GovDemandRoute
   '/gov/escalations': typeof GovEscalationsRoute
+  '/gov/expiries': typeof GovExpiriesRoute
   '/gov/exports': typeof GovExportsRoute
   '/gov/fee-caps': typeof GovFeeCapsRoute
   '/gov/funding': typeof GovFundingRoute
@@ -2131,6 +2209,7 @@ export interface FileRoutesByFullPath {
   '/gov/login': typeof GovLoginRoute
   '/gov/notifications': typeof GovNotificationsRoute
   '/gov/ratios': typeof GovRatiosRoute
+  '/gov/reports': typeof GovReportsRoute
   '/gov/screening': typeof GovScreeningRoute
   '/gov/subsidy': typeof GovSubsidyRoute
   '/guides/$code': typeof GuidesCodeRoute
@@ -2212,17 +2291,21 @@ export interface FileRoutesByFullPath {
   '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
+  '/fr/gov/analytics': typeof FrGovAnalyticsRoute
   '/fr/gov/audit': typeof FrGovAuditRoute
   '/fr/gov/broadcasts': typeof FrGovBroadcastsRoute
   '/fr/gov/complaints': typeof FrGovComplaintsRoute
   '/fr/gov/compliance': typeof FrGovComplianceRoute
+  '/fr/gov/data': typeof FrGovDataRoute
   '/fr/gov/demand': typeof FrGovDemandRoute
+  '/fr/gov/expiries': typeof FrGovExpiriesRoute
   '/fr/gov/exports': typeof FrGovExportsRoute
   '/fr/gov/fee-caps': typeof FrGovFeeCapsRoute
   '/fr/gov/funding': typeof FrGovFundingRoute
   '/fr/gov/incidents': typeof FrGovIncidentsRoute
   '/fr/gov/login': typeof FrGovLoginRoute
   '/fr/gov/ratios': typeof FrGovRatiosRoute
+  '/fr/gov/reports': typeof FrGovReportsRoute
   '/fr/gov/screening': typeof FrGovScreeningRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/help/articles': typeof FrHelpArticlesRoute
@@ -2233,6 +2316,7 @@ export interface FileRoutesByFullPath {
   '/fr/parent/daily-feed': typeof FrParentDailyFeedRoute
   '/fr/provider/leads': typeof FrProviderLeadsRoute
   '/fr/r/$code': typeof FrRCodeRoute
+  '/fr/support/$caseId': typeof FrSupportCaseIdRoute
   '/fr/welcome/$code': typeof FrWelcomeCodeRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
@@ -2255,6 +2339,7 @@ export interface FileRoutesByTo {
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
+  '/admin-ghl-leads': typeof AdminGhlLeadsRoute
   '/admin-gov-audit': typeof AdminGovAuditRoute
   '/admin-gov-broadcasts': typeof AdminGovBroadcastsRoute
   '/admin-gov-complaints': typeof AdminGovComplaintsRoute
@@ -2333,7 +2418,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/start-a-daycare': typeof StartADaycareRoute
   '/status': typeof StatusRoute
-  '/support': typeof SupportRouteWithChildren
+  '/support': typeof SupportRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
@@ -2368,8 +2453,10 @@ export interface FileRoutesByTo {
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
+  '/api/ghl-lead-reconcile': typeof ApiGhlLeadReconcileRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
+  '/c/$slug': typeof CSlugRoute
   '/call/$conversationId': typeof CallConversationIdRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
@@ -2431,6 +2518,7 @@ export interface FileRoutesByTo {
   '/fr/verify': typeof FrVerifyRoute
   '/fr/verify-2fa': typeof FrVerify2faRoute
   '/fr/waitlist': typeof FrWaitlistRoute
+  '/gov/analytics': typeof GovAnalyticsRoute
   '/gov/audit': typeof GovAuditRoute
   '/gov/broadcasts': typeof GovBroadcastsRoute
   '/gov/change-requests': typeof GovChangeRequestsRoute
@@ -2438,9 +2526,11 @@ export interface FileRoutesByTo {
   '/gov/complaint-updates': typeof GovComplaintUpdatesRoute
   '/gov/complaints': typeof GovComplaintsRoute
   '/gov/compliance': typeof GovComplianceRoute
+  '/gov/data': typeof GovDataRoute
   '/gov/data-requests': typeof GovDataRequestsRoute
   '/gov/demand': typeof GovDemandRoute
   '/gov/escalations': typeof GovEscalationsRoute
+  '/gov/expiries': typeof GovExpiriesRoute
   '/gov/exports': typeof GovExportsRoute
   '/gov/fee-caps': typeof GovFeeCapsRoute
   '/gov/funding': typeof GovFundingRoute
@@ -2449,6 +2539,7 @@ export interface FileRoutesByTo {
   '/gov/login': typeof GovLoginRoute
   '/gov/notifications': typeof GovNotificationsRoute
   '/gov/ratios': typeof GovRatiosRoute
+  '/gov/reports': typeof GovReportsRoute
   '/gov/screening': typeof GovScreeningRoute
   '/gov/subsidy': typeof GovSubsidyRoute
   '/guides/$code': typeof GuidesCodeRoute
@@ -2530,17 +2621,21 @@ export interface FileRoutesByTo {
   '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
+  '/fr/gov/analytics': typeof FrGovAnalyticsRoute
   '/fr/gov/audit': typeof FrGovAuditRoute
   '/fr/gov/broadcasts': typeof FrGovBroadcastsRoute
   '/fr/gov/complaints': typeof FrGovComplaintsRoute
   '/fr/gov/compliance': typeof FrGovComplianceRoute
+  '/fr/gov/data': typeof FrGovDataRoute
   '/fr/gov/demand': typeof FrGovDemandRoute
+  '/fr/gov/expiries': typeof FrGovExpiriesRoute
   '/fr/gov/exports': typeof FrGovExportsRoute
   '/fr/gov/fee-caps': typeof FrGovFeeCapsRoute
   '/fr/gov/funding': typeof FrGovFundingRoute
   '/fr/gov/incidents': typeof FrGovIncidentsRoute
   '/fr/gov/login': typeof FrGovLoginRoute
   '/fr/gov/ratios': typeof FrGovRatiosRoute
+  '/fr/gov/reports': typeof FrGovReportsRoute
   '/fr/gov/screening': typeof FrGovScreeningRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/help/articles': typeof FrHelpArticlesRoute
@@ -2551,6 +2646,7 @@ export interface FileRoutesByTo {
   '/fr/parent/daily-feed': typeof FrParentDailyFeedRoute
   '/fr/provider/leads': typeof FrProviderLeadsRoute
   '/fr/r/$code': typeof FrRCodeRoute
+  '/fr/support/$caseId': typeof FrSupportCaseIdRoute
   '/fr/welcome/$code': typeof FrWelcomeCodeRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
@@ -2574,6 +2670,7 @@ export interface FileRoutesById {
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
+  '/admin-ghl-leads': typeof AdminGhlLeadsRoute
   '/admin-gov-audit': typeof AdminGovAuditRoute
   '/admin-gov-broadcasts': typeof AdminGovBroadcastsRoute
   '/admin-gov-complaints': typeof AdminGovComplaintsRoute
@@ -2654,7 +2751,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/start-a-daycare': typeof StartADaycareRoute
   '/status': typeof StatusRoute
-  '/support': typeof SupportRouteWithChildren
+  '/support': typeof SupportRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
@@ -2689,8 +2786,10 @@ export interface FileRoutesById {
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
+  '/api/ghl-lead-reconcile': typeof ApiGhlLeadReconcileRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
+  '/c/$slug': typeof CSlugRoute
   '/call/$conversationId': typeof CallConversationIdRoute
   '/checkin/$id': typeof CheckinIdRoute
   '/daycare/$slug': typeof DaycareSlugRoute
@@ -2752,6 +2851,7 @@ export interface FileRoutesById {
   '/fr/verify': typeof FrVerifyRoute
   '/fr/verify-2fa': typeof FrVerify2faRoute
   '/fr/waitlist': typeof FrWaitlistRoute
+  '/gov_/analytics': typeof GovAnalyticsRoute
   '/gov_/audit': typeof GovAuditRoute
   '/gov_/broadcasts': typeof GovBroadcastsRoute
   '/gov_/change-requests': typeof GovChangeRequestsRoute
@@ -2759,9 +2859,11 @@ export interface FileRoutesById {
   '/gov_/complaint-updates': typeof GovComplaintUpdatesRoute
   '/gov_/complaints': typeof GovComplaintsRoute
   '/gov_/compliance': typeof GovComplianceRoute
+  '/gov_/data': typeof GovDataRoute
   '/gov_/data-requests': typeof GovDataRequestsRoute
   '/gov_/demand': typeof GovDemandRoute
   '/gov_/escalations': typeof GovEscalationsRoute
+  '/gov_/expiries': typeof GovExpiriesRoute
   '/gov_/exports': typeof GovExportsRoute
   '/gov_/fee-caps': typeof GovFeeCapsRoute
   '/gov_/funding': typeof GovFundingRoute
@@ -2770,6 +2872,7 @@ export interface FileRoutesById {
   '/gov_/login': typeof GovLoginRoute
   '/gov_/notifications': typeof GovNotificationsRoute
   '/gov_/ratios': typeof GovRatiosRoute
+  '/gov_/reports': typeof GovReportsRoute
   '/gov_/screening': typeof GovScreeningRoute
   '/gov_/subsidy': typeof GovSubsidyRoute
   '/guides/$code': typeof GuidesCodeRoute
@@ -2812,7 +2915,7 @@ export interface FileRoutesById {
   '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
-  '/support/$caseId': typeof SupportCaseIdRoute
+  '/support_/$caseId': typeof SupportCaseIdRoute
   '/video/$roomId': typeof VideoRoomIdRoute
   '/welcome/$code': typeof WelcomeCodeRoute
   '/fr/': typeof FrIndexRoute
@@ -2851,17 +2954,21 @@ export interface FileRoutesById {
   '/daycare/$city/$age': typeof DaycareCityAgeRoute
   '/daycare/city/$city': typeof DaycareCityCityRoute
   '/fr/daycare/$slug': typeof FrDaycareSlugRoute
+  '/fr/gov_/analytics': typeof FrGovAnalyticsRoute
   '/fr/gov_/audit': typeof FrGovAuditRoute
   '/fr/gov_/broadcasts': typeof FrGovBroadcastsRoute
   '/fr/gov_/complaints': typeof FrGovComplaintsRoute
   '/fr/gov_/compliance': typeof FrGovComplianceRoute
+  '/fr/gov_/data': typeof FrGovDataRoute
   '/fr/gov_/demand': typeof FrGovDemandRoute
+  '/fr/gov_/expiries': typeof FrGovExpiriesRoute
   '/fr/gov_/exports': typeof FrGovExportsRoute
   '/fr/gov_/fee-caps': typeof FrGovFeeCapsRoute
   '/fr/gov_/funding': typeof FrGovFundingRoute
   '/fr/gov_/incidents': typeof FrGovIncidentsRoute
   '/fr/gov_/login': typeof FrGovLoginRoute
   '/fr/gov_/ratios': typeof FrGovRatiosRoute
+  '/fr/gov_/reports': typeof FrGovReportsRoute
   '/fr/gov_/screening': typeof FrGovScreeningRoute
   '/fr/guides/$code': typeof FrGuidesCodeRoute
   '/fr/help/articles': typeof FrHelpArticlesRoute
@@ -2872,6 +2979,7 @@ export interface FileRoutesById {
   '/fr/parent/daily-feed': typeof FrParentDailyFeedRoute
   '/fr/provider_/leads': typeof FrProviderLeadsRoute
   '/fr/r/$code': typeof FrRCodeRoute
+  '/fr/support_/$caseId': typeof FrSupportCaseIdRoute
   '/fr/welcome/$code': typeof FrWelcomeCodeRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
@@ -2896,6 +3004,7 @@ export interface FileRouteTypes {
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
+    | '/admin-ghl-leads'
     | '/admin-gov-audit'
     | '/admin-gov-broadcasts'
     | '/admin-gov-complaints'
@@ -3011,8 +3120,10 @@ export interface FileRouteTypes {
     | '/api/seed-catalog'
     | '/api/spot-offers'
     | '/api/tour-holds'
+    | '/api/ghl-lead-reconcile'
     | '/api/unsubscribe'
     | '/book/$slug'
+    | '/c/$slug'
     | '/call/$conversationId'
     | '/checkin/$id'
     | '/daycare/$slug'
@@ -3074,6 +3185,7 @@ export interface FileRouteTypes {
     | '/fr/verify'
     | '/fr/verify-2fa'
     | '/fr/waitlist'
+    | '/gov/analytics'
     | '/gov/audit'
     | '/gov/broadcasts'
     | '/gov/change-requests'
@@ -3081,9 +3193,11 @@ export interface FileRouteTypes {
     | '/gov/complaint-updates'
     | '/gov/complaints'
     | '/gov/compliance'
+    | '/gov/data'
     | '/gov/data-requests'
     | '/gov/demand'
     | '/gov/escalations'
+    | '/gov/expiries'
     | '/gov/exports'
     | '/gov/fee-caps'
     | '/gov/funding'
@@ -3092,6 +3206,7 @@ export interface FileRouteTypes {
     | '/gov/login'
     | '/gov/notifications'
     | '/gov/ratios'
+    | '/gov/reports'
     | '/gov/screening'
     | '/gov/subsidy'
     | '/guides/$code'
@@ -3173,17 +3288,21 @@ export interface FileRouteTypes {
     | '/daycare/$city/$age'
     | '/daycare/city/$city'
     | '/fr/daycare/$slug'
+    | '/fr/gov/analytics'
     | '/fr/gov/audit'
     | '/fr/gov/broadcasts'
     | '/fr/gov/complaints'
     | '/fr/gov/compliance'
+    | '/fr/gov/data'
     | '/fr/gov/demand'
+    | '/fr/gov/expiries'
     | '/fr/gov/exports'
     | '/fr/gov/fee-caps'
     | '/fr/gov/funding'
     | '/fr/gov/incidents'
     | '/fr/gov/login'
     | '/fr/gov/ratios'
+    | '/fr/gov/reports'
     | '/fr/gov/screening'
     | '/fr/guides/$code'
     | '/fr/help/articles'
@@ -3194,6 +3313,7 @@ export interface FileRouteTypes {
     | '/fr/parent/daily-feed'
     | '/fr/provider/leads'
     | '/fr/r/$code'
+    | '/fr/support/$caseId'
     | '/fr/welcome/$code'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
@@ -3216,6 +3336,7 @@ export interface FileRouteTypes {
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
+    | '/admin-ghl-leads'
     | '/admin-gov-audit'
     | '/admin-gov-broadcasts'
     | '/admin-gov-complaints'
@@ -3329,8 +3450,10 @@ export interface FileRouteTypes {
     | '/api/seed-catalog'
     | '/api/spot-offers'
     | '/api/tour-holds'
+    | '/api/ghl-lead-reconcile'
     | '/api/unsubscribe'
     | '/book/$slug'
+    | '/c/$slug'
     | '/call/$conversationId'
     | '/checkin/$id'
     | '/daycare/$slug'
@@ -3392,6 +3515,7 @@ export interface FileRouteTypes {
     | '/fr/verify'
     | '/fr/verify-2fa'
     | '/fr/waitlist'
+    | '/gov/analytics'
     | '/gov/audit'
     | '/gov/broadcasts'
     | '/gov/change-requests'
@@ -3399,9 +3523,11 @@ export interface FileRouteTypes {
     | '/gov/complaint-updates'
     | '/gov/complaints'
     | '/gov/compliance'
+    | '/gov/data'
     | '/gov/data-requests'
     | '/gov/demand'
     | '/gov/escalations'
+    | '/gov/expiries'
     | '/gov/exports'
     | '/gov/fee-caps'
     | '/gov/funding'
@@ -3410,6 +3536,7 @@ export interface FileRouteTypes {
     | '/gov/login'
     | '/gov/notifications'
     | '/gov/ratios'
+    | '/gov/reports'
     | '/gov/screening'
     | '/gov/subsidy'
     | '/guides/$code'
@@ -3491,17 +3618,21 @@ export interface FileRouteTypes {
     | '/daycare/$city/$age'
     | '/daycare/city/$city'
     | '/fr/daycare/$slug'
+    | '/fr/gov/analytics'
     | '/fr/gov/audit'
     | '/fr/gov/broadcasts'
     | '/fr/gov/complaints'
     | '/fr/gov/compliance'
+    | '/fr/gov/data'
     | '/fr/gov/demand'
+    | '/fr/gov/expiries'
     | '/fr/gov/exports'
     | '/fr/gov/fee-caps'
     | '/fr/gov/funding'
     | '/fr/gov/incidents'
     | '/fr/gov/login'
     | '/fr/gov/ratios'
+    | '/fr/gov/reports'
     | '/fr/gov/screening'
     | '/fr/guides/$code'
     | '/fr/help/articles'
@@ -3512,6 +3643,7 @@ export interface FileRouteTypes {
     | '/fr/parent/daily-feed'
     | '/fr/provider/leads'
     | '/fr/r/$code'
+    | '/fr/support/$caseId'
     | '/fr/welcome/$code'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
@@ -3534,6 +3666,7 @@ export interface FileRouteTypes {
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
+    | '/admin-ghl-leads'
     | '/admin-gov-audit'
     | '/admin-gov-broadcasts'
     | '/admin-gov-complaints'
@@ -3649,8 +3782,10 @@ export interface FileRouteTypes {
     | '/api/seed-catalog'
     | '/api/spot-offers'
     | '/api/tour-holds'
+    | '/api/ghl-lead-reconcile'
     | '/api/unsubscribe'
     | '/book/$slug'
+    | '/c/$slug'
     | '/call/$conversationId'
     | '/checkin/$id'
     | '/daycare/$slug'
@@ -3712,6 +3847,7 @@ export interface FileRouteTypes {
     | '/fr/verify'
     | '/fr/verify-2fa'
     | '/fr/waitlist'
+    | '/gov_/analytics'
     | '/gov_/audit'
     | '/gov_/broadcasts'
     | '/gov_/change-requests'
@@ -3719,9 +3855,11 @@ export interface FileRouteTypes {
     | '/gov_/complaint-updates'
     | '/gov_/complaints'
     | '/gov_/compliance'
+    | '/gov_/data'
     | '/gov_/data-requests'
     | '/gov_/demand'
     | '/gov_/escalations'
+    | '/gov_/expiries'
     | '/gov_/exports'
     | '/gov_/fee-caps'
     | '/gov_/funding'
@@ -3730,6 +3868,7 @@ export interface FileRouteTypes {
     | '/gov_/login'
     | '/gov_/notifications'
     | '/gov_/ratios'
+    | '/gov_/reports'
     | '/gov_/screening'
     | '/gov_/subsidy'
     | '/guides/$code'
@@ -3772,7 +3911,7 @@ export interface FileRouteTypes {
     | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
-    | '/support/$caseId'
+    | '/support_/$caseId'
     | '/video/$roomId'
     | '/welcome/$code'
     | '/fr/'
@@ -3811,17 +3950,21 @@ export interface FileRouteTypes {
     | '/daycare/$city/$age'
     | '/daycare/city/$city'
     | '/fr/daycare/$slug'
+    | '/fr/gov_/analytics'
     | '/fr/gov_/audit'
     | '/fr/gov_/broadcasts'
     | '/fr/gov_/complaints'
     | '/fr/gov_/compliance'
+    | '/fr/gov_/data'
     | '/fr/gov_/demand'
+    | '/fr/gov_/expiries'
     | '/fr/gov_/exports'
     | '/fr/gov_/fee-caps'
     | '/fr/gov_/funding'
     | '/fr/gov_/incidents'
     | '/fr/gov_/login'
     | '/fr/gov_/ratios'
+    | '/fr/gov_/reports'
     | '/fr/gov_/screening'
     | '/fr/guides/$code'
     | '/fr/help/articles'
@@ -3832,6 +3975,7 @@ export interface FileRouteTypes {
     | '/fr/parent/daily-feed'
     | '/fr/provider_/leads'
     | '/fr/r/$code'
+    | '/fr/support_/$caseId'
     | '/fr/welcome/$code'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
@@ -3855,6 +3999,7 @@ export interface RootRouteChildren {
   AdminChatRoute: typeof AdminChatRoute
   AdminContractsRoute: typeof AdminContractsRoute
   AdminEmailHealthRoute: typeof AdminEmailHealthRoute
+  AdminGhlLeadsRoute: typeof AdminGhlLeadsRoute
   AdminGovAuditRoute: typeof AdminGovAuditRoute
   AdminGovBroadcastsRoute: typeof AdminGovBroadcastsRoute
   AdminGovComplaintsRoute: typeof AdminGovComplaintsRoute
@@ -3935,7 +4080,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   StartADaycareRoute: typeof StartADaycareRoute
   StatusRoute: typeof StatusRoute
-  SupportRoute: typeof SupportRouteWithChildren
+  SupportRoute: typeof SupportRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
   TourChecklistRoute: typeof TourChecklistRoute
@@ -3968,12 +4113,15 @@ export interface RootRouteChildren {
   ApiSeedCatalogRoute: typeof ApiSeedCatalogRoute
   ApiSpotOffersRoute: typeof ApiSpotOffersRoute
   ApiTourHoldsRoute: typeof ApiTourHoldsRoute
+  ApiGhlLeadReconcileRoute: typeof ApiGhlLeadReconcileRoute
   ApiUnsubscribeRoute: typeof ApiUnsubscribeRoute
   BookSlugRoute: typeof BookSlugRoute
+  CSlugRoute: typeof CSlugRoute
   CallConversationIdRoute: typeof CallConversationIdRoute
   CheckinIdRoute: typeof CheckinIdRoute
   DaycareSlugRoute: typeof DaycareSlugRoute
   DaycaresCityRoute: typeof DaycaresCityRoute
+  GovAnalyticsRoute: typeof GovAnalyticsRoute
   GovAuditRoute: typeof GovAuditRoute
   GovBroadcastsRoute: typeof GovBroadcastsRoute
   GovChangeRequestsRoute: typeof GovChangeRequestsRoute
@@ -3981,9 +4129,11 @@ export interface RootRouteChildren {
   GovComplaintUpdatesRoute: typeof GovComplaintUpdatesRoute
   GovComplaintsRoute: typeof GovComplaintsRoute
   GovComplianceRoute: typeof GovComplianceRoute
+  GovDataRoute: typeof GovDataRoute
   GovDataRequestsRoute: typeof GovDataRequestsRoute
   GovDemandRoute: typeof GovDemandRoute
   GovEscalationsRoute: typeof GovEscalationsRoute
+  GovExpiriesRoute: typeof GovExpiriesRoute
   GovExportsRoute: typeof GovExportsRoute
   GovFeeCapsRoute: typeof GovFeeCapsRoute
   GovFundingRoute: typeof GovFundingRoute
@@ -3992,6 +4142,7 @@ export interface RootRouteChildren {
   GovLoginRoute: typeof GovLoginRoute
   GovNotificationsRoute: typeof GovNotificationsRoute
   GovRatiosRoute: typeof GovRatiosRoute
+  GovReportsRoute: typeof GovReportsRoute
   GovScreeningRoute: typeof GovScreeningRoute
   GovSubsidyRoute: typeof GovSubsidyRoute
   InviteTokenRoute: typeof InviteTokenRoute
@@ -4023,6 +4174,7 @@ export interface RootRouteChildren {
   RCodeRoute: typeof RCodeRoute
   SignIdRoute: typeof SignIdRoute
   SpotsTokenRoute: typeof SpotsTokenRoute
+  SupportCaseIdRoute: typeof SupportCaseIdRoute
   VideoRoomIdRoute: typeof VideoRoomIdRoute
   WelcomeCodeRoute: typeof WelcomeCodeRoute
   ApiAdminContractsRoute: typeof ApiAdminContractsRoute
@@ -4138,6 +4290,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-email-health'
       fullPath: '/admin-email-health'
       preLoaderRoute: typeof AdminEmailHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-ghl-leads': {
+      id: '/admin-ghl-leads'
+      path: '/admin-ghl-leads'
+      fullPath: '/admin-ghl-leads'
+      preLoaderRoute: typeof AdminGhlLeadsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin-gov-audit': {
@@ -4945,6 +5104,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTourHoldsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/ghl-lead-reconcile': {
+      id: '/api/ghl-lead-reconcile'
+      path: '/api/ghl-lead-reconcile'
+      fullPath: '/api/ghl-lead-reconcile'
+      preLoaderRoute: typeof ApiGhlLeadReconcileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/unsubscribe': {
       id: '/api/unsubscribe'
       path: '/api/unsubscribe'
@@ -4957,6 +5123,13 @@ declare module '@tanstack/react-router' {
       path: '/book/$slug'
       fullPath: '/book/$slug'
       preLoaderRoute: typeof BookSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/c/$slug': {
+      id: '/c/$slug'
+      path: '/c/$slug'
+      fullPath: '/c/$slug'
+      preLoaderRoute: typeof CSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/call/$conversationId': {
@@ -5393,6 +5566,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrWaitlistRouteImport
       parentRoute: typeof FrRoute
     }
+    '/gov_/analytics': {
+      id: '/gov_/analytics'
+      path: '/gov/analytics'
+      fullPath: '/gov/analytics'
+      preLoaderRoute: typeof GovAnalyticsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/gov_/audit': {
       id: '/gov_/audit'
       path: '/gov/audit'
@@ -5442,6 +5622,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GovComplianceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gov_/data': {
+      id: '/gov_/data'
+      path: '/gov/data'
+      fullPath: '/gov/data'
+      preLoaderRoute: typeof GovDataRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/gov_/data-requests': {
       id: '/gov_/data-requests'
       path: '/gov/data-requests'
@@ -5461,6 +5648,13 @@ declare module '@tanstack/react-router' {
       path: '/gov/escalations'
       fullPath: '/gov/escalations'
       preLoaderRoute: typeof GovEscalationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gov_/expiries': {
+      id: '/gov_/expiries'
+      path: '/gov/expiries'
+      fullPath: '/gov/expiries'
+      preLoaderRoute: typeof GovExpiriesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gov_/exports': {
@@ -5517,6 +5711,13 @@ declare module '@tanstack/react-router' {
       path: '/gov/ratios'
       fullPath: '/gov/ratios'
       preLoaderRoute: typeof GovRatiosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gov_/reports': {
+      id: '/gov_/reports'
+      path: '/gov/reports'
+      fullPath: '/gov/reports'
+      preLoaderRoute: typeof GovReportsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gov_/screening': {
@@ -5820,12 +6021,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SpotsTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/support/$caseId': {
-      id: '/support/$caseId'
-      path: '/$caseId'
+    '/support_/$caseId': {
+      id: '/support_/$caseId'
+      path: '/support/$caseId'
       fullPath: '/support/$caseId'
       preLoaderRoute: typeof SupportCaseIdRouteImport
-      parentRoute: typeof SupportRoute
+      parentRoute: typeof rootRouteImport
     }
     '/video/$roomId': {
       id: '/video/$roomId'
@@ -6079,6 +6280,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrDaycareSlugRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/gov_/analytics': {
+      id: '/fr/gov_/analytics'
+      path: '/gov/analytics'
+      fullPath: '/fr/gov/analytics'
+      preLoaderRoute: typeof FrGovAnalyticsRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/gov_/audit': {
       id: '/fr/gov_/audit'
       path: '/gov/audit'
@@ -6107,11 +6315,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrGovComplianceRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/gov_/data': {
+      id: '/fr/gov_/data'
+      path: '/gov/data'
+      fullPath: '/fr/gov/data'
+      preLoaderRoute: typeof FrGovDataRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/gov_/demand': {
       id: '/fr/gov_/demand'
       path: '/gov/demand'
       fullPath: '/fr/gov/demand'
       preLoaderRoute: typeof FrGovDemandRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/gov_/expiries': {
+      id: '/fr/gov_/expiries'
+      path: '/gov/expiries'
+      fullPath: '/fr/gov/expiries'
+      preLoaderRoute: typeof FrGovExpiriesRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/gov_/exports': {
@@ -6154,6 +6376,13 @@ declare module '@tanstack/react-router' {
       path: '/gov/ratios'
       fullPath: '/fr/gov/ratios'
       preLoaderRoute: typeof FrGovRatiosRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/gov_/reports': {
+      id: '/fr/gov_/reports'
+      path: '/gov/reports'
+      fullPath: '/fr/gov/reports'
+      preLoaderRoute: typeof FrGovReportsRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/gov_/screening': {
@@ -6224,6 +6453,13 @@ declare module '@tanstack/react-router' {
       path: '/r/$code'
       fullPath: '/fr/r/$code'
       preLoaderRoute: typeof FrRCodeRouteImport
+      parentRoute: typeof FrRoute
+    }
+    '/fr/support_/$caseId': {
+      id: '/fr/support_/$caseId'
+      path: '/support/$caseId'
+      fullPath: '/fr/support/$caseId'
+      preLoaderRoute: typeof FrSupportCaseIdRouteImport
       parentRoute: typeof FrRoute
     }
     '/fr/welcome/$code': {
@@ -6422,22 +6658,27 @@ interface FrRouteChildren {
   FrWaitlistRoute: typeof FrWaitlistRoute
   FrIndexRoute: typeof FrIndexRoute
   FrDaycareSlugRoute: typeof FrDaycareSlugRoute
+  FrGovAnalyticsRoute: typeof FrGovAnalyticsRoute
   FrGovAuditRoute: typeof FrGovAuditRoute
   FrGovBroadcastsRoute: typeof FrGovBroadcastsRoute
   FrGovComplaintsRoute: typeof FrGovComplaintsRoute
   FrGovComplianceRoute: typeof FrGovComplianceRoute
+  FrGovDataRoute: typeof FrGovDataRoute
   FrGovDemandRoute: typeof FrGovDemandRoute
+  FrGovExpiriesRoute: typeof FrGovExpiriesRoute
   FrGovExportsRoute: typeof FrGovExportsRoute
   FrGovFeeCapsRoute: typeof FrGovFeeCapsRoute
   FrGovFundingRoute: typeof FrGovFundingRoute
   FrGovIncidentsRoute: typeof FrGovIncidentsRoute
   FrGovLoginRoute: typeof FrGovLoginRoute
   FrGovRatiosRoute: typeof FrGovRatiosRoute
+  FrGovReportsRoute: typeof FrGovReportsRoute
   FrGovScreeningRoute: typeof FrGovScreeningRoute
   FrJobsPostRoute: typeof FrJobsPostRoute
   FrMilieuxFamiliauxIdRoute: typeof FrMilieuxFamiliauxIdRoute
   FrProviderLeadsRoute: typeof FrProviderLeadsRoute
   FrRCodeRoute: typeof FrRCodeRoute
+  FrSupportCaseIdRoute: typeof FrSupportCaseIdRoute
   FrWelcomeCodeRoute: typeof FrWelcomeCodeRoute
   FrDaycareCityAgeRoute: typeof FrDaycareCityAgeRoute
   FrDaycareCityCityRoute: typeof FrDaycareCityCityRoute
@@ -6503,22 +6744,27 @@ const FrRouteChildren: FrRouteChildren = {
   FrWaitlistRoute: FrWaitlistRoute,
   FrIndexRoute: FrIndexRoute,
   FrDaycareSlugRoute: FrDaycareSlugRoute,
+  FrGovAnalyticsRoute: FrGovAnalyticsRoute,
   FrGovAuditRoute: FrGovAuditRoute,
   FrGovBroadcastsRoute: FrGovBroadcastsRoute,
   FrGovComplaintsRoute: FrGovComplaintsRoute,
   FrGovComplianceRoute: FrGovComplianceRoute,
+  FrGovDataRoute: FrGovDataRoute,
   FrGovDemandRoute: FrGovDemandRoute,
+  FrGovExpiriesRoute: FrGovExpiriesRoute,
   FrGovExportsRoute: FrGovExportsRoute,
   FrGovFeeCapsRoute: FrGovFeeCapsRoute,
   FrGovFundingRoute: FrGovFundingRoute,
   FrGovIncidentsRoute: FrGovIncidentsRoute,
   FrGovLoginRoute: FrGovLoginRoute,
   FrGovRatiosRoute: FrGovRatiosRoute,
+  FrGovReportsRoute: FrGovReportsRoute,
   FrGovScreeningRoute: FrGovScreeningRoute,
   FrJobsPostRoute: FrJobsPostRoute,
   FrMilieuxFamiliauxIdRoute: FrMilieuxFamiliauxIdRoute,
   FrProviderLeadsRoute: FrProviderLeadsRoute,
   FrRCodeRoute: FrRCodeRoute,
+  FrSupportCaseIdRoute: FrSupportCaseIdRoute,
   FrWelcomeCodeRoute: FrWelcomeCodeRoute,
   FrDaycareCityAgeRoute: FrDaycareCityAgeRoute,
   FrDaycareCityCityRoute: FrDaycareCityCityRoute,
@@ -6614,17 +6860,6 @@ const ProviderRouteWithChildren = ProviderRoute._addFileChildren(
   ProviderRouteChildren,
 )
 
-interface SupportRouteChildren {
-  SupportCaseIdRoute: typeof SupportCaseIdRoute
-}
-
-const SupportRouteChildren: SupportRouteChildren = {
-  SupportCaseIdRoute: SupportCaseIdRoute,
-}
-
-const SupportRouteWithChildren =
-  SupportRoute._addFileChildren(SupportRouteChildren)
-
 interface ApiFamilyDocumentsRouteChildren {
   ApiFamilyDocumentsIdRoute: typeof ApiFamilyDocumentsIdRoute
 }
@@ -6683,6 +6918,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminChatRoute: AdminChatRoute,
   AdminContractsRoute: AdminContractsRoute,
   AdminEmailHealthRoute: AdminEmailHealthRoute,
+  AdminGhlLeadsRoute: AdminGhlLeadsRoute,
   AdminGovAuditRoute: AdminGovAuditRoute,
   AdminGovBroadcastsRoute: AdminGovBroadcastsRoute,
   AdminGovComplaintsRoute: AdminGovComplaintsRoute,
@@ -6763,7 +6999,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   StartADaycareRoute: StartADaycareRoute,
   StatusRoute: StatusRoute,
-  SupportRoute: SupportRouteWithChildren,
+  SupportRoute: SupportRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
   TourChecklistRoute: TourChecklistRoute,
@@ -6796,12 +7032,15 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSeedCatalogRoute: ApiSeedCatalogRoute,
   ApiSpotOffersRoute: ApiSpotOffersRoute,
   ApiTourHoldsRoute: ApiTourHoldsRoute,
+  ApiGhlLeadReconcileRoute: ApiGhlLeadReconcileRoute,
   ApiUnsubscribeRoute: ApiUnsubscribeRoute,
   BookSlugRoute: BookSlugRoute,
+  CSlugRoute: CSlugRoute,
   CallConversationIdRoute: CallConversationIdRoute,
   CheckinIdRoute: CheckinIdRoute,
   DaycareSlugRoute: DaycareSlugRoute,
   DaycaresCityRoute: DaycaresCityRoute,
+  GovAnalyticsRoute: GovAnalyticsRoute,
   GovAuditRoute: GovAuditRoute,
   GovBroadcastsRoute: GovBroadcastsRoute,
   GovChangeRequestsRoute: GovChangeRequestsRoute,
@@ -6809,9 +7048,11 @@ const rootRouteChildren: RootRouteChildren = {
   GovComplaintUpdatesRoute: GovComplaintUpdatesRoute,
   GovComplaintsRoute: GovComplaintsRoute,
   GovComplianceRoute: GovComplianceRoute,
+  GovDataRoute: GovDataRoute,
   GovDataRequestsRoute: GovDataRequestsRoute,
   GovDemandRoute: GovDemandRoute,
   GovEscalationsRoute: GovEscalationsRoute,
+  GovExpiriesRoute: GovExpiriesRoute,
   GovExportsRoute: GovExportsRoute,
   GovFeeCapsRoute: GovFeeCapsRoute,
   GovFundingRoute: GovFundingRoute,
@@ -6820,6 +7061,7 @@ const rootRouteChildren: RootRouteChildren = {
   GovLoginRoute: GovLoginRoute,
   GovNotificationsRoute: GovNotificationsRoute,
   GovRatiosRoute: GovRatiosRoute,
+  GovReportsRoute: GovReportsRoute,
   GovScreeningRoute: GovScreeningRoute,
   GovSubsidyRoute: GovSubsidyRoute,
   InviteTokenRoute: InviteTokenRoute,
@@ -6851,6 +7093,7 @@ const rootRouteChildren: RootRouteChildren = {
   RCodeRoute: RCodeRoute,
   SignIdRoute: SignIdRoute,
   SpotsTokenRoute: SpotsTokenRoute,
+  SupportCaseIdRoute: SupportCaseIdRoute,
   VideoRoomIdRoute: VideoRoomIdRoute,
   WelcomeCodeRoute: WelcomeCodeRoute,
   ApiAdminContractsRoute: ApiAdminContractsRoute,

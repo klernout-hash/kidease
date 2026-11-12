@@ -1,20 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { GovNativeNote } from "@/components/gov/gov-login";
-import { GovCalendarPage } from "@/components/compliance/calendar-page";
-import { guardGovDesk, govRobotsHead, govRobotsHeaders } from "@/lib/gov/desk-guard";
-import { loadGovCalendar } from "@/lib/server/compliance-calendar";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { guardGovDesk } from "@/lib/gov/desk-guard";
 
 export const Route = createFileRoute("/fr/gov_/compliance")({
-  beforeLoad: ({ context }) => guardGovDesk("fr", Boolean((context as { nativeShell?: boolean }).nativeShell)),
-  loader: async ({ context }) => ((context as { nativeOnly?: boolean }).nativeOnly ? null : loadGovCalendar()),
-  head: () => govRobotsHead("Dates de conformité · KidEase"),
-  headers: govRobotsHeaders,
-  component: Page,
+  beforeLoad: async ({ context }) => {
+    await guardGovDesk("fr", Boolean((context as { nativeShell?: boolean }).nativeShell));
+    throw redirect({ href: "/fr/gov/expiries" });
+  },
 });
-
-function Page() {
-  const gate = Route.useRouteContext() as { nativeOnly?: boolean };
-  const data = Route.useLoaderData();
-  if (gate.nativeOnly || !data) return <GovNativeNote locale="fr" />;
-  return <GovCalendarPage data={data} locale="fr" />;
-}

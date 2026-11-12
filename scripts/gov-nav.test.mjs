@@ -11,7 +11,9 @@ test("a government session is not given the parent tab bar", () => {
   const items = roleNavItems({ role: "government" });
   assert.equal(items.some((item) => item.to === "/parent"), false);
   assert.equal(items.some((item) => item.to === "/inbox"), false);
-  assert.equal(items.some((item) => item.to === "/search"), true);
+  assert.equal(items.some((item) => item.to === "/admin"), false);
+  assert.equal(items.some((item) => item.to === "/provider"), false);
+  assert.equal(items.length, 5);
   assert.equal(items.some((item) => item.to === "/gov"), true);
 });
 
