@@ -33,7 +33,7 @@ export function parseQaAllowlist(raw: string | null | undefined): string[] {
   const seen = new Set<string>();
   for (const part of String(raw || "").split(/[,;\s]+/)) {
     const email = part.trim().toLowerCase();
-    if (email.includes("@")) seen.add(email);
+    if (email === "*" || email.includes("@")) seen.add(email);
   }
   return [...seen];
 }
@@ -65,7 +65,8 @@ export function qaSendDecision(input: {
   if (!senderIsKidEaseMailbox(input.sender)) return { ...base, deliver: false, reason: "bad_sender" };
   if (!input.allowlist.length) return { ...base, deliver: false, reason: "empty_allowlist" };
   const recipient = input.recipient.trim().toLowerCase();
-  if (!input.allowlist.map((item) => item.toLowerCase()).includes(recipient)) {
+  const open = input.allowlist.some((item) => item.trim() === "*");
+  if (!open && !input.allowlist.map((item) => item.toLowerCase()).includes(recipient)) {
     return { ...base, deliver: false, reason: "dropped" };
   }
   if (input.alreadySent) return { ...base, deliver: false, reason: "duplicate" };
