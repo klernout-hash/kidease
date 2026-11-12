@@ -1527,16 +1527,20 @@ async function captureTourReadViews(page, base, item, tag) {
   for (const width of [390, 1280]) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
     if (item.role === "parent") {
-      await page.goto(new URL("/parent?tab=requests", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+      const tourPath = item.locale === "fr" ? "/fr/parent?tab=requests" : "/parent?tab=requests";
+      await page.goto(new URL(tourPath, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
       const tour = page.locator("#tour-e2e-eng-tour");
       await tour.waitFor({ timeout: timeoutMs });
       await tour.scrollIntoViewIfNeeded();
       if (!(await pageIsQuiet(page))) throw new Error("Tour screenshot did not reach the synthetic view");
       await page.screenshot({ path: join(dir, `tour-read-${tag}-tours-${width}.png`), fullPage: false });
     }
-    await page.goto(new URL(item.inbox, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    const inboxPath = item.locale === "fr" ? `/fr${item.inbox}` : item.inbox;
+    await page.goto(new URL(inboxPath, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await page.locator(item.role === "parent" ? '[data-ke="inbox-split"]' : '[data-ke="centre-inbox"]').first().waitFor({ timeout: timeoutMs });
-    await page.getByText(item.role === "parent" ? "E2E Centre" : "E2E Parent", { exact: true }).first().waitFor({ timeout: timeoutMs });
+    const thread = page.locator('[data-ke="inbox-row"][href*="/inbox/e2e-eng-thread"]');
+    await thread.waitFor({ timeout: timeoutMs });
+    await thread.scrollIntoViewIfNeeded();
     if (!(await pageIsQuiet(page))) throw new Error("Inbox screenshot did not reach the synthetic view");
     await page.screenshot({ path: join(dir, `tour-read-${tag}-inbox-${width}.png`), fullPage: false });
   }
