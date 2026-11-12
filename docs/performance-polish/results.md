@@ -1,5 +1,9 @@
 # Performance and shared-control polish — draft evidence
 
+<!-- KIDEASE_ITERATION2_HISTORY_NOTICE_BEGIN -->
+> **Historical first-pass evidence.** Current source/proof and the final measured follow-up are tracked in [results-iteration2.md](results-iteration2.md). The tables and raw counts below retain the original 75cf→2f7a run and its limitations; they do not describe final app build `865e4710399d7a0ed6281d18ffa9b4bf4e04e4df` (published as `f68193a0a0990df63656992838175538de3a9297`). Later work addresses the parent/cookie caller minima and provider spacer CLS described below. Three old after-search captures were confirmed loaders, and another 141 search rows lack settled-state proof. The old 275 passes are historical collector decisions, not loaded-state certification. Changed readiness/overlap classifiers prevent treating aggregate count differences as product improvement. The original 12s map abort could still be retried by the fetch gate; final intentional-abort tests cover that later fix. Original raw tables remain unchanged for provenance.
+<!-- KIDEASE_ITERATION2_HISTORY_NOTICE_END -->
+
 Draft PR: https://github.com/klernout-hash/kidease/pull/841. No merge or manual deployment was performed. The repository independently queues its Vercel preview check.
 
 This is a coherent implementation with documented remaining work, not certification that the full requested product matrix or performance budgets pass. The app was measured at `2f7a2ee1762ebd4d02fd14b063bbb7b4a9cddf4b`, based on verified default `main` at `75cf0cd3cc1dc993b6eb920fe17139306f00cb80`. Connector-published commit `6d3d4c982de817d856e9649912e3a8fa390e209f` has tree `a78834c37765155ec66526abf5a8e2a0f336e8d6`, identical to reviewed local commit `fc4e517f94dd3a9bba09926f017750b97d5eba16`. Its runtime files are identical to the measured app; three test assertions differ.

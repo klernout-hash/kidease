@@ -191,6 +191,22 @@ node scripts/polish-iteration-compare.mjs ../evidence/iteration-2 after comparis
 node scripts/polish-iteration-compare.mjs ../evidence/iteration-2 final comparison
 ```
 
+The final n=1 route extension remains separate from the six n=3 priority rows:
+
+```sh
+node scripts/polish-supplement-compare.mjs ../evidence/iteration-2
+node scripts/polish-content-parity.mjs ../evidence/iteration-2
+```
+
+The second command promotes the source-checked `content-parity-review.json`
+into both JSON/Markdown comparisons after generation. Run it whenever either
+comparison is regenerated. It does not recollect timing or change raw reports.
+Final search totals are 425 before versus 426 after despite identical first96
+listing slug sets. Visible parent request rows also differ. These are paired
+routes and protocols, not identical full fixture data; preserve every reading
+without a causal speedup or regression claim. See the original actual final
+frames and their source-checked visual-review sidecars.
+
 It includes only samples with independently settled content and visually
 reviewed original Lighthouse final frames in verified metric statistics.
 Collection completion does not mean target compliance or product acceptance.
