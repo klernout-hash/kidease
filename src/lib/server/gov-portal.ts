@@ -3,6 +3,7 @@ import { sessionBearerMiddleware } from "@/lib/auth/middleware";
 import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
 import { buildGovDashboard, parseGovScope, type GovLocale } from "@/lib/gov/aggregate";
 import { children0to5, childRatioForView, CHILDREN_0_TO_5_SOURCE } from "@/lib/gov/places";
+import { bundleForScope } from "@/lib/gov/bundle";
 import { govProvinceChoices, govScopeProvince } from "@/lib/gov/province-choice";
 import { govPortalFooterEnabled } from "@/lib/features";
 
@@ -25,7 +26,7 @@ export async function dashboardForActor(
   input: { province?: string | null; region?: string | null; city?: string | null; locale?: string | null },
 ) {
   const { assertGovBudget, auditGov } = await import("@/lib/server/gov-actor.server");
-  const { bundleForProvince, loadGovBundle, loadStoredLicenceFlags } = await import("@/lib/server/gov-data.server");
+  const { loadGovBundle, loadStoredLicenceFlags } = await import("@/lib/server/gov-data.server");
   assertGovBudget(actor, "read");
   // A province account stays in that province and cannot widen. All of Canada is only for an org stored as Canada.
   const scope = parseGovScope({
@@ -34,7 +35,7 @@ export async function dashboardForActor(
     city: input.city,
   });
   const bundle = await loadGovBundle();
-  const raw = bundleForProvince(bundle, scope.province);
+  const raw = bundleForScope(bundle, scope);
   await auditGov({ userId: actor.userId, action: "login", province: scope.province });
   const view = buildGovDashboard(raw, scope, localeOf(input.locale), {
     orgName: actor.orgName,
