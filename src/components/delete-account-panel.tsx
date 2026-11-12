@@ -9,7 +9,7 @@ import { useCopy } from "@/lib/use-copy";
 import { ViewAsWriteLock } from "@/components/view-as-banner";
 
 export function DeleteAccountPanel({ signedIn }: { signedIn: boolean }) {
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const [phrase, setPhrase] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
@@ -48,6 +48,9 @@ export function DeleteAccountPanel({ signedIn }: { signedIn: boolean }) {
         <li>{t("deleteAccountKeepBilling")}</li>
         <li>{t("deleteAccountKeepLogs")}</li>
       </ul>
+      <Link to={locale === "fr" ? "/fr/privacy" : "/privacy"} className="mt-2 inline-flex min-h-11 items-center text-sm text-primary underline">
+        {t("privacy")}
+      </Link>
       <label className="mt-4 block text-sm">
         {t("deleteAccountType")}
         <input

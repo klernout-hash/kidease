@@ -1,5 +1,7 @@
 {
   "app": "KidEase",
+  "searchAlertsLoading": "Nilo-load ang mga alerto…",
+  "searchAlertsLoadFailed": "Hindi namin ma-load ang mga alerto mo. Subukan muli.",
   "tagline": "Lisensyadong pangangalaga, malapit sa bahay.",
   "search": "Maghanap",
   "explore": "Tuklasin",

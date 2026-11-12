@@ -1,5 +1,7 @@
 {
   "app": "KidEase",
+  "searchAlertsLoading": "Caricamento degli avvisi…",
+  "searchAlertsLoadFailed": "Non è stato possibile caricare i tuoi avvisi. Riprova.",
   "tagline": "Nidi autorizzati, vicino a casa.",
   "search": "Cerca",
   "explore": "Esplora",

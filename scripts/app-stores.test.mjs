@@ -14,7 +14,7 @@ import {
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-test("live stores have a link and coming soon stores do not", () => {
+test("confirmed store availability does not invent an unknown download link", () => {
   const play = APP_STORES.find((store) => store.id === "play");
   const amazon = APP_STORES.find((store) => store.id === "amazon");
   const huawei = APP_STORES.find((store) => store.id === "huawei");
@@ -24,11 +24,12 @@ test("live stores have a link and coming soon stores do not", () => {
   assert.match(PLAY_STORE_URL, /id=ca\.kidease\.app$/);
   assert.equal(amazon?.live, true);
   assert.equal(amazon?.url, AMAZON_STORE_URL);
-  assert.equal(huawei?.live, false);
+  assert.equal(huawei?.live, true);
   assert.equal(huawei?.url, null);
   assert.equal(apple?.live, false);
   assert.equal(apple?.url, null);
   assert.equal(liveAppStores().every((store) => store.url), true);
+  assert.equal(liveAppStores().some((store) => store.id === "huawei"), false);
 });
 
 test("the share link sends a phone to its store and everyone else to the list", () => {

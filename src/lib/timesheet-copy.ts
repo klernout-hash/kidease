@@ -15,6 +15,7 @@ export type TimesheetCopy = {
   thisWeek: string;
   hours: string;
   noRows: string;
+  noActive: string;
   edit: string;
   note: string;
   saveEdit: string;
@@ -43,6 +44,7 @@ const en: TimesheetCopy = {
   thisWeek: "This week",
   hours: "Hours",
   noRows: "No hours this week yet.",
+  noActive: "No staff currently clocked in.",
   edit: "Edit times",
   note: "Why this change",
   saveEdit: "Save the change",
@@ -83,6 +85,7 @@ const fr: TimesheetCopy = {
   thisWeek: "Cette semaine",
   hours: "Heures",
   noRows: "Aucune heure cette semaine.",
+  noActive: "Aucun membre du personnel n’est actuellement au travail.",
   edit: "Modifier les heures",
   note: "Pourquoi ce changement",
   saveEdit: "Enregistrer le changement",

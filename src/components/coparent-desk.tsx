@@ -140,7 +140,6 @@ export function CoparentDesk({ inviteToken = null }: { inviteToken?: string | nu
             />
           </label>
           <p className="text-sm text-muted">{emailCopy.mustAccept}</p>
-          <p className="text-sm text-muted">{emailCopy.expires}</p>
           <Button type="submit" disabled={busy}>
             {emailCopy.send}
           </Button>

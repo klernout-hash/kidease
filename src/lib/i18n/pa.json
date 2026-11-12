@@ -1,5 +1,7 @@
 {
   "app": "KidEase",
+  "searchAlertsLoading": "ਸੂਚਨਾਵਾਂ ਲੋਡ ਹੋ ਰਹੀਆਂ ਹਨ…",
+  "searchAlertsLoadFailed": "ਅਸੀਂ ਤੁਹਾਡੀਆਂ ਸੂਚਨਾਵਾਂ ਲੋਡ ਨਹੀਂ ਕਰ ਸਕੇ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
   "tagline": "ਲਾਇਸੰਸਸ਼ੁਦਾ ਦੇਖਭਾਲ, ਘਰ ਦੇ ਨੇੜੇ।",
   "search": "ਖੋਜ",
   "explore": "ਵੇਖੋ",
