@@ -21,7 +21,11 @@ import {
   manualFeeTaxCents,
   monthlyFeeTaxInvoiceBody,
   monthlyFeeTaxLine,
+  parentChargeQuote,
   parentInvoiceBody,
+  parentServiceFeeApplies,
+  parentServiceFeeLabel,
+  parentServiceFeeLine,
   PROVINCE_FEE_TAX,
   provinceFeeTax,
   publicConnectState,
@@ -33,7 +37,6 @@ import {
 } from "../src/lib/connect-payments.ts";
 import { isStripePublishableKey } from "../src/lib/stripe-browser.ts";
 import { DEFAULT_PLATFORM_FEE_BPS, platformFeeBps } from "../src/lib/stripe-methods.ts";
-import { receiveCents } from "../src/lib/bill.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (rel) => readFileSync(join(root, rel), "utf8");
@@ -45,7 +48,6 @@ test("Connect fee is exactly 3% and tax stays off the application fee", () => {
   assert.equal(connectFeeBps(""), 300);
   assert.equal(connectFeeBps(null), platformFeeBps(null));
   assert.equal(connectFeeBps(""), platformFeeBps(""));
-  assert.equal(receiveCents(10_000), 9_700);
   assert.equal(applicationFeeCents(10_000, 200), 200);
   assert.equal(applicationFeeCents(10_050, 200), 201);
   assert.equal(applicationFeeCents(0, 200), 0);
@@ -56,12 +58,61 @@ test("Connect fee is exactly 3% and tax stays off the application fee", () => {
   assert.equal(charge.application_fee_amount, 200);
   assert.equal(charge.on_behalf_of, "acct_day");
   assert.equal(charge.transfer_data.destination, "acct_day");
-  assert.equal(charge.amount, 10_000);
+  assert.equal(charge.amount, 10_200);
   const flat = Object.fromEntries(flattenStripeBody(charge));
   assert.equal(flat.application_fee_amount, "200");
   assert.equal(flat.on_behalf_of, "acct_day");
   assert.equal(flat["transfer_data[destination]"], "acct_day");
   assert.equal(JSON.stringify(charge).includes("tax"), false);
+});
+
+test("the parent pays the 3% fee and the centre keeps the invoice", () => {
+  const quote = parentChargeQuote({ invoiceCents: 10_000, bps: 300, env: {} });
+  assert.equal(parentServiceFeeApplies({ env: {} }), true);
+  assert.equal(quote.passedToParent, true);
+  assert.equal(quote.feeCents, 300);
+  assert.equal(quote.parentPaysCents, 10_300);
+  assert.equal(quote.applicationFeeCents, 300);
+  assert.equal(quote.centreReceivesCents, 10_000);
+  assert.equal(quote.label, "KidEase service fee (3%) / Frais de service KidEase (3 %)");
+  assert.equal(parentServiceFeeLabel(300), quote.label);
+  const line = parentServiceFeeLine(quote.feeCents, quote.label);
+  assert.equal(line?.amount, 300);
+  assert.equal(line?.description, quote.label);
+  const taxed = monthlyFeeTaxLine({
+    plan: { kind: "manual", rateId: null, taxBps: 1300 },
+    feeCents: quote.feeCents,
+  });
+  assert.equal(taxed?.amount, 39);
+  assert.equal(taxed?.description, FEE_TAX_DESCRIPTION);
+  assert.notEqual(quote.applicationFeeCents, quote.feeCents + (taxed?.amount ?? 0));
+  const held = parentChargeQuote({
+    invoiceCents: 10_000,
+    bps: 300,
+    province: "ON",
+    daycareId: "centre-1",
+    env: { KIDEASE_PARENT_FEE_EXCLUDE_PROVINCES: "ON,QC" },
+  });
+  assert.equal(held.feeCents, 0);
+  assert.equal(held.parentPaysCents, 10_000);
+  assert.equal(held.applicationFeeCents, 0);
+  assert.equal(held.centreReceivesCents, 10_000);
+  const centreOff = parentChargeQuote({
+    invoiceCents: 10_000,
+    daycareId: "qa-preview-hidden-centre",
+    env: { KIDEASE_PARENT_FEE_EXCLUDE_CENTRES: "qa-preview-hidden-centre" },
+  });
+  assert.equal(centreOff.passedToParent, false);
+  assert.equal(parentServiceFeeApplies({ env: { KIDEASE_PARENT_SERVICE_FEE: "0" } }), false);
+  const charge = destinationChargeFields({
+    invoiceCents: 10_000,
+    destination: "acct_day",
+    bps: 300,
+    env: {},
+  });
+  assert.equal(charge.amount, 10_300);
+  assert.equal(charge.application_fee_amount, 300);
+  assert.equal(charge.amount - charge.application_fee_amount, 10_000);
 });
 
 test("a month collects tax from every paid bill, once each", () => {

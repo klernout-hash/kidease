@@ -10,12 +10,13 @@ import { resolveTourCentre, type TourCentreDecision } from "./tour-phase0.ts";
 
 export const CENTRE_LEAD_STAGES = [
   "inquiry",
+  "contacted",
   "tour_booked",
   "toured",
   "applied",
-  "waitlisted",
   "offered",
   "enrolled",
+  "waitlisted",
   "lost",
 ] as const;
 export type CentreLeadStage = (typeof CENTRE_LEAD_STAGES)[number];
@@ -47,6 +48,8 @@ export const LEAD_SOURCES = [
   "enrolment",
   "website",
   "manual",
+  "phone",
+  "walk_in",
 ] as const;
 export type LeadSource = (typeof LEAD_SOURCES)[number];
 
@@ -56,12 +59,13 @@ export const HIDDEN_LEAD_CENTRE_IDS = ["qa-reviewer-demo"] as const;
 const STAGE_RANK: Record<CentreLeadStage, number> = {
   lost: 0,
   inquiry: 1,
-  tour_booked: 2,
-  toured: 3,
-  applied: 4,
-  waitlisted: 5,
-  offered: 6,
-  enrolled: 7,
+  contacted: 2,
+  tour_booked: 3,
+  toured: 4,
+  applied: 5,
+  waitlisted: 6,
+  offered: 7,
+  enrolled: 8,
 };
 
 export function isCentreLeadStage(value: string | null | undefined): value is CentreLeadStage {

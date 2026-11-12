@@ -11,6 +11,20 @@ function appOrigin() {
 
 export async function syncLeadFromTour(sql: Sql, tourId: string, status: string) {
   const next = tourStatusToLead(status);
+  const tours = await sql<{ user_id: string; daycare_id: string; child_id: string | null; child_name: string | null }>`
+    select user_id, daycare_id, child_id, child_name from tour_requests where id = ${tourId} limit 1
+  `.catch(() => []);
+  if (tours[0] && status !== "cancelled" && status !== "declined" && status !== "expired") {
+    const { rememberCentreLead } = await import("@/lib/server/lead-intake-write");
+    const done = status === "completed" || status === "attended";
+    await rememberCentreLead(sql, {
+      entry: done ? "tour_completed" : "tour_request",
+      daycareId: tours[0].daycare_id,
+      parentUserId: tours[0].user_id,
+      childId: tours[0].child_id,
+      childLabel: tours[0].child_name,
+    });
+  }
   await sql`
     update lead_requests
     set status = ${next},

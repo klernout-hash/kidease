@@ -20,6 +20,7 @@ import { Route as AdminAutomationsRouteImport } from './routes/admin-automations
 import { Route as AdminChatRouteImport } from './routes/admin-chat'
 import { Route as AdminContractsRouteImport } from './routes/admin-contracts'
 import { Route as AdminEmailHealthRouteImport } from './routes/admin-email-health'
+import { Route as AdminGhlLeadsRouteImport } from './routes/admin-ghl-leads'
 import { Route as AdminGovAuditRouteImport } from './routes/admin-gov-audit'
 import { Route as AdminGovBroadcastsRouteImport } from './routes/admin-gov-broadcasts'
 import { Route as AdminGovComplaintsRouteImport } from './routes/admin-gov-complaints'
@@ -135,6 +136,7 @@ import { Route as ApiSearchAlertsRouteImport } from './routes/api/search-alerts'
 import { Route as ApiSeedCatalogRouteImport } from './routes/api/seed-catalog'
 import { Route as ApiSpotOffersRouteImport } from './routes/api/spot-offers'
 import { Route as ApiTourHoldsRouteImport } from './routes/api/tour-holds'
+import { Route as ApiGhlLeadReconcileRouteImport } from './routes/api/ghl-lead-reconcile'
 import { Route as ApiUnsubscribeRouteImport } from './routes/api/unsubscribe'
 import { Route as BookSlugRouteImport } from './routes/book.$slug'
 import { Route as CSlugRouteImport } from './routes/c.$slug'
@@ -265,7 +267,7 @@ import { Route as ProviderWithdrawalRouteImport } from './routes/provider_.withd
 import { Route as RCodeRouteImport } from './routes/r.$code'
 import { Route as SignIdRouteImport } from './routes/sign.$id'
 import { Route as SpotsTokenRouteImport } from './routes/spots.$token'
-import { Route as SupportCaseIdRouteImport } from './routes/support.$caseId'
+import { Route as SupportCaseIdRouteImport } from './routes/support_.$caseId'
 import { Route as VideoRoomIdRouteImport } from './routes/video.$roomId'
 import { Route as WelcomeCodeRouteImport } from './routes/welcome.$code'
 import { Route as ApiAdminContractsRouteImport } from './routes/api/admin.contracts'
@@ -327,6 +329,7 @@ import { Route as FrMilieuxFamiliauxIdRouteImport } from './routes/fr.milieux-fa
 import { Route as FrParentDailyFeedRouteImport } from './routes/fr.parent.daily-feed'
 import { Route as FrProviderLeadsRouteImport } from './routes/fr.provider_.leads'
 import { Route as FrRCodeRouteImport } from './routes/fr.r.$code'
+import { Route as FrSupportCaseIdRouteImport } from './routes/fr.support_.$caseId'
 import { Route as FrWelcomeCodeRouteImport } from './routes/fr.welcome.$code'
 import { Route as PayBillBillIdRouteImport } from './routes/pay.bill.$billId'
 import { Route as ApiContractsIdPdfRouteImport } from './routes/api/contracts.$id.pdf'
@@ -390,6 +393,11 @@ const AdminContractsRoute = AdminContractsRouteImport.update({
 const AdminEmailHealthRoute = AdminEmailHealthRouteImport.update({
   id: '/admin-email-health',
   path: '/admin-email-health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminGhlLeadsRoute = AdminGhlLeadsRouteImport.update({
+  id: '/admin-ghl-leads',
+  path: '/admin-ghl-leads',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminGovAuditRoute = AdminGovAuditRouteImport.update({
@@ -966,6 +974,11 @@ const ApiSpotOffersRoute = ApiSpotOffersRouteImport.update({
 const ApiTourHoldsRoute = ApiTourHoldsRouteImport.update({
   id: '/api/tour-holds',
   path: '/api/tour-holds',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGhlLeadReconcileRoute = ApiGhlLeadReconcileRouteImport.update({
+  id: '/api/ghl-lead-reconcile',
+  path: '/api/ghl-lead-reconcile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiUnsubscribeRoute = ApiUnsubscribeRouteImport.update({
@@ -1621,9 +1634,9 @@ const SpotsTokenRoute = SpotsTokenRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const SupportCaseIdRoute = SupportCaseIdRouteImport.update({
-  id: '/$caseId',
-  path: '/$caseId',
-  getParentRoute: () => SupportRoute,
+  id: '/support_/$caseId',
+  path: '/support/$caseId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const VideoRoomIdRoute = VideoRoomIdRouteImport.update({
   id: '/video/$roomId',
@@ -1931,6 +1944,11 @@ const FrRCodeRoute = FrRCodeRouteImport.update({
   path: '/r/$code',
   getParentRoute: () => FrRoute,
 } as any)
+const FrSupportCaseIdRoute = FrSupportCaseIdRouteImport.update({
+  id: '/support_/$caseId',
+  path: '/support/$caseId',
+  getParentRoute: () => FrRoute,
+} as any)
 const FrWelcomeCodeRoute = FrWelcomeCodeRouteImport.update({
   id: '/welcome/$code',
   path: '/welcome/$code',
@@ -1989,6 +2007,7 @@ export interface FileRoutesByFullPath {
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
+  '/admin-ghl-leads': typeof AdminGhlLeadsRoute
   '/admin-gov-audit': typeof AdminGovAuditRoute
   '/admin-gov-broadcasts': typeof AdminGovBroadcastsRoute
   '/admin-gov-complaints': typeof AdminGovComplaintsRoute
@@ -2069,7 +2088,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/start-a-daycare': typeof StartADaycareRoute
   '/status': typeof StatusRoute
-  '/support': typeof SupportRouteWithChildren
+  '/support': typeof SupportRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
@@ -2104,6 +2123,7 @@ export interface FileRoutesByFullPath {
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
+  '/api/ghl-lead-reconcile': typeof ApiGhlLeadReconcileRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
   '/c/$slug': typeof CSlugRoute
@@ -2296,6 +2316,7 @@ export interface FileRoutesByFullPath {
   '/fr/parent/daily-feed': typeof FrParentDailyFeedRoute
   '/fr/provider/leads': typeof FrProviderLeadsRoute
   '/fr/r/$code': typeof FrRCodeRoute
+  '/fr/support/$caseId': typeof FrSupportCaseIdRoute
   '/fr/welcome/$code': typeof FrWelcomeCodeRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
@@ -2318,6 +2339,7 @@ export interface FileRoutesByTo {
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
+  '/admin-ghl-leads': typeof AdminGhlLeadsRoute
   '/admin-gov-audit': typeof AdminGovAuditRoute
   '/admin-gov-broadcasts': typeof AdminGovBroadcastsRoute
   '/admin-gov-complaints': typeof AdminGovComplaintsRoute
@@ -2396,7 +2418,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/start-a-daycare': typeof StartADaycareRoute
   '/status': typeof StatusRoute
-  '/support': typeof SupportRouteWithChildren
+  '/support': typeof SupportRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
@@ -2431,6 +2453,7 @@ export interface FileRoutesByTo {
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
+  '/api/ghl-lead-reconcile': typeof ApiGhlLeadReconcileRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
   '/c/$slug': typeof CSlugRoute
@@ -2623,6 +2646,7 @@ export interface FileRoutesByTo {
   '/fr/parent/daily-feed': typeof FrParentDailyFeedRoute
   '/fr/provider/leads': typeof FrProviderLeadsRoute
   '/fr/r/$code': typeof FrRCodeRoute
+  '/fr/support/$caseId': typeof FrSupportCaseIdRoute
   '/fr/welcome/$code': typeof FrWelcomeCodeRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
@@ -2646,6 +2670,7 @@ export interface FileRoutesById {
   '/admin-chat': typeof AdminChatRoute
   '/admin-contracts': typeof AdminContractsRoute
   '/admin-email-health': typeof AdminEmailHealthRoute
+  '/admin-ghl-leads': typeof AdminGhlLeadsRoute
   '/admin-gov-audit': typeof AdminGovAuditRoute
   '/admin-gov-broadcasts': typeof AdminGovBroadcastsRoute
   '/admin-gov-complaints': typeof AdminGovComplaintsRoute
@@ -2726,7 +2751,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/start-a-daycare': typeof StartADaycareRoute
   '/status': typeof StatusRoute
-  '/support': typeof SupportRouteWithChildren
+  '/support': typeof SupportRoute
   '/team': typeof TeamRoute
   '/terms': typeof TermsRoute
   '/tour-checklist': typeof TourChecklistRoute
@@ -2761,6 +2786,7 @@ export interface FileRoutesById {
   '/api/seed-catalog': typeof ApiSeedCatalogRoute
   '/api/spot-offers': typeof ApiSpotOffersRoute
   '/api/tour-holds': typeof ApiTourHoldsRoute
+  '/api/ghl-lead-reconcile': typeof ApiGhlLeadReconcileRoute
   '/api/unsubscribe': typeof ApiUnsubscribeRoute
   '/book/$slug': typeof BookSlugRoute
   '/c/$slug': typeof CSlugRoute
@@ -2889,7 +2915,7 @@ export interface FileRoutesById {
   '/r/$code': typeof RCodeRoute
   '/sign/$id': typeof SignIdRoute
   '/spots/$token': typeof SpotsTokenRoute
-  '/support/$caseId': typeof SupportCaseIdRoute
+  '/support_/$caseId': typeof SupportCaseIdRoute
   '/video/$roomId': typeof VideoRoomIdRoute
   '/welcome/$code': typeof WelcomeCodeRoute
   '/fr/': typeof FrIndexRoute
@@ -2953,6 +2979,7 @@ export interface FileRoutesById {
   '/fr/parent/daily-feed': typeof FrParentDailyFeedRoute
   '/fr/provider_/leads': typeof FrProviderLeadsRoute
   '/fr/r/$code': typeof FrRCodeRoute
+  '/fr/support_/$caseId': typeof FrSupportCaseIdRoute
   '/fr/welcome/$code': typeof FrWelcomeCodeRoute
   '/pay/bill/$billId': typeof PayBillBillIdRoute
   '/api/contracts/$id/pdf': typeof ApiContractsIdPdfRoute
@@ -2977,6 +3004,7 @@ export interface FileRouteTypes {
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
+    | '/admin-ghl-leads'
     | '/admin-gov-audit'
     | '/admin-gov-broadcasts'
     | '/admin-gov-complaints'
@@ -3092,6 +3120,7 @@ export interface FileRouteTypes {
     | '/api/seed-catalog'
     | '/api/spot-offers'
     | '/api/tour-holds'
+    | '/api/ghl-lead-reconcile'
     | '/api/unsubscribe'
     | '/book/$slug'
     | '/c/$slug'
@@ -3284,6 +3313,7 @@ export interface FileRouteTypes {
     | '/fr/parent/daily-feed'
     | '/fr/provider/leads'
     | '/fr/r/$code'
+    | '/fr/support/$caseId'
     | '/fr/welcome/$code'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
@@ -3306,6 +3336,7 @@ export interface FileRouteTypes {
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
+    | '/admin-ghl-leads'
     | '/admin-gov-audit'
     | '/admin-gov-broadcasts'
     | '/admin-gov-complaints'
@@ -3419,6 +3450,7 @@ export interface FileRouteTypes {
     | '/api/seed-catalog'
     | '/api/spot-offers'
     | '/api/tour-holds'
+    | '/api/ghl-lead-reconcile'
     | '/api/unsubscribe'
     | '/book/$slug'
     | '/c/$slug'
@@ -3611,6 +3643,7 @@ export interface FileRouteTypes {
     | '/fr/parent/daily-feed'
     | '/fr/provider/leads'
     | '/fr/r/$code'
+    | '/fr/support/$caseId'
     | '/fr/welcome/$code'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
@@ -3633,6 +3666,7 @@ export interface FileRouteTypes {
     | '/admin-chat'
     | '/admin-contracts'
     | '/admin-email-health'
+    | '/admin-ghl-leads'
     | '/admin-gov-audit'
     | '/admin-gov-broadcasts'
     | '/admin-gov-complaints'
@@ -3748,6 +3782,7 @@ export interface FileRouteTypes {
     | '/api/seed-catalog'
     | '/api/spot-offers'
     | '/api/tour-holds'
+    | '/api/ghl-lead-reconcile'
     | '/api/unsubscribe'
     | '/book/$slug'
     | '/c/$slug'
@@ -3876,7 +3911,7 @@ export interface FileRouteTypes {
     | '/r/$code'
     | '/sign/$id'
     | '/spots/$token'
-    | '/support/$caseId'
+    | '/support_/$caseId'
     | '/video/$roomId'
     | '/welcome/$code'
     | '/fr/'
@@ -3940,6 +3975,7 @@ export interface FileRouteTypes {
     | '/fr/parent/daily-feed'
     | '/fr/provider_/leads'
     | '/fr/r/$code'
+    | '/fr/support_/$caseId'
     | '/fr/welcome/$code'
     | '/pay/bill/$billId'
     | '/api/contracts/$id/pdf'
@@ -3963,6 +3999,7 @@ export interface RootRouteChildren {
   AdminChatRoute: typeof AdminChatRoute
   AdminContractsRoute: typeof AdminContractsRoute
   AdminEmailHealthRoute: typeof AdminEmailHealthRoute
+  AdminGhlLeadsRoute: typeof AdminGhlLeadsRoute
   AdminGovAuditRoute: typeof AdminGovAuditRoute
   AdminGovBroadcastsRoute: typeof AdminGovBroadcastsRoute
   AdminGovComplaintsRoute: typeof AdminGovComplaintsRoute
@@ -4043,7 +4080,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   StartADaycareRoute: typeof StartADaycareRoute
   StatusRoute: typeof StatusRoute
-  SupportRoute: typeof SupportRouteWithChildren
+  SupportRoute: typeof SupportRoute
   TeamRoute: typeof TeamRoute
   TermsRoute: typeof TermsRoute
   TourChecklistRoute: typeof TourChecklistRoute
@@ -4076,6 +4113,7 @@ export interface RootRouteChildren {
   ApiSeedCatalogRoute: typeof ApiSeedCatalogRoute
   ApiSpotOffersRoute: typeof ApiSpotOffersRoute
   ApiTourHoldsRoute: typeof ApiTourHoldsRoute
+  ApiGhlLeadReconcileRoute: typeof ApiGhlLeadReconcileRoute
   ApiUnsubscribeRoute: typeof ApiUnsubscribeRoute
   BookSlugRoute: typeof BookSlugRoute
   CSlugRoute: typeof CSlugRoute
@@ -4136,6 +4174,7 @@ export interface RootRouteChildren {
   RCodeRoute: typeof RCodeRoute
   SignIdRoute: typeof SignIdRoute
   SpotsTokenRoute: typeof SpotsTokenRoute
+  SupportCaseIdRoute: typeof SupportCaseIdRoute
   VideoRoomIdRoute: typeof VideoRoomIdRoute
   WelcomeCodeRoute: typeof WelcomeCodeRoute
   ApiAdminContractsRoute: typeof ApiAdminContractsRoute
@@ -4251,6 +4290,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-email-health'
       fullPath: '/admin-email-health'
       preLoaderRoute: typeof AdminEmailHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-ghl-leads': {
+      id: '/admin-ghl-leads'
+      path: '/admin-ghl-leads'
+      fullPath: '/admin-ghl-leads'
+      preLoaderRoute: typeof AdminGhlLeadsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin-gov-audit': {
@@ -5056,6 +5102,13 @@ declare module '@tanstack/react-router' {
       path: '/api/tour-holds'
       fullPath: '/api/tour-holds'
       preLoaderRoute: typeof ApiTourHoldsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ghl-lead-reconcile': {
+      id: '/api/ghl-lead-reconcile'
+      path: '/api/ghl-lead-reconcile'
+      fullPath: '/api/ghl-lead-reconcile'
+      preLoaderRoute: typeof ApiGhlLeadReconcileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/unsubscribe': {
@@ -5968,12 +6021,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SpotsTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/support/$caseId': {
-      id: '/support/$caseId'
-      path: '/$caseId'
+    '/support_/$caseId': {
+      id: '/support_/$caseId'
+      path: '/support/$caseId'
       fullPath: '/support/$caseId'
       preLoaderRoute: typeof SupportCaseIdRouteImport
-      parentRoute: typeof SupportRoute
+      parentRoute: typeof rootRouteImport
     }
     '/video/$roomId': {
       id: '/video/$roomId'
@@ -6402,6 +6455,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FrRCodeRouteImport
       parentRoute: typeof FrRoute
     }
+    '/fr/support_/$caseId': {
+      id: '/fr/support_/$caseId'
+      path: '/support/$caseId'
+      fullPath: '/fr/support/$caseId'
+      preLoaderRoute: typeof FrSupportCaseIdRouteImport
+      parentRoute: typeof FrRoute
+    }
     '/fr/welcome/$code': {
       id: '/fr/welcome/$code'
       path: '/welcome/$code'
@@ -6618,6 +6678,7 @@ interface FrRouteChildren {
   FrMilieuxFamiliauxIdRoute: typeof FrMilieuxFamiliauxIdRoute
   FrProviderLeadsRoute: typeof FrProviderLeadsRoute
   FrRCodeRoute: typeof FrRCodeRoute
+  FrSupportCaseIdRoute: typeof FrSupportCaseIdRoute
   FrWelcomeCodeRoute: typeof FrWelcomeCodeRoute
   FrDaycareCityAgeRoute: typeof FrDaycareCityAgeRoute
   FrDaycareCityCityRoute: typeof FrDaycareCityCityRoute
@@ -6703,6 +6764,7 @@ const FrRouteChildren: FrRouteChildren = {
   FrMilieuxFamiliauxIdRoute: FrMilieuxFamiliauxIdRoute,
   FrProviderLeadsRoute: FrProviderLeadsRoute,
   FrRCodeRoute: FrRCodeRoute,
+  FrSupportCaseIdRoute: FrSupportCaseIdRoute,
   FrWelcomeCodeRoute: FrWelcomeCodeRoute,
   FrDaycareCityAgeRoute: FrDaycareCityAgeRoute,
   FrDaycareCityCityRoute: FrDaycareCityCityRoute,
@@ -6798,17 +6860,6 @@ const ProviderRouteWithChildren = ProviderRoute._addFileChildren(
   ProviderRouteChildren,
 )
 
-interface SupportRouteChildren {
-  SupportCaseIdRoute: typeof SupportCaseIdRoute
-}
-
-const SupportRouteChildren: SupportRouteChildren = {
-  SupportCaseIdRoute: SupportCaseIdRoute,
-}
-
-const SupportRouteWithChildren =
-  SupportRoute._addFileChildren(SupportRouteChildren)
-
 interface ApiFamilyDocumentsRouteChildren {
   ApiFamilyDocumentsIdRoute: typeof ApiFamilyDocumentsIdRoute
 }
@@ -6867,6 +6918,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminChatRoute: AdminChatRoute,
   AdminContractsRoute: AdminContractsRoute,
   AdminEmailHealthRoute: AdminEmailHealthRoute,
+  AdminGhlLeadsRoute: AdminGhlLeadsRoute,
   AdminGovAuditRoute: AdminGovAuditRoute,
   AdminGovBroadcastsRoute: AdminGovBroadcastsRoute,
   AdminGovComplaintsRoute: AdminGovComplaintsRoute,
@@ -6947,7 +6999,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   StartADaycareRoute: StartADaycareRoute,
   StatusRoute: StatusRoute,
-  SupportRoute: SupportRouteWithChildren,
+  SupportRoute: SupportRoute,
   TeamRoute: TeamRoute,
   TermsRoute: TermsRoute,
   TourChecklistRoute: TourChecklistRoute,
@@ -6980,6 +7032,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSeedCatalogRoute: ApiSeedCatalogRoute,
   ApiSpotOffersRoute: ApiSpotOffersRoute,
   ApiTourHoldsRoute: ApiTourHoldsRoute,
+  ApiGhlLeadReconcileRoute: ApiGhlLeadReconcileRoute,
   ApiUnsubscribeRoute: ApiUnsubscribeRoute,
   BookSlugRoute: BookSlugRoute,
   CSlugRoute: CSlugRoute,
@@ -7040,6 +7093,7 @@ const rootRouteChildren: RootRouteChildren = {
   RCodeRoute: RCodeRoute,
   SignIdRoute: SignIdRoute,
   SpotsTokenRoute: SpotsTokenRoute,
+  SupportCaseIdRoute: SupportCaseIdRoute,
   VideoRoomIdRoute: VideoRoomIdRoute,
   WelcomeCodeRoute: WelcomeCodeRoute,
   ApiAdminContractsRoute: ApiAdminContractsRoute,
