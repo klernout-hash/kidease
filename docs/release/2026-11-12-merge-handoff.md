@@ -77,3 +77,26 @@ New flags in 822, 824, and 825 ship default off. Leave them off until a separate
 - Phase 3, 5, and 6 screens stay hidden while their flags are off.
 - Support: open `/support/sc_e2e` only in the e2e fixture. A real case URL should render the case, not a blank desk.
 - Government desk stays behind the existing gov sign-in. Oversight numbers that need a provincial agreement say they are not connected.
+
+## Status at 12 Nov 2026, 01:50 UTC
+
+Everything in the merge order is on `main`. Production is on `a2ded4a` and `/api/health` reports app and database ok on both kidease.ca and www.kidease.ca.
+
+| PR | Merge commit | Merged at (UTC) |
+| --- | --- | --- |
+| 824 | `6932f004ca` | 2026-11-11 22:29:37 |
+| 825 | `e978d984a0` | 2026-11-11 22:55:58 |
+| 826 | `1f7e222770` | 2026-11-11 23:24:02 |
+| 827 | `8d39cf9e59` | 2026-11-11 23:52:59 |
+| 828 | `ac5ceb7578` | 2026-11-12 00:10:06 |
+| 829 | `3d0e36de93` | 2026-11-12 00:26:11 |
+| 830 | `4ac0718745` | 2026-11-12 00:38:48 |
+| 832 | `ef8b8969cb` | 2026-11-12 00:53:54 |
+| 833 | `b55b1ee525` | 2026-11-12 01:06:49 |
+| 831 | `6f7f602513` | 2026-11-12 01:22:30 |
+| 836 | `a2ded4a2e1` | 2026-11-12 01:35:31 |
+
+Two corrections to the sections above:
+
+- Migrations are recorded in the `_migrations` table, keyed by file name, not in `schema_migrations`. `scripts/migrate.mjs` runs inside `npm run build`, so every production deploy applies any file not yet recorded and fails the build if one errors. Check `_migrations` before running a file by hand.
+- "Flags that stay OFF" describes production when this note was written. Kyle's release instruction of 12 Nov replaces it: which flags go on is in that instruction, not in this note. `FEATURE_PROVIDER_SUBSCRIPTIONS`, in-app purchases, `FEATURE_GOV_OVERSIGHT` and QA centre publishing stay off either way.
