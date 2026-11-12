@@ -23,7 +23,7 @@ export const Route = createFileRoute("/fr/gov")({
       data: { province: deps.province, region: deps.region, city: deps.city, locale: "fr" },
     });
   },
-  head: () => govRobotsHead("Bureau des gouvernements · KidEase"),
+  head: () => govRobotsHead("Aperçu"),
   headers: govRobotsHeaders,
   component: GovPageFr,
 });
@@ -32,5 +32,5 @@ function GovPageFr() {
   const gate = Route.useRouteContext() as { nativeOnly?: boolean };
   const data = Route.useLoaderData();
   if (gate.nativeOnly || !data) return <GovNativeNote locale="fr" />;
-  return <GovDashboardView data={data} />;
+  return <GovDashboardView data={data} section="overview" />;
 }

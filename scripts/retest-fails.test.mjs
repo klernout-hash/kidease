@@ -33,7 +33,7 @@ test("government filters reload from the dropdown search", () => {
   assert.match(gov, /loaderDeps:/);
   assert.match(gov, /deps\.city/);
   const dash = read("src/components/gov/gov-dashboard.tsx");
-  assert.match(dash, /regionForCity\(city\)/);
+  assert.match(dash, /regionForCity\(next\.city\)/);
   assert.doesNotMatch(dash, /Population per licensed space/);
   assert.doesNotMatch(dash, /total population per licensed space/);
   const copy = read("src/lib/gov/copy.ts");

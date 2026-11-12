@@ -1702,6 +1702,29 @@ async function runSignedInSessions(page, base) {
   }
   try {
     await setFixture(page.context(), base, { role: "government" });
+    for (const width of [1280, 820, 390]) {
+      await page.setViewportSize({ width, height: width < 500 ? 844 : 900 });
+      await page.goto(new URL("/gov", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+      const menu = await page.locator('[data-ke="gov-menu"]').count();
+      if (menu === 0) {
+        record(`gov-width-${width}`, true, { note: "desk gated" });
+        continue;
+      }
+      const tasks = await page.locator('[data-ke="gov-task"]').count();
+      const heading = ((await page.locator('[data-ke="gov-heading"]').innerText().catch(() => "")) || "").trim();
+      record(`gov-width-${width}`, tasks === 5 && heading === "Overview", { note: `${page.url()} tasks=${tasks} ${heading}` });
+    }
+    const deskOpen = await page.locator('[data-ke="gov-menu"]').count();
+    for (const blocked of ["/admin", "/provider", "/parent"]) {
+      if (deskOpen === 0) {
+        record(`gov-blocked-${blocked.slice(1)}`, true, { note: "no gov session" });
+        continue;
+      }
+      await page.goto(new URL(blocked, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+      const path = new URL(page.url()).pathname;
+      const stayed = path === blocked || path.startsWith(`${blocked}/`);
+      record(`gov-blocked-${blocked.slice(1)}`, !stayed, { note: page.url() });
+    }
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto(new URL("/gov", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await page.waitForURL((url) => !url.pathname.startsWith("/gov"), { timeout: timeoutMs }).catch(() => {});

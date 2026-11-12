@@ -132,7 +132,7 @@ test("provider editor is photo-led with a published preview", () => {
   assert.doesNotMatch(fields, /part === "meals" \? DESK_AMENITIES/);
   assert.match(src("src/components/provider-listing-forms.tsx"), /data-ke="photo-tour-preview"/);
   assert.match(src("src/components/gov/gov-login.tsx"), /forgot-password\?from=gov/);
-  assert.match(src("src/components/gov/gov-dashboard.tsx"), /data-ke="gov-task"/);
+  assert.match(src("src/components/gov/gov-frame.tsx"), /data-ke="gov-task"/);
   assert.match(src("src/components/gov/gov-dashboard.tsx"), /data-ke="gov-expiries"/);
   assert.match(src("src/lib/server/gov-portal.ts"), /cannot widen/);
   assert.match(src("src/lib/server/gov-portal.ts"), /province: actor\.province/);
