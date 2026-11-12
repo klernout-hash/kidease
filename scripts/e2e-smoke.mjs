@@ -1527,8 +1527,10 @@ async function captureTourReadViews(page, base, item, tag) {
   for (const width of [390, 1280]) {
     await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
     if (item.role === "parent") {
-      await page.goto(new URL("/parent?tab=tours", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
-      await page.getByText("E2E Centre", { exact: true }).first().waitFor({ timeout: timeoutMs });
+      await page.goto(new URL("/parent?tab=requests", base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+      const tour = page.locator("#tour-e2e-eng-tour");
+      await tour.waitFor({ timeout: timeoutMs });
+      await tour.scrollIntoViewIfNeeded();
       if (!(await pageIsQuiet(page))) throw new Error("Tour screenshot did not reach the synthetic view");
       await page.screenshot({ path: join(dir, `tour-read-${tag}-tours-${width}.png`), fullPage: false });
     }
