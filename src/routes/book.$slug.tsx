@@ -87,6 +87,7 @@ function BookPage() {
           days,
           message: message.trim(),
           parentName: parent.displayName ?? undefined,
+          intakeEntry: "enrol_now",
           locale,
         },
       });

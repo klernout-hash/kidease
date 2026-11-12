@@ -108,6 +108,8 @@ const CATEGORY: Record<FeatureFlagKey, FeatureCategory> = {
   FEATURE_FEE_DISPLAY_GATE: "shared",
   FEATURE_FAMILY_INVITE: "daycare",
   FEATURE_CENTRE_LEAD_TRACKER: "daycare",
+  FEATURE_CENTRE_CRM_PIPELINE: "daycare",
+  FEATURE_CENTRE_CRM_WORKFLOWS: "daycare",
   FEATURE_CENTRE_API: "daycare",
   FEATURE_CUSTODY_ORDERS: "daycare",
   FEATURE_OPERATOR_PACKS: "daycare",

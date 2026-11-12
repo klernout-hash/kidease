@@ -33,6 +33,7 @@ import { parentRequestSms } from "@/lib/sms-copy";
 import { leadNotificationHref, leadTitleKey, notificationSourceKey } from "@/lib/notifications";
 import { resolveActorUserId } from "@/lib/server/actor-user";
 import { saveParentInAppNotice } from "@/lib/server/parent-notice";
+import type { LeadEntryPoint } from "@/lib/lead-intake";
 import { nid } from "@/lib/utils";
 
 type LeadRow = {
@@ -121,6 +122,13 @@ export async function recordLeadRequest(
     sourceId?: string | null;
     conversationId?: string | null;
     notify?: boolean;
+    entry?: LeadEntryPoint;
+    childId?: string | null;
+    childLabel?: string | null;
+    ageGroup?: string | null;
+    desiredStart?: string | null;
+    schedule?: string | null;
+    roomWanted?: string | null;
   },
 ): Promise<{ id: string; reused: boolean; conversationId: string | null } | null> {
   const { assertChatNotBlocked } = await import("@/lib/server/safety");
@@ -129,6 +137,24 @@ export async function recordLeadRequest(
   const message = (input.message || "").trim() || null;
   const sourceKind = input.sourceKind ?? null;
   const sourceId = (input.sourceId || "").trim() || null;
+  const pipeLead = async () => {
+    const { entryForLeadKind } = await import("@/lib/lead-intake");
+    const { rememberCentreLead } = await import("@/lib/server/lead-intake-write");
+    await rememberCentreLead(sql, {
+      entry: input.entry || entryForLeadKind(kind, sourceKind),
+      daycareId: input.daycareId,
+      parentUserId: input.userId,
+      email: input.email,
+      name: [input.firstName, input.lastName].filter(Boolean).join(" "),
+      phone: input.phone,
+      childId: input.childId,
+      childLabel: input.childLabel,
+      ageGroup: input.ageGroup,
+      desiredStart: input.desiredStart,
+      schedule: input.schedule,
+      roomWanted: input.roomWanted,
+    });
+  };
 
   if (kind === "waitlist") {
     const open = await sql<{ id: string }>`
@@ -151,6 +177,7 @@ export async function recordLeadRequest(
           where id = ${open[0].id}
         `.catch(() => undefined);
       }
+      await pipeLead();
       return { id: open[0].id, reused: true, conversationId: null };
     }
   }
@@ -162,6 +189,7 @@ export async function recordLeadRequest(
       limit 1
     `.catch(() => []);
     if (existing[0]) {
+      await pipeLead();
       return {
         id: existing[0].id,
         reused: true,
@@ -222,6 +250,8 @@ export async function recordLeadRequest(
       });
     }
   }
+
+  await pipeLead();
 
   if (input.notify !== false) {
     await notifyNewLead(sql, {
@@ -484,6 +514,7 @@ export const createInfoRequest = createServerFn({ method: "POST" })
       lastName: contact.lastName,
       phone: contact.phone,
       email: contact.email,
+      entry: "contact_form",
     });
     if (!recorded) throw new Error("Could not save request");
     return {

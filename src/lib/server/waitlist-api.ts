@@ -120,6 +120,8 @@ export const setWaitlistInterest = createServerFn({ method: "POST" })
         daycareId: data.daycareId,
         kind: "waitlist",
         message: "I asked to join the waitlist.",
+        entry: "waitlist_join",
+        ageGroup: data.ageBand,
         sourceKind: "waitlist_interest",
         sourceId: saved[0]?.id || id,
       });
