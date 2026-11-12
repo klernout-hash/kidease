@@ -257,5 +257,86 @@ describe(
         },
       );
     });
+    test("home requires actual discovery cards, not only its heading", async () => {
+      await fixture(
+        `<div data-ke="home-discovery-surface"><h1>Find licensed daycare</h1></div>`,
+        async (page) => {
+          assert.equal(
+            (await page.evaluate(inspectPolishReadiness, { pageId: "home" })).ready,
+            false,
+          );
+          await page.locator('[data-ke="home-discovery-surface"]').evaluate((node) => {
+            node.insertAdjacentHTML(
+              "beforeend",
+              '<article data-slug="fixture-centre"><h3>Fixture centre</h3></article>',
+            );
+          });
+          assert.equal(
+            (await page.evaluate(inspectPolishReadiness, { pageId: "home" })).uniqueListingCount,
+            1,
+          );
+        },
+      );
+    });
+    test("listing SEO-only content does not qualify as fully loaded listing data", async () => {
+      await fixture(
+        `<h1>Fixture centre</h1><ul data-ke="listing-highlights"><li>Early SEO summary</li></ul>`,
+        async (page) => {
+          assert.equal(
+            (await page.evaluate(inspectPolishReadiness, { pageId: "listing" })).ready,
+            false,
+          );
+          await page.evaluate(() => {
+            document.body.innerHTML = '<div data-ke="listing-name"><h1>Fixture centre</h1></div>';
+          });
+          assert.equal(
+            (await page.evaluate(inspectPolishReadiness, { pageId: "listing" })).ready,
+            true,
+          );
+        },
+      );
+    });
+    test("login requires the actual email form and primary action", async () => {
+      await fixture(`<h1>Sign in</h1><div data-ke="login-split"></div>`, async (page) => {
+        assert.equal(
+          (await page.evaluate(inspectPolishReadiness, { pageId: "login" })).ready,
+          false,
+        );
+        await page.locator('[data-ke="login-split"]').evaluate((node) => {
+          node.innerHTML =
+            '<form data-ke="email-sign-in"><label>Email<input type="email"></label><button type="button" data-ke="email-primary">Sign in</button></form>';
+        });
+        assert.equal(
+          (await page.evaluate(inspectPolishReadiness, { pageId: "login" })).ready,
+          true,
+        );
+      });
+    });
+    test("parent data must settle and a flags-off desk is never healthy feature coverage", async () => {
+      await fixture(
+        `<div data-ke="parent-home" data-settled="0"><section data-ke="parent-home-saved">Saved centres</section></div>`,
+        async (page) => {
+          assert.equal(
+            (await page.evaluate(inspectPolishReadiness, { pageId: "parent" })).ready,
+            false,
+          );
+          await page
+            .locator('[data-ke="parent-home"]')
+            .evaluate((node) => node.setAttribute("data-settled", "1"));
+          assert.equal(
+            (await page.evaluate(inspectPolishReadiness, { pageId: "parent" })).ready,
+            true,
+          );
+          await page.evaluate(() => {
+            document.body.innerHTML =
+              '<div class="ke-dense"><p class="font-display">Staff shifts are off</p><button>Back to today</button></div>';
+          });
+          const gated = await page.evaluate(inspectPolishReadiness, { pageId: "staff" });
+          assert.equal(gated.state, "gated");
+          assert.equal(gated.ready, true);
+          assert.equal(gated.healthy, false);
+        },
+      );
+    });
   },
 );

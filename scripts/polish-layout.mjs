@@ -4,7 +4,11 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve, relative, isAbsolute } from "node:path";
 import { execFileSync } from "node:child_process";
 import { chromium } from "playwright";
-import { inspectPolishReadiness, waitForPolishReadiness } from "./polish-readiness.mjs";
+import {
+  inspectPolishReadiness,
+  waitForPolishReadiness,
+  POLISH_READINESS_CONTRACT,
+} from "./polish-readiness.mjs";
 import {
   POLISH_PAGES,
   POLISH_SCREENSHOT_WIDTHS,
@@ -703,7 +707,7 @@ async function run() {
         if (
           existing &&
           !args["retry-pages"].split(",").includes(pageSpec.id) &&
-          (pageSpec.id !== "search" || existing.readiness?.contract === "content-v2")
+          existing.readiness?.contract === POLISH_READINESS_CONTRACT
         ) {
           manifest.results.push({ ...existing, reusedFrom: resolve(args.reuse) });
           save();
@@ -795,7 +799,7 @@ async function run() {
                 reason: `Expected ${new URL(result.requestedPath, args.base).pathname}, received ${response?.status() || 0} ${new URL(page.url()).pathname}.`,
               }
             : await waitForPolishReadiness(page, { pageId: pageSpec.id });
-          result.readiness.contract = "content-v2";
+          result.readiness.contract = POLISH_READINESS_CONTRACT;
           result.fontsReady = await page.evaluate(() =>
             Promise.race([
               document.fonts.ready.then(() => true),
@@ -897,6 +901,10 @@ async function run() {
             if (result.readiness.state === "error")
               result.reason =
                 "A settled search error surface was audited; healthy result-data coverage was unavailable.";
+            if (result.readiness.state === "gated") {
+              result.status = "blocked";
+              result.reason = "Feature flags are off; only gated-state geometry was audited.";
+            }
           }
           const screenshot =
             args.mode !== "matrix" &&

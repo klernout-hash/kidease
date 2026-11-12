@@ -511,7 +511,7 @@
   .ke-explore-filter-bar {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 8px;
     width: 100%;
     min-width: 0;
     max-width: 100%;
@@ -3020,8 +3020,8 @@ h1, h2, h3, h4, p, li, label, legend, dt, dd {
 }
 @media (max-width: 767px) {
   .ke-explore-filter-bar > [data-chip-carousel] {
-    flex: 1 1 calc(100% - 6.75rem);
-    max-width: calc(100% - 6.75rem);
+    flex: 1 1 0;
+    max-width: 100%;
   }
   .ke-explore-filter-actions {
     position: relative;

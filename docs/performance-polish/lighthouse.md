@@ -121,8 +121,13 @@ node scripts/polish-lighthouse.mjs \
   --server-state 'Frozen local build; one document warmup per fresh profile'
 ```
 
-`--warm-document` makes exactly one same-URL, same-mobile-user-agent document
-GET through the API client before each Lighthouse navigation. It shares the
+`--warm-document` makes exactly one same-URL document GET through the API client
+before each Lighthouse navigation. The fixed mobile user-agent says Chrome136;
+Lighthouse substitutes host Chrome157 in its mobile network user-agent. Earlier
+same-UA wording was inaccurate. Preserve that fixed pairing across the frozen
+phases rather than changing the protocol midway. Raw Lighthouse
+`environment.networkUserAgent` records the emulated mobile user-agent; its
+top-level `userAgent` describes host Chrome. The warmup shares the
 synthetic session, but fetches no browser assets and warms no browser HTTP cache.
 Record the returned status, body bytes, card counts and any fallback verbatim;
 do not repeat warmups until a desired timing appears.
@@ -158,6 +163,9 @@ node scripts/polish-startup-trace.mjs \
 
 This opens only the existing header Menu control at a 1280×800 desktop
 viewport, with explicitly applied CDP 4× CPU and adjusted Slow-4G throttling.
+The warmup still uses fixed mobile Chrome136 UA; this diagnostic navigation
+uses desktop Chrome157 UA. That pairing is preserved across phases and does
+not claim equal warmup/navigation UAs.
 It records navigation/DCL, actual click timing, handler-property detection,
 aria-expanded/panel state, launch hold, visible skeletons, long tasks and lab
 EventTiming. First activation is assessed and saved before any diagnostic
@@ -170,6 +178,26 @@ overhead; these traces are diagnostic and are neither Lighthouse samples nor
 field INP. Trace URLs are stripped of query/hash and sensitive header/payload
 fields are redacted. Every trace uses local fixtures and remains separate from
 the first-pass artifacts.
+
+Preserve intermediate builds as separate directories. The `6012f205` follow-up
+is kept under `iteration-2/after`; a later final-build run belongs under
+`iteration-2/final`. Record visual review in a source-checked sidecar such as
+`review-after.json` rather than replacing raw reports or final frames. The
+collectors refuse an existing phase summary rather than overwrite it. The
+focused comparator accepts the after-directory name and output stem:
+
+```sh
+node scripts/polish-iteration-compare.mjs ../evidence/iteration-2 after comparison-6012
+node scripts/polish-iteration-compare.mjs ../evidence/iteration-2 final comparison
+```
+
+It includes only samples with independently settled content and visually
+reviewed original Lighthouse final frames in verified metric statistics.
+Collection completion does not mean target compliance or product acceptance.
+Startup EventTiming entry counts, positive interaction IDs and observed maxima
+remain separate from activation outcomes. Missing entries at the 16ms threshold
+are unobserved, not zero; a short event on a failed activation is not a usable
+response. INP stays unavailable.
 
 After the full matrices and the two additional core replicates are available,
 generate a comparison without collecting new data:

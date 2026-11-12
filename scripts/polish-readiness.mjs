@@ -1,4 +1,6 @@
 /** Browser-side content state. An h1 alone is never evidence that search finished. */
+export const POLISH_READINESS_CONTRACT = "content-v3";
+
 export function inspectPolishReadiness({ pageId }) {
   const shown = (element) => {
     if (!element) return false;
@@ -15,7 +17,7 @@ export function inspectPolishReadiness({ pageId }) {
   const visible = (selector, root = document) =>
     Array.from(root.querySelectorAll(selector)).filter(shown);
   const pendingGate = visible(
-    '[data-ke="admin-gate-pending"],[data-ke="admin-session-pending"],[aria-label="Starting KidEase"]',
+    '[data-ke="admin-gate-pending"],[data-ke="admin-session-pending"],[aria-label="Starting KidEase"],[data-ke="parent-home"][data-settled="0"],[data-ke="daycare-desk"][data-settled="0"]',
   );
   if (pendingGate.length)
     return {
@@ -119,9 +121,77 @@ export function inspectPolishReadiness({ pageId }) {
         "Neither actual search listings nor an explicit settled empty/error surface is rendered.",
     };
   }
+  if (pageId === "home") {
+    const surface = visible('[data-ke="home-discovery-surface"]')[0];
+    const slugs = surface
+      ? [
+          ...new Set(
+            visible("[data-slug]", surface)
+              .map((node) => node.getAttribute("data-slug"))
+              .filter(Boolean),
+          ),
+        ].sort()
+      : [];
+    if (!surface || !visible("h1", surface).length || !slugs.length)
+      return {
+        ready: false,
+        healthy: false,
+        state: "pending",
+        reason: "The home discovery surface and actual listing cards have not both rendered.",
+      };
+    return {
+      ready: true,
+      healthy: true,
+      state: "content",
+      uniqueListingCount: slugs.length,
+      listingSlugs: slugs,
+      fingerprint: JSON.stringify(["home", slugs]),
+    };
+  }
+  if (pageId === "listing") {
+    const failed = visible('[data-ke="listing-retry"],[data-ke="listing-missing"]')[0];
+    if (failed)
+      return {
+        ready: true,
+        healthy: false,
+        state: "error",
+        title: failed.textContent.trim(),
+        fingerprint: JSON.stringify(["listing-error", failed.textContent.trim()]),
+      };
+    const name = visible('[data-ke="listing-name"] h1')[0];
+    if (!name)
+      return {
+        ready: false,
+        healthy: false,
+        state: "pending",
+        reason: "Full listing data has not rendered; an early SEO summary alone is insufficient.",
+      };
+    return {
+      ready: true,
+      healthy: true,
+      state: "content",
+      title: name.textContent.trim(),
+      fingerprint: JSON.stringify(["listing", name.textContent.trim()]),
+    };
+  }
+  if (pageId === "login") {
+    const form = visible('[data-ke="login-split"] [data-ke="email-sign-in"]')[0];
+    if (
+      !form ||
+      !visible('input[type="email"]', form).length ||
+      !visible('[data-ke="email-primary"]', form).length
+    )
+      return {
+        ready: false,
+        healthy: false,
+        state: "pending",
+        reason: "The actual email sign-in form and primary action are not both rendered.",
+      };
+    return { ready: true, healthy: true, state: "content", fingerprint: "email-sign-in-ready" };
+  }
   const selector =
     pageId === "parent"
-      ? '[data-ke="parent-home-saved"]'
+      ? '[data-ke="parent-home"][data-settled="1"]'
       : pageId === "daycare"
         ? '[data-ke="daycare-desk"][data-settled="1"]'
         : pageId === "admin"
@@ -151,14 +221,13 @@ export function inspectPolishReadiness({ pageId }) {
       title: error,
       fingerprint: JSON.stringify(["error", error]),
     };
+  const gated =
+    ["org", "staff"].includes(pageId) &&
+    headings.some((text) => /are off|sont éteints/i.test(text));
   return {
     ready: true,
-    healthy: true,
-    state:
-      ["org", "staff"].includes(pageId) &&
-      headings.some((text) => /are off|sont éteints/i.test(text))
-        ? "gated"
-        : "content",
+    healthy: !gated,
+    state: gated ? "gated" : "content",
     selector,
     fingerprint: JSON.stringify([selector, headings]),
   };
@@ -185,6 +254,7 @@ export async function waitForPolishReadiness(
       if (Date.now() - stableSince >= stableMs && samples >= 2)
         return {
           ...last,
+          contract: POLISH_READINESS_CONTRACT,
           stableForMs: Date.now() - stableSince,
           samples,
           elapsedMs: Date.now() - start,
@@ -197,6 +267,7 @@ export async function waitForPolishReadiness(
   }
   return {
     ...last,
+    contract: POLISH_READINESS_CONTRACT,
     ready: false,
     healthy: false,
     samples,

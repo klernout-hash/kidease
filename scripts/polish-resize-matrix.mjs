@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /** Responsive geometry checks reuse a loaded page within each appearance/text cohort. */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { resolve, relative } from "node:path";
+import { resolve, relative, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
 import { inspectLayout } from "./polish-layout.mjs";
-import { waitForPolishReadiness } from "./polish-readiness.mjs";
+import { waitForPolishReadiness, POLISH_READINESS_CONTRACT } from "./polish-readiness.mjs";
 import { POLISH_PAGES, localAuditUrl, polishPath, polishProfiles } from "./polish-coverage.mjs";
 
 const args = {
@@ -17,6 +17,8 @@ const args = {
   slug: "provincial-employee-day-care-portage-1255",
   chrome: "",
   workers: "3",
+  phase: "after",
+  capture: "none",
 };
 for (let index = 2; index < process.argv.length; index += 2) {
   const key = process.argv[index].replace(/^--/, "");
@@ -25,6 +27,9 @@ for (let index = 2; index < process.argv.length; index += 2) {
   args[key] = process.argv[index + 1];
 }
 args.base = localAuditUrl(args.base);
+if (!/^[a-z0-9-]+$/.test(args.phase)) throw new Error("Use a simple phase label.");
+if (!["none", "canonical"].includes(args.capture))
+  throw new Error("--capture must be none or canonical.");
 if (!/^[a-f0-9]{40}$/.test(args.revision))
   throw new Error("Supply the verified full served-source --revision.");
 if (process.env.POLISH_FIXTURE_DATABASE !== "local-pglite")
@@ -37,18 +42,19 @@ if (![1, 2, 3].includes(args.workers))
 args.out = resolve(args.out);
 if (relative(process.cwd(), args.out).startsWith(".."))
   throw new Error("Output must stay inside this checkout.");
-const canonicalPath = resolve(args.canonical);
-const canonical = JSON.parse(readFileSync(canonicalPath, "utf8"));
-if (canonical.commit !== args.revision || canonical.configuration.base !== args.base)
+const canonicalPath = args.canonical === "none" ? null : resolve(args.canonical);
+const canonical = canonicalPath ? JSON.parse(readFileSync(canonicalPath, "utf8")) : null;
+if (canonical && (canonical.commit !== args.revision || canonical.configuration.base !== args.base))
   throw new Error("Canonical evidence must match the verified source revision and local origin.");
 const selected = POLISH_PAGES.filter((page) => args.pages.split(",").includes(page.id));
 if (!selected.length) throw new Error("No selected page IDs.");
 const profiles = polishProfiles("matrix");
+const captureIds = new Set(polishProfiles("screenshots").map((profile) => profile.id));
 mkdirSync(args.out, { recursive: true });
-const reportPath = resolve(args.out, "after-layout.json");
+const reportPath = resolve(args.out, `${args.phase}-layout.json`);
 const report = {
   schemaVersion: 1,
-  phase: "after",
+  phase: args.phase,
   commit: args.revision,
   startedAt: new Date().toISOString(),
   configuration: { ...args, mode: "resize-matrix", profiles, scroll: "top" },
@@ -65,6 +71,10 @@ const report = {
     scroll: "First viewport only; canonical reused rows retain their recorded scope",
     network: "HTTP loopback only; all WebSockets and the decoded health path blocked",
     accountData: "Disposable local fixture only; feature flags unchanged",
+    canonicalCaptures:
+      args.capture === "canonical"
+        ? "Full-page images captured after strict data-state recheck on canonical width/appearance profiles; same-session resized layout, not a fresh-start performance claim."
+        : "none",
   },
   requestedProfileCases: selected.length * profiles.length * 2,
   pages: POLISH_PAGES.map((page) => ({
@@ -180,7 +190,7 @@ async function runCohort(browser, task) {
       unavailable = String(error.message || error).slice(0, 400);
     }
     for (const profile of cohort) {
-      const prior = canonical.results.find(
+      const prior = canonical?.results.find(
         (row) => row.page === pageSpec.id && row.locale === locale && row.profile === profile.id,
       );
       const result = {
@@ -232,7 +242,7 @@ async function runCohort(browser, task) {
           timeoutMs: 5000,
           stableMs: 300,
         });
-        result.readiness = { ...content, contract: "content-v2" };
+        result.readiness = { ...content, contract: POLISH_READINESS_CONTRACT };
         if (!content.ready) {
           result.status = "blocked";
           result.reason = content.reason;
@@ -252,6 +262,37 @@ async function runCohort(browser, task) {
         result.status = result.geometryStatus === "passed" && content.healthy ? "passed" : "failed";
         if (!content.healthy)
           result.reason = "Settled error surface; healthy result-data coverage unavailable.";
+        if (content.state === "gated") {
+          result.status = "blocked";
+          result.reason = "Feature flags are off; gated-state geometry only.";
+        }
+        if (args.capture === "canonical" && captureIds.has(profile.id)) {
+          result.fontsReady = await page.evaluate(() =>
+            Promise.race([
+              document.fonts.ready.then(() => true),
+              new Promise((resolve) => setTimeout(() => resolve(false), 5000)),
+            ]),
+          );
+          const captureState = await waitForPolishReadiness(page, {
+            pageId: pageSpec.id,
+            timeoutMs: 5000,
+            stableMs: 300,
+          });
+          result.readiness.beforeScreenshot =
+            captureState.ready && captureState.fingerprint === content.fingerprint;
+          result.readiness.screenshotState = captureState;
+          if (!result.readiness.beforeScreenshot || !result.fontsReady) {
+            result.status = "blocked";
+            result.reason = "Capture content or font state did not remain settled.";
+          }
+          result.screenshot = `${args.phase}-${pageSpec.id}-${locale}-${profile.id}.png`;
+          await page.screenshot({
+            path: resolve(args.out, result.screenshot),
+            fullPage: true,
+            animations: "disabled",
+            timeout: 30000,
+          });
+        }
       } catch (error) {
         result.status = "error";
         result.reason = String(error.message || error).slice(0, 400);
@@ -286,21 +327,23 @@ async function run() {
       for (const locale of ["en", "fr"]) {
         const groups = new Map();
         for (const profile of profiles) {
-          const prior = canonical.results.find(
+          const prior = canonical?.results.find(
             (row) =>
               row.page === pageSpec.id && row.locale === locale && row.profile === profile.id,
           );
           if (
             (profile.look !== "classic" || profile.theme !== "light") &&
             prior &&
-            (pageSpec.id !== "search" || prior.readiness?.contract === "content-v2") &&
+            prior.readiness?.contract === POLISH_READINESS_CONTRACT &&
             ["passed", "failed", "blocked"].includes(prior.status)
           ) {
             report.results.push({
               ...prior,
               checkType: "canonical appearance evidence reused",
               reusedFrom: canonicalPath,
-              ...(prior.screenshot ? { originalScreenshot: `after/${prior.screenshot}` } : {}),
+              ...(prior.screenshot
+                ? { originalScreenshot: resolve(dirname(canonicalPath), prior.screenshot) }
+                : {}),
             });
             continue;
           }

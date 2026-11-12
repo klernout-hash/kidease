@@ -58,8 +58,17 @@ POLISH_FIXTURE_DATABASE=local-pglite node scripts/polish-resize-matrix.mjs --bas
 
 The resize runner groups profiles by page, locale, appearance and text setting. It loads one page for a cohort, changes the viewport, waits for content readiness, and audits the first viewport. It mirrors the application's existing text-scale CSS setting in the disposable page DOM so a saved fixture preference cannot override the requested test size. It reuses completed matching canonical appearance cases with their original outcomes and provenance. Ten selected surfaces produce 920 requested profile cases, including unavailable/gated coverage decisions; the report separately identifies actual resize checks, reused evidence and cohorts whose route was unavailable. These checks measure responsive layout after resize; they do not measure fresh navigation performance or certify full-document scrolling for every profile.
 
+For fresh matched runs, use `--phase before` or `--phase after`, `--canonical none` and `--capture canonical`. This performs the matrix and saves full-page screenshots for the canonical width/appearance profiles in the same session. The screenshot readiness state is checked again before each image; the images do not measure a fresh navigation. The `content-v3` contract requires actual home cards, fully loaded listing data, the actual sign-in form, and settled parent/daycare data. Flags-off organization/staff states remain blocked coverage even when their geometry passes. Earlier contracts are not reused as certified captures under this stronger contract.
+
 Cold-navigation and full-scroll attempts remain in separately named partial reports. Their interrupted or browser-closed cases are retained as original attempts; they are not converted into passes. The resize report is the final geometry report, while the canonical screenshot reports remain the before/after visual comparison.
 
 ## Performance interpretation
 
 Lighthouse and browser timing results are laboratory measurements using simulated conditions. TBT is not INP. A synthetic interaction sample is not field INP, and no successful field INP claim can be made from this run. A local-only run with external resources blocked is not a measurement of production R2, map tiles, third-party scripts, CDN cache behavior or a physical 4G device. Preserve exact metric outputs, network settings, request blocks and baseline failures with the report.
+
+Iteration-2 document warmups use a fixed mobile Chrome136 user-agent, while
+Lighthouse uses host Chrome157 in its emulated mobile network user-agent.
+Earlier same-UA wording was inaccurate. All frozen phases retain that pairing;
+do not claim byte-identical warmup/navigation UAs or silently change the protocol
+midway. Raw `environment.networkUserAgent` records the actual mobile UA; the
+top-level Lighthouse `userAgent` describes host Chrome.

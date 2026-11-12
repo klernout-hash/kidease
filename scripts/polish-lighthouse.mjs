@@ -109,8 +109,9 @@ const methodology = {
   runOffset,
   captureNavigation,
   documentWarmup: warmDocument
-    ? "One same-URL/same-mobile-UA document GET through the separate API client before each Lighthouse sample. No browser assets or HTTP cache are warmed; fallback responses are retained without retrying until fast."
+    ? "One same-URL document GET through the separate API client before each Lighthouse sample, using the fixed mobile Chrome136 UA recorded here. Lighthouse substitutes its host Chrome version in the mobile network UA; these strings are not byte-identical. No browser assets or HTTP cache are warmed; fallback responses are retained without retrying until fast."
     : "No per-sample document warmup.",
+  documentWarmupUserAgent: warmDocument ? mobileUserAgent : null,
   hostQuietDeclaration: quietHost
     ? "Operator declared that other agent layout workers, tests, builds and automation browsers were stopped for this serial collection. Existing user browsers may remain. Sanitized process observations are recorded at sample boundaries; this is not continuous CPU-isolation proof."
     : "No quiet-host declaration.",
@@ -139,6 +140,11 @@ const methodology = {
     ? "Recovered from existing, unaltered Lighthouse JSON; no timing sample rerun."
     : "Same-run Lighthouse capture and postprocessing.",
 };
+if (!recoverReports && existsSync(resolve(out, "summary.json"))) {
+  throw new Error(
+    "Refusing to overwrite an existing measurement phase; choose a new output directory.",
+  );
+}
 mkdirSync(out, { recursive: true });
 const summary = { methodology, createdAt: new Date().toISOString(), rows: [], aggregates: [] };
 if (recoverReports && existsSync(resolve(out, "summary.json"))) {

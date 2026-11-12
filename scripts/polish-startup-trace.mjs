@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /** Local-only startup diagnosis, separate from Lighthouse timing samples. */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { createHash } from "node:crypto";
 import { chromium } from "playwright";
@@ -49,7 +49,7 @@ const report = {
     instrumentation:
       "Read-only MutationObserver, PerformanceObserver, DOM polling and CDP timeline/network trace; overhead is present. These traces are diagnostic, separate from Lighthouse and not field INP.",
     serverWarmup:
-      "One same-URL mobile-UA document GET via the separate API client before the fresh browser navigation; no retry until fast.",
+      "One same-URL fixed mobile Chrome136-UA document GET via the separate API client before the fresh desktop Chrome157 navigation at1280x800. Warmup and navigation UAs differ; this pairing is preserved across phases. No retry until fast.",
     quietWindow:
       "Root declared all other agent tests/builds/browsers stopped until these serial captures close. Lighthouse boundary host observations are retained separately.",
     privacy:
@@ -58,6 +58,11 @@ const report = {
   },
   results: [],
 };
+if (existsSync(resolve(out, "summary.json"))) {
+  throw new Error(
+    "Refusing to overwrite an existing startup phase; choose a new output directory.",
+  );
+}
 mkdirSync(out, { recursive: true });
 const save = () => writeFileSync(resolve(out, "summary.json"), JSON.stringify(report, null, 2));
 save();
