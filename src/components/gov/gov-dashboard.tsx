@@ -4,6 +4,7 @@ import type { GovDashboard } from "@/lib/gov/aggregate";
 import { feeBucketLabel, govCopy } from "@/lib/gov/copy";
 import { regionForCity } from "@/lib/gov/places";
 import { GovFrame } from "@/components/gov/gov-frame";
+import { OVERSIGHT_ITEMS, accessNeed, facilityRisk, govOversightEnabled } from "@/lib/gov/oversight";
 import { GovJobShortage } from "@/components/ece-job-desk";
 import { CurriculumGovStrip } from "@/components/curriculum-pack";
 import { GovMap } from "@/components/gov/gov-map";
@@ -328,6 +329,7 @@ export function GovDashboardView({
             <li><a className="underline-offset-4 hover:underline" href={data.locale === "fr" ? "/fr/gov/reports?tab=incidents" : "/gov/reports?tab=incidents"}>{data.locale === "fr" ? "Événements graves ce mois-ci" : "Serious occurrences this month"}</a></li>
           </ul>
         </section>
+        <OversightNote locale={data.locale} spaces={typeof kpis.capacity === "number" ? kpis.capacity : null} />
         <GovMap data={data} />
         <section className="mt-6 grid gap-3 lg:grid-cols-2" data-ke="gov-needs-attention" aria-labelledby="gov-needs-title">
           <div className="rounded-2xl bg-surface p-4 ring-1 ring-border">
@@ -547,5 +549,48 @@ export function GovDashboardView({
         </>
         ) : null}
     </GovFrame>
+  );
+}
+
+function OversightNote({ locale, spaces }: { locale: "en" | "fr"; spaces: number | null }) {
+  const fr = locale === "fr";
+  const enabled = govOversightEnabled();
+  const need = accessNeed({ spaces, children: null });
+  const risk = facilityRisk({ enabled, factors: {} });
+  return (
+    <section className="mt-6 rounded-xl bg-surface p-4 ring-1 ring-border" data-ke="gov-oversight">
+      <h2 className="font-display text-xl">{fr ? "Ce qu’un régulateur peut voir" : "What a regulator can see"}</h2>
+      <p className="mt-2 text-base leading-6 text-muted">
+        {fr
+          ? "Les chiffres publics viennent du registre déjà dans KidEase. Les inspections, les échéances et les ordres attendent une entente avec le Manitoba. Aucun courriel n’est envoyé d’ici."
+          : "Public counts come from the register KidEase already holds. Inspections, expiry dates, and orders wait on a Manitoba agreement. Nothing is emailed from here."}
+      </p>
+      <ul className="mt-4 space-y-2 text-base leading-6">
+        {OVERSIGHT_ITEMS.map((item) => (
+          <li key={item.id} data-ke={`gov-oversight-${item.id}`}>
+            <span className="font-medium text-fg">{fr ? item.fr : item.en}.</span>{" "}
+            <span className="text-muted">
+              {item.state === "public"
+                ? fr ? "Déjà dans les données publiques." : "Already in the public data."
+                : item.state === "agreement"
+                  ? fr ? "En attente de l’entente." : "Waiting on the agreement."
+                  : enabled
+                    ? fr ? "Le pointage est allumé, mais les facteurs provinciaux manquent." : "The score is on, but the provincial factors are missing."
+                    : fr ? "Éteint tant que le drapeau n’est pas à 1." : "Off until the flag is set to 1."}
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-4 text-sm text-muted" data-ke="gov-oversight-need">
+        {need.childrenPerSpace == null
+          ? fr ? "Enfants par place : pas encore relié." : "Children per space: not connected yet."
+          : fr ? `${need.childrenPerSpace} enfants par place.` : `${need.childrenPerSpace} children per space.`}
+      </p>
+      <p className="mt-1 text-sm text-muted" data-ke="gov-oversight-risk">
+        {risk.blocked
+          ? fr ? "Pointage de risque : non calculé." : "Risk score: not calculated."
+          : fr ? `Pointage ${risk.score}.` : `Score ${risk.score}.`}
+      </p>
+    </section>
   );
 }
