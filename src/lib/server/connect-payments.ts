@@ -11,7 +11,8 @@ import { getSql } from "@/lib/db";
 import { nid } from "@/lib/utils";
 import {
   accountSessionBody,
-  applicationFeeCents,
+  parentChargeQuote,
+  parentServiceFeeLine,
   classifyConnectEvent,
   connectChargeGate,
   connectLiveEnabled,
@@ -328,7 +329,16 @@ export const listCentreIdsForPayouts = createServerFn({ method: "GET" })
     return { ...state, centres: rows };
   });
 
-type OpenBill = { id: string; daycareId: string; daycareName: string; amountCents: number; number: string };
+type OpenBill = {
+  id: string;
+  daycareId: string;
+  daycareName: string;
+  amountCents: number;
+  feeCents: number;
+  parentPaysCents: number;
+  feeLabel: string;
+  number: string;
+};
 
 export const listParentPayChoices = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
@@ -355,8 +365,8 @@ export const listParentPayChoices = createServerFn({ method: "GET" })
       order by d.name
       limit 40
     `.catch(() => []);
-    const openRows = await sql<{ id: string; daycare_id: string; name: string; amount_cents: number | null; total: number; number: string }>`
-      select i.id, i.daycare_id, d.name, i.amount_cents, i.total, i.number
+    const openRows = await sql<{ id: string; daycare_id: string; name: string; province: string | null; amount_cents: number | null; total: number; number: string }>`
+      select i.id, i.daycare_id, d.name, d.province, i.amount_cents, i.total, i.number
       from invoices i
       join daycares d on d.id = i.daycare_id
       where i.parent_user_id = ${context.userId} and i.status = 'sent'
@@ -370,13 +380,20 @@ export const listParentPayChoices = createServerFn({ method: "GET" })
         daycareName: row.name,
         mode: parsePayMode(row.mode),
       })),
-      open: openRows.map((row) => ({
-        id: row.id,
-        daycareId: row.daycare_id,
-        daycareName: row.name,
-        amountCents: row.amount_cents != null ? Number(row.amount_cents) : Math.round(Number(row.total) || 0) * 100,
-        number: row.number,
-      })),
+      open: openRows.map((row) => {
+        const amountCents = row.amount_cents != null ? Number(row.amount_cents) : Math.round(Number(row.total) || 0) * 100;
+        const quote = parentChargeQuote({ invoiceCents: amountCents, province: row.province, daycareId: row.daycare_id });
+        return {
+          id: row.id,
+          daycareId: row.daycare_id,
+          daycareName: row.name,
+          amountCents,
+          feeCents: quote.feeCents,
+          parentPaysCents: quote.parentPaysCents,
+          feeLabel: quote.label,
+          number: row.number,
+        };
+      }),
     };
   });
 
@@ -438,8 +455,23 @@ export async function attachConnectBill(billId: string): Promise<{ ok: boolean; 
   const destination = String(connect[0]?.stripe_account_id || "");
   if (!destination.startsWith("acct_") || !connect[0]?.charges_enabled) return { ok: false, reason: "missing" };
   const invoiceCents = bill.amount_cents != null ? Number(bill.amount_cents) : Math.round(Number(bill.total) || 0) * 100;
-  const fee = applicationFeeCents(invoiceCents, connectFeeBps());
-  destinationChargeFields({ invoiceCents, destination, bps: connectFeeBps() });
+  const place = await sql<{ province: string | null }>`
+    select province from daycares where id = ${bill.daycare_id} limit 1
+  `.catch(() => [] as { province: string | null }[]);
+  const quote = parentChargeQuote({
+    invoiceCents,
+    bps: connectFeeBps(),
+    province: place[0]?.province,
+    daycareId: bill.daycare_id,
+  });
+  const fee = quote.feeCents;
+  destinationChargeFields({
+    invoiceCents,
+    destination,
+    bps: connectFeeBps(),
+    province: place[0]?.province,
+    daycareId: bill.daycare_id,
+  });
   const routed = await stripeCallFor(sql, bill.parent_user_id, bill.daycare_id);
   if (!("secret" in routed)) return { ok: false, reason: routed.reason };
   const profile = await profileCustomer(sql, bill.parent_user_id);
@@ -464,6 +496,8 @@ export async function attachConnectBill(billId: string): Promise<{ ok: boolean; 
         billId: bill.id,
         defaultPaymentMethod: fallback,
         bps: connectFeeBps(),
+        province: place[0]?.province,
+        daycareId: bill.daycare_id,
       }),
       "POST",
       { idempotencyKey: `bill-inv-${routed.mode}-${bill.id}`, secret: routed.secret },
@@ -475,6 +509,14 @@ export async function attachConnectBill(billId: string): Promise<{ ok: boolean; 
         customer: customerId,
         invoice: invoiceId,
       }, "POST", { idempotencyKey: `bill-item-${routed.mode}-${bill.id}`, secret: routed.secret });
+      const feeLine = parentServiceFeeLine(fee, quote.label);
+      if (feeLine) {
+        await stripeRequest("/invoiceitems", {
+          ...feeLine,
+          customer: customerId,
+          invoice: invoiceId,
+        }, "POST", { idempotencyKey: `bill-fee-${routed.mode}-${bill.id}`, secret: routed.secret });
+      }
       const finalized = withoutHostedInvoice(
         await stripeRequest<Record<string, unknown>>(`/invoices/${encodeURIComponent(invoiceId)}/finalize`, {}, "POST", {
           idempotencyKey: `bill-final-${routed.mode}-${bill.id}`,
@@ -488,7 +530,7 @@ export async function attachConnectBill(billId: string): Promise<{ ok: boolean; 
           stripe_invoice_id = ${invoiceId},
           stripe_payment_intent_id = coalesce(${paymentIntentId || null}, stripe_payment_intent_id),
           platform_fee_cents = ${fee},
-          net_cents = ${Math.max(0, invoiceCents - fee)},
+          net_cents = ${quote.centreReceivesCents},
           updated_at = now()
         where id = ${bill.id}
       `.catch(() => undefined);

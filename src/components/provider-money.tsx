@@ -8,8 +8,8 @@ import { EmptyState } from "@/components/empty-state";
 import { useCopy } from "@/lib/use-copy";
 import { money } from "@/lib/utils";
 import type { Locale } from "@/lib/types";
-import { currentPeriod, periodLabel, platformFeePercentLabel, splitFee } from "@/lib/stripe-methods";
-import { type Bill, type BillParty, billDollars, centsToDollars, receiveCents } from "@/lib/bill";
+import { currentPeriod, periodLabel, platformFeePercentLabel } from "@/lib/stripe-methods";
+import { type Bill, type BillParty, billDollars } from "@/lib/bill";
 import { createBill, listBillParties, listProviderBills, sendBill, voidBill } from "@/lib/server/billing";
 import { StripeInvoiceList } from "@/components/stripe-invoice-list";
 import { Field } from "@/components/provider-listing-forms";
@@ -58,7 +58,6 @@ export function ProviderMoneyPanel() {
 
   const party = parties.find((p) => `${p.userId}:${p.daycareId}` === form.partyKey) ?? null;
   const amountCad = Number(form.amountCad) || 0;
-  const preview = splitFee(Math.round(amountCad * 100), feeBps ?? undefined);
 
   const open = useMemo(() => bills.filter((b) => b.status === "draft" || b.status === "sent"), [bills]);
   const done = useMemo(() => bills.filter((b) => b.status !== "draft" && b.status !== "sent"), [bills]);
@@ -184,7 +183,7 @@ export function ProviderMoneyPanel() {
             {stripeLive ? (
               <>
                 {t("youReceive")}{" "}
-                <span className="font-medium text-fg">{money(centsToDollars(preview.net), locale)}</span>{" "}
+                <span className="font-medium text-fg">{money(amountCad, locale)}</span>{" "}
                 {t("afterKidEaseFee")}
                 {platformFeePercentLabel(feeBps) ? ` (${platformFeePercentLabel(feeBps)})` : ""}.
               </>
@@ -300,8 +299,7 @@ function BillList({
                 {b.memo ? <p className="mt-1 text-sm text-subtle">{b.memo}</p> : null}
                 {stripeLive && b.status !== "void" ? (
                   <p className="mt-1 text-sm text-muted">
-                    {t("youReceive")} {money(centsToDollars(receiveCents(b.amountCents, b.platformFeeCents)), locale)}{" "}
-                    {t("afterKidEaseFee")}
+                    {t("youReceive")} {money(billDollars(b), locale)} {t("afterKidEaseFee")}
                   </p>
                 ) : null}
               </div>
