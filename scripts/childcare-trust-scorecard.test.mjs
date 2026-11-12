@@ -90,7 +90,7 @@ test("support desks settle instead of hanging on Loading", () => {
   const support = src("src/routes/support.tsx");
   assert.match(support, /SESSION_SETTLE_MS/);
   assert.match(support, /\(isPending \|\| !ready\) && !settled/);
-  assert.match(src("src/routes/support.$caseId.tsx"), /\(isPending \|\| !ready\) && !settled/);
+  assert.match(src("src/routes/support_.$caseId.tsx"), /\(isPending \|\| !ready\) && !settled/);
 });
 
 test("search SSR loader seeds first paint instead of an empty null list", () => {

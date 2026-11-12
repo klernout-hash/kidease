@@ -10,7 +10,7 @@ import { SQL_SETTLE_MS, withTimeout } from "@/lib/timeout";
  * A timeout does not 404 the desk.
  */
 export async function beforeLoadSupportDesk(next = "/support") {
-  const dest = next.startsWith("/support") ? next : "/support";
+  const dest = next.startsWith("/support") || next.startsWith("/fr/support") ? next : "/support";
   try {
     await withTimeout(assertSupportDesk(), SQL_SETTLE_MS, "support-gate-timeout");
   } catch (err) {
