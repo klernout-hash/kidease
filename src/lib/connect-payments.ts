@@ -20,6 +20,7 @@
  */
 
 import { DEFAULT_PLATFORM_FEE_BPS, MAX_PLATFORM_FEE_BPS, platformFeeBps } from "./stripe-methods.ts";
+import { stripeCredentialsForMode, type PaymentStripeMode } from "./stripe-route.ts";
 
 export type ConnectEnv = Record<string, string | undefined>;
 
@@ -611,20 +612,35 @@ export type ConnectPublicState = {
   googlePayMerchantId: string | null;
 };
 
-export function publicConnectState(env: ConnectEnv = process.env): ConnectPublicState {
+export function publicConnectState(env: ConnectEnv = process.env, mode?: PaymentStripeMode): ConnectPublicState {
   const enabled = connectPaymentsEnabled(env);
-  const gate = connectChargeGate(env);
-  const publishable = clean(env.STRIPE_PUBLISHABLE_KEY);
-  const publishableMode = stripeKeyMode(publishable, "publishable");
-  const ready = gate.ok && (publishableMode === "test" || publishableMode === "live");
-  const blockedLive = enabled && gate.ok === false && gate.reason === "live";
-  return {
-    enabled,
-    ready,
-    blockedLive,
-    publishableKey: ready ? publishable : null,
+  const merchants = {
     appleMerchantId: enabled ? clean(env.APPLE_MERCHANT_ID) || null : null,
     googlePayMerchantId: enabled ? clean(env.GOOGLE_PAY_MERCHANT_ID) || null : null,
+  };
+  if (!mode) {
+    const gate = connectChargeGate(env);
+    const publishable = clean(env.STRIPE_PUBLISHABLE_KEY);
+    const publishableMode = stripeKeyMode(publishable, "publishable");
+    const ready = gate.ok && (publishableMode === "test" || publishableMode === "live");
+    return {
+      enabled,
+      ready,
+      blockedLive: enabled && gate.ok === false && gate.reason === "live",
+      publishableKey: ready ? publishable : null,
+      ...merchants,
+    };
+  }
+  if (mode === "live" && !connectLiveEnabled(env)) {
+    return { enabled, ready: false, blockedLive: enabled, publishableKey: null, ...merchants };
+  }
+  const creds = stripeCredentialsForMode(mode, env);
+  return {
+    enabled,
+    ready: enabled && creds.ok,
+    blockedLive: enabled && mode === "live" && !creds.ok,
+    publishableKey: enabled && creds.ok ? creds.publishable : null,
+    ...merchants,
   };
 }
 
