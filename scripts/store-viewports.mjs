@@ -409,19 +409,56 @@ async function windowsInputs(browser, base, problems) {
         if (root.dataset.channel !== "website") notes.push(`channel ${root.dataset.channel}`);
         return notes;
       });
+      // These checks belong to the original home screen, even if Menu navigates.
+      for (const note of found) problems.push(`win-touch ${note}`);
       const menu = touchPage.locator("[aria-controls='ke-nav-drawer']");
       if (await menu.isVisible().catch(() => false)) {
-        await touchPage.evaluate(() => {
-          window.__keTap = 0;
+        const originalUrl = new URL(touchPage.url());
+        const href = await menu.getAttribute("href");
+        const destination = href ? new URL(href, originalUrl) : null;
+        if (destination && (destination.origin !== originalUrl.origin || !/^\/(?:fr\/)?menu$/.test(destination.pathname))) {
+          throw new Error("Menu has an unexpected native destination");
+        }
+        let menuResponse = null;
+        const recordMenuResponse = (response) => {
+          if (destination && response.url() === destination.href && response.request().isNavigationRequest() && response.frame() === touchPage.mainFrame()) {
+            menuResponse = response;
+          }
+        };
+        touchPage.on("response", recordMenuResponse);
+        // Console events arrive in Node before navigation destroys the old document.
+        const pointerMarker = "__ke_store_menu_pointerup__";
+        await touchPage.evaluate((marker) => {
           document.querySelector("[aria-controls='ke-nav-drawer']")?.addEventListener("pointerup", () => {
-            window.__keTap = 1;
+            console.debug(marker);
           }, { once: true });
-        });
-        await menu.tap();
-        const tapped = await touchPage.evaluate(() => window.__keTap);
-        if (tapped !== 1) problems.push("win-touch missed");
+        }, pointerMarker);
+        try {
+          const outcomes = [touchPage.locator("#ke-nav-drawer").waitFor({ state: "visible", timeout: 25000 }).then(() => "drawer")];
+          if (destination) {
+            outcomes.push(touchPage.waitForURL(destination.href, { waitUntil: "domcontentloaded", timeout: 25000 }).then(() => "native-menu"));
+          }
+          const [,, outcome] = await Promise.all([
+            touchPage.waitForEvent("console", { predicate: (message) => message.text() === pointerMarker, timeout: 25000 }),
+            menu.tap(),
+            Promise.race(outcomes),
+          ]);
+          if (outcome === "native-menu") {
+            if (touchPage.url() !== destination.href || menuResponse?.status() !== 200) problems.push(`win-touch native-menu status ${menuResponse?.status() ?? "missing"}`);
+            const screen = touchPage.locator('main[data-ke="app-menu"]');
+            await screen.waitFor({ state: "visible", timeout: 25000 });
+            const links = await screen.locator("nav a[href]:visible").count();
+            if (links < 2) problems.push(`win-touch native-menu navigation-links ${links}`);
+            console.log(`[store-viewports] win-touch native-menu ${destination.pathname}; original-home geometry checked before tap`);
+          } else {
+            if (touchPage.url() !== originalUrl.href) problems.push("win-touch drawer changed-page");
+            if (await menu.getAttribute("aria-expanded") !== "true") problems.push("win-touch drawer not-expanded");
+            console.log("[store-viewports] win-touch drawer; original-home geometry checked before tap");
+          }
+        } finally {
+          touchPage.off("response", recordMenuResponse);
+        }
       } else problems.push("win-touch missing-menu");
-      for (const note of found) problems.push(`win-touch ${note}`);
     }
   } catch (err) {
     problems.push(`win-touch ${err instanceof Error ? err.message.split("\n")[0] : String(err)}`);
