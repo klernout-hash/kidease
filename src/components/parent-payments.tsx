@@ -160,7 +160,16 @@ function ParentPayChoices() {
   const [publishableKey, setPublishableKey] = useState<string | null>(null);
   const [modes, setModes] = useState<{ daycareId: string; daycareName: string; mode: PayMode }[]>([]);
   const [openBills, setOpenBills] = useState<
-    { id: string; daycareId: string; daycareName: string; amountCents: number; number: string }[]
+    {
+      id: string;
+      daycareId: string;
+      daycareName: string;
+      amountCents: number;
+      feeCents: number;
+      parentPaysCents: number;
+      feeLabel: string;
+      number: string;
+    }[]
   >([]);
   const [methods, setMethods] = useState<{ id: string; label: string }[]>([]);
   const [methodId, setMethodId] = useState("");
@@ -249,6 +258,14 @@ function ParentPayChoices() {
             <p className="font-medium">{bill.daycareName}</p>
             <p className="text-sm text-muted">{bill.number}</p>
             <p className="mt-1 tabular-nums">{cad(bill.amountCents)}</p>
+            {bill.feeCents > 0 ? (
+              <p className="mt-1 text-sm text-muted">
+                {bill.feeLabel} · {cad(bill.feeCents)}
+              </p>
+            ) : null}
+            <p className="mt-1 text-sm font-medium tabular-nums">
+              {t("youPay")} · {cad(bill.parentPaysCents || bill.amountCents)}
+            </p>
             {methods.length > 0 ? (
               <label className="mt-3 block text-sm font-medium">
                 {t("walletTitle")}
@@ -280,7 +297,7 @@ function ParentPayChoices() {
                       toast.error(t("actionFailed"));
                       return;
                     }
-                    const stripe = await loadStripeClient(publishableKey);
+                    const stripe = await loadStripeClient(res.publishableKey || publishableKey);
                     if (!stripe) {
                       toast.error(t("walletNotSetUp"));
                       return;
