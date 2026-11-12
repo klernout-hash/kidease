@@ -11,7 +11,6 @@ import { LedgerHonesty } from "@/components/listing-status-badge";
 import { TaxReceiptStudio } from "@/components/tax-receipt-studio";
 import { ChildHealthLog } from "@/components/child-health-log";
 import { EceJobDesk } from "@/components/ece-job-desk";
-import { ChildCheckHistory } from "@/components/child-checkin-desk";
 import { ChildCareCard } from "@/components/child-care-card";
 import { CareReminderForm } from "@/components/care-reminder-form";
 import { CoparentDesk } from "@/components/coparent-desk";
@@ -529,7 +528,6 @@ export function ParentDesk({
         <div className="mt-6">
           <Suspense fallback={<div className="ke-skel mt-6 h-40 rounded-xl" aria-hidden="true" />}>
             <DailyCareDesk role="parent" />
-            <ChildCheckHistory />
           </Suspense>
         </div>
       ) : null}

@@ -1,0 +1,242 @@
+[
+  {
+    "width": 390,
+    "look": "classic",
+    "theme": "light",
+    "lang": "en",
+    "path": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-attendance-390-classic-light-en.png",
+    "layout": {
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "background": "rgb(243, 241, 236)"
+    },
+    "errors": [],
+    "remoteRequests": 0,
+    "statusCount": 1
+  },
+  {
+    "width": 390,
+    "look": "classic",
+    "theme": "light",
+    "lang": "fr",
+    "path": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-attendance-390-classic-light-fr.png",
+    "layout": {
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "background": "rgb(243, 241, 236)"
+    },
+    "errors": [],
+    "remoteRequests": 0,
+    "statusCount": 1
+  },
+  {
+    "width": 390,
+    "look": "classic",
+    "theme": "dark",
+    "lang": "en",
+    "path": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-attendance-390-classic-dark-en.png",
+    "layout": {
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "background": "rgb(20, 22, 28)"
+    },
+    "errors": [],
+    "remoteRequests": 0,
+    "statusCount": 1
+  },
+  {
+    "width": 390,
+    "look": "classic",
+    "theme": "dark",
+    "lang": "fr",
+    "path": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-attendance-390-classic-dark-fr.png",
+    "layout": {
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "background": "rgb(20, 22, 28)"
+    },
+    "errors": [],
+    "remoteRequests": 0,
+    "statusCount": 1
+  },
+  {
+    "width": 390,
+    "look": "clean",
+    "theme": "light",
+    "lang": "en",
+    "path": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-attendance-390-clean-light-en.png",
+    "layout": {
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "background": "rgb(255, 255, 255)"
+    },
+    "errors": [],
+    "remoteRequests": 0,
+    "statusCount": 1
+  },
+  {
+    "width": 390,
+    "look": "clean",
+    "theme": "light",
+    "lang": "fr",
+    "path": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-attendance-390-clean-light-fr.png",
+    "layout": {
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "background": "rgb(255, 255, 255)"
+    },
+    "errors": [],
+    "remoteRequests": 0,
+    "statusCount": 1
+  },
+  {
+    "width": 390,
+    "look": "clean",
+    "theme": "dark",
+    "lang": "en",
+    "path": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-attendance-390-clean-dark-en.png",
+    "layout": {
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "background": "rgb(20, 22, 28)"
+    },
+    "errors": [],
+    "remoteRequests": 0,
+    "statusCount": 1
+  },
+  {
+    "width": 390,
+    "look": "clean",
+    "theme": "dark",
+    "lang": "fr",
+    "path": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-attendance-390-clean-dark-fr.png",
+    "layout": {
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "background": "rgb(20, 22, 28)"
+    },
+    "errors": [],
+    "remoteRequests": 0,
+    "statusCount": 1
+  },
+  {
+    "width": 1280,
+    "look": "classic",
+    "theme": "light",
+    "lang": "en",
+    "path": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-attendance-1280-classic-light-en.png",
+    "layout": {
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "background": "rgb(243, 241, 236)"
+    },
+    "errors": [],
+    "remoteRequests": 0,
+    "statusCount": 1
+  },
+  {
+    "width": 1280,
+    "look": "classic",
+    "theme": "light",
+    "lang": "fr",
+    "path": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-attendance-1280-classic-light-fr.png",
+    "layout": {
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "background": "rgb(243, 241, 236)"
+    },
+    "errors": [],
+    "remoteRequests": 0,
+    "statusCount": 1
+  },
+  {
+    "width": 1280,
+    "look": "classic",
+    "theme": "dark",
+    "lang": "en",
+    "path": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-attendance-1280-classic-dark-en.png",
+    "layout": {
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "background": "rgb(20, 22, 28)"
+    },
+    "errors": [],
+    "remoteRequests": 0,
+    "statusCount": 1
+  },
+  {
+    "width": 1280,
+    "look": "classic",
+    "theme": "dark",
+    "lang": "fr",
+    "path": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-attendance-1280-classic-dark-fr.png",
+    "layout": {
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "background": "rgb(20, 22, 28)"
+    },
+    "errors": [],
+    "remoteRequests": 0,
+    "statusCount": 1
+  },
+  {
+    "width": 1280,
+    "look": "clean",
+    "theme": "light",
+    "lang": "en",
+    "path": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-attendance-1280-clean-light-en.png",
+    "layout": {
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "background": "rgb(255, 255, 255)"
+    },
+    "errors": [],
+    "remoteRequests": 0,
+    "statusCount": 1
+  },
+  {
+    "width": 1280,
+    "look": "clean",
+    "theme": "light",
+    "lang": "fr",
+    "path": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-attendance-1280-clean-light-fr.png",
+    "layout": {
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "background": "rgb(255, 255, 255)"
+    },
+    "errors": [],
+    "remoteRequests": 0,
+    "statusCount": 1
+  },
+  {
+    "width": 1280,
+    "look": "clean",
+    "theme": "dark",
+    "lang": "en",
+    "path": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-attendance-1280-clean-dark-en.png",
+    "layout": {
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "background": "rgb(20, 22, 28)"
+    },
+    "errors": [],
+    "remoteRequests": 0,
+    "statusCount": 1
+  },
+  {
+    "width": 1280,
+    "look": "clean",
+    "theme": "dark",
+    "lang": "fr",
+    "path": "/Users/kylel/Documents/Codex/2026-11-12/task-9/evidence/local-attendance-1280-clean-dark-fr.png",
+    "layout": {
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "background": "rgb(20, 22, 28)"
+    },
+    "errors": [],
+    "remoteRequests": 0,
+    "statusCount": 1
+  }
+]

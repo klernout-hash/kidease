@@ -60,6 +60,7 @@ import {
   mapTilesForCamera,
   mapViewCacheKey,
   listPinsForCamera,
+  markerCount,
   markersForMapView,
   projectMapRows,
   pickNearestMapDot,
@@ -130,6 +131,8 @@ function searchCardsToMapPins(items: DaycareCard[]): MapPin[] {
 
 type Props = {
   items: DaycareCard[];
+  /** Draw only these items, without loading nearby directory listings. */
+  itemsOnly?: boolean;
   origin: { lat: number; lng: number };
   secondOrigin?: { lat: number; lng: number } | null;
   radiusKm: number;
@@ -177,6 +180,7 @@ export function MapView(props: Props) {
 
 function OsmMapView({
   items,
+  itemsOnly = false,
   origin,
   secondOrigin,
   radiusKm,
@@ -243,6 +247,7 @@ function OsmMapView({
       onSelectRef.current(fromList.slug);
       return;
     }
+    if (itemsOnly) return;
     setPicked(item.id);
     if (!("fromPrice" in item)) {
       setPickedPin({
@@ -278,9 +283,9 @@ function OsmMapView({
     if (!picked) return null;
     const fromList = items.find((item) => item.slug === picked || item.id === picked);
     if (fromList) return fromList;
-    if (pickedPin && (pickedPin.slug === picked || pickedPin.id === picked)) return mapPinToCard(pickedPin, origin);
+    if (!itemsOnly && pickedPin && (pickedPin.slug === picked || pickedPin.id === picked)) return mapPinToCard(pickedPin, origin);
     return null;
-  }, [items, picked, pickedPin, origin]);
+  }, [items, itemsOnly, picked, pickedPin, origin]);
   const selectedRef = useRef(selected);
   selectedRef.current = selected;
   const dismissRef = useRef<() => void>(() => {});
@@ -410,6 +415,8 @@ function OsmMapView({
     writeMapBase(base);
   }, [base, ready]);
 
+  const itemsFrameKey = itemsOnly ? searchCardsToMapPins(items).map((pin) => `${pin.id}:${pin.lat}:${pin.lng}`).join(",") : "";
+
   useEffect(() => {
     const map = mapRef.current;
     const maps = mapsApiRef.current;
@@ -420,12 +427,34 @@ function OsmMapView({
     userMovedRef.current = false;
 
     const fit = () => {
+      if (itemsOnly) {
+        circleRef.current?.setMap(null);
+        circle2Ref.current?.setMap(null);
+        youRef.current?.setMap(null);
+        workYouRef.current?.setMap(null);
+        const saved = searchCardsToMapPins(itemsRef.current);
+        if (!saved.length) return;
+        const first = saved[0];
+        if (saved.length === 1) {
+          map.setCenter({ lat: first.lat, lng: first.lng });
+          map.setZoom(13);
+          return;
+        }
+        const bounds = new maps.LatLngBounds(
+          { lat: first.lat, lng: first.lng },
+          { lat: first.lat, lng: first.lng },
+        );
+        for (const pin of saved.slice(1)) bounds.extend({ lat: pin.lat, lng: pin.lng });
+        map.fitBounds(bounds, el.clientWidth > 0 ? radiusFitPadding(el.clientWidth) : MAP_RADIUS_FIT_PAD);
+        return;
+      }
       const home = originRef.current;
       const other = secondOriginRef.current;
       const frame = radiusCircleFrame(home, radiusRef.current);
       const box = bboxFromRadius(home, frame.radiusKm);
       map.setCenter({ lat: home.lat, lng: home.lng });
       if (circleRef.current) {
+        circleRef.current.setMap(map);
         circleRef.current.setCenter({ lat: home.lat, lng: home.lng });
         circleRef.current.setRadius(frame.meters);
         circleRef.current.setOptions(RADIUS_CIRCLE_STYLE);
@@ -486,6 +515,7 @@ function OsmMapView({
     };
     const idle = maps.event?.addListenerOnce?.(map, "idle", () => {
       if (!framing || userMovedRef.current) return;
+      if (itemsOnly) return;
       const home = originRef.current;
       const frame = radiusCircleFrame(home, radiusRef.current);
       const visible = map.getBounds?.();
@@ -516,8 +546,11 @@ function OsmMapView({
       }, 80);
     });
     ro.observe(el);
-    if (youRef.current) {
+    if (itemsOnly) {
+      youRef.current?.setMap(null);
+    } else if (youRef.current) {
       youRef.current.setPosition({ lat: point.lat, lng: point.lng });
+      youRef.current.setMap(map);
     } else {
       youRef.current = createYouAreHereDot({
         map,
@@ -534,11 +567,12 @@ function OsmMapView({
       if (idle) maps.event?.removeListener?.(idle);
       maps.event.removeListener(drag);
     };
-  }, [origin.lat, origin.lng, secondOrigin?.lat, secondOrigin?.lng, radiusKm, ready, mapEpoch]);
+  }, [origin.lat, origin.lng, secondOrigin?.lat, secondOrigin?.lng, radiusKm, ready, mapEpoch, itemsOnly, itemsFrameKey]);
 
   useEffect(() => {
     const map = mapRef.current;
     const maps = mapsApiRef.current;
+    if (itemsOnly) return;
     if (!map || !maps || !ready) return;
     let cancelled = false;
     let timer = 0;
@@ -684,10 +718,10 @@ function OsmMapView({
       window.clearTimeout(timer);
       maps.event.removeListener(listener);
     };
-  }, [ready, mapEpoch]);
+  }, [ready, mapEpoch, itemsOnly]);
 
   useEffect(() => {
-    if (loadedView.current) return;
+    if (itemsOnly || loadedView.current) return;
     const zoomNow = mapZoomForRadius(radiusKm);
     if (mapLoadMode(zoomNow) !== "pins") return;
     const pins = searchCardsToMapPins(items);
@@ -707,9 +741,9 @@ function OsmMapView({
       if (current?.mode === "pins" && current.pins.map((pin) => pin.id).join(",") === signature) return current;
       return seeded;
     });
-  }, [items, origin, radiusKm]);
+  }, [items, origin, radiusKm, itemsOnly]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const map = mapRef.current;
     const maps = mapsApiRef.current;
     const createOverlay = overlayFactoryRef.current;
@@ -733,10 +767,10 @@ function OsmMapView({
             })
           : null;
       const seeded =
-        frame && (!viewData || !bboxCovers(viewData.bbox, frame))
-          ? listPinsForCamera(searchCardsToMapPins(items), zoom, frame)
+        frame && (itemsOnly || !viewData || !bboxCovers(viewData.bbox, frame))
+          ? listPinsForCamera(searchCardsToMapPins(items), zoom, frame, { itemsOnly })
           : null;
-      const view = seeded && frame && bboxCovers(seeded.bbox, frame) ? seeded : viewData;
+      const view = itemsOnly ? seeded : seeded && frame && bboxCovers(seeded.bbox, frame) ? seeded : viewData;
       const drawn = markersForMapView({
         items,
         view,
@@ -781,6 +815,7 @@ function OsmMapView({
         map,
         zoom,
         pins: dotPins.filter((item) => item.id !== picked && item.slug !== picked),
+        label: itemsOnly ? t("mapSavedCount").replace("{n}", String(markerCount(drawn.markers))) : undefined,
         locale: locale === "fr" ? "fr" : "en",
         onPick: (item) => openPinRef.current(item),
       });
@@ -810,15 +845,19 @@ function OsmMapView({
       pinsRef.current = nextPins;
     };
 
-    const timer = window.setTimeout(paint, 50);
-    const idle = maps.event.addListenerOnce(map, "idle", paint);
+    // Remove a previous general-results layer before an items-only frame paints.
+    if (itemsOnly) paint();
+    const timer = itemsOnly ? 0 : window.setTimeout(paint, 50);
+    const idle = itemsOnly
+      ? maps.event.addListener(map, "idle", paint)
+      : maps.event.addListenerOnce(map, "idle", paint);
 
     return () => {
       window.clearTimeout(timer);
       maps.event.removeListener(idle);
       pinHitRef.current = () => null;
     };
-  }, [items, locale, picked, ready, zoom, viewData, mapEpoch]);
+  }, [items, itemsOnly, locale, picked, ready, zoom, viewData, mapEpoch, t]);
 
   useEffect(() => {
     const maps = mapsApiRef.current;
@@ -1022,9 +1061,11 @@ function OsmMapView({
 
       <div className="pointer-events-none absolute left-3 top-[4.6rem] z-[400] lg:top-3">
         <span className="inline-flex items-center rounded-full bg-surface px-3 py-1.5 text-xs font-semibold text-fg shadow-card ring-1 ring-border">
-          {t("mapSearchRadius")
-            .replace("{n}", displayDistance(radiusKm, "km"))
-            .replace("{u}", t("km"))}
+          {itemsOnly
+            ? t("mapSavedOnly")
+            : t("mapSearchRadius")
+                .replace("{n}", displayDistance(radiusKm, "km"))
+                .replace("{u}", t("km"))}
         </span>
       </div>
 
@@ -1311,10 +1352,11 @@ function mountPinCanvas(input: {
   map: KidEaseMap;
   zoom: number;
   pins: DotItem[];
+  label?: string;
   locale: "en" | "fr";
   onPick: (item: DotItem) => void;
 }): AnyPin {
-  const { maps, map, zoom, pins, locale, onPick } = input;
+  const { maps, map, zoom, pins, label, locale, onPick } = input;
   const drawPx = mapLogoPinPx(zoom);
   const tapPx = mapPinTapPx(zoom);
   const hitPx = Math.max(MAP_DOT_HIT_PX, tapPx / 2);
@@ -1368,7 +1410,7 @@ function mountPinCanvas(input: {
     const layer = document.createElement("canvas");
     layer.className = "ke-map-pin-canvas";
     layer.style.pointerEvents = "none";
-    layer.dataset.keMapLabel = `${pins.length} daycares`;
+    layer.dataset.keMapLabel = label || `${pins.length} daycares`;
     layer.tabIndex = 0;
     layer.setAttribute("role", "application");
     layer.setAttribute("aria-label", layer.dataset.keMapLabel);

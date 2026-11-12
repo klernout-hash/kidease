@@ -37,6 +37,7 @@ import {
   type Eligibility,
 } from "../attendance-notices.ts";
 import { nid } from "../utils.ts";
+import { isParentAbsenceStatus, isParentReportedAbsence } from "../daily-care.ts";
 
 type BookingRow = {
   id: string;
@@ -60,8 +61,9 @@ async function dayEvents(sql: Sql, bookingId: string, localDay: string): Promise
     pickup_name: string | null;
     correction_of: string | null;
     reason: string | null;
+    recorded_by: string;
   }>`
-    select id, action, at, pickup_name, correction_of, reason
+    select id, action, at, pickup_name, correction_of, reason, recorded_by
     from child_check_events
     where booking_id = ${bookingId} and local_day = ${localDay}
     order by at asc, id asc
@@ -75,6 +77,7 @@ async function dayEvents(sql: Sql, bookingId: string, localDay: string): Promise
       pickupName: row.pickup_name || "",
       correctionOf: row.correction_of,
       reason: row.reason || "",
+      recordedBy: row.recorded_by,
     }));
 }
 
@@ -479,7 +482,7 @@ export async function readCentreDay(
   };
 }
 
-export async function readParentDay(sql: Sql, userId: string, now: Date) {
+export async function readParentDay(sql: Sql, userId: string, now: Date, includeConfirmations = true) {
   const kids = await sql<{
     booking_id: string;
     child_name: string;
@@ -501,13 +504,35 @@ export async function readParentDay(sql: Sql, userId: string, now: Date) {
   const cards = [];
   for (const kid of kids) {
     const localDay = centreLocalDay(now, kid.timezone || "America/Winnipeg");
-    const events = await dayEvents(sql, kid.booking_id, localDay);
+    const events = includeConfirmations ? await dayEvents(sql, kid.booking_id, localDay) : [];
     const last = effectiveDoorAction(events);
+    const updater = events.at(-1);
+    const staff = updater?.recordedBy
+      ? await sql<{ name: string | null }>`select name from "user" where id = ${updater.recordedBy} limit 1`
+      : [];
+    const reports = await sql<{ status: string; updated_by: string | null; staff: boolean }>`
+      select a.status, a.updated_by,
+        (exists (select 1 from provider_daycares p where p.daycare_id = a.daycare_id and p.user_id = a.updated_by)
+          or exists (select 1 from centre_members m where m.daycare_id = a.daycare_id and m.user_id = a.updated_by and m.status = 'active')) as staff
+      from attendance a
+      where a.daycare_id = ${kid.daycare_id} and a.child_name = ${kid.child_name}
+        and a.parent_user_id = ${userId} and a.day = ${localDay}
+        and (a.booking_id = ${kid.booking_id} or a.booking_id is null)
+      limit 1
+    `;
+    const report = reports[0];
+    const parentReported = Boolean(report && isParentReportedAbsence({
+      status: report.status, updatedBy: report.updated_by, parentUserId: userId, updatedByCentreStaff: report.staff,
+    }));
     cards.push({
       bookingId: kid.booking_id,
       childName: kid.child_name,
       daycareName: kid.daycare_name,
+      localDay,
       status: attendanceStatus(last),
+      lastUpdated: updater ? { at: updater.at, name: staff[0]?.name?.trim() || null } : null,
+      parentReported,
+      parentReport: parentReported && report && isParentAbsenceStatus(report.status) ? report.status : null,
       demo: isDemoAttendance({ daycareId: kid.daycare_id, isTest: kid.is_test, daycareName: kid.daycare_name }),
       timeZone: kid.timezone || "America/Winnipeg",
       events: events.map((event) => ({
@@ -522,6 +547,44 @@ export async function readParentDay(sql: Sql, userId: string, now: Date) {
     });
   }
   return cards;
+}
+
+/** Existing parent away notices update the operational record, never staff confirmations. */
+export async function saveParentAbsenceReport(
+  sql: Sql,
+  input: { userId: string; bookingId: string; status: string; now: Date },
+) {
+  if (!isParentAbsenceStatus(input.status)) return { ok: false as const, error: "Choose an absence report." };
+  const bookings = await sql<{
+    id: string; daycare_id: string; daycare_name: string; child_name: string; timezone: string | null; conversation_id: string | null;
+  }>`
+    select b.id, b.daycare_id, d.name as daycare_name, c.name as child_name, d.timezone, b.conversation_id
+    from bookings b
+    join daycares d on d.id = b.daycare_id
+    join children c on c.id = b.child_id
+    where b.id = ${input.bookingId} and b.user_id = ${input.userId}
+      and c.user_id = ${input.userId} and b.status in ('accepted', 'active')
+    limit 1
+  `;
+  const booking = bookings[0];
+  if (!booking) return { ok: false as const, error: "That child is not enrolled on this account." };
+  const localDay = centreLocalDay(input.now, booking.timezone || "America/Winnipeg");
+  const saved = await sql<{ id: string }>`
+    insert into attendance (id, daycare_id, booking_id, conversation_id, child_name, parent_user_id, day, status, updated_by)
+    values (${nid("at")}, ${booking.daycare_id}, ${booking.id}, ${booking.conversation_id}, ${booking.child_name}, ${input.userId}, ${localDay}, ${input.status}, ${input.userId})
+    on conflict (daycare_id, child_name, day) do update set
+      status = excluded.status, updated_by = excluded.updated_by,
+      booking_id = coalesce(attendance.booking_id, excluded.booking_id),
+      conversation_id = coalesce(attendance.conversation_id, excluded.conversation_id)
+    where attendance.parent_user_id = ${input.userId}
+      and (attendance.booking_id is null or attendance.booking_id = ${booking.id})
+    returning id
+  `;
+  if (!saved.length) return { ok: false as const, error: "Ask the centre to check this child's record." };
+  return {
+    ok: true as const, status: input.status, localDay, daycareId: booking.daycare_id,
+    daycareName: booking.daycare_name, childName: booking.child_name, conversationId: booking.conversation_id,
+  };
 }
 
 export async function seedDemoChildren(sql: Sql, userId: string) {

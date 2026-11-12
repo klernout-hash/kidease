@@ -11,6 +11,7 @@ import {
   correctChildCheck,
   listDoorRoster,
   listMyChildAttendance,
+  reportMyChildAbsence,
   recordChildCheck,
 } from "@/lib/server/child-checkin";
 import type { Locale } from "@/lib/types";
@@ -257,20 +258,22 @@ export function AttendanceSamples({ locale }: { locale: "en" | "fr" }) {
 }
 
 export function ChildCheckHistory() {
-  const { locale } = useCopy();
+  const { locale, t } = useCopy();
   const legacy = featureCopy(locale);
   const copy = attendanceCopy(locale);
   const [rows, setRows] = useState<Awaited<ReturnType<typeof listMyChildAttendance>> | null>(null);
+  const [busy, setBusy] = useState("");
+  const [message, setMessage] = useState("");
   useEffect(() => {
     void listMyChildAttendance()
       .then(setRows)
       .catch(() => setRows({ enabled: false, children: [] }));
   }, []);
-  if (!rows?.enabled) return null;
+  if (!rows || (!rows.enabled && !rows.children.length)) return null;
   return (
     <section className="mt-8 w-full" data-ke="child-check-history">
-      <h2 className="font-display text-2xl">{copy.parentTitle}</h2>
-      <p className="mt-2 max-w-prose text-sm text-muted">{copy.parentLead}</p>
+      <h2 className="font-display text-2xl">{rows.enabled ? copy.parentTitle : t("careParentNoticeTitle")}</h2>
+      {rows.enabled ? <p className="mt-2 max-w-prose text-sm text-muted">{copy.parentLead}</p> : null}
       <p className="mt-1 text-sm text-muted">{copy.noPhoto}</p>
       {rows.children.length ? (
         <ul className="mt-4 space-y-4">
@@ -280,33 +283,84 @@ export function ChildCheckHistory() {
                 <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-surface-2 text-xl font-semibold" aria-hidden>
                   {initialsFor(child.childName)}
                 </span>
-                <div>
+                <div className="min-w-0 break-words">
                   <p className="text-lg font-semibold">{child.childName}</p>
                   {child.demo ? <p className="text-sm text-muted">{copy.demo}</p> : null}
                   <p className="text-sm text-muted">{child.daycareName}</p>
-                  <p className="mt-1 text-base font-medium">{statusWord(child.status, copy)}</p>
+                  <p className="mt-1 text-sm text-muted" data-ke="attendance-date">
+                    {t("careCentreDate")}: <time dateTime={child.localDay}>{child.localDay}</time> · {child.timeZone}
+                  </p>
+                  {rows.enabled ? <p className="mt-1 text-base font-medium" data-ke="parent-attendance-status">
+                    {child.events.length ? statusWord(child.status, copy) : t("careNoArrivalConfirmed")}
+                  </p> : null}
+                  {child.lastUpdated ? (
+                    <p className="mt-1 text-sm text-muted" data-ke="attendance-updater">
+                      {t("careAttendanceUpdated")
+                        .replace("{name}", child.lastUpdated.name || t("careCentreStaff"))
+                        .replace("{time}", when(child.lastUpdated.at, locale, child.timeZone))}
+                    </p>
+                  ) : null}
                 </div>
               </div>
-              {child.events.length ? (
-                <ul className="mt-3 divide-y divide-border text-sm">
-                  {child.events.map((event) => (
-                    <li key={event.id} className="py-2">
-                      {event.correction ? `${copy.correct}: ` : ""}
-                      {event.action === "check_in" ? legacy.arrived : legacy.left} · {when(event.at, locale, event.timeZone || child.timeZone)}
-                      {event.pickupName ? ` · ${event.pickupName}` : ""}
-                      {event.reason ? ` · ${event.reason}` : ""}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
+              {rows.enabled && child.events.length ? (
+                <details className="mt-3">
+                  <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-medium text-primary">
+                    {t("careAttendanceHistory")}
+                  </summary>
+                  <ul className="divide-y divide-border text-sm">
+                    {child.events.map((event) => (
+                      <li key={event.id} className="py-2">
+                        {event.correction ? `${t("careAttendanceCorrection")}: ` : ""}
+                        {event.action === "check_in" ? legacy.arrived : legacy.left} · {when(event.at, locale, event.timeZone || child.timeZone)}
+                        {event.pickupName ? ` · ${event.pickupName}` : ""}
+                        {event.reason ? ` · ${event.reason}` : ""}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              ) : rows.enabled ? (
                 <p className="mt-3 text-sm text-muted">{legacy.checkNone}</p>
-              )}
+              ) : null}
+              <div className="mt-3 border-t border-border pt-3" data-ke="parent-absence-notice">
+                <h3 className="text-sm font-semibold">{t("careParentNoticeDay").replace("{date}", child.localDay)}</h3>
+                <p className="mt-1 text-sm text-muted">{t("careParentNoticeLead")}</p>
+                {child.parentReport ? (
+                  <p className="mt-2 text-sm" data-ke="parent-reported-absence">
+                    {t("careParentReported").replace("{status}", t(child.parentReport === "sick" ? "careSick" : child.parentReport === "vacation" ? "careVacation" : "careAbsent"))}
+                  </p>
+                ) : null}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {(["absent", "sick", "vacation"] as const).map((status) => (
+                    <Button
+                      key={status}
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      disabled={Boolean(busy) || child.parentReport === status}
+                      onClick={() => {
+                        setBusy(child.bookingId);
+                        setMessage("");
+                        void reportMyChildAbsence({ data: { bookingId: child.bookingId, status, locale } })
+                          .then(async (result) => {
+                            setMessage(result.ok ? t("careParentReportSaved") : t("tourRespondFailed"));
+                            if (result.ok) setRows(await listMyChildAttendance());
+                          })
+                          .catch(() => setMessage(t("tourRespondFailed")))
+                          .finally(() => setBusy(""));
+                      }}
+                    >
+                      {t(status === "sick" ? "careReportSick" : status === "vacation" ? "careReportVacation" : "careReportAbsent")}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </li>
           ))}
         </ul>
       ) : (
         <p className="mt-3 text-sm text-muted">{legacy.checkNone}</p>
       )}
+      {message ? <p className="mt-3 text-sm" role="status">{message}</p> : null}
     </section>
   );
 }

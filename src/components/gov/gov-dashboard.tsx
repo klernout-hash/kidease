@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { govMenuHref, type GovSection } from "@/lib/gov/menu";
 import type { GovDashboard } from "@/lib/gov/aggregate";
 import { feeBucketLabel, govCopy } from "@/lib/gov/copy";
-import { regionForCity } from "@/lib/gov/places";
+import { provinceName, regionForCity } from "@/lib/gov/places";
 import { GovFrame } from "@/components/gov/gov-frame";
 import { OVERSIGHT_ITEMS, accessNeed, facilityRisk, govOversightEnabled } from "@/lib/gov/oversight";
 import { GovJobShortage } from "@/components/ece-job-desk";
@@ -415,6 +415,7 @@ export function GovDashboardView({
           <h2 id="gov-wait-title" className="font-display text-xl">
             {copy.waitlist}
           </h2>
+          {data.waitlistContext ? <p className="mt-2 max-w-3xl text-sm leading-6 text-muted" data-ke="gov-demand-scope">{data.waitlistContext}</p> : null}
           {data.waitlist.some((row) => !row.suppressed) ? (
             <ul className="mt-3 space-y-2 text-sm">
               {data.waitlist
@@ -466,6 +467,11 @@ export function GovDashboardView({
           </div>
         </section>
         <SurveyContext locale={data.locale} />
+        <p className="mt-8 max-w-3xl text-sm leading-6 text-muted" data-ke="gov-jobs-scope">
+          {data.locale === "fr"
+            ? `${data.province === "ALL" ? "Contexte des emplois pour tout le Canada" : `Contexte des emplois pour ${provinceName(data.province, data.locale)} au complet`}. Le filtre de ville ou de région ne s’applique pas à ce panneau.`
+            : `${data.province === "ALL" ? "Job context for all of Canada" : `Job context for all of ${provinceName(data.province, data.locale)}`}. The city or region filter does not apply to this panel.`}
+        </p>
         <GovJobShortage province={data.province === "ALL" ? "CA" : data.province} locale={data.locale} />
         </>
         ) : null}
