@@ -2,7 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
-import { splitFee, currentPeriod } from "@/lib/stripe-methods";
+import { parentChargeQuote } from "@/lib/connect-payments";
+import { currentPeriod } from "@/lib/stripe-methods";
 import { storedFeeCents } from "@/lib/wiring/common";
 import { planWithdrawal, withdrawalEnabled, withdrawalMode } from "@/lib/wiring/withdrawal";
 import { daycareUserIds, deliverNotice, newId } from "@/lib/server/wiring/runtime";
@@ -83,7 +84,7 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
     let invoiceId: string | null = null;
     if (mode === "live" && plan.invoiceCents != null) {
       const amountCad = Math.round(plan.invoiceCents / 100);
-      const split = splitFee(plan.invoiceCents);
+      const quote = parentChargeQuote({ invoiceCents: plan.invoiceCents, daycareId: data.daycareId });
       invoiceId = newId("bl");
       await sql`
         insert into invoices (
@@ -92,8 +93,8 @@ export const requestWithdrawal = createServerFn({ method: "POST" })
           issued_by, memo, created_by
         ) values (
           ${invoiceId}, ${`KE-${invoiceId.slice(-8).toUpperCase()}`}, ${context.userId}, ${data.daycareId},
-          ${currentPeriod()}, ${"draft"}, ${"cad"}, ${amountCad}, ${Math.round(split.platformFee / 100)}, ${amountCad},
-          ${plan.invoiceCents}, ${split.platformFee}, ${split.net}, ${"provider"}, ${"Final invoice"}, ${context.userId}
+          ${currentPeriod()}, ${"draft"}, ${"cad"}, ${amountCad}, ${Math.round(quote.feeCents / 100)}, ${amountCad},
+          ${plan.invoiceCents}, ${quote.feeCents}, ${quote.centreReceivesCents}, ${"provider"}, ${"Final invoice"}, ${context.userId}
         )
       `;
     }

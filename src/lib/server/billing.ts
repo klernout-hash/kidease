@@ -2,7 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { nid } from "@/lib/utils";
-import { currentPeriod, platformFeeBps, splitFee } from "@/lib/stripe-methods";
+import { connectLiveEnabled, parentChargeQuote } from "@/lib/connect-payments";
+import { currentPeriod, platformFeeBps } from "@/lib/stripe-methods";
 import { stripeChargesLive } from "@/lib/stripe-live";
 import {
   type Bill,
@@ -51,6 +52,7 @@ type InvoiceRow = {
   receipt_url: string | null;
   sent_at: string | null;
   created_at: string;
+  province: string | null;
 };
 
 const INVOICE_SELECT = `
@@ -59,8 +61,13 @@ const INVOICE_SELECT = `
   i.period, i.status, i.currency, i.subtotal, i.platform_fee, i.total,
   i.amount_cents, i.platform_fee_cents, i.net_cents, i.due_at, i.paid_at, i.memo,
   i.created_by, i.stripe_checkout_session_id, i.stripe_payment_intent_id, i.receipt_url,
-  i.sent_at, i.created_at
+  i.sent_at, i.created_at, d.province
 `;
+
+/** Live card pay for a centre bill. The secret must be live and KIDEASE_CONNECT_LIVE must be exactly 1. */
+function parentBillCardLive(): boolean {
+  return stripeChargesLive() && connectLiveEnabled();
+}
 
 function appOrigin() {
   return (process.env.APP_ORIGIN || process.env.VITE_APP_URL || "https://kidease.ca").replace(/\/$/, "");
@@ -176,6 +183,7 @@ async function recordPaymentRow(
 ) {
   const dollars = Math.round(bill.amountCents / 100);
   const fee = Math.round(bill.platformFeeCents / 100);
+  const net = dollars;
   const existing = await sql<{ id: string }>`
     select id from payments where invoice_id = ${bill.id} limit 1
   `.catch(() => []);
@@ -186,7 +194,7 @@ async function recordPaymentRow(
         stripe_payment_intent = ${extras.paymentIntentId ?? null},
         stripe_charge_id = ${extras.chargeId ?? null},
         platform_fee = ${fee},
-        net_amount = ${dollars - fee}
+        net_amount = ${net}
       where id = ${existing[0].id}
     `.catch(() => undefined);
     return existing[0].id;
@@ -199,7 +207,7 @@ async function recordPaymentRow(
       invoice_id, period, platform_fee, net_amount, stripe_payment_intent, stripe_charge_id
     ) values (
       ${id}, ${bill.parentUserId}, ${bill.bookingId}, ${bill.daycareId}, ${dollars},
-      ${"card"}, ${"paid"}, ${reference}, ${bill.id}, ${bill.period}, ${fee}, ${dollars - fee},
+      ${"card"}, ${"paid"}, ${reference}, ${bill.id}, ${bill.period}, ${fee}, ${net},
       ${extras.paymentIntentId ?? null}, ${extras.chargeId ?? null}
     )
   `.catch(async () => {
@@ -328,7 +336,7 @@ export const listProviderBills = createServerFn({ method: "GET" })
       [context.userId],
     ).catch(() => []);
     return {
-      stripeLive: stripeChargesLive(),
+      stripeLive: parentBillCardLive(),
       platformFeeBps: platformFeeBps(),
       bills: rows.map((row) => ({ ...mapBill(row), parentEmail: null })),
     };
@@ -353,7 +361,7 @@ export const listParentBills = createServerFn({ method: "GET" })
       [homeId],
     ).catch(() => []);
     return {
-      stripeLive: stripeChargesLive(),
+      stripeLive: parentBillCardLive(),
       platformFeeBps: platformFeeBps(),
       bills: rows.map(mapBill).filter((b) => parentCanSeeBill(b.status)),
     };
@@ -464,8 +472,13 @@ export const createBill = createServerFn({ method: "POST" })
       if (!bk[0]) bookingId = null;
     }
     const amountCents = dollarsToCents(amountCad);
-    const split = splitFee(amountCents);
-    const feeDollars = Math.round(split.platformFee / 100);
+    const provinceRows = await sql<{ province: string }>`select province from daycares where id = ${data.daycareId} limit 1`.catch(() => []);
+    const quote = parentChargeQuote({
+      invoiceCents: amountCents,
+      province: provinceRows[0]?.province,
+      daycareId: data.daycareId,
+    });
+    const feeDollars = Math.round(quote.feeCents / 100);
     const period = (data.period || currentPeriod()).trim() || currentPeriod();
     const dueAt = data.dueAt?.trim() || null;
     const memo = data.memo?.trim() || null;
@@ -487,13 +500,12 @@ export const createBill = createServerFn({ method: "POST" })
       ) values (
         ${id}, ${number}, ${bookingId}, ${data.parentUserId}, ${data.daycareId}, ${childId},
         ${period}, ${"draft"}, ${"cad"}, ${amountCad}, ${feeDollars}, ${amountCad},
-        ${amountCents}, ${split.platformFee}, ${split.net}, ${dueAt}, ${"provider"}, ${memo}, ${context.userId}
+        ${amountCents}, ${quote.feeCents}, ${quote.centreReceivesCents}, ${dueAt}, ${"provider"}, ${memo}, ${context.userId}
       )
     `;
     const row = await loadInvoice(sql, id);
     if (!row) throw new Error("Could not save bill");
     const { noteMonthlyUnchecked } = await import("@/lib/server/compliance-fees");
-    const provinceRows = await sql<{ province: string }>`select province from daycares where id = ${data.daycareId} limit 1`.catch(() => []);
     await noteMonthlyUnchecked({
       daycareId: data.daycareId,
       province: provinceRows[0]?.province || "",
@@ -578,7 +590,13 @@ export const getBill = createServerFn({ method: "GET" })
       status: bill.status,
     });
     if (!access.ok) throw new Error("Bill not found");
-    return { bill, stripeLive: stripeChargesLive(), role: access.role, platformFeeBps: platformFeeBps() };
+    const serviceFee = parentChargeQuote({
+      invoiceCents: bill.amountCents,
+      bps: platformFeeBps(),
+      province: row.province,
+      daycareId: bill.daycareId,
+    });
+    return { bill, stripeLive: parentBillCardLive(), role: access.role, platformFeeBps: platformFeeBps(), serviceFee };
   });
 
 export const createBillCheckout = createServerFn({ method: "POST" })
@@ -593,12 +611,12 @@ export const createBillCheckout = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const billId = data.billId;
     const sql = await getSql();
-    const row = stripeChargesLive() ? await loadInvoice(sql, billId) : null;
+    const row = parentBillCardLive() ? await loadInvoice(sql, billId) : null;
     const bill = row ? mapBill(row) : null;
     const gate = decideBillCheckout({
       actorUserId: context.userId,
       bill: bill ? { parentUserId: bill.parentUserId, status: bill.status } : null,
-      stripeLive: stripeChargesLive(),
+      stripeLive: parentBillCardLive(),
     });
     if (!gate.ok) throw new Error(gate.error);
     if (gate.alreadyPaid) return { url: null as string | null, alreadyPaid: true as const };
@@ -609,6 +627,11 @@ export const createBillCheckout = createServerFn({ method: "POST" })
     const destination = resolveConnectDestination({
       stripeAccountId: connect[0]?.stripe_account_id,
       chargesEnabled: connect[0]?.charges_enabled,
+    });
+    const quote = parentChargeQuote({
+      invoiceCents: bill.amountCents,
+      province: row?.province,
+      daycareId: bill.daycareId,
     });
     const origin = appOrigin();
     const profile = await sql<{ stripe_customer_id: string | null; locale: string | null }>`
@@ -629,7 +652,8 @@ export const createBillCheckout = createServerFn({ method: "POST" })
       userId: context.userId,
       locale,
       destinationAccount: destination,
-      applicationFeeCents: destination ? bill.platformFeeCents : undefined,
+      applicationFeeCents: destination ? quote.applicationFeeCents : undefined,
+      serviceFeeLabel: quote.label,
     });
     await rememberStripeCustomer(context.userId, session.customer ?? null);
     const pi = typeof session.payment_intent === "string" ? session.payment_intent : null;

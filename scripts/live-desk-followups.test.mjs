@@ -23,9 +23,10 @@ test("parent Pay hides plan sentences while subscriptions are off", () => {
     }
     assert.match(tx(locale, parentPayLeadKey(true, true)), PLAN);
   }
-  assert.match(tx("en", "ledgerLiveParentBills"), /KidEase’s platform fee comes from the daycare/);
-  assert.match(tx("en", "ledgerLiveParent"), /KidEase’s platform fee comes from the daycare/);
-  assert.match(tx("fr", "ledgerLiveParentBills"), /Les frais de plateforme KidEase viennent du versement à la garderie/);
+  assert.match(tx("en", "ledgerLiveParentBills"), /KidEase service fee/);
+  assert.match(tx("en", "ledgerLiveParent"), /centre receives the full bill/);
+  assert.match(tx("fr", "ledgerLiveParentBills"), /frais de service KidEase/);
+  assert.match(tx("en", "connectFeeParentPay"), /centre receives the full bill/);
   const desk = src("src/components/parent-desk.tsx");
   assert.match(desk, /const plansOn = !storeShell && desks\?\.subscriptionsEnabled === true/);
   assert.match(desk, /plansOn=\{plansOn\}/);
