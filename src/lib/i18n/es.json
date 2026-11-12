@@ -1,5 +1,7 @@
 {
   "app": "KidEase",
+  "searchAlertsLoading": "Cargando alertas…",
+  "searchAlertsLoadFailed": "No pudimos cargar tus alertas. Inténtalo de nuevo.",
   "tagline": "Cuidado con licencia, cerca de casa.",
   "search": "Buscar",
   "explore": "Explorar",

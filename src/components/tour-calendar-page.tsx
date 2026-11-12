@@ -7,6 +7,7 @@ import {
   eventsFromTours,
   eventsOnDay,
   monthCells,
+  tourCalendarDayLabel,
   tourReminderPlan,
   type CalendarEvent,
 } from "@/lib/desk-features";
@@ -99,6 +100,8 @@ export function TourCalendarPage({ audience }: { audience: "parent" | "provider"
 
   const title = fr ? "Calendrier des visites" : "Tour calendar";
   const monthLabel = cursor.toLocaleDateString(fr ? "fr-CA" : "en-CA", { month: "long", year: "numeric" });
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 
   async function remind() {
     if (!selected) return;
@@ -162,6 +165,9 @@ export function TourCalendarPage({ audience }: { audience: "parent" | "provider"
             <button
               key={cell.day}
               type="button"
+              aria-label={tourCalendarDayLabel(cell.day, count, locale)}
+              aria-pressed={on}
+              aria-current={cell.day === today ? "date" : undefined}
               className={`min-h-11 rounded-lg text-sm ${cell.inMonth ? "text-fg" : "text-subtle"} ${on ? "bg-primary text-primary-fg" : "bg-surface ring-1 ring-border"}`}
               onClick={() => setPicked(cell.day)}
             >

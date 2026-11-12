@@ -1,5 +1,7 @@
 {
   "app": "KidEase",
+  "searchAlertsLoading": "正在加载提醒…",
+  "searchAlertsLoadFailed": "无法加载你的提醒。请重试。",
   "tagline": "持证托儿，离家更近。",
   "search": "搜索",
   "explore": "发现",

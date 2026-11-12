@@ -1,5 +1,7 @@
 {
   "app": "KidEase",
+  "searchAlertsLoading": "جارٍ تحميل التنبيهات…",
+  "searchAlertsLoadFailed": "تعذّر تحميل تنبيهاتك. حاول مرة أخرى.",
   "tagline": "رعاية مرخّصة، قريبة من المنزل.",
   "search": "بحث",
   "explore": "استكشاف",

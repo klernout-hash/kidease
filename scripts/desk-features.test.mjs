@@ -27,10 +27,17 @@ import {
   monthCells,
   parsePickupContacts,
   tourReminderPlan,
+  tourCalendarDayLabel,
 } from "../src/lib/desk-features.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const src = (rel) => readFileSync(join(root, rel), "utf8");
+
+test("calendar day names distinguish adjacent months and announce visit counts", () => {
+  assert.equal(tourCalendarDayLabel("2026-11-01", 0, "en"), "Sunday, November 1, 2026, 0 visits");
+  assert.equal(tourCalendarDayLabel("2026-12-01", 1, "en"), "Tuesday, December 1, 2026, 1 visit");
+  assert.equal(tourCalendarDayLabel("2026-11-12", 2, "fr"), "jeudi 12 novembre 2026, 2 visites");
+});
 
 const FLAGS = [
   ["FEATURE_REVIEW_REPLIES", reviewRepliesEnabled],

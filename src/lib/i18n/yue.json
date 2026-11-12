@@ -1,5 +1,7 @@
 {
   "app": "KidEase",
+  "searchAlertsLoading": "正在載入通知…",
+  "searchAlertsLoadFailed": "未能載入你嘅通知。請再試一次。",
   "tagline": "持牌託兒，離家更近。",
   "search": "搜尋",
   "explore": "探索",

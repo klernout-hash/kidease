@@ -1,5 +1,7 @@
 {
   "app": "KidEase",
+  "searchAlertsLoading": "Benachrichtigungen werden geladen…",
+  "searchAlertsLoadFailed": "Deine Benachrichtigungen konnten nicht geladen werden. Versuche es erneut.",
   "tagline": "Lizenzierte Betreuung, nah am Zuhause.",
   "search": "Suchen",
   "explore": "Entdecken",

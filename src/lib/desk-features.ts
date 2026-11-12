@@ -98,6 +98,21 @@ export function eventsOnDay(events: readonly CalendarEvent[], day: string): Cale
   return events.filter((event) => event.day === day);
 }
 
+/** Full date names keep adjacent months and visit counts clear without visual position. */
+export function tourCalendarDayLabel(day: string, visits: number, locale: string): string {
+  const date = new Date(`${day}T12:00:00Z`);
+  const fr = locale === "fr";
+  const name = date.toLocaleDateString(fr ? "fr-CA" : "en-CA", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+  const count = fr ? `${visits} visite${visits > 1 ? "s" : ""}` : `${visits} visit${visits === 1 ? "" : "s"}`;
+  return `${name}, ${count}`;
+}
+
 const OPEN_TOUR = new Set(["pending", "accepted"]);
 
 export function eventsFromTours(

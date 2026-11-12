@@ -210,7 +210,7 @@ export function ParentDeskPage({ search, loaded }: { search: ParentSearch; loade
               <>
                 <h1 className="font-display text-3xl">{t("familyDocsTitle")}</h1>
                 <p className="mt-3 text-base">{t("familyDocsLead")}</p>
-                <FamilyVaultPanel signedIn />
+                <FamilyVaultPanel signedIn showHeading={false} />
               </>
             ) : null}
             {search.tab === "stories" ? <ParentStoriesDesk /> : null}

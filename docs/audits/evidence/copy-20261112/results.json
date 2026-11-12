@@ -1,0 +1,186 @@
+{
+  "kind": "local synthetic fixture; not live acceptance",
+  "results": [
+    {
+      "width": 390,
+      "locale": "en",
+      "look": "classic",
+      "theme": "light",
+      "calendar": "date/count/keyboard/state passed",
+      "huawei": "available/no link passed",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "locale": "en",
+      "look": "classic",
+      "theme": "dark",
+      "calendar": "date/count/keyboard/state passed",
+      "huawei": "available/no link passed",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "locale": "en",
+      "look": "clean",
+      "theme": "light",
+      "calendar": "date/count/keyboard/state passed",
+      "huawei": "available/no link passed",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "locale": "en",
+      "look": "clean",
+      "theme": "dark",
+      "calendar": "date/count/keyboard/state passed",
+      "huawei": "available/no link passed",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "locale": "fr",
+      "look": "classic",
+      "theme": "light",
+      "calendar": "date/count/keyboard/state passed",
+      "huawei": "available/no link passed",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "locale": "fr",
+      "look": "classic",
+      "theme": "dark",
+      "calendar": "date/count/keyboard/state passed",
+      "huawei": "available/no link passed",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "locale": "fr",
+      "look": "clean",
+      "theme": "light",
+      "calendar": "date/count/keyboard/state passed",
+      "huawei": "available/no link passed",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "locale": "fr",
+      "look": "clean",
+      "theme": "dark",
+      "calendar": "date/count/keyboard/state passed",
+      "huawei": "available/no link passed",
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "locale": "en",
+      "look": "classic",
+      "theme": "light",
+      "calendar": "date/count/keyboard/state passed",
+      "huawei": "available/no link passed",
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "locale": "en",
+      "look": "classic",
+      "theme": "dark",
+      "calendar": "date/count/keyboard/state passed",
+      "huawei": "available/no link passed",
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "locale": "en",
+      "look": "clean",
+      "theme": "light",
+      "calendar": "date/count/keyboard/state passed",
+      "huawei": "available/no link passed",
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "locale": "en",
+      "look": "clean",
+      "theme": "dark",
+      "calendar": "date/count/keyboard/state passed",
+      "huawei": "available/no link passed",
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "locale": "fr",
+      "look": "classic",
+      "theme": "light",
+      "calendar": "date/count/keyboard/state passed",
+      "huawei": "available/no link passed",
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "locale": "fr",
+      "look": "classic",
+      "theme": "dark",
+      "calendar": "date/count/keyboard/state passed",
+      "huawei": "available/no link passed",
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "locale": "fr",
+      "look": "clean",
+      "theme": "light",
+      "calendar": "date/count/keyboard/state passed",
+      "huawei": "available/no link passed",
+      "overflow": false
+    },
+    {
+      "width": 1280,
+      "locale": "fr",
+      "look": "clean",
+      "theme": "dark",
+      "calendar": "date/count/keyboard/state passed",
+      "huawei": "available/no link passed",
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "locale": "en",
+      "documents": "one heading/on+off passed",
+      "invitation": "7day wording passed",
+      "alerts": "loading/error/retry/empty passed",
+      "account": "scheduled wording/support/no delete passed",
+      "hours": "completed/empty passed"
+    },
+    {
+      "width": 390,
+      "locale": "fr",
+      "documents": "one heading/on+off passed",
+      "invitation": "7day wording passed",
+      "alerts": "loading/error/retry/empty passed",
+      "account": "scheduled wording/support/no delete passed",
+      "hours": "completed/empty passed"
+    },
+    {
+      "width": 1280,
+      "locale": "en",
+      "documents": "one heading/on+off passed",
+      "invitation": "7day wording passed",
+      "alerts": "loading/error/retry/empty passed",
+      "account": "scheduled wording/support/no delete passed",
+      "hours": "completed/empty passed"
+    },
+    {
+      "width": 1280,
+      "locale": "fr",
+      "documents": "one heading/on+off passed",
+      "invitation": "7day wording passed",
+      "alerts": "loading/error/retry/empty passed",
+      "account": "scheduled wording/support/no delete passed",
+      "hours": "completed/empty passed"
+    }
+  ],
+  "errors": []
+}

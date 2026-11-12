@@ -39,7 +39,7 @@ function vaultError(code: string, t: (key: CopyKey) => string) {
   return t("familyDocsFailed");
 }
 
-export function FamilyVaultPanel({ signedIn }: { signedIn: boolean }) {
+export function FamilyVaultPanel({ signedIn, showHeading = true }: { signedIn: boolean; showHeading?: boolean }) {
   const { t, locale } = useCopy();
   const fr = locale === "fr";
   const [documents, setDocuments] = useState<Doc[]>([]);
@@ -127,8 +127,8 @@ export function FamilyVaultPanel({ signedIn }: { signedIn: boolean }) {
   if (!enabled) {
     return (
       <section className="mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="family-vault-off">
-        <h2 className="font-display text-xl">{t("familyDocsTitle")}</h2>
-        <p className="mt-2 text-sm text-muted">{t("familyDocsLead")}</p>
+        {showHeading ? <h2 className="font-display text-xl">{t("familyDocsTitle")}</h2> : null}
+        {showHeading ? <p className="mt-2 text-sm text-muted">{t("familyDocsLead")}</p> : null}
         <p className="mt-2 text-sm text-muted">{fr ? "Cette étape est éteinte." : "This step is off."}</p>
         <Button className="mt-4" asChild>
           <Link to="/">{t("navHome")}</Link>
@@ -139,8 +139,8 @@ export function FamilyVaultPanel({ signedIn }: { signedIn: boolean }) {
 
   return (
     <section className="mt-8 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border" data-ke="family-vault">
-      <h2 className="font-display text-xl">{t("familyDocsTitle")}</h2>
-      <p className="mt-2 text-sm text-muted">{t("familyDocsLead")}</p>
+      {showHeading ? <h2 className="font-display text-xl">{t("familyDocsTitle")}</h2> : null}
+      {showHeading ? <p className="mt-2 text-sm text-muted">{t("familyDocsLead")}</p> : null}
       <p className="mt-2 text-sm text-muted">{t("familyDocsPrivate")}</p>
       {!signedIn ? (
         <Button className="mt-4" asChild>
