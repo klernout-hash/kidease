@@ -139,7 +139,7 @@ export function SmartMatchEntry({ inline = false, quiet = false }: { inline?: bo
   const button = quiet ? (
     <button
       type="button"
-      className="inline-flex min-h-11 items-center px-1 text-sm font-medium text-muted underline-offset-4 hover:text-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation"
+      className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center px-1 text-sm font-medium text-muted underline-offset-4 hover:text-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation"
       data-ke="smart-match-open"
       data-flag={on ? "on" : "off"}
       onClick={() => setOpen(true)}

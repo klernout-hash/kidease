@@ -36,9 +36,9 @@ const SHELL_FRAME =
   "flex min-h-dvh min-h-[100dvh] w-full min-w-0 flex-col bg-bg pl-[var(--ke-safe-left,env(safe-area-inset-left))] pr-[var(--ke-safe-right,env(safe-area-inset-right))] text-fg";
 const APP_TAB_PAD = "[[data-channel=app]_&]:pb-[calc(4.75rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]";
 const HEADER_BAR =
-  "ke-site-header sticky top-[var(--ke-view-as-h,0px)] z-40 border-b border-slate-200/80 bg-bg/95 pt-[var(--ke-safe-top,env(safe-area-inset-top))] backdrop-blur-md dark:border-white/15";
+  "ke-site-header sticky top-[var(--ke-view-as-h,0px)] z-40 border-b border-border bg-bg/95 pt-[var(--ke-safe-top,env(safe-area-inset-top))] backdrop-blur-md";
 const HEADER_CTA =
-  "ke-web-only inline-flex min-h-11 max-w-[9.5rem] touch-manipulation items-center justify-center gap-1.5 whitespace-normal rounded-full border border-primary px-2.5 text-center text-[13px] font-medium leading-tight text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 active:scale-[0.99] sm:max-w-none sm:px-3 sm:text-sm";
+  "ke-web-only inline-flex min-h-[44px] max-w-[9.5rem] touch-manipulation items-center justify-center gap-1.5 whitespace-normal rounded-full border border-primary px-2.5 text-center text-[13px] font-medium leading-tight text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 active:scale-[0.99] sm:max-w-none sm:px-3 sm:text-sm";
 
 export function Shell({ children }: { children: ReactNode }) {
   const { t, locale } = useCopy();
@@ -122,7 +122,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <KeyboardInset />
         <header className={HEADER_BAR}>
           <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
-            <Link to={homeTo} className="shrink-0" aria-label="KidEase">
+            <Link to={homeTo} className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center" aria-label="KidEase">
               <BrandMark size="sm" />
             </Link>
           </div>
@@ -140,7 +140,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <KeyboardInset />
         <header className={HEADER_BAR}>
           <div className="ke-gutter mx-auto flex min-h-16 max-w-6xl items-center py-2">
-            <Link to={homeTo} className="shrink-0" aria-label="KidEase">
+            <Link to={homeTo} className="inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center" aria-label="KidEase">
               <BrandMark size="sm" />
             </Link>
             <div className="ml-auto">
@@ -165,7 +165,7 @@ export function Shell({ children }: { children: ReactNode }) {
         <div className="ke-gutter relative mx-auto min-w-0 max-w-6xl">
           <div className="flex h-14 w-full min-w-0 items-center gap-3 max-md:h-auto max-md:min-h-14 max-md:gap-2 md:h-16">
             {menuLeaf ? <MenuLeafBack /> : null}
-            <Link to={homeTo} className="relative z-20 shrink-0" aria-label="KidEase">
+            <Link to={homeTo} className="relative z-20 inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center" aria-label="KidEase">
               <BrandMark size="sm" />
             </Link>
             {barePath === "/" || barePath === "/search" ? (
@@ -187,7 +187,7 @@ export function Shell({ children }: { children: ReactNode }) {
                 </Link>
               </div>
             ) : null}
-            <div className="relative z-20 ml-auto flex items-center gap-2 bg-bg pl-1 max-md:min-w-0 max-md:max-w-full max-md:gap-1.5 md:shrink-0 [[data-channel=website]_&]:flex">
+            <div className="relative z-20 ml-auto flex items-center gap-2 bg-bg pl-1 max-md:min-w-0 max-md:max-w-full max-md:gap-[8px] md:shrink-0 [[data-channel=website]_&]:flex">
               {!headerUser || (!viewingGuest && chrome.role === "parent") ? (
                 <Link
                   to={localePath("/search", locale)}
@@ -202,7 +202,7 @@ export function Shell({ children }: { children: ReactNode }) {
                 <Link
                   to={localePath("/claim", locale)}
                   data-ke="list-your-daycare"
-                  className="ke-web-only inline-flex min-h-11 max-w-[9.5rem] touch-manipulation items-center justify-center gap-1.5 whitespace-normal rounded-full border border-primary px-2.5 text-center text-[13px] font-medium leading-tight text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 active:scale-[0.99] sm:max-w-none sm:px-3 sm:text-sm"
+                  className="ke-web-only inline-flex min-h-[44px] max-w-[9.5rem] touch-manipulation items-center justify-center gap-1.5 whitespace-normal rounded-full border border-primary px-2.5 text-center text-[13px] font-medium leading-tight text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 active:scale-[0.99] sm:max-w-none sm:px-3 sm:text-sm"
                 >
                   <Building2 className="size-4 shrink-0" aria-hidden />
                   {t("navForDaycares")}
@@ -211,7 +211,7 @@ export function Shell({ children }: { children: ReactNode }) {
               <HeaderAccount />
               <button
                 type="button"
-                className="ke-web-only relative grid size-12 shrink-0 place-items-center rounded-full text-fg transition-colors duration-150 ease-out hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation [[data-channel=website]_&]:grid"
+                className="ke-web-only relative grid size-12 min-h-[44px] min-w-[44px] shrink-0 place-items-center rounded-full text-fg transition-colors duration-150 ease-out hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation [[data-channel=website]_&]:grid"
                 aria-label={t("menu")}
                 aria-expanded={open}
                 aria-controls="ke-nav-drawer"
@@ -258,7 +258,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <p className="text-sm text-fg">{t("guestViewBanner")}</p>
           <a
             href={hideAdmin ? NATIVE_ADMIN_NOTE_PATH : "/admin"}
-            className="mt-2 inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-fg"
+            className="mt-2 inline-flex min-h-[44px] items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-fg"
             onClick={() => clearGuestViewCookie()}
           >
             {t("guestViewExit")}
@@ -273,7 +273,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <p className="text-sm text-fg">{t("accountRestoreBody")}</p>
           <button
             type="button"
-            className="mt-2 inline-flex min-h-11 items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-fg"
+            className="mt-2 inline-flex min-h-[44px] items-center rounded-full bg-primary px-4 text-sm font-medium text-primary-fg"
             onClick={() => {
               void restoreMyAccount()
                 .then(() => window.location.reload())
@@ -312,7 +312,7 @@ export function Shell({ children }: { children: ReactNode }) {
           {govBrowsing ? (
             <p className="ke-gutter flex flex-wrap items-center justify-between gap-2 bg-surface py-2 text-sm" data-ke="gov-public-browse">
               <span>{locale === "fr" ? "Fiches publiques permises, partout au Canada." : "Public licensed listings, all of Canada."}</span>
-              <a className="inline-flex min-h-11 items-center font-semibold text-primary" href={locale === "fr" ? "/fr/gov" : "/gov"}>
+              <a className="inline-flex min-h-[44px] items-center font-semibold text-primary" href={locale === "fr" ? "/fr/gov" : "/gov"}>
                 {locale === "fr" ? "Retour au bureau" : "Return to the government desk"}
               </a>
             </p>

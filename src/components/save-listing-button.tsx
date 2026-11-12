@@ -17,7 +17,6 @@ import {
   readShortlistCache,
   SHORTLIST_EVENT,
   stashPendingSave,
-  writeShortlistCache,
 } from "@/lib/shortlist";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
@@ -25,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { captureRankingEvent } from "@/lib/ranking/events";
 import { rankingContextFor } from "@/lib/ranking/context";
 
-const HEART_SAVED = "#FF385C";
+const HEART_SAVED = "var(--color-danger)";
 
 export type SaveListingAppearance = "photo" | "ghost" | "bar";
 
@@ -44,7 +43,7 @@ export function SaveListingButton({
   daycareId: string;
   nextPath?: string;
   appearance?: SaveListingAppearance;
-  /** White chip on listing photos. Listing hero keeps the plain overlay heart. */
+  /** Full chip on listing photos; the hero uses a quieter surface backing. */
   framed?: boolean;
   className?: string;
 }) {
@@ -152,14 +151,14 @@ export function SaveListingButton({
         className={cn(
           appearance === "photo"
             ? cn(
-                "pointer-events-auto absolute right-2 top-2 z-20 grid place-items-center rounded-full",
-                framed ? "size-12 bg-white ring-1 ring-black/10" : "size-11",
+                "pointer-events-auto absolute right-2 top-2 z-20 grid min-h-[44px] min-w-[44px] place-items-center rounded-full text-fg ring-1 ring-border",
+                framed ? "size-12 bg-surface" : "size-11 bg-surface/90",
               )
-            : "inline-flex min-h-11 min-w-11 items-center justify-center",
+            : "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-fg",
           className,
         )}
       >
-        <Heart className={appearance === "photo" ? "size-7 text-[#1a1a1a]" : "size-4"} />
+        <Heart className={appearance === "photo" ? "size-7 text-fg" : "size-4 text-fg"} aria-hidden />
       </a>
     );
   }
@@ -175,7 +174,7 @@ export function SaveListingButton({
         className={className}
         disabled={busy}
       >
-        <Heart className={saved ? "size-4 fill-fg" : "size-4"} />
+        <Heart className={cn("size-4", saved && "fill-current text-danger")} aria-hidden />
       </Button>
     );
   }
@@ -192,7 +191,7 @@ export function SaveListingButton({
         className={className}
         disabled={busy}
       >
-        <Heart className={cn("size-5", saved && "fill-fg")} />
+        <Heart className={cn("size-5", saved && "fill-current text-danger")} aria-hidden />
       </Button>
     );
   }
@@ -204,10 +203,10 @@ export function SaveListingButton({
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => void onSave(e)}
       className={cn(
-        "pointer-events-auto absolute right-2 top-2 z-20 grid place-items-center rounded-full",
+        "pointer-events-auto absolute right-2 top-2 z-20 grid min-h-[44px] min-w-[44px] place-items-center rounded-full ring-1 ring-border",
         framed
-          ? "size-12 bg-white ring-1 ring-black/10"
-          : "size-11",
+          ? "size-12 bg-surface"
+          : "size-11 bg-surface/90",
         className,
       )}
       aria-label={label}
@@ -216,15 +215,17 @@ export function SaveListingButton({
     >
       {framed ? (
         <Heart
-          className={cn("size-7", saved ? "text-[#FF385C]" : "text-[#1a1a1a]")}
+          className={cn("size-7", saved ? "text-danger" : "text-fg")}
           strokeWidth={saved ? 2 : 2.25}
           fill={saved ? HEART_SAVED : "none"}
+          aria-hidden
         />
       ) : (
         <Heart
-          className={cn("size-[22px] drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]", saved ? "text-[#FF385C]" : "text-white")}
+          className={cn("size-[22px]", saved ? "text-danger" : "text-fg")}
           strokeWidth={1.7}
-          fill={saved ? HEART_SAVED : "rgba(0,0,0,0.28)"}
+          fill={saved ? HEART_SAVED : "none"}
+          aria-hidden
         />
       )}
     </button>

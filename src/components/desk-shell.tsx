@@ -35,8 +35,8 @@ function navClass(on: boolean) {
     // inline-flex so <a> deep-links (Messages, Find care) match <button> pills.
     // Anchors are display:inline by default: min-height/ring then collapse into
     // a vertical sliver beside the label.
-    "inline-flex box-border h-11 min-h-11 shrink-0 items-center justify-center whitespace-nowrap rounded-full px-3 text-sm leading-none no-underline hover:no-underline",
-    "md:h-auto md:min-h-0 md:flex-col md:items-stretch md:justify-start md:whitespace-normal md:rounded-lg md:px-2.5 md:py-1.5 md:leading-snug",
+    "inline-flex box-border h-11 min-h-[44px] min-w-[44px] shrink-0 items-center justify-center whitespace-nowrap rounded-full px-3 text-sm leading-none no-underline hover:no-underline",
+    "md:h-auto md:min-h-[44px] md:flex-col md:items-stretch md:justify-start md:whitespace-normal md:rounded-lg md:px-2.5 md:py-1.5 md:leading-snug",
     on
       ? "bg-primary text-primary-fg ring-1 ring-primary"
       : "bg-transparent text-muted ring-1 ring-border hover:text-fg md:ring-0 md:hover:bg-surface",
@@ -64,9 +64,9 @@ function DeskNavFace({
   const { label, hint } = deskItemText(item, t);
   return (
     <>
-      <span className="flex w-full items-center gap-2 font-medium leading-none">
+      <span className="flex w-full min-w-0 items-center gap-2 font-medium leading-snug">
         <DeskItemIcon name={item.icon} className="size-3.5 shrink-0" />
-        <span className="min-w-0 flex-1">{label}</span>
+        <span className="min-w-0 flex-1 break-words">{label}</span>
         <CountBadge count={count} />
       </span>
       {hint ? (
@@ -216,7 +216,7 @@ export function DeskShell({
                   <DeskSwitcher />
                 </div>
               ) : null}
-              <nav data-ke="desk-desktop-nav" className="mt-2 hidden flex-col gap-0.5 md:flex">
+              <nav data-ke="desk-desktop-nav" className="mt-2 hidden flex-col gap-[8px] md:flex">
                 {visibleDeskGroups(desk, allItems).map(({ group, items }) => (
                   <details
                     key={group.id}
@@ -224,10 +224,10 @@ export function DeskShell({
                     onToggle={(event) => writeDeskGroupOpen(desk, group.id, event.currentTarget.open)}
                     className="py-0.5"
                   >
-                    <summary className="mt-3 flex min-h-11 cursor-pointer list-none items-center rounded-lg border-b border-border px-2.5 pb-1 text-sm font-extrabold uppercase tracking-[0.14em] text-slate-950 dark:text-white [&::-webkit-details-marker]:hidden">
+                    <summary className="mt-3 flex min-h-[44px] cursor-pointer list-none items-center break-words rounded-lg border-b border-border px-2.5 pb-1 text-sm font-extrabold uppercase tracking-[0.14em] text-fg [&::-webkit-details-marker]:hidden">
                       <span>{group.labelKey ? t(group.labelKey) : group.label}</span>
                     </summary>
-                    <div className="flex flex-col gap-0.5">
+                    <div className="mt-[8px] flex flex-col gap-[8px]">
                       {items.map((item) => {
                         const on = itemIsOn(item, active, pathname);
                         const count = attentionForItem(session?.attention, item.id);

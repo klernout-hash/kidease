@@ -45,7 +45,7 @@ export function AppearanceControl({
       <label
         className={cn(
           "inline-flex shrink-0 items-center justify-center overflow-visible",
-          compact ? "h-8 min-w-[5.5rem]" : "h-11 min-w-[7.25rem]",
+          compact ? "h-8 min-w-[5.5rem]" : "h-11 min-h-[44px] min-w-[7.25rem]",
           className,
         )}
       >
@@ -57,7 +57,7 @@ export function AppearanceControl({
             "ke-lang-select w-full cursor-pointer rounded-full border-0 bg-transparent text-center font-medium text-muted hover:text-fg",
             compact
               ? "ke-header-chrome h-8 min-h-8 min-w-[5.5rem] px-2.5 text-[11px] leading-none"
-              : "h-11 min-h-11 px-3.5 text-[15px]",
+              : "h-11 min-h-[44px] px-3.5 text-[15px]",
           )}
           aria-label={t("appearance")}
         >

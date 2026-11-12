@@ -6,6 +6,7 @@ import { useRoleChrome } from "@/components/role-chrome";
 import { EmptyState } from "@/components/empty-state";
 import { RoleUpgradeCard } from "@/components/role-upgrade-card";
 import { StatusBadge } from "@/components/status-badge";
+import { Button } from "@/components/ui/button";
 import { parentHomeCardEligible, showHomeUpgradeCard } from "@/lib/upgrade-prompt";
 import { showsParentBrowseActions } from "@/lib/role-access";
 import { spotOfferCopy } from "@/lib/spot-offer-copy";
@@ -77,9 +78,9 @@ export function ParentHome({
         />
       ) : null}
       <section data-ke="parent-home-saved">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-[8px]">
           <h2 className="font-display text-xl">{t("parentHomeSaved")}</h2>
-          <Link to={parentPath} search={{ tab: "saved" }} className="text-sm font-medium text-primary">
+          <Link to={parentPath} search={{ tab: "saved" }} className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md px-2 text-sm font-medium text-primary">
             {t("saved")}
           </Link>
         </div>
@@ -113,9 +114,9 @@ export function ParentHome({
         )}
       </section>
       <section data-ke="parent-home-waiting">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-[8px]">
           <h2 className="font-display text-xl">{t("parentHomeRequests")}</h2>
-          <Link to={parentPath} search={{ tab: "requests" }} className="text-sm font-medium text-primary">
+          <Link to={parentPath} search={{ tab: "requests" }} className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md px-2 text-sm font-medium text-primary">
             {t("parentHomeSeeAll")}
           </Link>
         </div>
@@ -149,7 +150,7 @@ export function ParentHome({
           )}
         </div>
       </section>
-      <form action="/search" method="get" className="flex gap-2" data-ke="parent-home-search">
+      <form action="/search" method="get" className="flex gap-[8px]" data-ke="parent-home-search">
         <label className="min-w-0 flex-1">
           <span className="sr-only">{t("parentHomeSearchLabel")}</span>
           <input
@@ -159,9 +160,9 @@ export function ParentHome({
             autoComplete="off"
           />
         </label>
-        <button type="submit" className="min-h-12 shrink-0 rounded-full bg-primary px-4 text-sm font-medium text-primary-fg">
+        <Button type="submit" className="shrink-0 rounded-full px-4">
           {t("search")}
-        </button>
+        </Button>
       </form>
       <AreaWaitlistForm returnTo="/parent" />
 

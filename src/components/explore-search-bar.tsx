@@ -432,7 +432,7 @@ export function ExploreSearchBar({
         <div className={cn(segmentClass("when", 1), prominent && "lg:min-w-0")}>
           <button
             type="button"
-            className="w-full min-w-0 text-left"
+            className="min-h-[44px] w-full min-w-0 text-left"
             aria-expanded={active === "when"}
             aria-controls={whenPanelId}
             onClick={() => setActive((cur) => (cur === "when" ? null : "when"))}

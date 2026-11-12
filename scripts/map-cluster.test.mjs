@@ -819,7 +819,7 @@ test("a camera settle batches every missing tile into one request and retries a 
 
   const view = read("src/components/map-view.tsx");
   const server = read("src/lib/server/map-pins.ts");
-  assert.match(view, /mapPinTiles\(\{ data: \{ zoom: zoomNow, tiles: missing \} \}\)/);
+  assert.match(view, /mapPinTiles\(\{ data: \{ zoom: zoomNow, tiles: missing \}, signal \}\)/);
   assert.match(view, /MAP_FETCH_DEBOUNCE_MS/);
   assert.match(server, /loadMapPinTileBatch/);
   assert.match(server, /unionMapTiles/);

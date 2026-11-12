@@ -960,7 +960,7 @@ export function LoginScreen({
               <div className="flex flex-wrap gap-3 text-sm" data-ke="login-recovery">
                 <button
                   type="button"
-                  className="min-h-11 font-medium text-primary underline-offset-4 hover:underline"
+                  className="inline-flex min-h-[44px] min-w-[44px] items-center font-medium text-primary underline-offset-4 hover:underline"
                   onClick={() => {
                     attempt.current += 1;
                     continued.current = true;
@@ -975,12 +975,12 @@ export function LoginScreen({
                 </button>
                 <button
                   type="button"
-                  className="min-h-11 font-medium text-muted underline-offset-4 hover:underline"
+                  className="inline-flex min-h-[44px] min-w-[44px] items-center font-medium text-muted underline-offset-4 hover:underline"
                   onClick={() => openDesk()}
                 >
                   {dest.startsWith("/search") ? t("loginBackExplore") : dest.startsWith("/daycare/") ? t("loginBackListing") : t("loginOpenDesk")}
                 </button>
-                <a href="/parent" className="min-h-11 font-medium text-fg underline underline-offset-4 hover:underline">
+                <a href="/parent" className="inline-flex min-h-[44px] min-w-[44px] items-center font-medium text-fg underline underline-offset-4 hover:underline">
                   {t("loginParentDesk")}
                 </a>
               </div>
@@ -1018,7 +1018,7 @@ export function LoginScreen({
               <Link
                 to={forgotTo}
                 search={{ email: (operator ? OPERATOR_EMAIL : emailLink).trim() }}
-                className="text-[13px] font-medium text-muted underline-offset-4 hover:text-fg hover:underline"
+                className="inline-flex min-h-[44px] min-w-[44px] items-center text-[13px] font-medium text-muted underline-offset-4 hover:text-fg hover:underline"
               >
                 {t("forgotPassword")}
               </Link>
@@ -1030,7 +1030,7 @@ export function LoginScreen({
           {!operator && !pickingRole ? (
           <button
             type="button"
-            className="mt-4 text-sm text-muted underline-offset-4 hover:underline"
+            className="mt-4 inline-flex min-h-[44px] min-w-[44px] items-center text-sm text-muted underline-offset-4 hover:underline"
             onClick={() => setMode(mode === "up" ? "in" : "up")}
           >
             {mode === "up" ? t("haveAccount") : t("needAccount")}
@@ -1038,7 +1038,7 @@ export function LoginScreen({
           ) : null}
           </>
           )}
-          <p className="mt-6 text-center text-xs text-subtle">
+          <p className="mt-6 flex flex-wrap items-center justify-center gap-x-[8px] text-center text-xs text-subtle">
             <a
               href={authBackFallback({ next: search.next, locale: locale === "fr" ? "fr" : "en" })}
               data-ke-auth-back=""
@@ -1050,20 +1050,20 @@ export function LoginScreen({
                 }
                 window.location.replace(currentAuthBackFallback(search.next, locale === "fr" ? "fr" : "en"));
               }}
-              className="underline-offset-4 hover:underline"
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center underline-offset-4 hover:underline"
             >
               {t("back")}
             </a>
             {" · "}
-            <Link to="/privacy" className="underline-offset-4 hover:underline">
+            <Link to="/privacy" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center underline-offset-4 hover:underline">
               {t("privacy")}
             </Link>
             {" · "}
-            <Link to="/terms" className="underline-offset-4 hover:underline">
+            <Link to="/terms" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center underline-offset-4 hover:underline">
               {t("terms")}
             </Link>
             {" · "}
-            <Link to="/cookies" className="underline-offset-4 hover:underline">
+            <Link to="/cookies" className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center underline-offset-4 hover:underline">
               {t("cookies")}
             </Link>
           </p>

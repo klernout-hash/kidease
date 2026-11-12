@@ -148,12 +148,12 @@ export function SiteFooter() {
             <Column id="kidease" title={t("app")} links={footerLinks(linksForRole(FOOTER_COLUMNS.kidease, chrome.role, "kidease", chrome.pending || chrome.role !== "guest"), hideCommerce, hidePlans)} locale={locale} t={t} />
           </nav>
           <div className="mt-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 text-sm">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-[8px]">
               {FOOTER_LEGAL.map((link) => (
                 <Link
                   key={link.to}
                   to={localePath(link.to, locale)}
-                  className="ke-footer-link inline-flex min-h-11 items-center"
+                  className="ke-footer-link inline-flex min-h-[44px] items-center"
                 >
                   {footerLinkLabel(link, t, locale)}
                 </Link>
@@ -165,7 +165,7 @@ export function SiteFooter() {
             <p className="mt-2">
               <Link
                 to={fr ? "/fr/gov/login" : "/gov/login"}
-                className="ke-footer-link inline-flex min-h-11 items-center text-sm"
+                className="ke-footer-link inline-flex min-h-[44px] items-center text-sm"
               >
                 {fr ? "Pour les gouvernements" : "For governments"}
               </Link>
@@ -188,7 +188,7 @@ export function SiteFooter() {
               </p>
               <p className="ke-footer-legal-note">{t("neverSell")}</p>
               <p className="ke-footer-legal-note">
-                <button type="button" data-ke="cookie-settings-link" className="ke-footer-link min-h-11 underline-offset-4 hover:underline" onClick={openCookieSettings}>
+                <button type="button" data-ke="cookie-settings-link" className="ke-footer-link min-h-[44px] underline-offset-4 hover:underline" onClick={openCookieSettings}>
                   {t("cookieSettings")}
                 </button>
               </p>
@@ -196,7 +196,7 @@ export function SiteFooter() {
                 {companyOperatorLine(fr ? "fr" : "en")}
               </p>
             </div>
-            <div className="ke-footer-legal-meta flex flex-row flex-wrap items-center justify-end gap-1">
+            <div className="ke-footer-legal-meta flex flex-row flex-wrap items-center justify-end gap-[8px]">
               <ShareKidEaseButton appearance="labeled" className="rounded-full border border-border px-3" />
               <HeaderSocial always />
             </div>

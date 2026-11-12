@@ -173,7 +173,7 @@ test("smart match stays on the page and does not send places to the model", () =
   const claim = read("src/components/claim-listing-cta.tsx");
   assert.match(claim, /source === "card"/);
   assert.match(claim, /rounded-full/);
-  assert.match(claim, /min-h-8/);
+  assert.match(claim, /min-h-\[44px\] min-w-\[44px\]/);
   assert.match(claim, /max-w-full/);
   assert.doesNotMatch(tx("en", "smartMatchCta"), /—/);
   assert.doesNotMatch(tx("fr", "smartMatchCta"), /—/);

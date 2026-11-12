@@ -83,7 +83,7 @@ test("guest visual cards use the compact photo layout with live, fee, and claim"
   const card = src("src/components/daycare-card.tsx");
   assert.match(card, /data-ke="visual-card"/);
   assert.match(card, /aspect-\[4\/3\]/);
-  assert.match(card, /rounded-\[14px\]/);
+  assert.match(card, /rounded-md/);
   assert.match(card, /data-ke="card-live-pill"/);
   assert.match(card, /SubsidyPill/);
   assert.match(card, /publicBrowseClaim/);

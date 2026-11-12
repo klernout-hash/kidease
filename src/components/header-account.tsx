@@ -27,7 +27,7 @@ export function HeaderAccount() {
   const showAvatar = Boolean(headerUser) || (chrome.signedIn && !chrome.pending);
 
   return (
-    <div className="flex items-center gap-0.5" data-ke="header-account">
+    <div className="flex items-center gap-[8px]" data-ke="header-account">
       {showAvatar ? <NotificationBell /> : null}
       {showAvatar ? (
         <Link
@@ -35,7 +35,7 @@ export function HeaderAccount() {
           search={accountSearch(sticky)}
           data-ke="header-avatar"
           aria-label={t("menuAccountSettings")}
-          className="grid size-12 place-items-center rounded-full touch-manipulation"
+          className="grid size-12 min-h-[44px] min-w-[44px] shrink-0 place-items-center rounded-full touch-manipulation"
         >
           <span className="sr-only">{t("menuAccountSettings")}</span>
           {headerUser ? (
@@ -56,7 +56,7 @@ export function HeaderAccount() {
           to={localePath("/login", locale)}
           data-ke="header-login"
           aria-label={t("logIn")}
-          className="grid size-12 place-items-center rounded-full touch-manipulation"
+          className="grid size-12 min-h-[44px] min-w-[44px] shrink-0 place-items-center rounded-full touch-manipulation"
         >
           <span className="grid size-9 place-items-center rounded-full bg-surface text-primary ring-2 ring-primary/80">
             <UserRound className="size-4" strokeWidth={1.7} aria-hidden />

@@ -189,6 +189,7 @@ function ListingAnchor({
   return (
     <Link
       to={localePath(`/daycare/${slug}`, locale)}
+      preload="intent"
       search={search}
       hash={hash}
       className={className}
@@ -344,7 +345,7 @@ export const DaycareCard = memo(function DaycareCard({
               eager={eager}
               priority={priority}
               claim={offerClaim}
-              rounded="rounded-[14px]"
+              rounded="rounded-md"
               className="aspect-[4/3]"
             />
           </ListingAnchor>
@@ -424,13 +425,13 @@ export const DaycareCard = memo(function DaycareCard({
             <CardMicroPills item={item} />
           </div>
         </ListingAnchor>
-        <div className="mt-1 flex w-full min-w-0 flex-wrap items-center gap-2">
+        <div className="mt-1 flex w-full min-w-0 flex-wrap items-center gap-[8px]">
           {parentActions ? (
             <ListingAnchor
               slug={item.slug}
               search={{ ask: "tour" }}
               data-ke="card-book-tour"
-              className="relative z-10 inline-flex min-h-11 items-center justify-center whitespace-normal rounded-[14px] bg-primary px-3 text-center text-[13px] font-semibold leading-tight text-primary-fg no-underline touch-manipulation"
+              className="relative z-10 inline-flex min-h-[44px] min-w-[44px] items-center justify-center whitespace-normal rounded-md bg-primary px-3 text-center text-[13px] font-semibold leading-tight text-primary-fg no-underline touch-manipulation"
               onClick={(e) => e.stopPropagation()}
             >
               {t("bookTour")}
@@ -441,7 +442,7 @@ export const DaycareCard = memo(function DaycareCard({
               slug={item.slug}
               search={{ ask: "info" }}
               data-ke="card-request-info"
-              className="relative z-10 inline-flex min-h-11 items-center text-[13px] font-semibold text-primary no-underline touch-manipulation"
+              className="relative z-10 inline-flex min-h-[44px] min-w-[44px] items-center text-[13px] font-semibold text-primary no-underline touch-manipulation"
               onClick={(e) => e.stopPropagation()}
             >
               {t("cardRequestInfo")}
@@ -452,14 +453,14 @@ export const DaycareCard = memo(function DaycareCard({
               slug={item.slug}
               hash="join-waitlist"
               data-ke="card-join-waitlist"
-              className="relative z-10 inline-flex min-h-11 items-center justify-center rounded-full bg-surface px-3 text-center text-[13px] font-semibold leading-tight text-fg no-underline ring-1 ring-border touch-manipulation"
+              className="relative z-10 inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-surface px-3 text-center text-[13px] font-semibold leading-tight text-fg no-underline ring-1 ring-border touch-manipulation"
               onClick={(e) => e.stopPropagation()}
             >
               {joinLabel}
             </ListingAnchor>
           ) : null}
           {offerClaim ? (
-            <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10 min-h-11" />
+            <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10 min-h-[44px] min-w-[44px]" />
           ) : null}
         </div>
       </article>
@@ -592,13 +593,13 @@ export const DaycareCard = memo(function DaycareCard({
           <TrustSignals item={item} surface="card" compact />
         </div>
       ) : null}
-      <div className="mt-1.5 flex w-full min-w-0 flex-wrap items-center gap-2">
+      <div className="mt-1.5 flex w-full min-w-0 flex-wrap items-center gap-[8px]">
         {parentActions ? (
           <ListingAnchor
             slug={item.slug}
             search={{ ask: "tour" }}
             data-ke="card-book-tour"
-            className="relative z-10 inline-flex min-h-11 appearance-none items-center justify-center whitespace-normal rounded-[14px] border-0 bg-primary px-3 text-center text-[13px] font-semibold leading-tight text-primary-fg no-underline shadow-none touch-manipulation [-moz-appearance:none]"
+            className="relative z-10 inline-flex min-h-[44px] min-w-[44px] appearance-none items-center justify-center whitespace-normal rounded-md border-0 bg-primary px-3 text-center text-[13px] font-semibold leading-tight text-primary-fg no-underline shadow-none touch-manipulation [-moz-appearance:none]"
             onClick={(e) => e.stopPropagation()}
           >
             {t("bookTour")}
@@ -609,7 +610,7 @@ export const DaycareCard = memo(function DaycareCard({
             slug={item.slug}
             search={{ ask: "info" }}
             data-ke="card-request-info"
-            className="relative z-10 inline-flex min-h-11 items-center text-[13px] font-semibold text-primary no-underline touch-manipulation"
+            className="relative z-10 inline-flex min-h-[44px] min-w-[44px] items-center text-[13px] font-semibold text-primary no-underline touch-manipulation"
             onClick={(e) => e.stopPropagation()}
           >
             {t("cardRequestInfo")}
@@ -620,14 +621,14 @@ export const DaycareCard = memo(function DaycareCard({
             slug={item.slug}
             hash="join-waitlist"
             data-ke="card-join-waitlist"
-            className="relative z-10 inline-flex min-h-11 items-center justify-center rounded-full bg-surface px-3 text-center text-[13px] font-semibold leading-tight text-fg no-underline ring-1 ring-border touch-manipulation"
+            className="relative z-10 inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full bg-surface px-3 text-center text-[13px] font-semibold leading-tight text-fg no-underline ring-1 ring-border touch-manipulation"
             onClick={(e) => e.stopPropagation()}
           >
             {joinLabel}
           </ListingAnchor>
         ) : null}
         {offerClaim ? (
-          <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10 min-h-11" />
+          <ClaimListingCta daycareId={item.id} name={name} source="card" className="relative z-10 min-h-[44px] min-w-[44px]" />
         ) : null}
       </div>
     </article>

@@ -14,7 +14,6 @@ import {
   isGoogleMap,
   mountGoogleHtmlMarker,
   mountGoogleYouAreHere,
-  preloadGoogleMaps,
 } from "./google-map.ts";
 
 export const OSM_ROAD_STYLE = "https://tiles.openfreemap.org/styles/liberty";
@@ -140,6 +139,9 @@ export function preloadOsmMap(): Promise<MlModule> {
         import("maplibre-gl/dist/maplibre-gl.css"),
       ]);
       ml.setWorkerUrl(worker.default);
+      // Keep raster tiles and sprites from competing with the visible listing
+      // photos on a phone connection. Vector requests retain MapLibre's queue.
+      ml.setMaxParallelImageRequests(6);
       return ml;
     })().catch((err) => {
       libPromise = null;
@@ -147,17 +149,6 @@ export function preloadOsmMap(): Promise<MlModule> {
     });
   }
   return libPromise;
-}
-
-/** @deprecated Use preloadOsmMap. Kept so search can warm the library. */
-export const loadOsmMap = preloadOsmMap;
-
-/** Warm the provider that will actually paint. Skips MapLibre when Google is selected. */
-export function preloadMapLibrary(): Promise<unknown> {
-  if (typeof window === "undefined") return Promise.reject(new Error("Map is browser-only"));
-  if (readClientStoreChannel() === "huawei") return Promise.resolve();
-  if (preferredMapProvider() === "google") return preloadGoogleMaps();
-  return preloadOsmMap();
 }
 
 export type KidEaseMap = {
@@ -233,7 +224,7 @@ function skipOpenFreeMapFallback(err: unknown) {
   return name === "AbortError" || name === "MapSupersededError" || name === "MapUnavailableError";
 }
 
-/** Start the Maps script only once the host is on screen (or about to be). */
+/** Start the Maps script only once the host is on screen. */
 export function whenMapHostVisible(el: HTMLElement, signal?: AbortSignal): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
   if (signal?.aborted) return Promise.reject(closedMap());
@@ -253,7 +244,7 @@ export function whenMapHostVisible(el: HTMLElement, signal?: AbortSignal): Promi
       (entries) => {
         if (entries.some((entry) => entry.isIntersecting)) finish();
       },
-      { root: null, rootMargin: "160px 0px", threshold: 0.01 },
+      { root: null, rootMargin: "0px", threshold: 0.01 },
     );
     signal?.addEventListener("abort", onAbort);
     io.observe(el);
@@ -271,7 +262,7 @@ function mapHostOnScreen(el: HTMLElement) {
   if (rect.width < 8 || rect.height < 8) return false;
   const height = window.innerHeight || document.documentElement.clientHeight;
   const width = window.innerWidth || document.documentElement.clientWidth;
-  return rect.bottom >= -160 && rect.right >= 0 && rect.top <= height + 160 && rect.left <= width;
+  return rect.bottom > 0 && rect.right > 0 && rect.top < height && rect.left < width;
 }
 
 function satelliteStyle(): StyleSpecification {
@@ -890,6 +881,8 @@ async function createOsmKidEaseMap(
   input: KidEaseMapInput,
 ): Promise<{ map: KidEaseMap; maps: KidEaseMaps; tilesReady: boolean }> {
   const lib = await preloadOsmMap();
+  // A parent may have switched back to the list while the library downloaded.
+  if (input.signal?.aborted) throw closedMap();
   const satellite = input.mapTypeId === "hybrid" || input.mapTypeId === "satellite";
   const basemap = satellite ? "satellite" : "roadmap";
   const ml = new lib.Map({

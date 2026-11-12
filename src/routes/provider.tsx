@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState, useSearch } from "@tanstack/react-router";
 import { beforeLoadPrivate } from "@/lib/server/role-route";
 import { privateReturnPath } from "@/lib/role-access";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { isAdminOnlyListing } from "@/lib/listing-visibility";
 import { canUseOperatorTools } from "@/lib/operator-tools";
@@ -49,8 +49,6 @@ import { storedCentreName } from "@/lib/utils";
 import { FOUNDING_PAGE, foundingLocale } from "@/lib/founding-period";
 import { formatAgeLabel, formatStart, scheduleLabel } from "@/lib/templates";
 import type { Child, Daycare, SpotRequest, TourRequest } from "@/lib/types";
-import { ProviderContractsPanel } from "@/components/provider-contracts";
-import { AgreementRequestAction, CentreAgreementEditor } from "@/components/parent-agreement-panel";
 import { useCentreAgreementChips } from "@/components/use-centre-agreement-chips";
 import { ListingCultureFields } from "@/components/listing-culture-fields";
 import { CapacityForm, Field } from "@/components/provider-listing-forms";
@@ -62,7 +60,6 @@ import {
   ListingPhotoPrepareError,
 } from "@/lib/listing-photo-downgrade";
 import { listingPublishMissing, mergeListingDraft } from "@/lib/listing-publish";
-import { TourAvailabilityDesk } from "@/components/tour-availability-desk";
 import { ListingStatusBadge } from "@/components/listing-status-badge";
 import { TrustSignals } from "@/components/trust-badge";
 import { ProviderTrustChecklist } from "@/components/provider-trust";
@@ -70,14 +67,8 @@ import { listingStatusFromClaim } from "@/lib/listing-status";
 import { publicApprovalEligible } from "@/lib/approve-live";
 import { KidEaseApprovalStrip } from "@/components/kidease-approval";
 import { officialLicenceNumber } from "@/lib/licensing";
-import { ProviderMoneyPanel } from "@/components/provider-money";
-import { QboPanel } from "@/components/qbo-panel";
-import { CwelccPanel } from "@/components/cwelcc-panel";
-import { TaxReceiptStudio } from "@/components/tax-receipt-studio";
-import { TourCalendarPage } from "@/components/tour-calendar-page";
 import { SupportPreviewBanner } from "@/components/support-preview-banner";
 import { VacancyConfirmLoop } from "@/components/vacancy-confirm";
-import { SpotOfferDesk } from "@/components/spot-offer-desk";
 import { DirectorNudgeQueue } from "@/components/director-nudges";
 import { FreePageExplainer } from "@/components/free-listing-share";
 import { CompletenessChecklist } from "@/components/listing-completeness";
@@ -87,15 +78,10 @@ import { COACH_FOCUS_ANCHOR, type ListingCoachFocus } from "@/lib/listing-verifi
 import { DemandCues } from "@/components/rank-cues";
 import type { DemandSnapshot } from "@/lib/demand-heat";
 import type { ProviderEntitlements } from "@/lib/provider-entitlements";
-import { CentreEmployeesPanel } from "@/components/centre-employees";
-import { StaffSchedulingDesk } from "@/components/staff-scheduling-desk";
-import { StaffTimesheetDesk } from "@/components/staff-timesheet-desk";
-import { CentreToolsDesk } from "@/components/centre-tools-desk";
 import { LearningStoriesDesk, StoriesDeskLink } from "@/components/learning-stories-desk";
 import { CurriculumDeskLink, CurriculumPackDesk } from "@/components/curriculum-pack";
 import { OrgDeskLink, OrgOccupancyDesk } from "@/components/org-occupancy-desk";
 import { EceJobDesk } from "@/components/ece-job-desk";
-import { AgeOpenSpotsDesk } from "@/components/age-open-spots-desk";
 import { ChildCheckinDesk } from "@/components/child-checkin-desk";
 import { SafeArrivalPanel } from "@/components/safe-arrival-panel";
 import { ChildHealthLog } from "@/components/child-health-log";
@@ -103,19 +89,71 @@ import { CertExpiryPanel } from "@/components/cert-expiry-panel";
 import { FamilyInviteGap } from "@/components/family-invite-gap";
 import { orgDeskStatus } from "@/lib/server/org-occupancy";
 import { gapCopy, moneyCentreChoice, pickCentre } from "@/lib/gap-features";
-import { ProviderScreeningPanel } from "@/components/provider-screening";
 import { useSessionDesks } from "@/components/desk-switcher";
 import { useRoleChrome } from "@/components/role-chrome";
 import { DaycareDeskHome } from "@/components/daycare-desk-home";
-import { HostCalendarDesk } from "@/components/host-calendar-desk";
-import { HostListingsDesk } from "@/components/host-listing-desk";
 import { HostTodayHome } from "@/components/host-today-home";
 import { hostSectionFromFocus } from "@/lib/host-action";
 import { isHostSection } from "@/lib/host-listing";
 import { syncHostActionNotices } from "@/lib/server/host-action";
-import { ProviderInsightsDesk } from "@/components/provider-insights-desk";
-import { TopRatedDesk } from "@/components/top-rated-desk";
+import { HostListingsDesk } from "@/components/host-listing-desk";
+import { AgeOpenSpotsDesk } from "@/components/age-open-spots-desk";
+import { SpotOfferDesk } from "@/components/spot-offer-desk";
 import { QUERY_STALE_MS, dedupedQuery } from "@/lib/fn-query";
+
+// Desk editors and reports load when their selected desk renders. Today keeps
+// its existing content while the navigation stays mounted during other loads.
+const ProviderContractsPanel = lazy(() =>
+  import("@/components/provider-contracts").then((m) => ({ default: m.ProviderContractsPanel })),
+);
+const TourAvailabilityDesk = lazy(() =>
+  import("@/components/tour-availability-desk").then((m) => ({ default: m.TourAvailabilityDesk })),
+);
+const ProviderMoneyPanel = lazy(() =>
+  import("@/components/provider-money").then((m) => ({ default: m.ProviderMoneyPanel })),
+);
+const QboPanel = lazy(() =>
+  import("@/components/qbo-panel").then((m) => ({ default: m.QboPanel })),
+);
+const CwelccPanel = lazy(() =>
+  import("@/components/cwelcc-panel").then((m) => ({ default: m.CwelccPanel })),
+);
+const TaxReceiptStudio = lazy(() =>
+  import("@/components/tax-receipt-studio").then((m) => ({ default: m.TaxReceiptStudio })),
+);
+const TourCalendarPage = lazy(() =>
+  import("@/components/tour-calendar-page").then((m) => ({ default: m.TourCalendarPage })),
+);
+const CentreEmployeesPanel = lazy(() =>
+  import("@/components/centre-employees").then((m) => ({ default: m.CentreEmployeesPanel })),
+);
+const StaffSchedulingDesk = lazy(() =>
+  import("@/components/staff-scheduling-desk").then((m) => ({ default: m.StaffSchedulingDesk })),
+);
+const StaffTimesheetDesk = lazy(() =>
+  import("@/components/staff-timesheet-desk").then((m) => ({ default: m.StaffTimesheetDesk })),
+);
+const CentreToolsDesk = lazy(() =>
+  import("@/components/centre-tools-desk").then((m) => ({ default: m.CentreToolsDesk })),
+);
+const ProviderScreeningPanel = lazy(() =>
+  import("@/components/provider-screening").then((m) => ({ default: m.ProviderScreeningPanel })),
+);
+const HostCalendarDesk = lazy(() =>
+  import("@/components/host-calendar-desk").then((m) => ({ default: m.HostCalendarDesk })),
+);
+const ProviderInsightsDesk = lazy(() =>
+  import("@/components/provider-insights-desk").then((m) => ({ default: m.ProviderInsightsDesk })),
+);
+const TopRatedDesk = lazy(() =>
+  import("@/components/top-rated-desk").then((m) => ({ default: m.TopRatedDesk })),
+);
+const AgreementRequestAction = lazy(() =>
+  import("@/components/parent-agreement-panel").then((m) => ({ default: m.AgreementRequestAction })),
+);
+const CentreAgreementEditor = lazy(() =>
+  import("@/components/parent-agreement-panel").then((m) => ({ default: m.CentreAgreementEditor })),
+);
 
 const DESKS: DaycareDesk[] = ["today", "requests", "money", "listings", "insights", "top-rated", "tours", "calendar", "licence", "contract", "promote", "employees", "screening", "staff", "stories", "sites", "learning", "hours", "tools"];
 const OWNER_DESKS = new Set<DaycareDesk>(["money", "licence", "contract", "promote"]);
@@ -447,6 +485,11 @@ export function ProviderPage() {
         void navigate({ to: "/provider", search: { ...search, desk: nextDesk }, replace: true });
       }}
     >
+      <Suspense fallback={
+        <div role="status" aria-live="polite" aria-label={t("loading")}>
+          <DeskSkeleton />
+        </div>
+      }>
       {desk === "insights" ? <ProviderInsightsDesk /> : null}
       {desk === "top-rated" ? <TopRatedDesk on={topRated} /> : null}
       {deskSettled && deskListings.length === 0 && centreOwner && desk !== "insights" ? (
@@ -994,6 +1037,7 @@ export function ProviderPage() {
       {desk === "promote" ? (
         <p className="rounded-xl bg-surface px-5 py-8 text-sm text-muted ring-1 ring-border">{t("plansNotOffered")}</p>
       ) : null}
+      </Suspense>
     </DeskShell>
     </TwoFactorGate>
   );

@@ -108,8 +108,8 @@ test("Explore list is stacked category rails with arrows, not a grid", () => {
   assert.doesNotMatch(lib, /spotsTotal \|\| 4/);
 
   assert.match(listingRail, /data-ke="explore-rail-empty"/);
-  assert.match(listingRail, /className="flex shrink-0 items-center gap-2"/);
-  assert.match(listingRail, /ke-listing-rail-arrows hidden items-center gap-2 sm:flex/);
+  assert.match(listingRail, /className="flex shrink-0 items-center gap-\[8px\]"/);
+  assert.match(listingRail, /ke-listing-rail-arrows hidden items-center gap-\[8px\] sm:flex/);
   assert.match(listingRail, /ke-listing-rail-port/);
   assert.match(listingRail, /persist/);
 
@@ -180,7 +180,7 @@ test("phone and desktop rail chrome stays first-class", () => {
   assert.match(css, /touch-action:\s*pan-x/);
   assert.match(css, /@media \(min-width: 1280px\)/);
   assert.match(css, /--ke-card-w: 13rem/);
-  assert.match(listingRail, /hidden items-center gap-2 sm:flex/);
+  assert.match(listingRail, /hidden items-center gap-\[8px\] sm:flex/);
   assert.match(chips, /data-explore-cat="all"/);
   assert.match(chips, /t\("catAll"\)/);
   assert.match(chips, /localePath\("\/search", locale\)/);
