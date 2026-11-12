@@ -55,7 +55,7 @@ export async function captureAppStoreAvailability(browser, base, outDir) {
           row.url = page.url();
           assert.equal(new URL(row.url).origin, origin.origin);
           assert.equal(new URL(page.url()).pathname, path);
-          await page.locator("[data-ke='app-store-status']").waitFor({ state: "visible" });
+          await page.locator("main [data-ke='app-store-status']").waitFor({ state: "visible" });
           await page.locator("#stores").waitFor({ state: "visible" });
           await page.waitForFunction(({ theme, look }) => document.documentElement.dataset.resolvedTheme === theme && (document.documentElement.dataset.look || "classic") === look, { theme, look });
           await page.evaluate(() => document.fonts.ready);
@@ -64,7 +64,7 @@ export async function captureAppStoreAvailability(browser, base, outDir) {
           const available = locale === "fr" ? "Offert maintenant" : "Available now";
           const soon = locale === "fr" ? "Bientôt offert" : "Coming soon";
           row.observed = await page.evaluate(({ available, soon }) => {
-            const panels = [document.querySelector("[data-ke='app-store-status']"), document.querySelector("#stores")];
+            const panels = [document.querySelector("main [data-ke='app-store-status']"), document.querySelector("#stores")];
             return {
               width: innerWidth, height: innerHeight, language: document.documentElement.lang, clientWidth: document.documentElement.clientWidth, scrollWidth: document.documentElement.scrollWidth,
               dpr: devicePixelRatio, theme: document.documentElement.dataset.resolvedTheme, look: document.documentElement.dataset.look || "classic",
