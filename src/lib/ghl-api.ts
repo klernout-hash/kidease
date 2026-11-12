@@ -56,7 +56,7 @@ export type GhlApiSkipReason = "flag-off" | "no-api-token" | "no-email" | "revie
 
 export type GhlApiResult =
   | { ok: true; skipped: true; reason: GhlApiSkipReason }
-  | { ok: true; skipped: false; contactId: string; opportunity: "created" | "exists" }
+  | { ok: true; skipped: false; contactId: string; opportunity: "created" | "exists"; opportunityId?: string }
   | { ok: false; error: string };
 
 export type GhlApiTarget = {
@@ -142,17 +142,23 @@ export function buildGhlContactUpsertBody(input: {
   phone?: string | null;
   company?: string | null;
   testListing?: boolean;
+  extraTags?: readonly string[];
   env?: EnvMap;
 }): Record<string, unknown> {
   const audience = ghlAudienceForTrigger(input.trigger);
   const target = resolveGhlApiTarget(audience, input.env);
   const phone = trim(input.phone);
   const company = trim(input.company);
+  const tags = ghlApiContactTags(input.trigger, { testListing: input.testListing });
+  for (const tag of input.extraTags || []) {
+    const clean = trim(tag);
+    if (clean && !tags.includes(clean)) tags.push(clean);
+  }
   const body: Record<string, unknown> = {
     locationId: target.locationId,
     email: input.email.trim(),
     ...splitName(input.name || ""),
-    tags: ghlApiContactTags(input.trigger, { testListing: input.testListing }),
+    tags,
   };
   if (phone) body.phone = phone;
   if (company) body.companyName = company;
@@ -196,6 +202,14 @@ async function readJson(res: Response): Promise<unknown> {
   } catch {
     return null;
   }
+}
+
+function opportunityIdFrom(json: unknown): string {
+  if (!json || typeof json !== "object") return "";
+  const row = json as { id?: unknown; opportunity?: { id?: unknown } };
+  const nested = row.opportunity && typeof row.opportunity.id === "string" ? row.opportunity.id.trim() : "";
+  if (nested) return nested;
+  return typeof row.id === "string" ? row.id.trim() : "";
 }
 
 function contactIdFrom(json: unknown): string {
@@ -270,6 +284,9 @@ export async function postGhlCrmSignup(input: {
   company?: string | null;
   eventId?: string | null;
   testListing?: boolean;
+  extraTags?: readonly string[];
+  /** Reviewer accounts are skipped unless this lead push asks to tag them qa:test. */
+  allowReviewer?: boolean;
   fetchImpl?: FetchImpl;
   env?: EnvMap;
   onSkip?: (reason: GhlApiSkipReason) => void;
@@ -291,7 +308,7 @@ export async function postGhlCrmSignup(input: {
       input.onSkip?.("no-email");
       return { ok: true, skipped: true, reason: "no-email" };
     }
-    if (isStoreReviewerEmail(email)) {
+    if (isStoreReviewerEmail(email) && !input.allowReviewer) {
       logStoreReviewerSignupSkip(ghlAudienceForTrigger(input.trigger), email);
       return { ok: true, skipped: true, reason: "reviewer-account" };
     }
@@ -312,6 +329,7 @@ export async function postGhlCrmSignup(input: {
       phone: input.phone,
       company: input.company,
       testListing: input.testListing,
+      extraTags: input.extraTags,
       env,
     });
     // Upsert's tags array replaces every tag. Send identity here, then add tags.
@@ -384,7 +402,16 @@ export async function postGhlCrmSignup(input: {
       }),
       fetchImpl,
     });
-    if (created.ok) return { ok: true, skipped: false, contactId, opportunity: "created" };
+    if (created.ok) {
+      const opportunityId = opportunityIdFrom(created.json);
+      return {
+        ok: true,
+        skipped: false,
+        contactId,
+        opportunity: "created",
+        ...(opportunityId ? { opportunityId } : {}),
+      };
+    }
     if (duplicateOpportunity(created.status, created.json)) {
       return { ok: true, skipped: false, contactId, opportunity: "exists" };
     }
