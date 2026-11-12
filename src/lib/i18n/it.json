@@ -3503,5 +3503,19 @@
   "inboxAssignedYou": "Assigned to you",
   "notificationsBellHint": "Avvisi, non messaggi non letti",
   "leadTrackerNav": "Famiglie",
-  "leadTrackerNavHint": "A che punto è ogni famiglia"
+  "leadTrackerNavHint": "A che punto è ogni famiglia",
+  "careParentNoticeTitle": "Avvisi dei genitori",
+  "careParentNoticeDay": "Programma per il {date}",
+  "careParentNoticeLead": "Salva una nota per segnalare che tuo figlio sarà assente. Il personale conferma comunque arrivo e ritiro.",
+  "careParentReported": "Segnalato dal genitore: {status}",
+  "careReportAbsent": "Segnala l'assenza",
+  "careReportSick": "Segnala malattia",
+  "careReportVacation": "Segnala vacanza",
+  "careParentReportSaved": "Segnalazione salvata.",
+  "careNoArrivalConfirmed": "Nessun arrivo confermato",
+  "careCentreDate": "Data del centro",
+  "careAttendanceUpdated": "Ultimo aggiornamento di {name} alle {time}",
+  "careCentreStaff": "Personale del centro",
+  "careAttendanceHistory": "Cronologia di questa data",
+  "careAttendanceCorrection": "Correzione"
 }

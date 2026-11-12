@@ -3503,5 +3503,19 @@
   "inboxAssignedYou": "Assigned to you",
   "notificationsBellHint": "提醒，唔係未讀訊息",
   "leadTrackerNav": "家庭",
-  "leadTrackerNavHint": "每個家庭去到邊一步"
+  "leadTrackerNavHint": "每個家庭去到邊一步",
+  "careParentNoticeTitle": "家長通知",
+  "careParentNoticeDay": "{date}嘅安排",
+  "careParentNoticeLead": "記錄小朋友將會缺席。返到同接走仍然由職員確認。",
+  "careParentReported": "家長報告：{status}",
+  "careReportAbsent": "報告缺席",
+  "careReportSick": "報告病假",
+  "careReportVacation": "報告休假",
+  "careParentReportSaved": "報告已儲存。",
+  "careNoArrivalConfirmed": "未確認返到",
+  "careCentreDate": "中心日期",
+  "careAttendanceUpdated": "最近由{name}喺{time}更新",
+  "careCentreStaff": "中心職員",
+  "careAttendanceHistory": "呢日嘅記錄",
+  "careAttendanceCorrection": "更正"
 }

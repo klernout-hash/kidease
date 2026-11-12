@@ -11,7 +11,8 @@ import {
   initialsFor,
 } from "../src/lib/attendance-handoff.ts";
 import { FLAG_DEFAULTS } from "../src/lib/flags.ts";
-import { commitCorrection, commitHandoff, readCentreDay, readParentDay, seedDemoChildren } from "../src/lib/server/attendance-handoff.ts";
+import { commitCorrection, commitHandoff, readCentreDay, readParentDay, saveParentAbsenceReport, seedDemoChildren } from "../src/lib/server/attendance-handoff.ts";
+import { isParentReportedAbsence, parentAbsenceBody } from "../src/lib/daily-care.ts";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
@@ -29,6 +30,7 @@ function sqlFor(pg) {
 async function previewDb() {
   const pg = new PGlite();
   await pg.exec(`
+    create table "user" (id text primary key, name text);
     create table daycares (
       id text primary key,
       slug text unique,
@@ -65,6 +67,7 @@ async function previewDb() {
       user_id text not null,
       daycare_id text not null,
       child_id text,
+      conversation_id text,
       start_month text,
       schedule text,
       age_group text,
@@ -76,6 +79,7 @@ async function previewDb() {
       daycare_id text not null,
       primary key (user_id, daycare_id)
     );
+    create table centre_members (user_id text, daycare_id text, role text, status text);
     create table child_care_people (
       id text primary key,
       child_id text not null,
@@ -96,6 +100,7 @@ async function previewDb() {
     );
   `);
   await pg.exec(read("migrations/0182_attendance_handoff.sql"));
+  await pg.exec(read("migrations/0012_attendance.sql"));
   return { pg, sql: sqlFor(pg) };
 }
 
@@ -200,4 +205,104 @@ test("isolated preview database reloads demo attendance and refuses the wrong pe
   assert.equal(roster.headcount, 1);
   assert.equal(roster.canCorrect, false);
   await pg.close();
+});
+
+test("parent summary follows centre confirmations, corrections and the centre-local day", async () => {
+  const { pg, sql } = await previewDb();
+  try {
+    await pg.exec(`insert into "user" (id, name) values ('staff-1', 'DEMO Educator'), ('manager-1', 'DEMO Manager')`);
+    await seedDemoChildren(sql, "parent-demo");
+    const booking = await pg.query("select id from bookings where user_id = 'parent-demo' and child_id like '%avery' limit 1");
+    const bookingId = booking.rows[0].id;
+    const arrival = new Date("2026-11-13T02:00:00.000Z");
+    const childAt = async (now) => (await readParentDay(sql, "parent-demo", now)).find((row) => row.bookingId === bookingId);
+    const expected = await childAt(arrival);
+    assert.equal(expected.localDay, "2026-11-12");
+    assert.equal(expected.timeZone, "America/Winnipeg");
+    assert.equal(expected.events.length, 0);
+    assert.equal(expected.lastUpdated, null);
+
+    assert.equal((await commitHandoff(sql, {
+      actorId: "staff-1", role: "staff", bookingId, action: "check_in", pickupName: "", now: arrival,
+    })).ok, true);
+    const here = await childAt(arrival);
+    assert.equal(here.status, "here");
+    assert.deepEqual(here.lastUpdated, { at: arrival.toISOString(), name: "DEMO Educator" });
+
+    const pickup = new Date("2026-11-13T02:10:00.000Z");
+    assert.equal((await commitHandoff(sql, {
+      actorId: "staff-1", role: "staff", bookingId, action: "check_out", pickupName: "DEMO Parker", now: pickup,
+    })).ok, true);
+    const left = await childAt(pickup);
+    assert.equal(left.status, "picked_up");
+    assert.deepEqual(left.lastUpdated, { at: pickup.toISOString(), name: "DEMO Educator" });
+
+    const correction = new Date("2026-11-13T02:15:00.000Z");
+    assert.equal((await commitCorrection(sql, {
+      actorId: "manager-1", role: "manager", bookingId, action: "check_in", reason: "Wrong pickup was recorded", now: correction,
+    })).ok, true);
+    const reloaded = await childAt(correction);
+    assert.equal(reloaded.status, "here");
+    assert.deepEqual(reloaded.lastUpdated, { at: correction.toISOString(), name: "DEMO Manager" });
+    assert.equal(reloaded.events.length, 3);
+    assert.equal(reloaded.events.at(-1).correction, true);
+    assert.deepEqual(await readParentDay(sql, "other-parent", correction), []);
+
+    const tomorrow = await childAt(new Date("2026-11-13T06:00:00.000Z"));
+    assert.equal(tomorrow.localDay, "2026-11-13");
+    assert.equal(tomorrow.events.length, 0);
+    assert.equal(tomorrow.lastUpdated, null);
+    assert.equal(tomorrow.status, "expected");
+  } finally {
+    await pg.close();
+  }
+});
+
+test("parent absence reports are dated plans and cannot change confirmed physical attendance", async () => {
+  const { pg, sql } = await previewDb();
+  try {
+    await pg.exec(`insert into "user" (id, name) values ('staff-1', 'DEMO Educator')`);
+    await seedDemoChildren(sql, "parent-demo");
+    // The demo seed gives one account both desks. Model a parent-only account first.
+    await pg.exec("delete from provider_daycares where user_id = 'parent-demo'");
+    const booking = await pg.query("select id from bookings where user_id = 'parent-demo' and child_id like '%avery' limit 1");
+    const bookingId = booking.rows[0].id;
+    const now = new Date("2026-11-13T02:00:00.000Z");
+    await commitHandoff(sql, { actorId: "staff-1", role: "staff", bookingId, action: "check_in", pickupName: "", now });
+    for (const status of ["absent", "sick", "vacation"]) {
+      const saved = await saveParentAbsenceReport(sql, { userId: "parent-demo", bookingId, status, now });
+      assert.equal(saved.ok, true);
+      assert.equal(saved.localDay, "2026-11-12");
+      const child = (await readParentDay(sql, "parent-demo", now)).find((row) => row.bookingId === bookingId);
+      assert.equal(child.parentReported, true);
+      assert.equal(child.parentReport, status);
+      assert.equal(child.status, "here");
+      assert.equal(child.events.length, 1);
+      assert.deepEqual(child.lastUpdated, { at: now.toISOString(), name: "DEMO Educator" });
+      assert.match(parentAbsenceBody({ ...saved, locale: "en" }), /^Parent report for 2026-11-12:/);
+      assert.match(parentAbsenceBody({ ...saved, locale: "fr" }), /^Avis du parent pour le 2026-11-12/);
+    }
+    for (const status of ["arrived", "departed", "scheduled", "here", "parent_reported"]) {
+      assert.equal((await saveParentAbsenceReport(sql, { userId: "parent-demo", bookingId, status, now })).ok, false);
+    }
+    assert.equal((await saveParentAbsenceReport(sql, { userId: "other-parent", bookingId, status: "absent", now })).ok, false);
+    assert.deepEqual(await readParentDay(sql, "other-parent", now), []);
+    const withoutConfirmations = (await readParentDay(sql, "parent-demo", now, false)).find((row) => row.bookingId === bookingId);
+    assert.equal(withoutConfirmations.events.length, 0);
+    assert.equal(withoutConfirmations.lastUpdated, null);
+    assert.equal(withoutConfirmations.parentReport, "vacation");
+
+    await pg.query("update attendance set updated_by = 'staff-1', status = 'sick' where booking_id = $1", [bookingId]);
+    const staffChoice = (await readParentDay(sql, "parent-demo", now)).find((row) => row.bookingId === bookingId);
+    assert.equal(staffChoice.parentReported, false);
+    assert.equal(staffChoice.parentReport, null);
+    await pg.exec("insert into centre_members (user_id, daycare_id, role, status) values ('parent-demo', 'demo-att-centre', 'staff', 'active')");
+    await pg.query("update attendance set updated_by = 'parent-demo' where booking_id = $1", [bookingId]);
+    const dualRoleStaffChoice = (await readParentDay(sql, "parent-demo", now)).find((row) => row.bookingId === bookingId);
+    assert.equal(dualRoleStaffChoice.parentReported, false);
+    assert.equal(dualRoleStaffChoice.parentReport, null);
+    assert.equal(isParentReportedAbsence({ status: "arrived", updatedBy: "parent-demo", parentUserId: "parent-demo", updatedByCentreStaff: false }), false);
+  } finally {
+    await pg.close();
+  }
 });
