@@ -7,6 +7,7 @@
 export const ADMISSION_STEPS = [
   "asked",
   "visit_booked",
+  "visit_done",
   "visit_declined",
   "waitlist",
   "offer",
@@ -25,9 +26,13 @@ export type AdmissionFacts = {
   queuePosition?: number | null;
 };
 
-const COPY: Record<AdmissionStep, "admissionAsked" | "admissionVisitBooked" | "admissionVisitDeclined" | "admissionWaitlist" | "admissionOffer" | "admissionOfferDeclined" | "admissionForms" | "admissionEnrolled"> = {
+type AdmissionCopyKey = "admissionAsked" | "admissionVisitBooked" | "admissionVisitDeclined" | "admissionWaitlist" | "admissionOffer" | "admissionOfferDeclined" | "admissionForms" | "admissionEnrolled";
+
+/** A finished visit has no line of its own: the status pill already says Completed. */
+const COPY: Record<AdmissionStep, AdmissionCopyKey | null> = {
   asked: "admissionAsked",
   visit_booked: "admissionVisitBooked",
+  visit_done: null,
   visit_declined: "admissionVisitDeclined",
   waitlist: "admissionWaitlist",
   offer: "admissionOffer",
@@ -36,7 +41,7 @@ const COPY: Record<AdmissionStep, "admissionAsked" | "admissionVisitBooked" | "a
   enrolled: "admissionEnrolled",
 };
 
-export function admissionJourney(input: AdmissionFacts): { step: AdmissionStep; queuePosition: null; copyKey: (typeof COPY)[AdmissionStep] } {
+export function admissionJourney(input: AdmissionFacts): { step: AdmissionStep; queuePosition: null; copyKey: AdmissionCopyKey | null } {
   const tour = String(input.tourStatus || "").trim().toLowerCase();
   const booking = String(input.bookingStatus || "").trim().toLowerCase();
   const offer = String(input.offerStatus || "").trim().toLowerCase();
@@ -48,7 +53,8 @@ export function admissionJourney(input: AdmissionFacts): { step: AdmissionStep; 
   else if (offer === "pending" || offer === "sent") step = "offer";
   else if (booking === "waitlist") step = "waitlist";
   else if (tour === "declined" || tour === "lost" || tour === "expired" || tour === "no_show") step = "visit_declined";
-  else if (tour === "accepted" || tour === "completed") step = "visit_booked";
+  else if (tour === "completed") step = "visit_done";
+  else if (tour === "accepted") step = "visit_booked";
   else step = "asked";
 
   return { step, queuePosition: null, copyKey: COPY[step] };

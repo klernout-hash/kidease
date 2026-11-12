@@ -1053,7 +1053,7 @@ export const getThread = createServerFn({ method: "GET" })
         select id, name, preferred_name, birthdate, allergies, epi_pen, medical_notes, medications,
                doctor_name, doctor_phone, foods_like, foods_avoid, diet, likes, comfort_item, nap_routine,
                toilet, home_language, soothes, fears, emergency_name, emergency_phone, pickup_people,
-               photo_ok, sunscreen_ok, notes
+               photo_ok, sunscreen_ok, notes, immunization_status, immunization_note, home_address
         from children where id = ${b.child_id} limit 1
       `;
       if (kids[0]) child = mapChild(revealChildHealth(kids[0]));

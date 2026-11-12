@@ -11,8 +11,6 @@ import { Shell } from "@/components/shell";
 import { DeskSkeleton } from "@/components/page-skeleton";
 import { DeskShell } from "@/components/desk-shell";
 import { AuditDeskLink } from "@/components/audit-desk-link";
-import { Phase1Desk } from "@/components/phase1-desk";
-import { Phase2Desk } from "@/components/phase2-desk";
 import { Phase5Desk } from "@/components/phase5-desk";
 import { Button } from "@/components/ui/button";
 import { BlockFamilyButton } from "@/components/block-user";
@@ -93,7 +91,6 @@ import { CentreEmployeesPanel } from "@/components/centre-employees";
 import { StaffSchedulingDesk } from "@/components/staff-scheduling-desk";
 import { StaffTimesheetDesk } from "@/components/staff-timesheet-desk";
 import { CentreToolsDesk } from "@/components/centre-tools-desk";
-import { Phase6Desk } from "@/components/phase6-desk";
 import { LearningStoriesDesk, StoriesDeskLink } from "@/components/learning-stories-desk";
 import { CurriculumDeskLink, CurriculumPackDesk } from "@/components/curriculum-pack";
 import { OrgDeskLink, OrgOccupancyDesk } from "@/components/org-occupancy-desk";
@@ -222,7 +219,11 @@ export function ProviderPage() {
   const search = useSearch({ strict: false }) as ReturnType<typeof providerValidateSearch>;
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const childRoute = pathname === "/provider/subscription" || pathname.startsWith("/provider/subscription/");
+  // Pages nested under this one (provider.<name>.tsx). Each must show its own
+  // screen through the outlet, not the Today desk.
+  const childRoute = ["/provider/subscription", "/provider/leads", "/provider/families"].some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
+  );
   const [desk, setDesk] = useState<DaycareDesk>(search.desk ?? DEFAULT_DESK);
   const [listings, setListings] = useState<Daycare[]>([]);
   const [showTestListings, setShowTestListings] = useState(false);
@@ -467,12 +468,9 @@ export function ProviderPage() {
           <p className="mt-2 text-sm text-muted">{t("claimSuccessLead")}</p>
         </section>
       ) : null}
-      {desk === "today" ? <Phase6Desk locale={locale === "fr" ? "fr" : "en"} role={centreOwner ? "owner" : "staff"} /> : null}
       {desk === "today" ? <AuditDeskLink locale={locale === "fr" ? "fr" : "en"} /> : null}
-      {desk === "today" ? <Phase1Desk locale={locale === "fr" ? "fr" : "en"} role={centreOwner ? "owner" : "staff"} /> : null}
-      {desk === "today" ? <Phase2Desk locale={locale === "fr" ? "fr" : "en"} role={centreOwner ? "owner" : "staff"} /> : null}
       {desk === "today" ? (
-        <Phase5Desk locale={locale === "fr" ? "fr" : "en"} role={centreOwner ? "owner" : "staff"} slug={deskListings[0]?.slug} />
+        <Phase5Desk locale={locale === "fr" ? "fr" : "en"} role={centreOwner ? "owner" : "staff"} slug={deskListings[0]?.slug} actionsOnly />
       ) : null}
       {desk === "today" ? <StoriesDeskLink /> : null}
       {desk === "today" ? <CurriculumDeskLink /> : null}

@@ -1,3 +1,4 @@
+import { govTownMatches } from "@/lib/gov/town-search";
 import { useEffect, type ReactNode } from "react";
 import { GovHelp } from "@/components/gov/gov-help";
 import { signOut } from "@/lib/auth/client";
@@ -58,6 +59,8 @@ export function GovFrame({
     scrollGovMain();
   }, [title, section]);
 
+  const searchNeedle = search.trim().toLowerCase();
+  const townMatches = govTownMatches(cities, search);
   return (
     <div className="w-full min-h-dvh overflow-x-hidden bg-bg text-fg pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
       <a href="#gov-main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-10 focus:bg-surface focus:px-3 focus:py-2">
@@ -122,9 +125,49 @@ export function GovFrame({
               className="ke-input mt-1 w-full"
               value={search}
               onChange={(event) => onSearch(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" || !townMatches.length) return;
+                event.preventDefault();
+                onFilter({ city: townMatches[0] });
+                onSearch("");
+              }}
+              aria-describedby="gov-search-result"
               data-ke="gov-search"
             />
           </label>
+          <div id="gov-search-result" className="mt-2" role="status" aria-live="polite" data-ke="gov-search-result">
+            {searchNeedle.length >= 2 ? (
+              townMatches.length ? (
+                <>
+                  <p className="text-sm text-muted">
+                    {fr ? "Choisissez une ville pour filtrer les chiffres." : "Pick a town to filter the numbers."}
+                  </p>
+                  <ul className="mt-2 flex flex-wrap gap-2">
+                    {townMatches.map((town) => (
+                      <li key={town}>
+                        <button
+                          type="button"
+                          className="inline-flex min-h-11 items-center rounded-full bg-surface px-3 text-sm font-medium ring-1 ring-border touch-manipulation"
+                          onClick={() => {
+                            onFilter({ city: town });
+                            onSearch("");
+                          }}
+                        >
+                          {town}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <p className="text-sm text-muted">
+                  {fr
+                    ? `Aucune ville ne correspond à « ${search.trim()} ». Les chiffres ne changent pas.`
+                    : `No town matches "${search.trim()}". The numbers have not changed.`}
+                </p>
+              )
+            ) : null}
+          </div>
           <form className="mt-3 grid gap-3 sm:grid-cols-3" onSubmit={(event) => event.preventDefault()}>
             <label className="block text-sm font-medium">
               {copy.province}
