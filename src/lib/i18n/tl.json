@@ -3501,5 +3501,19 @@
   "inboxAssignedYou": "Assigned to you",
   "notificationsBellHint": "Mga alerto, hindi unread na mensahe",
   "leadTrackerNav": "Mga pamilya",
-  "leadTrackerNavHint": "Kung saang hakbang ang bawat pamilya"
+  "leadTrackerNavHint": "Kung saang hakbang ang bawat pamilya",
+  "careParentNoticeTitle": "Mga abiso ng magulang",
+  "careParentNoticeDay": "Plano para sa {date}",
+  "careParentNoticeLead": "Mag-save ng tala na liliban ang iyong anak. Staff pa rin ang nagkukumpirma ng pagdating at pagsundo.",
+  "careParentReported": "Iniulat ng magulang: {status}",
+  "careReportAbsent": "Iulat na liliban",
+  "careReportSick": "Iulat na may sakit",
+  "careReportVacation": "Iulat na magbabakasyon",
+  "careParentReportSaved": "Na-save ang ulat.",
+  "careNoArrivalConfirmed": "Walang kumpirmadong pagdating",
+  "careCentreDate": "Petsa sa centre",
+  "careAttendanceUpdated": "Huling na-update ni {name} nang {time}",
+  "careCentreStaff": "Staff ng centre",
+  "careAttendanceHistory": "Kasaysayan para sa petsang ito",
+  "careAttendanceCorrection": "Pagwawasto"
 }

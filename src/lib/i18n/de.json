@@ -3501,5 +3501,19 @@
   "inboxAssignedYou": "Assigned to you",
   "notificationsBellHint": "Hinweise, keine ungelesenen Nachrichten",
   "leadTrackerNav": "Familien",
-  "leadTrackerNavHint": "Welcher Schritt für jede Familie"
+  "leadTrackerNavHint": "Welcher Schritt für jede Familie",
+  "careParentNoticeTitle": "Mitteilungen der Eltern",
+  "careParentNoticeDay": "Plan für {date}",
+  "careParentNoticeLead": "Speichere eine Notiz, dass dein Kind fehlen wird. Ankunft und Abholung werden weiterhin vom Personal bestätigt.",
+  "careParentReported": "Von Eltern gemeldet: {status}",
+  "careReportAbsent": "Abwesenheit melden",
+  "careReportSick": "Krankheit melden",
+  "careReportVacation": "Urlaub melden",
+  "careParentReportSaved": "Meldung gespeichert.",
+  "careNoArrivalConfirmed": "Keine Ankunft bestätigt",
+  "careCentreDate": "Datum im Zentrum",
+  "careAttendanceUpdated": "Zuletzt von {name} um {time} aktualisiert",
+  "careCentreStaff": "Personal des Zentrums",
+  "careAttendanceHistory": "Verlauf für dieses Datum",
+  "careAttendanceCorrection": "Korrektur"
 }

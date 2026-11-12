@@ -34,6 +34,35 @@ export const JOURNAL_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "
 
 export type CarePresence = "here" | "picked_up" | "expected" | "absent" | "sick" | "vacation";
 export type CareAttendanceAction = "check_in" | "check_out" | "absent" | "sick" | "vacation";
+export type ParentAbsenceStatus = "absent" | "sick" | "vacation";
+
+export function isParentAbsenceStatus(value: string): value is ParentAbsenceStatus {
+  return value === "absent" || value === "sick" || value === "vacation";
+}
+
+/** Old staff choices must not become parent reports just because a parent reads them. */
+export function isParentReportedAbsence(input: {
+  status: string;
+  updatedBy: string | null;
+  parentUserId: string;
+  updatedByCentreStaff: boolean;
+}): boolean {
+  return isParentAbsenceStatus(input.status) && input.updatedBy === input.parentUserId && !input.updatedByCentreStaff;
+}
+
+export function parentAbsenceBody(input: {
+  status: ParentAbsenceStatus;
+  childName: string;
+  daycareName: string;
+  localDay: string;
+  locale?: string;
+}): string {
+  const fr = input.locale === "fr";
+  const reason = input.status === "sick" ? (fr ? "malade" : "sick") : input.status === "vacation" ? (fr ? "en vacances" : "on vacation") : (fr ? "absent(e)" : "away");
+  return fr
+    ? `Avis du parent pour le ${input.localDay} : ${input.childName} sera ${reason} à ${input.daycareName}. Le centre confirme les arrivées et les départs.`
+    : `Parent report for ${input.localDay}: ${input.childName} will be ${reason} at ${input.daycareName}. Staff confirm arrival and pickup.`;
+}
 export type CareDeskRole = "parent" | "provider";
 export type CareStatusKind = CareAttendanceAction | "journal" | "medication" | "incident" | "meal" | "nap";
 

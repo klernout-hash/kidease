@@ -3501,5 +3501,19 @@
   "inboxAssignedYou": "Assigned to you",
   "notificationsBellHint": "تنبيهات، وليست رسائل غير مقروءة",
   "leadTrackerNav": "العائلات",
-  "leadTrackerNavHint": "الخطوة التي وصلت إليها كل عائلة"
+  "leadTrackerNavHint": "الخطوة التي وصلت إليها كل عائلة",
+  "careParentNoticeTitle": "إشعارات الوالدين",
+  "careParentNoticeDay": "الخطة ليوم {date}",
+  "careParentNoticeLead": "احفظ ملاحظة بأن طفلك سيغيب. يبقى تأكيد الوصول والاستلام من مسؤولية الموظفين.",
+  "careParentReported": "إبلاغ الوالدين: {status}",
+  "careReportAbsent": "الإبلاغ عن غياب",
+  "careReportSick": "الإبلاغ عن مرض",
+  "careReportVacation": "الإبلاغ عن إجازة",
+  "careParentReportSaved": "تم حفظ الإبلاغ.",
+  "careNoArrivalConfirmed": "لم يتم تأكيد الوصول",
+  "careCentreDate": "التاريخ في المركز",
+  "careAttendanceUpdated": "آخر تحديث بواسطة {name} في {time}",
+  "careCentreStaff": "موظفو المركز",
+  "careAttendanceHistory": "السجل لهذا التاريخ",
+  "careAttendanceCorrection": "تصحيح"
 }

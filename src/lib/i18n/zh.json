@@ -3501,5 +3501,19 @@
   "inboxAssignedYou": "Assigned to you",
   "notificationsBellHint": "提醒，不是未读消息",
   "leadTrackerNav": "家庭",
-  "leadTrackerNavHint": "每个家庭走到哪一步"
+  "leadTrackerNavHint": "每个家庭走到哪一步",
+  "careParentNoticeTitle": "家长通知",
+  "careParentNoticeDay": "{date}的计划",
+  "careParentNoticeLead": "记录孩子将缺席的情况。到园和接走仍由工作人员确认。",
+  "careParentReported": "家长报告：{status}",
+  "careReportAbsent": "报告缺席",
+  "careReportSick": "报告生病",
+  "careReportVacation": "报告休假",
+  "careParentReportSaved": "报告已保存。",
+  "careNoArrivalConfirmed": "尚未确认到园",
+  "careCentreDate": "托育中心日期",
+  "careAttendanceUpdated": "最近由{name}于{time}更新",
+  "careCentreStaff": "托育中心工作人员",
+  "careAttendanceHistory": "该日期的记录",
+  "careAttendanceCorrection": "更正"
 }
