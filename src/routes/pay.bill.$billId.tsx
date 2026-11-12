@@ -11,7 +11,7 @@ import { BillStatusBadge } from "@/components/bill-status";
 import { createBillCheckout, getBill } from "@/lib/server/billing";
 import { useCopy } from "@/lib/use-copy";
 import { money } from "@/lib/utils";
-import { periodLabel, platformFeePercentLabel } from "@/lib/stripe-methods";
+import { periodLabel } from "@/lib/stripe-methods";
 import { type Bill, billDollars } from "@/lib/bill";
 import { WalletMethodHints } from "@/components/wallet-methods";
 import { openStripeCheckout } from "@/lib/wallets";
@@ -37,7 +37,11 @@ function PayBillPage() {
   const { t, locale } = useCopy();
   const [bill, setBill] = useState<Bill | null>(null);
   const [stripeLive, setStripeLive] = useState(false);
-  const [feeBps, setFeeBps] = useState<number | null>(null);
+  const [serviceFee, setServiceFee] = useState<{
+    feeCents: number;
+    parentPaysCents: number;
+    label: string;
+  } | null>(null);
   const [busy, setBusy] = useState(false);
   const [missing, setMissing] = useState(false);
   const [consents, setConsents] = useState<CaslPrefs>({
@@ -54,7 +58,7 @@ function PayBillPage() {
         if (cancelled) return;
         setBill(res.bill);
         setStripeLive(res.stripeLive);
-        setFeeBps(typeof res.platformFeeBps === "number" ? res.platformFeeBps : null);
+        setServiceFee(res.serviceFee ?? null);
         setMissing(false);
       })
       .catch(() => {
@@ -82,7 +86,7 @@ function PayBillPage() {
         .then((res) => {
           setBill(res.bill);
           setStripeLive(res.stripeLive);
-          setFeeBps(typeof res.platformFeeBps === "number" ? res.platformFeeBps : null);
+          setServiceFee(res.serviceFee ?? null);
         })
         .catch(() => undefined);
     }, 1200);
@@ -123,7 +127,7 @@ function PayBillPage() {
         const latest = await getBill({ data: bill.id });
         setBill(latest.bill);
         setStripeLive(latest.stripeLive);
-        setFeeBps(typeof latest.platformFeeBps === "number" ? latest.platformFeeBps : null);
+        setServiceFee(latest.serviceFee ?? null);
         return;
       }
       if (res.url) {
@@ -167,23 +171,28 @@ function PayBillPage() {
               {bill.dueAt ? ` · ${t("billDue")} ${bill.dueAt}` : ""}
             </p>
             {bill.memo ? <p className="mt-2 text-sm text-muted">{bill.memo}</p> : null}
-            <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
-              <span className="text-sm text-muted">{t("amount")}</span>
-              <span className="font-display text-2xl tabular-nums">{money(billDollars(bill), locale)}</span>
+            <div className="mt-4 space-y-2 border-t border-border pt-4">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm text-muted">{t("centreBill")}</span>
+                <span className="tabular-nums">{money(billDollars(bill), locale)}</span>
+              </div>
+              {serviceFee && serviceFee.feeCents > 0 ? (
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm text-muted">{serviceFee.label}</span>
+                  <span className="tabular-nums">{money(serviceFee.feeCents / 100, locale)}</span>
+                </div>
+              ) : null}
+              <div className="flex items-center justify-between gap-3 border-t border-border pt-2">
+                <span className="text-sm font-medium">{alreadyPaid ? t("paid") : t("youPay")}</span>
+                <span className="font-display text-2xl tabular-nums">
+                  {money((serviceFee?.parentPaysCents ?? bill.amountCents) / 100, locale)}
+                </span>
+              </div>
             </div>
             <p className="mt-1 text-xs text-subtle">
               {t("payCadNote")} · {bill.number}
             </p>
-            {!alreadyPaid ? (
-              <div className="mt-3 space-y-1 border-t border-border pt-3">
-                <p className="text-sm text-muted">{t("connectFeeParentPay")}</p>
-                <p className="text-xs text-subtle">
-                  {platformFeePercentLabel(feeBps)
-                    ? `${t("connectFeePosted")} (${platformFeePercentLabel(feeBps)})`
-                    : t("connectFeeShownAtCheckout")}
-                </p>
-              </div>
-            ) : null}
+            <p className="mt-3 text-sm text-muted">{t("connectFeeParentPay")}</p>
           </div>
         ) : null}
 
@@ -207,10 +216,9 @@ function PayBillPage() {
         {canPay ? (
           <div className="mt-6 space-y-3 rounded-xl bg-surface p-5 shadow-card ring-1 ring-border">
             <CaslConsentFields value={consents} onChange={setConsents} showEmailService={false} />
-            <p className="text-sm text-muted">{t("connectFeeParentPay")}</p>
             <Button className="w-full" disabled={busy} onClick={() => void pay()}>
               <Lock className="size-4" />
-              {t("pay")} · {money(billDollars(bill!), locale)}
+              {t("pay")} · {money((serviceFee?.parentPaysCents ?? bill!.amountCents) / 100, locale)}
             </Button>
             <WalletMethodHints stripeLive={stripeLive} />
             <p className="text-center text-xs text-subtle">{t("stripeMark")}</p>
@@ -224,8 +232,13 @@ function PayBillPage() {
             </span>
             <p className="mt-3 font-display text-2xl">{t("paid")}</p>
             <p className="mt-1 text-sm text-muted">
-              {t("paidTo")} {bill.daycareName} · {money(billDollars(bill), locale)}
+              {t("paidTo")} {bill.daycareName} · {money((serviceFee?.parentPaysCents ?? bill.amountCents) / 100, locale)}
             </p>
+            {serviceFee && serviceFee.feeCents > 0 ? (
+              <p className="mt-2 text-sm text-muted">
+                {serviceFee.label} · {money(serviceFee.feeCents / 100, locale)}
+              </p>
+            ) : null}
             <div className="mt-4 flex flex-wrap gap-2">
               {bill.receiptUrl ? (
                 <Button asChild>

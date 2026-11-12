@@ -1,13 +1,15 @@
 /**
  * Thin Stripe Checkout helper (no SDK). Checkout Session fits TanStack Start:
  * the parent is redirected to Stripe and returns to /pay/bill/$id.
- * Never call this with sk_test_ — stripeChargesLive() must already be true.
+ * Live charges use sk_live_. A QA account or hidden centre passes sk_test_
+ * through stripeRequest's secret option. A live secret is never used for them.
  *
  * KidEase branding: statement_descriptor_suffix is KIDEASE. Also set the
  * Stripe Dashboard statement descriptor prefix to KidEase so card statements
  * read clearly in CAD.
  */
 
+import { connectFeeBps, parentServiceFeeLabel } from "../connect-payments.ts";
 import { StripeApiError } from "../stripe-public-error.ts";
 import { checkoutCurrency, checkoutLocale, checkoutPaymentMethodTypes } from "../stripe-wallets.ts";
 
@@ -93,25 +95,30 @@ export async function ensureCanadaStripeCustomer(input: {
   customerId?: string | null;
   email?: string | null;
   userId?: string | null;
+  /** QA payments pass the test secret. Live payments omit it. */
+  secret?: string;
+  /** False keeps a real parent's live customer id when this call is test-mode. */
+  persist?: boolean;
 }): Promise<string> {
+  const secret = input.secret;
   const existing = String(input.customerId || "").trim();
   if (existing) {
     try {
-      const customer = await stripeRequest<StripeCustomer>(`/customers/${encodeURIComponent(existing)}`, {}, "GET");
+      const customer = await stripeRequest<StripeCustomer>(`/customers/${encodeURIComponent(existing)}`, {}, "GET", { secret });
       if (!stripeCustomerAddressIsSet(customer.address)) {
         await stripeRequest(`/customers/${encodeURIComponent(existing)}`, {
           address: { country: CHECKOUT_BILLING_COUNTRY },
-        });
+        }, "POST", { secret });
       }
       return existing;
     } catch {
       // Stale id: create a Canada customer rather than failing the charge.
     }
   }
-  const created = await stripeRequest<StripeCustomer>("/customers", canadaCustomerParams({ email: input.email }));
+  const created = await stripeRequest<StripeCustomer>("/customers", canadaCustomerParams({ email: input.email }), "POST", { secret });
   const id = String(created.id || "").trim();
   if (!id) throw new Error("Stripe did not return a customer");
-  await persistNewStripeCustomer(input.userId, id);
+  if (input.persist !== false) await persistNewStripeCustomer(input.userId, id);
   return id;
 }
 
@@ -135,7 +142,9 @@ export type StripeCheckoutInput = {
   locale?: string | null;
   /** Connect account id when the centre can receive funds. Parent never sees this. */
   destinationAccount?: string | null;
+  /** KidEase service fee in cents. Equals application_fee_amount. Not tax. */
   applicationFeeCents?: number;
+  serviceFeeLabel?: string | null;
 };
 
 export type StripeCheckoutSession = {
@@ -226,9 +235,36 @@ export function checkoutSessionBody(input: StripeCheckoutInput): Record<string, 
     metadata: { bill_id: input.billId, kidease: "bill" },
     statement_descriptor_suffix: STRIPE_STATEMENT_SUFFIX,
   };
-  if (input.destinationAccount && (input.applicationFeeCents ?? 0) >= 0) {
-    paymentIntent.application_fee_amount = input.applicationFeeCents ?? 0;
+  const serviceFeeCents =
+    input.destinationAccount && (input.applicationFeeCents ?? 0) > 0 ? Math.round(input.applicationFeeCents ?? 0) : 0;
+  if (input.destinationAccount && serviceFeeCents >= 0) {
+    paymentIntent.application_fee_amount = serviceFeeCents;
     paymentIntent.transfer_data = { destination: input.destinationAccount };
+  }
+  const lineItems: Array<Record<string, unknown>> = [
+    {
+      quantity: 1,
+      price_data: {
+        currency,
+        unit_amount: input.amountCents,
+        product_data: {
+          name: `KidEase bill ${input.number}`,
+          description: `${input.daycareName} · ${input.period}`,
+        },
+      },
+    },
+  ];
+  if (serviceFeeCents > 0) {
+    lineItems.push({
+      quantity: 1,
+      price_data: {
+        currency,
+        unit_amount: serviceFeeCents,
+        product_data: {
+          name: input.serviceFeeLabel || parentServiceFeeLabel(connectFeeBps()),
+        },
+      },
+    });
   }
   const body: Record<string, unknown> = {
     mode: "payment",
@@ -237,19 +273,7 @@ export function checkoutSessionBody(input: StripeCheckoutInput): Record<string, 
     success_url: input.successUrl,
     cancel_url: input.cancelUrl,
     client_reference_id: input.billId,
-    line_items: [
-      {
-        quantity: 1,
-        price_data: {
-          currency,
-          unit_amount: input.amountCents,
-          product_data: {
-            name: `KidEase bill ${input.number}`,
-            description: `${input.daycareName} · ${input.period}`,
-          },
-        },
-      },
-    ],
+    line_items: lineItems,
     currency,
     metadata: { bill_id: input.billId, kidease: "bill" },
     payment_intent_data: paymentIntent,
@@ -305,14 +329,14 @@ export async function stripeRequest<T>(
   path: string,
   body: Record<string, unknown>,
   method: "POST" | "GET" = "POST",
-  opts?: { idempotencyKey?: string },
+  opts?: { idempotencyKey?: string; secret?: string },
 ): Promise<T> {
   if (method !== "GET") {
     // No @/ import: node tests load this file without the Vite alias.
     // The view-as frame installs this hook before a signed-in request runs.
     (globalThis as { __kideaseViewAsSideEffect__?: (action: "payment") => void }).__kideaseViewAsSideEffect__?.("payment");
   }
-  const key = (process.env.STRIPE_SECRET_KEY || "").trim();
+  const key = (opts?.secret || process.env.STRIPE_SECRET_KEY || "").trim();
   if (!key) throw new Error("Stripe is not configured");
   const url = path.startsWith("http") ? path : `https://api.stripe.com/v1${path}`;
   const headers: Record<string, string> = {

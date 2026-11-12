@@ -119,6 +119,8 @@ export const FEATURE_FLAG_KEYS = [
   "FEATURE_FEE_DISPLAY_GATE",
   "FEATURE_FAMILY_INVITE",
   "FEATURE_CENTRE_LEAD_TRACKER",
+  "FEATURE_CENTRE_CRM_PIPELINE",
+  "FEATURE_CENTRE_CRM_WORKFLOWS",
   "FEATURE_CENTRE_API",
   "FEATURE_CUSTODY_ORDERS",
   "FEATURE_OPERATOR_PACKS",
@@ -421,6 +423,10 @@ export const FLAG_DEFAULTS: Record<FeatureFlagKey, boolean> = {
   FEATURE_FAMILY_INVITE: false,
   /** Family pipeline on the daycare desk. Off. No mail, text, or push. */
   FEATURE_CENTRE_LEAD_TRACKER: false,
+  /** Kanban pipeline on the daycare desk. Off. No mail or text. */
+  FEATURE_CENTRE_CRM_PIPELINE: false,
+  /** Stage tasks and in-app reminders. Off. Family mail and text stay held. */
+  FEATURE_CENTRE_CRM_WORKFLOWS: false,
   /** Per-centre API keys and webhooks. Off. Nothing is exposed until a centre turns a key on. */
   FEATURE_CENTRE_API: false,
   /** Court order and pickup list. Off. Both parents keep access unless an order says otherwise. */
@@ -1215,6 +1221,18 @@ export const FEATURE_FLAG_CATALOG: readonly FeatureFlagCatalogRow[] = [
     docs: "docs/flags.md",
     summary:
       "Family steps on the daycare desk, from inquiry to enrolled. Off. Uses messages, tours, waitlists, and enrolments the family already shared. No mail, text, or push.",
+  },
+  {
+    key: "FEATURE_CENTRE_CRM_PIPELINE",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "List and board of family steps. A centre can rename steps. Off. No mail, text, or outside CRM.",
+  },
+  {
+    key: "FEATURE_CENTRE_CRM_WORKFLOWS",
+    defaultOn: false,
+    docs: "docs/flags.md",
+    summary: "Tasks and in-app reminders when a family changes step. Off. Family mail and text stay held.",
   },
   {
     key: "FEATURE_CENTRE_API",
