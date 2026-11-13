@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** Controlled iteration-3 Lighthouse captures; immutable snapshot states, no seeding. */
+/** Controlled iteration-4 Lighthouse captures; immutable snapshot states, no seeding. */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -10,6 +10,7 @@ import { loadavg } from "node:os";
 import { chromium } from "playwright";
 import { modelLcp } from "./polish-lantern-model.mjs";
 import { inspectFixtureSurface } from "./polish-fixture-prepare.mjs";
+import { CONTROLLED_SEARCH_CASE, SETTLED_SURFACE_CONTRACT, controlledSearchPath, waitForSettledSurface } from "./polish-settled-surface.mjs";
 import { POLISH_PAGES, polishPath } from "./polish-coverage.mjs";
 import {
   CONTROLLED_ACCEPT_ENCODING,
@@ -53,7 +54,7 @@ if (argv.includes("--validate-protocol")) {
   console.log(JSON.stringify({ validated: true, protocol: protocol.metadata }));
   process.exit(0);
 }
-const out = resolve(value("out", `../evidence/iteration-3/${phase}/lighthouse`));
+const out = resolve(value("out", `../evidence/iteration-4/${phase}/lighthouse`));
 if (![repo, resolve(repo, ".."), "/tmp"].some((root) => out.startsWith(`${root}/`))) {
   throw new Error("Output must be inside this task workspace or /tmp.");
 }
@@ -127,6 +128,7 @@ const methodology = {
       "polish-fixture-control.mjs",
       "polish-fixture-lib.mjs",
       "polish-readiness.mjs",
+      "polish-settled-surface.mjs",
     ].map((file) => [
       file,
       createHash("sha256")
@@ -164,7 +166,8 @@ const methodology = {
   authenticated:
     "Captured synthetic role states from the canonical imported PGLite snapshot. No per-navigation seed or standalone auth-session request; no live accounts or charges.",
   intendedContentVerification:
-    "Independent same-session navigation after each Lighthouse sample verifies settled headings and redirects. It does not change the captured Lighthouse sample.",
+    "Iteration4 independent probe preserves its DCL+500ms observation, then waits at most25seconds for stable geographic labels and strict full canonical surface text. This cannot change the original Lighthouse LCP/TBT. Search uses explicit identical Winnipeg queries and fresh locale profiles; this is a different testcase from iteration3 empty-query captures.",
+  settledSurfaceContract: SETTLED_SURFACE_CONTRACT,
   postprocessing:
     "Same-run capture; guestsearch Lantern models recomputed from full raw inputs only after measured browser closes and host.after is captured. Sanitized inputs/models are persisted; no metric timing overlap.",
 };
@@ -316,7 +319,10 @@ async function measureScripts(lhr) {
 
 for (const definition of pages.filter((page) => selected.includes(page.id))) {
   for (const locale of locales) {
-    const path = polishPath(definition, locale, listingSlug);
+    const expectedSurface = protocol.expectedSurface(definition.role || "guest", locale);
+    if (definition.id === "search" && (expectedSurface?.captureContract !== SETTLED_SURFACE_CONTRACT || expectedSurface.path !== controlledSearchPath(locale) || JSON.stringify(expectedSurface.searchCase) !== JSON.stringify(CONTROLLED_SEARCH_CASE)))
+      throw new Error("Iteration4 search requires a fresh locale-isolated geographic fixture proof; do not reuse iteration3 surfaces.");
+    const path = definition.id === "search" ? expectedSurface.path : polishPath(definition, locale, listingSlug);
     const url = new URL(path, base).href;
     for (let run = runOffset + 1; run <= runOffset + runCount; run++) {
       const name = `${definition.id}-${locale}-${run}`;
@@ -554,6 +560,21 @@ for (const definition of pages.filter((page) => selected.includes(page.id))) {
         });
         await auditedPage.setViewportSize({ width: 412, height: 823 });
         await auditedPage.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+        if (definition.id === "search") {
+          row.probeSettling = await waitForSettledSurface(auditedPage, {
+            pageId: definition.id,
+            inspectSurface: inspectFixtureSurface,
+            expectedSurface: expectedSurface.surface,
+            geography: expectedSurface.searchCase,
+            onInitial: async (initial) => {
+              row.probeInitialObservation = initial;
+              const filename = `${name}-probe-initial-500ms.png`;
+              const screenshotStartedAt = new Date().toISOString();
+              const bytes = await auditedPage.screenshot({ path: resolve(out, filename), fullPage: false });
+              row.probeInitialScreenshot = { file: filename, sha256: createHash("sha256").update(bytes).digest("hex"), observationElapsedMs: initial.elapsedMs, screenshotStartedAt, screenshotCompletedAt: new Date().toISOString(), interpretation: "First probe after a500ms minimum; screenshot follows the recorded DOM observation. Diagnostic, not the Lighthouse final frame or a settled-content pass." };
+            },
+          });
+        }
         await auditedPage
           .locator("h1")
           .first()
@@ -590,7 +611,7 @@ for (const definition of pages.filter((page) => selected.includes(page.id))) {
             .isVisible()
             .catch(() => false);
         }
-        await auditedPage.waitForTimeout(500);
+        if (definition.id !== "search") await auditedPage.waitForTimeout(500);
         row.readinessSurface = await auditedPage.evaluate(inspectFixtureSurface, {
           pageId: definition.id,
         });
@@ -601,7 +622,7 @@ for (const definition of pages.filter((page) => selected.includes(page.id))) {
           const expected = protocol.expectedSurface(definition.role || "guest", locale);
           row.expectedReadinessSurfaceHash = expected?.surfaceHash || null;
           row.readinessFullContentParity = Boolean(
-            expected && row.readinessSurfaceHash === expected.surfaceHash,
+            expected && row.readinessSurfaceHash === expected.surfaceHash && row.probeSettling?.settled !== false,
           );
         }
         {

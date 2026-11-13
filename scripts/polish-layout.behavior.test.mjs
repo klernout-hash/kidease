@@ -57,6 +57,18 @@ describe(
     const involves = (issue, a, b) =>
       [issue.target, issue.other].includes(a) && [issue.target, issue.other].includes(b);
 
+    test("44px controls pass while43.8px width or height is under the touch floor", async () => {
+      await fixture(
+        `<div style="display:flex;gap:16px;padding:20px"><button id="exact" style="width:44px;min-width:0;height:44px">44px</button><button id="short" style="width:80px;min-width:0;height:43.8px">Short</button><button id="narrow" style="width:43.8px;min-width:0;height:44px">Thin</button></div>`,
+        async (_page, audit) => {
+          const undersized = audit.issues.filter((row) => row.kind === "tap-target-under-44");
+          assert.deepEqual(new Set(undersized.map((row) => row.target)), new Set(["#short", "#narrow"]));
+          assert.ok(undersized.find((row) => row.target === "#short").effectiveTarget.height < 44);
+          assert.ok(undersized.find((row) => row.target === "#narrow").effectiveTarget.width < 44);
+        },
+      );
+    });
+
     test("same-card image/save overlay keeps both controls independently operable", async () => {
       await fixture(card, async (page, audit) => {
         assert.ok(audit.observations.some((row) => row.kind === "same-card-photo-save-overlay"));

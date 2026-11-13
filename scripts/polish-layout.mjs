@@ -354,7 +354,7 @@ export function inspectLayout() {
         });
       }
     }
-    if (target.width < 43.5 || target.height < 43.5)
+    if (target.width < 43.99 || target.height < 43.99)
       add("tap-target-under-44", el, { effectiveTarget: box(target) });
     const labelledBy = (el.getAttribute("aria-labelledby") || "")
       .split(/\s+/)

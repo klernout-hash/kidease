@@ -1,4 +1,59 @@
-# Iteration-3 controlled collection
+# Iteration-4 geographic/content capture
+
+Iteration4 uses the same Lighthouse navigation, network, CPU, asset accounting
+and immutable fixture checks described below. It changes **only preparation and
+the independent post-Lighthouse content probe**, and explicitly changes the search
+testcase to `?q=Winnipeg%2C%20MB` in both EN and FR. Do not compare this testcase
+as though it were the earlier empty-query `/search` or `/fr/search` cohort.
+Both baseline and candidate must use the new testcase and new fixture proofs.
+
+Before editing, the exact iteration3 collector sources and SHA256 values were
+saved in `evidence/iteration-4/collector-baseline` outside the repository. They
+match the original frozen source hashes: fixture preparation
+`d8eabf973dfa889ab163775a16b60396404d208d0bc7da381bc5f4c9f192a33c`,
+Lighthouse collector
+`6af8585a29b9c27b4049bacfd75924a82ca8d65256a67bbaa003851032572a31`.
+The existing iteration3 raw captures and hash manifests remain unchanged.
+Each new Lighthouse output records the current collector/helper hashes.
+
+Preparation now opens **a fresh browser context for each locale**, starting
+from the same original captured role-state bytes. It does not carry EN's
+location, query, localStorage or navigation-refreshed cookies into FR. Captured
+input state stays immutable across locale contexts. This is recorded as
+`fresh-context-same-captured-state` in the proof. Existing seed order, flags,
+archive import, table fingerprints and session-expiry checks remain in force.
+
+Search geographic readiness requires the actual explicit `q`, the visible
+Winnipeg heading and at least one real visible card distance label. It then
+requires the **complete ordered card surface text and geographic labels** to
+remain stable for500ms. Count/slug stability alone is insufficient. The
+independent measured probe additionally requires exact equality with the
+canonical full surface, including every meaningful distance, name, count and
+card order. No text is removed or normalized beyond the existing whitespace
+handling. Missing or changed badges still fail strict parity.
+
+The helper preserves its first observation after a500ms minimum and records
+the actual elapsed time, full surface and geographic DOM state. The measured
+probe also saves an initial PNG with screenshot start/end timestamps, separately
+from its DOM observation. It waits at most25seconds for strict stable parity,
+recording first geographic-ready time, first exact-parity time, final state and
+timeout outcome. Fixture failures save a diagnostic rather than silently
+restarting or reseeding. The final probe remains separate from the actual
+Lighthouse final frame and LCP/TBT. Waiting for settled content cannot alter
+the already captured navigation timing or turn the early observation into a
+fast-interaction pass.
+
+Use a **new** private directory and public generation output. The updated
+Lighthouse collector defaults to `evidence/iteration-4/{phase}/lighthouse` and
+refuses iteration3 search fixture proofs. Explicit `--out` paths and final
+source SHAs must still be recorded. No browser/measurement is authorized by
+this document; the coordinator opens the quiet window.
+
+```sh
+node --test scripts/polish-settled-surface.test.mjs scripts/polish-fixture.test.mjs
+```
+
+# Historical iteration-3 controlled collection
 
 Use only the coordinator-approved direct loopback servers and canonical fixture
 manifest described in [fixtures.md](fixtures.md). Earlier iterations remain

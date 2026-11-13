@@ -16,6 +16,8 @@ import { clientNodeBuiltinStub } from "./scripts/client-node-stub.mjs";
 import { routeUiSplitPlugin } from "./scripts/route-ui-split.mjs";
 // @ts-expect-error Optional QA-only build observer alongside the TS config
 import { polishBuildGraphPlugin } from "./scripts/polish-build-graph.mjs";
+// @ts-expect-error JS plugin alongside the TS vite config
+import { startupChunksPlugin } from "./scripts/startup-chunks.mjs";
 
 /**
  * Finish PGLite bootstrap during dev-server setup (before traffic). Vite awaits
@@ -350,6 +352,7 @@ export default defineConfig(({ command, isPreview, mode }) => {
   optimizeDeps: { exclude: ["sharp"] },
   plugins: [
     polishBuildGraphPlugin(),
+    startupChunksPlugin(),
     twilioVideoCspSafe(),
     gateGoogleMapsClientKey(mapsBrowserKey),
     clientNodeBuiltinStub(),

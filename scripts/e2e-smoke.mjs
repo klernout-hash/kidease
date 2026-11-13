@@ -20,6 +20,7 @@ import { runPhoneViewportPass, runMobileLayoutRegression, runPhoneIssuePass } fr
 import { runFoldResizePass } from "./fold-resize.mjs";
 import { STORE_GROUP_NAMES, runStoreViewportPass } from "./store-viewports.mjs";
 import { runDesktopVisualPass } from "./desktop-visual.mjs";
+import { captureAppStoreAvailability } from "./app-store-availability.mjs";
 import { checkedOutputPath, checkedUrl, smokeAllowedOutputDirs } from "./browser-guard.mjs";
 import { withNetRetry } from "./e2e-net.mjs";
 import {
@@ -1854,6 +1855,10 @@ try {
     if (args.signedIn) {
       await runSignedInSessions(page, base);
     } else if (args.desktopVisualOnly) {
+      const appStores = await captureAppStoreAvailability(browser, base, join(root, "artifacts/e2e/desktop-actual/app-store-availability"));
+      record("app-store-availability", appStores.skipped || appStores.captures === 16, {
+        note: appStores.skipped ? appStores.reason : "EN/FR, 390/1280, classic/clean, light/dark; actual public routes",
+      });
       const desktopProblems = await runDesktopVisualPass(browser, base);
       record("desktop-visual", desktopProblems.length === 0, {
         note: desktopProblems.length ? desktopProblems.slice(0, 6).join(" | ") : "1280 to 2560",

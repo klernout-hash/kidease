@@ -18,6 +18,12 @@ import {
 } from "./polish-fixture-lib.mjs";
 import { localAuditUrl } from "./polish-coverage.mjs";
 import { waitForPolishReadiness } from "./polish-readiness.mjs";
+import {
+  CONTROLLED_SEARCH_CASE,
+  SETTLED_SURFACE_CONTRACT,
+  controlledSearchPath,
+  waitForSettledSurface,
+} from "./polish-settled-surface.mjs";
 
 /** Stable user-visible identities, order, counts, and text; no auth/session values. */
 export function inspectFixtureSurface({ pageId }) {
@@ -71,7 +77,7 @@ export function inspectFixtureSurface({ pageId }) {
 export function normalizeFixtureState(state, base) {
   return {
     cookies: state.cookies.map((cookie) => ({ ...cookie })),
-    origins: state.origins.map((origin) => ({ ...origin, origin: base })),
+    origins: state.origins.map((origin) => ({ ...origin, origin: base, localStorage: (origin.localStorage || []).map((entry) => ({ ...entry })) })),
   };
 }
 
@@ -88,21 +94,28 @@ async function installGuards(context, base, blocked) {
 
 async function captureContent(browser, args, role, stateFile) {
   const state = JSON.parse(readFileSync(stateFile, "utf8"));
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block", reducedMotion: "reduce", storageState: normalizeFixtureState(state, args.base) });
   const results = [];
   const blocked = [];
-  try {
-    await installGuards(context, args.base, blocked);
-    const page = await context.newPage();
-    const pageErrors = [];
-    page.on("pageerror", (error) => pageErrors.push(error.message));
-    const pageId = { guest: "search", parent: "parent", provider: "daycare", admin: "admin" }[role];
-    for (const locale of ["en", "fr"]) {
-      const path = role === "admin" ? (locale === "fr" ? "/admin?lang=fr" : "/admin") : `${locale === "fr" ? "/fr" : ""}/${{ guest: "search", parent: "parent", provider: "provider" }[role]}`;
+  const pageId = { guest: "search", parent: "parent", provider: "daycare", admin: "admin" }[role];
+  for (const locale of ["en", "fr"]) {
+    // Every locale starts from the same captured bytes. EN navigation must not
+    // initialize FR's store, query, localStorage or refreshed session cookies.
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, serviceWorkers: "block", reducedMotion: "reduce", storageState: normalizeFixtureState(state, args.base) });
+    try {
+      await installGuards(context, args.base, blocked);
+      const page = await context.newPage();
+      const pageErrors = [];
+      page.on("pageerror", (error) => pageErrors.push(error.message));
+      const path = role === "guest" ? controlledSearchPath(locale) : role === "admin" ? (locale === "fr" ? "/admin?lang=fr" : "/admin") : `${locale === "fr" ? "/fr" : ""}/${{ parent: "parent", provider: "provider" }[role]}`;
       const response = await page.goto(new URL(path, args.base).href, { waitUntil: "domcontentloaded", timeout: 45000 });
+      const settledSurface = pageId === "search"
+        ? await waitForSettledSurface(page, { pageId, inspectSurface: inspectFixtureSurface })
+        : null;
       const ready = await waitForPolishReadiness(page, { pageId });
-      if (!ready.ready || !ready.healthy || response?.status() !== 200 || new URL(page.url()).pathname !== new URL(path, args.base).pathname)
+      if (!ready.ready || !ready.healthy || settledSurface?.settled === false || response?.status() !== 200 || new URL(page.url()).pathname !== new URL(path, args.base).pathname) {
+        writeFileSync(resolve(args.out, `${args.phase || "prepare"}-${role}-${locale}-readiness-failure.json`), JSON.stringify({ captureContract: SETTLED_SURFACE_CONTRACT, role, locale, path, settledSurface, readiness: ready, pageErrors }, null, 2) + "\n", { flag: "wx" });
         throw new Error(`${role}/${locale} failed strict loaded-content readiness.`);
+      }
       if (role === "admin") await page.locator('[data-ke="admin-review-loading"]').waitFor({ state: "hidden", timeout: 25000 });
       const surface = await page.evaluate(inspectFixtureSurface, { pageId });
       if (pageId === "search" && (!surface.total || surface.renderedCards !== ready.uniqueListingCount))
@@ -111,10 +124,13 @@ async function captureContent(browser, args, role, stateFile) {
         throw new Error("This controlled fixture expects exactly96rendered search-card identities; no scope substitution is allowed.");
       if (pageId === "admin" && (surface.pending || surface.errors.length || !surface.stats.length || (!surface.queueCards.length && !surface.empty.length)))
         throw new Error("Admin queue/count proof is incomplete.");
-      results.push({ role, locale, path, readiness: ready, surface, surfaceHash: sha256(JSON.stringify(surface)), pageErrors: [...pageErrors] });
+      results.push({ role, locale, path, captureContract: SETTLED_SURFACE_CONTRACT, localeIsolation: "fresh-context-same-captured-state", ...(pageId === "search" ? { searchCase: CONTROLLED_SEARCH_CASE, settledSurface } : {}), readiness: ready, surface, surfaceHash: sha256(JSON.stringify(surface)), pageErrors: [...pageErrors] });
+    } finally {
+      await context.close();
     }
-    return { results, finalState: await context.storageState(), blocked };
-  } finally { await context.close(); }
+  }
+  // Never replace the common input state with one locale's navigation effects.
+  return { results, finalState: state, blocked };
 }
 
 async function run() {

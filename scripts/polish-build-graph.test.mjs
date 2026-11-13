@@ -29,3 +29,27 @@ test("observer is disabled by default and limited to client builds when enabled"
   assert.equal(plugin.applyToEnvironment({ name: "client" }), true);
   assert.equal(plugin.applyToEnvironment({ name: "server" }), false);
 });
+
+test("rendered metadata distinguishes removed code from real declarations and unknown metadata", () => {
+  const declaration = "export const feature = false;";
+  const graph = buildGraph({
+    "entry.js": chunk("entry.js", { entry: true, modules: {
+      "/repo/src/removed.ts": { renderedLength: 0, renderedExports: [], code: null },
+      "/repo/src/declaration.ts": { renderedLength: declaration.length, renderedExports: ["feature"], code: declaration },
+      "/repo/src/unknown.ts": {},
+      "/repo/src/private-detail.ts": {
+        renderedLength: 10, renderedExports: [],
+        get code() { throw new Error("Unrequested module code must not be read"); },
+      },
+    } }),
+  }, { root: "/repo", codeModuleIds: ["src/removed.ts", "src/declaration.ts"] });
+  assert.deepEqual(graph.initial.zeroRenderedModuleIds, ["src/removed.ts"]);
+  assert.deepEqual(graph.initial.unknownRenderedModuleIds, ["src/unknown.ts"]);
+  assert.deepEqual(graph.initial.renderedModuleIds, ["src/declaration.ts", "src/private-detail.ts"]);
+  const modules = graph.chunks[0].renderedModules;
+  assert.deepEqual(modules.find(({ id }) => id === "src/declaration.ts"), {
+    id: "src/declaration.ts", renderedLength: declaration.length, renderedExports: ["feature"], code: declaration,
+  });
+  assert.equal(modules.find(({ id }) => id === "src/removed.ts").code, null);
+  assert.equal(Object.hasOwn(modules.find(({ id }) => id === "src/private-detail.ts"), "code"), false);
+});
