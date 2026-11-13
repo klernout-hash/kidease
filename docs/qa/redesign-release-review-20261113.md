@@ -1,11 +1,11 @@
 # KidEase redesign release review — 13 November 2026
 
-This is the current implementation and validation record for the redesign draft. Application/test source is reviewed layout `c27a475d`, corrections `960da0f4` and the Floating Gallery extension `55197ba9`, based on main `9d9838ec` (#842–#846). Later evidence edits change documentation only. See the [review history](approved-redesign-20261113.md), [blocker corrections](redesign-local-blockers-20261113.md) and [current icon implementation/evidence](floating-gallery-20261113.md) for context. This record does not establish release acceptance.
+This is the implementation and validation record for the redesign draft. Application/test source is reviewed layout `c27a475d`, corrections `960da0f4`, the Floating Gallery extension `55197ba9` and automatic idle-motion follow-up `91299bdb`, based on main `9d9838ec` (#842–#846). See the [review history](approved-redesign-20261113.md), [blocker corrections](redesign-local-blockers-20261113.md), [original icon snapshot](floating-gallery-20261113.md) and [current idle-motion evidence](category-idle-20261113.md) for context. This record does not establish release acceptance.
 
 ## Included
 
 - [x] Care categories inside the home header at desktop and phone widths, including Classic; city/locale destinations retained. Small desktop **For daycares** link and mobile-menu destination.
-- [x] Original Floating Gallery PNG artwork and finite interaction motion, with reduced-motion support. Classic retains six type links; the existing optional gallery retains eight categories. Asset bytes, routes, labels and current default look are preserved. [Current screenshots and rendered motion](floating-gallery-20261113.md).
+- [x] Original Floating Gallery PNG artwork with gentle periodic idle motion while visible, finite interaction replay, off-screen/hidden-state pauses and live reduced-motion support. Classic retains six type links; the existing optional gallery retains eight categories. Asset bytes, routes, labels and current default look are preserved. [Current screenshots and rendered motion](category-idle-20261113.md).
 - [x] Redundant **Live on KidEase** section removed; useful live-centre filtering retained.
 - [x] Category and Recently Viewed photo cards use shared responsive sizes/20:19 picture boxes on web and app. Listing photos retain their ratio and cover fit; missing photos remain honest branded fallbacks.
 - [x] Source-date photo overlays removed; relevant provenance retained elsewhere.
@@ -29,7 +29,7 @@ This is the current implementation and validation record for the redesign draft.
 
 ## Validation and visual evidence
 
-Current icon-extension application/test source `55197ba9` passed the full local suite: **3,060 passed,0 failed,0 skipped**; typecheck passed; ESLint **0 errors,128 warnings**. Fresh credential-free `build:dev` and bundle guards passed:71 server modules,8 extra locales lazy,727 client files without database schema. Current category browser checks cover eight functional cases,56 routes/back checks,24 repeat cycles and keyboard/motion/reduced-motion behavior; [scope and current evidence](floating-gallery-20261113.md).
+First icon-extension application/test source `55197ba9` passed the full local suite: **3,060 passed,0 failed,0 skipped**; typecheck passed; ESLint **0 errors,128 warnings**. Fresh credential-free `build:dev` and bundle guards passed:71 server modules,8 extra locales lazy,727 client files without database schema. Those category browser checks cover eight functional cases,56 routes/back checks,24 repeat cycles and keyboard/motion/reduced-motion behavior; [historical scope](floating-gallery-20261113.md). The [idle follow-up validation](category-idle-20261113.md) records its exact checks and limits separately.
 
 Earlier redesign source `960da0f4` passed local guest smoke **shard1/8:34/34**, eight EN/FR×390/1280×Classic/Clean hydration cases, synthetic503 Retry recovery, the original two-width coverage scenario and actual-worker/built-map cycles. Those earlier checks are historical; full guest shards and signed-in CI have not been rerun for the icon extension.
 

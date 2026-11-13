@@ -3537,8 +3537,6 @@ html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-home"] .sticky 
   margin-block: 0.25rem;
   pointer-events: none;
   transform-origin: 50% 70%;
-  animation: ke-category-arrive 1.05s cubic-bezier(.35, .05, .2, 1) both;
-  animation-delay: var(--ke-category-delay, 0s);
 }
 .ke-category-icon {
   display: block;
@@ -3546,11 +3544,7 @@ html[data-ui="airbnb-v1"] [data-ke="airbnb-home"] [data-ke="msv2-home"] .sticky 
   height: 100%;
   max-width: 100%;
   object-fit: contain;
-}
-@keyframes ke-category-arrive {
-  0%, 100% { transform: rotate(0) translateY(0); }
-  30% { transform: rotate(-6deg) translateY(-4px); }
-  65% { transform: rotate(5deg) translateY(-2px); }
+  transform-origin: 50% 70%;
 }
 @media (prefers-reduced-motion: reduce) {
   html[data-ui="airbnb-v1"] .ke-airbnb-sheet { transition: none; }

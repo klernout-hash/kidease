@@ -1,6 +1,6 @@
 # Floating Gallery category icons — 13 November 2026
 
-Application/test source: `55197ba9827cd5f381b8a157d569c26401c0a1d0`, extending reviewed redesign `b3a5e6a4`. Later evidence edits change documentation only.
+This records the first icon snapshot, application/test source `55197ba9827cd5f381b8a157d569c26401c0a1d0`, extending reviewed redesign `b3a5e6a4`. Its screenshots and finite-motion videos are retained as history. The [automatic idle-motion follow-up](category-idle-20261113.md) supersedes the motion behavior below and includes fresh evidence.
 
 ## Behavior
 
@@ -8,7 +8,7 @@ All eight original 256×256 RGBA PNGs are included unchanged and mapped by the s
 
 The Classic header retains its six licensed-care/program links, localized labels and selected-city query. The existing optional gallery retains eight categories, including All and Open Spots, with its existing destinations and selection behavior. Phone rows retain horizontal scrolling. Classic remains the default look; Clean remains opt-in. No feature flag, source data, payment/subscription setting, business filter or authorization behavior changes.
 
-The PNGs themselves are static. Their reserved icon boxes use the reference's finite 1.05-second sway, with cubic-bezier(.35,.05,.2,1), rotation and vertical translation. A staggered arrival plays once; pointer entry, keyboard focus and clicks can replay it. Pointer exit does not start another animation. Reduced motion disables the arrival and interaction effects; changing the preference cancels an active effect. Unmount removes the control/media listeners and cancels owned animations. Labels and hit targets remain stationary. There are no animation timers or forced layout reads.
+The PNGs themselves are static. This first snapshot used a finite 1.05-second sway, with cubic-bezier(.35,.05,.2,1), rotation and vertical translation: one staggered arrival plus pointer-entry, focus and click replay. It did not provide ongoing idle motion. The follow-up adds gentle periodic motion while visible, with off-screen and hidden-state pauses. Both versions keep labels and hit targets stationary and honor reduced motion.
 
 ## Validation
 

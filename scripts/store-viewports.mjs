@@ -93,6 +93,11 @@ function safeFor(vp) {
   return { top: 24, right: 0, bottom: 24, left: 0 };
 }
 
+/** Buttons and text links can both provide visible hover feedback. */
+export function hoverFeedbackChanged(before, after) {
+  return ["backgroundColor", "color", "textDecorationLine"].some((property) => before[property] !== after[property]);
+}
+
 async function openRoute(page, base, path) {
   const url = new URL(path, base).href;
   const res = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 25000 }).catch(async () => {
@@ -365,10 +370,14 @@ async function windowsInputs(browser, base, problems) {
       });
       const link = page.locator("[data-ke='list-your-daycare']");
       if (await link.isVisible().catch(() => false)) {
-        const before = await link.evaluate((el) => getComputedStyle(el).backgroundColor);
+        const hoverStyle = (el) => {
+          const style = getComputedStyle(el);
+          return { backgroundColor: style.backgroundColor, color: style.color, textDecorationLine: style.textDecorationLine };
+        };
+        const before = await link.evaluate(hoverStyle);
         await link.hover();
-        const after = await link.evaluate((el) => getComputedStyle(el).backgroundColor);
-        if (before === after) problems.push("win-mouse hover-unchanged");
+        const after = await link.evaluate(hoverStyle);
+        if (!hoverFeedbackChanged(before, after)) problems.push("win-mouse hover-unchanged");
       } else problems.push("win-mouse missing-link");
       for (const note of hover) problems.push(`win-mouse ${note}`);
     }
