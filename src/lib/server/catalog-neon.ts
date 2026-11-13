@@ -19,6 +19,7 @@ import { correctCentreNameTypos, listingSlugLookupKeys, normalizeListingSlug } f
 import { listingCultureFrom } from "@/lib/listing-culture";
 import { agesKnownFromConfirmedFlag } from "@/lib/standard-age-groups";
 import { normalizeLicenseStatus, normalizeMatchState } from "@/lib/trust";
+import { searchEvidence, type SearchBatch, type SearchReadOptions } from "@/lib/search-evidence";
 import {
   LISTING_DISTANCE_KM_SQL,
   LISTING_WITHIN_RADIUS_B_SQL,
@@ -155,11 +156,19 @@ export async function queryNeonCityHubListings(
   province: string,
   cityKeys: readonly string[],
 ): Promise<CatalogDaycare[] | null> {
+  return (await queryNeonCityHubListingsResult(province, cityKeys))?.rows ?? null;
+}
+
+export async function queryNeonCityHubListingsResult(
+  province: string,
+  cityKeys: readonly string[],
+  opts?: SearchReadOptions,
+): Promise<SearchBatch<CatalogDaycare> | null> {
   if (dbSource !== "neon") return null;
   const keys = [...new Set(cityKeys.map((key) => key.trim()).filter(Boolean))];
-  if (!keys.length) return [];
+  if (!keys.length) return { rows: [], evidence: searchEvidence({ status: "complete", source: "primary" }) };
   const cacheKey = `${province.toUpperCase()}:${keys.slice().sort().join("|")}`;
-  const cachedHub = readTimed(cityHubCache, cacheKey, LIST_TTL_MS);
+  const cachedHub = opts?.refresh ? undefined : readTimed(cityHubCache, cacheKey, LIST_TTL_MS);
   if (cachedHub) return cachedHub;
   try {
     const sql = await Promise.race([getSql(), rejectAfter(6000, "directory-list-timeout")]);
@@ -174,7 +183,7 @@ export async function queryNeonCityHubListings(
       [province.toUpperCase(), keys],
     );
     const listed = rows.filter(catalogRowRenderable).map(catalogRowToListing).filter(isPublicListing);
-    return rememberTimed(cityHubCache, cacheKey, listed);
+    return rememberTimed(cityHubCache, cacheKey, { rows: listed, evidence: candidateEvidence(rows.length, CITY_TYPE_LIST_CAP) });
   } catch {
     return null;
   }
@@ -237,12 +246,12 @@ const LIST_CACHE_MAX = 48;
 type Timed<T> = { at: number; value: T };
 
 let countCache: { at: number; n: number } | null = null;
-let neonAllCache: CatalogDaycare[] | null = null;
+let neonAllCache: SearchBatch<CatalogDaycare> | null = null;
 let suppressedCache: { at: number; keys: SuppressedCatalogKeys } | null = null;
-const nearbyCache = new Map<string, Timed<(CatalogDaycare & { distanceKm?: number })[]>>();
-const cityHubCache = new Map<string, Timed<CatalogDaycare[]>>();
+const nearbyCache = new Map<string, Timed<SearchBatch<CatalogDaycare & { distanceKm?: number }>>>();
+const cityHubCache = new Map<string, Timed<SearchBatch<CatalogDaycare>>>();
 const slugCache = new Map<string, Timed<CatalogDaycare>>();
-let nameIndexCache: Timed<PublicNameIndexRow[]> | null = null;
+let nameIndexCache: Timed<SearchBatch<PublicNameIndexRow>> | null = null;
 
 export type PublicNameIndexRow = {
   id: string;
@@ -270,6 +279,16 @@ function rememberTimed<T>(map: Map<string, Timed<T>>, key: string, value: T, max
   return value;
 }
 
+/** A raw limit can hide matches even when hydration later removes some rows. */
+function candidateEvidence(rawCount: number, limit: number) {
+  return searchEvidence({
+    status: rawCount >= limit ? "partial" : "complete",
+    source: "primary",
+    reasons: rawCount >= limit ? ["candidate-limit"] : [],
+    retryable: false,
+  });
+}
+
 export function resetNeonCatalogCache() {
   countCache = null;
   neonAllCache = null;
@@ -284,10 +303,10 @@ export function resetNeonCatalogCache() {
  * Ids and slugs the database has marked hidden, inactive, admin-only, or
  * retired. Null means the database did not answer — callers keep the bundle.
  */
-export async function loadSuppressedCatalogKeys(): Promise<SuppressedCatalogKeys | null> {
+export async function loadSuppressedCatalogKeys(opts?: SearchReadOptions): Promise<SuppressedCatalogKeys | null> {
   if (typeof window !== "undefined") return null;
   const now = Date.now();
-  if (suppressedCache && now - suppressedCache.at < SUPPRESSED_TTL_MS) return suppressedCache.keys;
+  if (!opts?.refresh && suppressedCache && now - suppressedCache.at < SUPPRESSED_TTL_MS) return suppressedCache.keys;
   try {
     const sql = await Promise.race([getSql(), rejectAfter(4000, "suppressed-catalog-timeout")]);
     const rows = await sql.query<{ id: string | null; slug: string | null }>(
@@ -415,20 +434,20 @@ export async function postgisReady(sql: Sql): Promise<boolean> {
   }
 }
 
-export async function countPublicDaycares(sql: Sql): Promise<number> {
+export async function countPublicDaycares(sql: Sql, opts?: SearchReadOptions): Promise<number> {
   const now = Date.now();
-  if (countCache && now - countCache.at < COUNT_TTL_MS) return countCache.n;
+  if (!opts?.refresh && countCache && now - countCache.at < COUNT_TTL_MS) return countCache.n;
   const rows = await sql.query<{ n: number }>(PUBLIC_CATALOG_COUNT_SQL);
   const n = Number(rows[0]?.n) || 0;
   countCache = { at: now, n };
   return n;
 }
 
-export async function isNeonCatalogPreferred(sql?: Sql): Promise<boolean> {
+export async function isNeonCatalogPreferred(sql?: Sql, opts?: SearchReadOptions): Promise<boolean> {
   if (dbSource !== "neon") return false;
   try {
     const client = sql ?? (await Promise.race([getSql(), rejectAfter(4000, "catalog-count-timeout")]));
-    const publicCount = await countPublicDaycares(client);
+    const publicCount = await countPublicDaycares(client, opts);
     return preferNeonCatalog({
       source: catalogSourceFromEnv(),
       neonAvailable: true,
@@ -441,15 +460,22 @@ export async function isNeonCatalogPreferred(sql?: Sql): Promise<boolean> {
 }
 
 export async function loadNeonCatalogIfPreferred(): Promise<CatalogDaycare[] | null> {
+  return (await queryNeonCatalogAllResult())?.rows ?? null;
+}
+
+export async function queryNeonCatalogAllResult(opts?: SearchReadOptions): Promise<SearchBatch<CatalogDaycare> | null> {
   if (dbSource !== "neon") return null;
   try {
     const sql = await Promise.race([getSql(), rejectAfter(6000, "catalog-sql-timeout")]);
-    if (!(await isNeonCatalogPreferred(sql))) return null;
-    if (neonAllCache) return neonAllCache;
+    if (!(await isNeonCatalogPreferred(sql, opts))) return null;
+    if (!opts?.refresh && neonAllCache) return neonAllCache;
     // Full table, including admin-only QA fixtures. Public surfaces must use
     // getPublicCatalog / nearby SQL — never this list unfiltered.
     const rows = await sql.query<CatalogDbRow>(`select ${CATALOG_SELECT} from daycares`);
-    neonAllCache = rows.filter(catalogRowRenderable).filter((row) => !(row.merged_into || "").trim() && !(row.import_fault || "").trim()).map(catalogRowToListing);
+    neonAllCache = {
+      rows: rows.filter(catalogRowRenderable).filter((row) => !(row.merged_into || "").trim() && !(row.import_fault || "").trim()).map(catalogRowToListing),
+      evidence: searchEvidence({ status: "complete", source: "primary" }),
+    };
     return neonAllCache;
   } catch {
     return null;
@@ -571,16 +597,20 @@ export async function neonCatalogById(id: string): Promise<CatalogDaycare | null
 
 /** Every matching database row, including hidden and retired. Null when the database did not answer. */
 export async function neonCatalogByIds(ids: string[]): Promise<CatalogDaycare[] | null> {
+  return (await neonCatalogByIdsResult(ids))?.rows ?? null;
+}
+
+export async function neonCatalogByIdsResult(ids: string[], _opts?: SearchReadOptions): Promise<SearchBatch<CatalogDaycare> | null> {
   if (typeof window !== "undefined") return null;
   const wanted = ids.filter(Boolean);
-  if (wanted.length === 0) return [];
+  if (wanted.length === 0) return { rows: [], evidence: searchEvidence({ status: "complete", source: "primary" }) };
   try {
     const sql = await Promise.race([getSql(), rejectAfter(6000, "catalog-sql-timeout")]);
     const rows = await sql.query<CatalogDbRow>(
       `select ${CATALOG_SELECT} from daycares where id = any($1::text[])`,
       [wanted],
     );
-    return rows.filter(catalogRowRenderable).map(catalogRowToListing);
+    return { rows: rows.filter(catalogRowRenderable).map(catalogRowToListing), evidence: searchEvidence({ status: "complete", source: "primary" }) };
   } catch {
     return null;
   }
@@ -592,14 +622,26 @@ export async function queryNeonNearby(
   sql?: Sql,
   limit = 400,
 ): Promise<(CatalogDaycare & { distanceKm?: number })[] | null> {
+  return (await queryNeonNearbyResult(origin, radiusKm, sql, limit))?.rows ?? null;
+}
+
+export async function queryNeonNearbyResult(
+  origin: { lat: number; lng: number },
+  radiusKm: number,
+  sql?: Sql,
+  limit = 400,
+  opts?: SearchReadOptions,
+): Promise<SearchBatch<CatalogDaycare & { distanceKm?: number }> | null> {
   if (dbSource !== "neon") return null;
-  const cacheKey = `${origin.lat.toFixed(3)}:${origin.lng.toFixed(3)}:${clampRadiusKm(radiusKm)}:${Math.floor(limit)}`;
-  const cached = readTimed(nearbyCache, cacheKey, LIST_TTL_MS);
+  const radius = clampRadiusKm(radiusKm);
+  const cap = Math.min(CITY_TYPE_LIST_CAP, Math.max(1, Math.floor(limit)));
+  const cacheKey = JSON.stringify(["nearby", origin.lat, origin.lng, radius, cap]);
+  const cached = opts?.refresh ? undefined : readTimed(nearbyCache, cacheKey, LIST_TTL_MS);
   if (cached) return cached;
   try {
     const client = sql ?? (await Promise.race([getSql(), rejectAfter(6000, "nearby-sql-timeout")]));
     if (!(await postgisReady(client))) return null;
-    const meters = clampRadiusKm(radiusKm) * 1000;
+    const meters = radius * 1000;
     const rows = await Promise.race([
       client.query<CatalogDbRow>(neonNearSql(limit), [origin.lng, origin.lat, meters]),
       rejectAfter(6000, "nearby-dwithin-timeout"),
@@ -611,7 +653,7 @@ export async function queryNeonNearby(
         distanceKm: Math.round(Number(row.distance_km) * 10) / 10,
       }))
       .filter(isPublicListing);
-    return rememberTimed(nearbyCache, cacheKey, listed);
+    return rememberTimed(nearbyCache, cacheKey, { rows: listed, evidence: candidateEvidence(rows.length, cap) });
   } catch {
     return null;
   }
@@ -646,14 +688,25 @@ export async function queryNeonNearbyDual(
   radiusKm: number,
   sql?: Sql,
 ): Promise<(CatalogDaycare & { distanceKm?: number })[] | null> {
+  return (await queryNeonNearbyDualResult(originA, originB, radiusKm, sql))?.rows ?? null;
+}
+
+export async function queryNeonNearbyDualResult(
+  originA: { lat: number; lng: number },
+  originB: { lat: number; lng: number },
+  radiusKm: number,
+  sql?: Sql,
+  opts?: SearchReadOptions,
+): Promise<SearchBatch<CatalogDaycare & { distanceKm?: number }> | null> {
   if (dbSource !== "neon") return null;
-  const cacheKey = `dual:${originA.lat.toFixed(3)}:${originA.lng.toFixed(3)}:${originB.lat.toFixed(3)}:${originB.lng.toFixed(3)}:${clampRadiusKm(radiusKm)}`;
-  const cached = readTimed(nearbyCache, cacheKey, LIST_TTL_MS);
+  const radius = clampRadiusKm(radiusKm);
+  const cacheKey = JSON.stringify(["dual", originA.lat, originA.lng, originB.lat, originB.lng, radius, 400]);
+  const cached = opts?.refresh ? undefined : readTimed(nearbyCache, cacheKey, LIST_TTL_MS);
   if (cached) return cached;
   try {
     const client = sql ?? (await Promise.race([getSql(), rejectAfter(6000, "nearby-sql-timeout")]));
     if (!(await postgisReady(client))) return null;
-    const meters = clampRadiusKm(radiusKm) * 1000;
+    const meters = radius * 1000;
     const rows = await Promise.race([
       client.query<CatalogDbRow>(NEON_DUAL_NEAR_SQL, [originA.lng, originA.lat, meters, originB.lng, originB.lat]),
       rejectAfter(6000, "nearby-dual-dwithin-timeout"),
@@ -665,7 +718,7 @@ export async function queryNeonNearbyDual(
         distanceKm: Math.round(Number(row.distance_km) * 10) / 10,
       }))
       .filter(isPublicListing);
-    return rememberTimed(nearbyCache, cacheKey, listed);
+    return rememberTimed(nearbyCache, cacheKey, { rows: listed, evidence: candidateEvidence(rows.length, 400) });
   } catch {
     return null;
   }
@@ -673,8 +726,12 @@ export async function queryNeonNearbyDual(
 
 /** Names only, cached. Name search fuzzy-matches this, then loads list rows for hits. */
 export async function queryNeonPublicNameIndex(): Promise<PublicNameIndexRow[] | null> {
+  return (await queryNeonPublicNameIndexResult())?.rows ?? null;
+}
+
+export async function queryNeonPublicNameIndexResult(opts?: SearchReadOptions): Promise<SearchBatch<PublicNameIndexRow> | null> {
   if (dbSource !== "neon") return null;
-  if (nameIndexCache && Date.now() - nameIndexCache.at < NAME_TTL_MS) return nameIndexCache.value;
+  if (!opts?.refresh && nameIndexCache && Date.now() - nameIndexCache.at < NAME_TTL_MS) return nameIndexCache.value;
   try {
     const sql = await Promise.race([getSql(), rejectAfter(6000, "name-index-timeout")]);
     const rows = await sql.query<PublicNameIndexRow>(
@@ -682,8 +739,9 @@ export async function queryNeonPublicNameIndex(): Promise<PublicNameIndexRow[] |
          from daycares
         where ${PUBLIC_LISTING_SQL}`,
     );
-    nameIndexCache = { at: Date.now(), value: rows };
-    return rows;
+    const batch = { rows, evidence: searchEvidence({ status: "complete", source: "primary" }) };
+    nameIndexCache = { at: Date.now(), value: batch };
+    return batch;
   } catch {
     return null;
   }
@@ -691,9 +749,13 @@ export async function queryNeonPublicNameIndex(): Promise<PublicNameIndexRow[] |
 
 /** List columns for a name-search hit set. Null when the database did not answer. */
 export async function queryNeonListingsByIds(ids: string[]): Promise<CatalogDaycare[] | null> {
+  return (await queryNeonListingsByIdsResult(ids))?.rows ?? null;
+}
+
+export async function queryNeonListingsByIdsResult(ids: string[], _opts?: SearchReadOptions): Promise<SearchBatch<CatalogDaycare> | null> {
   if (dbSource !== "neon") return null;
   const wanted = [...new Set(ids.map((id) => String(id || "").trim()).filter(Boolean))];
-  if (!wanted.length) return [];
+  if (!wanted.length) return { rows: [], evidence: searchEvidence({ status: "complete", source: "primary" }) };
   try {
     const sql = await Promise.race([getSql(), rejectAfter(6000, "name-rows-timeout")]);
     const rows = await sql.query<CatalogDbRow>(
@@ -703,7 +765,10 @@ export async function queryNeonListingsByIds(ids: string[]): Promise<CatalogDayc
     const byId = new Map(
       rows.filter(catalogRowRenderable).map((row) => [row.id, catalogRowToListing(row)] as const),
     );
-    return wanted.map((id) => byId.get(id)).filter((row): row is CatalogDaycare => Boolean(row) && isPublicListing(row));
+    return {
+      rows: wanted.map((id) => byId.get(id)).filter((row): row is CatalogDaycare => Boolean(row) && isPublicListing(row)),
+      evidence: searchEvidence({ status: "complete", source: "primary" }),
+    };
   } catch {
     return null;
   }

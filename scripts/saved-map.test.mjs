@@ -75,7 +75,7 @@ test("cached general results cannot add pins to saved-only panning or an empty s
   resetMapViewCache();
 });
 
-test("shortlist opts into item-only data, fetch guard, repainting, and saved labels", () => {
+test("shortlist and scoped search retain separate supplied-data guards and repainting", () => {
   const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
   const shortlist = read("src/components/parent-shortlist.tsx");
   const view = read("src/components/map-view.tsx");
@@ -83,10 +83,17 @@ test("shortlist opts into item-only data, fetch guard, repainting, and saved lab
   const fetchEffect = view.slice(view.indexOf("const pendingTiles ="), view.indexOf("if (itemsOnly || loadedView.current)"));
   const fetchStart = view.slice(view.lastIndexOf("useEffect(() =>", view.indexOf("const pendingTiles =")), view.indexOf("const pendingTiles ="));
   assert.match(fetchStart, /if \(itemsOnly\) return/);
-  assert.match(fetchEffect, /\[ready, mapEpoch, itemsOnly\]/);
+  assert.match(fetchStart, /if \(!map \|\| !maps \|\| !ready \|\| searchScoped\) return/);
+  assert.match(fetchEffect, /\[ready, mapEpoch, itemsOnly, searchScoped\]/);
+  // Saved wins if both supplied-data props exist; [] remains an explicit empty search.
+  assert.match(view, /const searchScoped = !itemsOnly && searchPins !== undefined/);
+  assert.match(view, /if \(itemsOnly \|\| loadedView\.current\) return;\s*if \(searchScoped\) return/);
   assert.match(view, /const view = itemsOnly \? seeded/);
+  assert.match(view, /const view = itemsOnly \? seeded : searchScoped \? scoped/);
+  assert.match(view, /projectMapRows\(searchPins, zoom, frame\)/);
   assert.match(view, /listPinsForCamera\(searchCardsToMapPins\(items\), zoom, frame, \{ itemsOnly \}\)/);
-  assert.match(view, /itemsOnly\s*\? maps\.event\.addListener\(map, "idle", paint\)/);
+  assert.match(view, /if \(itemsOnly \|\| searchScoped\) paint\(\)/);
+  assert.match(view, /itemsOnly \|\| searchScoped\s*\? maps\.event\.addListener\(map, "idle", paint\)/);
   assert.match(view, /t\("mapSavedOnly"\)/);
   assert.match(view, /t\("mapSavedCount"\)/);
 });

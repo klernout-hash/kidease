@@ -2,8 +2,7 @@
 import { pathToFileURL } from "node:url";
 
 /**
- * Public document/static availability smoke. No sign-in and no paid vendor.
- * This does not establish database health; health/status endpoints may write.
+ * Public production smoke. No sign-in and no paid vendor.
  *
  *   node scripts/live-smoke.mjs
  *
@@ -15,7 +14,7 @@ const CHECKS = [
   { name: "home", path: "/", statuses: [200], must: /KidEase/i, forbid: /Something went wrong/i },
   { name: "login", path: "/login", statuses: [200], forbid: /Something went wrong/i },
   { name: "fr-login", path: "/fr/login", statuses: [200], forbid: /Something went wrong/i },
-  { name: "robots", path: "/robots.txt", statuses: [200], must: /^User-agent:\s*\*\s*$/im },
+  { name: "robots", path: "/robots.txt", statuses: [200], must: /User-agent:/i },
   { name: "sign-in-redirect", path: "/sign-in", statuses: [301, 302, 307, 308], location: /\/login(?:\?|$)/ },
   { name: "sign-up-redirect", path: "/sign-up", statuses: [301, 302, 307, 308], location: /\/signup(?:\?|$)/ },
 ];

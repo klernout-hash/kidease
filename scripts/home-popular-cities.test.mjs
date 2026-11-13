@@ -132,7 +132,7 @@ test("guest home hero keeps the search bar and drops the city grid and trust dup
   assert.doesNotMatch(src("src/components/shell.tsx"), /HomeCareTypeRow/);
   assert.doesNotMatch(src("src/components/shell.tsx"), /lg:absolute/);
   assert.doesNotMatch(src("src/components/shell.tsx"), /inset-x-16/);
-  assert.match(src("src/components/shell.tsx"), /whitespace-normal/);
+  assert.match(src("src/components/shell.tsx"), /hidden min-h-\[44px\] min-w-\[44px\][^"]*md:inline-flex/);
   assert.match(src("src/components/shell.tsx"), /data-ke="list-your-daycare"/);
   assert.doesNotMatch(src("src/components/shell.tsx"), /header-overflow-types/);
   assert.match(src("src/components/facility-type-rails.tsx"), /ResizeObserver/);
@@ -142,23 +142,21 @@ test("guest home hero keeps the search bar and drops the city grid and trust dup
   assert.doesNotMatch(hero, /HeroYard/);
 });
 
-test("guest menu shows each help link once and hides empty headings", () => {
+test("guest menu delegates help to the shared support group and hides empty headings", () => {
   const drawer = src("src/components/nav-drawer.tsx");
   const guestStart = drawer.indexOf("function GuestDrawerLinks");
   const guestEnd = drawer.indexOf("export function NavDrawer");
   assert.ok(guestStart >= 0 && guestEnd > guestStart);
   const guest = drawer.slice(guestStart, guestEnd);
-  assert.equal((guest.match(/label=\{t\("helpTitle"\)\}/g) || []).length, 1);
-  assert.equal((guest.match(/label=\{t\("faqShort"\)\}/g) || []).length, 1);
-  assert.equal((guest.match(/label=\{t\("contactTitle"\)\}/g) || []).length, 1);
-  assert.equal((guest.match(/<DrawerSection/g) || []).length, 3);
+  assert.doesNotMatch(guest, /label=\{t\("(?:helpTitle|faqShort|contactTitle)"\)\}/);
+  assert.equal((guest.match(/<DrawerSection/g) || []).length, 2);
   assert.match(drawer.slice(0, guestStart), /if \(rows\.length === 0\) return null/);
   assert.doesNotMatch(guest, /<details/);
   assert.match(guest, /marker="drawer-find-care"[\s\S]*\{navExtra\}/);
   assert.doesNotMatch(guest, />KidEase</);
   assert.match(drawer, /data-ke="drawer-kidease"/);
-  assert.match(drawer, /data-ke="drawer-help-links"/);
-  assert.match(drawer, /icon=\{item\.icon\}/);
+  assert.doesNotMatch(drawer, /data-ke="drawer-help-links"/);
+  assert.match(src("src/components/footer-more-links.tsx"), /footerMenuGroupsForShell/);
   assert.doesNotMatch(guest, /items\.map/);
   assert.match(src("src/components/footer-more-links.tsx"), /<details/);
   assert.doesNotMatch(src("src/lib/site-footer-nav.ts"), /statusNav/);

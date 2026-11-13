@@ -514,8 +514,8 @@ export function prepareGuideTurn(input: {
         direct = answer(
           locale,
           "/search",
-          "Plans are not offered on this site yet. Search and messages stay open. Listing and claim stay free.",
-          "Les forfaits ne sont pas offerts sur ce site pour le moment. La recherche et les messages restent ouverts. La fiche et la revendication restent gratuites.",
+          "KidEase subscriptions are unavailable. Search, messages, and centre bill payments remain available. Listing and claim stay free.",
+          "Les abonnements KidEase sont indisponibles. La recherche, les messages et le paiement des factures de centre restent accessibles. La fiche et la revendication restent gratuites.",
         );
       } else {
         direct = answer(locale, nav.page.path, nav.page.en, nav.page.fr);

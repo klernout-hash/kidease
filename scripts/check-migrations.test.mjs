@@ -3,6 +3,7 @@ import test from "node:test";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { EventEmitter } from "node:events";
 import { PGlite } from "@electric-sql/pglite";
 import { checkConfiguredMigrations, checkMigrationLedger, migrationCheckFailureMessage } from "./check-migrations.mjs";
 
@@ -143,9 +144,143 @@ test("normal build checks the ledger while the manual write command stays separa
   const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
   assert.match(pkg.scripts.build, /&& npm run db:migrate:check$/);
   assert.doesNotMatch(pkg.scripts.build, /npm run db:migrate(?:\s|$)/);
+  assert.deepEqual(pkg.scripts.build.split(/\s*&&\s*/), [
+    "vite build",
+    "node scripts/upload-posthog-sourcemaps.mjs",
+    "node scripts/check-ssr-bundle.mjs",
+    "node scripts/check-locale-chunks.mjs",
+    "node scripts/check-client-db.mjs",
+    "npm run db:migrate:check",
+  ]);
+  for (const lifecycle of ["prebuild", "postbuild", "preinstall", "postinstall", "prepare"])
+    assert.equal(pkg.scripts[lifecycle], undefined, `${lifecycle} must not introduce an unchecked build/install side effect`);
   assert.equal(pkg.scripts["db:migrate"], "node --experimental-strip-types scripts/migrate.mjs");
   assert.equal(pkg.scripts["db:migrate:check"], "node --experimental-strip-types scripts/check-migrations.mjs");
   const cacheKey = readFileSync(new URL("../.github/workflows/ci.yml", import.meta.url), "utf8").split("\n").find((line) => line.includes("key: vite-build-"));
   assert.ok(cacheKey.includes("'package.json'"));
   assert.ok(cacheKey.includes("'scripts/check-migrations.mjs'"));
+  assert.ok(cacheKey.includes("'migrations/**'"));
+});
+
+test("pure gate: production missing or blank database configuration rejects before files or connection access", async () => {
+  for (const DATABASE_URL of [undefined, "", "   \n\t"]) {
+    let poolCreated = false;
+    await assert.rejects(checkConfiguredMigrations({
+      env: { VERCEL_ENV: "production", DATABASE_URL },
+      migrationsDir: "/this-must-not-be-read-production-migrations",
+      createPool: () => { poolCreated = true; throw new Error("must not connect"); },
+    }), { code: "MIGRATION_DATABASE_REQUIRED" });
+    assert.equal(poolCreated, false);
+  }
+});
+
+test("pure gate: unconfigured local CI and preview builds skip without filesystem or connection access", async () => {
+  for (const environment of [{}, { CI: "true" }, { NODE_ENV: "production", CI: "true" }, { VERCEL_ENV: "preview" }, { VERCEL_ENV: "development" }]) {
+    for (const DATABASE_URL of [undefined, "", "   "]) {
+      let poolCreated = false;
+      const result = await checkConfiguredMigrations({
+        env: { ...environment, DATABASE_URL },
+        migrationsDir: "/this-must-not-be-read-unconfigured-migrations",
+        createPool: () => { poolCreated = true; throw new Error("must not connect"); },
+      });
+      assert.equal(result.status, "skipped");
+      assert.equal(poolCreated, false);
+    }
+  }
+});
+
+test("pure gate: an empty SQL migration inventory rejects before creating a pool", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "kidease-empty-migration-check-"));
+  let poolCreated = false;
+  try {
+    writeFileSync(join(dir, "README.md"), "Not SQL and never executed.");
+    await assert.rejects(checkConfiguredMigrations({
+      env: { VERCEL_ENV: "production", DATABASE_URL: "postgres://synthetic.invalid/fixture" },
+      migrationsDir: dir,
+      createPool: () => { poolCreated = true; throw new Error("must not connect"); },
+    }), { code: "MIGRATION_FILES_EMPTY" });
+    assert.equal(poolCreated, false);
+  } finally { rmSync(dir, { recursive: true }); }
+});
+
+test("pure gate: malformed ledger results fail closed and always roll back without logging row values", async () => {
+  for (const result of [{}, { rows: null }, { rows: "invalid" }, { rows: [null] }, { rows: [{}] }, { rows: [{ name: null }] }, { rows: [{ name: 3 }] }]) {
+    const queries = [];
+    const client = { query: async (sql) => {
+      queries.push(sql);
+      return sql.startsWith("SELECT") ? result : { rows: [] };
+    } };
+    await assert.rejects(checkMigrationLedger(client, ["0001_first.sql"]), { code: "MIGRATION_LEDGER_INVALID" });
+    assert.deepEqual(queries, ["BEGIN READ ONLY", "SELECT name FROM public._migrations", "ROLLBACK"]);
+  }
+});
+
+function syntheticDriverError() {
+  return Object.assign(new Error("password=synthetic-private-value host=synthetic.invalid"), {
+    client: { connectionParameters: { password: "synthetic-private-value" } },
+  });
+}
+
+function assertSanitizedFailure(error, expectedCode = "MIGRATION_CHECK_FAILED") {
+  assert.equal(error.code, expectedCode);
+  assert.doesNotMatch(migrationCheckFailureMessage(error), /synthetic-private-value|synthetic\.invalid|connectionParameters|password=/);
+  return true;
+}
+
+test("pure gate: pool and client error events fail closed with sanitized failures and connection cleanup", async () => {
+  for (const errorPhase of ["pool-connect", "client-select", "pool-release", "pool-end"]) {
+    const dir = mkdtempSync(join(tmpdir(), "kidease-event-migration-check-"));
+    const events = [];
+    try {
+      writeFileSync(join(dir, "0001_first.sql"), "Deliberately not executable SQL.");
+      const pool = new EventEmitter();
+      const client = new EventEmitter();
+      client.query = async (sql) => {
+        events.push(sql);
+        if (sql.startsWith("SELECT") && errorPhase === "client-select") client.emit("error", syntheticDriverError());
+        return { rows: [{ name: "0001_first.sql" }] };
+      };
+      client.release = () => {
+        events.push("release");
+        if (errorPhase === "pool-release") pool.emit("error", syntheticDriverError());
+      };
+      pool.connect = async () => {
+        events.push("connect");
+        if (errorPhase === "pool-connect") pool.emit("error", syntheticDriverError());
+        return client;
+      };
+      pool.end = async () => {
+        events.push("end");
+        if (errorPhase === "pool-end") pool.emit("error", syntheticDriverError());
+      };
+      await assert.rejects(checkConfiguredMigrations({
+        env: { DATABASE_URL: "postgres://synthetic.invalid/fixture" }, migrationsDir: dir, createPool: () => pool,
+      }), error => assertSanitizedFailure(error));
+      assert.equal(events.filter(event => event === "release").length, 1);
+      assert.equal(events.filter(event => event === "end").length, 1);
+      assert.ok(events.every(event => ["connect", "BEGIN READ ONLY", "SELECT name FROM public._migrations", "ROLLBACK", "release", "end"].includes(event)));
+    } finally { rmSync(dir, { recursive: true }); }
+  }
+});
+
+test("pure gate: release and pool-end failures cannot report an up-to-date build", async () => {
+  for (const failurePhase of ["release", "end", "both"]) {
+    const dir = mkdtempSync(join(tmpdir(), "kidease-cleanup-migration-check-"));
+    const events = [];
+    try {
+      writeFileSync(join(dir, "0001_first.sql"), "Never read or executed.");
+      const client = {
+        query: async (sql) => { events.push(sql); return { rows: [{ name: "0001_first.sql" }] }; },
+        release: () => { events.push("release"); if (failurePhase !== "end") throw syntheticDriverError(); },
+      };
+      const pool = {
+        connect: async () => client,
+        end: async () => { events.push("end"); if (failurePhase !== "release") throw syntheticDriverError(); },
+      };
+      await assert.rejects(checkConfiguredMigrations({
+        env: { DATABASE_URL: "postgres://synthetic.invalid/fixture" }, migrationsDir: dir, createPool: () => pool,
+      }), error => assertSanitizedFailure(error, "MIGRATION_CHECK_CLEANUP_FAILED"));
+      assert.deepEqual(events, ["BEGIN READ ONLY", "SELECT name FROM public._migrations", "ROLLBACK", "release", "end"]);
+    } finally { rmSync(dir, { recursive: true }); }
+  }
 });

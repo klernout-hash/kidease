@@ -2,7 +2,7 @@
 
 The audit starts from the verified default-branch commit recorded in each report. It does not contact production, change application flags, call `/api/health`, submit product forms, or authenticate to a real account. Browser HTTP requests outside the specified loopback origin are blocked, including analytics, maps, and remote images. This makes the run safe and reproducible, but does not measure those external services.
 
-Run the production build with a disposable local database and without production environment variables. Do not use `npm run build` for a measurement-only build: its final step runs database migrations. Use `npx vite build`, then the repository bundle checks explicitly. The existing `e2e --start-preview` runner enables subscriptions and probes health, so its default environment is unsuitable for this evidence run.
+Run the production build with a disposable local database and without production environment variables. Normal `npm run build` now ends with the read-only migration-ledger check, not migrations. For an isolated measurement build, use a clean environment with no production credentials; a missing local DATABASE_URL skips remote-ledger verification and is not proof that production migrations are current. The existing `e2e --start-preview` runner enables subscriptions and probes health, so its default environment is unsuitable for this evidence run.
 
 ## Layout audit
 

@@ -4,6 +4,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { govAuthMiddleware } from "@/lib/auth/gov-middleware";
+import { govScopeProvince } from "@/lib/gov/province-choice";
+import type { GovActor } from "@/lib/server/gov-actor.server";
 import { listAccessibleDaycareIds } from "@/lib/server/centre-access";
 import { curriculumPackEnabled, curriculumPackLive, storyCornerEnabled } from "@/lib/features";
 import { ENROLLED_BOOKING_STATUSES } from "@/lib/review-gate";
@@ -584,9 +586,12 @@ export const replyToCurriculumStory = createServerFn({ method: "POST" })
 export const governmentCurriculumTotals = createServerFn({ method: "GET" })
   .middleware([govAuthMiddleware])
   .validator((input: { province?: string } | undefined) => ({ province: String(input?.province || "").trim() }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const scope = govScopeProvince(context.gov as GovActor, normalizeProvince(data.province) || data.province);
+    const province = normalizeProvince(scope);
     if (!curriculumPackEnabled()) return { enabled: false as const, live: false as const, rows: [] };
-    const province = normalizeProvince(data.province);
+    const provinceAliases = [province, "PEI", "NWT", "NF", "NFDL", "QUEBEC", "QUÉBEC"]
+      .filter((value): value is string => Boolean(value) && normalizeProvince(value) === province);
     const sql = await getSql();
     await ensureCurriculum();
     const rows = await sql
@@ -594,7 +599,9 @@ export const governmentCurriculumTotals = createServerFn({ method: "GET" })
         `select d.province, m.goal_ids
          from curriculum_story_meta m
          join daycares d on d.id = m.daycare_id
-         where m.status = 'published'`,
+         where m.status = 'published'
+           and ($1 = 'ALL' or replace(upper(btrim(coalesce(d.province, ''))), '.', '') = any($2::text[]))`,
+        [scope, provinceAliases],
       )
       .catch(() => []);
     const counts = new Map<string, number>();

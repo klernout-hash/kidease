@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
+import ts from "typescript";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -128,18 +129,32 @@ test("Explore filter chrome is one Airbnb/Maps bar, not three pill rows", () => 
   assert.doesNotMatch(search, /licensedNotLiveTitle/);
 });
 
-test("listing cards render one Request info CTA, not a stacked ghost layer", () => {
+test("each listing card has one accessible details action and its role-gated save control", () => {
   const card = src("src/components/daycare-card.tsx");
-  const visual = card.slice(card.indexOf('presentation === "visual"'), card.indexOf("card-photo:rail"));
-  const rail = card.slice(card.indexOf("card-photo:rail"));
-  assert.equal((visual.match(/cardRequestInfo/g) ?? []).length, 1);
-  assert.equal((rail.match(/cardRequestInfo/g) ?? []).length, 1);
-  assert.match(card, /data-ke="card-request-info"/);
-  assert.match(card, /appearance-none/);
-  assert.match(card, /\[-moz-appearance:none\]/);
-  assert.match(card, /CompareChip/);
-  const compareAt = card.indexOf("<CompareChip");
-  const compareBlock = card.slice(compareAt, card.indexOf("/>", compareAt) + 2);
-  assert.doesNotMatch(compareBlock, /left-2 bottom-2/);
+  const source = ts.createSourceFile("daycare-card.tsx", card, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const attribute = (node, name) => node.openingElement.attributes.properties
+    .find((prop) => ts.isJsxAttribute(prop) && prop.name.getText(source) === name)?.initializer?.text;
+  const articles = [];
+  const visit = (node) => {
+    if (ts.isJsxElement(node) && node.openingElement.tagName.getText(source) === "article") {
+      const visual = attribute(node, "data-ke") === "visual-card";
+      const rail = (attribute(node, "className") || "").split(/\s+/).includes("ke-tile");
+      if (visual || rail) articles.push({ node, presentation: visual ? "visual" : "rail" });
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  assert.equal(articles.length, 2);
+  for (const { node, presentation } of articles) {
+    const markup = node.getText(source);
+    assert.equal((markup.match(/data-ke="card-view-details"/g) || []).length, 1, presentation);
+    assert.equal((markup.match(/t\("viewDetails"\)/g) || []).length, 2, presentation);
+    assert.equal((markup.match(/<SaveListingButton\b/g) || []).length, 1, presentation);
+    assert.match(markup, /parentActions \? <SaveListingButton/);
+    assert.doesNotMatch(markup, /card-book-tour|card-request-info|card-join-waitlist|ClaimListingCta|CompareChip|ShareListingButton/);
+  }
+  assert.match(card, /to=\{localePath\(`\/daycare\/\$\{slug\}`, locale\)\}/);
+  assert.match(card, /label=\{`\$\{t\("viewDetails"\)\} · \$\{name\}`\}/);
+  assert.doesNotMatch(card, /search=|hash=/);
   assert.doesNotMatch(card, /className="ke-tile group relative w-full"/);
 });

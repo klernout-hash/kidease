@@ -159,6 +159,7 @@ export function DeskShell({
   wide,
   headingMode = "page",
   pageClassName,
+  fitViewport = false,
 }: {
   desk: DeskId;
   active: string;
@@ -168,6 +169,7 @@ export function DeskShell({
   /** Aside label when the page already has its own h1, such as Your centres. */
   headingMode?: "page" | "aside";
   pageClassName?: string;
+  fitViewport?: boolean;
 }) {
   const meta = DESK_META[desk];
   const { t } = useCopy();
@@ -207,10 +209,10 @@ export function DeskShell({
 
   return (
     <DeskMenuProvider value={{ desk, items: allItems, active, pathname, onSelect }}>
-      <Shell pageClassName={pageClassName}>
-        <div className={cn("ke-dense mx-auto flex flex-col gap-3 px-3 py-2 md:py-3", wide ? "max-w-[90rem]" : "max-w-6xl")}>
-          <div className="flex flex-col gap-3 md:flex-row md:items-start md:gap-4">
-            <aside className="md:sticky md:top-14 md:w-44 md:shrink-0">
+      <Shell fitViewport={fitViewport} pageClassName={pageClassName}>
+        <div className={cn("ke-dense mx-auto flex flex-col gap-3 px-3 py-2 md:py-3", wide ? "max-w-[90rem]" : "max-w-6xl", fitViewport && "min-h-0 w-full flex-1")}>
+          <div className={cn("flex flex-col gap-3 md:flex-row md:items-start md:gap-4", fitViewport && "min-h-0 flex-1 md:items-stretch")}>
+            <aside className={cn("md:sticky md:top-14 md:w-44 md:shrink-0", fitViewport && "shrink-0 md:static md:min-h-0 md:overflow-y-auto")}>
               <p className="hidden text-[11px] font-medium uppercase tracking-[0.14em] text-subtle md:block">{eyebrow}</p>
               <Heading className={cn("font-display text-[1.2rem] leading-tight md:mt-0.5", headingMode === "aside" && "max-md:sr-only")}>{title}</Heading>
               {showSwitcher ? (
@@ -241,7 +243,7 @@ export function DeskShell({
                 ))}
               </nav>
             </aside>
-            <div className="min-w-0 flex-1">{children}</div>
+            <div className={cn("min-w-0 flex-1", fitViewport && "flex min-h-0 flex-col")}>{children}</div>
           </div>
         </div>
       </Shell>

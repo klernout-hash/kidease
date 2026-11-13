@@ -177,7 +177,8 @@ test("guest Explore cards hide Catalogue-matched and keep high-contrast titles",
   assert.match(src("src/lib/listing-card.ts"), /isCatalogueMatchedBadge\(license\)/);
   const card = src("src/components/daycare-card.tsx");
   assert.match(card, /isCatalogueMatchedBadge\(license\)/);
-  assert.match(card, /text-fg dark:text-white/);
+  assert.match(card, /space-y-px text-fg/);
+  assert.doesNotMatch(card, /dark:text-white/);
   assert.doesNotMatch(card, /space-y-px text-\[#222\]/);
   assert.match(src("src/components/trust-badge.tsx"), /if \(!badges\.length\) return null;/);
 });

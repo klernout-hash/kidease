@@ -1,4 +1,5 @@
-import { lazy, Suspense, useEffect, useId, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -12,38 +13,27 @@ const SmartMatchChat = lazy(() =>
   import("@/components/smart-match-chat").then((m) => ({ default: m.SmartMatchChat })),
 );
 
-function chatTabStops(panel: HTMLElement) {
-  return Array.from(
-    panel.querySelectorAll<HTMLElement>("a[href], button, select, textarea, input, [tabindex]"),
-  ).filter(
-    (element) =>
-      element.tabIndex >= 0 &&
-      !element.matches(":disabled") &&
-      !element.closest("[inert]") &&
-      element.getClientRects().length > 0 &&
-      getComputedStyle(element).visibility !== "hidden",
-  );
-}
-
-export function SmartMatchEntry({
-  inline = false,
-  quiet = false,
-}: {
-  inline?: boolean;
-  quiet?: boolean;
-}) {
+export function SmartMatchEntry({ inline = false, quiet = false, card = false }: { inline?: boolean; quiet?: boolean; card?: boolean }) {
   const { user } = useCurrentUserState();
-  const { t } = useCopy();
+  const { t, locale } = useCopy();
   const on = useAiFeatureFlag(AI_FLAGS.smartMatch);
   const [open, setOpen] = useState(false);
 
-  const button = quiet ? (
-    <button
+  const button = card ? (
+    <Button
       type="button"
-      className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center px-1 text-sm font-medium text-muted underline-offset-4 hover:text-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation"
+      className="min-h-[44px] min-w-[44px] shrink-0 rounded-md px-5 touch-manipulation max-sm:w-full"
       data-ke="smart-match-open"
       data-flag={on ? "on" : "off"}
-      onClick={() => setOpen(true)}
+    >
+      {locale === "fr" ? "Trouver ma garderie" : "Find my match"} <span aria-hidden="true">→</span>
+    </Button>
+  ) : quiet ? (
+    <button
+      type="button"
+      className="inline-flex min-h-[44px] min-w-[44px] items-center px-1 text-sm font-medium text-muted underline-offset-4 hover:text-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 touch-manipulation"
+      data-ke="smart-match-open"
+      data-flag={on ? "on" : "off"}
     >
       {t("smartMatchCta")}
     </button>
@@ -51,26 +41,35 @@ export function SmartMatchEntry({
     <Button
       type="button"
       variant="secondary"
-      className="whitespace-nowrap max-md:h-auto max-md:max-w-full max-md:whitespace-normal max-md:px-4 max-md:text-center"
+      className="min-h-[44px] min-w-[44px] whitespace-nowrap max-md:h-auto max-md:max-w-full max-md:whitespace-normal max-md:px-4 max-md:text-center"
       data-ke="smart-match-open"
       data-flag={on ? "on" : "off"}
-      onClick={() => setOpen(true)}
     >
       {t("smartMatchCta")}
     </Button>
   );
+  const trigger = <Dialog.Trigger asChild>{button}</Dialog.Trigger>;
 
   return (
-    <>
-      {inline ? button : <div className="mt-3 flex justify-center">{button}</div>}
-      {open ? (
-        <SmartMatchDialog
-          onClose={() => setOpen(false)}
-          signedIn={Boolean(user)}
-          visitorId={user?.id}
-        />
-      ) : null}
-    </>
+    <Dialog.Root open={open} onOpenChange={setOpen}>
+      {card ? (
+        <section
+          data-ke="smart-match-card"
+          className="mx-auto mt-4 flex w-full max-w-[960px] flex-col gap-4 rounded-xl border border-primary/15 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+        >
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold leading-snug text-fg">
+              {locale === "fr" ? "Besoin d’aide pour trouver la bonne garderie?" : "Need help finding the right daycare?"}
+            </h2>
+            <p className="mt-1 text-sm leading-5 text-muted">
+              {locale === "fr" ? "Répondez à 5 questions pour explorer les options pour votre famille." : "Answer 5 quick questions to explore options for your family."}
+            </p>
+          </div>
+          {trigger}
+        </section>
+      ) : inline ? trigger : <div className="mt-3 flex justify-center">{trigger}</div>}
+      {open ? <SmartMatchDialog onClose={() => setOpen(false)} signedIn={Boolean(user)} visitorId={user?.id} /> : null}
+    </Dialog.Root>
   );
 }
 
@@ -84,83 +83,49 @@ function SmartMatchDialog({
   visitorId?: string | null;
 }) {
   const { t } = useCopy();
-  const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
-  const closeRef = useRef(onClose);
-  closeRef.current = onClose;
   const started = useRef(false);
-
-  // Focus, dismissal, and scroll locking are immediate, even on a slow chunk.
   useEffect(() => {
-    if (!started.current) {
-      started.current = true;
-      capturePostHogEvent("smart_match_started", {});
-    }
-    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    panelRef.current?.focus();
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        event.stopPropagation();
-        closeRef.current();
-        return;
-      }
-      if (event.key !== "Tab" || !panelRef.current) return;
-      // Keep an outer navigation drawer from handling this dialog's Tab key.
-      event.stopPropagation();
-      const stops = chatTabStops(panelRef.current);
-      const first = stops[0];
-      const last = stops[stops.length - 1];
-      if (!first || !last) {
-        event.preventDefault();
-        panelRef.current.focus();
-        return;
-      }
-      const active = document.activeElement;
-      if (!stops.includes(active as HTMLElement)) {
-        event.preventDefault();
-        (event.shiftKey ? last : first).focus();
-      } else if (event.shiftKey && active === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && active === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
-    window.addEventListener("keydown", onKey, true);
-    return () => {
-      document.body.style.overflow = prev;
-      window.removeEventListener("keydown", onKey, true);
-      if (opener?.isConnected) opener.focus({ preventScroll: true });
-    };
+    if (started.current) return;
+    started.current = true;
+    capturePostHogEvent("smart_match_started", {});
   }, []);
 
   return (
-    <div
-      className="fixed inset-0 z-[80] flex items-end justify-center md:items-center"
-      role="presentation"
-    >
-      <div className="absolute inset-0 bg-fg/40" aria-hidden="true" onClick={onClose} />
+    <Dialog.Portal>
+    <div className="fixed inset-0 z-[100] flex items-end justify-center md:items-center" role="presentation">
+      <Dialog.Overlay asChild>
+        <button type="button" tabIndex={-1} className="absolute inset-0 bg-fg/40" aria-label={t("close")} onClick={onClose} />
+      </Dialog.Overlay>
+      <Dialog.Content
+        asChild
+        aria-modal="true"
+        aria-describedby={undefined}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          panelRef.current?.focus();
+        }}
+        onEscapeKeyDown={(event) => {
+          // The drawer also listens for Escape; close only this top dialog.
+          event.stopPropagation();
+        }}
+      >
       <div
         ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
         tabIndex={-1}
         data-ke="smart-match-chat"
         className="relative z-10 flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-2xl bg-bg shadow-card ring-1 ring-border outline-none md:rounded-2xl"
       >
         <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-          <h2 id={titleId} className="font-display text-xl">
+          <Dialog.Title asChild>
+          <h2 className="font-display text-xl">
             {t("smartMatchTitle")}
           </h2>
+          </Dialog.Title>
           <button
             type="button"
             onClick={onClose}
-            className="grid size-11 min-h-[44px] min-w-[44px] shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+            className="grid size-11 min-h-[44px] min-w-[44px] place-items-center rounded-full text-muted hover:bg-surface-2 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
             aria-label={t("close")}
           >
             ×
@@ -170,7 +135,9 @@ function SmartMatchDialog({
           <SmartMatchChat onClose={onClose} signedIn={signedIn} visitorId={visitorId} />
         </Suspense>
       </div>
+      </Dialog.Content>
     </div>
+    </Dialog.Portal>
   );
 }
 

@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "applicationSourceCommit": "55197ba9827cd5f381b8a157d569c26401c0a1d0",
+  "assets": [
+    {
+      "file": "public/photos/care-icons/KidEase_All.png",
+      "bytes": 74692,
+      "sha256": "7f46f023849e5628dc84032ae76fd2e2e3ebb06a545a95c9213c3b28c1d7d317",
+      "width": 256,
+      "height": 256,
+      "colorType": "RGBA"
+    },
+    {
+      "file": "public/photos/care-icons/KidEase_Centres.png",
+      "bytes": 96052,
+      "sha256": "65f93d3bd98dc8b6e257e860b3a360e94c0d24bff891cfe0e76c90ee36823070",
+      "width": 256,
+      "height": 256,
+      "colorType": "RGBA"
+    },
+    {
+      "file": "public/photos/care-icons/KidEase_Home_Daycares.png",
+      "bytes": 105805,
+      "sha256": "0d49bf2a800ce10d01e8606046b9de2cf65730e62b2f74347524cf7fda8e9486",
+      "width": 256,
+      "height": 256,
+      "colorType": "RGBA"
+    },
+    {
+      "file": "public/photos/care-icons/KidEase_Group_Homes.png",
+      "bytes": 87575,
+      "sha256": "7df32cbf203dcd75d3090e533e616abff280f1ff2c5fce0f280e749d33f96b30",
+      "width": 256,
+      "height": 256,
+      "colorType": "RGBA"
+    },
+    {
+      "file": "public/photos/care-icons/KidEase_Nursery.png",
+      "bytes": 101129,
+      "sha256": "bf4364e1500937effcf4cf48e2d86093924564af4b3ec95737072b33f350647c",
+      "width": 256,
+      "height": 256,
+      "colorType": "RGBA"
+    },
+    {
+      "file": "public/photos/care-icons/KidEase_School_Age.png",
+      "bytes": 104565,
+      "sha256": "c46aaf27d21a976f069934a73ca6f8cc7dbd641aad21fec387a6bc36c2c2bdbe",
+      "width": 256,
+      "height": 256,
+      "colorType": "RGBA"
+    },
+    {
+      "file": "public/photos/care-icons/KidEase_Before_After.png",
+      "bytes": 94912,
+      "sha256": "f67e827f24d971a2be49b1f80b4ab7f40f51b37fc19efc081f2abc4b58b0caf9",
+      "width": 256,
+      "height": 256,
+      "colorType": "RGBA"
+    },
+    {
+      "file": "public/photos/care-icons/KidEase_Open_Spots.png",
+      "bytes": 82945,
+      "sha256": "2e683826588becea39d95633ebe72a46c2bea5f5108735e7c0b151acd621a874",
+      "width": 256,
+      "height": 256,
+      "colorType": "RGBA"
+    }
+  ],
+  "totalAssetBytes": 747675,
+  "referenceOnly": {
+    "floatingGalleryGifSha256": "2a45cf20367ff391b6fd8d5d1a240c899f7e7f0749b380a9f2db880ebe554f10",
+    "interactiveMenuHtmlSha256": "427fe3bc0d50ec20af93c215f4cbb3e084914f296aadec35ddaffec6f7d3c442"
+  },
+  "notes": [
+    "Original PNG bytes are unchanged; animation is applied by the shared component, not encoded into the PNGs.",
+    "Artwork is decorative category illustration, not a photo or factual claim about a listed daycare.",
+    "The reference GIF and HTML are design evidence and are not shipped as application pages."
+  ]
+}

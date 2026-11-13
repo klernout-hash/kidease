@@ -5,7 +5,7 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { compareEmptyKey, featPayBodyKey, tx } from "../src/lib/copy.ts";
 import { loadExtraCopy } from "../src/lib/extra-copy.ts";
-import { isDerivedFromDailyCap, knownListingMonthlyFee, publicMonthlyFee } from "../src/lib/listing-fee.ts";
+import { dailyCapDollars, isDerivedFromDailyCap, knownListingMonthlyFee, publicMonthlyFee } from "../src/lib/listing-fee.ts";
 import { parsePioneerSearch } from "../src/lib/pioneer-filters.ts";
 import { publicAgeSourceUrl } from "../src/lib/standard-age-groups.ts";
 import { storeListingsLive } from "../src/lib/store-review.ts";
@@ -22,9 +22,12 @@ test("a daily cap is not printed as a monthly fee", () => {
   assert.equal(isDerivedFromDailyCap(900, 10), false);
   assert.equal(knownListingMonthlyFee({ programDaily: 10, province: "MB", feeProgram: "mb-10-day" }, "preschool"), null);
   assert.equal(publicMonthlyFee(217, { province: "MB", feeProgram: "mb-10-day" }), null);
-  assert.equal(publicMonthlyFee(217.5, { province: "SK" }), null);
+  const skProgram = { province: "SK", feeProgram: "sk-10-day", agesKnown: true, ageMinMonths: 0, ageMaxMonths: 60 };
+  assert.equal(dailyCapDollars({ province: "SK" }), null);
+  assert.equal(dailyCapDollars(skProgram), 10);
+  assert.equal(publicMonthlyFee(217.5, skProgram), null);
   assert.equal(publicMonthlyFee(900, { province: "ON", feeConfidence: "centre" }), 900);
-  assert.equal(publicMonthlyFee(217.5, { province: "SK", feeConfidence: "centre" }), 217.5);
+  assert.equal(publicMonthlyFee(217.5, { ...skProgram, feeConfidence: "centre" }), 217.5);
 });
 
 test("French program chip uses spoken and leaves the site language alone", () => {

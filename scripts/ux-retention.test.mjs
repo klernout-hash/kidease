@@ -29,8 +29,9 @@ test("listing detail keeps website CTAs, login next, and a back link", () => {
   assert.match(listing, /listingPath = localePath\(`\/daycare\/\$\{slug\}`, locale\)/);
   assert.match(listing, /\$\{listingPath\}\?ask=/);
   assert.match(listing, /backToExplore/);
-  assert.match(listing, /listingCtaLead/);
-  assert.match(listing, /searchNearby/);
+  assert.match(listing, /data-ke="listing-next-step-lead"/);
+  assert.match(listing, /const primaryLabel = live \? t\("requestTour"\) : t\("requestInfo"\)/);
+  assert.equal((listing.match(/onClick=\{primaryAction\}/g) ?? []).length, 2);
   assert.match(listing, /md:hidden/);
   assert.match(listing, /\[\[data-channel=app\]_&\]:bottom-\[calc\(5rem\+var\(--ke-keyboard,0px\)\)\]/);
   assert.doesNotMatch(listing, /\[\[data-channel=website\]_&\]:hidden/);
@@ -91,7 +92,7 @@ test("home offers a resume CTA and records a sanitized last path", () => {
   const shell = src("src/components/shell.tsx");
   assert.match(home, /ResumeVisitCard/);
   assert.match(home, /data-ke="home-hero-pills"/);
-  assert.match(home, /<SmartMatchEntry inline/);
+  assert.match(home, /<SmartMatchEntry card/);
   assert.match(boot, /captureRetentionTouch/);
   assert.match(shell, /rememberResumePath/);
   assert.match(copy, /resumeVisitPill: "Continue where you left off"/);

@@ -70,7 +70,7 @@ Automation-pack flags (`FEATURE_POSTHOG_ERRORS`, `FEATURE_OPS_ALERTS`, `FEATURE_
 | `FEATURE_PRIVATE_MEDIA` | off | Daily-log and learning-story photos are returned as a short-lived R2 link. Public URLs are dropped. | The feed shows the signed photo or nothing. | Saved photo values stay as they are today. |
 | `FEATURE_QR_KIOSK` | off | Mint and redeem a rotating check-in code. Writes attendance only after a valid scan for an enrolled child. | Daycare daily desk shows the code. Parent daily feed can scan it. | The screen stays hidden. |
 | `FEATURE_PROVINCE_REPORTS` | off | Build a CSV or PDF from saved listings. Manitoba and Ontario columns differ. | Admin registries page offers a download when this is on. | The download stays hidden. |
-| `FEATURE_GOV_SCOPES` | off | Totals for the province stored on the government account. Other provinces are not queried. | Account page shows the totals. The phone app points to the website and does not sign the person out. | The card says totals are not on yet. The person stays signed in. |
+| `FEATURE_GOV_SCOPES` | off | Legacy provincial summary API for an authenticated, active government member with a valid organization province. SQL and response filtering use that verified organization scope; national scopes are unsupported. | No Account card is mounted, and no new dashboard placement is added. A successful empty query reports zero; a failed query reports unavailable without totals. | The API returns an off state without totals. Login and sessions are unchanged. |
 | `FEATURE_FR_CA` | off | French subjects on parent request email and SMS when the saved locale is French. Quebec and New Brunswick location, plus the browser or device language, choose French when nobody saved a choice. | Language toggle shows Français (Canada). Admin, government, parent, and daycare gap strings use fr-CA. | Today's rules: Quebec only, browser language ignored, email and SMS subjects stay English. |
 
 ## Why PostHog
@@ -150,7 +150,7 @@ Env still works as a fallback when PostHog is down (last successful overlay is k
 | `FEATURE_QR_KIOSK` | no | Default **off**. Set `1` to show the rotating check-in code. Also set `KIOSK_TOKEN_SECRET` (a random string, not a vendor key). |
 | `KIOSK_TOKEN_SECRET` | no | Server-only signing key for check-in codes. Leave blank to keep minting off. Never commit a real value. |
 | `FEATURE_PROVINCE_REPORTS` | no | Default **off**. Set `1` to let admin download a provincial licensing CSV or PDF. |
-| `FEATURE_GOV_SCOPES` | no | Default **off**. Set `1` after a profile has role `government` and `gov_province`. Does not sign anyone out. |
+| `FEATURE_GOV_SCOPES` | no | Default **off**. The legacy summary API requires a verified active government organization and a valid province; it does not trust `profiles.gov_province`. National scopes return unsupported without totals. No Account mount. Turning it off does not sign anyone out. |
 | `FEATURE_FR_CA` | no | Default **off**. Set `1` for fr-CA auto-detect (browser, device, Quebec, New Brunswick) and French email and SMS. A saved language choice still wins. |
 | `FEATURE_WITHDRAWAL` | no | Default **off**. Uses the centre's notice period and stored fee. A freed space queues the area waitlist. |
 | `FEATURE_ENROLMENT_HANDOFF` | no | Default **off**. Accepted spot, enrolment packet, e-sign, then the first bill. Needs _LIVE to call DocuSign or save the bill. |

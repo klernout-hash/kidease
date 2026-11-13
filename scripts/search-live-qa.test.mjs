@@ -73,7 +73,10 @@ test("Live on KidEase is a shareable claim-verified filter", () => {
   assert.match(search, /readLiveSearchFlag\(s\.live\)/);
   assert.match(search, /out\.live = 1/);
   assert.match(src("src/routes/index.tsx"), /live \? \{ live: 1 as const \}/);
-  assert.match(search, /isClaimVerified/);
+  assert.match(search, /live: claimVerifiedOnly \|\| readLiveSearchFlag\(incoming\.live\)/);
+  assert.match(src("src/lib/server/daycares.ts"), /query\.live \? found\.rows\.filter\(\(card\) => isClaimVerified\(card\) && !card\.isTest\)/);
+  assert.match(src("src/lib/server/daycares.ts"), /withSearchRows\(found, filterSearchResults\(all/);
+  assert.match(src("src/lib/search-result-filters.ts"), /filters\.claimVerifiedOnly && !isClaimVerified\(row\)/);
   assert.match(search, /writeLiveClaimed/);
   assert.match(search, /liveSearchParam\(liveOn\)/);
   assert.doesNotMatch(search, /live: liveOn \? "1"/);
@@ -81,8 +84,8 @@ test("Live on KidEase is a shareable claim-verified filter", () => {
   assert.equal(splitLiveBrowseHint("1 live · browse directory").browse, "browse directory");
   assert.equal(splitLiveBrowseHint("1 live · browse directory").count, "1 live");
   assert.match(src("src/components/explore-filter-bar.tsx"), /data-ke="live-on-kidease"/);
-  assert.match(src("src/components/shell.tsx"), /data-ke="live-on-kidease-tab"/);
-  assert.match(src("src/routes/index.tsx"), /data-ke="home-live-on-kidease"/);
+  assert.doesNotMatch(src("src/components/shell.tsx"), /data-ke="live-on-kidease-tab"/);
+  assert.doesNotMatch(src("src/routes/index.tsx"), /data-ke="home-live-on-kidease"/);
   assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /liveOnKidEase: "Live on KidEase"/);
   assert.match((src("src/lib/copy-en.ts") + src("src/lib/copy-fr.ts")), /liveOnKidEase: "En ligne sur KidEase"/);
   for (const pack of ["ar", "de", "es", "it", "pa", "tl", "yue", "zh"]) {
@@ -114,8 +117,9 @@ test("a Where box that is not a place becomes a name search, and name matches st
 test("large city searches overlay the nearest cards first", () => {
   const server = src("src/lib/server/daycares.ts");
   assert.match(server, /overlayCap = 192/);
-  assert.match(server, /full && full\.length > 0 \? 80 : 400/);
-  assert.match(src("src/routes/search.tsx"), /cached \? 160 : 0/);
+  assert.match(server, /settleSearchRead\(livePromise, full\.kind === "result" && full\.batch\.rows\.length > 0 \? 80 : 400\)/);
+  assert.match(src("src/routes/search.tsx"), /cached && !fresh \? 160 : 0/);
+  assert.match(src("src/routes/search.tsx"), /refresh: fresh/);
 });
 
 test("parent Upgrade opens the plan view and daycare viewers do not see Request info on tours", () => {

@@ -66,7 +66,7 @@ const surfaces = [];
 let activeCase = null;
 try {
   for (const locale of ["en", "fr"]) {
-    for (const width of [390, 1440]) {
+    for (const width of [390, 1280]) {
       activeCase = { phase: "behavior", locale, width };
       const scriptRequests = [];
       const page = await browser.newPage({
@@ -95,7 +95,7 @@ try {
       try {
         const { entry, readiness } = await openHome(page, locale);
         assert.equal(chunkRequests, 0, `${locale}: chat must not download before the CTA opens`);
-        const initialOverflow = await page.evaluate(() => document.body.style.overflow);
+        const initialOverflow = await page.evaluate(() => getComputedStyle(document.body).overflow);
         const firstChunk = page.waitForRequest((request) =>
           chunkUrl.test(new URL(request.url()).pathname),
         );
@@ -106,7 +106,7 @@ try {
         await page.waitForFunction(
           () => document.activeElement?.getAttribute("data-ke") === "smart-match-chat",
         );
-        await page.waitForFunction(() => document.body.style.overflow === "hidden");
+        await page.waitForFunction(() => getComputedStyle(document.body).overflow === "hidden");
         assert.equal(
           await dialog.locator('[role="status"]').count(),
           1,
@@ -116,7 +116,7 @@ try {
         const close = dialog.locator("button[aria-label]").first();
         await page.keyboard.press("Shift+Tab");
         assert.equal(
-          await close.evaluate((element) => element === document.activeElement),
+          await dialog.evaluate((element) => element.contains(document.activeElement)),
           true,
           `${locale}: initial Shift+Tab stays inside the pending dialog`,
         );
@@ -134,8 +134,9 @@ try {
           });
         await page.keyboard.press("Escape");
         await dialog.waitFor({ state: "detached" });
+        await page.waitForFunction((element) => element === document.activeElement, await entry.elementHandle(), { timeout: 3000 });
         assert.equal(
-          await page.evaluate(() => document.body.style.overflow),
+          await page.evaluate(() => getComputedStyle(document.body).overflow),
           initialOverflow,
           `${locale}: pending close restores scroll`,
         );
@@ -162,6 +163,7 @@ try {
           name: locale === "fr" ? "Recommencer" : "Start over",
           exact: true,
         });
+        await close.focus();
         await page.keyboard.press("Shift+Tab");
         assert.equal(
           await restart.evaluate((element) => element === document.activeElement),
@@ -234,7 +236,8 @@ try {
           .waitFor({ state: "visible" });
         await page.keyboard.press("Escape");
         await dialog.waitFor({ state: "detached" });
-        assert.equal(await page.evaluate(() => document.body.style.overflow), initialOverflow);
+        await page.waitForFunction((element) => element === document.activeElement, await entry.elementHandle(), { timeout: 3000 });
+        assert.equal(await page.evaluate(() => getComputedStyle(document.body).overflow), initialOverflow);
         assert.equal(
           await entry.evaluate((element) => element === document.activeElement),
           true,

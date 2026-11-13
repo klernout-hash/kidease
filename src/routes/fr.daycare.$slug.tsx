@@ -38,6 +38,7 @@ export const Route = createFileRoute("/fr/daycare/$slug")({
   },
   notFoundComponent: ListingNotFoundPage,
   errorComponent: ListingRetryPage,
+  wrapInSuspense: true,
   headers: ({ loaderData }) => {
     if (loaderData?.noindex) return { "X-Robots-Tag": "noindex, nofollow" };
     return undefined;

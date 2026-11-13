@@ -414,7 +414,10 @@ test("search, cards, rails, and vacancy wire the shared helper", () => {
   assert.match(listing, /unclaimedRequestNote|listing_request_started/);
   assert.match(src("src/components/request-tour.tsx"), /listing_request_submitted/);
   assert.match(src("src/lib/site-footer-nav.ts"), /"\/compare"/);
-  assert.match(src("src/components/nav-drawer.tsx"), /localePath\("\/compare"/);
+  assert.match(src("src/components/nav-drawer.tsx"), /FooterMoreLinks/);
+  assert.match(src("src/components/footer-more-links.tsx"), /"\/compare": "compare"/);
+  assert.match(card, /data-ke="card-view-details"/);
+  assert.match(listing, /toggleCompareItem/);
   assert.match(inbox, /providerRequestsEmpty/);
   assert.match(quality, /qualityTodoFirst/);
   assert.doesNotMatch(helpers, /FEATURE_INAPP_CHAT|FEATURE_SMS|FEATURE_PUSH/);

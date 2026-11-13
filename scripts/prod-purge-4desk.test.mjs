@@ -47,7 +47,15 @@ test("P0 Admin chrome is hidden from guests and non-kyle sessions", () => {
     "provider",
   ]);
   const footer = src("src/components/site-footer.tsx");
-  assert.match(footer, /isKidEaseOperatorEmail\(user\?\.primaryEmail\)/);
+  assert.doesNotMatch(footer, /operatorSignIn|["']\/admin["']/);
+  const shell = src("src/components/shell.tsx");
+  assert.match(shell, /canSeeAdminDesk\(session\?\.role, session\?\.email \?\? user\?\.primaryEmail\)/);
+  assert.match(src("src/routes/admin.tsx"), /beforeLoad: beforeLoadAdminDesk/);
+  assert.match(src("src/lib/server/admin-route.ts"), /withTimeout\(assertAdminDesk\(\)/);
+  const guard = src("src/lib/server/roles.ts");
+  assert.match(guard, /if \(!isKidEaseOperatorEmail\(email\)\) \{[\s\S]*?return \{ ok: false/);
+  assert.match(guard, /export async function requireAdmin\(userId: string\) \{[\s\S]*?resolveAdminAccess\(userId\);\s*if \(!access\.ok\) throw new Error\("Not authorized"\)/);
+  assert.match(guard, /export const assertAdminDesk[\s\S]*?resolveAdminAccess\(context\.userId\);\s*if \(!access\.ok\) throw new Error\("Not authorized"\)/);
   assert.doesNotMatch(footer, /showOperatorSignIn = !isPending && !user/);
   assert.match(src("src/components/menu-desk-tools.tsx"), /session\?\.email/);
   assert.match(src("src/components/shell.tsx"), /session\?\.email/);

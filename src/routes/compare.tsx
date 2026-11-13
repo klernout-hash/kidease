@@ -15,7 +15,7 @@ import {
   parseCompareSlugs,
 } from "@/lib/now-loops";
 import { hasRealPhoto } from "@/lib/listing-readiness";
-import { parentListingFeesVisible } from "@/lib/public-fees";
+import { parentListingFeesVisible, parentListingMonthlyFee } from "@/lib/public-fees";
 import { compareEmptyKey } from "@/lib/copy-keys";
 import { useCopy } from "@/lib/use-copy";
 import { useRoleChrome } from "@/components/role-chrome";
@@ -66,7 +66,7 @@ function CompareRoute() {
 export function ComparePage({ slugs }: { slugs: string[] }) {
   const { t, locale } = useCopy();
   const plansOn = useRoleChrome().subscriptionsEnabled === true;
-  const feesOn = parentListingFeesVisible(plansOn);
+  const feesOn = parentListingFeesVisible();
   const { compareMax } = useParentPlusAccess();
   const origin = useAppStore((s) => s.origin);
   const workOrigin = useAppStore((s) => s.workOrigin);
@@ -128,7 +128,7 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
                   <th className="p-2" />
                   {items.map((d) => (
                     <th key={d.id} className="p-2 align-bottom">
-                      <BuildingPhoto src={listingThumb(d.photos)} className="mb-2 aspect-[4/3] w-full rounded-lg object-cover" />
+                      <BuildingPhoto src={listingThumb(d.photos)} className="ke-card-photo mb-2 w-full rounded-lg object-cover" />
                       <Link to={localePath(`/daycare/${d.slug}`, locale)} className="font-semibold hover:underline">
                         {locale === "fr" ? d.nameFr : d.name}
                       </Link>
@@ -225,7 +225,8 @@ export function ComparePage({ slugs }: { slugs: string[] }) {
                   values={items.map((d) => {
                     const subsidy = listingSubsidy(d);
                     if (subsidy) return subsidyLabel(subsidy, locale);
-                    return d.fromPrice > 0 ? money(d.fromPrice, locale) : t("cardGapFees");
+                    const monthly = parentListingMonthlyFee(d);
+                    return monthly != null ? money(monthly, locale) : t("cardGapFees");
                   })}
                 />
                 ) : null}

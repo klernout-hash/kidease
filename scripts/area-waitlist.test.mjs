@@ -168,9 +168,10 @@ test("join buttons, role hide, and the alert job stay on the existing rails", ()
   const actions = src("src/lib/server/area-waitlist.ts");
   const job = src("src/lib/server/search-alerts.ts");
   const migration = src("migrations/0107_area_waitlist.sql");
-  assert.match(card, /hash="join-waitlist"/);
+  assert.match(card, /data-ke="card-view-details"/);
   assert.match(card, /showsParentBrowseActions/);
-  assert.match(card, /data-ke="card-join-waitlist"/);
+  assert.doesNotMatch(card, /data-ke="card-join-waitlist"/);
+  assert.match(src("src/routes/daycare.$slug.tsx"), /parentActions \? <JoinWaitlist/);
   assert.match(home, /hash="join-waitlist"/);
   assert.match(home, /AreaWaitlistForm/);
   assert.match(form, /#join-waitlist/);

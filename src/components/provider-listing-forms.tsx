@@ -45,6 +45,8 @@ import { standardAgeLabelsForListing } from "@/lib/standard-age-groups";
 import type { CopyKey } from "@/lib/copy";
 import { isReauthRequiredMessage } from "@/lib/reauth";
 import { presentAuthCopy } from "@/lib/auth/present-auth-copy";
+import { publicErrorMessage } from "@/lib/public-error";
+import { publicPayMessage } from "@/lib/stripe-public-error";
 import { useReauthPrompt } from "@/components/reauth-dialog";
 import { useInNativeShell } from "@/lib/use-native-shell";
 import { formatPlanCad } from "@/lib/upgrade-plans";
@@ -91,7 +93,7 @@ export function PromotePanel({ daycare }: { daycare: Daycare; onSaved: () => voi
       }
       toast.error(t("stripeCheckoutFailed"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("actionFailed"));
+      toast.error(publicPayMessage(err, t("actionFailed")));
     } finally {
       setBusy(null);
     }
@@ -109,7 +111,7 @@ export function PromotePanel({ daycare }: { daycare: Daycare; onSaved: () => voi
       }
       toast.error(t("stripeCheckoutFailed"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("actionFailed"));
+      toast.error(publicPayMessage(err, t("actionFailed")));
     } finally {
       setBusy(null);
     }
@@ -487,7 +489,7 @@ export function CapacityForm({
       }
       setPendingLicense(null);
       setLicenseNeedsConfirm(false);
-      const message = presentAuthCopy(locale, raw) || t("uploadDocTooBig");
+      const message = presentAuthCopy(locale, publicErrorMessage(raw, t("actionFailed")));
       setLicenseError(message);
       toast.error(message);
       return "error";

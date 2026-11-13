@@ -35,7 +35,6 @@ import { PayCtas, useShowPayCtas } from "@/components/pay-chrome";
 import { useSessionDesks } from "@/components/session-desks";
 import { checkoutCtaLabel, daycareUpgradePlan, paidPlanVisible, visibleYearlySavings } from "@/lib/upgrade-plans";
 import { BillingIntervalToggle } from "@/components/billing-interval-toggle";
-import { FoundingPlans } from "@/components/founding-plans";
 import { UpgradePlanCard } from "@/components/upgrade-plan-card";
 
 const COPY = {
@@ -56,14 +55,14 @@ const COPY = {
     portal: "Manage billing",
     networkNeed: "Network is priced for 3 or more sites.",
     sites: (n: number) => (n === 1 ? "1 listed site" : `${n} listed sites`),
-    status: "Stripe status",
-    entitled: "Active entitlements",
+    status: "Subscription status",
+    entitled: "Your plan",
     entitledFree: "Free basics: listing, vacancy, claim, licence.",
-    blocked: "Checkout is blocked until this plan’s Stripe price ID is set on Vercel.",
+    blocked: "This plan is unavailable to buy right now. Nothing was charged.",
     savedFree: "You are on Free. Listing tools stay on.",
     portalCard: "Open the Stripe customer portal to update the card or cancel.",
-    portalWait: "The portal appears after the first live checkout creates a Stripe customer on this profile.",
-    portalOff: "Card payments are not live yet. Centre plan checkout is not charged.",
+    portalWait: "Billing details appear after your first subscription purchase.",
+    portalOff: "Subscription checkout is unavailable. Nothing was charged.",
   },
   fr: {
     eyebrow: "Forfaits facultatifs",
@@ -82,14 +81,14 @@ const COPY = {
     portal: "Gérer la facturation",
     networkNeed: "Réseau est tarifé pour 3 sites ou plus.",
     sites: (n: number) => (n === 1 ? "1 site listé" : `${n} sites listés`),
-    status: "Statut Stripe",
-    entitled: "Droits actifs",
+    status: "Statut de l’abonnement",
+    entitled: "Votre forfait",
     entitledFree: "Base gratuite: fiche, places, réclamation, permis.",
-    blocked: "Le checkout reste fermé tant que l’identifiant de prix Stripe n’est pas sur Vercel.",
+    blocked: "Ce forfait ne peut pas être acheté pour le moment. Rien n’a été débité.",
     savedFree: "Vous êtes sur Gratuit. Les outils de fiche restent ouverts.",
     portalCard: "Ouvrez le portail Stripe pour changer la carte ou annuler.",
-    portalWait: "Le portail apparaît après le premier paiement en direct, quand Stripe crée un client sur ce profil.",
-    portalOff: "Les paiements par carte ne sont pas encore en direct. Le forfait centre n’est pas facturé.",
+    portalWait: "Les détails de facturation apparaissent après votre premier abonnement.",
+    portalOff: "L’achat d’un abonnement est indisponible. Rien n’a été débité.",
   },
 };
 
@@ -378,9 +377,7 @@ export function ProviderSubscriptionPanel({
   const showCheckout = subscriptionsOn && (showPay || adminPreview);
 
   if (!showCheckout) {
-    if (!subscriptionsOn) {
-      return <FoundingPlans embedded />;
-    }
+    if (!subscriptionsOn && !planOpen && !pinOpen) return null;
     if (!planOpen && !pinOpen) {
       return (
         <section className="ke-digital-plan space-y-4 rounded-xl bg-surface p-5 ring-1 ring-border" data-ke="plans-not-offered">

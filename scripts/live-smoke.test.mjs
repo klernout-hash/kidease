@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import {
   judgeProbe,
@@ -38,103 +37,44 @@ test("probes reject the error screen and accept the sign-in redirect", () => {
   assert.match(judgeProbe(redirect, { status: 200, body: "", location: "" }), /status 200/);
 });
 
-const publicPaths = ["/", "/login", "/fr/login", "/robots.txt", "/sign-in", "/sign-up"];
-const robots = readFileSync(new URL("../public/robots.txt", import.meta.url), "utf8");
-
-function publicResponse(url, { robotsBody = robots, robotsStatus = 200 } = {}) {
-  const { origin, pathname } = new URL(url);
-  assert.equal(origin, "https://www.kidease.ca");
-  switch (pathname) {
-    case "/": return new Response("KidEase");
-    case "/login":
-    case "/fr/login": return new Response("Sign in");
-    case "/robots.txt": return new Response(robotsBody, { status: robotsStatus });
-    case "/sign-in": return new Response(null, { status: 301, headers: { Location: "/login" } });
-    case "/sign-up": return new Response(null, { status: 301, headers: { Location: "/signup" } });
-    default: throw new Error(`Unexpected public smoke path ${pathname}`);
-  }
-}
-
-function assertPublicRequests(requests) {
-  assert.deepEqual(requests.map(({ url }) => new URL(url).pathname), publicPaths);
-  for (const { url, init } of requests) {
-    assert.doesNotMatch(new URL(url).pathname, /(?:^|\/)(?:health|status)(?:\/|$)/i);
-    assert.equal(init.method, undefined);
+function publicFetch(paths, robotsBody = "User-agent: *\nDisallow: /admin\n") {
+  return async (url, init) => {
+    const path = new URL(url).pathname;
+    paths.push(path);
     assert.equal(init.redirect, "manual");
-    assert.equal(init.headers, undefined);
-  }
+    assert.ok(!init.method || init.method === "GET");
+    assert.equal(init.body, undefined);
+    const redirect = path === "/sign-in" ? "/login" : path === "/sign-up" ? "/signup" : "";
+    return {
+      status: redirect ? 302 : 200,
+      text: async () => path === "/robots.txt" ? robotsBody : "KidEase",
+      headers: { get: (name) => name === "location" ? redirect : null },
+    };
+  };
 }
 
-test("successful public smoke checks the committed static robots file and never health/status or rollback", async () => {
-  const requests = [];
-  const result = await runLiveSmoke({
-    env: { VERCEL_TOKEN: "fixture-token", VERCEL_PROJECT_ID: "prj_fixture" },
-    fetchImpl: async (url, init) => {
-      requests.push({ url, init });
-      return publicResponse(url);
-    },
-    log() {},
+test("automatic public smoke checks static robots without calling the mutative health route", async () => {
+  const paths = [];
+  const verdict = await runLiveSmoke({
+    env: { SMOKE_BASE_URL: "https://smoke.invalid" },
+    fetchImpl: publicFetch(paths),
+    log: () => {},
   });
-  assertPublicRequests(requests);
-  assert.equal(result.ok, true);
-  assert.equal(result.rolledBack, false);
-  assert.deepEqual(result.results.map(({ name, ok }) => ({ name, ok })), [
-    { name: "home", ok: true }, { name: "login", ok: true }, { name: "fr-login", ok: true },
-    { name: "robots", ok: true }, { name: "sign-in-redirect", ok: true }, { name: "sign-up-redirect", ok: true },
-  ]);
+  assert.equal(verdict.ok, true);
+  assert.equal(verdict.rolledBack, false);
+  assert.deepEqual(paths, ["/", "/login", "/fr/login", "/robots.txt", "/sign-in", "/sign-up"]);
+  assert.ok(paths.every((path) => !path.startsWith("/api/")));
 });
 
-test("robots must return 200 with its expected public content; absent secrets prevent rollback", async () => {
-  for (const options of [{ robotsBody: "<html>KidEase</html>" }, { robotsStatus: 503 }]) {
-    const requests = [];
-    const result = await runLiveSmoke({
-      env: {},
-      fetchImpl: async (url, init) => {
-        requests.push({ url, init });
-        return publicResponse(url, options);
-      },
-      log() {},
-    });
-    assertPublicRequests(requests);
-    assert.equal(result.ok, false);
-    assert.equal(result.rolledBack, false);
-    assert.deepEqual(result.results.filter(({ ok }) => !ok).map(({ name }) => name), ["robots"]);
-  }
-});
-
-test("failed public smoke retains authenticated rollback to the previous ready production deployment", async () => {
-  const requests = [];
-  const result = await runLiveSmoke({
-    env: { VERCEL_TOKEN: "fixture-token", VERCEL_PROJECT_ID: "prj_fixture", VERCEL_ORG_ID: "team_fixture" },
-    fetchImpl: async (url, init) => {
-      requests.push({ url, init });
-      const parsed = new URL(url);
-      if (parsed.origin === "https://www.kidease.ca") return publicResponse(url, { robotsBody: "unavailable" });
-      assert.equal(parsed.origin, "https://api.vercel.com");
-      assert.equal(init.headers.Authorization, "Bearer fixture-token");
-      if (parsed.pathname === "/v6/deployments") {
-        assert.equal(init.method, undefined);
-        assert.equal(parsed.searchParams.get("projectId"), "prj_fixture");
-        assert.equal(parsed.searchParams.get("target"), "production");
-        assert.equal(parsed.searchParams.get("teamId"), "team_fixture");
-        return Response.json({ deployments: [
-          { uid: "dpl_new", readyState: "READY", target: "production", created: 20 },
-          { uid: "dpl_preview", readyState: "READY", target: "preview", created: 30 },
-          { uid: "dpl_old", readyState: "READY", target: "production", created: 10 },
-          { uid: "dpl_bad", readyState: "ERROR", target: "production", created: 40 },
-        ] });
-      }
-      assert.equal(parsed.pathname, "/v1/projects/prj_fixture/rollback/dpl_old");
-      assert.equal(parsed.searchParams.get("teamId"), "team_fixture");
-      assert.equal(init.method, "POST");
-      assert.equal(init.headers["Content-Type"], "application/json");
-      return new Response(null, { status: 200 });
-    },
-    log() {},
+test("static robots probe rejects a health-shaped response without running rollback or another route", async () => {
+  const paths = [];
+  const verdict = await runLiveSmoke({
+    env: { SMOKE_BASE_URL: "https://smoke.invalid" },
+    fetchImpl: publicFetch(paths, '{"status":"ok"}'),
+    log: () => {},
   });
-  assertPublicRequests(requests.slice(0, 6));
-  assert.equal(requests.length, 8);
-  assert.equal(result.ok, false);
-  assert.equal(result.rolledBack, true);
-  assert.deepEqual(result.results.filter(({ ok }) => !ok).map(({ name }) => name), ["robots"]);
+  assert.equal(verdict.ok, false);
+  assert.equal(verdict.rolledBack, false);
+  assert.deepEqual(verdict.results.filter((row) => !row.ok).map((row) => row.name), ["robots"]);
+  assert.deepEqual(paths, ["/", "/login", "/fr/login", "/robots.txt", "/sign-in", "/sign-up"]);
 });

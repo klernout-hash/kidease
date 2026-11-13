@@ -39,7 +39,7 @@ export function ShortlistCompareTable({
             <th className="p-2" />
             {items.map((d) => (
               <th key={d.id} className="p-2 align-bottom">
-                <BuildingPhoto src={listingThumb(d.photos)} className="mb-2 aspect-[4/3] w-full rounded-lg object-cover" />
+                <BuildingPhoto src={listingThumb(d.photos)} className="ke-card-photo mb-2 w-full rounded-lg object-cover" />
                 <Link to="/daycare/$slug" params={{ slug: d.slug }} className="font-semibold hover:underline">
                   {displayCentreName(locale === "fr" ? d.nameFr : d.name)}
                 </Link>

@@ -50,6 +50,7 @@ export function RoleNavLinks({
   const navRole = chromeRoleInNativeShell(role, hideAdmin);
   const items = roleNavItems({ role: navRole, paid, subscriptionsOn: chrome.subscriptionsEnabled })
     .filter((item) => !(item.id === "signin" && appearance !== "header"))
+    .filter((item) => !(item.id === "help" && appearance === "drawer"))
     .map((item) => ({
     ...item,
     label: item.id === "upgrade" ? t(paid ? "navMyPlan" : "navUpgrade") : NAV_KEY[item.id] ? t(NAV_KEY[item.id]) : item.label,

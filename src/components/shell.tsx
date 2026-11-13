@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Building2, Calendar, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { AppTabBar } from "@/components/app-tab-bar";
 import { HeaderAccount } from "@/components/header-account";
 import { useCurrentUserState, useLocallySignedOut } from "@/lib/auth/use-current-user";
@@ -24,7 +24,6 @@ import { accountSearch, canSeeAdminDesk } from "@/lib/desks";
 import { NATIVE_ADMIN_NOTE_PATH } from "@/lib/native-admin";
 import { useNativeHidesAdmin } from "@/lib/use-native-shell";
 import { SiteFooter } from "@/components/site-footer";
-import { readLiveSearchFlag } from "@/lib/explore-search";
 import { rememberResumePath } from "@/lib/retention";
 import { ApplyPendingShortlist } from "@/components/apply-pending-shortlist";
 import { ApplyReferral } from "@/components/apply-referral";
@@ -38,24 +37,9 @@ const SHELL_FRAME =
 const APP_TAB_PAD = "[[data-channel=app]_&]:pb-[calc(4.75rem+var(--ke-safe-bottom,env(safe-area-inset-bottom)))]";
 const HEADER_BAR =
   "ke-site-header sticky top-[var(--ke-view-as-h,0px)] z-40 border-b border-border bg-bg/95 pt-[var(--ke-safe-top,env(safe-area-inset-top))] backdrop-blur-md";
-const HEADER_CTA =
-  "ke-web-only inline-flex min-h-[44px] max-w-[9.5rem] touch-manipulation items-center justify-center gap-1.5 whitespace-normal rounded-full border border-primary px-2.5 text-center text-[13px] font-medium leading-tight text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 active:scale-[0.99] sm:max-w-none sm:px-3 sm:text-sm";
-
-export function Shell({ children, pageClassName }: { children: ReactNode; pageClassName?: string }) {
+export function Shell({ children, headerCategories, fitViewport = false, pageClassName }: { children: ReactNode; headerCategories?: ReactNode; fitViewport?: boolean; pageClassName?: string }) {
   const { t, locale } = useCopy();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const headerCity = useRouterState({
-    select: (s) => {
-      const search = s.location.search as { q?: unknown } | undefined;
-      return typeof search?.q === "string" ? search.q : "";
-    },
-  });
-  const headerLive = useRouterState({
-    select: (s) => {
-      const search = s.location.search as { live?: unknown } | undefined;
-      return readLiveSearchFlag(search?.live);
-    },
-  });
   const { user } = useCurrentUserState();
   const locallyOut = useLocallySignedOut();
   const { session, sticky } = useSessionDesks();
@@ -64,6 +48,19 @@ export function Shell({ children, pageClassName }: { children: ReactNode; pageCl
   const hideAdmin = useNativeHidesAdmin();
   const headerUser = viewingGuest ? null : user;
   const [open, setOpen] = useState(false);
+  const frameRef = useRef<HTMLDivElement>(null);
+
+  useIsoLayoutEffect(() => {
+    const frame = frameRef.current;
+    if (!fitViewport || !frame) return;
+    const tabs = frame.querySelector<HTMLElement>('[data-ke="app-tab-bar"]');
+    if (!tabs) return;
+    const apply = () => frame.style.setProperty("--ke-frame-tabs", `${tabs.getBoundingClientRect().height}px`);
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(tabs);
+    return () => observer.disconnect();
+  }, [fitViewport]);
 
   useEffect(() => {
     applyDocumentLocale(locale);
@@ -100,6 +97,7 @@ export function Shell({ children, pageClassName }: { children: ReactNode; pageCl
   const verifyLite = pathname.startsWith("/verify-2fa");
   const menuLite = pathname.startsWith("/menu");
   const hideFooter =
+    fitViewport ||
     hideTabs ||
     pathname.startsWith("/admin") ||
     pathname.startsWith("/support") ||
@@ -108,14 +106,6 @@ export function Shell({ children, pageClassName }: { children: ReactNode; pageCl
   const menuLeaf = isMenuLeafPath(pathname);
 
   const homeTo = chrome.role === "government" ? localePath("/gov", locale) : localePath("/", locale);
-  const govBrowsing =
-    chrome.role === "government" &&
-    (barePath === "/" || barePath.startsWith("/search") || barePath.startsWith("/daycare"));
-  const drawerItems = [
-    { to: localePath("/help", locale), label: t("helpTitle"), icon: "help" as const },
-    { to: localePath("/faq", locale), label: t("faqShort"), icon: "faq" as const },
-    { to: localePath("/contact", locale), label: t("contactTitle"), icon: "contact" as const },
-  ];
 
   if (verifyLite) {
     return (
@@ -160,52 +150,30 @@ export function Shell({ children, pageClassName }: { children: ReactNode; pageCl
   }
 
   return (
-    <div className={SHELL_FRAME}>
+    <div ref={frameRef} className={SHELL_FRAME} data-ke-viewport={fitViewport ? "inbox" : undefined}>
       <KeyboardInset />
       <header className={HEADER_BAR}>
         <div className="ke-gutter relative mx-auto min-w-0 max-w-6xl">
-          <div className="flex h-14 w-full min-w-0 items-center gap-3 max-md:h-auto max-md:min-h-14 max-md:gap-2 md:h-16">
+          <div className={`flex w-full min-w-0 items-center gap-3 max-md:gap-2 ${headerCategories ? "min-h-14 flex-wrap md:min-h-16 md:flex-nowrap" : "h-14 max-md:h-auto max-md:min-h-14 md:h-16"}`}>
             {menuLeaf ? <MenuLeafBack /> : null}
             <Link to={homeTo} className="relative z-20 inline-flex min-h-[44px] min-w-[44px] shrink-0 items-center" aria-label="KidEase">
               <BrandMark size="sm" />
             </Link>
-            {barePath === "/" || barePath === "/search" ? (
-              <div className="hidden min-w-0 flex-1 items-center gap-2 md:flex" data-ke="header-care-slot">
-                <Link
-                  to={localePath("/search", locale)}
-                  search={
-                    headerLive
-                      ? headerCity
-                        ? { q: headerCity }
-                        : {}
-                      : { ...(headerCity ? { q: headerCity } : {}), live: 1 as const }
-                  }
-                  data-ke="live-on-kidease-tab"
-                  aria-current={headerLive ? "true" : undefined}
-                  className={`ke-chip shrink-0 ${headerLive ? "ke-chip-on" : ""}`}
-                >
-                  {t("liveOnKidEase")}
-                </Link>
+            {headerCategories ? (
+              <div
+                data-ke="header-care-categories"
+                className="order-last w-full min-w-0 md:order-none md:w-auto md:flex-1"
+              >
+                {headerCategories}
               </div>
             ) : null}
-            <div className="relative z-20 ml-auto flex items-center gap-2 bg-bg pl-1 max-md:min-w-0 max-md:max-w-full max-md:gap-[8px] md:shrink-0 [[data-channel=website]_&]:flex">
-              {!headerUser || (!viewingGuest && chrome.role === "parent") ? (
-                <Link
-                  to={localePath("/search", locale)}
-                  data-ke="book-a-tour"
-                  className={HEADER_CTA}
-                >
-                  <Calendar className="size-4 shrink-0" aria-hidden />
-                  {t("bookTour")}
-                </Link>
-              ) : null}
+            <div className="relative z-20 ml-auto flex items-center gap-2 bg-bg pl-1 max-md:min-w-0 max-md:max-w-full max-md:gap-1.5 md:shrink-0 [[data-channel=website]_&]:flex">
               {!headerUser || (!viewingGuest && chrome.role === "provider") ? (
                 <Link
                   to={localePath("/claim", locale)}
                   data-ke="list-your-daycare"
-                  className="ke-web-only inline-flex min-h-[44px] max-w-[9.5rem] touch-manipulation items-center justify-center gap-1.5 whitespace-normal rounded-full border border-primary px-2.5 text-center text-[13px] font-medium leading-tight text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 active:scale-[0.99] sm:max-w-none sm:px-3 sm:text-sm"
+                  className="ke-web-only hidden min-h-[44px] min-w-[44px] items-center px-1.5 text-[13px] font-medium text-muted underline-offset-4 hover:text-fg hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 md:inline-flex"
                 >
-                  <Building2 className="size-4 shrink-0" aria-hidden />
                   {t("navForDaycares")}
                 </Link>
               ) : null}
@@ -233,28 +201,6 @@ export function Shell({ children, pageClassName }: { children: ReactNode; pageCl
               </a>
             </div>
           </div>
-          {barePath === "/" || barePath === "/search" ? (
-            <div
-              data-ke="phone-care-tabs"
-              className="flex w-full min-w-0 items-center gap-2 overflow-x-auto pb-1.5 md:hidden"
-            >
-              <Link
-                to={localePath("/search", locale)}
-                search={
-                  headerLive
-                    ? headerCity
-                      ? { q: headerCity }
-                      : {}
-                    : { ...(headerCity ? { q: headerCity } : {}), live: 1 as const }
-                }
-                data-ke="live-on-kidease-tab"
-                aria-current={headerLive ? "true" : undefined}
-                className={`ke-chip shrink-0 ${headerLive ? "ke-chip-on" : ""}`}
-              >
-                {t("liveOnKidEase")}
-              </Link>
-            </div>
-          ) : null}
         </div>
       </header>
       {viewingGuest ? (
@@ -294,7 +240,6 @@ export function Shell({ children, pageClassName }: { children: ReactNode; pageCl
         open={open}
         onClose={close}
         title={t("explore")}
-        items={drawerItems}
         parentLabel={t("parentSignIn")}
         providerLabel={t("providerLogin")}
         signedIn={(Boolean(headerUser) || chrome.signedIn) && !locallyOut && !viewingGuest}
@@ -309,18 +254,10 @@ export function Shell({ children, pageClassName }: { children: ReactNode; pageCl
         headerExtra={null}
         navExtra={null}
       />
-      <div className={`flex min-h-0 min-w-0 flex-1 flex-col ${hideTabs ? "" : APP_TAB_PAD}`}>
+      <div data-ke="shell-content" className={`flex min-h-0 min-w-0 flex-1 flex-col ${hideTabs ? "" : APP_TAB_PAD}`}>
         <ApplyPendingShortlist />
         <ApplyReferral />
         <div className={cn("ke-page min-h-0 min-w-0 flex-1", pageClassName)} data-ke="page">
-          {govBrowsing ? (
-            <p className="ke-gutter flex flex-wrap items-center justify-between gap-2 bg-surface py-2 text-sm" data-ke="gov-public-browse">
-              <span>{locale === "fr" ? "Fiches publiques permises, partout au Canada." : "Public licensed listings, all of Canada."}</span>
-              <a className="inline-flex min-h-[44px] items-center font-semibold text-primary" href={locale === "fr" ? "/fr/gov" : "/gov"}>
-                {locale === "fr" ? "Retour au bureau" : "Return to the government desk"}
-              </a>
-            </p>
-          ) : null}
           {children}
           {hideFooter ? null : <SiteFooter />}
         </div>

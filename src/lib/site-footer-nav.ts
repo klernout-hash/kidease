@@ -95,6 +95,41 @@ export function footerLinksForShell(
   });
 }
 
+type FooterMenuGroup = { id: string; titleKey: CopyKey; links: FooterLinkDef[] };
+
+/** A single support group owns help links in the drawer and the app menu. */
+export function footerMenuGroupsForShell(input: {
+  native: boolean;
+  plansOn: boolean;
+  omit?: readonly string[];
+}): FooterMenuGroup[] {
+  const hidden = new Set(input.omit ?? []);
+  const groups: FooterMenuGroup[] = [
+    { id: "find", titleKey: "navFindCare", links: FOOTER_PARENTS },
+    { id: "daycares", titleKey: "navForDaycares", links: FOOTER_DAYCARES },
+    { id: "help", titleKey: "menuGetHelp", links: FOOTER_SUPPORT },
+    { id: "about", titleKey: "about", links: FOOTER_KIDEASE },
+    { id: "legal", titleKey: "menuPrivacyLegal", links: FOOTER_LEGAL },
+  ];
+  return groups
+    .map((group) => ({
+      ...group,
+      links: footerLinksForShell(input, group.links).filter((link) => !hidden.has(link.to)),
+    }))
+    .filter((group) => group.links.length > 0);
+}
+
+/** Guest drawer owns these complete groups; the lower More section omits them. */
+export const GUEST_DRAWER_FOOTER_OMIT = [...FOOTER_PARENTS, ...FOOTER_DAYCARES].map((link) => link.to);
+
+export function guestDrawerMenuGroupsForShell(input: { native: boolean; plansOn: boolean }): FooterMenuGroup[] {
+  return footerMenuGroupsForShell(input)
+    .filter((group) => group.id === "find" || group.id === "daycares")
+    .map((group) => group.id === "find"
+      ? { ...group, links: [group.links[0], copyLink("/search", "navMap", { search: { view: "map" } }), ...group.links.slice(1)] }
+      : group);
+}
+
 /** Hrefs the phone menu is built from before the shell filter. */
 export function mobileMenuHrefs(): string[] {
   return footerLinkHrefs();

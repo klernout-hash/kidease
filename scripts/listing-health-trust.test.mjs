@@ -175,10 +175,15 @@ test("quality ranking prefers claim verified, fresh vacancy, completeness — in
   const search = src("src/routes/search.tsx");
   assert.match(search, /filterClaimVerified/);
   assert.match(search, /sortRecommended/);
-  assert.match(search, /isClaimVerified/);
+  assert.match(search, /claimVerifiedOnly/);
+  assert.match(search, /filters: resultFilters/);
+  assert.match(src("src/lib/search-result-filters.ts"), /filters\.claimVerifiedOnly && !isClaimVerified\(row\)/);
   const daycares = src("src/lib/server/daycares.ts");
   assert.match(daycares, /recommendedRank/);
   assert.match(daycares, /recommended/);
+  assert.match(daycares, /query\.live \? found\.rows\.filter\(\(card\) => isClaimVerified\(card\) && !card\.isTest\)/);
+  assert.match(daycares, /filterSearchResults\(all/);
+  assert.match(daycares, /withSearchRows\(found, filterSearchResults\(all/);
   assert.match(src("src/lib/proximity.ts"), /listingQualityBoost/);
   assert.match(src("src/lib/listing-readiness.ts"), /Incomplete listings stay in the set/);
 });

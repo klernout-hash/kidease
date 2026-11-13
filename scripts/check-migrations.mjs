@@ -21,11 +21,20 @@ function databaseFailure(error) {
   return new MigrationCheckError("MIGRATION_CHECK_FAILED", "Database migration check failed; no migrations were run.");
 }
 
-/** Client injection supports mocks and isolated PGlite; only three fixed SQL statements exist. */
-export async function checkMigrationLedger(client, filenames) {
+function migrationInventory(filenames) {
+  if (!Array.isArray(filenames))
+    throw new MigrationCheckError("MIGRATION_FILES_INVALID", "Migration filenames are invalid.");
   const expected = [...new Set(filenames)].sort();
+  if (!expected.length)
+    throw new MigrationCheckError("MIGRATION_FILES_EMPTY", "Repository migration inventory is empty; the build cannot verify its schema.");
   if (expected.some((name) => typeof name !== "string" || !/^[a-zA-Z0-9_.-]+\.sql$/.test(name)))
     throw new MigrationCheckError("MIGRATION_FILES_INVALID", "Migration filenames are invalid.");
+  return expected;
+}
+
+/** Client injection supports mocks and isolated PGlite; only three fixed SQL statements exist. */
+export async function checkMigrationLedger(client, filenames) {
+  const expected = migrationInventory(filenames);
   let attemptedBegin = false;
   let outcome;
   let failure;
@@ -33,7 +42,7 @@ export async function checkMigrationLedger(client, filenames) {
     attemptedBegin = true;
     await client.query("BEGIN READ ONLY");
     const result = await client.query("SELECT name FROM public._migrations");
-    if (!Array.isArray(result?.rows) || result.rows.some((row) => typeof row.name !== "string"))
+    if (!Array.isArray(result?.rows) || result.rows.some((row) => !row || typeof row.name !== "string"))
       throw new MigrationCheckError("MIGRATION_LEDGER_INVALID", "Migration ledger returned invalid names.");
     const applied = new Set(result.rows.map((row) => row.name));
     const pending = expected.filter((name) => !applied.has(name));
@@ -59,7 +68,11 @@ async function defaultPool(options) {
 
 export async function checkConfiguredMigrations({ env = process.env, migrationsDir = join(dirname(fileURLToPath(import.meta.url)), "..", "migrations"), createPool = defaultPool } = {}) {
   const databaseUrl = String(env.DATABASE_URL || "").trim();
-  if (!databaseUrl) return { status: "skipped", reason: "DATABASE_URL is unset" };
+  if (!databaseUrl) {
+    if (env.VERCEL_ENV === "production")
+      throw new MigrationCheckError("MIGRATION_DATABASE_REQUIRED", "A Vercel production build requires a configured database for its read-only migration check.");
+    return { status: "skipped", reason: "DATABASE_URL is unset" };
+  }
   let filenames;
   try {
     filenames = (await readdir(migrationsDir, { withFileTypes: true }))
@@ -68,13 +81,20 @@ export async function checkConfiguredMigrations({ env = process.env, migrationsD
   } catch {
     throw new MigrationCheckError("MIGRATION_FILES_UNREADABLE", "Repository migration filenames could not be read.");
   }
+  filenames = migrationInventory(filenames);
   let pool;
   let client;
   let outcome;
   let failure;
+  // pg-pool can emit errors containing a client and its connection options.
+  // Capture only a fixed failure; never let an unhandled event print that object.
+  const connectionFailure = () => { failure ??= databaseFailure(); };
   try {
     pool = await createPool({ connectionString: postgresPoolUrl(databaseUrl), max: 1, connectionTimeoutMillis: 10000, statement_timeout: 10000, query_timeout: 15000 });
+    if (typeof pool?.on === "function") pool.on("error", connectionFailure);
     client = await pool.connect();
+    if (typeof client?.on === "function") client.on("error", connectionFailure);
+    if (failure) throw failure;
     outcome = await checkMigrationLedger(client, filenames);
   } catch (error) {
     failure = databaseFailure(error);

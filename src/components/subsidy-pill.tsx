@@ -1,10 +1,11 @@
 import { useState } from "react";
+import * as Popover from "@radix-ui/react-popover";
 import { feePillPulses } from "@/lib/card-photo-pills";
 import { listingSubsidy, subsidyLabel, subsidyNote } from "@/lib/fee-program";
 import { useCopy } from "@/lib/use-copy";
 import { cn } from "@/lib/utils";
 
-/** Photo and header pill. Tap or hover shows the one-line fact and the official source. */
+/** Photo and header program label. Open it for eligibility details and provenance. */
 export function SubsidyPill({
   item,
   className,
@@ -30,43 +31,53 @@ export function SubsidyPill({
   const note = subsidyNote(subsidy, loc);
   const pulse = feePillPulses(subsidy.subsidy_type);
   return (
-    <span className="pointer-events-auto relative inline-flex max-w-full flex-col items-start">
-      <button
-        type="button"
-        data-ke="card-fee-pill"
-        data-subsidy-type={subsidy.subsidy_type}
-        data-verified-at={subsidy.verified_at}
-        title={note}
-        aria-expanded={open}
-        className={cn("inline-flex min-h-11 items-center px-3 touch-manipulation", pulse && "ke-priority-pill", className)}
-        onClick={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          setOpen((value) => !value);
-        }}
-      >
-        {subsidyLabel(subsidy, loc)}
-      </button>
-      <span data-ke="card-fee-source" className="mt-0.5 inline-flex max-w-[16rem] items-center rounded bg-black/75 text-left text-[11px] font-normal leading-4 text-white">
-        <a
-          href={subsidy.subsidy_source}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex min-h-11 items-center px-3 underline touch-manipulation"
+    <Popover.Root open={open} onOpenChange={setOpen}>
+      <Popover.Trigger asChild>
+        <button
+          type="button"
+          data-ke="card-fee-pill"
+          data-subsidy-type={subsidy.subsidy_type}
+          title={note}
+          className={cn(
+            "pointer-events-auto inline-flex min-h-11 items-center px-3 touch-manipulation",
+            className,
+            pulse && "ke-priority-pill bg-primary text-primary-fg",
+          )}
+          onClick={(event) => {
+            event.stopPropagation();
+          }}
+        >
+          {subsidyLabel(subsidy, loc)}
+        </button>
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Content
+          data-ke="card-fee-note"
+          aria-label={loc === "fr" ? "Détails du programme de frais" : "Fee program details"}
+          side="bottom"
+          align="start"
+          sideOffset={8}
+          collisionPadding={16}
+          className="z-[80] w-72 max-w-[calc(100vw-2rem)] rounded-xl bg-surface p-4 text-left text-sm font-normal leading-6 text-fg shadow-xl ring-1 ring-border"
           onClick={(event) => event.stopPropagation()}
         >
-          {loc === "fr" ? "Source" : "Source"}
-        </a>
-        {subsidy.verified_at ? ` · ${subsidy.verified_at}` : ""}
-      </span>
-      {open ? (
-        <span
-          data-ke="card-fee-note"
-          className="mt-1 max-w-[240px] rounded-lg bg-black/80 px-2 py-1 text-left text-[11px] font-normal leading-4 text-white"
-        >
-          {note}
-        </span>
-      ) : null}
-    </span>
+          <p>{note}</p>
+          <a
+            data-ke="card-fee-source"
+            href={subsidy.subsidy_source}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-1 inline-flex min-h-11 items-center text-primary underline underline-offset-4 touch-manipulation"
+          >
+            {loc === "fr" ? "Voir la source" : "View source"}
+          </a>
+          {subsidy.verified_at ? (
+            <p className="text-xs text-subtle">
+              {loc === "fr" ? "Règle vérifiée le" : "Rule checked"} {subsidy.verified_at}
+            </p>
+          ) : null}
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
   );
 }

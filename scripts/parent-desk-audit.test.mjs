@@ -39,13 +39,13 @@ test("home puts saved daycares and waiting items before search", () => {
   assert.ok(saved > 0 && waiting > saved && search > waiting);
 });
 
-test("listing phone bar is one main button and the heart", () => {
+test("listing phone bar keeps one primary, Save, and a secondary disclosure", () => {
   const page = src("src/routes/daycare.$slug.tsx");
   const start = page.indexOf('data-ke="listing-sticky-bar"');
-  const bar = page.slice(start, start + 900);
+  const bar = page.slice(start, start + 1600);
   assert.match(bar, /data-ke="listing-sticky-cta"/);
   assert.match(bar, /SaveListingButton/);
-  assert.doesNotMatch(bar, /ListingMoreActions/);
+  assert.match(bar, /ListingMoreActions compact/);
   assert.doesNotMatch(bar, /ListingCtaSnippet/);
-  assert.match(page, /data-ke="listing-availability"/);
+  assert.match(src("src/components/listing-parent-pack.tsx"), /data-ke="listing-availability"/);
 });

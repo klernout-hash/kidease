@@ -133,14 +133,15 @@ export function preloadOsmMap(): Promise<MlModule> {
   if (typeof window === "undefined") return Promise.reject(new Error("Map is browser-only"));
   if (!libPromise) {
     libPromise = (async () => {
-      const [ml, worker] = await Promise.all([
+      const [ml] = await Promise.all([
         import("maplibre-gl"),
-        import("maplibre-gl/dist/maplibre-gl-worker.mjs?url"),
         import("maplibre-gl/dist/maplibre-gl.css"),
       ]);
-      ml.setWorkerUrl(worker.default);
-      // Keep raster tiles and sprites from competing with the visible listing
-      // photos on a phone connection. Vector requests retain MapLibre's queue.
+      // Pass the worker script URL without executing its class export on the page.
+      // Vite emits this self-contained script as a hashed asset in production.
+      const workerUrl = new URL("../../node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs", import.meta.url).href;
+      ml.setWorkerUrl(workerUrl);
+      // Limit image requests so map tiles do not crowd out listing photos.
       ml.setMaxParallelImageRequests(6);
       return ml;
     })().catch((err) => {

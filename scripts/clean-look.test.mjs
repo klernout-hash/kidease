@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import vm from "node:vm";
+import { CARE_CATEGORY_SOURCES, careCategoryArt } from "../src/lib/care-category-art.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const src = (rel) => readFileSync(join(root, rel), "utf8");
@@ -74,10 +75,13 @@ test("the clean look has light and dark tokens and keeps the logo artwork", () =
   assert.match(src("docs/clean-look/README.md"), /Do not change the default until Kyle says so/);
 });
 
-test("the website home reuses the page's picture tabs and leaves the shell alone", () => {
+test("the home picture tabs sit inside the header without page overlap", () => {
   const css = src("src/styles.css");
-  assert.match(css, /html\[data-look="clean"\] \.ke-home > \.ke-airbnb-phone-only \{\n {4}display: block;/);
-  assert.doesNotMatch(src("src/components/shell.tsx"), /care-cats|ke-care-gif/);
+  const shell = src("src/components/shell.tsx");
+  assert.match(shell, /data-ke="header-care-categories"/);
+  assert.match(src("src/routes/index.tsx"), /headerCategories=\{boot\.airbnbUi/);
+  assert.match(css, /\[data-ke="header-care-categories"\] \.ke-airbnb-cats/);
+  assert.doesNotMatch(css, /margin: -6rem auto 0/);
 });
 
 test("the tidy home keeps every part reachable", () => {
@@ -88,10 +92,10 @@ test("the tidy home keeps every part reachable", () => {
   assert.match(src("src/components/explore-search-bar.tsx"), /onNearby: onLocate/);
 });
 
-test("recently viewed moves up as photo cards in the clean look only", () => {
+test("recently viewed shares photo cards while moving up only in the clean look", () => {
   const home = src("src/routes/index.tsx");
-  assert.equal(home.match(/<RecentlyViewedRow items=\{recentPublic\} cards \/>/g)?.length, 2);
-  assert.equal(home.match(/className="ke-classic-only[^"]*">\s*<RecentlyViewedRow items=\{recentPublic\} \/>/g)?.length, 2);
+  assert.equal(home.match(/<RecentlyViewedRow items=\{recentPublic\} cards \/>/g)?.length, 4);
+  assert.equal(home.match(/className="ke-classic-only[^"]*">\s*<RecentlyViewedRow items=\{recentPublic\} cards \/>/g)?.length, 2);
   const row = src("src/components/recently-viewed-row.tsx");
   assert.match(row, /data-ke="recent-card"/);
   assert.match(row, /rounded-2xl/);
@@ -99,11 +103,13 @@ test("recently viewed moves up as photo cards in the clean look only", () => {
   assert.match(src("src/styles.css"), /html\[data-look="clean"\] \.ke-classic-only \{\n {2}display: none !important;/);
 });
 
-test("each care type has its own icon in the clean look", () => {
+test("each care type keeps the same original artwork in Classic and Clean", () => {
   const css = src("src/styles.css");
-  const ids = ["all", "child_care_centre", "family_home", "group_home", "nursery_preschool", "school_age", "before_after", "open"];
-  for (const id of ids) {
-    assert.ok(css.includes(`[data-ke="airbnb-care-${id}"] .ke-airbnb-cat-art img {\n  content: url("/photos/care-icons/${id}.webp");`), id);
-    assert.ok(readFileSync(join(root, "public/photos/care-icons", `${id}.webp`)).length > 1000, id);
+  assert.doesNotMatch(css, /content:\s*url\("\/photos\/care-icons\//);
+  for (const [id, file] of Object.entries(CARE_CATEGORY_SOURCES)) {
+    assert.equal(careCategoryArt(id).src, `/photos/care-icons/${file}`);
+    assert.ok(readFileSync(join(root, "public/photos/care-icons", file)).length > 1000, id);
   }
+  assert.match(src("src/components/facility-type-rails.tsx"), /<CareCategoryIcon id=\{type\}/);
+  assert.match(src("src/components/airbnb-screens.tsx"), /<CareCategoryIcon id=\{cat\.id\}/);
 });

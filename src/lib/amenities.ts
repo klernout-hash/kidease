@@ -1,4 +1,8 @@
 export function amenityLabel(key: string, locale: string) {
+  // The stored participation flag is not a verified fee or a parent-facing program name.
+  if (key.trim().toLowerCase() === "cwelcc") {
+    return locale === "fr" ? "Renseignez-vous sur les frais réduits" : "Ask about reduced fees";
+  }
   const map: Record<string, { en: string; fr: string }> = {
     meals: { en: "Meals included", fr: "Repas inclus" },
     garden: { en: "Food garden", fr: "Jardin potager" },

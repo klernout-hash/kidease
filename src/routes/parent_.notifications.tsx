@@ -25,14 +25,13 @@ function Page() {
     <WiringDesk
       kicker="KidEase"
       title={fr ? "Avis" : "Notices"}
-      lead={fr ? "Vos avis dans l’appli sont ici. Les textos partent seulement si vous avez accepté. Les notifications poussées arrivent bientôt." : "Your in-app notices are here. Texts go only if you opted in. Push is coming soon."}
-      next={fr ? "Ouvrez vos avis. Rien n’est envoyé par texto ou courriel tant que ce n’est pas activé." : "Open your notices. Nothing is texted or emailed until that is turned on."}
+      lead={fr ? "Retrouvez vos avis KidEase et choisissez comment les recevoir." : "Find your KidEase notices and choose how to receive them."}
+      next={fr ? "Ouvrez vos avis pour voir les nouvelles de vos demandes." : "Open your notices to see updates about your requests."}
       enabled
     >
       <Button asChild>
         <Link to="/notifications">{fr ? "Voir vos avis" : "See your notices"}</Link>
       </Button>
-      <p className="mt-2 text-sm text-muted">{fr ? "L’appli téléphone n’est pas encore dans les boutiques. Les notifications poussées arrivent bientôt." : "The phone apps are not in the stores yet. Push is coming soon."}</p>
       {outbound ? (
         <>
           <label className="mt-4 flex min-h-11 items-center gap-3 text-sm">
