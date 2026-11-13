@@ -57,7 +57,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: artifacts/ci-build
-          key: vite-build-${{ runner.os }}-${{ hashFiles('package-lock.json', 'vite.config.ts', 'src/**', 'server/**', 'public/**', 'scripts/migrate.mjs', 'scripts/check-ssr-bundle.mjs', 'scripts/check-locale-chunks.mjs', 'scripts/check-client-db.mjs') }}
+          key: vite-build-${{ runner.os }}-${{ hashFiles('package.json', 'package-lock.json', 'vite.config.ts', 'src/**', 'server/**', 'public/**', 'migrations/**', 'scripts/migrate.mjs', 'scripts/check-migrations.mjs', 'scripts/check-ssr-bundle.mjs', 'scripts/check-locale-chunks.mjs', 'scripts/check-client-db.mjs') }}
       - uses: actions/setup-node@v4
         if: steps.vite-build.outputs.cache-hit != 'true'
         with:
