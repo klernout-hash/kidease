@@ -288,6 +288,15 @@ async function captureCentreLeadWorkerView(page, base, locale) {
     await page.goto(new URL(path, base).href, { waitUntil: "domcontentloaded", timeout: timeoutMs });
     await page.getByRole("heading", { level: 1, name: title, exact: true }).waitFor({ timeout: timeoutMs });
     await page.getByText(offBody, { exact: true }).waitFor({ timeout: timeoutMs });
+    // Static off-page content can precede hydration and the seeded session.
+    await page.waitForFunction(() => {
+      const groups = [...document.querySelectorAll('[data-ke="desk-desktop-nav"] details')];
+      return groups.length > 0 && groups.every((group) => group.dataset.keGroup === "1");
+    }, undefined, { timeout: timeoutMs });
+    await page.locator('[data-ke="header-avatar"]').getByText("ED", { exact: true }).waitFor({ timeout: timeoutMs });
+    await page.locator('[data-ke="desk-switcher-slot"] [data-ke="desk-switch-tab"][data-desk="parent"]').waitFor({ state: "attached", timeout: timeoutMs });
+    await page.locator('header [data-ke="book-a-tour"]').waitFor({ state: "detached", timeout: timeoutMs });
+    if (width === 1280) await page.locator('[data-ke="desk-desktop-nav"] [data-nav="today"]').waitFor({ timeout: timeoutMs });
     if (!(await pageIsQuiet(page))) throw new Error("Tracker capture did not reach the default-off synthetic view");
     await page.screenshot({ path: join(dir, `tracker-worker-${locale}-${width}.png`), fullPage: false });
   }
