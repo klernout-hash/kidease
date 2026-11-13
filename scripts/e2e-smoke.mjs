@@ -284,12 +284,27 @@ async function searchSmokeSnapshot(page) {
     };
     const coverage = [...document.querySelectorAll('[data-ke="search-coverage"]')].find(visible);
     const cards = [...document.querySelectorAll("[data-slug]")].filter(visible);
+    const anchors = [...document.querySelectorAll('a[href*="/daycare/"]:not([href*="/daycare/city"])')];
+    const first = anchors[0];
+    const firstBox = first?.getBoundingClientRect();
+    const countNode = document.querySelector('[data-ke="search-count"]');
+    const loading = Boolean(countNode?.querySelector(".ke-skel"));
     return {
-      count: (document.querySelector('[data-ke="search-count"]')?.textContent || "").replace(/\s+/g, " ").trim(),
-      coverage: coverage?.getAttribute("data-coverage") || "complete",
+      count: (countNode?.textContent || "").replace(/\s+/g, " ").trim(),
+      coverage: coverage?.getAttribute("data-coverage") || (loading ? "pending" : "complete"),
       warning: (coverage?.querySelector("span")?.textContent || "").replace(/\s+/g, " ").trim().slice(0, 240),
       cards: cards.length,
       seededLiveCard: cards.some((card) => card.getAttribute("data-slug") === "e2e-centre"),
+      phase: loading ? "loading" : cards.length ? "results" : "empty",
+      viewport: { width: innerWidth, height: innerHeight, scrollY },
+      mobileVariantPresent: Boolean(document.querySelector('[data-ke="msv2-split"]')),
+      links: { total: anchors.length, visible: anchors.filter(visible).length },
+      firstLink: first ? {
+        path: (first.getAttribute("href") || "").split(/[?#]/)[0].slice(0, 160),
+        visible: visible(first),
+        width: firstBox.width, height: firstBox.height,
+        mobile: Boolean(first.closest('[data-ke="msv2-split"]')),
+      } : null,
     };
   });
 }
@@ -304,7 +319,9 @@ function positiveLiveSearchCount(snapshot) {
 }
 
 async function roleListingFromSearch(page, waitMs = timeoutMs) {
-  const listing = page.locator('a[href*="/daycare/"]:not([href*="/daycare/city"])').first();
+  // Responsive variants keep hidden copies in the DOM. Select a visible link
+  // before taking the first match, preserving the requirement for a real card.
+  const listing = page.locator('a[href*="/daycare/"]:not([href*="/daycare/city"]):visible').first();
   const requests = [];
   const origin = new URL(page.url()).origin;
   const onResponse = (response) => {
@@ -317,21 +334,74 @@ async function roleListingFromSearch(page, waitMs = timeoutMs) {
   page.on("response", onResponse);
   let retried = false;
   try {
-    await listing.waitFor({ state: "visible", timeout: waitMs }).catch(() => {});
+    // Capture the visible match before collecting diagnostics: a background
+    // refresh can replace the results between separate visibility/href reads.
+    let href = (await listing.getAttribute("href", { timeout: waitMs }).catch(() => "")) || "";
     const before = await searchSmokeSnapshot(page);
-    if (!(await listing.isVisible().catch(() => false)) && ["partial", "unverified", "error"].includes(before.coverage)) {
+    if (!href && ["partial", "unverified", "error"].includes(before.coverage)) {
       // One user-visible search recovery only; never reload or bypass the UI.
       const retry = page.locator(".ke-search-results").getByRole("button", { name: /^(Retry|Réessayer)$/ }).first();
       if (await retry.isVisible().catch(() => false) && await retry.isEnabled().catch(() => false)) {
         await retry.click({ timeout: 5000 });
         retried = true;
-        await listing.waitFor({ state: "visible", timeout: waitMs }).catch(() => {});
+        href = (await listing.getAttribute("href", { timeout: waitMs }).catch(() => "")) || "";
       }
     }
-    const href = await listing.isVisible().catch(() => false) ? (await listing.getAttribute("href")) || "" : "";
     return { href, diagnostics: { before, after: await searchSmokeSnapshot(page), retried, requests } };
   } finally {
     page.off("response", onResponse);
+  }
+}
+
+async function runRoleListingDiscoveryRegression(browser) {
+  const page = await browser.newPage();
+  try {
+    await page.route("**/*", (route) => route.abort());
+    for (const width of [390, 1280]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.setContent(`<style>
+        .desktop { display:none }
+        @media(min-width:768px) { .mobile { display:none } .desktop { display:block } }
+      </style>
+      <div data-ke="search-count">2 listings available to view</div>
+      <div class="mobile" data-ke="msv2-split"><article data-slug="fixture-mobile"><a href="/daycare/fixture-mobile">Mobile listing</a></article></div>
+      <div class="desktop ke-search-results"><article data-slug="fixture-desktop"><a href="/daycare/fixture-desktop">Desktop listing</a></article></div>`);
+      const found = await roleListingFromSearch(page, 300);
+      const expected = width < 768 ? "/daycare/fixture-mobile" : "/daycare/fixture-desktop";
+      record(`role-search-visible-copy-${width}`, found.href === expected && !found.diagnostics.retried, { search: found.diagnostics });
+    }
+    for (const state of ["hidden", "empty", "loading"]) {
+      await page.setContent(`<div data-ke="search-count">${state === "loading" ? '<span class="ke-skel">Loading centres…</span>' : "0 listings available to view"}</div>${state === "hidden" ? '<div hidden><article data-slug="fixture-hidden"><a href="/daycare/fixture-hidden">Hidden listing</a></article></div>' : ""}`);
+      const found = await roleListingFromSearch(page, 150);
+      record(`role-search-rejects-${state}`, found.href === "" && !found.diagnostics.retried && (state !== "loading" || found.diagnostics.after.coverage === "pending"), { search: found.diagnostics });
+    }
+    await page.setContent('<div data-ke="search-count"><span class="ke-skel">Loading centres…</span></div>');
+    await page.evaluate(() => setTimeout(() => {
+      document.body.innerHTML = '<div data-ke="search-count">1 listing available to view</div><article data-slug="fixture-loaded"><a href="/daycare/fixture-loaded">Loaded listing</a></article>';
+    }, 50));
+    const loaded = await roleListingFromSearch(page, 500);
+    record("role-search-waits-for-visible-result", loaded.href === "/daycare/fixture-loaded" && !loaded.diagnostics.retried, { search: loaded.diagnostics });
+    await page.setContent('<div data-ke="search-count">1 listing available to view</div><article data-slug="fixture-before-refresh"><a href="/daycare/fixture-before-refresh">Visible listing</a></article>');
+    const evaluate = page.evaluate.bind(page);
+    let refreshed = false;
+    // Reproduce a UI refresh between the diagnostic and the later href read
+    // used by the former helper, without changing its positive requirement.
+    page.evaluate = async (...parameters) => {
+      const result = await evaluate(...parameters);
+      if (!refreshed) {
+        refreshed = true;
+        await evaluate(() => { document.body.innerHTML = '<div data-ke="search-count"><span class="ke-skel">Loading centres…</span></div>'; });
+      }
+      return result;
+    };
+    try {
+      const captured = await roleListingFromSearch(page, 300);
+      record("role-search-captures-visible-link-before-refresh", captured.href === "/daycare/fixture-before-refresh" && captured.diagnostics.before.cards === 1 && captured.diagnostics.after.coverage === "pending" && !captured.diagnostics.retried, { search: captured.diagnostics });
+    } finally {
+      page.evaluate = evaluate;
+    }
+  } finally {
+    await page.close();
   }
 }
 
@@ -2112,6 +2182,7 @@ try {
     }
 
   if (smokeGroupSelected(args, "role")) {
+    await runRoleListingDiscoveryRegression(browser);
     await runRoleFixture(page, base);
   }
   if (smokeGroupSelected(args, "webkit")) {
