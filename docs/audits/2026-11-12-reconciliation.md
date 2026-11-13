@@ -1,16 +1,52 @@
 # KidEase audit reconciliation — 12 November 2026
 
-Baseline: `75cf0cd3cc1dc993b6eb920fe17139306f00cb80` (PR #840). Read AGENTS.md and docs/clean-look/README.md first. This is a source audit with local regression evidence, not a live sign-off.
+Historical audit baseline: `75cf0cd3cc1dc993b6eb920fe17139306f00cb80` (PR #840). Read AGENTS.md and docs/clean-look/README.md first. The dated reconciliation below supersedes the baseline status for shipped implementations. Source changes and local regression evidence are separate from live acceptance.
 
 Primary source: current Library-read `KidEase-Five-Desk-Audit-2026-11-12.pdf`, Library ID `libfile_fde3_f-70705804f0808191a45b3151bd5b2ddb_89b906bfbf4081918e5900b0310185fb`, version 1, 39 pages, 74 actionable findings plus X02 passed retest. Full extracted text is in `audit-five-desk-text.txt`. No source item was invented.
 
-## Status meaning
+## Current-status reconciliation — 12 November 2026, after PR #845
+
+The original source audit below remains evidence of the `75cf0cd` baseline. Its “Still broken (source)” entries are historical observations, not assertions that those faults remain in current main. GitHub confirms PRs [842](https://github.com/klernout-hash/kidease/pull/842), [843](https://github.com/klernout-hash/kidease/pull/843), [844](https://github.com/klernout-hash/kidease/pull/844), and [845](https://github.com/klernout-hash/kidease/pull/845) are merged. Current shipped source is [`7e7c65689dd76c7a33f8e2a1faab8f9ee256e63b`](https://github.com/klernout-hash/kidease/commit/7e7c65689dd76c7a33f8e2a1faab8f9ee256e63b).
+
+| Finding | Implementation shipped | Current acceptance boundary |
+| --- | --- | --- |
+| V01 | #842, merge `846e7be4f3d82da8b25402e6e0e4dc54d19e0f67`: city/region directory, cited fees, trends and vacancy updates use the selected public-listing cohort; wider demand/job context is labelled. [Scope and local evidence](../gov-analytics-scope.md). | Authenticated live analytics acceptance remains not checked. Government sign-in redirects at 390px/1280px do not establish analytics correctness. |
+| P06 | #843, merge `a75d14e4b911fc4eaea47789680e465b1236b527`: saved-centre maps draw only the supplied shortlist and skip directory viewport fetches. [Scope and local evidence](../saved-map.md). | This addresses the saved map only. Public G03 search map/list parity remains separate and unresolved by this change; post-release saved-map acceptance remains not checked. |
+| P04 | #844, merge `dd9986e31da97cf0053f1127eb81eb950d4c2d64`: one centre-confirmed attendance summary uses the centre-local date; dated parent absence reports remain separate. [Scope and local evidence](../parent-attendance-summary.md). | Parent/provider live reload acceptance remains not checked. Dual-role attribution is conservatively unlabelled. |
+| P09 | #845: invitation wording consistently states a seven-day lifetime in English/French. | Wording correction shipped; expiry date/status and a resend control remain unimplemented. No invitation was sent during verification. |
+| P11 | #845: shared store availability separates Kyle-confirmed Huawei availability from a verified download URL; general all-phone-apps-coming-soon alert claims are removed. | Kyle's later “Huawei is live” correction governs availability. The actual AppGallery listing URL remains unverified and absent; no direct link, device redirect or push delivery is established. The shipped badge fallback still derives its unavailable text from missing URL and requires the accompanying follow-up correction. |
+| P12 | #845: Parent Documents owns the title/introduction; its vault panel hides the repeated heading. | Local enabled/disabled-vault coverage exists; current live Documents acceptance remains not checked. |
+| P14 | #845: alert copy describes the parent's task; loading, failure/retry and loaded-empty states are distinct. | Local delayed/failing/retry fixtures exist; live alert acceptance remains not checked. |
+| P21 | #845: deletion action/confirmation describe scheduled deletion and the 30-day recovery period. | Existing retention/revocation behaviour remains; no deletion was submitted and live acceptance remains not checked. |
+| P22 | #845: password-reset and forgotten-sign-in-email guidance are separate in English/French. | Local entry-point checks exist; live recovery acceptance remains not checked. |
+| P24 | #845: calendar days have full-date/visit-count accessible names plus selected/today states. | Local keyboard/date/locale fixtures exist; live calendar acceptance remains not checked. |
+| X03 | #845: active-shift empty text is distinct from weekly no-hours text. | Local active/completed/empty-week fixtures exist; live staff-hours acceptance remains not checked. |
+
+The eight #845 items and their local fixture evidence are documented in [the wording/layout scope](../qa/audit-copy-20261112.md). The released #842–#845 heads passed required GitHub `check` and `e2e` before merge, as recorded in their PR release evidence; those results do not transfer to a later follow-up head. This reconciliation does **not** mark all 74 findings resolved.
+
+Vercel's connector reported successful completion for the exact final shipped SHA above at [kidease-git deployment GEPmMQxgyrxtm8sdTVuNjy4gtQyz](https://vercel.com/klernout-1129s-projects/kidease-git/GEPmMQxgyrxtm8sdTVuNjy4gtQyz). The Mac/browser outage prevented fresh direct alias/domain checks and authenticated post-release acceptance after #842. The release worker's anonymous French `/fr/get-app` retrieval showed Available in the shared panel but Coming soon in a separate badge panel; its English retrieval had uncertain freshness. These observations are limited evidence, not full app-page acceptance.
+
+### Live ledger carried forward from the earlier handoff
+
+The observations in [the original handoff](2026-11-12-handoff.md) were made against `75cf0cd` at 390×844 and 1280×900, with clean look selected. They are preserved below, not freshly retested against `7e7c656`.
+
+| Finding | 390px | 1280px | Boundary |
+| --- | --- | --- | --- |
+| D01 Families route | Pass | Pass | Earlier handoff observed Families at your centre and the centre chooser. |
+| P01 parent placeholder stack | Pass | Pass | Earlier handoff observed useful Home content without the old pre-header placeholder stack. |
+| D02 daycare placeholder stack | Pass | Pass | Earlier handoff observed Today without the old pre-header placeholder stack. |
+| G05 Toronto within 10 km | Not checked | Pass | Desktop parser response observed; the phone guided-matcher path was not established. |
+| X05, P03, P05, V08, V06 | Not checked | Not checked | Existing QA threads/tours and government sign-in or product decisions remain needed. No new live acceptance is claimed. |
+
+Classic remains the source default. Payment/subscription flags and configuration, paused Email/CRM bots, and excluded PRs 357/336/307/289/841 are unchanged. Roughly 243 flags and `KIDEASE_CONNECT_LIVE=0` are historical handoff values, not freshly verified runtime state. Production database health is not checked: health/on-call handlers can backfill ages, and authenticated desk loaders can expire tour holds/send notices. Do not invoke those loaders to update this evidence ledger.
+
+## Historical baseline status meaning
 
 - **Fixed:** acceptance observed on the live site. This read-only subtask makes no new fixed-live claims; the main agent's live matrix is authoritative.
 - **Still broken (source):** the reported fault or contradictory copy is directly present at this baseline. Live acceptance remains untested by this subtask.
 - **Not checked:** a merged implementation may exist, a live/account/data test is required, or this audit did not establish the current fault. A historic PDF is not evidence of current failure.
 
-## What the four merged PRs actually changed
+## Historical baseline: what the four earlier merged PRs changed
 
 | PR | Confirmed merged source scope | What it does not establish |
 |---|---|---|
@@ -21,7 +57,7 @@ Primary source: current Library-read `KidEase-Five-Desk-Audit-2026-11-12.pdf`, L
 
 Local existing regressions: `parent-desk-audit`, `gov-desk-simple`, `gov-oversight`, `support-case-route`, `role-access`, `request-guard`, and `explore-search` passed **42/42**. Log: `reconciliation-tests.log`. This does not prove live functionality.
 
-## Primary Five-Desk findings
+## Historical primary Five-Desk findings at `75cf0cd`
 
 | ID | Priority | Status | Baseline evidence or next acceptance |
 |---|---|---|---|
@@ -107,13 +143,13 @@ Authoritative definitions of **U1–U6 / P1–P6 / G1–G9** remain unlocated. T
 
 A5 support routing is already implemented in source by **PR #830**, commit `32cf570` / merge `4ac0718`, before these four PRs. English `support_.$caseId` is a root sibling; French is under FrRoute, not the inbox. Therefore no Outlet is needed in support.tsx. Local support route regression passes; live case acceptance is not checked.
 
-## Next seven-item wording/layout batch
+## Historical proposed wording/layout batch — superseded by #845
 
 P09 invitation lifetime, P12 document heading duplication, P14 alert empty-state language/loading, P21 deletion action name, P22 password/email recovery guidance, P24 full accessible calendar dates, and X03 active-shift empty copy.
 
 Keep D03 court-order policy unchanged. Skip P11 until Huawei's real AppGallery URL is verified. This seven-item scope meets Kyle's requested 6–10 findings per PR.
 
-## Outstanding evidence
+## Historical outstanding evidence — see current reconciliation above
 
 Original legacy PDFs, current Test Bot draft, Kyle government/admin session, safe preview/database isolation or verified ignored-build path, current runtime flag count, live database health via a genuinely read-only path, and current deployment alias evidence remain owned by the main handoff agent. Do not claim these from historical counts.
 
